@@ -160,11 +160,11 @@ module XGen
           @socket.print(message.buf.to_s)
         end
 
-        protected
-
         def full_coll_name(collection)
           "#{@name}.#{collection}"
         end
+
+        protected
 
         def db_command(selector)
           # TODO synchronize

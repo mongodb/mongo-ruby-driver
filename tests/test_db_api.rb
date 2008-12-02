@@ -76,4 +76,8 @@ class DBAPITest < Test::Unit::TestCase
     # Mongo bug: returns string with wrong length, so last byte of value is chopped off.
 #     assert_equal @coll.name, row['options']['create']
   end
+
+  def test_full_coll_name
+    assert_equal @coll_full_name, @db.full_coll_name(@coll.name)
+  end
 end
