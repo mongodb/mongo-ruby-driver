@@ -24,6 +24,10 @@ The tests assume that the Mongo database is running on the default port.
 
 * More tests.
 
+* Implement Admin.
+
+* See FIXME in db test.
+
 
 = License
 

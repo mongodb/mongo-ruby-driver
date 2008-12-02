@@ -59,6 +59,8 @@ module XGen
         end
 
         def admin
+          # TODO
+          raise "not implemented"
           Admin.new(self)
         end
 
