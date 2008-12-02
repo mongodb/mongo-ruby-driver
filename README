@@ -18,6 +18,23 @@ Mongo must be running, of course.
 The tests assume that the Mongo database is running on the default port.
 
 
+= The Code
+
+Most of this code was transliterated from Geir Magnusson Jr's Java Mongo
+driver, which can be found at
+http://github.com/geir/mongo-java-driver/tree/master.
+
+== Release Notes
+
+If you ran tests using code before relase
+http://github.com/jimm/mongo-ruby-driver/commit/4244f56ce6c7044a1ce096843eb991856422c0cc
+then the DB API tests might fail the first time you run it. If that doesn't
+clear up the failed test, you might have to delete your database. To do that,
+type
+
+  $ rm /data/db/ruby-mongo-test*
+
+
 = To Do
 
 * Synchronization.

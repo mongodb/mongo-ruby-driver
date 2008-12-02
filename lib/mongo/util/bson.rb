@@ -1,6 +1,9 @@
 require 'mongo/util/byte_buffer'
 require 'mongo/objectid'
 
+# See http://github.com/10gen/mongo/tree/master/db/jsobj.h
+# and 
+
 class BSON
 
   EOO = 0                       # x
