@@ -72,9 +72,7 @@ class DBAPITest < Test::Unit::TestCase
     assert rows.length >= 1
     row = rows.detect { |r| r['name'] == @coll_full_name }
     assert_not_nil row
-# FIXME restore this test when Mongo fixes this bug (or we prove I'm doing something wrong)
-    # Mongo bug: returns string with wrong length, so last byte of value is chopped off.
-#     assert_equal @coll.name, row['options']['create']
+    assert_equal @coll.name, row['options']['create']
   end
 
   def test_full_coll_name

@@ -213,7 +213,7 @@ class BSON
     end_pos = buf.position
 
     # Put the string size in front
-    buf.put_int(end_pos - start_pos - 1, len_pos)
+    buf.put_int(end_pos - start_pos, len_pos)
 
     # Go back to where we were
     buf.position = end_pos
