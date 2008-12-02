@@ -48,19 +48,19 @@ class DBAPITest < Test::Unit::TestCase
 
   def test_drop_collection
     assert @db.drop_collection(@coll.name), "drop of collection #{@coll.name} failed"
-    assert_equal 0, @db.collection_names.length
+    assert !@db.collection_names.include?(@coll_full_name)
   end
 
   def test_collection_names
     names = @db.collection_names
-    assert_equal 1, names.length
-    assert_equal 'ruby-mongo-test.test', names[0]
+    assert names.length >= 1
+    assert names.include?(@coll_full_name)
 
     coll2 = @db.collection('test2')
     coll2.insert('a' => 1)      # collection not created until it's used
     names = @db.collection_names
-    assert_equal 2, names.length
-    assert names.include?('ruby-mongo-test.test')
+    assert names.length >= 2
+    assert names.include?(@coll_full_name)
     assert names.include?('ruby-mongo-test.test2')
   ensure
     @db.drop_collection('test2')
@@ -69,9 +69,9 @@ class DBAPITest < Test::Unit::TestCase
   def test_collections_info
     cursor = @db.collections_info
     rows = cursor.collect
-    assert_equal 1, rows.length
-    row = rows[0]
-    assert_equal @coll_full_name, row['name']
+    assert rows.length >= 1
+    row = rows.detect { |r| r['name'] == @coll_full_name }
+    assert_not_nil row
 # FIXME restore this test when Mongo fixes this bug (or we prove I'm doing something wrong)
     # Mongo bug: returns string with wrong length, so last byte of value is chopped off.
 #     assert_equal @coll.name, row['options']['create']
@@ -80,4 +80,16 @@ class DBAPITest < Test::Unit::TestCase
   def test_full_coll_name
     assert_equal @coll_full_name, @db.full_coll_name(@coll.name)
   end
+
+# FIXME
+#   def test_index_information
+#     list = @db.index_information(@coll.name)
+#     assert_equal 0, list.length
+
+#     @db.create_index(@coll, 'index_name', {'a' => 1})
+#     $stderr.puts @db.create_index(@coll, 'index_name', {'a' => 1}).to_s # DEBUG
+#     list = @db.index_information(@coll.name)
+#     $stderr.puts "list = #{list.inspect}" # DEBUG
+#     assert_equal 1, list.length
+#   end
 end
