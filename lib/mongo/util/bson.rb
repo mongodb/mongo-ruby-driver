@@ -1,4 +1,5 @@
 require 'mongo/util/byte_buffer'
+require 'mongo/objectid'
 
 class BSON
 
@@ -152,7 +153,7 @@ class BSON
   end
 
   def deserialize_oid_data
-    ObjectID.new(buf.get(12).pack("C*"))
+    XGen::Mongo::Driver::ObjectID.new(buf.get(12).pack("C*"))
   end
 
   def serialize_eoo_element(buf)
@@ -189,7 +190,7 @@ class BSON
   def serialize_object_element(buf, key, val)
     buf.put(OBJECT)
     self.class.serialize_cstr(buf, key)
-    BSON.new(buf).serialize(val)
+    buf.put_array(BSON.new.serialize(val).to_a)
   end
 
   def serialize_oid_element(buf, key, val)
@@ -241,7 +242,7 @@ class BSON
       key == "$where" ? CODE : STRING
     when Array
       ARRAY
-    when ObjectID
+    when XGen::Mongo::Driver::ObjectID
       OID
     when true, false
       Boolean

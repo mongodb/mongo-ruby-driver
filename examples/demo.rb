@@ -16,5 +16,5 @@ coll.insert(doc)
 doc = {'a' => 3}
 coll.insert(doc)
 
-puts coll.count()
+puts "There are #{coll.count()} records in the test collection. Here they are:"
 coll.find().each { |doc| puts doc.inspect }

@@ -32,7 +32,7 @@ module XGen
         end
 
         def selector=(sel)
-          @selector = case selector
+          @selector = case sel
                       when nil
                         {}
                       when String
