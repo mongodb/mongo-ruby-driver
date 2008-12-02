@@ -13,4 +13,8 @@ coll.insert(doc)
 doc = {'a' => 2}
 coll.insert(doc)
 
+doc = {'a' => 3}
+coll.insert(doc)
+
+puts coll.count()
 coll.find().each { |doc| puts doc.inspect }

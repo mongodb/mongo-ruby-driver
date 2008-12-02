@@ -112,7 +112,7 @@ module XGen
           doc = db_command(:count => collection, :query => selector)
           o = doc['ok']
           return doc['n'].to_i if o.to_i == 1
-          raise "Error with count command: #{doc.to_s}" unless o.kind_of?(Numeric)
+          raise "Error with count command: #{doc.inspect}"
         end
 
         def drop_index(collection, name)
