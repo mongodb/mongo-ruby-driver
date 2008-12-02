@@ -63,16 +63,18 @@ module XGen
         end
 
         def collection(name)
+          # We do not implement the Java driver's optional strict mode, which
+          # throws an exception if the collection does not exist.
           create_collection(name)
         end
 
         def drop_collection(name)
           coll = collection(name)
           return true if coll == nil
-          col.drop_indexes
+          coll.drop_indexes     # Mongo requires that we drop indexes manually
 
           doc = db_command(:drop => name)
-          o = md['ok']
+          o = doc['ok']
           return o.kind_of?(Numeric) && o.to_i == 1
         end
 
