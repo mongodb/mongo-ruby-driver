@@ -21,4 +21,17 @@ class DBAPITest < Test::Unit::TestCase
     @coll.clear
     assert_equal 0, @coll.count
   end
+
+  def test_insert
+    @coll.insert('a' => 1)
+    @coll.insert('a' => 2)
+    @coll.insert('b' => 3)
+
+    assert_equal 3, @coll.count
+    docs = @coll.find().collect
+    assert_equal 3, docs.length
+    assert docs.include?('a' => 1)
+    assert docs.include?('a' => 2)
+    assert docs.include?('b' => 3)
+  end
 end

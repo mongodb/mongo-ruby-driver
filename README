@@ -1,1 +1,49 @@
-This is a simple pure-Ruby driver for the 10gen MongoDB.
+= Introduction
+
+This is a simple pure-Ruby driver for the 10gen Mongo DB. For more information
+about Mongo, see http://www.mongodb.org.
+
+= Demo
+
+  $ ruby examples/demo.rb
+
+Mongo must be running, of course.
+
+= Testing
+
+  $ rake test
+
+The tests assume that the Mongo database is running on the default port.
+
+= License
+
+== Mongo Ruby Driver
+
+Copyright (C) 2008 10gen Inc.
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License, version 3, as published by
+the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+details.
+
+See http://www.gnu.org/licenses/ for a copy of the GNU Affero General Public
+License.
+
+== UUID
+
+This driver uses the UUID generator by Assaf Arkin and Eric Hodel, which uses
+the MIT license (see the top of the file lib/mongo/util/uuid.rb).
+
+== MAC Address Finder
+
+This driver uses the MAC address finder found at
+http://codeforpeople.com/lib/ruby/macaddr/macaddr-1.0.0/lib/macaddr.rb, which
+uses Ruby's license (see http://codeforpeople.com/lib/license.txt).
+
+# Local Variables:
+# mode:rdoc
+# End:

@@ -1,3 +1,4 @@
+# From http://github.com/assaf/uuid/tree/master
 #
 # = uuid.rb - UUID generator
 #
