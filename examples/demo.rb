@@ -3,7 +3,12 @@ require 'mongo'
 
 include XGen::Mongo::Driver
 
-db = Mongo.new.db('ruby-mongo-demo')
+host = ARGV[0] || 'localhost'
+port = ARGV[1] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
+
+puts "Connecting to #{host}:#{port}"
+
+db = Mongo.new(host, port).db('ruby-mongo-demo')
 coll = db.collection('test')
 coll.clear
 
