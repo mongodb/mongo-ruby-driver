@@ -8,7 +8,8 @@ Rake::TestTask.new do |t|
   t.test_files = FileList['tests/test*.rb']
 end
 
+desc "Generate documentation"
 task :rdoc do
   FileUtils.rm_rf('doc')
-  system "rdoc --main README README `find lib -name '*.rb'`"
+  system "rdoc --main README --inline-source --quiet README `find lib -name '*.rb'`"
 end

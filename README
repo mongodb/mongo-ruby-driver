@@ -89,6 +89,8 @@ This driver uses the MAC address finder found at
 http://codeforpeople.com/lib/ruby/macaddr/macaddr-1.0.0/lib/macaddr.rb, which
 uses Ruby's license (see http://codeforpeople.com/lib/license.txt).
 
+--
 # Local Variables:
 # mode:rdoc
 # End:
+++
