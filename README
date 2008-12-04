@@ -3,6 +3,10 @@
 This is a simple pure-Ruby driver for the 10gen Mongo DB. For more information
 about Mongo, see http://www.mongodb.org.
 
+Note: this driver is still alpha quality. The API will change, as will the
+data saved to the database (especially primary key values). Do *_not_* use this
+for any production data.
+
 
 = Demo
 
@@ -26,7 +30,9 @@ http://github.com/geir/mongo-java-driver/tree/master.
 
 == Release Notes
 
-If you ran tests using code before relase
+I plan to remove the auto-generation of _id primary keys.
+
+If you ran tests using code before release
 http://github.com/jimm/mongo-ruby-driver/commit/4244f56ce6c7044a1ce096843eb991856422c0cc
 then the DB API tests might fail the first time you run it. If that doesn't
 clear up the failed test, you might have to delete your database. To do that,
