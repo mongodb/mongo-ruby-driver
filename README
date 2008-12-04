@@ -37,6 +37,14 @@ type
 
 = To Do
 
+* More code comments. More text in this file.
+
+* Rake task for rdoc generation.
+
+* Remove default _id generation.
+
+* Introduce optional per-database and per-collection PKInjector.
+
 * Synchronization.
 
 * More tests.
