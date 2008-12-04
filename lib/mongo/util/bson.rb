@@ -155,8 +155,8 @@ class BSON
     bytes[0..-2].pack("C*")
   end
 
-  def deserialize_oid_data
-    XGen::Mongo::Driver::ObjectID.new(buf.get(12).pack("C*"))
+  def deserialize_oid_data(buf)
+    XGen::Mongo::Driver::ObjectID.new(buf.get(XGen::Mongo::Driver::ObjectID::UUID_STRING_LENGTH).pack("C*"))
   end
 
   def serialize_eoo_element(buf)
@@ -199,7 +199,7 @@ class BSON
   def serialize_oid_element(buf, key, val)
     buf.put(OID)
     self.class.serialize_cstr(buf, key)
-    buf.put_array(val.to_a)
+    buf.put_array(val.to_s.unpack("C*"))
   end
 
   def serialize_string_element(buf, key, val, type)
