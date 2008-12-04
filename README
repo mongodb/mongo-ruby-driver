@@ -22,6 +22,15 @@ Mongo must be running, of course.
 The tests assume that the Mongo database is running on the default port.
 
 
+= Documentation
+
+  $ rake rdoc
+
+Then open the file doc/index.html. (I need to figure out where to put this on
+the Web, or even how to publish this to the Wiki at
+http://github.com/jimm/mongo-ruby-driver/wikis automatically.)
+
+
 = The Code
 
 Most of this code was transliterated from Geir Magnusson Jr's Java Mongo
