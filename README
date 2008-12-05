@@ -69,6 +69,14 @@ type
 * See FIXME in db test.
 
 
+= Credits
+
+Adrian Madrid, aemadrid@gmail.com
+* examples/benchmarks.rb
+* examples/irb.rb
+* modifications to examples/simple.rb
+
+
 = License
 
 == Mongo Ruby Driver
