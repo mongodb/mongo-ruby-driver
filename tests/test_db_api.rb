@@ -1,4 +1,5 @@
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
+
 require 'mongo'
 require 'test/unit'
 
@@ -6,7 +7,9 @@ require 'test/unit'
 class DBAPITest < Test::Unit::TestCase
 
   def setup
-    @db = XGen::Mongo::Driver::Mongo.new.db('ruby-mongo-test')
+    host = ENV['HOST'] || ENV['host'] || 'localhost'
+    port = ENV['PORT'] || ENV['port'] || 27017
+    @db = XGen::Mongo::Driver::Mongo.new(host, port).db('ruby-mongo-test')
     @coll = @db.collection('test')
     @coll.clear
     @coll.insert('a' => 1)      # collection not created until it's used
