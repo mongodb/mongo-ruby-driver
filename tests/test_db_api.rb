@@ -33,9 +33,9 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 3, @coll.count
     docs = @coll.find().collect
     assert_equal 3, docs.length
-    assert docs.include?('a' => 1)
-    assert docs.include?('a' => 2)
-    assert docs.include?('b' => 3)
+    assert docs.any?{|x| x['a'] == 1}
+    assert docs.any?{|x| x['a'] == 2}
+    assert docs.any?{|x| x['b'] == 3}
   end
 
   def test_close
