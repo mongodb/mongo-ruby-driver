@@ -153,7 +153,6 @@ module XGen
         end
 
         def insert_into_db(collection, objects)
-          objects.each { |o| o['_id'] ||= ObjectID.new }
           # TODO synchronize
           objects.each { |o| send_to_db(InsertMessage.new(@name, collection, o)) }
         end
