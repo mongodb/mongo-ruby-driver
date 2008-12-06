@@ -19,6 +19,8 @@ module XGen
     module Driver
 
       class ObjectID
+        
+        include Comparable
 
         UUID_STRING_LENGTH = 24
 
@@ -36,6 +38,10 @@ module XGen
 
         def to_s
           @uuid
+        end
+        
+        def <=>(other)
+          to_s <=> other.to_s
         end
       end
     end
