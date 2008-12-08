@@ -96,15 +96,10 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 1, docs.size
     assert docs.detect { |row| row['a'] == 2 }
     # Find by advanced query (in clause)
-    begin
-      docs = @coll.find('a' => {'$in' => [1,2]}).map
-      assert_equal 2, docs.size
-      assert docs.detect { |row| row['a'] == 1 }
-      assert docs.detect { |row| row['a'] == 2 }
-    rescue Exception => ex
-      # this currently breaks
-      assert false
-    end
+    docs = @coll.find('a' => {'$in' => [1,2]}).map
+    assert_equal 2, docs.size
+    assert docs.detect { |row| row['a'] == 1 }
+    assert docs.detect { |row| row['a'] == 2 }
   end
   
   def test_close
