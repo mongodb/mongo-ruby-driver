@@ -35,6 +35,7 @@ module XGen
           objects = objects.first if objects.size == 1 && objects.first.is_a?(Array)
           @db.insert_into_db(@name, objects)
         end
+        alias_method :<<, :insert
 
         def remove(selector={})
           @db.remove_from_db(@name, selector)

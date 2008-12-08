@@ -33,6 +33,11 @@ class DBAPITest < Test::Unit::TestCase
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
     assert docs.detect { |row| row['b'] == 3 }
+
+    @coll << {'b' => 4}
+    docs = @coll.find().collect
+    assert_equal 4, docs.length
+    assert docs.detect { |row| row['b'] == 4 }
   end
 
   def test_close
