@@ -46,22 +46,60 @@ class DBAPITest < Test::Unit::TestCase
   def test_find
     @r2 = @coll.insert('_id' => new_oid, 'a' => 2)
     @r3 = @coll.insert('_id' => new_oid, 'b' => 3)
-    
+    # Check sizes
     docs = @coll.find().map
     assert_equal 3, docs.size
     assert_equal 3, @coll.count
-    
+    # Find by id 
     docs = @coll.find('_id' => @r1['_id']).map
     assert_equal 1, docs.size
     doc = docs.first
     assert_equal doc['_id'], @r1['_id']
     assert_equal doc['a'], @r1['a']    
-    
+    # Find by id (same id again)
     docs = @coll.find('_id' => @r1['_id']).map
     assert_equal 1, docs.size
     doc = docs.first
     assert_equal doc['_id'], @r1['_id']
     assert_equal doc['a'], @r1['a']    
+    # Find by other value
+    docs = @coll.find('a' => @r1['a']).map
+    assert_equal 1, docs.size
+    doc = docs.first
+    assert_equal doc['_id'], @r1['_id']
+    assert_equal doc['a'], @r1['a']    
+    # Find by advanced query (less than)
+    docs = @coll.find('a' => { '$lt' => 10 }).map
+    assert_equal 2, docs.size
+    assert docs.detect { |row| row['a'] == 1 }
+    assert docs.detect { |row| row['a'] == 2 }
+    # Find by advanced query (greater than)
+    docs = @coll.find('a' => { '$gt' => 1 }).map
+    assert_equal 1, docs.size
+    assert docs.detect { |row| row['a'] == 2 }
+    # Find by advanced query (less than or equal to)
+    docs = @coll.find('a' => { '$lte' => 1 }).map
+    assert_equal 1, docs.size
+    assert docs.detect { |row| row['a'] == 1 }
+    # Find by advanced query (greater than or equal to)
+    docs = @coll.find('a' => { '$gte' => 1 }).map
+    assert_equal 2, docs.size
+    assert docs.detect { |row| row['a'] == 1 }
+    assert docs.detect { |row| row['a'] == 2 }
+    # Find by advanced query (between)
+    docs = @coll.find('a' => { '$gt' => 1, '$lt' => 3 }).map
+    assert_equal 1, docs.size
+    assert docs.detect { |row| row['a'] == 2 }
+    # Find by advanced query (in clause)
+    begin
+      docs = @coll.find('a' => {'$in' => [1,2]}).map
+      assert_equal 2, docs.size
+      assert docs.detect { |row| row['a'] == 1 }
+      assert docs.detect { |row| row['a'] == 2 }
+    rescue Exception => ex
+      # this currently breaks
+      assert false
+    end
   end
   
   def test_close
