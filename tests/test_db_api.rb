@@ -94,4 +94,11 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 'index_name', info[:name]
     assert_equal 1, info[:keys]['a']
   end
+
+  def test_array
+    @coll << {'b' => [1, 2, 3]}
+    rows = @coll.find({}, {'b' => 1}).collect
+    assert_equal 1, rows.length
+    assert_equal [1, 2, 3], rows[0]['b']
+  end
 end

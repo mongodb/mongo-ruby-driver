@@ -1,4 +1,5 @@
 require 'mongo/util/byte_buffer'
+require 'mongo/util/ordered_hash'
 require 'mongo/objectid'
 
 # See http://github.com/10gen/mongo/tree/master/db/jsobj.h
@@ -56,6 +57,8 @@ class BSON
         serialize_object_element(@buf, k, v)
       when OID
         serialize_oid_element(@buf, k, v)
+      when ARRAY
+        serialize_array_element(@buf, k, v)
       when BOOLEAN
         serialize_boolean_element(@buf, k, v)
       when DATE
@@ -91,6 +94,9 @@ class BSON
       when OID
         key = deserialize_element_name(@buf)
         doc[key] = deserialize_oid_data(@buf)
+      when ARRAY
+        key = deserialize_element_name(@buf)
+        doc[key] = deserialize_array_data(@buf)
       when OBJECT
         key = deserialize_element_name(@buf)
         doc[key] = deserialize_object_data(@buf)
@@ -149,6 +155,13 @@ class BSON
     BSON.new.deserialize(buf.get(size))
   end
 
+  def deserialize_array_data(buf)
+    h = deserialize_object_data(buf)
+    a = []
+    h.each { |k, v| a[k.to_i] = v }
+    a
+  end
+
   def deserialize_string_data(buf)
     len = buf.get_int
     bytes = buf.get(len)
@@ -193,10 +206,18 @@ class BSON
     end
   end
 
-  def serialize_object_element(buf, key, val)
-    buf.put(OBJECT)
+  def serialize_object_element(buf, key, val, opcode=OBJECT)
+    buf.put(opcode)
     self.class.serialize_cstr(buf, key)
     buf.put_array(BSON.new.serialize(val).to_a)
+  end
+
+  def serialize_array_element(buf, key, val)
+    # Turn array into hash with integer indices as keys
+    h = OrderedHash.new
+    i = 0
+    val.each { |v| h[i] = v; i += 1 }
+    serialize_object_element(buf, key, h, ARRAY)
   end
 
   def serialize_oid_element(buf, key, val)

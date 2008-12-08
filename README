@@ -52,6 +52,8 @@ type
 
 = To Do
 
+* Support more types: REGEX, etc.
+
 * Study src/main/ed/db/{dbcollection,dbcursor,db}.js in the Babble code.
   That's what I should be writing to.
 
