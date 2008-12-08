@@ -131,7 +131,7 @@ module XGen
             h = {:name => row['name']}
             raise "Name of index on return from db was nil. Coll = #{full_coll_name(collection)}" unless h[:name]
 
-            h[:keys] = row['keys']
+            h[:keys] = row['key']
             raise "Keys for index on return from db was nil. Coll = #{full_coll_name(collection)}" unless h[:keys]
 
             h[:ns] = row['ns']
