@@ -7,10 +7,10 @@ module XGen
 
       class RemoveMessage < Message
 
-        def initialize(name, collection, sel)
+        def initialize(db_name, collection_name, sel)
           super(OP_DELETE)
           write_int(0)
-          write_string("#{name}.#{collection}")
+          write_string("#{db_name}.#{collection_name}")
           write_int(0)              # flags?
           write_doc(sel)
         end

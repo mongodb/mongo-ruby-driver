@@ -22,8 +22,6 @@ module XGen
         
         include Comparable
 
-        UUID_STRING_LENGTH = 24
-
         @@uuid_generator = UUID.new
 
         # String UUID

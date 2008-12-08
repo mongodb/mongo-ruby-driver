@@ -69,7 +69,8 @@ module XGen
         end
 
         def drop_indexes
-          index_information.each { |info| @db.drop_index(@name, info.name) }
+          # just need to call drop indexes with no args; will drop them all
+          @db.drop_index(@name, '*')
         end
 
         def index_information

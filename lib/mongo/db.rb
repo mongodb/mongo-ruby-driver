@@ -17,6 +17,7 @@ require 'mongo/objectid'
 require 'mongo/collection'
 require 'mongo/message'
 require 'mongo/query'
+require 'mongo/util/ordered_hash.rb'
 
 module XGen
   module Mongo
@@ -52,8 +53,9 @@ module XGen
           return Collection.new(self, name) if collection_names.include?(name)
 
           # Create new collection
-          sel = {:create => name}.merge(options)
-          doc = db_command(sel)
+          oh = OrderedHash.new
+          oh[:create] = name
+          doc = db_command(oh.merge(options))
           o = doc['ok']
           return Collection.new(self, name) if o.kind_of?(Numeric) && (o.to_i == 1 || o.to_i == 0)
           raise "Error creating collection: #{doc.inspect}"
@@ -89,85 +91,103 @@ module XGen
           send_to_db(MsgMessage.new(msg))
         end
         
-        def query(collection, query)
+        def query(collection_name, query)
           # TODO synchronize
-          send_to_db(QueryMessage.new(@name, collection, query))
-          return Cursor.new(self, collection)
+          send_to_db(QueryMessage.new(@name, collection_name, query))
+          return Cursor.new(self, collection_name)
         end
 
-        def remove_from_db(collection, selector)
+        def remove_from_db(collection_name, selector)
           # TODO synchronize
-          send_to_db(RemoveMessage.new(@name, collection, selector))
+          send_to_db(RemoveMessage.new(@name, collection_name, selector))
         end
 
-        def replace_in_db(collection, selector, obj)
+        def replace_in_db(collection_name, selector, obj)
           # TODO synchronize
-          send_to_db(UpdateMessage.new(@name, collection, selector, obj, false))
+          send_to_db(UpdateMessage.new(@name, collection_name, selector, obj, false))
         end
         alias_method :modify_in_db, :replace_in_db
 
-        def repsert_in_db(collection, selector, obj)
+        def repsert_in_db(collection_name, selector, obj)
           # TODO if PKInjector, inject
           # TODO synchronize
-          send_to_db(UpdateMessage.new(@name, collection, selector, obj, true))
+          send_to_db(UpdateMessage.new(@name, collection_name, selector, obj, true))
           obj
         end
 
-        def count(collection, selector)
-          doc = db_command(:count => collection, :query => selector)
+        def count(collection_name, selector)
+          oh = OrderedHash.new
+          oh[:count] = collection_name
+          oh[:query] = selector
+          doc = db_command(oh)
           o = doc['ok']
           return doc['n'].to_i if o.to_i == 1
           raise "Error with count command: #{doc.inspect}"
         end
 
-        def drop_index(collection, name)
-          db_command(:deleteIndexes => collection, :index => name)
+        def drop_index(collection_name, name)
+          oh = OrderedHash.new
+          oh[:deleteIndexes] = collection_name
+          oh[:index] = name
+          doc = db_command(oh)
+          o = doc['ok']
+          raise "Error with drop_index command: #{doc.inspect}" unless o.kind_of?(Numeric) && o.to_i == 1
         end
 
-        def index_information(collection)
-          sel = {:ns => full_coll_name(collection)}
+        def index_information(collection_name)
+          sel = {:ns => full_coll_name(collection_name)}
           # TODO synchronize
           query(SYSTEM_INDEX_COLLECTION, Query.new(sel)).collect { |row|
             h = {:name => row['name']}
-            raise "Name of index on return from db was nil. Coll = #{full_coll_name(collection)}" unless h[:name]
+            raise "Name of index on return from db was nil. Coll = #{full_coll_name(collection_name)}" unless h[:name]
 
-            h[:keys] = row['keys']
-            raise "Keys for index on return from db was nil. Coll = #{full_coll_name(collection)}" unless h[:keys]
+            h[:keys] = row['key']
+            raise "Keys for index on return from db was nil. Coll = #{full_coll_name(collection_name)}" unless h[:keys]
 
             h[:ns] = row['ns']
-            raise "Namespace for index on return from db was nil. Coll = #{full_coll_name(collection)}" unless h[:ns]
+            raise "Namespace for index on return from db was nil. Coll = #{full_coll_name(collection_name)}" unless h[:ns]
             h[:ns].sub!(/.*\./, '')
-            raise "Error: ns != collection" unless h[:ns] == collection
+            raise "Error: ns != collection" unless h[:ns] == collection_name
 
             h
           }
         end
 
-        def create_index(collection, name, fields)
-          sel = {:name => name, :ns => full_coll_name(collection)}
+        def create_index(collection_name, index_name, fields)
+          sel = {:name => index_name, :ns => full_coll_name(collection_name)}
           field_h = {}
           fields.each { |f| field_h[f] = 1 }
-          sel['key'] = field_h
+          sel[:key] = field_h
           # TODO synchronize
           send_to_db(InsertMessage.new(@name, SYSTEM_INDEX_COLLECTION, sel))
         end
 
-        def insert_into_db(collection, objects)
+        def insert_into_db(collection_name, objects)
+          objects.each { |o| o['_id'] ||= ObjectID.new }
           # TODO synchronize
-          objects.each { |o| send_to_db(InsertMessage.new(@name, collection, o)) }
+          objects.each { |o| send_to_db(InsertMessage.new(@name, collection_name, o)) }
         end
 
         def send_to_db(message)
           @socket.print(message.buf.to_s)
         end
 
-        def full_coll_name(collection)
-          "#{@name}.#{collection}"
+        def full_coll_name(collection_name)
+          "#{@name}.#{collection_name}"
         end
 
         protected
 
+        # DB commands need to be ordered, so selector must be an OrderedHash
+        # (or a Hash with only one element). What DB commands really need is
+        # that the "command" key be first.
         def db_command(selector)
+          if !selector.kind_of?(OrderedHash)
+            if !selector.kind_of?(Hash) || selector.keys.length > 1
+              raise "db_command must be given an OrderedHash when there is more than one key"
+            end
+          end
+
           # TODO synchronize
           q = Query.new(selector)
           q.number_to_return = 1

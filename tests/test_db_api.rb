@@ -17,7 +17,7 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def teardown
-    @coll.clear unless @db.socket.closed?
+    @coll.clear unless @coll == nil || @db.socket.closed?
   end
 
   def test_clear
@@ -33,9 +33,9 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 3, @coll.count
     docs = @coll.find().collect
     assert_equal 3, docs.length
-    assert docs.any?{|x| x['a'] == 1}
-    assert docs.any?{|x| x['a'] == 2}
-    assert docs.any?{|x| x['b'] == 3}
+    assert docs.detect { |row| row['a'] == 1 }
+    assert docs.detect { |row| row['a'] == 2 }
+    assert docs.detect { |row| row['b'] == 3 }
   end
   
   def test_inserted_id
@@ -73,6 +73,7 @@ class DBAPITest < Test::Unit::TestCase
   def test_drop_collection
     assert @db.drop_collection(@coll.name), "drop of collection #{@coll.name} failed"
     assert !@db.collection_names.include?(@coll_full_name)
+    @coll = nil
   end
 
   def test_collection_names
@@ -103,17 +104,14 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal @coll_full_name, @db.full_coll_name(@coll.name)
   end
 
-# FIXME
-#   def test_index_information
-#     list = @db.index_information(@coll.name)
-#     assert_equal 0, list.length
-
-#     @db.create_index(@coll, 'index_name', {'a' => 1})
-#     $stderr.puts @db.create_index(@coll, 'index_name', {'a' => 1}).to_s # DEBUG
-#     list = @db.index_information(@coll.name)
-#     $stderr.puts "list = #{list.inspect}" # DEBUG
-#     assert_equal 1, list.length
-#   end
+  def test_index_information
+    @db.create_index(@coll.name, 'index_name', ['a'])
+    list = @db.index_information(@coll.name)
+    assert_equal 1, list.length
+    info = list[0]
+    assert_equal 'index_name', info[:name]
+    assert_equal 1, info[:keys]['a']
+  end
 
   private
   
