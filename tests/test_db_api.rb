@@ -101,4 +101,12 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 1, rows.length
     assert_equal [1, 2, 3], rows[0]['b']
   end
+
+  def test_regex
+    regex = /foobar/i
+    @coll << {'b' => regex}
+    rows = @coll.find({}, {'b' => 1}).collect
+    assert_equal 1, rows.length
+    assert_equal regex, rows[0]['b']
+  end
 end
