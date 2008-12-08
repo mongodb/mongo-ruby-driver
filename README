@@ -52,6 +52,9 @@ type
 
 = To Do
 
+* Study src/main/ed/db/{dbcollection,dbcursor,db}.js in the Babble code.
+  That's what I should be writing to.
+
 * Capped collection support.
 
 * More code comments. More text in this file.

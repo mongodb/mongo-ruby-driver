@@ -7,14 +7,13 @@ module XGen
 
       class InsertMessage < Message
 
-        def initialize(name, collection, *objs)
+        def initialize(db_name, collection_name, *objs)
           super(OP_INSERT)
           write_int(0)
-          write_string("#{name}.#{collection}")
+          write_string("#{db_name}.#{collection_name}")
           objs.each { |o| write_doc(o) }
         end
       end
     end
   end
 end
-
