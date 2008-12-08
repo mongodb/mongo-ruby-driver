@@ -79,7 +79,9 @@ type
 Adrian Madrid, aemadrid@gmail.com
 * examples/benchmarks.rb
 * examples/irb.rb
-* modifications to examples/simple.rb
+* Modifications to examples/simple.rb
+* Found plenty of bugs and missing features.
+* Many other code suggestions and improvements.
 
 
 = License
