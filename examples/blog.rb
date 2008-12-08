@@ -26,14 +26,14 @@ authors = DB.collection "authors"
 authors.clear
 # authors.create_index "meta", :_id => 1, :name => 1, :age => 1
 puts "-" * LINE_SIZE
-borges = authors << { :name => "Jorge Luis Borges", :email => "jorge@borges.com", :age => 123 }
-puts "borges : #{borges.inspect}"
 shaksp = authors << { :name => "William Shakespeare", :email => "william@shakespeare.com", :age => 587 }
 puts "shaksp : #{shaksp.inspect}"
+borges = authors << { :name => "Jorge Luis Borges", :email => "jorge@borges.com", :age => 123 }
+puts "borges : #{borges.inspect}"
 puts "-" * LINE_SIZE
 puts "authors ordered by age ascending"
 puts "-" * LINE_SIZE
-authors.find({}, nil, :sort => :age).each {|x| puts "%-25.25s : %-25.25s : %3i" % [x['name'], x['email'], x['age']]}
+authors.find({}, :sort => :age).each {|x| puts "%-25.25s : %-25.25s : %3i" % [x['name'], x['email'], x['age']]}
 
 puts "=" * LINE_SIZE
 puts "Adding users"
@@ -48,7 +48,7 @@ puts "lsmt : #{lsmt.inspect}"
 puts "-" * LINE_SIZE
 puts "users ordered by login ascending"
 puts "-" * LINE_SIZE
-users.find({}, nil, :sort => :login).each {|x| puts "%-10.10s : %-25.25s : %-25.25s" % [x['login'], x['name'], x['email']]}
+users.find({}, :sort => :login).each {|x| puts "%-10.10s : %-25.25s : %-25.25s" % [x['login'], x['name'], x['email']]}
 
 puts "=" * LINE_SIZE
 puts "Adding articles"
@@ -71,7 +71,7 @@ end
 puts "-" * LINE_SIZE
 puts "articles ordered by title ascending"
 puts "-" * LINE_SIZE
-articles.find({}, nil, :sort => :title).each {|x| puts "%-25.25s : %-25.25s" % [x['title'], x['author_id']]}
+articles.find({}, :sort => :title).each {|x| puts "%-25.25s : %-25.25s" % [x['title'], x['author_id']]}
 
 puts ">> Closing connection"
 DB.close
