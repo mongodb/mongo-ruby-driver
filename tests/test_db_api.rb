@@ -48,7 +48,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal @r1['_id'], doc['_id']
   end
   
-  def test_find
+  def test_find_simple
     @r2 = @coll.insert('_id' => new_oid, 'a' => 2)
     @r3 = @coll.insert('_id' => new_oid, 'b' => 3)
     # Check sizes
@@ -72,7 +72,12 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 1, docs.size
     doc = docs.first
     assert_equal doc['_id'], @r1['_id']
-    assert_equal doc['a'], @r1['a']    
+    assert_equal doc['a'], @r1['a']
+  end
+  
+  def test_find_advanced
+    @r2 = @coll.insert('_id' => new_oid, 'a' => 2)
+    @r3 = @coll.insert('_id' => new_oid, 'b' => 3)
     # Find by advanced query (less than)
     docs = @coll.find('a' => { '$lt' => 10 }).map
     assert_equal 2, docs.size
@@ -105,6 +110,11 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
+  end
+  
+  def test_find_sorting
+    @r2 = @coll.insert('_id' => new_oid, 'a' => 2)
+    @r3 = @coll.insert('_id' => new_oid, 'b' => 3)
     # Sorting (ascending)
     docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => { 'a' => 1 }).map
     assert_equal 2, docs.size
