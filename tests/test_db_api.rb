@@ -100,6 +100,19 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
+    # Find by advanced query (regexp)
+    docs = @coll.find('a' => {'$in' => /[1|2]/}).map
+    assert_equal 2, docs.size
+    assert docs.detect { |row| row['a'] == 1 }
+    assert docs.detect { |row| row['a'] == 2 }
+    # Sorting (ascending)
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => { 'a' => 1 }).map
+    assert_equal 2, docs.size
+    assert_equal 1, docs.first['a']
+    # Sorting (descending)
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => { 'a' => -1 }).map
+    assert_equal 2, docs.size
+    assert_equal 2, docs.first['a']
   end
   
   def test_close
