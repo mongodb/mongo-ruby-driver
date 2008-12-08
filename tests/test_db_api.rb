@@ -12,7 +12,7 @@ class DBAPITest < Test::Unit::TestCase
     @db = XGen::Mongo::Driver::Mongo.new(host, port).db('ruby-mongo-test')
     @coll = @db.collection('test')
     @coll.clear
-    @r1 = @coll.insert('_id' => get_new_oid, 'a' => 1)      # collection not created until it's used
+    @r1 = @coll.insert('_id' => new_oid, 'a' => 1)      # collection not created until it's used
     @coll_full_name = 'ruby-mongo-test.test'
   end
 
@@ -27,8 +27,8 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_insert
-    @coll.insert('_id' => get_new_oid, 'a' => 2)
-    @coll.insert('_id' => get_new_oid, 'b' => 3)
+    @coll.insert('_id' => new_oid, 'a' => 2)
+    @coll.insert('_id' => new_oid, 'b' => 3)
 
     assert_equal 3, @coll.count
     docs = @coll.find().collect
@@ -44,8 +44,8 @@ class DBAPITest < Test::Unit::TestCase
   end
   
   def test_find
-    @r2 = @coll.insert('_id' => get_new_oid, 'a' => 2)
-    @r3 = @coll.insert('_id' => get_new_oid, 'b' => 3)
+    @r2 = @coll.insert('_id' => new_oid, 'a' => 2)
+    @r3 = @coll.insert('_id' => new_oid, 'b' => 3)
     
     docs = @coll.find().map
     assert_equal 3, docs.size
@@ -54,7 +54,12 @@ class DBAPITest < Test::Unit::TestCase
     docs = @coll.find('_id' => @r1['_id']).map
     assert_equal 1, docs.size
     doc = docs.first
-    $stderr.puts "docs.first #{doc.inspect}"
+    assert_equal doc['_id'], @r1['_id']
+    assert_equal doc['a'], @r1['a']    
+    
+    docs = @coll.find('_id' => @r1['_id']).map
+    assert_equal 1, docs.size
+    doc = docs.first
     assert_equal doc['_id'], @r1['_id']
     assert_equal doc['a'], @r1['a']    
   end
@@ -112,10 +117,10 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 'index_name', info[:name]
     assert_equal 1, info[:keys]['a']
   end
-
+  
   private
   
-  def get_new_oid
-    XGen::Mongo::Driver::ObjectID.new
+  def new_oid
+    XGen::Mongo::Driver::ObjectID.new.to_s
   end
 end
