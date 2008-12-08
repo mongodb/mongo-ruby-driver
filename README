@@ -52,6 +52,8 @@ type
 
 = To Do
 
+* Capped collection support.
+
 * More code comments. More text in this file.
 
 * Rake task for rdoc generation.
