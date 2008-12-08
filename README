@@ -52,18 +52,18 @@ type
 
 = To Do
 
-* Support more types: REGEX, etc.
+* Implement Babble's algorithm for ObjectID. Implement Comparable.
 
-* Study src/main/ed/db/{dbcollection,dbcursor,db}.js in the Babble code.
-  That's what I should be writing to.
+* Change find(selector={}, fields=nil, options={}) to find(selector={},
+  options={})
+
+* ObjectID equality.
 
 * Capped collection support.
 
 * More code comments. More text in this file.
 
-* Rake task for rdoc generation.
-
-* Remove default _id generation.
+* Support more types: REF, SYMBOL, CODE_W_SCOPE, etc.
 
 * Introduce optional per-database and per-collection PKInjector.
 
@@ -73,7 +73,8 @@ type
 
 * Implement Admin.
 
-* See FIXME in db test.
+* Study src/main/ed/db/{dbcollection,dbcursor,db}.js and ByteEncoder.java in
+  the Babble code. That's what I should be writing to.
 
 
 = Credits

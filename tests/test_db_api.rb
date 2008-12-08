@@ -7,8 +7,8 @@ require 'test/unit'
 class DBAPITest < Test::Unit::TestCase
 
   def setup
-    host = ENV['HOST'] || ENV['host'] || 'localhost'
-    port = ENV['PORT'] || ENV['port'] || 27017
+    host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
+    port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
     @db = XGen::Mongo::Driver::Mongo.new(host, port).db('ruby-mongo-test')
     @coll = @db.collection('test')
     @coll.clear
@@ -184,6 +184,14 @@ class DBAPITest < Test::Unit::TestCase
     rows = @coll.find({}, {'b' => 1}).collect
     assert_equal 1, rows.length
     assert_equal [1, 2, 3], rows[0]['b']
+  end
+
+  def test_regex
+    regex = /foobar/i
+    @coll << {'b' => regex}
+    rows = @coll.find({}, {'b' => 1}).collect
+    assert_equal 1, rows.length
+    assert_equal regex, rows[0]['b']
   end
 
   private

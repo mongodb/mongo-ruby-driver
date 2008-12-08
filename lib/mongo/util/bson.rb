@@ -59,6 +59,8 @@ class BSON
         serialize_oid_element(@buf, k, v)
       when ARRAY
         serialize_array_element(@buf, k, v)
+      when REGEX
+        serialize_regex_element(@buf, k, v)
       when BOOLEAN
         serialize_boolean_element(@buf, k, v)
       when DATE
@@ -97,6 +99,9 @@ class BSON
       when ARRAY
         key = deserialize_element_name(@buf)
         doc[key] = deserialize_array_data(@buf)
+      when REGEX
+        key = deserialize_element_name(@buf)
+        doc[key] = deserialize_regex_data(@buf)
       when OBJECT
         key = deserialize_element_name(@buf)
         doc[key] = deserialize_object_data(@buf)
@@ -162,6 +167,16 @@ class BSON
     a
   end
 
+  def deserialize_regex_data(buf)
+    str = deserialize_element_name(buf)
+    options_str = deserialize_element_name(buf)
+    options = 0
+    options |= Regexp::IGNORECASE if options_str.include?('i')
+    options |= Regexp::MULTILINE if options_str.include?('m')
+    options |= Regexp::EXTENDED if options_str.include?('x')
+    Regexp.new(str, options)
+  end
+
   def deserialize_string_data(buf)
     len = buf.get_int
     bytes = buf.get(len)
@@ -220,6 +235,21 @@ class BSON
     serialize_object_element(buf, key, h, ARRAY)
   end
 
+  def serialize_regex_element(buf, key, val)
+    buf.put(REGEX)
+    self.class.serialize_cstr(buf, key)
+
+    str = val.to_s.sub(/.*?:/, '')[0..-2] # Turn "(?xxx:yyy)" into "yyy"
+    self.class.serialize_cstr(buf, str)
+
+    options = val.options
+    options_str = ''
+    options_str << 'i' if ((options & Regexp::IGNORECASE) != 0)
+    options_str << 'm' if ((options & Regexp::MULTILINE) != 0)
+    options_str << 'x' if ((options & Regexp::EXTENDED) != 0)
+    self.class.serialize_cstr(buf, options_str)
+  end
+
   def serialize_oid_element(buf, key, val)
     buf.put(OID)
     self.class.serialize_cstr(buf, key)
@@ -274,6 +304,8 @@ class BSON
       key == "$where" ? CODE : STRING
     when Array
       ARRAY
+    when Regexp
+      REGEX
     when XGen::Mongo::Driver::ObjectID
       OID
     when true, false
