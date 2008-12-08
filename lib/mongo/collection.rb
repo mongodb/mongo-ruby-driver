@@ -26,9 +26,9 @@ module XGen
           @name = name
         end
 
-        def find(selector={}, fields=nil, options={})
-          fields = nil if fields && fields.empty?
-          @db.query(@name, Query.new(selector, fields, options[:offset] || 0, options[:limit] || 0, options[:sort]))
+        def find(selector={}, options={})
+          options = { :fields => nil, :offset => 0, :limit => 0, :sort => nil}.update(options)
+          @db.query(@name, Query.new(selector, options[:fields], options[:offset], options[:limit], options[:sort]))
         end
 
         def insert(*objects)
