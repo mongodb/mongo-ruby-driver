@@ -36,6 +36,11 @@ class DBAPITest < Test::Unit::TestCase
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
     assert docs.detect { |row| row['b'] == 3 }
+
+    @coll << {'b' => 4}
+    docs = @coll.find().collect
+    assert_equal 4, docs.length
+    assert docs.detect { |row| row['b'] == 4 }
   end
   
   def test_inserted_id
@@ -155,7 +160,14 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 'index_name', info[:name]
     assert_equal 1, info[:keys]['a']
   end
-  
+
+  def test_array
+    @coll << {'b' => [1, 2, 3]}
+    rows = @coll.find({}, {'b' => 1}).collect
+    assert_equal 1, rows.length
+    assert_equal [1, 2, 3], rows[0]['b']
+  end
+
   private
   
   def new_oid

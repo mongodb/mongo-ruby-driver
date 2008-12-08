@@ -36,7 +36,11 @@ module XGen
           res = @db.insert_into_db(@name, objects)
           res.size > 1 ? res : res.first
         end
+<<<<<<< HEAD:lib/mongo/collection.rb
         alias :<< :insert
+=======
+        alias_method :<<, :insert
+>>>>>>> e7019a63f28331913c12e5c145d1f49af10b54ac:lib/mongo/collection.rb
 
         def remove(selector={})
           @db.remove_from_db(@name, selector)
