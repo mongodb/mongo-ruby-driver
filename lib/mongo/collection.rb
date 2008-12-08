@@ -26,9 +26,16 @@ module XGen
           @name = name
         end
 
+        # Options:
+        # * <tt>:fields</tt> - Array of collection field names; only those will be returned (plus _id if defined)
+        # * <tt>:offset</tt> - Start at this record when returning records
+        # * <tt>:limit</tt> - Maximum number of records to return
+        # * <tt>:sort</tt> - Hash of field names as keys and 1/-1 as values; 1 == ascending, -1 == descending
+        # <tt>
         def find(selector={}, options={})
-          options = { :fields => nil, :offset => 0, :limit => 0, :sort => nil}.update(options)
-          @db.query(@name, Query.new(selector, options[:fields], options[:offset], options[:limit], options[:sort]))
+          fields = options.delete(:fields)
+          fields = nil if fields && fields.empty?
+          @db.query(@name, Query.new(selector, fields, options[:offset] || 0, options[:limit] || 0, options[:sort]))
         end
 
         def insert(*objects)

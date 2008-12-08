@@ -181,7 +181,7 @@ class DBAPITest < Test::Unit::TestCase
 
   def test_array
     @coll << {'b' => [1, 2, 3]}
-    rows = @coll.find({}, {'b' => 1}).collect
+    rows = @coll.find({}, {:fields => ['b']}).collect
     assert_equal 1, rows.length
     assert_equal [1, 2, 3], rows[0]['b']
   end
@@ -189,7 +189,7 @@ class DBAPITest < Test::Unit::TestCase
   def test_regex
     regex = /foobar/i
     @coll << {'b' => regex}
-    rows = @coll.find({}, {'b' => 1}).collect
+    rows = @coll.find({}, {:fields => ['b']}).collect
     assert_equal 1, rows.length
     assert_equal regex, rows[0]['b']
   end
