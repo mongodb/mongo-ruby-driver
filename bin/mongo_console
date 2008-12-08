@@ -11,9 +11,10 @@ include XGen::Mongo::Driver
 
 host = org_argv[0] || 'localhost'
 port = org_argv[1] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
+db_name = org_argv[2] || 'ruby-mongo-console'
 
-puts "Connecting to #{host}:#{port} on DB"
-DB = Mongo.new(host, port).db('ruby-mongo-examples-irb')
+puts "Connecting to #{host}:#{port} on DB for #{db_name}"
+DB = Mongo.new(host, port).db(db_name)
 
 puts "Starting IRB session..."
 IRB.start(__FILE__)
