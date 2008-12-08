@@ -33,7 +33,8 @@ module XGen
 
         def insert(*objects)
           objects = objects.first if objects.size == 1 && objects.first.is_a?(Array)
-          @db.insert_into_db(@name, objects)
+          res = @db.insert_into_db(@name, objects)
+          res.size > 1 ? res : res.first
         end
         alias_method :<<, :insert
 

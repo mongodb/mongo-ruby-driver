@@ -20,6 +20,8 @@ module XGen
 
       class ObjectID
 
+        include Comparable
+
         @@uuid_generator = UUID.new
 
         # String UUID
@@ -34,6 +36,12 @@ module XGen
 
         def to_s
           @uuid
+        end
+
+        # This will make more sense when we implement the Babble algorithm for
+        # generating object ids.
+        def <=>(other)
+          to_s <=> other.to_s
         end
       end
     end

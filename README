@@ -52,6 +52,13 @@ type
 
 = To Do
 
+* Implement Babble's algorithm for ObjectID. Implement Comparable.
+
+* Change find(selector={}, fields=nil, options={}) to find(selector={},
+  options={})
+
+* ObjectID equality.
+
 * Capped collection support.
 
 * More code comments. More text in this file.

@@ -6,7 +6,9 @@ require 'test/unit'
 class DBAPITest < Test::Unit::TestCase
 
   def setup
-    @db = XGen::Mongo::Driver::Mongo.new.db('ruby-mongo-test')
+    host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
+    port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
+    @db = XGen::Mongo::Driver::Mongo.new(host, port).db('ruby-mongo-test')
     @coll = @db.collection('test')
     @coll.clear
     @coll.insert('a' => 1)      # collection not created until it's used
@@ -108,5 +110,42 @@ class DBAPITest < Test::Unit::TestCase
     rows = @coll.find({}, {'b' => 1}).collect
     assert_equal 1, rows.length
     assert_equal regex, rows[0]['b']
+  end
+
+  def test_find
+    @coll.insert('a' => 2)
+
+    # Find by advanced query (less than)
+    docs = @coll.find('a' => { '$lt' => 10 }).map
+    assert_equal 2, docs.size
+    assert docs.detect { |row| row['a'] == 1 }
+    assert docs.detect { |row| row['a'] == 2 }
+
+    # Find by advanced query (greater than)
+    docs = @coll.find('a' => { '$gt' => 1 }).map
+    assert_equal 1, docs.size
+    assert docs.detect { |row| row['a'] == 2 }
+
+    # Find by advanced query (less than or equal to)
+    docs = @coll.find('a' => { '$lte' => 1 }).map
+    assert_equal 1, docs.size
+    assert docs.detect { |row| row['a'] == 1 }
+
+    # Find by advanced query (greater than or equal to)
+    docs = @coll.find('a' => { '$gte' => 1 }).map
+    assert_equal 2, docs.size
+    assert docs.detect { |row| row['a'] == 1 }
+    assert docs.detect { |row| row['a'] == 2 }
+
+    # Find by advanced query (between)
+    docs = @coll.find('a' => { '$gt' => 1, '$lt' => 3 }).map
+    assert_equal 1, docs.size
+    assert docs.detect { |row| row['a'] == 2 }
+
+    # Find by advanced query (in clause)
+    docs = @coll.find('a' => {'$in' => [1,2]}).map
+    assert_equal 2, docs.size
+    assert docs.detect { |row| row['a'] == 1 }
+    assert docs.detect { |row| row['a'] == 2 }
   end
 end
