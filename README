@@ -58,6 +58,8 @@ type
 
 * Capped collection support.
 
+* Implement order_by (right now, sort order is ignored)
+
 * More code comments. More text in this file.
 
 * Support more types: REF, SYMBOL, CODE_W_SCOPE, etc.
