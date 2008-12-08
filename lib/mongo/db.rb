@@ -13,7 +13,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 require 'socket'
-require 'mongo/objectid'
 require 'mongo/collection'
 require 'mongo/message'
 require 'mongo/query'
@@ -163,7 +162,6 @@ module XGen
         end
 
         def insert_into_db(collection_name, objects)
-          objects.each { |o| o['_id'] ||= ObjectID.new }
           # TODO synchronize
           objects.each { |o| send_to_db(InsertMessage.new(@name, collection_name, o)) }
         end
