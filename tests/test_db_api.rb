@@ -124,16 +124,30 @@ class DBAPITest < Test::Unit::TestCase
     @coll.insert('b' => 3)
 
     # Sorting (ascending)
-    order_by = OrderedHash.new
-    order_by['a'] = 1
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => order_by).map
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [{'a' => 1}]).map
     assert_equal 2, docs.size
     assert_equal 1, docs.first['a']
 
     # Sorting (descending)
-    order_by = OrderedHash.new
-    order_by['a'] = -1
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => order_by).map
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [{'a' => -1}]).map
+    assert_equal 2, docs.size
+    assert_equal 2, docs.first['a']
+
+    # Sorting using array of names; assumes ascending order
+    # NOTE: Mongo itself does not yet properly sort by multiple names
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => ['a']).map
+    assert_equal 2, docs.size
+    assert_equal 1, docs.first['a']
+
+    # Sorting using empty array; no order guarantee but should not blow up.
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [{'a' => -1}]).map
+    assert_equal 2, docs.size
+
+    # Sorting using ordered hash. You can use an unordered one, but then the
+    # order of the keys won't be guaranteed thus your sort won't make sense.
+    oh = OrderedHash.new
+    oh['a'] = -1
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => oh).map
     assert_equal 2, docs.size
     assert_equal 2, docs.first['a']
   end
