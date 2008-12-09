@@ -12,7 +12,11 @@ class DBAPITest < Test::Unit::TestCase
     @db = XGen::Mongo::Driver::Mongo.new(host, port).db('ruby-mongo-test')
     @coll = @db.collection('test')
     @coll.clear
+<<<<<<< HEAD:tests/test_db_api.rb
     @r1 = @coll.insert('_id' => new_oid, 'a' => 1)      # collection not created until it's used
+=======
+    @r1 = @coll.insert('a' => 1) # collection not created until it's used
+>>>>>>> 135a9ca0ab28335d8f9eaaa78fed7cc502d062df:tests/test_db_api.rb
     @coll_full_name = 'ruby-mongo-test.test'
   end
 
@@ -78,40 +82,47 @@ class DBAPITest < Test::Unit::TestCase
   def test_find_advanced
     @r2 = @coll.insert('_id' => new_oid, 'a' => 2)
     @r3 = @coll.insert('_id' => new_oid, 'b' => 3)
+    
     # Find by advanced query (less than)
     docs = @coll.find('a' => { '$lt' => 10 }).map
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
+    
     # Find by advanced query (greater than)
     docs = @coll.find('a' => { '$gt' => 1 }).map
     assert_equal 1, docs.size
     assert docs.detect { |row| row['a'] == 2 }
+    
     # Find by advanced query (less than or equal to)
     docs = @coll.find('a' => { '$lte' => 1 }).map
     assert_equal 1, docs.size
     assert docs.detect { |row| row['a'] == 1 }
+    
     # Find by advanced query (greater than or equal to)
     docs = @coll.find('a' => { '$gte' => 1 }).map
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
+    
     # Find by advanced query (between)
     docs = @coll.find('a' => { '$gt' => 1, '$lt' => 3 }).map
     assert_equal 1, docs.size
     assert docs.detect { |row| row['a'] == 2 }
+
     # Find by advanced query (in clause)
     docs = @coll.find('a' => {'$in' => [1,2]}).map
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
+
     # Find by advanced query (regexp)
     docs = @coll.find('a' => /[1|2]/).map
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
   end
-  
+
   def test_find_sorting
     @coll.insert('a' => 2)
     @coll.insert('b' => 3)
@@ -130,7 +141,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, docs.size
     assert_equal 2, docs.first['a']
   end
-  
+
   def test_close
     @db.close
     assert @db.socket.closed?
@@ -203,6 +214,6 @@ class DBAPITest < Test::Unit::TestCase
   private
   
   def new_oid
-    XGen::Mongo::Driver::ObjectID.new.to_s
+    XGen::Mongo::Driver::ObjectID.new
   end
 end

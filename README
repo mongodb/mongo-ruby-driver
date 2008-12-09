@@ -52,11 +52,9 @@ type
 
 = To Do
 
-* Implement Babble's algorithm for ObjectID. Implement Comparable.
-
-* ObjectID equality.
-
 * Capped collection support.
+
+* Implement order_by (right now, sort order is ignored)
 
 * More code comments. More text in this file.
 
@@ -101,17 +99,6 @@ details.
 
 See http://www.gnu.org/licenses/ for a copy of the GNU Affero General Public
 License.
-
-== UUID
-
-This driver uses the UUID generator by Assaf Arkin and Eric Hodel, which uses
-the MIT license (see the top of the file lib/mongo/util/uuid.rb).
-
-== MAC Address Finder
-
-This driver uses the MAC address finder found at
-http://codeforpeople.com/lib/ruby/macaddr/macaddr-1.0.0/lib/macaddr.rb, which
-uses Ruby's license (see http://codeforpeople.com/lib/license.txt).
 
 --
 # Local Variables:
