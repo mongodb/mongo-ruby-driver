@@ -13,7 +13,6 @@ class DBAPITest < Test::Unit::TestCase
     @coll = @db.collection('test')
     @coll.clear
     @r1 = @coll.insert('_id' => new_oid, 'a' => 1)      # collection not created until it's used
-    @r1 = @coll.insert('a' => 1) # collection not created until it's used
     @coll_full_name = 'ruby-mongo-test.test'
   end
 
@@ -138,6 +137,8 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, docs.size
     assert_equal 2, docs.first['a']
   end
+  
+  # def test_
 
   def test_close
     @db.close
