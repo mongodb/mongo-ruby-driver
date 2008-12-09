@@ -39,7 +39,9 @@ module XGen
 
         def next_object
           refill_via_get_more if num_remaining == 0
-          @objects.shift
+          o = @objects.shift
+          raise o['$err'] if o['$err']
+          o
         end
 
         def each
