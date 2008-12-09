@@ -122,7 +122,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 1, docs.first['a']
 
     # Sorting using empty array; no order guarantee but should not blow up.
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [{'a' => -1}]).map
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => []).map
     assert_equal 2, docs.size
 
     # Sorting using ordered hash. You can use an unordered one, but then the
