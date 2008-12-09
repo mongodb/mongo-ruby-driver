@@ -52,6 +52,9 @@ type
 
 = To Do
 
+* Tests that prove that this driver's ObjectID and Geir's Java version do the
+  same thing.
+
 * Capped collection support.
 
 * Implement order_by (right now, sort order is ignored)
