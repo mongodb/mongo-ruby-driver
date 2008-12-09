@@ -51,4 +51,18 @@ class ObjectIDTest < Test::Unit::TestCase
     assert_equal 24, $1.length
   end
 
+  def test_save_and_restore
+    host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
+    port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
+    db = XGen::Mongo::Driver::Mongo.new(host, port).db('ruby-mongo-test')
+    coll = db.collection('test')
+
+    coll.clear
+    coll << {'a' => 1, '_id' => @o}
+
+    row = coll.find().collect.first
+    assert_equal 1, row['a']
+    assert_equal @o, row['_id']
+  end
+
 end
