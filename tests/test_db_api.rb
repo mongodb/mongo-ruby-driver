@@ -12,11 +12,8 @@ class DBAPITest < Test::Unit::TestCase
     @db = XGen::Mongo::Driver::Mongo.new(host, port).db('ruby-mongo-test')
     @coll = @db.collection('test')
     @coll.clear
-<<<<<<< HEAD:tests/test_db_api.rb
     @r1 = @coll.insert('_id' => new_oid, 'a' => 1)      # collection not created until it's used
-=======
     @r1 = @coll.insert('a' => 1) # collection not created until it's used
->>>>>>> 135a9ca0ab28335d8f9eaaa78fed7cc502d062df:tests/test_db_api.rb
     @coll_full_name = 'ruby-mongo-test.test'
   end
 
