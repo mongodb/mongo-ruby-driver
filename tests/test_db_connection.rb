@@ -6,8 +6,6 @@ require 'test/unit'
 class DBConnectionTest < Test::Unit::TestCase
 
   def test_no_exceptions
-    host = ENV['HOST'] || ENV['host'] || 'localhost'
-    port = ENV['PORT'] || ENV['port'] || 27017
     host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
     port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
     db = XGen::Mongo::Driver::Mongo.new(host, port).db('ruby-mongo-test')

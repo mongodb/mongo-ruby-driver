@@ -12,39 +12,86 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-require 'mongo/util/uuid'
+require 'mutex_m'
+require 'mongo/util/byte_buffer'
 
 module XGen
   module Mongo
     module Driver
 
+      # Implementation of the Babble OID.
+      # 
+      #   12 bytes
+      #   ---
+      #    0 time
+      #    1
+      #    2
+      #    3
+      #    4 machine
+      #    5
+      #    6
+      #    7 pid
+      #    8
+      #    9 inc
+      #   10
+      #   11
       class ObjectID
-        
-        include Comparable
 
-        include Comparable
+        MACHINE = ( val = rand(0x1000000); [val & 0xff, (val >> 8) & 0xff, (val >> 16) & 0xff] )
+        PID = ( val = rand(0x10000); [val & 0xff, (val >> 8) & 0xff]; )
 
-        @@uuid_generator = UUID.new
+        LOCK = Object.new
+        LOCK.extend Mutex_m
 
-        # String UUID
-        attr_reader :uuid
+        @@index_time = Time.new.to_i
+        @@index = 0
 
-        # +uuid+ is a string. If nil, a new UUID will be generated.
-        def initialize(uuid=nil)
-          # The Babble server expects 12-byte (24 hex character) keys, which
-          # is why we throw away part of the UUID.
-          @uuid ||= @@uuid_generator.generate(:compact).sub(/(.{12}).{8}(.{12})/, '\1\2')
+        # +data+ is an array of bytes. If nil, a new id will be generated.
+        # The time +t+ is only used for testing; leave it nil.
+        def initialize(data=nil, t=nil)
+          @data = data || generate_id(t)
+        end
+
+        def eql?(other)
+          @data == other.to_a
+        end
+        alias_method :==, :eql?
+
+        def to_a
+          @data.dup
         end
 
         def to_s
-          @uuid
+          @data.collect { |b| '%02x' % b }.join
         end
 
-        # This will make more sense when we implement the Babble algorithm for
-        # generating object ids.
-        def <=>(other)
-          to_s <=> other.to_s
+        def generate_id(t=nil)
+          t ||= Time.new.to_i
+          buf = ByteBuffer.new
+          buf.put_int(t & 0xffffffff)
+          buf.put_array(MACHINE)
+          buf.put_array(PID)
+          i = index_for_time(t)
+          buf.put(i & 0xff)
+          buf.put((i >> 8) & 0xff)
+          buf.put((i >> 16) & 0xff)
+
+          buf.rewind
+          buf.to_a.dup
         end
+
+        def index_for_time(t)
+          LOCK.mu_synchronize {
+            if t != @@index_time
+              @@index = 0
+              @@index_time = t
+            end
+            retval = @@index
+            @@index += 1
+            retval
+          }
+        end
+
       end
     end
   end
