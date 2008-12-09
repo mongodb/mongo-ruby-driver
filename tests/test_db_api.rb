@@ -107,12 +107,16 @@ class DBAPITest < Test::Unit::TestCase
     @coll.insert('b' => 3)
 
     # Sorting (ascending)
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => { 'a' => 1 }).map
+    order_by = OrderedHash.new
+    order_by['a'] = 1
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => order_by).map
     assert_equal 2, docs.size
     assert_equal 1, docs.first['a']
 
     # Sorting (descending)
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => { 'a' => -1 }).map
+    order_by = OrderedHash.new
+    order_by['a'] = -1
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => order_by).map
     assert_equal 2, docs.size
     assert_equal 2, docs.first['a']
   end
