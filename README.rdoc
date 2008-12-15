@@ -100,9 +100,3 @@ details.
 
 See http://www.gnu.org/licenses/ for a copy of the GNU Affero General Public
 License.
-
---
-# Local Variables:
-# mode:rdoc
-# End:
-++
