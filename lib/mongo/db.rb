@@ -27,12 +27,20 @@ module XGen
         SYSTEM_INDEX_COLLECTION = "system.indexes"
         SYSTEM_COMMAND_COLLECTION = "$cmd"
 
+        # Strict mode means that trying to access a collection that does not
+        # exist will raise an error. Strict mode is off (false) by default.
+        attr_writer :strict
+
+        # Returns the value of the +strict+ flag.
+        def strict?; @strict; end
+
         attr_reader :name, :socket
 
         def initialize(db_name, host, port)
           raise "Invalid DB name" if !db_name || (db_name && db_name.length > 0 && db_name.include?("."))
           @name, @host, @port = db_name, host, port
           @socket = TCPSocket.new(@host, @port)
+          @strict = false
         end
 
         def collection_names
@@ -47,9 +55,18 @@ module XGen
           query(SYSTEM_NAMESPACE_COLLECTION, Query.new(selector))
         end
 
+        # Create a collection. If +strict+ is false, will return existing or
+        # new collection. If +strict+ is true, will raise an error if
+        # collection +name+ does not already exist.
         def create_collection(name, options={})
           # First check existence
-          return Collection.new(self, name) if collection_names.include?(name)
+          if collection_names.include?(full_coll_name(name))
+            if strict?
+              raise "Collection #{name} already exists. Currently in strict mode."
+            else
+              return Collection.new(self, name)
+            end
+          end
 
           # Create new collection
           oh = OrderedHash.new
@@ -66,10 +83,16 @@ module XGen
           Admin.new(self)
         end
 
+        # Return a collection. If +strict+ is false, will return existing or
+        # new collection. If +strict+ is true, will raise an error if
+        # collection +name+ already exists.
         def collection(name)
-          # We do not implement the Java driver's optional strict mode, which
-          # throws an exception if the collection does not exist.
-          create_collection(name)
+          return Collection.new(self, name) if collection_names.include?(full_coll_name(name))
+          if strict?
+            raise "Collection #{name} doesn't exist. Currently in strict mode."
+          else
+            create_collection(name)
+          end
         end
 
         def drop_collection(name)

@@ -39,6 +39,8 @@ http://github.com/geir/mongo-java-driver/tree/master.
 
 == Release Notes
 
+Added "strict" db attribute.
+
 I plan to remove the auto-generation of _id primary keys.
 
 If you ran tests using code before release
@@ -51,6 +53,8 @@ type
 
 
 = To Do
+
+* Add way to ask db if it is master or slave.
 
 * Tests that prove that this driver's ObjectID and Geir's Java version do the
   same thing. (I've done so manually.)

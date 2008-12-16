@@ -203,4 +203,47 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 1, rows.length
     assert_equal regex, rows[0]['b']
   end
+
+  def test_strict
+    assert !@db.strict?
+    @db.strict = true
+    assert @db.strict?
+  end
+
+  def test_strict_access_collection
+    @db.strict = true
+    begin
+      @db.collection('does-not-exist')
+      fail "expected exception"
+    rescue => ex
+      assert_equal "Collection does-not-exist doesn't exist. Currently in strict mode.", ex.to_s
+    ensure
+      @db.strict = false
+      @db.drop_collection('does-not-exist')
+    end
+  end
+
+  def test_strict_create_collection
+    @db.drop_collection('foobar')
+    @db.strict = true
+
+    begin
+      @db.create_collection('foobar')
+      assert true
+    rescue => ex
+      fail "did not expect exception \"#{ex}\""
+    end
+
+    # Now the collection exists. This time we should see an exception.
+    begin
+      @db.create_collection('foobar')
+      fail "expected exception"
+    rescue => ex
+      assert_equal "Collection foobar already exists. Currently in strict mode.", ex.to_s
+    ensure
+      @db.strict = false
+      @db.drop_collection('foobar')
+    end
+  end
+
 end
