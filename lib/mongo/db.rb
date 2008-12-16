@@ -72,8 +72,8 @@ module XGen
           oh = OrderedHash.new
           oh[:create] = name
           doc = db_command(oh.merge(options))
-          o = doc['ok']
-          return Collection.new(self, name) if o.kind_of?(Numeric) && (o.to_i == 1 || o.to_i == 0)
+          ok = doc['ok']
+          return Collection.new(self, name) if ok.kind_of?(Numeric) && (ok.to_i == 1 || ok.to_i == 0)
           raise "Error creating collection: #{doc.inspect}"
         end
 
@@ -100,9 +100,15 @@ module XGen
           return true if coll == nil
           coll.drop_indexes     # Mongo requires that we drop indexes manually
 
-          doc = db_command(:drop => name)
-          o = doc['ok']
-          return o.kind_of?(Numeric) && o.to_i == 1
+          ok?(db_command(:drop => name))
+        end
+
+        # Returns true if this database is a master (or is not paired with any
+        # other database), false if it is a slave.
+        def master?
+          doc = db_command(:ismaster => 1)
+          is_master = doc['ismaster']
+          ok?(doc) && is_master.kind_of?(Numeric) && is_master.to_i == 1
         end
 
         def close
@@ -142,8 +148,7 @@ module XGen
           oh[:count] = collection_name
           oh[:query] = selector
           doc = db_command(oh)
-          o = doc['ok']
-          return doc['n'].to_i if o.to_i == 1
+          return doc['n'].to_i if ok?(doc)
           raise "Error with count command: #{doc.inspect}"
         end
 
@@ -152,8 +157,7 @@ module XGen
           oh[:deleteIndexes] = collection_name
           oh[:index] = name
           doc = db_command(oh)
-          o = doc['ok']
-          raise "Error with drop_index command: #{doc.inspect}" unless o.kind_of?(Numeric) && o.to_i == 1
+          raise "Error with drop_index command: #{doc.inspect}" unless ok?(doc)
         end
 
         def index_information(collection_name)
@@ -198,6 +202,11 @@ module XGen
         end
 
         protected
+
+        def ok?(doc)
+          ok = doc['ok']
+          ok.kind_of?(Numeric) && ok.to_i == 1
+        end
 
         # DB commands need to be ordered, so selector must be an OrderedHash
         # (or a Hash with only one element). What DB commands really need is

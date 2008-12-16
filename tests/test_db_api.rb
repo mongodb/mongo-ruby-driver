@@ -246,4 +246,8 @@ class DBAPITest < Test::Unit::TestCase
     end
   end
 
+  def test_ismaster
+    assert @db.master?
+  end
+
 end
