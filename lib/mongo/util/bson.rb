@@ -87,7 +87,7 @@ class BSON
     while @buf.more?
       type = @buf.get
       case type
-      when STRING
+      when STRING, CODE
         key = deserialize_element_name(@buf)
         doc[key] = deserialize_string_data(@buf)
       when NUMBER
