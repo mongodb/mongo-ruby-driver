@@ -3,28 +3,28 @@ require 'mongo/util/ordered_hash'
 require 'mongo/objectid'
 
 # See http://github.com/10gen/mongo/tree/master/db/jsobj.h
-# and 
 
 class BSON
 
-  EOO = 0                       # x
-  MAXKEY = -1                   # x
-  NUMBER = 1                    # x t
-  STRING = 2                    # x t
-  OBJECT = 3                    # x t
+  MINKEY = -1
+  EOO = 0
+  NUMBER = 1
+  STRING = 2
+  OBJECT = 3
   ARRAY = 4
   BINARY = 5
   UNDEFINED = 6
-  OID = 7                       # x
-  BOOLEAN = 8                   # x t
-  DATE = 9                      # x t
-  NULL = 10                     # x t
+  OID = 7
+  BOOLEAN = 8
+  DATE = 9
+  NULL = 10
   REGEX = 11
   REF = 12
   CODE = 13
   SYMBOL = 14
   CODE_W_SCOPE = 15
   NUMBER_INT = 16
+  MAXKEY = 127
 
   def self.serialize_cstr(buf, val)
     buf.put_array(val.to_s.unpack("C*") + [0])
@@ -67,8 +67,10 @@ class BSON
         serialize_date_element(@buf, k, v)
       when NULL
         serialize_null_element(@buf, k)
+      when BINARY, UNDEFINED, REF, SYMBOL, CODE_W_SCOPE
+        raise "unimplemented type #{type}"
       else
-        raise "Unhandled Type #{type}"
+        raise "unhandled type #{type}"
       end
     }
     serialize_eoo_element(@buf)
