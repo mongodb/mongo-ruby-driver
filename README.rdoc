@@ -54,7 +54,13 @@ type
 
 = To Do
 
-* Add way to ask db if it is master or slave.
+* Add way to ask db if it is master or slave. Mongo needs to add this, first.
+
+* Once Mongo can tell us if an instance is master or slave, add a way to
+  specify a collection of databases on startup (a simple array of IP
+  address/port numbers, perhaps, or a hash or something). The driver would
+  then find the master and, on each subsequent command, ask that machine if it
+  is the master before proceeding.
 
 * Tests that prove that this driver's ObjectID and Geir's Java version do the
   same thing. (I've done so manually.)
