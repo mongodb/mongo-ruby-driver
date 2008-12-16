@@ -3,9 +3,9 @@
 This is a simple pure-Ruby driver for the 10gen Mongo DB. For more information
 about Mongo, see http://www.mongodb.org.
 
-Note: this driver is still alpha quality. The API will change, as will the
+Note: this driver is still alpha quality. The API will change, as may the
 data saved to the database (especially primary key values). Do *_not_* use this
-for any production data.
+for any production data yet.
 
 
 = Demo
@@ -27,7 +27,7 @@ The tests assume that the Mongo database is running on the default port.
   $ rake rdoc
 
 Then open the file doc/index.html. (I need to figure out where to put this on
-the Web, or even how to publish this to the Wiki at
+the Web, or perhaps how to publish this to the Wiki at
 http://github.com/jimm/mongo-ruby-driver/wikis automatically.)
 
 
@@ -53,7 +53,7 @@ type
 = To Do
 
 * Tests that prove that this driver's ObjectID and Geir's Java version do the
-  same thing.
+  same thing. (I've done so manually.)
 
 * Capped collection support.
 
@@ -100,9 +100,3 @@ details.
 
 See http://www.gnu.org/licenses/ for a copy of the GNU Affero General Public
 License.
-
---
-# Local Variables:
-# mode:rdoc
-# End:
-++

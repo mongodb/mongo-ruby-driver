@@ -49,8 +49,14 @@ class ByteBuffer
     @cursor += array.length
   end
 
-  def put_int(i, offset=nil)
-    put_array([i].pack(@int_pack_order).split(//).collect{|c| c[0]}, offset)
+  if RUBY_VERSION >= '1.9'
+    def put_int(i, offset=nil)
+      put_array([i].pack(@int_pack_order).split(//).collect{|c| c.bytes.first}, offset)
+    end
+  else
+    def put_int(i, offset=nil)
+      put_array([i].pack(@int_pack_order).split(//).collect{|c| c[0]}, offset)
+    end
   end
 
   def put_long(i, offset=nil)
@@ -64,8 +70,14 @@ class ByteBuffer
     end
   end
 
-  def put_double(d, offset=nil)
-    put_array([d].pack(@double_pack_order).split(//), offset)
+  if RUBY_VERSION >= '1.9'
+    def put_double(d, offset=nil)
+      put_array([d].pack(@double_pack_order).split(//).collect{|c| c.bytes.first}, offset)
+    end
+  else
+    def put_double(d, offset=nil)
+      put_array([d].pack(@double_pack_order).split(//).collect{|c| c[0]}, offset)
+    end
   end
 
   # If +size+ == 1, returns one byte. Else returns array of bytes of length

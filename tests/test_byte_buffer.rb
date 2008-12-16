@@ -32,6 +32,12 @@ class ByteBufferTest < Test::Unit::TestCase
     assert_equal 1027, @buf.get_long
   end
 
+  def test_get_double
+    @buf.put_double 41.2
+    @buf.rewind
+    assert_equal 41.2, @buf.get_double
+  end
+
   def test_rewrite
     @buf.put_int(0)
     @buf.rewind
