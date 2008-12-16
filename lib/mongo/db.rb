@@ -27,12 +27,20 @@ module XGen
         SYSTEM_INDEX_COLLECTION = "system.indexes"
         SYSTEM_COMMAND_COLLECTION = "$cmd"
 
+        # Strict mode means that trying to access a collection that does not
+        # exist will raise an error. Strict mode is off (false) by default.
+        attr_writer :strict
+
+        # Returns the value of the +strict+ flag.
+        def strict?; @strict; end
+
         attr_reader :name, :socket
 
         def initialize(db_name, host, port)
           raise "Invalid DB name" if !db_name || (db_name && db_name.length > 0 && db_name.include?("."))
           @name, @host, @port = db_name, host, port
           @socket = TCPSocket.new(@host, @port)
+          @strict = false
         end
 
         def collection_names
@@ -47,16 +55,25 @@ module XGen
           query(SYSTEM_NAMESPACE_COLLECTION, Query.new(selector))
         end
 
+        # Create a collection. If +strict+ is false, will return existing or
+        # new collection. If +strict+ is true, will raise an error if
+        # collection +name+ does not already exist.
         def create_collection(name, options={})
           # First check existence
-          return Collection.new(self, name) if collection_names.include?(name)
+          if collection_names.include?(full_coll_name(name))
+            if strict?
+              raise "Collection #{name} already exists. Currently in strict mode."
+            else
+              return Collection.new(self, name)
+            end
+          end
 
           # Create new collection
           oh = OrderedHash.new
           oh[:create] = name
           doc = db_command(oh.merge(options))
-          o = doc['ok']
-          return Collection.new(self, name) if o.kind_of?(Numeric) && (o.to_i == 1 || o.to_i == 0)
+          ok = doc['ok']
+          return Collection.new(self, name) if ok.kind_of?(Numeric) && (ok.to_i == 1 || ok.to_i == 0)
           raise "Error creating collection: #{doc.inspect}"
         end
 
@@ -66,10 +83,16 @@ module XGen
           Admin.new(self)
         end
 
+        # Return a collection. If +strict+ is false, will return existing or
+        # new collection. If +strict+ is true, will raise an error if
+        # collection +name+ already exists.
         def collection(name)
-          # We do not implement the Java driver's optional strict mode, which
-          # throws an exception if the collection does not exist.
-          create_collection(name)
+          return Collection.new(self, name) if collection_names.include?(full_coll_name(name))
+          if strict?
+            raise "Collection #{name} doesn't exist. Currently in strict mode."
+          else
+            create_collection(name)
+          end
         end
 
         def drop_collection(name)
@@ -77,9 +100,15 @@ module XGen
           return true if coll == nil
           coll.drop_indexes     # Mongo requires that we drop indexes manually
 
-          doc = db_command(:drop => name)
-          o = doc['ok']
-          return o.kind_of?(Numeric) && o.to_i == 1
+          ok?(db_command(:drop => name))
+        end
+
+        # Returns true if this database is a master (or is not paired with any
+        # other database), false if it is a slave.
+        def master?
+          doc = db_command(:ismaster => 1)
+          is_master = doc['ismaster']
+          ok?(doc) && is_master.kind_of?(Numeric) && is_master.to_i == 1
         end
 
         def close
@@ -119,8 +148,7 @@ module XGen
           oh[:count] = collection_name
           oh[:query] = selector
           doc = db_command(oh)
-          o = doc['ok']
-          return doc['n'].to_i if o.to_i == 1
+          return doc['n'].to_i if ok?(doc)
           raise "Error with count command: #{doc.inspect}"
         end
 
@@ -129,8 +157,7 @@ module XGen
           oh[:deleteIndexes] = collection_name
           oh[:index] = name
           doc = db_command(oh)
-          o = doc['ok']
-          raise "Error with drop_index command: #{doc.inspect}" unless o.kind_of?(Numeric) && o.to_i == 1
+          raise "Error with drop_index command: #{doc.inspect}" unless ok?(doc)
         end
 
         def index_information(collection_name)
@@ -175,6 +202,11 @@ module XGen
         end
 
         protected
+
+        def ok?(doc)
+          ok = doc['ok']
+          ok.kind_of?(Numeric) && ok.to_i == 1
+        end
 
         # DB commands need to be ordered, so selector must be an OrderedHash
         # (or a Hash with only one element). What DB commands really need is
