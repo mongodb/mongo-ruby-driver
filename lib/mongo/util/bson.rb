@@ -31,7 +31,6 @@ class BSON
   end
 
   def initialize
-    @private_buf = ByteBuffer.new
     @buf = ByteBuffer.new
   end
 
@@ -78,8 +77,10 @@ class BSON
     self
   end
 
-  def deserialize(buf)
-    @buf = ByteBuffer.new(buf.to_a)
+  def deserialize(buf=nil)
+    # If buf is nil, use @buf, assumed to contain already-serialized BSON.
+    # This is only true during testing.
+    @buf = ByteBuffer.new(buf.to_a) if buf
     @buf.rewind
     @buf.get_int                # eat message size
     doc = {}
