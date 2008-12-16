@@ -305,7 +305,7 @@ class BSON
     when XGen::Mongo::Driver::ObjectID
       OID
     when true, false
-      Boolean
+      BOOLEAN
     when Time
       DATE
     when Hash
