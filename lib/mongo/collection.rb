@@ -1,4 +1,4 @@
-# ---
+# --
 # Copyright (C) 2008 10gen Inc.
 #
 # This program is free software: you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
-# +++
+# ++
 
 require 'mongo/query'
 
