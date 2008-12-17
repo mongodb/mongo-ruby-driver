@@ -112,6 +112,13 @@ module XGen
           @db.index_information(@name)
         end
 
+        # Return a hash containing options that apply to this collection.
+        # 'create' will be the collection name. For the other possible keys
+        # and values, see DB#create_collection.
+        def options
+          @db.collections_info(@name).next_object()['options']
+        end
+
         # Return the number of records that match +selector+. If +selector+ is
         # +nil+ or an empty hash, returns the count of all records.
         def count(selector={})

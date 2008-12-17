@@ -66,8 +66,6 @@ type
 
 * Capped collection support.
 
-* More code comments. More text in this file.
-
 * Support more types: REF, SYMBOL, CODE_W_SCOPE, etc.
 
 * Introduce optional per-database and per-collection PKInjector.

@@ -175,6 +175,22 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal @coll.name, row['options']['create']
   end
 
+  def test_collection_options
+    @db.drop_collection('foobar')
+    @db.strict = true
+
+    begin
+      coll = @db.create_collection('foobar', :capped => true, :size => 1024)
+      options = coll.options()
+      assert_equal 'foobar', options['create']
+      assert_equal true, options['capped']
+      assert_equal 1024, options['size']
+    rescue => ex
+      @db.drop_collection('foobar')
+      fail "did not expect exception \"#{ex}\""
+    end
+  end
+
   def test_full_coll_name
     assert_equal @coll_full_name, @db.full_coll_name(@coll.name)
   end
