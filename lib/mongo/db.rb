@@ -83,6 +83,16 @@ module XGen
         # Create a collection. If +strict+ is false, will return existing or
         # new collection. If +strict+ is true, will raise an error if
         # collection +name+ already exists.
+        #
+        # Options is an optional hash:
+        #
+        # :capped :: Boolean. If not specified, capped is +false+.
+        #
+        # :size :: If +capped+ is +true+, specifies the maximum number of
+        #          bytes. If +false+, specifies the initial extent of the
+        #          collection.
+        #
+        # :max :: Max number of records in a capped collection. Optional.
         def create_collection(name, options={})
           # First check existence
           if collection_names.include?(full_coll_name(name))
@@ -96,7 +106,7 @@ module XGen
           # Create new collection
           oh = OrderedHash.new
           oh[:create] = name
-          doc = db_command(oh.merge(options))
+          doc = db_command(oh.merge(options || {}))
           ok = doc['ok']
           return Collection.new(self, name) if ok.kind_of?(Numeric) && (ok.to_i == 1 || ok.to_i == 0)
           raise "Error creating collection: #{doc.inspect}"
@@ -111,16 +121,6 @@ module XGen
         # Return a collection. If +strict+ is false, will return existing or
         # new collection. If +strict+ is true, will raise an error if
         # collection +name+ does not already exists.
-        #
-        # Options:
-        #
-        # :capped :: Boolean. If not specified, capped is +false+.
-        #
-        # :size :: If +capped+ is +true+, specifies the maximum number of
-        #          bytes. If +false+, specifies the initial extent of the
-        #          collection.
-        #
-        # :max :: Max number of records in a capped collection. Optional.
         def collection(name)
           return Collection.new(self, name) if collection_names.include?(full_coll_name(name))
           if strict?
