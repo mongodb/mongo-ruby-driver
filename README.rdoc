@@ -10,7 +10,7 @@ for any production data yet.
 
 = Demo
 
-  $ ruby examples/demo.rb
+  $ ruby examples/simple.rb
 
 Mongo must be running, of course.
 
