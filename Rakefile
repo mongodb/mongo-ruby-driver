@@ -11,5 +11,5 @@ end
 desc "Generate documentation"
 task :rdoc do
   FileUtils.rm_rf('doc')
-  system "rdoc --main README --inline-source --quiet README `find lib -name '*.rb'`"
+  system "rdoc --main README.rdoc --inline-source --quiet README.rdoc `find lib -name '*.rb'`"
 end
