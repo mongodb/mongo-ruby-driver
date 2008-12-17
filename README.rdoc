@@ -54,6 +54,8 @@ type
 
 = To Do
 
+* Tests for update and repsert.
+
 * Add a way to specify a collection of databases on startup (a simple array of
   IP address/port numbers, perhaps, or a hash or something). The driver would
   then find the master and, on each subsequent command, ask that machine if it
