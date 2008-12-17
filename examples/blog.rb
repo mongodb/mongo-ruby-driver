@@ -15,16 +15,15 @@ include XGen::Mongo::Driver
 host = ARGV[0] || 'localhost'
 port = ARGV[1] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
 
-LINE_SIZE = 120
-
 puts ">> Connecting to #{host}:#{port}"
 DB = Mongo.new(host, port).db('ruby-mongo-blog')
 
+LINE_SIZE = 120
 puts "=" * LINE_SIZE
 puts "Adding authors"
 authors = DB.collection "authors"
 authors.clear
-# authors.create_index "meta", :_id => 1, :name => 1, :age => 1
+authors.create_index "meta", '_id' => 1, 'name' => 1, 'age' => 1
 puts "-" * LINE_SIZE
 shaksp = authors << { :name => "William Shakespeare", :email => "william@shakespeare.com", :age => 587 }
 puts "shaksp : #{shaksp.inspect}"
@@ -33,7 +32,7 @@ puts "borges : #{borges.inspect}"
 puts "-" * LINE_SIZE
 puts "authors ordered by age ascending"
 puts "-" * LINE_SIZE
-authors.find({}, :sort => :age).each {|x| puts "%-25.25s : %-25.25s : %3i" % [x['name'], x['email'], x['age']]}
+authors.find({}, :sort => [{'age' => 1}]).each {|x| puts "%-25.25s : %-25.25s : %3i" % [x['name'], x['email'], x['age']]}
 
 puts "=" * LINE_SIZE
 puts "Adding users"
