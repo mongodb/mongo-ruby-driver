@@ -8,6 +8,24 @@ class ByteBufferTest < Test::Unit::TestCase
     @buf = ByteBuffer.new
   end
 
+  def test_nil_get_returns_one_byte
+    @buf.put_array([1, 2, 3, 4])
+    @buf.rewind
+    assert_equal 1, @buf.get
+  end
+
+  def test_one_get_returns_array_length_one
+    @buf.put_array([1, 2, 3, 4])
+    @buf.rewind
+    assert_equal [1], @buf.get(1)
+  end
+
+  def test_zero_get_returns_empty_array
+    @buf.put_array([1, 2, 3, 4])
+    @buf.rewind
+    assert_equal [], @buf.get(0)
+  end
+
   def test_empty
     assert_equal 0, @buf.length
   end
