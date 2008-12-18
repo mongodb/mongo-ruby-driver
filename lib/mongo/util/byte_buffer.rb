@@ -97,13 +97,15 @@ class ByteBuffer
     end
   end
 
-  # If +size+ == 1, returns one byte. Else returns array of bytes of length
-  # +size+.
-  def get(len=1)
+  # If +size+ == nil, returns one byte. Else returns array of bytes of length
+  # # +size+.
+  def get(len=nil)
+    one_byte = len.nil?
+    len ||= 1
     check_read_length(len)
     start = @cursor
     @cursor += len
-    if len == 1
+    if one_byte
       @buf[start]
     else
       @buf[start, len]
