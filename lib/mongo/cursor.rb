@@ -1,3 +1,4 @@
+# --
 # Copyright (C) 2008 10gen Inc.
 #
 # This program is free software: you can redistribute it and/or modify it
@@ -11,6 +12,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+# ++
 
 require 'mongo/message'
 require 'mongo/util/byte_buffer'
@@ -20,6 +22,7 @@ module XGen
   module Mongo
     module Driver
 
+      # A cursor over query results. Returned objects are hashes.
       class Cursor
 
         include Enumerable
@@ -33,10 +36,12 @@ module XGen
           read_all
         end
 
+        # Return +true+ if there are more records to retrieve.
         def more?
           num_remaining > 0
         end
 
+        # Return the next object. Raises an error if necessary.
         def next_object
           refill_via_get_more if num_remaining == 0
           o = @objects.shift
@@ -44,12 +49,14 @@ module XGen
           o
         end
 
+        # Iterate over each object, yielding it to the given block.
         def each
           while more?
             yield next_object()
           end
         end
 
+        # Close the cursor.
         def close
           @db.send_to_db(KillCursorMessage(@cursor_id)) if @cursor_id
           @objects = []

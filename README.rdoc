@@ -10,7 +10,7 @@ for any production data yet.
 
 = Demo
 
-  $ ruby examples/demo.rb
+  $ ruby examples/simple.rb
 
 Mongo must be running, of course.
 
@@ -54,6 +54,8 @@ type
 
 = To Do
 
+* Tests for update and repsert.
+
 * Add a way to specify a collection of databases on startup (a simple array of
   IP address/port numbers, perhaps, or a hash or something). The driver would
   then find the master and, on each subsequent command, ask that machine if it
@@ -63,8 +65,6 @@ type
   same thing. (I've done so manually.)
 
 * Capped collection support.
-
-* More code comments. More text in this file.
 
 * Support more types: REF, SYMBOL, CODE_W_SCOPE, etc.
 
@@ -105,5 +105,5 @@ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
 details.
 
-See http://www.gnu.org/licenses/ for a copy of the GNU Affero General Public
+See http://www.gnu.org/licenses for a copy of the GNU Affero General Public
 License.

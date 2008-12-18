@@ -11,14 +11,7 @@ db = Mongo.new(host, port).db('ruby-mongo-examples-simple')
 coll = db.collection('test')
 coll.clear
 
-doc = {'a' => 1}
-coll.insert(doc)
-
-doc = {'a' => 2}
-coll.insert(doc)
-
-doc = {'a' => 3}
-coll.insert(doc)
+3.times { |i| coll.insert({'a' => i+1}) }
 
 puts "There are #{coll.count()} records in the test collection. Here they are:"
 coll.find().each { |doc| puts doc.inspect }

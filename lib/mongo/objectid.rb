@@ -1,3 +1,4 @@
+# --
 # Copyright (C) 2008 10gen Inc.
 #
 # This program is free software: you can redistribute it and/or modify it
@@ -11,6 +12,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
+# ++
 
 require 'mutex_m'
 require 'mongo/util/byte_buffer'
@@ -19,7 +21,12 @@ module XGen
   module Mongo
     module Driver
 
-      # Implementation of the Babble OID.
+      # Implementation of the Babble OID. Object ids are not required by
+      # Mongo, but they make certain operations more efficient.
+      #
+      # The driver does not automatically assign ids to records that are
+      # inserted. (An upcoming feature will allow you to give an id "factory"
+      # to a database and/or a collection.)
       # 
       #   12 bytes
       #   ---
@@ -65,6 +72,7 @@ module XGen
           @data.collect { |b| '%02x' % b }.join
         end
 
+        # (Would normally be private, but isn't so we can test it.)
         def generate_id(t=nil)
           t ||= Time.new.to_i
           buf = ByteBuffer.new
@@ -80,6 +88,7 @@ module XGen
           buf.to_a.dup
         end
 
+        # (Would normally be private, but isn't so we can test it.)
         def index_for_time(t)
           LOCK.mu_synchronize {
             if t != @@index_time
