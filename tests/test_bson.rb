@@ -5,6 +5,8 @@ require 'test/unit'
 # NOTE: assumes Mongo is running
 class BSONTest < Test::Unit::TestCase
 
+  include XGen::Mongo::Driver
+
   def setup
     @b = BSON.new
   end
@@ -40,7 +42,7 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_oid
-    doc = {'doc' => XGen::Mongo::Driver::ObjectID.new}
+    doc = {'doc' => ObjectID.new}
     @b.serialize(doc)
     assert_equal doc, @b.deserialize
   end
