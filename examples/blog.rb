@@ -1,5 +1,4 @@
 require "rubygems"
-require "benchwarmer"
 
 class Exception
   def errmsg
@@ -12,8 +11,8 @@ require 'mongo'
 
 include XGen::Mongo::Driver
 
-host = ARGV[0] || 'localhost'
-port = ARGV[1] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
+host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
+port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
 
 puts ">> Connecting to #{host}:#{port}"
 DB = Mongo.new(host, port).db('ruby-mongo-blog')
@@ -47,7 +46,7 @@ puts "lsmt : #{lsmt.inspect}"
 puts "-" * LINE_SIZE
 puts "users ordered by login ascending"
 puts "-" * LINE_SIZE
-users.find({}, :sort => :login).each {|x| puts "%-10.10s : %-25.25s : %-25.25s" % [x['login'], x['name'], x['email']]}
+users.find({}, :sort => [{'login' => 1}]).each {|x| puts "%-10.10s : %-25.25s : %-25.25s" % [x['login'], x['name'], x['email']]}
 
 puts "=" * LINE_SIZE
 puts "Adding articles"
@@ -70,7 +69,7 @@ end
 puts "-" * LINE_SIZE
 puts "articles ordered by title ascending"
 puts "-" * LINE_SIZE
-articles.find({}, :sort => :title).each {|x| puts "%-25.25s : %-25.25s" % [x['title'], x['author_id']]}
+articles.find({}, :sort => [{'title' => 1}]).each {|x| puts "%-25.25s : %-25.25s" % [x['title'], x['author_id']]}
 
 puts ">> Closing connection"
 DB.close

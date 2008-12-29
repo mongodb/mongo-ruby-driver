@@ -1,16 +1,14 @@
 require "rubygems"
-require "benchwarmer"
+require "benchmark"
   
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 
-include XGen::Mongo::Driver
-
-host = ARGV[0] || 'localhost'
-port = ARGV[1] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
+host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
+port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
 
 puts "Connecting to #{host}:#{port}"
-db = Mongo.new(host, port).db('ruby-mongo-examples-complex')
+db = XGen::Mongo::Driver::Mongo.new(host, port).db('ruby-mongo-examples-complex')
 coll = db.collection('test')
 coll.clear
 
@@ -22,15 +20,19 @@ msgs = %w{hola hello aloha ciao}
 arr = OBJS_COUNT.times.map {|x| { :number => x, :rndm => (rand(5)+1), :msg => msgs[rand(4)] }}
 
 puts "Running benchmark"
-Benchmark.warmer(TEST_COUNT) do
-  report "single object inserts" do
-    coll.clear
-    arr.each {|x| coll.insert(x)}
-  end
-  report "multiple object insert" do
-    coll.clear
-    coll.insert(arr)
-  end
+Benchmark.bmbm do |results|
+  results.report("single object inserts:  ") { 
+    TEST_COUNT.times {
+      coll.clear
+      arr.each {|x| coll.insert(x)} 
+    }
+  }
+  results.report("multiple object insert: ") { 
+    TEST_COUNT.times {
+      coll.clear
+      coll.insert(arr)
+    }
+  }
 end
 
 coll.clear

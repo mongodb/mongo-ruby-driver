@@ -3,8 +3,8 @@ require 'mongo'
 
 include XGen::Mongo::Driver
 
-host = ARGV[0] || 'localhost'
-port = ARGV[1] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
+host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
+port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
 
 puts "Connecting to #{host}:#{port}"
 db = Mongo.new(host, port).db('ruby-mongo-examples-simple')
