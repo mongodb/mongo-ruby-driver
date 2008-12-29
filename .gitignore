@@ -1,2 +1,5 @@
 doc
 t
+pkg
+doc
+*.gemspec
