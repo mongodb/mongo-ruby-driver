@@ -57,7 +57,7 @@ namespace :gem do
   end
   
   desc "Install the gem locally with ruby 1.9"
-  task :'19:install' => [:package] do
+  task :'install19' => [:package] do
     sh %{sudo gem19 install pkg/#{GEM}-#{GEM_VERSION}}
   end
  
