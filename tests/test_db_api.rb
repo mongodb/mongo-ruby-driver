@@ -51,7 +51,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 3, @coll.count
 
     # Find by other value
-    docs = @coll.find('a' => @r1['a']).map
+    docs = @coll.find('a' => @r1['a']).map{ |x| x }
     assert_equal 1, docs.size
     doc = docs.first
     assert_equal doc['_id'], @r1['_id']
@@ -69,34 +69,34 @@ class DBAPITest < Test::Unit::TestCase
     assert docs.detect { |row| row['a'] == 2 }
 
     # Find by advanced query (greater than)
-    docs = @coll.find('a' => { '$gt' => 1 }).map
+    docs = @coll.find('a' => { '$gt' => 1 }).map{ |x| x }
     assert_equal 1, docs.size
     assert docs.detect { |row| row['a'] == 2 }
 
     # Find by advanced query (less than or equal to)
-    docs = @coll.find('a' => { '$lte' => 1 }).map
+    docs = @coll.find('a' => { '$lte' => 1 }).map{ |x| x }
     assert_equal 1, docs.size
     assert docs.detect { |row| row['a'] == 1 }
 
     # Find by advanced query (greater than or equal to)
-    docs = @coll.find('a' => { '$gte' => 1 }).map
+    docs = @coll.find('a' => { '$gte' => 1 }).map{ |x| x }
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
 
     # Find by advanced query (between)
-    docs = @coll.find('a' => { '$gt' => 1, '$lt' => 3 }).map
+    docs = @coll.find('a' => { '$gt' => 1, '$lt' => 3 }).map{ |x| x }
     assert_equal 1, docs.size
     assert docs.detect { |row| row['a'] == 2 }
 
     # Find by advanced query (in clause)
-    docs = @coll.find('a' => {'$in' => [1,2]}).map
+    docs = @coll.find('a' => {'$in' => [1,2]}).map{ |x| x }
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
 
     # Find by advanced query (regexp)
-    docs = @coll.find('a' => /[1|2]/).map
+    docs = @coll.find('a' => /[1|2]/).map{ |x| x }
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
