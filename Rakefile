@@ -39,11 +39,6 @@ Rake::TestTask.new do |t|
   t.test_files = FileList['tests/test*.rb']
 end
 
-desc "Test using Ruby 1.9"
-task :'test:19' do
-  system "rake19 test"
-end
-
 desc "Generate documentation"
 task :rdoc do
   FileUtils.rm_rf('doc')
