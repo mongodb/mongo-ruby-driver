@@ -39,6 +39,11 @@ Rake::TestTask.new do |t|
   t.test_files = FileList['tests/test*.rb']
 end
 
+desc "Test using Ruby 1.9"
+task :'test:19' do
+  system "rake19 test"
+end
+
 desc "Generate documentation"
 task :rdoc do
   FileUtils.rm_rf('doc')
@@ -54,6 +59,11 @@ namespace :gem do
   desc "Install the gem locally"
   task :install => [:package] do
     sh %{sudo gem install pkg/#{GEM}-#{GEM_VERSION}}
+  end
+  
+  desc "Install the gem locally with ruby 1.9"
+  task :'19:install' => [:package] do
+    sh %{sudo gem19 install pkg/#{GEM}-#{GEM_VERSION}}
   end
  
   desc "Create a gemspec file"
