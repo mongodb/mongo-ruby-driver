@@ -30,14 +30,14 @@ class DBAPITest < Test::Unit::TestCase
     @coll.insert('b' => 3)
 
     assert_equal 3, @coll.count
-    docs = @coll.find().collect
+    docs = @coll.find().collect{|x| x}
     assert_equal 3, docs.length
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
     assert docs.detect { |row| row['b'] == 3 }
 
     @coll << {'b' => 4}
-    docs = @coll.find().collect
+    docs = @coll.find().collect{|x| x}
     assert_equal 4, docs.length
     assert docs.detect { |row| row['b'] == 4 }
   end
@@ -168,7 +168,7 @@ class DBAPITest < Test::Unit::TestCase
 
   def test_collections_info
     cursor = @db.collections_info
-    rows = cursor.collect
+    rows = cursor.collect{|x| x}
     assert rows.length >= 1
     row = rows.detect { |r| r['name'] == @coll_full_name }
     assert_not_nil row
@@ -207,7 +207,7 @@ class DBAPITest < Test::Unit::TestCase
 
   def test_array
     @coll << {'b' => [1, 2, 3]}
-    rows = @coll.find({}, {:fields => ['b']}).collect
+    rows = @coll.find({}, {:fields => ['b']}).collect{|x| x}
     assert_equal 1, rows.length
     assert_equal [1, 2, 3], rows[0]['b']
   end
@@ -215,7 +215,7 @@ class DBAPITest < Test::Unit::TestCase
   def test_regex
     regex = /foobar/i
     @coll << {'b' => regex}
-    rows = @coll.find({}, {:fields => ['b']}).collect
+    rows = @coll.find({}, {:fields => ['b']}).collect{|x| x}
     assert_equal 1, rows.length
     assert_equal regex, rows[0]['b']
   end
