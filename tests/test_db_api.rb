@@ -30,14 +30,14 @@ class DBAPITest < Test::Unit::TestCase
     @coll.insert('b' => 3)
 
     assert_equal 3, @coll.count
-    docs = @coll.find().collect{|x| x}
+    docs = @coll.find().map{ |x| x }
     assert_equal 3, docs.length
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
     assert docs.detect { |row| row['b'] == 3 }
 
     @coll << {'b' => 4}
-    docs = @coll.find().collect{|x| x}
+    docs = @coll.find().map{ |x| x }
     assert_equal 4, docs.length
     assert docs.detect { |row| row['b'] == 4 }
   end
@@ -46,7 +46,7 @@ class DBAPITest < Test::Unit::TestCase
     @r2 = @coll.insert('a' => 2)
     @r3 = @coll.insert('b' => 3)
     # Check sizes
-    docs = @coll.find().map
+    docs = @coll.find().map{ |x| x }
     assert_equal 3, docs.size
     assert_equal 3, @coll.count
 
@@ -63,7 +63,7 @@ class DBAPITest < Test::Unit::TestCase
     @coll.insert('b' => 3)
 
     # Find by advanced query (less than)
-    docs = @coll.find('a' => { '$lt' => 10 }).map
+    docs = @coll.find('a' => { '$lt' => 10 }).map{ |x| x }
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
@@ -107,29 +107,29 @@ class DBAPITest < Test::Unit::TestCase
     @coll.insert('b' => 3)
 
     # Sorting (ascending)
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [{'a' => 1}]).map
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [{'a' => 1}]).map{ |x| x }
     assert_equal 2, docs.size
     assert_equal 1, docs.first['a']
 
     # Sorting (descending)
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [{'a' => -1}]).map
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [{'a' => -1}]).map{ |x| x }
     assert_equal 2, docs.size
     assert_equal 2, docs.first['a']
 
     # Sorting using array of names; assumes ascending order.
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => ['a']).map
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => ['a']).map{ |x| x }
     assert_equal 2, docs.size
     assert_equal 1, docs.first['a']
 
     # Sorting using empty array; no order guarantee but should not blow up.
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => []).map
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => []).map{ |x| x }
     assert_equal 2, docs.size
 
     # Sorting using ordered hash. You can use an unordered one, but then the
     # order of the keys won't be guaranteed thus your sort won't make sense.
     oh = OrderedHash.new
     oh['a'] = -1
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => oh).map
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => oh).map{ |x| x }
     assert_equal 2, docs.size
     assert_equal 2, docs.first['a']
   end
@@ -168,7 +168,7 @@ class DBAPITest < Test::Unit::TestCase
 
   def test_collections_info
     cursor = @db.collections_info
-    rows = cursor.collect{|x| x}
+    rows = cursor.map{ |x| x }
     assert rows.length >= 1
     row = rows.detect { |r| r['name'] == @coll_full_name }
     assert_not_nil row
@@ -207,7 +207,7 @@ class DBAPITest < Test::Unit::TestCase
 
   def test_array
     @coll << {'b' => [1, 2, 3]}
-    rows = @coll.find({}, {:fields => ['b']}).collect{|x| x}
+    rows = @coll.find({}, {:fields => ['b']}).map{ |x| x }
     assert_equal 1, rows.length
     assert_equal [1, 2, 3], rows[0]['b']
   end
@@ -215,7 +215,7 @@ class DBAPITest < Test::Unit::TestCase
   def test_regex
     regex = /foobar/i
     @coll << {'b' => regex}
-    rows = @coll.find({}, {:fields => ['b']}).collect{|x| x}
+    rows = @coll.find({}, {:fields => ['b']}).map{ |x| x }
     assert_equal 1, rows.length
     assert_equal regex, rows[0]['b']
   end
