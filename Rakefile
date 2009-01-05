@@ -25,6 +25,7 @@ spec = Gem::Specification.new do |s|
   s.files = FileList['bin/*', 'lib/**/*.rb', 'tests/**/*.rb', '[A-Z]*'].to_a
   
   s.bindir = 'bin'
+  s.executables  = %w( mongo_console )
   s.has_rdoc = true
 
   s.author = AUTHOR
