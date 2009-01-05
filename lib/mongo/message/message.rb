@@ -22,7 +22,7 @@ module XGen
           @buf = ByteBuffer.new
           
           @buf.put_int(16)      # holder for length
-          @buf.put_int(@@class_req_id += 1)
+          @buf.put_int(@request_id)
           @buf.put_int(0)       # response_to
           @buf.put_int(op)
         end

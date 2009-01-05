@@ -5,10 +5,12 @@ require 'test/unit'
 # NOTE: assumes Mongo is running
 class DBAPITest < Test::Unit::TestCase
 
+  include XGen::Mongo::Driver
+
   def setup
     host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-    port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
-    @db = XGen::Mongo::Driver::Mongo.new(host, port).db('ruby-mongo-test')
+    port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT
+    @db = Mongo.new(host, port).db('ruby-mongo-test')
     @coll = @db.collection('test')
     @coll.clear
     @r1 = @coll.insert('a' => 1) # collection not created until it's used
