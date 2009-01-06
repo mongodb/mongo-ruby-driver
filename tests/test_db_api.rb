@@ -136,6 +136,25 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, docs.first['a']
   end
 
+  def test_find_limits
+    @coll.insert('a' => 2)
+    @coll.insert('b' => 3)
+    @coll.insert('c' => 4)
+
+    docs = @coll.find({}, :limit => 1).map{ |x| x }
+    puts "docs : #{docs.size}"
+    assert_equal 1, docs.size
+    docs = @coll.find({}, :limit => 2).map{ |x| x }
+    puts "docs : #{docs.size}"
+    assert_equal 2, docs.size
+    docs = @coll.find({}, :limit => 3).map{ |x| x }
+    puts "docs : #{docs.size}"
+    assert_equal 3, docs.size
+    docs = @coll.find({}).map{ |x| x }
+    puts "docs : #{docs.size}"
+    assert_equal 3, docs.size
+  end
+
   def test_close
     @db.close
     assert @db.socket.closed?
