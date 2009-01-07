@@ -44,6 +44,10 @@ See the git log comments.
 
 * Add :publish Rake task, once we get a RubyForge project.
 
+* Add group_by. Need to figure out how we are going to send functions. The
+  current thinking is that Mongo will allow a subset of JavaScript (which we
+  would have to send as a string), but this is still under discussion.
+
 * Add explain and hint support.
 
 * Only update message sizes once, not after every write of a value. This will
