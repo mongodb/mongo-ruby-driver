@@ -1,18 +1,21 @@
 = Introduction
 
-This is a simple pure-Ruby driver for the 10gen Mongo DB. For more information
-about Mongo, see http://www.mongodb.org.
+This is a Ruby driver for the 10gen Mongo DB. For more information about
+Mongo, see http://www.mongodb.org.
 
-Note: this driver is still alpha quality. The API will change, as may the
-data saved to the database (especially primary key values). Do *_not_* use this
-for any production data yet.
+Note: this driver is still alpha quality. The API will change, as *may* the
+data saved to the database (especially primary key values). Do *_not_* use
+this for any production data yet.
 
 
 = Demo
 
+Mongo must be running, of course.
+
   $ ruby examples/simple.rb
 
-Mongo must be running, of course.
+See also the test code, especially
+http://github.com/jimm/mongo-ruby-driver/tree/master/tests/test_db_api.rb
 
 
 = Testing
@@ -28,16 +31,11 @@ The tests assume that the Mongo database is running on the default port.
 
 Then open the file doc/index.html. (I need to figure out where to put this on
 the Web, or perhaps how to publish this to the Wiki at
-http://github.com/jimm/mongo-ruby-driver/wikis automatically.)
+http://github.com/jimm/mongo-ruby-driver/wikis automatically. I have applied
+for a RubyForge project, so the docs will eventually go there.)
 
 
-= The Code
-
-Most of this code was transliterated from Geir Magnusson Jr's Java Mongo
-driver, which can be found at
-http://github.com/geir/mongo-java-driver/tree/master.
-
-== Release Notes
+= Release Notes
 
 See the git log comments.
 
