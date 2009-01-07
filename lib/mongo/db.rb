@@ -32,6 +32,7 @@ module XGen
 
         SYSTEM_NAMESPACE_COLLECTION = "system.namespaces"
         SYSTEM_INDEX_COLLECTION = "system.indexes"
+        SYSTEM_PROFILE_COLLECTION = "system.profile"
         SYSTEM_COMMAND_COLLECTION = "$cmd"
 
         # Strict mode enforces collection existence checks. When +true+,

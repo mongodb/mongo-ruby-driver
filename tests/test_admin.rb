@@ -37,4 +37,20 @@ class AdminTest < Test::Unit::TestCase
     assert_equal :off, @admin.profiling_level
   end
 
+  def test_profiling_info
+    # Perform at least one query while profiling so we have something to see.
+    @admin.profiling_level = :all
+    @coll.find()
+
+    info = @admin.profiling_info
+    assert_kind_of Array, info
+    assert info.length >= 1
+    first = info.first
+    assert_kind_of String, first['info']
+    assert_kind_of Time, first['ts']
+    assert_kind_of Numeric, first['millis']
+
+    @admin.profiling_level = :off
+  end
+
 end
