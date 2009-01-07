@@ -105,38 +105,67 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_find_sorting
-    @coll.insert('a' => 2)
-    @coll.insert('b' => 3)
+    @coll.clear
+    @coll.insert('a' => 1, 'b' => 2)
+    @coll.insert('a' => 2, 'b' => 1)
+    @coll.insert('a' => 3, 'b' => 2)
+    @coll.insert('a' => 4, 'b' => 1)
 
     # Sorting (ascending)
     docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [{'a' => 1}]).map{ |x| x }
-    assert_equal 2, docs.size
+    assert_equal 4, docs.size
     assert_equal 1, docs[0]['a']
     assert_equal 2, docs[1]['a']
+    assert_equal 3, docs[2]['a']
+    assert_equal 4, docs[3]['a']
 
     # Sorting (descending)
     docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [{'a' => -1}]).map{ |x| x }
-    assert_equal 2, docs.size
-    assert_equal 2, docs[0]['a']
-    assert_equal 1, docs[1]['a']
+    assert_equal 4, docs.size
+    assert_equal 4, docs[0]['a']
+    assert_equal 3, docs[1]['a']
+    assert_equal 2, docs[2]['a']
+    assert_equal 1, docs[3]['a']
 
     # Sorting using array of names; assumes ascending order.
     docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => ['a']).map{ |x| x }
-    assert_equal 2, docs.size
-    assert_equal 1, docs.first['a']
+    assert_equal 4, docs.size
+    assert_equal 1, docs[0]['a']
+    assert_equal 2, docs[1]['a']
+    assert_equal 3, docs[2]['a']
+    assert_equal 4, docs[3]['a']
+    
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => ['b', 'a']).map{ |x| x }
+    assert_equal 4, docs.size
+    assert_equal 2, docs[0]['a']
+    assert_equal 4, docs[1]['a']
+    assert_equal 1, docs[2]['a']
+    assert_equal 3, docs[3]['a']
 
     # Sorting using empty array; no order guarantee but should not blow up.
     docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => []).map{ |x| x }
-    assert_equal 2, docs.size
+    assert_equal 4, docs.size
 
     # Sorting using ordered hash. You can use an unordered one, but then the
     # order of the keys won't be guaranteed thus your sort won't make sense.
     oh = OrderedHash.new
     oh['a'] = -1
     docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => oh).map{ |x| x }
-    assert_equal 2, docs.size
-    assert_equal 2, docs[0]['a']
-    assert_equal 1, docs[1]['a']
+    assert_equal 4, docs.size
+    assert_equal 4, docs[0]['a']
+    assert_equal 3, docs[1]['a']
+    assert_equal 2, docs[2]['a']
+    assert_equal 1, docs[3]['a']
+
+    oh = OrderedHash.new
+    oh['b'] = -1
+    oh['a'] = 1
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => oh).map{ |x| x }
+    assert_equal 4, docs.size
+    assert_equal 1, docs[0]['a']
+    assert_equal 3, docs[1]['a']
+    assert_equal 2, docs[2]['a']
+    assert_equal 4, docs[3]['a']
   end
 
   def test_find_limits
