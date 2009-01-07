@@ -39,17 +39,7 @@ http://github.com/geir/mongo-java-driver/tree/master.
 
 == Release Notes
 
-Added "strict" db attribute.
-
-I plan to remove the auto-generation of _id primary keys.
-
-If you ran tests using code before release
-http://github.com/jimm/mongo-ruby-driver/commit/4244f56ce6c7044a1ce096843eb991856422c0cc
-then the DB API tests might fail the first time you run it. If that doesn't
-clear up the failed test, you might have to delete your database. To do that,
-type
-
-  $ rm /data/db/ruby-mongo-test*
+See the git log comments.
 
 
 = To Do
