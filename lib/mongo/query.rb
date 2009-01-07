@@ -43,16 +43,18 @@ module XGen
         #                     in calls to Collection#find.) Default is 0 (all
         #                     records).
         #
-        # order_by :: If not +nil+, specifies record sort order. May be either
-        #             a hash or an array. If an array, it should be an array
-        #             of field names which will all be sorted in ascending
-        #             order. If a hash, it may be either a regular Hash or an
-        #             OrderedHash. The keys should be field names, and the
-        #             values should be 1 (ascending) or -1 (descending). Note
-        #             that if it is a regular Hash then sorting by more than
-        #             one field probably will not be what you intend because
-        #             key order is not preserved. (order_by is called :sort in
-        #             calls to Collection#find.)
+        # order_by :: If not +nil+, specifies record sort order. May be a
+        #             String, Hash, OrderedHash, or Array. If a string, the
+        #             results will be ordered by that field in ascending
+        #             order. If an array, it should be an array of field names
+        #             which will all be sorted in ascending order. If a hash,
+        #             it may be either a regular Hash or an OrderedHash. The
+        #             keys should be field names, and the values should be 1
+        #             (ascending) or -1 (descending). Note that if it is a
+        #             regular Hash then sorting by more than one field
+        #             probably will not be what you intend because key order
+        #             is not preserved. (order_by is called :sort in calls to
+        #             Collection#find.)
         def initialize(sel={}, return_fields=nil, number_to_skip=0, number_to_return=0, order_by=nil)
           @number_to_skip, @number_to_return, @order_by = number_to_skip, number_to_return, order_by
           self.selector = sel
