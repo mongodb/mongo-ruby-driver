@@ -31,8 +31,7 @@ module XGen
 
         def initialize(db, collection, num_to_return=0)
           @db, @collection, @num_to_return = db, collection, num_to_return
-          @objects_returned = 0
-          @objects = []
+          @cache = []
           @closed = false
           read_all
         end
@@ -46,7 +45,7 @@ module XGen
         # Return the next object. Raises an error if necessary.
         def next_object
           refill_via_get_more if num_remaining == 0
-          o = @objects.shift
+          o = @cache.shift
           raise o['$err'] if o['$err']
           o
         end
@@ -54,18 +53,43 @@ module XGen
         # Iterate over each object, yielding it to the given block. At most
         # @num_to_return records are returned (or all of them, if
         # @num_to_return is 0).
+        #
+        # If #to_a has already been called then this method uses the array
+        # that we store internally. In that case, #each can be called multiple
+        # times because it re-uses that array.
         def each
+          if @rows              # Already turned into an array
+            @rows.each { |row| yield row }
+          else
+            num_returned = 0
+            while more? && (@num_to_return <= 0 || num_returned < @num_to_return)
+              yield next_object()
+              num_returned += 1
+            end
+          end
+        end
+
+        # Return all of the rows as an array. Calling this multiple times will
+        # work fine; it always returns the same array.
+        #
+        # You can call #each after calling #to_a (multiple times even, because
+        # it will use the internally-stored array), but you can't call #to_a
+        # after calling #ach.
+        def to_a
+          return @rows if @rows
+          @rows = []
           num_returned = 0
           while more? && (@num_to_return <= 0 || num_returned < @num_to_return)
-            yield next_object()
+            @rows << next_object()
             num_returned += 1
           end
+          @rows
         end
 
         # Close the cursor.
         def close
           @db.send_to_db(KillCursorMessage(@cursor_id)) if @cursor_id
-          @objects = []
+          @cache = []
           @cursor_id = 0
           @closed = true
         end
@@ -80,7 +104,7 @@ module XGen
 
         def read_objects_off_wire
           while doc = next_object_on_wire
-            @objects << doc
+            @cache << doc
           end
         end
 
@@ -101,8 +125,8 @@ module XGen
         end
 
         def num_remaining
-          refill_via_get_more if @objects.length == 0
-          @objects.length
+          refill_via_get_more if @cache.length == 0
+          @cache.length
         end
 
         private

@@ -32,14 +32,14 @@ class DBAPITest < Test::Unit::TestCase
     @coll.insert('b' => 3)
 
     assert_equal 3, @coll.count
-    docs = @coll.find().map{ |x| x }
+    docs = @coll.find().to_a
     assert_equal 3, docs.length
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
     assert docs.detect { |row| row['b'] == 3 }
 
     @coll << {'b' => 4}
-    docs = @coll.find().map{ |x| x }
+    docs = @coll.find().to_a
     assert_equal 4, docs.length
     assert docs.detect { |row| row['b'] == 4 }
   end
@@ -48,12 +48,12 @@ class DBAPITest < Test::Unit::TestCase
     @r2 = @coll.insert('a' => 2)
     @r3 = @coll.insert('b' => 3)
     # Check sizes
-    docs = @coll.find().map{ |x| x }
+    docs = @coll.find().to_a
     assert_equal 3, docs.size
     assert_equal 3, @coll.count
 
     # Find by other value
-    docs = @coll.find('a' => @r1['a']).map{ |x| x }
+    docs = @coll.find('a' => @r1['a']).to_a
     assert_equal 1, docs.size
     doc = docs.first
     assert_equal doc['_id'], @r1['_id']
@@ -65,40 +65,40 @@ class DBAPITest < Test::Unit::TestCase
     @coll.insert('b' => 3)
 
     # Find by advanced query (less than)
-    docs = @coll.find('a' => { '$lt' => 10 }).map{ |x| x }
+    docs = @coll.find('a' => { '$lt' => 10 }).to_a
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
 
     # Find by advanced query (greater than)
-    docs = @coll.find('a' => { '$gt' => 1 }).map{ |x| x }
+    docs = @coll.find('a' => { '$gt' => 1 }).to_a
     assert_equal 1, docs.size
     assert docs.detect { |row| row['a'] == 2 }
 
     # Find by advanced query (less than or equal to)
-    docs = @coll.find('a' => { '$lte' => 1 }).map{ |x| x }
+    docs = @coll.find('a' => { '$lte' => 1 }).to_a
     assert_equal 1, docs.size
     assert docs.detect { |row| row['a'] == 1 }
 
     # Find by advanced query (greater than or equal to)
-    docs = @coll.find('a' => { '$gte' => 1 }).map{ |x| x }
+    docs = @coll.find('a' => { '$gte' => 1 }).to_a
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
 
     # Find by advanced query (between)
-    docs = @coll.find('a' => { '$gt' => 1, '$lt' => 3 }).map{ |x| x }
+    docs = @coll.find('a' => { '$gt' => 1, '$lt' => 3 }).to_a
     assert_equal 1, docs.size
     assert docs.detect { |row| row['a'] == 2 }
 
     # Find by advanced query (in clause)
-    docs = @coll.find('a' => {'$in' => [1,2]}).map{ |x| x }
+    docs = @coll.find('a' => {'$in' => [1,2]}).to_a
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
 
     # Find by advanced query (regexp)
-    docs = @coll.find('a' => /[1|2]/).map{ |x| x }
+    docs = @coll.find('a' => /[1|2]/).to_a
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
@@ -112,7 +112,7 @@ class DBAPITest < Test::Unit::TestCase
     @coll.insert('a' => 4, 'b' => 1)
 
     # Sorting (ascending)
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => {'a' => 1}).map{ |x| x }
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => {'a' => 1}).to_a
     assert_equal 4, docs.size
     assert_equal 1, docs[0]['a']
     assert_equal 2, docs[1]['a']
@@ -120,7 +120,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 4, docs[3]['a']
 
     # Sorting (descending)
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => {'a' => -1}).map{ |x| x }
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => {'a' => -1}).to_a
     assert_equal 4, docs.size
     assert_equal 4, docs[0]['a']
     assert_equal 3, docs[1]['a']
@@ -128,7 +128,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 1, docs[3]['a']
 
     # Sorting using array of names; assumes ascending order.
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => ['a']).map{ |x| x }
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => ['a']).to_a
     assert_equal 4, docs.size
     assert_equal 1, docs[0]['a']
     assert_equal 2, docs[1]['a']
@@ -136,14 +136,14 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 4, docs[3]['a']
 
     # Sorting using single name; assumes ascending order.
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => 'a').map{ |x| x }
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => 'a').to_a
     assert_equal 4, docs.size
     assert_equal 1, docs[0]['a']
     assert_equal 2, docs[1]['a']
     assert_equal 3, docs[2]['a']
     assert_equal 4, docs[3]['a']
 
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => ['b', 'a']).map{ |x| x }
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => ['b', 'a']).to_a
     assert_equal 4, docs.size
     assert_equal 2, docs[0]['a']
     assert_equal 4, docs[1]['a']
@@ -151,14 +151,14 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 3, docs[3]['a']
 
     # Sorting using empty array; no order guarantee but should not blow up.
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => []).map{ |x| x }
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => []).to_a
     assert_equal 4, docs.size
 
     # Sorting using ordered hash. You can use an unordered one, but then the
     # order of the keys won't be guaranteed thus your sort won't make sense.
     oh = OrderedHash.new
     oh['a'] = -1
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => oh).map{ |x| x }
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => oh).to_a
     assert_equal 4, docs.size
     assert_equal 4, docs[0]['a']
     assert_equal 3, docs[1]['a']
@@ -169,7 +169,7 @@ class DBAPITest < Test::Unit::TestCase
 #     oh = OrderedHash.new
 #     oh['b'] = -1
 #     oh['a'] = 1
-#     docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => oh).map{ |x| x }
+#     docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => oh).to_a
 #     assert_equal 4, docs.size
 #     assert_equal 1, docs[0]['a']
 #     assert_equal 3, docs[1]['a']
@@ -182,17 +182,17 @@ class DBAPITest < Test::Unit::TestCase
     @coll.insert('c' => 3)
     @coll.insert('d' => 4)
 
-    docs = @coll.find({}, :limit => 1).map{ |x| x }
+    docs = @coll.find({}, :limit => 1).to_a
     assert_equal 1, docs.size
-    docs = @coll.find({}, :limit => 2).map{ |x| x }
+    docs = @coll.find({}, :limit => 2).to_a
     assert_equal 2, docs.size
-    docs = @coll.find({}, :limit => 3).map{ |x| x }
+    docs = @coll.find({}, :limit => 3).to_a
     assert_equal 3, docs.size
-    docs = @coll.find({}, :limit => 4).map{ |x| x }
+    docs = @coll.find({}, :limit => 4).to_a
     assert_equal 4, docs.size
-    docs = @coll.find({}).map{ |x| x }
+    docs = @coll.find({}).to_a
     assert_equal 4, docs.size
-    docs = @coll.find({}, :limit => 99).map{ |x| x }
+    docs = @coll.find({}, :limit => 99).to_a
     assert_equal 4, docs.size
   end
 
@@ -230,7 +230,7 @@ class DBAPITest < Test::Unit::TestCase
 
   def test_collections_info
     cursor = @db.collections_info
-    rows = cursor.map{ |x| x }
+    rows = cursor.to_a
     assert rows.length >= 1
     row = rows.detect { |r| r['name'] == @coll_full_name }
     assert_not_nil row
@@ -269,7 +269,7 @@ class DBAPITest < Test::Unit::TestCase
 
   def test_array
     @coll << {'b' => [1, 2, 3]}
-    rows = @coll.find({}, {:fields => ['b']}).map{ |x| x }
+    rows = @coll.find({}, {:fields => ['b']}).to_a
     assert_equal 1, rows.length
     assert_equal [1, 2, 3], rows[0]['b']
   end
@@ -277,7 +277,7 @@ class DBAPITest < Test::Unit::TestCase
   def test_regex
     regex = /foobar/i
     @coll << {'b' => regex}
-    rows = @coll.find({}, {:fields => ['b']}).map{ |x| x }
+    rows = @coll.find({}, {:fields => ['b']}).to_a
     assert_equal 1, rows.length
     assert_equal regex, rows[0]['b']
   end
@@ -322,6 +322,21 @@ class DBAPITest < Test::Unit::TestCase
       @db.strict = false
       @db.drop_collection('foobar')
     end
+  end
+
+  def test_to_a
+    cursor = @coll.find()
+    rows = cursor.to_a
+
+    # Make sure we get back exactly the same array the next time we ask
+    rows2 = cursor.to_a
+    assert_same rows, rows2
+
+    # Make sure we can still iterate after calling to_a
+    rows_with_each = cursor.collect{|row| row}
+    assert_equal rows, rows_with_each
+
+    # Make sure we can iterate more than once after calling to_a
   end
 
   def test_ismaster
