@@ -43,7 +43,11 @@ module XGen
         def find(selector={}, options={})
           fields = options.delete(:fields)
           fields = nil if fields && fields.empty?
-          @db.query(@name, Query.new(selector, fields, options[:offset] || 0, options[:limit] || 0, options[:sort]))
+          offset = options.delete(:offset) || 0
+          limit = options.delete(:limit) || 0
+          sort = options.delete(:sort)
+          raise RuntimeError, "Unknown options [#{options.inspect}]" unless options.empty?
+          @db.query(@name, Query.new(selector, fields, offset, limit, sort))
         end
 
         # Insert +objects+, which are hashes.
