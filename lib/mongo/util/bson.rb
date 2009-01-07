@@ -82,6 +82,7 @@ class BSON
       when NULL
         serialize_null_element(@buf, k)
       when BINARY, UNDEFINED, REF, SYMBOL, CODE_W_SCOPE
+        # TODO
         raise "unimplemented type #{type}"
       else
         raise "unhandled type #{type}"
@@ -132,6 +133,9 @@ class BSON
       when NULL
         key = deserialize_element_name(@buf)
         doc[key] = nil
+      when BINARY, UNDEFINED, REF, SYMBOL, CODE_W_SCOPE
+        # TODO
+        raise "unimplemented type #{type}"
       when EOO
         break
       else
