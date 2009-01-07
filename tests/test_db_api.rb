@@ -339,6 +339,17 @@ class DBAPITest < Test::Unit::TestCase
     # Make sure we can iterate more than once after calling to_a
   end
 
+  def test_to_a_after_each
+    cursor = @coll.find
+    cursor.each { |row| row }
+    begin
+      cursor.to_a
+      fail "expected \"can't call\" error"
+    rescue => ex
+      assert_equal "can't call Cursor#to_a after calling Cursor#each", ex.to_s
+    end
+  end
+
   def test_ismaster
     assert @db.master?
   end

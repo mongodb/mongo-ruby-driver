@@ -33,6 +33,7 @@ module XGen
           @db, @collection, @num_to_return = db, collection, num_to_return
           @cache = []
           @closed = false
+          @can_call_to_a = true
           read_all
         end
 
@@ -57,6 +58,11 @@ module XGen
         # If #to_a has already been called then this method uses the array
         # that we store internally. In that case, #each can be called multiple
         # times because it re-uses that array.
+        #
+        # You can call #each after calling #to_a (multiple times even, because
+        # it will use the internally-stored array), but you can't call #to_a
+        # after calling #each unless you also called it before calling #each.
+        # If you try to do that, an error will be raised.
         def each
           if @rows              # Already turned into an array
             @rows.each { |row| yield row }
@@ -66,17 +72,25 @@ module XGen
               yield next_object()
               num_returned += 1
             end
+            @can_call_to_a = false
           end
         end
 
-        # Return all of the rows as an array. Calling this multiple times will
-        # work fine; it always returns the same array.
+        # Return all of the rows (up to the +num_to_return+ value specified in
+        # #new) as an array. Calling this multiple times will work fine; it
+        # always returns the same array.
+        #
+        # Don't use this if you're expecting large amounts of data, of course.
+        # All of the returned rows are kept in an array stored in this object
+        # so it can be reused.
         #
         # You can call #each after calling #to_a (multiple times even, because
         # it will use the internally-stored array), but you can't call #to_a
-        # after calling #ach.
+        # after calling #each unless you also called it before calling #each.
+        # If you try to do that, an error will be raised.
         def to_a
           return @rows if @rows
+          raise "can't call Cursor#to_a after calling Cursor#each" unless @can_call_to_a
           @rows = []
           num_returned = 0
           while more? && (@num_to_return <= 0 || num_returned < @num_to_return)
