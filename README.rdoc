@@ -57,13 +57,9 @@ See the git log comments.
 * Tests that prove that this driver's ObjectID and Geir's Java version do the
   same thing. (I've done so manually.)
 
-* Capped collection support.
-
 * Support more types: REF, SYMBOL, CODE_W_SCOPE, etc.
 
 * Introduce optional per-database and per-collection PKInjector.
-
-* Synchronization.
 
 * More tests.
 
