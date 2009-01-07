@@ -53,4 +53,8 @@ class AdminTest < Test::Unit::TestCase
     @admin.profiling_level = :off
   end
 
+  def test_validate_collection
+    assert @admin.validate_collection(@coll.name)
+  end
+
 end
