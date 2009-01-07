@@ -157,7 +157,8 @@ class BSON
   end
 
   def deserialize_date_data(buf)
-    Time.at(buf.get_long)
+    millisecs = buf.get_long()
+    Time.at(millisecs.to_f / 1000.0) # at() takes fractional seconds
   end
 
   def deserialize_boolean_data(buf)
@@ -223,7 +224,8 @@ class BSON
   def serialize_date_element(buf, key, val)
     buf.put(DATE)
     self.class.serialize_cstr(buf, key)
-    buf.put_long(val.to_i)
+    millisecs = (val.to_f * 1000).to_i
+    buf.put_long(millisecs)
   end
 
   def serialize_number_element(buf, key, val, type)
