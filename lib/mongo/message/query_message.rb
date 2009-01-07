@@ -15,25 +15,20 @@ module XGen
           write_int(query.number_to_skip)
           write_int(query.number_to_return)
           sel = query.selector
-          if query.order_by
+          if query.order_by && query.order_by.length > 0
             sel = OrderedHash.new
             sel['query'] = query.selector
             sel['orderby'] = case query.order_by
+                             when String
+                               {query.order_by => 1}
                              when Array
-                               if query.order_by.empty? # Empty array of order_by values 
-                                []
-                               else
-                                 case query.order_by[0]
-                                 when Hash # Array of hashes
-                                   query.order_by
-                                 else      # ['a', 'b']
-                                   query.order_by.collect { |v| {v => 1} } # Assume ascending order for all values
-                                 end
-                               end
+                               h = OrderedHash.new
+                               query.order_by.each { |ob| h[ob] = 1 }
+                               h
                              when Hash # Should be an ordered hash, but this message doesn't care
-                               a = []
-                               query.order_by.each { |k,v| a << {k => v }}
-                               a
+                               query.order_by
+                             else
+                               raise "illegal order_by: is a #{query.order_by.class.name}, must be String, Array, Hash, or OrderedHash"
                              end
                                
           end
