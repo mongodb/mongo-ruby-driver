@@ -29,14 +29,16 @@ module XGen
 
         RESPONSE_HEADER_SIZE = 20
 
-        def initialize(db, collection)
-          @db, @collection = db, collection
+        def initialize(db, collection, num_to_return=0)
+          @db, @collection, @num_to_return = db, collection, num_to_return
+          @objects_returned = 0
           @objects = []
           @closed = false
           read_all
         end
 
-        # Return +true+ if there are more records to retrieve.
+        # Return +true+ if there are more records to retrieve. We do not check
+        # @num_to_return; #each is responsible for doing that.
         def more?
           num_remaining > 0
         end
@@ -49,10 +51,14 @@ module XGen
           o
         end
 
-        # Iterate over each object, yielding it to the given block.
+        # Iterate over each object, yielding it to the given block. At most
+        # @num_to_return records are returned (or all of them, if
+        # @num_to_return is 0).
         def each
-          while more?
+          num_returned = 0
+          while more? && (@num_to_return <= 0 || num_returned < @num_to_return)
             yield next_object()
+            num_returned += 1
           end
         end
 

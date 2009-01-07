@@ -27,20 +27,21 @@ module XGen
       class Query
 
         attr_accessor :number_to_skip, :number_to_return, :order_by
-        attr_reader :selector, :fields # writers defined below
+        attr_reader :selector   # writer defined below
 
         # sel :: A hash describing the query. See the Mongo docs for details.
         #
-        # return_fields :: If not +nil+, an array of field names. Only those
-        #                  fields will be returned. (Called :fields in calls
-        #                  to Collection#find.)
+        # return_fields :: If not +nil+, a single field name or an array of
+        #                  field names. Only those fields will be returned.
+        #                  (Called :fields in calls to Collection#find.)
         #
         # number_to_skip :: Number of records to skip before returning
         #                   records. (Called :offset in calls to
-        #                   Collection#find.)
+        #                   Collection#find.) Default is 0.
         #
         # number_to_return :: Max number of records to return. (Called :limit
-        #                     in calls to Collection#find.)
+        #                     in calls to Collection#find.) Default is 0 (all
+        #                     records).
         #
         # order_by :: If not +nil+, specifies record sort order. May be either
         #             a hash or an array. If an array, it should be an array
@@ -76,6 +77,23 @@ module XGen
         def fields=(val)
           @fields = val
           @fields = nil if @fields && @fields.empty?
+        end
+
+        def fields
+          case @fields
+          when String
+            {@fields => 1}
+          when Array
+            if @fields.length == 0
+              nil
+            else
+              h = {}
+              @fields.each { |field| h[field] = 1 }
+              h
+            end
+          else                  # nil, anything else
+            nil
+          end
         end
       end
     end

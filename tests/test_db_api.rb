@@ -183,6 +183,8 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 4, docs.size
     docs = @coll.find({}).map{ |x| x }
     assert_equal 4, docs.size
+    docs = @coll.find({}, :limit => 99).map{ |x| x }
+    assert_equal 4, docs.size
   end
 
   def test_close

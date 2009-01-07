@@ -54,6 +54,9 @@ type
 
 = To Do
 
+* Only update message sizes once, not after every write of a value. This will
+  require an explicit call to update_message_length in each message subclass.
+
 * Tests for update and repsert.
 
 * Add a way to specify a collection of databases on startup (a simple array of

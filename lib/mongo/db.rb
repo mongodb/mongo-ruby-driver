@@ -163,7 +163,7 @@ module XGen
         def query(collection_name, query)
           # TODO synchronize
           send_to_db(QueryMessage.new(@name, collection_name, query))
-          return Cursor.new(self, collection_name)
+          return Cursor.new(self, collection_name, query.number_to_return)
         end
 
         # Remove the records that match +selector+ from +collection_name+.
