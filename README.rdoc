@@ -65,7 +65,7 @@ See the git log comments.
 
 * More tests.
 
-* Implement Admin.
+* Implement the rest of the Admin interface.
 
 * Study src/main/ed/db/{dbcollection,dbcursor,db}.js and ByteEncoder.java in
   the Babble code. That's what I should be writing to.

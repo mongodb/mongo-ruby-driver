@@ -21,6 +21,7 @@ require 'mongo/collection'
 require 'mongo/message'
 require 'mongo/query'
 require 'mongo/util/ordered_hash.rb'
+require 'mongo/admin'
 
 module XGen
   module Mongo
@@ -116,8 +117,6 @@ module XGen
         end
 
         def admin
-          # TODO
-          raise "not implemented"
           Admin.new(self)
         end
 
@@ -278,8 +277,6 @@ module XGen
           "#{@name}.#{collection_name}"
         end
 
-        protected
-
         # Return +true+ if +doc+ contains an 'ok' field with the value 1.
         def ok?(doc)
           ok = doc['ok']
@@ -289,6 +286,8 @@ module XGen
         # DB commands need to be ordered, so selector must be an OrderedHash
         # (or a Hash with only one element). What DB commands really need is
         # that the "command" key be first.
+        #
+        # Do not call this. Intended for driver use only.
         def db_command(selector)
           if !selector.kind_of?(OrderedHash)
             if !selector.kind_of?(Hash) || selector.keys.length > 1
