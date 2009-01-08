@@ -34,9 +34,20 @@ class OrderedHash < Hash
     @ordered_keys.each { |k| yield k, self[k] }
   end
 
+  def values
+    collect { |k, v| v }
+  end
+
   def merge(other)
+    oh = self.dup
+    oh.merge!(other)
+    oh
+  end
+
+  def merge!(other)
     @ordered_keys ||= []
     @ordered_keys += other.keys # unordered if not an OrderedHash
+    @ordered_keys.uniq!
     super(other)
   end
 
