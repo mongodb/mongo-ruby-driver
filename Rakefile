@@ -4,6 +4,7 @@ require 'fileutils'
 require 'rake'
 require 'rake/testtask'
 require 'rake/gempackagetask'
+require 'rake/contrib/rubyforgepublisher'
 
 GEM = "mongo"
 GEM_VERSION = '0.0.1'
@@ -12,6 +13,7 @@ DESCRIPTION = 'This is a simple pure-Ruby driver for the 10gen Mongo DB. For mor
 AUTHOR = 'Jim Menard'
 EMAIL = 'jimm@io.com'
 HOMEPAGE = 'http://www.mongodb.org'
+RUBYFORGE_USER = 'jimm'
  
 spec = Gem::Specification.new do |s|
   s.name = GEM
@@ -42,8 +44,14 @@ end
 
 desc "Generate documentation"
 task :rdoc do
-  FileUtils.rm_rf('doc')
-  system "rdoc --main README.rdoc --inline-source --quiet README.rdoc `find lib -name '*.rb'`"
+  FileUtils.rm_rf('html')
+  system "rdoc --main README.rdoc --op html --inline-source --quiet README.rdoc `find lib -name '*.rb'`"
+end
+
+desc "Publish documentation to mongo.rubyforge.org"
+task :publish => [:rdoc] do
+  # Assumes docs are in ./html
+  Rake::RubyForgePublisher.new(GEM, RUBYFORGE_USER).upload
 end
 
 namespace :gem do 

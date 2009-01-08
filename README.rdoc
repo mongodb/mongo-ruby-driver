@@ -8,17 +8,33 @@ data saved to the database (especially primary key values). Do *_not_* use
 this for any production data yet.
 
 
+= Installation
+
+Install the "mongo" gem by typing
+
+  $ sudo gem install mongo
+
+The source code is available at http://github.com/jimm/mongo-ruby-driver. You
+can either clone the git repository or download a tarball or zip file. Once
+you have the source, you can use it from wherever you downloaded it or you can
+install it as a gem from the source by typing
+
+  $ rake gem:install
+
+
 = Demo
 
-Mongo must be running, of course.
+You can see and run the examples if you've downloaded the source. Mongo must
+be running, of course.
 
   $ ruby examples/simple.rb
 
-See also the test code, especially
-http://github.com/jimm/mongo-ruby-driver/tree/master/tests/test_db_api.rb
+See also the test code, especially tests/test_db_api.rb.
 
 
 = Testing
+
+If you have the source code, you can run the tests.
 
   $ rake test
 
@@ -27,12 +43,12 @@ The tests assume that the Mongo database is running on the default port.
 
 = Documentation
 
+This documentation is available online at http://mongo.rubyforge.org. You can
+generate the documentation if you have the source by typing
+
   $ rake rdoc
 
-Then open the file doc/index.html. (I need to figure out where to put this on
-the Web, or perhaps how to publish this to the Wiki at
-http://github.com/jimm/mongo-ruby-driver/wikis automatically. I have applied
-for a RubyForge project, so the docs will eventually go there.)
+Then open the file html/index.html.
 
 
 = Release Notes
@@ -41,8 +57,6 @@ See the git log comments.
 
 
 = To Do
-
-* Add :publish Rake task, once we get a RubyForge project.
 
 * Add group_by. Need to figure out how we are going to send functions. The
   current thinking is that Mongo will allow a subset of JavaScript (which we
@@ -87,8 +101,6 @@ Adrian Madrid, aemadrid@gmail.com
 
 
 = License
-
-== Mongo Ruby Driver
 
 Copyright (C) 2008-2009 10gen Inc.
 
