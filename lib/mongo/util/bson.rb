@@ -17,6 +17,7 @@
 require 'mongo/util/byte_buffer'
 require 'mongo/util/ordered_hash'
 require 'mongo/objectid'
+require 'mongo/dbref'
 
 # A BSON seralizer/deserializer.
 class BSON
@@ -81,7 +82,9 @@ class BSON
         serialize_date_element(@buf, k, v)
       when NULL
         serialize_null_element(@buf, k)
-      when BINARY, UNDEFINED, REF, SYMBOL, CODE_W_SCOPE
+      when REF
+        serialize_dbref_element(@buf, k, v)
+      when BINARY, UNDEFINED, SYMBOL, CODE_W_SCOPE
         # TODO
         raise "unimplemented type #{type}"
       else
@@ -133,7 +136,10 @@ class BSON
       when NULL
         key = deserialize_element_name(@buf)
         doc[key] = nil
-      when BINARY, UNDEFINED, REF, SYMBOL, CODE_W_SCOPE
+      when REF
+        key = deserialize_element_name(@buf)
+        doc[key] = deserialize_dbref_data(@buf)
+      when BINARY, UNDEFINED, SYMBOL, CODE_W_SCOPE
         # TODO
         raise "unimplemented type #{type}"
       when EOO
@@ -210,6 +216,14 @@ class BSON
     XGen::Mongo::Driver::ObjectID.new(buf.get(12))
   end
 
+  def deserialize_dbref_data(buf)
+    ns = deserialize_string_data(buf)
+    oid = deserialize_oid_data(buf)
+    # TODO fix parent, field_name, db of DBRef. Does that need to be done here
+    # or by the caller?
+    XGen::Mongo::Driver::DBRef.new(nil, nil, nil, ns, oid)
+  end
+
   def serialize_eoo_element(buf)
     buf.put(EOO)
   end
@@ -217,6 +231,11 @@ class BSON
   def serialize_null_element(buf, key)
     buf.put(NULL)
     self.class.serialize_cstr(buf, key)
+  end
+
+  def serialize_dbref_element(buf, key, val)
+    serialize_string_element(buf, key, val.namespace, REF)
+    buf.put_array(val.object_id.to_a)
   end
 
   def serialize_boolean_element(buf, key, val)
@@ -325,6 +344,8 @@ class BSON
       REGEX
     when XGen::Mongo::Driver::ObjectID
       OID
+    when XGen::Mongo::Driver::DBRef
+      REF
     when true, false
       BOOLEAN
     when Time

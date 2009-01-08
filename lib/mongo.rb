@@ -1,5 +1,6 @@
 require 'mongo/mongo'
 require 'mongo/objectid'
+require 'mongo/dbref'
 require 'mongo/message'
 require 'mongo/db'
 require 'mongo/cursor'

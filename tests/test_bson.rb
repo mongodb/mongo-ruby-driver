@@ -76,4 +76,14 @@ class BSONTest < Test::Unit::TestCase
 
   def test_null
   end
+
+  def test_dbref
+    oid = ObjectID.new
+    doc = {'dbref' => DBRef.new(nil, nil, nil, 'namespace', oid)}
+    @b.serialize(doc)
+    doc2 = @b.deserialize
+    assert_equal 'namespace', doc2['dbref'].namespace
+    assert_equal oid, doc2['dbref'].object_id
+  end
+
 end
