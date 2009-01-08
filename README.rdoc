@@ -7,6 +7,23 @@ Note: this driver is still alpha quality. The API will change, as *may* the
 data saved to the database (especially primary key values). Do *_not_* use
 this for any production data yet.
 
+Start by reading the XGen::Mongo::Driver::Mongo and XGen::Mongo::Driver::DB
+documentation, then move on to XGen::Mongo::Driver::Collection and
+XGen::Mongo::Driver::Cursor.
+
+A quick code sample:
+
+  require 'mongo'
+
+  include XGen::Mongo::Driver
+
+  db = Mongo.new('localhost').db('sample-db')
+  coll = db.collection('test')
+
+  coll.clear
+  3.times { |i| coll.insert({'a' => i+1}) }
+  puts "There are #{coll.count()} records. Here they are:"
+  coll.find().each { |doc| puts doc.inspect }
 
 = Installation
 
