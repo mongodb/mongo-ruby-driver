@@ -41,6 +41,7 @@ class AdminTest < Test::Unit::TestCase
     # Perform at least one query while profiling so we have something to see.
     @admin.profiling_level = :all
     @coll.find()
+    @admin.profiling_level = :off
 
     info = @admin.profiling_info
     assert_kind_of Array, info
@@ -49,8 +50,6 @@ class AdminTest < Test::Unit::TestCase
     assert_kind_of String, first['info']
     assert_kind_of Time, first['ts']
     assert_kind_of Numeric, first['millis']
-
-    @admin.profiling_level = :off
   end
 
   def test_validate_collection
