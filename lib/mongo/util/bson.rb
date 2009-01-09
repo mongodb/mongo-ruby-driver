@@ -102,7 +102,7 @@ class BSON
     @buf = ByteBuffer.new(buf.to_a) if buf
     @buf.rewind
     @buf.get_int                # eat message size
-    doc = {}
+    doc = OrderedHash.new
     while @buf.more?
       type = @buf.get
       case type
