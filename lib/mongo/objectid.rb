@@ -53,6 +53,18 @@ module XGen
         @@index_time = Time.new.to_i
         @@index = 0
 
+        # Given a string representation of an ObjectID, return a new ObjectID
+        # with that value.
+        def self.from_string(str)
+          data = []
+          i = str.to_i(16)
+          while i > 0
+            data << (i & 0xff)
+            i >>= 8
+          end
+          self.new(data.reverse)
+        end
+
         # +data+ is an array of bytes. If nil, a new id will be generated.
         # The time +t+ is only used for testing; leave it nil.
         def initialize(data=nil, t=nil)

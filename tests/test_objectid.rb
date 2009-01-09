@@ -65,4 +65,12 @@ class ObjectIDTest < Test::Unit::TestCase
     assert_equal @o, row['_id']
   end
 
+  def test_from_string
+    hex_str = @o.to_s
+    o2 = ObjectID.from_string(hex_str)
+    assert_equal hex_str, o2.to_s
+    assert_equal @o, o2
+    assert_equal @o.to_s, o2.to_s
+  end
+
 end
