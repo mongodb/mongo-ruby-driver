@@ -79,4 +79,8 @@ class OrderedHashTest < Test::Unit::TestCase
     assert_equal ['crab', 'apple', 3, 'foo'], @oh.values
   end
 
+  def test_inspect_retains_order
+    assert_equal '{"c"=>1, "a"=>2, "z"=>3}', @oh.inspect
+  end
+
 end
