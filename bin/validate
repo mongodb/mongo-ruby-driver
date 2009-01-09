@@ -1,7 +1,10 @@
 #!/usr/bin/env ruby
 #
-# Reads a .xson file (XML that describes a Mongo-type document) from stdin and
-# writes the corresponding BSON to stdout.
+# usage: validate somefile.xson somefile.bson
+#
+# Reads somefile.xson file (XML that describes a Mongo-type document),
+# converts it into a Ruby OrderedHash, runs that through the BSON
+# serialization code, and writes the BSON bytes to somefile.bson.
 #
 # This script is used by the mongo-qa project
 # (http://github.com/mongodb/mongo-qa).
@@ -10,6 +13,7 @@ $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 require 'mongo/util/xml_to_ruby'
 
-obj = XMLToRuby.new.xml_to_ruby($stdin)
+obj = nil
+File.open(ARGV[0], 'r') { |f| obj = XMLToRuby.new.xml_to_ruby(f) }
 bson = BSON.new.serialize(obj).to_a
-bson.each { |b| putc(b) }
+File.open(ARGV[1], 'wb') { |f| bson.each { |b| f.putc(b) } }
