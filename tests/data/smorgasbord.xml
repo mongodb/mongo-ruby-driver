@@ -1,7 +1,7 @@
 <twonk>
 <meta/>
 <doc>
-  <oid name="_id">4ea067497065180748000000</oid>
+  <oid name="_id">33dc67499236d9a01a000000</oid>
   <int name="an_int">42</int>
   <string name="a_string">foo</string>
   <boolean name="truthiness">true</boolean>
@@ -17,7 +17,7 @@
   <date name="now">1231515664416</date>
   <ref name="dbref">
     <ns>namespace</ns>
-    <oid>4ea067497065180748010000</oid>
+    <oid>33dc67499236d9a01a010000</oid>
   </ref>
   <regex name="regex">
     <pattern>foobar</pattern>
@@ -25,5 +25,6 @@
   </regex>
   <null name="a_null_value"></null>
   <code name="$where">this is code</code>
+  <symbol name="a_symbol">symbol_value</symbol>
 </doc>
 </twonk>

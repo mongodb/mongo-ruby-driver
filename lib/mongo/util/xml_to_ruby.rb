@@ -44,6 +44,8 @@ class XMLToRuby
       e.text.to_f
     when 'string', 'code'
       e.text.to_s
+    when 'symbol'
+      e.text.to_s.intern
     when 'boolean'
       e.text.to_s == 'true'
     when 'array'
