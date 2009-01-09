@@ -8,6 +8,9 @@ class BSONTest < Test::Unit::TestCase
   include XGen::Mongo::Driver
 
   def setup
+    # We don't pass a DB to the constructor, even though we are about to test
+    # deserialization. This means that when we deserialize, any DBRefs will
+    # have nil @db ivars. That's fine for now.
     @b = BSON.new
   end
 
@@ -79,7 +82,8 @@ class BSONTest < Test::Unit::TestCase
 
   def test_dbref
     oid = ObjectID.new
-    doc = {'dbref' => DBRef.new(nil, nil, nil, 'namespace', oid)}
+    doc = {}
+    doc['dbref'] = DBRef.new(doc, 'dbref', nil, 'namespace', oid)
     @b.serialize(doc)
     doc2 = @b.deserialize
     assert_equal 'namespace', doc2['dbref'].namespace

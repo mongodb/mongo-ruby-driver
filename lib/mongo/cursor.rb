@@ -167,7 +167,7 @@ module XGen
           buf.put_array(@db.socket.recv(size-4).unpack("C*"), 4)
           @n_remaining -= 1
           buf.rewind
-          BSON.new.deserialize(buf)
+          BSON.new(@db).deserialize(buf)
         end
 
         def to_s

@@ -115,8 +115,11 @@ class RoundTripTest < Test::Unit::TestCase
         assert_equal bson.length, bson_from_ruby.length
         assert_equal bson, bson_from_ruby
 
-        # Turn those BSON bytes back into a Ruby object
-        obj_from_bson = BSON.new.deserialize(ByteBuffer.new(bson_from_ruby))
+        # Turn those BSON bytes back into a Ruby object.
+        #
+        # We're passing a nil db to the contructor here, but that's OK because
+        # the BSON bytes don't contain the db object in any case.
+        obj_from_bson = BSON.new(nil).deserialize(ByteBuffer.new(bson_from_ruby))
         assert_kind_of OrderedHash, obj_from_bson
 
         # Turn that Ruby object into BSON and compare it to the original BSON

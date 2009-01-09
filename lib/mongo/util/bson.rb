@@ -46,7 +46,9 @@ class BSON
     buf.put_array(val.to_s.unpack("C*") + [0])
   end
 
-  def initialize
+  def initialize(db=nil)
+    # db is only needed during deserialization when the data contains a DBRef
+    @db = db
     @buf = ByteBuffer.new
   end
 
@@ -96,7 +98,7 @@ class BSON
     self
   end
 
-  def deserialize(buf=nil)
+  def deserialize(buf=nil, parent=nil)
     # If buf is nil, use @buf, assumed to contain already-serialized BSON.
     # This is only true during testing.
     @buf = ByteBuffer.new(buf.to_a) if buf
@@ -120,13 +122,13 @@ class BSON
         doc[key] = deserialize_oid_data(@buf)
       when ARRAY
         key = deserialize_cstr(@buf)
-        doc[key] = deserialize_array_data(@buf)
+        doc[key] = deserialize_array_data(@buf, doc)
       when REGEX
         key = deserialize_cstr(@buf)
         doc[key] = deserialize_regex_data(@buf)
       when OBJECT
         key = deserialize_cstr(@buf)
-        doc[key] = deserialize_object_data(@buf)
+        doc[key] = deserialize_object_data(@buf, doc)
       when BOOLEAN
         key = deserialize_cstr(@buf)
         doc[key] = deserialize_boolean_data(@buf)
@@ -138,7 +140,7 @@ class BSON
         doc[key] = nil
       when REF
         key = deserialize_cstr(@buf)
-        doc[key] = deserialize_dbref_data(@buf)
+        doc[key] = deserialize_dbref_data(@buf, key, parent)
       when BINARY, SYMBOL, CODE_W_SCOPE
         # TODO
         raise "unimplemented type #{type}"
@@ -183,14 +185,14 @@ class BSON
     buf.get_int
   end
 
-  def deserialize_object_data(buf)
+  def deserialize_object_data(buf, parent)
     size = buf.get_int
     buf.position -= 4
-    BSON.new.deserialize(buf.get(size))
+    BSON.new(@db).deserialize(buf.get(size), parent)
   end
 
-  def deserialize_array_data(buf)
-    h = deserialize_object_data(buf)
+  def deserialize_array_data(buf, parent)
+    h = deserialize_object_data(buf, parent)
     a = []
     h.each { |k, v| a[k.to_i] = v }
     a
@@ -216,12 +218,10 @@ class BSON
     XGen::Mongo::Driver::ObjectID.new(buf.get(12))
   end
 
-  def deserialize_dbref_data(buf)
+  def deserialize_dbref_data(buf, key, parent)
     ns = deserialize_cstr(buf)
     oid = deserialize_oid_data(buf)
-    # TODO fix parent, field_name, db of DBRef. Does that need to be done here
-    # or by the caller?
-    XGen::Mongo::Driver::DBRef.new(nil, nil, nil, ns, oid)
+    XGen::Mongo::Driver::DBRef.new(parent, key, @db, ns, oid)
   end
 
   def serialize_eoo_element(buf)
