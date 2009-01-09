@@ -1,0 +1,29 @@
+<twonk>
+<meta/>
+<doc>
+  <oid name="_id">4ea067497065180748000000</oid>
+  <int name="an_int">42</int>
+  <string name="a_string">foo</string>
+  <boolean name="truthiness">true</boolean>
+  <number name="a_float">42.12345</number>
+  <array name="an_array">
+    <string name="0">x</string>
+    <string name="1">y</string>
+    <string name="2">z</string>
+    <doc name="3">
+      <string name="subobject">yup</string>
+    </doc>
+  </array>
+  <date name="now">1231515664416</date>
+  <ref name="dbref">
+    <ns>namespace</ns>
+    <oid>4ea067497065180748010000</oid>
+  </ref>
+  <regex name="regex">
+    <pattern>foobar</pattern>
+    <options></options>
+  </regex>
+  <null name="a_null_value"></null>
+  <code name="$where">this is code</code>
+</doc>
+</twonk>
