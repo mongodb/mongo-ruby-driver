@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+#
+# Reads a .xson file (XML that describes a Mongo-type document) from stdin and
+# writes the corresponding BSON to stdout.
+#
+# This script is used by the mongo-qa project
+# (http://github.com/mongodb/mongo-qa).
+
+$LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
+require 'mongo'
+require 'mongo/util/xml_to_ruby'
+
+obj = XMLToRuby.new.xml_to_ruby($stdin)
+bson = BSON.new.serialize(obj).to_a
+bson.each { |b| putc(b) }
