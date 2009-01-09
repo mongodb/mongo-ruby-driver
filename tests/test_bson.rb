@@ -90,4 +90,11 @@ class BSONTest < Test::Unit::TestCase
     assert_equal oid, doc2['dbref'].object_id
   end
 
+  def test_symbol
+    doc = {'sym' => :foo}
+    @b.serialize(doc)
+    doc2 = @b.deserialize
+    assert_equal :foo, doc2['sym']
+  end
+
 end

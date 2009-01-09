@@ -86,7 +86,9 @@ class BSON
         serialize_null_element(@buf, k)
       when REF
         serialize_dbref_element(@buf, k, v)
-      when BINARY, UNDEFINED, SYMBOL, CODE_W_SCOPE
+      when SYMBOL
+        serialize_symbol_element(@buf, k, v)
+      when BINARY, UNDEFINED, CODE_W_SCOPE
         # TODO
         raise "unimplemented type #{type}"
       else
@@ -141,7 +143,10 @@ class BSON
       when REF
         key = deserialize_cstr(@buf)
         doc[key] = deserialize_dbref_data(@buf, key, parent)
-      when BINARY, SYMBOL, CODE_W_SCOPE
+      when SYMBOL
+        key = deserialize_cstr(@buf)
+        doc[key] = deserialize_symbol_data(@buf, key)
+      when BINARY, CODE_W_SCOPE
         # TODO
         raise "unimplemented type #{type}"
       when EOO
@@ -224,6 +229,10 @@ class BSON
     XGen::Mongo::Driver::DBRef.new(parent, key, @db, ns, oid)
   end
 
+  def deserialize_symbol_data(buf, key)
+    deserialize_cstr(buf).intern
+  end
+
   def serialize_eoo_element(buf)
     buf.put(EOO)
   end
@@ -238,6 +247,12 @@ class BSON
     self.class.serialize_cstr(buf, key)
     self.class.serialize_cstr(buf, val.namespace)
     buf.put_array(val.object_id.to_a)
+  end
+
+  def serialize_symbol_element(buf, key, val)
+    buf.put(SYMBOL)
+    self.class.serialize_cstr(buf, key)
+    self.class.serialize_cstr(buf, val)
   end
 
   def serialize_boolean_element(buf, key, val)
@@ -354,6 +369,8 @@ class BSON
       DATE
     when Hash
       OBJECT
+    when Symbol
+      SYMBOL
     else
       raise "Unknown type of object: #{o.class.name}"
     end
