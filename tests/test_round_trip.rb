@@ -110,7 +110,7 @@ class RoundTripTest < Test::Unit::TestCase
         # Read the BSON from the file
         bson = f.read
         bson = if RUBY_VERSION >= '1.9'
-                 bson.bytes
+                 bson.bytes.to_a
                else
                  bson.split(//).collect { |c| c[0] }
                end
