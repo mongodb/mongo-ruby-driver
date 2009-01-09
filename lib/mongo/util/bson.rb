@@ -133,13 +133,13 @@ class BSON
       when DATE
         key = deserialize_cstr(@buf)
         doc[key] = deserialize_date_data(@buf)
-      when NULL
+      when NULL, UNDEFINED
         key = deserialize_cstr(@buf)
         doc[key] = nil
       when REF
         key = deserialize_cstr(@buf)
         doc[key] = deserialize_dbref_data(@buf)
-      when BINARY, UNDEFINED, SYMBOL, CODE_W_SCOPE
+      when BINARY, SYMBOL, CODE_W_SCOPE
         # TODO
         raise "unimplemented type #{type}"
       when EOO
