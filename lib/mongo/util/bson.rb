@@ -107,37 +107,37 @@ class BSON
       type = @buf.get
       case type
       when STRING, CODE
-        key = deserialize_element_name(@buf)
+        key = deserialize_cstr(@buf)
         doc[key] = deserialize_string_data(@buf)
       when NUMBER
-        key = deserialize_element_name(@buf)
+        key = deserialize_cstr(@buf)
         doc[key] = deserialize_number_data(@buf)
       when NUMBER_INT
-        key = deserialize_element_name(@buf)
+        key = deserialize_cstr(@buf)
         doc[key] = deserialize_number_int_data(@buf)
       when OID
-        key = deserialize_element_name(@buf)
+        key = deserialize_cstr(@buf)
         doc[key] = deserialize_oid_data(@buf)
       when ARRAY
-        key = deserialize_element_name(@buf)
+        key = deserialize_cstr(@buf)
         doc[key] = deserialize_array_data(@buf)
       when REGEX
-        key = deserialize_element_name(@buf)
+        key = deserialize_cstr(@buf)
         doc[key] = deserialize_regex_data(@buf)
       when OBJECT
-        key = deserialize_element_name(@buf)
+        key = deserialize_cstr(@buf)
         doc[key] = deserialize_object_data(@buf)
       when BOOLEAN
-        key = deserialize_element_name(@buf)
+        key = deserialize_cstr(@buf)
         doc[key] = deserialize_boolean_data(@buf)
       when DATE
-        key = deserialize_element_name(@buf)
+        key = deserialize_cstr(@buf)
         doc[key] = deserialize_date_data(@buf)
       when NULL
-        key = deserialize_element_name(@buf)
+        key = deserialize_cstr(@buf)
         doc[key] = nil
       when REF
-        key = deserialize_element_name(@buf)
+        key = deserialize_cstr(@buf)
         doc[key] = deserialize_dbref_data(@buf)
       when BINARY, UNDEFINED, SYMBOL, CODE_W_SCOPE
         # TODO
@@ -197,8 +197,8 @@ class BSON
   end
 
   def deserialize_regex_data(buf)
-    str = deserialize_element_name(buf)
-    options_str = deserialize_element_name(buf)
+    str = deserialize_cstr(buf)
+    options_str = deserialize_cstr(buf)
     options = 0
     options |= Regexp::IGNORECASE if options_str.include?('i')
     options |= Regexp::MULTILINE if options_str.include?('m')
@@ -217,7 +217,7 @@ class BSON
   end
 
   def deserialize_dbref_data(buf)
-    ns = deserialize_string_data(buf)
+    ns = deserialize_cstr(buf)
     oid = deserialize_oid_data(buf)
     # TODO fix parent, field_name, db of DBRef. Does that need to be done here
     # or by the caller?
@@ -234,7 +234,9 @@ class BSON
   end
 
   def serialize_dbref_element(buf, key, val)
-    serialize_string_element(buf, key, val.namespace, REF)
+    buf.put(REF)
+    self.class.serialize_cstr(buf, key)
+    self.class.serialize_cstr(buf, val.namespace)
     buf.put_array(val.object_id.to_a)
   end
 
@@ -317,7 +319,7 @@ class BSON
     buf.position = end_pos
   end
 
-  def deserialize_element_name(buf)
+  def deserialize_cstr(buf)
     chars = ""
     while 1
       b = buf.get
