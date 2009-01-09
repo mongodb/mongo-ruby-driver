@@ -90,12 +90,6 @@ class RoundTripTest < Test::Unit::TestCase
     DBRef.new(nil, nil, nil, ns, ObjectID.from_string(oid_str))
   end
 
-# DEBUG
-#   def test_foo
-#     $stderr.puts "#{@@ruby['smorgasbord'].class.name}" # DEBUG
-#     $stderr.puts "@@ruby['smorgasbord'] = #{@@ruby['smorgasbord'].inspect.gsub(/, /, ",\n")}" # DEBUG
-#   end
-
   # Round-trip comparisons of Ruby-to-BSON and back.
   # * Take the objects that were read from XML
   # * Turn them into BSON bytes
