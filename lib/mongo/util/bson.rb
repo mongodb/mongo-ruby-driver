@@ -240,7 +240,11 @@ class BSON
   end
 
   def deserialize_binary_data(buf, key)
-    Base64.decode64(deserialize_cstr(buf))
+    len = buf.get_int
+    bytes = buf.get(len)
+    str = ''
+    bytes.each { |c| str << c.chr }
+    str
   end
 
   def serialize_eoo_element(buf)
@@ -268,7 +272,15 @@ class BSON
   def serialize_binary_element(buf, key, val)
     buf.put(BINARY)
     self.class.serialize_cstr(buf, key)
-    self.class.serialize_cstr(buf, Base64.encode64(val))
+    buf.put(val.length)
+    bytes = if RUBY_VERSION >= '1.9'
+              val.bytes.to_a
+            else
+              a = []
+              val.each_byte { |byte| a << byte }
+              a
+            end
+    buf.put_array(bytes)
   end
 
   def serialize_boolean_element(buf, key, val)
