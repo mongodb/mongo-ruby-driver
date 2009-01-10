@@ -1,0 +1,33 @@
+<twonk>
+<meta/>
+<doc>
+  <regex name="simple">
+    <pattern>foobar</pattern>
+    <options/>
+  </regex>
+  <regex name="ignore_case">
+    <pattern>foobar</pattern>
+    <options>i</options>
+  </regex>
+  <regex name="extended">
+    <pattern>foobar</pattern>
+    <options>x</options>
+  </regex>
+  <regex name="multiline">
+    <pattern>foobar</pattern>
+    <options>m</options>
+  </regex>
+  <regex name="all">
+    <pattern>foobar</pattern>
+    <options>imx</options>
+  </regex>
+  <regex name="all_different_order">
+    <pattern>foobar</pattern>
+    <options>imx</options>
+  </regex>
+  <regex name="interesting">
+    <pattern>(\d+)-?\s*[a-z]+</pattern>
+    <options/>
+  </regex>
+</doc>
+</twonk>

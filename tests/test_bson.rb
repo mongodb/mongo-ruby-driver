@@ -97,4 +97,14 @@ class BSONTest < Test::Unit::TestCase
     assert_equal :foo, doc2['sym']
   end
 
+  def test_binary
+    bin = 'binstring'.to_mongo_binary
+    assert_kind_of Binary, bin
+
+    doc = {'bin' => bin}
+    @b.serialize(doc)
+    doc2 = @b.deserialize
+    assert_equal 'binstring', doc2['bin']
+  end
+
 end

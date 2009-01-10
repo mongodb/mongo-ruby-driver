@@ -1,0 +1,13 @@
+<twonk>
+<meta/>
+<doc>
+  <number name="negative_one">-1.0</number>
+  <number name="zero">0.0</number>
+  <number name="one">1.0</number>
+  <number name="the_answer">42.0</number>
+  <number name="more_than_the_answer">42.123</number>
+  <number name="double">2147483647.0</number>
+  <number name="big_double">1099511627775.0</number>
+  <number name="negative_double">-1099511627775.0</number>
+</doc>
+</twonk>

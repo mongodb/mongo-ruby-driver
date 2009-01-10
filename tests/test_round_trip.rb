@@ -46,8 +46,19 @@ class RoundTripTest < Test::Unit::TestCase
         # Turn the Ruby object into BSON bytes and compare with the BSON bytes
         # from the file.
         bson_from_ruby = BSON.new.serialize(obj).to_a
-        assert_equal bson.length, bson_from_ruby.length
-        assert_equal bson, bson_from_ruby
+
+#         # DEBUG
+#         File.open(File.join(HERE, 'data', "#{name}_out.bson"), 'wb') { |f|
+#           bson_from_ruby.each { |b| f.putc(b) }
+#         }
+
+        begin
+          assert_equal bson.length, bson_from_ruby.length
+          assert_equal bson, bson_from_ruby
+        rescue => ex
+          $stderr.puts "failure while round-tripping #{name}" # DEBUG
+          raise ex
+        end
 
         # Turn those BSON bytes back into a Ruby object.
         #

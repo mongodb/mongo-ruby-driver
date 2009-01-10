@@ -1,0 +1,25 @@
+<twonk>
+<meta/>
+<doc>
+  <array name="empty">
+  </array>
+  <array name="simple">
+    <int name="0">1</int>
+    <int name="1">2</int>
+    <int name="2">3</int>
+  </array>
+  <array name="mixed">
+    <string name="0">a</string>
+    <date name="1">1231515664416</date>
+    <int name="2">42</int>
+  </array>
+  <array name="subobject">
+    <string name="0">x</string>
+    <string name="1">y</string>
+    <string name="2">z</string>
+    <doc name="3">
+      <string name="subobject">yup</string>
+    </doc>
+  </array>
+</doc>
+</twonk>

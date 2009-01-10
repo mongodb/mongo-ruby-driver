@@ -1,0 +1,11 @@
+<twonk>
+<meta/>
+<doc>
+  <int name="negative_one">-1</int>
+  <int name="zero">0</int>
+  <int name="one">1</int>
+  <int name="the_answer">42</int>
+  <int name="long">2147483647</int>
+  <int name="negative_long">-2147483647</int>
+</doc>
+</twonk>

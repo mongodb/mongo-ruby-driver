@@ -1,0 +1,38 @@
+<twonk>
+<meta/>
+<doc>
+  <doc name="empty">
+  </doc>
+  <doc name="simple">
+    <int name="first">1</int>
+    <string name="second">two</string>
+    <array name="third">
+      <int name="0">1</int>
+      <int name="1">2</int>
+      <int name="2">3</int>
+    </array>
+  </doc>
+  <doc name="deep">
+    <doc name="child">
+      <doc name="child">
+        <doc name="child">
+          <doc name="child">
+            <doc name="child">
+              <doc name="child">
+                <doc name="child">
+                  <doc name="child">
+                    <doc name="child">
+                      <doc name="child">
+                      </doc>
+                    </doc>
+                  </doc>
+                </doc>
+              </doc>
+            </doc>
+          </doc>
+        </doc>
+      </doc>
+    </doc>
+  </doc>
+</doc>
+</twonk>

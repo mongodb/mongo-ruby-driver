@@ -44,6 +44,8 @@ class XMLToRuby
       e.text.to_f
     when 'string', 'code'
       e.text.to_s
+    when 'binary'
+      Base64.decode64(e.text.to_s).to_mongo_binary
     when 'symbol'
       e.text.to_s.intern
     when 'boolean'
@@ -54,7 +56,7 @@ class XMLToRuby
       Time.at(e.text.to_f / 1000.0)
     when 'regex'
       regex_to_ruby(e.elements)
-    when 'null'
+    when 'null', 'undefined'
       nil
     when 'doc'
       doc_to_ruby(e)

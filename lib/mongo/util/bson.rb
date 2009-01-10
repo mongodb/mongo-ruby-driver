@@ -14,6 +14,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ++
 
+require 'base64'
 require 'mongo/util/byte_buffer'
 require 'mongo/util/ordered_hash'
 require 'mongo/objectid'
@@ -88,7 +89,9 @@ class BSON
         serialize_dbref_element(@buf, k, v)
       when SYMBOL
         serialize_symbol_element(@buf, k, v)
-      when BINARY, UNDEFINED, CODE_W_SCOPE
+      when BINARY
+        serialize_binary_element(@buf, k, v)
+      when UNDEFINED, CODE_W_SCOPE # UNDEFINED should never happen
         # TODO
         raise "unimplemented type #{type}"
       else
@@ -146,7 +149,10 @@ class BSON
       when SYMBOL
         key = deserialize_cstr(@buf)
         doc[key] = deserialize_symbol_data(@buf, key)
-      when BINARY, CODE_W_SCOPE
+      when BINARY
+        key = deserialize_cstr(@buf)
+        doc[key] = deserialize_binary_data(@buf, key)
+      when CODE_W_SCOPE
         # TODO
         raise "unimplemented type #{type}"
       when EOO
@@ -233,6 +239,10 @@ class BSON
     deserialize_cstr(buf).intern
   end
 
+  def deserialize_binary_data(buf, key)
+    Base64.decode64(deserialize_cstr(buf))
+  end
+
   def serialize_eoo_element(buf)
     buf.put(EOO)
   end
@@ -253,6 +263,12 @@ class BSON
     buf.put(SYMBOL)
     self.class.serialize_cstr(buf, key)
     self.class.serialize_cstr(buf, val)
+  end
+
+  def serialize_binary_element(buf, key, val)
+    buf.put(BINARY)
+    self.class.serialize_cstr(buf, key)
+    self.class.serialize_cstr(buf, Base64.encode64(val))
   end
 
   def serialize_boolean_element(buf, key, val)
@@ -363,6 +379,8 @@ class BSON
       OID
     when XGen::Mongo::Driver::DBRef
       REF
+    when XGen::Mongo::Driver::Binary
+      BINARY
     when true, false
       BOOLEAN
     when Time
