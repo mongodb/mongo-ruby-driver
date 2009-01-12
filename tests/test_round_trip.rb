@@ -83,7 +83,7 @@ class RoundTripTest < Test::Unit::TestCase
         assert_equal bson.length, bson_from_ruby.length
         assert_equal bson, bson_from_ruby
       rescue => ex
-        $stderr.puts "failure while round-tripping #{dir}/#{name}" # DEBUG
+        $stderr.puts "failure while round-tripping (A) #{dir}/#{name}" # DEBUG
         raise ex
       end
 
@@ -102,7 +102,7 @@ class RoundTripTest < Test::Unit::TestCase
         assert_equal bson.length, bson_from_ruby.length
         assert_equal bson, bson_from_ruby
       rescue => ex
-        $stderr.puts "failure while round-tripping #{dir}/#{name}" # DEBUG
+        $stderr.puts "failure while round-tripping (B) #{dir}/#{name}" # DEBUG
         raise ex
       end
     }
