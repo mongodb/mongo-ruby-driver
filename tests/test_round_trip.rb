@@ -90,15 +90,21 @@ class RoundTripTest < Test::Unit::TestCase
       # Turn those BSON bytes back into a Ruby object.
       #
       # We're passing a nil db to the contructor here, but that's OK because
-      # the BSON bytes don't contain the db object in any case.
+      # the BSON DBFef bytes don't contain the db object in any case, and we
+      # don't care what the database is.
       obj_from_bson = BSON.new(nil).deserialize(ByteBuffer.new(bson_from_ruby))
       assert_kind_of OrderedHash, obj_from_bson
 
       # Turn that Ruby object into BSON and compare it to the original BSON
       # bytes.
       bson_from_ruby = BSON.new.serialize(obj_from_bson).to_a
-      assert_equal bson.length, bson_from_ruby.length
-      assert_equal bson, bson_from_ruby
+      begin
+        assert_equal bson.length, bson_from_ruby.length
+        assert_equal bson, bson_from_ruby
+      rescue => ex
+        $stderr.puts "failure while round-tripping #{dir}/#{name}" # DEBUG
+        raise ex
+      end
     }
   end
 
