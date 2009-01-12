@@ -57,10 +57,12 @@ module XGen
         # with that value.
         def self.from_string(str)
           data = []
+          byte = 0
           i = str.to_i(16)
-          while i > 0
+          while byte < 12
             data << (i & 0xff)
             i >>= 8
+            byte += 1
           end
           self.new(data.reverse)
         end
