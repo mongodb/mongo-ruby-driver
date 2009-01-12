@@ -73,4 +73,10 @@ class ObjectIDTest < Test::Unit::TestCase
     assert_equal @o.to_s, o2.to_s
   end
 
+  def test_from_string_leading_zeroes
+    hex_str = '000000000000000000abcdef'
+    o = ObjectID.from_string(hex_str)
+    assert_equal hex_str, o.to_s
+  end
+
 end
