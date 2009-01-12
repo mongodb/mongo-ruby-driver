@@ -17,7 +17,7 @@
 require 'rexml/document'
 require 'mongo'
 
-# Converts a .bson file (an XML file that describes a Mongo-type document) to
+# Converts a .xson file (an XML file that describes a Mongo-type document) to
 # an OrderedHash.
 class XMLToRuby
 

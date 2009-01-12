@@ -3,3 +3,4 @@ t
 pkg
 doc
 *.gemspec
+mongo-qa

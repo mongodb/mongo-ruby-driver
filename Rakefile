@@ -42,6 +42,17 @@ Rake::TestTask.new do |t|
   t.test_files = FileList['tests/test*.rb']
 end
 
+desc "Clone or pull (update) the mongo-qa project used for testing"
+task :mongo_qa do
+  if File.exist?('mongo-qa')
+    Dir.chdir('mongo-qa') do
+      system('git pull')
+    end
+  else
+    system('git clone git://github.com/mongodb/mongo-qa.git')
+  end
+end
+
 desc "Generate documentation"
 task :rdoc do
   FileUtils.rm_rf('html')

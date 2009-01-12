@@ -57,6 +57,20 @@ If you have the source code, you can run the tests.
 
 The tests assume that the Mongo database is running on the default port.
 
+The project mongo-qa (http://github.com/mongodb/mongo-qa) contains many more
+Mongo driver tests that are language independent. To run thoses tests as part
+of the "rake test" task, run
+
+  $ rake mongo_qa
+  $ rake test
+
+The mongo_qa task uses the "git clone" command to make a copy of that project
+in a directory named mongo-qa. If the directory already exists, then the
+mongo_qa task uses "git pull" to updated the code that's there. The Ruby
+driver tests will then use some of the data files from that project when it
+runs BSON tests. You can delete this directory at any time if you don't want
+to run those tests any more.
+
 
 = Documentation
 
