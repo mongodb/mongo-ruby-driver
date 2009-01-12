@@ -273,7 +273,7 @@ class BSON
   def serialize_binary_element(buf, key, val)
     buf.put(BINARY)
     self.class.serialize_cstr(buf, key)
-    buf.put(val.length)
+    buf.put_int(val.length)
     bytes = if RUBY_VERSION >= '1.9'
               val.bytes.to_a
             else
