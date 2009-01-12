@@ -245,7 +245,7 @@ class BSON
     bytes = buf.get(len)
     str = ''
     bytes.each { |c| str << c.chr }
-    str
+    str.to_mongo_binary
   end
 
   def serialize_eoo_element(buf)

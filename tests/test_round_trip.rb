@@ -74,16 +74,14 @@ class RoundTripTest < Test::Unit::TestCase
       # from the file.
       bson_from_ruby = BSON.new.serialize(obj).to_a
 
-#       # DEBUG
-#       File.open(File.join(dir, "#{name}_out.bson"), 'wb') { |f|
-#         bson_from_ruby.each { |b| f.putc(b) }
-#       }
-
       begin
         assert_equal bson.length, bson_from_ruby.length
         assert_equal bson, bson_from_ruby
       rescue => ex
         $stderr.puts "failure while round-tripping (A) #{dir}/#{name}" # DEBUG
+        File.open(File.join(dir, "#{name}_out_a.bson"), 'wb') { |f| # DEBUG
+          bson_from_ruby.each { |b| f.putc(b) }
+        }
         raise ex
       end
 
@@ -103,6 +101,9 @@ class RoundTripTest < Test::Unit::TestCase
         assert_equal bson, bson_from_ruby
       rescue => ex
         $stderr.puts "failure while round-tripping (B) #{dir}/#{name}" # DEBUG
+        File.open(File.join(dir, "#{name}_out_b.bson"), 'wb') { |f| # DEBUG
+          bson_from_ruby.each { |b| f.putc(b) }
+        }
         raise ex
       end
     }
