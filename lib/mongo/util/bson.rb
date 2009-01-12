@@ -149,10 +149,10 @@ class BSON
         doc[key] = deserialize_dbref_data(@buf, key, parent)
       when SYMBOL
         key = deserialize_cstr(@buf)
-        doc[key] = deserialize_symbol_data(@buf, key)
+        doc[key] = deserialize_symbol_data(@buf)
       when BINARY
         key = deserialize_cstr(@buf)
-        doc[key] = deserialize_binary_data(@buf, key)
+        doc[key] = deserialize_binary_data(@buf)
       when CODE_W_SCOPE
         # TODO
         raise "unimplemented type #{type}"
@@ -236,11 +236,11 @@ class BSON
     XGen::Mongo::Driver::DBRef.new(parent, key, @db, ns, oid)
   end
 
-  def deserialize_symbol_data(buf, key)
+  def deserialize_symbol_data(buf)
     deserialize_cstr(buf).intern
   end
 
-  def deserialize_binary_data(buf, key)
+  def deserialize_binary_data(buf)
     len = buf.get_int
     bytes = buf.get(len)
     str = ''
