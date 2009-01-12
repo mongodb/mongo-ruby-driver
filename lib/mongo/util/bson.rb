@@ -91,7 +91,8 @@ class BSON
         serialize_symbol_element(@buf, k, v)
       when BINARY
         serialize_binary_element(@buf, k, v)
-      when UNDEFINED, CODE_W_SCOPE # UNDEFINED should never happen
+      when UNDEFINED, CODE_W_SCOPE
+        # UNDEFINED should never happen because Ruby has no UNDEFINED type
         # TODO
         raise "unimplemented type #{type}"
       else
