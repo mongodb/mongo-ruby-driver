@@ -381,6 +381,8 @@ class BSON
       NUMBER_INT
     when Numeric
       NUMBER
+    when XGen::Mongo::Driver::Binary # must be before String
+      BINARY
     when String
       # magic awful stuff - the DB requires that a where clause is sent as CODE
       key == "$where" ? CODE : STRING
@@ -392,8 +394,6 @@ class BSON
       OID
     when XGen::Mongo::Driver::DBRef
       REF
-    when XGen::Mongo::Driver::Binary
-      BINARY
     when true, false
       BOOLEAN
     when Time
