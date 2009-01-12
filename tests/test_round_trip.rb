@@ -105,7 +105,7 @@ EOS
         assert_equal bson.length, bson_from_ruby.length
         assert_equal bson, bson_from_ruby
       rescue => ex
-#         File.open(File.join(dir, "#{name}_out_b.bson"), 'wb') { |f| DEBUG
+#         File.open(File.join(dir, "#{name}_out_b.bson"), 'wb') { |f| # DEBUG
 #           bson_from_ruby.each { |b| f.putc(b) }
 #         }
         raise ex

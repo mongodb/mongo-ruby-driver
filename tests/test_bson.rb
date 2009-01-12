@@ -107,4 +107,11 @@ class BSONTest < Test::Unit::TestCase
     assert_equal 'binstring', doc2['bin']
   end
 
+  def test_undefined
+    doc = {'undef' => Undefined.new}
+    @b.serialize(doc)
+    doc2 = @b.deserialize
+    assert_kind_of Undefined, doc2['undef']
+  end
+
 end

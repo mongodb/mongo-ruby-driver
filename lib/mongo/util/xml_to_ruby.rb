@@ -56,8 +56,10 @@ class XMLToRuby
       Time.at(e.text.to_f / 1000.0)
     when 'regex'
       regex_to_ruby(e.elements)
-    when 'null', 'undefined'
+    when 'null'
       nil
+    when 'undefined'
+      Undefined.new
     when 'doc'
       doc_to_ruby(e)
     else
