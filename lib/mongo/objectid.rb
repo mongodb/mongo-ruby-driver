@@ -47,6 +47,14 @@ module XGen
         MACHINE = ( val = rand(0x1000000); [val & 0xff, (val >> 8) & 0xff, (val >> 16) & 0xff] )
         PID = ( val = rand(0x10000); [val & 0xff, (val >> 8) & 0xff]; )
 
+        # The string representation of an OID is different than its internal
+        # and BSON byte representations. The BYTE_ORDER here maps
+        # internal/BSON byte position (the index in BYTE_ORDER) to the
+        # position of the two hex characters representing that byte in the
+        # string representation. For example, the 0th BSON byte corresponds to
+        # the (0-based) 7th pair of hex chars in the string.
+        BYTE_ORDER = [7, 6, 5, 4, 3, 2, 1, 0, 11, 10, 9, 8]
+
         LOCK = Object.new
         LOCK.extend Mutex_m
 
@@ -57,14 +65,10 @@ module XGen
         # with that value.
         def self.from_string(str)
           data = []
-          byte = 0
-          i = str.to_i(16)
-          while byte < 12
-            data << (i & 0xff)
-            i >>= 8
-            byte += 1
-          end
-          self.new(data.reverse)
+          BYTE_ORDER.each_with_index { |string_position, data_index|
+            data[data_index] = str[string_position * 2, 2].to_i(16)
+          }
+          self.new(data)
         end
 
         # +data+ is an array of bytes. If nil, a new id will be generated.
@@ -83,7 +87,11 @@ module XGen
         end
 
         def to_s
-          @data.collect { |b| '%02x' % b }.join
+          str = ' ' * 24
+          BYTE_ORDER.each_with_index { |string_position, data_index|
+            str[string_position * 2, 2] = '%02x' % @data[data_index]
+          }
+          str
         end
 
         # (Would normally be private, but isn't so we can test it.)

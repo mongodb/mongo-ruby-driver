@@ -79,4 +79,10 @@ class ObjectIDTest < Test::Unit::TestCase
     assert_equal hex_str, o.to_s
   end
 
+  def test_byte_order
+    hex_str = '000102030405060708090A0B'
+    o = ObjectID.from_string(hex_str)
+    assert_equal [0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00, 0x0b, 0x0a, 0x09, 0x08], o.to_a
+  end
+
 end
