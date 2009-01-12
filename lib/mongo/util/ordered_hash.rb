@@ -15,7 +15,13 @@
 # ++
 
 # A hash in which the order of keys are preserved.
+#
+# Under Ruby 1.9 and greater, this class has no added methods because Ruby's
+# Hash already keeps its keys ordered by order of insertion.
 class OrderedHash < Hash
+
+  # We only need the body of this class if the RUBY_VERSION is before 1.9
+  if RUBY_VERSION < '1.9'
 
   attr_accessor :ordered_keys
 
@@ -56,5 +62,7 @@ class OrderedHash < Hash
     str << (@ordered_keys || []).collect { |k| "\"#{k}\"=>#{self.[](k).inspect}" }.join(", ")
     str << '}'
   end
+
+  end                           # Ruby before 1.9
 
 end
