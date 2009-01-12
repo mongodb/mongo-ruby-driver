@@ -71,6 +71,9 @@ driver tests will then use some of the data files from that project when it
 runs BSON tests. You can delete this directory at any time if you don't want
 to run those tests any more.
 
+Additionally, the script bin/validate is used by the mongo-qa project's
+validator script.
+
 
 = Documentation
 
