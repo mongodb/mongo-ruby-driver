@@ -13,7 +13,6 @@ $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 require 'mongo/util/xml_to_ruby'
 
-obj = nil
-File.open(ARGV[0], 'r') { |f| obj = XMLToRuby.new.xml_to_ruby(f) }
+obj = File.open(ARGV[0], 'r') { |f| XMLToRuby.new.xml_to_ruby(f) }
 bson = BSON.new.serialize(obj).to_a
 File.open(ARGV[1], 'wb') { |f| bson.each { |b| f.putc(b) } }
