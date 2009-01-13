@@ -22,6 +22,10 @@ module XGen
       # regexes may contain option characters beyond 'i', 'm', and 'x'. (Note
       # that Mongo only uses those three, but that regexes coming from other
       # languages may store different option characters.)
+      #
+      # Note that you do not have to use this class at all if you wish to
+      # store regular expressions in Mongo. The Mongo and Ruby regex option
+      # flags are the same. Storing regexes is discouraged, in any case.
       class RegexpOfHolding < Regexp
 
         attr_accessor :extra_options_str
