@@ -17,8 +17,11 @@
 require 'base64'
 require 'mongo/util/byte_buffer'
 require 'mongo/util/ordered_hash'
-require 'mongo/objectid'
-require 'mongo/dbref'
+require 'mongo/types/binary'
+require 'mongo/types/dbref'
+require 'mongo/types/objectid'
+require 'mongo/types/regexp_of_holding'
+require 'mongo/types/undefined'
 
 # A BSON seralizer/deserializer.
 class BSON

@@ -1,8 +1,8 @@
-require 'mongo/objectid'
-require 'mongo/dbref'
-require 'mongo/binary'
-require 'mongo/regexp_of_holding'
-require 'mongo/undefined'
+require 'mongo/types/binary'
+require 'mongo/types/dbref'
+require 'mongo/types/objectid'
+require 'mongo/types/regexp_of_holding'
+require 'mongo/types/undefined'
 
 require 'mongo/mongo'
 require 'mongo/message'
