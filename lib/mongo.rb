@@ -1,8 +1,10 @@
-require 'mongo/mongo'
 require 'mongo/objectid'
 require 'mongo/dbref'
 require 'mongo/binary'
+require 'mongo/regexp_of_holding'
 require 'mongo/undefined'
+
+require 'mongo/mongo'
 require 'mongo/message'
 require 'mongo/db'
 require 'mongo/cursor'

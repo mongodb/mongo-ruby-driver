@@ -59,7 +59,26 @@ class BSONTest < Test::Unit::TestCase
   def test_regex
     doc = {'doc' => /foobar/i}
     @b.serialize(doc)
-    assert_equal doc, @b.deserialize
+    doc2 = @b.deserialize
+    assert_equal doc, doc2
+
+    r = doc2['doc']
+    assert_kind_of XGen::Mongo::Driver::RegexpOfHolding, r
+    assert_equal '', r.extra_options_str
+
+    r.extra_options_str << 'zywcab'
+    assert_equal 'zywcab', r.extra_options_str
+
+    b = BSON.new
+    doc = {'doc' => r}
+    b.serialize(doc)
+    doc2 = nil
+    doc2 = b.deserialize
+    assert_equal doc, doc2
+
+    r = doc2['doc']
+    assert_kind_of XGen::Mongo::Driver::RegexpOfHolding, r
+    assert_equal 'abcwyz', r.extra_options_str # must be sorted
   end
 
   def test_boolean

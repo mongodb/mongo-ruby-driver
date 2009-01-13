@@ -221,7 +221,8 @@ class BSON
     options |= Regexp::IGNORECASE if options_str.include?('i')
     options |= Regexp::MULTILINE if options_str.include?('m')
     options |= Regexp::EXTENDED if options_str.include?('x')
-    Regexp.new(str, options)
+    options_str.gsub!(/[imx]/, '') # Now remove the three we understand
+    XGen::Mongo::Driver::RegexpOfHolding.new(str, options, options_str)
   end
 
   def deserialize_string_data(buf)
@@ -342,7 +343,9 @@ class BSON
     options_str << 'i' if ((options & Regexp::IGNORECASE) != 0)
     options_str << 'm' if ((options & Regexp::MULTILINE) != 0)
     options_str << 'x' if ((options & Regexp::EXTENDED) != 0)
-    self.class.serialize_cstr(buf, options_str)
+    options_str << val.extra_options_str if val.respond_to?(:extra_options_str)
+    # Must store option chars in alphabetical order
+    self.class.serialize_cstr(buf, options_str.split(//).sort.uniq.join)
   end
 
   def serialize_oid_element(buf, key, val)
