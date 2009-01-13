@@ -23,14 +23,20 @@ module XGen
       # A named collection of records in a database.
       class Collection
 
-        attr_reader :db, :name
-
-        # A single field name or array of field names. May be +nil+.
-        attr_accessor :hint_fields
+        attr_reader :db, :name, :hint_fields
 
         def initialize(db, name)
           @db = db
           @name = name
+        end
+
+        # Set hint fields to use and return +self+. hint_fields may be a
+        # single field name or array of field names. May be +nil+. If no hint
+        # fields are specified, the ones in the collection are used if they
+        # exist.
+        def hint(hint_fields)
+          @hint_fileds = hint_fileds
+          self
         end
 
         # Return records that match a +selector+ hash. See Mongo docs for

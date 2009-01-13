@@ -183,7 +183,7 @@ module XGen
         # #send_query_message when needed. If the caller never requests an
         # object from the cursor, the query never gets sent.
         def query(collection, query)
-          Cursor.new(self, collection, QueryMessage.new(@name, collection.name, query))
+          Cursor.new(self, collection, query)
         end
 
         # Used by a Cursor to lazily send the query to the database.

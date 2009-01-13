@@ -51,4 +51,13 @@ class CursorTest < Test::Unit::TestCase
     end
   end
 
+  def test_hint
+    begin
+      cursor = @coll.find('a' => 1).hint('a')
+      assert_equal 1, cursor.to_a.size
+    rescue => ex
+      fail ex.to_s
+    end
+  end
+
 end

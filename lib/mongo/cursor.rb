@@ -29,14 +29,11 @@ module XGen
 
         RESPONSE_HEADER_SIZE = 20
 
-        attr_reader :db, :collection, :query_message
+        attr_reader :db, :collection, :query
 
-        # A single field name or array of field names. May be +nil+.
-        attr_accessor :hint_fields
-
-        def initialize(db, collection, query_message)
-          @db, @collection, @query_message = db, collection, query_message
-          @num_to_return = query_message.query.number_to_return || 0
+        def initialize(db, collection, query)
+          @db, @collection, @query = db, collection, query
+          @num_to_return = @query.number_to_return || 0
           @cache = []
           @closed = false
           @can_call_to_a = true
@@ -44,6 +41,15 @@ module XGen
         end
 
         def closed?; @closed; end
+
+        # Set hint fields to use and return +self+. hint_fields may be a
+        # single field name or array of field names. May be +nil+. If no hint
+        # fields are specified, the ones in the collection are used if they
+        # exist.
+        def hint(hint_fields)
+          @hint_fields = hint_fields
+          self
+        end
 
         # Return +true+ if there are more records to retrieve. We do not check
         # @num_to_return; #each is responsible for doing that.
@@ -111,9 +117,9 @@ module XGen
         # Returns an explain plan record.
         def explain
           sel = OrderedHash.new
-          sel['query'] = @query_message.query.selector
+          sel['query'] = @query.selector
           sel['$explain'] = true
-          c = Cursor.new(@db, @collection, QueryMessage.new(@db.name, @collection.name, Query.new(sel)))
+          c = Cursor.new(@db, @collection, Query.new(sel))
           e = c.next_object
           c.close
           e
@@ -194,7 +200,19 @@ module XGen
         def send_query_if_needed
           # Run query first time we request an object from the wire
           unless @query_run
-            @db.send_query_message(@query_message)
+            hints = @hint_fields || @collection.hint_fields
+            hints = [hints] if hints.kind_of?(String)
+            query = if hints
+                      h = {}
+                      hints.each { |field| h[field] = 1 }
+                      sel = OrderedHash.new
+                      sel['query'] = @query.selector
+                      sel['$hint'] = h
+                      Query.new(sel)
+                    else
+                      @query
+                    end
+            @db.send_query_message(QueryMessage.new(@db.name, @collection.name, query))
             @query_run = true
             read_all
           end
