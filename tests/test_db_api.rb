@@ -354,4 +354,8 @@ class DBAPITest < Test::Unit::TestCase
     assert @db.master?
   end
 
+  def test_master
+    assert_equal "#{@db.host}:#{@db.port}", @db.master
+  end
+
 end

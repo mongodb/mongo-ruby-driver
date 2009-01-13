@@ -49,6 +49,8 @@ module XGen
         # The name of the database.
         attr_reader :name
 
+        attr_reader :host, :port
+
         # The database's socket. For internal use only.
         attr_reader :socket
 
@@ -149,6 +151,20 @@ module XGen
           doc = db_command(:ismaster => 1)
           is_master = doc['ismaster']
           ok?(doc) && is_master.kind_of?(Numeric) && is_master.to_i == 1
+        end
+
+        # Returns a string of the form "host:port" that points to the master
+        # database. Works even if this is the master database.
+        def master
+          doc = db_command(:ismaster => 1)
+          is_master = doc['ismaster']
+          raise "Error retrieving master database" unless ok?(doc) && is_master.kind_of?(Numeric)
+          case is_master.to_i
+          when 1
+            "#@host:#@port"
+          else
+            doc['remote']
+          end
         end
 
         # Close the connection to the database.
