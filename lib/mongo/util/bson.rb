@@ -46,8 +46,18 @@ class BSON
   NUMBER_INT = 16
   MAXKEY = 127
 
+  if RUBY_VERSION >= '1.9'
+    def self.to_utf8(str)
+      str.encode("utf-8")
+    end
+  else
+    def self.to_utf8(str)
+      str                       # TODO punt for now
+    end
+  end
+
   def self.serialize_cstr(buf, val)
-    buf.put_array(val.to_s.unpack("C*") + [0])
+    buf.put_array(to_utf8(val.to_s).unpack("C*") + [0])
   end
 
   def initialize(db=nil)
@@ -173,6 +183,7 @@ class BSON
     doc
   end
 
+  # For debugging.
   def hex_dump
     str = ''
     @buf.to_a.each_with_index { |b,i|
@@ -231,7 +242,11 @@ class BSON
   def deserialize_string_data(buf)
     len = buf.get_int
     bytes = buf.get(len)
-    bytes[0..-2].pack("C*")
+    str = bytes[0..-2].pack("C*")
+    if RUBY_VERSION >= '1.9'
+      str.force_encoding("utf-8")
+    end
+    str
   end
 
   def deserialize_oid_data(buf)
@@ -384,6 +399,9 @@ class BSON
       b = buf.get
       break if b == 0
       chars << b.chr
+    end
+    if RUBY_VERSION >= '1.9'
+      chars.force_encoding("utf-8") # Mongo stores UTF-8
     end
     chars
   end

@@ -49,6 +49,21 @@ be running, of course.
 See also the test code, especially tests/test_db_api.rb.
 
 
+= Notes
+
+== String Encoding
+
+The BSON ("Binary JSON") format used to communicate with Mongo requires that
+strings be UTF-8 (http://en.wikipedia.org/wiki/UTF-8).
+
+Ruby 1.9 has built-in character encoding support. All strings sent to Mongo
+and received from Mongo are converted to UTF-8 when necessary, and strings
+read from Mongo will have their character encodings set to UTF-8.
+
+When used with Ruby 1.8, the bytes in each string are written to and read from
+Mongo as-is. If the string is ASCII all is well, because ASCII is a subset of
+UTF-8. If the string is not ASCII then it may not be a well-formed UTF-8 string.
+
 = Testing
 
 If you have the source code, you can run the tests.
