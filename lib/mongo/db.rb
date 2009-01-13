@@ -84,7 +84,7 @@ module XGen
         def collections_info(coll_name=nil)
           selector = {}
           selector[:name] = full_coll_name(coll_name) if coll_name
-          query(SYSTEM_NAMESPACE_COLLECTION, Query.new(selector))
+          query(Collection.new(self, SYSTEM_NAMESPACE_COLLECTION), Query.new(selector))
         end
 
         # Create a collection. If +strict+ is false, will return existing or
@@ -182,8 +182,8 @@ module XGen
         # Note that the query gets sent lazily; the cursor calls
         # #send_query_message when needed. If the caller never requests an
         # object from the cursor, the query never gets sent.
-        def query(collection_name, query)
-          Cursor.new(self, collection_name, QueryMessage.new(@name, collection_name, query))
+        def query(collection, query)
+          Cursor.new(self, collection, QueryMessage.new(@name, collection.name, query))
         end
 
         # Used by a Cursor to lazily send the query to the database.
@@ -256,7 +256,7 @@ module XGen
         # :ns :: Namespace; same as +collection_name+.
         def index_information(collection_name)
           sel = {:ns => full_coll_name(collection_name)}
-          query(SYSTEM_INDEX_COLLECTION, Query.new(sel)).collect { |row|
+          query(Collection.new(self, SYSTEM_INDEX_COLLECTION), Query.new(sel)).collect { |row|
             h = {:name => row['name']}
             raise "Name of index on return from db was nil. Coll = #{full_coll_name(collection_name)}" unless h[:name]
 
@@ -321,7 +321,7 @@ module XGen
 
           q = Query.new(selector)
           q.number_to_return = 1
-          query(SYSTEM_COMMAND_COLLECTION, q).next_object
+          query(Collection.new(self, SYSTEM_COMMAND_COLLECTION), q).next_object
         end
 
       end

@@ -25,6 +25,9 @@ module XGen
 
         attr_reader :db, :name
 
+        # A single field name or array of field names. May be +nil+.
+        attr_accessor :hint_fields
+
         def initialize(db, name)
           @db = db
           @name = name
@@ -47,7 +50,7 @@ module XGen
           limit = options.delete(:limit) || 0
           sort = options.delete(:sort)
           raise RuntimeError, "Unknown options [#{options.inspect}]" unless options.empty?
-          @db.query(@name, Query.new(selector, fields, offset, limit, sort))
+          @db.query(self, Query.new(selector, fields, offset, limit, sort))
         end
 
         # Insert +objects+, which are hashes. "<<" is aliased to this method.

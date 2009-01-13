@@ -66,7 +66,7 @@ module XGen
         # Return an array contining current profiling information from the
         # database.
         def profiling_info
-          @db.query(DB::SYSTEM_PROFILE_COLLECTION, Query.new({})).to_a
+          @db.query(Collection.new(@db, DB::SYSTEM_PROFILE_COLLECTION), Query.new({})).to_a
         end
 
         # Validate a named collection by raising an exception if there is a

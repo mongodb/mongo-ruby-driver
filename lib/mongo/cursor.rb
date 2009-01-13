@@ -31,6 +31,9 @@ module XGen
 
         attr_reader :db, :collection, :query_message
 
+        # A single field name or array of field names. May be +nil+.
+        attr_accessor :hint_fields
+
         def initialize(db, collection, query_message)
           @db, @collection, @query_message = db, collection, query_message
           @num_to_return = query_message.query.number_to_return || 0
@@ -110,7 +113,7 @@ module XGen
           sel = OrderedHash.new
           sel['query'] = @query_message.query.selector
           sel['$explain'] = true
-          c = Cursor.new(@db, @collection, QueryMessage.new(@db.name, @collection, Query.new(sel)))
+          c = Cursor.new(@db, @collection, QueryMessage.new(@db.name, @collection.name, Query.new(sel)))
           e = c.next_object
           c.close
           e
@@ -173,7 +176,7 @@ module XGen
         def refill_via_get_more
           send_query_if_needed
           return if @cursor_id == 0
-          @db.send_to_db(GetMoreMessage.new(@db.name, @collection, @cursor_id))
+          @db.send_to_db(GetMoreMessage.new(@db.name, @collection.name, @cursor_id))
           read_all
         end
 
