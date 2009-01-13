@@ -177,12 +177,19 @@ module XGen
           send_to_db(MsgMessage.new(msg))
         end
         
-        # Send a Query to +collection_name+ and return a Cursor over the
-        # results.
+        # Returns a Cursor over the query results.
+        #
+        # Note that the query gets sent lazily; the cursor calls
+        # #send_query_message when needed. If the caller never requests an
+        # object from the cursor, the query never gets sent.
         def query(collection_name, query)
+          Cursor.new(self, collection_name, QueryMessage.new(@name, collection_name, query))
+        end
+
+        # Used by a Cursor to lazily send the query to the database.
+        def send_query_message(query_message)
           @semaphore.synchronize {
-            send_to_db(QueryMessage.new(@name, collection_name, query))
-            Cursor.new(self, collection_name, query.number_to_return)
+            send_to_db(query_message)
           }
         end
 

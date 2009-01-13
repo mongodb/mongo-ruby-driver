@@ -29,13 +29,18 @@ module XGen
 
         RESPONSE_HEADER_SIZE = 20
 
-        def initialize(db, collection, num_to_return=0)
-          @db, @collection, @num_to_return = db, collection, num_to_return
+        attr_reader :db, :collection, :query_message
+
+        def initialize(db, collection, query_message)
+          @db, @collection, @query_message = db, collection, query_message
+          @num_to_return = query_message.query.number_to_return || 0
           @cache = []
           @closed = false
           @can_call_to_a = true
-          read_all
+          @query_run = false
         end
+
+        def closed?; @closed; end
 
         # Return +true+ if there are more records to retrieve. We do not check
         # @num_to_return; #each is responsible for doing that.
@@ -100,9 +105,20 @@ module XGen
           @rows
         end
 
+        # Returns an explain plan record.
+        def explain
+          sel = OrderedHash.new
+          sel['query'] = @query_message.query.selector
+          sel['$explain'] = true
+          c = Cursor.new(@db, @collection, QueryMessage.new(@db.name, @collection, Query.new(sel)))
+          e = c.next_object
+          c.close
+          e
+        end
+
         # Close the cursor.
         def close
-          @db.send_to_db(KillCursorMessage(@cursor_id)) if @cursor_id
+          @db.send_to_db(KillCursorsMessage.new(@cursor_id)) if @cursor_id
           @cache = []
           @cursor_id = 0
           @closed = true
@@ -146,6 +162,7 @@ module XGen
         private
 
         def next_object_on_wire
+          send_query_if_needed
           # if @n_remaining is 0 but we have a non-zero cursor, there are more
           # to fetch, so do a GetMore operation, but don't do it here - do it
           # when someone pulls an object out of the cache and it's empty
@@ -154,6 +171,7 @@ module XGen
         end
 
         def refill_via_get_more
+          send_query_if_needed
           return if @cursor_id == 0
           @db.send_to_db(GetMoreMessage.new(@db.name, @collection, @cursor_id))
           read_all
@@ -170,6 +188,15 @@ module XGen
           BSON.new(@db).deserialize(buf)
         end
 
+        def send_query_if_needed
+          # Run query first time we request an object from the wire
+          unless @query_run
+            @db.send_query_message(@query_message)
+            @query_run = true
+            read_all
+          end
+        end
+
         def to_s
           "DBResponse(flags=#@result_flags, cursor_id=#@cursor_id, start=#@starting_from, n_returned=#@n_returned)"
         end
@@ -177,4 +204,3 @@ module XGen
     end
   end
 end
-

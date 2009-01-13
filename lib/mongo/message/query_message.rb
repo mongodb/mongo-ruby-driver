@@ -8,8 +8,11 @@ module XGen
 
       class QueryMessage < Message
 
+        attr_reader :query
+
         def initialize(db_name, collection_name, query)
           super(OP_QUERY)
+          @query = query
           write_int(0)
           write_string("#{db_name}.#{collection_name}")
           write_int(query.number_to_skip)
