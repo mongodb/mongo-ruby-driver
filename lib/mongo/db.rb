@@ -51,7 +51,7 @@ module XGen
 
         attr_reader :host, :port
 
-        # The database's socket. For internal use only.
+        # The database's socket. For internal (and Cursor) use only.
         attr_reader :socket
 
         # db_name :: The database name
