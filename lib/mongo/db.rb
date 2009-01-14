@@ -167,6 +167,20 @@ module XGen
           end
         end
 
+        # Switches our socket to the master database. If we are already the
+        # master, no change is made.
+        def switch_to_master
+          master_str = master()
+          unless master_str == "#@host:#@port"
+            @semaphore.synchronize {
+              master_str =~ /(.+):(\d+)/
+              @host, @port = $1, $2
+              close()
+              @socket = TCPSocket.new(@host, @port)
+            }
+          end
+        end
+
         # Close the connection to the database.
         def close
           @socket.close

@@ -196,17 +196,6 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 4, docs.size
   end
 
-  def test_close
-    @db.close
-    assert @db.socket.closed?
-    begin
-      @coll.insert('a' => 1)
-      fail "expected IOError exception"
-    rescue IOError => ex
-      assert_match /closed stream/, ex.to_s
-    end
-  end
-
   def test_drop_collection
     assert @db.drop_collection(@coll.name), "drop of collection #{@coll.name} failed"
     assert !@db.collection_names.include?(@coll_full_name)
@@ -251,10 +240,6 @@ class DBAPITest < Test::Unit::TestCase
       @db.drop_collection('foobar')
       fail "did not expect exception \"#{ex}\""
     end
-  end
-
-  def test_full_coll_name
-    assert_equal @coll_full_name, @db.full_coll_name(@coll.name)
   end
 
   def test_index_information
