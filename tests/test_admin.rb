@@ -20,9 +20,10 @@ class AdminTest < Test::Unit::TestCase
   end
 
   def teardown
-    unless @db.socket.closed?
+    if @db.connected?
       @admin.profiling_level = :off
-      @coll.clear unless @coll == nil
+      @coll.clear if @coll
+      @db.close
     end
   end
 

@@ -25,14 +25,36 @@ module XGen
 
         DEFAULT_PORT = 27017
 
-        # Host default is 'localhost', port default is DEFAULT_PORT.
-        def initialize(host='localhost', port=DEFAULT_PORT)
-          @host, @port = host, port
+        # Either nodes_or_host is a host name string and port is an optional
+        # port number that defaults to DEFAULT_PORT, or nodes_or_host is an
+        # array of arrays, where each is a host/port pair (or a host with no
+        # port). Finally, if both args are nil then host is 'localhost' and
+        # port is DEFAULT_PORT. Since that's so confusing, here are a few
+        # examples:
+        #
+        #  Mongo.new                         # localhost, DEFAULT_PORT
+        #  Mongo.new("localhost")            # localhost, DEFAULT_PORT
+        #  Mongo.new("localhost", 3000)      # localhost, 3000
+        #  Mongo.new([["localhost"]])        # localhost, DEFAULT_PORT
+        #  Mongo.new([["localhost", 3000]])  # localhost, 3000
+        #  Mongo.new([["db1.example.com", 3000], ["db2.example.com", 3000]]])
+        #
+        # When a DB object first connects, it tries nodes and stops at the
+        # first one it connects to.
+        def initialize(nodes_or_host, port=nil)
+          @nodes = case nodes_or_host
+                   when String
+                     [[nodes_or_host, port || DEFAULT_PORT]]
+                   when Array
+                     nodes_or_host.collect { |nh| [nh[0], nh[1] || DEFAULT_PORT] }
+                   when nil
+                     [['localhost', DEFAULT_PORT]]
+                   end
         end
 
         # Return the XGen::Mongo::Driver::DB named +db_name+.
         def db(db_name)
-          XGen::Mongo::Driver::DB.new(db_name, @host, @port)
+          XGen::Mongo::Driver::DB.new(db_name, @nodes)
         end
 
         # Not implemented.

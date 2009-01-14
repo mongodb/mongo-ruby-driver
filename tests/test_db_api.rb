@@ -18,7 +18,10 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def teardown
-    @coll.clear unless @coll == nil || @db.socket.closed?
+    if @db.connected?
+      @coll.clear unless @coll == nil
+      @db.close
+    end
   end
 
   def test_clear

@@ -49,25 +49,47 @@ module XGen
         # The name of the database.
         attr_reader :name
 
-        attr_reader :host, :port
+        # Host to which we are currently connected.
+        attr_reader :host
+        # Port to which we are currently connected.
+        attr_reader :port
+
+        # An array of [host, port] pairs.
+        attr_reader :nodes
 
         # The database's socket. For internal (and Cursor) use only.
         attr_reader :socket
 
         # db_name :: The database name
         #
-        # host :: The database host name or IP address. Defaults to 'localhost'.
+        # nodes :: An array of [host, port] pairs.
         #
-        # port :: The database port number. Defaults to
-        #         XGen::Mongo::Driver::Mongo::DEFAULT_PORT.
-        #
-        def initialize(db_name, host='localhost', port=XGen::Mongo::Driver::Mongo::DEFAULT_PORT)
+        # When a DB object first connects, it tries the first node. If that
+        # fails, it keeps trying to connect to the remaining nodes until it
+        # sucessfully connects.
+        def initialize(db_name, nodes)
           raise "Invalid DB name" if !db_name || (db_name && db_name.length > 0 && db_name.include?("."))
-          @name, @host, @port = db_name, host, port
-          @socket = TCPSocket.new(@host, @port)
+          @name, @nodes = db_name, nodes
           @strict = false
           @semaphore = Object.new
           @semaphore.extend Mutex_m
+          connect_to_first_available_host
+        end
+
+        def connect_to_first_available_host
+          close if @socket
+          @host = @port = nil
+          @nodes.detect { |hp|
+            @host, @port = *hp
+            begin
+              @socket = TCPSocket.new(@host, @port)
+              break if ok?(db_command(:ismaster => 1)) # success
+            rescue => ex
+              close if @socket
+            end
+            @socket
+          }
+          raise "error: failed to connect to any given host:port" unless @socket
         end
 
         # Returns an array of collection names. Each name is of the form
@@ -183,7 +205,12 @@ module XGen
 
         # Close the connection to the database.
         def close
-          @socket.close
+          @socket.close if @socket
+          @socket = nil
+        end
+
+        def connected?
+          @socket != nil
         end
 
         # Send a MsgMessage to the database.

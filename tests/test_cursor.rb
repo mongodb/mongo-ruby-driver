@@ -18,7 +18,10 @@ class CursorTest < Test::Unit::TestCase
   end
 
   def teardown
-    @coll.clear unless @coll == nil || @db.socket.closed?
+    if @db.connected?
+      @coll.clear if @coll
+      @db.close
+    end
   end
 
   def test_explain
