@@ -80,7 +80,7 @@ class BSON
     obj.each {|k, v|
       type = bson_type(v, k)
       case type
-      when STRING, CODE
+      when STRING, CODE, SYMBOL
         serialize_string_element(@buf, k, v, type)
       when NUMBER, NUMBER_INT
         serialize_number_element(@buf, k, v, type)
@@ -100,8 +100,6 @@ class BSON
         serialize_null_element(@buf, k)
       when REF
         serialize_dbref_element(@buf, k, v)
-      when SYMBOL
-        serialize_symbol_element(@buf, k, v)
       when BINARY
         serialize_binary_element(@buf, k, v)
       when UNDEFINED
@@ -131,6 +129,9 @@ class BSON
       when STRING, CODE
         key = deserialize_cstr(@buf)
         doc[key] = deserialize_string_data(@buf)
+      when SYMBOL
+        key = deserialize_cstr(@buf)
+        doc[key] = deserialize_string_data(@buf).intern
       when NUMBER
         key = deserialize_cstr(@buf)
         doc[key] = deserialize_number_data(@buf)
@@ -164,9 +165,6 @@ class BSON
       when REF
         key = deserialize_cstr(@buf)
         doc[key] = deserialize_dbref_data(@buf, key, parent)
-      when SYMBOL
-        key = deserialize_cstr(@buf)
-        doc[key] = deserialize_symbol_data(@buf)
       when BINARY
         key = deserialize_cstr(@buf)
         doc[key] = deserialize_binary_data(@buf)
@@ -259,10 +257,6 @@ class BSON
     XGen::Mongo::Driver::DBRef.new(parent, key, @db, ns, oid)
   end
 
-  def deserialize_symbol_data(buf)
-    deserialize_cstr(buf).intern
-  end
-
   def deserialize_binary_data(buf)
     len = buf.get_int
     bytes = buf.get(len)
@@ -285,12 +279,6 @@ class BSON
     self.class.serialize_cstr(buf, key)
     self.class.serialize_cstr(buf, val.namespace)
     buf.put_array(val.object_id.to_a)
-  end
-
-  def serialize_symbol_element(buf, key, val)
-    buf.put(SYMBOL)
-    self.class.serialize_cstr(buf, key)
-    self.class.serialize_cstr(buf, val)
   end
 
   def serialize_binary_element(buf, key, val)
