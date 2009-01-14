@@ -125,13 +125,15 @@ module XGen
 
         # Returns an explain plan record.
         def explain
-          sel = OrderedHash.new
-          sel['query'] = @query.selector
-          sel['$explain'] = true
-          c = Cursor.new(@db, @collection, Query.new(sel))
-          e = c.next_object
+          old_val = @query.explain
+          @query.explain = true
+
+          c = Cursor.new(@db, @collection, @query)
+          explanation = c.next_object
           c.close
-          e
+
+          @query.explain = old_val
+          explanation
         end
 
         # Close the cursor.
@@ -210,18 +212,11 @@ module XGen
           # Run query first time we request an object from the wire
           unless @query_run
             hints = @hint_fields || @collection.hint_fields
-            query = if hints
-                      h = {}
-                      hints.each { |field| h[field] = 1 }
-                      sel = OrderedHash.new
-                      sel['query'] = @query.selector
-                      sel['$hint'] = h
-                      Query.new(sel)
-                    else
-                      @query
-                    end
-            @db.send_query_message(QueryMessage.new(@db.name, @collection.name, query))
+            old_hints = @query.hint_fields
+            @query.hint_fields = hints
+            @db.send_query_message(QueryMessage.new(@db.name, @collection.name, @query))
             @query_run = true
+            @query.hint_fields = old_hints
             read_all
           end
         end

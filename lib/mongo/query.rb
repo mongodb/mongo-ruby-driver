@@ -27,6 +27,10 @@ module XGen
       class Query
 
         attr_accessor :number_to_skip, :number_to_return, :order_by
+        # If true, $explain will be set in QueryMessage that uses this query.
+        attr_accessor :explain
+        # Either +nil+ or an array of hint field names.
+        attr_accessor :hint_fields
         attr_reader :selector   # writer defined below
 
         # sel :: A hash describing the query. See the Mongo docs for details.
@@ -96,6 +100,10 @@ module XGen
           else                  # nil, anything else
             nil
           end
+        end
+
+        def contains_special_fields
+          (@order_by != nil && @order_by.length > 0) || @explain || @hint_fields
         end
       end
     end
