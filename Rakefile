@@ -7,7 +7,7 @@ require 'rake/gempackagetask'
 require 'rake/contrib/rubyforgepublisher'
 
 GEM = "mongo"
-GEM_VERSION = '0.0.4'
+GEM_VERSION = '0.0.5'
 SUMMARY = 'Simple pure-Ruby driver for the 10gen Mongo DB'
 DESCRIPTION = 'This is a simple pure-Ruby driver for the 10gen Mongo DB. For more information about Mongo, see http://www.mongodb.org.'
 AUTHOR = 'Jim Menard'
