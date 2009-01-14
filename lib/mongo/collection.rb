@@ -31,11 +31,19 @@ module XGen
         end
 
         # Set hint fields to use and return +self+. hint_fields may be a
-        # single field name or array of field names. May be +nil+. If no hint
-        # fields are specified, the ones in the collection are used if they
-        # exist.
+        # single field name, array of field names, or a hash whose keys will
+        # become the hint field names. May be +nil+.
         def hint(hint_fields)
-          @hint_fileds = hint_fileds
+          @hint_fields = case hint_fields
+                         when String
+                           [hint_fields]
+                         when Hash
+                           hint_fields.keys
+                         when nil
+                           nil
+                         else
+                           hint_fields.to_a
+                         end
           self
         end
 
