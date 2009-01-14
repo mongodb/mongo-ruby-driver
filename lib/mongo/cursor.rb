@@ -43,11 +43,20 @@ module XGen
         def closed?; @closed; end
 
         # Set hint fields to use and return +self+. hint_fields may be a
-        # single field name or array of field names. May be +nil+. If no hint
-        # fields are specified, the ones in the collection are used if they
-        # exist.
+        # single field name, array of field names, or a hash whose keys will
+        # become the hint field names. May be +nil+. If no hint fields are
+        # specified, the ones in the collection are used if they exist.
         def hint(hint_fields)
-          @hint_fields = hint_fields
+          @hint_fields = case hint_fields
+                         when String
+                           [hint_fields]
+                         when Hash
+                           hint_fields.keys
+                         when nil
+                           nil
+                         else
+                           hint_fields.to_a
+                         end
           self
         end
 
@@ -201,7 +210,6 @@ module XGen
           # Run query first time we request an object from the wire
           unless @query_run
             hints = @hint_fields || @collection.hint_fields
-            hints = [hints] if hints.kind_of?(String)
             query = if hints
                       h = {}
                       hints.each { |field| h[field] = 1 }
