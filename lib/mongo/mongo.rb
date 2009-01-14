@@ -28,7 +28,7 @@ module XGen
         # Either nodes_or_host is a host name string and port is an optional
         # port number that defaults to DEFAULT_PORT, or nodes_or_host is an
         # array of arrays, where each is a host/port pair (or a host with no
-        # port). Finally, if both args are nil then host is 'localhost' and
+        # port). Finally, if nodes_or_host is nil then host is 'localhost' and
         # port is DEFAULT_PORT. Since that's so confusing, here are a few
         # examples:
         #
