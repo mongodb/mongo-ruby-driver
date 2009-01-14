@@ -111,11 +111,6 @@ See the git log comments.
   current thinking is that Mongo will allow a subset of JavaScript (which we
   would have to send as a string), but this is still under discussion.
 
-* Add explain and hint support.
-
-* Only update message sizes once, not after every write of a value. This will
-  require an explicit call to update_message_length in each message subclass.
-
 * Tests for update and repsert.
 
 * Add a way to specify a collection of databases on startup (a simple array of
@@ -123,17 +118,18 @@ See the git log comments.
   then find the master and, on each subsequent command, ask that machine if it
   is the master before proceeding.
 
-* Tests that prove that this driver's ObjectID and Geir's Java version do the
-  same thing. (I've done so manually.)
-
-* Support more types: REF, SYMBOL, CODE_W_SCOPE, etc.
-
 * Introduce optional per-database and per-collection PKInjector.
 
 * More tests.
 
-* Study src/main/ed/db/{dbcollection,dbcursor,db}.js and ByteEncoder.java in
-  the Babble code. That's what I should be writing to.
+== Optimizations
+
+* Only update message sizes once, not after every write of a value. This will
+  require an explicit call to update_message_length in each message subclass.
+
+* ensure_index commands should be cached to prevent excessive communication
+  with the database. (Or, the driver user should be informed that ensure_index
+  is not a lightweight operation for the particular driver.)
 
 
 = Credits
