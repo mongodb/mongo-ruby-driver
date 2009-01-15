@@ -70,7 +70,7 @@ module XGen
         def next_object
           refill_via_get_more if num_remaining == 0
           o = @cache.shift
-          raise o['$err'] if o['$err']
+          raise o['$err'] if o && o['$err']
           o
         end
 
