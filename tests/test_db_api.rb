@@ -153,12 +153,14 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 1, docs[2]['a']
     assert_equal 3, docs[3]['a']
 
-    # Sorting using empty array; no order guarantee but should not blow up.
+    # Sorting using empty array; no order guarantee (Mongo bug #898) but
+    # should not blow up.
     docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => []).to_a
     assert_equal 4, docs.size
 
-    # Sorting using array of hashes; no order guarantee but should not blow up.
-    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [{'b' => 1}, {'a' => 1}]).to_a
+    # Sorting using array of hashes; no order guarantee (Mongo bug #898) but
+    # should not blow up.
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [{'b' => 1}, {'a' => -1}]).to_a
     assert_equal 4, docs.size
 
     # Sorting using ordered hash. You can use an unordered one, but then the

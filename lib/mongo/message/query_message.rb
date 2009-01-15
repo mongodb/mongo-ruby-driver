@@ -27,7 +27,16 @@ module XGen
                                  {query.order_by => 1}
                                when Array
                                  h = OrderedHash.new
-                                 query.order_by.each { |ob| h[ob] = 1 }
+                                 query.order_by.each { |ob|
+                                   case ob
+                                   when String
+                                     h[ob] = 1
+                                   when Hash # should have one entry; will handle all
+                                     ob.each { |k,v| h[k] = v }
+                                   else
+                                     raise "illegal query order_by value #{query.order_by.inspect}"
+                                   end
+                                 }
                                  h
                                when Hash # Should be an ordered hash, but this message doesn't care
                                  query.order_by
