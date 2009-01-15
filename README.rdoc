@@ -29,12 +29,13 @@ A quick code sample:
 
 Install the "mongo" gem by typing
 
-  $ sudo gem install mongo
+  $ gem sources -a http://gems.github.com
+  $ sudo gem install mongodb-mongo
 
-The source code is available at http://github.com/jimm/mongo-ruby-driver. You
-can either clone the git repository or download a tarball or zip file. Once
-you have the source, you can use it from wherever you downloaded it or you can
-install it as a gem from the source by typing
+The source code is available at http://github.com/mongodb/mongo-ruby-driver.
+You can either clone the git repository or download a tarball or zip file.
+Once you have the source, you can use it from wherever you downloaded it or
+you can install it as a gem from the source by typing
 
   $ rake gem:install
 
