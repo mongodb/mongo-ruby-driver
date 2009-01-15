@@ -2,5 +2,6 @@ html
 t
 pkg
 doc
-*.gemspec
+mongo-ruby-driver.gemspec
+mongo-ruby-driver-*.gem
 mongo-qa
