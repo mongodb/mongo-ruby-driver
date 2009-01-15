@@ -41,7 +41,7 @@ module XGen
         #
         # When a DB object first connects, it tries nodes and stops at the
         # first one it connects to.
-        def initialize(nodes_or_host, port=nil)
+        def initialize(nodes_or_host=nil, port=nil)
           @nodes = case nodes_or_host
                    when String
                      [[nodes_or_host, port || DEFAULT_PORT]]
