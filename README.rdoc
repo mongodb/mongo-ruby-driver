@@ -30,7 +30,7 @@ A quick code sample:
 Install the "mongo" gem by typing
 
   $ gem sources -a http://gems.github.com
-  $ sudo gem install mongodb-mongo
+  $ sudo gem install mongodb-mongo-ruby-driver
 
 The source code is available at http://github.com/mongodb/mongo-ruby-driver.
 You can either clone the git repository or download a tarball or zip file.
