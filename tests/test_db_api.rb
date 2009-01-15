@@ -157,6 +157,10 @@ class DBAPITest < Test::Unit::TestCase
     docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => []).to_a
     assert_equal 4, docs.size
 
+    # Sorting using array of hashes; no order guarantee but should not blow up.
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [{'b' => 1}, {'a' => 1}]).to_a
+    assert_equal 4, docs.size
+
     # Sorting using ordered hash. You can use an unordered one, but then the
     # order of the keys won't be guaranteed thus your sort won't make sense.
     oh = OrderedHash.new
