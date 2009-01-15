@@ -252,7 +252,7 @@ class BSON
   end
 
   def deserialize_dbref_data(buf, key, parent)
-    ns = deserialize_cstr(buf)
+    ns = deserialize_string_data(buf)
     oid = deserialize_oid_data(buf)
     XGen::Mongo::Driver::DBRef.new(parent, key, @db, ns, oid)
   end
@@ -275,9 +275,7 @@ class BSON
   end
 
   def serialize_dbref_element(buf, key, val)
-    buf.put(REF)
-    self.class.serialize_cstr(buf, key)
-    self.class.serialize_cstr(buf, val.namespace)
+    serialize_string_element(buf, key, val.namespace, REF)
     buf.put_array(val.object_id.to_a)
   end
 
