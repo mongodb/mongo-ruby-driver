@@ -16,7 +16,6 @@
 
 require 'socket'
 require 'mutex_m'
-require 'mongo/mongo'
 require 'mongo/collection'
 require 'mongo/message'
 require 'mongo/query'
