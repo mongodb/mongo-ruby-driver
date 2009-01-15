@@ -121,6 +121,11 @@ module XGen
           @db.drop_index(@name, '*')
         end
 
+        # Drop the entire collection. USE WITH CAUTION.
+        def drop
+          @db.drop_collection(@name)
+        end
+
         # Return an array of hashes, one for each index. Each hash contains:
         #
         # :name :: Index name

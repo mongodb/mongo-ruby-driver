@@ -73,6 +73,16 @@ class ObjectIDTest < Test::Unit::TestCase
     assert_equal @o.to_s, o2.to_s
   end
 
+  def test_legal_oid_string
+    assert !ObjectID.legal_oid_string(nil)
+    assert !ObjectID.legal_oid_string("fred")
+    assert !ObjectID.legal_oid_string("0000")
+    assert !ObjectID.legal_oid_string('000102030405060708090A0')
+    assert ObjectID.legal_oid_string('000102030405060708090A0B')
+    assert ObjectID.legal_oid_string('abcdefABCDEF123456789012')
+    assert !ObjectID.legal_oid_string('abcdefABCDEF12345678901x')
+  end
+
   def test_from_string_leading_zeroes
     hex_str = '000000000000000000abcdef'
     o = ObjectID.from_string(hex_str)
