@@ -47,7 +47,7 @@ EOS
   # Dynamically generate one test for each test file. This way, if one test
   # fails the others will still run.
   create_test_for_round_trip_files_in_dir(File.join(HERE, 'data'))
-  mongo_qa_dir = File.join(HERE, '..', 'mongo-qa/modules/bson_tests')
+  mongo_qa_dir = File.join(HERE, '..', 'mongo-qa/modules/bson_tests/tests')
   if File.exist?(mongo_qa_dir)
     %w(basic_types complex single_types).each { |subdir_name|
       create_test_for_round_trip_files_in_dir(File.join(mongo_qa_dir, subdir_name))
