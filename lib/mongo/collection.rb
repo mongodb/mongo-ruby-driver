@@ -68,6 +68,9 @@ module XGen
         end
 
         # Insert +objects+, which are hashes. "<<" is aliased to this method.
+        # Returns either the single inserted object or a new array containing
+        # +objects+. The object(s) may have been modified by the database's PK
+        # factory, if it has one.
         def insert(*objects)
           objects = objects.first if objects.size == 1 && objects.first.is_a?(Array)
           res = @db.insert_into_db(@name, objects)

@@ -63,6 +63,11 @@ module XGen
         # DB#new for details.
         attr_reader :pk_factory
 
+        def pk_factory=(pk_factory)
+          raise "error: can not change PK factory" if @pk_factory
+          @pk_factory = pk_factory
+        end
+
         # db_name :: The database name
         #
         # nodes :: An array of [host, port] pairs.
@@ -345,12 +350,14 @@ module XGen
         end
 
         # Insert +objects+ into +collection_name+. Normally called by
-        # Collection#insert.
+        # Collection#insert. Returns a new array containing +objects+,
+        # possibly modified by @pk_factory.
         def insert_into_db(collection_name, objects)
           @semaphore.synchronize {
-            objects.each { |o|
+            objects.collect { |o|
               o = @pk_factory.create_pk(o) if @pk_factory
               send_to_db(InsertMessage.new(@name, collection_name, o))
+              o
             }
           }
         end

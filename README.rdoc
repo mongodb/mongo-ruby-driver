@@ -94,8 +94,10 @@ Here is a sample primary key factory, taken from the tests:
     end
   end
 
-A database's PK factory object may not be changed. Right now, it may only be
-specified when you obtain the db object.
+A database's PK factory object may be changed, but this is not recommended.
+The only reason it is changeable is so that libraries such as MongoRecord that
+use this driver can set the PK factory after obtaining the database but before
+using it for the first time.
 
 === Strict mode
 
