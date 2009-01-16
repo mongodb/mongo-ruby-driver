@@ -37,13 +37,12 @@ end
 namespace :gem do 
 
   desc "Install the gem locally"
-  task :install => [:package] do
-    sh %{sudo gem install mongo-ruby-driver.gemspec}
-  end
-  
-  desc "Install the gem locally with ruby 1.9"
-  task :'install19' => [:package] do
-    sh %{sudo gem19 install mongo-ruby-driver.gemspec}
+  task :install do
+    sh <<EOS
+gem build mongo-ruby-driver.gemspec &&
+    sudo gem install mongo-ruby-driver-*.gem &&
+    rm mongo-ruby-driver-*.gem
+EOS
   end
 
 end
