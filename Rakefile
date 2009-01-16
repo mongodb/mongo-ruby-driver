@@ -40,8 +40,8 @@ namespace :gem do
   task :install do
     sh <<EOS
 gem build mongo-ruby-driver.gemspec &&
-    sudo gem install mongo-ruby-driver-*.gem &&
-    rm mongo-ruby-driver-*.gem
+    sudo gem install mongo-*.gem &&
+    rm mongo-*.gem
 EOS
   end
 
