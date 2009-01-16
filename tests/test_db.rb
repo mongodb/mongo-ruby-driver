@@ -3,7 +3,7 @@ require 'mongo'
 require 'test/unit'
 
 # NOTE: assumes Mongo is running
-class DBAPITest < Test::Unit::TestCase
+class DBTest < Test::Unit::TestCase
 
   include XGen::Mongo::Driver
 
