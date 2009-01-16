@@ -57,6 +57,29 @@ module XGen
           XGen::Mongo::Driver::DB.new(db_name, @nodes)
         end
 
+        # Returns a hash containing database names as keys and disk space for
+        # each as values.
+        def database_info
+          admin_db = nil
+          begin
+            admin_db = db('admin')
+            doc = admin_db.db_command(:listDatabases => 1)
+            raise "error retrieving database info" unless admin_db.ok?(doc)
+            h = {}
+            doc['databases'].each { |db|
+              h[db['name']] = db['sizeOnDisk'].to_i
+            }
+            h
+          ensure
+            admin_db.close
+          end
+        end
+
+        # Returns an array of database names.
+        def database_names
+          database_info.keys
+        end
+
         # Not implemented.
         def clone_database(from)
           raise "not implemented"
