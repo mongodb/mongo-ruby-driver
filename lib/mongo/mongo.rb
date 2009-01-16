@@ -52,9 +52,10 @@ module XGen
                    end
         end
 
-        # Return the XGen::Mongo::Driver::DB named +db_name+.
-        def db(db_name)
-          XGen::Mongo::Driver::DB.new(db_name, @nodes)
+        # Return the XGen::Mongo::Driver::DB named +db_name+. See DB#new for
+        # +options+.
+        def db(db_name, options={})
+          XGen::Mongo::Driver::DB.new(db_name, @nodes, options)
         end
 
         # Returns a hash containing database names as keys and disk space for

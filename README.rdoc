@@ -63,7 +63,58 @@ read from Mongo will have their character encodings set to UTF-8.
 
 When used with Ruby 1.8, the bytes in each string are written to and read from
 Mongo as-is. If the string is ASCII all is well, because ASCII is a subset of
-UTF-8. If the string is not ASCII then it may not be a well-formed UTF-8 string.
+UTF-8. If the string is not ASCII then it may not be a well-formed UTF-8
+string.
+
+== The DB class
+
+=== Primary Key Factories
+
+A basic Mongo driver is not responsible for creating primary keys or knowing
+how to interpret them. You can tell the Ruby Mongo driver how to create
+primary keys by passing in the :pk option to the Mongo#db method.
+
+  include XGen::Mongo::Driver
+  db = Mongo.new.db('dbname', :pk => MyPKFactory)
+
+A primary key factory object must respond to :create_pk, which should take a
+hash and return a hash which merges the original hash with any primary key
+fields the factory wishes to inject. NOTE: if the object already has a primary
+key, the factory should not inject a new key; this means that the object is
+being used in a repsert but it already exists. The idea here is that when ever
+a record is inserted, the :pk object's +create_pk+ method will be called and
+the new hash returned will be inserted.
+
+Here is a sample primary key factory, taken from the tests:
+
+  class TestPKFactory
+    def create_pk(row)
+      row['_id'] ||= XGen::Mongo::Driver::ObjectID.new
+      row
+    end
+  end
+
+A database's PK factory object may not be changed. Right now, it may only be
+specified when you obtain the db object.
+
+=== Strict mode
+
+Each database has an optional strict mode. If strict mode is on, then asking
+for a collection that does not exist will raise an error, as will asking to
+create a collection that already exists. Note that both these operations are
+completely harmless; strict mode is a programmer convenience only.
+
+To turn on strict mode, either pass in :strict => true when obtaining a DB
+object or call the :strict= method:
+
+  db = XGen::Mongo::Driver::Mongo.new.db('dbname', :strict => true)
+  # I'm feeling lax
+  db.strict = false
+  # No, I'm not!
+  db.strict = true
+
+The method DB#strict? returns the current value of that flag.
+
 
 = Testing
 

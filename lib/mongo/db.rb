@@ -59,17 +59,40 @@ module XGen
         # The database's socket. For internal (and Cursor) use only.
         attr_reader :socket
 
+        # A primary key factory object (or +nil+). See the README.doc file or
+        # DB#new for details.
+        attr_reader :pk_factory
+
         # db_name :: The database name
         #
         # nodes :: An array of [host, port] pairs.
         #
+        # options :: A hash of options.
+        #
+        # Options:
+        #
+        # :strict :: If true, collections must exist to be accessed and must
+        #            not exist to be created. See #collection and
+        #            #create_collection.
+        #
+        # :pk :: A primary key factory object that must respond to :create_pk,
+        #        which should take a hash and return a hash which merges the
+        #        original hash with any primary key fields the factory wishes
+        #        to inject. (NOTE: if the object already has a primary key,
+        #        the factory should not inject a new key; this means that the
+        #        object is being used in a repsert but it already exists.) The
+        #        idea here is that when ever a record is inserted, the :pk
+        #        object's +create_pk+ method will be called and the new hash
+        #        returned will be inserted.
+        #
         # When a DB object first connects, it tries the first node. If that
         # fails, it keeps trying to connect to the remaining nodes until it
         # sucessfully connects.
-        def initialize(db_name, nodes)
+        def initialize(db_name, nodes, options={})
           raise "Invalid DB name" if !db_name || (db_name && db_name.length > 0 && db_name.include?("."))
           @name, @nodes = db_name, nodes
-          @strict = false
+          @strict = options[:strict]
+          @pk_factory = options[:pk]
           @semaphore = Object.new
           @semaphore.extend Mutex_m
           connect_to_first_available_host
@@ -252,8 +275,8 @@ module XGen
         # applying +obj+ as an update. If no match, inserts (???). Normally
         # called by Collection#repsert.
         def repsert_in_db(collection_name, selector, obj)
-          # TODO if PKInjector, inject
           @semaphore.synchronize {
+            obj = @pk_factory.create_pk(obj) if @pk_factory
             send_to_db(UpdateMessage.new(@name, collection_name, selector, obj, true))
             obj
           }
@@ -325,7 +348,10 @@ module XGen
         # Collection#insert.
         def insert_into_db(collection_name, objects)
           @semaphore.synchronize {
-            objects.each { |o| send_to_db(InsertMessage.new(@name, collection_name, o)) }
+            objects.each { |o|
+              o = @pk_factory.create_pk(o) if @pk_factory
+              send_to_db(InsertMessage.new(@name, collection_name, o))
+            }
           }
         end
 
