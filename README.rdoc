@@ -75,7 +75,7 @@ how to interpret them. You can tell the Ruby Mongo driver how to create
 primary keys by passing in the :pk option to the Mongo#db method.
 
   include XGen::Mongo::Driver
-  db = Mongo.new.db('dbname', :pk => MyPKFactory)
+  db = Mongo.new.db('dbname', :pk => MyPKFactory.new)
 
 A primary key factory object must respond to :create_pk, which should take a
 hash and return a hash which merges the original hash with any primary key
