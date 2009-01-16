@@ -48,6 +48,7 @@ Gem::Specification.new do |s|
                   'tests/test_db_api.rb',
                   'tests/test_db_connection.rb',
                   'tests/test_message.rb',
+                  'tests/test_mongo.rb',
                   'tests/test_objectid.rb',
                   'tests/test_ordered_hash.rb',
                   'tests/test_round_trip.rb']
