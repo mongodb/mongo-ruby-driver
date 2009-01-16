@@ -148,12 +148,8 @@ module XGen
         # new collection. If +strict+ is true, will raise an error if
         # collection +name+ does not already exists.
         def collection(name)
-          return Collection.new(self, name) if collection_names.include?(full_coll_name(name))
-          if strict?
-            raise "Collection #{name} doesn't exist. Currently in strict mode."
-          else
-            create_collection(name)
-          end
+          return Collection.new(self, name) if !strict? || collection_names.include?(full_coll_name(name))
+          raise "Collection #{name} doesn't exist. Currently in strict mode."
         end
 
         # Drop collection +name+. Returns +true+ on success or if the

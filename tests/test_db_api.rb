@@ -232,7 +232,6 @@ class DBAPITest < Test::Unit::TestCase
     assert rows.length >= 1
     row = rows.detect { |r| r['name'] == @coll_full_name }
     assert_not_nil row
-    assert_equal @coll.name, row['options']['create']
   end
 
   def test_collection_options
