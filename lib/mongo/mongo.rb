@@ -102,7 +102,7 @@ module XGen
             raise "error retrieving database info" unless db.ok?(doc)
             doc
           ensure
-            db.close
+            db.close if db
           end
         end
 
