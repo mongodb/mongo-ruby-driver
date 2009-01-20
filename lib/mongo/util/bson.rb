@@ -46,6 +46,8 @@ class BSON
   NUMBER_INT = 16
   MAXKEY = 127
 
+  BYTE_TYPE = 2
+
   if RUBY_VERSION >= '1.9'
     def self.to_utf8(str)
       str.encode("utf-8")
@@ -258,6 +260,8 @@ class BSON
   end
 
   def deserialize_binary_data(buf)
+    buf.get_int                 # length + 4; ignored
+    buf.get                     # byte type; ignored
     len = buf.get_int
     bytes = buf.get(len)
     str = ''
@@ -282,7 +286,7 @@ class BSON
   def serialize_binary_element(buf, key, val)
     buf.put(BINARY)
     self.class.serialize_cstr(buf, key)
-    buf.put_int(val.length)
+
     bytes = if RUBY_VERSION >= '1.9'
               val.bytes.to_a
             else
@@ -290,6 +294,11 @@ class BSON
               val.each_byte { |byte| a << byte }
               a
             end
+
+    num_bytes = bytes.length
+    buf.put_int(num_bytes + 4)
+    buf.put(BYTE_TYPE)
+    buf.put_int(num_bytes)
     buf.put_array(bytes)
   end
 
