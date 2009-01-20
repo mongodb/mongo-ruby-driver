@@ -94,7 +94,7 @@ module XGen
         # fails, it keeps trying to connect to the remaining nodes until it
         # sucessfully connects.
         def initialize(db_name, nodes, options={})
-          raise "Invalid DB name" if !db_name || (db_name && db_name.length > 0 && db_name.include?("."))
+          raise "Invalid DB name \"#{db_name}\" (must be non-nil, non-zero-length, and can not contain \".\")" if !db_name || (db_name && db_name.length > 0 && db_name.include?("."))
           @name, @nodes = db_name, nodes
           @strict = options[:strict]
           @pk_factory = options[:pk]
@@ -203,7 +203,7 @@ module XGen
         def master
           doc = db_command(:ismaster => 1)
           is_master = doc['ismaster']
-          raise "Error retrieving master database" unless ok?(doc) && is_master.kind_of?(Numeric)
+          raise "Error retrieving master database: #{doc.inspect}" unless ok?(doc) && is_master.kind_of?(Numeric)
           case is_master.to_i
           when 1
             "#@host:#@port"

@@ -99,7 +99,7 @@ module XGen
           begin
             db = db(db_name)
             doc = db.db_command(cmd)
-            raise "error retrieving database info" unless db.ok?(doc)
+            raise "error retrieving database info: #{doc.inspect}" unless db.ok?(doc)
             doc
           ensure
             db.close if db
