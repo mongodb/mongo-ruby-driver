@@ -29,4 +29,16 @@ class MongoTest < Test::Unit::TestCase
     assert names.include?('admin')
   end
 
+  def test_drop_database
+    db = @mongo.db('will-be-deleted')
+    coll = db.collection('temp')
+    coll.clear
+    coll.insert(:name => 'temp')
+    assert_equal 1, coll.count()
+    assert @mongo.database_names.include?('will-be-deleted')
+
+    @mongo.drop_database('will-be-deleted')
+    assert !@mongo.database_names.include?('will-be-deleted')
+  end
+
 end

@@ -61,19 +61,12 @@ module XGen
         # Returns a hash containing database names as keys and disk space for
         # each as values.
         def database_info
-          admin_db = nil
-          begin
-            admin_db = db('admin')
-            doc = admin_db.db_command(:listDatabases => 1)
-            raise "error retrieving database info" unless admin_db.ok?(doc)
-            h = {}
-            doc['databases'].each { |db|
-              h[db['name']] = db['sizeOnDisk'].to_i
-            }
-            h
-          ensure
-            admin_db.close
-          end
+          doc = single_db_command('admin', :listDatabases => 1)
+          h = {}
+          doc['databases'].each { |db|
+            h[db['name']] = db['sizeOnDisk'].to_i
+          }
+          h
         end
 
         # Returns an array of database names.
@@ -89,6 +82,28 @@ module XGen
         # Not implemented.
         def copy_database(from_host, from_db, to_db)
           raise "not implemented"
+        end
+
+        # Drops the database +name+.
+        def drop_database(name)
+          single_db_command(name, :dropDatabase => 1)
+        end
+
+        protected
+
+        # Send cmd (a hash, possibly ordered) to the admin database and return
+        # the answer. Raises an error unless the return is "ok" (DB#ok?
+        # returns +true+).
+        def single_db_command(db_name, cmd)
+          db = nil
+          begin
+            db = db(db_name)
+            doc = db.db_command(cmd)
+            raise "error retrieving database info" unless db.ok?(doc)
+            doc
+          ensure
+            db.close
+          end
         end
 
       end
