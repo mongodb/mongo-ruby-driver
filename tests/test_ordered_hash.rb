@@ -82,4 +82,21 @@ class OrderedHashTest < Test::Unit::TestCase
     assert_equal '{"c"=>1, "a"=>2, "z"=>3}', @oh.inspect
   end
 
+  def test_clear
+    @oh.clear
+    assert @oh.keys.empty?
+  end
+
+  def test_delete
+    assert @oh.keys.include?('z')
+    @oh.delete('z')
+    assert !@oh.keys.include?('z')
+  end
+
+  def test_delete_if
+    assert @oh.keys.include?('z')
+    @oh.delete_if { |k,v| k == 'z' }
+    assert !@oh.keys.include?('z')
+  end
+
 end

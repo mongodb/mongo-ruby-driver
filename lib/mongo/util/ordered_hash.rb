@@ -63,6 +63,24 @@ class OrderedHash < Hash
     str << '}'
   end
 
+  def delete(key, &block)
+    @ordered_keys.delete(key)
+    super
+  end
+
+  def delete_if(&block)
+    self.each { |k,v|
+      if yield k, v
+        delete(k)
+      end
+    }
+  end
+
+  def clear
+    super
+    @ordered_keys = []
+  end
+
   end                           # Ruby before 1.9
 
 end
