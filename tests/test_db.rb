@@ -1,5 +1,5 @@
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
-require 'md5'
+require 'digest/md5'
 require 'mongo'
 require 'test/unit'
 
@@ -19,12 +19,17 @@ class DBTest < Test::Unit::TestCase
     @host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
     @port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT
     @db = Mongo.new(@host, @port).db('ruby-mongo-test')
+
     @spongebob = 'spongebob'
     @spongebob_password = 'squarepants'
+    @users = @db.collection('system.users')
+    @users.clear
+    @db.add_user(@spongebob, @spongebob_password)
   end
 
   def teardown
     if @db.connected?
+      @users.clear if @users
       @db.close
     end
   end
@@ -54,6 +59,7 @@ class DBTest < Test::Unit::TestCase
 
   def test_array
     @db.close
+    @users = nil
     @db = Mongo.new([["nosuch.example.com"], [@host, @port]]).db('ruby-mongo-test')
     assert @db.connected?
   end
@@ -86,45 +92,25 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_add_user
-    coll = @db.collection('system.users')
-    coll.clear
-    begin
-      assert_equal 0, coll.count
-      @db.add_user(@spongebob, @spongebob_password)
-      assert_equal 1, coll.count
-      doc = coll.find({}, :limit => 1).next_object
-      assert_equal @spongebob, doc['user']
-      assert_equal MD5.new("mongo#{@spongebob_password}").to_s, doc['pwd']
-    ensure
-      coll.clear
-    end
+    assert_equal 1, @users.count
+    doc = @users.find({}, :limit => 1).next_object
+    assert_equal @spongebob, doc['user']
+    assert_equal Digest::MD5.hexdigest("mongo#{@spongebob_password}"), doc['pwd']
   end
 
   def test_delete_user
-    coll = @db.collection('system.users')
-    coll.clear
-    begin
-      assert_equal 0, coll.count
-      @db.add_user(@spongebob, @spongebob_password)
-      assert_equal 1, coll.count
-      @db.delete_user(@spongebob)
-      assert_equal 0, coll.count
-    ensure
-      coll.clear
-    end
+    @db.delete_user(@spongebob)
+    assert_equal 0, @users.count
   end
 
   def test_authenticate
-    coll = @db.collection('system.users')
-    coll.clear
-    begin
-      @db.add_user(@spongebob, @spongebob_password)
-      assert !@db.authenticate('nobody', 'nopassword')
-      assert !@db.authenticate(@spongebob, 'squareliederhosen')
-      assert @db.authenticate(@spongebob, @spongebob_password)
-    ensure
-      coll.clear
-    end
+    assert !@db.authenticate('nobody', 'nopassword')
+    assert !@db.authenticate(@spongebob, 'squareliederhosen')
+    assert @db.authenticate(@spongebob, @spongebob_password)
+  end
+
+  def test_logout
+    @db.logout                  # only testing that we don't throw exception
   end
 
 end

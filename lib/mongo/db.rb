@@ -15,7 +15,7 @@
 # ++
 
 require 'socket'
-require 'md5'
+require 'digest/md5'
 require 'mutex_m'
 require 'mongo/collection'
 require 'mongo/message'
@@ -144,8 +144,14 @@ module XGen
           auth['authenticate'] = 1
           auth['user'] = username
           auth['nonce'] = nonce
-          auth['key'] = MD5.md5("#{nonce}#{username}#{hash_password(password)}").to_s
+          auth['key'] = Digest::MD5.hexdigest("#{nonce}#{username}#{hash_password(password)}")
           ok?(db_command(auth))
+        end
+
+        # Deauthorizes use for this database for this connection.
+        def logout
+          doc = db_command(:logout => 1)
+          raise "error logging out: #{doc.inspect}" unless ok?(doc)
         end
 
         # Returns an array of collection names. Each name is of the form
@@ -425,7 +431,7 @@ module XGen
         private
 
         def hash_password(plaintext)
-          MD5.new("mongo#{plaintext}").to_s
+          Digest::MD5.hexdigest("mongo#{plaintext}")
         end
 
       end
