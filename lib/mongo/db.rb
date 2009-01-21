@@ -15,6 +15,7 @@
 # ++
 
 require 'socket'
+require 'md5'
 require 'mutex_m'
 require 'mongo/collection'
 require 'mongo/message'
@@ -32,6 +33,7 @@ module XGen
         SYSTEM_NAMESPACE_COLLECTION = "system.namespaces"
         SYSTEM_INDEX_COLLECTION = "system.indexes"
         SYSTEM_PROFILE_COLLECTION = "system.profile"
+        SYSTEM_USER_COLLECTION = "system.users"
         SYSTEM_COMMAND_COLLECTION = "$cmd"
 
         # Strict mode enforces collection existence checks. When +true+,
@@ -117,6 +119,33 @@ module XGen
             @socket
           }
           raise "error: failed to connect to any given host:port" unless @socket
+        end
+
+        # Add a new user to the database.
+        def add_user(username, password)
+          coll = collection(SYSTEM_USER_COLLECTION)
+          coll.insert(:user => username, :pwd => hash_password(password))
+        end
+
+        def delete_user(username)
+          coll = collection(SYSTEM_USER_COLLECTION)
+          coll.remove(:user => username)
+        end
+
+        # Returns true if +username+ has +password+ in
+        # +SYSTEM_USER_COLLECTION+. +name+ is username, +password+ is
+        # plaintext password.
+        def authenticate(username, password)
+          doc = db_command(:getnonce => 1)
+          raise "error retrieving nonce: #{doc}" unless ok?(doc)
+          nonce = doc['nonce']
+
+          auth = OrderedHash.new
+          auth['authenticate'] = 1
+          auth['user'] = username
+          auth['nonce'] = nonce
+          auth['key'] = MD5.md5("#{nonce}#{username}#{hash_password(password)}").to_s
+          ok?(db_command(auth))
         end
 
         # Returns an array of collection names. Each name is of the form
@@ -391,6 +420,12 @@ module XGen
           q = Query.new(selector)
           q.number_to_return = 1
           query(Collection.new(self, SYSTEM_COMMAND_COLLECTION), q).next_object
+        end
+
+        private
+
+        def hash_password(plaintext)
+          MD5.new("mongo#{plaintext}").to_s
         end
 
       end
