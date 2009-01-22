@@ -86,7 +86,7 @@ module XGen
         end
 
         def eql?(other)
-          @data == other.to_a
+          @data == other.instance_variable_get("@data")
         end
         alias_method :==, :eql?
 
