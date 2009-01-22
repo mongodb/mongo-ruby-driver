@@ -24,7 +24,7 @@ class DBTest < Test::Unit::TestCase
     @spongebob_password = 'squarepants'
     @users = @db.collection('system.users')
     @users.clear
-    @db.add_user(@spongebob, @spongebob_password)
+    @users.insert(:user => @spongebob, :pwd => @db.send(:hash_password, @spongebob_password))
   end
 
   def teardown
@@ -89,18 +89,6 @@ class DBTest < Test::Unit::TestCase
     rescue => ex
       assert_match /can not change PK factory/, ex.to_s
     end
-  end
-
-  def test_add_user
-    assert_equal 1, @users.count
-    doc = @users.find({}, :limit => 1).next_object
-    assert_equal @spongebob, doc['user']
-    assert_equal Digest::MD5.hexdigest("mongo#{@spongebob_password}"), doc['pwd']
-  end
-
-  def test_delete_user
-    @db.delete_user(@spongebob)
-    assert_equal 0, @users.count
   end
 
   def test_authenticate

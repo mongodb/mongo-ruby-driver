@@ -121,17 +121,6 @@ module XGen
           raise "error: failed to connect to any given host:port" unless @socket
         end
 
-        # Add a new user to the database.
-        def add_user(username, password)
-          coll = collection(SYSTEM_USER_COLLECTION)
-          coll.insert(:user => username, :pwd => hash_password(password))
-        end
-
-        def delete_user(username)
-          coll = collection(SYSTEM_USER_COLLECTION)
-          coll.remove(:user => username)
-        end
-
         # Returns true if +username+ has +password+ in
         # +SYSTEM_USER_COLLECTION+. +name+ is username, +password+ is
         # plaintext password.
