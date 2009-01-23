@@ -50,10 +50,10 @@ class DBTest < Test::Unit::TestCase
     assert_equal 'ruby-mongo-test.test', @db.full_coll_name(coll.name)
   end
 
-  def test_array
+  def test_pair
     @db.close
     @users = nil
-    @db = Mongo.new([["nosuch.example.com"], [@host, @port]]).db('ruby-mongo-test')
+    @db = Mongo.new({:left => "nosuch.example.com", :right => [@host, @port]}).db('ruby-mongo-test')
     assert @db.connected?
   end
 

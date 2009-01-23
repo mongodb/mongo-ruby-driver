@@ -73,9 +73,12 @@ module XGen
           @pk_factory = pk_factory
         end
 
+        # Instances of DB are normally obtained by calling Mongo#db.
+        #
         # db_name :: The database name
         #
-        # nodes :: An array of [host, port] pairs.
+        # nodes :: An array of [host, port] pairs. See Mongo#new, which offers
+        #          a more flexible way of defining nodes.
         #
         # options :: A hash of options.
         #

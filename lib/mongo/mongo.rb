@@ -27,12 +27,16 @@ module XGen
 
         # Create a Mongo database server instance. You specify either one or a
         # pair of servers. If one, you also say if connecting to a slave is
-        # OK. The host default is "localhost" and port default is
-        # DEFAULT_PORT. If you specify a pair, pair_or_host is an array of two
-        # arrays, where each is a host/port pair (or a host with no port), and
-        # the +port+ argument is ignored.
+        # OK. In either case, the host default is "localhost" and port default
+        # is DEFAULT_PORT.
         #
-        # Options are passed on to each DB instance:
+        # If you specify a pair, pair_or_host is a hash with two keys :left
+        # and :right. Each key maps to either
+        # * a server name, in which case port is DEFAULT_PORT
+        # * a port number, in which case server is "localhost"
+        # * an array containing a server name and a port number in either order
+        #
+        # +options+ are passed on to each DB instance:
         #
         # :slave_ok :: Only used if one host is specified. If false, when
         #              connecting to that host/port a DB object will check to
@@ -51,11 +55,20 @@ module XGen
         #  Mongo.new                         # localhost, DEFAULT_PORT, !slave
         #  Mongo.new("localhost")            # localhost, DEFAULT_PORT, !slave
         #  Mongo.new("localhost", 3000)      # localhost, 3000, slave not ok
-        #  Mongo.new("localhost", 3000, :slave_ok => true) # localhost, 3000, slave ok
+        #  # localhost, 3000, slave ok
+        #  Mongo.new("localhost", 3000, :slave_ok => true)
+        #  # localhost, DEFAULT_PORT, auto reconnect
+        #  Mongo.new(nil, nil, :auto_reconnect => true)
+        #
         #  # A pair of servers. DB will always talk to the master. On socket
         #  # error or "not master" error, we will auto-reconnect to the
         #  # current master.
-        #  Mongo.new([["db1.example.com", 3000], ["db2.example.com", 3000]]], nil, :auto_reconnect => true)
+        #  Mongo.new({:left  => ["db1.example.com", 3000],
+        #             :right => "db2.example.com"}, # DEFAULT_PORT
+        #            nil, :auto_reconnect => true)
+        #
+        #  # Here, :right is localhost/DEFAULT_PORT. No auto-reconnect.
+        #  Mongo.new({:left => ["db1.example.com", 3000]})
         #
         # When a DB object first connects to a pair, it will find the master
         # instance and connect to that one.
@@ -63,8 +76,11 @@ module XGen
           @pair = case pair_or_host
                    when String
                      [[pair_or_host, port || DEFAULT_PORT]]
-                   when Array
-                     pair_or_host.collect { |nh| [nh[0], nh[1] || DEFAULT_PORT] }
+                   when Hash
+                    connections = []
+                    connections << pair_val_to_connection(pair_or_host[:left])
+                    connections << pair_val_to_connection(pair_or_host[:right])
+                    connections
                    when nil
                      [['localhost', DEFAULT_PORT]]
                    end
@@ -110,6 +126,26 @@ module XGen
         end
 
         protected
+
+        # Turns an array containing an optional host name string and an
+        # optional port number integer into a [host, port] pair array.
+        def pair_val_to_connection(a)
+          case a
+          when nil
+            ['localhost', DEFAULT_PORT]
+          when String
+            [a, DEFAULT_PORT]
+          when Integer
+            ['localhost', a]
+          when Array
+            connection = ['localhost', DEFAULT_PORT]
+            connection[0] = a[0] if a[0].kind_of?(String)
+            connection[0] = a[1] if a[1].kind_of?(String)
+            connection[1] = a[0] if a[0].kind_of?(Integer)
+            connection[1] = a[1] if a[1].kind_of?(Integer)
+            connection
+          end
+        end
 
         # Send cmd (a hash, possibly ordered) to the admin database and return
         # the answer. Raises an error unless the return is "ok" (DB#ok?
