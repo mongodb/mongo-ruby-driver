@@ -28,9 +28,9 @@ module XGen
         # Create a Mongo database server instance. You specify either one or a
         # pair of servers. If one, you also say if connecting to a slave is
         # OK. The host default is "localhost" and port default is
-        # DEFAULT_PORT. If you specify a pair, pair_or_host is an array of
-        # arrays, where each is a host/port pair (or a host with no port) and
-        # the +port+ and +slave_ok+ arguments are ignored.
+        # DEFAULT_PORT. If you specify a pair, pair_or_host is an array of two
+        # arrays, where each is a host/port pair (or a host with no port), and
+        # the +port+ argument is ignored.
         #
         # Options are passed on to each DB instance:
         #
@@ -55,7 +55,7 @@ module XGen
         #  # A pair of servers. DB will always talk to the master. On socket
         #  # error or "not master" error, we will auto-reconnect to the
         #  # current master.
-        #  Mongo.new([["db1.example.com", 3000], ["db2.example.com", 3000]]], :auto_reconnect => true)
+        #  Mongo.new([["db1.example.com", 3000], ["db2.example.com", 3000]]], nil, :auto_reconnect => true)
         #
         # When a DB object first connects to a pair, it will find the master
         # instance and connect to that one.
