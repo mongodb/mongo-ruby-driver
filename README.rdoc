@@ -32,6 +32,11 @@ Install the "mongo" gem by typing
   $ gem sources -a http://gems.github.com
   $ sudo gem install mongodb-mongo-ruby-driver
 
+The first line tells RubyGems to add the GitHub gem repository. You only need
+to run this command once.
+
+=== From the GitHub source
+
 The source code is available at http://github.com/mongodb/mongo-ruby-driver.
 You can either clone the git repository or download a tarball or zip file.
 Once you have the source, you can use it from wherever you downloaded it or
