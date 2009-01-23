@@ -28,7 +28,7 @@ class DBTest < Test::Unit::TestCase
   end
 
   def teardown
-    if @db.connected?
+    if @db && @db.connected?
       @users.clear if @users
       @db.close
     end
@@ -48,13 +48,6 @@ class DBTest < Test::Unit::TestCase
   def test_full_coll_name
     coll = @db.collection('test')
     assert_equal 'ruby-mongo-test.test', @db.full_coll_name(coll.name)
-  end
-
-  def test_master
-    # Doesn't really test anything since we probably only have one database
-    # during this test.
-    @db.switch_to_master
-    assert @db.connected?
   end
 
   def test_array
@@ -99,6 +92,18 @@ class DBTest < Test::Unit::TestCase
 
   def test_logout
     @db.logout                  # only testing that we don't throw exception
+  end
+
+  def test_auto_connect
+    @db.close
+    db = Mongo.new(@host, @port, :auto_reconnect => true).db('ruby-mongo-test')
+    assert db.connected?
+    assert db.auto_reconnect?
+    db.close
+    assert !db.connected?
+    assert db.auto_reconnect?
+    db.collection('test').insert('a' => 1)
+    assert db.connected?
   end
 
 end

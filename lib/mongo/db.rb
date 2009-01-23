@@ -61,6 +61,9 @@ module XGen
         # The database's socket. For internal (and Cursor) use only.
         attr_reader :socket
 
+        def slave_ok?; @slave_ok; end
+        def auto_reconnect?; @auto_reconnect; end
+
         # A primary key factory object (or +nil+). See the README.doc file or
         # DB#new for details.
         attr_reader :pk_factory
@@ -92,27 +95,49 @@ module XGen
         #        object's +create_pk+ method will be called and the new hash
         #        returned will be inserted.
         #
-        # When a DB object first connects, it tries the first node. If that
-        # fails, it keeps trying to connect to the remaining nodes until it
-        # sucessfully connects.
+        # :slave_ok :: Only used if +nodes+ contains only one host/port. If
+        #              false, when connecting to that host/port we check to
+        #              see if the server is the master. If it is not, an error
+        #              is thrown.
+        #
+        # :auto_reconnect :: If the connection gets closed (for example, we
+        #                    have a server pair and saw the "not master"
+        #                    error, which closes the connection), then
+        #                    automatically try to reconnect to the master or
+        #                    to the single server we have been given. Defaults
+        #                    to +false+.
+        #
+        # When a DB object first connects to a pair, it will find the master
+        # instance and connect to that one. On socket error or if we recieve a
+        # "not master" error, we again find the master of the pair.
         def initialize(db_name, nodes, options={})
           raise "Invalid DB name \"#{db_name}\" (must be non-nil, non-zero-length, and can not contain \".\")" if !db_name || (db_name && db_name.length > 0 && db_name.include?("."))
           @name, @nodes = db_name, nodes
           @strict = options[:strict]
           @pk_factory = options[:pk]
+          @slave_ok = options[:slave_ok] && @nodes.length == 1 # only OK if one node
+          @auto_reconnect = options[:auto_reconnect]
           @semaphore = Object.new
           @semaphore.extend Mutex_m
-          connect_to_first_available_host
+          connect_to_master
         end
 
-        def connect_to_first_available_host
+        def connect_to_master
           close if @socket
           @host = @port = nil
           @nodes.detect { |hp|
             @host, @port = *hp
             begin
               @socket = TCPSocket.new(@host, @port)
-              break if ok?(db_command(:ismaster => 1)) # success
+
+              # Check for master. Can't call master? because it uses mutex,
+              # which may already be in use during this call.
+              semaphore_is_locked = @semaphore.locked?
+              @semaphore.unlock if semaphore_is_locked
+              is_master = master?
+              @semaphore.lock if semaphore_is_locked
+
+              break if @slave_ok || is_master
             rescue => ex
               close if @socket
             end
@@ -233,20 +258,6 @@ module XGen
             "#@host:#@port"
           else
             doc['remote']
-          end
-        end
-
-        # Switches our socket to the master database. If we are already the
-        # master, no change is made.
-        def switch_to_master
-          master_str = master()
-          unless master_str == "#@host:#@port"
-            @semaphore.synchronize {
-              master_str =~ /(.+):(\d+)/
-              @host, @port = $1, $2
-              close()
-              @socket = TCPSocket.new(@host, @port)
-            }
           end
         end
 
@@ -387,7 +398,13 @@ module XGen
         end
 
         def send_to_db(message)
-          @socket.print(message.buf.to_s)
+          connect_to_master if !connected? && @auto_reconnect
+          begin
+            @socket.print(message.buf.to_s)
+          rescue => ex
+            close
+            raise ex
+          end
         end
 
         def full_coll_name(collection_name)

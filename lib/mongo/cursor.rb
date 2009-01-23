@@ -70,7 +70,19 @@ module XGen
         def next_object
           refill_via_get_more if num_remaining == 0
           o = @cache.shift
-          raise o['$err'] if o && o['$err']
+
+          if o && o['$err']
+            err = o['$err']
+
+            # If the server has stopped being the master (e.g., it's one of a
+            # pair but it has died or something like that) then we close that
+            # connection. If the db has auto connect option and a pair of
+            # servers, next request will re-open on master server.
+            @db.close if err == "not master"
+
+            raise err
+          end
+
           o
         end
 
