@@ -254,8 +254,8 @@ module XGen
           doc['err']
         end
 
-        # Returns +true+ if there is was an error caused by the most recently
-        # executed database operation.
+        # Returns +true+ if an error was caused by the most recently executed
+        # database operation.
         #
         # Note: as of this writing, errors are only detected on the db server
         # for certain kinds of operations (writes). The plan is to change this
