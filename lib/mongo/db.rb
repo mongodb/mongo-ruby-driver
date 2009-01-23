@@ -242,6 +242,28 @@ module XGen
           ok?(db_command(:drop => name))
         end
 
+        # Returns the error message from the most recently executed database
+        # operation for this connection, or +nil+ if there was no error.
+        #
+        # Note: as of this writing, errors are only detected on the db server
+        # for certain kinds of operations (writes). The plan is to change this
+        # so that all operations will set the error if needed.
+        def error
+          doc = db_command(:getlasterror => 1)
+          raise "error retrieving last error: #{doc}" unless ok?(doc)
+          doc['err']
+        end
+
+        # Returns +true+ if there is was an error caused by the most recently
+        # executed database operation.
+        #
+        # Note: as of this writing, errors are only detected on the db server
+        # for certain kinds of operations (writes). The plan is to change this
+        # so that all operations will set the error if needed.
+        def error?
+          error != nil
+        end
+
         # Returns true if this database is a master (or is not paired with any
         # other database), false if it is a slave.
         def master?

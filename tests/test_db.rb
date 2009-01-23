@@ -106,4 +106,16 @@ class DBTest < Test::Unit::TestCase
     assert db.connected?
   end
 
+  def test_error
+    doc = @db.send(:db_command, :forceerror => 1)
+    assert @db.error?
+    err = @db.error
+    assert_match /forced error/, err
+
+    # ask again
+    assert @db.error?
+    err2 = @db.error
+    assert_equal err, err2
+  end
+
 end
