@@ -47,6 +47,17 @@ class DBAPITest < Test::Unit::TestCase
     assert docs.detect { |row| row['b'] == 4 }
   end
 
+  def test_insert_multiple
+    @coll.insert({'a' => 2}, {'b' => 3})
+
+    assert_equal 3, @coll.count
+    docs = @coll.find().to_a
+    assert_equal 3, docs.length
+    assert docs.detect { |row| row['a'] == 1 }
+    assert docs.detect { |row| row['a'] == 2 }
+    assert docs.detect { |row| row['b'] == 3 }
+  end
+
   def test_find_simple
     @r2 = @coll.insert('a' => 2)
     @r3 = @coll.insert('b' => 3)
