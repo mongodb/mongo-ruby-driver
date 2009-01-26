@@ -286,6 +286,16 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal regex, rows[0]['b']
   end
 
+  def test_non_oid_id
+    # Note: can't use Time.new because that will include fractional seconds,
+    # which Mongo does not store.
+    t = Time.at(1234567890)
+    @coll << {'_id' => t}
+    rows = @coll.find({'_id' => t}).to_a
+    assert_equal 1, rows.length
+    assert_equal t, rows[0]['_id']
+  end
+
   def test_strict
     assert !@db.strict?
     @db.strict = true
