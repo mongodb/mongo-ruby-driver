@@ -64,7 +64,7 @@ class OrderedHash < Hash
   end
 
   def delete(key, &block)
-    @ordered_keys.delete(key)
+    @ordered_keys.delete(key) if @ordered_keys
     super
   end
 
