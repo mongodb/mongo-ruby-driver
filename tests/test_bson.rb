@@ -125,6 +125,18 @@ class BSONTest < Test::Unit::TestCase
     assert_equal 'binstring', doc2['bin']
   end
 
+#   def test_binary_byte_buffer
+#     bb = ByteBuffer.new
+#     10.times { |i| bb.put(i) }
+#     doc = {'bin' => bb}
+#     @b.serialize(doc)
+#     doc2 = @b.deserialize
+
+#     doc2_bytes = []
+#     doc2['bin'].each_byte { |b| doc2_bytes << b }
+#     assert_equal bb.to_a, doc2_bytes
+#   end
+
   def test_undefined
     doc = {'undef' => Undefined.new}
     @b.serialize(doc)

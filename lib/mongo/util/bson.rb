@@ -287,12 +287,17 @@ class BSON
     buf.put(BINARY)
     self.class.serialize_cstr(buf, key)
 
-    bytes = if RUBY_VERSION >= '1.9'
-              val.bytes.to_a
+    bytes = case val
+            when ByteBuffer
+              val.to_a
             else
-              a = []
-              val.each_byte { |byte| a << byte }
-              a
+              if RUBY_VERSION >= '1.9'
+                val.bytes.to_a
+              else
+                a = []
+                val.each_byte { |byte| a << byte }
+                a
+              end
             end
 
     num_bytes = bytes.length
@@ -422,7 +427,7 @@ class BSON
       NUMBER_INT
     when Numeric
       NUMBER
-    when XGen::Mongo::Driver::Binary # must be before String
+    when XGen::Mongo::Driver::Binary, ByteBuffer # must be before String
       BINARY
     when String
       # magic awful stuff - the DB requires that a where clause is sent as CODE
