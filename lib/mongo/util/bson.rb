@@ -333,7 +333,20 @@ class BSON
   def serialize_object_element(buf, key, val, opcode=OBJECT)
     buf.put(opcode)
     self.class.serialize_cstr(buf, key)
-    buf.put_array(BSON.new.serialize(val).to_a)
+    buf.put_array(BSON.new.serialize(put_id_first(val)).to_a)
+  end
+
+  # For internal use only. Looks for '_id' or :_id key of val. If there is
+  # one, returns an OrderedHash where '_id' is first. If not, returns val.
+  def put_id_first(val)
+    oid = val.delete('_id') || val.delete(:_id)
+    if oid
+      h = OrderedHash.new
+      h['_id'] = oid
+      val.each { |k, v| h[k] = v }
+      val = h
+    end
+    val
   end
 
   def serialize_array_element(buf, key, val)

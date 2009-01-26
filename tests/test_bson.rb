@@ -132,4 +132,20 @@ class BSONTest < Test::Unit::TestCase
     assert_kind_of Undefined, doc2['undef']
   end
 
+  def test_put_id_first
+    val = {'a' => 'foo'}
+    assert_same val, @b.put_id_first(val)
+
+    val = OrderedHash.new
+    val['not_id'] = 1
+    val['_id'] = 2
+    id_first = @b.put_id_first(val)
+    assert_equal ['_id', 'not_id'], id_first.keys
+
+    val = {'a' => 'foo', 'b' => 'bar', :_id => 42, 'z' => 'hello'}
+    id_first = @b.put_id_first(val)
+    assert id_first.keys.include?('_id')
+    assert !id_first.keys.include?(:_id)
+  end
+
 end
