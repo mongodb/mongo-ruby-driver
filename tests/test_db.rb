@@ -64,11 +64,15 @@ class DBTest < Test::Unit::TestCase
 
     obj = coll.insert('name' => 'Fred', 'age' => 42)
     row = coll.find({'name' => 'Fred'}, :limit => 1).next_object
+    oid = row.delete('_id')
+    assert_not_nil oid
     assert_equal obj, row
 
     oid = XGen::Mongo::Driver::ObjectID.new
     obj = coll.insert('_id' => oid, 'name' => 'Barney', 'age' => 41)
     row = coll.find({'name' => 'Barney'}, :limit => 1).next_object
+    db_oid = row.delete('_id')
+    assert_equal oid, db_oid
     assert_equal obj, row
 
     coll.clear

@@ -79,7 +79,17 @@ class BSON
     # put in a placeholder for the total size
     @buf.put_int(0)
 
-    obj.each {|k, v|
+    # Write key/value pairs. Always write _id first if it exists.
+    oid = obj.delete('_id') || obj.delete(:_id)
+    serialize_key_value('_id', oid) if oid
+    obj.each {|k, v| serialize_key_value(k, v) }
+
+    serialize_eoo_element(@buf)
+    @buf.put_int(@buf.size, 0)
+    self
+  end
+
+  def serialize_key_value(k, v)
       type = bson_type(v, k)
       case type
       when STRING, CODE, SYMBOL
@@ -112,10 +122,6 @@ class BSON
       else
         raise "unhandled type #{type}"
       end
-    }
-    serialize_eoo_element(@buf)
-    @buf.put_int(@buf.size, 0)
-    self
   end
 
   def deserialize(buf=nil, parent=nil)
@@ -338,20 +344,7 @@ class BSON
   def serialize_object_element(buf, key, val, opcode=OBJECT)
     buf.put(opcode)
     self.class.serialize_cstr(buf, key)
-    buf.put_array(BSON.new.serialize(put_id_first(val)).to_a)
-  end
-
-  # For internal use only. Looks for '_id' or :_id key of val. If there is
-  # one, returns an OrderedHash where '_id' is first. If not, returns val.
-  def put_id_first(val)
-    oid = val.delete('_id') || val.delete(:_id)
-    if oid
-      h = OrderedHash.new
-      h['_id'] = oid
-      val.each { |k, v| h[k] = v }
-      val = h
-    end
-    val
+    buf.put_array(BSON.new.serialize(val).to_a)
   end
 
   def serialize_array_element(buf, key, val)

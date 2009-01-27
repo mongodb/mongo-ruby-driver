@@ -95,9 +95,6 @@ class BSONTest < Test::Unit::TestCase
     assert_equal doc['date'].to_i, doc2['date'].to_i
   end
 
-  def test_null
-  end
-
   def test_dbref
     oid = ObjectID.new
     doc = {}
@@ -125,17 +122,17 @@ class BSONTest < Test::Unit::TestCase
     assert_equal 'binstring', doc2['bin']
   end
 
-#   def test_binary_byte_buffer
-#     bb = ByteBuffer.new
-#     10.times { |i| bb.put(i) }
-#     doc = {'bin' => bb}
-#     @b.serialize(doc)
-#     doc2 = @b.deserialize
+  def test_binary_byte_buffer
+    bb = ByteBuffer.new
+    10.times { |i| bb.put(i) }
+    doc = {'bin' => bb}
+    @b.serialize(doc)
+    doc2 = @b.deserialize
 
-#     doc2_bytes = []
-#     doc2['bin'].each_byte { |b| doc2_bytes << b }
-#     assert_equal bb.to_a, doc2_bytes
-#   end
+    doc2_bytes = []
+    doc2['bin'].each_byte { |b| doc2_bytes << b }
+    assert_equal bb.to_a, doc2_bytes
+  end
 
   def test_undefined
     doc = {'undef' => Undefined.new}
@@ -145,19 +142,17 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_put_id_first
-    val = {'a' => 'foo'}
-    assert_same val, @b.put_id_first(val)
-
     val = OrderedHash.new
     val['not_id'] = 1
     val['_id'] = 2
-    id_first = @b.put_id_first(val)
-    assert_equal ['_id', 'not_id'], id_first.keys
+    roundtrip = @b.deserialize(@b.serialize(val).to_a)
+    assert_kind_of OrderedHash, roundtrip
+    assert_equal '_id', roundtrip.keys.first
 
     val = {'a' => 'foo', 'b' => 'bar', :_id => 42, 'z' => 'hello'}
-    id_first = @b.put_id_first(val)
-    assert id_first.keys.include?('_id')
-    assert !id_first.keys.include?(:_id)
+    roundtrip = @b.deserialize(@b.serialize(val).to_a)
+    assert_kind_of OrderedHash, roundtrip
+    assert_equal '_id', roundtrip.keys.first
   end
 
 end
