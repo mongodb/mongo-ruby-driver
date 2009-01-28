@@ -14,31 +14,41 @@ class MongoTest < Test::Unit::TestCase
   end
 
   def test_database_info
+    @mongo.drop_database('ruby-mongo-info-test')
+    @mongo.db('ruby-mongo-info-test').collection('info-test').insert('a' => 1)
+
     info = @mongo.database_info
     assert_not_nil info
     assert_kind_of Hash, info
-    assert_not_nil info['admin']
-    assert info['admin'] > 0
+    assert_not_nil info['ruby-mongo-info-test']
+    assert info['ruby-mongo-info-test'] > 0
+
+    @mongo.drop_database('ruby-mongo-info-test')
   end
 
   def test_database_names
+    @mongo.drop_database('ruby-mongo-info-test')
+    @mongo.db('ruby-mongo-info-test').collection('info-test').insert('a' => 1)
+
     names = @mongo.database_names
     assert_not_nil names
     assert_kind_of Array, names
     assert names.length >= 1
-    assert names.include?('admin')
+    assert names.include?('ruby-mongo-info-test')
+
+    @mongo.drop_database('ruby-mongo-info-test')
   end
 
   def test_drop_database
-    db = @mongo.db('will-be-deleted')
+    db = @mongo.db('ruby-mongo-will-be-deleted')
     coll = db.collection('temp')
     coll.clear
     coll.insert(:name => 'temp')
     assert_equal 1, coll.count()
-    assert @mongo.database_names.include?('will-be-deleted')
+    assert @mongo.database_names.include?('ruby-mongo-will-be-deleted')
 
-    @mongo.drop_database('will-be-deleted')
-    assert !@mongo.database_names.include?('will-be-deleted')
+    @mongo.drop_database('ruby-mongo-will-be-deleted')
+    assert !@mongo.database_names.include?('ruby-mongo-will-be-deleted')
   end
 
   def test_pair
