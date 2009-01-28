@@ -8,9 +8,9 @@ require 'test/unit'
 # OrderedHash and then test both Ruby-to-BSON and BSON-to-Ruby translations.
 #
 # There is a whole other project that includes similar tests
-# (http://github.com/mongodb/mongo-qa). If the directory ../mongo-qa exists,
-# then we find the BSON test files there and use those, too. Use the Rake task
-# "mongo_qa" to obtain those tests.
+# (http://github.com/mongodb/mongo-qa). If the directory ../../mongo-qa
+# exists, (that is, the top-level dir of mongo-qa is next to the top-level dir
+# of this project), then we find the BSON test files there and use those, too.
 class RoundTripTest < Test::Unit::TestCase
 
   include XGen::Mongo::Driver
@@ -47,7 +47,7 @@ EOS
   # Dynamically generate one test for each test file. This way, if one test
   # fails the others will still run.
   create_test_for_round_trip_files_in_dir(File.join(HERE, 'data'))
-  mongo_qa_dir = File.join(HERE, '..', 'mongo-qa/modules/bson_tests/tests')
+  mongo_qa_dir = File.join(HERE, '../..', 'mongo-qa/modules/bson_tests/tests')
   if File.exist?(mongo_qa_dir)
     %w(basic_types complex single_types).each { |subdir_name|
       create_test_for_round_trip_files_in_dir(File.join(mongo_qa_dir, subdir_name))

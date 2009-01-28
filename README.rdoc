@@ -133,17 +133,16 @@ The tests assume that the Mongo database is running on the default port.
 
 The project mongo-qa (http://github.com/mongodb/mongo-qa) contains many more
 Mongo driver tests that are language independent. To run thoses tests as part
-of the "rake test" task, run
+of the "rake test" task, download the code "next to" this directory. So, after
+installing the mongo-qa code you would have these two directories next to each
+other:
 
-  $ rake mongo_qa
+  $ ls
+  mongo-qa
+  mongo-ruby-driver
   $ rake test
 
-The mongo_qa task uses the "git clone" command to make a copy of that project
-in a directory named mongo-qa. If the directory already exists, then the
-mongo_qa task uses "git pull" to updated the code that's there. The Ruby
-driver tests will then use some of the data files from that project when it
-runs BSON tests. You can delete this directory at any time if you don't want
-to run those tests any more.
+The tests run just fine if the mongo-qa directory is not there.
 
 Additionally, the script bin/validate is used by the mongo-qa project's
 validator script.
