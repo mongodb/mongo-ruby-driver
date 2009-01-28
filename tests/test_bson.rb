@@ -155,4 +155,18 @@ class BSONTest < Test::Unit::TestCase
     assert_equal '_id', roundtrip.keys.first
   end
 
+  def test_do_not_change_original_object
+    val = OrderedHash.new
+    val['not_id'] = 1
+    val['_id'] = 2
+    assert val.keys.include?('_id')
+    @b.serialize(val)
+    assert val.keys.include?('_id')
+
+    val = {'a' => 'foo', 'b' => 'bar', :_id => 42, 'z' => 'hello'}
+    assert val.keys.include?(:_id)
+    @b.serialize(val)
+    assert val.keys.include?(:_id)
+  end
+
 end

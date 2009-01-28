@@ -80,9 +80,9 @@ class BSON
     @buf.put_int(0)
 
     # Write key/value pairs. Always write _id first if it exists.
-    oid = obj.delete('_id') || obj.delete(:_id)
+    oid = obj['_id'] || obj[:_id]
     serialize_key_value('_id', oid) if oid
-    obj.each {|k, v| serialize_key_value(k, v) }
+    obj.each {|k, v| serialize_key_value(k, v) unless k == '_id' || k == :_id }
 
     serialize_eoo_element(@buf)
     @buf.put_int(@buf.size, 0)
