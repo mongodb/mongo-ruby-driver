@@ -25,6 +25,10 @@ A quick code sample:
   puts "There are #{coll.count()} records. Here they are:"
   coll.find().each { |doc| puts doc.inspect }
 
+This driver also includes an implementation of a GridStore class, a Ruby
+interface to Mongo's GridFS storage. NOTE: the GridStore code may be moved to
+a separate project.
+
 = Installation
 
 Install the "mongo" gem by typing
@@ -53,6 +57,15 @@ be running, of course.
   $ ruby examples/simple.rb
 
 See also the test code, especially tests/test_db_api.rb.
+
+For the GridFS class GridStore, see the tests.
+
+
+= GridStore
+
+The GridStore class is a Ruby implementation of Mongo's GridFS file storage
+system. An instance of GridStore is like an IO object. See the rdocs for
+details.
 
 
 = Notes

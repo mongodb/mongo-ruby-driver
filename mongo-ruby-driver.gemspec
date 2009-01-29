@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'mongo'
-  s.version = '0.3.3'
+  s.version = '0.4.0'
   s.platform = Gem::Platform::RUBY
   s.summary = 'Simple pure-Ruby driver for the 10gen Mongo DB'
   s.description = 'A pure-Ruby driver for the 10gen Mongo DB. For more information about Mongo, see http://www.mongodb.org.'
