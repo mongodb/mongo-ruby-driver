@@ -129,7 +129,10 @@ If you have the source code, you can run the tests.
 
   $ rake test
 
-The tests assume that the Mongo database is running on the default port.
+The tests assume that the Mongo database is running on the default port. You
+can override the default host (localhost) and port (Mongo::DEFAULT_PORT) by
+using the environment variables MONGO_RUBY_DRIVER_HOST and
+MONGO_RUBY_DRIVER_PORT.
 
 The project mongo-qa (http://github.com/mongodb/mongo-qa) contains many more
 Mongo driver tests that are language independent. To run thoses tests as part
