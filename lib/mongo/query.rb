@@ -29,7 +29,7 @@ module XGen
         # If true, $explain will be set in QueryMessage that uses this query.
         attr_accessor :explain
         # Either +nil+ or an array of hint field names.
-        attr_accessor :hint_fields
+        attr_accessor :hint
         attr_reader :selector   # writer defined below
 
         # sel :: A hash describing the query. See the Mongo docs for details.
@@ -58,8 +58,12 @@ module XGen
         #             probably will not be what you intend because key order
         #             is not preserved. (order_by is called :sort in calls to
         #             Collection#find.)
-        def initialize(sel={}, return_fields=nil, number_to_skip=0, number_to_return=0, order_by=nil)
-          @number_to_skip, @number_to_return, @order_by = number_to_skip, number_to_return, order_by
+        #
+        # hint :: If not +nil+, specifies query hint fields. See
+        #                Collection#hint.
+        def initialize(sel={}, return_fields=nil, number_to_skip=0, number_to_return=0, order_by=nil, hint=nil)
+          @number_to_skip, @number_to_return, @order_by, @hint =
+            number_to_skip, number_to_return, order_by, hint
           self.selector = sel
           self.fields = return_fields
         end
@@ -102,7 +106,7 @@ module XGen
         end
 
         def contains_special_fields
-          (@order_by != nil && @order_by.length > 0) || @explain || @hint_fields
+          (@order_by != nil && @order_by.length > 0) || @explain || @hint
         end
       end
     end

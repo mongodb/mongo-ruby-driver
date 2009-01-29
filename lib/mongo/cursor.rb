@@ -42,24 +42,6 @@ module XGen
 
         def closed?; @closed; end
 
-        # Set hint fields to use and return +self+. hint_fields may be a
-        # single field name, array of field names, or a hash whose keys will
-        # become the hint field names. May be +nil+. If no hint fields are
-        # specified, the ones in the collection are used if they exist.
-        def hint(hint_fields)
-          @hint_fields = case hint_fields
-                         when String
-                           [hint_fields]
-                         when Hash
-                           hint_fields.keys
-                         when nil
-                           nil
-                         else
-                           hint_fields.to_a
-                         end
-          self
-        end
-
         # Return +true+ if there are more records to retrieve. We do not check
         # @num_to_return; #each is responsible for doing that.
         def more?
@@ -223,12 +205,8 @@ module XGen
         def send_query_if_needed
           # Run query first time we request an object from the wire
           unless @query_run
-            hints = @hint_fields || @collection.hint_fields
-            old_hints = @query.hint_fields
-            @query.hint_fields = hints
             @db.send_query_message(QueryMessage.new(@db.name, @collection.name, @query))
             @query_run = true
-            @query.hint_fields = old_hints
             read_all
           end
         end

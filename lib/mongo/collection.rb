@@ -23,27 +23,18 @@ module XGen
       # A named collection of records in a database.
       class Collection
 
-        attr_reader :db, :name, :hint_fields
+        attr_reader :db, :name, :hint
 
         def initialize(db, name)
           @db = db
           @name = name
         end
 
-        # Set hint fields to use and return +self+. hint_fields may be a
+        # Set hint fields to use and return +self+. hint may be a
         # single field name, array of field names, or a hash whose keys will
         # become the hint field names. May be +nil+.
-        def hint(hint_fields)
-          @hint_fields = case hint_fields
-                         when String
-                           [hint_fields]
-                         when Hash
-                           hint_fields.keys
-                         when nil
-                           nil
-                         else
-                           hint_fields.to_a
-                         end
+        def hint=(hint)
+          @hint = normalize_hint_fields(hint)
           self
         end
 
@@ -57,14 +48,21 @@ module XGen
         # :sort :: Either hash of field names as keys and 1/-1 as values; 1 ==
         #          ascending, -1 == descending, or array of field names (all
         #          assumed to be sorted in ascending order).
+        # :hint :: See #hint. This option overrides the collection-wide value.
         def find(selector={}, options={})
           fields = options.delete(:fields)
           fields = nil if fields && fields.empty?
           offset = options.delete(:offset) || 0
           limit = options.delete(:limit) || 0
           sort = options.delete(:sort)
+          hint = options.delete(:hint)
+          if hint
+            hint = normalize_hint_fields(hint)
+          else
+            hint = @hint
+          end
           raise RuntimeError, "Unknown options [#{options.inspect}]" unless options.empty?
-          @db.query(self, Query.new(selector, fields, offset, limit, sort))
+          @db.query(self, Query.new(selector, fields, offset, limit, sort, hint))
         end
 
         # Insert +objects+, which are hashes. "<<" is aliased to this method.
@@ -154,6 +152,20 @@ module XGen
           @db.count(@name, selector || {})
         end
 
+        protected
+
+        def normalize_hint_fields(hint)
+          case hint
+          when String
+            [hint]
+          when Hash
+            hint.keys
+          when nil
+            nil
+          else
+            hint.to_a
+          end
+        end
       end
     end
   end

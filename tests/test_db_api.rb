@@ -372,4 +372,31 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal "#{@db.host}:#{@db.port}", @db.master
   end
 
+  def test_hint
+    begin
+      assert_nil @coll.hint
+      assert_equal 1, @coll.find({'a' => 1}, :hint => 'a').to_a.size
+      assert_equal 1, @coll.find({'a' => 1}, :hint => ['a']).to_a.size
+      assert_equal 1, @coll.find({'a' => 1}, :hint => {'a' => 1}).to_a.size
+
+      @coll.hint = 'a'
+      assert_equal ['a'], @coll.hint
+      assert_equal 1, @coll.find('a' => 1).to_a.size
+
+      @coll.hint = ['a']
+      assert_equal ['a'], @coll.hint
+      assert_equal 1, @coll.find('a' => 1).to_a.size
+
+      @coll.hint = {'a' => 1}
+      assert_equal ['a'], @coll.hint
+      assert_equal 1, @coll.find('a' => 1).to_a.size
+
+      @coll.hint = nil
+      assert_nil @coll.hint
+      assert_equal 1, @coll.find('a' => 1).to_a.size
+    rescue => ex
+      fail ex.to_s
+    end
+  end
+
 end
