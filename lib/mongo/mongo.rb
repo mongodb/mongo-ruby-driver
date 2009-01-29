@@ -75,7 +75,7 @@ module XGen
         def initialize(pair_or_host=nil, port=nil, options={})
           @pair = case pair_or_host
                    when String
-                     [[pair_or_host, port || DEFAULT_PORT]]
+                     [[pair_or_host, port ? port.to_i : DEFAULT_PORT]]
                    when Hash
                     connections = []
                     connections << pair_val_to_connection(pair_or_host[:left])
