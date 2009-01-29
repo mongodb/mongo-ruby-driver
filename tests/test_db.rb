@@ -123,4 +123,10 @@ class DBTest < Test::Unit::TestCase
     assert_equal err, err2
   end
 
+  def test_text_port_number
+    db = DB.new('ruby-mongo-test', [[@host, @port.to_s]])
+    # If there is no error, all is well
+    db.collection('users').clear
+  end
+
 end
