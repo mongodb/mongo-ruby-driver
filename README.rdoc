@@ -61,11 +61,48 @@ See also the test code, especially tests/test_db_api.rb.
 For the GridFS class GridStore, see the tests.
 
 
+= The Driver
+
+Here is some simple example code:
+
+  require 'rubygems'        # not required for Ruby 1.9
+  require 'mongo'
+
+  include XGen::Mongo::Driver
+  db = Mongo.new.db('my-db-name')
+  things = db.collection('things')
+
+  things.clear
+  things.insert('a' => 42)
+  things.insert('a' => 99, 'b' => Time.now)
+  puts things.count                               # => 2
+  puts things.find('a' => 42).next_object.inspect # {"a"=>42}
+
+
 = GridStore
 
 The GridStore class is a Ruby implementation of Mongo's GridFS file storage
 system. An instance of GridStore is like an IO object. See the rdocs for
 details.
+
+Note that the GridStore class is not automatically required when you require
+'mongo'. You need to require 'mongo/gridfs'.
+
+Example code:
+
+  GridStore.open(database, 'filename', 'w') { |f|
+    f.puts "Hello, world!"
+  }
+  GridStore.open(database, 'filename, 'r') { |f|
+    puts f.read         # => Hello, world!\n
+  }
+  GridStore.open(database, 'filename', 'w+') { |f|
+    f.puts "But wait, there's more!"
+  }
+  GridStore.open(database, 'filename, 'r') { |f|
+    puts f.read         # => Hello, world!\nBut wait, there's more!\n
+  }
+
 
 
 = Notes
@@ -107,6 +144,20 @@ Here is a sample primary key factory, taken from the tests:
 
   class TestPKFactory
     def create_pk(row)
+      row['_id'] ||= XGen::Mongo::Driver::ObjectID.new
+      row
+    end
+  end
+
+Here's a slightly more sophisticated one that handles both symbol and string
+keys. This is the PKFactory that comes with the MongoRecord code (an
+ActiveRecord-like framework for non-Rails apps) and the AR Mongo adapter code
+(for Rails):
+
+  class PKFactory
+    def create_pk(row)
+      return row if row[:_id]
+      row.delete(:_id)      # in case it exists but the value is nil
       row['_id'] ||= XGen::Mongo::Driver::ObjectID.new
       row
     end

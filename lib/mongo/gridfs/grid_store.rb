@@ -13,13 +13,14 @@ module XGen
       #
       # Example code:
       #
+      #   require 'mongo/gridfs'
       #   GridStore.open(database, 'filename', 'w') { |f|
       #     f.puts "Hello, world!"
       #   }
       #   GridStore.open(database, 'filename, 'r') { |f|
       #     puts f.read         # => Hello, world!\n
       #   }
-      #   GridStore.open(database, 'filename', 'w+") { |f|
+      #   GridStore.open(database, 'filename', 'w+') { |f|
       #     f.puts "But wait, there's more!"
       #   }
       #   GridStore.open(database, 'filename, 'r') { |f|
