@@ -174,4 +174,43 @@ class GridStoreTest < Test::Unit::TestCase
     }
   end
 
+  def test_chunk_size_in_option
+    GridStore.open(@db, 'new-file', 'w', :chunk_size => 42) { |f| f.write("foo") }
+    GridStore.open(@db, 'new-file', 'r') { |f|
+      assert f.chunk_size == 42
+    }
+  end
+
+  def test_upload_date
+    now = Time.now
+    orig_file_upload_date = nil
+    GridStore.open(@db, 'foobar', 'r') { |f| orig_file_upload_date = f.upload_date }
+    assert_not_nil orig_file_upload_date
+    assert (orig_file_upload_date - now) < 5 # even a really slow system < 5 secs
+
+    sleep(2)
+    GridStore.open(@db, 'foobar', 'w') { |f| f.write "new data" }
+    file_upload_date = nil
+    GridStore.open(@db, 'foobar', 'r') { |f| file_upload_date = f.upload_date }
+    assert_equal orig_file_upload_date, file_upload_date
+  end
+
+  def test_content_type
+    ct = nil
+    GridStore.open(@db, 'foobar', 'r') { |f| ct = f.content_type }
+    assert_equal GridStore::DEFAULT_CONTENT_TYPE, ct
+
+    GridStore.open(@db, 'foobar', 'w+') { |f| f.content_type = 'text/html' }
+    ct2 = nil
+    GridStore.open(@db, 'foobar', 'r') { |f| ct2 = f.content_type }
+    assert_equal 'text/html', ct2
+  end
+
+  def test_content_type_option
+    GridStore.open(@db, 'new-file', 'w', :content_type => 'image/jpg') { |f| f.write('foo') }
+    ct = nil
+    GridStore.open(@db, 'new-file', 'r') { |f| ct = f.content_type }
+    assert_equal 'image/jpg', ct
+  end
+
 end

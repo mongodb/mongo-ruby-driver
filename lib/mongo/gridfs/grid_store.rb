@@ -28,6 +28,9 @@ module XGen
       #   }
       class GridStore
 
+        DEFAULT_ROOT_COLLECTION = 'gridfs'
+        DEFAULT_CONTENT_TYPE = 'text/plain'
+
         include Enumerable
 
         attr_accessor :filename
@@ -35,10 +38,13 @@ module XGen
         # Array of strings; may be +nil+
         attr_accessor :aliases
 
-        # Default is 'text/plain'
+        # Default is DEFAULT_CONTENT_TYPE
         attr_accessor :content_type
 
-        attr_reader :object_id, :upload_date
+        attr_reader :object_id
+
+        # Time that the file was first saved.
+        attr_reader :upload_date
 
         attr_reader :chunk_size
 
@@ -50,8 +56,8 @@ module XGen
             db.collection('_files').find({'filename' => name}).next_object.nil?
           end
 
-          def open(db, name, mode)
-            gs = self.new(db, name, mode)
+          def open(db, name, mode, options={})
+            gs = self.new(db, name, mode, options)
             result = nil
             begin
               result = yield gs if block_given?
@@ -90,7 +96,17 @@ module XGen
         #+++
 
         # Mode may only be 'r', 'w', or 'w+'.
-        def initialize(db, name, mode='r')
+        #
+        # Options:
+        #
+        # :chunk_size :: Ignored if mode is 'r' or 'w+'. Sets chunk size for
+        #                files opened for writing ('w'). See also #chunk_size=
+        #                which may only be called before any data is written.
+        #
+        # :content_type :: Ignored if mode is 'r' or 'w+'. String. Default
+        #                  value is DEFAULT_CONTENT_TYPE. See also
+        #                  #content_type=
+        def initialize(db, name, mode='r', options={})
           @db, @filename, @mode = db, name, mode
 
           doc = @db.collection('_files').find({'filename' => @filename}).next_object
@@ -112,7 +128,7 @@ module XGen
           else
             @upload_date = Time.new
             @chunk_size = Chunk::DEFAULT_CHUNK_SIZE
-            @content_type = 'text/plain'
+            @content_type = DEFAULT_CONTENT_TYPE
             @length = 0
           end
 
@@ -122,6 +138,8 @@ module XGen
           when 'w'
             delete_chunks
             @first_chunk = @curr_chunk = nil
+            @content_type = options[:content_type] if options[:content_type]
+            @chunk_size = options[:chunk_size] if options[:chunk_size]
           when 'w+'
             @curr_chunk = find_last_chunk
             @curr_chunk.pos = @curr_chunk.data.length if @curr_chunk
@@ -340,6 +358,7 @@ module XGen
               files.remove('_id' => @object_id)
             else
               @object_id = XGen::Mongo::Driver::ObjectID.new
+              @upload_date = Time.now
             end
             files.insert(to_mongo_object)
           end
