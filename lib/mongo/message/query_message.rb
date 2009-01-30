@@ -44,14 +44,8 @@ module XGen
                                  raise "illegal order_by: is a #{query.order_by.class.name}, must be String, Array, Hash, or OrderedHash"
                                end
             end
-            if query.hint && query.hint.length > 0
-              hints = OrderedHash.new
-              query.hint.each { |hf| hints[hf] = 1 }
-              sel['$hint'] = hints
-            end
-            if query.explain
-              sel['$explain'] = true
-            end
+            sel['$hint'] = query.hint if query.hint && query.hint.length > 0
+            sel['$explain'] = true if query.explain
                                
           end
           write_doc(sel)

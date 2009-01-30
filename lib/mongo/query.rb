@@ -28,7 +28,7 @@ module XGen
         attr_accessor :number_to_skip, :number_to_return, :order_by
         # If true, $explain will be set in QueryMessage that uses this query.
         attr_accessor :explain
-        # Either +nil+ or an array of hint field names.
+        # Either +nil+ or a hash (preferably an OrderedHash).
         attr_accessor :hint
         attr_reader :selector   # writer defined below
 
@@ -59,7 +59,8 @@ module XGen
         #             is not preserved. (order_by is called :sort in calls to
         #             Collection#find.)
         #
-        # hint :: If not +nil+, specifies query hint fields. See
+        # hint :: If not +nil+, specifies query hint fields. Must be either
+        #                +nil+ or a hash (preferably an OrderedHash). See
         #                Collection#hint.
         def initialize(sel={}, return_fields=nil, number_to_skip=0, number_to_return=0, order_by=nil, hint=nil)
           @number_to_skip, @number_to_return, @order_by, @hint =

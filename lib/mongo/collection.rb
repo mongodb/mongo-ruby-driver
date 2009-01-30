@@ -30,9 +30,9 @@ module XGen
           @name = name
         end
 
-        # Set hint fields to use and return +self+. hint may be a
-        # single field name, array of field names, or a hash whose keys will
-        # become the hint field names. May be +nil+.
+        # Set hint fields to use and return +self+. hint may be a single field
+        # name, array of field names, or a hash (preferably an OrderedHash).
+        # May be +nil+.
         def hint=(hint)
           @hint = normalize_hint_fields(hint)
           self
@@ -59,7 +59,7 @@ module XGen
           if hint
             hint = normalize_hint_fields(hint)
           else
-            hint = @hint
+            hint = @hint        # assumed to be normalized already
           end
           raise RuntimeError, "Unknown options [#{options.inspect}]" unless options.empty?
           @db.query(self, Query.new(selector, fields, offset, limit, sort, hint))
@@ -157,13 +157,15 @@ module XGen
         def normalize_hint_fields(hint)
           case hint
           when String
-            [hint]
+            {hint => 1}
           when Hash
-            hint.keys
+            hint
           when nil
             nil
           else
-            hint.to_a
+            h = OrderedHash.new
+            hint.to_a.each { |k| h[k] = 1 }
+            h
           end
         end
       end

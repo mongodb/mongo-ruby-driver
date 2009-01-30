@@ -373,6 +373,7 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_hint
+    @coll.create_index('test_a_index', 'a')
     begin
       assert_nil @coll.hint
       assert_equal 1, @coll.find({'a' => 1}, :hint => 'a').to_a.size
@@ -380,15 +381,15 @@ class DBAPITest < Test::Unit::TestCase
       assert_equal 1, @coll.find({'a' => 1}, :hint => {'a' => 1}).to_a.size
 
       @coll.hint = 'a'
-      assert_equal ['a'], @coll.hint
+      assert_equal({'a' => 1}, @coll.hint)
       assert_equal 1, @coll.find('a' => 1).to_a.size
 
       @coll.hint = ['a']
-      assert_equal ['a'], @coll.hint
+      assert_equal({'a' => 1}, @coll.hint)
       assert_equal 1, @coll.find('a' => 1).to_a.size
 
       @coll.hint = {'a' => 1}
-      assert_equal ['a'], @coll.hint
+      assert_equal({'a' => 1}, @coll.hint)
       assert_equal 1, @coll.find('a' => 1).to_a.size
 
       @coll.hint = nil
@@ -396,6 +397,8 @@ class DBAPITest < Test::Unit::TestCase
       assert_equal 1, @coll.find('a' => 1).to_a.size
     rescue => ex
       fail ex.to_s
+    ensure
+      @coll.drop_index('test_a_index')
     end
   end
 
