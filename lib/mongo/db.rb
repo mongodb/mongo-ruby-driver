@@ -161,7 +161,7 @@ module XGen
           auth['authenticate'] = 1
           auth['user'] = username
           auth['nonce'] = nonce
-          auth['key'] = Digest::MD5.hexdigest("#{nonce}#{username}#{hash_password(password)}")
+          auth['key'] = Digest::MD5.hexdigest("#{nonce}#{username}#{hash_password(username, password)}")
           ok?(db_command(auth))
         end
 
@@ -461,8 +461,8 @@ module XGen
 
         private
 
-        def hash_password(plaintext)
-          Digest::MD5.hexdigest("mongo#{plaintext}")
+        def hash_password(username, plaintext)
+          Digest::MD5.hexdigest("#{username}:mongo:#{plaintext}")
         end
 
       end

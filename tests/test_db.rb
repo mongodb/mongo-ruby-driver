@@ -24,7 +24,7 @@ class DBTest < Test::Unit::TestCase
     @spongebob_password = 'squarepants'
     @users = @db.collection('system.users')
     @users.clear
-    @users.insert(:user => @spongebob, :pwd => @db.send(:hash_password, @spongebob_password))
+    @users.insert(:user => @spongebob, :pwd => @db.send(:hash_password, @spongebob, @spongebob_password))
   end
 
   def teardown
