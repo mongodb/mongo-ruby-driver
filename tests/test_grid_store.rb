@@ -1,6 +1,5 @@
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'test/unit'
-require 'rubygems'
 require 'mongo'
 require 'mongo/gridfs'
 
@@ -14,8 +13,8 @@ class GridStoreTest < Test::Unit::TestCase
     @port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT
     @db = Mongo.new(@host, @port).db('ruby-mongo-utils-test')
 
-    @files = @db.collection('_files')
-    @chunks = @db.collection('_chunks')
+    @files = @db.collection('gridfs.files')
+    @chunks = @db.collection('gridfs.chunks')
     @chunks.clear
     @files.clear
 
@@ -30,17 +29,24 @@ class GridStoreTest < Test::Unit::TestCase
     end
   end
 
+  def test_exist
+    assert GridStore.exist?(@db, 'foobar')
+    assert !GridStore.exist?(@db, 'does_not_exist')
+    assert !GridStore.exist?(@db, 'foobar', 'another_root')
+  end
+
   def test_small_write
     rows = @files.find({'filename' => 'foobar'}).to_a
     assert_not_nil rows
     assert_equal 1, rows.length
-    assert_equal 1, rows.length
     row = rows[0]
     assert_not_nil row
 
-    assert_kind_of DBRef, row['next']
-    first_chunk_id = row['next'].object_id
-    first_chunk = @chunks.find({'_id' => first_chunk_id}).next_object
+    file_id = row['_id']
+    assert_kind_of ObjectID, file_id
+    rows = @chunks.find({'files_id' => file_id}).to_a
+    assert_not_nil rows
+    assert_equal 1, rows.length
   end
 
   def test_small_file
@@ -61,11 +67,11 @@ class GridStoreTest < Test::Unit::TestCase
     assert_equal "hello", GridStore.read(@db, 'foobar', 5)
   end
 
-# TODO seek not yet implemented
-#   def test_read_with_offset
-#     assert_equal "world", GridStore.read(@db, 'foobar', 5, 7)
-#     assert_equal "world!", GridStore.read(@db, 'foobar', nil, 7)
-#   end
+  # Also tests seek
+  def test_read_with_offset
+    assert_equal "world", GridStore.read(@db, 'foobar', 5, 7)
+    assert_equal "world!", GridStore.read(@db, 'foobar', nil, 7)
+  end
 
   def test_multi_chunk
     @chunks.clear
@@ -131,7 +137,7 @@ class GridStoreTest < Test::Unit::TestCase
   def test_save_empty_file
     @chunks.clear
     @files.clear
-    GridStore.open(@db, 'empty', 'w')
+    GridStore.open(@db, 'empty', 'w') {} # re-write with zero bytes
     assert_equal 1, @files.count
     assert_equal 0, @chunks.count
   end
@@ -211,6 +217,19 @@ class GridStoreTest < Test::Unit::TestCase
     ct = nil
     GridStore.open(@db, 'new-file', 'r') { |f| ct = f.content_type }
     assert_equal 'image/jpg', ct
+  end
+
+  def test_unknown_mode
+    GridStore.open(@db, 'foobar', 'x')
+    fail 'should have seen "illegal mode" error raised'
+  rescue => ex
+    assert_equal "error: illegal mode x", ex.to_s
+  end
+
+  def test_metadata
+    GridStore.open(@db, 'foobar', 'r') { |f| assert_nil f.metadata }
+    GridStore.open(@db, 'foobar', 'w+') { |f| f.metadata = {'a' => 1} }
+    GridStore.open(@db, 'foobar', 'r') { |f| assert_equal({'a' => 1}, f.metadata) }
   end
 
 end

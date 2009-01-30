@@ -1,4 +1,3 @@
-require 'mongo/types/dbref'
 require 'mongo/types/objectid'
 require 'mongo/util/ordered_hash'
 require 'mongo/gridfs/chunk'
@@ -41,7 +40,9 @@ module XGen
         # Default is DEFAULT_CONTENT_TYPE
         attr_accessor :content_type
 
-        attr_reader :object_id
+        attr_accessor :metadata
+
+        attr_reader :files_id
 
         # Time that the file was first saved.
         attr_reader :upload_date
@@ -52,8 +53,8 @@ module XGen
 
         class << self
 
-          def exist?(db, name)
-            db.collection('_files').find({'filename' => name}).next_object.nil?
+          def exist?(db, name, root_collection=DEFAULT_ROOT_COLLECTION)
+            db.collection("#{root_collection}.files").find({'filename' => name}).next_object != nil
           end
 
           def open(db, name, mode, options={})
@@ -84,7 +85,7 @@ module XGen
             names.each { |name|
               gs = GridStore.new(db, name)
               gs.send(:delete_chunks)
-              db.collection('_files').remove('_id' => gs.object_id)
+              gs.collection.remove('_id' => gs.files_id)
             }
           end
           alias_method :delete, :unlink
@@ -97,62 +98,81 @@ module XGen
 
         # Mode may only be 'r', 'w', or 'w+'.
         #
-        # Options:
+        # Options. Descriptions start with a list of the modes for which that
+        # option is legitimate.
         #
-        # :chunk_size :: Ignored if mode is 'r' or 'w+'. Sets chunk size for
-        #                files opened for writing ('w'). See also #chunk_size=
-        #                which may only be called before any data is written.
+        # :root :: (r, w, w+) Name of root collection to use, instead of
+        #          DEFAULT_ROOT_COLLECTION.
         #
-        # :content_type :: Ignored if mode is 'r' or 'w+'. String. Default
-        #                  value is DEFAULT_CONTENT_TYPE. See also
-        #                  #content_type=
+        # :metadata:: (w, w+) A hash containing any data you want persisted as
+        #                     this file's metadata. See also metadata=
+        #
+        # :chunk_size :: (w) Sets chunk size for files opened for writing
+        #                See also chunk_size= which may only be called before
+        #                any data is written.
+        #
+        # :content_type :: (w) Default value is DEFAULT_CONTENT_TYPE. See
+        #                  also #content_type=
         def initialize(db, name, mode='r', options={})
           @db, @filename, @mode = db, name, mode
+          @root = options[:root] || DEFAULT_ROOT_COLLECTION
 
-          doc = @db.collection('_files').find({'filename' => @filename}).next_object
+          doc = collection.find({'filename' => @filename}).next_object
           if doc
-            @object_id = doc['_id']
+            @files_id = doc['_id']
             @content_type = doc['contentType']
             @chunk_size = doc['chunkSize']
             @upload_date = doc['uploadDate']
             @aliases = doc['aliases']
             @length = doc['length']
-            fc_id = doc['next']
-            if fc_id
-              coll = @db.collection('_chunks')
-              row = coll.find({'_id' => fc_id.object_id}).next_object
-              @first_chunk = row ? Chunk.new(coll, row) : nil
-            else
-              @first_chunk = nil
-            end
+            @metadata = doc['metadata']
           else
-            @upload_date = Time.new
-            @chunk_size = Chunk::DEFAULT_CHUNK_SIZE
+            @files_id = XGen::Mongo::Driver::ObjectID.new
             @content_type = DEFAULT_CONTENT_TYPE
+            @chunk_size = Chunk::DEFAULT_CHUNK_SIZE
             @length = 0
           end
 
           case mode
           when 'r'
-            @curr_chunk = @first_chunk
+            @curr_chunk = nth_chunk(0)
+            @position = 0
           when 'w'
+            chunk_collection.create_index("chunk_index", ['files_id', 'n'])
             delete_chunks
-            @first_chunk = @curr_chunk = nil
+            @curr_chunk = Chunk.new(self, 'n' => 0)
             @content_type = options[:content_type] if options[:content_type]
             @chunk_size = options[:chunk_size] if options[:chunk_size]
+            @metadata = options[:metadata] if options[:metadata]
+            @position = 0
           when 'w+'
-            @curr_chunk = find_last_chunk
+            chunk_collection.create_index("chunk_index", ['files_id', 'n'])
+            @curr_chunk = nth_chunk(last_chunk_number) || Chunk.new(self, 'n' => 0) # might be empty
             @curr_chunk.pos = @curr_chunk.data.length if @curr_chunk
+            @metadata = options[:metadata] if options[:metadata]
+            @position = @length
+          else
+            raise "error: illegal mode #{mode}"
           end
 
           @lineno = 0
           @pushback_byte = nil
         end
 
+        def collection
+          @db.collection("#{@root}.files")
+        end
+
+        # Returns collection used for storing chunks. Depends on value of
+        # @root.
+        def chunk_collection
+          @db.collection("#{@root}.chunks")
+        end
+
         # Change chunk size. Can only change if the file is opened for write
-        # and the first chunk's size is zero.
+        # and no data has yet been written.
         def chunk_size=(size)
-          unless @mode[0] == ?w && @first_chunk == nil
+          unless @mode[0] == ?w && @position == 0 && @upload_date == nil
             raise "error: can only change chunk size if open for write and no data written."
           end
           @chunk_size = size
@@ -166,13 +186,15 @@ module XGen
           if @pushback_byte
             byte = @pushback_byte
             @pushback_byte = nil
+            @position += 1
             byte
           elsif eof?
             nil
           else
             if @curr_chunk.eof?
-              @curr_chunk = @curr_chunk.next
+              @curr_chunk = nth_chunk(@curr_chunk.chunk_number + 1)
             end
+            @position += 1
             @curr_chunk.getc
           end
         end
@@ -237,6 +259,7 @@ module XGen
 
         def ungetc(byte)
           @pushback_byte = byte
+          @position -= 1
         end
 
         #---
@@ -244,15 +267,12 @@ module XGen
         #+++
 
         def putc(byte)
-          chunks = @db.collection('_chunks')
-          if @curr_chunk == nil
-            @first_chunk = @curr_chunk = Chunk.new(chunks, 'cn' => 1)
-          elsif @curr_chunk.pos == @chunk_size
-            prev_chunk = @curr_chunk
-            @curr_chunk = Chunk.new(chunks, 'cn' => prev_chunk.chunk_number + 1)
-            prev_chunk.next = @curr_chunk
-            prev_chunk.save
+          if @curr_chunk.pos == @chunk_size
+            prev_chunk_number = @curr_chunk.chunk_number
+            @curr_chunk.save
+            @curr_chunk = Chunk.new(self, 'n' => prev_chunk_number + 1)
           end
+          @position += 1
           @curr_chunk.putc(byte)
         end
 
@@ -303,7 +323,7 @@ module XGen
 
         def eof
           raise IOError.new("stream not open for reading") unless @mode[0] == ?r
-          @curr_chunk == nil || (@curr_chunk.eof? && !@curr_chunk.has_next?)
+          @position >= @length
         end
         alias_method :eof?, :eof
 
@@ -312,36 +332,42 @@ module XGen
         #+++
 
         def rewind
-          if @curr_chunk != @first_chunk
-            @curr_chunk.save unless @curr_chunk == nil || @curr_chunk.empty?
-            @curr_chunk == @first_chunk
+          if @curr_chunk.chunk_number != 0
+            if @mode[0] == ?w
+              delete_chunks
+              @curr_chunk = Chunk.new(self, 'n' => 0)
+            else
+              @curr_chunk == nth_chunk(0)
+            end
           end
           @curr_chunk.pos = 0
           @lineno = 0
-          # TODO if writing, delete all other chunks on first write
+          @position = 0
         end
 
         def seek(pos, whence=IO::SEEK_SET)
-#           target_pos = case whence
-#                        when IO::SEEK_CUR
-#                          tell + pos
-#                        when IO::SEEK_END
+          target_pos = case whence
+                       when IO::SEEK_CUR
+                         @position + pos
+                       when IO::SEEK_END
+                         @length - pos
+                       when IO::SEEK_SET
+                         pos
+                       end
                          
-#           @curr_chunk.save if @curr_chunk
-#           target_chunk_num = ((pos / @chunk_size) + 1).to_i
-#           target_chunk_pos = pos % @chunk_size
-#           if @curr_chunk == nil || @curr_chunk.chunk_number != target_chunk_num
-#           end
-#           @curr_chunk.pos = target_chunk_pos
-#           0
-          # TODO
-          raise "not yet implemented"
+          new_chunk_number = (target_pos / @chunk_size).to_i
+          if new_chunk_number != @curr_chunk.chunk_number
+            @curr_chunk.save if @mode[0] == ?w
+            @curr_chunk = nth_chunk(new_chunk_number)
+          end
+          @position = target_pos
+          @curr_chunk.pos = @position % @chunk_size
+          0
         end
 
         def tell
-          return 0 unless @curr_chunk
-          @chunk_size * (@curr_chunk.chunk_number - 1) + @curr_chunk.pos
-        end
+          @position
+         end
 
         #---
         # ================ closing ================
@@ -351,13 +377,12 @@ module XGen
           if @mode[0] == ?w
             if @curr_chunk
               @curr_chunk.truncate
-              @curr_chunk.save
+              @curr_chunk.save if @curr_chunk.pos > 0
             end
-            files = @db.collection('_files')
-            if @object_id
-              files.remove('_id' => @object_id)
+            files = collection
+            if @upload_date
+              files.remove('_id' => @files_id)
             else
-              @object_id = XGen::Mongo::Driver::ObjectID.new
               @upload_date = Time.now
             end
             files.insert(to_mongo_object)
@@ -377,38 +402,29 @@ module XGen
 
         def to_mongo_object
           h = OrderedHash.new
-          h['_id'] = @object_id
+          h['_id'] = @files_id
           h['filename'] = @filename
           h['contentType'] = @content_type
-          h['length'] = @curr_chunk ? (@curr_chunk.chunk_number - 1) * @chunk_size + @curr_chunk.pos : 0
+          h['length'] = @curr_chunk ? @curr_chunk.chunk_number * @chunk_size + @curr_chunk.pos : 0
           h['chunkSize'] = @chunk_size
           h['uploadDate'] = @upload_date
           h['aliases'] = @aliases
-          h['next'] = XGen::Mongo::Driver::DBRef.new(nil, nil, @db, '_chunks', @first_chunk.object_id) if @first_chunk
+          h['metadata'] = @metadata
           h
         end
 
-        def find_last_chunk
-          chunk = @curr_chunk || @first_chunk
-          while chunk.has_next?
-            chunk = chunk.next
-          end
-          chunk
-        end
-
-        def save_chunk(chunk)
-          chunks = @db.collection('_chunks')
-        end
-
         def delete_chunks
-          chunk = @first_chunk
-          coll = @db.collection('_chunks')
-          while chunk
-            next_chunk = chunk.next
-            coll.remove({'_id' => chunk.object_id})
-            chunk = next_chunk
-          end
-          @first_chunk = @curr_chunk = nil
+          chunk_collection.remove({'files_id' => @files_id}) if @files_id
+          @curr_chunk = nil
+        end
+
+        def nth_chunk(n)
+          mongo_chunk = chunk_collection.find({'files_id' => @files_id, 'n' => n}).next_object
+          Chunk.new(self, mongo_chunk || {})
+        end
+
+        def last_chunk_number
+          (@length / @chunk_size).to_i
         end
 
       end
