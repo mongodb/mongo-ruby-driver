@@ -63,7 +63,7 @@ module XGen
 
         def save
           coll = @file.chunk_collection
-          coll.remove({'_id' => @object_id}) if @object_id
+          coll.remove({'_id' => @object_id})
           coll.insert(to_mongo_object)
         end
 
