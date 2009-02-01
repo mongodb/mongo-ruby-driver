@@ -121,13 +121,27 @@ Mongo as-is. If the string is ASCII all is well, because ASCII is a subset of
 UTF-8. If the string is not ASCII then it may not be a well-formed UTF-8
 string.
 
-== The DB class
+== Primary Keys
+
+The field _id is a primary key. It is treated specially by the database, and
+its use makes many operations more efficient.
+
+The value of an _id may be of any type. (Older versions of Mongo required that
+they be XGen::Mongo::Driver::ObjectID instances.)
+
+The database itself inserts an _id value if none is specified when a record is
+inserted.
 
 === Primary Key Factories
 
-A basic Mongo driver is not responsible for creating primary keys or knowing
-how to interpret them. You can tell the Ruby Mongo driver how to create
-primary keys by passing in the :pk option to the Mongo#db method.
+A primary key factory is a class you supply to a DB object that knows how to
+generate _id values. Primary key factories are no longer necessary because
+Mongo now inserts an _id value for every record that does not already have
+one. However, if you want to control _id values or even their types, using a
+PK factory lets you do so.
+
+You can tell the Ruby Mongo driver how to create primary keys by passing in
+the :pk option to the Mongo#db method.
 
   include XGen::Mongo::Driver
   db = Mongo.new.db('dbname', :pk => MyPKFactory.new)
@@ -163,10 +177,17 @@ ActiveRecord-like framework for non-Rails apps) and the AR Mongo adapter code
     end
   end
 
-A database's PK factory object may be set after you obtain it, but only once.
-The only reason it is changeable is so that libraries such as MongoRecord that
-use this driver can set the PK factory after obtaining the database but before
-using it for the first time.
+A database's PK factory object may be set either when a DB object is created
+or immediately after you obtain it, but only once. The only reason it is
+changeable at all is so that libraries such as MongoRecord that use this
+driver can set the PK factory after obtaining the database but before using it
+for the first time.
+
+== The DB Class
+
+=== Primary Key factories
+
+See the section on "Primary Keys" above.
 
 === Strict mode
 
