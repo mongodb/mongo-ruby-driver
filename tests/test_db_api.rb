@@ -70,7 +70,10 @@ class DBAPITest < Test::Unit::TestCase
     docs = @coll.find('a' => @r1['a']).to_a
     assert_equal 1, docs.size
     doc = docs.first
-    assert_equal doc['_id'], @r1['_id']
+    # Can't compare _id values because at insert, an _id was added to @r1 by
+    # the database but we don't know what it is without re-reading the record
+    # (which is what we are doing right now).
+#     assert_equal doc['_id'], @r1['_id']
     assert_equal doc['a'], @r1['a']
   end
 

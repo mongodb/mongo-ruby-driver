@@ -53,7 +53,7 @@ class DBTest < Test::Unit::TestCase
   def test_pair
     @db.close
     @users = nil
-    @db = Mongo.new({:left => "nosuch.example.com", :right => [@host, @port]}).db('ruby-mongo-test')
+    @db = Mongo.new({:left => "this-should-fail", :right => [@host, @port]}).db('ruby-mongo-test')
     assert @db.connected?
   end
 
