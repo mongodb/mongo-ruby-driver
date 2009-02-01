@@ -132,6 +132,10 @@ they be XGen::Mongo::Driver::ObjectID instances.)
 The database itself inserts an _id value if none is specified when a record is
 inserted.
 
+The driver automatically sends the _id field to the database first, which is
+how Mongo likes it. You don't have to worry about where the _id field is in
+your hash record, or worry if you are using an OrderedHash or not.
+
 === Primary Key Factories
 
 A primary key factory is a class you supply to a DB object that knows how to
