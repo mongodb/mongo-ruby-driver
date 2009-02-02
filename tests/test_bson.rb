@@ -113,25 +113,40 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_binary
-    bin = 'binstring'.to_mongo_binary
-    assert_kind_of Binary, bin
+    bin = Binary.new
+    'binstring'.each_byte { |b| bin.put(b) }
 
     doc = {'bin' => bin}
     @b.serialize(doc)
     doc2 = @b.deserialize
-    assert_equal 'binstring', doc2['bin']
+    bin2 = doc2['bin']
+    assert_kind_of Binary, bin2
+    assert_equal 'binstring', bin2.to_s
+  end
+
+  def test_binary_type
+    bin = Binary.new([1, 2, 3, 4, 5], Binary::SUBTYPE_USER_DEFINED)
+
+    doc = {'bin' => bin}
+    @b.serialize(doc)
+    doc2 = @b.deserialize
+    bin2 = doc2['bin']
+    assert_kind_of Binary, bin2
+    assert_equal [1, 2, 3, 4, 5], bin2.to_a
+    assert_equal Binary::SUBTYPE_USER_DEFINED, bin2.subtype
   end
 
   def test_binary_byte_buffer
     bb = ByteBuffer.new
-    10.times { |i| bb.put(i) }
+    5.times { |i| bb.put(i + 1) }
+
     doc = {'bin' => bb}
     @b.serialize(doc)
     doc2 = @b.deserialize
-
-    doc2_bytes = []
-    doc2['bin'].each_byte { |b| doc2_bytes << b }
-    assert_equal bb.to_a, doc2_bytes
+    bin2 = doc2['bin']
+    assert_kind_of Binary, bin2
+    assert_equal [1, 2, 3, 4, 5], bin2.to_a
+    assert_equal Binary::SUBTYPE_BYTES, bin2.subtype
   end
 
   def test_undefined

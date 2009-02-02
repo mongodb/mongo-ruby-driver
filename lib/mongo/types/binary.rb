@@ -14,21 +14,29 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 # ++
 
+require 'mongo/util/byte_buffer'
+
 module XGen
   module Mongo
     module Driver
 
-      # An array of binary bytes. The only reason this exists is so that the
-      # BSON encoder will know to output the Mongo BINARY type.
-      class Binary < String; end
+      # An array of binary bytes with a Mongo subtype value.
+      class Binary < ByteBuffer
 
+        SUBTYPE_BYTES = 0x02
+        SUBTYPE_UUID = 0x03
+        SUBTYPE_MD5 = 0x05
+        SUBTYPE_USER_DEFINED = 0x80
+
+        # One of the SUBTYPE_* constants. Default is SUBTYPE_BYTES.
+        attr_accessor :subtype
+
+        def initialize(initial_data=[], subtype=SUBTYPE_BYTES)
+          super(initial_data)
+          @subtype = subtype
+        end
+
+      end
     end
-  end
-end
-
-class String
-  # Convert a string into a XGen::Mongo::Driver::Binary
-  def to_mongo_binary
-    XGen::Mongo::Driver::Binary.new(self)
   end
 end

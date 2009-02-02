@@ -45,7 +45,10 @@ class XMLToRuby
     when 'string', 'code'
       e.text.to_s
     when 'binary'
-      Base64.decode64(e.text.to_s).to_mongo_binary
+      bin = Binary.new
+      decoded = Base64.decode64(e.text.to_s)
+      decoded.each_byte { |b| bin.put(b) }
+      bin
     when 'symbol'
       e.text.to_s.intern
     when 'boolean'
