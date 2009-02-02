@@ -350,7 +350,7 @@ module XGen
                        when IO::SEEK_CUR
                          @position + pos
                        when IO::SEEK_END
-                         @length - pos
+                         @length + pos
                        when IO::SEEK_SET
                          pos
                        end

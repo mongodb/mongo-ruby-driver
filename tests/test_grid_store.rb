@@ -73,6 +73,32 @@ class GridStoreTest < Test::Unit::TestCase
     assert_equal "world!", GridStore.read(@db, 'foobar', nil, 7)
   end
 
+  def test_seek
+    GridStore.open(@db, 'foobar', 'r') { |f|
+      f.seek(0)
+      assert_equal 'h', f.getc.chr
+      f.seek(7)
+      assert_equal 'w', f.getc.chr
+      f.seek(4)
+      assert_equal 'o', f.getc.chr
+
+      f.seek(-1, IO::SEEK_END)
+      assert_equal '!', f.getc.chr
+      f.seek(-6, IO::SEEK_END)
+      assert_equal 'w', f.getc.chr
+
+      f.seek(0)
+      f.seek(7, IO::SEEK_CUR)
+      assert_equal 'w', f.getc.chr
+      f.seek(-1, IO::SEEK_CUR)
+      assert_equal 'w', f.getc.chr
+      f.seek(-4, IO::SEEK_CUR)
+      assert_equal 'o', f.getc.chr
+      f.seek(3, IO::SEEK_CUR)
+      assert_equal 'o', f.getc.chr
+    }
+  end
+
   def test_multi_chunk
     @chunks.clear
     @files.clear
