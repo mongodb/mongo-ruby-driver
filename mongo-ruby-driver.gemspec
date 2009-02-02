@@ -1,13 +1,13 @@
 Gem::Specification.new do |s|
   s.name = 'mongo'
-  s.version = '0.4.5'
+  s.version = '0.5.0'
   s.platform = Gem::Platform::RUBY
   s.summary = 'Simple pure-Ruby driver for the 10gen Mongo DB'
   s.description = 'A pure-Ruby driver for the 10gen Mongo DB. For more information about Mongo, see http://www.mongodb.org.'
 
   s.require_paths = ['lib']
   
-  s.files = ['bin/mongo_console', 'bin/validate',
+  s.files = ['bin/mongo_console', 'bin/run_test_script',
              'examples/benchmarks.rb',
              'examples/blog.rb',
              'examples/index_test.rb',
@@ -17,6 +17,9 @@ Gem::Specification.new do |s|
              'lib/mongo/collection.rb',
              'lib/mongo/cursor.rb',
              'lib/mongo/db.rb',
+             'lib/mongo/gridfs/chunk.rb',
+             'lib/mongo/gridfs/grid_store.rb',
+             'lib/mongo/gridfs.rb',
              'lib/mongo/message/get_more_message.rb',
              'lib/mongo/message/insert_message.rb',
              'lib/mongo/message/kill_cursors_message.rb',
@@ -40,13 +43,22 @@ Gem::Specification.new do |s|
              'lib/mongo/util/ordered_hash.rb',
              'lib/mongo/util/xml_to_ruby.rb',
              'README.rdoc', 'Rakefile', 'mongo-ruby-driver.gemspec']
-  s.test_files = ['tests/test_admin.rb',
+  s.test_files = ['tests/mongo-qa/_common.rb',
+                  'tests/mongo-qa/capped',
+                  'tests/mongo-qa/circuar',
+                  'tests/mongo-qa/count1',
+                  'tests/mongo-qa/find',
+                  'tests/mongo-qa/remove',
+                  'tests/mongo-qa/test1',
+                  'tests/test_admin.rb',
                   'tests/test_bson.rb',
                   'tests/test_byte_buffer.rb',
+                  'tests/test_chunk.rb',
                   'tests/test_cursor.rb',
                   'tests/test_db.rb',
                   'tests/test_db_api.rb',
                   'tests/test_db_connection.rb',
+                  'tests/test_grid_store.rb',
                   'tests/test_message.rb',
                   'tests/test_mongo.rb',
                   'tests/test_objectid.rb',
