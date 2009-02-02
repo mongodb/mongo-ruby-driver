@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby
+
+require File.join(File.dirname(__FILE__), '_common.rb')
+db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
+
+colla = db.collection('a')
+collb = db.collection('b')
+collc = db.collection('c')
+
+colla.insert('c' => 'b')
+collb.insert('c' => 1)
+
+x_id = ObjectID.new
+x_dbref = DBRef.new(nil, 'thiz', db, 'c', x_id)
+x = {'_id' => x_id, 'that' => 2, 'thiz' => x_dbref}
+collc.insert(x)

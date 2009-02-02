@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+require File.join(File.dirname(__FILE__), '_common.rb')
+db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
+
+db.collection('test').insert('a' => 2)

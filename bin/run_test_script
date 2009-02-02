@@ -1,0 +1,15 @@
+#!/bin/bash
+# usage: run_test_script test_name output_file
+#
+# See http://mongodb.onconfluence.com/display/DOCS/Using+the+Framework+(for+Driver+Developers)
+
+HERE=`dirname $0`
+
+begintime=`date`
+ruby $HERE/../tests/mongo-qa/$1
+exitval=$?
+endtime=`date`
+
+echo "begintime:$begintime" >> $2
+echo "endtime:$endtime" >> $2
+echo "exit_code:$exitval" >> $2
