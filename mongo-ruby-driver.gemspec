@@ -45,7 +45,7 @@ Gem::Specification.new do |s|
              'README.rdoc', 'Rakefile', 'mongo-ruby-driver.gemspec']
   s.test_files = ['tests/mongo-qa/_common.rb',
                   'tests/mongo-qa/capped',
-                  'tests/mongo-qa/circuar',
+                  'tests/mongo-qa/circular',
                   'tests/mongo-qa/count1',
                   'tests/mongo-qa/find',
                   'tests/mongo-qa/remove',
