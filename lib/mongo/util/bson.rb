@@ -26,6 +26,8 @@ require 'mongo/types/undefined'
 # A BSON seralizer/deserializer.
 class BSON
 
+  include XGen::Mongo::Driver
+
   MINKEY = -1
   EOO = 0
   NUMBER = 1
@@ -167,7 +169,7 @@ class BSON
         doc[key] = nil
       when UNDEFINED
         key = deserialize_cstr(@buf)
-        doc[key] = XGen::Mongo::Driver::Undefined.new
+        doc[key] = Undefined.new
       when REF
         key = deserialize_cstr(@buf)
         doc[key] = deserialize_dbref_data(@buf, key, parent)
@@ -240,7 +242,7 @@ class BSON
     options |= Regexp::MULTILINE if options_str.include?('m')
     options |= Regexp::EXTENDED if options_str.include?('x')
     options_str.gsub!(/[imx]/, '') # Now remove the three we understand
-    XGen::Mongo::Driver::RegexpOfHolding.new(str, options, options_str)
+    RegexpOfHolding.new(str, options, options_str)
   end
 
   def deserialize_string_data(buf)
@@ -254,20 +256,20 @@ class BSON
   end
 
   def deserialize_oid_data(buf)
-    XGen::Mongo::Driver::ObjectID.new(buf.get(12))
+    ObjectID.new(buf.get(12))
   end
 
   def deserialize_dbref_data(buf, key, parent)
     ns = deserialize_string_data(buf)
     oid = deserialize_oid_data(buf)
-    XGen::Mongo::Driver::DBRef.new(parent, key, @db, ns, oid)
+    DBRef.new(parent, key, @db, ns, oid)
   end
 
   def deserialize_binary_data(buf)
     len = buf.get_int
     type = buf.get
-    len = buf.get_int if type == XGen::Mongo::Driver::Binary::SUBTYPE_BYTES
-    XGen::Mongo::Driver::Binary.new(buf.get(len), type)
+    len = buf.get_int if type == Binary::SUBTYPE_BYTES
+    Binary.new(buf.get(len), type)
   end
 
   def serialize_eoo_element(buf)
@@ -290,8 +292,8 @@ class BSON
 
     bytes = val.to_a
     num_bytes = bytes.length
-    subtype = val.respond_to?(:subtype) ? val.subtype : XGen::Mongo::Driver::Binary::SUBTYPE_BYTES
-    if subtype == XGen::Mongo::Driver::Binary::SUBTYPE_BYTES
+    subtype = val.respond_to?(:subtype) ? val.subtype : Binary::SUBTYPE_BYTES
+    if subtype == Binary::SUBTYPE_BYTES
       buf.put_int(num_bytes + 4)
       buf.put(subtype)
       buf.put_int(num_bytes)
@@ -419,9 +421,9 @@ class BSON
       ARRAY
     when Regexp
       REGEX
-    when XGen::Mongo::Driver::ObjectID
+    when ObjectID
       OID
-    when XGen::Mongo::Driver::DBRef
+    when DBRef
       REF
     when true, false
       BOOLEAN
@@ -431,7 +433,7 @@ class BSON
       OBJECT
     when Symbol
       SYMBOL
-    when XGen::Mongo::Driver::Undefined
+    when Undefined
       UNDEFINED
     else
       raise "Unknown type of object: #{o.class.name}"
