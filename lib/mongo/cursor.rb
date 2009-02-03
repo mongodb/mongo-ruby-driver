@@ -42,13 +42,15 @@ module XGen
 
         def closed?; @closed; end
 
-        # Return +true+ if there are more records to retrieve. We do not check
-        # @num_to_return; #each is responsible for doing that.
+        # Internal method, not for general use. Return +true+ if there are
+        # more records to retrieve. We do not check @num_to_return; #each is
+        # responsible for doing that.
         def more?
           num_remaining > 0
         end
 
-        # Return the next object. Raises an error if necessary.
+        # Return the next object or nil if there are no more. Raises an error
+        # if necessary.
         def next_object
           refill_via_get_more if num_remaining == 0
           o = @cache.shift
