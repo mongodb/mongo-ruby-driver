@@ -17,20 +17,20 @@ coll.clear
 
 admin = db.admin
 
-# # Profiling level set/get
-# p admin.profiling_level
+# Profiling level set/get
+p admin.profiling_level
 
-# # Start profiling everything
-# admin.profiling_level = :all
+# Start profiling everything
+admin.profiling_level = :all
 
-# # Read records, creating a profiling event
-# coll.find().to_a
+# Read records, creating a profiling event
+coll.find().to_a
 
-# # Stop profiling
-# admin.profiling_level = :off
+# Stop profiling
+admin.profiling_level = :off
 
-# # Print all profiling info
-# pp admin.profiling_info
+# Print all profiling info
+pp admin.profiling_info
 
 # Validate returns a hash if all is well or raises an exception if there is a
 # problem.
