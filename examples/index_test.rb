@@ -1,6 +1,3 @@
-require "rubygems"
-require "benchwarmer"
-
 class Exception
   def errmsg
     "%s: %s\n%s" % [self.class, message, (backtrace || []).join("\n") << "\n"]
@@ -38,7 +35,7 @@ OBJS_COUNT = 100
 
 puts ">> Generating test data"
 msgs = %w{hola hello aloha ciao}
-arr = OBJS_COUNT.times.map {|x| { :number => x, :rndm => (rand(5)+1), :msg => msgs[rand(4)] }}
+arr = (0...OBJS_COUNT).collect {|x| { :number => x, :rndm => (rand(5)+1), :msg => msgs[rand(4)] }}
 puts "generated"
 
 puts ">> Inserting data (#{arr.size})"

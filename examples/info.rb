@@ -16,8 +16,15 @@ coll.clear
 # Insert 3 records
 3.times { |i| coll.insert({'a' => i+1}) }
 
-puts "There are #{coll.count()} records in the test collection. Here they are:"
-coll.find().each { |doc| puts doc.inspect }
+# Collection names in database
+p db.collection_names
+
+# More information about each collection
+p db.collections_info
+
+# Index information
+db.create_index('test', 'index_name', ['a'])
+p db.index_information('test')
 
 # Destroy the collection
 coll.drop

@@ -8,7 +8,7 @@ host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
 port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
 
 puts "Connecting to #{host}:#{port}"
-db = XGen::Mongo::Driver::Mongo.new(host, port).db('ruby-mongo-examples-complex')
+db = XGen::Mongo::Driver::Mongo.new(host, port).db('ruby-mongo-examples')
 coll = db.collection('test')
 coll.clear
 

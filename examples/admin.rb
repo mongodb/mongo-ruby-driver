@@ -1,5 +1,6 @@
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
+require 'pp'
 
 include XGen::Mongo::Driver
 
@@ -13,11 +14,22 @@ coll = db.collection('test')
 # Erase all records from collection, if any
 coll.clear
 
-# Insert 3 records
-3.times { |i| coll.insert({'a' => i+1}) }
+admin = db.admin
 
-puts "There are #{coll.count()} records in the test collection. Here they are:"
-coll.find().each { |doc| puts doc.inspect }
+# Profiling level set/get
+p admin.profiling_level
+
+# Start profiling everything
+admin.profiling_level = :all
+
+# Read records, creating a profiling event
+coll.find().to_a
+
+# Stop profiling
+admin.profiling_level = :off
+
+# Print all profiling info
+pp admin.profiling_info
 
 # Destroy the collection
 coll.drop
