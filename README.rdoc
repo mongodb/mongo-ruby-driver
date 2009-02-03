@@ -217,6 +217,18 @@ object or call the :strict= method:
 
 The method DB#strict? returns the current value of that flag.
 
+== Cursors
+
+Random cursor fun facts:
+
+- Cursors are enumerable.
+
+- The query doesn't get run until you actually attempt to retrieve data from a
+  cursor.
+
+- Cursors have a to_a method.
+
+
 
 = Testing
 

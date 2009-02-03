@@ -35,6 +35,6 @@ coll.insert('array' => [1, 2, 3],
             'null' => nil,
             'symbol' => :zildjian)
 
-coll.find().each { |row| pp row }
+pp coll.find().next_object
 
 coll.clear
