@@ -18,7 +18,7 @@ coll.clear
 coll.insert('array' => [1, 2, 3],
             'string' => 'hello',
             'hash' => {'a' => 1, 'b' => 2},
-            'date' => Time.now, # seconds only; millisecs are not stored
+            'date' => Time.now, # milliseconds only; microseconds are not stored
             'oid' => ObjectID.new,
             'binary' => Binary.new([1, 2, 3]),
             'int' => 42,
