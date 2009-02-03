@@ -54,7 +54,11 @@ class AdminTest < Test::Unit::TestCase
   end
 
   def test_validate_collection
-    assert @admin.validate_collection(@coll.name)
+    doc = @admin.validate_collection(@coll.name)
+    assert_not_nil doc
+    result = doc['result']
+    assert_not_nil result
+    assert_match /firstExtent/, result
   end
 
 end

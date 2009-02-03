@@ -70,14 +70,15 @@ module XGen
         end
 
         # Validate a named collection by raising an exception if there is a
-        # problem or returning +true+ if all is well.
+        # problem or returning an interesting hash (see especially the
+        # 'result' string value) if all is well.
         def validate_collection(name)
           doc = @db.db_command(:validate => name)
           raise "Error with validate command: #{doc.inspect}" unless @db.ok?(doc)
           result = doc['result']
           raise "Error with validation data: #{doc.inspect}" unless result.kind_of?(String)
           raise "Error: invalid collection #{name}: #{doc.inspect}" if result =~ /\b(exception|corrupt)\b/i
-          true
+          doc
         end
 
       end
