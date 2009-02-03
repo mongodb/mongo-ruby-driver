@@ -35,6 +35,7 @@ admin = db.admin
 # Validate returns a hash if all is well or raises an exception if there is a
 # problem.
 info = admin.validate_collection(coll.name)
+puts "valid = #{info['ok']}"
 puts info['result']
 
 # Destroy the collection
