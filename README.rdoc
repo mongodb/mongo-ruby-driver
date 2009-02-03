@@ -11,7 +11,8 @@ Start by reading the XGen::Mongo::Driver::Mongo and XGen::Mongo::Driver::DB
 documentation, then move on to XGen::Mongo::Driver::Collection and
 XGen::Mongo::Driver::Cursor.
 
-A quick code sample:
+Here is a quick code sample. See the files in the "examples" subdirectory for
+many more.
 
   require 'mongo'
 
@@ -49,16 +50,21 @@ you can install it as a gem from the source by typing
   $ rake gem:install
 
 
-= Demo
+= Examples
 
-You can see and run the examples if you've downloaded the source. Mongo must
-be running, of course.
+There are many examples in the "examples" subdirectory. Samples include using
+the driver and using the GridFS class GridStore. Mongo must be running for
+these examples to work, of course.
 
+Here's how to start mongo and run the "simple.rb" example:
+
+  $ cd path/to/mongo
+  $ ./mongod run
+  ... then in another window ...
+  $ cd path/to/mongo-ruby-driver
   $ ruby examples/simple.rb
 
 See also the test code, especially tests/test_db_api.rb.
-
-For the GridFS class GridStore, see the tests.
 
 
 = The Driver
