@@ -15,50 +15,53 @@ class DBTest < Test::Unit::TestCase
 
   include XGen::Mongo::Driver
 
-  def setup
-    @host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-    @port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT
-    @db = Mongo.new(@host, @port).db('ruby-mongo-test')
+  @@host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
+  @@port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT
+  @@db = Mongo.new(@@host, @@port).db('ruby-mongo-test')
+  @@users = @@db.collection('system.users')
 
+  def setup
     @spongebob = 'spongebob'
     @spongebob_password = 'squarepants'
-    @users = @db.collection('system.users')
-    @users.clear
-    @users.insert(:user => @spongebob, :pwd => @db.send(:hash_password, @spongebob, @spongebob_password))
+    @@users.clear
+    @@users.insert(:user => @spongebob, :pwd => @@db.send(:hash_password, @spongebob, @spongebob_password))
   end
 
   def teardown
-    if @db && @db.connected?
-      @users.clear if @users
-      @db.close
-    end
+    @@users.clear if @@users
   end
 
   def test_close
-    @db.close
-    assert !@db.connected?
+    @@db.close
+    assert !@@db.connected?
     begin
-      @db.collection('test').insert('a' => 1)
+      @@db.collection('test').insert('a' => 1)
       fail "expected 'NilClass' exception"
     rescue => ex
       assert_match /NilClass/, ex.to_s
+    ensure
+      @@db = Mongo.new(@@host, @@port).db('ruby-mongo-test')
+      @@users = @@db.collection('system.users')
     end
   end
 
   def test_full_coll_name
-    coll = @db.collection('test')
-    assert_equal 'ruby-mongo-test.test', @db.full_coll_name(coll.name)
+    coll = @@db.collection('test')
+    assert_equal 'ruby-mongo-test.test', @@db.full_coll_name(coll.name)
   end
 
   def test_pair
-    @db.close
-    @users = nil
-    @db = Mongo.new({:left => "this-should-fail", :right => [@host, @port]}).db('ruby-mongo-test')
-    assert @db.connected?
+    @@db.close
+    @@users = nil
+    @@db = Mongo.new({:left => "this-should-fail", :right => [@@host, @@port]}).db('ruby-mongo-test')
+    assert @@db.connected?
+  ensure
+    @@db = Mongo.new(@@host, @@port) unless @@db.connected?
+    @@users = @@db.collection('system.users')
   end
 
   def test_pk_factory
-    db = Mongo.new(@host, @port).db('ruby-mongo-test', :pk => TestPKFactory.new)
+    db = Mongo.new(@@host, @@port).db('ruby-mongo-test', :pk => TestPKFactory.new)
     coll = db.collection('test')
     coll.clear
 
@@ -80,28 +83,31 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_pk_factory_reset
-    @db.pk_factory = Object.new # first time
+    db = Mongo.new(@@host, @@port).db('ruby-mongo-test')
+    db.pk_factory = Object.new # first time
     begin
-      @db.pk_factory = Object.new
+      db.pk_factory = Object.new
       fail "error: expected exception"
     rescue => ex
       assert_match /can not change PK factory/, ex.to_s
+    ensure
+      db.close
     end
   end
 
   def test_authenticate
-    assert !@db.authenticate('nobody', 'nopassword')
-    assert !@db.authenticate(@spongebob, 'squareliederhosen')
-    assert @db.authenticate(@spongebob, @spongebob_password)
+    assert !@@db.authenticate('nobody', 'nopassword')
+    assert !@@db.authenticate(@spongebob, 'squareliederhosen')
+    assert @@db.authenticate(@spongebob, @spongebob_password)
   end
 
   def test_logout
-    @db.logout                  # only testing that we don't throw exception
+    @@db.logout                  # only testing that we don't throw exception
   end
 
   def test_auto_connect
-    @db.close
-    db = Mongo.new(@host, @port, :auto_reconnect => true).db('ruby-mongo-test')
+    @@db.close
+    db = Mongo.new(@@host, @@port, :auto_reconnect => true).db('ruby-mongo-test')
     assert db.connected?
     assert db.auto_reconnect?
     db.close
@@ -109,22 +115,25 @@ class DBTest < Test::Unit::TestCase
     assert db.auto_reconnect?
     db.collection('test').insert('a' => 1)
     assert db.connected?
+  ensure
+    @@db = Mongo.new(@@host, @@port).db('ruby-mongo-test')
+    @@users = @@db.collection('system.users')
   end
 
   def test_error
-    doc = @db.send(:db_command, :forceerror => 1)
-    assert @db.error?
-    err = @db.error
+    doc = @@db.send(:db_command, :forceerror => 1)
+    assert @@db.error?
+    err = @@db.error
     assert_match /forced error/, err
 
     # ask again
-    assert @db.error?
-    err2 = @db.error
+    assert @@db.error?
+    err2 = @@db.error
     assert_equal err, err2
   end
 
   def test_text_port_number
-    db = DB.new('ruby-mongo-test', [[@host, @port.to_s]])
+    db = DB.new('ruby-mongo-test', [[@@host, @@port.to_s]])
     # If there is no error, all is well
     db.collection('users').clear
   end

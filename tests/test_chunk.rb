@@ -8,26 +8,22 @@ class ChunkTest < Test::Unit::TestCase
   include XGen::Mongo::Driver
   include XGen::Mongo::GridFS
 
+  @@db = Mongo.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+                   ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT).db('ruby-mongo-utils-test')
+  @@files = @@db.collection('gridfs.files')
+  @@chunks = @@db.collection('gridfs.chunks')
+
   def setup
-    @host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-    @port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT
-    @db = Mongo.new(@host, @port).db('ruby-mongo-utils-test')
+    @@chunks.clear
+    @@files.clear
 
-    @files = @db.collection('gridfs.files')
-    @chunks = @db.collection('gridfs.chunks')
-    @chunks.clear
-    @files.clear
-
-    @f = GridStore.new(@db, 'foobar', 'w')
+    @f = GridStore.new(@@db, 'foobar', 'w')
     @c = @f.instance_variable_get('@curr_chunk')
   end
 
   def teardown
-    if @db && @db.connected?
-      @chunks.clear
-      @files.clear
-      @db.close
-    end
+    @@chunks.clear
+    @@files.clear
   end
 
   def test_pos

@@ -7,24 +7,21 @@ class AdminTest < Test::Unit::TestCase
 
   include XGen::Mongo::Driver
 
+  @@db = Mongo.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+                   ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT).db('ruby-mongo-test')
+  @@coll = @@db.collection('test')
+
   def setup
-    host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-    port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT
-    @db = Mongo.new(host, port).db('ruby-mongo-test')
     # Insert some data to make sure the database itself exists.
-    @coll = @db.collection('test')
-    @coll.clear
-    @r1 = @coll.insert('a' => 1) # collection not created until it's used
-    @coll_full_name = 'ruby-mongo-test.test'
-    @admin = @db.admin
+    @@coll.clear
+    @r1 = @@coll.insert('a' => 1) # collection not created until it's used
+    @@coll_full_name = 'ruby-mongo-test.test'
+    @admin = @@db.admin
   end
 
   def teardown
-    if @db.connected?
-      @admin.profiling_level = :off
-      @coll.clear if @coll
-      @db.close
-    end
+    @admin.profiling_level = :off
+    @@coll.clear if @@coll
   end
 
   def test_default_profiling_level
@@ -41,7 +38,7 @@ class AdminTest < Test::Unit::TestCase
   def test_profiling_info
     # Perform at least one query while profiling so we have something to see.
     @admin.profiling_level = :all
-    @coll.find()
+    @@coll.find()
     @admin.profiling_level = :off
 
     info = @admin.profiling_info
@@ -54,7 +51,7 @@ class AdminTest < Test::Unit::TestCase
   end
 
   def test_validate_collection
-    doc = @admin.validate_collection(@coll.name)
+    doc = @admin.validate_collection(@@coll.name)
     assert_not_nil doc
     result = doc['result']
     assert_not_nil result
