@@ -108,6 +108,7 @@ module XGen
         # Create a new index named +index_name+. +fields+ should be an array
         # of field names.
         def create_index(name, *fields)
+          fields = *fields if fields.kind_of?(Array) && fields.length == 1
           @db.create_index(@name, name, fields)
         end
 
