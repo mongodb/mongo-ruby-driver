@@ -4,6 +4,11 @@ require File.join(File.dirname(__FILE__), '_common.rb')
 db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
 foo = db.collection('foo')
 
-foo.update({:x => 1}, {:x => 1, :y => 2})
-foo.update({:x => 2}, {:x => 1, :y => 7})
-foo.update({:x => 3}, {:x => 4, :y => 1})
+if __FILE__ == $0
+  foo.drop
+  foo.insert(:x => 1)
+end
+
+foo.replace({:x => 1}, {:x => 1, :y => 2})
+foo.replace({:x => 2}, {:x => 1, :y => 7})
+foo.replace({:x => 3}, {:x => 4, :y => 1})

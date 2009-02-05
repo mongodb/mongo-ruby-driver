@@ -3,6 +3,10 @@
 require File.join(File.dirname(__FILE__), '_common.rb')
 db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
 
+if __FILE__ == $0
+  %w(a b c).each { |name| db.drop_collection(name) }
+end
+
 colla = db.collection('a')
 collb = db.collection('b')
 collc = db.collection('c')

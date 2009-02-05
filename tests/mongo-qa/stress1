@@ -6,6 +6,10 @@ require File.join(File.dirname(__FILE__), '_common.rb')
 db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
 c = db.collection('stress1')
 
+if __FILE__ == $0
+  c.drop
+end
+
 50000.times { |i|
   c.insert(:name => "asdf#{i}", :date => Time.now, :_id => i,
            :blah => LONG_STRING, :subarray => [])

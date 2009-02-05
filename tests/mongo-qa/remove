@@ -3,5 +3,15 @@
 require File.join(File.dirname(__FILE__), '_common.rb')
 db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
 
+if __FILE__ == $0
+  c = db.collection('remove1')
+  50.times { |i| c.insert(:a => i) }
+  c = db.collection('remove2')
+  c.insert(:a => 3, :b => 1)
+  c.insert(:a => 3, :b => 3)
+  c.insert(:a => 2, :b => 3)
+  c.insert(:b => 3)
+end
+
 db.collection('remove1').clear
 db.collection('remove2').remove('a' => 3)

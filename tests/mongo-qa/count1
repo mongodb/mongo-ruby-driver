@@ -3,6 +3,14 @@
 require File.join(File.dirname(__FILE__), '_common.rb')
 db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
 
+if __FILE__ == $0
+  3.times { |i| db.drop_collection("test#{i+1}") }
+  db.create_collection('test1')
+  db.collection('test2').insert({:name => 'a'})
+  c = db.collection('test3')
+  100.times { |i| c.insert(:i => i, :foo => 'bar') }
+end
+
 puts db.collection('test1').count
 puts db.collection('test2').count
 puts db.collection('test3').count('i' => 'a')
