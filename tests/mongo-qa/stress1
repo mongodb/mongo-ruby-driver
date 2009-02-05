@@ -10,7 +10,6 @@ n1 = 50_000
 n2 = 10_000
 
 if $DEBUG
-  raise "WHAT THE HELL?"        # DEBUG
   n1 = 5
   n2 = 1
   c.drop
