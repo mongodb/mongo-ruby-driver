@@ -5,6 +5,10 @@
 
 HERE=`dirname $0`
 
+if [ ! -f $HERE/../tests/mongo-qa/$1 ] ; then
+    exit 0
+fi
+
 begintime=`date`
 ruby $HERE/../tests/mongo-qa/$1 >> $2
 exitval=$?
