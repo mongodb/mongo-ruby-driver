@@ -288,8 +288,11 @@ module XGen
 
         # Close the connection to the database.
         def close
-          @socket.close if @socket
-          @socket = nil
+          if @socket
+            s = @socket
+            @socket = nil
+            s.close
+          end
         end
 
         def connected?
@@ -426,6 +429,7 @@ module XGen
           connect_to_master if !connected? && @auto_reconnect
           begin
             @socket.print(message.buf.to_s)
+            @socket.flush
           rescue => ex
             close
             raise ex
