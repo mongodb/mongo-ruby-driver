@@ -6,7 +6,7 @@
 HERE=`dirname $0`
 
 begintime=`date`
-ruby $HERE/../tests/mongo-qa/$1
+ruby $HERE/../tests/mongo-qa/$1 >> $2
 exitval=$?
 endtime=`date`
 
