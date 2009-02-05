@@ -270,6 +270,21 @@ class DBAPITest < Test::Unit::TestCase
     info = list[0]
     assert_equal 'index_name', info[:name]
     assert_equal 1, info[:keys]['a']
+  ensure
+    @@db.drop_index(@@coll.name, 'index_name')
+  end
+
+  def test_multiple_index_cols
+    @@db.create_index(@@coll.name, 'index_name', ['a', 'b', 'c'])
+    list = @@db.index_information(@@coll.name)
+    assert_equal 1, list.length
+
+    info = list[0]
+    assert_equal 'index_name', info[:name]
+    keys = info[:keys].keys
+    assert_equal ['a', 'b', 'c'], keys.sort
+  ensure
+    @@db.drop_index(@@coll.name, 'index_name')
   end
 
   def test_array
