@@ -4,7 +4,7 @@ require File.join(File.dirname(__FILE__), '_common.rb')
 db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
 coll = db.collection('part1')
 
-if __FILE__ == $0
+if $DEBUG
   coll.drop
 end
 

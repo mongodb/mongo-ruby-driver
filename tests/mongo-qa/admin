@@ -6,7 +6,7 @@ db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
 db.collection('test').insert({'test' => 1})
 admin = db.admin
 
-if __FILE__ == $0
+if $DEBUG
   db.drop_collection('tester')
   admin.profiling_level = :slow_only
 end

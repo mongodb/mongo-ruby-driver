@@ -5,18 +5,18 @@ db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
 x = db.collection('x')
 y = db.collection('y')
 
-if __FILE__ == $0
+if $DEBUG
   x.drop
   x.insert('field1' => 'f1', 'field2' => 'f2')
-  x.create_index('field1', 'field1')
-  x.create_index('field2', 'field2')
+  x.create_index('field1_1', 'field1')
+  x.create_index('field2_1', 'field2')
 end
 
 def print_sorted_info_keys(info)
   puts info[:keys].keys.sort.collect { |key| "#{key}_1" }.join("_")
 end
 
-x.drop_index('field1')
+x.drop_index('field1_1')
 x.index_information.each { |info| print_sorted_info_keys(info) }
 
 y.create_index('abc', ['a', 'b', 'c'])
