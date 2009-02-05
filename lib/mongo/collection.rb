@@ -26,8 +26,8 @@ module XGen
         attr_reader :db, :name, :hint
 
         def initialize(db, name)
-          @db = db
-          @name = name
+          @db, @name = db, name
+          @hint = nil
         end
 
         # Set hint fields to use and return +self+. hint may be a single field
