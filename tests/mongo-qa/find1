@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+
+require File.join(File.dirname(__FILE__), '_common.rb')
+db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
+
+cursor = db.collection('c').find({'x' => 1}, :sort => 'y', :offset => 20, :limit => 10)
+cursor.each { |row| puts row['z'] }

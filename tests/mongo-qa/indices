@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+require File.join(File.dirname(__FILE__), '_common.rb')
+db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
+x = db.collection('x')
+y = db.collection('y')
+
+def print_sorted_info_keys(info)
+  puts info[:keys].keys.sort.collect { |key| "#{key}_1" }.join("_")
+end
+
+x.drop_index('field1')
+x.index_information.each { |info| print_sorted_info_keys(info) }
+
+y.create_index('abc', ['a', 'b', 'c'])
+y.create_index('d', ['d'])
+y.index_information.sort{|a,b| a[:name] <=> b[:name]}.each { |info| print_sorted_info_keys(info) }
