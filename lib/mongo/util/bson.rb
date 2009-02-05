@@ -393,7 +393,7 @@ class BSON
 
   def deserialize_cstr(buf)
     chars = ""
-    while 1
+    while true
       b = buf.get
       break if b == 0
       chars << b.chr

@@ -122,6 +122,7 @@ module XGen
           @auto_reconnect = options[:auto_reconnect]
           @semaphore = Object.new
           @semaphore.extend Mutex_m
+          @socket = nil
           connect_to_master
         end
 

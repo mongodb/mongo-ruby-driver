@@ -38,6 +38,7 @@ module XGen
           @closed = false
           @can_call_to_a = true
           @query_run = false
+          @rows = nil
         end
 
         def closed?; @closed; end

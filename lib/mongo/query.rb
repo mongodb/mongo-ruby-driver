@@ -65,6 +65,7 @@ module XGen
         def initialize(sel={}, return_fields=nil, number_to_skip=0, number_to_return=0, order_by=nil, hint=nil)
           @number_to_skip, @number_to_return, @order_by, @hint =
             number_to_skip, number_to_return, order_by, hint
+          @explain = nil
           self.selector = sel
           self.fields = return_fields
         end
