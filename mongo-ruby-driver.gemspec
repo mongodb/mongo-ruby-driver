@@ -1,3 +1,19 @@
+require 'find'
+
+def self.files_in(dir)
+  files = []
+  Find.find(dir) { |path|
+    next if path =~ /\.DS_Store$/
+    files << path unless File.directory?(path)
+  }
+  files
+end
+
+PACKAGE_FILES = ['README.rdoc', 'Rakefile', 'mongo-ruby-driver.gemspec'] +
+  files_in('bin') + files_in('examples') + files_in('lib')
+    
+TEST_FILES = files_in('tests')
+
 Gem::Specification.new do |s|
   s.name = 'mongo'
   s.version = '0.5.3'
@@ -7,68 +23,8 @@ Gem::Specification.new do |s|
 
   s.require_paths = ['lib']
   
-  s.files = ['bin/mongo_console', 'bin/run_test_script',
-             'examples/benchmarks.rb',
-             'examples/blog.rb',
-             'examples/index_test.rb',
-             'examples/simple.rb',
-             'lib/mongo.rb',
-             'lib/mongo/admin.rb',
-             'lib/mongo/collection.rb',
-             'lib/mongo/cursor.rb',
-             'lib/mongo/db.rb',
-             'lib/mongo/gridfs/chunk.rb',
-             'lib/mongo/gridfs/grid_store.rb',
-             'lib/mongo/gridfs.rb',
-             'lib/mongo/message/get_more_message.rb',
-             'lib/mongo/message/insert_message.rb',
-             'lib/mongo/message/kill_cursors_message.rb',
-             'lib/mongo/message/message.rb',
-             'lib/mongo/message/message_header.rb',
-             'lib/mongo/message/msg_message.rb',
-             'lib/mongo/message/opcodes.rb',
-             'lib/mongo/message/query_message.rb',
-             'lib/mongo/message/remove_message.rb',
-             'lib/mongo/message/update_message.rb',
-             'lib/mongo/message.rb',
-             'lib/mongo/mongo.rb',
-             'lib/mongo/query.rb',
-             'lib/mongo/types/binary.rb',
-             'lib/mongo/types/dbref.rb',
-             'lib/mongo/types/objectid.rb',
-             'lib/mongo/types/regexp_of_holding.rb',
-             'lib/mongo/types/undefined.rb',
-             'lib/mongo/util/bson.rb',
-             'lib/mongo/util/byte_buffer.rb',
-             'lib/mongo/util/ordered_hash.rb',
-             'lib/mongo/util/xml_to_ruby.rb',
-             'README.rdoc', 'Rakefile', 'mongo-ruby-driver.gemspec']
-  s.test_files = ['tests/mongo-qa/_common.rb',
-                  'tests/mongo-qa/admin',
-                  'tests/mongo-qa/capped',
-                  'tests/mongo-qa/count1',
-                  'tests/mongo-qa/dbs',
-                  'tests/mongo-qa/find',
-                  'tests/mongo-qa/find1',
-                  'tests/mongo-qa/indices',
-                  'tests/mongo-qa/remove',
-                  'tests/mongo-qa/stress1',
-                  'tests/mongo-qa/test1',
-                  'tests/mongo-qa/update',
-                  'tests/test_admin.rb',
-                  'tests/test_bson.rb',
-                  'tests/test_byte_buffer.rb',
-                  'tests/test_chunk.rb',
-                  'tests/test_cursor.rb',
-                  'tests/test_db.rb',
-                  'tests/test_db_api.rb',
-                  'tests/test_db_connection.rb',
-                  'tests/test_grid_store.rb',
-                  'tests/test_message.rb',
-                  'tests/test_mongo.rb',
-                  'tests/test_objectid.rb',
-                  'tests/test_ordered_hash.rb',
-                  'tests/test_round_trip.rb']
+  s.files = PACKAGE_FILES
+  s.test_files = TEST_FILES
   
   s.has_rdoc = true
   s.rdoc_options = ['--main', 'README.rdoc', '--inline-source']
