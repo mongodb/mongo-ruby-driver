@@ -3,10 +3,6 @@
 This is a Ruby driver for the 10gen Mongo DB. For more information about
 Mongo, see http://www.mongodb.org.
 
-Note: this driver is still alpha quality. The API will change, as *may* the
-data saved to the database (especially primary key values). Do *_not_* use
-this for any production data yet.
-
 Start by reading the XGen::Mongo::Driver::Mongo and XGen::Mongo::Driver::DB
 documentation, then move on to XGen::Mongo::Driver::Collection and
 XGen::Mongo::Driver::Cursor.
