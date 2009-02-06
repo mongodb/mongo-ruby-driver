@@ -23,23 +23,11 @@ def check_keys(c, expected)
 end
 
 if $DEBUG
-  begin
-    index_names = x.index_information.collect { |info| info[:name] }
-    x.drop_index('field1_1') if index_names.include?('field1_1')
-    x.drop_index('field2_1') if index_names.include?('field2_1')
-    x.drop
-  rescue => ex
-  end
+  x.drop                        # also drops indexes
   x.insert('field1' => 'f1', 'field2' => 'f2')
   x.create_index('field1_1', 'field1')
   x.create_index('field2_1', 'field2')
-  begin
-    index_names = y.index_information.collect { |info| info[:name] }
-    y.drop_index('abc') if index_names.include?('abc')
-    y.drop_index('d') if index_names.include?('d')
-    y.drop
-  rescue => ex
-  end
+  y.drop
 end
 
 # There should only be two indices on x, and none on y. We raise an error if
