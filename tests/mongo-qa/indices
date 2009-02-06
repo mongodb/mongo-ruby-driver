@@ -5,20 +5,54 @@ db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
 x = db.collection('x')
 y = db.collection('y')
 
+def sorted_index_info(c)
+  c.index_information.sort { |a,b| a[:name] <=> b[:name] }
+end
+
+def sorted_info_keys(info)
+  info[:keys].keys.sort.collect { |key| "#{key}_1" }.join("_")
+end
+
+def check_keys(c, expected)
+  keys = sorted_index_info(c).collect {|info| sorted_info_keys(info)}
+  if keys == expected
+    ''
+  else
+    "#{c.name} indices should start out #{expected.inspect} but is #{keys.inspect}"
+  end
+end
+
 if $DEBUG
-  x.drop
+  begin
+    index_names = x.index_information.collect { |info| info[:name] }
+    x.drop_index('field1_1') if index_names.include?('field1_1')
+    x.drop_index('field2_1') if index_names.include?('field2_1')
+    x.drop
+  rescue => ex
+  end
   x.insert('field1' => 'f1', 'field2' => 'f2')
   x.create_index('field1_1', 'field1')
   x.create_index('field2_1', 'field2')
+  begin
+    index_names = y.index_information.collect { |info| info[:name] }
+    y.drop_index('abc') if index_names.include?('abc')
+    y.drop_index('d') if index_names.include?('d')
+    y.drop
+  rescue => ex
+  end
 end
 
-def print_sorted_info_keys(info)
-  puts info[:keys].keys.sort.collect { |key| "#{key}_1" }.join("_")
-end
+# There should only be two indices on x, and none on y. We raise an error if
+# the preconditions are not met. (They were not, on our testing harness, for a
+# while due to Mongo behavior.)
+err = []
+err << check_keys(x, ['field1_1', 'field2_1'])
+err << check_keys(y, [])
+raise "\n#{err.join("\n")}" unless err == ['', '']
 
 x.drop_index('field1_1')
-x.index_information.each { |info| print_sorted_info_keys(info) }
+sorted_index_info(x).each { |info| puts sorted_info_keys(info) }
 
 y.create_index('abc', ['a', 'b', 'c'])
 y.create_index('d', ['d'])
-y.index_information.sort{|a,b| a[:name] <=> b[:name]}.each { |info| print_sorted_info_keys(info) }
+sorted_index_info(y).each { |info| puts sorted_info_keys(info) }
