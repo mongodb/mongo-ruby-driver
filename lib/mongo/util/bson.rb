@@ -54,7 +54,7 @@ class BSON
     end
   else
     def self.to_utf8(str)
-      str                       # TODO punt for now
+      str                       # TODO Ruby 1.8 punt for now
     end
   end
 
@@ -117,7 +117,7 @@ class BSON
       when UNDEFINED
         serialize_undefined_element(@buf, k)
       when CODE_W_SCOPE
-        # TODO
+        # TODO CODE_W_SCOPE unimplemented; may be removed
         raise "unimplemented type #{type}"
       else
         raise "unhandled type #{type}"
@@ -177,7 +177,7 @@ class BSON
         key = deserialize_cstr(@buf)
         doc[key] = deserialize_binary_data(@buf)
       when CODE_W_SCOPE
-        # TODO
+        # TODO CODE_W_SCOPE unimplemented; may be removed
         raise "unimplemented type #{type}"
       when EOO
         break

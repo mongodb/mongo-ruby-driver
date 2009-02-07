@@ -8,8 +8,6 @@ module XGen
     module GridFS
 
       # A chunk stores a portion of GridStore data.
-      #
-      # TODO: user-defined chunk size
       class Chunk
 
         DEFAULT_CHUNK_SIZE = 1024 * 256
