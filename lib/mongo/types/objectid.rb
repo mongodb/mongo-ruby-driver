@@ -64,7 +64,7 @@ module XGen
         # Given a string representation of an ObjectID, return a new ObjectID
         # with that value.
         def self.from_string(str)
-          raise "illegal ObjectID format" unless legal_oid_string(str)
+          raise "illegal ObjectID format" unless legal?(str)
           data = []
           BYTE_ORDER.each_with_index { |string_position, data_index|
             data[data_index] = str[string_position * 2, 2].to_i(16)
@@ -72,7 +72,7 @@ module XGen
           self.new(data)
         end
 
-        def self.legal_oid_string(str)
+        def self.legal?(str)
           len = BYTE_ORDER.length * 2
           str =~ /([0-9a-f]+)/i
           match = $1
