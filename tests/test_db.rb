@@ -67,14 +67,14 @@ class DBTest < Test::Unit::TestCase
 
     # new id gets added to returned object
     obj = coll.insert('name' => 'Fred', 'age' => 42)
-    row = coll.find({'name' => 'Fred'}, :limit => 1).next_object
+    row = coll.find_first({'name' => 'Fred'}, :limit => 1)
     oid = row['_id']
     assert_not_nil oid
     assert_equal obj, row
 
     oid = XGen::Mongo::Driver::ObjectID.new
     obj = coll.insert('_id' => oid, 'name' => 'Barney', 'age' => 41)
-    row = coll.find({'name' => 'Barney'}, :limit => 1).next_object
+    row = coll.find_first({'name' => 'Barney'}, :limit => 1)
     db_oid = row['_id']
     assert_equal oid, db_oid
     assert_equal obj, row

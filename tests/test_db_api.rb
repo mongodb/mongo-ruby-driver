@@ -216,6 +216,18 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 4, docs.size
   end
 
+  def test_find_first
+    x = @@coll.find_first('a' => 1)
+    assert_not_nil x
+    assert_equal 1, x['a']
+  end
+
+  def test_find_first_no_records
+    @@coll.clear
+    x = @@coll.find_first('a' => 1)
+    assert_nil x
+  end
+
   def test_drop_collection
     assert @@db.drop_collection(@@coll.name), "drop of collection #{@@coll.name} failed"
     assert !@@db.collection_names.include?(@@coll_full_name)

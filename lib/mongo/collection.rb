@@ -65,6 +65,14 @@ module XGen
           @db.query(self, Query.new(selector, fields, offset, limit, sort, hint))
         end
 
+        # Find the first record that matches +selector+. See #find.
+        def find_first(selector={}, options={})
+          cursor = find(selector, options)
+          obj = cursor.next_object
+          cursor.close
+          obj
+        end
+
         # Insert +objects+, which are hashes. "<<" is aliased to this method.
         # Returns either the single inserted object or a new array containing
         # +objects+. The object(s) may have been modified by the database's PK
