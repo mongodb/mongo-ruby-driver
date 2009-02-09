@@ -134,6 +134,10 @@ module XGen
         end
 
         # Close the cursor.
+        #
+        # Note: if a cursor is read until exhausted (read until OP_QUERY or
+        # OP_GETMORE returns zero for the cursor id), there is no need to
+        # close it by calling this method.
         def close
           @db.send_to_db(KillCursorsMessage.new(@cursor_id)) if @cursor_id
           @cache = []
