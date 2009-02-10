@@ -8,8 +8,7 @@ host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
 port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
 
 puts "Connecting to #{host}:#{port}"
-# db = Mongo.new(host, port).db('ruby-mongo-examples')
-db = Mongo.new('192.168.19.123', port).db('ruby-mongo-examples')
+db = Mongo.new(host, port).db('ruby-mongo-examples')
 coll = db.create_collection('test')
 
 # Erase all records from collection, if any
