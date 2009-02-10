@@ -67,10 +67,10 @@ module XGen
 
         # Find the first record that matches +selector+. See #find.
         def find_first(selector={}, options={})
-          cursor = find(selector, options)
-          obj = cursor.next_object
-          cursor.close
-          obj
+          h = options.dup
+          h[:limit] = 1
+          cursor = find(selector, h)
+          cursor.next_object    # don't need to explicitly close b/c of limit 
         end
 
         # Insert +objects+, which are hashes. "<<" is aliased to this method.
