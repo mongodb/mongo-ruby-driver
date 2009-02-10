@@ -201,13 +201,13 @@ module XGen
 
         def gets(separator=$/)
           str = ''
-          byte = getc
+          byte = self.getc
           return nil if byte == nil # EOF
           while byte != nil
             s = byte.chr
             str << s
             break if s == separator
-            byte = getc
+            byte = self.getc
           end
           @lineno += 1
           str
@@ -215,17 +215,17 @@ module XGen
 
         def read(len=nil, buf=nil)
           buf ||= ''
-          byte = getc
+          byte = self.getc
           while byte != nil && (len == nil || len > 0)
             buf << byte.chr
             len -= 1 if len
-            byte = getc if (len == nil || len > 0)
+            byte = self.getc if (len == nil || len > 0)
           end
           buf
         end
 
         def readchar
-          byte = getc
+          byte = self.getc
           raise EOFError.new if byte == nil
           byte
         end
@@ -250,10 +250,10 @@ module XGen
         alias_method :each_line, :each
 
         def each_byte
-          byte = getc
+          byte = self.getc
           while byte
             yield byte
-            byte = getc
+            byte = self.getc
           end
         end
 
@@ -280,14 +280,14 @@ module XGen
           objs = [$_] if objs == nil || objs.empty?
           objs.each { |obj|
             str = obj.to_s
-            str.each_byte { |byte| putc(byte) }
+            str.each_byte { |byte| self.putc(byte) }
           }
           nil
         end
 
         def puts(*objs)
           if objs == nil || objs.empty?
-            putc(10)
+            self.putc(10)
           else
             print(*objs.collect{ |obj|
                     str = obj.to_s
@@ -307,7 +307,7 @@ module XGen
           raise "#@filename not opened for write" unless @mode[0] == ?w
           count = 0
           string.each_byte { |byte|
-            putc byte
+            self.putc byte
             count += 1
           }
           count
