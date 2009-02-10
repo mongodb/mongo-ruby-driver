@@ -26,13 +26,11 @@ coll.create_index('foo', 'i')
 t0 = Time.new
 N.times { |i| coll.insert('i' => i) }
 db.error                        # forces pause until all finished
-t1 = Time.new
-report('insert', t0, t1, N)
+report('insert', t0, Time.new, N)
 
 t0 = Time.new
 N.times { coll.find_first }
-t1 = Time.new
-report('find_first', t0, t1, N)
+report('find_first', t0, Time.new, N)
 
 t0 = Time.new
 N.times {
@@ -40,11 +38,9 @@ N.times {
   coll.find('i' => 234).each { }
   coll.find('i' => 9876).each { }
 }
-t1 = Time.new
-report('find', t0, t1, N * 3)
+report('find', t0, Time.new, N * 3)
 
 h = {'i' => {'$gt' => 200, '$lt' => 200}}
 t0 = Time.new
 N.times { coll.find(h).each { } }
-t1 = Time.new
-report('find gt/lt', t0, t1, N)
+report('find gt/lt', t0, Time.new, N)
