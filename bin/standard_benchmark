@@ -14,6 +14,14 @@ def report(str, t0, t1, n)
   printf("%16s: %03.8f\n", str, dt)
 end
 
+def benchmark(str, n, db, after_proc=nil)
+  coll = db.collection('benchmark')
+  t0 = Time.new
+  n.times { |i| yield coll, i }
+  after_proc.call if after_proc
+  report(str, t0, Time.new, n)
+end
+
 host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
 port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
 
@@ -23,24 +31,19 @@ coll = db.collection('benchmark')
 
 coll.create_index('foo', 'i')
 
-t0 = Time.new
-N.times { |i| coll.insert('i' => i) }
-db.error                        # forces pause until all finished
-report('insert', t0, Time.new, N)
-
-t0 = Time.new
-N.times { coll.find_first }
-report('find_first', t0, Time.new, N)
-
-t0 = Time.new
-N.times {
+# Call to db.error forces inserts to finish
+benchmark('insert', N, db, Proc.new{db.error}) { |coll, i|
+  coll.insert('i' => i)
+}
+benchmark('find_first', N, db) { |coll, i|
+  coll.find_first
+}
+benchmark('find', N, db) { |coll, i|
   coll.find('i' => 3).each { }
   coll.find('i' => 234).each { }
   coll.find('i' => 9876).each { }
 }
-report('find', t0, Time.new, N * 3)
-
-h = {'i' => {'$gt' => 200, '$lt' => 200}}
-t0 = Time.new
-N.times { coll.find(h).each { } }
-report('find gt/lt', t0, Time.new, N)
+benchmark('find gt/lt', N, db) { |coll, i|
+  h = {'i' => {'$gt' => 200, '$lt' => 200}}
+  coll.find(h).each {}
+}
