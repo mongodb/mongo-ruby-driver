@@ -1,4 +1,3 @@
-require "rubygems"
 require "benchmark"
   
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
@@ -17,7 +16,7 @@ TEST_COUNT = 100
 
 puts "Generating benchmark data"
 msgs = %w{hola hello aloha ciao}
-arr = OBJS_COUNT.times.map {|x| { :number => x, :rndm => (rand(5)+1), :msg => msgs[rand(4)] }}
+arr = (0..OBJS_COUNT).collect {|x| { :number => x, :rndm => (rand(5)+1), :msg => msgs[rand(4)] }}
 
 puts "Running benchmark"
 Benchmark.bmbm do |results|
@@ -31,6 +30,11 @@ Benchmark.bmbm do |results|
     TEST_COUNT.times {
       coll.clear
       coll.insert(arr)
+    }
+  }
+  results.report("find_first: ") {
+    TEST_COUNT.times {
+      coll.find_first(:number => 0)
     }
   }
 end
