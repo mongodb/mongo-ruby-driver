@@ -133,6 +133,7 @@ module XGen
             @host, @port = *hp
             begin
               @socket = TCPSocket.new(@host, @port)
+              @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 
               # Check for master. Can't call master? because it uses mutex,
               # which may already be in use during this call.
