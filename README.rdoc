@@ -88,7 +88,8 @@ Here is some simple example code:
 
 The GridStore class is a Ruby implementation of Mongo's GridFS file storage
 system. An instance of GridStore is like an IO object. See the rdocs for
-details.
+details, and see examples/gridfs.rb for code that uses many of the GridStore
+features like metadata, content type, rewind/seek/tell, etc.
 
 Note that the GridStore class is not automatically required when you require
 'mongo'. You need to require 'mongo/gridfs'.
