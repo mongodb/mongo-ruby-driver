@@ -31,7 +31,7 @@ a separate project.
 Install the "mongo" gem by typing
 
   $ gem sources -a http://gems.github.com
-  $ sudo gem install mongodb-mongo-ruby-driver
+  $ sudo gem install mongodb-mongo
 
 The first line tells RubyGems to add the GitHub gem repository. You only need
 to run this command once.
@@ -44,6 +44,9 @@ Once you have the source, you can use it from wherever you downloaded it or
 you can install it as a gem from the source by typing
 
   $ rake gem:install
+
+Note: when you install the gem this way it is called "mongo", not
+"mongodb-mongo". In either case, you "require 'mongo'" in your source code.
 
 
 = Examples
