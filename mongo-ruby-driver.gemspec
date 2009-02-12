@@ -57,7 +57,7 @@ TEST_FILES = files_in('tests')
 
 Gem::Specification.new do |s|
   s.name = 'mongo'
-  s.version = '0.6.0'
+  s.version = '0.6.1'
   s.platform = Gem::Platform::RUBY
   s.summary = 'Simple pure-Ruby driver for the 10gen Mongo DB'
   s.description = 'A pure-Ruby driver for the 10gen Mongo DB. For more information about Mongo, see http://www.mongodb.org.'
