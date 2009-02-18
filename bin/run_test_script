@@ -10,7 +10,7 @@ if [ ! -f $HERE/../tests/mongo-qa/$1 ] ; then
 fi
 
 begintime=`date`
-ruby $HERE/../tests/mongo-qa/$1 >> $2
+ruby $HERE/../tests/mongo-qa/$1 $3 $4 >> $2
 exitval=$?
 endtime=`date`
 
