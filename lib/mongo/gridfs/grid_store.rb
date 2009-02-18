@@ -43,7 +43,7 @@ module XGen
       #   }
       class GridStore
 
-        DEFAULT_ROOT_COLLECTION = 'gridfs'
+        DEFAULT_ROOT_COLLECTION = 'fs'
         DEFAULT_CONTENT_TYPE = 'text/plain'
 
         include Enumerable

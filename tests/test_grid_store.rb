@@ -10,8 +10,8 @@ class GridStoreTest < Test::Unit::TestCase
 
   @@db = Mongo.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
                    ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT).db('ruby-mongo-test')
-  @@files = @@db.collection('gridfs.files')
-  @@chunks = @@db.collection('gridfs.chunks')
+  @@files = @@db.collection('fs.files')
+  @@chunks = @@db.collection('fs.chunks')
 
   def setup
     @@chunks.clear
