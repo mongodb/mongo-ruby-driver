@@ -208,6 +208,23 @@ class GridStoreTest < Test::Unit::TestCase
     }
   end
 
+  def test_md5
+    GridStore.open(@@db, 'new-file', 'w') { |f| f.write("hello world\n")}
+    GridStore.open(@@db, 'new-file', 'r') { |f|
+      assert f.md5 == '6f5902ac237024bdd0c176cb93063dc4'
+      begin
+        f.md5 = 'cant do this'
+        fail "should have seen error"
+      rescue => ex
+        true
+      end
+    }
+    GridStore.open(@@db, 'new-file', 'w') {}
+    GridStore.open(@@db, 'new-file', 'r') { |f|
+      assert f.md5 == 'd41d8cd98f00b204e9800998ecf8427e'
+    }
+  end
+
   def test_upload_date
     now = Time.now
     orig_file_upload_date = nil

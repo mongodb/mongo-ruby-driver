@@ -67,6 +67,8 @@ module XGen
 
         attr_accessor :lineno
 
+        attr_reader :md5
+
         class << self
 
           def exist?(db, name, root_collection=DEFAULT_ROOT_COLLECTION)
@@ -142,6 +144,7 @@ module XGen
             @aliases = doc['aliases']
             @length = doc['length']
             @metadata = doc['metadata']
+            @md5 = doc['md5']
           else
             @files_id = XGen::Mongo::Driver::ObjectID.new
             @content_type = DEFAULT_CONTENT_TYPE
@@ -370,7 +373,7 @@ module XGen
                        when IO::SEEK_SET
                          pos
                        end
-                         
+
           new_chunk_number = (target_pos / @chunk_size).to_i
           if new_chunk_number != @curr_chunk.chunk_number
             @curr_chunk.save if @mode[0] == ?w
@@ -405,7 +408,7 @@ module XGen
           end
           @db = nil
         end
-          
+
         def closed?
           @db == nil
         end
@@ -426,6 +429,10 @@ module XGen
           h['uploadDate'] = @upload_date
           h['aliases'] = @aliases
           h['metadata'] = @metadata
+          md5_command = OrderedHash.new
+          md5_command['filemd5'] = @files_id
+          md5_command['root'] = @root
+          h['md5'] = @db.db_command(md5_command)['md5']
           h
         end
 
