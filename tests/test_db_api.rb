@@ -425,8 +425,6 @@ class DBAPITest < Test::Unit::TestCase
       @@coll.hint = nil
       assert_nil @@coll.hint
       assert_equal 1, @@coll.find('a' => 1).to_a.size
-    rescue => ex
-      fail ex.to_s
     ensure
       @@coll.drop_index('test_a_index')
     end
