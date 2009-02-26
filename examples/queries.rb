@@ -59,7 +59,7 @@ pp coll.find('a' => /[1|2]/).explain()
 # collection, in which case they will be used with all queries, or they can be
 # specified per query, in which case that hint overrides the hint associated
 # with the collection if any.
-coll.create_index('test_a_index', 'a')
+coll.create_index('a')
 coll.hint = 'a'
 
 # You will see a different explanation now that the hint is in place

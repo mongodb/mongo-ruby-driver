@@ -4,7 +4,7 @@ require 'test/unit'
 
 # NOTE: assumes Mongo is running
 class DBAPITest < Test::Unit::TestCase
-
+  include XGen::Mongo
   include XGen::Mongo::Driver
 
   @@db = Mongo.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
@@ -275,28 +275,30 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_index_information
-    @@db.create_index(@@coll.name, 'index_name', ['a'])
+    name = @@db.create_index(@@coll.name, 'a')
     list = @@db.index_information(@@coll.name)
     assert_equal 1, list.length
 
     info = list[0]
-    assert_equal 'index_name', info[:name]
+    assert_equal name, 'a_1'
+    assert_equal name, info[:name]
     assert_equal 1, info[:keys]['a']
   ensure
-    @@db.drop_index(@@coll.name, 'index_name')
+    @@db.drop_index(@@coll.name, name)
   end
 
   def test_multiple_index_cols
-    @@db.create_index(@@coll.name, 'index_name', ['a', 'b', 'c'])
+    name = @@db.create_index(@@coll.name, [['a', DESCENDING], ['b', ASCENDING], ['c', DESCENDING]])
     list = @@db.index_information(@@coll.name)
     assert_equal 1, list.length
 
     info = list[0]
-    assert_equal 'index_name', info[:name]
+    assert_equal name, 'a_-1_b_1_c_-1'
+    assert_equal name, info[:name]
     keys = info[:keys].keys
     assert_equal ['a', 'b', 'c'], keys.sort
   ensure
-    @@db.drop_index(@@coll.name, 'index_name')
+    @@db.drop_index(@@coll.name, name)
   end
 
   def test_array
@@ -403,7 +405,7 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_hint
-    @@coll.create_index('test_a_index', 'a')
+    name = @@coll.create_index('a')
     begin
       assert_nil @@coll.hint
       assert_equal 1, @@coll.find({'a' => 1}, :hint => 'a').to_a.size
@@ -426,7 +428,7 @@ class DBAPITest < Test::Unit::TestCase
       assert_nil @@coll.hint
       assert_equal 1, @@coll.find('a' => 1).to_a.size
     ensure
-      @@coll.drop_index('test_a_index')
+      @@coll.drop_index(name)
     end
   end
 

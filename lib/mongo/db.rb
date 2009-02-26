@@ -305,7 +305,7 @@ module XGen
         def send_message(msg)
           send_to_db(MsgMessage.new(msg))
         end
-        
+
         # Returns a Cursor over the query results.
         #
         # Note that the query gets sent lazily; the cursor calls
@@ -401,17 +401,28 @@ module XGen
           }
         end
 
-        # Create a new index on +collection_name+ named +index_name+. +fields+
-        # should be an array of field names. Normally called by
-        # Collection#create_index.
-        def create_index(collection_name, index_name, fields)
-          sel = {:name => index_name, :ns => full_coll_name(collection_name)}
-          field_h = {}
-          fields.each { |f| field_h[f] = 1 }
-          sel[:key] = field_h
+        # Create a new index on +collection_name+. +field_or_spec+
+        # should be either a single field name or a Array of [field name,
+        # direction] pairs. Directions should be specified as
+        # XGen::Mongo::ASCENDING or XGen::Mongo::DESCENDING. Normally called
+        # by Collection#create_index.
+        def create_index(collection_name, field_or_spec)
+          field_h = OrderedHash.new
+          if field_or_spec.is_a? String
+            field_h[field_or_spec] = 1
+          else
+            field_or_spec.each { |f| field_h[f[0]] = f[1] }
+          end
+          name = gen_index_name(field_h)
+          sel = {
+            :name => name,
+            :ns => full_coll_name(collection_name),
+            :key => field_h
+          }
           @semaphore.synchronize {
             send_to_db(InsertMessage.new(@name, SYSTEM_INDEX_COLLECTION, sel))
           }
+          name
         end
 
         # Insert +objects+ into +collection_name+. Normally called by
@@ -471,6 +482,13 @@ module XGen
           Digest::MD5.hexdigest("#{username}:mongo:#{plaintext}")
         end
 
+        def gen_index_name(spec)
+          temp = []
+          spec.each_pair { |field, direction|
+            temp = temp.push("#{field}_#{direction}")
+          }
+          return temp.join("_")
+        end
       end
     end
   end

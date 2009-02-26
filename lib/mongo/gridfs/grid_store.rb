@@ -157,7 +157,7 @@ module XGen
             @curr_chunk = nth_chunk(0)
             @position = 0
           when 'w'
-            chunk_collection.create_index("chunk_index", ['files_id', 'n'])
+            chunk_collection.create_index([['files_id', XGen::Mongo::ASCENDING], ['n', XGen::Mongo::ASCENDING]])
             delete_chunks
             @curr_chunk = Chunk.new(self, 'n' => 0)
             @content_type = options[:content_type] if options[:content_type]
@@ -165,7 +165,7 @@ module XGen
             @metadata = options[:metadata] if options[:metadata]
             @position = 0
           when 'w+'
-            chunk_collection.create_index("chunk_index", ['files_id', 'n'])
+            chunk_collection.create_index([['files_id', XGen::Mongo::ASCENDING], ['n', XGen::Mongo::ASCENDING]])
             @curr_chunk = nth_chunk(last_chunk_number) || Chunk.new(self, 'n' => 0) # might be empty
             @curr_chunk.pos = @curr_chunk.data.length if @curr_chunk
             @metadata = options[:metadata] if options[:metadata]

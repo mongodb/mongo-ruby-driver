@@ -10,3 +10,10 @@ require 'mongo/db'
 require 'mongo/cursor'
 require 'mongo/collection'
 require 'mongo/admin'
+
+module XGen
+  module Mongo
+    ASCENDING = 1
+    DESCENDING = -1
+  end
+end

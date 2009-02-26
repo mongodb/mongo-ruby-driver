@@ -70,7 +70,7 @@ module XGen
           h = options.dup
           h[:limit] = 1
           cursor = find(selector, h)
-          cursor.next_object    # don't need to explicitly close b/c of limit 
+          cursor.next_object    # don't need to explicitly close b/c of limit
         end
 
         # Insert +objects+, which are hashes. "<<" is aliased to this method.
@@ -113,11 +113,12 @@ module XGen
           @db.modify_in_db(@name, selector, modifier_obj)
         end
 
-        # Create a new index named +index_name+. +fields+ should be an array
-        # of field names.
-        def create_index(name, *fields)
-          fields = *fields if fields.kind_of?(Array) && fields.length == 1
-          @db.create_index(@name, name, fields)
+        # Create a new index. +field_or_spec+
+        # should be either a single field name or a Array of [field name,
+        # direction] pairs. Directions should be specified as
+        # XGen::Mongo::ASCENDING or XGen::Mongo::DESCENDING.
+        def create_index(field_or_spec)
+          @db.create_index(@name, field_or_spec)
         end
 
         # Drop index +name+.
