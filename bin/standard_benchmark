@@ -7,19 +7,46 @@ require 'mongo'
 
 include XGen::Mongo::Driver
 
-N = 30_000
+TRIALS = 2
+PER_TRIAL = 5000
+BATCH_SIZE = 100
 
-def report(str, t0, t1, n)
-  dt = t1.to_f - t0.to_f
-  printf("%16s: %03.8f\n", str, dt)
+SMALL = {}
+MEDIUM = {
+  'integer' => 5,
+  'number' => 5.05,
+  'boolean' => false,
+  'array' => ['test', 'benchmark']
+}
+LARGE = {
+  'base_url' => 'http://www.example.com/test-me',
+  'total_word_count' => 6743,
+  'access_time' => Time.now,
+  'meta_tags' => {
+    'description' => 'i am a long description string',
+    'author' => 'Holly Man',
+    'dynamically_created_meta_tag' => 'who know\n what'
+  },
+  'page_structure' => {
+    'counted_tags' => 3450,
+    'no_of_js_attached' => 10,
+    'no_of_images' => 6
+  },
+  'harvested_words' => ['10gen','web','open','source','application','paas',
+                        'platform-as-a-service','technology','helps',
+                        'developers','focus','building','mongodb','mongo'] * 20
+}
+
+def report(str, t)
+  printf("%s%d\n", str.ljust(60, '.'), PER_TRIAL / t)
 end
 
-def benchmark(str, n, db, after_proc=nil)
-  coll = db.collection('benchmark')
+def benchmark(str, proc, n, db, coll_name, object, setup=nil)
+  coll = db.collection(coll_name)
+  setup.call(coll, object) if setup
   t0 = Time.new
-  n.times { |i| yield coll, i }
-  after_proc.call if after_proc
-  report(str, t0, Time.new, n)
+  n.times { |i| proc.call(coll, object, i) }
+  report(str, Time.new.to_f - t0.to_f)
 end
 
 host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
@@ -27,23 +54,55 @@ port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
 
 db = Mongo.new(host, port).db('ruby-benchmark')
 db.drop_collection('benchmark')
-coll = db.collection('benchmark')
 
-coll.create_index('foo', 'i')
+insert = Proc.new { |coll, object, i|
+  object['x'] = i
+  coll.insert(object)
+}
+benchmark('insert (small, no index)', insert, PER_TRIAL, db, 'small_none', SMALL)
+benchmark('insert (medium, no index)', insert, PER_TRIAL, db, 'medium_none', MEDIUM)
+benchmark('insert (large, no index)', insert, PER_TRIAL, db, 'large_none', LARGE)
 
-# Call to db.error forces inserts to finish
-benchmark('insert', N, db, Proc.new{db.error}) { |coll, i|
-  coll.insert('i' => i)
+index_on_x = Proc.new { |coll, object|
+  coll.create_index('foo', 'x') # TODO fix this in the driver!!
 }
-benchmark('find_first', N, db) { |coll, i|
-  coll.find_first
+benchmark('insert (small, indexed)', insert, PER_TRIAL, db, 'small_index', SMALL, index_on_x)
+benchmark('insert (medium, indexed)', insert, PER_TRIAL, db, 'medium_index', MEDIUM, index_on_x)
+benchmark('insert (large, indexed)', insert, PER_TRIAL, db, 'large_index', LARGE, index_on_x)
+
+insert_batch = Proc.new { |coll, object, i|
+  object['x'] = i
+  coll.insert([object] * BATCH_SIZE)
 }
-benchmark('find', N, db) { |coll, i|
-  coll.find('i' => 3).each { }
-  coll.find('i' => 234).each { }
-  coll.find('i' => 9876).each { }
+benchmark('batch insert (small, no index)', insert_batch, PER_TRIAL/BATCH_SIZE, db, 'small_bulk', SMALL)
+benchmark('batch insert (medium, no index)', insert_batch, PER_TRIAL/BATCH_SIZE, db, 'medium_bulk', MEDIUM)
+benchmark('batch insert (large, no index)', insert_batch, PER_TRIAL/BATCH_SIZE, db, 'large_bulk', LARGE)
+
+find_one = Proc.new { |coll, x, i|
+  coll.find_first('x' => x)
 }
-benchmark('find gt/lt', N, db) { |coll, i|
-  h = {'i' => {'$gt' => 200, '$lt' => 200}}
-  coll.find(h).each {}
+benchmark('find_one (small, no index)', find_one, PER_TRIAL, db, 'small_none', PER_TRIAL / 2)
+benchmark('find_one (medium, no index)', find_one, PER_TRIAL, db, 'medium_none', PER_TRIAL / 2)
+benchmark('find_one (large, no index)', find_one, PER_TRIAL, db, 'large_none', PER_TRIAL / 2)
+
+benchmark('find_one (small, indexed)', find_one, PER_TRIAL, db, 'small_index', PER_TRIAL / 2)
+benchmark('find_one (medium, indexed)', find_one, PER_TRIAL, db, 'medium_index', PER_TRIAL / 2)
+benchmark('find_one (large, indexed)', find_one, PER_TRIAL, db, 'large_index', PER_TRIAL / 2)
+
+find = Proc.new { |coll, x, i|
+  coll.find('x' => x).each {}
 }
+benchmark('find (small, no index)', find, PER_TRIAL, db, 'small_none', PER_TRIAL / 2)
+benchmark('find (medium, no index)', find, PER_TRIAL, db, 'medium_none', PER_TRIAL / 2)
+benchmark('find (large, no index)', find, PER_TRIAL, db, 'large_none', PER_TRIAL / 2)
+
+benchmark('find (small, indexed)', find, PER_TRIAL, db, 'small_index', PER_TRIAL / 2)
+benchmark('find (medium, indexed)', find, PER_TRIAL, db, 'medium_index', PER_TRIAL / 2)
+benchmark('find (large, indexed)', find, PER_TRIAL, db, 'large_index', PER_TRIAL / 2)
+
+benchmark('find range (small, indexed)', find, PER_TRIAL, db, 'small_index',
+          {"$gt" => PER_TRIAL / 2, "$lt" => PER_TRIAL / 2 + BATCH_SIZE})
+benchmark('find range (medium, indexed)', find, PER_TRIAL, db, 'medium_index',
+          {"$gt" => PER_TRIAL / 2, "$lt" => PER_TRIAL / 2 + BATCH_SIZE})
+benchmark('find range (large, indexed)', find, PER_TRIAL, db, 'large_index',
+          {"$gt" => PER_TRIAL / 2, "$lt" => PER_TRIAL / 2 + BATCH_SIZE})
