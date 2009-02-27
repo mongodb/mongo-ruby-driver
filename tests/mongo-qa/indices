@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 
 require File.join(File.dirname(__FILE__), '_common.rb')
+
+include XGen::Mongo
+
 db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
 x = db.collection('x')
 y = db.collection('y')
@@ -41,6 +44,6 @@ raise "\n#{err.join("\n")}" unless err == ['', '']
 x.drop_index('field1_1')
 sorted_index_info(x).each { |info| puts sorted_info_keys(info) }
 
-y.create_index('abc', ['a', 'b', 'c'])
-y.create_index('d', ['d'])
+y.create_index([['a', ASCENDING], ['b', ASCENDING], ['c', ASCENDING]])
+y.create_index('d')
 sorted_index_info(y).each { |info| puts sorted_info_keys(info) }
