@@ -74,16 +74,16 @@ TEST_FILES = ['tests/mongo-qa/_common.rb',
 
 Gem::Specification.new do |s|
   s.name = 'mongo'
-  s.version = '0.6.2'
+  s.version = '0.6.3'
   s.platform = Gem::Platform::RUBY
   s.summary = 'Simple pure-Ruby driver for the 10gen Mongo DB'
   s.description = 'A pure-Ruby driver for the 10gen Mongo DB. For more information about Mongo, see http://www.mongodb.org.'
 
   s.require_paths = ['lib']
-  
+
   s.files = PACKAGE_FILES
   s.test_files = TEST_FILES
-  
+
   s.has_rdoc = true
   s.rdoc_options = ['--main', 'README.rdoc', '--inline-source']
   s.extra_rdoc_files = ['README.rdoc']
