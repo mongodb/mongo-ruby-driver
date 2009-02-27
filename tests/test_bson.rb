@@ -16,6 +16,9 @@ class BSONTest < Test::Unit::TestCase
   def test_string
     doc = {'doc' => 'hello, world'}
     @b.serialize(doc)
+    assert_equal @b.to_a, [0x1b, 0x00, 0x00, 0x00, 0x02, ?d, ?o, ?c, 0x00, 0x0D,
+                           0x00, 0x00, 0x00, ?h, ?e, ?l, ?l, ?o, ","[0], " "[0],
+                           ?w, ?o, ?r, ?l, ?d, 0x00, 0x00]
     assert_equal doc, @b.deserialize
   end
 
