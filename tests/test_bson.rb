@@ -90,9 +90,8 @@ class BSONTest < Test::Unit::TestCase
     doc = {'date' => Time.now}
     @b.serialize(doc)
     doc2 = @b.deserialize
-    # Mongo only stores seconds, so comparing raw Time objects will fail
-    # because the fractional seconds will be different.
-    assert_equal doc['date'].to_i, doc2['date'].to_i
+    # Mongo only stores up to the millisecond
+    assert_in_delta doc['date'], doc2['date'], 0.001
   end
 
   def test_dbref
@@ -122,6 +121,7 @@ class BSONTest < Test::Unit::TestCase
     bin2 = doc2['bin']
     assert_kind_of Binary, bin2
     assert_equal 'binstring', bin2.to_s
+    assert_equal Binary::SUBTYPE_BYTES, bin2.subtype
   end
 
   def test_binary_type
