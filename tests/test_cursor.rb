@@ -40,6 +40,17 @@ class CursorTest < Test::Unit::TestCase
     end
   end
 
+  def test_refill_via_get_more
+    1000.times { |i|
+      @@coll.insert('a' => i)
+    }
+    count = 0
+    @@coll.find.each { |obj|
+      count += obj['a']
+    }
+    assert_equal 499501, count
+  end
+
   def test_close_after_query_sent
     begin
       cursor = @@coll.find('a' => 1)

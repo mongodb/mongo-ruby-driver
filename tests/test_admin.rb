@@ -33,6 +33,13 @@ class AdminTest < Test::Unit::TestCase
     assert_equal :slow_only, @admin.profiling_level
     @admin.profiling_level = :off
     assert_equal :off, @admin.profiling_level
+    @admin.profiling_level = :all
+    assert_equal :all, @admin.profiling_level
+    begin
+      @admin.profiling_level = :medium
+      fail "shouldn't be able to do this"
+    rescue
+    end
   end
 
   def test_profiling_info

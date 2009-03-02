@@ -233,6 +233,12 @@ class DBAPITest < Test::Unit::TestCase
     assert !@@db.collection_names.include?(@@coll_full_name)
   end
 
+  def test_other_drop
+    assert @@db.collection_names.include?(@@coll_full_name)
+    @@coll.drop
+    assert !@@db.collection_names.include?(@@coll_full_name)
+  end
+
   def test_collection_names
     names = @@db.collection_names
     assert names.length >= 1
@@ -277,6 +283,7 @@ class DBAPITest < Test::Unit::TestCase
   def test_index_information
     name = @@db.create_index(@@coll.name, 'a')
     list = @@db.index_information(@@coll.name)
+    assert_equal @@coll.index_information, list
     assert_equal 1, list.length
 
     info = list[0]
@@ -368,6 +375,37 @@ class DBAPITest < Test::Unit::TestCase
       @@db.strict = false
       @@db.drop_collection('foobar')
     end
+
+    # Now we're not in strict mode - should succeed
+    @@db.create_collection('foobar')
+    @@db.create_collection('foobar')
+    @@db.drop_collection('foobar')
+  end
+
+  def test_replace
+    assert_equal @@coll.count, 1
+    assert_equal @@coll.find_first["a"], 1
+
+    @@coll.replace({"a" => 1}, {"a" => 2})
+    assert_equal @@coll.count, 1
+    assert_equal @@coll.find_first["a"], 2
+
+    @@coll.replace({"b" => 1}, {"a" => 3})
+    assert_equal @@coll.count, 1
+    assert_equal @@coll.find_first["a"], 2
+  end
+
+  def test_repsert
+    assert_equal @@coll.count, 1
+    assert_equal @@coll.find_first["a"], 1
+
+    @@coll.repsert({"a" => 1}, {"a" => 2})
+    assert_equal @@coll.count, 1
+    assert_equal @@coll.find_first["a"], 2
+
+    @@coll.repsert({"b" => 1}, {"a" => 3})
+    assert_equal @@coll.count, 2
+    assert @@coll.find_first({"a" => 3})
   end
 
   def test_to_a
