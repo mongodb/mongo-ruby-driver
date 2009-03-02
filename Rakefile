@@ -23,7 +23,7 @@ task :publish => [:rdoc] do
   Rake::RubyForgePublisher.new(GEM, RUBYFORGE_USER).upload
 end
 
-namespace :gem do 
+namespace :gem do
 
   desc "Install the gem locally"
   task :install do
