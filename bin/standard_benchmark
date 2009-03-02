@@ -64,7 +64,7 @@ benchmark('insert (medium, no index)', insert, PER_TRIAL, db, 'medium_none', MED
 benchmark('insert (large, no index)', insert, PER_TRIAL, db, 'large_none', LARGE)
 
 index_on_x = Proc.new { |coll, object|
-  coll.create_index('foo', 'x') # TODO fix this in the driver!!
+  coll.create_index('x')
 }
 benchmark('insert (small, indexed)', insert, PER_TRIAL, db, 'small_index', SMALL, index_on_x)
 benchmark('insert (medium, indexed)', insert, PER_TRIAL, db, 'medium_index', MEDIUM, index_on_x)
