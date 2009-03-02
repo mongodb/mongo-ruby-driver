@@ -56,7 +56,7 @@ class DBTest < Test::Unit::TestCase
     @@db = Mongo.new({:left => "this-should-fail", :right => [@@host, @@port]}).db('ruby-mongo-test')
     assert @@db.connected?
   ensure
-    @@db = Mongo.new(@@host, @@port) unless @@db.connected?
+    @@db = Mongo.new(@@host, @@port).db('ruby-mongo-test') unless @@db.connected?
     @@users = @@db.collection('system.users')
   end
 

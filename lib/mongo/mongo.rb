@@ -34,7 +34,7 @@ module XGen
         # and :right. Each key maps to either
         # * a server name, in which case port is DEFAULT_PORT
         # * a port number, in which case server is "localhost"
-        # * an array containing a server name and a port number in either order
+        # * an array containing a server name and a port number in that order
         #
         # +options+ are passed on to each DB instance:
         #
@@ -127,8 +127,8 @@ module XGen
 
         protected
 
-        # Turns an array containing an optional host name string and an
-        # optional port number integer into a [host, port] pair array.
+        # Turns an array containing a host name string and a
+        # port number integer into a [host, port] pair array.
         def pair_val_to_connection(a)
           case a
           when nil
@@ -138,12 +138,7 @@ module XGen
           when Integer
             ['localhost', a]
           when Array
-            connection = ['localhost', DEFAULT_PORT]
-            connection[0] = a[0] if a[0].kind_of?(String)
-            connection[0] = a[1] if a[1].kind_of?(String)
-            connection[1] = a[0] if a[0].kind_of?(Integer)
-            connection[1] = a[1] if a[1].kind_of?(Integer)
-            connection
+            a
           end
         end
 

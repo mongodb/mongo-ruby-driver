@@ -64,7 +64,7 @@ class MongoTest < Test::Unit::TestCase
     assert_equal ['localhost', Mongo::DEFAULT_PORT], pair[0]
     assert_equal ['bar', Mongo::DEFAULT_PORT], pair[1]
 
-    db = Mongo.new({:right => [123, 'foo'], :left => 'bar'})
+    db = Mongo.new({:right => ['foo', 123], :left => 'bar'})
     pair = db.instance_variable_get('@pair')
     assert_equal 2, pair.length
     assert_equal ['bar', Mongo::DEFAULT_PORT], pair[0]
