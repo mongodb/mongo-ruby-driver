@@ -72,21 +72,28 @@ class BSON
     @buf.to_a
   end
 
-  def serialize(obj)
-    raise "Document is null" unless obj
+  begin
+    require 'mongo/ext/cbson'
+    def serialize(obj)
+      @buf = ByteBuffer.new(CBson.serialize(obj))
+    end
+  rescue LoadError
+    def serialize(obj)
+      raise "Document is null" unless obj
 
-    @buf.rewind
-    # put in a placeholder for the total size
-    @buf.put_int(0)
+      @buf.rewind
+      # put in a placeholder for the total size
+      @buf.put_int(0)
 
-    # Write key/value pairs. Always write _id first if it exists.
-    oid = obj['_id'] || obj[:_id]
-    serialize_key_value('_id', oid) if oid
-    obj.each {|k, v| serialize_key_value(k, v) unless k == '_id' || k == :_id }
+      # Write key/value pairs. Always write _id first if it exists.
+      oid = obj['_id'] || obj[:_id]
+      serialize_key_value('_id', oid) if oid
+      obj.each {|k, v| serialize_key_value(k, v) unless k == '_id' || k == :_id }
 
-    serialize_eoo_element(@buf)
-    @buf.put_int(@buf.size, 0)
-    self
+      serialize_eoo_element(@buf)
+      @buf.put_int(@buf.size, 0)
+      self
+    end
   end
 
   def serialize_key_value(k, v)

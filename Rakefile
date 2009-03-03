@@ -4,7 +4,10 @@ require 'fileutils'
 require 'rake'
 require 'rake/testtask'
 require 'rake/gempackagetask'
-require 'rake/contrib/rubyforgepublisher'
+begin
+  require 'rake/contrib/rubyforgepublisher'
+rescue LoadError
+end
 
 # NOTE: some of the tests assume Mongo is running
 Rake::TestTask.new do |t|
@@ -21,6 +24,14 @@ desc "Publish documentation to mongo.rubyforge.org"
 task :publish => [:rdoc] do
   # Assumes docs are in ./html
   Rake::RubyForgePublisher.new(GEM, RUBYFORGE_USER).upload
+end
+
+desc "Compile the extension"
+task :compile do
+  cd 'ext/cbson'
+  ruby 'extconf.rb'
+  sh 'make'
+  cp 'cbson.bundle', '../../lib/mongo/ext/cbson.bundle'
 end
 
 namespace :gem do
