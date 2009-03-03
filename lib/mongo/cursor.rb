@@ -207,7 +207,7 @@ module XGen
           begin
             buf.put_array(@db.socket.recv(size-4).unpack("C*"), 4)
           rescue => ex
-            raise "#{ex.class}: #{ex.message} ***size was #{size}***"
+            raise "#{ex.class}: #{ex.message} ***size was #{size}*res_flags #{@result_flags}*cursor_id #{@cursor_id}*starting_from #{@starting_from}*n_returned #{@n_returned}***"
           end
           @n_remaining -= 1
           buf.rewind
