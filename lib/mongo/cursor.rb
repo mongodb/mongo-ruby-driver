@@ -203,7 +203,12 @@ module XGen
           buf.put_array(@db.socket.recv(4).unpack("C*"))
           buf.rewind
           size = buf.get_int
-          buf.put_array(@db.socket.recv(size-4).unpack("C*"), 4)
+          # TODO debugging here for a bit
+          begin
+            buf.put_array(@db.socket.recv(size-4).unpack("C*"), 4)
+          rescue => ex
+            raise "#{ex.class}: #{ex.message} ***size was #{size}***"
+          end
           @n_remaining -= 1
           buf.rewind
           BSON.new(@db).deserialize(buf)
