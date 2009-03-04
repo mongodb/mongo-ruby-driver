@@ -301,6 +301,16 @@ module XGen
           @socket != nil
         end
 
+        def receive_full(length)
+          message = ""
+          while message.length < length do
+            chunk = @socket.recv(length - message.length)
+            raise "connection closed" unless chunk.length > 0
+            message += chunk
+          end
+          message
+        end
+
         # Send a MsgMessage to the database.
         def send_message(msg)
           send_to_db(MsgMessage.new(msg))
