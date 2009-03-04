@@ -18,6 +18,9 @@ require 'mongo/message'
 require 'mongo/util/byte_buffer'
 require 'mongo/util/bson'
 
+require 'logger'
+LOG = Logger.new('recv_file.log', 'daily')
+
 module XGen
   module Mongo
     module Driver
@@ -165,7 +168,10 @@ module XGen
 
         def read_response_header
           header_buf = ByteBuffer.new
-          header_buf.put_array(@db.socket.recv(RESPONSE_HEADER_SIZE).unpack("C*"))
+          read = @db.socket.recv(RESPONSE_HEADER_SIZE)
+          header_buf.put_array(read.unpack("C*"))
+          LOG.debug "resp head: #{read.inspect}\n"
+          raise "BAD SIZE" unless read.length == RESPONSE_HEADER_SIZE
           raise "Short read for DB response header; expected #{RESPONSE_HEADER_SIZE} bytes, saw #{header_buf.length}" unless header_buf.length == RESPONSE_HEADER_SIZE
           header_buf.rewind
           @result_flags = header_buf.get_int
@@ -201,12 +207,17 @@ module XGen
         def object_from_stream
           buf = ByteBuffer.new
           read = @db.socket.recv(4)
+          LOG.debug "size: #{read.inspect}\n"
+          raise "BAD SIZE" unless read.length == 4
           buf.put_array(read.unpack("C*"))
           buf.rewind
           size = buf.get_int
           # TODO debugging here for a bit
           begin
-            buf.put_array(@db.socket.recv(size-4).unpack("C*"), 4)
+            blah = @db.socket.recv(size-4)
+            buf.put_array(blah.unpack("C*"), 4)
+            LOG.debug "body: #{blah.inspect}\n"
+            raise "BAD SIZE" unless blah.length == size-4
           rescue => ex
             raise "#{ex.class}: #{ex.message} ***size was #{size}*size string was #{read.inspect}*res_flags #{@result_flags}*cursor_id #{@cursor_id}*starting_from #{@starting_from}*n_returned #{@n_returned}***"
           end

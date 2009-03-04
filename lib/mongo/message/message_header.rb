@@ -30,7 +30,10 @@ module XGen
 
         def read_header(socket)
           @buf.rewind
-          @buf.put_array(socket.recv(HEADER_SIZE).unpack("C*"))
+          read = socket.recv(HEADER_SIZE)
+          @buf.put_array(read.unpack("C*"))
+          LOG.debug "header: #{read.inspect}\n"
+          raise "BAD SIZE" unless read.length == HEADER_SIZE
           raise "Short read for DB response header: expected #{HEADER_SIZE} bytes, saw #{@buf.size}" unless @buf.size == HEADER_SIZE
           @buf.rewind
           @size = @buf.get_int
