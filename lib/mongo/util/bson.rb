@@ -255,7 +255,10 @@ class BSON
   def deserialize_string_data(buf)
     len = buf.get_int
     bytes = buf.get(len)
-    str = bytes[0..-2].pack("C*")
+    str = bytes[0..-2]
+    if str.respond_to? "pack"
+      str = str.pack("C*")
+    end
     if RUBY_VERSION >= '1.9'
       str.force_encoding("utf-8")
     end
