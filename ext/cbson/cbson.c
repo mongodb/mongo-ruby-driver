@@ -11,6 +11,9 @@ typedef struct {
 } bson_buffer;
 
 static char zero = 0;
+static char one = 1;
+
+static void write_doc(bson_buffer* buffer, VALUE hash);
 
 static bson_buffer* buffer_new(void) {
     bson_buffer* buffer;
@@ -78,6 +81,54 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
     bson_buffer* buffer = (bson_buffer*)extra;
 
     switch(TYPE(value)) {
+    case T_FIXNUM:
+        write_name_and_type(buffer, key, 0x10);
+        int int_value = FIX2INT(value);
+        buffer_write_bytes(buffer, (char*)&int_value, 4);
+        break;
+    case T_TRUE:
+        write_name_and_type(buffer, key, 0x08);
+        buffer_write_bytes(buffer, &one, 1);
+        break;
+    case T_FALSE:
+        write_name_and_type(buffer, key, 0x08);
+        buffer_write_bytes(buffer, &zero, 1);
+        break;
+    case T_FLOAT:
+        write_name_and_type(buffer, key, 0x01);
+        double d = NUM2DBL(value);
+        buffer_write_bytes(buffer, (char*)&d, 8);
+        break;
+    case T_NIL:
+        write_name_and_type(buffer, key, 0x0A);
+        break;
+    case T_HASH:
+        write_name_and_type(buffer, key, 0x03);
+        write_doc(buffer, value);
+        break;
+    case T_ARRAY:
+        write_name_and_type(buffer, key, 0x04);
+        int start_position = buffer->position;
+
+        // save space for length
+        int length_location = buffer_save_bytes(buffer, 4);
+
+        int items = RARRAY_LEN(value);
+        VALUE* values = RARRAY_PTR(value);
+        int i;
+        for(i = 0; i < items; i++) {
+            char* name;
+            asprintf(&name, "%d", i);
+            VALUE key = rb_str_new2(name);
+            write_element(key, values[i], (VALUE)buffer);
+            free(name);
+        }
+
+        // write null byte and fill in length
+        buffer_write_bytes(buffer, &zero, 1);
+        int obj_length = buffer->position - start_position;
+        memcpy(buffer->buffer + length_location, &obj_length, 4);
+        break;
     case T_STRING:
         write_name_and_type(buffer, key, 0x02);
         int length = RSTRING(value)->len + 1;

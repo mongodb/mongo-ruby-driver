@@ -44,7 +44,7 @@ TEST_CASES = [{},
                 "a bool" => false
               },
               {
-                "this"=> 5,
+                "this" => 5,
                 "is" => {"a" => true},
                 "big" => [true, 5.5],
                 "object" => nil
