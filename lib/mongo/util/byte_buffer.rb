@@ -135,11 +135,19 @@ class ByteBuffer
   end
 
   def to_a
-    @buf
+    if @buf.respond_to? "unpack"
+      @buf.unpack("C*")
+    else
+      @buf
+    end
   end
 
   def to_s
-    @buf.pack("C*")
+    if @buf.respond_to? "pack"
+      @buf.pack("C*")
+    else
+      @buf
+    end
   end
 
   def dump

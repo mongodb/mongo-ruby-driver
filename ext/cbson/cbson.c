@@ -1,3 +1,25 @@
+/*
+ * Copyright 2009 10gen, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * This file contains C implementations of some of the functions needed by the
+ * bson module. If possible, these implementations should be used to speed up
+ * BSON encoding and decoding.
+ */
+
 #include "ruby.h"
 #include "st.h"
 #include <assert.h>
@@ -136,6 +158,28 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
         buffer_write_bytes(buffer, RSTRING(value)->ptr, length - 1);
         buffer_write_bytes(buffer, &zero, 1);
         break;
+    case T_OBJECT:
+        {
+            // TODO there has to be a better way to do these checks...
+            const char* cls = rb_class2name(RBASIC(value)->klass);
+            if (strcmp(cls, "XGen::Mongo::Driver::Binary") == 0) {
+                write_name_and_type(buffer, key, 0x05);
+                const char subtype = (const char)FIX2INT(rb_funcall(value, rb_intern("subtype"), 0));
+                VALUE string_data = rb_funcall(value, rb_intern("to_s"), 0);
+                int length = RSTRING(string_data)->len;
+                if (subtype == 2) {
+                    const int other_length = length + 4;
+                    buffer_write_bytes(buffer, (const char*)&other_length, 4);
+                    buffer_write_bytes(buffer, &subtype, 1);
+                }
+                buffer_write_bytes(buffer, (const char*)&length, 4);
+                if (subtype != 2) {
+                    buffer_write_bytes(buffer, &subtype, 1);
+                }
+                buffer_write_bytes(buffer, RSTRING(string_data)->ptr, length);
+                break;
+            }
+        }
     default:
         rb_raise(rb_eTypeError, "no c encoder for this type yet");
         break;
