@@ -200,14 +200,15 @@ module XGen
 
         def object_from_stream
           buf = ByteBuffer.new
-          buf.put_array(@db.socket.recv(4).unpack("C*"))
+          read = @db.socket.recv(4)
+          buf.put_array(read.unpack("C*"))
           buf.rewind
           size = buf.get_int
           # TODO debugging here for a bit
           begin
             buf.put_array(@db.socket.recv(size-4).unpack("C*"), 4)
           rescue => ex
-            raise "#{ex.class}: #{ex.message} ***size was #{size}*res_flags #{@result_flags}*cursor_id #{@cursor_id}*starting_from #{@starting_from}*n_returned #{@n_returned}***"
+            raise "#{ex.class}: #{ex.message} ***size was #{size}*size string was #{read.inspect}*res_flags #{@result_flags}*cursor_id #{@cursor_id}*starting_from #{@starting_from}*n_returned #{@n_returned}***"
           end
           @n_remaining -= 1
           buf.rewind
