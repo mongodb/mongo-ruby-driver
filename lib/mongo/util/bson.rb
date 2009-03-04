@@ -134,7 +134,11 @@ class BSON
   def deserialize(buf=nil, parent=nil)
     # If buf is nil, use @buf, assumed to contain already-serialized BSON.
     # This is only true during testing.
-    @buf = ByteBuffer.new(buf) if buf
+    if buf.is_a? String
+      @buf = ByteBuffer.new(buf) if buf
+    else
+      @buf = ByteBuffer.new(buf.to_a) if buf
+    end
     @buf.rewind
     @buf.get_int                # eat message size
     doc = OrderedHash.new
