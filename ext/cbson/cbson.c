@@ -121,6 +121,9 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         return ST_CONTINUE;
     }
 
+    // TODO do this somewhere else, not in the c code...
+    int is_code = !strcmp("$where", RSTRING(key)->ptr);
+
     switch(TYPE(value)) {
     case T_FIXNUM:
         write_name_and_type(buffer, key, 0x10);
@@ -171,7 +174,11 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         memcpy(buffer->buffer + length_location, &obj_length, 4);
         break;
     case T_STRING:
-        write_name_and_type(buffer, key, 0x02);
+        if (is_code) {
+            write_name_and_type(buffer, key, 0x0D);
+        } else {
+            write_name_and_type(buffer, key, 0x02);
+        }
         int length = RSTRING(value)->len + 1;
         buffer_write_bytes(buffer, (char*)&length, 4);
         buffer_write_bytes(buffer, RSTRING(value)->ptr, length - 1);
