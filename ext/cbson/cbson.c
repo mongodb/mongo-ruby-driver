@@ -197,6 +197,16 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
                 buffer_write_bytes(buffer, RSTRING(string_data)->ptr, length);
                 break;
             }
+            if (strcmp(cls, "XGen::Mongo::Driver::ObjectID") == 0) {
+                write_name_and_type(buffer, key, 0x07);
+                VALUE as_array = rb_funcall(value, rb_intern("to_a"), 0);
+                int i;
+                for (i = 0; i < 12; i++) {
+                    char byte = (char)FIX2INT(RARRAY(as_array)->ptr[i]);
+                    buffer_write_bytes(buffer, &byte, 1);
+                }
+                break;
+            }
             if (strcmp(cls, "XGen::Mongo::Driver::Undefined") == 0) {
                 write_name_and_type(buffer, key, 0x06);
                 break;

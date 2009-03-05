@@ -100,7 +100,11 @@ class ByteBuffer
     if one_byte
       @buf[start]
     else
-      @buf[start, len]
+      if @buf.respond_to? "unpack"
+        @buf[start, len].unpack("C*")
+      else
+        @buf[start, len]
+      end
     end
   end
 
