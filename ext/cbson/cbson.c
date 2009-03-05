@@ -125,9 +125,15 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
     int is_code = !strcmp("$where", RSTRING(key)->ptr);
 
     switch(TYPE(value)) {
+    case T_BIGNUM:
+        write_name_and_type(buffer, key, 0x10);
+        VALUE as_f = rb_funcall(value, rb_intern("to_f"), 0);
+        int int_value = NUM2LL(as_f);
+        buffer_write_bytes(buffer, (char*)&int_value, 4);
+        break;
     case T_FIXNUM:
         write_name_and_type(buffer, key, 0x10);
-        int int_value = FIX2INT(value);
+        int_value = FIX2INT(value);
         buffer_write_bytes(buffer, (char*)&int_value, 4);
         break;
     case T_TRUE:
