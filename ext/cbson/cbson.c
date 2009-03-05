@@ -191,7 +191,18 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
                 break;
             }
         }
-        //    case T_DATA:
+    case T_DATA:
+        {
+            // TODO again, is this really the only way to do this?
+            const char* cls = rb_class2name(RBASIC(value)->klass);
+            if (strcmp(cls, "Time") == 0) {
+                write_name_and_type(buffer, key, 0x09);
+                double t = NUM2DBL(rb_funcall(value, rb_intern("to_f"), 0));
+                long long time_since_epoch = (long long)(t * 1000);
+                buffer_write_bytes(buffer, (const char*)&time_since_epoch, 8);
+                break;
+            }
+        }
     default:
         rb_raise(rb_eTypeError, "no c encoder for this type yet");
         break;
