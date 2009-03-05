@@ -39,12 +39,12 @@ static void write_doc(bson_buffer* buffer, VALUE hash);
 
 static bson_buffer* buffer_new(void) {
     bson_buffer* buffer;
-    buffer = (bson_buffer*)malloc(sizeof(bson_buffer));
+    buffer = ALLOC(bson_buffer);
     assert(buffer);
 
     buffer->size = INITIAL_BUFFER_SIZE;
     buffer->position = 0;
-    buffer->buffer = (char*)malloc(INITIAL_BUFFER_SIZE);
+    buffer->buffer = ALLOC_N(char, INITIAL_BUFFER_SIZE);
     assert(buffer->buffer);
 
     return buffer;
@@ -66,7 +66,7 @@ static void buffer_resize(bson_buffer* buffer, int min_length) {
     while (size < min_length) {
         size *= 2;
     }
-    buffer->buffer = (char*)realloc(buffer->buffer, size);
+    buffer->buffer = REALLOC_N(buffer->buffer, char, size);
     assert(buffer->buffer);
     buffer->size = size;
 }
@@ -182,6 +182,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
                 break;
             }
         }
+        //    case T_DATA:
     default:
         rb_raise(rb_eTypeError, "no c encoder for this type yet");
         break;
