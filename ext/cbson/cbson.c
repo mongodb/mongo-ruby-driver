@@ -162,9 +162,11 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
         {
             // TODO there has to be a better way to do these checks...
             const char* cls = rb_class2name(RBASIC(value)->klass);
-            if (strcmp(cls, "XGen::Mongo::Driver::Binary") == 0) {
+            if (strcmp(cls, "XGen::Mongo::Driver::Binary") == 0 ||
+                strcmp(cls, "ByteBuffer") == 0) {
                 write_name_and_type(buffer, key, 0x05);
-                const char subtype = (const char)FIX2INT(rb_funcall(value, rb_intern("subtype"), 0));
+                const char subtype = strcmp(cls, "ByteBuffer") ?
+                    (const char)FIX2INT(rb_funcall(value, rb_intern("subtype"), 0)) : 2;
                 VALUE string_data = rb_funcall(value, rb_intern("to_s"), 0);
                 int length = RSTRING(string_data)->len;
                 if (subtype == 2) {
