@@ -22,6 +22,7 @@
 
 #include "ruby.h"
 #include "st.h"
+#include "regex.h"
 #include <assert.h>
 
 #define INITIAL_BUFFER_SIZE 256
@@ -34,6 +35,10 @@ typedef struct {
 
 static char zero = 0;
 static char one = 1;
+
+static int cmp_char(const void* a, const void* b) {
+    return *(char*)a - *(char*)b;
+}
 
 static void write_doc(bson_buffer* buffer, VALUE hash);
 
@@ -241,8 +246,40 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
                 break;
             }
         }
+    case T_REGEXP:
+        write_name_and_type(buffer, key, 0x0B);
+
+        length = RREGEXP(value)->len;
+        char* pattern = RREGEXP(value)->str;
+        buffer_write_bytes(buffer, pattern, length);
+        buffer_write_bytes(buffer, &zero, 1);
+
+        long flags = RREGEXP(value)->ptr->options;
+        if (flags & RE_OPTION_IGNORECASE) {
+            char ignorecase = 'i';
+            buffer_write_bytes(buffer, &ignorecase, 1);
+        }
+        if (flags & RE_OPTION_MULTILINE) {
+            char multiline = 'm';
+            buffer_write_bytes(buffer, &multiline, 1);
+        }
+        if (flags & RE_OPTION_EXTENDED) {
+            char extended = 'x';
+            buffer_write_bytes(buffer, &extended, 1);
+        }
+
+        VALUE has_extra = rb_funcall(value, rb_intern("respond_to?"), 1, rb_str_new2("extra_options_str"));
+        if (TYPE(has_extra) == T_TRUE) {
+            VALUE extra = rb_funcall(value, rb_intern("extra_options_str"), 0);
+            int old_position = buffer->position;
+            buffer_write_bytes(buffer, RSTRING(extra)->ptr, RSTRING(extra)->len);
+            qsort(buffer->buffer + old_position, RSTRING(extra)->len, sizeof(char), cmp_char);
+        }
+        buffer_write_bytes(buffer, &zero, 1);
+
+        break;
     default:
-        rb_raise(rb_eTypeError, "no c encoder for this type yet");
+        rb_raise(rb_eTypeError, "no c encoder for this type yet (%d)", TYPE(value));
         break;
     }
     return ST_CONTINUE;
