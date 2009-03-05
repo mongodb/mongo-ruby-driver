@@ -170,9 +170,9 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
     case T_SYMBOL:
         write_name_and_type(buffer, key, 0x0E);
         const char* str_value = rb_id2name(SYM2ID(value));
-        int str_length = strlen(str_value) + 1;
-        buffer_write_bytes(buffer, (char*)&str_length, 4);
-        buffer_write_bytes(buffer, str_value, str_length);
+        length = strlen(str_value) + 1;
+        buffer_write_bytes(buffer, (char*)&length, 4);
+        buffer_write_bytes(buffer, str_value, length);
         break;
     case T_OBJECT:
         {
@@ -203,6 +203,23 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
                 int i;
                 for (i = 0; i < 12; i++) {
                     char byte = (char)FIX2INT(RARRAY(as_array)->ptr[i]);
+                    buffer_write_bytes(buffer, &byte, 1);
+                }
+                break;
+            }
+            if (strcmp(cls, "XGen::Mongo::Driver::DBRef") == 0) {
+                write_name_and_type(buffer, key, 0x0C);
+
+                VALUE ns = rb_funcall(value, rb_intern("namespace"), 0);
+                int length = RSTRING(ns)->len + 1;
+                buffer_write_bytes(buffer, (char*)&length, 4);
+                buffer_write_bytes(buffer, RSTRING(ns)->ptr, length - 1);
+                buffer_write_bytes(buffer, &zero, 1);
+
+                VALUE oid_as_array = rb_funcall(rb_funcall(value, rb_intern("object_id"), 0),
+                                                rb_intern("to_a"), 0);
+                for (i = 0; i < 12; i++) {
+                    char byte = (char)FIX2INT(RARRAY(oid_as_array)->ptr[i]);
                     buffer_write_bytes(buffer, &byte, 1);
                 }
                 break;
