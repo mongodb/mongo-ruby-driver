@@ -197,6 +197,10 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
                 buffer_write_bytes(buffer, RSTRING(string_data)->ptr, length);
                 break;
             }
+            if (strcmp(cls, "XGen::Mongo::Driver::Undefined") == 0) {
+                write_name_and_type(buffer, key, 0x06);
+                break;
+            }
         }
     case T_DATA:
         {
