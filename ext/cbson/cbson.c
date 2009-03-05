@@ -289,7 +289,18 @@ static void write_doc(bson_buffer* buffer, VALUE hash) {
     int start_position = buffer->position;
     int length_location = buffer_save_bytes(buffer, 4);
 
-    rb_hash_foreach(hash, write_element, (VALUE)buffer);
+    // we have to check for an OrderedHash and handle that specially
+    if (strcmp(rb_class2name(RBASIC(hash)->klass), "OrderedHash") == 0) {
+        VALUE keys = rb_funcall(hash, rb_intern("keys"), 0);
+        int i;
+        for(i = 0; i < RARRAY(keys)->len; i++) {
+            VALUE key = RARRAY(keys)->ptr[i];
+            VALUE value = rb_hash_aref(hash, key);
+            write_element(key, value, (VALUE)buffer);
+        }
+    } else {
+        rb_hash_foreach(hash, write_element, (VALUE)buffer);
+    }
 
     // write null byte and fill in length
     buffer_write_bytes(buffer, &zero, 1);

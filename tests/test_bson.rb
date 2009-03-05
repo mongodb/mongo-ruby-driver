@@ -1,5 +1,6 @@
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
+require 'mongo/util/ordered_hash'
 require 'test/unit'
 
 class BSONTest < Test::Unit::TestCase
@@ -33,6 +34,16 @@ class BSONTest < Test::Unit::TestCase
 
   def test_int
     doc = {'doc' => 42}
+    @b.serialize(doc)
+    assert_equal doc, @b.deserialize
+  end
+
+  def test_ordered_hash
+    doc = OrderedHash.new
+    doc["b"] = 1
+    doc["a"] = 2
+    doc["c"] = 3
+    doc["d"] = 4
     @b.serialize(doc)
     assert_equal doc, @b.deserialize
   end
