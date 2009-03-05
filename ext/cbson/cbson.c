@@ -41,6 +41,7 @@ static int cmp_char(const void* a, const void* b) {
 }
 
 static void write_doc(bson_buffer* buffer, VALUE hash);
+static int write_element(VALUE key, VALUE value, VALUE extra);
 
 static bson_buffer* buffer_new(void) {
     bson_buffer* buffer;
@@ -104,7 +105,7 @@ static void write_name_and_type(bson_buffer* buffer, VALUE name, char type) {
     buffer_write_bytes(buffer, &zero, 1);
 }
 
-static int write_element(VALUE key, VALUE value, VALUE extra) {
+static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow_id) {
     bson_buffer* buffer = (bson_buffer*)extra;
 
     if (TYPE(key) == T_SYMBOL) {
@@ -114,6 +115,10 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
 
     if (TYPE(key) != T_STRING) {
         rb_raise(rb_eTypeError, "keys must be strings or symbols");
+    }
+
+    if (!allow_id && strcmp("_id", RSTRING(key)->ptr) == 0) {
+        return ST_CONTINUE;
     }
 
     switch(TYPE(value)) {
@@ -285,9 +290,25 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
     return ST_CONTINUE;
 }
 
+static int write_element(VALUE key, VALUE value, VALUE extra) {
+    return write_element_allow_id(key, value, extra, 0);
+}
+
 static void write_doc(bson_buffer* buffer, VALUE hash) {
     int start_position = buffer->position;
     int length_location = buffer_save_bytes(buffer, 4);
+
+    VALUE key = rb_str_new2("_id");
+    VALUE id = rb_hash_aref(hash, key);
+    if (TYPE(id) != T_NIL) {
+        write_element_allow_id(key, id, (VALUE)buffer, 1);
+    }
+    key = ID2SYM(rb_intern("_id"));
+    id = rb_hash_aref(hash, key);
+    if (TYPE(id) != T_NIL) {
+        write_element_allow_id(key, id, (VALUE)buffer, 1);
+    }
+
 
     // we have to check for an OrderedHash and handle that specially
     if (strcmp(rb_class2name(RBASIC(hash)->klass), "OrderedHash") == 0) {
