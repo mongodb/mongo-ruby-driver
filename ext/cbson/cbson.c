@@ -167,6 +167,13 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
         buffer_write_bytes(buffer, RSTRING(value)->ptr, length - 1);
         buffer_write_bytes(buffer, &zero, 1);
         break;
+    case T_SYMBOL:
+        write_name_and_type(buffer, key, 0x0E);
+        const char* str_value = rb_id2name(SYM2ID(value));
+        int str_length = strlen(str_value) + 1;
+        buffer_write_bytes(buffer, (char*)&str_length, 4);
+        buffer_write_bytes(buffer, str_value, str_length);
+        break;
     case T_OBJECT:
         {
             // TODO there has to be a better way to do these checks...
