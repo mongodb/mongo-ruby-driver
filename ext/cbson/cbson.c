@@ -102,6 +102,15 @@ static void write_name_and_type(bson_buffer* buffer, VALUE name, char type) {
 static int write_element(VALUE key, VALUE value, VALUE extra) {
     bson_buffer* buffer = (bson_buffer*)extra;
 
+    if (TYPE(key) == T_SYMBOL) {
+        // TODO better way to do this... ?
+        key = rb_str_new2(rb_id2name(SYM2ID(key)));
+    }
+
+    if (TYPE(key) != T_STRING) {
+        rb_raise(rb_eTypeError, "keys must be strings or symbols");
+    }
+
     switch(TYPE(value)) {
     case T_FIXNUM:
         write_name_and_type(buffer, key, 0x10);

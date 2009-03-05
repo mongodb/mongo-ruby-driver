@@ -132,8 +132,7 @@ class BSONTest < Test::Unit::TestCase
     doc2 = @b.deserialize
     bin2 = doc2['bin']
     assert_kind_of Binary, bin2
-    b = bin2.to_a
-    assert_equal [1, 2, 3, 4, 5], b
+    assert_equal [1, 2, 3, 4, 5], bin2.to_a
     assert_equal Binary::SUBTYPE_USER_DEFINED, bin2.subtype
   end
 
