@@ -35,6 +35,12 @@ class OrderedHash < Hash
     super(key, value)
   end
 
+  def ==(other)
+    !other.nil? &&
+      keys == other.keys &&
+      values == other.values
+  end
+
   def each
     @ordered_keys ||= []
     @ordered_keys.each { |k| yield k, self[k] }

@@ -16,6 +16,33 @@ class OrderedHashTest < Test::Unit::TestCase
     assert_equal [], OrderedHash.new.keys
   end
 
+  def test_equality
+    a = OrderedHash.new
+    a['x'] = 1
+    a['y'] = 2
+
+    b = OrderedHash.new
+    b['y'] = 2
+    b['x'] = 1
+
+    c = OrderedHash.new
+    c['x'] = 1
+    c['y'] = 2
+
+    d = OrderedHash.new
+    d['x'] = 2
+    d['y'] = 3
+
+    e = OrderedHash.new
+    e['z'] = 1
+    e['y'] = 2
+
+    assert_equal a, c
+    assert_not_equal a, b
+    assert_not_equal a, d
+    assert_not_equal a, e
+  end
+
   def test_order_preserved
     assert_equal @ordered_keys, @oh.keys
   end
