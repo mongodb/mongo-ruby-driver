@@ -48,6 +48,14 @@ class CursorTest < Test::Unit::TestCase
     @@coll.find.each { |obj|
       count += obj['a']
     }
+
+    # do the same thing again for debugging
+    count2 = 0
+    @@coll.find.each { |obj|
+      count2 += obj['a']
+    }
+
+    assert_equal count, count2
     assert_equal 499501, count
   end
 
