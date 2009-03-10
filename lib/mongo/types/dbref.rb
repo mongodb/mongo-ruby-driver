@@ -20,11 +20,11 @@ module XGen
 
       class DBRef
 
-        attr_reader :parent, :field_name, :db, :namespace, :object_id
+        attr_reader :namespace, :object_id
 
-        def initialize(parent, field_name, db, namespace, object_id)
-          @parent, @field_name, @db, @namespace, @object_id =
-            parent, field_name, db, namespace, object_id
+        def initialize(namespace, object_id)
+          @namespace, @object_id =
+            namespace, object_id
         end
 
         def to_s

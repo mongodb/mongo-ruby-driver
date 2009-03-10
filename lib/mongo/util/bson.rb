@@ -62,9 +62,7 @@ class BSON
     buf.put_array(to_utf8(val.to_s).unpack("C*") + [0])
   end
 
-  def initialize(db=nil)
-    # db is only needed during deserialization when the data contains a DBRef
-    @db = db
+  def initialize()
     @buf = ByteBuffer.new
   end
 
@@ -133,7 +131,7 @@ class BSON
 
   begin
     require 'mongo/ext/cbson'
-    def deserialize(buf=nil, parent=nil)
+    def deserialize(buf=nil)
       if buf.is_a? String
         @buf = ByteBuffer.new(buf) if buf
       else
@@ -143,7 +141,7 @@ class BSON
       CBson.deserialize(@buf.to_s)
     end
   rescue LoadError
-    def deserialize(buf=nil, parent=nil)
+    def deserialize(buf=nil)
       # If buf is nil, use @buf, assumed to contain already-serialized BSON.
       # This is only true during testing.
       if buf.is_a? String
@@ -174,13 +172,13 @@ class BSON
           doc[key] = deserialize_oid_data(@buf)
         when ARRAY
           key = deserialize_cstr(@buf)
-          doc[key] = deserialize_array_data(@buf, doc)
+          doc[key] = deserialize_array_data(@buf)
         when REGEX
           key = deserialize_cstr(@buf)
           doc[key] = deserialize_regex_data(@buf)
         when OBJECT
           key = deserialize_cstr(@buf)
-          doc[key] = deserialize_object_data(@buf, doc)
+          doc[key] = deserialize_object_data(@buf)
         when BOOLEAN
           key = deserialize_cstr(@buf)
           doc[key] = deserialize_boolean_data(@buf)
@@ -195,7 +193,7 @@ class BSON
           doc[key] = Undefined.new
         when REF
           key = deserialize_cstr(@buf)
-          doc[key] = deserialize_dbref_data(@buf, key, parent)
+          doc[key] = deserialize_dbref_data(@buf)
         when BINARY
           key = deserialize_cstr(@buf)
           doc[key] = deserialize_binary_data(@buf)
@@ -245,14 +243,14 @@ class BSON
     buf.get_int
   end
 
-  def deserialize_object_data(buf, parent)
+  def deserialize_object_data(buf)
     size = buf.get_int
     buf.position -= 4
-    BSON.new(@db).deserialize(buf.get(size), parent)
+    BSON.new().deserialize(buf.get(size))
   end
 
-  def deserialize_array_data(buf, parent)
-    h = deserialize_object_data(buf, parent)
+  def deserialize_array_data(buf)
+    h = deserialize_object_data(buf)
     a = []
     h.each { |k, v| a[k.to_i] = v }
     a
@@ -286,10 +284,10 @@ class BSON
     ObjectID.new(buf.get(12))
   end
 
-  def deserialize_dbref_data(buf, key, parent)
+  def deserialize_dbref_data(buf)
     ns = deserialize_string_data(buf)
     oid = deserialize_oid_data(buf)
-    DBRef.new(parent, key, @db, ns, oid)
+    DBRef.new(ns, oid)
   end
 
   def deserialize_binary_data(buf)

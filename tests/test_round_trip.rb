@@ -95,7 +95,7 @@ EOS
       # We're passing a nil db to the contructor here, but that's OK because
       # the BSON DBFef bytes don't contain the db object in any case, and we
       # don't care what the database is.
-      obj_from_bson = BSON.new(nil).deserialize(ByteBuffer.new(bson_from_ruby))
+      obj_from_bson = BSON.new.deserialize(ByteBuffer.new(bson_from_ruby))
       assert_kind_of OrderedHash, obj_from_bson
 
       # Turn that Ruby object into BSON and compare it to the original BSON

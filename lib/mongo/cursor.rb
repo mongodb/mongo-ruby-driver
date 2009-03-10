@@ -218,7 +218,7 @@ module XGen
           raise "BAD SIZE" unless read2.length == size - 4
           @n_remaining -= 1
           buf.rewind
-          BSON.new(@db).deserialize(buf)
+          BSON.new.deserialize(buf)
         end
 
         def send_query_if_needed

@@ -99,7 +99,7 @@ class XMLToRuby
   def dbref_to_ruby(elements)
     ns = elements['ns'].text
     oid_str = elements['oid'].text
-    DBRef.new(nil, nil, nil, ns, ObjectID.from_string(oid_str))
+    DBRef.new(ns, ObjectID.from_string(oid_str))
   end
 
 end
