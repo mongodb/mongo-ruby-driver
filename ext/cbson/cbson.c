@@ -33,6 +33,7 @@ static VALUE Time;
 static VALUE ObjectID;
 static VALUE DBRef;
 static VALUE RegexpOfHolding;
+static VALUE OrderedHash;
 
 typedef struct {
     char* buffer;
@@ -451,8 +452,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
         }
     case 6:
         {
-            VALUE* argv;
-            value = rb_class_new_instance(0, argv, Undefined);
+            value = rb_class_new_instance(0, NULL, Undefined);
             break;
         }
     case 7:
@@ -559,7 +559,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
 }
 
 static VALUE elements_to_hash(const char* buffer, int max) {
-    VALUE hash = rb_hash_new();
+    VALUE hash = rb_class_new_instance(0, NULL, OrderedHash);
     int position = 0;
     while (position < max) {
         int type = (int)buffer[position++];
@@ -567,7 +567,7 @@ static VALUE elements_to_hash(const char* buffer, int max) {
         VALUE name = rb_str_new(buffer + position, name_length);
         position += name_length + 1;
         VALUE value = get_value(buffer, &position, type);
-        rb_hash_aset(hash, name, value);
+        rb_funcall(hash, rb_intern("[]="), 2, name, value);
     }
     return hash;
 }
@@ -600,6 +600,8 @@ void Init_cbson() {
     DBRef = rb_const_get(driver, rb_intern("DBRef"));
     rb_require("mongo/types/regexp_of_holding");
     RegexpOfHolding = rb_const_get(driver, rb_intern("RegexpOfHolding"));
+    rb_require("mongo/util/ordered_hash");
+    OrderedHash = rb_const_get(rb_cObject, rb_intern("OrderedHash"));
 
     VALUE CBson = rb_define_module("CBson");
     rb_define_module_function(CBson, "serialize", method_serialize, 1);
