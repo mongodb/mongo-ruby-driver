@@ -42,6 +42,7 @@ static int cmp_char(const void* a, const void* b) {
 
 static void write_doc(bson_buffer* buffer, VALUE hash);
 static int write_element(VALUE key, VALUE value, VALUE extra);
+static VALUE elements_to_hash(const char* buffer, int max);
 
 static bson_buffer* buffer_new(void) {
     bson_buffer* buffer;
@@ -360,7 +361,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
         {
             double d;
             memcpy(&d, buffer + *position, 8);
-            value = DBL2NUM(d);
+            value = rb_float_new(d);
             *position += 8;
             break;
         }
@@ -372,9 +373,40 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             *position += value_length + 1;
             break;
         }
+    case 3:
+        {
+            int size;
+            memcpy(&size, buffer + *position, 4);
+            value = elements_to_hash(buffer + *position + 4, size - 5);
+            *position += size;
+            break;
+        }
+    case 4:
+        {
+            int size;
+            memcpy(&size, buffer + *position, 4);
+            int end = *position + size - 1;
+            *position += 4;
+
+            value = rb_ary_new();
+            while (*position < end) {
+                int type = (int)buffer[(*position)++];
+                int key_size = strlen(buffer + *position);
+                *position += key_size + 1; // just skip the key, they're in order.
+                VALUE to_append = get_value(buffer, position, type);
+                rb_ary_push(value, to_append);
+            }
+            (*position)++;
+            break;
+        }
     case 8:
         {
             value = buffer[(*position)++] ? Qtrue : Qfalse;
+            break;
+        }
+    case 10:
+        {
+            value = Qnil;
             break;
         }
     case 16:
