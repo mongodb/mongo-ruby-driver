@@ -131,73 +131,86 @@ class BSON
       end
   end
 
-  def deserialize(buf=nil, parent=nil)
-    # If buf is nil, use @buf, assumed to contain already-serialized BSON.
-    # This is only true during testing.
-    if buf.is_a? String
-      @buf = ByteBuffer.new(buf) if buf
-    else
-      @buf = ByteBuffer.new(buf.to_a) if buf
-    end
-    @buf.rewind
-    @buf.get_int                # eat message size
-    doc = OrderedHash.new
-    while @buf.more?
-      type = @buf.get
-      case type
-      when STRING, CODE
-        key = deserialize_cstr(@buf)
-        doc[key] = deserialize_string_data(@buf)
-      when SYMBOL
-        key = deserialize_cstr(@buf)
-        doc[key] = deserialize_string_data(@buf).intern
-      when NUMBER
-        key = deserialize_cstr(@buf)
-        doc[key] = deserialize_number_data(@buf)
-      when NUMBER_INT
-        key = deserialize_cstr(@buf)
-        doc[key] = deserialize_number_int_data(@buf)
-      when OID
-        key = deserialize_cstr(@buf)
-        doc[key] = deserialize_oid_data(@buf)
-      when ARRAY
-        key = deserialize_cstr(@buf)
-        doc[key] = deserialize_array_data(@buf, doc)
-      when REGEX
-        key = deserialize_cstr(@buf)
-        doc[key] = deserialize_regex_data(@buf)
-      when OBJECT
-        key = deserialize_cstr(@buf)
-        doc[key] = deserialize_object_data(@buf, doc)
-      when BOOLEAN
-        key = deserialize_cstr(@buf)
-        doc[key] = deserialize_boolean_data(@buf)
-      when DATE
-        key = deserialize_cstr(@buf)
-        doc[key] = deserialize_date_data(@buf)
-      when NULL
-        key = deserialize_cstr(@buf)
-        doc[key] = nil
-      when UNDEFINED
-        key = deserialize_cstr(@buf)
-        doc[key] = Undefined.new
-      when REF
-        key = deserialize_cstr(@buf)
-        doc[key] = deserialize_dbref_data(@buf, key, parent)
-      when BINARY
-        key = deserialize_cstr(@buf)
-        doc[key] = deserialize_binary_data(@buf)
-      when CODE_W_SCOPE
-        # TODO CODE_W_SCOPE unimplemented; may be removed
-        raise "unimplemented type #{type}"
-      when EOO
-        break
+  begin
+    require 'mongo/ext/cbson'
+    def deserialize(buf=nil, parent=nil)
+      if buf.is_a? String
+        @buf = ByteBuffer.new(buf) if buf
       else
-        raise "Unknown type #{type}, key = #{key}"
+        @buf = ByteBuffer.new(buf.to_a) if buf
       end
+      @buf.rewind
+      CBson.deserialize(@buf.to_s)
     end
-    @buf.rewind
-    doc
+  rescue LoadError
+    def deserialize(buf=nil, parent=nil)
+      # If buf is nil, use @buf, assumed to contain already-serialized BSON.
+      # This is only true during testing.
+      if buf.is_a? String
+        @buf = ByteBuffer.new(buf) if buf
+      else
+        @buf = ByteBuffer.new(buf.to_a) if buf
+      end
+      @buf.rewind
+      @buf.get_int                # eat message size
+      doc = OrderedHash.new
+      while @buf.more?
+        type = @buf.get
+        case type
+        when STRING, CODE
+          key = deserialize_cstr(@buf)
+          doc[key] = deserialize_string_data(@buf)
+        when SYMBOL
+          key = deserialize_cstr(@buf)
+          doc[key] = deserialize_string_data(@buf).intern
+        when NUMBER
+          key = deserialize_cstr(@buf)
+          doc[key] = deserialize_number_data(@buf)
+        when NUMBER_INT
+          key = deserialize_cstr(@buf)
+          doc[key] = deserialize_number_int_data(@buf)
+        when OID
+          key = deserialize_cstr(@buf)
+          doc[key] = deserialize_oid_data(@buf)
+        when ARRAY
+          key = deserialize_cstr(@buf)
+          doc[key] = deserialize_array_data(@buf, doc)
+        when REGEX
+          key = deserialize_cstr(@buf)
+          doc[key] = deserialize_regex_data(@buf)
+        when OBJECT
+          key = deserialize_cstr(@buf)
+          doc[key] = deserialize_object_data(@buf, doc)
+        when BOOLEAN
+          key = deserialize_cstr(@buf)
+          doc[key] = deserialize_boolean_data(@buf)
+        when DATE
+          key = deserialize_cstr(@buf)
+          doc[key] = deserialize_date_data(@buf)
+        when NULL
+          key = deserialize_cstr(@buf)
+          doc[key] = nil
+        when UNDEFINED
+          key = deserialize_cstr(@buf)
+          doc[key] = Undefined.new
+        when REF
+          key = deserialize_cstr(@buf)
+          doc[key] = deserialize_dbref_data(@buf, key, parent)
+        when BINARY
+          key = deserialize_cstr(@buf)
+          doc[key] = deserialize_binary_data(@buf)
+        when CODE_W_SCOPE
+          # TODO CODE_W_SCOPE unimplemented; may be removed
+          raise "unimplemented type #{type}"
+        when EOO
+          break
+        else
+          raise "Unknown type #{type}, key = #{key}"
+        end
+      end
+      @buf.rewind
+      doc
+    end
   end
 
   # For debugging.

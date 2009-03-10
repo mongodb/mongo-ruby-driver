@@ -353,7 +353,72 @@ static VALUE method_serialize(VALUE self, VALUE doc) {
     return result;
 }
 
+static VALUE get_value(const char* buffer, int* position, int type) {
+    VALUE value;
+    switch (type) {
+    case 1:
+        {
+            double d;
+            memcpy(&d, buffer + *position, 8);
+            value = DBL2NUM(d);
+            *position += 8;
+            break;
+        }
+    case 2:
+        {
+            *position += 4;
+            int value_length = strlen(buffer + *position);
+            value = rb_str_new(buffer+ *position, value_length);
+            *position += value_length + 1;
+            break;
+        }
+    case 8:
+        {
+            value = buffer[(*position)++] ? Qtrue : Qfalse;
+            break;
+        }
+    case 16:
+        {
+            int i;
+            memcpy(&i, buffer + *position, 4);
+            value = INT2FIX(i);
+            *position += 4;
+            break;
+        }
+    default:
+        rb_raise(rb_eTypeError, "no c decoder for this type yet (%d)", type);
+        break;
+    }
+    return value;
+}
+
+static VALUE elements_to_hash(const char* buffer, int max) {
+    VALUE hash = rb_hash_new();
+    int position = 0;
+    while (position < max) {
+        int type = (int)buffer[position++];
+        int name_length = strlen(buffer + position);
+        VALUE name = rb_str_new(buffer + position, name_length);
+        position += name_length + 1;
+        VALUE value = get_value(buffer, &position, type);
+        rb_hash_aset(hash, name, value);
+    }
+    return hash;
+}
+
+static VALUE method_deserialize(VALUE self, VALUE bson) {
+    const char* buffer = RSTRING(bson)->ptr;
+    int remaining = RSTRING(bson)->len;
+
+    // NOTE we just swallow the size and end byte here
+    buffer += 4;
+    remaining -= 5;
+
+    return elements_to_hash(buffer, remaining);
+}
+
 void Init_cbson() {
     VALUE CBson = rb_define_module("CBson");
     rb_define_module_function(CBson, "serialize", method_serialize, 1);
+    rb_define_module_function(CBson, "deserialize", method_deserialize, 1);
 }
