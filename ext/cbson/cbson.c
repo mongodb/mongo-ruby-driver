@@ -31,6 +31,7 @@ static VALUE Binary;
 static VALUE Undefined;
 static VALUE Time;
 static VALUE ObjectID;
+static VALUE DBRef;
 
 typedef struct {
     char* buffer;
@@ -457,8 +458,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
         {
             VALUE str = rb_str_new(buffer + *position, 12);
             VALUE oid = rb_funcall(str, rb_intern("unpack"), 1, rb_str_new2("C*"));
-            VALUE argv[1] = {oid};
-            value = rb_class_new_instance(1, argv, ObjectID);
+            value = rb_class_new_instance(1, &oid, ObjectID);
             *position += 12;
             break;
         }
@@ -481,6 +481,22 @@ static VALUE get_value(const char* buffer, int* position, int type) {
     case 10:
         {
             value = Qnil;
+            break;
+        }
+    case 12:
+        {
+            *position += 4;
+            int collection_length = strlen(buffer + *position);
+            VALUE collection = rb_str_new(buffer+ *position, collection_length);
+            *position += collection_length + 1;
+
+            VALUE str = rb_str_new(buffer + *position, 12);
+            VALUE oid = rb_funcall(str, rb_intern("unpack"), 1, rb_str_new2("C*"));
+            VALUE id = rb_class_new_instance(1, &oid, ObjectID);
+            *position += 12;
+
+            VALUE argv[2] = {collection, id};
+            value = rb_class_new_instance(2, argv, DBRef);
             break;
         }
     case 14:
@@ -546,6 +562,8 @@ void Init_cbson() {
     Undefined = rb_const_get(driver, rb_intern("Undefined"));
     rb_require("mongo/types/objectid");
     ObjectID = rb_const_get(driver, rb_intern("ObjectID"));
+    rb_require("mongo/types/dbref");
+    DBRef = rb_const_get(driver, rb_intern("DBRef"));
 
     VALUE CBson = rb_define_module("CBson");
     rb_define_module_function(CBson, "serialize", method_serialize, 1);
