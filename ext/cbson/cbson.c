@@ -28,6 +28,9 @@
 #define INITIAL_BUFFER_SIZE 256
 
 static VALUE Binary;
+static VALUE Undefined;
+static VALUE Time;
+static VALUE ObjectID;
 
 typedef struct {
     char* buffer;
@@ -129,77 +132,97 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
 
     switch(TYPE(value)) {
     case T_BIGNUM:
-        write_name_and_type(buffer, key, 0x10);
-        VALUE as_f = rb_funcall(value, rb_intern("to_f"), 0);
-        int int_value = NUM2LL(as_f);
-        buffer_write_bytes(buffer, (char*)&int_value, 4);
-        break;
+        {
+            write_name_and_type(buffer, key, 0x10);
+            VALUE as_f = rb_funcall(value, rb_intern("to_f"), 0);
+            int int_value = NUM2LL(as_f);
+            buffer_write_bytes(buffer, (char*)&int_value, 4);
+            break;
+        }
     case T_FIXNUM:
-        write_name_and_type(buffer, key, 0x10);
-        int_value = FIX2INT(value);
-        buffer_write_bytes(buffer, (char*)&int_value, 4);
-        break;
+        {
+            write_name_and_type(buffer, key, 0x10);
+            int int_value = FIX2INT(value);
+            buffer_write_bytes(buffer, (char*)&int_value, 4);
+            break;
+        }
     case T_TRUE:
-        write_name_and_type(buffer, key, 0x08);
-        buffer_write_bytes(buffer, &one, 1);
-        break;
+        {
+            write_name_and_type(buffer, key, 0x08);
+            buffer_write_bytes(buffer, &one, 1);
+            break;
+        }
     case T_FALSE:
-        write_name_and_type(buffer, key, 0x08);
-        buffer_write_bytes(buffer, &zero, 1);
-        break;
+        {
+            write_name_and_type(buffer, key, 0x08);
+            buffer_write_bytes(buffer, &zero, 1);
+            break;
+        }
     case T_FLOAT:
-        write_name_and_type(buffer, key, 0x01);
-        double d = NUM2DBL(value);
-        buffer_write_bytes(buffer, (char*)&d, 8);
-        break;
+        {
+            write_name_and_type(buffer, key, 0x01);
+            double d = NUM2DBL(value);
+            buffer_write_bytes(buffer, (char*)&d, 8);
+            break;
+        }
     case T_NIL:
-        write_name_and_type(buffer, key, 0x0A);
-        break;
+        {
+            write_name_and_type(buffer, key, 0x0A);
+            break;
+        }
     case T_HASH:
-        write_name_and_type(buffer, key, 0x03);
-        write_doc(buffer, value);
-        break;
+        {
+            write_name_and_type(buffer, key, 0x03);
+            write_doc(buffer, value);
+            break;
+        }
     case T_ARRAY:
-        write_name_and_type(buffer, key, 0x04);
-        int start_position = buffer->position;
+        {
+            write_name_and_type(buffer, key, 0x04);
+            int start_position = buffer->position;
 
-        // save space for length
-        int length_location = buffer_save_bytes(buffer, 4);
+            // save space for length
+            int length_location = buffer_save_bytes(buffer, 4);
 
-        int items = RARRAY_LEN(value);
-        VALUE* values = RARRAY_PTR(value);
-        int i;
-        for(i = 0; i < items; i++) {
-            char* name;
-            asprintf(&name, "%d", i);
-            VALUE key = rb_str_new2(name);
-            write_element(key, values[i], (VALUE)buffer);
-            free(name);
+            int items = RARRAY_LEN(value);
+            VALUE* values = RARRAY_PTR(value);
+            int i;
+            for(i = 0; i < items; i++) {
+                char* name;
+                asprintf(&name, "%d", i);
+                VALUE key = rb_str_new2(name);
+                write_element(key, values[i], (VALUE)buffer);
+                free(name);
+            }
+
+            // write null byte and fill in length
+            buffer_write_bytes(buffer, &zero, 1);
+            int obj_length = buffer->position - start_position;
+            memcpy(buffer->buffer + length_location, &obj_length, 4);
+            break;
         }
-
-        // write null byte and fill in length
-        buffer_write_bytes(buffer, &zero, 1);
-        int obj_length = buffer->position - start_position;
-        memcpy(buffer->buffer + length_location, &obj_length, 4);
-        break;
     case T_STRING:
-        if (is_code) {
-            write_name_and_type(buffer, key, 0x0D);
-        } else {
-            write_name_and_type(buffer, key, 0x02);
+        {
+            if (is_code) {
+                write_name_and_type(buffer, key, 0x0D);
+            } else {
+                write_name_and_type(buffer, key, 0x02);
+            }
+            int length = RSTRING(value)->len + 1;
+            buffer_write_bytes(buffer, (char*)&length, 4);
+            buffer_write_bytes(buffer, RSTRING(value)->ptr, length - 1);
+            buffer_write_bytes(buffer, &zero, 1);
+            break;
         }
-        int length = RSTRING(value)->len + 1;
-        buffer_write_bytes(buffer, (char*)&length, 4);
-        buffer_write_bytes(buffer, RSTRING(value)->ptr, length - 1);
-        buffer_write_bytes(buffer, &zero, 1);
-        break;
     case T_SYMBOL:
-        write_name_and_type(buffer, key, 0x0E);
-        const char* str_value = rb_id2name(SYM2ID(value));
-        length = strlen(str_value) + 1;
-        buffer_write_bytes(buffer, (char*)&length, 4);
-        buffer_write_bytes(buffer, str_value, length);
-        break;
+        {
+            write_name_and_type(buffer, key, 0x0E);
+            const char* str_value = rb_id2name(SYM2ID(value));
+            int length = strlen(str_value) + 1;
+            buffer_write_bytes(buffer, (char*)&length, 4);
+            buffer_write_bytes(buffer, str_value, length);
+            break;
+        }
     case T_OBJECT:
         {
             // TODO there has to be a better way to do these checks...
@@ -244,6 +267,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
 
                 VALUE oid_as_array = rb_funcall(rb_funcall(value, rb_intern("object_id"), 0),
                                                 rb_intern("to_a"), 0);
+                int i;
                 for (i = 0; i < 12; i++) {
                     char byte = (char)FIX2INT(RARRAY(oid_as_array)->ptr[i]);
                     buffer_write_bytes(buffer, &byte, 1);
@@ -268,40 +292,44 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
             }
         }
     case T_REGEXP:
-        write_name_and_type(buffer, key, 0x0B);
+        {
+            write_name_and_type(buffer, key, 0x0B);
 
-        length = RREGEXP(value)->len;
-        char* pattern = RREGEXP(value)->str;
-        buffer_write_bytes(buffer, pattern, length);
-        buffer_write_bytes(buffer, &zero, 1);
+            int length = RREGEXP(value)->len;
+            char* pattern = RREGEXP(value)->str;
+            buffer_write_bytes(buffer, pattern, length);
+            buffer_write_bytes(buffer, &zero, 1);
 
-        long flags = RREGEXP(value)->ptr->options;
-        if (flags & RE_OPTION_IGNORECASE) {
-            char ignorecase = 'i';
-            buffer_write_bytes(buffer, &ignorecase, 1);
-        }
-        if (flags & RE_OPTION_MULTILINE) {
-            char multiline = 'm';
-            buffer_write_bytes(buffer, &multiline, 1);
-        }
-        if (flags & RE_OPTION_EXTENDED) {
-            char extended = 'x';
-            buffer_write_bytes(buffer, &extended, 1);
-        }
+            long flags = RREGEXP(value)->ptr->options;
+            if (flags & RE_OPTION_IGNORECASE) {
+                char ignorecase = 'i';
+                buffer_write_bytes(buffer, &ignorecase, 1);
+            }
+            if (flags & RE_OPTION_MULTILINE) {
+                char multiline = 'm';
+                buffer_write_bytes(buffer, &multiline, 1);
+            }
+            if (flags & RE_OPTION_EXTENDED) {
+                char extended = 'x';
+                buffer_write_bytes(buffer, &extended, 1);
+            }
 
-        VALUE has_extra = rb_funcall(value, rb_intern("respond_to?"), 1, rb_str_new2("extra_options_str"));
-        if (TYPE(has_extra) == T_TRUE) {
-            VALUE extra = rb_funcall(value, rb_intern("extra_options_str"), 0);
-            int old_position = buffer->position;
-            buffer_write_bytes(buffer, RSTRING(extra)->ptr, RSTRING(extra)->len);
-            qsort(buffer->buffer + old_position, RSTRING(extra)->len, sizeof(char), cmp_char);
-        }
-        buffer_write_bytes(buffer, &zero, 1);
+            VALUE has_extra = rb_funcall(value, rb_intern("respond_to?"), 1, rb_str_new2("extra_options_str"));
+            if (TYPE(has_extra) == T_TRUE) {
+                VALUE extra = rb_funcall(value, rb_intern("extra_options_str"), 0);
+                int old_position = buffer->position;
+                buffer_write_bytes(buffer, RSTRING(extra)->ptr, RSTRING(extra)->len);
+                qsort(buffer->buffer + old_position, RSTRING(extra)->len, sizeof(char), cmp_char);
+            }
+            buffer_write_bytes(buffer, &zero, 1);
 
-        break;
+            break;
+        }
     default:
-        rb_raise(rb_eTypeError, "no c encoder for this type yet (%d)", TYPE(value));
-        break;
+        {
+            rb_raise(rb_eTypeError, "no c encoder for this type yet (%d)", TYPE(value));
+            break;
+        }
     }
     return ST_CONTINUE;
 }
@@ -419,9 +447,35 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             *position += length + 5;
             break;
         }
+    case 6:
+        {
+            VALUE* argv;
+            value = rb_class_new_instance(0, argv, Undefined);
+            break;
+        }
+    case 7:
+        {
+            VALUE str = rb_str_new(buffer + *position, 12);
+            VALUE oid = rb_funcall(str, rb_intern("unpack"), 1, rb_str_new2("C*"));
+            VALUE argv[1] = {oid};
+            value = rb_class_new_instance(1, argv, ObjectID);
+            *position += 12;
+            break;
+        }
     case 8:
         {
             value = buffer[(*position)++] ? Qtrue : Qfalse;
+            break;
+        }
+    case 9:
+        {
+            long long millis;
+            memcpy(&millis, buffer + *position, 8);
+            VALUE seconds = INT2NUM(millis / 1000);
+            VALUE microseconds = INT2NUM((millis % 1000) * 1000);
+
+            value = rb_funcall(Time, rb_intern("at"), 2, seconds, microseconds);
+            *position += 8;
             break;
         }
     case 10:
@@ -446,8 +500,10 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             break;
         }
     default:
-        rb_raise(rb_eTypeError, "no c decoder for this type yet (%d)", type);
-        break;
+        {
+            rb_raise(rb_eTypeError, "no c decoder for this type yet (%d)", type);
+            break;
+        }
     }
     return value;
 }
@@ -478,12 +534,19 @@ static VALUE method_deserialize(VALUE self, VALUE bson) {
 }
 
 void Init_cbson() {
-    rb_require("mongo/types/binary");
+    Time = rb_const_get(rb_cObject, rb_intern("Time"));
+
     VALUE driver = rb_const_get(rb_const_get(rb_const_get(rb_cObject,
                                                           rb_intern("XGen")),
                                              rb_intern("Mongo")),
                                 rb_intern("Driver"));
+    rb_require("mongo/types/binary");
     Binary = rb_const_get(driver, rb_intern("Binary"));
+    rb_require("mongo/types/undefined");
+    Undefined = rb_const_get(driver, rb_intern("Undefined"));
+    rb_require("mongo/types/objectid");
+    ObjectID = rb_const_get(driver, rb_intern("ObjectID"));
+
     VALUE CBson = rb_define_module("CBson");
     rb_define_module_function(CBson, "serialize", method_serialize, 1);
     rb_define_module_function(CBson, "deserialize", method_deserialize, 1);
