@@ -27,6 +27,8 @@
 
 #define INITIAL_BUFFER_SIZE 256
 
+static VALUE Binary;
+
 typedef struct {
     char* buffer;
     int size;
@@ -366,6 +368,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             break;
         }
     case 2:
+    case 13:
         {
             *position += 4;
             int value_length = strlen(buffer + *position);
@@ -399,6 +402,23 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             (*position)++;
             break;
         }
+    case 5:
+        {
+            int length;
+            memcpy(&length, buffer + *position, 4);
+            int subtype = (unsigned char)buffer[*position + 4];
+            VALUE data;
+            if (subtype == 2) {
+                data = rb_str_new(buffer + *position + 9, length - 4);
+            } else {
+                data = rb_str_new(buffer + *position + 5, length);
+            }
+            VALUE st = INT2FIX(subtype);
+            VALUE argv[2] = {data, st};
+            value = rb_class_new_instance(2, argv, Binary);
+            *position += length + 5;
+            break;
+        }
     case 8:
         {
             value = buffer[(*position)++] ? Qtrue : Qfalse;
@@ -407,6 +427,14 @@ static VALUE get_value(const char* buffer, int* position, int type) {
     case 10:
         {
             value = Qnil;
+            break;
+        }
+    case 14:
+        {
+            int value_length;
+            memcpy(&value_length, buffer + *position, 4);
+            value = ID2SYM(rb_intern(buffer + *position + 4));
+            *position += value_length + 5;
             break;
         }
     case 16:
@@ -450,6 +478,12 @@ static VALUE method_deserialize(VALUE self, VALUE bson) {
 }
 
 void Init_cbson() {
+    rb_require("mongo/types/binary");
+    VALUE driver = rb_const_get(rb_const_get(rb_const_get(rb_cObject,
+                                                          rb_intern("XGen")),
+                                             rb_intern("Mongo")),
+                                rb_intern("Driver"));
+    Binary = rb_const_get(driver, rb_intern("Binary"));
     VALUE CBson = rb_define_module("CBson");
     rb_define_module_function(CBson, "serialize", method_serialize, 1);
     rb_define_module_function(CBson, "deserialize", method_deserialize, 1);
