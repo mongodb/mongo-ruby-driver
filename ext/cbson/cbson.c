@@ -32,6 +32,7 @@ static VALUE Undefined;
 static VALUE Time;
 static VALUE ObjectID;
 static VALUE DBRef;
+static VALUE RegexpOfHolding;
 
 typedef struct {
     char* buffer;
@@ -483,11 +484,44 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             value = Qnil;
             break;
         }
+    case 11:
+        {
+            int pattern_length = strlen(buffer + *position);
+            VALUE pattern = rb_str_new(buffer + *position, pattern_length);
+            *position += pattern_length + 1;
+
+            int flags_length = strlen(buffer + *position);
+            int i = 0;
+
+            char flags[4];
+            flags[0] = 0;
+            char extra[10];
+            extra[0] = 0;
+            for (i = 0; i < flags_length; i++) {
+                char flag = buffer[*position + i];
+                if (flag == 'i' || flag == 'm' || flag == 'x') {
+                    if (strlen(flags) < 3) {
+                        strncat(flags, &flag, 1);
+                    }
+                }
+                else if (strlen(extra) < 9) {
+                    strncat(extra, &flag, 1);
+                }
+            }
+            VALUE argv[3] = {
+                pattern,
+                rb_str_new2(flags),
+                rb_str_new2(extra)
+            };
+            value = rb_class_new_instance(3, argv, RegexpOfHolding);
+            *position += flags_length + 1;
+            break;
+        }
     case 12:
         {
             *position += 4;
             int collection_length = strlen(buffer + *position);
-            VALUE collection = rb_str_new(buffer+ *position, collection_length);
+            VALUE collection = rb_str_new(buffer + *position, collection_length);
             *position += collection_length + 1;
 
             VALUE str = rb_str_new(buffer + *position, 12);
@@ -564,6 +598,8 @@ void Init_cbson() {
     ObjectID = rb_const_get(driver, rb_intern("ObjectID"));
     rb_require("mongo/types/dbref");
     DBRef = rb_const_get(driver, rb_intern("DBRef"));
+    rb_require("mongo/types/regexp_of_holding");
+    RegexpOfHolding = rb_const_get(driver, rb_intern("RegexpOfHolding"));
 
     VALUE CBson = rb_define_module("CBson");
     rb_define_module_function(CBson, "serialize", method_serialize, 1);
