@@ -46,19 +46,19 @@ class CursorTest < Test::Unit::TestCase
     }
 
     assert_equal 1001, @@coll.count
-
     count = 0
     @@coll.find.each { |obj|
       count += obj['a']
     }
+    assert_equal 1001, @@coll.count
 
     # do the same thing again for debugging
     assert_equal 1001, @@coll.count
-
     count2 = 0
     @@coll.find.each { |obj|
       count2 += obj['a']
     }
+    assert_equal 1001, @@coll.count
 
     assert_equal count, count2
     assert_equal 499501, count
@@ -74,19 +74,19 @@ class CursorTest < Test::Unit::TestCase
     }
 
     assert_equal 1001, coll.count
-
     count = 0
     coll.find.each { |obj|
       count += obj['a']
     }
+    assert_equal 1001, coll.count
 
     # do the same thing again for debugging
     assert_equal 1001, coll.count
-
     count2 = 0
     coll.find.each { |obj|
       count2 += obj['a']
     }
+    assert_equal 1001, coll.count
 
     assert_equal count, count2
     assert_equal 499501, count
