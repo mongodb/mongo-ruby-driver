@@ -493,16 +493,19 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             int flags_length = strlen(buffer + *position);
             int i = 0;
 
-            char flags[4];
-            flags[0] = 0;
+            int flags;
             char extra[10];
             extra[0] = 0;
             for (i = 0; i < flags_length; i++) {
                 char flag = buffer[*position + i];
-                if (flag == 'i' || flag == 'm' || flag == 'x') {
-                    if (strlen(flags) < 3) {
-                        strncat(flags, &flag, 1);
-                    }
+                if (flag == 'i') {
+                    flags |= RE_OPTION_IGNORECASE;
+                }
+                else if (flag == 'm') {
+                    flags |= RE_OPTION_MULTILINE;
+                }
+                else if (flag == 'x') {
+                    flags |= RE_OPTION_EXTENDED;
                 }
                 else if (strlen(extra) < 9) {
                     strncat(extra, &flag, 1);
@@ -510,7 +513,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             }
             VALUE argv[3] = {
                 pattern,
-                rb_str_new2(flags),
+                INT2FIX(flags),
                 rb_str_new2(extra)
             };
             value = rb_class_new_instance(3, argv, RegexpOfHolding);
@@ -538,14 +541,14 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             int value_length;
             memcpy(&value_length, buffer + *position, 4);
             value = ID2SYM(rb_intern(buffer + *position + 4));
-            *position += value_length + 5;
+            *position += value_length + 4;
             break;
         }
     case 16:
         {
             int i;
             memcpy(&i, buffer + *position, 4);
-            value = INT2FIX(i);
+            value = LL2NUM(i);
             *position += 4;
             break;
         }
