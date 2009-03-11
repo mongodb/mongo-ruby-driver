@@ -493,7 +493,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             int flags_length = strlen(buffer + *position);
             int i = 0;
 
-            int flags;
+            int flags = 0;
             char extra[10];
             extra[0] = 0;
             for (i = 0; i < flags_length; i++) {
