@@ -44,12 +44,17 @@ class CursorTest < Test::Unit::TestCase
     1000.times { |i|
       @@coll.insert('a' => i)
     }
+
+    assert_equal 1001, @@coll.count
+
     count = 0
     @@coll.find.each { |obj|
       count += obj['a']
     }
 
     # do the same thing again for debugging
+    assert_equal 1001, @@coll.count
+
     count2 = 0
     @@coll.find.each { |obj|
       count2 += obj['a']
@@ -67,12 +72,17 @@ class CursorTest < Test::Unit::TestCase
     1000.times { |i|
       coll.insert('a' => i)
     }
+
+    assert_equal 1001, coll.count
+
     count = 0
     coll.find.each { |obj|
       count += obj['a']
     }
 
     # do the same thing again for debugging
+    assert_equal 1001, coll.count
+
     count2 = 0
     coll.find.each { |obj|
       count2 += obj['a']
