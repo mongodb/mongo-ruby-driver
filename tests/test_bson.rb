@@ -21,7 +21,7 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_code
-    doc = {'$where' => 'this.a.b < this.b'}
+    doc = {'$where' => Code.new('this.a.b < this.b')}
     @b.serialize(doc)
     assert_equal doc, @b.deserialize
   end

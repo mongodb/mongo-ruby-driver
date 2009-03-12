@@ -95,9 +95,9 @@ class BSON
   end
 
   def serialize_key_value(k, v)
-      type = bson_type(v, k)
+      type = bson_type(v)
       case type
-      when STRING, CODE, SYMBOL
+      when STRING, SYMBOL
         serialize_string_element(@buf, k, v, type)
       when NUMBER, NUMBER_INT
         serialize_number_element(@buf, k, v, type)
@@ -122,8 +122,7 @@ class BSON
       when UNDEFINED
         serialize_undefined_element(@buf, k)
       when CODE_W_SCOPE
-        # TODO CODE_W_SCOPE unimplemented; may be removed
-        raise "unimplemented type #{type}"
+        serialize_code_w_scope(@buf, k, v)
       else
         raise "unhandled type #{type}"
       end
@@ -198,8 +197,8 @@ class BSON
           key = deserialize_cstr(@buf)
           doc[key] = deserialize_binary_data(@buf)
         when CODE_W_SCOPE
-          # TODO CODE_W_SCOPE unimplemented; may be removed
-          raise "unimplemented type #{type}"
+          key = deserialize_cstr(@buf)
+          doc[key] = deserialize_code_w_scope_data(@buf)
         when EOO
           break
         else
@@ -278,6 +277,24 @@ class BSON
       str.force_encoding("utf-8")
     end
     str
+  end
+
+  def deserialize_code_w_scope_data(buf)
+    buf.get_int
+    len = buf.get_int
+    code = buf.get(len)[0..-2]
+    if code.respond_to? "pack"
+      code = code.pack("C*")
+    end
+    if RUBY_VERSION >= '1.9'
+      code.force_encoding("utf-8")
+    end
+
+    scope_size = buf.get_int
+    buf.position -= 4
+    scope = BSON.new().deserialize(buf.get(scope_size))
+
+    Code.new(code, scope)
   end
 
   def deserialize_oid_data(buf)
@@ -416,6 +433,23 @@ class BSON
     buf.position = end_pos
   end
 
+  def serialize_code_w_scope(buf, key, val)
+    buf.put(CODE_W_SCOPE)
+    self.class.serialize_cstr(buf, key)
+
+    # Make a hole for the length
+    len_pos = buf.position
+    buf.put_int(0)
+
+    buf.put_int(val.length + 1)
+    self.class.serialize_cstr(buf, val)
+    buf.put_array(BSON.new.serialize(val.scope).to_a)
+
+    end_pos = buf.position
+    buf.put_int(end_pos - len_pos, len_pos)
+    buf.position = end_pos
+  end
+
   def deserialize_cstr(buf)
     chars = ""
     while true
@@ -429,7 +463,7 @@ class BSON
     chars
   end
 
-  def bson_type(o, key)
+  def bson_type(o)
     case o
     when nil
       NULL
@@ -439,9 +473,10 @@ class BSON
       NUMBER
     when ByteBuffer
       BINARY
+    when Code
+      CODE_W_SCOPE
     when String
-      # magic awful stuff - the DB requires that a where clause is sent as CODE
-      key == "$where" ? CODE : STRING
+      STRING
     when Array
       ARRAY
     when Regexp

@@ -16,6 +16,7 @@
 
 require 'mongo/collection'
 require 'mongo/message'
+require 'mongo/types/code'
 
 module XGen
   module Mongo
@@ -70,14 +71,16 @@ module XGen
           self.fields = return_fields
         end
 
-        # Set query selector hash. If sel is a string, it will be used as a
+        # Set query selector hash. If sel is Code/string, it will be used as a
         # $where clause. (See Mongo docs for details.)
         def selector=(sel)
           @selector = case sel
                       when nil
                         {}
-                      when String
+                      when Code
                         {"$where" => sel}
+                      when String
+                        {"$where" => Code.new(sel)}
                       when Hash
                         sel
                       end
