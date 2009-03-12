@@ -45,7 +45,7 @@ class XMLToRuby
     when 'string'
       e.text.to_s
     when 'code'
-      Code.new (e.text.to_s)
+      Code.new(e.text.to_s)
     when 'binary'
       bin = Binary.new
       decoded = Base64.decode64(e.text.to_s)
