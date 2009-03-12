@@ -32,6 +32,7 @@ static VALUE Undefined;
 static VALUE Time;
 static VALUE ObjectID;
 static VALUE DBRef;
+static VALUE Code;
 static VALUE RegexpOfHolding;
 static VALUE OrderedHash;
 
@@ -130,9 +131,6 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         return ST_CONTINUE;
     }
 
-    // TODO do this somewhere else, not in the c code...
-    int is_code = !strcmp("$where", RSTRING(key)->ptr);
-
     switch(TYPE(value)) {
     case T_BIGNUM:
         {
@@ -206,16 +204,31 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         }
     case T_STRING:
         {
-            if (is_code) {
-                write_name_and_type(buffer, key, 0x0D);
+            if (strcmp(rb_class2name(RBASIC(value)->klass),
+                       "XGen::Mongo::Driver::Code") == 0) {
+                write_name_and_type(buffer, key, 0x0F);
+
+                int start_position = buffer->position;
+                int length_location = buffer_save_bytes(buffer, 4);
+
+                int length = RSTRING(value)->len + 1;
+                buffer_write_bytes(buffer, (char*)&length, 4);
+                buffer_write_bytes(buffer, RSTRING(value)->ptr, length - 1);
+                buffer_write_bytes(buffer, &zero, 1);
+                write_doc(buffer, rb_funcall(value, rb_intern("scope"), 0));
+
+                int total_length = buffer->position - start_position;
+                memcpy(buffer->buffer + length_location, &total_length, 4);
+
+                break;
             } else {
                 write_name_and_type(buffer, key, 0x02);
+                int length = RSTRING(value)->len + 1;
+                buffer_write_bytes(buffer, (char*)&length, 4);
+                buffer_write_bytes(buffer, RSTRING(value)->ptr, length - 1);
+                buffer_write_bytes(buffer, &zero, 1);
+                break;
             }
-            int length = RSTRING(value)->len + 1;
-            buffer_write_bytes(buffer, (char*)&length, 4);
-            buffer_write_bytes(buffer, RSTRING(value)->ptr, length - 1);
-            buffer_write_bytes(buffer, &zero, 1);
-            break;
         }
     case T_SYMBOL:
         {
@@ -544,6 +557,22 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             *position += value_length + 4;
             break;
         }
+    case 15:
+        {
+            *position += 8;
+            int code_length = strlen(buffer + *position);
+            VALUE code = rb_str_new(buffer + *position, code_length);
+            *position += code_length + 1;
+
+            int scope_size;
+            memcpy(&scope_size, buffer + *position, 4);
+            VALUE scope = elements_to_hash(buffer + *position + 4, scope_size - 5);
+            *position += scope_size;
+
+            VALUE argv[2] = {code, scope};
+            value = rb_class_new_instance(2, argv, Code);
+            break;
+        }
     case 16:
         {
             int i;
@@ -601,6 +630,8 @@ void Init_cbson() {
     ObjectID = rb_const_get(driver, rb_intern("ObjectID"));
     rb_require("mongo/types/dbref");
     DBRef = rb_const_get(driver, rb_intern("DBRef"));
+    rb_require("mongo/types/code");
+    Code = rb_const_get(driver, rb_intern("Code"));
     rb_require("mongo/types/regexp_of_holding");
     RegexpOfHolding = rb_const_get(driver, rb_intern("RegexpOfHolding"));
     rb_require("mongo/util/ordered_hash");
