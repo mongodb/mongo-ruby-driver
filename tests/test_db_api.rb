@@ -442,6 +442,15 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal "#{@@db.host}:#{@@db.port}", @@db.master
   end
 
+  def test_where
+    @@coll.insert('a' => 2)
+    @@coll.insert('a' => 3)
+
+    assert_equal 3, @@coll.count
+    assert_equal 1, @@coll.find('$where' => Code.new('this.a > 2')).count
+    assert_equal 2, @@coll.find('$where' => Code.new('this.a > i', {'i' => 1})).count
+  end
+
   def test_hint
     name = @@coll.create_index('a')
     begin
