@@ -25,8 +25,8 @@ coll.insert('array' => [1, 2, 3],
             'float' => 33.33333,
             'regex' => /foobar/i,
             'boolean' => true,
-            '$where' => 'this.x == 3', # special case of string
-            'dbref' => DBRef.new(nil, 'dbref', db, coll.name, ObjectID.new),
+            '$where' => Code.new('this.x == 3'),
+            'dbref' => DBRef.new(coll.name, ObjectID.new),
 
 # NOTE: the undefined type is not saved to the database properly. This is a
 # Mongo bug. However, the undefined type may go away completely.
