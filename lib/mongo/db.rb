@@ -143,7 +143,7 @@ module XGen
               @semaphore.lock if semaphore_is_locked
 
               break if @slave_ok || is_master
-            rescue SocketError => ex
+            rescue SocketError, SystemCallError, IOError => ex
               close if @socket
             end
             @socket
