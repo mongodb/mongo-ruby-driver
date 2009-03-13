@@ -8,6 +8,8 @@ begin
   require 'rake/contrib/rubyforgepublisher'
 rescue LoadError
 end
+require 'rbconfig'
+include Config
 
 # NOTE: some of the tests assume Mongo is running
 Rake::TestTask.new do |t|
@@ -31,7 +33,7 @@ task :compile do
   cd 'ext/cbson'
   ruby 'extconf.rb'
   sh 'make'
-  cp 'cbson.bundle', '../../lib/mongo/ext/cbson.bundle'
+  cp "cbson.#{CONFIG['DLEXT']}", '../../lib/mongo/ext'
 end
 
 namespace :gem do
