@@ -1,5 +1,5 @@
 PACKAGE_FILES = ['README.rdoc', 'Rakefile', 'mongo-ruby-driver.gemspec']
-PACKAGE_FILES = PACKAGE_FILES + Dir['bin/*'] + Dir['examples/*.rb'] + Dir['lib/**/*.rb']
+PACKAGE_FILES = PACKAGE_FILES + Dir['bin/*'] + Dir['examples/*.rb'] + Dir['lib/**/*.rb'] + Dir['ext/**/*.(rb|c)']
 PACKAGE_FILES.reject! { |fn| fn.include? '.DS' }
 
 TEST_FILES = Dir['tests/*.rb'] + Dir['tests/mongo-qa/*']
