@@ -41,55 +41,69 @@ class CursorTest < Test::Unit::TestCase
   end
 
   def test_refill_via_get_more
-    1000.times { |i|
-      @@coll.insert('a' => i)
-    }
+    begin
+      assert_equal 1, @@coll.count
+      1000.times { |i|
+        assert_equal 1 + i, @@coll.count
+        @@coll.insert('a' => i)
+      }
 
-    assert_equal 1001, @@coll.count
-    count = 0
-    @@coll.find.each { |obj|
-      count += obj['a']
-    }
-    assert_equal 1001, @@coll.count
+      assert_equal 1001, @@coll.count
+      count = 0
+      @@coll.find.each { |obj|
+        count += obj['a']
+      }
+      assert_equal 1001, @@coll.count
 
-    # do the same thing again for debugging
-    assert_equal 1001, @@coll.count
-    count2 = 0
-    @@coll.find.each { |obj|
-      count2 += obj['a']
-    }
-    assert_equal 1001, @@coll.count
+      # do the same thing again for debugging
+      assert_equal 1001, @@coll.count
+      count2 = 0
+      @@coll.find.each { |obj|
+        count2 += obj['a']
+      }
+      assert_equal 1001, @@coll.count
 
-    assert_equal count, count2
-    assert_equal 499501, count
+      assert_equal count, count2
+      assert_equal 499501, count
+    rescue Test::Unit::AssertionFailedError => ex
+      p @@db.collection_names
+      Process.exit 1
+    end
   end
 
   def test_refill_via_get_more_alt_coll
-    coll = @@db.collection('test-alt-coll')
-    coll.clear
-    coll.insert('a' => 1)     # collection not created until it's used
+    begin
+      coll = @@db.collection('test-alt-coll')
+      coll.clear
+      coll.insert('a' => 1)     # collection not created until it's used
+      assert_equal 1, coll.count
 
-    1000.times { |i|
-      coll.insert('a' => i)
-    }
+      1000.times { |i|
+        assert_equal 1 + i, coll.count
+        coll.insert('a' => i)
+      }
 
-    assert_equal 1001, coll.count
-    count = 0
-    coll.find.each { |obj|
-      count += obj['a']
-    }
-    assert_equal 1001, coll.count
+      assert_equal 1001, coll.count
+      count = 0
+      coll.find.each { |obj|
+        count += obj['a']
+      }
+      assert_equal 1001, coll.count
 
-    # do the same thing again for debugging
-    assert_equal 1001, coll.count
-    count2 = 0
-    coll.find.each { |obj|
-      count2 += obj['a']
-    }
-    assert_equal 1001, coll.count
+      # do the same thing again for debugging
+      assert_equal 1001, coll.count
+      count2 = 0
+      coll.find.each { |obj|
+        count2 += obj['a']
+      }
+      assert_equal 1001, coll.count
 
-    assert_equal count, count2
-    assert_equal 499501, count
+      assert_equal count, count2
+      assert_equal 499501, count
+    rescue Test::Unit::AssertionFailedError => ex
+      p @@db.collection_names
+      Process.exit 1
+    end
   end
 
   def test_close_after_query_sent
