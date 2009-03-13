@@ -76,6 +76,7 @@ class BSON
       @buf = ByteBuffer.new(CBson.serialize(obj))
     end
   rescue LoadError
+    raise
     def serialize(obj)
       raise "Document is null" unless obj
 

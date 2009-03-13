@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
   s.has_rdoc = true
   s.rdoc_options = ['--main', 'README.rdoc', '--inline-source']
   s.extra_rdoc_files = ['README.rdoc']
-  s.extensions << 'ext/cbson/extconf.rb'
+#  s.extensions << 'ext/cbson/extconf.rb'
 
   s.authors = ['Jim Menard', 'Mike Dirolf']
   s.email = 'mongodb-dev@googlegroups.com'
