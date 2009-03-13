@@ -13,6 +13,10 @@ class MongoTest < Test::Unit::TestCase
     @mongo = Mongo.new(@host, @port)
   end
 
+  def teardown
+    @mongo.db('ruby-mongo-test').error
+  end
+
   def test_database_info
     @mongo.drop_database('ruby-mongo-info-test')
     @mongo.db('ruby-mongo-info-test').collection('info-test').insert('a' => 1)

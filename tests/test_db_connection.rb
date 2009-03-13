@@ -13,5 +13,6 @@ class DBConnectionTest < Test::Unit::TestCase
     db = Mongo.new(host, port).db('ruby-mongo-demo')
     coll = db.collection('test')
     coll.clear
+    db.error
   end
 end

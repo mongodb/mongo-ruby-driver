@@ -29,6 +29,7 @@ class DBTest < Test::Unit::TestCase
 
   def teardown
     @@users.clear if @@users
+    @@db.error
   end
 
   def test_close

@@ -22,6 +22,7 @@ class GridStoreTest < Test::Unit::TestCase
   def teardown
     @@chunks.clear
     @@files.clear
+    @@db.error
   end
 
   def test_exist

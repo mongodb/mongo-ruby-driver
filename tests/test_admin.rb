@@ -22,6 +22,7 @@ class AdminTest < Test::Unit::TestCase
   def teardown
     @admin.profiling_level = :off
     @@coll.clear if @@coll
+    @@db.error
   end
 
   def test_default_profiling_level
