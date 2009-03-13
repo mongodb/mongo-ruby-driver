@@ -451,6 +451,26 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, @@coll.count('$where' => Code.new('this.a > i', {'i' => 1}))
   end
 
+  def test_eval
+    assert_equal 3, @@db.eval('function (x) {return x;}', 3)
+
+    assert_equal nil, @@db.eval("function (x) {db.test_eval.save({y:x});}", 5)
+    assert_equal 5, @@db.collection('test_eval').find_first['y']
+
+    assert_equal 5, @@db.eval("function (x, y) {return x + y;}", 2, 3)
+    assert_equal 5, @@db.eval("function () {return 5;}")
+    assert_equal 5, @@db.eval("2 + 3;")
+
+    assert_equal 5, @@db.eval(Code.new("2 + 3;"))
+    assert_equal nil, @@db.eval(Code.new("return i;"))
+    assert_equal 2, @@db.eval(Code.new("return i;", {"i" => 2}))
+    assert_equal 5, @@db.eval(Code.new("i + 3;", {"i" => 2}))
+
+    assert_raise RuntimeError do
+      @@db.eval("5 ++ 5;")
+    end
+  end
+
   def test_hint
     name = @@coll.create_index('a')
     begin

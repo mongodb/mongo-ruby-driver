@@ -374,6 +374,23 @@ module XGen
           raise "Error with count command: #{doc.inspect}"
         end
 
+        # Evaluate a JavaScript expression on MongoDB.
+        # +code+ should be a string or Code instance containing a JavaScript
+        # expression. Additional arguments will be passed to that expression
+        # when it is run on the server.
+        def eval(code, *args)
+          if not code.is_a? Code
+            code = Code.new(code)
+          end
+
+          oh = OrderedHash.new
+          oh[:$eval] = code
+          oh[:args] = args
+          doc = db_command(oh)
+          return doc['retval'] if ok?(doc)
+          raise "Error with eval command: #{doc.inspect}"
+        end
+
         # Drop index +name+ from +collection_name+. Normally called from
         # Collection#drop_index or Collection#drop_indexes.
         def drop_index(collection_name, name)
