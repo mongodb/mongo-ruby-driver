@@ -16,9 +16,6 @@
 
 require 'mongo/util/byte_buffer'
 
-require 'logger'
-LOG = Logger.new('recv_file.log', 'daily')
-
 module XGen
   module Mongo
     module Driver
@@ -33,10 +30,7 @@ module XGen
 
         def read_header(db)
           @buf.rewind
-          read = db.receive_full(HEADER_SIZE)
-          @buf.put_array(read.unpack("C*"))
-          LOG.debug "header: #{read.inspect}\n"
-          raise "BAD SIZE" unless read.length == HEADER_SIZE
+          @buf.put_array(db.receive_full(HEADER_SIZE).unpack("C*"))
           raise "Short read for DB response header: expected #{HEADER_SIZE} bytes, saw #{@buf.size}" unless @buf.size == HEADER_SIZE
           @buf.rewind
           @size = @buf.get_int
