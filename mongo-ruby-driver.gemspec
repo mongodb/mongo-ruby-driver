@@ -1,5 +1,5 @@
-PACKAGE_FILES = ['README.rdoc', 'Rakefile', 'mongo-ruby-driver.gemspec']
-PACKAGE_FILES = PACKAGE_FILES + Dir['bin/*'] + Dir['examples/*.rb'] + Dir['lib/**/*.rb'] + Dir['ext/**/*.(rb|c)']
+PACKAGE_FILES = ['README.rdoc', 'Rakefile', 'mongo-ruby-driver.gemspec'] +
+  (Dir['bin/*'] + Dir['examples/*.rb'] + Dir['lib/**/*.rb'] + Dir["ext/**/*.{rb,c}"])
 PACKAGE_FILES.reject! { |fn| fn.include? '.DS' }
 
 TEST_FILES = Dir['tests/*.rb'] + Dir['tests/mongo-qa/*']
@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.summary = 'Ruby driver for the 10gen Mongo DB'
   s.description = 'A Ruby driver for the 10gen Mongo DB. For more information about Mongo, see http://www.mongodb.org.'
 
-  s.require_paths = ['lib']
+  s.require_paths = ['lib', 'ext']
 
   s.files = PACKAGE_FILES
   s.test_files = TEST_FILES
