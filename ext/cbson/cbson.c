@@ -273,21 +273,22 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 break;
             }
             if (strcmp(cls, "XGen::Mongo::Driver::DBRef") == 0) {
-                write_name_and_type(buffer, key, 0x0C);
+                write_name_and_type(buffer, key, 0x03);
+
+                int start_position = buffer->position;
+
+                // save space for length
+                int length_location = buffer_save_bytes(buffer, 4);
 
                 VALUE ns = rb_funcall(value, rb_intern("namespace"), 0);
-                int length = RSTRING(ns)->len + 1;
-                buffer_write_bytes(buffer, (char*)&length, 4);
-                buffer_write_bytes(buffer, RSTRING(ns)->ptr, length - 1);
-                buffer_write_bytes(buffer, &zero, 1);
+                write_element(rb_str_new2("$ref"), ns, (VALUE)buffer);
+                VALUE oid = rb_funcall(value, rb_intern("object_id"), 0);
+                write_element(rb_str_new2("$id"), oid, (VALUE)buffer);
 
-                VALUE oid_as_array = rb_funcall(rb_funcall(value, rb_intern("object_id"), 0),
-                                                rb_intern("to_a"), 0);
-                int i;
-                for (i = 0; i < 12; i++) {
-                    char byte = (char)FIX2INT(RARRAY(oid_as_array)->ptr[i]);
-                    buffer_write_bytes(buffer, &byte, 1);
-                }
+                // write null byte and fill in length
+                buffer_write_bytes(buffer, &zero, 1);
+                int obj_length = buffer->position - start_position;
+                memcpy(buffer->buffer + length_location, &obj_length, 4);
                 break;
             }
             if (strcmp(cls, "XGen::Mongo::Driver::Undefined") == 0) {
@@ -424,7 +425,19 @@ static VALUE get_value(const char* buffer, int* position, int type) {
         {
             int size;
             memcpy(&size, buffer + *position, 4);
-            value = elements_to_hash(buffer + *position + 4, size - 5);
+            if (strcmp(buffer + *position + 5, "$ref") == 0) { // DBRef
+                int offset = *position + 14;
+                VALUE argv[2];
+                int collection_length = strlen(buffer + offset);
+                argv[0] = rb_str_new(buffer + offset, collection_length);
+                offset += collection_length + 1;
+                char id_type = buffer[offset];
+                offset += 5;
+                argv[1] = get_value(buffer, &offset, (int)id_type);
+                value = rb_class_new_instance(2, argv, DBRef);
+            } else {
+                value = elements_to_hash(buffer + *position + 4, size - 5);
+            }
             *position += size;
             break;
         }
