@@ -245,7 +245,12 @@ class BSON
   def deserialize_object_data(buf)
     size = buf.get_int
     buf.position -= 4
-    BSON.new().deserialize(buf.get(size))
+    object = BSON.new().deserialize(buf.get(size))
+    if object.has_key? "$ref"
+      DBRef.new(object["$ref"], object["$id"])
+    else
+      object
+    end
   end
 
   def deserialize_array_data(buf)
@@ -324,8 +329,10 @@ class BSON
   end
 
   def serialize_dbref_element(buf, key, val)
-    serialize_string_element(buf, key, val.namespace, REF)
-    buf.put_array(val.object_id.to_a)
+    oh = OrderedHash.new
+    oh['$ref'] = val.namespace
+    oh['$id'] = val.object_id
+    serialize_object_element(buf, key, oh)
   end
 
   def serialize_binary_element(buf, key, val)
