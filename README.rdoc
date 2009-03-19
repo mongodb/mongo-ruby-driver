@@ -48,6 +48,19 @@ you can install it as a gem from the source by typing
 Note: when you install the gem this way it is called "mongo", not
 "mongodb-mongo". In either case, you "require 'mongo'" in your source code.
 
+=== Optional C Extension
+
+There is a separate gem containing optional C extensions that will increase the
+performance of the driver. To use the optional extensions just install the gem
+by typing
+
+  $ sudo gem install mongodb-mongo_ext
+
+To install from source type this instead
+
+  $ rake gem:install_extensions
+
+That's all there is to it!
 
 = Examples
 
