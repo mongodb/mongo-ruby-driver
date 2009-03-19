@@ -71,7 +71,7 @@ class BSON
   end
 
   begin
-    require 'mongo/ext/cbson'
+    require 'mongo_ext/cbson'
     def serialize(obj)
       @buf = ByteBuffer.new(CBson.serialize(obj))
     end
@@ -129,7 +129,7 @@ class BSON
   end
 
   begin
-    require 'mongo/ext/cbson'
+    require 'mongo_ext/cbson'
     def deserialize(buf=nil)
       if buf.is_a? String
         @buf = ByteBuffer.new(buf) if buf
