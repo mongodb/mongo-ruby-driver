@@ -28,14 +28,6 @@ task :publish => [:rdoc] do
   Rake::RubyForgePublisher.new(GEM, RUBYFORGE_USER).upload
 end
 
-desc "Compile the extension"
-task :compile do
-  cd 'ext/cbson'
-  ruby 'extconf.rb'
-  sh 'make'
-  cp "cbson.#{CONFIG['DLEXT']}", '../../lib/mongo/ext'
-end
-
 namespace :gem do
 
   desc "Install the gem locally"
@@ -44,6 +36,15 @@ namespace :gem do
 gem build mongo-ruby-driver.gemspec &&
     sudo gem install mongo-*.gem &&
     rm mongo-*.gem
+EOS
+  end
+
+  desc "Install the optional c extensions"
+  task :install_extensions do
+    sh <<EOS
+gem build mongo-extensions.gemspec &&
+    sudo gem install mongo_ext-*.gem &&
+    rm mongo_ext-*.gem
 EOS
   end
 
