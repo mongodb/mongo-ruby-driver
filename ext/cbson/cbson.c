@@ -21,8 +21,8 @@
  */
 
 #include "ruby.h"
-#include "st.h"
-#include "regex.h"
+#include "ruby/st.h"
+#include "ruby/regex.h"
 #include <assert.h>
 
 #define INITIAL_BUFFER_SIZE 256
@@ -35,6 +35,23 @@ static VALUE DBRef;
 static VALUE Code;
 static VALUE RegexpOfHolding;
 static VALUE OrderedHash;
+
+// this sucks. but for some reason these moved around between 1.8 and 1.9
+#ifdef ONIGURUMA_H
+#define IGNORECASE ONIG_OPTION_IGNORECASE
+#define MULTILINE ONIG_OPTION_MULTILINE
+#define EXTENDED ONIG_OPTION_EXTEND
+#else
+#define IGNORECASE RE_OPTION_IGNORECASE
+#define MULTILINE RE_OPTION_MULTILINE
+#define EXTENDED RE_OPTION_EXTENDED
+#endif
+
+// this sucks too.
+#ifndef RREGEXP_SRC_PTR
+#define RREGEXP_SRC_PTR(r) RREGEXP(r)->str
+#define RREGEXP_SRC_LEN(r) RREGEXP(r)->len
+#endif
 
 typedef struct {
     char* buffer;
@@ -111,7 +128,7 @@ static void buffer_write_bytes(bson_buffer* buffer, const char* bytes, int size)
 
 static void write_name_and_type(bson_buffer* buffer, VALUE name, char type) {
     buffer_write_bytes(buffer, &type, 1);
-    buffer_write_bytes(buffer, RSTRING(name)->ptr, RSTRING(name)->len);
+    buffer_write_bytes(buffer, RSTRING_PTR(name), RSTRING_LEN(name));
     buffer_write_bytes(buffer, &zero, 1);
 }
 
@@ -127,7 +144,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         rb_raise(rb_eTypeError, "keys must be strings or symbols");
     }
 
-    if (!allow_id && strcmp("_id", RSTRING(key)->ptr) == 0) {
+    if (!allow_id && strcmp("_id", RSTRING_PTR(key)) == 0) {
         return ST_CONTINUE;
     }
 
@@ -211,9 +228,9 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 int start_position = buffer->position;
                 int length_location = buffer_save_bytes(buffer, 4);
 
-                int length = RSTRING(value)->len + 1;
+                int length = RSTRING_LEN(value) + 1;
                 buffer_write_bytes(buffer, (char*)&length, 4);
-                buffer_write_bytes(buffer, RSTRING(value)->ptr, length - 1);
+                buffer_write_bytes(buffer, RSTRING_PTR(value), length - 1);
                 buffer_write_bytes(buffer, &zero, 1);
                 write_doc(buffer, rb_funcall(value, rb_intern("scope"), 0));
 
@@ -223,9 +240,9 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 break;
             } else {
                 write_name_and_type(buffer, key, 0x02);
-                int length = RSTRING(value)->len + 1;
+                int length = RSTRING_LEN(value) + 1;
                 buffer_write_bytes(buffer, (char*)&length, 4);
-                buffer_write_bytes(buffer, RSTRING(value)->ptr, length - 1);
+                buffer_write_bytes(buffer, RSTRING_PTR(value), length - 1);
                 buffer_write_bytes(buffer, &zero, 1);
                 break;
             }
@@ -249,7 +266,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 const char subtype = strcmp(cls, "ByteBuffer") ?
                     (const char)FIX2INT(rb_funcall(value, rb_intern("subtype"), 0)) : 2;
                 VALUE string_data = rb_funcall(value, rb_intern("to_s"), 0);
-                int length = RSTRING(string_data)->len;
+                int length = RSTRING_LEN(string_data);
                 if (subtype == 2) {
                     const int other_length = length + 4;
                     buffer_write_bytes(buffer, (const char*)&other_length, 4);
@@ -259,7 +276,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 if (subtype != 2) {
                     buffer_write_bytes(buffer, &subtype, 1);
                 }
-                buffer_write_bytes(buffer, RSTRING(string_data)->ptr, length);
+                buffer_write_bytes(buffer, RSTRING_PTR(string_data), length);
                 break;
             }
             if (strcmp(cls, "XGen::Mongo::Driver::ObjectID") == 0) {
@@ -267,7 +284,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 VALUE as_array = rb_funcall(value, rb_intern("to_a"), 0);
                 int i;
                 for (i = 0; i < 12; i++) {
-                    char byte = (char)FIX2INT(RARRAY(as_array)->ptr[i]);
+                    char byte = (char)FIX2INT(RARRAY_PTR(as_array)[i]);
                     buffer_write_bytes(buffer, &byte, 1);
                 }
                 break;
@@ -312,21 +329,21 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         {
             write_name_and_type(buffer, key, 0x0B);
 
-            int length = RREGEXP(value)->len;
-            char* pattern = RREGEXP(value)->str;
+            int length = RREGEXP_SRC_LEN(value);
+            char* pattern = (char*)RREGEXP_SRC_PTR(value);
             buffer_write_bytes(buffer, pattern, length);
             buffer_write_bytes(buffer, &zero, 1);
 
             long flags = RREGEXP(value)->ptr->options;
-            if (flags & RE_OPTION_IGNORECASE) {
+            if (flags & IGNORECASE) {
                 char ignorecase = 'i';
                 buffer_write_bytes(buffer, &ignorecase, 1);
             }
-            if (flags & RE_OPTION_MULTILINE) {
+            if (flags & MULTILINE) {
                 char multiline = 'm';
                 buffer_write_bytes(buffer, &multiline, 1);
             }
-            if (flags & RE_OPTION_EXTENDED) {
+            if (flags & EXTENDED) {
                 char extended = 'x';
                 buffer_write_bytes(buffer, &extended, 1);
             }
@@ -335,8 +352,8 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
             if (TYPE(has_extra) == T_TRUE) {
                 VALUE extra = rb_funcall(value, rb_intern("extra_options_str"), 0);
                 int old_position = buffer->position;
-                buffer_write_bytes(buffer, RSTRING(extra)->ptr, RSTRING(extra)->len);
-                qsort(buffer->buffer + old_position, RSTRING(extra)->len, sizeof(char), cmp_char);
+                buffer_write_bytes(buffer, RSTRING_PTR(extra), RSTRING_LEN(extra));
+                qsort(buffer->buffer + old_position, RSTRING_LEN(extra), sizeof(char), cmp_char);
             }
             buffer_write_bytes(buffer, &zero, 1);
 
@@ -375,8 +392,8 @@ static void write_doc(bson_buffer* buffer, VALUE hash) {
     if (strcmp(rb_class2name(RBASIC(hash)->klass), "OrderedHash") == 0) {
         VALUE keys = rb_funcall(hash, rb_intern("keys"), 0);
         int i;
-        for(i = 0; i < RARRAY(keys)->len; i++) {
-            VALUE key = RARRAY(keys)->ptr[i];
+        for(i = 0; i < RARRAY_LEN(keys); i++) {
+            VALUE key = RARRAY_PTR(keys)[i];
             VALUE value = rb_hash_aref(hash, key);
             write_element(key, value, (VALUE)buffer);
         }
@@ -525,13 +542,13 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             for (i = 0; i < flags_length; i++) {
                 char flag = buffer[*position + i];
                 if (flag == 'i') {
-                    flags |= RE_OPTION_IGNORECASE;
+                    flags |= IGNORECASE;
                 }
                 else if (flag == 'm') {
-                    flags |= RE_OPTION_MULTILINE;
+                    flags |= MULTILINE;
                 }
                 else if (flag == 'x') {
-                    flags |= RE_OPTION_EXTENDED;
+                    flags |= EXTENDED;
                 }
                 else if (strlen(extra) < 9) {
                     strncat(extra, &flag, 1);
@@ -618,8 +635,8 @@ static VALUE elements_to_hash(const char* buffer, int max) {
 }
 
 static VALUE method_deserialize(VALUE self, VALUE bson) {
-    const char* buffer = RSTRING(bson)->ptr;
-    int remaining = RSTRING(bson)->len;
+    const char* buffer = RSTRING_PTR(bson);
+    int remaining = RSTRING_LEN(bson);
 
     // NOTE we just swallow the size and end byte here
     buffer += 4;
