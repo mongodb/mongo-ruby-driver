@@ -11,6 +11,9 @@ end
 require 'rbconfig'
 include Config
 
+gem_command = "gem"
+gem_command = "gem1.9" if CONFIG["MAJOR"] = "1" && CONFIG["MINOR"] = "9"
+
 # NOTE: some of the tests assume Mongo is running
 Rake::TestTask.new do |t|
   t.test_files = FileList['tests/test*.rb']
@@ -33,8 +36,8 @@ namespace :gem do
   desc "Install the gem locally"
   task :install do
     sh <<EOS
-gem build mongo-ruby-driver.gemspec &&
-    sudo gem install mongo-*.gem &&
+#{gem_command} build mongo-ruby-driver.gemspec &&
+    sudo #{gem_command} install mongo-*.gem &&
     rm mongo-*.gem
 EOS
   end
@@ -42,8 +45,8 @@ EOS
   desc "Install the optional c extensions"
   task :install_extensions do
     sh <<EOS
-gem build mongo-extensions.gemspec &&
-    sudo gem install mongo_ext-*.gem &&
+#{gem_command} build mongo-extensions.gemspec &&
+    sudo #{gem_command} install mongo_ext-*.gem &&
     rm mongo_ext-*.gem
 EOS
   end
