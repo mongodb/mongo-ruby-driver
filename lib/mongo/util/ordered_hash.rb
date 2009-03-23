@@ -20,6 +20,12 @@
 # Hash already keeps its keys ordered by order of insertion.
 class OrderedHash < Hash
 
+  def ==(other)
+    !other.nil? &&
+      keys == other.keys &&
+      values == other.values
+  end
+
   # We only need the body of this class if the RUBY_VERSION is before 1.9
   if RUBY_VERSION < '1.9'
 
@@ -33,12 +39,6 @@ class OrderedHash < Hash
     @ordered_keys ||= []
     @ordered_keys << key unless @ordered_keys.include?(key)
     super(key, value)
-  end
-
-  def ==(other)
-    !other.nil? &&
-      keys == other.keys &&
-      values == other.values
   end
 
   def each
