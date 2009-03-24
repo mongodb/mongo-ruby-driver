@@ -52,8 +52,9 @@ end
 host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
 port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
 
-db = Mongo.new(host, port).db('ruby-benchmark')
-db.drop_collection('benchmark')
+connection = Mongo.new(host, port)
+connection.drop_database("benchmark")
+db = connection.db('benchmark')
 
 insert = Proc.new { |coll, object, i|
   object['x'] = i
