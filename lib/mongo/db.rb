@@ -239,8 +239,6 @@ module XGen
         def drop_collection(name)
           return true unless collection_names.include?(full_coll_name(name))
 
-          coll = collection(name)
-          coll.drop_indexes     # Mongo requires that we drop indexes manually
           ok?(db_command(:drop => name))
         end
 
