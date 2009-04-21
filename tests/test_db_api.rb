@@ -309,6 +309,28 @@ class DBAPITest < Test::Unit::TestCase
     @@db.drop_index(@@coll.name, name)
   end
 
+  def test_unique_index
+    @@db.drop_collection("blah")
+    test = @@db.collection("blah")
+    test.create_index("hello")
+
+    test.insert("hello" => "world")
+    test.insert("hello" => "mike")
+    test.insert("hello" => "world")
+    assert !@@db.error?
+
+    @@db.drop_collection("blah")
+    test = @@db.collection("blah")
+    test.create_index("hello", unique=true)
+
+    test.insert("hello" => "world")
+    test.insert("hello" => "mike")
+    test.insert("hello" => "world")
+    assert @@db.error?
+
+    @@db.drop_collection("blah")
+  end
+
   def test_array
     @@coll << {'b' => [1, 2, 3]}
     rows = @@coll.find({}, {:fields => ['b']}).to_a

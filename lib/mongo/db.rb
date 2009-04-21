@@ -430,8 +430,9 @@ module XGen
         # should be either a single field name or a Array of [field name,
         # direction] pairs. Directions should be specified as
         # XGen::Mongo::ASCENDING or XGen::Mongo::DESCENDING. Normally called
-        # by Collection#create_index.
-        def create_index(collection_name, field_or_spec)
+        # by Collection#create_index. If +unique+ is true the index will
+        # enforce a uniqueness constraint.
+        def create_index(collection_name, field_or_spec, unique=false)
           field_h = OrderedHash.new
           if field_or_spec.is_a? String
             field_h[field_or_spec] = 1
@@ -442,7 +443,8 @@ module XGen
           sel = {
             :name => name,
             :ns => full_coll_name(collection_name),
-            :key => field_h
+            :key => field_h,
+            :unique => unique
           }
           @semaphore.synchronize {
             send_to_db(InsertMessage.new(@name, SYSTEM_INDEX_COLLECTION, sel))

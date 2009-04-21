@@ -117,8 +117,10 @@ module XGen
         # should be either a single field name or a Array of [field name,
         # direction] pairs. Directions should be specified as
         # XGen::Mongo::ASCENDING or XGen::Mongo::DESCENDING.
-        def create_index(field_or_spec)
-          @db.create_index(@name, field_or_spec)
+        # +unique+ is an optional boolean indicating whether this index
+        # should enforce a uniqueness constraint.
+        def create_index(field_or_spec, unique=false)
+          @db.create_index(@name, field_or_spec, unique)
         end
 
         # Drop index +name+.
