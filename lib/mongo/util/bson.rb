@@ -46,6 +46,7 @@ class BSON
   SYMBOL = 14
   CODE_W_SCOPE = 15
   NUMBER_INT = 16
+  TIMESTAMP = 17
   MAXKEY = 127
 
   if RUBY_VERSION >= '1.9'
@@ -199,6 +200,10 @@ class BSON
         when CODE_W_SCOPE
           key = deserialize_cstr(@buf)
           doc[key] = deserialize_code_w_scope_data(@buf)
+        when TIMESTAMP
+          key = deserialize_cstr(@buf)
+          doc[key] = [deserialize_number_int_data(@buf),
+                      deserialize_number_int_data(@buf)]
         when EOO
           break
         else

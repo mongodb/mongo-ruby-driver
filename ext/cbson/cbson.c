@@ -611,6 +611,16 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             *position += 4;
             break;
         }
+    case 17:
+        {
+            int i;
+            int j;
+            memcpy(&i, buffer + *position, 4);
+            memcpy(&j, buffer + *position + 4, 4);
+            value = rb_ary_new3(2, LL2NUM(i), LL2NUM(j));
+            *position += 8;
+            break;
+        }
     default:
         {
             rb_raise(rb_eTypeError, "no c decoder for this type yet (%d)", type);

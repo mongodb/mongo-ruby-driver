@@ -181,6 +181,15 @@ class BSONTest < Test::Unit::TestCase
     assert_equal '_id', roundtrip.keys.first
   end
 
+  def test_timestamp
+    val = {"test" => [4, 20]}
+    assert_equal val, @b.deserialize([0x13, 0x00, 0x00, 0x00,
+                                      0x11, 0x74, 0x65, 0x73,
+                                      0x74, 0x00, 0x04, 0x00,
+                                      0x00, 0x00, 0x14, 0x00,
+                                      0x00, 0x00, 0x00])
+  end
+
   def test_do_not_change_original_object
     val = OrderedHash.new
     val['not_id'] = 1
