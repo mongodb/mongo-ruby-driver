@@ -23,7 +23,7 @@ desc "Generate documentation"
 task :rdoc do
   version = eval(File.read("mongo-ruby-driver.gemspec")).version
   out = File.join('html', version.to_s)
-  FileUtils.rm_rf(out)
+  FileUtils.rm_rf('html')
   system "rdoc --main README.rdoc --op #{out} --inline-source --quiet README.rdoc `find lib -name '*.rb'`"
 end
 
