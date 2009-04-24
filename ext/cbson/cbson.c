@@ -377,16 +377,15 @@ static void write_doc(bson_buffer* buffer, VALUE hash) {
     int length_location = buffer_save_bytes(buffer, 4);
 
     VALUE key = rb_str_new2("_id");
-    VALUE id = rb_hash_aref(hash, key);
-    if (TYPE(id) != T_NIL) {
+    if (rb_funcall(hash, rb_intern("has_key?"), 1, key) == Qtrue) {
+        VALUE id = rb_hash_aref(hash, key);
         write_element_allow_id(key, id, (VALUE)buffer, 1);
     }
     key = ID2SYM(rb_intern("_id"));
-    id = rb_hash_aref(hash, key);
-    if (TYPE(id) != T_NIL) {
+    if (rb_funcall(hash, rb_intern("has_key?"), 1, key) == Qtrue) {
+        VALUE id = rb_hash_aref(hash, key);
         write_element_allow_id(key, id, (VALUE)buffer, 1);
     }
-
 
     // we have to check for an OrderedHash and handle that specially
     if (strcmp(rb_class2name(RBASIC(hash)->klass), "OrderedHash") == 0) {

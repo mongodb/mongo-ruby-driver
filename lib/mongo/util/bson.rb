@@ -85,7 +85,13 @@ class BSON
       @buf.put_int(0)
 
       # Write key/value pairs. Always write _id first if it exists.
-      oid = obj['_id'] || obj[:_id]
+      if obj.has_key? '_id'
+        oid = obj['_id']
+      elsif obj.has_key? :_id
+        oid = obj[:_id]
+      else
+        oid = false
+      end
       serialize_key_value('_id', oid) if oid
       obj.each {|k, v| serialize_key_value(k, v) unless k == '_id' || k == :_id }
 

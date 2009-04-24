@@ -522,6 +522,14 @@ class DBAPITest < Test::Unit::TestCase
     end
   end
 
+  def test_hash_default_value_id
+    val = Hash.new(0)
+    val["x"] = 5
+    @@coll.insert val
+    id = @@coll.find_first("x" => 5)["_id"]
+    assert id != 0
+  end
+
 # TODO this test fails with error message "Undefed Before end of object"
 # That is a database error. The undefined type may go away.
 
