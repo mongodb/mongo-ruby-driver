@@ -288,10 +288,6 @@ See the git log comments.
 
 = To Do
 
-* Add group_by. Need to figure out how we are going to send functions. The
-  current thinking is that Mongo will allow a subset of JavaScript (which we
-  would have to send as a string), but this is still under discussion.
-
 * Tests for update and repsert.
 
 * Add a way to specify a collection of databases on startup (a simple array of
