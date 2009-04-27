@@ -530,6 +530,20 @@ class DBAPITest < Test::Unit::TestCase
     assert id != 0
   end
 
+  def test_group
+    @@db.drop_collection("test")
+    test = @@db.collection("test")
+
+    assert_equal [], test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")
+
+    test.insert("a" => 2)
+    test.insert("b" => 5)
+    test.insert("a" => 1)
+
+    assert_equal 3, test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")[0]["count"]
+    assert_equal 1, test.group([], {"a" => {"$gt" => 1}}, {"count" => 0}, "function (obj, prev) { prev.count++; }")[0]["count"]
+  end
+
 # TODO this test fails with error message "Undefed Before end of object"
 # That is a database error. The undefined type may go away.
 

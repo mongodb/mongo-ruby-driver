@@ -139,6 +139,48 @@ module XGen
           @db.drop_collection(@name)
         end
 
+        # Perform a query similar to an SQL group by operation.
+        #
+        # Returns an array of grouped items.
+        #
+        # :keys :: list of fields to group by
+        # :condition :: specification of rows to be considered (as a 'find'
+        #               query specification)
+        # :initial :: initial value of the aggregation counter object
+        # :reduce :: aggregation function as a JavaScript string
+        def group(keys, condition, initial, reduce)
+          group_function = <<EOS
+function () {
+    var c = db[ns].find(condition);
+    var map = new Map();
+    var reduce_function = #{reduce};
+    while (c.hasNext()) {
+        var obj = c.next();
+
+        var key = {};
+        for (var i in keys) {
+            key[keys[i]] = obj[keys[i]];
+        }
+
+        var aggObj = map[key];
+        if (aggObj == null) {
+            var newObj = Object.extend({}, key);
+            aggObj = map[key] = Object.extend(newObj, initial);
+        }
+        reduce_function(obj, aggObj);
+    }
+    return {"result": map.values()};
+}
+EOS
+          return @db.eval(Code.new(group_function,
+                                   {
+                                     "ns" => @name,
+                                     "keys" => keys,
+                                     "condition" => condition,
+                                     "initial" => initial
+                                   }))["result"]
+        end
+
         # Return an array of hashes, one for each index. Each hash contains:
         #
         # :name :: Index name
