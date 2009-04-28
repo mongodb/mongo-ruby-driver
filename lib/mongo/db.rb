@@ -372,6 +372,11 @@ module XGen
           raise "Error with count command: #{doc.inspect}"
         end
 
+        # Dereference a DBRef, getting the document it points to.
+        def dereference(dbref)
+          collection(dbref.namespace).find_first("_id" => dbref.object_id)
+        end
+
         # Evaluate a JavaScript expression on MongoDB.
         # +code+ should be a string or Code instance containing a JavaScript
         # expression. Additional arguments will be passed to that expression

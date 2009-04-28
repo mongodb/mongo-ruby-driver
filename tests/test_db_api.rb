@@ -544,6 +544,20 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 1, test.group([], {"a" => {"$gt" => 1}}, {"count" => 0}, "function (obj, prev) { prev.count++; }")[0]["count"]
   end
 
+  def test_deref
+    @@coll.clear
+
+    assert_equal nil, @@db.dereference(DBRef.new("test", ObjectID.new))
+    obj = {"x" => true}
+    key = @@coll.insert(obj)["_id"]
+    assert_equal true, @@db.dereference(DBRef.new("test", key))["x"]
+
+    assert_equal nil, @@db.dereference(DBRef.new("test", 4))
+    obj = {"_id" => 4}
+    @@coll.insert(obj)
+    assert_equal obj, @@db.dereference(DBRef.new("test", 4))
+  end
+
 # TODO this test fails with error message "Undefed Before end of object"
 # That is a database error. The undefined type may go away.
 
