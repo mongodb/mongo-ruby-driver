@@ -485,7 +485,6 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 5, @@db.eval("2 + 3;")
 
     assert_equal 5, @@db.eval(Code.new("2 + 3;"))
-    assert_equal nil, @@db.eval(Code.new("return i;"))
     assert_equal 2, @@db.eval(Code.new("return i;", {"i" => 2}))
     assert_equal 5, @@db.eval(Code.new("i + 3;", {"i" => 2}))
 
