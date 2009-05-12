@@ -181,6 +181,11 @@ class BSONTest < Test::Unit::TestCase
     assert_equal '_id', roundtrip.keys.first
   end
 
+  def test_nil_id
+    doc = {"_id" => nil}
+    assert_equal doc, @b.deserialize(@b.serialize(doc).to_a)
+  end
+
   def test_timestamp
     val = {"test" => [4, 20]}
     assert_equal val, @b.deserialize([0x13, 0x00, 0x00, 0x00,

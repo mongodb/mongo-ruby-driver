@@ -86,13 +86,11 @@ class BSON
 
       # Write key/value pairs. Always write _id first if it exists.
       if obj.has_key? '_id'
-        oid = obj['_id']
+        serialize_key_value('_id', obj['_id'])
       elsif obj.has_key? :_id
-        oid = obj[:_id]
-      else
-        oid = false
+        serialize_key_value('_id', obj[:_id])
       end
-      serialize_key_value('_id', oid) if oid
+
       obj.each {|k, v| serialize_key_value(k, v) unless k == '_id' || k == :_id }
 
       serialize_eoo_element(@buf)

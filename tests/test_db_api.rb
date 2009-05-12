@@ -547,14 +547,18 @@ class DBAPITest < Test::Unit::TestCase
     @@coll.clear
 
     assert_equal nil, @@db.dereference(DBRef.new("test", ObjectID.new))
-    obj = {"x" => true}
-    key = @@coll.insert(obj)["_id"]
-    assert_equal true, @@db.dereference(DBRef.new("test", key))["x"]
+    @@coll.insert({"x" => "hello"})
+    key = @@coll.find_first()["_id"]
+    assert_equal "hello", @@db.dereference(DBRef.new("test", key))["x"]
 
     assert_equal nil, @@db.dereference(DBRef.new("test", 4))
     obj = {"_id" => 4}
     @@coll.insert(obj)
     assert_equal obj, @@db.dereference(DBRef.new("test", 4))
+
+    @@coll.clear
+    @@coll.insert({"x" => "hello"})
+    assert_equal nil, @@db.dereference(DBRef.new("test", nil))
   end
 
 # TODO this test fails with error message "Undefed Before end of object"
