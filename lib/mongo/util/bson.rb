@@ -248,7 +248,10 @@ class BSON
   end
 
   def deserialize_number_int_data(buf)
-    buf.get_int
+    # sometimes ruby makes me angry... why would the same code pack as signed
+    # but unpack as unsigned
+    unsigned = buf.get_int
+    unsigned >= 2**32 / 2 ? unsigned - 2**32 : unsigned
   end
 
   def deserialize_object_data(buf)
@@ -387,6 +390,9 @@ class BSON
     if type == NUMBER
       buf.put_double(val)
     else
+      if val > 2**32 / 2 - 1 or val < -2**32 / 2
+        raise RangeError.new "MongoDB can only handle 4-byte ints - try converting to a double before saving"
+      end
       buf.put_int(val)
     end
   end

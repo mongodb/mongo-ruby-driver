@@ -151,6 +151,10 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
     switch(TYPE(value)) {
     case T_BIGNUM:
         {
+            if (rb_funcall(value, rb_intern(">"), 1, INT2NUM(2147483647)) == Qtrue ||
+                rb_funcall(value, rb_intern("<"), 1, INT2NUM(-2147483648)) == Qtrue) {
+                rb_raise(rb_eRangeError, "MongoDB can only handle 4-byte ints - try converting to a double before saving");
+            }
             write_name_and_type(buffer, key, 0x10);
             VALUE as_f = rb_funcall(value, rb_intern("to_f"), 0);
             int int_value = NUM2LL(as_f);

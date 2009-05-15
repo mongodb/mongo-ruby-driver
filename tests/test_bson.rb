@@ -36,6 +36,18 @@ class BSONTest < Test::Unit::TestCase
     doc = {'doc' => 42}
     @b.serialize(doc)
     assert_equal doc, @b.deserialize
+
+    doc = {"doc" => -5600}
+    @b.serialize(doc)
+    assert_equal doc, @b.deserialize
+
+    doc = {"doc" => 2147483647}
+    @b.serialize(doc)
+    assert_equal doc, @b.deserialize
+
+    doc = {"doc" => -2147483648}
+    @b.serialize(doc)
+    assert_equal doc, @b.deserialize
   end
 
   def test_ordered_hash
@@ -193,6 +205,21 @@ class BSONTest < Test::Unit::TestCase
                                       0x74, 0x00, 0x04, 0x00,
                                       0x00, 0x00, 0x14, 0x00,
                                       0x00, 0x00, 0x00])
+  end
+
+  def test_overflow
+    doc = {"x" => 2**45}
+    assert_raise RangeError do
+      @b.serialize(doc)
+    end
+
+    doc = {"x" => 2147483647}
+    assert_equal doc, @b.deserialize(@b.serialize(doc).to_a)
+
+    doc["x"] = doc["x"] + 1
+    assert_raise RangeError do
+      @b.serialize(doc)
+    end
   end
 
   def test_do_not_change_original_object
