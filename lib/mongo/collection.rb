@@ -73,6 +73,15 @@ module XGen
           cursor.next_object    # don't need to explicitly close b/c of limit
         end
 
+        # Save an updated +object+ to the collection, or insert it if it doesn't exist already.
+        def save(object)
+          if id = object[:_id] || object['_id']
+            modify({:_id => id}, object)
+          else
+            insert(object)
+          end
+        end
+
         # Insert +objects+, which are hashes. "<<" is aliased to this method.
         # Returns either the single inserted object or a new array containing
         # +objects+. The object(s) may have been modified by the database's PK
