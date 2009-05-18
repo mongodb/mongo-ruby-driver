@@ -321,6 +321,8 @@ Adrian Madrid, aemadrid@gmail.com
 * Gem support.
 * Many other code suggestions and improvements.
 
+Aman Gupta, aman@tmm1.net
+* Collection#save
 
 = License
 
