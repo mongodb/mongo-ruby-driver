@@ -561,6 +561,30 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal nil, @@db.dereference(DBRef.new("test", nil))
   end
 
+  def test_save
+    @@coll.clear
+
+    a = {"hello" => "world"}
+
+    @@coll.save(a)
+    assert_equal 1, @@coll.count
+
+    @@coll.save(@@coll.find_first)
+    assert_equal 1, @@coll.count
+
+    assert_equal "world", @@coll.find_first()["hello"]
+
+    doc = @@coll.find_first
+    doc["hello"] = "mike"
+    @@coll.save(doc)
+    assert_equal 1, @@coll.count
+
+    assert_equal "mike", @@coll.find_first()["hello"]
+
+    @@coll.save(a)
+    assert_equal 2, @@coll.count
+  end
+
 # TODO this test fails with error message "Undefed Before end of object"
 # That is a database error. The undefined type may go away.
 
