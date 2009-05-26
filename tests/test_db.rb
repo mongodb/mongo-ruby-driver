@@ -122,15 +122,33 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_error
-    doc = @@db.send(:db_command, :forceerror => 1)
-    assert @@db.error?
-    err = @@db.error
-    assert_match /forced error/, err
+    @@db.reset_error_history
+    assert_nil @@db.error
+    assert !@@db.error?
+    assert_nil @@db.previous_error
 
-    # ask again
+    @@db.send(:db_command, :forceerror => 1)
     assert @@db.error?
-    err2 = @@db.error
-    assert_equal err, err2
+    assert_not_nil @@db.error
+    assert_not_nil @@db.previous_error
+
+    @@db.send(:db_command, :forceerror => 1)
+    assert @@db.error?
+    assert @@db.error
+    prev_error = @@db.previous_error
+    assert_equal 1, prev_error['nPrev']
+    assert_equal prev_error["err"], @@db.error
+
+    @@db.collection('test').find_first
+    assert_nil @@db.error
+    assert !@@db.error?
+    assert @@db.previous_error
+    assert_equal 2, @@db.previous_error['nPrev']
+
+    @@db.reset_error_history
+    assert_nil @@db.error
+    assert !@@db.error?
+    assert_nil @@db.previous_error
   end
 
   def test_text_port_number

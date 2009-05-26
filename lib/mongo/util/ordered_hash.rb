@@ -21,9 +21,13 @@
 class OrderedHash < Hash
 
   def ==(other)
-    !other.nil? &&
-      keys == other.keys &&
-      values == other.values
+    begin
+      !other.nil? &&
+        keys == other.keys &&
+        values == other.values
+    rescue
+      false
+    end
   end
 
   # We only need the body of this class if the RUBY_VERSION is before 1.9

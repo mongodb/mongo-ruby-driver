@@ -264,6 +264,27 @@ module XGen
           error != nil
         end
 
+        # Get the most recent error to have occured on this database
+        #
+        # Only returns errors that have occured since the last call to
+        # DB#reset_error_history - returns +nil+ if there is no such error.
+        def previous_error
+          error = db_command(:getpreverror => 1)
+          if error["err"]
+            error
+          else
+            nil
+          end
+        end
+
+        # Reset the error history of this database
+        #
+        # Calls to DB#previous_error will only return errors that have occurred
+        # since the most recent call to this method.
+        def reset_error_history
+          db_command(:reseterror => 1)
+        end
+
         # Returns true if this database is a master (or is not paired with any
         # other database), false if it is a slave.
         def master?
