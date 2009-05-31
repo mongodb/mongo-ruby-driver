@@ -391,7 +391,7 @@ class BSON
       buf.put_double(val)
     else
       if val > 2**32 / 2 - 1 or val < -2**32 / 2
-        raise RangeError.new "MongoDB can only handle 4-byte ints - try converting to a double before saving"
+        raise RangeError.new("MongoDB can only handle 4-byte ints - try converting to a double before saving")
       end
       buf.put_int(val)
     end
