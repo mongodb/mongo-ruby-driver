@@ -27,7 +27,7 @@ module XGen
           super(OP_INSERT)
           write_int(0)
           write_string("#{db_name}.#{collection_name}")
-          objs.each { |o| write_doc(o) }
+          objs.each { |o| write_doc(o, true) }
         end
       end
     end

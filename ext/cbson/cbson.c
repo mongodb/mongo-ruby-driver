@@ -66,7 +66,7 @@ static int cmp_char(const void* a, const void* b) {
     return *(char*)a - *(char*)b;
 }
 
-static void write_doc(bson_buffer* buffer, VALUE hash);
+static void write_doc(bson_buffer* buffer, VALUE hash, VALUE no_dollar_sign);
 static int write_element(VALUE key, VALUE value, VALUE extra);
 static VALUE elements_to_hash(const char* buffer, int max);
 
@@ -126,6 +126,10 @@ static void buffer_write_bytes(bson_buffer* buffer, const char* bytes, int size)
     buffer->position += size;
 }
 
+static VALUE pack_extra(bson_buffer* buffer, VALUE no_dollar_sign) {
+    return rb_ary_new3(2, INT2NUM((int)buffer), no_dollar_sign);
+}
+
 static void write_name_and_type(bson_buffer* buffer, VALUE name, char type) {
     buffer_write_bytes(buffer, &type, 1);
     buffer_write_bytes(buffer, RSTRING_PTR(name), RSTRING_LEN(name));
@@ -133,7 +137,8 @@ static void write_name_and_type(bson_buffer* buffer, VALUE name, char type) {
 }
 
 static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow_id) {
-    bson_buffer* buffer = (bson_buffer*)extra;
+    bson_buffer* buffer = (bson_buffer*)NUM2INT(rb_ary_entry(extra, 0));
+    VALUE no_dollar_sign = rb_ary_entry(extra, 1);
 
     if (TYPE(key) == T_SYMBOL) {
         // TODO better way to do this... ?
@@ -146,6 +151,16 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
 
     if (!allow_id && strcmp("_id", RSTRING_PTR(key)) == 0) {
         return ST_CONTINUE;
+    }
+
+    if (no_dollar_sign == Qtrue && RSTRING_LEN(key) > 0 && RSTRING_PTR(key)[0] == '$') {
+        rb_raise(rb_eRuntimeError, "key must not start with '$'");
+    }
+    int i;
+    for (i = 0; i < RSTRING_LEN(key); i++) {
+        if (RSTRING_PTR(key)[i] == '.') {
+            rb_raise(rb_eRuntimeError, "key must not contain '.'");
+        }
     }
 
     switch(TYPE(value)) {
@@ -195,7 +210,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
     case T_HASH:
         {
             write_name_and_type(buffer, key, 0x03);
-            write_doc(buffer, value);
+            write_doc(buffer, value, no_dollar_sign);
             break;
         }
     case T_ARRAY:
@@ -213,7 +228,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 char* name;
                 asprintf(&name, "%d", i);
                 VALUE key = rb_str_new2(name);
-                write_element(key, values[i], (VALUE)buffer);
+                write_element(key, values[i], pack_extra(buffer, no_dollar_sign));
                 free(name);
             }
 
@@ -236,7 +251,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 buffer_write_bytes(buffer, (char*)&length, 4);
                 buffer_write_bytes(buffer, RSTRING_PTR(value), length - 1);
                 buffer_write_bytes(buffer, &zero, 1);
-                write_doc(buffer, rb_funcall(value, rb_intern("scope"), 0));
+                write_doc(buffer, rb_funcall(value, rb_intern("scope"), 0), Qfalse);
 
                 int total_length = buffer->position - start_position;
                 memcpy(buffer->buffer + length_location, &total_length, 4);
@@ -302,9 +317,9 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 int length_location = buffer_save_bytes(buffer, 4);
 
                 VALUE ns = rb_funcall(value, rb_intern("namespace"), 0);
-                write_element(rb_str_new2("$ref"), ns, (VALUE)buffer);
+                write_element(rb_str_new2("$ref"), ns, pack_extra(buffer, Qfalse));
                 VALUE oid = rb_funcall(value, rb_intern("object_id"), 0);
-                write_element(rb_str_new2("$id"), oid, (VALUE)buffer);
+                write_element(rb_str_new2("$id"), oid, pack_extra(buffer, Qfalse));
 
                 // write null byte and fill in length
                 buffer_write_bytes(buffer, &zero, 1);
@@ -376,19 +391,19 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
     return write_element_allow_id(key, value, extra, 0);
 }
 
-static void write_doc(bson_buffer* buffer, VALUE hash) {
+static void write_doc(bson_buffer* buffer, VALUE hash, VALUE no_dollar_sign) {
     int start_position = buffer->position;
     int length_location = buffer_save_bytes(buffer, 4);
 
     VALUE key = rb_str_new2("_id");
     if (rb_funcall(hash, rb_intern("has_key?"), 1, key) == Qtrue) {
         VALUE id = rb_hash_aref(hash, key);
-        write_element_allow_id(key, id, (VALUE)buffer, 1);
+        write_element_allow_id(key, id, pack_extra(buffer, no_dollar_sign), 1);
     }
     key = ID2SYM(rb_intern("_id"));
     if (rb_funcall(hash, rb_intern("has_key?"), 1, key) == Qtrue) {
         VALUE id = rb_hash_aref(hash, key);
-        write_element_allow_id(key, id, (VALUE)buffer, 1);
+        write_element_allow_id(key, id, pack_extra(buffer, no_dollar_sign), 1);
     }
 
     // we have to check for an OrderedHash and handle that specially
@@ -398,10 +413,11 @@ static void write_doc(bson_buffer* buffer, VALUE hash) {
         for(i = 0; i < RARRAY_LEN(keys); i++) {
             VALUE key = RARRAY_PTR(keys)[i];
             VALUE value = rb_hash_aref(hash, key);
-            write_element(key, value, (VALUE)buffer);
+
+            write_element(key, value, pack_extra(buffer, no_dollar_sign));
         }
     } else {
-        rb_hash_foreach(hash, write_element, (VALUE)buffer);
+        rb_hash_foreach(hash, write_element, pack_extra(buffer, no_dollar_sign));
     }
 
     // write null byte and fill in length
@@ -410,11 +426,11 @@ static void write_doc(bson_buffer* buffer, VALUE hash) {
     memcpy(buffer->buffer + length_location, &length, 4);
 }
 
-static VALUE method_serialize(VALUE self, VALUE doc) {
+static VALUE method_serialize(VALUE self, VALUE doc, VALUE no_dollar_sign) {
     bson_buffer* buffer = buffer_new();
     assert(buffer);
 
-    write_doc(buffer, doc);
+    write_doc(buffer, doc, no_dollar_sign);
 
     VALUE result = rb_str_new(buffer->buffer, buffer->position);
     buffer_free(buffer);
@@ -681,6 +697,6 @@ void Init_cbson() {
     OrderedHash = rb_const_get(rb_cObject, rb_intern("OrderedHash"));
 
     VALUE CBson = rb_define_module("CBson");
-    rb_define_module_function(CBson, "serialize", method_serialize, 1);
+    rb_define_module_function(CBson, "serialize", method_serialize, 2);
     rb_define_module_function(CBson, "deserialize", method_deserialize, 1);
 }

@@ -585,6 +585,44 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, @@coll.count
   end
 
+  def test_invalid_key_names
+    @@coll.clear
+
+    @@coll.insert({"hello" => "world"})
+    @@coll.insert({"hello" => {"hello" => "world"}})
+
+    assert_raise RuntimeError do
+      @@coll.insert({"$hello" => "world"})
+    end
+    assert_raise RuntimeError do
+      @@coll.insert({"hello" => {"$hello" => "world"}})
+    end
+
+    @@coll.insert({"he$llo" => "world"})
+    @@coll.insert({"hello" => {"hell$o" => "world"}})
+
+    assert_raise RuntimeError do
+      @@coll.insert({".hello" => "world"})
+    end
+    assert_raise RuntimeError do
+      @@coll.insert({"hello" => {".hello" => "world"}})
+    end
+    assert_raise RuntimeError do
+      @@coll.insert({"hello." => "world"})
+    end
+    assert_raise RuntimeError do
+      @@coll.insert({"hello" => {"hello." => "world"}})
+    end
+    assert_raise RuntimeError do
+      @@coll.insert({"hel.lo" => "world"})
+    end
+    assert_raise RuntimeError do
+      @@coll.insert({"hello" => {"hel.lo" => "world"}})
+    end
+
+    @@coll.modify({"hello" => "world"}, {"$inc" => "hello"})
+  end
+
 # TODO this test fails with error message "Undefed Before end of object"
 # That is a database error. The undefined type may go away.
 
