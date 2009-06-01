@@ -294,9 +294,37 @@ class DBAPITest < Test::Unit::TestCase
   ensure
     @@db.drop_index(@@coll.name, name)
   end
+  
+  def test_index_create_with_symbol
+    name = @@db.create_index(@@coll.name, :a)
+    list = @@db.index_information(@@coll.name)
+    assert_equal @@coll.index_information, list
+    assert_equal 2, list.length
+
+    info = list[1]
+    assert_equal name, 'a_1'
+    assert_equal name, info[:name]
+    assert_equal 1, info[:keys]['a']
+  ensure
+    @@db.drop_index(@@coll.name, name)
+  end
 
   def test_multiple_index_cols
     name = @@db.create_index(@@coll.name, [['a', DESCENDING], ['b', ASCENDING], ['c', DESCENDING]])
+    list = @@db.index_information(@@coll.name)
+    assert_equal 2, list.length
+
+    info = list[1]
+    assert_equal name, 'a_-1_b_1_c_-1'
+    assert_equal name, info[:name]
+    keys = info[:keys].keys
+    assert_equal ['a', 'b', 'c'], keys.sort
+  ensure
+    @@db.drop_index(@@coll.name, name)
+  end
+  
+  def test_multiple_index_cols_with_symbols
+    name = @@db.create_index(@@coll.name, [[:a, DESCENDING], [:b, ASCENDING], [:c, DESCENDING]])
     list = @@db.index_information(@@coll.name)
     assert_equal 2, list.length
 
