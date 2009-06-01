@@ -324,6 +324,9 @@ Adrian Madrid, aemadrid@gmail.com
 Aman Gupta, aman@tmm1.net
 * Collection#save
 
+Jon Crosby, jon@joncrosby.me
+* Some code clean-up
+
 = License
 
  Copyright 2008-2009 10gen Inc.
