@@ -612,6 +612,14 @@ class DBAPITest < Test::Unit::TestCase
     @@coll.save(a)
     assert_equal 2, @@coll.count
   end
+  
+  def test_save_with_object_that_has_id_but_does_not_actually_exist_in_collection
+    @@coll.clear
+    
+    a = {'_id' => '1', 'hello' => 'world'}
+    @@coll.save(a)    
+    assert_equal(1, @@coll.count)
+  end
 
 # TODO this test fails with error message "Undefed Before end of object"
 # That is a database error. The undefined type may go away.
