@@ -327,6 +327,10 @@ Aman Gupta, aman@tmm1.net
 Jon Crosby, jon@joncrosby.me
 * Some code clean-up
 
+John Nunemaker, http://railstips.org
+* Collection#create_index takes symbols as well as strings
+* Fix for Collection#save
+
 = License
 
  Copyright 2008-2009 10gen Inc.
