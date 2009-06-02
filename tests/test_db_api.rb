@@ -327,8 +327,25 @@ class DBAPITest < Test::Unit::TestCase
     test.insert("hello" => "mike")
     test.insert("hello" => "world")
     assert @@db.error?
+  end
+
+  def test_index_on_subfield
+    @@db.drop_collection("blah")
+    test = @@db.collection("blah")
+
+    test.insert("hello" => {"a" => 4, "b" => 5})
+    test.insert("hello" => {"a" => 7, "b" => 2})
+    test.insert("hello" => {"a" => 4, "b" => 10})
+    assert !@@db.error?
 
     @@db.drop_collection("blah")
+    test = @@db.collection("blah")
+    test.create_index("hello.a", unique=true)
+
+    test.insert("hello" => {"a" => 4, "b" => 5})
+    test.insert("hello" => {"a" => 7, "b" => 2})
+    test.insert("hello" => {"a" => 4, "b" => 10})
+    assert @@db.error?
   end
 
   def test_array
