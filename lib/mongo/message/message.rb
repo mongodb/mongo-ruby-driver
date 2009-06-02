@@ -36,7 +36,7 @@ module XGen
           @request_id = (@@class_req_id += 1)
           @response_id = 0
           @buf = ByteBuffer.new
-          
+
           @buf.put_int(16)      # holder for length
           @buf.put_int(@request_id)
           @buf.put_int(0)       # response_to
@@ -58,8 +58,8 @@ module XGen
           update_message_length
         end
 
-        def write_doc(hash)
-          @buf.put_array(BSON.new.serialize(hash).to_a)
+        def write_doc(hash, no_dollar_sign=false)
+          @buf.put_array(BSON.new.serialize(hash, no_dollar_sign).to_a)
           update_message_length
         end
 
