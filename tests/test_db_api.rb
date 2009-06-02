@@ -295,6 +295,20 @@ class DBAPITest < Test::Unit::TestCase
   ensure
     @@db.drop_index(@@coll.name, name)
   end
+  
+  def test_index_create_with_symbol
+    name = @@db.create_index(@@coll.name, :a)
+    list = @@db.index_information(@@coll.name)
+    assert_equal @@coll.index_information, list
+    assert_equal 2, list.length
+
+    info = list[1]
+    assert_equal name, 'a_1'
+    assert_equal name, info[:name]
+    assert_equal 1, info[:keys]['a']
+  ensure
+    @@db.drop_index(@@coll.name, name)
+  end
 
   def test_multiple_index_cols
     name = @@db.create_index(@@coll.name, [['a', DESCENDING], ['b', ASCENDING], ['c', DESCENDING]])
@@ -304,6 +318,20 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal name, 'a_-1_b_1_c_-1'
     assert info.has_key? name
     assert_equal [['a', DESCENDING], ['b', ASCENDING], ['c', DESCENDING]], info[name]
+  ensure
+    @@db.drop_index(@@coll.name, name)
+  end
+  
+  def test_multiple_index_cols_with_symbols
+    name = @@db.create_index(@@coll.name, [[:a, DESCENDING], [:b, ASCENDING], [:c, DESCENDING]])
+    list = @@db.index_information(@@coll.name)
+    assert_equal 2, list.length
+
+    info = list[1]
+    assert_equal name, 'a_-1_b_1_c_-1'
+    assert_equal name, info[:name]
+    keys = info[:keys].keys
+    assert_equal ['a', 'b', 'c'], keys.sort
   ensure
     @@db.drop_index(@@coll.name, name)
   end
@@ -599,6 +627,14 @@ class DBAPITest < Test::Unit::TestCase
 
     @@coll.save(a)
     assert_equal 2, @@coll.count
+  end
+  
+  def test_save_with_object_that_has_id_but_does_not_actually_exist_in_collection
+    @@coll.clear
+    
+    a = {'_id' => '1', 'hello' => 'world'}
+    @@coll.save(a)    
+    assert_equal(1, @@coll.count)
   end
 
   def test_invalid_key_names

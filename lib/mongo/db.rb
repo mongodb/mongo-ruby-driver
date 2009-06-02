@@ -447,10 +447,10 @@ module XGen
         # enforce a uniqueness constraint.
         def create_index(collection_name, field_or_spec, unique=false)
           field_h = OrderedHash.new
-          if field_or_spec.is_a? String
-            field_h[field_or_spec] = 1
+          if field_or_spec.is_a?(String) || field_or_spec.is_a?(Symbol)
+            field_h[field_or_spec.to_s] = 1
           else
-            field_or_spec.each { |f| field_h[f[0]] = f[1] }
+            field_or_spec.each { |f| field_h[f[0].to_s] = f[1] }
           end
           name = gen_index_name(field_h)
           sel = {
