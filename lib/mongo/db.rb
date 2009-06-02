@@ -425,31 +425,18 @@ module XGen
           raise "Error with drop_index command: #{doc.inspect}" unless ok?(doc)
         end
 
-        # Return an array of hashes, one for each index on +collection_name+.
-        # Normally called by Collection#index_information. Each hash contains:
-        #
-        # :name :: Index name
-        #
-        # :keys :: Hash whose keys are the names of the fields that make up
-        #          the key and values are integers.
-        #
-        # :ns :: Namespace; same as +collection_name+.
+        # Get information on the indexes for the collection +collection_name+.
+        # Normally called by Collection#index_information. Returns a hash where
+        # the keys are index names (as returned by Collection#create_index and
+        # the values are lists of [key, direction] pairs specifying the index
+        # (as passed to Collection#create_index).
         def index_information(collection_name)
           sel = {:ns => full_coll_name(collection_name)}
-          query(Collection.new(self, SYSTEM_INDEX_COLLECTION), Query.new(sel)).collect { |row|
-            h = {:name => row['name']}
-            raise "Name of index on return from db was nil. Coll = #{full_coll_name(collection_name)}" unless h[:name]
-
-            h[:keys] = row['key']
-            raise "Keys for index on return from db was nil. Coll = #{full_coll_name(collection_name)}" unless h[:keys]
-
-            h[:ns] = row['ns']
-            raise "Namespace for index on return from db was nil. Coll = #{full_coll_name(collection_name)}" unless h[:ns]
-            h[:ns].sub!(/.*\./, '')
-            raise "Error: ns != collection" unless h[:ns] == collection_name
-
-            h
+          info = {}
+          query(Collection.new(self, SYSTEM_INDEX_COLLECTION), Query.new(sel)).each { |index|
+            info[index['name']] = index['key'].to_a
           }
+          info
         end
 
         # Create a new index on +collection_name+. +field_or_spec+

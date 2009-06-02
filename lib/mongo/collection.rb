@@ -190,14 +190,10 @@ EOS
                                    }))["result"]
         end
 
-        # Return an array of hashes, one for each index. Each hash contains:
-        #
-        # :name :: Index name
-        #
-        # :keys :: Hash whose keys are the names of the fields that make up
-        #          the key and values are integers.
-        #
-        # :ns :: Namespace; same as this collection's name.
+        # Get information on the indexes for the collection +collection_name+.
+        # Returns a hash where the keys are index names (as returned by
+        # Collection#create_index and the values are lists of [key, direction]
+        # pairs specifying the index (as passed to Collection#create_index).
         def index_information
           @db.index_information(@name)
         end
