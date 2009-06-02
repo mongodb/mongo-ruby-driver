@@ -72,14 +72,13 @@ module XGen
           cursor = find(selector, h)
           cursor.next_object    # don't need to explicitly close b/c of limit
         end
-        
+
         # Save an updated +object+ to the collection, or insert it if it doesn't exist already.
         def save(object)
-          id = object[:_id] || object['_id']
-          if id.nil? || find_first({'_id' => id}).nil?
-            insert(object)
+          if id = object[:_id] || object['_id']
+            repsert({:_id => id}, object)
           else
-            modify({:_id => id}, object)
+            insert(object)
           end
         end
 
