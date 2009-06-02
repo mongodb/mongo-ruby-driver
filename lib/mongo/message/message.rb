@@ -58,8 +58,8 @@ module XGen
           update_message_length
         end
 
-        def write_doc(hash, no_dollar_sign=false)
-          @buf.put_array(BSON.new.serialize(hash, no_dollar_sign).to_a)
+        def write_doc(hash, check_keys=false)
+          @buf.put_array(BSON.new.serialize(hash, check_keys).to_a)
           update_message_length
         end
 

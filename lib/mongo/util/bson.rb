@@ -73,11 +73,11 @@ class BSON
 
   begin
     require 'mongo_ext/cbson'
-    def serialize(obj, no_dollar_sign=false)
-      @buf = ByteBuffer.new(CBson.serialize(obj, no_dollar_sign))
+    def serialize(obj, check_keys=false)
+      @buf = ByteBuffer.new(CBson.serialize(obj, check_keys))
     end
   rescue LoadError
-    def serialize(obj, no_dollar_sign=false)
+    def serialize(obj, check_keys=false)
       raise "Document is null" unless obj
 
       @buf.rewind
@@ -86,12 +86,12 @@ class BSON
 
       # Write key/value pairs. Always write _id first if it exists.
       if obj.has_key? '_id'
-        serialize_key_value('_id', obj['_id'], no_dollar_sign)
+        serialize_key_value('_id', obj['_id'], check_keys)
       elsif obj.has_key? :_id
-        serialize_key_value('_id', obj[:_id], no_dollar_sign)
+        serialize_key_value('_id', obj[:_id], check_keys)
       end
 
-      obj.each {|k, v| serialize_key_value(k, v, no_dollar_sign) unless k == '_id' || k == :_id }
+      obj.each {|k, v| serialize_key_value(k, v, check_keys) unless k == '_id' || k == :_id }
 
       serialize_eoo_element(@buf)
       @buf.put_int(@buf.size, 0)
@@ -99,13 +99,15 @@ class BSON
     end
   end
 
-  def serialize_key_value(k, v, no_dollar_sign)
+  def serialize_key_value(k, v, check_keys)
     k = k.to_s
-    if no_dollar_sign and k[0] == ?$
-      raise RuntimeError.new("key #{k} must not start with '$'")
-    end
-    if k.include? ?.
-      raise RuntimeError.new("key #{k} must not contain '.'")
+    if check_keys
+      if k[0] == ?$
+        raise RuntimeError.new("key #{k} must not start with '$'")
+      end
+      if k.include? ?.
+        raise RuntimeError.new("key #{k} must not contain '.'")
+      end
     end
     type = bson_type(v)
     case type
@@ -114,11 +116,11 @@ class BSON
     when NUMBER, NUMBER_INT
       serialize_number_element(@buf, k, v, type)
     when OBJECT
-      serialize_object_element(@buf, k, v, no_dollar_sign)
+      serialize_object_element(@buf, k, v, check_keys)
     when OID
       serialize_oid_element(@buf, k, v)
     when ARRAY
-      serialize_array_element(@buf, k, v, no_dollar_sign)
+      serialize_array_element(@buf, k, v, check_keys)
     when REGEX
       serialize_regex_element(@buf, k, v)
     when BOOLEAN
@@ -404,18 +406,18 @@ class BSON
     end
   end
 
-  def serialize_object_element(buf, key, val, no_dollar_sign, opcode=OBJECT)
+  def serialize_object_element(buf, key, val, check_keys, opcode=OBJECT)
     buf.put(opcode)
     self.class.serialize_cstr(buf, key)
-    buf.put_array(BSON.new.serialize(val, no_dollar_sign).to_a)
+    buf.put_array(BSON.new.serialize(val, check_keys).to_a)
   end
 
-  def serialize_array_element(buf, key, val, no_dollar_sign)
+  def serialize_array_element(buf, key, val, check_keys)
     # Turn array into hash with integer indices as keys
     h = OrderedHash.new
     i = 0
     val.each { |v| h[i] = v; i += 1 }
-    serialize_object_element(buf, key, h, no_dollar_sign, ARRAY)
+    serialize_object_element(buf, key, h, check_keys, ARRAY)
   end
 
   def serialize_regex_element(buf, key, val)

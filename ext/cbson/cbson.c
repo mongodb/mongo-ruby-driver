@@ -66,7 +66,7 @@ static int cmp_char(const void* a, const void* b) {
     return *(char*)a - *(char*)b;
 }
 
-static void write_doc(bson_buffer* buffer, VALUE hash, VALUE no_dollar_sign);
+static void write_doc(bson_buffer* buffer, VALUE hash, VALUE check_keys);
 static int write_element(VALUE key, VALUE value, VALUE extra);
 static VALUE elements_to_hash(const char* buffer, int max);
 
@@ -126,8 +126,8 @@ static void buffer_write_bytes(bson_buffer* buffer, const char* bytes, int size)
     buffer->position += size;
 }
 
-static VALUE pack_extra(bson_buffer* buffer, VALUE no_dollar_sign) {
-    return rb_ary_new3(2, INT2NUM((int)buffer), no_dollar_sign);
+static VALUE pack_extra(bson_buffer* buffer, VALUE check_keys) {
+    return rb_ary_new3(2, INT2NUM((int)buffer), check_keys);
 }
 
 static void write_name_and_type(bson_buffer* buffer, VALUE name, char type) {
@@ -138,7 +138,7 @@ static void write_name_and_type(bson_buffer* buffer, VALUE name, char type) {
 
 static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow_id) {
     bson_buffer* buffer = (bson_buffer*)NUM2INT(rb_ary_entry(extra, 0));
-    VALUE no_dollar_sign = rb_ary_entry(extra, 1);
+    VALUE check_keys = rb_ary_entry(extra, 1);
 
     if (TYPE(key) == T_SYMBOL) {
         // TODO better way to do this... ?
@@ -153,13 +153,15 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         return ST_CONTINUE;
     }
 
-    if (no_dollar_sign == Qtrue && RSTRING_LEN(key) > 0 && RSTRING_PTR(key)[0] == '$') {
-        rb_raise(rb_eRuntimeError, "key must not start with '$'");
-    }
-    int i;
-    for (i = 0; i < RSTRING_LEN(key); i++) {
-        if (RSTRING_PTR(key)[i] == '.') {
-            rb_raise(rb_eRuntimeError, "key must not contain '.'");
+    if (check_keys == Qtrue) {
+        if (RSTRING_LEN(key) > 0 && RSTRING_PTR(key)[0] == '$') {
+            rb_raise(rb_eRuntimeError, "key must not start with '$'");
+        }
+        int i;
+        for (i = 0; i < RSTRING_LEN(key); i++) {
+            if (RSTRING_PTR(key)[i] == '.') {
+                rb_raise(rb_eRuntimeError, "key must not contain '.'");
+            }
         }
     }
 
@@ -210,7 +212,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
     case T_HASH:
         {
             write_name_and_type(buffer, key, 0x03);
-            write_doc(buffer, value, no_dollar_sign);
+            write_doc(buffer, value, check_keys);
             break;
         }
     case T_ARRAY:
@@ -228,7 +230,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 char* name;
                 asprintf(&name, "%d", i);
                 VALUE key = rb_str_new2(name);
-                write_element(key, values[i], pack_extra(buffer, no_dollar_sign));
+                write_element(key, values[i], pack_extra(buffer, check_keys));
                 free(name);
             }
 
@@ -391,19 +393,19 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
     return write_element_allow_id(key, value, extra, 0);
 }
 
-static void write_doc(bson_buffer* buffer, VALUE hash, VALUE no_dollar_sign) {
+static void write_doc(bson_buffer* buffer, VALUE hash, VALUE check_keys) {
     int start_position = buffer->position;
     int length_location = buffer_save_bytes(buffer, 4);
 
     VALUE key = rb_str_new2("_id");
     if (rb_funcall(hash, rb_intern("has_key?"), 1, key) == Qtrue) {
         VALUE id = rb_hash_aref(hash, key);
-        write_element_allow_id(key, id, pack_extra(buffer, no_dollar_sign), 1);
+        write_element_allow_id(key, id, pack_extra(buffer, check_keys), 1);
     }
     key = ID2SYM(rb_intern("_id"));
     if (rb_funcall(hash, rb_intern("has_key?"), 1, key) == Qtrue) {
         VALUE id = rb_hash_aref(hash, key);
-        write_element_allow_id(key, id, pack_extra(buffer, no_dollar_sign), 1);
+        write_element_allow_id(key, id, pack_extra(buffer, check_keys), 1);
     }
 
     // we have to check for an OrderedHash and handle that specially
@@ -414,10 +416,10 @@ static void write_doc(bson_buffer* buffer, VALUE hash, VALUE no_dollar_sign) {
             VALUE key = RARRAY_PTR(keys)[i];
             VALUE value = rb_hash_aref(hash, key);
 
-            write_element(key, value, pack_extra(buffer, no_dollar_sign));
+            write_element(key, value, pack_extra(buffer, check_keys));
         }
     } else {
-        rb_hash_foreach(hash, write_element, pack_extra(buffer, no_dollar_sign));
+        rb_hash_foreach(hash, write_element, pack_extra(buffer, check_keys));
     }
 
     // write null byte and fill in length
@@ -426,11 +428,11 @@ static void write_doc(bson_buffer* buffer, VALUE hash, VALUE no_dollar_sign) {
     memcpy(buffer->buffer + length_location, &length, 4);
 }
 
-static VALUE method_serialize(VALUE self, VALUE doc, VALUE no_dollar_sign) {
+static VALUE method_serialize(VALUE self, VALUE doc, VALUE check_keys) {
     bson_buffer* buffer = buffer_new();
     assert(buffer);
 
-    write_doc(buffer, doc, no_dollar_sign);
+    write_doc(buffer, doc, check_keys);
 
     VALUE result = rb_str_new(buffer->buffer, buffer->position);
     buffer_free(buffer);

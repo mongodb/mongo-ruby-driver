@@ -473,7 +473,7 @@ module XGen
             :unique => unique
           }
           @semaphore.synchronize {
-            send_to_db(InsertMessage.new(@name, SYSTEM_INDEX_COLLECTION, sel))
+            send_to_db(InsertMessage.new(@name, SYSTEM_INDEX_COLLECTION, false, sel))
           }
           name
         end
@@ -485,7 +485,7 @@ module XGen
           @semaphore.synchronize {
             objects.collect { |o|
               o = @pk_factory.create_pk(o) if @pk_factory
-              send_to_db(InsertMessage.new(@name, collection_name, o))
+              send_to_db(InsertMessage.new(@name, collection_name, true, o))
               o
             }
           }
