@@ -290,7 +290,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal @@coll.index_information, info
     assert_equal 2, info.length
 
-    assert info.has_key? name
+    assert info.has_key?(name)
     assert_equal info[name], [["a", ASCENDING]]
   ensure
     @@db.drop_index(@@coll.name, name)
@@ -305,7 +305,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal @@coll.index_information, info
     assert_equal 2, info.length
 
-    assert info.has_key? name
+    assert info.has_key?(name)
     assert_equal info[name], [["a", ASCENDING]]
   ensure
     @@db.drop_index(@@coll.name, name)
@@ -317,7 +317,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, info.length
 
     assert_equal name, 'a_-1_b_1_c_-1'
-    assert info.has_key? name
+    assert info.has_key?(name)
     assert_equal [['a', DESCENDING], ['b', ASCENDING], ['c', DESCENDING]], info[name]
   ensure
     @@db.drop_index(@@coll.name, name)
@@ -329,7 +329,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, info.length
 
     assert_equal name, 'a_-1_b_1_c_-1'
-    assert info.has_key? name
+    assert info.has_key?(name)
     assert_equal [['a', DESCENDING], ['b', ASCENDING], ['c', DESCENDING]], info[name]
   ensure
     @@db.drop_index(@@coll.name, name)
