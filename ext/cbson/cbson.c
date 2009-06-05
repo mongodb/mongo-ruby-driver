@@ -24,6 +24,7 @@
 #include "st.h"
 #include "regex.h"
 #include <assert.h>
+#include <math.h>
 
 #define INITIAL_BUFFER_SIZE 256
 
@@ -341,7 +342,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
             if (strcmp(cls, "Time") == 0) {
                 write_name_and_type(buffer, key, 0x09);
                 double t = NUM2DBL(rb_funcall(value, rb_intern("to_f"), 0));
-                long long time_since_epoch = (long long)(t * 1000);
+                long long time_since_epoch = (long long)round(t * 1000);
                 buffer_write_bytes(buffer, (const char*)&time_since_epoch, 8);
                 break;
             }
