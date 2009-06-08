@@ -470,11 +470,13 @@ module XGen
         # possibly modified by @pk_factory.
         def insert_into_db(collection_name, objects)
           @semaphore.synchronize {
-            objects.collect { |o|
-              o = @pk_factory.create_pk(o) if @pk_factory
-              send_to_db(InsertMessage.new(@name, collection_name, true, o))
-              o
-            }
+            if @pk_factory
+              objects.collect! { |o|
+                @pk_factory.create_pk(o)
+              }
+            end
+            send_to_db(InsertMessage.new(@name, collection_name, true, *objects))
+            objects
           }
         end
 
