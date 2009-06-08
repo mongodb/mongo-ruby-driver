@@ -171,10 +171,11 @@ function () {
             key[keys[i]] = obj[keys[i]];
         }
 
-        var aggObj = map[key];
+        var aggObj = map.get(key);
         if (aggObj == null) {
             var newObj = Object.extend({}, key);
-            aggObj = map[key] = Object.extend(newObj, initial);
+            aggObj = Object.extend(newObj, initial);
+            map.put(key, aggObj);
         }
         reduce_function(obj, aggObj);
     }
