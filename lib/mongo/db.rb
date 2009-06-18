@@ -390,6 +390,7 @@ module XGen
           oh[:query] = selector || {}
           doc = db_command(oh)
           return doc['n'].to_i if ok?(doc)
+          return 0 if doc['errmsg'] == "ns missing"
           raise "Error with count command: #{doc.inspect}"
         end
 

@@ -56,6 +56,11 @@ class DBAPITest < Test::Unit::TestCase
     assert docs.detect { |row| row['b'] == 3 }
   end
 
+  def test_count_on_nonexisting
+    @@db.drop_collection('foo')
+    assert_equal 0, @@db.collection('foo').count()
+  end
+
   def test_find_simple
     @r2 = @@coll.insert('a' => 2)
     @r3 = @@coll.insert('b' => 3)
