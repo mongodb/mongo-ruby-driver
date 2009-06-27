@@ -1,5 +1,4 @@
 html
-t
 pkg
 doc
 mongo-ruby-driver-*.gem
@@ -7,3 +6,4 @@ nbproject
 *.bundle
 *.o
 ext/cbson/Makefile
+*~
