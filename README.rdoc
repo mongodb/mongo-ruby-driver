@@ -1,11 +1,6 @@
 = Introduction
 
-This is a Ruby driver for the 10gen Mongo DB. For more information about
-Mongo, see http://www.mongodb.org.
-
-Start by reading the XGen::Mongo::Driver::Mongo and XGen::Mongo::Driver::DB
-documentation, then move on to XGen::Mongo::Driver::Collection and
-XGen::Mongo::Driver::Cursor.
+This is a Ruby driver for MongoDB[http://www.mongodb.org].
 
 Here is a quick code sample. See the files in the "examples" subdirectory for
 many more.
@@ -23,8 +18,7 @@ many more.
   coll.find().each { |doc| puts doc.inspect }
 
 This driver also includes an implementation of a GridStore class, a Ruby
-interface to Mongo's GridFS storage. NOTE: the GridStore code may be moved to
-a separate project.
+interface to Mongo's GridFS storage.
 
 = Installation
 
@@ -77,7 +71,6 @@ Here's how to start mongo and run the "simple.rb" example:
   $ ruby examples/simple.rb
 
 See also the test code, especially tests/test_db_api.rb.
-
 
 = The Driver
 
@@ -143,25 +136,15 @@ string.
 == Primary Keys
 
 The field _id is a primary key. It is treated specially by the database, and
-its use makes many operations more efficient.
-
-The value of an _id may be of any type. (Older versions of Mongo required that
-they be XGen::Mongo::Driver::ObjectID instances.)
-
-The database itself inserts an _id value if none is specified when a record is
-inserted.
-
-The driver automatically sends the _id field to the database first, which is
-how Mongo likes it. You don't have to worry about where the _id field is in
-your hash record, or worry if you are using an OrderedHash or not.
+its use makes many operations more efficient. The value of an _id may be of
+any type. The database itself inserts an _id value if none is specified when
+a record is inserted.
 
 === Primary Key Factories
 
 A primary key factory is a class you supply to a DB object that knows how to
-generate _id values. Primary key factories are no longer necessary because
-Mongo now inserts an _id value for every record that does not already have
-one. However, if you want to control _id values or even their types, using a
-PK factory lets you do so.
+generate _id values. If you want to control _id values or even their types,
+using a PK factory lets you do so.
 
 You can tell the Ruby Mongo driver how to create primary keys by passing in
 the :pk option to the Mongo#db method.
@@ -173,7 +156,7 @@ A primary key factory object must respond to :create_pk, which should take a
 hash and return a hash which merges the original hash with any primary key
 fields the factory wishes to inject. NOTE: if the object already has a primary
 key, the factory should not inject a new key; this means that the object is
-being used in a repsert but it already exists. The idea here is that when ever
+being used in a repsert but it already exists. The idea here is that whenever
 a record is inserted, the :pk object's +create_pk+ method will be called and
 the new hash returned will be inserted.
 
@@ -284,30 +267,6 @@ Then open the file html/index.html.
 = Release Notes
 
 See the git log comments.
-
-
-= To Do
-
-* Tests for update and repsert.
-
-* Add a way to specify a collection of databases on startup (a simple array of
-  IP address/port numbers, perhaps, or a hash or something). The driver would
-  then find the master and, on each subsequent command, ask that machine if it
-  is the master before proceeding.
-
-* Introduce optional per-database and per-collection PKInjector.
-
-* More tests.
-
-== Optimizations
-
-* Only update message sizes once, not after every write of a value. This will
-  require an explicit call to update_message_length in each message subclass.
-
-* ensure_index commands should be cached to prevent excessive communication
-  with the database. (Or, the driver user should be informed that ensure_index
-  is not a lightweight operation for the particular driver.)
-
 
 = Credits
 
