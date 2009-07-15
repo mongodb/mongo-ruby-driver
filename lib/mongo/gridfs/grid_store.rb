@@ -93,6 +93,18 @@ module XGen
             }
           end
 
+          # List the contains of all GridFS files stored in the given db and
+          # root collection.
+          #
+          # :db :: the database to use
+          #
+          # :root_collection :: the root collection to use
+          def list(db, root_collection=DEFAULT_ROOT_COLLECTION)
+            db.collection("#{root_collection}.files").find().map { |f|
+              f['filename']
+            }
+          end
+
           def readlines(db, name, separator=$/)
             GridStore.open(db, name, 'r') { |gs|
               gs.readlines(separator)

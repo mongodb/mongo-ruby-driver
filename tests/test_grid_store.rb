@@ -31,6 +31,16 @@ class GridStoreTest < Test::Unit::TestCase
     assert !GridStore.exist?(@@db, 'foobar', 'another_root')
   end
 
+  def test_list
+    assert_equal ['foobar'], GridStore.list(@@db)
+    assert_equal ['foobar'], GridStore.list(@@db, 'fs')
+    assert_equal [], GridStore.list(@@db, 'my_fs')
+
+    GridStore.open(@@db, 'test', 'w') { |f| f.write("my file") }
+
+    assert_equal ['foobar', 'test'], GridStore.list(@@db)
+  end
+
   def test_small_write
     rows = @@files.find({'filename' => 'foobar'}).to_a
     assert_not_nil rows
