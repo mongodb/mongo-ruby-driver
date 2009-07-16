@@ -67,7 +67,7 @@ EOS
       XMLToRuby.new.xml_to_ruby(f)
     }
 
-    File.open(File.join(dir, "#{name}.bson"), 'r') { |f|
+    File.open(File.join(dir, "#{name}.bson"), 'rb') { |f|
       # Read the BSON from the file
       bson = f.read
       bson = if RUBY_VERSION >= '1.9'
