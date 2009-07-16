@@ -541,7 +541,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             VALUE microseconds = INT2NUM((millis % 1000) * 1000);
 
             value = rb_funcall(Time, rb_intern("at"), 2, seconds, microseconds);
-            value = rb_funcall(value, rb_intern("utc"), 0)
+            value = rb_funcall(value, rb_intern("utc"), 0);
             *position += 8;
             break;
         }
