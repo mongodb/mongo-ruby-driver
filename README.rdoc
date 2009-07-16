@@ -290,6 +290,9 @@ John Nunemaker, http://railstips.org
 * Collection#create_index takes symbols as well as strings
 * Fix for Collection#save
 
+David James, djames@sunlightfoundation.com
+* Fix dates to return as UTC
+
 = License
 
  Copyright 2008-2009 10gen Inc.

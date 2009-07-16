@@ -121,7 +121,7 @@ class BSONTest < Test::Unit::TestCase
     doc = {'date' => Time.now}
     @b.serialize(doc)
     doc2 = @b.deserialize
-    assert_equal "UTC", doc2['date'].zone
+    assert doc2['date'].utc?
   end
 
   def test_dbref
