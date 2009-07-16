@@ -245,7 +245,7 @@ class BSON
 
   def deserialize_date_data(buf)
     millisecs = buf.get_long()
-    Time.at(millisecs.to_f / 1000.0) # at() takes fractional seconds
+    Time.at(millisecs.to_f / 1000.0).utc
   end
 
   def deserialize_boolean_data(buf)

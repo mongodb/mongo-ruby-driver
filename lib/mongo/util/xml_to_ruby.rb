@@ -58,7 +58,7 @@ class XMLToRuby
     when 'array'
       array_to_ruby(e.elements)
     when 'date'
-      Time.at(e.text.to_f / 1000.0)
+      Time.at(e.text.to_f / 1000.0).utc
     when 'regex'
       regex_to_ruby(e.elements)
     when 'null'

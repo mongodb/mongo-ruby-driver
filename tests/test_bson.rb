@@ -117,6 +117,13 @@ class BSONTest < Test::Unit::TestCase
     assert_in_delta doc['date'], doc2['date'], 0.001
   end
 
+  def test_date_returns_as_utc
+    doc = {'date' => Time.now}
+    @b.serialize(doc)
+    doc2 = @b.deserialize
+    assert_equal "UTC", doc2['date'].zone
+  end
+
   def test_dbref
     oid = ObjectID.new
     doc = {}
