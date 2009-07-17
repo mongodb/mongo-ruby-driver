@@ -48,6 +48,19 @@ static VALUE OrderedHash;
 #define EXTENDED RE_OPTION_EXTENDED
 #endif
 
+/* TODO we ought to check that the malloc or asprintf was successful
+ * and raise an exception if not. */
+#ifdef _MSC_VER
+#define INT2STRING(buffer, i)                   \
+    {                                           \
+        int vslength = _scprintf("%d", i) + 1;  \
+        *buffer = malloc(vslength);             \
+        _snprintf(*buffer, vslength, "%d", i);  \
+    }
+#else
+#define INT2STRING(buffer, i) asprintf(buffer, "%d", i);
+#endif
+
 // this sucks too.
 #ifndef RREGEXP_SRC_PTR
 #define RREGEXP_SRC_PTR(r) RREGEXP(r)->str
@@ -114,8 +127,8 @@ static void buffer_assure_space(bson_buffer* buffer, int size) {
 
 /* returns offset for writing */
 static int buffer_save_bytes(bson_buffer* buffer, int size) {
-    buffer_assure_space(buffer, size);
     int position = buffer->position;
+    buffer_assure_space(buffer, size);
     buffer->position += size;
     return position;
 }
@@ -155,10 +168,10 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
     }
 
     if (check_keys == Qtrue) {
+        int i;
         if (RSTRING_LEN(key) > 0 && RSTRING_PTR(key)[0] == '$') {
             rb_raise(rb_eRuntimeError, "key must not start with '$'");
         }
-        int i;
         for (i = 0; i < RSTRING_LEN(key); i++) {
             if (RSTRING_PTR(key)[i] == '.') {
                 rb_raise(rb_eRuntimeError, "key must not contain '.'");
@@ -169,20 +182,23 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
     switch(TYPE(value)) {
     case T_BIGNUM:
         {
+            VALUE as_f;
+            int int_value;
             if (rb_funcall(value, rb_intern(">"), 1, INT2NUM(2147483647)) == Qtrue ||
                 rb_funcall(value, rb_intern("<"), 1, INT2NUM(-2147483648)) == Qtrue) {
-                rb_raise(rb_eRangeError, "MongoDB can only handle 4-byte ints - try converting to a double before saving");
+                rb_raise(rb_eRangeError, "MongoDB can only handle 4-byte ints"
+                         " - try converting to a double before saving");
             }
             write_name_and_type(buffer, key, 0x10);
-            VALUE as_f = rb_funcall(value, rb_intern("to_f"), 0);
-            int int_value = NUM2LL(as_f);
+            as_f = rb_funcall(value, rb_intern("to_f"), 0);
+            int_value = NUM2LL(as_f);
             buffer_write_bytes(buffer, (char*)&int_value, 4);
             break;
         }
     case T_FIXNUM:
         {
-            write_name_and_type(buffer, key, 0x10);
             int int_value = FIX2INT(value);
+            write_name_and_type(buffer, key, 0x10);
             buffer_write_bytes(buffer, (char*)&int_value, 4);
             break;
         }
@@ -200,8 +216,8 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         }
     case T_FLOAT:
         {
-            write_name_and_type(buffer, key, 0x01);
             double d = NUM2DBL(value);
+            write_name_and_type(buffer, key, 0x01);
             buffer_write_bytes(buffer, (char*)&d, 8);
             break;
         }
@@ -218,26 +234,29 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         }
     case T_ARRAY:
         {
+            int start_position, length_location, items, i, obj_length;
+            VALUE* values;
+
             write_name_and_type(buffer, key, 0x04);
-            int start_position = buffer->position;
+            start_position = buffer->position;
 
             // save space for length
-            int length_location = buffer_save_bytes(buffer, 4);
+            length_location = buffer_save_bytes(buffer, 4);
 
-            int items = RARRAY_LEN(value);
-            VALUE* values = RARRAY_PTR(value);
-            int i;
+            items = RARRAY_LEN(value);
+            values = RARRAY_PTR(value);
             for(i = 0; i < items; i++) {
                 char* name;
-                asprintf(&name, "%d", i);
-                VALUE key = rb_str_new2(name);
+                VALUE key;
+                INT2STRING(&name, i);
+                key = rb_str_new2(name);
                 write_element(key, values[i], pack_extra(buffer, check_keys));
                 free(name);
             }
 
             // write null byte and fill in length
             buffer_write_bytes(buffer, &zero, 1);
-            int obj_length = buffer->position - start_position;
+            obj_length = buffer->position - start_position;
             memcpy(buffer->buffer + length_location, &obj_length, 4);
             break;
         }
@@ -245,24 +264,25 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         {
             if (strcmp(rb_class2name(RBASIC(value)->klass),
                        "XGen::Mongo::Driver::Code") == 0) {
+                int start_position, length_location, length, total_length;
                 write_name_and_type(buffer, key, 0x0F);
 
-                int start_position = buffer->position;
-                int length_location = buffer_save_bytes(buffer, 4);
+                start_position = buffer->position;
+                length_location = buffer_save_bytes(buffer, 4);
 
-                int length = RSTRING_LEN(value) + 1;
+                length = RSTRING_LEN(value) + 1;
                 buffer_write_bytes(buffer, (char*)&length, 4);
                 buffer_write_bytes(buffer, RSTRING_PTR(value), length - 1);
                 buffer_write_bytes(buffer, &zero, 1);
                 write_doc(buffer, rb_funcall(value, rb_intern("scope"), 0), Qfalse);
 
-                int total_length = buffer->position - start_position;
+                total_length = buffer->position - start_position;
                 memcpy(buffer->buffer + length_location, &total_length, 4);
 
                 break;
             } else {
-                write_name_and_type(buffer, key, 0x02);
                 int length = RSTRING_LEN(value) + 1;
+                write_name_and_type(buffer, key, 0x02);
                 buffer_write_bytes(buffer, (char*)&length, 4);
                 buffer_write_bytes(buffer, RSTRING_PTR(value), length - 1);
                 buffer_write_bytes(buffer, &zero, 1);
@@ -271,9 +291,9 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         }
     case T_SYMBOL:
         {
-            write_name_and_type(buffer, key, 0x0E);
             const char* str_value = rb_id2name(SYM2ID(value));
             int length = strlen(str_value) + 1;
+            write_name_and_type(buffer, key, 0x0E);
             buffer_write_bytes(buffer, (char*)&length, 4);
             buffer_write_bytes(buffer, str_value, length);
             break;
@@ -284,11 +304,11 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
             const char* cls = rb_class2name(RBASIC(value)->klass);
             if (strcmp(cls, "XGen::Mongo::Driver::Binary") == 0 ||
                 strcmp(cls, "ByteBuffer") == 0) {
-                write_name_and_type(buffer, key, 0x05);
                 const char subtype = strcmp(cls, "ByteBuffer") ?
                     (const char)FIX2INT(rb_funcall(value, rb_intern("subtype"), 0)) : 2;
                 VALUE string_data = rb_funcall(value, rb_intern("to_s"), 0);
                 int length = RSTRING_LEN(string_data);
+                write_name_and_type(buffer, key, 0x05);
                 if (subtype == 2) {
                     const int other_length = length + 4;
                     buffer_write_bytes(buffer, (const char*)&other_length, 4);
@@ -302,9 +322,9 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 break;
             }
             if (strcmp(cls, "XGen::Mongo::Driver::ObjectID") == 0) {
-                write_name_and_type(buffer, key, 0x07);
                 VALUE as_array = rb_funcall(value, rb_intern("to_a"), 0);
                 int i;
+                write_name_and_type(buffer, key, 0x07);
                 for (i = 0; i < 12; i++) {
                     char byte = (char)FIX2INT(RARRAY_PTR(as_array)[i]);
                     buffer_write_bytes(buffer, &byte, 1);
@@ -312,21 +332,23 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 break;
             }
             if (strcmp(cls, "XGen::Mongo::Driver::DBRef") == 0) {
+                int start_position, length_location, obj_length;
+                VALUE ns, oid;
                 write_name_and_type(buffer, key, 0x03);
 
-                int start_position = buffer->position;
+                start_position = buffer->position;
 
                 // save space for length
-                int length_location = buffer_save_bytes(buffer, 4);
+                length_location = buffer_save_bytes(buffer, 4);
 
-                VALUE ns = rb_funcall(value, rb_intern("namespace"), 0);
+                ns = rb_funcall(value, rb_intern("namespace"), 0);
                 write_element(rb_str_new2("$ref"), ns, pack_extra(buffer, Qfalse));
-                VALUE oid = rb_funcall(value, rb_intern("object_id"), 0);
+                oid = rb_funcall(value, rb_intern("object_id"), 0);
                 write_element(rb_str_new2("$id"), oid, pack_extra(buffer, Qfalse));
 
                 // write null byte and fill in length
                 buffer_write_bytes(buffer, &zero, 1);
-                int obj_length = buffer->position - start_position;
+                obj_length = buffer->position - start_position;
                 memcpy(buffer->buffer + length_location, &obj_length, 4);
                 break;
             }
@@ -340,23 +362,25 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
             // TODO again, is this really the only way to do this?
             const char* cls = rb_class2name(RBASIC(value)->klass);
             if (strcmp(cls, "Time") == 0) {
-                write_name_and_type(buffer, key, 0x09);
                 double t = NUM2DBL(rb_funcall(value, rb_intern("to_f"), 0));
                 long long time_since_epoch = (long long)round(t * 1000);
+                write_name_and_type(buffer, key, 0x09);
                 buffer_write_bytes(buffer, (const char*)&time_since_epoch, 8);
                 break;
             }
         }
     case T_REGEXP:
         {
-            write_name_and_type(buffer, key, 0x0B);
-
             int length = RREGEXP_SRC_LEN(value);
             char* pattern = (char*)RREGEXP_SRC_PTR(value);
+            long flags = RREGEXP(value)->ptr->options;
+            VALUE has_extra;
+
+            write_name_and_type(buffer, key, 0x0B);
+
             buffer_write_bytes(buffer, pattern, length);
             buffer_write_bytes(buffer, &zero, 1);
 
-            long flags = RREGEXP(value)->ptr->options;
             if (flags & IGNORECASE) {
                 char ignorecase = 'i';
                 buffer_write_bytes(buffer, &ignorecase, 1);
@@ -370,7 +394,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 buffer_write_bytes(buffer, &extended, 1);
             }
 
-            VALUE has_extra = rb_funcall(value, rb_intern("respond_to?"), 1, rb_str_new2("extra_options_str"));
+            has_extra = rb_funcall(value, rb_intern("respond_to?"), 1, rb_str_new2("extra_options_str"));
             if (TYPE(has_extra) == T_TRUE) {
                 VALUE extra = rb_funcall(value, rb_intern("extra_options_str"), 0);
                 int old_position = buffer->position;
@@ -397,6 +421,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
 static void write_doc(bson_buffer* buffer, VALUE hash, VALUE check_keys) {
     int start_position = buffer->position;
     int length_location = buffer_save_bytes(buffer, 4);
+    int length;
 
     VALUE key = rb_str_new2("_id");
     if (rb_funcall(hash, rb_intern("has_key?"), 1, key) == Qtrue) {
@@ -425,17 +450,18 @@ static void write_doc(bson_buffer* buffer, VALUE hash, VALUE check_keys) {
 
     // write null byte and fill in length
     buffer_write_bytes(buffer, &zero, 1);
-    int length = buffer->position - start_position;
+    length = buffer->position - start_position;
     memcpy(buffer->buffer + length_location, &length, 4);
 }
 
 static VALUE method_serialize(VALUE self, VALUE doc, VALUE check_keys) {
+    VALUE result;
     bson_buffer* buffer = buffer_new();
     assert(buffer);
 
     write_doc(buffer, doc, check_keys);
 
-    VALUE result = rb_str_new(buffer->buffer, buffer->position);
+    result = rb_str_new(buffer->buffer, buffer->position);
     buffer_free(buffer);
     return result;
 }
@@ -454,8 +480,9 @@ static VALUE get_value(const char* buffer, int* position, int type) {
     case 2:
     case 13:
         {
+            int value_length;
             *position += 4;
-            int value_length = strlen(buffer + *position);
+            value_length = strlen(buffer + *position);
             value = rb_str_new(buffer+ *position, value_length);
             *position += value_length + 1;
             break;
@@ -468,9 +495,11 @@ static VALUE get_value(const char* buffer, int* position, int type) {
                 int offset = *position + 14;
                 VALUE argv[2];
                 int collection_length = strlen(buffer + offset);
+                char id_type;
+
                 argv[0] = rb_str_new(buffer + offset, collection_length);
                 offset += collection_length + 1;
-                char id_type = buffer[offset];
+                id_type = buffer[offset];
                 offset += 5;
                 argv[1] = get_value(buffer, &offset, (int)id_type);
                 value = rb_class_new_instance(2, argv, DBRef);
@@ -482,17 +511,19 @@ static VALUE get_value(const char* buffer, int* position, int type) {
         }
     case 4:
         {
-            int size;
+            int size, end;
             memcpy(&size, buffer + *position, 4);
-            int end = *position + size - 1;
+            end = *position + size - 1;
             *position += 4;
 
             value = rb_ary_new();
             while (*position < end) {
                 int type = (int)buffer[(*position)++];
                 int key_size = strlen(buffer + *position);
+                VALUE to_append;
+
                 *position += key_size + 1; // just skip the key, they're in order.
-                VALUE to_append = get_value(buffer, position, type);
+                to_append = get_value(buffer, position, type);
                 rb_ary_push(value, to_append);
             }
             (*position)++;
@@ -500,17 +531,20 @@ static VALUE get_value(const char* buffer, int* position, int type) {
         }
     case 5:
         {
-            int length;
+            int length, subtype;
+            VALUE data, st;
+            VALUE argv[2];
             memcpy(&length, buffer + *position, 4);
-            int subtype = (unsigned char)buffer[*position + 4];
-            VALUE data;
+            subtype = (unsigned char)buffer[*position + 4];
+            data;
             if (subtype == 2) {
                 data = rb_str_new(buffer + *position + 9, length - 4);
             } else {
                 data = rb_str_new(buffer + *position + 5, length);
             }
-            VALUE st = INT2FIX(subtype);
-            VALUE argv[2] = {data, st};
+            st = INT2FIX(subtype);
+            argv[0] = data;
+            argv[1] = st;
             value = rb_class_new_instance(2, argv, Binary);
             *position += length + 5;
             break;
@@ -536,9 +570,10 @@ static VALUE get_value(const char* buffer, int* position, int type) {
     case 9:
         {
             long long millis;
+            VALUE seconds, microseconds;
             memcpy(&millis, buffer + *position, 8);
-            VALUE seconds = INT2NUM(millis / 1000);
-            VALUE microseconds = INT2NUM((millis % 1000) * 1000);
+            seconds = INT2NUM(millis / 1000);
+            microseconds = INT2NUM((millis % 1000) * 1000);
 
             value = rb_funcall(Time, rb_intern("at"), 2, seconds, microseconds);
             value = rb_funcall(value, rb_intern("utc"), 0);
@@ -554,13 +589,12 @@ static VALUE get_value(const char* buffer, int* position, int type) {
         {
             int pattern_length = strlen(buffer + *position);
             VALUE pattern = rb_str_new(buffer + *position, pattern_length);
+            int flags_length, flags = 0, i = 0;
+            char extra[10];
+            VALUE argv[3];
             *position += pattern_length + 1;
 
-            int flags_length = strlen(buffer + *position);
-            int i = 0;
-
-            int flags = 0;
-            char extra[10];
+            flags_length = strlen(buffer + *position);
             extra[0] = 0;
             for (i = 0; i < flags_length; i++) {
                 char flag = buffer[*position + i];
@@ -577,28 +611,29 @@ static VALUE get_value(const char* buffer, int* position, int type) {
                     strncat(extra, &flag, 1);
                 }
             }
-            VALUE argv[3] = {
-                pattern,
-                INT2FIX(flags),
-                rb_str_new2(extra)
-            };
+            argv[0] = pattern;
+            argv[1] = INT2FIX(flags);
+            argv[2] = rb_str_new2(extra);
             value = rb_class_new_instance(3, argv, RegexpOfHolding);
             *position += flags_length + 1;
             break;
         }
     case 12:
         {
+            int collection_length;
+            VALUE collection, str, oid, id, argv[2];
             *position += 4;
-            int collection_length = strlen(buffer + *position);
-            VALUE collection = rb_str_new(buffer + *position, collection_length);
+            collection_length = strlen(buffer + *position);
+            collection = rb_str_new(buffer + *position, collection_length);
             *position += collection_length + 1;
 
-            VALUE str = rb_str_new(buffer + *position, 12);
-            VALUE oid = rb_funcall(str, rb_intern("unpack"), 1, rb_str_new2("C*"));
-            VALUE id = rb_class_new_instance(1, &oid, ObjectID);
+            str = rb_str_new(buffer + *position, 12);
+            oid = rb_funcall(str, rb_intern("unpack"), 1, rb_str_new2("C*"));
+            id = rb_class_new_instance(1, &oid, ObjectID);
             *position += 12;
 
-            VALUE argv[2] = {collection, id};
+            argv[0] = collection;
+            argv[1] = id;
             value = rb_class_new_instance(2, argv, DBRef);
             break;
         }
@@ -612,17 +647,19 @@ static VALUE get_value(const char* buffer, int* position, int type) {
         }
     case 15:
         {
+            int code_length, scope_size;
+            VALUE code, scope, argv[2];
             *position += 8;
-            int code_length = strlen(buffer + *position);
-            VALUE code = rb_str_new(buffer + *position, code_length);
+            code_length = strlen(buffer + *position);
+            code = rb_str_new(buffer + *position, code_length);
             *position += code_length + 1;
 
-            int scope_size;
             memcpy(&scope_size, buffer + *position, 4);
-            VALUE scope = elements_to_hash(buffer + *position + 4, scope_size - 5);
+            scope = elements_to_hash(buffer + *position + 4, scope_size - 5);
             *position += scope_size;
 
-            VALUE argv[2] = {code, scope};
+            argv[0] = code;
+            argv[1] = scope;
             value = rb_class_new_instance(2, argv, Code);
             break;
         }
@@ -660,8 +697,9 @@ static VALUE elements_to_hash(const char* buffer, int max) {
         int type = (int)buffer[position++];
         int name_length = strlen(buffer + position);
         VALUE name = rb_str_new(buffer + position, name_length);
+        VALUE value;
         position += name_length + 1;
-        VALUE value = get_value(buffer, &position, type);
+        value = get_value(buffer, &position, type);
         rb_funcall(hash, rb_intern("[]="), 2, name, value);
     }
     return hash;
@@ -679,12 +717,13 @@ static VALUE method_deserialize(VALUE self, VALUE bson) {
 }
 
 void Init_cbson() {
+    VALUE driver, CBson;
     Time = rb_const_get(rb_cObject, rb_intern("Time"));
 
-    VALUE driver = rb_const_get(rb_const_get(rb_const_get(rb_cObject,
-                                                          rb_intern("XGen")),
-                                             rb_intern("Mongo")),
-                                rb_intern("Driver"));
+    driver = rb_const_get(rb_const_get(rb_const_get(rb_cObject,
+                                                    rb_intern("XGen")),
+                                       rb_intern("Mongo")),
+                          rb_intern("Driver"));
     rb_require("mongo/types/binary");
     Binary = rb_const_get(driver, rb_intern("Binary"));
     rb_require("mongo/types/undefined");
@@ -700,7 +739,7 @@ void Init_cbson() {
     rb_require("mongo/util/ordered_hash");
     OrderedHash = rb_const_get(rb_cObject, rb_intern("OrderedHash"));
 
-    VALUE CBson = rb_define_module("CBson");
+    CBson = rb_define_module("CBson");
     rb_define_module_function(CBson, "serialize", method_serialize, 2);
     rb_define_module_function(CBson, "deserialize", method_deserialize, 1);
 }
