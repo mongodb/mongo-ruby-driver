@@ -21,8 +21,8 @@
  */
 
 #include "ruby.h"
-#include "st.h"
-#include "regex.h"
+#include "ruby/st.h"
+#include "ruby/regex.h"
 #include <assert.h>
 #include <math.h>
 
@@ -536,7 +536,6 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             VALUE argv[2];
             memcpy(&length, buffer + *position, 4);
             subtype = (unsigned char)buffer[*position + 4];
-            data;
             if (subtype == 2) {
                 data = rb_str_new(buffer + *position + 9, length - 4);
             } else {
