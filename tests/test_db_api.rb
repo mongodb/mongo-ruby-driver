@@ -13,7 +13,8 @@ class DBAPITest < Test::Unit::TestCase
 
   def setup
     @@coll.clear
-    @r1 = @@coll.insert('a' => 1) # collection not created until it's used
+    @r1 = {'a' => 1}
+    @@coll.insert(@r1) # collection not created until it's used
     @@coll_full_name = 'ruby-mongo-test.test'
   end
 
@@ -29,8 +30,8 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_insert
-    @@coll.insert('a' => 2)
-    @@coll.insert('b' => 3)
+    assert_kind_of ObjectID, @@coll.insert('a' => 2)
+    assert_kind_of ObjectID, @@coll.insert('b' => 3)
 
     assert_equal 3, @@coll.count
     docs = @@coll.find().to_a
@@ -46,7 +47,11 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_insert_multiple
-    @@coll.insert({'a' => 2}, {'b' => 3})
+    ids = @@coll.insert({'a' => 2}, {'b' => 3})
+    
+    ids.each do |i|
+      assert_kind_of ObjectID, i
+    end
 
     assert_equal 3, @@coll.count
     docs = @@coll.find().to_a
@@ -614,7 +619,7 @@ class DBAPITest < Test::Unit::TestCase
 
     a = {"hello" => "world"}
 
-    @@coll.save(a)
+    assert_kind_of ObjectID, @@coll.save(a)
     assert_equal 1, @@coll.count
 
     @@coll.save(@@coll.find_first)

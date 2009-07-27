@@ -66,19 +66,20 @@ class DBTest < Test::Unit::TestCase
     coll = db.collection('test')
     coll.clear
 
+    insert_id = coll.insert('name' => 'Fred', 'age' => 42)
     # new id gets added to returned object
-    obj = coll.insert('name' => 'Fred', 'age' => 42)
     row = coll.find_first({'name' => 'Fred'}, :limit => 1)
     oid = row['_id']
     assert_not_nil oid
-    assert_equal obj, row
+    assert_equal insert_id, oid
 
     oid = XGen::Mongo::Driver::ObjectID.new
-    obj = coll.insert('_id' => oid, 'name' => 'Barney', 'age' => 41)
-    row = coll.find_first({'name' => 'Barney'}, :limit => 1)
+    data = {'_id' => oid, 'name' => 'Barney', 'age' => 41}
+    coll.insert(data)
+    row = coll.find_first({'name' => data['name']}, :limit => 1)
     db_oid = row['_id']
     assert_equal oid, db_oid
-    assert_equal obj, row
+    assert_equal data, row
 
     coll.clear
   end
