@@ -48,7 +48,7 @@ class DBAPITest < Test::Unit::TestCase
 
   def test_insert_multiple
     ids = @@coll.insert({'a' => 2}, {'b' => 3})
-    
+
     ids.each do |i|
       assert_kind_of ObjectID, i
     end
@@ -619,10 +619,11 @@ class DBAPITest < Test::Unit::TestCase
 
     a = {"hello" => "world"}
 
-    assert_kind_of ObjectID, @@coll.save(a)
+    id = @@coll.save(a)
+    assert_kind_of ObjectID, id
     assert_equal 1, @@coll.count
 
-    @@coll.save(@@coll.find_first)
+    assert_equal id, @@coll.save(@@coll.find_first)
     assert_equal 1, @@coll.count
 
     assert_equal "world", @@coll.find_first()["hello"]

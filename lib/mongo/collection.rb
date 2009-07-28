@@ -77,6 +77,7 @@ module XGen
         def save(object)
           if id = object[:_id] || object['_id']
             repsert({:_id => id}, object)
+            id
           else
             insert(object)
           end
