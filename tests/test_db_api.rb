@@ -650,6 +650,9 @@ class DBAPITest < Test::Unit::TestCase
     @@coll.find(:_id => id).to_a.each do |doc|
       assert_equal "world", doc["hello"]
     end
+
+    id = ObjectID.from_string(id.to_s)
+    assert_equal "world", @@coll.find_first(:_id => id)["hello"]
   end
 
   def test_save_with_object_that_has_id_but_does_not_actually_exist_in_collection
