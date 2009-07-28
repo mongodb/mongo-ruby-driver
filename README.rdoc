@@ -293,6 +293,10 @@ John Nunemaker, http://railstips.org
 David James, djames@sunlightfoundation.com
 * Fix dates to return as UTC
 
+Paul Dlug, paul.dlug@gmail.com
+* Generate _id on the client side if not provided
+* Collection#insert and Collection#save return _id
+
 = License
 
  Copyright 2008-2009 10gen Inc.
