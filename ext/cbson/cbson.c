@@ -21,8 +21,8 @@
  */
 
 #include "ruby.h"
-#include "ruby/st.h"
-#include "ruby/regex.h"
+#include "st.h"
+#include "regex.h"
 #include <assert.h>
 #include <math.h>
 
