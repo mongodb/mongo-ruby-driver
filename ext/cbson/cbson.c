@@ -198,6 +198,11 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
     case T_FIXNUM:
         {
             int int_value = FIX2INT(value);
+            if (rb_funcall(value, rb_intern(">"), 1, INT2NUM(2147483647)) == Qtrue ||
+                rb_funcall(value, rb_intern("<"), 1, INT2NUM(-2147483648)) == Qtrue) {
+                rb_raise(rb_eRangeError, "MongoDB can only handle 4-byte ints"
+                         " - try converting to a double before saving");
+            }
             write_name_and_type(buffer, key, 0x10);
             buffer_write_bytes(buffer, (char*)&int_value, 4);
             break;
