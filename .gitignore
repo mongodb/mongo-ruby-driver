@@ -1,7 +1,7 @@
 html
 pkg
 doc
-mongo-ruby-driver-*.gem
+*.gem
 nbproject
 *.bundle
 *.o
