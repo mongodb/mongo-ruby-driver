@@ -21,8 +21,21 @@
  */
 
 #include "ruby.h"
+
+#if HAVE_RUBY_ST_H
 #include "ruby/st.h"
+#endif
+#if HAVE_ST_H
+#include "st.h"
+#endif
+
+#if HAVE_RUBY_REGEX_H
 #include "ruby/regex.h"
+#endif
+#if HAVE_REGEX_H
+#include "regex.h"
+#endif
+
 #include <assert.h>
 #include <math.h>
 
