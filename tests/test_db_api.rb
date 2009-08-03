@@ -639,6 +639,12 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, @@coll.count
   end
 
+  def test_save_long
+    @@coll.clear
+    @@coll.insert("x" => 9223372036854775807)
+    assert_equal 9223372036854775807, @@coll.find_first()["x"]
+  end
+
   def test_find_by_oid
     @@coll.clear
 

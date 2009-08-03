@@ -47,6 +47,7 @@ class BSON
   CODE_W_SCOPE = 15
   NUMBER_INT = 16
   TIMESTAMP = 17
+  NUMBER_LONG = 18
   MAXKEY = 127
 
   if RUBY_VERSION >= '1.9'
@@ -180,6 +181,9 @@ class BSON
         when NUMBER_INT
           key = deserialize_cstr(@buf)
           doc[key] = deserialize_number_int_data(@buf)
+        when NUMBER_LONG
+          key = deserialize_cstr(@buf)
+          doc[key] = deserialize_number_long_data(@buf)
         when OID
           key = deserialize_cstr(@buf)
           doc[key] = deserialize_oid_data(@buf)
@@ -261,6 +265,12 @@ class BSON
     # but unpack as unsigned
     unsigned = buf.get_int
     unsigned >= 2**32 / 2 ? unsigned - 2**32 : unsigned
+  end
+
+  def deserialize_number_long_data(buf)
+    # same note as above applies here...
+    unsigned = buf.get_long
+    unsigned >= 2 ** 64 / 2 ? unsigned - 2**64 : unsigned
   end
 
   def deserialize_object_data(buf)
@@ -394,15 +404,23 @@ class BSON
   end
 
   def serialize_number_element(buf, key, val, type)
-    buf.put(type)
-    self.class.serialize_cstr(buf, key)
     if type == NUMBER
+      buf.put(type)
+      self.class.serialize_cstr(buf, key)
       buf.put_double(val)
     else
-      if val > 2**32 / 2 - 1 or val < -2**32 / 2
-        raise RangeError.new("MongoDB can only handle 4-byte ints - try converting to a double before saving")
+      if val > 2**64 / 2 - 1 or val < -2**64 / 2
+        raise RangeError.new("MongoDB can only handle 8-byte ints")
       end
-      buf.put_int(val)
+      if val > 2**32 / 2 - 1 or val < -2**32 / 2
+        buf.put(NUMBER_LONG)
+        self.class.serialize_cstr(buf, key)
+        buf.put_long(val)
+      else
+        buf.put(type)
+        self.class.serialize_cstr(buf, key)
+        buf.put_int(val)
+      end
     end
   end
 

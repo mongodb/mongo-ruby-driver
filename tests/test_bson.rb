@@ -215,15 +215,29 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_overflow
-    doc = {"x" => 2**45}
+    doc = {"x" => 2**75}
     assert_raise RangeError do
       @b.serialize(doc)
     end
 
-    doc = {"x" => 2147483647}
+    doc = {"x" => 9223372036854775}
+    assert_equal doc, @b.deserialize(@b.serialize(doc).to_a)
+
+    doc = {"x" => 9223372036854775807}
     assert_equal doc, @b.deserialize(@b.serialize(doc).to_a)
 
     doc["x"] = doc["x"] + 1
+    assert_raise RangeError do
+      @b.serialize(doc)
+    end
+
+    doc = {"x" => -9223372036854775}
+    assert_equal doc, @b.deserialize(@b.serialize(doc).to_a)
+
+    doc = {"x" => -9223372036854775808}
+    assert_equal doc, @b.deserialize(@b.serialize(doc).to_a)
+
+    doc["x"] = doc["x"] - 1
     assert_raise RangeError do
       @b.serialize(doc)
     end
