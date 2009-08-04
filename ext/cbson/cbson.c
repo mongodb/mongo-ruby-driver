@@ -194,30 +194,24 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
 
     switch(TYPE(value)) {
     case T_BIGNUM:
-        {
-            VALUE as_f;
-            int int_value;
-            if (rb_funcall(value, rb_intern(">"), 1, INT2NUM(2147483647)) == Qtrue ||
-                rb_funcall(value, rb_intern("<"), 1, INT2NUM(-2147483648)) == Qtrue) {
-                rb_raise(rb_eRangeError, "MongoDB can only handle 4-byte ints"
-                         " - try converting to a double before saving");
-            }
-            write_name_and_type(buffer, key, 0x10);
-            as_f = rb_funcall(value, rb_intern("to_f"), 0);
-            int_value = NUM2LL(as_f);
-            buffer_write_bytes(buffer, (char*)&int_value, 4);
-            break;
-        }
     case T_FIXNUM:
         {
-            int int_value = FIX2INT(value);
-            if (rb_funcall(value, rb_intern(">"), 1, INT2NUM(2147483647)) == Qtrue ||
-                rb_funcall(value, rb_intern("<"), 1, INT2NUM(-2147483648)) == Qtrue) {
-                rb_raise(rb_eRangeError, "MongoDB can only handle 4-byte ints"
-                         " - try converting to a double before saving");
+            if (rb_funcall(value, rb_intern(">"), 1, LL2NUM(9223372036854775807LL)) == Qtrue ||
+                rb_funcall(value, rb_intern("<"), 1, LL2NUM(-9223372036854775808LL)) == Qtrue) {
+                rb_raise(rb_eRangeError, "MongoDB can only handle 8-byte ints");
             }
-            write_name_and_type(buffer, key, 0x10);
-            buffer_write_bytes(buffer, (char*)&int_value, 4);
+            if (rb_funcall(value, rb_intern(">"), 1, INT2NUM(2147483647L)) == Qtrue ||
+                rb_funcall(value, rb_intern("<"), 1, INT2NUM(-2147483648L)) == Qtrue) {
+                long long ll_value;
+                write_name_and_type(buffer, key, 0x12);
+                ll_value = NUM2LL(value);
+                buffer_write_bytes(buffer, (char*)&ll_value, 8);
+            } else {
+                int int_value;
+                write_name_and_type(buffer, key, 0x10);
+                int_value = NUM2LL(value);
+                buffer_write_bytes(buffer, (char*)&int_value, 4);
+            }
             break;
         }
     case T_TRUE:
@@ -695,6 +689,14 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             memcpy(&i, buffer + *position, 4);
             memcpy(&j, buffer + *position + 4, 4);
             value = rb_ary_new3(2, LL2NUM(i), LL2NUM(j));
+            *position += 8;
+            break;
+        }
+    case 18:
+        {
+            long long ll;
+            memcpy(&ll, buffer + *position, 8);
+            value = LL2NUM(ll);
             *position += 8;
             break;
         }
