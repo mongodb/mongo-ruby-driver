@@ -26,6 +26,24 @@ module XGen
         attr_reader :db, :name, :hint
 
         def initialize(db, name)
+          case name
+          when Symbol, String
+          else
+            raise RuntimeError, "new_name must be a string or symbol"
+          end
+
+          name = name.to_s
+
+          if name.empty? or name.include? ".."
+            raise RuntimeError, "collection names cannot be empty"
+          end
+          if name.include? "$" and not name.match(/^\$cmd/)
+            raise RuntimeError, "collection names must not contain '$'"
+          end
+          if name.match(/^\./) or name.match(/\.$/)
+            raise RuntimeError, "collection names must not start or end with '.'"
+          end
+
           @db, @name = db, name
           @hint = nil
         end

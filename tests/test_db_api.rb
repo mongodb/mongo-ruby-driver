@@ -713,6 +713,27 @@ class DBAPITest < Test::Unit::TestCase
     @@coll.modify({"hello" => "world"}, {"$inc" => "hello"})
   end
 
+  def test_collection_names
+    assert_raise RuntimeError do
+      @@db.collection(5)
+    end
+    assert_raise RuntimeError do
+      @@db.collection("")
+    end
+    assert_raise RuntimeError do
+      @@db.collection("te$t")
+    end
+    assert_raise RuntimeError do
+      @@db.collection(".test")
+    end
+    assert_raise RuntimeError do
+      @@db.collection("test.")
+    end
+    assert_raise RuntimeError do
+      @@db.collection("tes..t")
+    end
+  end
+
   def test_rename_collection
     @@db.drop_collection("foo")
     @@db.drop_collection("bar")
