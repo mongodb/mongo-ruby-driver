@@ -192,6 +192,35 @@ EOS
                                    }))["result"]
         end
 
+        # Rename this collection.
+        #
+        # If operating in auth mode, client must be authorized as an admin to
+        # perform this operation. Raises an error if +new_name+ is an invalid
+        # collection name.
+        #
+        # :new_name :: new name for this collection
+        def rename(new_name)
+          case new_name
+          when Symbol, String
+          else
+            raise RuntimeError, "new_name must be a string or symbol"
+          end
+
+          new_name = new_name.to_s
+
+          if new_name.empty? or new_name.include? ".."
+            raise RuntimeError, "collection names cannot be empty"
+          end
+          if new_name.include? "$"
+            raise RuntimeError, "collection names must not contain '$'"
+          end
+          if new_name.match(/^\./) or new_name.match(/\.$/)
+            raise RuntimeError, "collection names must not start or end with '.'"
+          end
+
+          @db.rename_collection(@name, new_name)
+        end
+
         # Get information on the indexes for the collection +collection_name+.
         # Returns a hash where the keys are index names (as returned by
         # Collection#create_index and the values are lists of [key, direction]

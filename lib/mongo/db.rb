@@ -340,8 +340,8 @@ module XGen
         # Note that the query gets sent lazily; the cursor calls
         # #send_query_message when needed. If the caller never requests an
         # object from the cursor, the query never gets sent.
-        def query(collection, query)
-          Cursor.new(self, collection, query)
+        def query(collection, query, admin=false)
+          Cursor.new(self, collection, query, admin)
         end
 
         # Used by a Cursor to lazily send the query to the database.
@@ -414,6 +414,16 @@ module XGen
           doc = db_command(oh)
           return doc['retval'] if ok?(doc)
           raise "Error with eval command: #{doc.inspect}"
+        end
+
+        # Rename collection +from+ to +to+. Meant to be called by
+        # Collection#rename.
+        def rename_collection(from, to)
+          oh = OrderedHash.new
+          oh[:renameCollection] = "#{@name}.#{from}"
+          oh[:to] = "#{@name}.#{to}"
+          doc = db_command(oh, true)
+          raise "Error renaming collection: #{doc.inspect}" unless ok?(doc)
         end
 
         # Drop index +name+ from +collection_name+. Normally called from
@@ -511,7 +521,7 @@ module XGen
         # that the "command" key be first.
         #
         # Do not call this. Intended for driver use only.
-        def db_command(selector)
+        def db_command(selector, use_admin_db=false)
           if !selector.kind_of?(OrderedHash)
             if !selector.kind_of?(Hash) || selector.keys.length > 1
               raise "db_command must be given an OrderedHash when there is more than one key"
@@ -520,7 +530,7 @@ module XGen
 
           q = Query.new(selector)
           q.number_to_return = 1
-          query(Collection.new(self, SYSTEM_COMMAND_COLLECTION), q).next_object
+          query(Collection.new(self, SYSTEM_COMMAND_COLLECTION), q, use_admin_db).next_object
         end
 
         private

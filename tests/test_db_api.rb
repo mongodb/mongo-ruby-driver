@@ -713,6 +713,53 @@ class DBAPITest < Test::Unit::TestCase
     @@coll.modify({"hello" => "world"}, {"$inc" => "hello"})
   end
 
+  def test_rename_collection
+    @@db.drop_collection("foo")
+    @@db.drop_collection("bar")
+    a = @@db.collection("foo")
+    b = @@db.collection("bar")
+
+    assert_raise RuntimeError do
+      a.rename(5)
+    end
+    assert_raise RuntimeError do
+      a.rename("")
+    end
+    assert_raise RuntimeError do
+      a.rename("te$t")
+    end
+    assert_raise RuntimeError do
+      a.rename(".test")
+    end
+    assert_raise RuntimeError do
+      a.rename("test.")
+    end
+    assert_raise RuntimeError do
+      a.rename("tes..t")
+    end
+
+    assert_equal 0, a.count()
+    assert_equal 0, b.count()
+
+    a.insert("x" => 1)
+    a.insert("x" => 2)
+
+    assert_equal 2, a.count()
+
+    a.rename("bar")
+
+    assert_equal 0, a.count()
+    assert_equal 2, b.count()
+
+    assert_equal 1, b.find().to_a()[0]["x"]
+    assert_equal 2, b.find().to_a()[1]["x"]
+
+    b.rename(:foo)
+
+    assert_equal 2, a.count()
+    assert_equal 0, b.count()
+  end
+
 # TODO this test fails with error message "Undefed Before end of object"
 # That is a database error. The undefined type may go away.
 
