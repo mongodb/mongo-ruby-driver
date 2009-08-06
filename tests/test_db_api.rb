@@ -241,25 +241,25 @@ class DBAPITest < Test::Unit::TestCase
 
   def test_drop_collection
     assert @@db.drop_collection(@@coll.name), "drop of collection #{@@coll.name} failed"
-    assert !@@db.collection_names.include?(@@coll_full_name)
+    assert !@@db.collection_names.include?(@@coll.name)
   end
 
   def test_other_drop
-    assert @@db.collection_names.include?(@@coll_full_name)
+    assert @@db.collection_names.include?(@@coll.name)
     @@coll.drop
-    assert !@@db.collection_names.include?(@@coll_full_name)
+    assert !@@db.collection_names.include?(@@coll.name)
   end
 
   def test_collection_names
     names = @@db.collection_names
     assert names.length >= 1
-    assert names.include?(@@coll_full_name)
+    assert names.include?(@@coll.name)
 
     coll2 = @@db.collection('test2')
     coll2.insert('a' => 1)      # collection not created until it's used
     names = @@db.collection_names
     assert names.length >= 2
-    assert names.include?(@@coll_full_name)
+    assert names.include?(@@coll.name)
     assert names.include?('ruby-mongo-test.test2')
   ensure
     @@db.drop_collection('test2')

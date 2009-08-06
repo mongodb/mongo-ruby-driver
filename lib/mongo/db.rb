@@ -173,12 +173,11 @@ module XGen
           raise "error logging out: #{doc.inspect}" unless ok?(doc)
         end
 
-        # Returns an array of collection names. Each name is of the form
-        # "database_name.collection_name".
+        # Returns an array of collection names in this database.
         def collection_names
           names = collections_info.collect { |doc| doc['name'] || '' }
-          names.delete('')
-          names
+          names = names.delete_if {|name| name.index(@name).nil? || name.index('$')}
+          names.map {|name| name.sub(@name + '.', '')}
         end
 
         # Returns a cursor over query result hashes. Each hash contains a
@@ -205,7 +204,7 @@ module XGen
         # :max :: Max number of records in a capped collection. Optional.
         def create_collection(name, options={})
           # First check existence
-          if collection_names.include?(full_coll_name(name))
+          if collection_names.include?(name)
             if strict?
               raise "Collection #{name} already exists. Currently in strict mode."
             else
@@ -230,14 +229,14 @@ module XGen
         # new collection. If +strict+ is true, will raise an error if
         # collection +name+ does not already exists.
         def collection(name)
-          return Collection.new(self, name) if !strict? || collection_names.include?(full_coll_name(name))
+          return Collection.new(self, name) if !strict? || collection_names.include?(name)
           raise "Collection #{name} doesn't exist. Currently in strict mode."
         end
 
         # Drop collection +name+. Returns +true+ on success or if the
         # collection does not exist, +false+ otherwise.
         def drop_collection(name)
-          return true unless collection_names.include?(full_coll_name(name))
+          return true unless collection_names.include?(name)
 
           ok?(db_command(:drop => name))
         end

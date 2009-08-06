@@ -51,6 +51,18 @@ class DBTest < Test::Unit::TestCase
     assert_equal 'ruby-mongo-test.test', @@db.full_coll_name(coll.name)
   end
 
+  def test_collection_names
+    @@db.collection("test").insert("foo" => 5)
+    @@db.collection("test.mike").insert("bar" => 0)
+
+    colls = @@db.collection_names()
+    assert colls.include?("test")
+    assert colls.include?("test.mike")
+    colls.each { |name|
+      assert !name.include?("$")
+    }
+  end
+
   def test_pair
     @@db.close
     @@users = nil
