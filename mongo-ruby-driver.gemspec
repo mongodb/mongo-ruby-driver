@@ -75,6 +75,7 @@ TEST_FILES = ['tests/mongo-qa/_common.rb',
               'tests/test_mongo.rb',
               'tests/test_objectid.rb',
               'tests/test_ordered_hash.rb',
+              'tests/test_threading.rb',
               'tests/test_round_trip.rb']
 
 Gem::Specification.new do |s|

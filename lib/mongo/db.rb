@@ -345,15 +345,13 @@ module XGen
 
         # Used by a Cursor to lazily send the query to the database.
         def send_query_message(query_message)
-          @semaphore.synchronize {
-            send_to_db(query_message)
-          }
+          send_to_db(query_message)
         end
 
         # Remove the records that match +selector+ from +collection_name+.
         # Normally called by Collection#remove or Collection#clear.
         def remove_from_db(collection_name, selector)
-          @semaphore.synchronize {
+          _synchronize {
             send_to_db(RemoveMessage.new(@name, collection_name, selector))
           }
         end
@@ -361,7 +359,7 @@ module XGen
         # Update records in +collection_name+ that match +selector+ by
         # applying +obj+ as an update. Normally called by Collection#replace.
         def replace_in_db(collection_name, selector, obj)
-          @semaphore.synchronize {
+          _synchronize {
             send_to_db(UpdateMessage.new(@name, collection_name, selector, obj, false))
           }
         end
@@ -373,7 +371,7 @@ module XGen
         # applying +obj+ as an update. If no match, inserts (???). Normally
         # called by Collection#repsert.
         def repsert_in_db(collection_name, selector, obj)
-          @semaphore.synchronize {
+          _synchronize {
             obj = @pk_factory.create_pk(obj) if @pk_factory
             send_to_db(UpdateMessage.new(@name, collection_name, selector, obj, true))
             obj
@@ -469,7 +467,7 @@ module XGen
             :key => field_h,
             :unique => unique
           }
-          @semaphore.synchronize {
+          _synchronize {
             send_to_db(InsertMessage.new(@name, SYSTEM_INDEX_COLLECTION, false, sel))
           }
           name
@@ -479,7 +477,7 @@ module XGen
         # Collection#insert. Returns a new array containing +objects+,
         # possibly modified by @pk_factory.
         def insert_into_db(collection_name, objects)
-          @semaphore.synchronize {
+          _synchronize {
             if @pk_factory
               objects.collect! { |o|
                 @pk_factory.create_pk(o)
@@ -530,6 +528,10 @@ module XGen
           q = Query.new(selector)
           q.number_to_return = 1
           query(Collection.new(self, SYSTEM_COMMAND_COLLECTION), q, use_admin_db).next_object
+        end
+
+        def _synchronize &block
+          @semaphore.synchronize &block
         end
 
         private
