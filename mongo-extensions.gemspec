@@ -7,6 +7,7 @@ TEST_FILES = []
 
 Gem::Specification.new do |s|
   s.name = 'mongo_ext'
+
   s.version = '0.11'
   s.platform = Gem::Platform::RUBY
   s.summary = 'C extensions for the MongoDB Ruby driver'
