@@ -781,6 +781,14 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 0, b.count()
   end
 
+  # doesn't really test functionality, just that the option is set correctly
+  def test_snapshot
+    @@db.collection("test").find({}, :snapshot => true).to_a
+    assert_raise RuntimeError do
+      @@db.collection("test").find({}, :snapshot => true, :sort => 'a').to_a
+    end
+  end
+
 # TODO this test fails with error message "Undefed Before end of object"
 # That is a database error. The undefined type may go away.
 

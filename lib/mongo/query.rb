@@ -26,7 +26,7 @@ module XGen
       # Mongo documentation for query details.
       class Query
 
-        attr_accessor :number_to_skip, :number_to_return, :order_by
+        attr_accessor :number_to_skip, :number_to_return, :order_by, :snapshot
         # If true, $explain will be set in QueryMessage that uses this query.
         attr_accessor :explain
         # Either +nil+ or a hash (preferably an OrderedHash).
@@ -63,9 +63,9 @@ module XGen
         # hint :: If not +nil+, specifies query hint fields. Must be either
         #                +nil+ or a hash (preferably an OrderedHash). See
         #                Collection#hint.
-        def initialize(sel={}, return_fields=nil, number_to_skip=0, number_to_return=0, order_by=nil, hint=nil)
-          @number_to_skip, @number_to_return, @order_by, @hint =
-            number_to_skip, number_to_return, order_by, hint
+        def initialize(sel={}, return_fields=nil, number_to_skip=0, number_to_return=0, order_by=nil, hint=nil, snapshot=nil)
+          @number_to_skip, @number_to_return, @order_by, @hint, @snapshot =
+            number_to_skip, number_to_return, order_by, hint, snapshot
           @explain = nil
           self.selector = sel
           self.fields = return_fields
@@ -111,7 +111,7 @@ module XGen
         end
 
         def contains_special_fields
-          (@order_by != nil && @order_by.length > 0) || @explain || @hint
+          (@order_by != nil && @order_by.length > 0) || @explain || @hint || @snapshot
         end
       end
     end

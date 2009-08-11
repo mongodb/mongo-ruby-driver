@@ -67,6 +67,11 @@ module XGen
         #          ascending, -1 == descending, or array of field names (all
         #          assumed to be sorted in ascending order).
         # :hint :: See #hint. This option overrides the collection-wide value.
+        # :snapshot :: If true, snapshot mode will be used for this query.
+        #              Snapshot mode assures no duplicates are returned, or
+        #              objects missed, which were preset at both the start and
+        #              end of the query's execution. For details see
+        #              http://www.mongodb.org/display/DOCS/How+to+do+Snapshotting+in+the+Mongo+Database
         def find(selector={}, options={})
           fields = options.delete(:fields)
           fields = nil if fields && fields.empty?
@@ -74,13 +79,14 @@ module XGen
           limit = options.delete(:limit) || 0
           sort = options.delete(:sort)
           hint = options.delete(:hint)
+          snapshot = options.delete(:snapshot)
           if hint
             hint = normalize_hint_fields(hint)
           else
             hint = @hint        # assumed to be normalized already
           end
           raise RuntimeError, "Unknown options [#{options.inspect}]" unless options.empty?
-          @db.query(self, Query.new(selector, fields, offset, limit, sort, hint))
+          @db.query(self, Query.new(selector, fields, offset, limit, sort, hint, snapshot))
         end
 
         # Find the first record that matches +selector+. See #find.

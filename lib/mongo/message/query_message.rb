@@ -62,7 +62,7 @@ module XGen
             end
             sel['$hint'] = query.hint if query.hint && query.hint.length > 0
             sel['$explain'] = true if query.explain
-                               
+            sel['$snapshot'] = true if query.snapshot
           end
           write_doc(sel)
           write_doc(query.fields) if query.fields
