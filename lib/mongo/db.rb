@@ -114,7 +114,21 @@ module XGen
         # instance and connect to that one. On socket error or if we recieve a
         # "not master" error, we again find the master of the pair.
         def initialize(db_name, nodes, options={})
-          raise "Invalid DB name \"#{db_name}\" (must be non-nil, non-zero-length, and can not contain \".\")" if !db_name || (db_name && db_name.length > 0 && db_name.include?("."))
+          case db_name
+          when Symbol, String
+          else
+            raise TypeError, "db_name must be a string or symbol"
+          end
+
+          [" ", ".", "$", "/", "\\"].each do |invalid_char|
+            if db_name.include? invalid_char
+              raise InvalidName, "database names cannot contain the character '#{invalid_char}'"
+            end
+          end
+          if db_name.empty?
+            raise InvalidName, "database name cannot be the empty string"
+          end
+
           @name, @nodes = db_name, nodes
           @strict = options[:strict]
           @pk_factory = options[:pk]

@@ -17,6 +17,17 @@ class MongoTest < Test::Unit::TestCase
     @mongo.db('ruby-mongo-test').error
   end
 
+  def test_invalid_database_names
+    assert_raise TypeError do @mongo.db(4) end
+
+    assert_raise InvalidName do @mongo.db('') end
+    assert_raise InvalidName do @mongo.db('te$t') end
+    assert_raise InvalidName do @mongo.db('te.t') end
+    assert_raise InvalidName do @mongo.db('te\\t') end
+    assert_raise InvalidName do @mongo.db('te/t') end
+    assert_raise InvalidName do @mongo.db('te st') end
+  end
+
   def test_database_info
     @mongo.drop_database('ruby-mongo-info-test')
     @mongo.db('ruby-mongo-info-test').collection('info-test').insert('a' => 1)
