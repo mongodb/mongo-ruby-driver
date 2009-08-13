@@ -690,32 +690,32 @@ class DBAPITest < Test::Unit::TestCase
     @@coll.insert({"hello" => "world"})
     @@coll.insert({"hello" => {"hello" => "world"}})
 
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       @@coll.insert({"$hello" => "world"})
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       @@coll.insert({"hello" => {"$hello" => "world"}})
     end
 
     @@coll.insert({"he$llo" => "world"})
     @@coll.insert({"hello" => {"hell$o" => "world"}})
 
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       @@coll.insert({".hello" => "world"})
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       @@coll.insert({"hello" => {".hello" => "world"}})
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       @@coll.insert({"hello." => "world"})
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       @@coll.insert({"hello" => {"hello." => "world"}})
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       @@coll.insert({"hel.lo" => "world"})
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       @@coll.insert({"hello" => {"hel.lo" => "world"}})
     end
 
@@ -723,22 +723,22 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_collection_names
-    assert_raise RuntimeError do
+    assert_raise TypeError do
       @@db.collection(5)
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       @@db.collection("")
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       @@db.collection("te$t")
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       @@db.collection(".test")
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       @@db.collection("test.")
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       @@db.collection("tes..t")
     end
   end
@@ -749,22 +749,22 @@ class DBAPITest < Test::Unit::TestCase
     a = @@db.collection("foo")
     b = @@db.collection("bar")
 
-    assert_raise RuntimeError do
+    assert_raise TypeError do
       a.rename(5)
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       a.rename("")
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       a.rename("te$t")
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       a.rename(".test")
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       a.rename("test.")
     end
-    assert_raise RuntimeError do
+    assert_raise InvalidName do
       a.rename("tes..t")
     end
 

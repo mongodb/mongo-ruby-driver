@@ -19,6 +19,9 @@ module XGen
     module Driver
       # Raised when a database operation fails.
       class OperationFailure < RuntimeError; end
+
+      # Raised when an invalid name is used.
+      class InvalidName < RuntimeError; end
     end
   end
 end

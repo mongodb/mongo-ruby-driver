@@ -49,6 +49,7 @@ static VALUE DBRef;
 static VALUE Code;
 static VALUE RegexpOfHolding;
 static VALUE OrderedHash;
+static VALUE InvalidName;
 
 // this sucks. but for some reason these moved around between 1.8 and 1.9
 #ifdef ONIGURUMA_H
@@ -183,11 +184,11 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
     if (check_keys == Qtrue) {
         int i;
         if (RSTRING_LEN(key) > 0 && RSTRING_PTR(key)[0] == '$') {
-            rb_raise(rb_eRuntimeError, "key must not start with '$'");
+            rb_raise(InvalidName, "key must not start with '$'");
         }
         for (i = 0; i < RSTRING_LEN(key); i++) {
             if (RSTRING_PTR(key)[i] == '.') {
-                rb_raise(rb_eRuntimeError, "key must not contain '.'");
+                rb_raise(InvalidName, "key must not contain '.'");
             }
         }
     }
@@ -755,6 +756,8 @@ void Init_cbson() {
     Code = rb_const_get(driver, rb_intern("Code"));
     rb_require("mongo/types/regexp_of_holding");
     RegexpOfHolding = rb_const_get(driver, rb_intern("RegexpOfHolding"));
+    rb_require("mongo/errors");
+    InvalidName = rb_const_get(driver, rb_intern("InvalidName"));
     rb_require("mongo/util/ordered_hash");
     OrderedHash = rb_const_get(rb_cObject, rb_intern("OrderedHash"));
 

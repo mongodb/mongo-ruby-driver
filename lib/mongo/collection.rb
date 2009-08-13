@@ -29,19 +29,19 @@ module XGen
           case name
           when Symbol, String
           else
-            raise RuntimeError, "new_name must be a string or symbol"
+            raise TypeError, "new_name must be a string or symbol"
           end
 
           name = name.to_s
 
           if name.empty? or name.include? ".."
-            raise RuntimeError, "collection names cannot be empty"
+            raise InvalidName, "collection names cannot be empty"
           end
           if name.include? "$" and not name.match(/^\$cmd/)
-            raise RuntimeError, "collection names must not contain '$'"
+            raise InvalidName, "collection names must not contain '$'"
           end
           if name.match(/^\./) or name.match(/\.$/)
-            raise RuntimeError, "collection names must not start or end with '.'"
+            raise InvalidName, "collection names must not start or end with '.'"
           end
 
           @db, @name = db, name
@@ -256,7 +256,7 @@ EOS
         # Rename this collection.
         #
         # If operating in auth mode, client must be authorized as an admin to
-        # perform this operation. Raises an error if +new_name+ is an invalid
+        # perform this operation. Raises +InvalidName+ if +new_name+ is an invalid
         # collection name.
         #
         # :new_name :: new name for this collection
@@ -264,19 +264,19 @@ EOS
           case new_name
           when Symbol, String
           else
-            raise RuntimeError, "new_name must be a string or symbol"
+            raise TypeError, "new_name must be a string or symbol"
           end
 
           new_name = new_name.to_s
 
           if new_name.empty? or new_name.include? ".."
-            raise RuntimeError, "collection names cannot be empty"
+            raise InvalidName, "collection names cannot be empty"
           end
           if new_name.include? "$"
-            raise RuntimeError, "collection names must not contain '$'"
+            raise InvalidName, "collection names must not contain '$'"
           end
           if new_name.match(/^\./) or new_name.match(/\.$/)
-            raise RuntimeError, "collection names must not start or end with '.'"
+            raise InvalidName, "collection names must not start or end with '.'"
           end
 
           @db.rename_collection(@name, new_name)

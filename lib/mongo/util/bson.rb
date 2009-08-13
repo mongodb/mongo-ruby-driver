@@ -104,10 +104,10 @@ class BSON
     k = k.to_s
     if check_keys
       if k[0] == ?$
-        raise RuntimeError.new("key #{k} must not start with '$'")
+        raise InvalidName.new("key #{k} must not start with '$'")
       end
       if k.include? ?.
-        raise RuntimeError.new("key #{k} must not contain '.'")
+        raise InvalidName.new("key #{k} must not contain '.'")
       end
     end
     type = bson_type(v)
