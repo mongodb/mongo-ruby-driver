@@ -364,8 +364,11 @@ module XGen
           }
         end
 
-        # Alias for #replace_in_db. Normally called by Collection.modify.
-        alias_method :modify_in_db, :replace_in_db
+        # DEPRECATED - use Collection#update instead
+        def modify_in_db(collection_name, selector, obj)
+          warn "DB#modify_in_db is deprecated and will be removed. Please use Collection#update instead."
+          replace_in_db(collection_name, selector, obj)
+        end
 
         # Update records in +collection_name+ that match +selector+ by
         # applying +obj+ as an update. If no match, inserts (???). Normally
