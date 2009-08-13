@@ -7,3 +7,4 @@ nbproject
 *.o
 ext/cbson/Makefile
 *~
+*#*
