@@ -4,6 +4,7 @@ require 'mongo/types/objectid'
 require 'mongo/types/regexp_of_holding'
 require 'mongo/types/undefined'
 
+require 'mongo/errors'
 require 'mongo/mongo'
 require 'mongo/message'
 require 'mongo/db'

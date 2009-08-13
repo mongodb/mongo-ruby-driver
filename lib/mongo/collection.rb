@@ -128,23 +128,60 @@ module XGen
           remove({})
         end
 
+        # DEPRECATED - use update(... :upsert => true) instead
+        #
         # Update records that match +selector+ by applying +obj+ as an update.
         # If no match, inserts (???).
         def repsert(selector, obj)
-          @db.repsert_in_db(@name, selector, obj)
+          warn "Collection#repsert is deprecated and will be removed. Please use Collection#update instead."
+          update(selector, obj, :upsert => true)
         end
 
+        # DEPRECATED - use update(... :upsert => false) instead
+        #
         # Update records that match +selector+ by applying +obj+ as an update.
         def replace(selector, obj)
-          @db.replace_in_db(@name, selector, obj)
+          warn "Collection#replace is deprecated and will be removed. Please use Collection#update instead."
+          update(selector, obj)
         end
 
+        # DEPRECATED - use update(... :upsert => false) instead
+        #
         # Update records that match +selector+ by applying +obj+ as an update.
         # Both +selector+ and +modifier_obj+ are required.
         def modify(selector, modifier_obj)
-          raise "no object" unless modifier_obj
-          raise "no selector" unless selector
-          @db.modify_in_db(@name, selector, modifier_obj)
+          warn "Collection#modify is deprecated and will be removed. Please use Collection#update instead."
+          update(selector, modifier_obj)
+        end
+
+        # Update a document(s) in this collection.
+        #
+        # :spec :: a hash specifying elements which must be present for
+        #   a document to be updated
+        # :document :: a hash specifying the fields to be changed in the
+        #   selected document(s), or (in the case of an upsert) the document to
+        #   be inserted
+        #
+        # Options:
+        # :upsert :: if true, perform an upsert operation
+        # :safe :: if true, check that the update succeeded. OperationFailure
+        #   will be raised on an error. Checking for safety requires an extra
+        #   round-trip to the database
+        def update(spec, document, options={})
+          upsert = options.delete(:upsert)
+          safe = options.delete(:safe)
+
+          if upsert
+            @db.repsert_in_db(@name, spec, document)
+          else
+            @db.replace_in_db(@name, spec, document)
+          end
+          if safe
+            error = @db.error
+            if error
+              raise OperationFailure, error
+            end
+          end
         end
 
         # Create a new index. +field_or_spec+
