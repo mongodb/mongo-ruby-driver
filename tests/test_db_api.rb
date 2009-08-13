@@ -46,6 +46,15 @@ class DBAPITest < Test::Unit::TestCase
     assert docs.detect { |row| row['b'] == 4 }
   end
 
+  def test_save_ordered_hash
+    oh = OrderedHash.new
+    oh['a'] = -1
+    oh['b'] = 'foo'
+
+    oid = @@coll.save(oh)
+    assert_equal 'foo', @@coll.find_first(:_id => oid)['b']
+  end
+
   def test_insert_multiple
     ids = @@coll.insert({'a' => 2}, {'b' => 3})
 
