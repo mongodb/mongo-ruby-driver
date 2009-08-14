@@ -88,7 +88,7 @@ class TestCollection < Test::Unit::TestCase
   end
 
   def test_find_one
-    id = @@test.save("hello" => "world")
+    id = @@test.save("hello" => "world", "foo" => "bar")
 
     assert_equal "world", @@test.find_one()["hello"]
     assert_equal @@test.find_one(id), @@test.find_one()
@@ -96,6 +96,9 @@ class TestCollection < Test::Unit::TestCase
     assert_equal @@test.find_one({}), @@test.find_one()
     assert_equal @@test.find_one("hello" => "world"), @@test.find_one()
     assert_equal @@test.find_one(OrderedHash["hello", "world"]), @@test.find_one()
+
+    assert @@test.find_one(nil, :fields => ["hello"]).include?("hello")
+    assert !@@test.find_one(nil, :fields => ["foo"]).include?("hello")
 
     assert_equal nil, @@test.find_one("hello" => "foo")
     assert_equal nil, @@test.find_one(OrderedHash["hello", "foo"])
