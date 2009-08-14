@@ -80,7 +80,7 @@ class DBTest < Test::Unit::TestCase
 
     insert_id = coll.insert('name' => 'Fred', 'age' => 42)
     # new id gets added to returned object
-    row = coll.find_first({'name' => 'Fred'}, :limit => 1)
+    row = coll.find_one({'name' => 'Fred'})
     oid = row['_id']
     assert_not_nil oid
     assert_equal insert_id, oid
@@ -88,7 +88,7 @@ class DBTest < Test::Unit::TestCase
     oid = XGen::Mongo::Driver::ObjectID.new
     data = {'_id' => oid, 'name' => 'Barney', 'age' => 41}
     coll.insert(data)
-    row = coll.find_first({'name' => data['name']}, :limit => 1)
+    row = coll.find_one({'name' => data['name']})
     db_oid = row['_id']
     assert_equal oid, db_oid
     assert_equal data, row
@@ -152,7 +152,7 @@ class DBTest < Test::Unit::TestCase
     assert_equal 1, prev_error['nPrev']
     assert_equal prev_error["err"], @@db.error
 
-    @@db.collection('test').find_first
+    @@db.collection('test').find_one
     assert_nil @@db.error
     assert !@@db.error?
     assert @@db.previous_error

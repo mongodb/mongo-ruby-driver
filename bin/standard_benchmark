@@ -80,7 +80,7 @@ benchmark('batch insert (medium, no index)', insert_batch, PER_TRIAL/BATCH_SIZE,
 benchmark('batch insert (large, no index)', insert_batch, PER_TRIAL/BATCH_SIZE, db, 'large_bulk', LARGE)
 
 find_one = Proc.new { |coll, x, i|
-  coll.find_first('x' => x)
+  coll.find_one('x' => x)
 }
 benchmark('find_one (small, no index)', find_one, PER_TRIAL, db, 'small_none', PER_TRIAL / 2)
 benchmark('find_one (medium, no index)', find_one, PER_TRIAL, db, 'medium_none', PER_TRIAL / 2)

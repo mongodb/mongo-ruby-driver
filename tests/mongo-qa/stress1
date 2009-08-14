@@ -22,7 +22,7 @@ n1.times { |i|
 puts
 
 n2.times { |i|
-  x = c.find_first({:id => i})
+  x = c.find_one({:id => i})
   x['subarray'] = "foo#{i}"
   p x
   c.modify({:id => i}, x)

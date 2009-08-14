@@ -1,5 +1,5 @@
 require "benchmark"
-  
+
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 
@@ -20,21 +20,21 @@ arr = (0..OBJS_COUNT).collect {|x| { :number => x, :rndm => (rand(5)+1), :msg =>
 
 puts "Running benchmark"
 Benchmark.bmbm do |results|
-  results.report("single object inserts:  ") { 
+  results.report("single object inserts:  ") {
     TEST_COUNT.times {
       coll.clear
-      arr.each {|x| coll.insert(x)} 
+      arr.each {|x| coll.insert(x)}
     }
   }
-  results.report("multiple object insert: ") { 
+  results.report("multiple object insert: ") {
     TEST_COUNT.times {
       coll.clear
       coll.insert(arr)
     }
   }
-  results.report("find_first: ") {
+  results.report("find_one: ") {
     TEST_COUNT.times {
-      coll.find_first(:number => 0)
+      coll.find_one(:number => 0)
     }
   }
 end

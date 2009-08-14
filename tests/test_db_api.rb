@@ -52,11 +52,11 @@ class DBAPITest < Test::Unit::TestCase
     oh['b'] = 'foo'
 
     oid = @@coll.save(oh)
-    assert_equal 'foo', @@coll.find_first(:_id => oid)['b']
+    assert_equal 'foo', @@coll.find_one(oid)['b']
 
     oh = OrderedHash['a' => 1, 'b' => 'foo']
     oid = @@coll.save(oh)
-    assert_equal 'foo', @@coll.find_first(:_id => oid)['b']
+    assert_equal 'foo', @@coll.find_one(oid)['b']
   end
 
   def test_insert_multiple
@@ -246,9 +246,9 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 1, x['a']
   end
 
-  def test_find_first_no_records
+  def test_find_one_no_records
     @@coll.clear
-    x = @@coll.find_first('a' => 1)
+    x = @@coll.find_one('a' => 1)
     assert_nil x
   end
 
@@ -473,28 +473,28 @@ class DBAPITest < Test::Unit::TestCase
 
   def test_replace
     assert_equal @@coll.count, 1
-    assert_equal @@coll.find_first["a"], 1
+    assert_equal @@coll.find_one["a"], 1
 
     @@coll.replace({"a" => 1}, {"a" => 2})
     assert_equal @@coll.count, 1
-    assert_equal @@coll.find_first["a"], 2
+    assert_equal @@coll.find_one["a"], 2
 
     @@coll.replace({"b" => 1}, {"a" => 3})
     assert_equal @@coll.count, 1
-    assert_equal @@coll.find_first["a"], 2
+    assert_equal @@coll.find_one["a"], 2
   end
 
   def test_repsert
     assert_equal @@coll.count, 1
-    assert_equal @@coll.find_first["a"], 1
+    assert_equal @@coll.find_one["a"], 1
 
     @@coll.repsert({"a" => 1}, {"a" => 2})
     assert_equal @@coll.count, 1
-    assert_equal @@coll.find_first["a"], 2
+    assert_equal @@coll.find_one["a"], 2
 
     @@coll.repsert({"b" => 1}, {"a" => 3})
     assert_equal @@coll.count, 2
-    assert @@coll.find_first({"a" => 3})
+    assert @@coll.find_one({"a" => 3})
   end
 
   def test_to_a
@@ -544,7 +544,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 3, @@db.eval('function (x) {return x;}', 3)
 
     assert_equal nil, @@db.eval("function (x) {db.test_eval.save({y:x});}", 5)
-    assert_equal 5, @@db.collection('test_eval').find_first['y']
+    assert_equal 5, @@db.collection('test_eval').find_one['y']
 
     assert_equal 5, @@db.eval("function (x, y) {return x + y;}", 2, 3)
     assert_equal 5, @@db.eval("function () {return 5;}")
@@ -591,7 +591,7 @@ class DBAPITest < Test::Unit::TestCase
     val = Hash.new(0)
     val["x"] = 5
     @@coll.insert val
-    id = @@coll.find_first("x" => 5)["_id"]
+    id = @@coll.find_one("x" => 5)["_id"]
     assert id != 0
   end
 
@@ -614,7 +614,7 @@ class DBAPITest < Test::Unit::TestCase
 
     assert_equal nil, @@db.dereference(DBRef.new("test", ObjectID.new))
     @@coll.insert({"x" => "hello"})
-    key = @@coll.find_first()["_id"]
+    key = @@coll.find_one()["_id"]
     assert_equal "hello", @@db.dereference(DBRef.new("test", key))["x"]
 
     assert_equal nil, @@db.dereference(DBRef.new("test", 4))
@@ -636,17 +636,17 @@ class DBAPITest < Test::Unit::TestCase
     assert_kind_of ObjectID, id
     assert_equal 1, @@coll.count
 
-    assert_equal id, @@coll.save(@@coll.find_first)
+    assert_equal id, @@coll.save(@@coll.find_one)
     assert_equal 1, @@coll.count
 
-    assert_equal "world", @@coll.find_first()["hello"]
+    assert_equal "world", @@coll.find_one()["hello"]
 
-    doc = @@coll.find_first
+    doc = @@coll.find_one
     doc["hello"] = "mike"
     @@coll.save(doc)
     assert_equal 1, @@coll.count
 
-    assert_equal "mike", @@coll.find_first()["hello"]
+    assert_equal "mike", @@coll.find_one()["hello"]
 
     @@coll.save(a)
     assert_equal 2, @@coll.count
@@ -655,7 +655,7 @@ class DBAPITest < Test::Unit::TestCase
   def test_save_long
     @@coll.clear
     @@coll.insert("x" => 9223372036854775807)
-    assert_equal 9223372036854775807, @@coll.find_first()["x"]
+    assert_equal 9223372036854775807, @@coll.find_one()["x"]
   end
 
   def test_find_by_oid
@@ -665,13 +665,13 @@ class DBAPITest < Test::Unit::TestCase
     id = @@coll.save("hello" => "world")
     assert_kind_of ObjectID, id
 
-    assert_equal "world", @@coll.find_first(:_id => id)["hello"]
+    assert_equal "world", @@coll.find_one(:_id => id)["hello"]
     @@coll.find(:_id => id).to_a.each do |doc|
       assert_equal "world", doc["hello"]
     end
 
     id = ObjectID.from_string(id.to_s)
-    assert_equal "world", @@coll.find_first(:_id => id)["hello"]
+    assert_equal "world", @@coll.find_one(:_id => id)["hello"]
   end
 
   def test_save_with_object_that_has_id_but_does_not_actually_exist_in_collection
@@ -680,12 +680,12 @@ class DBAPITest < Test::Unit::TestCase
     a = {'_id' => '1', 'hello' => 'world'}
     @@coll.save(a)
     assert_equal(1, @@coll.count)
-    assert_equal("world", @@coll.find_first()["hello"])
+    assert_equal("world", @@coll.find_one()["hello"])
 
     a["hello"] = "mike"
     @@coll.save(a)
     assert_equal(1, @@coll.count)
-    assert_equal("mike", @@coll.find_first()["hello"])
+    assert_equal("mike", @@coll.find_one()["hello"])
   end
 
   def test_invalid_key_names

@@ -89,8 +89,34 @@ module XGen
           @db.query(self, Query.new(selector, fields, offset, limit, sort, hint, snapshot))
         end
 
+        # Get a single object from the database.
+        #
+        # Raises TypeError if the argument is of an improper type. Returns a
+        # single document (hash), or nil if no result is found.
+        #
+        # :spec_or_object_id :: a hash specifying elements which must be
+        #   present for a document to be included in the result set OR an
+        #   instance of ObjectID to be used as the value for an _id query.
+        #   if nil an empty spec, {}, will be used.
+        def find_one(spec_or_object_id=nil)
+          spec = case spec_or_object_id
+                 when nil
+                   {}
+                 when ObjectID
+                   {:_id => spec_or_object_id}
+                 when Hash
+                   spec_or_object_id
+                 else
+                   raise TypeError, "spec_or_object_id must be an instance of ObjectID or Hash, or nil"
+                 end
+          find(spec, :limit => -1).next_object
+        end
+
+        # DEPRECATED - use find_one instead
+        #
         # Find the first record that matches +selector+. See #find.
         def find_first(selector={}, options={})
+          warn "Collection#find_first is deprecated and will be removed. Please use Collection#find_one instead."
           h = options.dup
           h[:limit] = 1
           cursor = find(selector, h)
