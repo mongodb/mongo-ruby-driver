@@ -636,19 +636,18 @@ class DBAPITest < Test::Unit::TestCase
     assert_kind_of ObjectID, id
     assert_equal 1, @@coll.count
 
-    assert_equal id, @@coll.save(@@coll.find_one)
+    assert_equal id, @@coll.save(a)
     assert_equal 1, @@coll.count
 
     assert_equal "world", @@coll.find_one()["hello"]
 
-    doc = @@coll.find_one
-    doc["hello"] = "mike"
-    @@coll.save(doc)
+    a["hello"] = "mike"
+    @@coll.save(a)
     assert_equal 1, @@coll.count
 
     assert_equal "mike", @@coll.find_one()["hello"]
 
-    @@coll.save(a)
+    @@coll.save({"hello" => "world"})
     assert_equal 2, @@coll.count
   end
 

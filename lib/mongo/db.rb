@@ -501,7 +501,7 @@ module XGen
               }
             else
               objects = objects.collect do |o|
-                o[:_id] || o['_id'] ? o : o.merge(:_id => ObjectID.new)
+                o[:_id] || o['_id'] ? o : o.merge!(:_id => ObjectID.new)
               end
             end
             send_to_db(InsertMessage.new(@name, collection_name, true, *objects))

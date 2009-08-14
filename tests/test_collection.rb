@@ -34,7 +34,6 @@ class TestCollection < Test::Unit::TestCase
   def test_safe_insert
     a = {"hello" => "world"}
     @@test.insert(a)
-    a = @@test.find_one() # TODO we need this because insert doesn't add _id
     @@test.insert(a)
     assert @@db.error.include? "E11000"
 
@@ -107,6 +106,25 @@ class TestCollection < Test::Unit::TestCase
     assert_raise TypeError do
       @@test.find_one(6)
     end
+  end
+
+  def test_insert_adds_id
+    doc = {"hello" => "world"}
+    @@test.insert(doc)
+    assert doc.include? :_id
+
+    docs = [{"hello" => "world"}, {"hello" => "world"}]
+    @@test.insert(docs)
+    docs.each do |doc|
+      assert doc.include? :_id
+    end
+  end
+
+  def test_save_adds_id
+    doc = {"hello" => "world"}
+    @@test.save(doc)
+    assert doc.include? :_id
+
   end
 end
 
