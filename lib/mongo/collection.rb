@@ -97,13 +97,19 @@ module XGen
           cursor.next_object    # don't need to explicitly close b/c of limit
         end
 
-        # Save an updated +object+ to the collection, or insert it if it doesn't exist already.
-        def save(object)
-          if id = object[:_id] || object['_id']
-            repsert({:_id => id}, object)
+        # Save a document in this collection
+        #
+        # If +to_save+ already has an '_id' then an update (upsert) operation
+        # is performed and any existing document with that _id is overwritten.
+        # Otherwise an insert operation is performed.
+        #
+        # :to_save :: the document (a hash) to be saved
+        def save(to_save)
+          if id = to_save[:_id] || to_save['_id']
+            update({:_id => id}, to_save, :upsert => true)
             id
           else
-            insert(object)
+            insert(to_save)
           end
         end
 
