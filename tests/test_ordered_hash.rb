@@ -12,6 +12,15 @@ class OrderedHashTest < Test::Unit::TestCase
     @ordered_keys = %w(c a z)
   end
 
+  def test_initialize
+    a = OrderedHash.new
+    a['x'] = 1
+    a['y'] = 2
+
+    b = OrderedHash['x' => 1, 'y' => 2]
+    assert_equal a, b
+  end
+
   def test_empty
     assert_equal [], OrderedHash.new.keys
   end

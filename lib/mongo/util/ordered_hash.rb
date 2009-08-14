@@ -32,65 +32,82 @@ class OrderedHash < Hash
 
   # We only need the body of this class if the RUBY_VERSION is before 1.9
   if RUBY_VERSION < '1.9'
+    attr_accessor :ordered_keys
 
-  attr_accessor :ordered_keys
-
-  def keys
-    @ordered_keys || []
-  end
-
-  def []=(key, value)
-    @ordered_keys ||= []
-    @ordered_keys << key unless @ordered_keys.include?(key)
-    super(key, value)
-  end
-
-  def each
-    @ordered_keys ||= []
-    @ordered_keys.each { |k| yield k, self[k] }
-  end
-
-  def values
-    collect { |k, v| v }
-  end
-
-  def merge(other)
-    oh = self.dup
-    oh.merge!(other)
-    oh
-  end
-
-  def merge!(other)
-    @ordered_keys ||= []
-    @ordered_keys += other.keys # unordered if not an OrderedHash
-    @ordered_keys.uniq!
-    super(other)
-  end
-
-  def inspect
-    str = '{'
-    str << (@ordered_keys || []).collect { |k| "\"#{k}\"=>#{self.[](k).inspect}" }.join(", ")
-    str << '}'
-  end
-
-  def delete(key, &block)
-    @ordered_keys.delete(key) if @ordered_keys
-    super
-  end
-
-  def delete_if(&block)
-    self.each { |k,v|
-      if yield k, v
-        delete(k)
+    def self.[] *args
+      oh = OrderedHash.new
+      if Hash === args[0]
+        oh.merge! args[0]
+      elsif (args.size % 2) != 0
+        raise ArgumentError, "odd number of elements for Hash"
+      else
+        0.step(args.size - 1, 2) do |key|
+          value = key + 1
+          oh[args[key]] = args[value]
+        end
       end
-    }
+      oh
+    end
+
+    def initialize(*a, &b)
+      super
+      @ordered_keys = []
+    end
+
+    def keys
+      @ordered_keys || []
+    end
+
+    def []=(key, value)
+      @ordered_keys ||= []
+      @ordered_keys << key unless @ordered_keys.include?(key)
+      super(key, value)
+    end
+
+    def each
+      @ordered_keys ||= []
+      @ordered_keys.each { |k| yield k, self[k] }
+    end
+
+    def values
+      collect { |k, v| v }
+    end
+
+    def merge(other)
+      oh = self.dup
+      oh.merge!(other)
+      oh
+    end
+
+    def merge!(other)
+      @ordered_keys ||= []
+      @ordered_keys += other.keys # unordered if not an OrderedHash
+      @ordered_keys.uniq!
+      super(other)
+    end
+
+    def inspect
+      str = '{'
+      str << (@ordered_keys || []).collect { |k| "\"#{k}\"=>#{self.[](k).inspect}" }.join(", ")
+      str << '}'
+    end
+
+    def delete(key, &block)
+      @ordered_keys.delete(key) if @ordered_keys
+      super
+    end
+
+    def delete_if(&block)
+      self.each { |k,v|
+        if yield k, v
+          delete(k)
+        end
+      }
+    end
+
+    def clear
+      super
+      @ordered_keys = []
+    end
   end
-
-  def clear
-    super
-    @ordered_keys = []
-  end
-
-  end                           # Ruby before 1.9
-
 end

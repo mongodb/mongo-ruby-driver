@@ -53,6 +53,10 @@ class DBAPITest < Test::Unit::TestCase
 
     oid = @@coll.save(oh)
     assert_equal 'foo', @@coll.find_first(:_id => oid)['b']
+
+    oh = OrderedHash['a' => 1, 'b' => 'foo']
+    oid = @@coll.save(oh)
+    assert_equal 'foo', @@coll.find_first(:_id => oid)['b']
   end
 
   def test_insert_multiple
