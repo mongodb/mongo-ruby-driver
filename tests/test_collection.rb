@@ -31,6 +31,18 @@ class TestCollection < Test::Unit::TestCase
     @@test.drop()
   end
 
+  def test_safe_insert
+    a = {"hello" => "world"}
+    @@test.insert(a)
+    a = @@test.find_first() # TODO we need this because insert doesn't add _id
+    @@test.insert(a)
+    assert @@db.error.include? "E11000"
+
+    assert_raise OperationFailure do
+      @@test.insert(a, :safe => true)
+    end
+  end
+
   def test_update
     id1 = @@test.save("x" => 5)
     @@test.update({}, {"$inc" => {"x" => 1}})
@@ -60,6 +72,18 @@ class TestCollection < Test::Unit::TestCase
 
     assert_raise OperationFailure do
       @@test.update({}, {"$inc" => {"x" => 1}}, :safe => true)
+    end
+  end
+
+  def test_safe_save
+    @@test.create_index("hello", true)
+
+    @@test.save("hello" => "world")
+    @@test.save("hello" => "world")
+    assert @@db.error.include? "E11000"
+
+    assert_raise OperationFailure do
+      @@test.save({"hello" => "world"}, :safe => true)
     end
   end
 end

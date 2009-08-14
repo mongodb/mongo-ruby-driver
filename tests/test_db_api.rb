@@ -60,7 +60,7 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_insert_multiple
-    ids = @@coll.insert({'a' => 2}, {'b' => 3})
+    ids = @@coll.insert([{'a' => 2}, {'b' => 3}])
 
     ids.each do |i|
       assert_kind_of ObjectID, i

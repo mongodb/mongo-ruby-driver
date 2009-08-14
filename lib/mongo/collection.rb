@@ -97,29 +97,50 @@ module XGen
           cursor.next_object    # don't need to explicitly close b/c of limit
         end
 
-        # Save a document in this collection
+        # Save a document in this collection.
         #
         # If +to_save+ already has an '_id' then an update (upsert) operation
         # is performed and any existing document with that _id is overwritten.
-        # Otherwise an insert operation is performed.
+        # Otherwise an insert operation is performed. Returns the _id of the
+        # saved document.
         #
         # :to_save :: the document (a hash) to be saved
-        def save(to_save)
+        #
+        # Options:
+        # :safe :: if true, check that the save succeeded. OperationFailure
+        #   will be raised on an error. Checking for safety requires an extra
+        #   round-trip to the database
+        def save(to_save, options={})
           if id = to_save[:_id] || to_save['_id']
-            update({:_id => id}, to_save, :upsert => true)
+            update({:_id => id}, to_save, :upsert => true, :safe => options.delete(:safe))
             id
           else
-            insert(to_save)
+            insert(to_save, :safe => options.delete(:safe))
           end
         end
 
-        # Insert +objects+, which are hashes. "<<" is aliased to this method.
-        # Returns either the single inserted object or a new array containing
-        # +objects+. The object(s) may have been modified by the database's PK
-        # factory, if it has one.
-        def insert(*objects)
-          objects = objects.first if objects.size == 1 && objects.first.is_a?(Array)
-          res = @db.insert_into_db(@name, objects)
+        # Insert a document(s) into this collection.
+        #
+        # "<<" is aliased to this method. Returns the _id of the inserted
+        # document or a list of _ids of the inserted documents. The object(s)
+        # may have been modified by the database's PK factory, if it has one.
+        #
+        # :doc_or_docs :: a document (as a hash) or Array of documents to be
+        #   inserted
+        #
+        # Options:
+        # :safe :: if true, check that the insert succeeded. OperationFailure
+        #   will be raised on an error. Checking for safety requires an extra
+        #   round-trip to the database
+        def insert(doc_or_docs, options={})
+          doc_or_docs = [doc_or_docs] if !doc_or_docs.is_a?(Array)
+          res = @db.insert_into_db(@name, doc_or_docs)
+          if options.delete(:safe)
+            error = @db.error
+            if error
+              raise OperationFailure, error
+            end
+          end
           res.size > 1 ? res : res.first
         end
         alias_method :<<, :insert

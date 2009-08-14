@@ -491,8 +491,8 @@ module XGen
         end
 
         # Insert +objects+ into +collection_name+. Normally called by
-        # Collection#insert. Returns a new array containing +objects+,
-        # possibly modified by @pk_factory.
+        # Collection#insert. Returns a new array containing the _ids
+        # of the inserted documents.
         def insert_into_db(collection_name, objects)
           _synchronize {
             if @pk_factory
