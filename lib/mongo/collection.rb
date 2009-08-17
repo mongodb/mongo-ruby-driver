@@ -48,6 +48,17 @@ module XGen
           @hint = nil
         end
 
+        # Get a sub-collection of this collection by name.
+        #
+        # Raises InvalidName if an invalid collection name is used.
+        #
+        # :name :: the name of the collection to get
+        def [](name)
+          name = "#{self.name}.#{name}"
+          return Collection.new(self, name) if !db.strict? || db.collection_names.include?(name)
+          raise "Collection #{name} doesn't exist. Currently in strict mode."
+        end
+
         # Set hint fields to use and return +self+. hint may be a single field
         # name, array of field names, or a hash (preferably an OrderedHash).
         # May be +nil+.

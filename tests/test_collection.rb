@@ -31,6 +31,20 @@ class TestCollection < Test::Unit::TestCase
     @@test.drop()
   end
 
+  def test_collection
+    assert_raise InvalidName do
+      @@db["te$t"]
+    end
+
+    assert_kind_of Collection, @@db["test"]
+    assert_equal @@db["test"].name(), @@db.collection("test").name()
+    assert_equal @@db["test"].name(), @@db[:test].name()
+
+    assert_kind_of Collection, @@db["test"]["foo"]
+    assert_equal @@db["test"]["foo"].name(), @@db.collection("test.foo").name()
+    assert_equal @@db["test"]["foo"].name(), @@db["test.foo"].name()
+  end
+
   def test_safe_insert
     a = {"hello" => "world"}
     @@test.insert(a)

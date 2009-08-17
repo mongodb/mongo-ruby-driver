@@ -246,6 +246,7 @@ module XGen
           return Collection.new(self, name) if !strict? || collection_names.include?(name)
           raise "Collection #{name} doesn't exist. Currently in strict mode."
         end
+        alias_method :[], :collection
 
         # Drop collection +name+. Returns +true+ on success or if the
         # collection does not exist, +false+ otherwise.
