@@ -12,7 +12,7 @@ require 'rbconfig'
 include Config
 
 gem_command = "gem"
-gem_command = "gem1.9" if CONFIG["MAJOR"] == "1" && CONFIG["MINOR"] == "9"
+gem_command = "gem1.9" if $0.match(/1\.9$/) # use gem1.9 if we used rake1.9
 
 # NOTE: some of the tests assume Mongo is running
 Rake::TestTask.new do |t|
