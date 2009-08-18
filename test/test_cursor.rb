@@ -31,6 +31,33 @@ class CursorTest < Test::Unit::TestCase
     assert_kind_of Numeric, explaination['nscanned']
   end
 
+  def test_count
+    @@coll.clear
+
+    assert_equal 0, @@coll.find().count()
+
+    10.times do |i|
+      @@coll.save("x" => i)
+    end
+
+    assert_equal 10, @@coll.find().count()
+    assert_kind_of Integer, @@coll.find().count()
+    assert_equal 10, @@coll.find({}, :limit => 5).count()
+    assert_equal 10, @@coll.find({}, :offset => 5).count()
+
+    assert_equal 1, @@coll.find({"x" => 1}).count()
+    assert_equal 5, @@coll.find({"x" => {"$lt" => 5}}).count()
+
+    a = @@coll.find()
+    b = a.count()
+    a.each do |doc|
+      break
+    end
+    assert_equal b, a.count()
+
+    assert_equal 0, @@db['acollectionthatdoesn'].count()
+  end
+
   def test_close_no_query_sent
     begin
       cursor = @@coll.find('a' => 1)

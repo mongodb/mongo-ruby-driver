@@ -71,6 +71,20 @@ module XGen
           o
         end
 
+        # Get the size of the results set for this query.
+        #
+        # Returns the number of objects in the results set for this query. Does
+        # not take limit and skip into account. Raises OperationFailure on a
+        # database error.
+        def count
+          command = OrderedHash["count", @collection.name,
+                                "query", @query.selector]
+          response = @db.db_command(command)
+          return response['n'].to_i if response['ok'] == 1
+          return 0 if response['errmsg'] == "ns missing"
+          raise OperationFailure, "Count failed: #{response['errmsg']}"
+        end
+
         # Iterate over each object, yielding it to the given block. At most
         # @num_to_return records are returned (or all of them, if
         # @num_to_return is 0).
