@@ -100,6 +100,15 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  def test_count
+    @@test.drop
+
+    assert_equal 0, @@test.count
+    @@test.save({})
+    @@test.save({})
+    assert_equal 2, @@test.count
+  end
+
   def test_find_one
     id = @@test.save("hello" => "world", "foo" => "bar")
 
