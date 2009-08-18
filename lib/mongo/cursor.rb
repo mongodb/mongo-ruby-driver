@@ -206,8 +206,9 @@ module XGen
         end
 
         def refill_via_get_more
-          send_query_if_needed
-          return if @cursor_id == 0
+          if send_query_if_needed or @cursor_id == 0
+            return
+          end
           @db._synchronize {
             @db.send_to_db(GetMoreMessage.new(@admin ? 'admin' : @db.name, @collection.name, @cursor_id))
             read_all
@@ -227,12 +228,15 @@ module XGen
 
         def send_query_if_needed
           # Run query first time we request an object from the wire
-          unless @query_run
+          if @query_run
+            false
+          else
             @db._synchronize {
               @db.send_query_message(QueryMessage.new(@admin ? 'admin' : @db.name, @collection.name, @query))
               @query_run = true
               read_all
             }
+            true
           end
         end
 

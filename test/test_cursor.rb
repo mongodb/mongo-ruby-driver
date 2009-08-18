@@ -145,4 +145,61 @@ class CursorTest < Test::Unit::TestCase
     end
   end
 
+  def test_kill_cursors
+    @@coll.drop
+
+    client_cursors = @@db.db_command("cursorInfo" => 1)["clientCursors_size"]
+    by_location = @@db.db_command("cursorInfo" => 1)["byLocation_size"]
+
+    10000.times do |i|
+      @@coll.insert("i" => i)
+    end
+
+    assert_equal(client_cursors,
+                 @@db.db_command("cursorInfo" => 1)["clientCursors_size"])
+    assert_equal(by_location,
+                 @@db.db_command("cursorInfo" => 1)["byLocation_size"])
+
+    10.times do |i|
+      @@coll.find_one()
+    end
+
+    assert_equal(client_cursors,
+                 @@db.db_command("cursorInfo" => 1)["clientCursors_size"])
+    assert_equal(by_location,
+                 @@db.db_command("cursorInfo" => 1)["byLocation_size"])
+
+    10.times do |i|
+      a = @@coll.find()
+      a.next_object()
+      a.close()
+    end
+
+    assert_equal(client_cursors,
+                 @@db.db_command("cursorInfo" => 1)["clientCursors_size"])
+    assert_equal(by_location,
+                 @@db.db_command("cursorInfo" => 1)["byLocation_size"])
+
+    a = @@coll.find()
+    a.next_object()
+
+    assert_not_equal(client_cursors,
+                     @@db.db_command("cursorInfo" => 1)["clientCursors_size"])
+    assert_not_equal(by_location,
+                     @@db.db_command("cursorInfo" => 1)["byLocation_size"])
+
+    a.close()
+
+    assert_equal(client_cursors,
+                 @@db.db_command("cursorInfo" => 1)["clientCursors_size"])
+    assert_equal(by_location,
+                 @@db.db_command("cursorInfo" => 1)["byLocation_size"])
+
+    a = @@coll.find({}, :limit => 10).next_object()
+
+    assert_equal(client_cursors,
+                 @@db.db_command("cursorInfo" => 1)["clientCursors_size"])
+    assert_equal(by_location,
+                 @@db.db_command("cursorInfo" => 1)["byLocation_size"])
+  end
 end
