@@ -104,9 +104,12 @@ class TestCollection < Test::Unit::TestCase
     @@test.drop
 
     assert_equal 0, @@test.count
-    @@test.save({})
-    @@test.save({})
+    @@test.save("x" => 1)
+    @@test.save("x" => 2)
     assert_equal 2, @@test.count
+
+    # TODO remove this test - it's deprecated
+    assert_equal 1, @@test.count("x" => 1)
   end
 
   def test_find_one

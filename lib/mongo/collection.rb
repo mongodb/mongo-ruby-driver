@@ -359,10 +359,15 @@ EOS
           @db.collections_info(@name).next_object()['options']
         end
 
-        # Return the number of records that match +selector+. If +selector+ is
-        # +nil+ or an empty hash, returns the count of all records.
-        def count(selector={})
-          @db.count(@name, selector || {})
+        # Get the number of documents in this collection.
+        #
+        # Specifying a +selector+ is DEPRECATED and will be removed. Please use
+        # find(selector).count() instead.
+        def count(selector=nil)
+          if selector
+            warn "specifying a selector for Collection#count is deprecated and will be removed. Please use Collection.find(selector).count instead."
+          end
+          find(selector || {}).count()
         end
 
         protected

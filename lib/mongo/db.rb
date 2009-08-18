@@ -396,17 +396,10 @@ module XGen
           }
         end
 
-        # Return the number of records in +collection_name+ that match
-        # +selector+. If +selector+ is +nil+ or an empty hash, returns the
-        # count of all records. Normally called by Collection#count.
+        # DEPRECATED - use Collection.find(selector).count() instead
         def count(collection_name, selector={})
-          oh = OrderedHash.new
-          oh[:count] = collection_name
-          oh[:query] = selector || {}
-          doc = db_command(oh)
-          return doc['n'].to_i if ok?(doc)
-          return 0 if doc['errmsg'] == "ns missing"
-          raise "Error with count command: #{doc.inspect}"
+          warn "DB#count is deprecated and will be removed. Please use Collection.find(selector).count instead."
+          collection(collection_name).find(selector).count()
         end
 
         # Dereference a DBRef, getting the document it points to.

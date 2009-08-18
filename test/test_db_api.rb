@@ -536,8 +536,8 @@ class DBAPITest < Test::Unit::TestCase
     @@coll.insert('a' => 3)
 
     assert_equal 3, @@coll.count
-    assert_equal 1, @@coll.count('$where' => Code.new('this.a > 2'))
-    assert_equal 2, @@coll.count('$where' => Code.new('this.a > i', {'i' => 1}))
+    assert_equal 1, @@coll.find('$where' => Code.new('this.a > 2')).count()
+    assert_equal 2, @@coll.find('$where' => Code.new('this.a > i', {'i' => 1})).count()
   end
 
   def test_eval
