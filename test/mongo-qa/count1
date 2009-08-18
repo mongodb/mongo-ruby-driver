@@ -13,6 +13,6 @@ end
 
 puts db.collection('test1').count
 puts db.collection('test2').count
-puts db.collection('test3').count('i' => 'a')
-puts db.collection('test3').count('i' => 3)
-puts db.collection('test3').count({'i' => {'$gte' => 67}})
+puts db.collection('test3').find('i' => 'a').count
+puts db.collection('test3').find('i' => 3).count
+puts db.collection('test3').find({'i' => {'$gte' => 67}}).count
