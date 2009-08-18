@@ -16,7 +16,7 @@ gem_command = "gem1.9" if $0.match(/1\.9$/) # use gem1.9 if we used rake1.9
 
 # NOTE: some of the tests assume Mongo is running
 Rake::TestTask.new do |t|
-  t.test_files = FileList['tests/test*.rb']
+  t.test_files = FileList['test/test*.rb']
 end
 
 desc "Generate documentation"
