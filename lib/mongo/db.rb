@@ -421,7 +421,7 @@ module XGen
           oh[:args] = args
           doc = db_command(oh)
           return doc['retval'] if ok?(doc)
-          raise "Error with eval command: #{doc.inspect}"
+          raise OperationFailure, "eval failed: #{doc['errmsg']}"
         end
 
         # Rename collection +from+ to +to+. Meant to be called by

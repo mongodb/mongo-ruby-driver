@@ -554,7 +554,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, @@db.eval(Code.new("return i;", {"i" => 2}))
     assert_equal 5, @@db.eval(Code.new("i + 3;", {"i" => 2}))
 
-    assert_raise RuntimeError do
+    assert_raise OperationFailure do
       @@db.eval("5 ++ 5;")
     end
   end
@@ -613,6 +613,10 @@ class DBAPITest < Test::Unit::TestCase
                 {"a" => nil, "count" => 1},
                 {"a" => 1, "count" => 1}]
     assert_equal expected, test.group(["a"], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")
+
+    assert_raise OperationFailure do
+      test.group([], {}, {}, "5 ++ 5")
+    end
   end
 
   def test_deref
