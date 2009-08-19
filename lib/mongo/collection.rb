@@ -67,11 +67,29 @@ module XGen
           self
         end
 
-        # Return records that match a +selector+ hash. See Mongo docs for
-        # details.
+        # Query the database.
+        #
+        # The +selector+ argument is a prototype document that all results must
+        # match. For example:
+        #
+        # collection.find({"hello" => "world"})
+        #
+        # only matches documents that have a key "hello" with value "world".
+        # Matches can have other keys *in addition* to "hello".
+        #
+        # If given an optional block +find+ will yield a Cursor to that block,
+        # close the cursor, and then return nil. This guarantees that partially
+        # evaluated cursors will be closed. If given no block +find+ returns a
+        # cursor.
+        #
+        # :selector :: A document (hash) specifying elements which must be
+        #              present for a document to be included in the result set.
         #
         # Options:
-        # :fields :: Array of collection field names; only those will be returned (plus _id if defined)
+        # :fields :: Array of field names that should be returned in the result
+        #            set ("_id" will always be included). By limiting results
+        #            to a certain subset of fields you can cut down on network
+        #            traffic and decoding time.
         # :offset :: Start at this record when returning records
         # :limit :: Maximum number of records to return
         # :sort :: Either hash of field names as keys and 1/-1 as values; 1 ==
@@ -97,7 +115,15 @@ module XGen
             hint = @hint        # assumed to be normalized already
           end
           raise RuntimeError, "Unknown options [#{options.inspect}]" unless options.empty?
-          @db.query(self, Query.new(selector, fields, offset, limit, sort, hint, snapshot))
+
+          cursor = @db.query(self, Query.new(selector, fields, offset, limit, sort, hint, snapshot))
+          if block_given?
+            yield cursor
+            cursor.close()
+            nil
+          else
+            cursor
+          end
         end
 
         # Get a single object from the database.

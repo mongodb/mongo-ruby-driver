@@ -201,5 +201,23 @@ class CursorTest < Test::Unit::TestCase
                  @@db.db_command("cursorInfo" => 1)["clientCursors_size"])
     assert_equal(by_location,
                  @@db.db_command("cursorInfo" => 1)["byLocation_size"])
+
+    @@coll.find() do |cursor|
+      cursor.next_object()
+    end
+
+    assert_equal(client_cursors,
+                 @@db.db_command("cursorInfo" => 1)["clientCursors_size"])
+    assert_equal(by_location,
+                 @@db.db_command("cursorInfo" => 1)["byLocation_size"])
+
+    @@coll.find() { |cursor|
+      cursor.next_object()
+    }
+
+    assert_equal(client_cursors,
+                 @@db.db_command("cursorInfo" => 1)["clientCursors_size"])
+    assert_equal(by_location,
+                 @@db.db_command("cursorInfo" => 1)["byLocation_size"])
   end
 end

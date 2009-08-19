@@ -152,5 +152,31 @@ class TestCollection < Test::Unit::TestCase
     @@test.save(doc)
     assert doc.include? :_id
   end
+
+  def test_optional_find_block
+    10.times do |i|
+      @@test.save("i" => i)
+    end
+
+    x = nil
+    @@test.find("i" => 2) { |cursor|
+      x = cursor.count()
+    }
+    assert_equal 1, x
+
+    i = 0
+    @@test.find({}, :offset => 5) do |cursor|
+      cursor.each do |doc|
+        i = i + 1
+      end
+    end
+    assert_equal 5, i
+
+    c = nil
+    @@test.find() do |cursor|
+      c = cursor
+    end
+    assert c.closed?
+  end
 end
 
