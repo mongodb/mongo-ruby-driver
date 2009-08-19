@@ -85,7 +85,7 @@ module XGen
         #              http://www.mongodb.org/display/DOCS/How+to+do+Snapshotting+in+the+Mongo+Database
         def find(selector={}, options={})
           fields = options.delete(:fields)
-          fields = nil if fields && fields.empty?
+          fields = ["_id"] if fields && fields.empty?
           offset = options.delete(:offset) || 0
           limit = options.delete(:limit) || 0
           sort = options.delete(:sort)
