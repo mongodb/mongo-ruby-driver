@@ -607,6 +607,12 @@ class DBAPITest < Test::Unit::TestCase
 
     assert_equal 3, test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")[0]["count"]
     assert_equal 1, test.group([], {"a" => {"$gt" => 1}}, {"count" => 0}, "function (obj, prev) { prev.count++; }")[0]["count"]
+
+    test.insert("a" => 2, "b" => 3)
+    expected = [{"a" => 2, "count" => 2},
+                {"a" => nil, "count" => 1},
+                {"a" => 1, "count" => 1}]
+    assert_equal expected, test.group(["a"], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")
   end
 
   def test_deref

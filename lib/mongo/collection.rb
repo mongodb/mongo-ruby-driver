@@ -317,8 +317,9 @@ function () {
         var obj = c.next();
 
         var key = {};
-        for (var i in keys) {
-            key[keys[i]] = obj[keys[i]];
+        for (var i = 0; i < keys.length; i++) {
+            var k = keys[i];
+            key[k] = obj[k];
         }
 
         var aggObj = map.get(key);
