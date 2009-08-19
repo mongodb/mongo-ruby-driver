@@ -600,22 +600,29 @@ class DBAPITest < Test::Unit::TestCase
     test = @@db.collection("test")
 
     assert_equal [], test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")
+    assert_equal [], test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }", true)
 
     test.insert("a" => 2)
     test.insert("b" => 5)
     test.insert("a" => 1)
 
     assert_equal 3, test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")[0]["count"]
+    assert_equal 3, test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }", true)[0]["count"]
     assert_equal 1, test.group([], {"a" => {"$gt" => 1}}, {"count" => 0}, "function (obj, prev) { prev.count++; }")[0]["count"]
+    assert_equal 1, test.group([], {"a" => {"$gt" => 1}}, {"count" => 0}, "function (obj, prev) { prev.count++; }", true)[0]["count"]
 
     test.insert("a" => 2, "b" => 3)
     expected = [{"a" => 2, "count" => 2},
                 {"a" => nil, "count" => 1},
                 {"a" => 1, "count" => 1}]
     assert_equal expected, test.group(["a"], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")
+    assert_equal expected, test.group(["a"], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }", true)
 
     assert_raise OperationFailure do
       test.group([], {}, {}, "5 ++ 5")
+    end
+    assert_raise OperationFailure do
+      test.group([], {}, {}, "5 ++ 5", true)
     end
   end
 

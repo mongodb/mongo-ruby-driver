@@ -302,12 +302,33 @@ module XGen
         #
         # Returns an array of grouped items.
         #
-        # :keys :: list of fields to group by
+        # :keys :: Array of fields to group by
         # :condition :: specification of rows to be considered (as a 'find'
         #               query specification)
         # :initial :: initial value of the aggregation counter object
         # :reduce :: aggregation function as a JavaScript string
-        def group(keys, condition, initial, reduce)
+        # :command :: if true, run the group as a command instead of in an
+        #             eval - it is likely that this option will eventually be
+        #             deprecated and all groups will be run as commands
+        def group(keys, condition, initial, reduce, command=false)
+          if command
+            hash = {}
+            keys.each do |k|
+              hash[k] = 1
+            end
+            result = @db.db_command({"group" =>
+                                      {
+                                        "ns" => @name,
+                                        "$reduce" => Code.new(reduce),
+                                        "key" => hash,
+                                        "cond" => condition,
+                                        "initial" => initial}})
+            if result["ok"] == 1
+              return result["retval"]
+            else
+              raise OperationFailure, "group command failed: #{result['errmsg']}"
+            end
+          end
           group_function = <<EOS
 function () {
     var c = db[ns].find(condition);
