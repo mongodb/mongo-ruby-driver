@@ -64,7 +64,11 @@ EOS
   #   generated)
   def one_round_trip(dir, name)
     obj = File.open(File.join(dir, "#{name}.xson")) { |f|
-      XMLToRuby.new.xml_to_ruby(f)
+      begin
+        XMLToRuby.new.xml_to_ruby(f)
+      rescue => ex # unsupported type
+        return
+      end
     }
 
     File.open(File.join(dir, "#{name}.bson"), 'rb') { |f|

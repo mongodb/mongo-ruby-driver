@@ -183,7 +183,7 @@ class BSONTest < Test::Unit::TestCase
     doc = {'undef' => Undefined.new}
     @b.serialize(doc)
     doc2 = @b.deserialize
-    assert_kind_of Undefined, doc2['undef']
+    assert_equal nil, doc2['undef']
   end
 
   def test_put_id_first

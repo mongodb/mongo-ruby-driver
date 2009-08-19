@@ -18,14 +18,15 @@ module XGen
   module Mongo
     module Driver
 
-      # A special "undefined" type to match Mongo's storage of UNKNOWN values.
-      # "UNKNOWN" comes from JavaScript.
-      #
-      # NOTE: this class does not attempt to provide ANY of the semantics an
-      # "unknown" object might need. It isn't nil, it isn't special in any
-      # way, and there isn't any singleton value.
-      class Undefined < Object; end
+      # DEPRECATED - the ruby driver converts the BSON undefined type to nil,
+      # and saves this type as nil
+      class Undefined < Object
 
+        def initialize
+          super
+          warn "the Undefined type is deprecated and will be removed - BSON undefineds get implicitely converted to nil now"
+        end
+      end
     end
   end
 end

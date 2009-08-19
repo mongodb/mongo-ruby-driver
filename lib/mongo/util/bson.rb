@@ -135,7 +135,7 @@ class BSON
     when BINARY
       serialize_binary_element(@buf, k, v)
     when UNDEFINED
-      serialize_undefined_element(@buf, k)
+      serialize_null_element(@buf, k)
     when CODE_W_SCOPE
       serialize_code_w_scope(@buf, k, v)
     else
@@ -207,7 +207,7 @@ class BSON
           doc[key] = nil
         when UNDEFINED
           key = deserialize_cstr(@buf)
-          doc[key] = Undefined.new
+          doc[key] = nil
         when REF
           key = deserialize_cstr(@buf)
           doc[key] = deserialize_dbref_data(@buf)
@@ -385,11 +385,6 @@ class BSON
     end
   end
 
-  def serialize_undefined_element(buf, key)
-    buf.put(UNDEFINED)
-    self.class.serialize_cstr(buf, key)
-  end
-
   def serialize_boolean_element(buf, key, val)
     buf.put(BOOLEAN)
     self.class.serialize_cstr(buf, key)
@@ -543,7 +538,7 @@ class BSON
     when Symbol
       SYMBOL
     when Undefined
-      UNDEFINED
+      NULL
     else
       raise "Unknown type of object: #{o.class.name}"
     end

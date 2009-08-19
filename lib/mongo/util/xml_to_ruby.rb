@@ -63,8 +63,6 @@ class XMLToRuby
       regex_to_ruby(e.elements)
     when 'null'
       nil
-    when 'undefined'
-      Undefined.new
     when 'doc'
       doc_to_ruby(e)
     else

@@ -42,7 +42,6 @@
 #define INITIAL_BUFFER_SIZE 256
 
 static VALUE Binary;
-static VALUE Undefined;
 static VALUE Time;
 static VALUE ObjectID;
 static VALUE DBRef;
@@ -366,7 +365,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 break;
             }
             if (strcmp(cls, "XGen::Mongo::Driver::Undefined") == 0) {
-                write_name_and_type(buffer, key, 0x06);
+                write_name_and_type(buffer, key, 0x0A); // just use nil type
                 break;
             }
         }
@@ -563,7 +562,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
         }
     case 6:
         {
-            value = rb_class_new_instance(0, NULL, Undefined);
+            value = Qnil;
             break;
         }
     case 7:
@@ -746,8 +745,6 @@ void Init_cbson() {
                           rb_intern("Driver"));
     rb_require("mongo/types/binary");
     Binary = rb_const_get(driver, rb_intern("Binary"));
-    rb_require("mongo/types/undefined");
-    Undefined = rb_const_get(driver, rb_intern("Undefined"));
     rb_require("mongo/types/objectid");
     ObjectID = rb_const_get(driver, rb_intern("ObjectID"));
     rb_require("mongo/types/dbref");
