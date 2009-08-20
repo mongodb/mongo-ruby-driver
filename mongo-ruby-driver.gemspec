@@ -78,7 +78,8 @@ TEST_FILES = ['test/mongo-qa/_common.rb',
               'test/test_objectid.rb',
               'test/test_ordered_hash.rb',
               'test/test_threading.rb',
-              'test/test_round_trip.rb']
+              'test/test_round_trip.rb',
+              'test/test_xgen.rb']
 
 Gem::Specification.new do |s|
   s.name = 'mongo'
