@@ -14,21 +14,17 @@
 # limitations under the License.
 # ++
 
-module XGen
-  module Mongo
-    module Driver
+module Mongo
 
-      # JavaScript code to be evaluated by MongoDB
-      class Code < String
-        # Hash mapping identifiers to their values
-        attr_accessor :scope
+  # JavaScript code to be evaluated by MongoDB
+  class Code < String
+    # Hash mapping identifiers to their values
+    attr_accessor :scope
 
-        def initialize(code, scope={})
-          super(code)
-          @scope = scope
-        end
-
-      end
+    def initialize(code, scope={})
+      super(code)
+      @scope = scope
     end
+
   end
 end

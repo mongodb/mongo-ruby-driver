@@ -20,8 +20,7 @@ require 'test/unit'
 
 # NOTE: assumes Mongo is running
 class TestCollection < Test::Unit::TestCase
-  include XGen::Mongo
-  include XGen::Mongo::Driver
+  include Mongo
 
   @@db = Mongo.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
                    ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT).db('ruby-mongo-test')

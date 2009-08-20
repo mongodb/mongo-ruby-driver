@@ -1,13 +1,13 @@
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 
-include XGen::Mongo::Driver
+include Mongo
 
 host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
+port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Mongo::DEFAULT_PORT
 
 puts "Connecting to #{host}:#{port}"
-db = Mongo.new(host, port).db('ruby-mongo-examples')
+db = Mongo::Mongo.new(host, port).db('ruby-mongo-examples')
 coll = db.collection('test')
 
 # Erase all records from collection, if any

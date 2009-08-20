@@ -14,31 +14,27 @@
 # limitations under the License.
 # ++
 
-module XGen
-  module Mongo
-    module Driver
+module Mongo
 
-      # A Regexp that can hold on to extra options and ignore them. Mongo
-      # regexes may contain option characters beyond 'i', 'm', and 'x'. (Note
-      # that Mongo only uses those three, but that regexes coming from other
-      # languages may store different option characters.)
-      #
-      # Note that you do not have to use this class at all if you wish to
-      # store regular expressions in Mongo. The Mongo and Ruby regex option
-      # flags are the same. Storing regexes is discouraged, in any case.
-      class RegexpOfHolding < Regexp
+  # A Regexp that can hold on to extra options and ignore them. Mongo
+  # regexes may contain option characters beyond 'i', 'm', and 'x'. (Note
+  # that Mongo only uses those three, but that regexes coming from other
+  # languages may store different option characters.)
+  #
+  # Note that you do not have to use this class at all if you wish to
+  # store regular expressions in Mongo. The Mongo and Ruby regex option
+  # flags are the same. Storing regexes is discouraged, in any case.
+  class RegexpOfHolding < Regexp
 
-        attr_accessor :extra_options_str
+    attr_accessor :extra_options_str
 
-        # +str+ and +options+ are the same as Regexp. +extra_options_str+
-        # contains all the other flags that were in Mongo but we do not use or
-        # understand.
-        def initialize(str, options, extra_options_str)
-          super(str, options)
-          @extra_options_str = extra_options_str
-        end
-      end
-
+    # +str+ and +options+ are the same as Regexp. +extra_options_str+
+    # contains all the other flags that were in Mongo but we do not use or
+    # understand.
+    def initialize(str, options, extra_options_str)
+      super(str, options)
+      @extra_options_str = extra_options_str
     end
   end
+
 end

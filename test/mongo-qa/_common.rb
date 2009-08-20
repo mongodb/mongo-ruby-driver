@@ -5,4 +5,4 @@ DEFAULT_HOST = '127.0.0.1'
 DEFAULT_PORT = 27017
 DEFAULT_DB = 'driver_test_framework'
 
-include XGen::Mongo::Driver
+include Mongo

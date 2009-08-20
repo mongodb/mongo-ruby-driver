@@ -26,7 +26,7 @@ require 'mongo/types/undefined'
 # A BSON seralizer/deserializer.
 class BSON
 
-  include XGen::Mongo::Driver
+  include Mongo
 
   MINKEY = -1
   EOO = 0

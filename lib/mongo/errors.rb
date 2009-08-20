@@ -14,14 +14,10 @@
 
 # Exceptions raised by the MongoDB driver.
 
-module XGen
-  module Mongo
-    module Driver
-      # Raised when a database operation fails.
-      class OperationFailure < RuntimeError; end
+module Mongo
+  # Raised when a database operation fails.
+  class OperationFailure < RuntimeError; end
 
-      # Raised when an invalid name is used.
-      class InvalidName < RuntimeError; end
-    end
-  end
+  # Raised when an invalid name is used.
+  class InvalidName < RuntimeError; end
 end

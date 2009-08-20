@@ -5,7 +5,7 @@ require 'test/unit'
 
 class TestPKFactory
   def create_pk(row)
-    row['_id'] ||= XGen::Mongo::Driver::ObjectID.new
+    row['_id'] ||= Mongo::ObjectID.new
     row
   end
 end
@@ -13,7 +13,7 @@ end
 # NOTE: assumes Mongo is running
 class DBTest < Test::Unit::TestCase
 
-  include XGen::Mongo::Driver
+  include Mongo
 
   @@host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
   @@port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT
@@ -85,7 +85,7 @@ class DBTest < Test::Unit::TestCase
     assert_not_nil oid
     assert_equal insert_id, oid
 
-    oid = XGen::Mongo::Driver::ObjectID.new
+    oid = ObjectID.new
     data = {'_id' => oid, 'name' => 'Barney', 'age' => 41}
     coll.insert(data)
     row = coll.find_one({'name' => data['name']})

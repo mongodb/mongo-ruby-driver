@@ -4,7 +4,7 @@ require 'test/unit'
 
 class ObjectIDTest < Test::Unit::TestCase
 
-  include XGen::Mongo::Driver
+  include Mongo
 
   def setup
     @t = 42

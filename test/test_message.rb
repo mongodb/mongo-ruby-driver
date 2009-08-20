@@ -4,7 +4,7 @@ require 'test/unit'
 
 class MessageTest < Test::Unit::TestCase
 
-  include XGen::Mongo::Driver
+  include Mongo
 
   def setup
     @msg = Message.new(42)

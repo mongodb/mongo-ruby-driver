@@ -14,19 +14,15 @@
 # limitations under the License.
 # ++
 
-module XGen
-  module Mongo
-    module Driver
+module Mongo
 
-      # DEPRECATED - the ruby driver converts the BSON undefined type to nil,
-      # and saves this type as nil
-      class Undefined < Object
+  # DEPRECATED - the ruby driver converts the BSON undefined type to nil,
+  # and saves this type as nil
+  class Undefined < Object
 
-        def initialize
-          super
-          warn "the Undefined type is deprecated and will be removed - BSON undefineds get implicitely converted to nil now"
-        end
-      end
+    def initialize
+      super
+      warn "the Undefined type is deprecated and will be removed - BSON undefineds get implicitely converted to nil now"
     end
   end
 end

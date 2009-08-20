@@ -21,7 +21,7 @@ require 'mongo'
 # an OrderedHash.
 class XMLToRuby
 
-  include XGen::Mongo::Driver
+  include Mongo
 
   def xml_to_ruby(io)
     doc = REXML::Document.new(io)

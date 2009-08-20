@@ -3,22 +3,22 @@ class Exception
     "%s: %s\n%s" % [self.class, message, (backtrace || []).join("\n") << "\n"]
   end
 end
-  
+
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 
-include XGen::Mongo::Driver
+include Mongo
 
 host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
+port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Mongo::DEFAULT_PORT
 
 puts ">> Connecting to #{host}:#{port}"
-db = Mongo.new(host, port).db('ruby-mongo-index_test')
+db = Mongo::Mongo.new(host, port).db('ruby-mongo-index_test')
 
 puts ">> Dropping collection test"
 begin
   res = db.drop_collection('test')
-  puts "dropped : #{res.inspect}" 
+  puts "dropped : #{res.inspect}"
 rescue => e
   puts "Error: #{e.errmsg}"
 end
@@ -26,7 +26,7 @@ end
 puts ">> Creating collection test"
 begin
   coll = db.collection('test')
-  puts "created : #{coll.inspect}" 
+  puts "created : #{coll.inspect}"
 rescue => e
   puts "Error: #{e.errmsg}"
 end
@@ -59,8 +59,8 @@ puts "created index: #{res.inspect}"
 
 puts ">> Gathering index information"
 begin
-  res = coll.index_information     
-  puts "index_information : #{res.inspect}" 
+  res = coll.index_information
+  puts "index_information : #{res.inspect}"
 rescue => e
   puts "Error: #{e.errmsg}"
 end
@@ -76,7 +76,7 @@ end
 
 puts ">> Dropping index"
 begin
-  res = coll.drop_index "all"
+  res = coll.drop_index "all_1"
   puts "dropped : #{res.inspect}"
 rescue => e
   puts "Error: #{e.errmsg}"
@@ -105,8 +105,8 @@ end
 
 puts ">> Gathering index information"
 begin
-  res = coll.index_information     
-  puts "index_information : #{res.inspect}" 
+  res = coll.index_information
+  puts "index_information : #{res.inspect}"
 rescue => e
   puts "Error: #{e.errmsg}"
 end

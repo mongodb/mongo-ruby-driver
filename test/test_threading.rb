@@ -4,7 +4,7 @@ require 'test/unit'
 
 class TestThreading < Test::Unit::TestCase
 
-  include XGen::Mongo::Driver
+  include Mongo
 
   @@host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
   @@port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT

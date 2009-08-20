@@ -13,7 +13,7 @@ require 'test/unit'
 # of this project), then we find the BSON test files there and use those, too.
 class RoundTripTest < Test::Unit::TestCase
 
-  include XGen::Mongo::Driver
+  include Mongo
 
   @@ruby = nil
 

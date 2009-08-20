@@ -5,7 +5,7 @@
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 
-include XGen::Mongo::Driver
+include Mongo
 
 TRIALS = 2
 PER_TRIAL = 5000
@@ -50,9 +50,9 @@ def benchmark(str, proc, n, db, coll_name, object, setup=nil)
 end
 
 host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
+port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Mongo::DEFAULT_PORT
 
-connection = Mongo.new(host, port)
+connection = Mongo::Mongo.new(host, port)
 connection.drop_database("benchmark")
 db = connection.db('benchmark')
 

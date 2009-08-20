@@ -5,17 +5,17 @@ class Exception
     "%s: %s\n%s" % [self.class, message, (backtrace || []).join("\n") << "\n"]
   end
 end
-  
+
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 
-include XGen::Mongo::Driver
+include Mongo
 
 host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
+port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Mongo::DEFAULT_PORT
 
 puts ">> Connecting to #{host}:#{port}"
-DB = Mongo.new(host, port).db('ruby-mongo-blog')
+DB = Mongo::Mongo.new(host, port).db('ruby-mongo-blog')
 
 LINE_SIZE = 120
 puts "=" * LINE_SIZE

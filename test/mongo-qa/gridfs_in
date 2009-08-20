@@ -3,9 +3,9 @@
 require File.join(File.dirname(__FILE__), '_common.rb')
 
 require 'mongo/gridfs'
-include XGen::Mongo::GridFS
+include GridFS
 
-db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
+db = Mongo::Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
 
 input_file = ARGV[0]
 

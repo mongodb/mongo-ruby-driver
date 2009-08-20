@@ -2,13 +2,13 @@ $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 require 'pp'
 
-include XGen::Mongo::Driver
+include Mongo
 
 host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-port = ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
+port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Mongo::DEFAULT_PORT
 
 puts "Connecting to #{host}:#{port}"
-db = Mongo.new(host, port).db('ruby-mongo-examples')
+db = Mongo::Mongo.new(host, port).db('ruby-mongo-examples')
 coll = db.collection('test')
 
 # Remove all records, if any
@@ -25,13 +25,8 @@ coll.insert('array' => [1, 2, 3],
             'float' => 33.33333,
             'regex' => /foobar/i,
             'boolean' => true,
-            '$where' => Code.new('this.x == 3'),
+            'where' => Code.new('this.x == 3'),
             'dbref' => DBRef.new(coll.name, ObjectID.new),
-
-# NOTE: the undefined type is not saved to the database properly. This is a
-# Mongo bug. However, the undefined type may go away completely.
-#             'undef' => Undefined.new,
-
             'null' => nil,
             'symbol' => :zildjian)
 

@@ -7,14 +7,14 @@ require 'irb'
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 
-include XGen::Mongo::Driver
+include Mongo
 
 host = org_argv[0] || ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-port = org_argv[1] || ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT
+port = org_argv[1] || ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Mongo::DEFAULT_PORT
 dbnm = org_argv[2] || ENV['MONGO_RUBY_DRIVER_DB']   || 'ruby-mongo-console'
 
 puts "Connecting to #{host}:#{port} (CONN) on with database #{dbnm} (DB)"
-CONN = Mongo.new(host, port)
+CONN = Mongo::Mongo.new(host, port)
 DB = CONN.db(dbnm)
 
 puts "Starting IRB session..."

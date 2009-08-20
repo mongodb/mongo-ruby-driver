@@ -14,24 +14,20 @@
 # limitations under the License.
 # ++
 
-module XGen
-  module Mongo
-    module Driver
+module Mongo
 
-      class DBRef
+  class DBRef
 
-        attr_reader :namespace, :object_id
+    attr_reader :namespace, :object_id
 
-        def initialize(namespace, object_id)
-          @namespace, @object_id =
-            namespace, object_id
-        end
-
-        def to_s
-          "ns: #{namespace}, id: #{object_id}"
-        end
-
-      end
+    def initialize(namespace, object_id)
+      @namespace, @object_id =
+        namespace, object_id
     end
+
+    def to_s
+      "ns: #{namespace}, id: #{object_id}"
+    end
+
   end
 end

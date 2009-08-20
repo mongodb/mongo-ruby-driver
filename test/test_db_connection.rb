@@ -5,7 +5,7 @@ require 'test/unit'
 # NOTE: assumes Mongo is running
 class DBConnectionTest < Test::Unit::TestCase
 
-  include XGen::Mongo::Driver
+  include Mongo
 
   def test_no_exceptions
     host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'

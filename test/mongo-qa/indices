@@ -2,9 +2,9 @@
 
 require File.join(File.dirname(__FILE__), '_common.rb')
 
-include XGen::Mongo
+include Mongo
 
-db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
+db = Mongo::Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
 x = db.collection('x')
 y = db.collection('y')
 

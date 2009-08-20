@@ -5,7 +5,7 @@ require 'test/unit'
 
 class BSONTest < Test::Unit::TestCase
 
-  include XGen::Mongo::Driver
+  include Mongo
 
   def setup
     # We don't pass a DB to the constructor, even though we are about to test
@@ -85,7 +85,7 @@ class BSONTest < Test::Unit::TestCase
     assert_equal doc, doc2
 
     r = doc2['doc']
-    assert_kind_of XGen::Mongo::Driver::RegexpOfHolding, r
+    assert_kind_of RegexpOfHolding, r
     assert_equal '', r.extra_options_str
 
     r.extra_options_str << 'zywcab'
@@ -99,7 +99,7 @@ class BSONTest < Test::Unit::TestCase
     assert_equal doc, doc2
 
     r = doc2['doc']
-    assert_kind_of XGen::Mongo::Driver::RegexpOfHolding, r
+    assert_kind_of RegexpOfHolding, r
     assert_equal 'abcwyz', r.extra_options_str # must be sorted
   end
 

@@ -4,8 +4,7 @@ require 'test/unit'
 
 # NOTE: assumes Mongo is running
 class DBAPITest < Test::Unit::TestCase
-  include XGen::Mongo
-  include XGen::Mongo::Driver
+  include Mongo
 
   @@db = Mongo.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
                    ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT).db('ruby-mongo-test')
@@ -817,18 +816,4 @@ class DBAPITest < Test::Unit::TestCase
       @@db.collection("test").find({}, :snapshot => true, :sort => 'a').to_a
     end
   end
-
-# TODO this test fails with error message "Undefed Before end of object"
-# That is a database error. The undefined type may go away.
-
-#   def test_insert_undefined
-#     doc = {'undef' => Undefined.new}
-#     @@coll.clear
-#     @@coll.insert(doc)
-#     p @@db.error                 # DEBUG
-#     assert_equal 1, @@coll.count
-#     row = @@coll.find().next_object
-#     assert_not_nil row
-#   end
-
 end

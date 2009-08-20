@@ -5,8 +5,8 @@ require 'mongo/gridfs'
 
 class ChunkTest < Test::Unit::TestCase
 
-  include XGen::Mongo::Driver
-  include XGen::Mongo::GridFS
+  include Mongo
+  include GridFS
 
   @@db = Mongo.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
                    ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT).db('ruby-mongo-utils-test')

@@ -16,27 +16,23 @@
 
 require 'mongo/util/byte_buffer'
 
-module XGen
-  module Mongo
-    module Driver
+module Mongo
 
-      # An array of binary bytes with a Mongo subtype value.
-      class Binary < ByteBuffer
+  # An array of binary bytes with a Mongo subtype value.
+  class Binary < ByteBuffer
 
-        SUBTYPE_BYTES = 0x02
-        SUBTYPE_UUID = 0x03
-        SUBTYPE_MD5 = 0x05
-        SUBTYPE_USER_DEFINED = 0x80
+    SUBTYPE_BYTES = 0x02
+    SUBTYPE_UUID = 0x03
+    SUBTYPE_MD5 = 0x05
+    SUBTYPE_USER_DEFINED = 0x80
 
-        # One of the SUBTYPE_* constants. Default is SUBTYPE_BYTES.
-        attr_accessor :subtype
+    # One of the SUBTYPE_* constants. Default is SUBTYPE_BYTES.
+    attr_accessor :subtype
 
-        def initialize(initial_data=[], subtype=SUBTYPE_BYTES)
-          super(initial_data)
-          @subtype = subtype
-        end
-
-      end
+    def initialize(initial_data=[], subtype=SUBTYPE_BYTES)
+      super(initial_data)
+      @subtype = subtype
     end
+
   end
 end
