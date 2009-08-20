@@ -4,10 +4,10 @@ $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 
 host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Mongo::DEFAULT_PORT
+port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Connection::DEFAULT_PORT
 
 puts "Connecting to #{host}:#{port}"
-db = Mongo::Mongo.new(host, port).db('ruby-mongo-examples')
+db = Mongo::Connection.new(host, port).db('ruby-mongo-examples')
 coll = db.collection('test')
 coll.clear
 

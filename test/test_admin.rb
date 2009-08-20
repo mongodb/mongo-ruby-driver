@@ -7,8 +7,8 @@ class AdminTest < Test::Unit::TestCase
 
   include Mongo
 
-  @@db = Mongo.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                   ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT).db('ruby-mongo-test')
+  @@db = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+                        ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT).db('ruby-mongo-test')
   @@coll = @@db.collection('test')
 
   def setup

@@ -9,8 +9,8 @@ class DBConnectionTest < Test::Unit::TestCase
 
   def test_no_exceptions
     host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-    port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT
-    db = Mongo.new(host, port).db('ruby-mongo-demo')
+    port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
+    db = Connection.new(host, port).db('ruby-mongo-demo')
     coll = db.collection('test')
     coll.clear
     db.error

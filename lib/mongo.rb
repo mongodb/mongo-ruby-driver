@@ -5,7 +5,7 @@ require 'mongo/types/regexp_of_holding'
 require 'mongo/types/undefined'
 
 require 'mongo/errors'
-require 'mongo/mongo'
+require 'mongo/connection'
 require 'mongo/message'
 require 'mongo/db'
 require 'mongo/cursor'

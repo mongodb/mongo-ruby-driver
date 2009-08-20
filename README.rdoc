@@ -9,7 +9,7 @@ many more.
 
   include Mongo
 
-  db = Mongo::Mongo.new('localhost').db('sample-db')
+  db = Connection.new('localhost').db('sample-db')
   coll = db.collection('test')
 
   coll.clear
@@ -80,7 +80,7 @@ Here is some simple example code:
   require 'mongo'
 
   include Mongo
-  db = Mongo::Mongo.new.db('my-db-name')
+  db = Connection.new.db('my-db-name')
   things = db.collection('things')
 
   things.clear
@@ -147,10 +147,10 @@ generate _id values. If you want to control _id values or even their types,
 using a PK factory lets you do so.
 
 You can tell the Ruby Mongo driver how to create primary keys by passing in
-the :pk option to the Mongo#db method.
+the :pk option to the Connection#db method.
 
   include Mongo
-  db = Mongo::Mongo.new.db('dbname', :pk => MyPKFactory.new)
+  db = Connection.new.db('dbname', :pk => MyPKFactory.new)
 
 A primary key factory object must respond to :create_pk, which should take a
 hash and return a hash which merges the original hash with any primary key
@@ -205,7 +205,7 @@ completely harmless; strict mode is a programmer convenience only.
 To turn on strict mode, either pass in :strict => true when obtaining a DB
 object or call the :strict= method:
 
-  db = Mongo::Mongo.new.db('dbname', :strict => true)
+  db = Connection.new.db('dbname', :strict => true)
   # I'm feeling lax
   db.strict = false
   # No, I'm not!
@@ -233,7 +233,7 @@ If you have the source code, you can run the tests.
   $ rake test
 
 The tests assume that the Mongo database is running on the default port. You
-can override the default host (localhost) and port (Mongo::DEFAULT_PORT) by
+can override the default host (localhost) and port (Connection::DEFAULT_PORT) by
 using the environment variables MONGO_RUBY_DRIVER_HOST and
 MONGO_RUBY_DRIVER_PORT.
 

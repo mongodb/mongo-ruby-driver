@@ -19,8 +19,8 @@ require 'test/unit'
 # TODO these tests should be removed - just testing for the deprecated
 # XGen::Mongo::Driver include path
 class TestXGen < Test::Unit::TestCase
-  @@db = XGen::Mongo::Driver::Mongo.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                                        ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Mongo::DEFAULT_PORT).db('ruby-mongo-test')
+  @@db = XGen::Mongo::Driver::Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+                                             ENV['MONGO_RUBY_DRIVER_PORT'] || XGen::Mongo::Driver::Connection::DEFAULT_PORT).db('ruby-mongo-test')
   @@test = @@db.collection('test')
 
   def setup
@@ -48,8 +48,8 @@ class TestXGenInclude < Test::Unit::TestCase
   include XGen::Mongo::Driver
   include XGen::Mongo
 
-  @@db = Mongo.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                   ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT).db('ruby-mongo-test')
+  @@db = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+                        ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT).db('ruby-mongo-test')
   @@test = @@db.collection('test')
 
   def setup

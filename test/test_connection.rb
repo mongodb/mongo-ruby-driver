@@ -3,14 +3,14 @@ require 'mongo'
 require 'test/unit'
 
 # NOTE: assumes Mongo is running
-class MongoTest < Test::Unit::TestCase
+class TestConnection < Test::Unit::TestCase
 
   include Mongo
 
   def setup
     @host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-    @port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT
-    @mongo = Mongo.new(@host, @port)
+    @port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
+    @mongo = Connection.new(@host, @port)
   end
 
   def teardown
@@ -67,23 +67,47 @@ class MongoTest < Test::Unit::TestCase
   end
 
   def test_pair
-    db = Mongo.new({:left => ['foo', 123]})
+    db = Connection.new({:left => ['foo', 123]})
     pair = db.instance_variable_get('@pair')
     assert_equal 2, pair.length
     assert_equal ['foo', 123], pair[0]
-    assert_equal ['localhost', Mongo::DEFAULT_PORT], pair[1]
+    assert_equal ['localhost', Connection::DEFAULT_PORT], pair[1]
 
-    db = Mongo.new({:right => 'bar'})
+    db = Connection.new({:right => 'bar'})
     pair = db.instance_variable_get('@pair')
     assert_equal 2, pair.length
-    assert_equal ['localhost', Mongo::DEFAULT_PORT], pair[0]
-    assert_equal ['bar', Mongo::DEFAULT_PORT], pair[1]
+    assert_equal ['localhost', Connection::DEFAULT_PORT], pair[0]
+    assert_equal ['bar', Connection::DEFAULT_PORT], pair[1]
 
-    db = Mongo.new({:right => ['foo', 123], :left => 'bar'})
+    db = Connection.new({:right => ['foo', 123], :left => 'bar'})
     pair = db.instance_variable_get('@pair')
     assert_equal 2, pair.length
-    assert_equal ['bar', Mongo::DEFAULT_PORT], pair[0]
+    assert_equal ['bar', Connection::DEFAULT_PORT], pair[0]
     assert_equal ['foo', 123], pair[1]
   end
+end
 
+# Test for deprecated Mongo class
+class TestMongo < Test::Unit::TestCase
+
+  include Mongo
+
+  def setup
+    @host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
+    @port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT
+    @mongo = Mongo.new(@host, @port)
+  end
+
+  def test_database_info
+    @mongo.drop_database('ruby-mongo-info-test')
+    @mongo.db('ruby-mongo-info-test').collection('info-test').insert('a' => 1)
+
+    info = @mongo.database_info
+    assert_not_nil info
+    assert_kind_of Hash, info
+    assert_not_nil info['ruby-mongo-info-test']
+    assert info['ruby-mongo-info-test'] > 0
+
+    @mongo.drop_database('ruby-mongo-info-test')
+  end
 end

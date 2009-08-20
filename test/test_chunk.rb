@@ -8,8 +8,8 @@ class ChunkTest < Test::Unit::TestCase
   include Mongo
   include GridFS
 
-  @@db = Mongo.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                   ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT).db('ruby-mongo-utils-test')
+  @@db = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+                        ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT).db('ruby-mongo-utils-test')
   @@files = @@db.collection('gridfs.files')
   @@chunks = @@db.collection('gridfs.chunks')
 

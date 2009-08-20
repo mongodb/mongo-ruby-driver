@@ -3,7 +3,7 @@
 LONG_STRING = "lksjhasoh1298alshasoidiohaskjasiouashoasasiugoas" * 6
 
 require File.join(File.dirname(__FILE__), '_common.rb')
-db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
+db = Connection.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
 c = db.collection('stress1')
 
 n1 = 50_000

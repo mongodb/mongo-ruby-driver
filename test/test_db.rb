@@ -16,8 +16,8 @@ class DBTest < Test::Unit::TestCase
   include Mongo
 
   @@host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-  @@port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT
-  @@db = Mongo.new(@@host, @@port).db('ruby-mongo-test')
+  @@port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
+  @@db = Connection.new(@@host, @@port).db('ruby-mongo-test')
   @@users = @@db.collection('system.users')
 
   def setup
@@ -41,7 +41,7 @@ class DBTest < Test::Unit::TestCase
     rescue => ex
       assert_match /NilClass/, ex.to_s
     ensure
-      @@db = Mongo.new(@@host, @@port).db('ruby-mongo-test')
+      @@db = Connection.new(@@host, @@port).db('ruby-mongo-test')
       @@users = @@db.collection('system.users')
     end
   end
@@ -66,15 +66,15 @@ class DBTest < Test::Unit::TestCase
   def test_pair
     @@db.close
     @@users = nil
-    @@db = Mongo.new({:left => "this-should-fail", :right => [@@host, @@port]}).db('ruby-mongo-test')
+    @@db = Connection.new({:left => "this-should-fail", :right => [@@host, @@port]}).db('ruby-mongo-test')
     assert @@db.connected?
   ensure
-    @@db = Mongo.new(@@host, @@port).db('ruby-mongo-test') unless @@db.connected?
+    @@db = Connection.new(@@host, @@port).db('ruby-mongo-test') unless @@db.connected?
     @@users = @@db.collection('system.users')
   end
 
   def test_pk_factory
-    db = Mongo.new(@@host, @@port).db('ruby-mongo-test', :pk => TestPKFactory.new)
+    db = Connection.new(@@host, @@port).db('ruby-mongo-test', :pk => TestPKFactory.new)
     coll = db.collection('test')
     coll.clear
 
@@ -97,7 +97,7 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_pk_factory_reset
-    db = Mongo.new(@@host, @@port).db('ruby-mongo-test')
+    db = Connection.new(@@host, @@port).db('ruby-mongo-test')
     db.pk_factory = Object.new # first time
     begin
       db.pk_factory = Object.new
@@ -121,7 +121,7 @@ class DBTest < Test::Unit::TestCase
 
   def test_auto_connect
     @@db.close
-    db = Mongo.new(@@host, @@port, :auto_reconnect => true).db('ruby-mongo-test')
+    db = Connection.new(@@host, @@port, :auto_reconnect => true).db('ruby-mongo-test')
     assert db.connected?
     assert db.auto_reconnect?
     db.close
@@ -130,7 +130,7 @@ class DBTest < Test::Unit::TestCase
     db.collection('test').insert('a' => 1)
     assert db.connected?
   ensure
-    @@db = Mongo.new(@@host, @@port).db('ruby-mongo-test')
+    @@db = Connection.new(@@host, @@port).db('ruby-mongo-test')
     @@users = @@db.collection('system.users')
   end
 

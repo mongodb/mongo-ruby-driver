@@ -7,8 +7,8 @@ class TestThreading < Test::Unit::TestCase
   include Mongo
 
   @@host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-  @@port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT
-  @@db = Mongo.new(@@host, @@port).db('ruby-mongo-test')
+  @@port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
+  @@db = Connection.new(@@host, @@port).db('ruby-mongo-test')
   @@coll = @@db.collection('thread-test-collection')
 
   def test_threading

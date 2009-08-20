@@ -4,10 +4,10 @@ require 'mongo'
 include Mongo
 
 host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Mongo::DEFAULT_PORT
+port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
 
 puts "Connecting to #{host}:#{port}"
-db = Mongo::Mongo.new(host, port).db('ruby-mongo-examples')
+db = Connection.new(host, port).db('ruby-mongo-examples')
 
 db.drop_collection('does-not-exist')
 db.create_collection('test')

@@ -18,8 +18,8 @@ require 'mongo/db'
 
 module Mongo
 
-  # Represents a Mongo database server.
-  class Mongo
+  # A connection to MongoDB.
+  class Connection
 
     DEFAULT_PORT = 27017
 
@@ -50,23 +50,23 @@ module Mongo
     #
     # Since that's so confusing, here are a few examples:
     #
-    #  Mongo.new                         # localhost, DEFAULT_PORT, !slave
-    #  Mongo.new("localhost")            # localhost, DEFAULT_PORT, !slave
-    #  Mongo.new("localhost", 3000)      # localhost, 3000, slave not ok
+    #  Connection.new                         # localhost, DEFAULT_PORT, !slave
+    #  Connection.new("localhost")            # localhost, DEFAULT_PORT, !slave
+    #  Connection.new("localhost", 3000)      # localhost, 3000, slave not ok
     #  # localhost, 3000, slave ok
-    #  Mongo.new("localhost", 3000, :slave_ok => true)
+    #  Connection.new("localhost", 3000, :slave_ok => true)
     #  # localhost, DEFAULT_PORT, auto reconnect
-    #  Mongo.new(nil, nil, :auto_reconnect => true)
+    #  Connection.new(nil, nil, :auto_reconnect => true)
     #
     #  # A pair of servers. DB will always talk to the master. On socket
     #  # error or "not master" error, we will auto-reconnect to the
     #  # current master.
-    #  Mongo.new({:left  => ["db1.example.com", 3000],
+    #  Connection.new({:left  => ["db1.example.com", 3000],
     #             :right => "db2.example.com"}, # DEFAULT_PORT
     #            nil, :auto_reconnect => true)
     #
     #  # Here, :right is localhost/DEFAULT_PORT. No auto-reconnect.
-    #  Mongo.new({:left => ["db1.example.com", 3000]})
+    #  Connection.new({:left => ["db1.example.com", 3000]})
     #
     # When a DB object first connects to a pair, it will find the master
     # instance and connect to that one.
@@ -154,6 +154,13 @@ module Mongo
         db.close if db
       end
     end
+  end
 
+  class Mongo < Connection
+    def initialize(pair_or_host=nil, port=nil, options={})
+      super(pair_or_host, port, options)
+
+      warn "Mongo::Mongo is deprecated and will be removed - please use Mongo::Connection"
+    end
   end
 end

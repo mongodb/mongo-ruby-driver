@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require File.join(File.dirname(__FILE__), '_common.rb')
-db = Mongo.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
+db = Connection.new(DEFAULT_HOST, DEFAULT_PORT).db(DEFAULT_DB)
 
 db.collection('test').insert({'test' => 1})
 admin = db.admin

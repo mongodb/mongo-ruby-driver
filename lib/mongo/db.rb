@@ -75,7 +75,7 @@ module Mongo
     #
     # db_name :: The database name
     #
-    # nodes :: An array of [host, port] pairs. See Mongo#new, which offers
+    # nodes :: An array of [host, port] pairs. See Connection#new, which offers
     #          a more flexible way of defining nodes.
     #
     # options :: A hash of options.
