@@ -22,7 +22,7 @@ module Mongo
 
     def initialize
       super
-      warn "the Undefined type is deprecated and will be removed - BSON undefineds get implicitely converted to nil now"
+      warn "the Undefined type is deprecated and will be removed - BSON undefineds get implicitly converted to nil now"
     end
   end
 end
