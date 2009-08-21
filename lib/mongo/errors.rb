@@ -18,6 +18,9 @@ module Mongo
   # Raised when a database operation fails.
   class OperationFailure < RuntimeError; end
 
+  # Raised when a client attempts to perform an invalid operation.
+  class InvalidOperation < RuntimeError; end
+
   # Raised when an invalid name is used.
   class InvalidName < RuntimeError; end
 end

@@ -35,9 +35,7 @@ module Mongo
       @num_to_return = @query.number_to_return || 0
       @cache = []
       @closed = false
-      @can_call_to_a = true
       @query_run = false
-      @rows = nil
     end
 
     # Return the next object or nil if there are no more. Raises an error
@@ -75,53 +73,34 @@ module Mongo
       raise OperationFailure, "Count failed: #{response['errmsg']}"
     end
 
-    # Iterate over each object, yielding it to the given block. At most
-    # @num_to_return records are returned (or all of them, if
-    # @num_to_return is 0).
+    # Iterate over each document in this cursor, yielding it to the given
+    # block.
     #
-    # If #to_a has already been called then this method uses the array
-    # that we store internally. In that case, #each can be called multiple
-    # times because it re-uses that array.
-    #
-    # You can call #each after calling #to_a (multiple times even, because
-    # it will use the internally-stored array), but you can't call #to_a
-    # after calling #each unless you also called it before calling #each.
-    # If you try to do that, an error will be raised.
+    # Iterating over an entire cursor will close it.
     def each
-      if @rows              # Already turned into an array
-        @rows.each { |row| yield row }
-      else
-        num_returned = 0
-        while more? && (@num_to_return <= 0 || num_returned < @num_to_return)
-          yield next_object()
-          num_returned += 1
-        end
-        @can_call_to_a = false
+      num_returned = 0
+      while more? && (@num_to_return <= 0 || num_returned < @num_to_return)
+        yield next_object()
+        num_returned += 1
       end
     end
 
-    # Return all of the rows (up to the +num_to_return+ value specified in
-    # #new) as an array. Calling this multiple times will work fine; it
-    # always returns the same array.
+    # Return all of the documents in this cursor as an array of hashes.
     #
-    # Don't use this if you're expecting large amounts of data, of course.
-    # All of the returned rows are kept in an array stored in this object
-    # so it can be reused.
+    # Raises InvalidOperation if this cursor has already been used (including
+    # any previous calls to this method).
     #
-    # You can call #each after calling #to_a (multiple times even, because
-    # it will use the internally-stored array), but you can't call #to_a
-    # after calling #each unless you also called it before calling #each.
-    # If you try to do that, an error will be raised.
+    # Use of this method is discouraged - iterating over a cursor is much
+    # more efficient in most cases.
     def to_a
-      return @rows if @rows
-      raise "can't call Cursor#to_a after calling Cursor#each" unless @can_call_to_a
-      @rows = []
+      raise InvalidOperation, "can't call Cursor#to_a on a used cursor" if @query_run
+      rows = []
       num_returned = 0
       while more? && (@num_to_return <= 0 || num_returned < @num_to_return)
-        @rows << next_object()
+        rows << next_object()
         num_returned += 1
       end
-      @rows
+      rows
     end
 
     # Returns an explain plan record for this cursor.

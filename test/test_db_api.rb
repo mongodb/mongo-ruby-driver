@@ -500,25 +500,18 @@ class DBAPITest < Test::Unit::TestCase
     cursor = @@coll.find()
     rows = cursor.to_a
 
-    # Make sure we get back exactly the same array the next time we ask
-    rows2 = cursor.to_a
-    assert_same rows, rows2
+    assert_raise InvalidOperation do
+      cursor.to_a
+    end
 
-    # Make sure we can still iterate after calling to_a
-    rows_with_each = cursor.collect{|row| row}
-    assert_equal rows, rows_with_each
-
-    # Make sure we can iterate more than once after calling to_a
+    cursor.each { |doc| fail "should be no docs in each now" }
   end
 
   def test_to_a_after_each
     cursor = @@coll.find
     cursor.each { |row| row }
-    begin
+    assert_raise InvalidOperation do
       cursor.to_a
-      fail "expected \"can't call\" error"
-    rescue => ex
-      assert_equal "can't call Cursor#to_a after calling Cursor#each", ex.to_s
     end
   end
 
