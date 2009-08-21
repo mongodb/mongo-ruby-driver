@@ -1,4 +1,3 @@
-# --
 # Copyright (C) 2008-2009 10gen Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# ++
 
 require 'mongo/message'
 require 'mongo/util/byte_buffer'
@@ -29,6 +27,9 @@ module Mongo
 
     attr_reader :db, :collection, :query
 
+    # Create a new cursor.
+    #
+    # Should not be called directly by application developers.
     def initialize(db, collection, query, admin=false)
       @db, @collection, @query, @admin = db, collection, query, admin
       @num_to_return = @query.number_to_return || 0
@@ -38,8 +39,6 @@ module Mongo
       @query_run = false
       @rows = nil
     end
-
-    def closed?; @closed; end
 
     # Return the next object or nil if there are no more. Raises an error
     # if necessary.
@@ -125,7 +124,7 @@ module Mongo
       @rows
     end
 
-    # Returns an explain plan record.
+    # Returns an explain plan record for this cursor.
     def explain
       old_val = @query.explain
       @query.explain = true
@@ -143,12 +142,19 @@ module Mongo
     # Note: if a cursor is read until exhausted (read until OP_QUERY or
     # OP_GETMORE returns zero for the cursor id), there is no need to
     # close it by calling this method.
+    #
+    # Collection#find takes an optional block argument which can be used to
+    # ensure that your cursors get closed. See the documentation for
+    # Collection#find for details.
     def close
       @db.send_to_db(KillCursorsMessage.new(@cursor_id)) if @cursor_id
       @cache = []
       @cursor_id = 0
       @closed = true
     end
+
+    # Returns true if this cursor is closed, false otherwise.
+    def closed?; @closed; end
 
     private
 
