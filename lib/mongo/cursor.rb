@@ -41,13 +41,6 @@ module Mongo
 
     def closed?; @closed; end
 
-    # Internal method, not for general use. Return +true+ if there are
-    # more records to retrieve. We do not check @num_to_return; #each is
-    # responsible for doing that.
-    def more?
-      num_remaining > 0
-    end
-
     # Return the next object or nil if there are no more. Raises an error
     # if necessary.
     def next_object
@@ -157,7 +150,7 @@ module Mongo
       @closed = true
     end
 
-    protected
+    private
 
     def read_all
       read_message_header
@@ -192,7 +185,12 @@ module Mongo
       @cache.length
     end
 
-    private
+    # Internal method, not for general use. Return +true+ if there are
+    # more records to retrieve. We do not check @num_to_return; #each is
+    # responsible for doing that.
+    def more?
+      num_remaining > 0
+    end
 
     def next_object_on_wire
       send_query_if_needed
