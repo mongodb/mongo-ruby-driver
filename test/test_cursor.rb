@@ -220,4 +220,14 @@ class CursorTest < Test::Unit::TestCase
     assert_equal(by_location,
                  @@db.db_command("cursorInfo" => 1)["byLocation_size"])
   end
+
+  def test_count_with_fields
+    @@coll.clear
+    @@coll.save("x" => 1)
+
+    @@coll.find({}, :fields => ["a"]).each do |doc|
+      fail "shouldn't have any results here"
+    end
+    assert_equal(0, @@coll.find({}, :fields => ["a"]).count())
+  end
 end

@@ -66,7 +66,8 @@ module Mongo
     # database error.
     def count
       command = OrderedHash["count", @collection.name,
-                            "query", @query.selector]
+                            "query", @query.selector,
+                            "fields", @query.fields()]
       response = @db.db_command(command)
       return response['n'].to_i if response['ok'] == 1
       return 0 if response['errmsg'] == "ns missing"
