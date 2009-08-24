@@ -108,16 +108,6 @@ module Mongo
       database_info.keys
     end
 
-    # Not implemented.
-    def clone_database(from)
-      raise "not implemented"
-    end
-
-    # Not implemented.
-    def copy_database(from_host, from_db, to_db)
-      raise "not implemented"
-    end
-
     # Drops the database +name+.
     def drop_database(name)
       single_db_command(name, :dropDatabase => 1)
