@@ -15,6 +15,8 @@
 # ++
 
 require 'mutex_m'
+require 'socket'
+require 'digest/md5'
 require 'mongo/util/byte_buffer'
 
 module Mongo
@@ -41,10 +43,6 @@ module Mongo
   #   10
   #   11
   class ObjectID
-
-    MACHINE = ( val = rand(0x1000000); [val & 0xff, (val >> 8) & 0xff, (val >> 16) & 0xff] )
-    PID = ( val = rand(0x10000); [val & 0xff, (val >> 8) & 0xff]; )
-
     # The string representation of an OID is different than its internal
     # and BSON byte representations. The BYTE_ORDER here maps
     # internal/BSON byte position (the index in BYTE_ORDER) to the
@@ -56,7 +54,6 @@ module Mongo
     LOCK = Object.new
     LOCK.extend Mutex_m
 
-    @@index_time = Time.new.to_i
     @@index = 0
 
     # Given a string representation of an ObjectID, return a new ObjectID
@@ -78,9 +75,8 @@ module Mongo
     end
 
     # +data+ is an array of bytes. If nil, a new id will be generated.
-    # The time +t+ is only used for testing; leave it nil.
-    def initialize(data=nil, t=nil)
-      @data = data || generate_id(t)
+    def initialize(data=nil)
+      @data = data || generate
     end
 
     def eql?(other)
@@ -100,34 +96,39 @@ module Mongo
       str
     end
 
-    # (Would normally be private, but isn't so we can test it.)
-    def generate_id(t=nil)
-      t ||= Time.new.to_i
+    private
+
+    def generate
+      # 4 bytes current time
+      time = Time.new.to_i
       buf = ByteBuffer.new
-      buf.put_int(t & 0xffffffff)
-      buf.put_array(MACHINE)
-      buf.put_array(PID)
-      i = index_for_time(t)
-      buf.put(i & 0xff)
-      buf.put((i >> 8) & 0xff)
-      buf.put((i >> 16) & 0xff)
+      buf.put_int(time & 0xFFFFFFFF)
+
+      # 3 bytes machine
+      machine_hash = Digest::MD5.digest(Socket.gethostname)
+      buf.put(machine_hash[0])
+      buf.put(machine_hash[1])
+      buf.put(machine_hash[2])
+
+      # 2 bytes pid
+      pid = Process.pid % 0xFFFF
+      buf.put(pid & 0xFF)
+      buf.put((pid >> 8) & 0xFF)
+
+      # 3 bytes inc
+      inc = get_inc
+      buf.put(inc & 0xFF)
+      buf.put((inc >> 8) & 0xFF)
+      buf.put((inc >> 16) & 0xFF)
 
       buf.rewind
       buf.to_a.dup
     end
 
-    # (Would normally be private, but isn't so we can test it.)
-    def index_for_time(t)
+    def get_inc
       LOCK.mu_synchronize {
-        if t != @@index_time
-          @@index = 0
-          @@index_time = t
-        end
-        retval = @@index
-        @@index += 1
-        retval
+        @@index = (@@index + 1) % 0xFFFFFF
       }
     end
-
   end
 end

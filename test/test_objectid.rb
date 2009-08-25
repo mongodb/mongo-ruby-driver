@@ -7,41 +7,19 @@ class ObjectIDTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @t = 42
-    @o = ObjectID.new(nil, @t)
-  end
-
-  def test_index_for_time
-    t = 99
-    assert_equal 0, @o.index_for_time(t)
-    assert_equal 1, @o.index_for_time(t)
-    assert_equal 2, @o.index_for_time(t)
-    t = 100
-    assert_equal 0, @o.index_for_time(t)
-  end
-
-  def test_time_bytes
-    a = @o.to_a
-    assert_equal @t, a[0]
-    3.times { |i| assert_equal 0, a[i+1] }
-
-    t = 43
-    o = ObjectID.new(nil, t)
-    a = o.to_a
-    assert_equal t, a[0]
-    3.times { |i| assert_equal 0, a[i+1] }
-    assert_equal 1, o.index_for_time(t) # 0 was used for o
+    @o = ObjectID.new()
   end
 
   def test_different
-    o2 = ObjectID.new(nil, @t)
-    assert @o.to_a != o2.to_a
+    a = ObjectID.new
+    b = ObjectID.new
+    assert_not_equal a.to_a, b.to_a
+    assert_not_equal a, b
   end
 
   def test_eql?
     o2 = ObjectID.new(@o.to_a)
-    assert @o.eql?(o2)
-    assert @o == o2
+    assert_equal @o, o2
   end
 
   def test_to_s
