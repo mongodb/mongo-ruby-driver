@@ -17,55 +17,23 @@
 require 'mutex_m'
 require 'socket'
 require 'digest/md5'
-require 'mongo/util/byte_buffer'
 
 module Mongo
 
-  # Implementation of the Babble OID. Object ids are not required by
-  # Mongo, but they make certain operations more efficient.
-  #
-  # The driver does not automatically assign ids to records that are
-  # inserted. (An upcoming feature will allow you to give an id "factory"
-  # to a database and/or a collection.)
-  #
-  #   12 bytes
-  #   ---
-  #    0 time
-  #    1
-  #    2
-  #    3
-  #    4 machine
-  #    5
-  #    6
-  #    7 pid
-  #    8
-  #    9 inc
-  #   10
-  #   11
+  # Representation of an ObjectId for Mongo.
   class ObjectID
-    # The string representation of an OID is different than its internal
-    # and BSON byte representations. The BYTE_ORDER here maps
-    # internal/BSON byte position (the index in BYTE_ORDER) to the
-    # position of the two hex characters representing that byte in the
-    # string representation. For example, the 0th BSON byte corresponds to
-    # the (0-based) 7th pair of hex chars in the string.
+    # This is the legacy byte ordering for Babble. Versions of the Ruby
+    # driver prior to 0.14 used this byte ordering when converting ObjectID
+    # instances to and from strings. If you have string representations of
+    # ObjectIDs using the legacy byte ordering make sure to use the
+    # to_s_legacy and from_string_legacy methods, or convert your strings
+    # with ObjectID#legacy_string_convert
     BYTE_ORDER = [7, 6, 5, 4, 3, 2, 1, 0, 11, 10, 9, 8]
 
     LOCK = Object.new
     LOCK.extend Mutex_m
 
     @@index = 0
-
-    # Given a string representation of an ObjectID, return a new ObjectID
-    # with that value.
-    def self.from_string(str)
-      raise "illegal ObjectID format" unless legal?(str)
-      data = []
-      BYTE_ORDER.each_with_index { |string_position, data_index|
-        data[data_index] = str[string_position * 2, 2].to_i(16)
-      }
-      self.new(data)
-    end
 
     def self.legal?(str)
       len = BYTE_ORDER.length * 2
@@ -88,7 +56,42 @@ module Mongo
       @data.dup
     end
 
+    # Given a string representation of an ObjectID, return a new ObjectID
+    # with that value.
+    def self.from_string(str)
+      raise "illegal ObjectID format" unless legal?(str)
+      data = []
+      12.times do |i|
+        data[i] = str[i * 2, 2].to_i(16)
+      end
+      self.new(data)
+    end
+
+    # Create a new ObjectID given a string representation of an ObjectID
+    # using the legacy byte ordering. This method may eventually be
+    # removed. If you are not sure that you need this method you should be
+    # using the regular from_string.
+    def self.from_string_legacy(str)
+      raise "illegal ObjectID format" unless legal?(str)
+      data = []
+      BYTE_ORDER.each_with_index { |string_position, data_index|
+        data[data_index] = str[string_position * 2, 2].to_i(16)
+      }
+      self.new(data)
+    end
+
     def to_s
+      str = ' ' * 24
+      12.times do |i|
+        str[i * 2, 2] = '%02x' % @data[i]
+      end
+      str
+    end
+
+    # Get a string representation of this ObjectID using the legacy byte
+    # ordering. This method may eventually be removed. If you are not sure
+    # that you need this method you should be using the regular to_s.
+    def to_s_legacy
       str = ' ' * 24
       BYTE_ORDER.each_with_index { |string_position, data_index|
         str[string_position * 2, 2] = '%02x' % @data[data_index]
@@ -96,33 +99,37 @@ module Mongo
       str
     end
 
+    # Convert a string representation of an ObjectID using the legacy byte
+    # ordering to the proper byte ordering. This method may eventually be
+    # removed. If you are not sure that you need this method it is probably
+    # unnecessary.
+    def self.legacy_string_convert(str)
+      legacy = ' ' * 24
+      BYTE_ORDER.each_with_index do |legacy_pos, pos|
+        legacy[legacy_pos * 2, 2] = str[pos * 2, 2]
+      end
+      legacy
+    end
+
     private
 
     def generate
+      oid = ''
+
       # 4 bytes current time
       time = Time.new.to_i
-      buf = ByteBuffer.new
-      buf.put_int(time & 0xFFFFFFFF)
+      oid += [time].pack("N")
 
       # 3 bytes machine
-      machine_hash = Digest::MD5.digest(Socket.gethostname)
-      buf.put(machine_hash[0])
-      buf.put(machine_hash[1])
-      buf.put(machine_hash[2])
+      oid += Digest::MD5.digest(Socket.gethostname)[0, 3]
 
       # 2 bytes pid
-      pid = Process.pid % 0xFFFF
-      buf.put(pid & 0xFF)
-      buf.put((pid >> 8) & 0xFF)
+      oid += [Process.pid % 0xFFFF].pack("n")
 
       # 3 bytes inc
-      inc = get_inc
-      buf.put(inc & 0xFF)
-      buf.put((inc >> 8) & 0xFF)
-      buf.put((inc >> 16) & 0xFF)
+      oid += [get_inc].pack("N")[1, 3]
 
-      buf.rewind
-      buf.to_a.dup
+      oid.unpack("C12")
     end
 
     def get_inc

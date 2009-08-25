@@ -29,6 +29,15 @@ class ObjectIDTest < Test::Unit::TestCase
     assert_equal 24, $1.length
   end
 
+  def test_to_s_legacy
+    s = @o.to_s_legacy
+    assert_equal 24, s.length
+    s =~ /^([0-9a-f]+)$/
+    assert_equal 24, $1.length
+
+    assert_not_equal s, @o.to_s
+  end
+
   def test_save_and_restore
     host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
     port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
@@ -51,6 +60,14 @@ class ObjectIDTest < Test::Unit::TestCase
     assert_equal @o.to_s, o2.to_s
   end
 
+  def test_from_string_legacy
+    hex_str = @o.to_s_legacy
+    o2 = ObjectID.from_string_legacy(hex_str)
+    assert_equal hex_str, o2.to_s_legacy
+    assert_equal @o, o2
+    assert_equal @o.to_s, o2.to_s
+  end
+
   def test_legal
     assert !ObjectID.legal?(nil)
     assert !ObjectID.legal?("fred")
@@ -62,7 +79,7 @@ class ObjectIDTest < Test::Unit::TestCase
   end
 
   def test_from_string_leading_zeroes
-    hex_str = '000000000000000000abcdef'
+    hex_str = '000000000000000000000000'
     o = ObjectID.from_string(hex_str)
     assert_equal hex_str, o.to_s
   end
@@ -70,7 +87,19 @@ class ObjectIDTest < Test::Unit::TestCase
   def test_byte_order
     hex_str = '000102030405060708090A0B'
     o = ObjectID.from_string(hex_str)
+    assert_equal [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b], o.to_a
+  end
+
+  def test_legacy_byte_order
+    hex_str = '000102030405060708090A0B'
+    o = ObjectID.from_string_legacy(hex_str)
     assert_equal [0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00, 0x0b, 0x0a, 0x09, 0x08], o.to_a
+  end
+
+  def test_legacy_string_convert
+    l = @o.to_s_legacy
+    s = @o.to_s
+    assert_equal s, ObjectID.legacy_string_convert(l)
   end
 
 end
