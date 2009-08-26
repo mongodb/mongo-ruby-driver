@@ -314,10 +314,17 @@ module Mongo
         keys.each do |k|
           hash[k] = 1
         end
+
+        case reduce
+        when Code
+        else
+          reduce = Code.new(reduce)
+        end
+
         result = @db.db_command({"group" =>
                                   {
                                     "ns" => @name,
-                                    "$reduce" => Code.new(reduce),
+                                    "$reduce" => reduce,
                                     "key" => hash,
                                     "cond" => condition,
                                     "initial" => initial}})
@@ -327,6 +334,19 @@ module Mongo
           raise OperationFailure, "group command failed: #{result['errmsg']}"
         end
       end
+
+      case reduce
+      when Code
+        scope = reduce.scope
+      else
+        scope = {}
+      end
+      scope.merge!({
+                     "ns" => @name,
+                     "keys" => keys,
+                     "condition" => condition,
+                     "initial" => initial })
+
       group_function = <<EOS
 function () {
     var c = db[ns].find(condition);
@@ -352,13 +372,7 @@ function () {
     return {"result": map.values()};
 }
 EOS
-      return @db.eval(Code.new(group_function,
-                               {
-                                 "ns" => @name,
-                                 "keys" => keys,
-                                 "condition" => condition,
-                                 "initial" => initial
-                               }))["result"]
+      return @db.eval(Code.new(group_function, scope))["result"]
     end
 
     # Rename this collection.

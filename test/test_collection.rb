@@ -186,5 +186,36 @@ class TestCollection < Test::Unit::TestCase
     assert_equal nil, @@test.find_one(:foo => "mike")
     assert_equal nil, @@test.find_one("foo" => "mike")
   end
+
+  def test_group_with_scope
+    @@test.save("a" => 1)
+    @@test.save("b" => 1)
+
+    reduce_function = "function (obj, prev) { prev.count += inc_value; }"
+
+    assert_equal 2, @@test.group([], {}, {"count" => 0},
+                                 Code.new(reduce_function,
+                                          {"inc_value" => 1}))[0]["count"]
+
+# TODO enable these tests when SERVER-262 is fixed
+
+#     assert_equal 2, @@test.group([], {}, {"count" => 0},
+#                                  Code.new(reduce_function,
+#                                           {"inc_value" => 1}), true)[0]["count"]
+
+    assert_equal 4, @@test.group([], {}, {"count" => 0},
+                                 Code.new(reduce_function,
+                                          {"inc_value" => 2}))[0]["count"]
+#     assert_equal 4, @@test.group([], {}, {"count" => 0},
+#                                  Code.new(reduce_function,
+#                                           {"inc_value" => 2}), true)[0]["count"]
+
+    assert_equal 1, @@test.group([], {}, {"count" => 0},
+                                 Code.new(reduce_function,
+                                          {"inc_value" => 0.5}))[0]["count"]
+#     assert_equal 1, @@test.group([], {}, {"count" => 0},
+#                                  Code.new(reduce_function,
+#                                           {"inc_value" => 0.5}), true)[0]["count"]
+  end
 end
 
