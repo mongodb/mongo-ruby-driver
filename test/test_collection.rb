@@ -177,5 +177,14 @@ class TestCollection < Test::Unit::TestCase
     end
     assert c.closed?
   end
+
+  def test_save_symbol_find_string
+    @@test.save(:foo => :mike)
+
+    assert_equal :mike, @@test.find_one(:foo => :mike)["foo"]
+    assert_equal :mike, @@test.find_one("foo" => :mike)["foo"]
+    assert_equal nil, @@test.find_one(:foo => "mike")
+    assert_equal nil, @@test.find_one("foo" => "mike")
+  end
 end
 
