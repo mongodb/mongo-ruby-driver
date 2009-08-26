@@ -218,4 +218,3 @@ class TestCollection < Test::Unit::TestCase
 #                                           {"inc_value" => 0.5}), true)[0]["count"]
   end
 end
-
