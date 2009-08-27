@@ -63,6 +63,18 @@ class DBTest < Test::Unit::TestCase
     }
   end
 
+  def test_collections
+    @@db.collection("test.durran").insert("foo" => 5)
+    @@db.collection("test.les").insert("bar" => 0)
+
+    colls = @@db.collections()
+    assert_not_nil colls.select { |coll| coll.name == "test.durran" }
+    assert_not_nil colls.select { |coll| coll.name == "test.les" }
+    assert_equal [], colls.select { |coll| coll.name == "does_not_exist" }
+
+    assert_kind_of Collection, colls[0]
+  end
+
   def test_pair
     @@db.close
     @@users = nil

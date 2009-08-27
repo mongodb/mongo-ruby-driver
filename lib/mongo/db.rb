@@ -192,6 +192,14 @@ module Mongo
       names.map {|name| name.sub(@name + '.', '')}
     end
 
+    # Retruns an array of Collection instances, one for each collection in this
+    # database.
+    def collections
+      collection_names.map do |collection_name|
+        Collection.new(self, collection_name)
+      end
+    end
+
     # Returns a cursor over query result hashes. Each hash contains a
     # 'name' string and optionally an 'options' hash. If +coll_name+ is
     # specified, an array of length 1 is returned.

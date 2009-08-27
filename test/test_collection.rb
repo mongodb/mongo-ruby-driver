@@ -183,8 +183,10 @@ class TestCollection < Test::Unit::TestCase
 
     assert_equal :mike, @@test.find_one(:foo => :mike)["foo"]
     assert_equal :mike, @@test.find_one("foo" => :mike)["foo"]
-    assert_equal nil, @@test.find_one(:foo => "mike")
-    assert_equal nil, @@test.find_one("foo" => "mike")
+
+    # TODO enable these tests conditionally based on server version (if >1.0)
+    # assert_equal :mike, @@test.find_one(:foo => "mike")["foo"]
+    # assert_equal :mike, @@test.find_one("foo" => "mike")["foo"]
   end
 
   def test_group_with_scope
