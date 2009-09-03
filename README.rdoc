@@ -256,7 +256,7 @@ validator script.
 
 = Documentation
 
-This documentation is available online at http://mongo.rubyforge.org. You can
+This documentation is available online at http://api.mongodb.org/ruby. You can
 generate the documentation if you have the source by typing
 
   $ rake rdoc
