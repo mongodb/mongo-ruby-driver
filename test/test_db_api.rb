@@ -809,4 +809,24 @@ class DBAPITest < Test::Unit::TestCase
       @@db.collection("test").find({}, :snapshot => true, :sort => 'a').to_a
     end
   end
+
+  def test_encodings
+    if RUBY_VERSION >= '1.9'
+      ascii = "hello world"
+      utf8 = "hello world".encode("UTF-8")
+      iso8859 = "hello world".encode("ISO-8859-1")
+
+      assert_equal "US-ASCII", ascii.encoding.name
+      assert_equal "UTF-8", utf8.encoding.name
+      assert_equal "ISO-8859-1", iso8859.encoding.name
+
+      @@coll.clear
+      @@coll.save("ascii" => ascii, "utf8" => utf8, "iso8859" => iso8859)
+      doc = @@coll.find_one()
+
+      assert_equal "UTF-8", doc["ascii"].encoding.name
+      assert_equal "UTF-8", doc["utf8"].encoding.name
+      assert_equal "UTF-8", doc["iso8859"].encoding.name
+    end
+  end
 end

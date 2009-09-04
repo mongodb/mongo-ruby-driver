@@ -50,6 +50,13 @@ static VALUE RegexpOfHolding;
 static VALUE OrderedHash;
 static VALUE InvalidName;
 
+#if HAVE_RUBY_ENCODING_H
+#include "ruby/encoding.h"
+#define STR_NEW(p,n) rb_enc_str_new((p), (n), rb_utf8_encoding())
+#else
+#define STR_NEW(p,n) rb_str_new((p), (n))
+#endif
+
 // this sucks. but for some reason these moved around between 1.8 and 1.9
 #ifdef ONIGURUMA_H
 #define IGNORECASE ONIG_OPTION_IGNORECASE
@@ -495,7 +502,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             int value_length;
             *position += 4;
             value_length = strlen(buffer + *position);
-            value = rb_str_new(buffer+ *position, value_length);
+            value = STR_NEW(buffer + *position, value_length);
             *position += value_length + 1;
             break;
         }
@@ -509,7 +516,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
                 int collection_length = strlen(buffer + offset);
                 char id_type;
 
-                argv[0] = rb_str_new(buffer + offset, collection_length);
+                argv[0] = STR_NEW(buffer + offset, collection_length);
                 offset += collection_length + 1;
                 id_type = buffer[offset];
                 offset += 5;
@@ -599,7 +606,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
     case 11:
         {
             int pattern_length = strlen(buffer + *position);
-            VALUE pattern = rb_str_new(buffer + *position, pattern_length);
+            VALUE pattern = STR_NEW(buffer + *position, pattern_length);
             int flags_length, flags = 0, i = 0;
             char extra[10];
             VALUE argv[3];
@@ -635,7 +642,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             VALUE collection, str, oid, id, argv[2];
             *position += 4;
             collection_length = strlen(buffer + *position);
-            collection = rb_str_new(buffer + *position, collection_length);
+            collection = STR_NEW(buffer + *position, collection_length);
             *position += collection_length + 1;
 
             str = rb_str_new(buffer + *position, 12);
@@ -662,7 +669,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             VALUE code, scope, argv[2];
             *position += 8;
             code_length = strlen(buffer + *position);
-            code = rb_str_new(buffer + *position, code_length);
+            code = STR_NEW(buffer + *position, code_length);
             *position += code_length + 1;
 
             memcpy(&scope_size, buffer + *position, 4);
@@ -715,7 +722,7 @@ static VALUE elements_to_hash(const char* buffer, int max) {
     while (position < max) {
         int type = (int)buffer[position++];
         int name_length = strlen(buffer + position);
-        VALUE name = rb_str_new(buffer + position, name_length);
+        VALUE name = STR_NEW(buffer + position, name_length);
         VALUE value;
         position += name_length + 1;
         value = get_value(buffer, &position, type);
