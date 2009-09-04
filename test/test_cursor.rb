@@ -57,6 +57,23 @@ class CursorTest < Test::Unit::TestCase
 
     assert_equal 0, @@db['acollectionthatdoesn'].count()
   end
+  
+  def test_sort
+    @@coll.clear
+    5.times{|x| @@coll.insert({"a" => x, "b" => 5-x}) }
+    
+    assert_kind_of Cursor, @@coll.find().sort({:a=>1})
+    
+    assert_equal 0, @@coll.find().sort({:a => 1}).next_object["a"]
+    assert_equal 4, @@coll.find().sort({:a => -1}).next_object["a"]
+    
+    assert_equal 1, @@coll.find().sort({:a => 1, :b => 1}).next_object["b"]
+    assert_equal 5, @@coll.find().sort({:a => 1, :b => -1}).next_object["b"]
+    
+    assert_equal 4, @@coll.find().sort({:a => 1}).sort({:a => -1}).next_object["a"]
+    assert_equal 4, @@coll.find().sort({:a => 1}).sort({:a => -1}).next_object["a"]
+    
+  end
 
   def test_limit
     @@coll.clear

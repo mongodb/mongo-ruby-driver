@@ -72,6 +72,18 @@ module Mongo
       return 0 if response['errmsg'] == "ns missing"
       raise OperationFailure, "Count failed: #{response['errmsg']}"
     end
+    
+    # Sort the results of the query with a hash of keys and orders
+    #
+    # Sorts should be formed as such:
+    # {:name=>-1} (sort by name, descending) OR {:name=>1} (sort by name, ascending)
+    # options are stackable, with the last option being the priority, i.e.:
+    # {:name => -1, :age => 1} (name descending, age asending)
+    def sort(order_hash = {})
+      raise InvalidOperation, "can't call Cursor#sort on a used cursor" if @query_run
+      @query.order_by = order_hash
+      self
+    end
 
     # Limits the number of results to be returned by this cursor.
     #
