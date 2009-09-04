@@ -154,7 +154,7 @@ static void buffer_write_bytes(bson_buffer* buffer, const char* bytes, int size)
 }
 
 static VALUE pack_extra(bson_buffer* buffer, VALUE check_keys) {
-    return rb_ary_new3(2, INT2NUM((long)buffer), check_keys);
+    return rb_ary_new3(2, LL2NUM((long long)buffer), check_keys);
 }
 
 static void write_name_and_type(bson_buffer* buffer, VALUE name, char type) {
@@ -164,7 +164,7 @@ static void write_name_and_type(bson_buffer* buffer, VALUE name, char type) {
 }
 
 static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow_id) {
-    bson_buffer* buffer = (bson_buffer*)NUM2LONG(rb_ary_entry(extra, 0));
+    bson_buffer* buffer = (bson_buffer*)NUM2LL(rb_ary_entry(extra, 0));
     VALUE check_keys = rb_ary_entry(extra, 1);
 
     if (TYPE(key) == T_SYMBOL) {
