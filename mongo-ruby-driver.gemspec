@@ -83,7 +83,7 @@ TEST_FILES = ['test/mongo-qa/_common.rb',
 
 Gem::Specification.new do |s|
   s.name = 'mongo'
-  s.version = '0.14'
+  s.version = '0.14.1'
   s.platform = Gem::Platform::RUBY
   s.summary = 'Ruby driver for the 10gen Mongo DB'
   s.description = 'A Ruby driver for the 10gen Mongo DB. For more information about Mongo, see http://www.mongodb.org.'
