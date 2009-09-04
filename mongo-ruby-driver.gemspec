@@ -89,7 +89,6 @@ Gem::Specification.new do |s|
   s.description = 'A Ruby driver for the 10gen Mongo DB. For more information about Mongo, see http://www.mongodb.org.'
 
   s.require_paths = ['lib']
-
   s.files = PACKAGE_FILES
   s.test_files = TEST_FILES
 
