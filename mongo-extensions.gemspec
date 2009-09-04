@@ -14,7 +14,6 @@ Gem::Specification.new do |s|
   s.description = 'C extensions to accelerate the MondoDB Ruby driver. For more information about Mongo, see http://www.mongodb.org.'
 
   s.require_paths = ['ext']
-
   s.files = PACKAGE_FILES
   s.test_files = TEST_FILES
 
