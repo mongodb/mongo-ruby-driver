@@ -48,7 +48,7 @@ class TestCollection < Test::Unit::TestCase
     a = {"hello" => "world"}
     @@test.insert(a)
     @@test.insert(a)
-    assert @@db.error.include? "E11000"
+    assert(@@db.error.include?("E11000"))
 
     assert_raise OperationFailure do
       @@test.insert(a, :safe => true)
@@ -92,7 +92,7 @@ class TestCollection < Test::Unit::TestCase
 
     @@test.save("hello" => "world")
     @@test.save("hello" => "world")
-    assert @@db.error.include? "E11000"
+    assert(@@db.error.include?("E11000"))
 
     assert_raise OperationFailure do
       @@test.save({"hello" => "world"}, :safe => true)
@@ -137,19 +137,19 @@ class TestCollection < Test::Unit::TestCase
   def test_insert_adds_id
     doc = {"hello" => "world"}
     @@test.insert(doc)
-    assert doc.include? :_id
+    assert(doc.include?(:_id))
 
     docs = [{"hello" => "world"}, {"hello" => "world"}]
     @@test.insert(docs)
     docs.each do |doc|
-      assert doc.include? :_id
+      assert(doc.include?(:_id))
     end
   end
 
   def test_save_adds_id
     doc = {"hello" => "world"}
     @@test.save(doc)
-    assert doc.include? :_id
+    assert(doc.include?(:_id))
   end
 
   def test_optional_find_block
