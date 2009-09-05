@@ -75,13 +75,12 @@ module Mongo
     
     # Sort the results of the query with a hash of keys and orders
     #
-    # Sorts should be formed as such:
-    # {:name=>-1} (sort by name, descending) OR {:name=>1} (sort by name, ascending)
-    # options are stackable, with the last option being the priority, i.e.:
-    # {:name => -1, :age => 1} (name descending, age asending)
-    def sort(order_hash = {})
+    # Either hash of field names as keys and 1/-1 as values; 1 ==
+    #          ascending, -1 == descending, or array of field names (all
+    #          assumed to be sorted in ascending order).
+    def sort(order)
       raise InvalidOperation, "can't call Cursor#sort on a used cursor" if @query_run
-      @query.order_by = OrderedHash[order_hash]
+      @query.order_by = order
       self
     end
 
