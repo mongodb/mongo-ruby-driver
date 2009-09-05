@@ -74,6 +74,30 @@ module Mongo
       raise OperationFailure, "Count failed: #{response['errmsg']}"
     end
 
+    # Sets a limit on the number of results returned by the query.
+    # Returns a cursor object.
+    #
+    # Note: this method overrides any limit specified in the #find method.
+    def limit(number_to_return)
+      check_modifiable
+      raise ArgumentError, "limit requires an integer" unless number_to_return.is_a? Integer
+
+      @number_to_return       = number_to_return
+      @query.number_to_return = number_to_return
+      return self
+    end
+    
+    # Sets an offset on the query results. Returns a cursor object.
+    #
+    # Note: this method overrides any offset specified in the #find method.
+    def offset(number_to_skip)
+      check_modifiable
+      raise ArgumentError, "limit requires an integer" unless number_to_skip.is_a? Integer
+
+      @query.number_to_skip = number_to_skip
+      return self
+    end
+
     # Iterate over each document in this cursor, yielding it to the given
     # block.
     #
@@ -225,6 +249,12 @@ module Mongo
 
     def to_s
       "DBResponse(flags=#@result_flags, cursor_id=#@cursor_id, start=#@starting_from, n_returned=#@n_returned)"
+    end
+
+    def check_modifiable
+      if @query_run || @closed
+        raise InvalidOperation, "Cannot modify the query once it has been run or closed."
+      end
     end
   end
 end
