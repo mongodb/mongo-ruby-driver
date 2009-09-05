@@ -67,11 +67,11 @@ class CursorTest < Test::Unit::TestCase
     assert_equal 0, @@coll.find().sort({:a => 1}).next_object["a"]
     assert_equal 4, @@coll.find().sort({:a => -1}).next_object["a"]
     
-    assert_equal 1, @@coll.find().sort({:a => 1, :b => 1}).next_object["b"]
+    assert_equal 1, @@coll.find().sort({:a => -1, :b => 1}).next_object["b"]
     assert_equal 5, @@coll.find().sort({:a => 1, :b => -1}).next_object["b"]
     
     assert_equal 4, @@coll.find().sort({:a => 1}).sort({:a => -1}).next_object["a"]
-    assert_equal 4, @@coll.find().sort({:a => 1}).sort({:a => -1}).next_object["a"]
+    assert_equal 0, @@coll.find().sort({:a => -1}).sort({:a => 1}).next_object["a"]
     
   end
 

@@ -81,7 +81,7 @@ module Mongo
     # {:name => -1, :age => 1} (name descending, age asending)
     def sort(order_hash = {})
       raise InvalidOperation, "can't call Cursor#sort on a used cursor" if @query_run
-      @query.order_by = order_hash
+      @query.order_by = OrderedHash[order_hash]
       self
     end
 
