@@ -240,12 +240,12 @@ module Mongo
       update(selector, modifier_obj)
     end
 
-    # Update a document(s) in this collection.
+    # Update a single document in this collection.
     #
     # :spec :: a hash specifying elements which must be present for
     #   a document to be updated
     # :document :: a hash specifying the fields to be changed in the
-    #   selected document(s), or (in the case of an upsert) the document to
+    #   selected document, or (in the case of an upsert) the document to
     #   be inserted
     #
     # Options:
