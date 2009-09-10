@@ -82,7 +82,7 @@ module Mongo
                when nil
                  [['localhost', DEFAULT_PORT]]
                end
-      @options = options
+      @options = options.merge(:logger => Logger.new(STDOUT))
     end
 
     # Return the Mongo::DB named +db_name+. The slave_ok and

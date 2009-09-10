@@ -111,5 +111,9 @@ module Mongo
     def contains_special_fields
       (@order_by != nil && @order_by.length > 0) || @explain || @hint || @snapshot
     end
+
+    def to_s
+      "#find(#{@selector.inspect})" + (@order_by ? ".sort(#{@order_by.inspect})" : "")
+    end
   end
 end

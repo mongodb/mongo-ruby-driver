@@ -135,6 +135,7 @@ module Mongo
       @semaphore = Object.new
       @semaphore.extend Mutex_m
       @socket = nil
+      @logger = options[:logger]
       connect_to_master
     end
 
@@ -512,8 +513,11 @@ module Mongo
     def send_to_db(message)
       connect_to_master if !connected? && @auto_reconnect
       begin
+        t_start = Time.now
         @socket.print(message.buf.to_s)
-        @socket.flush
+        res = @socket.flush
+        @logger.debug("  MONGODB (#{Time.now - t_start}s)  #{message.query}")
+        res
       rescue => ex
         close
         raise ex
