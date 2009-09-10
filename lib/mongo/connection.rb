@@ -15,6 +15,7 @@
 # ++
 
 require 'mongo/db'
+require 'logger'
 
 module Mongo
 
