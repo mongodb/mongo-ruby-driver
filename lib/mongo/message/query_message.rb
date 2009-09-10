@@ -27,6 +27,7 @@ module Mongo
     def initialize(db_name, collection_name, query)
       super(OP_QUERY)
       @query = query
+      @collection_name = collection_name
       write_int(0)
       write_string("#{db_name}.#{collection_name}")
       write_int(query.number_to_skip)
@@ -68,6 +69,10 @@ module Mongo
 
     def first_key(key)
       @first_key = key
+    end
+
+    def to_s
+      "db.#{@collection_name}.#{@query}"
     end
   end
 end

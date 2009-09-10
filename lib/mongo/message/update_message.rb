@@ -22,12 +22,17 @@ module Mongo
   class UpdateMessage < Message
 
     def initialize(db_name, collection_name, sel, obj, repsert)
+      @collection_name = collection_name
       super(OP_UPDATE)
       write_int(0)
       write_string("#{db_name}.#{collection_name}")
       write_int(repsert ? 1 : 0) # 1 if a repsert operation (upsert)
       write_doc(sel)
       write_doc(obj)
+    end
+
+    def to_s
+      "db.#{@collection_name}.update(#{@sel.inspect}, #{@obj.inspect})"
     end
   end
 end

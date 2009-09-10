@@ -516,7 +516,7 @@ module Mongo
         t_start = Time.now
         @socket.print(message.buf.to_s)
         res = @socket.flush
-        @logger.debug("  MONGODB (#{Time.now - t_start}s)  #{message.query}")
+        @logger.debug("  MONGODB (#{Time.now - t_start}s)  #{message}") if @logger
         res
       rescue => ex
         close

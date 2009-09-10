@@ -88,6 +88,8 @@ module Mongo
       str
     end
 
+    def inspect; to_s; end
+
     # Get a string representation of this ObjectID using the legacy byte
     # ordering. This method may eventually be removed. If you are not sure
     # that you need this method you should be using the regular to_s.

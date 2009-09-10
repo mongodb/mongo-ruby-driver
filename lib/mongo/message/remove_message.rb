@@ -22,11 +22,16 @@ module Mongo
   class RemoveMessage < Message
 
     def initialize(db_name, collection_name, sel)
+      @collection_name = collection_name
       super(OP_DELETE)
       write_int(0)
       write_string("#{db_name}.#{collection_name}")
       write_int(0)              # flags?
       write_doc(sel)
+    end
+
+    def to_s
+      "#{@collection_name}.clear()"
     end
   end
 end

@@ -83,7 +83,13 @@ module Mongo
                when nil
                  [['localhost', DEFAULT_PORT]]
                end
-      @options = options.merge(:logger => Logger.new(STDOUT))
+
+      unless options[:logger]
+        logger = Logger.new(STDOUT)
+        logger.level = Logger::INFO
+        options[:logger] = logger
+      end
+      @options = options
     end
 
     # Return the Mongo::DB named +db_name+. The slave_ok and
