@@ -515,10 +515,9 @@ module Mongo
     def send_to_db(message)
       connect_to_master if !connected? && @auto_reconnect
       begin
-        @socket.print(message.buf.to_s)
-        res = @socket.flush
         @logger.debug("  MONGODB #{message}") if @logger
-        res
+        @socket.print(message.buf.to_s)
+        @socket.flush
       rescue => ex
         close
         raise ex
