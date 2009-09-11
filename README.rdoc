@@ -300,6 +300,9 @@ Paul Dlug, paul.dlug@gmail.com
 Durran Jordan and Les Hill, durran@gmail.com
 * DB#collections
 
+Cyril Mougel, cyril.mougel@gmail.com
+* Initial logging support
+
 = License
 
  Copyright 2008-2009 10gen Inc.
