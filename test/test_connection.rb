@@ -1,6 +1,8 @@
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 require 'test/unit'
+require 'logger'
+require 'stringio'
 
 # NOTE: assumes Mongo is running
 class TestConnection < Test::Unit::TestCase
@@ -52,6 +54,17 @@ class TestConnection < Test::Unit::TestCase
     assert names.include?('ruby-mongo-info-test')
 
     @mongo.drop_database('ruby-mongo-info-test')
+  end
+
+  def test_logging
+    output = StringIO.new
+    logger = Logger.new(output)
+    logger.level = Logger::DEBUG
+    db = Connection.new(@host, @port, :logger => logger).db('ruby-mongo-test')
+    db['test'].find().to_a
+
+    assert output.string.include?("db.test.find")
+    assert !output.string.include?("db.test.remove")
   end
 
   def test_drop_database

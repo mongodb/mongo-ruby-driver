@@ -15,7 +15,6 @@
 # ++
 
 require 'mongo/db'
-require 'logger'
 
 module Mongo
 
@@ -48,6 +47,8 @@ module Mongo
     #                    automatically try to reconnect to the master or
     #                    to the single server we have been given. Defaults
     #                    to +false+.
+    # :logger :: Optional Logger instance to which driver usage information
+    #            will be logged.
     #
     # Since that's so confusing, here are a few examples:
     #
@@ -84,11 +85,6 @@ module Mongo
                  [['localhost', DEFAULT_PORT]]
                end
 
-      unless options[:logger]
-        logger = Logger.new(STDOUT)
-        logger.level = Logger::INFO
-        options[:logger] = logger
-      end
       @options = options
     end
 

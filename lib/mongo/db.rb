@@ -107,6 +107,8 @@ module Mongo
     #                    automatically try to reconnect to the master or
     #                    to the single server we have been given. Defaults
     #                    to +false+.
+    # :logger :: Optional Logger instance to which driver usage information
+    #            will be logged.
     #
     # When a DB object first connects to a pair, it will find the master
     # instance and connect to that one. On socket error or if we recieve a
@@ -513,10 +515,9 @@ module Mongo
     def send_to_db(message)
       connect_to_master if !connected? && @auto_reconnect
       begin
-        t_start = Time.now
         @socket.print(message.buf.to_s)
         res = @socket.flush
-        @logger.debug("  MONGODB (#{Time.now - t_start}s)  #{message}") if @logger
+        @logger.debug("  MONGODB #{message}") if @logger
         res
       rescue => ex
         close

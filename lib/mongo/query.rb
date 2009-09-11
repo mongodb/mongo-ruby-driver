@@ -113,7 +113,7 @@ module Mongo
     end
 
     def to_s
-      "#find(#{@selector.inspect})" + (@order_by ? ".sort(#{@order_by.inspect})" : "")
+      "find(#{@selector.inspect})" + (@order_by ? ".sort(#{@order_by.inspect})" : "")
     end
   end
 end
