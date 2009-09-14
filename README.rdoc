@@ -119,6 +119,29 @@ Example code:
 
 = Notes
 
+== Using with Phusion Passenger
+
+When passenger is in smart spawning mode you need to be sure that child
+processes forked by passenger will create a new connection to the database.
+activerecord-mongo-adapter handles this for you, so if you are using that
+you shouldn't need to worry about it. Otherwise you'll either need to use
+conservative spawning[http://www.modrails.org/documentation/Users%20guide.html#RailsSpawnMethod]
+or handle reconnecting when passenger forks a new process:
+
+  if defined?(PhusionPassenger)
+    PhusionPassenger.on_event(:starting_worker_process) do |forked|
+      if forked
+        # Call db.connect_to_master to reconnect here
+      end
+    end
+  end
+
+The above code should be put in _environment.rb_ or an initialization
+script.
+
+See this thread[http://groups.google.com/group/mongodb-user/browse_thread/thread/f31e2d23de38136a]
+for more details on this issue.
+
 == String Encoding
 
 The BSON ("Binary JSON") format used to communicate with Mongo requires that
