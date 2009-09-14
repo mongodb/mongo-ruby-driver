@@ -179,7 +179,6 @@ module Mongo
     end
 
     def next_object_on_wire
-      send_query_if_needed
       # if @n_remaining is 0 but we have a non-zero cursor, there are more
       # to fetch, so do a GetMore operation, but don't do it here - do it
       # when someone pulls an object out of the cache and it's empty
