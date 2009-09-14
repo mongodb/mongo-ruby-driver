@@ -53,7 +53,7 @@ module Mongo
     # :name :: the name of the collection to get
     def [](name)
       name = "#{self.name}.#{name}"
-      return Collection.new(self, name) if !db.strict? || db.collection_names.include?(name)
+      return Collection.new(db, name) if !db.strict? || db.collection_names.include?(name)
       raise "Collection #{name} doesn't exist. Currently in strict mode."
     end
 

@@ -42,6 +42,10 @@ class TestCollection < Test::Unit::TestCase
     assert_kind_of Collection, @@db["test"]["foo"]
     assert_equal @@db["test"]["foo"].name(), @@db.collection("test.foo").name()
     assert_equal @@db["test"]["foo"].name(), @@db["test.foo"].name()
+
+    @@db["test"]["foo"].clear
+    @@db["test"]["foo"].insert("x" => 5)
+    assert_equal 5, @@db.collection("test.foo").find_one()["x"]
   end
 
   def test_safe_insert
