@@ -125,11 +125,18 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_date_before_epoch
-    doc = {'date' => Time.utc(1600)}
-    @b.serialize(doc)
-    doc2 = @b.deserialize
-    # Mongo only stores up to the millisecond
-    assert_in_delta doc['date'], doc2['date'], 0.001
+    begin
+      doc = {'date' => Time.utc(1600)}
+      @b.serialize(doc)
+      doc2 = @b.deserialize
+      # Mongo only stores up to the millisecond
+      assert_in_delta doc['date'], doc2['date'], 0.001
+    rescue ArgumentError
+      # some versions of Ruby won't let you create pre-epoch Time instances
+      #
+      # TODO figure out how that will work if somebady has saved data
+      # w/ early dates already and is just querying for it.
+    end
   end
 
   def test_dbref
