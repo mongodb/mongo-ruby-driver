@@ -248,8 +248,10 @@ class BSON
   end
 
   def deserialize_date_data(buf)
-    millisecs = buf.get_long()
-    Time.at(millisecs.to_f / 1000.0).utc # at() takes fractional seconds
+    unsigned = buf.get_long()
+    # see note for deserialize_number_long_data below
+    milliseconds = unsigned >= 2 ** 64 / 2 ? unsigned - 2**64 : unsigned
+    Time.at(milliseconds.to_f / 1000.0).utc # at() takes fractional seconds
   end
 
   def deserialize_boolean_data(buf)

@@ -124,6 +124,14 @@ class BSONTest < Test::Unit::TestCase
     assert doc2['date'].utc?
   end
 
+  def test_date_before_epoch
+    doc = {'date' => Time.utc(1600)}
+    @b.serialize(doc)
+    doc2 = @b.deserialize
+    # Mongo only stores up to the millisecond
+    assert_in_delta doc['date'], doc2['date'], 0.001
+  end
+
   def test_dbref
     oid = ObjectID.new
     doc = {}
