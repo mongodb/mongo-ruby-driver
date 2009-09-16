@@ -106,14 +106,16 @@ module Mongo
 
     # Returns an explain plan record for this cursor.
     def explain
-      old_val = @query.explain
+      limit = @query.number_to_return
       @query.explain = true
+      @query.number_to_return = -limit.abs
 
       c = Cursor.new(@db, @collection, @query)
       explanation = c.next_object
       c.close
 
-      @query.explain = old_val
+      @query.explain = false
+      @query.number_to_return = limit
       explanation
     end
 
