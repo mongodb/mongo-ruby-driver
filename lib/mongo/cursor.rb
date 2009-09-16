@@ -32,7 +32,6 @@ module Mongo
     # Should not be called directly by application developers.
     def initialize(db, collection, query, admin=false)
       @db, @collection, @query, @admin = db, collection, query, admin
-      @num_to_return = @query.number_to_return || 0
       @cache = []
       @closed = false
       @query_run = false
@@ -74,25 +73,23 @@ module Mongo
       raise OperationFailure, "Count failed: #{response['errmsg']}"
     end
 
-    # Sets a limit on the number of results returned by the query.
-    # Returns a cursor object.
+    # Limits the number of results to be returned by this cursor.
     #
     # Note: this method overrides any limit specified in the #find method.
     def limit(number_to_return)
       check_modifiable
       raise ArgumentError, "limit requires an integer" unless number_to_return.is_a? Integer
 
-      @number_to_return       = number_to_return
       @query.number_to_return = number_to_return
       return self
     end
-    
-    # Sets an offset on the query results. Returns a cursor object.
+
+    # Skips the first +number_to_skip+ results of this cursor.
     #
     # Note: this method overrides any offset specified in the #find method.
-    def offset(number_to_skip)
+    def skip(number_to_skip)
       check_modifiable
-      raise ArgumentError, "limit requires an integer" unless number_to_skip.is_a? Integer
+      raise ArgumentError, "skip requires an integer" unless number_to_skip.is_a? Integer
 
       @query.number_to_skip = number_to_skip
       return self
@@ -104,7 +101,7 @@ module Mongo
     # Iterating over an entire cursor will close it.
     def each
       num_returned = 0
-      while more? && (@num_to_return <= 0 || num_returned < @num_to_return)
+      while more? && (@query.number_to_return <= 0 || num_returned < @query.number_to_return)
         yield next_object()
         num_returned += 1
       end
@@ -121,7 +118,7 @@ module Mongo
       raise InvalidOperation, "can't call Cursor#to_a on a used cursor" if @query_run
       rows = []
       num_returned = 0
-      while more? && (@num_to_return <= 0 || num_returned < @num_to_return)
+      while more? && (@query.number_to_return <= 0 || num_returned < @query.number_to_return)
         rows << next_object()
         num_returned += 1
       end
@@ -198,8 +195,8 @@ module Mongo
     end
 
     # Internal method, not for general use. Return +true+ if there are
-    # more records to retrieve. We do not check @num_to_return; #each is
-    # responsible for doing that.
+    # more records to retrieve. We do not check @query.number_to_return;
+    # #each is responsible for doing that.
     def more?
       num_remaining > 0
     end

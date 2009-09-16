@@ -71,24 +71,24 @@ class CursorTest < Test::Unit::TestCase
   end
 
   def test_limit_exceptions
-    assert_raise ArgumentError do 
+    assert_raise ArgumentError do
       cursor = @@coll.find().limit('not-an-integer')
     end
 
     cursor      = @@coll.find()
     firstResult = cursor.next_object()
-    assert_raise InvalidOperation, "Cannot modify the query once it has been run or closed." do 
+    assert_raise InvalidOperation, "Cannot modify the query once it has been run or closed." do
       cursor.limit(1)
     end
 
     cursor = @@coll.find()
     cursor.close
-    assert_raise InvalidOperation, "Cannot modify the query once it has been run or closed." do 
+    assert_raise InvalidOperation, "Cannot modify the query once it has been run or closed." do
       cursor.limit(1)
     end
   end
 
-  def test_offset
+  def test_skip
     @@coll.clear
 
     10.times do |i|
@@ -97,41 +97,41 @@ class CursorTest < Test::Unit::TestCase
     assert_equal 10, @@coll.find().count()
 
     all_results    = @@coll.find().to_a
-    offset_results = @@coll.find().offset(2).to_a
+    skip_results = @@coll.find().skip(2).to_a
     assert_equal 10, all_results.length
-    assert_equal 8,  offset_results.length
+    assert_equal 8,  skip_results.length
 
-    assert_equal all_results.slice(2...10), offset_results
+    assert_equal all_results.slice(2...10), skip_results
   end
 
-  def test_offset_exceptions
-    assert_raise ArgumentError do 
-      cursor = @@coll.find().offset('not-an-integer')
+  def test_skip_exceptions
+    assert_raise ArgumentError do
+      cursor = @@coll.find().skip('not-an-integer')
     end
 
     cursor      = @@coll.find()
     firstResult = cursor.next_object()
-    assert_raise InvalidOperation, "Cannot modify the query once it has been run or closed." do 
-      cursor.offset(1)
+    assert_raise InvalidOperation, "Cannot modify the query once it has been run or closed." do
+      cursor.skip(1)
     end
 
     cursor = @@coll.find()
     cursor.close
-    assert_raise InvalidOperation, "Cannot modify the query once it has been run or closed." do 
-      cursor.offset(1)
+    assert_raise InvalidOperation, "Cannot modify the query once it has been run or closed." do
+      cursor.skip(1)
     end
   end
 
-  def test_limit_offset_chaining
+  def test_limit_skip_chaining
     @@coll.clear
     10.times do |i|
       @@coll.save("x" => i)
     end
-    
+
     all_results = @@coll.find().to_a
-    limited_offset_results = @@coll.find().limit(5).offset(3).to_a
-    
-    assert_equal all_results.slice(3...8), limited_offset_results
+    limited_skip_results = @@coll.find().limit(5).skip(3).to_a
+
+    assert_equal all_results.slice(3...8), limited_skip_results
   end
 
   def test_close_no_query_sent
