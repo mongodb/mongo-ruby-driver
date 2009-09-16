@@ -326,6 +326,9 @@ Durran Jordan and Les Hill, durran@gmail.com
 Cyril Mougel, cyril.mougel@gmail.com
 * Initial logging support
 
+Jack Chen, chendo on github
+* Test case + fix for deserializing pre-epoch Time instances
+
 = License
 
  Copyright 2008-2009 10gen Inc.
