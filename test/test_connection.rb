@@ -99,28 +99,3 @@ class TestConnection < Test::Unit::TestCase
     assert_equal ['foo', 123], pair[1]
   end
 end
-
-# Test for deprecated Mongo class
-class TestMongo < Test::Unit::TestCase
-
-  include Mongo
-
-  def setup
-    @host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-    @port = ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::DEFAULT_PORT
-    @mongo = Mongo.new(@host, @port)
-  end
-
-  def test_database_info
-    @mongo.drop_database('ruby-mongo-info-test')
-    @mongo.db('ruby-mongo-info-test').collection('info-test').insert('a' => 1)
-
-    info = @mongo.database_info
-    assert_not_nil info
-    assert_kind_of Hash, info
-    assert_not_nil info['ruby-mongo-info-test']
-    assert info['ruby-mongo-info-test'] > 0
-
-    @mongo.drop_database('ruby-mongo-info-test')
-  end
-end

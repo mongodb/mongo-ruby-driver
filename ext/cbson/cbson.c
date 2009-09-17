@@ -371,10 +371,6 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 memcpy(buffer->buffer + length_location, &obj_length, 4);
                 break;
             }
-            if (strcmp(cls, "Mongo::Undefined") == 0) {
-                write_name_and_type(buffer, key, 0x0A); // just use nil type
-                break;
-            }
         }
     case T_DATA:
         {

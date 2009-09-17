@@ -194,13 +194,6 @@ class BSONTest < Test::Unit::TestCase
     assert_equal Binary::SUBTYPE_BYTES, bin2.subtype
   end
 
-  def test_undefined
-    doc = {'undef' => Undefined.new}
-    @b.serialize(doc)
-    doc2 = @b.deserialize
-    assert_equal nil, doc2['undef']
-  end
-
   def test_put_id_first
     val = OrderedHash.new
     val['not_id'] = 1

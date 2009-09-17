@@ -148,14 +148,6 @@ module Mongo
       find(spec, options.merge(:limit => -1)).next_object
     end
 
-    # DEPRECATED - use find_one instead
-    #
-    # Find the first record that matches +selector+. See #find.
-    def find_first(selector={}, options={})
-      warn "Collection#find_first is deprecated and will be removed. Please use Collection#find_one instead."
-      find_one(selector, options)
-    end
-
     # Save a document in this collection.
     #
     # If +to_save+ already has an '_id' then an update (upsert) operation
@@ -212,32 +204,6 @@ module Mongo
     # Remove all records.
     def clear
       remove({})
-    end
-
-    # DEPRECATED - use update(... :upsert => true) instead
-    #
-    # Update records that match +selector+ by applying +obj+ as an update.
-    # If no match, inserts (???).
-    def repsert(selector, obj)
-      warn "Collection#repsert is deprecated and will be removed. Please use Collection#update instead."
-      update(selector, obj, :upsert => true)
-    end
-
-    # DEPRECATED - use update(... :upsert => false) instead
-    #
-    # Update records that match +selector+ by applying +obj+ as an update.
-    def replace(selector, obj)
-      warn "Collection#replace is deprecated and will be removed. Please use Collection#update instead."
-      update(selector, obj)
-    end
-
-    # DEPRECATED - use update(... :upsert => false) instead
-    #
-    # Update records that match +selector+ by applying +obj+ as an update.
-    # Both +selector+ and +modifier_obj+ are required.
-    def modify(selector, modifier_obj)
-      warn "Collection#modify is deprecated and will be removed. Please use Collection#update instead."
-      update(selector, modifier_obj)
     end
 
     # Update a single document in this collection.
@@ -420,14 +386,8 @@ EOS
     end
 
     # Get the number of documents in this collection.
-    #
-    # Specifying a +selector+ is DEPRECATED and will be removed. Please use
-    # find(selector).count() instead.
-    def count(selector=nil)
-      if selector
-        warn "specifying a selector for Collection#count is deprecated and will be removed. Please use Collection.find(selector).count instead."
-      end
-      find(selector || {}).count()
+    def count()
+      find().count()
     end
 
     protected

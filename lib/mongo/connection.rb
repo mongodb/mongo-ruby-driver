@@ -148,12 +148,4 @@ module Mongo
       end
     end
   end
-
-  class Mongo < Connection
-    def initialize(pair_or_host=nil, port=nil, options={})
-      super(pair_or_host, port, options)
-
-      warn "Mongo::Mongo is deprecated and will be removed - please use Mongo::Connection"
-    end
-  end
 end

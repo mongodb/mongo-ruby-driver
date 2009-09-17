@@ -239,12 +239,6 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 4, docs.size
   end
 
-  def test_find_first
-    x = @@coll.find_first('a' => 1)
-    assert_not_nil x
-    assert_equal 1, x['a']
-  end
-
   def test_find_one_no_records
     @@coll.clear
     x = @@coll.find_one('a' => 1)
@@ -468,32 +462,6 @@ class DBAPITest < Test::Unit::TestCase
     @@db.create_collection('foobar')
     @@db.create_collection('foobar')
     @@db.drop_collection('foobar')
-  end
-
-  def test_replace
-    assert_equal @@coll.count, 1
-    assert_equal @@coll.find_one["a"], 1
-
-    @@coll.replace({"a" => 1}, {"a" => 2})
-    assert_equal @@coll.count, 1
-    assert_equal @@coll.find_one["a"], 2
-
-    @@coll.replace({"b" => 1}, {"a" => 3})
-    assert_equal @@coll.count, 1
-    assert_equal @@coll.find_one["a"], 2
-  end
-
-  def test_repsert
-    assert_equal @@coll.count, 1
-    assert_equal @@coll.find_one["a"], 1
-
-    @@coll.repsert({"a" => 1}, {"a" => 2})
-    assert_equal @@coll.count, 1
-    assert_equal @@coll.find_one["a"], 2
-
-    @@coll.repsert({"b" => 1}, {"a" => 3})
-    assert_equal @@coll.count, 2
-    assert @@coll.find_one({"a" => 3})
   end
 
   def test_to_a
@@ -730,8 +698,6 @@ class DBAPITest < Test::Unit::TestCase
     assert_raise InvalidName do
       @@coll.insert({"hello" => {"hel.lo" => "world"}})
     end
-
-    @@coll.modify({"hello" => "world"}, {"$inc" => "hello"})
   end
 
   def test_collection_names

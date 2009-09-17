@@ -388,12 +388,6 @@ module Mongo
       }
     end
 
-    # DEPRECATED - use Collection#update instead
-    def modify_in_db(collection_name, selector, obj)
-      warn "DB#modify_in_db is deprecated and will be removed. Please use Collection#update instead."
-      replace_in_db(collection_name, selector, obj)
-    end
-
     # Update records in +collection_name+ that match +selector+ by
     # applying +obj+ as an update. If no match, inserts (???). Normally
     # called by Collection#repsert.
@@ -403,12 +397,6 @@ module Mongo
         send_to_db(UpdateMessage.new(@name, collection_name, selector, obj, true))
         obj
       }
-    end
-
-    # DEPRECATED - use Collection.find(selector).count() instead
-    def count(collection_name, selector={})
-      warn "DB#count is deprecated and will be removed. Please use Collection.find(selector).count instead."
-      collection(collection_name).find(selector).count()
     end
 
     # Dereference a DBRef, getting the document it points to.

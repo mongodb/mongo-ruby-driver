@@ -21,7 +21,6 @@ require 'mongo/types/binary'
 require 'mongo/types/dbref'
 require 'mongo/types/objectid'
 require 'mongo/types/regexp_of_holding'
-require 'mongo/types/undefined'
 
 # A BSON seralizer/deserializer.
 class BSON
@@ -539,8 +538,6 @@ class BSON
       OBJECT
     when Symbol
       SYMBOL
-    when Undefined
-      NULL
     else
       raise "Unknown type of object: #{o.class.name}"
     end
