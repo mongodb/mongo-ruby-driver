@@ -38,8 +38,7 @@ module Mongo
     #                  (Called :fields in calls to Collection#find.)
     #
     # number_to_skip :: Number of records to skip before returning
-    #                   records. (Called :offset in calls to
-    #                   Collection#find.) Default is 0.
+    #                   records. Default is 0.
     #
     # number_to_return :: Max number of records to return. (Called :limit
     #                     in calls to Collection#find.) Default is 0 (all

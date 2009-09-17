@@ -43,7 +43,7 @@ class CursorTest < Test::Unit::TestCase
     assert_equal 10, @@coll.find().count()
     assert_kind_of Integer, @@coll.find().count()
     assert_equal 10, @@coll.find({}, :limit => 5).count()
-    assert_equal 10, @@coll.find({}, :offset => 5).count()
+    assert_equal 10, @@coll.find({}, :skip => 5).count()
 
     assert_equal 1, @@coll.find({"x" => 1}).count()
     assert_equal 5, @@coll.find({"x" => {"$lt" => 5}}).count()

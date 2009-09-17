@@ -107,7 +107,7 @@ module Mongo
     #
     # Raises InvalidOperation if this cursor has already been used.
     #
-    # This method overrides any offset specified in the Collection#find method,
+    # This method overrides any skip specified in the Collection#find method,
     # and only the last skip applied has an effect.
     def skip(number_to_skip)
       check_modifiable

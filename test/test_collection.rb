@@ -165,7 +165,7 @@ class TestCollection < Test::Unit::TestCase
     assert_equal 1, x
 
     i = 0
-    @@test.find({}, :offset => 5) do |cursor|
+    @@test.find({}, :skip => 5) do |cursor|
       cursor.each do |doc|
         i = i + 1
       end
@@ -197,6 +197,23 @@ class TestCollection < Test::Unit::TestCase
     # TODO enable these tests conditionally based on server version (if >1.0)
     # assert_equal :mike, @@test.find_one(:foo => "mike")["foo"]
     # assert_equal :mike, @@test.find_one("foo" => "mike")["foo"]
+  end
+
+  def test_limit_and_skip
+    10.times do |i|
+      @@test.save(:foo => i)
+    end
+
+    # TODO remove test for deprecated :offset option
+    assert_equal 5, @@test.find({}, :offset => 5).next_object()["foo"]
+
+    assert_equal 5, @@test.find({}, :skip => 5).next_object()["foo"]
+    assert_equal nil, @@test.find({}, :skip => 10).next_object()
+
+    assert_equal 5, @@test.find({}, :limit => 5).to_a.length
+
+    assert_equal 3, @@test.find({}, :skip => 3, :limit => 5).next_object()["foo"]
+    assert_equal 5, @@test.find({}, :skip => 3, :limit => 5).to_a.length
   end
 
   def test_group_with_scope

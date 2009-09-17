@@ -11,5 +11,5 @@ if $DEBUG
   (5..15).each { |i| c.insert(:x => 2, :y => i, :z => (i+64).chr) }
 end
 
-cursor = db.collection('c').find({'x' => 1}, :sort => 'y', :offset => 20, :limit => 10)
+cursor = db.collection('c').find({'x' => 1}, :sort => 'y', :skip => 20, :limit => 10)
 cursor.each { |row| puts row['z'] }

@@ -88,7 +88,8 @@ module Mongo
     #            set ("_id" will always be included). By limiting results
     #            to a certain subset of fields you can cut down on network
     #            traffic and decoding time.
-    # :offset :: Start at this record when returning records
+    # :skip :: Number of documents to omit (from the start of the result set)
+    #          when returning the results
     # :limit :: Maximum number of records to return
     # :sort :: Either hash of field names as keys and 1/-1 as values; 1 ==
     #          ascending, -1 == descending, or array of field names (all
@@ -102,7 +103,11 @@ module Mongo
     def find(selector={}, options={})
       fields = options.delete(:fields)
       fields = ["_id"] if fields && fields.empty?
-      offset = options.delete(:offset) || 0
+      skip = options.delete(:offset) || nil
+      if !skip.nil?
+        warn "the :offset option to find is deprecated and will be removed. please use :skip instead"
+      end
+      skip = options.delete(:skip) || skip || 0
       limit = options.delete(:limit) || 0
       sort = options.delete(:sort)
       hint = options.delete(:hint)
@@ -114,7 +119,7 @@ module Mongo
       end
       raise RuntimeError, "Unknown options [#{options.inspect}]" unless options.empty?
 
-      cursor = @db.query(self, Query.new(selector, fields, offset, limit, sort, hint, snapshot))
+      cursor = @db.query(self, Query.new(selector, fields, skip, limit, sort, hint, snapshot))
       if block_given?
         yield cursor
         cursor.close()

@@ -38,9 +38,9 @@ rows.each { |row| pp row }
 # records we find.
 coll.find('a' => 1)
 
-# Find records sort by 'a', offset 1, limit 2 records.
+# Find records sort by 'a', skip 1, limit 2 records.
 # Sort can be single name, array, or hash.
-coll.find({}, {:offset => 1, :limit => 2, :sort => 'a'})
+coll.find({}, {:skip => 1, :limit => 2, :sort => 'a'})
 
 # Find all records with 'a' > 1. There is also $lt, $gte, and $lte.
 coll.find({'a' => {'$gt' => 1}})
