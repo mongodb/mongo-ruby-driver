@@ -332,6 +332,9 @@ Jack Chen, chendo on github
 Kyle Banker, banker on github
 * #limit and #skip methods for Cursor instances
 
+Michael Bernstein, mrb on github
+* #sort method for Cursor instances
+
 = License
 
  Copyright 2008-2009 10gen Inc.

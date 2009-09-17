@@ -72,12 +72,17 @@ module Mongo
       return 0 if response['errmsg'] == "ns missing"
       raise OperationFailure, "Count failed: #{response['errmsg']}"
     end
-    
-    # Sort the results of the query with a hash of keys and orders
+
+    # Sort this cursor's result
     #
-    # Either hash of field names as keys and 1/-1 as values; 1 ==
-    #          ascending, -1 == descending, or array of field names (all
-    #          assumed to be sorted in ascending order).
+    # Takes either a hash of field names as keys and 1/-1 as values; 1 ==
+    # ascending, -1 == descending, or array of field names (all assumed to be
+    # sorted in ascending order).
+    #
+    # Raises InvalidOperation if this cursor has already been used.
+    #
+    # This method overrides any sort order specified in the Collection#find
+    # method, and only the last sort applied has an effect
     def sort(order)
       raise InvalidOperation, "can't call Cursor#sort on a used cursor" if @query_run
       @query.order_by = order
@@ -86,7 +91,10 @@ module Mongo
 
     # Limits the number of results to be returned by this cursor.
     #
-    # Note: this method overrides any limit specified in the #find method.
+    # Raises InvalidOperation if this cursor has already been used.
+    #
+    # This method overrides any limit specified in the Collection#find method,
+    # and only the last limit applied has an effect.
     def limit(number_to_return)
       check_modifiable
       raise ArgumentError, "limit requires an integer" unless number_to_return.is_a? Integer
@@ -97,7 +105,10 @@ module Mongo
 
     # Skips the first +number_to_skip+ results of this cursor.
     #
-    # Note: this method overrides any offset specified in the #find method.
+    # Raises InvalidOperation if this cursor has already been used.
+    #
+    # This method overrides any offset specified in the Collection#find method,
+    # and only the last skip applied has an effect.
     def skip(number_to_skip)
       check_modifiable
       raise ArgumentError, "skip requires an integer" unless number_to_skip.is_a? Integer
