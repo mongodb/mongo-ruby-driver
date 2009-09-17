@@ -84,7 +84,7 @@ module Mongo
     # This method overrides any sort order specified in the Collection#find
     # method, and only the last sort applied has an effect
     def sort(order)
-      raise InvalidOperation, "can't call Cursor#sort on a used cursor" if @query_run
+      check_modifiable
       @query.order_by = order
       self
     end
@@ -100,7 +100,7 @@ module Mongo
       raise ArgumentError, "limit requires an integer" unless number_to_return.is_a? Integer
 
       @query.number_to_return = number_to_return
-      return self
+      self
     end
 
     # Skips the first +number_to_skip+ results of this cursor.
@@ -114,7 +114,7 @@ module Mongo
       raise ArgumentError, "skip requires an integer" unless number_to_skip.is_a? Integer
 
       @query.number_to_skip = number_to_skip
-      return self
+      self
     end
 
     # Iterate over each document in this cursor, yielding it to the given
