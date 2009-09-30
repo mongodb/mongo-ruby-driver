@@ -83,7 +83,7 @@ Gem::Specification.new do |s|
   s.name = 'mongo'
 
   # be sure to change this constant in lib/mongo.rb as well
-  s.version = '0.14.1'
+  s.version = '0.15'
 
   s.platform = Gem::Platform::RUBY
   s.summary = 'Ruby driver for the 10gen Mongo DB'
