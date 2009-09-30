@@ -525,8 +525,6 @@ module Mongo
     # DB commands need to be ordered, so selector must be an OrderedHash
     # (or a Hash with only one element). What DB commands really need is
     # that the "command" key be first.
-    #
-    # Do not call this. Intended for driver use only.
     def db_command(selector, use_admin_db=false)
       if !selector.kind_of?(OrderedHash)
         if !selector.kind_of?(Hash) || selector.keys.length > 1
@@ -535,7 +533,7 @@ module Mongo
       end
 
       q = Query.new(selector)
-      q.number_to_return = 1
+      q.number_to_return = -1
       query(Collection.new(self, SYSTEM_COMMAND_COLLECTION), q, use_admin_db).next_object
     end
 

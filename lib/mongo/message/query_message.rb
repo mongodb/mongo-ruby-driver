@@ -31,7 +31,7 @@ module Mongo
       write_int(0)
       write_string("#{db_name}.#{collection_name}")
       write_int(query.number_to_skip)
-      write_int(-query.number_to_return) # Negative means hard limit
+      write_int(query.number_to_return)
       sel = query.selector
       if query.contains_special_fields
         sel = OrderedHash.new

@@ -173,7 +173,6 @@ module Mongo
     # Collection#find for details.
     def close
       @db.send_to_db(KillCursorsMessage.new(@cursor_id)) if @cursor_id
-      @cache = []
       @cursor_id = 0
       @closed = true
     end
@@ -207,8 +206,15 @@ module Mongo
       @result_flags = header_buf.get_int
       @cursor_id = header_buf.get_long
       @starting_from = header_buf.get_int
-      @n_returned = header_buf.get_int
-      @n_remaining = @n_returned
+      @n_remaining = header_buf.get_int
+      if @n_received
+        @n_received += @n_remaining
+      else
+        @n_received = @n_remaining
+      end
+      if @query.number_to_return > 0 and @n_received >= @query.number_to_return
+        close()
+      end
     end
 
     def num_remaining
@@ -267,7 +273,7 @@ module Mongo
     end
 
     def to_s
-      "DBResponse(flags=#@result_flags, cursor_id=#@cursor_id, start=#@starting_from, n_returned=#@n_returned)"
+      "DBResponse(flags=#@result_flags, cursor_id=#@cursor_id, start=#@starting_from)"
     end
 
     def check_modifiable

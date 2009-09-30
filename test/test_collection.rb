@@ -216,6 +216,39 @@ class TestCollection < Test::Unit::TestCase
     assert_equal 5, @@test.find({}, :skip => 3, :limit => 5).to_a.length
   end
 
+  def test_large_limit
+    2000.times do |i|
+      @@test.insert("x" => i, "y" => "mongomongo" * 1000)
+    end
+
+    assert_equal 2000, @@test.count
+
+    i = 0
+    y = 0
+    @@test.find({}, :limit => 1900).each do |doc|
+      i += 1
+      y += doc["x"]
+    end
+
+    assert_equal 1900, i
+    assert_equal 1804050, y
+  end
+
+  def test_small_limit
+    @@test.insert("x" => "hello world")
+    @@test.insert("x" => "goodbye world")
+
+    assert_equal 2, @@test.count
+
+    x = 0
+    @@test.find({}, :limit => 1).each do |doc|
+      x += 1
+      assert_equal "hello world", doc["x"]
+    end
+
+    assert_equal 1, x
+  end
+
   def test_group_with_scope
     @@test.save("a" => 1)
     @@test.save("b" => 1)

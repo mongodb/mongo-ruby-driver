@@ -335,6 +335,9 @@ Kyle Banker, banker on github
 Michael Bernstein, mrb on github
 * #sort method for Cursor instances
 
+Paulo Ahahgon, pahagon on github
+* removed hard limit
+
 = License
 
  Copyright 2008-2009 10gen Inc.
