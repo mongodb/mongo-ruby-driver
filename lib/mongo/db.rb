@@ -267,22 +267,19 @@ module Mongo
 
     # Returns the error message from the most recently executed database
     # operation for this connection, or +nil+ if there was no error.
-    #
-    # Note: as of this writing, errors are only detected on the db server
-    # for certain kinds of operations (writes). The plan is to change this
-    # so that all operations will set the error if needed.
     def error
       doc = db_command(:getlasterror => 1)
       raise "error retrieving last error: #{doc}" unless ok?(doc)
       doc['err']
     end
 
+    # Get status information from the last operation on this connection.
+    def last_status
+      db_command(:getlasterror => 1)
+    end
+
     # Returns +true+ if an error was caused by the most recently executed
     # database operation.
-    #
-    # Note: as of this writing, errors are only detected on the db server
-    # for certain kinds of operations (writes). The plan is to change this
-    # so that all operations will set the error if needed.
     def error?
       error != nil
     end

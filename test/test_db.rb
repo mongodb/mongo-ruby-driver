@@ -176,6 +176,17 @@ class DBTest < Test::Unit::TestCase
     assert_nil @@db.previous_error
   end
 
+  def test_last_status
+    @@db['test'].clear
+    @@db['test'].save("i" => 1)
+
+    @@db['test'].update({"i" => 1}, {"$set" => {"i" => 2}})
+    assert @@db.last_status()["updatedExisting"]
+
+    @@db['test'].update({"i" => 1}, {"$set" => {"i" => 500}})
+    assert !@@db.last_status()["updatedExisting"]
+  end
+
   def test_text_port_number
     db = DB.new('ruby-mongo-test', [[@@host, @@port.to_s]])
     # If there is no error, all is well
