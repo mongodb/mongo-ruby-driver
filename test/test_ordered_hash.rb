@@ -72,6 +72,8 @@ class OrderedHashTest < Test::Unit::TestCase
 
     @oh['z'] = 42
     assert_equal keys, @oh.keys
+
+    assert_equal @oh, @oh.each {|k,v|}
   end
 
   def test_values

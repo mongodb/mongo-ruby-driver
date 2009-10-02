@@ -67,6 +67,7 @@ class OrderedHash < Hash
     def each
       @ordered_keys ||= []
       @ordered_keys.each { |k| yield k, self[k] }
+      self
     end
 
     def values
