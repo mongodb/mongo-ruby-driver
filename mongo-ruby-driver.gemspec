@@ -86,8 +86,8 @@ Gem::Specification.new do |s|
   s.version = '0.15'
 
   s.platform = Gem::Platform::RUBY
-  s.summary = 'Ruby driver for the 10gen Mongo DB'
-  s.description = 'A Ruby driver for the 10gen Mongo DB. For more information about Mongo, see http://www.mongodb.org.'
+  s.summary = 'Ruby driver for the MongoDB'
+  s.description = 'A Ruby driver for MongoDB. For more information about Mongo, see http://www.mongodb.org.'
 
   s.require_paths = ['lib']
   s.files = PACKAGE_FILES
