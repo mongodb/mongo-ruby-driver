@@ -338,6 +338,10 @@ Michael Bernstein, mrb on github
 Paulo Ahahgon, pahagon on github
 * removed hard limit
 
+Les Hill, leshill on github
+* OrderedHash#each returns self
+
+
 = License
 
  Copyright 2008-2009 10gen Inc.
