@@ -22,13 +22,15 @@ interface to Mongo's GridFS storage.
 
 = Installation
 
-Install the "mongo" gem by typing
+The driver's gems are hosted on Gemcutter[http://gemcutter.org]. If you haven't
+installed a gem from Gemcutter before you'll need to set up Gemcutter first
 
-  $ gem sources -a http://gems.github.com
-  $ sudo gem install mongodb-mongo
+  $ gem install gemcutter
+  $ gem tumble
 
-The first line tells RubyGems to add the GitHub gem repository. You only need
-to run this command once.
+If (or once) you have Gemcutter setup, install the "mongo" gem by typing
+
+  $ gem install mongo
 
 === From the GitHub source
 
@@ -39,16 +41,13 @@ you can install it as a gem from the source by typing
 
   $ rake gem:install
 
-Note: when you install the gem this way it is called "mongo", not
-"mongodb-mongo". In either case, you "require 'mongo'" in your source code.
-
 === Optional C Extension
 
 There is a separate gem containing optional C extensions that will increase the
 performance of the driver. To use the optional extensions just install the gem
 by typing
 
-  $ sudo gem install mongodb-mongo_ext
+  $ gem install mongo_ext
 
 To install from source type this instead
 
