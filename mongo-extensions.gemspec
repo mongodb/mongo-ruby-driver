@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
   s.version = '0.15'
   s.platform = Gem::Platform::RUBY
   s.summary = 'C extensions for the MongoDB Ruby driver'
-  s.description = 'C extensions to accelerate the MondoDB Ruby driver. For more information about Mongo, see http://www.mongodb.org.'
+  s.description = 'C extensions to accelerate the MongoDB Ruby driver. For more information about Mongo, see http://www.mongodb.org.'
 
   s.require_paths = ['ext']
   s.files = PACKAGE_FILES
