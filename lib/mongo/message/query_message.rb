@@ -16,11 +16,12 @@
 
 require 'mongo/message/message'
 require 'mongo/message/opcodes'
+require 'mongo/util/conversions'
 require 'mongo/util/ordered_hash'
 
 module Mongo
-
   class QueryMessage < Message
+    include Mongo::Conversions
 
     attr_reader :query
 
@@ -37,24 +38,14 @@ module Mongo
         sel = OrderedHash.new
         sel['query'] = query.selector
         if query.order_by && query.order_by.length > 0
-          sel['orderby'] = case query.order_by
-                           when String
-                             {query.order_by => 1}
-                           when Array
-                             h = OrderedHash.new
-                             query.order_by.each { |ob|
-                               case ob
-                               when String
-                                 h[ob] = 1
-                               when Hash # should have one entry; will handle all
-                                 ob.each { |k,v| h[k] = v }
-                               else
-                                 raise "illegal query order_by value #{query.order_by.inspect}"
-                               end
-                             }
-                             h
+          order_by = query.order_by
+          sel['orderby'] = case order_by
+                           when String then string_as_sort_parameters(order_by)
+                           when Symbol then symbol_as_sort_parameters(order_by)
+                           when Array then array_as_sort_parameters(order_by)
                            when Hash # Should be an ordered hash, but this message doesn't care
-                             query.order_by
+                             warn_if_deprecated(order_by)
+                             order_by
                            else
                              raise "illegal order_by: is a #{query.order_by.class.name}, must be String, Array, Hash, or OrderedHash"
                            end
