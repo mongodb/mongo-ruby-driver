@@ -2,6 +2,8 @@ $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'digest/md5'
 require 'mongo'
 require 'test/unit'
+require 'stringio'
+require 'logger'
 
 class TestPKFactory
   def create_pk(row)
@@ -44,6 +46,17 @@ class DBTest < Test::Unit::TestCase
       @@db = Connection.new(@@host, @@port).db('ruby-mongo-test')
       @@users = @@db.collection('system.users')
     end
+  end
+  
+  def test_logger
+    output = StringIO.new
+    logger = Logger.new(output)
+    logger.level = Logger::DEBUG
+    db = Connection.new(@host, @port, :logger => logger).db('ruby-mongo-test')
+    assert_equal logger, db.logger
+    
+    db.logger.debug 'testing'
+    assert output.string.include?('testing')
   end
 
   def test_full_coll_name

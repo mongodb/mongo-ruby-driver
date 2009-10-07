@@ -58,6 +58,9 @@ module Mongo
 
     # The database's socket. For internal (and Cursor) use only.
     attr_reader :socket
+    
+    # The logger instance if :logger is passed to initialize
+    attr_reader :logger
 
     def slave_ok?; @slave_ok; end
     def auto_reconnect?; @auto_reconnect; end

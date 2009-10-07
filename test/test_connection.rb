@@ -66,6 +66,17 @@ class TestConnection < Test::Unit::TestCase
     assert output.string.include?("db.test.find")
     assert !output.string.include?("db.test.remove")
   end
+  
+  def test_connection_logger
+    output = StringIO.new
+    logger = Logger.new(output)
+    logger.level = Logger::DEBUG
+    connection = Connection.new(@host, @port, :logger => logger)
+    assert_equal logger, connection.logger
+    
+    connection.logger.debug 'testing'
+    assert output.string.include?('testing')
+  end
 
   def test_drop_database
     db = @mongo.db('ruby-mongo-will-be-deleted')

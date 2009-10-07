@@ -94,6 +94,10 @@ module Mongo
     def db(db_name, options={})
       DB.new(db_name, @pair, @options.merge(options))
     end
+    
+    def logger
+      @options[:logger]
+    end
 
     # Returns a hash containing database names as keys and disk space for
     # each as values.
