@@ -62,21 +62,29 @@ class CursorTest < Test::Unit::TestCase
     @@coll.clear
     5.times{|x| @@coll.insert({"a" => x}) }
 
-    assert_kind_of Cursor, @@coll.find().sort({:a => 1})
+    assert_kind_of Cursor, @@coll.find().sort(:a, 1)
 
-    assert_equal 0, @@coll.find().sort({:a => 1}).next_object["a"]
-    assert_equal 4, @@coll.find().sort({:a => -1}).next_object["a"]
-    assert_equal 0, @@coll.find().sort(["a"]).next_object["a"]
+    assert_equal 0, @@coll.find().sort(:a, 1).next_object["a"]
+    assert_equal 4, @@coll.find().sort(:a, -1).next_object["a"]
+    assert_equal 0, @@coll.find().sort([["a", :asc]]).next_object["a"]
 
-    assert_kind_of Cursor, @@coll.find().sort({:a => -1, :b => 1})
+    assert_kind_of Cursor, @@coll.find().sort([[:a, -1], [:b, 1]])
 
-    assert_equal 4, @@coll.find().sort({:a => 1}).sort({:a => -1}).next_object["a"]
-    assert_equal 0, @@coll.find().sort({:a => -1}).sort({:a => 1}).next_object["a"]
+    assert_equal 4, @@coll.find().sort(:a, 1).sort(:a, -1).next_object["a"]
+    assert_equal 0, @@coll.find().sort(:a, -1).sort(:a, 1).next_object["a"]
 
     cursor = @@coll.find()
     cursor.next_object()
     assert_raise InvalidOperation do
       cursor.sort(["a"])
+    end
+
+    assert_raise InvalidSortValueError do
+      @@coll.find().sort(:a, 25).next_object
+    end
+
+    assert_raise InvalidSortValueError do
+      @@coll.find().sort(25).next_object
     end
   end
 

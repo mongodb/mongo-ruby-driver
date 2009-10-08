@@ -24,6 +24,6 @@ module Mongo
   # Raised when an invalid name is used.
   class InvalidName < RuntimeError; end
 
-  # Raised when the client supplies an invalid values for a sorting.
+  # Raised when the client supplies an invalid value to sort by.
   class InvalidSortValueError < RuntimeError; end
 end

@@ -93,15 +93,15 @@ module Mongo #:nodoc:
       return 1 if ASCENDING.include?(val)
       return -1 if DESCENDING.include?(val)
       raise InvalidSortValueError.new(
-        "#{self} was supplied as a sort value when acceptable values are: " +
-        "ascending, asc, :ascending, :asc, 1, descending, desc, :descending, :desc, -1.")
+        "#{self} was supplied as a sort direction when acceptable values are: " +
+        "Mongo::ASCENDING, 'ascending', 'asc', :ascending, :asc, 1, Mongo::DESCENDING, 'descending', 'desc', :descending, :desc, -1.")
     end
 
     # This is the method to call when the client needs to be warned of
     # deprecation in the way sorting parameters are supplied.
     def warn_if_deprecated(value)
       unless value.is_a?(Array) && value.first.is_a?(Array)
-        warn("\nSorting has been deprecated in favor of a new syntax: \n" +
+        warn("Specifying sort order as #{value.inspect} has been deprecated in favor of a new syntax: \n" +
           "  :sort => [['field1', '(ascending|descending)'], ['field2', '(ascending|descending)']]")
       end
     end

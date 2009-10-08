@@ -108,7 +108,7 @@ module Mongo
     end
 
     def contains_special_fields
-      (@order_by != nil && @order_by.length > 0) || @explain || @hint || @snapshot
+      @order_by || @explain || @hint || @snapshot
     end
 
     def to_s

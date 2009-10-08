@@ -320,8 +320,9 @@ Paul Dlug, paul.dlug@gmail.com
 * Generate _id on the client side if not provided
 * Collection#insert and Collection#save return _id
 
-Durran Jordan and Les Hill, durran@gmail.com
+Durran Jordan, durran@gmail.com
 * DB#collections
+* Support for specifying sort order as array of [key, direction] pairs
 
 Cyril Mougel, cyril.mougel@gmail.com
 * Initial logging support

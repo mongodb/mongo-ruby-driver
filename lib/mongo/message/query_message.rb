@@ -37,7 +37,7 @@ module Mongo
       if query.contains_special_fields
         sel = OrderedHash.new
         sel['query'] = query.selector
-        if query.order_by && query.order_by.length > 0
+        if query.order_by
           order_by = query.order_by
           sel['orderby'] = case order_by
                            when String then string_as_sort_parameters(order_by)
@@ -47,7 +47,7 @@ module Mongo
                              warn_if_deprecated(order_by)
                              order_by
                            else
-                             raise "illegal order_by: is a #{query.order_by.class.name}, must be String, Array, Hash, or OrderedHash"
+                             raise InvalidSortValueError.new("illegal order_by: is a #{query.order_by.class.name}, must be String, Array, Hash, or OrderedHash")
                            end
         end
         sel['$hint'] = query.hint if query.hint && query.hint.length > 0

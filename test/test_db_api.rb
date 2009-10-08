@@ -149,7 +149,7 @@ class DBAPITest < Test::Unit::TestCase
     @@coll.insert('a' => 4, 'b' => 1)
 
     # Sorting (ascending)
-    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => {'a' => 1}).to_a
+    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => [['a', 1]]).to_a
     assert_equal 4, docs.size
     assert_equal 1, docs[0]['a']
     assert_equal 2, docs[1]['a']
@@ -157,7 +157,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 4, docs[3]['a']
 
     # Sorting (descending)
-    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => {'a' => -1}).to_a
+    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => [['a', -1]]).to_a
     assert_equal 4, docs.size
     assert_equal 4, docs[0]['a']
     assert_equal 3, docs[1]['a']
@@ -187,14 +187,8 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 1, docs[2]['a']
     assert_equal 3, docs[3]['a']
 
-    # Sorting using empty array; no order guarantee (Mongo bug #898) but
-    # should not blow up.
+    # Sorting using empty array; no order guarantee should not blow up.
     docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => []).to_a
-    assert_equal 4, docs.size
-
-    # Sorting using array of hashes; no order guarantee (Mongo bug #898) but
-    # should not blow up.
-    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => [{'b' => 1}, {'a' => -1}]).to_a
     assert_equal 4, docs.size
 
     # Sorting using ordered hash. You can use an unordered one, but then the
@@ -208,16 +202,15 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, docs[2]['a']
     assert_equal 1, docs[3]['a']
 
-    # TODO this will not pass due to known Mongo bug #898
-#     oh = OrderedHash.new
-#     oh['b'] = -1
-#     oh['a'] = 1
-#     docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => oh).to_a
-#     assert_equal 4, docs.size
-#     assert_equal 1, docs[0]['a']
-#     assert_equal 3, docs[1]['a']
-#     assert_equal 2, docs[2]['a']
-#     assert_equal 4, docs[3]['a']
+    oh = OrderedHash.new
+    oh['b'] = -1
+    oh['a'] = 1
+    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => oh).to_a
+    assert_equal 4, docs.size
+    assert_equal 1, docs[0]['a']
+    assert_equal 3, docs[1]['a']
+    assert_equal 2, docs[2]['a']
+    assert_equal 4, docs[3]['a']
   end
 
   def test_find_limits

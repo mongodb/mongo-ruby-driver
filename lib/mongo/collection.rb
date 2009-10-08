@@ -91,9 +91,9 @@ module Mongo
     # :skip :: Number of documents to omit (from the start of the result set)
     #          when returning the results
     # :limit :: Maximum number of records to return
-    # :sort :: Either hash of field names as keys and 1/-1 as values; 1 ==
-    #          ascending, -1 == descending, or array of field names (all
-    #          assumed to be sorted in ascending order).
+    # :sort :: An array of [key, direction] pairs to sort by. Direction should
+    #          be specified as Mongo::ASCENDING (or :ascending / :asc) or
+    #          Mongo::DESCENDING (or :descending / :desc)
     # :hint :: See #hint. This option overrides the collection-wide value.
     # :snapshot :: If true, snapshot mode will be used for this query.
     #              Snapshot mode assures no duplicates are returned, or

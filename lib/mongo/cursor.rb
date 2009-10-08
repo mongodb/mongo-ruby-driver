@@ -75,16 +75,24 @@ module Mongo
 
     # Sort this cursor's result
     #
-    # Takes either a hash of field names as keys and 1/-1 as values; 1 ==
-    # ascending, -1 == descending, or array of field names (all assumed to be
-    # sorted in ascending order).
+    # Takes either a single key and a direction, or an array of [key,
+    # direction] pairs. Directions should be specified as Mongo::ASCENDING
+    # or Mongo::DESCENDING (or :ascending or :descending) (or :asc or :desc).
     #
-    # Raises InvalidOperation if this cursor has already been used.
+    # Raises InvalidOperation if this cursor has already been used. Raises
+    # InvalidSortValueError if specified order is invalid.
     #
     # This method overrides any sort order specified in the Collection#find
     # method, and only the last sort applied has an effect
-    def sort(order)
+    def sort(key_or_list, direction=nil)
       check_modifiable
+
+      if !direction.nil?
+        order = [[key_or_list, direction]]
+      else
+        order = key_or_list
+      end
+
       @query.order_by = order
       self
     end
