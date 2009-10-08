@@ -311,6 +311,7 @@ Jon Crosby, jon@joncrosby.me
 John Nunemaker, http://railstips.org
 * Collection#create_index takes symbols as well as strings
 * Fix for Collection#save
+* Add logger convenience methods to connection and database
 
 David James, djames@sunlightfoundation.com
 * Fix dates to return as UTC
