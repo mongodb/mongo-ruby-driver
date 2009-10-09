@@ -118,6 +118,10 @@ Example code:
 
 = Notes
 
+== Thread Safety
+
+mongo-ruby-driver is thread safe.
+
 == Using with Phusion Passenger
 
 When passenger is in smart spawning mode you need to be sure that child
