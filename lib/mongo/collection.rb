@@ -395,6 +395,8 @@ EOS
       find().count()
     end
 
+    alias :size :count
+
     protected
 
     def normalize_hint_fields(hint)

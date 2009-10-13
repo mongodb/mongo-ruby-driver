@@ -112,6 +112,17 @@ class TestCollection < Test::Unit::TestCase
     assert_equal 2, @@test.count
   end
 
+  # Note: #size is just an alias for #count.
+  def test_size
+    @@test.drop
+
+    assert_equal 0, @@test.count
+    assert_equal @@test.size, @@test.count
+    @@test.save("x" => 1)
+    @@test.save("x" => 2)
+    assert_equal @@test.size, @@test.count
+  end
+
   def test_find_one
     id = @@test.save("hello" => "world", "foo" => "bar")
 
