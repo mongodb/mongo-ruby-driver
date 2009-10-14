@@ -123,6 +123,24 @@ class TestCollection < Test::Unit::TestCase
     assert_equal @@test.size, @@test.count
   end
 
+  def test_no_timeout_option
+    @@test.drop
+
+    assert_raise ArgumentError, "Timeout can be set to false only when #find is invoked with a block." do
+      @@test.find({}, :timeout => false)
+    end
+
+    @@test.find({}, :timeout => false) do |cursor|
+      assert_equal 0, cursor.count
+    end
+
+    @@test.save("x" => 1)
+    @@test.save("x" => 2)
+    @@test.find({}, :timeout => false) do |cursor|
+      assert_equal 2, cursor.count
+    end
+  end
+
   def test_find_one
     id = @@test.save("hello" => "world", "foo" => "bar")
 

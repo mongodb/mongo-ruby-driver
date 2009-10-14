@@ -100,6 +100,13 @@ module Mongo
     #              objects missed, which were preset at both the start and
     #              end of the query's execution. For details see
     #              http://www.mongodb.org/display/DOCS/How+to+do+Snapshotting+in+the+Mongo+Database
+    # :timeout :: When +true+ (default), the returned cursor will be subject to 
+    #             the normal cursor timeout behavior of the mongod process. 
+    #             When +false+, the returned cursor will never timeout. Note
+    #             that disabling timeout will only work when #find is invoked
+    #             with a block. This is to prevent any inadvertant failure to
+    #             close the cursor, as the cursor is explicitly closed when 
+    #             block code finishes.
     def find(selector={}, options={})
       fields = options.delete(:fields)
       fields = ["_id"] if fields && fields.empty?
@@ -112,6 +119,10 @@ module Mongo
       sort = options.delete(:sort)
       hint = options.delete(:hint)
       snapshot = options.delete(:snapshot)
+      if options[:timeout] == false && !block_given?
+        raise ArgumentError, "Timeout can be set to false only when #find is invoked with a block." 
+      end
+      timeout = block_given? ? (options.delete(:timeout) || true) : true
       if hint
         hint = normalize_hint_fields(hint)
       else
@@ -119,7 +130,7 @@ module Mongo
       end
       raise RuntimeError, "Unknown options [#{options.inspect}]" unless options.empty?
 
-      cursor = @db.query(self, Query.new(selector, fields, skip, limit, sort, hint, snapshot))
+      cursor = @db.query(self, Query.new(selector, fields, skip, limit, sort, hint, snapshot, timeout))
       if block_given?
         yield cursor
         cursor.close()

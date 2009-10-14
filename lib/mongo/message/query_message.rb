@@ -29,7 +29,7 @@ module Mongo
       super(OP_QUERY)
       @query = query
       @collection_name = collection_name
-      write_int(0)
+      write_int(@query.query_opts)
       write_string("#{db_name}.#{collection_name}")
       write_int(query.number_to_skip)
       write_int(query.number_to_return)

@@ -19,8 +19,6 @@ require 'mongo/message'
 require 'mongo/types/code'
 
 module Mongo
-
-  # A query against a collection. A query's selector is a hash. See the
   # Mongo documentation for query details.
   class Query
 
@@ -56,13 +54,22 @@ module Mongo
     #             probably will not be what you intend because key order
     #             is not preserved. (order_by is called :sort in calls to
     #             Collection#find.)
+    # :snapshot :: If true, snapshot mode will be used for this query.
+    #              Snapshot mode assures no duplicates are returned, or
+    #              objects missed, which were preset at both the start and
+    #              end of the query's execution. For details see
+    #              http://www.mongodb.org/display/DOCS/How+to+do+Snapshotting+in+the+Mongo+Database
     #
     # hint :: If not +nil+, specifies query hint fields. Must be either
-    #                +nil+ or a hash (preferably an OrderedHash). See
-    #                Collection#hint.
-    def initialize(sel={}, return_fields=nil, number_to_skip=0, number_to_return=0, order_by=nil, hint=nil, snapshot=nil)
-      @number_to_skip, @number_to_return, @order_by, @hint, @snapshot =
-        number_to_skip, number_to_return, order_by, hint, snapshot
+    #         +nil+ or a hash (preferably an OrderedHash). See Collection#hint.
+    #
+    # timeout :: When +true+ (default), the returned cursor will be subject to 
+    #             the normal cursor timeout behavior of the mongod process. 
+    #             When +false+, the returned cursor will never timeout. Care should 
+    #             be taken to ensure that cursors with timeout disabled are properly closed.
+    def initialize(sel={}, return_fields=nil, number_to_skip=0, number_to_return=0, order_by=nil, hint=nil, snapshot=nil, timeout=true)
+      @number_to_skip, @number_to_return, @order_by, @hint, @snapshot, @timeout =
+        number_to_skip, number_to_return, order_by, hint, snapshot, timeout
       @explain = nil
       self.selector = sel
       self.fields = return_fields
@@ -109,6 +116,12 @@ module Mongo
 
     def contains_special_fields
       @order_by || @explain || @hint || @snapshot
+    end
+
+    # Returns an integer indicating which query options have been selected.
+    # See http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol#MongoWireProtocol-OPQUERY
+    def query_opts
+      @timeout ? 0 : OP_QUERY_NO_CURSOR_TIMEOUT
     end
 
     def to_s
