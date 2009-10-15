@@ -37,4 +37,22 @@ class TestQueryMessage < Test::Unit::TestCase
     assert_equal 16, buf[16]
   end
 
+  def test_timeout_opcodes
+    @timeout       = true
+    @slave_ok      = true
+    @query         = Query.new({}, nil, 0, 0, nil, nil, nil, @timeout, @slave_ok)
+    @query_message = QueryMessage.new('db', 'collection', @query)
+    buf = @query_message.buf.instance_variable_get(:@buf)
+    assert_equal 4, buf[16]
+
+
+    @timeout       = false
+    @slave_ok      = true
+    @query         = Query.new({}, nil, 0, 0, nil, nil, nil, @timeout, @slave_ok)
+    @query_message = QueryMessage.new('db', 'collection', @query)
+    buf = @query_message.buf.instance_variable_get(:@buf)
+    assert_equal 20, buf[16]
+  end
+
+
 end

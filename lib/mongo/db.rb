@@ -160,6 +160,9 @@ module Mongo
           is_master = master?
           @semaphore.lock if semaphore_is_locked
 
+          if !@slave_ok && !is_master
+            raise ConfigurationError, "Trying to connect directly to slave; if this is what you want, specify :slave_ok => true."
+          end
           @slave_ok || is_master
         rescue SocketError, SystemCallError, IOError => ex
           close if @socket

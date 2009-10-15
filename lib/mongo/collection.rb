@@ -130,7 +130,7 @@ module Mongo
       end
       raise RuntimeError, "Unknown options [#{options.inspect}]" unless options.empty?
 
-      cursor = @db.query(self, Query.new(selector, fields, skip, limit, sort, hint, snapshot, timeout))
+      cursor = @db.query(self, Query.new(selector, fields, skip, limit, sort, hint, snapshot, timeout, @db.slave_ok?))
       if block_given?
         yield cursor
         cursor.close()

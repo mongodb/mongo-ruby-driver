@@ -33,4 +33,22 @@ class TestQuery < Test::Unit::TestCase
     assert_equal 16, @query.query_opts
   end
 
+  def test_slave_ok_opcodes
+    @slave_ok = true
+    @query   = Query.new({}, nil, 0, 0, nil, nil, nil, true, @slave_ok)
+    assert_equal 4, @query.query_opts
+   
+
+    @slave_ok = false
+    @query   = Query.new({}, nil, 0, 0, nil, nil, nil, true, @slave_ok)
+    assert_equal 0, @query.query_opts
+  end
+
+  def test_combined_opcodes
+    @timeout  = false
+    @slave_ok = true
+    @query   = Query.new({}, nil, 0, 0, nil, nil, nil, @timeout, @slave_ok)
+    assert_equal 20, @query.query_opts
+  end
+
 end

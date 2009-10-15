@@ -67,9 +67,9 @@ module Mongo
     #             the normal cursor timeout behavior of the mongod process. 
     #             When +false+, the returned cursor will never timeout. Care should 
     #             be taken to ensure that cursors with timeout disabled are properly closed.
-    def initialize(sel={}, return_fields=nil, number_to_skip=0, number_to_return=0, order_by=nil, hint=nil, snapshot=nil, timeout=true)
-      @number_to_skip, @number_to_return, @order_by, @hint, @snapshot, @timeout =
-        number_to_skip, number_to_return, order_by, hint, snapshot, timeout
+    def initialize(sel={}, return_fields=nil, number_to_skip=0, number_to_return=0, order_by=nil, hint=nil, snapshot=nil, timeout=true, slave_ok=false)
+      @number_to_skip, @number_to_return, @order_by, @hint, @snapshot, @timeout, @slave_ok =
+        number_to_skip, number_to_return, order_by, hint, snapshot, timeout, slave_ok
       @explain = nil
       self.selector = sel
       self.fields = return_fields
@@ -121,7 +121,9 @@ module Mongo
     # Returns an integer indicating which query options have been selected.
     # See http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol#MongoWireProtocol-OPQUERY
     def query_opts
-      @timeout ? 0 : OP_QUERY_NO_CURSOR_TIMEOUT
+      timeout  = @timeout ? 0 : OP_QUERY_NO_CURSOR_TIMEOUT
+      slave_ok = @slave_ok ? OP_QUERY_SLAVE_OK : 0 
+      slave_ok + timeout
     end
 
     def to_s
