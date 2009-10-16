@@ -6,5 +6,7 @@ nbproject
 *.bundle
 *.o
 ext/cbson/Makefile
+lib/mongo_ext/Makefile
+benchmark
 *~
 *#*

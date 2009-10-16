@@ -37,16 +37,37 @@ LARGE = {
                         'developers','focus','building','mongodb','mongo'] * 20
 }
 
+require 'benchmark'
+
 def report(str, t)
   printf("%s%d\n", str.ljust(60, '.'), PER_TRIAL / t)
+end
+
+def profile(str)
+  if ENV['MONGO_PROFILE']
+    require 'rubygems'
+    require 'ruby-prof'
+    prof_results = RubyProf.profile do
+      yield
+    end
+    File.open("benchmark/#{str}.html", "w") do |f|
+      RubyProf::GraphHtmlPrinter.new(prof_results).print(f, :min_percent => 5)
+    end
+  else
+    yield
+  end
 end
 
 def benchmark(str, proc, n, db, coll_name, object, setup=nil)
   coll = db.collection(coll_name)
   setup.call(coll, object) if setup
-  t0 = Time.new
-  n.times { |i| proc.call(coll, object, i) }
-  report(str, Time.new.to_f - t0.to_f)
+  profile(str) do
+    GC.start
+    tms = Benchmark.measure do
+      n.times { |i| proc.call(coll, object.is_a?(Hash) ? object.dup : object, i) }
+    end
+    report(str, tms.real)
+  end
 end
 
 host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
