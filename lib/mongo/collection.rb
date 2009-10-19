@@ -21,9 +21,9 @@ module Mongo
   # A named collection of records in a database.
   class Collection
 
-    attr_reader :db, :name, :hint
+    attr_reader :db, :name, :pk_factory, :hint
 
-    def initialize(db, name)
+    def initialize(db, name, pk_factory=nil)
       case name
       when Symbol, String
       else
@@ -42,7 +42,8 @@ module Mongo
         raise InvalidName, "collection names must not start or end with '.'"
       end
 
-      @db, @name = db, name
+      @db, @name  = db, name
+      @pk_factory = pk_factory || ObjectID
       @hint = nil
     end
 
@@ -200,21 +201,30 @@ module Mongo
     #   will be raised on an error. Checking for safety requires an extra
     #   round-trip to the database
     def insert(doc_or_docs, options={})
-      doc_or_docs = [doc_or_docs] if !doc_or_docs.is_a?(Array)
-      res = @db.insert_into_db(@name, doc_or_docs)
+      doc_or_docs = [doc_or_docs] unless doc_or_docs.is_a?(Array)
+      doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
+      result = insert_documents(doc_or_docs)
       if options.delete(:safe)
         error = @db.error
         if error
           raise OperationFailure, error
         end
       end
-      res.size > 1 ? res : res.first
+      result.size > 1 ? result : result.first
     end
     alias_method :<<, :insert
 
     # Remove the records that match +selector+.
-    def remove(selector={})
-      @db.remove_from_db(@name, selector)
+    #  def remove(selector={})
+    #    @db.remove_from_db(@name, selector)
+    #  end
+    def remove(selector={}, check_keys=false)
+      message = ByteBuffer.new
+      message.put_int(0)
+      BSON.serialize_cstr(message, "#{@db.name}.#{@name}")
+      message.put_int(0)
+      message.put_array(BSON.new.serialize(selector, check_keys).to_a)
+      db.send_message_with_operation(OP_DELETE, message)
     end
 
     # Remove all records.
@@ -236,19 +246,16 @@ module Mongo
     #   will be raised on an error. Checking for safety requires an extra
     #   round-trip to the database
     def update(spec, document, options={})
-      upsert = options.delete(:upsert)
-      safe = options.delete(:safe)
+      message = ByteBuffer.new
+      message.put_int(0)
+      BSON.serialize_cstr(message, "#{@db.name}.#{@name}")
+      message.put_int(options[:upsert] ? 1 : 0) # 1 if a repsert operation (upsert)
+      message.put_array(BSON.new.serialize(spec, false).to_a)
+      message.put_array(BSON.new.serialize(document, false).to_a)
+      @db.send_message_with_operation(OP_UPDATE, message)
 
-      if upsert
-        @db.repsert_in_db(@name, spec, document)
-      else
-        @db.replace_in_db(@name, spec, document)
-      end
-      if safe
-        error = @db.error
-        if error
-          raise OperationFailure, error
-        end
+      if options[:safe] && error=@db.error
+        raise OperationFailure, error
       end
     end
 
@@ -259,7 +266,20 @@ module Mongo
     # +unique+ is an optional boolean indicating whether this index
     # should enforce a uniqueness constraint.
     def create_index(field_or_spec, unique=false)
-      @db.create_index(@name, field_or_spec, unique)
+      field_h = OrderedHash.new
+      if field_or_spec.is_a?(String) || field_or_spec.is_a?(Symbol)
+        field_h[field_or_spec.to_s] = 1
+      else
+        field_or_spec.each { |f| field_h[f[0].to_s] = f[1] }
+      end
+      name = generate_index_names(field_h)
+      sel  = {
+        :name   => name,
+        :ns     => "#{@db.name}.#{@name}",
+        :key    => field_h,
+        :unique => unique }
+      insert_documents([sel], Mongo::DB::SYSTEM_INDEX_COLLECTION, false)
+      name
     end
 
     # Drop index +name+.
@@ -423,6 +443,28 @@ EOS
         hint.to_a.each { |k| h[k] = 1 }
         h
       end
+    end
+
+    private
+
+    # Sends an OP_INSERT message to the database.
+    # Takes an array of +documents+, an optional +collection_name+, and a
+    # +check_keys+ setting.
+    def insert_documents(documents, collection_name=@name, check_keys=true)
+      message = ByteBuffer.new
+      message.put_int(0)
+      BSON.serialize_cstr(message, "#{@db.name}.#{collection_name}")
+      documents.each { |doc| message.put_array(BSON.new.serialize(doc, check_keys).to_a) }
+      @db.send_message_with_operation(OP_INSERT, message)
+      documents.collect { |o| o[:_id] || o['_id'] }
+    end
+
+    def generate_index_names(spec)
+      indexes = []
+      spec.each_pair do |field, direction|
+        indexes.push("#{field}_#{direction}")
+      end 
+      indexes.join("_")
     end
   end
 end

@@ -66,4 +66,18 @@ class ByteBufferTest < Test::Unit::TestCase
     assert_equal 4, @buf.position
   end
 
+  def test_prepend_byte_buffer
+    @buf.put_int(4)
+    new_buf = ByteBuffer.new([5, 0, 0, 0])
+    @buf.prepend!(new_buf)
+    assert_equal [5, 0, 0, 0, 4, 0, 0, 0], @buf.to_a
+  end
+
+  def test_append_byte_buffer
+    @buf.put_int(4)
+    new_buf = ByteBuffer.new([5, 0, 0, 0])
+    @buf.append!(new_buf)
+    assert_equal [4, 0, 0, 0, 5, 0, 0, 0], @buf.to_a
+  end
+
 end

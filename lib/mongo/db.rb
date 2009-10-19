@@ -34,6 +34,9 @@ module Mongo
     SYSTEM_USER_COLLECTION = "system.users"
     SYSTEM_COMMAND_COLLECTION = "$cmd"
 
+    # Counter for generating unique request ids.
+    @@current_request_id = 0
+
     # Strict mode enforces collection existence checks. When +true+,
     # asking for a collection that does not exist or trying to create a
     # collection that already exists raises an error.
@@ -213,7 +216,7 @@ module Mongo
     # specified, an array of length 1 is returned.
     def collections_info(coll_name=nil)
       selector = {}
-      selector[:name] = full_coll_name(coll_name) if coll_name
+      selector[:name] = full_collection_name(coll_name) if coll_name
       query(Collection.new(self, SYSTEM_NAMESPACE_COLLECTION), Query.new(selector))
     end
 
@@ -245,7 +248,7 @@ module Mongo
       oh[:create] = name
       doc = db_command(oh.merge(options || {}))
       ok = doc['ok']
-      return Collection.new(self, name) if ok.kind_of?(Numeric) && (ok.to_i == 1 || ok.to_i == 0)
+      return Collection.new(self, name, @pk_factory) if ok.kind_of?(Numeric) && (ok.to_i == 1 || ok.to_i == 0)
       raise "Error creating collection: #{doc.inspect}"
     end
 
@@ -257,7 +260,7 @@ module Mongo
     # new collection. If +strict+ is true, will raise an error if
     # collection +name+ does not already exists.
     def collection(name)
-      return Collection.new(self, name) if !strict? || collection_names.include?(name)
+      return Collection.new(self, name, @pk_factory) if !strict? || collection_names.include?(name)
       raise "Collection #{name} doesn't exist. Currently in strict mode."
     end
     alias_method :[], :collection
@@ -374,33 +377,6 @@ module Mongo
       send_to_db(query_message)
     end
 
-    # Remove the records that match +selector+ from +collection_name+.
-    # Normally called by Collection#remove or Collection#clear.
-    def remove_from_db(collection_name, selector)
-      _synchronize {
-        send_to_db(RemoveMessage.new(@name, collection_name, selector))
-      }
-    end
-
-    # Update records in +collection_name+ that match +selector+ by
-    # applying +obj+ as an update. Normally called by Collection#replace.
-    def replace_in_db(collection_name, selector, obj)
-      _synchronize {
-        send_to_db(UpdateMessage.new(@name, collection_name, selector, obj, false))
-      }
-    end
-
-    # Update records in +collection_name+ that match +selector+ by
-    # applying +obj+ as an update. If no match, inserts (???). Normally
-    # called by Collection#repsert.
-    def repsert_in_db(collection_name, selector, obj)
-      _synchronize {
-        obj = @pk_factory.create_pk(obj) if @pk_factory
-        send_to_db(UpdateMessage.new(@name, collection_name, selector, obj, true))
-        obj
-      }
-    end
-
     # Dereference a DBRef, getting the document it points to.
     def dereference(dbref)
       collection(dbref.namespace).find_one("_id" => dbref.object_id)
@@ -449,7 +425,7 @@ module Mongo
     # the values are lists of [key, direction] pairs specifying the index
     # (as passed to Collection#create_index).
     def index_information(collection_name)
-      sel = {:ns => full_coll_name(collection_name)}
+      sel = {:ns => full_collection_name(collection_name)}
       info = {}
       query(Collection.new(self, SYSTEM_INDEX_COLLECTION), Query.new(sel)).each { |index|
         info[index['name']] = index['key'].to_a
@@ -464,42 +440,7 @@ module Mongo
     # by Collection#create_index. If +unique+ is true the index will
     # enforce a uniqueness constraint.
     def create_index(collection_name, field_or_spec, unique=false)
-      field_h = OrderedHash.new
-      if field_or_spec.is_a?(String) || field_or_spec.is_a?(Symbol)
-        field_h[field_or_spec.to_s] = 1
-      else
-        field_or_spec.each { |f| field_h[f[0].to_s] = f[1] }
-      end
-      name = gen_index_name(field_h)
-      sel = {
-        :name => name,
-        :ns => full_coll_name(collection_name),
-        :key => field_h,
-        :unique => unique
-      }
-      _synchronize {
-        send_to_db(InsertMessage.new(@name, SYSTEM_INDEX_COLLECTION, false, sel))
-      }
-      name
-    end
-
-    # Insert +objects+ into +collection_name+. Normally called by
-    # Collection#insert. Returns a new array containing the _ids
-    # of the inserted documents.
-    def insert_into_db(collection_name, objects)
-      _synchronize {
-        if @pk_factory
-          objects.collect! { |o|
-            @pk_factory.create_pk(o)
-          }
-        else
-          objects = objects.collect do |o|
-            o[:_id] || o['_id'] ? o : o.merge!(:_id => ObjectID.new)
-          end
-        end
-        send_to_db(InsertMessage.new(@name, collection_name, true, *objects))
-        objects.collect { |o| o[:_id] || o['_id'] }
-      }
+      self.collection(collection_name).create_index(field_or_spec, unique)
     end
 
     def send_to_db(message)
@@ -514,8 +455,23 @@ module Mongo
       end
     end
 
-    def full_coll_name(collection_name)
-      "#{@name}.#{collection_name}"
+    # Sends a message to MongoDB.
+    #
+    # Takes a MongoDB opcode, +operation+, and a message of class ByteBuffer,
+    # +message+, and sends the message to the databse, adding the necessary headers.
+    def send_message_with_operation(operation, message)
+      _synchronize do
+        connect_to_master if !connected? && @auto_reconnect
+        begin
+          message_with_headers = add_message_headers(operation, message)
+          @logger.debug("  MONGODB #{message}") if @logger
+          @socket.print(message_with_headers.to_s)
+          @socket.flush
+        rescue => ex
+          close
+          raise ex
+        end
+      end
     end
 
     # Return +true+ if +doc+ contains an 'ok' field with the value 1.
@@ -543,18 +499,40 @@ module Mongo
       @semaphore.synchronize &block
     end
 
+    def full_collection_name(collection_name)
+      "#{@name}.#{collection_name}"
+    end
+
     private
+
+    # Prepares a message for transmission to MongoDB by
+    # constructing a valid message header.
+    def add_message_headers(operation, message)
+      headers = ByteBuffer.new
+
+      # Message size.
+      headers.put_int(16 + message.size)
+
+      # Unique request id.
+      headers.put_int(get_request_id)
+
+      # Response id.
+      headers.put_int(0)
+
+      # Opcode.
+      headers.put_int(operation)
+      message.prepend!(headers)
+    end
+
+    # Increments and then returns the next available request id.
+    # Note: this method should be called from within a lock.
+    def get_request_id
+      @@current_request_id += 1
+      @@current_request_id
+    end
 
     def hash_password(username, plaintext)
       Digest::MD5.hexdigest("#{username}:mongo:#{plaintext}")
-    end
-
-    def gen_index_name(spec)
-      temp = []
-      spec.each_pair { |field, direction|
-        temp = temp.push("#{field}_#{direction}")
-      }
-      return temp.join("_")
     end
   end
 end

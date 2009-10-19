@@ -30,6 +30,22 @@ class TestCollection < Test::Unit::TestCase
     @@test.drop()
   end
 
+  def test_optional_pk_factory
+    @coll_default_pk = @@db.collection('stuff')
+    assert_equal Mongo::ObjectID, @coll_default_pk.pk_factory
+    @coll_default_pk = @@db.create_collection('more-stuff')
+    assert_equal Mongo::ObjectID, @coll_default_pk.pk_factory
+
+    # Create a db with a pk_factory.
+    @db = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+                         ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT).db('ruby-mongo-test', :pk => Object.new)
+    @coll = @db.collection('coll-with-pk')
+    assert @coll.pk_factory.is_a?(Object)
+
+    @coll = @db.create_collection('created_coll_with_pk')
+    assert @coll.pk_factory.is_a?(Object)
+  end
+
   def test_collection
     assert_raise InvalidName do
       @@db["te$t"]

@@ -54,6 +54,18 @@ class ByteBuffer
   end
   alias_method :length, :size
 
+  # Appends a second ByteBuffer object, +buffer+, to the current buffer.
+  def append!(buffer)
+    @buf = @buf + buffer.to_a
+    self
+  end
+
+  # Prepends a second ByteBuffer object, +buffer+, to the current buffer.
+  def prepend!(buffer)
+    @buf = buffer.to_a + @buf
+    self
+  end
+
   def put(byte, offset=nil)
     @cursor = offset if offset
     @buf[@cursor] = byte

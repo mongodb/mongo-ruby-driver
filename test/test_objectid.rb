@@ -10,6 +10,16 @@ class ObjectIDTest < Test::Unit::TestCase
     @o = ObjectID.new()
   end
 
+  def test_create_pk_method
+    doc = {:name => 'Mongo'}
+    doc = ObjectID.create_pk(doc)
+    assert doc[:_id]
+    
+    doc = {:name => 'Mongo', :_id => '12345'}
+    doc = ObjectID.create_pk(doc)
+    assert_equal '12345', doc[:_id]
+  end
+
   def test_different
     a = ObjectID.new
     b = ObjectID.new

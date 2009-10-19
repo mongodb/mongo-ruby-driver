@@ -61,7 +61,7 @@ class DBTest < Test::Unit::TestCase
 
   def test_full_coll_name
     coll = @@db.collection('test')
-    assert_equal 'ruby-mongo-test.test', @@db.full_coll_name(coll.name)
+    assert_equal 'ruby-mongo-test.test', @@db.full_collection_name(coll.name)
   end
 
   def test_collection_names
