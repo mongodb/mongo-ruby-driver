@@ -346,6 +346,8 @@ Paulo Ahahgon, pahagon on github
 Les Hill, leshill on github
 * OrderedHash#each returns self
 
+Sean Cribbs, seancribbs on github
+* Modify standard_benchmark to allow profiling
 
 = License
 
