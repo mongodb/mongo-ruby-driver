@@ -218,12 +218,12 @@ module Mongo
     #  def remove(selector={})
     #    @db.remove_from_db(@name, selector)
     #  end
-    def remove(selector={}, check_keys=false)
+    def remove(selector={})
       message = ByteBuffer.new
       message.put_int(0)
       BSON.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
-      message.put_array(BSON.new.serialize(selector, check_keys).to_a)
+      message.put_array(BSON.new.serialize(selector, false).to_a)
       db.send_message_with_operation(OP_DELETE, message)
     end
 
