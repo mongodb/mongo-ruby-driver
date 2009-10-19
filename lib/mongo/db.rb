@@ -16,7 +16,7 @@
 
 require 'socket'
 require 'digest/md5'
-require 'mutex_m'
+require 'thread'
 require 'mongo/collection'
 require 'mongo/message'
 require 'mongo/query'
@@ -137,8 +137,7 @@ module Mongo
       @pk_factory = options[:pk]
       @slave_ok = options[:slave_ok] && @nodes.length == 1 # only OK if one node
       @auto_reconnect = options[:auto_reconnect]
-      @semaphore = Object.new
-      @semaphore.extend Mutex_m
+      @semaphore = Mutex.new
       @socket = nil
       @logger = options[:logger]
       connect_to_master
