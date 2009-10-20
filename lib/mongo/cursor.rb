@@ -20,6 +20,7 @@ module Mongo
 
   # A cursor over query results. Returned objects are hashes.
   class Cursor
+    include Mongo::Conversions
 
     include Enumerable
 
@@ -246,11 +247,22 @@ module Mongo
     end
 
     def refill_via_get_more
-      if send_query_if_needed or @cursor_id == 0
-        return
-      end
+      return if send_query_if_needed || @cursor_id.zero?
       @db._synchronize {
-        @db.send_to_db(GetMoreMessage.new(@admin ? 'admin' : @db.name, @collection.name, @cursor_id))
+        message = ByteBuffer.new
+        # Reserved.
+        message.put_int(0)
+
+        # DB name.
+        db_name = @admin ? 'admin' : @db.name
+        BSON.serialize_cstr(message, "#{db_name}.#{@collection.name}")
+
+        # Number of results to return; db decides for now.
+        message.put_int(0)
+        
+        # Cursor id.
+        message.put_long(@cursor_id)
+        @db.send_message_with_operation_without_synchronize(OP_GET_MORE, message)
         read_all
       }
     end
@@ -272,11 +284,52 @@ module Mongo
         false
       else
         @db._synchronize {
-          @db.send_query_message(QueryMessage.new(@admin ? 'admin' : @db.name, @collection.name, @query))
+          message = construct_query_message(@query)
           @query_run = true
+          @db.send_message_with_operation_without_synchronize(OP_QUERY, message)
           read_all
         }
         true
+      end
+    end
+
+    def construct_query_message(query)
+      message = ByteBuffer.new
+      message.put_int(query.query_opts)
+      db_name = @admin ? 'admin' : @db.name
+      BSON.serialize_cstr(message, "#{db_name}.#{@collection.name}")
+      message.put_int(query.number_to_skip)
+      message.put_int(query.number_to_return)
+      sel = query.selector
+      if query.contains_special_fields
+        sel = add_special_query_fields(sel, query)
+      end
+      message.put_array(BSON.new.serialize(sel).to_a)
+      message.put_array(BSON.new.serialize(query.fields).to_a) if query.fields
+      message
+    end
+
+    def add_special_query_fields(sel, query)
+      sel = OrderedHash.new
+      sel['query']     = query.selector
+      order_by         = query.order_by
+      sel['orderby']   = get_query_order_by(order_by) if order_by
+      sel['$hint']     = query.hint if query.hint && query.hint.length > 0
+      sel['$explain']  = true if query.explain
+      sel['$snapshot'] = true if query.snapshot
+      sel
+    end
+
+    def get_query_order_by(order_by)
+      case order_by
+        when String then string_as_sort_parameters(order_by)
+        when Symbol then symbol_as_sort_parameters(order_by)
+        when Array  then array_as_sort_parameters(order_by)
+        when Hash # Should be an ordered hash, but this message doesn't care
+          warn_if_deprecated(order_by)
+          order_by
+        else
+          raise InvalidSortValueError, "Illegal order_by, '#{query.order_by.class.name}'; must be String, Array, Hash, or OrderedHash"
       end
     end
 

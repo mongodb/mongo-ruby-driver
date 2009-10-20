@@ -14,7 +14,7 @@
 # limitations under the License.
 # ++
 
-%w(get_more_message kill_cursors_message message_header
-   msg_message query_message).each { |f|
+%w(kill_cursors_message message_header
+   msg_message).each { |f|
   require "mongo/message/#{f}"
 }

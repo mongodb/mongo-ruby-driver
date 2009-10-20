@@ -372,11 +372,6 @@ module Mongo
       Cursor.new(self, collection, query, admin)
     end
 
-    # Used by a Cursor to lazily send the query to the database.
-    def send_query_message(query_message)
-      send_to_db(query_message)
-    end
-
     # Dereference a DBRef, getting the document it points to.
     def dereference(dbref)
       collection(dbref.namespace).find_one("_id" => dbref.object_id)
@@ -460,7 +455,7 @@ module Mongo
     # Takes a MongoDB opcode, +operation+, and a message of class ByteBuffer,
     # +message+, and sends the message to the databse, adding the necessary headers.
     def send_message_with_operation(operation, message)
-      _synchronize do
+      @semaphore.synchronize do
         connect_to_master if !connected? && @auto_reconnect
         begin
           message_with_headers = add_message_headers(operation, message)
@@ -471,6 +466,26 @@ module Mongo
           close
           raise ex
         end
+      end
+    end
+
+    def send_message_with_operation_without_synchronize(operation, message)
+        connect_to_master if !connected? && @auto_reconnect
+        begin
+          message_with_headers = add_message_headers(operation, message)
+          @logger.debug("  MONGODB #{operation} #{message}") if @logger
+          @socket.print(message_with_headers.to_s)
+          @socket.flush
+        rescue => ex
+          close
+          raise ex
+        end
+    end
+
+    def receive_message_with_operation(operation, message)
+      @semaphore.synchronize do 
+
+
       end
     end
 

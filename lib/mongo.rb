@@ -3,6 +3,8 @@ require 'mongo/types/dbref'
 require 'mongo/types/objectid'
 require 'mongo/types/regexp_of_holding'
 
+require 'mongo/util/conversions'
+
 require 'mongo/errors'
 require 'mongo/connection'
 require 'mongo/message'

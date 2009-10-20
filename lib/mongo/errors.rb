@@ -31,5 +31,5 @@ module Mongo
   class InvalidName < RuntimeError; end
 
   # Raised when the client supplies an invalid value to sort by.
-  class InvalidSortValueError < RuntimeError; end
+  class InvalidSortValueError < MongoRubyError; end
 end
