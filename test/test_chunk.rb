@@ -14,16 +14,16 @@ class ChunkTest < Test::Unit::TestCase
   @@chunks = @@db.collection('gridfs.chunks')
 
   def setup
-    @@chunks.clear
-    @@files.clear
+    @@chunks.remove
+    @@files.remove
 
     @f = GridStore.new(@@db, 'foobar', 'w')
     @c = @f.instance_variable_get('@curr_chunk')
   end
 
   def teardown
-    @@chunks.clear
-    @@files.clear
+    @@chunks.remove
+    @@files.remove
     @@db.error
   end
 

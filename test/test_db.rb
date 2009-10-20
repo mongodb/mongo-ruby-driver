@@ -25,12 +25,12 @@ class DBTest < Test::Unit::TestCase
   def setup
     @spongebob = 'spongebob'
     @spongebob_password = 'squarepants'
-    @@users.clear
+    @@users.remove
     @@users.insert(:user => @spongebob, :pwd => @@db.send(:hash_password, @spongebob, @spongebob_password))
   end
 
   def teardown
-    @@users.clear if @@users
+    @@users.remove if @@users
     @@db.error
   end
 
@@ -101,7 +101,7 @@ class DBTest < Test::Unit::TestCase
   def test_pk_factory
     db = Connection.new(@@host, @@port).db('ruby-mongo-test', :pk => TestPKFactory.new)
     coll = db.collection('test')
-    coll.clear
+    coll.remove
 
     insert_id = coll.insert('name' => 'Fred', 'age' => 42)
     # new id gets added to returned object
@@ -118,7 +118,7 @@ class DBTest < Test::Unit::TestCase
     assert_equal oid, db_oid
     assert_equal data, row
 
-    coll.clear
+    coll.remove
   end
 
   def test_pk_factory_reset
@@ -190,7 +190,7 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_last_status
-    @@db['test'].clear
+    @@db['test'].remove
     @@db['test'].save("i" => 1)
 
     @@db['test'].update({"i" => 1}, {"$set" => {"i" => 2}})
@@ -203,7 +203,7 @@ class DBTest < Test::Unit::TestCase
   def test_text_port_number
     db = DB.new('ruby-mongo-test', [[@@host, @@port.to_s]])
     # If there is no error, all is well
-    db.collection('users').clear
+    db.collection('users').remove
   end
 
 end

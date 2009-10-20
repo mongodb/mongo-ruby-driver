@@ -14,14 +14,14 @@ class GridStoreTest < Test::Unit::TestCase
   @@chunks = @@db.collection('fs.chunks')
 
   def setup
-    @@chunks.clear
-    @@files.clear
+    @@chunks.remove
+    @@files.remove
     GridStore.open(@@db, 'foobar', 'w') { |f| f.write("hello, world!") }
   end
 
   def teardown
-    @@chunks.clear
-    @@files.clear
+    @@chunks.remove
+    @@files.remove
     @@db.error
   end
 
@@ -106,8 +106,8 @@ class GridStoreTest < Test::Unit::TestCase
   end
 
   def test_multi_chunk
-    @@chunks.clear
-    @@files.clear
+    @@chunks.remove
+    @@files.remove
 
     size = 512
     GridStore.open(@@db, 'biggie', 'w') { |f|
@@ -167,8 +167,8 @@ class GridStoreTest < Test::Unit::TestCase
   end
 
   def test_save_empty_file
-    @@chunks.clear
-    @@files.clear
+    @@chunks.remove
+    @@files.remove
     GridStore.open(@@db, 'empty', 'w') {} # re-write with zero bytes
     assert_equal 1, @@files.count
     assert_equal 0, @@chunks.count

@@ -14,14 +14,8 @@
 # limitations under the License.
 # ++
 
-$LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
-require 'mongo'
-require 'test/unit'
-
-# NOTE: assumes Mongo is running
+require 'test/test_helper'
 class TestCollection < Test::Unit::TestCase
-  include Mongo
-
   @@db = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
                         ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT).db('ruby-mongo-test')
   @@test = @@db.collection("test")
@@ -59,7 +53,7 @@ class TestCollection < Test::Unit::TestCase
     assert_equal @@db["test"]["foo"].name(), @@db.collection("test.foo").name()
     assert_equal @@db["test"]["foo"].name(), @@db["test.foo"].name()
 
-    @@db["test"]["foo"].clear
+    @@db["test"]["foo"].remove
     @@db["test"]["foo"].insert("x" => 5)
     assert_equal 5, @@db.collection("test.foo").find_one()["x"]
   end
@@ -323,5 +317,32 @@ class TestCollection < Test::Unit::TestCase
 #     assert_equal 1, @@test.group([], {}, {"count" => 0},
 #                                  Code.new(reduce_function,
 #                                           {"inc_value" => 0.5}), true)[0]["count"]
+    end
+
+  context "A collection with two records" do 
+    setup do 
+      @collection = @@db.collection('test-collection')
+      @collection.insert({:name => "Jones"})
+      @collection.insert({:name => "Smith"})
+    end
+
+    should "have two records" do 
+      assert_equal 2, @collection.size
+    end
+
+    should "remove the two records" do 
+      @collection.remove()
+      assert_equal 0, @collection.size
+    end
+
+    should "remove all records if an empty document is specified" do 
+      @collection.remove({})
+      assert_equal 0, @collection.find.count
+    end
+
+    should "remove only matching records" do 
+      @collection.remove({:name => "Jones"})
+      assert_equal 1, @collection.size
+    end
   end
 end

@@ -81,7 +81,7 @@ class TestConnection < Test::Unit::TestCase
   def test_drop_database
     db = @mongo.db('ruby-mongo-will-be-deleted')
     coll = db.collection('temp')
-    coll.clear
+    coll.remove
     coll.insert(:name => 'temp')
     assert_equal 1, coll.count()
     assert @mongo.database_names.include?('ruby-mongo-will-be-deleted')

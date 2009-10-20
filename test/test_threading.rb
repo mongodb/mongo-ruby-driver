@@ -12,7 +12,7 @@ class TestThreading < Test::Unit::TestCase
   @@coll = @@db.collection('thread-test-collection')
 
   def test_threading
-    @@coll.clear
+    @@coll.remove
 
     1000.times do |i|
       @@coll.insert("x" => i)

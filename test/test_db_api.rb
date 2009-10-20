@@ -11,20 +11,20 @@ class DBAPITest < Test::Unit::TestCase
   @@coll = @@db.collection('test')
 
   def setup
-    @@coll.clear
+    @@coll.remove
     @r1 = {'a' => 1}
     @@coll.insert(@r1) # collection not created until it's used
     @@coll_full_name = 'ruby-mongo-test.test'
   end
 
   def teardown
-    @@coll.clear
+    @@coll.remove
     @@db.error
   end
 
   def test_clear
     assert_equal 1, @@coll.count
-    @@coll.clear
+    @@coll.remove
     assert_equal 0, @@coll.count
   end
 
@@ -142,7 +142,7 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_find_sorting
-    @@coll.clear
+    @@coll.remove
     @@coll.insert('a' => 1, 'b' => 2)
     @@coll.insert('a' => 2, 'b' => 1)
     @@coll.insert('a' => 3, 'b' => 2)
@@ -233,7 +233,7 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_find_one_no_records
-    @@coll.clear
+    @@coll.remove
     x = @@coll.find_one('a' => 1)
     assert_nil x
   end
@@ -580,7 +580,7 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_deref
-    @@coll.clear
+    @@coll.remove
 
     assert_equal nil, @@db.dereference(DBRef.new("test", ObjectID.new))
     @@coll.insert({"x" => "hello"})
@@ -592,13 +592,13 @@ class DBAPITest < Test::Unit::TestCase
     @@coll.insert(obj)
     assert_equal obj, @@db.dereference(DBRef.new("test", 4))
 
-    @@coll.clear
+    @@coll.remove
     @@coll.insert({"x" => "hello"})
     assert_equal nil, @@db.dereference(DBRef.new("test", nil))
   end
 
   def test_save
-    @@coll.clear
+    @@coll.remove
 
     a = {"hello" => "world"}
 
@@ -622,13 +622,13 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_save_long
-    @@coll.clear
+    @@coll.remove
     @@coll.insert("x" => 9223372036854775807)
     assert_equal 9223372036854775807, @@coll.find_one()["x"]
   end
 
   def test_find_by_oid
-    @@coll.clear
+    @@coll.remove
 
     @@coll.save("hello" => "mike")
     id = @@coll.save("hello" => "world")
@@ -644,7 +644,7 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_save_with_object_that_has_id_but_does_not_actually_exist_in_collection
-    @@coll.clear
+    @@coll.remove
 
     a = {'_id' => '1', 'hello' => 'world'}
     @@coll.save(a)
@@ -658,7 +658,7 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_invalid_key_names
-    @@coll.clear
+    @@coll.remove
 
     @@coll.insert({"hello" => "world"})
     @@coll.insert({"hello" => {"hello" => "world"}})
@@ -779,7 +779,7 @@ class DBAPITest < Test::Unit::TestCase
       assert_equal "UTF-8", utf8.encoding.name
       assert_equal "ISO-8859-1", iso8859.encoding.name
 
-      @@coll.clear
+      @@coll.remove
       @@coll.save("ascii" => ascii, "utf8" => utf8, "iso8859" => iso8859)
       doc = @@coll.find_one()
 

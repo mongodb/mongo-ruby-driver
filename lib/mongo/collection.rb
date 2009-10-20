@@ -214,10 +214,15 @@ module Mongo
     end
     alias_method :<<, :insert
 
-    # Remove the records that match +selector+.
-    #  def remove(selector={})
-    #    @db.remove_from_db(@name, selector)
-    #  end
+    # Remove all records from this collection. 
+    # If +selector+ is specified, only matching documents will be removed.
+    # 
+    # Remove all records from the collection:
+    #   @collection.remove
+    #   @collection.remove({})
+    #
+    # Remove only records that have expired: 
+    #   @collection.remove({:expire => {'$lte' => Time.now}})
     def remove(selector={})
       message = ByteBuffer.new
       message.put_int(0)
@@ -228,7 +233,9 @@ module Mongo
     end
 
     # Remove all records.
+    # DEPRECATED: please use Collection#remove instead.
     def clear
+      warn "Collection#clear is deprecated. Please use Collection#remove instead."
       remove({})
     end
 

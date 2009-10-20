@@ -12,13 +12,13 @@ class CursorTest < Test::Unit::TestCase
   @@coll = @@db.collection('test')
 
   def setup
-    @@coll.clear
+    @@coll.remove
     @@coll.insert('a' => 1)     # collection not created until it's used
     @@coll_full_name = 'ruby-mongo-test.test'
   end
 
   def teardown
-    @@coll.clear
+    @@coll.remove
     @@db.error
   end
 
@@ -32,7 +32,7 @@ class CursorTest < Test::Unit::TestCase
   end
 
   def test_count
-    @@coll.clear
+    @@coll.remove
 
     assert_equal 0, @@coll.find().count()
 
@@ -59,7 +59,7 @@ class CursorTest < Test::Unit::TestCase
   end
 
   def test_sort
-    @@coll.clear
+    @@coll.remove
     5.times{|x| @@coll.insert({"a" => x}) }
 
     assert_kind_of Cursor, @@coll.find().sort(:a, 1)
@@ -89,7 +89,7 @@ class CursorTest < Test::Unit::TestCase
   end
 
   def test_limit
-    @@coll.clear
+    @@coll.remove
 
     10.times do |i|
       @@coll.save("x" => i)
@@ -119,7 +119,7 @@ class CursorTest < Test::Unit::TestCase
   end
 
   def test_skip
-    @@coll.clear
+    @@coll.remove
 
     10.times do |i|
       @@coll.save("x" => i)
@@ -153,7 +153,7 @@ class CursorTest < Test::Unit::TestCase
   end
 
   def test_limit_skip_chaining
-    @@coll.clear
+    @@coll.remove
     10.times do |i|
       @@coll.save("x" => i)
     end
@@ -202,7 +202,7 @@ class CursorTest < Test::Unit::TestCase
 
   def test_refill_via_get_more_alt_coll
     coll = @@db.collection('test-alt-coll')
-    coll.clear
+    coll.remove
     coll.insert('a' => 1)     # collection not created until it's used
     assert_equal 1, coll.count
 
@@ -318,7 +318,7 @@ class CursorTest < Test::Unit::TestCase
   end
 
   def test_count_with_fields
-    @@coll.clear
+    @@coll.remove
     @@coll.save("x" => 1)
 
     @@coll.find({}, :fields => ["a"]).each do |doc|

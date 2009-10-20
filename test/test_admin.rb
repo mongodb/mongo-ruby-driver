@@ -13,7 +13,7 @@ class AdminTest < Test::Unit::TestCase
 
   def setup
     # Insert some data to make sure the database itself exists.
-    @@coll.clear
+    @@coll.remove
     @r1 = @@coll.insert('a' => 1) # collection not created until it's used
     @@coll_full_name = 'ruby-mongo-test.test'
     @admin = @@db.admin
@@ -21,7 +21,7 @@ class AdminTest < Test::Unit::TestCase
 
   def teardown
     @admin.profiling_level = :off
-    @@coll.clear if @@coll
+    @@coll.remove if @@coll
     @@db.error
   end
 

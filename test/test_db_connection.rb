@@ -12,7 +12,7 @@ class DBConnectionTest < Test::Unit::TestCase
     port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
     db = Connection.new(host, port).db('ruby-mongo-demo')
     coll = db.collection('test')
-    coll.clear
+    coll.remove
     db.error
   end
 end

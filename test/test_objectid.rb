@@ -54,7 +54,7 @@ class ObjectIDTest < Test::Unit::TestCase
     db = Connection.new(host, port).db('ruby-mongo-test')
     coll = db.collection('test')
 
-    coll.clear
+    coll.remove
     coll << {'a' => 1, '_id' => @o}
 
     row = coll.find().collect.first

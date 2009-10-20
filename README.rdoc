@@ -12,7 +12,7 @@ many more.
   db = Connection.new('localhost').db('sample-db')
   coll = db.collection('test')
 
-  coll.clear
+  coll.remove
   3.times { |i| coll.insert({'a' => i+1}) }
   puts "There are #{coll.count()} records. Here they are:"
   coll.find().each { |doc| puts doc.inspect }
@@ -82,7 +82,7 @@ Here is some simple example code:
   db = Connection.new.db('my-db-name')
   things = db.collection('things')
 
-  things.clear
+  things.remove
   things.insert('a' => 42)
   things.insert('a' => 99, 'b' => Time.now)
   puts things.count                               # => 2
@@ -257,6 +257,12 @@ Random cursor fun facts:
 If you have the source code, you can run the tests.
 
   $ rake test
+
+The tests now require shoulda and mocha.  You can install these gems as
+follows:
+
+  $ gem install shoulda
+  $ gem install mocha
 
 The tests assume that the Mongo database is running on the default port. You
 can override the default host (localhost) and port (Connection::DEFAULT_PORT) by
