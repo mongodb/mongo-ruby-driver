@@ -229,7 +229,7 @@ module Mongo
       BSON.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
       message.put_array(BSON.new.serialize(selector, false).to_a)
-      db.send_message_with_operation(OP_DELETE, message)
+      @db.send_message_with_operation(OP_DELETE, message)
     end
 
     # Remove all records.
