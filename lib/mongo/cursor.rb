@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/message'
 require 'mongo/util/byte_buffer'
 require 'mongo/util/bson'
 
@@ -173,17 +172,23 @@ module Mongo
 
     # Close the cursor.
     #
-    # Note: if a cursor is read until exhausted (read until OP_QUERY or
-    # OP_GETMORE returns zero for the cursor id), there is no need to
+    # Note: if a cursor is read until exhausted (read until Mongo::Constants::OP_QUERY or
+    # Mongo::Constants::OP_GETMORE returns zero for the cursor id), there is no need to
     # close it by calling this method.
     #
     # Collection#find takes an optional block argument which can be used to
     # ensure that your cursors get closed. See the documentation for
     # Collection#find for details.
     def close
-      @db.send_to_db(KillCursorsMessage.new(@cursor_id)) if @cursor_id
+      if @cursor_id
+        message = ByteBuffer.new
+        message.put_int(0)
+        message.put_int(1)
+        message.put_long(@cursor_id)
+        @db.send_message_with_operation(Mongo::Constants::OP_KILL_CURSORS, message)
+      end
       @cursor_id = 0
-      @closed = true
+      @closed    = true
     end
 
     # Returns true if this cursor is closed, false otherwise.
@@ -204,7 +209,16 @@ module Mongo
     end
 
     def read_message_header
-      MessageHeader.new.read_header(@db)
+      message = ByteBuffer.new
+      message.put_array(@db.receive_full(16).unpack("C*"))
+      unless message.size == 16 #HEADER_SIZE
+        raise "Short read for DB response header: expected #{16} bytes, saw #{message.size}" 
+      end
+      message.rewind
+      size = message.get_int
+      request_id = message.get_int
+      response_to = message.get_int
+      op = message.get_int
     end
 
     def read_response_header
@@ -220,9 +234,6 @@ module Mongo
         @n_received += @n_remaining
       else
         @n_received = @n_remaining
-      end
-      if @query.number_to_return > 0 and @n_received >= @query.number_to_return
-        close()
       end
     end
 
@@ -262,9 +273,10 @@ module Mongo
         
         # Cursor id.
         message.put_long(@cursor_id)
-        @db.send_message_with_operation_without_synchronize(OP_GET_MORE, message)
+        @db.send_message_with_operation_without_synchronize(Mongo::Constants::OP_GET_MORE, message)
         read_all
       }
+      close_cursor_if_query_complete
     end
 
     def object_from_stream
@@ -283,12 +295,13 @@ module Mongo
       if @query_run
         false
       else
+        message = construct_query_message(@query)
         @db._synchronize {
-          message = construct_query_message(@query)
+          @db.send_message_with_operation_without_synchronize(Mongo::Constants::OP_QUERY, message)
           @query_run = true
-          @db.send_message_with_operation_without_synchronize(OP_QUERY, message)
           read_all
         }
+        close_cursor_if_query_complete
         true
       end
     end
@@ -335,6 +348,10 @@ module Mongo
 
     def to_s
       "DBResponse(flags=#@result_flags, cursor_id=#@cursor_id, start=#@starting_from)"
+    end
+
+    def close_cursor_if_query_complete
+      close if @query.number_to_return > 0 && @n_received >= @query.number_to_return
     end
 
     def check_modifiable

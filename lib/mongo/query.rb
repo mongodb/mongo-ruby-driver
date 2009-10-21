@@ -15,7 +15,6 @@
 # ++
 
 require 'mongo/collection'
-require 'mongo/message'
 require 'mongo/types/code'
 
 module Mongo
@@ -119,10 +118,10 @@ module Mongo
     end
 
     # Returns an integer indicating which query options have been selected.
-    # See http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol#MongoWireProtocol-OPQUERY
+    # See http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol#MongoWireProtocol-Mongo::Constants::OPQUERY
     def query_opts
-      timeout  = @timeout ? 0 : OP_QUERY_NO_CURSOR_TIMEOUT
-      slave_ok = @slave_ok ? OP_QUERY_SLAVE_OK : 0 
+      timeout  = @timeout ? 0 : Mongo::Constants::OP_QUERY_NO_CURSOR_TIMEOUT
+      slave_ok = @slave_ok ? Mongo::Constants::OP_QUERY_SLAVE_OK : 0 
       slave_ok + timeout
     end
 

@@ -229,7 +229,7 @@ module Mongo
       BSON.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
       message.put_array(BSON.new.serialize(selector, false).to_a)
-      @db.send_message_with_operation(OP_DELETE, message)
+      @db.send_message_with_operation(Mongo::Constants::OP_DELETE, message)
     end
 
     # Remove all records.
@@ -259,7 +259,7 @@ module Mongo
       message.put_int(options[:upsert] ? 1 : 0) # 1 if a repsert operation (upsert)
       message.put_array(BSON.new.serialize(spec, false).to_a)
       message.put_array(BSON.new.serialize(document, false).to_a)
-      @db.send_message_with_operation(OP_UPDATE, message)
+      @db.send_message_with_operation(Mongo::Constants::OP_UPDATE, message)
 
       if options[:safe] && error=@db.error
         raise OperationFailure, error
@@ -454,7 +454,7 @@ EOS
 
     private
 
-    # Sends an OP_INSERT message to the database.
+    # Sends an Mongo::Constants::OP_INSERT message to the database.
     # Takes an array of +documents+, an optional +collection_name+, and a
     # +check_keys+ setting.
     def insert_documents(documents, collection_name=@name, check_keys=true)
@@ -462,7 +462,7 @@ EOS
       message.put_int(0)
       BSON.serialize_cstr(message, "#{@db.name}.#{collection_name}")
       documents.each { |doc| message.put_array(BSON.new.serialize(doc, check_keys).to_a) }
-      @db.send_message_with_operation(OP_INSERT, message)
+      @db.send_message_with_operation(Mongo::Constants::OP_INSERT, message)
       documents.collect { |o| o[:_id] || o['_id'] }
     end
 

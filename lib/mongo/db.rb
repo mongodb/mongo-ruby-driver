@@ -18,7 +18,6 @@ require 'socket'
 require 'digest/md5'
 require 'thread'
 require 'mongo/collection'
-require 'mongo/message'
 require 'mongo/query'
 require 'mongo/util/ordered_hash.rb'
 require 'mongo/admin'
@@ -358,11 +357,6 @@ module Mongo
       message
     end
 
-    # Send a MsgMessage to the database.
-    def send_message(msg)
-      send_to_db(MsgMessage.new(msg))
-    end
-
     # Returns a Cursor over the query results.
     #
     # Note that the query gets sent lazily; the cursor calls
@@ -470,16 +464,16 @@ module Mongo
     end
 
     def send_message_with_operation_without_synchronize(operation, message)
-        connect_to_master if !connected? && @auto_reconnect
-        begin
-          message_with_headers = add_message_headers(operation, message)
-          @logger.debug("  MONGODB #{operation} #{message}") if @logger
-          @socket.print(message_with_headers.to_s)
-          @socket.flush
-        rescue => ex
-          close
-          raise ex
-        end
+      connect_to_master if !connected? && @auto_reconnect
+      begin
+        message_with_headers = add_message_headers(operation, message)
+        @logger.debug("  MONGODB #{operation} #{message}") if @logger
+        @socket.print(message_with_headers.to_s)
+        @socket.flush
+      rescue => ex
+        close
+        raise ex
+      end
     end
 
     def receive_message_with_operation(operation, message)

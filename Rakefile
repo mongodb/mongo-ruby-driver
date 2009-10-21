@@ -18,7 +18,7 @@ gem_command = "gem1.9" if $0.match(/1\.9$/) # use gem1.9 if we used rake1.9
 desc "Test the MongoDB Ruby driver."
 Rake::TestTask.new(:test) do |t|
   t.test_files = FileList['test/test*.rb']
-  t.verbose = true
+  t.verbose    = true
 end
 
 desc "Generate documentation"
