@@ -438,15 +438,14 @@ static void write_doc(bson_buffer* buffer, VALUE hash, VALUE check_keys) {
     int length_location = buffer_save_bytes(buffer, 4);
     int length;
 
-    VALUE key = rb_str_new2("_id");
-    if (rb_funcall(hash, rb_intern("has_key?"), 1, key) == Qtrue) {
-        VALUE id = rb_hash_aref(hash, key);
-        write_element_allow_id(key, id, pack_extra(buffer, check_keys), 1);
-    }
-    key = ID2SYM(rb_intern("_id"));
-    if (rb_funcall(hash, rb_intern("has_key?"), 1, key) == Qtrue) {
-        VALUE id = rb_hash_aref(hash, key);
-        write_element_allow_id(key, id, pack_extra(buffer, check_keys), 1);
+    VALUE id_str = rb_str_new2("_id");
+    VALUE id_sym = ID2SYM(rb_intern("_id"));
+    if (rb_funcall(hash, rb_intern("has_key?"), 1, id_str) == Qtrue) {
+        VALUE id = rb_hash_aref(hash, id_str);
+        write_element_allow_id(id_str, id, pack_extra(buffer, check_keys), 1);
+    } else if (rb_funcall(hash, rb_intern("has_key?"), 1, id_sym) == Qtrue) {
+        VALUE id = rb_hash_aref(hash, id_sym);
+        write_element_allow_id(id_sym, id, pack_extra(buffer, check_keys), 1);
     }
 
     // we have to check for an OrderedHash and handle that specially
