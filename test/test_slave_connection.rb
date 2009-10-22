@@ -24,19 +24,14 @@ class SlaveConnectionTest < Test::Unit::TestCase
 
     def test_slave_ok_sent_to_queries
       @db   = Connection.new(@@host, @@port, :slave_ok => true).db('ruby-mongo-demo')
-      @coll = @db['test-collection']
-      @cursor = @coll.find({})
-      assert_equal true, @cursor.query.instance_variable_get(:@slave_ok)
+      assert_equal true, @db.slave_ok?
     end
   else
     puts "Not connected to slave; skipping slave connection tests."
 
     def test_slave_ok_false_on_queries
-      @db   = Connection.new(@@host, @@port).db('ruby-mongo-demo')
-      @coll = @db['test-collection']
-      @cursor = @coll.find({})
-      assert_nil @cursor.query.instance_variable_get(:@slave_ok)
+      @db = Connection.new(@@host, @@port).db('ruby-mongo-demo')
+      assert !@db.slave_ok?
     end
   end
-
 end

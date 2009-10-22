@@ -14,8 +14,6 @@
 # limitations under the License.
 # ++
 
-require 'mongo/query'
-
 module Mongo
 
   # A named collection of records in a database.
@@ -131,7 +129,8 @@ module Mongo
       end
       raise RuntimeError, "Unknown options [#{options.inspect}]" unless options.empty?
 
-      cursor = @db.query(self, Query.new(selector, fields, skip, limit, sort, hint, snapshot, timeout, @db.slave_ok?))
+      cursor = Cursor.new(self, :selector => selector, :fields => fields, :skip => skip, :limit => limit, 
+                          :order => sort, :hint => hint, :snapshot => snapshot, :timeout => timeout)
       if block_given?
         yield cursor
         cursor.close()

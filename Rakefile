@@ -14,11 +14,23 @@ include Config
 gem_command = "gem"
 gem_command = "gem1.9" if $0.match(/1\.9$/) # use gem1.9 if we used rake1.9
 
-# NOTE: some of the tests assume Mongo is running
+# NOTE: the functional tests assume MongoDB is running.
 desc "Test the MongoDB Ruby driver."
-Rake::TestTask.new(:test) do |t|
-  t.test_files = FileList['test/test*.rb']
-  t.verbose    = true
+task :test do
+  Rake::Task['test:unit'].invoke
+  Rake::Task['test:functional'].invoke
+end
+
+namespace :test do 
+  Rake::TestTask.new(:unit) do |t|
+    t.test_files = FileList['test/unit/*_test.rb']
+    t.verbose    = true
+  end
+
+  Rake::TestTask.new(:functional) do |t|
+    t.test_files = FileList['test/test*.rb']
+    t.verbose    = true
+  end
 end
 
 desc "Generate documentation"

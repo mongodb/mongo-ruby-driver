@@ -1,9 +1,11 @@
 require 'mongo/types/binary'
+require 'mongo/types/code'
 require 'mongo/types/dbref'
 require 'mongo/types/objectid'
 require 'mongo/types/regexp_of_holding'
 
 require 'mongo/util/conversions'
+require 'mongo/util/support'
 
 require 'mongo/errors'
 require 'mongo/constants'

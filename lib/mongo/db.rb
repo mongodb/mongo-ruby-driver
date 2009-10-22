@@ -18,7 +18,6 @@ require 'socket'
 require 'digest/md5'
 require 'thread'
 require 'mongo/collection'
-require 'mongo/query'
 require 'mongo/util/ordered_hash.rb'
 require 'mongo/admin'
 
@@ -216,7 +215,7 @@ module Mongo
     def collections_info(coll_name=nil)
       selector = {}
       selector[:name] = full_collection_name(coll_name) if coll_name
-      query(Collection.new(self, SYSTEM_NAMESPACE_COLLECTION), Query.new(selector))
+      Cursor.new(Collection.new(self, SYSTEM_NAMESPACE_COLLECTION), :selector => selector)
     end
 
     # Create a collection. If +strict+ is false, will return existing or
@@ -416,7 +415,7 @@ module Mongo
     def index_information(collection_name)
       sel = {:ns => full_collection_name(collection_name)}
       info = {}
-      query(Collection.new(self, SYSTEM_INDEX_COLLECTION), Query.new(sel)).each { |index|
+      Cursor.new(Collection.new(self, SYSTEM_INDEX_COLLECTION), :selector => sel).each { |index|
         info[index['name']] = index['key'].to_a
       }
       info
@@ -499,9 +498,8 @@ module Mongo
         end
       end
 
-      q = Query.new(selector)
-      q.number_to_return = -1
-      query(Collection.new(self, SYSTEM_COMMAND_COLLECTION), q, use_admin_db).next_object
+      cursor = Cursor.new(Collection.new(self, SYSTEM_COMMAND_COLLECTION), :admin => use_admin_db, :limit => -1, :selector => selector)
+      cursor.next_object
     end
 
     def _synchronize &block

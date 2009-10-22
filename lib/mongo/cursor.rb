@@ -25,13 +25,29 @@ module Mongo
 
     RESPONSE_HEADER_SIZE = 20
 
-    attr_reader :db, :collection, :query
+    attr_reader :collection, :selector, :admin, :fields, 
+      :order, :hint, :snapshot, :timeout,
+      :full_collection_name
 
     # Create a new cursor.
     #
     # Should not be called directly by application developers.
-    def initialize(db, collection, query, admin=false)
-      @db, @collection, @query, @admin = db, collection, query, admin
+    def initialize(collection, options={})
+      @db         = collection.db
+      @collection = collection
+
+      @selector   = convert_selector_for_query(options[:selector])
+      @fields     = convert_fields_for_query(options[:fields])
+      @admin      = options[:admin]    || false
+      @skip       = options[:skip]     || 0
+      @limit      = options[:limit]    || 0
+      @order      = options[:order]
+      @hint       = options[:hint]
+      @snapshot   = options[:snapshot]
+      @timeout    = options[:timeout]  || false
+      @explain    = options[:explain]
+
+      @full_collection_name   = "#{@collection.db.name}.#{@collection.name}"
       @cache = []
       @closed = false
       @query_run = false
@@ -64,9 +80,9 @@ module Mongo
     # not take limit and skip into account. Raises OperationFailure on a
     # database error.
     def count
-      command = OrderedHash["count", @collection.name,
-                            "query", @query.selector,
-                            "fields", @query.fields()]
+      command = OrderedHash["count",  @collection.name,
+                            "query",  @selector,
+                            "fields", @fields]
       response = @db.db_command(command)
       return response['n'].to_i if response['ok'] == 1
       return 0 if response['errmsg'] == "ns missing"
@@ -93,35 +109,39 @@ module Mongo
         order = key_or_list
       end
 
-      @query.order_by = order
+      @order = order
       self
     end
 
     # Limits the number of results to be returned by this cursor.
+    # Returns the current number_to_return if no parameter is given.
     #
     # Raises InvalidOperation if this cursor has already been used.
     #
     # This method overrides any limit specified in the Collection#find method,
     # and only the last limit applied has an effect.
-    def limit(number_to_return)
+    def limit(number_to_return=nil)
+      return @limit unless number_to_return
       check_modifiable
       raise ArgumentError, "limit requires an integer" unless number_to_return.is_a? Integer
 
-      @query.number_to_return = number_to_return
+      @limit = number_to_return
       self
     end
 
     # Skips the first +number_to_skip+ results of this cursor.
-    #
+    # Returns the current number_to_skip if no parameter is given.
+    # 
     # Raises InvalidOperation if this cursor has already been used.
     #
     # This method overrides any skip specified in the Collection#find method,
     # and only the last skip applied has an effect.
-    def skip(number_to_skip)
+    def skip(number_to_skip=nil)
+      return @skip unless number_to_skip
       check_modifiable
       raise ArgumentError, "skip requires an integer" unless number_to_skip.is_a? Integer
 
-      @query.number_to_skip = number_to_skip
+      @skip = number_to_skip
       self
     end
 
@@ -131,7 +151,7 @@ module Mongo
     # Iterating over an entire cursor will close it.
     def each
       num_returned = 0
-      while more? && (@query.number_to_return <= 0 || num_returned < @query.number_to_return)
+      while more? && (@limit <= 0 || num_returned < @limit)
         yield next_object()
         num_returned += 1
       end
@@ -148,7 +168,7 @@ module Mongo
       raise InvalidOperation, "can't call Cursor#to_a on a used cursor" if @query_run
       rows = []
       num_returned = 0
-      while more? && (@query.number_to_return <= 0 || num_returned < @query.number_to_return)
+      while more? && (@limit <= 0 || num_returned < @limit)
         rows << next_object()
         num_returned += 1
       end
@@ -157,16 +177,10 @@ module Mongo
 
     # Returns an explain plan record for this cursor.
     def explain
-      limit = @query.number_to_return
-      @query.explain = true
-      @query.number_to_return = -limit.abs
-
-      c = Cursor.new(@db, @collection, @query)
+      c = Cursor.new(@collection, query_options_hash.merge(:limit => -@limit.abs, :explain => true))
       explanation = c.next_object
       c.close
 
-      @query.explain = false
-      @query.number_to_return = limit
       explanation
     end
 
@@ -194,7 +208,64 @@ module Mongo
     # Returns true if this cursor is closed, false otherwise.
     def closed?; @closed; end
 
+    # Returns an integer indicating which query options have been selected.
+    # See http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol#MongoWireProtocol-Mongo::Constants::OPQUERY
+    def query_opts
+      timeout  = @timeout ? 0 : Mongo::Constants::OP_QUERY_NO_CURSOR_TIMEOUT
+      slave_ok = @db.slave_ok? ? Mongo::Constants::OP_QUERY_SLAVE_OK : 0 
+      slave_ok + timeout
+    end
+
+    # Returns the query options set on this Cursor.
+    def query_options_hash
+      { :selector => @selector,
+        :fields   => @fields,   
+        :admin    => @admin,   
+        :skip     => @skip_num, 
+        :limit    => @limit_num, 
+        :order    => @order,   
+        :hint     => @hint,   
+        :snapshot => @snapshot, 
+        :timeout  => @timeout }
+    end
+
     private
+
+    # Converts the +:fields+ parameter from a single field name or an array
+    # of fields names to a hash, with the field names for keys and '1' for each
+    # value.
+    def convert_fields_for_query(fields)
+      case fields
+        when String, Symbol
+          {fields => 1}
+        when Array
+          return nil if fields.length.zero?
+          returning({}) do |hash|
+            fields.each { |field| hash[field] = 1 }
+          end
+      end
+    end
+
+    # Set query selector hash. If the selector is a Code or String object, 
+    # the selector will be used in a $where clause.
+    # See http://www.mongodb.org/display/DOCS/Server-side+Code+Execution
+    def convert_selector_for_query(selector)
+       case selector
+         when Hash
+          selector
+         when nil
+           {}
+         when String
+          {"$where" => Code.new(selector)}
+         when Code
+          {"$where" => selector}
+      end
+    end
+
+    # Returns true if the query contains order, explain, hint, or snapshot.
+    def query_contains_special_fields?
+      @order || @explain || @hint || @snapshot
+    end
 
     def read_all
       read_message_header
@@ -243,7 +314,7 @@ module Mongo
     end
 
     # Internal method, not for general use. Return +true+ if there are
-    # more records to retrieve. We do not check @query.number_to_return;
+    # more records to retrieve. This methods does not check @limit;
     # #each is responsible for doing that.
     def more?
       num_remaining > 0
@@ -308,41 +379,40 @@ module Mongo
 
     def construct_query_message(query)
       message = ByteBuffer.new
-      message.put_int(query.query_opts)
+      message.put_int(query_opts)
       db_name = @admin ? 'admin' : @db.name
       BSON.serialize_cstr(message, "#{db_name}.#{@collection.name}")
-      message.put_int(query.number_to_skip)
-      message.put_int(query.number_to_return)
-      sel = query.selector
-      if query.contains_special_fields
-        sel = add_special_query_fields(sel, query)
+      message.put_int(@skip)
+      message.put_int(@limit)
+      selector = @selector
+      if query_contains_special_fields?
+        selector = selector_with_special_query_fields
       end
-      message.put_array(BSON.new.serialize(sel).to_a)
-      message.put_array(BSON.new.serialize(query.fields).to_a) if query.fields
+      message.put_array(BSON.new.serialize(selector).to_a)
+      message.put_array(BSON.new.serialize(@fields).to_a) if @fields
       message
     end
 
-    def add_special_query_fields(sel, query)
+    def selector_with_special_query_fields
       sel = OrderedHash.new
-      sel['query']     = query.selector
-      order_by         = query.order_by
-      sel['orderby']   = get_query_order_by(order_by) if order_by
-      sel['$hint']     = query.hint if query.hint && query.hint.length > 0
-      sel['$explain']  = true if query.explain
-      sel['$snapshot'] = true if query.snapshot
+      sel['query']     = @selector
+      sel['orderby']   = formatted_order_clause if @order
+      sel['$hint']     = @hint if @hint && @hint.length > 0
+      sel['$explain']  = true if @explain
+      sel['$snapshot'] = true if @snapshot
       sel
     end
 
-    def get_query_order_by(order_by)
-      case order_by
-        when String then string_as_sort_parameters(order_by)
-        when Symbol then symbol_as_sort_parameters(order_by)
-        when Array  then array_as_sort_parameters(order_by)
+    def formatted_order_clause
+      case @order
+        when String then string_as_sort_parameters(@order)
+        when Symbol then symbol_as_sort_parameters(@order)
+        when Array  then array_as_sort_parameters(@order)
         when Hash # Should be an ordered hash, but this message doesn't care
-          warn_if_deprecated(order_by)
-          order_by
+          warn_if_deprecated(@order)
+          @order 
         else
-          raise InvalidSortValueError, "Illegal order_by, '#{query.order_by.class.name}'; must be String, Array, Hash, or OrderedHash"
+          raise InvalidSortValueError, "Illegal order_by, '#{@order.class.name}'; must be String, Array, Hash, or OrderedHash"
       end
     end
 
@@ -351,7 +421,7 @@ module Mongo
     end
 
     def close_cursor_if_query_complete
-      close if @query.number_to_return > 0 && @n_received >= @query.number_to_return
+      close if @limit > 0 && @n_received >= @limit
     end
 
     def check_modifiable
