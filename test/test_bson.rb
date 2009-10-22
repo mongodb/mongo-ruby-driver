@@ -265,4 +265,18 @@ class BSONTest < Test::Unit::TestCase
     assert val.keys.include?(:_id)
   end
 
+  # note we only test for _id here because in the general case we will
+  # write duplicates for :key and "key". _id is a special case because
+  # we call has_key? to check for it's existance rather than just iterating
+  # over it like we do for the rest of the keys. thus, things like
+  # HashWithIndifferentAccess can cause problems for _id but not for other
+  # keys. rather than require rails to test with HWIA directly, we do this
+  # somewhat hacky test.
+  def test_no_duplicate_id
+    dup = {"_id" => "foo", :_id => "foo"}
+    one = {"_id" => "foo"}
+
+    assert_equal @b.serialize(one).to_a, @b.serialize(dup).to_a
+  end
+
 end
