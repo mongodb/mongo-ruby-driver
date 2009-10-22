@@ -340,6 +340,11 @@ class TestCollection < Test::Unit::TestCase
       assert_equal 0, @collection.find.count
     end
 
+    should "remove all records if deprecated clear is used" do 
+      @collection.clear
+      assert_equal 0, @collection.find.count
+    end
+
     should "remove only matching records" do 
       @collection.remove({:name => "Jones"})
       assert_equal 1, @collection.size
