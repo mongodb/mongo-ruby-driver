@@ -65,10 +65,12 @@ TEST_FILES = ['test/mongo-qa/_common.rb',
               'test/test_db_api.rb',
               'test/test_db_connection.rb',
               'test/test_grid_store.rb',
+              'test/test_helper.rb',
               'test/test_objectid.rb',
               'test/test_ordered_hash.rb',
               'test/test_threading.rb',
-              'test/test_round_trip.rb']
+              'test/test_round_trip.rb',
+              'test/unit/cursor_test.rb']
 
 Gem::Specification.new do |s|
   s.name = 'mongo'
