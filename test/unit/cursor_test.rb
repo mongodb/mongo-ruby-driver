@@ -103,7 +103,7 @@ class TestCursor < Test::Unit::TestCase
     should "when an array should return a hash with each key" do 
       @cursor = Cursor.new(@collection, :fields => [:name, :age])
       result  = @cursor.fields
-      assert_equal result.keys, [:age, :name]
+      assert_equal result.keys.sort{|a,b| a.to_s <=> b.to_s}, [:age, :name].sort{|a,b| a.to_s <=> b.to_s}
       assert result.values.all? {|v| v == 1}
     end
 
