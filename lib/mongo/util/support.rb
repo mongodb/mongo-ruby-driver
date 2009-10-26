@@ -13,11 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ++
-
-# A hash in which the order of keys are preserved.
-#
-# Under Ruby 1.9 and greater, this class has no added methods because Ruby's
-# Hash already keeps its keys ordered by order of insertion.
 class Object
 
   def returning(value)
