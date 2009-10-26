@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
 
   s.require_paths = ['ext']
   s.files = ['Rakefile', 'mongo-extensions.gemspec']
-  s.files += Dir['ext/**/*.rb']
+  s.files += Dir['ext/**/*.rb'] + Dir['ext/**/*.c']
   s.test_files = []
 
   s.has_rdoc = false
