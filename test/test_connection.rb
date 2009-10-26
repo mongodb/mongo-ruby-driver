@@ -19,6 +19,17 @@ class TestConnection < Test::Unit::TestCase
     @mongo.db('ruby-mongo-test').error
   end
 
+  def test_server_info
+    server_info = @mongo.server_info
+    assert server_info.keys.include? "version"
+    assert server_info.keys.include? "bits"
+    assert_equal 1.0, server_info["ok"]
+  end
+
+  def test_server_version
+    assert_match /\d\.\d+(\.\d+)?/, @mongo.server_version.to_s
+  end
+
   def test_invalid_database_names
     assert_raise TypeError do @mongo.db(4) end
 

@@ -6,6 +6,7 @@ require 'mongo/types/regexp_of_holding'
 
 require 'mongo/util/conversions'
 require 'mongo/util/support'
+require 'mongo/util/server_version'
 
 require 'mongo/errors'
 require 'mongo/constants'

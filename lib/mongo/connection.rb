@@ -120,6 +120,17 @@ module Mongo
       single_db_command(name, :dropDatabase => 1)
     end
 
+    # Return the build information for the current connection.
+    def server_info
+      db("admin").db_command(:buildinfo => 1)
+    end
+
+    # Returns the build version of the current server, using
+    # a ServerVersion object for comparability.
+    def server_version
+      ServerVersion.new(server_info["version"])
+    end
+
     protected
 
     # Turns an array containing a host name string and a

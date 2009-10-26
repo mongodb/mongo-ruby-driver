@@ -7,9 +7,11 @@ class CursorTest < Test::Unit::TestCase
 
   include Mongo
 
-  @@db = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                        ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT).db('ruby-mongo-test')
+  @@connection = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+                        ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
+  @@db   = @@connection.db('ruby-mongo-test')
   @@coll = @@db.collection('test')
+  @@version = @@connection.server_version
 
   def setup
     @@coll.remove
@@ -321,9 +323,10 @@ class CursorTest < Test::Unit::TestCase
     @@coll.remove
     @@coll.save("x" => 1)
 
-    @@coll.find({}, :fields => ["a"]).each do |doc|
-      fail "shouldn't have any results here"
+    if @@version < "1.1.3"
+      assert_equal(0, @@coll.find({}, :fields => ["a"]).count())
+    else
+      assert_equal(1, @@coll.find({}, :fields => ["a"]).count())
     end
-    assert_equal(0, @@coll.find({}, :fields => ["a"]).count())
   end
 end

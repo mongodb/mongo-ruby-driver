@@ -6,9 +6,11 @@ require 'test/unit'
 class DBAPITest < Test::Unit::TestCase
   include Mongo
 
-  @@db = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                        ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT).db('ruby-mongo-test')
+  @@connection = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+                        ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
+  @@db   = @@connection.db("ruby-mongo-test")
   @@coll = @@db.collection('test')
+  @@version = @@connection.server_version
 
   def setup
     @@coll.remove
@@ -386,16 +388,26 @@ class DBAPITest < Test::Unit::TestCase
   def test_array
     @@coll << {'b' => [1, 2, 3]}
     rows = @@coll.find({}, {:fields => ['b']}).to_a
-    assert_equal 1, rows.length
-    assert_equal [1, 2, 3], rows[0]['b']
+    if @@version < "1.1.3"
+      assert_equal 1, rows.length
+      assert_equal [1, 2, 3], rows[0]['b']
+    else
+      assert_equal 2, rows.length
+      assert_equal [1, 2, 3], rows[1]['b']
+    end
   end
 
   def test_regex
     regex = /foobar/i
     @@coll << {'b' => regex}
     rows = @@coll.find({}, {:fields => ['b']}).to_a
-    assert_equal 1, rows.length
-    assert_equal regex, rows[0]['b']
+    if @@version < "1.1.3"
+      assert_equal 1, rows.length
+      assert_equal regex, rows[0]['b']
+    else
+      assert_equal 2, rows.length
+      assert_equal regex, rows[1]['b']
+    end
   end
 
   def test_non_oid_id

@@ -16,9 +16,10 @@
 
 require 'test/test_helper'
 class TestCollection < Test::Unit::TestCase
-  @@db = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                        ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT).db('ruby-mongo-test')
+  @@connection = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost', ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
+  @@db   = @@connection.db('ruby-mongo-test')
   @@test = @@db.collection("test")
+  @@version = @@connection.server_version
 
   def setup
     @@test.drop()
@@ -89,15 +90,33 @@ class TestCollection < Test::Unit::TestCase
     assert_equal 2, @@test.find_one()["count"]
   end
 
-  def test_safe_update
-    @@test.create_index("x")
-    @@test.insert("x" => 5)
+  if @@version < "1.1.3"
+    def test_safe_update
+      @@test.create_index("x")
+      @@test.insert("x" => 5)
 
-    @@test.update({}, {"$inc" => {"x" => 1}})
-    assert @@db.error?
+      @@test.update({}, {"$inc" => {"x" => 1}})
+      assert @@db.error?
 
-    assert_raise OperationFailure do
-      @@test.update({}, {"$inc" => {"x" => 1}}, :safe => true)
+      # Can't change an index.
+      assert_raise OperationFailure do
+        @@test.update({}, {"$inc" => {"x" => 1}}, :safe => true)
+      end
+    end
+  else
+    def test_safe_update
+      @@test.create_index("x", true)
+      @@test.insert("x" => 5)
+      @@test.insert("x" => 10)
+
+      # Can update an indexed collection.
+      @@test.update({}, {"$inc" => {"x" => 1}})
+      assert !@@db.error?
+
+      # Can't duplicate an index.
+      assert_raise OperationFailure do
+        @@test.update({}, {"x" => 10}, :safe => true, :upsert => true)
+      end
     end
   end
 
