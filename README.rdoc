@@ -336,6 +336,7 @@ Durran Jordan, durran@gmail.com
 
 Cyril Mougel, cyril.mougel@gmail.com
 * Initial logging support
+* Test case
 
 Jack Chen, chendo on github
 * Test case + fix for deserializing pre-epoch Time instances
