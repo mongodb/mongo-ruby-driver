@@ -383,6 +383,28 @@ EOS
       return @db.eval(Code.new(group_function, scope))["result"]
     end
 
+    # Returns a list of distinct values for +key+ across all
+    # documents in the collection. The key may use dot notation
+    # to reach into an embedded object.
+    #   @collection.save({:zip => 10010, :name => {:age => 27}})
+    #   @collection.save({:zip => 94108, :name => {:age => 24}})
+    #   @collection.save({:zip => 10010, :name => {:age => 27}})
+    #   @collection.save({:zip => 99701, :name => {:age => 24}})
+    #   @collection.save({:zip => 94108, :name => {:age => 27}})
+    #
+    #   @collection.distinct(:zip)
+    #     [10010, 94108, 99701]
+    #   @collection.distinct("name.age")
+    #     [27, 24]
+    def distinct(key)
+      raise MongoArgumentError unless [String, Symbol].include?(key.class)
+      command = OrderedHash.new
+      command[:distinct] = @name
+      command[:key]        = key.to_s
+
+      @db.db_command(command)["values"]
+    end
+
     # Rename this collection.
     #
     # If operating in auth mode, client must be authorized as an admin to

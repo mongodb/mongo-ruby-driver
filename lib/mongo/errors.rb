@@ -21,6 +21,9 @@ module Mongo
   # Raised when configuration options cause connections, queries, etc., to fail.
   class ConfigurationError < MongoRubyError; end
 
+  # Raised when invalid arguments are sent to Mongo Ruby methods.
+  class MongoArgumentError < MongoRubyError; end
+
   # Raised when a database operation fails.
   class OperationFailure < RuntimeError; end
 

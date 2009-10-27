@@ -59,6 +59,21 @@ class TestCollection < Test::Unit::TestCase
     assert_equal 5, @@db.collection("test.foo").find_one()["x"]
   end
 
+  if @@version > "1.1"
+    def test_distinct
+      @@test.remove
+      @@test.insert([{:a => 0, :b => {:c => "a"}},
+                     {:a => 1, :b => {:c => "b"}},
+                     {:a => 1, :b => {:c => "c"}},
+                     {:a => 2, :b => {:c => "a"}},
+                     {:a => 3},
+                     {:a => 3}])
+
+      assert_equal [0, 1, 2, 3], @@test.distinct(:a).sort
+      assert_equal ["a", "b", "c"], @@test.distinct("b.c").sort
+    end
+  end
+
   def test_safe_insert
     a = {"hello" => "world"}
     @@test.insert(a)
