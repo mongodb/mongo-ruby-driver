@@ -22,7 +22,6 @@ class TestConnection < Test::Unit::TestCase
   def test_server_info
     server_info = @mongo.server_info
     assert server_info.keys.include?("version")
-    assert server_info.keys.include?("bits")
     assert_equal 1.0, server_info["ok"]
   end
 
