@@ -189,6 +189,13 @@ class DBTest < Test::Unit::TestCase
     assert_nil @@db.previous_error
   end
 
+  def test_check_command_response
+    command = {:forceerror => 1}
+    assert_raise OperationFailure do 
+      @@db.command(command, false, true)
+    end
+  end
+
   def test_last_status
     @@db['test'].remove
     @@db['test'].save("i" => 1)

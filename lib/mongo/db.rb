@@ -501,6 +501,35 @@ module Mongo
       cursor = Cursor.new(Collection.new(self, SYSTEM_COMMAND_COLLECTION), :admin => use_admin_db, :limit => -1, :selector => selector)
       cursor.next_object
     end
+    
+    # Sends a command to the database.
+    #
+    # :selector (required) :: An OrderedHash, or a standard Hash with just one
+    # key, specifying the command to be performed.
+    #
+    # :admin (optional) :: If true, the command will be executed on the admin
+    # collection.
+    #
+    # :check_response (optional) :: If true, will raise an exception if the
+    # command fails.
+    #
+    # Note: DB commands must start with the "command" key. For this reason,
+    # any selector containing more than one key must be an OrderedHash.
+    def command(selector, admin=false, check_response=false)
+      raise MongoArgumentError, "command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
+      if selector.class.eql?(Hash) && selector.keys.length > 1 
+        raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
+      end
+
+      result = Cursor.new(system_command_collection, :admin => admin, 
+        :limit => -1, :selector => selector).next_object
+
+      if check_response && !ok?(result)
+        raise OperationFailure, "Database command '#{selector.keys.first}' failed."
+      else
+        result
+      end
+    end
 
     def _synchronize &block
       @semaphore.synchronize &block
@@ -540,6 +569,10 @@ module Mongo
 
     def hash_password(username, plaintext)
       Digest::MD5.hexdigest("#{username}:mongo:#{plaintext}")
+    end
+
+    def system_command_collection
+      Collection.new(self, SYSTEM_COMMAND_COLLECTION)
     end
   end
 end

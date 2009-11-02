@@ -122,7 +122,7 @@ module Mongo
 
     # Return the build information for the current connection.
     def server_info
-      db("admin").db_command(:buildinfo => 1)
+      db("admin").command({:buildinfo => 1}, {:admin => true, :check_response => true})
     end
 
     # Returns the build version of the current server, using

@@ -18,6 +18,9 @@ module Mongo
   # Generic Mongo Ruby Driver exception class.
   class MongoRubyError < StandardError; end
 
+  # Raised when MongoDB itself has returned an error.
+  class MongoDBError < RuntimeError; end
+
   # Raised when configuration options cause connections, queries, etc., to fail.
   class ConfigurationError < MongoRubyError; end
 
@@ -25,10 +28,10 @@ module Mongo
   class MongoArgumentError < MongoRubyError; end
 
   # Raised when a database operation fails.
-  class OperationFailure < RuntimeError; end
+  class OperationFailure < MongoDBError; end
 
   # Raised when a client attempts to perform an invalid operation.
-  class InvalidOperation < RuntimeError; end
+  class InvalidOperation < MongoDBError; end
 
   # Raised when an invalid name is used.
   class InvalidName < RuntimeError; end
