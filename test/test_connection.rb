@@ -72,7 +72,7 @@ class TestConnection < Test::Unit::TestCase
     logger.level = Logger::DEBUG
     db = Connection.new(@host, @port, :logger => logger).db('ruby-mongo-test')
 
-    assert output.string.include?("2004")
+    assert output.string.include?("$cmd.find")
   end
   
   def test_connection_logger
