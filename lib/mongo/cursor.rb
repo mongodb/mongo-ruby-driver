@@ -199,7 +199,7 @@ module Mongo
         message.put_int(0)
         message.put_int(1)
         message.put_long(@cursor_id)
-        @db.send_message_with_operation(Mongo::Constants::OP_KILL_CURSORS, message)
+        @db.send_message_with_operation(Mongo::Constants::OP_KILL_CURSORS, message, "cursor.close()")
       end
       @cursor_id = 0
       @closed    = true
@@ -344,7 +344,7 @@ module Mongo
         
         # Cursor id.
         message.put_long(@cursor_id)
-        @db.send_message_with_operation_without_synchronize(Mongo::Constants::OP_GET_MORE, message)
+        @db.send_message_with_operation_without_synchronize(Mongo::Constants::OP_GET_MORE, message, "cursor.get_more()")
         read_all
       }
       close_cursor_if_query_complete
@@ -366,9 +366,10 @@ module Mongo
       if @query_run
         false
       else
-        message = construct_query_message(@query)
+        message = construct_query_message
         @db._synchronize {
-          @db.send_message_with_operation_without_synchronize(Mongo::Constants::OP_QUERY, message)
+          @db.send_message_with_operation_without_synchronize(Mongo::Constants::OP_QUERY, message, 
+            (query_log_message if @db.logger))  
           @query_run = true
           read_all
         }
@@ -377,7 +378,7 @@ module Mongo
       end
     end
 
-    def construct_query_message(query)
+    def construct_query_message
       message = ByteBuffer.new
       message.put_int(query_opts)
       db_name = @admin ? 'admin' : @db.name
@@ -391,6 +392,11 @@ module Mongo
       message.put_array(BSON.new.serialize(selector).to_a)
       message.put_array(BSON.new.serialize(@fields).to_a) if @fields
       message
+    end
+
+    def query_log_message
+      "db.#{@admin ? 'admin' : @db.name}.#{@collection.name}.find(#{@selector.inspect}, #{@fields ? @fields.inspect : '{}'})" +
+      "#{@skip != 0 ? ('.skip(' + @skip.to_s + ')') : ''}#{@limit != 0 ? ('.limit(' + @limit.to_s + ')') : ''}" 
     end
 
     def selector_with_special_query_fields

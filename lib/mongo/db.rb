@@ -431,28 +431,17 @@ module Mongo
       self.collection(collection_name).create_index(field_or_spec, unique)
     end
 
-    def send_to_db(message)
-      connect_to_master if !connected? && @auto_reconnect
-      begin
-        @logger.debug("  MONGODB #{message}") if @logger
-        @socket.print(message.buf.to_s)
-        @socket.flush
-      rescue => ex
-        close
-        raise ex
-      end
-    end
-
     # Sends a message to MongoDB.
     #
-    # Takes a MongoDB opcode, +operation+, and a message of class ByteBuffer,
-    # +message+, and sends the message to the databse, adding the necessary headers.
-    def send_message_with_operation(operation, message)
+    # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
+    # +message+, and an optional formatted +log_message+.
+    # Sends the message to the databse, adding the necessary headers.
+    def send_message_with_operation(operation, message, log_message=nil)
       @semaphore.synchronize do
         connect_to_master if !connected? && @auto_reconnect
         begin
           message_with_headers = add_message_headers(operation, message)
-          @logger.debug("  MONGODB #{message}") if @logger
+          @logger.debug("  MONGODB #{log_message || message}") if @logger
           @socket.print(message_with_headers.to_s)
           @socket.flush
         rescue => ex
@@ -462,11 +451,13 @@ module Mongo
       end
     end
 
-    def send_message_with_operation_without_synchronize(operation, message)
+    # Note: this is a temporary method. Will be removed in an upcoming
+    # refactoring.
+    def send_message_with_operation_without_synchronize(operation, message, log_message=nil)
       connect_to_master if !connected? && @auto_reconnect
       begin
         message_with_headers = add_message_headers(operation, message)
-        @logger.debug("  MONGODB #{operation} #{message}") if @logger
+        @logger.debug("  MONGODB #{log_message || message}") if @logger
         @socket.print(message_with_headers.to_s)
         @socket.flush
       rescue => ex
@@ -475,6 +466,7 @@ module Mongo
       end
     end
 
+    # Note: this method is a stub. Will be completed in an upcoming refactoring.
     def receive_message_with_operation(operation, message)
       @semaphore.synchronize do 
 

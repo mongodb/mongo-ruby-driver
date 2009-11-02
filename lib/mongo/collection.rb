@@ -228,7 +228,8 @@ module Mongo
       BSON.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
       message.put_array(BSON.new.serialize(selector, false).to_a)
-      @db.send_message_with_operation(Mongo::Constants::OP_DELETE, message)
+      @db.send_message_with_operation(Mongo::Constants::OP_DELETE, message,
+        "db.#{@db.name}.remove(#{selector.inspect})")
     end
 
     # Remove all records.
@@ -258,7 +259,8 @@ module Mongo
       message.put_int(options[:upsert] ? 1 : 0) # 1 if a repsert operation (upsert)
       message.put_array(BSON.new.serialize(spec, false).to_a)
       message.put_array(BSON.new.serialize(document, false).to_a)
-      @db.send_message_with_operation(Mongo::Constants::OP_UPDATE, message)
+      @db.send_message_with_operation(Mongo::Constants::OP_UPDATE, message, 
+        "db.#{@name}.update(#{spec.inspect}, #{document.inspect})")
 
       if options[:safe] && error=@db.error
         raise OperationFailure, error
@@ -483,7 +485,8 @@ EOS
       message.put_int(0)
       BSON.serialize_cstr(message, "#{@db.name}.#{collection_name}")
       documents.each { |doc| message.put_array(BSON.new.serialize(doc, check_keys).to_a) }
-      @db.send_message_with_operation(Mongo::Constants::OP_INSERT, message)
+      @db.send_message_with_operation(Mongo::Constants::OP_INSERT, message,
+        "db.#{collection_name}.insert(#{documents.inspect})")
       documents.collect { |o| o[:_id] || o['_id'] }
     end
 
