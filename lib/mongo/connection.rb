@@ -122,7 +122,7 @@ module Mongo
 
     # Copys the database +from+ on +host+ to +to+ on the executing server.
     # +host+ is optional and will use localhost host if no value is provided.
-    def copyDatabase( from, to, host="localhost" )
+    def copy_database( from, to, host="localhost" )
       oh = OrderedHash.new
       oh[:copydb]= 1
       oh[:fromhost] = host
