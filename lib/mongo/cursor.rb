@@ -20,10 +20,7 @@ module Mongo
   # A cursor over query results. Returned objects are hashes.
   class Cursor
     include Mongo::Conversions
-
     include Enumerable
-
-    RESPONSE_HEADER_SIZE = 20
 
     attr_reader :collection, :selector, :admin, :fields, 
       :order, :hint, :snapshot, :timeout,
@@ -250,14 +247,14 @@ module Mongo
     # the selector will be used in a $where clause.
     # See http://www.mongodb.org/display/DOCS/Server-side+Code+Execution
     def convert_selector_for_query(selector)
-       case selector
-         when Hash
-          selector
-         when nil
-           {}
-         when String
+      case selector
+        when Hash
+         selector
+        when nil
+          {}
+        when String
           {"$where" => Code.new(selector)}
-         when Code
+        when Code
           {"$where" => selector}
       end
     end
@@ -265,47 +262,6 @@ module Mongo
     # Returns true if the query contains order, explain, hint, or snapshot.
     def query_contains_special_fields?
       @order || @explain || @hint || @snapshot
-    end
-
-    def read_all
-      read_message_header
-      read_response_header
-      read_objects_off_wire
-    end
-
-    def read_objects_off_wire
-      while doc = next_object_on_wire
-        @cache << doc
-      end
-    end
-
-    def read_message_header
-      message = ByteBuffer.new
-      message.put_array(@db.receive_full(16).unpack("C*"))
-      unless message.size == 16 #HEADER_SIZE
-        raise "Short read for DB response header: expected #{16} bytes, saw #{message.size}" 
-      end
-      message.rewind
-      size = message.get_int
-      request_id = message.get_int
-      response_to = message.get_int
-      op = message.get_int
-    end
-
-    def read_response_header
-      header_buf = ByteBuffer.new
-      header_buf.put_array(@db.receive_full(RESPONSE_HEADER_SIZE).unpack("C*"))
-      raise "Short read for DB response header; expected #{RESPONSE_HEADER_SIZE} bytes, saw #{header_buf.length}" unless header_buf.length == RESPONSE_HEADER_SIZE
-      header_buf.rewind
-      @result_flags = header_buf.get_int
-      @cursor_id = header_buf.get_long
-      @starting_from = header_buf.get_int
-      @n_remaining = header_buf.get_int
-      if @n_received
-        @n_received += @n_remaining
-      else
-        @n_received = @n_remaining
-      end
     end
 
     def num_remaining
@@ -320,59 +276,36 @@ module Mongo
       num_remaining > 0
     end
 
-    def next_object_on_wire
-      # if @n_remaining is 0 but we have a non-zero cursor, there are more
-      # to fetch, so do a GetMore operation, but don't do it here - do it
-      # when someone pulls an object out of the cache and it's empty
-      return nil if @n_remaining == 0
-      object_from_stream
-    end
-
     def refill_via_get_more
       return if send_query_if_needed || @cursor_id.zero?
-      @db._synchronize {
-        message = ByteBuffer.new
-        # Reserved.
-        message.put_int(0)
+      message = ByteBuffer.new
+      # Reserved.
+      message.put_int(0)
 
-        # DB name.
-        db_name = @admin ? 'admin' : @db.name
-        BSON.serialize_cstr(message, "#{db_name}.#{@collection.name}")
+      # DB name.
+      db_name = @admin ? 'admin' : @db.name
+      BSON.serialize_cstr(message, "#{db_name}.#{@collection.name}")
 
-        # Number of results to return; db decides for now.
-        message.put_int(0)
+      # Number of results to return; db decides for now.
+      message.put_int(0)
         
-        # Cursor id.
-        message.put_long(@cursor_id)
-        @db.send_message_with_operation_without_synchronize(Mongo::Constants::OP_GET_MORE, message, "cursor.get_more()")
-        read_all
-      }
+      # Cursor id.
+      message.put_long(@cursor_id)
+      results, @n_received, @cursor_id = @db.receive_message_with_operation(Mongo::Constants::OP_GET_MORE, message, "cursor.get_more()")
+      @cache += results
       close_cursor_if_query_complete
     end
 
-    def object_from_stream
-      buf = ByteBuffer.new
-      buf.put_array(@db.receive_full(4).unpack("C*"))
-      buf.rewind
-      size = buf.get_int
-      buf.put_array(@db.receive_full(size - 4).unpack("C*"), 4)
-      @n_remaining -= 1
-      buf.rewind
-      BSON.new.deserialize(buf)
-    end
-
+    # Run query first time we request an object from the wire
     def send_query_if_needed
-      # Run query first time we request an object from the wire
       if @query_run
         false
       else
         message = construct_query_message
-        @db._synchronize {
-          @db.send_message_with_operation_without_synchronize(Mongo::Constants::OP_QUERY, message, 
+        results, @n_received, @cursor_id = @db.receive_message_with_operation(Mongo::Constants::OP_QUERY, message, 
             (query_log_message if @db.logger))  
-          @query_run = true
-          read_all
-        }
+        @cache += results
+        @query_run = true
         close_cursor_if_query_complete
         true
       end

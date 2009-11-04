@@ -26,6 +26,8 @@ module Mongo
   # A Mongo database.
   class DB
 
+    STANDARD_HEADER_SIZE = 16
+    RESPONSE_HEADER_SIZE = 20
     SYSTEM_NAMESPACE_COLLECTION = "system.namespaces"
     SYSTEM_INDEX_COLLECTION = "system.indexes"
     SYSTEM_PROFILE_COLLECTION = "system.profile"
@@ -48,6 +50,8 @@ module Mongo
 
     # The name of the database.
     attr_reader :name
+
+    attr_reader :connection
 
     # Host to which we are currently connected.
     attr_reader :host
@@ -132,6 +136,8 @@ module Mongo
       if db_name.empty?
         raise InvalidName, "database name cannot be the empty string"
       end
+
+      @connection = options[:connection]
 
       @name, @nodes = db_name, nodes
       @strict = options[:strict]
@@ -437,28 +443,79 @@ module Mongo
     # +message+, and an optional formatted +log_message+.
     # Sends the message to the databse, adding the necessary headers.
     def send_message_with_operation(operation, message, log_message=nil)
+      message_with_headers = add_message_headers(operation, message).to_s
+      @logger.debug("  MONGODB #{log_message || message}") if @logger
       @semaphore.synchronize do
-        connect_to_master if !connected? && @auto_reconnect
-        begin
-          message_with_headers = add_message_headers(operation, message)
-          @logger.debug("  MONGODB #{log_message || message}") if @logger
-          @socket.print(message_with_headers.to_s)
-          @socket.flush
-        rescue => ex
-          close
-          raise ex
-        end
+        send_message_on_socket(message_with_headers)
       end
     end
 
-    # Note: this is a temporary method. Will be removed in an upcoming
-    # refactoring.
-    def send_message_with_operation_without_synchronize(operation, message, log_message=nil)
+    # Note: this method is a stub. Will be completed in an upcoming refactoring.
+    def receive_message_with_operation(operation, message, log_message=nil)
+      message_with_headers = add_message_headers(operation, message).to_s
+      @logger.debug("  MONGODB #{log_message || message}") if @logger
+      @semaphore.synchronize do 
+        send_message_on_socket(message_with_headers)
+        receive
+      end
+    end
+
+    def receive
+      receive_header
+      number_received, cursor_id = receive_response_header
+      read_documents(number_received, cursor_id)
+    end
+
+    def receive_header
+      header = ByteBuffer.new
+      header.put_array(receive_data_on_socket(16).unpack("C*"))
+      unless header.size == STANDARD_HEADER_SIZE
+        raise "Short read for DB response header: " +
+          "expected #{STANDARD_HEADER_SIZE} bytes, saw #{header.size}" 
+      end
+      header.rewind
+      size        = header.get_int
+      request_id  = header.get_int
+      response_to = header.get_int
+      op          = header.get_int
+    end
+
+    def receive_response_header
+      header_buf = ByteBuffer.new
+      header_buf.put_array(receive_data_on_socket(RESPONSE_HEADER_SIZE).unpack("C*"))
+      if header_buf.length != RESPONSE_HEADER_SIZE
+        raise "Short read for DB response header; " +
+          "expected #{RESPONSE_HEADER_SIZE} bytes, saw #{header_buf.length}"
+      end
+      header_buf.rewind
+      result_flags     = header_buf.get_int
+      cursor_id        = header_buf.get_long
+      starting_from    = header_buf.get_int
+      number_remaining = header_buf.get_int
+      [number_remaining, cursor_id]
+    end
+
+    def read_documents(number_received, cursor_id)
+      docs = []
+      number_remaining = number_received
+      while number_remaining > 0 do
+        buf = ByteBuffer.new
+        buf.put_array(receive_data_on_socket(4).unpack("C*"))
+        buf.rewind
+        size = buf.get_int
+        buf.put_array(receive_data_on_socket(size - 4).unpack("C*"), 4)
+        number_remaining -= 1
+        buf.rewind
+        docs << BSON.new.deserialize(buf)
+      end
+      [docs, number_received, cursor_id]
+    end
+
+    # Sending a message on socket.
+    def send_message_on_socket(message_with_headers)
       connect_to_master if !connected? && @auto_reconnect
       begin
-        message_with_headers = add_message_headers(operation, message)
-        @logger.debug("  MONGODB #{log_message || message}") if @logger
-        @socket.print(message_with_headers.to_s)
+        @socket.print(message_with_headers)
         @socket.flush
       rescue => ex
         close
@@ -466,12 +523,15 @@ module Mongo
       end
     end
 
-    # Note: this method is a stub. Will be completed in an upcoming refactoring.
-    def receive_message_with_operation(operation, message)
-      @semaphore.synchronize do 
-
-
+    # Receive data of specified length on socket.
+    def receive_data_on_socket(length)
+      message = ""
+      while message.length < length do
+        chunk = @socket.recv(length - message.length)
+        raise "connection closed" unless chunk.length > 0
+        message += chunk
       end
+      message
     end
 
     # Return +true+ if +doc+ contains an 'ok' field with the value 1.
