@@ -120,17 +120,16 @@ module Mongo
       single_db_command(name, :dropDatabase => 1)
     end
 
-    # Copys the database +from+ on +host+ to +to+ on the executing server.
-    # +host+ is optional and will use localhost host if no value is provided.
-    def copy_database( from, to, host="localhost" )
+    # Copies the database +from+ on the local server to +to+ on the specified +host+.
+    # +host+ defaults to 'localhost' if no value is provided.
+    def copy_database(from, to, host="localhost")
       oh = OrderedHash.new
-      oh[:copydb]= 1
+      oh[:copydb]   = 1
       oh[:fromhost] = host
-      oh[:fromdb] = from
-      oh[:todb] = to
+      oh[:fromdb]   = from
+      oh[:todb]     = to
       single_db_command('admin', oh)
     end
-
 
     # Return the build information for the current connection.
     def server_info

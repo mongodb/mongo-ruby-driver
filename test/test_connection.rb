@@ -53,6 +53,14 @@ class TestConnection < Test::Unit::TestCase
     @mongo.drop_database('ruby-mongo-info-test')
   end
 
+  def test_copy_database
+    @mongo.db('old').collection('copy-test').insert('a' => 1)
+    @mongo.copy_database('old', 'new')
+    old_object = @mongo.db('old').collection('copy-test').find.next_object
+    new_object = @mongo.db('new').collection('copy-test').find.next_object
+    assert_equal old_object, new_object
+  end
+
   def test_database_names
     @mongo.drop_database('ruby-mongo-info-test')
     @mongo.db('ruby-mongo-info-test').collection('info-test').insert('a' => 1)
