@@ -159,7 +159,9 @@ class ByteBuffer
   end
 
   def to_s
-    if @buf.respond_to? "pack"
+    if @buf.respond_to? :fast_pack
+      @buf.fast_pack
+    elsif @buf.respond_to? "pack"
       @buf.pack("C*")
     else
       @buf

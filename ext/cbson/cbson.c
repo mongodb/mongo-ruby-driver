@@ -38,6 +38,8 @@
 
 #include <assert.h>
 #include <math.h>
+#include <unistd.h>
+#include <time.h>
 
 #define INITIAL_BUFFER_SIZE 256
 
@@ -49,6 +51,7 @@ static VALUE Code;
 static VALUE RegexpOfHolding;
 static VALUE OrderedHash;
 static VALUE InvalidName;
+static VALUE DigestMD5;
 
 #if HAVE_RUBY_ENCODING_H
 #include "ruby/encoding.h"
@@ -737,8 +740,58 @@ static VALUE method_deserialize(VALUE self, VALUE bson) {
     return elements_to_hash(buffer, remaining);
 }
 
+
+static VALUE fast_pack(VALUE self)
+{
+    VALUE res;
+    long i;
+    char c;
+
+    res = rb_str_buf_new(0);
+
+    for (i = 0; i < RARRAY(self)->len; i++) {
+        c = FIX2LONG(RARRAY(self)->ptr[i]);
+        rb_str_buf_cat(res, &c, sizeof(char));
+    }
+
+    return res;
+}
+
+
+static VALUE objectid_generate(VALUE self)
+{
+    VALUE ary, digest, hostname;
+    unsigned char *string;
+    unsigned long t, pid, inc;
+    int i;
+
+    string = ALLOC_N(unsigned char, 13);
+    hostname = rb_str_buf_new(64);
+
+    t = htonl(time(NULL));
+    MEMCPY(string, &t, char, 4);
+
+    gethostname(RSTRING(hostname)->ptr, 64);
+    RSTRING(hostname)->len = strlen(RSTRING(hostname)->ptr);
+    digest = rb_funcall(DigestMD5, rb_intern("hexdigest"), 1, hostname);
+    MEMCPY(string+4, RSTRING(digest)->ptr, unsigned char, 3);
+
+    pid = htonl(getpid());
+    MEMCPY(string+7, &pid, char, 2);
+
+    inc = htonl(FIX2ULONG(rb_funcall(self, rb_intern("get_inc"), 0)));
+    MEMCPY(string+9, ((unsigned char*)&inc + 1), unsigned char, 3);
+
+    ary = rb_ary_new2(12);
+    for(i = 0; i < 12; i++)
+        rb_ary_store(ary, i, INT2FIX((unsigned int)string[i]));
+    free(string);
+    return ary;
+}
+
+
 void Init_cbson() {
-    VALUE mongo, CBson;
+    VALUE mongo, CBson, Digest;
     Time = rb_const_get(rb_cObject, rb_intern("Time"));
 
     mongo = rb_const_get(rb_cObject, rb_intern("Mongo"));
@@ -760,4 +813,12 @@ void Init_cbson() {
     CBson = rb_define_module("CBson");
     rb_define_module_function(CBson, "serialize", method_serialize, 2);
     rb_define_module_function(CBson, "deserialize", method_deserialize, 1);
+
+    rb_require("digest/md5");
+    Digest = rb_const_get(rb_cObject, rb_intern("Digest"));
+    DigestMD5 = rb_const_get(Digest, rb_intern("MD5"));
+
+    rb_define_method(ObjectID, "generate", objectid_generate, 0);
+
+    rb_define_method(rb_cArray, "fast_pack", fast_pack, 0);
 }
