@@ -30,6 +30,25 @@ class CollectionTest < Test::Unit::TestCase
       end
       @coll.insert({:title => 'Moby Dick'})
     end
+
+    should "send safe update message" do
+      @db = MockDB.new("testing", ['localhost', 27017], :logger => @logger)
+      @coll = @db.collection('books')
+      @db.expects(:send_message_with_safe_check).with do |op, msg, log|
+        op == 2001 && log.include?("db.books.update")
+      end
+      @coll.update({}, {:title => 'Moby Dick'}, :safe => true)
+
+    end
+
+    should "send safe insert message" do
+      @db = MockDB.new("testing", ['localhost', 27017], :logger => @logger)
+      @coll = @db.collection('books')
+      @db.expects(:send_message_with_safe_check).with do |op, msg, log|
+        op == 2001 && log.include?("db.books.update")
+      end
+      @coll.update({}, {:title => 'Moby Dick'}, :safe => true)
+    end
   end
 end
 

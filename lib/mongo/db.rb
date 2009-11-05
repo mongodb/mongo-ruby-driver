@@ -450,6 +450,21 @@ module Mongo
       end
     end
 
+    # Sends a message to the database, waits for a response, and raises
+    # and exception if the operation has failed.
+    def send_message_with_safe_check(operation, message, log_message=nil)
+      message_with_headers = add_message_headers(operation, message)
+      message_with_check   = last_error_message
+      @logger.debug("  MONGODB #{log_message || message}") if @logger
+      @semaphore.synchronize do
+        send_message_on_socket(message_with_headers.append!(message_with_check).to_s)
+        docs, num_received, cursor_id = receive
+        if num_received == 1 && error = docs[0]['err']
+          raise Mongo::OperationFailure, error
+        end
+      end
+    end
+
     # Note: this method is a stub. Will be completed in an upcoming refactoring.
     def receive_message_with_operation(operation, message, log_message=nil)
       message_with_headers = add_message_headers(operation, message).to_s
@@ -512,10 +527,10 @@ module Mongo
     end
 
     # Sending a message on socket.
-    def send_message_on_socket(message_with_headers)
+    def send_message_on_socket(packed_message)
       connect_to_master if !connected? && @auto_reconnect
       begin
-        @socket.print(message_with_headers)
+        @socket.print(packed_message)
         @socket.flush
       rescue => ex
         close
@@ -583,10 +598,6 @@ module Mongo
       end
     end
 
-    def _synchronize &block
-      @semaphore.synchronize &block
-    end
-
     def full_collection_name(collection_name)
       "#{@name}.#{collection_name}"
     end
@@ -617,6 +628,35 @@ module Mongo
     def get_request_id
       @@current_request_id += 1
       @@current_request_id
+    end
+
+    # Creates a getlasterror message.
+    def last_error_message
+      generate_last_error_message
+    end
+
+    def generate_last_error_message
+      message = ByteBuffer.new
+      message.put_int(0)
+      BSON.serialize_cstr(message, "#{@name}.$cmd")
+      message.put_int(0)
+      message.put_int(-1)
+      message.put_array(BSON.new.serialize({:getlasterror => 1}).to_a)
+      add_message_headers(Mongo::Constants::OP_QUERY, message)
+    end
+
+    def reset_error_message
+      @@reset_error_message ||= generate_reset_error_message
+    end
+
+    def generate_reset_error_message
+      message = ByteBuffer.new
+      message.put_int(0)
+      BSON.serialize_cstr(message, "#{@name}.$cmd")
+      message.put_int(0)
+      message.put_int(-1)
+      message.put_array(BSON.new.serialize({:reseterror => 1}).to_a)
+      add_message_headers(Mongo::Constants::OP_QUERY, message)
     end
 
     def hash_password(username, plaintext)

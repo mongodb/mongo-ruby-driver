@@ -202,13 +202,7 @@ module Mongo
     def insert(doc_or_docs, options={})
       doc_or_docs = [doc_or_docs] unless doc_or_docs.is_a?(Array)
       doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
-      result = insert_documents(doc_or_docs)
-      if options.delete(:safe)
-        error = @db.error
-        if error
-          raise OperationFailure, error
-        end
-      end
+      result = insert_documents(doc_or_docs, @name, true, options[:safe])
       result.size > 1 ? result : result.first
     end
     alias_method :<<, :insert
@@ -259,11 +253,12 @@ module Mongo
       message.put_int(options[:upsert] ? 1 : 0) # 1 if a repsert operation (upsert)
       message.put_array(BSON.new.serialize(spec, false).to_a)
       message.put_array(BSON.new.serialize(document, false).to_a)
-      @db.send_message_with_operation(Mongo::Constants::OP_UPDATE, message, 
-        "db.#{@name}.update(#{spec.inspect}, #{document.inspect})")
-
-      if options[:safe] && error=@db.error
-        raise OperationFailure, error
+      if options[:safe]
+        @db.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message,
+          "db.#{@name}.update(#{spec.inspect}, #{document.inspect})")
+      else
+        @db.send_message_with_operation(Mongo::Constants::OP_UPDATE, message, 
+          "db.#{@name}.update(#{spec.inspect}, #{document.inspect})")
       end
     end
 
@@ -480,13 +475,18 @@ EOS
     # Sends an Mongo::Constants::OP_INSERT message to the database.
     # Takes an array of +documents+, an optional +collection_name+, and a
     # +check_keys+ setting.
-    def insert_documents(documents, collection_name=@name, check_keys=true)
+    def insert_documents(documents, collection_name=@name, check_keys=true, safe=false)
       message = ByteBuffer.new
       message.put_int(0)
       BSON.serialize_cstr(message, "#{@db.name}.#{collection_name}")
       documents.each { |doc| message.put_array(BSON.new.serialize(doc, check_keys).to_a) }
-      @db.send_message_with_operation(Mongo::Constants::OP_INSERT, message,
-        "db.#{collection_name}.insert(#{documents.inspect})")
+      if safe
+        @db.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message,
+          "db.#{collection_name}.insert(#{documents.inspect})")
+      else
+        @db.send_message_with_operation(Mongo::Constants::OP_INSERT, message,
+          "db.#{collection_name}.insert(#{documents.inspect})")
+      end
       documents.collect { |o| o[:_id] || o['_id'] }
     end
 
