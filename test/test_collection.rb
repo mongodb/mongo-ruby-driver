@@ -97,6 +97,20 @@ class TestCollection < Test::Unit::TestCase
     assert_equal 1, @@test.find_one(:_id => id2)["x"]
   end
 
+  if @@version >= "1.1.3"
+    def test_multi_update
+      @@test.save("num" => 10)
+      @@test.save("num" => 10)
+      @@test.save("num" => 10)
+      assert_equal 3, @@test.count
+
+      @@test.update({"num" => 10}, {"$set" => {"num" => 100}}, :multi => true)
+      @@test.find.each do |doc|
+        assert_equal 100, doc["num"]
+      end
+    end
+  end
+
   def test_upsert
     @@test.update({"page" => "/"}, {"$inc" => {"count" => 1}}, :upsert => true)
     @@test.update({"page" => "/"}, {"$inc" => {"count" => 1}}, :upsert => true)

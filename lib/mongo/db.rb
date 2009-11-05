@@ -465,7 +465,7 @@ module Mongo
       end
     end
 
-    # Note: this method is a stub. Will be completed in an upcoming refactoring.
+    # Send a message to the database and wait for the response.
     def receive_message_with_operation(operation, message, log_message=nil)
       message_with_headers = add_message_headers(operation, message).to_s
       @logger.debug("  MONGODB #{log_message || message}") if @logger

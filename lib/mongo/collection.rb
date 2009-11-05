@@ -235,30 +235,37 @@ module Mongo
 
     # Update a single document in this collection.
     #
-    # :spec :: a hash specifying elements which must be present for
-    #   a document to be updated
+    # :selector :: a hash specifying elements which must be present for a document to be updated. Note: 
+    # the update command currently updates only the first document matching the
+    # given selector. If you want all matching documents to be updated, be sure
+    # to specify :multi => true.
     # :document :: a hash specifying the fields to be changed in the
-    #   selected document, or (in the case of an upsert) the document to
-    #   be inserted
+    # selected document, or (in the case of an upsert) the document to
+    # be inserted
     #
     # Options:
     # :upsert :: if true, perform an upsert operation
+    # :multi :: update all documents matching the selector, as opposed to
+    # just the first matching document. Note: only works in 1.1.3 or later.
     # :safe :: if true, check that the update succeeded. OperationFailure
-    #   will be raised on an error. Checking for safety requires an extra
-    #   round-trip to the database
-    def update(spec, document, options={})
+    # will be raised on an error. Checking for safety requires an extra
+    # round-trip to the database
+    def update(selector, document, options={})
       message = ByteBuffer.new
       message.put_int(0)
       BSON.serialize_cstr(message, "#{@db.name}.#{@name}")
-      message.put_int(options[:upsert] ? 1 : 0) # 1 if a repsert operation (upsert)
-      message.put_array(BSON.new.serialize(spec, false).to_a)
+      update_options  = 0
+      update_options += 1 if options[:upsert]
+      update_options += 2 if options[:multi]
+      message.put_int(update_options)
+      message.put_array(BSON.new.serialize(selector, false).to_a)
       message.put_array(BSON.new.serialize(document, false).to_a)
       if options[:safe]
         @db.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message,
-          "db.#{@name}.update(#{spec.inspect}, #{document.inspect})")
+          "db.#{@name}.update(#{selector.inspect}, #{document.inspect})")
       else
         @db.send_message_with_operation(Mongo::Constants::OP_UPDATE, message, 
-          "db.#{@name}.update(#{spec.inspect}, #{document.inspect})")
+          "db.#{@name}.update(#{selector.inspect}, #{document.inspect})")
       end
     end
 

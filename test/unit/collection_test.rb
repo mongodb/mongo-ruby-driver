@@ -38,7 +38,6 @@ class CollectionTest < Test::Unit::TestCase
         op == 2001 && log.include?("db.books.update")
       end
       @coll.update({}, {:title => 'Moby Dick'}, :safe => true)
-
     end
 
     should "send safe insert message" do
