@@ -465,7 +465,7 @@ module Mongo
       end
     end
 
-    # Send a message to the database and wait for the response.
+    # Send a message to the database and waits for the response.
     def receive_message_with_operation(operation, message, log_message=nil)
       message_with_headers = add_message_headers(operation, message).to_s
       @logger.debug("  MONGODB #{log_message || message}") if @logger
@@ -474,6 +474,61 @@ module Mongo
         receive
       end
     end
+
+    # Return +true+ if +doc+ contains an 'ok' field with the value 1.
+    def ok?(doc)
+      ok = doc['ok']
+      ok.kind_of?(Numeric) && ok.to_i == 1
+    end
+
+    # DB commands need to be ordered, so selector must be an OrderedHash
+    # (or a Hash with only one element). What DB commands really need is
+    # that the "command" key be first.
+    def db_command(selector, use_admin_db=false)
+      if !selector.kind_of?(OrderedHash)
+        if !selector.kind_of?(Hash) || selector.keys.length > 1
+          raise "db_command must be given an OrderedHash when there is more than one key"
+        end
+      end
+
+      cursor = Cursor.new(Collection.new(self, SYSTEM_COMMAND_COLLECTION), :admin => use_admin_db, :limit => -1, :selector => selector)
+      cursor.next_object
+    end
+    
+    # Sends a command to the database.
+    #
+    # :selector (required) :: An OrderedHash, or a standard Hash with just one
+    # key, specifying the command to be performed.
+    #
+    # :admin (optional) :: If true, the command will be executed on the admin
+    # collection.
+    #
+    # :check_response (optional) :: If true, will raise an exception if the
+    # command fails.
+    #
+    # Note: DB commands must start with the "command" key. For this reason,
+    # any selector containing more than one key must be an OrderedHash.
+    def command(selector, admin=false, check_response=false)
+      raise MongoArgumentError, "command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
+      if selector.class.eql?(Hash) && selector.keys.length > 1 
+        raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
+      end
+
+      result = Cursor.new(system_command_collection, :admin => admin, 
+        :limit => -1, :selector => selector).next_object
+
+      if check_response && !ok?(result)
+        raise OperationFailure, "Database command '#{selector.keys.first}' failed."
+      else
+        result
+      end
+    end
+
+    def full_collection_name(collection_name)
+      "#{@name}.#{collection_name}"
+    end
+
+    private
 
     def receive
       receive_header
@@ -548,61 +603,6 @@ module Mongo
       end
       message
     end
-
-    # Return +true+ if +doc+ contains an 'ok' field with the value 1.
-    def ok?(doc)
-      ok = doc['ok']
-      ok.kind_of?(Numeric) && ok.to_i == 1
-    end
-
-    # DB commands need to be ordered, so selector must be an OrderedHash
-    # (or a Hash with only one element). What DB commands really need is
-    # that the "command" key be first.
-    def db_command(selector, use_admin_db=false)
-      if !selector.kind_of?(OrderedHash)
-        if !selector.kind_of?(Hash) || selector.keys.length > 1
-          raise "db_command must be given an OrderedHash when there is more than one key"
-        end
-      end
-
-      cursor = Cursor.new(Collection.new(self, SYSTEM_COMMAND_COLLECTION), :admin => use_admin_db, :limit => -1, :selector => selector)
-      cursor.next_object
-    end
-    
-    # Sends a command to the database.
-    #
-    # :selector (required) :: An OrderedHash, or a standard Hash with just one
-    # key, specifying the command to be performed.
-    #
-    # :admin (optional) :: If true, the command will be executed on the admin
-    # collection.
-    #
-    # :check_response (optional) :: If true, will raise an exception if the
-    # command fails.
-    #
-    # Note: DB commands must start with the "command" key. For this reason,
-    # any selector containing more than one key must be an OrderedHash.
-    def command(selector, admin=false, check_response=false)
-      raise MongoArgumentError, "command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
-      if selector.class.eql?(Hash) && selector.keys.length > 1 
-        raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
-      end
-
-      result = Cursor.new(system_command_collection, :admin => admin, 
-        :limit => -1, :selector => selector).next_object
-
-      if check_response && !ok?(result)
-        raise OperationFailure, "Database command '#{selector.keys.first}' failed."
-      else
-        result
-      end
-    end
-
-    def full_collection_name(collection_name)
-      "#{@name}.#{collection_name}"
-    end
-
-    private
 
     # Prepares a message for transmission to MongoDB by
     # constructing a valid message header.
