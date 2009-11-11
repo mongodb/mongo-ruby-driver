@@ -7,7 +7,18 @@ class ObjectIDTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @o = ObjectID.new()
+    @o = ObjectID.new
+  end
+
+  def test_hashcode
+    assert_equal @o.instance_variable_get(:@data).hash, @o.hash
+  end
+
+  def test_array_uniq_for_equilavent_ids
+    a = ObjectID.new('123')
+    b = ObjectID.new('123')
+    assert_equal a, b
+    assert_equal 1, [a, b].uniq.size
   end
 
   def test_create_pk_method

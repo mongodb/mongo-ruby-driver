@@ -57,6 +57,12 @@ module Mongo
     end
     alias_method :==, :eql?
 
+    # Returns a unique hashcode for the object.
+    # This is required since we've defined an #eql? method.
+    def hash
+      @data.hash
+    end
+
     def to_a
       @data.dup
     end

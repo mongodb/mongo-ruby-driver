@@ -356,6 +356,9 @@ Les Hill, leshill on github
 Sean Cribbs, seancribbs on github
 * Modify standard_benchmark to allow profiling
 
+Sunny Hirai
+* Suggested hashcode fix for Mongo::ObjectID
+
 = License
 
  Copyright 2008-2009 10gen Inc.
