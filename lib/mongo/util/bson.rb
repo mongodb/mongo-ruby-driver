@@ -71,6 +71,12 @@ class BSON
     @buf.to_a
   end
 
+  # Serializes an object.
+  # Implemented to ensure an API compatible with BSON extension. 
+  def self.serialize(obj, check_keys)
+    new.serialize(obj, check_keys)
+  end
+
   begin
     require 'mongo_ext/cbson'
     def serialize(obj, check_keys=false)
@@ -97,6 +103,12 @@ class BSON
       @buf.put_int(@buf.size, 0)
       self
     end
+  end
+
+  # Returns the array stored in the buffer.
+  # Implemented to ensure an API compatible with BSON extension. 
+  def unpack(arg)
+    @buf.to_a
   end
 
   def serialize_key_value(k, v, check_keys)

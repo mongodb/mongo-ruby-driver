@@ -450,6 +450,14 @@ module Mongo
       end
     end
 
+    def send_message_with_operation_raw(operation, message, log_message=nil)
+      message_with_headers = add_message_headers_raw(operation, message)
+      @logger.debug("  MONGODB #{log_message || message}") if @logger
+      @semaphore.synchronize do
+        send_message_on_socket(message_with_headers)
+      end
+    end
+
     # Sends a message to the database, waits for a response, and raises
     # and exception if the operation has failed.
     def send_message_with_safe_check(operation, message, log_message=nil)
@@ -641,7 +649,7 @@ module Mongo
       BSON.serialize_cstr(message, "#{@name}.$cmd")
       message.put_int(0)
       message.put_int(-1)
-      message.put_array(BSON.new.serialize({:getlasterror => 1}).to_a)
+      message.put_array(BSON_SERIALIZER.serialize({:getlasterror => 1}, false).unpack("C*"))
       add_message_headers(Mongo::Constants::OP_QUERY, message)
     end
 
@@ -655,7 +663,7 @@ module Mongo
       BSON.serialize_cstr(message, "#{@name}.$cmd")
       message.put_int(0)
       message.put_int(-1)
-      message.put_array(BSON.new.serialize({:reseterror => 1}).to_a)
+      message.put_array(BSON_SERIALIZER.serialize({:reseterror => 1}, false).unpack("C*"))
       add_message_headers(Mongo::Constants::OP_QUERY, message)
     end
 

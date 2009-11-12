@@ -20,9 +20,11 @@ class ByteBuffer
   attr_reader :order
 
   def initialize(initial_data=[])
-    @buf = initial_data
+    @buf    = initial_data
     @cursor = 0
-    self.order = :little_endian
+    @order  = :little_endian
+    @int_pack_order    = 'V'
+    @double_pack_order = 'E'
   end
 
   # +endianness+ should be :little_endian or :big_endian. Default is :little_endian

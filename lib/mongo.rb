@@ -18,6 +18,13 @@ require 'mongo/cursor'
 require 'mongo/collection'
 require 'mongo/admin'
 
+begin
+  require 'mongo_ext/cbson'
+    BSON_SERIALIZER = CBson
+  rescue LoadError
+    BSON_SERIALIZER = BSON
+end
+
 module Mongo
   ASCENDING = 1
   DESCENDING = -1
