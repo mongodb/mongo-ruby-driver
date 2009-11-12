@@ -58,13 +58,12 @@ def profile(str)
   end
 end
 
-def benchmark(str, proc, n, db, coll_name, object, setup=nil)
+def benchmark(str, n, db, coll_name, object)
   coll = db.collection(coll_name)
-  setup.call(coll, object) if setup
   profile(str) do
     GC.start
     tms = Benchmark.measure do
-      n.times { |i| proc.call(coll, object.is_a?(Hash) ? object.dup : object, i) }
+      n.times { |i| yield(coll, object.is_a?(Hash) ? object.dup : object, i) }
     end
     report(str, tms.real)
   end
@@ -75,56 +74,77 @@ port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
 
 connection = Connection.new(host, port)
 connection.drop_database("benchmark")
-db = connection.db('benchmark')
+@db = connection.db('benchmark')
 
-insert = Proc.new { |coll, object, i|
-  object['x'] = i
-  coll.insert(object)
-}
-benchmark('insert (small, no index)', insert, PER_TRIAL, db, 'small_none', SMALL)
-benchmark('insert (medium, no index)', insert, PER_TRIAL, db, 'medium_none', MEDIUM)
-benchmark('insert (large, no index)', insert, PER_TRIAL, db, 'large_none', LARGE)
+def benchmark_insert(desc, data_desc, data)
+  benchmark(desc, PER_TRIAL, @db, data_desc, data) do |coll, object, i| 
+    object['x'] = i
+    coll.insert(object)
+  end
+end
 
-index_on_x = Proc.new { |coll, object|
-  coll.create_index('x')
-}
-benchmark('insert (small, indexed)', insert, PER_TRIAL, db, 'small_index', SMALL, index_on_x)
-benchmark('insert (medium, indexed)', insert, PER_TRIAL, db, 'medium_index', MEDIUM, index_on_x)
-benchmark('insert (large, indexed)', insert, PER_TRIAL, db, 'large_index', LARGE, index_on_x)
+def benchmark_insert_index(desc, data_desc, data)
+  benchmark(desc, PER_TRIAL, @db, data_desc, data) do |coll, object, i| 
+    coll.create_index('x')
+    object['x'] = i
+    coll.insert(object)
+  end
+end
 
-insert_batch = Proc.new { |coll, object, i|
-  object['x'] = i
-  coll.insert([object] * BATCH_SIZE)
-}
-benchmark('batch insert (small, no index)', insert_batch, PER_TRIAL/BATCH_SIZE, db, 'small_bulk', SMALL)
-benchmark('batch insert (medium, no index)', insert_batch, PER_TRIAL/BATCH_SIZE, db, 'medium_bulk', MEDIUM)
-benchmark('batch insert (large, no index)', insert_batch, PER_TRIAL/BATCH_SIZE, db, 'large_bulk', LARGE)
+benchmark_insert('insert (small, no index)', 'small_none', SMALL)  
+benchmark_insert('insert (medium, no index)', 'medium_none', MEDIUM)
+benchmark_insert('insert (large, no index)', 'large_none', LARGE)
 
-find_one = Proc.new { |coll, x, i|
-  coll.find_one('x' => x)
-}
-benchmark('find_one (small, no index)', find_one, PER_TRIAL, db, 'small_none', PER_TRIAL / 2)
-benchmark('find_one (medium, no index)', find_one, PER_TRIAL, db, 'medium_none', PER_TRIAL / 2)
-benchmark('find_one (large, no index)', find_one, PER_TRIAL, db, 'large_none', PER_TRIAL / 2)
+benchmark_insert_index('insert (small, index)', 'small_indexed', SMALL)  
+benchmark_insert_index('insert (medium, index)', 'medium_indexed', MEDIUM)
+benchmark_insert_index('insert (large, index)', 'large_indexed', LARGE)
+ 
+def benchmark_insert_batch(desc, data_desc, data)
+  benchmark(desc, PER_TRIAL / BATCH_SIZE, @db, data_desc, data) do |coll, object, i| 
+    object['x'] = i
+    coll.insert([object] * BATCH_SIZE)
+  end
+end
 
-benchmark('find_one (small, indexed)', find_one, PER_TRIAL, db, 'small_index', PER_TRIAL / 2)
-benchmark('find_one (medium, indexed)', find_one, PER_TRIAL, db, 'medium_index', PER_TRIAL / 2)
-benchmark('find_one (large, indexed)', find_one, PER_TRIAL, db, 'large_index', PER_TRIAL / 2)
+benchmark_insert_batch('insert batch (small, index)', 'small_bulk', SMALL)  
+benchmark_insert_batch('insert batch (medium, index)', 'medium_bulk', MEDIUM)
+benchmark_insert_batch('insert batch (large, index)', 'large_bulk', LARGE)
 
-find = Proc.new { |coll, x, i|
-  coll.find('x' => x).each {}
-}
-benchmark('find (small, no index)', find, PER_TRIAL, db, 'small_none', PER_TRIAL / 2)
-benchmark('find (medium, no index)', find, PER_TRIAL, db, 'medium_none', PER_TRIAL / 2)
-benchmark('find (large, no index)', find, PER_TRIAL, db, 'large_none', PER_TRIAL / 2)
+def benchmark_find_one(desc, data_desc, data)
+  benchmark(desc, PER_TRIAL, @db, data_desc, data) do |coll, object, i| 
+    coll.find_one('x' => data_desc)
+  end
+end
 
-benchmark('find (small, indexed)', find, PER_TRIAL, db, 'small_index', PER_TRIAL / 2)
-benchmark('find (medium, indexed)', find, PER_TRIAL, db, 'medium_index', PER_TRIAL / 2)
-benchmark('find (large, indexed)', find, PER_TRIAL, db, 'large_index', PER_TRIAL / 2)
+benchmark_find_one('find_one (small, no index)', 'small_none', PER_TRIAL / 2)
+benchmark_find_one('find_one (medium, no index)', 'medium_none', PER_TRIAL / 2)
+benchmark_find_one('find_one (large, no index)', 'large_none', PER_TRIAL / 2)
+benchmark_find_one('find_one (small, indexed)', 'small_indexed', PER_TRIAL / 2)
+benchmark_find_one('find_one (medium, indexed)', 'medium_indexed', PER_TRIAL / 2)
+benchmark_find_one('find_one (large, indexed)', 'large_indexed', PER_TRIAL / 2)
 
-benchmark('find range (small, indexed)', find, PER_TRIAL, db, 'small_index',
-          {"$gt" => PER_TRIAL / 2, "$lt" => PER_TRIAL / 2 + BATCH_SIZE})
-benchmark('find range (medium, indexed)', find, PER_TRIAL, db, 'medium_index',
-          {"$gt" => PER_TRIAL / 2, "$lt" => PER_TRIAL / 2 + BATCH_SIZE})
-benchmark('find range (large, indexed)', find, PER_TRIAL, db, 'large_index',
-          {"$gt" => PER_TRIAL / 2, "$lt" => PER_TRIAL / 2 + BATCH_SIZE})
+def benchmark_find_all(desc, data_desc, data)
+  benchmark(desc, PER_TRIAL, @db, data_desc, data) do |coll, object, i| 
+    coll.find('x' => data_desc).each {}
+  end
+end
+
+benchmark_find_all('find_all (small, no index)', 'small_none', PER_TRIAL / 2)
+benchmark_find_all('find_all (medium, no index)', 'medium_none', PER_TRIAL / 2)
+benchmark_find_all('find_all (large, no index)', 'large_none', PER_TRIAL / 2)
+benchmark_find_all('find_all (small, indexed)', 'small_indexed', PER_TRIAL / 2)
+benchmark_find_all('find_all (medium, indexed)', 'medium_indexed', PER_TRIAL / 2)
+benchmark_find_all('find_all (large, indexed)', 'large_indexed', PER_TRIAL / 2)
+
+def benchmark_find_range(desc, data_desc, data)
+  benchmark(desc, PER_TRIAL, @db, data_desc, data) do |coll, object, i| 
+    coll.find('x' => data_desc).each {}
+  end
+end
+
+benchmark_find_range('find_range (small, indexed)', 'small_indexed', 
+                     {"$gt" => PER_TRIAL / 2, "$lt" => PER_TRIAL / 2 + BATCH_SIZE})
+benchmark_find_range('find_range (medium, indexed)', 'medium_indexed', 
+                     {"$gt" => PER_TRIAL / 2, "$lt" => PER_TRIAL / 2 + BATCH_SIZE})
+benchmark_find_range('find_range (large, indexed)', 'large_indexed', 
+                     {"$gt" => PER_TRIAL / 2, "$lt" => PER_TRIAL / 2 + BATCH_SIZE})
