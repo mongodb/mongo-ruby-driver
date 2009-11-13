@@ -42,6 +42,7 @@
 #include <time.h>
 
 #define INITIAL_BUFFER_SIZE 256
+#define MAX_HOSTNAME_LENGTH 256
 
 static VALUE Binary;
 static VALUE Time;
@@ -749,8 +750,8 @@ static VALUE fast_pack(VALUE self)
 
     res = rb_str_buf_new(0);
 
-    for (i = 0; i < RARRAY(self)->len; i++) {
-        c = FIX2LONG(RARRAY(self)->ptr[i]);
+    for (i = 0; i < RARRAY_LEN(self); i++) {
+        c = FIX2LONG(RARRAY_PTR(self)[i]);
         rb_str_buf_cat(res, &c, sizeof(char));
     }
 
@@ -760,33 +761,33 @@ static VALUE fast_pack(VALUE self)
 
 static VALUE objectid_generate(VALUE self)
 {
-    VALUE ary, digest, hostname;
-    unsigned char *string;
-    unsigned long t, pid, inc;
+    VALUE oid, digest;
+    char hostname[MAX_HOSTNAME_LENGTH];
+    unsigned char oid_bytes[12];
+    unsigned long t, inc;
+    unsigned short pid;
     int i;
 
-    string = ALLOC_N(unsigned char, 13);
-    hostname = rb_str_buf_new(64);
-
     t = htonl(time(NULL));
-    MEMCPY(string, &t, char, 4);
+    MEMCPY(&oid_bytes, &t, unsigned char, 4);
 
-    gethostname(RSTRING(hostname)->ptr, 64);
-    RSTRING(hostname)->len = strlen(RSTRING(hostname)->ptr);
-    digest = rb_funcall(DigestMD5, rb_intern("hexdigest"), 1, hostname);
-    MEMCPY(string+4, RSTRING(digest)->ptr, unsigned char, 3);
+    if (gethostname(&hostname, MAX_HOSTNAME_LENGTH) != 0) {
+        rb_raise(rb_eRuntimeError, "failed to get hostname");
+    }
+    digest = rb_funcall(DigestMD5, rb_intern("digest"), 1, rb_str_new2(hostname));
+    MEMCPY(&oid_bytes[4], RSTRING_PTR(digest), unsigned char, 3);
 
-    pid = htonl(getpid());
-    MEMCPY(string+7, &pid, char, 2);
+    pid = htons(getpid());
+    MEMCPY(&oid_bytes[7], &pid, unsigned char, 2);
 
     inc = htonl(FIX2ULONG(rb_funcall(self, rb_intern("get_inc"), 0)));
-    MEMCPY(string+9, ((unsigned char*)&inc + 1), unsigned char, 3);
+    MEMCPY(&oid_bytes[9], ((unsigned char*)&inc + 1), unsigned char, 3);
 
-    ary = rb_ary_new2(12);
-    for(i = 0; i < 12; i++)
-        rb_ary_store(ary, i, INT2FIX((unsigned int)string[i]));
-    free(string);
-    return ary;
+    oid = rb_ary_new2(12);
+    for(i = 0; i < 12; i++) {
+        rb_ary_store(oid, i, INT2FIX((unsigned int)oid_bytes[i]));
+    }
+    return oid;
 }
 
 
