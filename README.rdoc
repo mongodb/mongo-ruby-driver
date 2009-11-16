@@ -32,6 +32,11 @@ If (or once) you have Gemcutter setup, install the "mongo" gem by typing
 
   $ gem install mongo
 
+You should also install the driver's c extension for greatly increased
+performance:
+
+  $ gem install mongo_ext
+
 === From the GitHub source
 
 The source code is available at http://github.com/mongodb/mongo-ruby-driver.
