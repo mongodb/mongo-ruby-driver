@@ -32,8 +32,8 @@ If (or once) you have Gemcutter setup, install the "mongo" gem by typing
 
   $ gem install mongo
 
-You should also install the driver's c extension for greatly increased
-performance:
+For a significant performance boost, you should also install the driver's C
+extensions:
 
   $ gem install mongo_ext
 
@@ -46,15 +46,7 @@ you can install it as a gem from the source by typing
 
   $ rake gem:install
 
-=== Optional C Extension
-
-There is a separate gem containing optional C extensions that will increase the
-performance of the driver. To use the optional extensions just install the gem
-by typing
-
-  $ gem install mongo_ext
-
-To install from source type this instead
+To install the C extensions from source, type this instead:
 
   $ rake gem:install_extensions
 
