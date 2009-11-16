@@ -21,7 +21,7 @@ class ByteBuffer
 
   def initialize(initial_data=[])
     @buf    = initial_data
-    @cursor = 0
+    @cursor = @buf.length
     @order  = :little_endian
     @int_pack_order    = 'V'
     @double_pack_order = 'E'
