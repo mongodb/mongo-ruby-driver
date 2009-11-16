@@ -1,0 +1,10 @@
+0.17 2009-11-16
+* Performance improvements
+  * large document inserts twice as fast as 0.16
+  * queries 18% faster than 0.16 on average
+  * see benchmark comparison: http://gist.github.com/236062
+* Support for multi-update for Mongo >= 1.1.3 (See Collection#update)
+* Collection#distinct
+* Connection#copy_database (voodootikigod)
+* C optimizations for ByteBuffer#to_s and ObjectID#generate (seancribbs)
+* Continue code restructuring for performance and simplicity.
