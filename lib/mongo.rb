@@ -23,11 +23,13 @@ begin
     BSON_SERIALIZER = CBson
   rescue LoadError
     BSON_SERIALIZER = BSON
+    warn "\n**Notice: C extension not detected. This is required for optimum MongoDB Ruby driver performance."
+    warn "  You can install the extension as follows:\n  gem install mongo_ext\n"
 end
 
 module Mongo
   ASCENDING = 1
   DESCENDING = -1
 
-  VERSION = "0.17"
+  VERSION = "0.17.1"
 end

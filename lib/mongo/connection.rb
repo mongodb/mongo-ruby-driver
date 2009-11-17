@@ -14,8 +14,6 @@
 # limitations under the License.
 # ++
 
-require 'mongo/db'
-
 module Mongo
 
   # A connection to MongoDB.

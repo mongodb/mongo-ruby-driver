@@ -1,3 +1,7 @@
+0.17.1 2009-11-17
+* Index ordering fix
+* Notice to install mongo_ext
+
 0.17 2009-11-16
 * Performance improvements
   * large document inserts twice as fast as 0.16
