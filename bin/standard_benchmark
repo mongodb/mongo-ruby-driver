@@ -64,13 +64,11 @@ def benchmark(str, n, coll_name, data, create_index=false)
   coll.create_index('x') if create_index
   profile(str) do
     times = []
-    TRIALS.times do 
-      GC.start
-      t1 = Time.now
-        n.times { |i| yield(coll, i) }
-      t2 = Time.now
-      times << t2 - t1
-    end
+    GC.start
+    t1 = Time.now
+      n.times { |i| yield(coll, i) }
+    t2 = Time.now
+    times << t2 - t1
     report(str, times.min)
   end
 end
@@ -86,6 +84,7 @@ def benchmark_insert(desc, coll_name, data)
   benchmark(desc, PER_TRIAL, coll_name, data) do |coll, i|
     data['x'] = i
     coll.insert(data)
+    data.delete(:_id)
   end
 end
 
@@ -93,6 +92,7 @@ def benchmark_insert_index(desc, coll_name, data)
   benchmark(desc, PER_TRIAL, coll_name, data, true) do |coll, i|
     data['x'] = i
     coll.insert(data)
+    data.delete(:_id)
   end
 end
 
@@ -108,6 +108,7 @@ def benchmark_insert_batch(desc, coll_name, data)
   benchmark(desc, PER_TRIAL / BATCH_SIZE, coll_name, data) do |coll, i| 
     data['x'] = i
     coll.insert([data] * BATCH_SIZE)
+    data.delete(:_id)
   end
 end
 
