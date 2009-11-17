@@ -398,4 +398,27 @@ class TestCollection < Test::Unit::TestCase
       assert_equal 1, @collection.size
     end
   end
+
+  context "Creating indexes " do 
+    setup do 
+      @collection = @@db.collection('test-collection')
+    end
+
+    should "generate indexes in the proper order" do 
+      @collection.expects(:insert_documents) do |sel, coll, safe|
+        assert_equal 'b_1_a_1', sel[:name]
+      end
+      @collection.create_index([['b', 1], ['a', 1]])
+    end
+
+    context "with an index created" do 
+      setup do 
+        @collection.create_index([['b', 1], ['a', 1]])
+      end
+
+      should "return properly ordered index information" do 
+        assert_equal [['b', 1], ['a', 1]], @collection.index_information["b_1_a_1"]
+      end
+    end
+  end
 end

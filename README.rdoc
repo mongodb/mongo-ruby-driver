@@ -355,6 +355,7 @@ Sean Cribbs, seancribbs on github
 
 Sunny Hirai
 * Suggested hashcode fix for Mongo::ObjectID
+* Noted index ordering bug.
 
 = License
 

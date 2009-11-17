@@ -69,6 +69,7 @@ class OrderedHash < Hash
       @ordered_keys.each { |k| yield k, self[k] }
       self
     end
+    alias :each_pair :each
 
     def values
       collect { |k, v| v }

@@ -422,7 +422,7 @@ module Mongo
       sel = {:ns => full_collection_name(collection_name)}
       info = {}
       Cursor.new(Collection.new(self, SYSTEM_INDEX_COLLECTION), :selector => sel).each { |index|
-        info[index['name']] = index['key'].to_a
+        info[index['name']] = index['key'].map
       }
       info
     end
