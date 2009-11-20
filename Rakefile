@@ -31,6 +31,16 @@ namespace :test do
     t.test_files = FileList['test/test*.rb']
     t.verbose    = true
   end
+
+  Rake::TestTask.new(:pair_insert) do |t|
+    t.test_files = FileList['test/replica/pair_test.rb']
+    t.verbose    = true
+  end
+
+  Rake::TestTask.new(:pair_query) do |t|
+    t.test_files = FileList['test/replica/query_test.rb']
+    t.verbose    = true
+  end
 end
 
 desc "Generate documentation"

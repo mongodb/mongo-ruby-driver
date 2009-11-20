@@ -15,6 +15,7 @@
 # ++
 
 require 'socket'
+require 'timeout'
 require 'digest/md5'
 require 'thread'
 require 'mongo/collection'
@@ -147,6 +148,7 @@ module Mongo
       @semaphore = Mutex.new
       @socket = nil
       @logger = options[:logger]
+      @network_timeout = 20
       connect_to_master
     end
 
@@ -166,10 +168,10 @@ module Mongo
           is_master = master?
           @semaphore.lock if semaphore_is_locked
 
-          if !@slave_ok && !is_master
+          if @nodes.length == 1 && !is_master && !@slave_ok
             raise ConfigurationError, "Trying to connect directly to slave; if this is what you want, specify :slave_ok => true."
           end
-          @slave_ok || is_master
+          is_master || @slave_ok
         rescue SocketError, SystemCallError, IOError => ex
           close if @socket
           false
@@ -352,16 +354,6 @@ module Mongo
       @socket != nil
     end
 
-    def receive_full(length)
-      message = ""
-      while message.length < length do
-        chunk = @socket.recv(length - message.length)
-        raise "connection closed" unless chunk.length > 0
-        message += chunk
-      end
-      message
-    end
-
     # Returns a Cursor over the query results.
     #
     # Note that the query gets sent lazily; the cursor calls
@@ -465,10 +457,14 @@ module Mongo
       message_with_check   = last_error_message
       @logger.debug("  MONGODB #{log_message || message}") if @logger
       @semaphore.synchronize do
-        send_message_on_socket(message_with_headers.append!(message_with_check).to_s)
-        docs, num_received, cursor_id = receive
-        if num_received == 1 && error = docs[0]['err']
-          raise Mongo::OperationFailure, error
+        safe_send do 
+          send_message_on_socket(message_with_headers.append!(message_with_check).to_s)
+          docs, num_received, cursor_id = receive
+          if num_received == 1 && error = docs[0]['err']
+            raise Mongo::OperationFailure, error
+          else
+            true
+          end
         end
       end
     end
@@ -478,9 +474,32 @@ module Mongo
       message_with_headers = add_message_headers(operation, message).to_s
       @logger.debug("  MONGODB #{log_message || message}") if @logger
       @semaphore.synchronize do 
-        send_message_on_socket(message_with_headers)
-        receive
+        response = ""
+        safe_send do 
+          send_message_on_socket(message_with_headers)
+          response = receive
+        end
+        response
       end
+    end
+
+    # Capture errors and try to reconnect
+    def safe_send
+      sent = false
+      while(!sent) do 
+      begin
+        response = yield
+        sent = true
+        rescue Timeout::Error, SocketError, SystemCallError, IOError, ConnectionFailure => ex
+          if @auto_reconnect
+            connect_to_master
+          else
+            raise ex
+            close
+          end
+        end
+      end
+      response
     end
 
     # Return +true+ if +doc+ contains an 'ok' field with the value 1.
@@ -592,22 +611,37 @@ module Mongo
     # Sending a message on socket.
     def send_message_on_socket(packed_message)
       connect_to_master if !connected? && @auto_reconnect
-      begin
-        @socket.print(packed_message)
-        @socket.flush
-      rescue => ex
-        close
-        raise ex
+      sent = false
+      while !sent do 
+        begin
+          @socket.print(packed_message)
+          @socket.flush
+          sent = true
+        rescue => ex
+          sent = false
+          if @auto_reconnect
+            connect_to_master
+          else
+            close
+            raise ex
+          end
+        end
       end
     end
 
     # Receive data of specified length on socket.
     def receive_data_on_socket(length)
+      connect_to_master if !connected? && @auto_reconnect
       message = ""
+      chunk   = ""
       while message.length < length do
-        chunk = @socket.recv(length - message.length)
-        raise "connection closed" unless chunk.length > 0
-        message += chunk
+        begin
+          chunk = @socket.read(length - message.length)
+          raise ConnectionFailure, "connection closed" unless chunk && chunk.length > 0
+          message += chunk
+        rescue Timeout => ex
+          raise OperationFailure, "Database command timed out."
+        end
       end
       message
     end
