@@ -6,11 +6,11 @@ require 'test/unit'
 class DBAPITest < Test::Unit::TestCase
   include Mongo
 
-  @@connection = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+  @@conn = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
                         ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
-  @@db   = @@connection.db("ruby-mongo-test")
+  @@db   = @@conn.db("ruby-mongo-test")
   @@coll = @@db.collection('test')
-  @@version = @@connection.server_version
+  @@version = @@conn.server_version
 
   def setup
     @@coll.remove
@@ -95,7 +95,7 @@ class DBAPITest < Test::Unit::TestCase
     # Can't compare _id values because at insert, an _id was added to @r1 by
     # the database but we don't know what it is without re-reading the record
     # (which is what we are doing right now).
-#     assert_equal doc['_id'], @r1['_id']
+#   assert_equal doc['_id'], @r1['_id']
     assert_equal doc['a'], @r1['a']
   end
 
@@ -489,11 +489,11 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_ismaster
-    assert @@db.master?
+    assert @@conn.master?
   end
 
   def test_master
-    assert_equal "#{@@db.host}:#{@@db.port}", @@db.master
+    assert_equal "#{@@conn.host}:#{@@conn.port}", @@conn.master
   end
 
   def test_where

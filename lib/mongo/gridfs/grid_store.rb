@@ -442,7 +442,7 @@ module GridFS
       md5_command = OrderedHash.new
       md5_command['filemd5'] = @files_id
       md5_command['root'] = @root
-      h['md5'] = @db.db_command(md5_command)['md5']
+      h['md5'] = @db.command(md5_command)['md5']
       h
     end
 

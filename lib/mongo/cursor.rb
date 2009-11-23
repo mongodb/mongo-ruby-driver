@@ -32,6 +32,7 @@ module Mongo
     def initialize(collection, options={})
       @db         = collection.db
       @collection = collection
+      @connection = @db.connection
 
       @selector   = convert_selector_for_query(options[:selector])
       @fields     = convert_fields_for_query(options[:fields])
@@ -43,8 +44,9 @@ module Mongo
       @snapshot   = options[:snapshot]
       @timeout    = options[:timeout]  || false
       @explain    = options[:explain]
+      @socket     = options[:socket]
 
-      @full_collection_name   = "#{@collection.db.name}.#{@collection.name}"
+      @full_collection_name = "#{@collection.db.name}.#{@collection.name}"
       @cache = []
       @closed = false
       @query_run = false
@@ -83,7 +85,7 @@ module Mongo
       command = OrderedHash["count",  @collection.name,
                             "query",  @selector,
                             "fields", @fields]
-      response = @db.db_command(command)
+      response = @db.command(command)
       return response['n'].to_i if response['ok'] == 1
       return 0 if response['errmsg'] == "ns missing"
       raise OperationFailure, "Count failed: #{response['errmsg']}"
@@ -199,7 +201,7 @@ module Mongo
         message.put_int(0)
         message.put_int(1)
         message.put_long(@cursor_id)
-        @db.send_message_with_operation(Mongo::Constants::OP_KILL_CURSORS, message, "cursor.close()")
+        @connection.send_message_with_operation(Mongo::Constants::OP_KILL_CURSORS, message, "cursor.close()")
       end
       @cursor_id = 0
       @closed    = true
@@ -212,7 +214,7 @@ module Mongo
     # See http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol#MongoWireProtocol-Mongo::Constants::OPQUERY
     def query_opts
       timeout  = @timeout ? 0 : Mongo::Constants::OP_QUERY_NO_CURSOR_TIMEOUT
-      slave_ok = @db.slave_ok? ? Mongo::Constants::OP_QUERY_SLAVE_OK : 0 
+      slave_ok = @connection.slave_ok? ? Mongo::Constants::OP_QUERY_SLAVE_OK : 0 
       slave_ok + timeout
     end
 
@@ -294,7 +296,7 @@ module Mongo
         
       # Cursor id.
       message.put_long(@cursor_id)
-      results, @n_received, @cursor_id = @db.receive_message_with_operation(Mongo::Constants::OP_GET_MORE, message, "cursor.get_more()")
+      results, @n_received, @cursor_id = @connection.receive_message_with_operation(Mongo::Constants::OP_GET_MORE, message, "cursor.get_more()", @socket)
       @cache += results
       close_cursor_if_query_complete
     end
@@ -305,8 +307,8 @@ module Mongo
         false
       else
         message = construct_query_message
-        results, @n_received, @cursor_id = @db.receive_message_with_operation(Mongo::Constants::OP_QUERY, message, 
-            (query_log_message if @db.logger))  
+        results, @n_received, @cursor_id = @connection.receive_message_with_operation(Mongo::Constants::OP_QUERY, message, 
+            (query_log_message if @connection.logger), @socket)  
         @cache += results
         @query_run = true
         close_cursor_if_query_complete

@@ -144,7 +144,7 @@ class TestCollection < Test::Unit::TestCase
 
       # Can't duplicate an index.
       assert_raise OperationFailure do
-        @@test.update({}, {"x" => 10}, :safe => true, :upsert => true)
+        @@test.update({}, {"x" => 10}, :safe => true)
       end
     end
   end
@@ -154,7 +154,6 @@ class TestCollection < Test::Unit::TestCase
 
     @@test.save("hello" => "world")
     @@test.save("hello" => "world")
-    assert(@@db.error.include?("E11000"))
 
     assert_raise OperationFailure do
       @@test.save({"hello" => "world"}, :safe => true)

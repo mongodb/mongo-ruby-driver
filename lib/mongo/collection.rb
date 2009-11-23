@@ -41,6 +41,7 @@ module Mongo
       end
 
       @db, @name  = db, name
+      @connection = @db.connection
       @pk_factory = pk_factory || ObjectID
       @hint = nil
     end
@@ -222,7 +223,7 @@ module Mongo
       BSON.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
       message.put_array(BSON_SERIALIZER.serialize(selector, false).unpack("C*"))
-      @db.send_message_with_operation(Mongo::Constants::OP_DELETE, message,
+      @connection.send_message_with_operation(Mongo::Constants::OP_DELETE, message,
         "db.#{@db.name}.remove(#{selector.inspect})")
     end
 
@@ -261,10 +262,10 @@ module Mongo
       message.put_array(BSON_SERIALIZER.serialize(selector, false).unpack("C*"))
       message.put_array(BSON_SERIALIZER.serialize(document, false).unpack("C*"))
       if options[:safe]
-        @db.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message,
+        @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name,
           "db.#{@name}.update(#{selector.inspect}, #{document.inspect})")
       else
-        @db.send_message_with_operation(Mongo::Constants::OP_UPDATE, message, 
+        @connection.send_message_with_operation(Mongo::Constants::OP_UPDATE, message, 
           "db.#{@name}.update(#{selector.inspect}, #{document.inspect})")
       end
     end
@@ -333,7 +334,7 @@ module Mongo
           reduce = Code.new(reduce)
         end
 
-        result = @db.db_command({"group" =>
+        result = @db.command({"group" =>
                                   {
                                     "ns" => @name,
                                     "$reduce" => reduce,
@@ -406,7 +407,7 @@ EOS
       command[:distinct] = @name
       command[:key]        = key.to_s
 
-      @db.db_command(command)["values"]
+      @db.command(command)["values"]
     end
 
     # Rename this collection.
@@ -488,10 +489,10 @@ EOS
       BSON.serialize_cstr(message, "#{@db.name}.#{collection_name}")
       documents.each { |doc| message.put_array(BSON_SERIALIZER.serialize(doc, check_keys).unpack("C*")) }
       if safe
-        @db.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message,
+        @connection.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message, @db.name,
           "db.#{collection_name}.insert(#{documents.inspect})")
       else
-        @db.send_message_with_operation(Mongo::Constants::OP_INSERT, message,
+        @connection.send_message_with_operation(Mongo::Constants::OP_INSERT, message,
           "db.#{collection_name}.insert(#{documents.inspect})")
       end
       documents.collect { |o| o[:_id] || o['_id'] }

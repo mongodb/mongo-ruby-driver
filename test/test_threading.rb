@@ -4,14 +4,14 @@ class TestThreading < Test::Unit::TestCase
 
   include Mongo
 
-  @@db = Connection.new.db('ruby-mongo-test')
+  @@db = Connection.new('localhost', 27017, :pool_size => 150, :timeout => 1).db('ruby-mongo-test')
   @@coll = @@db.collection('thread-test-collection')
 
   def set_up_safe_data
     @@db.drop_collection('duplicate')
     @@db.drop_collection('unique')
     @duplicate = @@db.collection('duplicate')
-    @unique    = @@db.collection('unique') 
+    @unique    = @@db.collection('unique')
 
     @duplicate.insert("test" => "insert")
     @duplicate.insert("test" => "update")

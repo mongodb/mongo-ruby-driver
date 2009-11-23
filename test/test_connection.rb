@@ -79,8 +79,7 @@ class TestConnection < Test::Unit::TestCase
     logger = Logger.new(output)
     logger.level = Logger::DEBUG
     db = Connection.new(@host, @port, :logger => logger).db('ruby-mongo-test')
-
-    assert output.string.include?("$cmd.find")
+    assert output.string.include?("admin.$cmd.find")
   end
   
   def test_connection_logger
@@ -106,23 +105,23 @@ class TestConnection < Test::Unit::TestCase
     assert !@mongo.database_names.include?('ruby-mongo-will-be-deleted')
   end
 
-  def test_pair
-    db = Connection.new({:left => ['foo', 123]})
-    pair = db.instance_variable_get('@pair')
-    assert_equal 2, pair.length
-    assert_equal ['foo', 123], pair[0]
-    assert_equal ['localhost', Connection::DEFAULT_PORT], pair[1]
+  def test_nodes
+    db = Connection.new({:left => ['foo', 123]}, nil, :connect => false)
+    nodes = db.nodes
+    assert_equal 2, db.nodes.length
+    assert_equal ['foo', 123], nodes[0]
+    assert_equal ['localhost', Connection::DEFAULT_PORT], nodes[1]
 
-    db = Connection.new({:right => 'bar'})
-    pair = db.instance_variable_get('@pair')
-    assert_equal 2, pair.length
-    assert_equal ['localhost', Connection::DEFAULT_PORT], pair[0]
-    assert_equal ['bar', Connection::DEFAULT_PORT], pair[1]
+    db = Connection.new({:right => 'bar'}, nil, :connect => false)
+    nodes = db.nodes
+    assert_equal 2, nodes.length
+    assert_equal ['localhost', Connection::DEFAULT_PORT], nodes[0]
+    assert_equal ['bar', Connection::DEFAULT_PORT], nodes[1]
 
-    db = Connection.new({:right => ['foo', 123], :left => 'bar'})
-    pair = db.instance_variable_get('@pair')
-    assert_equal 2, pair.length
-    assert_equal ['bar', Connection::DEFAULT_PORT], pair[0]
-    assert_equal ['foo', 123], pair[1]
+    db = Connection.new({:right => ['foo', 123], :left => 'bar'}, nil, :connect => false)
+    nodes = db.nodes
+    assert_equal 2, nodes.length
+    assert_equal ['bar', Connection::DEFAULT_PORT], nodes[0]
+    assert_equal ['foo', 123], nodes[1]
   end
 end

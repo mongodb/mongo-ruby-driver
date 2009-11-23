@@ -9,8 +9,8 @@ class SlaveConnectionTest < Test::Unit::TestCase
   def self.connect_to_slave
     @@host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
     @@port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
-    db = Connection.new(@@host, @@port, :slave_ok => true).db('ruby-mongo-demo')
-    !db.master?
+    conn = Connection.new(@@host, @@port, :slave_ok => true)
+    !conn.master?
   end
 
   if self.connect_to_slave
@@ -30,8 +30,8 @@ class SlaveConnectionTest < Test::Unit::TestCase
     puts "Not connected to slave; skipping slave connection tests."
 
     def test_slave_ok_false_on_queries
-      @db = Connection.new(@@host, @@port).db('ruby-mongo-demo')
-      assert !@db.slave_ok?
+      @conn = Connection.new(@@host, @@port)
+      assert !@conn.slave_ok?
     end
   end
 end

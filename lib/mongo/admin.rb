@@ -30,7 +30,7 @@ module Mongo
     def profiling_level
       oh = OrderedHash.new
       oh[:profile] = -1
-      doc = @db.db_command(oh)
+      doc = @db.command(oh)
       raise "Error with profile command: #{doc.inspect}" unless @db.ok?(doc) && doc['was'].kind_of?(Numeric)
       case doc['was'].to_i
       when 0
@@ -57,7 +57,7 @@ module Mongo
                      else
                        raise "Error: illegal profiling level value #{level}"
                      end
-      doc = @db.db_command(oh)
+      doc = @db.command(oh)
       raise "Error with profile command: #{doc.inspect}" unless @db.ok?(doc)
     end
 
@@ -71,7 +71,7 @@ module Mongo
     # problem or returning an interesting hash (see especially the
     # 'result' string value) if all is well.
     def validate_collection(name)
-      doc = @db.db_command(:validate => name)
+      doc = @db.command(:validate => name)
       raise "Error with validate command: #{doc.inspect}" unless @db.ok?(doc)
       result = doc['result']
       raise "Error with validation data: #{doc.inspect}" unless result.kind_of?(String)

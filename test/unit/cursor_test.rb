@@ -4,7 +4,8 @@ class TestCursor < Test::Unit::TestCase
 
   context "Cursor options" do 
     setup do 
-      @db         = stub(:name => "testing", :slave_ok? => false)    
+      @connection = stub(:class => Connection)
+      @db         = stub(:name => "testing", :slave_ok? => false, :connection => @connection)    
       @collection = stub(:db => @db, :name => "items")
       @cursor     = Cursor.new(@collection)
     end
@@ -64,39 +65,10 @@ class TestCursor < Test::Unit::TestCase
     end
   end
 
-  context "Query options" do 
-    should "test timeout true and slave_ok false" do 
-      @db = stub(:slave_ok? => false, :name => "testing")
-      @collection = stub(:db => @db, :name => "items")
-      @cursor     = Cursor.new(@collection, :timeout => true)
-      assert_equal 0, @cursor.query_opts
-    end
-
-    should "test timeout false and slave_ok false" do 
-      @db = stub(:slave_ok? => false, :name => "testing")
-      @collection = stub(:db => @db, :name => "items")
-      @cursor     = Cursor.new(@collection, :timeout => false)
-      assert_equal 16, @cursor.query_opts
-    end
-
-    should "set timeout true and slave_ok true" do 
-      @db = stub(:slave_ok? => true, :name => "testing")
-      @collection = stub(:db => @db, :name => "items")
-      @cursor = Cursor.new(@collection, :timeout => true)
-      assert_equal 4, @cursor.query_opts
-    end
-
-    should "set timeout false and slave_ok true" do 
-      @db = stub(:slave_ok? => true, :name => "testing")
-      @collection = stub(:db => @db, :name => "items")
-      @cursor = Cursor.new(@collection, :timeout => false)
-      assert_equal 20, @cursor.query_opts
-    end
-  end
-
   context "Query fields" do 
     setup do 
-      @db = stub(:slave_ok? => true, :name => "testing")
+      @connection = stub(:class => Collection)
+      @db = stub(:slave_ok? => true, :name => "testing", :connection => @connection)
       @collection = stub(:db => @db, :name => "items")
     end
 

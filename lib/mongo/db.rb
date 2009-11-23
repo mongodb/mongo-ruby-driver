@@ -27,8 +27,6 @@ module Mongo
   # A Mongo database.
   class DB
 
-    STANDARD_HEADER_SIZE = 16
-    RESPONSE_HEADER_SIZE = 20
     SYSTEM_NAMESPACE_COLLECTION = "system.namespaces"
     SYSTEM_INDEX_COLLECTION = "system.indexes"
     SYSTEM_PROFILE_COLLECTION = "system.profile"
@@ -39,11 +37,10 @@ module Mongo
     @@current_request_id = 0
 
     # Strict mode enforces collection existence checks. When +true+,
-    # asking for a collection that does not exist or trying to create a
-    # collection that already exists raises an error.
+    # asking for a collection that does not exist, or trying to create a
+    # collection that already exists, raises an error.
     #
-    # Strict mode is off (+false+) by default. Its value can be changed at
-    # any time.
+    # Strict mode is disabled by default, but enabled (+true+) at any time.
     attr_writer :strict
 
     # Returns the value of the +strict+ flag.
@@ -52,26 +49,16 @@ module Mongo
     # The name of the database.
     attr_reader :name
 
+    # The Mongo::Connection instance connecting to the MongoDB server.
     attr_reader :connection
-
-    # Host to which we are currently connected.
-    attr_reader :host
-    # Port to which we are currently connected.
-    attr_reader :port
-
+    
     # An array of [host, port] pairs.
     attr_reader :nodes
 
-    # The database's socket. For internal (and Cursor) use only.
-    attr_reader :socket
-    
-    # The logger instance if :logger is passed to initialize
+    # The logger instance if :logger is passed to initialize.
     attr_reader :logger
 
-    def slave_ok?; @slave_ok; end
-
-    # A primary key factory object (or +nil+). See the README.doc file or
-    # DB#new for details.
+    # The primary key factory object (or +nil+).
     attr_reader :pk_factory
 
     def pk_factory=(pk_factory)
@@ -91,8 +78,7 @@ module Mongo
     # Options:
     #
     # :strict :: If true, collections must exist to be accessed and must
-    #            not exist to be created. See #collection and
-    #            #create_collection.
+    #            not exist to be created. See #collection and #create_collection.
     #
     # :pk :: A primary key factory object that must respond to :create_pk,
     #        which should take a hash and return a hash which merges the
@@ -119,72 +105,18 @@ module Mongo
     # When a DB object first connects to a pair, it will find the master
     # instance and connect to that one. On socket error or if we recieve a
     # "not master" error, we again find the master of the pair.
-    def initialize(db_name, nodes, options={})
-      case db_name
-      when Symbol, String
-      else
-        raise TypeError, "db_name must be a string or symbol"
-      end
-
-      [" ", ".", "$", "/", "\\"].each do |invalid_char|
-        if db_name.include? invalid_char
-          raise InvalidName, "database names cannot contain the character '#{invalid_char}'"
-        end
-      end
-      if db_name.empty?
-        raise InvalidName, "database name cannot be the empty string"
-      end
-
-      @connection = options[:connection]
-
-      @name, @nodes = db_name, nodes
-      @strict = options[:strict]
+    def initialize(db_name, connection, options={})
+      @name       = validate_db_name(db_name)
+      @connection = connection
+      @strict     = options[:strict]
       @pk_factory = options[:pk]
-      @slave_ok = options[:slave_ok] && @nodes.length == 1 # only OK if one node
-      if options[:auto_reconnect]
-        warn(":auto_reconnect is deprecated. henceforth, any time an operation fails, " + 
-             "the driver will attempt to reconnect master on subsequent operations.")
-      end
-      @semaphore = Mutex.new
-      @socket = nil
-      @logger = options[:logger]
-      @network_timeout = 20
-      connect_to_master
-    end
-
-    def connect_to_master
-      close if @socket
-      @host = @port = nil
-      @nodes.detect { |hp|
-        @host, @port = *hp
-        begin
-          @socket = TCPSocket.new(@host, @port)
-          @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
-
-          # Check for master. Can't call master? because it uses mutex,
-          # which may already be in use during this call.
-          semaphore_is_locked = @semaphore.locked?
-          @semaphore.unlock if semaphore_is_locked
-          is_master = master?
-          @semaphore.lock if semaphore_is_locked
-
-          if @nodes.length == 1 && !is_master && !@slave_ok
-            raise ConfigurationError, "Trying to connect directly to slave; if this is what you want, specify :slave_ok => true."
-          end
-          is_master || @slave_ok
-        rescue SocketError, SystemCallError, IOError => ex
-          close if @socket
-          false
-        end
-      }
-      raise ConnectionFailure, "error: failed to connect to any given host:port" unless @socket
     end
 
     # Returns true if +username+ has +password+ in
     # +SYSTEM_USER_COLLECTION+. +name+ is username, +password+ is
     # plaintext password.
     def authenticate(username, password)
-      doc = db_command(:getnonce => 1)
+      doc = command(:getnonce => 1)
       raise "error retrieving nonce: #{doc}" unless ok?(doc)
       nonce = doc['nonce']
 
@@ -193,12 +125,12 @@ module Mongo
       auth['user'] = username
       auth['nonce'] = nonce
       auth['key'] = Digest::MD5.hexdigest("#{nonce}#{username}#{hash_password(username, password)}")
-      ok?(db_command(auth))
+      ok?(command(auth))
     end
 
     # Deauthorizes use for this database for this connection.
     def logout
-      doc = db_command(:logout => 1)
+      doc = command(:logout => 1)
       raise "error logging out: #{doc.inspect}" unless ok?(doc)
     end
 
@@ -252,7 +184,7 @@ module Mongo
       # Create new collection
       oh = OrderedHash.new
       oh[:create] = name
-      doc = db_command(oh.merge(options || {}))
+      doc = command(oh.merge(options || {}))
       ok = doc['ok']
       return Collection.new(self, name, @pk_factory) if ok.kind_of?(Numeric) && (ok.to_i == 1 || ok.to_i == 0)
       raise "Error creating collection: #{doc.inspect}"
@@ -276,20 +208,20 @@ module Mongo
     def drop_collection(name)
       return true unless collection_names.include?(name)
 
-      ok?(db_command(:drop => name))
+      ok?(command(:drop => name))
     end
 
     # Returns the error message from the most recently executed database
     # operation for this connection, or +nil+ if there was no error.
     def error
-      doc = db_command(:getlasterror => 1)
+      doc = command(:getlasterror => 1)
       raise "error retrieving last error: #{doc}" unless ok?(doc)
       doc['err']
     end
 
     # Get status information from the last operation on this connection.
     def last_status
-      db_command(:getlasterror => 1)
+      command(:getlasterror => 1)
     end
 
     # Returns +true+ if an error was caused by the most recently executed
@@ -303,7 +235,7 @@ module Mongo
     # Only returns errors that have occured since the last call to
     # DB#reset_error_history - returns +nil+ if there is no such error.
     def previous_error
-      error = db_command(:getpreverror => 1)
+      error = command(:getpreverror => 1)
       if error["err"]
         error
       else
@@ -316,42 +248,7 @@ module Mongo
     # Calls to DB#previous_error will only return errors that have occurred
     # since the most recent call to this method.
     def reset_error_history
-      db_command(:reseterror => 1)
-    end
-
-    # Returns true if this database is a master (or is not paired with any
-    # other database), false if it is a slave.
-    def master?
-      doc = db_command(:ismaster => 1)
-      is_master = doc['ismaster']
-      ok?(doc) && is_master.kind_of?(Numeric) && is_master.to_i == 1
-    end
-
-    # Returns a string of the form "host:port" that points to the master
-    # database. Works even if this is the master database.
-    def master
-      doc = db_command(:ismaster => 1)
-      is_master = doc['ismaster']
-      raise "Error retrieving master database: #{doc.inspect}" unless ok?(doc) && is_master.kind_of?(Numeric)
-      case is_master.to_i
-      when 1
-        "#@host:#@port"
-      else
-        doc['remote']
-      end
-    end
-
-    # Close the connection to the database.
-    def close
-      if @socket
-        s = @socket
-        @socket = nil
-        s.close
-      end
-    end
-
-    def connected?
-      @socket != nil
+      command(:reseterror => 1)
     end
 
     # Returns a Cursor over the query results.
@@ -380,7 +277,7 @@ module Mongo
       oh = OrderedHash.new
       oh[:$eval] = code
       oh[:args] = args
-      doc = db_command(oh)
+      doc = command(oh)
       return doc['retval'] if ok?(doc)
       raise OperationFailure, "eval failed: #{doc['errmsg']}"
     end
@@ -391,7 +288,7 @@ module Mongo
       oh = OrderedHash.new
       oh[:renameCollection] = "#{@name}.#{from}"
       oh[:to] = "#{@name}.#{to}"
-      doc = db_command(oh, true)
+      doc = command(oh, true)
       raise "Error renaming collection: #{doc.inspect}" unless ok?(doc)
     end
 
@@ -401,7 +298,7 @@ module Mongo
       oh = OrderedHash.new
       oh[:deleteIndexes] = collection_name
       oh[:index] = name
-      doc = db_command(oh)
+      doc = command(oh)
       raise "Error with drop_index command: #{doc.inspect}" unless ok?(doc)
     end
 
@@ -428,59 +325,7 @@ module Mongo
     def create_index(collection_name, field_or_spec, unique=false)
       self.collection(collection_name).create_index(field_or_spec, unique)
     end
-
-    # Sends a message to MongoDB.
-    #
-    # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
-    # +message+, and an optional formatted +log_message+.
-    # Sends the message to the databse, adding the necessary headers.
-    def send_message_with_operation(operation, message, log_message=nil)
-      message_with_headers = add_message_headers(operation, message).to_s
-      @logger.debug("  MONGODB #{log_message || message}") if @logger
-      @semaphore.synchronize do
-        send_message_on_socket(message_with_headers)
-      end
-    end
-
-    def send_message_with_operation_raw(operation, message, log_message=nil)
-      message_with_headers = add_message_headers_raw(operation, message)
-      @logger.debug("  MONGODB #{log_message || message}") if @logger
-      @semaphore.synchronize do
-        send_message_on_socket(message_with_headers)
-      end
-    end
-
-    # Sends a message to the database, waits for a response, and raises
-    # and exception if the operation has failed.
-    def send_message_with_safe_check(operation, message, log_message=nil)
-      message_with_headers = add_message_headers(operation, message)
-      message_with_check   = last_error_message
-      @logger.debug("  MONGODB #{log_message || message}") if @logger
-      @semaphore.synchronize do
-        send_message_on_socket(message_with_headers.append!(message_with_check).to_s)
-        docs, num_received, cursor_id = receive
-        if num_received == 1 && error = docs[0]['err']
-          if docs[0]['err'] == 'not master'
-            raise ConnectionFailure
-          else
-            raise Mongo::OperationFailure, error
-          end
-        else
-          true
-        end
-      end
-    end
-
-    # Send a message to the database and waits for the response.
-    def receive_message_with_operation(operation, message, log_message=nil)
-      message_with_headers = add_message_headers(operation, message).to_s
-      @logger.debug("  MONGODB #{log_message || message}") if @logger
-      @semaphore.synchronize do
-        send_message_on_socket(message_with_headers)
-        receive
-      end
-    end
-
+    
     # Return +true+ if +doc+ contains an 'ok' field with the value 1.
     def ok?(doc)
       ok = doc['ok']
@@ -490,14 +335,14 @@ module Mongo
     # DB commands need to be ordered, so selector must be an OrderedHash
     # (or a Hash with only one element). What DB commands really need is
     # that the "command" key be first.
-    def db_command(selector, use_admin_db=false)
+    def command(selector, use_admin_db=false, sock=nil)
       if !selector.kind_of?(OrderedHash)
         if !selector.kind_of?(Hash) || selector.keys.length > 1
-          raise "db_command must be given an OrderedHash when there is more than one key"
+          raise "command must be given an OrderedHash when there is more than one key"
         end
       end
 
-      cursor = Cursor.new(Collection.new(self, SYSTEM_COMMAND_COLLECTION), :admin => use_admin_db, :limit => -1, :selector => selector)
+      cursor = Cursor.new(Collection.new(self, SYSTEM_COMMAND_COLLECTION), :admin => use_admin_db, :limit => -1, :selector => selector, :socket => sock)
       cursor.next_object
     end
     
@@ -514,14 +359,14 @@ module Mongo
     #
     # Note: DB commands must start with the "command" key. For this reason,
     # any selector containing more than one key must be an OrderedHash.
-    def command(selector, admin=false, check_response=false)
+    def command(selector, admin=false, check_response=false, sock=nil)
       raise MongoArgumentError, "command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
       if selector.class.eql?(Hash) && selector.keys.length > 1 
         raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
       end
 
       result = Cursor.new(system_command_collection, :admin => admin, 
-        :limit => -1, :selector => selector).next_object
+        :limit => -1, :selector => selector, :socket => sock).next_object
 
       if check_response && !ok?(result)
         raise OperationFailure, "Database command '#{selector.keys.first}' failed."
@@ -530,146 +375,17 @@ module Mongo
       end
     end
 
+    # DEPRECATED: please use DB#command instead.
+    def db_command(*args)
+      warn "DB#db_command has been DEPRECATED. Please use DB#command instead."
+      command(args[0], args[1])
+    end
+
     def full_collection_name(collection_name)
       "#{@name}.#{collection_name}"
     end
 
     private
-
-    def receive
-      receive_header
-      number_received, cursor_id = receive_response_header
-      read_documents(number_received, cursor_id)
-    end
-
-    def receive_header
-      header = ByteBuffer.new
-      header.put_array(receive_data_on_socket(16).unpack("C*"))
-      unless header.size == STANDARD_HEADER_SIZE
-        raise "Short read for DB response header: " +
-          "expected #{STANDARD_HEADER_SIZE} bytes, saw #{header.size}" 
-      end
-      header.rewind
-      size        = header.get_int
-      request_id  = header.get_int
-      response_to = header.get_int
-      op          = header.get_int
-    end
-
-    def receive_response_header
-      header_buf = ByteBuffer.new
-      header_buf.put_array(receive_data_on_socket(RESPONSE_HEADER_SIZE).unpack("C*"))
-      if header_buf.length != RESPONSE_HEADER_SIZE
-        raise "Short read for DB response header; " +
-          "expected #{RESPONSE_HEADER_SIZE} bytes, saw #{header_buf.length}"
-      end
-      header_buf.rewind
-      result_flags     = header_buf.get_int
-      cursor_id        = header_buf.get_long
-      starting_from    = header_buf.get_int
-      number_remaining = header_buf.get_int
-      [number_remaining, cursor_id]
-    end
-
-    def read_documents(number_received, cursor_id)
-      docs = []
-      number_remaining = number_received
-      while number_remaining > 0 do
-        buf = ByteBuffer.new
-        buf.put_array(receive_data_on_socket(4).unpack("C*"))
-        buf.rewind
-        size = buf.get_int
-        buf.put_array(receive_data_on_socket(size - 4).unpack("C*"), 4)
-        number_remaining -= 1
-        buf.rewind
-        docs << BSON.new.deserialize(buf)
-      end
-      [docs, number_received, cursor_id]
-    end
-
-    # Sending a message on socket.
-    def send_message_on_socket(packed_message)
-      connect_to_master if !connected?
-      begin
-        @socket.print(packed_message)
-        @socket.flush
-      rescue => ex
-        close
-        raise ConnectionFailure, "Operation failed with the following exception: #{ex}."
-      end
-    end
-
-    # Receive data of specified length on socket.
-    def receive_data_on_socket(length)
-      connect_to_master if !connected?
-      message = ""
-      chunk   = ""
-      while message.length < length do
-        begin
-          chunk = @socket.read(length - message.length)
-          raise ConnectionFailure, "connection closed" unless chunk && chunk.length > 0
-          message += chunk
-        rescue => ex
-          raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
-        end
-      end
-      message
-    end
-
-    # Prepares a message for transmission to MongoDB by
-    # constructing a valid message header.
-    def add_message_headers(operation, message)
-      headers = ByteBuffer.new
-
-      # Message size.
-      headers.put_int(16 + message.size)
-
-      # Unique request id.
-      headers.put_int(get_request_id)
-
-      # Response id.
-      headers.put_int(0)
-
-      # Opcode.
-      headers.put_int(operation)
-      message.prepend!(headers)
-    end
-
-    # Increments and then returns the next available request id.
-    # Note: this method should be called from within a lock.
-    def get_request_id
-      @@current_request_id += 1
-      @@current_request_id
-    end
-
-    # Creates a getlasterror message.
-    def last_error_message
-      generate_last_error_message
-    end
-
-    def generate_last_error_message
-      message = ByteBuffer.new
-      message.put_int(0)
-      BSON.serialize_cstr(message, "#{@name}.$cmd")
-      message.put_int(0)
-      message.put_int(-1)
-      message.put_array(BSON_SERIALIZER.serialize({:getlasterror => 1}, false).unpack("C*"))
-      add_message_headers(Mongo::Constants::OP_QUERY, message)
-    end
-
-    def reset_error_message
-      @@reset_error_message ||= generate_reset_error_message
-    end
-
-    def generate_reset_error_message
-      message = ByteBuffer.new
-      message.put_int(0)
-      BSON.serialize_cstr(message, "#{@name}.$cmd")
-      message.put_int(0)
-      message.put_int(-1)
-      message.put_array(BSON_SERIALIZER.serialize({:reseterror => 1}, false).unpack("C*"))
-      add_message_headers(Mongo::Constants::OP_QUERY, message)
-    end
 
     def hash_password(username, plaintext)
       Digest::MD5.hexdigest("#{username}:mongo:#{plaintext}")
@@ -677,6 +393,20 @@ module Mongo
 
     def system_command_collection
       Collection.new(self, SYSTEM_COMMAND_COLLECTION)
+    end
+
+    def validate_db_name(db_name)
+      unless [String, Symbol].include?(db_name.class)
+        raise TypeError, "db_name must be a string or symbol"
+      end
+
+      [" ", ".", "$", "/", "\\"].each do |invalid_char|
+        if db_name.include? invalid_char
+          raise InvalidName, "database names cannot contain the character '#{invalid_char}'"
+        end
+      end
+      raise InvalidName, "database name cannot be the empty string" if db_name.empty?
+      db_name
     end
   end
 end

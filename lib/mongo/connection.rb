@@ -14,12 +14,27 @@
 # limitations under the License.
 # ++
 
+require 'set'
+require 'socket'
+require 'monitor'
+
 module Mongo
 
   # A connection to MongoDB.
   class Connection
 
     DEFAULT_PORT = 27017
+    STANDARD_HEADER_SIZE = 16
+    RESPONSE_HEADER_SIZE = 20
+
+    attr_reader :logger, :size, :host, :port, :nodes, :sockets, :checked_out, :reserved_connections
+
+
+    def slave_ok?; @slave_ok; end
+    def auto_reconnect?; @auto_reconnect; end
+    
+    # Counter for generating unique request ids.
+    @@current_request_id = 0
 
     # Create a Mongo database server instance. You specify either one or a
     # pair of servers. If one, you also say if connecting to a slave is
@@ -69,41 +84,50 @@ module Mongo
     # When a DB object first connects to a pair, it will find the master
     # instance and connect to that one.
     def initialize(pair_or_host=nil, port=nil, options={})
-      @pair = case pair_or_host
-               when String
-                 [[pair_or_host, port ? port.to_i : DEFAULT_PORT]]
-               when Hash
-                connections = []
-                connections << pair_val_to_connection(pair_or_host[:left])
-                connections << pair_val_to_connection(pair_or_host[:right])
-                connections
-               when nil
-                 [['localhost', DEFAULT_PORT]]
-               end
+      @nodes = format_pair(pair_or_host)
 
-      @options = options
+      # Host and port of current master.
+      @host = @port = nil
+      
+      # Lock for request ids.
+      @id_lock = Mutex.new
+
+      # Lock for checking master.
+      @master_lock = Mutex.new
+
+      # Pool size and timeout.
+      @size      = options[:pool_size] || 1
+      @timeout   = options[:timeout]   || 1.0
+
+      # Cache of reserved sockets mapped to threads
+      @reserved_connections = {}
+
+      # Mutex for synchronizing pool access
+      @connection_mutex = Monitor.new
+
+      # Condition variable for signal and wait
+      @queue = @connection_mutex.new_cond
+
+      @sockets      = []
+      @checked_out  = []
+
+      # Slave ok can be true only if one node is specified
+      @auto_reconnect = options[:auto_reconnect]
+      @slave_ok = options[:slave_ok] && @nodes.length == 1
+      @logger   = options[:logger] || nil
+      @options  = options
+
+      should_connect = options[:connect].nil? ? true : options[:connect]
+      connect_to_master if should_connect
     end
 
-    # Return the Mongo::DB named +db_name+. The slave_ok and
-    # auto_reconnect options passed in via #new may be overridden here.
-    # See DB#new for other options you can pass in.
-    def db(db_name, options={})
-      DB.new(db_name, @pair, @options.merge(options))
-    end
-    
-    def logger
-      @options[:logger]
-    end
-
-    # Returns a hash containing database names as keys and disk space for
-    # each as values.
+    # Returns a hash with all database names and their respective sizes on
+    # disk.
     def database_info
-      doc = single_db_command('admin', :listDatabases => 1)
-      h = {}
-      doc['databases'].each { |db|
-        h[db['name']] = db['sizeOnDisk'].to_i
-      }
-      h
+      doc = self['admin'].command(:listDatabases => 1)
+      returning({}) do |info|
+        doc['databases'].each { |db| info[db['name']] = db['sizeOnDisk'].to_i }
+      end
     end
 
     # Returns an array of database names.
@@ -111,9 +135,21 @@ module Mongo
       database_info.keys
     end
 
+    # Return the database named +db_name+. The slave_ok and
+    # auto_reconnect options passed in via #new may be overridden here.
+    # See DB#new for other options you can pass in.
+    def db(db_name, options={})
+      DB.new(db_name, self, options.merge(:logger => @logger))
+    end
+
+    # Return the database named +db_name+.
+    def [](db_name)
+      DB.new(db_name, self, :logger => @logger)
+    end
+
     # Drops the database +name+.
     def drop_database(name)
-      single_db_command(name, :dropDatabase => 1)
+      self[name].command(:dropDatabase => 1)
     end
 
     # Copies the database +from+ on the local server to +to+ on the specified +host+.
@@ -124,7 +160,35 @@ module Mongo
       oh[:fromhost] = host
       oh[:fromdb]   = from
       oh[:todb]     = to
-      single_db_command('admin', oh)
+      self["admin"].command(oh)
+    end
+
+    # Increments and returns the next available request id.
+    def get_request_id
+      request_id = ''
+      @id_lock.synchronize do 
+        request_id = @@current_request_id += 1
+      end
+      request_id
+    end
+
+    # Prepares a message for transmission to MongoDB by
+    # constructing a valid message header.
+    def add_message_headers(operation, message)
+      headers = ByteBuffer.new
+
+      # Message size.
+      headers.put_int(16 + message.size)
+
+      # Unique request id.
+      headers.put_int(get_request_id)
+
+      # Response id.
+      headers.put_int(0)
+
+      # Opcode.
+      headers.put_int(operation)
+      message.prepend!(headers)
     end
 
     # Return the build information for the current connection.
@@ -132,14 +196,375 @@ module Mongo
       db("admin").command({:buildinfo => 1}, {:admin => true, :check_response => true})
     end
 
-    # Returns the build version of the current server, using
-    # a ServerVersion object for comparability.
+    # Get the build version of the current server.
+    # Returns a ServerVersion object for comparability.
     def server_version
       ServerVersion.new(server_info["version"])
     end
 
-    protected
 
+    ## Connections and pooling ##
+    
+    # Sends a message to MongoDB.
+    #
+    # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
+    # +message+, and an optional formatted +log_message+.
+    def send_message(operation, message, log_message=nil)
+      @logger.debug("  MONGODB #{log_message || message}") if @logger
+
+      packed_message = pack_message(operation, message)
+      socket = checkout
+      send_message_on_socket(packed_message, socket)
+    end
+
+    # Sends a message to MongoDB and returns the response.
+    #
+    # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
+    # +message+, an optional formatted +log_message+, and an optional
+    # socket.
+    def receive_message(operation, message, log_msg=nil, sock=nil)
+      @logger.debug("  MONGODB #{log_message || message}") if @logger
+      packed_message = pack_message(operation, message)
+
+      # This code is used only if we're checking for master.
+      if sock
+        @master_lock.synchronize do 
+          response = send_and_receive(packed_message, sock)
+        end
+      else
+        socket = checkout
+        response = send_and_receive(packed_message, socket)
+      end
+      response
+    end
+
+    # Sends a message to MongoDB.
+    #
+    # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
+    # +message+, and an optional formatted +log_message+.
+    # Sends the message to the databse, adding the necessary headers.
+    def send_message_with_operation(operation, message, log_message=nil)
+      @logger.debug("  MONGODB #{log_message || message}") if @logger
+      packed_message = pack_message(operation, message)
+      socket = checkout
+      response = send_message_on_socket(packed_message, socket)
+      checkin(socket)
+      response
+    end
+
+    # Sends a message to the database, waits for a response, and raises
+    # and exception if the operation has failed.
+    def send_message_with_safe_check(operation, message, db_name, log_message=nil)
+      message_with_headers = add_message_headers(operation, message)
+      message_with_check   = last_error_message(db_name)
+      @logger.debug("  MONGODB #{log_message || message}") if @logger
+      sock = checkout
+      msg  = message_with_headers.append!(message_with_check).to_s
+      send_message_on_socket(msg, sock)
+      docs, num_received, cursor_id = receive(sock)
+      if num_received == 1 && error = docs[0]['err']
+        raise Mongo::OperationFailure, error
+      end
+      checkin(sock)
+      [docs, num_received, cursor_id]
+    end
+
+    # Send a message to the database and waits for the response.
+    def receive_message_with_operation(operation, message, log_message=nil, socket=nil)
+      message_with_headers = add_message_headers(operation, message).to_s
+      @logger.debug("  MONGODB #{log_message || message}") if @logger
+      sock = socket || checkout
+
+      send_message_on_socket(message_with_headers, sock)
+      receive(sock)
+    end
+
+    # Creates a new socket and tries to connect to master.
+    # If successful, sets @host and @port to master and returns the socket.
+    def connect_to_master
+      @host = @port = nil
+      for node_pair in @nodes
+        host, port = *node_pair
+        begin
+          socket = TCPSocket.new(host, port)
+          socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+
+          result = self['admin'].command({:ismaster => 1}, false, false, socket)
+          if result['ok'] == 1 && ((is_master = result['ismaster'] == 1) || @slave_ok)
+            @host, @port = host, port
+          end
+
+          # Note: slave_ok can be true only when connecting to a single node.
+          if !@slave_ok && !is_master
+            raise ConfigurationError, "Trying to connect directly to slave; " +
+              "if this is what you want, specify :slave_ok => true."
+          end
+
+          break if is_master || @slave_ok
+        rescue SocketError, SystemCallError, IOError => ex
+          socket.close if socket
+          false
+        end
+      end 
+      raise ConnectionError, "failed to connect to any given host:port" unless socket
+    end
+
+    def master?
+      doc = self['admin'].command(:ismaster => 1)
+      doc['ok'] == 1 && doc['ismaster'] == 1
+    end
+
+    # Returns a string of the form "host:port" that points to the master
+    # database. Works even if this is the master database.
+    def master
+      doc = self['admin'].command(:ismaster => 1)
+      if doc['ok'] == 1 && doc['ismaster'] == 1
+        "#@host:#@port"
+      elsif doc['remote']
+       doc['remote']
+      else
+        raise "Error retrieving master database: #{doc.inspect}"
+      end
+    end
+
+    def connected?
+      @sockets.detect do |sock|
+        sock.is_a? Socket
+      end || (@host && @port)
+    end
+
+    # Close the connection to the database.
+    def close
+      @sockets.each do |sock|
+        sock.close
+      end
+      @host = @port = nil
+      @sockets.clear   
+      @checked_out.clear
+      @reserved_connections.clear
+    end
+
+    # Get a socket from the pool, mapped to the current thread.
+    def checkout
+      if sock = @reserved_connections[Thread.current.object_id]
+        sock
+      else
+        sock = obtain_socket
+        @reserved_connections[Thread.current.object_id] = sock
+      end
+      sock
+    end
+
+    # Return a socket to the pool.
+    def checkin(socket)
+      @connection_mutex.synchronize do 
+        @checked_out.delete(socket)
+        @reserved_connections.delete Thread.current.object_id
+        @queue.signal
+      end
+    end
+
+    # Releases connection for any dead threads.
+    # Called when the connection pool grows too large
+    # and we need additional sockets.
+    def clear_stale_cached_connections!
+      keys = Set.new(@reserved_connections.keys)
+
+      Thread.list.each do |thread|
+        keys.delete(thread.object_id) if thread.alive?
+      end
+      
+      keys.each do |key|
+        next unless @reserved_connections.has_key?(key)
+        checkin(@reserved_connections[key])
+        @reserved_connections.delete(key)
+      end
+    end
+
+    # Adds a new socket to the pool and checks it out.
+    #
+    # This method is called exclusively from #obtain_socket;
+    # therefore, it runs within a mutex, as it must.
+    def checkout_new_socket
+      socket = TCPSocket.new(@host, @port)
+      socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+      @sockets << socket
+      @checked_out << socket
+      socket
+    end
+
+    # Checks out the first available socket from the pool.
+    #
+    # This method is called exclusively from #obtain_socket;
+    # therefore, it runs within a mutex, as it must.
+    def checkout_existing_socket
+      socket = (@sockets - @checked_out).first
+      @checked_out << socket
+      socket
+    end
+
+    # Check out an existing socket or create a new socket if the maximum
+    # pool size has not been exceeded. Otherwise, wait for the next
+    # available socket.
+    def obtain_socket
+      @connection_mutex.synchronize do 
+        
+        # NOTE: Not certain that this is the best place for reconnect
+        connect_to_master if !connected? && @auto_reconnect
+        loop do 
+          socket = if @checked_out.size < @sockets.size
+                     checkout_existing_socket
+                   elsif @sockets.size < @size
+                     checkout_new_socket
+                   end
+
+          return socket if socket
+          # No connections available; wait.
+          if @queue.wait(@timeout)
+            next
+          else
+            # Try to clear out any stale threads to free up some connections
+            clear_stale_cached_connections!
+            if @size == @sockets.size
+              raise ConnectionTimeoutError, "could not obtain connection within " +
+                "#{@timeout} seconds. The max pool size is currently #{@size}; " +
+                "consider increasing it."
+            end
+          end # if
+        end # loop
+      end #sync
+    end
+
+    def receive(sock)
+      receive_header(sock)
+      number_received, cursor_id = receive_response_header(sock)
+      read_documents(number_received, cursor_id, sock)
+    end
+
+    def receive_header(sock)
+      header = ByteBuffer.new
+      header.put_array(receive_message_on_socket(16, sock).unpack("C*"))
+      unless header.size == STANDARD_HEADER_SIZE
+        raise "Short read for DB response header: " +
+          "expected #{STANDARD_HEADER_SIZE} bytes, saw #{header.size}" 
+      end
+      header.rewind
+      size        = header.get_int
+      request_id  = header.get_int
+      response_to = header.get_int
+      op          = header.get_int
+    end
+
+    def receive_response_header(sock)
+      header_buf = ByteBuffer.new
+      header_buf.put_array(receive_message_on_socket(RESPONSE_HEADER_SIZE, sock).unpack("C*"))
+      if header_buf.length != RESPONSE_HEADER_SIZE
+        raise "Short read for DB response header; " +
+          "expected #{RESPONSE_HEADER_SIZE} bytes, saw #{header_buf.length}"
+      end
+      header_buf.rewind
+      result_flags     = header_buf.get_int
+      cursor_id        = header_buf.get_long
+      starting_from    = header_buf.get_int
+      number_remaining = header_buf.get_int
+      [number_remaining, cursor_id]
+    end
+
+    def read_documents(number_received, cursor_id, sock)
+      docs = []
+      number_remaining = number_received
+      while number_remaining > 0 do
+        buf = ByteBuffer.new
+        buf.put_array(receive_message_on_socket(4, sock).unpack("C*"))
+        buf.rewind
+        size = buf.get_int
+        buf.put_array(receive_message_on_socket(size - 4, sock).unpack("C*"), 4)
+        number_remaining -= 1
+        buf.rewind
+        docs << BSON.new.deserialize(buf)
+      end
+      [docs, number_received, cursor_id]
+    end
+
+    def last_error_message(db_name)
+      message = ByteBuffer.new
+      message.put_int(0)
+      BSON.serialize_cstr(message, "#{db_name}.$cmd")
+      message.put_int(0)
+      message.put_int(-1)
+      message.put_array(BSON_SERIALIZER.serialize({:getlasterror => 1}, false).unpack("C*"))
+      add_message_headers(Mongo::Constants::OP_QUERY, message)
+    end
+
+    # Prepares a message for transmission to MongoDB by
+    # constructing a message header with a new request id.
+    def pack_message(operation, message)
+      headers = ByteBuffer.new
+
+      # Message size.
+      headers.put_int(16 + message.size)
+
+      # Unique request id.
+      headers.put_int(get_request_id)
+
+      # Response id.
+      headers.put_int(0)
+
+      # Opcode.
+      headers.put_int(operation)
+      message.prepend!(headers)
+      message.to_s
+    end
+
+    #def send_and_receive
+    #  send_message_on_socket(packed_message, socket)
+    #  receive_message_on_socket()
+    #end
+
+    # Low-level method for sending a message on a socket.
+    # Requires a packed message and an available socket, 
+    def send_message_on_socket(packed_message, socket)
+      #socket will be connected to master when we receive it
+      #begin
+      socket.send(packed_message, 0)
+      #rescue => ex
+        # close
+        # need to find a way to release the socket here
+        # checkin(socket)
+      #  raise ex
+      #end
+    end
+
+    # Low-level method for receiving data from socket.
+    # Requires length and an available socket.
+    def receive_message_on_socket(length, socket)
+      message = ""
+      while message.length < length do
+        chunk = socket.recv(length - message.length)
+        raise "connection closed" unless chunk.length > 0
+        message += chunk
+      end
+      message
+    end
+
+
+    ## Private helper methods
+
+    # Returns an array of host-port pairs.
+    def format_pair(pair_or_host)
+      case pair_or_host
+        when String
+          [[pair_or_host, port ? port.to_i : DEFAULT_PORT]]
+        when Hash
+         connections = []
+         connections << pair_val_to_connection(pair_or_host[:left])
+         connections << pair_val_to_connection(pair_or_host[:right])
+         connections
+        when nil
+          [['localhost', DEFAULT_PORT]]
+      end
+    end
+    
     # Turns an array containing a host name string and a
     # port number integer into a [host, port] pair array.
     def pair_val_to_connection(a)
@@ -152,21 +577,6 @@ module Mongo
         ['localhost', a]
       when Array
         a
-      end
-    end
-
-    # Send cmd (a hash, possibly ordered) to the admin database and return
-    # the answer. Raises an error unless the return is "ok" (DB#ok?
-    # returns +true+).
-    def single_db_command(db_name, cmd)
-      db = nil
-      begin
-        db = db(db_name)
-        doc = db.db_command(cmd)
-        raise "error retrieving database info: #{doc.inspect}" unless db.ok?(doc)
-        doc
-      ensure
-        db.close if db
       end
     end
   end

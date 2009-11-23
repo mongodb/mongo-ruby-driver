@@ -27,6 +27,12 @@ module Mongo
   # Raised when invalid arguments are sent to Mongo Ruby methods.
   class MongoArgumentError < MongoRubyError; end
 
+  # Raised on failures in connection to the database server.
+  class ConnectionError < MongoRubyError; end
+
+  # Raised on failures in connection to the database server.
+  class ConnectionTimeoutError < MongoRubyError; end
+
   # Raised when a database operation fails.
   class OperationFailure < MongoDBError; end
   

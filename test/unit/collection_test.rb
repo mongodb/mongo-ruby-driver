@@ -1,12 +1,6 @@
 require 'test/test_helper'
 
-class CollectionTest < Test::Unit::TestCase
-
-  class MockDB < DB
-    def connect_to_master
-      true
-    end
-  end
+class ConnectionTest < Test::Unit::TestCase
 
   context "Basic operations: " do 
     setup do 
@@ -14,36 +8,40 @@ class CollectionTest < Test::Unit::TestCase
     end
 
     should "send update message" do 
-      @db = MockDB.new("testing", ['localhost', 27017], :logger => @logger)
+      @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
+      @db   = @conn['testing']
       @coll = @db.collection('books')
-      @db.expects(:send_message_with_operation).with do |op, msg, log| 
+      @conn.expects(:send_message_with_operation).with do |op, msg, log| 
         op == 2001 && log.include?("db.books.update")
       end
       @coll.update({}, {:title => 'Moby Dick'})
     end
 
     should "send insert message" do 
-      @db = MockDB.new("testing", ['localhost', 27017], :logger => @logger)
+      @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
+      @db   = @conn['testing']
       @coll = @db.collection('books')
-      @db.expects(:send_message_with_operation).with do |op, msg, log| 
+      @conn.expects(:send_message_with_operation).with do |op, msg, log| 
         op == 2002 && log.include?("db.books.insert")
       end
       @coll.insert({:title => 'Moby Dick'})
     end
 
     should "send safe update message" do
-      @db = MockDB.new("testing", ['localhost', 27017], :logger => @logger)
+      @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
+      @db   = @conn['testing']
       @coll = @db.collection('books')
-      @db.expects(:send_message_with_safe_check).with do |op, msg, log|
+      @conn.expects(:send_message_with_safe_check).with do |op, msg, db_name, log|
         op == 2001 && log.include?("db.books.update")
       end
       @coll.update({}, {:title => 'Moby Dick'}, :safe => true)
     end
 
     should "send safe insert message" do
-      @db = MockDB.new("testing", ['localhost', 27017], :logger => @logger)
+      @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
+      @db   = @conn['testing']
       @coll = @db.collection('books')
-      @db.expects(:send_message_with_safe_check).with do |op, msg, log|
+      @conn.expects(:send_message_with_safe_check).with do |op, msg, db_name, log|
         op == 2001 && log.include?("db.books.update")
       end
       @coll.update({}, {:title => 'Moby Dick'}, :safe => true)

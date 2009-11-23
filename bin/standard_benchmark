@@ -64,11 +64,11 @@ def benchmark(str, n, coll_name, data, create_index=false)
   coll.create_index('x') if create_index
   profile(str) do
     times = []
-    GC.start
-    t1 = Time.now
-      n.times { |i| yield(coll, i) }
-    t2 = Time.now
-    times << t2 - t1
+      GC.start
+      t1 = Time.now
+        n.times { |i| yield(coll, i) }
+      t2 = Time.now
+      times << t2 - t1
     report(str, times.min)
   end
 end
