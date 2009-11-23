@@ -63,9 +63,12 @@ module Mongo
         # pair but it has died or something like that) then we close that
         # connection. If the db has auto connect option and a pair of
         # servers, next request will re-open on master server.
-        @db.close if err == "not master"
+        if err == "not master"
+          raise ConnectionFailure, err
+          @db.close
+        end
 
-        raise err
+        raise OperationFailure, err
       end
 
       o

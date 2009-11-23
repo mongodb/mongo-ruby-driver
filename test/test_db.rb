@@ -144,21 +144,6 @@ class DBTest < Test::Unit::TestCase
     @@db.logout                  # only testing that we don't throw exception
   end
 
-  def test_auto_connect
-    @@db.close
-    db = Connection.new(@@host, @@port, :auto_reconnect => true).db('ruby-mongo-test')
-    assert db.connected?
-    assert db.auto_reconnect?
-    db.close
-    assert !db.connected?
-    assert db.auto_reconnect?
-    db.collection('test').insert('a' => 1)
-    assert db.connected?
-  ensure
-    @@db = Connection.new(@@host, @@port).db('ruby-mongo-test')
-    @@users = @@db.collection('system.users')
-  end
-
   def test_error
     @@db.reset_error_history
     assert_nil @@db.error

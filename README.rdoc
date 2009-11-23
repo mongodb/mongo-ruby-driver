@@ -255,7 +255,21 @@ If you have the source code, you can run the tests.
 
   $ rake test
 
-The tests now require shoulda and mocha.  You can install these gems as
+This will run both unit and functional tests. If you want to run these
+individually:
+
+  $ rake test:unit
+  $ rake test:functional
+
+
+If you want to test replica pairs, you can run the following tests
+individually:
+
+  $ rake test:pair_count
+  $ rake test:pair_insert
+  $ rake test:pair_query
+
+All tests now require shoulda and mocha.  You can install these gems as
 follows:
 
   $ gem install shoulda

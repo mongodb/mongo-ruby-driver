@@ -776,7 +776,7 @@ class DBAPITest < Test::Unit::TestCase
   # doesn't really test functionality, just that the option is set correctly
   def test_snapshot
     @@db.collection("test").find({}, :snapshot => true).to_a
-    assert_raise RuntimeError do
+    assert_raise OperationFailure do
       @@db.collection("test").find({}, :snapshot => true, :sort => 'a').to_a
     end
   end

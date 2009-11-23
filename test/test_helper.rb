@@ -22,4 +22,19 @@ require 'mongo'
 # NOTE: most tests assume that MongoDB is running.
 class Test::Unit::TestCase
   include Mongo
+
+  # Generic code for rescuing connection failures and retrying operations.
+  # This could be combined with some timeout functionality.
+  def rescue_connection_failure
+    success = false
+    while !success
+      begin
+        yield
+        success = true
+      rescue Mongo::ConnectionFailure
+        puts "Rescuing"
+        sleep(1)
+      end
+    end
+  end
 end

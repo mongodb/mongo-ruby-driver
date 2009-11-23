@@ -32,8 +32,13 @@ namespace :test do
     t.verbose    = true
   end
 
+  Rake::TestTask.new(:pair_count) do |t|
+    t.test_files = FileList['test/replica/count_test.rb']
+    t.verbose    = true
+  end
+
   Rake::TestTask.new(:pair_insert) do |t|
-    t.test_files = FileList['test/replica/pair_test.rb']
+    t.test_files = FileList['test/replica/insert_test.rb']
     t.verbose    = true
   end
 

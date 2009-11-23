@@ -39,12 +39,10 @@ module Mongo
     #              see if the server is the master. If it is not, an error
     #              is thrown.
     #
-    # :auto_reconnect :: If a DB connection gets closed (for example, we
-    #                    have a server pair and saw the "not master"
-    #                    error, which closes the connection), then
-    #                    automatically try to reconnect to the master or
-    #                    to the single server we have been given. Defaults
-    #                    to +false+.
+    # :auto_reconnect :: DEPRECATED. When an operation fails, a
+    # ConnectionFailure will be raised. The client is encouraged to retry the
+    # operation as necessary.
+    #
     # :logger :: Optional Logger instance to which driver usage information
     #            will be logged.
     #

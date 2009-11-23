@@ -69,7 +69,6 @@ module Mongo
     attr_reader :logger
 
     def slave_ok?; @slave_ok; end
-    def auto_reconnect?; @auto_reconnect; end
 
     # A primary key factory object (or +nil+). See the README.doc file or
     # DB#new for details.
@@ -110,14 +109,12 @@ module Mongo
     #              see if the server is the master. If it is not, an error
     #              is thrown.
     #
-    # :auto_reconnect :: If the connection gets closed (for example, we
-    #                    have a server pair and saw the "not master"
-    #                    error, which closes the connection), then
-    #                    automatically try to reconnect to the master or
-    #                    to the single server we have been given. Defaults
-    #                    to +false+.
     # :logger :: Optional Logger instance to which driver usage information
     #            will be logged.
+    #
+    # :auto_reconnect :: DEPRECATED. When an operation fails, a
+    # ConnectionFailure will be raised. The client is encouraged to retry the
+    # operation as necessary.
     #
     # When a DB object first connects to a pair, it will find the master
     # instance and connect to that one. On socket error or if we recieve a
@@ -144,7 +141,10 @@ module Mongo
       @strict = options[:strict]
       @pk_factory = options[:pk]
       @slave_ok = options[:slave_ok] && @nodes.length == 1 # only OK if one node
-      @auto_reconnect = options[:auto_reconnect]
+      if options[:auto_reconnect]
+        warn(":auto_reconnect is deprecated. henceforth, any time an operation fails, " + 
+             "the driver will attempt to reconnect master on subsequent operations.")
+      end
       @semaphore = Mutex.new
       @socket = nil
       @logger = options[:logger]
@@ -177,7 +177,7 @@ module Mongo
           false
         end
       }
-      raise "error: failed to connect to any given host:port" unless @socket
+      raise ConnectionFailure, "error: failed to connect to any given host:port" unless @socket
     end
 
     # Returns true if +username+ has +password+ in
@@ -457,14 +457,16 @@ module Mongo
       message_with_check   = last_error_message
       @logger.debug("  MONGODB #{log_message || message}") if @logger
       @semaphore.synchronize do
-        safe_send do 
-          send_message_on_socket(message_with_headers.append!(message_with_check).to_s)
-          docs, num_received, cursor_id = receive
-          if num_received == 1 && error = docs[0]['err']
-            raise Mongo::OperationFailure, error
+        send_message_on_socket(message_with_headers.append!(message_with_check).to_s)
+        docs, num_received, cursor_id = receive
+        if num_received == 1 && error = docs[0]['err']
+          if docs[0]['err'] == 'not master'
+            raise ConnectionFailure
           else
-            true
+            raise Mongo::OperationFailure, error
           end
+        else
+          true
         end
       end
     end
@@ -473,33 +475,10 @@ module Mongo
     def receive_message_with_operation(operation, message, log_message=nil)
       message_with_headers = add_message_headers(operation, message).to_s
       @logger.debug("  MONGODB #{log_message || message}") if @logger
-      @semaphore.synchronize do 
-        response = ""
-        safe_send do 
-          send_message_on_socket(message_with_headers)
-          response = receive
-        end
-        response
+      @semaphore.synchronize do
+        send_message_on_socket(message_with_headers)
+        receive
       end
-    end
-
-    # Capture errors and try to reconnect
-    def safe_send
-      sent = false
-      while(!sent) do 
-      begin
-        response = yield
-        sent = true
-        rescue Timeout::Error, SocketError, SystemCallError, IOError, ConnectionFailure => ex
-          if @auto_reconnect
-            connect_to_master
-          else
-            raise ex
-            close
-          end
-        end
-      end
-      response
     end
 
     # Return +true+ if +doc+ contains an 'ok' field with the value 1.
@@ -610,28 +589,19 @@ module Mongo
 
     # Sending a message on socket.
     def send_message_on_socket(packed_message)
-      connect_to_master if !connected? && @auto_reconnect
-      sent = false
-      while !sent do 
-        begin
-          @socket.print(packed_message)
-          @socket.flush
-          sent = true
-        rescue => ex
-          sent = false
-          if @auto_reconnect
-            connect_to_master
-          else
-            close
-            raise ex
-          end
-        end
+      connect_to_master if !connected?
+      begin
+        @socket.print(packed_message)
+        @socket.flush
+      rescue => ex
+        close
+        raise ConnectionFailure, "Operation failed with the following exception: #{ex}."
       end
     end
 
     # Receive data of specified length on socket.
     def receive_data_on_socket(length)
-      connect_to_master if !connected? && @auto_reconnect
+      connect_to_master if !connected?
       message = ""
       chunk   = ""
       while message.length < length do
@@ -639,8 +609,8 @@ module Mongo
           chunk = @socket.read(length - message.length)
           raise ConnectionFailure, "connection closed" unless chunk && chunk.length > 0
           message += chunk
-        rescue Timeout => ex
-          raise OperationFailure, "Database command timed out."
+        rescue => ex
+          raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
         end
       end
       message

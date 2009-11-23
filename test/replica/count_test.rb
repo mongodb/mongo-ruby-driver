@@ -4,7 +4,7 @@ require 'test/unit'
 require 'test/test_helper'
 
 # NOTE: this test should be run only if a replica pair is running.
-class ReplicaPairTest < Test::Unit::TestCase
+class CountTest < Test::Unit::TestCase
   include Mongo
  
   def setup 
@@ -14,26 +14,21 @@ class ReplicaPairTest < Test::Unit::TestCase
     @coll = @db.collection("test-pairs")
   end
 
-  def test_query
-    @coll.save({:a => 20})
-    @coll.save({:a => 30})
-    @coll.save({:a => 40})
-    results = []
-    @coll.find.each {|r| results << r}
-    [20, 30, 40].each do |a|
-      assert results.any? {|r| r['a'] == a}, "Could not find record for a => #{a}"
-    end
+  def test_correct_count_after_insertion_reconnect
+    @coll.insert({:a => 20}, :safe => true)
+    assert_equal 1, @coll.count
+
+    # Sleep to allow resync
+    sleep(3)
 
     puts "Please disconnect the current master."
     gets
 
-    results = []
     rescue_connection_failure do 
-      @coll.find.each {|r| results << r}
-      [20, 30, 40].each do |a|
-        assert results.any? {|r| r['a'] == a}, "Could not find record for a => #{a}"
-      end
+      @coll.insert({:a => 30}, :safe => true)
     end
+    @coll.insert({:a => 40}, :safe => true)
+    assert_equal 3, @coll.count, "Second count failed"
   end
 
 end
