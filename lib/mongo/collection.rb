@@ -110,14 +110,10 @@ module Mongo
     def find(selector={}, options={})
       fields = options.delete(:fields)
       fields = ["_id"] if fields && fields.empty?
-      skip = options.delete(:offset) || nil
-      if !skip.nil?
-        warn "the :offset option to find is deprecated and will be removed. please use :skip instead"
-      end
-      skip = options.delete(:skip) || skip || 0
-      limit = options.delete(:limit) || 0
-      sort = options.delete(:sort)
-      hint = options.delete(:hint)
+      skip   = options.delete(:skip) || skip || 0
+      limit  = options.delete(:limit) || 0
+      sort   = options.delete(:sort)
+      hint   = options.delete(:hint)
       snapshot = options.delete(:snapshot)
       if options[:timeout] == false && !block_given?
         raise ArgumentError, "Timeout can be set to false only when #find is invoked with a block." 
@@ -225,13 +221,6 @@ module Mongo
       message.put_array(BSON_SERIALIZER.serialize(selector, false).unpack("C*"))
       @connection.send_message_with_operation(Mongo::Constants::OP_DELETE, message,
         "db.#{@db.name}.remove(#{selector.inspect})")
-    end
-
-    # Remove all records.
-    # DEPRECATED: please use Collection#remove instead.
-    def clear
-      warn "Collection#clear is deprecated. Please use Collection#remove instead."
-      remove({})
     end
 
     # Update a single document in this collection.

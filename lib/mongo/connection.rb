@@ -278,6 +278,7 @@ module Mongo
     # Creates a new socket and tries to connect to master.
     # If successful, sets @host and @port to master and returns the socket.
     def connect_to_master
+      close
       @host = @port = nil
       for node_pair in @nodes
         host, port = *node_pair

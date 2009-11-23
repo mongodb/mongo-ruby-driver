@@ -67,7 +67,7 @@ module Mongo
         # servers, next request will re-open on master server.
         if err == "not master"
           raise ConnectionFailure, err
-          @db.close
+          @connection.close
         end
 
         raise OperationFailure, err
@@ -301,7 +301,7 @@ module Mongo
       close_cursor_if_query_complete
     end
 
-    # Run query first time we request an object from the wire
+    # Run query the first time we request an object from the wire
     def send_query_if_needed
       if @query_run
         false
@@ -349,14 +349,11 @@ module Mongo
 
     def formatted_order_clause
       case @order
-        when String then string_as_sort_parameters(@order)
-        when Symbol then symbol_as_sort_parameters(@order)
-        when Array  then array_as_sort_parameters(@order)
-        when Hash # Should be an ordered hash, but this message doesn't care
-          warn_if_deprecated(@order)
-          @order 
+        when String, Symbol then string_as_sort_parameters(@order)
+        when Array then array_as_sort_parameters(@order)
         else
-          raise InvalidSortValueError, "Illegal order_by, '#{@order.class.name}'; must be String, Array, Hash, or OrderedHash"
+          raise InvalidSortValueError, "Illegal sort clause, '#{@order.class.name}'; must be of the form " + 
+            "[['field1', '(ascending|descending)'], ['field2', '(ascending|descending)']]"
       end
     end
 

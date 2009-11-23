@@ -19,7 +19,7 @@ module Mongo #:nodoc:
   # objects to mongo-friendly parameters.
   module Conversions
 
-    ASCENDING = ["ascending", "asc", "1"]
+    ASCENDING  = ["ascending", "asc", "1"]
     DESCENDING = ["descending", "desc", "-1"]
 
     # Converts the supplied +Array+ to a +Hash+ to pass to mongo as
@@ -28,17 +28,9 @@ module Mongo #:nodoc:
     #
     # Example:
     #
-    # *DEPRECATED
-    #
-    # <tt>array_as_sort_parameters(["field1", "field2"])</tt> =>
-    # <tt>{ "field1" => "1", "field2" => "1" }</tt>
-    #
-    # *New Syntax:
-    #
     # <tt>array_as_sort_parameters([["field1", :asc], ["field2", :desc]])</tt> =>
     # <tt>{ "field1" => 1, "field2" => -1}</tt>
     def array_as_sort_parameters(value)
-      warn_if_deprecated(value)
       order_by = OrderedHash.new
       value.each do |param|
         if (param.class.name == "String")
@@ -50,7 +42,7 @@ module Mongo #:nodoc:
       order_by
     end
 
-    # Converts the supplied +String+ to a +Hash+ to pass to mongo as
+    # Converts the supplied +String+ or +Symbol+ to a +Hash+ to pass to mongo as
     # a sorting parameter with ascending order. If the +String+
     # is empty then an empty +Hash+ will be returned.
     #
@@ -61,22 +53,8 @@ module Mongo #:nodoc:
     # <tt>string_as_sort_parameters("field")</tt> => <tt>{ "field" => 1 }</tt>
     # <tt>string_as_sort_parameters("")</tt> => <tt>{}</tt>
     def string_as_sort_parameters(value)
-      warn_if_deprecated(value)
-      return {} if value.empty?
-      { value => 1 }
-    end
-
-    # Converts the supplied +Symbol+ to a +Hash+ to pass to mongo as
-    # a sorting parameter with ascending order.
-    #
-    # Example:
-    #
-    # *DEPRECATED
-    #
-    # <tt>symbol_as_sort_parameters(:field)</tt> => <tt>{ "field" => 1 }</tt>
-    def symbol_as_sort_parameters(value)
-      warn_if_deprecated(value)
-      { value.to_s => 1 }
+      return {} if (str = value.to_s).empty?
+      { str => 1 }
     end
 
     # Converts the +String+, +Symbol+, or +Integer+ to the 
@@ -96,15 +74,5 @@ module Mongo #:nodoc:
         "#{self} was supplied as a sort direction when acceptable values are: " +
         "Mongo::ASCENDING, 'ascending', 'asc', :ascending, :asc, 1, Mongo::DESCENDING, 'descending', 'desc', :descending, :desc, -1.")
     end
-
-    # This is the method to call when the client needs to be warned of
-    # deprecation in the way sorting parameters are supplied.
-    def warn_if_deprecated(value)
-      unless value.is_a?(Array) && value.first.is_a?(Array)
-        warn("Specifying sort order as #{value.inspect} has been deprecated in favor of a new syntax: \n" +
-          "  :sort => [['field1', '(ascending|descending)'], ['field2', '(ascending|descending)']]")
-      end
-    end
-
   end
 end

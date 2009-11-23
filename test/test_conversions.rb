@@ -28,7 +28,7 @@ class ConversionsTest < Test::Unit::TestCase
   end
 
   def test_symbol_as_sort_parameters
-    params = symbol_as_sort_parameters(:field)
+    params = string_as_sort_parameters(:field)
     assert_equal({ "field" => 1 }, params)
   end
 

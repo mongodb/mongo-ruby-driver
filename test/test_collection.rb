@@ -290,9 +290,6 @@ class TestCollection < Test::Unit::TestCase
       @@test.save(:foo => i)
     end
 
-    # TODO remove test for deprecated :offset option
-    assert_equal 5, @@test.find({}, :offset => 5).next_object()["foo"]
-
     assert_equal 5, @@test.find({}, :skip => 5).next_object()["foo"]
     assert_equal nil, @@test.find({}, :skip => 10).next_object()
 
@@ -384,11 +381,6 @@ class TestCollection < Test::Unit::TestCase
 
     should "remove all records if an empty document is specified" do 
       @collection.remove({})
-      assert_equal 0, @collection.find.count
-    end
-
-    should "remove all records if deprecated clear is used" do 
-      @collection.clear
       assert_equal 0, @collection.find.count
     end
 

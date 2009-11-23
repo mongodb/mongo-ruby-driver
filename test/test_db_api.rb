@@ -167,7 +167,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 1, docs[3]['a']
 
     # Sorting using array of names; assumes ascending order.
-    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => ['a']).to_a
+    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => 'a').to_a
     assert_equal 4, docs.size
     assert_equal 1, docs[0]['a']
     assert_equal 2, docs[1]['a']
@@ -197,22 +197,9 @@ class DBAPITest < Test::Unit::TestCase
     # order of the keys won't be guaranteed thus your sort won't make sense.
     oh = OrderedHash.new
     oh['a'] = -1
-    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => oh).to_a
-    assert_equal 4, docs.size
-    assert_equal 4, docs[0]['a']
-    assert_equal 3, docs[1]['a']
-    assert_equal 2, docs[2]['a']
-    assert_equal 1, docs[3]['a']
-
-    oh = OrderedHash.new
-    oh['b'] = -1
-    oh['a'] = 1
-    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => oh).to_a
-    assert_equal 4, docs.size
-    assert_equal 1, docs[0]['a']
-    assert_equal 3, docs[1]['a']
-    assert_equal 2, docs[2]['a']
-    assert_equal 4, docs[3]['a']
+    assert_raise InvalidSortValueError do 
+      docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => oh).to_a
+    end
   end
 
   def test_find_limits
