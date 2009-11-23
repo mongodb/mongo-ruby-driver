@@ -298,6 +298,33 @@ module Mongo
       @db.drop_collection(@name)
     end
 
+    def mapreduce(map, reduce, options={})
+      case map
+      when Code
+      else
+        map = Code.new(map)
+      end
+
+      case reduce
+      when Code
+      else
+        reduce = Code.new(reduce)
+      end
+
+      hash = OrderedHash.new
+      hash['mapreduce'] = self.name
+      hash['map'] = map
+      hash['reduce'] = reduce
+      hash.merge! options
+
+      result = @db.db_command(hash)
+      if result["ok"] == 1
+      return @db[result["result"]]
+      else
+        raise Mongo::OperationFailure, "map-reduce failed: #{result['errmsg']}"
+      end
+    end
+
     # Perform a query similar to an SQL group by operation.
     #
     # Returns an array of grouped items.
