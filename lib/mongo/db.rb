@@ -98,13 +98,7 @@ module Mongo
     # :logger :: Optional Logger instance to which driver usage information
     #            will be logged.
     #
-    # :auto_reconnect :: DEPRECATED. When an operation fails, a
-    # ConnectionFailure will be raised. The client is encouraged to retry the
-    # operation as necessary.
-    #
-    # When a DB object first connects to a pair, it will find the master
-    # instance and connect to that one. On socket error or if we recieve a
-    # "not master" error, we again find the master of the pair.
+    # :auto_reconnect :: DEPRECATED. See http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby
     def initialize(db_name, connection, options={})
       @name       = validate_db_name(db_name)
       @connection = connection

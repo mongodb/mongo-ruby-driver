@@ -29,60 +29,54 @@ module Mongo
 
     attr_reader :logger, :size, :host, :port, :nodes, :sockets, :checked_out, :reserved_connections
 
-
-    def slave_ok?; @slave_ok; end
-    def auto_reconnect?; @auto_reconnect; end
+    def slave_ok? 
+      @slave_ok
+    end
     
     # Counter for generating unique request ids.
     @@current_request_id = 0
 
-    # Create a Mongo database server instance. You specify either one or a
-    # pair of servers. If one, you also say if connecting to a slave is
-    # OK. In either case, the host default is "localhost" and port default
-    # is DEFAULT_PORT.
+    # Create a Mongo database server instance. Specify either one or a
+    # pair of servers. 
     #
-    # If you specify a pair, pair_or_host is a hash with two keys :left
-    # and :right. Each key maps to either
-    # * a server name, in which case port is DEFAULT_PORT
-    # * a port number, in which case server is "localhost"
-    # * an array containing a server name and a port number in that order
+    # If connecting to just one server, you may specify whether connection to slave is permitted.
+    # 
+    # In all cases, the default host is "localhost" and the default port, is 27017.
     #
-    # +options+ are passed on to each DB instance:
+    # When specifying, pair_or_host, is a hash with two keys: :left and :right. Each key maps to either
+    # * a server name, in which case port is 27017,
+    # * a port number, in which case the server is "localhost", or
+    # * an array containing [server_name, port_number]
     #
-    # :slave_ok :: Only used if one host is specified. If false, when
-    #              connecting to that host/port a DB object will check to
-    #              see if the server is the master. If it is not, an error
-    #              is thrown.
+    # +options+ 
     #
-    # :auto_reconnect :: DEPRECATED. When an operation fails, a
-    # ConnectionFailure will be raised. The client is encouraged to retry the
-    # operation as necessary.
+    # :slave_ok :: Defaults to +false+. Must be set to +true+ when connecting
+    #              to a single, slave node.
     #
     # :logger :: Optional Logger instance to which driver usage information
     #            will be logged.
     #
-    # Since that's so confusing, here are a few examples:
+    # :auto_reconnect :: DEPRECATED. See http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby
     #
-    #  Connection.new                         # localhost, DEFAULT_PORT, !slave
-    #  Connection.new("localhost")            # localhost, DEFAULT_PORT, !slave
-    #  Connection.new("localhost", 3000)      # localhost, 3000, slave not ok
-    #  # localhost, 3000, slave ok
-    #  Connection.new("localhost", 3000, :slave_ok => true)
-    #  # localhost, DEFAULT_PORT, auto reconnect
-    #  Connection.new(nil, nil, :auto_reconnect => true)
+    # Here are a few examples:
     #
-    #  # A pair of servers. DB will always talk to the master. On socket
-    #  # error or "not master" error, we will auto-reconnect to the
-    #  # current master.
-    #  Connection.new({:left  => ["db1.example.com", 3000],
-    #             :right => "db2.example.com"}, # DEFAULT_PORT
-    #            nil, :auto_reconnect => true)
+    #   # localhost, 27017
+    #   Connection.new
+    #   
+    #   # localhost, 27017
+    #   Connection.new("localhost")
     #
-    #  # Here, :right is localhost/DEFAULT_PORT. No auto-reconnect.
-    #  Connection.new({:left => ["db1.example.com", 3000]})
+    #   # localhost, 3000
+    #   Connection.new("localhost", 3000)
     #
-    # When a DB object first connects to a pair, it will find the master
-    # instance and connect to that one.
+    #   # localhost, 3000, where this node may be a slave
+    #   Connection.new("localhost", 3000, :slave_ok => true)
+    #
+    #  # A pair of servers. The driver will always talk to master. 
+    #  # On connection errors, Mongo::ConnectionFailure will be raised.
+    #  # See http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby 
+    #  Connection.new({:left  => ["db1.example.com", 27017],
+    #                  :right => ["db2.example.com", 27017]})
     def initialize(pair_or_host=nil, port=nil, options={})
       @nodes = format_pair(pair_or_host)
 
@@ -111,8 +105,11 @@ module Mongo
       @sockets      = []
       @checked_out  = []
 
+      if options[:auto_reconnect]
+        warn(":auto_reconnect is deprecated. see http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby")
+      end
+      
       # Slave ok can be true only if one node is specified
-      @auto_reconnect = options[:auto_reconnect]
       @slave_ok = options[:slave_ok] && @nodes.length == 1
       @logger   = options[:logger] || nil
       @options  = options
@@ -136,7 +133,6 @@ module Mongo
     end
 
     # Return the database named +db_name+. The slave_ok and
-    # auto_reconnect options passed in via #new may be overridden here.
     # See DB#new for other options you can pass in.
     def db(db_name, options={})
       DB.new(db_name, self, options.merge(:logger => @logger))
@@ -295,7 +291,7 @@ module Mongo
           end
 
           # Note: slave_ok can be true only when connecting to a single node.
-          if !@slave_ok && !is_master
+          if @nodes.length > 1 && !is_master && !@slave_ok
             raise ConfigurationError, "Trying to connect directly to slave; " +
               "if this is what you want, specify :slave_ok => true."
           end
@@ -306,16 +302,19 @@ module Mongo
           false
         end
       end 
-      raise ConnectionError, "failed to connect to any given host:port" unless socket
+      raise ConnectionFailure, "failed to connect to any given host:port" unless socket
     end
 
+    # NOTE: might not need this.
+    # Are we connected to the master node?
     def master?
       doc = self['admin'].command(:ismaster => 1)
       doc['ok'] == 1 && doc['ismaster'] == 1
     end
 
+    # NOTE: might not need this.
     # Returns a string of the form "host:port" that points to the master
-    # database. Works even if this is the master database.
+    # database. Works even if this _is_ the master database.
     def master
       doc = self['admin'].command(:ismaster => 1)
       if doc['ok'] == 1 && doc['ismaster'] == 1
@@ -327,10 +326,10 @@ module Mongo
       end
     end
 
+    # Are we connected to MongoDB? This is determined by checking whether
+    # @host and @port have values, since they're set to nil on calls to #close.
     def connected?
-      @sockets.detect do |sock|
-        sock.is_a? Socket
-      end || (@host && @port)
+      @host && @port
     end
 
     # Close the connection to the database.
@@ -364,9 +363,8 @@ module Mongo
       end
     end
 
-    # Releases connection for any dead threads.
-    # Called when the connection pool grows too large
-    # and we need additional sockets.
+    # Releases the connection for any dead threads.
+    # Called when the connection pool grows too large to free up more sockets.
     def clear_stale_cached_connections!
       keys = Set.new(@reserved_connections.keys)
 
@@ -410,7 +408,7 @@ module Mongo
       @connection_mutex.synchronize do 
         
         # NOTE: Not certain that this is the best place for reconnect
-        connect_to_master if !connected? && @auto_reconnect
+        connect_to_master if !connected?
         loop do 
           socket = if @checked_out.size < @sockets.size
                      checkout_existing_socket
@@ -515,11 +513,6 @@ module Mongo
       message.prepend!(headers)
       message.to_s
     end
-
-    #def send_and_receive
-    #  send_message_on_socket(packed_message, socket)
-    #  receive_message_on_socket()
-    #end
 
     # Low-level method for sending a message on a socket.
     # Requires a packed message and an available socket, 
