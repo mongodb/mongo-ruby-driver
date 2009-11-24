@@ -109,22 +109,8 @@ class ConnectionTest < Test::Unit::TestCase
           assert !@conn.checked_out.include?(@socket1)
           assert_nil @conn.reserved_connections[@thread1.object_id]
         end
-
-        should "maintain connection for live threads" do 
-          #assert @conn.checked_out.include?(@socket2)
-          #assert @conn.checked_out.include?(@socket3)
-        end
       end
 
-      context "when checking in a socket" do 
-        setup do 
-          @conn.checkin(@socket3)
-        end
-
-        should "reduce the number checked out by one" do 
-          #assert_equal @conn.checked_out.size, (@conn.sockets.size - 1)
-        end
-      end
     end
   end
 end 

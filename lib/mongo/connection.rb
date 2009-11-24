@@ -211,6 +211,7 @@ module Mongo
       packed_message = pack_message(operation, message)
       socket = checkout
       send_message_on_socket(packed_message, socket)
+      checkin(socket)
     end
 
     # Sends a message to MongoDB and returns the response.
@@ -243,9 +244,8 @@ module Mongo
       @logger.debug("  MONGODB #{log_message || message}") if @logger
       packed_message = pack_message(operation, message)
       socket = checkout
-      response = send_message_on_socket(packed_message, socket)
+      send_message_on_socket(packed_message, socket)
       checkin(socket)
-      response
     end
 
     # Sends a message to the database, waits for a response, and raises
@@ -258,10 +258,10 @@ module Mongo
       msg  = message_with_headers.append!(message_with_check).to_s
       send_message_on_socket(msg, sock)
       docs, num_received, cursor_id = receive(sock)
+      checkin(sock)
       if num_received == 1 && error = docs[0]['err']
         raise Mongo::OperationFailure, error
       end
-      checkin(sock)
       [docs, num_received, cursor_id]
     end
 
@@ -272,7 +272,9 @@ module Mongo
       sock = socket || checkout
 
       send_message_on_socket(message_with_headers, sock)
-      receive(sock)
+      result = receive(sock)
+      checkin(sock)
+      result
     end
 
     # Creates a new socket and tries to connect to master.
@@ -346,6 +348,7 @@ module Mongo
 
     # Get a socket from the pool, mapped to the current thread.
     def checkout
+      #return @socket ||= checkout_new_socket if @size == 1
       if sock = @reserved_connections[Thread.current.object_id]
         sock
       else
@@ -358,16 +361,17 @@ module Mongo
     # Return a socket to the pool.
     def checkin(socket)
       @connection_mutex.synchronize do 
-        @checked_out.delete(socket)
         @reserved_connections.delete Thread.current.object_id
+        @checked_out.delete(socket)
         @queue.signal
       end
+      true
     end
 
     # Releases the connection for any dead threads.
     # Called when the connection pool grows too large to free up more sockets.
     def clear_stale_cached_connections!
-      keys = Set.new(@reserved_connections.keys)
+      keys = @reserved_connections.keys
 
       Thread.list.each do |thread|
         keys.delete(thread.object_id) if thread.alive?
@@ -418,20 +422,22 @@ module Mongo
                    end
 
           return socket if socket
-          # No connections available; wait.
+          # Try to clear out any stale threads to free up some connections
+          clear_stale_cached_connections!
+          next if @checked_out.size < @sockets.size
+          # Otherwise, wait.
           if @queue.wait(@timeout)
             next
           else
-            # Try to clear out any stale threads to free up some connections
             clear_stale_cached_connections!
             if @size == @sockets.size
               raise ConnectionTimeoutError, "could not obtain connection within " +
                 "#{@timeout} seconds. The max pool size is currently #{@size}; " +
                 "consider increasing it."
             end
-          end # if
+          end  # if
         end # loop
-      end #sync
+      end # synchronize
     end
 
     def receive(sock)
@@ -518,15 +524,7 @@ module Mongo
     # Low-level method for sending a message on a socket.
     # Requires a packed message and an available socket, 
     def send_message_on_socket(packed_message, socket)
-      #socket will be connected to master when we receive it
-      #begin
       socket.send(packed_message, 0)
-      #rescue => ex
-        # close
-        # need to find a way to release the socket here
-        # checkin(socket)
-      #  raise ex
-      #end
     end
 
     # Low-level method for receiving data from socket.
