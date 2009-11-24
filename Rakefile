@@ -19,6 +19,7 @@ desc "Test the MongoDB Ruby driver."
 task :test do
   Rake::Task['test:unit'].invoke
   Rake::Task['test:functional'].invoke
+  Rake::Task['test:pooled_threading'].invoke
 end
 
 namespace :test do 
@@ -29,6 +30,11 @@ namespace :test do
 
   Rake::TestTask.new(:functional) do |t|
     t.test_files = FileList['test/test*.rb']
+    t.verbose    = true
+  end
+
+  Rake::TestTask.new(:pooled_threading) do |t|
+    t.test_files = FileList['test/threading/*.rb']
     t.verbose    = true
   end
 

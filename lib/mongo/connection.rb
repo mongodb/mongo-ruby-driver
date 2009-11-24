@@ -383,7 +383,7 @@ module Mongo
           next if @checked_out.size < @sockets.size
 
           # Otherwise, wait.
-          if @queue.wait(@timeout)
+          if wait
             next
           else
 
@@ -397,6 +397,20 @@ module Mongo
           end  # if
         end # loop
       end # synchronize
+    end
+
+    if RUBY_VERSION >= '1.9'
+      # Ruby 1.9's Condition Variables don't support timeouts yet;
+      # until they do, we'll make do with this hack. 
+      def wait
+        Timeout.timeout(@timeout) do 
+          @queue.wait
+        end
+      end
+    else
+      def wait
+        @queue.wait(@timeout)
+      end
     end
 
     def receive(sock)

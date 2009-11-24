@@ -43,21 +43,21 @@ class TestThreadingLargePool < Test::Unit::TestCase
   end
 
   def test_safe_insert
-      set_up_safe_data
-      threads = []
-      100.times do |i|
-        threads[i] = Thread.new do
-          if i % 2 == 0
-            assert_raise Mongo::OperationFailure do
-              @unique.insert({"test" => "insert"}, :safe => true)
-            end
-          else
-            @duplicate.insert({"test" => "insert"}, :safe => true)
+    set_up_safe_data
+    threads = []
+    100.times do |i|
+      threads[i] = Thread.new do
+        if i % 2 == 0
+          assert_raise Mongo::OperationFailure do
+            @unique.insert({"test" => "insert"}, :safe => true)
           end
+        else
+          @duplicate.insert({"test" => "insert"}, :safe => true)
         end
       end
-    
-      100.times do |i|
+    end
+  
+    100.times do |i|
       threads[i].join
     end
   end
