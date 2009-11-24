@@ -2,33 +2,32 @@
 
 This is the 10gen-supported Ruby driver for MongoDB[http://www.mongodb.org].
 
-Here is a quick code sample. See the files in the "examples" subdirectory for
-many more.
+Here is a quick code sample. See the MongoDB Ruby Tutorial
+(http://www.mongodb.org/display/DOCS/Ruby+Tutorial) for much more.
 
+  require 'rubygems'
   require 'mongo'
-
   include Mongo
 
-  db = Connection.new('localhost').db('sample-db')
-  coll = db.collection('test')
+  @db   = Connection.new.db('sample-db')
+  @coll = db.collection('test')
 
-  coll.remove
-  3.times { |i| coll.insert({'a' => i+1}) }
-  puts "There are #{coll.count()} records. Here they are:"
-  coll.find().each { |doc| puts doc.inspect }
-
-This driver also includes an implementation of a GridStore class, a Ruby
-interface to Mongo's GridFS storage.
+  @coll.remove
+  3.times do |i| 
+    @coll.insert({'a' => i+1})
+  end
+  puts "There are #{@coll.count()} records. Here they are:"
+  @coll.find().each { |doc| puts doc.inspect }
 
 = Installation
 
 The driver's gems are hosted on Gemcutter[http://gemcutter.org]. If you haven't
-installed a gem from Gemcutter before you'll need to set up Gemcutter first
+installed a gem from Gemcutter before, you'll need to set up Gemcutter first:
 
   $ gem install gemcutter
   $ gem tumble
 
-If (or once) you have Gemcutter setup, install the "mongo" gem by typing
+Once you've installed Gemcutter, install the mongo gem as follows:
 
   $ gem install mongo
 
@@ -54,11 +53,14 @@ That's all there is to it!
 
 = Examples
 
-There are many examples in the "examples" subdirectory. Samples include using
-the driver and using the GridFS class GridStore. Mongo must be running for
+For extensive examples, see the MongoDB Ruby Tutorial
+(http://www.mongodb.org/display/DOCS/Ruby+Tutorial).
+
+Bundled with the dirver are many examples in the "examples" subdirectory. Samples include using
+the driver and using the GridFS class GridStore. MongoDB must be running for
 these examples to work, of course.
 
-Here's how to start mongo and run the "simple.rb" example:
+Here's how to start MongoDB and run the "simple.rb" example:
 
   $ cd path/to/mongo
   $ ./mongod run
@@ -68,33 +70,15 @@ Here's how to start mongo and run the "simple.rb" example:
 
 See also the test code, especially test/test_db_api.rb.
 
-= The Driver
-
-Here is some simple example code:
-
-  require 'rubygems'        # not required for Ruby 1.9
-  require 'mongo'
-
-  include Mongo
-  db = Connection.new.db('my-db-name')
-  things = db.collection('things')
-
-  things.remove
-  things.insert('a' => 42)
-  things.insert('a' => 99, 'b' => Time.now)
-  puts things.count                               # => 2
-  puts things.find('a' => 42).next_object.inspect # {"a"=>42}
-
-
 = GridStore
 
-The GridStore class is a Ruby implementation of Mongo's GridFS file storage
-system. An instance of GridStore is like an IO object. See the rdocs for
+The GridStore class is a Ruby implementation of MongoDB's GridFS file storage
+system. An instance of GridStore is like an IO object. See the RDocs for
 details, and see examples/gridfs.rb for code that uses many of the GridStore
-features like metadata, content type, rewind/seek/tell, etc.
+features (metadata, content type, rewind/seek/tell, etc).
 
 Note that the GridStore class is not automatically required when you require
-'mongo'. You need to require 'mongo/gridfs'.
+'mongo'. You also need to require 'mongo/gridfs'
 
 Example code:
 
@@ -112,12 +96,31 @@ Example code:
   }
 
 
-
 = Notes
 
 == Thread Safety
 
-mongo-ruby-driver is thread safe.
+The driver is thread safe.
+
+== Connection Pooling
+
+As of 0.18, the driver implements connection pooling. By default, only one
+socket connection will be opened to MongoDB. However, if you're running a
+multi-threaded application, you can specify a maximum pool size and a maximum
+timeout for waiting for old connections to be released to the pool.
+
+To set up a pooled connection to a single MongoDB instance:
+
+  @conn = Connection.new("localhost", 27017, :pool_size => 5, :timeout => 5)
+
+A pooled connection to a paired instance would look like this:
+
+  @conn = Connection.new({:left  => ["db1.example.com", 27017],
+                    :right => ["db2.example.com", 27017]}, nil,
+                    :pool_size => 20, :timeout => 5)
+
+Though the pooling architecure will undoubtedly evolve, it owes much credit
+to the connection pooling implementations in ActiveRecord and PyMongo.
 
 == Using with Phusion Passenger
 
@@ -314,7 +317,7 @@ Then open the file html/index.html.
 
 = Release Notes
 
-See the git log comments.
+See HISTORY.
 
 = Credits
 
@@ -356,9 +359,6 @@ Cyril Mougel, cyril.mougel@gmail.com
 
 Jack Chen, chendo on github
 * Test case + fix for deserializing pre-epoch Time instances
-
-Kyle Banker, banker on github
-* #limit and #skip methods for Cursor instances
 
 Michael Bernstein, mrb on github
 * #sort method for Cursor instances
