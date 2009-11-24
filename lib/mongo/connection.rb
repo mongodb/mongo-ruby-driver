@@ -294,7 +294,7 @@ module Mongo
           end
 
           # Note: slave_ok can be true only when connecting to a single node.
-          if @nodes.length > 1 && !is_master && !@slave_ok
+          if @nodes.length == 1 && !is_master && !@slave_ok
             raise ConfigurationError, "Trying to connect directly to slave; " +
               "if this is what you want, specify :slave_ok => true."
           end
@@ -524,17 +524,26 @@ module Mongo
     # Low-level method for sending a message on a socket.
     # Requires a packed message and an available socket, 
     def send_message_on_socket(packed_message, socket)
+      begin
       socket.send(packed_message, 0)
+      rescue => ex
+        close
+        raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
+      end
     end
 
     # Low-level method for receiving data from socket.
     # Requires length and an available socket.
     def receive_message_on_socket(length, socket)
       message = ""
-      while message.length < length do
-        chunk = socket.recv(length - message.length)
-        raise "connection closed" unless chunk.length > 0
-        message += chunk
+      begin
+        while message.length < length do
+          chunk = socket.recv(length - message.length)
+          raise ConnectionFailure, "connection closed" unless chunk.length > 0
+          message += chunk
+        end
+        rescue => ex
+          raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
       end
       message
     end
