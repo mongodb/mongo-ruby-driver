@@ -36,9 +36,10 @@ module Mongo
     # Counter for generating unique request ids.
     @@current_request_id = 0
 
-    # Create a Mongo database server instance. Specify either one or a
-    # pair of servers. 
+    # Creates a connection to MongoDB. Specify either one or a pair of servers,
+    # along with a maximum connection pool size and timeout.
     #
+    # == Connecting
     # If connecting to just one server, you may specify whether connection to slave is permitted.
     # 
     # In all cases, the default host is "localhost" and the default port, is 27017.
@@ -48,7 +49,7 @@ module Mongo
     # * a port number, in which case the server is "localhost", or
     # * an array containing [server_name, port_number]
     #
-    # +options+ 
+    # === options
     #
     # :slave_ok :: Defaults to +false+. Must be set to +true+ when connecting
     #              to a single, slave node.
@@ -58,7 +59,15 @@ module Mongo
     #
     # :auto_reconnect :: DEPRECATED. See http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby
     #
-    # Here are a few examples:
+    # :pool_size :: The maximum number of socket connections that can be opened
+    #               that can be opened to the database.
+    #
+    # :timeout   :: When all of the connections to the pool are checked out,
+    #               this is the number of seconds to wait for a new connection
+    #               to be released before throwing an exception.
+    #                
+    #
+    # == Examples:
     #
     #   # localhost, 27017
     #   Connection.new
@@ -66,8 +75,8 @@ module Mongo
     #   # localhost, 27017
     #   Connection.new("localhost")
     #
-    #   # localhost, 3000
-    #   Connection.new("localhost", 3000)
+    #   # localhost, 3000, max 5 connections, with max 5 seconds of wait time.
+    #   Connection.new("localhost", 3000, :pool_size => 5, :timeout => 5)
     #
     #   # localhost, 3000, where this node may be a slave
     #   Connection.new("localhost", 3000, :slave_ok => true)
@@ -77,6 +86,11 @@ module Mongo
     #  # See http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby 
     #  Connection.new({:left  => ["db1.example.com", 27017],
     #                  :right => ["db2.example.com", 27017]})
+    #
+    #  A pair of servers, with connection pooling. Not the nil param placeholder for port.
+    #  Connection.new({:left  => ["db1.example.com", 27017],
+    #                  :right => ["db2.example.com", 27017]}, nil,
+    #                  :pool_size => 20, :timeout => 5)
     def initialize(pair_or_host=nil, port=nil, options={})
       @nodes = format_pair(pair_or_host)
 
@@ -129,13 +143,13 @@ module Mongo
       database_info.keys
     end
 
-    # Return the database named +db_name+. The slave_ok and
+    # Returns the database named +db_name+. The slave_ok and
     # See DB#new for other options you can pass in.
     def db(db_name, options={})
       DB.new(db_name, self, options.merge(:logger => @logger))
     end
 
-    # Return the database named +db_name+.
+    # Returns the database named +db_name+.
     def [](db_name)
       DB.new(db_name, self, :logger => @logger)
     end
@@ -165,31 +179,12 @@ module Mongo
       request_id
     end
 
-    # Prepares a message for transmission to MongoDB by
-    # constructing a valid message header.
-    def add_message_headers(operation, message)
-      headers = ByteBuffer.new
-
-      # Message size.
-      headers.put_int(16 + message.size)
-
-      # Unique request id.
-      headers.put_int(get_request_id)
-
-      # Response id.
-      headers.put_int(0)
-
-      # Opcode.
-      headers.put_int(operation)
-      message.prepend!(headers)
-    end
-
-    # Return the build information for the current connection.
+    # Returns the build information for the current connection.
     def server_info
       db("admin").command({:buildinfo => 1}, {:admin => true, :check_response => true})
     end
 
-    # Get the build version of the current server.
+    # Gets the build version of the current server.
     # Returns a ServerVersion object for comparability.
     def server_version
       ServerVersion.new(server_info["version"])
@@ -198,25 +193,6 @@ module Mongo
 
     ## Connections and pooling ##
     
-    # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
-    # +message+, an optional formatted +log_message+, and an optional
-    # socket.
-    def receive_message(operation, message, log_msg=nil, sock=nil)
-      @logger.debug("  MONGODB #{log_message || message}") if @logger
-      packed_message = pack_message(operation, message)
-
-      # This code is used only if we're checking for master.
-      if sock
-        @master_lock.synchronize do 
-          response = send_and_receive(packed_message, sock)
-        end
-      else
-        socket = checkout
-        response = send_and_receive(packed_message, socket)
-      end
-      response
-    end
-
     # Sends a message to MongoDB.
     #
     # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
@@ -224,7 +200,7 @@ module Mongo
     # Sends the message to the databse, adding the necessary headers.
     def send_message(operation, message, log_message=nil)
       @logger.debug("  MONGODB #{log_message || message}") if @logger
-      packed_message = pack_message(operation, message)
+      packed_message = add_message_headers(operation, message).to_s
       socket = checkout
       send_message_on_socket(packed_message, socket)
       checkin(socket)
@@ -241,8 +217,8 @@ module Mongo
       message_with_check   = last_error_message(db_name)
       @logger.debug("  MONGODB #{log_message || message}") if @logger
       sock = checkout
-      msg  = message_with_headers.append!(message_with_check).to_s
-      send_message_on_socket(msg, sock)
+      packed_message = message_with_headers.append!(message_with_check).to_s
+      send_message_on_socket(packed_message, sock)
       docs, num_received, cursor_id = receive(sock)
       checkin(sock)
       if num_received == 1 && error = docs[0]['err']
@@ -257,11 +233,11 @@ module Mongo
     # +message+, and an optional formatted +log_message+. This method 
     # also takes an options socket for internal use with #connect_to_master.
     def receive_message(operation, message, log_message=nil, socket=nil)
-      message_with_headers = add_message_headers(operation, message).to_s
+      packed_message = add_message_headers(operation, message).to_s
       @logger.debug("  MONGODB #{log_message || message}") if @logger
       sock = socket || checkout
 
-      send_message_on_socket(message_with_headers, sock)
+      send_message_on_socket(packed_message, sock)
       result = receive(sock)
       checkin(sock)
       result
@@ -315,6 +291,7 @@ module Mongo
       @checked_out.clear
       @reserved_connections.clear
     end
+
 
     private
 
@@ -383,9 +360,8 @@ module Mongo
     # available socket.
     def obtain_socket
       @connection_mutex.synchronize do 
-        
-        # NOTE: Not certain that this is the best place for reconnect
         connect_to_master if !connected?
+
         loop do 
           socket = if @checked_out.size < @sockets.size
                      checkout_existing_socket
@@ -394,13 +370,17 @@ module Mongo
                    end
 
           return socket if socket
+
           # Try to clear out any stale threads to free up some connections
           clear_stale_cached_connections!
           next if @checked_out.size < @sockets.size
+
           # Otherwise, wait.
           if @queue.wait(@timeout)
             next
           else
+
+            # Try to clear stale threads once more before failing.
             clear_stale_cached_connections!
             if @size == @sockets.size
               raise ConnectionTimeoutError, "could not obtain connection within " +
@@ -472,10 +452,10 @@ module Mongo
       message.put_array(BSON_SERIALIZER.serialize({:getlasterror => 1}, false).unpack("C*"))
       add_message_headers(Mongo::Constants::OP_QUERY, message)
     end
-
+    
     # Prepares a message for transmission to MongoDB by
-    # constructing a message header with a new request id.
-    def pack_message(operation, message)
+    # constructing a valid message header.
+    def add_message_headers(operation, message)
       headers = ByteBuffer.new
 
       # Message size.
@@ -490,7 +470,6 @@ module Mongo
       # Opcode.
       headers.put_int(operation)
       message.prepend!(headers)
-      message.to_s
     end
 
     # Low-level method for sending a message on a socket.
