@@ -53,7 +53,7 @@ module Mongo
     # * a port number, in which case the server is "localhost", or
     # * an array containing [server_name, port_number]
     #
-    # === options
+    # === Options
     #
     # :slave_ok :: Defaults to +false+. Must be set to +true+ when connecting
     #              to a single, slave node.
@@ -71,19 +71,19 @@ module Mongo
     #               to be released before throwing an exception.
     #                
     #
-    # == Examples:
+    # === Examples:
     #
-    #   # localhost, 27017
-    #   Connection.new
+    #  # localhost, 27017
+    #  Connection.new
     #   
-    #   # localhost, 27017
-    #   Connection.new("localhost")
+    #  # localhost, 27017
+    #  Connection.new("localhost")
     #
-    #   # localhost, 3000, max 5 connections, with max 5 seconds of wait time.
-    #   Connection.new("localhost", 3000, :pool_size => 5, :timeout => 5)
+    #  # localhost, 3000, max 5 connections, with max 5 seconds of wait time.
+    #  Connection.new("localhost", 3000, :pool_size => 5, :timeout => 5)
     #
-    #   # localhost, 3000, where this node may be a slave
-    #   Connection.new("localhost", 3000, :slave_ok => true)
+    #  # localhost, 3000, where this node may be a slave
+    #  Connection.new("localhost", 3000, :slave_ok => true)
     #
     #  # A pair of servers. The driver will always talk to master. 
     #  # On connection errors, Mongo::ConnectionFailure will be raised.
