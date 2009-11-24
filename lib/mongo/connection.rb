@@ -43,7 +43,7 @@ module Mongo
     # 
     # In all cases, the default host is "localhost" and the default port, is 27017.
     #
-    # When specifying, pair_or_host, is a hash with two keys: :left and :right. Each key maps to either
+    # When specifying a pair, pair_or_host, is a hash with two keys: :left and :right. Each key maps to either
     # * a server name, in which case port is 27017,
     # * a port number, in which case the server is "localhost", or
     # * an array containing [server_name, port_number]
@@ -85,9 +85,6 @@ module Mongo
       
       # Lock for request ids.
       @id_lock = Mutex.new
-
-      # Lock for checking master.
-      @master_lock = Mutex.new
 
       # Pool size and timeout.
       @size      = options[:pool_size] || 1
@@ -201,21 +198,6 @@ module Mongo
 
     ## Connections and pooling ##
     
-    # Sends a message to MongoDB.
-    #
-    # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
-    # +message+, and an optional formatted +log_message+.
-    def send_message(operation, message, log_message=nil)
-      @logger.debug("  MONGODB #{log_message || message}") if @logger
-
-      packed_message = pack_message(operation, message)
-      socket = checkout
-      send_message_on_socket(packed_message, socket)
-      checkin(socket)
-    end
-
-    # Sends a message to MongoDB and returns the response.
-    #
     # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
     # +message+, an optional formatted +log_message+, and an optional
     # socket.
@@ -240,7 +222,7 @@ module Mongo
     # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
     # +message+, and an optional formatted +log_message+.
     # Sends the message to the databse, adding the necessary headers.
-    def send_message_with_operation(operation, message, log_message=nil)
+    def send_message(operation, message, log_message=nil)
       @logger.debug("  MONGODB #{log_message || message}") if @logger
       packed_message = pack_message(operation, message)
       socket = checkout
@@ -250,6 +232,10 @@ module Mongo
 
     # Sends a message to the database, waits for a response, and raises
     # and exception if the operation has failed.
+    #
+    # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
+    # +message+, the +db_name+, and an optional formatted +log_message+.
+    # Sends the message to the databse, adding the necessary headers.
     def send_message_with_safe_check(operation, message, db_name, log_message=nil)
       message_with_headers = add_message_headers(operation, message)
       message_with_check   = last_error_message(db_name)
@@ -265,8 +251,12 @@ module Mongo
       [docs, num_received, cursor_id]
     end
 
-    # Send a message to the database and waits for the response.
-    def receive_message_with_operation(operation, message, log_message=nil, socket=nil)
+    # Sends a message to the database and waits for the response.
+    #
+    # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
+    # +message+, and an optional formatted +log_message+. This method 
+    # also takes an options socket for internal use with #connect_to_master.
+    def receive_message(operation, message, log_message=nil, socket=nil)
       message_with_headers = add_message_headers(operation, message).to_s
       @logger.debug("  MONGODB #{log_message || message}") if @logger
       sock = socket || checkout
@@ -325,6 +315,8 @@ module Mongo
       @checked_out.clear
       @reserved_connections.clear
     end
+
+    private
 
     # Get a socket from the pool, mapped to the current thread.
     def checkout
@@ -560,5 +552,6 @@ module Mongo
         a
       end
     end
+
   end
 end

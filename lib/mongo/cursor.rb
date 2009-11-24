@@ -201,7 +201,7 @@ module Mongo
         message.put_int(0)
         message.put_int(1)
         message.put_long(@cursor_id)
-        @connection.send_message_with_operation(Mongo::Constants::OP_KILL_CURSORS, message, "cursor.close()")
+        @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message, "cursor.close()")
       end
       @cursor_id = 0
       @closed    = true
@@ -296,7 +296,7 @@ module Mongo
         
       # Cursor id.
       message.put_long(@cursor_id)
-      results, @n_received, @cursor_id = @connection.receive_message_with_operation(Mongo::Constants::OP_GET_MORE, message, "cursor.get_more()", @socket)
+      results, @n_received, @cursor_id = @connection.receive_message(Mongo::Constants::OP_GET_MORE, message, "cursor.get_more()", @socket)
       @cache += results
       close_cursor_if_query_complete
     end
@@ -307,7 +307,7 @@ module Mongo
         false
       else
         message = construct_query_message
-        results, @n_received, @cursor_id = @connection.receive_message_with_operation(Mongo::Constants::OP_QUERY, message, 
+        results, @n_received, @cursor_id = @connection.receive_message(Mongo::Constants::OP_QUERY, message, 
             (query_log_message if @connection.logger), @socket)  
         @cache += results
         @query_run = true

@@ -219,7 +219,7 @@ module Mongo
       BSON.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
       message.put_array(BSON_SERIALIZER.serialize(selector, false).unpack("C*"))
-      @connection.send_message_with_operation(Mongo::Constants::OP_DELETE, message,
+      @connection.send_message(Mongo::Constants::OP_DELETE, message,
         "db.#{@db.name}.remove(#{selector.inspect})")
     end
 
@@ -254,7 +254,7 @@ module Mongo
         @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name,
           "db.#{@name}.update(#{selector.inspect}, #{document.inspect})")
       else
-        @connection.send_message_with_operation(Mongo::Constants::OP_UPDATE, message, 
+        @connection.send_message(Mongo::Constants::OP_UPDATE, message, 
           "db.#{@name}.update(#{selector.inspect}, #{document.inspect})")
       end
     end
@@ -481,7 +481,7 @@ EOS
         @connection.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message, @db.name,
           "db.#{collection_name}.insert(#{documents.inspect})")
       else
-        @connection.send_message_with_operation(Mongo::Constants::OP_INSERT, message,
+        @connection.send_message(Mongo::Constants::OP_INSERT, message,
           "db.#{collection_name}.insert(#{documents.inspect})")
       end
       documents.collect { |o| o[:_id] || o['_id'] }

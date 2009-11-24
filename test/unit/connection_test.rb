@@ -12,6 +12,11 @@ class ConnectionTest < Test::Unit::TestCase
     db = Object.new
   end
 
+  # Make a few methods public for these tests.
+  class Mongo::Connection
+    public :checkin, :checkout, :clear_stale_cached_connections!
+  end
+
   context "Initialization: " do 
 
     context "given a single node" do 
