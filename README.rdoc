@@ -1,6 +1,6 @@
 = Introduction
 
-This is a Ruby driver for MongoDB[http://www.mongodb.org].
+This is the 10gen-supported Ruby driver for MongoDB[http://www.mongodb.org].
 
 Here is a quick code sample. See the files in the "examples" subdirectory for
 many more.
@@ -268,6 +268,11 @@ individually:
   $ rake test:pair_count
   $ rake test:pair_insert
   $ rake test:pair_query
+
+It's also possible to test replica pairs with connection pooling:
+
+  $ rake test:pooled_pair_insert
+
 
 All tests now require shoulda and mocha.  You can install these gems as
 follows:

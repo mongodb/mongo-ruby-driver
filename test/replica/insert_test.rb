@@ -4,7 +4,7 @@ require 'test/unit'
 require 'test/test_helper'
 
 # NOTE: this test should be run only if a replica pair is running.
-class ReplicaPairTest < Test::Unit::TestCase
+class ReplicaPairInsertTest < Test::Unit::TestCase
   include Mongo
  
   def setup 
@@ -33,7 +33,6 @@ class ReplicaPairTest < Test::Unit::TestCase
     gets
     results = []
     
-    # Note: need to figure out what to do here since this first find will fail.
     rescue_connection_failure do 
       @coll.find.each {|r| results << r}
       [20, 30, 40, 50, 60, 70].each do |a|

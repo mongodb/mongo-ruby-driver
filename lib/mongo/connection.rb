@@ -23,6 +23,10 @@ module Mongo
   # A connection to MongoDB.
   class Connection
 
+    # We need to make sure that all connection abort when
+    # a ConnectionError is raised.
+    Thread.abort_on_exception = true
+
     DEFAULT_PORT = 27017
     STANDARD_HEADER_SIZE = 16
     RESPONSE_HEADER_SIZE = 20
@@ -292,7 +296,6 @@ module Mongo
       @reserved_connections.clear
     end
 
-
     private
 
     # Get a socket from the pool, mapped to the current thread.
@@ -338,8 +341,12 @@ module Mongo
     # This method is called exclusively from #obtain_socket;
     # therefore, it runs within a mutex, as it must.
     def checkout_new_socket
+      begin
       socket = TCPSocket.new(@host, @port)
       socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+      rescue => ex
+        raise ConnectionFailure, "Failed to connect socket: #{ex}"
+      end
       @sockets << socket
       @checked_out << socket
       socket

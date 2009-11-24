@@ -4,7 +4,7 @@ require 'test/unit'
 require 'test/test_helper'
 
 # NOTE: this test should be run only if a replica pair is running.
-class CountTest < Test::Unit::TestCase
+class ReplicaPairCountTest < Test::Unit::TestCase
   include Mongo
  
   def setup 

@@ -42,6 +42,11 @@ namespace :test do
     t.verbose    = true
   end
 
+  Rake::TestTask.new(:pooled_pair_insert) do |t|
+    t.test_files = FileList['test/replica/pooled_insert_test.rb']
+    t.verbose    = true
+  end
+
   Rake::TestTask.new(:pair_query) do |t|
     t.test_files = FileList['test/replica/query_test.rb']
     t.verbose    = true
