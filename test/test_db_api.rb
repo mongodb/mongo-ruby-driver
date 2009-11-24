@@ -475,14 +475,6 @@ class DBAPITest < Test::Unit::TestCase
     end
   end
 
-  def test_ismaster
-    assert @@conn.master?
-  end
-
-  def test_master
-    assert_equal "#{@@conn.host}:#{@@conn.port}", @@conn.master
-  end
-
   def test_where
     @@coll.insert('a' => 2)
     @@coll.insert('a' => 3)

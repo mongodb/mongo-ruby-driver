@@ -288,6 +288,7 @@ module Mongo
           socket = TCPSocket.new(host, port)
           socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 
+          # If we're connected to master, set the @host and @port
           result = self['admin'].command({:ismaster => 1}, false, false, socket)
           if result['ok'] == 1 && ((is_master = result['ismaster'] == 1) || @slave_ok)
             @host, @port = host, port
@@ -306,27 +307,6 @@ module Mongo
         end
       end 
       raise ConnectionFailure, "failed to connect to any given host:port" unless socket
-    end
-
-    # NOTE: might not need this.
-    # Are we connected to the master node?
-    def master?
-      doc = self['admin'].command(:ismaster => 1)
-      doc['ok'] == 1 && doc['ismaster'] == 1
-    end
-
-    # NOTE: might not need this.
-    # Returns a string of the form "host:port" that points to the master
-    # database. Works even if this _is_ the master database.
-    def master
-      doc = self['admin'].command(:ismaster => 1)
-      if doc['ok'] == 1 && doc['ismaster'] == 1
-        "#@host:#@port"
-      elsif doc['remote']
-       doc['remote']
-      else
-        raise "Error retrieving master database: #{doc.inspect}"
-      end
     end
 
     # Are we connected to MongoDB? This is determined by checking whether

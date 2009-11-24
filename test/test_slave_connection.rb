@@ -10,7 +10,8 @@ class SlaveConnectionTest < Test::Unit::TestCase
     @@host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
     @@port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
     conn = Connection.new(@@host, @@port, :slave_ok => true)
-    !conn.master?
+    cmd = conn['admin'].command(:ismaster => 1)
+    cmd['ok'] == 1 && cmd['ismaster'] != 1
   end
 
   if self.connect_to_slave
