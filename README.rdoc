@@ -376,6 +376,9 @@ Sunny Hirai
 * Suggested hashcode fix for Mongo::ObjectID
 * Noted index ordering bug.
 
+Christos Trochalakis
+* Added map/reduce helper
+
 = License
 
  Copyright 2008-2009 10gen Inc.

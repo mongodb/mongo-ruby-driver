@@ -271,10 +271,20 @@ class TestCollection < Test::Unit::TestCase
 
     m = "function() { emit(this.user_id, 1); }"
     r = "function(k,vals) { return 1; }"
-    res = @@test.mapreduce(m, r);
+    res = @@test.map_reduce(m, r);
     assert res.find_one({"_id" => 1})
     assert res.find_one({"_id" => 2})
+  end
 
+  def test_mapreduce_with_code_objects
+    @@test << { "user_id" => 1 }
+    @@test << { "user_id" => 2 }
+
+    m = Code.new("function() { emit(this.user_id, 1); }")
+    r = Code.new("function(k,vals) { return 1; }")
+    res = @@test.map_reduce(m, r);
+    assert res.find_one({"_id" => 1})
+    assert res.find_one({"_id" => 2})
   end
 
   def test_saving_dates_pre_epoch

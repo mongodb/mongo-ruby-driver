@@ -1,3 +1,13 @@
+0.18 2009-11-25
+* Connections now support connection pooling. See http://api.mongodb.org/ruby/0.18/classes/Mongo/Connection.html#M000158
+* Deprecated :auto_reconnect option on connection; if the driver fails to
+  connect, it will automatically try to reconnect on the subsequent operation. 
+  See http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby
+* Added Collection#map_reduce helper (Christos Trochalakis)
+* Deprecated DB#db_command in favor of DB#command.
+* Removed deprecated old sort options, :offset, and Connection#clear.
+* Lots of internal code restructuring for better maintainability.
+
 0.17.1 2009-11-17
 * Index ordering fix
 * Notice to install mongo_ext

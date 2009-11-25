@@ -298,18 +298,28 @@ module Mongo
       @db.drop_collection(@name)
     end
 
-    def mapreduce(map, reduce, options={})
-      case map
-      when Code
-      else
-        map = Code.new(map)
-      end
-
-      case reduce
-      when Code
-      else
-        reduce = Code.new(reduce)
-      end
+    # Performs a map/reduce operation on the current collection. Returns a new
+    # collection containing the results of the operation.
+    #
+    # Required:
+    # +map+    :: a map function, written in javascript.
+    # +reduce+ :: a reduce function, written in javascript.
+    #
+    # Optional:
+    # :query    :: a query selector document, like what's passed to #find, to limit
+    #              the operation to a subset of the collection.
+    # :sort     :: sort parameters passed to the query.
+    # :limit    :: number of objects to return from the collection.
+    # :finalize :: a javascript function to apply to the result set after the
+    #              map/reduce operation has finished.
+    # :out      :: the name of the output collection. if specified, the collection will not be treated as temporary.
+    # :keeptemp :: if true, the generated collection will be persisted. default is false.
+    # :verbose  :: if true, provides statistics on job execution time.
+    #
+    # For more information on using map/reduce, see http://www.mongodb.org/display/DOCS/MapReduce
+    def map_reduce(map, reduce, options={})
+      map    = Code.new(map) unless map.is_a?(Code)
+      reduce = Code.new(reduce) unless reduce.is_a?(Code)
 
       hash = OrderedHash.new
       hash['mapreduce'] = self.name
@@ -317,16 +327,15 @@ module Mongo
       hash['reduce'] = reduce
       hash.merge! options
 
-      result = @db.db_command(hash)
-      if result["ok"] == 1
-      return @db[result["result"]]
-      else
-        raise Mongo::OperationFailure, "map-reduce failed: #{result['errmsg']}"
+      result = @db.command(hash)
+      unless result["ok"] == 1
+        raise Mongo::OperationFailure, "map-reduce failed: #{result['errmsg']}" 
       end
+      @db[result["result"]]
     end
+    alias :mapreduce :map_reduce
 
-    # Perform a query similar to an SQL group by operation.
-    #
+    # Performs a group query, similar to the 'SQL GROUP BY' operation.
     # Returns an array of grouped items.
     #
     # :keys :: Array of fields to group by
@@ -344,11 +353,7 @@ module Mongo
           hash[k] = 1
         end
 
-        case reduce
-        when Code
-        else
-          reduce = Code.new(reduce)
-        end
+        reduce = Code.new(reduce) unless reduce.is_a?(Code)
 
         result = @db.command({"group" =>
                                   {
@@ -401,7 +406,7 @@ function () {
     return {"result": map.values()};
 }
 EOS
-      return @db.eval(Code.new(group_function, scope))["result"]
+      @db.eval(Code.new(group_function, scope))["result"]
     end
 
     # Returns a list of distinct values for +key+ across all
