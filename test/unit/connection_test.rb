@@ -17,10 +17,10 @@ class ConnectionTest < Test::Unit::TestCase
     public :checkin, :checkout, :clear_stale_cached_connections!
   end
 
-  context "Initialization: " do 
+  context "Initialization: " do
 
-    context "given a single node" do 
-      setup do 
+    context "given a single node" do
+      setup do
         TCPSocket.stubs(:new).returns(new_mock_socket)
         @conn = Connection.new('localhost', 27107, :connect => false)
 
@@ -30,25 +30,25 @@ class ConnectionTest < Test::Unit::TestCase
         @conn.connect_to_master
       end
 
-      should "set localhost and port to master" do 
+      should "set localhost and port to master" do
         assert_equal 'localhost', @conn.host
         assert_equal 27017, @conn.port
       end
 
-      should "set connection pool to 1" do 
+      should "set connection pool to 1" do
         assert_equal 1, @conn.size
       end
 
-      should "default slave_ok to false" do 
+      should "default slave_ok to false" do
         assert !@conn.slave_ok?
       end
     end
   end
 
-  context "Connection pooling: " do 
-    setup do 
+  context "Connection pooling: " do
+    setup do
       TCPSocket.stubs(:new).returns(new_mock_socket)
-      @conn = Connection.new('localhost', 27107, :connect => false, 
+      @conn = Connection.new('localhost', 27107, :connect => false,
                                    :pool_size => 3)
 
       admin_db = new_mock_db
@@ -57,18 +57,18 @@ class ConnectionTest < Test::Unit::TestCase
       @conn.connect_to_master
     end
 
-    should "check out a new connection" do 
+    should "check out a new connection" do
       socket = @conn.checkout
       assert @conn.reserved_connections.keys.include? Thread.current.object_id
     end
 
-    context "with multiple threads" do 
-      setup do 
+    context "with multiple threads" do
+      setup do
         @thread1 = Object.new
         @thread2 = Object.new
         @thread3 = Object.new
         @thread4 = Object.new
-        
+
         Thread.stubs(:current).returns(@thread1)
         @socket1 = @conn.checkout
         Thread.stubs(:current).returns(@thread2)
@@ -77,19 +77,19 @@ class ConnectionTest < Test::Unit::TestCase
         @socket3 = @conn.checkout
       end
 
-      should "add each thread to the reserved pool" do 
+      should "add each thread to the reserved pool" do
         assert @conn.reserved_connections.keys.include?(@thread1.object_id)
         assert @conn.reserved_connections.keys.include?(@thread2.object_id)
         assert @conn.reserved_connections.keys.include?(@thread3.object_id)
       end
 
-      should "only add one socket per thread" do 
+      should "only add one socket per thread" do
         @conn.reserved_connections.values do |socket|
           assert [@socket1, @socket2, @socket3].include?(socket)
         end
       end
 
-      should "check out all sockets" do 
+      should "check out all sockets" do
         assert_equal @conn.sockets.size, @conn.checked_out.size
         @conn.sockets.each do |sock|
           assert @conn.checked_out.include?(sock)
@@ -101,8 +101,8 @@ class ConnectionTest < Test::Unit::TestCase
         # Will test in integration tests.
       end
 
-      context "when releasing dead threads" do 
-        setup do 
+      context "when releasing dead threads" do
+        setup do
           @thread1.expects(:alive?).returns(false)
           @thread2.expects(:alive?).returns(true)
           @thread3.expects(:alive?).returns(true)
@@ -110,7 +110,7 @@ class ConnectionTest < Test::Unit::TestCase
           @conn.clear_stale_cached_connections!
         end
 
-        should "return connections for dead threads" do 
+        should "return connections for dead threads" do
           assert !@conn.checked_out.include?(@socket1)
           assert_nil @conn.reserved_connections[@thread1.object_id]
         end
@@ -118,5 +118,5 @@ class ConnectionTest < Test::Unit::TestCase
 
     end
   end
-end 
+end
 
