@@ -1,4 +1,4 @@
-$LOAD_PATH << File.join(File.dirname(__FILE__), '..', 'lib')
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
 require 'mongo/types/binary'
 require 'mongo/types/code'
