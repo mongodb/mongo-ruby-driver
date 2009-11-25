@@ -59,7 +59,7 @@ class ConnectionTest < Test::Unit::TestCase
 
     should "check out a new connection" do
       socket = @conn.checkout
-      assert(@conn.reserved_connections.keys.include? Thread.current.object_id)
+      assert @conn.reserved_connections.keys.include?(Thread.current.object_id)
     end
 
     context "with multiple threads" do
