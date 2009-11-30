@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 require 'mongo/util/ordered_hash'
@@ -22,25 +23,6 @@ class BSONTest < Test::Unit::TestCase
   end
 
 
-  begin
-    CBson
-
-  def test_valid_utf8_string
-    doc = {'doc' => "aéあ"}
-    bson = CBson.serialize(doc, false)
-    assert_equal doc, CBson.deserialize(bson)
-  end
-
-  def test_invalid_string
-    string = Iconv.conv('iso-8859-1', 'utf-8', 'aé').first
-    doc = {'doc' => string} 
-    assert_raise InvalidStringEncoding do
-      CBson.serialize(doc, false)
-    end
-  end
- 
-  rescue
-
   def test_valid_utf8_string
     doc = {'doc' => "aéあ"}
     @b.serialize(doc)
@@ -49,12 +31,10 @@ class BSONTest < Test::Unit::TestCase
 
   def test_invalid_string
     string = Iconv.conv('iso-8859-1', 'utf-8', 'aé').first
-    doc = {'doc' => string} 
+    doc = {'doc' => string}
     assert_raise InvalidStringEncoding do
       @b.serialize(doc)
     end
-  end
-
   end
 
   def test_code
