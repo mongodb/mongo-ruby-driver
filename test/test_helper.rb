@@ -1,5 +1,6 @@
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'rubygems'
+require 'mongo'
 require 'test/unit'
 
 begin
@@ -16,8 +17,6 @@ You can install these gems as follows:
 MSG
     exit
 end
-
-require 'mongo'
 
 # NOTE: most tests assume that MongoDB is running.
 class Test::Unit::TestCase

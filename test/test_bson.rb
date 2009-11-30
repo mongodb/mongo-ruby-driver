@@ -21,6 +21,26 @@ class BSONTest < Test::Unit::TestCase
     assert_equal doc, @b.deserialize
   end
 
+
+  begin
+    CBson
+
+  def test_valid_utf8_string
+    doc = {'doc' => "aéあ"}
+    bson = CBson.serialize(doc, false)
+    assert_equal doc, CBson.deserialize(bson)
+  end
+
+  def test_invalid_string
+    string = Iconv.conv('iso-8859-1', 'utf-8', 'aé').first
+    doc = {'doc' => string} 
+    assert_raise InvalidStringEncoding do
+      CBson.serialize(doc, false)
+    end
+  end
+ 
+  rescue
+
   def test_valid_utf8_string
     doc = {'doc' => "aéあ"}
     @b.serialize(doc)
@@ -33,6 +53,8 @@ class BSONTest < Test::Unit::TestCase
     assert_raise InvalidStringEncoding do
       @b.serialize(doc)
     end
+  end
+
   end
 
   def test_code
