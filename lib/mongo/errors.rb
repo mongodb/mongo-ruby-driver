@@ -27,6 +27,9 @@ module Mongo
   # Raised when invalid arguments are sent to Mongo Ruby methods.
   class MongoArgumentError < MongoRubyError; end
 
+  # Raised when given a string is not valid utf-8 (Ruby 1.8 only).
+  class InvalidStringEncoding < MongoRubyError; end
+
   # Raised on failures in connection to the database server.
   class ConnectionError < MongoRubyError; end
 

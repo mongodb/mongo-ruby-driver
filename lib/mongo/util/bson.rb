@@ -55,7 +55,12 @@ class BSON
     end
   else
     def self.to_utf8(str)
-      str                       # TODO Ruby 1.8 punt for now
+      begin
+      str.unpack("U*")
+      rescue => ex
+        raise InvalidStringEncoding, "String not valid utf-8: #{str}"
+      end
+      str
     end
   end
 

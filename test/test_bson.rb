@@ -1,6 +1,7 @@
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 require 'mongo/util/ordered_hash'
+require 'iconv'
 require 'test/unit'
 
 class BSONTest < Test::Unit::TestCase
@@ -18,6 +19,20 @@ class BSONTest < Test::Unit::TestCase
     doc = {'doc' => 'hello, world'}
     @b.serialize(doc)
     assert_equal doc, @b.deserialize
+  end
+
+  def test_valid_utf8_string
+    doc = {'doc' => "aéあ"}
+    @b.serialize(doc)
+    assert_equal doc, @b.deserialize
+  end
+
+  def test_invalid_string
+    string = Iconv.conv('iso-8859-1', 'utf-8', 'aé').first
+    doc = {'doc' => string} 
+    assert_raise InvalidStringEncoding do
+      @b.serialize(doc)
+    end
   end
 
   def test_code
