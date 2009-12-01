@@ -467,7 +467,7 @@ module Mongo
     def last_error_message(db_name)
       message = ByteBuffer.new
       message.put_int(0)
-      BSON.serialize_cstr(message, "#{db_name}.$cmd")
+      BSON_RUBY.serialize_cstr(message, "#{db_name}.$cmd")
       message.put_int(0)
       message.put_int(-1)
       message.put_array(BSON_SERIALIZER.serialize({:getlasterror => 1}, false).unpack("C*"))

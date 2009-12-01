@@ -69,7 +69,7 @@ class BSON_RUBY
   end
 
   def self.serialize_cstr(buf, val)
-    buf.put_array(to_utf8(val.to_s).unpack("C*") + [0])
+    buf.put_array(to_utf8(val.to_s).unpack("C*") << 0)
   end
 
   def to_a

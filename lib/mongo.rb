@@ -8,6 +8,8 @@ module Mongo
 end
 
 begin
+    # Need this for running test with and without c ext in Ruby 1.9.
+    raise LoadError if ENV['TEST_MODE'] && !ENV['C_EXT']
     require 'mongo_ext/cbson'
     require 'mongo/util/bson_c'
     BSON            = BSON_C
@@ -31,6 +33,7 @@ require 'mongo/types/regexp_of_holding'
 require 'mongo/util/support'
 require 'mongo/util/conversions'
 require 'mongo/util/server_version'
+require 'mongo/util/bson_ruby'
 
 require 'mongo/errors'
 require 'mongo/constants'

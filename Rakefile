@@ -10,6 +10,7 @@ rescue LoadError
 end
 require 'rbconfig'
 include Config
+ENV['TEST_MODE'] = 'TRUE'
 
 gem_command = "gem"
 gem_command = "gem1.9" if $0.match(/1\.9$/) # use gem1.9 if we used rake1.9

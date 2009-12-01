@@ -1,16 +1,9 @@
+# coding:utf-8
 require 'test/test_helper'
-require 'iconv'
 
 class BSONTest < Test::Unit::TestCase
 
   include Mongo
-
-  def setup
-    # We don't pass a DB to the constructor, even though we are about to test
-    # deserialization. This means that when we deserialize, any DBRefs will
-    # have nil @db ivars. That's fine for now.
-    #BSON = BSON.new
-  end
 
   def test_string
     doc = {'doc' => 'hello, world'}
@@ -18,18 +11,21 @@ class BSONTest < Test::Unit::TestCase
     assert_equal doc, BSON.deserialize(bson)
   end
 
-
   def test_valid_utf8_string
-    doc = {'doc' => "aéあ"}
+    doc = {'doc' => "aé"}
     bson = bson = BSON.serialize(doc)
     assert_equal doc, BSON.deserialize(bson)
   end
 
-  def test_invalid_string
-    string = Iconv.conv('iso-8859-1', 'utf-8', 'aé').first
-    doc = {'doc' => string} 
-    assert_raise InvalidStringEncoding do
-      BSON.serialize(doc)
+  # We'll raise this exception only in 1.8 since 1.9 forces UTF-8 conversion.
+  if RUBY_VERSION < '1.9'
+    require 'iconv'
+    def test_invalid_string
+      string = Iconv.conv('iso-8859-1', 'utf-8', 'aé').first
+      doc = {'doc' => string} 
+      assert_raise InvalidStringEncoding do
+        BSON.serialize(doc)
+      end
     end
   end
 

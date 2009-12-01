@@ -286,7 +286,7 @@ module Mongo
 
       # DB name.
       db_name = @admin ? 'admin' : @db.name
-      BSON.serialize_cstr(message, "#{db_name}.#{@collection.name}")
+      BSON_RUBY.serialize_cstr(message, "#{db_name}.#{@collection.name}")
 
       # Number of results to return; db decides for now.
       message.put_int(0)
@@ -317,7 +317,7 @@ module Mongo
       message = ByteBuffer.new
       message.put_int(query_opts)
       db_name = @admin ? 'admin' : @db.name
-      BSON.serialize_cstr(message, "#{db_name}.#{@collection.name}")
+      BSON_RUBY.serialize_cstr(message, "#{db_name}.#{@collection.name}")
       message.put_int(@skip)
       message.put_int(@limit)
       selector = @selector
