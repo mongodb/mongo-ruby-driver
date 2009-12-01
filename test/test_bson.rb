@@ -1,4 +1,4 @@
-# coding:utf-8
+# encoding:utf-8
 require 'test/test_helper'
 
 class BSONTest < Test::Unit::TestCase
