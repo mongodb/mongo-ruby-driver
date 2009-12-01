@@ -1,6 +1,4 @@
-$LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
-require 'mongo'
-require 'test/unit'
+require 'test/test_helper'
 
 class ObjectIDTest < Test::Unit::TestCase
 

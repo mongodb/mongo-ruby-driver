@@ -1,9 +1,10 @@
-$LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
-require 'rubygems'
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+require 'rubygems' if ENV['C_EXT']
 require 'mongo'
 require 'test/unit'
 
 begin
+  require 'rubygems'
   require 'shoulda'
   require 'mocha'
   rescue LoadError
@@ -17,6 +18,8 @@ You can install these gems as follows:
 MSG
     exit
 end
+
+require 'mongo_ext/cbson' if ENV['C_EXT']
 
 # NOTE: most tests assume that MongoDB is running.
 class Test::Unit::TestCase

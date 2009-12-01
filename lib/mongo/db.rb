@@ -18,9 +18,6 @@ require 'socket'
 require 'timeout'
 require 'digest/md5'
 require 'thread'
-require 'mongo/collection'
-require 'mongo/util/ordered_hash.rb'
-require 'mongo/admin'
 
 module Mongo
 

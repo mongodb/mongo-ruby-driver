@@ -459,7 +459,7 @@ module Mongo
         buf.put_array(receive_message_on_socket(size - 4, sock).unpack("C*"), 4)
         number_remaining -= 1
         buf.rewind
-        docs << BSON.new.deserialize(buf)
+        docs << BSON.deserialize(buf)
       end
       [docs, number_received, cursor_id]
     end

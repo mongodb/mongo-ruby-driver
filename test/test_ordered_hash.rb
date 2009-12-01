@@ -1,6 +1,4 @@
-$LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
-require 'mongo/util/ordered_hash'
-require 'test/unit'
+require 'test/test_helper'
 
 class OrderedHashTest < Test::Unit::TestCase
 

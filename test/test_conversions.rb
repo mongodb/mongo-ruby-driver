@@ -1,8 +1,7 @@
-$LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
+require 'test/test_helper'
 require 'mongo/errors'
 require 'mongo/util/conversions'
 require 'mongo/util/ordered_hash'
-require 'test/unit'
 
 class ConversionsTest < Test::Unit::TestCase
   include Mongo::Conversions

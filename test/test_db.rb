@@ -1,7 +1,5 @@
-$LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
+require 'test/test_helper'
 require 'digest/md5'
-require 'mongo'
-require 'test/unit'
 require 'stringio'
 require 'logger'
 

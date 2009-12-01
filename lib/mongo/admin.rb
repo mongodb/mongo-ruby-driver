@@ -14,8 +14,6 @@
 # limitations under the License.
 # ++
 
-require 'mongo/util/ordered_hash'
-
 module Mongo
 
   # Provide administrative database methods: those having to do with

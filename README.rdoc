@@ -254,16 +254,23 @@ Random cursor fun facts:
 
 = Testing
 
-If you have the source code, you can run the tests.
+If you have the source code, you can run the tests. There's a separate rake task for testing with 
+the mongo_ext c extension enabled.
 
-  $ rake test
+  $ rake test:c
 
-This will run both unit and functional tests. If you want to run these
-individually:
+Or, to test without the extension:
+
+  $ rake test:ruby
+
+These will run both unit and functional tests. To run these tests alone:
 
   $ rake test:unit
   $ rake test:functional
 
+To run any individual rake tasks with the C extenson enabled, just pass C_EXT=true to the task:
+
+  $ rake test:unit C_EXT=true
 
 If you want to test replica pairs, you can run the following tests
 individually:
@@ -276,6 +283,7 @@ It's also possible to test replica pairs with connection pooling:
 
   $ rake test:pooled_pair_insert
 
+===Shoulda and Mocha
 
 All tests now require shoulda and mocha.  You can install these gems as
 follows:

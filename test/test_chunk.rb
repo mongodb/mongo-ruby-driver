@@ -1,6 +1,4 @@
-$LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
-require 'test/unit'
-require 'mongo'
+require 'test/test_helper'
 require 'mongo/gridfs'
 
 class ChunkTest < Test::Unit::TestCase

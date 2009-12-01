@@ -18,7 +18,6 @@ require 'mongo/types/objectid'
 require 'mongo/util/byte_buffer'
 require 'mongo/util/ordered_hash'
 
-
 module GridFS
 
   # A chunk stores a portion of GridStore data.

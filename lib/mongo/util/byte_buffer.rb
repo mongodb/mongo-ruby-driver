@@ -27,6 +27,25 @@ class ByteBuffer
     @double_pack_order = 'E'
   end
 
+  if RUBY_VERSION >= '1.9'
+    def self.to_utf8(str)
+      str.encode("utf-8")
+    end
+  else
+    def self.to_utf8(str)
+      begin
+      str.unpack("U*")
+      rescue => ex
+        raise InvalidStringEncoding, "String not valid utf-8: #{str}"
+      end
+      str
+    end
+  end
+
+  def self.serialize_cstr(buf, val)
+    buf.put_array(to_utf8(val.to_s).unpack("C*") + [0])
+  end
+
   # +endianness+ should be :little_endian or :big_endian. Default is :little_endian
   def order=(endianness)
     @order = endianness

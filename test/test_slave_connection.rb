@@ -1,6 +1,4 @@
-$LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
-require 'mongo'
-require 'test/unit'
+require 'test/test_helper'
 
 # NOTE: these tests are run only if we can connect to a single MongoDB in slave mode.
 class SlaveConnectionTest < Test::Unit::TestCase

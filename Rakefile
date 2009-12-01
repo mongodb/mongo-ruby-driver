@@ -14,15 +14,32 @@ include Config
 gem_command = "gem"
 gem_command = "gem1.9" if $0.match(/1\.9$/) # use gem1.9 if we used rake1.9
 
-# NOTE: the functional tests assume MongoDB is running.
 desc "Test the MongoDB Ruby driver."
 task :test do
-  Rake::Task['test:unit'].invoke
-  Rake::Task['test:functional'].invoke
-  Rake::Task['test:pooled_threading'].invoke
+  puts "\nThis option has changed."
+  puts "\nTo test the driver with the c-extensions:\nrake test:c\n"
+  puts "To test the pure ruby driver: \nrake test:ruby"
 end
 
 namespace :test do 
+
+  desc "Test the driver with the c extension enabled."
+  task :c do
+    ENV['C_EXT'] = 'TRUE'
+    Rake::Task['test:unit'].invoke
+    Rake::Task['test:functional'].invoke
+    Rake::Task['test:pooled_threading'].invoke
+    ENV['C_EXT'] = nil
+  end
+
+  desc "Test the driver using pure ruby (no c extension)"
+  task :ruby do 
+    ENV['C_EXT'] = nil
+    Rake::Task['test:unit'].invoke
+    Rake::Task['test:functional'].invoke
+    Rake::Task['test:pooled_threading'].invoke
+  end
+
   Rake::TestTask.new(:unit) do |t|
     t.test_files = FileList['test/unit/*_test.rb']
     t.verbose    = true

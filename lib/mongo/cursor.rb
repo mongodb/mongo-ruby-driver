@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/util/byte_buffer'
-require 'mongo/util/bson'
-
 module Mongo
 
   # A cursor over query results. Returned objects are hashes.

@@ -1,8 +1,7 @@
 HERE = File.dirname(__FILE__)
 $LOAD_PATH[0,0] = File.join(HERE, '..', 'lib')
-require 'mongo'
+require 'test/test_helper'
 require 'mongo/util/xml_to_ruby'
-require 'test/unit'
 
 # For each xml/bson file in the data subdirectory, we turn the XML into an
 # OrderedHash and then test both Ruby-to-BSON and BSON-to-Ruby translations.

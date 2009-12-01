@@ -1,5 +1,27 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
+module Mongo
+  ASCENDING = 1
+  DESCENDING = -1
+
+  VERSION = "0.18"
+end
+
+begin
+    require 'mongo_ext/cbson'
+    require 'mongo/util/bson_c'
+    BSON            = BSON_C
+    BSON_SERIALIZER = CBson
+  rescue LoadError
+    require 'mongo/util/bson_ruby'
+    BSON            = BSON_RUBY
+    BSON_SERIALIZER = BSON
+    warn "\n**Notice: C extension not loaded. This is required for optimum MongoDB Ruby driver performance."
+    warn "  You can install the extension as follows:\n  gem install mongo_ext\n"
+    warn "  If you continue to receive this message after installing, make sure that the"
+    warn "  mongo_ext gem is in your load path.  This may mean requiring rubygems.\n"
+end 
+
 require 'mongo/types/binary'
 require 'mongo/types/code'
 require 'mongo/types/dbref'
@@ -17,19 +39,3 @@ require 'mongo/db'
 require 'mongo/cursor'
 require 'mongo/collection'
 require 'mongo/admin'
-
-begin
-  require 'mongo_ext/cbson'
-    BSON_SERIALIZER = CBson
-  rescue LoadError
-    BSON_SERIALIZER = BSON
-    warn "\n**Notice: C extension not detected. This is required for optimum MongoDB Ruby driver performance."
-    warn "  You can install the extension as follows:\n  gem install mongo_ext\n"
-end
-
-module Mongo
-  ASCENDING = 1
-  DESCENDING = -1
-
-  VERSION = "0.18"
-end
