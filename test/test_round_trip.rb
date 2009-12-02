@@ -73,11 +73,6 @@ EOS
     File.open(File.join(dir, "#{name}.bson"), 'rb') { |f|
       # Read the BSON from the file
       bson = f.read
-      bson = if RUBY_VERSION >= '1.9'
-               bson.bytes
-             else
-               bson
-             end
 
       # Turn the Ruby object into BSON bytes and compare with the BSON bytes
       # from the file.
