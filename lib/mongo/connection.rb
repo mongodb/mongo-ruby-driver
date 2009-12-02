@@ -96,7 +96,7 @@ module Mongo
     #                  :right => ["db2.example.com", 27017]}, nil,
     #                  :pool_size => 20, :timeout => 5)
     def initialize(pair_or_host=nil, port=nil, options={})
-      @nodes = format_pair(pair_or_host)
+      @nodes = format_pair(pair_or_host, port)
 
       # Host and port of current master.
       @host = @port = nil
@@ -524,7 +524,7 @@ module Mongo
     ## Private helper methods
 
     # Returns an array of host-port pairs.
-    def format_pair(pair_or_host)
+    def format_pair(pair_or_host, port)
       case pair_or_host
         when String
           [[pair_or_host, port ? port.to_i : DEFAULT_PORT]]
