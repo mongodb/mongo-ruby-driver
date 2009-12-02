@@ -771,7 +771,7 @@ static VALUE objectid_generate(VALUE self)
     t = htonl(time(NULL));
     MEMCPY(&oid_bytes, &t, unsigned char, 4);
 
-    if (gethostname(&hostname, MAX_HOSTNAME_LENGTH) != 0) {
+    if (gethostname(hostname, MAX_HOSTNAME_LENGTH) != 0) {
         rb_raise(rb_eRuntimeError, "failed to get hostname");
     }
     digest = rb_funcall(DigestMD5, rb_intern("digest"), 1, rb_str_new2(hostname));
