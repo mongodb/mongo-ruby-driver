@@ -74,18 +74,18 @@ EOS
       # Read the BSON from the file
       bson = f.read
       bson = if RUBY_VERSION >= '1.9'
-               bson.bytes.to_a
+               bson.bytes
              else
-               bson.split(//).collect { |c| c[0] }
+               bson
              end
 
       # Turn the Ruby object into BSON bytes and compare with the BSON bytes
       # from the file.
-      bson_from_ruby = BSON.new.serialize(obj).to_a
+      bson_from_ruby = BSON.serialize(obj)
 
       begin
-        assert_equal bson.length, bson_from_ruby.length
-        assert_equal bson, bson_from_ruby
+        assert_equal bson.length, bson_from_ruby.to_s.length
+        assert_equal bson, bson_from_ruby.to_s
       rescue => ex
 #         File.open(File.join(dir, "#{name}_out_a.bson"), 'wb') { |f| # DEBUG
 #           bson_from_ruby.each { |b| f.putc(b) }
@@ -98,15 +98,15 @@ EOS
       # We're passing a nil db to the contructor here, but that's OK because
       # the BSON DBRef bytes don't contain the db object in any case, and we
       # don't care what the database is.
-      obj_from_bson = BSON.new.deserialize(ByteBuffer.new(bson_from_ruby))
+      obj_from_bson = BSON.deserialize(bson_from_ruby)
       assert_kind_of OrderedHash, obj_from_bson
 
       # Turn that Ruby object into BSON and compare it to the original BSON
       # bytes.
-      bson_from_ruby = BSON.new.serialize(obj_from_bson).to_a
+      bson_from_ruby = BSON.serialize(obj_from_bson)
       begin
-        assert_equal bson.length, bson_from_ruby.length
-        assert_equal bson, bson_from_ruby
+        assert_equal bson.length, bson_from_ruby.to_s.length
+        assert_equal bson, bson_from_ruby.to_s
       rescue => ex
 #         File.open(File.join(dir, "#{name}_out_b.bson"), 'wb') { |f| # DEBUG
 #           bson_from_ruby.each { |b| f.putc(b) }

@@ -76,8 +76,12 @@ class BSON_RUBY
     @buf.to_a
   end
 
+  def to_s
+    @buf.to_s
+  end
+
   # Serializes an object.
-  # Implemented to ensure an API compatible with BSON extension. 
+  # Implemented to ensure an API compatible with BSON extension.
   def self.serialize(obj, check_keys=false)
     new.serialize(obj, check_keys)
   end
@@ -108,7 +112,7 @@ class BSON_RUBY
   end
 
   # Returns the array stored in the buffer.
-  # Implemented to ensure an API compatible with BSON extension. 
+  # Implemented to ensure an API compatible with BSON extension.
   def unpack(arg)
     @buf.to_a
   end
