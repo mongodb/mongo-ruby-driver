@@ -22,7 +22,7 @@ class BSONTest < Test::Unit::TestCase
   if RUBY_VERSION < '1.9'
     require 'iconv'
     def test_invalid_string
-      string = Iconv.conv('iso-8859-1', 'utf-8', 'aé').first
+      string = Iconv.conv('iso-8859-1', 'utf-8', 'aé')
       doc = {'doc' => string}
       assert_raise InvalidStringEncoding do
         BSON.serialize(doc)
