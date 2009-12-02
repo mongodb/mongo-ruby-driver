@@ -36,14 +36,23 @@
 #include "regex.h"
 #endif
 
-#include "version.h"
-
-#include <assert.h>
+#include <string.h>
 #include <math.h>
 #include <unistd.h>
 #include <time.h>
 
-#define INITIAL_BUFFER_SIZE 256
+#include "version.h"
+#include "buffer.h"
+
+#define SAFE_WRITE(buffer, data, size)                                  \
+    if (buffer_write((buffer), (data), (size)) != 0)                    \
+        rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c")
+
+#define SAFE_WRITE_AT_POS(buffer, position, data, size)                 \
+    if (buffer_write_at_position((buffer), (position), (data), (size)) != 0) \
+        rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c")
+
+
 #define MAX_HOSTNAME_LENGTH 256
 
 static VALUE Binary;
@@ -93,12 +102,6 @@ static VALUE DigestMD5;
 #define RREGEXP_SRC_LEN(r) RREGEXP(r)->len
 #endif
 
-typedef struct {
-    char* buffer;
-    int size;
-    int position;
-} bson_buffer;
-
 static char zero = 0;
 static char one = 1;
 
@@ -106,78 +109,22 @@ static int cmp_char(const void* a, const void* b) {
     return *(char*)a - *(char*)b;
 }
 
-static void write_doc(bson_buffer* buffer, VALUE hash, VALUE check_keys);
+static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys);
 static int write_element(VALUE key, VALUE value, VALUE extra);
 static VALUE elements_to_hash(const char* buffer, int max);
 
-static bson_buffer* buffer_new(void) {
-    bson_buffer* buffer;
-    buffer = ALLOC(bson_buffer);
-    assert(buffer);
-
-    buffer->size = INITIAL_BUFFER_SIZE;
-    buffer->position = 0;
-    buffer->buffer = ALLOC_N(char, INITIAL_BUFFER_SIZE);
-    assert(buffer->buffer);
-
-    return buffer;
-}
-
-static void buffer_free(bson_buffer* buffer) {
-    assert(buffer);
-    assert(buffer->buffer);
-
-    free(buffer->buffer);
-    free(buffer);
-}
-
-static void buffer_resize(bson_buffer* buffer, int min_length) {
-    int size = buffer->size;
-    if (size >= min_length) {
-        return;
-    }
-    while (size < min_length) {
-        size *= 2;
-    }
-    buffer->buffer = REALLOC_N(buffer->buffer, char, size);
-    assert(buffer->buffer);
-    buffer->size = size;
-}
-
-static void buffer_assure_space(bson_buffer* buffer, int size) {
-    if (buffer->position + size <= buffer->size) {
-        return;
-    }
-    buffer_resize(buffer, buffer->position + size);
-}
-
-/* returns offset for writing */
-static int buffer_save_bytes(bson_buffer* buffer, int size) {
-    int position = buffer->position;
-    buffer_assure_space(buffer, size);
-    buffer->position += size;
-    return position;
-}
-
-static void buffer_write_bytes(bson_buffer* buffer, const char* bytes, int size) {
-    buffer_assure_space(buffer, size);
-
-    memcpy(buffer->buffer + buffer->position, bytes, size);
-    buffer->position += size;
-}
-
-static VALUE pack_extra(bson_buffer* buffer, VALUE check_keys) {
+static VALUE pack_extra(buffer_t buffer, VALUE check_keys) {
     return rb_ary_new3(2, LL2NUM((long long)buffer), check_keys);
 }
 
-static void write_name_and_type(bson_buffer* buffer, VALUE name, char type) {
-    buffer_write_bytes(buffer, &type, 1);
-    buffer_write_bytes(buffer, RSTRING_PTR(name), RSTRING_LEN(name));
-    buffer_write_bytes(buffer, &zero, 1);
+static void write_name_and_type(buffer_t buffer, VALUE name, char type) {
+    SAFE_WRITE(buffer, &type, 1);
+    SAFE_WRITE(buffer, RSTRING_PTR(name), RSTRING_LEN(name));
+    SAFE_WRITE(buffer, &zero, 1);
 }
 
 static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow_id) {
-    bson_buffer* buffer = (bson_buffer*)NUM2LL(rb_ary_entry(extra, 0));
+    buffer_t buffer = (buffer_t)NUM2LL(rb_ary_entry(extra, 0));
     VALUE check_keys = rb_ary_entry(extra, 1);
 
     if (TYPE(key) == T_SYMBOL) {
@@ -218,32 +165,32 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 long long ll_value;
                 write_name_and_type(buffer, key, 0x12);
                 ll_value = NUM2LL(value);
-                buffer_write_bytes(buffer, (char*)&ll_value, 8);
+                SAFE_WRITE(buffer, (char*)&ll_value, 8);
             } else {
                 int int_value;
                 write_name_and_type(buffer, key, 0x10);
                 int_value = NUM2LL(value);
-                buffer_write_bytes(buffer, (char*)&int_value, 4);
+                SAFE_WRITE(buffer, (char*)&int_value, 4);
             }
             break;
         }
     case T_TRUE:
         {
             write_name_and_type(buffer, key, 0x08);
-            buffer_write_bytes(buffer, &one, 1);
+            SAFE_WRITE(buffer, &one, 1);
             break;
         }
     case T_FALSE:
         {
             write_name_and_type(buffer, key, 0x08);
-            buffer_write_bytes(buffer, &zero, 1);
+            SAFE_WRITE(buffer, &zero, 1);
             break;
         }
     case T_FLOAT:
         {
             double d = NUM2DBL(value);
             write_name_and_type(buffer, key, 0x01);
-            buffer_write_bytes(buffer, (char*)&d, 8);
+            SAFE_WRITE(buffer, (char*)&d, 8);
             break;
         }
     case T_NIL:
@@ -259,14 +206,18 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         }
     case T_ARRAY:
         {
-            int start_position, length_location, items, i, obj_length;
+            buffer_position length_location, start_position, obj_length;
+            int items, i;
             VALUE* values;
 
             write_name_and_type(buffer, key, 0x04);
-            start_position = buffer->position;
+            start_position = buffer_get_position(buffer);
 
             // save space for length
-            length_location = buffer_save_bytes(buffer, 4);
+            length_location = buffer_save_space(buffer, 4);
+            if (length_location == -1) {
+                rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
+            }
 
             items = RARRAY_LEN(value);
             values = RARRAY_PTR(value);
@@ -280,37 +231,40 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
             }
 
             // write null byte and fill in length
-            buffer_write_bytes(buffer, &zero, 1);
-            obj_length = buffer->position - start_position;
-            memcpy(buffer->buffer + length_location, &obj_length, 4);
+            SAFE_WRITE(buffer, &zero, 1);
+            obj_length = buffer_get_position(buffer) - start_position;
+            SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&obj_length, 4);
             break;
         }
     case T_STRING:
         {
             if (strcmp(rb_class2name(RBASIC(value)->klass),
                        "Mongo::Code") == 0) {
-                int start_position, length_location, length, total_length;
+                buffer_position length_location, start_position, total_length;
+                int length;
                 write_name_and_type(buffer, key, 0x0F);
 
-                start_position = buffer->position;
-                length_location = buffer_save_bytes(buffer, 4);
+                start_position = buffer_get_position(buffer);
+                length_location = buffer_save_space(buffer, 4);
+                if (length_location == -1) {
+                    rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
+                }
 
                 length = RSTRING_LEN(value) + 1;
-                buffer_write_bytes(buffer, (char*)&length, 4);
-                buffer_write_bytes(buffer, RSTRING_PTR(value), length - 1);
-                buffer_write_bytes(buffer, &zero, 1);
+                SAFE_WRITE(buffer, (char*)&length, 4);
+                SAFE_WRITE(buffer, RSTRING_PTR(value), length - 1);
+                SAFE_WRITE(buffer, &zero, 1);
                 write_doc(buffer, rb_funcall(value, rb_intern("scope"), 0), Qfalse);
 
-                total_length = buffer->position - start_position;
-                memcpy(buffer->buffer + length_location, &total_length, 4);
-
+                total_length = buffer_get_position(buffer) - start_position;
+                SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&total_length, 4);
                 break;
             } else {
                 int length = RSTRING_LEN(value) + 1;
                 write_name_and_type(buffer, key, 0x02);
-                buffer_write_bytes(buffer, (char*)&length, 4);
-                buffer_write_bytes(buffer, RSTRING_PTR(value), length - 1);
-                buffer_write_bytes(buffer, &zero, 1);
+                SAFE_WRITE(buffer, (char*)&length, 4);
+                SAFE_WRITE(buffer, RSTRING_PTR(value), length - 1);
+                SAFE_WRITE(buffer, &zero, 1);
                 break;
             }
         }
@@ -319,8 +273,8 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
             const char* str_value = rb_id2name(SYM2ID(value));
             int length = strlen(str_value) + 1;
             write_name_and_type(buffer, key, 0x0E);
-            buffer_write_bytes(buffer, (char*)&length, 4);
-            buffer_write_bytes(buffer, str_value, length);
+            SAFE_WRITE(buffer, (char*)&length, 4);
+            SAFE_WRITE(buffer, str_value, length);
             break;
         }
     case T_OBJECT:
@@ -336,14 +290,14 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 write_name_and_type(buffer, key, 0x05);
                 if (subtype == 2) {
                     const int other_length = length + 4;
-                    buffer_write_bytes(buffer, (const char*)&other_length, 4);
-                    buffer_write_bytes(buffer, &subtype, 1);
+                    SAFE_WRITE(buffer, (const char*)&other_length, 4);
+                    SAFE_WRITE(buffer, &subtype, 1);
                 }
-                buffer_write_bytes(buffer, (const char*)&length, 4);
+                SAFE_WRITE(buffer, (const char*)&length, 4);
                 if (subtype != 2) {
-                    buffer_write_bytes(buffer, &subtype, 1);
+                    SAFE_WRITE(buffer, &subtype, 1);
                 }
-                buffer_write_bytes(buffer, RSTRING_PTR(string_data), length);
+                SAFE_WRITE(buffer, RSTRING_PTR(string_data), length);
                 break;
             }
             if (strcmp(cls, "Mongo::ObjectID") == 0) {
@@ -352,19 +306,22 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 write_name_and_type(buffer, key, 0x07);
                 for (i = 0; i < 12; i++) {
                     char byte = (char)FIX2INT(RARRAY_PTR(as_array)[i]);
-                    buffer_write_bytes(buffer, &byte, 1);
+                    SAFE_WRITE(buffer, &byte, 1);
                 }
                 break;
             }
             if (strcmp(cls, "Mongo::DBRef") == 0) {
-                int start_position, length_location, obj_length;
+                buffer_position length_location, start_position, obj_length;
                 VALUE ns, oid;
                 write_name_and_type(buffer, key, 0x03);
 
-                start_position = buffer->position;
+                start_position = buffer_get_position(buffer);
 
                 // save space for length
-                length_location = buffer_save_bytes(buffer, 4);
+                length_location = buffer_save_space(buffer, 4);
+                if (length_location == -1) {
+                    rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
+                }
 
                 ns = rb_funcall(value, rb_intern("namespace"), 0);
                 write_element(rb_str_new2("$ref"), ns, pack_extra(buffer, Qfalse));
@@ -372,9 +329,9 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 write_element(rb_str_new2("$id"), oid, pack_extra(buffer, Qfalse));
 
                 // write null byte and fill in length
-                buffer_write_bytes(buffer, &zero, 1);
-                obj_length = buffer->position - start_position;
-                memcpy(buffer->buffer + length_location, &obj_length, 4);
+                SAFE_WRITE(buffer, &zero, 1);
+                obj_length = buffer_get_position(buffer) - start_position;
+                SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&obj_length, 4);
                 break;
             }
         }
@@ -386,7 +343,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 double t = NUM2DBL(rb_funcall(value, rb_intern("to_f"), 0));
                 long long time_since_epoch = (long long)round(t * 1000);
                 write_name_and_type(buffer, key, 0x09);
-                buffer_write_bytes(buffer, (const char*)&time_since_epoch, 8);
+                SAFE_WRITE(buffer, (const char*)&time_since_epoch, 8);
                 break;
             }
         }
@@ -399,30 +356,30 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
 
             write_name_and_type(buffer, key, 0x0B);
 
-            buffer_write_bytes(buffer, pattern, length);
-            buffer_write_bytes(buffer, &zero, 1);
+            SAFE_WRITE(buffer, pattern, length);
+            SAFE_WRITE(buffer, &zero, 1);
 
             if (flags & IGNORECASE) {
                 char ignorecase = 'i';
-                buffer_write_bytes(buffer, &ignorecase, 1);
+                SAFE_WRITE(buffer, &ignorecase, 1);
             }
             if (flags & MULTILINE) {
                 char multiline = 'm';
-                buffer_write_bytes(buffer, &multiline, 1);
+                SAFE_WRITE(buffer, &multiline, 1);
             }
             if (flags & EXTENDED) {
                 char extended = 'x';
-                buffer_write_bytes(buffer, &extended, 1);
+                SAFE_WRITE(buffer, &extended, 1);
             }
 
             has_extra = rb_funcall(value, rb_intern("respond_to?"), 1, rb_str_new2("extra_options_str"));
             if (TYPE(has_extra) == T_TRUE) {
                 VALUE extra = rb_funcall(value, rb_intern("extra_options_str"), 0);
-                int old_position = buffer->position;
-                buffer_write_bytes(buffer, RSTRING_PTR(extra), RSTRING_LEN(extra));
-                qsort(buffer->buffer + old_position, RSTRING_LEN(extra), sizeof(char), cmp_char);
+                buffer_position old_position = buffer_get_position(buffer);
+                SAFE_WRITE(buffer, RSTRING_PTR(extra), RSTRING_LEN(extra));
+                qsort(buffer_get_buffer(buffer) + old_position, RSTRING_LEN(extra), sizeof(char), cmp_char);
             }
-            buffer_write_bytes(buffer, &zero, 1);
+            SAFE_WRITE(buffer, &zero, 1);
 
             break;
         }
@@ -439,13 +396,17 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
     return write_element_allow_id(key, value, extra, 0);
 }
 
-static void write_doc(bson_buffer* buffer, VALUE hash, VALUE check_keys) {
-    int start_position = buffer->position;
-    int length_location = buffer_save_bytes(buffer, 4);
-    int length;
-
+static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys) {
+    buffer_position start_position = buffer_get_position(buffer);
+    buffer_position length_location = buffer_save_space(buffer, 4);
+    buffer_position length;
     VALUE id_str = rb_str_new2("_id");
     VALUE id_sym = ID2SYM(rb_intern("_id"));
+
+    if (length_location == -1) {
+        rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
+    }
+
     if (rb_funcall(hash, rb_intern("has_key?"), 1, id_str) == Qtrue) {
         VALUE id = rb_hash_aref(hash, id_str);
         write_element_allow_id(id_str, id, pack_extra(buffer, check_keys), 1);
@@ -469,20 +430,24 @@ static void write_doc(bson_buffer* buffer, VALUE hash, VALUE check_keys) {
     }
 
     // write null byte and fill in length
-    buffer_write_bytes(buffer, &zero, 1);
-    length = buffer->position - start_position;
-    memcpy(buffer->buffer + length_location, &length, 4);
+    SAFE_WRITE(buffer, &zero, 1);
+    length = buffer_get_position(buffer) - start_position;
+    SAFE_WRITE_AT_POS(buffer, length_location, &length, 4);
 }
 
 static VALUE method_serialize(VALUE self, VALUE doc, VALUE check_keys) {
     VALUE result;
-    bson_buffer* buffer = buffer_new();
-    assert(buffer);
+    buffer_t buffer = buffer_new();
+    if (buffer == NULL) {
+        rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
+    }
 
     write_doc(buffer, doc, check_keys);
 
-    result = rb_str_new(buffer->buffer, buffer->position);
-    buffer_free(buffer);
+    result = rb_str_new(buffer_get_buffer(buffer), buffer_get_position(buffer));
+    if (buffer_free(buffer) != 0) {
+        rb_raise(rb_eRuntimeError, "failed to free buffer");
+    }
     return result;
 }
 
