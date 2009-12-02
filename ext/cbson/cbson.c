@@ -36,6 +36,8 @@
 #include "regex.h"
 #endif
 
+#include "version.h"
+
 #include <assert.h>
 #include <math.h>
 #include <unistd.h>
@@ -792,7 +794,7 @@ static VALUE objectid_generate(VALUE self)
 
 
 void Init_cbson() {
-    VALUE mongo, CBson, Digest;
+    VALUE mongo, CBson, Digest, ext_version;
     Time = rb_const_get(rb_cObject, rb_intern("Time"));
 
     mongo = rb_const_get(rb_cObject, rb_intern("Mongo"));
@@ -812,6 +814,8 @@ void Init_cbson() {
     OrderedHash = rb_const_get(rb_cObject, rb_intern("OrderedHash"));
 
     CBson = rb_define_module("CBson");
+    ext_version = rb_str_new2(VERSION);
+    rb_define_const(CBson, "VERSION", ext_version);
     rb_define_module_function(CBson, "serialize", method_serialize, 2);
     rb_define_module_function(CBson, "deserialize", method_deserialize, 1);
 

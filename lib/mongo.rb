@@ -10,8 +10,8 @@ end
 begin
     # Need this for running test with and without c ext in Ruby 1.9.
     raise LoadError if ENV['TEST_MODE'] && !ENV['C_EXT']
-    gem 'mongo_ext', "= #{Mongo::VERSION}"
     require 'mongo_ext/cbson'
+    raise LoadError if CBson::VERSION != Mongo::VERSION
     require 'mongo/util/bson_c'
     BSON            = BSON_C
     BSON_SERIALIZER = CBson

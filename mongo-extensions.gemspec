@@ -1,11 +1,12 @@
 require 'lib/mongo'
-
+VERSION_HEADER = File.open(File.join(File.dirname(__FILE__), 'ext', 'cbson', 'version.h'), "r") 
+VERSION        = VERSION_HEADER.read.scan(/VERSION\s+"(\d+\.\d+)\\/)[0][0]
 Gem::Specification.new do |s|
   s.name = 'mongo_ext'
 
-  s.version = Mongo::VERSION
+  s.version  = VERSION
   s.platform = Gem::Platform::RUBY
-  s.summary = 'C extensions for the MongoDB Ruby driver'
+  s.summary  = 'C extensions for the MongoDB Ruby driver'
   s.description = 'C extensions to accelerate the MongoDB Ruby driver. For more information about Mongo, see http://www.mongodb.org.'
 
   s.require_paths = ['ext']
