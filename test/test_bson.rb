@@ -12,20 +12,28 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_valid_utf8_string
-    doc = {'doc' => "aé"}
+    doc = {'doc' => 'aé'}
     bson = bson = BSON.serialize(doc)
     assert_equal doc, BSON.deserialize(bson)
   end
 
-  # We'll raise this exception only in 1.8 since 1.9 forces UTF-8 conversion.
+  # In 1.8 we test that other string encodings raise an exception.
+  # In 1.9 we test that they get auto-converted.
   if RUBY_VERSION < '1.9'
     require 'iconv'
     def test_invalid_string
       string = Iconv.conv('iso-8859-1', 'utf-8', 'aé').first
-      doc = {'doc' => string} 
+      doc = {'doc' => string}
       assert_raise InvalidStringEncoding do
         BSON.serialize(doc)
       end
+    end
+  else
+    def test_non_utf8_string
+      bson = BSON.serialize({'str' => 'aé'.encode('iso-8859-1')})
+      result = BSON.deserialize(bson)['str']
+      assert_equal 'aé', result
+      assert_equal 'UTF-8', result.encoding.name
     end
   end
 
