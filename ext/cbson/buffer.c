@@ -76,6 +76,7 @@ static int buffer_grow(buffer_t buffer, int min_length) {
         return 1;
     }
     buffer->size = size;
+    return 0;
 }
 
 /* Assure that `buffer` has at least `size` free bytes (and grow if needed).

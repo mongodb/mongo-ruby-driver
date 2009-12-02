@@ -52,7 +52,6 @@
     if (buffer_write_at_position((buffer), (position), (data), (size)) != 0) \
         rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c")
 
-
 #define MAX_HOSTNAME_LENGTH 256
 
 static VALUE Binary;
