@@ -87,8 +87,6 @@ static void write_utf8(buffer_t buffer, VALUE string) {
 }
 #endif
 
-/* TODO free buffer on all exceptions! */
-
 // this sucks. but for some reason these moved around between 1.8 and 1.9
 #ifdef ONIGURUMA_H
 #define IGNORECASE ONIG_OPTION_IGNORECASE
@@ -151,6 +149,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
     }
 
     if (TYPE(key) != T_STRING) {
+        buffer_free(buffer);
         rb_raise(rb_eTypeError, "keys must be strings or symbols");
     }
 
@@ -161,10 +160,12 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
     if (check_keys == Qtrue) {
         int i;
         if (RSTRING_LEN(key) > 0 && RSTRING_PTR(key)[0] == '$') {
+            buffer_free(buffer);
             rb_raise(InvalidName, "key must not start with '$'");
         }
         for (i = 0; i < RSTRING_LEN(key); i++) {
             if (RSTRING_PTR(key)[i] == '.') {
+                buffer_free(buffer);
                 rb_raise(InvalidName, "key must not contain '.'");
             }
         }
@@ -176,6 +177,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         {
             if (rb_funcall(value, rb_intern(">"), 1, LL2NUM(9223372036854775807LL)) == Qtrue ||
                 rb_funcall(value, rb_intern("<"), 1, LL2NUM(-9223372036854775808LL)) == Qtrue) {
+                buffer_free(buffer);
                 rb_raise(rb_eRangeError, "MongoDB can only handle 8-byte ints");
             }
             if (rb_funcall(value, rb_intern(">"), 1, INT2NUM(2147483647L)) == Qtrue ||
@@ -405,6 +407,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         }
     default:
         {
+            buffer_free(buffer);
             rb_raise(rb_eTypeError, "no c encoder for this type yet (%d)", TYPE(value));
             break;
         }

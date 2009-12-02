@@ -17,6 +17,9 @@
 #ifndef BUFFER_H
 #define BUFFER_H
 
+/* Note: if any of these functions return a failure condition then the buffer
+ * has already been freed. */
+
 /* A buffer */
 typedef struct buffer* buffer_t;
 /* A position in the buffer */
