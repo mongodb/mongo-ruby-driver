@@ -43,6 +43,7 @@
 
 #include "version.h"
 #include "buffer.h"
+#include "encoding_helpers.h"
 
 #define SAFE_WRITE(buffer, data, size)                                  \
     if (buffer_write((buffer), (data), (size)) != 0)                    \
@@ -62,14 +63,31 @@ static VALUE Code;
 static VALUE RegexpOfHolding;
 static VALUE OrderedHash;
 static VALUE InvalidName;
+static VALUE InvalidStringEncoding;
 static VALUE DigestMD5;
 
 #if HAVE_RUBY_ENCODING_H
 #include "ruby/encoding.h"
 #define STR_NEW(p,n) rb_enc_str_new((p), (n), rb_utf8_encoding())
+/* MUST call TO_UTF8 before calling write_utf8. */
+#define TO_UTF8(string) rb_str_export_to_enc((string), rb_utf8_encoding())
+static void write_utf8(buffer_t buffer, VALUE string) {
+    SAFE_WRITE(buffer, RSTRING_PTR(string), RSTRING_LEN(string));
+}
 #else
 #define STR_NEW(p,n) rb_str_new((p), (n))
+/* MUST call TO_UTF8 before calling write_utf8. */
+#define TO_UTF8(string) (string)
+static void write_utf8(buffer_t buffer, VALUE string) {
+    if (!is_legal_utf8_string(RSTRING_PTR(string), RSTRING_LEN(string))) {
+        buffer_free(buffer);
+        rb_raise(InvalidStringEncoding, "String not valid UTF-8");
+    }
+    SAFE_WRITE(buffer, RSTRING_PTR(string), RSTRING_LEN(string));
+}
 #endif
+
+/* TODO free buffer on all exceptions! */
 
 // this sucks. but for some reason these moved around between 1.8 and 1.9
 #ifdef ONIGURUMA_H
@@ -118,7 +136,8 @@ static VALUE pack_extra(buffer_t buffer, VALUE check_keys) {
 
 static void write_name_and_type(buffer_t buffer, VALUE name, char type) {
     SAFE_WRITE(buffer, &type, 1);
-    SAFE_WRITE(buffer, RSTRING_PTR(name), RSTRING_LEN(name));
+    name = TO_UTF8(name);
+    write_utf8(buffer, name);
     SAFE_WRITE(buffer, &zero, 1);
 }
 
@@ -259,10 +278,12 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&total_length, 4);
                 break;
             } else {
-                int length = RSTRING_LEN(value) + 1;
+                int length;
                 write_name_and_type(buffer, key, 0x02);
+                value = TO_UTF8(value);
+                length = RSTRING_LEN(value) + 1;
                 SAFE_WRITE(buffer, (char*)&length, 4);
-                SAFE_WRITE(buffer, RSTRING_PTR(value), length - 1);
+                write_utf8(buffer, value);
                 SAFE_WRITE(buffer, &zero, 1);
                 break;
             }
@@ -774,6 +795,7 @@ void Init_cbson() {
     RegexpOfHolding = rb_const_get(mongo, rb_intern("RegexpOfHolding"));
     rb_require("mongo/errors");
     InvalidName = rb_const_get(mongo, rb_intern("InvalidName"));
+    InvalidStringEncoding = rb_const_get(mongo, rb_intern("InvalidStringEncoding"));
     rb_require("mongo/util/ordered_hash");
     OrderedHash = rb_const_get(rb_cObject, rb_intern("OrderedHash"));
 
