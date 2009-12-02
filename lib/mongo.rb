@@ -14,11 +14,9 @@ begin
     raise LoadError if CBson::VERSION != Mongo::VERSION
     require 'mongo/util/bson_c'
     BSON            = BSON_C
-    BSON_SERIALIZER = CBson
   rescue LoadError
     require 'mongo/util/bson_ruby'
     BSON            = BSON_RUBY
-    BSON_SERIALIZER = BSON
     warn "\n**Notice: C extension not loaded. This is required for optimum MongoDB Ruby driver performance."
     warn "  You can install the extension as follows:\n  gem install mongo_ext\n"
     warn "  If you continue to receive this message after installing, make sure that the"

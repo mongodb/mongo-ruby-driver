@@ -218,7 +218,7 @@ module Mongo
       message.put_int(0)
       BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
-      message.put_array(BSON_SERIALIZER.serialize(selector, false).unpack("C*"))
+      message.put_array(BSON.serialize(selector, false).unpack("C*"))
       @connection.send_message(Mongo::Constants::OP_DELETE, message,
         "db.#{@db.name}.remove(#{selector.inspect})")
     end
@@ -248,8 +248,8 @@ module Mongo
       update_options += 1 if options[:upsert]
       update_options += 2 if options[:multi]
       message.put_int(update_options)
-      message.put_array(BSON_SERIALIZER.serialize(selector, false).unpack("C*"))
-      message.put_array(BSON_SERIALIZER.serialize(document, false).unpack("C*"))
+      message.put_array(BSON.serialize(selector, false).unpack("C*"))
+      message.put_array(BSON.serialize(document, false).unpack("C*"))
       if options[:safe]
         @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name,
           "db.#{@name}.update(#{selector.inspect}, #{document.inspect})")
@@ -508,7 +508,7 @@ EOS
       message = ByteBuffer.new
       message.put_int(0)
       BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{collection_name}")
-      documents.each { |doc| message.put_array(BSON_SERIALIZER.serialize(doc, check_keys).unpack("C*")) }
+      documents.each { |doc| message.put_array(BSON.serialize(doc, check_keys).unpack("C*")) }
       if safe
         @connection.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message, @db.name,
           "db.#{collection_name}.insert(#{documents.inspect})")

@@ -470,7 +470,7 @@ module Mongo
       BSON_RUBY.serialize_cstr(message, "#{db_name}.$cmd")
       message.put_int(0)
       message.put_int(-1)
-      message.put_array(BSON_SERIALIZER.serialize({:getlasterror => 1}, false).unpack("C*"))
+      message.put_array(BSON.serialize({:getlasterror => 1}, false).unpack("C*"))
       add_message_headers(Mongo::Constants::OP_QUERY, message)
     end
     

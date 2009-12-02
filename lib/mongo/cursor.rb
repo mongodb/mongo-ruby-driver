@@ -324,8 +324,8 @@ module Mongo
       if query_contains_special_fields?
         selector = selector_with_special_query_fields
       end
-      message.put_array(BSON_SERIALIZER.serialize(selector, false).unpack("C*"))
-      message.put_array(BSON_SERIALIZER.serialize(@fields, false).unpack("C*")) if @fields
+      message.put_array(BSON.serialize(selector, false).unpack("C*"))
+      message.put_array(BSON.serialize(@fields, false).unpack("C*")) if @fields
       message
     end
 
