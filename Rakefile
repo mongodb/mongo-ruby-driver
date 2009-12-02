@@ -22,7 +22,7 @@ task :test do
   puts "To test the pure ruby driver: \nrake test:ruby"
 end
 
-namespace :test do 
+namespace :test do
 
   desc "Test the driver with the c extension enabled."
   task :c do
@@ -34,7 +34,7 @@ namespace :test do
   end
 
   desc "Test the driver using pure ruby (no c extension)"
-  task :ruby do 
+  task :ruby do
     ENV['C_EXT'] = nil
     Rake::Task['test:unit'].invoke
     Rake::Task['test:functional'].invoke
@@ -97,7 +97,7 @@ namespace :gem do
   task :install do
     sh <<EOS
 #{gem_command} build mongo-ruby-driver.gemspec &&
-    sudo #{gem_command} install mongo-*.gem &&
+    #{gem_command} install mongo-*.gem &&
     rm mongo-*.gem
 EOS
   end
@@ -106,7 +106,7 @@ EOS
   task :install_extensions do
     sh <<EOS
 #{gem_command} build mongo-extensions.gemspec &&
-    sudo #{gem_command} install mongo_ext-*.gem &&
+    #{gem_command} install mongo_ext-*.gem &&
     rm mongo_ext-*.gem
 EOS
   end
