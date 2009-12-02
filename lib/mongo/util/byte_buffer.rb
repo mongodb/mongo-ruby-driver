@@ -179,6 +179,10 @@ class ByteBuffer
     end
   end
 
+  def unpack(args)
+    to_a
+  end
+
   def to_s
     if @buf.respond_to? :fast_pack
       @buf.fast_pack
