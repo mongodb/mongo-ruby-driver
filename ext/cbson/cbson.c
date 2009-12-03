@@ -579,7 +579,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             long long millis;
             VALUE seconds, microseconds;
             memcpy(&millis, buffer + *position, 8);
-            seconds = INT2NUM(millis / 1000);
+            seconds = LL2NUM(millis / 1000);
             microseconds = INT2NUM((millis % 1000) * 1000);
 
             value = rb_funcall(Time, rb_intern("at"), 2, seconds, microseconds);
