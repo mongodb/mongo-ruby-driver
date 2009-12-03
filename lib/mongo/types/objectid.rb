@@ -124,6 +124,12 @@ module Mongo
       legacy
     end
 
+    # Returns the utc time at which this ObjectID was generated. This may
+    # be used in lieu of a created_at timestamp.
+    def generation_time
+      Time.at(@data.pack("C4").unpack("N")[0])
+    end
+
     private
 
     begin

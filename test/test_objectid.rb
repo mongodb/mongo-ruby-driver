@@ -121,4 +121,10 @@ class ObjectIDTest < Test::Unit::TestCase
     assert_equal s, ObjectID.legacy_string_convert(l)
   end
 
+  def test_generation_time
+    time = Time.now
+    id   = ObjectID.new
+
+    assert_in_delta time.to_i, id.generation_time.to_i, 2
+  end
 end
