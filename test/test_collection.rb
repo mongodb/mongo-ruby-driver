@@ -26,11 +26,20 @@ class TestCollection < Test::Unit::TestCase
     assert @coll.pk_factory.is_a?(Object)
   end
 
-  def test_collection
+  def test_valid_names
     assert_raise InvalidName do
       @@db["te$t"]
     end
 
+    assert_raise InvalidName do
+      @@db['$main']
+    end
+
+    assert @@db['$cmd']
+    assert @@db['oplog.$main']
+  end
+
+  def test_collection
     assert_kind_of Collection, @@db["test"]
     assert_equal @@db["test"].name(), @@db.collection("test").name()
     assert_equal @@db["test"].name(), @@db[:test].name()

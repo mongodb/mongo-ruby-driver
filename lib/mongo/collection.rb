@@ -33,8 +33,8 @@ module Mongo
       if name.empty? or name.include? ".."
         raise InvalidName, "collection names cannot be empty"
       end
-      if name.include? "$" and not name.match(/^\$cmd/)
-        raise InvalidName, "collection names must not contain '$'"
+      if name.include? "$"
+        raise InvalidName, "collection names must not contain '$'" unless name =~ /((^\$cmd)|(oplog\.\$main))/
       end
       if name.match(/^\./) or name.match(/\.$/)
         raise InvalidName, "collection names must not start or end with '.'"
