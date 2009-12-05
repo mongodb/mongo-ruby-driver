@@ -1,3 +1,10 @@
+0.18.1 2009-12-05
+* Fixed issue with negative dates in Ruby 1.9
+* Minor refactorings for C extension and BSON classes
+* Ensure UTF-8 in Ruby 1.8
+* Fix for connections on non-default port (Delano Mandelbaum)
+* More explicit test suite tasks for running with/without C extension.
+
 0.18 2009-11-25
 * Connections now support connection pooling. See http://api.mongodb.org/ruby/0.18/classes/Mongo/Connection.html#M000158
 * Deprecated :auto_reconnect option on connection; if the driver fails to

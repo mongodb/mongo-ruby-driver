@@ -4,7 +4,7 @@ module Mongo
   ASCENDING = 1
   DESCENDING = -1
 
-  VERSION = "0.18"
+  VERSION = "0.18.1"
 end
 
 begin

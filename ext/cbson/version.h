@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-#define VERSION "0.18\0"
+#define VERSION "0.18.1"
