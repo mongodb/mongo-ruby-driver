@@ -1,4 +1,4 @@
-require 'test/test_helper'
+require 'test_helper'
 
 class ObjectIDTest < Test::Unit::TestCase
 
@@ -138,5 +138,10 @@ class ObjectIDTest < Test::Unit::TestCase
     id   = ObjectID.new
 
     assert_in_delta time.to_i, id.generation_time.to_i, 2
+  end
+  
+  def test_json
+    id = ObjectID.new
+    assert_equal %Q("#{id}"), id.to_json
   end
 end

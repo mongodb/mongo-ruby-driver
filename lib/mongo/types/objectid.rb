@@ -100,6 +100,10 @@ module Mongo
     end
 
     def inspect; to_s; end
+    
+    def to_json(*args)
+      %Q("#{to_s}")
+    end
 
     # Get a string representation of this ObjectID using the legacy byte
     # ordering. This method may eventually be removed. If you are not sure
