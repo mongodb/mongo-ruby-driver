@@ -377,6 +377,16 @@ class TestCollection < Test::Unit::TestCase
 #     assert_equal 1, @@test.group([], {}, {"count" => 0},
 #                                  Code.new(reduce_function,
 #                                           {"inc_value" => 0.5}), true)[0]["count"]
+
+    # test finalize
+    #assert_equal( 3, 
+    #  @@test.group(
+    #    [], {}, {"count" => 0}, 
+    #    Code.new(reduce_function,{"inc_value" => 2}), true, 
+    #    Code.new("function (o) { o.final_count = o.count - 1; }")
+    #  )[0]["final_count"]
+    #)
+
     end
 
   context "A collection with two records" do 

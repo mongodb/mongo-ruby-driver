@@ -346,28 +346,42 @@ module Mongo
     # :command :: if true, run the group as a command instead of in an
     #             eval - it is likely that this option will eventually be
     #             deprecated and all groups will be run as commands
-    def group(keys, condition, initial, reduce, command=false)
+    def group(keys, condition, initial, reduce, command=false, finalize=nil)
+
       if command
         hash = {}
         keys.each do |k|
           hash[k] = 1
         end
 
-        reduce = Code.new(reduce) unless reduce.is_a?(Code)
+        reduce =   Code.new(reduce)   unless reduce.is_a?(Code)
 
-        result = @db.command({"group" =>
-                                  {
-                                    "ns" => @name,
-                                    "$reduce" => reduce,
-                                    "key" => hash,
-                                    "cond" => condition,
-                                    "initial" => initial}})
+        group_command = {
+          "group" => {
+            "ns"      => @name,
+            "$reduce" => reduce,
+            "key"     => hash,
+            "cond"    => condition,
+            "initial" => initial
+          }
+        }
+
+        # only add finalize if specified
+        if finalize
+          finalize = Code.new(finalize) unless finalize.is_a?(Code)
+          group_command['group']['finalize'] = finalize
+        end
+
+        result = @db.command group_command
+
         if result["ok"] == 1
           return result["retval"]
         else
           raise OperationFailure, "group command failed: #{result['errmsg']}"
         end
       end
+
+      raise OperationFailure, "finalize is only supported with the group command" if finalize
 
       case reduce
       when Code
