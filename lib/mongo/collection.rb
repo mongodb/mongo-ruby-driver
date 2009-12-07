@@ -338,11 +338,14 @@ module Mongo
     # Performs a group query, similar to the 'SQL GROUP BY' operation.
     # Returns an array of grouped items.
     #
-    # :keys :: Array of fields to group by
+    # :keys :: an array of fields to group by
     # :condition :: specification of rows to be considered (as a 'find'
     #               query specification)
     # :initial :: initial value of the aggregation counter object
     # :reduce :: aggregation function as a JavaScript string
+    # :finalize :: optional. a JavaScript function that receives and modifies 
+    #              each of the resultant grouped objects. Available only when group is run
+    #              with command set to true.
     # :command :: if true, run the group as a command instead of in an
     #             eval - it is likely that this option will eventually be
     #             deprecated and all groups will be run as commands
@@ -381,7 +384,8 @@ module Mongo
         end
       end
 
-      raise OperationFailure, "finalize is only supported with the group command" if finalize
+      raise OperationFailure, ":finalize can be specified only when " +
+        "group is run as a command (set command param to true)" if finalize
 
       case reduce
       when Code
