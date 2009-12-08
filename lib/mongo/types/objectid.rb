@@ -70,7 +70,7 @@ module Mongo
     # Given a string representation of an ObjectID, return a new ObjectID
     # with that value.
     def self.from_string(str)
-      raise "illegal ObjectID format" unless legal?(str)
+      raise InvalidObjectID, "illegal ObjectID format" unless legal?(str)
       data = []
       12.times do |i|
         data[i] = str[i * 2, 2].to_i(16)
@@ -83,7 +83,7 @@ module Mongo
     # removed. If you are not sure that you need this method you should be
     # using the regular from_string.
     def self.from_string_legacy(str)
-      raise "illegal ObjectID format" unless legal?(str)
+      raise InvalidObjectID, "illegal ObjectID format" unless legal?(str)
       data = []
       BYTE_ORDER.each_with_index { |string_position, data_index|
         data[data_index] = str[string_position * 2, 2].to_i(16)

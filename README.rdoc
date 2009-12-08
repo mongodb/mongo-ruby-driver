@@ -329,7 +329,7 @@ See HISTORY.
 
 = Credits
 
-See CREDITS
+See CREDITS.
 
 = License
 

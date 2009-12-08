@@ -79,12 +79,24 @@ class ObjectIDTest < Test::Unit::TestCase
     assert_equal @o.to_s, o2.to_s
   end
 
+  def test_illegal_from_string
+    assert_raise InvalidObjectID do 
+      ObjectID.from_string("")
+    end
+  end
+
   def test_from_string_legacy
     hex_str = @o.to_s_legacy
     o2 = ObjectID.from_string_legacy(hex_str)
     assert_equal hex_str, o2.to_s_legacy
     assert_equal @o, o2
     assert_equal @o.to_s, o2.to_s
+  end
+
+  def test_illegal_from_string_legacy
+    assert_raise InvalidObjectID do 
+      ObjectID.from_string_legacy("")
+    end
   end
 
   def test_legal

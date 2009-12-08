@@ -30,6 +30,9 @@ module Mongo
   # Raised when given a string is not valid utf-8 (Ruby 1.8 only).
   class InvalidStringEncoding < MongoRubyError; end
 
+  # Raised when attempting to initialize an invalid ObjectID.
+  class InvalidObjectID < MongoRubyError; end
+
   # Raised on failures in connection to the database server.
   class ConnectionError < MongoRubyError; end
 
