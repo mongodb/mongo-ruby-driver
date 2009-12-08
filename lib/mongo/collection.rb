@@ -100,12 +100,12 @@ module Mongo
     #              objects missed, which were preset at both the start and
     #              end of the query's execution. For details see
     #              http://www.mongodb.org/display/DOCS/How+to+do+Snapshotting+in+the+Mongo+Database
-    # :timeout :: When +true+ (default), the returned cursor will be subject to 
-    #             the normal cursor timeout behavior of the mongod process. 
+    # :timeout :: When +true+ (default), the returned cursor will be subject to
+    #             the normal cursor timeout behavior of the mongod process.
     #             When +false+, the returned cursor will never timeout. Note
     #             that disabling timeout will only work when #find is invoked
     #             with a block. This is to prevent any inadvertant failure to
-    #             close the cursor, as the cursor is explicitly closed when 
+    #             close the cursor, as the cursor is explicitly closed when
     #             block code finishes.
     def find(selector={}, options={})
       fields = options.delete(:fields)
@@ -116,7 +116,7 @@ module Mongo
       hint   = options.delete(:hint)
       snapshot = options.delete(:snapshot)
       if options[:timeout] == false && !block_given?
-        raise ArgumentError, "Timeout can be set to false only when #find is invoked with a block." 
+        raise ArgumentError, "Timeout can be set to false only when #find is invoked with a block."
       end
       timeout = block_given? ? (options.delete(:timeout) || true) : true
       if hint
@@ -126,7 +126,7 @@ module Mongo
       end
       raise RuntimeError, "Unknown options [#{options.inspect}]" unless options.empty?
 
-      cursor = Cursor.new(self, :selector => selector, :fields => fields, :skip => skip, :limit => limit, 
+      cursor = Cursor.new(self, :selector => selector, :fields => fields, :skip => skip, :limit => limit,
                           :order => sort, :hint => hint, :snapshot => snapshot, :timeout => timeout)
       if block_given?
         yield cursor
@@ -204,14 +204,14 @@ module Mongo
     end
     alias_method :<<, :insert
 
-    # Remove all records from this collection. 
+    # Remove all records from this collection.
     # If +selector+ is specified, only matching documents will be removed.
-    # 
+    #
     # Remove all records from the collection:
     #   @collection.remove
     #   @collection.remove({})
     #
-    # Remove only records that have expired: 
+    # Remove only records that have expired:
     #   @collection.remove({:expire => {'$lte' => Time.now}})
     def remove(selector={})
       message = ByteBuffer.new
@@ -225,7 +225,7 @@ module Mongo
 
     # Update a single document in this collection.
     #
-    # :selector :: a hash specifying elements which must be present for a document to be updated. Note: 
+    # :selector :: a hash specifying elements which must be present for a document to be updated. Note:
     # the update command currently updates only the first document matching the
     # given selector. If you want all matching documents to be updated, be sure
     # to specify :multi => true.
@@ -254,7 +254,7 @@ module Mongo
         @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name,
           "db.#{@name}.update(#{selector.inspect}, #{document.inspect})")
       else
-        @connection.send_message(Mongo::Constants::OP_UPDATE, message, 
+        @connection.send_message(Mongo::Constants::OP_UPDATE, message,
           "db.#{@name}.update(#{selector.inspect}, #{document.inspect})")
       end
     end
@@ -329,7 +329,7 @@ module Mongo
 
       result = @db.command(hash)
       unless result["ok"] == 1
-        raise Mongo::OperationFailure, "map-reduce failed: #{result['errmsg']}" 
+        raise Mongo::OperationFailure, "map-reduce failed: #{result['errmsg']}"
       end
       @db[result["result"]]
     end
@@ -343,7 +343,7 @@ module Mongo
     #               query specification)
     # :initial :: initial value of the aggregation counter object
     # :reduce :: aggregation function as a JavaScript string
-    # :finalize :: optional. a JavaScript function that receives and modifies 
+    # :finalize :: optional. a JavaScript function that receives and modifies
     #              each of the resultant grouped objects. Available only when group is run
     #              with command set to true.
     # :command :: if true, run the group as a command instead of in an
@@ -541,7 +541,7 @@ EOS
       indexes = []
       spec.each_pair do |field, direction|
         indexes.push("#{field}_#{direction}")
-      end 
+      end
       indexes.join("_")
     end
   end

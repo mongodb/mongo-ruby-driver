@@ -379,61 +379,61 @@ class TestCollection < Test::Unit::TestCase
 #                                           {"inc_value" => 0.5}), true)[0]["count"]
 
     # test finalize
-    #assert_equal( 3, 
+    #assert_equal( 3,
     #  @@test.group(
-    #    [], {}, {"count" => 0}, 
-    #    Code.new(reduce_function,{"inc_value" => 2}), true, 
+    #    [], {}, {"count" => 0},
+    #    Code.new(reduce_function,{"inc_value" => 2}), true,
     #    Code.new("function (o) { o.final_count = o.count - 1; }")
     #  )[0]["final_count"]
     #)
 
     end
 
-  context "A collection with two records" do 
-    setup do 
+  context "A collection with two records" do
+    setup do
       @collection = @@db.collection('test-collection')
       @collection.insert({:name => "Jones"})
       @collection.insert({:name => "Smith"})
     end
 
-    should "have two records" do 
+    should "have two records" do
       assert_equal 2, @collection.size
     end
 
-    should "remove the two records" do 
+    should "remove the two records" do
       @collection.remove()
       assert_equal 0, @collection.size
     end
 
-    should "remove all records if an empty document is specified" do 
+    should "remove all records if an empty document is specified" do
       @collection.remove({})
       assert_equal 0, @collection.find.count
     end
 
-    should "remove only matching records" do 
+    should "remove only matching records" do
       @collection.remove({:name => "Jones"})
       assert_equal 1, @collection.size
     end
   end
 
-  context "Creating indexes " do 
-    setup do 
+  context "Creating indexes " do
+    setup do
       @collection = @@db.collection('test-collection')
     end
 
-    should "generate indexes in the proper order" do 
+    should "generate indexes in the proper order" do
       @collection.expects(:insert_documents) do |sel, coll, safe|
         assert_equal 'b_1_a_1', sel[:name]
       end
       @collection.create_index([['b', 1], ['a', 1]])
     end
 
-    context "with an index created" do 
-      setup do 
+    context "with an index created" do
+      setup do
         @collection.create_index([['b', 1], ['a', 1]])
       end
 
-      should "return properly ordered index information" do 
+      should "return properly ordered index information" do
         assert_equal [['b', 1], ['a', 1]], @collection.index_information["b_1_a_1"]
       end
     end
