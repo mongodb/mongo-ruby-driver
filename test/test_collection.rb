@@ -53,6 +53,27 @@ class TestCollection < Test::Unit::TestCase
     assert_equal 5, @@db.collection("test.foo").find_one()["x"]
   end
 
+  def test_nil_id
+    assert_equal 5, @@test.insert({"_id" => 5, "foo" => "bar"}, {:safe => true})
+    assert_equal 5, @@test.save({"_id" => 5, "foo" => "baz"}, {:safe => true})
+    assert_equal nil, @@test.find_one("foo" => "bar")
+    assert_equal "baz", @@test.find_one(:_id => 5)["foo"]
+    assert_raise OperationFailure do
+      @@test.insert({"_id" => 5, "foo" => "bar"}, {:safe => true})
+    end
+
+    assert_equal nil, @@test.insert({"_id" => nil, "foo" => "bar"}, {:safe => true})
+    assert_equal nil, @@test.save({"_id" => nil, "foo" => "baz"}, {:safe => true})
+    assert_equal nil, @@test.find_one("foo" => "bar")
+    assert_equal "baz", @@test.find_one(:_id => nil)["foo"]
+    assert_raise OperationFailure do
+      @@test.insert({"_id" => nil, "foo" => "bar"}, {:safe => true})
+    end
+    assert_raise OperationFailure do
+      @@test.insert({:_id => nil, "foo" => "bar"}, {:safe => true})
+    end
+  end
+
   if @@version > "1.1"
     def test_distinct
       @@test.remove

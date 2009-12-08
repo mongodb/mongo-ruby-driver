@@ -175,7 +175,8 @@ module Mongo
     #   will be raised on an error. Checking for safety requires an extra
     #   round-trip to the database
     def save(to_save, options={})
-      if id = to_save[:_id] || to_save['_id']
+      if to_save.has_key?(:_id) || to_save.has_key?('_id')
+        id = to_save[:_id] || to_save['_id']
         update({:_id => id}, to_save, :upsert => true, :safe => options.delete(:safe))
         id
       else

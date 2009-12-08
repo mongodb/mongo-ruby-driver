@@ -44,7 +44,7 @@ module Mongo
 
     # Adds a primary key to the given document if needed.
     def self.create_pk(doc)
-      doc[:_id] || doc['_id'] ? doc : doc.merge!(:_id => self.new)
+      doc.has_key?(:_id) || doc.has_key?('_id') ? doc : doc.merge!(:_id => self.new)
     end
 
     # +data+ is an array of bytes. If nil, a new id will be generated.
