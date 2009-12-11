@@ -71,6 +71,10 @@ class GridStoreTest < Test::Unit::TestCase
     assert_equal "hello", GridStore.read(@@db, 'foobar', 5)
   end
 
+  def test_access_length
+    assert_equal 13, GridStore.new(@@db, 'foobar').length
+  end
+
   # Also tests seek
   def test_read_with_offset
     assert_equal "world", GridStore.read(@@db, 'foobar', 5, 7)

@@ -54,6 +54,9 @@ module GridFS
     # Default is DEFAULT_CONTENT_TYPE
     attr_accessor :content_type
 
+    # Size of file in bytes
+    attr_reader :length
+
     attr_accessor :metadata
 
     attr_reader :files_id
