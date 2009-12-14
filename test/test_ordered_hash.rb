@@ -23,6 +23,22 @@ class OrderedHashTest < Test::Unit::TestCase
     assert_equal [], OrderedHash.new.keys
   end
 
+  def test_uniq
+    list = []
+    doc  = OrderedHash.new
+    doc['_id']  = 'ab12'
+    doc['name'] = 'test'
+
+    same_doc = OrderedHash.new
+    same_doc['_id']  = 'ab12'
+    same_doc['name'] = 'test'
+    list << doc
+    list << same_doc
+
+    assert_equal 2, list.size
+    assert_equal 1, list.uniq.size
+  end
+
   def test_equality
     a = OrderedHash.new
     a['x'] = 1
