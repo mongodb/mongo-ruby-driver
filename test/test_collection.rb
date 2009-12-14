@@ -91,11 +91,11 @@ class TestCollection < Test::Unit::TestCase
         assert_equal ["a", "b", "c"], @@test.distinct("b.c").sort
       end
 
-      should "filter collection with query" do 
+      should "filter collection with query" do
         assert_equal [2, 3], @@test.distinct(:a, {:a => {"$gt" => 1}}).sort
       end
 
-      should "filter nested objects" do 
+      should "filter nested objects" do
         assert_equal ["a", "b"], @@test.distinct("b.c", {"b.c" => {"$ne" => "c"}}).sort
       end
     end
