@@ -441,11 +441,17 @@ EOS
     #     [10010, 94108, 99701]
     #   @collection.distinct("name.age")
     #     [27, 24]
-    def distinct(key)
+    #
+    # You may also pass a document selector as the second parameter
+    # to limit the documents over which distinct is run:
+    #   @collection.distinct("name.age", {"name.age" => {"$gt" => 24}})
+    #     [27]
+    def distinct(key, query=nil)
       raise MongoArgumentError unless [String, Symbol].include?(key.class)
       command = OrderedHash.new
       command[:distinct] = @name
-      command[:key]        = key.to_s
+      command[:key]      = key.to_s
+      command[:query]    = query
 
       @db.command(command)["values"]
     end

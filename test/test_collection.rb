@@ -75,17 +75,29 @@ class TestCollection < Test::Unit::TestCase
   end
 
   if @@version > "1.1"
-    def test_distinct
-      @@test.remove
-      @@test.insert([{:a => 0, :b => {:c => "a"}},
-                     {:a => 1, :b => {:c => "b"}},
-                     {:a => 1, :b => {:c => "c"}},
-                     {:a => 2, :b => {:c => "a"}},
-                     {:a => 3},
-                     {:a => 3}])
+    context "distinct queries" do
+      setup do
+        @@test.remove
+        @@test.insert([{:a => 0, :b => {:c => "a"}},
+                       {:a => 1, :b => {:c => "b"}},
+                       {:a => 1, :b => {:c => "c"}},
+                       {:a => 2, :b => {:c => "a"}},
+                       {:a => 3},
+                       {:a => 3}])
+      end
 
-      assert_equal [0, 1, 2, 3], @@test.distinct(:a).sort
-      assert_equal ["a", "b", "c"], @@test.distinct("b.c").sort
+      should "return distinct values" do
+        assert_equal [0, 1, 2, 3], @@test.distinct(:a).sort
+        assert_equal ["a", "b", "c"], @@test.distinct("b.c").sort
+      end
+
+      should "filter collection with query" do 
+        assert_equal [2, 3], @@test.distinct(:a, {:a => {"$gt" => 1}}).sort
+      end
+
+      should "filter nested objects" do 
+        assert_equal ["a", "b"], @@test.distinct("b.c", {"b.c" => {"$ne" => "c"}}).sort
+      end
     end
   end
 
