@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+require 'mongo'
+require 'mongo/gridfs'
+require 'benchmark'
+
+include Mongo
+include GridFS
+
+db = Connection.new['benchmark-gridfs']
+sample_data = File.open(File.join(File.dirname(__FILE__), 'sample_file.pdf'), 'r').read
+
+length = sample_data.length
+mb     = length / 1048576.0
+
+t1 = Time.now
+GridStore.open(db, 'mongodb.pdf', 'w') do |f|
+  f.write(sample_data)
+end
+puts "Write: #{mb / (Time.now - t1)} mb/s"
+
+t1 = Time.now
+GridStore.open(db, 'mongodb.pdf', 'r') do |f|
+  data = f.read
+end
+puts "Read: #{mb / (Time.now - t1)} mb/s"

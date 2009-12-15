@@ -55,7 +55,6 @@ module GridFS
     def size; @data.size; end
     alias_method :length, :size
 
-    # Erase all data after current position.
     def truncate
       if @data.position < @data.length
         curr_data = @data

@@ -245,13 +245,47 @@ module GridFS
       str
     end
 
-    def read(len=nil, buf=nil)
+    def old_read(len=nil, buf=nil)
       buf ||= ''
       byte = self.getc
       while byte != nil && (len == nil || len > 0)
         buf << byte.chr
         len -= 1 if len
         byte = self.getc if (len == nil || len > 0)
+      end
+      buf
+    end
+
+    def read(len=nil, buf=nil)
+      if len
+        read_partial(len, buf)
+      else
+        read_all(buf)
+      end
+    end
+
+    def read_partial(len, buf=nil)
+      buf ||= ''
+      byte = self.getc
+      while byte != nil && (len == nil || len > 0)
+        buf << byte.chr
+        len -= 1 if len
+        byte = self.getc if (len == nil || len > 0)
+      end
+      buf
+    end
+
+    def read_all(buf=nil)
+      buf ||= ''
+      while true do
+        if (@curr_chunk.pos > 0)
+          data = @curr_chunk.data.to_s
+          buf += data[@position, data.length]
+        else
+          buf += @curr_chunk.data.to_s
+        end
+        break if @curr_chunk.chunk_number == last_chunk_number
+        @curr_chunk = nth_chunk(@curr_chunk.chunk_number + 1)
       end
       buf
     end
@@ -334,15 +368,21 @@ module GridFS
       write(obj.to_s)
     end
 
-    # Writes +string+ as bytes and returns the number of bytes written.
     def write(string)
       raise "#@filename not opened for write" unless @mode[0] == ?w
-      count = 0
-      string.each_byte { |byte|
-        self.putc byte
-        count += 1
-      }
-      count
+      to_write = string.length
+      while (to_write > 0) do
+        if @curr_chunk && @curr_chunk.data.position == @chunk_size
+          prev_chunk_number = @curr_chunk.chunk_number
+          @curr_chunk = GridFS::Chunk.new(self, 'n' => prev_chunk_number + 1)
+        end
+        chunk_available = @chunk_size - @curr_chunk.data.position
+        step_size = (to_write > chunk_available) ? chunk_available : to_write
+        @curr_chunk.data.put_array(ByteBuffer.new(string[-to_write,step_size]).to_a)
+        to_write -= step_size
+        @curr_chunk.save
+      end
+      string.length - to_write
     end
 
     # A no-op.
@@ -399,7 +439,7 @@ module GridFS
 
     def tell
       @position
-     end
+    end
 
     #---
     # ================ closing ================
