@@ -34,7 +34,7 @@ class TestThreading < Test::Unit::TestCase
         end
       end
     end
-  
+
     100.times do |i|
       threads[i].join
     end
@@ -54,7 +54,7 @@ class TestThreading < Test::Unit::TestCase
         end
       end
     end
-  
+
     100.times do |i|
       threads[i].join
     end

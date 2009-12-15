@@ -36,7 +36,7 @@ class TestThreadingLargePool < Test::Unit::TestCase
         end
       end
     end
-  
+
     100.times do |i|
       threads[i].join
     end
@@ -56,7 +56,7 @@ class TestThreadingLargePool < Test::Unit::TestCase
         end
       end
     end
-  
+
     100.times do |i|
       threads[i].join
     end

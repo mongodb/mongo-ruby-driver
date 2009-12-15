@@ -264,32 +264,6 @@ module GridFS
       end
     end
 
-    def read_partial(len, buf=nil)
-      buf ||= ''
-      byte = self.getc
-      while byte != nil && (len == nil || len > 0)
-        buf << byte.chr
-        len -= 1 if len
-        byte = self.getc if (len == nil || len > 0)
-      end
-      buf
-    end
-
-    def read_all(buf=nil)
-      buf ||= ''
-      while true do
-        if (@curr_chunk.pos > 0)
-          data = @curr_chunk.data.to_s
-          buf += data[@position, data.length]
-        else
-          buf += @curr_chunk.data.to_s
-        end
-        break if @curr_chunk.chunk_number == last_chunk_number
-        @curr_chunk = nth_chunk(@curr_chunk.chunk_number + 1)
-      end
-      buf
-    end
-
     def readchar
       byte = self.getc
       raise EOFError.new if byte == nil
@@ -487,6 +461,32 @@ module GridFS
       md5_command['root'] = @root
       h['md5'] = @db.command(md5_command)['md5']
       h
+    end
+
+    def read_partial(len, buf=nil)
+      buf ||= ''
+      byte = self.getc
+      while byte != nil && (len == nil || len > 0)
+        buf << byte.chr
+        len -= 1 if len
+        byte = self.getc if (len == nil || len > 0)
+      end
+      buf
+    end
+
+    def read_all(buf=nil)
+      buf ||= ''
+      while true do
+        if (@curr_chunk.pos > 0)
+          data = @curr_chunk.data.to_s
+          buf += data[@position, data.length]
+        else
+          buf += @curr_chunk.data.to_s
+        end
+        break if @curr_chunk.chunk_number == last_chunk_number
+        @curr_chunk = nth_chunk(@curr_chunk.chunk_number + 1)
+      end
+      buf
     end
 
     def delete_chunks

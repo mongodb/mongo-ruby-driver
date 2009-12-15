@@ -71,6 +71,17 @@ class GridStoreTest < Test::Unit::TestCase
     assert_equal "hello", GridStore.read(@@db, 'foobar', 5)
   end
 
+  def test_read_with_and_without_length
+    GridStore.open(@@db, 'read-types', 'w') do |f|
+      f.write('hello, there')
+    end
+
+    GridStore.open(@@db, 'read-types', 'r') do |f|
+      assert_equal 'hello, ', f.read(7)
+      assert_equal 'there', f.read
+    end
+  end
+
   def test_access_length
     assert_equal 13, GridStore.new(@@db, 'foobar').length
   end
