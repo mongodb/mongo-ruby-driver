@@ -9,6 +9,7 @@ include GridFS
 
 db = Connection.new['benchmark-gridfs']
 sample_data = File.open(File.join(File.dirname(__FILE__), 'sample_file.pdf'), 'r').read
+GridStore.delete(db, 'mongodb.pdf')
 
 length = sample_data.length
 mb     = length / 1048576.0
