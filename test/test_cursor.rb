@@ -58,6 +58,13 @@ class CursorTest < Test::Unit::TestCase
     assert_equal 0, @@db['acollectionthatdoesn'].count()
   end
 
+  def test_next_object_deprecation
+    @@coll.remove
+    @@coll.insert({"a" => 1})
+
+    assert_equal 1, @@coll.find().next_object["a"]
+  end
+
   def test_sort
     @@coll.remove
     5.times{|x| @@coll.insert({"a" => x}) }

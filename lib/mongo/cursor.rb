@@ -71,6 +71,11 @@ module Mongo
       doc
     end
 
+    def next_object
+      warn "Cursor#next_object is deprecated; please use Cursor#next_document instead."
+      next_document
+    end
+
     # Get the size of the result set for this query.
     #
     # Returns the number of objects in the result set for this query. Does
