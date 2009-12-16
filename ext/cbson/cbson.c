@@ -64,6 +64,7 @@ static VALUE RegexpOfHolding;
 static VALUE OrderedHash;
 static VALUE InvalidName;
 static VALUE InvalidStringEncoding;
+static VALUE InvalidDocument;
 static VALUE DigestMD5;
 
 #if HAVE_RUBY_ENCODING_H
@@ -455,6 +456,12 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys) {
     // write null byte and fill in length
     SAFE_WRITE(buffer, &zero, 1);
     length = buffer_get_position(buffer) - start_position;
+
+    // make sure that length doesn't exceed 4MB
+    if (length > 4 * 1024 * 1024) {
+      rb_raise(InvalidDocument, "Document too large: BSON documents are limited to 4MB.");
+      return;
+    }
     SAFE_WRITE_AT_POS(buffer, length_location, &length, 4);
 }
 
@@ -799,6 +806,7 @@ void Init_cbson() {
     rb_require("mongo/errors");
     InvalidName = rb_const_get(mongo, rb_intern("InvalidName"));
     InvalidStringEncoding = rb_const_get(mongo, rb_intern("InvalidStringEncoding"));
+    InvalidDocument = rb_const_get(mongo, rb_intern("InvalidDocument"));
     rb_require("mongo/util/ordered_hash");
     OrderedHash = rb_const_get(rb_cObject, rb_intern("OrderedHash"));
 

@@ -107,6 +107,9 @@ class BSON_RUBY
     obj.each {|k, v| serialize_key_value(k, v, check_keys) unless k == '_id' || k == :_id }
 
     serialize_eoo_element(@buf)
+    if @buf.size > 4 * 1024 * 1024
+      raise InvalidDocument, "Document is too large (#{@buf.size}). BSON documents are limited to 4MB (#{4 * 1024 * 1024})."
+    end
     @buf.put_int(@buf.size, 0)
     self
   end

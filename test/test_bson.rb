@@ -23,6 +23,13 @@ class BSONTest < Test::Unit::TestCase
     assert_equal doc, BSON.deserialize(bson)
   end
 
+  def test_document_length
+    doc = {'name' => 'a' * 5 * 1024 * 1024}
+    assert_raise InvalidDocument do
+      assert BSON.serialize(doc)
+    end
+  end
+
   # In 1.8 we test that other string encodings raise an exception.
   # In 1.9 we test that they get auto-converted.
   if RUBY_VERSION < '1.9'

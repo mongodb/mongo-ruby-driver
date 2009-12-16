@@ -39,9 +39,12 @@ module Mongo
   # Raised on failures in connection to the database server.
   class ConnectionTimeoutError < MongoRubyError; end
 
+  # Raised when trying to insert a document that exceeds the 4MB limit.
+  class InvalidDocument < MongoDBError; end
+
   # Raised when a database operation fails.
   class OperationFailure < MongoDBError; end
-  
+
   # Raised when a database operation fails.
   class ConnectionFailure < MongoDBError; end
 
