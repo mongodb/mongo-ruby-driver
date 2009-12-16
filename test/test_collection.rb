@@ -91,12 +91,16 @@ class TestCollection < Test::Unit::TestCase
         assert_equal ["a", "b", "c"], @@test.distinct("b.c").sort
       end
 
-      should "filter collection with query" do
-        assert_equal [2, 3], @@test.distinct(:a, {:a => {"$gt" => 1}}).sort
-      end
+      if @@version >= "1.2"
 
-      should "filter nested objects" do
-        assert_equal ["a", "b"], @@test.distinct("b.c", {"b.c" => {"$ne" => "c"}}).sort
+        should "filter collection with query" do
+          assert_equal [2, 3], @@test.distinct(:a, {:a => {"$gt" => 1}}).sort
+        end
+
+        should "filter nested objects" do
+          assert_equal ["a", "b"], @@test.distinct("b.c", {"b.c" => {"$ne" => "c"}}).sort
+        end
+
       end
     end
   end
@@ -292,26 +296,42 @@ class TestCollection < Test::Unit::TestCase
     assert c.closed?
   end
 
-  def test_mapreduce
-    @@test << { "user_id" => 1 }
-    @@test << { "user_id" => 2 }
+  if @@version < "1.1.1"
+    def test_map_reduce
+      @@test << { "user_id" => 1 }
+      @@test << { "user_id" => 2 }
 
-    m = "function() { emit(this.user_id, 1); }"
-    r = "function(k,vals) { return 1; }"
-    res = @@test.map_reduce(m, r);
-    assert res.find_one({"_id" => 1})
-    assert res.find_one({"_id" => 2})
-  end
+      m = "function() { emit(this.user_id, 1); }"
+      r = "function(k,vals) { return 1; }"
+      res = @@test.map_reduce(m, r);
+      assert res.find_one({"_id" => 1})
+      assert res.find_one({"_id" => 2})
+    end
 
-  def test_mapreduce_with_code_objects
-    @@test << { "user_id" => 1 }
-    @@test << { "user_id" => 2 }
+    def test_map_reduce_with_code_objects
+      @@test << { "user_id" => 1 }
+      @@test << { "user_id" => 2 }
 
-    m = Code.new("function() { emit(this.user_id, 1); }")
-    r = Code.new("function(k,vals) { return 1; }")
-    res = @@test.map_reduce(m, r);
-    assert res.find_one({"_id" => 1})
-    assert res.find_one({"_id" => 2})
+      m = Code.new("function() { emit(this.user_id, 1); }")
+      r = Code.new("function(k,vals) { return 1; }")
+      res = @@test.map_reduce(m, r);
+      assert res.find_one({"_id" => 1})
+      assert res.find_one({"_id" => 2})
+    end
+
+    def test_map_reduce_with_options
+      @@test.remove
+      @@test << { "user_id" => 1 }
+      @@test << { "user_id" => 2 }
+      @@test << { "user_id" => 3 }
+
+      m = Code.new("function() { emit(this.user_id, 1); }")
+      r = Code.new("function(k,vals) { return 1; }")
+      res = @@test.map_reduce(m, r, :query => {"user_id" => {"$gt" => 1}});
+      assert_equal 2, res.count
+      assert res.find_one({"_id" => 2})
+      assert res.find_one({"_id" => 3})
+    end
   end
 
   def test_saving_dates_pre_epoch
