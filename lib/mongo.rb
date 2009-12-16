@@ -21,7 +21,7 @@ begin
     warn "  You can install the extension as follows:\n  gem install mongo_ext\n"
     warn "  If you continue to receive this message after installing, make sure that the"
     warn "  mongo_ext gem is in your load path and that the mongo_ext and mongo gems are of the same version.\n"
-end 
+end
 
 require 'mongo/types/binary'
 require 'mongo/types/code'

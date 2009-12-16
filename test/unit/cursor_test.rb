@@ -2,15 +2,15 @@ require 'test/test_helper'
 
 class TestCursor < Test::Unit::TestCase
 
-  context "Cursor options" do 
-    setup do 
+  context "Cursor options" do
+    setup do
       @connection = stub(:class => Connection)
-      @db         = stub(:name => "testing", :slave_ok? => false, :connection => @connection)    
+      @db         = stub(:name => "testing", :slave_ok? => false, :connection => @connection)
       @collection = stub(:db => @db, :name => "items")
       @cursor     = Cursor.new(@collection)
     end
 
-    should "set admin to false" do 
+    should "set admin to false" do
       assert_equal false, @cursor.admin
 
       @cursor = Cursor.new(@collection, :admin => true)
@@ -60,35 +60,35 @@ class TestCursor < Test::Unit::TestCase
       assert_equal "name", @cursor.hint
     end
 
-    should "cache full collection name" do 
+    should "cache full collection name" do
       assert_equal "testing.items", @cursor.full_collection_name
     end
   end
 
-  context "Query fields" do 
-    setup do 
+  context "Query fields" do
+    setup do
       @connection = stub(:class => Collection)
       @db = stub(:slave_ok? => true, :name => "testing", :connection => @connection)
       @collection = stub(:db => @db, :name => "items")
     end
 
-    should "when an array should return a hash with each key" do 
+    should "when an array should return a hash with each key" do
       @cursor = Cursor.new(@collection, :fields => [:name, :age])
       result  = @cursor.fields
       assert_equal result.keys.sort{|a,b| a.to_s <=> b.to_s}, [:age, :name].sort{|a,b| a.to_s <=> b.to_s}
       assert result.values.all? {|v| v == 1}
     end
 
-    should "when a string, return a hash with just the key" do 
+    should "when a string, return a hash with just the key" do
       @cursor = Cursor.new(@collection, :fields => "name")
-      result  = @cursor.fields 
+      result  = @cursor.fields
       assert_equal result.keys.sort, ["name"]
       assert result.values.all? {|v| v == 1}
     end
 
-    should "return nil when neither hash nor string nor symbol" do 
+    should "return nil when neither hash nor string nor symbol" do
       @cursor = Cursor.new(@collection, :fields => 1234567)
-      assert_nil @cursor.fields 
+      assert_nil @cursor.fields
     end
   end
 end

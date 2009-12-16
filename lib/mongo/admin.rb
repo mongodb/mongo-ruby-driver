@@ -59,8 +59,7 @@ module Mongo
       raise "Error with profile command: #{doc.inspect}" unless @db.ok?(doc)
     end
 
-    # Return an array contining current profiling information from the
-    # database.
+    # Returns an array containing current profiling information.
     def profiling_info
       Cursor.new(Collection.new(@db, DB::SYSTEM_PROFILE_COLLECTION), :selector => {}).to_a
     end

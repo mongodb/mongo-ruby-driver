@@ -158,7 +158,7 @@ module Mongo
              else
                raise TypeError, "spec_or_object_id must be an instance of ObjectID or Hash, or nil"
              end
-      find(spec, options.merge(:limit => -1)).next_object
+      find(spec, options.merge(:limit => -1)).next_document
     end
 
     # Save a document in this collection.
@@ -497,7 +497,7 @@ EOS
     # 'create' will be the collection name. For the other possible keys
     # and values, see DB#create_collection.
     def options
-      @db.collections_info(@name).next_object()['options']
+      @db.collections_info(@name).next_document['options']
     end
 
     # Get the number of documents in this collection.
@@ -526,7 +526,7 @@ EOS
 
     private
 
-    # Sends an Mongo::Constants::OP_INSERT message to the database.
+    # Sends a Mongo::Constants::OP_INSERT message to the database.
     # Takes an array of +documents+, an optional +collection_name+, and a
     # +check_keys+ setting.
     def insert_documents(documents, collection_name=@name, check_keys=true, safe=false)

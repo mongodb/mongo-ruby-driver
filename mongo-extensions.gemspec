@@ -1,5 +1,5 @@
 require 'lib/mongo'
-VERSION_HEADER = File.open(File.join(File.dirname(__FILE__), 'ext', 'cbson', 'version.h'), "r") 
+VERSION_HEADER = File.open(File.join(File.dirname(__FILE__), 'ext', 'cbson', 'version.h'), "r")
 VERSION        = VERSION_HEADER.read.scan(/VERSION\s+"(\d+\.\d+(\.\d+)?)\"/)[0][0]
 Gem::Specification.new do |s|
   s.name = 'mongo_ext'

@@ -48,7 +48,7 @@ module Mongo
 
     # The Mongo::Connection instance connecting to the MongoDB server.
     attr_reader :connection
-    
+
     # An array of [host, port] pairs.
     attr_reader :nodes
 
@@ -316,7 +316,7 @@ module Mongo
     def create_index(collection_name, field_or_spec, unique=false)
       self.collection(collection_name).create_index(field_or_spec, unique)
     end
-    
+
     # Return +true+ if +doc+ contains an 'ok' field with the value 1.
     def ok?(doc)
       ok = doc['ok']
@@ -334,9 +334,9 @@ module Mongo
       end
 
       cursor = Cursor.new(Collection.new(self, SYSTEM_COMMAND_COLLECTION), :admin => use_admin_db, :limit => -1, :selector => selector, :socket => sock)
-      cursor.next_object
+      cursor.next_document
     end
-    
+
     # Sends a command to the database.
     #
     # :selector (required) :: An OrderedHash, or a standard Hash with just one
@@ -352,12 +352,12 @@ module Mongo
     # any selector containing more than one key must be an OrderedHash.
     def command(selector, admin=false, check_response=false, sock=nil)
       raise MongoArgumentError, "command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
-      if selector.class.eql?(Hash) && selector.keys.length > 1 
+      if selector.class.eql?(Hash) && selector.keys.length > 1
         raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
       end
 
-      result = Cursor.new(system_command_collection, :admin => admin, 
-        :limit => -1, :selector => selector, :socket => sock).next_object
+      result = Cursor.new(system_command_collection, :admin => admin,
+        :limit => -1, :selector => selector, :socket => sock).next_document
 
       if check_response && !ok?(result)
         raise OperationFailure, "Database command '#{selector.keys.first}' failed."

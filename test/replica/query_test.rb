@@ -6,8 +6,8 @@ require 'test/test_helper'
 # NOTE: this test should be run only if a replica pair is running.
 class ReplicaPairQueryTest < Test::Unit::TestCase
   include Mongo
- 
-  def setup 
+
+  def setup
     @conn = Mongo::Connection.new({:left => ["localhost", 27017], :right => ["localhost", 27018]}, nil)
     @db = @conn.db('mongo-ruby-test')
     @db.drop_collection("test-pairs")
@@ -28,7 +28,7 @@ class ReplicaPairQueryTest < Test::Unit::TestCase
     gets
 
     results = []
-    rescue_connection_failure do 
+    rescue_connection_failure do
       @coll.find.each {|r| results << r}
       [20, 30, 40].each do |a|
         assert results.any? {|r| r['a'] == a}, "Could not find record for a => #{a}"

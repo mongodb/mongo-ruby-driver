@@ -18,6 +18,7 @@ module Mongo
 
   # JavaScript code to be evaluated by MongoDB
   class Code < String
+
     # Hash mapping identifiers to their values
     attr_accessor :scope
 

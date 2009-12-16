@@ -13,7 +13,7 @@ Here is a quick code sample. See the MongoDB Ruby Tutorial
   @coll = db.collection('test')
 
   @coll.remove
-  3.times do |i| 
+  3.times do |i|
     @coll.insert({'a' => i+1})
   end
   puts "There are #{@coll.count()} records. Here they are:"
@@ -254,7 +254,7 @@ Random cursor fun facts:
 
 = Testing
 
-If you have the source code, you can run the tests. There's a separate rake task for testing with 
+If you have the source code, you can run the tests. There's a separate rake task for testing with
 the mongo_ext c extension enabled.
 
   $ rake test:c

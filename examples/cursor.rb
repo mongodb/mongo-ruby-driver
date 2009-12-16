@@ -33,14 +33,14 @@ array = cursor.to_a
 cursor.each { |row| pp row }
 
 # You can get the next object
-first_object = coll.find().next_object
+first_object = coll.find().next_document
 
-# next_object returns nil if there are no more objects that match
+# next_document returns nil if there are no more objects that match
 cursor = coll.find()
-obj = cursor.next_object
+obj = cursor.next_document
 while obj
   pp obj
-  obj = cursor.next_object
+  obj = cursor.next_document
 end
 
 # Destroy the collection

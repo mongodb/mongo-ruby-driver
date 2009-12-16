@@ -6,8 +6,8 @@ require 'test/test_helper'
 # NOTE: this test should be run only if a replica pair is running.
 class ReplicaPairCountTest < Test::Unit::TestCase
   include Mongo
- 
-  def setup 
+
+  def setup
     @conn = Mongo::Connection.new({:left => ["localhost", 27017], :right => ["localhost", 27018]}, nil)
     @db = @conn.db('mongo-ruby-test')
     @db.drop_collection("test-pairs")
@@ -24,7 +24,7 @@ class ReplicaPairCountTest < Test::Unit::TestCase
     puts "Please disconnect the current master."
     gets
 
-    rescue_connection_failure do 
+    rescue_connection_failure do
       @coll.insert({:a => 30}, :safe => true)
     end
     @coll.insert({:a => 40}, :safe => true)

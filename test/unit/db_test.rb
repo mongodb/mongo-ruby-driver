@@ -11,8 +11,8 @@ class DBTest < Test::Unit::TestCase
     message = db.add_message_headers(Mongo::Constants::OP_INSERT, message)
   end
 
-  context "DB commands" do 
-    setup do 
+  context "DB commands" do
+    setup do
       @conn = stub()
       @db   = DB.new("testing", @conn)
       @collection = mock()
@@ -20,30 +20,30 @@ class DBTest < Test::Unit::TestCase
     end
 
     should "raise an error if given a hash with more than one key" do
-      assert_raise MongoArgumentError do 
+      assert_raise MongoArgumentError do
         @db.command(:buildinfo => 1, :somekey => 1)
       end
     end
 
-    should "raise an error if the selector is omitted" do 
-      assert_raise MongoArgumentError do 
+    should "raise an error if the selector is omitted" do
+      assert_raise MongoArgumentError do
         @db.command({}, true)
       end
     end
 
-    should "create the proper cursor" do 
-      @cursor = mock(:next_object => {"ok" => 1})
+    should "create the proper cursor" do
+      @cursor = mock(:next_document => {"ok" => 1})
       Cursor.expects(:new).with(@collection, :admin => true,
         :limit => -1, :selector => {:buildinfo => 1}, :socket => nil).returns(@cursor)
       command = {:buildinfo => 1}
       @db.command(command, true)
     end
 
-    should "raise an error when the command fails" do 
-      @cursor = mock(:next_object => {"ok" => 0})
+    should "raise an error when the command fails" do
+      @cursor = mock(:next_document => {"ok" => 0})
       Cursor.expects(:new).with(@collection, :admin => true,
         :limit => -1, :selector => {:buildinfo => 1}, :socket => nil).returns(@cursor)
-      assert_raise OperationFailure do 
+      assert_raise OperationFailure do
         command = {:buildinfo => 1}
         @db.command(command, true, true)
       end
@@ -51,4 +51,4 @@ class DBTest < Test::Unit::TestCase
   end
 end
 
- 
+

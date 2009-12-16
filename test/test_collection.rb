@@ -359,12 +359,12 @@ class TestCollection < Test::Unit::TestCase
       @@test.save(:foo => i)
     end
 
-    assert_equal 5, @@test.find({}, :skip => 5).next_object()["foo"]
-    assert_equal nil, @@test.find({}, :skip => 10).next_object()
+    assert_equal 5, @@test.find({}, :skip => 5).next_document()["foo"]
+    assert_equal nil, @@test.find({}, :skip => 10).next_document()
 
     assert_equal 5, @@test.find({}, :limit => 5).to_a.length
 
-    assert_equal 3, @@test.find({}, :skip => 3, :limit => 5).next_object()["foo"]
+    assert_equal 3, @@test.find({}, :skip => 3, :limit => 5).next_document()["foo"]
     assert_equal 5, @@test.find({}, :skip => 3, :limit => 5).to_a.length
   end
 

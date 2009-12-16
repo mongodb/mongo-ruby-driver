@@ -2,7 +2,7 @@
 require 'rubygems'
 require 'mongo'
 require 'mongo/gridfs'
-require 'benchmark'
+#require 'ruby-prof'
 
 include Mongo
 include GridFS
@@ -15,10 +15,15 @@ length = sample_data.length
 mb     = length / 1048576.0
 
 t1 = Time.now
+#RubyProf.start
 GridStore.open(db, 'mongodb.pdf', 'w') do |f|
   f.write(sample_data)
 end
+#result = RubyProf.stop
 puts "Write: #{mb / (Time.now - t1)} mb/s"
+#printer = RubyProf::FlatPrinter.new(result)
+#printer.print(STDOUT, 0)
+
 
 t1 = Time.now
 GridStore.open(db, 'mongodb.pdf', 'r') do |f|
