@@ -47,11 +47,13 @@ Les Hill, leshill on github
 * OrderedHash#each returns self
 
 Sean Cribbs, seancribbs on github
-* Modify standard_benchmark to allow profiling
+* Modified standard_benchmark to allow profiling
+* c ext for faster ObjectID creation
 
 Sunny Hirai
 * Suggested hashcode fix for Mongo::ObjectID
 * Noted index ordering bug.
+* GridFS performance boost
 
 Christos Trochalakis
 * Added map/reduce helper
