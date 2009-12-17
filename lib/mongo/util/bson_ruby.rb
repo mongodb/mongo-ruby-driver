@@ -451,8 +451,10 @@ class BSON_RUBY
     buf.put(REGEX)
     self.class.serialize_key(buf, key)
 
-    str = val.to_s.sub(/.*?:/, '')[0..-2] # Turn "(?xxx:yyy)" into "yyy"
-    self.class.serialize_cstr(buf, str)
+    str = val.source
+    # We use serialize_key here since regex patterns aren't prefixed with
+    # length (can't contain the NULL byte).
+    self.class.serialize_key(buf, str)
 
     options = val.options
     options_str = ''

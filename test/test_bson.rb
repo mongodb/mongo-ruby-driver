@@ -329,6 +329,10 @@ class BSONTest < Test::Unit::TestCase
     assert_raise InvalidDocument do
       BSON.serialize({"\x00" => "a"})
     end
+
+    assert_raise InvalidDocument do
+      BSON.serialize({"a" => (Regexp.compile "ab\x00c")})
+    end
   end
 
 end
