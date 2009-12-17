@@ -111,5 +111,23 @@ class OrderedHash < Hash
       super
       @ordered_keys = []
     end
+
+    def hash
+      code = 17
+      each_pair do |key, value|
+        code = 37 * code + key.hash
+        code = 37 * code + value.hash
+      end
+      code
+    end
+
+    def eql?(o)
+      if o.instance_of? OrderedHash
+        self.hash == o.hash
+      else
+        false
+      end
+    end
+
   end
 end
