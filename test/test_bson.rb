@@ -321,4 +321,14 @@ class BSONTest < Test::Unit::TestCase
     assert_equal BSON.serialize(one).to_a, BSON.serialize(dup).to_a
   end
 
+  def test_null_character
+    doc = {"a" => "\x00"}
+
+    assert_equal doc, BSON.deserialize(BSON.serialize(doc).to_a)
+
+    assert_raise InvalidDocument do
+      BSON.serialize({"\x00" => "a"})
+    end
+  end
+
 end
