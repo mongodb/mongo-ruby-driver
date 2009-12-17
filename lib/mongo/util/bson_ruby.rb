@@ -73,7 +73,7 @@ class BSON_RUBY
   end
 
   def self.serialize_key(buf, key)
-    raise InvalidDocument, "Key names / regex patterns must not contain the NULL byte" if key.include? 0
+    raise InvalidDocument, "Key names / regex patterns must not contain the NULL byte" if key.include? "\x00"
     self.serialize_cstr(buf, key)
   end
 
