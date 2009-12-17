@@ -54,8 +54,8 @@ class TestConnection < Test::Unit::TestCase
   def test_copy_database
     @mongo.db('old').collection('copy-test').insert('a' => 1)
     @mongo.copy_database('old', 'new')
-    old_object = @mongo.db('old').collection('copy-test').find.next_object
-    new_object = @mongo.db('new').collection('copy-test').find.next_object
+    old_object = @mongo.db('old').collection('copy-test').find.next_document
+    new_object = @mongo.db('new').collection('copy-test').find.next_document
     assert_equal old_object, new_object
   end
 

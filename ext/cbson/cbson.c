@@ -459,6 +459,7 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys) {
 
     // make sure that length doesn't exceed 4MB
     if (length > 4 * 1024 * 1024) {
+      buffer_free(buffer);
       rb_raise(InvalidDocument, "Document too large: BSON documents are limited to 4MB.");
       return;
     }

@@ -33,10 +33,10 @@ module Mongo
 
     attr_reader :logger, :size, :host, :port, :nodes, :sockets, :checked_out, :reserved_connections
 
-    def slave_ok? 
+    def slave_ok?
       @slave_ok
     end
-    
+
     # Counter for generating unique request ids.
     @@current_request_id = 0
 
@@ -45,7 +45,7 @@ module Mongo
     #
     # == Connecting
     # If connecting to just one server, you may specify whether connection to slave is permitted.
-    # 
+    #
     # In all cases, the default host is "localhost" and the default port, is 27017.
     #
     # When specifying a pair, pair_or_host, is a hash with two keys: :left and :right. Each key maps to either
@@ -69,13 +69,13 @@ module Mongo
     # :timeout   :: When all of the connections to the pool are checked out,
     #               this is the number of seconds to wait for a new connection
     #               to be released before throwing an exception.
-    #                
+    #
     #
     # === Examples:
     #
     #  # localhost, 27017
     #  Connection.new
-    #   
+    #
     #  # localhost, 27017
     #  Connection.new("localhost")
     #
@@ -85,9 +85,9 @@ module Mongo
     #  # localhost, 3000, where this node may be a slave
     #  Connection.new("localhost", 3000, :slave_ok => true)
     #
-    #  # A pair of servers. The driver will always talk to master. 
+    #  # A pair of servers. The driver will always talk to master.
     #  # On connection errors, Mongo::ConnectionFailure will be raised.
-    #  # See http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby 
+    #  # See http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby
     #  Connection.new({:left  => ["db1.example.com", 27017],
     #                  :right => ["db2.example.com", 27017]})
     #
@@ -100,7 +100,7 @@ module Mongo
 
       # Host and port of current master.
       @host = @port = nil
-      
+
       # Lock for request ids.
       @id_lock = Mutex.new
 
@@ -123,7 +123,7 @@ module Mongo
       if options[:auto_reconnect]
         warn(":auto_reconnect is deprecated. see http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby")
       end
-      
+
       # Slave ok can be true only if one node is specified
       @slave_ok = options[:slave_ok] && @nodes.length == 1
       @logger   = options[:logger] || nil
@@ -177,7 +177,7 @@ module Mongo
     # Increments and returns the next available request id.
     def get_request_id
       request_id = ''
-      @id_lock.synchronize do 
+      @id_lock.synchronize do
         request_id = @@current_request_id += 1
       end
       request_id
@@ -196,7 +196,7 @@ module Mongo
 
 
     ## Connections and pooling ##
-    
+
     # Sends a message to MongoDB.
     #
     # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
@@ -234,7 +234,7 @@ module Mongo
     # Sends a message to the database and waits for the response.
     #
     # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
-    # +message+, and an optional formatted +log_message+. This method 
+    # +message+, and an optional formatted +log_message+. This method
     # also takes an options socket for internal use with #connect_to_master.
     def receive_message(operation, message, log_message=nil, socket=nil)
       packed_message = add_message_headers(operation, message).to_s
@@ -275,7 +275,7 @@ module Mongo
           socket.close if socket
           false
         end
-      end 
+      end
       raise ConnectionFailure, "failed to connect to any given host:port" unless socket
     end
 
@@ -291,7 +291,7 @@ module Mongo
         sock.close
       end
       @host = @port = nil
-      @sockets.clear   
+      @sockets.clear
       @checked_out.clear
       @reserved_connections.clear
     end
@@ -312,7 +312,7 @@ module Mongo
 
     # Return a socket to the pool.
     def checkin(socket)
-      @connection_mutex.synchronize do 
+      @connection_mutex.synchronize do
         @reserved_connections.delete Thread.current.object_id
         @checked_out.delete(socket)
         @queue.signal
@@ -328,7 +328,7 @@ module Mongo
       Thread.list.each do |thread|
         keys.delete(thread.object_id) if thread.alive?
       end
-      
+
       keys.each do |key|
         next unless @reserved_connections.has_key?(key)
         checkin(@reserved_connections[key])
@@ -366,10 +366,10 @@ module Mongo
     # pool size has not been exceeded. Otherwise, wait for the next
     # available socket.
     def obtain_socket
-      @connection_mutex.synchronize do 
+      @connection_mutex.synchronize do
         connect_to_master if !connected?
 
-        loop do 
+        loop do
           socket = if @checked_out.size < @sockets.size
                      checkout_existing_socket
                    elsif @sockets.size < @size
@@ -401,9 +401,9 @@ module Mongo
 
     if RUBY_VERSION >= '1.9'
       # Ruby 1.9's Condition Variables don't support timeouts yet;
-      # until they do, we'll make do with this hack. 
+      # until they do, we'll make do with this hack.
       def wait
-        Timeout.timeout(@timeout) do 
+        Timeout.timeout(@timeout) do
           @queue.wait
         end
       end
@@ -424,7 +424,7 @@ module Mongo
       header.put_array(receive_message_on_socket(16, sock).unpack("C*"))
       unless header.size == STANDARD_HEADER_SIZE
         raise "Short read for DB response header: " +
-          "expected #{STANDARD_HEADER_SIZE} bytes, saw #{header.size}" 
+          "expected #{STANDARD_HEADER_SIZE} bytes, saw #{header.size}"
       end
       header.rewind
       size        = header.get_int
@@ -473,7 +473,7 @@ module Mongo
       message.put_array(BSON.serialize({:getlasterror => 1}, false).unpack("C*"))
       add_message_headers(Mongo::Constants::OP_QUERY, message)
     end
-    
+
     # Prepares a message for transmission to MongoDB by
     # constructing a valid message header.
     def add_message_headers(operation, message)
@@ -494,7 +494,7 @@ module Mongo
     end
 
     # Low-level method for sending a message on a socket.
-    # Requires a packed message and an available socket, 
+    # Requires a packed message and an available socket,
     def send_message_on_socket(packed_message, socket)
       begin
       socket.send(packed_message, 0)
@@ -537,7 +537,7 @@ module Mongo
           [['localhost', DEFAULT_PORT]]
       end
     end
-    
+
     # Turns an array containing a host name string and a
     # port number integer into a [host, port] pair array.
     def pair_val_to_connection(a)

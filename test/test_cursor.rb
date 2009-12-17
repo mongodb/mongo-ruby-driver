@@ -58,33 +58,40 @@ class CursorTest < Test::Unit::TestCase
     assert_equal 0, @@db['acollectionthatdoesn'].count()
   end
 
+  def test_next_object_deprecation
+    @@coll.remove
+    @@coll.insert({"a" => 1})
+
+    assert_equal 1, @@coll.find().next_object["a"]
+  end
+
   def test_sort
     @@coll.remove
     5.times{|x| @@coll.insert({"a" => x}) }
 
     assert_kind_of Cursor, @@coll.find().sort(:a, 1)
 
-    assert_equal 0, @@coll.find().sort(:a, 1).next_object["a"]
-    assert_equal 4, @@coll.find().sort(:a, -1).next_object["a"]
-    assert_equal 0, @@coll.find().sort([["a", :asc]]).next_object["a"]
+    assert_equal 0, @@coll.find().sort(:a, 1).next_document["a"]
+    assert_equal 4, @@coll.find().sort(:a, -1).next_document["a"]
+    assert_equal 0, @@coll.find().sort([["a", :asc]]).next_document["a"]
 
     assert_kind_of Cursor, @@coll.find().sort([[:a, -1], [:b, 1]])
 
-    assert_equal 4, @@coll.find().sort(:a, 1).sort(:a, -1).next_object["a"]
-    assert_equal 0, @@coll.find().sort(:a, -1).sort(:a, 1).next_object["a"]
+    assert_equal 4, @@coll.find().sort(:a, 1).sort(:a, -1).next_document["a"]
+    assert_equal 0, @@coll.find().sort(:a, -1).sort(:a, 1).next_document["a"]
 
     cursor = @@coll.find()
-    cursor.next_object()
+    cursor.next_document
     assert_raise InvalidOperation do
       cursor.sort(["a"])
     end
 
     assert_raise InvalidSortValueError do
-      @@coll.find().sort(:a, 25).next_object
+      @@coll.find().sort(:a, 25).next_document
     end
 
     assert_raise InvalidSortValueError do
-      @@coll.find().sort(25).next_object
+      @@coll.find().sort(25).next_document
     end
   end
 
@@ -106,7 +113,7 @@ class CursorTest < Test::Unit::TestCase
     end
 
     cursor      = @@coll.find()
-    firstResult = cursor.next_object()
+    firstResult = cursor.next_document
     assert_raise InvalidOperation, "Cannot modify the query once it has been run or closed." do
       cursor.limit(1)
     end
@@ -140,7 +147,7 @@ class CursorTest < Test::Unit::TestCase
     end
 
     cursor      = @@coll.find()
-    firstResult = cursor.next_object()
+    firstResult = cursor.next_document
     assert_raise InvalidOperation, "Cannot modify the query once it has been run or closed." do
       cursor.skip(1)
     end
@@ -233,7 +240,7 @@ class CursorTest < Test::Unit::TestCase
   def test_close_after_query_sent
     begin
       cursor = @@coll.find('a' => 1)
-      cursor.next_object
+      cursor.next_document
       cursor.close
       assert cursor.closed?
     rescue => ex
@@ -267,7 +274,7 @@ class CursorTest < Test::Unit::TestCase
 
     10.times do |i|
       a = @@coll.find()
-      a.next_object()
+      a.next_document
       a.close()
     end
 
@@ -277,7 +284,7 @@ class CursorTest < Test::Unit::TestCase
                  @@db.command("cursorInfo" => 1)["byLocation_size"])
 
     a = @@coll.find()
-    a.next_object()
+    a.next_document
 
     assert_not_equal(client_cursors,
                      @@db.command("cursorInfo" => 1)["clientCursors_size"])
@@ -291,7 +298,7 @@ class CursorTest < Test::Unit::TestCase
     assert_equal(by_location,
                  @@db.command("cursorInfo" => 1)["byLocation_size"])
 
-    a = @@coll.find({}, :limit => 10).next_object()
+    a = @@coll.find({}, :limit => 10).next_document
 
     assert_equal(client_cursors,
                  @@db.command("cursorInfo" => 1)["clientCursors_size"])
@@ -299,7 +306,7 @@ class CursorTest < Test::Unit::TestCase
                  @@db.command("cursorInfo" => 1)["byLocation_size"])
 
     @@coll.find() do |cursor|
-      cursor.next_object()
+      cursor.next_document
     end
 
     assert_equal(client_cursors,
@@ -308,7 +315,7 @@ class CursorTest < Test::Unit::TestCase
                  @@db.command("cursorInfo" => 1)["byLocation_size"])
 
     @@coll.find() { |cursor|
-      cursor.next_object()
+      cursor.next_document
     }
 
     assert_equal(client_cursors,

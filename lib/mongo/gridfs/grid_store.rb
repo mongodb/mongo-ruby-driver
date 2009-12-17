@@ -73,7 +73,7 @@ module GridFS
     class << self
 
       def exist?(db, name, root_collection=DEFAULT_ROOT_COLLECTION)
-        db.collection("#{root_collection}.files").find({'filename' => name}).next_object != nil
+        db.collection("#{root_collection}.files").find({'filename' => name}).next_document != nil
       end
 
       def open(db, name, mode, options={})
@@ -94,12 +94,12 @@ module GridFS
         }
       end
 
-      # List the contains of all GridFS files stored in the given db and
+      # List the contents of all GridFS files stored in the given db and
       # root collection.
       #
       # :db :: the database to use
       #
-      # :root_collection :: the root collection to use
+      # :root_collection :: the root collection to use. If not specified, will use default root collection.
       def list(db, root_collection=DEFAULT_ROOT_COLLECTION)
         db.collection("#{root_collection}.files").find().map { |f|
           f['filename']
@@ -148,7 +148,7 @@ module GridFS
       @db, @filename, @mode = db, name, mode
       @root = options[:root] || DEFAULT_ROOT_COLLECTION
 
-      doc = collection.find({'filename' => @filename}).next_object
+      doc = collection.find({'filename' => @filename}).next_document
       if doc
         @files_id = doc['_id']
         @content_type = doc['contentType']
@@ -495,7 +495,7 @@ module GridFS
     end
 
     def nth_chunk(n)
-      mongo_chunk = chunk_collection.find({'files_id' => @files_id, 'n' => n}).next_object
+      mongo_chunk = chunk_collection.find({'files_id' => @files_id, 'n' => n}).next_document
       Chunk.new(self, mongo_chunk || {})
     end
 

@@ -19,7 +19,7 @@ module Mongo
     include Mongo::Conversions
     include Enumerable
 
-    attr_reader :collection, :selector, :admin, :fields, 
+    attr_reader :collection, :selector, :admin, :fields,
       :order, :hint, :snapshot, :timeout,
       :full_collection_name
 
@@ -49,19 +49,17 @@ module Mongo
       @query_run = false
     end
 
-    # Return the next object or nil if there are no more. Raises an error
-    # if necessary.
-    def next_object
+    # Return the next document or nil if there are no more.
+    def next_document
       refill_via_get_more if num_remaining == 0
-      o = @cache.shift
+      doc = @cache.shift
 
-      if o && o['$err']
-        err = o['$err']
+      if doc && doc['$err']
+        err = doc['$err']
 
         # If the server has stopped being the master (e.g., it's one of a
         # pair but it has died or something like that) then we close that
-        # connection. If the db has auto connect option and a pair of
-        # servers, next request will re-open on master server.
+        # connection. The next request will re-open on master server.
         if err == "not master"
           raise ConnectionFailure, err
           @connection.close
@@ -70,12 +68,17 @@ module Mongo
         raise OperationFailure, err
       end
 
-      o
+      doc
     end
 
-    # Get the size of the results set for this query.
+    def next_object
+      warn "Cursor#next_object is deprecated; please use Cursor#next_document instead."
+      next_document
+    end
+
+    # Get the size of the result set for this query.
     #
-    # Returns the number of objects in the results set for this query. Does
+    # Returns the number of objects in the result set for this query. Does
     # not take limit and skip into account. Raises OperationFailure on a
     # database error.
     def count
@@ -88,17 +91,17 @@ module Mongo
       raise OperationFailure, "Count failed: #{response['errmsg']}"
     end
 
-    # Sort this cursor's result
+    # Sort this cursor's results.
     #
     # Takes either a single key and a direction, or an array of [key,
-    # direction] pairs. Directions should be specified as Mongo::ASCENDING
-    # or Mongo::DESCENDING (or :ascending or :descending) (or :asc or :desc).
+    # direction] pairs. Directions should be specified as Mongo::ASCENDING / Mongo::DESCENDING
+    # (or :ascending / :descending, :asc / :desc).
     #
     # Raises InvalidOperation if this cursor has already been used. Raises
-    # InvalidSortValueError if specified order is invalid.
+    # InvalidSortValueError if the specified order is invalid.
     #
     # This method overrides any sort order specified in the Collection#find
-    # method, and only the last sort applied has an effect
+    # method, and only the last sort applied has an effect.
     def sort(key_or_list, direction=nil)
       check_modifiable
 
@@ -130,7 +133,7 @@ module Mongo
 
     # Skips the first +number_to_skip+ results of this cursor.
     # Returns the current number_to_skip if no parameter is given.
-    # 
+    #
     # Raises InvalidOperation if this cursor has already been used.
     #
     # This method overrides any skip specified in the Collection#find method,
@@ -151,15 +154,15 @@ module Mongo
     def each
       num_returned = 0
       while more? && (@limit <= 0 || num_returned < @limit)
-        yield next_object()
+        yield next_document
         num_returned += 1
       end
     end
 
     # Return all of the documents in this cursor as an array of hashes.
     #
-    # Raises InvalidOperation if this cursor has already been used (including
-    # any previous calls to this method).
+    # Raises InvalidOperation if this cursor has already been used or if
+    # this methods has already been called on the cursor.
     #
     # Use of this method is discouraged - iterating over a cursor is much
     # more efficient in most cases.
@@ -168,22 +171,22 @@ module Mongo
       rows = []
       num_returned = 0
       while more? && (@limit <= 0 || num_returned < @limit)
-        rows << next_object()
+        rows << next_document
         num_returned += 1
       end
       rows
     end
 
-    # Returns an explain plan record for this cursor.
+    # Returns an explain plan document for this cursor.
     def explain
       c = Cursor.new(@collection, query_options_hash.merge(:limit => -@limit.abs, :explain => true))
-      explanation = c.next_object
+      explanation = c.next_document
       c.close
 
       explanation
     end
 
-    # Close the cursor.
+    # Closes the cursor.
     #
     # Note: if a cursor is read until exhausted (read until Mongo::Constants::OP_QUERY or
     # Mongo::Constants::OP_GETMORE returns zero for the cursor id), there is no need to
@@ -211,20 +214,20 @@ module Mongo
     # See http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol#MongoWireProtocol-Mongo::Constants::OPQUERY
     def query_opts
       timeout  = @timeout ? 0 : Mongo::Constants::OP_QUERY_NO_CURSOR_TIMEOUT
-      slave_ok = @connection.slave_ok? ? Mongo::Constants::OP_QUERY_SLAVE_OK : 0 
+      slave_ok = @connection.slave_ok? ? Mongo::Constants::OP_QUERY_SLAVE_OK : 0
       slave_ok + timeout
     end
 
-    # Returns the query options set on this Cursor.
+    # Returns the query options for this Cursor.
     def query_options_hash
       { :selector => @selector,
-        :fields   => @fields,   
-        :admin    => @admin,   
-        :skip     => @skip_num, 
-        :limit    => @limit_num, 
-        :order    => @order,   
-        :hint     => @hint,   
-        :snapshot => @snapshot, 
+        :fields   => @fields,
+        :admin    => @admin,
+        :skip     => @skip_num,
+        :limit    => @limit_num,
+        :order    => @order,
+        :hint     => @hint,
+        :snapshot => @snapshot,
         :timeout  => @timeout }
     end
 
@@ -245,7 +248,7 @@ module Mongo
       end
     end
 
-    # Set query selector hash. If the selector is a Code or String object, 
+    # Set the query selector hash. If the selector is a Code or String object,
     # the selector will be used in a $where clause.
     # See http://www.mongodb.org/display/DOCS/Server-side+Code+Execution
     def convert_selector_for_query(selector)
@@ -266,20 +269,21 @@ module Mongo
       @order || @explain || @hint || @snapshot
     end
 
+    # Return a number of documents remaining for this cursor.
     def num_remaining
       refill_via_get_more if @cache.length == 0
       @cache.length
     end
 
     # Internal method, not for general use. Return +true+ if there are
-    # more records to retrieve. This methods does not check @limit;
-    # #each is responsible for doing that.
+    # more records to retrieve. This method does not check @limit;
+    # Cursor#each is responsible for doing that.
     def more?
       num_remaining > 0
     end
 
     def refill_via_get_more
-      return if send_query_if_needed || @cursor_id.zero?
+      return if send_initial_query || @cursor_id.zero?
       message = ByteBuffer.new
       # Reserved.
       message.put_int(0)
@@ -290,7 +294,7 @@ module Mongo
 
       # Number of results to return; db decides for now.
       message.put_int(0)
-        
+
       # Cursor id.
       message.put_long(@cursor_id)
       results, @n_received, @cursor_id = @connection.receive_message(Mongo::Constants::OP_GET_MORE, message, "cursor.get_more()", @socket)
@@ -299,13 +303,13 @@ module Mongo
     end
 
     # Run query the first time we request an object from the wire
-    def send_query_if_needed
+    def send_initial_query
       if @query_run
         false
       else
         message = construct_query_message
-        results, @n_received, @cursor_id = @connection.receive_message(Mongo::Constants::OP_QUERY, message, 
-            (query_log_message if @connection.logger), @socket)  
+        results, @n_received, @cursor_id = @connection.receive_message(Mongo::Constants::OP_QUERY, message,
+            (query_log_message if @connection.logger), @socket)
         @cache += results
         @query_run = true
         close_cursor_if_query_complete
@@ -331,7 +335,7 @@ module Mongo
 
     def query_log_message
       "#{@admin ? 'admin' : @db.name}.#{@collection.name}.find(#{@selector.inspect}, #{@fields ? @fields.inspect : '{}'})" +
-      "#{@skip != 0 ? ('.skip(' + @skip.to_s + ')') : ''}#{@limit != 0 ? ('.limit(' + @limit.to_s + ')') : ''}" 
+      "#{@skip != 0 ? ('.skip(' + @skip.to_s + ')') : ''}#{@limit != 0 ? ('.limit(' + @limit.to_s + ')') : ''}"
     end
 
     def selector_with_special_query_fields
@@ -349,7 +353,7 @@ module Mongo
         when String, Symbol then string_as_sort_parameters(@order)
         when Array then array_as_sort_parameters(@order)
         else
-          raise InvalidSortValueError, "Illegal sort clause, '#{@order.class.name}'; must be of the form " + 
+          raise InvalidSortValueError, "Illegal sort clause, '#{@order.class.name}'; must be of the form " +
             "[['field1', '(ascending|descending)'], ['field2', '(ascending|descending)']]"
       end
     end

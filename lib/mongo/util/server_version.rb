@@ -25,7 +25,7 @@ module Mongo
     # Implements comparable.
     def <=>(new)
       local, new  = self.to_a, to_array(new)
-      for n in 0...local.size do 
+      for n in 0...local.size do
         break if elements_include_mods?(local[n], new[n])
         if local[n] < new[n].to_i
           result = -1
@@ -52,10 +52,10 @@ module Mongo
 
     # Returns true if any elements include mod symbols (-, +)
     def elements_include_mods?(*elements)
-      elements.any? { |n| n =~ /[\-\+]/ } 
+      elements.any? { |n| n =~ /[\-\+]/ }
     end
 
-    # Converts argument to an array of integers, 
+    # Converts argument to an array of integers,
     # appending any mods as the final element.
     def to_array(version)
       array = version.split(".").map {|n| (n =~ /^\d+$/) ? n.to_i : n }

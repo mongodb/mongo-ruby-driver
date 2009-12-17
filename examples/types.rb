@@ -30,6 +30,6 @@ coll.insert('array' => [1, 2, 3],
             'null' => nil,
             'symbol' => :zildjian)
 
-pp coll.find().next_object
+pp coll.find().next_document
 
 coll.clear
