@@ -51,7 +51,7 @@
 
 #define SAFE_WRITE_AT_POS(buffer, position, data, size)                 \
     if (buffer_write_at_position((buffer), (position), (data), (size)) != 0) \
-        rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c")
+        rb_raise(rb_eRuntimeError, "invalid write at position in buffer.c")
 
 #define MAX_HOSTNAME_LENGTH 256
 
