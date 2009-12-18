@@ -401,46 +401,58 @@ class TestCollection < Test::Unit::TestCase
     assert_equal 1, x
   end
 
-  def test_group_with_scope
-    @@test.save("a" => 1)
-    @@test.save("b" => 1)
-
-    reduce_function = "function (obj, prev) { prev.count += inc_value; }"
-
-    assert_equal 2, @@test.group([], {}, {"count" => 0},
-                                 Code.new(reduce_function,
-                                          {"inc_value" => 1}))[0]["count"]
-
-# TODO enable these tests when SERVER-262 is fixed
-
-#     assert_equal 2, @@test.group([], {}, {"count" => 0},
-#                                  Code.new(reduce_function,
-#                                           {"inc_value" => 1}), true)[0]["count"]
-
-    assert_equal 4, @@test.group([], {}, {"count" => 0},
-                                 Code.new(reduce_function,
-                                          {"inc_value" => 2}))[0]["count"]
-#     assert_equal 4, @@test.group([], {}, {"count" => 0},
-#                                  Code.new(reduce_function,
-#                                           {"inc_value" => 2}), true)[0]["count"]
-
-    assert_equal 1, @@test.group([], {}, {"count" => 0},
-                                 Code.new(reduce_function,
-                                          {"inc_value" => 0.5}))[0]["count"]
-#     assert_equal 1, @@test.group([], {}, {"count" => 0},
-#                                  Code.new(reduce_function,
-#                                           {"inc_value" => 0.5}), true)[0]["count"]
-
-    # test finalize
-    #assert_equal( 3,
-    #  @@test.group(
-    #    [], {}, {"count" => 0},
-    #    Code.new(reduce_function,{"inc_value" => 2}), true,
-    #    Code.new("function (o) { o.final_count = o.count - 1; }")
-    #  )[0]["final_count"]
-    #)
-
+  context "Grouping" do
+    setup do 
+      @@test.remove
+      @@test.save("a" => 1)
+      @@test.save("b" => 1)
+      @initial = {"count" => 0}
+      @reduce_function = "function (obj, prev) { prev.count += inc_value; }"
     end
+
+    should "group results using eval form" do
+      assert_equal 1, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 0.5}))[0]["count"]
+      assert_equal 2, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 1}))[0]["count"]
+      assert_equal 4, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 2}))[0]["count"]
+    end
+
+    should "group results using command form" do
+      assert_equal 1, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 0.5}), true)[0]["count"]
+      assert_equal 2, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 1}), true)[0]["count"]
+      assert_equal 4, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 2}), true)[0]["count"]
+    end
+
+    should "finalize grouped results" do
+      @finalize = "function(doc) {doc.f = doc.count + 200; }"
+      assert_equal 202, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 1}), true, @finalize)[0]["f"]
+    end
+  end
+
+  context "Grouping with a key function" do
+    setup do 
+      @@test.remove
+      @@test.save("a" => 1)
+      @@test.save("a" => 2)
+      @@test.save("a" => 3)
+      @@test.save("a" => 4)
+      @@test.save("a" => 5)
+      @initial = {"count" => 0}
+      @keyf    = "function (doc) { if(doc.a % 2 == 0) { return {even: true}; } else {return {odd: true}} };"
+      @reduce  = "function (obj, prev) { prev.count += 1; }"
+    end
+
+    should "group results" do
+      results = @@test.group(@keyf, {}, @initial, @reduce, true).sort {|a, b| a['count'] <=> b['count']}
+      assert results[0]['even'] && results[0]['count'] == 2.0
+      assert results[1]['odd'] && results[1]['count'] == 3.0
+    end
+
+    should "raise an error if trying to use keyf as a group eval" do
+      assert_raise OperationFailure do
+        @@test.group(@keyf, {}, @initial, @reduce)
+      end
+    end
+  end
 
   context "A collection with two records" do
     setup do

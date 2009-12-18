@@ -339,9 +339,9 @@ module Mongo
     # Performs a group query, similar to the 'SQL GROUP BY' operation.
     # Returns an array of grouped items.
     #
-    # :keys :: an array of fields to group by
-    # :condition :: specification of rows to be considered (as a 'find'
-    #               query specification)
+    # :key :: either 1) an array of fields to group by, 2) a javascript function to generate
+    #         the key object, or 3) nil.
+    # :condition :: an optional document specifying a query to limit the documents over which group is run.
     # :initial :: initial value of the aggregation counter object
     # :reduce :: aggregation function as a JavaScript string
     # :finalize :: optional. a JavaScript function that receives and modifies
@@ -350,25 +350,33 @@ module Mongo
     # :command :: if true, run the group as a command instead of in an
     #             eval - it is likely that this option will eventually be
     #             deprecated and all groups will be run as commands
-    def group(keys, condition, initial, reduce, command=false, finalize=nil)
+    def group(key, condition, initial, reduce, command=false, finalize=nil)
 
       if command
-        hash = {}
-        keys.each do |k|
-          hash[k] = 1
-        end
 
-        reduce =   Code.new(reduce)   unless reduce.is_a?(Code)
+        reduce = Code.new(reduce) unless reduce.is_a?(Code)
 
         group_command = {
           "group" => {
             "ns"      => @name,
             "$reduce" => reduce,
-            "key"     => hash,
             "cond"    => condition,
             "initial" => initial
           }
         }
+
+        unless key.nil?
+          if key.is_a? Array
+            key_type = "key"
+            key_value = {}
+            key.each { |k| key_value[k] = 1 }
+          else
+            key_type  = "$keyf"
+            key_value = key.is_a?(Code) ? key : Code.new(key)
+          end
+
+          group_command["group"][key_type] = key_value
+        end
 
         # only add finalize if specified
         if finalize
@@ -383,22 +391,28 @@ module Mongo
         else
           raise OperationFailure, "group command failed: #{result['errmsg']}"
         end
-      end
 
-      raise OperationFailure, ":finalize can be specified only when " +
-        "group is run as a command (set command param to true)" if finalize
-
-      case reduce
-      when Code
-        scope = reduce.scope
       else
-        scope = {}
-      end
-      scope.merge!({
-                     "ns" => @name,
-                     "keys" => keys,
-                     "condition" => condition,
-                     "initial" => initial })
+
+        warn "Collection#group must now be run as a command; you can do this by passing 'true' as the command argument."
+
+        raise OperationFailure, ":finalize can be specified only when " +
+          "group is run as a command (set command param to true)" if finalize
+
+        raise OperationFailure, "key must be an array of fields to group by. If you want to pass a key function, 
+          run group as a command by passing 'true' as the command argument." unless key.is_a? Array || key.nil?
+
+        case reduce
+        when Code
+          scope = reduce.scope
+        else
+          scope = {}
+        end
+        scope.merge!({
+                       "ns" => @name,
+                       "keys" => key,
+                       "condition" => condition,
+                       "initial" => initial })
 
       group_function = <<EOS
 function () {
@@ -425,7 +439,8 @@ function () {
     return {"result": map.values()};
 }
 EOS
-      @db.eval(Code.new(group_function, scope))["result"]
+        @db.eval(Code.new(group_function, scope))["result"]
+      end
     end
 
     # Returns a list of distinct values for +key+ across all
