@@ -31,7 +31,7 @@ module Mongo
     STANDARD_HEADER_SIZE = 16
     RESPONSE_HEADER_SIZE = 20
 
-    attr_reader :logger, :size, :host, :port, :nodes, :sockets, :checked_out, :reserved_connections
+    attr_reader :logger, :size, :host, :port, :nodes, :sockets, :checked_out
 
     def slave_ok?
       @slave_ok
@@ -107,9 +107,6 @@ module Mongo
       # Pool size and timeout.
       @size      = options[:pool_size] || 1
       @timeout   = options[:timeout]   || 1.0
-
-      # Cache of reserved sockets mapped to threads
-      @reserved_connections = {}
 
       # Mutex for synchronizing pool access
       @connection_mutex = Monitor.new
@@ -293,47 +290,22 @@ module Mongo
       @host = @port = nil
       @sockets.clear
       @checked_out.clear
-      @reserved_connections.clear
     end
 
     private
 
     # Get a socket from the pool, mapped to the current thread.
     def checkout
-      #return @socket ||= checkout_new_socket if @size == 1
-      if sock = @reserved_connections[Thread.current.object_id]
-        sock
-      else
-        sock = obtain_socket
-        @reserved_connections[Thread.current.object_id] = sock
-      end
-      sock
+      obtain_socket
     end
 
     # Return a socket to the pool.
     def checkin(socket)
       @connection_mutex.synchronize do
-        @reserved_connections.delete Thread.current.object_id
         @checked_out.delete(socket)
         @queue.signal
       end
       true
-    end
-
-    # Releases the connection for any dead threads.
-    # Called when the connection pool grows too large to free up more sockets.
-    def clear_stale_cached_connections!
-      keys = @reserved_connections.keys
-
-      Thread.list.each do |thread|
-        keys.delete(thread.object_id) if thread.alive?
-      end
-
-      keys.each do |key|
-        next unless @reserved_connections.has_key?(key)
-        checkin(@reserved_connections[key])
-        @reserved_connections.delete(key)
-      end
     end
 
     # Adds a new socket to the pool and checks it out.
@@ -366,10 +338,16 @@ module Mongo
     # pool size has not been exceeded. Otherwise, wait for the next
     # available socket.
     def obtain_socket
-      @connection_mutex.synchronize do
-        connect_to_master if !connected?
+      connect_to_master if !connected?
+      start_time = Time.now
+      loop do
+        if (Time.now - start_time) > 30
+            raise ConnectionTimeoutError, "could not obtain connection within " +
+              "#{@timeout} seconds. The max pool size is currently #{@size}; " +
+              "consider increasing it."
+        end
 
-        loop do
+        @connection_mutex.synchronize do
           socket = if @checked_out.size < @sockets.size
                      checkout_existing_socket
                    elsif @sockets.size < @size
@@ -377,26 +355,9 @@ module Mongo
                    end
 
           return socket if socket
-
-          # Try to clear out any stale threads to free up some connections
-          clear_stale_cached_connections!
-          next if @checked_out.size < @sockets.size
-
-          # Otherwise, wait.
-          if wait
-            next
-          else
-
-            # Try to clear stale threads once more before failing.
-            clear_stale_cached_connections!
-            if @size == @sockets.size
-              raise ConnectionTimeoutError, "could not obtain connection within " +
-                "#{@timeout} seconds. The max pool size is currently #{@size}; " +
-                "consider increasing it."
-            end
-          end  # if
-        end # loop
-      end # synchronize
+          wait
+        end
+      end
     end
 
     if RUBY_VERSION >= '1.9'

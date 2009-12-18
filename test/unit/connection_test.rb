@@ -12,11 +12,6 @@ class ConnectionTest < Test::Unit::TestCase
     db = Object.new
   end
 
-  # Make a few methods public for these tests.
-  class Mongo::Connection
-    public :checkin, :checkout, :clear_stale_cached_connections!
-  end
-
   context "Initialization: " do
 
     context "given a single node" do
@@ -58,80 +53,6 @@ class ConnectionTest < Test::Unit::TestCase
     should "set localhost and port correctly" do
       assert_equal '255.255.255.255', @conn.host
       assert_equal 2500, @conn.port
-    end
-  end
-
-  context "Connection pooling: " do
-    setup do
-      TCPSocket.stubs(:new).returns(new_mock_socket)
-      @conn = Connection.new('localhost', 27107, :connect => false,
-                                   :pool_size => 3)
-
-      admin_db = new_mock_db
-      admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1})
-      @conn.expects(:[]).with('admin').returns(admin_db)
-      @conn.connect_to_master
-    end
-
-    should "check out a new connection" do
-      socket = @conn.checkout
-      assert @conn.reserved_connections.keys.include?(Thread.current.object_id)
-    end
-
-    context "with multiple threads" do
-      setup do
-        @thread1 = Object.new
-        @thread2 = Object.new
-        @thread3 = Object.new
-        @thread4 = Object.new
-
-        Thread.stubs(:current).returns(@thread1)
-        @socket1 = @conn.checkout
-        Thread.stubs(:current).returns(@thread2)
-        @socket2 = @conn.checkout
-        Thread.stubs(:current).returns(@thread3)
-        @socket3 = @conn.checkout
-      end
-
-      should "add each thread to the reserved pool" do
-        assert @conn.reserved_connections.keys.include?(@thread1.object_id)
-        assert @conn.reserved_connections.keys.include?(@thread2.object_id)
-        assert @conn.reserved_connections.keys.include?(@thread3.object_id)
-      end
-
-      should "only add one socket per thread" do
-        @conn.reserved_connections.values do |socket|
-          assert [@socket1, @socket2, @socket3].include?(socket)
-        end
-      end
-
-      should "check out all sockets" do
-        assert_equal @conn.sockets.size, @conn.checked_out.size
-        @conn.sockets.each do |sock|
-          assert @conn.checked_out.include?(sock)
-        end
-      end
-
-      should "raise an error if no more sockets can be checked out" do
-        # This can't be tested with mock threads.
-        # Will test in integration tests.
-      end
-
-      context "when releasing dead threads" do
-        setup do
-          @thread1.expects(:alive?).returns(false)
-          @thread2.expects(:alive?).returns(true)
-          @thread3.expects(:alive?).returns(true)
-          Thread.expects(:list).returns([@thread1, @thread2, @thread3])
-          @conn.clear_stale_cached_connections!
-        end
-
-        should "return connections for dead threads" do
-          assert !@conn.checked_out.include?(@socket1)
-          assert_nil @conn.reserved_connections[@thread1.object_id]
-        end
-      end
-
     end
   end
 end
