@@ -112,7 +112,9 @@ static void write_utf8(buffer_t buffer, VALUE string, char check_null) {
 
 /* TODO we ought to check that the malloc or asprintf was successful
  * and raise an exception if not. */
-#ifdef _MSC_VER
+/* TODO maybe we can use something more portable like vsnprintf instead
+ * of this hack. And share it with the Python extension ;) */
+#ifndef HAVE_ASPRINTF
 #define INT2STRING(buffer, i)                   \
     {                                           \
         int vslength = _scprintf("%d", i) + 1;  \
