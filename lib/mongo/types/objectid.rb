@@ -132,9 +132,8 @@ module Mongo
 
     private
 
-    begin
-      require 'mongo_ext/cbson'
-    rescue LoadError
+    # We need to define this method only if CBson isn't loaded.
+    unless defined? CBson
       def generate
         oid = ''
 
