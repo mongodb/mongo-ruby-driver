@@ -93,16 +93,16 @@ namespace :gem do
 
   desc "Install the gem locally"
   task :install do
-    system "gem build mongo-ruby-driver.gemspec"
-    system "gem install mongo-*.gem"
-    system "rm mongo-*.gem"
+    sh "gem build mongo-ruby-driver.gemspec"
+    sh "gem install mongo-*.gem"
+    sh "rm mongo-*.gem"
   end
 
   desc "Install the optional c extensions"
   task :install_extensions do
-    system "gem build mongo-extensions.gemspec"
-    system "gem install mongo_ext-*.gem"
-    system "rm mongo_ext-*.gem"
+    sh "gem build mongo-extensions.gemspec"
+    sh "gem install mongo_ext-*.gem"
+    sh "rm mongo_ext-*.gem"
   end
 
 end
