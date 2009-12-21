@@ -70,7 +70,6 @@ module Mongo
     #               this is the number of seconds to wait for a new connection
     #               to be released before throwing an exception.
     #
-    #
     # === Examples:
     #
     #  # localhost, 27017
@@ -106,7 +105,10 @@ module Mongo
 
       # Pool size and timeout.
       @size      = options[:pool_size] || 1
-      @timeout   = options[:timeout]   || 1.0
+      @timeout   = options[:timeout]   || 5.0
+
+      # Number of seconds to wait for threads to signal availability.
+      @thread_timeout = @timeout >= 5.0 ? (@timeout / 4.0) : 1.0
 
       # Mutex for synchronizing pool access
       @connection_mutex = Monitor.new
@@ -294,11 +296,6 @@ module Mongo
 
     private
 
-    # Get a socket from the pool, mapped to the current thread.
-    def checkout
-      obtain_socket
-    end
-
     # Return a socket to the pool.
     def checkin(socket)
       @connection_mutex.synchronize do
@@ -337,14 +334,14 @@ module Mongo
     # Check out an existing socket or create a new socket if the maximum
     # pool size has not been exceeded. Otherwise, wait for the next
     # available socket.
-    def obtain_socket
+    def checkout
       connect_to_master if !connected?
       start_time = Time.now
       loop do
-        if (Time.now - start_time) > 30
+        if (Time.now - start_time) > @timeout
             raise ConnectionTimeoutError, "could not obtain connection within " +
               "#{@timeout} seconds. The max pool size is currently #{@size}; " +
-              "consider increasing it."
+              "consider increasing the pool size or timeout."
         end
 
         @connection_mutex.synchronize do
@@ -364,13 +361,13 @@ module Mongo
       # Ruby 1.9's Condition Variables don't support timeouts yet;
       # until they do, we'll make do with this hack.
       def wait
-        Timeout.timeout(@timeout) do
+        Timeout.timeout(@thread_timeout) do
           @queue.wait
         end
       end
     else
       def wait
-        @queue.wait(@timeout)
+        @queue.wait(@thread_timeout)
       end
     end
 

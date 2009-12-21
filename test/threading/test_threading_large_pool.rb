@@ -6,7 +6,7 @@ class TestThreadingLargePool < Test::Unit::TestCase
 
   include Mongo
 
-  @@db = Connection.new('localhost', 27017, :pool_size => 50, :timeout => 1).db('ruby-mongo-test')
+  @@db = Connection.new('localhost', 27017, :pool_size => 50, :timeout => 10).db('ruby-mongo-test')
   @@coll = @@db.collection('thread-test-collection')
 
   def set_up_safe_data
