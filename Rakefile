@@ -1,3 +1,4 @@
+# -*- mode: ruby; -*-
 require 'rubygems'
 require 'rubygems/specification'
 require 'fileutils'
