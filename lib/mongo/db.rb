@@ -132,7 +132,7 @@ module Mongo
       names.map {|name| name.sub(@name + '.', '')}
     end
 
-    # Retruns an array of Collection instances, one for each collection in this
+    # Retuns an array of Collection instances, one for each collection in this
     # database.
     def collections
       collection_names.map do |collection_name|

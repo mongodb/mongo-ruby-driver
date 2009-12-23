@@ -210,11 +210,11 @@ module Mongo
     end
 
     # Sends a message to the database, waits for a response, and raises
-    # and exception if the operation has failed.
+    # an exception if the operation has failed.
     #
     # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
     # +message+, the +db_name+, and an optional formatted +log_message+.
-    # Sends the message to the databse, adding the necessary headers.
+    # Sends the message to the database, adding the necessary headers.
     def send_message_with_safe_check(operation, message, db_name, log_message=nil)
       message_with_headers = add_message_headers(operation, message)
       message_with_check   = last_error_message(db_name)

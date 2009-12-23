@@ -45,7 +45,7 @@ module Mongo
   # Raised when a database operation fails.
   class OperationFailure < MongoDBError; end
 
-  # Raised when a database operation fails.
+  # Raised when a connection operation fails.
   class ConnectionFailure < MongoDBError; end
 
   # Raised when a client attempts to perform an invalid operation.
