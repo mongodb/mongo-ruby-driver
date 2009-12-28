@@ -67,32 +67,49 @@ class CursorTest < Test::Unit::TestCase
 
   def test_sort
     @@coll.remove
-    5.times{|x| @@coll.insert({"a" => x}) }
+    5.times{|x| @@coll.insert({"age" => x}) }
 
-    assert_kind_of Cursor, @@coll.find().sort(:a, 1)
+    assert_kind_of Cursor, @@coll.find().sort(:age, 1)
 
-    assert_equal 0, @@coll.find().sort(:a, 1).next_document["a"]
-    assert_equal 4, @@coll.find().sort(:a, -1).next_document["a"]
-    assert_equal 0, @@coll.find().sort([["a", :asc]]).next_document["a"]
+    assert_equal 0, @@coll.find().sort(:age, 1).next_document["age"]
+    assert_equal 4, @@coll.find().sort(:age, -1).next_document["age"]
+    assert_equal 0, @@coll.find().sort([["age", :asc]]).next_document["age"]
 
-    assert_kind_of Cursor, @@coll.find().sort([[:a, -1], [:b, 1]])
+    assert_kind_of Cursor, @@coll.find().sort([[:age, -1], [:b, 1]])
 
-    assert_equal 4, @@coll.find().sort(:a, 1).sort(:a, -1).next_document["a"]
-    assert_equal 0, @@coll.find().sort(:a, -1).sort(:a, 1).next_document["a"]
+    assert_equal 4, @@coll.find().sort(:age, 1).sort(:age, -1).next_document["age"]
+    assert_equal 0, @@coll.find().sort(:age, -1).sort(:age, 1).next_document["age"]
+
+    assert_equal 4, @@coll.find().sort([:age, :asc]).sort(:age, -1).next_document["age"]
+    assert_equal 0, @@coll.find().sort([:age, :desc]).sort(:age, 1).next_document["age"]
 
     cursor = @@coll.find()
     cursor.next_document
     assert_raise InvalidOperation do
-      cursor.sort(["a"])
+      cursor.sort(["age"])
     end
 
     assert_raise InvalidSortValueError do
-      @@coll.find().sort(:a, 25).next_document
+      @@coll.find().sort(:age, 25).next_document
     end
 
     assert_raise InvalidSortValueError do
       @@coll.find().sort(25).next_document
     end
+  end
+
+  def test_sort_date
+    @@coll.remove
+    5.times{|x| @@coll.insert({"created_at" => Time.utc(2000 + x)}) }
+
+    assert_equal 2000, @@coll.find().sort(:created_at, :asc).next_document["created_at"].year
+    assert_equal 2004, @@coll.find().sort(:created_at, :desc).next_document["created_at"].year
+
+    assert_equal 2000, @@coll.find().sort([:created_at, :asc]).next_document["created_at"].year
+    assert_equal 2004, @@coll.find().sort([:created_at, :desc]).next_document["created_at"].year
+
+    assert_equal 2000, @@coll.find().sort([[:created_at, :asc]]).next_document["created_at"].year
+    assert_equal 2004, @@coll.find().sort([[:created_at, :desc]]).next_document["created_at"].year
   end
 
   def test_limit

@@ -32,11 +32,19 @@ module Mongo #:nodoc:
     # <tt>{ "field1" => 1, "field2" => -1}</tt>
     def array_as_sort_parameters(value)
       order_by = OrderedHash.new
-      value.each do |param|
-        if (param.class.name == "String")
-          order_by[param] = 1
+      if value.first.is_a? Array
+        value.each do |param|
+          if (param.class.name == "String")
+            order_by[param] = 1
+          else
+            order_by[param[0]] = sort_value(param[1]) unless param[1].nil?
+          end
+        end
+      else
+        if order_by.size == 1
+          order_by[value.first] = 1
         else
-          order_by[param[0]] = sort_value(param[1]) unless param[1].nil?
+          order_by[value.first] = sort_value(value[1])
         end
       end
       order_by
