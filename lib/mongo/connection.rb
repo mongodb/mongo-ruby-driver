@@ -16,7 +16,7 @@
 
 require 'set'
 require 'socket'
-require 'monitor'
+require 'thread'
 
 module Mongo
 
@@ -107,14 +107,11 @@ module Mongo
       @size      = options[:pool_size] || 1
       @timeout   = options[:timeout]   || 5.0
 
-      # Number of seconds to wait for threads to signal availability.
-      @thread_timeout = @timeout >= 5.0 ? (@timeout / 4.0) : 1.0
-
       # Mutex for synchronizing pool access
-      @connection_mutex = Monitor.new
+      @connection_mutex = Mutex.new
 
       # Condition variable for signal and wait
-      @queue = @connection_mutex.new_cond
+      @queue = ConditionVariable.new
 
       @sockets      = []
       @checked_out  = []
@@ -300,8 +297,8 @@ module Mongo
     def checkin(socket)
       @connection_mutex.synchronize do
         @checked_out.delete(socket)
-        @queue.signal
       end
+      @queue.signal
       true
     end
 
@@ -352,22 +349,10 @@ module Mongo
                    end
 
           return socket if socket
-          wait
-        end
-      end
-    end
 
-    if RUBY_VERSION >= '1.9'
-      # Ruby 1.9's Condition Variables don't support timeouts yet;
-      # until they do, we'll make do with this hack.
-      def wait
-        Timeout.timeout(@thread_timeout) do
-          @queue.wait
+          # Otherwise, wait
+          @queue.wait(@connection_mutex)
         end
-      end
-    else
-      def wait
-        @queue.wait(@thread_timeout)
       end
     end
 
