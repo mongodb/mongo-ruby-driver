@@ -109,6 +109,7 @@ module Mongo
 
       # Mutex for synchronizing pool access
       @connection_mutex = Mutex.new
+      @safe_mutex = Mutex.new
 
       # Condition variable for signal and wait
       @queue = ConditionVariable.new
@@ -218,8 +219,11 @@ module Mongo
       @logger.debug("  MONGODB #{log_message || message}") if @logger
       sock = checkout
       packed_message = message_with_headers.append!(message_with_check).to_s
-      send_message_on_socket(packed_message, sock)
-      docs, num_received, cursor_id = receive(sock)
+      docs = num_received = cursor_id = ''
+      @safe_mutex.synchronize do
+        send_message_on_socket(packed_message, sock)
+        docs, num_received, cursor_id = receive(sock)
+      end
       checkin(sock)
       if num_received == 1 && error = docs[0]['err']
         raise Mongo::OperationFailure, error
@@ -237,8 +241,11 @@ module Mongo
       @logger.debug("  MONGODB #{log_message || message}") if @logger
       sock = socket || checkout
 
-      send_message_on_socket(packed_message, sock)
-      result = receive(sock)
+      result = ''
+      @safe_mutex.synchronize do
+        send_message_on_socket(packed_message, sock)
+        result = receive(sock)
+      end
       checkin(sock)
       result
     end
