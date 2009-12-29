@@ -297,15 +297,15 @@ module Mongo
     def checkin(socket)
       @connection_mutex.synchronize do
         @checked_out.delete(socket)
+        @queue.signal
       end
-      @queue.signal
       true
     end
 
     # Adds a new socket to the pool and checks it out.
     #
-    # This method is called exclusively from #obtain_socket;
-    # therefore, it runs within a mutex, as it must.
+    # This method is called exclusively from #checkout;
+    # therefore, it runs within a mutex.
     def checkout_new_socket
       begin
       socket = TCPSocket.new(@host, @port)
@@ -320,8 +320,8 @@ module Mongo
 
     # Checks out the first available socket from the pool.
     #
-    # This method is called exclusively from #obtain_socket;
-    # therefore, it runs within a mutex, as it must.
+    # This method is called exclusively from #checkout;
+    # therefore, it runs within a mutex.
     def checkout_existing_socket
       socket = (@sockets - @checked_out).first
       @checked_out << socket
