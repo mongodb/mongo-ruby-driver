@@ -1,6 +1,6 @@
-0.18.2 2009-12-21
+0.18.2 2009-12-29
+* Significant GridStore performance improvement (thx., Sunny Hirai)
 * Enabled support for keyf on group
-* Signification GridStore performance improvement (thx., Sunny Hirai)
 * Support :query option for Collection#distinct
 * Support :finalize option for Collection#group
 * (0.18.1) ObjectID#generation_time returns a created_at timestamp.
@@ -9,6 +9,7 @@
 * Character encoding fixes for C extension
 * Enforce 4MB limit on document creation
 * Simplified connection pooling code
+* Fixes for connection pooling on Ruby 1.8.6/Windows.
 
 0.18.1 2009-12-05
 * Fixed issue with negative dates in Ruby 1.9

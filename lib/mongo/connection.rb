@@ -70,6 +70,9 @@ module Mongo
     #               this is the number of seconds to wait for a new connection
     #               to be released before throwing an exception.
     #
+    # Note that there are a few issues when using connection pooling with Ruby 1.9 on Windows. These
+    # should be resolved in the next release.
+    #
     # === Examples:
     #
     #  # localhost, 27017
