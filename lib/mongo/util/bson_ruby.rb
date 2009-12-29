@@ -554,7 +554,7 @@ class BSON_RUBY
     when Symbol
       SYMBOL
     else
-      raise "Unknown type of object: #{o.class.name}"
+      raise InvalidDocument, "Unknown type of object: #{o.class.name}"
     end
   end
 

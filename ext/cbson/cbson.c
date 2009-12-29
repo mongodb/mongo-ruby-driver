@@ -369,6 +369,9 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&obj_length, 4);
                 break;
             }
+            buffer_free(buffer);
+            rb_raise(InvalidDocument, "Unsupported type for BSON (%d)", TYPE(value));
+            break;
         }
     case T_DATA:
         {
@@ -421,7 +424,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
     default:
         {
             buffer_free(buffer);
-            rb_raise(rb_eTypeError, "no c encoder for this type yet (%d)", TYPE(value));
+            rb_raise(InvalidDocument, "Unsupported type for BSON (%d)", TYPE(value));
             break;
         }
     }

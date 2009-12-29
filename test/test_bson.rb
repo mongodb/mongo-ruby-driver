@@ -335,4 +335,15 @@ class BSONTest < Test::Unit::TestCase
     end
   end
 
+  def test_invalid_object
+    o = Object.new
+    assert_raise InvalidDocument do
+      BSON.serialize({:foo => o})
+    end
+
+    assert_raise InvalidDocument do
+      BSON.serialize({:foo => Date.today})
+    end
+  end
+
 end
