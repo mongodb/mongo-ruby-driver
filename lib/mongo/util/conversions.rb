@@ -40,7 +40,7 @@ module Mongo #:nodoc:
             order_by[param[0]] = sort_value(param[1]) unless param[1].nil?
           end
         end
-      else
+      elsif !value.empty?
         if order_by.size == 1
           order_by[value.first] = 1
         else

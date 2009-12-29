@@ -180,7 +180,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 3, docs[2]['a']
     assert_equal 4, docs[3]['a']
 
-    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => ['b', 'a']).to_a
+    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => [['b', 'asc'], ['a', 'asc']]).to_a
     assert_equal 4, docs.size
     assert_equal 2, docs[0]['a']
     assert_equal 4, docs[1]['a']

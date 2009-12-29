@@ -6,9 +6,9 @@ require 'mongo/util/ordered_hash'
 class ConversionsTest < Test::Unit::TestCase
   include Mongo::Conversions
 
-  def test_array_as_sort_parameters_with_array_of_strings
-    params = array_as_sort_parameters(["field1", "field2"])
-    assert_equal({ "field1" => 1, "field2" => 1 }, params)
+  def test_array_as_sort_parameters_with_array_of_key_and_value
+    params = array_as_sort_parameters(["field1", "asc"])
+    assert_equal({"field1" => 1}, params)
   end
 
   def test_array_as_sort_parameters_with_array_of_string_and_values
