@@ -12,7 +12,7 @@ db = Connection.new(host, port).db('ruby-mongo-examples')
 coll = db.collection('test')
 
 # Erase all records from collection, if any
-coll.clear
+coll.remove
 
 # Insert 3 records
 3.times { |i| coll.insert({'a' => i+1}) }

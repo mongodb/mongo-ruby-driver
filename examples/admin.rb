@@ -12,7 +12,7 @@ db = Connection.new(host, port).db('ruby-mongo-examples')
 coll = db.create_collection('test')
 
 # Erase all records from collection, if any
-coll.clear
+coll.remove
 
 admin = db.admin
 

@@ -12,7 +12,7 @@ db = Connection.new(host, port).db('ruby-mongo-examples')
 coll = db.collection('test')
 
 # Remove all records, if any
-coll.clear
+coll.remove
 
 # Insert record with all sorts of values
 coll.insert('array' => [1, 2, 3],
@@ -32,4 +32,4 @@ coll.insert('array' => [1, 2, 3],
 
 pp coll.find().next_document
 
-coll.clear
+coll.remove

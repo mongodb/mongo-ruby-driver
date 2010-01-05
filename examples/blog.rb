@@ -21,7 +21,7 @@ LINE_SIZE = 120
 puts "=" * LINE_SIZE
 puts "Adding authors"
 authors = DB.collection "authors"
-authors.clear
+authors.remove
 authors.create_index "meta", '_id' => 1, 'name' => 1, 'age' => 1
 puts "-" * LINE_SIZE
 shaksp = authors << { :name => "William Shakespeare", :email => "william@shakespeare.com", :age => 587 }
@@ -36,7 +36,7 @@ authors.find({}, :sort => [{'age' => 1}]).each {|x| puts "%-25.25s : %-25.25s : 
 puts "=" * LINE_SIZE
 puts "Adding users"
 users = DB.collection "users"
-users.clear
+users.remove
 # users.create_index "meta", :_id => 1, :login => 1, :name => 1
 puts "-" * LINE_SIZE
 jdoe = users << { :login => "jdoe", :name => "John Doe", :email => "john@doe.com" }
@@ -51,7 +51,7 @@ users.find({}, :sort => [{'login' => 1}]).each {|x| puts "%-10.10s : %-25.25s : 
 puts "=" * LINE_SIZE
 puts "Adding articles"
 articles = DB.collection "articles"
-articles.clear
+articles.remove
 # articles.create_index "meta", :_id => 1, :author_id => 1, :title => 1
 puts "-" * LINE_SIZE
 begin
