@@ -16,11 +16,23 @@
 
 module Mongo
 
-  # A named collection of records in a database.
+  # A named collection of documents in a database.
   class Collection
 
     attr_reader :db, :name, :pk_factory, :hint
 
+    # Initialize a collection object.
+    #
+    # @param [DB] db a MongoDB database instance.
+    # @param [String, Symbol] name the name of the collection.
+    #
+    # @raise [InvalidName]
+    #   if collection name is empty, contains '$', or starts or ends with '.'
+    #
+    # @raise [TypeError]
+    #   if collection name is not a string or symbol
+    #
+    # @return [Collection]
     def initialize(db, name, pk_factory=nil)
       case name
       when Symbol, String
@@ -46,21 +58,30 @@ module Mongo
       @hint = nil
     end
 
-    # Get a sub-collection of this collection by name.
+    # Return a sub-collection of this collection by name. If 'users' is a collection, then
+    # 'users.comments' is a sub-collection of users.
     #
-    # Raises InvalidName if an invalid collection name is used.
+    # @param [String] name
+    #   the collection to return
     #
-    # :name :: the name of the collection to get
+    # @raise [InvalidName]
+    #   if passed an invalid collection name
+    #
+    # @return [Collection]
+    #   the specified sub-collection
     def [](name)
       name = "#{self.name}.#{name}"
       return Collection.new(db, name) if !db.strict? || db.collection_names.include?(name)
       raise "Collection #{name} doesn't exist. Currently in strict mode."
     end
 
-    # Set hint fields to use and return +self+. hint may be a single field
-    # name, array of field names, or a hash (preferably an OrderedHash).
-    # May be +nil+.
-    def hint=(hint)
+    # Set a hint field for query optimizer. Hint may be a single field
+    # name, array of field names, or a hash (preferably an [OrderedHash]).
+    # If using MongoDB > 1.1, you probably don't ever need to set a hint.
+    #
+    # @param [String, Array, OrderedHash] hint a single field, an array of
+    #   fields, or a hash specifying fields
+    def hint=(hint=nil)
       @hint = normalize_hint_fields(hint)
       self
     end
@@ -70,7 +91,7 @@ module Mongo
     # The +selector+ argument is a prototype document that all results must
     # match. For example:
     #
-    # collection.find({"hello" => "world"})
+    #   collection.find({"hello" => "world"})
     #
     # only matches documents that have a key "hello" with value "world".
     # Matches can have other keys *in addition* to "hello".
@@ -80,51 +101,49 @@ module Mongo
     # evaluated cursors will be closed. If given no block +find+ returns a
     # cursor.
     #
-    # :selector :: A document (hash) specifying elements which must be
-    #              present for a document to be included in the result set.
+    # @param [Hash] selector
+    #   a document specifying elements which must be present for a
+    #   document to be included in the result set.
     #
-    # Options:
-    # :fields :: Array of field names that should be returned in the result
-    #            set ("_id" will always be included). By limiting results
-    #            to a certain subset of fields you can cut down on network
-    #            traffic and decoding time.
-    # :skip :: Number of documents to omit (from the start of the result set)
-    #          when returning the results
-    # :limit :: Maximum number of records to return
-    # :sort :: An array of [key, direction] pairs to sort by. Direction should
-    #          be specified as Mongo::ASCENDING (or :ascending / :asc) or
-    #          Mongo::DESCENDING (or :descending / :desc)
-    # :hint :: See #hint. This option overrides the collection-wide value.
-    # :snapshot :: If true, snapshot mode will be used for this query.
-    #              Snapshot mode assures no duplicates are returned, or
-    #              objects missed, which were preset at both the start and
-    #              end of the query's execution. For details see
-    #              http://www.mongodb.org/display/DOCS/How+to+do+Snapshotting+in+the+Mongo+Database
-    # :timeout :: When +true+ (default), the returned cursor will be subject to
-    #             the normal cursor timeout behavior of the mongod process.
-    #             When +false+, the returned cursor will never timeout. Note
-    #             that disabling timeout will only work when #find is invoked
-    #             with a block. This is to prevent any inadvertant failure to
-    #             close the cursor, as the cursor is explicitly closed when
-    #             block code finishes.
-    def find(selector={}, options={})
-      fields = options.delete(:fields)
+    # @option opts [Array] :fields field names that should be returned in the result
+    #   set ("_id" will always be included). By limiting results to a certain subset of fields,
+    #   you can cut down on network traffic and decoding time.
+    # @option opts [Integer] :skip number of documents to skip from the beginning of the result set
+    # @option opts [Integer] :limit maximum number of documents to return
+    # @option opts [Array]   :sort an array of [key, direction] pairs to sort by. Direction should
+    #   be specified as Mongo::ASCENDING (or :ascending / :asc) or Mongo::DESCENDING (or :descending / :desc)
+    # @option opts [String, Array, OrderedHash] :hint hint for query optimizer, usually not necessary if using MongoDB > 1.1
+    # @option opts [Boolean] :snapshot ('false') if true, snapshot mode will be used for this query.
+    #   Snapshot mode assures no duplicates are returned, or objects missed, which were preset at both the start and
+    #   end of the query's execution. For details see http://www.mongodb.org/display/DOCS/How+to+do+Snapshotting+in+the+Mongo+Database
+    # @option opts [Boolean] :timeout ('true') when +true+, the returned cursor will be subject to
+    #   the normal cursor timeout behavior of the mongod process. When +false+, the returned cursor will never timeout. Note
+    #   that disabling timeout will only work when #find is invoked with a block. This is to prevent any inadvertant failure to
+    #   close the cursor, as the cursor is explicitly closed when block code finishes.
+    #
+    # @raise [ArgumentError]
+    #   if timeout is set to false and find is not invoked in a block
+    #
+    # @raise [RuntimeError]
+    #   if given unknown options
+    def find(selector={}, opts={})
+      fields = opts.delete(:fields)
       fields = ["_id"] if fields && fields.empty?
-      skip   = options.delete(:skip) || skip || 0
-      limit  = options.delete(:limit) || 0
-      sort   = options.delete(:sort)
-      hint   = options.delete(:hint)
-      snapshot = options.delete(:snapshot)
-      if options[:timeout] == false && !block_given?
+      skip   = opts.delete(:skip) || skip || 0
+      limit  = opts.delete(:limit) || 0
+      sort   = opts.delete(:sort)
+      hint   = opts.delete(:hint)
+      snapshot = opts.delete(:snapshot)
+      if opts[:timeout] == false && !block_given?
         raise ArgumentError, "Timeout can be set to false only when #find is invoked with a block."
       end
-      timeout = block_given? ? (options.delete(:timeout) || true) : true
+      timeout = block_given? ? (opts.delete(:timeout) || true) : true
       if hint
         hint = normalize_hint_fields(hint)
       else
         hint = @hint        # assumed to be normalized already
       end
-      raise RuntimeError, "Unknown options [#{options.inspect}]" unless options.empty?
+      raise RuntimeError, "Unknown options [#{opts.inspect}]" unless opts.empty?
 
       cursor = Cursor.new(self, :selector => selector, :fields => fields, :skip => skip, :limit => limit,
                           :order => sort, :hint => hint, :snapshot => snapshot, :timeout => timeout)
@@ -137,17 +156,22 @@ module Mongo
       end
     end
 
-    # Get a single object from the database.
+    # Return a single object from the database.
     #
-    # Raises TypeError if the argument is of an improper type. Returns a
-    # single document (hash), or nil if no result is found.
+    # @return [OrderedHash, Nil]
+    #   a single document or nil if no result is found.
     #
-    # :spec_or_object_id :: a hash specifying elements which must be
-    #   present for a document to be included in the result set OR an
+    # @param [Hash, ObjectID, Nil] spec_or_object_id a hash specifying elements 
+    #   which must be present for a document to be included in the result set or an 
     #   instance of ObjectID to be used as the value for an _id query.
-    #   if nil an empty spec, {}, will be used.
-    # :options :: options, as passed to Collection#find
-    def find_one(spec_or_object_id=nil, options={})
+    #   If nil, an empty selector, {}, will be used.
+    #
+    # @option opts [Hash]
+    #   any valid options that can be send to Collection#find
+    #
+    # @raise [TypeError]
+    #   if the argument is of an improper type.
+    def find_one(spec_or_object_id=nil, opts={})
       spec = case spec_or_object_id
              when nil
                {}
@@ -158,45 +182,45 @@ module Mongo
              else
                raise TypeError, "spec_or_object_id must be an instance of ObjectID or Hash, or nil"
              end
-      find(spec, options.merge(:limit => -1)).next_document
+      find(spec, opts.merge(:limit => -1)).next_document
     end
 
-    # Save a document in this collection.
+    # Save a document to this collection.
     #
-    # If +to_save+ already has an '_id' then an update (upsert) operation
-    # is performed and any existing document with that _id is overwritten.
-    # Otherwise an insert operation is performed. Returns the _id of the
-    # saved document.
+    # @param [Hash] doc
+    #   the document to be saved. If the document already has an '_id' key,
+    #   then an update (upsert) operation will be performed, and any existing
+    #   document with that _id is overwritten. Otherwise an insert operation is performed.
     #
-    # :to_save :: the document (a hash) to be saved
+    # @return [ObjectID] the _id of the saved document.
     #
-    # Options:
-    # :safe :: if true, check that the save succeeded. OperationFailure
-    #   will be raised on an error. Checking for safety requires an extra
-    #   round-trip to the database
-    def save(to_save, options={})
-      if to_save.has_key?(:_id) || to_save.has_key?('_id')
-        id = to_save[:_id] || to_save['_id']
-        update({:_id => id}, to_save, :upsert => true, :safe => options.delete(:safe))
+    # @option opts [Boolean] :safe (+false+) 
+    #   If true, check that the save succeeded. OperationFailure
+    #   will be raised on an error. Note that a safe check requires an extra
+    #   round-trip to the database.
+    def save(doc, options={})
+      if doc.has_key?(:_id) || doc.has_key?('_id')
+        id = doc[:_id] || doc['_id']
+        update({:_id => id}, doc, :upsert => true, :safe => options.delete(:safe))
         id
       else
-        insert(to_save, :safe => options.delete(:safe))
+        insert(doc, :safe => options.delete(:safe))
       end
     end
 
-    # Insert a document(s) into this collection.
+    # Insert one or more documents into the collection.
     #
-    # "<<" is aliased to this method. Returns the _id of the inserted
-    # document or a list of _ids of the inserted documents. The object(s)
-    # may have been modified by the database's PK factory, if it has one.
+    # @param [Hash, Array] doc_or_docs
+    #   a document (as a hash) or array of documents to be inserted.
     #
-    # :doc_or_docs :: a document (as a hash) or Array of documents to be
-    #   inserted
+    # @return [ObjectID, Array]
+    #   the _id of the inserted document or a list of _ids of all inserted documents.
+    #   Note: the object may have been modified by the database's PK factory, if it has one.
     #
-    # Options:
-    # :safe :: if true, check that the insert succeeded. OperationFailure
-    #   will be raised on an error. Checking for safety requires an extra
-    #   round-trip to the database
+    # @option opts [Boolean] :safe (+false+) 
+    #   If true, check that the save succeeded. OperationFailure
+    #   will be raised on an error. Note that a safe check requires an extra
+    #   round-trip to the database.
     def insert(doc_or_docs, options={})
       doc_or_docs = [doc_or_docs] unless doc_or_docs.is_a?(Array)
       doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
@@ -205,15 +229,18 @@ module Mongo
     end
     alias_method :<<, :insert
 
-    # Remove all records from this collection.
-    # If +selector+ is specified, only matching documents will be removed.
+    # Remove all documents from this collection.
     #
-    # Remove all records from the collection:
-    #   @collection.remove
-    #   @collection.remove({})
+    # @param [Hash] selector
+    #   If specified, only matching documents will be removed.
     #
-    # Remove only records that have expired:
-    #   @collection.remove({:expire => {'$lte' => Time.now}})
+    # Examples
+    # @example: remove all documents from the 'users':
+    #   @users.remove
+    #   @users.remove({})
+    #
+    # @example: remove only documents that have expired:
+    #   @users.remove({:expire => {'$lte' => Time.now}})
     def remove(selector={})
       message = ByteBuffer.new
       message.put_int(0)
@@ -226,21 +253,22 @@ module Mongo
 
     # Update a single document in this collection.
     #
-    # :selector :: a hash specifying elements which must be present for a document to be updated. Note:
-    # the update command currently updates only the first document matching the
-    # given selector. If you want all matching documents to be updated, be sure
-    # to specify :multi => true.
-    # :document :: a hash specifying the fields to be changed in the
-    # selected document, or (in the case of an upsert) the document to
-    # be inserted
+    # @param [Hash] selector
+    #   a hash specifying elements which must be present for a document to be updated. Note:
+    #   the update command currently updates only the first document matching the
+    #   given selector. If you want all matching documents to be updated, be sure
+    #   to specify :multi => true.
+    # @param [Hash] document
+    #   a hash specifying the fields to be changed in the selected document,
+    #   or (in the case of an upsert) the document to be inserted
     #
-    # Options:
-    # :upsert :: if true, perform an upsert operation
-    # :multi :: update all documents matching the selector, as opposed to
-    # just the first matching document. Note: only works in 1.1.3 or later.
-    # :safe :: if true, check that the update succeeded. OperationFailure
-    # will be raised on an error. Checking for safety requires an extra
-    # round-trip to the database
+    # @option [Boolean] :upsert (+false+) if true, performs an upsert (update or insert)
+    # @option [Boolean] :multi (+false+) update all documents matching the selector, as opposed to
+    #   just the first matching document. Note: only works in MongoDB 1.1.3 or later.
+    # @option opts [Boolean] :safe (+false+) 
+    #   If true, check that the save succeeded. OperationFailure
+    #   will be raised on an error. Note that a safe check requires an extra
+    #   round-trip to the database.
     def update(selector, document, options={})
       message = ByteBuffer.new
       message.put_int(0)
@@ -260,12 +288,13 @@ module Mongo
       end
     end
 
-    # Create a new index. +field_or_spec+
-    # should be either a single field name or a Array of [field name,
-    # direction] pairs. Directions should be specified as
-    # Mongo::ASCENDING or Mongo::DESCENDING.
-    # +unique+ is an optional boolean indicating whether this index
-    # should enforce a uniqueness constraint.
+    # Create a new index.
+    #
+    # @param [String, Array] field_or_spec
+    #   should be either a single field name or an array of
+    #   [field name, direction] pairs. Directions should be specified as Mongo::ASCENDING or Mongo::DESCENDING.
+    #
+    # @param [Boolean] unique if true, this index will enforce a uniqueness constraint.
     def create_index(field_or_spec, unique=false)
       field_h = OrderedHash.new
       if field_or_spec.is_a?(String) || field_or_spec.is_a?(Symbol)
@@ -283,15 +312,19 @@ module Mongo
       name
     end
 
-    # Drop index +name+.
+    # Drop a specified index.
+    #
+    # @param [String] name
     def drop_index(name)
       @db.drop_index(@name, name)
     end
 
     # Drop all indexes.
     def drop_indexes
-      # just need to call drop indexes with no args; will drop them all
+
+      # Note: calling drop_indexes with no args will drop them all.
       @db.drop_index(@name, '*')
+
     end
 
     # Drop the entire collection. USE WITH CAUTION.
@@ -299,26 +332,26 @@ module Mongo
       @db.drop_collection(@name)
     end
 
-    # Performs a map/reduce operation on the current collection. Returns a new
-    # collection containing the results of the operation.
+    # Perform a map/reduce operation on the current collection.
     #
-    # Required:
-    # +map+    :: a map function, written in javascript.
-    # +reduce+ :: a reduce function, written in javascript.
+    # @param [String, Code] map a map function, written in JavaScript.
+    # @param [String, Code] reduce a reduce function, written in JavaScript.
     #
-    # Optional:
-    # :query    :: a query selector document, like what's passed to #find, to limit
-    #              the operation to a subset of the collection.
-    # :sort     :: sort parameters passed to the query.
-    # :limit    :: number of objects to return from the collection.
-    # :finalize :: a javascript function to apply to the result set after the
-    #              map/reduce operation has finished.
-    # :out      :: the name of the output collection. if specified, the collection will not be treated as temporary.
-    # :keeptemp :: if true, the generated collection will be persisted. default is false.
-    # :verbose  :: if true, provides statistics on job execution time.
+    # @option opts [Hash] :query ({}) a query selector document, like what's passed to #find, to limit
+    #   the operation to a subset of the collection.
+    # @option opts [Array] :sort ([]) an array of [key, direction] pairs to sort by. Direction should
+    #   be specified as Mongo::ASCENDING (or :ascending / :asc) or Mongo::DESCENDING (or :descending / :desc)
+    # @option opts [Integer] :limit (nil) if passing a query, number of objects to return from the collection.
+    # @option opts [String, Code] :finalize (nil) a javascript function to apply to the result set after the
+    #   map/reduce operation has finished.
+    # @option opts [String] :out (nil) the name of the output collection. If specified, the collection will not be treated as temporary.
+    # @option opts [Boolean] :keeptemp (false) if true, the generated collection will be persisted. default is false.
+    # @option opts [Boolean ] :verbose (false) if true, provides statistics on job execution time.
     #
-    # For more information on using map/reduce, see http://www.mongodb.org/display/DOCS/MapReduce
-    def map_reduce(map, reduce, options={})
+    # @return [Collection] a collection containing the results of the operation.
+    #
+    # @see http://www.mongodb.org/display/DOCS/MapReduce Offical MongoDB map/reduce documentation.
+    def map_reduce(map, reduce, opts={})
       map    = Code.new(map) unless map.is_a?(Code)
       reduce = Code.new(reduce) unless reduce.is_a?(Code)
 
@@ -326,7 +359,7 @@ module Mongo
       hash['mapreduce'] = self.name
       hash['map'] = map
       hash['reduce'] = reduce
-      hash.merge! options
+      hash.merge! opts
 
       result = @db.command(hash)
       unless result["ok"] == 1
@@ -336,20 +369,20 @@ module Mongo
     end
     alias :mapreduce :map_reduce
 
-    # Performs a group query, similar to the 'SQL GROUP BY' operation.
-    # Returns an array of grouped items.
+    # Perform a group aggregation.
     #
-    # :key :: either 1) an array of fields to group by, 2) a javascript function to generate
-    #         the key object, or 3) nil.
-    # :condition :: an optional document specifying a query to limit the documents over which group is run.
-    # :initial :: initial value of the aggregation counter object
-    # :reduce :: aggregation function as a JavaScript string
-    # :finalize :: optional. a JavaScript function that receives and modifies
+    # @param [Array, String, Code, Nil] :key either 1) an array of fields to group by,
+    #   2) a javascript function to generate the key object, or 3) nil.
+    # @param [Hash] condition an optional document specifying a query to limit the documents over which group is run.
+    # @param [Hash] initial initial value of the aggregation counter object
+    # @param [String, Code] reduce aggregation function, in JavaScript
+    # @param [String, Code] finalize :: optional. a JavaScript function that receives and modifies
     #              each of the resultant grouped objects. Available only when group is run
     #              with command set to true.
-    # :command :: if true, run the group as a command instead of in an
-    #             eval - it is likely that this option will eventually be
-    #             deprecated and all groups will be run as commands
+    # @param [Boolean] command if true, run the group as a command instead of in an
+    #   eval. Note: Running group as eval has been DEPRECATED.
+    #
+    # @return [Array] the grouped items.
     def group(key, condition, initial, reduce, command=false, finalize=nil)
 
       if command
@@ -443,9 +476,14 @@ EOS
       end
     end
 
-    # Returns a list of distinct values for +key+ across all
+    # Return a list of distinct values for +key+ across all
     # documents in the collection. The key may use dot notation
     # to reach into an embedded object.
+    #
+    # @param [String, Symbol, OrderedHash] key or hash to group by.
+    # @param [Hash] query a selector for limiting the result set over which to group.
+    #
+    # @example Saving zip codes and ages and returning distinct results.
     #   @collection.save({:zip => 10010, :name => {:age => 27}})
     #   @collection.save({:zip => 94108, :name => {:age => 24}})
     #   @collection.save({:zip => 10010, :name => {:age => 27}})
@@ -461,6 +499,8 @@ EOS
     # to limit the documents over which distinct is run:
     #   @collection.distinct("name.age", {"name.age" => {"$gt" => 24}})
     #     [27]
+    #
+    # @return [Array] an array of distinct values.
     def distinct(key, query=nil)
       raise MongoArgumentError unless [String, Symbol].include?(key.class)
       command = OrderedHash.new
@@ -473,11 +513,12 @@ EOS
 
     # Rename this collection.
     #
-    # If operating in auth mode, client must be authorized as an admin to
-    # perform this operation. Raises +InvalidName+ if +new_name+ is an invalid
-    # collection name.
+    # Note: If operating in auth mode, the client must be authorized as an admin to
+    # perform this operation. 
     #
-    # :new_name :: new name for this collection
+    # @param [String ] new_name the new name for this collection
+    #
+    # @raise [InvalidName] if +new_name+ is an invalid collection name.
     def rename(new_name)
       case new_name
       when Symbol, String
@@ -500,23 +541,25 @@ EOS
       @db.rename_collection(@name, new_name)
     end
 
-    # Get information on the indexes for the collection +collection_name+.
-    # Returns a hash where the keys are index names (as returned by
-    # Collection#create_index and the values are lists of [key, direction]
-    # pairs specifying the index (as passed to Collection#create_index).
+    # Get information on the indexes for this collection.
+    #
+    # @return [Hash] a hash where the keys are index names.
     def index_information
       @db.index_information(@name)
     end
 
     # Return a hash containing options that apply to this collection.
-    # 'create' will be the collection name. For the other possible keys
-    # and values, see DB#create_collection.
+    # For all possible keys and values, see DB#create_collection.
+    #
+    # @return [Hash] options that apply to this collection.
     def options
       @db.collections_info(@name).next_document['options']
     end
 
     # Get the number of documents in this collection.
-    def count()
+    #
+    # @return [Integer]
+    def count
       find().count()
     end
 

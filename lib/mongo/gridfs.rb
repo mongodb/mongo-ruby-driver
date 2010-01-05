@@ -14,3 +14,6 @@
 # limitations under the License.
 # ++
 require 'mongo/gridfs/grid_store'
+
+module GridFS
+end

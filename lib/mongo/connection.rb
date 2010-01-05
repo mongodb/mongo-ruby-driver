@@ -23,8 +23,7 @@ module Mongo
   # A connection to MongoDB.
   class Connection
 
-    # We need to make sure that all connection abort when
-    # a ConnectionError is raised.
+    # Abort connections if a ConnectionError is raised.
     Thread.abort_on_exception = true
 
     DEFAULT_PORT = 27017
@@ -254,7 +253,7 @@ module Mongo
     end
 
     # Creates a new socket and tries to connect to master.
-    # If successful, sets @host and @port to master and returns the socket.
+    # If successful, sets host and port to master and returns the socket.
     def connect_to_master
       close
       @host = @port = nil
@@ -286,7 +285,7 @@ module Mongo
     end
 
     # Are we connected to MongoDB? This is determined by checking whether
-    # @host and @port have values, since they're set to nil on calls to #close.
+    # host and port have values, since they're set to nil on calls to #close.
     def connected?
       @host && @port
     end
