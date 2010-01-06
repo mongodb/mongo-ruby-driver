@@ -16,16 +16,22 @@
 
 module Mongo
 
-  # Provide administrative database methods: those having to do with
-  # profiling and validation.
+  # @deprecated this class is deprecated. Methods defined here will 
+  #   henceforth be available in Mongo::DB.
   class Admin
 
     def initialize(db)
+      warn "The Admin class has been DEPRECATED. All admin methods now exist in DB."
       @db = db
     end
 
     # Return the current database profiling level.
+    #
+    # @return [Symbol] :off, :slow_only, or :all
+    #
+    # @deprecated please use DB#profiling_level instead.
     def profiling_level
+      warn "Admin#profiling_level has been DEPRECATED. Please use DB#profiling_level instead."
       oh = OrderedHash.new
       oh[:profile] = -1
       doc = @db.command(oh)
@@ -43,7 +49,10 @@ module Mongo
     end
 
     # Set database profiling level to :off, :slow_only, or :all.
+    #
+    # @deprecated please use DB#profiling_level= instead.
     def profiling_level=(level)
+      warn "Admin#profiling_level= has been DEPRECATED. Please use DB#profiling_level= instead."
       oh = OrderedHash.new
       oh[:profile] = case level
                      when :off
@@ -60,14 +69,20 @@ module Mongo
     end
 
     # Returns an array containing current profiling information.
+    #
+    # @deprecated please use DB#profiling_info instead.
     def profiling_info
+      warn "Admin#profiling_info has been DEPRECATED. Please use DB#profiling_info instead."
       Cursor.new(Collection.new(@db, DB::SYSTEM_PROFILE_COLLECTION), :selector => {}).to_a
     end
 
     # Validate a named collection by raising an exception if there is a
     # problem or returning an interesting hash (see especially the
     # 'result' string value) if all is well.
+    #
+    # @deprecated please use DB#validate_collection instead.
     def validate_collection(name)
+      warn "Admin#validate_collection has been DEPRECATED. Please use DB#validate_collection instead."
       doc = @db.command(:validate => name)
       raise "Error with validate command: #{doc.inspect}" unless @db.ok?(doc)
       result = doc['result']

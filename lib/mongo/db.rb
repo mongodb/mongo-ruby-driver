@@ -181,7 +181,9 @@ module Mongo
       raise "Error creating collection: #{doc.inspect}"
     end
 
+    # @deprecated all the admin methods are now included in the DB class.
     def admin
+      warn "DB#admin has been DEPRECATED. All the admin functions are now available in the DB class itself."
       Admin.new(self)
     end
 
@@ -366,7 +368,7 @@ module Mongo
       end
     end
 
-    # DEPRECATED: please use DB#command instead.
+    # @deprecated please use DB#command instead.
     def db_command(*args)
       warn "DB#db_command has been DEPRECATED. Please use DB#command instead."
       command(args[0], args[1])
@@ -374,6 +376,60 @@ module Mongo
 
     def full_collection_name(collection_name)
       "#{@name}.#{collection_name}"
+    end
+
+    # Return the current database profiling level.
+    #
+    # @return [Symbol] :off, :slow_only, or :all
+    def profiling_level
+      oh = OrderedHash.new
+      oh[:profile] = -1
+      doc = command(oh)
+      raise "Error with profile command: #{doc.inspect}" unless ok?(doc) && doc['was'].kind_of?(Numeric)
+      case doc['was'].to_i
+      when 0
+        :off
+      when 1
+        :slow_only
+      when 2
+        :all
+      else
+        raise "Error: illegal profiling level value #{doc['was']}"
+      end
+    end
+
+    # Set database profiling level to :off, :slow_only, or :all.
+    def profiling_level=(level)
+      oh = OrderedHash.new
+      oh[:profile] = case level
+                     when :off
+                       0
+                     when :slow_only
+                       1
+                     when :all
+                       2
+                     else
+                       raise "Error: illegal profiling level value #{level}"
+                     end
+      doc = command(oh)
+      raise "Error with profile command: #{doc.inspect}" unless ok?(doc)
+    end
+
+    # Returns an array containing current profiling information.
+    def profiling_info
+      Cursor.new(Collection.new(self, DB::SYSTEM_PROFILE_COLLECTION), :selector => {}).to_a
+    end
+
+    # Validate a named collection by raising an exception if there is a
+    # problem or returning an interesting hash (see especially the
+    # 'result' string value) if all is well.
+    def validate_collection(name)
+      doc = command(:validate => name)
+      raise "Error with validate command: #{doc.inspect}" unless ok?(doc)
+      result = doc['result']
+      raise "Error with validation data: #{doc.inspect}" unless result.kind_of?(String)
+      raise "Error: invalid collection #{name}: #{doc.inspect}" if result =~ /\b(exception|corrupt)\b/i
+      doc
     end
 
     private

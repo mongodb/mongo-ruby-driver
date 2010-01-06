@@ -202,4 +202,53 @@ class DBTest < Test::Unit::TestCase
     assert db.collection('users').remove
   end
 
+  context "database profiling" do
+    setup do
+      @db  = @@conn['ruby-mongo-test-admin-functions']
+      @coll = @db['test']
+      @coll.remove
+      @r1 = @coll.insert('a' => 1) # collection not created until it's used
+    end
+
+    should "set default profiling level" do
+      assert_equal :off, @db.profiling_level
+    end
+
+    should "change profiling level" do
+      @db.profiling_level = :slow_only
+      assert_equal :slow_only, @db.profiling_level
+      @db.profiling_level = :off
+      assert_equal :off, @db.profiling_level
+      @db.profiling_level = :all
+      assert_equal :all, @db.profiling_level
+      begin
+        @db.profiling_level = :medium
+        fail "shouldn't be able to do this"
+      rescue
+      end
+    end
+
+    should "return profiling info" do
+      @db.profiling_level = :all
+      @coll.find()
+      @db.profiling_level = :off
+
+      info = @db.profiling_info
+      assert_kind_of Array, info
+      assert info.length >= 1
+      first = info.first
+      assert_kind_of String, first['info']
+      assert_kind_of Time, first['ts']
+      assert_kind_of Numeric, first['millis']
+    end
+
+    def test_validate_collection
+      doc = @db.validate_collection(@coll.name)
+      assert_not_nil doc
+      result = doc['result']
+      assert_not_nil result
+      assert_match /firstExtent/, result
+    end
+
+  end
 end
