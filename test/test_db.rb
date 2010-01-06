@@ -242,7 +242,7 @@ class DBTest < Test::Unit::TestCase
       assert_kind_of Numeric, first['millis']
     end
 
-    def test_validate_collection
+    should "validate collection" do
       doc = @db.validate_collection(@coll.name)
       assert_not_nil doc
       result = doc['result']
