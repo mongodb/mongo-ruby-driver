@@ -1,4 +1,5 @@
-$LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+
 require 'mongo'
 require 'mongo/gridfs'
 
@@ -19,7 +20,7 @@ end
 GridStore.open(db, 'foobar', 'w') { |f| f.write("hello, world!") }
 
 # Read it and print out the contents
-dump(db, 'foobar')                 # defined above
+dump(db, 'foobar')
 
 # Append more data
 GridStore.open(db, 'foobar', 'w+') { |f| f.write("\n"); f.puts "line two" }

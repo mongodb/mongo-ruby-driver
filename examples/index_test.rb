@@ -1,10 +1,5 @@
-class Exception
-  def errmsg
-    "%s: %s\n%s" % [self.class, message, (backtrace || []).join("\n") << "\n"]
-  end
-end
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
-$LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 
 include Mongo
@@ -14,6 +9,12 @@ port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
 
 puts ">> Connecting to #{host}:#{port}"
 db = Connection.new(host, port).db('ruby-mongo-index_test')
+
+class Exception
+  def errmsg
+    "%s: %s\n%s" % [self.class, message, (backtrace || []).join("\n") << "\n"]
+  end
+end
 
 puts ">> Dropping collection test"
 begin
@@ -43,8 +44,8 @@ coll.insert(arr)
 puts "inserted"
 
 puts ">> Creating index"
-res = coll.create_index "all", :_id => 1, :number => 1, :rndm => 1, :msg => 1
-# res = coll.create_index "all", '_id' => 1, 'number' => 1, 'rndm' => 1, 'msg' => 1
+#res = coll.create_index "all", :_id => 1, :number => 1, :rndm => 1, :msg => 1
+res = coll.create_index [[:number, 1], [:rndm, 1], [:msg, 1]]
 puts "created index: #{res.inspect}"
 # ============================ Mongo Log ============================
 # Fri Dec  5 14:45:02 Adding all existing records for ruby-mongo-console.test to new index
@@ -76,7 +77,7 @@ end
 
 puts ">> Dropping index"
 begin
-  res = coll.drop_index "all_1"
+  res = coll.drop_index "number_1_rndm_1_msg_1"
   puts "dropped : #{res.inspect}"
 rescue => e
   puts "Error: #{e.errmsg}"

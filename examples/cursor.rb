@@ -1,4 +1,5 @@
-$LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+
 require 'mongo'
 require 'pp'
 
@@ -23,7 +24,7 @@ coll.remove
 # Find returns a Cursor, which is Enumerable. You can iterate:
 coll.find().each { |row| pp row }
 
-# You can turn it into an array
+# You can turn it into an array:
 array = coll.find().to_a
 
 # You can iterate after turning it into an array (the cursor will iterate over
