@@ -553,6 +553,8 @@ class BSON_RUBY
       OBJECT
     when Symbol
       SYMBOL
+    when Date, DateTime
+      raise InvalidDocument, "Trying to use Date or DateTime; the driver currently supports Time objects only."
     else
       raise InvalidDocument, "Unknown type of object: #{o.class.name}"
     end

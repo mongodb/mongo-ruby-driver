@@ -181,6 +181,19 @@ class BSONTest < Test::Unit::TestCase
     end
   end
 
+  def test_exeption_on_using_date
+    [DateTime.now, Date.today].each do |invalid_date|
+      doc = {:date => invalid_date}
+      begin
+      bson = BSON.serialize(doc)
+      rescue => e
+      ensure
+        assert_equal InvalidDocument, e.class
+        assert_match /Time/, e.message
+      end
+    end
+  end
+
   def test_dbref
     oid = ObjectID.new
     doc = {}

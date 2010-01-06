@@ -369,6 +369,11 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&obj_length, 4);
                 break;
             }
+            if (strcmp(cls, "DateTime") == 0 || strcmp(cls, "Date") == 0) {
+              buffer_free(buffer);
+              rb_raise(InvalidDocument, "Trying to use Date or DateTime; the driver currently supports Time objects only.",
+                  TYPE(value));
+            }
             buffer_free(buffer);
             rb_raise(InvalidDocument, "Unsupported type for BSON (%d)", TYPE(value));
             break;
