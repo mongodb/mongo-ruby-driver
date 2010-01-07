@@ -83,6 +83,14 @@ task :rdoc do
   system "rdoc --main README.rdoc --op #{out} --inline-source --quiet README.rdoc `find lib -name '*.rb'`"
 end
 
+desc "Generate YARD documentation"
+task :ydoc do
+  version = eval(File.read("mongo-ruby-driver.gemspec")).version
+  out = File.join('ydoc', version.to_s)
+  FileUtils.rm_rf('ydoc')
+  system "yardoc lib/**/*.rb lib/mongo/**/*.rb -o #{out} --title MongoRuby-#{version}"
+end
+
 desc "Publish documentation to mongo.rubyforge.org"
 task :publish => [:rdoc] do
   # Assumes docs are in ./html

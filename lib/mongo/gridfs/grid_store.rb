@@ -20,25 +20,32 @@ require 'mongo/gridfs/chunk'
 
 module GridFS
 
-  # GridStore is an IO-like object that provides input and output for
-  # streams of data to Mongo. See Mongo's documentation about GridFS for
-  # storage implementation details.
+  # GridStore is an IO-like class that provides input and output for
+  # streams of data to MongoDB.
   #
-  # Example code:
+  # @example
   #
-  #   require 'mongo/gridfs'
-  #   GridStore.open(database, 'filename', 'w') { |f|
-  #     f.puts "Hello, world!"
-  #   }
-  #   GridStore.open(database, 'filename, 'r') { |f|
-  #     puts f.read         # => Hello, world!\n
-  #   }
-  #   GridStore.open(database, 'filename', 'w+') { |f|
-  #     f.puts "But wait, there's more!"
-  #   }
-  #   GridStore.open(database, 'filename, 'r') { |f|
-  #     puts f.read         # => Hello, world!\nBut wait, there's more!\n
-  #   }
+  #  include GridFS
+  #
+  #  #Store the text "Hello, world!" in the grid store.
+  #  GridStore.open(database, 'filename', 'w') do |f|
+  #    f.puts "Hello, world!"
+  #  end
+  #
+  #  # Output "Hello, world!"
+  #  GridStore.open(database, 'filename, 'r') do |f|
+  #    puts f.read
+  #  end
+  #
+  #  # Add text to the grid store.
+  #  GridStore.open(database, 'filename', 'w+') do |f|
+  #    f.puts "But wait, there's more!"
+  #  end
+  #
+  #  # Retrieve everything, outputting  "Hello, world!\nBut wait, there's more!\n"
+  #  GridStore.open(database, 'filename, 'r') do |f|
+  #    puts f.read
+  #  end
   class GridStore
 
     DEFAULT_ROOT_COLLECTION = 'fs'

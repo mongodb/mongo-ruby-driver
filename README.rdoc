@@ -82,18 +82,27 @@ Note that the GridStore class is not automatically required when you require
 
 Example code:
 
-  GridStore.open(database, 'filename', 'w') { |f|
+  include GridFS
+
+  # Store the text "Hello, world!" in the grid store.
+  GridStore.open(database, 'filename', 'w') do |f|
     f.puts "Hello, world!"
-  }
-  GridStore.open(database, 'filename, 'r') { |f|
-    puts f.read         # => Hello, world!\n
-  }
-  GridStore.open(database, 'filename', 'w+') { |f|
+  end
+
+  # Output "Hello, world!"
+  GridStore.open(database, 'filename, 'r') do |f|
+    puts f.read
+  end
+
+  # Add text to the grid store.
+  GridStore.open(database, 'filename', 'w+') do |f|
     f.puts "But wait, there's more!"
-  }
-  GridStore.open(database, 'filename, 'r') { |f|
-    puts f.read         # => Hello, world!\nBut wait, there's more!\n
-  }
+  end
+
+  # Retrieve everything, outputting  "Hello, world!\nBut wait, there's more!\n"
+  GridStore.open(database, 'filename, 'r') do |f|
+    puts f.read
+  end
 
 
 = Notes
@@ -119,7 +128,7 @@ A pooled connection to a paired instance would look like this:
                     :right => ["db2.example.com", 27017]}, nil,
                     :pool_size => 20, :timeout => 5)
 
-Though the pooling architecure will undoubtedly evolve, it owes much credit
+Though the pooling architecure will undoubtedly evolve, it currently owes much credit
 to the connection pooling implementations in ActiveRecord and PyMongo.
 
 == Using with Phusion Passenger
@@ -139,7 +148,7 @@ or handle reconnecting when passenger forks a new process:
     end
   end
 
-The above code should be put in _environment.rb_ or an initialization
+The above code should be put in _environment.rb_ or in an initialization
 script.
 
 See this thread[http://groups.google.com/group/mongodb-user/browse_thread/thread/f31e2d23de38136a]
@@ -156,7 +165,7 @@ read from Mongo will have their character encodings set to UTF-8.
 
 When used with Ruby 1.8, the bytes in each string are written to and read from
 Mongo as-is. If the string is ASCII all is well, because ASCII is a subset of
-UTF-8. If the string is not ASCII then it may not be a well-formed UTF-8
+UTF-8. If the string is not ASCII, it may not be a well-formed UTF-8
 string.
 
 == Primary Keys
@@ -173,17 +182,18 @@ generate _id values. If you want to control _id values or even their types,
 using a PK factory lets you do so.
 
 You can tell the Ruby Mongo driver how to create primary keys by passing in
-the :pk option to the Connection#db method.
+the :pk_factory option to the Connection#db method.
 
-  include Mongo
-  db = Connection.new.db('dbname', :pk => MyPKFactory.new)
+  db = Mongo::Connection.new.db('dbname', :pk_factory => MyPKFactory.new)
 
 A primary key factory object must respond to :create_pk, which should take a
 hash and return a hash which merges the original hash with any primary key
-fields the factory wishes to inject. NOTE: if the object already has a primary
-key, the factory should not inject a new key; this means that the object is
-being used in a repsert but it already exists. The idea here is that whenever
-a record is inserted, the :pk object's +create_pk+ method will be called and
+fields the factory wishes to inject. 
+
+NOTE: if the object already has a primary key, the factory should not inject
+a new key; this means that the object is being used in a repsert but it already
+exists. The idea here is that whenever a record is inserted,
+the :pk_factory object's +create_pk+ method will be called and
 the new hash returned will be inserted.
 
 Here is a sample primary key factory, taken from the tests:
@@ -249,7 +259,6 @@ Random cursor fun facts:
   cursor.
 
 - Cursors have a to_a method.
-
 
 
 = Testing
