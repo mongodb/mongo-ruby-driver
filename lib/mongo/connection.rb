@@ -20,7 +20,7 @@ require 'thread'
 
 module Mongo
 
-  # A connection to MongoDB.
+  # Instantiates and manages connections to MongoDB.
   class Connection
 
     # Abort connections if a ConnectionError is raised.
@@ -39,63 +39,54 @@ module Mongo
     # Counter for generating unique request ids.
     @@current_request_id = 0
 
-    # Creates a connection to MongoDB. Specify either one or a pair of servers,
+    # Create a connection to MongoDB. Specify either one or a pair of servers,
     # along with a maximum connection pool size and timeout.
     #
-    # == Connecting
     # If connecting to just one server, you may specify whether connection to slave is permitted.
-    #
-    # In all cases, the default host is "localhost" and the default port, is 27017.
+    # In all cases, the default host is "localhost" and the default port is 27017.
     #
     # When specifying a pair, pair_or_host, is a hash with two keys: :left and :right. Each key maps to either
     # * a server name, in which case port is 27017,
     # * a port number, in which case the server is "localhost", or
     # * an array containing [server_name, port_number]
     #
-    # === Options
+    # @param [String, Hash] pair_or_host See explanation above.
+    # @param [Integer] port specify a port number here if only one host is being specified. Leave nil if
+    #   specifying a pair of servers in +pair_or_host+.
     #
-    # :slave_ok :: Defaults to +false+. Must be set to +true+ when connecting
-    #              to a single, slave node.
+    # @option options [Boolean] :slave_ok (false) Must be set to +true+ when connecting
+    #   to a single, slave node.
+    # @option options [Logger, #debug] :logger (nil) Logger instance to receive driver operation log.
+    # @option options [Boolean] :auto_reconnect DEPRECATED. See http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby
+    # @option options [Integer] :pool_size (1) The maximum number of socket connections that can be opened to the database.
+    # @option options [Float] :timeout (5.0) When all of the connections to the pool are checked out,
+    #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
     #
-    # :logger :: Optional Logger instance to which driver usage information
-    #            will be logged.
-    #
-    # :auto_reconnect :: DEPRECATED. See http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby
-    #
-    # :pool_size :: The maximum number of socket connections that can be opened
-    #               that can be opened to the database.
-    #
-    # :timeout   :: When all of the connections to the pool are checked out,
-    #               this is the number of seconds to wait for a new connection
-    #               to be released before throwing an exception.
-    #
-    # Note that there are a few issues when using connection pooling with Ruby 1.9 on Windows. These
+    # @example Note that there are a few issues when using connection pooling with Ruby 1.9 on Windows. These
     # should be resolved in the next release.
     #
-    # === Examples:
+    # @example localhost, 27017
+    #   Connection.new
     #
-    #  # localhost, 27017
-    #  Connection.new
+    # @example localhost, 27017
+    #   Connection.new("localhost")
     #
-    #  # localhost, 27017
-    #  Connection.new("localhost")
+    # @example localhost, 3000, max 5 connections, with max 5 seconds of wait time.
+    #   Connection.new("localhost", 3000, :pool_size => 5, :timeout => 5)
     #
-    #  # localhost, 3000, max 5 connections, with max 5 seconds of wait time.
-    #  Connection.new("localhost", 3000, :pool_size => 5, :timeout => 5)
+    # @example localhost, 3000, where this node may be a slave
+    #   Connection.new("localhost", 3000, :slave_ok => true)
     #
-    #  # localhost, 3000, where this node may be a slave
-    #  Connection.new("localhost", 3000, :slave_ok => true)
-    #
-    #  # A pair of servers. The driver will always talk to master.
-    #  # On connection errors, Mongo::ConnectionFailure will be raised.
-    #  # See http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby
-    #  Connection.new({:left  => ["db1.example.com", 27017],
+    # @example A pair of servers. The driver will always talk to master.
+    # # On connection errors, Mongo::ConnectionFailure will be raised.
+    # @see http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby Replica pairs in Ruby
+    #   Connection.new({:left  => ["db1.example.com", 27017],
     #                  :right => ["db2.example.com", 27017]})
     #
-    #  A pair of servers, with connection pooling. Not the nil param placeholder for port.
-    #  Connection.new({:left  => ["db1.example.com", 27017],
-    #                  :right => ["db2.example.com", 27017]}, nil,
-    #                  :pool_size => 20, :timeout => 5)
+    # @example A pair of servers with connection pooling enabled. Note the nil param placeholder for port.
+    #   Connection.new({:left  => ["db1.example.com", 27017],
+    #                   :right => ["db2.example.com", 27017]}, nil,
+    #                   :pool_size => 20, :timeout => 5)
     def initialize(pair_or_host=nil, port=nil, options={})
       @nodes = format_pair(pair_or_host, port)
 
@@ -123,7 +114,7 @@ module Mongo
         warn(":auto_reconnect is deprecated. see http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby")
       end
 
-      # Slave ok can be true only if one node is specified
+      # slave_ok can be true only if one node is specified
       @slave_ok = options[:slave_ok] && @nodes.length == 1
       @logger   = options[:logger] || nil
       @options  = options
@@ -132,8 +123,10 @@ module Mongo
       connect_to_master if should_connect
     end
 
-    # Returns a hash with all database names and their respective sizes on
-    # disk.
+    # Return a hash with all database names
+    # and their respective sizes on disk.
+    #
+    # @return [Hash]
     def database_info
       doc = self['admin'].command(:listDatabases => 1)
       returning({}) do |info|
@@ -141,39 +134,57 @@ module Mongo
       end
     end
 
-    # Returns an array of database names.
+    # Return an array of database names.
+    #
+    # @return [Array]
     def database_names
       database_info.keys
     end
 
-    # Returns the database named +db_name+. The slave_ok and
-    # See DB#new for other options you can pass in.
+    # Return a database with the given name.
+    # See DB#new for valid options hash parameters.
+    #
+    # @param [String] db_name a valid database name.
+    #
+    # @return [Mongo::DB]
     def db(db_name, options={})
       DB.new(db_name, self, options.merge(:logger => @logger))
     end
 
-    # Returns the database named +db_name+.
+    # Shortcut for returning a database. Use DB#db to accept options.
+    #
+    # @param [String] db_name a valid database name.
+    #
+    # @return [Mongo::DB]
     def [](db_name)
       DB.new(db_name, self, :logger => @logger)
     end
 
-    # Drops the database +name+.
+    # Drop a database.
+    #
+    # @param [String] name name of an existing database.
     def drop_database(name)
       self[name].command(:dropDatabase => 1)
     end
 
-    # Copies the database +from+ on the local server to +to+ on the specified +host+.
+    # Copy the database +from+ on the local server to +to+ on the specified +host+.
     # +host+ defaults to 'localhost' if no value is provided.
-    def copy_database(from, to, host="localhost")
+    #
+    # @param [String] from name of the database to copy from.
+    # @param [String] to name of the database to copy to.
+    # @param [String] from_host host of the 'from' database.
+    def copy_database(from, to, from_host="localhost")
       oh = OrderedHash.new
       oh[:copydb]   = 1
-      oh[:fromhost] = host
+      oh[:fromhost] = from_host
       oh[:fromdb]   = from
       oh[:todb]     = to
       self["admin"].command(oh)
     end
 
-    # Increments and returns the next available request id.
+    # Increment and return the next available request id.
+    #
+    # return [Integer]
     def get_request_id
       request_id = ''
       @id_lock.synchronize do
@@ -182,13 +193,17 @@ module Mongo
       request_id
     end
 
-    # Returns the build information for the current connection.
+    # Get the build information for the current connection.
+    #
+    # @return [Hash]
     def server_info
       db("admin").command({:buildinfo => 1}, {:admin => true, :check_response => true})
     end
 
-    # Gets the build version of the current server.
-    # Returns a ServerVersion object for comparability.
+    # Get the build version of the current server.
+    #
+    # @return [Mongo::ServerVersion]
+    #   object allowing easy comparability of version.
     def server_version
       ServerVersion.new(server_info["version"])
     end
@@ -196,11 +211,13 @@ module Mongo
 
     ## Connections and pooling ##
 
-    # Sends a message to MongoDB.
+    # Send a message to MongoDB, adding the necessary headers.
     #
-    # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
-    # +message+, and an optional formatted +log_message+.
-    # Sends the message to the databse, adding the necessary headers.
+    # @param [Integer] operation a MongoDB opcode.
+    # @param [ByteBuffer] message a message to send to the database.
+    # @param [String] log_message text version of +message+ for logging.
+    #
+    # @return [True]
     def send_message(operation, message, log_message=nil)
       @logger.debug("  MONGODB #{log_message || message}") if @logger
       packed_message = add_message_headers(operation, message).to_s
@@ -212,9 +229,14 @@ module Mongo
     # Sends a message to the database, waits for a response, and raises
     # an exception if the operation has failed.
     #
-    # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
-    # +message+, the +db_name+, and an optional formatted +log_message+.
-    # Sends the message to the database, adding the necessary headers.
+    # @param [Integer] operation a MongoDB opcode.
+    # @param [ByteBuffer] message a message to send to the database.
+    # @param [String] db_name the name of the database. used on call to get_last_error.
+    # @param [String] log_message text version of +message+ for logging.
+    #
+    # @return [Array]
+    #   An array whose indexes include [0] documents returned, [1] number of document received,
+    #   and [3] a cursor_id.
     def send_message_with_safe_check(operation, message, db_name, log_message=nil)
       message_with_headers = add_message_headers(operation, message)
       message_with_check   = last_error_message(db_name)
@@ -235,9 +257,14 @@ module Mongo
 
     # Sends a message to the database and waits for the response.
     #
-    # Takes a MongoDB opcode, +operation+, a message of class ByteBuffer,
-    # +message+, and an optional formatted +log_message+. This method
-    # also takes an options socket for internal use with #connect_to_master.
+    # @param [Integer] operation a MongoDB opcode.
+    # @param [ByteBuffer] message a message to send to the database.
+    # @param [String] log_message text version of +message+ for logging.
+    # @param [Socket] socket a socket to use in lieu of checking out a new one.
+    #
+    # @return [Array]
+    #   An array whose indexes include [0] documents returned, [1] number of document received,
+    #   and [3] a cursor_id.
     def receive_message(operation, message, log_message=nil, socket=nil)
       packed_message = add_message_headers(operation, message).to_s
       @logger.debug("  MONGODB #{log_message || message}") if @logger
@@ -252,8 +279,10 @@ module Mongo
       result
     end
 
-    # Creates a new socket and tries to connect to master.
+    # Create a new socket and attempt to connect to master.
     # If successful, sets host and port to master and returns the socket.
+    #
+    # @raise [ConnectionFailure] if unable to connect to any host or port.
     def connect_to_master
       close
       @host = @port = nil
