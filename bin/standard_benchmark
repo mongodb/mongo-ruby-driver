@@ -6,6 +6,7 @@
 # The c-extension, mongo_ext, will be used if installed.
 
 require 'rubygems'
+require 'benchmark'
 require 'mongo'
 
 include Mongo
@@ -40,8 +41,13 @@ LARGE = {
                         'developers','focus','building','mongodb','mongo'] * 20
 }
 
-def report(str, t)
-  printf("%s%d\n", str.ljust(60, '.'), PER_TRIAL / t)
+def print_headings
+  puts "\n#{PER_TRIAL} documents or queries per trial. Batches of #{BATCH_SIZE} on batch inserts."
+  printf("\n%s%-10s %-15s %-10s %-15s\n\n", "Test".ljust(40, ' '), "(real)", "(real ops/s)", "(user)", "(user ops/s)")
+end
+
+def report(str, t, u=nil)
+  printf("%s %-10.2f %-15d %-10.2f %-15d\n", str.ljust(40, '.'), t, (PER_TRIAL / t), u, PER_TRIAL / u)
 end
 
 def profile(str)
@@ -63,13 +69,12 @@ def benchmark(str, n, coll_name, data, create_index=false)
   coll = @db.collection(coll_name)
   coll.create_index('x') if create_index
   profile(str) do
-    times = []
-      GC.start
-      t1 = Time.now
-        n.times { |i| yield(coll, i) }
-      t2 = Time.now
-      times << t2 - t1
-    report(str, times.min)
+    GC.start
+    tm = Benchmark::Tms.new
+    td = tm.add do
+      n.times { |i| yield(coll, i) }
+    end
+    report(str, td.real, td.utime)
   end
 end
 
@@ -96,28 +101,31 @@ def benchmark_insert_index(desc, coll_name, data)
   end
 end
 
-benchmark_insert('insert (small, no index)', 'small_none', SMALL)  
+
+print_headings
+
+benchmark_insert('insert (small, no index)', 'small_none', SMALL)
 benchmark_insert('insert (medium, no index)', 'medium_none', MEDIUM)
 benchmark_insert('insert (large, no index)', 'large_none', LARGE)
 
-benchmark_insert_index('insert (small, index)', 'small_indexed', SMALL)  
+benchmark_insert_index('insert (small, index)', 'small_indexed', SMALL)
 benchmark_insert_index('insert (medium, index)', 'medium_indexed', MEDIUM)
 benchmark_insert_index('insert (large, index)', 'large_indexed', LARGE)
- 
+
 def benchmark_insert_batch(desc, coll_name, data)
-  benchmark(desc, PER_TRIAL / BATCH_SIZE, coll_name, data) do |coll, i| 
+  benchmark(desc, PER_TRIAL / BATCH_SIZE, coll_name, data) do |coll, i|
     data['x'] = i
     coll.insert([data] * BATCH_SIZE)
     data.delete(:_id)
   end
 end
 
-benchmark_insert_batch('insert batch (small, index)', 'small_bulk', SMALL)  
+benchmark_insert_batch('insert batch (small, index)', 'small_bulk', SMALL)
 benchmark_insert_batch('insert batch (medium, index)', 'medium_bulk', MEDIUM)
 benchmark_insert_batch('insert batch (large, index)', 'large_bulk', LARGE)
 
 def benchmark_find_one(desc, coll_name, data)
-  benchmark(desc, PER_TRIAL, coll_name, data) do |coll, i| 
+  benchmark(desc, PER_TRIAL, coll_name, data) do |coll, i|
     coll.find_one({'x' => data})
   end
 end
@@ -131,22 +139,22 @@ benchmark_find_one('find_one (medium, indexed)', 'medium_indexed', PER_TRIAL / 2
 benchmark_find_one('find_one (large, indexed)', 'large_indexed', PER_TRIAL / 2)
 
 def benchmark_find_all(desc, coll_name, data)
-  benchmark(desc, PER_TRIAL, coll_name, data) do |coll, i| 
+  benchmark(desc, PER_TRIAL, coll_name, data) do |coll, i|
     coll.find({'x' => data}).each {|o| o}
   end
 end
 
-benchmark_find_all('find_all (small, no index)', 'small_none', PER_TRIAL / 2)
-benchmark_find_all('find_all (medium, no index)', 'medium_none', PER_TRIAL / 2)
-benchmark_find_all('find_all (large, no index)', 'large_none', PER_TRIAL / 2)
+benchmark_find_all('find (small, no index)', 'small_none', PER_TRIAL / 2)
+benchmark_find_all('find (medium, no index)', 'medium_none', PER_TRIAL / 2)
+benchmark_find_all('find (large, no index)', 'large_none', PER_TRIAL / 2)
 
-benchmark_find_all('find_all (small, indexed)', 'small_indexed', PER_TRIAL / 2)
-benchmark_find_all('find_all (medium, indexed)', 'medium_indexed', PER_TRIAL / 2)
-benchmark_find_all('find_all (large, indexed)', 'large_indexed', PER_TRIAL / 2)
+benchmark_find_all('find (small, indexed)', 'small_indexed', PER_TRIAL / 2)
+benchmark_find_all('find (medium, indexed)', 'medium_indexed', PER_TRIAL / 2)
+benchmark_find_all('find (large, indexed)', 'large_indexed', PER_TRIAL / 2)
 
-benchmark_find_all('find_range (small, indexed)', 'small_indexed', 
+benchmark_find_all('find_range (small, indexed)', 'small_indexed',
                      {"$gt" => PER_TRIAL / 2, "$lt" => PER_TRIAL / 2 + BATCH_SIZE})
-benchmark_find_all('find_range (medium, indexed)', 'medium_indexed', 
+benchmark_find_all('find_range (medium, indexed)', 'medium_indexed',
                      {"$gt" => PER_TRIAL / 2, "$lt" => PER_TRIAL / 2 + BATCH_SIZE})
-benchmark_find_all('find_range (large, indexed)', 'large_indexed', 
+benchmark_find_all('find_range (large, indexed)', 'large_indexed',
                      {"$gt" => PER_TRIAL / 2, "$lt" => PER_TRIAL / 2 + BATCH_SIZE})
