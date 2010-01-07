@@ -17,6 +17,7 @@
 require 'rexml/document'
 require 'mongo'
 
+# @deprecated
 # Converts a .xson file (an XML file that describes a Mongo-type document) to
 # an OrderedHash.
 class XMLToRuby
@@ -24,6 +25,7 @@ class XMLToRuby
   include Mongo
 
   def xml_to_ruby(io)
+    warn "XMLToRuby is deprecated. The .xson format is not longer in use."
     doc = REXML::Document.new(io)
     doc_to_ruby(doc.root.elements['doc'])
   end
@@ -31,6 +33,7 @@ class XMLToRuby
   protected
 
   def element_to_ruby(e)
+    warn "XMLToRuby is deprecated. The .xson format is not longer in use."
     type = e.name
     child = e.elements[1]
     case type
@@ -71,12 +74,14 @@ class XMLToRuby
   end
 
   def doc_to_ruby(element)
+    warn "XMLToRuby is deprecated. The .xson format is not longer in use."
     oh = OrderedHash.new
     element.elements.each { |e| oh[e.attributes['name']] = element_to_ruby(e) }
     oh
   end
 
   def array_to_ruby(elements)
+    warn "XMLToRuby is deprecated. The .xson format is not longer in use."
     a = []
     elements.each { |e|
       index_str = e.attributes['name']
@@ -86,6 +91,7 @@ class XMLToRuby
   end
 
   def regex_to_ruby(elements)
+    warn "XMLToRuby is deprecated. The .xson format is not longer in use."
     pattern = elements['pattern'].text
     options_str = elements['options'].text || ''
 
@@ -97,6 +103,7 @@ class XMLToRuby
   end
 
   def dbref_to_ruby(elements)
+    warn "XMLToRuby is deprecated. The .xson format is not longer in use."
     ns = elements['ns'].text
     oid_str = elements['oid'].text
     DBRef.new(ns, ObjectID.from_string(oid_str))

@@ -28,10 +28,13 @@ module Mongo
 
     attr_accessor :extra_options_str
 
+    # @deprecated we're no longer supporting this.
     # +str+ and +options+ are the same as Regexp. +extra_options_str+
     # contains all the other flags that were in Mongo but we do not use or
     # understand.
     def initialize(str, options, extra_options_str)
+      warn "RegexpOfHolding is deprecated; the modifiers i, m, and x will be stored automatically as BSON." +
+        "If you're only storing the options i, m, and x, you can safely ignore this message."
       super(str, options)
       @extra_options_str = extra_options_str
     end
