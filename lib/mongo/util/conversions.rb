@@ -19,8 +19,8 @@ module Mongo #:nodoc:
   # objects to mongo-friendly parameters.
   module Conversions
 
-    ASCENDING  = ["ascending", "asc", "1"]
-    DESCENDING = ["descending", "desc", "-1"]
+    ASCENDING_CONVERSION  = ["ascending", "asc", "1"]
+    DESCENDING_CONVERSION = ["descending", "desc", "-1"]
 
     # Converts the supplied +Array+ to a +Hash+ to pass to mongo as
     # sorting parameters. The returned +Hash+ will vary depending 
@@ -76,11 +76,12 @@ module Mongo #:nodoc:
     # If the value is invalid then an error will be raised.
     def sort_value(value)
       val = value.to_s.downcase
-      return 1 if ASCENDING.include?(val)
-      return -1 if DESCENDING.include?(val)
+      return 1 if ASCENDING_CONVERSION.include?(val)
+      return -1 if DESCENDING_CONVERSION.include?(val)
       raise InvalidSortValueError.new(
         "#{self} was supplied as a sort direction when acceptable values are: " +
-        "Mongo::ASCENDING, 'ascending', 'asc', :ascending, :asc, 1, Mongo::DESCENDING, 'descending', 'desc', :descending, :desc, -1.")
+        "Mongo::ASCENDING, 'ascending', 'asc', :ascending, :asc, 1, Mongo::DESCENDING, " +
+        "'descending', 'desc', :descending, :desc, -1.")
     end
   end
 end
