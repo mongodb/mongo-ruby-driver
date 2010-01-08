@@ -45,10 +45,13 @@ module Mongo
     # If connecting to just one server, you may specify whether connection to slave is permitted.
     # In all cases, the default host is "localhost" and the default port is 27017.
     #
-    # When specifying a pair, pair_or_host, is a hash with two keys: :left and :right. Each key maps to either
+    # When specifying a pair, +pair_or_host+, is a hash with two keys: :left and :right. Each key maps to either
     # * a server name, in which case port is 27017,
     # * a port number, in which case the server is "localhost", or
     # * an array containing [server_name, port_number]
+    #
+    # Note that there are a few issues when using connection pooling with Ruby 1.9 on Windows. These
+    # should be resolved in the next release.
     #
     # @param [String, Hash] pair_or_host See explanation above.
     # @param [Integer] port specify a port number here if only one host is being specified. Leave nil if
@@ -62,8 +65,6 @@ module Mongo
     # @option options [Float] :timeout (5.0) When all of the connections to the pool are checked out,
     #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
     #
-    # @example Note that there are a few issues when using connection pooling with Ruby 1.9 on Windows. These
-    # should be resolved in the next release.
     #
     # @example localhost, 27017
     #   Connection.new
@@ -78,8 +79,7 @@ module Mongo
     #   Connection.new("localhost", 3000, :slave_ok => true)
     #
     # @example A pair of servers. The driver will always talk to master.
-    # # On connection errors, Mongo::ConnectionFailure will be raised.
-    # @see http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby Replica pairs in Ruby
+    #   # On connection errors, Mongo::ConnectionFailure will be raised.
     #   Connection.new({:left  => ["db1.example.com", 27017],
     #                  :right => ["db2.example.com", 27017]})
     #
@@ -87,6 +87,8 @@ module Mongo
     #   Connection.new({:left  => ["db1.example.com", 27017],
     #                   :right => ["db2.example.com", 27017]}, nil,
     #                   :pool_size => 20, :timeout => 5)
+    #
+    # @see http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby Replica pairs in Ruby
     def initialize(pair_or_host=nil, port=nil, options={})
       @nodes = format_pair(pair_or_host, port)
 

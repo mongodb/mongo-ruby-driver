@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ++
-# nodoc
+
+#:nodoc:
 class Object
 
-  # nodoc
+  #:nodoc:
   def returning(value)
     yield value
     value

@@ -234,13 +234,12 @@ module Mongo
     # @param [Hash] selector
     #   If specified, only matching documents will be removed.
     #
-    # Examples
-    # @example: remove all documents from the 'users':
-    #   @users.remove
-    #   @users.remove({})
+    # @example remove all documents from the 'users' collection:
+    #   users.remove
+    #   users.remove({})
     #
-    # @example: remove only documents that have expired:
-    #   @users.remove({:expire => {'$lte' => Time.now}})
+    # @example remove only documents that have expired:
+    #   users.remove({:expire => {"$lte" => Time.now}})
     def remove(selector={})
       message = ByteBuffer.new
       message.put_int(0)
@@ -495,8 +494,8 @@ EOS
     #   @collection.distinct("name.age")
     #     [27, 24]
     #
-    # You may also pass a document selector as the second parameter
-    # to limit the documents over which distinct is run:
+    #   # You may also pass a document selector as the second parameter
+    #   # to limit the documents over which distinct is run:
     #   @collection.distinct("name.age", {"name.age" => {"$gt" => 24}})
     #     [27]
     #
