@@ -32,10 +32,6 @@ module Mongo
 
     attr_reader :logger, :size, :host, :port, :nodes, :sockets, :checked_out
 
-    def slave_ok?
-      @slave_ok
-    end
-
     # Counter for generating unique request ids.
     @@current_request_id = 0
 
@@ -208,6 +204,13 @@ module Mongo
     #   object allowing easy comparability of version.
     def server_version
       ServerVersion.new(server_info["version"])
+    end
+
+    # Is it okay to connect to a slave?
+    #
+    # @return [Boolean]
+    def slave_ok?
+      @slave_ok
     end
 
 

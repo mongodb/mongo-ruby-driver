@@ -25,7 +25,10 @@ module Mongo
 
     # Create a new cursor.
     #
-    # Should not be called directly by application developers.
+    # Note: cursors are created when executing queries using [Collection#find] and other
+    # similar methods. Application developers shouldn't have to create cursors manually.
+    #
+    # @return [Cursor]
     def initialize(collection, options={})
       @db         = collection.db
       @collection = collection
@@ -49,7 +52,9 @@ module Mongo
       @query_run = false
     end
 
-    # Return the next document or nil if there are no more.
+    # Get the next document specified the cursor options.
+    #
+    # @return [Hash, Nil] the next document or Nil if no documents remain.
     def next_document
       refill_via_get_more if num_remaining == 0
       doc = @cache.shift
@@ -71,6 +76,7 @@ module Mongo
       doc
     end
 
+    # @deprecated use Cursor#next_document instead.
     def next_object
       warn "Cursor#next_object is deprecated; please use Cursor#next_document instead."
       next_document
@@ -78,9 +84,10 @@ module Mongo
 
     # Get the size of the result set for this query.
     #
-    # Returns the number of objects in the result set for this query. Does
-    # not take limit and skip into account. Raises OperationFailure on a
-    # database error.
+    # @return [Integer] the number of objects in the result set for this query. Does
+    #   not take limit and skip into account. 
+    #
+    # @raise [OperationFailure] on a database error.
     def count
       command = OrderedHash["count",  @collection.name,
                             "query",  @selector,
@@ -93,15 +100,16 @@ module Mongo
 
     # Sort this cursor's results.
     #
-    # Takes either a single key and a direction, or an array of [key,
-    # direction] pairs. Directions should be specified as Mongo::ASCENDING / Mongo::DESCENDING
-    # (or :ascending / :descending, :asc / :desc).
-    #
-    # Raises InvalidOperation if this cursor has already been used. Raises
-    # InvalidSortValueError if the specified order is invalid.
-    #
     # This method overrides any sort order specified in the Collection#find
     # method, and only the last sort applied has an effect.
+    #
+    # @param [Symbol, Array] key_or_list either 1) a key to sort by or 2) 
+    #   an array of [key, direction] pairs to sort by. Direction should
+    #   be specified as Mongo::ASCENDING (or :ascending / :asc) or Mongo::DESCENDING (or :descending / :desc)
+    #
+    # @raise [InvalidOperation] if this cursor has already been used.
+    #
+    # @raise [InvalidSortValueError] if the specified order is invalid.
     def sort(key_or_list, direction=nil)
       check_modifiable
 
@@ -115,13 +123,14 @@ module Mongo
       self
     end
 
-    # Limits the number of results to be returned by this cursor.
-    # Returns the current number_to_return if no parameter is given.
-    #
-    # Raises InvalidOperation if this cursor has already been used.
+    # Limit the number of results to be returned by this cursor.
     #
     # This method overrides any limit specified in the Collection#find method,
     # and only the last limit applied has an effect.
+    #
+    # @return [Integer] the current number_to_return if no parameter is given.
+    #
+    # @raise [InvalidOperation] if this cursor has already been used.
     def limit(number_to_return=nil)
       return @limit unless number_to_return
       check_modifiable
@@ -134,10 +143,12 @@ module Mongo
     # Skips the first +number_to_skip+ results of this cursor.
     # Returns the current number_to_skip if no parameter is given.
     #
-    # Raises InvalidOperation if this cursor has already been used.
-    #
     # This method overrides any skip specified in the Collection#find method,
     # and only the last skip applied has an effect.
+    #
+    # @return [Integer]
+    #
+    # @raise [InvalidOperation] if this cursor has already been used.
     def skip(number_to_skip=nil)
       return @skip unless number_to_skip
       check_modifiable
@@ -151,6 +162,13 @@ module Mongo
     # block.
     #
     # Iterating over an entire cursor will close it.
+    #
+    # @yield passes each document to a block for processing.
+    #
+    # @example if 'comments' represents a collection of comments:
+    #   comments.find.each do |doc|
+    #     puts doc['user']
+    #   end
     def each
       num_returned = 0
       while more? && (@limit <= 0 || num_returned < @limit)
@@ -159,13 +177,15 @@ module Mongo
       end
     end
 
-    # Return all of the documents in this cursor as an array of hashes.
+    # Receive all the documents from this cursor as an array of hashes.
     #
-    # Raises InvalidOperation if this cursor has already been used or if
-    # this methods has already been called on the cursor.
+    # Note: use of this method is discouraged - in most cases, it's much more
+    # efficient to retrieve documents as you need them by iterating over the cursor.
     #
-    # Use of this method is discouraged - iterating over a cursor is much
-    # more efficient in most cases.
+    # @return [Array] an array of documents.
+    #
+    # @raise [InvalidOperation] if this cursor has already been used or if
+    #   this method has already been called on the cursor.
     def to_a
       raise InvalidOperation, "can't call Cursor#to_a on a used cursor" if @query_run
       rows = []
@@ -177,7 +197,9 @@ module Mongo
       rows
     end
 
-    # Returns an explain plan document for this cursor.
+    # Get the explain plan for this cursor.
+    #
+    # @return [Hash] a document containing the explain plan for this cursor.
     def explain
       c = Cursor.new(@collection, query_options_hash.merge(:limit => -@limit.abs, :explain => true))
       explanation = c.next_document
@@ -186,15 +208,16 @@ module Mongo
       explanation
     end
 
-    # Closes the cursor.
+    # Close the cursor.
     #
     # Note: if a cursor is read until exhausted (read until Mongo::Constants::OP_QUERY or
     # Mongo::Constants::OP_GETMORE returns zero for the cursor id), there is no need to
-    # close it by calling this method.
+    # close it manually.
     #
-    # Collection#find takes an optional block argument which can be used to
-    # ensure that your cursors get closed. See the documentation for
-    # Collection#find for details.
+    # Note also: Collection#find takes an optional block argument which can be used to
+    # ensure that your cursors get closed.
+    #
+    # @return [True]
     def close
       if @cursor_id
         message = ByteBuffer.new
@@ -207,18 +230,26 @@ module Mongo
       @closed    = true
     end
 
-    # Returns true if this cursor is closed, false otherwise.
+    # Is this cursor closed?
+    #
+    # @return [Boolean]
     def closed?; @closed; end
 
     # Returns an integer indicating which query options have been selected.
-    # See http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol#MongoWireProtocol-Mongo::Constants::OPQUERY
+    #
+    # @return [Integer]
+    #
+    # @see http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol#MongoWireProtocol-Mongo::Constants::OPQUERY
+    # The MongoDB wire protocol.
     def query_opts
       timeout  = @timeout ? 0 : Mongo::Constants::OP_QUERY_NO_CURSOR_TIMEOUT
       slave_ok = @connection.slave_ok? ? Mongo::Constants::OP_QUERY_SLAVE_OK : 0
       slave_ok + timeout
     end
 
-    # Returns the query options for this Cursor.
+    # Get the query options for this Cursor.
+    #
+    # @return [Hash]
     def query_options_hash
       { :selector => @selector,
         :fields   => @fields,
@@ -233,7 +264,7 @@ module Mongo
 
     private
 
-    # Converts the +:fields+ parameter from a single field name or an array
+    # Convert the +:fields+ parameter from a single field name or an array
     # of fields names to a hash, with the field names for keys and '1' for each
     # value.
     def convert_fields_for_query(fields)
