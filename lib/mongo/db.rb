@@ -21,7 +21,7 @@ require 'thread'
 
 module Mongo
 
-  # A Mongo database.
+  # A MongoDB database.
   class DB
 
     SYSTEM_NAMESPACE_COLLECTION = "system.namespaces"
@@ -55,15 +55,7 @@ module Mongo
     # The logger instance if :logger is passed to initialize.
     attr_reader :logger
 
-    # The primary key factory object (or +nil+).
-    attr_reader :pk_factory
-
-    def pk_factory=(pk_factory)
-      raise "error: can not change PK factory" if @pk_factory
-      @pk_factory = pk_factory
-    end
-
-    # Instances of DB are normally obtained by calling Mongo#db.
+        # Instances of DB are normally obtained by calling Mongo#db.
     #
     # db_name :: The database name
     #
@@ -122,7 +114,8 @@ module Mongo
     # Deauthorizes use for this database for this connection.
     def logout
       doc = command(:logout => 1)
-      raise "error logging out: #{doc.inspect}" unless ok?(doc)
+      return true if ok?(doc)
+      raise "error logging out: #{doc.inspect}"
     end
 
     # Returns an array of collection names in this database.
@@ -376,6 +369,22 @@ module Mongo
 
     def full_collection_name(collection_name)
       "#{@name}.#{collection_name}"
+    end
+
+    # The primary key factory object (or +nil+).
+    def pk_factory
+      @pk_factory
+    end
+
+    # Specify a primary key factory if not already set.
+    #
+    # @raise [MongoArgumentError] if the primary key factory has already been set.
+    def pk_factory=(pk_factory)
+      if @pk_factory
+        raise MongoArgumentError, "Cannot change primary key factory once it's been set"
+      end
+
+      @pk_factory = pk_factory
     end
 
     # Return the current database profiling level.

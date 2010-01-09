@@ -132,7 +132,7 @@ class DBTest < Test::Unit::TestCase
       db.pk_factory = Object.new
       fail "error: expected exception"
     rescue => ex
-      assert_match /can not change PK factory/, ex.to_s
+      assert_match /Cannot change/, ex.to_s
     ensure
       conn.close
     end
@@ -145,7 +145,7 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_logout
-    @@db.logout                  # only testing that we don't throw exception
+    assert @@db.logout
   end
 
   def test_error
