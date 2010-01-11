@@ -189,7 +189,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
     case T_FIXNUM:
         {
             if (rb_funcall(value, rb_intern(">"), 1, LL2NUM(9223372036854775807LL)) == Qtrue ||
-                rb_funcall(value, rb_intern("<"), 1, LL2NUM(-9223372036854775808LL)) == Qtrue) {
+                rb_funcall(value, rb_intern("<"), 1, LL2NUM(-9223372036854775808ULL)) == Qtrue) {
                 buffer_free(buffer);
                 rb_raise(rb_eRangeError, "MongoDB can only handle 8-byte ints");
             }
@@ -483,7 +483,7 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys) {
       rb_raise(InvalidDocument, "Document too large: BSON documents are limited to 4MB.");
       return;
     }
-    SAFE_WRITE_AT_POS(buffer, length_location, &length, 4);
+    SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&length, 4);
 }
 
 static VALUE method_serialize(VALUE self, VALUE doc, VALUE check_keys) {
