@@ -55,39 +55,19 @@ module Mongo
     # The logger instance if :logger is passed to initialize.
     attr_reader :logger
 
-        # Instances of DB are normally obtained by calling Mongo#db.
+    # Instances of DB are normally obtained by calling Mongo#db.
     #
-    # db_name :: The database name
+    # @param [String] db_name the database name.
+    # @param [Mongo::Connection] connection a connection object pointing to MongoDB. Note
+    #   that databases are usually instantiated via the Connection class. See the examples below.
     #
-    # nodes :: An array of [host, port] pairs. See Connection#new, which offers
-    #          a more flexible way of defining nodes.
+    # @option options [Boolean] strict (False) If true, collections must exist to be accessed and must
+    #   not exist to be created. See DB#collection and DB#create_collection.
     #
-    # options :: A hash of options.
-    #
-    # Options:
-    #
-    # :strict :: If true, collections must exist to be accessed and must
-    #            not exist to be created. See #collection and #create_collection.
-    #
-    # :pk :: A primary key factory object that must respond to :create_pk,
-    #        which should take a hash and return a hash which merges the
-    #        original hash with any primary key fields the factory wishes
-    #        to inject. (NOTE: if the object already has a primary key,
-    #        the factory should not inject a new key; this means that the
-    #        object is being used in a repsert but it already exists.) The
-    #        idea here is that when ever a record is inserted, the :pk
-    #        object's +create_pk+ method will be called and the new hash
-    #        returned will be inserted.
-    #
-    # :slave_ok :: Only used if +nodes+ contains only one host/port. If
-    #              false, when connecting to that host/port we check to
-    #              see if the server is the master. If it is not, an error
-    #              is thrown.
-    #
-    # :logger :: Optional Logger instance to which driver usage information
-    #            will be logged.
-    #
-    # :auto_reconnect :: DEPRECATED. See http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby
+    # @option options [Object, #create_pk(doc)] pk (Mongo::ObjectID) A primary key factory object,
+    #   which should take a hash and return a hash which merges the original hash with any primary key
+    #   fields the factory wishes to inject. (NOTE: if the object already has a primary key,
+    #   the factory should not inject a new key).
     def initialize(db_name, connection, options={})
       @name       = validate_db_name(db_name)
       @connection = connection
@@ -95,9 +75,13 @@ module Mongo
       @pk_factory = options[:pk]
     end
 
-    # Returns true if +username+ has +password+ in
-    # +SYSTEM_USER_COLLECTION+. +name+ is username, +password+ is
-    # plaintext password.
+    # Authenticates with the given username and password. Note that mongod
+    # must be started with the --auth option for authentication to be enabled.
+    #
+    # @param [String] username
+    # @param [String] password
+    #
+    # @return [Boolean]
     def authenticate(username, password)
       doc = command(:getnonce => 1)
       raise "error retrieving nonce: #{doc}" unless ok?(doc)
@@ -112,66 +96,84 @@ module Mongo
     end
 
     # Deauthorizes use for this database for this connection.
+    #
+    # @raise [MongoDBError] if logging out fails.
+    #
+    # @return [Boolean]
     def logout
       doc = command(:logout => 1)
       return true if ok?(doc)
-      raise "error logging out: #{doc.inspect}"
+      raise MongoDBError, "error logging out: #{doc.inspect}"
     end
 
-    # Returns an array of collection names in this database.
+    # Get an array of collection names in this database.
+    #
+    # @return [Array]
     def collection_names
       names = collections_info.collect { |doc| doc['name'] || '' }
       names = names.delete_if {|name| name.index(@name).nil? || name.index('$')}
       names.map {|name| name.sub(@name + '.', '')}
     end
 
-    # Retuns an array of Collection instances, one for each collection in this
-    # database.
+    # Get an array of Collection instances, one for each collection in this database.
+    #
+    # @return [Array<Mongo::Collection>]
     def collections
       collection_names.map do |collection_name|
         Collection.new(self, collection_name)
       end
     end
 
-    # Returns a cursor over query result hashes. Each hash contains a
-    # 'name' string and optionally an 'options' hash. If +coll_name+ is
-    # specified, an array of length 1 is returned.
+    # Get info on system namespaces (collections). This method returns
+    # a cursor which can be iterated over. For each collection, a hash
+    # will be yielded containing a 'name' string and, optionally, an 'options' hash.
+    #
+    # @param [String] coll_name return info for the specifed collection only.
+    #
+    # @return [Mongo::Cursor<Hash>]
     def collections_info(coll_name=nil)
       selector = {}
       selector[:name] = full_collection_name(coll_name) if coll_name
       Cursor.new(Collection.new(self, SYSTEM_NAMESPACE_COLLECTION), :selector => selector)
     end
 
-    # Create a collection. If +strict+ is false, will return existing or
+    # Create a collection.
+    #
     # new collection. If +strict+ is true, will raise an error if
     # collection +name+ already exists.
     #
-    # Options is an optional hash:
+    # @param [String] name the name of the new collection.
     #
-    # :capped :: Boolean. If not specified, capped is +false+.
+    # @option options [Boolean] :capped (False) created a capped collection.
     #
-    # :size :: If +capped+ is +true+, specifies the maximum number of
-    #          bytes. If +false+, specifies the initial extent of the
-    #          collection.
+    # @option options [Integer] :size (Nil) If +capped+ is +true+, specifies the maximum number of
+    #   bytes for the capped collection. If +false+, specifies the number of bytes allocated
+    #   for the initial extent of the collection.
     #
-    # :max :: Max number of records in a capped collection. Optional.
+    # @option options [Integer] :max (Nil) If +capped+ is +true+, indicates the maximum number of records 
+    #   in a capped collection.
+    #
+    # @raise [MongoDBError] raised under two conditions: either we're in +strict+ mode and the collection
+    #   already exists or collection creation fails on the server.
+    #
+    # @return [Mongo::Collection]
     def create_collection(name, options={})
-      # First check existence
+      # Does the collection already exist?
       if collection_names.include?(name)
         if strict?
-          raise "Collection #{name} already exists. Currently in strict mode."
+          raise MongoDBError, "Collection #{name} already exists. Currently in strict mode."
         else
           return Collection.new(self, name)
         end
       end
 
-      # Create new collection
+      # Create a new collection.
       oh = OrderedHash.new
       oh[:create] = name
       doc = command(oh.merge(options || {}))
       ok = doc['ok']
       return Collection.new(self, name, @pk_factory) if ok.kind_of?(Numeric) && (ok.to_i == 1 || ok.to_i == 0)
-      raise "Error creating collection: #{doc.inspect}"
+      raise MongoDBError, "Error creating collection: #{doc.inspect}"
     end
 
     # @deprecated all the admin methods are now included in the DB class.
@@ -180,46 +182,59 @@ module Mongo
       Admin.new(self)
     end
 
-    # Return a collection. If +strict+ is false, will return existing or
-    # new collection. If +strict+ is true, will raise an error if
-    # collection +name+ does not already exists.
+    # Get a collection by name.
+    #
+    # @param [String] name the collection name.
+    #
+    # @raise [MongoDBError] if collection does not already exist and we're in +strict+ mode.
     def collection(name)
       return Collection.new(self, name, @pk_factory) if !strict? || collection_names.include?(name)
-      raise "Collection #{name} doesn't exist. Currently in strict mode."
+      raise MongoDBError, "Collection #{name} doesn't exist. Currently in strict mode."
     end
     alias_method :[], :collection
 
-    # Drop collection +name+. Returns +true+ on success or if the
-    # collection does not exist, +false+ otherwise.
+    # Drop a collection by +name+.
+    #
+    # @param [String] name
+    #
+    # @return [Boolean] True on success or if the collection names doesn't exist.
     def drop_collection(name)
       return true unless collection_names.include?(name)
 
       ok?(command(:drop => name))
     end
 
-    # Returns the error message from the most recently executed database
+    # Get the error message from the most recently executed database
     # operation for this connection, or +nil+ if there was no error.
+    #
+    # @return [String, Nil]
     def error
       doc = command(:getlasterror => 1)
-      raise "error retrieving last error: #{doc}" unless ok?(doc)
+      raise MongoDBError, "error retrieving last error: #{doc}" unless ok?(doc)
       doc['err']
     end
 
     # Get status information from the last operation on this connection.
+    #
+    # @return [Hash] a hash representing the status of the last db op.
     def last_status
       command(:getlasterror => 1)
     end
 
-    # Returns +true+ if an error was caused by the most recently executed
+    # Return +true+ if an error was caused by the most recently executed
     # database operation.
+    #
+    # @return [Boolean]
     def error?
       error != nil
     end
 
-    # Get the most recent error to have occured on this database
+    # Get the most recent error to have occured on this database.
     #
-    # Only returns errors that have occured since the last call to
+    # This command only returns errors that have occured since the last call to
     # DB#reset_error_history - returns +nil+ if there is no such error.
+    #
+    # @return [String, Nil]
     def previous_error
       error = command(:getpreverror => 1)
       if error["err"]
@@ -233,28 +248,39 @@ module Mongo
     #
     # Calls to DB#previous_error will only return errors that have occurred
     # since the most recent call to this method.
+    #
+    # @return [Hash]
     def reset_error_history
       command(:reseterror => 1)
     end
 
+    # @deprecated please use Collection#find to create queries.
+    #
     # Returns a Cursor over the query results.
     #
     # Note that the query gets sent lazily; the cursor calls
-    # #send_query_message when needed. If the caller never requests an
+    # Connection#send_message when needed. If the caller never requests an
     # object from the cursor, the query never gets sent.
     def query(collection, query, admin=false)
       Cursor.new(self, collection, query, admin)
     end
 
-    # Dereference a DBRef, getting the document it points to.
+    # Dereference a DBRef, returning the document it points to.
+    #
+    # @param [Mongo::DBRef] dbref
+    #
+    # @return [Hash] the document indicated by the db reference.
+    #
+    # @see http://www.mongodb.org/display/DOCS/DB+Ref MongoDB DBRef spec.
     def dereference(dbref)
       collection(dbref.namespace).find_one("_id" => dbref.object_id)
     end
 
-    # Evaluate a JavaScript expression on MongoDB.
-    # +code+ should be a string or Code instance containing a JavaScript
-    # expression. Additional arguments will be passed to that expression
-    # when it is run on the server.
+    # Evaluate a JavaScript expression in MongoDB.
+    #
+    # @param [String, Code] code a JavaScript expression to evaluate server-side.
+    # @param [Integer, Hash] args any additional argument to be passed to the +code+ expression when 
+    #   it's run on the server.
     def eval(code, *args)
       if not code.is_a? Code
         code = Code.new(code)
@@ -268,31 +294,46 @@ module Mongo
       raise OperationFailure, "eval failed: #{doc['errmsg']}"
     end
 
-    # Rename collection +from+ to +to+. Meant to be called by
-    # Collection#rename.
+    # Rename a collection.
+    #
+    # @param [String] from original collection name.
+    # @param [String] to new collection name.
+    #
+    # @return [True] returns +true+ on success.
+    # 
+    # @raise MongoDBError if there's an error renaming the collection.
     def rename_collection(from, to)
       oh = OrderedHash.new
       oh[:renameCollection] = "#{@name}.#{from}"
       oh[:to] = "#{@name}.#{to}"
       doc = command(oh, true)
-      raise "Error renaming collection: #{doc.inspect}" unless ok?(doc)
+      ok?(doc) || raise(MongoDBError, "Error renaming collection: #{doc.inspect}")
     end
 
-    # Drop index +name+ from +collection_name+. Normally called from
+    # Drop an index from a given collection. Normally called from
     # Collection#drop_index or Collection#drop_indexes.
-    def drop_index(collection_name, name)
+    #
+    # @param [String] collection_name
+    # @param [String] index_name
+    #
+    # @return [True] returns +true+ on success.
+    #
+    # @raise MongoDBError if there's an error renaming the collection.
+    def drop_index(collection_name, index_name)
       oh = OrderedHash.new
       oh[:deleteIndexes] = collection_name
-      oh[:index] = name
+      oh[:index] = index_name
       doc = command(oh)
-      raise "Error with drop_index command: #{doc.inspect}" unless ok?(doc)
+      ok?(doc) || raise(MongoDBError, "Error with drop_index command: #{doc.inspect}")
     end
 
-    # Get information on the indexes for the collection +collection_name+.
-    # Normally called by Collection#index_information. Returns a hash where
-    # the keys are index names (as returned by Collection#create_index and
-    # the values are lists of [key, direction] pairs specifying the index
-    # (as passed to Collection#create_index).
+    # Get information on the indexes for the given collection.
+    # Normally called by Collection#index_information.
+    #
+    # @param [String] collection_name
+    #
+    # @return [Hash] keys are index names and the values are lists of [key, direction] pairs
+    #   defining the index.
     def index_information(collection_name)
       sel = {:ns => full_collection_name(collection_name)}
       info = {}
@@ -302,49 +343,48 @@ module Mongo
       info
     end
 
-    # Create a new index on +collection_name+. +field_or_spec+
-    # should be either a single field name or a Array of [field name,
-    # direction] pairs. Directions should be specified as
-    # Mongo::ASCENDING or Mongo::DESCENDING. Normally called
-    # by Collection#create_index. If +unique+ is true the index will
-    # enforce a uniqueness constraint.
+    # Create a new index on the given collection.
+    # Normally called by Collection#create_index.
+    #
+    # @param [String] collection_name
+    # @param [String, Array] field_or_spec either either a single field name
+    #   or an array of [field name, direction] pairs. Directions should be specified as
+    #   Mongo::ASCENDING or Mongo::DESCENDING.
+    # @param [Boolean] unique if +true+, the created index will enforce a uniqueness constraint.
+    #
+    # @return [String] the name of the index created.
     def create_index(collection_name, field_or_spec, unique=false)
       self.collection(collection_name).create_index(field_or_spec, unique)
     end
 
-    # Return +true+ if +doc+ contains an 'ok' field with the value 1.
+    # Return +true+ if the supplied +doc+ contains an 'ok' field with the value 1.
+    #
+    # @param [Hash] doc
+    #
+    # @return [Boolean]
     def ok?(doc)
       ok = doc['ok']
       ok.kind_of?(Numeric) && ok.to_i == 1
     end
 
-    # DB commands need to be ordered, so selector must be an OrderedHash
-    # (or a Hash with only one element). What DB commands really need is
-    # that the "command" key be first.
-    def command(selector, use_admin_db=false, sock=nil)
-      if !selector.kind_of?(OrderedHash)
-        if !selector.kind_of?(Hash) || selector.keys.length > 1
-          raise "command must be given an OrderedHash when there is more than one key"
-        end
-      end
-
-      cursor = Cursor.new(Collection.new(self, SYSTEM_COMMAND_COLLECTION), :admin => use_admin_db, :limit => -1, :selector => selector, :socket => sock)
-      cursor.next_document
-    end
-
-    # Sends a command to the database.
-    #
-    # :selector (required) :: An OrderedHash, or a standard Hash with just one
-    # key, specifying the command to be performed.
-    #
-    # :admin (optional) :: If true, the command will be executed on the admin
-    # collection.
-    #
-    # :check_response (optional) :: If true, will raise an exception if the
-    # command fails.
+    # Send a command to the database. Note that a command has a formal definition in MongoDB: it's
+    # a kind of overloaded query.
     #
     # Note: DB commands must start with the "command" key. For this reason,
     # any selector containing more than one key must be an OrderedHash.
+    #
+    # @param [OrderedHash, Hash] selector an OrderedHash, or a standard Hash with just one
+    # key, specifying the command to be performed.
+    #
+    # @param [Boolean] admin If +true+, the command will be executed on the admin
+    # collection.
+    #
+    # @param [Boolean] check_response If +true+, will raise an exception if the
+    # command fails.
+    #
+    # @param [Socket] sock a socket to use. This is mainly for internal use.
+    #
+    # @return [Hash]
     def command(selector, admin=false, check_response=false, sock=nil)
       raise MongoArgumentError, "command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
       if selector.class.eql?(Hash) && selector.keys.length > 1
@@ -367,11 +407,18 @@ module Mongo
       command(args[0], args[1])
     end
 
+    # A shortcut returning db plus dot plus collection name.
+    #
+    # @param [String] collection_name
+    #
+    # @return [String]
     def full_collection_name(collection_name)
       "#{@name}.#{collection_name}"
     end
 
     # The primary key factory object (or +nil+).
+    #
+    # @return [Object, Nil]
     def pk_factory
       @pk_factory
     end
@@ -407,7 +454,9 @@ module Mongo
       end
     end
 
-    # Set database profiling level to :off, :slow_only, or :all.
+    # Set this database's profiling level.
+    #
+    # @param [Symbol] level acceptable options are +:off+, +:slow_only+, or +:all+.
     def profiling_level=(level)
       oh = OrderedHash.new
       oh[:profile] = case level
@@ -421,23 +470,30 @@ module Mongo
                        raise "Error: illegal profiling level value #{level}"
                      end
       doc = command(oh)
-      raise "Error with profile command: #{doc.inspect}" unless ok?(doc)
+      ok?(doc) || raise(MongoDBError, "Error with profile command: #{doc.inspect}")
     end
 
-    # Returns an array containing current profiling information.
+    # Get the current profiling information.
+    #
+    # @return [Array] a list of documents containing profiling information.
     def profiling_info
       Cursor.new(Collection.new(self, DB::SYSTEM_PROFILE_COLLECTION), :selector => {}).to_a
     end
 
-    # Validate a named collection by raising an exception if there is a
-    # problem or returning an interesting hash (see especially the
-    # 'result' string value) if all is well.
+    # Validate a named collection.
+    #
+    # @param [String] name the collection name.
+    #
+    # @return [Hash] validation information.
+    #
+    # @raise [MongoDBError] if the command fails or there's a problem with the validation
+    #   data, or if the collection is invalid.
     def validate_collection(name)
       doc = command(:validate => name)
-      raise "Error with validate command: #{doc.inspect}" unless ok?(doc)
+      raise MongoDBError, "Error with validate command: #{doc.inspect}" unless ok?(doc)
       result = doc['result']
-      raise "Error with validation data: #{doc.inspect}" unless result.kind_of?(String)
-      raise "Error: invalid collection #{name}: #{doc.inspect}" if result =~ /\b(exception|corrupt)\b/i
+      raise MongoDBError, "Error with validation data: #{doc.inspect}" unless result.kind_of?(String)
+      raise MongoDBError, "Error: invalid collection #{name}: #{doc.inspect}" if result =~ /\b(exception|corrupt)\b/i
       doc
     end
 

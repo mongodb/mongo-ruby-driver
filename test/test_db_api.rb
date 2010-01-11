@@ -419,6 +419,7 @@ class DBAPITest < Test::Unit::TestCase
       @@db.collection('does-not-exist')
       fail "expected exception"
     rescue => ex
+      assert_equal MongoDBError, ex.class
       assert_equal "Collection does-not-exist doesn't exist. Currently in strict mode.", ex.to_s
     ensure
       @@db.strict = false
@@ -438,15 +439,11 @@ class DBAPITest < Test::Unit::TestCase
     end
 
     # Now the collection exists. This time we should see an exception.
-    begin
+    assert_raise MongoDBError do
       @@db.create_collection('foobar')
-      fail "expected exception"
-    rescue => ex
-      assert_equal "Collection foobar already exists. Currently in strict mode.", ex.to_s
-    ensure
-      @@db.strict = false
-      @@db.drop_collection('foobar')
     end
+    @@db.strict = false
+    @@db.drop_collection('foobar')
 
     # Now we're not in strict mode - should succeed
     @@db.create_collection('foobar')

@@ -294,6 +294,8 @@ module Mongo
     #   [field name, direction] pairs. Directions should be specified as Mongo::ASCENDING or Mongo::DESCENDING.
     #
     # @param [Boolean] unique if true, this index will enforce a uniqueness constraint.
+    #
+    # @return [String] the name of the index created.
     def create_index(field_or_spec, unique=false)
       field_h = OrderedHash.new
       if field_or_spec.is_a?(String) || field_or_spec.is_a?(Symbol)
