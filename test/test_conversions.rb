@@ -1,5 +1,5 @@
 require 'test/test_helper'
-require 'mongo/errors'
+require 'mongo/exceptions'
 require 'mongo/util/conversions'
 require 'mongo/util/ordered_hash'
 
