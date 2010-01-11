@@ -826,7 +826,7 @@ void Init_cbson() {
     Code = rb_const_get(mongo, rb_intern("Code"));
     rb_require("mongo/types/regexp_of_holding");
     RegexpOfHolding = rb_const_get(mongo, rb_intern("RegexpOfHolding"));
-    rb_require("mongo/errors");
+    rb_require("mongo/exceptions");
     InvalidName = rb_const_get(mongo, rb_intern("InvalidName"));
     InvalidStringEncoding = rb_const_get(mongo, rb_intern("InvalidStringEncoding"));
     InvalidDocument = rb_const_get(mongo, rb_intern("InvalidDocument"));
