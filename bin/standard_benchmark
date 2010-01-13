@@ -6,8 +6,8 @@
 # The c-extension, mongo_ext, will be used if installed.
 
 require 'rubygems'
-require 'benchmark'
 require 'mongo'
+require 'benchmark'
 
 include Mongo
 

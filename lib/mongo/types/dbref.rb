@@ -16,13 +16,18 @@
 
 module Mongo
 
+  # A reference to another object in a MongoDB database.
   class DBRef
 
     attr_reader :namespace, :object_id
 
+    # Create a DBRef. Use this class in conjunction with DB#dereference.
+    #
+    # @param [String] a collection name
+    # @param [ObjectID] an object id
     def initialize(namespace, object_id)
-      @namespace, @object_id =
-        namespace, object_id
+      @namespace = namespace
+      @object_id = object_id
     end
 
     def to_s

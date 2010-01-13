@@ -16,12 +16,17 @@
 
 module Mongo
 
-  # JavaScript code to be evaluated by MongoDB
+  # JavaScript code to be evaluated by MongoDB.
   class Code < String
 
     # Hash mapping identifiers to their values
     attr_accessor :scope
 
+    # Wrap code to be evaluated by MongoDB.
+    #
+    # @param [String] code the JavaScript code.
+    # @param [Hash] a document mapping identifiers to values, which
+    #   represent the scope in which the code is to be executed.
     def initialize(code, scope={})
       super(code)
       @scope = scope

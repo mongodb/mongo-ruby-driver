@@ -49,12 +49,6 @@ module Mongo
     # The Mongo::Connection instance connecting to the MongoDB server.
     attr_reader :connection
 
-    # An array of [host, port] pairs.
-    attr_reader :nodes
-
-    # The logger instance if :logger is passed to initialize.
-    attr_reader :logger
-
     # Instances of DB are normally obtained by calling Mongo#db.
     #
     # @param [String] db_name the database name.
@@ -75,7 +69,7 @@ module Mongo
       @pk_factory = options[:pk]
     end
 
-    # Authenticates with the given username and password. Note that mongod
+    # Authenticate with the given username and password. Note that mongod
     # must be started with the --auth option for authentication to be enabled.
     #
     # @param [String] username
@@ -130,7 +124,7 @@ module Mongo
     #
     # @param [String] coll_name return info for the specifed collection only.
     #
-    # @return [Mongo::Cursor<Hash>]
+    # @return [Mongo::Cursor]
     def collections_info(coll_name=nil)
       selector = {}
       selector[:name] = full_collection_name(coll_name) if coll_name
@@ -187,6 +181,8 @@ module Mongo
     # @param [String] name the collection name.
     #
     # @raise [MongoDBError] if collection does not already exist and we're in +strict+ mode.
+    #
+    # @return [Mongo::Collection]
     def collection(name)
       return Collection.new(self, name, @pk_factory) if !strict? || collection_names.include?(name)
       raise MongoDBError, "Collection #{name} doesn't exist. Currently in strict mode."
@@ -205,9 +201,10 @@ module Mongo
     end
 
     # Get the error message from the most recently executed database
-    # operation for this connection, or +nil+ if there was no error.
+    # operation for this connection.
     #
-    # @return [String, Nil]
+    # @return [String, Nil] either the text describing the error or nil if no 
+    #   error has occurred.
     def error
       doc = command(:getlasterror => 1)
       raise MongoDBError, "error retrieving last error: #{doc}" unless ok?(doc)
@@ -234,7 +231,7 @@ module Mongo
     # This command only returns errors that have occured since the last call to
     # DB#reset_error_history - returns +nil+ if there is no such error.
     #
-    # @return [String, Nil]
+    # @return [String, Nil] the text of the error or +nil+ if no error has occurred.
     def previous_error
       error = command(:getpreverror => 1)
       if error["err"]
@@ -281,6 +278,8 @@ module Mongo
     # @param [String, Code] code a JavaScript expression to evaluate server-side.
     # @param [Integer, Hash] args any additional argument to be passed to the +code+ expression when 
     #   it's run on the server.
+    #
+    # @return [String] the return value of the function.
     def eval(code, *args)
       if not code.is_a? Code
         code = Code.new(code)
@@ -367,11 +366,13 @@ module Mongo
       ok.kind_of?(Numeric) && ok.to_i == 1
     end
 
-    # Send a command to the database. Note that a command has a formal definition in MongoDB: it's
-    # a kind of overloaded query.
+    # Send a command to the database.
     #
     # Note: DB commands must start with the "command" key. For this reason,
     # any selector containing more than one key must be an OrderedHash.
+    #
+    # It may be of interest hat a command in MongoDB is technically a kind of query 
+    # that occurs on the system command collection ($cmd).
     #
     # @param [OrderedHash, Hash] selector an OrderedHash, or a standard Hash with just one
     # key, specifying the command to be performed.
@@ -434,7 +435,8 @@ module Mongo
       @pk_factory = pk_factory
     end
 
-    # Return the current database profiling level.
+    # Return the current database profiling level. If profiling is enabled, you can
+    # get the results using DB#profiling_info.
     #
     # @return [Symbol] :off, :slow_only, or :all
     def profiling_level
@@ -454,7 +456,8 @@ module Mongo
       end
     end
 
-    # Set this database's profiling level.
+    # Set this database's profiling level. If profiling is enabled, you can
+    # get the results using DB#profiling_info.
     #
     # @param [Symbol] level acceptable options are +:off+, +:slow_only+, or +:all+.
     def profiling_level=(level)

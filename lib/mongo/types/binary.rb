@@ -18,7 +18,10 @@ require 'mongo/util/byte_buffer'
 
 module Mongo
 
-  # An array of binary bytes with a Mongo subtype value.
+  # An array of binary bytes with a MongoDB subtype. See the subtype
+  # constants for reference.
+  #
+  # Use this class when storing binary data in documents.
   class Binary < ByteBuffer
 
     SUBTYPE_BYTES = 0x02
@@ -29,6 +32,13 @@ module Mongo
     # One of the SUBTYPE_* constants. Default is SUBTYPE_BYTES.
     attr_accessor :subtype
 
+    # Create a buffer for storing binary data in MongoDB.
+    #
+    # @param [Array] initia_data
+    # @param [Fixnum] one of four values specifying a BSON binary subtype. Possible values are
+    #   SUBTYPE_BYTES, SUBTYPE_UUID, SUBTYPE_MD5, and SUBTYPE_USER_DEFINED.
+    #
+    # @see http://www.mongodb.org/display/DOCS/BSON#BSON-noteondatabinary BSON binary subtypes.
     def initialize(initial_data=[], subtype=SUBTYPE_BYTES)
       super(initial_data)
       @subtype = subtype

@@ -56,7 +56,7 @@ That's all there is to it!
 For extensive examples, see the MongoDB Ruby Tutorial
 (http://www.mongodb.org/display/DOCS/Ruby+Tutorial).
 
-Bundled with the dirver are many examples in the "examples" subdirectory. Samples include using
+Bundled with the driver are many examples, located in the "examples" subdirectory. Samples include using
 the driver and using the GridFS class GridStore. MongoDB must be running for
 these examples to work, of course.
 
@@ -90,7 +90,7 @@ Example code:
   end
 
   # Output "Hello, world!"
-  GridStore.open(database, 'filename, 'r') do |f|
+  GridStore.open(database, 'filename', 'r') do |f|
     puts f.read
   end
 
@@ -100,7 +100,7 @@ Example code:
   end
 
   # Retrieve everything, outputting  "Hello, world!\nBut wait, there's more!\n"
-  GridStore.open(database, 'filename, 'r') do |f|
+  GridStore.open(database, 'filename', 'r') do |f|
     puts f.read
   end
 
@@ -128,7 +128,7 @@ A pooled connection to a paired instance would look like this:
                     :right => ["db2.example.com", 27017]}, nil,
                     :pool_size => 20, :timeout => 5)
 
-Though the pooling architecure will undoubtedly evolve, it currently owes much credit
+Though the pooling architecture will undoubtedly evolve, it currently owes much credit
 to the connection pooling implementations in ActiveRecord and PyMongo.
 
 == Using with Phusion Passenger
@@ -191,8 +191,8 @@ hash and return a hash which merges the original hash with any primary key
 fields the factory wishes to inject. 
 
 NOTE: if the object already has a primary key, the factory should not inject
-a new key; this means that the object is being used in a repsert but it already
-exists. The idea here is that whenever a record is inserted,
+a new key; this means that the object may already exist in the database.
+The idea here is that whenever a record is inserted,
 the :pk_factory object's +create_pk+ method will be called and
 the new hash returned will be inserted.
 
@@ -277,7 +277,7 @@ These will run both unit and functional tests. To run these tests alone:
   $ rake test:unit
   $ rake test:functional
 
-To run any individual rake tasks with the C extenson enabled, just pass C_EXT=true to the task:
+To run any individual rake tasks with the C extension enabled, just pass C_EXT=true to the task:
 
   $ rake test:unit C_EXT=true
 
@@ -327,9 +327,9 @@ validator script.
 This documentation is available online at http://api.mongodb.org/ruby. You can
 generate the documentation if you have the source by typing
 
-  $ rake rdoc
+  $ rake ydoc
 
-Then open the file html/index.html.
+Then open the file +ydoc/index.html+.
 
 
 = Release Notes

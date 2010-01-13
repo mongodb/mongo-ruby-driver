@@ -33,7 +33,7 @@ module GridFS
   #  end
   #
   #  # Output "Hello, world!"
-  #  GridStore.open(database, 'filename, 'r') do |f|
+  #  GridStore.open(database, 'filename', 'r') do |f|
   #    puts f.read
   #  end
   #
@@ -43,7 +43,7 @@ module GridFS
   #  end
   #
   #  # Retrieve everything, outputting  "Hello, world!\nBut wait, there's more!\n"
-  #  GridStore.open(database, 'filename, 'r') do |f|
+  #  GridStore.open(database, 'filename', 'r') do |f|
   #    puts f.read
   #  end
   class GridStore
