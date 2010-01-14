@@ -241,11 +241,11 @@ module Mongo
     # @example remove only documents that have expired:
     #   users.remove({:expire => {"$lte" => Time.now}})
     def remove(selector={})
-      message = ByteBuffer.new
-      message.put_int(0)
+      # Initial byte is 0.
+      message = ByteBuffer.new([0, 0, 0, 0])
       BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
-      message.put_array(BSON.serialize(selector, false).unpack("C*"))
+      message.put_array(BSON.serialize(selector, false).to_a)
       @connection.send_message(Mongo::Constants::OP_DELETE, message,
         "db.#{@db.name}.remove(#{selector.inspect})")
     end
@@ -269,15 +269,15 @@ module Mongo
     #   will be raised on an error. Note that a safe check requires an extra
     #   round-trip to the database.
     def update(selector, document, options={})
-      message = ByteBuffer.new
-      message.put_int(0)
+      # Initial byte is 0.
+      message = ByteBuffer.new([0, 0, 0, 0])
       BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       update_options  = 0
       update_options += 1 if options[:upsert]
       update_options += 2 if options[:multi]
       message.put_int(update_options)
-      message.put_array(BSON.serialize(selector, false).unpack("C*"))
-      message.put_array(BSON.serialize(document, false).unpack("C*"))
+      message.put_array(BSON.serialize(selector, false).to_a)
+      message.put_array(BSON.serialize(document, false).to_a)
       if options[:safe]
         @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name,
           "db.#{@name}.update(#{selector.inspect}, #{document.inspect})")
@@ -589,10 +589,10 @@ EOS
     # Takes an array of +documents+, an optional +collection_name+, and a
     # +check_keys+ setting.
     def insert_documents(documents, collection_name=@name, check_keys=true, safe=false)
-      message = ByteBuffer.new
-      message.put_int(0)
+      # Initial byte is 0.
+      message = ByteBuffer.new([0, 0, 0, 0])
       BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{collection_name}")
-      documents.each { |doc| message.put_array(BSON.serialize(doc, check_keys).unpack("C*")) }
+      documents.each { |doc| message.put_array(BSON.serialize(doc, check_keys).to_a) }
       if safe
         @connection.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message, @db.name,
           "db.#{collection_name}.insert(#{documents.inspect})")

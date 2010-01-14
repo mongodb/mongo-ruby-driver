@@ -17,6 +17,20 @@
 # A byte buffer.
 class ByteBuffer
 
+  # Commonly-used integers.
+  INT_LOOKUP = {
+    0    => [0, 0, 0, 0],
+    1    => [1, 0, 0, 0],
+    2    => [2, 0, 0, 0],
+    3    => [3, 0, 0, 0],
+    4    => [4, 0, 0, 0],
+    2001 => [209, 7, 0, 0],
+    2002 => [210, 7, 0, 0],
+    2004 => [212, 7, 0, 0],
+    2005 => [213, 7, 0, 0],
+    2006 => [214, 7, 0, 0]
+  }
+
   attr_reader :order
 
   def initialize(initial_data=[])
@@ -100,8 +114,10 @@ class ByteBuffer
   end
 
   def put_int(i, offset=nil)
-    a = []
-    [i].pack(@int_pack_order).each_byte { |b| a << b }
+    unless a = INT_LOOKUP[i]
+      a = []
+      [i].pack(@int_pack_order).each_byte { |b| a << b }
+    end
     put_array(a, offset)
   end
 
