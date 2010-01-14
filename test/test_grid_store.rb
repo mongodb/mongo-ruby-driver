@@ -151,6 +151,16 @@ class GridStoreTest < Test::Unit::TestCase
     assert_equal 0, @@files.count
     assert_equal 0, @@chunks.count
   end
+  
+  def test_mv
+    assert_equal 1, @@files.count
+    assert_equal 1, @@chunks.count
+    GridStore.mv(@@db, 'foobar', 'bazqux')
+    assert_equal 1, @@files.count
+    assert_equal 1, @@chunks.count
+    assert !GridStore.exist?(@@db, 'foobar')
+    assert GridStore.exist?(@@db, 'bazqux')
+  end
 
   def test_append
     GridStore.open(@@db, 'foobar', 'w+') { |f| f.write(" how are you?") }

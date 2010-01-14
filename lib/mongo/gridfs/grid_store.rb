@@ -118,7 +118,7 @@ module GridFS
           gs.readlines(separator)
         }
       end
-
+      
       def unlink(db, *names)
         names.each { |name|
           gs = GridStore.new(db, name)
@@ -127,6 +127,10 @@ module GridFS
         }
       end
       alias_method :delete, :unlink
+
+      def mv(db, src, dest, root_collection=DEFAULT_ROOT_COLLECTION)
+        db.collection("#{root_collection}.files").update({ :filename => src }, { '$set' => { :filename => dest } })
+      end
 
     end
 
