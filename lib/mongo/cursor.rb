@@ -156,7 +156,6 @@ module Mongo
     def limit(number_to_return=nil)
       return @limit unless number_to_return
       check_modifiable
-      raise ArgumentError, "limit requires an integer" unless number_to_return.is_a? Integer
 
       @limit = number_to_return
       self
@@ -174,7 +173,6 @@ module Mongo
     def skip(number_to_skip=nil)
       return @skip unless number_to_skip
       check_modifiable
-      raise ArgumentError, "skip requires an integer" unless number_to_skip.is_a? Integer
 
       @skip = number_to_skip
       self
