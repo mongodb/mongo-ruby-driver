@@ -240,14 +240,23 @@ module Mongo
     #
     # @example remove only documents that have expired:
     #   users.remove({:expire => {"$lte" => Time.now}})
-    def remove(selector={})
+    def remove(selector={}, options={})
       # Initial byte is 0.
       message = ByteBuffer.new([0, 0, 0, 0])
       BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
       message.put_array(BSON.serialize(selector, false).to_a)
-      @connection.send_message(Mongo::Constants::OP_DELETE, message,
-        "db.#{@db.name}.remove(#{selector.inspect})")
+      
+      if options[:safe]
+        @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message,
+          "db.#{@db.name}.remove(#{selector.inspect})")
+        # the return value of send_message_with_safe_check isn't actually meaningful --
+        # only the fact that it didn't raise an error is -- so just return true
+        true
+      else
+        @connection.send_message(Mongo::Constants::OP_DELETE, message,
+          "db.#{@db.name}.remove(#{selector.inspect})")
+      end
     end
 
     # Update a single document in this collection.
