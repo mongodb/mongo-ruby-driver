@@ -88,6 +88,8 @@ class OrderedHash < Hash
       super(other)
     end
 
+    alias :update :merge!
+
     def inspect
       str = '{'
       str << (@ordered_keys || []).collect { |k| "\"#{k}\"=>#{self.[](k).inspect}" }.join(", ")

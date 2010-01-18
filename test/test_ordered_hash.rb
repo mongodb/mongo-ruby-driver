@@ -130,6 +130,14 @@ class OrderedHashTest < Test::Unit::TestCase
     assert_equal ['crab', 'apple', 3, 'foo'], @oh.values
   end
 
+  def test_update
+    other = OrderedHash.new
+    other['f'] = 'foo'
+    noob = @oh.update(other)
+    assert_equal @ordered_keys + ['f'], noob.keys
+    assert_equal [1, 2, 3, 'foo'], noob.values
+  end
+
   def test_inspect_retains_order
     assert_equal '{"c"=>1, "a"=>2, "z"=>3}', @oh.inspect
   end
