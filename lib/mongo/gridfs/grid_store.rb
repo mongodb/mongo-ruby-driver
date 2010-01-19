@@ -77,7 +77,6 @@ module GridFS
 
     attr_reader :md5
 
-
     # Determine whether a given file exists in the GridStore.
     #
     # @param [Mongo::DB] a MongoDB database.
@@ -121,10 +120,10 @@ module GridFS
     #
     # @return [String] the file data
     def self.read(db, name, length=nil, offset=nil)
-      GridStore.open(db, name, 'r') { |gs|
+      GridStore.open(db, name, 'r') do |gs|
         gs.seek(offset) if offset
         gs.read(length)
-      }
+      end
     end
 
     # List the contents of all GridFS files stored in the given db and
@@ -135,9 +134,9 @@ module GridFS
     #
     # @return [Array]
     def self.list(db, root_collection=DEFAULT_ROOT_COLLECTION)
-      db.collection("#{root_collection}.files").find().map { |f|
+      db.collection("#{root_collection}.files").find().map do |f|
         f['filename']
-      }
+      end
     end
 
     # Get each line of data from the specified file 
@@ -149,9 +148,9 @@ module GridFS
     #
     # @return [Array]
     def self.readlines(db, name, separator=$/)
-      GridStore.open(db, name, 'r') { |gs|
+      GridStore.open(db, name, 'r') do |gs|
         gs.readlines(separator)
-      }
+      end
     end
 
     # Remove one for more files from the given db.
@@ -159,14 +158,14 @@ module GridFS
     # @param [Mongo::Database] a MongoDB database.
     # @param [Array<String>] the filenames to remove
     def self.unlink(db, *names)
-      names.each { |name|
+      names.each do |name|
         gs = GridStore.new(db, name)
         gs.send(:delete_chunks)
         gs.collection.remove('_id' => gs.files_id)
-      }
+      end
     end
     class << self
-    alias_method :delete, :unlink
+      alias_method :delete, :unlink
     end
 
     # Rename a file in this collection. Note that this method uses
@@ -183,24 +182,20 @@ module GridFS
     # Initialize a GridStore instance for reading, writing, or modifying a given file.
     # Note that it's often easier to work with the various GridStore class methods (open, read, etc.).
     #
-    #
     # @param [Mongo::DB] db a MongoDB database.
     # @param [String] name a filename.
     # @param [String] mode either 'r', 'w', or 'w+' for reading, writing, or appending, respectively.
     #
-    # @option options [String] root ('r', 'w', 'w+')
-    # :root :: (r, w, w+) Name of root collection to use, instead of
-    #          DEFAULT_ROOT_COLLECTION.
+    # @option options [String] root DEFAULT_ROOT_COLLECTION ('r', 'w', 'w+') the name of the root collection to use.
     #
-    # :metadata:: (w, w+) A hash containing any data you want persisted as
-    #                     this file's metadata. See also metadata=
+    # @option options [String] metadata ({}) (w, w+) A hash containing any data you want persisted as
+    #   this file's metadata.
     #
-    # :chunk_size :: (w) Sets chunk size for files opened for writing
-    #                See also chunk_size= which may only be called before
-    #                any data is written.
+    # @option options [Integer] chunk_size (Chunk::DEFAULT_CHUNK_SIZE) (w) Sets chunk size for files opened for writing.
+    #   See also GridStore#chunk_size=.
     #
-    # :content_type :: (w) Default value is DEFAULT_CONTENT_TYPE. See
-    #                  also #content_type=
+    # @option options [String] content_type ('text/plain') Set the content type stored as the 
+    #   file's metadata. See also GridStore#content_type=.
     def initialize(db, name, mode='r', options={})
       @db, @filename, @mode = db, name, mode
       @root = options[:root] || DEFAULT_ROOT_COLLECTION
