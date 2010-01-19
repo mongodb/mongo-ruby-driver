@@ -77,72 +77,118 @@ module GridFS
 
     attr_reader :md5
 
-    class << self
 
-      def exist?(db, name, root_collection=DEFAULT_ROOT_COLLECTION)
-        db.collection("#{root_collection}.files").find({'filename' => name}).next_document != nil
-      end
-
-      def open(db, name, mode, options={})
-        gs = self.new(db, name, mode, options)
-        result = nil
-        begin
-          result = yield gs if block_given?
-        ensure
-          gs.close
-        end
-        result
-      end
-
-      def read(db, name, length=nil, offset=nil)
-        GridStore.open(db, name, 'r') { |gs|
-          gs.seek(offset) if offset
-          gs.read(length)
-        }
-      end
-
-      # List the contents of all GridFS files stored in the given db and
-      # root collection.
-      #
-      # :db :: the database to use
-      #
-      # :root_collection :: the root collection to use. If not specified, will use default root collection.
-      def list(db, root_collection=DEFAULT_ROOT_COLLECTION)
-        db.collection("#{root_collection}.files").find().map { |f|
-          f['filename']
-        }
-      end
-
-      def readlines(db, name, separator=$/)
-        GridStore.open(db, name, 'r') { |gs|
-          gs.readlines(separator)
-        }
-      end
-      
-      def unlink(db, *names)
-        names.each { |name|
-          gs = GridStore.new(db, name)
-          gs.send(:delete_chunks)
-          gs.collection.remove('_id' => gs.files_id)
-        }
-      end
-      alias_method :delete, :unlink
-
-      def mv(db, src, dest, root_collection=DEFAULT_ROOT_COLLECTION)
-        db.collection("#{root_collection}.files").update({ :filename => src }, { '$set' => { :filename => dest } })
-      end
-
+    # Determine whether a given file exists in the GridStore.
+    #
+    # @param [Mongo::DB] a MongoDB database.
+    # @param [String] name the filename.
+    # @param [String] root_collection the name of the gridfs root collection.
+    #
+    # @return [Boolean]
+    def self.exist?(db, name, root_collection=DEFAULT_ROOT_COLLECTION)
+      db.collection("#{root_collection}.files").find({'filename' => name}).next_document != nil
     end
 
-    #---
-    # ================================================================
-    #+++
+    # Open a GridFS file for reading, writing, or appending. Note that
+    # this method must be used with a block.
+    #
+    # @param [Mongo::DB] a MongoDB database.
+    # @param [String] name the filename.
+    # @param [String] mode one of 'r', 'w', or 'w+' for reading, writing, 
+    #   and appending, respectively.
+    # @param [Hash] options any of the options available on 
+    #   GridStore initialization.
+    #
+    # @see GridStore#initialize.
+    def self.open(db, name, mode, options={})
+      gs = self.new(db, name, mode, options)
+      result = nil
+      begin
+        result = yield gs if block_given?
+      ensure
+        gs.close
+      end
+      result
+    end
 
-    # Mode may only be 'r', 'w', or 'w+'.
+    # Read a file stored in GridFS.
     #
-    # Options. Descriptions start with a list of the modes for which that
-    # option is legitimate.
+    # @param [Mongo::DB] db a MongoDB database.
+    # @param [String] name the name of the file.
+    # @param [Integer] length the number of bytes to read.
+    # @param [Integer] offset the number of bytes beyond the 
+    #   beginning of the file to start reading.
     #
+    # @return [String] the file data
+    def self.read(db, name, length=nil, offset=nil)
+      GridStore.open(db, name, 'r') { |gs|
+        gs.seek(offset) if offset
+        gs.read(length)
+      }
+    end
+
+    # List the contents of all GridFS files stored in the given db and
+    # root collection.
+    #
+    # @param [Mongo::DB] db a MongoDB database.
+    # @param [String] root_collection the name of the root collection.
+    #
+    # @return [Array]
+    def self.list(db, root_collection=DEFAULT_ROOT_COLLECTION)
+      db.collection("#{root_collection}.files").find().map { |f|
+        f['filename']
+      }
+    end
+
+    # Get each line of data from the specified file 
+    # as an array of strings.
+    #
+    # @param [Mongo::DB] db a MongoDB database.
+    # @param [String] name the filename.
+    # @param [String, Reg] separator
+    #
+    # @return [Array]
+    def self.readlines(db, name, separator=$/)
+      GridStore.open(db, name, 'r') { |gs|
+        gs.readlines(separator)
+      }
+    end
+
+    # Remove one for more files from the given db.
+    #
+    # @param [Mongo::Database] a MongoDB database.
+    # @param [Array<String>] the filenames to remove
+    def self.unlink(db, *names)
+      names.each { |name|
+        gs = GridStore.new(db, name)
+        gs.send(:delete_chunks)
+        gs.collection.remove('_id' => gs.files_id)
+      }
+    end
+    class << self
+    alias_method :delete, :unlink
+    end
+
+    # Rename a file in this collection. Note that this method uses
+    # Collection#update, which means that you will not be notified 
+    #
+    # @param [Mongo::DB] a MongoDB database.
+    # @param [String] src the name of the source file.
+    # @param [String] dest the name of the destination file.
+    # @param [String] root_collection the name of the default root collection.
+    def self.mv(db, src, dest, root_collection=DEFAULT_ROOT_COLLECTION)
+      db.collection("#{root_collection}.files").update({ :filename => src }, { '$set' => { :filename => dest } })
+    end
+
+    # Initialize a GridStore instance for reading, writing, or modifying a given file.
+    # Note that it's often easier to work with the various GridStore class methods (open, read, etc.).
+    #
+    #
+    # @param [Mongo::DB] db a MongoDB database.
+    # @param [String] name a filename.
+    # @param [String] mode either 'r', 'w', or 'w+' for reading, writing, or appending, respectively.
+    #
+    # @option options [String] root ('r', 'w', 'w+')
     # :root :: (r, w, w+) Name of root collection to use, instead of
     #          DEFAULT_ROOT_COLLECTION.
     #
@@ -202,18 +248,26 @@ module GridFS
       @pushback_byte = nil
     end
 
+    # Get the files collection referenced by this GridStore instance.
+    #
+    # @return [Mongo::Collection]
     def collection
       @db.collection("#{@root}.files")
     end
 
-    # Returns collection used for storing chunks. Depends on value of
-    # @root.
+    # Get the chunk collection referenced by this GridStore.
+    #
+    # @return [Mongo::Collection]
     def chunk_collection
       @db.collection("#{@root}.chunks")
     end
 
-    # Change chunk size. Can only change if the file is opened for write
+    # Change the chunk size. This is permitted only when the file is opened for write
     # and no data has yet been written.
+    #
+    # @param [Integer] size the new chunk size, in bytes.
+    #
+    # @return [Integer] the new chunk size.
     def chunk_size=(size)
       unless @mode[0] == ?w && @position == 0 && @upload_date == nil
         raise "error: can only change chunk size if open for write and no data written."
@@ -221,9 +275,7 @@ module GridFS
       @chunk_size = size
     end
 
-    #---
     # ================ reading ================
-    #+++
 
     def getc
       if @pushback_byte
@@ -254,17 +306,6 @@ module GridFS
       end
       @lineno += 1
       str
-    end
-
-    def old_read(len=nil, buf=nil)
-      buf ||= ''
-      byte = self.getc
-      while byte != nil && (len == nil || len > 0)
-        buf << byte.chr
-        len -= 1 if len
-        byte = self.getc if (len == nil || len > 0)
-      end
-      buf
     end
 
     def read(len=nil, buf=nil)
@@ -313,9 +354,7 @@ module GridFS
       @position -= 1
     end
 
-    #---
     # ================ writing ================
-    #+++
 
     def putc(byte)
       if @curr_chunk.pos == @chunk_size
@@ -374,9 +413,7 @@ module GridFS
     def flush
     end
 
-    #---
     # ================ status ================
-    #+++
 
     def eof
       raise IOError.new("stream not open for reading") unless @mode[0] == ?r
@@ -384,9 +421,7 @@ module GridFS
     end
     alias_method :eof?, :eof
 
-    #---
     # ================ positioning ================
-    #+++
 
     def rewind
       if @curr_chunk.chunk_number != 0
