@@ -234,7 +234,7 @@ module Mongo
     # @param [Hash] selector
     #   If specified, only matching documents will be removed.
     #
-    # @param opts [Boolean] :safe [false] run the operation in safe mode, which
+    # @option opts [Boolean] :safe [false] run the operation in safe mode, which
     #   will call :getlasterror on the database and report any assertions.
     #
     # @example remove all documents from the 'users' collection:

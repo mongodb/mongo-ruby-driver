@@ -99,6 +99,7 @@ module GridFS
     #   GridStore initialization.
     #
     # @see GridStore#initialize.
+    # @see The various GridStore class methods, e.g., GridStore.open, GridStore.read etc.
     def self.open(db, name, mode, options={})
       gs = self.new(db, name, mode, options)
       result = nil
@@ -155,8 +156,10 @@ module GridFS
 
     # Remove one for more files from the given db.
     #
-    # @param [Mongo::Database] a MongoDB database.
-    # @param [Array<String>] the filenames to remove
+    # @param [Mongo::Database] db a MongoDB database.
+    # @param [Array<String>] names the filenames to remove
+    #
+    # @return [True]
     def self.unlink(db, *names)
       names.each do |name|
         gs = GridStore.new(db, name)
@@ -186,15 +189,15 @@ module GridFS
     # @param [String] name a filename.
     # @param [String] mode either 'r', 'w', or 'w+' for reading, writing, or appending, respectively.
     #
-    # @option options [String] root DEFAULT_ROOT_COLLECTION ('r', 'w', 'w+') the name of the root collection to use.
+    # @option options [String] :root DEFAULT_ROOT_COLLECTION ('r', 'w', 'w+') the name of the root collection to use.
     #
-    # @option options [String] metadata ({}) (w, w+) A hash containing any data you want persisted as
+    # @option options [String] :metadata ({}) (w, w+) A hash containing any data you want persisted as
     #   this file's metadata.
     #
-    # @option options [Integer] chunk_size (Chunk::DEFAULT_CHUNK_SIZE) (w) Sets chunk size for files opened for writing.
+    # @option options [Integer] :chunk_size (Chunk::DEFAULT_CHUNK_SIZE) (w) Sets chunk size for files opened for writing.
     #   See also GridStore#chunk_size=.
     #
-    # @option options [String] content_type ('text/plain') Set the content type stored as the 
+    # @option options [String] :content_type ('text/plain') Set the content type stored as the 
     #   file's metadata. See also GridStore#content_type=.
     def initialize(db, name, mode='r', options={})
       @db, @filename, @mode = db, name, mode
