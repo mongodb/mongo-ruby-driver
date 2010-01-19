@@ -234,20 +234,28 @@ module Mongo
     # @param [Hash] selector
     #   If specified, only matching documents will be removed.
     #
+    # @param opts [Boolean] :safe [false] run the operation in safe mode, which
+    #   will call :getlasterror on the database and report any assertions.
+    #
     # @example remove all documents from the 'users' collection:
     #   users.remove
     #   users.remove({})
     #
     # @example remove only documents that have expired:
     #   users.remove({:expire => {"$lte" => Time.now}})
-    def remove(selector={}, options={})
+    #
+    # @return [True]
+    #
+    # @raise [Mongo::OperationFailure] an exception will be raised iff safe mode is enabled
+    #   and the operation fails.
+    def remove(selector={}, opts={})
       # Initial byte is 0.
       message = ByteBuffer.new([0, 0, 0, 0])
       BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
       message.put_array(BSON.serialize(selector, false).to_a)
-      
-      if options[:safe]
+
+      if opts[:safe]
         @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message,
           "db.#{@db.name}.remove(#{selector.inspect})")
         # the return value of send_message_with_safe_check isn't actually meaningful --

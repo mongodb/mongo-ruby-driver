@@ -191,6 +191,19 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  def test_safe_remove
+    @conn = Connection.new
+    @db   = @conn['mongo-ruby-test']
+    @test = @db['test-safe-remove']
+    @test.save({:a => 20})
+    @conn.stubs(:receive).returns([[{'ok' => 0, 'err' => 'failed'}], 1, 0])
+
+    assert_raise OperationFailure do
+      @test.remove({}, :safe => true)
+    end
+    @test.drop
+  end
+
   def test_count
     @@test.drop
 
