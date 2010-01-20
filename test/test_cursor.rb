@@ -1,4 +1,5 @@
 require 'test/test_helper'
+require 'logger'
 
 # NOTE: assumes Mongo is running
 class CursorTest < Test::Unit::TestCase
@@ -15,11 +16,6 @@ class CursorTest < Test::Unit::TestCase
     @@coll.remove
     @@coll.insert('a' => 1)     # collection not created until it's used
     @@coll_full_name = 'ruby-mongo-test.test'
-  end
-
-  def teardown
-    @@coll.remove
-    @@db.error
   end
 
   def test_explain
@@ -110,6 +106,21 @@ class CursorTest < Test::Unit::TestCase
 
     assert_equal 2000, @@coll.find().sort([[:created_at, :asc]]).next_document["created_at"].year
     assert_equal 2004, @@coll.find().sort([[:created_at, :desc]]).next_document["created_at"].year
+  end
+
+  def test_sort_min_max_keys
+    @@coll.remove
+    @@coll.insert({"n" => 1000000})
+    @@coll.insert({"n" => -1000000})
+    @@coll.insert({"n" => MaxKey.new})
+    @@coll.insert({"n" => MinKey.new})
+
+    results = @@coll.find.sort([:n, :asc]).to_a
+
+    assert_equal MinKey.new, results[0]['n']
+    assert_equal -1000000,   results[1]['n']
+    assert_equal 1000000,    results[2]['n']
+    assert_equal MaxKey.new, results[3]['n']
   end
 
   def test_limit

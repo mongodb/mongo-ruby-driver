@@ -60,6 +60,8 @@ static VALUE Time;
 static VALUE ObjectID;
 static VALUE DBRef;
 static VALUE Code;
+static VALUE MinKey;
+static VALUE MaxKey;
 static VALUE RegexpOfHolding;
 static VALUE OrderedHash;
 static VALUE InvalidName;
@@ -369,9 +371,18 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&obj_length, 4);
                 break;
             }
+            if (strcmp(cls, "Mongo::MaxKey") == 0) {
+                write_name_and_type(buffer, key, 0x7f);
+                break;
+            }
+            if (strcmp(cls, "Mongo::MinKey") == 0) {
+                write_name_and_type(buffer, key, 0xff);
+                break;
+            }
             if (strcmp(cls, "DateTime") == 0 || strcmp(cls, "Date") == 0 || strcmp(cls, "ActiveSupport::TimeWithZone") == 0) {
               buffer_free(buffer);
-              rb_raise(InvalidDocument, "Trying to serialize and instance of Date, DateTime, or TimeWithZone; the MongoDB Ruby driver currently supports Time objects only.",
+              rb_raise(InvalidDocument, 
+                  "Trying to serialize and instance of Date, DateTime, or TimeWithZone; the MongoDB Ruby driver currently supports Time objects only.",
                   TYPE(value));
             }
             buffer_free(buffer);
@@ -506,6 +517,11 @@ static VALUE method_serialize(VALUE self, VALUE doc, VALUE check_keys) {
 static VALUE get_value(const char* buffer, int* position, int type) {
     VALUE value;
     switch (type) {
+    case -1:
+        {
+            value = rb_class_new_instance(0, NULL, MinKey);
+            break;
+        }
     case 1:
         {
             double d;
@@ -727,6 +743,11 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             *position += 8;
             break;
         }
+    case 127:
+        {
+            value = rb_class_new_instance(0, NULL, MaxKey);
+            break;
+        }
     default:
         {
             rb_raise(rb_eTypeError, "no c decoder for this type yet (%d)", type);
@@ -825,6 +846,9 @@ void Init_cbson() {
     DBRef = rb_const_get(mongo, rb_intern("DBRef"));
     rb_require("mongo/types/code");
     Code = rb_const_get(mongo, rb_intern("Code"));
+    rb_require("mongo/types/min_max_keys");
+    MinKey = rb_const_get(mongo, rb_intern("MinKey"));
+    MaxKey = rb_const_get(mongo, rb_intern("MaxKey"));
     rb_require("mongo/types/regexp_of_holding");
     RegexpOfHolding = rb_const_get(mongo, rb_intern("RegexpOfHolding"));
     rb_require("mongo/exceptions");

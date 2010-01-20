@@ -45,6 +45,7 @@ require 'mongo/types/code'
 require 'mongo/types/dbref'
 require 'mongo/types/objectid'
 require 'mongo/types/regexp_of_holding'
+require 'mongo/types/min_max_keys'
 
 require 'mongo/util/support'
 require 'mongo/util/conversions'

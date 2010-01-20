@@ -163,6 +163,10 @@ class BSON_RUBY
       serialize_null_element(@buf, k)
     when CODE_W_SCOPE
       serialize_code_w_scope(@buf, k, v)
+    when MAXKEY
+      serialize_max_key_element(@buf, k)
+    when MINKEY
+      serialize_min_key_element(@buf, k)
     else
       raise "unhandled type #{type}"
     end
@@ -234,6 +238,12 @@ class BSON_RUBY
         key = deserialize_cstr(@buf)
         doc[key] = [deserialize_number_int_data(@buf),
                     deserialize_number_int_data(@buf)]
+      when MAXKEY
+        key = deserialize_cstr(@buf)
+        doc[key] = MaxKey.new
+      when MINKEY, 255 # This is currently easier than unpack the type byte as an unsigned char.
+        key = deserialize_cstr(@buf)
+        doc[key] = MinKey.new
       when EOO
         break
       else
@@ -466,6 +476,16 @@ class BSON_RUBY
     self.class.serialize_cstr(buf, options_str.split(//).sort.uniq.join)
   end
 
+  def serialize_max_key_element(buf, key)
+    buf.put(MAXKEY)
+    self.class.serialize_key(buf, key)
+  end
+
+  def serialize_min_key_element(buf, key)
+    buf.put(MINKEY)
+    self.class.serialize_key(buf, key)
+  end
+
   def serialize_oid_element(buf, key, val)
     buf.put(OID)
     self.class.serialize_key(buf, key)
@@ -553,6 +573,10 @@ class BSON_RUBY
       OBJECT
     when Symbol
       SYMBOL
+    when MaxKey
+      MAXKEY
+    when MinKey
+      MINKEY
     when Date, DateTime
       raise InvalidDocument, "Trying to serialize an instance of #{o.class}; " +
         "the MongoDB Ruby driver currently supports Time objects only."

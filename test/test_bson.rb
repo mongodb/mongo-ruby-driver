@@ -356,6 +356,18 @@ class BSONTest < Test::Unit::TestCase
     end
   end
 
+  def test_max_key
+    doc = {"a" => MaxKey.new}
+
+    assert_equal doc, BSON.deserialize(BSON.serialize(doc).to_a)
+  end
+
+  def test_min_key
+    doc = {"a" => MinKey.new}
+
+    assert_equal doc, BSON.deserialize(BSON.serialize(doc).to_a)
+  end
+
   def test_invalid_object
     o = Object.new
     assert_raise InvalidDocument do
