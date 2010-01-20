@@ -225,10 +225,13 @@ module Mongo
     # @return [True]
     def send_message(operation, message, log_message=nil)
       @logger.debug("  MONGODB #{log_message || message}") if @logger
-      packed_message = add_message_headers(operation, message).to_s
-      socket = checkout
-      send_message_on_socket(packed_message, socket)
-      checkin(socket)
+      begin
+        packed_message = add_message_headers(operation, message).to_s
+        socket = checkout
+        send_message_on_socket(packed_message, socket)
+      ensure
+        checkin(socket)
+      end
     end
 
     # Sends a message to the database, waits for a response, and raises
@@ -246,14 +249,17 @@ module Mongo
       message_with_headers = add_message_headers(operation, message)
       message_with_check   = last_error_message(db_name)
       @logger.debug("  MONGODB #{log_message || message}") if @logger
-      sock = checkout
-      packed_message = message_with_headers.append!(message_with_check).to_s
-      docs = num_received = cursor_id = ''
-      @safe_mutex.synchronize do
-        send_message_on_socket(packed_message, sock)
-        docs, num_received, cursor_id = receive(sock)
+      begin
+        sock = checkout
+        packed_message = message_with_headers.append!(message_with_check).to_s
+        docs = num_received = cursor_id = ''
+        @safe_mutex.synchronize do
+          send_message_on_socket(packed_message, sock)
+          docs, num_received, cursor_id = receive(sock)
+        end
+      ensure
+        checkin(sock)
       end
-      checkin(sock)
       if num_received == 1 && error = docs[0]['err']
         raise Mongo::OperationFailure, error
       end
@@ -273,14 +279,17 @@ module Mongo
     def receive_message(operation, message, log_message=nil, socket=nil)
       packed_message = add_message_headers(operation, message).to_s
       @logger.debug("  MONGODB #{log_message || message}") if @logger
-      sock = socket || checkout
+      begin
+        sock = socket || checkout
 
-      result = ''
-      @safe_mutex.synchronize do
-        send_message_on_socket(packed_message, sock)
-        result = receive(sock)
+        result = ''
+        @safe_mutex.synchronize do
+          send_message_on_socket(packed_message, sock)
+          result = receive(sock)
+        end
+      ensure
+        checkin(sock)
       end
-      checkin(sock)
       result
     end
 
@@ -394,6 +403,9 @@ module Mongo
           return socket if socket
 
           # Otherwise, wait
+          if @logger
+            @logger.warn "Waiting for available connection; #{@checked_out.size} of #{@size} connections checked out."
+          end
           @queue.wait(@connection_mutex)
         end
       end

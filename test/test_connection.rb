@@ -1,6 +1,7 @@
 require 'test/test_helper'
 require 'logger'
 require 'stringio'
+require 'thread'
 
 # NOTE: assumes Mongo is running
 class TestConnection < Test::Unit::TestCase
@@ -121,5 +122,39 @@ class TestConnection < Test::Unit::TestCase
     assert_equal 2, nodes.length
     assert_equal ['bar', Connection::DEFAULT_PORT], nodes[0]
     assert_equal ['foo', 123], nodes[1]
+  end
+
+  context "Connection exceptions" do
+    setup do
+      @conn = Mongo::Connection.new('localhost', 27017, :pool_size => 10, :timeout => 10)
+      @coll = @conn['mongo-ruby-test']['test-connection-exceptions']
+    end
+
+    should "release connection if an exception is raised on send_message" do
+      @conn.stubs(:send_message_on_socket).raises(ConnectionFailure)
+      assert_equal 0, @conn.checked_out.size
+      assert_raise ConnectionFailure do
+        @coll.insert({:test => "insert"})
+      end
+      assert_equal 0, @conn.checked_out.size
+    end
+
+    should "release connection if an exception is raised on send_with_safe_check" do
+      @conn.stubs(:receive).raises(ConnectionFailure)
+      assert_equal 0, @conn.checked_out.size
+      assert_raise ConnectionFailure do
+        @coll.insert({:test => "insert"}, :safe => true)
+      end
+      assert_equal 0, @conn.checked_out.size
+    end
+
+    should "release connection if an exception is raised on receive_message" do
+      @conn.stubs(:receive).raises(ConnectionFailure)
+      assert_equal 0, @conn.checked_out.size
+      assert_raise ConnectionFailure do
+        @coll.find.to_a
+      end
+      assert_equal 0, @conn.checked_out.size
+    end
   end
 end
