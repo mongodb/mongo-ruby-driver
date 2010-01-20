@@ -369,13 +369,13 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&obj_length, 4);
                 break;
             }
-            if (strcmp(cls, "DateTime") == 0 || strcmp(cls, "Date") == 0) {
+            if (strcmp(cls, "DateTime") == 0 || strcmp(cls, "Date") == 0 || strcmp(cls, "ActiveSupport::TimeWithZone") == 0) {
               buffer_free(buffer);
-              rb_raise(InvalidDocument, "Trying to use Date or DateTime; the driver currently supports Time objects only.",
+              rb_raise(InvalidDocument, "Trying to serialize and instance of Date, DateTime, or TimeWithZone; the MongoDB Ruby driver currently supports Time objects only.",
                   TYPE(value));
             }
             buffer_free(buffer);
-            rb_raise(InvalidDocument, "Unsupported type for BSON (%d)", TYPE(value));
+            rb_raise(InvalidDocument, "Cannot serialize an object of class %s into BSON.", cls);
             break;
         }
     case T_DATA:
@@ -428,8 +428,9 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         }
     default:
         {
+            const char* cls = rb_class2name(RBASIC(value)->klass);
             buffer_free(buffer);
-            rb_raise(InvalidDocument, "Unsupported type for BSON (%d)", TYPE(value));
+            rb_raise(InvalidDocument, "Cannot serialize an object of class %s into BSON.", cls);
             break;
         }
     }

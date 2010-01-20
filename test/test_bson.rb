@@ -1,6 +1,13 @@
 # encoding:utf-8
 require 'test/test_helper'
 
+# Need to simulating this class
+# without actually loading it.
+module ActiveSupport
+  class TimeWithZone
+  end
+end
+
 class BSONTest < Test::Unit::TestCase
 
   include Mongo
@@ -181,15 +188,16 @@ class BSONTest < Test::Unit::TestCase
     end
   end
 
-  def test_exeption_on_using_date
-    [DateTime.now, Date.today].each do |invalid_date|
+  def test_exeption_on_using_unsupported_date_class
+    [DateTime.now, Date.today, ActiveSupport::TimeWithZone.new].each do |invalid_date|
       doc = {:date => invalid_date}
       begin
       bson = BSON.serialize(doc)
       rescue => e
       ensure
+        puts e.message
         assert_equal InvalidDocument, e.class
-        assert_match /Time/, e.message
+        assert_match /Time objects only/, e.message
       end
     end
   end

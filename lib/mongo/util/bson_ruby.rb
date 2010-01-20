@@ -554,9 +554,15 @@ class BSON_RUBY
     when Symbol
       SYMBOL
     when Date, DateTime
-      raise InvalidDocument, "Trying to use Date or DateTime; the driver currently supports Time objects only."
+      raise InvalidDocument, "Trying to serialize an instance of #{o.class}; " +
+        "the MongoDB Ruby driver currently supports Time objects only."
     else
-      raise InvalidDocument, "Unknown type of object: #{o.class.name}"
+      if defined?(ActiveSupport::TimeWithZone) && o.is_a?(ActiveSupport::TimeWithZone)
+        raise InvalidDocument, "Trying to serialize an instance of ActiveSupport::TimeWithZone; " +
+                               "the MongoDB Ruby driver currently supports Time objects only."
+      else
+        raise InvalidDocument, "Unknown type of object: #{o.class.name}"
+      end
     end
   end
 
