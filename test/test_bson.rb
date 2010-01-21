@@ -1,5 +1,8 @@
 # encoding:utf-8
 require 'test/test_helper'
+require 'complex'
+require 'bigdecimal'
+require 'rational'
 
 # Need to simulating this class
 # without actually loading it.
@@ -197,7 +200,7 @@ class BSONTest < Test::Unit::TestCase
       ensure
         puts e.message
         assert_equal InvalidDocument, e.class
-        assert_match /Time objects only/, e.message
+        assert_match /UTC Time/, e.message
       end
     end
   end
@@ -311,6 +314,20 @@ class BSONTest < Test::Unit::TestCase
     doc["x"] = doc["x"] - 1
     assert_raise RangeError do
       bson = BSON.serialize(doc)
+    end
+  end
+
+  def test_invalid_numeric_types
+    [BigDecimal.new("1.0"), Complex.new(0, 1), Rational.new!(2, 3)].each do |type|
+      print type.class
+      doc = {"x" => type}
+      begin
+        BSON.serialize(doc)
+      rescue => e
+      ensure
+        assert_equal InvalidDocument, e.class
+        assert_match /Numeric type #{type.class}/, e.message
+      end
     end
   end
 

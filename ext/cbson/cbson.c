@@ -274,7 +274,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
     case T_STRING:
         {
             if (strcmp(rb_class2name(RBASIC(value)->klass),
-                       "Mongo::Code") == 0) {
+                  "Mongo::Code") == 0) {
                 buffer_position length_location, start_position, total_length;
                 int length;
                 write_name_and_type(buffer, key, 0x0F);
@@ -380,10 +380,14 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 break;
             }
             if (strcmp(cls, "DateTime") == 0 || strcmp(cls, "Date") == 0 || strcmp(cls, "ActiveSupport::TimeWithZone") == 0) {
-              buffer_free(buffer);
-              rb_raise(InvalidDocument, 
-                  "Trying to serialize and instance of Date, DateTime, or TimeWithZone; the MongoDB Ruby driver currently supports Time objects only.",
-                  TYPE(value));
+                buffer_free(buffer);
+                rb_raise(InvalidDocument, "%s is not currently supported; use a UTC Time instance instead.", cls);
+                break;
+            }
+            if(strcmp(cls, "Complex") == 0 || strcmp(cls, "Rational") == 0 || strcmp(cls, "BigDecimal") == 0) {
+                buffer_free(buffer);
+                rb_raise(InvalidDocument, "The Numeric type %s cannot be encoded as BSON; only Bignum, Fixnum, and Float are supported.", cls);
+                break;
             }
             buffer_free(buffer);
             rb_raise(InvalidDocument, "Cannot serialize an object of class %s into BSON.", cls);
@@ -391,7 +395,6 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         }
     case T_DATA:
         {
-            // TODO again, is this really the only way to do this?
             const char* cls = rb_class2name(RBASIC(value)->klass);
             if (strcmp(cls, "Time") == 0) {
                 double t = NUM2DBL(rb_funcall(value, rb_intern("to_f"), 0));
@@ -400,6 +403,14 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 SAFE_WRITE(buffer, (const char*)&time_since_epoch, 8);
                 break;
             }
+            if(strcmp(cls, "BigDecimal") == 0) {
+                buffer_free(buffer);
+                rb_raise(InvalidDocument, "The Numeric type %s cannot be encoded as BSON; only Bignum, Fixnum, and Float are supported.", cls);
+                break;
+            }
+            buffer_free(buffer);
+            rb_raise(InvalidDocument, "Cannot serialize an object of class %s into BSON.", cls);
+            break;
         }
     case T_REGEXP:
         {
@@ -441,7 +452,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         {
             const char* cls = rb_class2name(RBASIC(value)->klass);
             buffer_free(buffer);
-            rb_raise(InvalidDocument, "Cannot serialize an object of class %s into BSON.", cls);
+            rb_raise(InvalidDocument, "Cannot serialize an object of class %s (type %d) into BSON.", cls, TYPE(value));
             break;
         }
     }

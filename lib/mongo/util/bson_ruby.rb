@@ -549,7 +549,7 @@ class BSON_RUBY
       NULL
     when Integer
       NUMBER_INT
-    when Numeric
+    when Float
       NUMBER
     when ByteBuffer
       BINARY
@@ -577,15 +577,17 @@ class BSON_RUBY
       MAXKEY
     when MinKey
       MINKEY
+    when Numeric
+      raise InvalidDocument, "The Numeric type #{o.class} cannot be encoded as BSON; only Fixum, Bignum, and Float are supported."
     when Date, DateTime
-      raise InvalidDocument, "Trying to serialize an instance of #{o.class}; " +
-        "the MongoDB Ruby driver currently supports Time objects only."
+      raise InvalidDocument, "#{o.class} is not currently supported; " +
+        "use a UTC Time instance instead."
     else
       if defined?(ActiveSupport::TimeWithZone) && o.is_a?(ActiveSupport::TimeWithZone)
-        raise InvalidDocument, "Trying to serialize an instance of ActiveSupport::TimeWithZone; " +
-                               "the MongoDB Ruby driver currently supports Time objects only."
+        raise InvalidDocument, "ActiveSupport::TimeWithZone is not currently supported; " +
+                               "use a UTC Time instance instead."
       else
-        raise InvalidDocument, "Unknown type of object: #{o.class.name}"
+        raise InvalidDocument, "#{o.class} isn't supported as a BSON type."
       end
     end
   end
