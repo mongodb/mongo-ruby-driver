@@ -318,7 +318,7 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_invalid_numeric_types
-    [BigDecimal.new("1.0"), Complex.new(0, 1), Rational.new!(2, 3)].each do |type|
+    [BigDecimal.new("1.0"), Complex(0, 1), Rational.new!(2, 3)].each do |type|
       print type.class
       doc = {"x" => type}
       begin
