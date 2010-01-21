@@ -120,7 +120,7 @@ class OrderedHash < Hash
         code = 37 * code + key.hash
         code = 37 * code + value.hash
       end
-      code
+      code & 0x7fffffff
     end
 
     def eql?(o)

@@ -19,6 +19,12 @@ class OrderedHashTest < Test::Unit::TestCase
     assert_equal a, b
   end
 
+  def test_hash_code
+    o = OrderedHash.new
+    o['number'] = 50
+    assert o.hash
+  end
+
   def test_empty
     assert_equal [], OrderedHash.new.keys
   end
