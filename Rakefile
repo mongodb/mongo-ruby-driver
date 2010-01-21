@@ -28,6 +28,7 @@ namespace :test do
     Rake::Task['test:unit'].invoke
     Rake::Task['test:functional'].invoke
     Rake::Task['test:pooled_threading'].invoke
+    Rake::Task['test:drop_databases'].invoke
     ENV['C_EXT'] = nil
   end
 
@@ -37,6 +38,7 @@ namespace :test do
     Rake::Task['test:unit'].invoke
     Rake::Task['test:functional'].invoke
     Rake::Task['test:pooled_threading'].invoke
+    Rake::Task['test:drop_databases'].invoke
   end
 
   Rake::TestTask.new(:unit) do |t|
@@ -72,6 +74,15 @@ namespace :test do
   Rake::TestTask.new(:pair_query) do |t|
     t.test_files = FileList['test/replica/query_test.rb']
     t.verbose    = true
+  end
+
+  task :drop_databases do |t|
+    puts "Dropping test database..."
+    require File.join(File.dirname(__FILE__), 'lib', 'mongo')
+    include Mongo
+    con = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+      ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
+    con.drop_database('ruby-mongo-test')
   end
 end
 
