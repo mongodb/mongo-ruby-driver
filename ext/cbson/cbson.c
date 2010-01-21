@@ -386,7 +386,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
             }
             if(strcmp(cls, "Complex") == 0 || strcmp(cls, "Rational") == 0 || strcmp(cls, "BigDecimal") == 0) {
                 buffer_free(buffer);
-                rb_raise(InvalidDocument, "The Numeric type %s cannot be encoded as BSON; only Bignum, Fixnum, and Float are supported.", cls);
+                rb_raise(InvalidDocument, "Cannot serialize the Numeric type %s as BSON; only Bignum, Fixnum, and Float are supported.", cls);
                 break;
             }
             buffer_free(buffer);
@@ -405,7 +405,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
             }
             if(strcmp(cls, "BigDecimal") == 0) {
                 buffer_free(buffer);
-                rb_raise(InvalidDocument, "The Numeric type %s cannot be encoded as BSON; only Bignum, Fixnum, and Float are supported.", cls);
+                rb_raise(InvalidDocument, "Cannot serialize the Numeric type %s as BSON; only Bignum, Fixnum, and Float are supported.", cls);
                 break;
             }
             buffer_free(buffer);

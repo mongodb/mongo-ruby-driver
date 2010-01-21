@@ -198,7 +198,6 @@ class BSONTest < Test::Unit::TestCase
       bson = BSON.serialize(doc)
       rescue => e
       ensure
-        puts e.message
         assert_equal InvalidDocument, e.class
         assert_match /UTC Time/, e.message
       end
@@ -319,14 +318,13 @@ class BSONTest < Test::Unit::TestCase
 
   def test_invalid_numeric_types
     [BigDecimal.new("1.0"), Complex(0, 1), Rational(2, 3)].each do |type|
-      print type.class
       doc = {"x" => type}
       begin
         BSON.serialize(doc)
       rescue => e
       ensure
         assert_equal InvalidDocument, e.class
-        assert_match /Numeric type #{type.class}/, e.message
+        assert_match /Cannot serialize/, e.message
       end
     end
   end

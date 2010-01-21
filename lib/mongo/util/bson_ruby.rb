@@ -578,7 +578,7 @@ class BSON_RUBY
     when MinKey
       MINKEY
     when Numeric
-      raise InvalidDocument, "The Numeric type #{o.class} cannot be encoded as BSON; only Fixum, Bignum, and Float are supported."
+      raise InvalidDocument, "Cannot serialize the Numeric type #{o.class} as BSON; only Fixum, Bignum, and Float are supported."
     when Date, DateTime
       raise InvalidDocument, "#{o.class} is not currently supported; " +
         "use a UTC Time instance instead."
@@ -587,7 +587,7 @@ class BSON_RUBY
         raise InvalidDocument, "ActiveSupport::TimeWithZone is not currently supported; " +
                                "use a UTC Time instance instead."
       else
-        raise InvalidDocument, "#{o.class} isn't supported as a BSON type."
+        raise InvalidDocument, "Cannot serialize #{o.class} as a BSON type; it either isn't supported or won't translate to BSON."
       end
     end
   end
