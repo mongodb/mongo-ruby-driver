@@ -123,6 +123,27 @@ class CursorTest < Test::Unit::TestCase
     assert_equal MaxKey.new, results[3]['n']
   end
 
+  def test_id_range_queries
+    @@coll.remove
+
+    t1 = Time.now
+    t1_id = ObjectID.from_time(t1)
+    @@coll.save({:t => 't1'})
+    @@coll.save({:t => 't1'})
+    @@coll.save({:t => 't1'})
+    sleep(2)
+    t2 = Time.now
+    t2_id = ObjectID.from_time(t2)
+    @@coll.save({:t => 't2'})
+    @@coll.save({:t => 't2'})
+    @@coll.save({:t => 't2'})
+
+    assert_equal 3, @@coll.find({'_id' => {'$gt' => t1_id}, '_id' => {'$lt' => t2_id}}).count
+    @@coll.find({'_id' => {'$gt' => t2_id}}).each do |doc|
+      assert_equal 't2', doc['t']
+    end
+  end
+
   def test_limit
     @@coll.remove
 

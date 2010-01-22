@@ -51,6 +51,22 @@ module Mongo
       str && str.length == len && match == str
     end
 
+    # Create an object id from the given time. This is useful for doing range
+    # queries; it works because MongoDB's object ids begin
+    # with a timestamp.
+    #
+    # @param [Time] time a utc time to encode as an object id.
+    #
+    # @return [Mongo::ObjectID]
+    #
+    # @example Return all document created before Jan 1, 2010.
+    #   time = Time.utc(2010, 1, 1)
+    #   time_id = ObjectID.from_time(time)
+    #   collection.find({'_id' => {'$lt' => time_id}})
+    def self.from_time(time)
+      self.new([time.to_i,0,0].pack("NNN").unpack("C12"))
+    end
+
     # Adds a primary key to the given document if needed.
     #
     # @param [Hash] doc a document requiring an _id.
@@ -163,7 +179,7 @@ module Mongo
     #
     # @return [Time] the time at which this object was created.
     def generation_time
-      Time.at(@data.pack("C4").unpack("N")[0])
+      Time.at(@data.pack("C4").unpack("N")[0]).utc
     end
 
     private

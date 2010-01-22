@@ -23,7 +23,7 @@ class ObjectIDTest < Test::Unit::TestCase
     doc = {:name => 'Mongo'}
     doc = ObjectID.create_pk(doc)
     assert doc[:_id]
-    
+
     doc = {:name => 'Mongo', :_id => '12345'}
     doc = ObjectID.create_pk(doc)
     assert_equal '12345', doc[:_id]
@@ -136,10 +136,19 @@ class ObjectIDTest < Test::Unit::TestCase
   def test_generation_time
     time = Time.now
     id   = ObjectID.new
+    generated_time = id.generation_time
 
-    assert_in_delta time.to_i, id.generation_time.to_i, 2
+    assert_in_delta time.to_i, generated_time.to_i, 2
+    assert_equal "UTC", generated_time.zone
   end
-  
+
+  def test_from_time
+    time = Time.now.utc
+    id   = ObjectID.from_time(time)
+
+    assert_equal time.to_i, id.generation_time.to_i
+  end
+
   def test_json
     id = ObjectID.new
     assert_equal %Q("#{id}"), id.to_json
