@@ -2,7 +2,7 @@
 
 This is the 10gen-supported Ruby driver for MongoDB[http://www.mongodb.org].
 
-Here is a quick code sample. See the MongoDB Ruby Tutorial
+Here's a quick code sample. See the MongoDB Ruby Tutorial
 (http://www.mongodb.org/display/DOCS/Ruby+Tutorial) for much more.
 
   require 'rubygems'
@@ -264,7 +264,7 @@ Random cursor fun facts:
 = Testing
 
 If you have the source code, you can run the tests. There's a separate rake task for testing with
-the mongo_ext c extension enabled.
+the mongo_ext C extension enabled.
 
   $ rake test:c
 
