@@ -142,8 +142,12 @@ module Mongo
     end
     alias_method :inspect, :to_s
 
-    def to_json(*args)
-      %Q("#{to_s}")
+    # Convert to MongoDB extended JSON format. Since JSON includes type information,
+    # but lacks an ObjectID type, this JSON format encodes the type using an $id key.
+    #
+    # @return [String] the object id represented as MongoDB extended JSON.
+    def to_json(escaped=false)
+      "{\"$oid\": \"#{to_s}\"}"
     end
 
     # @deprecated

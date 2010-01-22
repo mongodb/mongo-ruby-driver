@@ -151,6 +151,6 @@ class ObjectIDTest < Test::Unit::TestCase
 
   def test_json
     id = ObjectID.new
-    assert_equal %Q("#{id}"), id.to_json
+    assert_equal "{\"$oid\": \"#{id}\"}", id.to_json
   end
 end
