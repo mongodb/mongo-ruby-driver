@@ -25,7 +25,7 @@ class TestThreadingLargePool < Test::Unit::TestCase
   def test_safe_update
     set_up_safe_data
     threads = []
-    1000.times do |i|
+    300.times do |i|
       threads[i] = Thread.new do
         if i % 2 == 0
           assert_raise Mongo::OperationFailure do
@@ -37,7 +37,7 @@ class TestThreadingLargePool < Test::Unit::TestCase
       end
     end
 
-    1000.times do |i|
+    300.times do |i|
       threads[i].join
     end
   end
@@ -45,7 +45,7 @@ class TestThreadingLargePool < Test::Unit::TestCase
   def test_safe_insert
     set_up_safe_data
     threads = []
-    1000.times do |i|
+    300.times do |i|
       threads[i] = Thread.new do
         if i % 2 == 0
           assert_raise Mongo::OperationFailure do
@@ -57,7 +57,7 @@ class TestThreadingLargePool < Test::Unit::TestCase
       end
     end
 
-    1000.times do |i|
+    300.times do |i|
       threads[i].join
     end
   end
