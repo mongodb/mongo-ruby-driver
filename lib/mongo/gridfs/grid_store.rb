@@ -392,6 +392,10 @@ module GridFS
 
     def write(string)
       raise "#@filename not opened for write" unless @mode[0] == ?w
+      # Since Ruby 1.9.1 doesn't necessarily store one character per byte.
+      if string.respond_to?(:force_encoding)
+        string.force_encoding("binary")
+      end
       to_write = string.length
       while (to_write > 0) do
         if @curr_chunk && @curr_chunk.data.position == @chunk_size

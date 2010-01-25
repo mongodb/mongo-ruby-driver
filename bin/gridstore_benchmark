@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 require 'rubygems'
 require 'mongo'
-require 'mongo/gridfs'
 #require 'ruby-prof'
 
 include Mongo
