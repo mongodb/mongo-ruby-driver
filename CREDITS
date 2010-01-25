@@ -29,6 +29,7 @@ Paul Dlug, paul.dlug@gmail.com
 Durran Jordan, durran@gmail.com
 * DB#collections
 * Support for specifying sort order as array of [key, direction] pairs
+* OrderedHash#update aliases to merge!
 
 Cyril Mougel, cyril.mougel@gmail.com
 * Initial logging support
@@ -60,3 +61,9 @@ Christos Trochalakis
 
 Blythe Dunham
 * Added finalize option to map/reduce
+
+Matt Powell (fauxparse)
+* Added GridStore#mv
+
+Patrick Collison
+* Added safe mode for Collection#remove

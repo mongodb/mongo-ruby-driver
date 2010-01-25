@@ -1,3 +1,16 @@
+0.18.3 2010-1-25
+* Convert docs to YARD
+* Support MongoDB extended JSON on ObjectID#to_json
+* ObjectID#from_time for performing date range queries on _id (thx., Sunny Hirai)
+* GridStore#mv for renaming files (Matt Powell)
+* Safe mode for Collection#remove (Patrick Collison)
+* Support BSON types MinKey and MaxKey
+* DEPRECATED Admin, XMLToRuby, and RegexpOfHolding classes.
+* Handle unsupported Numeric types gracefully (Complex, Rational, BigDecimal)
+* Handle unsupported Time types gracefully (Date, DateTime, ActiveSupport::TimeWithZone)
+* Numerous small bug fixes
+* Minor performance improvements
+
 0.18.2 2009-12-29
 * Significant GridStore performance improvement (thx., Sunny Hirai)
 * Enabled support for keyf on group
