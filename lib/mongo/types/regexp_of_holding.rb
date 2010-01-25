@@ -24,6 +24,8 @@ module Mongo
   # Note that you do not have to use this class at all if you wish to
   # store regular expressions in Mongo. The Mongo and Ruby regex option
   # flags are the same. Storing regexes is discouraged, in any case.
+  # 
+  # @deprecated
   class RegexpOfHolding < Regexp
 
     attr_accessor :extra_options_str
