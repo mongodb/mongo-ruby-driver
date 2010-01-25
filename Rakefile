@@ -96,10 +96,10 @@ end
 
 desc "Generate YARD documentation"
 task :ydoc do
-  version = eval(File.read("mongo-ruby-driver.gemspec")).version
-  out = File.join('ydoc', version.to_s)
+  require File.join(File.dirname(__FILE__), 'lib', 'mongo')
+  out = File.join('ydoc', Mongo::VERSION)
   FileUtils.rm_rf('ydoc')
-  system "yardoc lib/**/*.rb lib/mongo/**/*.rb -o #{out} --title MongoRuby-#{version}"
+  system "yardoc lib/**/*.rb lib/mongo/**/*.rb -o #{out} --title MongoRuby-#{Mongo::VERSION}"
 end
 
 desc "Publish documentation to mongo.rubyforge.org"
