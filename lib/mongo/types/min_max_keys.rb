@@ -16,7 +16,7 @@
 
 module Mongo
 
-  # A class representing the BSON MinKey type. MaxKey will always compare greater than
+  # A class representing the BSON MaxKey type. MaxKey will always compare greater than
   # all other BSON types and values.
   #
   # @example Sorting (assume @numbers is a collection):
