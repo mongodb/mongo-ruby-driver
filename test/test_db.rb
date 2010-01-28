@@ -21,18 +21,6 @@ class DBTest < Test::Unit::TestCase
   @@db    = @@conn.db('ruby-mongo-test')
   @@users = @@db.collection('system.users')
 
-  def setup
-    @spongebob = 'spongebob'
-    @spongebob_password = 'squarepants'
-    @@users.remove
-    @@users.insert(:user => @spongebob, :pwd => @@db.send(:hash_password, @spongebob, @spongebob_password))
-  end
-
-  def teardown
-    @@users.remove if @@users
-    @@db.error
-  end
-
   def test_close
     @@conn.close
     assert !@@conn.connected?
@@ -139,9 +127,12 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_authenticate
+    @@db.add_user('spongebob', 'squarepants')
     assert !@@db.authenticate('nobody', 'nopassword')
-    assert !@@db.authenticate(@spongebob, 'squareliederhosen')
-    assert @@db.authenticate(@spongebob, @spongebob_password)
+    assert !@@db.authenticate('spongebob' , 'squareliederhosen')
+    assert @@db.authenticate('spongebob', 'squarepants')
+    @@db.logout
+    @@db.remove_user('spongebob')
   end
 
   def test_logout
@@ -200,6 +191,19 @@ class DBTest < Test::Unit::TestCase
     conn = Connection.new(@@host, @@port.to_s)
     db   = conn['ruby-mongo-test']
     assert db.collection('users').remove
+  end
+
+  def test_user_management
+    @@db.add_user("bob", "secret")
+    @@db.logout
+    p @@users.find.to_a
+    assert @@db.authenticate("bob", "secret")
+    assert @@db.remove_user("bob")
+    assert !@@db.authenticate("bob", "secret")
+  end
+
+  def test_remove_non_existant_user
+    assert !@@db.remove_user("joe")
   end
 
   context "database profiling" do

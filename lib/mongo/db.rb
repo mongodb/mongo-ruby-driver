@@ -89,6 +89,35 @@ module Mongo
       ok?(command(auth))
     end
 
+    # Adds a user to this database for use with authentication. If the user already
+    # exists in the system, the password will be updated.
+    #
+    # @param [String] username
+    # @param [String] password
+    #
+    # @return [Hash] an object representing the user.
+    def add_user(username, password)
+      users = self[SYSTEM_USER_COLLECTION]
+      user  = users.find_one({:user => username}) || {:user => username}
+      user['pwd'] = hash_password(username, password)
+      users.save(user)
+      return user
+    end
+
+    # Remove the given user from this database. Returns false if the user
+    # doesn't exist in the system.
+    #
+    # @param [String] username
+    #
+    # @return [Boolean]
+    def remove_user(username)
+      if self[SYSTEM_USER_COLLECTION].find_one({:user => username})
+        self[SYSTEM_USER_COLLECTION].remove({:user => username}, :safe => true)
+      else
+        return false
+      end
+    end
+
     # Deauthorizes use for this database for this connection.
     #
     # @raise [MongoDBError] if logging out fails.
