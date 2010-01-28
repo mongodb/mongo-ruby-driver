@@ -87,15 +87,15 @@ class BSON_RUBY
 
   # Serializes an object.
   # Implemented to ensure an API compatible with BSON extension.
-  def self.serialize(obj, check_keys=false)
-    new.serialize(obj, check_keys)
+  def self.serialize(obj, check_keys=false, move_id=false)
+    new.serialize(obj, check_keys, move_id)
   end
 
   def self.deserialize(buf=nil)
     new.deserialize(buf)
   end
 
-  def serialize(obj, check_keys=false)
+  def serialize(obj, check_keys=false, move_id=false)
     raise "Document is null" unless obj
 
     @buf.rewind
@@ -103,13 +103,19 @@ class BSON_RUBY
     @buf.put_int(0)
 
     # Write key/value pairs. Always write _id first if it exists.
-    if obj.has_key? '_id'
-      serialize_key_value('_id', obj['_id'], check_keys)
-    elsif obj.has_key? :_id
-      serialize_key_value('_id', obj[:_id], check_keys)
+    if move_id
+      if obj.has_key? '_id'
+        serialize_key_value('_id', obj['_id'], check_keys)
+      elsif obj.has_key? :_id
+        serialize_key_value('_id', obj[:_id], check_keys)
+      end
+      obj.each {|k, v| serialize_key_value(k, v, check_keys) unless k == '_id' || k == :_id }
+    else
+      if obj.has_key?('_id') && obj.has_key?(:_id)
+        obj.delete(:_id)
+      end
+      obj.each {|k, v| serialize_key_value(k, v, check_keys) }
     end
-
-    obj.each {|k, v| serialize_key_value(k, v, check_keys) unless k == '_id' || k == :_id }
 
     serialize_eoo_element(@buf)
     if @buf.size > 4 * 1024 * 1024

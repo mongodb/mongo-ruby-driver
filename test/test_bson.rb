@@ -263,19 +263,19 @@ class BSONTest < Test::Unit::TestCase
     val = OrderedHash.new
     val['not_id'] = 1
     val['_id'] = 2
-    roundtrip = BSON.deserialize(BSON.serialize(val).to_a)
+    roundtrip = BSON.deserialize(BSON.serialize(val, false, true).to_a)
     assert_kind_of OrderedHash, roundtrip
     assert_equal '_id', roundtrip.keys.first
 
     val = {'a' => 'foo', 'b' => 'bar', :_id => 42, 'z' => 'hello'}
-    roundtrip = BSON.deserialize(BSON.serialize(val).to_a)
+    roundtrip = BSON.deserialize(BSON.serialize(val, false, true).to_a)
     assert_kind_of OrderedHash, roundtrip
     assert_equal '_id', roundtrip.keys.first
   end
 
   def test_nil_id
     doc = {"_id" => nil}
-    assert_equal doc, BSON.deserialize(bson = BSON.serialize(doc).to_a)
+    assert_equal doc, BSON.deserialize(bson = BSON.serialize(doc, false, true).to_a)
   end
 
   def test_timestamp
@@ -394,4 +394,35 @@ class BSONTest < Test::Unit::TestCase
     end
   end
 
+  def test_move_id
+    a = OrderedHash.new
+    a['text'] = 'abc'
+    a['key'] = 'abc'
+    a['_id']  = 1
+
+    assert_equal ")\000\000\000\020_id\000\001\000\000\000\002text" +
+                 "\000\004\000\000\000abc\000\002key\000\004\000\000\000abc\000\000",
+                 BSON.serialize(a, false, true).to_s
+    assert_equal ")\000\000\000\002text\000\004\000\000\000abc\000\002key" +
+                 "\000\004\000\000\000abc\000\020_id\000\001\000\000\000\000",
+                 BSON.serialize(a, false, false).to_s
+  end
+
+  def test_move_id_with_nested_doc
+    b = OrderedHash.new
+    b['text'] = 'abc'
+    b['_id']   = 2
+    c = OrderedHash.new
+    c['text'] = 'abc'
+    c['hash'] = b
+    c['_id']  = 3
+    assert_equal ">\000\000\000\020_id\000\003\000\000\000\002text" +
+                 "\000\004\000\000\000abc\000\003hash\000\034\000\000" +
+                 "\000\002text\000\004\000\000\000abc\000\020_id\000\002\000\000\000\000\000",
+                 BSON.serialize(c, false, true).to_s
+    assert_equal ">\000\000\000\002text\000\004\000\000\000abc\000\003hash" +
+                 "\000\034\000\000\000\002text\000\004\000\000\000abc\000\020_id" +
+                 "\000\002\000\000\000\000\020_id\000\003\000\000\000\000",
+                 BSON.serialize(c, false, false).to_s
+  end
 end

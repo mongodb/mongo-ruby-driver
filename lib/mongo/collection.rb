@@ -126,6 +126,8 @@ module Mongo
     #
     # @raise [RuntimeError]
     #   if given unknown options
+    #
+    # @see Official, <a href="http://dochub.mongodb.org/find" name="find-instance_method" rel="find">Official Docs</a>
     def find(selector={}, opts={})
       fields = opts.delete(:fields)
       fields = ["_id"] if fields && fields.empty?
@@ -198,6 +200,8 @@ module Mongo
     #   If true, check that the save succeeded. OperationFailure
     #   will be raised on an error. Note that a safe check requires an extra
     #   round-trip to the database.
+    # 
+    # @see Official, <a href="http://dochub.mongodb.org/save" name="save-instance_method" rel="find">Official Docs</a>
     def save(doc, options={})
       if doc.has_key?(:_id) || doc.has_key?('_id')
         id = doc[:_id] || doc['_id']
@@ -294,7 +298,7 @@ module Mongo
       update_options += 2 if options[:multi]
       message.put_int(update_options)
       message.put_array(BSON.serialize(selector, false).to_a)
-      message.put_array(BSON.serialize(document, false).to_a)
+      message.put_array(BSON.serialize(document, false, true).to_a)
       if options[:safe]
         @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name,
           "db.#{@name}.update(#{selector.inspect}, #{document.inspect})")
@@ -609,7 +613,7 @@ EOS
       # Initial byte is 0.
       message = ByteBuffer.new([0, 0, 0, 0])
       BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{collection_name}")
-      documents.each { |doc| message.put_array(BSON.serialize(doc, check_keys).to_a) }
+      documents.each { |doc| message.put_array(BSON.serialize(doc, check_keys, true).to_a) }
       if safe
         @connection.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message, @db.name,
           "db.#{collection_name}.insert(#{documents.inspect})")

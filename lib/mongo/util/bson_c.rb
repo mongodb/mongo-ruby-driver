@@ -1,8 +1,8 @@
 # A thin wrapper for the CBson class
 class BSON_C
 
-  def self.serialize(obj, check_keys=false)
-    ByteBuffer.new(CBson.serialize(obj, check_keys))
+  def self.serialize(obj, check_keys=false, move_id=false)
+    ByteBuffer.new(CBson.serialize(obj, check_keys, move_id))
   end
 
   def self.deserialize(buf=nil)

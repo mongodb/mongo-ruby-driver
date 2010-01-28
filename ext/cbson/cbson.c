@@ -139,12 +139,16 @@ static int cmp_char(const void* a, const void* b) {
     return *(char*)a - *(char*)b;
 }
 
-static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys);
+static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_id);
 static int write_element(VALUE key, VALUE value, VALUE extra);
 static VALUE elements_to_hash(const char* buffer, int max);
 
 static VALUE pack_extra(buffer_t buffer, VALUE check_keys) {
     return rb_ary_new3(2, LL2NUM((long long)buffer), check_keys);
+}
+
+static VALUE pack_triple(buffer_t buffer, VALUE check_keys, int allow_id) {
+    return rb_ary_new3(3, LL2NUM((long long)buffer), check_keys, allow_id);
 }
 
 static void write_name_and_type(buffer_t buffer, VALUE name, char type) {
@@ -236,7 +240,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
     case T_HASH:
         {
             write_name_and_type(buffer, key, 0x03);
-            write_doc(buffer, value, check_keys);
+            write_doc(buffer, value, check_keys, Qfalse);
             break;
         }
     case T_ARRAY:
@@ -289,7 +293,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 SAFE_WRITE(buffer, (char*)&length, 4);
                 SAFE_WRITE(buffer, RSTRING_PTR(value), length - 1);
                 SAFE_WRITE(buffer, &zero, 1);
-                write_doc(buffer, rb_funcall(value, rb_intern("scope"), 0), Qfalse);
+                write_doc(buffer, rb_funcall(value, rb_intern("scope"), 0), Qfalse, Qfalse);
 
                 total_length = buffer_get_position(buffer) - start_position;
                 SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&total_length, 4);
@@ -463,10 +467,11 @@ static int write_element(VALUE key, VALUE value, VALUE extra) {
     return write_element_allow_id(key, value, extra, 0);
 }
 
-static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys) {
+static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_id) {
     buffer_position start_position = buffer_get_position(buffer);
     buffer_position length_location = buffer_save_space(buffer, 4);
     buffer_position length;
+    int allow_id;
     VALUE id_str = rb_str_new2("_id");
     VALUE id_sym = ID2SYM(rb_intern("_id"));
 
@@ -474,12 +479,23 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys) {
         rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
     }
 
-    if (rb_funcall(hash, rb_intern("has_key?"), 1, id_str) == Qtrue) {
-        VALUE id = rb_hash_aref(hash, id_str);
-        write_element_allow_id(id_str, id, pack_extra(buffer, check_keys), 1);
-    } else if (rb_funcall(hash, rb_intern("has_key?"), 1, id_sym) == Qtrue) {
-        VALUE id = rb_hash_aref(hash, id_sym);
-        write_element_allow_id(id_sym, id, pack_extra(buffer, check_keys), 1);
+    // write '_id' first if move_id is true
+    if(move_id == Qtrue) {
+        allow_id = 0;
+        if (rb_funcall(hash, rb_intern("has_key?"), 1, id_str) == Qtrue) {
+            VALUE id = rb_hash_aref(hash, id_str);
+            write_element_allow_id(id_str, id, pack_extra(buffer, check_keys), 1);
+        } else if (rb_funcall(hash, rb_intern("has_key?"), 1, id_sym) == Qtrue) {
+            VALUE id = rb_hash_aref(hash, id_sym);
+            write_element_allow_id(id_sym, id, pack_extra(buffer, check_keys), 1);
+        }
+    }
+    else {
+        allow_id = 1;
+        if ((rb_funcall(hash, rb_intern("has_key?"), 1, id_str) == Qtrue) &&
+               (rb_funcall(hash, rb_intern("has_key?"), 1, id_sym) == Qtrue)) {
+                   VALUE obj = rb_hash_delete(hash, id_str);
+        }
     }
 
     // we have to check for an OrderedHash and handle that specially
@@ -490,10 +506,10 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys) {
             VALUE key = RARRAY_PTR(keys)[i];
             VALUE value = rb_hash_aref(hash, key);
 
-            write_element(key, value, pack_extra(buffer, check_keys));
+            write_element_allow_id(key, value, pack_extra(buffer, check_keys), allow_id);
         }
     } else {
-        rb_hash_foreach(hash, write_element, pack_extra(buffer, check_keys));
+        rb_hash_foreach(hash, write_element_allow_id, pack_triple(buffer, check_keys, allow_id));
     }
 
     // write null byte and fill in length
@@ -509,14 +525,14 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys) {
     SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&length, 4);
 }
 
-static VALUE method_serialize(VALUE self, VALUE doc, VALUE check_keys) {
+static VALUE method_serialize(VALUE self, VALUE doc, VALUE check_keys, VALUE move_id) {
     VALUE result;
     buffer_t buffer = buffer_new();
     if (buffer == NULL) {
         rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
     }
 
-    write_doc(buffer, doc, check_keys);
+    write_doc(buffer, doc, check_keys, move_id);
 
     result = rb_str_new(buffer_get_buffer(buffer), buffer_get_position(buffer));
     if (buffer_free(buffer) != 0) {
@@ -872,7 +888,7 @@ void Init_cbson() {
     CBson = rb_define_module("CBson");
     ext_version = rb_str_new2(VERSION);
     rb_define_const(CBson, "VERSION", ext_version);
-    rb_define_module_function(CBson, "serialize", method_serialize, 2);
+    rb_define_module_function(CBson, "serialize", method_serialize, 3);
     rb_define_module_function(CBson, "deserialize", method_deserialize, 1);
 
     rb_require("digest/md5");
