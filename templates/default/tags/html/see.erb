@@ -1,0 +1,12 @@
+<% if object.has_tag?(:see) %>
+  <h3>See Also:</h3>
+  <ul class="see">
+    <% for tag in object.tags(:see) %>
+      <% if tag.name =~ /^http/ %>
+        <li><%= linkify(tag.name, tag.text || tag.name) %></li>
+      <% else %>
+        <li><%= tag.text %></li>
+      <% end %>
+    <% end %>
+  </ul>
+<% end %>
