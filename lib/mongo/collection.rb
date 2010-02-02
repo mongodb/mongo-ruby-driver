@@ -127,7 +127,7 @@ module Mongo
     # @raise [RuntimeError]
     #   if given unknown options
     #
-    # @see Official, <a href="http://dochub.mongodb.org/find" name="find-instance_method" rel="find">Official Docs</a>
+    # @core find
     def find(selector={}, opts={})
       fields = opts.delete(:fields)
       fields = ["_id"] if fields && fields.empty?

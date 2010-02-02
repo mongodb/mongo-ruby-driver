@@ -1,0 +1,8 @@
+<% if object.has_tag?(:core) %>
+  <h3>Core docs:</h3>
+  <ul class="see">
+    <% for tag in object.tags(:core) %>
+      <li><%= linkify('http://dochub.mongodb.org/core/' + tag.name, tag.text || tag.name.capitalize) %></li>
+    <% end %>
+  </ul>
+<% end %>
