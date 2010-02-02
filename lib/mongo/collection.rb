@@ -127,7 +127,7 @@ module Mongo
     # @raise [RuntimeError]
     #   if given unknown options
     #
-    # @core find
+    # @core find find-instance_method
     def find(selector={}, opts={})
       fields = opts.delete(:fields)
       fields = ["_id"] if fields && fields.empty?
