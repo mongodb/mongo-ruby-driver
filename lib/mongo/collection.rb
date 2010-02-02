@@ -200,8 +200,6 @@ module Mongo
     #   If true, check that the save succeeded. OperationFailure
     #   will be raised on an error. Note that a safe check requires an extra
     #   round-trip to the database.
-    # 
-    # @see Official, <a href="http://dochub.mongodb.org/save" name="save-instance_method" rel="find">Official Docs</a>
     def save(doc, options={})
       if doc.has_key?(:_id) || doc.has_key?('_id')
         id = doc[:_id] || doc['_id']
