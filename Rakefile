@@ -76,6 +76,11 @@ namespace :test do
     t.verbose    = true
   end
 
+  Rake::TestTask.new(:auto_reconnect) do |t|
+    t.test_files = FileList['test/auxillary/autoreconnect_test.rb']
+    t.verbose    = true
+  end
+
   task :drop_databases do |t|
     puts "Dropping test database..."
     require File.join(File.dirname(__FILE__), 'lib', 'mongo')

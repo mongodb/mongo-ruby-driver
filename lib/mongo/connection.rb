@@ -321,6 +321,7 @@ module Mongo
           break if is_master || @slave_ok
         rescue SocketError, SystemCallError, IOError => ex
           socket.close if socket
+          close
           false
         end
       end
@@ -513,6 +514,7 @@ module Mongo
           message += chunk
         end
         rescue => ex
+          close
           raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
       end
       message
