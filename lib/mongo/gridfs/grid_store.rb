@@ -49,11 +49,11 @@ module GridFS
   #
   # @core gridfs
   class GridStore
+    include Enumerable
 
     DEFAULT_ROOT_COLLECTION = 'fs'
-    DEFAULT_CONTENT_TYPE = 'text/plain'
 
-    include Enumerable
+    DEFAULT_CONTENT_TYPE = 'text/plain'
 
     attr_accessor :filename
 
@@ -94,7 +94,7 @@ module GridFS
     # @param [String] root_collection the name of the gridfs root collection.
     #
     # @return [Boolean]
-    def self.exist?(db, name, root_collection=DEFAULT_ROOT_COLLECTION)
+    def self.exist?(db, name, root_collection=GridStore.default_root_collection)
       db.collection("#{root_collection}.files").find({'filename' => name}).next_document != nil
     end
 
@@ -103,9 +103,9 @@ module GridFS
     #
     # @param [Mongo::DB] a MongoDB database.
     # @param [String] name the filename.
-    # @param [String] mode one of 'r', 'w', or 'w+' for reading, writing, 
+    # @param [String] mode one of 'r', 'w', or 'w+' for reading, writing,
     #   and appending, respectively.
-    # @param [Hash] options any of the options available on 
+    # @param [Hash] options any of the options available on
     #   GridStore initialization.
     #
     # @see GridStore#initialize.
@@ -144,7 +144,7 @@ module GridFS
     # @param [String] root_collection the name of the root collection.
     #
     # @return [Array]
-    def self.list(db, root_collection=DEFAULT_ROOT_COLLECTION)
+    def self.list(db, root_collection=GridStore.default_root_collection)
       db.collection("#{root_collection}.files").find().map do |f|
         f['filename']
       end
@@ -182,13 +182,14 @@ module GridFS
     end
 
     # Rename a file in this collection. Note that this method uses
-    # Collection#update, which means that you will not be notified 
+    # Collection#update, which means that you will not be notified of the
+    # success of the operation.
     #
     # @param [Mongo::DB] a MongoDB database.
     # @param [String] src the name of the source file.
     # @param [String] dest the name of the destination file.
     # @param [String] root_collection the name of the default root collection.
-    def self.mv(db, src, dest, root_collection=DEFAULT_ROOT_COLLECTION)
+    def self.mv(db, src, dest, root_collection=GridStore.default_root_collection)
       db.collection("#{root_collection}.files").update({ :filename => src }, { '$set' => { :filename => dest } })
     end
 

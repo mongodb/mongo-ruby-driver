@@ -196,7 +196,6 @@ class DBTest < Test::Unit::TestCase
   def test_user_management
     @@db.add_user("bob", "secret")
     @@db.logout
-    p @@users.find.to_a
     assert @@db.authenticate("bob", "secret")
     assert @@db.remove_user("bob")
     assert !@@db.authenticate("bob", "secret")
