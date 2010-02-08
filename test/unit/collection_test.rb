@@ -27,6 +27,17 @@ class ConnectionTest < Test::Unit::TestCase
       @coll.insert({:title => 'Moby Dick'})
     end
 
+    should "not log binary data" do
+      @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
+      @db   = @conn['testing']
+      @coll = @db.collection('books')
+      data = Mongo::Binary.new(("BINARY " * 1000).unpack("c*"))
+      @conn.expects(:send_message).with do |op, msg, log|
+        op == 2002 && log.include?("Mongo::Binary")
+      end
+      @coll.insert({:data => data})
+    end
+
     should "send safe update message" do
       @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @conn['testing']

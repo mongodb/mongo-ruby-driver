@@ -44,5 +44,9 @@ module Mongo
       @subtype = subtype
     end
 
+    def inspect
+      "<Mongo::Binary:#{object_id}>"
+    end
+
   end
 end
