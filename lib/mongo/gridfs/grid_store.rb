@@ -46,6 +46,8 @@ module GridFS
   #  GridStore.open(database, 'filename', 'r') do |f|
   #    puts f.read
   #  end
+  #
+  # @core gridfs
   class GridStore
 
     DEFAULT_ROOT_COLLECTION = 'fs'

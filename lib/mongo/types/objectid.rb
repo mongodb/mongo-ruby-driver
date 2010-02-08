@@ -21,6 +21,8 @@ require 'digest/md5'
 module Mongo
 
   # ObjectID class for documents in MongoDB.
+  #
+  # @core objectids
   class ObjectID
     # This is the legacy byte ordering for Babble. Versions of the Ruby
     # driver prior to 0.14 used this byte ordering when converting ObjectID

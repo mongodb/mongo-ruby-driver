@@ -25,6 +25,8 @@ module Mongo
     #
     # @param [String] a collection name
     # @param [ObjectID] an object id
+    #
+    # @core dbrefs constructor_details
     def initialize(namespace, object_id)
       @namespace = namespace
       @object_id = object_id

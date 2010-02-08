@@ -33,6 +33,8 @@ module Mongo
     #   if collection name is not a string or symbol
     #
     # @return [Collection]
+    #
+    # @core collections constructor_details
     def initialize(db, name, pk_factory=nil)
       case name
       when Symbol, String
@@ -223,6 +225,8 @@ module Mongo
     #   If true, check that the save succeeded. OperationFailure
     #   will be raised on an error. Note that a safe check requires an extra
     #   round-trip to the database.
+    #
+    # @core insert insert-instance_method
     def insert(doc_or_docs, options={})
       doc_or_docs = [doc_or_docs] unless doc_or_docs.is_a?(Array)
       doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
@@ -250,6 +254,8 @@ module Mongo
     #
     # @raise [Mongo::OperationFailure] an exception will be raised iff safe mode is enabled
     #   and the operation fails.
+    #
+    # @core remove remove-instance_method
     def remove(selector={}, opts={})
       # Initial byte is 0.
       message = ByteBuffer.new([0, 0, 0, 0])
@@ -287,6 +293,8 @@ module Mongo
     #   If true, check that the save succeeded. OperationFailure
     #   will be raised on an error. Note that a safe check requires an extra
     #   round-trip to the database.
+    #
+    # @core update update-instance_method
     def update(selector, document, options={})
       # Initial byte is 0.
       message = ByteBuffer.new([0, 0, 0, 0])
@@ -315,6 +323,8 @@ module Mongo
     # @param [Boolean] unique if true, this index will enforce a uniqueness constraint.
     #
     # @return [String] the name of the index created.
+    #
+    # @core indexes create_index-instance_method
     def create_index(field_or_spec, unique=false)
       field_h = OrderedHash.new
       if field_or_spec.is_a?(String) || field_or_spec.is_a?(Symbol)
@@ -335,11 +345,15 @@ module Mongo
     # Drop a specified index.
     #
     # @param [String] name
+    #
+    # @core indexes
     def drop_index(name)
       @db.drop_index(@name, name)
     end
 
     # Drop all indexes.
+    #
+    # @core indexes
     def drop_indexes
 
       # Note: calling drop_indexes with no args will drop them all.
@@ -371,6 +385,8 @@ module Mongo
     # @return [Collection] a collection containing the results of the operation.
     #
     # @see http://www.mongodb.org/display/DOCS/MapReduce Offical MongoDB map/reduce documentation.
+    #
+    # @core mapreduce map_reduce-instance_method
     def map_reduce(map, reduce, opts={})
       map    = Code.new(map) unless map.is_a?(Code)
       reduce = Code.new(reduce) unless reduce.is_a?(Code)
@@ -564,6 +580,8 @@ EOS
     # Get information on the indexes for this collection.
     #
     # @return [Hash] a hash where the keys are index names.
+    #
+    # @core indexes
     def index_information
       @db.index_information(@name)
     end

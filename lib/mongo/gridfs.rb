@@ -17,6 +17,9 @@ require 'mongo/gridfs/grid_store'
 
 # GridFS is a specification for storing large binary objects in MongoDB.
 # See the documentation for GridFS::GridStore
+#
 # @see GridFS::GridStore
+#
+# @core gridfs
 module GridFS
 end

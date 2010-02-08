@@ -85,6 +85,8 @@ module Mongo
     #                   :pool_size => 20, :timeout => 5)
     #
     # @see http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby Replica pairs in Ruby
+    #
+    # @core connections constructor_details
     def initialize(pair_or_host=nil, port=nil, options={})
       @nodes = format_pair(pair_or_host, port)
 
@@ -145,6 +147,8 @@ module Mongo
     # @param [String] db_name a valid database name.
     #
     # @return [Mongo::DB]
+    #
+    # @core databases db-instance_method
     def db(db_name, options={})
       DB.new(db_name, self, options.merge(:logger => @logger))
     end
@@ -154,6 +158,8 @@ module Mongo
     # @param [String] db_name a valid database name.
     #
     # @return [Mongo::DB]
+    #
+    # @core databases []-instance_method
     def [](db_name)
       DB.new(db_name, self, :logger => @logger)
     end

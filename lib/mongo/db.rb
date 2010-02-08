@@ -62,6 +62,8 @@ module Mongo
     #   which should take a hash and return a hash which merges the original hash with any primary key
     #   fields the factory wishes to inject. (NOTE: if the object already has a primary key,
     #   the factory should not inject a new key).
+    #
+    # @core databases constructor_details
     def initialize(db_name, connection, options={})
       @name       = validate_db_name(db_name)
       @connection = connection
@@ -76,6 +78,8 @@ module Mongo
     # @param [String] password
     #
     # @return [Boolean]
+    #
+    # @core authenticate authenticate-instance_method
     def authenticate(username, password)
       doc = command(:getnonce => 1)
       raise "error retrieving nonce: #{doc}" unless ok?(doc)
@@ -415,6 +419,8 @@ module Mongo
     # @param [Socket] sock a socket to use. This is mainly for internal use.
     #
     # @return [Hash]
+    #
+    # @core commands command_instance-method
     def command(selector, admin=false, check_response=false, sock=nil)
       raise MongoArgumentError, "command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
       if selector.class.eql?(Hash) && selector.keys.length > 1
@@ -468,6 +474,8 @@ module Mongo
     # get the results using DB#profiling_info.
     #
     # @return [Symbol] :off, :slow_only, or :all
+    #
+    # @core profiling profiling_level-instance_method
     def profiling_level
       oh = OrderedHash.new
       oh[:profile] = -1
