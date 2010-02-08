@@ -79,6 +79,14 @@ module GridFS
 
     attr_reader :md5
 
+    def self.default_root_collection
+      @@default_root_collection ||= DEFAULT_ROOT_COLLECTION
+    end
+
+    def self.default_root_collection=(name)
+      @@default_root_collection = name
+    end
+
     # Determine whether a given file exists in the GridStore.
     #
     # @param [Mongo::DB] a MongoDB database.
@@ -165,7 +173,7 @@ module GridFS
     def self.unlink(db, *names)
       names.each do |name|
         gs = GridStore.new(db, name)
-        gs.send(:delete_chunks)
+        gs.delete_chunks
         gs.collection.remove('_id' => gs.files_id)
       end
     end
@@ -203,7 +211,7 @@ module GridFS
     #   file's metadata. See also GridStore#content_type=.
     def initialize(db, name, mode='r', options={})
       @db, @filename, @mode = db, name, mode
-      @root = options[:root] || DEFAULT_ROOT_COLLECTION
+      @root = options[:root] || GridStore.default_root_collection
 
       doc = collection.find({'filename' => @filename}).next_document
       if doc
@@ -490,6 +498,11 @@ module GridFS
       @db == nil
     end
 
+    def delete_chunks
+      chunk_collection.remove({'files_id' => @files_id}) if @files_id
+      @curr_chunk = nil
+    end
+
     #---
     # ================ protected ================
     #+++
@@ -539,12 +552,7 @@ module GridFS
       buf
     end
 
-    def delete_chunks
-      chunk_collection.remove({'files_id' => @files_id}) if @files_id
-      @curr_chunk = nil
-    end
-
-    def nth_chunk(n)
+   def nth_chunk(n)
       mongo_chunk = chunk_collection.find({'files_id' => @files_id, 'n' => n}).next_document
       Chunk.new(self, mongo_chunk || {})
     end

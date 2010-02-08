@@ -151,7 +151,23 @@ class GridStoreTest < Test::Unit::TestCase
     assert_equal 0, @@files.count
     assert_equal 0, @@chunks.count
   end
-  
+
+  def test_unlink_alternate_root_collection
+    GridStore.default_root_collection = 'gridfs'
+    GridStore.open(@@db, 'foobar', 'w') do |f|
+      f.puts "Hello"
+    end
+    assert GridStore.exist?(@@db, 'foobar')
+
+    GridStore.default_root_collection = 'fs'
+    GridStore.unlink(@@db, 'foobar')
+    assert !GridStore.exist?(@@db, 'foobar')
+
+    GridStore.default_root_collection = 'gridfs'
+    GridStore.unlink(@@db, 'foobar')
+    assert !GridStore.exist?(@@db, 'foobar')
+  end
+
   def test_mv
     assert_equal 1, @@files.count
     assert_equal 1, @@chunks.count
