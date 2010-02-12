@@ -150,7 +150,7 @@ module GridFS
       end
     end
 
-    # Get each line of data from the specified file 
+    # Get each line of data from the specified file
     # as an array of strings.
     #
     # @param [Mongo::DB] db a MongoDB database.
@@ -208,7 +208,7 @@ module GridFS
     # @option options [Integer] :chunk_size (Chunk::DEFAULT_CHUNK_SIZE) (w) Sets chunk size for files opened for writing.
     #   See also GridStore#chunk_size=.
     #
-    # @option options [String] :content_type ('text/plain') Set the content type stored as the 
+    # @option options [String] :content_type ('text/plain') Set the content type stored as the
     #   file's metadata. See also GridStore#content_type=.
     def initialize(db, name, mode='r', options={})
       @db, @filename, @mode = db, name, mode

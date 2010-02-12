@@ -552,7 +552,7 @@ EOS
     # Note: If operating in auth mode, the client must be authorized as an admin to
     # perform this operation. 
     #
-    # @param [String ] new_name the new name for this collection
+    # @param [String] new_name the new name for this collection
     #
     # @raise [InvalidName] if +new_name+ is an invalid collection name.
     def rename(new_name)
