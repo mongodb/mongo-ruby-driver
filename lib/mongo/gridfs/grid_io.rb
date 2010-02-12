@@ -167,10 +167,6 @@ module Mongo
       chunk || {}
     end
 
-    def delete_chunks(selector)
-      @chunks.remove(selector)
-    end
-
     def last_chunk_number
       (@file_length / @chunk_size).to_i
     end
@@ -215,7 +211,7 @@ module Mongo
           @current_chunk = get_chunk(0)
           @file_position = 0
         when 'w'
-          delete_chunks({'_files_id' => })
+          @chunks.remove({'_files_id' => @files_id})
 
           @metadata      = opts[:metadata] if opts[:metadata]
           @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]])

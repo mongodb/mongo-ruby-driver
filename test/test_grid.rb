@@ -1,7 +1,6 @@
 require 'test/test_helper'
 
 class GridTest < Test::Unit::TestCase
-  include GridFS
 
   def setup
     @db ||= Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
@@ -17,16 +16,13 @@ class GridTest < Test::Unit::TestCase
 
   context "When reading:" do
     setup do
-      @data   = "CHUNKS" * 50000
-      GridStore.open(@db, 'sample', 'w') do |f|
-        f.puts @data
+      @data = "CHUNKS" * 50000
+      @grid = Grid.new(@db)
+      @grid.open('sample', 'w') do |f|
+        f.write @data
       end
 
       @grid = Grid.new(@db)
-    end
-
-    should "contain sample data" do
-      assert_equal @data, GridStore.read(@db, 'sample')
     end
 
     should "read sample data" do
