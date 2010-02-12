@@ -76,6 +76,10 @@ class OrderedHashTest < Test::Unit::TestCase
     assert_equal @ordered_keys, @oh.keys
   end
 
+  def test_to_a_order_preserved
+    assert_equal @ordered_keys, @oh.to_a.map(&:first)
+  end
+
   def test_order_preserved_after_replace
     @oh['a'] = 42
     assert_equal @ordered_keys, @oh.keys

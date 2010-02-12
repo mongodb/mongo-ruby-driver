@@ -71,6 +71,11 @@ class OrderedHash < Hash
     end
     alias :each_pair :each
 
+    def to_a
+      @ordered_keys ||= []
+      @ordered_keys.map { |k| [k, self[k]] }      
+    end
+    
     def values
       collect { |k, v| v }
     end
