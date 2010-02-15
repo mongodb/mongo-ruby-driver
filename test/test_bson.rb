@@ -138,10 +138,9 @@ class BSONTest < Test::Unit::TestCase
     assert_equal doc, doc2
 
     r = doc2['doc']
-    assert_kind_of RegexpOfHolding, r
-    assert_equal '', r.extra_options_str
+    assert_kind_of Regexp, r
 
-    r.extra_options_str << 'zywcab'
+    r = RegexpOfHolding.new('st', 0, 'zywcab')
     assert_equal 'zywcab', r.extra_options_str
 
     doc = {'doc' => r}

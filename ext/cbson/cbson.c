@@ -62,6 +62,7 @@ static VALUE DBRef;
 static VALUE Code;
 static VALUE MinKey;
 static VALUE MaxKey;
+static VALUE Regexp;
 static VALUE RegexpOfHolding;
 static VALUE OrderedHash;
 static VALUE InvalidName;
@@ -693,8 +694,13 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             }
             argv[0] = pattern;
             argv[1] = INT2FIX(flags);
-            argv[2] = rb_str_new2(extra);
-            value = rb_class_new_instance(3, argv, RegexpOfHolding);
+            if(extra[0] == 0) {
+                value = rb_class_new_instance(2, argv, Regexp);
+            }
+            else { // Deserializing a RegexpOfHolding
+                argv[2] = rb_str_new2(extra);
+                value = rb_class_new_instance(3, argv, RegexpOfHolding);
+            }
             *position += flags_length + 1;
             break;
         }
@@ -877,6 +883,7 @@ void Init_cbson() {
     MinKey = rb_const_get(mongo, rb_intern("MinKey"));
     MaxKey = rb_const_get(mongo, rb_intern("MaxKey"));
     rb_require("mongo/types/regexp_of_holding");
+    Regexp = rb_const_get(rb_cObject, rb_intern("Regexp"));
     RegexpOfHolding = rb_const_get(mongo, rb_intern("RegexpOfHolding"));
     rb_require("mongo/exceptions");
     InvalidName = rb_const_get(mongo, rb_intern("InvalidName"));
