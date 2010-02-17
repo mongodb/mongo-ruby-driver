@@ -135,6 +135,15 @@ class DBTest < Test::Unit::TestCase
     @@db.remove_user('spongebob')
   end
 
+  def test_authenticate_with_connection_uri
+    @@db.add_user('spongebob', 'squarepants')
+    assert Mongo::Connection.from_uri("mongodb://spongebob:squarepants@localhost/#{@@db.name}")
+
+    assert_raise MongoDBError do
+      Mongo::Connection.from_uri("mongodb://wrong:info@localhost/#{@@db.name}")
+    end
+  end
+
   def test_logout
     assert @@db.logout
   end

@@ -30,7 +30,10 @@ module Mongo
     STANDARD_HEADER_SIZE = 16
     RESPONSE_HEADER_SIZE = 20
 
-    attr_reader :logger, :size, :host, :port, :nodes, :sockets, :checked_out
+    MONGODB_URI_MATCHER = /(([.\w\d]+):([\w\d]+)@)?([.\w\d]+)(:([\w\d]+))?(\/([-\d\w]+))?/
+    MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]"
+
+    attr_reader :logger, :size, :host, :port, :nodes, :auths, :sockets, :checked_out
 
     # Counter for generating unique request ids.
     @@current_request_id = 0
@@ -74,21 +77,24 @@ module Mongo
     # @example localhost, 3000, where this node may be a slave
     #   Connection.new("localhost", 3000, :slave_ok => true)
     #
-    # @example A pair of servers. The driver will always talk to master.
-    #   # On connection errors, Mongo::ConnectionFailure will be raised.
+    # @example DEPRECATED. To initialize a paired connection, use Connection.paired instead.
     #   Connection.new({:left  => ["db1.example.com", 27017],
     #                  :right => ["db2.example.com", 27017]})
     #
-    # @example A pair of servers with connection pooling enabled. Note the nil param placeholder for port.
+    # @example DEPRECATED. To initialize a paired connection, use Connection.paired instead.
     #   Connection.new({:left  => ["db1.example.com", 27017],
     #                   :right => ["db2.example.com", 27017]}, nil,
     #                   :pool_size => 20, :timeout => 5)
     #
     # @see http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby Replica pairs in Ruby
     #
-    # @core connections constructor_details
+    # @core connections
     def initialize(pair_or_host=nil, port=nil, options={})
-      @nodes = format_pair(pair_or_host, port)
+      if block_given?
+        @nodes, @auths = yield self
+      else
+        @nodes = format_pair(pair_or_host, port)
+      end
 
       # Host and port of current master.
       @host = @port = nil
@@ -120,7 +126,50 @@ module Mongo
       @options  = options
 
       should_connect = options[:connect].nil? ? true : options[:connect]
-      connect_to_master if should_connect
+      if should_connect
+        connect_to_master
+        authenticate_databases if @auths
+      end
+    end
+
+    # Initialize a paired connection to MongoDB.
+    #
+    # @param nodes [Array] An array of arrays, each of which specified a host and port.
+    # @param opts Takes the same options as Connection.new
+    #
+    # @example
+    #   Connection.new([["db1.example.com", 27017],
+    #                   ["db2.example.com", 27017]])
+    #
+    # @example
+    #   Connection.new([["db1.example.com", 27017],
+    #                   ["db2.example.com", 27017]],
+    #                   :pool_size => 20, :timeout => 5)
+    #
+    # @return [Mongo::Connection]
+    def self.paired(nodes, opts={})
+      unless nodes.length == 2 && nodes.all? {|n| n.is_a? Array}
+        raise MongoArgumentError, "Connection.paired requires that exactly two nodes be specified."
+      end
+      # Block returns an array, the first element being an array of nodes and the second an array
+      # of authorizations for the database.
+      new(nil, nil, opts) do |con|
+        [[con.pair_val_to_connection(nodes[0]), con.pair_val_to_connection(nodes[1])], []]
+      end
+    end
+
+    # Initialize a connection to MongoDB using the MongoDB URI spec:
+    #
+    # @param uri [String]
+    #   A string of the format mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]
+    #
+    # @param opts Any of the options available for Connection.new
+    #
+    # @return [Mongo::Connection]
+    def self.from_uri(uri, opts={})
+      new(nil, nil, opts) do |con|
+        con.parse_uri(uri)
+      end
     end
 
     # Return a hash with all database names
@@ -350,6 +399,86 @@ module Mongo
       @checked_out.clear
     end
 
+    ## Configuration helper methods
+
+    # Returns an array of host-port pairs.
+    #
+    # @private
+    def format_pair(pair_or_host, port)
+      case pair_or_host
+        when String
+          [[pair_or_host, port ? port.to_i : DEFAULT_PORT]]
+        when Hash
+         warn "Initializing a paired connection with Connection.new is deprecated. Use Connection.pair instead."
+         connections = []
+         connections << pair_val_to_connection(pair_or_host[:left])
+         connections << pair_val_to_connection(pair_or_host[:right])
+         connections
+        when nil
+          [['localhost', DEFAULT_PORT]]
+      end
+    end
+
+    # Convert an argument containing a host name string and a
+    # port number integer into a [host, port] pair array.
+    #
+    # @private
+    def pair_val_to_connection(a)
+      case a
+      when nil
+        ['localhost', DEFAULT_PORT]
+      when String
+        [a, DEFAULT_PORT]
+      when Integer
+        ['localhost', a]
+      when Array
+        a
+      end
+    end
+
+    # Parse a MongoDB URI. This method is used by Connection.from_uri.
+    # Returns an array of nodes and an array of db authorizations, if applicable.
+    #
+    # @private
+    def parse_uri(string)
+      if string =~ /^mongodb:\/\//
+        string = string[10..-1]
+      else
+        raise MongoArgumentError, "MongoDB URI must match this spec: #{MONGODB_URI_SPEC}"
+      end
+
+      nodes = []
+      auths = []
+      specs = string.split(',')
+      specs.each do |spec|
+        matches  = MONGODB_URI_MATCHER.match(spec)
+        if !matches
+          raise MongoArgumentError, "MongoDB URI must match this spec: #{MONGODB_URI_SPEC}"
+        end
+
+        uname = matches[2]
+        pwd   = matches[3]
+        host  = matches[4]
+        port  = matches[6] || DEFAULT_PORT
+        if !(port.to_s =~ /^\d+$/)
+          raise MongoArgumentError, "Invalid port #{port}; port must be specified as digits."
+        end
+        port  = port.to_i
+        db    = matches[8]
+
+        if (uname || pwd || db) && !(uname && pwd && db)
+          raise MongoArgumentError, "MongoDB URI must include all three of username, password, " +
+            "and db if any one of these is specified."
+        else
+          auths << [uname, pwd, db]
+        end
+
+        nodes << [host, port]
+      end
+
+      [nodes, auths]
+    end
+
     private
 
     # Return a socket to the pool.
@@ -526,38 +655,18 @@ module Mongo
       message
     end
 
-
-    ## Private helper methods
-
-    # Returns an array of host-port pairs.
-    def format_pair(pair_or_host, port)
-      case pair_or_host
-        when String
-          [[pair_or_host, port ? port.to_i : DEFAULT_PORT]]
-        when Hash
-         connections = []
-         connections << pair_val_to_connection(pair_or_host[:left])
-         connections << pair_val_to_connection(pair_or_host[:right])
-         connections
-        when nil
-          [['localhost', DEFAULT_PORT]]
+    # Authenticate for any auth info provided on instantiating the connection.
+    # Only called when a MongoDB URI has been used to instantiate the connection, and
+    # when that connection specifies databases and authentication credentials.
+    #
+    # @raise [MongoDBError]
+    def authenticate_databases
+      @auths.each do |auth|
+        user    = auth[0]
+        pwd     = auth[1]
+        db_name = auth[2]
+        self.db(db_name).authenticate(user, pwd) || raise(MongoDBError, "Failed to authenticate db #{db_name}.")
       end
     end
-
-    # Turns an array containing a host name string and a
-    # port number integer into a [host, port] pair array.
-    def pair_val_to_connection(a)
-      case a
-      when nil
-        ['localhost', DEFAULT_PORT]
-      when String
-        [a, DEFAULT_PORT]
-      when Integer
-        ['localhost', a]
-      when Array
-        a
-      end
-    end
-
   end
 end
