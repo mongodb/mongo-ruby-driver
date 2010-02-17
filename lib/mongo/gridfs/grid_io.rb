@@ -152,10 +152,11 @@ module Mongo
       chunk['n']        = n
       chunk['files_id'] = @files_id
       chunk['data']     = ''
-      @chunk_position = 0
+      @chunk_position   = 0
       chunk
     end
 
+    # TODO: Perhaps use an upsert here instead?
     def save_chunk(chunk)
       @chunks.remove('_id' => chunk['_id'])
       @chunks.insert(chunk)

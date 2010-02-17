@@ -264,7 +264,7 @@ module Mongo
       message.put_array(BSON.serialize(selector, false).to_a)
 
       if opts[:safe]
-        @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message,
+        @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message, @db.name,
           "db.#{@db.name}.remove(#{selector.inspect})")
         # the return value of send_message_with_safe_check isn't actually meaningful --
         # only the fact that it didn't raise an error is -- so just return true

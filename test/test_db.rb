@@ -204,8 +204,8 @@ class DBTest < Test::Unit::TestCase
 
   def test_user_management
     @@db.add_user("bob", "secret")
-    @@db.logout
     assert @@db.authenticate("bob", "secret")
+    @@db.logout
     assert @@db.remove_user("bob")
     assert !@@db.authenticate("bob", "secret")
   end
