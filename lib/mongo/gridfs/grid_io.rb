@@ -15,25 +15,29 @@
 # ++
 
 module Mongo
+
+  # WARNING: This is part of a new, experimental GridFS API. Subject to change.
   class GridIO
     DEFAULT_CHUNK_SIZE   = 256 * 1024
-    DEFAULT_CONTENT_TYPE = 'text/plain'
+    DEFAULT_CONTENT_TYPE = 'binary/octet-stream'
 
-    attr_reader :content_type
-    attr_reader :chunk_size
+    attr_reader :content_type, :chunk_size, :upload_date, :files_id, :filename, :metadata
 
-    # @options opts [Hash] :cond
-    def initialize(files, chunks, filename, mode, opts={})
+    def initialize(files, chunks, filename, mode, filesystem, opts={})
       @files    = files
       @chunks   = chunks
       @filename = filename
       @mode     = mode
       @content_type = opts[:content_type] || DEFAULT_CONTENT_TYPE
       @chunk_size   = opts[:chunk_size] || DEFAULT_CHUNK_SIZE
-      @files_id     = opts[:files_id] || Mongo::ObjectID.new
+      @files_id     = opts[:_id]
 
-      init_file(opts)
-      init_mode(opts)
+      case @mode
+        when 'r' then init_read(filesystem, opts)
+        when 'w' then init_write(opts)
+        else
+          raise GridError, "Invalid file mode #{@mode}. Valid options include 'r' and 'w'."
+      end
     end
 
     # Read the data from the file. If a length if specified, will read from the
@@ -57,6 +61,7 @@ module Mongo
       end
       buf
     end
+    alias :data :read
 
     # Write the given string (binary) data to the file.
     #
@@ -79,7 +84,7 @@ module Mongo
         end
         chunk_available = @chunk_size - @chunk_position
         step_size = (to_write > chunk_available) ? chunk_available : to_write
-        @current_chunk['data'] = Binary.new(@current_chunk['data'].to_s << string[-to_write, step_size])
+        @current_chunk['data'] = Binary.new((@current_chunk['data'].to_s << string[-to_write, step_size]).unpack("c*"))
         @chunk_position += step_size
         to_write -= step_size
         save_chunk(@current_chunk)
@@ -134,14 +139,14 @@ module Mongo
     # @return [True]
     def close
       if @mode[0] == ?w
-        if @upload_date
-          @files.remove('_id' => @files_id)
-        else
-          @upload_date = Time.now
-        end
+        @upload_date = Time.now.utc
         @files.insert(to_mongo_object)
       end
       true
+    end
+
+    def inspect
+      "_id: #{@files_id}"
     end
 
     private
@@ -184,49 +189,38 @@ module Mongo
     end
 
     # Initialize based on whether the supplied file exists.
-    def init_file(opts)
-      selector = {'filename' => @filename}
-      selector.merge(opts[:criteria]) if opts[:criteria]
-      doc = @files.find(selector).next_document
-      if doc
-        @files_id     = doc['_id']
-        @content_type = doc['contentType']
-        @chunk_size   = doc['chunkSize']
-        @upload_date  = doc['uploadDate']
-        @aliases      = doc['aliases']
-        @file_length  = doc['length']
-        @metadata     = doc['metadata']
-        @md5          = doc['md5']
+    def init_read(filesystem, opts)
+      if filesystem
+        doc = @files.find({'filename' => @filename}, :sort => [["uploadDate", -1]], :limit => 1).next_document
+        raise GridError, "Could not open file with filename #{@filename}" unless doc
       else
-        @files_id     = Mongo::ObjectID.new
-        @content_type = opts[:content_type] || DEFAULT_CONTENT_TYPE
-        @chunk_size   = opts[:chunk_size]   || DEFAULT_CHUNK_SIZE
-        @length       = 0
+        doc = @files.find({'_id' => @files_id}).next_document
+        raise GridError, "Could not open file with id #{@files_id}" unless doc
       end
+
+      @files_id     = doc['_id']
+      @content_type = doc['contentType']
+      @chunk_size   = doc['chunkSize']
+      @upload_date  = doc['uploadDate']
+      @aliases      = doc['aliases']
+      @file_length  = doc['length']
+      @metadata     = doc['metadata']
+      @md5          = doc['md5']
+      @filename     = doc['filename']
+      @current_chunk = get_chunk(0)
+      @file_position = 0
     end
 
     # Validates and sets up the class for the given file mode.
-    def init_mode(opts)
-      case @mode
-        when 'r'
-          @current_chunk = get_chunk(0)
-          @file_position = 0
-        when 'w'
-          @chunks.remove({'_files_id' => @files_id})
+    def init_write(opts)
+      @files_id      = opts[:_id] || Mongo::ObjectID.new
+      @content_type  = opts[:content_type] || @content_type || DEFAULT_CONTENT_TYPE
+      @chunk_size    = opts[:chunk_size]   || @chunk_size || DEFAULT_CHUNK_SIZE
+      @file_length   = 0
+      @metadata      = opts[:metadata] if opts[:metadata]
 
-          @metadata      = opts[:metadata] if opts[:metadata]
-          @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]])
-          @current_chunk = create_chunk(0)
-          @file_position = 0
-        when 'w+'
-          @metadata       = opts[:metadata] if opts[:metadata]
-          @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]])
-          @current_chunk  = get_chunk(last_chunk_number) || create_chunk(0)
-          @chunk_position = @current_chunk['data'].length
-          @file_position  = @length
-        else
-          raise GridError, "Illegal file mode #{mode}. Valid options are 'r', 'w', and 'w+'."
-      end
+      @current_chunk = create_chunk(0)
+      @file_position = 0
     end
 
     def to_mongo_object

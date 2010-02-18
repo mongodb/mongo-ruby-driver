@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 require 'rubygems'
 require 'mongo'
-#require 'ruby-prof'
 
 include Mongo
 include GridFS
@@ -16,9 +15,7 @@ mb     = length / 1048576.0
 
 t1 = Time.now
 @grid = Grid.new(db)
-@grid.open('mongodb-new.pdf', 'w') do |f|
-  f.write(sample_data)
-end
+@id = @grid.put(sample_data, 'mongodb-new.pdf')
 puts "Write: #{mb / (Time.now - t1)} mb/s"
 
 t1 = Time.now
@@ -29,14 +26,9 @@ puts "Write: #{mb / (Time.now - t1)} mb/s"
 
 t1 = Time.now
 @grid = Grid.new(db)
-data = @grid.open('mongodb-new.pdf', 'r') do |f|
-  f.read
-end
+data = @grid.get(@id).read
 puts "Read new: #{mb / (Time.now - t1)} mb/s"
 file = db['fs.files'].find_one({:filename => 'mongodb-new.pdf'})
-p file
-puts
-p db['fs.chunks'].find({:files_id => file['_id']}, {:fields => ['files_id']}).to_a
 
 t1 = Time.now
 old_data = GridStore.open(db, 'mongodb.pdf', 'r') do |f|

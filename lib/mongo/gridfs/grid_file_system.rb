@@ -17,40 +17,35 @@
 module Mongo
 
   # WARNING: This class is part of a new, experimental GridFS API. Subject to change.
-  class Grid
-    DEFAULT_BUCKET_NAME = 'fs'
+  class GridFileSystem < Grid
 
     def initialize(db, bucket_name=DEFAULT_BUCKET_NAME)
-      check_params(db)
-      @db     = db
-      @files  = @db["#{bucket_name}.files"]
-      @chunks = @db["#{bucket_name}.chunks"]
+      super
 
-      @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]])
+      @files.create_index([['filename', 1], ['uploadDate', -1]])
     end
 
-    def put(data, filename, opts={})
-      file = GridIO.new(@files, @chunks, filename, 'w', false, opts=opts)
-      file.write(data)
-      file.close
-      file.files_id
+    def open(filename, mode, opts={})
+      file   = GridIO.new(@files, @chunks, filename, mode, true, opts)
+      return file unless block_given?
+      result = nil
+      begin
+        result = yield file
+      ensure
+        file.close
+      end
+      result
+    end
+
+    def put(data, filename)
     end
 
     def get(id)
-      GridIO.new(@files, @chunks, nil, 'r', false, :_id => id)
     end
 
-    def delete(id)
-      @files.remove({"_id" => id})
-      @chunks.remove({"_id" => id})
+    # Deletes all files matching the given criteria.
+    def delete(criteria)
     end
 
-    private
-
-    def check_params(db)
-      if !db.is_a?(Mongo::DB)
-        raise MongoArgumentError, "db must be an instance of Mongo::DB."
-      end
-    end
   end
 end
