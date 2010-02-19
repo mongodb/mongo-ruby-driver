@@ -50,6 +50,9 @@ class GridTest < Test::Unit::TestCase
     file = @grid.get(id)
     io.rewind
     data = io.read
+    if data.respond_to?(:force_encoding)
+      data.force_encoding(:binary)
+    end
     read_data = ""
     while(chunk = file.read(read_length))
       read_data << chunk

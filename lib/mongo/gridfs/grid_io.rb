@@ -168,7 +168,7 @@ module Mongo
       (@file_length / @chunk_size).to_i
     end
 
-    # An optimized read method for reading the whole file.
+    # Read a file in its entirety (optimized).
     def read_all
       buf = ''
       while true
@@ -179,6 +179,7 @@ module Mongo
       buf
     end
 
+    # Read a file incrementally.
     def read_length(length)
       cache_chunk_data
       remaining  = (@file_length - @file_position)
