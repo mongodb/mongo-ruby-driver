@@ -48,20 +48,15 @@ module Mongo
     # @return [String]
     #   the data in the file
     def read(length=nil)
-      return '' if length == 0
-      return read_all if length.nil? && @file_position.zero?
-      buf = ''
-      while true
-        buf << @current_chunk['data'].to_s[@chunk_position..-1]
-        if buf.length >= length
-          return buf[0...length]
-        else
-          @current_chunk = get_chunk(@current_chunk['n'] + 1)
-        end
+      if length == 0
+        return ''
+      elsif length.nil? && @file_position.zero?
+        read_all
+      else
+        read_length(length)
       end
-      buf
     end
-    alias :data :read
+    alias_method :data, :read
 
     # Write the given string (binary) data to the file.
     #
@@ -70,26 +65,17 @@ module Mongo
     #
     # @return [Integer]
     #   the number of bytes written.
-    def write(string)
-      raise GridError, "#{@filename} not opened for write" unless @mode[0] == ?w
-      # Since Ruby 1.9.1 doesn't necessarily store one character per byte.
-      if string.respond_to?(:force_encoding)
-        string.force_encoding("binary")
-      end
-      to_write = string.length
-      while (to_write > 0) do
-        if @current_chunk && @chunk_position == @chunk_size
-          next_chunk_number = @current_chunk['n'] + 1
-          @current_chunk    = create_chunk(next_chunk_number)
+    def write(io)
+      raise GridError, "file not opened for write" unless @mode[0] == ?w
+      if io.is_a? String
+        write_string(io)
+      else
+        length = 0
+        while(string = io.read(@chunk_size))
+          length += write_string(string)
         end
-        chunk_available = @chunk_size - @chunk_position
-        step_size = (to_write > chunk_available) ? chunk_available : to_write
-        @current_chunk['data'] = Binary.new((@current_chunk['data'].to_s << string[-to_write, step_size]).unpack("c*"))
-        @chunk_position += step_size
-        to_write -= step_size
-        save_chunk(@current_chunk)
+        length
       end
-      string.length - to_write
     end
 
     # Position the file pointer at the provided location.
@@ -129,12 +115,12 @@ module Mongo
       @file_position
     end
 
-    # Creates or updates the document storing the chunks' metadata
-    # in the files collection. The file exists only after this method
-    # is called.
+    # Creates or updates the document from the files collection that
+    # stores the chunks' metadata. The file becomes available only after
+    # this method has been called.
     #
-    # This method will be invoked automatically
-    # on GridIO#open. Otherwise, it must be called manually.
+    # This method will be invoked automatically when
+    # on GridIO#open is passed a block. Otherwise, it must be called manually.
     #
     # @return [True]
     def close
@@ -170,7 +156,12 @@ module Mongo
     def get_chunk(n)
       chunk = @chunks.find({'files_id' => @files_id, 'n' => n}).next_document
       @chunk_position = 0
-      chunk || {}
+      chunk
+    end
+
+    def get_chunk_for_read(n)
+      chunk = get_chunk(n)
+      return nil unless chunk
     end
 
     def last_chunk_number
@@ -186,6 +177,58 @@ module Mongo
         @current_chunk = get_chunk(@current_chunk['n'] + 1)
       end
       buf
+    end
+
+    def read_length(length)
+      cache_chunk_data
+      remaining  = (@file_length - @file_position)
+      to_read    = length > remaining ? remaining : length
+      return nil unless remaining > 0
+
+      buf        =  ''
+      while to_read > 0
+        if @chunk_position == @chunk_data_length
+          @current_chunk = get_chunk(@current_chunk['n'] + 1)
+          cache_chunk_data
+        end
+        chunk_remainder = @chunk_data_length - @chunk_position
+        size = (to_read >= chunk_remainder) ? chunk_remainder : to_read
+        buf << @current_chunk_data[@chunk_position, size]
+        to_read         -= size
+        @chunk_position += size
+        @file_position  += size
+      end
+      buf
+    end
+
+    def cache_chunk_data
+      @current_chunk_data = @current_chunk['data'].to_s
+      if @current_chunk_data.respond_to?(:force_encoding)
+        @current_chunk_data.force_encoding("binary")
+      end
+      @chunk_data_length  = @current_chunk['data'].length
+    end
+
+    def write_string(string)
+      # Since Ruby 1.9.1 doesn't necessarily store one character per byte.
+      if string.respond_to?(:force_encoding)
+        string.force_encoding("binary")
+      end
+
+      to_write = string.length
+      while (to_write > 0) do
+        if @current_chunk && @chunk_position == @chunk_size
+          next_chunk_number = @current_chunk['n'] + 1
+          @current_chunk    = create_chunk(next_chunk_number)
+        end
+        chunk_available = @chunk_size - @chunk_position
+        step_size = (to_write > chunk_available) ? chunk_available : to_write
+        @current_chunk['data'] = Binary.new((@current_chunk['data'].to_s << string[-to_write, step_size]).unpack("c*"))
+        @chunk_position += step_size
+        to_write -= step_size
+        save_chunk(@current_chunk)
+      end
+      string.length - to_write
     end
 
     # Initialize based on whether the supplied file exists.

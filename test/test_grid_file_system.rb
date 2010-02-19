@@ -143,12 +143,12 @@ class GridTest < Test::Unit::TestCase
         f.seek(0)
         f.seek(7, IO::SEEK_CUR)
         assert_equal 'w', f.read(1)
-        f.seek(-1, IO::SEEK_CUR)
+        f.seek(-2, IO::SEEK_CUR)
         assert_equal ' ', f.read(1)
         f.seek(-4, IO::SEEK_CUR)
         assert_equal 'l', f.read(1)
         f.seek(3, IO::SEEK_CUR)
-        assert_equal ',', f.read(1)
+        assert_equal 'w', f.read(1)
       end
     end
 

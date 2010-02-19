@@ -18,13 +18,13 @@ module Mongo
 
   # WARNING: This class is part of a new, experimental GridFS API. Subject to change.
   class Grid
-    DEFAULT_BUCKET_NAME = 'fs'
+    DEFAULT_FS_NAME = 'fs'
 
-    def initialize(db, bucket_name=DEFAULT_BUCKET_NAME)
+    def initialize(db, fs_name=DEFAULT_FS_NAME)
       check_params(db)
       @db     = db
-      @files  = @db["#{bucket_name}.files"]
-      @chunks = @db["#{bucket_name}.chunks"]
+      @files  = @db["#{fs_name}.files"]
+      @chunks = @db["#{fs_name}.chunks"]
 
       @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]])
     end

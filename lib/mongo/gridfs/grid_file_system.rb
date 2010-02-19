@@ -19,7 +19,7 @@ module Mongo
   # WARNING: This class is part of a new, experimental GridFS API. Subject to change.
   class GridFileSystem < Grid
 
-    def initialize(db, bucket_name=DEFAULT_BUCKET_NAME)
+    def initialize(db, fs_name=DEFAULT_FS_NAME)
       super
 
       @files.create_index([['filename', 1], ['uploadDate', -1]])
