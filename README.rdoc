@@ -292,35 +292,16 @@ It's also possible to test replica pairs with connection pooling:
 
   $ rake test:pooled_pair_insert
 
-===Shoulda and Mocha
+===Mocha
 
-All tests now require shoulda and mocha.  You can install these gems as
-follows:
+Running the test suite requires mocha.  You can install it as follows:
 
-  $ gem install shoulda
   $ gem install mocha
 
 The tests assume that the Mongo database is running on the default port. You
 can override the default host (localhost) and port (Connection::DEFAULT_PORT) by
 using the environment variables MONGO_RUBY_DRIVER_HOST and
 MONGO_RUBY_DRIVER_PORT.
-
-The project mongo-qa (http://github.com/mongodb/mongo-qa) contains many more
-Mongo driver tests that are language independent. To run thoses tests as part
-of the "rake test" task, download the code "next to" this directory. So, after
-installing the mongo-qa code you would have these two directories next to each
-other:
-
-  $ ls
-  mongo-qa
-  mongo-ruby-driver
-  $ rake test
-
-The tests run just fine if the mongo-qa directory is not there.
-
-Additionally, the script bin/validate is used by the mongo-qa project's
-validator script.
-
 
 = Documentation
 
@@ -342,7 +323,7 @@ See CREDITS.
 
 = License
 
- Copyright 2008-2009 10gen Inc.
+ Copyright 2008-2010 10gen Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -355,4 +336,3 @@ See CREDITS.
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
-

@@ -1,15 +1,15 @@
 require 'test/test_helper'
+include Mongo
 
-class GridTest < Test::Unit::TestCase
-
-  def setup
+context "GridFileSystem:" do
+  setup do
     @db ||= Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
       ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT).db('ruby-mongo-test')
     @files  = @db.collection('fs.files')
     @chunks = @db.collection('fs.chunks')
   end
 
-  def teardown
+  teardown do
     @files.remove
     @chunks.remove
   end

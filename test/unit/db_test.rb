@@ -1,14 +1,15 @@
 require 'test/test_helper'
 
-class DBTest < Test::Unit::TestCase
-
-  def insert_message(db, documents)
-    documents = [documents] unless documents.is_a?(Array)
-    message = ByteBuffer.new
-    message.put_int(0)
-    BSON.serialize_cstr(message, "#{db.name}.test")
-    documents.each { |doc| message.put_array(BSON.new.serialize(doc, true).to_a) }
-    message = db.add_message_headers(Mongo::Constants::OP_INSERT, message)
+context "DBTest: " do
+  setup do
+    def insert_message(db, documents)
+      documents = [documents] unless documents.is_a?(Array)
+      message = ByteBuffer.new
+      message.put_int(0)
+      BSON.serialize_cstr(message, "#{db.name}.test")
+      documents.each { |doc| message.put_array(BSON.new.serialize(doc, true).to_a) }
+      message = db.add_message_headers(Mongo::Constants::OP_INSERT, message)
+    end
   end
 
   context "DB commands" do
