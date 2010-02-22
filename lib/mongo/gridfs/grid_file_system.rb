@@ -53,10 +53,6 @@ module Mongo
     end
     alias_method :unlink, :delete
 
-    def remove_previous_versions
-      ids = @files.find({'filename' => filename}, :sort => [['filename', 1]])
-    end
-
     private
 
     def default_grid_io_opts(filename=nil)
