@@ -23,10 +23,12 @@ module Mongo
       super
 
       @files.create_index([['filename', 1], ['uploadDate', -1]])
+      @default_query_opts = {:sort => [['filename', 1], ['uploadDate', -1]], :limit => 1}
     end
 
     def open(filename, mode, opts={})
-      file   = GridIO.new(@files, @chunks, filename, mode, true, opts)
+      opts.merge!(default_grid_io_opts(filename))
+      file   = GridIO.new(@files, @chunks, filename, mode, opts)
       return file unless block_given?
       result = nil
       begin
@@ -37,15 +39,31 @@ module Mongo
       result
     end
 
-    def put(data, filename)
+    def put(data, filename, opts={})
+      opts.merge!(default_grid_io_opts(filename))
+      file = GridIO.new(@files, @chunks, filename, 'w', opts)
+      file.write(data)
+      file.close
+      file.files_id
     end
 
-    def get(id)
+    def get(filename, opts={})
+      opts.merge!(default_grid_io_opts(filename))
+      GridIO.new(@files, @chunks, filename, 'r', opts)
     end
 
-    # Deletes all files matching the given criteria.
-    def delete(criteria)
+    def delete(filename, opts={})
+      ids = @files.find({'filename' => filename}, ['_id'])
+      ids.each do |id|
+        @files.remove({'_id' => id})
+        @chunks.remove('files_id' => id)
+      end
     end
 
+    private
+
+    def default_grid_io_opts(filename=nil)
+      {:fs_name => @fs_name, :query => {'filename' => filename}, :query_opts => @default_query_opts}
+    end
   end
 end

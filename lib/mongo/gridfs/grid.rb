@@ -22,22 +22,25 @@ module Mongo
 
     def initialize(db, fs_name=DEFAULT_FS_NAME)
       check_params(db)
-      @db     = db
-      @files  = @db["#{fs_name}.files"]
-      @chunks = @db["#{fs_name}.chunks"]
+      @db      = db
+      @files   = @db["#{fs_name}.files"]
+      @chunks  = @db["#{fs_name}.chunks"]
+      @fs_name = fs_name
 
       @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]])
     end
 
     def put(data, filename, opts={})
-      file = GridIO.new(@files, @chunks, filename, 'w', false, opts=opts)
+      opts.merge!(default_grid_io_opts)
+      file = GridIO.new(@files, @chunks, filename, 'w', opts=opts)
       file.write(data)
       file.close
       file.files_id
     end
 
     def get(id)
-      GridIO.new(@files, @chunks, nil, 'r', false, :_id => id)
+      opts = {:query => {'_id' => id}}.merge!(default_grid_io_opts)
+      GridIO.new(@files, @chunks, nil, 'r', opts)
     end
 
     def delete(id)
@@ -46,6 +49,10 @@ module Mongo
     end
 
     private
+
+    def default_grid_io_opts
+      {:fs_name => @fs_name}
+    end
 
     def check_params(db)
       if !db.is_a?(Mongo::DB)

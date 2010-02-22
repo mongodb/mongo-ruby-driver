@@ -1,58 +1,61 @@
 require 'test/test_helper'
 
-context "Basic operations: " do
-  setup do
-    @logger = mock()
-  end
+class CollectionTest < Test::Unit::TestCase
 
-  should "send update message" do
-    @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
-    @db   = @conn['testing']
-    @coll = @db.collection('books')
-    @conn.expects(:send_message).with do |op, msg, log|
-      op == 2001 && log.include?("db.books.update")
+  context "Basic operations: " do
+    setup do
+      @logger = mock()
     end
-    @coll.update({}, {:title => 'Moby Dick'})
-  end
 
-  should "send insert message" do
-    @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
-    @db   = @conn['testing']
-    @coll = @db.collection('books')
-    @conn.expects(:send_message).with do |op, msg, log|
-      op == 2002 && log.include?("db.books.insert")
+    should "send update message" do
+      @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
+      @db   = @conn['testing']
+      @coll = @db.collection('books')
+      @conn.expects(:send_message).with do |op, msg, log|
+        op == 2001 && log.include?("db.books.update")
+      end
+      @coll.update({}, {:title => 'Moby Dick'})
     end
-    @coll.insert({:title => 'Moby Dick'})
-  end
 
-  should "not log binary data" do
-    @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
-    @db   = @conn['testing']
-    @coll = @db.collection('books')
-    data = Mongo::Binary.new(("BINARY " * 1000).unpack("c*"))
-    @conn.expects(:send_message).with do |op, msg, log|
-      op == 2002 && log.include?("Mongo::Binary")
+    should "send insert message" do
+      @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
+      @db   = @conn['testing']
+      @coll = @db.collection('books')
+      @conn.expects(:send_message).with do |op, msg, log|
+        op == 2002 && log.include?("db.books.insert")
+      end
+      @coll.insert({:title => 'Moby Dick'})
     end
-    @coll.insert({:data => data})
-  end
 
-  should "send safe update message" do
-    @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
-    @db   = @conn['testing']
-    @coll = @db.collection('books')
-    @conn.expects(:send_message_with_safe_check).with do |op, msg, db_name, log|
-      op == 2001 && log.include?("db.books.update")
+    should "not log binary data" do
+      @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
+      @db   = @conn['testing']
+      @coll = @db.collection('books')
+      data = Mongo::Binary.new(("BINARY " * 1000).unpack("c*"))
+      @conn.expects(:send_message).with do |op, msg, log|
+        op == 2002 && log.include?("Mongo::Binary")
+      end
+      @coll.insert({:data => data})
     end
-    @coll.update({}, {:title => 'Moby Dick'}, :safe => true)
-  end
 
-  should "send safe insert message" do
-    @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
-    @db   = @conn['testing']
-    @coll = @db.collection('books')
-    @conn.expects(:send_message_with_safe_check).with do |op, msg, db_name, log|
-      op == 2001 && log.include?("db.books.update")
+    should "send safe update message" do
+      @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
+      @db   = @conn['testing']
+      @coll = @db.collection('books')
+      @conn.expects(:send_message_with_safe_check).with do |op, msg, db_name, log|
+        op == 2001 && log.include?("db.books.update")
+      end
+      @coll.update({}, {:title => 'Moby Dick'}, :safe => true)
     end
-    @coll.update({}, {:title => 'Moby Dick'}, :safe => true)
+
+    should "send safe insert message" do
+      @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
+      @db   = @conn['testing']
+      @coll = @db.collection('books')
+      @conn.expects(:send_message_with_safe_check).with do |op, msg, db_name, log|
+        op == 2001 && log.include?("db.books.update")
+      end
+      @coll.update({}, {:title => 'Moby Dick'}, :safe => true)
+    end
   end
 end

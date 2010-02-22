@@ -292,10 +292,11 @@ It's also possible to test replica pairs with connection pooling:
 
   $ rake test:pooled_pair_insert
 
-===Mocha
+===Shoulda and Mocha
 
-Running the test suite requires mocha.  You can install it as follows:
+Running the test suite requires shoulda and mocha.  You can install them as follows:
 
+  $ gem install shoulda
   $ gem install mocha
 
 The tests assume that the Mongo database is running on the default port. You

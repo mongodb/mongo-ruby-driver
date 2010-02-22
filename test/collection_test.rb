@@ -1,7 +1,7 @@
 require 'test/test_helper'
 
 class TestCollection < Test::Unit::TestCase
-  @@connection = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost', ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
+  @@connection ||= Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost', ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
   @@db   = @@connection.db('ruby-mongo-test')
   @@test = @@db.collection("test")
   @@version = @@connection.server_version
@@ -75,32 +75,31 @@ class TestCollection < Test::Unit::TestCase
   end
 
   if @@version > "1.1"
-    context "distinct queries" do
-      setup do
-        @@test.remove
-        @@test.insert([{:a => 0, :b => {:c => "a"}},
-                       {:a => 1, :b => {:c => "b"}},
-                       {:a => 1, :b => {:c => "c"}},
-                       {:a => 2, :b => {:c => "a"}},
-                       {:a => 3},
-                       {:a => 3}])
+    def setup_for_distinct
+      @@test.remove
+      @@test.insert([{:a => 0, :b => {:c => "a"}},
+                     {:a => 1, :b => {:c => "b"}},
+                     {:a => 1, :b => {:c => "c"}},
+                     {:a => 2, :b => {:c => "a"}},
+                     {:a => 3},
+                     {:a => 3}])
+    end
+
+    def test_distinct_queries
+      setup_for_distinct
+      assert_equal [0, 1, 2, 3], @@test.distinct(:a).sort
+      assert_equal ["a", "b", "c"], @@test.distinct("b.c").sort
+    end
+
+    if @@version >= "1.2"
+      def test_filter_collection_with_query
+        setup_for_distinct
+        assert_equal [2, 3], @@test.distinct(:a, {:a => {"$gt" => 1}}).sort
       end
 
-      should "return distinct values" do
-        assert_equal [0, 1, 2, 3], @@test.distinct(:a).sort
-        assert_equal ["a", "b", "c"], @@test.distinct("b.c").sort
-      end
-
-      if @@version >= "1.2"
-
-        should "filter collection with query" do
-          assert_equal [2, 3], @@test.distinct(:a, {:a => {"$gt" => 1}}).sort
-        end
-
-        should "filter nested objects" do
-          assert_equal ["a", "b"], @@test.distinct("b.c", {"b.c" => {"$ne" => "c"}}).sort
-        end
-
+      def test_filter_nested_objects
+        setup_for_distinct
+        assert_equal ["a", "b"], @@test.distinct("b.c", {"b.c" => {"$ne" => "c"}}).sort
       end
     end
   end

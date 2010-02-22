@@ -5,12 +5,14 @@ require 'test/unit'
 
 begin
   require 'rubygems'
+  require 'shoulda'
   require 'mocha'
   rescue LoadError
     puts <<MSG
 
-This test suite requires mocha.
-You can install it as follows:
+This test suite requires shoulda and mocha.
+You can install them as follows:
+  gem install shoulda
   gem install mocha
 
 MSG
@@ -37,32 +39,4 @@ class Test::Unit::TestCase
       end
     end
   end
-end
-
-# shoulda-mini
-# based on test/spec/mini 5
-# http://gist.github.com/307649
-# chris@ozmm.org
-#
-def context(*args, &block)
-  return super unless (name = args.first) && block
-  require 'test/unit'
-  klass = Class.new(Test::Unit::TestCase) do
-    def self.should(name, &block)
-      define_method("test_#{name.to_s.gsub(/\W/,'_')}", &block) if block
-    end
-    def self.xshould(*args) end
-    def self.context(*args, &block) instance_eval(&block) end
-    def self.setup(&block)
-      define_method(:setup) { self.class.setups.each { |s| instance_eval(&s) } }
-      setups << block
-    end
-    def self.setups; @setups ||= [] end
-    def self.teardown(&block) define_method(:teardown, &block) end
-  end
-  (class << klass; self end).send(:define_method, :name) { name.gsub(/\W/,'_') }
-  klass.class_eval do
-    include Mongo
-  end
-  klass.class_eval &block
 end

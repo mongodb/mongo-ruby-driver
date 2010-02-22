@@ -23,20 +23,20 @@ module Mongo
 
     attr_reader :content_type, :chunk_size, :upload_date, :files_id, :filename, :metadata
 
-    def initialize(files, chunks, filename, mode, filesystem, opts={})
-      @files    = files
-      @chunks   = chunks
-      @filename = filename
-      @mode     = mode
-      @content_type = opts[:content_type] || DEFAULT_CONTENT_TYPE
-      @chunk_size   = opts[:chunk_size] || DEFAULT_CHUNK_SIZE
-      @files_id     = opts[:_id]
+    def initialize(files, chunks, filename, mode, opts={})
+      @files      = files
+      @chunks     = chunks
+      @filename   = filename
+      @mode       = mode
+      @query      = opts[:query] || {}
+      @query_opts = opts[:query_opts] || {}
+      @fs_name    = opts[:fs_name] || Grid::DEFAULT_FS_NAME
 
       case @mode
-        when 'r' then init_read(filesystem, opts)
+        when 'r' then init_read(opts)
         when 'w' then init_write(opts)
         else
-          raise GridError, "Invalid file mode #{@mode}. Valid options include 'r' and 'w'."
+          raise GridError, "Invalid file mode #{@mode}. Mode should be 'r' or 'w'."
       end
     end
 
@@ -147,9 +147,7 @@ module Mongo
       chunk
     end
 
-    # TODO: Perhaps use an upsert here instead?
     def save_chunk(chunk)
-      @chunks.remove('_id' => chunk['_id'])
       @chunks.insert(chunk)
     end
 
@@ -159,22 +157,17 @@ module Mongo
       chunk
     end
 
-    def get_chunk_for_read(n)
-      chunk = get_chunk(n)
-      return nil unless chunk
-    end
-
     def last_chunk_number
       (@file_length / @chunk_size).to_i
     end
 
-    # Read a file in its entirety (optimized).
+    # Read a file in its entirety.
     def read_all
       buf = ''
       while true
         buf << @current_chunk['data'].to_s
-        break if @current_chunk['n'] == last_chunk_number
         @current_chunk = get_chunk(@current_chunk['n'] + 1)
+        break unless @current_chunk
       end
       buf
     end
@@ -232,15 +225,10 @@ module Mongo
       string.length - to_write
     end
 
-    # Initialize based on whether the supplied file exists.
-    def init_read(filesystem, opts)
-      if filesystem
-        doc = @files.find({'filename' => @filename}, :sort => [["uploadDate", -1]], :limit => 1).next_document
-        raise GridError, "Could not open file with filename #{@filename}" unless doc
-      else
-        doc = @files.find({'_id' => @files_id}).next_document
-        raise GridError, "Could not open file with id #{@files_id}" unless doc
-      end
+    # Initialize the class for reading a file.
+    def init_read(opts)
+      doc = @files.find(@query, @query_opts).next_document
+      raise GridError, "Could not open file matching #{@query.inspect} #{@query_opts.inspect}" unless doc
 
       @files_id     = doc['_id']
       @content_type = doc['contentType']
@@ -251,11 +239,12 @@ module Mongo
       @metadata     = doc['metadata']
       @md5          = doc['md5']
       @filename     = doc['filename']
+
       @current_chunk = get_chunk(0)
       @file_position = 0
     end
 
-    # Validates and sets up the class for the given file mode.
+    # Initialize the class for writing a file.
     def init_write(opts)
       @files_id      = opts[:_id] || Mongo::ObjectID.new
       @content_type  = opts[:content_type] || @content_type || DEFAULT_CONTENT_TYPE
@@ -281,7 +270,7 @@ module Mongo
       # Get a server-side md5.
       md5_command            = OrderedHash.new
       md5_command['filemd5'] = @files_id
-      md5_command['root']    = 'fs'
+      md5_command['root']    = @fs_name
       h['md5']               = @files.db.command(md5_command)['md5']
 
       h
