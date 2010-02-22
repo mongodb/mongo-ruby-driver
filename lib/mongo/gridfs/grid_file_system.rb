@@ -19,8 +19,13 @@ module Mongo
   # WARNING: This class is part of a new, experimental GridFS API. Subject to change.
   class GridFileSystem < Grid
 
-    def initialize(db, fs_name=DEFAULT_FS_NAME)
-      super
+    def initialize(db, fs_name=Grid::DEFAULT_FS_NAME)
+      raise MongoArgumentError, "db must be a Mongo::DB." unless db.is_a?(Mongo::DB)
+
+      @db      = db
+      @files   = @db["#{fs_name}.files"]
+      @chunks  = @db["#{fs_name}.chunks"]
+      @fs_name = fs_name
 
       @files.create_index([['filename', 1], ['uploadDate', -1]])
       @default_query_opts = {:sort => [['filename', 1], ['uploadDate', -1]], :limit => 1}
@@ -39,25 +44,17 @@ module Mongo
       result
     end
 
-    def put(data, filename, opts={})
-      opts.merge!(default_grid_io_opts(filename))
-      file = GridIO.new(@files, @chunks, filename, 'w', opts)
-      file.write(data)
-      file.close
-      file.files_id
-    end
-
-    def get(filename, opts={})
-      opts.merge!(default_grid_io_opts(filename))
-      GridIO.new(@files, @chunks, filename, 'r', opts)
-    end
-
-    def delete(filename, opts={})
-      ids = @files.find({'filename' => filename}, ['_id'])
-      ids.each do |id|
-        @files.remove({'_id' => id})
-        @chunks.remove('files_id' => id)
+    def delete(filename)
+      files = @files.find({'filename' => filename}, :fields => ['_id'])
+      files.each do |file|
+        @files.remove({'_id' => file['_id']})
+        @chunks.remove({'files_id' => file['_id']})
       end
+    end
+    alias_method :unlink, :delete
+
+    def remove_previous_versions
+      ids = @files.find({'filename' => filename}, :sort => [['filename', 1]])
     end
 
     private

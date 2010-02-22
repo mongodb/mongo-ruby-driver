@@ -105,6 +105,29 @@ class GridFileSystemTest < Test::Unit::TestCase
        should "contain the new data" do
          assert_equal @new_data, @new.read, "Expected DATA"
        end
+
+       context "and on a second overwrite" do
+         setup do
+           sleep(2)
+           new_data = "NEW" * 1000
+           @grid.open('sample', 'w') do |f|
+             f.write new_data
+           end
+
+           @ids = @db['fs.files'].find({'filename' => 'sample'}).map {|file| file['_id']}
+         end
+
+         should "write a third version of the file" do
+           assert_equal 3, @db['fs.files'].find({'filename' => 'sample'}).count
+           assert_equal 3, @db['fs.chunks'].find({'files_id' => {'$in' => @ids}}).count
+         end
+
+         should "remove all versions and their data on delete" do
+           @grid.delete('sample')
+           assert_equal 0, @db['fs.files'].find({'filename' => 'sample'}).count
+           assert_equal 0, @db['fs.chunks'].find({'files_id' => {'$in' => @ids}}).count
+         end
+       end
      end
    end
 

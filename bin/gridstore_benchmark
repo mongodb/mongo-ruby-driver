@@ -15,7 +15,7 @@ mb     = length / 1048576.0
 
 t1 = Time.now
 @grid = Grid.new(db)
-@id = @grid.put(sample_data, 'mongodb-new.pdf')
+@id   = @grid.put(sample_data, 'mongodb-new.pdf', :safe => true)
 puts "Write: #{mb / (Time.now - t1)} mb/s"
 
 t1 = Time.now

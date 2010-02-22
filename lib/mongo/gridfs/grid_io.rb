@@ -14,6 +14,8 @@
 # limitations under the License.
 # ++
 
+require 'digest/md5'
+
 module Mongo
 
   # WARNING: This is part of a new, experimental GridFS API. Subject to change.
@@ -21,7 +23,8 @@ module Mongo
     DEFAULT_CHUNK_SIZE   = 256 * 1024
     DEFAULT_CONTENT_TYPE = 'binary/octet-stream'
 
-    attr_reader :content_type, :chunk_size, :upload_date, :files_id, :filename, :metadata
+    attr_reader :content_type, :chunk_size, :upload_date, :files_id, :filename, 
+      :metadata, :server_md5, :client_md5
 
     def initialize(files, chunks, filename, mode, opts={})
       @files      = files
@@ -31,6 +34,8 @@ module Mongo
       @query      = opts[:query] || {}
       @query_opts = opts[:query_opts] || {}
       @fs_name    = opts[:fs_name] || Grid::DEFAULT_FS_NAME
+      @safe       = opts[:safe] || false
+      @local_md5  = Digest::MD5.new if @safe
 
       case @mode
         when 'r' then init_read(opts)
@@ -68,11 +73,21 @@ module Mongo
     def write(io)
       raise GridError, "file not opened for write" unless @mode[0] == ?w
       if io.is_a? String
+        if @safe
+          @local_md5.update(io)
+        end
         write_string(io)
       else
         length = 0
-        while(string = io.read(@chunk_size))
-          length += write_string(string)
+        if @safe
+          while(string = io.read(@chunk_size))
+            @local_md5.update(string)
+            length += write_string(string)
+          end
+        else
+          while(string = io.read(@chunk_size))
+            length += write_string(string)
+          end
         end
         length
       end
@@ -266,14 +281,24 @@ module Mongo
       h['uploadDate']  = @upload_date
       h['aliases']     = @aliases
       h['metadata']    = @metadata
+      h['md5']         = get_md5
+      h
+    end
 
-      # Get a server-side md5.
+    # Get a server-side md5 and validate against the client if running in safe mode.
+    def get_md5
       md5_command            = OrderedHash.new
       md5_command['filemd5'] = @files_id
       md5_command['root']    = @fs_name
-      h['md5']               = @files.db.command(md5_command)['md5']
-
-      h
+      @server_md5 = @files.db.command(md5_command)['md5']
+      if @safe
+        @client_md5 = @local_md5.hexdigest
+        if @local_md5 != @server_md5
+          raise @local_md5 != @server_md5GridError, "File on server failed MD5 check"
+        end
+      else
+        @server_md5
+      end
     end
   end
 end

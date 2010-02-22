@@ -21,7 +21,8 @@ module Mongo
     DEFAULT_FS_NAME = 'fs'
 
     def initialize(db, fs_name=DEFAULT_FS_NAME)
-      check_params(db)
+      raise MongoArgumentError, "db must be a Mongo::DB." unless db.is_a?(Mongo::DB)
+
       @db      = db
       @files   = @db["#{fs_name}.files"]
       @chunks  = @db["#{fs_name}.chunks"]
@@ -52,12 +53,6 @@ module Mongo
 
     def default_grid_io_opts
       {:fs_name => @fs_name}
-    end
-
-    def check_params(db)
-      if !db.is_a?(Mongo::DB)
-        raise MongoArgumentError, "db must be an instance of Mongo::DB."
-      end
     end
   end
 end

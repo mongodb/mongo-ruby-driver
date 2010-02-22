@@ -9,6 +9,7 @@ class GridIOTest < Test::Unit::TestCase
         ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT).db('ruby-mongo-test')
       @files  = @db.collection('fs.files')
       @chunks = @db.collection('fs.chunks')
+      @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]])
     end
 
     teardown do
@@ -30,6 +31,24 @@ class GridIOTest < Test::Unit::TestCase
       should "set chunk size" do
         file = GridIO.new(@files, @chunks, @filename, @mode, :chunk_size => 1000)
         assert_equal 1000, file.chunk_size
+      end
+    end
+
+    context "Grid MD5 check" do
+
+      should "run in safe mode" do
+        file = GridIO.new(@files, @chunks, 'smallfile', 'w', :safe => true)
+        file.write("DATA" * 100)
+        assert file.close
+        assert_equal file.server_md5, file.client_md5
+      end
+
+      should "validate with a large file" do
+        io = File.open(File.join(File.dirname(__FILE__), 'data', 'sample_file.pdf'), 'r')
+        file = GridIO.new(@files, @chunks, 'bigfile', 'w', :safe => true)
+        file.write(io)
+        assert file.close
+        assert_equal file.server_md5, file.client_md5
       end
     end
   end
