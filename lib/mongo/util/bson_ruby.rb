@@ -332,7 +332,7 @@ class BSON_RUBY
     if options_str == ''
       Regexp.new(str, options)
     else
-      warn("Use deprecated Regexp options #{options_str}; future versions of this MongoDB driver will support only i, m, and x. See deprecated class RegexpOfHolding for more info.")
+      warn("Using deprecated Regexp options #{options_str}; future versions of this MongoDB driver will support only i, m, and x. See deprecated class RegexpOfHolding for more info.")
       RegexpOfHolding.new(str, options, options_str)
     end
   end
