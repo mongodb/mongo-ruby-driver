@@ -52,7 +52,6 @@ require 'mongo/util/conversions'
 require 'mongo/util/server_version'
 require 'mongo/util/bson_ruby'
 
-require 'mongo/admin'
 require 'mongo/collection'
 require 'mongo/connection'
 require 'mongo/cursor'
