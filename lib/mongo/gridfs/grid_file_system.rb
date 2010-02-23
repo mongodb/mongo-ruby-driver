@@ -16,9 +16,16 @@
 
 module Mongo
 
-  # WARNING: This class is part of a new, experimental GridFS API. Subject to change.
+  # A file store built on the GridFS specification featuring
+  # an API and behavior similar to that of a traditional file system.
   class GridFileSystem < Grid
 
+    # Initialize a new Grid instance, consisting of a MongoDB database
+    # and a filesystem prefix if not using the default.
+    #
+    # @param [Mongo::DB] db a MongoDB database.
+    # @param [String] fs_name A name for the file system. The default name, based on
+    #   the specification, is 'fs'.
     def initialize(db, fs_name=Grid::DEFAULT_FS_NAME)
       raise MongoArgumentError, "db must be a Mongo::DB." unless db.is_a?(Mongo::DB)
 
@@ -31,6 +38,32 @@ module Mongo
       @default_query_opts = {:sort => [['filename', 1], ['uploadDate', -1]], :limit => 1}
     end
 
+    # Open a file for reading or writing.
+    #
+    # @param [String] filename the name of the file.
+    # @param [String] mode either 'r' or 'w' for reading from
+    #   or writing to the file.
+    #
+    # @example
+    #
+    #  # Store the text "Hello, world!" in the grid file system.
+    #  @grid = GridFileSystem.new(@db)
+    #  @grid.open('filename', 'w') do |f|
+    #    f.write "Hello, world!"
+    #  end
+    #
+    #  # Output "Hello, world!"
+    #  @grid = GridFileSystem.new(@db)
+    #  @grid.open('filename', 'r') do |f|
+    #    puts f.read
+    #  end
+    #
+    #  # Write a file on disk to the GridFileSystem
+    #  @file = File.open('image.jpg')
+    #  @grid = GridFileSystem.new(@db)
+    #  @grid.open('image.jpg, 'w') do |f|
+    #    f.write @file
+    #  end
     def open(filename, mode, opts={})
       opts.merge!(default_grid_io_opts(filename))
       file   = GridIO.new(@files, @chunks, filename, mode, opts)
@@ -44,6 +77,12 @@ module Mongo
       result
     end
 
+    # Delete the file with the given filename. Note that this will delete
+    # all versions of the file.
+    #
+    # @param [String] filename
+    #
+    # @return [Boolean]
     def delete(filename)
       files = @files.find({'filename' => filename}, :fields => ['_id'])
       files.each do |file|

@@ -47,7 +47,6 @@ module GridFS
   #    puts f.read
   #  end
   #
-  # @core gridfs
   # @deprecated
   class GridStore
     include Enumerable

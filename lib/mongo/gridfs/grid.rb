@@ -16,10 +16,15 @@
 
 module Mongo
 
-  # WARNING: This class is part of a new, experimental GridFS API. Subject to change.
+  # Implements the basic MongoDB GridFS specification.
   class Grid
     DEFAULT_FS_NAME = 'fs'
 
+    # Initialize a new Grid instance, consisting of a MongoDB database
+    # and a filesystem prefix if not using the default.
+    #
+    # @core gridfs
+    # @see GridFileSystem
     def initialize(db, fs_name=DEFAULT_FS_NAME)
       raise MongoArgumentError, "db must be a Mongo::DB." unless db.is_a?(Mongo::DB)
 
@@ -31,6 +36,12 @@ module Mongo
       @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]])
     end
 
+    # Store a file in the file store.
+    #
+    # @param [String, #read] data a string or io-like object to store.
+    # @param [String] filename a name for the file.
+    #
+    # @return [Mongo::ObjectID] the file's id.
     def put(data, filename, opts={})
       opts.merge!(default_grid_io_opts)
       file = GridIO.new(@files, @chunks, filename, 'w', opts=opts)
@@ -39,11 +50,21 @@ module Mongo
       file.files_id
     end
 
+    # Read a file from the file store.
+    #
+    # @param [] id the file's unique id.
+    #
+    # @return [Mongo::GridIO]
     def get(id)
       opts = {:query => {'_id' => id}}.merge!(default_grid_io_opts)
       GridIO.new(@files, @chunks, nil, 'r', opts)
     end
 
+    # Delete a file from the store.
+    #
+    # @param [] id
+    #
+    # @return [Boolean]
     def delete(id)
       @files.remove({"_id" => id})
       @chunks.remove({"_id" => id})
