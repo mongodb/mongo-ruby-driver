@@ -133,6 +133,18 @@ class GridStoreTest < Test::Unit::TestCase
     #assert_equal ('x' * size) + ('y' * size) + ('z' * size), GridStore.read(@@db, 'biggie')
   end
 
+  def test_binary
+    file = File.open(File.join(File.dirname(__FILE__), 'data', 'data.tar.gz'), 'r')
+    GridStore.open(@@db, 'zip', 'w') do |f|
+      f.write(file.read)
+    end
+
+    file.rewind
+    GridStore.open(@@db, 'zip', 'r') do |f|
+      assert_equal file.read.length, f.read.length
+    end
+  end
+
   def test_puts_and_readlines
     GridStore.open(@@db, 'multiline', 'w') { |f|
       f.puts "line one"
