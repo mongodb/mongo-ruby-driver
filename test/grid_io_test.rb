@@ -52,12 +52,15 @@ class GridIOTest < Test::Unit::TestCase
     end
 
     context "Content types" do
-      should "determine common content types from the extension" do
-        file = GridIO.new(@files, @chunks, 'sample.pdf', 'w')
-        assert_equal 'application/pdf', file.content_type
 
-        file = GridIO.new(@files, @chunks, 'sample.txt', 'w')
-        assert_equal 'text/plain', file.content_type
+      if defined?(MIME)
+        should "determine common content types from the extension" do
+          file = GridIO.new(@files, @chunks, 'sample.pdf', 'w')
+          assert_equal 'application/pdf', file.content_type
+
+          file = GridIO.new(@files, @chunks, 'sample.txt', 'w')
+          assert_equal 'text/plain', file.content_type
+        end
       end
 
       should "default to binary/octet-stream when type is unknown" do

@@ -15,7 +15,10 @@
 # ++
 
 require 'digest/md5'
+begin
 require 'mime/types'
+rescue LoadError
+end
 
 module Mongo
 
@@ -44,8 +47,8 @@ module Mongo
     # @options opts [ObjectID] :_id (ObjectID) a unique id for
     #   the file to be use in lieu of an automatically generated one.
     # @options opts [String] :content_type ('binary/octet-stream') If no content type is specified,
-    #   the content type will be inferred from the filename extension. If that can't be done, the default
-    #   content type of 'binary/octet-stream' will be used.
+    #   the content type will may be inferred from the filename extension if the mime-types gem can be
+    #   loaded. Otherwise, the content type 'binary/octet-stream' will be used.
     # @options opts [Boolean] :safe (false) When safe mode is enabled, the chunks sent to the server
     #   will be validated using an md5 hash. If validation fails, an exception will be raised.
     def initialize(files, chunks, filename, mode, opts={})
@@ -284,7 +287,7 @@ module Mongo
     # Initialize the class for writing a file.
     def init_write(opts)
       @files_id      = opts[:_id] || Mongo::ObjectID.new
-      @content_type  = opts[:content_type] || get_content_type || DEFAULT_CONTENT_TYPE
+      @content_type  = opts[:content_type] || (defined? MIME) && get_content_type || DEFAULT_CONTENT_TYPE
       @chunk_size    = opts[:chunk_size] || DEFAULT_CHUNK_SIZE
       @file_length   = 0
       @metadata      = opts[:metadata] if opts[:metadata]
