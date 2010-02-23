@@ -20,23 +20,15 @@ require 'digest/md5'
 
 module Mongo
 
-  # ObjectID class for documents in MongoDB.
+  # Generates MongoDB object ids.
   #
   # @core objectids
   class ObjectID
-    # This is the legacy byte ordering for Babble. Versions of the Ruby
-    # driver prior to 0.14 used this byte ordering when converting ObjectID
-    # instances to and from strings. If you have string representations of
-    # ObjectIDs using the legacy byte ordering make sure to use the
-    # to_s_legacy and from_string_legacy methods, or convert your strings
-    # with ObjectID#legacy_string_convert
-    BYTE_ORDER = [7, 6, 5, 4, 3, 2, 1, 0, 11, 10, 9, 8]
-
     @@lock  = Mutex.new
     @@index = 0
 
     # Create a new object id. If no parameter is given, an id corresponding
-    # to the ObjectID BSON data type will be created. This is a 12-byte value 
+    # to the ObjectID BSON data type will be created. This is a 12-byte value
     # consisting of a 4-byte timestamp, a 3-byte machine id, a 2-byte process id,
     # and a 3-byte counter.
     #
@@ -46,8 +38,14 @@ module Mongo
       @data = data || generate
     end
 
+    # Determine if the supplied string is legal. Legal strings will
+    # consist of 24 hexadecimal characters.
+    #
+    # @param [String] str
+    #
+    # @return [Boolean]
     def self.legal?(str)
-      len = BYTE_ORDER.length * 2
+      len = 24
       str =~ /([0-9a-f]+)/i
       match = $1
       str && str.length == len && match == str
@@ -117,21 +115,6 @@ module Mongo
       self.new(data)
     end
 
-    # @deprecated
-    # Create a new ObjectID given a string representation of an ObjectID
-    # using the legacy byte ordering. This method may eventually be
-    # removed. If you are not sure that you need this method you should be
-    # using the regular from_string.
-    def self.from_string_legacy(str)
-      warn "Support for legacy object ids has been DEPRECATED."
-      raise InvalidObjectID, "illegal ObjectID format" unless legal?(str)
-      data = []
-      BYTE_ORDER.each_with_index { |string_position, data_index|
-        data[data_index] = str[string_position * 2, 2].to_i(16)
-      }
-      self.new(data)
-    end
-
     # Get a string representation of this object id.
     #
     # @return [String]
@@ -150,33 +133,6 @@ module Mongo
     # @return [String] the object id represented as MongoDB extended JSON.
     def to_json(escaped=false)
       "{\"$oid\": \"#{to_s}\"}"
-    end
-
-    # @deprecated
-    # Get a string representation of this ObjectID using the legacy byte
-    # ordering. This method may eventually be removed. If you are not sure
-    # that you need this method you should be using the regular to_s.
-    def to_s_legacy
-      warn "Support for legacy object ids has been DEPRECATED."
-      str = ' ' * 24
-      BYTE_ORDER.each_with_index { |string_position, data_index|
-        str[string_position * 2, 2] = '%02x' % @data[data_index]
-      }
-      str
-    end
-
-    # @deprecated
-    # Convert a string representation of an ObjectID using the legacy byte
-    # ordering to the proper byte ordering. This method may eventually be
-    # removed. If you are not sure that you need this method it is probably
-    # unnecessary.
-    def self.legacy_string_convert(str)
-      warn "Support for legacy object ids has been DEPRECATED."
-      legacy = ' ' * 24
-      BYTE_ORDER.each_with_index do |legacy_pos, pos|
-        legacy[legacy_pos * 2, 2] = str[pos * 2, 2]
-      end
-      legacy
     end
 
     # Return the UTC time at which this ObjectID was generated. This may
