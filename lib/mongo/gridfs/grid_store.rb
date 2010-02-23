@@ -48,12 +48,15 @@ module GridFS
   #  end
   #
   # @core gridfs
+  # @deprecated
   class GridStore
     include Enumerable
 
     DEFAULT_ROOT_COLLECTION = 'fs'
 
     DEFAULT_CONTENT_TYPE = 'text/plain'
+
+    DEPRECATION_WARNING = "GridFS::GridStore is deprecated. Use either Grid or GridFileSystem."
 
     attr_accessor :filename
 
@@ -94,7 +97,9 @@ module GridFS
     # @param [String] root_collection the name of the gridfs root collection.
     #
     # @return [Boolean]
+    # @deprecated
     def self.exist?(db, name, root_collection=GridStore.default_root_collection)
+      warn DEPRECATION_WARNING
       db.collection("#{root_collection}.files").find({'filename' => name}).next_document != nil
     end
 
@@ -110,6 +115,7 @@ module GridFS
     #
     # @see GridStore#initialize.
     # @see The various GridStore class methods, e.g., GridStore.open, GridStore.read etc.
+    # @deprecated
     def self.open(db, name, mode, options={})
       gs = self.new(db, name, mode, options)
       result = nil
@@ -130,6 +136,7 @@ module GridFS
     #   beginning of the file to start reading.
     #
     # @return [String] the file data
+    # @deprecated
     def self.read(db, name, length=nil, offset=nil)
       GridStore.open(db, name, 'r') do |gs|
         gs.seek(offset) if offset
@@ -144,7 +151,9 @@ module GridFS
     # @param [String] root_collection the name of the root collection.
     #
     # @return [Array]
+    # @deprecated
     def self.list(db, root_collection=GridStore.default_root_collection)
+      warn DEPRECATION_WARNING
       db.collection("#{root_collection}.files").find().map do |f|
         f['filename']
       end
@@ -158,6 +167,7 @@ module GridFS
     # @param [String, Reg] separator
     #
     # @return [Array]
+    # @deprecated
     def self.readlines(db, name, separator=$/)
       GridStore.open(db, name, 'r') do |gs|
         gs.readlines(separator)
@@ -170,6 +180,7 @@ module GridFS
     # @param [Array<String>] names the filenames to remove
     #
     # @return [True]
+    # @deprecated
     def self.unlink(db, *names)
       names.each do |name|
         gs = GridStore.new(db, name)
@@ -189,7 +200,9 @@ module GridFS
     # @param [String] src the name of the source file.
     # @param [String] dest the name of the destination file.
     # @param [String] root_collection the name of the default root collection.
+    # @deprecated
     def self.mv(db, src, dest, root_collection=GridStore.default_root_collection)
+      warn DEPRECATION_WARNING
       db.collection("#{root_collection}.files").update({ :filename => src }, { '$set' => { :filename => dest } })
     end
 
@@ -210,7 +223,9 @@ module GridFS
     #
     # @option options [String] :content_type ('text/plain') Set the content type stored as the
     #   file's metadata. See also GridStore#content_type=.
+    # @deprecated
     def initialize(db, name, mode='r', options={})
+      warn DEPRECATION_WARNING
       @db, @filename, @mode = db, name, mode
       @root = options[:root] || GridStore.default_root_collection
 
