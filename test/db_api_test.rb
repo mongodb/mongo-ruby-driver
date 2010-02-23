@@ -539,22 +539,19 @@ class DBAPITest < Test::Unit::TestCase
     test = @@db.collection("test")
 
     assert_equal [], test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")
-    assert_equal [], test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }", true)
+    assert_equal [], test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")
 
     test.insert("a" => 2)
     test.insert("b" => 5)
     test.insert("a" => 1)
 
     assert_equal 3, test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")[0]["count"]
-    assert_equal 3, test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }", true)[0]["count"]
+    assert_equal 3, test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")[0]["count"]
     assert_equal 1, test.group([], {"a" => {"$gt" => 1}}, {"count" => 0}, "function (obj, prev) { prev.count++; }")[0]["count"]
-    assert_equal 1, test.group([], {"a" => {"$gt" => 1}}, {"count" => 0}, "function (obj, prev) { prev.count++; }", true)[0]["count"]
+    assert_equal 1, test.group([], {"a" => {"$gt" => 1}}, {"count" => 0}, "function (obj, prev) { prev.count++; }")[0]["count"]
 
     finalize = "function (obj) { obj.f = obj.count - 1; }"
     assert_equal 2, test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }", true, finalize)[0]["f"]
-    assert_raise OperationFailure do
-      test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }", false, finalize)[0]["f"]
-    end
 
     test.insert("a" => 2, "b" => 3)
     expected = [{"a" => 2, "count" => 2},

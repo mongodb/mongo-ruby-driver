@@ -453,8 +453,10 @@ module Mongo
       end
 
       # only add finalize if specified
-      if finalize
-        finalize = Code.new(finalize) unless finalize.is_a?(Code)
+      # check to see if users have sent the finalizer as the last argument.
+      finalize = deprecated if deprecated.is_a?(String) || deprecated.is_a?(Code)
+      finalize = Code.new(finalize) if finalize.is_a?(String)
+      if finalize.is_a?(Code)
         group_command['group']['finalize'] = finalize
       end
 
