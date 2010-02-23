@@ -18,14 +18,26 @@ require 'digest/md5'
 
 module Mongo
 
-  # WARNING: This is part of a new, experimental GridFS API. Subject to change.
+  # GridIO objects represent files in the GridFS specification. This class
+  # manages the reading and writing of file chunks and metadata.
   class GridIO
     DEFAULT_CHUNK_SIZE   = 256 * 1024
     DEFAULT_CONTENT_TYPE = 'binary/octet-stream'
 
-    attr_reader :content_type, :chunk_size, :upload_date, :files_id, :filename, 
+    attr_reader :content_type, :chunk_size, :upload_date, :files_id, :filename,
       :metadata, :server_md5, :client_md5
 
+    # Create a new GridIO object. Note that most users will not need to use this class directly;
+    # the Grid and GridFileSystem classes will instantiate this class
+    #
+    # @param [Mongo::Collection] files a collection for storing file metadata.
+    # @param [Mongo::Collection] chunks a collection for storing file chunks.
+    # @param [String] filename the name of the file to open or write.
+    # @param [String] mode 'r' or 'w' or reading or creating a file.
+    #
+    # @option opts [Hash] :query a query selector used when opening the file in 'r' mode.
+    # @option opts [Hash] :query_opts any query options to be used when opening the file in 'r' mode.
+    # @option opts [String] :fs_name the file system prefix. Defaults to 'fs'
     def initialize(files, chunks, filename, mode, opts={})
       @files      = files
       @chunks     = chunks
@@ -38,7 +50,7 @@ module Mongo
       @local_md5  = Digest::MD5.new if @safe
 
       case @mode
-        when 'r' then init_read(opts)
+        when 'r' then init_read
         when 'w' then init_write(opts)
         else
           raise GridError, "Invalid file mode #{@mode}. Mode should be 'r' or 'w'."
@@ -147,7 +159,7 @@ module Mongo
     end
 
     def inspect
-      "_id: #{@files_id}"
+      "#<GridIO _id: #{@files_id}>"
     end
 
     private
@@ -241,7 +253,7 @@ module Mongo
     end
 
     # Initialize the class for reading a file.
-    def init_read(opts)
+    def init_read
       doc = @files.find(@query, @query_opts).next_document
       raise GridError, "Could not open file matching #{@query.inspect} #{@query_opts.inspect}" unless doc
 
