@@ -18,7 +18,7 @@ module Mongo
 
   # A file store built on the GridFS specification featuring
   # an API and behavior similar to that of a traditional file system.
-  class GridFileSystem < Grid
+  class GridFileSystem
 
     # Initialize a new Grid instance, consisting of a MongoDB database
     # and a filesystem prefix if not using the default.
