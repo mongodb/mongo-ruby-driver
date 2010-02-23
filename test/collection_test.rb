@@ -437,15 +437,9 @@ class TestCollection < Test::Unit::TestCase
       assert_equal 4, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 2}))[0]["count"]
     end
 
-    should "group results using command form" do
-      assert_equal 1, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 0.5}), true)[0]["count"]
-      assert_equal 2, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 1}), true)[0]["count"]
-      assert_equal 4, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 2}), true)[0]["count"]
-    end
-
     should "finalize grouped results" do
       @finalize = "function(doc) {doc.f = doc.count + 200; }"
-      assert_equal 202, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 1}), true, @finalize)[0]["f"]
+      assert_equal 202, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 1}), @finalize)[0]["f"]
     end
   end
 
@@ -463,15 +457,9 @@ class TestCollection < Test::Unit::TestCase
     end
 
     should "group results" do
-      results = @@test.group(@keyf, {}, @initial, @reduce, true).sort {|a, b| a['count'] <=> b['count']}
+      results = @@test.group(@keyf, {}, @initial, @reduce).sort {|a, b| a['count'] <=> b['count']}
       assert results[0]['even'] && results[0]['count'] == 2.0
       assert results[1]['odd'] && results[1]['count'] == 3.0
-    end
-
-    should "raise an error if trying to use keyf as a group eval" do
-      assert_raise OperationFailure do
-        @@test.group(@keyf, {}, @initial, @reduce)
-      end
     end
   end
 
