@@ -48,6 +48,10 @@ class ObjectIDTest < Test::Unit::TestCase
     assert_equal 24, $1.length
   end
 
+  def test_inspect
+    assert_equal "ObjectID('#{@o.to_s}')", @o.inspect
+  end
+
   def test_save_and_restore
     host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
     port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
