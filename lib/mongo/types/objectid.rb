@@ -125,7 +125,10 @@ module Mongo
       end
       str
     end
-    alias_method :inspect, :to_s
+
+    def inspect
+      "ObjectID('#{to_s}')"
+    end
 
     # Convert to MongoDB extended JSON format. Since JSON includes type information,
     # but lacks an ObjectID type, this JSON format encodes the type using an $id key.
