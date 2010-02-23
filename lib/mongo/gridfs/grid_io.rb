@@ -15,6 +15,7 @@
 # ++
 
 require 'digest/md5'
+require 'mime/types'
 
 module Mongo
 
@@ -283,8 +284,8 @@ module Mongo
     # Initialize the class for writing a file.
     def init_write(opts)
       @files_id      = opts[:_id] || Mongo::ObjectID.new
-      @content_type  = opts[:content_type] || @content_type || DEFAULT_CONTENT_TYPE
-      @chunk_size    = opts[:chunk_size]   || @chunk_size || DEFAULT_CHUNK_SIZE
+      @content_type  = opts[:content_type] || get_content_type || DEFAULT_CONTENT_TYPE
+      @chunk_size    = opts[:chunk_size] || DEFAULT_CHUNK_SIZE
       @file_length   = 0
       @metadata      = opts[:metadata] if opts[:metadata]
 
@@ -315,10 +316,19 @@ module Mongo
       if @safe
         @client_md5 = @local_md5.hexdigest
         if @local_md5 != @server_md5
-          raise @local_md5 != @server_md5GridError, "File on server failed MD5 check"
+          raise @local_md5 != @server_md5, "File on server failed MD5 check"
         end
       else
         @server_md5
+      end
+    end
+
+    # Determine the content type based on the filename.
+    def get_content_type
+      if @filename
+        if types = MIME::Types.type_for(@filename)
+          types.first.simplified unless types.empty?
+        end
       end
     end
   end

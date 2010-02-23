@@ -16,7 +16,7 @@
 
 module Mongo
 
-  # Implements the basic MongoDB GridFS specification.
+  # Implementation of the MongoDB GridFS specification. A file store.
   class Grid
     DEFAULT_FS_NAME = 'fs'
 

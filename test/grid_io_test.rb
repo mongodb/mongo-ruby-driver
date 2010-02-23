@@ -35,7 +35,6 @@ class GridIOTest < Test::Unit::TestCase
     end
 
     context "Grid MD5 check" do
-
       should "run in safe mode" do
         file = GridIO.new(@files, @chunks, 'smallfile', 'w', :safe => true)
         file.write("DATA" * 100)
@@ -49,6 +48,26 @@ class GridIOTest < Test::Unit::TestCase
         file.write(io)
         assert file.close
         assert_equal file.server_md5, file.client_md5
+      end
+    end
+
+    context "Content types" do
+      should "determine common content types from the extension" do
+        file = GridIO.new(@files, @chunks, 'sample.pdf', 'w')
+        assert_equal 'application/pdf', file.content_type
+
+        file = GridIO.new(@files, @chunks, 'sample.txt', 'w')
+        assert_equal 'text/plain', file.content_type
+      end
+
+      should "default to binary/octet-stream when type is unknown" do
+        file = GridIO.new(@files, @chunks, 'sample.l33t', 'w')
+        assert_equal 'binary/octet-stream', file.content_type
+      end
+
+      should "use any provided content type by default" do
+        file = GridIO.new(@files, @chunks, 'sample.l33t', 'w', :content_type => 'image/jpg')
+        assert_equal 'image/jpg', file.content_type
       end
     end
   end
