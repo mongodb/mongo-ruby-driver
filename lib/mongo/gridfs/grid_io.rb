@@ -289,8 +289,9 @@ module Mongo
       @files_id      = opts[:_id] || Mongo::ObjectID.new
       @content_type  = opts[:content_type] || (defined? MIME) && get_content_type || DEFAULT_CONTENT_TYPE
       @chunk_size    = opts[:chunk_size] || DEFAULT_CHUNK_SIZE
-      @file_length   = 0
       @metadata      = opts[:metadata] if opts[:metadata]
+      @aliases       = opts[:aliases] if opts[:aliases]
+      @file_length   = 0
 
       @current_chunk = create_chunk(0)
       @file_position = 0
