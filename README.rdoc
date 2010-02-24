@@ -70,40 +70,51 @@ Here's how to start MongoDB and run the "simple.rb" example:
 
 See also the test code, especially test/test_db_api.rb.
 
-= GridStore
+= GridFS
 
-The GridStore class is a Ruby implementation of MongoDB's GridFS file storage
-system. An instance of GridStore is like an IO object. See the RDocs for
-details, and see examples/gridfs.rb for code that uses many of the GridStore
-features (metadata, content type, rewind/seek/tell, etc).
+Note: The GridStore class has been deprecated. Use either the Grid or GridFileSystem
+classes to take advantage of GridFS.
 
-Note that the GridStore class is not automatically required when you require
-'mongo'. You also need to require 'mongo/gridfs'
+The Ruby driver include two abstractions for storing large files: Grid and GridFileSystem.
+The Grid class is a Ruby implementation of MongoDB's GridFS file storage
+specification. GridFileSystem is essentailly the same, but provides a more filesystem-like API
+and assumes that filenames are unique.
 
-Example code:
+An instance of both classes represents an individual file store. See the API reference
+for details, and see examples/gridfs.rb for code that uses many of the Grid
+features (metadata, content type, seek, tell, etc).
 
-  include GridFS
+Examples:
+  include Mongo
 
-  # Store the text "Hello, world!" in the grid store.
-  GridStore.open(database, 'filename', 'w') do |f|
-    f.puts "Hello, world!"
+  # Get a database
+  db = Mongo::Connection.new.db('app-db')
+
+  # GridFileSystem. Store the text "Hello, world!" in the fs.
+  fs = GridFileSystem.new(db)
+  fs.open('filename', 'w') do |f|
+    f.write "Hello, world!"
   end
 
-  # Output "Hello, world!"
-  GridStore.open(database, 'filename', 'r') do |f|
+  # GridFileSystem. Output "Hello, world!"
+  fs = GridFileSystem.new(db)
+  fs.open('filename', 'r') do |f|
     puts f.read
   end
 
-  # Add text to the grid store.
-  GridStore.open(database, 'filename', 'w+') do |f|
-    f.puts "But wait, there's more!"
-  end
+  # Write a file on disk to the Grid
+  file = File.open('image.jpg')
+  grid = GridFileSystem.new(db)
+  id   = grid.put(file)
 
-  # Retrieve everything, outputting  "Hello, world!\nBut wait, there's more!\n"
-  GridStore.open(database, 'filename', 'r') do |f|
-    puts f.read
-  end
+  # Retrieve the file
+  file = grid.get(id)
+  file.read
 
+  # Get all the file's metata
+  file.filename
+  file.content_type
+  file.metadata
 
 = Notes
 

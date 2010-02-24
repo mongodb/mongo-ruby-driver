@@ -7,34 +7,39 @@ include GridFS
 
 db = Connection.new['benchmark-gridfs']
 sample_data = File.open(File.join(File.dirname(__FILE__), 'sample_file.pdf'), 'r').read
-GridStore.delete(db, 'mongodb.pdf')
-GridStore.delete(db, 'mongodb-new.pdf')
+db['fs.files'].remove
+db['fs.chunks'].remove
 
+T      = 5
 length = sample_data.length
-mb     = length / 1048576.0
+mb     = T * length / 1048576.0
 
-t1 = Time.now
 @grid = Grid.new(db)
-@id   = @grid.put(sample_data, 'mongodb-new.pdf', :safe => true)
-puts "Write: #{mb / (Time.now - t1)} mb/s"
-
 t1 = Time.now
-GridStore.open(db, 'mongodb.pdf', 'w') do |f|
-  f.write(sample_data)
+ids = []
+T.times do |n|
+  ids << @grid.put(sample_data, "mongodb-new-#{n}.pdf")
 end
-puts "Write: #{mb / (Time.now - t1)} mb/s"
+puts "Grid Write: #{mb / (Time.now - t1)} mb/s"
 
 t1 = Time.now
-@grid = Grid.new(db)
-data = @grid.get(@id).read
-puts "Read new: #{mb / (Time.now - t1)} mb/s"
-file = db['fs.files'].find_one({:filename => 'mongodb-new.pdf'})
-
-t1 = Time.now
-old_data = GridStore.open(db, 'mongodb.pdf', 'r') do |f|
-  f.read
+T.times do |n|
+  GridStore.open(db, "mongodb.pdf-#{n}", 'w') do |f|
+    f.write(sample_data)
+  end
 end
-puts "Read: #{mb / (Time.now - t1)} mb/s"
+puts "GridStore Write: #{mb / (Time.now - t1)} mb/s"
 
-puts sample_data == old_data
-puts sample_data == data
+t1 = Time.now
+T.times do |n|
+  data = @grid.get(ids[n]).read
+end
+puts "Grid Read: #{mb / (Time.now - t1)} mb/s"
+
+t1 = Time.now
+T.times do |n|
+  old_data = GridStore.open(db, "mongodb.pdf-#{n}", 'r') do |f|
+    f.read
+  end
+end
+puts "GridStore Read: #{mb / (Time.now - t1)} mb/s"

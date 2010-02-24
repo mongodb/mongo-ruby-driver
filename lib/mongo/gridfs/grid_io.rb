@@ -29,7 +29,7 @@ module Mongo
     DEFAULT_CONTENT_TYPE = 'binary/octet-stream'
 
     attr_reader :content_type, :chunk_size, :upload_date, :files_id, :filename,
-      :metadata, :server_md5, :client_md5
+      :metadata, :server_md5, :client_md5, :file_length
 
     # Create a new GridIO object. Note that most users will not need to use this class directly;
     # the Grid and GridFileSystem classes will instantiate this class
