@@ -9,15 +9,15 @@ Here's a quick code sample. See the MongoDB Ruby Tutorial
   require 'mongo'
   include Mongo
 
-  @db   = Connection.new.db('sample-db')
-  @coll = db.collection('test')
+  db   = Connection.new.db('sample-db')
+  coll = db.collection('test')
 
-  @coll.remove
+  coll.remove
   3.times do |i|
-    @coll.insert({'a' => i+1})
+    coll.insert({'a' => i+1})
   end
-  puts "There are #{@coll.count()} records. Here they are:"
-  @coll.find().each { |doc| puts doc.inspect }
+  puts "There are #{coll.count()} records. Here they are:"
+  coll.find().each { |doc| puts doc.inspect }
 
 = Installation
 
