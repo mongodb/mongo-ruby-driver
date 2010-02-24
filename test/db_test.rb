@@ -128,8 +128,12 @@ class DBTest < Test::Unit::TestCase
 
   def test_authenticate
     @@db.add_user('spongebob', 'squarepants')
-    assert !@@db.authenticate('nobody', 'nopassword')
-    assert !@@db.authenticate('spongebob' , 'squareliederhosen')
+    assert_raise Mongo::AuthenticationError do
+      assert !@@db.authenticate('nobody', 'nopassword')
+    end
+    assert_raise Mongo::AuthenticationError do
+      assert !@@db.authenticate('spongebob' , 'squareliederhosen')
+    end
     assert @@db.authenticate('spongebob', 'squarepants')
     @@db.logout
     @@db.remove_user('spongebob')
@@ -139,7 +143,7 @@ class DBTest < Test::Unit::TestCase
     @@db.add_user('spongebob', 'squarepants')
     assert Mongo::Connection.from_uri("mongodb://spongebob:squarepants@localhost/#{@@db.name}")
 
-    assert_raise MongoDBError do
+    assert_raise Mongo::AuthenticationError do
       Mongo::Connection.from_uri("mongodb://wrong:info@localhost/#{@@db.name}")
     end
   end
@@ -207,7 +211,9 @@ class DBTest < Test::Unit::TestCase
     assert @@db.authenticate("bob", "secret")
     @@db.logout
     assert @@db.remove_user("bob")
-    assert !@@db.authenticate("bob", "secret")
+    assert_raise Mongo::AuthenticationError do
+      @@db.authenticate("bob", "secret")
+    end
   end
 
   def test_remove_non_existant_user

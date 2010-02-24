@@ -665,7 +665,7 @@ module Mongo
         user    = auth[0]
         pwd     = auth[1]
         db_name = auth[2]
-        self.db(db_name).authenticate(user, pwd) || raise(MongoDBError, "Failed to authenticate db #{db_name}.")
+        self.db(db_name).authenticate(user, pwd)
       end
     end
   end

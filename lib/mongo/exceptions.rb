@@ -46,6 +46,9 @@ module Mongo
   # when the document contains objects that can't be serialized as BSON.
   class InvalidDocument < MongoDBError; end
 
+  # Raised when authentication fails.
+  class AuthenticationError < MongoDBError; end
+
   # Raised when a database operation fails.
   class OperationFailure < MongoDBError; end
 

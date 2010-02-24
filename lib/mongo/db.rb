@@ -79,6 +79,8 @@ module Mongo
     #
     # @return [Boolean]
     #
+    # @raise [AuthenticationError]
+    #
     # @core authenticate authenticate-instance_method
     def authenticate(username, password)
       doc = command(:getnonce => 1)
@@ -90,7 +92,8 @@ module Mongo
       auth['user'] = username
       auth['nonce'] = nonce
       auth['key'] = Digest::MD5.hexdigest("#{nonce}#{username}#{hash_password(username, password)}")
-      ok?(command(auth))
+      ok?(command(auth)) ||
+        raise(MongoDBError::AuthenticationError, "Failed to authenticate user '#{username}' on db '#{self.name}'")
     end
 
     # Adds a user to this database for use with authentication. If the user already
