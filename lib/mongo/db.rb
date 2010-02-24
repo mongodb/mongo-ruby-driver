@@ -206,12 +206,6 @@ module Mongo
       raise MongoDBError, "Error creating collection: #{doc.inspect}"
     end
 
-    # @deprecated all the admin methods are now included in the DB class.
-    def admin
-      warn "DB#admin has been DEPRECATED. All the admin functions are now available in the DB class itself."
-      Admin.new(self)
-    end
-
     # Get a collection by name.
     #
     # @param [String] name the collection name.
@@ -438,12 +432,6 @@ module Mongo
       else
         result
       end
-    end
-
-    # @deprecated please use DB#command instead.
-    def db_command(*args)
-      warn "DB#db_command has been DEPRECATED. Please use DB#command instead."
-      command(args[0], args[1])
     end
 
     # A shortcut returning db plus dot plus collection name.
