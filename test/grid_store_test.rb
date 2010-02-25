@@ -130,7 +130,6 @@ class GridStoreTest < Test::Unit::TestCase
     }
 
     assert_equal 3, @@chunks.count
-    #assert_equal ('x' * size) + ('y' * size) + ('z' * size), GridStore.read(@@db, 'biggie')
   end
 
   def test_binary
@@ -140,8 +139,12 @@ class GridStoreTest < Test::Unit::TestCase
     end
 
     file.rewind
+    data = file.read
+    if data.respond_to?(:force_encoding)
+      data.force_encoding(:binary)
+    end
     GridStore.open(@@db, 'zip', 'r') do |f|
-      assert_equal file.read.length, f.read.length
+      assert_equal data.length, f.read.length
     end
   end
 
