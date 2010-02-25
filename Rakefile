@@ -81,6 +81,11 @@ namespace :test do
     t.verbose    = true
   end
 
+  Rake::TestTask.new(:authentication) do |t|
+    t.test_files = FileList['test/auxillary/authentication_test.rb']
+    t.verbose    = true
+  end
+
   task :drop_databases do |t|
     puts "Dropping test database..."
     require File.join(File.dirname(__FILE__), 'lib', 'mongo')

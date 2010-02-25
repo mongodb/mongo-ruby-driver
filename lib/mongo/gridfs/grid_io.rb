@@ -320,7 +320,7 @@ module Mongo
       if @safe
         @client_md5 = @local_md5.hexdigest
         if @local_md5 != @server_md5
-          raise @local_md5 != @server_md5, "File on server failed MD5 check"
+          raise GridError, "File on server failed MD5 check"
         end
       else
         @server_md5

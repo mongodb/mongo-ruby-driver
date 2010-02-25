@@ -82,7 +82,7 @@ module Mongo
     # @raise [AuthenticationError]
     #
     # @core authenticate authenticate-instance_method
-    def authenticate(username, password)
+    def authenticate(username, password, save_authorization=true)
       doc = command(:getnonce => 1)
       raise "error retrieving nonce: #{doc}" unless ok?(doc)
       nonce = doc['nonce']
@@ -92,8 +92,14 @@ module Mongo
       auth['user'] = username
       auth['nonce'] = nonce
       auth['key'] = Digest::MD5.hexdigest("#{nonce}#{username}#{hash_password(username, password)}")
-      ok?(command(auth)) ||
-        raise(MongoDBError::AuthenticationError, "Failed to authenticate user '#{username}' on db '#{self.name}'")
+      if ok?(command(auth))
+        if save_authorization
+          @connection.add_auth(@name, username, password)
+        end
+        true
+      else
+        raise(Mongo::AuthenticationError, "Failed to authenticate user '#{username}' on db '#{self.name}'")
+      end
     end
 
     # Adds a user to this database for use with authentication. If the user already
@@ -125,15 +131,21 @@ module Mongo
       end
     end
 
-    # Deauthorizes use for this database for this connection.
+    # Deauthorizes use for this database for this connection. Also removes
+    # any saved authorization in the connection class associated with this
+    # database.
     #
     # @raise [MongoDBError] if logging out fails.
     #
     # @return [Boolean]
     def logout
       doc = command(:logout => 1)
-      return true if ok?(doc)
-      raise MongoDBError, "error logging out: #{doc.inspect}"
+      if ok?(doc)
+        @connection.remove_auth(@name)
+        true
+      else
+        raise MongoDBError, "error logging out: #{doc.inspect}"
+      end
     end
 
     # Get an array of collection names in this database.

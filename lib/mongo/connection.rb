@@ -90,8 +90,10 @@ module Mongo
     #
     # @core connections
     def initialize(pair_or_host=nil, port=nil, options={})
+      @auths        = []
+
       if block_given?
-        @nodes, @auths = yield self
+        @nodes = yield self
       else
         @nodes = format_pair(pair_or_host, port)
       end
@@ -126,10 +128,7 @@ module Mongo
       @options  = options
 
       should_connect = options[:connect].nil? ? true : options[:connect]
-      if should_connect
-        connect_to_master
-        authenticate_databases if @auths
-      end
+      connect_to_master if should_connect
     end
 
     # Initialize a paired connection to MongoDB.
@@ -154,7 +153,7 @@ module Mongo
       # Block returns an array, the first element being an array of nodes and the second an array
       # of authorizations for the database.
       new(nil, nil, opts) do |con|
-        [[con.pair_val_to_connection(nodes[0]), con.pair_val_to_connection(nodes[1])], []]
+        [con.pair_val_to_connection(nodes[0]), con.pair_val_to_connection(nodes[1])]
       end
     end
 
@@ -172,12 +171,68 @@ module Mongo
       end
     end
 
+    # Apply each of the saved database authentications.
+    #
+    # @return [Boolean] returns true if authentications exist and succeeed, false
+    #   if none exists.
+    #
+    # @raise [AuthenticationError] raises an exception if any one
+    #   authentication fails.
+    def apply_saved_authentication
+      return false if @auths.empty?
+      @auths.each do |auth|
+        self[auth['db_name']].authenticate(auth['username'], auth['password'], false)
+      end
+      true
+    end
+
+    # Save an authentication to this connection. When connecting,
+    # the connection will attempt to re-authenticate on every db
+    # specificed in the list of auths.
+    #
+    # @param [String] db_name
+    # @param [String] username
+    # @param [String] password
+    #
+    # @return [Hash] a hash representing the authentication just added.
+    def add_auth(db_name, username, password)
+      remove_auth(db_name)
+      auth = {}
+      auth['db_name']  = db_name
+      auth['username'] = username
+      auth['password'] = password
+      @auths << auth
+      auth
+    end
+
+    # Remove a saved authentication for this connection.
+    #
+    # @param [String] db_name
+    #
+    # @return [Boolean]
+    def remove_auth(db_name)
+      return unless @auths
+      if @auths.reject! { |a| a['db_name'] == db_name }
+        true
+      else
+        false
+      end
+    end
+
+    # Remove all authenication information stored in this connection.
+    #
+    # @return [true] this operation return true because it always succeeds.
+    def clear_auths
+      @auths = []
+      true
+    end
+
     # Return a hash with all database names
     # and their respective sizes on disk.
     #
     # @return [Hash]
     def database_info
-      doc = self['admin'].command(:listDatabases => 1)
+      doc = self['admin'].command({:listDatabases => 1}, false, true)
       returning({}) do |info|
         doc['databases'].each { |db| info[db['name']] = db['sizeOnDisk'].to_i }
       end
@@ -232,7 +287,7 @@ module Mongo
       oh[:fromhost] = from_host
       oh[:fromdb]   = from
       oh[:todb]     = to
-      self["admin"].command(oh)
+      self["admin"].command(oh, false, true)
     end
 
     # Increment and return the next available request id.
@@ -250,7 +305,7 @@ module Mongo
     #
     # @return [Hash]
     def server_info
-      db("admin").command({:buildinfo => 1}, {:admin => true, :check_response => true})
+      self["admin"].command({:buildinfo => 1}, false, true)
     end
 
     # Get the build version of the current server.
@@ -365,6 +420,7 @@ module Mongo
           result = self['admin'].command({:ismaster => 1}, false, false, socket)
           if result['ok'] == 1 && ((is_master = result['ismaster'] == 1) || @slave_ok)
             @host, @port = host, port
+            apply_saved_authentication
           end
 
           # Note: slave_ok can be true only when connecting to a single node.
@@ -470,13 +526,13 @@ module Mongo
           raise MongoArgumentError, "MongoDB URI must include all three of username, password, " +
             "and db if any one of these is specified."
         else
-          auths << [uname, pwd, db]
+          add_auth(db, uname, pwd)
         end
 
         nodes << [host, port]
       end
 
-      [nodes, auths]
+      nodes
     end
 
     private
@@ -653,20 +709,6 @@ module Mongo
           raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
       end
       message
-    end
-
-    # Authenticate for any auth info provided on instantiating the connection.
-    # Only called when a MongoDB URI has been used to instantiate the connection, and
-    # when that connection specifies databases and authentication credentials.
-    #
-    # @raise [MongoDBError]
-    def authenticate_databases
-      @auths.each do |auth|
-        user    = auth[0]
-        pwd     = auth[1]
-        db_name = auth[2]
-        self.db(db_name).authenticate(user, pwd)
-      end
     end
   end
 end

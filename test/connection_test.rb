@@ -69,8 +69,6 @@ class TestConnection < Test::Unit::TestCase
     assert_kind_of Array, names
     assert names.length >= 1
     assert names.include?('ruby-mongo-info-test')
-
-    @mongo.drop_database('ruby-mongo-info-test')
   end
 
   def test_logging
@@ -80,7 +78,7 @@ class TestConnection < Test::Unit::TestCase
     db = Connection.new(@host, @port, :logger => logger).db('ruby-mongo-test')
     assert output.string.include?("admin.$cmd.find")
   end
-  
+
   def test_connection_logger
     output = StringIO.new
     logger = Logger.new(output)
@@ -122,6 +120,38 @@ class TestConnection < Test::Unit::TestCase
     assert_equal 2, nodes.length
     assert_equal ['bar', Connection::DEFAULT_PORT], nodes[0]
     assert_equal ['foo', 123], nodes[1]
+  end
+
+  context "Saved authentications" do
+    setup do
+      @conn = Mongo::Connection.new
+      @auth = {'db_name' => 'test', 'username' => 'bob', 'password' => 'secret'}
+      @conn.add_auth(@auth['db_name'], @auth['username'], @auth['password'])
+    end
+
+    should "save the authentication" do
+      assert_equal @auth, @conn.auths[0]
+    end
+
+    should "replace the auth if given a new auth for the same db" do
+      auth = {'db_name' => 'test', 'username' => 'mickey', 'password' => 'm0u53'}
+      @conn.add_auth(auth['db_name'], auth['username'], auth['password'])
+      assert_equal 1, @conn.auths.length
+      assert_equal auth, @conn.auths[0]
+    end
+
+    should "remove auths by database" do
+      @conn.remove_auth('non-existent database')
+      assert_equal 1, @conn.auths.length
+
+      @conn.remove_auth('test')
+      assert_equal 0, @conn.auths.length
+    end
+
+    should "remove all auths" do
+      @conn.clear_auths
+      assert_equal 0, @conn.auths.length
+    end
   end
 
   context "Connection exceptions" do

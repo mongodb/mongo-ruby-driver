@@ -75,8 +75,10 @@ class ConnectionTest < Test::Unit::TestCase
         @conn = Connection.from_uri("mongodb://kyle:s3cr3t@localhost:27017/app,mickey:m0u5e@mydb.com:27018/dsny", :connect => false)
         assert_equal ['localhost', 27017], @conn.nodes[0]
         assert_equal ['mydb.com', 27018], @conn.nodes[1]
-        assert_equal ['kyle', 's3cr3t', 'app'], @conn.auths[0]
-        assert_equal ['mickey', 'm0u5e', 'dsny'], @conn.auths[1]
+        auth_hash = {'username' => 'kyle', 'password' => 's3cr3t', 'db_name' => 'app'}
+        assert_equal auth_hash, @conn.auths[0]
+        auth_hash = {'username' => 'mickey', 'password' => 'm0u5e', 'db_name' => 'dsny'}
+        assert_equal auth_hash, @conn.auths[1]
       end
 
       should "attempt to connect" do
@@ -86,6 +88,7 @@ class ConnectionTest < Test::Unit::TestCase
         admin_db = new_mock_db
         admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1})
         @conn.expects(:[]).with('admin').returns(admin_db)
+        @conn.expects(:apply_saved_authentication)
         @conn.connect_to_master
       end
 

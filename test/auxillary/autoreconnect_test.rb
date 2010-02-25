@@ -29,7 +29,7 @@ class AutoreconnectTest < Test::Unit::TestCase
 
     begin
       @coll.find.to_a
-      rescue Mongo::ConnectionFailure 
+      rescue Mongo::ConnectionFailure
     end
 
     results = []
@@ -38,5 +38,4 @@ class AutoreconnectTest < Test::Unit::TestCase
         assert results.any? {|r| r['a'] == a}, "Could not find record for a => #{a}"
       end
   end
-
 end
