@@ -338,7 +338,11 @@ module Mongo
         :ns     => "#{@db.name}.#{@name}",
         :key    => field_h,
         :unique => unique }
-      insert_documents([sel], Mongo::DB::SYSTEM_INDEX_COLLECTION, false)
+      begin
+        insert_documents([sel], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, true)
+      rescue Mongo::OperationFailure
+        raise Mongo::OperationFailure, "Failed to create index #{sel.inspect}."
+      end
       name
     end
 
