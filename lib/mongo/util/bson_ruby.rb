@@ -105,14 +105,14 @@ class BSON_RUBY
     # Write key/value pairs. Always write _id first if it exists.
     if move_id
       if obj.has_key? '_id'
-        serialize_key_value('_id', obj['_id'], check_keys)
+        serialize_key_value('_id', obj['_id'], false)
       elsif obj.has_key? :_id
-        serialize_key_value('_id', obj[:_id], check_keys)
+        serialize_key_value('_id', obj[:_id], false)
       end
       obj.each {|k, v| serialize_key_value(k, v, check_keys) unless k == '_id' || k == :_id }
     else
       if obj.has_key?('_id') && obj.has_key?(:_id)
-        obj.delete(:_id)
+        obj['_id'] = obj.delete(:_id)
       end
       obj.each {|k, v| serialize_key_value(k, v, check_keys) }
     end

@@ -141,15 +141,12 @@ static int cmp_char(const void* a, const void* b) {
 }
 
 static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_id);
-static int write_element(VALUE key, VALUE value, VALUE extra);
+static int write_element_with_id(VALUE key, VALUE value, VALUE extra);
+static int write_element_without_id(VALUE key, VALUE value, VALUE extra);
 static VALUE elements_to_hash(const char* buffer, int max);
 
 static VALUE pack_extra(buffer_t buffer, VALUE check_keys) {
     return rb_ary_new3(2, LL2NUM((long long)buffer), check_keys);
-}
-
-static VALUE pack_triple(buffer_t buffer, VALUE check_keys, int allow_id) {
-    return rb_ary_new3(3, LL2NUM((long long)buffer), check_keys, allow_id);
 }
 
 static void write_name_and_type(buffer_t buffer, VALUE name, char type) {
@@ -159,7 +156,7 @@ static void write_name_and_type(buffer_t buffer, VALUE name, char type) {
     SAFE_WRITE(buffer, &zero, 1);
 }
 
-static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow_id) {
+static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
     buffer_t buffer = (buffer_t)NUM2LL(rb_ary_entry(extra, 0));
     VALUE check_keys = rb_ary_entry(extra, 1);
 
@@ -173,7 +170,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
         rb_raise(rb_eTypeError, "keys must be strings or symbols");
     }
 
-    if (!allow_id && strcmp("_id", RSTRING_PTR(key)) == 0) {
+    if (allow_id == 0 && strcmp("_id", RSTRING_PTR(key)) == 0) {
         return ST_CONTINUE;
     }
 
@@ -266,7 +263,7 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 VALUE key;
                 INT2STRING(&name, i);
                 key = rb_str_new2(name);
-                write_element(key, values[i], pack_extra(buffer, check_keys));
+                write_element_with_id(key, values[i], pack_extra(buffer, check_keys));
                 free(name);
             }
 
@@ -366,9 +363,9 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
                 }
 
                 ns = rb_funcall(value, rb_intern("namespace"), 0);
-                write_element(rb_str_new2("$ref"), ns, pack_extra(buffer, Qfalse));
+                write_element_with_id(rb_str_new2("$ref"), ns, pack_extra(buffer, Qfalse));
                 oid = rb_funcall(value, rb_intern("object_id"), 0);
-                write_element(rb_str_new2("$id"), oid, pack_extra(buffer, Qfalse));
+                write_element_with_id(rb_str_new2("$id"), oid, pack_extra(buffer, Qfalse));
 
                 // write null byte and fill in length
                 SAFE_WRITE(buffer, &zero, 1);
@@ -464,8 +461,12 @@ static int write_element_allow_id(VALUE key, VALUE value, VALUE extra, int allow
     return ST_CONTINUE;
 }
 
-static int write_element(VALUE key, VALUE value, VALUE extra) {
-    return write_element_allow_id(key, value, extra, 0);
+static int write_element_without_id(VALUE key, VALUE value, VALUE extra) {
+    return write_element(key, value, extra, 0);
+}
+
+static int write_element_with_id(VALUE key, VALUE value, VALUE extra) {
+    return write_element(key, value, extra, 1);
 }
 
 static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_id) {
@@ -473,6 +474,7 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_
     buffer_position length_location = buffer_save_space(buffer, 4);
     buffer_position length;
     int allow_id;
+    int (*write_function)(VALUE, VALUE, VALUE) = NULL;
     VALUE id_str = rb_str_new2("_id");
     VALUE id_sym = ID2SYM(rb_intern("_id"));
 
@@ -480,37 +482,47 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_
         rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
     }
 
-    // write '_id' first if move_id is true
+    // write '_id' first if move_id is true. then don't allow an id to be written.
     if(move_id == Qtrue) {
         allow_id = 0;
         if (rb_funcall(hash, rb_intern("has_key?"), 1, id_str) == Qtrue) {
             VALUE id = rb_hash_aref(hash, id_str);
-            write_element_allow_id(id_str, id, pack_extra(buffer, check_keys), 1);
+            write_element_with_id(id_str, id, pack_extra(buffer, check_keys));
         } else if (rb_funcall(hash, rb_intern("has_key?"), 1, id_sym) == Qtrue) {
             VALUE id = rb_hash_aref(hash, id_sym);
-            write_element_allow_id(id_sym, id, pack_extra(buffer, check_keys), 1);
+            write_element_with_id(id_sym, id, pack_extra(buffer, check_keys));
         }
     }
     else {
         allow_id = 1;
-        if ((rb_funcall(hash, rb_intern("has_key?"), 1, id_str) == Qtrue) &&
-               (rb_funcall(hash, rb_intern("has_key?"), 1, id_sym) == Qtrue)) {
-                   VALUE obj = rb_hash_delete(hash, id_str);
+        if (strcmp(rb_class2name(RBASIC(hash)->klass), "HashWithIndifferentAccess") != 0) {
+            if ((rb_funcall(hash, rb_intern("has_key?"), 1, id_str) == Qtrue) &&
+                   (rb_funcall(hash, rb_intern("has_key?"), 1, id_sym) == Qtrue)) {
+                      VALUE oid_sym = rb_hash_delete(hash, id_sym);
+                      rb_funcall(hash, rb_intern("[]="), 2, id_str, oid_sym);
+            }
         }
+    }
+
+    if(allow_id == 1) {
+        write_function = write_element_with_id;
+    }
+    else {
+        write_function = write_element_without_id;
     }
 
     // we have to check for an OrderedHash and handle that specially
     if (strcmp(rb_class2name(RBASIC(hash)->klass), "OrderedHash") == 0) {
         VALUE keys = rb_funcall(hash, rb_intern("keys"), 0);
         int i;
-        for(i = 0; i < RARRAY_LEN(keys); i++) {
+                for(i = 0; i < RARRAY_LEN(keys); i++) {
             VALUE key = RARRAY_PTR(keys)[i];
             VALUE value = rb_hash_aref(hash, key);
 
-            write_element_allow_id(key, value, pack_extra(buffer, check_keys), allow_id);
+            write_function(key, value, pack_extra(buffer, check_keys));
         }
     } else {
-        rb_hash_foreach(hash, write_element_allow_id, pack_triple(buffer, check_keys, allow_id));
+        rb_hash_foreach(hash, write_function, pack_extra(buffer, check_keys));
     }
 
     // write null byte and fill in length

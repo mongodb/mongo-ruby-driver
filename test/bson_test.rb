@@ -356,6 +356,13 @@ class BSONTest < Test::Unit::TestCase
     assert_equal BSON.serialize(one).to_a, BSON.serialize(dup).to_a
   end
 
+  def test_no_duplicate_id_when_moving_id
+    dup = {"_id" => "foo", :_id => "foo"}
+    one = {:_id => "foo"}
+
+    assert_equal BSON.serialize(one, false, true).to_s, BSON.serialize(dup, false, true).to_s
+  end
+
   def test_null_character
     doc = {"a" => "\x00"}
 
@@ -399,6 +406,7 @@ class BSONTest < Test::Unit::TestCase
     a['key'] = 'abc'
     a['_id']  = 1
 
+
     assert_equal ")\000\000\000\020_id\000\001\000\000\000\002text" +
                  "\000\004\000\000\000abc\000\002key\000\004\000\000\000abc\000\000",
                  BSON.serialize(a, false, true).to_s
@@ -423,5 +431,24 @@ class BSONTest < Test::Unit::TestCase
                  "\000\034\000\000\000\002text\000\004\000\000\000abc\000\020_id" +
                  "\000\002\000\000\000\000\020_id\000\003\000\000\000\000",
                  BSON.serialize(c, false, false).to_s
+  end
+
+  begin
+  require 'active_support'
+  rescue LoadError
+    warn 'Could not test BSON with HashWithIndifferentAccess.'
+  end
+
+  if defined?(HashWithIndifferentAccess)
+    def test_keep_id_with_hash_with_indifferent_access
+      doc = HashWithIndifferentAccess.new
+      doc[:_id] = ObjectID.new
+      BSON.serialize(doc, false, false).to_a
+      assert doc.has_key?("_id")
+
+      doc['_id'] = ObjectID.new
+      BSON.serialize(doc, false, false).to_a
+      assert doc.has_key?("_id")
+    end
   end
 end
