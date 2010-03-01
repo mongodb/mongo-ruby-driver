@@ -1,3 +1,18 @@
+0.19 2010-3-1
+* Deprecated GridFS::GridStore. Grid and GridFileSystem classes replace
+the GridFS implementation with a simpler API and vastly-improved performance.
+See http://www.mongodb.org/display/DOCS/GridFS+in+Ruby for more details.
+* Safe mode for Grid and GridFileSystem.
+* Grid and GridFileSystem use Mime/Types to detect content type (if available)
+* Connection API simplified. Use Connection.paired for pairs and Connection.from_uri to
+use MongoDB's connection URI specification.
+* Authentication can be saved so that reauthentication happens automatically
+on reconnect.
+* Raise exception if authentication fails.
+* Raise exception if index creation fails.
+* Removed a number of deprecated methods and classes.
+* Several bug fixes.
+
 0.18.3 2010-1-25
 * Convert docs to YARD
 * Support MongoDB extended JSON on ObjectID#to_json

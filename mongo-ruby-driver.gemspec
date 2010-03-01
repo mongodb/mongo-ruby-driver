@@ -22,7 +22,7 @@ Gem::Specification.new do |s|
   s.rdoc_options = ['--main', 'README.rdoc', '--inline-source']
   s.extra_rdoc_files = ['README.rdoc']
 
-  s.authors = ['Jim Menard', 'Mike Dirolf']
+  s.authors = ['Jim Menard', 'Mike Dirolf', 'Kyle Banker']
   s.email = 'mongodb-dev@googlegroups.com'
   s.homepage = 'http://www.mongodb.org'
 end
