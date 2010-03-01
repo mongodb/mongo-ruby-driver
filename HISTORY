@@ -12,6 +12,7 @@ on reconnect.
 * Raise exception if index creation fails.
 * Removed a number of deprecated methods and classes.
 * Several bug fixes.
+* Nearing 1.0!
 
 0.18.3 2010-1-25
 * Convert docs to YARD
