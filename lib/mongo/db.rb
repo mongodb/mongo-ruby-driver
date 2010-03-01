@@ -96,7 +96,7 @@ module Mongo
       auth['nonce'] = nonce
       auth['key'] = Digest::MD5.hexdigest("#{nonce}#{username}#{hash_password(username, password)}")
       if ok?(command(auth))
-        if save_authorization
+        if save_auth
           @connection.add_auth(@name, username, password)
         end
         true
