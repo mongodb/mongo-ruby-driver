@@ -24,6 +24,7 @@ module Mongo
     # and a filesystem prefix if not using the default.
     #
     # @core gridfs
+    #
     # @see GridFileSystem
     def initialize(db, fs_name=DEFAULT_FS_NAME)
       raise MongoArgumentError, "db must be a Mongo::DB." unless db.is_a?(Mongo::DB)
@@ -40,6 +41,16 @@ module Mongo
     #
     # @param [String, #read] data a string or io-like object to store.
     # @param [String] filename a name for the file.
+    #
+    # @options opts [Hash] :metadata ({}) any additional data to store with the file.
+    # @options opts [ObjectID] :_id (ObjectID) a unique id for
+    #   the file to be use in lieu of an automatically generated one.
+    # @options opts [String] :content_type ('binary/octet-stream') If no content type is specified,
+    #   the content type will may be inferred from the filename extension if the mime-types gem can be
+    #   loaded. Otherwise, the content type 'binary/octet-stream' will be used.
+    # @options opts [Integer] (262144) :chunk_size size of file chunks in bytes.
+    # @options opts [Boolean] :safe (false) When safe mode is enabled, the chunks sent to the server
+    #   will be validated using an md5 hash. If validation fails, an exception will be raised.
     #
     # @return [Mongo::ObjectID] the file's id.
     def put(data, filename, opts={})

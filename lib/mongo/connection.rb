@@ -188,7 +188,8 @@ module Mongo
 
     # Save an authentication to this connection. When connecting,
     # the connection will attempt to re-authenticate on every db
-    # specificed in the list of auths.
+    # specificed in the list of auths. This method is called automatically
+    # by DB#authenticate.
     #
     # @param [String] db_name
     # @param [String] username

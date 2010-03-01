@@ -15,11 +15,15 @@
 # ++
 require 'mongo/gridfs/grid_store'
 
+# DEPRECATED. Plese see GridFileSystem and Grid classes.
+#
 # GridFS is a specification for storing large binary objects in MongoDB.
 # See the documentation for GridFS::GridStore
 #
 # @see GridFS::GridStore
 #
 # @core gridfs
+#
+# @deprecated
 module GridFS
 end

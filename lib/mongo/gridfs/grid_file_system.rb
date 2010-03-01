@@ -38,11 +38,23 @@ module Mongo
       @default_query_opts = {:sort => [['filename', 1], ['uploadDate', -1]], :limit => 1}
     end
 
-    # Open a file for reading or writing.
+    # Open a file for reading or writing. Note that the options for this method only apply
+    # when opening in 'w' mode.
     #
     # @param [String] filename the name of the file.
     # @param [String] mode either 'r' or 'w' for reading from
     #   or writing to the file.
+    # @param [Hash] opts see GridIO#new
+    #
+    # @options opts [Hash] :metadata ({}) any additional data to store with the file.
+    # @options opts [ObjectID] :_id (ObjectID) a unique id for
+    #   the file to be use in lieu of an automatically generated one.
+    # @options opts [String] :content_type ('binary/octet-stream') If no content type is specified,
+    #   the content type will may be inferred from the filename extension if the mime-types gem can be
+    #   loaded. Otherwise, the content type 'binary/octet-stream' will be used.
+    # @options opts [Integer] (262144) :chunk_size size of file chunks in bytes.
+    # @options opts [Boolean] :safe (false) When safe mode is enabled, the chunks sent to the server
+    #   will be validated using an md5 hash. If validation fails, an exception will be raised.
     #
     # @example
     #

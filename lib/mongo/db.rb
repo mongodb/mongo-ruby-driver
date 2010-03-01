@@ -76,13 +76,16 @@ module Mongo
     #
     # @param [String] username
     # @param [String] password
+    # @param [Boolean] save_auth
+    #   Save this authentication to the connection object using Connection#add_auth. This
+    #   will ensure that the authentication will be applied on database reconnect.
     #
     # @return [Boolean]
     #
     # @raise [AuthenticationError]
     #
     # @core authenticate authenticate-instance_method
-    def authenticate(username, password, save_authorization=true)
+    def authenticate(username, password, save_auth=true)
       doc = command(:getnonce => 1)
       raise "error retrieving nonce: #{doc}" unless ok?(doc)
       nonce = doc['nonce']
