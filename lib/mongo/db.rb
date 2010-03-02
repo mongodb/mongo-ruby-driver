@@ -416,8 +416,9 @@ module Mongo
     # Note: DB commands must start with the "command" key. For this reason,
     # any selector containing more than one key must be an OrderedHash.
     #
-    # It may be of interest hat a command in MongoDB is technically a kind of query 
-    # that occurs on the system command collection ($cmd).
+    # Note also that a command in MongoDB is just a kind of query
+    # that occurs on the system command collection ($cmd). Examine this method's implementation
+    # to see how it works.
     #
     # @param [OrderedHash, Hash] selector an OrderedHash, or a standard Hash with just one
     # key, specifying the command to be performed.
