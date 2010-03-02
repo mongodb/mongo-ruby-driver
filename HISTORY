@@ -1,3 +1,6 @@
+0.19.1 2010-3-2
+* Fix for HashWithIndifferentAccess in ActiveSupport-3.0
+
 0.19 2010-3-1
 * Deprecated GridFS::GridStore. Grid and GridFileSystem classes replace
 the GridFS implementation with a simpler API and vastly-improved performance.
