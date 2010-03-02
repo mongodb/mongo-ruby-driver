@@ -495,7 +495,7 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_
     }
     else {
         allow_id = 1;
-        if (strcmp(rb_class2name(RBASIC(hash)->klass), "HashWithIndifferentAccess") != 0) {
+        if (strcmp(rb_class2name(RBASIC(hash)->klass), "Hash") == 0) {
             if ((rb_funcall(hash, rb_intern("has_key?"), 1, id_str) == Qtrue) &&
                    (rb_funcall(hash, rb_intern("has_key?"), 1, id_sym) == Qtrue)) {
                       VALUE oid_sym = rb_hash_delete(hash, id_sym);

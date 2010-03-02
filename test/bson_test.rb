@@ -4,11 +4,18 @@ require 'complex'
 require 'bigdecimal'
 require 'rational'
 
-# Need to simulating this class
-# without actually loading it.
-module ActiveSupport
-  class TimeWithZone
+begin
+  require 'active_support/core_ext'
+  require 'active_support/hash_with_indifferent_access'
+  Time.zone = "Pacific Time (US & Canada)"
+  Zone = Time.zone.now
+rescue LoadError
+  warn 'Could not test BSON with HashWithIndifferentAccess.'
+  module ActiveSupport
+    class TimeWithZone
+    end
   end
+  Zone = ActiveSupport::TimeWithZone.new
 end
 
 class BSONTest < Test::Unit::TestCase
@@ -191,7 +198,7 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_exeption_on_using_unsupported_date_class
-    [DateTime.now, Date.today, ActiveSupport::TimeWithZone.new].each do |invalid_date|
+    [DateTime.now, Date.today, Zone].each do |invalid_date|
       doc = {:date => invalid_date}
       begin
       bson = BSON.serialize(doc)
@@ -433,21 +440,19 @@ class BSONTest < Test::Unit::TestCase
                  BSON.serialize(c, false, false).to_s
   end
 
-  begin
-  require 'active_support'
-  rescue LoadError
-    warn 'Could not test BSON with HashWithIndifferentAccess.'
-  end
-
   if defined?(HashWithIndifferentAccess)
     def test_keep_id_with_hash_with_indifferent_access
       doc = HashWithIndifferentAccess.new
-      doc[:_id] = ObjectID.new
-      BSON.serialize(doc, false, false).to_a
+      embedded = HashWithIndifferentAccess.new
+      embedded['_id'] = ObjectID.new
+      doc['_id']      = ObjectID.new
+      doc['embedded'] = [embedded]
+      BSON.serialize(doc, false, true).to_a
       assert doc.has_key?("_id")
+      assert doc['embedded'][0].has_key?("_id")
 
       doc['_id'] = ObjectID.new
-      BSON.serialize(doc, false, false).to_a
+      BSON.serialize(doc, false, true).to_a
       assert doc.has_key?("_id")
     end
   end
