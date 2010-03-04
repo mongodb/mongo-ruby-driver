@@ -21,12 +21,12 @@ Here's a quick code sample. See the MongoDB Ruby Tutorial
 
 = Installation
 
-The driver's gems are hosted on Gemcutter[http://gemcutter.org]. If you haven't
-installed a gem from Gemcutter before, you'll need to set up Gemcutter first:
+The driver's gems are hosted at Rubygems.org[http://rubygems.org]. Make sure you're
+using the latest version of rubygems:
 
-  $ gem install gemcutter
+  $ gem update --system
 
-Once you've installed Gemcutter, install the mongo gem as follows:
+Then you can install the mongo gem as follows:
 
   $ gem install mongo
 
