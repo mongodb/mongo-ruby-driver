@@ -53,10 +53,7 @@ module BSON
     #
     # @return [Boolean]
     def self.legal?(str)
-      len = 24
-      str =~ /([0-9a-f]+)/i
-      match = $1
-      str && str.length == len && match == str
+      str =~ /^[0-9a-f]{24}$/i ? true : false
     end
 
     # Create an object id from the given time. This is useful for doing range
