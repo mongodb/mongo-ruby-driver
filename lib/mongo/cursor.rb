@@ -363,7 +363,8 @@ module Mongo
 
     def query_log_message
       "#{@admin ? 'admin' : @db.name}.#{@collection.name}.find(#{@selector.inspect}, #{@fields ? @fields.inspect : '{}'})" +
-      "#{@skip != 0 ? ('.skip(' + @skip.to_s + ')') : ''}#{@limit != 0 ? ('.limit(' + @limit.to_s + ')') : ''}"
+      "#{@skip != 0 ? ('.skip(' + @skip.to_s + ')') : ''}#{@limit != 0 ? ('.limit(' + @limit.to_s + ')') : ''}" +
+      "#{@order ? ('.sort(' + @order.inspect + ')') : ''}"
     end
 
     def selector_with_special_query_fields

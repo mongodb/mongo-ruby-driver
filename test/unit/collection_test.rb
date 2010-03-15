@@ -27,6 +27,16 @@ class CollectionTest < Test::Unit::TestCase
       @coll.insert({:title => 'Moby Dick'})
     end
 
+    should "send sort data" do
+      @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
+      @db   = @conn['testing']
+      @coll = @db.collection('books')
+      @conn.expects(:receive_message).with do |op, msg, log, sock|
+        op == 2004 && log.include?("sort")
+      end.returns([[], 0, 0])
+      @coll.find({:title => 'Moby Dick'}).sort([['title', 1], ['author', 1]]).next_document
+    end
+
     should "not log binary data" do
       @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @conn['testing']
