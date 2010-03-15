@@ -78,6 +78,7 @@ module Mongo
     # @return [String]
     #   the data in the file
     def read(length=nil)
+      return '' if @file_length.zero?
       if length == 0
         return ''
       elsif length.nil? && @file_position.zero?
@@ -165,6 +166,9 @@ module Mongo
     # @return [True]
     def close
       if @mode[0] == ?w
+        if @current_chunk['n'].zero? && @chunk_position.zero?
+          warn "Warning: Storing a file with zero length."
+        end
         @upload_date = Time.now.utc
         @files.insert(to_mongo_object)
       end

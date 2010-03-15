@@ -45,6 +45,18 @@ class GridTest < Test::Unit::TestCase
       end
     end
 
+    context "Storing data with a length of zero" do
+      setup do
+        @grid = Grid.new(@db, 'test-fs')
+        @id   = @grid.put('', 'sample', :metadata => {'app' => 'photos'})
+      end
+
+      should "return the zero length" do
+        data = @grid.get(@id)
+        assert_equal 0, data.read.length
+      end
+    end
+
     context "Streaming: " do || {}
       setup do
         def read_and_write_stream(filename, read_length, opts={})
