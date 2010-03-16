@@ -318,14 +318,43 @@ module Mongo
     #
     # @param [String, Array] field_or_spec
     #   should be either a single field name or an array of
-    #   [field name, direction] pairs. Directions should be specified as Mongo::ASCENDING or Mongo::DESCENDING.
+    #   [field name, direction] pairs. Directions should be specified
+    #   as Mongo::ASCENDING, Mongo::DESCENDING, or Mongo::GEO2D.
     #
-    # @param [Boolean] unique if true, this index will enforce a uniqueness constraint.
+    #   Note that geospatial indexing only work in versions of MongoDB >= 1.3.3+. Keep in mind, too,
+    #   that in order to index a given field, that field must reference either an array or a sub-object
+    #   where the first two values represent x- and y-coordinates. Examples can be seen below.
+    #
+    # @param [Boolean] unique if true, this index will enforce a uniqueness constraint. DEPRECATED. Future
+    #   versions of this driver will specify the uniqueness constraint using a hash param.
+    #
+    # @option opts [Boolean] :unique (false) if true, this index will enforce a uniqueness constraint.
+    # @option opts [Boolean] :background (false) indicate that the index should be built in the background. This
+    #   feature is only available in MongoDB >= 1.3.2.
+    # @option opts [Boolean] :dropDups If creating a unique index on a collection with pre-existing records,
+    #   this option will keep the first document the database indexes and drop all subsequent with duplicate values.
+    # @option opts [Integer] :min specify the minimum longitude and latitude for a geo index.
+    # @option opts [Integer] :max specify the maximum longitude and latitude for a geo index.
+    #
+    # @example Creating a compound index:
+    #   @posts.create_index([['subject', Mongo::ASCENDING], ['created_at', Mongo::DESCENDING]])
+    #
+    # @example Creating a geospatial index:
+    #   @restaurants.create_index(['location', Mongo::GEO2D])
+    #
+    #   # Note that this will work only if 'location' represents x,y coordinates:
+    #   {'location': [0, 50]}
+    #   {'location': {'x' => 0, 'y' => 50}}
+    #   {'location': {'latitude' => 0, 'longitude' => 50}}
+    #
+    # @example A geospatial index with alternate longitude and latitude:
+    #   @restaurants.create_index(['location', Mongo::GEO2D], :min => 500, :max => 500)
     #
     # @return [String] the name of the index created.
     #
     # @core indexes create_index-instance_method
-    def create_index(field_or_spec, unique=false)
+    def create_index(field_or_spec, opts={})
+      opts.assert_valid_keys(:min, :max, :background, :unique, :dropDups) if opts.is_a?(Hash)
       field_h = OrderedHash.new
       if field_or_spec.is_a?(String) || field_or_spec.is_a?(Symbol)
         field_h[field_or_spec.to_s] = 1
@@ -333,15 +362,20 @@ module Mongo
         field_or_spec.each { |f| field_h[f[0].to_s] = f[1] }
       end
       name = generate_index_names(field_h)
+      if opts == true || opts == false
+        warn "If you're using Collection#create_index, the method for specifying a unique index has changed." +
+          "Please pass :unique => true to the method instead."
+      end
       sel  = {
         :name   => name,
         :ns     => "#{@db.name}.#{@name}",
         :key    => field_h,
-        :unique => unique }
+        :unique => (opts == true ? true : false) }
+      sel.merge!(opts) if opts.is_a?(Hash)
       begin
-        insert_documents([sel], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, true)
+        response = insert_documents([sel], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, true)
       rescue Mongo::OperationFailure
-        raise Mongo::OperationFailure, "Failed to create index #{sel.inspect}."
+        raise Mongo::OperationFailure, "Failed to create index #{sel.inspect}. Errors: #{response}"
       end
       name
     end

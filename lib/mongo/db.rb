@@ -378,11 +378,11 @@ module Mongo
     # @return [Hash] keys are index names and the values are lists of [key, direction] pairs
     #   defining the index.
     def index_information(collection_name)
-      sel = {:ns => full_collection_name(collection_name)}
+      sel  = {:ns => full_collection_name(collection_name)}
       info = {}
-      Cursor.new(Collection.new(self, SYSTEM_INDEX_COLLECTION), :selector => sel).each { |index|
-        info[index['name']] = index['key'].map {|k| k}
-      }
+      Cursor.new(Collection.new(self, SYSTEM_INDEX_COLLECTION), :selector => sel).each do |index|
+        info[index['name']] = index
+      end
       info
     end
 

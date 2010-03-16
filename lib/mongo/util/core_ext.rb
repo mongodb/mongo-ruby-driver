@@ -24,3 +24,14 @@ class Object
   end
 
 end
+
+#:nodoc:
+class Hash
+
+  #:nodoc:
+  def assert_valid_keys(*valid_keys)
+    unknown_keys = keys - [valid_keys].flatten
+    raise(Mongo::MongoArgumentError, "Unknown key(s): #{unknown_keys.join(", ")}") unless unknown_keys.empty?
+  end
+
+end

@@ -21,8 +21,9 @@ begin
 end
 
 module Mongo
-  ASCENDING = 1
+  ASCENDING  =  1
   DESCENDING = -1
+  GEO2D      = '2d'
 
   module Constants
     OP_REPLY        = 1

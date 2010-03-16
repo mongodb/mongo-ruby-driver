@@ -133,12 +133,6 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
-
-    # Find by advanced query (regexp)
-    docs = @@coll.find('a' => /[1|2]/).to_a
-    assert_equal 2, docs.size
-    assert docs.detect { |row| row['a'] == 1 }
-    assert docs.detect { |row| row['a'] == 2 }
   end
 
   def test_find_sorting
@@ -287,7 +281,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, info.length
 
     assert info.has_key?(name)
-    assert_equal info[name], [["a", ASCENDING]]
+    assert_equal info[name]["key"], {"a" => 1}
   ensure
     @@db.drop_index(@@coll.name, name)
   end
@@ -302,7 +296,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, info.length
 
     assert info.has_key?(name)
-    assert_equal info[name], [["a", ASCENDING]]
+    assert_equal info[name]['key'], {"a" => 1}
   ensure
     @@db.drop_index(@@coll.name, name)
   end
@@ -314,7 +308,7 @@ class DBAPITest < Test::Unit::TestCase
 
     assert_equal name, 'a_-1_b_1_c_-1'
     assert info.has_key?(name)
-    assert_equal [['a', DESCENDING], ['b', ASCENDING], ['c', DESCENDING]], info[name]
+    assert_equal info[name]['key'], {"a" => -1, "b" => 1, "c" => -1}
   ensure
     @@db.drop_index(@@coll.name, name)
   end
@@ -326,7 +320,7 @@ class DBAPITest < Test::Unit::TestCase
 
     assert_equal name, 'a_-1_b_1_c_-1'
     assert info.has_key?(name)
-    assert_equal [['a', DESCENDING], ['b', ASCENDING], ['c', DESCENDING]], info[name]
+    assert_equal info[name]['key'], {"a" => -1, "b" => 1, "c" => -1}
   ensure
     @@db.drop_index(@@coll.name, name)
   end

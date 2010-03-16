@@ -492,7 +492,30 @@ class TestCollection < Test::Unit::TestCase
 
   context "Creating indexes " do
     setup do
+      @@db.drop_collection('geo')
+      @@db.drop_collection('test-collection')
       @collection = @@db.collection('test-collection')
+      @geo        = @@db.collection('geo')
+    end
+
+    should "create a geospatial index" do
+      @geo.save({'loc' => [-100, 100]})
+      @geo.create_index([['loc', Mongo::GEO2D]])
+      assert @geo.index_information['loc_2d']
+    end
+
+    should "create a unique index" do
+      @collection.create_index([['a', Mongo::ASCENDING]], true)
+      assert @collection.index_information['a_1']['unique'] == true
+    end
+
+    should "create an index in the background" do
+      if @@version > '1.3.1'
+        @collection.create_index([['b', Mongo::ASCENDING]], :background => true)
+        assert @collection.index_information['b_1']['background'] == true
+      else
+        assert true
+      end
     end
 
     should "generate indexes in the proper order" do
@@ -508,7 +531,7 @@ class TestCollection < Test::Unit::TestCase
       end
 
       should "return properly ordered index information" do
-        assert_equal [['b', 1], ['a', 1]], @collection.index_information["b_1_a_1"]
+        assert @collection.index_information['b_1_a_1']
       end
     end
   end
