@@ -16,7 +16,6 @@
 
 require 'socket'
 require 'timeout'
-require 'digest/md5'
 require 'thread'
 
 module Mongo
@@ -65,7 +64,7 @@ module Mongo
     #
     # @core databases constructor_details
     def initialize(db_name, connection, options={})
-      @name       = validate_db_name(db_name)
+      @name       = Mongo::Support.validate_db_name(db_name)
       @connection = connection
       @strict     = options[:strict]
       @pk_factory = options[:pk]
@@ -94,7 +93,7 @@ module Mongo
       auth['authenticate'] = 1
       auth['user'] = username
       auth['nonce'] = nonce
-      auth['key'] = Digest::MD5.hexdigest("#{nonce}#{username}#{hash_password(username, password)}")
+      auth['key'] = Mongo::Support.auth_key(username, password, nonce)
       if ok?(command(auth))
         if save_auth
           @connection.add_auth(@name, username, password)
@@ -115,7 +114,7 @@ module Mongo
     def add_user(username, password)
       users = self[SYSTEM_USER_COLLECTION]
       user  = users.find_one({:user => username}) || {:user => username}
-      user['pwd'] = hash_password(username, password)
+      user['pwd'] = Mongo::Support.hash_password(username, password)
       users.save(user)
       return user
     end
@@ -444,7 +443,7 @@ module Mongo
         :limit => -1, :selector => selector, :socket => sock).next_document
 
       if check_response && !ok?(result)
-        raise OperationFailure, "Database command '#{selector.keys.first}' failed."
+        raise OperationFailure, "Database command '#{selector.keys.first}' failed: #{result.inspect}"
       else
         result
       end
@@ -546,26 +545,8 @@ module Mongo
 
     private
 
-    def hash_password(username, plaintext)
-      Digest::MD5.hexdigest("#{username}:mongo:#{plaintext}")
-    end
-
     def system_command_collection
       Collection.new(self, SYSTEM_COMMAND_COLLECTION)
-    end
-
-    def validate_db_name(db_name)
-      unless [String, Symbol].include?(db_name.class)
-        raise TypeError, "db_name must be a string or symbol"
-      end
-
-      [" ", ".", "$", "/", "\\"].each do |invalid_char|
-        if db_name.include? invalid_char
-          raise InvalidName, "database names cannot contain the character '#{invalid_char}'"
-        end
-      end
-      raise InvalidName, "database name cannot be the empty string" if db_name.empty?
-      db_name
     end
   end
 end

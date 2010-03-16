@@ -58,6 +58,23 @@ class TestConnection < Test::Unit::TestCase
     old_object = @mongo.db('old').collection('copy-test').find.next_document
     new_object = @mongo.db('new').collection('copy-test').find.next_document
     assert_equal old_object, new_object
+    @mongo.drop_database('old')
+    @mongo.drop_database('new')
+  end
+
+  def test_copy_database_with_auth
+    @mongo.db('old').collection('copy-test').insert('a' => 1)
+    @mongo.db('old').add_user('bob', 'secret')
+
+    assert_raise Mongo::OperationFailure do
+      @mongo.copy_database('old', 'new', 'localhost', 'bob', 'badpassword')
+    end
+
+    result = @mongo.copy_database('old', 'new', 'localhost', 'bob', 'secret')
+    assert result['ok'].to_i == 1
+
+    @mongo.drop_database('old')
+    @mongo.drop_database('new')
   end
 
   def test_database_names

@@ -14,13 +14,46 @@
 # limitations under the License.
 # ++
 
-#:nodoc:
-class Object
+require 'digest/md5'
 
-  #:nodoc:
-  def returning(value)
-    yield value
-    value
+module Mongo
+  module Support
+    extend self
+
+    # Generate an MD5 for authentication.
+    #
+    # @param [String] username
+    # @param [String] password
+    # @param [String] nonce
+    #
+    # @return [String] a key for db authentication.
+    def auth_key(username, password, nonce)
+      Digest::MD5.hexdigest("#{nonce}#{username}#{hash_password(username, password)}")
+    end
+
+    # Return a hashed password for auth.
+    #
+    # @param [String] username
+    # @param [String] plaintext
+    #
+    # @return [String]
+    def hash_password(username, plaintext)
+      Digest::MD5.hexdigest("#{username}:mongo:#{plaintext}")
+    end
+
+
+    def validate_db_name(db_name)
+      unless [String, Symbol].include?(db_name.class)
+        raise TypeError, "db_name must be a string or symbol"
+      end
+
+      [" ", ".", "$", "/", "\\"].each do |invalid_char|
+        if db_name.include? invalid_char
+          raise InvalidName, "database names cannot contain the character '#{invalid_char}'"
+        end
+      end
+      raise InvalidName, "database name cannot be the empty string" if db_name.empty?
+      db_name
+    end
   end
-
 end

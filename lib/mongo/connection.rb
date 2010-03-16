@@ -276,19 +276,33 @@ module Mongo
       self[name].command(:dropDatabase => 1)
     end
 
-    # Copy the database +from+ on the local server to +to+ on the specified +host+.
-    # +host+ defaults to 'localhost' if no value is provided.
+    # Copy the database +from+ to +to+ on localhost. The +from+ database is
+    # assumed to be on localhost, but an alternate host can be specified.
     #
     # @param [String] from name of the database to copy from.
     # @param [String] to name of the database to copy to.
     # @param [String] from_host host of the 'from' database.
-    def copy_database(from, to, from_host="localhost")
+    # @param [String] username username for authentication against from_db (>=1.3.x).
+    # @param [String] password password for authentication against from_db (>=1.3.x).
+    def copy_database(from, to, from_host="localhost", username=nil, password=nil)
       oh = OrderedHash.new
       oh[:copydb]   = 1
       oh[:fromhost] = from_host
       oh[:fromdb]   = from
       oh[:todb]     = to
-      self["admin"].command(oh, false, true)
+      if username || password
+        unless username && password
+          raise MongoArgumentError, "Both username and password must be supplied for authentication."
+        end
+        nonce_cmd = OrderedHash.new
+        nonce_cmd[:copydbgetnonce] = 1
+        nonce_cmd[:fromhost] = from_host
+        result = self["admin"].command(nonce_cmd, true, true)
+        oh[:nonce] = result["nonce"]
+        oh[:username] = username
+        oh[:key] = Mongo::Support.auth_key(username, password, oh[:nonce])
+      end
+      self["admin"].command(oh, true, true)
     end
 
     # Increment and return the next available request id.

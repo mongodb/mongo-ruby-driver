@@ -48,6 +48,7 @@ require 'mongo/types/regexp_of_holding'
 require 'mongo/types/min_max_keys'
 
 require 'mongo/util/support'
+require 'mongo/util/core_ext'
 require 'mongo/util/conversions'
 require 'mongo/util/server_version'
 require 'mongo/util/bson_ruby'
