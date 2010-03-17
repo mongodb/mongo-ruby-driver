@@ -1,3 +1,4 @@
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'test/test_helper'
 require 'mongo/gridfs'
 

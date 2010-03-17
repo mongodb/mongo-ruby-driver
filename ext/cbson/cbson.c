@@ -128,9 +128,22 @@ static void write_utf8(buffer_t buffer, VALUE string, char check_null) {
 #define INT2STRING(buffer, i) asprintf(buffer, "%d", i);
 #endif
 
-// this sucks too.
-#ifndef RREGEXP_SRC
-#define RREGEXP_SRC(r) rb_str_new(RREGEXP((r))->str, RREGEXP((r))->len)
+/* for rubinius compatibility, use the RREGEXP_SOURCE macro to retrieve
+ * the regex's source pattern. MRI 1.8 and 1.9 both have RREGEXP_SRC 
+ * defined, but the underlying structure is different, so the second
+ * if/else takes care of that.
+ */
+#ifndef RREGEXP_SOURCE
+#ifdef RREGEXP_SRC
+#define RREGEXP_SOURCE(r) RREGEXP_SRC(r)
+#else
+#define RREGEXP_SOURCE(r) rb_str_new(RREGEXP((r))->str, RREGEXP((r))->len)
+#endif
+#endif
+
+// rubinius compatibility
+#ifndef RREGEXP_OPTIONS
+#define RREGEXP_OPTIONS(r) RREGEXP(value)->ptr->options
 #endif
 
 static char zero = 0;
@@ -275,7 +288,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         }
     case T_STRING:
         {
-            if (strcmp(rb_class2name(RBASIC(value)->klass),
+            if (strcmp(rb_obj_classname(value),
                   "Mongo::Code") == 0) {
                 buffer_position length_location, start_position, total_length;
                 int length;
@@ -319,7 +332,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
     case T_OBJECT:
         {
             // TODO there has to be a better way to do these checks...
-            const char* cls = rb_class2name(RBASIC(value)->klass);
+            const char* cls = rb_obj_classname(value);
             if (strcmp(cls, "Mongo::Binary") == 0 ||
                 strcmp(cls, "ByteBuffer") == 0) {
                 const char subtype = strcmp(cls, "ByteBuffer") ?
@@ -397,7 +410,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         }
     case T_DATA:
         {
-            const char* cls = rb_class2name(RBASIC(value)->klass);
+            const char* cls = rb_obj_classname(value);
             if (strcmp(cls, "Time") == 0) {
                 double t = NUM2DBL(rb_funcall(value, rb_intern("to_f"), 0));
                 long long time_since_epoch = (long long)round(t * 1000);
@@ -416,8 +429,8 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         }
     case T_REGEXP:
         {
-            VALUE pattern = RREGEXP_SRC(value);
-            long flags = RREGEXP(value)->ptr->options;
+            VALUE pattern = RREGEXP_SOURCE(value);
+            long flags = RREGEXP_OPTIONS(value);
             VALUE has_extra;
 
             write_name_and_type(buffer, key, 0x0B);
@@ -452,7 +465,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         }
     default:
         {
-            const char* cls = rb_class2name(RBASIC(value)->klass);
+            const char* cls = rb_obj_classname(value);
             buffer_free(buffer);
             rb_raise(InvalidDocument, "Cannot serialize an object of class %s (type %d) into BSON.", cls, TYPE(value));
             break;
@@ -495,7 +508,7 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_
     }
     else {
         allow_id = 1;
-        if (strcmp(rb_class2name(RBASIC(hash)->klass), "Hash") == 0) {
+        if (strcmp(rb_obj_classname(hash), "Hash") == 0) {
             if ((rb_funcall(hash, rb_intern("has_key?"), 1, id_str) == Qtrue) &&
                    (rb_funcall(hash, rb_intern("has_key?"), 1, id_sym) == Qtrue)) {
                       VALUE oid_sym = rb_hash_delete(hash, id_sym);
@@ -512,7 +525,7 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_
     }
 
     // we have to check for an OrderedHash and handle that specially
-    if (strcmp(rb_class2name(RBASIC(hash)->klass), "OrderedHash") == 0) {
+    if (strcmp(rb_obj_classname(hash), "OrderedHash") == 0) {
         VALUE keys = rb_funcall(hash, rb_intern("keys"), 0);
         int i;
                 for(i = 0; i < RARRAY_LEN(keys); i++) {
@@ -883,25 +896,25 @@ void Init_cbson() {
     Time = rb_const_get(rb_cObject, rb_intern("Time"));
 
     mongo = rb_const_get(rb_cObject, rb_intern("Mongo"));
-    rb_require("mongo/types/binary");
+    rb_require("mongo_bson/types/binary");
     Binary = rb_const_get(mongo, rb_intern("Binary"));
-    rb_require("mongo/types/objectid");
+    rb_require("mongo_bson/types/objectid");
     ObjectID = rb_const_get(mongo, rb_intern("ObjectID"));
-    rb_require("mongo/types/dbref");
+    rb_require("mongo_bson/types/dbref");
     DBRef = rb_const_get(mongo, rb_intern("DBRef"));
-    rb_require("mongo/types/code");
+    rb_require("mongo_bson/types/code");
     Code = rb_const_get(mongo, rb_intern("Code"));
-    rb_require("mongo/types/min_max_keys");
+    rb_require("mongo_bson/types/min_max_keys");
     MinKey = rb_const_get(mongo, rb_intern("MinKey"));
     MaxKey = rb_const_get(mongo, rb_intern("MaxKey"));
-    rb_require("mongo/types/regexp_of_holding");
+    rb_require("mongo_bson/types/regexp_of_holding");
     Regexp = rb_const_get(rb_cObject, rb_intern("Regexp"));
     RegexpOfHolding = rb_const_get(mongo, rb_intern("RegexpOfHolding"));
-    rb_require("mongo/exceptions");
+    rb_require("mongo_bson/exceptions");
     InvalidName = rb_const_get(mongo, rb_intern("InvalidName"));
     InvalidStringEncoding = rb_const_get(mongo, rb_intern("InvalidStringEncoding"));
     InvalidDocument = rb_const_get(mongo, rb_intern("InvalidDocument"));
-    rb_require("mongo/util/ordered_hash");
+    rb_require("mongo_bson/ordered_hash");
     OrderedHash = rb_const_get(rb_cObject, rb_intern("OrderedHash"));
 
     CBson = rb_define_module("CBson");

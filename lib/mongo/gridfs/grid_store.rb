@@ -14,8 +14,8 @@
 # limitations under the License.
 # ++
 
-require 'mongo/types/objectid'
-require 'mongo/util/ordered_hash'
+require 'mongo_bson/types/objectid'
+require 'mongo_bson/ordered_hash'
 require 'mongo/gridfs/chunk'
 
 module GridFS

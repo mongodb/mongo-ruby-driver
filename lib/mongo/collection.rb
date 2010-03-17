@@ -261,7 +261,7 @@ module Mongo
       message = ByteBuffer.new([0, 0, 0, 0])
       BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
-      message.put_array(BSON.serialize(selector, false, true).to_a)
+      message.put_array(BSON_CODER.serialize(selector, false, true).to_a)
 
       if opts[:safe]
         @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message, @db.name,
@@ -303,8 +303,8 @@ module Mongo
       update_options += 1 if options[:upsert]
       update_options += 2 if options[:multi]
       message.put_int(update_options)
-      message.put_array(BSON.serialize(selector, false, true).to_a)
-      message.put_array(BSON.serialize(document, false, true).to_a)
+      message.put_array(BSON_CODER.serialize(selector, false, true).to_a)
+      message.put_array(BSON_CODER.serialize(document, false, true).to_a)
       if options[:safe]
         @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name,
           "db.#{@name}.update(#{selector.inspect}, #{document.inspect})")
@@ -590,7 +590,7 @@ module Mongo
       # Initial byte is 0.
       message = ByteBuffer.new([0, 0, 0, 0])
       BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{collection_name}")
-      documents.each { |doc| message.put_array(BSON.serialize(doc, check_keys, true).to_a) }
+      documents.each { |doc| message.put_array(BSON_CODER.serialize(doc, check_keys, true).to_a) }
       if safe
         @connection.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message, @db.name,
           "db.#{collection_name}.insert(#{documents.inspect})")

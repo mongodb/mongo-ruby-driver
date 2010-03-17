@@ -650,7 +650,7 @@ module Mongo
         buf.put_array(receive_message_on_socket(size - 4, sock).unpack("C*"), 4)
         number_remaining -= 1
         buf.rewind
-        docs << BSON.deserialize(buf)
+        docs << BSON_CODER.deserialize(buf)
       end
       [docs, number_received, cursor_id]
     end
@@ -661,7 +661,7 @@ module Mongo
       BSON_RUBY.serialize_cstr(message, "#{db_name}.$cmd")
       message.put_int(0)
       message.put_int(-1)
-      message.put_array(BSON.serialize({:getlasterror => 1}, false).unpack("C*"))
+      message.put_array(BSON_CODER.serialize({:getlasterror => 1}, false).unpack("C*"))
       add_message_headers(Mongo::Constants::OP_QUERY, message)
     end
 
