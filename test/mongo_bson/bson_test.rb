@@ -22,6 +22,13 @@ class BSONTest < Test::Unit::TestCase
 
   include Mongo
 
+
+  def test_deprecated_bson_module
+    doc = {'doc' => 'hello, world'}
+    bson = BSON.serialize(doc)
+    assert_equal doc, BSON.deserialize(bson)
+  end
+
   def test_string
     doc = {'doc' => 'hello, world'}
     bson = bson = Mongo::BSON_CODER.serialize(doc)

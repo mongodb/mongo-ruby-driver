@@ -3,8 +3,33 @@ $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 module Mongo
   module BSON
     VERSION = "0.19.2"
+    def self.serialize(obj, check_keys=false, move_id=false)
+      warn "BSON has been deprecated. Use Mongo::BSON_CODER instead."
+      BSON_CODER.serialize(obj, check_keys, move_id)
+    end
+
+
+    def self.deserialize(buf=nil)
+      warn "BSON has been deprecated. Use Mongo::BSON_CODER instead."
+      BSON_CODER.deserialize(buf)
+    end
   end
 end
+
+# This just exists for deprecation warnings. Will be removed in an upcoming version.
+module BSON
+  def self.serialize(obj, check_keys=false, move_id=false)
+    warn "BSON has been deprecated. Use Mongo::BSON_CODER instead."
+    BSON_CODER.serialize(obj, check_keys, move_id)
+  end
+
+
+  def self.deserialize(buf=nil)
+    warn "BSON has been deprecated. Use Mongo::BSON_CODER instead."
+    BSON_CODER.deserialize(buf)
+  end
+end
+
 
 begin
   # Need this for running test with and without c ext in Ruby 1.9.
