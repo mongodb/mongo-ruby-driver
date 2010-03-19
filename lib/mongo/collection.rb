@@ -316,14 +316,17 @@ module Mongo
 
     # Create a new index.
     #
-    # @param [String, Array] field_or_spec
+    # @param [String, Array] spec
     #   should be either a single field name or an array of
     #   [field name, direction] pairs. Directions should be specified
     #   as Mongo::ASCENDING, Mongo::DESCENDING, or Mongo::GEO2D.
     #
-    #   Note that geospatial indexing only work in versions of MongoDB >= 1.3.3+. Keep in mind, too,
-    #   that in order to index a given field, that field must reference either an array or a sub-object
+    #   Note that geospatial indexing only works with versions of MongoDB >= 1.3.3+. Keep in mind, too,
+    #   that in order to geo-index a given field, that field must reference either an array or a sub-object
     #   where the first two values represent x- and y-coordinates. Examples can be seen below.
+    #
+    #   Also note that it is permissible to create compound indexes that include a geospatial index as
+    #   long as the geospatial index comes first.
     #
     # @param [Boolean] unique if true, this index will enforce a uniqueness constraint. DEPRECATED. Future
     #   versions of this driver will specify the uniqueness constraint using a hash param.
@@ -340,7 +343,7 @@ module Mongo
     #   @posts.create_index([['subject', Mongo::ASCENDING], ['created_at', Mongo::DESCENDING]])
     #
     # @example Creating a geospatial index:
-    #   @restaurants.create_index(['location', Mongo::GEO2D])
+    #   @restaurants.create_index([['location', Mongo::GEO2D]])
     #
     #   # Note that this will work only if 'location' represents x,y coordinates:
     #   {'location': [0, 50]}
@@ -348,34 +351,38 @@ module Mongo
     #   {'location': {'latitude' => 0, 'longitude' => 50}}
     #
     # @example A geospatial index with alternate longitude and latitude:
-    #   @restaurants.create_index(['location', Mongo::GEO2D], :min => 500, :max => 500)
+    #   @restaurants.create_index([['location', Mongo::GEO2D]], :min => 500, :max => 500)
     #
     # @return [String] the name of the index created.
     #
     # @core indexes create_index-instance_method
-    def create_index(field_or_spec, opts={})
+    def create_index(spec, opts={})
       opts.assert_valid_keys(:min, :max, :background, :unique, :dropDups) if opts.is_a?(Hash)
-      field_h = OrderedHash.new
-      if field_or_spec.is_a?(String) || field_or_spec.is_a?(Symbol)
-        field_h[field_or_spec.to_s] = 1
+      field_spec = OrderedHash.new
+      if spec.is_a?(String) || spec.is_a?(Symbol)
+        field_spec[spec.to_s] = 1
+      elsif spec.is_a?(Array) && spec.all? {|field| field.is_a?(Array) }
+        spec.each { |f| field_spec[f[0].to_s] = f[1] }
       else
-        field_or_spec.each { |f| field_h[f[0].to_s] = f[1] }
+        raise MongoArgumentError, "Invalid index specification #{spec.inspect}; " + 
+          "should be either a string, symbol, or an array of arrays."
       end
-      name = generate_index_names(field_h)
+
+      name = generate_index_name(field_spec)
       if opts == true || opts == false
-        warn "If you're using Collection#create_index, the method for specifying a unique index has changed." +
+        warn "For Collection#create_index, the method for specifying a unique index has changed." +
           "Please pass :unique => true to the method instead."
       end
       sel  = {
         :name   => name,
         :ns     => "#{@db.name}.#{@name}",
-        :key    => field_h,
+        :key    => field_spec,
         :unique => (opts == true ? true : false) }
       sel.merge!(opts) if opts.is_a?(Hash)
       begin
         response = insert_documents([sel], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, true)
       rescue Mongo::OperationFailure
-        raise Mongo::OperationFailure, "Failed to create index #{sel.inspect}. Errors: #{response}"
+        raise Mongo::OperationFailure, "Failed to create index #{sel.inspect} with the following errors: #{response}"
       end
       name
     end
@@ -635,7 +642,7 @@ module Mongo
       documents.collect { |o| o[:_id] || o['_id'] }
     end
 
-    def generate_index_names(spec)
+    def generate_index_name(spec)
       indexes = []
       spec.each_pair do |field, direction|
         indexes.push("#{field}_#{direction}")
