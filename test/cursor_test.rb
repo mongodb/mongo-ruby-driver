@@ -376,4 +376,18 @@ class CursorTest < Test::Unit::TestCase
       assert_equal(1, @@coll.find({}, :fields => ["a"]).count())
     end
   end
+
+  def test_has_next
+    @@coll.remove
+    200.times do |n|
+      @@coll.save("x" => n)
+    end
+
+    cursor = @@coll.find
+    while cursor.has_next?
+      assert cursor.next_document
+    end
+
+    assert_equal false, cursor.has_next?
+  end
 end
