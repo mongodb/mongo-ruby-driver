@@ -86,6 +86,11 @@ namespace :test do
     t.verbose    = true
   end
 
+  Rake::TestTask.new(:new_features) do |t|
+    t.test_files = FileList['test/auxillary/1.4_features.rb']
+    t.verbose    = true
+  end
+
   task :drop_databases do |t|
     puts "Dropping test database..."
     require File.join(File.dirname(__FILE__), 'lib', 'mongo')
