@@ -128,17 +128,8 @@ static void write_utf8(buffer_t buffer, VALUE string, char check_null) {
 #define INT2STRING(buffer, i) asprintf(buffer, "%d", i);
 #endif
 
-/* for rubinius compatibility, use the RREGEXP_SOURCE macro to retrieve
- * the regex's source pattern. MRI 1.8 and 1.9 both have RREGEXP_SRC 
- * defined, but the underlying structure is different, so the second
- * if/else takes care of that.
- */
-#ifndef RREGEXP_SOURCE
-#ifdef RREGEXP_SRC
-#define RREGEXP_SOURCE(r) RREGEXP_SRC(r)
-#else
-#define RREGEXP_SOURCE(r) rb_str_new(RREGEXP((r))->str, RREGEXP((r))->len)
-#endif
+#ifndef RREGEXP_SRC
+#define RREGEXP_SRC(r) rb_str_new(RREGEXP((r))->str, RREGEXP((r))->len)
 #endif
 
 // rubinius compatibility
@@ -429,7 +420,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         }
     case T_REGEXP:
         {
-            VALUE pattern = RREGEXP_SOURCE(value);
+            VALUE pattern = RREGEXP_SRC(value);
             long flags = RREGEXP_OPTIONS(value);
             VALUE has_extra;
 
