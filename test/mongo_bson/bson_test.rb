@@ -204,8 +204,10 @@ class BSONTest < Test::Unit::TestCase
       bson = Mongo::BSON_CODER.serialize(doc)
       rescue => e
       ensure
-        assert_equal InvalidDocument, e.class
-        assert_match /UTC Time/, e.message
+        if !invalid_date.is_a? Time
+          assert_equal InvalidDocument, e.class
+          assert_match /UTC Time/, e.message
+        end
       end
     end
   end
