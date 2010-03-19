@@ -518,6 +518,12 @@ class TestCollection < Test::Unit::TestCase
       end
     end
 
+    should "require an array of arrays" do
+      assert_raise MongoArgumentError do
+        @collection.create_index(['c', Mongo::ASCENDING])
+      end
+    end
+
     should "generate indexes in the proper order" do
       @collection.expects(:insert_documents) do |sel, coll, safe|
         assert_equal 'b_1_a_1', sel[:name]
