@@ -78,6 +78,13 @@ module Mongo
       doc
     end
 
+    # Determine whether this cursor has any remaining results.
+    #
+    # @return [Boolean]
+    def has_next?
+      num_remaining > 0
+    end
+
     # Get the size of the result set for this query.
     #
     # @return [Integer] the number of objects in the result set for this query. Does
@@ -169,7 +176,7 @@ module Mongo
     #   end
     def each
       num_returned = 0
-      while more? && (@limit <= 0 || num_returned < @limit)
+      while has_next? && (@limit <= 0 || num_returned < @limit)
         yield next_document
         num_returned += 1
       end
@@ -188,7 +195,7 @@ module Mongo
       raise InvalidOperation, "can't call Cursor#to_a on a used cursor" if @query_run
       rows = []
       num_returned = 0
-      while more? && (@limit <= 0 || num_returned < @limit)
+      while has_next? && (@limit <= 0 || num_returned < @limit)
         rows << next_document
         num_returned += 1
       end
@@ -303,13 +310,6 @@ module Mongo
     def num_remaining
       refill_via_get_more if @cache.length == 0
       @cache.length
-    end
-
-    # Internal method, not for general use. Return +true+ if there are
-    # more records to retrieve. This method does not check @limit;
-    # Cursor#each is responsible for doing that.
-    def more?
-      num_remaining > 0
     end
 
     def refill_via_get_more
