@@ -14,7 +14,7 @@
 # limitations under the License.
 # ++
 
-require 'mongo/util/byte_buffer'
+require 'mongo_bson/byte_buffer'
 
 module Mongo
 

@@ -14,9 +14,9 @@
 # limitations under the License.
 # ++
 
-require 'mongo/types/objectid'
-require 'mongo/util/byte_buffer'
-require 'mongo/util/ordered_hash'
+require 'mongo_bson/types/objectid'
+require 'mongo_bson/byte_buffer'
+require 'mongo_bson/ordered_hash'
 
 module GridFS
 

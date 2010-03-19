@@ -9,9 +9,9 @@ TRIALS = 100000
 
 def encode(doc)
   t0 = Time.new
-  b = BSON.new
+  b = Mongo::BSON_CODER.new
   TRIALS.times { |i|
-    b = BSON.new
+    b = Mongo::BSON_CODER.new
     b.serialize doc
   }
   print "took: #{Time.now.to_f - t0.to_f}\n"

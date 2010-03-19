@@ -12,11 +12,13 @@ Gem::Specification.new do |s|
   s.require_paths = ['lib']
 
   s.files  = ['README.rdoc', 'Rakefile', 'mongo-ruby-driver.gemspec', 'LICENSE.txt']
-  s.files += Dir['lib/**/*.rb'] + Dir['examples/**/*.rb'] + Dir['bin/**/*.rb']
+  s.files += ['lib/mongo.rb'] + Dir['lib/mongo/**/*.rb']
+  s.files += Dir['examples/**/*.rb'] + Dir['bin/**/*.rb']
   s.test_files = Dir['test/**/*.rb']
 
   s.has_rdoc = true
   s.test_files = Dir['test/**/*.rb']
+  s.test_files -= Dir['test/mongo_bson/*.rb'] # remove these files from the manifest
 
   s.has_rdoc = true
   s.rdoc_options = ['--main', 'README.rdoc', '--inline-source']

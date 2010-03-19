@@ -1,0 +1,23 @@
+require "lib/mongo_bson"
+
+Gem::Specification.new do |s|
+  s.name = 'mongo_bson'
+
+  s.version = Mongo::BSON::VERSION
+
+  s.platform = Gem::Platform::RUBY
+  s.summary = 'Ruby implementation of BSON'
+  s.description = 'A Ruby BSON implementation for MongoDB. For more information about Mongo, see http://www.mongodb.org. For more information on BSON, see http://www.bsonspec.org.'
+
+  s.require_paths = ['lib']
+
+  s.files  = ['Rakefile', 'mongo-bson.gemspec', 'LICENSE.txt']
+  s.files += ['lib/mongo_bson.rb'] + Dir['lib/mongo_bson/**/*.rb']
+  s.test_files = Dir['test/mongo_bson/*.rb']
+
+  s.has_rdoc = true
+
+  s.authors = ['Jim Menard', 'Mike Dirolf', 'Kyle Banker']
+  s.email = 'mongodb-dev@googlegroups.com'
+  s.homepage = 'http://www.mongodb.org'
+end

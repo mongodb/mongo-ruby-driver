@@ -7,8 +7,8 @@ class DBTest < Test::Unit::TestCase
         documents = [documents] unless documents.is_a?(Array)
         message = ByteBuffer.new
         message.put_int(0)
-        BSON.serialize_cstr(message, "#{db.name}.test")
-        documents.each { |doc| message.put_array(BSON.new.serialize(doc, true).to_a) }
+        Mongo::BSON_CODER..serialize_cstr(message, "#{db.name}.test")
+        documents.each { |doc| message.put_array(Mongo::BSON_CODER.new.serialize(doc, true).to_a) }
         message = db.add_message_headers(Mongo::Constants::OP_INSERT, message)
       end
     end

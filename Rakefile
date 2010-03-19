@@ -27,6 +27,7 @@ namespace :test do
     ENV['C_EXT'] = 'TRUE'
     Rake::Task['test:unit'].invoke
     Rake::Task['test:functional'].invoke
+    Rake::Task['test:bson'].invoke
     Rake::Task['test:pooled_threading'].invoke
     Rake::Task['test:drop_databases'].invoke
     ENV['C_EXT'] = nil
@@ -37,10 +38,11 @@ namespace :test do
     ENV['C_EXT'] = nil
     Rake::Task['test:unit'].invoke
     Rake::Task['test:functional'].invoke
+    Rake::Task['test:bson'].invoke
     Rake::Task['test:pooled_threading'].invoke
     Rake::Task['test:drop_databases'].invoke
   end
-
+  
   Rake::TestTask.new(:unit) do |t|
     t.test_files = FileList['test/unit/*_test.rb']
     t.verbose    = true
@@ -88,6 +90,11 @@ namespace :test do
 
   Rake::TestTask.new(:new_features) do |t|
     t.test_files = FileList['test/auxillary/1.4_features.rb']
+    t.verbose    = true
+  end
+
+  Rake::TestTask.new(:bson) do |t|
+    t.test_files = FileList['test/mongo_bson/*_test.rb']
     t.verbose    = true
   end
 
