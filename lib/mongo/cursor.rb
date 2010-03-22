@@ -282,6 +282,8 @@ module Mongo
           returning({}) do |hash|
             fields.each { |field| hash[field] = 1 }
           end
+        when Hash
+          return fields
       end
     end
 

@@ -30,6 +30,13 @@ class CursorTest < Test::Unit::TestCase
       assert @cursor.fields == {:name => 1, :date => 1}
     end
 
+    should "set mix fields 0 and 1" do
+      assert_nil @cursor.fields
+
+      @cursor = Cursor.new(@collection, :fields => {:name => 1, :date => 0})
+      assert @cursor.fields == {:name => 1, :date => 0}
+    end
+
     should "set limit" do
       assert_equal 0, @cursor.limit
 
