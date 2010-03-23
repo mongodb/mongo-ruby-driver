@@ -192,19 +192,19 @@ generate _id values. If you want to control _id values or even their types,
 using a PK factory lets you do so.
 
 You can tell the Ruby Mongo driver how to create primary keys by passing in
-the :pk_factory option to the Connection#db method.
+the :pk option to the Connection#db method.
 
-  db = Mongo::Connection.new.db('dbname', :pk_factory => MyPKFactory.new)
+  db = Mongo::Connection.new.db('dbname', :pk => MyPKFactory.new)
 
-A primary key factory object must respond to :create_pk, which should take a
-hash and return a hash which merges the original hash with any primary key
-fields the factory wishes to inject. 
+A primary key factory object must respond to :create_pk, which should
+take a hash and return a hash which merges the original hash with any
+primary key fields the factory wishes to inject.
 
-NOTE: if the object already has a primary key, the factory should not inject
-a new key; this means that the object may already exist in the database.
-The idea here is that whenever a record is inserted,
-the :pk_factory object's +create_pk+ method will be called and
-the new hash returned will be inserted.
+NOTE: if the object already has a primary key, the factory should not
+inject a new key; this means that the object may already exist in the
+database.  The idea here is that whenever a record is inserted, the
+:pk object's +create_pk+ method will be called and the new hash
+returned will be inserted.
 
 Here is a sample primary key factory, taken from the tests:
 
