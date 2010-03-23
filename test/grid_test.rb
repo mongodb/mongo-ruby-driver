@@ -42,6 +42,7 @@ class GridTest < Test::Unit::TestCase
         assert_raise GridError do
           @grid.get(@id)
         end
+        assert_equal nil, @db['test-fs']['chunks'].find_one({:files_id => @id})
       end
     end
 

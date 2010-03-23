@@ -78,7 +78,7 @@ module Mongo
     # @return [Boolean]
     def delete(id)
       @files.remove({"_id" => id})
-      @chunks.remove({"_id" => id})
+      @chunks.remove({"files_id" => id})
     end
 
     private
