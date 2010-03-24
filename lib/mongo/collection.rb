@@ -265,13 +265,13 @@ module Mongo
 
       if opts[:safe]
         @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message, @db.name,
-          "db.#{@db.name}.remove(#{selector.inspect})")
+          "#{@db.name}['#{@name}'].remove(#{selector.inspect})")
         # the return value of send_message_with_safe_check isn't actually meaningful --
         # only the fact that it didn't raise an error is -- so just return true
         true
       else
         @connection.send_message(Mongo::Constants::OP_DELETE, message,
-          "db.#{@db.name}.remove(#{selector.inspect})")
+          "#{@db.name}['#{@name}'].remove(#{selector.inspect})")
       end
     end
 
@@ -307,10 +307,10 @@ module Mongo
       message.put_array(BSON_CODER.serialize(document, false, true).to_a)
       if options[:safe]
         @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name,
-          "db.#{@name}.update(#{selector.inspect}, #{document.inspect})")
+          "#{@db.name}['#{@name}'].update(#{selector.inspect}, #{document.inspect})")
       else
         @connection.send_message(Mongo::Constants::OP_UPDATE, message,
-          "db.#{@name}.update(#{selector.inspect}, #{document.inspect})")
+          "#{@db.name}['#{@name}'].update(#{selector.inspect}, #{document.inspect})")
       end
     end
 
@@ -634,10 +634,10 @@ module Mongo
       documents.each { |doc| message.put_array(BSON_CODER.serialize(doc, check_keys, true).to_a) }
       if safe
         @connection.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message, @db.name,
-          "db.#{collection_name}.insert(#{documents.inspect})")
+          "#{@db.name}['#{collection_name}'].insert(#{documents.inspect})")
       else
         @connection.send_message(Mongo::Constants::OP_INSERT, message,
-          "db.#{collection_name}.insert(#{documents.inspect})")
+          "#{@db.name}['#{collection_name}'].insert(#{documents.inspect})")
       end
       documents.collect { |o| o[:_id] || o['_id'] }
     end

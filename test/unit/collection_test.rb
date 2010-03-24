@@ -12,7 +12,7 @@ class CollectionTest < Test::Unit::TestCase
       @db   = @conn['testing']
       @coll = @db.collection('books')
       @conn.expects(:send_message).with do |op, msg, log|
-        op == 2001 && log.include?("db.books.update")
+        op == 2001 && log.include?("testing['books'].update")
       end
       @coll.update({}, {:title => 'Moby Dick'})
     end
@@ -22,7 +22,7 @@ class CollectionTest < Test::Unit::TestCase
       @db   = @conn['testing']
       @coll = @db.collection('books')
       @conn.expects(:send_message).with do |op, msg, log|
-        op == 2002 && log.include?("db.books.insert")
+        op == 2002 && log.include?("testing['books'].insert")
       end
       @coll.insert({:title => 'Moby Dick'})
     end
@@ -53,7 +53,7 @@ class CollectionTest < Test::Unit::TestCase
       @db   = @conn['testing']
       @coll = @db.collection('books')
       @conn.expects(:send_message_with_safe_check).with do |op, msg, db_name, log|
-        op == 2001 && log.include?("db.books.update")
+        op == 2001 && log.include?("testing['books'].update")
       end
       @coll.update({}, {:title => 'Moby Dick'}, :safe => true)
     end
@@ -63,7 +63,7 @@ class CollectionTest < Test::Unit::TestCase
       @db   = @conn['testing']
       @coll = @db.collection('books')
       @conn.expects(:send_message_with_safe_check).with do |op, msg, db_name, log|
-        op == 2001 && log.include?("db.books.update")
+        op == 2001 && log.include?("testing['books'].update")
       end
       @coll.update({}, {:title => 'Moby Dick'}, :safe => true)
     end
