@@ -230,7 +230,7 @@ module Mongo
         message = ByteBuffer.new([0, 0, 0, 0])
         message.put_int(1)
         message.put_long(@cursor_id)
-        @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message, "cursor.close()")
+        @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message, "cursor.close")
       end
       @cursor_id = 0
       @closed    = true
@@ -362,7 +362,7 @@ module Mongo
     end
 
     def query_log_message
-      "#{@admin ? 'admin' : @db.name}.#{@collection.name}.find(#{@selector.inspect}, #{@fields ? @fields.inspect : '{}'})" +
+      "#{@admin ? 'admin' : @db.name}['#{@collection.name}'].find(#{@selector.inspect}, #{@fields ? @fields.inspect : '{}'})" +
       "#{@skip != 0 ? ('.skip(' + @skip.to_s + ')') : ''}#{@limit != 0 ? ('.limit(' + @limit.to_s + ')') : ''}" +
       "#{@order ? ('.sort(' + @order.inspect + ')') : ''}"
     end
