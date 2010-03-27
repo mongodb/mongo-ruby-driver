@@ -107,9 +107,11 @@ module Mongo
     #   a document specifying elements which must be present for a
     #   document to be included in the result set.
     #
-    # @option opts [Array] :fields field names that should be returned in the result
+    # @option opts [Array, Hash] :fields field names that should be returned in the result
     #   set ("_id" will always be included). By limiting results to a certain subset of fields,
-    #   you can cut down on network traffic and decoding time.
+    #   you can cut down on network traffic and decoding time. If using a Hash, keys should be field
+    #   names and values should be either 1 or 0, depending on whether you want to include or exclude
+    #   the given field.
     # @option opts [Integer] :skip number of documents to skip from the beginning of the result set
     # @option opts [Integer] :limit maximum number of documents to return
     # @option opts [Array]   :sort an array of [key, direction] pairs to sort by. Direction should

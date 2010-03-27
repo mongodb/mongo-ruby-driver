@@ -250,6 +250,25 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  def test_fields_as_hash
+    @@test.save(:a => 1, :b => 1, :c => 1)
+
+    doc = @@test.find_one({:a => 1}, :fields => {:b => 0})
+    assert_nil doc['b']
+    assert doc['a']
+    assert doc['c']
+
+    doc = @@test.find_one({:a => 1}, :fields => {:a => 1, :b => 1})
+    assert_nil doc['c']
+    assert doc['a']
+    assert doc['b']
+
+
+    assert_raise Mongo::OperationFailure do
+      @@test.find_one({:a => 1}, :fields => {:a => 1, :b => 0})
+    end
+  end
+
   def test_find_one
     id = @@test.save("hello" => "world", "foo" => "bar")
 
