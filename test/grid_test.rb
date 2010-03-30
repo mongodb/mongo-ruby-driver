@@ -46,6 +46,35 @@ class GridTest < Test::Unit::TestCase
       end
     end
 
+    context "Filename not required" do
+      setup do
+        @data = "GRIDDATA" * 50000
+        @grid = Grid.new(@db, 'test-fs')
+        @metadata = {'app' => 'photos'}
+      end
+
+      should "store the file without a filename" do
+        id = @grid.put(@data, 'sample', :metadata => @metadata)
+        file = @grid.get(id)
+        assert_equal 'sample', file.filename
+        assert_equal @metadata, file.metadata
+      end
+
+      should "store without a filename" do
+        id = @grid.put(@data, :metadata => @metadata)
+        file = @grid.get(id)
+        assert_nil file.filename
+        assert_equal @metadata, file.metadata
+      end
+
+      should "store with filename and metadata" do
+        id = @grid.put(@data, :filename => 'sample', :metadata => @metadata)
+        file = @grid.get(id)
+        assert_equal 'sample', file.filename
+        assert_equal @metadata, file.metadata
+      end
+    end
+
     context "Storing data with a length of zero" do
       setup do
         @grid = Grid.new(@db, 'test-fs')
