@@ -53,7 +53,7 @@ class GridTest < Test::Unit::TestCase
         @metadata = {'app' => 'photos'}
       end
 
-      should "store the file without a filename" do
+      should "store the file with the old filename api" do
         id = @grid.put(@data, 'sample', :metadata => @metadata)
         file = @grid.get(id)
         assert_equal 'sample', file.filename
@@ -67,7 +67,7 @@ class GridTest < Test::Unit::TestCase
         assert_equal @metadata, file.metadata
       end
 
-      should "store with filename and metadata" do
+      should "store with filename and metadata with the new api" do
         id = @grid.put(@data, :filename => 'sample', :metadata => @metadata)
         file = @grid.get(id)
         assert_equal 'sample', file.filename
