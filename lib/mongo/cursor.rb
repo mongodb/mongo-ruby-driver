@@ -303,11 +303,6 @@ module Mongo
       end
     end
 
-    # Returns true if the query contains order, explain, hint, or snapshot.
-    def query_contains_special_fields?
-      @order || @explain || @hint || @snapshot
-    end
-
     # Return a number of documents remaining for this cursor.
     def num_remaining
       refill_via_get_more if @cache.length == 0
@@ -354,11 +349,8 @@ module Mongo
       BSON_RUBY.serialize_cstr(message, "#{db_name}.#{@collection.name}")
       message.put_int(@skip)
       message.put_int(@limit)
-      selector = @selector
-      if query_contains_special_fields?
-        selector = selector_with_special_query_fields
-      end
-      message.put_array(BSON_CODER.serialize(selector, false).to_a)
+      spec = query_contains_special_fields? ? construct_query_spec : @selector
+      message.put_array(BSON_CODER.serialize(spec, false).to_a)
       message.put_array(BSON_CODER.serialize(@fields, false).to_a) if @fields
       message
     end
@@ -369,14 +361,20 @@ module Mongo
       "#{@order ? ('.sort(' + @order.inspect + ')') : ''}"
     end
 
-    def selector_with_special_query_fields
-      sel = OrderedHash.new
-      sel['query']     = @selector
-      sel['orderby']   = formatted_order_clause if @order
-      sel['$hint']     = @hint if @hint && @hint.length > 0
-      sel['$explain']  = true if @explain
-      sel['$snapshot'] = true if @snapshot
-      sel
+    def construct_query_spec
+      return @selector if @selector.has_key?('$query')
+      spec = OrderedHash.new
+      spec['$query']    = @selector
+      spec['$orderby']  = formatted_order_clause if @order
+      spec['$hint']     = @hint if @hint && @hint.length > 0
+      spec['$explain']  = true if @explain
+      spec['$snapshot'] = true if @snapshot
+      spec
+    end
+
+    # Returns true if the query contains order, explain, hint, or snapshot.
+    def query_contains_special_fields?
+      @order || @explain || @hint || @snapshot
     end
 
     def formatted_order_clause
