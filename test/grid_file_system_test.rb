@@ -109,9 +109,9 @@ class GridFileSystemTest < Test::Unit::TestCase
        context "and on a second overwrite" do
          setup do
            sleep(2)
-           new_data = "NEW" * 1000
+           @new_data = "NEW" * 1000
            @grid.open('sample', 'w') do |f|
-             f.write new_data
+             f.write @new_data
            end
 
            @ids = @db['fs.files'].find({'filename' => 'sample'}).map {|file| file['_id']}
@@ -126,6 +126,18 @@ class GridFileSystemTest < Test::Unit::TestCase
            @grid.delete('sample')
            assert_equal 0, @db['fs.files'].find({'filename' => 'sample'}).count
            assert_equal 0, @db['fs.chunks'].find({'files_id' => {'$in' => @ids}}).count
+         end
+
+         should "delete old versions on write with :delete_old is passed in" do
+           @grid.open('sample', 'w', :delete_old => true) do |f|
+             f.write @new_data
+           end
+           @new_ids = @db['fs.files'].find({'filename' => 'sample'}).map {|file| file['_id']}
+           assert_equal 1, @new_ids.length
+           id = @new_ids.first
+           assert !@ids.include?(id)
+           assert_equal 1, @db['fs.files'].find({'filename' => 'sample'}).count
+           assert_equal 1, @db['fs.chunks'].find({'files_id' => id}).count
          end
        end
      end

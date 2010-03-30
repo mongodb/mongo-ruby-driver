@@ -53,6 +53,8 @@ module Mongo
     #   the content type will may be inferred from the filename extension if the mime-types gem can be
     #   loaded. Otherwise, the content type 'binary/octet-stream' will be used.
     # @options opts [Integer] (262144) :chunk_size size of file chunks in bytes.
+    # @options opts [Boolean] :delete_old (false) ensure that old versions of the file are deleted. This option
+    #  only work in 'w' mode.
     # @options opts [Boolean] :safe (false) When safe mode is enabled, the chunks sent to the server
     #   will be validated using an md5 hash. If validation fails, an exception will be raised.
     #
@@ -76,15 +78,23 @@ module Mongo
     #  @grid.open('image.jpg, 'w') do |f|
     #    f.write @file
     #  end
+    #
+    #  @return [Mongo::GridIO]
     def open(filename, mode, opts={})
       opts.merge!(default_grid_io_opts(filename))
-      file   = GridIO.new(@files, @chunks, filename, mode, opts)
+      del  = opts.delete(:delete_old) && mode == 'w'
+      file = GridIO.new(@files, @chunks, filename, mode, opts)
       return file unless block_given?
       result = nil
       begin
         result = yield file
       ensure
-        file.close
+        id = file.close
+        if del
+          self.delete do
+            @files.find({'filename' => filename, '_id' => {'$ne' => id}}, :fields => ['_id'])
+          end
+        end
       end
       result
     end
@@ -94,9 +104,15 @@ module Mongo
     #
     # @param [String] filename
     #
+    # @yield [] pass a block that returns an array of documents to be deleted.
+    #
     # @return [Boolean]
-    def delete(filename)
-      files = @files.find({'filename' => filename}, :fields => ['_id'])
+    def delete(filename=nil)
+      if block_given?
+        files = yield
+      else
+        files = @files.find({'filename' => filename}, :fields => ['_id'])
+      end
       files.each do |file|
         @files.remove({'_id' => file['_id']})
         @chunks.remove({'files_id' => file['_id']})

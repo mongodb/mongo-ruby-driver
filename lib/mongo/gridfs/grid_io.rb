@@ -163,16 +163,16 @@ module Mongo
     # This method will be invoked automatically when
     # on GridIO#open is passed a block. Otherwise, it must be called manually.
     #
-    # @return [True]
+    # @return [Mongo::ObjectID]
     def close
       if @mode[0] == ?w
         if @current_chunk['n'].zero? && @chunk_position.zero?
           warn "Warning: Storing a file with zero length."
         end
         @upload_date = Time.now.utc
-        @files.insert(to_mongo_object)
+        id = @files.insert(to_mongo_object)
       end
-      true
+      id
     end
 
     def inspect
