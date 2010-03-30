@@ -54,7 +54,7 @@ module Mongo
     # @param [Mongo::Connection] connection a connection object pointing to MongoDB. Note
     #   that databases are usually instantiated via the Connection class. See the examples below.
     #
-    # @option options [Boolean] strict (False) If true, collections must exist to be accessed and must
+    # @option options [Boolean] :strict (False) If true, collections must exist to be accessed and must
     #   not exist to be created. See DB#collection and DB#create_collection.
     #
     # @option options [Object, #create_pk(doc)] :pk (Mongo::ObjectID) A primary key factory object,
