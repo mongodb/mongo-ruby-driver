@@ -34,13 +34,15 @@ module Mongo
 
     # Create a buffer for storing binary data in MongoDB.
     #
-    # @param [Array] initia_data
+    # @param [Array, String] data to story as BSON binary. If a string is given, the value will be
+    #   concerted to an array of bytes using String#unpack("c*").
     # @param [Fixnum] one of four values specifying a BSON binary subtype. Possible values are
     #   SUBTYPE_BYTES, SUBTYPE_UUID, SUBTYPE_MD5, and SUBTYPE_USER_DEFINED.
     #
     # @see http://www.mongodb.org/display/DOCS/BSON#BSON-noteondatabinary BSON binary subtypes.
-    def initialize(initial_data=[], subtype=SUBTYPE_BYTES)
-      super(initial_data)
+    def initialize(data=[], subtype=SUBTYPE_BYTES)
+      data = data.unpack("c*") if data.is_a?(String)
+      super(data)
       @subtype = subtype
     end
 

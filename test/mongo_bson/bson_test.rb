@@ -249,6 +249,17 @@ class BSONTest < Test::Unit::TestCase
     assert_equal Binary::SUBTYPE_BYTES, bin2.subtype
   end
 
+  def test_binary_with_string
+    b = Binary.new('somebinarystring')
+    doc = {'bin' => b}
+    bson = Mongo::BSON_CODER.serialize(doc)
+    doc2 = Mongo::BSON_CODER.deserialize(bson)
+    bin2 = doc2['bin']
+    assert_kind_of Binary, bin2
+    assert_equal 'somebinarystring', bin2.to_s
+    assert_equal Binary::SUBTYPE_BYTES, bin2.subtype
+  end
+
   def test_binary_type
     bin = Binary.new([1, 2, 3, 4, 5], Binary::SUBTYPE_USER_DEFINED)
 
