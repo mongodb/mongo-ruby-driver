@@ -103,7 +103,6 @@ class GridTest < Test::Unit::TestCase
             read_data << chunk
           end
           assert_equal data.length, read_data.length
-          assert_equal data, read_data, "Unequal!"
         end
 
         @grid = Grid.new(@db, 'test-fs')
