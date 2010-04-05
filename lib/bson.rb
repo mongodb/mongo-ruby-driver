@@ -16,7 +16,7 @@ begin
   # Need this for running test with and without c ext in Ruby 1.9.
   raise LoadError if ENV['TEST_MODE'] && !ENV['C_EXT']
   require 'bson_ext/cbson'
-  raise LoadError unless defined?(CBson::VERSION)# && CBson::VERSION == Mongo::BSON::VERSION
+  raise LoadError unless defined?(CBson::VERSION) && CBson::VERSION == BSON::VERSION
   require 'bson/bson_c'
   module BSON
     BSON_CODER = BSON_C
