@@ -17,7 +17,7 @@ data = "hello, world!"
 grid = Grid.new(db)
 
 # Write a new file. data can be a string or an io object responding to #read.
-id = grid.put(data, 'hello.txt')
+id = grid.put(data, :filename => 'hello.txt')
 
 # Read it and print out the contents
 file = grid.get(id)
@@ -33,11 +33,12 @@ rescue => e
 end
 
 # Metadata
-id = grid.put(data, 'hello.txt', :content_type => 'text/plain', :metadata => {'name' => 'hello'})
+id = grid.put(data, :filename => 'hello.txt', :content_type => 'text/plain', :metadata => {'name' => 'hello'})
 file = grid.get(id)
 
 p file.content_type
 p file.metadata.inspect
 p file.chunk_size
 p file.file_length
+p file.filename
 p file.data
