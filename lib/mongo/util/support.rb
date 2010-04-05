@@ -49,10 +49,10 @@ module Mongo
 
       [" ", ".", "$", "/", "\\"].each do |invalid_char|
         if db_name.include? invalid_char
-          raise InvalidName, "database names cannot contain the character '#{invalid_char}'"
+          raise Mongo::InvalidNSName, "database names cannot contain the character '#{invalid_char}'"
         end
       end
-      raise InvalidName, "database name cannot be the empty string" if db_name.empty?
+      raise Mongo::InvalidNSName, "database name cannot be the empty string" if db_name.empty?
       db_name
     end
   end

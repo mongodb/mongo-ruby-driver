@@ -26,7 +26,7 @@ module Mongo
     # @param [DB] db a MongoDB database instance.
     # @param [String, Symbol] name the name of the collection.
     #
-    # @raise [InvalidName]
+    # @raise [InvalidNSName]
     #   if collection name is empty, contains '$', or starts or ends with '.'
     #
     # @raise [TypeError]
@@ -45,13 +45,13 @@ module Mongo
       name = name.to_s
 
       if name.empty? or name.include? ".."
-        raise Mongo::InvalidName, "collection names cannot be empty"
+        raise Mongo::InvalidNSName, "collection names cannot be empty"
       end
       if name.include? "$"
-        raise Mongo::InvalidName, "collection names must not contain '$'" unless name =~ /((^\$cmd)|(oplog\.\$main))/
+        raise Mongo::InvalidNSName, "collection names must not contain '$'" unless name =~ /((^\$cmd)|(oplog\.\$main))/
       end
       if name.match(/^\./) or name.match(/\.$/)
-        raise Mongo::InvalidName, "collection names must not start or end with '.'"
+        raise Mongo::InvalidNSName, "collection names must not start or end with '.'"
       end
 
       @db, @name  = db, name
@@ -66,7 +66,7 @@ module Mongo
     # @param [String] name
     #   the collection to return
     #
-    # @raise [InvalidName]
+    # @raise [Mongo::InvalidNSName]
     #   if passed an invalid collection name
     #
     # @return [Collection]
@@ -545,7 +545,7 @@ module Mongo
     #
     # @param [String] new_name the new name for this collection
     #
-    # @raise [InvalidName] if +new_name+ is an invalid collection name.
+    # @raise [Mongo::InvalidNSName] if +new_name+ is an invalid collection name.
     def rename(new_name)
       case new_name
       when Symbol, String
@@ -556,13 +556,13 @@ module Mongo
       new_name = new_name.to_s
 
       if new_name.empty? or new_name.include? ".."
-        raise InvalidName, "collection names cannot be empty"
+        raise Mongo::InvalidNSName, "collection names cannot be empty"
       end
       if new_name.include? "$"
-        raise InvalidName, "collection names must not contain '$'"
+        raise Mongo::InvalidNSName, "collection names must not contain '$'"
       end
       if new_name.match(/^\./) or new_name.match(/\.$/)
-        raise InvalidName, "collection names must not start or end with '.'"
+        raise Mongo::InvalidNSName, "collection names must not start or end with '.'"
       end
 
       @db.rename_collection(@name, new_name)

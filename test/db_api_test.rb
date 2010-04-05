@@ -3,6 +3,7 @@ require 'test/test_helper'
 # NOTE: assumes Mongo is running
 class DBAPITest < Test::Unit::TestCase
   include Mongo
+  include BSON
 
   @@conn = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
                         ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
@@ -646,32 +647,32 @@ class DBAPITest < Test::Unit::TestCase
     @@coll.insert({"hello" => "world"})
     @@coll.insert({"hello" => {"hello" => "world"}})
 
-    assert_raise InvalidName do
+    assert_raise BSON::InvalidKeyName do
       @@coll.insert({"$hello" => "world"})
     end
-    assert_raise InvalidName do
+    assert_raise BSON::InvalidKeyName do
       @@coll.insert({"hello" => {"$hello" => "world"}})
     end
 
     @@coll.insert({"he$llo" => "world"})
     @@coll.insert({"hello" => {"hell$o" => "world"}})
 
-    assert_raise InvalidName do
+    assert_raise BSON::InvalidKeyName do
       @@coll.insert({".hello" => "world"})
     end
-    assert_raise InvalidName do
+    assert_raise BSON::InvalidKeyName do
       @@coll.insert({"hello" => {".hello" => "world"}})
     end
-    assert_raise InvalidName do
+    assert_raise BSON::InvalidKeyName do
       @@coll.insert({"hello." => "world"})
     end
-    assert_raise InvalidName do
+    assert_raise BSON::InvalidKeyName do
       @@coll.insert({"hello" => {"hello." => "world"}})
     end
-    assert_raise InvalidName do
+    assert_raise BSON::InvalidKeyName do
       @@coll.insert({"hel.lo" => "world"})
     end
-    assert_raise InvalidName do
+    assert_raise BSON::InvalidKeyName do
       @@coll.insert({"hello" => {"hel.lo" => "world"}})
     end
   end
@@ -680,19 +681,19 @@ class DBAPITest < Test::Unit::TestCase
     assert_raise TypeError do
       @@db.collection(5)
     end
-    assert_raise Mongo::InvalidName do
+    assert_raise Mongo::InvalidNSName do
       @@db.collection("")
     end
-    assert_raise Mongo::InvalidName do
+    assert_raise Mongo::InvalidNSName do
       @@db.collection("te$t")
     end
-    assert_raise Mongo::InvalidName do
+    assert_raise Mongo::InvalidNSName do
       @@db.collection(".test")
     end
-    assert_raise Mongo::InvalidName do
+    assert_raise Mongo::InvalidNSName do
       @@db.collection("test.")
     end
-    assert_raise Mongo::InvalidName do
+    assert_raise Mongo::InvalidNSName do
       @@db.collection("tes..t")
     end
   end
@@ -706,19 +707,19 @@ class DBAPITest < Test::Unit::TestCase
     assert_raise TypeError do
       a.rename(5)
     end
-    assert_raise Mongo::InvalidName do
+    assert_raise Mongo::InvalidNSName do
       a.rename("")
     end
-    assert_raise Mongo::InvalidName do
+    assert_raise Mongo::InvalidNSName do
       a.rename("te$t")
     end
-    assert_raise Mongo::InvalidName do
+    assert_raise Mongo::InvalidNSName do
       a.rename(".test")
     end
-    assert_raise Mongo::InvalidName do
+    assert_raise Mongo::InvalidNSName do
       a.rename("test.")
     end
-    assert_raise Mongo::InvalidName do
+    assert_raise Mongo::InvalidNSName do
       a.rename("tes..t")
     end
 

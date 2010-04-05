@@ -24,17 +24,11 @@ module Mongo
   # Raised when configuration options cause connections, queries, etc., to fail.
   class ConfigurationError < MongoRubyError; end
 
-  # Raised with fatal errors to GridFS.
+  # Raised on fatal errors to GridFS.
   class GridError < MongoRubyError; end
 
   # Raised when invalid arguments are sent to Mongo Ruby methods.
   class MongoArgumentError < MongoRubyError; end
-
-  # Raised when given a string is not valid utf-8 (Ruby 1.8 only).
-  class InvalidStringEncoding < MongoRubyError; end
-
-  # Raised when attempting to initialize an invalid ObjectID.
-  class InvalidObjectID < MongoRubyError; end
 
   # Raised on failures in connection to the database server.
   class ConnectionError < MongoRubyError; end
@@ -42,9 +36,8 @@ module Mongo
   # Raised on failures in connection to the database server.
   class ConnectionTimeoutError < MongoRubyError; end
 
-  # Raised when trying to insert a document that exceeds the 4MB limit or
-  # when the document contains objects that can't be serialized as BSON.
-  class InvalidDocument < MongoDBError; end
+  # Raised when a connection operation fails.
+  class ConnectionFailure < MongoDBError; end
 
   # Raised when authentication fails.
   class AuthenticationError < MongoDBError; end
@@ -52,14 +45,11 @@ module Mongo
   # Raised when a database operation fails.
   class OperationFailure < MongoDBError; end
 
-  # Raised when a connection operation fails.
-  class ConnectionFailure < MongoDBError; end
-
   # Raised when a client attempts to perform an invalid operation.
   class InvalidOperation < MongoDBError; end
 
-  # Raised when an invalid name is used.
-  class InvalidName < RuntimeError; end
+  # Raised when an invalid collection or database name is used (invalid namespace name).
+  class InvalidNSName < RuntimeError; end
 
   # Raised when the client supplies an invalid value to sort by.
   class InvalidSortValueError < MongoRubyError; end

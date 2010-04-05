@@ -32,12 +32,12 @@ class TestConnection < Test::Unit::TestCase
   def test_invalid_database_names
     assert_raise TypeError do @mongo.db(4) end
 
-    assert_raise Mongo::InvalidName do @mongo.db('') end
-    assert_raise Mongo::InvalidName do @mongo.db('te$t') end
-    assert_raise Mongo::InvalidName do @mongo.db('te.t') end
-    assert_raise Mongo::InvalidName do @mongo.db('te\\t') end
-    assert_raise Mongo::InvalidName do @mongo.db('te/t') end
-    assert_raise Mongo::InvalidName do @mongo.db('te st') end
+    assert_raise Mongo::InvalidNSName do @mongo.db('') end
+    assert_raise Mongo::InvalidNSName do @mongo.db('te$t') end
+    assert_raise Mongo::InvalidNSName do @mongo.db('te.t') end
+    assert_raise Mongo::InvalidNSName do @mongo.db('te\\t') end
+    assert_raise Mongo::InvalidNSName do @mongo.db('te/t') end
+    assert_raise Mongo::InvalidNSName do @mongo.db('te st') end
   end
 
   def test_database_info

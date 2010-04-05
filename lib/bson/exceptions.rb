@@ -35,5 +35,5 @@ module BSON
   class InvalidDocument < BSONError; end
 
   # Raised when an invalid name is used.
-  class InvalidName < BSONError; end
+  class InvalidKeyName < BSONError; end
 end

@@ -27,11 +27,11 @@ class TestCollection < Test::Unit::TestCase
   end
 
   def test_valid_names
-    assert_raise Mongo::InvalidName do
+    assert_raise Mongo::InvalidNSName do
       @@db["te$t"]
     end
 
-    assert_raise Mongo::InvalidName do
+    assert_raise Mongo::InvalidNSName do
       @@db['$main']
     end
 

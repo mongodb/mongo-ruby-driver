@@ -1,4 +1,9 @@
 0.20
+* Exception class adjustments:
+  * Mongo::InvalidObjectID moved to BSON::InvalidObjectID
+  * Mongo::InvalidDocument moved to BSON::InvalidDocument
+  * Mongo::InvalidStringEncoding moved to BSON::InvalidStringEncoding
+  * Mongo::InvalidName replaced by Mongo::InvalidNSName and BSON::InvalidKeyName
 * BSON-related code extracted into two separate gems: bson and bson_ext (Chuck Remes).
 * Extensions compile on Rubinius (Chuck Remes).
 * Query :fields options allows for values of 0 to exclude fields (houdini, railsjedi).

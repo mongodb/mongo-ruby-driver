@@ -65,7 +65,7 @@ static VALUE MaxKey;
 static VALUE Regexp;
 static VALUE RegexpOfHolding;
 static VALUE OrderedHash;
-static VALUE InvalidName;
+static VALUE InvalidKeyName;
 static VALUE InvalidStringEncoding;
 static VALUE InvalidDocument;
 static VALUE DigestMD5;
@@ -182,12 +182,12 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         int i;
         if (RSTRING_LEN(key) > 0 && RSTRING_PTR(key)[0] == '$') {
             buffer_free(buffer);
-            rb_raise(InvalidName, "key must not start with '$'");
+            rb_raise(InvalidKeyName, "key must not start with '$'");
         }
         for (i = 0; i < RSTRING_LEN(key); i++) {
             if (RSTRING_PTR(key)[i] == '.') {
                 buffer_free(buffer);
-                rb_raise(InvalidName, "key must not contain '.'");
+                rb_raise(InvalidKeyName, "key must not contain '.'");
             }
         }
     }
@@ -902,7 +902,7 @@ void Init_cbson() {
     Regexp = rb_const_get(rb_cObject, rb_intern("Regexp"));
     RegexpOfHolding = rb_const_get(bson, rb_intern("RegexpOfHolding"));
     rb_require("bson/exceptions");
-    InvalidName = rb_const_get(bson, rb_intern("InvalidName"));
+    InvalidKeyName = rb_const_get(bson, rb_intern("InvalidKeyName"));
     InvalidStringEncoding = rb_const_get(bson, rb_intern("InvalidStringEncoding"));
     InvalidDocument = rb_const_get(bson, rb_intern("InvalidDocument"));
     rb_require("bson/ordered_hash");
