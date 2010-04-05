@@ -1,3 +1,14 @@
+0.20
+* BSON-related code extracted into two separate gems: bson and bson_ext (Chuck Remes).
+* Extensions compile on Rubinius (Chuck Remes).
+* Query :fields options allows for values of 0 to exclude fields (houdini, railsjedi).
+* BSON::Binary constructor can now take a string, which will be packed into an array.
+* GridFS
+  * Option to delete old versions of GridFileSystem entries.
+  * Filename is now optional for Grid#put.
+* Removed the following deprecated items:
+  * GridStore class
+
 0.19.3 2010-4-5
 * Minor fix for assert_valid_keys.
 

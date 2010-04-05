@@ -67,3 +67,10 @@ Matt Powell (fauxparse)
 
 Patrick Collison
 * Added safe mode for Collection#remove
+
+Chuck Remes
+* Extraction of BSON into separate gems
+* Extensions compile on Rubinius
+
+Dmitrii Golub (Houdini) and Jacques Crocker (railsjedi)
+* Support open to exclude fields on query
