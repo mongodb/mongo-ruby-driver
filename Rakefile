@@ -141,9 +141,12 @@ namespace :gem do
 
   desc "Install the optional c extensions"
   task :install_extensions do
-    sh "gem build mongo-extensions.gemspec"
-    sh "gem install mongo_ext-*.gem"
-    sh "rm mongo_ext-*.gem"
+    sh "gem build bson.gemspec"
+    sh "gem build bson_ext.gemspec"
+    sh "gem install bson-*.gem"
+    sh "gem install bson_ext-*.gem"
+    sh "rm bson-*.gem"
+    sh "rm bson_ext-*.gem"
   end
 
 end
