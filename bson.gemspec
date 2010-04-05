@@ -1,9 +1,9 @@
-require "lib/mongo_bson"
+require "lib/bson"
 
 Gem::Specification.new do |s|
-  s.name = 'mongo_bson'
+  s.name = 'bson'
 
-  s.version = Mongo::BSON::VERSION
+  s.version = '1.0'#Mongo::BSON::VERSION
 
   s.platform = Gem::Platform::RUBY
   s.summary = 'Ruby implementation of BSON'
@@ -11,8 +11,8 @@ Gem::Specification.new do |s|
 
   s.require_paths = ['lib']
 
-  s.files  = ['Rakefile', 'mongo-bson.gemspec', 'LICENSE.txt']
-  s.files += ['lib/mongo_bson.rb'] + Dir['lib/mongo_bson/**/*.rb']
+  s.files  = ['Rakefile', 'bson.gemspec', 'LICENSE.txt']
+  s.files += ['lib/bson.rb'] + Dir['lib/bson/**/*.rb']
   s.test_files = Dir['test/mongo_bson/*.rb']
 
   s.has_rdoc = true

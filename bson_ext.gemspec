@@ -1,8 +1,8 @@
-require 'lib/mongo'
+require 'lib/bson'
 VERSION_HEADER = File.open(File.join(File.dirname(__FILE__), 'ext', 'cbson', 'version.h'), "r")
 VERSION        = VERSION_HEADER.read.scan(/VERSION\s+"(\d+\.\d+(\.\d+\w*)?)\"/)[0][0]
 Gem::Specification.new do |s|
-  s.name = 'mongo_ext'
+  s.name = 'bson_ext'
 
   s.version  = VERSION
   s.platform = Gem::Platform::RUBY
@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.description = 'C extensions to accelerate the MongoDB Ruby driver. For more information about Mongo, see http://www.mongodb.org.'
 
   s.require_paths = ['ext']
-  s.files = ['Rakefile', 'mongo-extensions.gemspec']
+  s.files = ['Rakefile', 'bson_ext.gemspec']
   s.files += Dir['ext/**/*.rb'] + Dir['ext/**/*.c'] + Dir['ext/**/*.h']
   s.test_files = []
 
