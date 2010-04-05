@@ -8,14 +8,14 @@ class CursorTest < Test::Unit::TestCase
 
   @@connection = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
                         ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
-  @@db   = @@connection.db('ruby-mongo-test')
+  @@db   = @@connection.db(MONGO_TEST_DB)
   @@coll = @@db.collection('test')
   @@version = @@connection.server_version
 
   def setup
     @@coll.remove
     @@coll.insert('a' => 1)     # collection not created until it's used
-    @@coll_full_name = 'ruby-mongo-test.test'
+    @@coll_full_name = "#{MONGO_TEST_DB}.test"
   end
 
   def test_explain

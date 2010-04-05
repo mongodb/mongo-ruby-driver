@@ -6,7 +6,7 @@ class DBAPITest < Test::Unit::TestCase
 
   @@conn = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
                         ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
-  @@db   = @@conn.db("ruby-mongo-test")
+  @@db   = @@conn.db(MONGO_TEST_DB)
   @@coll = @@db.collection('test')
   @@version = @@conn.server_version
 
@@ -14,7 +14,7 @@ class DBAPITest < Test::Unit::TestCase
     @@coll.remove
     @r1 = {'a' => 1}
     @@coll.insert(@r1) # collection not created until it's used
-    @@coll_full_name = 'ruby-mongo-test.test'
+    @@coll_full_name = "#{MONGO_TEST_DB}.test"
   end
 
   def teardown
@@ -240,7 +240,7 @@ class DBAPITest < Test::Unit::TestCase
     names = @@db.collection_names
     assert names.length >= 2
     assert names.include?(@@coll.name)
-    assert names.include?('ruby-mongo-test.test2')
+    assert names.include?('mongo-ruby-test.test2')
   ensure
     @@db.drop_collection('test2')
   end

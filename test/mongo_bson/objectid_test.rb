@@ -56,7 +56,7 @@ class ObjectIDTest < Test::Unit::TestCase
   def test_save_and_restore
     host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
     port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
-    db = Connection.new(host, port).db('ruby-mongo-test')
+    db = Connection.new(host, port).db(MONGO_TEST_DB)
     coll = db.collection('test')
 
     coll.remove

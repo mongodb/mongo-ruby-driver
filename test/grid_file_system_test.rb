@@ -6,7 +6,7 @@ class GridFileSystemTest < Test::Unit::TestCase
     setup do
       @con = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
         ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
-      @db = @con.db('mongo-ruby-test')
+      @db = @con.db(MONGO_TEST_DB)
     end
 
     teardown do

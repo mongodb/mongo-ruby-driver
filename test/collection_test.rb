@@ -2,7 +2,7 @@ require 'test/test_helper'
 
 class TestCollection < Test::Unit::TestCase
   @@connection ||= Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost', ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
-  @@db   = @@connection.db('ruby-mongo-test')
+  @@db   = @@connection.db(MONGO_TEST_DB)
   @@test = @@db.collection("test")
   @@version = @@connection.server_version
 
@@ -18,7 +18,7 @@ class TestCollection < Test::Unit::TestCase
 
     # Create a db with a pk_factory.
     @db = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                         ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT).db('ruby-mongo-test', :pk => Object.new)
+                         ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT).db(MONGO_TEST_DB, :pk => Object.new)
     @coll = @db.collection('coll-with-pk')
     assert @coll.pk_factory.is_a?(Object)
 
@@ -192,7 +192,7 @@ class TestCollection < Test::Unit::TestCase
 
   def test_mocked_safe_remove
     @conn = Connection.new
-    @db   = @conn['mongo-ruby-test']
+    @db   = @conn[MONGO_TEST_DB]
     @test = @db['test-safe-remove']
     @test.save({:a => 20})
     @conn.stubs(:receive).returns([[{'ok' => 0, 'err' => 'failed'}], 1, 0])
@@ -205,7 +205,7 @@ class TestCollection < Test::Unit::TestCase
 
   def test_safe_remove
     @conn = Connection.new
-    @db   = @conn['mongo-ruby-test']
+    @db   = @conn[MONGO_TEST_DB]
     @test = @db['test-safe-remove']
     @test.save({:a => 50})
     @test.remove({}, :safe => true)

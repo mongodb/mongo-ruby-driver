@@ -16,7 +16,7 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def teardown
-    @mongo.db('ruby-mongo-test').error
+    @mongo.db(MONGO_TEST_DB).error
   end
 
   def test_server_info
@@ -41,16 +41,16 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_database_info
-    @mongo.drop_database('ruby-mongo-info-test')
-    @mongo.db('ruby-mongo-info-test').collection('info-test').insert('a' => 1)
+    @mongo.drop_database(MONGO_TEST_DB)
+    @mongo.db(MONGO_TEST_DB).collection('info-test').insert('a' => 1)
 
     info = @mongo.database_info
     assert_not_nil info
     assert_kind_of Hash, info
-    assert_not_nil info['ruby-mongo-info-test']
-    assert info['ruby-mongo-info-test'] > 0
+    assert_not_nil info[MONGO_TEST_DB]
+    assert info[MONGO_TEST_DB] > 0
 
-    @mongo.drop_database('ruby-mongo-info-test')
+    @mongo.drop_database(MONGO_TEST_DB)
   end
 
   def test_copy_database
@@ -79,21 +79,21 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_database_names
-    @mongo.drop_database('ruby-mongo-info-test')
-    @mongo.db('ruby-mongo-info-test').collection('info-test').insert('a' => 1)
+    @mongo.drop_database(MONGO_TEST_DB)
+    @mongo.db(MONGO_TEST_DB).collection('info-test').insert('a' => 1)
 
     names = @mongo.database_names
     assert_not_nil names
     assert_kind_of Array, names
     assert names.length >= 1
-    assert names.include?('ruby-mongo-info-test')
+    assert names.include?(MONGO_TEST_DB)
   end
 
   def test_logging
     output = StringIO.new
     logger = Logger.new(output)
     logger.level = Logger::DEBUG
-    db = Connection.new(@host, @port, :logger => logger).db('ruby-mongo-test')
+    db = Connection.new(@host, @port, :logger => logger).db(MONGO_TEST_DB)
     assert output.string.include?("admin['$cmd'].find")
   end
 
@@ -175,7 +175,7 @@ class TestConnection < Test::Unit::TestCase
   context "Connection exceptions" do
     setup do
       @conn = Mongo::Connection.new('localhost', 27017, :pool_size => 10, :timeout => 10)
-      @coll = @conn['mongo-ruby-test']['test-connection-exceptions']
+      @coll = @conn[MONGO_TEST_DB]['test-connection-exceptions']
     end
 
     should "release connection if an exception is raised on send_message" do

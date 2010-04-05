@@ -100,11 +100,11 @@ namespace :test do
 
   task :drop_databases do |t|
     puts "Dropping test database..."
-    require File.join(File.dirname(__FILE__), 'lib', 'mongo')
+    require File.join(File.dirname(__FILE__), 'test', 'test_helper')
     include Mongo
     con = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
       ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
-    con.drop_database('ruby-mongo-test')
+    con.drop_database(MONGO_TEST_DB)
   end
 end
 

@@ -18,7 +18,7 @@ class DBTest < Test::Unit::TestCase
   @@host  = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
   @@port  = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
   @@conn  = Connection.new(@@host, @@port)
-  @@db    = @@conn.db('ruby-mongo-test')
+  @@db    = @@conn.db(MONGO_TEST_DB)
   @@users = @@db.collection('system.users')
 
   def test_close
@@ -30,7 +30,7 @@ class DBTest < Test::Unit::TestCase
     rescue => ex
       assert_match /NilClass/, ex.to_s
     ensure
-      @@db = Connection.new(@@host, @@port).db('ruby-mongo-test')
+      @@db = Connection.new(@@host, @@port).db(MONGO_TEST_DB)
       @@users = @@db.collection('system.users')
     end
   end
@@ -48,7 +48,7 @@ class DBTest < Test::Unit::TestCase
 
   def test_full_coll_name
     coll = @@db.collection('test')
-    assert_equal 'ruby-mongo-test.test', @@db.full_collection_name(coll.name)
+    assert_equal "#{MONGO_TEST_DB}.test", @@db.full_collection_name(coll.name)
   end
 
   def test_collection_names
@@ -79,18 +79,18 @@ class DBTest < Test::Unit::TestCase
     @@conn.close
     @@users = nil
     @@conn  = Connection.new({:left => "this-should-fail", :right => [@@host, @@port]})
-    @@db    = @@conn['ruby-mongo-test']
+    @@db    = @@conn[MONGO_TEST_DB]
     assert @@conn.connected?
   ensure
     unless @@conn.connected?
       @@conn = Connection.new(@@host, @@port) 
-      @@db   = @@conn.db('ruby-mongo-test')
+      @@db   = @@conn.db(MONGO_TEST_DB)
     end
     @@users = @@db.collection('system.users')
   end
 
   def test_pk_factory
-    db = Connection.new(@@host, @@port).db('ruby-mongo-test', :pk => TestPKFactory.new)
+    db = Connection.new(@@host, @@port).db(MONGO_TEST_DB, :pk => TestPKFactory.new)
     coll = db.collection('test')
     coll.remove
 
@@ -114,7 +114,7 @@ class DBTest < Test::Unit::TestCase
 
   def test_pk_factory_reset
     conn = Connection.new(@@host, @@port)
-    db   = conn.db('ruby-mongo-test')
+    db   = conn.db(MONGO_TEST_DB)
     db.pk_factory = Object.new # first time
     begin
       db.pk_factory = Object.new
@@ -202,7 +202,7 @@ class DBTest < Test::Unit::TestCase
 
   def test_text_port_number_raises_no_errors
     conn = Connection.new(@@host, @@port.to_s)
-    db   = conn['ruby-mongo-test']
+    db   = conn[MONGO_TEST_DB]
     assert db.collection('users').remove
   end
 
@@ -222,7 +222,7 @@ class DBTest < Test::Unit::TestCase
 
   context "database profiling" do
     setup do
-      @db  = @@conn['ruby-mongo-test-admin-functions']
+      @db  = @@conn[MONGO_TEST_DB]
       @coll = @db['test']
       @coll.remove
       @r1 = @coll.insert('a' => 1) # collection not created until it's used
