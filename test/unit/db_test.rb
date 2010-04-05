@@ -53,7 +53,7 @@ class DBTest < Test::Unit::TestCase
 
       should "raise an error if logging out fails" do
         @db.expects(:command).returns({})
-        assert_raise MongoDBError do
+        assert_raise Mongo::MongoDBError do
           @db.logout
         end
       end
@@ -61,35 +61,35 @@ class DBTest < Test::Unit::TestCase
       should "raise an error if collection creation fails" do
         @db.expects(:collection_names).returns([])
         @db.expects(:command).returns({})
-        assert_raise MongoDBError do
+        assert_raise Mongo::MongoDBError do
           @db.create_collection("foo")
         end
       end
 
       should "raise an error if getlasterror fails" do
         @db.expects(:command).returns({})
-        assert_raise MongoDBError do
+        assert_raise Mongo::MongoDBError do
           @db.error
         end
       end
 
       should "raise an error if rename fails" do
         @db.expects(:command).returns({})
-        assert_raise MongoDBError do
+        assert_raise Mongo::MongoDBError do
           @db.rename_collection("foo", "bar")
         end
       end
 
       should "raise an error if drop_index fails" do
         @db.expects(:command).returns({})
-        assert_raise MongoDBError do
+        assert_raise Mongo::MongoDBError do
           @db.drop_index("foo", "bar")
         end
       end
 
       should "raise an error if set_profiling_level fails" do
         @db.expects(:command).returns({})
-        assert_raise MongoDBError do
+        assert_raise Mongo::MongoDBError do
           @db.profiling_level = :slow_only
         end
       end

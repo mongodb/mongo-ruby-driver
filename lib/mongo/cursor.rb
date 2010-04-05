@@ -227,7 +227,7 @@ module Mongo
     # @return [True]
     def close
       if @cursor_id
-        message = ByteBuffer.new([0, 0, 0, 0])
+        message = BSON::ByteBuffer.new([0, 0, 0, 0])
         message.put_int(1)
         message.put_long(@cursor_id)
         @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message, "cursor.close")
@@ -311,11 +311,11 @@ module Mongo
 
     def refill_via_get_more
       return if send_initial_query || @cursor_id.zero?
-      message = ByteBuffer.new([0, 0, 0, 0])
+      message = BSON::ByteBuffer.new([0, 0, 0, 0])
 
       # DB name.
       db_name = @admin ? 'admin' : @db.name
-      BSON_RUBY.serialize_cstr(message, "#{db_name}.#{@collection.name}")
+      BSON::BSON_RUBY.serialize_cstr(message, "#{db_name}.#{@collection.name}")
 
       # Number of results to return; db decides for now.
       message.put_int(0)
@@ -343,15 +343,15 @@ module Mongo
     end
 
     def construct_query_message
-      message = ByteBuffer.new
+      message = BSON::ByteBuffer.new
       message.put_int(query_opts)
       db_name = @admin ? 'admin' : @db.name
-      BSON_RUBY.serialize_cstr(message, "#{db_name}.#{@collection.name}")
+      BSON::BSON_RUBY.serialize_cstr(message, "#{db_name}.#{@collection.name}")
       message.put_int(@skip)
       message.put_int(@limit)
       spec = query_contains_special_fields? ? construct_query_spec : @selector
-      message.put_array(BSON_CODER.serialize(spec, false).to_a)
-      message.put_array(BSON_CODER.serialize(@fields, false).to_a) if @fields
+      message.put_array(BSON::BSON_CODER.serialize(spec, false).to_a)
+      message.put_array(BSON::BSON_CODER.serialize(@fields, false).to_a) if @fields
       message
     end
 

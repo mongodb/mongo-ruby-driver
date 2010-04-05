@@ -8,7 +8,7 @@ class BinaryTest < Test::Unit::TestCase
     end
 
     should "not display actual data" do
-      binary = Mongo::Binary.new(@data)
+      binary = BSON::Binary.new(@data)
       assert_equal "<Mongo::Binary:#{binary.object_id}>", binary.inspect
     end
   end

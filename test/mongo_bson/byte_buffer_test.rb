@@ -1,6 +1,7 @@
 require 'test/test_helper'
 
 class ByteBufferTest < Test::Unit::TestCase
+  include BSON
 
   def setup
     @buf = ByteBuffer.new

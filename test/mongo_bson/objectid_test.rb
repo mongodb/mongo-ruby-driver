@@ -3,6 +3,7 @@ require 'test/test_helper'
 class ObjectIDTest < Test::Unit::TestCase
 
   include Mongo
+  include BSON
 
   def setup
     @o = ObjectID.new

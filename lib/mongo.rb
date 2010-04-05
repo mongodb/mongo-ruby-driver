@@ -4,9 +4,6 @@ module Mongo
   VERSION = "0.19.2"
 end
 
-require 'mongo_bson'
-
-
 module Mongo
   ASCENDING  =  1
   DESCENDING = -1
@@ -27,6 +24,8 @@ module Mongo
   end
 
 end
+
+require 'bson'
 
 require 'mongo/util/support'
 require 'mongo/util/core_ext'

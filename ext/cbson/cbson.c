@@ -280,7 +280,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
     case T_STRING:
         {
             if (strcmp(rb_obj_classname(value),
-                  "Mongo::Code") == 0) {
+                  "BSON::Code") == 0) {
                 buffer_position length_location, start_position, total_length;
                 int length;
                 write_name_and_type(buffer, key, 0x0F);
@@ -324,7 +324,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         {
             // TODO there has to be a better way to do these checks...
             const char* cls = rb_obj_classname(value);
-            if (strcmp(cls, "Mongo::Binary") == 0 ||
+            if (strcmp(cls, "BSON::Binary") == 0 ||
                 strcmp(cls, "ByteBuffer") == 0) {
                 const char subtype = strcmp(cls, "ByteBuffer") ?
                     (const char)FIX2INT(rb_funcall(value, rb_intern("subtype"), 0)) : 2;
@@ -343,7 +343,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 SAFE_WRITE(buffer, RSTRING_PTR(string_data), length);
                 break;
             }
-            if (strcmp(cls, "Mongo::ObjectID") == 0) {
+            if (strcmp(cls, "BSON::ObjectID") == 0) {
                 VALUE as_array = rb_funcall(value, rb_intern("to_a"), 0);
                 int i;
                 write_name_and_type(buffer, key, 0x07);
@@ -353,7 +353,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 }
                 break;
             }
-            if (strcmp(cls, "Mongo::DBRef") == 0) {
+            if (strcmp(cls, "BSON::DBRef") == 0) {
                 buffer_position length_location, start_position, obj_length;
                 VALUE ns, oid;
                 write_name_and_type(buffer, key, 0x03);
@@ -377,11 +377,11 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&obj_length, 4);
                 break;
             }
-            if (strcmp(cls, "Mongo::MaxKey") == 0) {
+            if (strcmp(cls, "BSON::MaxKey") == 0) {
                 write_name_and_type(buffer, key, 0x7f);
                 break;
             }
-            if (strcmp(cls, "Mongo::MinKey") == 0) {
+            if (strcmp(cls, "BSON::MinKey") == 0) {
                 write_name_and_type(buffer, key, 0xff);
                 break;
             }
@@ -883,29 +883,29 @@ static VALUE objectid_generate(VALUE self)
 
 
 void Init_cbson() {
-    VALUE mongo, CBson, Digest, ext_version;
+    VALUE bson, CBson, Digest, ext_version;
     Time = rb_const_get(rb_cObject, rb_intern("Time"));
 
-    mongo = rb_const_get(rb_cObject, rb_intern("Mongo"));
-    rb_require("mongo_bson/types/binary");
-    Binary = rb_const_get(mongo, rb_intern("Binary"));
-    rb_require("mongo_bson/types/objectid");
-    ObjectID = rb_const_get(mongo, rb_intern("ObjectID"));
-    rb_require("mongo_bson/types/dbref");
-    DBRef = rb_const_get(mongo, rb_intern("DBRef"));
-    rb_require("mongo_bson/types/code");
-    Code = rb_const_get(mongo, rb_intern("Code"));
-    rb_require("mongo_bson/types/min_max_keys");
-    MinKey = rb_const_get(mongo, rb_intern("MinKey"));
-    MaxKey = rb_const_get(mongo, rb_intern("MaxKey"));
-    rb_require("mongo_bson/types/regexp_of_holding");
+    bson = rb_const_get(rb_cObject, rb_intern("BSON"));
+    rb_require("bson/types/binary");
+    Binary = rb_const_get(bson, rb_intern("Binary"));
+    rb_require("bson/types/objectid");
+    ObjectID = rb_const_get(bson, rb_intern("ObjectID"));
+    rb_require("bson/types/dbref");
+    DBRef = rb_const_get(bson, rb_intern("DBRef"));
+    rb_require("bson/types/code");
+    Code = rb_const_get(bson, rb_intern("Code"));
+    rb_require("bson/types/min_max_keys");
+    MinKey = rb_const_get(bson, rb_intern("MinKey"));
+    MaxKey = rb_const_get(bson, rb_intern("MaxKey"));
+    rb_require("bson/types/regexp_of_holding");
     Regexp = rb_const_get(rb_cObject, rb_intern("Regexp"));
-    RegexpOfHolding = rb_const_get(mongo, rb_intern("RegexpOfHolding"));
-    rb_require("mongo_bson/exceptions");
-    InvalidName = rb_const_get(mongo, rb_intern("InvalidName"));
-    InvalidStringEncoding = rb_const_get(mongo, rb_intern("InvalidStringEncoding"));
-    InvalidDocument = rb_const_get(mongo, rb_intern("InvalidDocument"));
-    rb_require("mongo_bson/ordered_hash");
+    RegexpOfHolding = rb_const_get(bson, rb_intern("RegexpOfHolding"));
+    rb_require("bson/exceptions");
+    InvalidName = rb_const_get(bson, rb_intern("InvalidName"));
+    InvalidStringEncoding = rb_const_get(bson, rb_intern("InvalidStringEncoding"));
+    InvalidDocument = rb_const_get(bson, rb_intern("InvalidDocument"));
+    rb_require("bson/ordered_hash");
     OrderedHash = rb_const_get(rb_cObject, rb_intern("OrderedHash"));
 
     CBson = rb_define_module("CBson");

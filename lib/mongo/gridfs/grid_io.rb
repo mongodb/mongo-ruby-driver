@@ -163,7 +163,7 @@ module Mongo
     # This method will be invoked automatically when
     # on GridIO#open is passed a block. Otherwise, it must be called manually.
     #
-    # @return [Mongo::ObjectID]
+    # @return [BSON::ObjectID]
     def close
       if @mode[0] == ?w
         if @current_chunk['n'].zero? && @chunk_position.zero?
@@ -183,7 +183,7 @@ module Mongo
 
     def create_chunk(n)
       chunk = OrderedHash.new
-      chunk['_id']      = Mongo::ObjectID.new
+      chunk['_id']      = BSON::ObjectID.new
       chunk['n']        = n
       chunk['files_id'] = @files_id
       chunk['data']     = ''
@@ -261,7 +261,7 @@ module Mongo
         end
         chunk_available = @chunk_size - @chunk_position
         step_size = (to_write > chunk_available) ? chunk_available : to_write
-        @current_chunk['data'] = Binary.new((@current_chunk['data'].to_s << string[-to_write, step_size]).unpack("c*"))
+        @current_chunk['data'] = BSON::Binary.new((@current_chunk['data'].to_s << string[-to_write, step_size]).unpack("c*"))
         @chunk_position += step_size
         to_write -= step_size
         save_chunk(@current_chunk)
@@ -290,7 +290,7 @@ module Mongo
 
     # Initialize the class for writing a file.
     def init_write(opts)
-      @files_id      = opts[:_id] || Mongo::ObjectID.new
+      @files_id      = opts[:_id] || BSON::ObjectID.new
       @content_type  = opts[:content_type] || (defined? MIME) && get_content_type || DEFAULT_CONTENT_TYPE
       @chunk_size    = opts[:chunk_size] || DEFAULT_CHUNK_SIZE
       @metadata      = opts[:metadata] if opts[:metadata]

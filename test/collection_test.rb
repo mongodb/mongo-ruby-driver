@@ -12,9 +12,9 @@ class TestCollection < Test::Unit::TestCase
 
   def test_optional_pk_factory
     @coll_default_pk = @@db.collection('stuff')
-    assert_equal Mongo::ObjectID, @coll_default_pk.pk_factory
+    assert_equal BSON::ObjectID, @coll_default_pk.pk_factory
     @coll_default_pk = @@db.create_collection('more-stuff')
-    assert_equal Mongo::ObjectID, @coll_default_pk.pk_factory
+    assert_equal BSON::ObjectID, @coll_default_pk.pk_factory
 
     # Create a db with a pk_factory.
     @db = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
@@ -27,11 +27,11 @@ class TestCollection < Test::Unit::TestCase
   end
 
   def test_valid_names
-    assert_raise InvalidName do
+    assert_raise Mongo::InvalidName do
       @@db["te$t"]
     end
 
-    assert_raise InvalidName do
+    assert_raise Mongo::InvalidName do
       @@db['$main']
     end
 

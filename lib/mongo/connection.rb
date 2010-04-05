@@ -344,7 +344,7 @@ module Mongo
     # Send a message to MongoDB, adding the necessary headers.
     #
     # @param [Integer] operation a MongoDB opcode.
-    # @param [ByteBuffer] message a message to send to the database.
+    # @param [BSON::ByteBuffer] message a message to send to the database.
     # @param [String] log_message text version of +message+ for logging.
     #
     # @return [True]
@@ -363,7 +363,7 @@ module Mongo
     # an exception if the operation has failed.
     #
     # @param [Integer] operation a MongoDB opcode.
-    # @param [ByteBuffer] message a message to send to the database.
+    # @param [BSON::ByteBuffer] message a message to send to the database.
     # @param [String] db_name the name of the database. used on call to get_last_error.
     # @param [String] log_message text version of +message+ for logging.
     #
@@ -394,7 +394,7 @@ module Mongo
     # Sends a message to the database and waits for the response.
     #
     # @param [Integer] operation a MongoDB opcode.
-    # @param [ByteBuffer] message a message to send to the database.
+    # @param [BSON::ByteBuffer] message a message to send to the database.
     # @param [String] log_message text version of +message+ for logging.
     # @param [Socket] socket a socket to use in lieu of checking out a new one.
     #
@@ -625,7 +625,7 @@ module Mongo
     end
 
     def receive_header(sock)
-      header = ByteBuffer.new
+      header = BSON::ByteBuffer.new
       header.put_array(receive_message_on_socket(16, sock).unpack("C*"))
       unless header.size == STANDARD_HEADER_SIZE
         raise "Short read for DB response header: " +
@@ -639,7 +639,7 @@ module Mongo
     end
 
     def receive_response_header(sock)
-      header_buf = ByteBuffer.new
+      header_buf = BSON::ByteBuffer.new
       header_buf.put_array(receive_message_on_socket(RESPONSE_HEADER_SIZE, sock).unpack("C*"))
       if header_buf.length != RESPONSE_HEADER_SIZE
         raise "Short read for DB response header; " +
@@ -657,32 +657,32 @@ module Mongo
       docs = []
       number_remaining = number_received
       while number_remaining > 0 do
-        buf = ByteBuffer.new
+        buf = BSON::ByteBuffer.new
         buf.put_array(receive_message_on_socket(4, sock).unpack("C*"))
         buf.rewind
         size = buf.get_int
         buf.put_array(receive_message_on_socket(size - 4, sock).unpack("C*"), 4)
         number_remaining -= 1
         buf.rewind
-        docs << BSON_CODER.deserialize(buf)
+        docs << BSON::BSON_CODER.deserialize(buf)
       end
       [docs, number_received, cursor_id]
     end
 
     def last_error_message(db_name)
-      message = ByteBuffer.new
+      message = BSON::ByteBuffer.new
       message.put_int(0)
-      BSON_RUBY.serialize_cstr(message, "#{db_name}.$cmd")
+      BSON::BSON_RUBY.serialize_cstr(message, "#{db_name}.$cmd")
       message.put_int(0)
       message.put_int(-1)
-      message.put_array(BSON_CODER.serialize({:getlasterror => 1}, false).unpack("C*"))
+      message.put_array(BSON::BSON_CODER.serialize({:getlasterror => 1}, false).unpack("C*"))
       add_message_headers(Mongo::Constants::OP_QUERY, message)
     end
 
     # Prepares a message for transmission to MongoDB by
     # constructing a valid message header.
     def add_message_headers(operation, message)
-      headers = ByteBuffer.new
+      headers = BSON::ByteBuffer.new
 
       # Message size.
       headers.put_int(16 + message.size)

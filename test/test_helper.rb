@@ -19,11 +19,12 @@ MSG
     exit
 end
 
-require 'mongo_ext/cbson' if ENV['C_EXT']
+require 'bson_ext/cbson' if ENV['C_EXT']
 
 # NOTE: most tests assume that MongoDB is running.
 class Test::Unit::TestCase
   include Mongo
+  include BSON
 
   # Generic code for rescuing connection failures and retrying operations.
   # This could be combined with some timeout functionality.

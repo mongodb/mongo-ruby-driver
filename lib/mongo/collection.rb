@@ -45,18 +45,18 @@ module Mongo
       name = name.to_s
 
       if name.empty? or name.include? ".."
-        raise InvalidName, "collection names cannot be empty"
+        raise Mongo::InvalidName, "collection names cannot be empty"
       end
       if name.include? "$"
-        raise InvalidName, "collection names must not contain '$'" unless name =~ /((^\$cmd)|(oplog\.\$main))/
+        raise Mongo::InvalidName, "collection names must not contain '$'" unless name =~ /((^\$cmd)|(oplog\.\$main))/
       end
       if name.match(/^\./) or name.match(/\.$/)
-        raise InvalidName, "collection names must not start or end with '.'"
+        raise Mongo::InvalidName, "collection names must not start or end with '.'"
       end
 
       @db, @name  = db, name
       @connection = @db.connection
-      @pk_factory = pk_factory || ObjectID
+      @pk_factory = pk_factory || BSON::ObjectID
       @hint = nil
     end
 
@@ -181,7 +181,7 @@ module Mongo
       spec = case spec_or_object_id
              when nil
                {}
-             when ObjectID
+             when BSON::ObjectID
                {:_id => spec_or_object_id}
              when Hash
                spec_or_object_id
@@ -260,10 +260,10 @@ module Mongo
     # @core remove remove-instance_method
     def remove(selector={}, opts={})
       # Initial byte is 0.
-      message = ByteBuffer.new([0, 0, 0, 0])
-      BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
+      message = BSON::ByteBuffer.new([0, 0, 0, 0])
+      BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
-      message.put_array(BSON_CODER.serialize(selector, false, true).to_a)
+      message.put_array(BSON::BSON_CODER.serialize(selector, false, true).to_a)
 
       if opts[:safe]
         @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message, @db.name,
@@ -299,14 +299,14 @@ module Mongo
     # @core update update-instance_method
     def update(selector, document, options={})
       # Initial byte is 0.
-      message = ByteBuffer.new([0, 0, 0, 0])
-      BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
+      message = BSON::ByteBuffer.new([0, 0, 0, 0])
+      BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       update_options  = 0
       update_options += 1 if options[:upsert]
       update_options += 2 if options[:multi]
       message.put_int(update_options)
-      message.put_array(BSON_CODER.serialize(selector, false, true).to_a)
-      message.put_array(BSON_CODER.serialize(document, false, true).to_a)
+      message.put_array(BSON::BSON_CODER.serialize(selector, false, true).to_a)
+      message.put_array(BSON::BSON_CODER.serialize(document, false, true).to_a)
       if options[:safe]
         @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name,
           "#{@db.name}['#{@name}'].update(#{selector.inspect}, #{document.inspect})")
@@ -415,15 +415,15 @@ module Mongo
 
     # Perform a map/reduce operation on the current collection.
     #
-    # @param [String, Code] map a map function, written in JavaScript.
-    # @param [String, Code] reduce a reduce function, written in JavaScript.
+    # @param [String, BSON::Code] map a map function, written in JavaScript.
+    # @param [String, BSON::Code] reduce a reduce function, written in JavaScript.
     #
     # @option opts [Hash] :query ({}) a query selector document, like what's passed to #find, to limit
     #   the operation to a subset of the collection.
     # @option opts [Array] :sort ([]) an array of [key, direction] pairs to sort by. Direction should
     #   be specified as Mongo::ASCENDING (or :ascending / :asc) or Mongo::DESCENDING (or :descending / :desc)
     # @option opts [Integer] :limit (nil) if passing a query, number of objects to return from the collection.
-    # @option opts [String, Code] :finalize (nil) a javascript function to apply to the result set after the
+    # @option opts [String, BSON::Code] :finalize (nil) a javascript function to apply to the result set after the
     #   map/reduce operation has finished.
     # @option opts [String] :out (nil) the name of the output collection. If specified, the collection will not be treated as temporary.
     # @option opts [Boolean] :keeptemp (false) if true, the generated collection will be persisted. default is false.
@@ -435,8 +435,8 @@ module Mongo
     #
     # @core mapreduce map_reduce-instance_method
     def map_reduce(map, reduce, opts={})
-      map    = Code.new(map) unless map.is_a?(Code)
-      reduce = Code.new(reduce) unless reduce.is_a?(Code)
+      map    = BSON::Code.new(map) unless map.is_a?(BSON::Code)
+      reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
 
       hash = OrderedHash.new
       hash['mapreduce'] = self.name
@@ -454,12 +454,12 @@ module Mongo
 
     # Perform a group aggregation.
     #
-    # @param [Array, String, Code, Nil] :key either 1) an array of fields to group by,
+    # @param [Array, String, BSON::Code, Nil] :key either 1) an array of fields to group by,
     #   2) a javascript function to generate the key object, or 3) nil.
     # @param [Hash] condition an optional document specifying a query to limit the documents over which group is run.
     # @param [Hash] initial initial value of the aggregation counter object
-    # @param [String, Code] reduce aggregation function, in JavaScript
-    # @param [String, Code] finalize :: optional. a JavaScript function that receives and modifies
+    # @param [String, BSON::Code] reduce aggregation function, in JavaScript
+    # @param [String, BSON::Code] finalize :: optional. a JavaScript function that receives and modifies
     #              each of the resultant grouped objects. Available only when group is run
     #              with command set to true.
     # @param [Nil] deprecated this param in a placeholder for a deprecated param. It will be removed
@@ -475,7 +475,7 @@ module Mongo
           "See http://api.mongodb.org/ruby/current/Mongo/Collection.html#group-instance_method for details."
       end
 
-      reduce = Code.new(reduce) unless reduce.is_a?(Code)
+      reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
 
       group_command = {
         "group" => {
@@ -493,7 +493,7 @@ module Mongo
           key.each { |k| key_value[k] = 1 }
         else
           key_type  = "$keyf"
-          key_value = key.is_a?(Code) ? key : Code.new(key)
+          key_value = key.is_a?(BSON::Code) ? key : BSON::Code.new(key)
         end
 
         group_command["group"][key_type] = key_value
@@ -501,9 +501,9 @@ module Mongo
 
       # only add finalize if specified
       # check to see if users have sent the finalizer as the last argument.
-      finalize = deprecated if deprecated.is_a?(String) || deprecated.is_a?(Code)
-      finalize = Code.new(finalize) if finalize.is_a?(String)
-      if finalize.is_a?(Code)
+      finalize = deprecated if deprecated.is_a?(String) || deprecated.is_a?(BSON::Code)
+      finalize = BSON::Code.new(finalize) if finalize.is_a?(String)
+      if finalize.is_a?(BSON::Code)
         group_command['group']['finalize'] = finalize
       end
 
@@ -631,9 +631,9 @@ module Mongo
     # +check_keys+ setting.
     def insert_documents(documents, collection_name=@name, check_keys=true, safe=false)
       # Initial byte is 0.
-      message = ByteBuffer.new([0, 0, 0, 0])
-      BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{collection_name}")
-      documents.each { |doc| message.put_array(BSON_CODER.serialize(doc, check_keys, true).to_a) }
+      message = BSON::ByteBuffer.new([0, 0, 0, 0])
+      BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{collection_name}")
+      documents.each { |doc| message.put_array(BSON::BSON_CODER.serialize(doc, check_keys, true).to_a) }
       if safe
         @connection.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message, @db.name,
           "#{@db.name}['#{collection_name}'].insert(#{documents.inspect})")
