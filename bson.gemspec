@@ -3,7 +3,7 @@ require "lib/bson"
 Gem::Specification.new do |s|
   s.name = 'bson'
 
-  s.version = '1.0'#Mongo::BSON::VERSION
+  s.version = BSON::VERSION
 
   s.platform = Gem::Platform::RUBY
   s.summary = 'Ruby implementation of BSON'
