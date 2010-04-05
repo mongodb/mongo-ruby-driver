@@ -462,19 +462,9 @@ module Mongo
     # @param [String, BSON::Code] finalize :: optional. a JavaScript function that receives and modifies
     #              each of the resultant grouped objects. Available only when group is run
     #              with command set to true.
-    # @param [Nil] deprecated this param in a placeholder for a deprecated param. It will be removed
-    #   in the next release.
     #
     # @return [Array] the grouped items.
-    def group(key, condition, initial, reduce, finalize=nil, deprecated=nil)
-
-      # Warn of changed API post eval deprecation.
-      if finalize == true || finalize == false || deprecated
-        warn "The API for Collection#group has changed. 'Finalize' is now the fifth parameter, " +
-          "since it's no longer necessary to specify whether #group is run as a command. " +
-          "See http://api.mongodb.org/ruby/current/Mongo/Collection.html#group-instance_method for details."
-      end
-
+    def group(key, condition, initial, reduce, finalize=nil)
       reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
 
       group_command = {
@@ -499,9 +489,6 @@ module Mongo
         group_command["group"][key_type] = key_value
       end
 
-      # only add finalize if specified
-      # check to see if users have sent the finalizer as the last argument.
-      finalize = deprecated if deprecated.is_a?(String) || deprecated.is_a?(BSON::Code)
       finalize = BSON::Code.new(finalize) if finalize.is_a?(String)
       if finalize.is_a?(BSON::Code)
         group_command['group']['finalize'] = finalize
