@@ -1,3 +1,15 @@
+0.19.2 2010-4-5
+This release fixes a major bug and is the final release
+in the 0.19 series. The next release, 0.20.0, will introduce
+separate gems for bson and bson_ext and may require small
+changes to existing code bases. Expect that release in the next
+few days.
+* Fix for Grid#delete bug.
+* Log messages read like valid ruby driver code.
+* Cursor#has_next.
+* Tests for MongoDB 1.4 features.
+* Flexible index creation method with Mongo::GEO2D constant.
+
 0.19.1 2010-3-2
 * Fix for HashWithIndifferentAccess in ActiveSupport-3.0
 
