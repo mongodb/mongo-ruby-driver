@@ -272,7 +272,7 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_binary_byte_buffer
-    bb = ByteBuffer.new
+    bb = Binary.new
     5.times { |i| bb.put(i + 1) }
 
     doc = {'bin' => bb}

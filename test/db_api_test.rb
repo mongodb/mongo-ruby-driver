@@ -29,8 +29,8 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_insert
-    assert_kind_of ObjectID, @@coll.insert('a' => 2)
-    assert_kind_of ObjectID, @@coll.insert('b' => 3)
+    assert_kind_of BSON::ObjectID, @@coll.insert('a' => 2)
+    assert_kind_of BSON::ObjectID, @@coll.insert('b' => 3)
 
     assert_equal 3, @@coll.count
     docs = @@coll.find().to_a
@@ -62,7 +62,7 @@ class DBAPITest < Test::Unit::TestCase
     ids = @@coll.insert([{'a' => 2}, {'b' => 3}])
 
     ids.each do |i|
-      assert_kind_of ObjectID, i
+      assert_kind_of BSON::ObjectID, i
     end
 
     assert_equal 3, @@coll.count
@@ -413,7 +413,7 @@ class DBAPITest < Test::Unit::TestCase
       @@db.collection('does-not-exist')
       fail "expected exception"
     rescue => ex
-      assert_equal MongoDBError, ex.class
+      assert_equal Mongo::MongoDBError, ex.class
       assert_equal "Collection does-not-exist doesn't exist. Currently in strict mode.", ex.to_s
     ensure
       @@db.strict = false
@@ -433,7 +433,7 @@ class DBAPITest < Test::Unit::TestCase
     end
 
     # Now the collection exists. This time we should see an exception.
-    assert_raise MongoDBError do
+    assert_raise Mongo::MongoDBError do
       @@db.create_collection('foobar')
     end
     @@db.strict = false
@@ -680,19 +680,19 @@ class DBAPITest < Test::Unit::TestCase
     assert_raise TypeError do
       @@db.collection(5)
     end
-    assert_raise InvalidName do
+    assert_raise Mongo::InvalidName do
       @@db.collection("")
     end
-    assert_raise InvalidName do
+    assert_raise Mongo::InvalidName do
       @@db.collection("te$t")
     end
-    assert_raise InvalidName do
+    assert_raise Mongo::InvalidName do
       @@db.collection(".test")
     end
-    assert_raise InvalidName do
+    assert_raise Mongo::InvalidName do
       @@db.collection("test.")
     end
-    assert_raise InvalidName do
+    assert_raise Mongo::InvalidName do
       @@db.collection("tes..t")
     end
   end
@@ -706,19 +706,19 @@ class DBAPITest < Test::Unit::TestCase
     assert_raise TypeError do
       a.rename(5)
     end
-    assert_raise InvalidName do
+    assert_raise Mongo::InvalidName do
       a.rename("")
     end
-    assert_raise InvalidName do
+    assert_raise Mongo::InvalidName do
       a.rename("te$t")
     end
-    assert_raise InvalidName do
+    assert_raise Mongo::InvalidName do
       a.rename(".test")
     end
-    assert_raise InvalidName do
+    assert_raise Mongo::InvalidName do
       a.rename("test.")
     end
-    assert_raise InvalidName do
+    assert_raise Mongo::InvalidName do
       a.rename("tes..t")
     end
 

@@ -229,7 +229,7 @@ module Mongo
     # @return [Mongo::Collection]
     def collection(name)
       return Collection.new(self, name, @pk_factory) if !strict? || collection_names.include?(name)
-      raise MongoDBError, "Collection #{name} doesn't exist. Currently in strict mode."
+      raise Mongo::MongoDBError, "Collection #{name} doesn't exist. Currently in strict mode."
     end
     alias_method :[], :collection
 
@@ -325,8 +325,8 @@ module Mongo
     #
     # @return [String] the return value of the function.
     def eval(code, *args)
-      if not code.is_a? Code
-        code = Code.new(code)
+      if not code.is_a? BSON::Code
+        code = BSON::Code.new(code)
       end
 
       oh = OrderedHash.new

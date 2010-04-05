@@ -5,7 +5,7 @@ require 'logger'
 
 class TestPKFactory
   def create_pk(row)
-    row['_id'] ||= Mongo::ObjectID.new
+    row['_id'] ||= BSON::ObjectID.new
     row
   end
 end
@@ -101,7 +101,7 @@ class DBTest < Test::Unit::TestCase
     assert_not_nil oid
     assert_equal insert_id, oid
 
-    oid = ObjectID.new
+    oid = BSON::ObjectID.new
     data = {'_id' => oid, 'name' => 'Barney', 'age' => 41}
     coll.insert(data)
     row = coll.find_one({'name' => data['name']})

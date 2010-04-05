@@ -9,7 +9,7 @@ class BinaryTest < Test::Unit::TestCase
 
     should "not display actual data" do
       binary = BSON::Binary.new(@data)
-      assert_equal "<Mongo::Binary:#{binary.object_id}>", binary.inspect
+      assert_equal "<BSON::Binary:#{binary.object_id}>", binary.inspect
     end
   end
 end
