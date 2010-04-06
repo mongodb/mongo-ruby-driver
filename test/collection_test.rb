@@ -7,7 +7,7 @@ class TestCollection < Test::Unit::TestCase
   @@version = @@connection.server_version
 
   def setup
-    @@test.drop()
+    @@test.remove
   end
 
   def test_optional_pk_factory
@@ -161,6 +161,7 @@ class TestCollection < Test::Unit::TestCase
       assert_raise OperationFailure do
         @@test.update({}, {"$inc" => {"x" => 1}}, :safe => true)
       end
+      @@test.drop
     end
   else
     def test_safe_update
@@ -176,6 +177,7 @@ class TestCollection < Test::Unit::TestCase
       assert_raise OperationFailure do
         @@test.update({}, {"x" => 10}, :safe => true)
       end
+      @@test.drop
     end
   end
 
@@ -188,6 +190,7 @@ class TestCollection < Test::Unit::TestCase
     assert_raise OperationFailure do
       @@test.save({"hello" => "world"}, :safe => true)
     end
+    @@test.drop
   end
 
   def test_mocked_safe_remove
@@ -371,6 +374,28 @@ class TestCollection < Test::Unit::TestCase
       assert_equal 2, res.count
       assert res.find_one({"_id" => 2})
       assert res.find_one({"_id" => 3})
+    end
+  end
+
+  if @@version > "1.3.0"
+    def test_find_and_modify
+      @@test << { :a => 1, :processed => false }
+      @@test << { :a => 2, :processed => false }
+      @@test << { :a => 3, :processed => false }
+
+      @@test.find_and_modify(:query => {}, :sort => [['a', -1]], :update => {"$set" => {:processed => true}})
+
+      assert @@test.find_one({:a => 3})['processed']
+    end
+
+    def test_find_and_modify_with_invalid_options
+      @@test << { :a => 1, :processed => false }
+      @@test << { :a => 2, :processed => false }
+      @@test << { :a => 3, :processed => false }
+
+      assert_raise Mongo::OperationFailure do
+        @@test.find_and_modify(:blimey => {})
+      end
     end
   end
 

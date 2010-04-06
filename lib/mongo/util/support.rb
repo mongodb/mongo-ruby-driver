@@ -18,6 +18,7 @@ require 'digest/md5'
 
 module Mongo
   module Support
+    include Mongo::Conversions
     extend self
 
     # Generate an MD5 for authentication.
@@ -54,6 +55,16 @@ module Mongo
       end
       raise Mongo::InvalidNSName, "database name cannot be the empty string" if db_name.empty?
       db_name
+    end
+
+    def format_order_clause(order)
+      case order
+        when String, Symbol then string_as_sort_parameters(order)
+        when Array then array_as_sort_parameters(order)
+        else
+          raise InvalidSortValueError, "Illegal sort clause, '#{order.class.name}'; must be of the form " +
+            "[['field1', '(ascending|descending)'], ['field2', '(ascending|descending)']]"
+      end
     end
   end
 end

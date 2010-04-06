@@ -365,7 +365,7 @@ module Mongo
       return @selector if @selector.has_key?('$query')
       spec = OrderedHash.new
       spec['$query']    = @selector
-      spec['$orderby']  = formatted_order_clause if @order
+      spec['$orderby']  = Mongo::Support.format_order_clause(@order) if @order
       spec['$hint']     = @hint if @hint && @hint.length > 0
       spec['$explain']  = true if @explain
       spec['$snapshot'] = true if @snapshot
@@ -375,16 +375,6 @@ module Mongo
     # Returns true if the query contains order, explain, hint, or snapshot.
     def query_contains_special_fields?
       @order || @explain || @hint || @snapshot
-    end
-
-    def formatted_order_clause
-      case @order
-        when String, Symbol then string_as_sort_parameters(@order)
-        when Array then array_as_sort_parameters(@order)
-        else
-          raise InvalidSortValueError, "Illegal sort clause, '#{@order.class.name}'; must be of the form " +
-            "[['field1', '(ascending|descending)'], ['field2', '(ascending|descending)']]"
-      end
     end
 
     def to_s
