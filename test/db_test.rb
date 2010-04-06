@@ -20,6 +20,7 @@ class DBTest < Test::Unit::TestCase
   @@conn  = Connection.new(@@host, @@port)
   @@db    = @@conn.db(MONGO_TEST_DB)
   @@users = @@db.collection('system.users')
+  @@version = @@conn.server_version
 
   def test_close
     @@conn.close
@@ -218,6 +219,15 @@ class DBTest < Test::Unit::TestCase
 
   def test_remove_non_existant_user
     assert !@@db.remove_user("joe")
+  end
+
+
+  if @@version >= "1.3.5"
+    def test_db_stats
+      stats = @@db.stats
+      assert stats.has_key?('collections')
+      assert stats.has_key?('dataSize')
+    end
   end
 
   context "database profiling" do

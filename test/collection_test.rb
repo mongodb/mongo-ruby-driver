@@ -399,6 +399,15 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  if @@version >= "1.3.5"
+    def test_coll_stats
+      @@test << {:n => 1}
+      @@test.create_index("n")
+
+      assert_equal "#{MONGO_TEST_DB}.test", @@test.stats['ns']
+    end
+  end
+
   def test_saving_dates_pre_epoch
     begin
       @@test.save({'date' => Time.utc(1600)})

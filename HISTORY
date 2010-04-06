@@ -1,4 +1,9 @@
 0.20
+
+* Support for new commands:
+  * Collection#find_and_modify
+  * Collection#stats
+  * DB#stats
 * Exception class adjustments:
   * Mongo::InvalidObjectID moved to BSON::InvalidObjectID
   * Mongo::InvalidDocument moved to BSON::InvalidDocument

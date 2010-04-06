@@ -608,6 +608,13 @@ module Mongo
       @db.collections_info(@name).next_document['options']
     end
 
+    # Return stats on the collection. Uses MongoDB's collstats command.
+    #
+    # @return [Hash]
+    def stats
+      @db.command({:collstats => @name})
+    end
+
     # Get the number of documents in this collection.
     #
     # @return [Integer]

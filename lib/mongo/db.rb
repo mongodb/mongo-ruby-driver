@@ -386,6 +386,14 @@ module Mongo
       info
     end
 
+
+    # Return stats on this database. Uses MongoDB's dbstats command.
+    #
+    # @return [Hash]
+    def stats
+      self.command({:dbstats => 1})
+    end
+
     # Create a new index on the given collection.
     # Normally called by Collection#create_index.
     #
