@@ -426,7 +426,7 @@ module Mongo
     #
     # @return [Hash] the matched document.
     #
-    # @core mapreduce map_reduce-instance_method
+    # @core findandmodify find_and_modify-instance_method
     def find_and_modify(opts={})
       cmd = OrderedHash.new
       cmd[:findandmodify] = @name
