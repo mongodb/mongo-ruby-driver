@@ -27,6 +27,7 @@ module Mongo
   class GridIO
     DEFAULT_CHUNK_SIZE   = 256 * 1024
     DEFAULT_CONTENT_TYPE = 'binary/octet-stream'
+    PROTECTED_ATTRS      = [:files_id, :file_length, :client_md5, :server_md5]
 
     attr_reader :content_type, :chunk_size, :upload_date, :files_id, :filename,
       :metadata, :server_md5, :client_md5, :file_length
@@ -52,21 +53,35 @@ module Mongo
     # @options opts [Boolean] :safe (false) When safe mode is enabled, the chunks sent to the server
     #   will be validated using an md5 hash. If validation fails, an exception will be raised.
     def initialize(files, chunks, filename, mode, opts={})
-      @files      = files
-      @chunks     = chunks
-      @filename   = filename
-      @mode       = mode
-      @query      = opts[:query] || {}
-      @query_opts = opts[:query_opts] || {}
-      @fs_name    = opts[:fs_name] || Grid::DEFAULT_FS_NAME
-      @safe       = opts[:safe] || false
-      @local_md5  = Digest::MD5.new if @safe
+      @files        = files
+      @chunks       = chunks
+      @filename     = filename
+      @mode         = mode
+      @query        = opts.delete(:query) || {}
+      @query_opts   = opts.delete(:query_opts) || {}
+      @fs_name      = opts.delete(:fs_name) || Grid::DEFAULT_FS_NAME
+      @safe         = opts.delete(:safe) || false
+      @local_md5    = Digest::MD5.new if @safe
+      @custom_attrs = {}
 
       case @mode
         when 'r' then init_read
         when 'w' then init_write(opts)
         else
           raise GridError, "Invalid file mode #{@mode}. Mode should be 'r' or 'w'."
+      end
+    end
+
+    def [](key)
+      @custom_attrs[key] || instance_variable_get("@#{key.to_s}")
+    end
+
+    def []=(key, value)
+      if PROTECTED_ATTRS.include?(key.to_sym)
+        warn "Attempting to overwrite protected value."
+        return nil
+      else
+        @custom_attrs[key] = value
       end
     end
 
@@ -283,6 +298,7 @@ module Mongo
       @metadata     = doc['metadata']
       @md5          = doc['md5']
       @filename     = doc['filename']
+      @custom_attrs = doc
 
       @current_chunk = get_chunk(0)
       @file_position = 0
@@ -290,12 +306,13 @@ module Mongo
 
     # Initialize the class for writing a file.
     def init_write(opts)
-      @files_id      = opts[:_id] || BSON::ObjectID.new
-      @content_type  = opts[:content_type] || (defined? MIME) && get_content_type || DEFAULT_CONTENT_TYPE
-      @chunk_size    = opts[:chunk_size] || DEFAULT_CHUNK_SIZE
-      @metadata      = opts[:metadata] if opts[:metadata]
-      @aliases       = opts[:aliases] if opts[:aliases]
+      @files_id      = opts.delete(:_id) || BSON::ObjectID.new
+      @content_type  = opts.delete(:content_type) || (defined? MIME) && get_content_type || DEFAULT_CONTENT_TYPE
+      @chunk_size    = opts.delete(:chunk_size) || DEFAULT_CHUNK_SIZE
+      @metadata      = opts.delete(:metadata) if opts[:metadata]
+      @aliases       = opts.delete(:aliases) if opts[:aliases]
       @file_length   = 0
+      opts.each {|k, v| self[k] = v}
 
       @current_chunk = create_chunk(0)
       @file_position = 0
@@ -304,14 +321,15 @@ module Mongo
     def to_mongo_object
       h                = OrderedHash.new
       h['_id']         = @files_id
-      h['filename']    = @filename
+      h['filename']    = @filename if @filename
       h['contentType'] = @content_type
       h['length']      = @current_chunk ? @current_chunk['n'] * @chunk_size + @chunk_position : 0
       h['chunkSize']   = @chunk_size
       h['uploadDate']  = @upload_date
-      h['aliases']     = @aliases
-      h['metadata']    = @metadata
+      h['aliases']     = @aliases if @aliases
+      h['metadata']    = @metadata if @metadata
       h['md5']         = get_md5
+      h.merge!(@custom_attrs)
       h
     end
 

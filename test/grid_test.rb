@@ -64,6 +64,8 @@ class GridTest < Test::Unit::TestCase
         id = @grid.put(@data, :metadata => @metadata)
         file = @grid.get(id)
         assert_nil file.filename
+        file_doc = @files.find_one({'_id' => id})
+        assert !file_doc.has_key?('filename')
         assert_equal @metadata, file.metadata
       end
 
@@ -72,6 +74,28 @@ class GridTest < Test::Unit::TestCase
         file = @grid.get(id)
         assert_equal 'sample', file.filename
         assert_equal @metadata, file.metadata
+      end
+    end
+
+    context "Writing arbitrary data fields" do
+      setup do
+        @data = "GRIDDATA" * 50000
+        @grid = Grid.new(@db, 'test-fs')
+      end
+
+      should "write random keys to the files collection" do
+        id = @grid.put(@data, :phrases => ["blimey", "ahoy!"])
+        file = @grid.get(id)
+
+        assert_equal ["blimey", "ahoy!"], file['phrases']
+      end
+
+      should "ignore special keys" do
+        id = @grid.put(@data, :file_length => 100, :phrase => "blimey")
+        file = @grid.get(id)
+
+        assert_equal "blimey", file['phrase']
+        assert_equal 400_000, file.file_length
       end
     end
 

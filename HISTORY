@@ -1,5 +1,4 @@
 0.20
-
 * Support for new commands:
   * Collection#find_and_modify
   * Collection#stats
@@ -16,6 +15,7 @@
 * GridFS
   * Option to delete old versions of GridFileSystem entries.
   * Filename is now optional for Grid#put.
+  * Option to write arbitrary attributes to a file: @grid.put(@data, :favorite_phrase => "blimey!")
 * Removed the following deprecated items:
   * GridStore class
 
