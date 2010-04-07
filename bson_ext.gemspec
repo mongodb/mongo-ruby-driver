@@ -6,8 +6,8 @@ Gem::Specification.new do |s|
 
   s.version  = VERSION
   s.platform = Gem::Platform::RUBY
-  s.summary  = 'C extensions for the MongoDB Ruby driver'
-  s.description = 'C extensions to accelerate the MongoDB Ruby driver. For more information about Mongo, see http://www.mongodb.org.'
+  s.summary  = 'C extensions for Ruby BSON.'
+  s.description = 'C extensions to accelerate the Ruby BSON serialization. For more information about BSON, see http://bsonspec.org.  For information about MongoDB, see http://www.mongodb.org.'
 
   s.require_paths = ['ext']
   s.files = ['Rakefile', 'bson_ext.gemspec']
