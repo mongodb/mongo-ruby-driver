@@ -30,10 +30,14 @@ Then you can install the mongo gem as follows:
 
   $ gem install mongo
 
-For a significant performance boost, you should also install the driver's C
+The driver also requires the BSON gem:
+
+  $ gem install bson
+
+And for a significant performance boost, you'll want to install the C extensions:
 extensions:
 
-  $ gem install mongo_ext
+  $ gem install bson_ext
 
 === From the GitHub source
 
@@ -274,7 +278,7 @@ Random cursor fun facts:
 = Testing
 
 If you have the source code, you can run the tests. There's a separate rake task for testing with
-the mongo_ext C extension enabled.
+the bson_ext C extension enabled.
 
   $ rake test:c
 
