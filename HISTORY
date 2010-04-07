@@ -3,21 +3,31 @@
   * Collection#find_and_modify
   * Collection#stats
   * DB#stats
-* Exception class adjustments:
-  * Mongo::InvalidObjectID moved to BSON::InvalidObjectID
-  * Mongo::InvalidDocument moved to BSON::InvalidDocument
-  * Mongo::InvalidStringEncoding moved to BSON::InvalidStringEncoding
-  * Mongo::InvalidName replaced by Mongo::InvalidNSName and BSON::InvalidKeyName
-* BSON-related code extracted into two separate gems: bson and bson_ext (Chuck Remes).
-* Extensions compile on Rubinius (Chuck Remes).
 * Query :fields options allows for values of 0 to exclude fields (houdini, railsjedi).
-* BSON::Binary constructor can now take a string, which will be packed into an array.
 * GridFS
   * Option to delete old versions of GridFileSystem entries.
   * Filename is now optional for Grid#put.
   * Option to write arbitrary attributes to a file: @grid.put(@data, :favorite_phrase => "blimey!")
+  * Indexes created on the chunks collection are now unique. If you have an existing chunks collection,
+    you may want to remove 
 * Removed the following deprecated items:
   * GridStore class
+
+* BSON-related code extracted into two separate gems: bson and bson_ext (thx to Chuck Remes).
+  * mongo_ext no longer exists.
+  * BSON::Binary constructor can now take a string, which will be packed into an array.
+  * Exception class adjustments:
+    * Mongo::InvalidObjectID moved to BSON::InvalidObjectID
+    * Mongo::InvalidDocument moved to BSON::InvalidDocument
+    * Mongo::InvalidStringEncoding moved to BSON::InvalidStringEncoding
+    * Mongo::InvalidName replaced by Mongo::InvalidNSName and BSON::InvalidKeyName
+  * BSON types are now namespaced under the BSON module. These types include:
+    * Binary
+    * ObjectID
+    * Code
+    * DBRef
+    * MinKey and MaxKey
+  * Extensions compile on Rubinius (Chuck Remes).
 
 0.19.3 2010-4-5
 * Minor fix for assert_valid_keys.

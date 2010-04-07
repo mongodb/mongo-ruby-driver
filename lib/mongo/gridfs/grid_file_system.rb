@@ -34,8 +34,10 @@ module Mongo
       @chunks  = @db["#{fs_name}.chunks"]
       @fs_name = fs_name
 
-      @files.create_index([['filename', 1], ['uploadDate', -1]])
       @default_query_opts = {:sort => [['filename', 1], ['uploadDate', -1]], :limit => 1}
+
+      @files.create_index([['filename', 1], ['uploadDate', -1]])
+      @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
     end
 
     # Open a file for reading or writing. Note that the options for this method only apply

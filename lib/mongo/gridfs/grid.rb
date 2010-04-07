@@ -34,7 +34,7 @@ module Mongo
       @chunks  = @db["#{fs_name}.chunks"]
       @fs_name = fs_name
 
-      @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]])
+      @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
     end
 
     # Store a file in the file store.

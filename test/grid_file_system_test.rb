@@ -30,6 +30,14 @@ class GridFileSystemTest < Test::Unit::TestCase
         assert_equal data.length, @chunks_data.length
       end
 
+      should "have a unique index on chunks" do
+        assert @db['fs.chunks'].index_information['files_id_1_n_1']['unique']
+      end
+
+      should "have an index on filename" do
+        assert @db['fs.files'].index_information['filename_1_uploadDate_-1']
+      end
+
       should "return an empty string if length is zero" do
         data = @grid.open('sample.file', 'r') { |f| f.read(0) }
         assert_equal '', data

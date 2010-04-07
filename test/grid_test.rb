@@ -27,6 +27,10 @@ class GridTest < Test::Unit::TestCase
         assert_equal @data, data
       end
 
+      should "have a unique index on chunks" do
+        assert @chunks.index_information['files_id_1_n_1']['unique']
+      end
+
       should "store the filename" do
         file = @grid.get(@id)
         assert_equal 'sample', file.filename
