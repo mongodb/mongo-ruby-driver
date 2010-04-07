@@ -39,7 +39,7 @@ class GridTest < Test::Unit::TestCase
 
       should "delete the file and any chunks" do
         @grid.delete(@id)
-        assert_raise GridError do
+        assert_raise GridFileNotFound do
           @grid.get(@id)
         end
         assert_equal nil, @db['test-fs']['chunks'].find_one({:files_id => @id})

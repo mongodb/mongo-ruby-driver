@@ -287,7 +287,7 @@ module Mongo
     # Initialize the class for reading a file.
     def init_read
       doc = @files.find(@query, @query_opts).next_document
-      raise GridError, "Could not open file matching #{@query.inspect} #{@query_opts.inspect}" unless doc
+      raise GridFileNotFound, "Could not open file matching #{@query.inspect} #{@query_opts.inspect}" unless doc
 
       @files_id     = doc['_id']
       @content_type = doc['contentType']
@@ -342,7 +342,7 @@ module Mongo
       if @safe
         @client_md5 = @local_md5.hexdigest
         if @local_md5 != @server_md5
-          raise GridError, "File on server failed MD5 check"
+          raise GridMD5Failure, "File on server failed MD5 check"
         end
       else
         @server_md5

@@ -75,9 +75,15 @@ class GridFileSystemTest < Test::Unit::TestCase
        assert_equal data.length, @data.length
      end
 
+     should "raise exception if file not found" do
+       assert_raise GridFileNotFound do
+         @grid.open('io', 'r') { |f| f.write('hello') }
+       end
+     end
+
      should "raise exception if not opened for write" do
        assert_raise GridError do
-         @grid.open('io', 'r') { |f| f.write('hello') }
+         @grid.open('sample', 'r') { |f| f.write('hello') }
        end
      end
 

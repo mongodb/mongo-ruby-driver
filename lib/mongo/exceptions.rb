@@ -27,6 +27,12 @@ module Mongo
   # Raised on fatal errors to GridFS.
   class GridError < MongoRubyError; end
 
+  # Raised on fatal errors to GridFS.
+  class GridFileNotFound < GridError; end
+
+  # Raised on fatal errors to GridFS.
+  class GridMD5Failure < GridError; end
+
   # Raised when invalid arguments are sent to Mongo Ruby methods.
   class MongoArgumentError < MongoRubyError; end
 
