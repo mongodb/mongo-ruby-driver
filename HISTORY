@@ -13,6 +13,7 @@
 * Removed the following deprecated items:
   * GridStore class
   * RegexpOfHolding class
+  * Paired connections must now be initialized with Connection.paired
 
 * BSON-related code extracted into two separate gems: bson and bson_ext (thx to Chuck Remes).
   * mongo_ext no longer exists.

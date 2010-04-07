@@ -79,12 +79,12 @@ class DBTest < Test::Unit::TestCase
   def test_pair
     @@conn.close
     @@users = nil
-    @@conn  = Connection.new({:left => "this-should-fail", :right => [@@host, @@port]})
+    @@conn  = Connection.paired([["this-should-fail", 27017], [@@host, @@port]])
     @@db    = @@conn[MONGO_TEST_DB]
     assert @@conn.connected?
   ensure
     unless @@conn.connected?
-      @@conn = Connection.new(@@host, @@port) 
+      @@conn = Connection.new(@@host, @@port)
       @@db   = @@conn.db(MONGO_TEST_DB)
     end
     @@users = @@db.collection('system.users')

@@ -44,26 +44,20 @@ module Mongo
     # If connecting to just one server, you may specify whether connection to slave is permitted.
     # In all cases, the default host is "localhost" and the default port is 27017.
     #
-    # When specifying a pair, +pair_or_host+, is a hash with two keys: :left and :right. Each key maps to either
-    # * a server name, in which case port is 27017,
-    # * a port number, in which case the server is "localhost", or
-    # * an array containing [server_name, port_number]
+    # To specify a pair, use Connection.paired.
     #
     # Note that there are a few issues when using connection pooling with Ruby 1.9 on Windows. These
     # should be resolved in the next release.
     #
-    # @param [String, Hash] pair_or_host See explanation above.
-    # @param [Integer] port specify a port number here if only one host is being specified. Leave nil if
-    #   specifying a pair of servers in +pair_or_host+.
+    # @param [String, Hash] host.
+    # @param [Integer] port specify a port number here if only one host is being specified.
     #
     # @option options [Boolean] :slave_ok (false) Must be set to +true+ when connecting
     #   to a single, slave node.
     # @option options [Logger, #debug] :logger (nil) Logger instance to receive driver operation log.
-    # @option options [Boolean] :auto_reconnect DEPRECATED. See http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby
     # @option options [Integer] :pool_size (1) The maximum number of socket connections that can be opened to the database.
     # @option options [Float] :timeout (5.0) When all of the connections to the pool are checked out,
     #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
-    #
     #
     # @example localhost, 27017
     #   Connection.new
@@ -77,25 +71,16 @@ module Mongo
     # @example localhost, 3000, where this node may be a slave
     #   Connection.new("localhost", 3000, :slave_ok => true)
     #
-    # @example DEPRECATED. To initialize a paired connection, use Connection.paired instead.
-    #   Connection.new({:left  => ["db1.example.com", 27017],
-    #                  :right => ["db2.example.com", 27017]})
-    #
-    # @example DEPRECATED. To initialize a paired connection, use Connection.paired instead.
-    #   Connection.new({:left  => ["db1.example.com", 27017],
-    #                   :right => ["db2.example.com", 27017]}, nil,
-    #                   :pool_size => 20, :timeout => 5)
-    #
     # @see http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby Replica pairs in Ruby
     #
     # @core connections
-    def initialize(pair_or_host=nil, port=nil, options={})
+    def initialize(host=nil, port=nil, options={})
       @auths        = []
 
       if block_given?
         @nodes = yield self
       else
-        @nodes = format_pair(pair_or_host, port)
+        @nodes = format_pair(host, port)
       end
 
       # Host and port of current master.
@@ -117,10 +102,6 @@ module Mongo
 
       @sockets      = []
       @checked_out  = []
-
-      if options[:auto_reconnect]
-        warn(":auto_reconnect is deprecated. see http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby")
-      end
 
       # slave_ok can be true only if one node is specified
       @slave_ok = options[:slave_ok] && @nodes.length == 1
@@ -479,12 +460,6 @@ module Mongo
       case pair_or_host
         when String
           [[pair_or_host, port ? port.to_i : DEFAULT_PORT]]
-        when Hash
-         warn "Initializing a paired connection with Connection.new is deprecated. Use Connection.pair instead."
-         connections = []
-         connections << pair_val_to_connection(pair_or_host[:left])
-         connections << pair_val_to_connection(pair_or_host[:right])
-         connections
         when nil
           [['localhost', DEFAULT_PORT]]
       end

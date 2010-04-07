@@ -886,7 +886,6 @@ void Init_cbson() {
     rb_require("bson/types/min_max_keys");
     MinKey = rb_const_get(bson, rb_intern("MinKey"));
     MaxKey = rb_const_get(bson, rb_intern("MaxKey"));
-    rb_require("bson/types/regexp_of_holding");
     Regexp = rb_const_get(rb_cObject, rb_intern("Regexp"));
     rb_require("bson/exceptions");
     InvalidKeyName = rb_const_get(bson, rb_intern("InvalidKeyName"));
