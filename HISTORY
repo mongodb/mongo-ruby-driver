@@ -1,4 +1,7 @@
 0.20
+If upgrading from a previous version of the Ruby driver, please read these notes carefully,
+along with the 0.20_UPGRADE doc.
+
 * Support for new commands:
   * Collection#find_and_modify
   * Collection#stats
