@@ -153,18 +153,11 @@ class BSONTest < Test::Unit::TestCase
     r = doc2['doc']
     assert_kind_of Regexp, r
 
-    r = RegexpOfHolding.new('st', 0, 'zywcab')
-    assert_equal 'zywcab', r.extra_options_str
-
     doc = {'doc' => r}
     bson_doc = BSON::BSON_CODER.serialize(doc)
     doc2 = nil
     doc2 = BSON::BSON_CODER.deserialize(bson_doc)
     assert_equal doc, doc2
-
-    r = doc2['doc']
-    assert_kind_of RegexpOfHolding, r
-    assert_equal 'abcwyz', r.extra_options_str # must be sorted
   end
 
   def test_boolean

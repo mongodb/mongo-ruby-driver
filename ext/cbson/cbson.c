@@ -63,7 +63,6 @@ static VALUE Code;
 static VALUE MinKey;
 static VALUE MaxKey;
 static VALUE Regexp;
-static VALUE RegexpOfHolding;
 static VALUE OrderedHash;
 static VALUE InvalidKeyName;
 static VALUE InvalidStringEncoding;
@@ -687,12 +686,10 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             int pattern_length = strlen(buffer + *position);
             VALUE pattern = STR_NEW(buffer + *position, pattern_length);
             int flags_length, flags = 0, i = 0;
-            char extra[10];
             VALUE argv[3];
             *position += pattern_length + 1;
 
             flags_length = strlen(buffer + *position);
-            extra[0] = 0;
             for (i = 0; i < flags_length; i++) {
                 char flag = buffer[*position + i];
                 if (flag == 'i') {
@@ -704,19 +701,10 @@ static VALUE get_value(const char* buffer, int* position, int type) {
                 else if (flag == 'x') {
                     flags |= EXTENDED;
                 }
-                else if (strlen(extra) < 9) {
-                    strncat(extra, &flag, 1);
-                }
             }
             argv[0] = pattern;
             argv[1] = INT2FIX(flags);
-            if(extra[0] == 0) {
-                value = rb_class_new_instance(2, argv, Regexp);
-            }
-            else { // Deserializing a RegexpOfHolding
-                argv[2] = rb_str_new2(extra);
-                value = rb_class_new_instance(3, argv, RegexpOfHolding);
-            }
+            value = rb_class_new_instance(2, argv, Regexp);
             *position += flags_length + 1;
             break;
         }
@@ -900,7 +888,6 @@ void Init_cbson() {
     MaxKey = rb_const_get(bson, rb_intern("MaxKey"));
     rb_require("bson/types/regexp_of_holding");
     Regexp = rb_const_get(rb_cObject, rb_intern("Regexp"));
-    RegexpOfHolding = rb_const_get(bson, rb_intern("RegexpOfHolding"));
     rb_require("bson/exceptions");
     InvalidKeyName = rb_const_get(bson, rb_intern("InvalidKeyName"));
     InvalidStringEncoding = rb_const_get(bson, rb_intern("InvalidStringEncoding"));

@@ -322,13 +322,7 @@ module BSON
       options |= Regexp::IGNORECASE if options_str.include?('i')
       options |= Regexp::MULTILINE if options_str.include?('m')
       options |= Regexp::EXTENDED if options_str.include?('x')
-      options_str.gsub!(/[imx]/, '') # Now remove the three we understand
-      if options_str == ''
-        Regexp.new(str, options)
-      else
-        warn("Using deprecated Regexp options #{options_str}; future versions of this MongoDB driver will support only i, m, and x. See deprecated class RegexpOfHolding for more info.")
-        RegexpOfHolding.new(str, options, options_str)
-      end
+      Regexp.new(str, options)
     end
 
     def deserialize_string_data(buf)
