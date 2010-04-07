@@ -56,7 +56,8 @@ module Mongo
     #   loaded. Otherwise, the content type 'binary/octet-stream' will be used.
     # @options opts [Integer] (262144) :chunk_size size of file chunks in bytes.
     # @options opts [Boolean] :delete_old (false) ensure that old versions of the file are deleted. This option
-    #  only work in 'w' mode.
+    #  only work in 'w' mode. Certain precautions must be taken when deleting GridFS files. See the notes under
+    #  GridFileSystem#delete.
     # @options opts [Boolean] :safe (false) When safe mode is enabled, the chunks sent to the server
     #   will be validated using an md5 hash. If validation fails, an exception will be raised.
     #
@@ -103,6 +104,10 @@ module Mongo
 
     # Delete the file with the given filename. Note that this will delete
     # all versions of the file.
+    #
+    # Note that deleting a GridFS file can result in read errors if another process
+    # is attempting to read a file while it's being deleted. While the odds for this
+    # kind of race condition are small, it's important to be aware of.
     #
     # @param [String] filename
     #
