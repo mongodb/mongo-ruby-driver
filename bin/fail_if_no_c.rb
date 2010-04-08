@@ -5,7 +5,7 @@
 require 'rubygems'
 require 'mongo'
 begin
-  require 'mongo_ext/cbson'
+  require 'bson_ext/cbson'
 rescue LoadError
   Process.exit 1
 end

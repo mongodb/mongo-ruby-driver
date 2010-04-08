@@ -3,7 +3,7 @@
 #
 # Note: Ruby 1.9 is faster than 1.8, as expected.
 # This suite will be run against the installed version of ruby-mongo-driver.
-# The c-extension, mongo_ext, will be used if installed.
+# The c-extension, bson_ext, will be used if installed.
 
 require 'rubygems'
 require 'mongo'

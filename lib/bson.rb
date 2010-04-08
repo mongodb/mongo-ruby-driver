@@ -1,7 +1,7 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
 module BSON
-  VERSION = "0.20"
+  VERSION = "0.20.1"
   def self.serialize(obj, check_keys=false, move_id=false)
     BSON_CODER.serialize(obj, check_keys, move_id)
   end
@@ -27,9 +27,9 @@ rescue LoadError
     BSON_CODER = BSON_RUBY
   end
   warn "\n**Notice: C extension not loaded. This is required for optimum MongoDB Ruby driver performance."
-  warn "  You can install the extension as follows:\n  gem install mongo_ext\n"
+  warn "  You can install the extension as follows:\n  gem install bson_ext\n"
   warn "  If you continue to receive this message after installing, make sure that the"
-  warn "  mongo_ext gem is in your load path and that the mongo_ext and mongo gems are of the same version.\n"
+  warn "  bson_ext gem is in your load path and that the bson_ext and mongo gems are of the same version.\n"
 end
 
 require 'bson/types/binary'
