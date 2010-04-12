@@ -1,7 +1,7 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
 module Mongo
-  VERSION = "0.20.1"
+  VERSION = "0.20.2"
 end
 
 module Mongo
@@ -21,6 +21,8 @@ module Mongo
 
     OP_QUERY_SLAVE_OK          = 4
     OP_QUERY_NO_CURSOR_TIMEOUT = 16
+
+    DEFAULT_BATCH_SIZE = 100
   end
 
 end

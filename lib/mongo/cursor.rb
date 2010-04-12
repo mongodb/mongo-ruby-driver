@@ -47,6 +47,7 @@ module Mongo
       @timeout    = options[:timeout]  || false
       @explain    = options[:explain]
       @socket     = options[:socket]
+      @batch_size = options[:batch_size] || Mongo::Constants::DEFAULT_BATCH_SIZE
 
       @full_collection_name = "#{@collection.db.name}.#{@collection.name}"
       @cache = []
@@ -317,8 +318,8 @@ module Mongo
       db_name = @admin ? 'admin' : @db.name
       BSON::BSON_RUBY.serialize_cstr(message, "#{db_name}.#{@collection.name}")
 
-      # Number of results to return; db decides for now.
-      message.put_int(0)
+      # Number of results to return.
+      message.put_int(@batch_size)
 
       # Cursor id.
       message.put_long(@cursor_id)

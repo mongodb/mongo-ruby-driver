@@ -120,6 +120,8 @@ module Mongo
     # @option opts [Boolean] :snapshot ('false') if true, snapshot mode will be used for this query.
     #   Snapshot mode assures no duplicates are returned, or objects missed, which were preset at both the start and
     #   end of the query's execution. For details see http://www.mongodb.org/display/DOCS/How+to+do+Snapshotting+in+the+Mongo+Database
+    # @option opts [Boolean] :batch_size (100) the number of documents to returned by the database per GETMORE operation. A value of 0
+    #   will let the database server decide how many results to returns. This option can be ignored for most use cases.
     # @option opts [Boolean] :timeout ('true') when +true+, the returned cursor will be subject to
     #   the normal cursor timeout behavior of the mongod process. When +false+, the returned cursor will never timeout. Note
     #   that disabling timeout will only work when #find is invoked with a block. This is to prevent any inadvertant failure to
@@ -140,6 +142,7 @@ module Mongo
       sort   = opts.delete(:sort)
       hint   = opts.delete(:hint)
       snapshot = opts.delete(:snapshot)
+      batch_size = opts.delete(:batch_size)
       if opts[:timeout] == false && !block_given?
         raise ArgumentError, "Timeout can be set to false only when #find is invoked with a block."
       end
@@ -152,7 +155,7 @@ module Mongo
       raise RuntimeError, "Unknown options [#{opts.inspect}]" unless opts.empty?
 
       cursor = Cursor.new(self, :selector => selector, :fields => fields, :skip => skip, :limit => limit,
-                          :order => sort, :hint => hint, :snapshot => snapshot, :timeout => timeout)
+                          :order => sort, :hint => hint, :snapshot => snapshot, :timeout => timeout, :batch_size => batch_size)
       if block_given?
         yield cursor
         cursor.close()

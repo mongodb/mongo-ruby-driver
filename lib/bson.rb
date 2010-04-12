@@ -1,7 +1,7 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
 module BSON
-  VERSION = "0.20.1"
+  VERSION = "0.20.2"
   def self.serialize(obj, check_keys=false, move_id=false)
     BSON_CODER.serialize(obj, check_keys, move_id)
   end
