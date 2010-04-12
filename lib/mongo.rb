@@ -19,6 +19,7 @@ module Mongo
     OP_DELETE       = 2006
     OP_KILL_CURSORS = 2007
 
+    OP_QUERY_TAILABLE          = 2
     OP_QUERY_SLAVE_OK          = 4
     OP_QUERY_NO_CURSOR_TIMEOUT = 16
 

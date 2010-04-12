@@ -594,4 +594,42 @@ class TestCollection < Test::Unit::TestCase
       end
     end
   end
+
+  context "Capped collections" do
+    setup do
+      @@db.drop_collection('log')
+      @capped = @@db.create_collection('log', :capped => true, :size => 1024)
+
+      10.times { |n| @capped.insert({:n => n}) }
+    end
+
+    should "find using a standard cursor" do
+      cursor = @capped.find
+      10.times do
+        assert cursor.next_document
+      end
+      assert_nil cursor.next_document
+      @capped.insert({:n => 100})
+      assert_nil cursor.next_document
+    end
+
+    should "" do
+      col = @@db['regular-collection']
+      col.insert({:a => 1000})
+      tail = Cursor.new(col, :tailable => true, :order => [['$natural', 1]])
+      assert_raise OperationFailure do
+        tail.next_document
+      end
+    end
+
+    should "find using a tailable cursor" do
+      tail = Cursor.new(@capped, :tailable => true, :order => [['$natural', 1]])
+      10.times do
+        assert tail.next_document
+      end
+      assert_nil tail.next_document
+      @capped.insert({:n => 100})
+      assert tail.next_document
+    end
+  end
 end

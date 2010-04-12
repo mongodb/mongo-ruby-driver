@@ -47,6 +47,7 @@ module Mongo
       @timeout    = options[:timeout]  || false
       @explain    = options[:explain]
       @socket     = options[:socket]
+      @tailable   = options[:tailable] || false
       @batch_size = options[:batch_size] || Mongo::Constants::DEFAULT_BATCH_SIZE
 
       @full_collection_name = "#{@collection.db.name}.#{@collection.name}"
@@ -251,7 +252,8 @@ module Mongo
     def query_opts
       timeout  = @timeout ? 0 : Mongo::Constants::OP_QUERY_NO_CURSOR_TIMEOUT
       slave_ok = @connection.slave_ok? ? Mongo::Constants::OP_QUERY_SLAVE_OK : 0
-      slave_ok + timeout
+      tailable = @tailable ? Mongo::Constants::OP_QUERY_TAILABLE : 0
+      slave_ok + timeout + tailable
     end
 
     # Get the query options for this Cursor.
