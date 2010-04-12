@@ -22,6 +22,12 @@ class BSONTest < Test::Unit::TestCase
 
   include BSON
 
+  def test_serialize_returns_byte_buffer
+    doc = {'doc' => 'hello, world'}
+    bson = BSON.serialize(doc)
+    assert bson.is_a?(ByteBuffer)
+  end
+
   def test_deprecated_bson_module
     doc = {'doc' => 'hello, world'}
     bson = BSON.serialize(doc)

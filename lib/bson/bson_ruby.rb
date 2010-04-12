@@ -116,7 +116,7 @@ module BSON
         raise InvalidDocument, "Document is too large (#{@buf.size}). BSON documents are limited to 4MB (#{4 * 1024 * 1024})."
       end
       @buf.put_int(@buf.size, 0)
-      self
+      @buf
     end
 
     # Returns the array stored in the buffer.
