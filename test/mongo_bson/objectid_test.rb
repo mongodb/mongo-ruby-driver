@@ -50,7 +50,8 @@ class ObjectIDTest < Test::Unit::TestCase
   end
 
   def test_inspect
-    assert_equal "ObjectID('#{@o.to_s}')", @o.inspect
+    obj = {'$oid' => @o.to_s}
+    assert_equal obj, @o.inspect
   end
 
   def test_save_and_restore

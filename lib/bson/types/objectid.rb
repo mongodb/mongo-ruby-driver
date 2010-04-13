@@ -127,7 +127,7 @@ module BSON
     end
 
     def inspect
-      "ObjectID('#{to_s}')"
+      {"$oid" => to_s}
     end
 
     # Convert to MongoDB extended JSON format. Since JSON includes type information,
