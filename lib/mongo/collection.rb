@@ -367,7 +367,14 @@ module Mongo
       if spec.is_a?(String) || spec.is_a?(Symbol)
         field_spec[spec.to_s] = 1
       elsif spec.is_a?(Array) && spec.all? {|field| field.is_a?(Array) }
-        spec.each { |f| field_spec[f[0].to_s] = f[1] }
+        spec.each do |f|
+          if [Mongo::ASCENDING, Mongo::DESCENDING, Mongo::GEO2D].include?(f[1])
+            field_spec[f[0].to_s] = f[1]
+          else
+            raise MongoArgumentError, "Invalid index field #{f[1].inspect}; " + 
+              "should be one of Mongo::ASCENDING (1), Mongo::DESCENDING (-1) or Mongo::GEO2D ('2d')."
+          end
+        end
       else
         raise MongoArgumentError, "Invalid index specification #{spec.inspect}; " + 
           "should be either a string, symbol, or an array of arrays."

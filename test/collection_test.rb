@@ -577,6 +577,12 @@ class TestCollection < Test::Unit::TestCase
       end
     end
 
+    should "enforce proper index types" do
+      assert_raise MongoArgumentError do
+        @collection.create_index([['c', 'blah']])
+      end
+    end
+
     should "generate indexes in the proper order" do
       @collection.expects(:insert_documents) do |sel, coll, safe|
         assert_equal 'b_1_a_1', sel[:name]
