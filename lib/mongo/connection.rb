@@ -118,11 +118,11 @@ module Mongo
     # @param opts Takes the same options as Connection.new
     #
     # @example
-    #   Connection.new([["db1.example.com", 27017],
+    #   Connection.paired([["db1.example.com", 27017],
     #                   ["db2.example.com", 27017]])
     #
     # @example
-    #   Connection.new([["db1.example.com", 27017],
+    #   Connection.paired([["db1.example.com", 27017],
     #                   ["db2.example.com", 27017]],
     #                   :pool_size => 20, :timeout => 5)
     #

@@ -105,7 +105,7 @@ module Mongo
     # Delete the file with the given filename. Note that this will delete
     # all versions of the file.
     #
-    # Note that deleting a GridFS file can result in read errors if another process
+    # Be careful with this. Deleting a GridFS file can result in read errors if another process
     # is attempting to read a file while it's being deleted. While the odds for this
     # kind of race condition are small, it's important to be aware of.
     #
