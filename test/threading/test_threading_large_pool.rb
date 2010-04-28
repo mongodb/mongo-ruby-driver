@@ -19,7 +19,7 @@ class TestThreadingLargePool < Test::Unit::TestCase
     @duplicate.insert("test" => "update")
     @unique.insert("test" => "insert")
     @unique.insert("test" => "update")
-    @unique.create_index("test", true)
+    @unique.create_index("test", :unique => true)
   end
 
   def test_safe_update

@@ -333,9 +333,6 @@ module Mongo
     #   Also note that it is permissible to create compound indexes that include a geospatial index as
     #   long as the geospatial index comes first.
     #
-    # @param [Boolean] unique if true, this index will enforce a uniqueness constraint. DEPRECATED. Future
-    #   versions of this driver will specify the uniqueness constraint using a hash param.
-    #
     # @option opts [Boolean] :unique (false) if true, this index will enforce a uniqueness constraint.
     # @option opts [Boolean] :background (false) indicate that the index should be built in the background. This
     #   feature is only available in MongoDB >= 1.3.2.
@@ -362,7 +359,7 @@ module Mongo
     #
     # @core indexes create_index-instance_method
     def create_index(spec, opts={})
-      opts.assert_valid_keys(:min, :max, :background, :unique, :dropDups) if opts.is_a?(Hash)
+      opts.assert_valid_keys(:min, :max, :background, :unique, :dropDups)
       field_spec = OrderedHash.new
       if spec.is_a?(String) || spec.is_a?(Symbol)
         field_spec[spec.to_s] = 1
@@ -381,20 +378,17 @@ module Mongo
       end
 
       name = generate_index_name(field_spec)
-      if opts == true || opts == false
-        warn "For Collection#create_index, the method for specifying a unique index has changed." +
-          "Please pass :unique => true to the method instead."
-      end
-      sel  = {
+
+      selector = {
         :name   => name,
         :ns     => "#{@db.name}.#{@name}",
-        :key    => field_spec,
-        :unique => (opts == true ? true : false) }
-      sel.merge!(opts) if opts.is_a?(Hash)
+        :key    => field_spec
+      }
+      selector.merge!(opts)
       begin
-        response = insert_documents([sel], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, true)
+        response = insert_documents([selector], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, true)
       rescue Mongo::OperationFailure
-        raise Mongo::OperationFailure, "Failed to create index #{sel.inspect} with the following errors: #{response}"
+        raise Mongo::OperationFailure, "Failed to create index #{selector.inspect} with the following errors: #{response}"
       end
       name
     end

@@ -404,8 +404,11 @@ module Mongo
     # @param [Boolean] unique if +true+, the created index will enforce a uniqueness constraint.
     #
     # @return [String] the name of the index created.
+    #
+    # @deprecated
     def create_index(collection_name, field_or_spec, unique=false)
-      self.collection(collection_name).create_index(field_or_spec, unique)
+      warn "DB#create_index is now deprecated. Please use Collection#create_index instead."
+      self.collection(collection_name).create_index(field_or_spec, :unique => unique)
     end
 
     # Return +true+ if the supplied +doc+ contains an 'ok' field with the value 1.

@@ -338,7 +338,7 @@ class DBAPITest < Test::Unit::TestCase
 
     @@db.drop_collection("blah")
     test = @@db.collection("blah")
-    test.create_index("hello", unique=true)
+    test.create_index("hello", :unique => true)
 
     test.insert("hello" => "world")
     test.insert("hello" => "mike")
@@ -357,7 +357,7 @@ class DBAPITest < Test::Unit::TestCase
 
     @@db.drop_collection("blah")
     test = @@db.collection("blah")
-    test.create_index("hello.a", unique=true)
+    test.create_index("hello.a", :unique => true)
 
     test.insert("hello" => {"a" => 4, "b" => 5})
     test.insert("hello" => {"a" => 7, "b" => 2})

@@ -165,7 +165,7 @@ class TestCollection < Test::Unit::TestCase
     end
   else
     def test_safe_update
-      @@test.create_index("x", true)
+      @@test.create_index("x", :unique => true)
       @@test.insert("x" => 5)
       @@test.insert("x" => 10)
 
@@ -182,7 +182,7 @@ class TestCollection < Test::Unit::TestCase
   end
 
   def test_safe_save
-    @@test.create_index("hello", true)
+    @@test.create_index("hello", :unique => true)
 
     @@test.save("hello" => "world")
     @@test.save("hello" => "world")
@@ -558,7 +558,7 @@ class TestCollection < Test::Unit::TestCase
     end
 
     should "create a unique index" do
-      @collection.create_index([['a', Mongo::ASCENDING]], true)
+      @collection.create_index([['a', Mongo::ASCENDING]], :unique => true)
       assert @collection.index_information['a_1']['unique'] == true
     end
 
