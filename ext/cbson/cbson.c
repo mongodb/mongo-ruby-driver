@@ -22,6 +22,23 @@
 
 #include "ruby.h"
 
+/* Ensure compatibility with early releases of Ruby 1.8.5 */
+#ifndef RSTRING_PTR
+#  define RSTRING_PTR(v) RSTRING(v)->ptr
+#endif
+
+#ifndef RSTRING_LEN
+#  define RSTRING_LEN(v) RSTRING(v)->len
+#endif
+
+#ifndef RARRAY_PTR
+#  define RARRAY_PTR(v) RARRAY(v)->ptr
+#endif
+
+#ifndef RARRAY_LEN
+#  define RARRAY_LEN(v) RARRAY(v)->len
+#endif
+
 #if HAVE_RUBY_ST_H
 #include "ruby/st.h"
 #endif
