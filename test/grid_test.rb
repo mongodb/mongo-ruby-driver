@@ -19,7 +19,7 @@ class GridTest < Test::Unit::TestCase
       setup do
         @data = "GRIDDATA" * 50000
         @grid = Grid.new(@db, 'test-fs')
-        @id   = @grid.put(@data, 'sample', :metadata => {'app' => 'photos'})
+        @id   = @grid.put(@data, :filename => 'sample', :metadata => {'app' => 'photos'})
       end
 
       should "retrieve the stored data" do
@@ -58,7 +58,7 @@ class GridTest < Test::Unit::TestCase
       end
 
       should "store the file with the old filename api" do
-        id = @grid.put(@data, 'sample', :metadata => @metadata)
+        id = @grid.put(@data, :filename => 'sample', :metadata => @metadata)
         file = @grid.get(id)
         assert_equal 'sample', file.filename
         assert_equal @metadata, file.metadata
@@ -106,7 +106,7 @@ class GridTest < Test::Unit::TestCase
     context "Storing data with a length of zero" do
       setup do
         @grid = Grid.new(@db, 'test-fs')
-        @id   = @grid.put('', 'sample', :metadata => {'app' => 'photos'})
+        @id   = @grid.put('', :filename => 'sample', :metadata => {'app' => 'photos'})
       end
 
       should "return the zero length" do
@@ -119,7 +119,7 @@ class GridTest < Test::Unit::TestCase
       setup do
         def read_and_write_stream(filename, read_length, opts={})
           io   = File.open(File.join(File.dirname(__FILE__), 'data', filename), 'r')
-          id   = @grid.put(io, filename + read_length.to_s, opts)
+          id   = @grid.put(io, opts.merge!(:filename => filename + read_length.to_s))
           file = @grid.get(id)
           io.rewind
           data = io.read

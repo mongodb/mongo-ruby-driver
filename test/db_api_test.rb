@@ -275,7 +275,7 @@ class DBAPITest < Test::Unit::TestCase
   def test_index_information
     assert_equal @@coll.index_information.length, 1
 
-    name = @@db.create_index(@@coll.name, 'a')
+    name = @@coll.create_index('a')
     info = @@db.index_information(@@coll.name)
     assert_equal name, "a_1"
     assert_equal @@coll.index_information, info
@@ -303,7 +303,7 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_multiple_index_cols
-    name = @@db.create_index(@@coll.name, [['a', DESCENDING], ['b', ASCENDING], ['c', DESCENDING]])
+    name = @@coll.create_index([['a', DESCENDING], ['b', ASCENDING], ['c', DESCENDING]])
     info = @@db.index_information(@@coll.name)
     assert_equal 2, info.length
 
@@ -315,7 +315,7 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_multiple_index_cols_with_symbols
-    name = @@db.create_index(@@coll.name, [[:a, DESCENDING], [:b, ASCENDING], [:c, DESCENDING]])
+    name = @@coll.create_index([[:a, DESCENDING], [:b, ASCENDING], [:c, DESCENDING]])
     info = @@db.index_information(@@coll.name)
     assert_equal 2, info.length
 

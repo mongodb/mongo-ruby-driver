@@ -56,14 +56,8 @@ module Mongo
     #   will be validated using an md5 hash. If validation fails, an exception will be raised.
     #
     # @return [Mongo::ObjectID] the file's id.
-    def put(data, opts={}, old_opts={})
-      if opts.is_a?(String)
-        warn "The filename is now optional. Please pass the filename as a hash option: Grid#put(data, :filename => 'file.jpg')."
-        filename = opts
-        opts     = old_opts
-      else
-        filename = opts[:filename]
-      end
+    def put(data, opts={})
+      filename = opts[:filename]
       opts.merge!(default_grid_io_opts)
       file = GridIO.new(@files, @chunks, filename, 'w', opts=opts)
       file.write(data)
