@@ -39,6 +39,9 @@ module Mongo
 
     # Store a file in the file store.
     #
+    # Note that arbitary metadata attributes can be saved to the file by passing
+    # them is as options.
+    #
     # @param [String, #read] data a string or io-like object to store.
     #
     # @options opts [String] :filename (nil) a name for the file.

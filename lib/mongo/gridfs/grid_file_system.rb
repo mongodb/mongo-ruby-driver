@@ -43,6 +43,9 @@ module Mongo
     # Open a file for reading or writing. Note that the options for this method only apply
     # when opening in 'w' mode.
     #
+    # Note that arbitary metadata attributes can be saved to the file by passing
+    # them is as options.
+    #
     # @param [String] filename the name of the file.
     # @param [String] mode either 'r' or 'w' for reading from
     #   or writing to the file.
