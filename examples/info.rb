@@ -24,7 +24,7 @@ p db.collection_names
 p db.collections_info
 
 # Index information
-db.create_index('test', 'a')
+coll.create_index('a')
 p db.index_information('test')
 
 # Destroy the collection

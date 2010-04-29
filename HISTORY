@@ -1,3 +1,15 @@
+1.0 2010-4-29
+Note: if upgrading from versions prior to 0.20, be sure to upgrade
+to 0.20 before upgrading to 1.0.
+
+* Inspected ObjectID is represented in MongoDB extended json format.
+* Support for tailable cursors.
+* Configurable query response batch size (thx. to Aman Gupta)
+
+* bson_ext installs on early release of Ruby 1.8.5 (dfitzgibbon)
+* Deprecated DB#create_index. Use Collection#create_index index.
+* Removed deprecated Grid#put syntax; no longer requires a filename.
+
 0.20.1 2010-4-7
  * Added bson gem dependency.
 

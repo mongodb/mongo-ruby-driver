@@ -1,4 +1,9 @@
-0.20 will require some minor code upgrades.
+You can upgrade freely from v0.20 to v1.0.
+
+However, if you're running a version < 0.20, upgrade to 0.20
+before upgrading to 1.0.
+
+The upgrade to 0.20 requires some minor code upgrades.
 
 1. Note the exception changes in HISTORY. Certain exceptions are now scoped under the BSON
 module; if you're catching these, you will need to modify your code.

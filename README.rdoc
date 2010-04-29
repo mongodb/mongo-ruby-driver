@@ -35,7 +35,6 @@ The driver also requires the BSON gem:
   $ gem install bson
 
 And for a significant performance boost, you'll want to install the C extensions:
-extensions:
 
   $ gem install bson_ext
 

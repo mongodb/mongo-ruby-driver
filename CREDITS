@@ -10,6 +10,7 @@ Adrian Madrid, aemadrid@gmail.com
 
 Aman Gupta, aman@tmm1.net
 * Collection#save
+* Noted bug in returning query batch size.
 
 Jon Crosby, jon@joncrosby.me
 * Some code clean-up
@@ -74,3 +75,6 @@ Chuck Remes
 
 Dmitrii Golub (Houdini) and Jacques Crocker (railsjedi)
 * Support open to exclude fields on query
+
+dfitzgibbon
+* patch for ensuring bson_ext compatibility with early release of Ruby 1.8.5

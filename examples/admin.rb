@@ -9,13 +9,14 @@ host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
 port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
 
 puts "Connecting to #{host}:#{port}"
-db = Mongo::Connection.new(host, port).db('ruby-mongo-examples')
+con  = Mongo::Connection.new(host, port)
+db   = con.db('ruby-mongo-examples')
 coll = db.create_collection('test')
 
 # Erase all records from collection, if any
 coll.remove
 
-admin = db.admin
+admin = con['admin']
 
 # Profiling level set/get
 puts "Profiling level: #{admin.profiling_level}"
@@ -34,7 +35,7 @@ pp admin.profiling_info
 
 # Validate returns a hash if all is well and
 # raises an exception if there is a problem.
-info = admin.validate_collection(coll.name)
+info = db.validate_collection(coll.name)
 puts "valid = #{info['ok']}"
 puts info['result']
 
