@@ -272,6 +272,16 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  if @@version <= "1.5.1"
+    def test_fields_with_slice
+      @@test.save({:foo => [1, 2, 3, 4, 5, 6], :test => 'slice'})
+
+      doc = @@test.find_one({:test => 'slice'}, :fields => {'foo' => {'$slice' => [0, 3]}})
+      assert_equal [1, 2, 3], doc['foo']
+      @@test.remove
+    end
+  end
+
   def test_find_one
     id = @@test.save("hello" => "world", "foo" => "bar")
 
