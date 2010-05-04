@@ -1,6 +1,5 @@
 require 'test/test_helper'
 
-# NOTE: assumes Mongo is running
 class DBConnectionTest < Test::Unit::TestCase
 
   include Mongo

@@ -172,6 +172,9 @@ module Mongo
     # specificed in the list of auths. This method is called automatically
     # by DB#authenticate.
     #
+    # Note: this method will not actually issue an authentication command. To do that,
+    # either run Connection#apply_saved_authentication or DB#authenticate.
+    #
     # @param [String] db_name
     # @param [String] username
     # @param [String] password

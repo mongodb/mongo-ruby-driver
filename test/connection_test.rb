@@ -3,7 +3,6 @@ require 'logger'
 require 'stringio'
 require 'thread'
 
-# NOTE: assumes Mongo is running
 class TestConnection < Test::Unit::TestCase
 
   include Mongo

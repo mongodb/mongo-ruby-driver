@@ -23,7 +23,6 @@ require 'bson_ext/cbson' if ENV['C_EXT']
 
 MONGO_TEST_DB = 'mongo-ruby-test'
 
-# NOTE: most tests assume that MongoDB is running.
 class Test::Unit::TestCase
   include Mongo
   include BSON

@@ -10,7 +10,6 @@ class TestPKFactory
   end
 end
 
-# NOTE: assumes Mongo is running
 class DBTest < Test::Unit::TestCase
 
   include Mongo

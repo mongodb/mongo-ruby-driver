@@ -1,6 +1,5 @@
 require 'test/test_helper'
 
-# NOTE: assumes Mongo is running
 class DBAPITest < Test::Unit::TestCase
   include Mongo
   include BSON
