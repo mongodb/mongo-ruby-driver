@@ -247,11 +247,19 @@ module Mongo
     # Get the error message from the most recently executed database
     # operation for this connection.
     #
-    # @return [String, Nil] either the text describing the error or nil if no 
+    # @option opts [Boolean] :fsync (false)
+    # @option opts [Integer] :w (nil)
+    # @option opts [Integer] :wtimeout (nil)
+    #
+    # @return [String, Nil] either the text describing an error or nil if no
     #   error has occurred.
-    def error
-      doc = command(:getlasterror => 1)
-      raise MongoDBError, "error retrieving last error: #{doc}" unless ok?(doc)
+    def error(opts={})
+      opts.assert_valid_keys(:w, :wtimeout, :fsync)
+      cmd = OrderedHash.new
+      cmd[:getlasterror] = 1
+      cmd.merge!(opts) unless opts.empty?
+      doc = command(cmd)
+      raise MongoDBError, "error retrieving last error: #{doc.inspect}" unless ok?(doc)
       doc['err']
     end
 

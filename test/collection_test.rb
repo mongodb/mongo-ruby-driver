@@ -115,6 +115,39 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  if @@version >= "1.5.1"
+    def test_safe_mode_with_advanced_safe_with_invalid_options
+      assert_raise_error ArgumentError, "Unknown key(s): wtime" do
+        @@test.insert({:foo => 1}, :safe => {:w => 2, :wtime => 1, :fsync => true})
+      end
+      assert_raise_error ArgumentError, "Unknown key(s): wtime" do
+        @@test.update({:foo => 1}, {:foo => 2}, :safe => {:w => 2, :wtime => 1, :fsync => true})
+      end
+
+      assert_raise_error ArgumentError, "Unknown key(s): wtime" do
+        @@test.remove({:foo => 2}, :safe => {:w => 2, :wtime => 1, :fsync => true})
+      end
+    end
+
+    def test_safe_mode_with_w_failure
+      assert_raise_error OperationFailure, "timed out waiting for slaves" do
+        @@test.insert({:foo => 1}, :safe => {:w => 2, :wtimeout => 1, :fsync => true})
+      end
+      assert_raise_error OperationFailure, "timed out waiting for slaves" do
+        @@test.update({:foo => 1}, {:foo => 2}, :safe => {:w => 2, :wtimeout => 1, :fsync => true})
+      end
+      assert_raise_error OperationFailure, "timed out waiting for slaves" do
+        @@test.remove({:foo => 2}, :safe => {:w => 2, :wtimeout => 1, :fsync => true})
+      end
+    end
+
+    def test_safe_mode_with_write_and_fsync
+      assert @@test.insert({:foo => 1}, :safe => {:w => 1, :wtimeout => 1, :fsync => true})
+      assert @@test.update({:foo => 1}, {:foo => 2}, :safe => {:w => 1, :wtimeout => 1, :fsync => true})
+      assert @@test.remove({:foo => 2}, :safe => {:w => 1, :wtimeout => 1, :fsync => true})
+    end
+  end
+
   def test_update
     id1 = @@test.save("x" => 5)
     @@test.update({}, {"$inc" => {"x" => 1}})
@@ -272,7 +305,7 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
-  if @@version <= "1.5.1"
+  if @@version >= "1.5.1"
     def test_fields_with_slice
       @@test.save({:foo => [1, 2, 3, 4, 5, 6], :test => 'slice'})
 

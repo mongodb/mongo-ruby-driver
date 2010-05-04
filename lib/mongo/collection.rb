@@ -203,17 +203,22 @@ module Mongo
     #
     # @return [ObjectID] the _id of the saved document.
     #
-    # @option opts [Boolean] :safe (+false+) 
-    #   If true, check that the save succeeded. OperationFailure
-    #   will be raised on an error. Note that a safe check requires an extra
-    #   round-trip to the database.
-    def save(doc, options={})
+    # @option opts [Boolean, Hash] :safe (+false+)
+    #   run the operation in safe mode, which run a getlasterror command on the
+    #   database to report any assertion. In addition, a hash can be provided to
+    #   run an fsync and/or wait for replication of the save (>= 1.5.1). See the options
+    #   for DB#error.
+    #
+    # @raises [OperationFailure] when :safe mode fails.
+    #
+    # @see DB#remove for options that can be passed to :safe.
+    def save(doc, opts={})
       if doc.has_key?(:_id) || doc.has_key?('_id')
         id = doc[:_id] || doc['_id']
-        update({:_id => id}, doc, :upsert => true, :safe => options.delete(:safe))
+        update({:_id => id}, doc, :upsert => true, :safe => opts[:safe])
         id
       else
-        insert(doc, :safe => options.delete(:safe))
+        insert(doc, :safe => opts[:safe])
       end
     end
 
@@ -226,10 +231,13 @@ module Mongo
     #   the _id of the inserted document or a list of _ids of all inserted documents.
     #   Note: the object may have been modified by the database's PK factory, if it has one.
     #
-    # @option opts [Boolean] :safe (+false+) 
-    #   If true, check that the save succeeded. OperationFailure
-    #   will be raised on an error. Note that a safe check requires an extra
-    #   round-trip to the database.
+    # @option opts [Boolean, Hash] :safe (+false+)
+    #   run the operation in safe mode, which run a getlasterror command on the
+    #   database to report any assertion. In addition, a hash can be provided to
+    #   run an fsync and/or wait for replication of the insert (>= 1.5.1). See the options
+    #   for DB#error.
+    #
+    # @see DB#remove for options that can be passed to :safe.
     #
     # @core insert insert-instance_method
     def insert(doc_or_docs, options={})
@@ -245,8 +253,11 @@ module Mongo
     # @param [Hash] selector
     #   If specified, only matching documents will be removed.
     #
-    # @option opts [Boolean] :safe [false] run the operation in safe mode, which
-    #   will call :getlasterror on the database and report any assertions.
+    # @option opts [Boolean, Hash] :safe (+false+)
+    #   run the operation in safe mode, which run a getlasterror command on the
+    #   database to report any assertion. In addition, a hash can be provided to
+    #   run an fsync and/or wait for replication of the remove (>= 1.5.1). See the options
+    #   for DB#error.
     #
     # @example remove all documents from the 'users' collection:
     #   users.remove
@@ -260,6 +271,8 @@ module Mongo
     # @raise [Mongo::OperationFailure] an exception will be raised iff safe mode is enabled
     #   and the operation fails.
     #
+    # @see DB#remove for options that can be passed to :safe.
+    #
     # @core remove remove-instance_method
     def remove(selector={}, opts={})
       # Initial byte is 0.
@@ -270,7 +283,7 @@ module Mongo
 
       if opts[:safe]
         @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message, @db.name,
-          "#{@db.name}['#{@name}'].remove(#{selector.inspect})")
+          "#{@db.name}['#{@name}'].remove(#{selector.inspect})", opts[:safe])
         # the return value of send_message_with_safe_check isn't actually meaningful --
         # only the fact that it didn't raise an error is -- so just return true
         true
@@ -312,7 +325,7 @@ module Mongo
       message.put_array(BSON::BSON_CODER.serialize(document, false, true).to_a)
       if options[:safe]
         @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name,
-          "#{@db.name}['#{@name}'].update(#{selector.inspect}, #{document.inspect})")
+          "#{@db.name}['#{@name}'].update(#{selector.inspect}, #{document.inspect})", options[:safe])
       else
         @connection.send_message(Mongo::Constants::OP_UPDATE, message,
           "#{@db.name}['#{@name}'].update(#{selector.inspect}, #{document.inspect})")
@@ -657,7 +670,7 @@ module Mongo
       documents.each { |doc| message.put_array(BSON::BSON_CODER.serialize(doc, check_keys, true).to_a) }
       if safe
         @connection.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message, @db.name,
-          "#{@db.name}['#{collection_name}'].insert(#{documents.inspect})")
+          "#{@db.name}['#{collection_name}'].insert(#{documents.inspect})", safe)
       else
         @connection.send_message(Mongo::Constants::OP_INSERT, message,
           "#{@db.name}['#{collection_name}'].insert(#{documents.inspect})")

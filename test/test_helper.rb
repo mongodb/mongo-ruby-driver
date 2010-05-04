@@ -42,4 +42,13 @@ class Test::Unit::TestCase
       end
     end
   end
+
+  def assert_raise_error(klass, message)
+    begin
+      yield
+    rescue => e
+      assert_equal klass, e.class
+      assert e.message.include?(message), "#{e.message} does not include #{message}."
+    end
+  end
 end

@@ -347,13 +347,17 @@ module Mongo
     # @param [BSON::ByteBuffer] message a message to send to the database.
     # @param [String] db_name the name of the database. used on call to get_last_error.
     # @param [String] log_message text version of +message+ for logging.
+    # @param [Hash] last_error_params parameters to be sent to getLastError. See DB#error for
+    #   available options.
+    #
+    # @see DB#error for valid last error params.
     #
     # @return [Array]
     #   An array whose indexes include [0] documents returned, [1] number of document received,
     #   and [3] a cursor_id.
-    def send_message_with_safe_check(operation, message, db_name, log_message=nil)
+    def send_message_with_safe_check(operation, message, db_name, log_message=nil, last_error_params=false)
       message_with_headers = add_message_headers(operation, message)
-      message_with_check   = last_error_message(db_name)
+      message_with_check   = last_error_message(db_name, last_error_params)
       @logger.debug("  MONGODB #{log_message || message}") if @logger
       begin
         sock = checkout
@@ -366,7 +370,7 @@ module Mongo
       ensure
         checkin(sock)
       end
-      if num_received == 1 && error = docs[0]['err']
+      if num_received == 1 && (error = docs[0]['err'] || docs[0]['errmsg'])
         raise Mongo::OperationFailure, error
       end
       [docs, num_received, cursor_id]
@@ -644,13 +648,21 @@ module Mongo
       [docs, number_received, cursor_id]
     end
 
-    def last_error_message(db_name)
+    # Constructs a getlasterror message. This method is used exclusively by
+    # Connection#send_message_with_safe_check.
+    def last_error_message(db_name, opts)
       message = BSON::ByteBuffer.new
       message.put_int(0)
       BSON::BSON_RUBY.serialize_cstr(message, "#{db_name}.$cmd")
       message.put_int(0)
       message.put_int(-1)
-      message.put_array(BSON::BSON_CODER.serialize({:getlasterror => 1}, false).unpack("C*"))
+      cmd = OrderedHash.new
+      cmd[:getlasterror] = 1
+      if opts.is_a?(Hash)
+        opts.assert_valid_keys(:w, :wtimeout, :fsync)
+        cmd.merge!(opts)
+      end
+      message.put_array(BSON::BSON_CODER.serialize(cmd, false).unpack("C*"))
       add_message_headers(Mongo::Constants::OP_QUERY, message)
     end
 
