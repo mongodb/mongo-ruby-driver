@@ -209,7 +209,7 @@ module Mongo
     #   run an fsync and/or wait for replication of the save (>= 1.5.1). See the options
     #   for DB#error.
     #
-    # @raises [OperationFailure] when :safe mode fails.
+    # @raise [OperationFailure] when :safe mode fails.
     #
     # @see DB#remove for options that can be passed to :safe.
     def save(doc, opts={})

@@ -43,14 +43,14 @@ module Mongo
     # @option opts [Hash] :query a query selector used when opening the file in 'r' mode.
     # @option opts [Hash] :query_opts any query options to be used when opening the file in 'r' mode.
     # @option opts [String] :fs_name the file system prefix.
-    # @options opts [Integer] (262144) :chunk_size size of file chunks in bytes.
-    # @options opts [Hash] :metadata ({}) any additional data to store with the file.
-    # @options opts [ObjectID] :_id (ObjectID) a unique id for
+    # @option opts [Integer] (262144) :chunk_size size of file chunks in bytes.
+    # @option opts [Hash] :metadata ({}) any additional data to store with the file.
+    # @option opts [ObjectID] :_id (ObjectID) a unique id for
     #   the file to be use in lieu of an automatically generated one.
-    # @options opts [String] :content_type ('binary/octet-stream') If no content type is specified,
+    # @option opts [String] :content_type ('binary/octet-stream') If no content type is specified,
     #   the content type will may be inferred from the filename extension if the mime-types gem can be
     #   loaded. Otherwise, the content type 'binary/octet-stream' will be used.
-    # @options opts [Boolean] :safe (false) When safe mode is enabled, the chunks sent to the server
+    # @option opts [Boolean] :safe (false) When safe mode is enabled, the chunks sent to the server
     #   will be validated using an md5 hash. If validation fails, an exception will be raised.
     def initialize(files, chunks, filename, mode, opts={})
       @files        = files

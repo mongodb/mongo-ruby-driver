@@ -25,6 +25,15 @@ class GridFileSystemTest < Test::Unit::TestCase
         @grid = GridFileSystem.new(@db)
       end
 
+      should "return existence of the file" do
+        file = @grid.exist?(:filename => 'sample.file')
+        assert_equal 'sample.file', file['filename']
+      end
+
+      should "return nil if the file doesn't exist" do
+        assert_nil @grid.exist?(:filename => 'foo.file')
+      end
+
       should "read sample data" do
         data = @grid.open('sample.file', 'r') { |f| f.read }
         assert_equal data.length, @chunks_data.length

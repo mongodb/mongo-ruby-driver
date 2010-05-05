@@ -22,6 +22,15 @@ class GridTest < Test::Unit::TestCase
         @id   = @grid.put(@data, :filename => 'sample', :metadata => {'app' => 'photos'})
       end
 
+      should "check existence" do
+        file = @grid.exist?(:filename => 'sample')
+        assert_equal 'sample', file['filename']
+      end
+
+      should "return nil if it doesn't exist" do
+        assert_nil @grid.exist?(:metadata => 'foo')
+      end
+
       should "retrieve the stored data" do
         data = @grid.get(@id).data
         assert_equal @data, data
