@@ -98,6 +98,12 @@ class BSONTest < Test::Unit::TestCase
     assert_equal doc, BSON::BSON_CODER.deserialize(bson)
   end
 
+  def test_code_with_scope
+    doc = {'$where' => Code.new('this.a.b < this.b', {'foo' => 1})}
+    bson = BSON::BSON_CODER.serialize(doc)
+    assert_equal doc, BSON::BSON_CODER.deserialize(bson)
+  end
+
   def test_number
     doc = {'doc' => 41.99}
     bson = BSON::BSON_CODER.serialize(doc)
