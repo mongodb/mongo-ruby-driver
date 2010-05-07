@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 # Copyright (C) 2008-2010 10gen Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
