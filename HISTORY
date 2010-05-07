@@ -1,3 +1,12 @@
+1.0.1 2010-5-7
+
+* set Encoding.default_internal
+* DEPRECATE JavaScript string on Collection#find. You now must specify $where explicitly.
+* Added Grid#exist? and GridFileSystem#exist?
+* Support for replication acknowledgment
+* Support for $slice
+* Namespaced OrderedHash under BSON (sleverbor)
+
 1.0 2010-4-29
 Note: if upgrading from versions prior to 0.20, be sure to upgrade
 to 0.20 before upgrading to 1.0.
