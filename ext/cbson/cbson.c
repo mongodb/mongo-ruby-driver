@@ -88,7 +88,15 @@ static VALUE DigestMD5;
 
 #if HAVE_RUBY_ENCODING_H
 #include "ruby/encoding.h"
-#define STR_NEW(p,n) rb_enc_str_new((p), (n), rb_utf8_encoding())
+#define STR_NEW(p,n)                                                    \
+    ({                                                                  \
+        VALUE _str = rb_enc_str_new((p), (n), rb_utf8_encoding());      \
+        rb_encoding* internal_encoding = rb_default_internal_encoding(); \
+        if (internal_encoding) {                                        \
+            _str = rb_str_export_to_enc(_str, internal_encoding);       \
+        }                                                               \
+        _str;                                                           \
+    })
 /* MUST call TO_UTF8 before calling write_utf8. */
 #define TO_UTF8(string) rb_str_export_to_enc((string), rb_utf8_encoding())
 static void write_utf8(buffer_t buffer, VALUE string, char check_null) {

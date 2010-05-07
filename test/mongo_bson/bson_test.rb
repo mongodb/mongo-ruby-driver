@@ -90,6 +90,23 @@ class BSONTest < Test::Unit::TestCase
       bson = BSON::BSON_CODER.serialize({'aé'.encode('iso-8859-1') => 'hello'})
       assert_equal 'hello', BSON::BSON_CODER.deserialize(bson)['aé']
     end
+
+    # Based on a test from sqlite3-ruby
+    def test_default_internal_is_honored
+      before_enc = Encoding.default_internal
+
+      str = "壁に耳あり、障子に目あり"
+      bson = BSON::BSON_CODER.serialize("x" => str)
+
+      Encoding.default_internal = 'EUC-JP'
+      out = BSON::BSON_CODER.deserialize(bson)["x"]
+
+      assert_equal Encoding.default_internal, out.encoding
+      assert_equal str.encode('EUC-JP'), out
+      assert_equal str, out.encode(str.encoding)
+    ensure
+      Encoding.default_internal = before_enc
+    end
   end
 
   def test_code

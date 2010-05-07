@@ -325,6 +325,16 @@ module BSON
       Regexp.new(str, options)
     end
 
+    def encoded_str(str)
+      if RUBY_VERSION >= '1.9'
+        str.force_encoding("utf-8")
+        if Encoding.default_internal
+          str.encode!(Encoding.default_internal)
+        end
+      end
+      str
+    end
+
     def deserialize_string_data(buf)
       len = buf.get_int
       bytes = buf.get(len)
@@ -332,10 +342,7 @@ module BSON
       if str.respond_to? "pack"
         str = str.pack("C*")
       end
-      if RUBY_VERSION >= '1.9'
-        str.force_encoding("utf-8")
-      end
-      str
+      encoded_str(str)
     end
 
     def deserialize_code_w_scope_data(buf)
@@ -345,15 +352,12 @@ module BSON
       if code.respond_to? "pack"
         code = code.pack("C*")
       end
-      if RUBY_VERSION >= '1.9'
-        code.force_encoding("utf-8")
-      end
 
       scope_size = buf.get_int
       buf.position -= 4
       scope = BSON_CODER.new().deserialize(buf.get(scope_size))
 
-      Code.new(code, scope)
+      Code.new(encoded_str(code), scope)
     end
 
     def deserialize_oid_data(buf)
@@ -536,10 +540,7 @@ module BSON
         break if b == 0
         chars << b.chr
       end
-      if RUBY_VERSION >= '1.9'
-        chars.force_encoding("utf-8") # Mongo stores UTF-8
-      end
-      chars
+      encoded_str(chars)
     end
 
     def bson_type(o)
