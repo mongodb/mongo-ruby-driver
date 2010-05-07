@@ -323,14 +323,14 @@ class TestCollection < Test::Unit::TestCase
     assert_equal @@test.find_one(nil), @@test.find_one()
     assert_equal @@test.find_one({}), @@test.find_one()
     assert_equal @@test.find_one("hello" => "world"), @@test.find_one()
-    assert_equal @@test.find_one(OrderedHash["hello", "world"]), @@test.find_one()
+    assert_equal @@test.find_one(BSON::OrderedHash["hello", "world"]), @@test.find_one()
 
     assert @@test.find_one(nil, :fields => ["hello"]).include?("hello")
     assert !@@test.find_one(nil, :fields => ["foo"]).include?("hello")
     assert_equal ["_id"], @@test.find_one(nil, :fields => []).keys()
 
     assert_equal nil, @@test.find_one("hello" => "foo")
-    assert_equal nil, @@test.find_one(OrderedHash["hello", "foo"])
+    assert_equal nil, @@test.find_one(BSON::OrderedHash["hello", "foo"])
     assert_equal nil, @@test.find_one(ObjectID.new)
 
     assert_raise TypeError do

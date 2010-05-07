@@ -532,7 +532,7 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_
     }
 
     // we have to check for an OrderedHash and handle that specially
-    if (strcmp(rb_obj_classname(hash), "OrderedHash") == 0) {
+    if (strcmp(rb_obj_classname(hash), "BSON::OrderedHash") == 0) {
         VALUE keys = rb_funcall(hash, rb_intern("keys"), 0);
         int i;
                 for(i = 0; i < RARRAY_LEN(keys); i++) {
@@ -909,7 +909,7 @@ void Init_cbson() {
     InvalidStringEncoding = rb_const_get(bson, rb_intern("InvalidStringEncoding"));
     InvalidDocument = rb_const_get(bson, rb_intern("InvalidDocument"));
     rb_require("bson/ordered_hash");
-    OrderedHash = rb_const_get(rb_cObject, rb_intern("OrderedHash"));
+    OrderedHash = rb_const_get(bson, rb_intern("OrderedHash"));
 
     CBson = rb_define_module("CBson");
     ext_version = rb_str_new2(VERSION);

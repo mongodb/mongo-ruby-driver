@@ -150,7 +150,7 @@ class Features14Test < Test::Unit::TestCase
       end
 
       should "use geoNear command to return distances from a point" do
-        cmd = OrderedHash.new
+        cmd = BSON::OrderedHash.new
         cmd['geoNear'] = 'places'
         cmd['near']    = @empire_state
         cmd['num']     = 6

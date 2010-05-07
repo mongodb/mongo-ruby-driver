@@ -46,14 +46,14 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_save_ordered_hash
-    oh = OrderedHash.new
+    oh = BSON::OrderedHash.new
     oh['a'] = -1
     oh['b'] = 'foo'
 
     oid = @@coll.save(oh)
     assert_equal 'foo', @@coll.find_one(oid)['b']
 
-    oh = OrderedHash['a' => 1, 'b' => 'foo']
+    oh = BSON::OrderedHash['a' => 1, 'b' => 'foo']
     oid = @@coll.save(oh)
     assert_equal 'foo', @@coll.find_one(oid)['b']
   end
@@ -187,7 +187,7 @@ class DBAPITest < Test::Unit::TestCase
 
     # Sorting using ordered hash. You can use an unordered one, but then the
     # order of the keys won't be guaranteed thus your sort won't make sense.
-    oh = OrderedHash.new
+    oh = BSON::OrderedHash.new
     oh['a'] = -1
     assert_raise InvalidSortValueError do 
       docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => oh).to_a

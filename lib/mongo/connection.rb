@@ -269,7 +269,7 @@ module Mongo
     # @param [String] username username for authentication against from_db (>=1.3.x).
     # @param [String] password password for authentication against from_db (>=1.3.x).
     def copy_database(from, to, from_host="localhost", username=nil, password=nil)
-      oh = OrderedHash.new
+      oh = BSON::OrderedHash.new
       oh[:copydb]   = 1
       oh[:fromhost] = from_host
       oh[:fromdb]   = from
@@ -278,7 +278,7 @@ module Mongo
         unless username && password
           raise MongoArgumentError, "Both username and password must be supplied for authentication."
         end
-        nonce_cmd = OrderedHash.new
+        nonce_cmd = BSON::OrderedHash.new
         nonce_cmd[:copydbgetnonce] = 1
         nonce_cmd[:fromhost] = from_host
         result = self["admin"].command(nonce_cmd, true, true)
@@ -659,7 +659,7 @@ module Mongo
       BSON::BSON_RUBY.serialize_cstr(message, "#{db_name}.$cmd")
       message.put_int(0)
       message.put_int(-1)
-      cmd = OrderedHash.new
+      cmd = BSON::OrderedHash.new
       cmd[:getlasterror] = 1
       if opts.is_a?(Hash)
         opts.assert_valid_keys(:w, :wtimeout, :fsync)

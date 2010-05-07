@@ -94,7 +94,7 @@ module Mongo
     #
     # @raise [OperationFailure] on a database error.
     def count
-      command = OrderedHash["count",  @collection.name,
+      command = BSON::OrderedHash["count",  @collection.name,
                             "query",  @selector,
                             "fields", @fields]
       response = @db.command(command)
@@ -366,7 +366,7 @@ module Mongo
 
     def construct_query_spec
       return @selector if @selector.has_key?('$query')
-      spec = OrderedHash.new
+      spec = BSON::OrderedHash.new
       spec['$query']    = @selector
       spec['$orderby']  = Mongo::Support.format_order_clause(@order) if @order
       spec['$hint']     = @hint if @hint && @hint.length > 0

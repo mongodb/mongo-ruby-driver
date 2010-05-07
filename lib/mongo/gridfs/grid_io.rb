@@ -197,7 +197,7 @@ module Mongo
     private
 
     def create_chunk(n)
-      chunk = OrderedHash.new
+      chunk = BSON::OrderedHash.new
       chunk['_id']      = BSON::ObjectID.new
       chunk['n']        = n
       chunk['files_id'] = @files_id
@@ -319,7 +319,7 @@ module Mongo
     end
 
     def to_mongo_object
-      h                = OrderedHash.new
+      h                = BSON::OrderedHash.new
       h['_id']         = @files_id
       h['filename']    = @filename if @filename
       h['contentType'] = @content_type
@@ -335,7 +335,7 @@ module Mongo
 
     # Get a server-side md5 and validate against the client if running in safe mode.
     def get_md5
-      md5_command            = OrderedHash.new
+      md5_command            = BSON::OrderedHash.new
       md5_command['filemd5'] = @files_id
       md5_command['root']    = @fs_name
       @server_md5 = @files.db.command(md5_command)['md5']

@@ -373,7 +373,7 @@ module Mongo
     # @core indexes create_index-instance_method
     def create_index(spec, opts={})
       opts.assert_valid_keys(:min, :max, :background, :unique, :dropDups)
-      field_spec = OrderedHash.new
+      field_spec = BSON::OrderedHash.new
       if spec.is_a?(String) || spec.is_a?(Symbol)
         field_spec[spec.to_s] = 1
       elsif spec.is_a?(Array) && spec.all? {|field| field.is_a?(Array) }
@@ -445,7 +445,7 @@ module Mongo
     #
     # @core findandmodify find_and_modify-instance_method
     def find_and_modify(opts={})
-      cmd = OrderedHash.new
+      cmd = BSON::OrderedHash.new
       cmd[:findandmodify] = @name
       cmd.merge!(opts)
       cmd[:sort] = Mongo::Support.format_order_clause(opts[:sort]) if opts[:sort]
@@ -478,7 +478,7 @@ module Mongo
       map    = BSON::Code.new(map) unless map.is_a?(BSON::Code)
       reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
 
-      hash = OrderedHash.new
+      hash = BSON::OrderedHash.new
       hash['mapreduce'] = self.name
       hash['map'] = map
       hash['reduce'] = reduce
@@ -570,7 +570,7 @@ module Mongo
     # @return [Array] an array of distinct values.
     def distinct(key, query=nil)
       raise MongoArgumentError unless [String, Symbol].include?(key.class)
-      command = OrderedHash.new
+      command = BSON::OrderedHash.new
       command[:distinct] = @name
       command[:key]      = key.to_s
       command[:query]    = query
@@ -652,7 +652,7 @@ module Mongo
       when nil
         nil
       else
-        h = OrderedHash.new
+        h = BSON::OrderedHash.new
         hint.to_a.each { |k| h[k] = 1 }
         h
       end

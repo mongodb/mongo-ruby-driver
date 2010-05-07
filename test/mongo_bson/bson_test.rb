@@ -123,7 +123,7 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_ordered_hash
-    doc = OrderedHash.new
+    doc = BSON::OrderedHash.new
     doc["b"] = 1
     doc["a"] = 2
     doc["c"] = 3
@@ -284,16 +284,16 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_put_id_first
-    val = OrderedHash.new
+    val = BSON::OrderedHash.new
     val['not_id'] = 1
     val['_id'] = 2
     roundtrip = BSON::BSON_CODER.deserialize(BSON::BSON_CODER.serialize(val, false, true).to_a)
-    assert_kind_of OrderedHash, roundtrip
+    assert_kind_of BSON::OrderedHash, roundtrip
     assert_equal '_id', roundtrip.keys.first
 
     val = {'a' => 'foo', 'b' => 'bar', :_id => 42, 'z' => 'hello'}
     roundtrip = BSON::BSON_CODER.deserialize(BSON::BSON_CODER.serialize(val, false, true).to_a)
-    assert_kind_of OrderedHash, roundtrip
+    assert_kind_of BSON::OrderedHash, roundtrip
     assert_equal '_id', roundtrip.keys.first
   end
 
@@ -354,7 +354,7 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_do_not_change_original_object
-    val = OrderedHash.new
+    val = BSON::OrderedHash.new
     val['not_id'] = 1
     val['_id'] = 2
     assert val.keys.include?('_id')
@@ -426,7 +426,7 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_move_id
-    a = OrderedHash.new
+    a = BSON::OrderedHash.new
     a['text'] = 'abc'
     a['key'] = 'abc'
     a['_id']  = 1
@@ -441,10 +441,10 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_move_id_with_nested_doc
-    b = OrderedHash.new
+    b = BSON::OrderedHash.new
     b['text'] = 'abc'
     b['_id']   = 2
-    c = OrderedHash.new
+    c = BSON::OrderedHash.new
     c['text'] = 'abc'
     c['hash'] = b
     c['_id']  = 3

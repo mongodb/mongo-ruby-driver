@@ -3,7 +3,7 @@ require 'test/test_helper'
 class OrderedHashTest < Test::Unit::TestCase
 
   def setup
-    @oh = OrderedHash.new
+    @oh = BSON::OrderedHash.new
     @oh['c'] = 1
     @oh['a'] = 2
     @oh['z'] = 3
@@ -11,31 +11,31 @@ class OrderedHashTest < Test::Unit::TestCase
   end
 
   def test_initialize
-    a = OrderedHash.new
+    a = BSON::OrderedHash.new
     a['x'] = 1
     a['y'] = 2
 
-    b = OrderedHash['x' => 1, 'y' => 2]
+    b = BSON::OrderedHash['x' => 1, 'y' => 2]
     assert_equal a, b
   end
 
   def test_hash_code
-    o = OrderedHash.new
+    o = BSON::OrderedHash.new
     o['number'] = 50
     assert o.hash
   end
 
   def test_empty
-    assert_equal [], OrderedHash.new.keys
+    assert_equal [], BSON::OrderedHash.new.keys
   end
 
   def test_uniq
     list = []
-    doc  = OrderedHash.new
+    doc  = BSON::OrderedHash.new
     doc['_id']  = 'ab12'
     doc['name'] = 'test'
 
-    same_doc = OrderedHash.new
+    same_doc = BSON::OrderedHash.new
     same_doc['_id']  = 'ab12'
     same_doc['name'] = 'test'
     list << doc
@@ -46,23 +46,23 @@ class OrderedHashTest < Test::Unit::TestCase
   end
 
   def test_equality
-    a = OrderedHash.new
+    a = BSON::OrderedHash.new
     a['x'] = 1
     a['y'] = 2
 
-    b = OrderedHash.new
+    b = BSON::OrderedHash.new
     b['y'] = 2
     b['x'] = 1
 
-    c = OrderedHash.new
+    c = BSON::OrderedHash.new
     c['x'] = 1
     c['y'] = 2
 
-    d = OrderedHash.new
+    d = BSON::OrderedHash.new
     d['x'] = 2
     d['y'] = 3
 
-    e = OrderedHash.new
+    e = BSON::OrderedHash.new
     e['z'] = 1
     e['y'] = 2
 
@@ -105,7 +105,7 @@ class OrderedHashTest < Test::Unit::TestCase
   end
 
   def test_merge
-    other = OrderedHash.new
+    other = BSON::OrderedHash.new
     other['f'] = 'foo'
     noob = @oh.merge(other)
     assert_equal @ordered_keys + ['f'], noob.keys
@@ -113,7 +113,7 @@ class OrderedHashTest < Test::Unit::TestCase
   end
 
   def test_merge_bang
-    other = OrderedHash.new
+    other = BSON::OrderedHash.new
     other['f'] = 'foo'
     @oh.merge!(other)
     assert_equal @ordered_keys + ['f'], @oh.keys
@@ -121,7 +121,7 @@ class OrderedHashTest < Test::Unit::TestCase
   end
 
   def test_merge_bang_with_overlap
-    other = OrderedHash.new
+    other = BSON::OrderedHash.new
     other['a'] = 'apple'
     other['c'] = 'crab'
     other['f'] = 'foo'
@@ -141,7 +141,7 @@ class OrderedHashTest < Test::Unit::TestCase
   end
 
   def test_update
-    other = OrderedHash.new
+    other = BSON::OrderedHash.new
     other['f'] = 'foo'
     noob = @oh.update(other)
     assert_equal @ordered_keys + ['f'], noob.keys

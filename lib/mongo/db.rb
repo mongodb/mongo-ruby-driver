@@ -89,7 +89,7 @@ module Mongo
       raise "error retrieving nonce: #{doc}" unless ok?(doc)
       nonce = doc['nonce']
 
-      auth = OrderedHash.new
+      auth = BSON::OrderedHash.new
       auth['authenticate'] = 1
       auth['user'] = username
       auth['nonce'] = nonce
@@ -212,7 +212,7 @@ module Mongo
       end
 
       # Create a new collection.
-      oh = OrderedHash.new
+      oh = BSON::OrderedHash.new
       oh[:create] = name
       doc = command(oh.merge(options || {}))
       ok = doc['ok']
@@ -255,7 +255,7 @@ module Mongo
     #   error has occurred.
     def error(opts={})
       opts.assert_valid_keys(:w, :wtimeout, :fsync)
-      cmd = OrderedHash.new
+      cmd = BSON::OrderedHash.new
       cmd[:getlasterror] = 1
       cmd.merge!(opts) unless opts.empty?
       doc = command(cmd)
@@ -337,7 +337,7 @@ module Mongo
         code = BSON::Code.new(code)
       end
 
-      oh = OrderedHash.new
+      oh = BSON::OrderedHash.new
       oh[:$eval] = code
       oh[:args] = args
       doc = command(oh)
@@ -354,7 +354,7 @@ module Mongo
     # 
     # @raise MongoDBError if there's an error renaming the collection.
     def rename_collection(from, to)
-      oh = OrderedHash.new
+      oh = BSON::OrderedHash.new
       oh[:renameCollection] = "#{@name}.#{from}"
       oh[:to] = "#{@name}.#{to}"
       doc = command(oh, true)
@@ -371,7 +371,7 @@ module Mongo
     #
     # @raise MongoDBError if there's an error renaming the collection.
     def drop_index(collection_name, index_name)
-      oh = OrderedHash.new
+      oh = BSON::OrderedHash.new
       oh[:deleteIndexes] = collection_name
       oh[:index] = index_name
       doc = command(oh)
@@ -502,7 +502,7 @@ module Mongo
     #
     # @core profiling profiling_level-instance_method
     def profiling_level
-      oh = OrderedHash.new
+      oh = BSON::OrderedHash.new
       oh[:profile] = -1
       doc = command(oh)
       raise "Error with profile command: #{doc.inspect}" unless ok?(doc) && doc['was'].kind_of?(Numeric)
@@ -523,7 +523,7 @@ module Mongo
     #
     # @param [Symbol] level acceptable options are +:off+, +:slow_only+, or +:all+.
     def profiling_level=(level)
-      oh = OrderedHash.new
+      oh = BSON::OrderedHash.new
       oh[:profile] = case level
                      when :off
                        0

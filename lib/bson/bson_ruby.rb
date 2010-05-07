@@ -182,7 +182,7 @@ module BSON
       end
       @buf.rewind
       @buf.get_int                # eat message size
-      doc = OrderedHash.new
+      doc = BSON::OrderedHash.new
       while @buf.more?
         type = @buf.get
         case type
@@ -383,7 +383,7 @@ module BSON
     end
 
     def serialize_dbref_element(buf, key, val)
-      oh = OrderedHash.new
+      oh = BSON::OrderedHash.new
       oh['$ref'] = val.namespace
       oh['$id'] = val.object_id
       serialize_object_element(buf, key, oh, false)
@@ -450,7 +450,7 @@ module BSON
 
     def serialize_array_element(buf, key, val, check_keys)
       # Turn array into hash with integer indices as keys
-      h = OrderedHash.new
+      h = BSON::OrderedHash.new
       i = 0
       val.each { |v| h[i] = v; i += 1 }
       serialize_object_element(buf, key, h, check_keys, ARRAY)

@@ -18,123 +18,125 @@
 #
 # Under Ruby 1.9 and greater, this class has no added methods because Ruby's
 # Hash already keeps its keys ordered by order of insertion.
-class OrderedHash < Hash
+module BSON
+  class OrderedHash < Hash
 
-  def ==(other)
-    begin
-      !other.nil? &&
-        keys == other.keys &&
-        values == other.values
-    rescue
-      false
-    end
-  end
-
-  # We only need the body of this class if the RUBY_VERSION is before 1.9
-  if RUBY_VERSION < '1.9'
-    attr_accessor :ordered_keys
-
-    def self.[] *args
-      oh = OrderedHash.new
-      if Hash === args[0]
-        oh.merge! args[0]
-      elsif (args.size % 2) != 0
-        raise ArgumentError, "odd number of elements for Hash"
-      else
-        0.step(args.size - 1, 2) do |key|
-          value = key + 1
-          oh[args[key]] = args[value]
-        end
-      end
-      oh
-    end
-
-    def initialize(*a, &b)
-      super
-      @ordered_keys = []
-    end
-
-    def keys
-      @ordered_keys || []
-    end
-
-    def []=(key, value)
-      @ordered_keys ||= []
-      @ordered_keys << key unless @ordered_keys.include?(key)
-      super(key, value)
-    end
-
-    def each
-      @ordered_keys ||= []
-      @ordered_keys.each { |k| yield k, self[k] }
-      self
-    end
-    alias :each_pair :each
-
-    def to_a
-      @ordered_keys ||= []
-      @ordered_keys.map { |k| [k, self[k]] }      
-    end
-    
-    def values
-      collect { |k, v| v }
-    end
-
-    def merge(other)
-      oh = self.dup
-      oh.merge!(other)
-      oh
-    end
-
-    def merge!(other)
-      @ordered_keys ||= []
-      @ordered_keys += other.keys # unordered if not an OrderedHash
-      @ordered_keys.uniq!
-      super(other)
-    end
-
-    alias :update :merge!
-
-    def inspect
-      str = '{'
-      str << (@ordered_keys || []).collect { |k| "\"#{k}\"=>#{self.[](k).inspect}" }.join(", ")
-      str << '}'
-    end
-
-    def delete(key, &block)
-      @ordered_keys.delete(key) if @ordered_keys
-      super
-    end
-
-    def delete_if(&block)
-      self.each { |k,v|
-        if yield k, v
-          delete(k)
-        end
-      }
-    end
-
-    def clear
-      super
-      @ordered_keys = []
-    end
-
-    def hash
-      code = 17
-      each_pair do |key, value|
-        code = 37 * code + key.hash
-        code = 37 * code + value.hash
-      end
-      code & 0x7fffffff
-    end
-
-    def eql?(o)
-      if o.instance_of? OrderedHash
-        self.hash == o.hash
-      else
+    def ==(other)
+      begin
+        !other.nil? &&
+          keys == other.keys &&
+          values == other.values
+      rescue
         false
       end
     end
 
+    # We only need the body of this class if the RUBY_VERSION is before 1.9
+    if RUBY_VERSION < '1.9'
+      attr_accessor :ordered_keys
+
+      def self.[] *args
+        oh = BSON::OrderedHash.new
+        if Hash === args[0]
+          oh.merge! args[0]
+        elsif (args.size % 2) != 0
+          raise ArgumentError, "odd number of elements for Hash"
+        else
+          0.step(args.size - 1, 2) do |key|
+            value = key + 1
+            oh[args[key]] = args[value]
+          end
+        end
+        oh
+      end
+
+      def initialize(*a, &b)
+        super
+        @ordered_keys = []
+      end
+
+      def keys
+        @ordered_keys || []
+      end
+
+      def []=(key, value)
+        @ordered_keys ||= []
+        @ordered_keys << key unless @ordered_keys.include?(key)
+        super(key, value)
+      end
+
+      def each
+        @ordered_keys ||= []
+        @ordered_keys.each { |k| yield k, self[k] }
+        self
+      end
+      alias :each_pair :each
+
+      def to_a
+        @ordered_keys ||= []
+        @ordered_keys.map { |k| [k, self[k]] }      
+      end
+    
+      def values
+        collect { |k, v| v }
+      end
+
+      def merge(other)
+        oh = self.dup
+        oh.merge!(other)
+        oh
+      end
+
+      def merge!(other)
+        @ordered_keys ||= []
+        @ordered_keys += other.keys # unordered if not an BSON::OrderedHash
+        @ordered_keys.uniq!
+        super(other)
+      end
+
+      alias :update :merge!
+
+      def inspect
+        str = '{'
+        str << (@ordered_keys || []).collect { |k| "\"#{k}\"=>#{self.[](k).inspect}" }.join(", ")
+        str << '}'
+      end
+
+      def delete(key, &block)
+        @ordered_keys.delete(key) if @ordered_keys
+        super
+      end
+
+      def delete_if(&block)
+        self.each { |k,v|
+          if yield k, v
+            delete(k)
+          end
+        }
+      end
+
+      def clear
+        super
+        @ordered_keys = []
+      end
+
+      def hash
+        code = 17
+        each_pair do |key, value|
+          code = 37 * code + key.hash
+          code = 37 * code + value.hash
+        end
+        code & 0x7fffffff
+      end
+
+      def eql?(o)
+        if o.instance_of? BSON::OrderedHash
+          self.hash == o.hash
+        else
+          false
+        end
+      end
+
+    end
   end
 end
