@@ -299,10 +299,10 @@ module Mongo
          selector
         when nil
           {}
-        when String
-          {"$where" => Code.new(selector)}
-        when Code
+        when BSON::Code
           {"$where" => selector}
+        when String
+          {"$where" => BSON::Code.new(selector)}
       end
     end
 
