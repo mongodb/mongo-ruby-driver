@@ -300,8 +300,12 @@ module Mongo
         when nil
           {}
         when BSON::Code
+          warn "Collection#find will no longer take a JavaScript string in future versions. " +
+            "Please specify your $where query explicitly."
           {"$where" => selector}
         when String
+          warn "Collection#find will no longer take a JavaScript string in future versions. " +
+            "Please specify your $where query explicitly."
           {"$where" => BSON::Code.new(selector)}
       end
     end
