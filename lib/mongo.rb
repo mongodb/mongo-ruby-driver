@@ -24,8 +24,6 @@ module Mongo
     OP_QUERY_TAILABLE          = 2
     OP_QUERY_SLAVE_OK          = 4
     OP_QUERY_NO_CURSOR_TIMEOUT = 16
-
-    DEFAULT_BATCH_SIZE = 100
   end
 
 end

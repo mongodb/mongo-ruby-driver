@@ -50,7 +50,7 @@ module Mongo
       @explain    = options[:explain]
       @socket     = options[:socket]
       @tailable   = options[:tailable] || false
-      @batch_size = options[:batch_size] || Mongo::Constants::DEFAULT_BATCH_SIZE
+      @batch_size = options[:batch_size] || 0
 
       @full_collection_name = "#{@collection.db.name}.#{@collection.name}"
       @cache = []
