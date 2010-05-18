@@ -152,18 +152,27 @@ class DBTest < Test::Unit::TestCase
     assert @@db.logout
   end
 
+  def test_command
+    assert_raise OperationFailure do
+      @@db.command({:non_command => 1}, :check_response => true)
+    end
+
+    result = @@db.command({:non_command => 1}, :check_response => false)
+    assert_equal 0, result['ok'].to_i
+  end
+
   def test_error
     @@db.reset_error_history
     assert_nil @@db.error
     assert !@@db.error?
     assert_nil @@db.previous_error
 
-    @@db.send(:command, :forceerror => 1)
+    @@db.command({:forceerror => 1}, :check_response => false)
     assert @@db.error?
     assert_not_nil @@db.error
     assert_not_nil @@db.previous_error
 
-    @@db.send(:command, :forceerror => 1)
+    @@db.command({:forceerror => 1}, :check_response => false)
     assert @@db.error?
     assert @@db.error
     prev_error = @@db.previous_error
@@ -203,7 +212,7 @@ class DBTest < Test::Unit::TestCase
   def test_check_command_response
     command = {:forceerror => 1}
     assert_raise OperationFailure do 
-      @@db.command(command, false, true)
+      @@db.command(command)
     end
   end
 

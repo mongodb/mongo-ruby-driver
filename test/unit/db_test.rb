@@ -22,8 +22,10 @@ class DBTest < Test::Unit::TestCase
       end
 
       should "raise an error if given a hash with more than one key" do
-        assert_raise MongoArgumentError do
-          @db.command(:buildinfo => 1, :somekey => 1)
+        if RUBY_VERSION < '1.9'
+          assert_raise MongoArgumentError do
+            @db.command(:buildinfo => 1, :somekey => 1)
+          end
         end
       end
 
@@ -70,13 +72,6 @@ class DBTest < Test::Unit::TestCase
         @db.expects(:command).returns({})
         assert_raise Mongo::MongoDBError do
           @db.error
-        end
-      end
-
-      should "raise an error if rename fails" do
-        @db.expects(:command).returns({})
-        assert_raise Mongo::MongoDBError do
-          @db.rename_collection("foo", "bar")
         end
       end
 

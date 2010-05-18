@@ -40,6 +40,9 @@ module Mongo
 
       @selector   = convert_selector_for_query(options[:selector])
       @fields     = convert_fields_for_query(options[:fields])
+      if options[:admin]
+        warn "The admin option to Cursor#new has been deprecated. The cursor should now be passed the admin collection explicitly."
+      end
       @admin      = options[:admin]    || false
       @skip       = options[:skip]     || 0
       @limit      = options[:limit]    || 0
@@ -264,7 +267,6 @@ module Mongo
     def query_options_hash
       { :selector => @selector,
         :fields   => @fields,
-        :admin    => @admin,
         :skip     => @skip_num,
         :limit    => @limit_num,
         :order    => @order,

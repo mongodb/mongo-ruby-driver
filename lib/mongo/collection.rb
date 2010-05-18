@@ -452,7 +452,7 @@ module Mongo
       cmd.merge!(opts)
       cmd[:sort] = Mongo::Support.format_order_clause(opts[:sort]) if opts[:sort]
 
-      @db.command(cmd, false, true)['value']
+      @db.command(cmd)['value']
     end
 
     # Perform a map/reduce operation on the current collection.
@@ -536,7 +536,7 @@ module Mongo
         group_command['group']['finalize'] = finalize
       end
 
-      result = @db.command group_command
+      result = @db.command(group_command)
 
       if result["ok"] == 1
         result["retval"]

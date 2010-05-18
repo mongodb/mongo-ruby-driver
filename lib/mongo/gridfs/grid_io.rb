@@ -340,7 +340,7 @@ module Mongo
       md5_command            = BSON::OrderedHash.new
       md5_command['filemd5'] = @files_id
       md5_command['root']    = @fs_name
-      @server_md5 = @files.db.command(md5_command, false, true)['md5']
+      @server_md5 = @files.db.command(md5_command)['md5']
       if @safe
         @client_md5 = @local_md5.hexdigest
         if @local_md5 != @server_md5

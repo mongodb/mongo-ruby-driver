@@ -219,7 +219,7 @@ module Mongo
     #
     # @return [Hash]
     def database_info
-      doc = self['admin'].command({:listDatabases => 1}, false, true)
+      doc = self['admin'].command({:listDatabases => 1})
       returning({}) do |info|
         doc['databases'].each { |db| info[db['name']] = db['sizeOnDisk'].to_i }
       end
@@ -283,12 +283,12 @@ module Mongo
         nonce_cmd = BSON::OrderedHash.new
         nonce_cmd[:copydbgetnonce] = 1
         nonce_cmd[:fromhost] = from_host
-        result = self["admin"].command(nonce_cmd, true, true)
+        result = self["admin"].command(nonce_cmd)
         oh[:nonce] = result["nonce"]
         oh[:username] = username
         oh[:key] = Mongo::Support.auth_key(username, password, oh[:nonce])
       end
-      self["admin"].command(oh, true, true)
+      self["admin"].command(oh)
     end
 
     # Increment and return the next available request id.
@@ -306,7 +306,7 @@ module Mongo
     #
     # @return [Hash]
     def server_info
-      self["admin"].command({:buildinfo => 1}, false, true)
+      self["admin"].command({:buildinfo => 1})
     end
 
     # Get the build version of the current server.
@@ -422,7 +422,7 @@ module Mongo
           socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 
           # If we're connected to master, set the @host and @port
-          result = self['admin'].command({:ismaster => 1}, false, false, socket)
+          result = self['admin'].command({:ismaster => 1}, :check_response => false, :sock => socket)
           if result['ok'] == 1 && ((is_master = result['ismaster'] == 1) || @slave_ok)
             @host, @port = host, port
             apply_saved_authentication

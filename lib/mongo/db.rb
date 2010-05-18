@@ -87,7 +87,7 @@ module Mongo
     #
     # @core authenticate authenticate-instance_method
     def authenticate(username, password, save_auth=true)
-      doc = command(:getnonce => 1)
+      doc = command(:getnonce => 1, :check_response => false)
       raise "error retrieving nonce: #{doc}" unless ok?(doc)
       nonce = doc['nonce']
 
@@ -96,7 +96,7 @@ module Mongo
       auth['user'] = username
       auth['nonce'] = nonce
       auth['key'] = Mongo::Support.auth_key(username, password, nonce)
-      if ok?(command(auth))
+      if ok?(self.command(auth, :check_response => false))
         if save_auth
           @connection.add_auth(@name, username, password)
         end
@@ -260,7 +260,7 @@ module Mongo
       cmd = BSON::OrderedHash.new
       cmd[:getlasterror] = 1
       cmd.merge!(opts) unless opts.empty?
-      doc = command(cmd)
+      doc = command(cmd, :check_response => false)
       raise MongoDBError, "error retrieving last error: #{doc.inspect}" unless ok?(doc)
       doc['err']
     end
@@ -359,7 +359,7 @@ module Mongo
       oh = BSON::OrderedHash.new
       oh[:renameCollection] = "#{@name}.#{from}"
       oh[:to] = "#{@name}.#{to}"
-      doc = command(oh, true)
+      doc = DB.new('admin', @connection).command(oh)
       ok?(doc) || raise(MongoDBError, "Error renaming collection: #{doc.inspect}")
     end
 
@@ -441,22 +441,31 @@ module Mongo
     # to see how it works.
     #
     # @param [OrderedHash, Hash] selector an OrderedHash, or a standard Hash with just one
-    # key, specifying the command to be performed.
+    # key, specifying the command to be performed. In Ruby 1.9, OrderedHash isn't necessary since
+    # hashes are ordered by default.
     #
     # @param [Boolean] admin If +true+, the command will be executed on the admin
-    # collection.
+    # collection. DEPRECATED.
     #
-    # @param [Boolean] check_response If +true+, will raise an exception if the
+    # @option opts [Boolean] :check_response (true) If +true+, raises an exception if the
     # command fails.
-    #
-    # @param [Socket] sock a socket to use. This is mainly for internal use.
+    # @option opts [Socket] :sock a socket to use for sending the command. This is mainly for internal use.
     #
     # @return [Hash]
     #
     # @core commands command_instance-method
-    def command(selector, admin=false, check_response=false, sock=nil)
+    def command(selector, opts={}, old_check_response=false, old_sock=nil)
+      if opts.is_a?(Hash)
+        check_response = opts[:check_response].nil? ? true : opts[:check_response]
+        sock           = opts[:sock]
+      else
+        warn "The options passed to DB#command should now be passed as hash keys; the admin option has been deprecated."
+        admin          = opts
+        check_response = old_check_response
+        sock           = old_sock
+      end
       raise MongoArgumentError, "command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
-      if selector.class.eql?(Hash) && selector.keys.length > 1
+      if selector.class.eql?(Hash) && selector.keys.length > 1 && RUBY_VERSION < '1.9'
         raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
       end
 
