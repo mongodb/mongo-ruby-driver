@@ -22,6 +22,10 @@ require 'digest/md5'
 
 module BSON
 
+  def BSON::ObjectID(s)
+    ObjectID.from_string(s)
+  end
+
   # Generates MongoDB object ids.
   #
   # @core objectids
@@ -129,11 +133,11 @@ module BSON
     end
 
     def inspect
-      {"$oid" => to_s}
+      "BSON::ObjectID('#{to_s}')"
     end
 
     # Convert to MongoDB extended JSON format. Since JSON includes type information,
-    # but lacks an ObjectID type, this JSON format encodes the type using an $id key.
+    # but lacks an ObjectID type, this JSON format encodes the type using an $oid key.
     #
     # @return [String] the object id represented as MongoDB extended JSON.
     def to_json(escaped=false)

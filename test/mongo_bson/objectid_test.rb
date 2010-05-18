@@ -1,4 +1,6 @@
 require 'test/test_helper'
+require 'rubygems'
+require 'json'
 
 class ObjectIDTest < Test::Unit::TestCase
 
@@ -49,9 +51,12 @@ class ObjectIDTest < Test::Unit::TestCase
     assert_equal 24, $1.length
   end
 
+  def test_method
+    assert_equal ObjectID.from_string(@o.to_s), BSON::ObjectID(@o.to_s)
+  end
+
   def test_inspect
-    obj = {'$oid' => @o.to_s}
-    assert_equal obj, @o.inspect
+    assert_equal "BSON::ObjectID('#{@o.to_s}')", @o.inspect
   end
 
   def test_save_and_restore
