@@ -2,8 +2,10 @@
 
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
+MINIMUM_BSON_EXT_VERSION = "1.0.1"
+
 module BSON
-  VERSION = "1.0.1"
+  VERSION = "1.0.2"
   def self.serialize(obj, check_keys=false, move_id=false)
     BSON_CODER.serialize(obj, check_keys, move_id)
   end
@@ -18,7 +20,11 @@ begin
   # Need this for running test with and without c ext in Ruby 1.9.
   raise LoadError if ENV['TEST_MODE'] && !ENV['C_EXT']
   require 'bson_ext/cbson'
-  raise LoadError unless defined?(CBson::VERSION) && CBson::VERSION == BSON::VERSION
+  raise LoadError unless defined?(CBson::VERSION)
+  if CBson::VERSION < MINIMUM_BSON_EXT_VERSION
+    puts "Able to load bson_ext version #{CBson::VERSION}, but >= #{MINIMUM_BSON_EXT_VERSION} is required."
+    raise LoadError
+  end
   require 'bson/bson_c'
   module BSON
     BSON_CODER = BSON_C
