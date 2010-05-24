@@ -10,7 +10,7 @@ module BSON
 
     def self.deserialize(buf=nil)
       if buf.is_a? String
-        to_deserialize = ByteBuffer.new(buf) if buf
+        buf = ByteBuffer.new(buf) if buf
       else
         buf = ByteBuffer.new(buf.to_a) if buf
       end

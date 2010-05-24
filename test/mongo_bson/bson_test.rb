@@ -28,6 +28,13 @@ class BSONTest < Test::Unit::TestCase
     assert bson.is_a?(ByteBuffer)
   end
 
+  def test_deserialize_from_string
+    doc = {'doc' => 'hello, world'}
+    bson = BSON.serialize(doc)
+    string = bson.to_s
+    assert_equal doc, BSON.deserialize(string)
+  end
+
   def test_deprecated_bson_module
     doc = {'doc' => 'hello, world'}
     bson = BSON.serialize(doc)
