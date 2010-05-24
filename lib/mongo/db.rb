@@ -87,7 +87,7 @@ module Mongo
     #
     # @core authenticate authenticate-instance_method
     def authenticate(username, password, save_auth=true)
-      doc = command(:getnonce => 1, :check_response => false)
+      doc = command({:getnonce => 1}, :check_response => false)
       raise "error retrieving nonce: #{doc}" unless ok?(doc)
       nonce = doc['nonce']
 
@@ -465,7 +465,7 @@ module Mongo
         sock           = old_sock
       end
       raise MongoArgumentError, "command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
-      if selector.class.eql?(Hash) && selector.keys.length > 1 && RUBY_VERSION < '1.9'
+      if selector.keys.length > 1 && RUBY_VERSION < '1.9' && selector.class != BSON::OrderedHash
         raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
       end
 
