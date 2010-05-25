@@ -20,6 +20,8 @@
 #
 # Under Ruby 1.9 and greater, this class has no added methods because Ruby's
 # Hash already keeps its keys ordered by order of insertion.
+require 'set'
+
 module BSON
   class OrderedHash < Hash
 
@@ -55,6 +57,7 @@ module BSON
       def initialize(*a, &b)
         super
         @ordered_keys = []
+        @ordered_set = Set.new
       end
 
       def keys
@@ -63,7 +66,11 @@ module BSON
 
       def []=(key, value)
         @ordered_keys ||= []
-        @ordered_keys << key unless @ordered_keys.include?(key)
+        @ordered_set ||= Set.new
+        unless @ordered_set.member?(key)
+          @ordered_keys << key
+          @ordered_set.add(key)
+        end
         super(key, value)
       end
 
@@ -93,6 +100,7 @@ module BSON
         @ordered_keys ||= []
         @ordered_keys += other.keys # unordered if not an BSON::OrderedHash
         @ordered_keys.uniq!
+        @ordered_set = Set.new(@ordered_keys)
         super(other)
       end
 
@@ -106,6 +114,7 @@ module BSON
 
       def delete(key, &block)
         @ordered_keys.delete(key) if @ordered_keys
+        @ordered_set.delete(key) if @ordered_set
         super
       end
 
@@ -119,6 +128,7 @@ module BSON
 
       def clear
         super
+        @ordered_set.clear
         @ordered_keys = []
       end
 
