@@ -14,6 +14,22 @@ module BSON
   def self.deserialize(buf=nil)
     BSON_CODER.deserialize(buf)
   end
+
+  # Reads a single BSON document from an IO object.
+  # This method is used in the binary b2json, bundled with
+  # the bson gem, for reading a file full of bson documents.
+  #
+  # @param [IO] io an io object containing a bson object.
+  #
+  # @return [ByteBuffer]
+  def self.read_bson_document(io)
+    bytebuf = BSON::ByteBuffer.new
+    sz = io.read(4).unpack("V")[0]
+    bytebuf.put_int(sz)
+    bytebuf.put_array(io.read(sz-4).unpack("C*"))
+    bytebuf.rewind
+    return BSON.deserialize(bytebuf)
+  end
 end
 
 begin

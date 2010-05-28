@@ -22,6 +22,15 @@ class BSONTest < Test::Unit::TestCase
 
   include BSON
 
+  def test_read_bson_io_document
+    doc = {'doc' => 'hello, world'}
+    bson = BSON.serialize(doc)
+    io = StringIO.new
+    io.write(bson.to_s)
+    io.rewind
+    assert_equal BSON.deserialize(bson), BSON.read_bson_document(io)
+  end
+
   def test_serialize_returns_byte_buffer
     doc = {'doc' => 'hello, world'}
     bson = BSON.serialize(doc)

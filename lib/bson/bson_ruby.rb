@@ -20,9 +20,6 @@ module BSON
   # A BSON seralizer/deserializer in pure Ruby.
   class BSON_RUBY
 
-    # why was this necessary?
-    #include Mongo
-
     MINKEY = -1
     EOO = 0
     NUMBER = 1
