@@ -17,7 +17,7 @@ module BSON
 
   # Reads a single BSON document from an IO object.
   # This method is used in the executable b2json, bundled with
-  # the bson gem, for reading a file full of bson documents.
+  # the bson gem, for reading a file of bson documents.
   #
   # @param [IO] io an io object containing a bson object.
   #
