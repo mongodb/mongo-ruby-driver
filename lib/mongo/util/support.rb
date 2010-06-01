@@ -68,5 +68,15 @@ module Mongo
             "[['field1', '(ascending|descending)'], ['field2', '(ascending|descending)']]"
       end
     end
+
+    # Determine if a database command has succeeded by
+    # checking the document response.
+    #
+    # @param [Hash] doc
+    #
+    # @return [Boolean] true if the 'ok' key is either 1 or *true*.
+    def ok?(doc)
+      doc['ok'] == 1.0 || doc['ok'] == true
+    end
   end
 end

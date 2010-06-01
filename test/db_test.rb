@@ -158,7 +158,7 @@ class DBTest < Test::Unit::TestCase
     end
 
     result = @@db.command({:non_command => 1}, :check_response => false)
-    assert_equal 0, result['ok'].to_i
+    assert !Mongo::Support.ok?(result)
   end
 
   def test_error

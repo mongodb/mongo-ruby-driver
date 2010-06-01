@@ -217,8 +217,7 @@ module Mongo
       oh = BSON::OrderedHash.new
       oh[:create] = name
       doc = command(oh.merge(options || {}))
-      ok = doc['ok']
-      return Collection.new(self, name, @pk_factory) if ok.kind_of?(Numeric) && (ok.to_i == 1 || ok.to_i == 0)
+      return Collection.new(self, name, @pk_factory) if ok?(doc)
       raise MongoDBError, "Error creating collection: #{doc.inspect}"
     end
 
@@ -427,8 +426,7 @@ module Mongo
     #
     # @return [Boolean]
     def ok?(doc)
-      ok = doc['ok']
-      ok.kind_of?(Numeric) && ok.to_i == 1
+      Mongo::Support.ok?(doc)
     end
 
     # Send a command to the database.

@@ -62,7 +62,7 @@ class DBTest < Test::Unit::TestCase
 
       should "raise an error if collection creation fails" do
         @db.expects(:collection_names).returns([])
-        @db.expects(:command).returns({})
+        @db.expects(:command).returns({'ok' => 0})
         assert_raise Mongo::MongoDBError do
           @db.create_collection("foo")
         end

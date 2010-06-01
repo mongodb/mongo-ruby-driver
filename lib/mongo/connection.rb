@@ -423,7 +423,8 @@ module Mongo
 
           # If we're connected to master, set the @host and @port
           result = self['admin'].command({:ismaster => 1}, :check_response => false, :sock => socket)
-          if result['ok'] == 1 && ((is_master = result['ismaster'] == 1) || @slave_ok)
+          if Mongo::Support.ok?(result) &&
+              ((is_master = result['ismaster'] == 1) || @slave_ok)
             @host, @port = host, port
             apply_saved_authentication
           end

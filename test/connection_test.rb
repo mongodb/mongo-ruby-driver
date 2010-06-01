@@ -21,7 +21,7 @@ class TestConnection < Test::Unit::TestCase
   def test_server_info
     server_info = @mongo.server_info
     assert server_info.keys.include?("version")
-    assert_equal 1.0, server_info["ok"]
+    assert Mongo::Support.ok?(server_info)
   end
 
   def test_server_version
@@ -71,7 +71,7 @@ class TestConnection < Test::Unit::TestCase
     end
 
     result = @mongo.copy_database('old', 'new', 'localhost', 'bob', 'secret')
-    assert result['ok'].to_i == 1
+    assert Mongo::Support.ok?(result)
 
     @mongo.drop_database('old')
     @mongo.drop_database('new')

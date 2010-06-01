@@ -103,7 +103,7 @@ module Mongo
                             "query",  @selector,
                             "fields", @fields]
       response = @db.command(command)
-      return response['n'].to_i if response['ok'] == 1
+      return response['n'].to_i if Mongo::Support.ok?(response)
       return 0 if response['errmsg'] == "ns missing"
       raise OperationFailure, "Count failed: #{response['errmsg']}"
     end

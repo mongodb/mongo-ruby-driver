@@ -538,7 +538,7 @@ module Mongo
 
       result = @db.command(group_command)
 
-      if result["ok"] == 1
+      if Mongo::Support.ok?(result)
         result["retval"]
       else
         raise OperationFailure, "group command failed: #{result['errmsg']}"
