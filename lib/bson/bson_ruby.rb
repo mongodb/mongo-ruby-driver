@@ -175,7 +175,7 @@ module BSON
       # If buf is nil, use @buf, assumed to contain already-serialized BSON.
       # This is only true during testing.
       if buf.is_a? String
-        @buf = ByteBuffer.new(buf) if buf
+        @buf = ByteBuffer.new(buf.unpack("C*")) if buf
       else
         @buf = ByteBuffer.new(buf.to_a) if buf
       end

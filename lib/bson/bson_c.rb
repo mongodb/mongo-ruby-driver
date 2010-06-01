@@ -26,7 +26,7 @@ module BSON
 
     def self.deserialize(buf=nil)
       if buf.is_a? String
-        buf = ByteBuffer.new(buf) if buf
+        buf = ByteBuffer.new(buf.unpack("C*")) if buf
       else
         buf = ByteBuffer.new(buf.to_a) if buf
       end
