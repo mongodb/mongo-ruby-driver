@@ -134,18 +134,18 @@ namespace :gem do
 
   desc "Install the gem locally"
   task :install do
+    sh "gem build bson.gemspec"
+    sh "gem install bson-*.gem"
     sh "gem build mongo-ruby-driver.gemspec"
     sh "gem install mongo-*.gem"
     sh "rm mongo-*.gem"
+    sh "rm bson-*.gem"
   end
 
   desc "Install the optional c extensions"
   task :install_extensions do
-    sh "gem build bson.gemspec"
     sh "gem build bson_ext.gemspec"
-    sh "gem install bson-*.gem"
     sh "gem install bson_ext-*.gem"
-    sh "rm bson-*.gem"
     sh "rm bson_ext-*.gem"
   end
 
