@@ -1,3 +1,11 @@
+1.0.2 2010-6-5
+This is a minor release for fixing an incompatibility with MongoDB v1.5.2
+
+* Fix for boolean response on commands for core server v1.5.2
+* BSON.read_bson_document and b2json executable (neomantra)
+* BSON::ObjectID() shortcut for BSON::ObjectID.from_string (tmm1)
+* Various bug fixes.
+
 1.0.1 2010-5-7
 
 * set Encoding.default_internal
