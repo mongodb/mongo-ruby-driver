@@ -110,7 +110,7 @@ end
 
 desc "Generate documentation"
 task :rdoc do
-  version = eval(File.read("mongo-ruby-driver.gemspec")).version
+  version = eval(File.read("mongo.gemspec")).version
   out = File.join('html', version.to_s)
   FileUtils.rm_rf('html')
   system "rdoc --main README.rdoc --op #{out} --inline-source --quiet README.rdoc `find lib -name '*.rb'`"
@@ -136,7 +136,7 @@ namespace :gem do
   task :install do
     sh "gem build bson.gemspec"
     sh "gem install bson-*.gem"
-    sh "gem build mongo-ruby-driver.gemspec"
+    sh "gem build mongo.gemspec"
     sh "gem install mongo-*.gem"
     sh "rm mongo-*.gem"
     sh "rm bson-*.gem"
