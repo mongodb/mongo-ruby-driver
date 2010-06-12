@@ -522,11 +522,11 @@ module Mongo
         port  = port.to_i
         db    = matches[8]
 
-        if (uname || pwd || db) && !(uname && pwd && db)
+        if uname && pwd && db
+          add_auth(db, uname, pwd)
+        elsif uname || pwd || db
           raise MongoArgumentError, "MongoDB URI must include all three of username, password, " +
             "and db if any one of these is specified."
-        else
-          add_auth(db, uname, pwd)
         end
 
         nodes << [host, port]

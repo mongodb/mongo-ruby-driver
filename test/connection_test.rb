@@ -24,6 +24,12 @@ class TestConnection < Test::Unit::TestCase
     assert Mongo::Support.ok?(server_info)
   end
 
+  def test_connection_uri
+    con = Connection.from_uri("mongodb://localhost:27017")
+    assert_equal "localhost", con.host
+    assert_equal 27017, con.port
+  end
+
   def test_server_version
     assert_match /\d\.\d+(\.\d+)?/, @mongo.server_version.to_s
   end
