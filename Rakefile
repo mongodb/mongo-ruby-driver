@@ -121,7 +121,7 @@ task :ydoc do
   require File.join(File.dirname(__FILE__), 'lib', 'mongo')
   out = File.join('ydoc', Mongo::VERSION)
   FileUtils.rm_rf('ydoc')
-  system "yardoc lib/**/*.rb lib/mongo/**/*.rb -e docs/yard_ext.rb -p docs/templates -o #{out} --title MongoRuby-#{Mongo::VERSION}"
+  system "yardoc lib/**/*.rb lib/mongo/**/*.rb lib/bson/**/*.rb -e docs/yard_ext.rb -p docs/templates -o #{out} --title MongoRuby-#{Mongo::VERSION}"
 end
 
 desc "Publish documentation to mongo.rubyforge.org"
