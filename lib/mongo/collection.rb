@@ -374,7 +374,7 @@ module Mongo
     #
     # @core indexes create_index-instance_method
     def create_index(spec, opts={})
-      opts.assert_valid_keys(:min, :max, :background, :unique, :dropDups)
+      opts.assert_valid_keys(:min, :max, :name, :background, :unique, :dropDups)
       field_spec = BSON::OrderedHash.new
       if spec.is_a?(String) || spec.is_a?(Symbol)
         field_spec[spec.to_s] = 1
@@ -392,7 +392,7 @@ module Mongo
           "should be either a string, symbol, or an array of arrays."
       end
 
-      name = generate_index_name(field_spec)
+      name = opts.delete(:name) || generate_index_name(field_spec)
 
       selector = {
         :name   => name,

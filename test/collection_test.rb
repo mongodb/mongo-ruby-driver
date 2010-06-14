@@ -626,6 +626,19 @@ class TestCollection < Test::Unit::TestCase
       end
     end
 
+    should "raise an error if index name is greater than 128" do
+      assert_raise Mongo::OperationFailure do
+        @collection.create_index([['a' * 25, 1], ['b' * 25, 1],
+          ['c' * 25, 1], ['d' * 25, 1], ['e' * 25, 1]])
+      end
+    end
+
+    should "allow for an alternate name to be specified" do
+      @collection.create_index([['a' * 25, 1], ['b' * 25, 1],
+        ['c' * 25, 1], ['d' * 25, 1], ['e' * 25, 1]], :name => 'foo_index')
+      assert @collection.index_information['foo_index']
+    end
+
     should "generate indexes in the proper order" do
       @collection.expects(:insert_documents) do |sel, coll, safe|
         assert_equal 'b_1_a_1', sel[:name]
