@@ -7,6 +7,7 @@ class ConnectionTest < Test::Unit::TestCase
       def new_mock_socket
         socket = Object.new
         socket.stubs(:setsockopt).with(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+        socket.expects(:close)
         socket
       end
 

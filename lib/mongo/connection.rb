@@ -437,9 +437,10 @@ module Mongo
 
           break if is_master || @slave_ok
         rescue SocketError, SystemCallError, IOError => ex
-          socket.close if socket
           close
           false
+        ensure
+          socket.close if socket
         end
       end
       raise ConnectionFailure, "failed to connect to any given host:port" unless socket
