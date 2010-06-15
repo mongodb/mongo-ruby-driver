@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.require_paths = ['lib']
 
   s.files  = ['README.rdoc', 'HISTORY', 'Rakefile',
-    'mongo-ruby-driver.gemspec', 'LICENSE.txt']
+    'mongo.gemspec', 'LICENSE.txt']
   s.files += ['lib/mongo.rb'] + Dir['lib/mongo/**/*.rb']
   s.files += Dir['examples/**/*.rb'] + Dir['bin/**/*.rb']
   s.test_files = Dir['test/**/*.rb']
