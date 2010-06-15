@@ -115,6 +115,17 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  def test_maximum_insert_size
+    docs = []
+    16.times do
+      docs << {'foo' => 'a' * 1_000_000}
+    end
+
+    assert_raise InvalidOperation do
+      @@test.insert(docs)
+    end
+  end
+
   if @@version >= "1.5.1"
     def test_safe_mode_with_advanced_safe_with_invalid_options
       assert_raise_error ArgumentError, "Unknown key(s): wtime" do

@@ -670,6 +670,8 @@ module Mongo
       message = BSON::ByteBuffer.new([0, 0, 0, 0])
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{collection_name}")
       documents.each { |doc| message.put_array(BSON::BSON_CODER.serialize(doc, check_keys, true).to_a) }
+      raise InvalidOperation, "Exceded maximum insert size of 16,000,000 bytes" if message.size > 16_000_000
+
       if safe
         @connection.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message, @db.name,
           "#{@db.name}['#{collection_name}'].insert(#{documents.inspect})", safe)
