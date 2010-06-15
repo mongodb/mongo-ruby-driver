@@ -40,10 +40,10 @@ end
 # print usage
 def usage()
     STDERR << <<END_OF_USAGE
-usage:  b2json.rb [-h] [file1 [file2]]
+usage:  b2json [-h] [file1 [file2]]
 
    Converts a BSON file to JSON on STDOUT.
-   You can pass multiple filename.
+   You can pass multiple filenames.
    If no filenames are passed, then STDIN is consumed.
 
 END_OF_USAGE
