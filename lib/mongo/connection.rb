@@ -32,7 +32,7 @@ module Mongo
     STANDARD_HEADER_SIZE = 16
     RESPONSE_HEADER_SIZE = 20
 
-    MONGODB_URI_MATCHER = /(([.\w\d]+):([\w\d]+)@)?([.\w\d]+)(:([\w\d]+))?(\/([-\d\w]+))?/
+    MONGODB_URI_MATCHER = /(([.\w\d]+):([\w\d]+)@)?([-.\w\d]+)(:([\w\d]+))?(\/([-\d\w]+))?/
     MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]"
 
     attr_reader :logger, :size, :host, :port, :nodes, :auths, :sockets, :checked_out

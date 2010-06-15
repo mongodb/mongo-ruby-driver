@@ -66,6 +66,12 @@ class ConnectionTest < Test::Unit::TestCase
         assert_equal ['localhost', 27017], @conn.nodes[0]
       end
 
+      should "allow a complex host names" do
+        host_name = "foo.bar-12345.org"
+        @conn = Connection.from_uri("mongodb://#{host_name}", :connect => false)
+        assert_equal [host_name, 27017], @conn.nodes[0]
+      end
+
       should "parse a uri specifying multiple nodes" do
         @conn = Connection.from_uri("mongodb://localhost:27017,mydb.com:27018", :connect => false)
         assert_equal ['localhost', 27017], @conn.nodes[0]
