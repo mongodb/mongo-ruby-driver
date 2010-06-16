@@ -1,3 +1,8 @@
+1.0.3 2010-6-15
+
+* Optimiztion for BSON::OrderedHash
+* Some important fixes.
+
 1.0.2 2010-6-5
 This is a minor release for fixing an incompatibility with MongoDB v1.5.2
 
