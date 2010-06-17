@@ -140,6 +140,16 @@ class OrderedHashTest < Test::Unit::TestCase
     assert_equal ['crab', 'apple', 3, 'foo'], @oh.values
   end
 
+  def test_equality_with_hash
+    o = BSON::OrderedHash.new
+    o[:a] = 1
+    o[:b] = 2
+    o[:c] = 3
+    r = {:a => 1, :b => 2, :c => 3}
+    assert r == o
+    assert o == r
+  end
+
   def test_update
     other = BSON::OrderedHash.new
     other['f'] = 'foo'

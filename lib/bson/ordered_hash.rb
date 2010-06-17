@@ -27,9 +27,12 @@ module BSON
 
     def ==(other)
       begin
-        !other.nil? &&
-          keys == other.keys &&
-          values == other.values
+        case other
+        when BSON::OrderedHash
+           keys == other.keys && values == other.values
+        else
+          !other.nil? && keys.size == other.keys.size && keys.all? {|x| self[x] == other[x] }
+        end
       rescue
         false
       end
