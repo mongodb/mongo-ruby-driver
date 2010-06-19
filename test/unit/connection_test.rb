@@ -88,6 +88,13 @@ class ConnectionTest < Test::Unit::TestCase
         assert_equal auth_hash, @conn.auths[1]
       end
 
+      should "parse a uri with a hyphen & underscore in the username or password" do
+        @conn = Connection.from_uri("mongodb://hyphen-user_name:p-s_s@localhost:27017/db", :connect => false)
+        assert_equal ['localhost', 27017], @conn.nodes[0]
+        auth_hash = { 'db_name' => 'db', 'username' => 'hyphen-user_name', "password" => 'p-s_s' }
+        assert_equal auth_hash, @conn.auths[0]
+      end
+
       should "attempt to connect" do
         TCPSocket.stubs(:new).returns(new_mock_socket)
         @conn = Connection.from_uri("mongodb://localhost", :connect => false)
