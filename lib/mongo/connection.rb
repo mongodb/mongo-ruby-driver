@@ -696,7 +696,10 @@ module Mongo
     # Requires a packed message and an available socket,
     def send_message_on_socket(packed_message, socket)
       begin
-      socket.send(packed_message, 0)
+      while packed_message.size > 0
+        byte_sent = socket.send(packed_message, 0)
+        packed_message.slice!(0, byte_sent)
+      end
       rescue => ex
         close
         raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
