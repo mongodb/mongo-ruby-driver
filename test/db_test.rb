@@ -230,7 +230,7 @@ class DBTest < Test::Unit::TestCase
   def test_text_port_number_raises_no_errors
     conn = Connection.new(@@host, @@port.to_s)
     db   = conn[MONGO_TEST_DB]
-    assert db.collection('users').remove
+    db.collection('users').remove
   end
 
   def test_user_management
