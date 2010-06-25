@@ -686,7 +686,7 @@ class TestCollection < Test::Unit::TestCase
       assert_nil cursor.next_document
     end
 
-    should "" do
+    should "fail tailable cursor on a non-capped collection" do
       col = @@db['regular-collection']
       col.insert({:a => 1000})
       tail = Cursor.new(col, :tailable => true, :order => [['$natural', 1]])
