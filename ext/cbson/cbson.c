@@ -141,13 +141,25 @@ static void write_utf8(buffer_t buffer, VALUE string, char check_null) {
  * and raise an exception if not. */
 /* TODO maybe we can use something more portable like vsnprintf instead
  * of this hack. And share it with the Python extension ;) */
+/* If we don't have ASPRINTF, there are two possibilities:
+ * either use _scprintf and _snprintf on for Windows or
+ * use snprintf for solaris. */
 #ifndef HAVE_ASPRINTF
+#ifdef _MSC_VER
 #define INT2STRING(buffer, i)                   \
     {                                           \
         int vslength = _scprintf("%d", i) + 1;  \
         *buffer = malloc(vslength);             \
         _snprintf(*buffer, vslength, "%d", i);  \
     }
+#else
+#define INT2STRING(buffer, i)                   \
+    {                                           \
+        int vslength = snprintf(NULL, 0, "%d", i) + 1;  \
+        *buffer = malloc(vslength);             \
+        snprintf(*buffer, vslength, "%d", i);   \
+    }
+#endif
 #else
 #define INT2STRING(buffer, i) asprintf(buffer, "%d", i);
 #endif
