@@ -275,6 +275,12 @@ module Mongo
         :timeout  => @timeout }
     end
 
+    # Clean output for inspect.
+    def inspect
+      "<Mongo::Cursor:0x#{object_id.to_s(16)} namespace='#{@db.name}.#{@collection.name}' " +
+        "@selector=#{@selector.inspect}>"
+    end
+
     private
 
     # Convert the +:fields+ parameter from a single field name or an array

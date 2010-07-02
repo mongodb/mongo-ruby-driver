@@ -17,6 +17,13 @@ class CursorTest < Test::Unit::TestCase
     @@coll_full_name = "#{MONGO_TEST_DB}.test"
   end
 
+  def test_inspect
+    selector = {:a => 1}
+    cursor = @@coll.find(selector)
+    assert_equal "<Mongo::Cursor:0x#{cursor.object_id.to_s(16)} namespace='#{@@db.name}.#{@@coll.name}' " +
+        "@selector=#{selector.inspect}>", cursor.inspect
+  end
+
   def test_explain
     cursor = @@coll.find('a' => 1)
     explaination = cursor.explain
