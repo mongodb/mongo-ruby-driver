@@ -29,6 +29,7 @@ module Mongo
     SYSTEM_INDEX_COLLECTION = "system.indexes"
     SYSTEM_PROFILE_COLLECTION = "system.profile"
     SYSTEM_USER_COLLECTION = "system.users"
+    SYSTEM_JS_COLLECTION = "system.js"
     SYSTEM_COMMAND_COLLECTION = "$cmd"
 
     # Counter for generating unique request ids.
@@ -106,6 +107,36 @@ module Mongo
       end
     end
 
+    # Adds a stored Javascript function to the database which can executed  
+    # server-side in map_reduce, db.eval and $where clauses.
+    # 
+    # @param [String] function_name
+    # @param [String] code
+    #
+    # @return [String] the function name saved to the database
+    def add_stored_function(function_name, code)
+      self[SYSTEM_JS_COLLECTION].save(
+        {
+          "_id" => function_name, 
+          :value => BSON::Code.new(code)
+        }
+      )
+    end
+    
+    # Removes stored Javascript function from the database.  Returns
+    # false if the function does not exist
+    #
+    # @param [String] function_name
+    #
+    # @return [Boolean]
+    def remove_stored_function(function_name)
+      if self[SYSTEM_JS_COLLECTION].find_one({"_id" => function_name})
+        self[SYSTEM_JS_COLLECTION].remove({"_id" => function_name}, :safe => true)
+      else
+        return false
+      end
+    end
+    
     # Adds a user to this database for use with authentication. If the user already
     # exists in the system, the password will be updated.
     #

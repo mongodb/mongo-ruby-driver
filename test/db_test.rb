@@ -247,6 +247,14 @@ class DBTest < Test::Unit::TestCase
     assert !@@db.remove_user("joe")
   end
 
+  def test_stored_function_management
+    @@db.add_stored_function("sum", "function (x, y) { return x + y; }")
+    assert_equal @@db.eval("return sum(2,3);"), 5
+    assert @@db.remove_stored_function("sum")
+    assert_raise OperationFailure do 
+      @@db.eval("return sum(2,3);")
+    end
+  end
 
   if @@version >= "1.3.5"
     def test_db_stats
