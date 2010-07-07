@@ -140,7 +140,7 @@ module BSON
     # but lacks an ObjectID type, this JSON format encodes the type using an $oid key.
     #
     # @return [String] the object id represented as MongoDB extended JSON.
-    def to_json(escaped=false)
+    def to_json(*a)
       "{\"$oid\": \"#{to_s}\"}"
     end
 
