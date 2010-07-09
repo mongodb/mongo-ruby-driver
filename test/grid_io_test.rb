@@ -52,9 +52,7 @@ class GridIOTest < Test::Unit::TestCase
 
       should "raise an exception when check fails" do
         io = File.open(File.join(File.dirname(__FILE__), 'data', 'sample_file.pdf'), 'r')
-        db = mock()
-        db.stubs(:command).returns({'md5' => '12345'})
-        @files.expects(:db).returns(db)
+        @db.stubs(:command).returns({'md5' => '12345'})
         file = GridIO.new(@files, @chunks, 'bigfile', 'w', :safe => true)
         file.write(io)
         assert_raise GridMD5Failure do
