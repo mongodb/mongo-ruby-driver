@@ -255,10 +255,11 @@ module Mongo
     # @see http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol#MongoWireProtocol-Mongo::Constants::OPQUERY
     # The MongoDB wire protocol.
     def query_opts
-      timeout  = @timeout ? 0 : Mongo::Constants::OP_QUERY_NO_CURSOR_TIMEOUT
-      slave_ok = @connection.slave_ok? ? Mongo::Constants::OP_QUERY_SLAVE_OK : 0
-      tailable = @tailable ? Mongo::Constants::OP_QUERY_TAILABLE : 0
-      slave_ok + timeout + tailable
+      opts     = 0
+      opts    |= Mongo::Constants::OP_QUERY_NO_CURSOR_TIMEOUT unless @timeout
+      opts    |= Mongo::Constants::OP_QUERY_SLAVE_OK if @connection.slave_ok?
+      opts    |= Mongo::Constants::OP_QUERY_TAILABLE if @tailable
+      opts
     end
 
     # Get the query options for this Cursor.
