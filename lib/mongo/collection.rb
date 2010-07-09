@@ -470,6 +470,8 @@ module Mongo
     # @option opts [String] :out (nil) the name of the output collection. If specified, the collection will not be treated as temporary.
     # @option opts [Boolean] :keeptemp (false) if true, the generated collection will be persisted. default is false.
     # @option opts [Boolean ] :verbose (false) if true, provides statistics on job execution time.
+    # @options opts [Boolean] :raw (false) if true, return the raw result object from the map_reduce command, and not
+    #   the instantiated collection that's returned by default.
     #
     # @return [Collection] a collection containing the results of the operation.
     #
@@ -477,8 +479,10 @@ module Mongo
     #
     # @core mapreduce map_reduce-instance_method
     def map_reduce(map, reduce, opts={})
+      opts.assert_valid_keys(:query, :sort, :limit, :finalize, :keeptemp, :verbose, :raw)
       map    = BSON::Code.new(map) unless map.is_a?(BSON::Code)
       reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
+      raw    = opts.delete(:raw)
 
       hash = BSON::OrderedHash.new
       hash['mapreduce'] = self.name
@@ -490,7 +494,12 @@ module Mongo
       unless Mongo::Support.ok?(result)
         raise Mongo::OperationFailure, "map-reduce failed: #{result['errmsg']}"
       end
-      @db[result["result"]]
+
+      if raw
+        result
+      else
+        @db[result["result"]]
+      end
     end
     alias :mapreduce :map_reduce
 

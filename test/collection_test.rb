@@ -393,7 +393,7 @@ class TestCollection < Test::Unit::TestCase
     assert c.closed?
   end
 
-  if @@version < "1.1.1"
+  if @@version > "1.1.1"
     def test_map_reduce
       @@test << { "user_id" => 1 }
       @@test << { "user_id" => 2 }
@@ -428,6 +428,23 @@ class TestCollection < Test::Unit::TestCase
       assert_equal 2, res.count
       assert res.find_one({"_id" => 2})
       assert res.find_one({"_id" => 3})
+    end
+
+    def test_map_reduce_with_raw_response
+      m = Code.new("function() { emit(this.user_id, 1); }")
+      r = Code.new("function(k,vals) { return 1; }")
+      res = @@test.map_reduce(m, r, :raw => true)
+      assert res["result"]
+      assert res["counts"]
+      assert res["timeMillis"]
+    end
+
+    def test_allows_only_valid_keys
+      m = Code.new("function() { emit(this.user_id, 1); }")
+      r = Code.new("function(k,vals) { return 1; }")
+      assert_raise ArgumentError do
+        @@test.map_reduce(m, r, :foo => true)
+      end
     end
   end
 
