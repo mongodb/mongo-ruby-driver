@@ -487,7 +487,7 @@ module Mongo
       hash.merge! opts
 
       result = @db.command(hash)
-      unless result["ok"] == 1
+      unless Mongo::Support.ok?(result)
         raise Mongo::OperationFailure, "map-reduce failed: #{result['errmsg']}"
       end
       @db[result["result"]]
