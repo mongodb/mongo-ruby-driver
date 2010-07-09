@@ -315,9 +315,16 @@ module Mongo
       @aliases       = opts.delete(:aliases) if opts[:aliases]
       @file_length   = 0
       opts.each {|k, v| self[k] = v}
+      check_existing_file if @safe
 
       @current_chunk = create_chunk(0)
       @file_position = 0
+    end
+
+    def check_existing_file
+      if @files.find_one('_id' => @files_id)
+        raise GridError, "Attempting to overwrite with Grid#put. You must delete the file first."
+      end
     end
 
     def to_mongo_object

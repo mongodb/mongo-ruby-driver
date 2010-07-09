@@ -41,10 +41,11 @@ module Mongo
       @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
     end
 
-    # Store a file in the file store.
+    # Store a file in the file store. This method is designed only for writing new files;
+    # if you need to update a given file, first delete it using #Grid#delete.
     #
     # Note that arbitary metadata attributes can be saved to the file by passing
-    # them is as options.
+    # them in as options.
     #
     # @param [String, #read] data a string or io-like object to store.
     #
