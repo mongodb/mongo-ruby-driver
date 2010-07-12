@@ -466,7 +466,9 @@ module Mongo
       result = Cursor.new(system_command_collection,
         :limit => -1, :selector => selector, :socket => sock).next_document
 
-      if result.nil? || (check_response && !ok?(result))
+      if result.nil?
+        raise OperationFailure, "Database command '#{selector.keys.first}' failed: returned null."
+      elsif (check_response && !ok?(result))
         raise OperationFailure, "Database command '#{selector.keys.first}' failed: #{result.inspect}"
       else
         result
