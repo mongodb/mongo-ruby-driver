@@ -335,17 +335,6 @@ module Mongo
       command(:reseterror => 1)
     end
 
-    # @deprecated please use Collection#find to create queries.
-    #
-    # Returns a Cursor over the query results.
-    #
-    # Note that the query gets sent lazily; the cursor calls
-    # Connection#send_message when needed. If the caller never requests an
-    # object from the cursor, the query never gets sent.
-    def query(collection, query, admin=false)
-      Cursor.new(self, collection, query, admin)
-    end
-
     # Dereference a DBRef, returning the document it points to.
     #
     # @param [Mongo::DBRef] dbref
@@ -406,7 +395,7 @@ module Mongo
       oh = BSON::OrderedHash.new
       oh[:deleteIndexes] = collection_name
       oh[:index] = index_name
-      doc = command(oh)
+      doc = command(oh, :check_response => false)
       ok?(doc) || raise(MongoDBError, "Error with drop_index command: #{doc.inspect}")
     end
 
@@ -432,23 +421,6 @@ module Mongo
     # @return [Hash]
     def stats
       self.command({:dbstats => 1})
-    end
-
-    # Create a new index on the given collection.
-    # Normally called by Collection#create_index.
-    #
-    # @param [String] collection_name
-    # @param [String, Array] field_or_spec either either a single field name
-    #   or an array of [field name, direction] pairs. Directions should be specified as
-    #   Mongo::ASCENDING or Mongo::DESCENDING.
-    # @param [Boolean] unique if +true+, the created index will enforce a uniqueness constraint.
-    #
-    # @return [String] the name of the index created.
-    #
-    # @deprecated
-    def create_index(collection_name, field_or_spec, unique=false)
-      warn "DB#create_index is now deprecated. Please use Collection#create_index instead."
-      self.collection(collection_name).create_index(field_or_spec, :unique => unique)
     end
 
     # Return +true+ if the supplied +doc+ contains an 'ok' field with the value 1.
@@ -484,21 +456,14 @@ module Mongo
     #
     # @core commands command_instance-method
     def command(selector, opts={}, old_check_response=false, old_sock=nil)
-      if opts.is_a?(Hash)
-        check_response = opts[:check_response].nil? ? true : opts[:check_response]
-        sock           = opts[:sock]
-      else
-        warn "The options passed to DB#command should now be passed as hash keys; the admin option has been deprecated."
-        admin          = opts
-        check_response = old_check_response
-        sock           = old_sock
-      end
+      check_response = opts[:check_response].nil? ? true : opts[:check_response]
+      sock           = opts[:sock]
       raise MongoArgumentError, "command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
       if selector.keys.length > 1 && RUBY_VERSION < '1.9' && selector.class != BSON::OrderedHash
         raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
       end
 
-      result = Cursor.new(system_command_collection, :admin => admin,
+      result = Cursor.new(system_command_collection,
         :limit => -1, :selector => selector, :socket => sock).next_document
 
       if result.nil? || (check_response && !ok?(result))

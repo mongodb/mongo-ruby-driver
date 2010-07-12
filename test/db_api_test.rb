@@ -289,7 +289,7 @@ class DBAPITest < Test::Unit::TestCase
   def test_index_create_with_symbol
     assert_equal @@coll.index_information.length, 1
 
-    name = @@db.create_index(@@coll.name, :a)
+    name = @@coll.create_index([['a', 1]])
     info = @@db.index_information(@@coll.name)
     assert_equal name, "a_1"
     assert_equal @@coll.index_information, info

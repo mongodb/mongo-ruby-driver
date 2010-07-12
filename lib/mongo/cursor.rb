@@ -21,7 +21,7 @@ module Mongo
     include Mongo::Conversions
     include Enumerable
 
-    attr_reader :collection, :selector, :admin, :fields,
+    attr_reader :collection, :selector, :fields,
       :order, :hint, :snapshot, :timeout,
       :full_collection_name, :batch_size
 
@@ -40,10 +40,6 @@ module Mongo
 
       @selector   = convert_selector_for_query(options[:selector])
       @fields     = convert_fields_for_query(options[:fields])
-      if options[:admin]
-        warn "The admin option to Cursor#new has been deprecated. The cursor should now be passed the admin collection explicitly."
-      end
-      @admin      = options[:admin]    || false
       @skip       = options[:skip]     || 0
       @limit      = options[:limit]    || 0
       @order      = options[:order]
@@ -332,8 +328,7 @@ module Mongo
       message = BSON::ByteBuffer.new([0, 0, 0, 0])
 
       # DB name.
-      db_name = @admin ? 'admin' : @db.name
-      BSON::BSON_RUBY.serialize_cstr(message, "#{db_name}.#{@collection.name}")
+      BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@collection.name}")
 
       # Number of results to return.
       message.put_int(@batch_size)
@@ -363,8 +358,7 @@ module Mongo
     def construct_query_message
       message = BSON::ByteBuffer.new
       message.put_int(query_opts)
-      db_name = @admin ? 'admin' : @db.name
-      BSON::BSON_RUBY.serialize_cstr(message, "#{db_name}.#{@collection.name}")
+      BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@collection.name}")
       message.put_int(@skip)
       message.put_int(@limit)
       spec = query_contains_special_fields? ? construct_query_spec : @selector
@@ -374,7 +368,7 @@ module Mongo
     end
 
     def query_log_message
-      "#{@admin ? 'admin' : @db.name}['#{@collection.name}'].find(#{@selector.inspect}, #{@fields ? @fields.inspect : '{}'})" +
+      "#{@db.name}['#{@collection.name}'].find(#{@selector.inspect}, #{@fields ? @fields.inspect : '{}'})" +
       "#{@skip != 0 ? ('.skip(' + @skip.to_s + ')') : ''}#{@limit != 0 ? ('.limit(' + @limit.to_s + ')') : ''}" +
       "#{@order ? ('.sort(' + @order.inspect + ')') : ''}"
     end

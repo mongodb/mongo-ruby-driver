@@ -31,25 +31,25 @@ class DBTest < Test::Unit::TestCase
 
       should "raise an error if the selector is omitted" do
         assert_raise MongoArgumentError do
-          @db.command({}, true)
+          @db.command({}, :check_response => true)
         end
       end
 
       should "create the proper cursor" do
         @cursor = mock(:next_document => {"ok" => 1})
-        Cursor.expects(:new).with(@collection, :admin => true,
+        Cursor.expects(:new).with(@collection,
           :limit => -1, :selector => {:buildinfo => 1}, :socket => nil).returns(@cursor)
         command = {:buildinfo => 1}
-        @db.command(command, true)
+        @db.command(command, :check_response => true)
       end
 
       should "raise an error when the command fails" do
         @cursor = mock(:next_document => {"ok" => 0})
-        Cursor.expects(:new).with(@collection, :admin => true,
+        Cursor.expects(:new).with(@collection,
           :limit => -1, :selector => {:buildinfo => 1}, :socket => nil).returns(@cursor)
         assert_raise OperationFailure do
           command = {:buildinfo => 1}
-          @db.command(command, true, true)
+          @db.command(command, :check_response => true)
         end
       end
 

@@ -9,13 +9,6 @@ class CursorTest < Test::Unit::TestCase
       @cursor     = Cursor.new(@collection)
     end
 
-    should "set admin to false" do
-      assert_equal false, @cursor.admin
-
-      @cursor = Cursor.new(@collection, :admin => true)
-      assert_equal true, @cursor.admin
-    end
-
     should "set selector" do
       assert @cursor.selector == {}
 
