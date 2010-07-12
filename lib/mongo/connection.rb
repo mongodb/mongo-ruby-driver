@@ -632,11 +632,20 @@ module Mongo
           "expected #{RESPONSE_HEADER_SIZE} bytes, saw #{header_buf.length}"
       end
       header_buf.rewind
-      result_flags     = header_buf.get_int
+      check_response_flags(header_buf.get_int)
       cursor_id        = header_buf.get_long
       starting_from    = header_buf.get_int
       number_remaining = header_buf.get_int
       [number_remaining, cursor_id]
+    end
+
+    def check_response_flags(flags)
+      if flags & Mongo::Constants::REPLY_CURSOR_NOT_FOUND != 0
+        raise Mongo::OperationFailure, "Query response returned CURSOR_NOT_FOUND. " +
+          "Either an invalid cursor was specified, or the cursor may have timed out on the server."
+      elsif flags & Mongo::Constants::REPLY_QUERY_FAILURE != 0
+        raise Mongo::OperationFailure, "Query response returned QUERY_FAILURE."
+      end
     end
 
     def read_documents(number_received, cursor_id, sock)

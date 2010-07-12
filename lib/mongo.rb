@@ -21,11 +21,18 @@ module Mongo
     OP_DELETE       = 2006
     OP_KILL_CURSORS = 2007
 
-    OP_QUERY_TAILABLE          = 2
-    OP_QUERY_SLAVE_OK          = 4
-    OP_QUERY_NO_CURSOR_TIMEOUT = 16
-  end
+    OP_QUERY_TAILABLE          = 2 ** 1
+    OP_QUERY_SLAVE_OK          = 2 ** 2
+    OP_QUERY_OPLOG_REPLAY      = 2 ** 3
+    OP_QUERY_NO_CURSOR_TIMEOUT = 2 ** 4
+    OP_QUERY_AWAIT_DATA        = 2 ** 5
+    OP_QUERY_EXHAUST           = 2 ** 6
 
+    REPLY_CURSOR_NOT_FOUND     = 2 ** 0
+    REPLY_QUERY_FAILURE        = 2 ** 1
+    REPLY_SHARD_CONFIG_STALE   = 2 ** 2
+    REPLY_AWAIT_CAPABLE        = 2 ** 3
+  end
 end
 
 require 'bson'

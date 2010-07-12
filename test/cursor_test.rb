@@ -137,7 +137,7 @@ class CursorTest < Test::Unit::TestCase
     @@coll.save({:t => 't2'})
     @@coll.save({:t => 't2'})
 
-    assert_equal 3, @@coll.find({'_id' => {'$gt' => t1_id}, '_id' => {'$lt' => t2_id}}).count
+    assert_equal 3, @@coll.find({'_id' => {'$gt' => t1_id, '$lt' => t2_id}}).count
     @@coll.find({'_id' => {'$gt' => t2_id}}).each do |doc|
       assert_equal 't2', doc['t']
     end
@@ -395,5 +395,22 @@ class CursorTest < Test::Unit::TestCase
     end
 
     assert_equal false, cursor.has_next?
+  end
+
+  def test_cursor_invalid
+    @@coll.remove
+    1000.times do |n|
+      @@coll.insert({:a => n})
+    end
+
+    cursor = @@coll.find({})
+    cursor.next_document
+    cursor.close
+
+    assert_raise_error(Mongo::OperationFailure, "CURSOR_NOT_FOUND") do
+      999.times do
+        cursor.next_document
+      end
+    end
   end
 end

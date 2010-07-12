@@ -157,7 +157,8 @@ module Mongo
       raise RuntimeError, "Unknown options [#{opts.inspect}]" unless opts.empty?
 
       cursor = Cursor.new(self, :selector => selector, :fields => fields, :skip => skip, :limit => limit,
-                          :order => sort, :hint => hint, :snapshot => snapshot, :timeout => timeout, :batch_size => batch_size)
+        :order => sort, :hint => hint, :snapshot => snapshot, :timeout => timeout, :batch_size => batch_size)
+
       if block_given?
         yield cursor
         cursor.close()

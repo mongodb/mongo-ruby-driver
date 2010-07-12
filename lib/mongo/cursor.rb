@@ -23,7 +23,7 @@ module Mongo
 
     attr_reader :collection, :selector, :admin, :fields,
       :order, :hint, :snapshot, :timeout,
-      :full_collection_name
+      :full_collection_name, :batch_size
 
     # Create a new cursor.
     #
@@ -237,7 +237,7 @@ module Mongo
         message = BSON::ByteBuffer.new([0, 0, 0, 0])
         message.put_int(1)
         message.put_long(@cursor_id)
-        @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message, "cursor.close")
+        @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message, "cursor.close #{@cursor_id}")
       end
       @cursor_id = 0
       @closed    = true
