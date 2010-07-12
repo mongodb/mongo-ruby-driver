@@ -97,7 +97,11 @@ module Mongo
 
       # Mutex for synchronizing pool access
       @connection_mutex = Mutex.new
-      @safe_mutex = Mutex.new
+
+
+      # Create a mutex when a new key, in this case a socket,
+      # is added to the hash.
+      @safe_mutexes = Hash.new { |h, k| h[k] = Mutex.new }
 
       # Condition variable for signal and wait
       @queue = ConditionVariable.new
@@ -368,7 +372,7 @@ module Mongo
         sock = checkout
         packed_message = message_with_headers.append!(message_with_check).to_s
         docs = num_received = cursor_id = ''
-        @safe_mutex.synchronize do
+        @safe_mutexes[sock].synchronize do
           send_message_on_socket(packed_message, sock)
           docs, num_received, cursor_id = receive(sock)
         end
@@ -398,7 +402,7 @@ module Mongo
         sock = socket || checkout
 
         result = ''
-        @safe_mutex.synchronize do
+        @safe_mutexes[sock].synchronize do
           send_message_on_socket(packed_message, sock)
           result = receive(sock)
         end
