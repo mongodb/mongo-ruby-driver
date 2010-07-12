@@ -269,7 +269,7 @@ module Mongo
     #
     # @param [String] name
     #
-    # @return [Boolean] True on success or if the collection names doesn't exist.
+    # @return [Boolean] +true+ on success or +false+ if the collection name doesn't exist.
     def drop_collection(name)
       return true unless collection_names.include?(name)
 
