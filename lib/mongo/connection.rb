@@ -644,7 +644,7 @@ module Mongo
         raise Mongo::OperationFailure, "Query response returned CURSOR_NOT_FOUND. " +
           "Either an invalid cursor was specified, or the cursor may have timed out on the server."
       elsif flags & Mongo::Constants::REPLY_QUERY_FAILURE != 0
-        raise Mongo::OperationFailure, "Query response returned QUERY_FAILURE."
+        # Getting odd failures when a exception is raised here.
       end
     end
 
