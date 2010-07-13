@@ -1,3 +1,20 @@
+1.0.4 2010-7-13
+
+* Removed deprecated
+  - Cursor admin option
+  - DB#query
+  - DB#create_index (use Collection#create_index)
+  - DB#command only takes hash options now
+* j2bson executable (neomantra)
+* Fixed bson_ext compilation on Solaris (slyphon)
+* System JS helpers (neovintage)
+* Use one mutex per thread on pooled connections (cremes)
+* Check for CursorNotFound response flag
+* MapReduce can return raw command output using :raw
+* BSON::OrderedHash equality with other Ruby hashes (Ryan Angilly)
+* Fix for broken Socket.send with large payloads (Frédéric De Jaeger)
+* Lots of minor improvements. See commmits.
+
 1.0.3 2010-6-15
 
 * Optimiztion for BSON::OrderedHash
