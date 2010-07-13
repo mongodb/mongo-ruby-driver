@@ -480,7 +480,7 @@ module Mongo
     #
     # @core mapreduce map_reduce-instance_method
     def map_reduce(map, reduce, opts={})
-      opts.assert_valid_keys(:query, :sort, :limit, :finalize, :keeptemp, :verbose, :raw)
+      opts.assert_valid_keys(:query, :sort, :limit, :finalize, :out, :keeptemp, :verbose, :raw)
       map    = BSON::Code.new(map) unless map.is_a?(BSON::Code)
       reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
       raw    = opts.delete(:raw)
