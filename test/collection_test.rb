@@ -439,6 +439,16 @@ class TestCollection < Test::Unit::TestCase
       assert res["timeMillis"]
     end
 
+    def test_map_reduce_with_output_collection
+      output_collection = "test-map-coll"
+      m = Code.new("function() { emit(this.user_id, 1); }")
+      r = Code.new("function(k,vals) { return 1; }")
+      res = @@test.map_reduce(m, r, :raw => true, :out => output_collection)
+      assert_equal output_collection, res["result"]
+      assert res["counts"]
+      assert res["timeMillis"]
+    end
+
     def test_allows_only_valid_keys
       m = Code.new("function() { emit(this.user_id, 1); }")
       r = Code.new("function(k,vals) { return 1; }")
