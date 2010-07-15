@@ -71,8 +71,8 @@ module Mongo
         # pair but it has died or something like that) then we close that
         # connection. The next request will re-open on master server.
         if err == "not master"
-          raise ConnectionFailure, err
           @connection.close
+          raise ConnectionFailure, err
         end
 
         raise OperationFailure, err
