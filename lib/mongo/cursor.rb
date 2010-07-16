@@ -45,7 +45,7 @@ module Mongo
       @order      = options[:order]
       @hint       = options[:hint]
       @snapshot   = options[:snapshot]
-      @timeout    = options[:timeout]  || false
+      @timeout    = options[:timeout]  || true
       @explain    = options[:explain]
       @socket     = options[:socket]
       @tailable   = options[:tailable] || false

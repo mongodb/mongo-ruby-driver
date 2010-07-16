@@ -9,6 +9,10 @@ class CursorTest < Test::Unit::TestCase
       @cursor     = Cursor.new(@collection)
     end
 
+    should "set timeout" do
+      assert_equal true, @cursor.timeout
+    end
+
     should "set selector" do
       assert @cursor.selector == {}
 

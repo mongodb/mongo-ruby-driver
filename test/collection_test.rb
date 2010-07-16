@@ -297,6 +297,11 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  def test_defualt_timeout
+    cursor = @@test.find
+    assert_equal true, cursor.timeout
+  end
+
   def test_fields_as_hash
     @@test.save(:a => 1, :b => 1, :c => 1)
 
