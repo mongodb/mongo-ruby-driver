@@ -18,13 +18,13 @@ class ConnectionTest < Test::Unit::TestCase
 
     context "given a single node" do
       setup do
-        TCPSocket.stubs(:new).returns(new_mock_socket)
         @conn = Connection.new('localhost', 27017, :connect => false)
+        TCPSocket.stubs(:new).returns(new_mock_socket)
 
         admin_db = new_mock_db
         admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1})
         @conn.expects(:[]).with('admin').returns(admin_db)
-        @conn.connect_to_master
+        @conn.connect
       end
 
       should "set localhost and port to master" do
@@ -41,19 +41,63 @@ class ConnectionTest < Test::Unit::TestCase
       end
     end
 
+    context "connecting to a replica set" do
+      setup do
+        TCPSocket.stubs(:new).returns(new_mock_socket)
+        @conn = Connection.new('localhost', 27017, :connect => false)
+
+        admin_db = new_mock_db
+        @hosts = ['localhost:27018', 'localhost:27019']
+        admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1, 'hosts' => @hosts})
+        @conn.expects(:[]).with('admin').returns(admin_db)
+        @conn.connect
+      end
+
+      should "store the hosts returned from the ismaster command" do
+        @hosts.each do |host|
+          host, port = host.split(":")
+          port = port.to_i
+          assert @conn.nodes.include?([host, port]), "Connection doesn't include host #{host.inspect}."
+        end
+      end
+    end
+
+    context "connecting to a replica set and providing seed nodes" do
+      setup do
+        TCPSocket.stubs(:new).returns(new_mock_socket)
+        @conn = Connection.multi([['localhost', 27017], ['localhost', 27019]], :connect => false)
+
+        admin_db = new_mock_db
+        @hosts = ['localhost:27017', 'localhost:27018', 'localhost:27019']
+        admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1, 'hosts' => @hosts})
+        @conn.expects(:[]).with('admin').returns(admin_db)
+        @conn.connect
+      end
+
+      should "not store any hosts redundantly" do
+        assert_equal 3, @conn.nodes.size
+
+        @hosts.each do |host|
+          host, port = host.split(":")
+          port = port.to_i
+          assert @conn.nodes.include?([host, port]), "Connection doesn't include host #{host.inspect}."
+        end
+      end
+    end
+
     context "initializing a paired connection" do
       should "require left and right nodes" do
         assert_raise MongoArgumentError do
-          Connection.paired(['localhost', 27018], :connect => false)
+          Connection.multi(['localhost', 27018], :connect => false)
         end
 
         assert_raise MongoArgumentError do
-          Connection.paired(['localhost', 27018], :connect => false)
+          Connection.multi(['localhost', 27018], :connect => false)
         end
       end
 
       should "store both nodes" do
-        @conn = Connection.paired([['localhost', 27017], ['localhost', 27018]], :connect => false)
+        @conn = Connection.multi([['localhost', 27017], ['localhost', 27018]], :connect => false)
 
         assert_equal ['localhost', 27017], @conn.nodes[0]
         assert_equal ['localhost', 27018], @conn.nodes[1]
@@ -103,7 +147,7 @@ class ConnectionTest < Test::Unit::TestCase
         admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1})
         @conn.expects(:[]).with('admin').returns(admin_db)
         @conn.expects(:apply_saved_authentication)
-        @conn.connect_to_master
+        @conn.connect
       end
 
       should "raise an error on invalid uris" do

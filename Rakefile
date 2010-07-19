@@ -58,23 +58,43 @@ namespace :test do
     t.verbose    = true
   end
 
-  Rake::TestTask.new(:pair_count) do |t|
-    t.test_files = FileList['test/replica/count_test.rb']
+  Rake::TestTask.new(:replica_pair_count) do |t|
+    t.test_files = FileList['test/replica_pairs/count_test.rb']
     t.verbose    = true
   end
 
-  Rake::TestTask.new(:pair_insert) do |t|
-    t.test_files = FileList['test/replica/insert_test.rb']
+  Rake::TestTask.new(:replica_pair_insert) do |t|
+    t.test_files = FileList['test/replica_pairs/insert_test.rb']
     t.verbose    = true
   end
 
-  Rake::TestTask.new(:pooled_pair_insert) do |t|
-    t.test_files = FileList['test/replica/pooled_insert_test.rb']
+  Rake::TestTask.new(:pooled_replica_pair_insert) do |t|
+    t.test_files = FileList['test/replica_pairs/pooled_insert_test.rb']
     t.verbose    = true
   end
 
-  Rake::TestTask.new(:pair_query) do |t|
-    t.test_files = FileList['test/replica/query_test.rb']
+  Rake::TestTask.new(:replica_pair_query) do |t|
+    t.test_files = FileList['test/replica_pairs/query_test.rb']
+    t.verbose    = true
+  end
+
+  Rake::TestTask.new(:replica_set_count) do |t|
+    t.test_files = FileList['test/replica_sets/count_test.rb']
+    t.verbose    = true
+  end
+
+  Rake::TestTask.new(:replica_set_insert) do |t|
+    t.test_files = FileList['test/replica_sets/insert_test.rb']
+    t.verbose    = true
+  end
+
+  Rake::TestTask.new(:pooled_replica_set_insert) do |t|
+    t.test_files = FileList['test/replica_sets/pooled_insert_test.rb']
+    t.verbose    = true
+  end
+
+  Rake::TestTask.new(:replica_set_query) do |t|
+    t.test_files = FileList['test/replica_sets/query_test.rb']
     t.verbose    = true
   end
 
