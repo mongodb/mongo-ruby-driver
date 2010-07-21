@@ -3,15 +3,17 @@ require 'mongo'
 require 'test/unit'
 require 'test/test_helper'
 
-# NOTE: this test should be run only if a replica pair is running.
-class ReplicaPairPooledInsertTest < Test::Unit::TestCase
+# NOTE: This test expects a replica set of three nodes to be running
+# on the local host.
+class ReplicaSetPooledInsertTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @conn = Mongo::Connection.new({:left => ["localhost", 27017], :right => ["localhost", 27018]}, nil, :pool_size => 10, :timeout => 5)
-    @db = @conn.db('mongo-ruby-test')
-    @db.drop_collection("test-pairs")
-    @coll = @db.collection("test-pairs")
+    @conn = Mongo::Connection.multi([['localhost', 27017], ['localhost', 27018], ['localhost', 27019]],
+       :pool_size => 10, :timeout => 5)
+    @db = @conn.db(MONGO_TEST_DB)
+    @db.drop_collection("test-sets")
+    @coll = @db.collection("test-sets")
   end
 
   def test_insert
