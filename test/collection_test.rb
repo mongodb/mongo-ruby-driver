@@ -453,14 +453,6 @@ class TestCollection < Test::Unit::TestCase
       assert res["counts"]
       assert res["timeMillis"]
     end
-
-    def test_allows_only_valid_keys
-      m = Code.new("function() { emit(this.user_id, 1); }")
-      r = Code.new("function(k,vals) { return 1; }")
-      assert_raise ArgumentError do
-        @@test.map_reduce(m, r, :foo => true)
-      end
-    end
   end
 
   if @@version > "1.3.0"
