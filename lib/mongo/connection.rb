@@ -604,7 +604,9 @@ module Mongo
         @nodes_tried << node
         if config
           update_node_list(config['hosts']) if config['hosts']
-          @logger.warn(config['msg']) if config['msg']
+          if @logger
+            @logger.warn(config['msg']) if config['msg']
+          end
         end
 
         socket.close if socket
