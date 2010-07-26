@@ -1,3 +1,8 @@
+1.0.6 2010-7-26
+
+* Replica set support.
+* Collection#map_reduce bug fix.
+
 1.0.5 2010-7-13
 
 * Fix for bug introduced in 1.0.4.
