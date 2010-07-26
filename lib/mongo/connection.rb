@@ -123,18 +123,21 @@ module Mongo
       connect if should_connect
     end
 
-    # Initialize a paired connection to MongoDB.
+    # Initialize a connection to a MongoDB replica set using an array of seed nodes.
     #
-    # @param nodes [Array] An array of arrays, each of which specified a host and port.
+    # Note that, even when connecting to a replica set, you can use Connection.new specifying
+    # just a single node. If the replica set is up, the remaining nodes in the set will be cached
+    # for failover.
+    #
+    # @param nodes [Array] An array of arrays, each of which specifies a host and port.
     # @param opts Takes the same options as Connection.new
     #
     # @example
-    #   Connection.paired([["db1.example.com", 27017],
+    #   Connection.multi([["db1.example.com", 27017],
     #                   ["db2.example.com", 27017]])
     #
     # @example
-    #   Connection.paired([["db1.example.com", 27017],
-    #                   ["db2.example.com", 27017]],
+    #   Connection.multi([["db1.example.com", 27017], ["db2.example.com", 27017], ["db3.example.com", 27017]],
     #                   :pool_size => 20, :timeout => 5)
     #
     # @return [Mongo::Connection]
