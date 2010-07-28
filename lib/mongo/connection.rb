@@ -119,7 +119,7 @@ module Mongo
       @logger   = options[:logger] || nil
       @options  = options
 
-      should_connect = options[:connect].nil? ? true : options[:connect]
+      should_connect = options.fetch(:connect, true)
       connect if should_connect
     end
 
