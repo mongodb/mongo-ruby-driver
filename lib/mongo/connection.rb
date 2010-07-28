@@ -376,7 +376,7 @@ module Mongo
     # @param [BSON::ByteBuffer] message a message to send to the database.
     # @param [String] log_message text version of +message+ for logging.
     #
-    # @return [True]
+    # @return [Integer] number of bytes sent
     def send_message(operation, message, log_message=nil)
       @logger.debug("  MONGODB #{log_message || message}") if @logger
       begin
@@ -812,12 +812,17 @@ module Mongo
 
     # Low-level method for sending a message on a socket.
     # Requires a packed message and an available socket,
+    #
+    # @return [Integer] number of bytes sent
     def send_message_on_socket(packed_message, socket)
       begin
+      total_bytes_sent = 0
       while packed_message.size > 0
         byte_sent = socket.send(packed_message, 0)
+        total_bytes_sent += byte_sent
         packed_message.slice!(0, byte_sent)
       end
+      total_bytes_sent
       rescue => ex
         close
         raise ConnectionFailure, "Operation failed with the following exception: #{ex}"

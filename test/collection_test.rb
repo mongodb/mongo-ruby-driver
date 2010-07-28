@@ -259,6 +259,11 @@ class TestCollection < Test::Unit::TestCase
     @test.drop
   end
 
+  def test_remove_return_value
+    assert_equal 50, @@test.remove({})
+    assert_equal 57, @@test.remove({"x" => 1})
+  end
+
   def test_count
     @@test.drop
 
