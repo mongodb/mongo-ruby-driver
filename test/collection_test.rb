@@ -139,24 +139,6 @@ class TestCollection < Test::Unit::TestCase
         @@test.remove({:foo => 2}, :safe => {:w => 2, :wtime => 1, :fsync => true})
       end
     end
-
-    def test_safe_mode_with_w_failure
-      assert_raise_error OperationFailure, "timed out waiting for slaves" do
-        @@test.insert({:foo => 1}, :safe => {:w => 2, :wtimeout => 1, :fsync => true})
-      end
-      assert_raise_error OperationFailure, "timed out waiting for slaves" do
-        @@test.update({:foo => 1}, {:foo => 2}, :safe => {:w => 2, :wtimeout => 1, :fsync => true})
-      end
-      assert_raise_error OperationFailure, "timed out waiting for slaves" do
-        @@test.remove({:foo => 2}, :safe => {:w => 2, :wtimeout => 1, :fsync => true})
-      end
-    end
-
-    def test_safe_mode_with_write_and_fsync
-      assert @@test.insert({:foo => 1}, :safe => {:w => 1, :wtimeout => 1, :fsync => true})
-      assert @@test.update({:foo => 1}, {:foo => 2}, :safe => {:w => 1, :wtimeout => 1, :fsync => true})
-      assert @@test.remove({:foo => 2}, :safe => {:w => 1, :wtimeout => 1, :fsync => true})
-    end
   end
 
   def test_update

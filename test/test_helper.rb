@@ -48,6 +48,8 @@ class Test::Unit::TestCase
     rescue => e
       assert_equal klass, e.class
       assert e.message.include?(message), "#{e.message} does not include #{message}."
+    else
+      flunk "Expected assertion #{klass} but none was raised."
     end
   end
 end

@@ -399,18 +399,18 @@ class CursorTest < Test::Unit::TestCase
 
   def test_cursor_invalid
     @@coll.remove
-    1000.times do |n|
+    10000.times do |n|
       @@coll.insert({:a => n})
     end
 
     cursor = @@coll.find({})
-    cursor.next_document
-    cursor.close
 
-    assert_raise_error(Mongo::OperationFailure, "CURSOR_NOT_FOUND") do
-      999.times do
+    assert_raise_error Mongo::OperationFailure, "CURSOR_NOT_FOUND" do
+      9999.times do
         cursor.next_document
+        cursor.instance_variable_set(:@cursor_id, 1234567890)
       end
     end
   end
+
 end

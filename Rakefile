@@ -98,6 +98,11 @@ namespace :test do
     t.verbose    = true
   end
 
+  Rake::TestTask.new(:replica_set_ack) do |t|
+    t.test_files = FileList['test/replica_sets/replication_ack_test.rb']
+    t.verbose    = true
+  end
+
   Rake::TestTask.new(:auto_reconnect) do |t|
     t.test_files = FileList['test/auxillary/autoreconnect_test.rb']
     t.verbose    = true

@@ -191,24 +191,6 @@ class DBTest < Test::Unit::TestCase
     assert_nil @@db.previous_error
   end
 
-  if @@version >= "1.5.1"
-    def test_failing_error_params
-      assert_raise_error Mongo::MongoDBError, "timed out waiting for slaves" do
-        @@db.error(:w => 2, :wtimeout => 10, :fsync => true)
-      end
-    end
-
-    def test_passing_error_params
-      assert_nil @@db.error(:w => 1, :wtimeout => 10, :fsync => true)
-    end
-
-    def test_invalid_error_params
-      assert_raise_error ArgumentError, "Unknown key(s): z" do
-        @@db.error(:z => 1, :wtimeout => 10, :fsync => true)
-      end
-    end
-  end
-
   def test_check_command_response
     command = {:forceerror => 1}
     assert_raise OperationFailure do 
