@@ -1,3 +1,9 @@
+1.0.7 2010-8-4
+
+* A few minor test/doc fixes.
+* Better tests for replica sets and replication acknowledgment.
+* Deprecated DB#error and DB#last_status
+
 1.0.6 2010-7-26
 
 * Replica set support.
