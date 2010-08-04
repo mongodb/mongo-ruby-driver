@@ -122,7 +122,7 @@ module Mongo
         }
       )
     end
-    
+
     # Removes stored Javascript function from the database.  Returns
     # false if the function does not exist
     #
@@ -136,7 +136,7 @@ module Mongo
         return false
       end
     end
-    
+
     # Adds a user to this database for use with authentication. If the user already
     # exists in the system, the password will be updated.
     #
@@ -390,7 +390,7 @@ module Mongo
     # @param [String] to new collection name.
     #
     # @return [True] returns +true+ on success.
-    # 
+    #
     # @raise MongoDBError if there's an error renaming the collection.
     def rename_collection(from, to)
       oh = BSON::OrderedHash.new
@@ -462,9 +462,6 @@ module Mongo
     # key, specifying the command to be performed. In Ruby 1.9, OrderedHash isn't necessary since
     # hashes are ordered by default.
     #
-    # @param [Boolean] admin If +true+, the command will be executed on the admin
-    # collection. DEPRECATED.
-    #
     # @option opts [Boolean] :check_response (true) If +true+, raises an exception if the
     # command fails.
     # @option opts [Socket] :sock a socket to use for sending the command. This is mainly for internal use.
@@ -472,8 +469,8 @@ module Mongo
     # @return [Hash]
     #
     # @core commands command_instance-method
-    def command(selector, opts={}, old_check_response=false, old_sock=nil)
-      check_response = opts[:check_response].nil? ? true : opts[:check_response]
+    def command(selector, opts={})
+      check_response = opts.fetch(:check_response, true)
       sock           = opts[:sock]
       raise MongoArgumentError, "command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
       if selector.keys.length > 1 && RUBY_VERSION < '1.9' && selector.class != BSON::OrderedHash
