@@ -1,3 +1,4 @@
+$:.unshift '.'
 require 'test/test_helper'
 require 'digest/md5'
 require 'stringio'
@@ -236,6 +237,11 @@ class DBTest < Test::Unit::TestCase
     assert_raise OperationFailure do 
       @@db.eval("return sum(2,3);")
     end
+  end
+
+  def test_eval
+    @@db.eval("db.system.save({_id:'hello', value: function() { print('hello'); } })")
+    assert_equal 'hello', @@db['system'].find_one['_id']
   end
 
   if @@version >= "1.3.5"

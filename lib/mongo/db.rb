@@ -326,7 +326,7 @@ module Mongo
     #
     # @return [Boolean]
     def error?
-      error != nil
+      get_last_error['err'] != nil
     end
 
     # Get the most recent error to have occured on this database.
@@ -379,10 +379,9 @@ module Mongo
 
       oh = BSON::OrderedHash.new
       oh[:$eval] = code
-      oh[:args] = args
+      oh[:args]  = args
       doc = command(oh)
-      return doc['retval'] if ok?(doc)
-      raise OperationFailure, "eval failed: #{doc['errmsg']}"
+      doc['retval']
     end
 
     # Rename a collection.
@@ -397,7 +396,7 @@ module Mongo
       oh = BSON::OrderedHash.new
       oh[:renameCollection] = "#{@name}.#{from}"
       oh[:to] = "#{@name}.#{to}"
-      doc = DB.new('admin', @connection).command(oh)
+      doc = DB.new('admin', @connection).command(oh, :check_response => false)
       ok?(doc) || raise(MongoDBError, "Error renaming collection: #{doc.inspect}")
     end
 
@@ -433,7 +432,6 @@ module Mongo
       end
       info
     end
-
 
     # Return stats on this database. Uses MongoDB's dbstats command.
     #
@@ -530,7 +528,7 @@ module Mongo
     def profiling_level
       oh = BSON::OrderedHash.new
       oh[:profile] = -1
-      doc = command(oh)
+      doc = command(oh, :check_response => false)
       raise "Error with profile command: #{doc.inspect}" unless ok?(doc) && doc['was'].kind_of?(Numeric)
       case doc['was'].to_i
       when 0
@@ -560,7 +558,7 @@ module Mongo
                      else
                        raise "Error: illegal profiling level value #{level}"
                      end
-      doc = command(oh)
+      doc = command(oh, :check_response => false)
       ok?(doc) || raise(MongoDBError, "Error with profile command: #{doc.inspect}")
     end
 
@@ -580,7 +578,7 @@ module Mongo
     # @raise [MongoDBError] if the command fails or there's a problem with the validation
     #   data, or if the collection is invalid.
     def validate_collection(name)
-      doc = command(:validate => name)
+      doc = command({:validate => name}, :check_response => false)
       raise MongoDBError, "Error with validate command: #{doc.inspect}" unless ok?(doc)
       result = doc['result']
       raise MongoDBError, "Error with validation data: #{doc.inspect}" unless result.kind_of?(String)
