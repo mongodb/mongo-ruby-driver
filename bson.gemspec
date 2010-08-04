@@ -1,4 +1,4 @@
-require "lib/bson"
+require "./lib/bson"
 
 Gem::Specification.new do |s|
   s.name = 'bson'
