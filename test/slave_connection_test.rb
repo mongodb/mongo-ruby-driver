@@ -16,14 +16,14 @@ class SlaveConnectionTest < Test::Unit::TestCase
     puts "Connected to slave; running slave tests."
 
     def test_connect_to_slave
-      assert_raise Mongo::ConfigurationError do 
+      assert_raise Mongo::ConnectionFailure do
         @db = Connection.new(@@host, @@port, :slave_ok => false).db('ruby-mongo-demo')
       end
     end
 
     def test_slave_ok_sent_to_queries
-      @db   = Connection.new(@@host, @@port, :slave_ok => true).db('ruby-mongo-demo')
-      assert_equal true, @db.slave_ok?
+      @con = Connection.new(@@host, @@port, :slave_ok => true)
+      assert_equal true, @con.slave_ok?
     end
   else
     puts "Not connected to slave; skipping slave connection tests."
