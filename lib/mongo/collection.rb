@@ -260,7 +260,7 @@ module Mongo
     #   run the operation in safe mode, which run a getlasterror command on the
     #   database to report any assertion. In addition, a hash can be provided to
     #   run an fsync and/or wait for replication of the remove (>= 1.5.1). See the options
-    #   for DB#error.
+    #   for DB#get_last_error.
     #
     # @example remove all documents from the 'users' collection:
     #   users.remove

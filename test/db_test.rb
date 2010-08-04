@@ -164,30 +164,30 @@ class DBTest < Test::Unit::TestCase
 
   def test_error
     @@db.reset_error_history
-    assert_nil @@db.error
+    assert_nil @@db.get_last_error['err']
     assert !@@db.error?
     assert_nil @@db.previous_error
 
     @@db.command({:forceerror => 1}, :check_response => false)
     assert @@db.error?
-    assert_not_nil @@db.error
+    assert_not_nil @@db.get_last_error['err']
     assert_not_nil @@db.previous_error
 
     @@db.command({:forceerror => 1}, :check_response => false)
     assert @@db.error?
-    assert @@db.error
+    assert @@db.get_last_error['err']
     prev_error = @@db.previous_error
     assert_equal 1, prev_error['nPrev']
-    assert_equal prev_error["err"], @@db.error
+    assert_equal prev_error["err"], @@db.get_last_error['err']
 
     @@db.collection('test').find_one
-    assert_nil @@db.error
+    assert_nil @@db.get_last_error['err']
     assert !@@db.error?
     assert @@db.previous_error
     assert_equal 2, @@db.previous_error['nPrev']
 
     @@db.reset_error_history
-    assert_nil @@db.error
+    assert_nil @@db.get_last_error['err']
     assert !@@db.error?
     assert_nil @@db.previous_error
   end

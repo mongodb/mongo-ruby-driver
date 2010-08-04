@@ -1,4 +1,4 @@
-require 'test/test_helper'
+require './test/test_helper'
 
 class TestCollection < Test::Unit::TestCase
   @@connection ||= Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost', ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)

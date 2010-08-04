@@ -398,7 +398,7 @@ module Mongo
     # @param [Hash] last_error_params parameters to be sent to getLastError. See DB#error for
     #   available options.
     #
-    # @see DB#error for valid last error params.
+    # @see DB#get_last_error for valid last error params.
     #
     # @return [Array]
     #   An array whose indexes include [0] documents returned, [1] number of document received,

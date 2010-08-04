@@ -15,7 +15,7 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def teardown
-    @mongo.db(MONGO_TEST_DB).error
+    @mongo[MONGO_TEST_DB].get_last_error
   end
 
   def test_slave_ok_with_multiple_nodes

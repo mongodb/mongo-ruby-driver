@@ -19,7 +19,7 @@ class DBAPITest < Test::Unit::TestCase
 
   def teardown
     @@coll.remove
-    @@db.error
+    @@db.get_last_error
   end
 
   def test_clear
