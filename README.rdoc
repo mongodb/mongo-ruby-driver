@@ -165,7 +165,7 @@ or handle reconnecting when passenger forks a new process:
   if defined?(PhusionPassenger)
     PhusionPassenger.on_event(:starting_worker_process) do |forked|
       if forked
-        # Call db.connect_to_master to reconnect here
+        # Call db.connect to reconnect here
       end
     end
   end
