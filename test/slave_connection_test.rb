@@ -9,7 +9,7 @@ class SlaveConnectionTest < Test::Unit::TestCase
     @@port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
     conn = Connection.new(@@host, @@port, :slave_ok => true)
     response = conn['admin'].command(:ismaster => 1)
-    Mongo::Support.ok?(response['ok']) && response['ismaster'] != 1
+    Mongo::Support.ok?(response) && response['ismaster'] != 1
   end
 
   if self.connect_to_slave
