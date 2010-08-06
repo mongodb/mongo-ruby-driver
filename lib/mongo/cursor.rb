@@ -229,7 +229,7 @@ module Mongo
     #
     # @return [True]
     def close
-      if @cursor_id
+      if @cursor_id && @cursor_id != 0
         message = BSON::ByteBuffer.new([0, 0, 0, 0])
         message.put_int(1)
         message.put_long(@cursor_id)
