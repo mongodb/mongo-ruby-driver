@@ -148,7 +148,7 @@ module Mongo
       if opts[:timeout] == false && !block_given?
         raise ArgumentError, "Timeout can be set to false only when #find is invoked with a block."
       end
-      timeout = block_given? ? (opts.delete(:timeout) || true) : true
+      timeout = block_given? ? opts.fetch(:timeout, true) : true
       if hint
         hint = normalize_hint_fields(hint)
       else
