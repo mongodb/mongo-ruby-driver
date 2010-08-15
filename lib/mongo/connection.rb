@@ -24,6 +24,9 @@ module Mongo
 
   # Instantiates and manages connections to MongoDB.
   class Connection
+    TCPSocket = ::TCPSocket
+    Mutex = ::Mutex
+    ConditionVariable = ::ConditionVariable
 
     # Abort connections if a ConnectionError is raised.
     Thread.abort_on_exception = true
