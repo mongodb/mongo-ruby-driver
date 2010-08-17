@@ -471,7 +471,7 @@ module Mongo
     # @option opts [String] :out (nil) the name of the output collection. If specified, the collection will not be treated as temporary.
     # @option opts [Boolean] :keeptemp (false) if true, the generated collection will be persisted. default is false.
     # @option opts [Boolean ] :verbose (false) if true, provides statistics on job execution time.
-    # @options opts [Boolean] :raw (false) if true, return the raw result object from the map_reduce command, and not
+    # @option opts [Boolean] :raw (false) if true, return the raw result object from the map_reduce command, and not
     #   the instantiated collection that's returned by default.
     #
     # @return [Collection] a collection containing the results of the operation.
