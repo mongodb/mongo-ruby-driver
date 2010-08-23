@@ -179,4 +179,12 @@ class OrderedHashTest < Test::Unit::TestCase
     assert !@oh.keys.include?('z')
   end
 
+  def test_reject
+    new = @oh.reject
+    assert new.keys == @oh.keys
+
+    new = @oh.reject { |k, v| k == 'z' }
+    assert !new.keys.include?('z')
+  end
+
 end

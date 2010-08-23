@@ -129,6 +129,12 @@ module BSON
         }
       end
 
+      def reject(&block)
+        clone = self.clone
+        return clone unless block_given?
+        clone.delete_if &block
+      end
+
       def clear
         super
         @ordered_set.clear
