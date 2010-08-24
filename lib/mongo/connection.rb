@@ -35,7 +35,7 @@ module Mongo
     MONGODB_URI_MATCHER = /(([-_.\w\d]+):([-_\w\d]+)@)?([-.\w\d]+)(:([\w\d]+))?(\/([-\d\w]+))?/
     MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]"
 
-    attr_reader :logger, :size, :host, :port, :nodes, :auths, :sockets, :checked_out
+    attr_reader :logger, :size, :host, :port, :nodes, :auths, :sockets, :checked_out, :primary, :secondaries, :arbiters
 
     # Counter for generating unique request ids.
     @@current_request_id = 0
@@ -49,6 +49,11 @@ module Mongo
     # or replica pair, use Connection.multi. If you're only specifying one node in the
     # replica set, you can use Connection.new, as any other host known to the set will be
     # cached.
+    #
+    # Once connected to a replica set, you can find out which nodes are primary, secondary, and
+    # arbiters with the corresponding accessors: Connection#primary, Connection#secondaries, and
+    # Connection#arbiters. This is useful if your application needs to connect manually to nodes other
+    # than the primary.
     #
     # @param [String, Hash] host.
     # @param [Integer] port specify a port number here if only one host is being specified.
@@ -115,6 +120,12 @@ module Mongo
       else
         @slave_ok = options[:slave_ok]
       end
+
+      # Cache the various node types
+      # when connecting to a replica set.
+      @primary     = nil
+      @secondaries = []
+      @arbiters    = []
 
       @logger   = options[:logger] || nil
       @options  = options
@@ -463,9 +474,11 @@ module Mongo
 
       while !connected? && !(nodes_to_try = @nodes - @nodes_tried).empty?
         nodes_to_try.each do |node|
-          if is_primary?(check_is_master(node))
+          config = check_is_master(node)
+          if is_primary?(config)
             set_primary(node)
-            break
+          else
+            set_auxillary(node, config)
           end
         end
       end
@@ -578,6 +591,9 @@ module Mongo
       close
       @host = nil
       @port = nil
+      @primary = nil
+      @secondaries = []
+      @arbiters    = []
       @nodes_tried = []
     end
 
@@ -592,7 +608,6 @@ module Mongo
       config && (config['ismaster'] == 1 || config['ismaster'] == true) || @slave_ok
     end
 
-    # @return
     def check_is_master(node)
       begin
         host, port = *node
@@ -622,7 +637,20 @@ module Mongo
     # apply any saved authentication credentials.
     def set_primary(node)
       @host, @port = *node
+      @primary = [@host, @port]
       apply_saved_authentication
+    end
+
+    # Determines what kind of node we have and caches its host
+    # and port so that users can easily connect manually.
+    def set_auxillary(node, config)
+      if config
+        if config['secondary']
+          @secondaries << node unless @secondaries.include?(node)
+        elsif config['arbiterOnly']
+          @arbiters << node unless @arbiters.include?(node)
+        end
+      end
     end
 
     # Update the list of known nodes. Only applies to replica sets,
