@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
 
   s.files  = ['README.rdoc', 'HISTORY', 'Rakefile',
     'mongo.gemspec', 'LICENSE.txt']
-v s.files += ['lib/mongo.rb'] + Dir['lib/mongo/**/*.rb']
+  s.files += ['lib/mongo.rb'] + Dir['lib/mongo/**/*.rb']
   s.files += Dir['examples/**/*.rb'] + Dir['bin/**/*.rb']
   s.test_files = Dir['test/**/*.rb']
 
