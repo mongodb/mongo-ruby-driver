@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
 
   s.files  = ['README.rdoc', 'HISTORY', 'Rakefile',
     'mongo.gemspec', 'LICENSE.txt']
-  s.files += ['lib/mongo.rb'] + Dir['lib/mongo/**/*.rb']
+v s.files += ['lib/mongo.rb'] + Dir['lib/mongo/**/*.rb']
   s.files += Dir['examples/**/*.rb'] + Dir['bin/**/*.rb']
   s.test_files = Dir['test/**/*.rb']
 
@@ -29,5 +29,5 @@ Gem::Specification.new do |s|
   s.email = 'mongodb-dev@googlegroups.com'
   s.homepage = 'http://www.mongodb.org'
 
-  s.add_dependency(%q<bson>, [">= 1.0.4"])
+  s.add_dependency(%q<bson>, [">= 1.0.5"])
 end
