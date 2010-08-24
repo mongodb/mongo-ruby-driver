@@ -89,6 +89,7 @@ module BSON
     end
 
     def serialize(obj, check_keys=false, move_id=false)
+      raise(InvalidDocument, "BSON.serialize takes a Hash but got a #{obj.class}") unless obj.is_a?(Hash)
       raise "Document is null" unless obj
 
       @buf.rewind

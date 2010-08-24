@@ -22,6 +22,20 @@ class BSONTest < Test::Unit::TestCase
 
   include BSON
 
+  def test_require_hash
+    assert_raise_error InvalidDocument, "takes a Hash" do
+      BSON.serialize('foo')
+    end
+
+    assert_raise_error InvalidDocument, "takes a Hash" do
+      BSON.serialize(Object.new)
+    end
+
+    assert_raise_error InvalidDocument, "takes a Hash" do
+      BSON.serialize(Set.new)
+    end
+  end
+
   def test_read_bson_io_document
     doc = {'doc' => 'hello, world'}
     bson = BSON.serialize(doc)
