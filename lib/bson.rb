@@ -60,6 +60,7 @@ require 'bson/types/binary'
 require 'bson/types/code'
 require 'bson/types/dbref'
 require 'bson/types/objectid'
+require 'bson/types/object_id'
 require 'bson/types/min_max_keys'
 
 require 'base64'

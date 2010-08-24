@@ -47,7 +47,7 @@ module Mongo
     # @option opts [String] :fs_name the file system prefix.
     # @option opts [Integer] (262144) :chunk_size size of file chunks in bytes.
     # @option opts [Hash] :metadata ({}) any additional data to store with the file.
-    # @option opts [ObjectID] :_id (ObjectID) a unique id for
+    # @option opts [ObjectId] :_id (ObjectId) a unique id for
     #   the file to be use in lieu of an automatically generated one.
     # @option opts [String] :content_type ('binary/octet-stream') If no content type is specified,
     #   the content type will may be inferred from the filename extension if the mime-types gem can be
@@ -180,7 +180,7 @@ module Mongo
     # This method will be invoked automatically when
     # on GridIO#open is passed a block. Otherwise, it must be called manually.
     #
-    # @return [BSON::ObjectID]
+    # @return [BSON::ObjectId]
     def close
       if @mode[0] == ?w
         if @current_chunk['n'].zero? && @chunk_position.zero?
@@ -200,7 +200,7 @@ module Mongo
 
     def create_chunk(n)
       chunk = BSON::OrderedHash.new
-      chunk['_id']      = BSON::ObjectID.new
+      chunk['_id']      = BSON::ObjectId.new
       chunk['n']        = n
       chunk['files_id'] = @files_id
       chunk['data']     = ''
@@ -308,7 +308,7 @@ module Mongo
 
     # Initialize the class for writing a file.
     def init_write(opts)
-      @files_id      = opts.delete(:_id) || BSON::ObjectID.new
+      @files_id      = opts.delete(:_id) || BSON::ObjectId.new
       @content_type  = opts.delete(:content_type) || (defined? MIME) && get_content_type || DEFAULT_CONTENT_TYPE
       @chunk_size    = opts.delete(:chunk_size) || DEFAULT_CHUNK_SIZE
       @metadata      = opts.delete(:metadata) if opts[:metadata]

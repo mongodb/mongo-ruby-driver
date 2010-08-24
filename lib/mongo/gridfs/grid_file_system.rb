@@ -55,7 +55,7 @@ module Mongo
     # @param [Hash] opts see GridIO#new
     #
     # @option opts [Hash] :metadata ({}) any additional data to store with the file.
-    # @option opts [ObjectID] :_id (ObjectID) a unique id for
+    # @option opts [ObjectId] :_id (ObjectId) a unique id for
     #   the file to be use in lieu of an automatically generated one.
     # @option opts [String] :content_type ('binary/octet-stream') If no content type is specified,
     #   the content type will may be inferred from the filename extension if the mime-types gem can be

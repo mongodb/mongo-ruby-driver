@@ -58,7 +58,7 @@ module Mongo
 
       @db, @name  = db, name
       @connection = @db.connection
-      @pk_factory = pk_factory || BSON::ObjectID
+      @pk_factory = pk_factory || BSON::ObjectId
       @hint = nil
     end
 
@@ -145,15 +145,19 @@ module Mongo
       hint   = opts.delete(:hint)
       snapshot = opts.delete(:snapshot)
       batch_size = opts.delete(:batch_size)
+
       if opts[:timeout] == false && !block_given?
         raise ArgumentError, "Timeout can be set to false only when #find is invoked with a block."
+      else
+        timeout = opts.delete(:timeout) || false
       end
-      timeout = block_given? ? opts.fetch(:timeout, true) : true
+
       if hint
         hint = normalize_hint_fields(hint)
       else
         hint = @hint        # assumed to be normalized already
       end
+
       raise RuntimeError, "Unknown options [#{opts.inspect}]" unless opts.empty?
 
       cursor = Cursor.new(self, :selector => selector, :fields => fields, :skip => skip, :limit => limit,
@@ -173,9 +177,9 @@ module Mongo
     # @return [OrderedHash, Nil]
     #   a single document or nil if no result is found.
     #
-    # @param [Hash, ObjectID, Nil] spec_or_object_id a hash specifying elements 
+    # @param [Hash, ObjectId, Nil] spec_or_object_id a hash specifying elements 
     #   which must be present for a document to be included in the result set or an 
-    #   instance of ObjectID to be used as the value for an _id query.
+    #   instance of ObjectId to be used as the value for an _id query.
     #   If nil, an empty selector, {}, will be used.
     #
     # @option opts [Hash]
@@ -187,12 +191,12 @@ module Mongo
       spec = case spec_or_object_id
              when nil
                {}
-             when BSON::ObjectID
+             when BSON::ObjectId
                {:_id => spec_or_object_id}
              when Hash
                spec_or_object_id
              else
-               raise TypeError, "spec_or_object_id must be an instance of ObjectID or Hash, or nil"
+               raise TypeError, "spec_or_object_id must be an instance of ObjectId or Hash, or nil"
              end
       find(spec, opts.merge(:limit => -1)).next_document
     end
@@ -204,7 +208,7 @@ module Mongo
     #   then an update (upsert) operation will be performed, and any existing
     #   document with that _id is overwritten. Otherwise an insert operation is performed.
     #
-    # @return [ObjectID] the _id of the saved document.
+    # @return [ObjectId] the _id of the saved document.
     #
     # @option opts [Boolean, Hash] :safe (+false+)
     #   run the operation in safe mode, which run a getlasterror command on the
@@ -230,7 +234,7 @@ module Mongo
     # @param [Hash, Array] doc_or_docs
     #   a document (as a hash) or array of documents to be inserted.
     #
-    # @return [ObjectID, Array]
+    # @return [ObjectId, Array]
     #   the _id of the inserted document or a list of _ids of all inserted documents.
     #   Note: the object may have been modified by the database's PK factory, if it has one.
     #

@@ -29,8 +29,8 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_insert
-    assert_kind_of BSON::ObjectID, @@coll.insert('a' => 2)
-    assert_kind_of BSON::ObjectID, @@coll.insert('b' => 3)
+    assert_kind_of BSON::ObjectId, @@coll.insert('a' => 2)
+    assert_kind_of BSON::ObjectId, @@coll.insert('b' => 3)
 
     assert_equal 3, @@coll.count
     docs = @@coll.find().to_a
@@ -62,7 +62,7 @@ class DBAPITest < Test::Unit::TestCase
     ids = @@coll.insert([{'a' => 2}, {'b' => 3}])
 
     ids.each do |i|
-      assert_kind_of BSON::ObjectID, i
+      assert_kind_of BSON::ObjectId, i
     end
 
     assert_equal 3, @@coll.count
@@ -575,7 +575,7 @@ class DBAPITest < Test::Unit::TestCase
   def test_deref
     @@coll.remove
 
-    assert_equal nil, @@db.dereference(DBRef.new("test", ObjectID.new))
+    assert_equal nil, @@db.dereference(DBRef.new("test", ObjectId.new))
     @@coll.insert({"x" => "hello"})
     key = @@coll.find_one()["_id"]
     assert_equal "hello", @@db.dereference(DBRef.new("test", key))["x"]
@@ -596,7 +596,7 @@ class DBAPITest < Test::Unit::TestCase
     a = {"hello" => "world"}
 
     id = @@coll.save(a)
-    assert_kind_of ObjectID, id
+    assert_kind_of ObjectId, id
     assert_equal 1, @@coll.count
 
     assert_equal id, @@coll.save(a)
@@ -625,14 +625,14 @@ class DBAPITest < Test::Unit::TestCase
 
     @@coll.save("hello" => "mike")
     id = @@coll.save("hello" => "world")
-    assert_kind_of ObjectID, id
+    assert_kind_of ObjectId, id
 
     assert_equal "world", @@coll.find_one(:_id => id)["hello"]
     @@coll.find(:_id => id).to_a.each do |doc|
       assert_equal "world", doc["hello"]
     end
 
-    id = ObjectID.from_string(id.to_s)
+    id = ObjectId.from_string(id.to_s)
     assert_equal "world", @@coll.find_one(:_id => id)["hello"]
   end
 

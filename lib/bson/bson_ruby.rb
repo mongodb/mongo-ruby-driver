@@ -360,7 +360,7 @@ module BSON
     end
 
     def deserialize_oid_data(buf)
-      ObjectID.new(buf.get(12))
+      ObjectId.new(buf.get(12))
     end
 
     def deserialize_dbref_data(buf)
@@ -561,6 +561,8 @@ module BSON
       when Regexp
         REGEX
       when ObjectID
+        OID
+      when ObjectId
         OID
       when DBRef
         REF

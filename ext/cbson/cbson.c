@@ -75,6 +75,7 @@
 static VALUE Binary;
 static VALUE Time;
 static VALUE ObjectID;
+static VALUE ObjectId;
 static VALUE DBRef;
 static VALUE Code;
 static VALUE MinKey;
@@ -379,7 +380,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 SAFE_WRITE(buffer, RSTRING_PTR(string_data), length);
                 break;
             }
-            if (strcmp(cls, "BSON::ObjectID") == 0) {
+            if ((strcmp(cls, "BSON::ObjectId") == 0) || (strcmp(cls, "BSON::ObjectID") == 0)) {
                 VALUE as_array = rb_funcall(value, rb_intern("to_a"), 0);
                 int i;
                 write_name_and_type(buffer, key, 0x07);
@@ -691,7 +692,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
         {
             VALUE str = rb_str_new(buffer + *position, 12);
             VALUE oid = rb_funcall(str, rb_intern("unpack"), 1, rb_str_new2("C*"));
-            value = rb_class_new_instance(1, &oid, ObjectID);
+            value = rb_class_new_instance(1, &oid, ObjectId);
             *position += 12;
             break;
         }
@@ -756,7 +757,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
 
             str = rb_str_new(buffer + *position, 12);
             oid = rb_funcall(str, rb_intern("unpack"), 1, rb_str_new2("C*"));
-            id = rb_class_new_instance(1, &oid, ObjectID);
+            id = rb_class_new_instance(1, &oid, ObjectId);
             *position += 12;
 
             argv[0] = collection;
@@ -916,6 +917,8 @@ void Init_cbson() {
     Binary = rb_const_get(bson, rb_intern("Binary"));
     rb_require("bson/types/objectid");
     ObjectID = rb_const_get(bson, rb_intern("ObjectID"));
+    rb_require("bson/types/object_id");
+    ObjectId = rb_const_get(bson, rb_intern("ObjectId"));
     rb_require("bson/types/dbref");
     DBRef = rb_const_get(bson, rb_intern("DBRef"));
     rb_require("bson/types/code");

@@ -42,7 +42,7 @@ module Mongo
       #
       #   # Check for existence by _id
       #   @grid = Grid.new(@db)
-      #   @grid.exist?(:_id => BSON::ObjectID.from_string('4bddcd24beffd95a7db9b8c8'))
+      #   @grid.exist?(:_id => BSON::ObjectId.from_string('4bddcd24beffd95a7db9b8c8'))
       #
       #   # Check for existence by an arbitrary attribute.
       #   @grid = Grid.new(@db)

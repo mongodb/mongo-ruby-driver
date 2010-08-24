@@ -51,7 +51,7 @@ module Mongo
     #
     # @option opts [String] :filename (nil) a name for the file.
     # @option opts [Hash] :metadata ({}) any additional data to store with the file.
-    # @option opts [ObjectID] :_id (ObjectID) a unique id for
+    # @option opts [ObjectId] :_id (ObjectId) a unique id for
     #   the file to be use in lieu of an automatically generated one.
     # @option opts [String] :content_type ('binary/octet-stream') If no content type is specified,
     #   the content type will may be inferred from the filename extension if the mime-types gem can be
@@ -60,7 +60,7 @@ module Mongo
     # @option opts [Boolean] :safe (false) When safe mode is enabled, the chunks sent to the server
     #   will be validated using an md5 hash. If validation fails, an exception will be raised.
     #
-    # @return [Mongo::ObjectID] the file's id.
+    # @return [Mongo::ObjectId] the file's id.
     def put(data, opts={})
       filename = opts[:filename]
       opts.merge!(default_grid_io_opts)

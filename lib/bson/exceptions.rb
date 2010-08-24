@@ -32,6 +32,9 @@ module BSON
   # Raised when attempting to initialize an invalid ObjectID.
   class InvalidObjectID < BSONError; end
 
+  # Raised when attempting to initialize an invalid ObjectID.
+  class InvalidObjectId < BSONError; end
+
   # Raised when trying to insert a document that exceeds the 4MB limit or
   # when the document contains objects that can't be serialized as BSON.
   class InvalidDocument < BSONError; end

@@ -22,28 +22,25 @@ require 'digest/md5'
 
 module BSON
 
-  def BSON::ObjectID(s)
-    ObjectID.from_string(s)
+  def BSON::ObjectId(s)
+    ObjectId.from_string(s)
   end
 
   # Generates MongoDB object ids.
   #
   # @core objectids
-  class ObjectID
+  class ObjectId
     @@lock  = Mutex.new
     @@index = 0
 
-    # @deprecated
-    #
     # Create a new object id. If no parameter is given, an id corresponding
-    # to the ObjectID BSON data type will be created. This is a 12-byte value
+    # to the ObjectId BSON data type will be created. This is a 12-byte value
     # consisting of a 4-byte timestamp, a 3-byte machine id, a 2-byte process id,
     # and a 3-byte counter.
     #
     # @param [Array] data should be an array of bytes. If you want
     #   to generate a standard MongoDB object id, leave this argument blank.
     def initialize(data=nil)
-      warn "BSON::ObjectID is deprecated. Please use BSON::ObjectId instead."
       @data = data || generate
     end
 
@@ -66,11 +63,11 @@ module BSON
     #
     # @param [Time] time a utc time to encode as an object id.
     #
-    # @return [Mongo::ObjectID]
+    # @return [Mongo::ObjectId]
     #
     # @example Return all document created before Jan 1, 2010.
     #   time = Time.utc(2010, 1, 1)
-    #   time_id = ObjectID.from_time(time)
+    #   time_id = ObjectId.from_time(time)
     #   collection.find({'_id' => {'$lt' => time_id}})
     def self.from_time(time)
       self.new([time.to_i,0,0].pack("NNN").unpack("C12"))
@@ -80,7 +77,7 @@ module BSON
     #
     # @param [Hash] doc a document requiring an _id.
     #
-    # @return [Mongo::ObjectID, Object] returns a newly-created or 
+    # @return [Mongo::ObjectId, Object] returns a newly-created or 
     #   current _id for the given document.
     def self.create_pk(doc)
       doc.has_key?(:_id) || doc.has_key?('_id') ? doc : doc.merge!(:_id => self.new)
@@ -88,7 +85,7 @@ module BSON
 
     # Check equality of this object id with another.
     #
-    # @param [Mongo::ObjectID] object_id
+    # @param [Mongo::ObjectId] object_id
     def eql?(object_id)
       @data == object_id.instance_variable_get("@data")
     end
@@ -109,14 +106,14 @@ module BSON
       @data.dup
     end
 
-    # Given a string representation of an ObjectID, return a new ObjectID
+    # Given a string representation of an ObjectId, return a new ObjectId
     # with that value.
     #
     # @param [String] str
     #
-    # @return [Mongo::ObjectID]
+    # @return [Mongo::ObjectId]
     def self.from_string(str)
-      raise InvalidObjectID, "illegal ObjectID format" unless legal?(str)
+      raise InvalidObjectId, "illegal ObjectId format" unless legal?(str)
       data = []
       12.times do |i|
         data[i] = str[i * 2, 2].to_i(16)
@@ -136,18 +133,18 @@ module BSON
     end
 
     def inspect
-      "BSON::ObjectID('#{to_s}')"
+      "BSON::ObjectId('#{to_s}')"
     end
 
     # Convert to MongoDB extended JSON format. Since JSON includes type information,
-    # but lacks an ObjectID type, this JSON format encodes the type using an $oid key.
+    # but lacks an ObjectId type, this JSON format encodes the type using an $oid key.
     #
     # @return [String] the object id represented as MongoDB extended JSON.
     def to_json(*a)
       "{\"$oid\": \"#{to_s}\"}"
     end
 
-    # Return the UTC time at which this ObjectID was generated. This may
+    # Return the UTC time at which this ObjectId was generated. This may
     # be used in lieu of a created_at timestamp since this information
     # is always encoded in the object id.
     #

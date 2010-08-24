@@ -12,9 +12,9 @@ class TestCollection < Test::Unit::TestCase
 
   def test_optional_pk_factory
     @coll_default_pk = @@db.collection('stuff')
-    assert_equal BSON::ObjectID, @coll_default_pk.pk_factory
+    assert_equal BSON::ObjectId, @coll_default_pk.pk_factory
     @coll_default_pk = @@db.create_collection('more-stuff')
-    assert_equal BSON::ObjectID, @coll_default_pk.pk_factory
+    assert_equal BSON::ObjectId, @coll_default_pk.pk_factory
 
     # Create a db with a pk_factory.
     @db = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
@@ -334,7 +334,7 @@ class TestCollection < Test::Unit::TestCase
 
     assert_equal nil, @@test.find_one("hello" => "foo")
     assert_equal nil, @@test.find_one(BSON::OrderedHash["hello", "foo"])
-    assert_equal nil, @@test.find_one(ObjectID.new)
+    assert_equal nil, @@test.find_one(ObjectId.new)
 
     assert_raise TypeError do
       @@test.find_one(6)
