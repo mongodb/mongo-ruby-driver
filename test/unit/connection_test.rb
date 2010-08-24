@@ -7,7 +7,7 @@ class ConnectionTest < Test::Unit::TestCase
       def new_mock_socket
         socket = Object.new
         socket.stubs(:setsockopt).with(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
-        socket.expects(:close)
+        socket.stubs(:close)
         socket
       end
 
@@ -69,8 +69,8 @@ class ConnectionTest < Test::Unit::TestCase
 
         admin_db = new_mock_db
         @hosts = ['localhost:27017', 'localhost:27018', 'localhost:27019']
-        admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1, 'hosts' => @hosts})
-        @conn.expects(:[]).with('admin').returns(admin_db)
+        admin_db.stubs(:command).returns({'ok' => 1, 'ismaster' => 1, 'hosts' => @hosts})
+        @conn.stubs(:[]).with('admin').returns(admin_db)
         @conn.connect
       end
 
