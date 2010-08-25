@@ -158,26 +158,24 @@ module BSON
 
     private
 
-    # We need to define this method only if CBson isn't loaded.
-    unless defined? CBson
-      def generate
-        oid = ''
+    # This gets overwritten by the C extension if it loads.
+    def generate
+      oid = ''
 
-        # 4 bytes current time
-        time = Time.new.to_i
-        oid += [time].pack("N")
+      # 4 bytes current time
+      time = Time.new.to_i
+      oid += [time].pack("N")
 
-        # 3 bytes machine
-        oid += Digest::MD5.digest(Socket.gethostname)[0, 3]
+      # 3 bytes machine
+      oid += Digest::MD5.digest(Socket.gethostname)[0, 3]
 
-        # 2 bytes pid
-        oid += [Process.pid % 0xFFFF].pack("n")
+      # 2 bytes pid
+      oid += [Process.pid % 0xFFFF].pack("n")
 
-        # 3 bytes inc
-        oid += [get_inc].pack("N")[1, 3]
+      # 3 bytes inc
+      oid += [get_inc].pack("N")[1, 3]
 
-        oid.unpack("C12")
-      end
+      oid.unpack("C12")
     end
 
     def get_inc

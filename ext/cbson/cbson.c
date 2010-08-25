@@ -949,6 +949,7 @@ void Init_cbson() {
     DigestMD5 = rb_const_get(Digest, rb_intern("MD5"));
 
     rb_define_method(ObjectID, "generate", objectid_generate, 0);
+    rb_define_method(ObjectId, "generate", objectid_generate, 0);
 
     rb_define_method(rb_cArray, "fast_pack", fast_pack, 0);
 }
