@@ -73,7 +73,6 @@
 #define MAX_HOSTNAME_LENGTH 256
 
 static VALUE Binary;
-static VALUE Time;
 static VALUE ObjectID;
 static VALUE ObjectId;
 static VALUE DBRef;
@@ -708,12 +707,9 @@ static VALUE get_value(const char* buffer, int* position, int type) {
     case 9:
         {
             long long millis;
-            VALUE seconds, microseconds;
             memcpy(&millis, buffer + *position, 8);
-            seconds = LL2NUM(millis / 1000);
-            microseconds = INT2NUM((millis % 1000) * 1000);
 
-            value = rb_funcall(Time, rb_intern("at"), 2, seconds, microseconds);
+            value = rb_time_new(millis / 1000, (millis % 1000) * 1000);
             value = rb_funcall(value, rb_intern("utc"), 0);
             *position += 8;
             break;
@@ -914,7 +910,6 @@ static VALUE objectid_generate(VALUE self)
 
 void Init_cbson() {
     VALUE bson, CBson, Digest, ext_version;
-    Time = rb_const_get(rb_cObject, rb_intern("Time"));
 
     bson = rb_const_get(rb_cObject, rb_intern("BSON"));
     rb_require("bson/types/binary");
