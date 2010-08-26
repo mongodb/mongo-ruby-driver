@@ -81,6 +81,18 @@ module Mongo
       doc
     end
 
+    # Reset this cursor on the server. Cursor options, such as the
+    # query string and the values for skip and limit, are preserved.
+    def rewind!
+      close
+      @cache.clear
+      @cursor_id  = nil
+      @closed     = false
+      @query_run  = false
+      @n_received = nil
+      true
+    end
+
     # Determine whether this cursor has any remaining results.
     #
     # @return [Boolean]
@@ -187,22 +199,18 @@ module Mongo
 
     # Receive all the documents from this cursor as an array of hashes.
     #
-    # Note: use of this method is discouraged - in most cases, it's much more
+    # Notes:
+    #
+    # If you've already started iterating over the cursor, the array returned
+    # by this method contains only the remaining documents. See Cursor#rewind! if you
+    # need to reset the cursor.
+    #
+    # Use of this method is discouraged - in most cases, it's much more
     # efficient to retrieve documents as you need them by iterating over the cursor.
     #
     # @return [Array] an array of documents.
-    #
-    # @raise [InvalidOperation] if this cursor has already been used or if
-    #   this method has already been called on the cursor.
     def to_a
-      raise InvalidOperation, "can't call Cursor#to_a on a used cursor" if @query_run
-      rows = []
-      num_returned = 0
-      while has_next? && (@limit <= 0 || num_returned < @limit)
-        rows << next_document
-        num_returned += 1
-      end
-      rows
+      super
     end
 
     # Get the explain plan for this cursor.

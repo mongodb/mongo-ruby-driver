@@ -445,25 +445,6 @@ class DBAPITest < Test::Unit::TestCase
     @@db.drop_collection('foobar')
   end
 
-  def test_to_a
-    cursor = @@coll.find()
-    rows = cursor.to_a
-
-    assert_raise InvalidOperation do
-      cursor.to_a
-    end
-
-    cursor.each { |doc| fail "should be no docs in each now" }
-  end
-
-  def test_to_a_after_each
-    cursor = @@coll.find
-    cursor.each { |row| row }
-    assert_raise InvalidOperation do
-      cursor.to_a
-    end
-  end
-
   def test_where
     @@coll.insert('a' => 2)
     @@coll.insert('a' => 3)

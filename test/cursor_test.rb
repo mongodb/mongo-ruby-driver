@@ -396,4 +396,36 @@ class CursorTest < Test::Unit::TestCase
     end
   end
 
+  def test_enumberables
+    @@coll.remove
+    100.times do |n|
+      @@coll.insert({:a => n})
+    end
+
+    assert_equal 100, @@coll.find.to_a.length
+    assert_equal 100, @@coll.find.to_set.length
+
+    cursor = @@coll.find
+    50.times { |n| cursor.next_document }
+    assert_equal 50, cursor.to_a.length
+  end
+
+  def test_rewind
+    @@coll.remove
+    100.times do |n|
+      @@coll.insert({:a => n})
+    end
+
+    cursor = @@coll.find
+    cursor.to_a
+    assert_equal [], cursor.map {|doc| doc }
+
+    cursor.rewind!
+    assert_equal 100, cursor.map {|doc| doc }.length
+
+    cursor.rewind!
+    5.times { cursor.next_document }
+    cursor.rewind!
+    assert_equal 100, cursor.map {|doc| doc }.length
+  end
 end
