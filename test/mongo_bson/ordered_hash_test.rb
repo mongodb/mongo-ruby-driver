@@ -187,4 +187,11 @@ class OrderedHashTest < Test::Unit::TestCase
     assert !new.keys.include?('z')
   end
 
+  def test_clone
+    copy = @oh.clone
+    assert copy.keys == @oh.keys
+
+    copy[:foo] = 1
+    assert copy.keys != @oh.keys
+  end
 end

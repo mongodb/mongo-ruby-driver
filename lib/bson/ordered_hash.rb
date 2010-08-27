@@ -88,7 +88,7 @@ module BSON
         @ordered_keys ||= []
         @ordered_keys.map { |k| [k, self[k]] }      
       end
-    
+
       def values
         collect { |k, v| v }
       end
@@ -158,6 +158,9 @@ module BSON
         end
       end
 
+      def clone
+        Marshal::load(Marshal.dump(self))
+      end
     end
   end
 end
