@@ -180,7 +180,7 @@ class OrderedHashTest < Test::Unit::TestCase
   end
 
   def test_reject
-    new = @oh.reject
+    new = @oh.reject { |k, v| k == 'foo' }
     assert new.keys == @oh.keys
 
     new = @oh.reject { |k, v| k == 'z' }
