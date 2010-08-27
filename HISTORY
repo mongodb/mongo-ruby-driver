@@ -1,3 +1,9 @@
+1.0.8 2010-8-27
+
+* Cursor#rewind! and more consistent Cursor Enumberable behavior
+* Deprecated ObjectID for ObjectId
+* Numerous minor bug fixes.
+
 1.0.7 2010-8-4
 
 * A few minor test/doc fixes.
