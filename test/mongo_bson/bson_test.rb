@@ -6,11 +6,10 @@ require 'rational'
 
 begin
   require 'active_support/core_ext'
-  require 'active_support/hash_with_indifferent_access'
   Time.zone = "Pacific Time (US & Canada)"
   Zone = Time.zone.now
 rescue LoadError
-  warn 'Could not test BSON with HashWithIndifferentAccess.'
+  warn 'Mocking time with zone'
   module ActiveSupport
     class TimeWithZone
     end
@@ -523,20 +522,22 @@ class BSONTest < Test::Unit::TestCase
                  BSON::BSON_CODER.serialize(c, false, false).to_s
   end
 
-  if defined?(HashWithIndifferentAccess)
-    def test_keep_id_with_hash_with_indifferent_access
-      doc = HashWithIndifferentAccess.new
-      embedded = HashWithIndifferentAccess.new
-      embedded['_id'] = ObjectID.new
-      doc['_id']      = ObjectID.new
-      doc['embedded'] = [embedded]
-      BSON::BSON_CODER.serialize(doc, false, true).to_a
-      assert doc.has_key?("_id")
-      assert doc['embedded'][0].has_key?("_id")
+  # Mocking this class for testing
+  class ::HashWithIndifferentAccess < Hash; end
 
-      doc['_id'] = ObjectID.new
-      BSON::BSON_CODER.serialize(doc, false, true).to_a
-      assert doc.has_key?("_id")
-    end
+  def test_keep_id_with_hash_with_indifferent_access
+    doc = HashWithIndifferentAccess.new
+    embedded = HashWithIndifferentAccess.new
+    embedded['_id'] = ObjectID.new
+    doc['_id']      = ObjectID.new
+    doc['embedded'] = [embedded]
+    BSON::BSON_CODER.serialize(doc, false, true).to_a
+    assert doc.has_key?("_id")
+    assert doc['embedded'][0].has_key?("_id")
+
+    doc['_id'] = ObjectID.new
+    BSON::BSON_CODER.serialize(doc, false, true).to_a
+    assert doc.has_key?("_id")
   end
+
 end

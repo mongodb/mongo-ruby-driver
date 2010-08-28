@@ -561,7 +561,7 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_
 
             write_function(key, value, pack_extra(buffer, check_keys));
         }
-    } else if (strcmp(rb_obj_classname(hash), "Hash") == 0) {
+    } else if (strncmp(rb_obj_classname(hash), "Hash", 4) == 0) {
         rb_hash_foreach(hash, write_function, pack_extra(buffer, check_keys));
     } else {
         buffer_free(buffer);
