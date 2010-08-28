@@ -85,6 +85,7 @@ static VALUE InvalidKeyName;
 static VALUE InvalidStringEncoding;
 static VALUE InvalidDocument;
 static VALUE DigestMD5;
+static VALUE RB_HASH;
 
 #if HAVE_RUBY_ENCODING_H
 #include "ruby/encoding.h"
@@ -535,7 +536,8 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_
     }
     else {
         allow_id = 1;
-        if (strcmp(rb_obj_classname(hash), "Hash") == 0) {
+        // Ensure that hash doesn't contain both '_id' and :_id
+        if ((rb_obj_classname(hash), "Hash") == 0) {
             if ((rb_funcall(hash, rb_intern("has_key?"), 1, id_str) == Qtrue) &&
                    (rb_funcall(hash, rb_intern("has_key?"), 1, id_sym) == Qtrue)) {
                       VALUE oid_sym = rb_hash_delete(hash, id_sym);
@@ -561,7 +563,7 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_
 
             write_function(key, value, pack_extra(buffer, check_keys));
         }
-    } else if (strncmp(rb_obj_classname(hash), "Hash", 4) == 0) {
+    } else if (rb_obj_is_kind_of(hash, RB_HASH) == Qtrue) {
         rb_hash_foreach(hash, write_function, pack_extra(buffer, check_keys));
     } else {
         buffer_free(buffer);
@@ -932,6 +934,7 @@ void Init_cbson() {
     InvalidDocument = rb_const_get(bson, rb_intern("InvalidDocument"));
     rb_require("bson/ordered_hash");
     OrderedHash = rb_const_get(bson, rb_intern("OrderedHash"));
+    RB_HASH = rb_const_get(bson, rb_intern("Hash"));
 
     CBson = rb_define_module("CBson");
     ext_version = rb_str_new2(VERSION);
