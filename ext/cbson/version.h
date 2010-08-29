@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-#define VERSION "1.0.6"
+#define VERSION "1.0.7"
