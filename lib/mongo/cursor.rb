@@ -321,9 +321,7 @@ module Mongo
           {fields => 1}
         when Array
           return nil if fields.length.zero?
-          returning({}) do |hash|
-            fields.each { |field| hash[field] = 1 }
-          end
+          fields.each_with_object({}) { |field, hash| hash[field] = 1 }
         when Hash
           return fields
       end

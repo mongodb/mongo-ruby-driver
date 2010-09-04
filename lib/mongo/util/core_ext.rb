@@ -20,10 +20,21 @@
 class Object
 
   #:nodoc:
-  def returning(value)
-    yield value
-    value
-  end
+  def tap
+    yield self
+    self
+  end unless respond_to? :tap
+
+end
+
+#:nodoc:
+module Enumerable
+
+  #:nodoc:
+  def each_with_object(memo)
+    each { |element| yield(element, memo) }
+    memo
+  end unless [].respond_to?(:each_with_object)
 
 end
 

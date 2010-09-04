@@ -277,8 +277,8 @@ module Mongo
     # @return [Hash]
     def database_info
       doc = self['admin'].command({:listDatabases => 1})
-      returning({}) do |info|
-        doc['databases'].each { |db| info[db['name']] = db['sizeOnDisk'].to_i }
+      doc['databases'].each_with_object({}) do |db, info|
+        info[db['name']] = db['sizeOnDisk'].to_i
       end
     end
 
