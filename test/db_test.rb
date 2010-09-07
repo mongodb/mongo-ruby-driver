@@ -203,10 +203,10 @@ class DBTest < Test::Unit::TestCase
     @@db['test'].save("i" => 1)
 
     @@db['test'].update({"i" => 1}, {"$set" => {"i" => 2}})
-    assert @@db.last_status()["updatedExisting"]
+    assert @@db.get_last_error()["updatedExisting"]
 
     @@db['test'].update({"i" => 1}, {"$set" => {"i" => 500}})
-    assert !@@db.last_status()["updatedExisting"]
+    assert !@@db.get_last_error()["updatedExisting"]
   end
 
   def test_text_port_number_raises_no_errors

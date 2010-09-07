@@ -108,7 +108,7 @@ class TestCollection < Test::Unit::TestCase
     a = {"hello" => "world"}
     @@test.insert(a)
     @@test.insert(a)
-    assert(@@db.error.include?("E11000"))
+    assert(@@db.get_last_error.include?("E11000"))
 
     assert_raise OperationFailure do
       @@test.insert(a, :safe => true)

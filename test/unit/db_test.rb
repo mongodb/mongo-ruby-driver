@@ -71,7 +71,7 @@ class DBTest < Test::Unit::TestCase
       should "raise an error if getlasterror fails" do
         @db.expects(:command).returns({})
         assert_raise Mongo::MongoDBError do
-          @db.error
+          @db.get_last_error
         end
       end
 

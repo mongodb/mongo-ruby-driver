@@ -10,6 +10,6 @@ class DBConnectionTest < Test::Unit::TestCase
     db = Connection.new(host, port).db(MONGO_TEST_DB)
     coll = db.collection('test')
     coll.remove
-    db.error
+    db.get_last_error
   end
 end
