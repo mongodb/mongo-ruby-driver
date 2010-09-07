@@ -37,8 +37,16 @@ module BSON
     attr_reader :order
 
     def initialize(initial_data=[])
-      @buf    = initial_data
-      @cursor = @buf.length
+      if initial_data.is_a?(String)
+        if initial_data.respond_to?(:force_encoding)
+          @str = initial_data.force_encoding('binary')
+        else
+          @str = initial_data
+        end
+      else
+        @buf = initial_data
+      end
+      @cursor = (@buf || @str).length
       @order  = :little_endian
       @int_pack_order    = 'V'
       @double_pack_order = 'E'
@@ -84,35 +92,38 @@ module BSON
 
     def clear
       @buf = []
+      @str = nil
       rewind
     end
 
     def size
-      @buf.size
+      (@buf || @str).size
     end
     alias_method :length, :size
 
     # Appends a second ByteBuffer object, +buffer+, to the current buffer.
     def append!(buffer)
-      @buf = @buf + buffer.to_a
+      self.buf = buf + buffer.to_a
       self
     end
 
     # Prepends a second ByteBuffer object, +buffer+, to the current buffer.
     def prepend!(buffer)
-      @buf = buffer.to_a + @buf
+      self.buf = buffer.to_a + buf
       self
     end
 
     def put(byte, offset=nil)
       @cursor = offset if offset
-      @buf[@cursor] = byte
+      buf[@cursor] = byte
+      buf_modified!
       @cursor += 1
     end
 
     def put_array(array, offset=nil)
       @cursor = offset if offset
-      @buf[@cursor, array.length] = array
+      buf[@cursor, array.length] = array
+      buf_modified!
       @cursor += array.length
     end
 
@@ -150,12 +161,12 @@ module BSON
       start = @cursor
       @cursor += len
       if one_byte
-        @buf[start]
+        buf[start]
       else
-        if @buf.respond_to? "unpack"
-          @buf[start, len].unpack("C*")
+        if buf.respond_to? "unpack"
+          buf[start, len].unpack("C*")
         else
-          @buf[start, len]
+          buf[start, len]
         end
       end
     end
@@ -163,7 +174,7 @@ module BSON
     def get_int
       check_read_length(4)
       vals = ""
-      (@cursor..@cursor+3).each { |i| vals << @buf[i].chr }
+      (@cursor..@cursor+3).each { |i| vals << buf[i].chr }
       @cursor += 4
       vals.unpack(@int_pack_order)[0]
     end
@@ -181,20 +192,20 @@ module BSON
     def get_double
       check_read_length(8)
       vals = ""
-      (@cursor..@cursor+7).each { |i| vals << @buf[i].chr }
+      (@cursor..@cursor+7).each { |i| vals << buf[i].chr }
       @cursor += 8
       vals.unpack(@double_pack_order)[0]
     end
 
     def more?
-      @cursor < @buf.size
+      @cursor < buf.size
     end
 
     def to_a
-      if @buf.respond_to? "unpack"
-        @buf.unpack("C*")
+      if buf.respond_to? "unpack"
+        buf.unpack("C*")
       else
-        @buf
+        buf
       end
     end
 
@@ -203,23 +214,42 @@ module BSON
     end
 
     def to_s
-      if @buf.respond_to? :fast_pack
-        @buf.fast_pack
-      elsif @buf.respond_to? "pack"
-        @buf.pack("C*")
-      else
-        @buf
+      if !@str
+        if @buf.respond_to? :fast_pack
+          @str = @buf.fast_pack
+        elsif @buf.respond_to? "pack"
+          @str = @buf.pack("C*")
+        else
+          @str = @buf
+        end
       end
+      @str
     end
 
     def dump
-      @buf.each_with_index { |c, i| $stderr.puts "#{'%04d' % i}: #{'%02x' % c} #{'%03o' % c} #{'%s' % c.chr} #{'%3d' % c}" }
+      buf.each_with_index { |c, i| $stderr.puts "#{'%04d' % i}: #{'%02x' % c} #{'%03o' % c} #{'%s' % c.chr} #{'%3d' % c}" }
     end
 
     private
 
+    def buf
+      if !@buf
+        @buf = @str.unpack("c*")
+      end
+      @buf
+    end
+    
+    def buf=(buffer)
+      @buf = buffer
+      @str = nil
+    end
+    
+    def buf_modified!
+      @str = nil
+    end
+    
     def check_read_length(len)
-      raise "attempt to read past end of buffer" if @cursor + len > @buf.length
+      raise "attempt to read past end of buffer" if @cursor + len > (@buf || @str).length
     end
 
   end

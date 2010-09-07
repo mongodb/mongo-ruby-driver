@@ -78,5 +78,15 @@ class ByteBufferTest < Test::Unit::TestCase
     @buf.append!(new_buf)
     assert_equal [4, 0, 0, 0, 5, 0, 0, 0], @buf.to_a
   end
+  
+  def test_binary_string_input
+    str = "abcd"
+    str.force_encoding('binary') if str.respond_to?(:force_encoding)
+    @buf = ByteBuffer.new(str)
+    assert_equal "abcd", @buf.to_s
+    assert_equal [97, 98, 99, 100], @buf.to_a
+    @buf.put_int(0)
+    assert_equal [97, 98, 99, 100, 0, 0, 0, 0], @buf.to_a
+  end
 
 end
