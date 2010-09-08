@@ -62,7 +62,7 @@ module Mongo
     #
     # @return [Hash, Nil] the next document or Nil if no documents remain.
     def next_document
-      refill_via_get_more if num_remaining == 0
+      refresh if num_remaining == 0
       doc = @cache.shift
 
       if doc && doc['$err']
@@ -329,11 +329,11 @@ module Mongo
 
     # Return a number of documents remaining for this cursor.
     def num_remaining
-      refill_via_get_more if @cache.length == 0
+      refresh if @cache.length == 0
       @cache.length
     end
 
-    def refill_via_get_more
+    def refresh
       return if send_initial_query || @cursor_id.zero?
       message = BSON::ByteBuffer.new([0, 0, 0, 0])
 
