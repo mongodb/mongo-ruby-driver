@@ -3,7 +3,9 @@ require 'test/test_helper'
 class CursorTest < Test::Unit::TestCase
   context "Cursor options" do
     setup do
-      @connection = stub(:class => Connection)
+      @logger     = mock()
+      @logger.stubs(:debug)
+      @connection = stub(:class => Connection, :logger => @logger)
       @db         = stub(:name => "testing", :slave_ok? => false, :connection => @connection)
       @collection = stub(:db => @db, :name => "items")
       @cursor     = Cursor.new(@collection)
@@ -70,7 +72,7 @@ class CursorTest < Test::Unit::TestCase
 
   context "Query fields" do
     setup do
-      @connection = stub(:class => Collection)
+      @connection = stub(:class => Collection, :logger => @logger)
       @db = stub(:slave_ok? => true, :name => "testing", :connection => @connection)
       @collection = stub(:db => @db, :name => "items")
     end

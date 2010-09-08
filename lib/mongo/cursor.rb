@@ -37,6 +37,7 @@ module Mongo
       @db         = collection.db
       @collection = collection
       @connection = @db.connection
+      @logger     = @connection.logger
 
       @selector   = convert_selector_for_query(options[:selector])
       @fields     = convert_fields_for_query(options[:fields])
@@ -241,7 +242,8 @@ module Mongo
         message = BSON::ByteBuffer.new([0, 0, 0, 0])
         message.put_int(1)
         message.put_long(@cursor_id)
-        @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message, "cursor.close #{@cursor_id}")
+        @logger.debug("MONGODB cursor.close #{@cursor_id}") if @logger
+        @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message, nil)
       end
       @cursor_id = 0
       @closed    = true
@@ -343,7 +345,9 @@ module Mongo
 
       # Cursor id.
       message.put_long(@cursor_id)
-      results, @n_received, @cursor_id = @connection.receive_message(Mongo::Constants::OP_GET_MORE, message, "cursor.get_more()", @socket)
+      @logger.debug("MONGODB cursor.refresh() for cursor #{@cursor_id}") if @logger
+      results, @n_received, @cursor_id = @connection.receive_message(Mongo::Constants::OP_GET_MORE,
+                                                                     message, nil, @socket)
       @cache += results
       close_cursor_if_query_complete
     end
@@ -354,8 +358,8 @@ module Mongo
         false
       else
         message = construct_query_message
-        results, @n_received, @cursor_id = @connection.receive_message(Mongo::Constants::OP_QUERY, message,
-            (query_log_message if @connection.logger), @socket)
+        @logger.debug query_log_message if @logger
+        results, @n_received, @cursor_id = @connection.receive_message(Mongo::Constants::OP_QUERY, message, nil, @socket)
         @cache += results
         @query_run = true
         close_cursor_if_query_complete

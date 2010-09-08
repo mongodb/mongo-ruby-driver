@@ -12,8 +12,9 @@ class CollectionTest < Test::Unit::TestCase
       @db   = @conn['testing']
       @coll = @db.collection('books')
       @conn.expects(:send_message).with do |op, msg, log|
-        op == 2001 && log.include?("testing['books'].update")
+        op == 2001
       end
+      @logger.stubs(:debug)
       @coll.update({}, {:title => 'Moby Dick'})
     end
 
@@ -22,7 +23,10 @@ class CollectionTest < Test::Unit::TestCase
       @db   = @conn['testing']
       @coll = @db.collection('books')
       @conn.expects(:send_message).with do |op, msg, log|
-        op == 2002 && log.include?("testing['books'].insert")
+        op == 2002
+      end
+      @logger.expects(:debug).with do |msg|
+        msg.include?("Moby")
       end
       @coll.insert({:title => 'Moby Dick'})
     end
@@ -32,8 +36,11 @@ class CollectionTest < Test::Unit::TestCase
       @db   = @conn['testing']
       @coll = @db.collection('books')
       @conn.expects(:receive_message).with do |op, msg, log, sock|
-        op == 2004 && log.include?("sort")
+        op == 2004
       end.returns([[], 0, 0])
+      @logger.expects(:debug).with do |msg|
+        msg.include?('Moby')
+      end
       @coll.find({:title => 'Moby Dick'}).sort([['title', 1], ['author', 1]]).next_document
     end
 
@@ -43,7 +50,10 @@ class CollectionTest < Test::Unit::TestCase
       @coll = @db.collection('books')
       data = BSON::Binary.new(("BINARY " * 1000).unpack("c*"))
       @conn.expects(:send_message).with do |op, msg, log|
-        op == 2002 && log.include?("BSON::Binary")
+        op == 2002
+      end
+      @logger.expects(:debug).with do |msg|
+        msg.include?("Binary")
       end
       @coll.insert({:data => data})
     end
@@ -53,7 +63,10 @@ class CollectionTest < Test::Unit::TestCase
       @db   = @conn['testing']
       @coll = @db.collection('books')
       @conn.expects(:send_message_with_safe_check).with do |op, msg, db_name, log|
-        op == 2001 && log.include?("testing['books'].update")
+        op == 2001
+      end
+      @logger.expects(:debug).with do |msg|
+        msg.include?("testing['books'].update")
       end
       @coll.update({}, {:title => 'Moby Dick'}, :safe => true)
     end
@@ -63,8 +76,9 @@ class CollectionTest < Test::Unit::TestCase
       @db   = @conn['testing']
       @coll = @db.collection('books')
       @conn.expects(:send_message_with_safe_check).with do |op, msg, db_name, log|
-        op == 2001 && log.include?("testing['books'].update")
+        op == 2001
       end
+      @logger.stubs(:debug)
       @coll.update({}, {:title => 'Moby Dick'}, :safe => true)
     end
   end

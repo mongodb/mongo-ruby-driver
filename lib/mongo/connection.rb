@@ -298,7 +298,7 @@ module Mongo
     #
     # @core databases db-instance_method
     def db(db_name, options={})
-      DB.new(db_name, self, options.merge(:logger => @logger))
+      DB.new(db_name, self)
     end
 
     # Shortcut for returning a database. Use DB#db to accept options.
@@ -309,7 +309,7 @@ module Mongo
     #
     # @core databases []-instance_method
     def [](db_name)
-      DB.new(db_name, self, :logger => @logger)
+      DB.new(db_name, self)
     end
 
     # Drop a database.
@@ -388,11 +388,9 @@ module Mongo
     #
     # @param [Integer] operation a MongoDB opcode.
     # @param [BSON::ByteBuffer] message a message to send to the database.
-    # @param [String] log_message text version of +message+ for logging.
     #
     # @return [Integer] number of bytes sent
     def send_message(operation, message, log_message=nil)
-      @logger.debug("  MONGODB #{log_message || message}") if @logger
       begin
         packed_message = add_message_headers(operation, message).to_s
         socket = checkout
@@ -408,7 +406,6 @@ module Mongo
     # @param [Integer] operation a MongoDB opcode.
     # @param [BSON::ByteBuffer] message a message to send to the database.
     # @param [String] db_name the name of the database. used on call to get_last_error.
-    # @param [String] log_message text version of +message+ for logging.
     # @param [Hash] last_error_params parameters to be sent to getLastError. See DB#error for
     #   available options.
     #
@@ -420,7 +417,6 @@ module Mongo
     def send_message_with_safe_check(operation, message, db_name, log_message=nil, last_error_params=false)
       message_with_headers = add_message_headers(operation, message)
       message_with_check   = last_error_message(db_name, last_error_params)
-      @logger.debug("  MONGODB #{log_message || message}") if @logger
       begin
         sock = checkout
         packed_message = message_with_headers.append!(message_with_check).to_s
@@ -442,7 +438,6 @@ module Mongo
     #
     # @param [Integer] operation a MongoDB opcode.
     # @param [BSON::ByteBuffer] message a message to send to the database.
-    # @param [String] log_message text version of +message+ for logging.
     # @param [Socket] socket a socket to use in lieu of checking out a new one.
     #
     # @return [Array]
@@ -450,7 +445,6 @@ module Mongo
     #   and [3] a cursor_id.
     def receive_message(operation, message, log_message=nil, socket=nil)
       packed_message = add_message_headers(operation, message).to_s
-      @logger.debug("  MONGODB #{log_message || message}") if @logger
       begin
         sock = socket || checkout
 
@@ -626,7 +620,7 @@ module Mongo
         if config
           update_node_list(config['hosts']) if config['hosts']
           if @logger
-            @logger.warn(config['msg']) if config['msg']
+            @logger.warn("MONGODB #{config['msg']}") if config['msg']
           end
         end
 
@@ -737,7 +731,7 @@ module Mongo
 
           # Otherwise, wait
           if @logger
-            @logger.warn "Waiting for available connection; #{@checked_out.size} of #{@size} connections checked out."
+            @logger.warn "MONGODB Waiting for available connection; #{@checked_out.size} of #{@size} connections checked out."
           end
           @queue.wait(@connection_mutex)
         end
