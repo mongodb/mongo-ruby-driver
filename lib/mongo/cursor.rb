@@ -50,19 +50,20 @@ module Mongo
       @explain    = options[:explain]
       @socket     = options[:socket]
       @tailable   = options[:tailable] || false
-      @batch_size = options[:batch_size] || 0
+      batch_size(options[:batch_size] || 0)
 
       @full_collection_name = "#{@collection.db.name}.#{@collection.name}"
-      @cache = []
-      @closed = false
-      @query_run = false
+      @cache        = []
+      @closed       = false
+      @query_run    = false
+      @returned     = 0
     end
 
     # Get the next document specified the cursor options.
     #
     # @return [Hash, Nil] the next document or Nil if no documents remain.
     def next_document
-      refresh if num_remaining == 0
+      refresh if @cache.length == 0#empty?# num_remaining == 0
       doc = @cache.shift
 
       if doc && doc['$err']
@@ -179,6 +180,26 @@ module Mongo
       self
     end
 
+    # Set the batch size for server responses.
+    #
+    # Note that the batch size will take effect only on queries
+    # where the number to be returned is greater than 100.
+    #
+    # @param [Integer] size either 0 or some integer greater than 1. If 0,
+    #   the server will determine the batch size.
+    #
+    # @return [Cursor]
+    def batch_size(size=0)
+      check_modifiable
+      if size < 0 || size == 1
+        raise ArgumentError, "Invalid value for batch_size #{size}; must be 0 or > 1."
+      else
+        @batch_size = size > @limit ? @limit : size
+      end
+
+      self
+    end
+
     # Iterate over each document in this cursor, yielding it to the given
     # block.
     #
@@ -191,10 +212,11 @@ module Mongo
     #     puts doc['user']
     #   end
     def each
-      num_returned = 0
-      while has_next? && (@limit <= 0 || num_returned < @limit)
-        yield next_document
-        num_returned += 1
+      #num_returned = 0
+      #while has_next? && (@limit <= 0 || num_returned < @limit)
+      while doc = next_document
+        yield doc #next_document
+        #num_returned += 1
       end
     end
 
@@ -220,7 +242,7 @@ module Mongo
     #
     # @core explain explain-instance_method
     def explain
-      c = Cursor.new(@collection, query_options_hash.merge(:limit => -@limit.abs, :explain => true))
+      c = Cursor.new(@collection, query_opti/ns_hash.merge(:limit => -@limit.abs, :explain => true))
       explanation = c.next_document
       c.close
 
@@ -327,7 +349,7 @@ module Mongo
       end
     end
 
-    # Return a number of documents remaining for this cursor.
+    # Return the number of documents remaining for this cursor.
     def num_remaining
       refresh if @cache.length == 0
       @cache.length
@@ -341,13 +363,22 @@ module Mongo
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@collection.name}")
 
       # Number of results to return.
-      message.put_int(@batch_size)
+      if @limit
+        if (@returned + @batch_size) > @limit
+          message.put_int(@limit - @returned)
+        else
+          message.put_int(@batch_size)
+        end
+      else
+        message.put_int(@batch_size)
+      end
 
       # Cursor id.
       message.put_long(@cursor_id)
       @logger.debug("MONGODB cursor.refresh() for cursor #{@cursor_id}") if @logger
       results, @n_received, @cursor_id = @connection.receive_message(Mongo::Constants::OP_GET_MORE,
                                                                      message, nil, @socket)
+      @returned += @n_received
       @cache += results
       close_cursor_if_query_complete
     end
@@ -360,6 +391,7 @@ module Mongo
         message = construct_query_message
         @logger.debug query_log_message if @logger
         results, @n_received, @cursor_id = @connection.receive_message(Mongo::Constants::OP_QUERY, message, nil, @socket)
+        @returned += @n_received
         @cache += results
         @query_run = true
         close_cursor_if_query_complete
@@ -406,7 +438,9 @@ module Mongo
     end
 
     def close_cursor_if_query_complete
-      close if @limit > 0 && @n_received >= @limit
+      if @limit > 0 && @n_received >= @limit
+        close
+      end
     end
 
     def check_modifiable
