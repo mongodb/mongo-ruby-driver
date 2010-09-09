@@ -363,12 +363,12 @@ module Mongo
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@collection.name}")
 
       # Number of results to return.
-      if @limit
-        if (@returned + @batch_size) > @limit
-          message.put_int(@limit - @returned)
-        else
-          message.put_int(@batch_size)
+      if @limit > 0
+        limit = @limit - @returned
+        if @batch_size > 0
+          limit = limit < @batch_size ? limit : @batch_size
         end
+        message.put_int(limit)
       else
         message.put_int(@batch_size)
       end
@@ -438,7 +438,7 @@ module Mongo
     end
 
     def close_cursor_if_query_complete
-      if @limit > 0 && @n_received >= @limit
+      if @limit > 0 && @returned >= @limit
         close
       end
     end
