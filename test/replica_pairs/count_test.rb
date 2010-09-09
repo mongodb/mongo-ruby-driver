@@ -1,7 +1,7 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'mongo'
 require 'test/unit'
-require 'test/test_helper'
+require './test/test_helper'
 
 # NOTE: this test should be run only if a replica pair is running.
 class ReplicaPairCountTest < Test::Unit::TestCase

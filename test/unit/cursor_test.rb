@@ -1,4 +1,4 @@
-require 'test/test_helper'
+require './test/test_helper'
 
 class CursorTest < Test::Unit::TestCase
   context "Cursor options" do

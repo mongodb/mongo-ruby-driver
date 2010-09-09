@@ -1,4 +1,4 @@
-require 'test/test_helper'
+require './test/test_helper'
 
 class OrderedHashTest < Test::Unit::TestCase
 

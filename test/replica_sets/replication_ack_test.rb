@@ -1,7 +1,7 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'mongo'
 require 'test/unit'
-require 'test/test_helper'
+require './test/test_helper'
 
 # NOTE: This test expects a replica set of three nodes to be running on local host.
 class ReplicaSetAckTest < Test::Unit::TestCase

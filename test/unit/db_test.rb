@@ -1,4 +1,4 @@
-require 'test/test_helper'
+require './test/test_helper'
 
 class DBTest < Test::Unit::TestCase
   context "DBTest: " do

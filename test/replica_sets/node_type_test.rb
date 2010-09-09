@@ -1,7 +1,7 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'mongo'
 require 'test/unit'
-require 'test/test_helper'
+require './test/test_helper'
 
 # NOTE: This test expects a replica set of three nodes, one of which is an arbiter, to be running
 # on the local host.

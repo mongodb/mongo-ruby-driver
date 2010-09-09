@@ -1,4 +1,4 @@
-require 'test/test_helper'
+require './test/test_helper'
 include Mongo
 
 class GridTest < Test::Unit::TestCase
@@ -139,7 +139,7 @@ class GridTest < Test::Unit::TestCase
           io.rewind
           data = io.read
           if data.respond_to?(:force_encoding)
-            data.force_encoding(:binary)
+            data.force_encoding("binary")
           end
           read_data = ""
           while(chunk = file.read(read_length))
