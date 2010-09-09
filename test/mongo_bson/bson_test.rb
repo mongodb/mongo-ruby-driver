@@ -191,7 +191,7 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_oid
-    doc = {'doc' => ObjectID.new}
+    doc = {'doc' => ObjectId.new}
     bson = BSON::BSON_CODER.serialize(doc)
     assert_equal doc, BSON::BSON_CODER.deserialize(bson)
   end
@@ -270,7 +270,7 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_dbref
-    oid = ObjectID.new
+    oid = ObjectId.new
     doc = {}
     doc['dbref'] = DBRef.new('namespace', oid)
     bson = BSON::BSON_CODER.serialize(doc)
@@ -528,14 +528,14 @@ class BSONTest < Test::Unit::TestCase
   def test_keep_id_with_hash_with_indifferent_access
     doc = HashWithIndifferentAccess.new
     embedded = HashWithIndifferentAccess.new
-    embedded['_id'] = ObjectID.new
-    doc['_id']      = ObjectID.new
+    embedded['_id'] = ObjectId.new
+    doc['_id']      = ObjectId.new
     doc['embedded'] = [embedded]
     BSON::BSON_CODER.serialize(doc, false, true).to_a
     assert doc.has_key?("_id")
     assert doc['embedded'][0].has_key?("_id")
 
-    doc['_id'] = ObjectID.new
+    doc['_id'] = ObjectId.new
     BSON::BSON_CODER.serialize(doc, false, true).to_a
     assert doc.has_key?("_id")
   end
