@@ -242,7 +242,7 @@ module Mongo
     #
     # @core explain explain-instance_method
     def explain
-      c = Cursor.new(@collection, query_opti/ns_hash.merge(:limit => -@limit.abs, :explain => true))
+      c = Cursor.new(@collection, query_options_hash.merge(:limit => -@limit.abs, :explain => true))
       explanation = c.next_document
       c.close
 
