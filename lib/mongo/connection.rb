@@ -786,13 +786,10 @@ module Mongo
       docs = []
       number_remaining = number_received
       while number_remaining > 0 do
-        buf = BSON::ByteBuffer.new
-        buf.put_array(receive_message_on_socket(4, sock).unpack("C*"))
-        buf.rewind
-        size = buf.get_int
-        buf.put_array(receive_message_on_socket(size - 4, sock).unpack("C*"), 4)
+        buf = receive_message_on_socket(4, sock)
+        size = buf.unpack('V')[0]
+        buf << receive_message_on_socket(size - 4, sock)
         number_remaining -= 1
-        buf.rewind
         docs << BSON::BSON_CODER.deserialize(buf)
       end
       [docs, number_received, cursor_id]
