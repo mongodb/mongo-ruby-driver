@@ -857,18 +857,35 @@ module Mongo
     # Low-level method for receiving data from socket.
     # Requires length and an available socket.
     def receive_message_on_socket(length, socket)
-      message = ""
+      message = new_binary_string
       begin
-        while message.length < length do
-          chunk = socket.recv(length - message.length)
-          raise ConnectionFailure, "connection closed" unless chunk.length > 0
-          message += chunk
+        socket.read(length, message)
+        raise ConnectionFailure, "connection closed" unless message.length > 0
+        if message.length < length
+          chunk = new_binary_string
+          while message.length < length
+            socket.read(length - message.length, chunk)
+            raise ConnectionFailure, "connection closed" unless chunk.length > 0
+            message << chunk
+          end
         end
         rescue => ex
           close
           raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
       end
       message
+    end
+    
+    if defined?(Encoding)
+      BINARY_ENCODING = Encoding.find("binary")
+      
+      def new_binary_string
+        "".force_encoding(BINARY_ENCODING)
+      end
+    else
+      def new_binary_string
+        ""
+      end
     end
   end
 end
