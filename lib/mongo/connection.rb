@@ -768,17 +768,14 @@ module Mongo
     end
 
     def receive_response_header(sock)
-      header_buf = BSON::ByteBuffer.new
-      header_buf.put_array(receive_message_on_socket(RESPONSE_HEADER_SIZE, sock).unpack("C*"))
+      header_buf = receive_message_on_socket(RESPONSE_HEADER_SIZE, sock)
       if header_buf.length != RESPONSE_HEADER_SIZE
         raise "Short read for DB response header; " +
           "expected #{RESPONSE_HEADER_SIZE} bytes, saw #{header_buf.length}"
       end
-      header_buf.rewind
-      check_response_flags(header_buf.get_int)
-      cursor_id        = header_buf.get_long
-      starting_from    = header_buf.get_int
-      number_remaining = header_buf.get_int
+      flags, cursor_id_a, cursor_id_b, starting_from, number_remaining = header_buf.unpack('VVVVV')
+      check_response_flags(flags)
+      cursor_id = (cursor_id_b << 32) + cursor_id_a
       [number_remaining, cursor_id]
     end
 
