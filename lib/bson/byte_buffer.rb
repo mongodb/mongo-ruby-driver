@@ -252,7 +252,7 @@ module BSON
 
     def ensure_length(length)
       if @str.size < length
-        @str << NULL * (length - @str.size)
+        @str << NULL_BYTE * (length - @str.size)
       end
     end
     
