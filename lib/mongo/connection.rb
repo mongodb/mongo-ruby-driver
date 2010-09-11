@@ -739,7 +739,7 @@ module Mongo
     end
 
     def receive(sock)
-      receive_header(sock)
+      receive_and_discard_header(sock)
       number_received, cursor_id = receive_response_header(sock)
       read_documents(number_received, cursor_id, sock)
     end
@@ -756,6 +756,15 @@ module Mongo
       request_id  = header.get_int
       response_to = header.get_int
       op          = header.get_int
+    end
+    
+    def receive_and_discard_header(sock)
+      bytes_read = receive_and_discard_message_on_socket(16, sock)
+      unless bytes_read == STANDARD_HEADER_SIZE
+        raise "Short read for DB response header: " +
+          "expected #{STANDARD_HEADER_SIZE} bytes, saw #{bytes_read}"
+      end
+      nil
     end
 
     def receive_response_header(sock)
@@ -871,6 +880,30 @@ module Mongo
           raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
       end
       message
+    end
+    
+    # Low-level data for receiving data from socket.
+    # Unlike #receive_message_on_socket, this method immediately discards the data
+    # and only returns the number of bytes read.
+    def receive_and_discard_message_on_socket(length, socket)
+      chunk = new_binary_string
+      bytes_read = 0
+      begin
+        socket.read(length, chunk)
+        bytes_read = chunk.length
+        raise ConnectionFailure, "connection closed" unless bytes_read > 0
+        if bytes_read < length
+          while bytes_read < length
+            socket.read(length - bytes_read, chunk)
+            raise ConnectionFailure, "connection closed" unless chunk.length > 0
+            bytes_read += chunk.length
+          end
+        end
+        rescue => ex
+          close
+          raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
+      end
+      bytes_read
     end
     
     if defined?(Encoding)
