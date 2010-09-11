@@ -125,6 +125,13 @@ class ByteBufferTest < Test::Unit::TestCase
       @buf.to_s)
   end
   
+  def test_put_binary
+    @buf.put(1)
+    @buf.put_binary("\x02\x03", 0)
+    @buf.put_binary("\x04\x05", 4)
+    assert_equal "\x02\x03\x00\x00\x04\x05", @buf.to_s
+  end
+  
   def test_rewrite
     @buf.put_int(0)
     @buf.rewind

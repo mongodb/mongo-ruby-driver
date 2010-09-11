@@ -47,22 +47,29 @@ module BSON
     end
 
     if RUBY_VERSION >= '1.9'
-      def self.to_utf8(str)
-        str.encode("utf-8")
+      NULL_BYTE       = "\0".force_encoding('binary').freeze
+      UTF8_ENCODING   = Encoding.find('utf-8')
+      BINARY_ENCODING = Encoding.find('binary')
+      
+      def self.to_utf8_binary(str)
+        str.encode(UTF8_ENCODING).force_encoding(BINARY_ENCODING)
       end
     else
-      def self.to_utf8(str)
+      NULL_BYTE = "\0"
+      
+      def self.to_utf8_binary(str)
         begin
           str.unpack("U*")
         rescue => ex
-          raise InvalidStringEncoding, "String not valid utf-8: #{str}"
+          raise InvalidStringEncoding, "String not valid utf-8: #{str.inspect}"
         end
         str
       end
     end
 
     def self.serialize_cstr(buf, val)
-      buf.put_array(to_utf8(val.to_s).unpack("C*") << 0)
+      buf.put_binary(to_utf8_binary(val.to_s))
+      buf.put_binary(NULL_BYTE)
     end
 
     def self.serialize_key(buf, key)

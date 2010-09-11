@@ -117,6 +117,20 @@ module BSON
       @cursor += 1
     end
     
+    def put_binary(data, offset=nil)
+      @cursor = offset if offset
+      if defined?(BINARY_ENCODING)
+        data = data.dup.force_encoding(BINARY_ENCODING)
+      end
+      if more?
+        @str[@cursor, data.length] = data
+      else
+        ensure_length(@cursor)
+        @str << data
+      end
+      @cursor += data.length
+    end
+    
     def put_array(array, offset=nil)
       @cursor = offset if offset
       if more?

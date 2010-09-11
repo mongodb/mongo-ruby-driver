@@ -404,8 +404,8 @@ module Mongo
       message.put_int(@skip)
       message.put_int(@limit)
       spec = query_contains_special_fields? ? construct_query_spec : @selector
-      message.put_array(BSON::BSON_CODER.serialize(spec, false).to_a)
-      message.put_array(BSON::BSON_CODER.serialize(@fields, false).to_a) if @fields
+      message.put_binary(BSON::BSON_CODER.serialize(spec, false).to_s)
+      message.put_binary(BSON::BSON_CODER.serialize(@fields, false).to_s) if @fields
       message
     end
 
