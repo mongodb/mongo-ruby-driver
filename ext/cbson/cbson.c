@@ -72,6 +72,12 @@
 
 #define MAX_HOSTNAME_LENGTH 256
 
+static ID element_assignment_method;
+static ID unpack_method;
+static ID utc_method;
+static ID lt_operator;
+static ID gt_operator;
+
 static VALUE Binary;
 static VALUE ObjectID;
 static VALUE ObjectId;
@@ -233,13 +239,13 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
     case T_BIGNUM:
     case T_FIXNUM:
         {
-            if (rb_funcall(value, rb_intern(">"), 1, LL2NUM(9223372036854775807LL)) == Qtrue ||
-                rb_funcall(value, rb_intern("<"), 1, LL2NUM(-9223372036854775808ULL)) == Qtrue) {
+            if (rb_funcall(value, gt_operator, 1, LL2NUM(9223372036854775807LL)) == Qtrue ||
+                rb_funcall(value, lt_operator, 1, LL2NUM(-9223372036854775808ULL)) == Qtrue) {
                 buffer_free(buffer);
                 rb_raise(rb_eRangeError, "MongoDB can only handle 8-byte ints");
             }
-            if (rb_funcall(value, rb_intern(">"), 1, INT2NUM(2147483647L)) == Qtrue ||
-                rb_funcall(value, rb_intern("<"), 1, INT2NUM(-2147483648L)) == Qtrue) {
+            if (rb_funcall(value, gt_operator, 1, INT2NUM(2147483647L)) == Qtrue ||
+                rb_funcall(value, lt_operator, 1, INT2NUM(-2147483648L)) == Qtrue) {
                 long long ll_value;
                 write_name_and_type(buffer, key, 0x12);
                 ll_value = NUM2LL(value);
@@ -696,7 +702,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
     case 7:
         {
             VALUE str = rb_str_new(buffer + *position, 12);
-            VALUE oid = rb_funcall(str, rb_intern("unpack"), 1, rb_str_new2("C*"));
+            VALUE oid = rb_funcall(str, unpack_method, 1, rb_str_new2("C*"));
             value = rb_class_new_instance(1, &oid, ObjectId);
             *position += 12;
             break;
@@ -712,7 +718,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             memcpy(&millis, buffer + *position, 8);
 
             value = rb_time_new(millis / 1000, (millis % 1000) * 1000);
-            value = rb_funcall(value, rb_intern("utc"), 0);
+            value = rb_funcall(value, utc_method, 0);
             *position += 8;
             break;
         }
@@ -758,7 +764,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             *position += collection_length + 1;
 
             str = rb_str_new(buffer + *position, 12);
-            oid = rb_funcall(str, rb_intern("unpack"), 1, rb_str_new2("C*"));
+            oid = rb_funcall(str, unpack_method, 1, rb_str_new2("C*"));
             id = rb_class_new_instance(1, &oid, ObjectId);
             *position += 12;
 
@@ -844,7 +850,7 @@ static VALUE elements_to_hash(const char* buffer, int max) {
         VALUE value;
         position += name_length + 1;
         value = get_value(buffer, &position, type);
-        rb_funcall(hash, rb_intern("[]="), 2, name, value);
+        rb_funcall(hash, element_assignment_method, 2, name, value);
     }
     return hash;
 }
@@ -912,6 +918,12 @@ static VALUE objectid_generate(VALUE self)
 
 void Init_cbson() {
     VALUE bson, CBson, Digest, ext_version;
+    
+    element_assignment_method = rb_intern("[]=");
+    unpack_method = rb_intern("unpack");
+    utc_method = rb_intern("utc");
+    lt_operator = rb_intern("<");
+    gt_operator = rb_intern(">");
 
     bson = rb_const_get(rb_cObject, rb_intern("BSON"));
     rb_require("bson/types/binary");
