@@ -1,3 +1,4 @@
+# encoding: binary
 require './test/test_helper'
 
 class ByteBufferTest < Test::Unit::TestCase
@@ -5,6 +6,13 @@ class ByteBufferTest < Test::Unit::TestCase
 
   def setup
     @buf = ByteBuffer.new
+  end
+  
+  def test_initial_state
+    assert_equal 0, @buf.position
+    assert_equal [], @buf.to_a
+    assert_equal "", @buf.to_s
+    assert_equal 0, @buf.length
   end
 
   def test_nil_get_returns_one_byte
@@ -23,10 +31,6 @@ class ByteBufferTest < Test::Unit::TestCase
     @buf.put_array([1, 2, 3, 4])
     @buf.rewind
     assert_equal [], @buf.get(0)
-  end
-
-  def test_empty
-    assert_equal 0, @buf.length
   end
 
   def test_length
@@ -54,7 +58,34 @@ class ByteBufferTest < Test::Unit::TestCase
     @buf.rewind
     assert_equal 41.2, @buf.get_double
   end
-
+  
+  if defined?(Encoding)
+    def test_serialize_cstr_converts_encoding_to_utf8
+      theta = "hello \xC8".force_encoding("ISO-8859-7")
+      ByteBuffer.serialize_cstr(@buf, theta)
+      assert_equal "hello \xCE\x98\0", @buf.to_s
+      assert_equal Encoding.find('binary'), @buf.to_s.encoding
+    end
+    
+    def test_serialize_cstr_validates_data_as_utf8
+      assert_raises(Encoding::UndefinedConversionError) do
+        ByteBuffer.serialize_cstr(@buf, "hello \xFF")
+      end
+    end
+  else
+    def test_serialize_cstr_forces_encoding_to_utf8
+      # Unicode snowman (\u2603)
+      ByteBuffer.serialize_cstr(@buf, "hello \342\230\203")
+      assert_equal "hello \342\230\203\0", @buf.to_s
+    end
+    
+    def test_serialize_cstr_validates_data_as_utf8
+      assert_raises(BSON::InvalidStringEncoding) do
+        ByteBuffer.serialize_cstr(@buf, "hello \xFF")
+      end
+    end
+  end
+  
   def test_rewrite
     @buf.put_int(0)
     @buf.rewind
@@ -79,7 +110,18 @@ class ByteBufferTest < Test::Unit::TestCase
     assert_equal [4, 0, 0, 0, 5, 0, 0, 0], @buf.to_a
   end
   
-  def test_binary_string_input
+  def test_array_as_initial_input
+    @buf = ByteBuffer.new([5, 0, 0, 0])
+    assert_equal 4, @buf.size
+    assert_equal "\x05\x00\x00\x00", @buf.to_s
+    assert_equal [5, 0, 0, 0], @buf.to_a
+    @buf.put_int(32)
+    @buf.rewind
+    assert_equal 5, @buf.get_int
+    assert_equal 32, @buf.get_int
+  end
+  
+  def test_binary_string_as_initial_input
     str = "abcd"
     str.force_encoding('binary') if str.respond_to?(:force_encoding)
     @buf = ByteBuffer.new(str)
@@ -87,6 +129,16 @@ class ByteBufferTest < Test::Unit::TestCase
     assert_equal [97, 98, 99, 100], @buf.to_a
     @buf.put_int(0)
     assert_equal [97, 98, 99, 100, 0, 0, 0, 0], @buf.to_a
+  end
+  
+  def test_more
+    assert !@buf.more?
+    @buf.put_int(5)
+    assert !@buf.more?
+    @buf.rewind
+    assert @buf.more?
+    @buf.get_int
+    assert !@buf.more?
   end
 
 end
