@@ -173,8 +173,7 @@ module BSON
 
     def get_int
       check_read_length(4)
-      vals = ""
-      (@cursor..@cursor+3).each { |i| vals << buf[i].chr }
+      vals = buf[@cursor..@cursor+3].pack("C*")
       @cursor += 4
       vals.unpack(@int_pack_order)[0]
     end
