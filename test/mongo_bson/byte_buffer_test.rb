@@ -86,6 +86,45 @@ class ByteBufferTest < Test::Unit::TestCase
     end
   end
   
+  def test_put_negative_byte
+    @buf.put(-1)
+    @buf.rewind
+    assert_equal 255, @buf.get
+    assert_equal "\xFF", @buf.to_s
+  end
+  
+  def test_put_with_offset
+    @buf.put(1)
+    @buf.put(2, 0)
+    @buf.put(3, 3)
+    assert_equal "\x02\x00\x00\x03", @buf.to_s
+  end
+  
+  def test_put_array_with_offset
+    @buf.put(1)
+    @buf.put_array([2, 3], 0)
+    @buf.put_array([4, 5], 4)
+    assert_equal "\x02\x03\x00\x00\x04\x05", @buf.to_s
+  end
+  
+  def test_put_int_with_offset
+    @buf.put(1)
+    @buf.put_int(2, 0)
+    @buf.put_int(3, 5)
+    assert_equal "\x02\x00\x00\x00\x00\x03\x00\x00\x00", @buf.to_s
+  end
+  
+  def test_put_long_with_offset
+    @buf.put(1)
+    @buf.put_long(2, 0)
+    @buf.put_long(3, 9)
+    assert_equal(
+      "\x02\x00\x00\x00\x00\x00\x00\x00" +
+      "\x00" +
+      "\x03\x00\x00\x00\x00\x00\x00\x00",
+      @buf.to_s)
+  end
+  
   def test_rewrite
     @buf.put_int(0)
     @buf.rewind

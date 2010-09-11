@@ -20,23 +20,9 @@
 module BSON
   class ByteBuffer
 
-    # Commonly-used integers.
-    INT_LOOKUP = {
-      0    => [0, 0, 0, 0],
-      1    => [1, 0, 0, 0],
-      2    => [2, 0, 0, 0],
-      3    => [3, 0, 0, 0],
-      4    => [4, 0, 0, 0],
-      2001 => [209, 7, 0, 0],
-      2002 => [210, 7, 0, 0],
-      2004 => [212, 7, 0, 0],
-      2005 => [213, 7, 0, 0],
-      2006 => [214, 7, 0, 0]
-    }
-
     attr_reader :order
 
-    def initialize(initial_data=[])
+    def initialize(initial_data="")
       if initial_data.is_a?(String)
         if initial_data.respond_to?(:force_encoding)
           @str = initial_data.force_encoding('binary')
@@ -44,31 +30,38 @@ module BSON
           @str = initial_data
         end
       else
-        @buf = initial_data
+        @str = initial_data.pack('C*')
       end
-      @cursor = (@buf || @str).length
+      @cursor = @str.length
       @order  = :little_endian
       @int_pack_order    = 'V'
       @double_pack_order = 'E'
     end
 
     if RUBY_VERSION >= '1.9'
-      def self.to_utf8(str)
-        str.encode("utf-8")
+      NULL_BYTE       = "\0".force_encoding('binary').freeze
+      UTF8_ENCODING   = Encoding.find('utf-8')
+      BINARY_ENCODING = Encoding.find('binary')
+      
+      def self.to_utf8_binary(str)
+        str.encode(UTF8_ENCODING).force_encoding(BINARY_ENCODING)
       end
     else
-      def self.to_utf8(str)
+      NULL_BYTE = "\0"
+      
+      def self.to_utf8_binary(str)
         begin
         str.unpack("U*")
         rescue => ex
-          raise InvalidStringEncoding, "String not valid utf-8: #{str}"
+          raise InvalidStringEncoding, "String not valid utf-8: #{str.inspect}"
         end
         str
       end
     end
 
     def self.serialize_cstr(buf, val)
-      buf.put_array(to_utf8(val.to_s).unpack("C*") + [0])
+      buf.append!(to_utf8_binary(val.to_s))
+      buf.append!(NULL_BYTE)
     end
 
     # +endianness+ should be :little_endian or :big_endian. Default is :little_endian
@@ -91,48 +84,59 @@ module BSON
     end
 
     def clear
-      @buf = []
-      @str = nil
+      @str = ""
+      @str.force_encoding('binary') if @str.respond_to?(:force_encoding)
       rewind
     end
 
     def size
-      (@buf || @str).size
+      @str.size
     end
     alias_method :length, :size
 
     # Appends a second ByteBuffer object, +buffer+, to the current buffer.
     def append!(buffer)
-      self.buf = buf + buffer.to_a
+      @str << buffer.to_s
       self
     end
 
     # Prepends a second ByteBuffer object, +buffer+, to the current buffer.
     def prepend!(buffer)
-      self.buf = buffer.to_a + buf
+      @str = buffer.to_s + @str
       self
     end
 
     def put(byte, offset=nil)
       @cursor = offset if offset
-      buf[@cursor] = byte
-      buf_modified!
+      if more?
+        @str[@cursor] = chr(byte)
+      else
+        ensure_length(@cursor)
+        @str << chr(byte)
+      end
       @cursor += 1
     end
-
+    
     def put_array(array, offset=nil)
       @cursor = offset if offset
-      buf[@cursor, array.length] = array
-      buf_modified!
+      if more?
+        @str[@cursor, array.length] = array.pack("C*")
+      else
+        ensure_length(@cursor)
+        @str << array.pack("C*")
+      end
       @cursor += array.length
     end
 
     def put_int(i, offset=nil)
-      unless a = INT_LOOKUP[i]
-        a = []
-        [i].pack(@int_pack_order).each_byte { |b| a << b }
+      @cursor = offset if offset
+      if more?
+        @str[@cursor, 4] = [i].pack(@int_pack_order)
+      else
+        ensure_length(@cursor)
+        @str << [i].pack(@int_pack_order)
       end
-      put_array(a, offset)
+      @cursor += 4
     end
 
     def put_long(i, offset=nil)
@@ -154,26 +158,37 @@ module BSON
 
     # If +size+ == nil, returns one byte. Else returns array of bytes of length
     # # +size+.
-    def get(len=nil)
-      one_byte = len.nil?
-      len ||= 1
-      check_read_length(len)
-      start = @cursor
-      @cursor += len
-      if one_byte
-        buf[start]
-      else
-        if buf.respond_to? "unpack"
-          buf[start, len].unpack("C*")
+    if "x"[0].is_a?(Integer)
+      def get(len=nil)
+        one_byte = len.nil?
+        len ||= 1
+        check_read_length(len)
+        start = @cursor
+        @cursor += len
+        if one_byte
+          @str[start]
         else
-          buf[start, len]
+          @str[start, len].unpack("C*")
+        end
+      end
+    else
+      def get(len=nil)
+        one_byte = len.nil?
+        len ||= 1
+        check_read_length(len)
+        start = @cursor
+        @cursor += len
+        if one_byte
+          @str[start, 1].ord
+        else
+          @str[start, len].unpack("C*")
         end
       end
     end
 
     def get_int
       check_read_length(4)
-      vals = buf[@cursor..@cursor+3].pack("C*")
+      vals = @str[@cursor..@cursor+3]
       @cursor += 4
       vals.unpack(@int_pack_order)[0]
     end
@@ -190,22 +205,17 @@ module BSON
 
     def get_double
       check_read_length(8)
-      vals = ""
-      (@cursor..@cursor+7).each { |i| vals << buf[i].chr }
+      vals = @str[@cursor..@cursor+7]
       @cursor += 8
       vals.unpack(@double_pack_order)[0]
     end
 
     def more?
-      @cursor < buf.size
+      @cursor < @str.size
     end
 
     def to_a
-      if buf.respond_to? "unpack"
-        buf.unpack("C*")
-      else
-        buf
-      end
+      @str.unpack("C*")
     end
 
     def unpack(args)
@@ -213,42 +223,35 @@ module BSON
     end
 
     def to_s
-      if !@str
-        if @buf.respond_to? :fast_pack
-          @str = @buf.fast_pack
-        elsif @buf.respond_to? "pack"
-          @str = @buf.pack("C*")
-        else
-          @str = @buf
-        end
-      end
       @str
     end
 
     def dump
-      buf.each_with_index { |c, i| $stderr.puts "#{'%04d' % i}: #{'%02x' % c} #{'%03o' % c} #{'%s' % c.chr} #{'%3d' % c}" }
+      i = 0
+      @str.each_byte do |c, i|
+        $stderr.puts "#{'%04d' % i}: #{'%02x' % c} #{'%03o' % c} #{'%s' % c.chr} #{'%3d' % c}"
+        i += 1
+      end
     end
 
     private
 
-    def buf
-      if !@buf
-        @buf = @str.unpack("c*")
+    def ensure_length(length)
+      if @str.size < length
+        @str << NULL * (length - @str.size)
       end
-      @buf
     end
     
-    def buf=(buffer)
-      @buf = buffer
-      @str = nil
-    end
-    
-    def buf_modified!
-      @str = nil
+    def chr(byte)
+      if byte < 0
+        [byte].pack('c')
+      else
+        byte.chr
+      end
     end
     
     def check_read_length(len)
-      raise "attempt to read past end of buffer" if @cursor + len > (@buf || @str).length
+      raise "attempt to read past end of buffer" if @cursor + len > @str.length
     end
 
   end
