@@ -746,7 +746,7 @@ module Mongo
 
     def receive_header(sock)
       header = BSON::ByteBuffer.new
-      header.put_array(receive_message_on_socket(16, sock).unpack("C*"))
+      header.put_binary(receive_message_on_socket(16, sock))
       unless header.size == STANDARD_HEADER_SIZE
         raise "Short read for DB response header: " +
           "expected #{STANDARD_HEADER_SIZE} bytes, saw #{header.size}"
@@ -815,7 +815,7 @@ module Mongo
         opts.assert_valid_keys(:w, :wtimeout, :fsync)
         cmd.merge!(opts)
       end
-      message.put_array(BSON::BSON_CODER.serialize(cmd, false).unpack("C*"))
+      message.put_binary(BSON::BSON_CODER.serialize(cmd, false).to_s)
       add_message_headers(Mongo::Constants::OP_QUERY, message)
     end
 

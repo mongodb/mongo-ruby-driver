@@ -284,10 +284,10 @@ module Mongo
     # @core remove remove-instance_method
     def remove(selector={}, opts={})
       # Initial byte is 0.
-      message = BSON::ByteBuffer.new([0, 0, 0, 0])
+      message = BSON::ByteBuffer.new("\0\0\0\0")
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
-      message.put_array(BSON::BSON_CODER.serialize(selector, false, true).to_a)
+      message.put_binary(BSON::BSON_CODER.serialize(selector, false, true).to_s)
 
       @logger.debug("MONGODB #{@db.name}['#{@name}'].remove(#{selector.inspect})") if @logger
       if opts[:safe]
@@ -322,14 +322,14 @@ module Mongo
     # @core update update-instance_method
     def update(selector, document, options={})
       # Initial byte is 0.
-      message = BSON::ByteBuffer.new([0, 0, 0, 0])
+      message = BSON::ByteBuffer.new("\0\0\0\0")
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       update_options  = 0
       update_options += 1 if options[:upsert]
       update_options += 2 if options[:multi]
       message.put_int(update_options)
-      message.put_array(BSON::BSON_CODER.serialize(selector, false, true).to_a)
-      message.put_array(BSON::BSON_CODER.serialize(document, false, true).to_a)
+      message.put_binary(BSON::BSON_CODER.serialize(selector, false, true).to_s)
+      message.put_binary(BSON::BSON_CODER.serialize(document, false, true).to_s)
       @logger.debug("MONGODB #{@db.name}['#{@name}'].update(#{selector.inspect}, #{document.inspect})") if @logger
       if options[:safe]
         @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name, nil, options[:safe])
@@ -679,9 +679,11 @@ module Mongo
     # +check_keys+ setting.
     def insert_documents(documents, collection_name=@name, check_keys=true, safe=false)
       # Initial byte is 0.
-      message = BSON::ByteBuffer.new([0, 0, 0, 0])
+      message = BSON::ByteBuffer.new("\0\0\0\0")
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{collection_name}")
-      documents.each { |doc| message.put_array(BSON::BSON_CODER.serialize(doc, check_keys, true).to_a) }
+      documents.each do |doc|
+        message.put_binary(BSON::BSON_CODER.serialize(doc, check_keys, true).to_s)
+      end
       raise InvalidOperation, "Exceded maximum insert size of 16,000,000 bytes" if message.size > 16_000_000
 
       @logger.debug("MONGODB #{@db.name}['#{collection_name}'].insert(#{documents.inspect})") if @logger
