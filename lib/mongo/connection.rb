@@ -864,9 +864,8 @@ module Mongo
     # Low-level method for receiving data from socket.
     # Requires length and an available socket.
     def receive_message_on_socket(length, socket)
-      message = new_binary_string
       begin
-        socket.read(length, message)
+        message = socket.read(length)
         raise ConnectionFailure, "connection closed" unless message.length > 0
         if message.length < length
           chunk = new_binary_string
@@ -887,10 +886,9 @@ module Mongo
     # Unlike #receive_message_on_socket, this method immediately discards the data
     # and only returns the number of bytes read.
     def receive_and_discard_message_on_socket(length, socket)
-      chunk = new_binary_string
       bytes_read = 0
       begin
-        socket.read(length, chunk)
+        chunk = socket.read(length)
         bytes_read = chunk.length
         raise ConnectionFailure, "connection closed" unless bytes_read > 0
         if bytes_read < length
