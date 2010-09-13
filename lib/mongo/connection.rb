@@ -845,11 +845,14 @@ module Mongo
     # @return [Integer] number of bytes sent
     def send_message_on_socket(packed_message, socket)
       begin
-      total_bytes_sent = 0
-      while packed_message.size > 0
-        byte_sent = socket.send(packed_message, 0)
-        total_bytes_sent += byte_sent
-        packed_message.slice!(0, byte_sent)
+      total_bytes_sent = socket.send(packed_message, 0)
+      if total_bytes_sent != packed_message.size
+        packed_message.slice!(0, total_bytes_sent)
+        while packed_message.size > 0
+          byte_sent = socket.send(packed_message, 0)
+          total_bytes_sent += byte_sent
+          packed_message.slice!(0, byte_sent)
+        end
       end
       total_bytes_sent
       rescue => ex
