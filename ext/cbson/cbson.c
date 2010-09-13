@@ -183,6 +183,9 @@ static void write_utf8(buffer_t buffer, VALUE string, char check_null) {
 static char zero = 0;
 static char one = 1;
 
+static char hostname_digest[17];
+static unsigned int object_id_inc = 0;
+
 static int cmp_char(const void* a, const void* b) {
     return *(char*)a - *(char*)b;
 }
@@ -886,8 +889,7 @@ static VALUE fast_pack(VALUE self)
 
 static VALUE objectid_generate(VALUE self)
 {
-    VALUE oid, digest;
-    char hostname[MAX_HOSTNAME_LENGTH];
+    VALUE oid;
     unsigned char oid_bytes[12];
     unsigned long t, inc;
     unsigned short pid;
@@ -896,16 +898,22 @@ static VALUE objectid_generate(VALUE self)
     t = htonl(time(NULL));
     MEMCPY(&oid_bytes, &t, unsigned char, 4);
 
-    if (gethostname(hostname, MAX_HOSTNAME_LENGTH) != 0) {
-        rb_raise(rb_eRuntimeError, "failed to get hostname");
-    }
-    digest = rb_funcall(DigestMD5, rb_intern("digest"), 1, rb_str_new2(hostname));
-    MEMCPY(&oid_bytes[4], RSTRING_PTR(digest), unsigned char, 3);
+    MEMCPY(&oid_bytes[4], hostname_digest, unsigned char, 3);
 
     pid = htons(getpid());
     MEMCPY(&oid_bytes[7], &pid, unsigned char, 2);
 
-    inc = htonl(FIX2ULONG(rb_funcall(self, rb_intern("get_inc"), 0)));
+    /* No need to synchronize modification of this counter between threads;
+     * MRI global interpreter lock guarantees serializaility.
+     *
+     * Compiler should optimize out impossible branch.
+     */
+    if (sizeof(unsigned int) == 4) {
+        object_id_inc++;
+    } else {
+        object_id_inc = (object_id_inc + 1) % 0xFFFFFF;
+    }
+    inc = htonl(object_id_inc);
     MEMCPY(&oid_bytes[9], ((unsigned char*)&inc + 1), unsigned char, 3);
 
     oid = rb_ary_new2(12);
@@ -917,7 +925,8 @@ static VALUE objectid_generate(VALUE self)
 
 
 void Init_cbson() {
-    VALUE bson, CBson, Digest, ext_version;
+    VALUE bson, CBson, Digest, ext_version, digest;
+    static char hostname[MAX_HOSTNAME_LENGTH];
     
     element_assignment_method = rb_intern("[]=");
     unpack_method = rb_intern("unpack");
@@ -962,4 +971,12 @@ void Init_cbson() {
     rb_define_method(ObjectId, "generate", objectid_generate, 0);
 
     rb_define_method(rb_cArray, "fast_pack", fast_pack, 0);
+    
+    if (gethostname(hostname, MAX_HOSTNAME_LENGTH) != 0) {
+        rb_raise(rb_eRuntimeError, "failed to get hostname");
+    }
+    digest = rb_funcall(DigestMD5, rb_intern("digest"), 1,
+        rb_str_new2(hostname));
+    memcpy(hostname_digest, RSTRING_PTR(digest), 16);
+    hostname_digest[16] = '\0';
 }
