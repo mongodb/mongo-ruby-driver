@@ -822,19 +822,20 @@ module Mongo
     # Prepares a message for transmission to MongoDB by
     # constructing a valid message header.
     def add_message_headers(operation, message)
-      headers = BSON::ByteBuffer.new
-
-      # Message size.
-      headers.put_int(16 + message.size)
-
-      # Unique request id.
-      headers.put_int(get_request_id)
-
-      # Response id.
-      headers.put_int(0)
-
-      # Opcode.
-      headers.put_int(operation)
+      headers = [
+        # Message size.
+        16 + message.size,
+        
+        # Unique request id.
+        get_request_id,
+        
+        # Response id.
+        0,
+        
+        # Opcode.
+        operation
+      ].pack('VVVV')
+      
       message.prepend!(headers)
     end
 
