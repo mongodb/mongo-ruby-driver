@@ -278,7 +278,6 @@ module BSON
 
     def deserialize_date_data(buf)
       unsigned = buf.get_long()
-      # see note for deserialize_number_long_data below
       milliseconds = unsigned >= 2 ** 64 / 2 ? unsigned - 2**64 : unsigned
       Time.at(milliseconds.to_f / 1000.0).utc # at() takes fractional seconds
     end
@@ -292,14 +291,11 @@ module BSON
     end
 
     def deserialize_number_int_data(buf)
-      # sometimes ruby makes me angry... why would the same code pack as signed
-      # but unpack as unsigned
       unsigned = buf.get_int
       unsigned >= 2**32 / 2 ? unsigned - 2**32 : unsigned
     end
 
     def deserialize_number_long_data(buf)
-      # same note as above applies here...
       unsigned = buf.get_long
       unsigned >= 2 ** 64 / 2 ? unsigned - 2**64 : unsigned
     end
