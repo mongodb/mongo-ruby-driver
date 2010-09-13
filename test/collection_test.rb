@@ -105,10 +105,11 @@ class TestCollection < Test::Unit::TestCase
   end
 
   def test_safe_insert
+    @@test.create_index("hello", :unique => true)
     a = {"hello" => "world"}
     @@test.insert(a)
     @@test.insert(a)
-    assert(@@db.get_last_error.include?("E11000"))
+    assert(@@db.get_last_error['err'].include?("11000"))
 
     assert_raise OperationFailure do
       @@test.insert(a, :safe => true)
