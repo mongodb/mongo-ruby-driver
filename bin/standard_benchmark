@@ -42,7 +42,12 @@ LARGE = {
 }
 
 def print_headings
-  puts "\n#{PER_TRIAL} documents or queries per trial. Batches of #{BATCH_SIZE} on batch inserts."
+  puts "\nMongoDB Ruby Driver -- Standard Benchmark"
+  puts Time.now.utc.strftime("%d-%b-%Y")
+  puts `ruby -v` + "\n"
+  puts "Latest Commit:"
+  puts `git log | head -n4`
+  puts "#{PER_TRIAL} documents or queries per trial. Batches of #{BATCH_SIZE} on batch inserts."
   printf("\n%s%-10s %-15s %-10s %-15s\n\n", "Test".ljust(40, ' '), "(real)", "(real ops/s)", "(user)", "(user ops/s)")
 end
 
