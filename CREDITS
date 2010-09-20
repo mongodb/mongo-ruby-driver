@@ -72,9 +72,21 @@ Patrick Collison
 Chuck Remes
 * Extraction of BSON into separate gems
 * Extensions compile on Rubinius
+* Performance improvements for INT in C extensions
 
 Dmitrii Golub (Houdini) and Jacques Crocker (railsjedi)
 * Support open to exclude fields on query
 
 dfitzgibbon
 * patch for ensuring bson_ext compatibility with early release of Ruby 1.8.5
+
+Matt Taylor
+* Noticed excessive calls to ObjectId#to_s. As a result, stopped creating
+log messages when no logger was passed to Mongo::Connection. Resulted in a significant
+performance improvement.
+
+Hongli Lai (Phusion)
+* Significant performance improvements. See commits.
+
+Mislav Marohnić
+* Replaced returning with each_with_object
