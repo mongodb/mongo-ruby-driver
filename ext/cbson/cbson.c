@@ -240,23 +240,27 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
 
     switch(TYPE(value)) {
     case T_BIGNUM:
-    case T_FIXNUM:
         {
             if (rb_funcall(value, gt_operator, 1, LL2NUM(9223372036854775807LL)) == Qtrue ||
                 rb_funcall(value, lt_operator, 1, LL2NUM(-9223372036854775808ULL)) == Qtrue) {
                 buffer_free(buffer);
                 rb_raise(rb_eRangeError, "MongoDB can only handle 8-byte ints");
             }
-            if (rb_funcall(value, gt_operator, 1, INT2NUM(2147483647L)) == Qtrue ||
-                rb_funcall(value, lt_operator, 1, INT2NUM(-2147483648L)) == Qtrue) {
-                long long ll_value;
+        }
+        // NOTE: falls through to T_FIXNUM code
+    case T_FIXNUM:
+        {
+            long long ll_value;
+            ll_value = NUM2LL(value);
+
+            if (ll_value > 2147483647L ||
+                ll_value < -2147483648L) {
                 write_name_and_type(buffer, key, 0x12);
-                ll_value = NUM2LL(value);
                 SAFE_WRITE(buffer, (char*)&ll_value, 8);
             } else {
                 int int_value;
                 write_name_and_type(buffer, key, 0x10);
-                int_value = NUM2LL(value);
+                int_value = ll_value;
                 SAFE_WRITE(buffer, (char*)&int_value, 4);
             }
             break;
