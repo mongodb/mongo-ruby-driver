@@ -868,27 +868,6 @@ static VALUE method_deserialize(VALUE self, VALUE bson) {
     return elements_to_hash(buffer, remaining);
 }
 
-
-static VALUE fast_pack(VALUE self)
-{
-    VALUE res;
-    long i, len;
-    char c;
-    char *buf;
-
-    len = RARRAY_LEN(self);
-    buf = malloc(len * sizeof(char));
-
-    for (i = 0; i < len; i++) {
-      buf[i] = FIX2INT(rb_ary_entry(self, i));
-    }
-
-    res = rb_str_new(buf, len);
-
-    return res;
-}
-
-
 static VALUE objectid_generate(VALUE self)
 {
     VALUE oid;
@@ -972,8 +951,6 @@ void Init_cbson() {
     rb_define_method(ObjectID, "generate", objectid_generate, 0);
     rb_define_method(ObjectId, "generate", objectid_generate, 0);
 
-    rb_define_method(rb_cArray, "fast_pack", fast_pack, 0);
-    
     if (gethostname(hostname, MAX_HOSTNAME_LENGTH) != 0) {
         rb_raise(rb_eRuntimeError, "failed to get hostname");
     }
