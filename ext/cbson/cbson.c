@@ -31,10 +31,6 @@
 #  define RSTRING_LEN(v) RSTRING(v)->len
 #endif
 
-#ifndef RARRAY_PTR
-#  define RARRAY_PTR(v) RARRAY(v)->ptr
-#endif
-
 #ifndef RARRAY_LEN
 #  define RARRAY_LEN(v) RARRAY(v)->len
 #endif
@@ -311,13 +307,12 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             }
 
             items = RARRAY_LEN(value);
-            values = RARRAY_PTR(value);
             for(i = 0; i < items; i++) {
                 char* name;
                 VALUE key;
                 INT2STRING(&name, i);
                 key = rb_str_new2(name);
-                write_element_with_id(key, values[i], pack_extra(buffer, check_keys));
+                write_element_with_id(key, rb_ary_entry(value, i), pack_extra(buffer, check_keys));
                 free(name);
             }
 
@@ -398,7 +393,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 int i;
                 write_name_and_type(buffer, key, 0x07);
                 for (i = 0; i < 12; i++) {
-                    char byte = (char)FIX2INT(RARRAY_PTR(as_array)[i]);
+                    char byte = (char)FIX2INT(rb_ary_entry(as_array, i));
                     SAFE_WRITE(buffer, &byte, 1);
                 }
                 break;
@@ -571,7 +566,7 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_
         VALUE keys = rb_funcall(hash, rb_intern("keys"), 0);
         int i;
                 for(i = 0; i < RARRAY_LEN(keys); i++) {
-            VALUE key = RARRAY_PTR(keys)[i];
+            VALUE key = rb_ary_entry(keys, i);
             VALUE value = rb_hash_aref(hash, key);
 
             write_function(key, value, pack_extra(buffer, check_keys));
@@ -877,15 +872,18 @@ static VALUE method_deserialize(VALUE self, VALUE bson) {
 static VALUE fast_pack(VALUE self)
 {
     VALUE res;
-    long i;
+    long i, len;
     char c;
+    char *buf;
 
-    res = rb_str_buf_new(0);
+    len = RARRAY_LEN(self);
+    buf = malloc(len * sizeof(char));
 
-    for (i = 0; i < RARRAY_LEN(self); i++) {
-        c = FIX2LONG(RARRAY_PTR(self)[i]);
-        rb_str_buf_cat(res, &c, sizeof(char));
+    for (i = 0; i < len; i++) {
+      buf[i] = FIX2INT(rb_ary_entry(self, i));
     }
+
+    res = rb_str_new(buf, len);
 
     return res;
 }
