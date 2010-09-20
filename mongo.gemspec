@@ -15,7 +15,10 @@ Gem::Specification.new do |s|
     'mongo.gemspec', 'LICENSE.txt']
   s.files += ['lib/mongo.rb'] + Dir['lib/mongo/**/*.rb']
   s.files += Dir['examples/**/*.rb'] + Dir['bin/**/*.rb']
+  s.files += Dir['bin/mongo_console']
   s.test_files = Dir['test/**/*.rb']
+
+  s.executables = ['mongo_console']
 
   s.has_rdoc = true
   s.test_files = Dir['test/**/*.rb']
