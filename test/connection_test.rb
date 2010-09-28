@@ -143,6 +143,24 @@ class TestConnection < Test::Unit::TestCase
     end
   end
 
+  def test_fsync_lock
+    @mongo.lock!
+    assert_equal 1, @mongo['admin']['$cmd.sys.inprog'].find_one['fsyncLock'], "Not fsync-locked"
+    assert_equal "unlock requested", @mongo.unlock!['info']
+    unlocked = false
+    counter  = 0
+    while counter < 5
+      if @mongo['admin']['$cmd.sys.inprog'].find_one['fsyncLock'].nil?
+        unlocked = true
+        break
+      else
+        sleep(1)
+        counter += 1
+      end
+    end
+    assert unlocked, "mongod failed to unlock"
+  end
+
   context "Saved authentications" do
     setup do
       @conn = Mongo::Connection.new

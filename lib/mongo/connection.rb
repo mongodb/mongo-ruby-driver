@@ -211,6 +211,24 @@ module Mongo
       end
     end
 
+    # Fsync, then lock the mongod process against writes. Use this to get
+    # the datafiles in a state safe for snapshotting, backing up, etc.
+    #
+    # @return [BSON::OrderedHash] the command response
+    def lock!
+      cmd = BSON::OrderedHash.new
+      cmd[:fsync] = 1
+      cmd[:lock]  = true
+      self['admin'].command(cmd)
+    end
+
+    # Unlock a previously fsync-locked mongod process.
+    #
+    # @return [BSON::OrderedHash] command response
+    def unlock!
+      self['admin']['$cmd.sys.unlock'].find_one
+    end
+
     # Apply each of the saved database authentications.
     #
     # @return [Boolean] returns true if authentications exist and succeeed, false
