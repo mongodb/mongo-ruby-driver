@@ -126,7 +126,7 @@ module BSON
       def reject(&block)
         clone = self.clone
         return clone unless block_given?
-        clone.delete_if &block
+        clone.delete_if(&block)
       end
 
       def clear
