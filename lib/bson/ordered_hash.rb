@@ -30,7 +30,7 @@ module BSON
         when BSON::OrderedHash
            keys == other.keys && values == other.values
         else
-          !other.nil? && keys.size == other.keys.size && keys.all? {|x| self[x] == other[x] }
+          super
         end
       rescue
         false
