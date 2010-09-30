@@ -13,6 +13,29 @@ require 'rbconfig'
 include Config
 ENV['TEST_MODE'] = 'TRUE'
 
+task :java do
+  Rake::Task['build:java'].invoke
+  Rake::Task['test:ruby'].invoke
+end
+
+namespace :build do
+  desc "Build the java extensions."
+  task :java do
+    puts "Building Java extensions..."
+    java_dir  = File.join(File.dirname(__FILE__), 'ext', 'java')
+    jar_dir   = File.join(java_dir, 'jar')
+
+    jruby_jar = File.join(jar_dir, 'jruby.jar')
+    mongo_jar = File.join(jar_dir, 'mongo.jar')
+    bson_jar = File.join(jar_dir, 'bson.jar')
+
+    src_base   = File.join(java_dir, 'src')
+
+    system("javac -Xlint:unchecked -classpath #{jruby_jar}:#{mongo_jar}:#{bson_jar} #{File.join(src_base, 'org', 'jbson', '*.java')}")
+    system("cd #{src_base} && jar cf #{File.join(jar_dir, 'jbson.jar')} #{File.join('.', 'org', 'jbson', '*.class')}")
+  end
+end
+
 desc "Test the MongoDB Ruby driver."
 task :test do
   puts "\nThis option has changed."

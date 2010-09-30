@@ -44,6 +44,7 @@ module BSON
 
     def initialize
       @buf = ByteBuffer.new
+      @encoder = BSON_RUBY
     end
 
     if RUBY_VERSION >= '1.9'
@@ -303,7 +304,7 @@ module BSON
     def deserialize_object_data(buf)
       size = buf.get_int
       buf.position -= 4
-      object = BSON_CODER.new().deserialize(buf.get(size))
+      object = @encoder.new().deserialize(buf.get(size))
       if object.has_key? "$ref"
         DBRef.new(object["$ref"], object["$id"])
       else
@@ -358,7 +359,7 @@ module BSON
 
       scope_size = buf.get_int
       buf.position -= 4
-      scope = BSON_CODER.new().deserialize(buf.get(scope_size))
+      scope = @encoder.new().deserialize(buf.get(scope_size))
 
       Code.new(encoded_str(code), scope)
     end
@@ -452,7 +453,7 @@ module BSON
     def serialize_object_element(buf, key, val, check_keys, opcode=OBJECT)
       buf.put(opcode)
       self.class.serialize_key(buf, key)
-      buf.put_array(BSON_CODER.new.serialize(val, check_keys).to_a)
+      buf.put_array(@encoder.new.serialize(val, check_keys).to_a)
     end
 
     def serialize_array_element(buf, key, val, check_keys)
@@ -527,9 +528,9 @@ module BSON
       len_pos = buf.position
       buf.put_int(0)
 
-      buf.put_int(val.length + 1)
-      self.class.serialize_cstr(buf, val)
-      buf.put_array(BSON_CODER.new.serialize(val.scope).to_a)
+      buf.put_int(val.code.length + 1)
+      self.class.serialize_cstr(buf, val.code)
+      buf.put_array(@encoder.new.serialize(val.scope).to_a)
 
       end_pos = buf.position
       buf.put_int(end_pos - len_pos, len_pos)

@@ -32,28 +32,39 @@ module BSON
   end
 end
 
-begin
-  # Need this for running test with and without c ext in Ruby 1.9.
-  raise LoadError if ENV['TEST_MODE'] && !ENV['C_EXT']
-  require 'bson_ext/cbson'
-  raise LoadError unless defined?(CBson::VERSION)
-  if CBson::VERSION < MINIMUM_BSON_EXT_VERSION
-    puts "Able to load bson_ext version #{CBson::VERSION}, but >= #{MINIMUM_BSON_EXT_VERSION} is required."
-    raise LoadError
-  end
-  require 'bson/bson_c'
+if RUBY_PLATFORM =~ /java/
+  jar_dir = File.join(File.dirname(__FILE__), '..', 'ext', 'java', 'jar')
+  require File.join(jar_dir, 'mongo.jar')
+  require File.join(jar_dir, 'bson.jar')
+  require File.join(jar_dir, 'jbson.jar')
+  require 'bson/bson_java'
   module BSON
-    BSON_CODER = BSON_C
+    BSON_CODER = BSON_JAVA
   end
-rescue LoadError
-  require 'bson/bson_ruby'
-  module BSON
-    BSON_CODER = BSON_RUBY
+else
+  begin
+    # Need this for running test with and without c ext in Ruby 1.9.
+    raise LoadError if ENV['TEST_MODE'] && !ENV['C_EXT']
+    require 'bson_ext/cbson'
+    raise LoadError unless defined?(CBson::VERSION)
+    if CBson::VERSION < MINIMUM_BSON_EXT_VERSION
+      puts "Able to load bson_ext version #{CBson::VERSION}, but >= #{MINIMUM_BSON_EXT_VERSION} is required."
+      raise LoadError
+    end
+    require 'bson/bson_c'
+    module BSON
+      BSON_CODER = BSON_C
+    end
+  rescue LoadError
+    require 'bson/bson_ruby'
+    module BSON
+      BSON_CODER = BSON_RUBY
+    end
+    warn "\n**Notice: C extension not loaded. This is required for optimum MongoDB Ruby driver performance."
+    warn "  You can install the extension as follows:\n  gem install bson_ext\n"
+    warn "  If you continue to receive this message after installing, make sure that the"
+    warn "  bson_ext gem is in your load path and that the bson_ext and mongo gems are of the same version.\n"
   end
-  warn "\n**Notice: C extension not loaded. This is required for optimum MongoDB Ruby driver performance."
-  warn "  You can install the extension as follows:\n  gem install bson_ext\n"
-  warn "  If you continue to receive this message after installing, make sure that the"
-  warn "  bson_ext gem is in your load path and that the bson_ext and mongo gems are of the same version.\n"
 end
 
 require 'bson/types/binary'

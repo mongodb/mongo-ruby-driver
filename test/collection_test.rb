@@ -477,7 +477,7 @@ class TestCollection < Test::Unit::TestCase
   def test_saving_dates_pre_epoch
     begin
       @@test.save({'date' => Time.utc(1600)})
-      assert_in_delta Time.utc(1600), @@test.find_one()["date"], 0.001
+      assert_in_delta Time.utc(1600), @@test.find_one()["date"], 2
     rescue ArgumentError
       # See note in test_date_before_epoch (BSONTest)
     end

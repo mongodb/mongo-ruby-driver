@@ -14,6 +14,7 @@ Gem::Specification.new do |s|
   s.files  = ['Rakefile', 'bson.gemspec', 'LICENSE.txt']
   s.files += ['lib/bson.rb'] + Dir['lib/bson/**/*.rb']
   s.files += ['bin/b2json', 'bin/j2bson']
+  s.files += Dir['ext/java/jar/**/*.jar']
   s.test_files = Dir['test/mongo_bson/*.rb']
 
   s.executables = ['b2json', 'j2bson']

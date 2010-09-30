@@ -19,10 +19,10 @@
 module BSON
 
   # JavaScript code to be evaluated by MongoDB.
-  class Code < String
+  class Code
 
     # Hash mapping identifiers to their values
-    attr_accessor :scope
+    attr_accessor :scope, :code
 
     # Wrap code to be evaluated by MongoDB.
     #
@@ -30,8 +30,21 @@ module BSON
     # @param [Hash] a document mapping identifiers to values, which
     #   represent the scope in which the code is to be executed.
     def initialize(code, scope={})
-      super(code)
+      @code  = code
       @scope = scope
+    end
+
+    def length
+      @code.length
+    end
+
+    def ==(other)
+      self.class == other.class &&
+        @code == other.code && @scope == other.scope
+    end
+
+    def inspect
+      "<BSON::Code:#{object_id} @data=\"#{@code}\" @scope=\"#{@scope.inspect}\">"
     end
 
   end
