@@ -324,37 +324,14 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         }
     case T_STRING:
         {
-            if (strcmp(rb_obj_classname(value),
-                  "BSON::Code") == 0) {
-                buffer_position length_location, start_position, total_length;
-                int length;
-                write_name_and_type(buffer, key, 0x0F);
-
-                start_position = buffer_get_position(buffer);
-                length_location = buffer_save_space(buffer, 4);
-                if (length_location == -1) {
-                    rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
-                }
-
-                length = RSTRING_LEN(value) + 1;
-                SAFE_WRITE(buffer, (char*)&length, 4);
-                SAFE_WRITE(buffer, RSTRING_PTR(value), length - 1);
-                SAFE_WRITE(buffer, &zero, 1);
-                write_doc(buffer, rb_funcall(value, rb_intern("scope"), 0), Qfalse, Qfalse);
-
-                total_length = buffer_get_position(buffer) - start_position;
-                SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&total_length, 4);
-                break;
-            } else {
-                int length;
-                write_name_and_type(buffer, key, 0x02);
-                value = TO_UTF8(value);
-                length = RSTRING_LEN(value) + 1;
-                SAFE_WRITE(buffer, (char*)&length, 4);
-                write_utf8(buffer, value, 0);
-                SAFE_WRITE(buffer, &zero, 1);
-                break;
-            }
+            int length;
+            write_name_and_type(buffer, key, 0x02);
+            value = TO_UTF8(value);
+            length = RSTRING_LEN(value) + 1;
+            SAFE_WRITE(buffer, (char*)&length, 4);
+            write_utf8(buffer, value, 0);
+            SAFE_WRITE(buffer, &zero, 1);
+            break;
         }
     case T_SYMBOL:
         {
@@ -420,6 +397,28 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 SAFE_WRITE(buffer, &zero, 1);
                 obj_length = buffer_get_position(buffer) - start_position;
                 SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&obj_length, 4);
+                break;
+            }
+            if (strcmp(cls, "BSON::Code") == 0) {
+                buffer_position length_location, start_position, total_length;
+                int length;
+                write_name_and_type(buffer, key, 0x0F);
+
+                start_position = buffer_get_position(buffer);
+                length_location = buffer_save_space(buffer, 4);
+                if (length_location == -1) {
+                    rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
+                }
+
+                VALUE code_str = rb_funcall(value, rb_intern("code"), 0);
+                length = RSTRING_LEN(code_str) + 1;
+                SAFE_WRITE(buffer, (char*)&length, 4);
+                SAFE_WRITE(buffer, RSTRING_PTR(code_str), length - 1);
+                SAFE_WRITE(buffer, &zero, 1);
+                write_doc(buffer, rb_funcall(value, rb_intern("scope"), 0), Qfalse, Qfalse);
+
+                total_length = buffer_get_position(buffer) - start_position;
+                SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&total_length, 4);
                 break;
             }
             if (strcmp(cls, "BSON::MaxKey") == 0) {
