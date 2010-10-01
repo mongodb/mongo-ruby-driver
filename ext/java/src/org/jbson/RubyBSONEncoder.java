@@ -207,7 +207,7 @@ public class RubyBSONEncoder extends BSONEncoder {
         return _buf.getPosition() - start;
     }
 
-    protected void _putObjectField( String name , Object val ){
+    protected void _putObjectField( String name , Object val ) {
 
         if ( name.equals( "_transientFields" ) )
             return;
@@ -217,7 +217,7 @@ public class RubyBSONEncoder extends BSONEncoder {
           System.out.println( "\t class : " + val.getClass().getName() );
         }
 
-        if ( name.equals( "$where") && val instanceof String ){
+        if ( name.equals( "$where") && val instanceof String ) {
             _put( CODE , name );
             _putValueString( val.toString() );
             return;
@@ -227,10 +227,21 @@ public class RubyBSONEncoder extends BSONEncoder {
             putString(name, val.toString() );
 
         else if ( val instanceof Number ) {
-            if (((Number)val).longValue() >= Integer.MIN_VALUE && ((Number)val).longValue() <= Integer.MAX_VALUE)
-                putNumber(name, ((Number)val).intValue() );
-            else
-                putNumber(name, (Number)val );
+            if ( ( val instanceof Float ) || ( val instanceof Double ) ) {
+                _put( NUMBER , name );
+                _buf.writeDouble( ((Number)val).doubleValue() );
+            }
+            else {
+              long longVal = ((Number)val).longValue();
+              if (longVal >= Integer.MIN_VALUE && longVal <= Integer.MAX_VALUE) {
+                  _put( NUMBER_INT , name );
+                  _buf.writeInt( (int)longVal );
+              }
+              else {
+                  _put( NUMBER_LONG , name );
+                  _buf.writeLong( longVal );
+              }
+            }
         }
 
         else if ( val instanceof Boolean )
@@ -260,16 +271,22 @@ public class RubyBSONEncoder extends BSONEncoder {
 
             else if ( val instanceof RubyFixnum ) {
                 long jval = ((RubyFixnum)val).getLongValue();
+
                 if (jval >= Integer.MIN_VALUE && jval <= Integer.MAX_VALUE) {
-                    putNumber(name, (int)jval );
+                    _put( NUMBER_INT , name );
+                    _buf.writeInt( (int)jval );
                 }
-                else
-                    putNumber(name, (Number)jval );
+                else {
+                    _put( NUMBER_LONG , name );
+                    _buf.writeLong( jval );
+                }
             }
 
             else if ( val instanceof RubyFloat ) {
-                double jval = ((RubyFloat)val).getValue();
-                putNumber(name, (Number)jval );
+                double doubleValue = ((RubyFloat)val).getValue();
+
+                _put( NUMBER , name );
+                _buf.writeDouble( doubleValue );
             }
 
             else if ( val instanceof JavaProxy ) {
@@ -286,9 +303,8 @@ public class RubyBSONEncoder extends BSONEncoder {
             else if ( val instanceof RubyNil )
                 putNull(name);
 
-            else if ( val instanceof RubyTime ) {
+            else if ( val instanceof RubyTime )
                 putDate( name , ((RubyTime)val).getDateTime().getMillis() );
-            }
 
             else if ( val instanceof RubyBoolean )
                 putBoolean(name, (Boolean)((RubyBoolean)val).toJava(Boolean.class));
@@ -303,7 +319,7 @@ public class RubyBSONEncoder extends BSONEncoder {
                 }
                 else {
                     long jval = big.longValue();
-                    putNumber(name, (Number)jval );
+                    putLong(name, (Number)jval );
                 }
             }
 
@@ -444,25 +460,6 @@ public class RubyBSONEncoder extends BSONEncoder {
     protected void putDate( String name , long millis ){
         _put( DATE , name );
         _buf.writeLong( millis );
-    }
-
-    protected void putNumber( String name , Number n ){
-        if ( n instanceof Integer ||
-             n instanceof Short ||
-             n instanceof Byte ||
-             n instanceof AtomicInteger ){
-                _put( NUMBER_INT , name );
-                _buf.writeInt( n.intValue() );
-             }
-        else if ( n instanceof Long ||
-                  n instanceof AtomicLong ) {
-            _put( NUMBER_LONG , name );
-            _buf.writeLong( n.longValue() );
-        }
-        else {
-            _put( NUMBER , name );
-            _buf.writeDouble( n.doubleValue() );
-        }
     }
 
     private void putRubyBinary( String name , RubyObject binary ) {
