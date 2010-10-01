@@ -226,8 +226,12 @@ public class RubyBSONEncoder extends BSONEncoder {
         if ( val instanceof String )
             putString(name, val.toString() );
 
-        else if ( val instanceof Number )
-            putNumber(name, (Number)val);
+        else if ( val instanceof Number ) {
+            if (((Number)val).longValue() >= Integer.MIN_VALUE && ((Number)val).longValue() <= Integer.MAX_VALUE)
+                putNumber(name, ((Number)val).intValue() );
+            else
+                putNumber(name, (Number)val );
+        }
 
         else if ( val instanceof Boolean )
             putBoolean(name, (Boolean)val);
