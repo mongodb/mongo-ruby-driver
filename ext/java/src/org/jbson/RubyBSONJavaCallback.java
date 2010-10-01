@@ -26,7 +26,7 @@ import org.bson.types.*;
 
 public class RubyBSONJavaCallback implements BSONCallback {
 
-    private RubyHash _root;
+    private LinkedHashMap _root;
     private RubyModule _rbclsOrderedHash;
     private RubyModule _rbclsObjectId;
     private RubyModule _rbclsBinary;
@@ -60,17 +60,10 @@ public class RubyBSONJavaCallback implements BSONCallback {
         _nameStack.clear();
     }
 
-    public RubyHash createHash() {
-      RubyHash h = (RubyHash)JavaEmbedUtils.invokeMethod(_runtime, _rbclsOrderedHash, "new",
-            new Object[] { }, Object.class);
-
-      return h;
-    }
-
     public Object create( boolean array , List<String> path ){
         if ( array )
             return new ArrayList<Object>();
-        return createHash();
+        return new LinkedHashMap();
     }
 
     public void objectStart(){
@@ -78,7 +71,7 @@ public class RubyBSONJavaCallback implements BSONCallback {
             throw new IllegalStateException( "something is wrong" );
         }
 
-        _root = createHash();
+        _root = new LinkedHashMap();
         _stack.add(_root);
     }
 
@@ -87,34 +80,21 @@ public class RubyBSONJavaCallback implements BSONCallback {
     }
 
     public void objectStart(String key){
-        RubyHash hash = createHash();
+        LinkedHashMap hash = new LinkedHashMap();
 
         _nameStack.addLast( key );
 
         Object lastObject = _stack.getLast();
 
         // Yes, this is a bit hacky.
-        if(lastObject instanceof RubyHash) {
-            writeRubyHash(key, (RubyHash)lastObject, (IRubyObject)hash);
+        if(lastObject instanceof LinkedHashMap) {
+            ((LinkedHashMap)hash).put( key, lastObject );
         }
         else {
             ((ArrayList)lastObject).add(Integer.parseInt(key), hash);
-            //writeRubyArray(key, (RubyArray)lastObject, (IRubyObject)hash); 
         }
 
-        _stack.addLast( (RubyObject)hash );
-    }
-
-    public void writeRubyHash(String key, RubyHash hash, Object obj) {
-        RubyString rkey = _runtime.newString(key);
-        JavaEmbedUtils.invokeMethod(_runtime, hash, "[]=",
-          new Object[] { (IRubyObject)rkey, obj }, Object.class);
-    }
-
-    public void writeRubyArray(String key, RubyArray array, IRubyObject obj) {
-        Long rkey = Long.parseLong(key);
-        RubyFixnum index = new RubyFixnum(_runtime, rkey);
-        array.aset((IRubyObject)index, obj);
+        _stack.addLast( hash );
     }
 
     public void arrayStart(String key){
@@ -123,8 +103,8 @@ public class RubyBSONJavaCallback implements BSONCallback {
         Object lastObject = _stack.getLast();
         _nameStack.addLast( key );
 
-        if(lastObject instanceof RubyHash) {
-            writeRubyHash(key, (RubyHash)lastObject, array);
+        if(lastObject instanceof LinkedHashMap) {
+            ((LinkedHashMap)lastObject).put( key, lastObject );
         }
         else {
             ((ArrayList)lastObject).add(Integer.parseInt(key), array);
@@ -250,6 +230,7 @@ public class RubyBSONJavaCallback implements BSONCallback {
         _put ( name , result );
     }
 
+    // TODO: Optimize this. Incredibly slow.
     public void gotObjectId( String name , ObjectId id ){
        IRubyObject arg = (IRubyObject)RubyString.newString(_runtime, id.toString());
       // //System.out.println(id.toByteArray().length);
@@ -266,13 +247,13 @@ public class RubyBSONJavaCallback implements BSONCallback {
         _put( name, (RubyObject)result );
     }
 
-    // TODO: Incredibly annoying to deserialize to a Ruby DBRef. Might just
-    // stop supporting this altogether in the driver.
+    // DBRef has been deprecated in the Java driver. We're going to follow suit.
     public void gotDBRef( String name , String ns , ObjectId id ){
-        // _put( name , new BasicBSONObject( "$ns" , ns ).append( "$id" , id ) );
     }
 
     // TODO: I know that this is horrible. To be optimized.
+    // This conversion can probably be avoided altogether.
+    // Used only for GridFS.
     private RubyArray ja2ra( byte[] b ) {
         RubyArray result = RubyArray.newArray( _runtime, b.length );
         
@@ -314,9 +295,7 @@ public class RubyBSONJavaCallback implements BSONCallback {
           //a.aset((IRubyObject)index, o);
         }
         else {
-          RubyString rkey = RubyString.newString(_runtime, name);
-          JavaEmbedUtils.invokeMethod(_runtime, current, "[]=",
-            new Object[] { (IRubyObject)rkey, o }, Object.class);
+          ((LinkedHashMap)current).put( name, o );
         }
     }
     
@@ -328,28 +307,12 @@ public class RubyBSONJavaCallback implements BSONCallback {
       return _root;
     }
 
-    protected void setRoot(RubyHash o) {
-      _root = o;
-    }
-
+//    protected void setRoot(LinkedHashMap o) {
+//      _root = o;
+//    }
+//
     protected boolean isStackEmpty() {
       return _stack.size() < 1;
-    }
-
-    // Helper method for checking whether a Ruby hash has a certain key.
-    private boolean _rbHashHasKey(RubyHash hash, String key) {
-        RubyBoolean b = hash.has_key_p( _runtime.newString( key ) );
-        return b == _runtime.getTrue();
-    }
-
-    // Helper method for getting a value from a Ruby hash.
-    private IRubyObject _rbHashGet(RubyHash hash, Object key) {
-        if (key instanceof String) {
-            return hash.op_aref( _runtime.getCurrentContext(), _runtime.newString((String)key) );
-        }
-        else {
-            return hash.op_aref( _runtime.getCurrentContext(), (RubyObject)key );
-        }
     }
 
     static final HashMap<String, Object> _getRuntimeCache(Ruby runtime) {
