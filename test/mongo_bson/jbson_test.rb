@@ -23,7 +23,7 @@ class BSONTest < Test::Unit::TestCase
 
   def setup
     @encoder = BSON::BSON_JAVA
-    @decoder = BSON::BSON_RUBY#BSON::BSON_JAVA
+    @decoder = BSON::BSON_JAVA
   end
 
   def assert_doc_pass(doc, options={})
@@ -338,13 +338,16 @@ class BSONTest < Test::Unit::TestCase
     assert_doc_pass(doc)
   end
 
-  def test_timestamp
-    val = {"test" => [4, 20]}
-    assert_equal val, @decoder.deserialize([0x13, 0x00, 0x00, 0x00,
-                                      0x11, 0x74, 0x65, 0x73,
-                                      0x74, 0x00, 0x04, 0x00,
-                                      0x00, 0x00, 0x14, 0x00,
-                                      0x00, 0x00, 0x00])
+  if !(RUBY_PLATFORM =~ /java/)
+    def test_timestamp
+      val = {"test" => [4, 20]}
+      assert_equal val, @decoder.deserialize([0x13, 0x00, 0x00, 0x00,
+                                        0x11, 0x74, 0x65, 0x73,
+                                        0x74, 0x00, 0x04, 0x00,
+                                        0x00, 0x00, 0x14, 0x00,
+                                        0x00, 0x00, 0x00])
+
+    end
   end
 
   def test_overflow

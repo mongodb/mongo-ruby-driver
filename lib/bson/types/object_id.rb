@@ -44,6 +44,8 @@ module BSON
       @data = data || generate
     end
 
+    attr_accessor :data
+
     # Determine if the supplied string is legal. Legal strings will
     # consist of 24 hexadecimal characters.
     #
@@ -130,6 +132,13 @@ module BSON
         str[i * 2, 2] = '%02x' % @data[i]
       end
       str
+    end
+
+    def to_e
+      @data.each do |i|
+        print i
+        print ' ' 
+      end
     end
 
     def inspect

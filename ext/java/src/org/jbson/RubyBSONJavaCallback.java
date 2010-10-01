@@ -24,7 +24,7 @@ import java.util.regex.*;
 import org.bson.*;
 import org.bson.types.*;
 
-public class RubyBSONCallback implements BSONCallback {
+public class RubyBSONJavaCallback implements BSONCallback {
 
     private RubyHash _root;
     private RubyModule _rbclsOrderedHash;
@@ -34,12 +34,12 @@ public class RubyBSONCallback implements BSONCallback {
     private RubyModule _rbclsMaxKey;
     private RubyModule _rbclsDBRef;
     private RubyModule _rbclsCode;
-    private final LinkedList<RubyObject> _stack = new LinkedList<RubyObject>();
+    private final LinkedList<Object> _stack = new LinkedList<Object>();
     private final LinkedList<String> _nameStack = new LinkedList<String>();
     private Ruby _runtime;
     static final HashMap<Ruby, HashMap> _runtimeCache = new HashMap<Ruby, HashMap>();
 
-    public RubyBSONCallback(Ruby runtime) {
+    public RubyBSONJavaCallback(Ruby runtime) {
       _runtime          = runtime;
       _rbclsOrderedHash = _lookupConstant( _runtime, "BSON::OrderedHash" );
       _rbclsBinary      = _lookupConstant( _runtime, "BSON::Binary" );
@@ -60,7 +60,6 @@ public class RubyBSONCallback implements BSONCallback {
         _nameStack.clear();
     }
 
-    // Note: this actually creates an OrderedHash.
     public RubyHash createHash() {
       RubyHash h = (RubyHash)JavaEmbedUtils.invokeMethod(_runtime, _rbclsOrderedHash, "new",
             new Object[] { }, Object.class);
@@ -68,13 +67,9 @@ public class RubyBSONCallback implements BSONCallback {
       return h;
     }
 
-    public RubyArray createArray() {
-      return RubyArray.newArray(_runtime);
-    }
-
-    public RubyObject create( boolean array , List<String> path ){
+    public Object create( boolean array , List<String> path ){
         if ( array )
-            return createArray();
+            return new ArrayList<Object>();
         return createHash();
     }
 
@@ -96,50 +91,50 @@ public class RubyBSONCallback implements BSONCallback {
 
         _nameStack.addLast( key );
 
-        RubyObject lastObject = _stack.getLast();
+        Object lastObject = _stack.getLast();
 
         // Yes, this is a bit hacky.
         if(lastObject instanceof RubyHash) {
             writeRubyHash(key, (RubyHash)lastObject, (IRubyObject)hash);
         }
         else {
-            writeRubyArray(key, (RubyArray)lastObject, (IRubyObject)hash); 
+            ((ArrayList)lastObject).add(Integer.parseInt(key), hash);
+            //writeRubyArray(key, (RubyArray)lastObject, (IRubyObject)hash); 
         }
 
         _stack.addLast( (RubyObject)hash );
     }
 
-    // Note: we use []= because we're dealing with an OrderedHash, which in 1.8
-    // doesn't have an internal JRuby representation.
-    public void writeRubyHash(String key, RubyHash hash, IRubyObject obj) {
+    public void writeRubyHash(String key, RubyHash hash, Object obj) {
         RubyString rkey = _runtime.newString(key);
         JavaEmbedUtils.invokeMethod(_runtime, hash, "[]=",
           new Object[] { (IRubyObject)rkey, obj }, Object.class);
     }
 
-        public void writeRubyArray(String key, RubyArray array, IRubyObject obj) {
-        Long index = Long.parseLong(key);
-        array.store(index, obj);
+    public void writeRubyArray(String key, RubyArray array, IRubyObject obj) {
+        Long rkey = Long.parseLong(key);
+        RubyFixnum index = new RubyFixnum(_runtime, rkey);
+        array.aset((IRubyObject)index, obj);
     }
 
     public void arrayStart(String key){
-        RubyArray array = createArray();
+        ArrayList<Object> array = new ArrayList<Object>();
 
-        RubyObject lastObject = _stack.getLast();
+        Object lastObject = _stack.getLast();
         _nameStack.addLast( key );
 
         if(lastObject instanceof RubyHash) {
-            writeRubyHash(key, (RubyHash)lastObject, (IRubyObject)array);
+            writeRubyHash(key, (RubyHash)lastObject, array);
         }
         else {
-            writeRubyArray(key, (RubyArray)lastObject, (IRubyObject)array); 
+            ((ArrayList)lastObject).add(Integer.parseInt(key), array);
         }
 
-        _stack.addLast( (RubyObject)array );
+        _stack.addLast( array );
     }
 
-    public RubyObject objectDone(){
-        RubyObject o =_stack.removeLast();
+    public Object objectDone(){
+        Object o =_stack.removeLast();
         if ( _nameStack.size() > 0 )
             _nameStack.removeLast();
         else if ( _stack.size() > 0 ) {
@@ -152,12 +147,12 @@ public class RubyBSONCallback implements BSONCallback {
     public void arrayStart(){
     }
 
-    public RubyObject arrayDone(){
+    public Object arrayDone(){
         return objectDone();
     }
 
     public void gotNull( String name ){
-        _put(name, (RubyObject)_runtime.getNil());
+        _put(name, null);
     }
 
     // Undefined should be represented as a lack of key / value.
@@ -170,17 +165,14 @@ public class RubyBSONCallback implements BSONCallback {
     }
 
     public void gotCode( String name , String code ){
-        RubyString code_string = _runtime.newString( code );
         Object rb_code_obj = JavaEmbedUtils.invokeMethod(_runtime, _rbclsCode,
-            "new", new Object[] { code_string }, Object.class);
+            "new", new Object[] { code }, Object.class);
         _put( name , (RubyObject)rb_code_obj );
     }
 
     public void gotCodeWScope( String name , String code , Object scope ){
-        RubyString code_string = _runtime.newString( code );
-
         Object rb_code_obj = JavaEmbedUtils.invokeMethod(_runtime, _rbclsCode,
-            "new", new Object[] { code_string, (RubyHash)scope }, Object.class);
+            "new", new Object[] { code, (RubyHash)scope }, Object.class);
 
         _put( name , (RubyObject)rb_code_obj );
     }
@@ -198,23 +190,19 @@ public class RubyBSONCallback implements BSONCallback {
     }
 
     public void gotBoolean( String name , boolean v ){
-        RubyBoolean b = RubyBoolean.newBoolean( _runtime, v );
-        _put(name , b);
+        _put(name , v);
     }
 
     public void gotDouble( String name , double v ){
-        RubyFloat f = new RubyFloat( _runtime, v );
-        _put(name , (RubyObject)f);
+        _put(name , v);
     }
-    
+
     public void gotInt( String name , int v ){
-        RubyFixnum f = new RubyFixnum( _runtime, v );
-        _put(name , (RubyObject)f);
+        _put(name , v);
     }
-    
+
     public void gotLong( String name , long v ){
-        RubyFixnum f = new RubyFixnum( _runtime, v );
-        _put(name , (RubyObject)f);
+        _put(name , v);
     }
 
     public void gotDate( String name , long millis ){
@@ -240,8 +228,7 @@ public class RubyBSONCallback implements BSONCallback {
     }
 
     public void gotString( String name , String v ){
-        RubyString str = RubyString.newString(_runtime, v);
-        _put( name , str );
+        _put( name , v );
     }
 
     public void gotSymbol( String name , String v ){
@@ -265,6 +252,13 @@ public class RubyBSONCallback implements BSONCallback {
 
     public void gotObjectId( String name , ObjectId id ){
        IRubyObject arg = (IRubyObject)RubyString.newString(_runtime, id.toString());
+      // //System.out.println(id.toByteArray().length);
+      // byte[] b = id.toByteArray();
+      // RubyArray a = _runtime.newArray();
+      // for(int i=0; i < b.length; i++) {
+      //   System.out.println(b[i]);
+      //   a.append(_runtime.newFixnum(b[i]));
+      // }
        Object[] args = new Object[] { arg };
 
        Object result = JavaEmbedUtils.invokeMethod(_runtime, _rbclsObjectId, "from_string", args, Object.class);
@@ -283,7 +277,7 @@ public class RubyBSONCallback implements BSONCallback {
         RubyArray result = RubyArray.newArray( _runtime, b.length );
         
         for ( int i=0; i<b.length; i++ ) {
-            result.store( i, _runtime.newFixnum(b[i]) );
+            result.aset( RubyNumeric.dbl2num( _runtime, (double)i ), RubyNumeric.dbl2num( _runtime, (double)b[i] ) );
         }
 
         return result;
@@ -310,12 +304,14 @@ public class RubyBSONCallback implements BSONCallback {
         _put( name, (RubyObject)result );
     }
 
-    protected void _put( String name , RubyObject o ){
-        RubyObject current = cur();
-        if(current instanceof RubyArray) {
-          RubyArray a = (RubyArray)current;
-          Long n = Long.parseLong(name);
-          a.store(n, (IRubyObject)o);
+    protected void _put( String name , Object o ){
+        Object current = cur();
+        if(current instanceof ArrayList) {
+          ((ArrayList)current).add(Integer.parseInt(name), (Object)o);
+          //RubyArray a = (RubyArray)current;
+          //Long n = Long.parseLong(name);
+          //RubyFixnum index = new RubyFixnum(_runtime, n);
+          //a.aset((IRubyObject)index, o);
         }
         else {
           RubyString rkey = RubyString.newString(_runtime, name);
@@ -323,11 +319,11 @@ public class RubyBSONCallback implements BSONCallback {
             new Object[] { (IRubyObject)rkey, o }, Object.class);
         }
     }
-
-    protected RubyObject cur(){
+    
+    protected Object cur(){
         return _stack.getLast();
     }
-
+    
     public Object get(){
       return _root;
     }
@@ -338,6 +334,22 @@ public class RubyBSONCallback implements BSONCallback {
 
     protected boolean isStackEmpty() {
       return _stack.size() < 1;
+    }
+
+    // Helper method for checking whether a Ruby hash has a certain key.
+    private boolean _rbHashHasKey(RubyHash hash, String key) {
+        RubyBoolean b = hash.has_key_p( _runtime.newString( key ) );
+        return b == _runtime.getTrue();
+    }
+
+    // Helper method for getting a value from a Ruby hash.
+    private IRubyObject _rbHashGet(RubyHash hash, Object key) {
+        if (key instanceof String) {
+            return hash.op_aref( _runtime.getCurrentContext(), _runtime.newString((String)key) );
+        }
+        else {
+            return hash.op_aref( _runtime.getCurrentContext(), (RubyObject)key );
+        }
     }
 
     static final HashMap<String, Object> _getRuntimeCache(Ruby runtime) {

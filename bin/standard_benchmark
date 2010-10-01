@@ -70,7 +70,7 @@ def profile(str)
   end
 end
 
-def benchmark(str, n, coll_name, data, create_index=false)
+def benchmark(str, n, coll_name, data, create_index=false, verbosity=true)
   coll = @db.collection(coll_name)
   coll.create_index('x') if create_index
   profile(str) do
@@ -79,7 +79,7 @@ def benchmark(str, n, coll_name, data, create_index=false)
     td = tm.add do
       n.times { |i| yield(coll, i) }
     end
-    report(str, td.real, td.utime)
+    report(str, td.real, td.utime) if verbosity
   end
 end
 
@@ -90,8 +90,8 @@ connection = Connection.new(host, port)
 connection.drop_database("benchmark")
 @db = connection.db('benchmark')
 
-def benchmark_insert(desc, coll_name, data)
-  benchmark(desc, PER_TRIAL, coll_name, data) do |coll, i|
+def benchmark_insert(desc, coll_name, data, verbosity=true)
+  benchmark(desc, PER_TRIAL, coll_name, data, verbosity) do |coll, i|
     data['x'] = i
     coll.insert(data)
     data.delete(:_id)
@@ -109,9 +109,17 @@ end
 
 print_headings
 
+if RUBY_PLATFORM =~ /java/
+puts "***WARMUP***"
+benchmark_insert('insert (small, no index)', 'small_none', SMALL, false)
+benchmark_insert('insert (medium, no index)', 'medium_none', MEDIUM, false)
+benchmark_insert('insert (large, no index)', 'large_none', LARGE, false)
+puts "***WARMUP***"
+end
 benchmark_insert('insert (small, no index)', 'small_none', SMALL)
 benchmark_insert('insert (medium, no index)', 'medium_none', MEDIUM)
 benchmark_insert('insert (large, no index)', 'large_none', LARGE)
+
 
 benchmark_insert_index('insert (small, index)', 'small_indexed', SMALL)
 benchmark_insert_index('insert (medium, index)', 'medium_indexed', MEDIUM)
@@ -138,6 +146,11 @@ end
 benchmark_find_one('find_one (small, no index)', 'small_none', PER_TRIAL / 2)
 benchmark_find_one('find_one (medium, no index)', 'medium_none', PER_TRIAL / 2)
 benchmark_find_one('find_one (large, no index)', 'large_none', PER_TRIAL / 2)
+benchmark_find_one('find_one (small, no index)', 'small_none', PER_TRIAL / 2)
+benchmark_find_one('find_one (medium, no index)', 'medium_none', PER_TRIAL / 2)
+benchmark_find_one('find_one (large, no index)', 'large_none', PER_TRIAL / 2)
+
+
 
 benchmark_find_one('find_one (small, indexed)', 'small_indexed', PER_TRIAL / 2)
 benchmark_find_one('find_one (medium, indexed)', 'medium_indexed', PER_TRIAL / 2)

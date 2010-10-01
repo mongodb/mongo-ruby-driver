@@ -19,6 +19,7 @@ import org.bson.BSONEncoder;
 
 import org.jruby.javasupport.JavaEmbedUtils;
 import org.jruby.javasupport.JavaUtil;
+import org.jruby.java.proxies.JavaProxy;
 
 import org.jruby.*;
 import org.jruby.runtime.builtin.IRubyObject;
@@ -225,20 +226,8 @@ public class RubyBSONEncoder extends BSONEncoder {
         if ( val instanceof String )
             putString(name, val.toString() );
 
-        // TODO: Clean up
-        else if ( val instanceof Number ) {
-            if ( val instanceof Double ) {
-                  putNumber(name, (Number)val);
-              }
-              else {
-                 long jval = ((Number)val).longValue();
-                  if (jval > Integer.MIN_VALUE && jval < Integer.MAX_VALUE) {
-                      putNumber(name, (int)jval );
-                  }
-                  else
-                      putNumber(name, (Number)jval );
-              }
-        }
+        else if ( val instanceof Number )
+            putNumber(name, (Number)val);
 
         else if ( val instanceof Boolean )
             putBoolean(name, (Boolean)val);
@@ -265,7 +254,6 @@ public class RubyBSONEncoder extends BSONEncoder {
                 putSymbol(name, new Symbol(val.toString()));
             }
 
-            // TODO: Clean up
             else if ( val instanceof RubyFixnum ) {
                 long jval = ((RubyFixnum)val).getLongValue();
                 if (jval >= Integer.MIN_VALUE && jval <= Integer.MAX_VALUE) {
@@ -275,10 +263,20 @@ public class RubyBSONEncoder extends BSONEncoder {
                     putNumber(name, (Number)jval );
             }
 
-            // TODO: Clean up
             else if ( val instanceof RubyFloat ) {
                 double jval = ((RubyFloat)val).getValue();
                 putNumber(name, (Number)jval );
+            }
+
+            else if ( val instanceof JavaProxy ) {
+              Object obj = ((JavaProxy)val).getObject();
+              if ( obj instanceof ArrayList ) {
+                 putIterable( name, ((ArrayList)obj));
+              }
+              else {
+                 _rbRaise( (RubyClass)_rbclsInvalidDocument,
+                    "Got a JavaProxy object which can't be serialized as a BSON type." );
+              }
             }
 
             else if ( val instanceof RubyNil )
@@ -315,6 +313,9 @@ public class RubyBSONEncoder extends BSONEncoder {
               }
               else if( klass.equals( "BSON::ObjectID" ) ) {
                   putRubyObjectId(name, (RubyObject)val );
+              }
+              else if( klass.equals( "Java::JavaUtil::ArrayList" ) ) {
+                  putIterable(name, (Iterable)val );
               }
               else if ( klass.equals( "BSON::Code" ) ) {
                   putRubyCodeWScope(name, (RubyObject)val );
