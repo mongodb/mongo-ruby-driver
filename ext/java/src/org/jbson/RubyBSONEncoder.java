@@ -319,7 +319,8 @@ public class RubyBSONEncoder extends BSONEncoder {
                 }
                 else {
                     long jval = big.longValue();
-                    putLong(name, (Number)jval );
+                    _put( NUMBER_LONG , name );
+                    _buf.writeLong( jval );
                 }
             }
 
@@ -530,7 +531,7 @@ public class RubyBSONEncoder extends BSONEncoder {
         _put( OID , name );
 
         RubyArray roid = (RubyArray)JavaEmbedUtils.invokeMethod(_runtime, oid,
-            "to_a", new Object[] {}, Object.class);
+            "data", new Object[] {}, Object.class);
         byte[] joid = ra2ba( (RubyArray)roid );
 
         _buf.writeInt( convertToInt(joid, 0) );

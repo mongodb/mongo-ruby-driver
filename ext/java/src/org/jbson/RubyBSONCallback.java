@@ -264,10 +264,11 @@ public class RubyBSONCallback implements BSONCallback {
     }
 
     public void gotObjectId( String name , ObjectId id ){
-       IRubyObject arg = (IRubyObject)RubyString.newString(_runtime, id.toString());
+       byte[] jbytes = id.toByteArray();
+       RubyArray arg = ja2ra(jbytes);
        Object[] args = new Object[] { arg };
 
-       Object result = JavaEmbedUtils.invokeMethod(_runtime, _rbclsObjectId, "from_string", args, Object.class);
+       Object result = JavaEmbedUtils.invokeMethod(_runtime, _rbclsObjectId, "new", args, Object.class);
 
         _put( name, (RubyObject)result );
     }
@@ -281,7 +282,7 @@ public class RubyBSONCallback implements BSONCallback {
     // TODO: I know that this is horrible. To be optimized.
     private RubyArray ja2ra( byte[] b ) {
         RubyArray result = RubyArray.newArray( _runtime, b.length );
-        
+
         for ( int i=0; i<b.length; i++ ) {
             result.store( i, _runtime.newFixnum(b[i]) );
         }

@@ -108,6 +108,13 @@ module BSON
       @data.dup
     end
 
+    # Get the array representation without cloning.
+    #
+    # @return [Array]
+    def data
+      @data
+    end
+
     # Given a string representation of an ObjectId, return a new ObjectId
     # with that value.
     #
@@ -132,13 +139,6 @@ module BSON
         str[i * 2, 2] = '%02x' % @data[i]
       end
       str
-    end
-
-    def to_e
-      @data.each do |i|
-        print i
-        print ' ' 
-      end
     end
 
     def inspect
