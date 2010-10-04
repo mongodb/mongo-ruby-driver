@@ -168,35 +168,6 @@ module Mongo
       end
     end
 
-    # @deprecated
-    #
-    # Initialize a paired connection to MongoDB.
-    #
-    # @param nodes [Array] An array of arrays, each of which specified a host and port.
-    # @param opts Takes the same options as Connection.new
-    #
-    # @example
-    #   Connection.paired([["db1.example.com", 27017],
-    #                   ["db2.example.com", 27017]])
-    #
-    # @example
-    #   Connection.paired([["db1.example.com", 27017],
-    #                   ["db2.example.com", 27017]],
-    #                   :pool_size => 20, :timeout => 5)
-    #
-    # @return [Mongo::Connection]
-    def self.paired(nodes, opts={})
-      warn "Connection.paired is deprecated. Please use Connection.multi instead."
-      unless nodes.length == 2 && nodes.all? {|n| n.is_a? Array}
-        raise MongoArgumentError, "Connection.paired requires that exactly two nodes be specified."
-      end
-      # Block returns an array, the first element being an array of nodes and the second an array
-      # of authorizations for the database.
-      new(nil, nil, opts) do |con|
-        [con.pair_val_to_connection(nodes[0]), con.pair_val_to_connection(nodes[1])]
-      end
-    end
-
     # Initialize a connection to MongoDB using the MongoDB URI spec:
     #
     # @param uri [String]
@@ -506,15 +477,6 @@ module Mongo
       end
 
       raise ConnectionFailure, "failed to connect to any given host:port" unless connected?
-    end
-
-    # @deprecated
-    #
-    # Create a new socket and attempt to connect to master.
-    # If successful, sets host and port to master and returns the socket.
-    def connect_to_master
-      warn "Connection#connect_to_master is deprecated. Use Connection#connect instead."
-      connect
     end
 
     def connected?
