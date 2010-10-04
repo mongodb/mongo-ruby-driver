@@ -1,3 +1,11 @@
+1.1 2010-10-4
+* Official JRuby support via Java extensons for BSON (beta)
+* Connection#lock! and Connection#unlock! for easy fsync lock
+* Note: BSON::Code is no longer a subclass of String.
+
+1.0.9 2010-9-20
+* Significant performance improvements
+
 1.0.8 2010-8-27
 
 * Cursor#rewind! and more consistent Cursor Enumberable behavior

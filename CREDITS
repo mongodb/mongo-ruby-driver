@@ -36,6 +36,9 @@ Cyril Mougel, cyril.mougel@gmail.com
 * Initial logging support
 * Test case
 
+Honlgi Lai (Phusion)
+* Significant performance audit. See commits prior to 1.0.9
+
 Jack Chen, chendo on github
 * Test case + fix for deserializing pre-epoch Time instances
 
@@ -73,6 +76,7 @@ Chuck Remes
 * Extraction of BSON into separate gems
 * Extensions compile on Rubinius
 * Performance improvements for INT in C extensions
+* Performance improvements for JRuby BSON encoder and callback classes
 
 Dmitrii Golub (Houdini) and Jacques Crocker (railsjedi)
 * Support open to exclude fields on query
