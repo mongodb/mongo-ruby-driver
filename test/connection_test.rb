@@ -144,7 +144,9 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_fsync_lock
+    assert !@mongo.locked?
     @mongo.lock!
+    assert @mongo.locked?
     assert_equal 1, @mongo['admin']['$cmd.sys.inprog'].find_one['fsyncLock'], "Not fsync-locked"
     assert_equal "unlock requested", @mongo.unlock!['info']
     unlocked = false
@@ -158,6 +160,7 @@ class TestConnection < Test::Unit::TestCase
         counter += 1
       end
     end
+    assert !@mongo.locked?
     assert unlocked, "mongod failed to unlock"
   end
 

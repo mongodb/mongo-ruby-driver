@@ -222,6 +222,13 @@ module Mongo
       self['admin'].command(cmd)
     end
 
+    # Is this database locked against writes?
+    #
+    # @return [Boolean]
+    def locked?
+      self['admin']['$cmd.sys.inprog'].find_one['fsyncLock'] == 1
+    end
+
     # Unlock a previously fsync-locked mongod process.
     #
     # @return [BSON::OrderedHash] command response
