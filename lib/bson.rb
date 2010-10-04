@@ -55,11 +55,12 @@ else
     module BSON
       BSON_CODER = BSON_C
     end
-  rescue LoadError
+  rescue LoadError => e
     require 'bson/bson_ruby'
     module BSON
       BSON_CODER = BSON_RUBY
     end
+    p e
     warn "\n**Notice: C extension not loaded. This is required for optimum MongoDB Ruby driver performance."
     warn "  You can install the extension as follows:\n  gem install bson_ext\n"
     warn "  If you continue to receive this message after installing, make sure that the"
@@ -70,7 +71,6 @@ end
 require 'bson/types/binary'
 require 'bson/types/code'
 require 'bson/types/dbref'
-require 'bson/types/objectid'
 require 'bson/types/object_id'
 require 'bson/types/min_max_keys'
 

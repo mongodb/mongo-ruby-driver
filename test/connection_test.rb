@@ -130,7 +130,7 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_nodes
-    db = Connection.paired([['foo', 27017], ['bar', 27018]], :connect => false)
+    db = Connection.multi([['foo', 27017], ['bar', 27018]], :connect => false)
     nodes = db.nodes
     assert_equal 2, nodes.length
     assert_equal ['foo', 27017], nodes[0]
@@ -139,7 +139,7 @@ class TestConnection < Test::Unit::TestCase
 
   def test_slave_ok_with_multiple_nodes
     assert_raise MongoArgumentError do
-      Connection.paired([['foo', 27017], ['bar', 27018]], :connect => false, :slave_ok => true)
+      Connection.multi([['foo', 27017], ['bar', 27018]], :connect => false, :slave_ok => true)
     end
   end
 

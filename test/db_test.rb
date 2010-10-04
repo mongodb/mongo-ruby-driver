@@ -75,20 +75,6 @@ class DBTest < Test::Unit::TestCase
     assert_kind_of Collection, colls[0]
   end
 
-  def test_pair
-    @@conn.close
-    @@users = nil
-    @@conn  = Connection.paired([["this-should-fail", 27017], [@@host, @@port]])
-    @@db    = @@conn[MONGO_TEST_DB]
-    assert @@conn.connected?
-  ensure
-    unless @@conn.connected?
-      @@conn = Connection.new(@@host, @@port)
-      @@db   = @@conn.db(MONGO_TEST_DB)
-    end
-    @@users = @@db.collection('system.users')
-  end
-
   def test_pk_factory
     db = Connection.new(@@host, @@port).db(MONGO_TEST_DB, :pk => TestPKFactory.new)
     coll = db.collection('test')

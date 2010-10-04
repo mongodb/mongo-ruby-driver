@@ -75,7 +75,6 @@ static ID lt_operator;
 static ID gt_operator;
 
 static VALUE Binary;
-static VALUE ObjectID;
 static VALUE ObjectId;
 static VALUE DBRef;
 static VALUE Code;
@@ -365,7 +364,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 SAFE_WRITE(buffer, RSTRING_PTR(string_data), length);
                 break;
             }
-            if ((strcmp(cls, "BSON::ObjectId") == 0) || (strcmp(cls, "BSON::ObjectID") == 0)) {
+            if (strcmp(cls, "BSON::ObjectId") == 0) {
                 VALUE as_array = rb_funcall(value, rb_intern("to_a"), 0);
                 int i;
                 write_name_and_type(buffer, key, 0x07);
@@ -917,8 +916,6 @@ void Init_cbson() {
     bson = rb_const_get(rb_cObject, rb_intern("BSON"));
     rb_require("bson/types/binary");
     Binary = rb_const_get(bson, rb_intern("Binary"));
-    rb_require("bson/types/objectid");
-    ObjectID = rb_const_get(bson, rb_intern("ObjectID"));
     rb_require("bson/types/object_id");
     ObjectId = rb_const_get(bson, rb_intern("ObjectId"));
     rb_require("bson/types/dbref");
@@ -947,7 +944,6 @@ void Init_cbson() {
     Digest = rb_const_get(rb_cObject, rb_intern("Digest"));
     DigestMD5 = rb_const_get(Digest, rb_intern("MD5"));
 
-    rb_define_method(ObjectID, "generate", objectid_generate, 0);
     rb_define_method(ObjectId, "generate", objectid_generate, 0);
 
     if (gethostname(hostname, MAX_HOSTNAME_LENGTH) != 0) {
