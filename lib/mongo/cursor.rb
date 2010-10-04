@@ -39,7 +39,7 @@ module Mongo
       @connection = @db.connection
       @logger     = @connection.logger
 
-      @selector   = convert_selector_for_query(options[:selector])
+      @selector   = options[:selector] || {}
       @fields     = convert_fields_for_query(options[:fields])
       @skip       = options[:skip]     || 0
       @limit      = options[:limit]    || 0
@@ -324,26 +324,6 @@ module Mongo
           fields.each_with_object({}) { |field, hash| hash[field] = 1 }
         when Hash
           return fields
-      end
-    end
-
-    # Set the query selector hash. If the selector is a Code or String object,
-    # the selector will be used in a $where clause.
-    # See http://www.mongodb.org/display/DOCS/Server-side+Code+Execution
-    def convert_selector_for_query(selector)
-      case selector
-        when Hash
-         selector
-        when nil
-          {}
-        when BSON::Code
-          warn "Collection#find will no longer take a JavaScript string in future versions. " +
-            "Please specify your $where query explicitly."
-          {"$where" => selector}
-        when String
-          warn "Collection#find will no longer take a JavaScript string in future versions. " +
-            "Please specify your $where query explicitly."
-          {"$where" => BSON::Code.new(selector)}
       end
     end
 

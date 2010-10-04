@@ -454,16 +454,6 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 2, @@coll.find('$where' => BSON::Code.new('this.a > i', {'i' => 1})).count()
   end
 
-  def test_implicit_where
-    @@coll.remove
-    @@coll.insert('a' => 2)
-    @@coll.insert('a' => 3)
-
-    assert_equal 2, @@coll.count
-    assert_equal 1, @@coll.find('this.a > 2').count()
-    assert_equal 2, @@coll.find(BSON::Code.new('this.a > z', {'z' => 1})).to_a.length
-  end
-
   def test_eval
     assert_equal 3, @@db.eval('function (x) {return x;}', 3)
 
