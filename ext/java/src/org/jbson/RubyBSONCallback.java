@@ -265,12 +265,15 @@ public class RubyBSONCallback implements BSONCallback {
 
     public void gotObjectId( String name , ObjectId id ){
        byte[] jbytes = id.toByteArray();
-       RubyArray arg = ja2ra(jbytes);
+       RubyArray arg = RubyArray.newArray( _runtime, 12 );
+       for( int i=0; i<jbytes.length; i++) {
+         arg.store( i, _runtime.newFixnum(jbytes[i] & 0xFF) );
+       }
        Object[] args = new Object[] { arg };
 
        Object result = JavaEmbedUtils.invokeMethod(_runtime, _rbclsObjectId, "new", args, Object.class);
 
-        _put( name, (RubyObject)result );
+       _put( name, (RubyObject)result );
     }
 
     // TODO: Incredibly annoying to deserialize to a Ruby DBRef. Might just

@@ -565,8 +565,6 @@ module BSON
         ARRAY
       when Regexp
         REGEX
-      when ObjectID
-        OID
       when ObjectId
         OID
       when DBRef
