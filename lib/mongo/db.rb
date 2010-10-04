@@ -276,23 +276,6 @@ module Mongo
       ok?(command(:drop => name))
     end
 
-    # @deprecated
-    #
-    # Get the error message from the most recently executed database
-    # operation for this connection.
-    #
-    # @option opts [Boolean] :fsync (false)
-    # @option opts [Integer] :w (nil)
-    # @option opts [Integer] :wtimeout (nil)
-    #
-    # @return [String, Nil] either the text describing an error or nil if no
-    #   error has occurred.
-    def error(opts={})
-      warn "DB#error is deprecated. Please use DB#get_last_error instead"
-      opts.assert_valid_keys(:w, :wtimeout, :fsync)
-      get_last_error(opts)['err']
-    end
-
     # Run the getlasterror command with the specified replication options.
     #
     # @option opts [Boolean] :fsync (false)
@@ -309,16 +292,6 @@ module Mongo
       doc = command(cmd, :check_response => false)
       raise MongoDBError, "error retrieving last error: #{doc.inspect}" unless ok?(doc)
       doc
-    end
-
-    # @deprecated
-    #
-    # Get status information from the last operation on this connection.
-    #
-    # @return [Hash] a hash representing the status of the last db op.
-    def last_status
-      warn "DB#last_status is deprecated. Please use the equivalent DB#get_last_error instead"
-      command(:getlasterror => 1)
     end
 
     # Return +true+ if an error was caused by the most recently executed
