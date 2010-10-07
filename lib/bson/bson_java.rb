@@ -6,7 +6,7 @@ module BSON
     # we don't create a new one on each call to #serialize.
     def self.serialize(obj, check_keys=false, move_id=false)
       raise InvalidDocument, "BSON_JAVA.serialize takes a Hash" unless obj.is_a?(Hash)
-      enc = Java::OrgJbson::RubyBSONEncoder.new(JRuby.runtime)
+      enc = Java::OrgJbson::RubyBSONEncoder.new(JRuby.runtime, check_keys, move_id)
       ByteBuffer.new(enc.encode(obj))
     end
 

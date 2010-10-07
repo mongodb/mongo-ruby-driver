@@ -58,13 +58,18 @@ public class RubyBSONEncoder extends BSONEncoder {
     private RubyString _idAsString;
     private RubyString _tfAsString;
 
+    private boolean _check_keys;
+    private boolean _move_id;
+
     private static final int BIT_SIZE = 64;
     private static final long MAX = (1L << (BIT_SIZE - 1)) - 1;
     private static final BigInteger LONG_MAX = BigInteger.valueOf(MAX);
     private static final BigInteger LONG_MIN = BigInteger.valueOf(-MAX - 1);
 
 
-    public RubyBSONEncoder(Ruby runtime){
+    public RubyBSONEncoder(Ruby runtime, boolean check_keys, boolean move_id){
+      _check_keys = check_keys;
+      _move_id = move_id;
       _runtime = runtime;
       _rbclsByteBuffer = _lookupConstant( _runtime, "BSON::ByteBuffer" );
       _rbclsDBRef = _lookupConstant( _runtime, "BSON::DBRef" );
@@ -140,11 +145,10 @@ public class RubyBSONEncoder extends BSONEncoder {
         }
 
         final int sizePos = _buf.getPosition();
-        _buf.writeInt( 0 ); // leaving space for sthis.  set it at the end
+        _buf.writeInt( 0 ); // leaving space for this. set it at the end.
 
         List transientFields = null;
-        boolean rewriteID = ( myType == OBJECT && name == null );
-
+        boolean rewriteID = _move_id && ( myType == OBJECT && name == null );
 
         if ( myType == OBJECT ) {
 
@@ -175,17 +179,13 @@ public class RubyBSONEncoder extends BSONEncoder {
                  if( hashKey instanceof String) {
                      str = hashKey.toString();
                  }
-
                  else if (hashKey instanceof RubyString) {
                      str = ((RubyString)hashKey).asJavaString();
                  }
                  else if (hashKey instanceof RubySymbol) {
                      str = ((RubySymbol)hashKey).asJavaString();
                  }
-
-                 testNull(str);
-
-                 // If we're rewriting the _id, we can move on.
+                // If we're rewriting the _id, we can move on.
                  if ( rewriteID && str.equals( "_id" ) )
                     continue;
 
@@ -208,6 +208,10 @@ public class RubyBSONEncoder extends BSONEncoder {
     }
 
     protected void _putObjectField( String name , Object val ) {
+        if( _check_keys )
+            testValidKey( name );
+        else
+            testNull( name );
 
         if ( name.equals( "_transientFields" ) )
             return;
@@ -392,6 +396,22 @@ public class RubyBSONEncoder extends BSONEncoder {
          if(bytes[j] == '\u0000') {
              _rbRaise( (RubyClass)_rbclsInvalidDocument, "Null not allowed");
          }
+       }
+    }
+
+    // Make sure that name contains no null bytes, '.'s
+    // and doesn't start with a '$'.
+    private void testValidKey(String str) {
+       byte[] bytes = str.getBytes();
+
+       if( bytes[0] == 36 )
+           _rbRaise( (RubyClass)_rbclsInvalidKeyName, "$ not allowed in key name.");
+
+       for(int j = 0; j < bytes.length; j++ ) {
+         if(bytes[j] == '\u0000')
+             _rbRaise( (RubyClass)_rbclsInvalidDocument, "Null not allowed");
+         if(bytes[j] == 46)
+             _rbRaise( (RubyClass)_rbclsInvalidKeyName, ". not allowed in key name.");
        }
     }
 

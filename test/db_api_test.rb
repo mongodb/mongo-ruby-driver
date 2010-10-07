@@ -621,7 +621,6 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal("mike", @@coll.find_one()["hello"])
   end
 
-  if !RUBY_PLATFORM =~ /java/
   def test_invalid_key_names
     @@coll.remove
 
@@ -657,7 +656,6 @@ class DBAPITest < Test::Unit::TestCase
     assert_raise BSON::InvalidKeyName do
       @@coll.insert({"hello" => {"hel.lo" => "world"}})
     end
-  end
   end
 
   def test_collection_names
