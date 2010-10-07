@@ -12,9 +12,11 @@ rescue LoadError
   warn 'Mocking time with zone'
   module ActiveSupport
     class TimeWithZone
+      def initialize(utc_time, zone)
+      end
     end
   end
-  Zone = ActiveSupport::TimeWithZone.new
+  Zone = ActiveSupport::TimeWithZone.new(Time.now.utc, 'EST')
 end
 
 class BSONTest < Test::Unit::TestCase
@@ -167,7 +169,11 @@ class BSONTest < Test::Unit::TestCase
   def test_object
     doc = {'doc' => {'age' => 42, 'name' => 'Spongebob', 'shoe_size' => 9.5}}
     assert_doc_pass(doc)
-    bson = BSON::BSON_CODER.serialize(doc)
+  end
+
+  def test_embedded_document_with_nil
+    doc = {'doc' => {'age' => 42, 'name' => nil, 'shoe_size' => 9.5}}
+    assert_doc_pass(doc)
   end
 
   def test_oid
@@ -505,24 +511,6 @@ class BSONTest < Test::Unit::TestCase
                    "\000\002\000\000\000\000\020_id\000\003\000\000\000\000",
                    @encoder.serialize(c, false, false).to_s
     end
-  end
-
-  # Mocking this class for testing
-  class ::HashWithIndifferentAccess < Hash; end
-
-  def test_keep_id_with_hash_with_indifferent_access
-    doc = HashWithIndifferentAccess.new
-    embedded = HashWithIndifferentAccess.new
-    embedded['_id'] = ObjectId.new
-    doc['_id']      = ObjectId.new
-    doc['embedded'] = [embedded]
-    @encoder.serialize(doc, false, true).to_a
-    assert doc.has_key?("_id")
-    assert doc['embedded'][0].has_key?("_id")
-
-    doc['_id'] = ObjectId.new
-    @encoder.serialize(doc, false, true).to_a
-    assert doc.has_key?("_id")
   end
 
 end

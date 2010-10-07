@@ -21,7 +21,9 @@ end
 
 require 'bson_ext/cbson' if ENV['C_EXT']
 
-MONGO_TEST_DB = 'mongo-ruby-test'
+unless defined? MONGO_TEST_DB
+  MONGO_TEST_DB = 'mongo-ruby-test'
+end
 
 class Test::Unit::TestCase
   include Mongo

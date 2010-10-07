@@ -214,7 +214,10 @@ public class RubyBSONEncoder extends BSONEncoder {
 
         if ( DEBUG ) {
           System.out.println( "\t put thing : " + name );
-          System.out.println( "\t class : " + val.getClass().getName() );
+          if( val == null )
+            System.out.println( "\t class : null value" );
+          else
+            System.out.println( "\t class : " + val.getClass().getName() );
         }
 
         if ( name.equals( "$where") && val instanceof String ) {
@@ -255,6 +258,9 @@ public class RubyBSONEncoder extends BSONEncoder {
 
         else if ( val instanceof byte[] )
             putBinary( name , (byte[])val );
+
+        else if ( val == null )
+            putNull(name);
 
         else if ( val.getClass().isArray() )
             putIterable( name , Arrays.asList( (Object[])val ) );
