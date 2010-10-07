@@ -2,10 +2,10 @@
 
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
-MINIMUM_BSON_EXT_VERSION = "1.1"
+MINIMUM_BSON_EXT_VERSION = "1.1.1"
 
 module BSON
-  VERSION = "1.1"
+  VERSION = "1.1.1"
   def self.serialize(obj, check_keys=false, move_id=false)
     BSON_CODER.serialize(obj, check_keys, move_id)
   end

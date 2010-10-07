@@ -1,3 +1,7 @@
+1.1.1 2010-10-7
+* Critical JRuby bug fix RUBY-185
+* Check keys and move id only when necessary for JRuby encoder
+
 1.1 2010-10-4
 * Official JRuby support via Java extensons for BSON (beta)
 * Connection#lock! and Connection#unlock! for easy fsync lock

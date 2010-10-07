@@ -32,5 +32,5 @@ Gem::Specification.new do |s|
   s.email = 'mongodb-dev@googlegroups.com'
   s.homepage = 'http://www.mongodb.org'
 
-  s.add_dependency(%q<bson>, [">= 1.0.5"])
+  s.add_dependency(%q<bson>, [">= 1.1.1"])
 end
