@@ -483,10 +483,9 @@ class BSONTest < Test::Unit::TestCase
                  "\000\004\000\000\000abc\000\002key\000\004\000\000\000abc\000\000",
                  @encoder.serialize(a, false, true).to_s
 
-    # Java doesn't support this. Isn't actually necessary.
-      assert_equal ")\000\000\000\002text\000\004\000\000\000abc\000\002key" +
-                   "\000\004\000\000\000abc\000\020_id\000\001\000\000\000\000",
-                   @encoder.serialize(a, false, false).to_s
+    assert_equal ")\000\000\000\002text\000\004\000\000\000abc\000\002key" +
+                 "\000\004\000\000\000abc\000\020_id\000\001\000\000\000\000",
+                 @encoder.serialize(a, false, false).to_s
   end
 
   def test_move_id_with_nested_doc
