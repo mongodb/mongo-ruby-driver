@@ -23,7 +23,7 @@ Here's a quick code sample. See the MongoDB Ruby Tutorial
 
 === Ruby Versions
 
-The driver works and is consistently tested on Ruby 1.8.6, 1.8.7, and 1.9.1.
+The driver works and is consistently tested on Ruby 1.8.6, 1.8.7, and 1.9.2, and JRuby 1.5.1.
 
 Note that if you're on 1.8.7, be sure that you're using a patchlevel >= 249. There
 are some IO bugs in earlier versions.
@@ -39,13 +39,18 @@ Then you can install the mongo gem as follows:
 
   $ gem install mongo
 
-The driver also requires the BSON gem:
+The driver also requires the bson gem:
 
   $ gem install bson
 
 And for a significant performance boost, you'll want to install the C extensions:
 
   $ gem install bson_ext
+
+Note that bson_ext isn't used with JRuby. Instead, some native Java extensions are bundled with the bson gem.
+If you ever need to modify these extenions, you can recompile with the following rake task:
+
+  $ rake build:java
 
 === From the GitHub source
 
@@ -290,7 +295,7 @@ the bson_ext C extension enabled.
 
   $ rake test:c
 
-Or, to test without the extension:
+If you want to test the basic Ruby encoder, or if you're running JRuby:
 
   $ rake test:ruby
 
