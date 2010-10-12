@@ -23,15 +23,19 @@ module BSON
     attr_reader :order
 
     def initialize(initial_data="")
-      if initial_data.is_a?(String)
-        if initial_data.respond_to?(:force_encoding)
-          @str = initial_data.force_encoding('binary')
+      @str = case initial_data
+        when String then
+          if initial_data.respond_to?(:force_encoding)
+            initial_data.force_encoding('binary')
+          else
+            initial_data
+          end
+        when BSON::ByteBuffer then
+          initial_data.to_a.pac('C*')
         else
-          @str = initial_data
-        end
-      else
-        @str = initial_data.pack('C*')
+          initial_data.pack('C*')
       end
+
       @cursor = @str.length
       @order  = :little_endian
       @int_pack_order    = 'V'

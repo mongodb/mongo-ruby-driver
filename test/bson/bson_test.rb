@@ -74,6 +74,11 @@ class BSONTest < Test::Unit::TestCase
     end
   end
 
+  def test_round_trip
+    doc = {'doc' => 123}
+    @encoder.deserialize(@encoder.serialize(doc))
+  end
+
   # In 1.8 we test that other string encodings raise an exception.
   # In 1.9 we test that they get auto-converted.
   if RUBY_VERSION < '1.9'
