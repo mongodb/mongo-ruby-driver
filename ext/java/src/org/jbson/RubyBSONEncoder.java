@@ -165,6 +165,13 @@ public class RubyBSONEncoder extends BSONEncoder {
                 if ( temp instanceof RubyArray )
                     transientFields = (RubyArray)temp;
             }
+            else {
+                if (  _rbHashHasKey( (RubyHash)o, "_id" ) && _rbHashHasKey( (RubyHash)o, _idAsSym ) ) {
+                    ((RubyHash)o).fastDelete(_idAsSym);
+                }
+
+
+            }
 
             // Not sure we should invoke this way. Depends on if we can access the OrderedHash.
             RubyArray keys = (RubyArray)JavaEmbedUtils.invokeMethod( _runtime, o , "keys" , new Object[] {}
@@ -383,9 +390,9 @@ public class RubyBSONEncoder extends BSONEncoder {
             String klass = JavaEmbedUtils.invokeMethod(_runtime, val,
                 "class", new Object[] {}, Object.class).toString();
 
-              _rbRaise( (RubyClass)_rbclsInvalidDocument,
-                "Cannot serialize " + klass + " as a BSON type; " +
-                "it either isn't supported or won't translate to BSON.");
+            _rbRaise( (RubyClass)_rbclsInvalidDocument,
+              "Cannot serialize " + klass + " as a BSON type; " +
+              "it either isn't supported or won't translate to BSON.");
         }
     }
 
@@ -436,8 +443,30 @@ public class RubyBSONEncoder extends BSONEncoder {
         final int sizePos = _buf.getPosition();
         _buf.writeInt( 0 );
 
-        for ( Map.Entry entry : (Set<Map.Entry>)m.entrySet() )
-            _putObjectField( entry.getKey().toString() , entry.getValue() );
+       RubyArray keys = (RubyArray)JavaEmbedUtils.invokeMethod( _runtime, m , "keys" , new Object[] {} , Object.class);
+
+       for (Iterator<RubyObject> i = keys.iterator(); i.hasNext(); ) {
+
+           Object hashKey = i.next();
+
+           // Convert the key into a Java String
+           String str = "";
+           if( hashKey instanceof String) {
+               str = hashKey.toString();
+           }
+           else if (hashKey instanceof RubyString) {
+               str = ((RubyString)hashKey).asJavaString();
+           }
+           else if (hashKey instanceof RubySymbol) {
+               str = ((RubySymbol)hashKey).asJavaString();
+           }
+
+          RubyObject val = (RubyObject)_rbHashGet( (RubyHash)m, hashKey );
+          _putObjectField( str , (Object)val );
+       }
+
+        //for ( Map.Entry entry : (Set<Map.Entry>)m.entrySet() )
+       //     _putObjectField( entry.getKey().toString() , entry.getValue() );
 
         _buf.write( EOO );
         _buf.writeInt( sizePos , _buf.getPosition() - sizePos );

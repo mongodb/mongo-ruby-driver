@@ -26,8 +26,8 @@ namespace :build do
     jar_dir   = File.join(java_dir, 'jar')
 
     jruby_jar = File.join(jar_dir, 'jruby.jar')
-    mongo_jar = File.join(jar_dir, 'mongo.jar')
-    bson_jar = File.join(jar_dir, 'bson.jar')
+    mongo_jar = File.join(jar_dir, 'mongo-2.2.jar')
+    bson_jar = File.join(jar_dir, 'bson-2.2.jar')
 
     src_base   = File.join(java_dir, 'src')
 
@@ -65,7 +65,7 @@ namespace :test do
     Rake::Task['test:pooled_threading'].invoke
     Rake::Task['test:drop_databases'].invoke
   end
-  
+
   Rake::TestTask.new(:unit) do |t|
     t.test_files = FileList['test/unit/*_test.rb']
     t.verbose    = true
@@ -142,7 +142,7 @@ namespace :test do
   end
 
   Rake::TestTask.new(:bson) do |t|
-    t.test_files = FileList['test/mongo_bson/*_test.rb']
+    t.test_files = FileList['test/bson/*_test.rb']
     t.verbose    = true
   end
 

@@ -23,23 +23,19 @@ class BSONTest < Test::Unit::TestCase
 
   include BSON
 
-  # This setup allows us to change the decoders for
-  # cross-coder compatibility testing
   def setup
     @encoder = BSON::BSON_CODER
-    @decoder = @encoder
   end
 
   def assert_doc_pass(doc, options={})
     bson = @encoder.serialize(doc)
     if options[:debug]
-      puts "DEBUGGIN DOC:"
+      puts "DEBUGGING DOC:"
       p bson.to_a
       puts "DESERIALIZES TO:"
-      p @decoder.deserialize(bson)
     end
-    assert_equal @decoder.serialize(doc).to_a, bson.to_a
-    assert_equal doc, @decoder.deserialize(bson)
+    assert_equal @encoder.serialize(doc).to_a, bson.to_a
+    assert_equal doc, @encoder.deserialize(bson)
   end
 
   def test_require_hash
@@ -81,20 +77,23 @@ class BSONTest < Test::Unit::TestCase
   # In 1.8 we test that other string encodings raise an exception.
   # In 1.9 we test that they get auto-converted.
   if RUBY_VERSION < '1.9'
-    require 'iconv'
-    def test_invalid_string
-      string = Iconv.conv('iso-8859-1', 'utf-8', 'aé')
-      doc = {'doc' => string}
-      assert_raise InvalidStringEncoding do
-        @encoder.serialize(doc)
+    if ! RUBY_PLATFORM =~ /java/
+      require 'iconv'
+      def test_non_utf8_string
+        string = Iconv.conv('iso-8859-1', 'utf-8', 'aé')
+        doc = {'doc' => string}
+        assert_doc_pass(doc)
+        assert_raise InvalidStringEncoding do
+          @encoder.serialize(doc)
+        end
       end
-    end
 
-    def test_invalid_key
-      key = Iconv.conv('iso-8859-1', 'utf-8', 'aé')
-      doc = {key => 'hello'}
-      assert_raise InvalidStringEncoding do
-        @encoder.serialize(doc)
+      def test_non_utf8_key
+        key = Iconv.conv('iso-8859-1', 'utf-8', 'aé')
+        doc = {key => 'hello'}
+        assert_raise InvalidStringEncoding do
+          @encoder.serialize(doc)
+        end
       end
     end
   else
@@ -176,6 +175,14 @@ class BSONTest < Test::Unit::TestCase
     assert_doc_pass(doc)
   end
 
+  def test_embedded_document_with_date
+    doc = {'doc' => {'age' => 42, 'date' => Time.now.utc, 'shoe_size' => 9.5}}
+    bson = @encoder.serialize(doc)
+    p doc
+    p doc['doc']['date'].class
+    assert_doc_pass(doc)
+  end
+
   def test_oid
     doc = {'doc' => ObjectId.new}
     assert_doc_pass(doc)
@@ -199,7 +206,7 @@ class BSONTest < Test::Unit::TestCase
   def test_date
     doc = {'date' => Time.now}
     bson = @encoder.serialize(doc)
-    doc2 = @decoder.deserialize(bson)
+    doc2 = @encoder.deserialize(bson)
     # Mongo only stores up to the millisecond
     assert_in_delta doc['date'], doc2['date'], 0.001
   end
@@ -207,7 +214,7 @@ class BSONTest < Test::Unit::TestCase
   def test_date_returns_as_utc
     doc = {'date' => Time.now}
     bson = @encoder.serialize(doc)
-    doc2 = @decoder.deserialize(bson)
+    doc2 = @encoder.deserialize(bson)
     assert doc2['date'].utc?
   end
 
@@ -215,7 +222,7 @@ class BSONTest < Test::Unit::TestCase
     begin
       doc = {'date' => Time.utc(1600)}
       bson = @encoder.serialize(doc)
-      doc2 = @decoder.deserialize(bson)
+      doc2 = @encoder.deserialize(bson)
       # Mongo only stores up to the millisecond
       assert_in_delta doc['date'], doc2['date'], 2
     rescue ArgumentError
@@ -246,7 +253,7 @@ class BSONTest < Test::Unit::TestCase
     doc = {}
     doc['dbref'] = DBRef.new('namespace', oid)
     bson = @encoder.serialize(doc)
-    doc2 = @decoder.deserialize(bson)
+    doc2 = @encoder.deserialize(bson)
 
     # Java doesn't deserialize to DBRefs
     if RUBY_PLATFORM =~ /java/
@@ -261,7 +268,7 @@ class BSONTest < Test::Unit::TestCase
   def test_symbol
     doc = {'sym' => :foo}
     bson = @encoder.serialize(doc)
-    doc2 = @decoder.deserialize(bson)
+    doc2 = @encoder.deserialize(bson)
     assert_equal :foo, doc2['sym']
   end
 
@@ -271,7 +278,7 @@ class BSONTest < Test::Unit::TestCase
 
     doc = {'bin' => bin}
     bson = @encoder.serialize(doc)
-    doc2 = @decoder.deserialize(bson)
+    doc2 = @encoder.deserialize(bson)
     bin2 = doc2['bin']
     assert_kind_of Binary, bin2
     assert_equal 'binstring', bin2.to_s
@@ -282,7 +289,7 @@ class BSONTest < Test::Unit::TestCase
     b = Binary.new('somebinarystring')
     doc = {'bin' => b}
     bson = @encoder.serialize(doc)
-    doc2 = @decoder.deserialize(bson)
+    doc2 = @encoder.deserialize(bson)
     bin2 = doc2['bin']
     assert_kind_of Binary, bin2
     assert_equal 'somebinarystring', bin2.to_s
@@ -294,7 +301,7 @@ class BSONTest < Test::Unit::TestCase
 
     doc = {'bin' => bin}
     bson = @encoder.serialize(doc)
-    doc2 = @decoder.deserialize(bson)
+    doc2 = @encoder.deserialize(bson)
     bin2 = doc2['bin']
     assert_kind_of Binary, bin2
     assert_equal [1, 2, 3, 4, 5], bin2.to_a
@@ -308,7 +315,7 @@ class BSONTest < Test::Unit::TestCase
 
       doc = {'bin' => bin}
       bson = @encoder.serialize(doc)
-      doc2 = @decoder.deserialize(bson)
+      doc2 = @encoder.deserialize(bson)
       bin2 = doc2['bin']
       assert_kind_of Binary, bin2
       assert_equal [1, 2, 3, 4, 5], bin2.to_a
@@ -322,7 +329,7 @@ class BSONTest < Test::Unit::TestCase
 
     doc = {'bin' => bb}
     bson = @encoder.serialize(doc)
-    doc2 = @decoder.deserialize(bson)
+    doc2 = @encoder.deserialize(bson)
     bin2 = doc2['bin']
     assert_kind_of Binary, bin2
     assert_equal [1, 2, 3, 4, 5], bin2.to_a
@@ -333,12 +340,12 @@ class BSONTest < Test::Unit::TestCase
     val = BSON::OrderedHash.new
     val['not_id'] = 1
     val['_id'] = 2
-    roundtrip = @decoder.deserialize(@encoder.serialize(val, false, true).to_s)
+    roundtrip = @encoder.deserialize(@encoder.serialize(val, false, true).to_s)
     assert_kind_of BSON::OrderedHash, roundtrip
     assert_equal '_id', roundtrip.keys.first
 
     val = {'a' => 'foo', 'b' => 'bar', :_id => 42, 'z' => 'hello'}
-    roundtrip = @decoder.deserialize(@encoder.serialize(val, false, true).to_s)
+    roundtrip = @encoder.deserialize(@encoder.serialize(val, false, true).to_s)
     assert_kind_of BSON::OrderedHash, roundtrip
     assert_equal '_id', roundtrip.keys.first
   end
@@ -351,7 +358,7 @@ class BSONTest < Test::Unit::TestCase
   if !(RUBY_PLATFORM =~ /java/)
     def test_timestamp
       val = {"test" => [4, 20]}
-      assert_equal val, @decoder.deserialize([0x13, 0x00, 0x00, 0x00,
+      assert_equal val, @encoder.deserialize([0x13, 0x00, 0x00, 0x00,
                                         0x11, 0x74, 0x65, 0x73,
                                         0x74, 0x00, 0x04, 0x00,
                                         0x00, 0x00, 0x14, 0x00,
@@ -429,6 +436,14 @@ class BSONTest < Test::Unit::TestCase
 
     assert_equal @encoder.serialize(one).to_a, @encoder.serialize(dup).to_a
   end
+
+  def test_duplicate_keys
+    dup = {"_foo" => "foo", :_foo => "foo"}
+    one = {"_foo" => "foo"}
+
+    assert_equal @encoder.serialize(one).to_a, @encoder.serialize(dup).to_a
+  end
+
 
   def test_no_duplicate_id_when_moving_id
     dup = {"_id" => "foo", :_id => "foo"}

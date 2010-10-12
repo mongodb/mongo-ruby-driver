@@ -4,13 +4,12 @@ require 'json'
 
 class JSONTest < Test::Unit::TestCase
 
-  include Mongo
-  include BSON
-
   def test_object_id_as_json
-    id = ObjectId.new
+    id = BSON::ObjectId.new
+    p id.to_json
+
     obj = {'_id' => id}
-    assert_equal "{\"_id\":{\"$oid\": \"#{id.to_s}\"}}", obj.to_json
+    assert_equal "{\"_id\":#{id.to_json}}", obj.to_json
   end
 
 end

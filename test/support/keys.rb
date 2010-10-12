@@ -28,7 +28,7 @@ class Hash
   end
 
   alias_method :to_options,  :symbolize_keys
-  alias_method :to_options!, :symbolize_keys!
+  #alias_method :to_options!, :symbolize_keys!
 
   # Validate all keys in a hash match *valid keys, raising ArgumentError on a mismatch.
   # Note that keys are NOT treated indifferently, meaning if you use strings for keys but assert symbols
