@@ -1,5 +1,5 @@
-1.1.1 2010-10-7
-* Critical JRuby bug fix RUBY-185
+1.1.1 2010-10-14
+* Serveral critical JRuby bug fixes
 * Check keys and move id only when necessary for JRuby encoder
 
 1.1 2010-10-4
