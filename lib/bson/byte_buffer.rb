@@ -31,7 +31,7 @@ module BSON
             initial_data
           end
         when BSON::ByteBuffer then
-          initial_data.to_a.pac('C*')
+          initial_data.to_a.pack('C*')
         else
           initial_data.pack('C*')
       end
