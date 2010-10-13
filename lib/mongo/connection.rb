@@ -106,7 +106,6 @@ module Mongo
       # Mutex for synchronizing pool access
       @connection_mutex = Mutex.new
 
-
       # Create a mutex when a new key, in this case a socket,
       # is added to the hash.
       @safe_mutexes = Hash.new { |h, k| h[k] = Mutex.new }
@@ -157,7 +156,7 @@ module Mongo
     # @return [Mongo::Connection]
     def self.multi(nodes, opts={})
       unless nodes.length > 0 && nodes.all? {|n| n.is_a? Array}
-        raise MongoArgumentError, "Connection.paired requires at least one node to be specified."
+        raise MongoArgumentError, "Connection.multi requires at least one node to be specified."
       end
       # Block returns an array, the first element being an array of nodes and the second an array
       # of authorizations for the database.

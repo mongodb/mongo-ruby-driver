@@ -1,7 +1,7 @@
 require './test/test_helper'
 
 class TestCollection < Test::Unit::TestCase
-  @@connection ||= Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost', ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
+  @@connection ||= standard_connection
   @@db   = @@connection.db(MONGO_TEST_DB)
   @@test = @@db.collection("test")
   @@version = @@connection.server_version
@@ -221,7 +221,7 @@ class TestCollection < Test::Unit::TestCase
   end
 
   def test_mocked_safe_remove
-    @conn = Connection.new
+    @conn = standard_connection
     @db   = @conn[MONGO_TEST_DB]
     @test = @db['test-safe-remove']
     @test.save({:a => 20})
@@ -234,7 +234,7 @@ class TestCollection < Test::Unit::TestCase
   end
 
   def test_safe_remove
-    @conn = Connection.new
+    @conn = standard_connection
     @db   = @conn[MONGO_TEST_DB]
     @test = @db['test-safe-remove']
     @test.save({:a => 50})

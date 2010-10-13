@@ -29,6 +29,39 @@ class Test::Unit::TestCase
   include Mongo
   include BSON
 
+  def self.standard_connection(options={})
+    Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+      ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT, options)
+  end
+
+  def standard_connection(options={})
+    self.class.standard_connection(options)
+  end
+
+  def self.host_port
+    "#{mongo_host}:#{mongo_port}"
+  end
+
+  def self.mongo_host
+    ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
+  end
+
+  def self.mongo_port
+    ENV['MONGO_RUBY_DRIVER_PORT'].to_i || 27017
+  end
+
+  def host_port
+    self.class.host_port
+  end
+
+  def mongo_host
+    self.class.mongo_host
+  end
+
+  def mongo_port
+    self.class.mongo_port
+  end
+
   # Generic code for rescuing connection failures and retrying operations.
   # This could be combined with some timeout functionality.
   def rescue_connection_failure

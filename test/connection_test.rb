@@ -9,9 +9,7 @@ class TestConnection < Test::Unit::TestCase
   include BSON
 
   def setup
-    @host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-    @port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
-    @mongo = Connection.new(@host, @port)
+    @mongo = standard_connection
   end
 
   def teardown
@@ -29,9 +27,9 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_connection_uri
-    con = Connection.from_uri("mongodb://localhost:27017")
-    assert_equal "localhost", con.host
-    assert_equal 27017, con.port
+    con = Connection.from_uri("mongodb://#{host_port}")
+    assert_equal mongo_host, con.host
+    assert_equal mongo_port, con.port
   end
 
   def test_server_version
@@ -64,7 +62,7 @@ class TestConnection < Test::Unit::TestCase
 
   def test_copy_database
     @mongo.db('old').collection('copy-test').insert('a' => 1)
-    @mongo.copy_database('old', 'new')
+    @mongo.copy_database('old', 'new', host_port)
     old_object = @mongo.db('old').collection('copy-test').find.next_document
     new_object = @mongo.db('new').collection('copy-test').find.next_document
     assert_equal old_object, new_object
@@ -77,10 +75,10 @@ class TestConnection < Test::Unit::TestCase
     @mongo.db('old').add_user('bob', 'secret')
 
     assert_raise Mongo::OperationFailure do
-      @mongo.copy_database('old', 'new', 'localhost', 'bob', 'badpassword')
+      @mongo.copy_database('old', 'new', host_port, 'bob', 'badpassword')
     end
 
-    result = @mongo.copy_database('old', 'new', 'localhost', 'bob', 'secret')
+    result = @mongo.copy_database('old', 'new', host_port, 'bob', 'secret')
     assert Mongo::Support.ok?(result)
 
     @mongo.drop_database('old')
@@ -102,7 +100,7 @@ class TestConnection < Test::Unit::TestCase
     output = StringIO.new
     logger = Logger.new(output)
     logger.level = Logger::DEBUG
-    db = Connection.new(@host, @port, :logger => logger).db(MONGO_TEST_DB)
+    connection = standard_connection(:logger => logger).db(MONGO_TEST_DB)
     assert output.string.include?("admin['$cmd'].find")
   end
 
@@ -110,9 +108,9 @@ class TestConnection < Test::Unit::TestCase
     output = StringIO.new
     logger = Logger.new(output)
     logger.level = Logger::DEBUG
-    connection = Connection.new(@host, @port, :logger => logger)
+    connection = standard_connection(:logger => logger)
     assert_equal logger, connection.logger
-    
+
     connection.logger.debug 'testing'
     assert output.string.include?('testing')
   end
@@ -166,7 +164,7 @@ class TestConnection < Test::Unit::TestCase
 
   context "Saved authentications" do
     setup do
-      @conn = Mongo::Connection.new
+      @conn = standard_connection
       @auth = {'db_name' => 'test', 'username' => 'bob', 'password' => 'secret'}
       @conn.add_auth(@auth['db_name'], @auth['username'], @auth['password'])
     end
@@ -198,7 +196,7 @@ class TestConnection < Test::Unit::TestCase
 
   context "Connection exceptions" do
     setup do
-      @conn = Mongo::Connection.new('localhost', 27017, :pool_size => 10, :timeout => 10)
+      @conn = standard_connection(:pool_size => 10, :timeout => 10)
       @coll = @conn[MONGO_TEST_DB]['test-connection-exceptions']
     end
 

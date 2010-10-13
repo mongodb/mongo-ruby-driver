@@ -7,7 +7,7 @@ class ByteBufferTest < Test::Unit::TestCase
   def setup
     @buf = ByteBuffer.new
   end
-  
+
   def test_initial_state
     assert_equal 0, @buf.position
     assert_equal [], @buf.to_a

@@ -5,8 +5,7 @@ class CursorTest < Test::Unit::TestCase
 
   include Mongo
 
-  @@connection = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                        ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
+  @@connection = standard_connection
   @@db   = @@connection.db(MONGO_TEST_DB)
   @@coll = @@db.collection('test')
   @@version = @@connection.server_version

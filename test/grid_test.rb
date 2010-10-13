@@ -4,8 +4,7 @@ include Mongo
 class GridTest < Test::Unit::TestCase
   context "Tests:" do
     setup do
-      @db ||= Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-        ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT).db(MONGO_TEST_DB)
+      @db = standard_connection.db(MONGO_TEST_DB)
       @files  = @db.collection('test-fs.files')
       @chunks = @db.collection('test-fs.chunks')
     end

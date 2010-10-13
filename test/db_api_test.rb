@@ -4,8 +4,7 @@ class DBAPITest < Test::Unit::TestCase
   include Mongo
   include BSON
 
-  @@conn = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                        ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
+  @@conn = standard_connection
   @@db   = @@conn.db(MONGO_TEST_DB)
   @@coll = @@db.collection('test')
   @@version = @@conn.server_version

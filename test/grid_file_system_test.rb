@@ -4,9 +4,8 @@ include Mongo
 class GridFileSystemTest < Test::Unit::TestCase
   context "GridFileSystem:" do
     setup do
-      @con = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-        ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
-      @db = @con.db(MONGO_TEST_DB)
+      @con = standard_connection
+      @db  = @con.db(MONGO_TEST_DB)
     end
 
     teardown do

@@ -14,9 +14,7 @@ class DBTest < Test::Unit::TestCase
 
   include Mongo
 
-  @@host  = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-  @@port  = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
-  @@conn  = Connection.new(@@host, @@port)
+  @@conn  = standard_connection
   @@db    = @@conn.db(MONGO_TEST_DB)
   @@users = @@db.collection('system.users')
   @@version = @@conn.server_version
@@ -30,7 +28,7 @@ class DBTest < Test::Unit::TestCase
     rescue => ex
       assert_match /NilClass/, ex.to_s
     ensure
-      @@db = Connection.new(@@host, @@port).db(MONGO_TEST_DB)
+      @@db = standard_connection.db(MONGO_TEST_DB)
       @@users = @@db.collection('system.users')
     end
   end
@@ -39,7 +37,7 @@ class DBTest < Test::Unit::TestCase
     output = StringIO.new
     logger = Logger.new(output)
     logger.level = Logger::DEBUG
-    conn = Connection.new(@host, @port, :logger => logger)
+    conn = standard_connection(:logger => logger)
     assert_equal logger, conn.logger
     
     conn.logger.debug 'testing'
@@ -76,7 +74,7 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_pk_factory
-    db = Connection.new(@@host, @@port).db(MONGO_TEST_DB, :pk => TestPKFactory.new)
+    db = standard_connection.db(MONGO_TEST_DB, :pk => TestPKFactory.new)
     coll = db.collection('test')
     coll.remove
 
@@ -99,7 +97,7 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_pk_factory_reset
-    conn = Connection.new(@@host, @@port)
+    conn = standard_connection
     db   = conn.db(MONGO_TEST_DB)
     db.pk_factory = Object.new # first time
     begin
@@ -127,10 +125,10 @@ class DBTest < Test::Unit::TestCase
 
   def test_authenticate_with_connection_uri
     @@db.add_user('spongebob', 'squarepants')
-    assert Mongo::Connection.from_uri("mongodb://spongebob:squarepants@localhost/#{@@db.name}")
+    assert Mongo::Connection.from_uri("mongodb://spongebob:squarepants@#{host_port}/#{@@db.name}")
 
     assert_raise Mongo::AuthenticationError do
-      Mongo::Connection.from_uri("mongodb://wrong:info@localhost/#{@@db.name}")
+      Mongo::Connection.from_uri("mongodb://wrong:info@#{host_port}/#{@@db.name}")
     end
   end
 
@@ -196,7 +194,7 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_text_port_number_raises_no_errors
-    conn = Connection.new(@@host, @@port.to_s)
+    conn = standard_connection
     db   = conn[MONGO_TEST_DB]
     db.collection('users').remove
   end
