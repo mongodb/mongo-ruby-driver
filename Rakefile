@@ -172,12 +172,6 @@ task :ydoc do
   system "yardoc lib/**/*.rb lib/mongo/**/*.rb lib/bson/**/*.rb -e docs/yard_ext.rb -p docs/templates -o #{out} --title MongoRuby-#{Mongo::VERSION}"
 end
 
-desc "Publish documentation to mongo.rubyforge.org"
-task :publish => [:rdoc] do
-  # Assumes docs are in ./html
-  Rake::RubyForgePublisher.new(GEM, RUBYFORGE_USER).upload
-end
-
 namespace :gem do
 
   desc "Install the gem locally"
