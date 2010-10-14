@@ -1,5 +1,6 @@
 1.1.1 2010-10-14
-* Serveral critical JRuby bug fixes
+* Several critical JRuby bug fixes
+* Fixes for JRuby in 1.9 mode
 * Check keys and move id only when necessary for JRuby encoder
 
 1.1 2010-10-4
