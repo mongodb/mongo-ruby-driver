@@ -50,4 +50,9 @@ require 'mongo/exceptions'
 require 'mongo/gridfs/grid_ext'
 require 'mongo/gridfs/grid'
 require 'mongo/gridfs/grid_io'
+if RUBY_PLATFORM =~ /java/
+  require 'mongo/gridfs/grid_io_fix'
+end
 require 'mongo/gridfs/grid_file_system'
+
+
