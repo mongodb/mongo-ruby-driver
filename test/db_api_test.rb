@@ -739,7 +739,12 @@ class DBAPITest < Test::Unit::TestCase
       utf8 = "hello world".encode("UTF-8")
       iso8859 = "hello world".encode("ISO-8859-1")
 
-      assert_equal "US-ASCII", ascii.encoding.name
+      if RUBY_PLATFORM =~ /jruby/
+        assert_equal "ASCII-8BIT", ascii.encoding.name
+      else
+        assert_equal "US-ASCII", ascii.encoding.name
+      end
+
       assert_equal "UTF-8", utf8.encoding.name
       assert_equal "ISO-8859-1", iso8859.encoding.name
 

@@ -16,10 +16,6 @@ class TestConnection < Test::Unit::TestCase
     @mongo[MONGO_TEST_DB].get_last_error
   end
 
-  def test_slave_ok_with_multiple_nodes
-
-  end
-
   def test_server_info
     server_info = @mongo.server_info
     assert server_info.keys.include?("version")

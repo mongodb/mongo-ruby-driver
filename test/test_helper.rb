@@ -19,7 +19,7 @@ MSG
     exit
 end
 
-require 'bson_ext/cbson' if ENV['C_EXT']
+require 'bson_ext/cbson' if !(RUBY_PLATFORM =~ /java/) && ENV['C_EXT']
 
 unless defined? MONGO_TEST_DB
   MONGO_TEST_DB = 'mongo-ruby-test'
@@ -47,7 +47,7 @@ class Test::Unit::TestCase
   end
 
   def self.mongo_port
-    ENV['MONGO_RUBY_DRIVER_PORT'].to_i || 27017
+    ENV['MONGO_RUBY_DRIVER_PORT'] ? ENV['MONGO_RUBY_DRIVER_PORT'].to_i : 27017
   end
 
   def host_port
