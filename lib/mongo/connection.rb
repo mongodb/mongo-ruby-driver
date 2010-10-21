@@ -293,7 +293,7 @@ module Mongo
     #
     # @core databases db-instance_method
     def db(db_name, options={})
-      DB.new(db_name, self)
+      DB.new(db_name, self, options)
     end
 
     # Shortcut for returning a database. Use DB#db to accept options.

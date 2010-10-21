@@ -43,6 +43,13 @@ class TestConnection < Test::Unit::TestCase
     assert_raise Mongo::InvalidNSName do @mongo.db('te st') end
   end
 
+  def test_options_passed_to_db
+    @pk_mock = Object.new
+    db = @mongo.db('test', :pk => @pk_mock, :strict => true)
+    assert_equal @pk_mock, db.pk_factory
+    assert db.strict?
+  end
+
   def test_database_info
     @mongo.drop_database(MONGO_TEST_DB)
     @mongo.db(MONGO_TEST_DB).collection('info-test').insert('a' => 1)
