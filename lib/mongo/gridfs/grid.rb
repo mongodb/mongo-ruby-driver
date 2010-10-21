@@ -38,7 +38,10 @@ module Mongo
       @chunks  = @db["#{fs_name}.chunks"]
       @fs_name = fs_name
 
-      @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
+      # Ensure indexes only if not connected to slave.
+      unless db.connection.slave_ok?
+        @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
+      end
     end
 
     # Store a file in the file store. This method is designed only for writing new files;

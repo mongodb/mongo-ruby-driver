@@ -39,8 +39,11 @@ module Mongo
 
       @default_query_opts = {:sort => [['filename', 1], ['uploadDate', -1]], :limit => 1}
 
-      @files.create_index([['filename', 1], ['uploadDate', -1]])
-      @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
+      # Ensure indexes only if not connected to slave.
+      unless db.connection.slave_ok?
+        @files.create_index([['filename', 1], ['uploadDate', -1]])
+        @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
+      end
     end
 
     # Open a file for reading or writing. Note that the options for this method only apply
