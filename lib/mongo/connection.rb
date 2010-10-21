@@ -600,7 +600,7 @@ module Mongo
         config = self['admin'].command({:ismaster => 1}, :sock => socket)
 
       rescue OperationFailure, SocketError, SystemCallError, IOError => ex
-        close
+        close unless connected?
       ensure
         @nodes_tried << node
         if config
