@@ -9,15 +9,15 @@ class TestConnection < Test::Unit::TestCase
   include BSON
 
   def setup
-    @mongo = standard_connection
+    @conn = standard_connection
   end
 
   def teardown
-    @mongo[MONGO_TEST_DB].get_last_error
+    @conn[MONGO_TEST_DB].get_last_error
   end
 
   def test_server_info
-    server_info = @mongo.server_info
+    server_info = @conn.server_info
     assert server_info.keys.include?("version")
     assert Mongo::Support.ok?(server_info)
   end
@@ -29,70 +29,70 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_server_version
-    assert_match /\d\.\d+(\.\d+)?/, @mongo.server_version.to_s
+    assert_match /\d\.\d+(\.\d+)?/, @conn.server_version.to_s
   end
 
   def test_invalid_database_names
-    assert_raise TypeError do @mongo.db(4) end
+    assert_raise TypeError do @conn.db(4) end
 
-    assert_raise Mongo::InvalidNSName do @mongo.db('') end
-    assert_raise Mongo::InvalidNSName do @mongo.db('te$t') end
-    assert_raise Mongo::InvalidNSName do @mongo.db('te.t') end
-    assert_raise Mongo::InvalidNSName do @mongo.db('te\\t') end
-    assert_raise Mongo::InvalidNSName do @mongo.db('te/t') end
-    assert_raise Mongo::InvalidNSName do @mongo.db('te st') end
+    assert_raise Mongo::InvalidNSName do @conn.db('') end
+    assert_raise Mongo::InvalidNSName do @conn.db('te$t') end
+    assert_raise Mongo::InvalidNSName do @conn.db('te.t') end
+    assert_raise Mongo::InvalidNSName do @conn.db('te\\t') end
+    assert_raise Mongo::InvalidNSName do @conn.db('te/t') end
+    assert_raise Mongo::InvalidNSName do @conn.db('te st') end
   end
 
   def test_options_passed_to_db
     @pk_mock = Object.new
-    db = @mongo.db('test', :pk => @pk_mock, :strict => true)
+    db = @conn.db('test', :pk => @pk_mock, :strict => true)
     assert_equal @pk_mock, db.pk_factory
     assert db.strict?
   end
 
   def test_database_info
-    @mongo.drop_database(MONGO_TEST_DB)
-    @mongo.db(MONGO_TEST_DB).collection('info-test').insert('a' => 1)
+    @conn.drop_database(MONGO_TEST_DB)
+    @conn.db(MONGO_TEST_DB).collection('info-test').insert('a' => 1)
 
-    info = @mongo.database_info
+    info = @conn.database_info
     assert_not_nil info
     assert_kind_of Hash, info
     assert_not_nil info[MONGO_TEST_DB]
     assert info[MONGO_TEST_DB] > 0
 
-    @mongo.drop_database(MONGO_TEST_DB)
+    @conn.drop_database(MONGO_TEST_DB)
   end
 
   def test_copy_database
-    @mongo.db('old').collection('copy-test').insert('a' => 1)
-    @mongo.copy_database('old', 'new', host_port)
-    old_object = @mongo.db('old').collection('copy-test').find.next_document
-    new_object = @mongo.db('new').collection('copy-test').find.next_document
+    @conn.db('old').collection('copy-test').insert('a' => 1)
+    @conn.copy_database('old', 'new', host_port)
+    old_object = @conn.db('old').collection('copy-test').find.next_document
+    new_object = @conn.db('new').collection('copy-test').find.next_document
     assert_equal old_object, new_object
-    @mongo.drop_database('old')
-    @mongo.drop_database('new')
+    @conn.drop_database('old')
+    @conn.drop_database('new')
   end
 
   def test_copy_database_with_auth
-    @mongo.db('old').collection('copy-test').insert('a' => 1)
-    @mongo.db('old').add_user('bob', 'secret')
+    @conn.db('old').collection('copy-test').insert('a' => 1)
+    @conn.db('old').add_user('bob', 'secret')
 
     assert_raise Mongo::OperationFailure do
-      @mongo.copy_database('old', 'new', host_port, 'bob', 'badpassword')
+      @conn.copy_database('old', 'new', host_port, 'bob', 'badpassword')
     end
 
-    result = @mongo.copy_database('old', 'new', host_port, 'bob', 'secret')
+    result = @conn.copy_database('old', 'new', host_port, 'bob', 'secret')
     assert Mongo::Support.ok?(result)
 
-    @mongo.drop_database('old')
-    @mongo.drop_database('new')
+    @conn.drop_database('old')
+    @conn.drop_database('new')
   end
 
   def test_database_names
-    @mongo.drop_database(MONGO_TEST_DB)
-    @mongo.db(MONGO_TEST_DB).collection('info-test').insert('a' => 1)
+    @conn.drop_database(MONGO_TEST_DB)
+    @conn.db(MONGO_TEST_DB).collection('info-test').insert('a' => 1)
 
-    names = @mongo.database_names
+    names = @conn.database_names
     assert_not_nil names
     assert_kind_of Array, names
     assert names.length >= 1
@@ -119,15 +119,15 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_drop_database
-    db = @mongo.db('ruby-mongo-will-be-deleted')
+    db = @conn.db('ruby-mongo-will-be-deleted')
     coll = db.collection('temp')
     coll.remove
     coll.insert(:name => 'temp')
     assert_equal 1, coll.count()
-    assert @mongo.database_names.include?('ruby-mongo-will-be-deleted')
+    assert @conn.database_names.include?('ruby-mongo-will-be-deleted')
 
-    @mongo.drop_database('ruby-mongo-will-be-deleted')
-    assert !@mongo.database_names.include?('ruby-mongo-will-be-deleted')
+    @conn.drop_database('ruby-mongo-will-be-deleted')
+    assert !@conn.database_names.include?('ruby-mongo-will-be-deleted')
   end
 
   def test_nodes
@@ -145,15 +145,15 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_fsync_lock
-    assert !@mongo.locked?
-    @mongo.lock!
-    assert @mongo.locked?
-    assert_equal 1, @mongo['admin']['$cmd.sys.inprog'].find_one['fsyncLock'], "Not fsync-locked"
-    assert_equal "unlock requested", @mongo.unlock!['info']
+    assert !@conn.locked?
+    @conn.lock!
+    assert @conn.locked?
+    assert_equal 1, @conn['admin']['$cmd.sys.inprog'].find_one['fsyncLock'], "Not fsync-locked"
+    assert_equal "unlock requested", @conn.unlock!['info']
     unlocked = false
     counter  = 0
     while counter < 5
-      if @mongo['admin']['$cmd.sys.inprog'].find_one['fsyncLock'].nil?
+      if @conn['admin']['$cmd.sys.inprog'].find_one['fsyncLock'].nil?
         unlocked = true
         break
       else
@@ -161,7 +161,7 @@ class TestConnection < Test::Unit::TestCase
         counter += 1
       end
     end
-    assert !@mongo.locked?
+    assert !@conn.locked?
     assert unlocked, "mongod failed to unlock"
   end
 
@@ -199,35 +199,35 @@ class TestConnection < Test::Unit::TestCase
 
   context "Connection exceptions" do
     setup do
-      @conn = standard_connection(:pool_size => 10, :timeout => 10)
-      @coll = @conn[MONGO_TEST_DB]['test-connection-exceptions']
+      @con = standard_connection(:pool_size => 10, :timeout => 10)
+      @coll = @con[MONGO_TEST_DB]['test-connection-exceptions']
     end
 
     should "release connection if an exception is raised on send_message" do
-      @conn.stubs(:send_message_on_socket).raises(ConnectionFailure)
-      assert_equal 0, @conn.checked_out.size
+      @con.stubs(:send_message_on_socket).raises(ConnectionFailure)
+      assert_equal 0, @con.checked_out.size
       assert_raise ConnectionFailure do
         @coll.insert({:test => "insert"})
       end
-      assert_equal 0, @conn.checked_out.size
+      assert_equal 0, @con.checked_out.size
     end
 
     should "release connection if an exception is raised on send_with_safe_check" do
-      @conn.stubs(:receive).raises(ConnectionFailure)
-      assert_equal 0, @conn.checked_out.size
+      @con.stubs(:receive).raises(ConnectionFailure)
+      assert_equal 0, @con.checked_out.size
       assert_raise ConnectionFailure do
         @coll.insert({:test => "insert"}, :safe => true)
       end
-      assert_equal 0, @conn.checked_out.size
+      assert_equal 0, @con.checked_out.size
     end
 
     should "release connection if an exception is raised on receive_message" do
-      @conn.stubs(:receive).raises(ConnectionFailure)
-      assert_equal 0, @conn.checked_out.size
+      @con.stubs(:receive).raises(ConnectionFailure)
+      assert_equal 0, @con.checked_out.size
       assert_raise ConnectionFailure do
         @coll.find.to_a
       end
-      assert_equal 0, @conn.checked_out.size
+      assert_equal 0, @con.checked_out.size
     end
   end
 end
