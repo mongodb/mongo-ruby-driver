@@ -108,7 +108,10 @@ module Mongo
     #
     # @param [Hash] selector
     #   a document specifying elements which must be present for a
-    #   document to be included in the result set.
+    #   document to be included in the result set. Note that in rare cases,
+    #   (e.g., with $near queries), the order of keys will matter. To preserve
+    #   key order on a selector, use an instance of BSON::OrderedHash (only applies
+    #   to Ruby 1.8).
     #
     # @option opts [Array, Hash] :fields field names that should be returned in the result
     #   set ("_id" will always be included). By limiting results to a certain subset of fields,
