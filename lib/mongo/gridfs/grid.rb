@@ -65,7 +65,7 @@ module Mongo
     #
     # @return [Mongo::ObjectId] the file's id.
     def put(data, opts={})
-      filename = opts[:filename]
+      filename = opts.delete :filename
       opts.merge!(default_grid_io_opts)
       file = GridIO.new(@files, @chunks, filename, 'w', opts=opts)
       file.write(data)
