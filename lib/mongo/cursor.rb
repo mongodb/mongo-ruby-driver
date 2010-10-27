@@ -23,7 +23,7 @@ module Mongo
 
     attr_reader :collection, :selector, :fields,
       :order, :hint, :snapshot, :timeout,
-      :full_collection_name, :batch_size
+      :full_collection_name
 
     # Create a new cursor.
     #
