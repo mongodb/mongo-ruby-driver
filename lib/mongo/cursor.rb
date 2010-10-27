@@ -50,12 +50,12 @@ module Mongo
       @explain    = options[:explain]
       @socket     = options[:socket]
       @tailable   = options[:tailable] || false
+      @closed       = false
+      @query_run    = false
       batch_size(options[:batch_size] || 0)
 
       @full_collection_name = "#{@collection.db.name}.#{@collection.name}"
       @cache        = []
-      @closed       = false
-      @query_run    = false
       @returned     = 0
     end
 
