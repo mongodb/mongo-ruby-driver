@@ -424,6 +424,7 @@ module Mongo
         checkin(sock)
       end
       if num_received == 1 && (error = docs[0]['err'] || docs[0]['errmsg'])
+        close
         raise Mongo::OperationFailure, error
       end
       [docs, num_received, cursor_id]
