@@ -152,6 +152,14 @@ module BSON
     def to_json(*a)
       "{\"$oid\": \"#{to_s}\"}"
     end
+    
+    # Create the JSON hash structure convert to MongoDB extended format. Rails 2.3.3 
+    # introduced as_json to create the needed hash structure to encode objects into JSON.
+    # 
+    # @return [Hash] the hash representation as MongoDB extended JSON
+    def as_json(options ={})
+      {"$oid" => to_s}
+    end
 
     # Return the UTC time at which this ObjectId was generated. This may
     # be used in lieu of a created_at timestamp since this information
