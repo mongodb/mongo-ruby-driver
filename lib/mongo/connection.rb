@@ -424,7 +424,7 @@ module Mongo
         checkin(sock)
       end
       if num_received == 1 && (error = docs[0]['err'] || docs[0]['errmsg'])
-        close
+        close if error == "not master"
         raise Mongo::OperationFailure, error
       end
       [docs, num_received, cursor_id]
@@ -744,7 +744,7 @@ module Mongo
       response_to = header.get_int
       op          = header.get_int
     end
-    
+
     def receive_and_discard_header(sock)
       bytes_read = receive_and_discard_message_on_socket(16, sock)
       unless bytes_read == STANDARD_HEADER_SIZE
