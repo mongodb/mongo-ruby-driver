@@ -3,7 +3,8 @@
 This is the 10gen-supported Ruby driver for MongoDB[http://www.mongodb.org].
 
 Here's a quick code sample. See the MongoDB Ruby Tutorial
-(http://www.mongodb.org/display/DOCS/Ruby+Tutorial) for much more.
+(http://www.mongodb.org/display/DOCS/Ruby+Tutorial) for much more:
+
 
   require 'rubygems'
   require 'mongo'
@@ -18,6 +19,7 @@ Here's a quick code sample. See the MongoDB Ruby Tutorial
   end
   puts "There are #{coll.count()} records. Here they are:"
   coll.find().each { |doc| puts doc.inspect }
+
 
 = Installation
 
