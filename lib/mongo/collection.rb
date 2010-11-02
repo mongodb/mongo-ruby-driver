@@ -358,10 +358,10 @@ module Mongo
     # @option opts [Boolean] :unique (false) if true, this index will enforce a uniqueness constraint.
     # @option opts [Boolean] :background (false) indicate that the index should be built in the background. This
     #   feature is only available in MongoDB >= 1.3.2.
-    # @option opts [Boolean] :dropDups If creating a unique index on a collection with pre-existing records,
+    # @option opts [Boolean] :drop_dups (nil) If creating a unique index on a collection with pre-existing records,
     #   this option will keep the first document the database indexes and drop all subsequent with duplicate values.
-    # @option opts [Integer] :min specify the minimum longitude and latitude for a geo index.
-    # @option opts [Integer] :max specify the maximum longitude and latitude for a geo index.
+    # @option opts [Integer] :min (nil) specify the minimum longitude and latitude for a geo index.
+    # @option opts [Integer] :max (nil) specify the maximum longitude and latitude for a geo index.
     #
     # @example Creating a compound index:
     #   @posts.create_index([['subject', Mongo::ASCENDING], ['created_at', Mongo::DESCENDING]])
@@ -381,7 +381,7 @@ module Mongo
     #
     # @core indexes create_index-instance_method
     def create_index(spec, opts={})
-      opts.assert_valid_keys(:min, :max, :name, :background, :unique, :dropDups)
+      opts[:dropDups] = opts.delete(:drop_dups) if opts[:drop_dups]
       field_spec = BSON::OrderedHash.new
       if spec.is_a?(String) || spec.is_a?(Symbol)
         field_spec[spec.to_s] = 1
@@ -407,10 +407,17 @@ module Mongo
         :key    => field_spec
       }
       selector.merge!(opts)
-      begin
-        response = insert_documents([selector], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, true)
-      rescue Mongo::OperationFailure
-        raise Mongo::OperationFailure, "Failed to create index #{selector.inspect} with the following errors: #{response}"
+
+      insert_documents([selector], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, false)
+      response = @db.get_last_error
+
+      if response['err']
+        if response['code'] == 11000 && selector[:dropDups]
+          # NOP. If the user is intentionally dropping dups, we can ignore duplicate key errors.
+        else
+          raise Mongo::OperationFailure, "Failed to create index #{selector.inspect} with the following error: " +
+           "#{response['err']}"
+        end
       end
       name
     end

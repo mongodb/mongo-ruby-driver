@@ -628,6 +628,22 @@ class TestCollection < Test::Unit::TestCase
       assert @collection.index_information['a_1']['unique'] == true
     end
 
+    should "drop duplicates" do
+      @collection.insert({:a => 1})
+      @collection.insert({:a => 1})
+      assert_equal 2, @collection.find({:a => 1}).count
+      @collection.create_index([['a', Mongo::ASCENDING]], :unique => true, :dropDups => true)
+      assert_equal 1, @collection.find({:a => 1}).count
+    end
+
+    should "drop duplicates with ruby-like drop_dups key" do
+      @collection.insert({:a => 1})
+      @collection.insert({:a => 1})
+      assert_equal 2, @collection.find({:a => 1}).count
+      @collection.create_index([['a', Mongo::ASCENDING]], :unique => true, :drop_dups => true)
+      assert_equal 1, @collection.find({:a => 1}).count
+    end
+
     should "create an index in the background" do
       if @@version > '1.3.1'
         @collection.create_index([['b', Mongo::ASCENDING]], :background => true)
