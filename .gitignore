@@ -10,3 +10,4 @@ lib/mongo_ext/Makefile
 benchmark
 *~
 *#*
+*.class
