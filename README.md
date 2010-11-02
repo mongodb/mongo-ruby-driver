@@ -1,78 +1,75 @@
-= Introduction
+# Introduction
 
-This is the 10gen-supported Ruby driver for MongoDB[http://www.mongodb.org].
+This is the 10gen-supported Ruby driver for [MongoDB](http://www.mongodb.org).
 
-Here's a quick code sample. See the MongoDB Ruby Tutorial
-(http://www.mongodb.org/display/DOCS/Ruby+Tutorial) for much more:
+Here's a quick code sample. See the [MongoDB Ruby Tutorial](http://www.mongodb.org/display/DOCS/Ruby+Tutorial)
+for much more:
 
+    require 'rubygems'
+    require 'mongo'
+    include Mongo
 
-  require 'rubygems'
-  require 'mongo'
-  include Mongo
+    db   = Connection.new.db('sample-db')
+    coll = db.collection('test')
 
-  db   = Connection.new.db('sample-db')
-  coll = db.collection('test')
+    coll.remove
+    3.times do |i|
+      coll.insert({'a' => i+1})
+    end
+    puts "There are #{coll.count()} records. Here they are:"
+    coll.find().each { |doc| puts doc.inspect }
 
-  coll.remove
-  3.times do |i|
-    coll.insert({'a' => i+1})
-  end
-  puts "There are #{coll.count()} records. Here they are:"
-  coll.find().each { |doc| puts doc.inspect }
+# Installation
 
-
-= Installation
-
-=== Ruby Versions
+### Ruby Versions
 
 The driver works and is consistently tested on Ruby 1.8.6, 1.8.7, and 1.9.2, and JRuby 1.5.1.
 
 Note that if you're on 1.8.7, be sure that you're using a patchlevel >= 249. There
 are some IO bugs in earlier versions.
 
-=== Gems
+### Gems
 
-The driver's gems are hosted at Rubygems.org[http://rubygems.org]. Make sure you're
+The driver's gems are hosted at [Rubygems.org](http://rubygems.org). Make sure you're
 using the latest version of rubygems:
 
-  $ gem update --system
+    $ gem update --system
 
 Then you can install the mongo gem as follows:
 
-  $ gem install mongo
+    $ gem install mongo
 
 The driver also requires the bson gem:
 
-  $ gem install bson
+    $ gem install bson
 
 And for a significant performance boost, you'll want to install the C extensions:
 
-  $ gem install bson_ext
+    $ gem install bson_ext
 
 Note that bson_ext isn't used with JRuby. Instead, some native Java extensions are bundled with the bson gem.
 If you ever need to modify these extenions, you can recompile with the following rake task:
 
-  $ rake build:java
+    $ rake build:java
 
-=== From the GitHub source
+### From the GitHub source
 
 The source code is available at http://github.com/mongodb/mongo-ruby-driver.
 You can either clone the git repository or download a tarball or zip file.
 Once you have the source, you can use it from wherever you downloaded it or
 you can install it as a gem from the source by typing
 
-  $ rake gem:install
+    $ rake gem:install
 
 To install the C extensions from source, type this instead:
 
-  $ rake gem:install_extensions
+    $ rake gem:install_extensions
 
 That's all there is to it!
 
-= Examples
+# Examples
 
-For extensive examples, see the MongoDB Ruby Tutorial
-(http://www.mongodb.org/display/DOCS/Ruby+Tutorial).
+For extensive examples, see the [MongoDB Ruby Tutorial](http://www.mongodb.org/display/DOCS/Ruby+Tutorial).
 
 Bundled with the driver are many examples, located in the "examples" subdirectory. Samples include using
 the driver and using the GridFS class GridStore. MongoDB must be running for
@@ -80,18 +77,15 @@ these examples to work, of course.
 
 Here's how to start MongoDB and run the "simple.rb" example:
 
-  $ cd path/to/mongo
-  $ ./mongod run
-  ... then in another window ...
-  $ cd path/to/mongo-ruby-driver
-  $ ruby examples/simple.rb
+      $ cd path/to/mongo
+      $ ./mongod run
+      ... then in another window ...
+      $ cd path/to/mongo-ruby-driver
+      $ ruby examples/simple.rb
 
 See also the test code, especially test/test_db_api.rb.
 
-= GridFS
-
-Note: The GridStore class has been deprecated. Use either the Grid or GridFileSystem
-classes to take advantage of GridFS.
+# GridFS
 
 The Ruby driver include two abstractions for storing large files: Grid and GridFileSystem.
 The Grid class is a Ruby implementation of MongoDB's GridFS file storage
@@ -103,87 +97,56 @@ for details, and see examples/gridfs.rb for code that uses many of the Grid
 features (metadata, content type, seek, tell, etc).
 
 Examples:
-  include Mongo
+      # Write a file on disk to the Grid
+      file = File.open('image.jpg')
+      grid = Grid.new(db)
+      id   = grid.put(file)
 
-  # Get a database
-  db = Mongo::Connection.new.db('app-db')
+      # Retrieve the file
+      file = grid.get(id)
+      file.read
 
-  # GridFileSystem. Store the text "Hello, world!" in the fs.
-  fs = GridFileSystem.new(db)
-  fs.open('filename', 'w') do |f|
-    f.write "Hello, world!"
-  end
+      # Get all the file's metata
+      file.filename
+      file.content_type
+      file.metadata
 
-  # GridFileSystem. Output "Hello, world!"
-  fs = GridFileSystem.new(db)
-  fs.open('filename', 'r') do |f|
-    puts f.read
-  end
+# Notes
 
-  # Write a file on disk to the Grid
-  file = File.open('image.jpg')
-  grid = Grid.new(db)
-  id   = grid.put(file)
-
-  # Retrieve the file
-  file = grid.get(id)
-  file.read
-
-  # Get all the file's metata
-  file.filename
-  file.content_type
-  file.metadata
-
-= Notes
-
-== Thread Safety
+## Thread Safety
 
 The driver is thread-safe.
 
-== Connection Pooling
+## Connection Pooling
 
-As of 0.18, the driver implements connection pooling. By default, only one
+As of v0.18, the driver implements connection pooling. By default, only one
 socket connection will be opened to MongoDB. However, if you're running a
 multi-threaded application, you can specify a maximum pool size and a maximum
 timeout for waiting for old connections to be released to the pool.
 
 To set up a pooled connection to a single MongoDB instance:
 
-  @conn = Connection.new("localhost", 27017, :pool_size => 5, :timeout => 5)
-
-A pooled connection to a paired instance would look like this:
-
-  @conn = Connection.new({:left  => ["db1.example.com", 27017],
-                    :right => ["db2.example.com", 27017]}, nil,
-                    :pool_size => 20, :timeout => 5)
+    @conn = Connection.new("localhost", 27017, :pool_size => 5, :timeout => 5)
 
 Though the pooling architecture will undoubtedly evolve, it currently owes much credit
 to the connection pooling implementations in ActiveRecord and PyMongo.
 
-== Using with Phusion Passenger
+## Using with Phusion Passenger and Unicorn
 
-When passenger is in smart spawning mode you need to be sure that child
-processes forked by passenger will create a new connection to the database.
-activerecord-mongo-adapter handles this for you, so if you are using that
-you shouldn't need to worry about it. Otherwise you'll either need to use
-conservative spawning[http://www.modrails.org/documentation/Users%20guide.html#RailsSpawnMethod]
-or handle reconnecting when passenger forks a new process:
+When Passenger and Unicorn are in smart spawning mode you need to be sure that child
+processes will create a new connection to the database. In Passenger, this can be handled like so:
 
-  if defined?(PhusionPassenger)
-    PhusionPassenger.on_event(:starting_worker_process) do |forked|
-      if forked
-        # Call db.connect to reconnect here
+    if defined?(PhusionPassenger)
+      PhusionPassenger.on_event(:starting_worker_process) do |forked|
+        if forked
+          # Create new connection here
+        end
       end
     end
-  end
 
-The above code should be put in _environment.rb_ or in an initialization
-script.
+The above code should be put into a Rails initializer or other initialization script.
 
-See this thread[http://groups.google.com/group/mongodb-user/browse_thread/thread/f31e2d23de38136a]
-for more details on this issue.
-
-== String Encoding
+## String Encoding
 
 The BSON ("Binary JSON") format used to communicate with Mongo requires that
 strings be UTF-8 (http://en.wikipedia.org/wiki/UTF-8).
@@ -193,18 +156,18 @@ and received from Mongo are converted to UTF-8 when necessary, and strings
 read from Mongo will have their character encodings set to UTF-8.
 
 When used with Ruby 1.8, the bytes in each string are written to and read from
-Mongo as-is. If the string is ASCII all is well, because ASCII is a subset of
+Mongo as is. If the string is ASCII, all is well, because ASCII is a subset of
 UTF-8. If the string is not ASCII, it may not be a well-formed UTF-8
 string.
 
-== Primary Keys
+## Primary Keys
 
-The field _id is a primary key. It is treated specially by the database, and
+The `_id` field is a primary key. It is treated specially by the database, and
 its use makes many operations more efficient. The value of an _id may be of
 any type. The database itself inserts an _id value if none is specified when
 a record is inserted.
 
-=== Primary Key Factories
+### Primary Key Factories
 
 A primary key factory is a class you supply to a DB object that knows how to
 generate _id values. If you want to control _id values or even their types,
@@ -213,7 +176,7 @@ using a PK factory lets you do so.
 You can tell the Ruby Mongo driver how to create primary keys by passing in
 the :pk option to the Connection#db method.
 
-  db = Mongo::Connection.new.db('dbname', :pk => MyPKFactory.new)
+    db = Mongo::Connection.new.db('dbname', :pk => MyPKFactory.new)
 
 A primary key factory object must respond to :create_pk, which should
 take a hash and return a hash which merges the original hash with any
@@ -227,12 +190,12 @@ returned will be inserted.
 
 Here is a sample primary key factory, taken from the tests:
 
-  class TestPKFactory
-    def create_pk(row)
-      row['_id'] ||= Mongo::ObjectID.new
-      row
+    class TestPKFactory
+      def create_pk(row)
+        row['_id'] ||= Mongo::ObjectID.new
+        row
+      end
     end
-  end
 
 Here's a slightly more sophisticated one that handles both symbol and string
 keys. This is the PKFactory that comes with the MongoRecord code (an
@@ -254,13 +217,9 @@ changeable at all is so that libraries such as MongoRecord that use this
 driver can set the PK factory after obtaining the database but before using it
 for the first time.
 
-== The DB Class
+## The DB Class
 
-=== Primary Key factories
-
-See the section on "Primary Keys" above.
-
-=== Strict mode
+### Strict mode
 
 Each database has an optional strict mode. If strict mode is on, then asking
 for a collection that does not exist will raise an error, as will asking to
@@ -268,90 +227,85 @@ create a collection that already exists. Note that both these operations are
 completely harmless; strict mode is a programmer convenience only.
 
 To turn on strict mode, either pass in :strict => true when obtaining a DB
-object or call the :strict= method:
+object or call the `:strict=` method:
 
-  db = Connection.new.db('dbname', :strict => true)
-  # I'm feeling lax
-  db.strict = false
-  # No, I'm not!
-  db.strict = true
+    db = Connection.new.db('dbname', :strict => true)
+    # I'm feeling lax
+    db.strict = false
+    # No, I'm not!
+    db.strict = true
 
 The method DB#strict? returns the current value of that flag.
 
-== Cursors
+## Cursors
 
-Random cursor fun facts:
+Notes:
 
-- Cursors are enumerable.
+* Cursors are enumerable (and have a #to_a method).
 
-- The query doesn't get run until you actually attempt to retrieve data from a
+* The query doesn't get run until you actually attempt to retrieve data from a
   cursor.
 
-- Cursors have a to_a method.
+* Cursors will timeout on the server after 10 minutes. If you need to keep a cursor
+  open for more than 10 minutes, specify `:timeout => false` when you create the cursor.
 
 
-= Testing
+# Testing
 
-If you have the source code, you can run the tests. There's a separate rake task for testing with
-the bson_ext C extension enabled.
+If you have the source code, you can run the tests.
 
-  $ rake test:c
+    $ rake test:c
 
-If you want to test the basic Ruby encoder, or if you're running JRuby:
+If you want to test the basic Ruby encoder, without the C extension, or if you're running JRuby:
 
-  $ rake test:ruby
+    $ rake test:ruby
 
 These will run both unit and functional tests. To run these tests alone:
 
-  $ rake test:unit
-  $ rake test:functional
+    $ rake test:unit
+    $ rake test:functional
 
 To run any individual rake tasks with the C extension enabled, just pass C_EXT=true to the task:
 
-  $ rake test:unit C_EXT=true
+    $ rake test:unit C_EXT=true
 
-If you want to test replica pairs, you can run the following tests
+If you want to test replica set, you can run the following tests
 individually:
 
-  $ rake test:pair_count
-  $ rake test:pair_insert
-  $ rake test:pair_query
+    $ rake test:replica_set_count
+    $ rake test:replica_set_insert
+    $ rake test:replica_set_query
 
-It's also possible to test replica pairs with connection pooling:
-
-  $ rake test:pooled_pair_insert
-
-===Shoulda and Mocha
+### Shoulda and Mocha
 
 Running the test suite requires shoulda and mocha.  You can install them as follows:
 
-  $ gem install shoulda
-  $ gem install mocha
+    $ gem install shoulda
+    $ gem install mocha
 
 The tests assume that the Mongo database is running on the default port. You
 can override the default host (localhost) and port (Connection::DEFAULT_PORT) by
 using the environment variables MONGO_RUBY_DRIVER_HOST and
 MONGO_RUBY_DRIVER_PORT.
 
-= Documentation
+# Documentation
 
-This documentation is available online at http://api.mongodb.org/ruby. You can
+This documentation is available online at [http://api.mongodb.org/ruby](http://api.mongodb.org/ruby). You can
 generate the documentation if you have the source by typing
 
-  $ rake ydoc
+    $ rake ydoc
 
 Then open the file +ydoc/index.html+.
 
-
-= Release Notes
+# Release Notes
 
 See HISTORY.
 
-= Credits
+# Credits
 
 See CREDITS.
 
-= License
+# License
 
  Copyright 2008-2010 10gen Inc.
 

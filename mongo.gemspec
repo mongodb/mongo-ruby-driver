@@ -11,7 +11,7 @@ Gem::Specification.new do |s|
 
   s.require_paths = ['lib']
 
-  s.files  = ['README.rdoc', 'HISTORY', 'Rakefile',
+  s.files  = ['README.md', 'HISTORY', 'Rakefile',
     'mongo.gemspec', 'LICENSE.txt']
   s.files += ['lib/mongo.rb'] + Dir['lib/mongo/**/*.rb']
   s.files += Dir['examples/**/*.rb'] + Dir['bin/**/*.rb']
@@ -25,8 +25,8 @@ Gem::Specification.new do |s|
   s.test_files -= Dir['test/mongo_bson/*.rb'] # remove these files from the manifest
 
   s.has_rdoc = true
-  s.rdoc_options = ['--main', 'README.rdoc', '--inline-source']
-  s.extra_rdoc_files = ['README.rdoc']
+  s.rdoc_options = ['--main', 'README.md', '--inline-source']
+  s.extra_rdoc_files = ['README.md']
 
   s.authors = ['Jim Menard', 'Mike Dirolf', 'Kyle Banker']
   s.email = 'mongodb-dev@googlegroups.com'
