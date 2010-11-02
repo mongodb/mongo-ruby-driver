@@ -176,21 +176,38 @@ namespace :gem do
 
   desc "Install the gem locally"
   task :install do
+    sh "gem install --no-rdoc --no-ri json"
+
+    sh "gem uninstall -x -a -I bson"
     sh "gem build bson.gemspec"
-    sh "gem install bson-*.gem"
+    sh "gem install --no-rdoc --no-ri bson-*.gem"
+
+    sh "gem uninstall -x -a -I mongo"
     sh "gem build mongo.gemspec"
-    sh "gem install mongo-*.gem"
+    sh "gem install --no-rdoc --no-ri mongo-*.gem"
+
     sh "rm mongo-*.gem"
     sh "rm bson-*.gem"
   end
 
   desc "Install the optional c extensions"
   task :install_extensions do
+    sh "gem uninstall -x -a -I bson_ext"
     sh "gem build bson_ext.gemspec"
-    sh "gem install bson_ext-*.gem"
+    sh "gem install --no-rdoc --no-ri bson_ext-*.gem"
     sh "rm bson_ext-*.gem"
   end
 
+end
+
+namespace :ci do
+  namespace :test do
+    task :c do
+      Rake::Task['gem:install'].invoke
+      Rake::Task['gem:install_extensions'].invoke
+      Rake::Task['test:c'].invoke
+    end
+  end
 end
 
 task :default => :list

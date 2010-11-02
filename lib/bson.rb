@@ -60,10 +60,12 @@ else
     module BSON
       BSON_CODER = BSON_RUBY
     end
-    warn "\n**Notice: C extension not loaded. This is required for optimum MongoDB Ruby driver performance."
-    warn "  You can install the extension as follows:\n  gem install bson_ext\n"
-    warn "  If you continue to receive this message after installing, make sure that the"
-    warn "  bson_ext gem is in your load path and that the bson_ext and mongo gems are of the same version.\n"
+    unless ENV['TEST_MODE']
+      warn "\n**Notice: C extension not loaded. This is required for optimum MongoDB Ruby driver performance."
+      warn "  You can install the extension as follows:\n  gem install bson_ext\n"
+      warn "  If you continue to receive this message after installing, make sure that the"
+      warn "  bson_ext gem is in your load path and that the bson_ext and mongo gems are of the same version.\n"
+    end
   end
 end
 
