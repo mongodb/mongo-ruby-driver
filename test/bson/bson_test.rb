@@ -437,11 +437,13 @@ class BSONTest < Test::Unit::TestCase
   # HashWithIndifferentAccess can cause problems for _id but not for other
   # keys. rather than require rails to test with HWIA directly, we do this
   # somewhat hacky test.
+  #
+  # Note that the driver only eliminates duplicate ids when move_id is true.
   def test_no_duplicate_id
     dup = {"_id" => "foo", :_id => "foo"}
     one = {"_id" => "foo"}
 
-    assert_equal @encoder.serialize(one).to_a, @encoder.serialize(dup).to_a
+    assert_equal @encoder.serialize(one, false, true).to_a, @encoder.serialize(dup, false, true).to_a
   end
 
   def test_duplicate_keys
