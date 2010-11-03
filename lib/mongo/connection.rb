@@ -466,7 +466,7 @@ module Mongo
     # Create a new socket and attempt to connect to master.
     # If successful, sets host and port to master and returns the socket.
     #
-    # If connecting to a replica set, this method will update the
+    # If connecting to a replica set, this method will replace the
     # initially-provided seed list with any nodes known to the set.
     #
     # @raise [ConnectionFailure] if unable to connect to any host or port.
@@ -594,8 +594,6 @@ module Mongo
     #
     # If a primary node is discovered, we set the the @host and @port and
     # apply any saved authentication.
-    #
-    # TODO: use the 'primary', and 'seconday' fields if we're in a replica set
     def is_primary?(config)
       config && (config['ismaster'] == 1 || config['ismaster'] == true) || @slave_ok
     end
