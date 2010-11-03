@@ -1,6 +1,8 @@
 html
 pkg
 doc
+ydoc
+.yardoc
 *.gem
 nbproject
 *.bundle
@@ -11,3 +13,4 @@ benchmark
 *~
 *#*
 *.class
+*.swp

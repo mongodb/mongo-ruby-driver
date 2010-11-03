@@ -71,7 +71,7 @@ That's all there is to it!
 
 For extensive examples, see the [MongoDB Ruby Tutorial](http://www.mongodb.org/display/DOCS/Ruby+Tutorial).
 
-Bundled with the driver are many examples, located in the "examples" subdirectory. Samples include using
+Bundled with the driver are many examples, located in the "docs/examples" subdirectory. Samples include using
 the driver and using the GridFS class GridStore. MongoDB must be running for
 these examples to work, of course.
 
@@ -81,7 +81,7 @@ Here's how to start MongoDB and run the "simple.rb" example:
       $ ./mongod run
       ... then in another window ...
       $ cd path/to/mongo-ruby-driver
-      $ ruby examples/simple.rb
+      $ ruby docs/examples/simple.rb
 
 See also the test code, especially test/test_db_api.rb.
 
