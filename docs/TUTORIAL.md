@@ -1,4 +1,4 @@
-# Tutorial
+# MongoDB Ruby Driver Tutorial
 
 This tutorial gives many common examples of using MongoDB with the Ruby driver. If you're looking for information on data modeling, see [MongoDB Data Modeling and Rails](http://www.mongodb.org/display/DOCS/MongoDB+Data+Modeling+and+Rails). Links to the various object mappers are listed on our [object mappers page](http://www.mongodb.org/display/DOCS/Object+Mappers+for+Ruby+and+MongoDB).
 
@@ -52,7 +52,6 @@ If you're trying to connect to a replica set, see [Replica Sets in Ruby](http://
 
     #### Dropping a Database
     connection.drop_database('database_name')
-    #### Authentication (Optional)
 
 MongoDB can be run in a secure mode where access to databases is controlled through name and password authentication.  When run in this mode, any client application must provide a name and password before doing any operations.  In the Ruby driver, you simply do the following with the connected mongo object:
 
