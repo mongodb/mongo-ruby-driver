@@ -26,6 +26,20 @@ class TestCollection < Test::Unit::TestCase
     assert @coll.pk_factory.is_a?(Object)
   end
 
+  class TestPK
+    def self.create_pk
+    end
+  end
+
+  def test_pk_factory_on_collection
+    @coll = Collection.new(@@db, 'foo', TestPK)
+    assert_equal TestPK, @coll.pk_factory
+
+
+    @coll2 = Collection.new(@@db, 'foo', :pk => TestPK)
+    assert_equal TestPK, @coll2.pk_factory
+  end
+
   def test_valid_names
     assert_raise Mongo::InvalidNSName do
       @@db["te$t"]

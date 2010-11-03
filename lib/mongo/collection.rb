@@ -28,6 +28,9 @@ module Mongo
     # @param [DB] db a MongoDB database instance.
     # @param [String, Symbol] name the name of the collection.
     #
+    # @option options [:create_pk] :pk (BSON::ObjectId) A primary key factory to use
+    #   other than the default BSON::ObjectId.
+    #
     # @option options [Boolean, Hash] :safe (false) Set the default safe-mode options
     #   for insert, update, and remove method called on this Collection instance. If no
     #   value is provided, the default value set on this instance's DB will be used. This
@@ -42,7 +45,7 @@ module Mongo
     # @return [Collection]
     #
     # @core collections constructor_details
-    def initialize(db, name, pk_factory=nil, options={})
+    def initialize(db, name, options={})
       case name
       when Symbol, String
       else
@@ -61,11 +64,21 @@ module Mongo
         raise Mongo::InvalidNSName, "collection names must not start or end with '.'"
       end
 
+      if options.respond_to?(:create_pk) || !options.is_a?(Hash)
+        warn "The method for specifying a primary key factory on a Collection has changed.\n" +
+          "Please specify it as an option (e.g., :pk => PkFactory)."
+        pk_factory = options
+      else
+        pk_factory = nil
+      end
+
       @db, @name  = db, name
       @connection = @db.connection
       @logger     = @connection.logger
-      @pk_factory = pk_factory || BSON::ObjectId
-      @safe       = options.has_key?(:safe) ? options[:safe] : @db.safe
+      unless pk_factory
+        @safe       = options.has_key?(:safe) ? options[:safe] : @db.safe
+      end
+      @pk_factory = pk_factory || options[:pk] || BSON::ObjectId
       @hint = nil
     end
 

@@ -255,13 +255,14 @@ module Mongo
       oh = BSON::OrderedHash.new
       oh[:create] = name
       doc = command(oh.merge(options || {}))
-      return Collection.new(self, name, @pk_factory) if ok?(doc)
+      return Collection.new(self, name, :pk => @pk_factory) if ok?(doc)
       raise MongoDBError, "Error creating collection: #{doc.inspect}"
     end
 
     # Get a collection by name.
     #
     # @param [String] name the collection name.
+    # @param [Hash] options any valid options that can me passed to Collection#new.
     #
     # @raise [MongoDBError] if collection does not already exist and we're in +strict+ mode.
     #
@@ -271,7 +272,8 @@ module Mongo
         raise Mongo::MongoDBError, "Collection #{name} doesn't exist. Currently in strict mode."
       else
         options[:safe] = options.has_key?(:safe) ? options[:safe] : @safe
-        Collection.new(self, name, @pk_factory, options)
+        options.merge!(:pk => @pk_factory) unless options[:pk]
+        Collection.new(self, name, options)
       end
     end
     alias_method :[], :collection
