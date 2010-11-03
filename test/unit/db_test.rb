@@ -16,7 +16,9 @@ class DBTest < Test::Unit::TestCase
     context "DB commands" do
       setup do
         @conn = stub()
+        @conn.stubs(:safe)
         @db   = DB.new("testing", @conn)
+        @db.stubs(:safe)
         @collection = mock()
         @db.stubs(:system_command_collection).returns(@collection)
       end

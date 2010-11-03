@@ -45,8 +45,8 @@ module Mongo
     # Returns the value of the +strict+ flag.
     def strict?; @strict; end
 
-    # The name of the database.
-    attr_reader :name
+    # The name of the database and the local safe option.
+    attr_reader :name, :safe
 
     # The Mongo::Connection instance connecting to the MongoDB server.
     attr_reader :connection
@@ -65,12 +65,19 @@ module Mongo
     #   fields the factory wishes to inject. (NOTE: if the object already has a primary key,
     #   the factory should not inject a new key).
     #
+    # @option options [Boolean, Hash] :safe (false) Set the default safe-mode options
+    #   propogated to Collection objects instantiated off of this DB. If no
+    #   value is provided, the default value set on this instance's Connection object will be used. This
+    #   default can be overridden upon instantiation of any collection by explicity setting a :safe value
+    #   on initialization
+    #
     # @core databases constructor_details
     def initialize(db_name, connection, options={})
       @name       = Mongo::Support.validate_db_name(db_name)
       @connection = connection
       @strict     = options[:strict]
       @pk_factory = options[:pk]
+      @safe       = options.has_key?(:safe) ? options[:safe] : @connection.safe
     end
 
     # Authenticate with the given username and password. Note that mongod
@@ -259,9 +266,13 @@ module Mongo
     # @raise [MongoDBError] if collection does not already exist and we're in +strict+ mode.
     #
     # @return [Mongo::Collection]
-    def collection(name)
-      return Collection.new(self, name, @pk_factory) if !strict? || collection_names.include?(name)
-      raise Mongo::MongoDBError, "Collection #{name} doesn't exist. Currently in strict mode."
+    def collection(name, options={})
+      if strict? && !collection_names.include?(name)
+        raise Mongo::MongoDBError, "Collection #{name} doesn't exist. Currently in strict mode."
+      else
+        options[:safe] = options.has_key?(:safe) ? options[:safe] : @safe
+        Collection.new(self, name, @pk_factory, options)
+      end
     end
     alias_method :[], :collection
 

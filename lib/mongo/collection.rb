@@ -21,12 +21,17 @@ module Mongo
   # A named collection of documents in a database.
   class Collection
 
-    attr_reader :db, :name, :pk_factory, :hint
+    attr_reader :db, :name, :pk_factory, :hint, :safe
 
     # Initialize a collection object.
     #
     # @param [DB] db a MongoDB database instance.
     # @param [String, Symbol] name the name of the collection.
+    #
+    # @option options [Boolean, Hash] :safe (false) Set the default safe-mode options
+    #   for insert, update, and remove method called on this Collection instance. If no
+    #   value is provided, the default value set on this instance's DB will be used. This
+    #   default can be overridden for any invocation of insert, update, or remove.
     #
     # @raise [InvalidNSName]
     #   if collection name is empty, contains '$', or starts or ends with '.'
@@ -37,7 +42,7 @@ module Mongo
     # @return [Collection]
     #
     # @core collections constructor_details
-    def initialize(db, name, pk_factory=nil)
+    def initialize(db, name, pk_factory=nil, options={})
       case name
       when Symbol, String
       else
@@ -60,6 +65,7 @@ module Mongo
       @connection = @db.connection
       @logger     = @connection.logger
       @pk_factory = pk_factory || BSON::ObjectId
+      @safe       = options.has_key?(:safe) ? options[:safe] : @db.safe
       @hint = nil
     end
 
@@ -245,8 +251,10 @@ module Mongo
     # @option opts [Boolean, Hash] :safe (+false+)
     #   run the operation in safe mode, which run a getlasterror command on the
     #   database to report any assertion. In addition, a hash can be provided to
-    #   run an fsync and/or wait for replication of the insert (>= 1.5.1). See the options
-    #   for DB#error.
+    #   run an fsync and/or wait for replication of the insert (>= 1.5.1). Safe
+    #   options provided here will override any safe options set on this collection,
+    #   its database object, or the current connection. See the options on
+    #   for DB#get_last_error.
     #
     # @see DB#remove for options that can be passed to :safe.
     #
@@ -254,7 +262,8 @@ module Mongo
     def insert(doc_or_docs, options={})
       doc_or_docs = [doc_or_docs] unless doc_or_docs.is_a?(Array)
       doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
-      result = insert_documents(doc_or_docs, @name, true, options[:safe])
+      safe = options.has_key?(:safe) ? options[:safe] : @safe
+      result = insert_documents(doc_or_docs, @name, true, safe)
       result.size > 1 ? result : result.first
     end
     alias_method :<<, :insert
@@ -265,10 +274,11 @@ module Mongo
     #   If specified, only matching documents will be removed.
     #
     # @option opts [Boolean, Hash] :safe (+false+)
-    #   run the operation in safe mode, which run a getlasterror command on the
+    #   run the operation in safe mode, which will run a getlasterror command on the
     #   database to report any assertion. In addition, a hash can be provided to
-    #   run an fsync and/or wait for replication of the remove (>= 1.5.1). See the options
-    #   for DB#get_last_error.
+    #   run an fsync and/or wait for replication of the remove (>= 1.5.1). Safe
+    #   options provided here will override any safe options set on this collection,
+    #   its database, or the current connection. See the options for DB#get_last_error for more details.
     #
     # @example remove all documents from the 'users' collection:
     #   users.remove
@@ -287,14 +297,15 @@ module Mongo
     # @core remove remove-instance_method
     def remove(selector={}, opts={})
       # Initial byte is 0.
+      safe = opts.has_key?(:safe) ? opts[:safe] : @safe
       message = BSON::ByteBuffer.new("\0\0\0\0")
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
       message.put_binary(BSON::BSON_CODER.serialize(selector, false, true).to_s)
 
       @logger.debug("MONGODB #{@db.name}['#{@name}'].remove(#{selector.inspect})") if @logger
-      if opts[:safe]
-        @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message, @db.name, nil, opts[:safe])
+      if safe
+        @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message, @db.name, nil, safe)
         # the return value of send_message_with_safe_check isn't actually meaningful --
         # only the fact that it didn't raise an error is -- so just return true
         true
@@ -320,11 +331,14 @@ module Mongo
     # @option opts [Boolean] :safe (+false+) 
     #   If true, check that the save succeeded. OperationFailure
     #   will be raised on an error. Note that a safe check requires an extra
-    #   round-trip to the database.
+    #   round-trip to the database. Safe options provided here will override any safe
+    #   options set on this collection, its database object, or the current collection.
+    #   See the options for DB#get_last_error for details.
     #
     # @core update update-instance_method
     def update(selector, document, options={})
       # Initial byte is 0.
+      safe = options.has_key?(:safe) ? options[:safe] : @safe
       message = BSON::ByteBuffer.new("\0\0\0\0")
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       update_options  = 0
@@ -334,8 +348,8 @@ module Mongo
       message.put_binary(BSON::BSON_CODER.serialize(selector, false, true).to_s)
       message.put_binary(BSON::BSON_CODER.serialize(document, false, true).to_s)
       @logger.debug("MONGODB #{@db.name}['#{@name}'].update(#{selector.inspect}, #{document.inspect})") if @logger
-      if options[:safe]
-        @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name, nil, options[:safe])
+      if safe
+        @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name, nil, safe)
       else
         @connection.send_message(Mongo::Constants::OP_UPDATE, message, nil)
       end

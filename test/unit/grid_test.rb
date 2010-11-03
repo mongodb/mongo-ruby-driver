@@ -5,12 +5,14 @@ class GridTest < Test::Unit::TestCase
   context "GridFS: " do
     setup do
       @conn   = stub()
+      @conn.stubs(:safe)
       @db     = DB.new("testing", @conn)
       @files  = mock()
       @chunks = mock()
 
       @db.expects(:[]).with('fs.files').returns(@files)
       @db.expects(:[]).with('fs.chunks').returns(@chunks)
+      @db.stubs(:safe)
     end
 
     context "Grid classe with standard connections" do

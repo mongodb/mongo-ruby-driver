@@ -38,7 +38,8 @@ module Mongo
     MONGODB_URI_MATCHER = /(([-_.\w\d]+):([-_\w\d]+)@)?([-.\w\d]+)(:([\w\d]+))?(\/([-\d\w]+))?/
     MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]"
 
-    attr_reader :logger, :size, :host, :port, :nodes, :auths, :sockets, :checked_out, :primary, :secondaries, :arbiters
+    attr_reader :logger, :size, :host, :port, :nodes, :auths, :sockets, :checked_out, :primary, :secondaries, :arbiters,
+      :safe
 
     # Counter for generating unique request ids.
     @@current_request_id = 0
@@ -61,6 +62,10 @@ module Mongo
     # @param [String, Hash] host.
     # @param [Integer] port specify a port number here if only one host is being specified.
     #
+    # @option options [Boolean, Hash] :safe (false) Set the default safe-mode options
+    #   propogated to DB objects instantiated off of this Connection. This
+    #   default can be overridden upon instantiation of any DB by explicity setting a :safe value
+    #   on initialization.
     # @option options [Boolean] :slave_ok (false) Must be set to +true+ when connecting
     #   to a single, slave node.
     # @option options [Logger, #debug] :logger (nil) Logger instance to receive driver operation log.
@@ -113,6 +118,9 @@ module Mongo
 
       # Mutex for synchronizing pool access
       @connection_mutex = Mutex.new
+
+      # Global safe option. This is false by default.
+      @safe = options[:safe] || false
 
       # Create a mutex when a new key, in this case a socket,
       # is added to the hash.
@@ -312,7 +320,7 @@ module Mongo
     #
     # @core databases []-instance_method
     def [](db_name)
-      DB.new(db_name, self)
+      DB.new(db_name, self, :safe => @safe)
     end
 
     # Drop a database.
