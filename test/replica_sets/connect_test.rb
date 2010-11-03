@@ -7,8 +7,16 @@ require './test/test_helper'
 class ConnectTest < Test::Unit::TestCase
   include Mongo
 
+  def test_connect_bad_name
+    assert_raise_error(ReplicaSetConnectionError, "expected 'wrong-repl-set-name'") do
+      Mongo::Connection.multi([['localhost', 27017], ['localhost', 27018], ['localhost', 27019]],
+        :name => "wrong-repl-set-name")
+    end
+  end
+
   def test_connect
-    @conn = Mongo::Connection.multi([['localhost', 27017], ['localhost', 27018], ['localhost', 27019]])
+    @conn = Mongo::Connection.multi([['localhost', 27017], ['localhost', 27018], ['localhost', 27019]],
+                                    :name => "foo")
     assert @conn.connected?
   end
 

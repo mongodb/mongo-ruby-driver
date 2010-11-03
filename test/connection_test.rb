@@ -43,6 +43,12 @@ class TestConnection < Test::Unit::TestCase
     assert_raise Mongo::InvalidNSName do @conn.db('te st') end
   end
 
+  def test_replica_set_connection_name
+    assert_raise_error(Mongo::ReplicaSetConnectionError, "replSet") do
+      standard_connection(:name => "replica-set-foo")
+    end
+  end
+
   def test_options_passed_to_db
     @pk_mock = Object.new
     db = @conn.db('test', :pk => @pk_mock, :strict => true)

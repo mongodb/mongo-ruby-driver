@@ -43,6 +43,9 @@ module Mongo
   class ConnectionError < MongoRubyError; end
 
   # Raised on failures in connection to the database server.
+  class ReplicaSetConnectionError < ConnectionError; end
+
+  # Raised on failures in connection to the database server.
   class ConnectionTimeoutError < MongoRubyError; end
 
   # Raised when a connection operation fails.

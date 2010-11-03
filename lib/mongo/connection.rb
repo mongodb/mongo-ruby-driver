@@ -64,6 +64,8 @@ module Mongo
     # @option options [Boolean] :slave_ok (false) Must be set to +true+ when connecting
     #   to a single, slave node.
     # @option options [Logger, #debug] :logger (nil) Logger instance to receive driver operation log.
+    # @option options [String] :name (nil) The name of the replica set to connect to. An exception will be
+    #   raised if unable to connect to a replica set with this name.
     # @option options [Integer] :pool_size (1) The maximum number of socket connections that can be
     #   opened to the database.
     # @option options [Float] :timeout (5.0) When all of the connections to the pool are checked out,
@@ -83,6 +85,9 @@ module Mongo
     #
     # @see http://www.mongodb.org/display/DOCS/Replica+Pairs+in+Ruby Replica pairs in Ruby
     #
+    # @raise [ReplicaSetConnectionError] This is raised if a replica set name is specified and the
+    #   driver fails to connect to a replica set with that name.
+    #
     # @core connections
     def initialize(host=nil, port=nil, options={})
       @auths        = []
@@ -95,6 +100,9 @@ module Mongo
 
       # Host and port of current master.
       @host = @port = nil
+
+      # Replica set name
+      @replica_set_name = options[:name]
 
       # Lock for request ids.
       @id_lock = Mutex.new
@@ -600,6 +608,7 @@ module Mongo
 
         config = self['admin'].command({:ismaster => 1}, :sock => socket)
 
+        check_set_name(config, socket)
       rescue OperationFailure, SocketError, SystemCallError, IOError => ex
         close unless connected?
       ensure
@@ -615,6 +624,21 @@ module Mongo
       end
 
       config
+    end
+
+    # Make sure that we're connected to the expected replica set.
+    def check_set_name(config, socket)
+      if @replica_set_name
+        config = self['admin'].command({:replSetGetStatus => 1},
+                   :sock => socket, :check_response => false)
+
+        if !Mongo::Support.ok?(config)
+          raise ReplicaSetConnectionError, config['errmsg']
+        elsif config['set'] != @replica_set_name
+          raise ReplicaSetConnectionError,
+            "Attempting to connect to replica set '#{config['set']}' but expected '#{@replica_set_name}'"
+        end
+      end
     end
 
     # Set the specified node as primary, and
