@@ -52,7 +52,7 @@ Jack Chen, chendo on github
 
 Michael Bernstein, mrb on github
 
-* #sort method for Cursor instances
+* Cursor#sort
 
 Paulo Ahahgon, pahagon on github
 
