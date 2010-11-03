@@ -4,11 +4,11 @@ This is the 10gen-supported Ruby driver for [MongoDB](http://www.mongodb.org).
 
 This documentation includes other articles of interest, include:
 
-1. [A tutorial](file.TUTORIAL.html).
-2. [History](file.HISTORY.html).
-3. [Credits](file.CREDITS.html).
+1. [A tutorial](http://api.mongodb.org/ruby/current/file.TUTORIAL.html).
+2. [History](http://api.mongodb.org/ruby/current/file.HISTORY.html).
+3. [Credits](http://api.mongodb.org/ruby/current/file.CREDITS.html).
 
-Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](file.TUTORIAL.html)
+Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](http://api.mongodb.org/ruby/current/file.TUTORIAL.html)
 for much more:
 
     require 'rubygems'
