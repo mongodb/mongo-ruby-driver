@@ -11,10 +11,9 @@ Gem::Specification.new do |s|
 
   s.require_paths = ['lib']
 
-  s.files  = ['README.md', 'HISTORY', 'Rakefile',
-    'mongo.gemspec', 'LICENSE.txt']
+  s.files  = ['README.md', 'Rakefile', 'mongo.gemspec', 'LICENSE.txt']
   s.files += ['lib/mongo.rb'] + Dir['lib/mongo/**/*.rb']
-  s.files += Dir['examples/**/*.rb'] + Dir['bin/**/*.rb']
+  s.files += Dir['docs/**/*.md'] + Dir['examples/**/*.rb'] + Dir['bin/**/*.rb']
   s.files += Dir['bin/mongo_console']
   s.test_files = Dir['test/**/*.rb']
 

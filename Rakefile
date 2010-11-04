@@ -176,13 +176,9 @@ namespace :gem do
 
   desc "Install the gem locally"
   task :install do
-    sh "gem install --no-rdoc --no-ri json"
-
-    sh "gem uninstall -x -a -I bson"
     sh "gem build bson.gemspec"
     sh "gem install --no-rdoc --no-ri bson-*.gem"
 
-    sh "gem uninstall -x -a -I mongo"
     sh "gem build mongo.gemspec"
     sh "gem install --no-rdoc --no-ri mongo-*.gem"
 
