@@ -154,6 +154,32 @@ class CursorTest < Test::Unit::TestCase
     assert_equal 5, results.length
   end
 
+  def test_timeout_options
+    cursor = Cursor.new(@@coll)
+    assert_equal true, cursor.timeout
+
+    cursor = @@coll.find
+    assert_equal true, cursor.timeout
+
+    cursor = @@coll.find({}, :timeout => nil)
+    assert_equal true, cursor.timeout
+
+    cursor = Cursor.new(@@coll, :timeout => false)
+    assert_equal false, cursor.timeout
+
+    cursor = @@coll.find({}, :timeout => false)
+    assert_equal false, cursor.timeout
+  end
+
+  def test_timeout
+    opts = Cursor.new(@@coll).query_opts
+    assert_equal 0, opts & Mongo::Constants::OP_QUERY_NO_CURSOR_TIMEOUT
+
+    opts = Cursor.new(@@coll, :timeout => false).query_opts
+    assert_equal Mongo::Constants::OP_QUERY_NO_CURSOR_TIMEOUT,
+      opts & Mongo::Constants::OP_QUERY_NO_CURSOR_TIMEOUT
+  end
+
   def test_limit_exceptions
     assert_raise ArgumentError do
       cursor = @@coll.find().limit('not-an-integer')

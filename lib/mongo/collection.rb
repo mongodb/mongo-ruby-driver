@@ -141,12 +141,12 @@ module Mongo
     # @option opts [Array]   :sort an array of [key, direction] pairs to sort by. Direction should
     #   be specified as Mongo::ASCENDING (or :ascending / :asc) or Mongo::DESCENDING (or :descending / :desc)
     # @option opts [String, Array, OrderedHash] :hint hint for query optimizer, usually not necessary if using MongoDB > 1.1
-    # @option opts [Boolean] :snapshot ('false') if true, snapshot mode will be used for this query.
+    # @option opts [Boolean] :snapshot (false) if true, snapshot mode will be used for this query.
     #   Snapshot mode assures no duplicates are returned, or objects missed, which were preset at both the start and
     #   end of the query's execution. For details see http://www.mongodb.org/display/DOCS/How+to+do+Snapshotting+in+the+Mongo+Database
     # @option opts [Boolean] :batch_size (100) the number of documents to returned by the database per GETMORE operation. A value of 0
     #   will let the database server decide how many results to returns. This option can be ignored for most use cases.
-    # @option opts [Boolean] :timeout ('true') when +true+, the returned cursor will be subject to
+    # @option opts [Boolean] :timeout (true) when +true+, the returned cursor will be subject to
     #   the normal cursor timeout behavior of the mongod process. When +false+, the returned cursor will never timeout. Note
     #   that disabling timeout will only work when #find is invoked with a block. This is to prevent any inadvertant failure to
     #   close the cursor, as the cursor is explicitly closed when block code finishes.
@@ -165,13 +165,12 @@ module Mongo
       limit  = opts.delete(:limit) || 0
       sort   = opts.delete(:sort)
       hint   = opts.delete(:hint)
-      snapshot = opts.delete(:snapshot)
+      snapshot   = opts.delete(:snapshot)
       batch_size = opts.delete(:batch_size)
+      timeout    = (opts.delete(:timeout) == false) ? false : true
 
-      if opts[:timeout] == false && !block_given?
-        raise ArgumentError, "Timeout can be set to false only when #find is invoked with a block."
-      else
-        timeout = opts.delete(:timeout) || false
+      if !timeout
+        raise ArgumentError, "Collection#find must be invoked with a block when timeout is disabled."
       end
 
       if hint
@@ -187,7 +186,7 @@ module Mongo
 
       if block_given?
         yield cursor
-        cursor.close()
+        cursor.close
         nil
       else
         cursor
