@@ -1,5 +1,14 @@
 # MongoDB Ruby Driver History
 
+### 1.1.2
+2010-11-4
+
+* Two critical fixes to automated failover and replica sets.
+* Bug passing :timeout to Cursor.
+* Permit safe mode specification on Connection, Collection, and DB levels.
+* Specify replica set name on connect to verify connection to the right set.
+* Misc. reorganization of project and docs.
+
 ### 1.1.1
 2010-10-14
 
