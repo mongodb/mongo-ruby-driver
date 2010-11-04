@@ -169,7 +169,7 @@ module Mongo
       batch_size = opts.delete(:batch_size)
       timeout    = (opts.delete(:timeout) == false) ? false : true
 
-      if !timeout
+      if timeout == false && !block_given?
         raise ArgumentError, "Collection#find must be invoked with a block when timeout is disabled."
       end
 
