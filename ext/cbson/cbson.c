@@ -248,8 +248,8 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             long long ll_value;
             ll_value = NUM2LL(value);
 
-            if (ll_value > 2147483647L ||
-                ll_value < -2147483648L) {
+            if (ll_value > 2147483647LL ||
+                ll_value < -2147483648LL) {
                 write_name_and_type(buffer, key, 0x12);
                 SAFE_WRITE(buffer, (char*)&ll_value, 8);
             } else {
