@@ -175,10 +175,6 @@ class DBTest < Test::Unit::TestCase
     assert_nil @@db.previous_error
   end
 
-  def test_get_last_error_helper
-    p @@db.get_last_error
-  end
-
   def test_check_command_response
     command = {:forceerror => 1}
     assert_raise OperationFailure do 

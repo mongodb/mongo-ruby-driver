@@ -433,17 +433,18 @@ module Mongo
       }
       selector.merge!(opts)
 
-      insert_documents([selector], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, false)
-      response = @db.get_last_error
+      begin
+      insert_documents([selector], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, true)
 
-      if response['err']
-        if response['code'] == 11000 && selector[:dropDups]
+      rescue Mongo::OperationFailure => e
+        if selector[:dropDups] && e.message =~ /^11000/
           # NOP. If the user is intentionally dropping dups, we can ignore duplicate key errors.
         else
           raise Mongo::OperationFailure, "Failed to create index #{selector.inspect} with the following error: " +
-           "#{response['err']}"
+           "#{e.message}"
         end
       end
+
       name
     end
 
@@ -630,7 +631,7 @@ module Mongo
     # Rename this collection.
     #
     # Note: If operating in auth mode, the client must be authorized as an admin to
-    # perform this operation. 
+    # perform this operation.
     #
     # @param [String] new_name the new name for this collection
     #

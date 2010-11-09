@@ -130,11 +130,6 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
-  def test_safe_responses
-    response = @@test.insert({:a => 1}, :safe => true)
-    assert_equal false, response
-  end
-
   def test_maximum_insert_size
     docs = []
     16.times do
@@ -719,6 +714,15 @@ class TestCollection < Test::Unit::TestCase
         assert_equal 'b_1_a_1', sel[:name]
       end
       @collection.create_index([['b', 1], ['a', 1]])
+    end
+
+    should "allow multiple calls to create_index" do
+
+    end
+
+    should "allow creation of multiple indexes" do
+      assert @collection.create_index([['a', 1]])
+      assert @collection.create_index([['a', 1]])
     end
 
     context "with an index created" do
