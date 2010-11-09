@@ -556,7 +556,7 @@ class TestCollection < Test::Unit::TestCase
   end
 
   context "Grouping" do
-    setup do 
+    setup do
       @@test.remove
       @@test.save("a" => 1)
       @@test.save("b" => 1)
@@ -573,6 +573,23 @@ class TestCollection < Test::Unit::TestCase
     should "finalize grouped results" do
       @finalize = "function(doc) {doc.f = doc.count + 200; }"
       assert_equal 202, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 1}), @finalize)[0]["f"]
+    end
+  end
+
+  context "Grouping with key" do
+    setup do
+      @@test.remove
+      @@test.save("a" => 1, "pop" => 100)
+      @@test.save("a" => 1, "pop" => 100)
+      @@test.save("a" => 2, "pop" => 100)
+      @@test.save("a" => 2, "pop" => 100)
+      @initial = {"count" => 0, "foo" => 1}
+      @reduce_function = "function (obj, prev) { prev.count += obj.pop; }"
+    end
+
+    should "group" do
+      result = @@test.group([:a], {}, @initial, @reduce_function, nil)
+      assert result.all? { |r| r['count'] == 200 }
     end
   end
 
@@ -697,6 +714,15 @@ class TestCollection < Test::Unit::TestCase
         assert_equal 'b_1_a_1', sel[:name]
       end
       @collection.create_index([['b', 1], ['a', 1]])
+    end
+
+    should "allow multiple calls to create_index" do
+
+    end
+
+    should "allow creation of multiple indexes" do
+      assert @collection.create_index([['a', 1]])
+      assert @collection.create_index([['a', 1]])
     end
 
     context "with an index created" do

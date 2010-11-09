@@ -256,8 +256,7 @@ module Mongo
     #   a document (as a hash) or array of documents to be inserted.
     #
     # @return [ObjectId, Array]
-    #   the _id of the inserted document or a list of _ids of all inserted documents.
-    #   Note: the object may have been modified by the database's PK factory, if it has one.
+    #   The _id of the inserted document or a list of _ids of all inserted documents.
     #
     # @option opts [Boolean, Hash] :safe (+false+)
     #   run the operation in safe mode, which run a getlasterror command on the
@@ -298,7 +297,8 @@ module Mongo
     # @example remove only documents that have expired:
     #   users.remove({:expire => {"$lte" => Time.now}})
     #
-    # @return [True]
+    # @return [Hash, true] Returns a Hash containing the last error object if running in safe mode.
+    #   Otherwise, returns true.
     #
     # @raise [Mongo::OperationFailure] an exception will be raised iff safe mode is enabled
     #   and the operation fails.
@@ -317,15 +317,12 @@ module Mongo
       @logger.debug("MONGODB #{@db.name}['#{@name}'].remove(#{selector.inspect})") if @logger
       if safe
         @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message, @db.name, nil, safe)
-        # the return value of send_message_with_safe_check isn't actually meaningful --
-        # only the fact that it didn't raise an error is -- so just return true
-        true
       else
         @connection.send_message(Mongo::Constants::OP_DELETE, message)
       end
     end
 
-    # Update a single document in this collection.
+    # Update one or more documents in this collection.
     #
     # @param [Hash] selector
     #   a hash specifying elements which must be present for a document to be updated. Note:
@@ -345,6 +342,9 @@ module Mongo
     #   round-trip to the database. Safe options provided here will override any safe
     #   options set on this collection, its database object, or the current collection.
     #   See the options for DB#get_last_error for details.
+    #
+    # @return [Hash, true] Returns a Hash containing the last error object if running in safe mode.
+    #   Otherwise, returns true.
     #
     # @core update update-instance_method
     def update(selector, document, options={})
@@ -433,17 +433,18 @@ module Mongo
       }
       selector.merge!(opts)
 
-      insert_documents([selector], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, false)
-      response = @db.get_last_error
+      begin
+      insert_documents([selector], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, true)
 
-      if response['err']
-        if response['code'] == 11000 && selector[:dropDups]
+      rescue Mongo::OperationFailure => e
+        if selector[:dropDups] && e.message =~ /^11000/
           # NOP. If the user is intentionally dropping dups, we can ignore duplicate key errors.
         else
           raise Mongo::OperationFailure, "Failed to create index #{selector.inspect} with the following error: " +
-           "#{response['err']}"
+           "#{e.message}"
         end
       end
+
       name
     end
 
@@ -630,7 +631,7 @@ module Mongo
     # Rename this collection.
     #
     # Note: If operating in auth mode, the client must be authorized as an admin to
-    # perform this operation. 
+    # perform this operation.
     #
     # @param [String] new_name the new name for this collection
     #
