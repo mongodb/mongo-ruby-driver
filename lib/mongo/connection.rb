@@ -422,9 +422,7 @@ module Mongo
     #
     # @see DB#get_last_error for valid last error params.
     #
-    # @return [Array]
-    #   An array whose indexes include [0] documents returned, [1] number of document received,
-    #   and [3] a cursor_id.
+    # @return [Hash] The document returned by the call to getlasterror.
     def send_message_with_safe_check(operation, message, db_name, log_message=nil, last_error_params=false)
       message_with_headers = add_message_headers(operation, message)
       message_with_check   = last_error_message(db_name, last_error_params)
@@ -439,11 +437,13 @@ module Mongo
       ensure
         checkin(sock)
       end
+
       if num_received == 1 && (error = docs[0]['err'] || docs[0]['errmsg'])
         close if error == "not master"
-        raise Mongo::OperationFailure, error
+        raise Mongo::OperationFailure, docs[0]['code'].to_s + ': ' + error
       end
-      [docs, num_received, cursor_id]
+
+      docs[0]
     end
 
     # Sends a message to the database and waits for the response.

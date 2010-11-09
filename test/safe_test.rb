@@ -2,7 +2,7 @@ require './test/test_helper'
 include Mongo
 
 class SafeTest < Test::Unit::TestCase
-  context "Safe tests: " do
+  context "Safe mode propogation: " do
     setup do
       @con = standard_connection(:safe => {:w => 1})
       @db  = @con[MONGO_TEST_DB]
@@ -39,4 +39,30 @@ class SafeTest < Test::Unit::TestCase
       @col.update({:a => 2}, {:a => 1}, :safe => false)
     end
   end
+
+  context "Safe error objects" do
+    setup do
+      @con = standard_connection
+      @db  = @con[MONGO_TEST_DB]
+      @col = @db['test']
+      @col.remove
+      @col.insert({:a => 1})
+      @col.insert({:a => 1})
+      @col.insert({:a => 1})
+    end
+
+    should "return object on update" do
+      response = @col.update({:a => 1}, {"$set" => {:a => 2}},
+                             :multi => true, :safe => true)
+
+      assert response['updatedExisting']
+      assert_equal 3, response['n']
+    end
+
+    should "return object on remove" do
+      response = @col.remove({}, :safe => true)
+      assert_equal 3, response['n']
+    end
+  end
+
 end
