@@ -130,6 +130,11 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  def test_safe_responses
+    response = @@test.insert({:a => 1}, :safe => true)
+    assert_equal false, response
+  end
+
   def test_maximum_insert_size
     docs = []
     16.times do
@@ -556,7 +561,7 @@ class TestCollection < Test::Unit::TestCase
   end
 
   context "Grouping" do
-    setup do 
+    setup do
       @@test.remove
       @@test.save("a" => 1)
       @@test.save("b" => 1)
@@ -573,6 +578,23 @@ class TestCollection < Test::Unit::TestCase
     should "finalize grouped results" do
       @finalize = "function(doc) {doc.f = doc.count + 200; }"
       assert_equal 202, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 1}), @finalize)[0]["f"]
+    end
+  end
+
+  context "Grouping with key" do
+    setup do
+      @@test.remove
+      @@test.save("a" => 1, "pop" => 100)
+      @@test.save("a" => 1, "pop" => 100)
+      @@test.save("a" => 2, "pop" => 100)
+      @@test.save("a" => 2, "pop" => 100)
+      @initial = {"count" => 0, "foo" => 1}
+      @reduce_function = "function (obj, prev) { prev.count += obj.pop; }"
+    end
+
+    should "group" do
+      result = @@test.group([:a], {}, @initial, @reduce_function, nil)
+      assert result.all? { |r| r['count'] == 200 }
     end
   end
 
