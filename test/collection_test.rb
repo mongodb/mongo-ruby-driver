@@ -67,6 +67,17 @@ class TestCollection < Test::Unit::TestCase
     assert_equal 5, @@db.collection("test.foo").find_one()["x"]
   end
 
+  def test_rename_collection
+    @@db.drop_collection('foo1')
+    @@db.drop_collection('bar1')
+
+    @col = @@db.create_collection('foo1')
+    assert_equal 'foo1', @col.name
+
+    @col.rename('bar1')
+    assert_equal 'bar1', @col.name
+  end
+
   def test_nil_id
     assert_equal 5, @@test.insert({"_id" => 5, "foo" => "bar"}, {:safe => true})
     assert_equal 5, @@test.save({"_id" => 5, "foo" => "baz"}, {:safe => true})

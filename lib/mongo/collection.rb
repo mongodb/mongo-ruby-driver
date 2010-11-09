@@ -635,6 +635,8 @@ module Mongo
     #
     # @param [String] new_name the new name for this collection
     #
+    # @return [String] the name of the new collection.
+    #
     # @raise [Mongo::InvalidNSName] if +new_name+ is an invalid collection name.
     def rename(new_name)
       case new_name
@@ -656,6 +658,7 @@ module Mongo
       end
 
       @db.rename_collection(@name, new_name)
+      @name = new_name
     end
 
     # Get information on the indexes for this collection.
