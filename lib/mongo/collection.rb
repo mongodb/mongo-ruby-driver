@@ -74,6 +74,8 @@ module Mongo
       @db, @name  = db, name
       @connection = @db.connection
       @logger     = @connection.logger
+      @cache_time = @db.cache_time
+      @cache = Hash.new(0)
       unless pk_factory
         @safe       = options.has_key?(:safe) ? options[:safe] : @db.safe
       end
@@ -407,53 +409,48 @@ module Mongo
     # @core indexes create_index-instance_method
     def create_index(spec, opts={})
       opts[:dropDups] = opts.delete(:drop_dups) if opts[:drop_dups]
-      field_spec = BSON::OrderedHash.new
-      if spec.is_a?(String) || spec.is_a?(Symbol)
-        field_spec[spec.to_s] = 1
-      elsif spec.is_a?(Array) && spec.all? {|field| field.is_a?(Array) }
-        spec.each do |f|
-          if [Mongo::ASCENDING, Mongo::DESCENDING, Mongo::GEO2D].include?(f[1])
-            field_spec[f[0].to_s] = f[1]
-          else
-            raise MongoArgumentError, "Invalid index field #{f[1].inspect}; " + 
-              "should be one of Mongo::ASCENDING (1), Mongo::DESCENDING (-1) or Mongo::GEO2D ('2d')."
-          end
-        end
-      else
-        raise MongoArgumentError, "Invalid index specification #{spec.inspect}; " + 
-          "should be either a string, symbol, or an array of arrays."
-      end
-
+      field_spec = parse_index_spec(spec)
       name = opts.delete(:name) || generate_index_name(field_spec)
-
-      selector = {
-        :name   => name,
-        :ns     => "#{@db.name}.#{@name}",
-        :key    => field_spec
-      }
-      selector.merge!(opts)
-
-      begin
-      insert_documents([selector], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, true)
-
-      rescue Mongo::OperationFailure => e
-        if selector[:dropDups] && e.message =~ /^11000/
-          # NOP. If the user is intentionally dropping dups, we can ignore duplicate key errors.
-        else
-          raise Mongo::OperationFailure, "Failed to create index #{selector.inspect} with the following error: " +
-           "#{e.message}"
-        end
-      end
-
+      
+      generate_indexes(field_spec, name, opts)
       name
     end
 
+    
+    # Calls create_index and sets a flag to not do so again for another X minutes.
+    # this time can be specified as an option when initializing a Mongo::Db object as options[:cache_time]
+    # Any changes to an index will be propogated through regardless of cache time (eg, if you change index direction)
+    # @example Call sequence:
+    #   Time t: @posts.ensure_index([['subject', Mongo::ASCENDING])  -- calls create_index and sets the 5 minute cache
+    #   Time t+2min : @posts.ensure_index([['subject', Mongo::ASCENDING])  -- doesn't do anything
+    #   Time t+3min : @posts.ensure_index([['something_else', Mongo::ASCENDING])  -- calls create_index and sets 5 minute cache
+    #   Time t+10min : @posts.ensure_index([['subject', Mongo::ASCENDING])  -- calls create_index and resets the 5 minute counter
+    def ensure_index(spec, opts={})
+      valid = BSON::OrderedHash.new
+      now = Time.now.utc.to_i
+      field_spec = parse_index_spec(spec)
+
+            
+      field_spec.each do |key, value|
+        cache_key = generate_index_name({key => value}) #bit of a hack.
+        timeout = @cache[cache_key] || 0
+        valid[key] = value if timeout <= now
+      end
+      name = opts.delete(:name) || generate_index_name(valid)
+      generate_indexes(valid, name, opts) if valid.any?
+      
+      # I do this here instead of in the above loop in case there were any errors inserting. Best to be safe.
+      name.each {|n| @cache[n] = now + @cache_time}
+      name
+    end
+    
     # Drop a specified index.
     #
     # @param [String] name
     #
     # @core indexes
     def drop_index(name)
+      @cache[name] = [] # I do this first because there is no harm in clearing the cache.
       @db.drop_index(@name, name)
     end
 
@@ -461,7 +458,7 @@ module Mongo
     #
     # @core indexes
     def drop_indexes
-
+      @cache = {}
       # Note: calling drop_indexes with no args will drop them all.
       @db.drop_index(@name, '*')
     end
@@ -712,6 +709,51 @@ module Mongo
     end
 
     private
+    
+    
+    def parse_index_spec(spec)
+      field_spec = BSON::OrderedHash.new
+      if spec.is_a?(String) || spec.is_a?(Symbol)
+        field_spec[spec.to_s] = 1
+      elsif spec.is_a?(Array) && spec.all? {|field| field.is_a?(Array) }
+        spec.each do |f|
+          if [Mongo::ASCENDING, Mongo::DESCENDING, Mongo::GEO2D].include?(f[1])
+            field_spec[f[0].to_s] = f[1]
+          else
+            raise MongoArgumentError, "Invalid index field #{f[1].inspect}; " + 
+              "should be one of Mongo::ASCENDING (1), Mongo::DESCENDING (-1) or Mongo::GEO2D ('2d')."
+          end
+        end
+      else
+        raise MongoArgumentError, "Invalid index specification #{spec.inspect}; " + 
+          "should be either a string, symbol, or an array of arrays."
+      end
+      field_spec
+    end
+    
+    def generate_indexes(field_spec, name, opts)
+      selector = {
+        :name   => name,
+        :ns     => "#{@db.name}.#{@name}",
+        :key    => field_spec
+      }
+      selector.merge!(opts)
+
+      begin
+      insert_documents([selector], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, true)
+
+      rescue Mongo::OperationFailure => e
+        if selector[:dropDups] && e.message =~ /^11000/
+          # NOP. If the user is intentionally dropping dups, we can ignore duplicate key errors.
+        else
+          raise Mongo::OperationFailure, "Failed to create index #{selector.inspect} with the following error: " +
+           "#{e.message}"
+        end
+      end
+
+      nil
+    end
+    
 
     # Sends a Mongo::Constants::OP_INSERT message to the database.
     # Takes an array of +documents+, an optional +collection_name+, and a
