@@ -51,6 +51,9 @@ module Mongo
     # The Mongo::Connection instance connecting to the MongoDB server.
     attr_reader :connection
 
+    # The length of time that Collection.ensure_index should cache index calls
+    attr_accessor :cache_time
+
     # Instances of DB are normally obtained by calling Mongo#db.
     #
     # @param [String] db_name the database name.
@@ -70,6 +73,7 @@ module Mongo
     #   value is provided, the default value set on this instance's Connection object will be used. This
     #   default can be overridden upon instantiation of any collection by explicity setting a :safe value
     #   on initialization
+    # @option options [Integer] :cache_time (300) Set the time that all ensure_index calls should cache the command.
     #
     # @core databases constructor_details
     def initialize(db_name, connection, options={})
@@ -78,6 +82,7 @@ module Mongo
       @strict     = options[:strict]
       @pk_factory = options[:pk]
       @safe       = options.has_key?(:safe) ? options[:safe] : @connection.safe
+      @cache_time = options[:cache_time] || 300 #5 minutes.
     end
 
     # Authenticate with the given username and password. Note that mongod
