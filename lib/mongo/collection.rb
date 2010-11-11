@@ -382,6 +382,9 @@ module Mongo
     #   Also note that it is permissible to create compound indexes that include a geospatial index as
     #   long as the geospatial index comes first.
     #
+    #   If your code calls create_index frequently, you can use Collection#ensure_index to cache these calls
+    #   and thereby prevent excessive round trips to the database.
+    #
     # @option opts [Boolean] :unique (false) if true, this index will enforce a uniqueness constraint.
     # @option opts [Boolean] :background (false) indicate that the index should be built in the background. This
     #   feature is only available in MongoDB >= 1.3.2.
@@ -411,46 +414,53 @@ module Mongo
       opts[:dropDups] = opts.delete(:drop_dups) if opts[:drop_dups]
       field_spec = parse_index_spec(spec)
       name = opts.delete(:name) || generate_index_name(field_spec)
-      
+
       generate_indexes(field_spec, name, opts)
       name
     end
 
-    
     # Calls create_index and sets a flag to not do so again for another X minutes.
-    # this time can be specified as an option when initializing a Mongo::Db object as options[:cache_time]
-    # Any changes to an index will be propogated through regardless of cache time (eg, if you change index direction)
+    # this time can be specified as an option when initializing a Mongo::DB object as options[:cache_time]
+    # Any changes to an index will be propogated through regardless of cache time (e.g., a change of index direction)
+    #
+    # The parameters and options for this methods are the same as those for Collection#create_index.
+    #
     # @example Call sequence:
-    #   Time t: @posts.ensure_index([['subject', Mongo::ASCENDING])  -- calls create_index and sets the 5 minute cache
+    #   Time t: @posts.ensure_index([['subject', Mongo::ASCENDING])  -- calls create_index and
+    #     sets the 5 minute cache
     #   Time t+2min : @posts.ensure_index([['subject', Mongo::ASCENDING])  -- doesn't do anything
-    #   Time t+3min : @posts.ensure_index([['something_else', Mongo::ASCENDING])  -- calls create_index and sets 5 minute cache
-    #   Time t+10min : @posts.ensure_index([['subject', Mongo::ASCENDING])  -- calls create_index and resets the 5 minute counter
+    #   Time t+3min : @posts.ensure_index([['something_else', Mongo::ASCENDING])  -- calls create_index
+    #     and sets 5 minute cache
+    #   Time t+10min : @posts.ensure_index([['subject', Mongo::ASCENDING])  -- calls create_index and
+    #     resets the 5 minute counter
+    #
+    # @return [String] the name of the index.
     def ensure_index(spec, opts={})
       valid = BSON::OrderedHash.new
       now = Time.now.utc.to_i
       field_spec = parse_index_spec(spec)
 
-            
       field_spec.each do |key, value|
-        cache_key = generate_index_name({key => value}) #bit of a hack.
+        cache_key = generate_index_name({key => value})
         timeout = @cache[cache_key] || 0
         valid[key] = value if timeout <= now
       end
+
       name = opts.delete(:name) || generate_index_name(valid)
       generate_indexes(valid, name, opts) if valid.any?
-      
-      # I do this here instead of in the above loop in case there were any errors inserting. Best to be safe.
+
+      # Reset the cache here in case there are any errors inserting. Best to be safe.
       name.each {|n| @cache[n] = now + @cache_time}
       name
     end
-    
+
     # Drop a specified index.
     #
     # @param [String] name
     #
     # @core indexes
     def drop_index(name)
-      @cache[name] = [] # I do this first because there is no harm in clearing the cache.
+      @cache[name] = nil
       @db.drop_index(@name, name)
     end
 
@@ -459,6 +469,7 @@ module Mongo
     # @core indexes
     def drop_indexes
       @cache = {}
+
       # Note: calling drop_indexes with no args will drop them all.
       @db.drop_index(@name, '*')
     end
@@ -467,7 +478,6 @@ module Mongo
     def drop
       @db.drop_collection(@name)
     end
-
 
     # Atomically update and return a document using MongoDB's findAndModify command. (MongoDB > 1.3.0)
     #
@@ -709,8 +719,7 @@ module Mongo
     end
 
     private
-    
-    
+
     def parse_index_spec(spec)
       field_spec = BSON::OrderedHash.new
       if spec.is_a?(String) || spec.is_a?(Symbol)
@@ -730,7 +739,7 @@ module Mongo
       end
       field_spec
     end
-    
+
     def generate_indexes(field_spec, name, opts)
       selector = {
         :name   => name,
@@ -753,7 +762,6 @@ module Mongo
 
       nil
     end
-    
 
     # Sends a Mongo::Constants::OP_INSERT message to the database.
     # Takes an array of +documents+, an optional +collection_name+, and a

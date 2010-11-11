@@ -565,29 +565,37 @@ class TestCollection < Test::Unit::TestCase
 
     assert_equal 1, x
   end
-  
-  
+
+
   def test_ensure_index
     @@test.drop_indexes
     @@test.insert("x" => "hello world")
     assert_equal 1, @@test.index_information.keys.count #default index
-    
+
     @@test.ensure_index([["x", Mongo::DESCENDING]], {})
     assert_equal 2, @@test.index_information.keys.count
     assert @@test.index_information.keys.include? "x_-1"
-    
+
     @@test.ensure_index([["x", Mongo::ASCENDING]])
     assert @@test.index_information.keys.include? "x_1"
-    
+
     @@test.drop_index("x_1")
     assert_equal 2, @@test.index_information.keys.count
     @@test.drop_index("x_-1")
     assert_equal 1, @@test.index_information.keys.count
-    
+
     @@test.ensure_index([["x", Mongo::DESCENDING]], {}) #should work as not cached.
     assert_equal 2, @@test.index_information.keys.count
     assert @@test.index_information.keys.include? "x_-1"
-    
+
+    # Make sure that drop_index expires cache properly
+    @@test.ensure_index([['a', 1]])
+    assert @@test.index_information.keys.include?("a_1")
+    @@test.drop_index("a_1")
+    assert !@@test.index_information.keys.include?("a_1")
+    @@test.ensure_index([['a', 1]])
+    assert @@test.index_information.keys.include?("a_1")
+    @@test.drop_index("a_1")
   end
 
   context "Grouping" do
