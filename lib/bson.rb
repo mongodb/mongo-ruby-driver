@@ -45,8 +45,10 @@ else
   begin
     # Need this for running test with and without c ext in Ruby 1.9.
     raise LoadError if ENV['TEST_MODE'] && !ENV['C_EXT']
-    #raise LoadError unless little endian
-    raise LoadError unless [1,0,0,0].pack("i").bytes.first==1
+
+    # Raise LoadError unless little endian
+    raise LoadError unless [1,0,0,0].pack("i").bytes.first == 1
+
     require 'bson_ext/cbson'
     raise LoadError unless defined?(CBson::VERSION)
     if CBson::VERSION < MINIMUM_BSON_EXT_VERSION
