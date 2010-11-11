@@ -713,16 +713,7 @@ class DBAPITest < Test::Unit::TestCase
 
     a.rename("bar")
 
-    assert_equal 0, a.count()
-    assert_equal 2, b.count()
-
-    assert_equal 1, b.find().to_a()[0]["x"]
-    assert_equal 2, b.find().to_a()[1]["x"]
-
-    b.rename(:foo)
-
     assert_equal 2, a.count()
-    assert_equal 0, b.count()
   end
 
   # doesn't really test functionality, just that the option is set correctly

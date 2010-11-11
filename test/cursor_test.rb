@@ -182,10 +182,6 @@ class CursorTest < Test::Unit::TestCase
   end
 
   def test_limit_exceptions
-    assert_raise ArgumentError do
-      cursor = @@coll.find().limit('not-an-integer')
-    end
-
     cursor      = @@coll.find()
     firstResult = cursor.next_document
     assert_raise InvalidOperation, "Cannot modify the query once it has been run or closed." do
@@ -216,10 +212,6 @@ class CursorTest < Test::Unit::TestCase
   end
 
   def test_skip_exceptions
-    assert_raise ArgumentError do
-      cursor = @@coll.find().skip('not-an-integer')
-    end
-
     cursor      = @@coll.find()
     firstResult = cursor.next_document
     assert_raise InvalidOperation, "Cannot modify the query once it has been run or closed." do
