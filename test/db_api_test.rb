@@ -364,7 +364,7 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_array
-    @@coll << {'b' => [1, 2, 3]}
+    @@coll.insert({'b' => [1, 2, 3]})
     rows = @@coll.find({}, {:fields => ['b']}).to_a
     if @@version < "1.1.3"
       assert_equal 1, rows.length
