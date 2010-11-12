@@ -1,0 +1,73 @@
+# Replica Sets in Ruby
+
+Here follow a few considerations for those using the MongoDB Ruby driver with [replica sets](http://www.mongodb.org/display/DOCS/Replica+Sets).
+
+### Setup
+
+First, make sure that you've configured and initialized a replica set.
+
+Connecting to a replica set from the Ruby driver is easy. If you only want to specify a single node, simply pass that node to `Connection.new`:
+
+    @connection = Connection.new('foo.local', 27017)
+
+If you want to pass in multiple seed nodes, use `Connection.multi`:
+
+    @connection = Connection.multi([['n1.mydb.net', 27017], 
+       ['n2.mydb.net', 27017], ['n3.mydb.net', 27017]])
+
+In both cases, the driver will attempt to connect to a master node and, when found, will merge any other known members of the replica set into the seed list.
+
+### Connection Failures
+
+Imagine that our master node goes offline. How will the driver respond?
+
+At first, the driver will try to send operations to what was the master node. These operations will fail, and the driver will raise a *ConnectionFailure* exception. It then becomes the client's responsibility to decide how to handle this.
+
+If the client decides to retry, it's not guaranteed that another member of the replica set will have been promoted to master right away, so it's still possible that the driver will raise another *ConnectionFailure*. However, once a member has been promoted to master, typically within a few seconds, subsequent operations will succeed.
+
+The driver will essentially cycle through all known seed addresses until a node identifies itself as master.
+
+### Recovery
+
+Driver users may wish to wrap their database calls with failure recovery code. Here's one possibility:
+
+    # Ensure retry upon failure
+    def rescue_connection_failure(max_retries=5)
+        success = false
+        retries = 0
+        while !success
+          begin
+            yield
+            success = true
+          rescue Mongo::ConnectionFailure => ex
+            retries += 1
+            raise ex if retries >= max_retries
+            sleep(1)
+          end
+        end
+      end
+    end
+
+    # Wrapping a call to #count()
+    rescue_connection_failure do
+      @db.collection('users').count()
+    end
+
+Of course, the proper way to handle connection failures will always depend on the individual application. We encourage object-mapper and application developers to publish any promising results.
+
+### Testing
+
+The Ruby driver (>= 1.0.6) includes some unit tests for verifying replica set behavior. They reside in *tests/replica_sets*. You can run them individually with the following rake tasks:
+
+    rake test:replica_set_count
+    rake test:replica_set_insert
+    rake test:pooled_replica_set_insert
+    rake test:replica_set_query
+
+Make sure you have a replica set running on localhost before trying to run these tests.
+
+### Further Reading
+
+* [Replica Sets](http://www.mongodb.org/display/DOCS/Replica+Set+Configuration)
+* [Replics Set Configuration](http://www.mongodb.org/display/DOCS/Replica+Set+Configuration)
+

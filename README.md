@@ -5,8 +5,11 @@ This is the 10gen-supported Ruby driver for [MongoDB](http://www.mongodb.org).
 This documentation includes other articles of interest, include:
 
 1. [A tutorial](http://api.mongodb.org/ruby/current/file.TUTORIAL.html).
-2. [History](http://api.mongodb.org/ruby/current/file.HISTORY.html).
-3. [Credits](http://api.mongodb.org/ruby/current/file.CREDITS.html).
+2. [Replica Sets in Ruby](http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html).
+3. [GridFS in Ruby](http://api.mongodb.org/ruby/current/file.GridFS.html).
+4. [Frequently Asked Questions](http://api.mongodb.org/ruby/current/file.FAQ.html).
+5. [History](http://api.mongodb.org/ruby/current/file.HISTORY.html).
+6. [Credits](http://api.mongodb.org/ruby/current/file.CREDITS.html).
 
 Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](http://api.mongodb.org/ruby/current/file.TUTORIAL.html)
 for much more:
