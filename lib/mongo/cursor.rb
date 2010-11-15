@@ -104,14 +104,22 @@ module Mongo
 
     # Get the size of the result set for this query.
     #
+    # @param [Boolean] whether of not to take notice of skip and limit
+    #
     # @return [Integer] the number of objects in the result set for this query. Does
     #   not take limit and skip into account. 
     #
     # @raise [OperationFailure] on a database error.
-    def count
+    def count skip_and_limit = false
       command = BSON::OrderedHash["count",  @collection.name,
-                            "query",  @selector,
-                            "fields", @fields]
+                            "query",  @selector]
+      if skip_and_limit
+        command.merge! BSON::OrderedHash["limit", @limit] if @limit != 0
+        command.merge! BSON::OrderedHash["skip", @skip] if @skip != 0
+      end
+
+      command.merge! BSON::OrderedHash["fields", @fields]
+
       response = @db.command(command)
       return response['n'].to_i if Mongo::Support.ok?(response)
       return 0 if response['errmsg'] == "ns missing"
