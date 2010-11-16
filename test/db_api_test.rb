@@ -364,15 +364,12 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_array
+    @@coll.remove
+    @@coll.insert({'b' => [1, 2, 3]})
     @@coll.insert({'b' => [1, 2, 3]})
     rows = @@coll.find({}, {:fields => ['b']}).to_a
-    if @@version < "1.1.3"
-      assert_equal 1, rows.length
-      assert_equal [1, 2, 3], rows[0]['b']
-    else
-      assert_equal 2, rows.length
-      assert_equal [1, 2, 3], rows[1]['b']
-    end
+    assert_equal 2, rows.length
+    assert_equal [1, 2, 3], rows[1]['b']
   end
 
   def test_regex

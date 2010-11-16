@@ -24,8 +24,8 @@ class TestConnection < Test::Unit::TestCase
 
   def test_connection_uri
     con = Connection.from_uri("mongodb://#{host_port}")
-    assert_equal mongo_host, con.host
-    assert_equal mongo_port, con.port
+    assert_equal mongo_host, con.primary_pool.host
+    assert_equal mongo_port, con.primary_pool.port
   end
 
   def test_server_version
@@ -44,8 +44,8 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_replica_set_connection_name
-    assert_raise_error(Mongo::ReplicaSetConnectionError, "replSet") do
-      standard_connection(:name => "replica-set-foo")
+    assert_raise_error(Mongo::ReplicaSetConnectionError, "replica-set-foo") do
+      standard_connection(:rs_name => "replica-set-foo-wrong")
     end
   end
 
@@ -144,12 +144,6 @@ class TestConnection < Test::Unit::TestCase
     assert_equal ['bar', 27018], nodes[1]
   end
 
-  def test_slave_ok_with_multiple_nodes
-    assert_raise MongoArgumentError do
-      Connection.multi([['foo', 27017], ['bar', 27018]], :connect => false, :slave_ok => true)
-    end
-  end
-
   def test_fsync_lock
     assert !@conn.locked?
     @conn.lock!
@@ -211,29 +205,29 @@ class TestConnection < Test::Unit::TestCase
 
     should "release connection if an exception is raised on send_message" do
       @con.stubs(:send_message_on_socket).raises(ConnectionFailure)
-      assert_equal 0, @con.checked_out.size
+      assert_equal 0, @con.primary_pool.checked_out.size
       assert_raise ConnectionFailure do
         @coll.insert({:test => "insert"})
       end
-      assert_equal 0, @con.checked_out.size
+      assert_equal 0, @con.primary_pool.checked_out.size
     end
 
     should "release connection if an exception is raised on send_with_safe_check" do
       @con.stubs(:receive).raises(ConnectionFailure)
-      assert_equal 0, @con.checked_out.size
+      assert_equal 0, @con.primary_pool.checked_out.size
       assert_raise ConnectionFailure do
         @coll.insert({:test => "insert"}, :safe => true)
       end
-      assert_equal 0, @con.checked_out.size
+      assert_equal 0, @con.primary_pool.checked_out.size
     end
 
     should "release connection if an exception is raised on receive_message" do
       @con.stubs(:receive).raises(ConnectionFailure)
-      assert_equal 0, @con.checked_out.size
+      assert_equal 0, @con.primary_pool.checked_out.size
       assert_raise ConnectionFailure do
         @coll.find.to_a
       end
-      assert_equal 0, @con.checked_out.size
+      assert_equal 0, @con.primary_pool.checked_out.size
     end
   end
 end

@@ -40,6 +40,7 @@ require 'bson'
 require 'mongo/util/conversions'
 require 'mongo/util/support'
 require 'mongo/util/core_ext'
+require 'mongo/util/pool'
 require 'mongo/util/server_version'
 
 require 'mongo/collection'

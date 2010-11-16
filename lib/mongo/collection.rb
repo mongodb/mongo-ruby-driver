@@ -245,10 +245,10 @@ module Mongo
     def save(doc, opts={})
       if doc.has_key?(:_id) || doc.has_key?('_id')
         id = doc[:_id] || doc['_id']
-        update({:_id => id}, doc, :upsert => true, :safe => opts[:safe])
+        update({:_id => id}, doc, :upsert => true, :safe => opts.fetch(:safe, @safe))
         id
       else
-        insert(doc, :safe => opts[:safe])
+        insert(doc, :safe => opts.fetch(:safe, @safe))
       end
     end
 

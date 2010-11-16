@@ -57,13 +57,19 @@ module Mongo
       @full_collection_name = "#{@collection.db.name}.#{@collection.name}"
       @cache        = []
       @returned     = 0
+
+      if @collection.name =~ /^\$cmd/ || @collection.name =~ /^system/
+        @command = true
+      else
+        @command = false
+      end
     end
 
     # Get the next document specified the cursor options.
     #
     # @return [Hash, Nil] the next document or Nil if no documents remain.
     def next_document
-      refresh if @cache.length == 0#empty?# num_remaining == 0
+      refresh if @cache.length == 0
       doc = @cache.shift
 
       if doc && doc['$err']
@@ -352,8 +358,8 @@ module Mongo
       # Cursor id.
       message.put_long(@cursor_id)
       @logger.debug("MONGODB cursor.refresh() for cursor #{@cursor_id}") if @logger
-      results, @n_received, @cursor_id = @connection.receive_message(Mongo::Constants::OP_GET_MORE,
-                                                                     message, nil, @socket)
+      results, @n_received, @cursor_id = @connection.receive_message(
+          Mongo::Constants::OP_GET_MORE, message, nil, @socket, @command)
       @returned += @n_received
       @cache += results
       close_cursor_if_query_complete
@@ -366,7 +372,8 @@ module Mongo
       else
         message = construct_query_message
         @logger.debug query_log_message if @logger
-        results, @n_received, @cursor_id = @connection.receive_message(Mongo::Constants::OP_QUERY, message, nil, @socket)
+        results, @n_received, @cursor_id = @connection.receive_message(
+          Mongo::Constants::OP_QUERY, message, nil, @socket, @command)
         @returned += @n_received
         @cache += results
         @query_run = true

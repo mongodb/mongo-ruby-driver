@@ -4,7 +4,7 @@ include Mongo
 class ConnectionTest < Test::Unit::TestCase
   context "Initialization: " do
     setup do
-      def new_mock_socket
+      def new_mock_socket(host='localhost', port=27017)
         socket = Object.new
         socket.stubs(:setsockopt).with(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
         socket.stubs(:close)
@@ -28,12 +28,12 @@ class ConnectionTest < Test::Unit::TestCase
       end
 
       should "set localhost and port to master" do
-        assert_equal 'localhost', @conn.host
-        assert_equal 27017, @conn.port
+        assert_equal 'localhost', @conn.primary_pool.host
+        assert_equal 27017, @conn.primary_pool.port
       end
 
       should "set connection pool to 1" do
-        assert_equal 1, @conn.size
+        assert_equal 1, @conn.primary_pool.size
       end
 
       should "default slave_ok to false" do
@@ -43,22 +43,32 @@ class ConnectionTest < Test::Unit::TestCase
 
     context "connecting to a replica set" do
       setup do
-        TCPSocket.stubs(:new).returns(new_mock_socket)
-        @conn = Connection.new('localhost', 27017, :connect => false)
+        TCPSocket.stubs(:new).returns(new_mock_socket('localhost', 27017))
+        @conn = Connection.multi([['localhost', 27017]], :connect => false, :read_secondaries => true)
 
         admin_db = new_mock_db
-        @hosts = ['localhost:27018', 'localhost:27019']
-        admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1, 'hosts' => @hosts})
-        @conn.expects(:[]).with('admin').returns(admin_db)
+        @hosts = ['localhost:27018', 'localhost:27019', 'localhost:27020']
+
+        admin_db.stubs(:command).returns({'ok' => 1, 'ismaster' => 1, 'hosts' => @hosts}).
+          then.returns({'ok' => 1, 'ismaster' => 0, 'hosts' => @hosts, 'secondary' => 1}).
+          then.returns({'ok' => 1, 'ismaster' => 0, 'hosts' => @hosts, 'secondary' => 1}).
+          then.returns({'ok' => 1, 'ismaster' => 0, 'arbiterOnly' => 1})
+
+        @conn.stubs(:[]).with('admin').returns(admin_db)
         @conn.connect
       end
 
       should "store the hosts returned from the ismaster command" do
-        @hosts.each do |host|
-          host, port = host.split(":")
-          port = port.to_i
-          assert @conn.nodes.include?([host, port]), "Connection doesn't include host #{host.inspect}."
-        end
+        assert_equal 'localhost', @conn.primary_pool.host
+        assert_equal 27017, @conn.primary_pool.port
+
+        assert_equal 'localhost', @conn.secondary_pools[0].host
+        assert_equal 27018, @conn.secondary_pools[0].port
+
+        assert_equal 'localhost', @conn.secondary_pools[1].host
+        assert_equal 27019, @conn.secondary_pools[1].port
+
+        assert_equal 2, @conn.secondary_pools.length
       end
     end
 
@@ -75,13 +85,6 @@ class ConnectionTest < Test::Unit::TestCase
       end
 
       should "not store any hosts redundantly" do
-        assert_equal 3, @conn.nodes.size
-
-        @hosts.each do |host|
-          host, port = host.split(":")
-          port = port.to_i
-          assert @conn.nodes.include?([host, port]), "Connection doesn't include host #{host.inspect}."
-        end
       end
     end
 
