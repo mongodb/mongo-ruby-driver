@@ -39,7 +39,7 @@ module Mongo
     MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]"
 
     attr_reader :logger, :size, :nodes, :auths, :primary, :secondaries, :arbiters,
-      :safe, :primary_pool, :secondary_pools
+      :safe, :primary_pool, :read_pool
 
     # Counter for generating unique request ids.
     @@current_request_id = 0
@@ -143,6 +143,7 @@ module Mongo
 
       # Connection pools for each secondary node
       @secondary_pools = []
+      @read_pool = nil
 
       # Maps sockets to pools for checkin
       @pool_map        = {}
@@ -494,6 +495,8 @@ module Mongo
         end
       end
 
+      pick_secondary_for_read
+
       raise ConnectionFailure, "failed to connect to any given host:port" unless connected?
     end
 
@@ -512,6 +515,7 @@ module Mongo
     def close
       @primary_pool.close if @primary_pool
       @primary_pool = nil
+      @read_pool    = nil
       @secondary_pools.each do |pool|
         pool.close
       end
@@ -595,15 +599,10 @@ module Mongo
     def checkout_reader
       connect unless connected?
 
-      case @secondary_pools.size
-        when 0 then
-          checkout_writer
-        when 1 then
-          @secondary_pools[0].checkout
-        else
-          @secondary_pools.push(pool = @secondary_pools.shift)
-          @pool_map[socket = pool.checkout] = pool
-          socket
+      if @read_pool
+        @read_pool.checkout
+      else
+        checkout_writer
       end
     end
 
@@ -616,13 +615,10 @@ module Mongo
 
     # Checkin a socket used for reading.
     def checkin_reader(socket)
-      case @secondary_pools.size
-        when 0 then
-          checkin_writer(socket)
-        when 1 then
-          @secondary_pools[0].checkin(socket)
-        else
-          @pool_map[socket].checkin(socket)
+      if @read_pool
+        @read_pool.checkin(socket)
+      else
+        checkin_writer(socket)
       end
     end
 
@@ -634,6 +630,14 @@ module Mongo
     end
 
     private
+
+    # Pick a node randomly from the set of possibly secondaries.
+    def pick_secondary_for_read
+      srand(Time.now.to_i)
+      if (size = @secondary_pools.size) > 1
+        @read_pool = @secondary_pools[rand(size)]
+      end
+    end
 
     # If a ConnectionFailure is raised, this method will be called
     # to close the connection and reset connection values.
