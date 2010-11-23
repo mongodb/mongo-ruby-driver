@@ -39,7 +39,7 @@ module Mongo
     MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]"
 
     attr_reader :logger, :size, :nodes, :auths, :primary, :secondaries, :arbiters,
-      :safe, :primary_pool, :read_pool
+      :safe, :primary_pool, :secondary_pools, :read_pool
 
     # Counter for generating unique request ids.
     @@current_request_id = 0
