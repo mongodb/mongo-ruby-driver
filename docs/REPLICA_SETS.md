@@ -6,16 +6,20 @@ Here follow a few considerations for those using the MongoDB Ruby driver with [r
 
 First, make sure that you've configured and initialized a replica set.
 
-Connecting to a replica set from the Ruby driver is easy. If you only want to specify a single node, simply pass that node to `Connection.new`:
+Use `Connection.multi` to connect to a replica set:
 
-    @connection = Connection.new('foo.local', 27017)
+    @connection = Connection.multi([['n1.mydb.net', 27017], ['n2.mydb.net', 27017], ['n3.mydb.net', 27017]])
 
-If you want to pass in multiple seed nodes, use `Connection.multi`:
+The driver will attempt to connect to a master node and, when found, will replace all seed nodes with known members of the replica set.
 
-    @connection = Connection.multi([['n1.mydb.net', 27017], 
-       ['n2.mydb.net', 27017], ['n3.mydb.net', 27017]])
+### Read slaves
 
-In both cases, the driver will attempt to connect to a master node and, when found, will merge any other known members of the replica set into the seed list.
+If you want to read from a seconday node, you can pass :read_secondary => true.
+
+    @connection = Connection.multi([['n1.mydb.net', 27017], ['n2.mydb.net', 27017], ['n3.mydb.net', 27017]],
+                  :read_secondary => true)
+
+A random secondary will be chosen to be read from. In a typical multi-process Ruby application, you'll have a good distribution of reads across secondary nodes.
 
 ### Connection Failures
 
