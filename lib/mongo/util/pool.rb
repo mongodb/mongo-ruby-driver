@@ -28,7 +28,7 @@ module Mongo
       @host, @port = host, port
 
       # Pool size and timeout.
-      @size      = options[:pool_size] || 1
+      @size      = options[:size] || 1
       @timeout   = options[:timeout]   || 5.0
 
       # Mutex for synchronizing pool access

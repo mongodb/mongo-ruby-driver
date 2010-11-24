@@ -44,7 +44,7 @@ class ConnectionTest < Test::Unit::TestCase
     context "connecting to a replica set" do
       setup do
         TCPSocket.stubs(:new).returns(new_mock_socket('localhost', 27017))
-        @conn = Connection.multi([['localhost', 27017]], :connect => false, :read_secondaries => true)
+        @conn = Connection.multi([['localhost', 27017]], :connect => false, :read_secondary => true)
 
         admin_db = new_mock_db
         @hosts = ['localhost:27018', 'localhost:27019', 'localhost:27020']
