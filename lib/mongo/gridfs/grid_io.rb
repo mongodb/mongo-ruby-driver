@@ -191,6 +191,20 @@ module Mongo
       end
       id
     end
+    
+    # Read a chunk of the data from the file and yield it to the given
+    # block. It will read from the current file position.
+    #
+    # @param [Block] A block called with each chunk
+    #
+    # @return [Mongo::GridIO] self
+    def each
+      return read_all unless block_given?
+      while chunk = read(chunk_size)
+        yield chunk
+      end
+      self
+    end
 
     def inspect
       "#<GridIO _id: #{@files_id}>"
