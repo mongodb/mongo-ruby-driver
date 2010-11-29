@@ -4,10 +4,10 @@ This is the 10gen-supported Ruby driver for [MongoDB](http://www.mongodb.org).
 
 This documentation includes other articles of interest, include:
 
-1. [A tutorial](file.TUTORIAL.html).
-2. [Replica Sets in Ruby](file.REPLICA_SETS.html).
-3. [Write Concern in Ruby](file.WRITE_CONCERN.html).
-4. [GridFS in Ruby](file.GridFS.html).
+1. [A tutorial](http://api.mongodb/org/ruby/current/file.TUTORIAL.html).
+2. [Replica Sets in Ruby](http://api.mongodb/org/ruby/current/file.REPLICA_SETS.html).
+3. [Write Concern in Ruby](http://api.mongodb/org/ruby/current/file.WRITE_CONCERN.html).
+4. [GridFS in Ruby](http://api.mongodb/org/ruby/current/file.GridFS.html).
 5. [Frequently Asked Questions](http://api.mongodb.org/ruby/current/file.FAQ.html).
 6. [History](http://api.mongodb.org/ruby/current/file.HISTORY.html).
 7. [Credits](http://api.mongodb.org/ruby/current/file.CREDITS.html).
