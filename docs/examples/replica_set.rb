@@ -1,4 +1,4 @@
-# This code assumes a running replica set with at least on node at localhost:27017.
+# This code assumes a running replica set with at least one node at localhost:27017.
 require 'mongo'
 
 cons = []

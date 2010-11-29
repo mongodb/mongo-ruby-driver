@@ -44,8 +44,8 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_replica_set_connection_name
-    assert_raise_error(Mongo::ReplicaSetConnectionError, "replica-set-foo") do
-      standard_connection(:rs_name => "replica-set-foo-wrong")
+    assert_raise Mongo::ReplicaSetConnectionError do
+      standard_connection(:rs_name => "replica-set-wrong-name")
     end
   end
 
