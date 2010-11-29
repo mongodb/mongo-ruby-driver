@@ -169,7 +169,7 @@ task :ydoc do
   require File.join(File.dirname(__FILE__), 'lib', 'mongo')
   out = File.join('ydoc', Mongo::VERSION)
   FileUtils.rm_rf('ydoc')
-  system "yardoc lib/**/*.rb lib/mongo/**/*.rb lib/bson/**/*.rb -e yard/yard_ext.rb -p yard/templates -o #{out} --title MongoRuby-#{Mongo::VERSION} --files docs/TUTORIAL.md,docs/GridFS.md,docs/FAQ.md,docs/REPLICA_SETS.md,docs/HISTORY.md,docs/CREDITS.md,docs/1.0_UPGRADE.md"
+  system "yardoc lib/**/*.rb lib/mongo/**/*.rb lib/bson/**/*.rb -e yard/yard_ext.rb -p yard/templates -o #{out} --title MongoRuby-#{Mongo::VERSION} --files docs/TUTORIAL.md,docs/GridFS.md,docs/FAQ.md,docs/REPLICA_SETS.md,docs/WRITE_CONCERN.md,docs/HISTORY.md,docs/CREDITS.md,docs/1.0_UPGRADE.md"
 end
 
 namespace :gem do

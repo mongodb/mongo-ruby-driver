@@ -1,5 +1,17 @@
 # MongoDB Ruby Driver History
 
+### 1.1.3
+2010-11-29
+
+* Distributed reads for replica set secondaries. See /docs/examples/replica_set.rb and
+  http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html for details.
+* Note: when connecting to a replica set, you must use Connection#multi.
+* Cursor#count takes optional skip and limit
+* Collection#ensure_index for caching index creation calls
+* Collection#update and Collection#remove now return error object when using safe mode
+* Important fix for int/long serialization on bug introduced in 1.0.9
+* Numerous tweaks and bug fixes.
+
 ### 1.1.2
 2010-11-4
 

@@ -14,7 +14,7 @@ The driver will attempt to connect to a master node and, when found, will replac
 
 ### Read slaves
 
-If you want to read from a seconday node, you can pass :read_secondary => true.
+If you want to read from a seconday node, you can pass :read_secondary => true to Connection#multi.
 
     @connection = Connection.multi([['n1.mydb.net', 27017], ['n2.mydb.net', 27017], ['n3.mydb.net', 27017]],
                   :read_secondary => true)
@@ -23,9 +23,9 @@ A random secondary will be chosen to be read from. In a typical multi-process Ru
 
 ### Connection Failures
 
-Imagine that our master node goes offline. How will the driver respond?
+Imagine that either the master node or one of the read nodes goes offline. How will the driver respond?
 
-At first, the driver will try to send operations to what was the master node. These operations will fail, and the driver will raise a *ConnectionFailure* exception. It then becomes the client's responsibility to decide how to handle this.
+If any read operation fails, the driver will raise a *ConnectionFailure* exception. It then becomes the client's responsibility to decide how to handle this.
 
 If the client decides to retry, it's not guaranteed that another member of the replica set will have been promoted to master right away, so it's still possible that the driver will raise another *ConnectionFailure*. However, once a member has been promoted to master, typically within a few seconds, subsequent operations will succeed.
 
@@ -33,10 +33,11 @@ The driver will essentially cycle through all known seed addresses until a node 
 
 ### Recovery
 
-Driver users may wish to wrap their database calls with failure recovery code. Here's one possibility:
+Driver users may wish to wrap their database calls with failure recovery code. Here's one possibility, which will attempt to connection
+every half second and time out after thirty seconds.
 
     # Ensure retry upon failure
-    def rescue_connection_failure(max_retries=5)
+    def rescue_connection_failure(max_retries=60)
         success = false
         retries = 0
         while !success
@@ -46,7 +47,7 @@ Driver users may wish to wrap their database calls with failure recovery code. H
           rescue Mongo::ConnectionFailure => ex
             retries += 1
             raise ex if retries >= max_retries
-            sleep(1)
+            sleep(0.5)
           end
         end
       end
@@ -74,4 +75,3 @@ Make sure you have a replica set running on localhost before trying to run these
 
 * [Replica Sets](http://www.mongodb.org/display/DOCS/Replica+Set+Configuration)
 * [Replics Set Configuration](http://www.mongodb.org/display/DOCS/Replica+Set+Configuration)
-
