@@ -127,7 +127,7 @@ module Mongo
       @queue = ConditionVariable.new
 
       # slave_ok can be true only if one node is specified
-        @slave_ok = options[:slave_ok]
+      @slave_ok = options[:slave_ok]
 
       # Cache the various node types
       # when connecting to a replica set.
@@ -141,9 +141,6 @@ module Mongo
       # Connection pools for each secondary node
       @secondary_pools = []
       @read_pool = nil
-
-      # Maps sockets to pools for checkin
-      @pool_map        = {}
 
       @logger   = options[:logger] || nil
 
