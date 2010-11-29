@@ -4,7 +4,7 @@ GridFS, which stands for "Grid File Store," is a specification for storing large
 
 ### The Grid class
 
-The [Grid class](http://api.mongodb.org/ruby/current/Mongo/Grid.html) represents the core GridFS implementation. Grid gives you a simple file store, keyed on a unique ID. This means that duplicate filenames aren't a problem. To use the Grid class, first make sure you have a database, and then instantiate a Grid:
+The [Grid class](Mongo/Grid.html) represents the core GridFS implementation. Grid gives you a simple file store, keyed on a unique ID. This means that duplicate filenames aren't a problem. To use the Grid class, first make sure you have a database, and then instantiate a Grid:
 
 
     @db = Mongo::Connection.new.db('social_site')
