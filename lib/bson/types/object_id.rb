@@ -131,11 +131,7 @@ module BSON
     #
     # @return [String]
     def to_s
-      str = ' ' * 24
-      12.times do |i|
-        str[i * 2, 2] = '%02x' % @data[i]
-      end
-      str
+      @data.map {|e| v=e.to_s(16); v.size == 1 ? "0#{v}" : v }.join
     end
 
     def inspect

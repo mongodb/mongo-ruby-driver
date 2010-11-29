@@ -51,6 +51,12 @@ class ObjectIdTest < Test::Unit::TestCase
     assert_equal 24, $1.length
   end
 
+  def test_to_s2
+    @o = ObjectId.new([76, 244, 52, 174, 44, 84, 121, 76, 88, 0, 0, 3])
+    s = '4cf434ae2c54794c58000003'
+    assert_equal @o.to_s, s
+  end
+
   def test_method
     assert_equal ObjectId.from_string(@o.to_s), BSON::ObjectId(@o.to_s)
   end
