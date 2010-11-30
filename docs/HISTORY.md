@@ -1,5 +1,11 @@
 # MongoDB Ruby Driver History
 
+### 1.1.4
+2010-11-30
+
+* Important connection failure fix.
+* ObjectId#to_s optimization (David Cuadrado).
+
 ### 1.1.3
 2010-11-29
 
