@@ -10,7 +10,7 @@ class ConnectTest < Test::Unit::TestCase
   def test_connect_bad_name
     assert_raise_error(ReplicaSetConnectionError, "expected 'wrong-repl-set-name'") do
       Mongo::Connection.multi([['localhost', 27017], ['localhost', 27018], ['localhost', 27019]],
-        :name => "wrong-repl-set-name")
+        :rs_name => "wrong-repl-set-name")
     end
   end
 

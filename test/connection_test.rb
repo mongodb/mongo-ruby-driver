@@ -16,6 +16,12 @@ class TestConnection < Test::Unit::TestCase
     @conn[MONGO_TEST_DB].get_last_error
   end
 
+  def test_connection_failure
+    assert_raise Mongo::ConnectionFailure do
+      Mongo::Connection.new('localhost', 27347)
+    end
+  end
+
   def test_server_info
     server_info = @conn.server_info
     assert server_info.keys.include?("version")

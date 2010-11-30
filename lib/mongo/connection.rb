@@ -493,13 +493,13 @@ module Mongo
         end
       end
 
-      pick_secondary_for_read
+      pick_secondary_for_read if @read_secondary
 
       raise ConnectionFailure, "failed to connect to any given host:port" unless connected?
     end
 
     def connecting?
-      !(connected? && @nodes_to_try.empty?)
+      @nodes_to_try.length > 0
     end
 
     # It's possible that we defined connected as all nodes being connected???
