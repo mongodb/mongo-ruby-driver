@@ -191,11 +191,14 @@ module Mongo
       end
       id
     end
-    
+
     # Read a chunk of the data from the file and yield it to the given
-    # block. It will read from the current file position.
+    # block.
     #
-    # @param [Block] A block called with each chunk
+    # Note that this method reads from the current file position.
+    #
+    # @yield Yields on chunk per iteration as defined by this file's
+    #   chunk size.
     #
     # @return [Mongo::GridIO] self
     def each

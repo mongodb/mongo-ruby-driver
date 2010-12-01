@@ -45,7 +45,7 @@ module Mongo
     end
 
     # Store a file in the file store. This method is designed only for writing new files;
-    # if you need to update a given file, first delete it using #Grid#delete.
+    # if you need to update a given file, first delete it using Grid#delete.
     #
     # Note that arbitary metadata attributes can be saved to the file by passing
     # them in as options.

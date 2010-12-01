@@ -18,7 +18,8 @@ class GridTest < Test::Unit::TestCase
       setup do
         @data = "GRIDDATA" * 50000
         @grid = Grid.new(@db, 'test-fs')
-        @id   = @grid.put(@data, :filename => 'sample', :metadata => {'app' => 'photos'})
+        @id   = @grid.put(@data, :filename => 'sample',
+                          :metadata => {'app' => 'photos'})
       end
 
       should "check existence" do
@@ -120,12 +121,41 @@ class GridTest < Test::Unit::TestCase
     context "Storing data with a length of zero" do
       setup do
         @grid = Grid.new(@db, 'test-fs')
-        @id   = @grid.put('', :filename => 'sample', :metadata => {'app' => 'photos'})
+        @id   = @grid.put('', :filename => 'sample',
+                          :metadata => {'app' => 'photos'})
       end
 
       should "return the zero length" do
         data = @grid.get(@id)
         assert_equal 0, data.read.length
+      end
+    end
+
+    context "Grid streaming: " do
+      setup do
+        @grid = Grid.new(@db, 'test-fs')
+        filename = 'sample_data'
+        @io   = File.open(File.join(File.dirname(__FILE__), 'data', filename), 'r')
+        id    = @grid.put(@io, :filename => filename)
+        @file = @grid.get(id)
+        @io.rewind
+        @data = @io.read
+        if @data.respond_to?(:force_encoding)
+          @data.force_encoding("binary")
+        end
+      end
+
+      should "read the file" do
+        read_data = ""
+        @file.each do |chunk|
+          read_data << chunk
+        end
+        assert_equal @data.length, read_data.length
+      end
+
+      should "read the file if no block is given" do
+        read_data = @file.each
+        assert_equal @data.length, read_data.length
       end
     end
 
@@ -158,12 +188,12 @@ class GridTest < Test::Unit::TestCase
         read_and_write_stream('small_data.txt', 1)
       end
 
-      should "put and get a large io object when reading smaller than the chunk size" do
-        read_and_write_stream('sample_file.pdf', 256 * 1024)
+      should "put and get a large io object if reading less than the chunk size" do
+        read_and_write_stream('sample_data', 256 * 1024)
       end
 
-      should "put and get a large io object when reading larger than the chunk size" do
-        read_and_write_stream('sample_file.pdf', 300 * 1024)
+      should "put and get a large io object if reading more than the chunk size" do
+        read_and_write_stream('sample_data', 300 * 1024)
       end
     end
   end

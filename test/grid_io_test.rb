@@ -62,7 +62,6 @@ class GridIOTest < Test::Unit::TestCase
     end
 
     context "Content types" do
-
       if defined?(MIME)
         should "determine common content types from the extension" do
           file = GridIO.new(@files, @chunks, 'sample.pdf', 'w')
