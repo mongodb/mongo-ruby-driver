@@ -45,7 +45,7 @@ end
 
 namespace :test do
 
-  desc "Test the driver with the c extension enabled."
+  desc "Test the driver with the C extension enabled."
   task :c do
     ENV['C_EXT'] = 'TRUE'
     Rake::Task['test:unit'].invoke
@@ -56,7 +56,7 @@ namespace :test do
     ENV['C_EXT'] = nil
   end
 
-  desc "Test the driver using pure ruby (no c extension)"
+  desc "Test the driver using pure ruby (no C extension)"
   task :ruby do
     ENV['C_EXT'] = nil
     Rake::Task['test:unit'].invoke
@@ -147,16 +147,17 @@ namespace :test do
   end
 
   task :drop_databases do |t|
-    puts "Dropping test database..."
-    require File.join(File.dirname(__FILE__), 'test', 'test_helper')
-    include Mongo
-    con = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-      ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT)
-    con.drop_database(MONGO_TEST_DB)
+    puts "Dropping test databases..."
+    require './lib/mongo'
+    con = Mongo::Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+      ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Connection::DEFAULT_PORT)
+    con.database_names.each do |name|
+      con.drop_database(name) if name =~ /^ruby-test/
+    end
   end
 end
 
-desc "Generate documentation"
+desc "Generate RDOC documentation"
 task :rdoc do
   version = eval(File.read("mongo.gemspec")).version
   out = File.join('html', version.to_s)
@@ -188,7 +189,6 @@ namespace :gem do
 
   desc "Install the optional c extensions"
   task :install_extensions do
-    sh "gem uninstall -x -a -I bson_ext"
     sh "gem build bson_ext.gemspec"
     sh "gem install --no-rdoc --no-ri bson_ext-*.gem"
     sh "rm bson_ext-*.gem"
