@@ -450,7 +450,7 @@ module Mongo
       generate_indexes(valid, name, opts) if valid.any?
 
       # Reset the cache here in case there are any errors inserting. Best to be safe.
-      name.each {|n| @cache[n] = now + @cache_time}
+      @cache[name] = now + @cache_time
       name
     end
 
