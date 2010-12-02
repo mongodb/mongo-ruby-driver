@@ -321,6 +321,7 @@ module Mongo
         @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message, @db.name, nil, safe)
       else
         @connection.send_message(Mongo::Constants::OP_DELETE, message)
+        true
       end
     end
 

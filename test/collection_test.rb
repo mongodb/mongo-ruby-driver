@@ -263,13 +263,12 @@ class TestCollection < Test::Unit::TestCase
     @db   = @conn[MONGO_TEST_DB]
     @test = @db['test-safe-remove']
     @test.save({:a => 50})
-    @test.remove({}, :safe => true)
+    assert_equal 1, @test.remove({}, :safe => true)["n"]
     @test.drop
   end
 
   def test_remove_return_value
-    assert_equal 50, @@test.remove({})
-    assert_equal 57, @@test.remove({"x" => 1})
+    assert_equal true, @@test.remove({})
   end
 
   def test_count
