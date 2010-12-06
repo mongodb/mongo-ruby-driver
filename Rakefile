@@ -173,6 +173,41 @@ task :ydoc do
   system "yardoc lib/**/*.rb lib/mongo/**/*.rb lib/bson/**/*.rb -e yard/yard_ext.rb -p yard/templates -o #{out} --title MongoRuby-#{Mongo::VERSION} --files docs/TUTORIAL.md,docs/GridFS.md,docs/FAQ.md,docs/REPLICA_SETS.md,docs/WRITE_CONCERN.md,docs/HISTORY.md,docs/CREDITS.md,docs/1.0_UPGRADE.md"
 end
 
+namespace :bamboo do
+  namespace :linux do
+    namespace :mri do
+      task :ruby do
+        sh "rvm 1.8.7"
+        Rake::Task['test:ruby'].invoke
+      end
+
+      task :c do
+        sh "rvm 1.8.7"
+        Rake::Task['gem:install_extensions'].invoke
+        Rake::Task['test:c'].invoke
+      end
+    end
+
+    namespace :yarv do
+      task :ruby do
+        sh "rvm 1.9.2"
+        Rake::Task['test:ruby'].invoke
+      end
+
+      task :c do
+        sh "rvm 1.9.2"
+        Rake::Task['gem:install_extensions'].invoke
+        Rake::Task['test:c'].invoke
+      end
+    end
+
+    task :jruby do
+      sh "rvm jruby"
+      Rake::Task['test:ruby'].invoke
+    end
+  end
+end
+
 namespace :gem do
 
   desc "Install the gem locally"
