@@ -1,4 +1,4 @@
-require 'test/test_helper'
+require './test/test_helper'
 
 # Essentialy the same as test_threading.rb but with an expanded pool for
 # testing multiple connections.
