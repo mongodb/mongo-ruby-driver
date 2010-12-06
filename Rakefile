@@ -174,36 +174,14 @@ task :ydoc do
 end
 
 namespace :bamboo do
-  namespace :linux do
-    namespace :mri do
-      task :ruby do
-        sh "rvm 1.8.7"
-        Rake::Task['test:ruby'].invoke
-      end
-
-      task :c do
-        sh "/home/bamboo/.rvm/bin/rvm 1.8.7"
-        Rake::Task['gem:install_extensions'].invoke
-        Rake::Task['test:c'].invoke
-      end
-    end
-
-    namespace :yarv do
-      task :ruby do
-        sh "/home/bamboo/.rvm/bin/rvm 1.9.2"
-        Rake::Task['test:ruby'].invoke
-      end
-
-      task :c do
-        sh "rvm 1.9.2"
-        Rake::Task['gem:install_extensions'].invoke
-        Rake::Task['test:c'].invoke
-      end
-    end
-
-    task :jruby do
-      sh "/home/bamboo/.rvm/bin/rvm jruby"
+  namespace :test do
+    task :ruby do
       Rake::Task['test:ruby'].invoke
+    end
+
+    task :c do
+      Rake::Task['gem:install_extensions'].invoke
+      Rake::Task['test:c'].invoke
     end
   end
 end
