@@ -182,7 +182,7 @@ namespace :bamboo do
       end
 
       task :c do
-        sh "rvm 1.8.7"
+        sh "/home/bamboo/.rvm/bin/rvm 1.8.7"
         Rake::Task['gem:install_extensions'].invoke
         Rake::Task['test:c'].invoke
       end
@@ -190,7 +190,7 @@ namespace :bamboo do
 
     namespace :yarv do
       task :ruby do
-        sh "rvm 1.9.2"
+        sh "/home/bamboo/.rvm/bin/rvm 1.9.2"
         Rake::Task['test:ruby'].invoke
       end
 
@@ -202,7 +202,7 @@ namespace :bamboo do
     end
 
     task :jruby do
-      sh "rvm jruby"
+      sh "/home/bamboo/.rvm/bin/rvm jruby"
       Rake::Task['test:ruby'].invoke
     end
   end
