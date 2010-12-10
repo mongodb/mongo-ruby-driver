@@ -9,7 +9,7 @@ class ReplicaSetPooledInsertTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @conn = Mongo::Connection.multi([['localhost', 27017], ['localhost', 27018], ['localhost', 27019]],
+    @conn = Mongo::Connection.multi([[TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1], [TEST_HOST, TEST_PORT + 2]],
        :pool_size => 10, :timeout => 5)
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")

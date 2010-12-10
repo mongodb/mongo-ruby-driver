@@ -9,10 +9,17 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @conn = Mongo::Connection.multi([['localhost', 27018]], :read_secondaries => true)
+    @conn = Mongo::Connection.multi([[TEST_HOST, TEST_PORT]], :read_secondary => true)
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets", :safe => {:w => 2, :wtimeout => 100})
+  end
+
+  def test_con
+    assert @conn.primary_pool, "No primary pool!"
+    assert @conn.read_pool, "No read pool!"
+    assert @conn.primary_pool.port != @conn.read_pool.port,
+      "Primary port and read port at the same!"
   end
 
   def test_query
