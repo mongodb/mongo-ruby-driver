@@ -629,9 +629,9 @@ module Mongo
 
     private
 
-    # Pick a node randomly from the set of possibly secondaries.
+    # Pick a node randomly from the set of possible secondaries.
     def pick_secondary_for_read
-      if (size = @secondary_pools.size) > 1
+      if (size = @secondary_pools.size) > 0
         @read_pool = @secondary_pools[rand(size)]
       end
     end
@@ -715,9 +715,7 @@ module Mongo
         if config['secondary']
           host, port = *node
           @secondaries << node unless @secondaries.include?(node)
-          if @read_secondary
-            @secondary_pools << Pool.new(self, host, port, :size => @pool_size, :timeout => @timeout)
-          end
+          @secondary_pools << Pool.new(self, host, port, :size => @pool_size, :timeout => @timeout)
         elsif config['arbiterOnly']
           @arbiters << node unless @arbiters.include?(node)
         end

@@ -25,13 +25,20 @@ unless defined? MONGO_TEST_DB
   MONGO_TEST_DB = 'ruby-test-' + BSON::ObjectId.new.to_s
 end
 
+unless defined? TEST_PORT
+  TEST_PORT = ENV['MONGO_RUBY_DRIVER_PORT'].to_i || Connection::DEFAULT_PORT
+end
+
+unless defined? TEST_HOST
+  TEST_HOST = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
+end
+
 class Test::Unit::TestCase
   include Mongo
   include BSON
 
   def self.standard_connection(options={})
-    Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-      ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT, options)
+    Connection.new(TEST_HOST, TEST_PORT, options)
   end
 
   def standard_connection(options={})
@@ -43,11 +50,11 @@ class Test::Unit::TestCase
   end
 
   def self.mongo_host
-    ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
+    TEST_HOST
   end
 
   def self.mongo_port
-    ENV['MONGO_RUBY_DRIVER_PORT'] ? ENV['MONGO_RUBY_DRIVER_PORT'].to_i : 27017
+    TEST_PORT
   end
 
   def host_port
