@@ -9,7 +9,7 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @conn = Mongo::Connection.multi([[TEST_HOST, TEST_PORT]], :read_secondary => true)
+    @conn = ReplSetConnection.multi([TEST_HOST, TEST_PORT], :read_secondary => true)
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets", :safe => {:w => 2, :wtimeout => 100})

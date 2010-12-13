@@ -19,19 +19,25 @@
 module Mongo
 
   # Instantiates and manages connections to MongoDB.
-  class ReplSetConnection
+  class ReplSetConnection < Connection
     attr_reader :nodes, :secondaries, :arbiters, :read_pool, :secondary_pools
 
     def initialize(*args)
-
       if args.last.is_a?(Hash)
-        options = args.pop
+        opts = args.pop
+      else
+        opts = {}
       end
 
+      unless args.length > 0
+        raise MongoArgumentError, "A ReplSetConnection requires at least one node."
+      end
+
+      # Get seed nodes
       @nodes = args
 
       # Replica set name
-      @replica_set_name = options[:rs_name]
+      @replica_set = opts[:rs_name]
 
       # Cache the various node types when connecting to a replica set.
       @secondaries = []
@@ -41,7 +47,10 @@ module Mongo
       @secondary_pools = []
       @read_pool = nil
 
-      super
+      # Are we allowing reads from secondaries?
+      @read_secondary = opts.fetch(:read_secondary, false)
+
+      setup(opts)
     end
 
     # Create a new socket and attempt to connect to master.
@@ -86,13 +95,14 @@ module Mongo
 
     # If a ConnectionFailure is raised, this method will be called
     # to close the connection and reset connection values.
+    # TODO: what's the point of this method?
     def reset_connection
       super
       @secondaries     = []
       @secondary_pools = []
       @arbiters        = []
-      @nodes_tried     = []
-      @nodes_to_try    = []
+      @nodes_tried  = []
+      @nodes_to_try = []
     end
 
     private
@@ -124,7 +134,12 @@ module Mongo
       config
     end
 
-
+    # Primary, when connecting to a replica can, can only be a true primary node.
+    # (And not a slave, which is possible when connecting with the standard
+    # Connection class.
+    def is_primary?(config)
+      config && (config['ismaster'] == 1 || config['ismaster'] == true)
+    end
 
     # Pick a node randomly from the set of possible secondaries.
     def pick_secondary_for_read
@@ -135,15 +150,15 @@ module Mongo
 
     # Make sure that we're connected to the expected replica set.
     def check_set_name(config, socket)
-      if @replica_set_name
+      if @replica_set
         config = self['admin'].command({:replSetGetStatus => 1},
                    :sock => socket, :check_response => false)
 
         if !Mongo::Support.ok?(config)
           raise ReplicaSetConnectionError, config['errmsg']
-        elsif config['set'] != @replica_set_name
+        elsif config['set'] != @replica_set
           raise ReplicaSetConnectionError,
-            "Attempting to connect to replica set '#{config['set']}' but expected '#{@replica_set_name}'"
+            "Attempting to connect to replica set '#{config['set']}' but expected '#{@replica_set}'"
         end
       end
     end

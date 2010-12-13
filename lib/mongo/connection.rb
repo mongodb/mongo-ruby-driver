@@ -92,47 +92,18 @@ module Mongo
     #
     # @core connections
     def initialize(host=nil, port=nil, options={})
-      @auths        = options.fetch(:auths, [])
-
       @host_to_try = format_pair(host, port)
 
       # Host and port of current master.
       @host = @port = nil
 
-      # Lock for request ids.
-      @id_lock = Mutex.new
-
-      # Pool size and timeout.
-      @pool_size = options[:pool_size] || 1
-      @timeout   = options[:timeout]   || 5.0
-
-      # Mutex for synchronizing pool access
-      @connection_mutex = Mutex.new
-
-      # Global safe option. This is false by default.
-      @safe = options[:safe] || false
-
-      # Create a mutex when a new key, in this case a socket,
-      # is added to the hash.
-      @safe_mutexes = Hash.new { |h, k| h[k] = Mutex.new }
-
-      # Condition variable for signal and wait
-      @queue = ConditionVariable.new
-
       # slave_ok can be true only if one node is specified
       @slave_ok = options[:slave_ok]
 
-      @primary     = nil
-
-      # Connection pool for primay node
-      @primary_pool    = nil
-
-      @logger   = options[:logger] || nil
-
-      should_connect = options.fetch(:connect, true)
-      connect if should_connect
+      setup(options)
     end
 
+    
     # DEPRECATED
     #
     # Initialize a connection to a MongoDB replica set using an array of seed nodes.
@@ -160,19 +131,10 @@ module Mongo
     #
     # @deprecated
     def self.multi(nodes, opts={})
-      unless nodes.length > 0 && nodes.all? {|n| n.is_a? Array}
-        raise MongoArgumentError, "Connection.multi requires at least one node to be specified."
-      end
+      warn "Connection.multi is now deprecated. Please use ReplSetConnection.new instead."
 
-      # Block returns an array, the first element being an array of nodes and the second an array
-      # of authorizations for the database.
-      new(nil, nil, opts) do |con|
-        nodes.map do |node|
-          con.instance_variable_set(:@replica_set, true)
-          con.instance_variable_set(:@read_secondary, true) if opts[:read_secondary]
-          con.pair_val_to_connection(node)
-        end
-      end
+      nodes << opts
+      ReplSetConnection.new(*nodes)
     end
 
     # Initialize a connection to MongoDB using the MongoDB URI spec:
@@ -191,6 +153,8 @@ module Mongo
       elsif nodes.length > 1
         nodes << opts
         ReplSetConnection.new(*nodes)
+      else
+        raise MongoArgumentError, "No nodes specified. Please ensure that you've provided at least one node."
       end
     end
 
@@ -500,40 +464,8 @@ module Mongo
       @primary_pool = nil
     end
 
-    ## Configuration helper methods
-
-    # Returns a host-port pair.
-    #
-    # @return [Array]
-    #
-    # @private
-    def format_pair(host, port)
-      case host
-        when String
-          [host, port ? port.to_i : DEFAULT_PORT]
-        when nil
-          ['localhost', DEFAULT_PORT]
-      end
-    end
-
-    # Convert an argument containing a host name string and a
-    # port number integer into a [host, port] pair array.
-    #
-    # @private
-    def pair_val_to_connection(a)
-      case a
-      when nil
-        ['localhost', DEFAULT_PORT]
-      when String
-        [a, DEFAULT_PORT]
-      when Integer
-        ['localhost', a]
-      when Array
-        a
-      end
-    end
-
-        # Checkout a socket for reading (i.e., a secondary node).
+    
+    # Checkout a socket for reading (i.e., a secondary node).
     def checkout_reader
       connect unless connected?
 
@@ -567,6 +499,77 @@ module Mongo
       end
     end
 
+    protected
+
+    # Generic initialization code.
+    # @protected
+    def setup(options)
+      # Authentication objects
+      @auths = options.fetch(:auths, [])
+
+      # Lock for request ids.
+      @id_lock = Mutex.new
+
+      # Pool size and timeout.
+      @pool_size = options[:pool_size] || 1
+      @timeout   = options[:timeout]   || 5.0
+
+      # Mutex for synchronizing pool access
+      @connection_mutex = Mutex.new
+
+      # Global safe option. This is false by default.
+      @safe = options[:safe] || false
+
+      # Create a mutex when a new key, in this case a socket,
+      # is added to the hash.
+      @safe_mutexes = Hash.new { |h, k| h[k] = Mutex.new }
+
+      # Condition variable for signal and wait
+      @queue = ConditionVariable.new
+
+      # Connection pool for primay node
+      @primary      = nil
+      @primary_pool = nil
+
+      @logger   = options[:logger] || nil
+
+      should_connect = options.fetch(:connect, true)
+      connect if should_connect
+    end
+
+    ## Configuration helper methods
+
+    # Returns a host-port pair.
+    #
+    # @return [Array]
+    #
+    # @private
+    def format_pair(host, port)
+      case host
+        when String
+          [host, port ? port.to_i : DEFAULT_PORT]
+        when nil
+          ['localhost', DEFAULT_PORT]
+      end
+    end
+
+    # Convert an argument containing a host name string and a
+    # port number integer into a [host, port] pair array.
+    #
+    # @private
+    def pair_val_to_connection(a)
+      case a
+      when nil
+        ['localhost', DEFAULT_PORT]
+      when String
+        [a, DEFAULT_PORT]
+      when Integer
+        ['localhost', a]
+      when Array
+        a
+      end
+    end
+
     private
 
     # If a ConnectionFailure is raised, this method will be called
@@ -584,7 +587,7 @@ module Mongo
     # apply any saved authentication.
     # TODO: simplify
     def is_primary?(config)
-      config && (config['ismaster'] == 1 || config['ismaster'] == true) || !@replica_set && @slave_ok
+      config && (config['ismaster'] == 1 || config['ismaster'] == true) || @slave_ok
     end
 
     def check_is_master(node)

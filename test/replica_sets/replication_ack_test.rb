@@ -8,11 +8,13 @@ class ReplicaSetAckTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @conn = Mongo::Connection.multi([[TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1], [TEST_HOST, TEST_PORT + 2]])
+    @conn = ReplSetConnection.multi([TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1],
+      [TEST_HOST, TEST_PORT + 2])
 
     master = [@conn.primary_pool.host, @conn.primary_pool.port]
 
-    @slave1 = Mongo::Connection.new(@conn.secondary_pools[0].host, @conn.secondary_pools[0].port, :slave_ok => true)
+    @slave1 = Connection.new(@conn.secondary_pools[0].host,
+      @conn.secondary_pools[0].port, :slave_ok => true)
 
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
@@ -36,7 +38,6 @@ class ReplicaSetAckTest < Test::Unit::TestCase
 
     assert @col.insert({:foo => "0" * 10000}, :safe => {:w => 2, :wtimeout => 1000})
     assert_equal 2, @slave1[MONGO_TEST_DB]["test-sets"].count
-
 
     assert @col.update({:baz => "bar"}, {:baz => "foo"}, :safe => {:w => 2, :wtimeout => 1000})
     assert @slave1[MONGO_TEST_DB]["test-sets"].find_one({:baz => "foo"})

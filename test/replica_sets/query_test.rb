@@ -9,7 +9,8 @@ class ReplicaSetQueryTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @conn = Mongo::Connection.multi([[TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1], [TEST_HOST, TEST_PORT + 2]])
+    @conn = ReplSetConnection.multi([TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1],
+      [TEST_HOST, TEST_PORT + 2])
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets")

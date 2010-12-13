@@ -9,15 +9,15 @@ class ConnectTest < Test::Unit::TestCase
   include Mongo
 
   def test_connect_bad_name
-    assert_raise_error(ReplicaSetConnectionError, "expected 'wrong-repl-set-name'") do
-      Mongo::Connection.multi([[TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1], [TEST_HOST, TEST_PORT + 2]],
-        :rs_name => "wrong-repl-set-name")
+    assert_raise_error(ReplicaSetReplSetConnectionError, "expected 'wrong-repl-set-name'") do
+      ReplSetConnection.multi([TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1],
+        [TEST_HOST, TEST_PORT + 2], :rs_name => "wrong-repl-set-name")
     end
   end
 
   def test_connect
-    @conn = Mongo::Connection.multi([[TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1], [TEST_HOST, TEST_PORT + 2]],
-                                    :name => "foo")
+    @conn = ReplSetConnection.multi([TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1],
+      [TEST_HOST, TEST_PORT + 2], :name => "foo")
     assert @conn.connected?
   end
 
@@ -25,7 +25,8 @@ class ConnectTest < Test::Unit::TestCase
     puts "Please kill the node at #{TEST_PORT}."
     gets
 
-    @conn = Mongo::Connection.multi([[TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1], [TEST_HOST, TEST_PORT + 2]])
+    @conn = ReplSetConnection.multi([[TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1],
+      [TEST_HOST, TEST_PORT + 2]])
     assert @conn.connected?
   end
 
@@ -33,7 +34,8 @@ class ConnectTest < Test::Unit::TestCase
     puts "Please kill the node at #{TEST_PORT + 1}."
     gets
 
-    @conn = Mongo::Connection.multi([[TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1], [TEST_HOST, TEST_PORT + 2]])
+    @conn = ReplSetConnection.multi([[TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1],
+      [TEST_HOST, TEST_PORT + 2]])
     assert @conn.connected?
   end
 
@@ -41,7 +43,8 @@ class ConnectTest < Test::Unit::TestCase
     puts "Please kill the node at #{TEST_PORT + 2}."
     gets
 
-    @conn = Mongo::Connection.multi([[TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1], [TEST_HOST, TEST_PORT + 2]])
+    @conn = ReplSetConnection.multi([[TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1],
+      [TEST_HOST, TEST_PORT + 2]])
     assert @conn.connected?
   end
 end
