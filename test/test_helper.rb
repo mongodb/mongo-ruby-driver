@@ -26,7 +26,7 @@ unless defined? MONGO_TEST_DB
 end
 
 unless defined? TEST_PORT
-  TEST_PORT = ENV['MONGO_RUBY_DRIVER_PORT'].to_i || Connection::DEFAULT_PORT
+  TEST_PORT = ENV['MONGO_RUBY_DRIVER_PORT'] ? ENV['MONGO_RUBY_DRIVER_PORT'].to_i : Mongo::Connection::DEFAULT_PORT
 end
 
 unless defined? TEST_HOST
