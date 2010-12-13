@@ -1,12 +1,18 @@
 #!/usr/bin/ruby
 
-require 'rubygems'
-require 'mongo'
+STDOUT.sync = true
+
+unless defined? Mongo
+  require File.join(File.dirname(__FILE__), '..', '..', 'lib', 'mongo')
+end
 
 class ReplSetManager
 
+  attr_accessor :host, :start_port, :ports
+
   def initialize(opts={})
     @start_port = opts[:start_port] || 30000
+    @ports      = []
     @name       = opts[:name] || 'replica-set-foo'
     @count      = opts[:count] || 3
     @host       = opts[:host]  || 'localhost'
@@ -21,14 +27,17 @@ class ReplSetManager
     puts "Starting a replica set with #{@count} nodes"
 
     system("killall mongod")
+
     @count.times do |n|
       @mongods[n] ||= {}
-      @mongods[n]['db_path'] = get_path("rs-#{n}")
-      @mongods[n]['log_path'] = get_path("log-#{n}")
+      port = @start_port + n
+      @ports << port
+      @mongods[n]['port'] = port
+      @mongods[n]['db_path'] = get_path("rs-#{port}")
+      @mongods[n]['log_path'] = get_path("log-#{port}")
       system("rm -rf #{@mongods[n]['db_path']}")
       system("mkdir -p #{@mongods[n]['db_path']}")
 
-      @mongods[n]['port'] = @start_port + n
       @mongods[n]['start'] = "mongod --replSet #{@name} --logpath '#{@mongods[n]['log_path']}' " +
        " --dbpath #{@mongods[n]['db_path']} --port #{@mongods[n]['port']} --fork"
 
@@ -43,7 +52,6 @@ class ReplSetManager
       @config['members'] << member
     end
 
-    p @mongods
     init
     ensure_up
   end
@@ -52,6 +60,18 @@ class ReplSetManager
     system("kill -2 #{@mongods[node]['pid']}")
     @mongods[node]['up'] = false
     sleep(1)
+  end
+
+  def kill_primary
+    node = get_node_with_state(1)
+    kill(node)
+    return node
+  end
+
+  def kill_secondary
+    node = get_node_with_state(2)
+    kill(node)
+    return node
   end
 
   def start(node)
@@ -63,15 +83,15 @@ class ReplSetManager
   alias :restart :start
 
   def ensure_up
+    print "Ensuring members are up..."
     @con = get_connection
-    p @con
 
     attempt(Mongo::OperationFailure) do
       status = @con['admin'].command({'replSetGetStatus' => 1})
-      p status
+      print "."
       if status['members'].all? { |m| [1, 2, 7].include?(m['state']) }
         puts "All members up!"
-        return
+        return status
       else
         raise Mongo::OperationFailure
       end
@@ -88,11 +108,22 @@ class ReplSetManager
     end
   end
 
+  def get_node_with_state(state)
+    status = ensure_up
+    node = status['members'].detect {|m| m['state'] == state}
+    if node
+      host_port = node['name'].split(':')
+      port = host_port[1] ? host_port[1].to_i : 27017
+      key = @mongods.keys.detect {|key| @mongods[key]['port'] == port}
+      return key
+    else
+      return false
+    end
+  end
+
   def get_connection
     attempt(Mongo::ConnectionFailure) do
       node = @mongods.keys.detect {|key| !@mongods[key]['arbiter'] && @mongods[key]['up'] }
-      p @mongods[node]['port']
-      p node
       @con = Mongo::Connection.new(@host, @mongods[node]['port'], :slave_ok => true)
     end
 
@@ -100,10 +131,7 @@ class ReplSetManager
   end
 
   def get_path(name)
-    p @path
-    j = File.join(@path, name)
-    p j
-    j
+    File.join(@path, name)
   end
 
   def attempt(exception)

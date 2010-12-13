@@ -69,21 +69,7 @@ class Test::Unit::TestCase
     self.class.mongo_port
   end
 
-  # Generic code for rescuing connection failures and retrying operations.
-  # This could be combined with some timeout functionality.
-  def rescue_connection_failure
-    success = false
-    while !success
-      begin
-        yield
-        success = true
-      rescue Mongo::ConnectionFailure
-        puts "Rescuing"
-        sleep(1)
-      end
-    end
-  end
-
+  
   def assert_raise_error(klass, message)
     begin
       yield
