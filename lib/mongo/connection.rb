@@ -35,9 +35,6 @@ module Mongo
     STANDARD_HEADER_SIZE = 16
     RESPONSE_HEADER_SIZE = 20
 
-    MONGODB_URI_MATCHER = /(([-_.\w\d]+):([-_\w\d]+)@)?([-.\w\d]+)(:([\w\d]+))?(\/([-\d\w]+))?/
-    MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]"
-
     attr_reader :logger, :size, :nodes, :auths, :primary, :secondaries, :arbiters,
       :safe, :primary_pool, :read_pool, :secondary_pools, :host_to_try
 
@@ -103,7 +100,6 @@ module Mongo
       setup(options)
     end
 
-    
     # DEPRECATED
     #
     # Initialize a connection to a MongoDB replica set using an array of seed nodes.
@@ -464,7 +460,6 @@ module Mongo
       @primary_pool = nil
     end
 
-    
     # Checkout a socket for reading (i.e., a secondary node).
     def checkout_reader
       connect unless connected?
@@ -597,19 +592,9 @@ module Mongo
         socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 
         config = self['admin'].command({:ismaster => 1}, :sock => socket)
-
       rescue OperationFailure, SocketError, SystemCallError, IOError => ex
-        close# unless connected?
+        close
       ensure
-      #  @nodes_tried << node
-      #  if config
-      #    update_node_list(config['hosts']) if config['hosts']
-
-      #    if config['msg'] && @logger
-      #      @logger.warn("MONGODB #{config['msg']}")
-      #    end
-      #  end
-
         socket.close if socket
       end
 

@@ -8,17 +8,26 @@ end
 
 class ReplSetManager
 
-  attr_accessor :host, :start_port, :ports
+  attr_accessor :host, :start_port, :ports, :name, :mongods
 
   def initialize(opts={})
     @start_port = opts[:start_port] || 30000
     @ports      = []
     @name       = opts[:name] || 'replica-set-foo'
-    @count      = opts[:count] || 3
     @host       = opts[:host]  || 'localhost'
     @retries    = opts[:retries] || 60
     @config     = {"_id" => @name, "members" => []}
     @path       = File.join(File.expand_path(File.dirname(__FILE__)), "data")
+
+    @passive_count   = opts[:secondary_count] || 1
+    @arbiter_count   = opts[:arbiter_count]   || 1
+    @secondary_count = opts[:passive_count]   || 1
+    @primary_count   = 1
+
+    @count = @primary_count + @passive_count + @arbiter_count + @secondary_count
+    if @count > 7
+      raise StandardError, "Cannot create a replica set with #{node_count} nodes. 7 is the max."
+    end
 
     @mongods   = {}
   end
@@ -28,32 +37,55 @@ class ReplSetManager
 
     system("killall mongod")
 
-    @count.times do |n|
-      @mongods[n] ||= {}
-      port = @start_port + n
-      @ports << port
-      @mongods[n]['port'] = port
-      @mongods[n]['db_path'] = get_path("rs-#{port}")
-      @mongods[n]['log_path'] = get_path("log-#{port}")
-      system("rm -rf #{@mongods[n]['db_path']}")
-      system("mkdir -p #{@mongods[n]['db_path']}")
-
-      @mongods[n]['start'] = "mongod --replSet #{@name} --logpath '#{@mongods[n]['log_path']}' " +
-       " --dbpath #{@mongods[n]['db_path']} --port #{@mongods[n]['port']} --fork"
-
-      start(n)
-
-      member = {'_id' => n, 'host' => "#{@host}:#{@mongods[n]['port']}"}
-      if n == @count-1
-        @mongods[n]['arbiter'] = true
-        member['arbiterOnly'] = true
-      end
-
-      @config['members'] << member
+    n = 0
+    (@primary_count + @secondary_count).times do |n|
+      init_node(n)
+      n += 1
     end
 
-    init
+    @passive_count.times do
+      init_node(n) do |attrs|
+        attrs['priority'] = 0
+      end
+      n += 1
+    end
+
+    @arbiter_count.times do
+      init_node(n) do |attrs|
+        attrs['arbiterOnly'] = true
+      end
+      n += 1
+    end
+
+    initiate
     ensure_up
+  end
+
+  def init_node(n)
+    @mongods[n] ||= {}
+    port = @start_port + n
+    @ports << port
+    @mongods[n]['port'] = port
+    @mongods[n]['db_path'] = get_path("rs-#{port}")
+    @mongods[n]['log_path'] = get_path("log-#{port}")
+    system("rm -rf #{@mongods[n]['db_path']}")
+    system("mkdir -p #{@mongods[n]['db_path']}")
+
+    @mongods[n]['start'] = "mongod --replSet #{@name} --logpath '#{@mongods[n]['log_path']}' " +
+     " --dbpath #{@mongods[n]['db_path']} --port #{@mongods[n]['port']} --fork"
+
+    start(n)
+
+    member = {'_id' => n, 'host' => "#{@host}:#{@mongods[n]['port']}"}
+
+    if block_given?
+      custom_attrs = {}
+      yield custom_attrs
+      member.merge!(custom_attrs)
+      @mongods[n].merge!(custom_attrs)
+    end
+
+    @config['members'] << member
   end
 
   def kill(node)
@@ -68,10 +100,38 @@ class ReplSetManager
     return node
   end
 
+  # Note that we have to rescue a connection failure
+  # when we run the StepDown command because that
+  # command will close the connection.
+  def step_down_primary
+    primary = get_node_with_state(1)
+    con = get_connection(primary)
+    begin
+      con['admin'].command({'replSetStepDown' => 90})
+    rescue Mongo::ConnectionFailure
+    end
+  end
+
   def kill_secondary
     node = get_node_with_state(2)
     kill(node)
     return node
+  end
+
+  def restart_killed_nodes
+    nodes = @mongods.keys.select do |key|
+      @mongods[key]['up'] == false
+    end
+
+    nodes.each do |node|
+      start(node)
+    end
+
+    ensure_up
+  end
+
+  def get_node_from_port(port)
+    @mongods.keys.detect { |key| @mongods[key]['port'] == port }
   end
 
   def start(node)
@@ -84,12 +144,13 @@ class ReplSetManager
 
   def ensure_up
     print "Ensuring members are up..."
-    @con = get_connection
 
     attempt(Mongo::OperationFailure) do
-      status = @con['admin'].command({'replSetGetStatus' => 1})
+      con = get_connection
+      status = con['admin'].command({'replSetGetStatus' => 1})
       print "."
-      if status['members'].all? { |m| [1, 2, 7].include?(m['state']) }
+      if status['members'].all? { |m| [1, 2, 7].include?(m['state']) } &&
+         status['members'].any? { |m| m['state'] == 1 }
         puts "All members up!"
         return status
       else
@@ -98,13 +159,26 @@ class ReplSetManager
     end
   end
 
+  def primary
+    nodes = get_all_host_pairs_with_state(1)
+    nodes.empty? ? nil : nodes[0]
+  end
+
+  def secondaries
+    get_all_host_pairs_with_state(2)
+  end
+
+  def arbiters
+    get_all_host_pairs_with_state(7)
+  end
+
   private
 
-  def init
-    get_connection
+  def initiate
+    con = get_connection
 
     attempt(Mongo::OperationFailure) do
-      @con['admin'].command({'replSetInitiate' => @config})
+      con['admin'].command({'replSetInitiate' => @config})
     end
   end
 
@@ -121,13 +195,25 @@ class ReplSetManager
     end
   end
 
-  def get_connection
-    attempt(Mongo::ConnectionFailure) do
-      node = @mongods.keys.detect {|key| !@mongods[key]['arbiter'] && @mongods[key]['up'] }
-      @con = Mongo::Connection.new(@host, @mongods[node]['port'], :slave_ok => true)
+  def get_all_host_pairs_with_state(state)
+    status = ensure_up
+    nodes = status['members'].select {|m| m['state'] == state}
+    nodes.map do |node|
+      host_port = node['name'].split(':')
+      port = host_port[1] ? host_port[1].to_i : 27017
+      [host, port]
+    end
+  end
+
+  def get_connection(node=nil)
+    con = attempt(Mongo::ConnectionFailure) do
+      if !node
+        node = @mongods.keys.detect {|key| !@mongods[key]['arbiterOnly'] && @mongods[key]['up'] }
+      end
+      con = Mongo::Connection.new(@host, @mongods[node]['port'], :slave_ok => true)
     end
 
-    return @con
+    return con
   end
 
   def get_path(name)
@@ -140,8 +226,7 @@ class ReplSetManager
 
     while count < @retries do
       begin
-        yield
-        return
+        return yield
         rescue exception
           sleep(1)
           count += 1

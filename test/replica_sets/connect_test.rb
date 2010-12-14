@@ -1,50 +1,74 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'mongo'
-require 'test/unit'
-require './test/test_helper'
+require './test/replica_sets/rs_test_helper'
 
-# NOTE: This test expects a replica set of three nodes to be running on TEST_HOST,
-# on ports TEST_PORT, TEST_PORT + 1, and TEST + 2.
+# NOTE: This test expects a replica set of three nodes to be running on RS.host,
+# on ports TEST_PORT, RS.ports[1], and TEST + 2.
 class ConnectTest < Test::Unit::TestCase
   include Mongo
 
+  def setup
+    RS.restart_killed_nodes
+  end
+
   def test_connect_bad_name
-    assert_raise_error(ReplicaSetReplSetConnectionError, "expected 'wrong-repl-set-name'") do
-      ReplSetConnection.multi([TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1],
-        [TEST_HOST, TEST_PORT + 2], :rs_name => "wrong-repl-set-name")
+    assert_raise_error(ReplicaSetConnectionError, "-wrong") do
+      ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
+        [RS.host, RS.ports[2]], :rs_name => RS.name + "-wrong")
     end
   end
 
   def test_connect
-    @conn = ReplSetConnection.multi([TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1],
-      [TEST_HOST, TEST_PORT + 2], :name => "foo")
+    @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
+      [RS.host, RS.ports[2]], :name => RS.name)
+    assert @conn.connected?
+
+    assert_equal RS.primary, @conn.primary
+    assert_equal RS.secondaries, @conn.secondaries
+    assert_equal RS.arbiters, @conn.arbiters
+  end
+
+  def test_connect_with_primary_node_killed
+    node = RS.kill_primary
+
+    # Becuase we're killing the primary and trying to connect right away,
+    # this is going to fail right away.
+    assert_raise_error(ConnectionFailure, "Failed to connect to primary node") do
+      @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
+        [RS.host, RS.ports[2]])
+    end
+
+    # This allows the secondary to come up as a primary
+    rescue_connection_failure do
+      @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
+        [RS.host, RS.ports[2]])
+    end
     assert @conn.connected?
   end
 
-  def test_connect_with_first_node_down
-    puts "Please kill the node at #{TEST_PORT}."
-    gets
+  def test_connect_with_secondary_node_killed
+    node = RS.kill_secondary
 
-    @conn = ReplSetConnection.multi([[TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1],
-      [TEST_HOST, TEST_PORT + 2]])
+    @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
+      [RS.host, RS.ports[2]])
     assert @conn.connected?
   end
 
-  def test_connect_with_second_node_down
-    puts "Please kill the node at #{TEST_PORT + 1}."
-    gets
+  def test_connect_with_third_node_killed
+    RS.kill(RS.get_node_from_port(RS.ports[2]))
 
-    @conn = ReplSetConnection.multi([[TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1],
-      [TEST_HOST, TEST_PORT + 2]])
+    @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
+      [RS.host, RS.ports[2]])
     assert @conn.connected?
   end
 
-  def test_connect_with_third_node_down
-    puts "Please kill the node at #{TEST_PORT + 2}."
-    gets
+  def test_connect_with_primary_stepped_down
+    RS.step_down_primary
 
-    @conn = ReplSetConnection.multi([[TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1],
-      [TEST_HOST, TEST_PORT + 2]])
+    rescue_connection_failure do
+      @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
+        [RS.host, RS.ports[2]])
+    end
     assert @conn.connected?
   end
+
 end

@@ -1,6 +1,4 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'mongo'
-require 'test/unit'
 require './test/replica_sets/rs_test_helper'
 
 # NOTE: This test expects a replica set of three nodes to be running
@@ -20,10 +18,10 @@ class ReplicaSetCountTest < Test::Unit::TestCase
   end
 
   def test_correct_count_after_insertion_reconnect
-    @coll.insert({:a => 20})#, :safe => {:w => 3, :wtimeout => 10000})
+    @coll.insert({:a => 20}, :safe => {:w => 2, :wtimeout => 10000})
     assert_equal 1, @coll.count
 
-    # Disconnecting the current master node
+    # Kill the current master node
     @node = RS.kill_primary
 
     rescue_connection_failure do

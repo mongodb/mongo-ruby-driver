@@ -77,7 +77,13 @@ module Mongo
 
       pick_secondary_for_read if @read_secondary
 
-      raise ConnectionFailure, "failed to connect to any given host:port" unless connected?
+      if !connected?
+        if @secondary_pools.empty?
+          raise ConnectionFailure, "Failed to connect any given host:port"
+        else
+          raise ConnectionFailure, "Failed to connect to primary node."
+        end
+      end
     end
 
     def connecting?
@@ -121,7 +127,11 @@ module Mongo
       ensure
         @nodes_tried << node
         if config
-          update_node_list(config['hosts']) if config['hosts']
+          nodes = []
+          nodes += config['hosts'] if config['hosts']
+          nodes += config['arbiters'] if config['arbiters']
+          nodes += config['passives'] if config['passives']
+          update_node_list(nodes)
 
           if config['msg'] && @logger
             @logger.warn("MONGODB #{config['msg']}")
