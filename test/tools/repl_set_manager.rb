@@ -151,7 +151,7 @@ class ReplSetManager
       con = get_connection
       status = con['admin'].command({'replSetGetStatus' => 1})
       print "."
-      if status['members'].all? { |m| [1, 2, 7].include?(m['state']) } &&
+      if status['members'].all? { |m| m['health'] == 1 && [1, 2, 7].include?(m['state']) } &&
          status['members'].any? { |m| m['state'] == 1 }
         print "all members up!\n\n"
         return status

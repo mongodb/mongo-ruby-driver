@@ -1,7 +1,5 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'mongo'
-require 'test/unit'
-require './test/test_helper'
+require './test/replica_sets/rs_test_helper'
 
 # NOTE: This test expects a replica set of three nodes to be running
 # on the local host.
@@ -16,13 +14,15 @@ class ReplicaSetPooledInsertTest < Test::Unit::TestCase
     @coll = @db.collection("test-sets")
   end
 
+  def teardown
+    RS.restart_killed_nodes
+  end
+
   def test_insert
     expected_results = [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     @coll.save({:a => -1}, :safe => true)
 
     RS.kill_primary
-    puts "Please disconnect the current master."
-    gets
 
     threads = []
     10.times do |i|

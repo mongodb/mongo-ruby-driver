@@ -74,7 +74,7 @@ namespace :test do
   end
 
   Rake::TestTask.new(:rs) do |t|
-    t.test_files = ['test/replica_sets/count_test.rb', 'test/replica_sets/connect_test.rb', 'test/replica_sets/insert_test.rb']
+    t.test_files = FileList['test/replica_sets/*_test.rb']
     t.verbose    = true
   end
 

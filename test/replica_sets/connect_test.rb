@@ -10,6 +10,10 @@ class ConnectTest < Test::Unit::TestCase
     RS.restart_killed_nodes
   end
 
+  def teardown
+    RS.restart_killed_nodes
+  end
+
   def test_connect_bad_name
     assert_raise_error(ReplicaSetConnectionError, "-wrong") do
       ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
