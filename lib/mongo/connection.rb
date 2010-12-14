@@ -750,9 +750,14 @@ module Mongo
     end
 
     def receive(sock, expected_response)
+      begin
       receive_header(sock, expected_response)
       number_received, cursor_id = receive_response_header(sock)
       read_documents(number_received, cursor_id, sock)
+      rescue Mongo::ConnectionFailure => ex
+        close
+        raise ex
+      end
     end
 
     def receive_header(sock, expected_response)
