@@ -9,8 +9,7 @@ class ReplicaSetNodeTypeTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @conn = ReplSetConnection.multi([TEST_HOST, TEST_PORT], [TEST_HOST, TEST_PORT + 1],
-      [TEST_HOST, TEST_PORT + 2])
+    @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]], [RS.host, RS.ports[2]])
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets")
@@ -26,8 +25,7 @@ class ReplicaSetNodeTypeTest < Test::Unit::TestCase
     old_secondary = @conn.secondaries.first
     old_primary   = @conn.primary
 
-    puts "Please disconnect the current primary and reconnect so that it becomes secondary."
-    gets
+    RS.step_down_primary
 
     # Insert something to rescue the connection failure.
     rescue_connection_failure do

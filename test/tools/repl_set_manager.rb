@@ -19,9 +19,9 @@ class ReplSetManager
     @config     = {"_id" => @name, "members" => []}
     @path       = File.join(File.expand_path(File.dirname(__FILE__)), "data")
 
-    @passive_count   = opts[:secondary_count] || 1
-    @arbiter_count   = opts[:arbiter_count]   || 1
-    @secondary_count = opts[:passive_count]   || 1
+    @arbiter_count   = opts[:arbiter_count]   || 2
+    @secondary_count = opts[:secondary_count] || 1
+    @passive_count   = opts[:passive_count] || 1
     @primary_count   = 1
 
     @count = @primary_count + @passive_count + @arbiter_count + @secondary_count
@@ -33,7 +33,7 @@ class ReplSetManager
   end
 
   def start_set
-    puts "Starting a replica set with #{@count} nodes"
+    puts "** Starting a replica set with #{@count} nodes"
 
     system("killall mongod")
 
@@ -89,6 +89,8 @@ class ReplSetManager
   end
 
   def kill(node)
+    pid = @mongods[node]['pid']
+    puts "** Killing node with pid #{pid} at port #{@mongods[node]['port']}"
     system("kill -2 #{@mongods[node]['pid']}")
     @mongods[node]['up'] = false
     sleep(1)
@@ -137,13 +139,13 @@ class ReplSetManager
   def start(node)
     system(@mongods[node]['start'])
     @mongods[node]['up'] = true
-    sleep(1)
+    sleep(0.5)
     @mongods[node]['pid'] = File.open(File.join(@mongods[node]['db_path'], 'mongod.lock')).read.strip
   end
   alias :restart :start
 
   def ensure_up
-    print "Ensuring members are up..."
+    print "** Ensuring members are up..."
 
     attempt(Mongo::OperationFailure) do
       con = get_connection
@@ -151,7 +153,7 @@ class ReplSetManager
       print "."
       if status['members'].all? { |m| [1, 2, 7].include?(m['state']) } &&
          status['members'].any? { |m| m['state'] == 1 }
-        puts "All members up!"
+        print "all members up!\n\n"
         return status
       else
         raise Mongo::OperationFailure

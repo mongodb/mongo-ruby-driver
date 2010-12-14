@@ -23,8 +23,8 @@ class ConnectTest < Test::Unit::TestCase
     assert @conn.connected?
 
     assert_equal RS.primary, @conn.primary
-    assert_equal RS.secondaries, @conn.secondaries
-    assert_equal RS.arbiters, @conn.arbiters
+    assert_equal RS.secondaries.sort, @conn.secondaries.sort
+    assert_equal RS.arbiters.sort, @conn.arbiters.sort
   end
 
   def test_connect_with_primary_node_killed

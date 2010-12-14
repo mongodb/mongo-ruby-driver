@@ -19,7 +19,7 @@ class Test::Unit::TestCase
         yield
         success = true
       rescue Mongo::ConnectionFailure
-        puts "Rescuing attempt #{tries}"
+        puts "Rescue attempt #{tries}"
         tries += 1
         sleep(1)
       end

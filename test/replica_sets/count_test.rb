@@ -14,7 +14,7 @@ class ReplicaSetCountTest < Test::Unit::TestCase
   end
 
   def teardown
-    RS.start(@node)
+    RS.restart_killed_nodes
   end
 
   def test_correct_count_after_insertion_reconnect
