@@ -203,7 +203,7 @@ module Mongo
         end
 
         host, port = host.split(':')
-        [host, port.to_i]
+        [host, port ? port.to_i : Connection::DEFAULT_PORT]
       end
 
       # Replace the list of seed nodes with the canonical list.
