@@ -1,7 +1,5 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'mongo'
-require 'test/unit'
-require './test/test_helper'
+require './test/replica_sets/rs_test_helper'
 
 # NOTE: This test expects a replica set of three nodes to be running
 # on the local host.
@@ -9,10 +7,14 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @conn = Mongo::Connection.multi([[TEST_HOST, TEST_PORT]], :read_secondary => true)
+    @conn = ReplSetConnection.new([RS.host, RS.ports[0]], :read_secondary => true)
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets", :safe => {:w => 2, :wtimeout => 100})
+  end
+
+  def teardown
+    RS.restart_killed_nodes
   end
 
   def test_con
@@ -32,8 +34,7 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
     assert results.include?(30)
     assert results.include?(40)
 
-    puts "Please disconnect the current master."
-    gets
+    RS.kill_primary
 
     results = []
     rescue_connection_failure do

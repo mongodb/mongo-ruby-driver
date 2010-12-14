@@ -35,11 +35,8 @@ module Mongo
     STANDARD_HEADER_SIZE = 16
     RESPONSE_HEADER_SIZE = 20
 
-    MONGODB_URI_MATCHER = /(([-_.\w\d]+):([-_\w\d]+)@)?([-.\w\d]+)(:([\w\d]+))?(\/([-\d\w]+))?/
-    MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]"
-
     attr_reader :logger, :size, :nodes, :auths, :primary, :secondaries, :arbiters,
-      :safe, :primary_pool, :read_pool, :secondary_pools
+      :safe, :primary_pool, :read_pool, :secondary_pools, :host_to_try
 
     # Counter for generating unique request ids.
     @@current_request_id = 0
@@ -92,62 +89,19 @@ module Mongo
     #
     # @core connections
     def initialize(host=nil, port=nil, options={})
-      @auths        = []
-
-      if block_given?
-        @nodes = yield self
-      else
-        @nodes = format_pair(host, port)
-      end
+      @host_to_try = format_pair(host, port)
 
       # Host and port of current master.
       @host = @port = nil
 
-      # Replica set name
-      @replica_set_name = options[:rs_name]
-
-      # Lock for request ids.
-      @id_lock = Mutex.new
-
-      # Pool size and timeout.
-      @pool_size = options[:pool_size] || 1
-      @timeout   = options[:timeout]   || 5.0
-
-      # Mutex for synchronizing pool access
-      @connection_mutex = Mutex.new
-
-      # Global safe option. This is false by default.
-      @safe = options[:safe] || false
-
-      # Create a mutex when a new key, in this case a socket,
-      # is added to the hash.
-      @safe_mutexes = Hash.new { |h, k| h[k] = Mutex.new }
-
-      # Condition variable for signal and wait
-      @queue = ConditionVariable.new
-
       # slave_ok can be true only if one node is specified
       @slave_ok = options[:slave_ok]
 
-      # Cache the various node types
-      # when connecting to a replica set.
-      @primary     = nil
-      @secondaries = []
-      @arbiters    = []
-
-      # Connection pool for primay node
-      @primary_pool    = nil
-
-      # Connection pools for each secondary node
-      @secondary_pools = []
-      @read_pool = nil
-
-      @logger   = options[:logger] || nil
-
-      should_connect = options.fetch(:connect, true)
-      connect if should_connect
+      setup(options)
     end
 
+    # DEPRECATED
+    #
     # Initialize a connection to a MongoDB replica set using an array of seed nodes.
     #
     # The seed nodes specified will be used on the initial connection to the replica set, but note
@@ -170,20 +124,13 @@ module Mongo
     #                   :read_secondary => true)
     #
     # @return [Mongo::Connection]
+    #
+    # @deprecated
     def self.multi(nodes, opts={})
-      unless nodes.length > 0 && nodes.all? {|n| n.is_a? Array}
-        raise MongoArgumentError, "Connection.multi requires at least one node to be specified."
-      end
+      warn "Connection.multi is now deprecated. Please use ReplSetConnection.new instead."
 
-      # Block returns an array, the first element being an array of nodes and the second an array
-      # of authorizations for the database.
-      new(nil, nil, opts) do |con|
-        nodes.map do |node|
-          con.instance_variable_set(:@replica_set, true)
-          con.instance_variable_set(:@read_secondary, true) if opts[:read_secondary]
-          con.pair_val_to_connection(node)
-        end
-      end
+      nodes << opts
+      ReplSetConnection.new(*nodes)
     end
 
     # Initialize a connection to MongoDB using the MongoDB URI spec:
@@ -195,8 +142,15 @@ module Mongo
     #
     # @return [Mongo::Connection]
     def self.from_uri(uri, opts={})
-      new(nil, nil, opts) do |con|
-        con.parse_uri(uri)
+      nodes, auths = Mongo::URIParser.parse(uri)
+      opts.merge!({:auths => auths})
+      if nodes.length == 1
+        Connection.new(nodes[0][0], nodes[0][1], opts)
+      elsif nodes.length > 1
+        nodes << opts
+        ReplSetConnection.new(*nodes)
+      else
+        raise MongoArgumentError, "No nodes specified. Please ensure that you've provided at least one node."
       end
     end
 
@@ -482,20 +436,11 @@ module Mongo
     # @raise [ConnectionFailure] if unable to connect to any host or port.
     def connect
       reset_connection
-      @nodes_to_try = @nodes.clone
 
-      while connecting?
-        node   = @nodes_to_try.shift
-        config = check_is_master(node)
-
-        if is_primary?(config)
-          set_primary(node)
-        else
-          set_auxillary(node, config)
-        end
+      config = check_is_master(@host_to_try)
+      if is_primary?(config)
+        set_primary(@host_to_try)
       end
-
-      pick_secondary_for_read if @read_secondary
 
       raise ConnectionFailure, "failed to connect to any given host:port" unless connected?
     end
@@ -515,84 +460,6 @@ module Mongo
     def close
       @primary_pool.close if @primary_pool
       @primary_pool = nil
-      @read_pool    = nil
-      @secondary_pools.each do |pool|
-        pool.close
-      end
-    end
-
-    ## Configuration helper methods
-
-    # Returns an array of host-port pairs.
-    #
-    # @private
-    def format_pair(pair_or_host, port)
-      case pair_or_host
-        when String
-          [[pair_or_host, port ? port.to_i : DEFAULT_PORT]]
-        when nil
-          [['localhost', DEFAULT_PORT]]
-      end
-    end
-
-    # Convert an argument containing a host name string and a
-    # port number integer into a [host, port] pair array.
-    #
-    # @private
-    def pair_val_to_connection(a)
-      case a
-      when nil
-        ['localhost', DEFAULT_PORT]
-      when String
-        [a, DEFAULT_PORT]
-      when Integer
-        ['localhost', a]
-      when Array
-        a
-      end
-    end
-
-    # Parse a MongoDB URI. This method is used by Connection.from_uri.
-    # Returns an array of nodes and an array of db authorizations, if applicable.
-    #
-    # @private
-    def parse_uri(string)
-      if string =~ /^mongodb:\/\//
-        string = string[10..-1]
-      else
-        raise MongoArgumentError, "MongoDB URI must match this spec: #{MONGODB_URI_SPEC}"
-      end
-
-      nodes = []
-      auths = []
-      specs = string.split(',')
-      specs.each do |spec|
-        matches  = MONGODB_URI_MATCHER.match(spec)
-        if !matches
-          raise MongoArgumentError, "MongoDB URI must match this spec: #{MONGODB_URI_SPEC}"
-        end
-
-        uname = matches[2]
-        pwd   = matches[3]
-        host  = matches[4]
-        port  = matches[6] || DEFAULT_PORT
-        if !(port.to_s =~ /^\d+$/)
-          raise MongoArgumentError, "Invalid port #{port}; port must be specified as digits."
-        end
-        port  = port.to_i
-        db    = matches[8]
-
-        if uname && pwd && db
-          add_auth(db, uname, pwd)
-        elsif uname || pwd || db
-          raise MongoArgumentError, "MongoDB URI must include all three of username, password, " +
-            "and db if any one of these is specified."
-        end
-
-        nodes << [host, port]
-      end
-
-      nodes
     end
 
     # Checkout a socket for reading (i.e., a secondary node).
@@ -629,25 +496,85 @@ module Mongo
       end
     end
 
-    private
+    protected
 
-    # Pick a node randomly from the set of possible secondaries.
-    def pick_secondary_for_read
-      if (size = @secondary_pools.size) > 0
-        @read_pool = @secondary_pools[rand(size)]
+    # Generic initialization code.
+    # @protected
+    def setup(options)
+      # Authentication objects
+      @auths = options.fetch(:auths, [])
+
+      # Lock for request ids.
+      @id_lock = Mutex.new
+
+      # Pool size and timeout.
+      @pool_size = options[:pool_size] || 1
+      @timeout   = options[:timeout]   || 5.0
+
+      # Mutex for synchronizing pool access
+      @connection_mutex = Mutex.new
+
+      # Global safe option. This is false by default.
+      @safe = options[:safe] || false
+
+      # Create a mutex when a new key, in this case a socket,
+      # is added to the hash.
+      @safe_mutexes = Hash.new { |h, k| h[k] = Mutex.new }
+
+      # Condition variable for signal and wait
+      @queue = ConditionVariable.new
+
+      # Connection pool for primay node
+      @primary      = nil
+      @primary_pool = nil
+
+      @logger   = options[:logger] || nil
+
+      should_connect = options.fetch(:connect, true)
+      connect if should_connect
+    end
+
+    ## Configuration helper methods
+
+    # Returns a host-port pair.
+    #
+    # @return [Array]
+    #
+    # @private
+    def format_pair(host, port)
+      case host
+        when String
+          [host, port ? port.to_i : DEFAULT_PORT]
+        when nil
+          ['localhost', DEFAULT_PORT]
       end
     end
 
+    # Convert an argument containing a host name string and a
+    # port number integer into a [host, port] pair array.
+    #
+    # @private
+    def pair_val_to_connection(a)
+      case a
+      when nil
+        ['localhost', DEFAULT_PORT]
+      when String
+        [a, DEFAULT_PORT]
+      when Integer
+        ['localhost', a]
+      when Array
+        a
+      end
+    end
+
+    private
+
     # If a ConnectionFailure is raised, this method will be called
     # to close the connection and reset connection values.
+    # TODO: evaluate whether this method is actually necessary
     def reset_connection
       close
       @primary = nil
-      @secondaries     = []
-      @secondary_pools = []
-      @arbiters        = []
-      @nodes_tried     = []
-      @nodes_to_try    = []
     end
 
     # Primary is defined as either a master node or a slave if
@@ -655,8 +582,9 @@ module Mongo
     #
     # If a primary node is discovered, we set the the @host and @port and
     # apply any saved authentication.
+    # TODO: simplify
     def is_primary?(config)
-      config && (config['ismaster'] == 1 || config['ismaster'] == true) || !@replica_set && @slave_ok
+      config && (config['ismaster'] == 1 || config['ismaster'] == true) || @slave_ok
     end
 
     def check_is_master(node)
@@ -666,39 +594,13 @@ module Mongo
         socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 
         config = self['admin'].command({:ismaster => 1}, :sock => socket)
-
-        check_set_name(config, socket)
       rescue OperationFailure, SocketError, SystemCallError, IOError => ex
-        close unless connected?
+        close
       ensure
-        @nodes_tried << node
-        if config
-          update_node_list(config['hosts']) if config['hosts']
-
-          if config['msg'] && @logger
-            @logger.warn("MONGODB #{config['msg']}")
-          end
-        end
-
         socket.close if socket
       end
 
       config
-    end
-
-    # Make sure that we're connected to the expected replica set.
-    def check_set_name(config, socket)
-      if @replica_set_name
-        config = self['admin'].command({:replSetGetStatus => 1},
-                   :sock => socket, :check_response => false)
-
-        if !Mongo::Support.ok?(config)
-          raise ReplicaSetConnectionError, config['errmsg']
-        elsif config['set'] != @replica_set_name
-          raise ReplicaSetConnectionError,
-            "Attempting to connect to replica set '#{config['set']}' but expected '#{@replica_set_name}'"
-        end
-      end
     end
 
     # Set the specified node as primary, and
@@ -708,45 +610,6 @@ module Mongo
       @primary = [host, port]
       @primary_pool = Pool.new(self, host, port, :size => @pool_size, :timeout => @timeout)
       apply_saved_authentication
-    end
-
-    # Determines what kind of node we have and caches its host
-    # and port so that users can easily connect manually.
-    def set_auxillary(node, config)
-      if config
-        if config['secondary']
-          host, port = *node
-          @secondaries << node unless @secondaries.include?(node)
-          @secondary_pools << Pool.new(self, host, port, :size => @pool_size, :timeout => @timeout)
-        elsif config['arbiterOnly']
-          @arbiters << node unless @arbiters.include?(node)
-        end
-      end
-    end
-
-    # Update the list of known nodes. Only applies to replica sets,
-    # where the response to the ismaster command will return a list
-    # of known hosts.
-    #
-    # @param hosts [Array] a list of hosts, specified as string-encoded
-    #   host-port values. Example: ["myserver-1.org:27017", "myserver-1.org:27017"]
-    #
-    # @return [Array] the updated list of nodes
-    def update_node_list(hosts)
-      new_nodes = hosts.map do |host|
-        if !host.respond_to?(:split)
-          warn "Could not parse host #{host.inspect}."
-          next
-        end
-
-        host, port = host.split(':')
-        [host, port.to_i]
-      end
-
-      # Replace the list of seed nodes with the canonical list.
-      @nodes = new_nodes.clone
-
-      @nodes_to_try = new_nodes - @nodes_tried
     end
 
     def receive(sock, expected_response)

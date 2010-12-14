@@ -50,7 +50,12 @@ module Mongo
 
     def close
       @sockets.each do |sock|
-        sock.close
+        begin
+          sock.close
+        rescue IOError => ex
+          warn "IOError when attempting to close socket connected "
+           + "to #{@host}:#{@port}: #{ex.inspect}"
+        end
       end
       @host = @port = nil
       @sockets.clear

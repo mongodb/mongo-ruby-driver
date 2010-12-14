@@ -38,9 +38,8 @@ end
 
 desc "Test the MongoDB Ruby driver."
 task :test do
-  puts "\nThis option has changed."
-  puts "\nTo test the driver with the c-extensions:\nrake test:c\n"
-  puts "To test the pure ruby driver: \nrake test:ruby"
+  puts "\nTo test the driver with the C-extensions:\nrake test:c\n\n"
+  puts "To test the pure ruby driver: \nrake test:ruby\n\n"
 end
 
 namespace :test do
@@ -48,22 +47,35 @@ namespace :test do
   desc "Test the driver with the C extension enabled."
   task :c do
     ENV['C_EXT'] = 'TRUE'
-    Rake::Task['test:unit'].invoke
-    Rake::Task['test:functional'].invoke
-    Rake::Task['test:bson'].invoke
-    Rake::Task['test:pooled_threading'].invoke
-    Rake::Task['test:drop_databases'].invoke
+    if ENV['TEST']
+      Rake::Task['test:functional'].invoke
+    else
+      Rake::Task['test:unit'].invoke
+      Rake::Task['test:functional'].invoke
+      Rake::Task['test:bson'].invoke
+      Rake::Task['test:pooled_threading'].invoke
+      Rake::Task['test:drop_databases'].invoke
+    end
     ENV['C_EXT'] = nil
   end
 
   desc "Test the driver using pure ruby (no C extension)"
   task :ruby do
     ENV['C_EXT'] = nil
-    Rake::Task['test:unit'].invoke
-    Rake::Task['test:functional'].invoke
-    Rake::Task['test:bson'].invoke
-    Rake::Task['test:pooled_threading'].invoke
-    Rake::Task['test:drop_databases'].invoke
+    if ENV['TEST']
+      Rake::Task['test:functional'].invoke
+    else
+      Rake::Task['test:unit'].invoke
+      Rake::Task['test:functional'].invoke
+      Rake::Task['test:bson'].invoke
+      Rake::Task['test:pooled_threading'].invoke
+      Rake::Task['test:drop_databases'].invoke
+    end
+  end
+
+  Rake::TestTask.new(:rs) do |t|
+    t.test_files = FileList['test/replica_sets/*_test.rb']
+    t.verbose    = true
   end
 
   Rake::TestTask.new(:unit) do |t|
