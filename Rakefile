@@ -89,7 +89,7 @@ namespace :test do
   end
 
   Rake::TestTask.new(:pooled_threading) do |t|
-    t.test_files = FileList['test/threading/*.rb']
+    t.test_files = FileList['test/threading/*_test.rb']
     t.verbose    = true
   end
 
