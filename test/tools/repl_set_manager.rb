@@ -147,7 +147,7 @@ class ReplSetManager
   def ensure_up
     print "** Ensuring members are up..."
 
-    attempt(Mongo::OperationFailure) do
+    attempt do
       con = get_connection
       status = con['admin'].command({'replSetGetStatus' => 1})
       print "."
@@ -179,7 +179,7 @@ class ReplSetManager
   def initiate
     con = get_connection
 
-    attempt(Mongo::OperationFailure) do
+    attempt do
       con['admin'].command({'replSetInitiate' => @config})
     end
   end
@@ -208,7 +208,7 @@ class ReplSetManager
   end
 
   def get_connection(node=nil)
-    con = attempt(Mongo::ConnectionFailure) do
+    con = attempt do
       if !node
         node = @mongods.keys.detect {|key| !@mongods[key]['arbiterOnly'] && @mongods[key]['up'] }
       end
@@ -222,14 +222,14 @@ class ReplSetManager
     File.join(@path, name)
   end
 
-  def attempt(exception)
+  def attempt
     raise "No block given!" unless block_given?
     count = 0
 
     while count < @retries do
       begin
         return yield
-        rescue exception, Mongo::ConnectionFailure
+        rescue Mongo::OperationFailure, Mongo::ConnectionFailure
           sleep(1)
           count += 1
       end
