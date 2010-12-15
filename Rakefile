@@ -73,6 +73,7 @@ namespace :test do
     end
   end
 
+  desc "Run the replica set test suite"
   Rake::TestTask.new(:rs) do |t|
     t.test_files = FileList['test/replica_sets/*_test.rb']
     t.verbose    = true
@@ -90,51 +91,6 @@ namespace :test do
 
   Rake::TestTask.new(:pooled_threading) do |t|
     t.test_files = FileList['test/threading/*_test.rb']
-    t.verbose    = true
-  end
-
-  Rake::TestTask.new(:replica_pair_count) do |t|
-    t.test_files = FileList['test/replica_pairs/count_test.rb']
-    t.verbose    = true
-  end
-
-  Rake::TestTask.new(:replica_pair_insert) do |t|
-    t.test_files = FileList['test/replica_pairs/insert_test.rb']
-    t.verbose    = true
-  end
-
-  Rake::TestTask.new(:pooled_replica_pair_insert) do |t|
-    t.test_files = FileList['test/replica_pairs/pooled_insert_test.rb']
-    t.verbose    = true
-  end
-
-  Rake::TestTask.new(:replica_pair_query) do |t|
-    t.test_files = FileList['test/replica_pairs/query_test.rb']
-    t.verbose    = true
-  end
-
-  Rake::TestTask.new(:replica_set_count) do |t|
-    t.test_files = FileList['test/replica_sets/count_test.rb']
-    t.verbose    = true
-  end
-
-  Rake::TestTask.new(:replica_set_insert) do |t|
-    t.test_files = FileList['test/replica_sets/insert_test.rb']
-    t.verbose    = true
-  end
-
-  Rake::TestTask.new(:pooled_replica_set_insert) do |t|
-    t.test_files = FileList['test/replica_sets/pooled_insert_test.rb']
-    t.verbose    = true
-  end
-
-  Rake::TestTask.new(:replica_set_query) do |t|
-    t.test_files = FileList['test/replica_sets/query_test.rb']
-    t.verbose    = true
-  end
-
-  Rake::TestTask.new(:replica_set_ack) do |t|
-    t.test_files = FileList['test/replica_sets/replication_ack_test.rb']
     t.verbose    = true
   end
 
