@@ -21,7 +21,6 @@ Gem::Specification.new do |s|
 
   s.has_rdoc = true
   s.test_files = Dir['test/**/*.rb']
-  s.test_files -= Dir['test/mongo_bson/*.rb'] # remove these files from the manifest
 
   s.has_rdoc = true
   s.rdoc_options = ['--main', 'README.md', '--inline-source']
@@ -31,5 +30,5 @@ Gem::Specification.new do |s|
   s.email = 'mongodb-dev@googlegroups.com'
   s.homepage = 'http://www.mongodb.org'
 
-  s.add_dependency(%q<bson>, [">= 1.1.1"])
+  s.add_dependency(%q<bson>, [">= #{Mongo::VERSION}"])
 end
