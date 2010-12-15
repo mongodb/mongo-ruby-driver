@@ -468,8 +468,12 @@ module Mongo
         raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
       end
 
-      result = Cursor.new(system_command_collection,
-        :limit => -1, :selector => selector, :socket => sock).next_document
+      begin
+        result = Cursor.new(system_command_collection,
+          :limit => -1, :selector => selector, :socket => sock).next_document
+      rescue OperationFailure => ex
+        raise OperationFailure, "Database command '#{selector.keys.first}' failed: #{ex.message}"
+      end
 
       if result.nil?
         raise OperationFailure, "Database command '#{selector.keys.first}' failed: returned null."
