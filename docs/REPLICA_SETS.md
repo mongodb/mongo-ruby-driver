@@ -6,17 +6,17 @@ Here follow a few considerations for those using the MongoDB Ruby driver with [r
 
 First, make sure that you've configured and initialized a replica set.
 
-Use `Connection.multi` to connect to a replica set:
+Use `ReplSetConnection.new` to connect to a replica set:
 
-    @connection = Connection.multi([['n1.mydb.net', 27017], ['n2.mydb.net', 27017], ['n3.mydb.net', 27017]])
+    @connection = ReplSetConnection.new(['n1.mydb.net', 27017], ['n2.mydb.net', 27017], ['n3.mydb.net', 27017])
 
 The driver will attempt to connect to a master node and, when found, will replace all seed nodes with known members of the replica set.
 
 ### Read slaves
 
-If you want to read from a seconday node, you can pass :read_secondary => true to Connection#multi.
+If you want to read from a seconday node, you can pass :read_secondary => true to ReplSetConnection#new.
 
-    @connection = Connection.multi([['n1.mydb.net', 27017], ['n2.mydb.net', 27017], ['n3.mydb.net', 27017]],
+    @connection = ReplSetConnection.new(['n1.mydb.net', 27017], ['n2.mydb.net', 27017], ['n3.mydb.net', 27017],
                   :read_secondary => true)
 
 A random secondary will be chosen to be read from. In a typical multi-process Ruby application, you'll have a good distribution of reads across secondary nodes.
@@ -62,14 +62,12 @@ Of course, the proper way to handle connection failures will always depend on th
 
 ### Testing
 
-The Ruby driver (>= 1.0.6) includes some unit tests for verifying replica set behavior. They reside in *tests/replica_sets*. You can run them individually with the following rake tasks:
+The Ruby driver (>= 1.1.5) includes unit tests for verifying replica set behavior. They reside in *tests/replica_sets*. You can run them as a group with the following rake task:
 
-    rake test:replica_set_count
-    rake test:replica_set_insert
-    rake test:pooled_replica_set_insert
-    rake test:replica_set_query
+    rake test:rs
 
-Make sure you have a replica set running on localhost before trying to run these tests.
+The suite will set up a five-node replica set by itself and ensure that driver behaves correctly even in the face
+of individual node failures. Node that the `mongod` executable must be in the search path for this to work.
 
 ### Further Reading
 

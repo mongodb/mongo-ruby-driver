@@ -18,10 +18,44 @@
 
 module Mongo
 
-  # Instantiates and manages connections to MongoDB.
+  # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
     attr_reader :nodes, :secondaries, :arbiters, :read_pool, :secondary_pools
 
+    # Create a connection to a MongoDB replica set.
+    #
+    # Once connected to a replica set, you can find out which nodes are primary, secondary, and
+    # arbiters with the corresponding accessors: Connection#primary, Connection#secondaries, and
+    # Connection#arbiters. This is useful if your application needs to connect manually to nodes other
+    # than the primary.
+    #
+    # @param [Array] args A list of host-port pairs ending with a hash containing any options. See
+    #   the examples below for exactly how to use the constructor.
+    #
+    # @option options [Boolean, Hash] :safe (false) Set the default safe-mode options
+    #   propogated to DB objects instantiated off of this Connection. This
+    #   default can be overridden upon instantiation of any DB by explicity setting a :safe value
+    #   on initialization.
+    # @option options [Boolean] :read_secondary(false) If true, a random secondary node will be chosen,
+    #   and all reads will be directed to that node.
+    # @option options [Logger, #debug] :logger (nil) Logger instance to receive driver operation log.
+    # @option options [Integer] :pool_size (1) The maximum number of socket connections allowed per
+    #   connection pool. Note: this setting is relevant only for multi-threaded applications.
+    # @option options [Float] :timeout (5.0) When all of the connections a pool are checked out,
+    #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
+    #   Note: this setting is relevant only for multi-threaded applications.
+    #
+    # @example Connect to a replica set and provide two seed nodes:
+    #   ReplSetConnection.new(['localhost', 30000], ['localhost', 30001])
+    #
+    # @example Connect to a replica set providing two seed nodes and allowing reads from a
+    #   secondary node:
+    #   ReplSetConnection.new(['localhost', 30000], ['localhost', 30001], :read_secondary => true)
+    #
+    # @see http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html Replica sets in Ruby
+    #
+    # @raise [ReplicaSetConnectionError] This is raised if a replica set name is specified and the
+    #   driver fails to connect to a replica set with that name.
     def initialize(*args)
       if args.last.is_a?(Hash)
         opts = args.pop
