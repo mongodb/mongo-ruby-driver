@@ -111,6 +111,13 @@ module Mongo
       @nodes_to_try = []
     end
 
+    # Is it okay to connect to a slave?
+    #
+    # @return [Boolean]
+    def slave_ok?
+      @read_secondary || @slave_ok
+    end
+
     private
 
     def check_is_master(node)
@@ -212,5 +219,38 @@ module Mongo
       @nodes_to_try = new_nodes - @nodes_tried
     end
 
+    # Checkout a socket for reading (i.e., a secondary node).
+    def checkout_reader
+      connect unless connected?
+
+      if @read_pool
+        @read_pool.checkout
+      else
+        checkout_writer
+      end
+    end
+
+    # Checkout a socket for writing (i.e., a primary node).
+    def checkout_writer
+      connect unless connected?
+
+      @primary_pool.checkout
+    end
+
+    # Checkin a socket used for reading.
+    def checkin_reader(socket)
+      if @read_pool
+        @read_pool.checkin(socket)
+      else
+        checkin_writer(socket)
+      end
+    end
+
+    # Checkin a socket used for writing.
+    def checkin_writer(socket)
+      if @primary_pool
+        @primary_pool.checkin(socket)
+      end
+    end
   end
 end

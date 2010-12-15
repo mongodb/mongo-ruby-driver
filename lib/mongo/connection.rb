@@ -35,8 +35,7 @@ module Mongo
     STANDARD_HEADER_SIZE = 16
     RESPONSE_HEADER_SIZE = 20
 
-    attr_reader :logger, :size, :nodes, :auths, :primary, :secondaries, :arbiters,
-      :safe, :primary_pool, :read_pool, :secondary_pools, :host_to_try
+    attr_reader :logger, :size, :auths, :primary, :safe, :primary_pool, :host_to_try
 
     # Counter for generating unique request ids.
     @@current_request_id = 0
@@ -316,18 +315,7 @@ module Mongo
       self["admin"].command(oh)
     end
 
-    # Increment and return the next available request id.
-    #
-    # return [Integer]
-    def get_request_id
-      request_id = ''
-      @id_lock.synchronize do
-        request_id = @@current_request_id += 1
-      end
-      request_id
-    end
-
-    # Get the build information for the current connection.
+        # Get the build information for the current connection.
     #
     # @return [Hash]
     def server_info
@@ -346,7 +334,7 @@ module Mongo
     #
     # @return [Boolean]
     def slave_ok?
-      @read_secondary || @slave_ok
+      @slave_ok
     end
 
     # Send a message to MongoDB, adding the necessary headers.
@@ -446,7 +434,9 @@ module Mongo
         set_primary(@host_to_try)
       end
 
-      raise ConnectionFailure, "failed to connect to any given host:port" unless connected?
+      if !connected?
+        raise ConnectionFailure, "Failed to connect to a master node at #{@host_to_try[0]}:#{@host_to_try[1]}"
+      end
     end
 
     def connecting?
@@ -467,33 +457,29 @@ module Mongo
     end
 
     # Checkout a socket for reading (i.e., a secondary node).
+    # Note: this is overridden in ReplSetConnection.
     def checkout_reader
       connect unless connected?
-
-      if @read_pool
-        @read_pool.checkout
-      else
-        checkout_writer
-      end
+      @primary_pool.checkout
     end
 
     # Checkout a socket for writing (i.e., a primary node).
+    # Note: this is overridden in ReplSetConnection.
     def checkout_writer
       connect unless connected?
-
       @primary_pool.checkout
     end
 
     # Checkin a socket used for reading.
+    # Note: this is overridden in ReplSetConnection.
     def checkin_reader(socket)
-      if @read_pool
-        @read_pool.checkin(socket)
-      else
-        checkin_writer(socket)
+      if @primary_pool
+        @primary_pool.checkin(socket)
       end
     end
 
     # Checkin a socket used for writing.
+    # Note: this is overridden in ReplSetConnection.
     def checkin_writer(socket)
       if @primary_pool
         @primary_pool.checkin(socket)
@@ -616,6 +602,9 @@ module Mongo
       apply_saved_authentication
     end
 
+
+    ## Low-level connection methods.
+
     def receive(sock, expected_response)
       begin
       receive_header(sock, expected_response)
@@ -724,6 +713,17 @@ module Mongo
 
       message.prepend!(headers)
 
+      request_id
+    end
+
+    # Increment and return the next available request id.
+    #
+    # return [Integer]
+    def get_request_id
+      request_id = ''
+      @id_lock.synchronize do
+        request_id = @@current_request_id += 1
+      end
       request_id
     end
 
