@@ -34,13 +34,6 @@ module Mongo
       # Mutex for synchronizing pool access
       @connection_mutex = Mutex.new
 
-      # Global safe option. This is false by default.
-      @safe = options[:safe] || false
-
-      # Create a mutex when a new key, in this case a socket,
-      # is added to the hash.
-      @safe_mutexes = Hash.new { |h, k| h[k] = Mutex.new }
-
       # Condition variable for signal and wait
       @queue = ConditionVariable.new
 
