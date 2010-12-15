@@ -14,6 +14,12 @@ class ConnectTest < Test::Unit::TestCase
     RS.restart_killed_nodes
   end
 
+  def test_connect_with_deprecated_multi
+    @conn = Connection.multi([[RS.host, RS.ports[0]], [RS.host, RS.ports[1]]], :name => RS.name)
+    assert @conn.connected?
+    assert @conn.is_a?(ReplSetConnection)
+  end
+
   def test_connect_bad_name
     assert_raise_error(ReplicaSetConnectionError, "-wrong") do
       ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],

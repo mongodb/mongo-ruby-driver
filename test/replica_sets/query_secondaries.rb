@@ -10,7 +10,6 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
     @conn = ReplSetConnection.new([RS.host, RS.ports[0]], :read_secondary => true)
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
-    @coll = @db.collection("test-sets", :safe => {:w => 2, :wtimeout => 100})
   end
 
   def teardown
@@ -24,7 +23,8 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
       "Primary port and read port at the same!"
   end
 
-  def test_query
+  def test_query_secondaries
+    @coll = @db.collection("test-sets", :safe => {:w => 3, :wtimeout => 10000})
     @coll.save({:a => 20})
     @coll.save({:a => 30})
     @coll.save({:a => 40})
@@ -42,6 +42,38 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
       [20, 30, 40].each do |a|
         assert results.any? {|r| r['a'] == a}, "Could not find record for a => #{a}"
       end
+    end
+  end
+
+  def test_kill_primary
+    @coll = @db.collection("test-sets", :safe => {:w => 3, :wtimeout => 10000})
+    @coll.save({:a => 20})
+    @coll.save({:a => 30})
+    assert_equal 2, @coll.find.to_a.length
+
+    # Should still be able to read immediately after killing master node
+    RS.kill_primary
+    assert_equal 2, @coll.find.to_a.length
+  end
+
+  def test_kill_secondary
+    @coll = @db.collection("test-sets", {:safe => {:w => 3, :wtimeout => 10000}})
+    @coll.save({:a => 20})
+    @coll.save({:a => 30})
+    assert_equal 2, @coll.find.to_a.length
+
+    read_node = RS.get_node_from_port(@conn.read_pool.port)
+    RS.kill(read_node)
+
+    # Should fail immediately on next read
+    assert_raise ConnectionFailure do
+      @coll.find.to_a.length
+    end
+
+    # Should eventually reconnect and be able to read
+    rescue_connection_failure do
+      length = @coll.find.to_a.length
+      assert_equal 2, length
     end
   end
 

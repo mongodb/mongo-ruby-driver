@@ -229,7 +229,7 @@ class ReplSetManager
     while count < @retries do
       begin
         return yield
-        rescue exception
+        rescue exception, Mongo::ConnectionFailure
           sleep(1)
           count += 1
       end
