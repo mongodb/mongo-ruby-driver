@@ -9,8 +9,8 @@ class GridFileSystemTest < Test::Unit::TestCase
     end
 
     teardown do
-      @db['fs.files'].remove
-      @db['fs.chunks'].remove
+      @db.drop_collection('fs.files')
+      @db.drop_collection('fs.chunks')
     end
 
     context "When reading:" do

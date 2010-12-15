@@ -33,6 +33,39 @@ class GridIOTest < Test::Unit::TestCase
       end
     end
 
+    context "Seeking" do
+      setup do
+        @filename = 'test'
+        @mode     = 'w'
+        @data     = "1" * 1024 * 1024
+        @file = GridIO.new(@files, @chunks, @filename, @mode)
+        @file.write(@data)
+        @file.close
+      end
+
+      should "read all data using read_length and then be able to seek" do
+        file = GridIO.new(@files, @chunks, nil, "r", :query => {:_id => @file.files_id})
+        assert_equal @data, file.read(1024 * 1024)
+        file.seek(0)
+        assert_equal @data, file.read
+      end
+
+      should "read all data using read_all and then be able to seek" do
+        file = GridIO.new(@files, @chunks, nil, "r", :query => {:_id => @file.files_id})
+        assert_equal @data, file.read
+        file.seek(0)
+        assert_equal @data, file.read
+        file.seek(1024 * 512)
+        assert_equal 524288, file.file_position
+        assert_equal @data.length / 2, file.read.length
+        assert_equal 1048576, file.file_position
+        assert_nil file.read
+        file.seek(1024 * 512)
+        assert_equal 524288, file.file_position
+      end
+
+    end
+
     context "Grid MD5 check" do
       should "run in safe mode" do
         file = GridIO.new(@files, @chunks, 'smallfile', 'w', :safe => true)

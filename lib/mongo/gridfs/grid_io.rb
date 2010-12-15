@@ -32,7 +32,7 @@ module Mongo
     PROTECTED_ATTRS      = [:files_id, :file_length, :client_md5, :server_md5]
 
     attr_reader :content_type, :chunk_size, :upload_date, :files_id, :filename,
-      :metadata, :server_md5, :client_md5, :file_length
+      :metadata, :server_md5, :client_md5, :file_length, :file_position
 
     # Create a new GridIO object. Note that most users will not need to use this class directly;
     # the Grid and GridFileSystem classes will instantiate this class
@@ -242,11 +242,14 @@ module Mongo
     # Read a file in its entirety.
     def read_all
       buf = ''
-      while true
+      if @current_chunk
         buf << @current_chunk['data'].to_s
-        @current_chunk = get_chunk(@current_chunk['n'] + 1)
-        break unless @current_chunk
+        while chunk = get_chunk(@current_chunk['n'] + 1)
+          buf << chunk['data'].to_s
+          @current_chunk = chunk
+        end
       end
+      @file_position = @file_length
       buf
     end
 
@@ -254,7 +257,11 @@ module Mongo
     def read_length(length)
       cache_chunk_data
       remaining  = (@file_length - @file_position)
-      to_read    = length > remaining ? remaining : length
+      if length.nil?
+        to_read = remaining
+      else
+        to_read    = length > remaining ? remaining : length
+      end
       return nil unless remaining > 0
 
       buf        =  ''
