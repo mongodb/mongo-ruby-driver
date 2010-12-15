@@ -45,8 +45,7 @@ module Mongo
     # You may specify whether connection to slave is permitted.
     # In all cases, the default host is "localhost" and the default port is 27017.
     #
-    # To specify more than one host pair to be used as seeds in a replica set,
-    # use Connection.multi.
+    # If you're connecting to a replica set, you'll need to use ReplSetConnection.new instead.
     #
     # Once connected to a replica set, you can find out which nodes are primary, secondary, and
     # arbiters with the corresponding accessors: Connection#primary, Connection#secondaries, and
