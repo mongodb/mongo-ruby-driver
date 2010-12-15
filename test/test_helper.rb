@@ -22,7 +22,7 @@ end
 require 'bson_ext/cbson' if !(RUBY_PLATFORM =~ /java/) && ENV['C_EXT']
 
 unless defined? MONGO_TEST_DB
-  MONGO_TEST_DB = 'ruby-test-' + BSON::ObjectId.new.to_s
+  MONGO_TEST_DB = 'ruby-test-db'
 end
 
 unless defined? TEST_PORT
