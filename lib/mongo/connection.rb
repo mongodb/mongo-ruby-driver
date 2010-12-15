@@ -540,24 +540,9 @@ module Mongo
       end
     end
 
-    # Convert an argument containing a host name string and a
-    # port number integer into a [host, port] pair array.
-    #
-    # @private
-    def pair_val_to_connection(a)
-      case a
-      when nil
-        ['localhost', DEFAULT_PORT]
-      when String
-        [a, DEFAULT_PORT]
-      when Integer
-        ['localhost', a]
-      when Array
-        a
-      end
-    end
-
     private
+
+    ## Methods for establishing a connection:
 
     # If a ConnectionFailure is raised, this method will be called
     # to close the connection and reset connection values.
@@ -630,17 +615,6 @@ module Mongo
       nil
     end
 
-    # This is an optimized version of receive_header
-    # TODO: modify this to check response_id
-    def receive_and_discard_header(sock)
-      bytes_read = receive_and_discard_message_on_socket(16, sock)
-      unless bytes_read == STANDARD_HEADER_SIZE
-        raise "Short read for DB response header: " +
-          "expected #{STANDARD_HEADER_SIZE} bytes, saw #{bytes_read}"
-      end
-      nil
-    end
-
     def receive_response_header(sock)
       header_buf = receive_message_on_socket(RESPONSE_HEADER_SIZE, sock)
       if header_buf.length != RESPONSE_HEADER_SIZE
@@ -677,6 +651,8 @@ module Mongo
 
     # Constructs a getlasterror message. This method is used exclusively by
     # Connection#send_message_with_safe_check.
+    #
+    # Because it modifies message by reference, we don't need to return it.
     def build_last_error_message(message, db_name, opts)
       message.put_int(0)
       BSON::BSON_RUBY.serialize_cstr(message, "#{db_name}.$cmd")
@@ -694,6 +670,8 @@ module Mongo
 
     # Prepares a message for transmission to MongoDB by
     # constructing a valid message header.
+    #
+    # Note: this method modifies message by reference.
     #
     # @returns [Integer] the request id used in the header
     def add_message_headers(message, operation)
@@ -768,29 +746,6 @@ module Mongo
           raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
       end
       message
-    end
-
-    # Low-level data for receiving data from socket.
-    # Unlike #receive_message_on_socket, this method immediately discards the data
-    # and only returns the number of bytes read.
-    def receive_and_discard_message_on_socket(length, socket)
-      bytes_read = 0
-      begin
-        chunk = socket.read(length)
-        bytes_read = chunk.length
-        raise ConnectionFailure, "connection closed" unless bytes_read > 0
-        if bytes_read < length
-          while bytes_read < length
-            socket.read(length - bytes_read, chunk)
-            raise ConnectionFailure, "connection closed" unless chunk.length > 0
-            bytes_read += chunk.length
-          end
-        end
-        rescue => ex
-          close
-          raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
-      end
-      bytes_read
     end
 
     if defined?(Encoding)
