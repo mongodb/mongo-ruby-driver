@@ -117,3 +117,7 @@ Hongli Lai (Phusion)
 Mislav Marohnić
 
 * Replaced returning with each_with_object
+
+Alex Stupka
+
+* Replica set port bug

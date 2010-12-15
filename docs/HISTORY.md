@@ -1,5 +1,14 @@
 # MongoDB Ruby Driver History
 
+### 1.1.5
+2010-12-15
+
+* ReplSetConnection class. This must be used for replica set connections from
+  now on. You can still use Connection.multi, but that method has been deprecated.
+* Automated replica set tests. rake test:rs
+* Check that request and response ids match.
+* Several bug fixes. See the commit history for details.
+
 ### 1.1.4
 2010-11-30
 
