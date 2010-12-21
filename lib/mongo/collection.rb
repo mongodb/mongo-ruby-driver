@@ -134,7 +134,7 @@ module Mongo
     #   to Ruby 1.8).
     #
     # @option opts [Array, Hash] :fields field names that should be returned in the result
-    #   set ("_id" will always be included). By limiting results to a certain subset of fields,
+    #   set ("_id" will be included unless explicity excluded). By limiting results to a certain subset of fields,
     #   you can cut down on network traffic and decoding time. If using a Hash, keys should be field
     #   names and values should be either 1 or 0, depending on whether you want to include or exclude
     #   the given field.
