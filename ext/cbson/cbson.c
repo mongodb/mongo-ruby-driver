@@ -401,6 +401,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             if (strcmp(cls, "BSON::Code") == 0) {
                 buffer_position length_location, start_position, total_length;
                 int length;
+                VALUE code_str;
                 write_name_and_type(buffer, key, 0x0F);
 
                 start_position = buffer_get_position(buffer);
@@ -409,7 +410,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                     rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
                 }
 
-                VALUE code_str = rb_funcall(value, rb_intern("code"), 0);
+                code_str = rb_funcall(value, rb_intern("code"), 0);
                 length = RSTRING_LEN(code_str) + 1;
                 SAFE_WRITE(buffer, (char*)&length, 4);
                 SAFE_WRITE(buffer, RSTRING_PTR(code_str), length - 1);
@@ -573,8 +574,7 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_
         rb_hash_foreach(hash, write_function, pack_extra(buffer, check_keys));
     } else {
         buffer_free(buffer);
-        char* cls = rb_obj_classname(hash);
-        rb_raise(InvalidDocument, "BSON.serialize takes a Hash but got a %s", cls);
+        rb_raise(InvalidDocument, "BSON.serialize takes a Hash but got a %s", rb_obj_classname(hash));
     }
 
     // write null byte and fill in length
