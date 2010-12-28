@@ -47,7 +47,7 @@ else
     raise LoadError if ENV['TEST_MODE'] && !ENV['C_EXT']
 
     # Raise LoadError unless little endian
-    raise LoadError unless [1,0,0,0].pack("i").bytes.first == 1
+    raise LoadError unless "\x01\x00\x00\x00".unpack("i").first == 1
 
     require 'bson_ext/cbson'
     raise LoadError unless defined?(CBson::VERSION)
