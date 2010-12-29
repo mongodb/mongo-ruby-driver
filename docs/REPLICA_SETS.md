@@ -38,18 +38,14 @@ every half second and time out after thirty seconds.
 
     # Ensure retry upon failure
     def rescue_connection_failure(max_retries=60)
-        success = false
-        retries = 0
-        while !success
-          begin
-            yield
-            success = true
-          rescue Mongo::ConnectionFailure => ex
-            retries += 1
-            raise ex if retries >= max_retries
-            sleep(0.5)
-          end
-        end
+      retries = 0
+      begin
+        yield
+      rescue Mongo::ConnectionFailure => ex
+        retries += 1
+        raise ex if retries > max_retries
+        sleep(0.5)
+        retry
       end
     end
 
