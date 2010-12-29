@@ -13,6 +13,8 @@ class ReplicaSetAckTest < Test::Unit::TestCase
     @slave1 = Connection.new(@conn.secondary_pools[0].host,
       @conn.secondary_pools[0].port, :slave_ok => true)
 
+    assert !@slave1.read_primary?
+
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @col = @db.collection("test-sets")

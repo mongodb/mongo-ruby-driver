@@ -124,6 +124,14 @@ module Mongo
       @nodes_to_try.length > 0
     end
 
+    # Determine whether we're reading from a primary node. If false,
+    # this connection connects to a secondary node and @read_secondaries is true.
+    #
+    # @return [Boolean]
+    def read_primary?
+      !@read_pool || @read_pool.length.zero?
+    end
+
     # Close the connection to the database.
     def close
       super

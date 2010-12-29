@@ -430,7 +430,13 @@ module Mongo
       reset_connection
 
       config = check_is_master(@host_to_try)
-      if is_primary?(config)
+      if config
+        if config['ismaster'] == 1 || config['ismaster'] == true
+          @read_primary = true
+        elsif @slave_ok
+          @read_primary = false
+        end
+
         set_primary(@host_to_try)
       end
 
@@ -448,6 +454,14 @@ module Mongo
     # Probably not since if any node raises a connection failure, all nodes will be closed.
     def connected?
       @primary_pool && @primary_pool.host && @primary_pool.port
+    end
+
+    # Determine whether we're reading from a primary node. If false,
+    # this connection connects to a secondary node and @slave_ok is true.
+    #
+    # @return [Boolean]
+    def read_primary?
+      @read_primary
     end
 
     # Close the connection to the database.
@@ -550,16 +564,6 @@ module Mongo
     def reset_connection
       close
       @primary = nil
-    end
-
-    # Primary is defined as either a master node or a slave if
-    # :slave_ok has been set to +true+.
-    #
-    # If a primary node is discovered, we set the the @host and @port and
-    # apply any saved authentication.
-    # TODO: simplify
-    def is_primary?(config)
-      config && (config['ismaster'] == 1 || config['ismaster'] == true) || @slave_ok
     end
 
     def check_is_master(node)

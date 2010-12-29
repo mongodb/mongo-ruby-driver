@@ -31,6 +31,7 @@ class ConnectTest < Test::Unit::TestCase
     @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
       [RS.host, RS.ports[2]], :name => RS.name)
     assert @conn.connected?
+    assert @conn.read_primary?
 
     assert_equal RS.primary, @conn.primary
     assert_equal RS.secondaries.sort, @conn.secondaries.sort

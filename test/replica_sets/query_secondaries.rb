@@ -16,6 +16,10 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
     RS.restart_killed_nodes
   end
 
+  def test_read_primary
+    assert !@conn.read_primary?
+  end
+
   def test_con
     assert @conn.primary_pool, "No primary pool!"
     assert @conn.read_pool, "No read pool!"
