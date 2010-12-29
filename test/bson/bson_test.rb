@@ -67,11 +67,15 @@ class BSONTest < Test::Unit::TestCase
     assert_doc_pass(doc)
   end
 
-  def test_document_length
-    doc = {'name' => 'a' * 5 * 1024 * 1024}
+  def test_limit_max_bson_size
+    doc = {'name' => 'a' * BSON_CODER.max_bson_size}
     assert_raise InvalidDocument do
       assert @encoder.serialize(doc)
     end
+  end
+
+  def test_max_bson_size
+    assert BSON_CODER.max_bson_size >= BSON::DEFAULT_MAX_BSON_SIZE
   end
 
   def test_round_trip

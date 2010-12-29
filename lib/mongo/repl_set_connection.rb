@@ -111,7 +111,9 @@ module Mongo
 
       pick_secondary_for_read if @read_secondary
 
-      if !connected?
+      if connected?
+        BSON::BSON_CODER.update_max_bson_size(self)
+      else
         if @secondary_pools.empty?
           raise ConnectionFailure, "Failed to connect any given host:port"
         else

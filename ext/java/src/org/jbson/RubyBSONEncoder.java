@@ -61,6 +61,8 @@ public class RubyBSONEncoder extends BSONEncoder {
     private boolean _check_keys;
     private boolean _move_id;
 
+    private static final int DEFAULT_MAX_BSON_SIZE = 4 * 1024 * 1024;
+    private static int _max_bson_size = DEFAULT_MAX_BSON_SIZE;
     private static final int BIT_SIZE = 64;
     private static final long MAX = (1L << (BIT_SIZE - 1)) - 1;
     private static final BigInteger LONG_MAX = BigInteger.valueOf(MAX);
@@ -84,6 +86,17 @@ public class RubyBSONEncoder extends BSONEncoder {
       }
     }
 
+    public static RubyFixnum max_bson_size(RubyObject obj) {
+        Ruby _run = obj.getRuntime();
+        return _run.newFixnum(_max_bson_size);
+    }
+
+    public static void update_max_bson_size(RubyObject obj, RubyObject conn) {
+        Ruby _run = obj.getRuntime();
+        _max_bson_size = ((Long)JavaEmbedUtils.invokeMethod( _run, conn, "max_bson_size",
+          new Object[] {}, Object.class)).intValue();
+    }
+
     public RubyString encode( Object arg ) {
         RubyHash o = (RubyHash)arg;
         BasicOutputBuffer buf = new BasicOutputBuffer();
@@ -95,12 +108,12 @@ public class RubyBSONEncoder extends BSONEncoder {
         return b;
     }
 
-    public void set( OutputBuffer out ){
+    public void set( OutputBuffer out ) {
         if ( _buf != null ) {
             done();
             throw new IllegalStateException( "in the middle of something" );
         }
-        
+
         _buf = out;
     }
  
@@ -202,10 +215,10 @@ public class RubyBSONEncoder extends BSONEncoder {
           }
 
         // Make sure we're within the 4MB limit
-        if ( _buf.size() > 4 * 1024 * 1024 ) {
+        if ( _buf.size() > _max_bson_size ) {
             _rbRaise( (RubyClass)_rbclsInvalidDocument,
-              "Document is too large (" + _buf.size() + "). BSON documents are limited to 4MB (" +
-               4 * 1024 * 1024 + ").");
+              "Document is too large (" + _buf.size() + "). BSON documents are limited to " +
+              _max_bson_size + " bytes." );
         }
 
         _buf.write( EOO );

@@ -440,7 +440,9 @@ module Mongo
         set_primary(@host_to_try)
       end
 
-      if !connected?
+      if connected?
+        BSON::BSON_CODER.update_max_bson_size(self)
+      else
         raise ConnectionFailure, "Failed to connect to a master node at #{@host_to_try[0]}:#{@host_to_try[1]}"
       end
     end
@@ -468,6 +470,15 @@ module Mongo
     def close
       @primary_pool.close if @primary_pool
       @primary_pool = nil
+    end
+
+    # Returns the maximum BSON object size as returned by the core server.
+    # Use the 4MB default when the server doesn't report this.
+    #
+    # @return [Integer]
+    def max_bson_size
+      config = self['admin'].command({:ismaster => 1})
+      config['maxBsonObjectSize'] || Mongo::DEFAULT_MAX_BSON_SIZE
     end
 
     # Checkout a socket for reading (i.e., a secondary node).

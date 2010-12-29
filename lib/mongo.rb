@@ -11,6 +11,8 @@ module Mongo
   DESCENDING = -1
   GEO2D      = '2d'
 
+  DEFAULT_MAX_BSON_SIZE = 4 * 1024 * 1024
+
   module Constants
     OP_REPLY        = 1
     OP_MSG          = 1000

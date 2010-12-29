@@ -165,6 +165,41 @@ class TestConnection < Test::Unit::TestCase
     assert unlocked, "mongod failed to unlock"
   end
 
+  def test_max_bson_size_value
+    conn = standard_connection
+    if conn.server_version > "1.6"
+      assert_equal conn['admin'].command({:ismaster => 1})['maxBsonObjectSize'], conn.max_bson_size
+    end
+
+    conn.connect
+    assert_equal BSON::BSON_CODER.max_bson_size, conn.max_bson_size
+    doc = {'n' => 'a' * (BSON_CODER.max_bson_size - 11)}
+    assert_raise InvalidDocument do
+      assert BSON::BSON_CODER.serialize(doc)
+    end
+
+    limit = 7 * 1024 * 1024
+    conn.stubs(:max_bson_size).returns(limit)
+    conn.connect
+    assert_equal limit, conn.max_bson_size
+    assert_equal limit, BSON::BSON_CODER.max_bson_size
+    doc = {'n' => 'a' * ((limit) - 11)}
+    assert_raise_error InvalidDocument, "limited to #{limit}" do
+      assert BSON::BSON_CODER.serialize(doc)
+    end
+  end
+
+  def test_max_bson_size_with_old_mongod
+    conn = standard_connection(:connect => false)
+
+    admin_db = Object.new
+    admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1}).twice
+    conn.expects(:[]).with('admin').returns(admin_db).twice
+
+    conn.connect
+    assert_equal Mongo::DEFAULT_MAX_BSON_SIZE, BSON::BSON_CODER.max_bson_size
+  end
+
   context "Saved authentications" do
     setup do
       @conn = standard_connection

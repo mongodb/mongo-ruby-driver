@@ -88,6 +88,8 @@ static VALUE InvalidDocument;
 static VALUE DigestMD5;
 static VALUE RB_HASH;
 
+static int max_bson_size;
+
 #if HAVE_RUBY_ENCODING_H
 #include "ruby/encoding.h"
 #define STR_NEW(p,n)                                                    \
@@ -582,9 +584,9 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_
     length = buffer_get_position(buffer) - start_position;
 
     // make sure that length doesn't exceed 4MB
-    if (length > 4 * 1024 * 1024) {
+    if (length > max_bson_size) {
       buffer_free(buffer);
-      rb_raise(InvalidDocument, "Document too large: BSON documents are limited to 4MB.");
+      rb_raise(InvalidDocument, "Document too large: BSON documents are limited to %d bytes.", max_bson_size);
       return;
     }
     SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&length, 4);
@@ -902,11 +904,18 @@ static VALUE objectid_generate(VALUE self)
     return oid;
 }
 
+static void method_update_max_bson_size(VALUE self, VALUE connection) {
+    max_bson_size = FIX2INT(rb_funcall(connection, rb_intern("max_bson_size"), 0));
+}
+
+static VALUE method_max_bson_size(VALUE self) {
+    return INT2FIX(max_bson_size);
+}
 
 void Init_cbson() {
     VALUE bson, CBson, Digest, ext_version, digest;
     static char hostname[MAX_HOSTNAME_LENGTH];
-    
+
     element_assignment_method = rb_intern("[]=");
     unpack_method = rb_intern("unpack");
     utc_method = rb_intern("utc");
@@ -939,6 +948,8 @@ void Init_cbson() {
     rb_define_const(CBson, "VERSION", ext_version);
     rb_define_module_function(CBson, "serialize", method_serialize, 3);
     rb_define_module_function(CBson, "deserialize", method_deserialize, 1);
+    rb_define_module_function(CBson, "max_bson_size", method_max_bson_size, 0);
+    rb_define_module_function(CBson, "update_max_bson_size", method_update_max_bson_size, 1);
 
     rb_require("digest/md5");
     Digest = rb_const_get(rb_cObject, rb_intern("Digest"));
@@ -953,4 +964,6 @@ void Init_cbson() {
         rb_str_new2(hostname));
     memcpy(hostname_digest, RSTRING_PTR(digest), 16);
     hostname_digest[16] = '\0';
+
+    max_bson_size = 4 * 1024 * 1024;
 }

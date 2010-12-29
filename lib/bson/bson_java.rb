@@ -17,5 +17,12 @@ module BSON
       callback.get
     end
 
+    def self.max_bson_size
+      Java::OrgJbson::RubyBSONEncoder.max_bson_size(self)
+    end
+
+    def self.update_max_bson_size(connection)
+      Java::OrgJbson::RubyBSONEncoder.update_max_bson_size(self, connection)
+    end
   end
 end

@@ -28,5 +28,12 @@ module BSON
       CBson.deserialize(ByteBuffer.new(buf).to_s)
     end
 
+    def self.max_bson_size
+      CBson.max_bson_size
+    end
+
+    def self.update_max_bson_size(connection)
+      CBson.update_max_bson_size(connection)
+    end
   end
 end

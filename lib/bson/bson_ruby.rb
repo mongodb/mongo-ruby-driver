@@ -20,6 +20,10 @@ module BSON
   # A BSON seralizer/deserializer in pure Ruby.
   class BSON_RUBY
 
+    DEFAULT_MAX_BSON_SIZE = 4 * 1024 * 1024
+
+    @@max_bson_size = DEFAULT_MAX_BSON_SIZE
+
     MINKEY = -1
     EOO = 0
     NUMBER = 1
@@ -51,13 +55,13 @@ module BSON
       NULL_BYTE       = "\0".force_encoding('binary').freeze
       UTF8_ENCODING   = Encoding.find('utf-8')
       BINARY_ENCODING = Encoding.find('binary')
-      
+
       def self.to_utf8_binary(str)
         str.encode(UTF8_ENCODING).force_encoding(BINARY_ENCODING)
       end
     else
       NULL_BYTE = "\0"
-      
+
       def self.to_utf8_binary(str)
         begin
           str.unpack("U*")
@@ -66,6 +70,14 @@ module BSON
         end
         str
       end
+    end
+
+    def self.update_max_bson_size(connection)
+      @@max_bson_size = connection.max_bson_size
+    end
+
+    def self.max_bson_size
+      @@max_bson_size
     end
 
     def self.serialize_cstr(buf, val)
@@ -120,8 +132,8 @@ module BSON
       end
 
       serialize_eoo_element(@buf)
-      if @buf.size > 4 * 1024 * 1024
-        raise InvalidDocument, "Document is too large (#{@buf.size}). BSON documents are limited to 4MB (#{4 * 1024 * 1024})."
+      if @buf.size > @@max_bson_size
+        raise InvalidDocument, "Document is too large (#{@buf.size}). BSON documents are limited to #{@@max_bson_size} bytes."
       end
       @buf.put_int(@buf.size, 0)
       @buf
