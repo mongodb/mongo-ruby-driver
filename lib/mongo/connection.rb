@@ -138,15 +138,19 @@ module Mongo
     #
     # @param opts Any of the options available for Connection.new
     #
-    # @return [Mongo::Connection]
-    def self.from_uri(uri, opts={})
-      nodes, auths = Mongo::URIParser.parse(uri)
-      opts.merge!({:auths => auths})
-      if nodes.length == 1
-        Connection.new(nodes[0][0], nodes[0][1], opts)
-      elsif nodes.length > 1
-        nodes << opts
-        ReplSetConnection.new(*nodes)
+    # @return [Mongo::Connection, Mongo::ReplSetConnection]
+    def self.from_uri(string, extra_opts={})
+      uri = URIParser.new(string)
+      opts = uri.connection_options
+      opts.merge!(extra_opts)
+
+      if uri.nodes.length == 1
+        opts.merge!({:auths => uri.auths})
+        Connection.new(uri.nodes[0][0], uri.nodes[0][1], opts)
+      elsif uri.nodes.length > 1
+        nodes = uri.nodes.clone
+        nodes_with_opts = nodes << opts
+        ReplSetConnection.new(*nodes_with_opts)
       else
         raise MongoArgumentError, "No nodes specified. Please ensure that you've provided at least one node."
       end

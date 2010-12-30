@@ -16,8 +16,8 @@ class ConnectTest < Test::Unit::TestCase
 
   def test_connect_with_deprecated_multi
     @conn = Connection.multi([[RS.host, RS.ports[0]], [RS.host, RS.ports[1]]], :name => RS.name)
-    assert @conn.connected?
     assert @conn.is_a?(ReplSetConnection)
+    assert @conn.connected?
   end
 
   def test_connect_bad_name

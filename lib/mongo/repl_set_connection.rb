@@ -32,6 +32,8 @@ module Mongo
     # @param [Array] args A list of host-port pairs ending with a hash containing any options. See
     #   the examples below for exactly how to use the constructor.
     #
+    # @option options [String] :rs_name (nil) The name of the replica set to connect to. You
+    #   can use this option to verify that you're connecting to the right replica set.
     # @option options [Boolean, Hash] :safe (false) Set the default safe-mode options
     #   propogated to DB objects instantiated off of this Connection. This
     #   default can be overridden upon instantiation of any DB by explicity setting a :safe value
