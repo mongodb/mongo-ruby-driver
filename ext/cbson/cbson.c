@@ -104,13 +104,13 @@ static int max_bson_size;
 /* MUST call TO_UTF8 before calling write_utf8. */
 #define TO_UTF8(string) rb_str_export_to_enc((string), rb_utf8_encoding())
 static void write_utf8(buffer_t buffer, VALUE string, char check_null) {
-    result_t status = check_string(RSTRING_PTR(string), RSTRING_LEN(string),
+    result_t status = check_string(RSTRING_PTR(string), RSTRING_LENINT(string),
                                    0, check_null);
     if (status == HAS_NULL) {
         buffer_free(buffer);
         rb_raise(InvalidDocument, "Key names / regex patterns must not contain the NULL byte");
     }
-    SAFE_WRITE(buffer, RSTRING_PTR(string), RSTRING_LEN(string));
+    SAFE_WRITE(buffer, RSTRING_PTR(string), RSTRING_LENINT(string));
 }
 #else
 #define STR_NEW(p,n) rb_str_new((p), (n))
@@ -257,7 +257,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             } else {
                 int int_value;
                 write_name_and_type(buffer, key, 0x10);
-                int_value = ll_value;
+                int_value = (int)ll_value;
                 SAFE_WRITE(buffer, (char*)&int_value, 4);
             }
             break;
@@ -307,7 +307,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
             }
 
-            items = RARRAY_LEN(value);
+            items = RARRAY_LENINT(value);
             for(i = 0; i < items; i++) {
                 char* name;
                 VALUE key;
@@ -328,7 +328,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             int length;
             write_name_and_type(buffer, key, 0x02);
             value = TO_UTF8(value);
-            length = RSTRING_LEN(value) + 1;
+            length = RSTRING_LENINT(value) + 1;
             SAFE_WRITE(buffer, (char*)&length, 4);
             write_utf8(buffer, value, 0);
             SAFE_WRITE(buffer, &zero, 1);
@@ -337,7 +337,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
     case T_SYMBOL:
         {
             const char* str_value = rb_id2name(SYM2ID(value));
-            int length = strlen(str_value) + 1;
+            int length = (int)strlen(str_value) + 1;
             write_name_and_type(buffer, key, 0x0E);
             SAFE_WRITE(buffer, (char*)&length, 4);
             SAFE_WRITE(buffer, str_value, length);
@@ -352,7 +352,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 const char subtype = strcmp(cls, "ByteBuffer") ?
                     (const char)FIX2INT(rb_funcall(value, rb_intern("subtype"), 0)) : 2;
                 VALUE string_data = rb_funcall(value, rb_intern("to_s"), 0);
-                int length = RSTRING_LEN(string_data);
+                int length = RSTRING_LENINT(string_data);
                 write_name_and_type(buffer, key, 0x05);
                 if (subtype == 2) {
                     const int other_length = length + 4;
@@ -413,7 +413,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 }
 
                 code_str = rb_funcall(value, rb_intern("code"), 0);
-                length = RSTRING_LEN(code_str) + 1;
+                length = RSTRING_LENINT(code_str) + 1;
                 SAFE_WRITE(buffer, (char*)&length, 4);
                 SAFE_WRITE(buffer, RSTRING_PTR(code_str), length - 1);
                 SAFE_WRITE(buffer, &zero, 1);
@@ -493,7 +493,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             if (TYPE(has_extra) == T_TRUE) {
                 VALUE extra = rb_funcall(value, rb_intern("extra_options_str"), 0);
                 buffer_position old_position = buffer_get_position(buffer);
-                SAFE_WRITE(buffer, RSTRING_PTR(extra), RSTRING_LEN(extra));
+                SAFE_WRITE(buffer, RSTRING_PTR(extra), RSTRING_LENINT(extra));
                 qsort(buffer_get_buffer(buffer) + old_position, RSTRING_LEN(extra), sizeof(char), cmp_char);
             }
             SAFE_WRITE(buffer, &zero, 1);
@@ -667,7 +667,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             value = rb_ary_new();
             while (*position < end) {
                 int type = (int)buffer[(*position)++];
-                int key_size = strlen(buffer + *position);
+                int key_size = (int)strlen(buffer + *position);
                 VALUE to_append;
 
                 *position += key_size + 1; // just skip the key, they're in order.
@@ -731,13 +731,13 @@ static VALUE get_value(const char* buffer, int* position, int type) {
         }
     case 11:
         {
-            int pattern_length = strlen(buffer + *position);
+            int pattern_length = (int)strlen(buffer + *position);
             VALUE pattern = STR_NEW(buffer + *position, pattern_length);
             int flags_length, flags = 0, i = 0;
             VALUE argv[3];
             *position += pattern_length + 1;
 
-            flags_length = strlen(buffer + *position);
+            flags_length = (int)strlen(buffer + *position);
             for (i = 0; i < flags_length; i++) {
                 char flag = buffer[*position + i];
                 if (flag == 'i') {
@@ -847,7 +847,7 @@ static VALUE elements_to_hash(const char* buffer, int max) {
     int position = 0;
     while (position < max) {
         int type = (int)buffer[position++];
-        int name_length = strlen(buffer + position);
+        int name_length = (int)strlen(buffer + position);
         VALUE name = STR_NEW(buffer + position, name_length);
         VALUE value;
         position += name_length + 1;
@@ -859,7 +859,7 @@ static VALUE elements_to_hash(const char* buffer, int max) {
 
 static VALUE method_deserialize(VALUE self, VALUE bson) {
     const char* buffer = RSTRING_PTR(bson);
-    int remaining = RSTRING_LEN(bson);
+    int remaining = RSTRING_LENINT(bson);
 
     // NOTE we just swallow the size and end byte here
     buffer += 4;
@@ -876,7 +876,7 @@ static VALUE objectid_generate(VALUE self)
     unsigned short pid;
     int i;
 
-    t = htonl(time(NULL));
+    t = htonl((int)time(NULL));
     MEMCPY(&oid_bytes, &t, unsigned char, 4);
 
     MEMCPY(&oid_bytes[4], hostname_digest, unsigned char, 3);
