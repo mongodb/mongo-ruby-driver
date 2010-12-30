@@ -58,6 +58,8 @@ module Mongo
 
     # Parse a MongoDB URI. This method is used by Connection.from_uri.
     # Returns an array of nodes and an array of db authorizations, if applicable.
+    #
+    # @core connections
     def initialize(string)
       if string =~ /^mongodb:\/\//
         string = string[10..-1]
