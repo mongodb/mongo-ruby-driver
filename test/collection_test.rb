@@ -417,7 +417,7 @@ class TestCollection < Test::Unit::TestCase
 
       m = "function() { emit(this.user_id, 1); }"
       r = "function(k,vals) { return 1; }"
-      res = @@test.map_reduce(m, r);
+      res = @@test.map_reduce(m, r, :out => 'foo');
       assert res.find_one({"_id" => 1})
       assert res.find_one({"_id" => 2})
     end
@@ -428,7 +428,7 @@ class TestCollection < Test::Unit::TestCase
 
       m = Code.new("function() { emit(this.user_id, 1); }")
       r = Code.new("function(k,vals) { return 1; }")
-      res = @@test.map_reduce(m, r);
+      res = @@test.map_reduce(m, r, :out => 'foo');
       assert res.find_one({"_id" => 1})
       assert res.find_one({"_id" => 2})
     end
@@ -441,7 +441,7 @@ class TestCollection < Test::Unit::TestCase
 
       m = Code.new("function() { emit(this.user_id, 1); }")
       r = Code.new("function(k,vals) { return 1; }")
-      res = @@test.map_reduce(m, r, :query => {"user_id" => {"$gt" => 1}});
+      res = @@test.map_reduce(m, r, :query => {"user_id" => {"$gt" => 1}}, :out => 'foo');
       assert_equal 2, res.count
       assert res.find_one({"_id" => 2})
       assert res.find_one({"_id" => 3})
@@ -450,7 +450,7 @@ class TestCollection < Test::Unit::TestCase
     def test_map_reduce_with_raw_response
       m = Code.new("function() { emit(this.user_id, 1); }")
       r = Code.new("function(k,vals) { return 1; }")
-      res = @@test.map_reduce(m, r, :raw => true)
+      res = @@test.map_reduce(m, r, :raw => true, :out => 'foo')
       assert res["result"]
       assert res["counts"]
       assert res["timeMillis"]
