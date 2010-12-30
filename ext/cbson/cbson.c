@@ -30,9 +30,15 @@
 #ifndef RSTRING_LEN
 #  define RSTRING_LEN(v) RSTRING(v)->len
 #endif
+#ifndef RSTRING_LENINT
+#  define RSTRING_LENINT(v) rb_long2int(RSTRING_LEN(v))
+#endif
 
 #ifndef RARRAY_LEN
 #  define RARRAY_LEN(v) RARRAY(v)->len
+#endif
+#ifndef RARRAY_LENINT
+#  define RARRAY_LENINT(v) rb_long2int(RARRAY_LEN(v))
 #endif
 
 #if HAVE_RUBY_ST_H
