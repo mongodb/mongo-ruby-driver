@@ -52,9 +52,7 @@ module Mongo
                   :fsync      => lambda {|arg| arg == 'true' ? true : false}
                  }
 
-    ATTRS      = SPEC_ATTRS + OPT_ATTRS
-
-    attr_reader *ATTRS
+    attr_reader :nodes, :auths, :connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync
 
     # Parse a MongoDB URI. This method is used by Connection.from_uri.
     # Returns an array of nodes and an array of db authorizations, if applicable.
