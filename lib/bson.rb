@@ -7,7 +7,7 @@ MINIMUM_BSON_EXT_VERSION = "1.2.rc0"
 module BSON
   VERSION = "1.2.rc0"
 
-  if defined? Mongo
+  if defined? Mongo::DEFAULT_MAX_BSON_SIZE
     DEFAULT_MAX_BSON_SIZE = Mongo::DEFAULT_MAX_BSON_SIZE
   else
     DEFAULT_MAX_BSON_SIZE = 4 * 1024 * 1024
