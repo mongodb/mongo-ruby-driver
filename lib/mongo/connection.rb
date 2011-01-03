@@ -518,7 +518,6 @@ module Mongo
     protected
 
     # Generic initialization code.
-    # @protected
     def setup(options)
       # Authentication objects
       @auths = options.fetch(:auths, [])
@@ -692,7 +691,7 @@ module Mongo
     #
     # Note: this method modifies message by reference.
     #
-    # @returns [Integer] the request id used in the header
+    # @return [Integer] the request id used in the header
     def add_message_headers(message, operation)
       headers = [
         # Message size.
