@@ -91,10 +91,11 @@ public class RubyBSONEncoder extends BSONEncoder {
         return _run.newFixnum(_max_bson_size);
     }
 
-    public static void update_max_bson_size(RubyObject obj, RubyObject conn) {
+    public static RubyFixnum update_max_bson_size(RubyObject obj, RubyObject conn) {
         Ruby _run = obj.getRuntime();
         _max_bson_size = ((Long)JavaEmbedUtils.invokeMethod( _run, conn, "max_bson_size",
           new Object[] {}, Object.class)).intValue();
+        return _run.newFixnum(_max_bson_size);
     }
 
     public RubyString encode( Object arg ) {

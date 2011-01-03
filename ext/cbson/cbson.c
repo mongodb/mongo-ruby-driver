@@ -904,8 +904,9 @@ static VALUE objectid_generate(VALUE self)
     return oid;
 }
 
-static void method_update_max_bson_size(VALUE self, VALUE connection) {
+static VALUE method_update_max_bson_size(VALUE self, VALUE connection) {
     max_bson_size = FIX2INT(rb_funcall(connection, rb_intern("max_bson_size"), 0));
+    return INT2FIX(max_bson_size);
 }
 
 static VALUE method_max_bson_size(VALUE self) {

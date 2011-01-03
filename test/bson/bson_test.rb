@@ -78,6 +78,15 @@ class BSONTest < Test::Unit::TestCase
     assert BSON_CODER.max_bson_size >= BSON::DEFAULT_MAX_BSON_SIZE
   end
 
+  def test_update_max_bson_size
+    require 'ostruct'
+    mock_conn = OpenStruct.new
+    size      = 7 * 1024 * 1024
+    mock_conn.max_bson_size = size
+    assert_equal size, BSON_CODER.update_max_bson_size(mock_conn)
+    assert_equal size, BSON_CODER.max_bson_size
+  end
+
   def test_round_trip
     doc = {'doc' => 123}
     @encoder.deserialize(@encoder.serialize(doc))
