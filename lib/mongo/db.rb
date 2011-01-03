@@ -403,7 +403,7 @@ module Mongo
     def drop_index(collection_name, index_name)
       oh = BSON::OrderedHash.new
       oh[:deleteIndexes] = collection_name
-      oh[:index] = index_name
+      oh[:index] = index_name.to_s
       doc = command(oh, :check_response => false)
       ok?(doc) || raise(MongoDBError, "Error with drop_index command: #{doc.inspect}")
     end

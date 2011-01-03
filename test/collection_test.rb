@@ -600,6 +600,23 @@ class TestCollection < Test::Unit::TestCase
     @@test.drop_index("a_1")
   end
 
+  def test_ensure_index_timeout
+    @@db.cache_time = 2
+    coll = @@db['ensure_test']
+    coll.expects(:generate_indexes).twice
+    coll.ensure_index([['a', 1]])
+
+    # These will be cached
+    coll.ensure_index([['a', 1]])
+    coll.ensure_index([['a', 1]])
+    coll.ensure_index([['a', 1]])
+    coll.ensure_index([['a', 1]])
+
+    sleep(3)
+    # This won't be, so generate_indexes will be called twice
+    coll.ensure_index([['a', 1]])
+  end
+
   context "Grouping" do
     setup do
       @@test.remove
@@ -691,6 +708,17 @@ class TestCollection < Test::Unit::TestCase
       @@db.drop_collection('test-collection')
       @collection = @@db.collection('test-collection')
       @geo        = @@db.collection('geo')
+    end
+
+    should "create index using symbols" do
+      @collection.create_index :foo, :name => :bar
+      @geo.create_index :goo, :name => :baz
+      assert @collection.index_information['bar']
+      @collection.drop_index :bar
+      assert_nil @collection.index_information['bar']
+      assert @geo.index_information['baz']
+      @geo.drop_index(:baz)
+      assert_nil @geo.index_information['baz']
     end
 
     should "create a geospatial index" do

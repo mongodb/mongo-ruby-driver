@@ -415,6 +415,7 @@ module Mongo
       opts[:dropDups] = opts.delete(:drop_dups) if opts[:drop_dups]
       field_spec = parse_index_spec(spec)
       name = opts.delete(:name) || generate_index_name(field_spec)
+      name = name.to_s if name
 
       generate_indexes(field_spec, name, opts)
       name
@@ -437,18 +438,15 @@ module Mongo
     #
     # @return [String] the name of the index.
     def ensure_index(spec, opts={})
-      valid = BSON::OrderedHash.new
       now = Time.now.utc.to_i
       field_spec = parse_index_spec(spec)
 
-      field_spec.each do |key, value|
-        cache_key = generate_index_name({key => value})
-        timeout = @cache[cache_key] || 0
-        valid[key] = value if timeout <= now
-      end
+      name = opts.delete(:name) || generate_index_name(field_spec)
+      name = name.to_s if name
 
-      name = opts.delete(:name) || generate_index_name(valid)
-      generate_indexes(valid, name, opts) if valid.any?
+      if !@cache[name] || @cache[name] <= now
+        generate_indexes(field_spec, name, opts)
+      end
 
       # Reset the cache here in case there are any errors inserting. Best to be safe.
       @cache[name] = now + @cache_time
@@ -461,7 +459,7 @@ module Mongo
     #
     # @core indexes
     def drop_index(name)
-      @cache[name] = nil
+      @cache[name.to_s] = nil
       @db.drop_index(@name, name)
     end
 

@@ -113,7 +113,6 @@ class CollectionTest < Test::Unit::TestCase
 
       @coll.ensure_index [["x", Mongo::DESCENDING]]
       @coll.ensure_index [["x", Mongo::DESCENDING]]
-      
     end
     
     should "call generate_indexes for each key when calling ensure_indexes" do
