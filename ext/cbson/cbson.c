@@ -155,7 +155,7 @@ static void write_utf8(buffer_t buffer, VALUE string, char check_null) {
  * either use _scprintf and _snprintf on for Windows or
  * use snprintf for solaris. */
 #ifndef HAVE_ASPRINTF
-#ifdef _MSC_VER
+#ifdef _WIN32 || _MSC_VER
 #define INT2STRING(buffer, i)                   \
     {                                           \
         int vslength = _scprintf("%d", i) + 1;  \
