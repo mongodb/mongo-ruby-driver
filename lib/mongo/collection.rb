@@ -336,8 +336,8 @@ module Mongo
     #   a hash specifying the fields to be changed in the selected document,
     #   or (in the case of an upsert) the document to be inserted
     #
-    # @option [Boolean] :upsert (+false+) if true, performs an upsert (update or insert)
-    # @option [Boolean] :multi (+false+) update all documents matching the selector, as opposed to
+    # @option opts [Boolean] :upsert (+false+) if true, performs an upsert (update or insert)
+    # @option opts [Boolean] :multi (+false+) update all documents matching the selector, as opposed to
     #   just the first matching document. Note: only works in MongoDB 1.1.3 or later.
     # @option opts [Boolean] :safe (+false+) 
     #   If true, check that the save succeeded. OperationFailure
@@ -350,14 +350,14 @@ module Mongo
     #   Otherwise, returns true.
     #
     # @core update update-instance_method
-    def update(selector, document, options={})
+    def update(selector, document, opts={})
       # Initial byte is 0.
-      safe = options.has_key?(:safe) ? options[:safe] : @safe
+      safe = opts.fetch(:safe, @safe)
       message = BSON::ByteBuffer.new("\0\0\0\0")
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       update_options  = 0
-      update_options += 1 if options[:upsert]
-      update_options += 2 if options[:multi]
+      update_options += 1 if opts[:upsert]
+      update_options += 2 if opts[:multi]
       message.put_int(update_options)
       message.put_binary(BSON::BSON_CODER.serialize(selector, false, true).to_s)
       message.put_binary(BSON::BSON_CODER.serialize(document, false, true).to_s)
