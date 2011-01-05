@@ -40,7 +40,7 @@ class SafeTest < Test::Unit::TestCase
         col = @db['bar']
         assert_equal @safe_value, col.safe
 
-        col = Collection.new(@db, 'bar')
+        col = Collection.new('bar', @db)
         assert_equal @safe_value, col.safe
       end
 
@@ -48,7 +48,7 @@ class SafeTest < Test::Unit::TestCase
         col = @db.collection('bar', :safe => false)
         assert_equal false, col.safe
 
-        col = Collection.new(@db, 'bar', :safe => false)
+        col = Collection.new('bar', @db, :safe => false)
         assert_equal false, col.safe
       end
     end

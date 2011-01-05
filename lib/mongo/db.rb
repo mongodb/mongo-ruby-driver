@@ -56,7 +56,7 @@ module Mongo
 
     # Instances of DB are normally obtained by calling Mongo#db.
     #
-    # @param [String] db_name the database name.
+    # @param [String] name the database name.
     # @param [Mongo::Connection] connection a connection object pointing to MongoDB. Note
     #   that databases are usually instantiated via the Connection class. See the examples below.
     #
@@ -76,8 +76,8 @@ module Mongo
     # @option options [Integer] :cache_time (300) Set the time that all ensure_index calls should cache the command.
     #
     # @core databases constructor_details
-    def initialize(db_name, connection, options={})
-      @name       = Mongo::Support.validate_db_name(db_name)
+    def initialize(name, connection, options={})
+      @name       = Mongo::Support.validate_db_name(name)
       @connection = connection
       @strict     = options[:strict]
       @pk_factory = options[:pk]
@@ -208,8 +208,8 @@ module Mongo
     #
     # @return [Array<Mongo::Collection>]
     def collections
-      collection_names.map do |collection_name|
-        Collection.new(self, collection_name)
+      collection_names.map do |name|
+        Collection.new(name, self)
       end
     end
 
@@ -223,7 +223,7 @@ module Mongo
     def collections_info(coll_name=nil)
       selector = {}
       selector[:name] = full_collection_name(coll_name) if coll_name
-      Cursor.new(Collection.new(self, SYSTEM_NAMESPACE_COLLECTION), :selector => selector)
+      Cursor.new(Collection.new(SYSTEM_NAMESPACE_COLLECTION, self), :selector => selector)
     end
 
     # Create a collection.
@@ -252,7 +252,7 @@ module Mongo
         if strict?
           raise MongoDBError, "Collection #{name} already exists. Currently in strict mode."
         else
-          return Collection.new(self, name)
+          return Collection.new(name, self)
         end
       end
 
@@ -260,7 +260,7 @@ module Mongo
       oh = BSON::OrderedHash.new
       oh[:create] = name
       doc = command(oh.merge(options || {}))
-      return Collection.new(self, name, :pk => @pk_factory) if ok?(doc)
+      return Collection.new(name, self, :pk => @pk_factory) if ok?(doc)
       raise MongoDBError, "Error creating collection: #{doc.inspect}"
     end
 
@@ -278,7 +278,7 @@ module Mongo
       else
         options[:safe] = options.fetch(:safe, @safe)
         options.merge!(:pk => @pk_factory) unless options[:pk]
-        Collection.new(self, name, options)
+        Collection.new(name, self, options)
       end
     end
     alias_method :[], :collection
@@ -418,7 +418,7 @@ module Mongo
     def index_information(collection_name)
       sel  = {:ns => full_collection_name(collection_name)}
       info = {}
-      Cursor.new(Collection.new(self, SYSTEM_INDEX_COLLECTION), :selector => sel).each do |index|
+      Cursor.new(Collection.new(SYSTEM_INDEX_COLLECTION, self), :selector => sel).each do |index|
         info[index['name']] = index
       end
       info
@@ -558,7 +558,7 @@ module Mongo
     #
     # @return [Array] a list of documents containing profiling information.
     def profiling_info
-      Cursor.new(Collection.new(self, DB::SYSTEM_PROFILE_COLLECTION), :selector => {}).to_a
+      Cursor.new(Collection.new(SYSTEM_PROFILE_COLLECTION, self), :selector => {}).to_a
     end
 
     # Validate a named collection.
@@ -581,7 +581,7 @@ module Mongo
     private
 
     def system_command_collection
-      Collection.new(self, SYSTEM_COMMAND_COLLECTION)
+      Collection.new(SYSTEM_COMMAND_COLLECTION, self)
     end
   end
 end

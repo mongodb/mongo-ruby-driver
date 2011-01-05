@@ -32,11 +32,11 @@ class TestCollection < Test::Unit::TestCase
   end
 
   def test_pk_factory_on_collection
-    @coll = Collection.new(@@db, 'foo', TestPK)
+    @coll = Collection.new('foo', @@db, TestPK)
     assert_equal TestPK, @coll.pk_factory
 
 
-    @coll2 = Collection.new(@@db, 'foo', :pk => TestPK)
+    @coll2 = Collection.new('foo', @@db, :pk => TestPK)
     assert_equal TestPK, @coll2.pk_factory
   end
 

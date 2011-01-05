@@ -24,8 +24,8 @@ module Mongo
 
     # Initialize a collection object.
     #
-    # @param [DB] db a MongoDB database instance.
     # @param [String, Symbol] name the name of the collection.
+    # @param [DB] db a MongoDB database instance.
     #
     # @option options [:create_pk] :pk (BSON::ObjectId) A primary key factory to use
     #   other than the default BSON::ObjectId.
@@ -44,7 +44,13 @@ module Mongo
     # @return [Collection]
     #
     # @core collections constructor_details
-    def initialize(db, name, options={})
+    def initialize(name, db, options={})
+      if db.is_a?(String) && name.is_a?(Mongo::DB)
+        warn "Warning: the order of parameters to initialize a collection have changed. " +
+             "Please specify the collection name first, followed by the db."
+        db, name = name, db
+      end
+
       case name
       when Symbol, String
       else
@@ -96,7 +102,7 @@ module Mongo
     #   the specified sub-collection
     def [](name)
       name = "#{self.name}.#{name}"
-      return Collection.new(db, name) if !db.strict? || db.collection_names.include?(name)
+      return Collection.new(name, db) if !db.strict? || db.collection_names.include?(name)
       raise "Collection #{name} doesn't exist. Currently in strict mode."
     end
 
