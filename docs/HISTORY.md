@@ -1,5 +1,13 @@
 # MongoDB Ruby Driver History
 
+1.2.rc0
+2011-1-5
+
+Lots of cleanp and minor bug fixes.
+* Issues resolved: http://jira.mongodb.org/browse/RUBY/fixforversion/10222
+* Updated Java BSON to Java driver 2.4.
+* Platform gem for JRuby bson.
+
 ### 1.1.5
 2010-12-15
 
