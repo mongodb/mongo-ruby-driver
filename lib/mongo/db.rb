@@ -81,7 +81,7 @@ module Mongo
       @connection = connection
       @strict     = options[:strict]
       @pk_factory = options[:pk]
-      @safe       = options.has_key?(:safe) ? options[:safe] : @connection.safe
+      @safe       = options.fetch(:safe, @connection.safe)
       @cache_time = options[:cache_time] || 300 #5 minutes.
     end
 
@@ -276,7 +276,7 @@ module Mongo
       if strict? && !collection_names.include?(name)
         raise Mongo::MongoDBError, "Collection #{name} doesn't exist. Currently in strict mode."
       else
-        options[:safe] = options.has_key?(:safe) ? options[:safe] : @safe
+        options[:safe] = options.fetch(:safe, @safe)
         options.merge!(:pk => @pk_factory) unless options[:pk]
         Collection.new(self, name, options)
       end

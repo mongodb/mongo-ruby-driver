@@ -77,7 +77,7 @@ module Mongo
       @cache_time = @db.cache_time
       @cache = Hash.new(0)
       unless pk_factory
-        @safe       = options.has_key?(:safe) ? options[:safe] : @db.safe
+        @safe = options.fetch(:safe, @db.safe)
       end
       @pk_factory = pk_factory || options[:pk] || BSON::ObjectId
       @hint = nil
@@ -274,7 +274,7 @@ module Mongo
     def insert(doc_or_docs, options={})
       doc_or_docs = [doc_or_docs] unless doc_or_docs.is_a?(Array)
       doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
-      safe = options.has_key?(:safe) ? options[:safe] : @safe
+      safe = options.fetch(:safe, @safe)
       result = insert_documents(doc_or_docs, @name, true, safe)
       result.size > 1 ? result : result.first
     end
@@ -310,7 +310,7 @@ module Mongo
     # @core remove remove-instance_method
     def remove(selector={}, opts={})
       # Initial byte is 0.
-      safe = opts.has_key?(:safe) ? opts[:safe] : @safe
+      safe = opts.fetch(:safe, @safe)
       message = BSON::ByteBuffer.new("\0\0\0\0")
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
