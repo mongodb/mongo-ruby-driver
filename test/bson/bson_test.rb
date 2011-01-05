@@ -213,6 +213,15 @@ class BSONTest < Test::Unit::TestCase
     assert_doc_pass(doc)
   end
 
+  def test_array_keys
+    doc = {'doc' => [1, 2, 'a', 'b']}
+    bson = @encoder.serialize(doc).to_a
+    assert_equal 48, bson[14]
+    assert_equal 49, bson[21]
+    assert_equal 50, bson[28]
+    assert_equal 51, bson[37]
+  end
+
   def test_regex
     doc = {'doc' => /foobar/i}
     assert_doc_pass(doc)
