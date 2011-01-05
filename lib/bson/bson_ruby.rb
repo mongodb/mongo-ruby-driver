@@ -334,11 +334,11 @@ module BSON
     def deserialize_regex_data(buf)
       str = deserialize_cstr(buf)
       options_str = deserialize_cstr(buf)
-      options = 0
-      options |= Regexp::IGNORECASE if options_str.include?('i')
-      options |= Regexp::MULTILINE if options_str.include?('m')
-      options |= Regexp::EXTENDED if options_str.include?('x')
-      Regexp.new(str, options)
+      opts = 0
+      opts |= Regexp::IGNORECASE if options_str.include?('i')
+      opts |= Regexp::MULTILINE if options_str.include?('m')
+      opts |= Regexp::EXTENDED if options_str.include?('x')
+      Regexp.new(str, opts)
     end
 
     def encoded_str(str)

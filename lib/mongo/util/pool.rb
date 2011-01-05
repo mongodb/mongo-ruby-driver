@@ -22,14 +22,14 @@ module Mongo
 
     # Create a new pool of connections.
     #
-    def initialize(connection, host, port, options={})
+    def initialize(connection, host, port, opts={})
       @connection  = connection
 
       @host, @port = host, port
 
       # Pool size and timeout.
-      @size      = options[:size] || 1
-      @timeout   = options[:timeout]   || 5.0
+      @size      = opts[:size] || 1
+      @timeout   = opts[:timeout]   || 5.0
 
       # Mutex for synchronizing pool access
       @connection_mutex = Mutex.new

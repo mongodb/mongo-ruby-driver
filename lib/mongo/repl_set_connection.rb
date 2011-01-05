@@ -50,8 +50,10 @@ module Mongo
     # @example Connect to a replica set and provide two seed nodes:
     #   ReplSetConnection.new(['localhost', 30000], ['localhost', 30001])
     #
-    # @example Connect to a replica set providing two seed nodes and allowing reads from a
-    #   secondary node:
+    # @example Connect to a replica set providing two seed nodes and ensuring a connection to the replica set named 'prod':
+    #   ReplSetConnection.new(['localhost', 30000], ['localhost', 30001], :rs_name => 'prod')
+    #
+    # @example Connect to a replica set providing two seed nodes and allowing reads from a secondary node:
     #   ReplSetConnection.new(['localhost', 30000], ['localhost', 30001], :read_secondary => true)
     #
     # @see http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html Replica sets in Ruby

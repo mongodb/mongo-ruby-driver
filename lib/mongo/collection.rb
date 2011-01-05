@@ -27,10 +27,10 @@ module Mongo
     # @param [String, Symbol] name the name of the collection.
     # @param [DB] db a MongoDB database instance.
     #
-    # @option options [:create_pk] :pk (BSON::ObjectId) A primary key factory to use
+    # @option opts [:create_pk] :pk (BSON::ObjectId) A primary key factory to use
     #   other than the default BSON::ObjectId.
     #
-    # @option options [Boolean, Hash] :safe (false) Set the default safe-mode options
+    # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
     #   for insert, update, and remove method called on this Collection instance. If no
     #   value is provided, the default value set on this instance's DB will be used. This
     #   default can be overridden for any invocation of insert, update, or remove.
@@ -44,7 +44,7 @@ module Mongo
     # @return [Collection]
     #
     # @core collections constructor_details
-    def initialize(name, db, options={})
+    def initialize(name, db, opts={})
       if db.is_a?(String) && name.is_a?(Mongo::DB)
         warn "Warning: the order of parameters to initialize a collection have changed. " +
              "Please specify the collection name first, followed by the db."
@@ -69,10 +69,10 @@ module Mongo
         raise Mongo::InvalidNSName, "collection names must not start or end with '.'"
       end
 
-      if options.respond_to?(:create_pk) || !options.is_a?(Hash)
+      if opts.respond_to?(:create_pk) || !opts.is_a?(Hash)
         warn "The method for specifying a primary key factory on a Collection has changed.\n" +
           "Please specify it as an option (e.g., :pk => PkFactory)."
-        pk_factory = options
+        pk_factory = opts
       else
         pk_factory = nil
       end
@@ -83,9 +83,9 @@ module Mongo
       @cache_time = @db.cache_time
       @cache = Hash.new(0)
       unless pk_factory
-        @safe = options.fetch(:safe, @db.safe)
+        @safe = opts.fetch(:safe, @db.safe)
       end
-      @pk_factory = pk_factory || options[:pk] || BSON::ObjectId
+      @pk_factory = pk_factory || opts[:pk] || BSON::ObjectId
       @hint = nil
     end
 
@@ -277,10 +277,10 @@ module Mongo
     # @see DB#remove for options that can be passed to :safe.
     #
     # @core insert insert-instance_method
-    def insert(doc_or_docs, options={})
+    def insert(doc_or_docs, opts={})
       doc_or_docs = [doc_or_docs] unless doc_or_docs.is_a?(Array)
       doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
-      safe = options.fetch(:safe, @safe)
+      safe = opts.fetch(:safe, @safe)
       result = insert_documents(doc_or_docs, @name, true, safe)
       result.size > 1 ? result : result.first
     end

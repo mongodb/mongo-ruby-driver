@@ -33,26 +33,26 @@ module Mongo
     # @return [Cursor]
     #
     # @core cursors constructor_details
-    def initialize(collection, options={})
+    def initialize(collection, opts={})
       @db         = collection.db
       @collection = collection
       @connection = @db.connection
       @logger     = @connection.logger
 
-      @selector   = options[:selector] || {}
-      @fields     = convert_fields_for_query(options[:fields])
-      @skip       = options[:skip]     || 0
-      @limit      = options[:limit]    || 0
-      @order      = options[:order]
-      @hint       = options[:hint]
-      @snapshot   = options[:snapshot]
-      @timeout    = options.fetch(:timeout, true)
-      @explain    = options[:explain]
-      @socket     = options[:socket]
-      @tailable   = options[:tailable] || false
+      @selector   = opts[:selector] || {}
+      @fields     = convert_fields_for_query(opts[:fields])
+      @skip       = opts[:skip]     || 0
+      @limit      = opts[:limit]    || 0
+      @order      = opts[:order]
+      @hint       = opts[:hint]
+      @snapshot   = opts[:snapshot]
+      @timeout    = opts.fetch(:timeout, true)
+      @explain    = opts[:explain]
+      @socket     = opts[:socket]
+      @tailable   = opts[:tailable] || false
       @closed       = false
       @query_run    = false
-      batch_size(options[:batch_size] || 0)
+      batch_size(opts[:batch_size] || 0)
 
       @full_collection_name = "#{@collection.db.name}.#{@collection.name}"
       @cache        = []

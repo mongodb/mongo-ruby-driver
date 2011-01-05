@@ -55,16 +55,16 @@ module Mongo
     # @param [String, Hash] host.
     # @param [Integer] port specify a port number here if only one host is being specified.
     #
-    # @option options [Boolean, Hash] :safe (false) Set the default safe-mode options
+    # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
     #   propogated to DB objects instantiated off of this Connection. This
     #   default can be overridden upon instantiation of any DB by explicity setting a :safe value
     #   on initialization.
-    # @option options [Boolean] :slave_ok (false) Must be set to +true+ when connecting
+    # @option opts [Boolean] :slave_ok (false) Must be set to +true+ when connecting
     #   to a single, slave node.
-    # @option options [Logger, #debug] :logger (nil) Logger instance to receive driver operation log.
-    # @option options [Integer] :pool_size (1) The maximum number of socket connections allowed per
+    # @option opts [Logger, #debug] :logger (nil) Logger instance to receive driver operation log.
+    # @option opts [Integer] :pool_size (1) The maximum number of socket connections allowed per
     #   connection pool. Note: this setting is relevant only for multi-threaded applications.
-    # @option options [Float] :timeout (5.0) When all of the connections a pool are checked out,
+    # @option opts [Float] :timeout (5.0) When all of the connections a pool are checked out,
     #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
     #   Note: this setting is relevant only for multi-threaded applications (which in Ruby are rare).
     #
@@ -86,16 +86,16 @@ module Mongo
     #   driver fails to connect to a replica set with that name.
     #
     # @core connections
-    def initialize(host=nil, port=nil, options={})
+    def initialize(host=nil, port=nil, opts={})
       @host_to_try = format_pair(host, port)
 
       # Host and port of current master.
       @host = @port = nil
 
       # slave_ok can be true only if one node is specified
-      @slave_ok = options[:slave_ok]
+      @slave_ok = opts[:slave_ok]
 
-      setup(options)
+      setup(opts)
     end
 
     # DEPRECATED
@@ -109,9 +109,9 @@ module Mongo
     # @param nodes [Array] An array of arrays, each of which specifies a host and port.
     # @param opts [Hash] Any of the available options that can be passed to Connection.new.
     #
-    # @option options [String] :rs_name (nil) The name of the replica set to connect to. An exception will be
+    # @option opts [String] :rs_name (nil) The name of the replica set to connect to. An exception will be
     #   raised if unable to connect to a replica set with this name.
-    # @option options [Boolean] :read_secondary (false) When true, this connection object will pick a random slave
+    # @option opts [Boolean] :read_secondary (false) When true, this connection object will pick a random slave
     #   to send reads to.
     #
     # @example
@@ -263,12 +263,13 @@ module Mongo
     # See DB#new for valid options hash parameters.
     #
     # @param [String] db_name a valid database name.
+    # @param [Hash] opts options to be passed to the DB constructor.
     #
     # @return [Mongo::DB]
     #
     # @core databases db-instance_method
-    def db(db_name, options={})
-      DB.new(db_name, self, options)
+    def db(db_name, opts={})
+      DB.new(db_name, self, opts)
     end
 
     # Shortcut for returning a database. Use DB#db to accept options.
@@ -518,22 +519,22 @@ module Mongo
     protected
 
     # Generic initialization code.
-    def setup(options)
+    def setup(opts)
       # Authentication objects
-      @auths = options.fetch(:auths, [])
+      @auths = opts.fetch(:auths, [])
 
       # Lock for request ids.
       @id_lock = Mutex.new
 
       # Pool size and timeout.
-      @pool_size = options[:pool_size] || 1
-      @timeout   = options[:timeout]   || 5.0
+      @pool_size = opts[:pool_size] || 1
+      @timeout   = opts[:timeout]   || 5.0
 
       # Mutex for synchronizing pool access
       @connection_mutex = Mutex.new
 
       # Global safe option. This is false by default.
-      @safe = options[:safe] || false
+      @safe = opts[:safe] || false
 
       # Create a mutex when a new key, in this case a socket,
       # is added to the hash.
@@ -546,9 +547,9 @@ module Mongo
       @primary      = nil
       @primary_pool = nil
 
-      @logger   = options[:logger] || nil
+      @logger   = opts[:logger] || nil
 
-      should_connect = options.fetch(:connect, true)
+      should_connect = opts.fetch(:connect, true)
       connect if should_connect
     end
 
