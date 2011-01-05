@@ -12,7 +12,7 @@ This documentation includes other articles of interest, include:
 6. [History](http://api.mongodb.org/ruby/current/file.HISTORY.html).
 7. [Credits](http://api.mongodb.org/ruby/current/file.CREDITS.html).
 
-Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](file.TUTORIAL.html)
+Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](http://api.mongodb.org/ruby/current/file.TUTORIAL.html)
 for much more:
 
     require 'rubygems'
