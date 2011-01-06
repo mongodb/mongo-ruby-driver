@@ -556,17 +556,28 @@ module Mongo
 
     # Perform a group aggregation.
     #
-    # @param [Array, String, BSON::Code, Nil] :key either 1) an array of fields to group by,
-    #   2) a javascript function to generate the key object, or 3) nil.
-    # @param [Hash] condition an optional document specifying a query to limit the documents over which group is run.
-    # @param [Hash] initial initial value of the aggregation counter object
-    # @param [String, BSON::Code] reduce aggregation function, in JavaScript
-    # @param [String, BSON::Code] finalize :: optional. a JavaScript function that receives and modifies
-    #              each of the resultant grouped objects. Available only when group is run
-    #              with command set to true.
+    # @param [Hash] opts the options for this group operation. The minimum required are :initial
+    #   and :reduce.
     #
-    # @return [Array] the grouped items.
-    def group(key, condition, initial, reduce, finalize=nil)
+    # @option opts [Array, String, Symbol] :key (nil) Either the name of a field or a list of fields to group by (optional).
+    # @option opts [String, BSON::Code] :keyf (nil) A JavaScript function to be used to generate the grouping keys (optional).
+    # @option opts [String, BSON::Code] :cond ({}) A document specifying a query for filtering the documents over
+    #   which the aggregation is run (optional).
+    # @option opts [Hash] :initial the initial value of the aggregation counter object (required).
+    # @option opts [String, BSON::Code] :reduce (nil) a JavaScript aggregation function (required).
+    # @option opts [String, BSON::Code] :finalize (nil) a JavaScript function that receives and modifies
+    #   each of the resultant grouped objects. Available only when group is run with command
+    #   set to true.
+    #
+    # @return [Array] the command response consisting of grouped items.
+    def group(key, condition={}, initial={}, reduce=nil, finalize=nil)
+      if key.is_a?(Hash)
+        return new_group(key)
+      else
+        warn "Collection#group no longer take a list of paramters. This usage is deprecated." +
+             "Check out the new API at http://api.mongodb.org/ruby/current/Mongo/Collection.html#group-instance_method"
+      end
+
       reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
 
       group_command = {
@@ -577,6 +588,11 @@ module Mongo
           "initial" => initial
         }
       }
+
+      if key.is_a?(Symbol)
+        raise MongoArgumentError, "Group takes either an array of fields to group by or a JavaScript function" +
+          "in the form of a String or BSON::Code."
+      end
 
       unless key.nil?
         if key.is_a? Array
@@ -604,6 +620,48 @@ module Mongo
         raise OperationFailure, "group command failed: #{result['errmsg']}"
       end
     end
+
+    private
+
+    def new_group(opts={})
+      reduce   =  opts[:reduce]
+      finalize =  opts[:finalize]
+      cond     =  opts.fetch(:cond, {})
+      initial  =  opts[:initial]
+
+      if !(reduce && initial)
+        raise MongoArgumentError, "Group requires at minimum values for initial and reduce."
+      end
+
+      cmd = {
+        "group" => {
+          "ns"      => @name,
+          "$reduce" => reduce.to_bson_code,
+          "cond"    => cond,
+          "initial" => initial
+        }
+      }
+
+      if finalize
+        cmd['group']['finalize'] = finalize.to_bson_code
+      end
+
+      if key = opts[:key]
+        if key.is_a?(String) || key.is_a?(Symbol)
+          key = [key]
+        end
+        key_value = {}
+        key.each { |k| key_value[k] = 1 }
+        cmd["group"]["key"] = key_value
+      elsif keyf = opts[:keyf]
+        cmd["group"]["$keyf"] = keyf.to_bson_code
+      end
+
+      result = @db.command(cmd)
+      result["retval"]
+    end
+
+    public
 
     # Return a list of distinct values for +key+ across all
     # documents in the collection. The key may use dot notation

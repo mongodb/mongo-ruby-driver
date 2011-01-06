@@ -626,15 +626,25 @@ class TestCollection < Test::Unit::TestCase
       @reduce_function = "function (obj, prev) { prev.count += inc_value; }"
     end
 
+    should "fail if missing required options" do
+      assert_raise MongoArgumentError do
+        @@test.group(:initial => {})
+      end
+
+      assert_raise MongoArgumentError do
+        @@test.group(:reduce => "foo")
+      end
+    end
+
     should "group results using eval form" do
-      assert_equal 1, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 0.5}))[0]["count"]
-      assert_equal 2, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 1}))[0]["count"]
-      assert_equal 4, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 2}))[0]["count"]
+      assert_equal 1, @@test.group(:initial => @initial, :reduce => Code.new(@reduce_function, {"inc_value" => 0.5}))[0]["count"]
+      assert_equal 2, @@test.group(:initial => @initial, :reduce => Code.new(@reduce_function, {"inc_value" => 1}))[0]["count"]
+      assert_equal 4, @@test.group(:initial => @initial, :reduce => Code.new(@reduce_function, {"inc_value" => 2}))[0]["count"]
     end
 
     should "finalize grouped results" do
       @finalize = "function(doc) {doc.f = doc.count + 200; }"
-      assert_equal 202, @@test.group([], {}, @initial, Code.new(@reduce_function, {"inc_value" => 1}), @finalize)[0]["f"]
+      assert_equal 202, @@test.group(:initial => @initial, :reduce => Code.new(@reduce_function, {"inc_value" => 1}), :finalize => @finalize)[0]["f"]
     end
   end
 
@@ -650,7 +660,7 @@ class TestCollection < Test::Unit::TestCase
     end
 
     should "group" do
-      result = @@test.group([:a], {}, @initial, @reduce_function, nil)
+      result = @@test.group(:key => :a, :initial => @initial, :reduce => @reduce_function)
       assert result.all? { |r| r['count'] == 200 }
     end
   end
@@ -669,8 +679,15 @@ class TestCollection < Test::Unit::TestCase
     end
 
     should "group results" do
-      results = @@test.group(@keyf, {}, @initial, @reduce).sort {|a, b| a['count'] <=> b['count']}
+      results = @@test.group(:keyf => @keyf, :initial => @initial, :reduce => @reduce).sort {|a, b| a['count'] <=> b['count']}
       assert results[0]['even'] && results[0]['count'] == 2.0
+      assert results[1]['odd'] && results[1]['count'] == 3.0
+    end
+
+    should "group filtered results" do
+      results = @@test.group(:keyf => @keyf, :cond => {:a => {'$ne' => 2}},
+        :initial => @initial, :reduce => @reduce).sort {|a, b| a['count'] <=> b['count']}
+      assert results[0]['even'] && results[0]['count'] == 1.0
       assert results[1]['odd'] && results[1]['count'] == 3.0
     end
   end

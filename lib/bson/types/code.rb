@@ -47,5 +47,9 @@ module BSON
       "<BSON::Code:#{object_id} @data=\"#{@code}\" @scope=\"#{@scope.inspect}\">"
     end
 
+    def to_bson_code
+      self
+    end
+
   end
 end
