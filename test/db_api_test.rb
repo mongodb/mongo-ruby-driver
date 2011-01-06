@@ -509,33 +509,37 @@ class DBAPITest < Test::Unit::TestCase
     @@db.drop_collection("test")
     test = @@db.collection("test")
 
-    assert_equal [], test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")
-    assert_equal [], test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")
+    assert_equal [], test.group(:initial => {"count" => 0}, :reduce => "function (obj, prev) { prev.count++; }")
+    assert_equal [], test.group(:initial => {"count" => 0}, :reduce => "function (obj, prev) { prev.count++; }")
 
     test.insert("a" => 2)
     test.insert("b" => 5)
     test.insert("a" => 1)
 
-    assert_equal 3, test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")[0]["count"]
-    assert_equal 3, test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")[0]["count"]
-    assert_equal 1, test.group([], {"a" => {"$gt" => 1}}, {"count" => 0}, "function (obj, prev) { prev.count++; }")[0]["count"]
-    assert_equal 1, test.group([], {"a" => {"$gt" => 1}}, {"count" => 0}, "function (obj, prev) { prev.count++; }")[0]["count"]
+    assert_equal 3, test.group(:initial => {"count" => 0},
+                      :reduce => "function (obj, prev) { prev.count++; }")[0]["count"]
+    assert_equal 3, test.group(:initial => {"count" => 0},
+                      :reduce => "function (obj, prev) { prev.count++; }")[0]["count"]
+    assert_equal 1, test.group(:cond => {"a" => {"$gt" => 1}},
+                      :initial => {"count" => 0}, :reduce => "function (obj, prev) { prev.count++; }")[0]["count"]
+    assert_equal 1, test.group(:cond => {"a" => {"$gt" => 1}},
+                      :initial => {"count" => 0}, :reduce => "function (obj, prev) { prev.count++; }")[0]["count"]
 
     finalize = "function (obj) { obj.f = obj.count - 1; }"
-    assert_equal 2, test.group([], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }", finalize)[0]["f"]
+    assert_equal 2, test.group(:initial => {"count" => 0}, 
+                      :reduce => "function (obj, prev) { prev.count++; }", :finalize => finalize)[0]["f"]
 
     test.insert("a" => 2, "b" => 3)
     expected = [{"a" => 2, "count" => 2},
                 {"a" => nil, "count" => 1},
                 {"a" => 1, "count" => 1}]
-    assert_equal expected, test.group(["a"], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }")
-    assert_equal expected, test.group(["a"], {}, {"count" => 0}, "function (obj, prev) { prev.count++; }", true)
+    assert_equal expected, test.group(:key => ["a"], :initial => {"count" => 0},
+                             :reduce => "function (obj, prev) { prev.count++; }")
+    assert_equal expected, test.group(:key => :a, :initial => {"count" => 0},
+                             :reduce => "function (obj, prev) { prev.count++; }")
 
     assert_raise OperationFailure do
-      test.group([], {}, {}, "5 ++ 5")
-    end
-    assert_raise OperationFailure do
-      test.group([], {}, {}, "5 ++ 5", true)
+      test.group(:initial => {}, :reduce => "5 ++ 5")
     end
   end
 
