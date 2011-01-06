@@ -150,6 +150,12 @@ class BSONTest < Test::Unit::TestCase
     assert_doc_pass(doc)
   end
 
+  def test_code_with_symbol
+    assert_raise_error ArgumentError, "BSON::Code must be in the form of a String" do
+      Code.new(:fubar)
+    end
+  end
+
   def test_code_with_scope
     doc = {'$where' => Code.new('this.a.b < this.b', {'foo' => 1})}
     assert_doc_pass(doc)

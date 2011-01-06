@@ -32,6 +32,10 @@ module BSON
     def initialize(code, scope={})
       @code  = code
       @scope = scope
+
+      unless @code.is_a?(String)
+        raise ArgumentError, "BSON::Code must be in the form of a String; #{@code.class} is not allowed."
+      end
     end
 
     def length
