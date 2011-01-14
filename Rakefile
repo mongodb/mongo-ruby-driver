@@ -26,7 +26,7 @@ namespace :build do
     jar_dir   = File.join(java_dir, 'jar')
 
     jruby_jar = File.join(jar_dir, 'jruby.jar')
-    mongo_jar = File.join(jar_dir, 'mongo-2.2.jar')
+    mongo_jar = File.join(jar_dir, 'mongo-2.4.jar')
     bson_jar = File.join(jar_dir, 'bson-2.2.jar')
 
     src_base   = File.join(java_dir, 'src')

@@ -293,7 +293,7 @@ public class RubyBSONEncoder extends BSONEncoder {
         else if ( val instanceof RubyObject ) {
 
             if ( val instanceof RubyString ) {
-                putRubyString(name, ((RubyString)val).getUnicodeValue() );
+                putRubyString(name, (RubyString)val);
             }
 
             else if (val instanceof RubySymbol) {
@@ -582,10 +582,13 @@ public class RubyBSONEncoder extends BSONEncoder {
         _putString(name, s.getSymbol(), SYMBOL);
     }
 
-    protected void putRubyString( String name , String s ) {
-        _put( STRING , name );
-        _putValueString( s );
-    }
+    protected void putRubyString( String name , RubyString s ) {
+       byte[] bytes = s.getBytes();
+       _put( STRING , name );
+       _buf.writeInt( bytes.length + 1);
+       _buf.write( bytes );
+       _buf.write( (byte)0 );
+   }
 
     protected void putString(String name, String s) {
         _putString(name, s, STRING);
