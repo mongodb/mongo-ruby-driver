@@ -750,7 +750,8 @@ module Mongo
     # Requires length and an available socket.
     def receive_message_on_socket(length, socket)
       begin
-        message = socket.read(length)
+        message = new_binary_string
+        socket.read(length, message)
         raise ConnectionFailure, "connection closed" unless message.length > 0
         if message.length < length
           chunk = new_binary_string
