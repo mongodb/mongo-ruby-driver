@@ -26,6 +26,22 @@ class TestThreading < Test::Unit::TestCase
     assert_equal 27017, parser.nodes[1][1]
   end
 
+  def test_complex_passwords
+    parser = Mongo::URIParser.new('mongodb://bob:secret.word@a.example.com:27018/test')
+    assert_equal "bob", parser.auths[0]["username"]
+    assert_equal "secret.word", parser.auths[0]["password"]
+
+    parser = Mongo::URIParser.new('mongodb://bob:s-_3#%R.t@a.example.com:27018/test')
+    assert_equal "bob", parser.auths[0]["username"]
+    assert_equal "s-_3#%R.t", parser.auths[0]["password"]
+  end
+
+  def test_passwords_contain_no_commas
+    assert_raise MongoArgumentError do
+      Mongo::URIParser.new('mongodb://bob:a,b@a.example.com:27018/test')
+    end
+  end
+
   def test_multiple_uris_with_auths
     parser = Mongo::URIParser.new('mongodb://bob:secret@a.example.com:27018/test,joe:secret2@b.example.com/test2')
     assert_equal 2, parser.nodes.length

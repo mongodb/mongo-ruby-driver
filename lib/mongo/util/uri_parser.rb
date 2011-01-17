@@ -20,7 +20,7 @@ module Mongo
   class URIParser
 
     DEFAULT_PORT = 27017
-    MONGODB_URI_MATCHER = /(([-_.\w\d]+):([-_\w\d]+)@)?([-.\w\d]+)(:([\w\d]+))?(\/([-\d\w]+))?/
+    MONGODB_URI_MATCHER = /(([-_.\w\d]+):([^@]+)@)?([-.\w\d]+)(:([\w\d]+))?(\/([-\d\w]+))?/
     MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]"
     SPEC_ATTRS = [:nodes, :auths]
     OPT_ATTRS  = [:connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync]
@@ -56,6 +56,8 @@ module Mongo
 
     # Parse a MongoDB URI. This method is used by Connection.from_uri.
     # Returns an array of nodes and an array of db authorizations, if applicable.
+    #
+    # Note: passwords can contain any character except for a ','.
     #
     # @core connections
     def initialize(string)
