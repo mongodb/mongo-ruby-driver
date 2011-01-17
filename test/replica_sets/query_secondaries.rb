@@ -18,6 +18,7 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
 
   def test_read_primary
     assert !@conn.read_primary?
+    assert !@conn.primary?
   end
 
   def test_con

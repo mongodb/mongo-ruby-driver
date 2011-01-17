@@ -137,6 +137,7 @@ module Mongo
     def read_primary?
       !@read_pool || @read_pool.length.zero?
     end
+    alias :primary? :read_primary?
 
     # Close the connection to the database.
     def close
