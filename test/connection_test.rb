@@ -167,7 +167,7 @@ class TestConnection < Test::Unit::TestCase
 
   def test_max_bson_size_value
     conn = standard_connection
-    if conn.server_version > "1.6"
+    if conn.server_version > "1.7.2"
       assert_equal conn['admin'].command({:ismaster => 1})['maxBsonObjectSize'], conn.max_bson_size
     end
 
