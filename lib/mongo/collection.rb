@@ -570,9 +570,9 @@ module Mongo
     #   set to true.
     #
     # @return [Array] the command response consisting of grouped items.
-    def group(key, condition={}, initial={}, reduce=nil, finalize=nil)
-      if key.is_a?(Hash)
-        return new_group(key)
+    def group(opts, condition={}, initial={}, reduce=nil, finalize=nil)
+      if opts.is_a?(Hash)
+        return new_group(opts)
       else
         warn "Collection#group no longer take a list of paramters. This usage is deprecated." +
              "Check out the new API at http://api.mongodb.org/ruby/current/Mongo/Collection.html#group-instance_method"
@@ -589,13 +589,13 @@ module Mongo
         }
       }
 
-      if key.is_a?(Symbol)
+      if opts.is_a?(Symbol)
         raise MongoArgumentError, "Group takes either an array of fields to group by or a JavaScript function" +
           "in the form of a String or BSON::Code."
       end
 
-      unless key.nil?
-        if key.is_a? Array
+      unless opts.nil?
+        if opts.is_a? Array
           key_type = "key"
           key_value = {}
           key.each { |k| key_value[k] = 1 }
