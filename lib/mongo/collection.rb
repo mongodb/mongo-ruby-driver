@@ -598,10 +598,10 @@ module Mongo
         if opts.is_a? Array
           key_type = "key"
           key_value = {}
-          key.each { |k| key_value[k] = 1 }
+          opts.each { |k| key_value[k] = 1 }
         else
           key_type  = "$keyf"
-          key_value = key.is_a?(BSON::Code) ? key : BSON::Code.new(key)
+          key_value = opts.is_a?(BSON::Code) ? opts : BSON::Code.new(opts)
         end
 
         group_command["group"][key_type] = key_value
