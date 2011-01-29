@@ -534,6 +534,13 @@ module Mongo
       end
     end
 
+    # execute the block and log the operation as described by name/payload
+    def instrument( name, payload = {}, &blk )
+      res = yield
+      log_operation(name, payload)
+      res
+    end
+
     protected
 
     # Generic initialization code.
@@ -585,6 +592,18 @@ module Mongo
         when nil
           ['localhost', DEFAULT_PORT]
       end
+    end
+
+    ## Logging methods
+
+    def log_operation( name, payload )
+      return unless @logger
+      msg = "#{payload[:database]}['#{payload[:collection]}'].#{name}("
+      msg += payload.values_at(:selector, :document, :documents, :fields ).compact.map(&:inspect).join(', ') + ")"
+      msg += ".skip(#{payload[:skip]})"  if payload[:skip]
+      msg += ".limit(#{payload[:limit]})"  if payload[:limit]
+      msg += ".sort(#{payload[:sort]})"  if payload[:sort]
+      @logger.debug "MONGODB #{msg}"
     end
 
     private

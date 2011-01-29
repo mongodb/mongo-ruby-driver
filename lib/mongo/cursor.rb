@@ -378,13 +378,14 @@ module Mongo
         false
       else
         message = construct_query_message
-        @logger.debug query_log_message if @logger
-        results, @n_received, @cursor_id = @connection.receive_message(
-          Mongo::Constants::OP_QUERY, message, nil, @socket, @command)
-        @returned += @n_received
-        @cache += results
-        @query_run = true
-        close_cursor_if_query_complete
+        @connection.instrument( :find, instrument_payload ) do
+          results, @n_received, @cursor_id = @connection.receive_message(
+            Mongo::Constants::OP_QUERY, message, nil, @socket, @command)
+          @returned += @n_received
+          @cache += results
+          @query_run = true
+          close_cursor_if_query_complete
+        end
         true
       end
     end
@@ -401,10 +402,13 @@ module Mongo
       message
     end
 
-    def query_log_message
-      "#{@db.name}['#{@collection.name}'].find(#{@selector.inspect}, #{@fields ? @fields.inspect : '{}'})" +
-      "#{@skip != 0 ? ('.skip(' + @skip.to_s + ')') : ''}#{@limit != 0 ? ('.limit(' + @limit.to_s + ')') : ''}" +
-      "#{@order ? ('.sort(' + @order.inspect + ')') : ''}"
+    def instrument_payload
+      log = { :database => @db.name, :collection => @collection.name, :selector => selector }
+      log[:fields] = @fields  if @fields
+      log[:skip] = @skip  if @skip && (@skip > 0)
+      log[:limit] = @limit  if @limit && (@limit > 0)
+      log[:order] = @order  if @order
+      log
     end
 
     def construct_query_spec

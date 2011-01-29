@@ -79,7 +79,6 @@ module Mongo
 
       @db, @name  = db, name
       @connection = @db.connection
-      @logger     = @connection.logger
       @cache_time = @db.cache_time
       @cache = Hash.new(0)
       unless pk_factory
@@ -322,12 +321,13 @@ module Mongo
       message.put_int(0)
       message.put_binary(BSON::BSON_CODER.serialize(selector, false, true).to_s)
 
-      @logger.debug("MONGODB #{@db.name}['#{@name}'].remove(#{selector.inspect})") if @logger
-      if safe
-        @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message, @db.name, nil, safe)
-      else
-        @connection.send_message(Mongo::Constants::OP_DELETE, message)
-        true
+      @connection.instrument( :remove, :database => @db.name, :collection => @name, :selector => selector ) do
+        if safe
+          @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message, @db.name, nil, safe)
+        else
+          @connection.send_message(Mongo::Constants::OP_DELETE, message)
+          true
+        end
       end
     end
 
@@ -367,11 +367,13 @@ module Mongo
       message.put_int(update_options)
       message.put_binary(BSON::BSON_CODER.serialize(selector, false, true).to_s)
       message.put_binary(BSON::BSON_CODER.serialize(document, false, true).to_s)
-      @logger.debug("MONGODB #{@db.name}['#{@name}'].update(#{selector.inspect}, #{document.inspect})") if @logger
-      if safe
-        @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name, nil, safe)
-      else
-        @connection.send_message(Mongo::Constants::OP_UPDATE, message, nil)
+
+      @connection.instrument( :update, :database => @db.name, :collection => @name, :selector => selector, :document => document ) do
+        if safe
+          @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name, nil, safe)
+        else
+          @connection.send_message(Mongo::Constants::OP_UPDATE, message, nil)
+        end
       end
     end
 
@@ -838,11 +840,12 @@ module Mongo
       end
       raise InvalidOperation, "Exceded maximum insert size of 16,000,000 bytes" if message.size > 16_000_000
 
-      @logger.debug("MONGODB #{@db.name}['#{collection_name}'].insert(#{documents.inspect})") if @logger
-      if safe
-        @connection.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message, @db.name, nil, safe)
-      else
-        @connection.send_message(Mongo::Constants::OP_INSERT, message, nil)
+      @connection.instrument( :insert, :database => @db.name, :collection => collection_name, :documents => documents ) do
+        if safe
+          @connection.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message, @db.name, nil, safe)
+        else
+          @connection.send_message(Mongo::Constants::OP_INSERT, message, nil)
+        end
       end
       documents.collect { |o| o[:_id] || o['_id'] }
     end
