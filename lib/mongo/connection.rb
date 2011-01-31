@@ -35,7 +35,7 @@ module Mongo
     STANDARD_HEADER_SIZE = 16
     RESPONSE_HEADER_SIZE = 20
 
-    attr_reader :logger, :size, :auths, :primary, :safe, :primary_pool, :host_to_try
+    attr_reader :logger, :size, :auths, :primary, :safe, :primary_pool, :host_to_try, :pool_size
 
     # Counter for generating unique request ids.
     @@current_request_id = 0
@@ -188,10 +188,11 @@ module Mongo
     #
     # @raise [AuthenticationError] raises an exception if any one
     #   authentication fails.
-    def apply_saved_authentication
+    def apply_saved_authentication(opts={})
       return false if @auths.empty?
       @auths.each do |auth|
-        self[auth['db_name']].authenticate(auth['username'], auth['password'], false)
+        self[auth['db_name']].issue_authentication(auth['username'], auth['password'], false,
+          :socket => opts[:socket])
       end
       true
     end
@@ -239,6 +240,14 @@ module Mongo
     def clear_auths
       @auths = []
       true
+    end
+
+    def authenticate_pools
+      @primary_pool.authenticate_existing
+    end
+
+    def logout_pools(db)
+      @primary_pool.logout_existing(db)
     end
 
     # Return a hash with all database names
@@ -411,7 +420,13 @@ module Mongo
       request_id = add_message_headers(message, operation)
       packed_message = message.to_s
       begin
-        sock = socket || (command ? checkout_writer : checkout_reader)
+        if socket
+          sock = socket
+          checkin = false
+        else
+          sock = (command ? checkout_writer : checkout_reader)
+          checkin = true
+        end
 
         result = ''
         @safe_mutexes[sock].synchronize do
@@ -419,7 +434,9 @@ module Mongo
           result = receive(sock, request_id)
         end
       ensure
-        command ? checkin_writer(sock) : checkin_reader(sock)
+        if checkin
+          command ? checkin_writer(sock) : checkin_reader(sock)
+        end
       end
       result
     end
@@ -588,7 +605,7 @@ module Mongo
         socket = TCPSocket.new(host, port)
         socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 
-        config = self['admin'].command({:ismaster => 1}, :sock => socket)
+        config = self['admin'].command({:ismaster => 1}, :socket => socket)
       rescue OperationFailure, SocketError, SystemCallError, IOError => ex
         close
       ensure
@@ -598,15 +615,12 @@ module Mongo
       config
     end
 
-    # Set the specified node as primary, and
-    # apply any saved authentication credentials.
+    # Set the specified node as primary.
     def set_primary(node)
       host, port = *node
       @primary = [host, port]
       @primary_pool = Pool.new(self, host, port, :size => @pool_size, :timeout => @timeout)
-      apply_saved_authentication
     end
-
 
     ## Low-level connection methods.
 

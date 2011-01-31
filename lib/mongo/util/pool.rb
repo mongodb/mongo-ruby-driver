@@ -37,6 +37,9 @@ module Mongo
       # Condition variable for signal and wait
       @queue = ConditionVariable.new
 
+      # Operations to perform on a socket
+      @socket_ops = Hash.new { |h, k| h[k] = [] }
+
       @sockets      = []
       @checked_out  = []
     end
@@ -75,9 +78,40 @@ module Mongo
       rescue => ex
         raise ConnectionFailure, "Failed to connect socket: #{ex}"
       end
+
+      # If any saved authentications exist, we want to apply those
+      # when creating new sockets.
+      @connection.apply_saved_authentication(:socket => socket)
+
       @sockets << socket
       @checked_out << socket
       socket
+    end
+
+    # If a use calls DB#authentication, and several sockets exist,
+    # then we need a way to apply the authentication on each socket.
+    # So we store the apply_authentication method, and this will be
+    # applied right before the next use of each socket.
+    def authenticate_existing
+      @connection_mutex.synchronize do
+        @sockets.each do |socket|
+          @socket_ops[socket] << Proc.new do
+            @connection.apply_saved_authentication(:socket => socket)
+          end
+        end
+      end
+    end
+
+    # Store the logout op for each existing socket to be applied before
+    # the next use of each socket.
+    def logout_existing(db)
+      @connection_mutex.synchronize do
+        @sockets.each do |socket|
+          @socket_ops[socket] << Proc.new do
+            @connection.db(db).issue_logout(:socket => socket)
+          end
+        end
+      end
     end
 
     # Checks out the first available socket from the pool.
@@ -110,14 +144,24 @@ module Mongo
                      checkout_new_socket
                    end
 
-          return socket if socket
+          if socket
 
-          # Otherwise, wait
-          if @logger
-            @logger.warn "MONGODB Waiting for available connection; " +
-              "#{@checked_out.size} of #{@size} connections checked out."
+          # This call all procs, in order, scoped to existing sockets.
+          # At the moment, we use this to lazily authenticate and
+          # logout existing socket connections.
+          @socket_ops[socket].reject! do |op|
+            op.call
           end
-          @queue.wait(@connection_mutex)
+
+            return socket
+          else
+            # Otherwise, wait
+            if @logger
+              @logger.warn "MONGODB Waiting for available connection; " +
+                "#{@checked_out.size} of #{@size} connections checked out."
+            end
+            @queue.wait(@connection_mutex)
+          end
         end
       end
     end

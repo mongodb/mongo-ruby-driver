@@ -92,7 +92,8 @@ module Mongo
     # @param [String] password
     # @param [Boolean] save_auth
     #   Save this authentication to the connection object using Connection#add_auth. This
-    #   will ensure that the authentication will be applied on database reconnect.
+    #   will ensure that the authentication will be applied on database reconnect. Note
+    #   that this value must be true when using connection pooling.
     #
     # @return [Boolean]
     #
@@ -100,8 +101,19 @@ module Mongo
     #
     # @core authenticate authenticate-instance_method
     def authenticate(username, password, save_auth=true)
-      doc = command({:getnonce => 1}, :check_response => false)
-      raise "error retrieving nonce: #{doc}" unless ok?(doc)
+      if @connection.pool_size > 1
+        if !save_auth
+          raise MongoArgumentError, "If using connection pooling, :save_auth must be set to true."
+        end
+        @connection.authenticate_pools
+      end
+
+      issue_authentication(username, password, save_auth)
+    end
+
+    def issue_authentication(username, password, save_auth=true, opts={})
+      doc = command({:getnonce => 1}, :check_response => false, :socket => opts[:socket])
+      raise MongoDBError, "Error retrieving nonce: #{doc}" unless ok?(doc)
       nonce = doc['nonce']
 
       auth = BSON::OrderedHash.new
@@ -109,7 +121,7 @@ module Mongo
       auth['user'] = username
       auth['nonce'] = nonce
       auth['key'] = Mongo::Support.auth_key(username, password, nonce)
-      if ok?(self.command(auth, :check_response => false))
+      if ok?(self.command(auth, :check_response => false, :socket => opts[:socket]))
         if save_auth
           @connection.add_auth(@name, username, password)
         end
@@ -121,7 +133,7 @@ module Mongo
 
     # Adds a stored Javascript function to the database which can executed  
     # server-side in map_reduce, db.eval and $where clauses.
-    # 
+    #
     # @param [String] function_name
     # @param [String] code
     #
@@ -179,14 +191,22 @@ module Mongo
     end
 
     # Deauthorizes use for this database for this connection. Also removes
-    # any saved authorization in the connection class associated with this
+    # any saved authentication in the connection class associated with this
     # database.
     #
     # @raise [MongoDBError] if logging out fails.
     #
     # @return [Boolean]
-    def logout
-      doc = command(:logout => 1)
+    def logout(opts={})
+      if @connection.pool_size > 1
+        @connection.logout_pools(@name)
+      end
+
+      issue_logout(opts)
+    end
+
+    def issue_logout(opts={})
+      doc = command({:logout => 1}, :socket => opts[:socket])
       if ok?(doc)
         @connection.remove_auth(@name)
         true
@@ -455,14 +475,14 @@ module Mongo
     #
     # @option opts [Boolean] :check_response (true) If +true+, raises an exception if the
     # command fails.
-    # @option opts [Socket] :sock a socket to use for sending the command. This is mainly for internal use.
+    # @option opts [Socket] :socket a socket to use for sending the command. This is mainly for internal use.
     #
     # @return [Hash]
     #
     # @core commands command_instance-method
     def command(selector, opts={})
       check_response = opts.fetch(:check_response, true)
-      sock           = opts[:sock]
+      socket         = opts[:socket]
       raise MongoArgumentError, "command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
       if selector.keys.length > 1 && RUBY_VERSION < '1.9' && selector.class != BSON::OrderedHash
         raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
@@ -470,7 +490,7 @@ module Mongo
 
       begin
         result = Cursor.new(system_command_collection,
-          :limit => -1, :selector => selector, :socket => sock).next_document
+          :limit => -1, :selector => selector, :socket => socket).next_document
       rescue OperationFailure => ex
         raise OperationFailure, "Database command '#{selector.keys.first}' failed: #{ex.message}"
       end

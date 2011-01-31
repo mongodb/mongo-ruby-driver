@@ -167,6 +167,20 @@ module Mongo
       @read_secondary || @slave_ok
     end
 
+    def authenticate_pools
+      super
+      @secondary_pools.each do |pool|
+        pool.authenticate_existing
+      end
+    end
+
+    def logout_pools(db)
+      super
+      @secondary_pools.each do |pool|
+        pool.logout_existing(db)
+      end
+    end
+
     private
 
     def check_is_master(node)
