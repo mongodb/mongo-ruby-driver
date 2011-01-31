@@ -5,6 +5,7 @@ class CollectionTest < Test::Unit::TestCase
   context "Basic operations: " do
     setup do
       @logger = mock()
+      @logger.expects(:debug)
     end
 
     should "send update message" do
@@ -81,40 +82,39 @@ class CollectionTest < Test::Unit::TestCase
       @conn.stubs(:log_operation)
       @coll.update({}, {:title => 'Moby Dick'}, :safe => true)
     end
-    
+
     should "not call insert for each ensure_index call" do
       @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @conn['testing']
       @coll = @db.collection('books')
       @coll.expects(:generate_indexes).once
-      
+
       @coll.ensure_index [["x", Mongo::DESCENDING]]
       @coll.ensure_index [["x", Mongo::DESCENDING]]
-      
     end
+
     should "call generate_indexes for a new direction on the same field for ensure_index" do
       @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @conn['testing']
       @coll = @db.collection('books')
       @coll.expects(:generate_indexes).twice
-      
+
       @coll.ensure_index [["x", Mongo::DESCENDING]]
       @coll.ensure_index [["x", Mongo::ASCENDING]]
-      
+
     end
-    
+
     should "call generate_indexes twice because the cache time is 0 seconds" do
       @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @conn['testing']
       @db.cache_time = 0
       @coll = @db.collection('books')
       @coll.expects(:generate_indexes).twice
-      
 
       @coll.ensure_index [["x", Mongo::DESCENDING]]
       @coll.ensure_index [["x", Mongo::DESCENDING]]
     end
-    
+
     should "call generate_indexes for each key when calling ensure_indexes" do
       @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @conn['testing']
@@ -123,11 +123,8 @@ class CollectionTest < Test::Unit::TestCase
       @coll.expects(:generate_indexes).once.with do |a, b, c|
         a == {"x"=>-1, "y"=>-1}
       end
-      
+
       @coll.ensure_index [["x", Mongo::DESCENDING], ["y", Mongo::DESCENDING]]
     end
-
-    
-    
   end
 end
