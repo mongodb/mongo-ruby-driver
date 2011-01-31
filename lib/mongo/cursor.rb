@@ -378,7 +378,7 @@ module Mongo
         false
       else
         message = construct_query_message
-        @connection.instrument( :find, instrument_payload ) do
+        @connection.instrument(:find, instrument_payload) do
           results, @n_received, @cursor_id = @connection.receive_message(
             Mongo::Constants::OP_QUERY, message, nil, @socket, @command)
           @returned += @n_received

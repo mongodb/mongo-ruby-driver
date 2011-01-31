@@ -321,7 +321,7 @@ module Mongo
       message.put_int(0)
       message.put_binary(BSON::BSON_CODER.serialize(selector, false, true).to_s)
 
-      @connection.instrument( :remove, :database => @db.name, :collection => @name, :selector => selector ) do
+      @connection.instrument(:remove, :database => @db.name, :collection => @name, :selector => selector) do
         if safe
           @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message, @db.name, nil, safe)
         else
@@ -368,7 +368,7 @@ module Mongo
       message.put_binary(BSON::BSON_CODER.serialize(selector, false, true).to_s)
       message.put_binary(BSON::BSON_CODER.serialize(document, false, true).to_s)
 
-      @connection.instrument( :update, :database => @db.name, :collection => @name, :selector => selector, :document => document ) do
+      @connection.instrument(:update, :database => @db.name, :collection => @name, :selector => selector, :document => document) do
         if safe
           @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name, nil, safe)
         else
@@ -840,7 +840,7 @@ module Mongo
       end
       raise InvalidOperation, "Exceded maximum insert size of 16,000,000 bytes" if message.size > 16_000_000
 
-      @connection.instrument( :insert, :database => @db.name, :collection => collection_name, :documents => documents ) do
+      @connection.instrument(:insert, :database => @db.name, :collection => collection_name, :documents => documents) do
         if safe
           @connection.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message, @db.name, nil, safe)
         else

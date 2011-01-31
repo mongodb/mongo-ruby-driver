@@ -61,7 +61,8 @@ module Mongo
     #   on initialization.
     # @option opts [Boolean] :slave_ok (false) Must be set to +true+ when connecting
     #   to a single, slave node.
-    # @option opts [Logger, #debug] :logger (nil) Logger instance to receive driver operation log.
+    # @option opts [Logger, #debug] :logger (nil) A Logger instance for debugging driver ops. Note that
+    #   logging negatively impacts performance; therefore, it should not be used for high-performance apps.
     # @option opts [Integer] :pool_size (1) The maximum number of socket connections allowed per
     #   connection pool. Note: this setting is relevant only for multi-threaded applications.
     # @option opts [Float] :timeout (5.0) When all of the connections a pool are checked out,
@@ -534,8 +535,10 @@ module Mongo
       end
     end
 
-    # execute the block and log the operation as described by name/payload
-    def instrument( name, payload = {}, &blk )
+    # Execute the block and log the operation described by name
+    # and payload.
+    # TODO: Not sure if this should take a block.
+    def instrument(name, payload = {}, &blk)
       res = yield
       log_operation(name, payload)
       res
@@ -572,7 +575,12 @@ module Mongo
       @primary      = nil
       @primary_pool = nil
 
-      @logger   = opts[:logger] || nil
+      @logger = opts[:logger] || nil
+
+      if @logger
+        @logger.debug("MongoDB logging. Please note that logging negatively impacts performance " +
+        "and should be disabled for high-performance production apps.")
+      end
 
       should_connect = opts.fetch(:connect, true)
       connect if should_connect
@@ -596,7 +604,7 @@ module Mongo
 
     ## Logging methods
 
-    def log_operation( name, payload )
+    def log_operation(name, payload)
       return unless @logger
       msg = "#{payload[:database]}['#{payload[:collection]}'].#{name}("
       msg += payload.values_at(:selector, :document, :documents, :fields ).compact.map(&:inspect).join(', ') + ")"
