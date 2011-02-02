@@ -373,6 +373,8 @@ module Mongo
     end
 
     # Run query the first time we request an object from the wire
+    # TODO: should we be calling instrument_payload even if logging
+    # is disabled?
     def send_initial_query
       if @query_run
         false
