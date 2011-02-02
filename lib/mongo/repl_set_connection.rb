@@ -125,6 +125,7 @@ module Mongo
         end
       end
     end
+    alias :reconnect :connect
 
     def connecting?
       @nodes_to_try.length > 0

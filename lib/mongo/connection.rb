@@ -469,6 +469,7 @@ module Mongo
         raise ConnectionFailure, "Failed to connect to a master node at #{@host_to_try[0]}:#{@host_to_try[1]}"
       end
     end
+    alias :reconnect :connect
 
     def connecting?
       @nodes_to_try.length > 0
