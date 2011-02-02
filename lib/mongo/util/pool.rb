@@ -88,7 +88,7 @@ module Mongo
       socket
     end
 
-    # If a use calls DB#authentication, and several sockets exist,
+    # If a user calls DB#authenticate, and several sockets exist,
     # then we need a way to apply the authentication on each socket.
     # So we store the apply_authentication method, and this will be
     # applied right before the next use of each socket.

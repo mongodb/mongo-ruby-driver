@@ -189,7 +189,7 @@ module Mongo
         socket = TCPSocket.new(host, port)
         socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 
-        config = self['admin'].command({:ismaster => 1}, :sock => socket)
+        config = self['admin'].command({:ismaster => 1}, :socket => socket)
 
         check_set_name(config, socket)
       rescue OperationFailure, SocketError, SystemCallError, IOError => ex
@@ -232,7 +232,7 @@ module Mongo
     def check_set_name(config, socket)
       if @replica_set
         config = self['admin'].command({:replSetGetStatus => 1},
-                   :sock => socket, :check_response => false)
+                   :socket => socket, :check_response => false)
 
         if !Mongo::Support.ok?(config)
           raise ReplicaSetConnectionError, config['errmsg']

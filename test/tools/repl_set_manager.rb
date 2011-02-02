@@ -61,6 +61,13 @@ class ReplSetManager
     ensure_up
   end
 
+  def cleanup_set
+    system("killall mongod")
+    @count.times do |n|
+      system("rm -rf #{@mongods[n]['db_path']}")
+    end
+  end
+
   def init_node(n)
     @mongods[n] ||= {}
     port = @start_port + n
@@ -71,9 +78,7 @@ class ReplSetManager
     system("rm -rf #{@mongods[n]['db_path']}")
     system("mkdir -p #{@mongods[n]['db_path']}")
 
-    @mongods[n]['start'] = "mongod --replSet #{@name} --logpath '#{@mongods[n]['log_path']}' " +
-     " --dbpath #{@mongods[n]['db_path']} --port #{@mongods[n]['port']} --fork"
-
+    @mongods[n]['start'] = start_cmd(n)
     start(n)
 
     member = {'_id' => n, 'host' => "#{@host}:#{@mongods[n]['port']}"}
@@ -86,6 +91,11 @@ class ReplSetManager
     end
 
     @config['members'] << member
+  end
+
+  def start_cmd(n)
+    @mongods[n]['start'] = "mongod --replSet #{@name} --logpath '#{@mongods[n]['log_path']}' " +
+     " --dbpath #{@mongods[n]['db_path']} --port #{@mongods[n]['port']} --fork"
   end
 
   def kill(node)
