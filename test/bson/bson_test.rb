@@ -562,4 +562,47 @@ class BSONTest < Test::Unit::TestCase
     end
   end
 
+  def test_invalid_key_names
+    assert @encoder.serialize({"hello" => "world"}, true)
+    assert @encoder.serialize({"hello" => {"hello" => "world"}}, true)
+
+    assert @encoder.serialize({"he$llo" => "world"}, true)
+    assert @encoder.serialize({"hello" => {"hell$o" => "world"}}, true)
+
+    assert_raise BSON::InvalidDocument do
+      @encoder.serialize({"he\0llo" => "world"}, true)
+    end
+
+    assert_raise_error BSON::InvalidKeyName, "$hello" do
+      @encoder.serialize({"$hello" => "world"}, true)
+    end
+
+    assert_raise BSON::InvalidKeyName do
+      @encoder.serialize({"hello" => {"$hello" => "world"}}, true)
+    end
+
+    assert_raise_error BSON::InvalidKeyName, ".hello" do
+      @encoder.serialize({".hello" => "world"}, true)
+    end
+
+    assert_raise BSON::InvalidKeyName do
+      @encoder.serialize({"hello" => {".hello" => "world"}}, true)
+    end
+
+    assert_raise BSON::InvalidKeyName do
+      @encoder.serialize({"hello." => "world"}, true)
+    end
+
+    assert_raise BSON::InvalidKeyName do
+      @encoder.serialize({"hello" => {"hello." => "world"}}, true)
+    end
+
+    assert_raise BSON::InvalidKeyName do
+      @encoder.serialize({"hel.lo" => "world"}, true)
+    end
+
+    assert_raise BSON::InvalidKeyName do
+      @encoder.serialize({"hello" => {"hel.lo" => "world"}}, true)
+    end
+  end
 end

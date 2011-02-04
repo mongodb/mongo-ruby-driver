@@ -231,12 +231,12 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         int i;
         if (RSTRING_LEN(key) > 0 && RSTRING_PTR(key)[0] == '$') {
             buffer_free(buffer);
-            rb_raise(InvalidKeyName, "key must not start with '$'");
+            rb_raise(InvalidKeyName, "%s - key must not start with '$'", RSTRING_PTR(key));
         }
         for (i = 0; i < RSTRING_LEN(key); i++) {
             if (RSTRING_PTR(key)[i] == '.') {
                 buffer_free(buffer);
-                rb_raise(InvalidKeyName, "key must not contain '.'");
+                rb_raise(InvalidKeyName, "%s - key must not contain '.'", RSTRING_PTR(key));
             }
         }
     }

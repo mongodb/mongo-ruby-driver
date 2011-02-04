@@ -621,43 +621,6 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal("mike", @@coll.find_one()["hello"])
   end
 
-  def test_invalid_key_names
-    @@coll.remove
-
-    @@coll.insert({"hello" => "world"})
-    @@coll.insert({"hello" => {"hello" => "world"}})
-
-    assert_raise BSON::InvalidKeyName do
-      @@coll.insert({"$hello" => "world"})
-    end
-
-    assert_raise BSON::InvalidKeyName do
-      @@coll.insert({"hello" => {"$hello" => "world"}})
-    end
-
-    @@coll.insert({"he$llo" => "world"})
-    @@coll.insert({"hello" => {"hell$o" => "world"}})
-
-    assert_raise BSON::InvalidKeyName do
-      @@coll.insert({".hello" => "world"})
-    end
-    assert_raise BSON::InvalidKeyName do
-      @@coll.insert({"hello" => {".hello" => "world"}})
-    end
-    assert_raise BSON::InvalidKeyName do
-      @@coll.insert({"hello." => "world"})
-    end
-    assert_raise BSON::InvalidKeyName do
-      @@coll.insert({"hello" => {"hello." => "world"}})
-    end
-    assert_raise BSON::InvalidKeyName do
-      @@coll.insert({"hel.lo" => "world"})
-    end
-    assert_raise BSON::InvalidKeyName do
-      @@coll.insert({"hello" => {"hel.lo" => "world"}})
-    end
-  end
-
   def test_collection_names
     assert_raise TypeError do
       @@db.collection(5)
