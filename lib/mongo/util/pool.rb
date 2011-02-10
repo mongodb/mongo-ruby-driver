@@ -146,7 +146,7 @@ module Mongo
 
           if socket
 
-          # This call all procs, in order, scoped to existing sockets.
+          # This calls all procs, in order, scoped to existing sockets.
           # At the moment, we use this to lazily authenticate and
           # logout existing socket connections.
           @socket_ops[socket].reject! do |op|
