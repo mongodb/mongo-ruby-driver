@@ -1,5 +1,7 @@
 #!/usr/bin/ruby
 
+require 'thread'
+
 STDOUT.sync = true
 
 unless defined? Mongo
@@ -17,6 +19,7 @@ class ReplSetManager
     @host       = opts[:host]  || 'localhost'
     @retries    = opts[:retries] || 60
     @config     = {"_id" => @name, "members" => []}
+    @durable    = opts.fetch(:durable, false)
     @path       = File.join(File.expand_path(File.dirname(__FILE__)), "data")
 
     @arbiter_count   = opts[:arbiter_count]   || 2
@@ -96,19 +99,21 @@ class ReplSetManager
   def start_cmd(n)
     @mongods[n]['start'] = "mongod --replSet #{@name} --logpath '#{@mongods[n]['log_path']}' " +
      " --dbpath #{@mongods[n]['db_path']} --port #{@mongods[n]['port']} --fork"
+    @mongods[n]['start'] += " --dur" if @durable
+    @mongods[n]['start']
   end
 
-  def kill(node)
+  def kill(node, signal=2)
     pid = @mongods[node]['pid']
     puts "** Killing node with pid #{pid} at port #{@mongods[node]['port']}"
-    system("kill -2 #{@mongods[node]['pid']}")
+    system("kill -#{signal} #{@mongods[node]['pid']}")
     @mongods[node]['up'] = false
     sleep(1)
   end
 
-  def kill_primary
+  def kill_primary(signal=2)
     node = get_node_with_state(1)
-    kill(node)
+    kill(node, signal)
     return node
   end
 
@@ -184,6 +189,16 @@ class ReplSetManager
     get_all_host_pairs_with_state(7)
   end
 
+  # String used for adding a shard via mongos
+  # using the addshard command.
+  def shard_string
+    str = "#{@name}/"
+    str << @mongods.map do |k, mongod|
+      "#{@host}:#{mongod['port']}"
+    end.join(',')
+    str
+  end
+
   private
 
   def initiate
@@ -239,13 +254,13 @@ class ReplSetManager
     while count < @retries do
       begin
         return yield
-        rescue Mongo::OperationFailure, Mongo::ConnectionFailure
+        rescue Mongo::OperationFailure, Mongo::ConnectionFailure => ex
           sleep(1)
           count += 1
       end
     end
 
-    raise exception
+    raise ex
   end
 
 end
