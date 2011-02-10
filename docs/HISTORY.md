@@ -1,5 +1,12 @@
 # MongoDB Ruby Driver History
 
+### 1.2.1
+2011-1-18
+
+* Enable authentication with connection pooling.
+* Allow custom logging with Connection#instrument (CodeMonkeySteve)
+* Minor fixes and doc improvements.
+
 ### 1.2.0
 2011-1-18
 
