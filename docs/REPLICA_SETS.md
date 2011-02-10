@@ -63,7 +63,7 @@ The Ruby driver (>= 1.1.5) includes unit tests for verifying replica set behavio
     rake test:rs
 
 The suite will set up a five-node replica set by itself and ensure that driver behaves correctly even in the face
-of individual node failures. Node that the `mongod` executable must be in the search path for this to work.
+of individual node failures. Note that the `mongod` executable must be in the search path for this to work.
 
 ### Further Reading
 
