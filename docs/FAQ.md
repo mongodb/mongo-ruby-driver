@@ -110,3 +110,7 @@ Without further investigation, it's impossible to know exactly what has caused t
 Because of the indeterminacy involved, the MongoDB drivers will not retry operations on connection failure. How connection failures should be handled is entirely dependent on the application. Therefore, we leave it to the application developers to make the best decision in this case.
 
 The drivers will reconnect on the subsequent operation.
+
+#### I ocassionally get an error saying that responses are out of order. What's happening?
+
+See (this JIRA issue)[http://jira.mongodb.org/browse/RUBY-221].

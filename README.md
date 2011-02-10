@@ -129,7 +129,7 @@ The driver is thread-safe.
 
 ## Connection Pooling
 
-As of v0.18, the driver implements connection pooling. By default, only one
+The driver implements connection pooling. By default, only one
 socket connection will be opened to MongoDB. However, if you're running a
 multi-threaded application, you can specify a maximum pool size and a maximum
 timeout for waiting for old connections to be released to the pool.
@@ -149,12 +149,24 @@ processes will create a new connection to the database. In Passenger, this can b
     if defined?(PhusionPassenger)
       PhusionPassenger.on_event(:starting_worker_process) do |forked|
         if forked
-          # Create new connection here
+          # Reset all connection objects. How you do this depends on where
+          # you keep your connection object. In any case, call the #connect
+          # method on the connection object. For example:
+          # CONN.connect
+          #
+          # If you're using MongoMapper:
+          # MongoMapper.connection.connect
         end
       end
     end
 
-The above code should be put into a Rails initializer or other initialization script.
+In Unicorn, add this to your unicorn.rb file:
+
+    after_fork do |server, worker|
+      # Handle reconnection
+    end
+
+The above code should be put into a Rails initializer or similar initialization script.
 
 ## String Encoding
 
