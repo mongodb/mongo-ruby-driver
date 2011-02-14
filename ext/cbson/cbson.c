@@ -162,6 +162,7 @@ static void write_utf8(buffer_t buffer, VALUE string, char check_null) {
         *buffer = malloc(vslength);             \
         _snprintf(*buffer, vslength, "%d", i);  \
     }
+#define FREE_INTSTRING(buffer) free(buffer)
 #else
 #define INT2STRING(buffer, i)                   \
     {                                           \
@@ -169,9 +170,15 @@ static void write_utf8(buffer_t buffer, VALUE string, char check_null) {
         *buffer = malloc(vslength);             \
         snprintf(*buffer, vslength, "%d", i);   \
     }
+#define FREE_INTSTRING(buffer) free(buffer)
 #endif
 #else
 #define INT2STRING(buffer, i) asprintf(buffer, "%d", i);
+#ifdef USING_SYSTEM_ALLOCATOR_LIBRARY /* Ruby Enterprise Edition with tcmalloc */
+#define FREE_INTSTRING(buffer) system_free(buffer)
+#else
+#define FREE_INTSTRING(buffer) free(buffer)
+#endif
 #endif
 
 #ifndef RREGEXP_SRC
@@ -320,7 +327,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 INT2STRING(&name, i);
                 key = rb_str_new2(name);
                 write_element_with_id(key, rb_ary_entry(value, i), pack_extra(buffer, check_keys));
-                free(name);
+                FREE_INTSTRING(name);
             }
 
             // write null byte and fill in length
