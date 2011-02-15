@@ -1,5 +1,11 @@
 # MongoDB Ruby Driver History
 
+### 1.2.2
+2011-2-15
+
+* Improved replica set failover for edge case.
+* Fix for REE on OSX (Hongli Lai)
+
 ### 1.2.1
 2011-1-18
 
