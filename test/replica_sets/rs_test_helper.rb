@@ -16,7 +16,7 @@ class Test::Unit::TestCase
     begin
       yield
     rescue Mongo::ConnectionFailure => ex
-      puts "Rescue attempt #{retries}"
+      puts "Rescue attempt #{retries}: from #{ex}"
       retries += 1
       raise ex if retries > max_retries
       sleep(1)

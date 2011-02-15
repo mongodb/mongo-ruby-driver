@@ -76,7 +76,7 @@ module Mongo
       socket = TCPSocket.new(@host, @port)
       socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
       rescue => ex
-        raise ConnectionFailure, "Failed to connect socket: #{ex}"
+        raise ConnectionFailure, "Failed to connect to host #{@host} and port #{@port}: #{ex}"
       end
 
       # If any saved authentications exist, we want to apply those

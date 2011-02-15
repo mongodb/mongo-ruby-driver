@@ -17,8 +17,10 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
   end
 
   def test_read_primary
-    assert !@conn.read_primary?
-    assert !@conn.primary?
+    rescue_connection_failure do
+      assert !@conn.read_primary?
+      assert !@conn.primary?
+    end
   end
 
   def test_con
@@ -59,6 +61,12 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
     # Should still be able to read immediately after killing master node
     RS.kill_primary
     assert_equal 2, @coll.find.to_a.length
+    rescue_connection_failure do
+      @coll.save({:a => 50}, :safe => {:w => 2, :wtimeout => 10000})
+    end
+    RS.restart_killed_nodes
+    @coll.save({:a => 50}, :safe => {:w => 2, :wtimeout => 10000})
+    assert_equal 4, @coll.find.to_a.length
   end
 
   def test_kill_secondary
@@ -71,6 +79,7 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
     RS.kill(read_node)
 
     # Should fail immediately on next read
+    old_read_pool_port = @conn.read_pool.port
     assert_raise ConnectionFailure do
       @coll.find.to_a.length
     end
@@ -80,6 +89,8 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
       length = @coll.find.to_a.length
       assert_equal 2, length
     end
+    new_read_pool_port = @conn.read_pool.port
+    assert old_read_pool != new_read_pool
   end
 
 end

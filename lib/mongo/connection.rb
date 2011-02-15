@@ -795,7 +795,7 @@ module Mongo
       begin
         message = new_binary_string
         socket.read(length, message)
-        raise ConnectionFailure, "connection closed" unless message.length > 0
+        raise ConnectionFailure, "connection closed" unless message && message.length > 0
         if message.length < length
           chunk = new_binary_string
           while message.length < length

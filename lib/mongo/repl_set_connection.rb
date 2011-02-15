@@ -119,8 +119,10 @@ module Mongo
         BSON::BSON_CODER.update_max_bson_size(self)
       else
         if @secondary_pools.empty?
+          close # close any existing pools and sockets
           raise ConnectionFailure, "Failed to connect any given host:port"
         else
+          close # close any existing pools and sockets
           raise ConnectionFailure, "Failed to connect to primary node."
         end
       end
@@ -136,7 +138,7 @@ module Mongo
     #
     # @return [Boolean]
     def read_primary?
-      !@read_pool || @read_pool.length.zero?
+      !@read_pool
     end
     alias :primary? :read_primary?
 
@@ -194,9 +196,13 @@ module Mongo
 
         check_set_name(config, socket)
       rescue OperationFailure, SocketError, SystemCallError, IOError => ex
-        close unless connected?
+        # It's necessary to rescue here. The #connect method will keep trying
+        # until it has no more nodes to try and raise a ConnectionFailure if
+        # it can't connect to a primary.
       ensure
+        socket.close if socket
         @nodes_tried << node
+
         if config
           nodes = []
           nodes += config['hosts'] if config['hosts']
@@ -208,8 +214,6 @@ module Mongo
             @logger.warn("MONGODB #{config['msg']}")
           end
         end
-
-        socket.close if socket
       end
 
       config
