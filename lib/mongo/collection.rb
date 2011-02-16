@@ -576,7 +576,7 @@ module Mongo
       if opts.is_a?(Hash)
         return new_group(opts)
       else
-        warn "Collection#group no longer take a list of paramters. This usage is deprecated." +
+        warn "Collection#group no longer take a list of parameters. This usage is deprecated." +
              "Check out the new API at http://api.mongodb.org/ruby/current/Mongo/Collection.html#group-instance_method"
       end
 
