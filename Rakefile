@@ -107,6 +107,7 @@ namespace :test do
   Rake::TestTask.new(:authentication) do |t|
     t.test_files = FileList['test/auxillary/authentication_test.rb']
     t.verbose    = true
+    t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:new_features) do |t|
