@@ -77,6 +77,7 @@ namespace :test do
   Rake::TestTask.new(:rs) do |t|
     t.test_files = FileList['test/replica_sets/*_test.rb']
     t.verbose    = true
+    t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:unit) do |t|
