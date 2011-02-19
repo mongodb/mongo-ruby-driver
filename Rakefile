@@ -113,6 +113,7 @@ namespace :test do
   Rake::TestTask.new(:new_features) do |t|
     t.test_files = FileList['test/auxillary/1.4_features.rb']
     t.verbose    = true
+    t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:bson) do |t|
