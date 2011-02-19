@@ -101,6 +101,7 @@ namespace :test do
   Rake::TestTask.new(:auto_reconnect) do |t|
     t.test_files = FileList['test/auxillary/autoreconnect_test.rb']
     t.verbose    = true
+    t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:authentication) do |t|
