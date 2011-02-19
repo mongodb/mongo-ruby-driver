@@ -95,6 +95,7 @@ namespace :test do
   Rake::TestTask.new(:pooled_threading) do |t|
     t.test_files = FileList['test/threading/*_test.rb']
     t.verbose    = true
+    t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:auto_reconnect) do |t|
