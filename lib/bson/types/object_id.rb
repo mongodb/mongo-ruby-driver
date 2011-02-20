@@ -105,13 +105,6 @@ module BSON
       @data.dup
     end
 
-    # Get the array representation without cloning.
-    #
-    # @return [Array]
-    def data
-      @data
-    end
-
     # Given a string representation of an ObjectId, return a new ObjectId
     # with that value.
     #
