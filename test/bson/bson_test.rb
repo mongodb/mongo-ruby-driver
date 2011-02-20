@@ -137,14 +137,14 @@ class BSONTest < Test::Unit::TestCase
       str = "壁に耳あり、障子に目あり"
       bson = BSON::BSON_CODER.serialize("x" => str)
 
-      Encoding.default_internal = 'EUC-JP'
+      silently { Encoding.default_internal = 'EUC-JP' }
       out = BSON::BSON_CODER.deserialize(bson)["x"]
 
       assert_equal Encoding.default_internal, out.encoding
       assert_equal str.encode('EUC-JP'), out
       assert_equal str, out.encode(str.encoding)
     ensure
-      Encoding.default_internal = before_enc
+      silently { Encoding.default_internal = before_enc }
     end
   end
 
