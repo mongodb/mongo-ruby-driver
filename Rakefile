@@ -112,6 +112,7 @@ namespace :test do
   Rake::TestTask.new(:bson) do |t|
     t.test_files = FileList['test/bson/*_test.rb']
     t.verbose    = true
+    t.ruby_opts << '-w'
   end
 
   task :drop_databases do |t|
