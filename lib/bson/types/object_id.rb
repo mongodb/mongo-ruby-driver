@@ -84,9 +84,9 @@ module BSON
 
     # Check equality of this object id with another.
     #
-    # @param [Mongo::ObjectId] object_id
+    # @param [BSON::ObjectId] object_id
     def eql?(object_id)
-      @data == object_id.instance_variable_get("@data")
+      object_id.kind_of?(BSON::ObjectId) and self.data == object_id.data
     end
     alias_method :==, :eql?
 
