@@ -89,6 +89,7 @@ namespace :test do
   Rake::TestTask.new(:functional) do |t|
     t.test_files = FileList['test/*_test.rb']
     t.verbose    = true
+    t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:pooled_threading) do |t|
