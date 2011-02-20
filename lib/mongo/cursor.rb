@@ -34,6 +34,8 @@ module Mongo
     #
     # @core cursors constructor_details
     def initialize(collection, opts={})
+      @cursor_id  = nil
+
       @db         = collection.db
       @collection = collection
       @connection = @db.connection
