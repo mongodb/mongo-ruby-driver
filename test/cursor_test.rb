@@ -171,8 +171,8 @@ class CursorTest < Test::Unit::TestCase
     cursor = Cursor.new(@@coll, :timeout => false)
     assert_equal false, cursor.timeout
 
-    @@coll.find({}, :timeout => false) do |cursor|
-      assert_equal false, cursor.timeout
+    @@coll.find({}, :timeout => false) do |c|
+      assert_equal false, c.timeout
     end
   end
 
