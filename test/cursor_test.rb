@@ -450,5 +450,4 @@ class CursorTest < Test::Unit::TestCase
     cursor.rewind!
     assert_equal 100, cursor.map {|doc| doc }.length
   end
-
-  end
+end
