@@ -83,6 +83,7 @@ namespace :test do
   Rake::TestTask.new(:unit) do |t|
     t.test_files = FileList['test/unit/*_test.rb']
     t.verbose    = true
+    t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:functional) do |t|
