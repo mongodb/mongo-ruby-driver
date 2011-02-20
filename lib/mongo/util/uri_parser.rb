@@ -142,7 +142,11 @@ module Mongo
     # This method uses the lambdas defined in OPT_VALID and OPT_CONV to validate
     # and convert the given options.
     def parse_options(opts)
+      # initialize instance variables for available options
+      OPT_VALID.keys.each { |k| instance_variable_set("@#{k}", nil) }
+
       return unless opts
+
       separator = opts.include?('&') ? '&' : ';'
       opts.split(separator).each do |attr|
         key, value = attr.split('=')
