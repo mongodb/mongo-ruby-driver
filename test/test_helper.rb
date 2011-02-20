@@ -3,9 +3,17 @@ require 'rubygems' if ENV['C_EXT']
 require 'mongo'
 require 'test/unit'
 
+def silently
+  warn_level = $VERBOSE
+  $VERBOSE = nil
+  result = yield
+  $VERBOSE = warn_level
+  result
+end
+
 begin
   require 'rubygems'
-  require 'shoulda'
+  silently { require 'shoulda' }
   require 'mocha'
   rescue LoadError
     puts <<MSG
