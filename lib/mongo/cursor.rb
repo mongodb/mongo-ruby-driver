@@ -307,8 +307,8 @@ module Mongo
     def query_options_hash
       { :selector => @selector,
         :fields   => @fields,
-        :skip     => @skip_num,
-        :limit    => @limit_num,
+        :skip     => @skip,
+        :limit    => @limit,
         :order    => @order,
         :hint     => @hint,
         :snapshot => @snapshot,

@@ -12,28 +12,32 @@ class CursorTest < Test::Unit::TestCase
     end
 
     should "set timeout" do
-      assert_equal true, @cursor.timeout
+      assert @cursor.timeout
+      assert @cursor.query_options_hash[:timeout]
     end
 
     should "set selector" do
-      assert @cursor.selector == {}
+      assert_equal({}, @cursor.selector)
 
       @cursor = Cursor.new(@collection, :selector => {:name => "Jones"})
-      assert @cursor.selector == {:name => "Jones"}
+      assert_equal({:name => "Jones"}, @cursor.selector)
+      assert_equal({:name => "Jones"}, @cursor.query_options_hash[:selector])
     end
 
     should "set fields" do
       assert_nil @cursor.fields
 
       @cursor = Cursor.new(@collection, :fields => [:name, :date])
-      assert @cursor.fields == {:name => 1, :date => 1}
+      assert_equal({:name => 1, :date => 1}, @cursor.fields)
+      assert_equal({:name => 1, :date => 1}, @cursor.query_options_hash[:fields])
     end
 
     should "set mix fields 0 and 1" do
       assert_nil @cursor.fields
 
       @cursor = Cursor.new(@collection, :fields => {:name => 1, :date => 0})
-      assert @cursor.fields == {:name => 1, :date => 0}
+      assert_equal({:name => 1, :date => 0}, @cursor.fields)
+      assert_equal({:name => 1, :date => 0}, @cursor.query_options_hash[:fields])
     end
 
     should "set limit" do
@@ -41,6 +45,7 @@ class CursorTest < Test::Unit::TestCase
 
       @cursor = Cursor.new(@collection, :limit => 10)
       assert_equal 10, @cursor.limit
+      assert_equal 10, @cursor.query_options_hash[:limit]
     end
 
 
@@ -49,6 +54,7 @@ class CursorTest < Test::Unit::TestCase
 
       @cursor = Cursor.new(@collection, :skip => 5)
       assert_equal 5, @cursor.skip
+      assert_equal 5, @cursor.query_options_hash[:skip]
     end
 
     should "set sort order" do
@@ -56,6 +62,7 @@ class CursorTest < Test::Unit::TestCase
 
       @cursor = Cursor.new(@collection, :order => "last_name")
       assert_equal "last_name", @cursor.order
+      assert_equal "last_name", @cursor.query_options_hash[:order]
     end
 
     should "set hint" do
@@ -63,6 +70,7 @@ class CursorTest < Test::Unit::TestCase
 
       @cursor = Cursor.new(@collection, :hint => "name")
       assert_equal "name", @cursor.hint
+      assert_equal "name", @cursor.query_options_hash[:hint]
     end
 
     should "cache full collection name" do
