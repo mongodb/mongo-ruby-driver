@@ -164,12 +164,12 @@ class BSONTest < Test::Unit::TestCase
     assert_doc_pass(doc)
   end
 
-   def test_double
-     doc = {'doc' => 41.25}
-     assert_doc_pass(doc)
-   end
+  def test_double
+    doc = {'doc' => 41.25}
+    assert_doc_pass(doc)
+  end
 
- def test_int
+  def test_int
     doc = {'doc' => 42}
     assert_doc_pass(doc)
 
