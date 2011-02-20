@@ -280,7 +280,7 @@ class BSONTest < Test::Unit::TestCase
       ensure
         if !invalid_date.is_a? Time
           assert_equal InvalidDocument, e.class
-          assert_match /UTC Time/, e.message
+          assert_match(/UTC Time/, e.message)
         end
       end
     end
@@ -442,7 +442,7 @@ class BSONTest < Test::Unit::TestCase
       rescue => e
       ensure
         assert_equal InvalidDocument, e.class
-        assert_match /Cannot serialize/, e.message
+        assert_match(/Cannot serialize/, e.message)
       end
     end
   end
