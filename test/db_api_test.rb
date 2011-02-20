@@ -621,7 +621,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal("mike", @@coll.find_one()["hello"])
   end
 
-  def test_collection_names
+  def test_collection_names_errors
     assert_raise TypeError do
       @@db.collection(5)
     end
