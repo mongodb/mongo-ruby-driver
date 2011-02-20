@@ -40,11 +40,11 @@ class ConversionsTest < Test::Unit::TestCase
   end
 
   def test_sort_value_when_value_is_negative_one
-    assert_equal -1, sort_value(-1)
+    assert_equal(-1, sort_value(-1))
   end
 
   def test_sort_value_when_value_is_negative_one_as_a_string
-    assert_equal -1, sort_value("-1")
+    assert_equal(-1, sort_value("-1"))
   end
 
   def test_sort_value_when_value_is_ascending
@@ -80,35 +80,35 @@ class ConversionsTest < Test::Unit::TestCase
   end
 
   def test_sort_value_when_value_is_descending
-    assert_equal -1, sort_value("descending")
+    assert_equal(-1, sort_value("descending"))
   end
 
   def test_sort_value_when_value_is_desc
-    assert_equal -1, sort_value("desc")
+    assert_equal(-1, sort_value("desc"))
   end
 
   def test_sort_value_when_value_is_uppercase_descending
-    assert_equal -1, sort_value("DESCENDING")
+    assert_equal(-1, sort_value("DESCENDING"))
   end
 
   def test_sort_value_when_value_is_uppercase_desc
-    assert_equal -1, sort_value("DESC")
+    assert_equal(-1, sort_value("DESC"))
   end
 
   def test_sort_value_when_value_is_symbol_descending
-    assert_equal -1, sort_value(:descending)
+    assert_equal(-1, sort_value(:descending))
   end
 
   def test_sort_value_when_value_is_symbol_desc
-    assert_equal -1, sort_value(:desc)
+    assert_equal(-1, sort_value(:desc))
   end
 
   def test_sort_value_when_value_is_uppercase_symbol_descending
-    assert_equal -1, sort_value(:DESCENDING)
+    assert_equal(-1, sort_value(:DESCENDING))
   end
 
   def test_sort_value_when_value_is_uppercase_symbol_desc
-    assert_equal -1, sort_value(:DESC)
+    assert_equal(-1, sort_value(:DESC))
   end
 
   def test_sort_value_when_value_is_invalid
