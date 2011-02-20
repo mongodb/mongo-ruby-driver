@@ -1,8 +1,11 @@
 # encoding:utf-8
 require './test/test_helper'
-require 'complex'
+
+if RUBY_VERSION < '1.9'
+  require 'complex'
+  require 'rational'
+end
 require 'bigdecimal'
-require 'rational'
 
 begin
   require 'active_support/core_ext'
