@@ -1,6 +1,22 @@
 require './test/test_helper'
 include Mongo
 
+def read_and_write_stream(filename, read_length, opts={})
+  io   = File.open(File.join(File.dirname(__FILE__), 'data', filename), 'r')
+  id   = @grid.put(io, opts.merge!(:filename => filename + read_length.to_s))
+  file = @grid.get(id)
+  io.rewind
+  data = io.read
+  if data.respond_to?(:force_encoding)
+    data.force_encoding("binary")
+  end
+  read_data = ""
+  while(chunk = file.read(read_length))
+    read_data << chunk
+  end
+  assert_equal data.length, read_data.length
+end
+
 class GridTest < Test::Unit::TestCase
   context "Tests:" do
     setup do
@@ -161,22 +177,6 @@ class GridTest < Test::Unit::TestCase
 
     context "Streaming: " do || {}
       setup do
-        def read_and_write_stream(filename, read_length, opts={})
-          io   = File.open(File.join(File.dirname(__FILE__), 'data', filename), 'r')
-          id   = @grid.put(io, opts.merge!(:filename => filename + read_length.to_s))
-          file = @grid.get(id)
-          io.rewind
-          data = io.read
-          if data.respond_to?(:force_encoding)
-            data.force_encoding("binary")
-          end
-          read_data = ""
-          while(chunk = file.read(read_length))
-            read_data << chunk
-          end
-          assert_equal data.length, read_data.length
-        end
-
         @grid = Grid.new(@db, 'test-fs')
       end
 
