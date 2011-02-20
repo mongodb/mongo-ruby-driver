@@ -15,8 +15,8 @@ begin
   require 'rubygems'
   silently { require 'shoulda' }
   require 'mocha'
-  rescue LoadError
-    puts <<MSG
+rescue LoadError
+  puts <<MSG
 
 This test suite requires shoulda and mocha.
 You can install them as follows:
@@ -24,7 +24,8 @@ You can install them as follows:
   gem install mocha
 
 MSG
-    exit
+
+  exit
 end
 
 require 'bson_ext/cbson' if !(RUBY_PLATFORM =~ /java/) && ENV['C_EXT']
