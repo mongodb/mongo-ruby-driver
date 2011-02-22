@@ -465,6 +465,29 @@ class TestCollection < Test::Unit::TestCase
       assert res["counts"]
       assert res["timeMillis"]
     end
+
+    def test_map_reduce_with_collection_merge
+      @@test << {:user_id => 1}
+      @@test << {:user_id => 2}
+      output_collection = "test-map-coll"
+      m = Code.new("function() { emit(this.user_id, {count: 1}); }")
+      r = Code.new("function(k,vals) { var sum = 0;" +
+        " vals.forEach(function(v) { sum += v.count;} ); return {count: sum}; }")
+      res = @@test.map_reduce(m, r, :out => output_collection)
+
+      @@test.remove
+      @@test << {:user_id => 3}
+      res = @@test.map_reduce(m, r, :out => {:merge => output_collection})
+      assert res.find.to_a.any? {|doc| doc["_id"] == 3 && doc["value"]["count"] == 1}
+
+      @@test.remove
+      @@test << {:user_id => 3}
+      res = @@test.map_reduce(m, r, :out => {:reduce => output_collection})
+      assert res.find.to_a.any? {|doc| doc["_id"] == 3 && doc["value"]["count"] == 2}
+
+      res = @@test.map_reduce(m, r, :out => {:inline => 1})
+      assert res["results"]
+    end
   end
 
   if @@version > "1.3.0"

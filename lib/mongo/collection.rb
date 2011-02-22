@@ -521,13 +521,18 @@ module Mongo
     # @option opts [Integer] :limit (nil) if passing a query, number of objects to return from the collection.
     # @option opts [String, BSON::Code] :finalize (nil) a javascript function to apply to the result set after the
     #   map/reduce operation has finished.
-    # @option opts [String] :out (nil) the name of the output collection. If specified, the collection will not be treated as temporary.
-    # @option opts [Boolean] :keeptemp (false) if true, the generated collection will be persisted. default is false.
+    # @option opts [String] :out (nil) a valid output type. In versions of MongoDB prior to v1.7.6,
+    #   this option takes the name of a collection for the output results. In versions 1.7.6 and later,
+    #   this option specifies the output type. See the core docs for available output types.
+    # @option opts [Boolean] :keeptemp (false) if true, the generated collection will be persisted. The defualt
+    #   is false. Note that this option has no effect is versions of MongoDB > v1.7.6.
     # @option opts [Boolean ] :verbose (false) if true, provides statistics on job execution time.
     # @option opts [Boolean] :raw (false) if true, return the raw result object from the map_reduce command, and not
-    #   the instantiated collection that's returned by default.
+    #   the instantiated collection that's returned by default. Note if a collection name isn't returned in the
+    #   map-reduce output (as, for example, when using :out => {:inline => 1}), then this option will be
+    #   forced to true.
     #
-    # @return [Collection] a collection containing the results of the operation.
+    # @return [Collection, Hash] a Mongo::Collection object or a Hash with the map-reduce command's results.
     #
     # @see http://www.mongodb.org/display/DOCS/MapReduce Offical MongoDB map/reduce documentation.
     #
@@ -548,7 +553,7 @@ module Mongo
         raise Mongo::OperationFailure, "map-reduce failed: #{result['errmsg']}"
       end
 
-      if raw
+      if raw || !result["result"]
         result
       else
         @db[result["result"]]
