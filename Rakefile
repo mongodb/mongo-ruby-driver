@@ -175,6 +175,14 @@ namespace :gem do
     sh "rm bson_ext-*.gem"
   end
 
+  desc "Build all gems"
+  task :build_all do
+    sh "gem build mongo.gemspec"
+    sh "gem build bson.gemspec"
+    sh "gem build bson.java.gemspec"
+    sh "gem build bson_ext.gemspec"
+  end
+
 end
 
 namespace :ci do
