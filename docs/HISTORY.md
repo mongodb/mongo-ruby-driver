@@ -1,5 +1,11 @@
 # MongoDB Ruby Driver History
 
+### 1.2.3
+2011-2-22
+
+* Update docs for map-reduce command
+* Minor doc fix
+
 ### 1.2.2
 2011-2-15
 
