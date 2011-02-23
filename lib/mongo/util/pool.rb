@@ -49,8 +49,7 @@ module Mongo
         begin
           sock.close
         rescue IOError => ex
-          warn "IOError when attempting to close socket connected "
-           + "to #{@host}:#{@port}: #{ex.inspect}"
+          warn "IOError when attempting to close socket connected to #{@host}:#{@port}: #{ex.inspect}"
         end
       end
       @host = @port = nil
