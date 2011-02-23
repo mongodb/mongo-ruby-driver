@@ -509,7 +509,7 @@ module Mongo
       @db.command(cmd)['value']
     end
 
-    # Perform a map/reduce operation on the current collection.
+    # Perform a map-reduce operation on the current collection.
     #
     # @param [String, BSON::Code] map a map function, written in JavaScript.
     # @param [String, BSON::Code] reduce a reduce function, written in JavaScript.
@@ -529,10 +529,12 @@ module Mongo
     # @option opts [Boolean ] :verbose (false) if true, provides statistics on job execution time.
     # @option opts [Boolean] :raw (false) if true, return the raw result object from the map_reduce command, and not
     #   the instantiated collection that's returned by default. Note if a collection name isn't returned in the
-    #   map-reduce output (as, for example, when using :out => {:inline => 1}), then this option will be
-    #   forced to true.
+    #   map-reduce output (as, for example, when using :out => {:inline => 1}), then you must specify this option
+    #   or an ArgumentError will be raised.
     #
     # @return [Collection, Hash] a Mongo::Collection object or a Hash with the map-reduce command's results.
+    #
+    # @raise ArgumentError if you specify {:out => {:inline => true}} but don't specify :raw => true.
     #
     # @see http://www.mongodb.org/display/DOCS/MapReduce Offical MongoDB map/reduce documentation.
     #
@@ -553,10 +555,13 @@ module Mongo
         raise Mongo::OperationFailure, "map-reduce failed: #{result['errmsg']}"
       end
 
-      if raw || !result["result"]
+      if raw
         result
-      else
+      elsif result["result"]
         @db[result["result"]]
+      else
+        raise ArgumentError, "Could not instantiate collection from result. If you specified " +
+          "{:out => {:inline => true}}, then you must also specify :raw => true to get the results."
       end
     end
     alias :mapreduce :map_reduce
