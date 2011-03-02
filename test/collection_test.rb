@@ -485,7 +485,11 @@ class TestCollection < Test::Unit::TestCase
       res = @@test.map_reduce(m, r, :out => {:reduce => output_collection})
       assert res.find.to_a.any? {|doc| doc["_id"] == 3 && doc["value"]["count"] == 2}
 
-      res = @@test.map_reduce(m, r, :out => {:inline => 1})
+      assert_raise ArgumentError do
+        @@test.map_reduce(m, r, :out => {:inline => 1})
+      end
+
+      @@test.map_reduce(m, r, :raw => true, :out => {:inline => 1})
       assert res["results"]
     end
   end
