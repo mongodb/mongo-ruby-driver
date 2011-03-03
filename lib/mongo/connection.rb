@@ -329,12 +329,21 @@ module Mongo
       self["admin"].command(oh)
     end
 
-        # Get the build information for the current connection.
+    # Checks if a server is alive. This command will return immediately 
+    # even if the server is in a lock.
+    #
+    # @return [Hash]
+    def ping
+      self["admin"].command({:ping => 1})
+    end
+
+    # Get the build information for the current connection.
     #
     # @return [Hash]
     def server_info
       self["admin"].command({:buildinfo => 1})
     end
+
 
     # Get the build version of the current server.
     #
@@ -491,7 +500,7 @@ module Mongo
     def active?
       return false unless connected?
 
-      server_info
+      ping
       true
 
       rescue ConnectionFailure
