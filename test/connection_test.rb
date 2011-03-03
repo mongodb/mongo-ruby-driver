@@ -28,6 +28,11 @@ class TestConnection < Test::Unit::TestCase
     assert Mongo::Support.ok?(server_info)
   end
 
+  def test_ping
+    ping = @conn.ping
+    assert ping['ok']
+  end
+
   def test_connection_uri
     con = Connection.from_uri("mongodb://#{host_port}")
     assert_equal mongo_host, con.primary_pool.host
