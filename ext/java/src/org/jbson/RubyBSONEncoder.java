@@ -281,6 +281,9 @@ public class RubyBSONEncoder extends BSONEncoder {
         else if ( val instanceof Iterable)
             putIterable( name , (Iterable)val );
 
+        else if ( val instanceof Date )
+            putDate( name , ((Date)val).getTime() );
+
         else if ( val instanceof byte[] )
             putBinary( name , (byte[])val );
 

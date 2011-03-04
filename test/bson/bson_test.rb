@@ -246,8 +246,14 @@ class BSONTest < Test::Unit::TestCase
     assert_in_delta doc['date'], doc2['date'], 0.001
   end
 
+  def test_date_in_array
+    doc = {'date' => [Time.now.utc]}
+    bson = @encoder.serialize(doc)
+    doc2 = @encoder.deserialize(bson)
+  end
+
   def test_date_returns_as_utc
-    doc = {'date' => Time.now}
+    doc = {'date' => Time.now.utc}
     bson = @encoder.serialize(doc)
     doc2 = @encoder.deserialize(bson)
     assert doc2['date'].utc?
