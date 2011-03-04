@@ -573,7 +573,7 @@ class BSONTest < Test::Unit::TestCase
       @encoder.serialize({"he\0llo" => "world"}, true)
     end
 
-    assert_raise_error BSON::InvalidKeyName, "$hello" do
+    assert_raise BSON::InvalidKeyName do
       @encoder.serialize({"$hello" => "world"}, true)
     end
 
@@ -581,7 +581,7 @@ class BSONTest < Test::Unit::TestCase
       @encoder.serialize({"hello" => {"$hello" => "world"}}, true)
     end
 
-    assert_raise_error BSON::InvalidKeyName, ".hello" do
+    assert_raise BSON::InvalidKeyName  do
       @encoder.serialize({".hello" => "world"}, true)
     end
 
