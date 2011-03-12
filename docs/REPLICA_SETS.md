@@ -6,11 +6,12 @@ Here follow a few considerations for those using the MongoDB Ruby driver with [r
 
 First, make sure that you've configured and initialized a replica set.
 
-Use `ReplSetConnection.new` to connect to a replica set:
+Use `ReplSetConnection.new` to connect to a replica set. This method, which accepts a variable number of arugments,
+takes a list of seed nodes followed by any connection options. You'll want to specify at least two seed nodes. This gives
+the driver more chances to connect in the event that any one seed node is offline. Once the driver connects, it will
+cache the replica set topology as reported by the given seed node and use that information if a failover is later required.
 
     @connection = ReplSetConnection.new(['n1.mydb.net', 27017], ['n2.mydb.net', 27017], ['n3.mydb.net', 27017])
-
-The driver will attempt to connect to a master node and, when found, will replace all seed nodes with known members of the replica set.
 
 ### Read slaves
 
