@@ -126,14 +126,27 @@ class ObjectIdTest < Test::Unit::TestCase
     time = Time.now.utc
     id   = ObjectId.from_time(time)
 
+    assert id.to_a[4, 8].all? {|byte| byte == 0 }
     assert_equal time.to_i, id.generation_time.to_i
+  end
+
+  def test_from_time_unique
+    time = Time.now.utc
+    id   = ObjectId.from_time(time, :unique => true)
+
+    mac_id = Digest::MD5.digest(Socket.gethostname)[0, 3].unpack("C3")
+    assert_equal id.to_a[4, 3], mac_id
+    assert_equal time.to_i, id.generation_time.to_i
+
+    id2 = ObjectId.new(nil, time)
+    assert_equal time.to_i, id2.generation_time.to_i
   end
 
   def test_json
     id = ObjectId.new
     assert_equal "{\"$oid\": \"#{id}\"}", id.to_json
   end
-  
+
   def test_as_json
     id = ObjectId.new
     assert_equal({"$oid" => id.to_s}, id.as_json)

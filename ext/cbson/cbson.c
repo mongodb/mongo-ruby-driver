@@ -881,7 +881,7 @@ static VALUE method_deserialize(VALUE self, VALUE bson) {
     return elements_to_hash(buffer, remaining);
 }
 
-static VALUE objectid_generate(VALUE self)
+static VALUE objectid_generate(int argc, VALUE* args, VALUE self)
 {
     VALUE oid;
     unsigned char oid_bytes[12];
@@ -889,7 +889,11 @@ static VALUE objectid_generate(VALUE self)
     unsigned short pid;
     int i;
 
-    t = htonl((int)time(NULL));
+    if(argc == 0 || (argc == 1 && *args == Qnil)) {
+        t = htonl((int)time(NULL));
+    } else {
+        t = htonl(FIX2INT(rb_funcall(*args, rb_intern("to_i"), 0)));
+    }
     MEMCPY(&oid_bytes, &t, unsigned char, 4);
 
     MEMCPY(&oid_bytes[4], hostname_digest, unsigned char, 3);
@@ -969,7 +973,7 @@ void Init_cbson() {
     Digest = rb_const_get(rb_cObject, rb_intern("Digest"));
     DigestMD5 = rb_const_get(Digest, rb_intern("MD5"));
 
-    rb_define_method(ObjectId, "generate", objectid_generate, 0);
+    rb_define_method(ObjectId, "generate", objectid_generate, -1);
 
     if (gethostname(hostname, MAX_HOSTNAME_LENGTH) != 0) {
         rb_raise(rb_eRuntimeError, "failed to get hostname");

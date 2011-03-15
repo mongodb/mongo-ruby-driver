@@ -33,6 +33,8 @@ module BSON
     @@lock  = Mutex.new
     @@index = 0
 
+    attr_accessor :data
+
     # Create a new object id. If no parameter is given, an id corresponding
     # to the ObjectId BSON data type will be created. This is a 12-byte value
     # consisting of a 4-byte timestamp, a 3-byte machine id, a 2-byte process id,
@@ -40,11 +42,14 @@ module BSON
     #
     # @param [Array] data should be an array of bytes. If you want
     #   to generate a standard MongoDB object id, leave this argument blank.
-    def initialize(data=nil)
-      @data = data || generate
+    #
+    # @option opts :data (nil) An array of bytes to use as the object id.
+    # @option opts :time (nil) The value of this object ids timestamp. Note that
+    #   the remaining bytes will consist of the standard machine id, pid, and counter. If
+    #   you need a zeroed timestamp, used ObjectId.from_time.
+    def initialize(data=nil, time=nil)
+      @data = data || generate(time)
     end
-
-    attr_accessor :data
 
     # Determine if the supplied string is legal. Legal strings will
     # consist of 24 hexadecimal characters.
@@ -62,14 +67,23 @@ module BSON
     #
     # @param [Time] time a utc time to encode as an object id.
     #
+    # @option opts [:unique] (false) If false, the object id's bytes
+    #   succeeding the timestamp will be zeroed; if true, they'll
+    #   consist of the standard machine id, pid, and counter.
+    #
     # @return [Mongo::ObjectId]
     #
     # @example Return all document created before Jan 1, 2010.
     #   time = Time.utc(2010, 1, 1)
     #   time_id = ObjectId.from_time(time)
     #   collection.find({'_id' => {'$lt' => time_id}})
-    def self.from_time(time)
-      self.new([time.to_i,0,0].pack("NNN").unpack("C12"))
+    def self.from_time(time, opts={})
+      unique = opts.fetch(:unique, false)
+      if unique
+        self.new(nil, time)
+      else
+        self.new([time.to_i,0,0].pack("NNN").unpack("C12"))
+      end
     end
 
     # Adds a primary key to the given document if needed.
@@ -145,10 +159,10 @@ module BSON
     def to_json(*a)
       "{\"$oid\": \"#{to_s}\"}"
     end
-    
+
     # Create the JSON hash structure convert to MongoDB extended format. Rails 2.3.3 
     # introduced as_json to create the needed hash structure to encode objects into JSON.
-    # 
+    #
     # @return [Hash] the hash representation as MongoDB extended JSON
     def as_json(options ={})
       {"$oid" => to_s}
@@ -166,12 +180,16 @@ module BSON
     private
 
     # This gets overwritten by the C extension if it loads.
-    def generate
+    def generate(oid_time=nil)
       oid = ''
 
       # 4 bytes current time
-      time = Time.new.to_i
-      oid += [time].pack("N")
+      if oid_time
+        t = oid_time.to_i
+      else
+        t = Time.new.to_i
+      end
+      oid += [t].pack("N")
 
       # 3 bytes machine
       oid += Digest::MD5.digest(Socket.gethostname)[0, 3]
