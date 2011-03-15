@@ -395,10 +395,13 @@ class CursorTest < Test::Unit::TestCase
     end
 
     cursor = @@coll.find
+    n = 0
     while cursor.has_next?
-      assert cursor.next_document
+      assert cursor.next
+      n += 1
     end
 
+    assert_equal n, 200
     assert_equal false, cursor.has_next?
   end
 

@@ -88,6 +88,7 @@ module Mongo
 
       doc
     end
+    alias :next :next_document
 
     # Reset this cursor on the server. Cursor options, such as the
     # query string and the values for skip and limit, are preserved.
