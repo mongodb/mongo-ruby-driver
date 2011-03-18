@@ -157,6 +157,8 @@ module Mongo
     #   the normal cursor timeout behavior of the mongod process. When +false+, the returned cursor will never timeout. Note
     #   that disabling timeout will only work when #find is invoked with a block. This is to prevent any inadvertant failure to
     #   close the cursor, as the cursor is explicitly closed when block code finishes.
+    # @options opts [Block] :transformer optional block that can be handed to cursor for tranforming returned documents. Most valuable
+    #   use is for converting hashes to instances of a class.
     #
     # @raise [ArgumentError]
     #   if timeout is set to false and find is not invoked in a block
@@ -175,6 +177,7 @@ module Mongo
       snapshot   = opts.delete(:snapshot)
       batch_size = opts.delete(:batch_size)
       timeout    = (opts.delete(:timeout) == false) ? false : true
+      transformer = opts.delete(:transformer)
 
       if timeout == false && !block_given?
         raise ArgumentError, "Collection#find must be invoked with a block when timeout is disabled."
@@ -188,8 +191,18 @@ module Mongo
 
       raise RuntimeError, "Unknown options [#{opts.inspect}]" unless opts.empty?
 
-      cursor = Cursor.new(self, :selector => selector, :fields => fields, :skip => skip, :limit => limit,
-        :order => sort, :hint => hint, :snapshot => snapshot, :timeout => timeout, :batch_size => batch_size)
+      cursor = Cursor.new(self, {
+        :selector    => selector, 
+        :fields      => fields, 
+        :skip        => skip, 
+        :limit       => limit,
+        :order       => sort, 
+        :hint        => hint, 
+        :snapshot    => snapshot, 
+        :timeout     => timeout, 
+        :batch_size  => batch_size,
+        :transformer => transformer,
+      })
 
       if block_given?
         yield cursor

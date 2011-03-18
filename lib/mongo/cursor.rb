@@ -23,7 +23,7 @@ module Mongo
 
     attr_reader :collection, :selector, :fields,
       :order, :hint, :snapshot, :timeout,
-      :full_collection_name
+      :full_collection_name, :transformer
 
     # Create a new cursor.
     #
@@ -52,6 +52,7 @@ module Mongo
       @tailable   = opts[:tailable] || false
       @closed       = false
       @query_run    = false
+      @transformer = opts[:transformer]
       batch_size(opts[:batch_size] || 0)
 
       @full_collection_name = "#{@collection.db.name}.#{@collection.name}"
@@ -86,7 +87,11 @@ module Mongo
         raise OperationFailure, err
       end
 
-      doc
+      if @transformer.nil?
+        doc
+      else
+        @transformer.call(doc) if doc
+      end
     end
     alias :next :next_document
 

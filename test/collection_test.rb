@@ -592,6 +592,20 @@ class TestCollection < Test::Unit::TestCase
     assert_equal 1, x
   end
 
+  def test_find_with_transformer
+    klass       = Struct.new(:id, :a)
+    transformer = Proc.new { |doc| klass.new(doc['_id'], doc['a']) }
+    cursor      = @@test.find({}, :transformer => transformer)
+    assert_equal(transformer, cursor.transformer)
+  end
+  
+  def test_find_one_with_transformer
+    klass       = Struct.new(:id, :a)
+    transformer = Proc.new { |doc| klass.new(doc['_id'], doc['a']) }
+    id          = @@test.insert('a' => 1)
+    doc         = @@test.find_one(id, :transformer => transformer)
+    assert_instance_of(klass, doc)
+  end
 
   def test_ensure_index
     @@test.drop_indexes
