@@ -220,6 +220,7 @@ class TestConnection < Test::Unit::TestCase
 
     conn.primary_pool.host = 'localhost'
     conn.primary_pool.port = Mongo::Connection::DEFAULT_PORT
+    conn.primary_pool.instance_variable_set("@pids", {dropped_socket => Process.pid})
     conn.primary_pool.instance_variable_set("@sockets", [dropped_socket])
 
     assert !conn.active?

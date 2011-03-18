@@ -41,6 +41,7 @@ module Mongo
       @socket_ops = Hash.new { |h, k| h[k] = [] }
 
       @sockets      = []
+      @pids         = {}
       @checked_out  = []
     end
 
@@ -54,6 +55,7 @@ module Mongo
       end
       @host = @port = nil
       @sockets.clear
+      @pids.clear
       @checked_out.clear
     end
 
@@ -83,6 +85,7 @@ module Mongo
       @connection.apply_saved_authentication(:socket => socket)
 
       @sockets << socket
+      @pids[socket] = Process.pid
       @checked_out << socket
       socket
     end
@@ -115,12 +118,22 @@ module Mongo
 
     # Checks out the first available socket from the pool.
     #
+    # If the pid has changed, remove the socket and check out
+    # new one.
+    #
     # This method is called exclusively from #checkout;
     # therefore, it runs within a mutex.
     def checkout_existing_socket
       socket = (@sockets - @checked_out).first
-      @checked_out << socket
-      socket
+      if @pids[socket] != Process.pid
+         @pids[socket] = nil
+         @sockets.delete(socket)
+         socket.close
+         checkout_new_socket
+      else
+        @checked_out << socket
+        socket
+      end
     end
 
     # Check out an existing socket or create a new socket if the maximum
