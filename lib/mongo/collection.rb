@@ -157,8 +157,8 @@ module Mongo
     #   the normal cursor timeout behavior of the mongod process. When +false+, the returned cursor will never timeout. Note
     #   that disabling timeout will only work when #find is invoked with a block. This is to prevent any inadvertant failure to
     #   close the cursor, as the cursor is explicitly closed when block code finishes.
-    # @options opts [Block] :transformer optional block that can be handed to cursor for tranforming returned documents. Most valuable
-    #   use is for converting hashes to instances of a class.
+    # @options opts [Block] :transformer (nil) a block for tranforming returned documents.
+    #   This is normally used by object mappers to convert each returned document to an instance of a class.
     #
     # @raise [ArgumentError]
     #   if timeout is set to false and find is not invoked in a block
