@@ -194,4 +194,11 @@ class OrderedHashTest < Test::Unit::TestCase
     copy[:foo] = 1
     assert copy.keys != @oh.keys
   end
+  
+  def test_dup
+    oh2 = @oh.dup
+    oh2['f'] = 9
+    assert_nil @oh['f']
+    assert_equal ['c', 'a', 'z'], @oh.keys
+  end
 end
