@@ -231,6 +231,10 @@ module BSON
     def more?
       @cursor < @str.size
     end
+    
+    def ==(other)
+      other.respond_to?(:to_s) && @str == other.to_s
+    end
 
     def to_a
       @str.unpack("C*")

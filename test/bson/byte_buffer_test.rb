@@ -186,5 +186,16 @@ class ByteBufferTest < Test::Unit::TestCase
     @buf.get_int
     assert !@buf.more?
   end
+  
+  def test_equality
+    @buf = ByteBuffer.new("foo")
+    assert_equal @buf, @buf
+    assert_equal ByteBuffer.new(""), ByteBuffer.new("")
+    assert_equal ByteBuffer.new("123"), ByteBuffer.new("123")
+    assert_not_equal ByteBuffer.new("123"), ByteBuffer.new("1234")
+    assert_equal @buf, "foo"
+    assert_not_equal @buf, 123
+    assert_not_equal @buf, nil
+  end
 
 end
