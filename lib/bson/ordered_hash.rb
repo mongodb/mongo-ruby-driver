@@ -103,6 +103,15 @@ module BSON
       end
 
       alias :update :merge!
+      
+      def dup
+        result = OrderedHash.new
+        @ordered_keys ||= []
+        @ordered_keys.each do |key|
+          result[key] = self[key]
+        end
+        result
+      end
 
       def inspect
         str = '{'
