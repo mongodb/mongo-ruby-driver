@@ -245,7 +245,6 @@ module BSON
     end
 
     def dump
-      i = 0
       @str.each_byte do |c, i|
         $stderr.puts "#{'%04d' % i}: #{'%02x' % c} #{'%03o' % c} #{'%s' % c.chr} #{'%3d' % c}"
         i += 1

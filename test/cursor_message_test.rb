@@ -1,7 +1,7 @@
 require './test/test_helper'
 require 'logger'
 
-class CursorTest < Test::Unit::TestCase
+class CursorMessageTest < Test::Unit::TestCase
 
   include Mongo
 

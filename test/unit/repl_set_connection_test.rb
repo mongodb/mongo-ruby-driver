@@ -3,19 +3,6 @@ include Mongo
 
 class ReplSetConnectionTest < Test::Unit::TestCase
   context "Initialization: " do
-    setup do
-      def new_mock_socket(host='localhost', port=27017)
-        socket = Object.new
-        socket.stubs(:setsockopt).with(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
-        socket.stubs(:close)
-        socket
-      end
-
-      def new_mock_db
-        db = Object.new
-      end
-    end
-
     context "connecting to a replica set" do
       setup do
         TCPSocket.stubs(:new).returns(new_mock_socket('localhost', 27017))

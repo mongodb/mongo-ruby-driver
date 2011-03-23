@@ -168,10 +168,6 @@ module Mongo
             return socket
           else
             # Otherwise, wait
-            if @logger
-              @logger.warn "MONGODB Waiting for available connection; " +
-                "#{@checked_out.size} of #{@size} connections checked out."
-            end
             @queue.wait(@connection_mutex)
           end
         end

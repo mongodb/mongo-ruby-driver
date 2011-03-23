@@ -1,4 +1,4 @@
-require File.expand_path('./test/test_helper.rb')
+require './test/test_helper'
 
 class CollectionTest < Test::Unit::TestCase
 

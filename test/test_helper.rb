@@ -3,12 +3,20 @@ require 'rubygems' if ENV['C_EXT']
 require 'mongo'
 require 'test/unit'
 
+def silently
+  warn_level = $VERBOSE
+  $VERBOSE = nil
+  result = yield
+  $VERBOSE = warn_level
+  result
+end
+
 begin
   require 'rubygems'
-  require 'shoulda'
+  silently { require 'shoulda' }
   require 'mocha'
-  rescue LoadError
-    puts <<MSG
+rescue LoadError
+  puts <<MSG
 
 This test suite requires shoulda and mocha.
 You can install them as follows:
@@ -16,7 +24,8 @@ You can install them as follows:
   gem install mocha
 
 MSG
-    exit
+
+  exit
 end
 
 require 'bson_ext/cbson' if !(RUBY_PLATFORM =~ /java/) && ENV['C_EXT']
@@ -69,7 +78,17 @@ class Test::Unit::TestCase
     self.class.mongo_port
   end
 
-  
+  def new_mock_socket(host='localhost', port=27017)
+    socket = Object.new
+    socket.stubs(:setsockopt).with(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+    socket.stubs(:close)
+    socket
+  end
+
+  def new_mock_db
+    db = Object.new
+  end
+
   def assert_raise_error(klass, message)
     begin
       yield

@@ -1,8 +1,11 @@
 # encoding:utf-8
 require './test/test_helper'
-require 'complex'
+
+if RUBY_VERSION < '1.9'
+  require 'complex'
+  require 'rational'
+end
 require 'bigdecimal'
-require 'rational'
 
 begin
   require 'active_support/core_ext'
@@ -134,14 +137,14 @@ class BSONTest < Test::Unit::TestCase
       str = "壁に耳あり、障子に目あり"
       bson = BSON::BSON_CODER.serialize("x" => str)
 
-      Encoding.default_internal = 'EUC-JP'
+      silently { Encoding.default_internal = 'EUC-JP' }
       out = BSON::BSON_CODER.deserialize(bson)["x"]
 
       assert_equal Encoding.default_internal, out.encoding
       assert_equal str.encode('EUC-JP'), out
       assert_equal str, out.encode(str.encoding)
     ensure
-      Encoding.default_internal = before_enc
+      silently { Encoding.default_internal = before_enc }
     end
   end
 
@@ -161,12 +164,12 @@ class BSONTest < Test::Unit::TestCase
     assert_doc_pass(doc)
   end
 
-   def test_double
-     doc = {'doc' => 41.25}
-     assert_doc_pass(doc)
-   end
+  def test_double
+    doc = {'doc' => 41.25}
+    assert_doc_pass(doc)
+  end
 
- def test_int
+  def test_int
     doc = {'doc' => 42}
     assert_doc_pass(doc)
 
@@ -283,7 +286,7 @@ class BSONTest < Test::Unit::TestCase
       ensure
         if !invalid_date.is_a? Time
           assert_equal InvalidDocument, e.class
-          assert_match /UTC Time/, e.message
+          assert_match(/UTC Time/, e.message)
         end
       end
     end
@@ -445,7 +448,7 @@ class BSONTest < Test::Unit::TestCase
       rescue => e
       ensure
         assert_equal InvalidDocument, e.class
-        assert_match /Cannot serialize/, e.message
+        assert_match(/Cannot serialize/, e.message)
       end
     end
   end

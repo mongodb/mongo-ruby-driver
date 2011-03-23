@@ -34,6 +34,8 @@ module Mongo
     #
     # @core cursors constructor_details
     def initialize(collection, opts={})
+      @cursor_id  = nil
+
       @db         = collection.db
       @collection = collection
       @connection = @db.connection
@@ -313,8 +315,8 @@ module Mongo
     def query_options_hash
       { :selector => @selector,
         :fields   => @fields,
-        :skip     => @skip_num,
-        :limit    => @limit_num,
+        :skip     => @skip,
+        :limit    => @limit,
         :order    => @order,
         :hint     => @hint,
         :snapshot => @snapshot,

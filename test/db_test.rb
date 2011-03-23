@@ -26,7 +26,7 @@ class DBTest < Test::Unit::TestCase
       @@db.collection('test').insert('a' => 1)
       fail "expected 'NilClass' exception"
     rescue => ex
-      assert_match /NilClass/, ex.to_s
+      assert_match(/NilClass/, ex.to_s)
     ensure
       @@db = standard_connection.db(MONGO_TEST_DB)
       @@users = @@db.collection('system.users')
@@ -104,7 +104,7 @@ class DBTest < Test::Unit::TestCase
       db.pk_factory = Object.new
       fail "error: expected exception"
     rescue => ex
-      assert_match /Cannot change/, ex.to_s
+      assert_match(/Cannot change/, ex.to_s)
     ensure
       conn.close
     end
@@ -280,7 +280,7 @@ class DBTest < Test::Unit::TestCase
       assert_not_nil doc
       result = doc['result']
       assert_not_nil result
-      assert_match /firstExtent/, result
+      assert_match(/firstExtent/, result)
     end
 
   end

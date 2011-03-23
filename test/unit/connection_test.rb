@@ -3,19 +3,6 @@ include Mongo
 
 class ConnectionTest < Test::Unit::TestCase
   context "Initialization: " do
-    setup do
-      def new_mock_socket(host='localhost', port=27017)
-        socket = Object.new
-        socket.stubs(:setsockopt).with(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
-        socket.stubs(:close)
-        socket
-      end
-
-      def new_mock_db
-        db = Object.new
-      end
-    end
-
     context "given a single node" do
       setup do
         @conn = Connection.new('localhost', 27017, :connect => false)

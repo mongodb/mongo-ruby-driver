@@ -40,7 +40,7 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_server_version
-    assert_match /\d\.\d+(\.\d+)?/, @conn.server_version.to_s
+    assert_match(/\d\.\d+(\.\d+)?/, @conn.server_version.to_s)
   end
 
   def test_invalid_database_names

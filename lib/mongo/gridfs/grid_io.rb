@@ -335,8 +335,8 @@ module Mongo
       @files_id      = opts.delete(:_id) || BSON::ObjectId.new
       @content_type  = opts.delete(:content_type) || (defined? MIME) && get_content_type || DEFAULT_CONTENT_TYPE
       @chunk_size    = opts.delete(:chunk_size) || DEFAULT_CHUNK_SIZE
-      @metadata      = opts.delete(:metadata) if opts[:metadata]
-      @aliases       = opts.delete(:aliases) if opts[:aliases]
+      @metadata      = opts.delete(:metadata)
+      @aliases       = opts.delete(:aliases)
       @file_length   = 0
       opts.each {|k, v| self[k] = v}
       check_existing_file if @safe

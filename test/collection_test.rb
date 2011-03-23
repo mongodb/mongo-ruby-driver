@@ -373,8 +373,8 @@ class TestCollection < Test::Unit::TestCase
 
     docs = [{"hello" => "world"}, {"hello" => "world"}]
     @@test.insert(docs)
-    docs.each do |doc|
-      assert(doc.include?(:_id))
+    docs.each do |d|
+      assert(d.include?(:_id))
     end
   end
 

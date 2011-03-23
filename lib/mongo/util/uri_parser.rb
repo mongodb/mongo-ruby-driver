@@ -20,7 +20,7 @@ module Mongo
   class URIParser
 
     DEFAULT_PORT = 27017
-    MONGODB_URI_MATCHER = /(([-_.\w\d]+):([^@]+)@)?([-.\w\d]+)(:([\w\d]+))?(\/([-\d\w]+))?/
+    MONGODB_URI_MATCHER = /(([-.\w]+):([^@]+)@)?([-.\w]+)(:([\w]+))?(\/([-\w]+))?/
     MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]"
     SPEC_ATTRS = [:nodes, :auths]
     OPT_ATTRS  = [:connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync]
@@ -142,7 +142,11 @@ module Mongo
     # This method uses the lambdas defined in OPT_VALID and OPT_CONV to validate
     # and convert the given options.
     def parse_options(opts)
+      # initialize instance variables for available options
+      OPT_VALID.keys.each { |k| instance_variable_set("@#{k}", nil) }
+
       return unless opts
+
       separator = opts.include?('&') ? '&' : ';'
       opts.split(separator).each do |attr|
         key, value = attr.split('=')

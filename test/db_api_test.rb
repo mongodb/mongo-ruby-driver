@@ -239,7 +239,7 @@ class DBAPITest < Test::Unit::TestCase
     names = @@db.collection_names
     assert names.length >= 2
     assert names.include?(@@coll.name)
-    assert names.include?('mongo-ruby-test.test2')
+    assert names.include?('test2')
   ensure
     @@db.drop_collection('test2')
   end
@@ -621,7 +621,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal("mike", @@coll.find_one()["hello"])
   end
 
-  def test_collection_names
+  def test_collection_names_errors
     assert_raise TypeError do
       @@db.collection(5)
     end

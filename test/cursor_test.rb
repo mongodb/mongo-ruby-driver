@@ -120,7 +120,7 @@ class CursorTest < Test::Unit::TestCase
     results = @@coll.find.sort([:n, :asc]).to_a
 
     assert_equal MinKey.new, results[0]['n']
-    assert_equal -1000000,   results[1]['n']
+    assert_equal(-1000000,   results[1]['n'])
     assert_equal 1000000,    results[2]['n']
     assert_equal MaxKey.new, results[3]['n']
   end
@@ -171,8 +171,8 @@ class CursorTest < Test::Unit::TestCase
     cursor = Cursor.new(@@coll, :timeout => false)
     assert_equal false, cursor.timeout
 
-    @@coll.find({}, :timeout => false) do |cursor|
-      assert_equal false, cursor.timeout
+    @@coll.find({}, :timeout => false) do |c|
+      assert_equal false, c.timeout
     end
   end
 
