@@ -157,6 +157,20 @@ module Mongo
       end
     end
 
+    # The host name used for this connection.
+    #
+    # @return [String]
+    def host
+      @primary_pool.host
+    end
+
+    # The port used for this connection.
+    #
+    # @return [Integer]
+    def port
+      @primary_pool.port
+    end
+
     # Fsync, then lock the mongod process against writes. Use this to get
     # the datafiles in a state safe for snapshotting, backing up, etc.
     #

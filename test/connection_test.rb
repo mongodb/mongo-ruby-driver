@@ -22,6 +22,11 @@ class TestConnection < Test::Unit::TestCase
     end
   end
 
+  def test_host_port_accessors
+    assert_equal @conn.host, TEST_HOST
+    assert_equal @conn.port, TEST_PORT
+  end
+
   def test_server_info
     server_info = @conn.server_info
     assert server_info.keys.include?("version")

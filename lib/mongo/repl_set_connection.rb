@@ -135,6 +135,20 @@ module Mongo
       @nodes_to_try.length > 0
     end
 
+    # The replica set primary's host name.
+    #
+    # @return [String]
+    def host
+      super
+    end
+
+    # The replica set primary's port.
+    #
+    # @return [Integer]
+    def port
+      super
+    end
+
     # Determine whether we're reading from a primary node. If false,
     # this connection connects to a secondary node and @read_secondaries is true.
     #

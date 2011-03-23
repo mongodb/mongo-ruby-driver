@@ -39,6 +39,14 @@ class ConnectTest < Test::Unit::TestCase
     assert_equal RS.arbiters.sort, @conn.arbiters.sort
   end
 
+  def test_host_port_accessors
+    @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
+      [RS.host, RS.ports[2]], :name => RS.name)
+
+    assert_equal @conn.host, RS.primary[0]
+    assert_equal @conn.port, RS.primary[1]
+  end
+
   def test_connect_with_primary_node_killed
     node = RS.kill_primary
 
