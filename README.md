@@ -10,6 +10,7 @@ This documentation includes other articles of interest, include:
 4. [GridFS in Ruby](http://api.mongodb.org/ruby/current/file.GridFS.html).
 5. [Frequently Asked Questions](http://api.mongodb.org/ruby/current/file.FAQ.html).
 6. [History](http://api.mongodb.org/ruby/current/file.HISTORY.html).
+6. [Release plan](http://api.mongodb.org/ruby/current/file.RELEASES.html).
 7. [Credits](http://api.mongodb.org/ruby/current/file.CREDITS.html).
 
 Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](http://api.mongodb.org/ruby/current/file.TUTORIAL.html)
