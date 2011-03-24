@@ -107,21 +107,12 @@ static int max_bson_size;
         }                                                               \
         _str;                                                           \
     })
-/* MUST call TO_UTF8 before calling write_utf8. */
 #define TO_UTF8(string) rb_str_export_to_enc((string), rb_utf8_encoding())
-static void write_utf8(buffer_t buffer, VALUE string, char check_null) {
-    result_t status = check_string(RSTRING_PTR(string), RSTRING_LENINT(string),
-                                   0, check_null);
-    if (status == HAS_NULL) {
-        buffer_free(buffer);
-        rb_raise(InvalidDocument, "Key names / regex patterns must not contain the NULL byte");
-    }
-    SAFE_WRITE(buffer, RSTRING_PTR(string), RSTRING_LENINT(string));
-}
 #else
 #define STR_NEW(p,n) rb_str_new((p), (n))
-/* MUST call TO_UTF8 before calling write_utf8. */
 #define TO_UTF8(string) (string)
+#endif
+
 static void write_utf8(buffer_t buffer, VALUE string, char check_null) {
     result_t status = check_string(RSTRING_PTR(string), RSTRING_LEN(string),
                                    1, check_null);
@@ -132,9 +123,9 @@ static void write_utf8(buffer_t buffer, VALUE string, char check_null) {
         buffer_free(buffer);
         rb_raise(InvalidStringEncoding, "String not valid UTF-8");
     }
+    string = TO_UTF8(string);
     SAFE_WRITE(buffer, RSTRING_PTR(string), RSTRING_LEN(string));
 }
-#endif
 
 // this sucks. but for some reason these moved around between 1.8 and 1.9
 #ifdef ONIGURUMA_H
@@ -211,7 +202,6 @@ static VALUE pack_extra(buffer_t buffer, VALUE check_keys) {
 
 static void write_name_and_type(buffer_t buffer, VALUE name, char type) {
     SAFE_WRITE(buffer, &type, 1);
-    name = TO_UTF8(name);
     write_utf8(buffer, name, 1);
     SAFE_WRITE(buffer, &zero, 1);
 }
@@ -340,7 +330,6 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         {
             int length;
             write_name_and_type(buffer, key, 0x02);
-            value = TO_UTF8(value);
             length = RSTRING_LENINT(value) + 1;
             SAFE_WRITE(buffer, (char*)&length, 4);
             write_utf8(buffer, value, 0);
@@ -485,7 +474,6 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
 
             write_name_and_type(buffer, key, 0x0B);
 
-            pattern = TO_UTF8(pattern);
             write_utf8(buffer, pattern, 1);
             SAFE_WRITE(buffer, &zero, 1);
 

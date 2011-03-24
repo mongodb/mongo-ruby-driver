@@ -119,15 +119,23 @@ class BSONTest < Test::Unit::TestCase
     end
   else
     def test_non_utf8_string
-      bson = BSON::BSON_CODER.serialize({'str' => 'aé'.encode('iso-8859-1')})
-      result = BSON::BSON_CODER.deserialize(bson)['str']
-      assert_equal 'aé', result
-      assert_equal 'UTF-8', result.encoding.name
+      assert_raise BSON::InvalidStringEncoding do
+        BSON::BSON_CODER.serialize({'str' => 'aé'.encode('iso-8859-1')})
+      end
+    end
+
+    def test_invalid_utf8_string
+      str = "123\xD9"
+      assert !str.valid_encoding?
+      assert_raise BSON::InvalidStringEncoding do
+        BSON::BSON_CODER.serialize({'str' => str})
+      end
     end
 
     def test_non_utf8_key
-      bson = BSON::BSON_CODER.serialize({'aé'.encode('iso-8859-1') => 'hello'})
-      assert_equal 'hello', BSON::BSON_CODER.deserialize(bson)['aé']
+      assert_raise BSON::InvalidStringEncoding do
+        BSON::BSON_CODER.serialize({'aé'.encode('iso-8859-1') => 'hello'})
+      end
     end
 
     # Based on a test from sqlite3-ruby
