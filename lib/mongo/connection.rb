@@ -650,7 +650,7 @@ module Mongo
       msg += payload.values_at(:selector, :document, :documents, :fields ).compact.map(&:inspect).join(', ') + ")"
       msg += ".skip(#{payload[:skip]})"  if payload[:skip]
       msg += ".limit(#{payload[:limit]})"  if payload[:limit]
-      msg += ".sort(#{payload[:sort]})"  if payload[:sort]
+      msg += ".sort(#{payload[:order]})"  if payload[:order]
       @logger.debug "MONGODB #{msg}"
     end
 
