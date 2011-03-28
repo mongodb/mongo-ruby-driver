@@ -57,6 +57,9 @@ module Mongo
   # Raised when a database operation fails.
   class OperationFailure < MongoDBError; end
 
+  # Raised when a socket read operation times out.
+  class OperationTimeout < ::Timeout::Error; end
+
   # Raised when a client attempts to perform an invalid operation.
   class InvalidOperation < MongoDBError; end
 

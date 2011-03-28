@@ -272,6 +272,14 @@ Notes:
 * Cursors will timeout on the server after 10 minutes. If you need to keep a cursor
   open for more than 10 minutes, specify `:timeout => false` when you create the cursor.
 
+## Socket timeouts
+
+The Ruby driver support timeouts on socket read operations. To enable them, set the
+`:op_timeout` option when you create a `Mongo::Connection` object.
+
+If implementing higher-level timeouts, using tools like `Rack::Timeout`, it's very important
+to call `Mongo::Connection#close` to prevent the subsequent operation from receiving the previous
+request.
 
 # Testing
 

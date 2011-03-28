@@ -68,6 +68,8 @@ module Mongo
     # @option opts [Float] :timeout (5.0) When all of the connections a pool are checked out,
     #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
     #   Note: this setting is relevant only for multi-threaded applications (which in Ruby are rare).
+    # @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.
+    #   Disabled by default.
     #
     # @example localhost, 27017
     #   Connection.new
@@ -598,6 +600,9 @@ module Mongo
       @pool_size = opts[:pool_size] || 1
       @timeout   = opts[:timeout]   || 5.0
 
+      # Timeout on socket read operation.
+      @op_timeout = opts[:op_timeout] || nil
+
       # Mutex for synchronizing pool access
       @connection_mutex = Mutex.new
 
@@ -833,19 +838,26 @@ module Mongo
     def receive_message_on_socket(length, socket)
       begin
         message = new_binary_string
-        socket.read(length, message)
-        raise ConnectionFailure, "connection closed" unless message && message.length > 0
-        if message.length < length
-          chunk = new_binary_string
-          while message.length < length
-            socket.read(length - message.length, chunk)
-            raise ConnectionFailure, "connection closed" unless chunk.length > 0
-            message << chunk
+        Mongo::TimeoutHandler.timeout(@op_timeout, OperationTimeout) do
+          socket.read(length, message)
+          raise ConnectionFailure, "connection closed" unless message && message.length > 0
+          if message.length < length
+            chunk = new_binary_string
+            while message.length < length
+              socket.read(length - message.length, chunk)
+              raise ConnectionFailure, "connection closed" unless chunk.length > 0
+              message << chunk
+            end
           end
         end
-        rescue => ex
+      rescue => ex
           close
-          raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
+
+          if ex.class == OperationTimeout
+            raise OperationTimeout, "Timed out waiting in socket read."
+          else
+            raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
+          end
       end
       message
     end
