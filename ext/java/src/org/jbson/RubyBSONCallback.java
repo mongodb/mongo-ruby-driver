@@ -32,6 +32,7 @@ public class RubyBSONCallback implements BSONCallback {
     private RubyModule _rbclsBinary;
     private RubyModule _rbclsMinKey;
     private RubyModule _rbclsMaxKey;
+    private RubyModule _rbclsTimestamp;
     private RubyModule _rbclsDBRef;
     private RubyModule _rbclsCode;
     private final LinkedList<RubyObject> _stack = new LinkedList<RubyObject>();
@@ -47,6 +48,7 @@ public class RubyBSONCallback implements BSONCallback {
       _rbclsCode        = _lookupConstant( _runtime, "BSON::Code" );
       _rbclsMinKey      = _lookupConstant( _runtime, "BSON::MinKey" );
       _rbclsMaxKey      = _lookupConstant( _runtime, "BSON::MaxKey" );
+      _rbclsTimestamp   = _lookupConstant( _runtime, "BSON::Timestamp" );
       _rbclsObjectId    = _lookupConstant( _runtime, "BSON::ObjectId");
     }
 
@@ -250,17 +252,16 @@ public class RubyBSONCallback implements BSONCallback {
         _put( name , symbol );
     }
 
-    // Timestamp is currently rendered in Ruby as a two-element array.
     public void gotTimestamp( String name , int time , int inc ){
         RubyFixnum rtime = RubyFixnum.newFixnum( _runtime, time );
         RubyFixnum rinc  = RubyFixnum.newFixnum( _runtime, inc );
         RubyObject[] args = new RubyObject[2];
-        args[0] = rinc;
-        args[1] = rtime;
+        args[0] = rtime;
+        args[1] = rinc;
 
-        RubyArray result = RubyArray.newArray( _runtime, args );
+        Object result = JavaEmbedUtils.invokeMethod(_runtime, _rbclsTimestamp, "new", args, Object.class);
 
-        _put ( name , result );
+        _put ( name , (RubyObject)result );
     }
 
     public void gotObjectId( String name , ObjectId id ){

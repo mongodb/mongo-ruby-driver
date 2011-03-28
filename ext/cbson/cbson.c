@@ -86,6 +86,7 @@ static VALUE DBRef;
 static VALUE Code;
 static VALUE MinKey;
 static VALUE MaxKey;
+static VALUE Timestamp;
 static VALUE Regexp;
 static VALUE OrderedHash;
 static VALUE InvalidKeyName;
@@ -431,6 +432,17 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             }
             if (strcmp(cls, "BSON::MinKey") == 0) {
                 write_name_and_type(buffer, key, 0xff);
+                break;
+            }
+            if (strcmp(cls, "BSON::Timestamp") == 0) {
+                write_name_and_type(buffer, key, 0x11);
+                int seconds = FIX2INT(
+                    rb_funcall(value, rb_intern("seconds"), 0));
+                int increment = FIX2INT(
+                    rb_funcall(value, rb_intern("increment"), 0));
+
+                SAFE_WRITE(buffer, (const char*)&increment, 4);
+                SAFE_WRITE(buffer, (const char*)&seconds, 4);
                 break;
             }
             if (strcmp(cls, "DateTime") == 0 || strcmp(cls, "Date") == 0 || strcmp(cls, "ActiveSupport::TimeWithZone") == 0) {
@@ -813,11 +825,13 @@ static VALUE get_value(const char* buffer, int* position, int type) {
         }
     case 17:
         {
-            int i;
-            int j;
-            memcpy(&i, buffer + *position, 4);
-            memcpy(&j, buffer + *position + 4, 4);
-            value = rb_ary_new3(2, LL2NUM(i), LL2NUM(j));
+            int sec, inc;
+            VALUE argv[2];
+            memcpy(&inc, buffer + *position, 4);
+            memcpy(&sec, buffer + *position + 4, 4);
+            argv[0] = INT2FIX(sec);
+            argv[1] = INT2FIX(inc);
+            value = rb_class_new_instance(2, argv, Timestamp);
             *position += 8;
             break;
         }
@@ -940,6 +954,8 @@ void Init_cbson() {
     rb_require("bson/types/min_max_keys");
     MinKey = rb_const_get(bson, rb_intern("MinKey"));
     MaxKey = rb_const_get(bson, rb_intern("MaxKey"));
+    rb_require("bson/types/timestamp");
+    Timestamp = rb_const_get(bson, rb_intern("Timestamp"));
     Regexp = rb_const_get(rb_cObject, rb_intern("Regexp"));
     rb_require("bson/exceptions");
     InvalidKeyName = rb_const_get(bson, rb_intern("InvalidKeyName"));

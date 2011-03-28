@@ -192,6 +192,8 @@ module BSON
         serialize_max_key_element(@buf, k)
       when MINKEY
         serialize_min_key_element(@buf, k)
+      when TIMESTAMP
+        serialize_timestamp_element(@buf, k, v)
       else
         raise "unhandled type #{type}"
       end
@@ -261,8 +263,7 @@ module BSON
           doc[key] = deserialize_code_w_scope_data(@buf)
         when TIMESTAMP
           key = deserialize_cstr(@buf)
-          doc[key] = [deserialize_number_int_data(@buf),
-          deserialize_number_int_data(@buf)]
+          doc[key] = deserialize_timestamp_data(@buf)
         when MAXKEY
           key = deserialize_cstr(@buf)
           doc[key] = MaxKey.new
@@ -344,6 +345,12 @@ module BSON
       opts |= Regexp::MULTILINE if options_str.include?('m')
       opts |= Regexp::EXTENDED if options_str.include?('x')
       Regexp.new(str, opts)
+    end
+
+    def deserialize_timestamp_data(buf)
+      increment = buf.get_int
+      seconds = buf.get_int
+      Timestamp.new(seconds, increment)
     end
 
     def encoded_str(str)
@@ -510,6 +517,14 @@ module BSON
       self.class.serialize_key(buf, key)
     end
 
+    def serialize_timestamp_element(buf, key, val)
+      buf.put(TIMESTAMP)
+      self.class.serialize_key(buf, key)
+
+      buf.put_int(val.increment)
+      buf.put_int(val.seconds)
+    end
+
     def serialize_oid_element(buf, key, val)
       buf.put(OID)
       self.class.serialize_key(buf, key)
@@ -598,6 +613,8 @@ module BSON
         MAXKEY
       when MinKey
         MINKEY
+      when Timestamp
+        TIMESTAMP
       when Numeric
         raise InvalidDocument, "Cannot serialize the Numeric type #{o.class} as BSON; only Fixum, Bignum, and Float are supported."
       when Date, DateTime

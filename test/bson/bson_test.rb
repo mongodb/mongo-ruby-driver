@@ -410,13 +410,22 @@ class BSONTest < Test::Unit::TestCase
   if !(RUBY_PLATFORM =~ /java/)
     def test_timestamp
       val = {"test" => [4, 20]}
-      assert_equal val, @encoder.deserialize([0x13, 0x00, 0x00, 0x00,
-                                        0x11, 0x74, 0x65, 0x73,
-                                        0x74, 0x00, 0x04, 0x00,
-                                        0x00, 0x00, 0x14, 0x00,
-                                        0x00, 0x00, 0x00])
+      result = @encoder.deserialize([0x13, 0x00, 0x00, 0x00,
+                                     0x11, 0x74, 0x65, 0x73,
+                                     0x74, 0x00, 0x04, 0x00,
+                                     0x00, 0x00, 0x14, 0x00,
+                                     0x00, 0x00, 0x00])
 
+      assert_equal 4, result["test"][0]
+      assert_equal 20, result["test"][1]
     end
+  end
+
+  def test_timestamp_type
+    ts = Timestamp.new(5000, 100)
+    doc = {:ts => ts}
+    bson = @encoder.serialize(doc)
+    assert_equal ts, @encoder.deserialize(bson)["ts"]
   end
 
   def test_overflow

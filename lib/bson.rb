@@ -100,6 +100,7 @@ require 'bson/types/code'
 require 'bson/types/dbref'
 require 'bson/types/object_id'
 require 'bson/types/min_max_keys'
+require 'bson/types/timestamp'
 
 require 'base64'
 require 'bson/ordered_hash'

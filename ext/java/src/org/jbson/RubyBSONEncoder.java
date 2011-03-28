@@ -384,6 +384,9 @@ public class RubyBSONEncoder extends BSONEncoder {
               else if ( klass.equals("BSON::MaxKey") ) {
                   _put( MAXKEY, name );
               }
+              else if ( klass.equals("BSON::Timestamp") ) {
+                  putRubyTimestamp( name, (RubyObject)val );
+              }
               else if ( klass.equals("BSON::DBRef") ) {
                   RubyHash ref = (RubyHash)JavaEmbedUtils.invokeMethod(_runtime, val,
                       "to_hash", new Object[] {}, Object.class);
@@ -502,6 +505,18 @@ public class RubyBSONEncoder extends BSONEncoder {
         _put( TIMESTAMP , name );
         _buf.writeInt( ts.getInc() );
         _buf.writeInt( ts.getTime() );
+    }
+
+    protected void putRubyTimestamp(String name, RubyObject ts ){
+        _put( TIMESTAMP , name );
+
+        Number inc = (Number)JavaEmbedUtils.invokeMethod(_runtime, ts,
+            "increment", new Object[] {}, Object.class);
+        Number sec = (Number)JavaEmbedUtils.invokeMethod(_runtime, ts,
+            "seconds", new Object[] {}, Object.class);
+
+        _buf.writeInt( (int)inc.longValue() );
+        _buf.writeInt( (int)sec.longValue() );
     }
 
     protected void putRubyCodeWScope( String name , RubyObject code ){
