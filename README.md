@@ -142,32 +142,11 @@ To set up a pooled connection to a single MongoDB instance:
 Though the pooling architecture will undoubtedly evolve, it currently owes much credit
 to the connection pooling implementations in ActiveRecord and PyMongo.
 
-## Using with Phusion Passenger and Unicorn
+## Forking
 
-When Passenger and Unicorn are in smart spawning mode you need to be sure that child
-processes will create a new connection to the database. In Passenger, this can be handled like so:
-
-    if defined?(PhusionPassenger)
-      PhusionPassenger.on_event(:starting_worker_process) do |forked|
-        if forked
-          # Reset all connection objects. How you do this depends on where
-          # you keep your connection object. In any case, call the #connect
-          # method on the connection object. For example:
-          # CONN.connect
-          #
-          # If you're using MongoMapper:
-          # MongoMapper.connection.connect
-        end
-      end
-    end
-
-In Unicorn, add this to your unicorn.rb file:
-
-    after_fork do |server, worker|
-      # Handle reconnection
-    end
-
-The above code should be put into a Rails initializer or similar initialization script.
+Certain Ruby application servers work by forking, and it has long been necessary to
+re-establish the child process's connection to the database after fork. But with the release
+of v1.3.0, the Ruby driver detects forking and reconnects automatically.
 
 ## String Encoding
 
