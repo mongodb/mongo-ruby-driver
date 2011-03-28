@@ -270,6 +270,17 @@ class DBAPITest < Test::Unit::TestCase
     end
   end
 
+  def test_collection_options_are_passed_to_the_existing_ones
+    @@db.drop_collection('foobar')
+
+    @@db.create_collection('foobar')
+
+    opts = {:safe => true}
+    coll = @@db.create_collection('foobar', opts)
+    assert_equal true, coll.safe
+  end
+
+
   def test_index_information
     assert_equal @@coll.index_information.length, 1
 

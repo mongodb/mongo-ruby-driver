@@ -69,7 +69,7 @@ module Mongo
     #   the factory should not inject a new key).
     #
     # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
-    #   propogated to Collection objects instantiated off of this DB. If no
+    #   propagated to Collection objects instantiated off of this DB. If no
     #   value is provided, the default value set on this instance's Connection object will be used. This
     #   default can be overridden upon instantiation of any collection by explicity setting a :safe value
     #   on initialization
@@ -272,7 +272,7 @@ module Mongo
         if strict?
           raise MongoDBError, "Collection #{name} already exists. Currently in strict mode."
         else
-          return Collection.new(name, self)
+          return Collection.new(name, self, opts)
         end
       end
 
@@ -287,7 +287,7 @@ module Mongo
     # Get a collection by name.
     #
     # @param [String] name the collection name.
-    # @param [Hash] opts any valid options that can me passed to Collection#new.
+    # @param [Hash] opts any valid options that can be passed to Collection#new.
     #
     # @raise [MongoDBError] if collection does not already exist and we're in +strict+ mode.
     #
