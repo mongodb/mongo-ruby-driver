@@ -8,6 +8,7 @@ end
 require 'bigdecimal'
 
 begin
+  require 'tzinfo'
   require 'active_support/core_ext'
   Time.zone = "Pacific Time (US & Canada)"
   Zone = Time.zone.now
