@@ -1,5 +1,23 @@
 # MongoDB Ruby Driver History
 
+### 1.3.0.rc0
+
+* Add option to set timeouts on socket read calls. Use
+  the :op_timeout option when creating a new connection.
+* Add StringIO methods to GridIO objects
+* Support for BSON timestamp type with BSON::Timestamp
+* Change the BSON binary subtype from 2 to 0
+* Remove private method Connection#reset_conection
+  and deprecate public method ReplSetConnection#reset_connection
+* ByteBuffer#== and OrderedHash#dup (FooBarWidget)
+* Better check for UTF8 validity in Ruby 1.9
+* Added previously removed Connection#host and Connection#port
+* Added transformers to allow Mongo::Cursor to allow instantiated objects (jnunemaker)
+* Automated reconnection on fork
+* Added Cursor#next alias for Cursor#next_document
+* Audit tests after enabling warnings (wpiekutowski)
+* Various bug fixes thanks to FooBarWidget, Datanoise, Malitogeek
+
 ### 1.2.4
 2011-2-23
 
