@@ -159,7 +159,7 @@ class TestConnection < Test::Unit::TestCase
     @conn.lock!
     assert @conn.locked?
     assert_equal 1, @conn['admin']['$cmd.sys.inprog'].find_one['fsyncLock'], "Not fsync-locked"
-    assert_match /unlock/, @conn.unlock!['info']
+    assert_match(/unlock/, @conn.unlock!['info'])
     unlocked = false
     counter  = 0
     while counter < 5

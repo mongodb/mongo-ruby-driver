@@ -1,5 +1,5 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'rubygems' if ENV['C_EXT']
+require 'rubygems' if RUBY_VERSION < '1.9.0' && ENV['C_EXT']
 require 'mongo'
 require 'test/unit'
 
@@ -12,9 +12,9 @@ def silently
 end
 
 begin
-  require 'rubygems'
+  require 'rubygems' if RUBY_VERSION < "1.9.0" && !ENV['C_EXT']
   silently { require 'shoulda' }
-  require 'mocha'
+  silently { require 'mocha' }
 rescue LoadError
   puts <<MSG
 

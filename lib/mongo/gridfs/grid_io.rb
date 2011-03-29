@@ -17,10 +17,6 @@
 # ++
 
 require 'digest/md5'
-begin
-require 'mime/types'
-rescue LoadError
-end
 
 module Mongo
 

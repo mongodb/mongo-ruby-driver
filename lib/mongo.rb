@@ -82,7 +82,7 @@ if !defined?(RUBY_ENGINE) || (RUBY_ENGINE == 'ruby' && RUBY_VERSION < '1.9.0')
     require 'system_timer'
     Mongo::TimeoutHandler = SystemTimer
   rescue LoadError
-    warn "Could not load SystemTimer gem. Falling back to timeout.rb." +
+    warn "Could not load SystemTimer gem. Falling back to timeout.rb. " +
          "SystemTimer is STRONGLY recommended for timeouts in Ruby 1.8.7. " +
          "See http://ph7spot.com/musings/system-timer for details."
     require 'timeout'

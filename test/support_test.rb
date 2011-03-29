@@ -1,7 +1,6 @@
 require './test/test_helper'
 
 class SupportTest < Test::Unit::TestCase
-  include Mongo
 
   def test_command_response_succeeds
     assert Support.ok?('ok' => 1)

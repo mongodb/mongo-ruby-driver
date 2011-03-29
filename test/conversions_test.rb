@@ -1,7 +1,6 @@
 require './test/test_helper'
 require 'mongo/exceptions'
 require 'mongo/util/conversions'
-require 'bson/ordered_hash'
 
 class ConversionsTest < Test::Unit::TestCase
   include Mongo::Conversions
