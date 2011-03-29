@@ -1,6 +1,6 @@
 require './lib/bson'
 VERSION_HEADER = File.open(File.join(File.dirname(__FILE__), 'ext', 'cbson', 'version.h'), "r")
-VERSION        = VERSION_HEADER.read.scan(/VERSION\s+"(\d+\.\d+(\.[\w\d]+\w*)?)\"/)[0][0]
+VERSION        = VERSION_HEADER.read.scan(/VERSION "(\d[^"]+)"/)[0][0]
 Gem::Specification.new do |s|
   s.name = 'bson_ext'
 
