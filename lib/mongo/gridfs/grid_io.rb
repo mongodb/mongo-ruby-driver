@@ -168,6 +168,91 @@ module Mongo
     def tell
       @file_position
     end
+    alias :pos :tell
+
+    # Rewind the file. This is equivalent to seeking to the zeroth position.
+    #
+    # @return [Integer] the position of the file after rewinding (always zero).
+    def rewind
+      raise GridError, "file not opened for read" unless @mode[0] == "r"
+      seek(0)
+    end
+
+    # Return a boolean indicating whether the position pointer is
+    # at the end of the file.
+    #
+    # @return [Boolean]
+    def eof
+      raise GridError, "file not opened for read" unless @mode[0] == "r"
+      @file_position >= @file_length
+    end
+    alias :eof? :eof
+
+    # Return the next line from a GridFS file. This probably
+    # makes sense only if you're storing plain text. This method
+    # has a somewhat tricky API, which it inherits from Ruby's
+    # StringIO#gets.
+    #
+    # @param [String, Integer] separator or length. If a separator,
+    #   read up to the separator. If a length, read the +length+ number
+    #   of bytes. If nil, read the entire file.
+    # @param [Integer] length If a separator is provided, then
+    #   read until either finding the separator or
+    #   passing over the +length+ number of bytes.
+    #
+    # @return [String]
+    def gets(separator="\n", length=nil)
+      if separator.nil?
+        read_all
+      elsif separator.is_a?(Integer)
+        read_length(separator)
+      elsif separator.length > 1
+        result = ''
+        len = 0
+        match_idx = 0
+        match_num = separator.length - 1
+        to_match = separator[match_idx]
+        if length
+          matcher = lambda {|idx, num| idx < num && len < length }
+        else
+          matcher = lambda {|idx, num| idx < num}
+        end
+        while matcher.call(match_idx, match_num) && char = getc
+          result << char
+          len += 1
+          if char == to_match
+            while match_idx < match_num do
+              match_idx += 1
+              to_match = separator[match_idx]
+              char = getc
+              result << char
+              if char != to_match
+                match_idx = 0
+                to_match = separator[match_idx]
+                break
+              end
+            end
+          end
+        end
+        result
+      else
+        result = ''
+        len = 0
+        while char = getc
+          result << char
+          len += 1
+          break if char == separator || (length ? len >= length : false)
+        end
+        result
+      end
+    end
+
+    # Return the next byte from the GridFS file.
+    #
+    # @return [String]
+    def getc
+      read_length(1)
+    end
 
     # Creates or updates the document from the files collection that
     # stores the chunks' metadata. The file becomes available only after
@@ -256,7 +341,7 @@ module Mongo
       if length.nil?
         to_read = remaining
       else
-        to_read    = length > remaining ? remaining : length
+        to_read = length > remaining ? remaining : length
       end
       return nil unless remaining > 0
 

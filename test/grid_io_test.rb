@@ -32,6 +32,78 @@ class GridIOTest < Test::Unit::TestCase
       end
     end
 
+    context "StringIO methods" do
+      setup do
+        @filename = 'test'
+        @mode     = 'w'
+        @data     = "012345678\n" * 100000
+        @file = GridIO.new(@files, @chunks, @filename, @mode)
+        @file.write(@data)
+        @file.close
+      end
+
+      should "read data character by character using" do
+        bytes = 0
+        file = GridIO.new(@files, @chunks, nil, "r", :query => {:_id => @file.files_id})
+        while char = file.getc
+          bytes += 1
+        end
+        assert_equal bytes, 1_000_000
+      end
+
+      should "read length is a length is given" do
+        file = GridIO.new(@files, @chunks, nil, "r", :query => {:_id => @file.files_id})
+        string = file.gets(1000)
+        assert_equal string.length, 1000
+        bytes = 0
+        bytes += string.length
+        while string = file.gets(1000)
+          bytes += string.length
+        end
+        assert_equal bytes, 1_000_000
+      end
+
+      should "read to the end of the line by default and assign to $_" do
+        file = GridIO.new(@files, @chunks, nil, "r", :query => {:_id => @file.files_id})
+        string = file.gets
+        assert_equal 10, string.length
+      end
+
+      should "read to a given separator" do
+        file = GridIO.new(@files, @chunks, nil, "r", :query => {:_id => @file.files_id})
+        string = file.gets("5")
+        assert_equal 6, string.length
+      end
+
+      should "read a multi-character separator" do
+        file = GridIO.new(@files, @chunks, nil, "r", :query => {:_id => @file.files_id})
+        string = file.gets("45")
+        assert_equal 6, string.length
+        string = file.gets("45")
+        assert_equal "678\n012345", string
+        string = file.gets("\n01")
+        assert_equal "678\n01", string
+      end
+
+      should "read a mult-character separator with a length" do
+        file = GridIO.new(@files, @chunks, nil, "r", :query => {:_id => @file.files_id})
+        string = file.gets("45", 3)
+        assert_equal 3, string.length
+      end
+
+      should "tell position, eof, and rewind" do
+        file = GridIO.new(@files, @chunks, nil, "r", :query => {:_id => @file.files_id})
+        string = file.read(1000)
+        assert_equal 1000, file.pos
+        assert !file.eof?
+        file.read
+        assert file.eof?
+        file.rewind
+        assert_equal 0, file.pos
+        assert_equal 1_000_000, file.read.length
+      end
+    end
+
     context "Seeking" do
       setup do
         @filename = 'test'
