@@ -838,6 +838,7 @@ module Mongo
     def receive_message_on_socket(length, socket)
       begin
         if @op_timeout
+          message = nil
           Mongo::TimeoutHandler.timeout(@op_timeout, OperationTimeout) do
             message = receive_data(length, socket)
           end
@@ -848,7 +849,7 @@ module Mongo
           close
 
           if ex.class == OperationTimeout
-            raise OperationTimeout, "Timed out waiting in socket read."
+            raise OperationTimeout, "Timed out waiting on socket read."
           else
             raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
           end
