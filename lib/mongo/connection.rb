@@ -475,7 +475,7 @@ module Mongo
     #
     # @raise [ConnectionFailure] if unable to connect to any host or port.
     def connect
-      reset_connection
+      close
 
       config = check_is_master(@host_to_try)
       if config
@@ -536,6 +536,7 @@ module Mongo
     def close
       @primary_pool.close if @primary_pool
       @primary_pool = nil
+      @primary = nil
     end
 
     # Returns the maximum BSON object size as returned by the core server.
@@ -668,7 +669,6 @@ module Mongo
     # TODO: evaluate whether this method is actually necessary
     def reset_connection
       close
-      @primary = nil
     end
 
     def check_is_master(node)
