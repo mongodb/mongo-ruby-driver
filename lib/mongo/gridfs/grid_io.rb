@@ -174,7 +174,7 @@ module Mongo
     #
     # @return [Integer] the position of the file after rewinding (always zero).
     def rewind
-      raise GridError, "file not opened for read" unless @mode[0] == "r"
+      raise GridError, "file not opened for read" unless @mode[0] == ?r
       seek(0)
     end
 
@@ -183,7 +183,7 @@ module Mongo
     #
     # @return [Boolean]
     def eof
-      raise GridError, "file not opened for read" unless @mode[0] == "r"
+      raise GridError, "file not opened for read #{@mode}" unless @mode[0] == ?r
       @file_position >= @file_length
     end
     alias :eof? :eof
@@ -211,7 +211,7 @@ module Mongo
         len = 0
         match_idx = 0
         match_num = separator.length - 1
-        to_match = separator[match_idx]
+        to_match = separator[match_idx].chr
         if length
           matcher = lambda {|idx, num| idx < num && len < length }
         else
@@ -223,12 +223,12 @@ module Mongo
           if char == to_match
             while match_idx < match_num do
               match_idx += 1
-              to_match = separator[match_idx]
+              to_match = separator[match_idx].chr
               char = getc
               result << char
               if char != to_match
                 match_idx = 0
-                to_match = separator[match_idx]
+                to_match = separator[match_idx].chr
                 break
               end
             end
