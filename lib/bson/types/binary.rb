@@ -43,7 +43,7 @@ module BSON
     #   SUBTYPE_BYTES, SUBTYPE_UUID, SUBTYPE_MD5, and SUBTYPE_USER_DEFINED.
     #
     # @see http://www.mongodb.org/display/DOCS/BSON#BSON-noteondatabinary BSON binary subtypes.
-    def initialize(data=[], subtype=SUBTYPE_BYTES)
+    def initialize(data=[], subtype=SUBTYPE_SIMPLE)
       super(data)
       @subtype = subtype
     end

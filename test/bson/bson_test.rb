@@ -335,6 +335,20 @@ class BSONTest < Test::Unit::TestCase
     bin2 = doc2['bin']
     assert_kind_of Binary, bin2
     assert_equal 'binstring', bin2.to_s
+    assert_equal Binary::SUBTYPE_SIMPLE, bin2.subtype
+  end
+
+  def test_binary_with_deprecated_subtype
+    bin = Binary.new
+    'binstring'.each_byte { |b| bin.put(b) }
+    bin.subtype = Binary::SUBTYPE_BYTES
+
+    doc = {'bin' => bin}
+    bson = @encoder.serialize(doc)
+    doc2 = @encoder.deserialize(bson)
+    bin2 = doc2['bin']
+    assert_kind_of Binary, bin2
+    assert_equal 'binstring', bin2.to_s
     assert_equal Binary::SUBTYPE_BYTES, bin2.subtype
   end
 
@@ -346,7 +360,7 @@ class BSONTest < Test::Unit::TestCase
     bin2 = doc2['bin']
     assert_kind_of Binary, bin2
     assert_equal 'somebinarystring', bin2.to_s
-    assert_equal Binary::SUBTYPE_BYTES, bin2.subtype
+    assert_equal Binary::SUBTYPE_SIMPLE, bin2.subtype
   end
 
   def test_binary_type
@@ -386,7 +400,7 @@ class BSONTest < Test::Unit::TestCase
     bin2 = doc2['bin']
     assert_kind_of Binary, bin2
     assert_equal [1, 2, 3, 4, 5], bin2.to_a
-    assert_equal Binary::SUBTYPE_BYTES, bin2.subtype
+    assert_equal Binary::SUBTYPE_SIMPLE, bin2.subtype
   end
 
   def test_put_id_first
