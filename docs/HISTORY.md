@@ -1,6 +1,7 @@
 # MongoDB Ruby Driver History
 
 ### 1.3.0.rc0
+2011-3-29
 
 * Add option to set timeouts on socket read calls. Use
   the :op_timeout option when creating a new connection.
