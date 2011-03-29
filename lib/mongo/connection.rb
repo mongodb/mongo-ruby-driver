@@ -837,20 +837,14 @@ module Mongo
     # Requires length and an available socket.
     def receive_message_on_socket(length, socket)
       begin
-        message = new_binary_string
-        Mongo::TimeoutHandler.timeout(@op_timeout, OperationTimeout) do
-          socket.read(length, message)
-          raise ConnectionFailure, "connection closed" unless message && message.length > 0
-          if message.length < length
-            chunk = new_binary_string
-            while message.length < length
-              socket.read(length - message.length, chunk)
-              raise ConnectionFailure, "connection closed" unless chunk.length > 0
-              message << chunk
-            end
+        if @op_timeout
+          Mongo::TimeoutHandler.timeout(@op_timeout, OperationTimeout) do
+            message = receive_data(length, socket)
           end
+        else
+          message = receive_data(length, socket)
         end
-      rescue => ex
+        rescue => ex
           close
 
           if ex.class == OperationTimeout
@@ -858,6 +852,21 @@ module Mongo
           else
             raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
           end
+      end
+      message
+    end
+
+    def receive_data(length, socket)
+      message = new_binary_string
+      socket.read(length, message)
+      raise ConnectionFailure, "connection closed" unless message && message.length > 0
+      if message.length < length
+        chunk = new_binary_string
+        while message.length < length
+          socket.read(length - message.length, chunk)
+          raise ConnectionFailure, "connection closed" unless chunk.length > 0
+          message << chunk
+        end
       end
       message
     end
