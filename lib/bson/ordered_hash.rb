@@ -62,11 +62,11 @@ module BSON
       end
 
       def keys
-        @ordered_keys || []
+        @ordered_keys# || []
       end
 
       def []=(key, value)
-        @ordered_keys ||= []
+        #@ordered_keys ||= []
         unless has_key?(key)
           @ordered_keys << key
         end
@@ -74,14 +74,14 @@ module BSON
       end
 
       def each
-        @ordered_keys ||= []
+        #@ordered_keys ||= []
         @ordered_keys.each { |k| yield k, self[k] }
         self
       end
       alias :each_pair :each
 
       def to_a
-        @ordered_keys ||= []
+        #@ordered_keys ||= []
         @ordered_keys.map { |k| [k, self[k]] }      
       end
 
@@ -96,7 +96,7 @@ module BSON
       end
 
       def merge!(other)
-        @ordered_keys ||= []
+        #@ordered_keys ||= []
         @ordered_keys += other.keys # unordered if not an BSON::OrderedHash
         @ordered_keys.uniq!
         super(other)
@@ -106,7 +106,7 @@ module BSON
       
       def dup
         result = OrderedHash.new
-        @ordered_keys ||= []
+        #@ordered_keys ||= []
         @ordered_keys.each do |key|
           result[key] = self[key]
         end
