@@ -5,10 +5,6 @@ require 'fileutils'
 require 'rake'
 require 'rake/testtask'
 require 'rake/gempackagetask'
-begin
-  require 'rake/contrib/rubyforgepublisher'
-rescue LoadError
-end
 require 'rbconfig'
 include Config
 ENV['TEST_MODE'] = 'TRUE'
@@ -150,12 +146,20 @@ task :ydoc do
 end
 
 namespace :bamboo do
+  task :ci_reporter do
+    begin
+      require 'ci/reporter/rake/test_unit'
+    rescue LoadError
+      warn "Warning: Unable to load ci_reporter gem."
+    end
+  end
+
   namespace :test do
-    task :ruby do
+    task :ruby => [:ci_reporter, "ci:setup:testunit"] do
       Rake::Task['test:ruby'].invoke
     end
 
-    task :c do
+    task :c => [:ci_reporter, "ci:setup:testunit"] do
       Rake::Task['gem:install_extensions'].invoke
       Rake::Task['test:c'].invoke
     end
@@ -166,29 +170,30 @@ namespace :gem do
 
   desc "Install the gem locally"
   task :install do
-    sh "gem build bson.gemspec"
-    sh "gem install --no-rdoc --no-ri bson-*.gem"
+    `gem build bson.gemspec`
+    `gem install --no-rdoc --no-ri bson-*.gem`
 
-    sh "gem build mongo.gemspec"
-    sh "gem install --no-rdoc --no-ri mongo-*.gem"
+    `gem build mongo.gemspec`
+    `gem install --no-rdoc --no-ri mongo-*.gem`
 
-    sh "rm mongo-*.gem"
-    sh "rm bson-*.gem"
+    `rm mongo-*.gem`
+    `rm bson-*.gem`
   end
 
   desc "Install the optional c extensions"
   task :install_extensions do
-    sh "gem build bson_ext.gemspec"
-    sh "gem install --no-rdoc --no-ri bson_ext-*.gem"
-    sh "rm bson_ext-*.gem"
+    `gem uninstall bson_ext`
+    `gem build bson_ext.gemspec`
+    `gem install --no-rdoc --no-ri bson_ext-*.gem`
+    `rm bson_ext-*.gem`
   end
 
   desc "Build all gems"
   task :build_all do
-    sh "gem build mongo.gemspec"
-    sh "gem build bson.gemspec"
-    sh "gem build bson.java.gemspec"
-    sh "gem build bson_ext.gemspec"
+    `gem build mongo.gemspec`
+    `gem build bson.gemspec`
+    `gem build bson.java.gemspec`
+    `gem build bson_ext.gemspec`
   end
 
 end
