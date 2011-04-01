@@ -236,12 +236,12 @@ module BSON
       other.respond_to?(:to_s) && @str == other.to_s
     end
 
-    def to_a
-      @str.unpack("C*")
+    def to_a(format="C*")
+      @str.unpack(format)
     end
 
-    def unpack(args)
-      to_a
+    def unpack(format="C*")
+      to_a(format)
     end
 
     def to_s

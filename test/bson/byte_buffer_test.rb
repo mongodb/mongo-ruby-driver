@@ -21,6 +21,13 @@ class ByteBufferTest < Test::Unit::TestCase
     assert_equal 1, @buf.get
   end
 
+  def test_unpack
+    @buf.put_array([17, 2, 3, 4])
+    assert_equal [17, 2, 3, 4], @buf.to_a
+    assert_equal ["11020304"], @buf.unpack("H*")
+    assert_equal ["11020304"], @buf.to_a("H*")
+  end
+
   def test_one_get_returns_array_length_one
     @buf.put_array([1, 2, 3, 4])
     @buf.rewind
