@@ -10,19 +10,19 @@
 * Change the BSON binary subtype from 2 to 0
 * Remove private method Connection#reset_conection
   and deprecate public method ReplSetConnection#reset_connection
-* ByteBuffer#== and OrderedHash#dup (FooBarWidget)
+* ByteBuffer#== and OrderedHash#dup (Hongli Lai)
 * Better check for UTF8 validity in Ruby 1.9
 * Added previously removed Connection#host and Connection#port
 * Added transformers to allow Mongo::Cursor to allow instantiated objects (jnunemaker)
 * Automated reconnection on fork
 * Added Cursor#next alias for Cursor#next_document
 * Audit tests after enabling warnings (wpiekutowski)
-* Various bug fixes thanks to FooBarWidget, Datanoise, Malitogeek
+* Various bug fixes thanks to Datanoise, Hongli Lai, and Mauro Pompilio
 
 ### 1.2.4
 2011-2-23
 
-* Fix the exception message shown when there's an IOError (malditogeek)
+* Fix the exception message shown when there's an IOError (Mauro Pompilio)
 * Another update to map-reduce docs for v1.8. Note that if you use the new
   output option {:out => {:inline => true}}, then you must also specify
   :raw => true.
