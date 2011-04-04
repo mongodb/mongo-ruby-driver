@@ -18,17 +18,18 @@ for much more:
 
     require 'rubygems'
     require 'mongo'
-    include Mongo
 
-    db   = Connection.new.db('sample-db')
-    coll = db.collection('test')
+    @conn = Mongo::Connection.new
+    @db   = @conn['sample-db']
+    @coll = @db['test']
 
-    coll.remove
+    @coll.remove
     3.times do |i|
-      coll.insert({'a' => i+1})
+      @coll.insert({'a' => i+1})
     end
-    puts "There are #{coll.count()} records. Here they are:"
-    coll.find().each { |doc| puts doc.inspect }
+
+    puts "There are #{@coll.count} records. Here they are:"
+    @coll.find.each { |doc| puts doc.inspect }
 
 # Installation
 
