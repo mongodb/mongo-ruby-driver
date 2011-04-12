@@ -28,7 +28,7 @@ class ConnectTest < Test::Unit::TestCase
   end
 
   def test_connect
-    @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
+    @conn = ReplSetConnection.new([RS.host, RS.ports[1]], [RS.host, RS.ports[0]],
       [RS.host, RS.ports[2]], :name => RS.name)
     assert @conn.connected?
     assert @conn.read_primary?

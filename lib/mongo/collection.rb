@@ -147,16 +147,20 @@ module Mongo
     # @option opts [Integer] :limit maximum number of documents to return
     # @option opts [Array]   :sort an array of [key, direction] pairs to sort by. Direction should
     #   be specified as Mongo::ASCENDING (or :ascending / :asc) or Mongo::DESCENDING (or :descending / :desc)
-    # @option opts [String, Array, OrderedHash] :hint hint for query optimizer, usually not necessary if using MongoDB > 1.1
+    # @option opts [String, Array, OrderedHash] :hint hint for query optimizer, usually not necessary if
+    #   using MongoDB > 1.1
     # @option opts [Boolean] :snapshot (false) if true, snapshot mode will be used for this query.
     #   Snapshot mode assures no duplicates are returned, or objects missed, which were preset at both the start and
-    #   end of the query's execution. For details see http://www.mongodb.org/display/DOCS/How+to+do+Snapshotting+in+the+Mongo+Database
-    # @option opts [Boolean] :batch_size (100) the number of documents to returned by the database per GETMORE operation. A value of 0
-    #   will let the database server decide how many results to returns. This option can be ignored for most use cases.
+    #   end of the query's execution.
+    #   For details see http://www.mongodb.org/display/DOCS/How+to+do+Snapshotting+in+the+Mongo+Database
+    # @option opts [Boolean] :batch_size (100) the number of documents to returned by the database per
+    #   GETMORE operation. A value of 0 will let the database server decide how many results to returns.
+    #   This option can be ignored for most use cases.
     # @option opts [Boolean] :timeout (true) when +true+, the returned cursor will be subject to
-    #   the normal cursor timeout behavior of the mongod process. When +false+, the returned cursor will never timeout. Note
-    #   that disabling timeout will only work when #find is invoked with a block. This is to prevent any inadvertant failure to
-    #   close the cursor, as the cursor is explicitly closed when block code finishes.
+    #   the normal cursor timeout behavior of the mongod process. When +false+, the returned cursor will
+    #   never timeout. Note that disabling timeout will only work when #find is invoked with a block.
+    #   This is to prevent any inadvertant failure to close the cursor, as the cursor is explicitly
+    #   closed when block code finishes.
     # @option opts [Block] :transformer (nil) a block for tranforming returned documents.
     #   This is normally used by object mappers to convert each returned document to an instance of a class.
     #
