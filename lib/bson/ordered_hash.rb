@@ -138,6 +138,10 @@ module BSON
         clone.delete_if(&block)
       end
 
+      def reject!(&block)
+        delete_if(&block)
+      end
+
       def clear
         super
         @ordered_keys = []
