@@ -89,6 +89,7 @@ module Mongo
 
       # Are we allowing reads from secondaries?
       @read_secondary = opts.fetch(:read_secondary, false)
+      @slave_okay = false
 
       setup(opts)
     end

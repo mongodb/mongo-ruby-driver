@@ -123,6 +123,13 @@ class DBTest < Test::Unit::TestCase
     @@db.remove_user('spongebob')
   end
 
+  def test_authenticate_with_special_characters
+    assert @@db.add_user('foo:bar', '@foo')
+    assert @@db.authenticate('foo:bar', '@foo')
+    @@db.logout
+    @@db.remove_user('foo:bar')
+  end
+
   def test_authenticate_with_connection_uri
     @@db.add_user('spongebob', 'squarepants')
     assert Mongo::Connection.from_uri("mongodb://spongebob:squarepants@#{host_port}/#{@@db.name}")
