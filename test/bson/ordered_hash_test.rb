@@ -189,7 +189,8 @@ class OrderedHashTest < Test::Unit::TestCase
 
   def test_reject_bang
     @oh.reject! { |k, v| k == 'z' }
-    assert !@ok.keys.include?('z')
+    assert !@oh.keys.include?('z')
+    assert_nil @oh.reject! { |k, v| k == 'z' }
   end
 
   def test_clone

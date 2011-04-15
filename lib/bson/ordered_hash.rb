@@ -125,11 +125,11 @@ module BSON
       end
 
       def delete_if(&block)
-        self.each { |k,v|
+        self.each do |k,v|
           if yield k, v
             delete(k)
           end
-        }
+        end
       end
 
       def reject(&block)
@@ -139,7 +139,14 @@ module BSON
       end
 
       def reject!(&block)
-        delete_if(&block)
+        changed = false
+        self.each do |k,v|
+          if yield k, v
+            changed = true
+            delete(k)
+          end
+        end
+        changed ? self : nil
       end
 
       def clear
