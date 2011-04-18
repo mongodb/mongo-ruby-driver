@@ -168,6 +168,7 @@ module Mongo
     #
     # @core find find-instance_method
     def find(selector={}, opts={})
+      opts = opts.dup # don't bork input args
       fields = opts.delete(:fields)
       fields = ["_id"] if fields && fields.empty?
       skip   = opts.delete(:skip) || skip || 0
