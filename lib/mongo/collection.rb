@@ -168,6 +168,8 @@ module Mongo
     #
     # @core find find-instance_method
     def find(selector={}, opts={})
+      opts = opts.dup
+      
       fields = opts.delete(:fields)
       fields = ["_id"] if fields && fields.empty?
       skip   = opts.delete(:skip) || skip || 0
@@ -433,6 +435,8 @@ module Mongo
     #
     # @core indexes create_index-instance_method
     def create_index(spec, opts={})
+      opts = opts.dup
+      
       opts[:dropDups] = opts.delete(:drop_dups) if opts[:drop_dups]
       field_spec = parse_index_spec(spec)
       name = opts.delete(:name) || generate_index_name(field_spec)
@@ -459,6 +463,8 @@ module Mongo
     #
     # @return [String] the name of the index.
     def ensure_index(spec, opts={})
+      opts = opts.dup
+      
       now = Time.now.utc.to_i
       field_spec = parse_index_spec(spec)
 
@@ -553,6 +559,8 @@ module Mongo
     #
     # @core mapreduce map_reduce-instance_method
     def map_reduce(map, reduce, opts={})
+      opts = opts.dup
+      
       map    = BSON::Code.new(map) unless map.is_a?(BSON::Code)
       reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
       raw    = opts.delete(:raw)
