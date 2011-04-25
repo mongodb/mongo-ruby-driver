@@ -29,10 +29,7 @@ module BSON
   # Raised when given a string is not valid utf-8 (Ruby 1.8 only).
   class InvalidStringEncoding < BSONError; end
 
-  # Raised when attempting to initialize an invalid ObjectID.
-  class InvalidObjectID < BSONError; end
-
-  # Raised when attempting to initialize an invalid ObjectID.
+  # Raised when attempting to initialize an invalid ObjectId.
   class InvalidObjectId < BSONError; end
 
   # Raised when trying to insert a document that exceeds the 4MB limit or
