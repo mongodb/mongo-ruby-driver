@@ -312,7 +312,7 @@ module Mongo
     end
 
     def get_chunk(n)
-      chunk = @chunks.find({'files_id' => @files_id, 'n' => n}).next_document
+      chunk = @chunks.find({'files_id' => @files_id, 'n' => n}).next_document if n <= last_chunk_number
       @chunk_position = 0
       chunk
     end
