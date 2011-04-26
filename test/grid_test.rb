@@ -30,6 +30,21 @@ class GridTest < Test::Unit::TestCase
       @chunks.remove
     end
 
+    context "A one-chunk grid-stored file" do
+      setup do
+        @data = "GRIDDATA" * 5
+        @grid = Grid.new(@db, 'test-fs')
+        @id   = @grid.put(@data, :filename => 'sample',
+                          :metadata => {'app' => 'photos'})
+      end
+
+      should "retrieve the file" do
+        data = @grid.get(@id).data
+        assert_equal @data, data
+      end
+
+    end
+
     context "A basic grid-stored file" do
       setup do
         @data = "GRIDDATA" * 50000
@@ -55,7 +70,7 @@ class GridTest < Test::Unit::TestCase
 
       should "retrieve the stored data" do
         data = @grid.get(@id).data
-        assert_equal @data, data
+        assert_equal @data.length, data.length
       end
 
       should "have a unique index on chunks" do
@@ -159,6 +174,11 @@ class GridTest < Test::Unit::TestCase
         if @data.respond_to?(:force_encoding)
           @data.force_encoding("binary")
         end
+      end
+
+      should "be equal in length" do
+        @io.rewind
+        assert_equal @io.read.length, @file.read.length
       end
 
       should "read the file" do
