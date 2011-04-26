@@ -55,6 +55,7 @@ module Mongo
       @chunks       = chunks
       @filename     = filename
       @mode         = mode
+      opts          = opts.dup
       @query        = opts.delete(:query) || {}
       @query_opts   = opts.delete(:query_opts) || {}
       @fs_name      = opts.delete(:fs_name) || Grid::DEFAULT_FS_NAME
@@ -410,6 +411,7 @@ module Mongo
 
     # Initialize the class for writing a file.
     def init_write(opts)
+      opts           = opts.dup
       @files_id      = opts.delete(:_id) || BSON::ObjectId.new
       @content_type  = opts.delete(:content_type) || (defined? MIME) && get_content_type || DEFAULT_CONTENT_TYPE
       @chunk_size    = opts.delete(:chunk_size) || DEFAULT_CHUNK_SIZE

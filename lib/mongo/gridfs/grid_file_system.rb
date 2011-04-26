@@ -93,6 +93,7 @@ module Mongo
     #
     #  @return [Mongo::GridIO]
     def open(filename, mode, opts={})
+      opts = opts.dup
       opts.merge!(default_grid_io_opts(filename))
       del  = opts.delete(:delete_old) && mode == 'w'
       file = GridIO.new(@files, @chunks, filename, mode, opts)
