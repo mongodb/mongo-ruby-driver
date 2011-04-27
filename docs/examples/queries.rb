@@ -19,52 +19,56 @@ coll.remove
 coll.insert('a' => 1)
 coll.insert('a' => 2)
 coll.insert('b' => 3)
+coll.insert('c' => 'foo')
+coll.insert('c' => 'bar')
 
 # Count.
-puts "There are #{coll.count()} records."
+puts "There are #{coll.count} records."
 
 # Find all records. find() returns a Cursor.
-cursor = coll.find()
+puts "Find all records:"
+pp cursor = coll.find.to_a
 
 # Print them. Note that all records have an _id automatically added by the
 # database. See pk.rb for an example of how to use a primary key factory to
 # generate your own values for _id.
-cursor.each { |row| pp row }
-
-# Cursor has a to_a method that slurps all records into memory.
-rows = coll.find().to_a
-rows.each { |row| pp row }
+puts "Print each document individually:"
+pp cursor.each { |row| pp row }
 
 # See Collection#find. From now on in this file, we won't be printing the
 # records we find.
-coll.find('a' => 1)
+puts "Find one record:"
+pp coll.find('a' => 1).to_a
 
 # Find records sort by 'a', skip 1, limit 2 records.
 # Sort can be single name, array, or hash.
-coll.find({}, {:skip => 1, :limit => 2, :sort => 'a'})
+puts "Skip 1, limit 2, sort by 'a':"
+pp coll.find({}, {:skip => 1, :limit => 2, :sort => 'a'}).to_a
 
 # Find all records with 'a' > 1. There is also $lt, $gte, and $lte.
 coll.find({'a' => {'$gt' => 1}})
 coll.find({'a' => {'$gt' => 1, '$lte' => 3}})
 
 # Find all records with 'a' in a set of values.
-coll.find('a' => {'$in' => [1,2]})
+puts "Find all records where a is $in [1, 2]:"
+pp coll.find('a' => {'$in' => [1,2]}).to_a
 
-# Find by regexp
-coll.find('a' => /[1|2]/)
+puts "Find by regex:"
+pp coll.find({'c' => /f/}).to_a
 
 # Print query explanation
-pp coll.find('a' => /[1|2]/).explain()
+puts "Print an explain:"
+pp coll.find({'c' => /f/}).explain
 
 # Use a hint with a query. Need an index. Hints can be stored with the
 # collection, in which case they will be used with all queries, or they can be
 # specified per query, in which case that hint overrides the hint associated
 # with the collection if any.
-coll.create_index('a')
-coll.hint = 'a'
+coll.create_index('c')
+coll.hint = 'c'
 
-# You will see a different explanation now that the hint is in place
-pp coll.find('a' => /[1|2]/).explain()
+puts "Print an explain with index:"
+pp coll.find('c' => /[f|b]/).explain
 
-# Override hint for single query
-coll.find({'a' => 1}, :hint => 'b')
+puts "Print an explain with natural order hint:"
+pp coll.find({'c' => /[f|b]/}, :hint => '$natural').explain
