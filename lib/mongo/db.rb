@@ -296,6 +296,7 @@ module Mongo
       if strict? && !collection_names.include?(name)
         raise Mongo::MongoDBError, "Collection #{name} doesn't exist. Currently in strict mode."
       else
+        opts = opts.dup
         opts[:safe] = opts.fetch(:safe, @safe)
         opts.merge!(:pk => @pk_factory) unless opts[:pk]
         Collection.new(name, self, opts)
