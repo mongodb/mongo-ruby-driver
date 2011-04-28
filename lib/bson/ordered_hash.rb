@@ -57,8 +57,13 @@ module BSON
       end
 
       def initialize(*a, &b)
-        super
         @ordered_keys = []
+        super
+      end
+
+      def yaml_initialize(tag, val)
+        @ordered_keys = []        
+        super
       end
 
       def keys
