@@ -454,7 +454,9 @@ module Mongo
       @server_md5 = @files.db.command(md5_command)['md5']
       if @safe
         @client_md5 = @local_md5.hexdigest
-        if @local_md5 != @server_md5
+        if @local_md5 == @server_md5
+          @server_md5
+        else
           raise GridMD5Failure, "File on server failed MD5 check"
         end
       else
