@@ -235,7 +235,7 @@ module Mongo
             end
           end
         end
-        result
+        result.length > 0 ? result : nil
       else
         result = ''
         len = 0
@@ -244,7 +244,7 @@ module Mongo
           len += 1
           break if char == separator || (length ? len >= length : false)
         end
-        result
+        result.length > 0 ? result : nil
       end
     end
 
