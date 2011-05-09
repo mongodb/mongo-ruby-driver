@@ -495,7 +495,9 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             }
             if (flags & MULTILINE) {
                 char multiline = 'm';
+                char dotall = 's';
                 SAFE_WRITE(buffer, &multiline, 1);
+                SAFE_WRITE(buffer, &dotall, 1);
             }
             if (flags & EXTENDED) {
                 char extended = 'x';
@@ -757,6 +759,9 @@ static VALUE get_value(const char* buffer, int* position, int type) {
                     flags |= IGNORECASE;
                 }
                 else if (flag == 'm') {
+                    flags |= MULTILINE;
+                }
+                else if (flag == 's') {
                     flags |= MULTILINE;
                 }
                 else if (flag == 'x') {

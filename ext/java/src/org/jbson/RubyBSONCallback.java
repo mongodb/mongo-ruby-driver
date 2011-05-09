@@ -234,6 +234,9 @@ public class RubyBSONCallback implements BSONCallback {
       if(flags.contains("m")) {
         f = f | ReOptions.RE_OPTION_MULTILINE;
       }
+      if(flags.contains("s")) {
+        f = f | ReOptions.RE_OPTION_MULTILINE;
+      }
       if(flags.contains("x")) {
         f = f | ReOptions.RE_OPTION_EXTENDED;
       }

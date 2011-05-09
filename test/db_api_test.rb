@@ -396,6 +396,18 @@ class DBAPITest < Test::Unit::TestCase
     end
   end
 
+  def test_regex_multi_line
+    if @@version >= "1.9.1"
+doc = <<HERE
+  the lazy brown
+  fox
+HERE
+      @@coll.save({:doc => doc})
+      assert @@coll.find_one({:doc => /n.*x/m})
+      @@coll.remove
+    end
+  end
+
   def test_non_oid_id
     # Note: can't use Time.new because that will include fractional seconds,
     # which Mongo does not store.

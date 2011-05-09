@@ -642,8 +642,10 @@ public class RubyBSONEncoder extends BSONEncoder {
         if( (regexOptions & ReOptions.RE_OPTION_IGNORECASE) != 0 )
           options = options.concat( "i" );
 
-        if( (regexOptions & ReOptions.RE_OPTION_MULTILINE) != 0 )
+        if( (regexOptions & ReOptions.RE_OPTION_MULTILINE) != 0 ) {
           options = options.concat( "m" );
+          options = options.concat( "s" );
+        }
 
         if( (regexOptions & ReOptions.RE_OPTION_EXTENDED) != 0 )
           options = options.concat( "x" );

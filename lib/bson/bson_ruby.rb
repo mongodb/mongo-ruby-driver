@@ -343,6 +343,7 @@ module BSON
       opts = 0
       opts |= Regexp::IGNORECASE if options_str.include?('i')
       opts |= Regexp::MULTILINE if options_str.include?('m')
+      opts |= Regexp::MULTILINE if options_str.include?('s')
       opts |= Regexp::EXTENDED if options_str.include?('x')
       Regexp.new(str, opts)
     end
@@ -500,7 +501,10 @@ module BSON
       options = val.options
       options_str = ''
       options_str << 'i' if ((options & Regexp::IGNORECASE) != 0)
-      options_str << 'm' if ((options & Regexp::MULTILINE) != 0)
+      if ((options & Regexp::MULTILINE) != 0)
+        options_str << 'm'
+        options_str << 's'
+      end
       options_str << 'x' if ((options & Regexp::EXTENDED) != 0)
       options_str << val.extra_options_str if val.respond_to?(:extra_options_str)
       # Must store option chars in alphabetical order

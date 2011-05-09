@@ -245,6 +245,11 @@ class BSONTest < Test::Unit::TestCase
     assert_doc_pass(doc)
   end
 
+  def test_regex_multiline
+    doc = {'doc' => /foobar/m}
+    assert_doc_pass(doc)
+  end
+
   def test_boolean
     doc = {'doc' => true}
     assert_doc_pass(doc)
