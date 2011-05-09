@@ -208,43 +208,9 @@ module Mongo
       elsif separator.is_a?(Integer)
         read_length(separator)
       elsif separator.length > 1
-        result = ''
-        len = 0
-        match_idx = 0
-        match_num = separator.length - 1
-        to_match = separator[match_idx].chr
-        if length
-          matcher = lambda {|idx, num| idx < num && len < length }
-        else
-          matcher = lambda {|idx, num| idx < num}
-        end
-        while matcher.call(match_idx, match_num) && char = getc
-          result << char
-          len += 1
-          if char == to_match
-            while match_idx < match_num do
-              match_idx += 1
-              to_match = separator[match_idx].chr
-              char = getc
-              result << char
-              if char != to_match
-                match_idx = 0
-                to_match = separator[match_idx].chr
-                break
-              end
-            end
-          end
-        end
-        result
+        read_to_string(separator, length)
       else
-        result = ''
-        len = 0
-        while char = getc
-          result << char
-          len += 1
-          break if char == separator || (length ? len >= length : false)
-        end
-        result
+        read_to_character(separator, length)
       end
     end
 
@@ -357,6 +323,48 @@ module Mongo
         @file_position  += size
       end
       buf
+    end
+
+    def read_to_character(character="\n", length=nil)
+      result = ''
+      len = 0
+      while char = getc
+        result << char
+        len += 1
+        break if char == character || (length ? len >= length : false)
+      end
+      result.length > 0 ? result : nil
+    end
+
+    def read_to_string(string="\n", length=nil)
+      result = ''
+      len = 0
+      match_idx = 0
+      match_num = string.length - 1
+      to_match = string[match_idx].chr
+      if length
+        matcher = lambda {|idx, num| idx < num && len < length }
+      else
+        matcher = lambda {|idx, num| idx < num}
+      end
+      while matcher.call(match_idx, match_num) && char = getc
+        result << char
+        len += 1
+        if char == to_match
+          while match_idx < match_num do
+            match_idx += 1
+            to_match = string[match_idx].chr
+            char = getc
+            result << char
+            if char != to_match
+              match_idx = 0
+              to_match = string[match_idx].chr
+              break
+            end
+          end
+        end
+      end
+      result.length > 0 ? result : nil
     end
 
     def cache_chunk_data
