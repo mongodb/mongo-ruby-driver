@@ -298,17 +298,13 @@ class DBTest < Test::Unit::TestCase
       assert_kind_of Array, info
       assert info.length >= 1
       first = info.first
-      assert_kind_of String, first['info']
       assert_kind_of Time, first['ts']
       assert_kind_of Numeric, first['millis']
     end
 
     should "validate collection" do
       doc = @db.validate_collection(@coll.name)
-      assert_not_nil doc
-      result = doc['result']
-      assert_not_nil result
-      assert_match(/firstExtent/, result)
+      assert doc['valid']
     end
 
   end

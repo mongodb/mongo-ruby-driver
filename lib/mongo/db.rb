@@ -595,11 +595,16 @@ module Mongo
     # @raise [MongoDBError] if the command fails or there's a problem with the validation
     #   data, or if the collection is invalid.
     def validate_collection(name)
-      doc = command({:validate => name}, :check_response => false)
-      raise MongoDBError, "Error with validate command: #{doc.inspect}" unless ok?(doc)
-      result = doc['result']
-      raise MongoDBError, "Error with validation data: #{doc.inspect}" unless result.kind_of?(String)
-      raise MongoDBError, "Error: invalid collection #{name}: #{doc.inspect}" if result =~ /\b(exception|corrupt)\b/i
+      cmd = BSON::OrderedHash.new
+      cmd[:validate] = name
+      cmd[:full] = true
+      doc = command(cmd, :check_response => false)
+      if !ok?(doc)
+        raise MongoDBError, "Error with validate command: #{doc.inspect}"
+      end
+      if !doc['valid']
+        raise MongoDBError, "Error: invalid collection #{name}: #{doc.inspect}"
+      end
       doc
     end
 
