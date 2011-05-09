@@ -69,6 +69,24 @@ class GridIOTest < Test::Unit::TestCase
         assert_equal 10, string.length
       end
 
+      should "read to the end of the file one line at a time" do
+        file = GridIO.new(@files, @chunks, nil, "r", :query => {:_id => @file.files_id})
+        bytes = 0
+        while string = file.gets
+          bytes += string.length
+        end
+        assert_equal 1_000_000, bytes
+      end
+
+      should "read to the end of the file one multi-character separator at a time" do
+        file = GridIO.new(@files, @chunks, nil, "r", :query => {:_id => @file.files_id})
+        bytes = 0
+        while string = file.gets("45")
+          bytes += string.length
+        end
+        assert_equal 1_000_000, bytes
+      end
+
       should "read to a given separator" do
         file = GridIO.new(@files, @chunks, nil, "r", :query => {:_id => @file.files_id})
         string = file.gets("5")
