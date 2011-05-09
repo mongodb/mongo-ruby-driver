@@ -32,14 +32,35 @@ class DBTest < Test::Unit::TestCase
       @@users = @@db.collection('system.users')
     end
   end
-  
+
+  def test_create_collection
+    col = @@db.create_collection('foo')
+    assert_equal @@db['foo'].name, col.name
+
+    col = @@db.create_collection(:foo)
+    assert_equal @@db['foo'].name, col.name
+
+    @@db.drop_collection('foo')
+  end
+
+  def test_get_and_drop_collection
+    db = @@conn.db(MONGO_TEST_DB, :strict => true)
+    db.create_collection('foo')
+    assert db.collection('foo')
+    assert db.drop_collection('foo')
+
+    db.create_collection(:foo)
+    assert db.collection(:foo)
+    assert db.drop_collection(:foo)
+  end
+
   def test_logger
     output = StringIO.new
     logger = Logger.new(output)
     logger.level = Logger::DEBUG
     conn = standard_connection(:logger => logger)
     assert_equal logger, conn.logger
-    
+
     conn.logger.debug 'testing'
     assert output.string.include?('testing')
   end

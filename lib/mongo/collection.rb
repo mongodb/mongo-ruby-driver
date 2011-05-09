@@ -91,7 +91,7 @@ module Mongo
     # Return a sub-collection of this collection by name. If 'users' is a collection, then
     # 'users.comments' is a sub-collection of users.
     #
-    # @param [String] name
+    # @param [String, Symbol] name
     #   the collection to return
     #
     # @raise [Mongo::InvalidNSName]
@@ -101,7 +101,8 @@ module Mongo
     #   the specified sub-collection
     def [](name)
       name = "#{self.name}.#{name}"
-      return Collection.new(name, db) if !db.strict? || db.collection_names.include?(name)
+      return Collection.new(name, db) if !db.strict? ||
+        db.collection_names.include?(name.to_s)
       raise "Collection #{name} doesn't exist. Currently in strict mode."
     end
 
