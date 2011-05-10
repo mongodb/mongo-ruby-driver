@@ -1,5 +1,22 @@
 # MongoDB Ruby Driver History
 
+### 1.3.1
+2011-5-10
+
+* Fix GridIO#gets infinite loop error (Ryan McGeary)
+* Fix BSON::OrderedHash#reject! leaving keys with null values (rpt. by Ben Poweski)
+* Minor semantic fix for OrderedHash#reject!
+* Fix Mongo::DB to allow symbols in method traversing collection names (rpt. by Chris Griego)
+* Support new server regex option "s" (dotall). This is folded in with \m in Ruby.
+* Fix so that Cursor#close hits the right node when :read_secondary is enabled.
+* Support maxScan, showDiskLoc, and returnKey cursor options.
+* Make DB#validate_collection compatible with server v1.9.1.
+* Fix so that GridIO#gets returns local md5 with md5 matches server md5 (Steve Tantra).
+* Fix bug in BSON::OrderedHash that prevents YAML.load (Ian Warshak).
+* Fix example from /examples.
+* Ensure that we do not modify hash arguments by calling Hash#dup when appropriate.
+* Minor doc fixes.
+
 ### 1.3.0
 2011-4-04
 
