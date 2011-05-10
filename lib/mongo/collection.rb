@@ -391,7 +391,7 @@ module Mongo
         if safe
           @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name, nil, safe)
         else
-          @connection.send_message(Mongo::Constants::OP_UPDATE, message, nil)
+          @connection.send_message(Mongo::Constants::OP_UPDATE, message)
         end
       end
     end
@@ -874,7 +874,7 @@ module Mongo
         if safe
           @connection.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message, @db.name, nil, safe)
         else
-          @connection.send_message(Mongo::Constants::OP_INSERT, message, nil)
+          @connection.send_message(Mongo::Constants::OP_INSERT, message)
         end
       end
       documents.collect { |o| o[:_id] || o['_id'] }

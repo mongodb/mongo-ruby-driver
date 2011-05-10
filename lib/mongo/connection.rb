@@ -381,15 +381,36 @@ module Mongo
     # @param [Integer] operation a MongoDB opcode.
     # @param [BSON::ByteBuffer] message a message to send to the database.
     #
+    # @option opts [Symbol] :connection (:writer) The connection to which
+    #   this message should be sent. Valid options are :writer and :reader.
+    #
     # @return [Integer] number of bytes sent
-    def send_message(operation, message, log_message=nil)
+    def send_message(operation, message, opts={})
+      if opts.is_a?(String)
+        warn "Connection#send_message no longer takes a string log message. " +
+          "Logging is now handled within the Collection and Cursor classes."
+        opts = {}
+      end
+
+      connection = opts.fetch(:connection, :writer)
+
       begin
         add_message_headers(message, operation)
         packed_message = message.to_s
-        socket = checkout_writer
+
+        if connection == :writer
+          socket = checkout_writer
+        else
+          socket = checkout_reader
+        end
+
         send_message_on_socket(packed_message, socket)
       ensure
-        checkin_writer(socket)
+        if connection == :writer
+          checkin_writer(socket)
+        else
+          checkin_reader(socket)
+        end
       end
     end
 

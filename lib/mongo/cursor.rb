@@ -284,7 +284,7 @@ module Mongo
         message.put_int(1)
         message.put_long(@cursor_id)
         @logger.debug("MONGODB cursor.close #{@cursor_id}") if @logger
-        @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message, nil)
+        @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message, :connection => :reader)
       end
       @cursor_id = 0
       @closed    = true

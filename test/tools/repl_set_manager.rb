@@ -23,8 +23,8 @@ class ReplSetManager
     @path       = File.join(File.expand_path(File.dirname(__FILE__)), "data")
 
     @arbiter_count   = opts[:arbiter_count]   || 2
-    @secondary_count = opts[:secondary_count] || 1
-    @passive_count   = opts[:passive_count] || 1
+    @secondary_count = opts[:secondary_count] || 2
+    @passive_count   = opts[:passive_count] || 0
     @primary_count   = 1
 
     @count = @primary_count + @passive_count + @arbiter_count + @secondary_count
@@ -41,7 +41,7 @@ class ReplSetManager
     system("killall mongod")
 
     n = 0
-    (@primary_count + @secondary_count).times do |n|
+    (@primary_count + @secondary_count).times do
       init_node(n)
       n += 1
     end

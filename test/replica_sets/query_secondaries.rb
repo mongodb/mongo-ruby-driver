@@ -31,7 +31,7 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
   end
 
   def test_query_secondaries
-    @coll = @db.collection("test-sets", :safe => {:w => 3, :wtimeout => 10000})
+    @coll = @db.collection("test-sets", :safe => {:w => 3, :wtimeout => 20000})
     @coll.save({:a => 20})
     @coll.save({:a => 30})
     @coll.save({:a => 40})
@@ -70,7 +70,7 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
   end
 
   def test_kill_secondary
-    @coll = @db.collection("test-sets", {:safe => {:w => 3, :wtimeout => 10000}})
+    @coll = @db.collection("test-sets", {:safe => {:w => 3, :wtimeout => 20000}})
     @coll.save({:a => 20})
     @coll.save({:a => 30})
     assert_equal 2, @coll.find.to_a.length
@@ -90,7 +90,19 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
       assert_equal 2, length
     end
     new_read_pool_port = @conn.read_pool.port
-    assert old_read_pool != new_read_pool
+    assert old_read_pool_port != new_read_pool_port
+  end
+
+  def test_write_lots_of_data
+    @coll = @db.collection("test-sets", {:safe => {:w => 2}})
+
+    6000.times do |n|
+      @coll.save({:a => n})
+    end
+
+    cursor = @coll.find()
+    cursor.next
+    cursor.close
   end
 
 end
