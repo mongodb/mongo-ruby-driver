@@ -602,7 +602,7 @@ module Mongo
       if !ok?(doc)
         raise MongoDBError, "Error with validate command: #{doc.inspect}"
       end
-      if !doc['valid']
+      if (doc.has_key?('valid') && !doc['valid']) || (doc['result'] =~ /\b(exception|corrupt)\b/i)
         raise MongoDBError, "Error: invalid collection #{name}: #{doc.inspect}"
       end
       doc

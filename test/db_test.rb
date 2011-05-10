@@ -304,7 +304,11 @@ class DBTest < Test::Unit::TestCase
 
     should "validate collection" do
       doc = @db.validate_collection(@coll.name)
-      assert doc['valid']
+      if @@version >= "1.9.1"
+        assert doc['valid']
+      else
+        assert doc['result']
+      end
     end
 
   end
