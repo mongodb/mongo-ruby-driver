@@ -32,6 +32,21 @@ class CursorTest < Test::Unit::TestCase
     assert_kind_of Numeric, explaination['nscanned']
   end
 
+  def test_alive
+    batch = []
+    5000.times do |n|
+      batch << {:a => n}
+    end
+    @@coll.insert(batch)
+    cursor = @@coll.find
+    assert !cursor.alive?
+    cursor.next
+    assert cursor.alive?
+    cursor.close
+    assert !cursor.alive?
+    @@coll.remove
+  end
+
   def test_count
     @@coll.remove
 

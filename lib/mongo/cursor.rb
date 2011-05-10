@@ -307,6 +307,13 @@ module Mongo
     # @return [Boolean]
     def closed?; @closed; end
 
+    # Is this cursor alive on the server?
+    #
+    # @return [Boolean]
+    def alive?
+      @cursor_id && @cursor_id != 0
+    end
+
     # Returns an integer indicating which query options have been selected.
     #
     # @return [Integer]
