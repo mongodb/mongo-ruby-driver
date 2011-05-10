@@ -458,7 +458,10 @@ module Mongo
     #
     # @param [Integer] operation a MongoDB opcode.
     # @param [BSON::ByteBuffer] message a message to send to the database.
+    # @param [String] log_message this is currently a no-op and will be removed.
     # @param [Socket] socket a socket to use in lieu of checking out a new one.
+    # @param [Boolean] command (false) indicate whether this is a command. If this is a command,
+    #   the message will be sent to the primary node.
     #
     # @return [Array]
     #   An array whose indexes include [0] documents returned, [1] number of document received,
