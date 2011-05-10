@@ -41,19 +41,31 @@ module Mongo
       @connection = @db.connection
       @logger     = @connection.logger
 
+      # Query selector
       @selector   = opts[:selector] || {}
+
+      # Special operators that form part of $query
+      @order      = opts[:order]
+      @explain    = opts[:explain]
+      @hint       = opts[:hint]
+      @snapshot   = opts[:snapshot]
+      @max_scan   = opts.fetch(:max_scan, nil)
+      @return_key = opts.fetch(:return_key, nil)
+      @show_disk_loc = opts.fetch(:show_disk_loc, nil)
+
+      # Wire-protocol settings
       @fields     = convert_fields_for_query(opts[:fields])
       @skip       = opts[:skip]     || 0
       @limit      = opts[:limit]    || 0
-      @order      = opts[:order]
-      @hint       = opts[:hint]
-      @snapshot   = opts[:snapshot]
-      @timeout    = opts.fetch(:timeout, true)
-      @explain    = opts[:explain]
-      @socket     = opts[:socket]
       @tailable   = opts[:tailable] || false
+      @timeout    = opts.fetch(:timeout, true)
+
+      # Use this socket for the query
+      @socket     = opts[:socket]
+
       @closed       = false
       @query_run    = false
+
       @transformer = opts[:transformer]
       batch_size(opts[:batch_size] || 0)
 
@@ -320,7 +332,10 @@ module Mongo
         :order    => @order,
         :hint     => @hint,
         :snapshot => @snapshot,
-        :timeout  => @timeout }
+        :timeout  => @timeout,
+        :max_scan => @max_scan,
+        :return_key => @return_key,
+        :show_disk_loc => @show_disk_loc }
     end
 
     # Clean output for inspect.
@@ -429,6 +444,9 @@ module Mongo
       spec['$hint']     = @hint if @hint && @hint.length > 0
       spec['$explain']  = true if @explain
       spec['$snapshot'] = true if @snapshot
+      spec['$maxscan']  = @max_scan if @max_scan
+      spec['$returnKey']   = true if @return_key
+      spec['$showDiskLoc'] = true if @show_disk_loc
       spec
     end
 

@@ -162,6 +162,9 @@ module Mongo
     #   never timeout. Note that disabling timeout will only work when #find is invoked with a block.
     #   This is to prevent any inadvertant failure to close the cursor, as the cursor is explicitly
     #   closed when block code finishes.
+    # @option opts [Integer] :max_scan (nil) Limit the number of items to scan on both collection scans and indexed queries..
+    # @option opts [Boolean] :show_disk_loc (false) Return the disk location of each query result (for debugging).
+    # @option opts [Boolean] :return_key (false) Return the index key used to obtain the result (for debugging).
     # @option opts [Block] :transformer (nil) a block for tranforming returned documents.
     #   This is normally used by object mappers to convert each returned document to an instance of a class.
     #
