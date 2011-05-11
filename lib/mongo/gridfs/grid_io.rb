@@ -251,8 +251,9 @@ module Mongo
     # @return [Mongo::GridIO] self
     def each
       return read_all unless block_given?
-      while chunk = read(chunk_size)
+      while chunk = read(chunk_size) 
         yield chunk
+        break if chunk.empty?
       end
       self
     end

@@ -13,6 +13,7 @@ def read_and_write_stream(filename, read_length, opts={})
   read_data = ""
   while(chunk = file.read(read_length))
     read_data << chunk
+    break if chunk.empty?
   end
   assert_equal data.length, read_data.length
 end
@@ -195,6 +196,39 @@ class GridTest < Test::Unit::TestCase
       end
     end
 
+    context "Grid streaming an empty file: " do
+      setup do
+        @grid = Grid.new(@db, 'test-fs')
+        filename = 'empty_data'
+        @io   = File.open(File.join(File.dirname(__FILE__), 'data', filename), 'r')
+        id    = @grid.put(@io, :filename => filename)
+        @file = @grid.get(id)
+        @io.rewind
+        @data = @io.read
+        if @data.respond_to?(:force_encoding)
+          @data.force_encoding("binary")
+        end
+      end
+
+      should "be equal in length" do
+        @io.rewind
+        assert_equal @io.read.length, @file.read.length
+      end
+
+      should "read the file" do
+        read_data = ""
+        @file.each do |chunk|
+          read_data << chunk
+        end
+        assert_equal @data.length, read_data.length
+      end
+
+      should "read the file if no block is given" do
+        read_data = @file.each
+        assert_equal @data.length, read_data.length
+      end
+    end
+
     context "Streaming: " do || {}
       setup do
         @grid = Grid.new(@db, 'test-fs')
@@ -202,6 +236,10 @@ class GridTest < Test::Unit::TestCase
 
       should "put and get a small io object with a small chunk size" do
         read_and_write_stream('small_data.txt', 1, :chunk_size => 2)
+      end
+
+      should "put and get an empty io object" do
+        read_and_write_stream('empty_data', 1)
       end
 
       should "put and get a small io object" do
