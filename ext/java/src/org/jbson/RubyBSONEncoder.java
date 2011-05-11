@@ -558,7 +558,7 @@ public class RubyBSONEncoder extends BSONEncoder {
         long subtype = rbSubtype.longValue();
         byte[] data = ra2ba( rarray );
         if ( subtype == 2 ) {
-            putBinary( name, data );
+            putBinaryTypeTwo( name, data );
         }
         else {
             _put( BINARY , name );
@@ -568,17 +568,25 @@ public class RubyBSONEncoder extends BSONEncoder {
         }
     }
 
-    protected void putBinary( String name , byte[] data ){
+    /* We have a special method because type 2 has a different format. */
+    protected void putBinaryTypeTwo( String name , byte[] data ){
         _put( BINARY , name );
         _buf.writeInt( 4 + data.length );
 
-        _buf.write( B_BINARY );
+        _buf.write( 2 );
         _buf.writeInt( data.length );
         int before = _buf.getPosition();
         _buf.write( data );
         int after = _buf.getPosition();
 
         com.mongodb.util.MyAsserts.assertEquals( after - before , data.length );
+    }
+
+    protected void putBinary( String name , byte[] data ){
+        _put( BINARY , name );
+        _buf.writeInt( data.length );
+        _buf.write( 0 );
+        _buf.write( data );
     }
 
     protected void putBinary( String name , Binary val ){

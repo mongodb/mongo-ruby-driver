@@ -11,7 +11,7 @@ module BSON
     end
 
     def self.deserialize(buf)
-      dec = Java::OrgBson::BSONDecoder.new
+      dec = Java::OrgJbson::RubyBSONDecoder.new
       callback = Java::OrgJbson::RubyBSONCallback.new(JRuby.runtime)
       dec.decode(buf.to_s.to_java_bytes, callback)
       callback.get
