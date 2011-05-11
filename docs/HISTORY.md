@@ -15,6 +15,7 @@
 * Fix bug in BSON::OrderedHash that prevents YAML.load (Ian Warshak).
 * Fix example from /examples.
 * Ensure that we do not modify hash arguments by calling Hash#dup when appropriate.
+* Ensure that JRuby deserializer preserves binary subtypes properly.
 * Minor doc fixes.
 
 ### 1.3.0
