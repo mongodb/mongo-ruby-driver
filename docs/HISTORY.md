@@ -16,6 +16,7 @@
 * Fix example from /examples.
 * Ensure that we do not modify hash arguments by calling Hash#dup when appropriate.
 * Ensure that JRuby deserializer preserves binary subtypes properly.
+* Fix for streaming an empty file into GridFS (Daniël van de Burgt).
 * Minor doc fixes.
 
 ### 1.3.0
