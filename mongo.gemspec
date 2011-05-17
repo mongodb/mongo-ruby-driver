@@ -1,4 +1,4 @@
-require "./lib/mongo"
+require File.expand_path('../lib/mongo/version', __FILE__)
 
 Gem::Specification.new do |s|
   s.name = 'mongo'
