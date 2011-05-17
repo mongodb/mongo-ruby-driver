@@ -1,4 +1,4 @@
-require "./lib/mongo"
+require File.expand_path('../lib/mongo/version', __FILE__)
 
 Gem::Specification.new do |s|
   s.name = 'mongo'
@@ -30,5 +30,5 @@ Gem::Specification.new do |s|
   s.email = 'mongodb-dev@googlegroups.com'
   s.homepage = 'http://www.mongodb.org'
 
-  s.add_dependency(%q<bson>, [">= #{Mongo::VERSION}"])
+  s.add_dependency('bson', Mongo::VERSION)
 end
