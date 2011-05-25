@@ -163,8 +163,6 @@ module Mongo
     #   This is to prevent any inadvertant failure to close the cursor, as the cursor is explicitly
     #   closed when block code finishes.
     # @option opts [Integer] :max_scan (nil) Limit the number of items to scan on both collection scans and indexed queries..
-    # @option opts [Boolean] :show_disk_loc (false) Return the disk location of each query result (for debugging).
-    # @option opts [Boolean] :return_key (false) Return the index key used to obtain the result (for debugging).
     # @option opts [Block] :transformer (nil) a block for tranforming returned documents.
     #   This is normally used by object mappers to convert each returned document to an instance of a class.
     #
@@ -470,6 +468,7 @@ module Mongo
     # @return [String] the name of the index.
     def ensure_index(spec, opts={})
       now = Time.now.utc.to_i
+      opts[:dropDups] = opts[:drop_dups] if opts[:drop_dups]
       field_spec = parse_index_spec(spec)
 
       name = opts[:name] || generate_index_name(field_spec)
