@@ -564,7 +564,7 @@ module Mongo
     def map_reduce(map, reduce, opts={})
       map    = BSON::Code.new(map) unless map.is_a?(BSON::Code)
       reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
-      raw    = opts[:raw]
+      raw    = opts.delete(:raw)
 
       hash = BSON::OrderedHash.new
       hash['mapreduce'] = self.name
