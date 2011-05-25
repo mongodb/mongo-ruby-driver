@@ -163,6 +163,8 @@ module Mongo
     #   This is to prevent any inadvertant failure to close the cursor, as the cursor is explicitly
     #   closed when block code finishes.
     # @option opts [Integer] :max_scan (nil) Limit the number of items to scan on both collection scans and indexed queries..
+    # @option opts [Boolean] :show_disk_loc (false) Return the disk location of each query result (for debugging).
+    # @option opts [Boolean] :return_key (false) Return the index key used to obtain the result (for debugging).
     # @option opts [Block] :transformer (nil) a block for tranforming returned documents.
     #   This is normally used by object mappers to convert each returned document to an instance of a class.
     #
@@ -184,7 +186,10 @@ module Mongo
       snapshot   = opts.delete(:snapshot)
       batch_size = opts.delete(:batch_size)
       timeout    = (opts.delete(:timeout) == false) ? false : true
+      max_scan   = opts.delete(:max_scan)
+      return_key = opts.delete(:return_key)
       transformer = opts.delete(:transformer)
+      show_disk_loc = opts.delete(:max_scan)
 
       if timeout == false && !block_given?
         raise ArgumentError, "Collection#find must be invoked with a block when timeout is disabled."
@@ -209,6 +214,9 @@ module Mongo
         :timeout     => timeout, 
         :batch_size  => batch_size,
         :transformer => transformer,
+        :max_scan    => max_scan,
+        :show_disk_loc => show_disk_loc,
+        :return_key    => return_key
       })
 
       if block_given?
