@@ -497,6 +497,9 @@ module Mongo
     #
     # @core indexes
     def drop_index(name)
+      if name.is_a?(Array)
+        return drop_index(index_name(name))
+      end
       @cache[name.to_s] = nil
       @db.drop_index(@name, name)
     end
@@ -824,6 +827,14 @@ module Mongo
     end
 
     private
+  
+    def index_name(spec)
+      field_spec = parse_index_spec(spec)
+      index_information.each do |index|
+        return index[0] if index[1]['key'] == field_spec
+      end
+      nil
+    end
 
     def parse_index_spec(spec)
       field_spec = BSON::OrderedHash.new
