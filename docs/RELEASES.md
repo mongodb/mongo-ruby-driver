@@ -13,7 +13,7 @@ following release rules:
 
 2. Minor versions (Y in x.Y.z) will be released if new, backward-compatible functionality is introduced to the public API.
 
-3. Major versions (X in X.y.z) will be incremented if any backward-incompatibl changes are introduced to the public API.
+3. Major versions (X in X.y.z) will be incremented if any backward-incompatible changes are introduced to the public API.
 
 This policy will clearly indicate to users when an upgrade may affect their code. As a side effect, version numbers will climb more quickly than before.
 

@@ -43,7 +43,7 @@ module Mongo
     # @option options [Logger, #debug] :logger (nil) Logger instance to receive driver operation log.
     # @option options [Integer] :pool_size (1) The maximum number of socket connections allowed per
     #   connection pool. Note: this setting is relevant only for multi-threaded applications.
-    # @option options [Float] :timeout (5.0) When all of the connections a pool are checked out,
+    # @option options [Float] :pool_timeout (5.0) When all of the connections a pool are checked out,
     #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
     #   Note: this setting is relevant only for multi-threaded applications.
     # @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.

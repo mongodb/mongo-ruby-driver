@@ -65,7 +65,7 @@ module Mongo
     #   logging negatively impacts performance; therefore, it should not be used for high-performance apps.
     # @option opts [Integer] :pool_size (1) The maximum number of socket connections allowed per
     #   connection pool. Note: this setting is relevant only for multi-threaded applications.
-    # @option opts [Float] :timeout (5.0) When all of the connections a pool are checked out,
+    # @option opts [Float] :pool_timeout (5.0) When all of the connections a pool are checked out,
     #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
     #   Note: this setting is relevant only for multi-threaded applications (which in Ruby are rare).
     # @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.
@@ -625,14 +625,17 @@ module Mongo
 
       # Pool size and timeout.
       @pool_size = opts[:pool_size] || 1
-      @timeout   = opts[:timeout]   || 5.0
+      if opts[:timeout]
+        warn "The :timeout option has been deprecated " +
+          "and will be removed in the 2.0 release. Use :pool_timeout instead."
+      end
+      @timeout = opts[:pool_timeout] || opts[:timeout] || 5.0
 
       # Timeout on socket read operation.
       @op_timeout = opts[:op_timeout] || nil
 
       # Timeout on socket connect.
       @connect_timeout = opts[:connect_timeout] || nil
-
 
       # Mutex for synchronizing pool access
       @connection_mutex = Mutex.new
