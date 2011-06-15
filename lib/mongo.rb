@@ -74,22 +74,5 @@ if RUBY_PLATFORM =~ /java/
 end
 require 'mongo/gridfs/grid_file_system'
 
-# Use SystemTimer on Ruby 1.8
-if !defined?(RUBY_ENGINE) || (RUBY_ENGINE == 'ruby' && RUBY_VERSION < '1.9.0')
-  begin
-    require 'system_timer'
-    if SystemTimer.method(:timeout).arity.abs != 2
-      raise LoadError
-    end
-    Mongo::TimeoutHandler = SystemTimer
-  rescue LoadError
-    warn "Could not load SystemTimer >= v1.2.0. Falling back to timeout.rb. " +
-         "SystemTimer is STRONGLY recommended for timeouts in Ruby 1.8.7. " +
-         "See http://ph7spot.com/blog/system-timer-1-2-release for details."
-    require 'timeout'
-    Mongo::TimeoutHandler = Timeout
-  end
-else
-  require 'timeout'
-  Mongo::TimeoutHandler = Timeout
-end
+require 'timeout'
+Mongo::TimeoutHandler = Timeout
