@@ -89,7 +89,6 @@ module Mongo
 
       # Are we allowing reads from secondaries?
       @read_secondary = opts.fetch(:read_secondary, false)
-      @slave_okay = false
 
       setup(opts)
     end
@@ -186,7 +185,7 @@ module Mongo
     #
     # @return [Boolean]
     def slave_ok?
-      @read_secondary || @slave_ok
+      @read_secondary
     end
 
     def authenticate_pools
