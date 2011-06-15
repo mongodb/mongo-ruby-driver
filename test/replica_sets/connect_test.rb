@@ -27,6 +27,21 @@ class ConnectTest < Test::Unit::TestCase
     end
   end
 
+  def test_connect_timeout
+    passed = false
+    timeout = 3
+    begin
+      t0 = Time.now
+      ReplSetConnection.new(['192.169.169.1', 27017], :connect_timeout => timeout)
+    rescue OperationTimeout
+      passed = true
+      t1 = Time.now
+    end
+
+    assert passed
+    assert t1 - t0 < timeout + 1
+  end
+
   def test_connect
     @conn = ReplSetConnection.new([RS.host, RS.ports[1]], [RS.host, RS.ports[0]],
       [RS.host, RS.ports[2]], :name => RS.name)
@@ -66,7 +81,6 @@ class ConnectTest < Test::Unit::TestCase
       @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
         [RS.host, RS.ports[2]])
     end
-    assert @conn.connected?
   end
 
   def test_connect_with_secondary_node_killed

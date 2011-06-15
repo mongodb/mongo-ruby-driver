@@ -46,6 +46,10 @@ module Mongo
     # @option options [Float] :timeout (5.0) When all of the connections a pool are checked out,
     #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
     #   Note: this setting is relevant only for multi-threaded applications.
+    # @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.
+    #   Disabled by default.
+    # @option opts [Float] :connect_timeout (nil) The number of seconds to wait before timing out a
+    #   connection attempt.
     #
     # @example Connect to a replica set and provide two seed nodes. Note that the number of seed nodes does
     #   not have to be equal to the number of replica set members. The purpose of seed nodes is to permit
@@ -207,8 +211,16 @@ module Mongo
     def check_is_master(node)
       begin
         host, port = *node
-        socket = TCPSocket.new(host, port)
-        socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+
+        if @connect_timeout
+          Mongo::TimeoutHandler.timeout(@connect_timeout, OperationTimeout) do
+            socket = TCPSocket.new(host, port)
+            socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+          end
+        else
+          socket = TCPSocket.new(host, port)
+          socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+        end
 
         config = self['admin'].command({:ismaster => 1}, :socket => socket)
 

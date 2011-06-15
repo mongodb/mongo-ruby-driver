@@ -70,6 +70,8 @@ module Mongo
     #   Note: this setting is relevant only for multi-threaded applications (which in Ruby are rare).
     # @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.
     #   Disabled by default.
+    # @option opts [Float] :connect_timeout (nil) The number of seconds to wait before timing out a
+    #   connection attempt.
     #
     # @example localhost, 27017
     #   Connection.new
@@ -628,6 +630,10 @@ module Mongo
       # Timeout on socket read operation.
       @op_timeout = opts[:op_timeout] || nil
 
+      # Timeout on socket connect.
+      @connect_timeout = opts[:connect_timeout] || nil
+
+
       # Mutex for synchronizing pool access
       @connection_mutex = Mutex.new
 
@@ -698,8 +704,16 @@ module Mongo
     def check_is_master(node)
       begin
         host, port = *node
-        socket = TCPSocket.new(host, port)
-        socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+
+        if @connect_timeout
+          Mongo::TimeoutHandler.timeout(@connect_timeout, OperationTimeout) do
+            socket = TCPSocket.new(host, port)
+            socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+          end
+        else
+          socket = TCPSocket.new(host, port)
+          socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+        end
 
         config = self['admin'].command({:ismaster => 1}, :socket => socket)
       rescue OperationFailure, SocketError, SystemCallError, IOError => ex
