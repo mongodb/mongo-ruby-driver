@@ -94,6 +94,11 @@ module BSON
         collect { |k, v| v }
       end
 
+      def replace(other)
+        @ordered_keys = other.keys
+        super
+      end
+
       def merge(other)
         oh = self.dup
         oh.merge!(other)

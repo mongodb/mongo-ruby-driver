@@ -76,6 +76,20 @@ class OrderedHashTest < Test::Unit::TestCase
     assert_equal @ordered_keys, @oh.keys
   end
 
+  def test_replace
+    h1 = BSON::OrderedHash.new
+    h1[:a] = 1
+    h1[:b] = 2
+
+    h2 = BSON::OrderedHash.new
+    h2[:c] = 3
+    h2[:d] = 4
+    h1.replace(h2)
+
+    assert_equal [:c, :d], h1.keys
+    assert_equal [3, 4], h1.values
+  end
+
   def test_to_a_order_preserved
     assert_equal @ordered_keys, @oh.to_a.map {|m| m.first}
   end
