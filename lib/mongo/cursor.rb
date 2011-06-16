@@ -220,12 +220,13 @@ module Mongo
     #   the server will determine the batch size.
     #
     # @return [Cursor]
-    def batch_size(size=0)
+    def batch_size(size=nil)
+      return @batch_size unless size
       check_modifiable
       if size < 0 || size == 1
         raise ArgumentError, "Invalid value for batch_size #{size}; must be 0 or > 1."
       else
-        @batch_size = size > @limit ? @limit : size
+        @batch_size = @limit != 0 && size > @limit ? @limit : size
       end
 
       self
