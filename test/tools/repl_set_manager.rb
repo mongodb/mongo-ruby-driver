@@ -103,6 +103,25 @@ class ReplSetManager
     @mongods[n]['start']
   end
 
+  def add_node
+    primary = get_node_with_state(1)
+    con = get_connection(primary)
+    init_node(@mongods.length)
+
+    config = con['local']['system.replset'].find_one
+    @config['version'] = config['version'] + 1
+    p "Old config: #{config}"
+    p "New config: #{@config}"
+
+    # We expect a connection failure on reconfigure here.
+    begin
+      con['admin'].command({'replSetReconfig' => @config})
+    rescue Mongo::ConnectionFailure
+    end
+
+    ensure_up
+  end
+
   def kill(node, signal=2)
     pid = @mongods[node]['pid']
     puts "** Killing node with pid #{pid} at port #{@mongods[node]['port']}"
