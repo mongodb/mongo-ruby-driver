@@ -110,7 +110,7 @@ We can update the previous document using the `update` method. There are a coupl
 
 Or we can use an atomic operator to change a single value:
 
-    coll.update({"_id" => doc["_id"]}, {"$set" => {"name" => "MongoDB Ruby"`)
+    coll.update({"_id" => doc["_id"]}, {"$set" => {"name" => "MongoDB Ruby"}})
 
 Read [more about updating documents|Updating].
 
