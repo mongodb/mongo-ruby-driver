@@ -32,6 +32,7 @@ module BSON
   class ObjectId
     @@lock  = Mutex.new
     @@index = 0
+    @@hostname_digest = Digest::MD5.digest(Socket.gethostname)[0, 3]
 
     attr_accessor :data
 
@@ -185,7 +186,7 @@ module BSON
       oid += [t].pack("N")
 
       # 3 bytes machine
-      oid += Digest::MD5.digest(Socket.gethostname)[0, 3]
+      oid += @@hostname_digest
 
       # 2 bytes pid
       oid += [Process.pid % 0xFFFF].pack("n")
