@@ -30,10 +30,6 @@ module BSON
   #
   # @core objectids
   class ObjectId
-    @@lock  = Mutex.new
-    @@index = 0
-    @@hostname_digest = Digest::MD5.digest(Socket.gethostname)[0, 3]
-
     attr_accessor :data
 
     # Create a new object id. If no parameter is given, an id corresponding
@@ -127,7 +123,7 @@ module BSON
     #
     # @return [Mongo::ObjectId]
     def self.from_string(str)
-      raise InvalidObjectId, "illegal ObjectId format" unless legal?(str)
+      raise InvalidObjectId, "illegal ObjectId format: #{str}" unless legal?(str)
       data = []
       12.times do |i|
         data[i] = str[i * 2, 2].to_i(16)
@@ -171,35 +167,59 @@ module BSON
       Time.at(@data.pack("C4").unpack("N")[0]).utc
     end
 
-    private
-
-    # This gets overwritten by the C extension if it loads.
-    def generate(oid_time=nil)
-      oid = ''
-
-      # 4 bytes current time
-      if oid_time
-        t = oid_time.to_i
-      else
-        t = Time.new.to_i
-      end
-      oid += [t].pack("N")
-
-      # 3 bytes machine
-      oid += @@hostname_digest
-
-      # 2 bytes pid
-      oid += [Process.pid % 0xFFFF].pack("n")
-
-      # 3 bytes inc
-      oid += [get_inc].pack("N")[1, 3]
-
-      oid.unpack("C12")
+    def self.machine_id
+      @@machine_id
     end
 
-    def get_inc
-      @@lock.synchronize do
-        @@index = (@@index + 1) % 0xFFFFFF
+    private
+
+    if RUBY_PLATFORM =~ /java/
+      @@generator = Java::OrgBsonTypes::ObjectId
+      @@machine_id = [@@generator.genMachineId].pack("N")[0,3]
+
+      def generate(oid_time=nil)
+        data = (oid_time ? @@generator.new(oid_time) : @@generator.new)
+
+        oid = ''
+        oid += [data.timeSecond].pack("N")
+        oid += [data._machine].pack("N")
+        oid += [data._inc].pack("N")
+        oid.unpack("C12")
+      end
+
+    else
+      @@lock  = Mutex.new
+      @@index = 0
+      @@machine_id = Digest::MD5.digest(Socket.gethostname)[0, 3]
+
+      # This gets overwritten by the C extension if it loads.
+      def generate(oid_time=nil)
+        oid = ''
+
+        # 4 bytes current time
+        if oid_time
+          t = oid_time.to_i
+        else
+          t = Time.new.to_i
+        end
+        oid += [t].pack("N")
+
+        # 3 bytes machine
+        oid += @@machine_id
+
+        # 2 bytes pid
+        oid += [Process.pid % 0xFFFF].pack("n")
+
+        # 3 bytes inc
+        oid += [get_inc].pack("N")[1, 3]
+
+        oid.unpack("C12")
+      end
+
+      def get_inc
+        @@lock.synchronize do
+          @@index = (@@index + 1) % 0xFFFFFF
+        end
       end
     end
   end

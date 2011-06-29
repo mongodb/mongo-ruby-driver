@@ -134,8 +134,7 @@ class ObjectIdTest < Test::Unit::TestCase
     time = Time.now.utc
     id   = ObjectId.from_time(time, :unique => true)
 
-    mac_id = Digest::MD5.digest(Socket.gethostname)[0, 3].unpack("C3")
-    assert_equal id.to_a[4, 3], mac_id
+    assert_equal id.to_a[4, 3], ObjectId.machine_id.unpack("C3")
     assert_equal time.to_i, id.generation_time.to_i
 
     id2 = ObjectId.new(nil, time)
