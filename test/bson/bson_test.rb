@@ -436,8 +436,10 @@ class BSONTest < Test::Unit::TestCase
                                      0x00, 0x00, 0x14, 0x00,
                                      0x00, 0x00, 0x00])
 
-      assert_equal 4, result["test"][0]
-      assert_equal 20, result["test"][1]
+      silently do
+        assert_equal 4, result["test"][0]
+        assert_equal 20, result["test"][1]
+      end
     end
   end
 
