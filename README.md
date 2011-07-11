@@ -109,9 +109,10 @@ for details, and see examples/gridfs.rb for code that uses many of the Grid
 features (metadata, content type, seek, tell, etc).
 
 Examples:
+
       # Write a file on disk to the Grid
       file = File.open('image.jpg')
-      grid = Grid.new(db)
+      grid = Mongo::Grid.new(db)
       id   = grid.put(file)
 
       # Retrieve the file
