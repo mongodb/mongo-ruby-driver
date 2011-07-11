@@ -88,7 +88,7 @@ class OrderedHashTest < Test::Unit::TestCase
 
     assert_equal [:c, :d], h1.keys
     assert_equal [3, 4], h1.values
-    assert h1.keys.id != h2.keys.id
+    assert h1.keys.object_id != h2.keys.object_id
   end
 
   def test_to_a_order_preserved
