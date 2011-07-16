@@ -78,6 +78,10 @@ module Mongo
       end
 
       # Get seed nodes
+      # Sometimes @nodes seems to end up empty, meaning that reconnect attempts
+      # just fail.  Not sure why that is yet, but this prevents that failure mode.
+      # TODO: figure out why @nodes ends up empty
+      @orig_nodes = args
       @nodes = args
 
       # Replica set name
@@ -107,6 +111,7 @@ module Mongo
     def connect
       close
       @nodes_to_try = @nodes.clone
+      @nodes_to_try |= @orig_nodes
 
       while connecting?
         node   = @nodes_to_try.shift
