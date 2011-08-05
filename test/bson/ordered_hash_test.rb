@@ -45,6 +45,23 @@ class OrderedHashTest < Test::Unit::TestCase
     assert_equal 1, list.uniq.size
   end
 
+  if !(RUBY_VERSION =~ /1.8.6/)
+    def test_compatibility_with_hash
+      list = []
+      doc  = BSON::OrderedHash.new
+      doc['_id']  = 'ab12'
+      doc['name'] = 'test'
+
+      doc2 = {}
+      doc2['_id']  = 'ab12'
+      doc2['name'] = 'test'
+      list << doc
+      list << doc2
+
+      assert_equal 1, list.uniq.size
+    end
+  end
+
   def test_equality
     a = BSON::OrderedHash.new
     a['x'] = 1
