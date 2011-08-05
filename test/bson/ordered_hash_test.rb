@@ -38,6 +38,7 @@ class OrderedHashTest < Test::Unit::TestCase
     same_doc = BSON::OrderedHash.new
     same_doc['_id']  = 'ab12'
     same_doc['name'] = 'test'
+
     list << doc
     list << same_doc
 
@@ -191,7 +192,7 @@ class OrderedHashTest < Test::Unit::TestCase
   end
 
   def test_inspect_retains_order
-    assert_equal '{"c"=>1, "a"=>2, "z"=>3}', @oh.inspect
+    assert_equal "#<BSON::OrderedHash:0x#{@oh.object_id.to_s(16)} {\"c\"=>1, \"a\"=>2, \"z\"=>3}>", @oh.inspect
   end
 
   def test_clear

@@ -119,9 +119,9 @@ module BSON
       end
 
       def inspect
-        str = '{'
+        str = "#<BSON::OrderedHash:0x#{self.object_id.to_s(16)} {"
         str << (@ordered_keys || []).collect { |k| "\"#{k}\"=>#{self.[](k).inspect}" }.join(", ")
-        str << '}'
+        str << '}>'
       end
 
       def delete(key, &block)
