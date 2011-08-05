@@ -93,6 +93,18 @@ module Mongo
       end
     end
 
+    # Guess whether the cursor is alive on the server.
+    #
+    # Note that this method only checks whether we have
+    # a cursor id. The cursor may still have timed out
+    # on the server. This will be indicated in the next
+    # call to Cursor#next_document.
+    #
+    # @return [Boolean]
+    def alive?
+      @cursor_id && @cursor_id != 0
+    end
+
     # Get the next document specified the cursor options.
     #
     # @return [Hash, Nil] the next document or Nil if no documents remain.
