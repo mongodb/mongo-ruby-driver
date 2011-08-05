@@ -2,8 +2,8 @@ require './test/test_helper'
 require 'logger'
 
 class CursorTest < Test::Unit::TestCase
-
   include Mongo
+  include Mongo::Constants
 
   @@connection = standard_connection
   @@db   = @@connection.db(MONGO_TEST_DB)
@@ -14,6 +14,12 @@ class CursorTest < Test::Unit::TestCase
     @@coll.remove
     @@coll.insert('a' => 1)     # collection not created until it's used
     @@coll_full_name = "#{MONGO_TEST_DB}.test"
+  end
+
+  def test_add_options
+    c = @@coll.find
+    c.add_option(OP_QUERY_EXHAUST)
+    assert c.options & OP_QUERY_EXHAUST
   end
 
   def test_inspect

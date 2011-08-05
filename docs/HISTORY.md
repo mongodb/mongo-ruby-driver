@@ -1,5 +1,10 @@
 # MongoDB Ruby Driver History
 
+### 1.4.0
+UNRELEASED
+
+* Add Cursor#add_option. Deprecate Cursor#query_opts and replace with Cursor#options.
+
 ### 1.3.1
 2011-5-10
 
