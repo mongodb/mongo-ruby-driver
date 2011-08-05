@@ -350,12 +350,24 @@ module Mongo
     #
     # @param opt a valid query option
     #
-    # @return [Integer] the current value of options for this cursor.
+    # @return [Integer] the current value of the options bitfield for this cursor.
     #
     # @see http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol#MongoWireProtocol-Mongo::Constants::OPQUERY
     def add_option(opt)
       @options |= opt
-      return @options
+      @options
+    end
+
+    # Remove an option from the query options bitfield.
+    #
+    # @param opt a valid query option
+    #
+    # @return [Integer] the current value of the options bitfield for this cursor.
+    #
+    # @see http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol#MongoWireProtocol-Mongo::Constants::OPQUERY
+    def remove_option(opt)
+      @options &= ~opt
+      @options
     end
 
     # Get the query options for this Cursor.

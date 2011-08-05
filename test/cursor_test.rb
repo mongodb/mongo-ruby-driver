@@ -32,10 +32,13 @@ class CursorTest < Test::Unit::TestCase
     @@coll.remove
   end
 
-  def test_add_options
+  def test_add_and_remove_options
     c = @@coll.find
+    assert_equal 0, c.options & OP_QUERY_EXHAUST
     c.add_option(OP_QUERY_EXHAUST)
-    assert c.options & OP_QUERY_EXHAUST
+    assert_equal OP_QUERY_EXHAUST, c.options & OP_QUERY_EXHAUST
+    c.remove_option(OP_QUERY_EXHAUST)
+    assert_equal 0, c.options & OP_QUERY_EXHAUST
   end
 
   def test_inspect
