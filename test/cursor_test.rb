@@ -16,22 +16,6 @@ class CursorTest < Test::Unit::TestCase
     @@coll_full_name = "#{MONGO_TEST_DB}.test"
   end
 
-  def test_alive
-    batch = []
-    5000.times do |n|
-      batch << {:a => n}
-    end
-
-    @@coll.insert(batch)
-    cursor = @@coll.find
-    assert !cursor.alive?
-    cursor.next
-    assert cursor.alive?
-    cursor.close
-    assert !cursor.alive?
-    @@coll.remove
-  end
-
   def test_add_options
     c = @@coll.find
     c.add_option(OP_QUERY_EXHAUST)
