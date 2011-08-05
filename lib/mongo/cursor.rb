@@ -350,10 +350,15 @@ module Mongo
     #
     # @param opt a valid query option
     #
+    # @raise InvalidOperation if this method is run after the cursor has bee
+    #   iterated for the first time.
+    #
     # @return [Integer] the current value of the options bitfield for this cursor.
     #
     # @see http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol#MongoWireProtocol-Mongo::Constants::OPQUERY
     def add_option(opt)
+      check_modifiable
+
       @options |= opt
       @options
     end
@@ -362,10 +367,15 @@ module Mongo
     #
     # @param opt a valid query option
     #
+    # @raise InvalidOperation if this method is run after the cursor has bee
+    #   iterated for the first time.
+    #
     # @return [Integer] the current value of the options bitfield for this cursor.
     #
     # @see http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol#MongoWireProtocol-Mongo::Constants::OPQUERY
     def remove_option(opt)
+      check_modifiable
+
       @options &= ~opt
       @options
     end
