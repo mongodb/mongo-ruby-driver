@@ -489,8 +489,8 @@ module Mongo
     def instrument_payload
       log = { :database => @db.name, :collection => @collection.name, :selector => selector }
       log[:fields] = @fields  if @fields
-      log[:skip] = @skip  if @skip && (@skip > 0)
-      log[:limit] = @limit  if @limit && (@limit > 0)
+      log[:skip] = @skip  if @skip && (@skip != 0)
+      log[:limit] = @limit  if @limit && (@limit != 0)
       log[:order] = @order  if @order
       log
     end
