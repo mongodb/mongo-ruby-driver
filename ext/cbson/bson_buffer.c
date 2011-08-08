@@ -62,12 +62,17 @@ int bson_buffer_free(bson_buffer_t buffer) {
  * Return non-zero on allocation failure. */
 static int buffer_grow(bson_buffer_t buffer, int min_length) {
     int size = buffer->size;
+    int old_size;
     char* old_buffer = buffer->buffer;
     if (size >= min_length) {
         return 0;
     }
     while (size < min_length) {
+        old_size = size;
         size *= 2;
+        /* Prevent potential overflow. */
+        if( size < old_size )
+            size = min_length;
     }
     buffer->buffer = (char*)realloc(buffer->buffer, sizeof(char) * size);
     if (buffer->buffer == NULL) {
@@ -117,7 +122,7 @@ int bson_buffer_write(bson_buffer_t buffer, const char* data, int size) {
 int bson_buffer_write_at_position(bson_buffer_t buffer, bson_buffer_position position,
                              const char* data, int size) {
     if (position + size > buffer->size) {
-        buffer_free(buffer);
+        bson_buffer_free(buffer);
         return 1;
     }
 
