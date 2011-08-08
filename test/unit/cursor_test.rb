@@ -5,7 +5,7 @@ class CursorTest < Test::Unit::TestCase
     setup do
       @logger     = mock()
       @logger.stubs(:debug)
-      @connection = stub(:class => Connection, :logger => @logger)
+      @connection = stub(:class => Connection, :logger => @logger, :slave_ok? => false)
       @db         = stub(:name => "testing", :slave_ok? => false, :connection => @connection)
       @collection = stub(:db => @db, :name => "items")
       @cursor     = Cursor.new(@collection)
@@ -100,7 +100,7 @@ class CursorTest < Test::Unit::TestCase
     setup do
       @logger     = mock()
       @logger.stubs(:debug)
-      @connection = stub(:class => Connection, :logger => @logger)
+      @connection = stub(:class => Connection, :logger => @logger, :slave_ok? => false)
       @db = stub(:slave_ok? => true, :name => "testing", :connection => @connection)
       @collection = stub(:db => @db, :name => "items")
     end

@@ -191,8 +191,10 @@ class OrderedHashTest < Test::Unit::TestCase
     assert_equal [1, 2, 3, 'foo'], noob.values
   end
 
-  def test_inspect_retains_order
-    assert_equal "#<BSON::OrderedHash:0x#{@oh.object_id.to_s(16)} {\"c\"=>1, \"a\"=>2, \"z\"=>3}>", @oh.inspect
+  if RUBY_VERSION < "1.9.2"
+    def test_inspect_retains_order
+      assert_equal "#<BSON::OrderedHash:0x#{@oh.object_id.to_s(16)} {\"c\"=>1, \"a\"=>2, \"z\"=>3}>", @oh.inspect
+    end
   end
 
   def test_clear
