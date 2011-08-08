@@ -1,6 +1,6 @@
 require './test/test_helper'
 
-class TiumestampTest < Test::Unit::TestCase
+class TimestampTest < Test::Unit::TestCase
   include Mongo
 
   def test_timestamp_equality
