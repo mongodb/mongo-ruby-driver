@@ -61,16 +61,16 @@
 #include <time.h>
 
 #include "version.h"
-#include "buffer.h"
+#include "bson_buffer.h"
 #include "encoding_helpers.h"
 
 #define SAFE_WRITE(buffer, data, size)                                  \
-    if (buffer_write((buffer), (data), (size)) != 0)                    \
-        rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c")
+    if (bson_buffer_write((buffer), (data), (size)) != 0)                    \
+        rb_raise(rb_eNoMemError, "failed to allocate memory in bson_buffer.c")
 
 #define SAFE_WRITE_AT_POS(buffer, position, data, size)                 \
-    if (buffer_write_at_position((buffer), (position), (data), (size)) != 0) \
-        rb_raise(rb_eRuntimeError, "invalid write at position in buffer.c")
+    if (bson_buffer_write_at_position((buffer), (position), (data), (size)) != 0) \
+        rb_raise(rb_eRuntimeError, "invalid write at position in bson_buffer.c")
 
 #define MAX_HOSTNAME_LENGTH 256
 
@@ -114,14 +114,14 @@ static int max_bson_size;
 #define TO_UTF8(string) (string)
 #endif
 
-static void write_utf8(buffer_t buffer, VALUE string, char check_null) {
+static void write_utf8(bson_buffer_t buffer, VALUE string, char check_null) {
     result_t status = check_string(RSTRING_PTR(string), RSTRING_LEN(string),
                                    1, check_null);
     if (status == HAS_NULL) {
-        buffer_free(buffer);
+        bson_buffer_free(buffer);
         rb_raise(InvalidDocument, "Key names / regex patterns must not contain the NULL byte");
     } else if (status == NOT_UTF_8) {
-        buffer_free(buffer);
+        bson_buffer_free(buffer);
         rb_raise(InvalidStringEncoding, "String not valid UTF-8");
     }
     string = TO_UTF8(string);
@@ -192,23 +192,23 @@ static int cmp_char(const void* a, const void* b) {
     return *(char*)a - *(char*)b;
 }
 
-static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_id);
+static void write_doc(bson_buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_id);
 static int write_element_with_id(VALUE key, VALUE value, VALUE extra);
 static int write_element_without_id(VALUE key, VALUE value, VALUE extra);
 static VALUE elements_to_hash(const char* buffer, int max);
 
-static VALUE pack_extra(buffer_t buffer, VALUE check_keys) {
+static VALUE pack_extra(bson_buffer_t buffer, VALUE check_keys) {
     return rb_ary_new3(2, LL2NUM((long long)buffer), check_keys);
 }
 
-static void write_name_and_type(buffer_t buffer, VALUE name, char type) {
+static void write_name_and_type(bson_buffer_t buffer, VALUE name, char type) {
     SAFE_WRITE(buffer, &type, 1);
     write_utf8(buffer, name, 1);
     SAFE_WRITE(buffer, &zero, 1);
 }
 
 static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
-    buffer_t buffer = (buffer_t)NUM2LL(rb_ary_entry(extra, 0));
+    bson_buffer_t buffer = (bson_buffer_t)NUM2LL(rb_ary_entry(extra, 0));
     VALUE check_keys = rb_ary_entry(extra, 1);
 
     if (TYPE(key) == T_SYMBOL) {
@@ -217,7 +217,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
     }
 
     if (TYPE(key) != T_STRING) {
-        buffer_free(buffer);
+        bson_buffer_free(buffer);
         rb_raise(rb_eTypeError, "keys must be strings or symbols");
     }
 
@@ -228,12 +228,12 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
     if (check_keys == Qtrue) {
         int i;
         if (RSTRING_LEN(key) > 0 && RSTRING_PTR(key)[0] == '$') {
-            buffer_free(buffer);
+            bson_buffer_free(buffer);
             rb_raise(InvalidKeyName, "%s - key must not start with '$'", RSTRING_PTR(key));
         }
         for (i = 0; i < RSTRING_LEN(key); i++) {
             if (RSTRING_PTR(key)[i] == '.') {
-                buffer_free(buffer);
+                bson_buffer_free(buffer);
                 rb_raise(InvalidKeyName, "%s - key must not contain '.'", RSTRING_PTR(key));
             }
         }
@@ -244,7 +244,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         {
             if (rb_funcall(value, gt_operator, 1, LL2NUM(9223372036854775807LL)) == Qtrue ||
                 rb_funcall(value, lt_operator, 1, LL2NUM(-9223372036854775808ULL)) == Qtrue) {
-                buffer_free(buffer);
+                bson_buffer_free(buffer);
                 rb_raise(rb_eRangeError, "MongoDB can only handle 8-byte ints");
             }
         }
@@ -298,15 +298,15 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         }
     case T_ARRAY:
         {
-            buffer_position length_location, start_position, obj_length;
+            bson_buffer_position length_location, start_position, obj_length;
             int items, i;
             VALUE* values;
 
             write_name_and_type(buffer, key, 0x04);
-            start_position = buffer_get_position(buffer);
+            start_position = bson_buffer_get_position(buffer);
 
             // save space for length
-            length_location = buffer_save_space(buffer, 4);
+            length_location = bson_buffer_save_space(buffer, 4);
             if (length_location == -1) {
                 rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
             }
@@ -323,7 +323,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
 
             // write null byte and fill in length
             SAFE_WRITE(buffer, &zero, 1);
-            obj_length = buffer_get_position(buffer) - start_position;
+            obj_length = bson_buffer_get_position(buffer) - start_position;
             SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&obj_length, 4);
             break;
         }
@@ -380,14 +380,14 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 break;
             }
             if (strcmp(cls, "BSON::DBRef") == 0) {
-                buffer_position length_location, start_position, obj_length;
+                bson_buffer_position length_location, start_position, obj_length;
                 VALUE ns, oid;
                 write_name_and_type(buffer, key, 0x03);
 
-                start_position = buffer_get_position(buffer);
+                start_position = bson_buffer_get_position(buffer);
 
                 // save space for length
-                length_location = buffer_save_space(buffer, 4);
+                length_location = bson_buffer_save_space(buffer, 4);
                 if (length_location == -1) {
                     rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
                 }
@@ -399,18 +399,18 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
 
                 // write null byte and fill in length
                 SAFE_WRITE(buffer, &zero, 1);
-                obj_length = buffer_get_position(buffer) - start_position;
+                obj_length = bson_buffer_get_position(buffer) - start_position;
                 SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&obj_length, 4);
                 break;
             }
             if (strcmp(cls, "BSON::Code") == 0) {
-                buffer_position length_location, start_position, total_length;
+                bson_buffer_position length_location, start_position, total_length;
                 int length;
                 VALUE code_str;
                 write_name_and_type(buffer, key, 0x0F);
 
-                start_position = buffer_get_position(buffer);
-                length_location = buffer_save_space(buffer, 4);
+                start_position = bson_buffer_get_position(buffer);
+                length_location = bson_buffer_save_space(buffer, 4);
                 if (length_location == -1) {
                     rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
                 }
@@ -422,7 +422,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 SAFE_WRITE(buffer, &zero, 1);
                 write_doc(buffer, rb_funcall(value, rb_intern("scope"), 0), Qfalse, Qfalse);
 
-                total_length = buffer_get_position(buffer) - start_position;
+                total_length = bson_buffer_get_position(buffer) - start_position;
                 SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&total_length, 4);
                 break;
             }
@@ -446,16 +446,16 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 break;
             }
             if (strcmp(cls, "DateTime") == 0 || strcmp(cls, "Date") == 0 || strcmp(cls, "ActiveSupport::TimeWithZone") == 0) {
-                buffer_free(buffer);
+                bson_buffer_free(buffer);
                 rb_raise(InvalidDocument, "%s is not currently supported; use a UTC Time instance instead.", cls);
                 break;
             }
             if(strcmp(cls, "Complex") == 0 || strcmp(cls, "Rational") == 0 || strcmp(cls, "BigDecimal") == 0) {
-                buffer_free(buffer);
+                bson_buffer_free(buffer);
                 rb_raise(InvalidDocument, "Cannot serialize the Numeric type %s as BSON; only Bignum, Fixnum, and Float are supported.", cls);
                 break;
             }
-            buffer_free(buffer);
+            bson_buffer_free(buffer);
             rb_raise(InvalidDocument, "Cannot serialize an object of class %s into BSON.", cls);
             break;
         }
@@ -470,11 +470,11 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 break;
             }
             if(strcmp(cls, "BigDecimal") == 0) {
-                buffer_free(buffer);
+                bson_buffer_free(buffer);
                 rb_raise(InvalidDocument, "Cannot serialize the Numeric type %s as BSON; only Bignum, Fixnum, and Float are supported.", cls);
                 break;
             }
-            buffer_free(buffer);
+            bson_buffer_free(buffer);
             rb_raise(InvalidDocument, "Cannot serialize an object of class %s into BSON.", cls);
             break;
         }
@@ -507,9 +507,9 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             has_extra = rb_funcall(value, rb_intern("respond_to?"), 1, rb_str_new2("extra_options_str"));
             if (TYPE(has_extra) == T_TRUE) {
                 VALUE extra = rb_funcall(value, rb_intern("extra_options_str"), 0);
-                buffer_position old_position = buffer_get_position(buffer);
+                bson_buffer_position old_position = bson_buffer_get_position(buffer);
                 SAFE_WRITE(buffer, RSTRING_PTR(extra), RSTRING_LENINT(extra));
-                qsort(buffer_get_buffer(buffer) + old_position, RSTRING_LEN(extra), sizeof(char), cmp_char);
+                qsort(bson_buffer_get_buffer(buffer) + old_position, RSTRING_LEN(extra), sizeof(char), cmp_char);
             }
             SAFE_WRITE(buffer, &zero, 1);
 
@@ -518,7 +518,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
     default:
         {
             const char* cls = rb_obj_classname(value);
-            buffer_free(buffer);
+            bson_buffer_free(buffer);
             rb_raise(InvalidDocument, "Cannot serialize an object of class %s (type %d) into BSON.", cls, TYPE(value));
             break;
         }
@@ -534,10 +534,10 @@ static int write_element_with_id(VALUE key, VALUE value, VALUE extra) {
     return write_element(key, value, extra, 1);
 }
 
-static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_id) {
-    buffer_position start_position = buffer_get_position(buffer);
-    buffer_position length_location = buffer_save_space(buffer, 4);
-    buffer_position length;
+static void write_doc(bson_buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_id) {
+    bson_buffer_position start_position = bson_buffer_get_position(buffer);
+    bson_buffer_position length_location = bson_buffer_save_space(buffer, 4);
+    bson_buffer_position length;
     int allow_id;
     int (*write_function)(VALUE, VALUE, VALUE) = NULL;
     VALUE id_str = rb_str_new2("_id");
@@ -590,17 +590,17 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_
     } else if (rb_obj_is_kind_of(hash, RB_HASH) == Qtrue) {
         rb_hash_foreach(hash, write_function, pack_extra(buffer, check_keys));
     } else {
-        buffer_free(buffer);
+        bson_buffer_free(buffer);
         rb_raise(InvalidDocument, "BSON.serialize takes a Hash but got a %s", rb_obj_classname(hash));
     }
 
     // write null byte and fill in length
     SAFE_WRITE(buffer, &zero, 1);
-    length = buffer_get_position(buffer) - start_position;
+    length = bson_buffer_get_position(buffer) - start_position;
 
     // make sure that length doesn't exceed 4MB
     if (length > max_bson_size) {
-      buffer_free(buffer);
+      bson_buffer_free(buffer);
       rb_raise(InvalidDocument, "Document too large: BSON documents are limited to %d bytes.", max_bson_size);
       return;
     }
@@ -609,15 +609,15 @@ static void write_doc(buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_
 
 static VALUE method_serialize(VALUE self, VALUE doc, VALUE check_keys, VALUE move_id) {
     VALUE result;
-    buffer_t buffer = buffer_new();
+    bson_buffer_t buffer = bson_buffer_new();
     if (buffer == NULL) {
         rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
     }
 
     write_doc(buffer, doc, check_keys, move_id);
 
-    result = rb_str_new(buffer_get_buffer(buffer), buffer_get_position(buffer));
-    if (buffer_free(buffer) != 0) {
+    result = rb_str_new(bson_buffer_get_buffer(buffer), bson_buffer_get_position(buffer));
+    if (bson_buffer_free(buffer) != 0) {
         rb_raise(rb_eRuntimeError, "failed to free buffer");
     }
     return result;
