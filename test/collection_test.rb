@@ -10,6 +10,16 @@ class TestCollection < Test::Unit::TestCase
     @@test.remove
   end
 
+  def test_capped_method
+    @@db.create_collection('normal')
+    assert !@@db['normal'].capped?
+    @@db.drop_collection('normal')
+
+    @@db.create_collection('c', :capped => true)
+    assert @@db['c'].capped?
+    @@db.drop_collection('c')
+  end
+
   def test_optional_pk_factory
     @coll_default_pk = @@db.collection('stuff')
     assert_equal BSON::ObjectId, @coll_default_pk.pk_factory

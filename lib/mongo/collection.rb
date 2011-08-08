@@ -88,6 +88,16 @@ module Mongo
       @hint = nil
     end
 
+    # Indicate whether this is a capped collection.
+    #
+    # @raise [Mongo::OperationFailure]
+    #   if the collection doesn't exist.
+    #
+    # @return [Boolean]
+    def capped?
+      @db.command({:collstats => @name})['capped'] == 1
+    end
+
     # Return a sub-collection of this collection by name. If 'users' is a collection, then
     # 'users.comments' is a sub-collection of users.
     #
