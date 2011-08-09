@@ -67,7 +67,7 @@ class ConnectTest < Test::Unit::TestCase
   end
 
   def test_connect_with_primary_node_killed
-    node = RS.kill_primary
+    RS.kill_primary
 
     # Becuase we're killing the primary and trying to connect right away,
     # this is going to fail right away.
@@ -84,7 +84,7 @@ class ConnectTest < Test::Unit::TestCase
   end
 
   def test_connect_with_secondary_node_killed
-    node = RS.kill_secondary
+    RS.kill_secondary
 
     @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
       [RS.host, RS.ports[2]])

@@ -234,7 +234,7 @@ class ReplSetManager
     if node
       host_port = node['name'].split(':')
       port = host_port[1] ? host_port[1].to_i : 27017
-      key = @mongods.keys.detect {|key| @mongods[key]['port'] == port}
+      key = @mongods.keys.detect {|k| @mongods[k]['port'] == port}
       return key
     else
       return false
