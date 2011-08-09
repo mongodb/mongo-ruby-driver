@@ -214,7 +214,7 @@ class BSONTest < Test::Unit::TestCase
   def test_embedded_document_with_date
     doc = {'doc' => {'age' => 42, 'date' => Time.now.utc, 'shoe_size' => 9.5}}
     bson = @encoder.serialize(doc)
-    doc2 = @encoder.deserialize(bson)
+    @encoder.deserialize(bson)
     assert doc['doc']
     assert_equal 42,  doc['doc']['age']
     assert_equal 9.5, doc['doc']['shoe_size']
@@ -266,7 +266,7 @@ class BSONTest < Test::Unit::TestCase
   def test_date_in_array
     doc = {'date' => [Time.now.utc]}
     bson = @encoder.serialize(doc)
-    doc2 = @encoder.deserialize(bson)
+    @encoder.deserialize(bson)
   end
 
   def test_date_returns_as_utc
@@ -295,7 +295,7 @@ class BSONTest < Test::Unit::TestCase
     [DateTime.now, Date.today, Zone].each do |invalid_date|
       doc = {:date => invalid_date}
       begin
-      bson = BSON::BSON_CODER.serialize(doc)
+        BSON::BSON_CODER.serialize(doc)
       rescue => e
       ensure
         if !invalid_date.is_a? Time
@@ -429,7 +429,6 @@ class BSONTest < Test::Unit::TestCase
 
   if !(RUBY_PLATFORM =~ /java/)
     def test_timestamp
-      val = {"test" => [4, 20]}
       result = @encoder.deserialize([0x13, 0x00, 0x00, 0x00,
                                      0x11, 0x74, 0x65, 0x73,
                                      0x74, 0x00, 0x04, 0x00,
@@ -453,7 +452,7 @@ class BSONTest < Test::Unit::TestCase
   def test_overflow
     doc = {"x" => 2**75}
     assert_raise RangeError do
-      bson = @encoder.serialize(doc)
+      @encoder.serialize(doc)
     end
 
     doc = {"x" => 9223372036854775}
@@ -464,7 +463,7 @@ class BSONTest < Test::Unit::TestCase
 
     doc["x"] = doc["x"] + 1
     assert_raise RangeError do
-      bson = @encoder.serialize(doc)
+      @encoder.serialize(doc)
     end
 
     doc = {"x" => -9223372036854775}
@@ -475,7 +474,7 @@ class BSONTest < Test::Unit::TestCase
 
     doc["x"] = doc["x"] - 1
     assert_raise RangeError do
-      bson = BSON::BSON_CODER.serialize(doc)
+      BSON::BSON_CODER.serialize(doc)
     end
   end
 

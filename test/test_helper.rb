@@ -86,7 +86,7 @@ class Test::Unit::TestCase
   end
 
   def new_mock_db
-    db = Object.new
+    Object.new
   end
 
   def assert_raise_error(klass, message)
