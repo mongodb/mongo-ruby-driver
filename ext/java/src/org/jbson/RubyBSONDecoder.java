@@ -12,7 +12,7 @@ import org.bson.*;
 import org.bson.io.*;
 import org.bson.types.*;
 
-public class RubyBSONDecoder extends BSONDecoder {
+public class RubyBSONDecoder extends BasicBSONDecoder {
 
       protected void _binary( String name )
           throws IOException {

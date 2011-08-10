@@ -56,7 +56,7 @@ end
 
 if RUBY_PLATFORM =~ /java/
   jar_dir = File.join(File.dirname(__FILE__), '..', 'ext', 'java', 'jar')
-  require File.join(jar_dir, 'mongo-2.4.jar')
+  require File.join(jar_dir, 'mongo-2.6.5.jar')
   require File.join(jar_dir, 'jbson.jar')
   require 'bson/bson_java'
   module BSON
