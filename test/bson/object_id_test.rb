@@ -4,8 +4,6 @@ require 'json'
 
 class ObjectIdTest < Test::Unit::TestCase
 
-  include BSON
-
   def setup
     @o = ObjectId.new
   end
