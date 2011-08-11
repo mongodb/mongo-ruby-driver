@@ -15,5 +15,8 @@ module Mongo
     def hash
       address.hash
     end
+    def <=>(other)
+      address <=> other.address
+    end
   end
 end

@@ -133,7 +133,6 @@ class ReplSetManager
   def kill_primary(signal=2)
     node = get_node_with_state(1)
     kill(node, signal)
-    return node
   end
 
   # Note that we have to rescue a connection failure
