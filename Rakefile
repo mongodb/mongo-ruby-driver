@@ -22,12 +22,11 @@ namespace :build do
     jar_dir   = File.join(java_dir, 'jar')
 
     jruby_jar = File.join(jar_dir, 'jruby.jar')
-    mongo_jar = File.join(jar_dir, 'mongo-2.4.jar')
-    bson_jar = File.join(jar_dir, 'bson-2.2.jar')
+    mongo_jar = File.join(jar_dir, 'mongo-2.6.5.jar')
 
     src_base   = File.join(java_dir, 'src')
 
-    system("javac -Xlint:unchecked -classpath #{jruby_jar}:#{mongo_jar}:#{bson_jar} #{File.join(src_base, 'org', 'jbson', '*.java')}")
+    system("javac -Xlint:deprecation -Xlint:unchecked -classpath #{jruby_jar}:#{mongo_jar} #{File.join(src_base, 'org', 'jbson', '*.java')}")
     system("cd #{src_base} && jar cf #{File.join(jar_dir, 'jbson.jar')} #{File.join('.', 'org', 'jbson', '*.class')}")
   end
 end

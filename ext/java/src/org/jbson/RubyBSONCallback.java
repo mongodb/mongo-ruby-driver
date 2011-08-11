@@ -297,14 +297,9 @@ public class RubyBSONCallback implements BSONCallback {
         return result;
     }
 
+    @Deprecated
     public void gotBinaryArray( String name , byte[] b ) {
-        RubyArray a = ja2ra( b );
-
-        Object[] args = new Object[] { a, 2 };
-
-        Object result = JavaEmbedUtils.invokeMethod(_runtime, _rbclsBinary, "new", args, Object.class);
-
-        _put( name, (RubyObject)result );
+      /* Deprecated */
     }
 
     // TODO: fix abs stuff here. some kind of bad type issue

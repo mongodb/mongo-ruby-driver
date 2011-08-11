@@ -14,7 +14,7 @@ Gem::Specification.new do |s|
   s.files  = ['LICENSE.txt']
   s.files += ['lib/bson.rb'] + Dir['lib/bson/**/*.rb']
   s.files += ['bin/b2json', 'bin/j2bson']
-  s.test_files = Dir['test/bson/*.rb']
+  s.test_files = Dir['test/bson/*.rb', 'test/support/hash_with_indifferent_access.rb']
 
   s.executables = ['b2json', 'j2bson']
 

@@ -1,5 +1,6 @@
 # encoding:utf-8
-require './test/test_helper'
+require './test/bson/test_helper'
+require 'set'
 
 if RUBY_VERSION < '1.9'
   require 'complex'

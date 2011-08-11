@@ -1,5 +1,5 @@
 # encoding: binary
-require './test/test_helper'
+require './test/bson/test_helper'
 
 class ByteBufferTest < Test::Unit::TestCase
   include BSON

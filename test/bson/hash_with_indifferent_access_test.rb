@@ -1,5 +1,5 @@
 # encoding:utf-8
-require './test/test_helper'
+require './test/bson/test_helper'
 require './test/support/hash_with_indifferent_access'
 
 class HashWithIndifferentAccessTest < Test::Unit::TestCase

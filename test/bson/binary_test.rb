@@ -1,5 +1,5 @@
 # encoding:utf-8
-require './test/test_helper'
+require './test/bson/test_helper'
 
 class BinaryTest < Test::Unit::TestCase
   context "Inspecting" do

@@ -1,7 +1,6 @@
-require './test/test_helper'
+require './test/bson/test_helper'
 
 class TimestampTest < Test::Unit::TestCase
-  include Mongo
 
   def test_timestamp_equality
     t1 = Timestamp.new(5000, 200)

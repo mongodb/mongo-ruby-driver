@@ -1,11 +1,8 @@
-require './test/test_helper'
+require './test/bson/test_helper'
 require 'rubygems'
 require 'json'
 
 class ObjectIdTest < Test::Unit::TestCase
-
-  include Mongo
-  include BSON
 
   def setup
     @o = ObjectId.new
@@ -63,18 +60,6 @@ class ObjectIdTest < Test::Unit::TestCase
 
   def test_inspect
     assert_equal "BSON::ObjectId('#{@o.to_s}')", @o.inspect
-  end
-
-  def test_save_and_restore
-    db = standard_connection.db(MONGO_TEST_DB)
-    coll = db.collection('test')
-
-    coll.remove
-    coll << {'a' => 1, '_id' => @o}
-
-    row = coll.find().collect.first
-    assert_equal 1, row['a']
-    assert_equal @o, row['_id']
   end
 
   def test_from_string
