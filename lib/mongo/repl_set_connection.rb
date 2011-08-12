@@ -78,6 +78,10 @@ module Mongo
       end
 
       # Get seed nodes
+      # Sometimes @nodes seems to end up empty, meaning that reconnect attempts
+      # just fail.  Not sure why that is yet, but this prevents that failure mode.
+      # TODO: figure out why @nodes ends up empty
+      @orig_nodes = args
       @nodes = args
 
       # Replica set name
@@ -107,6 +111,7 @@ module Mongo
     def connect
       close
       @nodes_to_try = @nodes.clone
+      @nodes_to_try |= @orig_nodes
 
       while connecting?
         node   = @nodes_to_try.shift
@@ -233,7 +238,11 @@ module Mongo
         socket.close if socket
         @nodes_tried << node
 
-        if config
+        # If it's not a master or a secondary, it may not actually be
+        # a member of a replica set (e.g. it may be a fresh node that
+        # was just spun up).  In this case we should ignore it and
+        # move on to greener pastures.
+        if config && (config['ismaster'] || config['secondary'])
           nodes = []
           nodes += config['hosts'] if config['hosts']
           nodes += config['arbiters'] if config['arbiters']
@@ -243,6 +252,8 @@ module Mongo
           if config['msg'] && @logger
             @logger.warn("MONGODB #{config['msg']}")
           end
+        elsif config && config['info'] && @logger
+          @logger.warn("MONGODB skipping #{node.inspect}: #{config['info']}")
         end
       end
 
