@@ -221,7 +221,7 @@ class CursorTest < Test::Unit::TestCase
 
   def test_limit_exceptions
     cursor      = @@coll.find()
-    firstResult = cursor.next_document
+    cursor.next_document
     assert_raise InvalidOperation, "Cannot modify the query once it has been run or closed." do
       cursor.limit(1)
     end
@@ -251,7 +251,7 @@ class CursorTest < Test::Unit::TestCase
 
   def test_skip_exceptions
     cursor      = @@coll.find()
-    firstResult = cursor.next_document
+    cursor.next_document
     assert_raise InvalidOperation, "Cannot modify the query once it has been run or closed." do
       cursor.skip(1)
     end

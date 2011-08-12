@@ -125,15 +125,16 @@ class ReplSetManager
   def kill(node, signal=2)
     pid = @mongods[node]['pid']
     puts "** Killing node with pid #{pid} at port #{@mongods[node]['port']}"
-    system("kill -#{signal} #{@mongods[node]['pid']}")
+    begin
+      get_connection(node)['admin'].command({'shutdown' => 1})
+    rescue Mongo::ConnectionFailure
+    end
     @mongods[node]['up'] = false
-    sleep(1)
   end
 
   def kill_primary(signal=2)
     node = get_node_with_state(1)
     kill(node, signal)
-    return node
   end
 
   # Note that we have to rescue a connection failure
@@ -234,7 +235,7 @@ class ReplSetManager
     if node
       host_port = node['name'].split(':')
       port = host_port[1] ? host_port[1].to_i : 27017
-      key = @mongods.keys.detect {|key| @mongods[key]['port'] == port}
+      key = @mongods.keys.detect {|k| @mongods[k]['port'] == port}
       return key
     else
       return false

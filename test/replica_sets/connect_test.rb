@@ -19,14 +19,14 @@ class ConnectTest < Test::Unit::TestCase
     assert @conn.is_a?(ReplSetConnection)
     assert @conn.connected?
   end
-
+  
   def test_connect_bad_name
     assert_raise_error(ReplicaSetConnectionError, "-wrong") do
       ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
         [RS.host, RS.ports[2]], :rs_name => RS.name + "-wrong")
     end
   end
-
+  
   def test_connect_timeout
     passed = false
     timeout = 3
@@ -37,37 +37,36 @@ class ConnectTest < Test::Unit::TestCase
       passed = true
       t1 = Time.now
     end
-
+  
     assert passed
     assert t1 - t0 < timeout + 1
   end
-
+  
   def test_connect
     @conn = ReplSetConnection.new([RS.host, RS.ports[1]], [RS.host, RS.ports[0]],
       [RS.host, RS.ports[2]], :name => RS.name)
     assert @conn.connected?
     assert @conn.read_primary?
     assert @conn.primary?
-
+  
     assert_equal RS.primary, @conn.primary
-    assert_equal RS.secondaries.sort, @conn.secondaries.sort
-    assert_equal RS.arbiters.sort, @conn.arbiters.sort
-
+    assert_equal RS.secondaries.map{|n| Node.new(n)}.sort, @conn.secondaries.sort
+  
     @conn = ReplSetConnection.new([RS.host, RS.ports[1]], [RS.host, RS.ports[0]],
       :name => RS.name)
     assert @conn.connected?
   end
-
+  
   def test_host_port_accessors
     @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
       [RS.host, RS.ports[2]], :name => RS.name)
-
+  
     assert_equal @conn.host, RS.primary[0]
     assert_equal @conn.port, RS.primary[1]
   end
 
   def test_connect_with_primary_node_killed
-    node = RS.kill_primary
+    RS.kill_primary
 
     # Becuase we're killing the primary and trying to connect right away,
     # this is going to fail right away.
@@ -84,7 +83,7 @@ class ConnectTest < Test::Unit::TestCase
   end
 
   def test_connect_with_secondary_node_killed
-    node = RS.kill_secondary
+    RS.kill_secondary
 
     @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
       [RS.host, RS.ports[2]])
@@ -104,7 +103,7 @@ class ConnectTest < Test::Unit::TestCase
 
     rescue_connection_failure do
       @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
-        [RS.host, RS.ports[2]])
+       [RS.host, RS.ports[2]])
     end
     assert @conn.connected?
   end
