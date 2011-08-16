@@ -35,7 +35,8 @@ module Mongo
     STANDARD_HEADER_SIZE = 16
     RESPONSE_HEADER_SIZE = 20
 
-    attr_reader :logger, :size, :auths, :primary, :safe, :primary_pool, :host_to_try, :pool_size
+    attr_reader :logger, :size, :auths, :primary, :safe, :primary_pool,
+      :host_to_try, :pool_size, :connect_timeout
 
     # Counter for generating unique request ids.
     @@current_request_id = 0
