@@ -17,8 +17,9 @@
 
 module Mongo
   class Pool
+    PING_ATTEMPTS = 6
 
-    attr_accessor :host, :port, :size, :timeout, :safe, :checked_out
+    attr_accessor :host, :port, :size, :timeout, :safe, :checked_out, :connection
 
     # Create a new pool of connections.
     #
@@ -26,6 +27,9 @@ module Mongo
       @connection  = connection
 
       @host, @port = host, port
+
+      # A Mongo::Node object.
+      @node = opts[:node]
 
       # Pool size and timeout.
       @size      = opts[:size] || 1
@@ -57,6 +61,30 @@ module Mongo
       @sockets.clear
       @pids.clear
       @checked_out.clear
+    end
+
+    # Return the time it takes on average
+    # to do a round-trip against this node.
+    def ping_time
+     trials = []
+     begin
+        PING_ATTEMPTS.times do
+          t1 = Time.now
+          self.connection['admin'].command({:ping => 1}, :socket => @node.socket)
+          trials << (Time.now - t1) * 1000
+        end
+      rescue OperationFailure, SocketError, SystemCallError, IOError => ex
+        return nil
+     end
+
+      trials.sort!
+      trials.delete_at(trials.length-1)
+      trials.delete_at(0)
+
+      total = 0.0
+      trials.each { |t| total += t }
+
+      (total / trials.length).floor
     end
 
     # Return a socket to the pool.

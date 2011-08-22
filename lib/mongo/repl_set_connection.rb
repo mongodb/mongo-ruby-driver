@@ -21,7 +21,7 @@ module Mongo
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
     attr_reader :nodes, :secondaries, :arbiters, :read_pool, :secondary_pools,
-      :replica_set_name, :members
+      :replica_set_name, :ping_ranges
 
     # Create a connection to a MongoDB replica set.
     #
@@ -82,7 +82,7 @@ module Mongo
       @seeds = args
 
       # The members of the replica set, stored as instances of Mongo::Node.
-      @members = []
+      @nodes = []
 
       # Connection pool for primay node
       @primary      = nil
@@ -97,6 +97,9 @@ module Mongo
 
       # A list of arbiter address (for client information only)
       @arbiters = []
+
+      # An array mapping secondaries by proximity
+      @ping_ranges = Array.new(3) { |i| Array.new }
 
       # Are we allowing reads from secondaries?
       @read_secondary = opts.fetch(:read_secondary, false)
@@ -118,9 +121,10 @@ module Mongo
     def connect
       connect_to_members
       initialize_pools
-      pick_secondary_for_read
 
       if connected?
+        choose_node_for_reads
+        update_seed_list
         BSON::BSON_CODER.update_max_bson_size(self)
       else
         close
@@ -134,7 +138,7 @@ module Mongo
     end
 
     def connected?
-      @primary_pool || (@read_pool && @read_secondary)
+      @primary_pool || (!@secondary_pools.empty? && @read_secondary)
     end
 
     # @deprecated
@@ -168,10 +172,10 @@ module Mongo
     # Close the connection to the database.
     def close
       super
-      @members.each do |member|
+      @nodes.each do |member|
         member.disconnect
       end
-      @members = []
+      @nodes = []
       @read_pool = nil
       @secondary_pools.each do |pool|
         pool.close
@@ -226,56 +230,86 @@ module Mongo
         end
       end
 
-      raise ConnectionFailure, "Cannot connect to a replica set with name using seed nodes " +
-        "#{@seeds.map {|s| "#{s[0]}:#{s[1]}" }.join(',')}"
+      raise ConnectionFailure, "Cannot connect to a replica set using seeds " +
+        "#{@seeds.map {|s| "#{s[0]}:#{s[1]}" }.join(', ')}"
     end
 
     # Connect to each member of the replica set
     # as reported by the given seed node, and cache
-    # those connections in the @members array.
+    # those connections in the @nodes array.
     def connect_to_members
       seed = get_valid_seed_node
 
       seed.node_list.each do |host|
         node = Mongo::Node.new(self, host)
         if node.connect && node.set_config
-          @members << node
+          @nodes << node
         end
       end
     end
 
     # Initialize the connection pools to the primary and secondary nodes.
     def initialize_pools
-      if @members.empty?
+      if @nodes.empty?
         raise ConnectionFailure, "Failed to connect to any given member."
       end
 
-      @arbiters = @members.first.arbiters
+      @arbiters = @nodes.first.arbiters
 
-      @members.each do |member|
+      @nodes.each do |member|
         if member.primary?
           @primary = member.host_port
-          @primary_pool = Pool.new(self, member.host, member.port, :size => @pool_size, :timeout => @timeout)
+          @primary_pool = Pool.new(self, member.host, member.port,
+                                   :size => @pool_size,
+                                   :timeout => @timeout,
+                                   :node => member)
         elsif member.secondary? && !@secondaries.include?(member.host_port)
           @secondaries << member.host_port
-          @secondary_pools << Pool.new(self, member.host, member.port, :size => @pool_size, :timeout => @timeout)
+          @secondary_pools << Pool.new(self, member.host, member.port,
+                                       :size => @pool_size,
+                                       :timeout => @timeout,
+                                       :node => member)
         end
       end
     end
 
-    # Pick a node randomly from the set of possible secondaries.
-    def pick_secondary_for_read
-      return unless @read_secondary
-      if (size = @secondary_pools.size) > 0
-        @read_pool = @secondary_pools[rand(size)]
+    # Pick a node from the set of possible secondaries.
+    # If more than one node is available, use the ping
+    # time to figure out which nodes to choose from.
+    def choose_node_for_reads
+      return if @secondary_pools.empty?
+
+      if @secondary_pools.size == 1
+        @read_pool = @secondary_pools.first
+      else
+        @secondary_pools.each do |pool|
+          case pool.ping_time
+            when 0..150
+              @ping_ranges[0] << pool
+            when 150..1000
+              @ping_ranges[1] << pool
+            else
+              @ping_ranges[2] << pool
+          end
+        end
+
+        for list in @ping_ranges do
+          break if !list.empty?
+        end
+
+        @read_pool = list[rand(list.length)]
       end
+    end
+
+    def update_seed_list
+      @seeds = @nodes.map { |n| n.host_port }
     end
 
     # Checkout a socket for reading (i.e., a secondary node).
     def checkout_reader
       connect unless connected?
 
-      if @read_pool
+      if @read_secondary && @read_pool
         @read_pool.checkout
       else
         checkout_writer
@@ -291,7 +325,7 @@ module Mongo
 
     # Checkin a socket used for reading.
     def checkin_reader(socket)
-      if @read_pool
+      if @read_secondary && @read_pool
         @read_pool.checkin(socket)
       else
         checkin_writer(socket)

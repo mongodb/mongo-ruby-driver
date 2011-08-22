@@ -1,5 +1,6 @@
 module Mongo
   class Node
+
     attr_accessor :host, :port, :address, :config, :repl_set_status, :connection, :socket
 
     def initialize(connection, data)
@@ -22,7 +23,6 @@ module Mongo
     # return nil.
     def connect
       begin
-
         if self.connection.connect_timeout
           Mongo::TimeoutHandler.timeout(self.connection.connect_timeout, OperationTimeout) do
             socket = TCPSocket.new(self.host, self.port)
@@ -31,8 +31,12 @@ module Mongo
           socket = TCPSocket.new(self.host, self.port)
         end
 
-        socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
-        rescue OperationFailure, SocketError, SystemCallError, IOError => ex
+        if socket.nil?
+          return nil
+        else
+          socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+        end
+      rescue OperationFailure, SocketError, SystemCallError, IOError => ex
           return nil
       end
 
