@@ -15,7 +15,7 @@ Next, install the mongo rubygem:
 
 The required `bson` gem will be installed automatically.
 
-For optimum performance, install the bson_ext gem:
+For optimum performance, install the bson\_ext gem:
 
     gem install bson_ext
 
@@ -98,7 +98,7 @@ Once you have the collection object, you can insert documents into the collectio
 Notice that the above has an "inner" document embedded within it.  To do this, we can use a Hash or the driver's OrderedHash (which preserves key order) to create the document (including the inner document), and then just simply insert it into the collection using the `insert()` method.
 
     doc = {"name" => "MongoDB", "type" => "database", "count" => 1,
-           "info" => {"x" => 203, "y" => '102'`
+           "info" => {"x" => 203, "y" => '102'}}
     coll.insert(doc)
 
 #### Updating a Document
@@ -126,7 +126,7 @@ and you should see:
     {"_id"=>#<BSON::ObjectID:0x118576c ...>, "name"=>"MongoDB",
      "info"=>{"x"=>203, "y"=>102}, "type"=>"database", "count"=>1}
 
-Note the `\_id` element has been added automatically by MongoDB to your document.
+Note the `_id` element has been added automatically by MongoDB to your document.
 
 #### Adding Multiple Documents
 
