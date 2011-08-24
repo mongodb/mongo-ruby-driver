@@ -436,9 +436,9 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             }
             if (strcmp(cls, "BSON::Timestamp") == 0) {
                 write_name_and_type(buffer, key, 0x11);
-                int seconds = FIX2INT(
+                unsigned int seconds = NUM2UINT(
                     rb_funcall(value, rb_intern("seconds"), 0));
-                int increment = FIX2INT(
+                unsigned int increment = NUM2UINT(
                     rb_funcall(value, rb_intern("increment"), 0));
 
                 SAFE_WRITE(buffer, (const char*)&increment, 4);
@@ -830,12 +830,12 @@ static VALUE get_value(const char* buffer, int* position, int type) {
         }
     case 17:
         {
-            int sec, inc;
+            unsigned int sec, inc;
             VALUE argv[2];
             memcpy(&inc, buffer + *position, 4);
             memcpy(&sec, buffer + *position + 4, 4);
-            argv[0] = INT2FIX(sec);
-            argv[1] = INT2FIX(inc);
+            argv[0] = UINT2NUM(sec);
+            argv[1] = UINT2NUM(inc);
             value = rb_class_new_instance(2, argv, Timestamp);
             *position += 8;
             break;
