@@ -63,19 +63,23 @@ module Mongo
       @checked_out.clear
     end
 
+    def host_string
+      "#{@host}:#{@port}"
+    end
+
     # Return the time it takes on average
     # to do a round-trip against this node.
     def ping_time
-     trials = []
-     begin
-        PING_ATTEMPTS.times do
-          t1 = Time.now
-          self.connection['admin'].command({:ping => 1}, :socket => @node.socket)
-          trials << (Time.now - t1) * 1000
-        end
-      rescue OperationFailure, SocketError, SystemCallError, IOError => ex
-        return nil
-     end
+      trials = []
+      begin
+         PING_ATTEMPTS.times do
+           t1 = Time.now
+           self.connection['admin'].command({:ping => 1}, :socket => @node.socket)
+           trials << (Time.now - t1) * 1000
+         end
+       rescue OperationFailure, SocketError, SystemCallError, IOError => ex
+         return nil
+      end
 
       trials.sort!
       trials.delete_at(trials.length-1)

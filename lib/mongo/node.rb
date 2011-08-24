@@ -18,6 +18,10 @@ module Mongo
     end
     alias :== :eql?
 
+    def host_string
+      "#{@host}:#{@port}"
+    end
+
     # Create a connection to the provided node,
     # and, if successful, return the socket. Otherwise,
     # return nil.
@@ -55,6 +59,15 @@ module Mongo
       self.socket != nil
     end
 
+    def active?
+      begin
+        result = self.connection['admin'].command({:ping => 1}, :socket => self.socket)
+        return result['ok'] == 1
+      rescue OperationFailure, SocketError, SystemCallError, IOError => ex
+        return nil
+      end
+    end
+
     # Get the configuration for the provided node as returned by the
     # ismaster command. Additionally, check that the replica set name
     # matches with the name provided.
@@ -78,7 +91,9 @@ module Mongo
     # Note: this excludes arbiters.
     def node_list
       connect unless connected?
-      return [] unless self.config
+      set_config
+
+      return [] unless config
 
       nodes = []
       nodes += config['hosts'] if config['hosts']
@@ -88,6 +103,7 @@ module Mongo
 
     def arbiters
       connect unless connected?
+      return [] unless config['arbiters']
 
       config['arbiters'].map do |arbiter|
         split_nodes(arbiter)

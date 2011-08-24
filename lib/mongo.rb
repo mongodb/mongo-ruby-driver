@@ -57,6 +57,7 @@ require 'mongo/util/conversions'
 require 'mongo/util/support'
 require 'mongo/util/core_ext'
 require 'mongo/util/pool'
+require 'mongo/util/pool_manager'
 require 'mongo/util/server_version'
 require 'mongo/util/uri_parser'
 

@@ -17,7 +17,6 @@ class Test::Unit::TestCase
       yield
     rescue Mongo::ConnectionFailure => ex
       puts "Rescue attempt #{retries}: from #{ex}"
-      puts ex.backtrace
       retries += 1
       raise ex if retries > max_retries
       sleep(1)

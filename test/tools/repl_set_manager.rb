@@ -154,6 +154,15 @@ class ReplSetManager
     return node
   end
 
+  def kill_all_secondaries
+    nodes = get_all_nodes_with_state(2)
+    if nodes
+      nodes.each do |n|
+        kill(n)
+      end
+    end
+  end
+
   def restart_killed_nodes
     nodes = @mongods.keys.select do |key|
       @mongods[key]['up'] == false
@@ -228,13 +237,25 @@ class ReplSetManager
     end
   end
 
+  def get_all_nodes_with_state(state)
+    status = ensure_up
+    nodes = status['members'].select {|m| m['state'] == state}
+    nodes = nodes.map do |node|
+      host_port = node['name'].split(':')
+      port = host_port[1] ? host_port[1].to_i : 27017
+      @mongods.keys.detect {|key| @mongods[key]['port'] == port}
+    end
+
+    nodes == [] ? false : nodes
+  end
+
   def get_node_with_state(state)
     status = ensure_up
     node = status['members'].detect {|m| m['state'] == state}
     if node
       host_port = node['name'].split(':')
       port = host_port[1] ? host_port[1].to_i : 27017
-      key = @mongods.keys.detect {|key| @mongods[key]['port'] == port}
+      key = @mongods.keys.detect {|n| @mongods[n]['port'] == port}
       return key
     else
       return false
