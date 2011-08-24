@@ -19,6 +19,16 @@ class TimestampTest < Test::Unit::TestCase
     end
   end
 
+  def test_timestamp_32bit_compatibility
+    max_32bit_fixnum = (1 << 30) - 1
+    test_val = max_32bit_fixnum + 10
+
+    ts = Timestamp.new(test_val, test_val)
+    doc = {:ts => ts}
+    bson = BSON::BSON_CODER.serialize(doc)
+    assert_equal doc[:ts], BSON::BSON_CODER.deserialize(bson)['ts']
+  end
+
   def test_implements_array_for_backward_compatibility
     silently do
       ts = Timestamp.new(5000, 200)
