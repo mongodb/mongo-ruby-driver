@@ -605,6 +605,23 @@ module Mongo
       end
     end
 
+    # Log a message with the given level.
+    def log(level, message)
+      return unless @logger
+      case level
+        when :debug then
+          @logger.debug "MONGODB [DEBUG] #{msg}"
+        when :warn then
+          @logger.warn "MONGODB [WARNING] #{msg}"
+        when :error then
+          @logger.error "MONGODB [ERROR] #{msg}"
+        when :fatal then
+          @logger.fatal "MONGODB [FATAL] #{msg}"
+        else
+          @logger.info "MONGODB [INFO] #{msg}"
+        end
+    end
+
     # Execute the block and log the operation described by name
     # and payload.
     # TODO: Not sure if this should take a block.

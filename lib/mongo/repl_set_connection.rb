@@ -21,7 +21,7 @@ module Mongo
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
     attr_reader :nodes, :secondaries, :arbiters, :secondary_pools,
-      :replica_set_name, :read_pool
+      :replica_set_name, :read_pool, :seeds
 
     # Create a connection to a MongoDB replica set.
     #
@@ -163,6 +163,7 @@ module Mongo
       @seeds = manager.seeds
       @manager = manager
       @hosts = manager.hosts
+      @nodes = manager.nodes
     end
 
     # If ismaster doesn't match our current view
@@ -171,8 +172,13 @@ module Mongo
     # Then take out the connection lock and replace
     # our current values.
     def refresh
-      background_manager = PoolManager.new(self, @seeds)
+      return if !connected?
 
+      if !Thread.current[:background]
+        Thread.current[:background] = PoolManager.new(self, @seeds)
+      end
+
+      background_manager = Thread.current[:background]
       if update_struct = background_manager.update_required?(@hosts)
         @connection_lock.synchronize do
           background_manager.update(@manager, update_struct)
@@ -223,15 +229,19 @@ module Mongo
         @refresh_thread = nil
       end
 
-      @nodes.each do |member|
-        member.disconnect
+      if @nodes
+        @nodes.each do |member|
+          member.disconnect
+        end
       end
 
       @nodes = []
       @read_pool = nil
 
-      @secondary_pools.each do |pool|
-        pool.close
+      if @secondary_pools
+        @secondary_pools.each do |pool|
+          pool.close
+        end
       end
 
       @secondaries     = []
@@ -272,6 +282,7 @@ module Mongo
     private
 
     def initiate_auto_refresh
+      return unless @auto_refresh
       return if @refresh_thread && @refresh_thread.alive?
       @refresh_thread = Thread.new do
         sleep(@refresh_interval)

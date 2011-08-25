@@ -17,7 +17,7 @@ class ReplSetManager
     @ports      = []
     @name       = opts[:name] || 'replica-set-foo'
     @host       = opts[:host]  || 'localhost'
-    @retries    = opts[:retries] || 60
+    @retries    = opts[:retries] || 30
     @config     = {"_id" => @name, "members" => []}
     @durable    = opts.fetch(:durable, false)
     @path       = File.join(File.expand_path(File.dirname(__FILE__)), "data")
@@ -110,8 +110,6 @@ class ReplSetManager
 
     config = con['local']['system.replset'].find_one
     @config['version'] = config['version'] + 1
-    p "Old config: #{config}"
-    p "New config: #{@config}"
 
     # We expect a connection failure on reconfigure here.
     begin
@@ -119,6 +117,7 @@ class ReplSetManager
     rescue Mongo::ConnectionFailure
     end
 
+    con.close
     ensure_up
   end
 
@@ -146,6 +145,7 @@ class ReplSetManager
       con['admin'].command({'replSetStepDown' => 90})
     rescue Mongo::ConnectionFailure
     end
+    con.close
   end
 
   def kill_secondary
@@ -194,11 +194,14 @@ class ReplSetManager
       con = get_connection
       status = con['admin'].command({'replSetGetStatus' => 1})
       print "."
-      if status['members'].all? { |m| m['health'] == 1 && [1, 2, 7].include?(m['state']) } &&
+      if status['members'].all? { |m| m['health'] == 1 &&
+         [1, 2, 7].include?(m['state']) } &&
          status['members'].any? { |m| m['state'] == 1 }
         print "all members up!\n\n"
+        con.close
         return status
       else
+        con.close
         raise Mongo::OperationFailure
       end
     end
@@ -235,6 +238,8 @@ class ReplSetManager
     attempt do
       con['admin'].command({'replSetInitiate' => @config})
     end
+
+    con.close
   end
 
   def get_all_nodes_with_state(state)
@@ -295,11 +300,12 @@ class ReplSetManager
       begin
         return yield
         rescue Mongo::OperationFailure, Mongo::ConnectionFailure => ex
-          sleep(1)
+          sleep(2)
           count += 1
       end
     end
 
+    puts "NO MORE ATTEMPTS"
     raise ex
   end
 

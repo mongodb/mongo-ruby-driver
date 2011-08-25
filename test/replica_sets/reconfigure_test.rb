@@ -13,6 +13,7 @@ class ReplicaSetReconfigureTest < Test::Unit::TestCase
 
   def teardown
     RS.restart_killed_nodes
+    @conn.close if @conn
   end
 
   def test_query

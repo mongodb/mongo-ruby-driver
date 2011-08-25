@@ -6,12 +6,9 @@ require './test/replica_sets/rs_test_helper'
 class ConnectionStringTest < Test::Unit::TestCase
   include Mongo
 
-  def setup
-    RS.restart_killed_nodes
-  end
-
   def teardown
     RS.restart_killed_nodes
+    @conn.close if @conn
   end
 
   def test_connect_with_connection_string

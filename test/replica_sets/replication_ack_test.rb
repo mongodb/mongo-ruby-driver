@@ -20,6 +20,11 @@ class ReplicaSetAckTest < Test::Unit::TestCase
     @col = @db.collection("test-sets")
   end
 
+  def teardown
+    RS.restart_killed_nodes
+    @conn.close if @conn
+  end
+
   def test_safe_mode_with_w_failure
     assert_raise_error OperationFailure, "timeout" do
       @col.insert({:foo => 1}, :safe => {:w => 4, :wtimeout => 1, :fsync => true})

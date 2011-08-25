@@ -7,12 +7,9 @@ require 'benchmark'
 class ReplicaSetRefreshTest < Test::Unit::TestCase
   include Mongo
 
-  def setup
-    #RS.restart_killed_nodes
-  end
-
   def teardown
     RS.restart_killed_nodes
+    @conn.close if @conn
   end
 
   def test_connect_and_manual_refresh_with_secondaries_down

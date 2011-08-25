@@ -106,9 +106,10 @@ module Mongo
     # therefore, it runs within a mutex.
     def checkout_new_socket
       begin
-      socket = TCPSocket.new(@host, @port)
-      socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+        socket = TCPSocket.new(@host, @port)
+        socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
       rescue => ex
+        socket.close if socket
         raise ConnectionFailure, "Failed to connect to host #{@host} and port #{@port}: #{ex}"
       end
 

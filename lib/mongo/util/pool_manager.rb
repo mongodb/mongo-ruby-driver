@@ -2,11 +2,12 @@ module Mongo
   class PoolManager
 
     attr_reader :connection, :seeds, :arbiters, :primary, :secondaries,
-      :primary_pool, :read_pool, :secondary_pools, :hosts
+      :primary_pool, :read_pool, :secondary_pools, :hosts, :nodes
 
     def initialize(connection, seeds)
       @connection = connection
       @seeds = seeds
+      @refresh_node = nil
     end
 
     def connect
@@ -14,6 +15,7 @@ module Mongo
       nodes = connect_to_members
       initialize_pools(nodes)
       update_seed_list(nodes)
+      @nodes = nodes
     end
 
     # Ensure that the view of the replica set is current by
@@ -26,15 +28,15 @@ module Mongo
     # If we're connected to nodes that are no longer part of the set,
     # remove these from our set of secondary pools.
     def update_required?(hosts)
-      node = Thread.current[:refresher_node]
-      if !node || !node.active?
+      if !@refresh_node || !@refresh_node.active?
         begin
-          node = get_valid_seed_node
-          Thread.current[:refresher_node] = node
+          @refresh_node = get_valid_seed_node
         rescue ConnectionFailure
-          warn "Could not refresh config because no valid seed node was unavailable."
+          warn "Could not refresh config because no valid seed node was available."
+          return
         end
       end
+      node = @refresh_node
 
       node_list = node.node_list
 
@@ -104,6 +106,7 @@ module Mongo
       @secondaries = []
       @secondary_pools = []
       @hosts = []
+      @nodes = []
     end
 
     def connected_nodes
@@ -204,6 +207,8 @@ module Mongo
         node = Mongo::Node.new(self.connection, seed)
         if node.connect && node.set_config
           return node
+        else
+          node.disconnect
         end
       end
 

@@ -8,7 +8,7 @@ class ReplicaSetPooledInsertTest < Test::Unit::TestCase
 
   def setup
     @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
-      [RS.host, RS.ports[2]], :pool_size => 10, :timeout => 5)
+      [RS.host, RS.ports[2]], :pool_size => 5, :timeout => 5)
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets")
@@ -16,6 +16,7 @@ class ReplicaSetPooledInsertTest < Test::Unit::TestCase
 
   def teardown
     RS.restart_killed_nodes
+    @conn.close if @conn
   end
 
   def test_insert

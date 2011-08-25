@@ -11,7 +11,7 @@ class Test::Unit::TestCase
 
   # Generic code for rescuing connection failures and retrying operations.
   # This could be combined with some timeout functionality.
-  def rescue_connection_failure(max_retries=60)
+  def rescue_connection_failure(max_retries=30)
     retries = 0
     begin
       yield
@@ -19,7 +19,7 @@ class Test::Unit::TestCase
       puts "Rescue attempt #{retries}: from #{ex}"
       retries += 1
       raise ex if retries > max_retries
-      sleep(1)
+      sleep(2)
       retry
     end
   end

@@ -27,6 +27,7 @@ module Mongo
     # return nil.
     def connect
       begin
+        socket = nil
         if self.connection.connect_timeout
           Mongo::TimeoutHandler.timeout(self.connection.connect_timeout, OperationTimeout) do
             socket = TCPSocket.new(self.host, self.port)
@@ -40,8 +41,10 @@ module Mongo
         else
           socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
         end
-      rescue OperationFailure, SocketError, SystemCallError, IOError => ex
-          return nil
+      rescue OperationTimeout, OperationFailure, SocketError, SystemCallError, IOError => ex
+        self.connection.log(:debug, "Failed connection to #{host_string} with #{ex.class}, #{ex.message}.")
+        socket.close if socket
+        return nil
       end
 
       self.socket = socket
