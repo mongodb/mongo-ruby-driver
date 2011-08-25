@@ -29,10 +29,12 @@ module BSON
     end
 
     def self.max_bson_size
+      warn "BSON::BSON_CODER.max_bson_size is deprecated and will be removed in v2.0."
       CBson.max_bson_size
     end
 
     def self.update_max_bson_size(connection)
+      warn "BSON::BSON_CODER.update_max_bson_size is deprecated and now a no-op. It will be removed in v2.0."
       CBson.update_max_bson_size(connection)
     end
   end
