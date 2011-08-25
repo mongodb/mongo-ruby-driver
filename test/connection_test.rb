@@ -13,7 +13,7 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def teardown
-    @conn[MONGO_TEST_DB].get_last_error
+    @conn.close
   end
 
   def test_connection_failure
@@ -162,8 +162,8 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_nodes
-    db = Connection.multi([['foo', 27017], ['bar', 27018]], :connect => false)
-    nodes = db.nodes
+    conn = Connection.multi([['foo', 27017], ['bar', 27018]], :connect => false)
+    nodes = conn.nodes
     assert_equal 2, nodes.length
     assert_equal ['foo', 27017], nodes[0]
     assert_equal ['bar', 27018], nodes[1]
@@ -191,35 +191,32 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_max_bson_size_value
+    conn = standard_connection(:connect => false)
+
+    admin_db = Object.new
+    admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1, 'maxBsonObjectSize' => 15_000_000})
+    conn.expects(:[]).with('admin').returns(admin_db)
+    conn.connect
+    assert_equal 15_000_000, conn.max_bson_size
+
     conn = standard_connection
     if conn.server_version > "1.7.2"
       assert_equal conn['admin'].command({:ismaster => 1})['maxBsonObjectSize'], conn.max_bson_size
     end
 
     conn.connect
-    assert_equal BSON::BSON_CODER.max_bson_size, conn.max_bson_size
-    doc = {'n' => 'a' * (BSON_CODER.max_bson_size - 11)}
+    doc = {'n' => 'a' * (conn.max_bson_size)}
     assert_raise InvalidDocument do
-      assert BSON::BSON_CODER.serialize(doc)
-    end
-
-    limit = 7 * 1024 * 1024
-    conn.stubs(:max_bson_size).returns(limit)
-    conn.connect
-    assert_equal limit, conn.max_bson_size
-    assert_equal limit, BSON::BSON_CODER.max_bson_size
-    doc = {'n' => 'a' * ((limit) - 11)}
-    assert_raise_error InvalidDocument, "limited to #{limit}" do
-      assert BSON::BSON_CODER.serialize(doc)
+      assert BSON::BSON_CODER.serialize(doc, false, true, @conn.max_bson_size)
     end
   end
 
-  def test_max_bson_size_with_old_mongod
+  def test_max_bson_size_with_no_reported_max_size
     conn = standard_connection(:connect => false)
 
     admin_db = Object.new
-    admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1}).twice
-    conn.expects(:[]).with('admin').returns(admin_db).twice
+    admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1})
+    conn.expects(:[]).with('admin').returns(admin_db)
 
     conn.connect
     assert_equal Mongo::DEFAULT_MAX_BSON_SIZE, BSON::BSON_CODER.max_bson_size
@@ -251,6 +248,10 @@ class TestConnection < Test::Unit::TestCase
       @conn = standard_connection
       @auth = {'db_name' => 'test', 'username' => 'bob', 'password' => 'secret'}
       @conn.add_auth(@auth['db_name'], @auth['username'], @auth['password'])
+    end
+
+    teardown do
+      @conn.clear_auths
     end
 
     should "save the authentication" do
@@ -315,7 +316,7 @@ class TestConnection < Test::Unit::TestCase
       fake_socket = Mocha::Mock.new
       fake_socket.stubs(:close).raises(IOError.new)
       fake_socket.stub_everything
-      TCPSocket.expects(:new).returns(fake_socket)
+      TCPSocket.stubs(:new).returns(fake_socket)
 
       @con.primary_pool.checkout_new_socket
       assert_equal [], @con.primary_pool.close

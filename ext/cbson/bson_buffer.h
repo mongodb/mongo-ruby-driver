@@ -29,6 +29,10 @@ typedef int bson_buffer_position;
  * Return NULL on allocation failure. */
 bson_buffer_t bson_buffer_new(void);
 
+/* Set the max size for this buffer.
+ * Note: this is not a hard limit. */
+void bson_buffer_set_max_size(bson_buffer_t buffer, int max_size);
+
 /* Free the memory allocated for `buffer`.
  * Return non-zero on failure. */
 int bson_buffer_free(bson_buffer_t buffer);

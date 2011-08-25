@@ -512,12 +512,11 @@ module Mongo
           @read_primary = false
         end
 
+        @max_bson_size = config['maxBsonObjectSize'] || Mongo::DEFAULT_MAX_BSON_SIZE
         set_primary(@host_to_try)
       end
 
-      if connected?
-        BSON::BSON_CODER.update_max_bson_size(self)
-      else
+      if !connected?
         raise ConnectionFailure, "Failed to connect to a master node at #{@host_to_try[0]}:#{@host_to_try[1]}"
       end
     end
@@ -571,8 +570,7 @@ module Mongo
     #
     # @return [Integer]
     def max_bson_size
-      config = self['admin'].command({:ismaster => 1})
-      config['maxBsonObjectSize'] || Mongo::DEFAULT_MAX_BSON_SIZE
+      @max_bson_size
     end
 
     # Checkout a socket for reading (i.e., a secondary node).
@@ -619,7 +617,7 @@ module Mongo
           @logger.fatal "MONGODB [FATAL] #{msg}"
         else
           @logger.info "MONGODB [INFO] #{msg}"
-        end
+      end
     end
 
     # Execute the block and log the operation described by name
@@ -635,6 +633,9 @@ module Mongo
 
     # Generic initialization code.
     def setup(opts)
+      # Default maximum BSON object size
+      @max_bson_size = Mongo::DEFAULT_MAX_BSON_SIZE
+
       # Authentication objects
       @auths = opts.fetch(:auths, [])
 

@@ -4,9 +4,9 @@ module BSON
 
     # TODO: Pool or cache instances of RubyBSONEncoder so that
     # we don't create a new one on each call to #serialize.
-    def self.serialize(obj, check_keys=false, move_id=false)
+    def self.serialize(obj, check_keys=false, move_id=false, max_bson_size=BSON::DEFAULT_MAX_BSON_SIZE)
       raise InvalidDocument, "BSON_JAVA.serialize takes a Hash" unless obj.is_a?(Hash)
-      enc = Java::OrgJbson::RubyBSONEncoder.new(JRuby.runtime, check_keys, move_id)
+      enc = Java::OrgJbson::RubyBSONEncoder.new(JRuby.runtime, check_keys, move_id, max_bson_size)
       ByteBuffer.new(enc.encode(obj))
     end
 

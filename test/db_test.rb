@@ -156,7 +156,8 @@ class DBTest < Test::Unit::TestCase
     assert Mongo::Connection.from_uri("mongodb://spongebob:squarepants@#{host_port}/#{@@db.name}")
 
     assert_raise Mongo::AuthenticationError do
-      Mongo::Connection.from_uri("mongodb://wrong:info@#{host_port}/#{@@db.name}")
+      con = Mongo::Connection.from_uri("mongodb://wrong:info@#{host_port}/#{@@db.name}")
+      con['test']['foo'].find_one
     end
   end
 

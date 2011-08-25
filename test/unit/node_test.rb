@@ -20,7 +20,7 @@ class NodeTest < Test::Unit::TestCase
     assert_equal "power.level.com:#{Connection::DEFAULT_PORT}", node.address
   end
 
-  should "load a node from a stirng" do
+  should "load a node from a string" do
     node = Node.new(@connection, 'localhost:1234')
     assert_equal 'localhost', node.host
     assert_equal 1234, node.port

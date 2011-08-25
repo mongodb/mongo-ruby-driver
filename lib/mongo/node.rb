@@ -8,7 +8,8 @@ module Mongo
       if data.is_a?(String)
         self.host, self.port = split_nodes(data)
       else
-        self.host, self.port = data
+        self.host = data[0]
+        self.port = data[1].nil? ? Connection::DEFAULT_PORT : data[1].to_i
       end
       self.address = "#{host}:#{port}"
     end
@@ -134,7 +135,7 @@ module Mongo
     def split_nodes(host_string)
       data = host_string.split(":")
       host = data[0]
-      port = data[1].to_i || Connection::DEFAULT_PORT
+      port = data[1].nil? ? Connection::DEFAULT_PORT : data[1].to_i
 
       [host, port]
     end

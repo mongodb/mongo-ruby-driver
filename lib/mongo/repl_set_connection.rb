@@ -87,8 +87,10 @@ module Mongo
       # The list of seed nodes
       @seeds = args
 
+      @nodes = @seeds.dup
+
       # The members of the replica set, stored as instances of Mongo::Node.
-      @nodes = []
+      @members = []
 
       # Connection pool for primary node
       @primary      = nil
@@ -139,7 +141,6 @@ module Mongo
         manager.connect
 
         update_config(manager)
-        #BSON::BSON_CODER.update_max_bson_size(self)
         initiate_auto_refresh
 
         if @primary.nil? #TODO: in v2.0, we'll let this be optional and do a lazy connect.
@@ -164,6 +165,7 @@ module Mongo
       @manager = manager
       @hosts = manager.hosts
       @nodes = manager.nodes
+      @max_bson_size = manager.max_bson_size
     end
 
     # If ismaster doesn't match our current view
@@ -208,6 +210,11 @@ module Mongo
     # @return [Integer]
     def port
       super
+    end
+
+    def nodes
+      warn "DEPRECATED"
+      @seeds
     end
 
     # Determine whether we're reading from a primary node. If false,

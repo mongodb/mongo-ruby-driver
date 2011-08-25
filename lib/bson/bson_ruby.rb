@@ -46,8 +46,8 @@ module BSON
     NUMBER_LONG = 18
     MAXKEY = 127
 
-    def initialize
-      @buf = ByteBuffer.new
+    def initialize(max_bson_size=BSON::DEFAULT_MAX_BSON_SIZE)
+      @buf = ByteBuffer.new('', max_bson_size)
       @encoder = BSON_RUBY
     end
 
@@ -105,8 +105,8 @@ module BSON
 
     # Serializes an object.
     # Implemented to ensure an API compatible with BSON extension.
-    def self.serialize(obj, check_keys=false, move_id=false)
-      new.serialize(obj, check_keys, move_id)
+    def self.serialize(obj, check_keys=false, move_id=false, max_bson_size=BSON::DEFAULT_MAX_BSON_SIZE)
+      new(max_bson_size).serialize(obj, check_keys, move_id)
     end
 
     def self.deserialize(buf=nil)
@@ -137,8 +137,9 @@ module BSON
       end
 
       serialize_eoo_element(@buf)
-      if @buf.size > @@max_bson_size
-        raise InvalidDocument, "Document is too large (#{@buf.size}). BSON documents are limited to #{@@max_bson_size} bytes."
+      if @buf.size > @buf.max_size
+        raise InvalidDocument, "Document is too large (#{@buf.size}). " +
+         "This BSON documents is limited to #{@buf.max_size} bytes."
       end
       @buf.put_int(@buf.size, 0)
       @buf

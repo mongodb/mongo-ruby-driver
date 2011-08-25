@@ -69,7 +69,8 @@ public class RubyBSONEncoder extends BSONEncoder {
     private static final BigInteger LONG_MIN = BigInteger.valueOf(-MAX - 1);
 
 
-    public RubyBSONEncoder(Ruby runtime, boolean check_keys, boolean move_id){
+    public RubyBSONEncoder(Ruby runtime, boolean check_keys, boolean move_id, int max_bson_size){
+      _max_bson_size = max_bson_size;
       _check_keys = check_keys;
       _move_id = move_id;
       _runtime = runtime;

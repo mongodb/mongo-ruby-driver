@@ -1,7 +1,7 @@
 require './test/test_helper'
 
 class TestCollection < Test::Unit::TestCase
-  @@connection ||= standard_connection(:op_timeout => 2)
+  @@connection ||= standard_connection(:op_timeout => 10)
   @@db   = @@connection.db(MONGO_TEST_DB)
   @@test = @@db.collection("test")
   @@version = @@connection.server_version

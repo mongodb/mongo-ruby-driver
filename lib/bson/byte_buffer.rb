@@ -20,9 +20,9 @@
 module BSON
   class ByteBuffer
 
-    attr_reader :order
+    attr_reader :order, :max_size
 
-    def initialize(initial_data="")
+    def initialize(initial_data="", max_size=BSON::DEFAULT_MAX_BSON_SIZE)
       @str = case initial_data
         when String then
           if initial_data.respond_to?(:force_encoding)
@@ -40,6 +40,7 @@ module BSON
       @order  = :little_endian
       @int_pack_order    = 'V'
       @double_pack_order = 'E'
+      @max_size = max_size
     end
 
     if RUBY_VERSION >= '1.9'

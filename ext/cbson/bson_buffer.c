@@ -20,11 +20,13 @@
 #include "bson_buffer.h"
 
 #define INITIAL_BUFFER_SIZE 256
+#define DEFAULT_MAX_SIZE 4 * 1024 * 1024
 
 struct bson_buffer {
     char* buffer;
     int size;
     int position;
+    int max_size;
 };
 
 /* Allocate and return a new buffer.
@@ -43,8 +45,17 @@ bson_buffer_t bson_buffer_new(void) {
         free(buffer);
         return NULL;
     }
+    buffer->max_size = DEFAULT_MAX_SIZE;
 
     return buffer;
+}
+
+void bson_buffer_set_max_size(bson_buffer_t buffer, int max_size) {
+    buffer->max_size = max_size;
+}
+
+int bson_buffer_get_max_size(bson_buffer_t buffer) {
+    return buffer->max_size;
 }
 
 /* Free the memory allocated for `buffer`.

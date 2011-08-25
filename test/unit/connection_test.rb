@@ -9,8 +9,8 @@ class ConnectionTest < Test::Unit::TestCase
         TCPSocket.stubs(:new).returns(new_mock_socket)
 
         admin_db = new_mock_db
-        admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1}).twice
-        @conn.expects(:[]).with('admin').returns(admin_db).twice
+        admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1})
+        @conn.expects(:[]).with('admin').returns(admin_db)
         @conn.connect
       end
 
@@ -52,8 +52,8 @@ class ConnectionTest < Test::Unit::TestCase
         @conn = Connection.from_uri("mongodb://localhost", :connect => false)
 
         admin_db = new_mock_db
-        admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1}).twice
-        @conn.expects(:[]).with('admin').returns(admin_db).twice
+        admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1})
+        @conn.expects(:[]).with('admin').returns(admin_db)
         @conn.connect
       end
 

@@ -599,17 +599,22 @@ static void write_doc(bson_buffer_t buffer, VALUE hash, VALUE check_keys, VALUE 
     length = bson_buffer_get_position(buffer) - start_position;
 
     // make sure that length doesn't exceed 4MB
-    if (length > max_bson_size) {
+    if (length > bson_buffer_get_max_size(buffer)) {
       bson_buffer_free(buffer);
-      rb_raise(InvalidDocument, "Document too large: BSON documents are limited to %d bytes.", max_bson_size);
+      rb_raise(InvalidDocument,
+          "Document too large: This BSON documents is limited to %d bytes.",
+          bson_buffer_get_max_size(buffer));
       return;
     }
     SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&length, 4);
 }
 
-static VALUE method_serialize(VALUE self, VALUE doc, VALUE check_keys, VALUE move_id) {
+static VALUE method_serialize(VALUE self, VALUE doc, VALUE check_keys,
+    VALUE move_id, VALUE max_size) {
+
     VALUE result;
     bson_buffer_t buffer = bson_buffer_new();
+    bson_buffer_set_max_size(buffer, FIX2INT(max_size));
     if (buffer == NULL) {
         rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
     }
@@ -973,7 +978,7 @@ void Init_cbson() {
     CBson = rb_define_module("CBson");
     ext_version = rb_str_new2(VERSION);
     rb_define_const(CBson, "VERSION", ext_version);
-    rb_define_module_function(CBson, "serialize", method_serialize, 3);
+    rb_define_module_function(CBson, "serialize", method_serialize, 4);
     rb_define_module_function(CBson, "deserialize", method_deserialize, 1);
     rb_define_module_function(CBson, "max_bson_size", method_max_bson_size, 0);
     rb_define_module_function(CBson, "update_max_bson_size", method_update_max_bson_size, 1);

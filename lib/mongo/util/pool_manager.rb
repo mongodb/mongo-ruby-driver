@@ -2,7 +2,7 @@ module Mongo
   class PoolManager
 
     attr_reader :connection, :seeds, :arbiters, :primary, :secondaries,
-      :primary_pool, :read_pool, :secondary_pools, :hosts, :nodes
+      :primary_pool, :read_pool, :secondary_pools, :hosts, :nodes, :max_bson_size
 
     def initialize(connection, seeds)
       @connection = connection
@@ -12,10 +12,10 @@ module Mongo
 
     def connect
       initialize_data
-      nodes = connect_to_members
-      initialize_pools(nodes)
-      update_seed_list(nodes)
-      @nodes = nodes
+      members = connect_to_members
+      initialize_pools(members)
+      update_seed_list(members)
+      @members = members
     end
 
     # Ensure that the view of the replica set is current by
@@ -106,34 +106,34 @@ module Mongo
       @secondaries = []
       @secondary_pools = []
       @hosts = []
-      @nodes = []
+      @members = []
     end
 
     # Connect to each member of the replica set
     # as reported by the given seed node, and return
     # as a list of Mongo::Node objects.
     def connect_to_members
-      nodes = []
+      members = []
 
       seed = get_valid_seed_node
 
       seed.node_list.each do |host|
         node = Mongo::Node.new(self.connection, host)
         if node.connect && node.set_config
-          nodes << node
+          members << node
         end
       end
 
-      if nodes.empty?
+      if members.empty?
         raise ConnectionFailure, "Failed to connect to any given member."
       end
 
-      nodes
+      members
     end
 
     # Initialize the connection pools for the primary and secondary nodes.
-    def initialize_pools(nodes)
-      nodes.each do |member|
+    def initialize_pools(members)
+      members.each do |member|
         @hosts << member.host_string
 
         if member.primary?
@@ -151,7 +151,9 @@ module Mongo
         end
       end
 
-      @arbiters = nodes.first.arbiters
+      @max_bson_size = members.first.config['maxBsonObjectSize'] ||
+        Mongo::DEFAULT_MAX_BSON_SIZE
+      @arbiters = members.first.arbiters
       choose_read_pool
     end
 
@@ -203,8 +205,8 @@ module Mongo
         "#{@seeds.map {|s| "#{s[0]}:#{s[1]}" }.join(', ')}"
     end
 
-    def update_seed_list(nodes)
-      @seeds = nodes.map { |n| n.host_port }
+    def update_seed_list(members)
+      @seeds = members.map { |n| n.host_port }
     end
 
   end
