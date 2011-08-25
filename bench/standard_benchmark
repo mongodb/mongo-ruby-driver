@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-#$LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
+$LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 #
 # Note: Ruby 1.9 is faster than 1.8, as expected.
 # This suite will be run against the installed version of ruby-mongo-driver.
