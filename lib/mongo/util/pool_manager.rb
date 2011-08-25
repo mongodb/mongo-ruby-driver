@@ -109,19 +109,6 @@ module Mongo
       @nodes = []
     end
 
-    def connected_nodes
-      nodes = []
-      if @primary_pool
-        nodes << "#{@primary_pool.host}:#{@primary_pool.port}"
-      end
-
-      @secondary_pools.each do |pool|
-        nodes << "#{pool.host}:#{pool.port}"
-      end
-
-      nodes
-    end
-
     # Connect to each member of the replica set
     # as reported by the given seed node, and return
     # as a list of Mongo::Node objects.
