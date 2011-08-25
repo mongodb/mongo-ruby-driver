@@ -62,6 +62,19 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
   end
 
   def test_automated_refresh_with_removed_node
+    @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
+      [RS.host, RS.ports[2]], :refresh_interval => 2, :auto_refresh => true)
 
+    assert @conn.secondaries.length == 2
+    p @conn.secondaries
+    p @conn.secondary_pools.length
+
+    RS.remove_secondary_node
+    sleep(6)
+
+    p @conn.secondaries
+    p @conn.secondary_pools.length
+    assert @conn.secondaries.length == 1
   end
+
 end

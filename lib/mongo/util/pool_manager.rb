@@ -61,10 +61,9 @@ module Mongo
             @primary = nil
             @primary_pool.close
             @primary_pool = nil
-          elsif rejected_pool = @secondary_pools.reject! {|pool| pool.host_string == node}
-            @secondaries.reject! do |secondary|
-              secondary.port == rejected_pool.port && secondary.host == rejected_pool.host
-            end
+          elsif rejected_pool = @secondary_pools.detect {|pool| pool.host_string == node}
+            @secondary_pools.delete(rejected_pool)
+            @secondaries.delete(rejected_pool.host_port)
           end
         end
       end

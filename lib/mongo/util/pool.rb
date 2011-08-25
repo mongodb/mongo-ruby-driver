@@ -67,6 +67,10 @@ module Mongo
       "#{@host}:#{@port}"
     end
 
+    def host_port
+      [@host, @port]
+    end
+
     # Return the time it takes on average
     # to do a round-trip against this node.
     def ping_time
