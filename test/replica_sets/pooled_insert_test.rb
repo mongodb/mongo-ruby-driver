@@ -34,6 +34,8 @@ class ReplicaSetPooledInsertTest < Test::Unit::TestCase
       end
     end
 
+    threads.each {|t| t.join}
+
     # Restart the old master and wait for sync
     RS.restart_killed_nodes
     sleep(1)
