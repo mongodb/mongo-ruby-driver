@@ -80,11 +80,14 @@ module Mongo
         self.config = self.connection['admin'].command({:ismaster => 1}, :socket => self.socket)
 
         if self.config['msg'] && @logger
-          self.connection.logger.warn("MONGODB #{config['msg']}")
+          self.connection.log(:warn, "#{config['msg']}")
         end
 
-        check_set_name
-      rescue OperationFailure, SocketError, SystemCallError, IOError => ex
+        check_set_membership(config)
+        check_set_name(config)
+      rescue ReplicaSetConnectionError, OperationFailure, SocketError, SystemCallError, IOError => ex
+        self.connection.log(:warn, "Attempted connection to node #{host_string} raised " +
+                            "#{ex.class}: #{ex.message}")
         return nil
       end
 
@@ -140,16 +143,25 @@ module Mongo
       [host, port]
     end
 
-    # Make sure that we're connected to the expected replica set.
-    def check_set_name
+    # Ensure that this node is a member of a replica set.
+    def check_set_membership(config)
+      if !config['hosts']
+        message = "Will not connect to #{host_string} because it's not a member " +
+          "of a replica set."
+        raise ReplicaSetConnectionError, message
+      end
+    end
+
+    # Ensure that this node is part of a replica set of the expected name.
+    def check_set_name(config)
       if self.connection.replica_set_name
-        if !self.config['setName']
-          self.connection.logger.warn("MONGODB [warning] could not verify replica set name " +
+        if !config['setName']
+          self.connection.log(:warn, "Could not verify replica set name for member #{host_string} " +
             "because ismaster does not return name in this version of MongoDB")
-        elsif self.connection.replica_set_name != self.config['setName']
-          raise ReplicaSetConnectionError,
-            "Attempting to connect to replica set '#{config['setName']}' " +
+        elsif self.connection.replica_set_name != config['setName']
+          message = "Attempting to connect to replica set '#{config['setName']}' on member #{host_string} " +
             "but expected '#{self.connection.replica_set_name}'"
+          raise ReplicaSetConnectionError, message
         end
       end
     end
