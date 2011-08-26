@@ -7,8 +7,10 @@ class NodeTest < Test::Unit::TestCase
   end
 
   should "refuse to connect to node without 'hosts' key" do
+    tcp = mock()
     node = Node.new(@connection, ['localhost', 27017])
-    TCPSocket.stubs(:new).returns(new_mock_socket)
+    tcp.stubs(:new).returns(new_mock_socket)
+    @connection.stubs(:socket_class).returns(tcp)
 
     admin_db = new_mock_db
     admin_db.stubs(:command).returns({'ok' => 1, 'ismaster' => 1})
@@ -17,7 +19,7 @@ class NodeTest < Test::Unit::TestCase
     @connection.expects(:log)
 
     assert node.connect
-    assert node.set_config
+    node.set_config
   end
 
   should "load a node from an array" do

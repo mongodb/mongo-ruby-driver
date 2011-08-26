@@ -31,10 +31,10 @@ module Mongo
         socket = nil
         if self.connection.connect_timeout
           Mongo::TimeoutHandler.timeout(self.connection.connect_timeout, OperationTimeout) do
-            socket = TCPSocket.new(self.host, self.port)
+            socket = self.connection.socket_class.new(self.host, self.port)
           end
         else
-          socket = TCPSocket.new(self.host, self.port)
+          socket = self.connection.socket_class.new(self.host, self.port)
         end
 
         if socket.nil?

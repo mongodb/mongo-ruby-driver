@@ -36,7 +36,7 @@ module Mongo
     RESPONSE_HEADER_SIZE = 20
 
     attr_reader :logger, :size, :auths, :primary, :safe, :host_to_try,
-      :pool_size, :connect_timeout, :primary_pool
+      :pool_size, :connect_timeout, :primary_pool, :socket_class
 
     # Counter for generating unique request ids.
     @@current_request_id = 0
@@ -73,6 +73,7 @@ module Mongo
     #   Disabled by default.
     # @option opts [Float] :connect_timeout (nil) The number of seconds to wait before timing out a
     #   connection attempt.
+    # @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
     #
     # @example localhost, 27017
     #   Connection.new
@@ -636,6 +637,14 @@ module Mongo
       # Default maximum BSON object size
       @max_bson_size = Mongo::DEFAULT_MAX_BSON_SIZE
 
+      # Determine whether to use SSL.
+      @ssl = opts.fetch(:ssl, false)
+      if @ssl
+        @socket_class = Mongo::SSLSocket
+      else
+        @socket_class = ::TCPSocket
+      end
+
       # Authentication objects
       @auths = opts.fetch(:auths, [])
 
@@ -729,11 +738,11 @@ module Mongo
 
         if @connect_timeout
           Mongo::TimeoutHandler.timeout(@connect_timeout, OperationTimeout) do
-            socket = TCPSocket.new(host, port)
+            socket = @socket_class.new(host, port)
             socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
           end
         else
-          socket = TCPSocket.new(host, port)
+          socket = @socket_class.new(host, port)
           socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
         end
 

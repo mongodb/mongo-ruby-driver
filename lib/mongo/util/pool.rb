@@ -110,7 +110,7 @@ module Mongo
     # therefore, it runs within a mutex.
     def checkout_new_socket
       begin
-        socket = TCPSocket.new(@host, @port)
+        socket = self.connection.socket_class.new(@host, @port)
         socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
       rescue => ex
         socket.close if socket
