@@ -15,7 +15,7 @@ class TestCollection < Test::Unit::TestCase
     assert !@@db['normal'].capped?
     @@db.drop_collection('normal')
 
-    @@db.create_collection('c', :capped => true)
+    @@db.create_collection('c', :capped => true, :size => 100_000)
     assert @@db['c'].capped?
     @@db.drop_collection('c')
   end
@@ -148,6 +148,35 @@ class TestCollection < Test::Unit::TestCase
 
     assert_raise OperationFailure do
       @@test.insert(a, :safe => true)
+    end
+  end
+
+  def test_bulk_insert_with_continue_on_error
+    if @@version >= "2.0"
+      @@test.create_index([["foo", 1]], :unique => true)
+      docs = []
+      docs << {:foo => 1}
+      docs << {:foo => 1}
+      docs << {:foo => 2}
+      docs << {:foo => 3}
+      assert_raise OperationFailure do
+        @@test.insert(docs, :safe => true)
+      end
+      assert_equal 1, @@test.count
+      @@test.remove
+
+      docs = []
+      docs << {:foo => 1}
+      docs << {:foo => 1}
+      docs << {:foo => 2}
+      docs << {:foo => 3}
+      assert_raise OperationFailure do
+        @@test.insert(docs, :safe => true, :continue_on_error => true)
+      end
+      assert_equal 3, @@test.count
+
+      @@test.remove
+      @@test.drop_index("foo_1")
     end
   end
 

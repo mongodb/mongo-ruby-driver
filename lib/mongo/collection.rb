@@ -311,6 +311,11 @@ module Mongo
     #   its database object, or the current connection. See the options on
     #   for DB#get_last_error.
     #
+    # @option opts [Boolean] :continue_on_error (+false+) If true, then
+    #   continue a bulk insert even if one of the documents inserted
+    #   triggers a database assertion (as in a duplicate insert, for instance).
+    #   MongoDB v2.0+.
+    #
     # @see DB#remove for options that can be passed to :safe.
     #
     # @core insert insert-instance_method
@@ -318,7 +323,7 @@ module Mongo
       doc_or_docs = [doc_or_docs] unless doc_or_docs.is_a?(Array)
       doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
       safe = opts.fetch(:safe, @safe)
-      result = insert_documents(doc_or_docs, @name, true, safe)
+      result = insert_documents(doc_or_docs, @name, true, safe, opts)
       result.size > 1 ? result : result.first
     end
     alias_method :<<, :insert
@@ -837,7 +842,7 @@ module Mongo
     end
 
     private
-  
+
     def index_name(spec)
       field_spec = parse_index_spec(spec)
       index_information.each do |index|
@@ -892,9 +897,13 @@ module Mongo
     # Sends a Mongo::Constants::OP_INSERT message to the database.
     # Takes an array of +documents+, an optional +collection_name+, and a
     # +check_keys+ setting.
-    def insert_documents(documents, collection_name=@name, check_keys=true, safe=false)
-      # Initial byte is 0.
-      message = BSON::ByteBuffer.new("\0\0\0\0")
+    def insert_documents(documents, collection_name=@name, check_keys=true, safe=false, flags={})
+      if flags[:continue_on_error]
+        message = BSON::ByteBuffer.new
+        message.put_int(1)
+      else
+        message = BSON::ByteBuffer.new("\0\0\0\0")
+      end
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{collection_name}")
       documents.each do |doc|
         message.put_binary(BSON::BSON_CODER.serialize(doc, check_keys, true, @connection.max_bson_size).to_s)
