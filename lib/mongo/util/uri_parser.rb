@@ -130,9 +130,9 @@ module Mongo
 
         if uname && pwd && db
           auths << {'db_name' => db, 'username' => uname, 'password' => pwd}
-        elsif uname || pwd || db
-          raise MongoArgumentError, "MongoDB URI must include all three of username, password, " +
-            "and db if any one of these is specified."
+        elsif uname || pwd
+          raise MongoArgumentError, "MongoDB URI must include username, password, " +
+            "and db if username or password are specified."
         end
 
         @nodes << [host, port]
