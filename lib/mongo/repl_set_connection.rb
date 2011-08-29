@@ -112,7 +112,14 @@ module Mongo
       @refresh_interval = opts[:refresh_interval] || 90
 
       # Are we allowing reads from secondaries?
-      @read_secondary = opts.fetch(:read_secondary, false)
+      if opts[:read_secondary]
+        warn ":read_secondary options has now been deprecated and will " +
+          "be removed in driver v2.0. Use the :read option instead."
+        @read_secondary = opts.fetch(:read_secondary, false)
+        @read = :secondary
+      else
+        @read = opts.fetch(:read, :primary)
+      end
 
       # Lock around changes to the global config
       @connection_lock = Mutex.new
@@ -120,6 +127,10 @@ module Mongo
 
       # Store the refresher thread
       @refresh_thread = nil
+
+      # Maps
+      @sockets_to_pools = {}
+      @tags_to_pools = {}
 
       # Replica set name
       if opts[:rs_name]
@@ -226,6 +237,10 @@ module Mongo
     end
     alias :primary? :read_primary?
 
+    def read_preference
+      @read
+    end
+
     # Close the connection to the database.
     def close
       super
@@ -254,6 +269,8 @@ module Mongo
       @secondaries     = []
       @secondary_pools = []
       @arbiters        = []
+      @tags_to_pools.clear
+      @sockets_to_pools.clear
     end
 
     # If a ConnectionFailure is raised, this method will be called
@@ -265,11 +282,15 @@ module Mongo
         "Use ReplSetConnection#close instead."
     end
 
-    # Is it okay to connect to a slave?
+    # Returns +true+ if it's okay to read from a secondary node.
+    # Since this is a replica set, this must always be true.
     #
-    # @return [Boolean]
+    # This method exist primarily so that Cursor objects will
+    # generate query messages with a slaveOkay value of +true+.
+    #
+    # @return [Boolean] +true+
     def slave_ok?
-      @read_secondary
+      true
     end
 
     def authenticate_pools
@@ -299,25 +320,29 @@ module Mongo
 
     # Checkout a socket for reading (i.e., a secondary node).
     # Note that @read_pool might point to the primary pool
-    # if no read pool has been defined. That's okay; we don't
-    # want to have to check for the existence of the @read_pool
-    # because that introduces concurrency issues.
+    # if no read pool has been defined.
     def checkout_reader
       connect unless connected?
 
-      if @read_secondary && @read_pool
-        begin
-          return @read_pool.checkout
-        rescue NoMethodError
-          warn "Read pool was not available."
+      socket = @read_pool.checkout
+      @sockets_to_pools[socket] = @read_pool
+      return socket
+    end
+
+    # Checkout a socket connected to a node with one of
+    # the provided tags. If no such node exists, raise
+    # an exception.
+    def checkout_tagged(tags)
+      tags.each do |k, v|
+        if pool = @tags_to_pools[{k.to_s => v}]
+          socket = pool.checkout
+          @sockets_to_pools[socket] = pool
+          return socket
         end
       end
 
-      begin
-        return @primary_pool.checkout
-      rescue NoMethodError
-        raise ConnectionFailure, "Not connected to any nodes."
-      end
+      raise NodeWithTagsNotFound,
+        "Could not find a connection tagged with #{tags}."
     end
 
     # Checkout a socket for writing (i.e., a primary node).
@@ -326,7 +351,9 @@ module Mongo
 
       if @primary_pool
         begin
-          return @primary_pool.checkout
+          socket = @primary_pool.checkout
+          @sockets_to_pools[socket] = @primary
+          return socket
         rescue NoMethodError
         end
       end
@@ -336,17 +363,21 @@ module Mongo
 
     # Checkin a socket used for reading.
     def checkin_reader(socket)
-      if @read_secondary
-        @read_pool.checkin(socket)
-      else
-        checkin_writer(socket)
-      end
+      warn "ReplSetConnection#checkin_writer is not deprecated and will be remove " +
+        "in driver v2.0. Use ReplSetConnection#checkin instead."
+      checkin(socket)
     end
 
     # Checkin a socket used for writing.
     def checkin_writer(socket)
-      if @primary_pool
-        @primary_pool.checkin(socket)
+      warn "ReplSetConnection#checkin_writer is not deprecated and will be remove " +
+        "in driver v2.0. Use ReplSetConnection#checkin instead."
+      checkin(socket)
+    end
+
+    def checkin(socket)
+      if pool = @sockets_to_pools[socket]
+        pool.checkin(socket)
       end
     end
   end

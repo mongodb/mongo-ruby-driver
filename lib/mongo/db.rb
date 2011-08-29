@@ -82,6 +82,8 @@ module Mongo
       @strict     = opts[:strict]
       @pk_factory = opts[:pk]
       @safe       = opts.fetch(:safe, @connection.safe)
+      read = opts.fetch(:read, @connection.read_preference)
+      @read_preference = read.is_a?(Hash) ? read.dup : read
       @cache_time = opts[:cache_time] || 300 #5 minutes.
     end
 
@@ -607,6 +609,13 @@ module Mongo
         raise MongoDBError, "Error: invalid collection #{name}: #{doc.inspect}"
       end
       doc
+    end
+
+    # The value of the read preference. This will be
+    # either +:primary+, +:secondary+, or an object
+    # representing the tags to be read from.
+    def read_preference
+      @read_preference
     end
 
     private

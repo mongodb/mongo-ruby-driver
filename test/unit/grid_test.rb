@@ -6,6 +6,7 @@ class GridTest < Test::Unit::TestCase
     setup do
       @conn   = stub()
       @conn.stubs(:safe)
+      @conn.stubs(:read_preference)
       @db     = DB.new("testing", @conn)
       @files  = mock()
       @chunks = mock()
@@ -13,6 +14,7 @@ class GridTest < Test::Unit::TestCase
       @db.expects(:[]).with('fs.files').returns(@files)
       @db.expects(:[]).with('fs.chunks').returns(@chunks)
       @db.stubs(:safe)
+      @db.stubs(:read_preference)
     end
 
     context "Grid classe with standard connections" do

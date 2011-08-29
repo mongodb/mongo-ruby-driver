@@ -84,6 +84,8 @@ module Mongo
       unless pk_factory
         @safe = opts.fetch(:safe, @db.safe)
       end
+      read = opts.fetch(:read, @db.read_preference)
+      @read_preference = read.is_a?(Hash) ? read.dup : read
       @pk_factory = pk_factory || opts[:pk] || BSON::ObjectId
       @hint = nil
     end
@@ -200,6 +202,7 @@ module Mongo
       return_key = opts.delete(:return_key)
       transformer = opts.delete(:transformer)
       show_disk_loc = opts.delete(:max_scan)
+      read          = opts.delete(:read) || @read_preference
 
       if timeout == false && !block_given?
         raise ArgumentError, "Collection#find must be invoked with a block when timeout is disabled."
@@ -214,19 +217,20 @@ module Mongo
       raise RuntimeError, "Unknown options [#{opts.inspect}]" unless opts.empty?
 
       cursor = Cursor.new(self, {
-        :selector    => selector, 
-        :fields      => fields, 
-        :skip        => skip, 
+        :selector    => selector,
+        :fields      => fields,
+        :skip        => skip,
         :limit       => limit,
-        :order       => sort, 
-        :hint        => hint, 
-        :snapshot    => snapshot, 
-        :timeout     => timeout, 
+        :order       => sort,
+        :hint        => hint,
+        :snapshot    => snapshot,
+        :timeout     => timeout,
         :batch_size  => batch_size,
         :transformer => transformer,
         :max_scan    => max_scan,
         :show_disk_loc => show_disk_loc,
-        :return_key    => return_key
+        :return_key    => return_key,
+        :read          => read
       })
 
       if block_given?
@@ -679,6 +683,13 @@ module Mongo
       else
         raise OperationFailure, "group command failed: #{result['errmsg']}"
       end
+    end
+
+    # The value of the read preference. This will be
+    # either +:primary+, +:secondary+, or an object
+    # representing the tags to be read from.
+    def read_preference
+      @read_preference
     end
 
     private

@@ -48,6 +48,9 @@ module Mongo
   # Raised on failures in connection to the database server.
   class ConnectionTimeoutError < MongoRubyError; end
 
+  # Raised when no tags in a read preference maps to a given connection.
+  class NodeWithTagsNotFound < MongoRubyError; end
+
   # Raised when a connection operation fails.
   class ConnectionFailure < MongoDBError; end
 

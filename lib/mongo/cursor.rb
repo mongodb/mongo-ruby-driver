@@ -70,6 +70,8 @@ module Mongo
       @query_run    = false
 
       @transformer = opts[:transformer]
+      read         = opts[:read] || collection.read_preference
+      @read_preference = read.is_a?(Hash) ? read.dup : read
       batch_size(opts[:batch_size] || 0)
 
       @full_collection_name = "#{@collection.db.name}.#{@collection.name}"
@@ -448,7 +450,7 @@ module Mongo
       message.put_long(@cursor_id)
       @logger.debug("MONGODB cursor.refresh() for cursor #{@cursor_id}") if @logger
       results, @n_received, @cursor_id = @connection.receive_message(
-          Mongo::Constants::OP_GET_MORE, message, nil, @socket, @command)
+          Mongo::Constants::OP_GET_MORE, message, nil, @socket, @command, @read_preference)
       @returned += @n_received
       @cache += results
       close_cursor_if_query_complete
@@ -464,7 +466,7 @@ module Mongo
         message = construct_query_message
         @connection.instrument(:find, instrument_payload) do
           results, @n_received, @cursor_id = @connection.receive_message(
-            Mongo::Constants::OP_QUERY, message, nil, @socket, @command)
+            Mongo::Constants::OP_QUERY, message, nil, @socket, @command, @read_preference)
           @returned += @n_received
           @cache += results
           @query_run = true

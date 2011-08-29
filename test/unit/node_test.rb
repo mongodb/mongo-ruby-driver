@@ -65,7 +65,7 @@ class NodeTest < Test::Unit::TestCase
       Node.new(@connection, ['192.168.0.1', Connection::DEFAULT_PORT])
   end
 
-  should "two nodes with the same address should have the same hash" do
+  should "two nodes with the same address should have the same hash negate" do
     assert_not_equal Node.new(@connection, '192.168.0.1').hash,
       Node.new(@connection, '1239.33.4.2393:29949').hash
   end

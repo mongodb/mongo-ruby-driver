@@ -310,7 +310,7 @@ module Mongo
     #
     # @core databases []-instance_method
     def [](db_name)
-      DB.new(db_name, self, :safe => @safe)
+      DB.new(db_name, self)
     end
 
     # Drop a database.
@@ -410,11 +410,7 @@ module Mongo
 
         send_message_on_socket(packed_message, socket)
       ensure
-        if connection == :writer
-          checkin_writer(socket)
-        else
-          checkin_reader(socket)
-        end
+        checkin(socket)
       end
     end
 
@@ -446,7 +442,7 @@ module Mongo
           docs, num_received, cursor_id = receive(sock, last_error_id)
         end
       ensure
-        checkin_writer(sock)
+        checkin(sock)
       end
 
       if num_received == 1 && (error = docs[0]['err'] || docs[0]['errmsg'])
@@ -470,16 +466,24 @@ module Mongo
     # @return [Array]
     #   An array whose indexes include [0] documents returned, [1] number of document received,
     #   and [3] a cursor_id.
-    def receive_message(operation, message, log_message=nil, socket=nil, command=false)
+    def receive_message(operation, message, log_message=nil, socket=nil, command=false, read=:primary)
       request_id = add_message_headers(message, operation)
       packed_message = message.to_s
       begin
         if socket
           sock = socket
-          checkin = false
+          should_checkin = false
         else
-          sock = (command ? checkout_writer : checkout_reader)
-          checkin = true
+          if command
+            sock = checkout_writer
+          elsif read == :primary
+            sock = checkout_writer
+          elsif read == :secondary
+            sock = checkout_reader
+          else
+            sock = checkout_tagged(read)
+          end
+          should_checkin = true
         end
 
         result = ''
@@ -488,8 +492,8 @@ module Mongo
           result = receive(sock, request_id)
         end
       ensure
-        if checkin
-          command ? checkin_writer(sock) : checkin_reader(sock)
+        if should_checkin
+          checkin(sock)
         end
       end
       result
@@ -559,6 +563,14 @@ module Mongo
     end
     alias :primary? :read_primary?
 
+    # The value of the read preference. Because
+    # this is a single-node connection, the value
+    # is +:primary+, and the connection will read
+    # from whichever type of node it's connected to.
+    def read_preference
+      :primary
+    end
+
     # Close the connection to the database.
     def close
       @primary_pool.close if @primary_pool
@@ -591,14 +603,21 @@ module Mongo
     # Checkin a socket used for reading.
     # Note: this is overridden in ReplSetConnection.
     def checkin_reader(socket)
-      if @primary_pool
-        @primary_pool.checkin(socket)
-      end
+      warn "Connection#checkin_writer is not deprecated and will be remove " +
+        "in driver v2.0. Use Connection#checkin instead."
+      checkin(socket)
     end
 
     # Checkin a socket used for writing.
     # Note: this is overridden in ReplSetConnection.
     def checkin_writer(socket)
+      warn "Connection#checkin_writer is not deprecated and will be remove " +
+        "in driver v2.0. Use Connection#checkin instead."
+      checkin(socket)
+    end
+
+    # Check a socket back into its pool.
+    def checkin(socket)
       if @primary_pool
         @primary_pool.checkin(socket)
       end
@@ -671,7 +690,7 @@ module Mongo
       # Global safe option. This is false by default.
       @safe = opts[:safe] || false
 
-      # Create a mutex when a new key, in this case a socket,
+            # Create a mutex when a new key, in this case a socket,
       # is added to the hash.
       @safe_mutexes = Hash.new { |h, k| h[k] = Mutex.new }
 
