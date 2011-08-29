@@ -269,7 +269,8 @@ module Mongo
     #
     # @return [Mongo::Collection]
     def create_collection(name, opts={})
-      if collection_names.include?(name.to_s)
+      name = name.to_s
+      if collection_names.include?(name)
         if strict?
           raise MongoDBError, "Collection #{name} already exists. " +
             "Currently in strict mode."
