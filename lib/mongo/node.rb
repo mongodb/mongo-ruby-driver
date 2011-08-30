@@ -158,7 +158,7 @@ module Mongo
       if !config['hosts']
         message = "Will not connect to #{host_string} because it's not a member " +
           "of a replica set."
-        raise ReplicaSetConnectionError, message
+        raise ConnectionFailure, message
       end
     end
 
@@ -171,7 +171,7 @@ module Mongo
         elsif self.connection.replica_set_name != config['setName']
           message = "Attempting to connect to replica set '#{config['setName']}' on member #{host_string} " +
             "but expected '#{self.connection.replica_set_name}'"
-          raise ReplicaSetConnectionError, message
+          raise ConnectionFailure, message
         end
       end
     end

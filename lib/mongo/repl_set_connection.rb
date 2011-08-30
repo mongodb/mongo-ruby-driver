@@ -354,7 +354,7 @@ module Mongo
       if @primary_pool
         begin
           socket = @primary_pool.checkout
-          @sockets_to_pools[socket] = @primary
+          @sockets_to_pools[socket] = @primary_pool
           return socket
         rescue NoMethodError
         end

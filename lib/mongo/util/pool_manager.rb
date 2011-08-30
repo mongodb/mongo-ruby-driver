@@ -94,6 +94,7 @@ module Mongo
       @read_pool = manager.read_pool
       @arbiters = manager.arbiters
       @hosts = manager.hosts
+      @tags_to_pools = {}
     end
 
     def initialize_data
