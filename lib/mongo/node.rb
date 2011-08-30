@@ -12,6 +12,7 @@ module Mongo
         self.port = data[1].nil? ? Connection::DEFAULT_PORT : data[1].to_i
       end
       self.address = "#{host}:#{port}"
+      self.config = nil
     end
 
     def eql?(other)
@@ -98,7 +99,7 @@ module Mongo
     # Note: this excludes arbiters.
     def node_list
       connect unless connected?
-      set_config
+      set_config unless self.config
 
       return [] unless config
 
@@ -110,11 +111,20 @@ module Mongo
 
     def arbiters
       connect unless connected?
+      set_config unless self.config
       return [] unless config['arbiters']
 
       config['arbiters'].map do |arbiter|
         split_nodes(arbiter)
       end
+    end
+
+    def tags
+      connect unless connected?
+      set_config unless self.config
+      return {} unless config['tags'] && !config['tags'].empty?
+
+      config['tags']
     end
 
     def primary?

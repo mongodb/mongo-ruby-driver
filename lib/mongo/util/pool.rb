@@ -47,6 +47,8 @@ module Mongo
       @sockets      = []
       @pids         = {}
       @checked_out  = []
+      @ping_time    = nil
+      @last_ping    = nil
     end
 
     def close
@@ -71,9 +73,23 @@ module Mongo
       [@host, @port]
     end
 
+    # Refresh ping time only if we haven't
+    # checked within the last five minutes.
+    def ping_time
+      if !@last_ping
+        @last_ping = Time.now
+        @ping_time = refresh_ping_time
+      elsif Time.now - @last_ping > 300
+        @last_ping = Time.now
+        @ping_time = refresh_ping_time
+      else
+        @ping_time
+      end
+    end
+
     # Return the time it takes on average
     # to do a round-trip against this node.
-    def ping_time
+    def refresh_ping_time
       trials = []
       begin
          PING_ATTEMPTS.times do
@@ -86,13 +102,15 @@ module Mongo
       end
 
       trials.sort!
+
+      # Delete shortest and longest times
       trials.delete_at(trials.length-1)
       trials.delete_at(0)
 
       total = 0.0
       trials.each { |t| total += t }
 
-      (total / trials.length).floor
+      (total / trials.length).ceil
     end
 
     # Return a socket to the pool.

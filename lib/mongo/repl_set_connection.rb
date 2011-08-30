@@ -21,7 +21,7 @@ module Mongo
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
     attr_reader :nodes, :secondaries, :arbiters, :secondary_pools,
-      :replica_set_name, :read_pool, :seeds
+      :replica_set_name, :read_pool, :seeds, :tags_to_pools
 
     # Create a connection to a MongoDB replica set.
     #
@@ -172,6 +172,7 @@ module Mongo
       @primary_pool = manager.primary_pool
       @read_pool    = manager.read_pool
       @secondary_pools = manager.secondary_pools
+      @tags_to_pools   = manager.tags_to_pools
       @seeds = manager.seeds
       @manager = manager
       @hosts = manager.hosts
@@ -334,9 +335,10 @@ module Mongo
     # an exception.
     def checkout_tagged(tags)
       tags.each do |k, v|
-        if pool = @tags_to_pools[{k.to_s => v}]
-          socket = pool.checkout
-          @sockets_to_pools[socket] = pool
+        pools = @tags_to_pools[{k => v}]
+        if !pools.empty?
+          socket = pools.first.checkout
+          @sockets_to_pools[socket] = pools.first
           return socket
         end
       end

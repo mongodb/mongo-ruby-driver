@@ -10,7 +10,7 @@ end
 
 class ReplSetManager
 
-  attr_accessor :host, :start_port, :ports, :name, :mongods
+  attr_accessor :host, :start_port, :ports, :name, :mongods, :tags, :version
 
   def initialize(opts={})
     @start_port = opts[:start_port] || 30000
@@ -21,6 +21,10 @@ class ReplSetManager
     @config     = {"_id" => @name, "members" => []}
     @durable    = opts.fetch(:durable, false)
     @path       = File.join(File.expand_path(File.dirname(__FILE__)), "data")
+    @oplog_size = opts.fetch(:oplog_size, 512)
+    @tags = [{"dc" => "ny", "rack" => "a", "db" => "main"},
+             {"dc" => "ny", "rack" => "b", "db" => "main"},
+             {"dc" => "sf", "rack" => "a", "db" => "main"}]
 
     @arbiter_count   = opts[:arbiter_count]   || 2
     @secondary_count = opts[:secondary_count] || 2
@@ -33,6 +37,9 @@ class ReplSetManager
     end
 
     @mongods   = {}
+    version_string = `mongod --version`
+    version_string =~ /(\d\.\d\.\d)/
+    @version = $1.split(".").map {|d| d.to_i }
   end
 
   def start_set
@@ -42,7 +49,11 @@ class ReplSetManager
 
     n = 0
     (@primary_count + @secondary_count).times do
-      init_node(n)
+      init_node(n) do |attrs|
+        if @version[0] >= 2
+          attrs['tags'] = @tags[n % @tags.size]
+        end
+      end
       n += 1
     end
 
@@ -96,9 +107,21 @@ class ReplSetManager
     @config['members'] << member
   end
 
+  def journal_switch
+    if @version[0] >= 2
+      if @durable
+        "--journal"
+      else
+        "--nojournal"
+      end
+    elsif @durable
+      "--journal"
+    end
+  end
+
   def start_cmd(n)
     @mongods[n]['start'] = "mongod --replSet #{@name} --logpath '#{@mongods[n]['log_path']}' " +
-     " --dbpath #{@mongods[n]['db_path']} --port #{@mongods[n]['port']} --fork"
+     "--oplogSize #{@oplog_size} #{journal_switch} --dbpath #{@mongods[n]['db_path']} --port #{@mongods[n]['port']} --fork"
     @mongods[n]['start'] += " --dur" if @durable
     @mongods[n]['start']
   end

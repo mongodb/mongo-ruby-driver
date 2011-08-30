@@ -2,7 +2,8 @@ module Mongo
   class PoolManager
 
     attr_reader :connection, :seeds, :arbiters, :primary, :secondaries,
-      :primary_pool, :read_pool, :secondary_pools, :hosts, :nodes, :max_bson_size
+      :primary_pool, :read_pool, :secondary_pools, :hosts, :nodes, :max_bson_size,
+      :tags_to_pools
 
     def initialize(connection, seeds)
       @connection = connection
@@ -85,8 +86,6 @@ module Mongo
 
     private
 
-    # Note that @arbiters and @read_pool will be
-    # assigned automatically.
     def reference_manager_data(manager)
       @primary = manager.primary
       @primary_pool = manager.primary_pool
@@ -106,6 +105,7 @@ module Mongo
       @secondary_pools = []
       @hosts = []
       @members = []
+      @tags_to_pools = {}
     end
 
     # Connect to each member of the replica set
@@ -130,6 +130,23 @@ module Mongo
       members
     end
 
+    def associate_tags_with_pool(tags, pool)
+      tags.each_key do |key|
+        @tags_to_pools[{key => tags[key]}] ||= []
+        @tags_to_pools[{key => tags[key]}] << pool
+      end
+    end
+
+    # Sort each tag pool entry in descending order
+    # according to ping time.
+    def sort_tag_pools!
+      @tags_to_pools.each_value do |pool_list|
+        pool_list.sort! do |a, b|
+          a.ping_time <=> b.ping_time
+        end
+      end
+    end
+
     # Initialize the connection pools for the primary and secondary nodes.
     def initialize_pools(members)
       members.each do |member|
@@ -141,15 +158,19 @@ module Mongo
                                   :size => self.connection.pool_size,
                                   :timeout => self.connection.connect_timeout,
                                   :node => member)
+          associate_tags_with_pool(member.tags, @primary_pool)
         elsif member.secondary? && !@secondaries.include?(member.host_port)
           @secondaries << member.host_port
-          @secondary_pools << Pool.new(self.connection, member.host, member.port,
+          pool = Pool.new(self.connection, member.host, member.port,
                                        :size => self.connection.pool_size,
                                        :timeout => self.connection.connect_timeout,
                                        :node => member)
+          @secondary_pools << pool
+          associate_tags_with_pool(member.tags, pool)
         end
       end
 
+      sort_tag_pools!
       @max_bson_size = members.first.config['maxBsonObjectSize'] ||
         Mongo::DEFAULT_MAX_BSON_SIZE
       @arbiters = members.first.arbiters
