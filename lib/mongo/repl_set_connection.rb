@@ -108,7 +108,7 @@ module Mongo
       @arbiters = []
 
       # Refresh
-      @auto_refresh = opts.fetch(:auto_refresh, true)
+      @auto_refresh = opts.fetch(:auto_refresh, false)
       @refresh_interval = opts[:refresh_interval] || 90
 
       # Are we allowing reads from secondaries?
