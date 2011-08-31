@@ -69,7 +69,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     assert_equal 2, @conn.secondary_pools.length
 
     RS.remove_secondary_node
-    sleep(3)
+    sleep(4)
 
     assert_equal 1, @conn.secondaries.length
     assert_equal 1, @conn.secondary_pools.length
