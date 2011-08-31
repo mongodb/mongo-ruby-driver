@@ -86,7 +86,7 @@ module Mongo
 
         check_set_membership(config)
         check_set_name(config)
-      rescue ReplicaSetConnectionError, OperationFailure, SocketError, SystemCallError, IOError => ex
+      rescue ConnectionFailure, OperationFailure, SocketError, SystemCallError, IOError => ex
         self.connection.log(:warn, "Attempted connection to node #{host_string} raised " +
                             "#{ex.class}: #{ex.message}")
         return nil
@@ -158,7 +158,7 @@ module Mongo
       if !config['hosts']
         message = "Will not connect to #{host_string} because it's not a member " +
           "of a replica set."
-        raise ReplicaSetConnectionError, message
+        raise ConnectionFailure, message
       end
     end
 

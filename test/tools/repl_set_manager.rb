@@ -132,12 +132,10 @@ class ReplSetManager
     config = con['local']['system.replset'].find_one
     secondary = get_node_with_state(2)
     host_port = "#{@host}:#{@mongods[secondary]['port']}"
+    kill(secondary)
+    @mongods.delete(secondary)
     @config['members'].reject! {|m| m['host'] == host_port}
-
     @config['version'] = config['version'] + 1
-
-    primary = get_node_with_state(1)
-    con = get_connection(primary)
 
     begin
     con['admin'].command({'replSetReconfig' => @config})
@@ -145,12 +143,14 @@ class ReplSetManager
     end
 
     con.close
+
+    return secondary
   end
 
-  def add_node
+  def add_node(n=nil)
     primary = get_node_with_state(1)
     con = get_connection(primary)
-    init_node(@mongods.length)
+    init_node(n || @mongods.length)
 
     config = con['local']['system.replset'].find_one
     @config['version'] = config['version'] + 1

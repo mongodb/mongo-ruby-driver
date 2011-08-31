@@ -2,7 +2,6 @@ $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require './test/replica_sets/rs_test_helper'
 require 'benchmark'
 
-# NOTE: This test expects a replica set of three nodes to be running on RS.host,
 # on ports TEST_PORT, RS.ports[1], and TEST + 2.
 class ReplicaSetRefreshTest < Test::Unit::TestCase
   include Mongo
@@ -10,6 +9,27 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
   def teardown
     RS.restart_killed_nodes
     @conn.close if @conn
+  end
+
+  def test_connect_speed
+    Benchmark.bm do |x|
+      x.report("Connect") do
+        10.times do
+          ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
+            [RS.host, RS.ports[2]], :auto_refresh => false)
+        end
+      end
+
+          @con = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
+            [RS.host, RS.ports[2]], :auto_refresh => false)
+
+      x.report("manager") do
+        man = Mongo::PoolManager.new(@con, @con.seeds)
+        10.times do
+          man.connect
+        end
+      end
+    end
   end
 
   def test_connect_and_manual_refresh_with_secondaries_down
@@ -65,14 +85,36 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
       [RS.host, RS.ports[2]], :refresh_interval => 2, :auto_refresh => true)
 
-    assert_equal 2, @conn.secondaries.length
     assert_equal 2, @conn.secondary_pools.length
+    assert_equal 2, @conn.secondaries.length
 
-    RS.remove_secondary_node
+    n = RS.remove_secondary_node
     sleep(4)
 
     assert_equal 1, @conn.secondaries.length
     assert_equal 1, @conn.secondary_pools.length
+
+    RS.add_node(n)
   end
 
+  def test_adding_and_removing_nodes
+    puts "ADDING AND REMOVING"
+    @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
+      [RS.host, RS.ports[2]], :refresh_interval => 2, :auto_refresh => true)
+
+    RS.add_node
+    sleep(5)
+
+    @conn2 = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
+      [RS.host, RS.ports[2]], :refresh_interval => 2, :auto_refresh => true)
+
+    assert @conn2.secondaries == @conn.secondaries
+    assert_equal 3, @conn.secondary_pools.length
+    assert_equal 3, @conn.secondaries.length
+
+    RS.remove_secondary_node
+    sleep(4)
+    assert_equal 2, @conn.secondary_pools.length
+    assert_equal 2, @conn.secondaries.length
+  end
 end

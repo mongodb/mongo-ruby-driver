@@ -29,7 +29,7 @@ module Mongo
     # If we're connected to nodes that are no longer part of the set,
     # remove these from our set of secondary pools.
     def update_required?(hosts)
-      if !@refresh_node || !@refresh_node.active?
+      if !@refresh_node || !@refresh_node.set_config
         begin
           @refresh_node = get_valid_seed_node
         rescue ConnectionFailure
@@ -37,22 +37,13 @@ module Mongo
           return
         end
       end
-      node = @refresh_node
 
-      node_list = node.node_list
-
-      unconnected_nodes = node_list - hosts
-      removed_nodes = hosts - node_list
-
-      if unconnected_nodes.empty? && removed_nodes.empty?
-        return false
-      else
-        {:unconnected => unconnected_nodes, :removed => removed_nodes}
-      end
+      hosts != @refresh_node.node_list
     end
 
     def update(manager, node_struct)
       reference_manager_data(manager)
+
       unconnected_nodes = node_struct[:unconnected]
       removed_nodes = node_struct[:removed]
 
@@ -104,8 +95,8 @@ module Mongo
       @arbiters = []
       @secondaries = []
       @secondary_pools = []
-      @hosts = []
-      @members = []
+      @hosts = Set.new
+      @members = Set.new
       @tags_to_pools = {}
     end
 

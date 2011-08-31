@@ -20,7 +20,7 @@ class ConnectTest < Test::Unit::TestCase
   def test_connect_bad_name
     assert_raise_error(ReplicaSetConnectionError, "-wrong") do
       @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
-        [RS.host, RS.ports[2]], :rs_name => RS.name + "-wrong")
+        [RS.host, RS.ports[2]], :name => RS.name + "-wrong")
     end
   end
 

@@ -16,12 +16,14 @@
 # limitations under the License.
 # ++
 
+require 'sync'
+
 module Mongo
 
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
     attr_reader :nodes, :secondaries, :arbiters, :secondary_pools,
-      :replica_set_name, :read_pool, :seeds, :tags_to_pools
+      :replica_set_name, :read_pool, :seeds, :tags_to_pools, :refresh_interval
 
     # Create a connection to a MongoDB replica set.
     #
@@ -74,6 +76,8 @@ module Mongo
     # @raise [ReplicaSetConnectionError] This is raised if a replica set name is specified and the
     #   driver fails to connect to a replica set with that name.
     def initialize(*args)
+      extend Sync_m
+
       if args.last.is_a?(Hash)
         opts = args.pop
       else
@@ -87,6 +91,7 @@ module Mongo
       # The list of seed nodes
       @seeds = args
 
+      # TODO: get rid of this
       @nodes = @seeds.dup
 
       # The members of the replica set, stored as instances of Mongo::Node.
@@ -121,8 +126,6 @@ module Mongo
         @read = opts.fetch(:read, :primary)
       end
 
-      # Lock around changes to the global config
-      @connection_lock = Mutex.new
       @connected = false
 
       # Store the refresher thread
@@ -146,7 +149,7 @@ module Mongo
 
     # Initiate a connection to the replica set.
     def connect
-      @connection_lock.synchronize do
+      sync_synchronize(:EX) do
         return if @connected
         manager = PoolManager.new(self, @seeds)
         manager.connect
@@ -163,11 +166,12 @@ module Mongo
     end
 
     # Note: this method must be called from within
-    # a locked @connection_lock
+    # an exclusive lock.
     def update_config(manager)
       @arbiters = manager.arbiters.nil? ? [] : manager.arbiters.dup
       @primary = manager.primary.nil? ? nil : manager.primary.dup
       @secondaries = manager.secondaries.dup
+      @hosts = manager.hosts.dup
 
       @primary_pool = manager.primary_pool
       @read_pool    = manager.read_pool
@@ -175,7 +179,6 @@ module Mongo
       @tags_to_pools   = manager.tags_to_pools
       @seeds = manager.seeds
       @manager = manager
-      @hosts = manager.hosts
       @nodes = manager.nodes
       @max_bson_size = manager.max_bson_size
     end
@@ -193,16 +196,18 @@ module Mongo
       end
 
       background_manager = Thread.current[:background]
-      if update_struct = background_manager.update_required?(@hosts)
-        @connection_lock.synchronize do
-          background_manager.update(@manager, update_struct)
+      if background_manager.update_required?(@hosts)
+        sync_synchronize(:EX) do
+          background_manager.connect
           update_config(background_manager)
         end
       end
     end
 
     def connected?
-      @connected && !@connection_lock.locked?
+      sync_synchronize(:SH) do
+        @connected
+      end
     end
 
     # @deprecated
@@ -234,7 +239,9 @@ module Mongo
     #
     # @return [Boolean]
     def read_primary?
-      @read_pool == @primary_pool
+      sync_synchronize(:SH) do
+        @read_pool == @primary_pool
+      end
     end
     alias :primary? :read_primary?
 
@@ -243,10 +250,12 @@ module Mongo
     end
 
     # Close the connection to the database.
+    # TODO: we should get an exclusive lock here.
     def close
+      @connected = false
+
       super
 
-      @connected = false
       if @refresh_thread
         @refresh_thread.kill
         @refresh_thread = nil
@@ -314,8 +323,10 @@ module Mongo
       return unless @auto_refresh
       return if @refresh_thread && @refresh_thread.alive?
       @refresh_thread = Thread.new do
-        sleep(@refresh_interval)
-        refresh
+        while true do
+          sleep(@refresh_interval)
+          refresh
+        end
       end
     end
 
@@ -325,21 +336,25 @@ module Mongo
     def checkout_reader
       connect unless connected?
 
-      socket = @read_pool.checkout
-      @sockets_to_pools[socket] = @read_pool
-      return socket
+      sync_synchronize(:SH) do
+        socket = @read_pool.checkout
+        @sockets_to_pools[socket] = @read_pool
+        socket
+      end
     end
 
     # Checkout a socket connected to a node with one of
     # the provided tags. If no such node exists, raise
     # an exception.
     def checkout_tagged(tags)
-      tags.each do |k, v|
-        pools = @tags_to_pools[{k => v}]
-        if !pools.empty?
-          socket = pools.first.checkout
-          @sockets_to_pools[socket] = pools.first
-          return socket
+      sync_synchronize(:SH) do
+        tags.each do |k, v|
+          pools = @tags_to_pools[{k => v}]
+          if !pools.empty?
+            socket = pools.first.checkout
+            @sockets_to_pools[socket] = pools.first
+            socket
+          end
         end
       end
 
@@ -351,16 +366,13 @@ module Mongo
     def checkout_writer
       connect unless connected?
 
-      if @primary_pool
-        begin
+      sync_synchronize(:SH) do
+        if @primary_pool
           socket = @primary_pool.checkout
           @sockets_to_pools[socket] = @primary_pool
-          return socket
-        rescue NoMethodError
+          socket
         end
       end
-
-      raise ConnectionFailure, "Failed to connect to primary node."
     end
 
     # Checkin a socket used for reading.
