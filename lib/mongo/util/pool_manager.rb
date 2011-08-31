@@ -41,52 +41,7 @@ module Mongo
       hosts != @refresh_node.node_list
     end
 
-    def update(manager, node_struct)
-      reference_manager_data(manager)
-
-      unconnected_nodes = node_struct[:unconnected]
-      removed_nodes = node_struct[:removed]
-
-      if !removed_nodes.empty?
-        removed_nodes.each do |node|
-          if @primary_pool && @primary_pool.host_string == node
-            @primary = nil
-            @primary_pool.close
-            @primary_pool = nil
-          elsif rejected_pool = @secondary_pools.detect {|pool| pool.host_string == node}
-            @secondary_pools.delete(rejected_pool)
-            @secondaries.delete(rejected_pool.host_port)
-          end
-        end
-      end
-
-      if !unconnected_nodes.empty?
-        nodes = []
-        unconnected_nodes.each do |host_port|
-          node = Mongo::Node.new(self.connection, host_port)
-          if node.connect && node.set_config
-            nodes << node
-          end
-        end
-
-        if !nodes.empty?
-          initialize_pools(nodes)
-        end
-      end
-    end
-
     private
-
-    def reference_manager_data(manager)
-      @primary = manager.primary
-      @primary_pool = manager.primary_pool
-      @secondaries = manager.secondaries
-      @secondary_pools = manager.secondary_pools
-      @read_pool = manager.read_pool
-      @arbiters = manager.arbiters
-      @hosts = manager.hosts
-      @tags_to_pools = {}
-    end
 
     def initialize_data
       @primary = nil
