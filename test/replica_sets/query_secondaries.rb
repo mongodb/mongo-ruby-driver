@@ -7,7 +7,7 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @conn = ReplSetConnection.new([RS.host, RS.ports[0]], :read_secondary => true)
+    @conn = ReplSetConnection.new([RS.host, RS.ports[0]], :read => :secondary)
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
   end

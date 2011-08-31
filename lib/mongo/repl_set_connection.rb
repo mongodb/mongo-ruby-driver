@@ -349,11 +349,11 @@ module Mongo
     def checkout_tagged(tags)
       sync_synchronize(:SH) do
         tags.each do |k, v|
-          pools = @tags_to_pools[{k => v}]
-          if !pools.empty?
-            socket = pools.first.checkout
-            @sockets_to_pools[socket] = pools.first
-            socket
+          pool = @tags_to_pools[{k.to_s => v}]
+          if pool
+            socket = pool.checkout
+            @sockets_to_pools[socket] = pool
+            return socket
           end
         end
       end

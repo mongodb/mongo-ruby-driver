@@ -84,16 +84,6 @@ module Mongo
       end
     end
 
-    # Sort each tag pool entry in descending order
-    # according to ping time.
-    def sort_tag_pools!
-      @tags_to_pools.each_value do |pool_list|
-        pool_list.sort! do |a, b|
-          a.ping_time <=> b.ping_time
-        end
-      end
-    end
-
     # Initialize the connection pools for the primary and secondary nodes.
     def initialize_pools(members)
       members.each do |member|
@@ -117,24 +107,43 @@ module Mongo
         end
       end
 
-      sort_tag_pools!
+
       @max_bson_size = members.first.config['maxBsonObjectSize'] ||
         Mongo::DEFAULT_MAX_BSON_SIZE
       @arbiters = members.first.arbiters
-      choose_read_pool
+
+      set_read_pool
+      set_primary_tag_pools
+    end
+
+    # If there's more than one pool associated with
+    # a given tag, choose a close one using the bucket method.
+    def set_primary_tag_pools
+      @tags_to_pools.each do |k, pool_list|
+        if pool_list.length == 1
+          @tags_to_pools[k] = pool_list.first
+        else
+          @tags_to_pools[k] = nearby_pool_from_set(pool_list)
+        end
+      end
     end
 
     # Pick a node from the set of possible secondaries.
     # If more than one node is available, use the ping
     # time to figure out which nodes to choose from.
-    def choose_read_pool
+    def set_read_pool
       if @secondary_pools.empty?
-        @read_pool = @primary_pool
+         @read_pool = @primary_pool
       elsif @secondary_pools.size == 1
-        @read_pool = @secondary_pools[0]
+         @read_pool = @secondary_pools[0]
       else
-        ping_ranges = Array.new(3) { |i| Array.new }
-        @secondary_pools.each do |pool|
+        @read_pool = nearby_pool_from_set(@secondary_pools)
+      end
+    end
+
+    def nearby_pool_from_set(pool_set)
+      ping_ranges = Array.new(3) { |i| Array.new }
+        pool_set.each do |pool|
           case pool.ping_time
             when 0..150
               ping_ranges[0] << pool
@@ -149,8 +158,7 @@ module Mongo
           break if !list.empty?
         end
 
-        @read_pool = list[rand(list.length)]
-      end
+      list[rand(list.length)]
     end
 
     # Iterate through the list of provided seed
