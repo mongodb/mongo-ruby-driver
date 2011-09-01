@@ -1,7 +1,7 @@
 module Mongo
   class Node
 
-    attr_accessor :host, :port, :address, :config, :repl_set_status, :connection, :socket
+    attr_accessor :host, :port, :address, :config, :connection, :socket
 
     def initialize(connection, data)
       self.connection = connection
@@ -21,7 +21,11 @@ module Mongo
     alias :== :eql?
 
     def host_string
-      "#{@host}:#{@port}"
+      address
+    end
+
+    def inspect
+      "<Mongo::Node:0x#{self.object_id.to_s(16)} @host=#{@host} @port=#{@port}>"
     end
 
     # Create a connection to the provided node,

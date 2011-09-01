@@ -147,6 +147,11 @@ module Mongo
       setup(opts)
     end
 
+    def inspect
+      "<Mongo::ReplSetConnection:0x#{self.object_id.to_s(16)} @seeds=#{@seeds} " +
+        "@connected=#{@connected}>"
+    end
+
     # Initiate a connection to the replica set.
     def connect
       sync_synchronize(:EX) do

@@ -11,6 +11,10 @@ module Mongo
       @refresh_node = nil
     end
 
+    def inspect
+      "<Mongo::PoolManager:0x#{self.object_id.to_s(16)} @seeds=#{@seeds}>"
+    end
+
     def connect
       initialize_data
       members = connect_to_members
