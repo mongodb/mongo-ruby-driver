@@ -68,7 +68,7 @@ module BSON
     #   succeeding the timestamp will be zeroed; if true, they'll
     #   consist of the standard machine id, pid, and counter.
     #
-    # @return [Mongo::ObjectId]
+    # @return [BSON::ObjectId]
     #
     # @example Return all document created before Jan 1, 2010.
     #   time = Time.utc(2010, 1, 1)
@@ -87,7 +87,7 @@ module BSON
     #
     # @param [Hash] doc a document requiring an _id.
     #
-    # @return [Mongo::ObjectId, Object] returns a newly-created or 
+    # @return [BSON::ObjectId, Object] returns a newly-created or 
     #   current _id for the given document.
     def self.create_pk(doc)
       doc.has_key?(:_id) || doc.has_key?('_id') ? doc : doc.merge!(:_id => self.new)
@@ -121,7 +121,7 @@ module BSON
     #
     # @param [String] str
     #
-    # @return [Mongo::ObjectId]
+    # @return [BSON::ObjectId]
     def self.from_string(str)
       raise InvalidObjectId, "illegal ObjectId format: #{str}" unless legal?(str)
       data = []

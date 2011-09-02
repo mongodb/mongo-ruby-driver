@@ -63,7 +63,7 @@ module Mongo
     # @option opts [Boolean] :strict (False) If true, collections must exist to be accessed and must
     #   not exist to be created. See DB#collection and DB#create_collection.
     #
-    # @option opts [Object, #create_pk(doc)] :pk (Mongo::ObjectId) A primary key factory object,
+    # @option opts [Object, #create_pk(doc)] :pk (BSON::ObjectId) A primary key factory object,
     #   which should take a hash and return a hash which merges the original hash with any primary key
     #   fields the factory wishes to inject. (NOTE: if the object already has a primary key,
     #   the factory should not inject a new key).

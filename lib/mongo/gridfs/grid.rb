@@ -63,7 +63,7 @@ module Mongo
     # @option opts [Boolean] :safe (false) When safe mode is enabled, the chunks sent to the server
     #   will be validated using an md5 hash. If validation fails, an exception will be raised.
     #
-    # @return [Mongo::ObjectId] the file's id.
+    # @return [BSON::ObjectId] the file's id.
     def put(data, opts={})
       opts     = opts.dup
       filename = opts[:filename]
