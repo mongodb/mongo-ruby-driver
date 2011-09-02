@@ -3,7 +3,7 @@ module Mongo
 
     attr_reader :connection, :seeds, :arbiters, :primary, :secondaries,
       :primary_pool, :read_pool, :secondary_pools, :hosts, :nodes, :max_bson_size,
-      :tags_to_pools
+      :tags_to_pools, :members
 
     def initialize(connection, seeds)
       @connection = connection
