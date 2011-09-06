@@ -7,12 +7,13 @@ This documentation includes other articles of interest, include:
 1. [A tutorial](http://api.mongodb.org/ruby/current/file.TUTORIAL.html).
 2. [Replica Sets in Ruby](http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html).
 3. [Write Concern in Ruby](http://api.mongodb.org/ruby/current/file.WRITE_CONCERN.html).
-4. [Read Preference in Ruby](http://api.mongodb.org/ruby/current/file.READ_PREFERENCE.html).
-5. [GridFS in Ruby](http://api.mongodb.org/ruby/current/file.GridFS.html).
-6. [Frequently Asked Questions](http://api.mongodb.org/ruby/current/file.FAQ.html).
-7. [History](http://api.mongodb.org/ruby/current/file.HISTORY.html).
-8. [Release plan](http://api.mongodb.org/ruby/current/file.RELEASES.html).
-9. [Credits](http://api.mongodb.org/ruby/current/file.CREDITS.html).
+4. [Tailable Cursors in Ruby](http://api.mongodb.org/ruby/current/file.TAILABLE_CURSORS.html).
+5. [Read Preference in Ruby](http://api.mongodb.org/ruby/current/file.READ_PREFERENCE.html).
+6. [GridFS in Ruby](http://api.mongodb.org/ruby/current/file.GridFS.html).
+7. [Frequently Asked Questions](http://api.mongodb.org/ruby/current/file.FAQ.html).
+8. [History](http://api.mongodb.org/ruby/current/file.HISTORY.html).
+9. [Release plan](http://api.mongodb.org/ruby/current/file.RELEASES.html).
+10. [Credits](http://api.mongodb.org/ruby/current/file.CREDITS.html).
 
 Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](http://api.mongodb.org/ruby/current/file.TUTORIAL.html)
 for much more:
