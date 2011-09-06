@@ -48,8 +48,8 @@ UNRELEASED
 
 * Fix the exception message shown when there's an IOError (Mauro Pompilio)
 * Another update to map-reduce docs for v1.8. Note that if you use the new
-  output option {:out => {:inline => true}}, then you must also specify
-  :raw => true.
+  output option `{:out => {:inline => true}}`, then you must also specify
+  `:raw => true`.
 
 ### 1.2.3
 2011-2-22
