@@ -302,8 +302,6 @@ module Mongo
     #   for DB#error.
     #
     # @raise [OperationFailure] when :safe mode fails.
-    #
-    # @see DB#remove for options that can be passed to :safe.
     def save(doc, opts={})
       if doc.has_key?(:_id) || doc.has_key?('_id')
         id = doc[:_id] || doc['_id']
@@ -334,8 +332,6 @@ module Mongo
     #   continue a bulk insert even if one of the documents inserted
     #   triggers a database assertion (as in a duplicate insert, for instance).
     #   MongoDB v2.0+.
-    #
-    # @see DB#remove for options that can be passed to :safe.
     #
     # @core insert insert-instance_method
     def insert(doc_or_docs, opts={})
@@ -371,8 +367,6 @@ module Mongo
     #
     # @raise [Mongo::OperationFailure] an exception will be raised iff safe mode is enabled
     #   and the operation fails.
-    #
-    # @see DB#remove for options that can be passed to :safe.
     #
     # @core remove remove-instance_method
     def remove(selector={}, opts={})
