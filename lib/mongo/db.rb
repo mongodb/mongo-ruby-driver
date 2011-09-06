@@ -123,13 +123,14 @@ module Mongo
       auth['user'] = username
       auth['nonce'] = nonce
       auth['key'] = Mongo::Support.auth_key(username, password, nonce)
-      if ok?(self.command(auth, :check_response => false, :socket => opts[:socket]))
+      if ok?(doc = self.command(auth, :check_response => false, :socket => opts[:socket]))
         if save_auth
           @connection.add_auth(@name, username, password)
         end
         true
       else
-        raise(Mongo::AuthenticationError, "Failed to authenticate user '#{username}' on db '#{self.name}'")
+        message = "Failed to authenticate user '#{username}' on db '#{self.name}'"
+        raise Mongo::AuthenticationError.new(message, doc['code'], doc)
       end
     end
 
@@ -506,7 +507,13 @@ module Mongo
       if result.nil?
         raise OperationFailure, "Database command '#{selector.keys.first}' failed: returned null."
       elsif (check_response && !ok?(result))
-        raise OperationFailure, "Database command '#{selector.keys.first}' failed: #{result.inspect}"
+        message = "Database command '#{selector.keys.first}' failed: ("
+        message << result.map do |key, value|
+          "#{key}: '#{value}'"
+        end.join('; ')
+        message << ').'
+        code = result['code'] || result['assertionCode']
+        raise OperationFailure.new(message, code, result)
       else
         result
       end

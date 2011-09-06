@@ -22,7 +22,20 @@ module Mongo
   class MongoRubyError < StandardError; end
 
   # Raised when MongoDB itself has returned an error.
-  class MongoDBError < RuntimeError; end
+  class MongoDBError < RuntimeError
+
+     # @return The entire failed command's response object, if available.
+     attr_reader :result
+
+     # @return The failed command's error code, if availab.e
+     attr_reader :error_code
+
+     def initialize(message=nil, error_code=nil, result=nil)
+       @error_code = error_code
+       @result = result
+       super(message)
+     end
+  end
 
   # Raised when configuration options cause connections, queries, etc., to fail.
   class ConfigurationError < MongoRubyError; end

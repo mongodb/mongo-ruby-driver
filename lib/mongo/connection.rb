@@ -448,7 +448,7 @@ module Mongo
       if num_received == 1 && (error = docs[0]['err'] || docs[0]['errmsg'])
         close if error == "not master"
         error = "wtimeout" if error == "timeout"
-        raise Mongo::OperationFailure, docs[0]['code'].to_s + ': ' + error
+        raise OperationFailure.new(docs[0]['code'].to_s + ': ' + error, docs[0]['code'], docs[0])
       end
 
       docs[0]

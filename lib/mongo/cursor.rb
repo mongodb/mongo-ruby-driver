@@ -122,10 +122,10 @@ module Mongo
         # connection. The next request will re-open on master server.
         if err == "not master"
           @connection.close
-          raise ConnectionFailure, err
+          raise ConnectionFailure.new(err, doc['code'], doc)
         end
 
-        raise OperationFailure, err
+        raise OperationFailure.new(err, doc['code'], doc)
       end
 
       if @transformer.nil?
@@ -175,7 +175,7 @@ module Mongo
       response = @db.command(command)
       return response['n'].to_i if Mongo::Support.ok?(response)
       return 0 if response['errmsg'] == "ns missing"
-      raise OperationFailure, "Count failed: #{response['errmsg']}"
+      raise OperationFailure.new("Count failed: #{response['errmsg']}", response['code'], response)
     end
 
     # Sort this cursor's results.

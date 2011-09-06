@@ -206,8 +206,17 @@ class DBTest < Test::Unit::TestCase
 
   def test_check_command_response
     command = {:forceerror => 1}
-    assert_raise OperationFailure do 
+    raised = false
+    begin
       @@db.command(command)
+    rescue => ex
+      raised = true
+      assert ex.message.include?("forced error"),
+        "error message does not contain 'forced error'"
+      assert_equal 10038, ex.error_code
+      assert_equal 10038, ex.result['assertionCode']
+    ensure
+      assert raised, "No assertion raised!"
     end
   end
 
