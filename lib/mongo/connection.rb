@@ -132,7 +132,7 @@ module Mongo
     #
     # @deprecated
     def self.multi(nodes, opts={})
-      warn "Connection.multi is now deprecated. Please use ReplSetConnection.new instead."
+      warn "Connection.multi is now deprecated and will be removed in v2.0. Please use ReplSetConnection.new instead."
 
       nodes << opts
       ReplSetConnection.new(*nodes)
@@ -603,7 +603,7 @@ module Mongo
     # Checkin a socket used for reading.
     # Note: this is overridden in ReplSetConnection.
     def checkin_reader(socket)
-      warn "Connection#checkin_writer is not deprecated and will be remove " +
+      warn "Connection#checkin_writer is not deprecated and will be removed " +
         "in driver v2.0. Use Connection#checkin instead."
       checkin(socket)
     end
@@ -611,7 +611,7 @@ module Mongo
     # Checkin a socket used for writing.
     # Note: this is overridden in ReplSetConnection.
     def checkin_writer(socket)
-      warn "Connection#checkin_writer is not deprecated and will be remove " +
+      warn "Connection#checkin_writer is not deprecated and will be removed " +
         "in driver v2.0. Use Connection#checkin instead."
       checkin(socket)
     end

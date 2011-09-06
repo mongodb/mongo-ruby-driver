@@ -138,7 +138,7 @@ module Mongo
 
       # Replica set name
       if opts[:rs_name]
-        warn ":rs_name option has been deprecated and will be removed in 2.0. " +
+        warn ":rs_name option has been deprecated and will be removed in v2.0. " +
           "Please use :name instead."
         @replica_set_name = opts[:rs_name]
       else
@@ -294,7 +294,7 @@ module Mongo
     # @deprecated
     def reset_connection
       close
-      warn "ReplSetConnection#reset_connection is now deprecated. " +
+      warn "ReplSetConnection#reset_connection is now deprecated and will be removed in v2.0. " +
         "Use ReplSetConnection#close instead."
     end
 
@@ -383,14 +383,14 @@ module Mongo
 
     # Checkin a socket used for reading.
     def checkin_reader(socket)
-      warn "ReplSetConnection#checkin_writer is not deprecated and will be remove " +
+      warn "ReplSetConnection#checkin_writer is deprecated and will be removed " +
         "in driver v2.0. Use ReplSetConnection#checkin instead."
       checkin(socket)
     end
 
     # Checkin a socket used for writing.
     def checkin_writer(socket)
-      warn "ReplSetConnection#checkin_writer is not deprecated and will be remove " +
+      warn "ReplSetConnection#checkin_writer is deprecated and will be removed " +
         "in driver v2.0. Use ReplSetConnection#checkin instead."
       checkin(socket)
     end

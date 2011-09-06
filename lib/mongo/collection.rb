@@ -47,7 +47,8 @@ module Mongo
     def initialize(name, db, opts={})
       if db.is_a?(String) && name.is_a?(Mongo::DB)
         warn "Warning: the order of parameters to initialize a collection have changed. " +
-             "Please specify the collection name first, followed by the db."
+             "Please specify the collection name first, followed by the db. This will be made permanent"
+             "in v2.0."
         db, name = name, db
       end
 
@@ -638,7 +639,7 @@ module Mongo
       if opts.is_a?(Hash)
         return new_group(opts)
       else
-        warn "Collection#group no longer take a list of parameters. This usage is deprecated." +
+        warn "Collection#group no longer take a list of parameters. This usage is deprecated and will be remove in v2.0." +
              "Check out the new API at http://api.mongodb.org/ruby/current/Mongo/Collection.html#group-instance_method"
       end
 
