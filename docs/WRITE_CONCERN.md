@@ -7,9 +7,12 @@ Write concern is set using the `:safe` option. There are several possible option
     @collection.save({:doc => 'foo'}, :safe => true)
     @collection.save({:doc => 'foo'}, :safe => {:w => 2})
     @collection.save({:doc => 'foo'}, :safe => {:w => 2, :wtimeout => 200})
-    @collection.save({:doc => 'foo'}, :safe => {:w => 2, :wtimeout => 200, :fsync => true})
+    @collection.save({:doc => 'foo'}, :safe => {:w => 2, :wtimeout => 200, :j => true})
 
-The first, `true`, simply indicates that we should request a response from the server to ensure that to errors have occurred. The second, `{:w => 2}`forces the server to wait until at least two servers have recorded the write. The third does the same but will time out if the replication can't be completed in 200 milliseconds. The fourth forces an fsync on each server being written to (note: this option is rarely necessary and will have a dramaticly negative effect on performance).
+The first, `true`, simply indicates that we should request a response from the server to ensure that to errors have occurred. The second, `{:w => 2}`, forces the server to wait until at least two servers have recorded the write. The third does the same but will time out if the replication can't be completed in 200 milliseconds.
+Setting a value for `wtimeout` is encouraed.
+
+Finally, the fourth example forces the journal to sync to disk if journaling is enabled.
 
 ## Write concern inheritance
 
