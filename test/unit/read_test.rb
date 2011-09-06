@@ -87,11 +87,14 @@ class ReadTest < Test::Unit::TestCase
       end
 
       should "allow override alternate value on query" do
-        @con.expects(:receive_message).with do |o, m, l, s, c, r|
-          tags = {:dc => "ny"}
-        end.returns([[], 0, 0])
+        # TODO: enable this test once we enable reading from tags.
+        # @con.expects(:receive_message).with do |o, m, l, s, c, r|
+        #   tags = {:dc => "ny"}
+        # end.returns([[], 0, 0])
 
-        @col.find_one({:a => 1}, :read => {:dc => "ny"})
+        assert_raise MongoArgumentError do
+          @col.find_one({:a => 1}, :read => {:dc => "ny"})
+        end
       end
     end
   end

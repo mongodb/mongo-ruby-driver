@@ -82,8 +82,12 @@ module Mongo
       @strict     = opts[:strict]
       @pk_factory = opts[:pk]
       @safe       = opts.fetch(:safe, @connection.safe)
-      read = opts.fetch(:read, @connection.read_preference)
-      @read_preference = read.is_a?(Hash) ? read.dup : read
+      if value = opts[:read]
+        Mongo::Support.validate_read_preference(value)
+      else
+        value = @connection.read_preference
+      end
+      @read_preference = value.is_a?(Hash) ? value.dup : value
       @cache_time = opts[:cache_time] || 300 #5 minutes.
     end
 

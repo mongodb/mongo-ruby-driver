@@ -70,8 +70,12 @@ module Mongo
       @query_run    = false
 
       @transformer = opts[:transformer]
-      read         = opts[:read] || collection.read_preference
-      @read_preference = read.is_a?(Hash) ? read.dup : read
+      if value = opts[:read]
+        Mongo::Support.validate_read_preference(value)
+      else
+        value = collection.read_preference
+      end
+      @read_preference = value.is_a?(Hash) ? value.dup : value
       batch_size(opts[:batch_size] || 0)
 
       @full_collection_name = "#{@collection.db.name}.#{@collection.name}"

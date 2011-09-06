@@ -44,7 +44,6 @@ module Mongo
       Digest::MD5.hexdigest("#{username}:mongo:#{plaintext}")
     end
 
-
     def validate_db_name(db_name)
       unless [String, Symbol].include?(db_name.class)
         raise TypeError, "db_name must be a string or symbol"
@@ -57,6 +56,15 @@ module Mongo
       end
       raise Mongo::InvalidNSName, "database name cannot be the empty string" if db_name.empty?
       db_name
+    end
+
+    def validate_read_preference(value)
+      if [:primary, :secondary, nil].include?(value)
+        return true
+      else
+        raise MongoArgumentError, "#{value} is not a valid read preference. " +
+          "Please specify either :primary or :secondary."
+      end
     end
 
     def format_order_clause(order)

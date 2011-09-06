@@ -34,6 +34,11 @@ module Mongo
     #   for insert, update, and remove method called on this Collection instance. If no
     #   value is provided, the default value set on this instance's DB will be used. This
     #   default can be overridden for any invocation of insert, update, or remove.
+    # @option options [:primary, :secondary] :read The default read preference for queries
+    #   initiates from this connection object. If +:secondary+ is chosen, reads will be sent
+    #   to one of the closest available secondary nodes. If a secondary node cannot be located, the
+    #   read will be sent to the primary. If this option is left unspecified, the value of the read
+    #   preference for this collection's associated Mongo::DB object will be used.
     #
     # @raise [InvalidNSName]
     #   if collection name is empty, contains '$', or starts or ends with '.'
@@ -84,8 +89,12 @@ module Mongo
       @cache = Hash.new(0)
       unless pk_factory
         @safe = opts.fetch(:safe, @db.safe)
-        @read = opts.fetch(:read, @db.read_preference)
-        @read_preference = @read.is_a?(Hash) ? @read.dup : @read
+        if value = opts[:read]
+          Mongo::Support.validate_read_preference(value)
+        else
+          value = @db.read_preference
+        end
+        @read_preference = value.is_a?(Hash) ? value.dup : value
       end
       @pk_factory = pk_factory || opts[:pk] || BSON::ObjectId
       @hint = nil
@@ -157,6 +166,11 @@ module Mongo
     #   you can cut down on network traffic and decoding time. If using a Hash, keys should be field
     #   names and values should be either 1 or 0, depending on whether you want to include or exclude
     #   the given field.
+    # @option opts [:primary, :secondary] :read The default read preference for queries
+    #   initiates from this connection object. If +:secondary+ is chosen, reads will be sent
+    #   to one of the closest available secondary nodes. If a secondary node cannot be located, the
+    #   read will be sent to the primary. If this option is left unspecified, the value of the read
+    #   preference for this Collection object will be used.
     # @option opts [Integer] :skip number of documents to skip from the beginning of the result set
     # @option opts [Integer] :limit maximum number of documents to return
     # @option opts [Array]   :sort an array of [key, direction] pairs to sort by. Direction should

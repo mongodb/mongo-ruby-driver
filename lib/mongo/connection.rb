@@ -685,6 +685,7 @@ module Mongo
       @connect_timeout = opts[:connect_timeout] || nil
 
       # Mutex for synchronizing pool access
+      # TODO: remove this.
       @connection_mutex = Mutex.new
 
       # Global safe option. This is false by default.

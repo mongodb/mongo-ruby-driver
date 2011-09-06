@@ -41,8 +41,10 @@ module Mongo
     #   propogated to DB objects instantiated off of this Connection. This
     #   default can be overridden upon instantiation of any DB by explicity setting a :safe value
     #   on initialization.
-    # @option options [Boolean] :read_secondary(false) If true, a random secondary node will be chosen,
-    #   and all reads will be directed to that node.
+    # @option options [:primary, :secondary] :read (:primary) The default read preference for Mongo::DB
+    #   objects created from this connection object. If +:secondary+ is chosen, reads will be sent
+    #   to one of the closest available secondary nodes. If a secondary node cannot be located, the
+    #   read will be sent to the primary.
     # @option options [Logger, #debug] :logger (nil) Logger instance to receive driver operation log.
     # @option options [Integer] :pool_size (1) The maximum number of socket connections allowed per
     #   connection pool. Note: this setting is relevant only for multi-threaded applications.
@@ -125,6 +127,7 @@ module Mongo
         @read = :secondary
       else
         @read = opts.fetch(:read, :primary)
+        Mongo::Support.validate_read_preference(@read)
       end
 
       @connected = false
