@@ -53,6 +53,7 @@ module Mongo
     #   Disabled by default.
     # @option opts [Float] :connect_timeout (nil) The number of seconds to wait before timing out a
     #   connection attempt.
+    # @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
     # @option opts [Boolean] :auto_refresh (false) Set this to true to enable a background thread that
     #   periodically updates the state of the connection. If, for example, you initially connect while a secondary
     #   is down, :auto_refresh will reconnect to that secondary behind the scenes to
