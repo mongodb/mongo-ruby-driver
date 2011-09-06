@@ -314,9 +314,13 @@ class TestCollection < Test::Unit::TestCase
     @@test.drop
 
     assert_equal 0, @@test.count
-    @@test.save("x" => 1)
-    @@test.save("x" => 2)
+    @@test.save(:x => 1)
+    @@test.save(:x => 2)
     assert_equal 2, @@test.count
+
+    assert_equal 1, @@test.count(:query => {:x => 1})
+    assert_equal 1, @@test.count(:limit => 1)
+    assert_equal 0, @@test.count(:skip => 2)
   end
 
   # Note: #size is just an alias for #count.

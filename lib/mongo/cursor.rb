@@ -18,9 +18,9 @@ module Mongo
 
   # A cursor over query results. Returned objects are hashes.
   class Cursor
-    include Mongo::Conversions
     include Enumerable
     include Mongo::Constants
+    include Mongo::Conversions
 
     attr_reader :collection, :selector, :fields,
       :order, :hint, :snapshot, :timeout,

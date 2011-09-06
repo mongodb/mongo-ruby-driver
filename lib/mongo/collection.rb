@@ -83,9 +83,9 @@ module Mongo
       @cache = Hash.new(0)
       unless pk_factory
         @safe = opts.fetch(:safe, @db.safe)
+        @read = opts.fetch(:read, @db.read_preference)
+        @read_preference = @read.is_a?(Hash) ? @read.dup : @read
       end
-      read = opts.fetch(:read, @db.read_preference)
-      @read_preference = read.is_a?(Hash) ? read.dup : read
       @pk_factory = pk_factory || opts[:pk] || BSON::ObjectId
       @hint = nil
     end
@@ -828,9 +828,15 @@ module Mongo
 
     # Get the number of documents in this collection.
     #
+    # @option opts [Hash] :query ({}) A query selector for filtering the documents counted.
+    # @option opts [Integer] :skip (nil) The number of documents to skip.
+    # @option opts [Integer] :limit (nil) The number of documents to limit.
+    #
     # @return [Integer]
-    def count
-      find().count()
+    def count(opts={})
+      find(opts[:query],
+           :skip => opts[:skip],
+           :limit => opts[:limit]).count(true)
     end
 
     alias :size :count
