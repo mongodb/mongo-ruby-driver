@@ -104,7 +104,7 @@ module Mongo
     # Note that this method only checks whether we have
     # a cursor id. The cursor may still have timed out
     # on the server. This will be indicated in the next
-    # call to Cursor#next_document.
+    # call to Cursor#next.
     #
     # @return [Boolean]
     def alive?
@@ -114,7 +114,7 @@ module Mongo
     # Get the next document specified the cursor options.
     #
     # @return [Hash, Nil] the next document or Nil if no documents remain.
-    def next_document
+    def next
       refresh if @cache.length == 0
       doc = @cache.shift
 
@@ -138,7 +138,7 @@ module Mongo
         @transformer.call(doc) if doc
       end
     end
-    alias :next :next_document
+    alias :next_document :next
 
     # Reset this cursor on the server. Cursor options, such as the
     # query string and the values for skip and limit, are preserved.
