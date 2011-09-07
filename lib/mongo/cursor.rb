@@ -21,6 +21,7 @@ module Mongo
     include Enumerable
     include Mongo::Constants
     include Mongo::Conversions
+    include Mongo::Logging
 
     attr_reader :collection, :selector, :fields,
       :order, :hint, :snapshot, :timeout,
@@ -332,7 +333,7 @@ module Mongo
         message = BSON::ByteBuffer.new([0, 0, 0, 0])
         message.put_int(1)
         message.put_long(@cursor_id)
-        @logger.debug("MONGODB cursor.close #{@cursor_id}") if @logger
+        log(:debug, "Cursor#close #{@cursor_id}")
         @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message, :connection => :reader)
       end
       @cursor_id = 0
@@ -458,8 +459,8 @@ module Mongo
 
     def send_initial_query
       message = construct_query_message
-      payload = instrument_payload if @connection.logger
-      @connection.instrument(:find, payload) do
+      payload = instrument_payload if @logger
+      instrument(:find, payload) do
         results, @n_received, @cursor_id = @connection.receive_message(
           Mongo::Constants::OP_QUERY, message, nil, @socket, @command,
           @read_preference, @options & OP_QUERY_EXHAUST != 0)
@@ -489,7 +490,7 @@ module Mongo
 
       # Cursor id.
       message.put_long(@cursor_id)
-      @logger.debug("MONGODB cursor.refresh() for cursor #{@cursor_id}") if @logger
+      log(:debug, "cursor.refresh() for cursor #{@cursor_id}") if @logger
       results, @n_received, @cursor_id = @connection.receive_message(
           Mongo::Constants::OP_GET_MORE, message, nil, @socket, @command, @read_preference)
       @returned += @n_received

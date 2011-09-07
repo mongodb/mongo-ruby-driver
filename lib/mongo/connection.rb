@@ -24,6 +24,8 @@ module Mongo
 
   # Instantiates and manages connections to MongoDB.
   class Connection
+    include Mongo::Logging
+
     TCPSocket = ::TCPSocket
     Mutex = ::Mutex
     ConditionVariable = ::ConditionVariable
@@ -625,32 +627,6 @@ module Mongo
       end
     end
 
-    # Log a message with the given level.
-    def log(level, message)
-      return unless @logger
-      case level
-        when :debug then
-          @logger.debug "MONGODB [DEBUG] #{msg}"
-        when :warn then
-          @logger.warn "MONGODB [WARNING] #{msg}"
-        when :error then
-          @logger.error "MONGODB [ERROR] #{msg}"
-        when :fatal then
-          @logger.fatal "MONGODB [FATAL] #{msg}"
-        else
-          @logger.info "MONGODB [INFO] #{msg}"
-      end
-    end
-
-    # Execute the block and log the operation described by name
-    # and payload.
-    # TODO: Not sure if this should take a block.
-    def instrument(name, payload = {}, &blk)
-      res = yield
-      log_operation(name, payload)
-      res
-    end
-
     protected
 
     # Generic initialization code.
@@ -731,18 +707,6 @@ module Mongo
       end
     end
 
-    ## Logging methods
-
-    def log_operation(name, payload)
-      return unless @logger
-      msg = "#{payload[:database]}['#{payload[:collection]}'].#{name}("
-      msg += payload.values_at(:selector, :document, :documents, :fields ).compact.map(&:inspect).join(', ') + ")"
-      msg += ".skip(#{payload[:skip]})"  if payload[:skip]
-      msg += ".limit(#{payload[:limit]})"  if payload[:limit]
-      msg += ".sort(#{payload[:order]})"  if payload[:order]
-      @logger.debug "MONGODB #{msg}"
-    end
-
     private
 
     ## Methods for establishing a connection:
@@ -787,7 +751,7 @@ module Mongo
 
     ## Low-level connection methods.
 
-    def receive(sock, cursor_id, exhaust)
+    def receive(sock, cursor_id, exhaust=false)
       begin
         if exhaust
           docs = []
