@@ -462,11 +462,13 @@ module Mongo
     # @param [Socket] socket a socket to use in lieu of checking out a new one.
     # @param [Boolean] command (false) indicate whether this is a command. If this is a command,
     #   the message will be sent to the primary node.
+    # @param [Boolean] command (false) indicate whether the cursor should be exhausted. Set
+    #   this to true only when the OP_QUERY_EXHAUST flag is set.
     #
     # @return [Array]
     #   An array whose indexes include [0] documents returned, [1] number of document received,
     #   and [3] a cursor_id.
-    def receive_message(operation, message, log_message=nil, socket=nil, command=false, read=:primary)
+    def receive_message(operation, message, log_message=nil, socket=nil, command=false, read=:primary, exhaust=false)
       request_id = add_message_headers(message, operation)
       packed_message = message.to_s
       begin
@@ -489,7 +491,7 @@ module Mongo
         result = ''
         @safe_mutexes[sock].synchronize do
           send_message_on_socket(packed_message, sock)
-          result = receive(sock, request_id)
+          result = receive(sock, request_id, exhaust)
         end
       ensure
         if should_checkin
@@ -785,21 +787,38 @@ module Mongo
 
     ## Low-level connection methods.
 
-    def receive(sock, expected_response)
+    def receive(sock, cursor_id, exhaust)
       begin
-      receive_header(sock, expected_response)
-      number_received, cursor_id = receive_response_header(sock)
-      read_documents(number_received, cursor_id, sock)
+        if exhaust
+          docs = []
+          num_received = 0
+
+          while(cursor_id != 0) do
+            receive_header(sock, cursor_id, exhaust)
+            number_received, cursor_id = receive_response_header(sock)
+            new_docs, n = read_documents(number_received, sock)
+            docs += new_docs
+            num_received += n
+          end
+
+          return [docs, num_received, cursor_id]
+        else
+          receive_header(sock, cursor_id, exhaust)
+          number_received, cursor_id = receive_response_header(sock)
+          docs, num_received = read_documents(number_received, sock)
+
+          return [docs, num_received, cursor_id]
+        end
       rescue Mongo::ConnectionFailure => ex
         close
         raise ex
       end
     end
 
-    def receive_header(sock, expected_response)
+    def receive_header(sock, expected_response, exhaust=false)
       header = receive_message_on_socket(16, sock)
       size, request_id, response_to = header.unpack('VVV')
-      if expected_response != response_to
+      if !exhaust && expected_response != response_to
         raise Mongo::ConnectionFailure, "Expected response #{expected_response} but got #{response_to}"
       end
 
@@ -831,7 +850,7 @@ module Mongo
       end
     end
 
-    def read_documents(number_received, cursor_id, sock)
+    def read_documents(number_received, sock)
       docs = []
       number_remaining = number_received
       while number_remaining > 0 do
@@ -841,7 +860,7 @@ module Mongo
         number_remaining -= 1
         docs << BSON::BSON_CODER.deserialize(buf)
       end
-      [docs, number_received, cursor_id]
+      [docs, number_received]
     end
 
     # Constructs a getlasterror message. This method is used exclusively by

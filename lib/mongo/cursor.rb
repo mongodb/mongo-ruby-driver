@@ -115,7 +115,14 @@ module Mongo
     #
     # @return [Hash, Nil] the next document or Nil if no documents remain.
     def next
-      refresh if @cache.length == 0
+      if @cache.length == 0
+        if @query_run && (@options & OP_QUERY_EXHAUST != 0)
+          close
+          return nil
+        else
+          refresh
+        end
+      end
       doc = @cache.shift
 
       if doc && doc['$err']
@@ -428,7 +435,15 @@ module Mongo
 
     # Return the number of documents remaining for this cursor.
     def num_remaining
-      refresh if @cache.length == 0
+      if @cache.length == 0
+        if @query_run && (@options & OP_QUERY_EXHAUST != 0)
+          close
+          return 0
+        else
+          refresh
+        end
+      end
+
       @cache.length
     end
 
@@ -470,7 +485,8 @@ module Mongo
         message = construct_query_message
         @connection.instrument(:find, instrument_payload) do
           results, @n_received, @cursor_id = @connection.receive_message(
-            Mongo::Constants::OP_QUERY, message, nil, @socket, @command, @read_preference)
+            Mongo::Constants::OP_QUERY, message, nil, @socket, @command,
+            @read_preference, @options & OP_QUERY_EXHAUST != 0)
           @returned += @n_received
           @cache += results
           @query_run = true

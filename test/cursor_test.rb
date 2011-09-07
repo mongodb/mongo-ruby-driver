@@ -50,6 +50,33 @@ class CursorTest < Test::Unit::TestCase
     end
   end
 
+  def test_exhaust
+    if @@version >= "2.0"
+      @@coll.remove
+      data = "1" * 100_000
+      10_000.times do |n|
+        @@coll.insert({:n => n, :data => data})
+      end
+
+      c = Cursor.new(@@coll)
+      c.add_option(OP_QUERY_EXHAUST)
+      assert_equal @@coll.count, c.to_a.size
+      assert c.closed?
+
+      c = Cursor.new(@@coll)
+      c.add_option(OP_QUERY_EXHAUST)
+      9999.times do
+        c.next
+      end
+      assert c.has_next?
+      assert c.next
+      assert !c.has_next?
+      assert c.closed?
+
+      @@coll.remove
+    end
+  end
+
   def test_inspect
     selector = {:a => 1}
     cursor = @@coll.find(selector)
