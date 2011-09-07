@@ -81,7 +81,7 @@ class CursorTest < Test::Unit::TestCase
     selector = {:a => 1}
     cursor = @@coll.find(selector)
     assert_equal "<Mongo::Cursor:0x#{cursor.object_id.to_s(16)} namespace='#{@@db.name}.#{@@coll.name}' " +
-        "@selector=#{selector.inspect}>", cursor.inspect
+        "@selector=#{selector.inspect} @cursor_id=#{cursor.cursor_id}>", cursor.inspect
   end
 
   def test_explain
