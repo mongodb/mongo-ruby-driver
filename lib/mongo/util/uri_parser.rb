@@ -20,7 +20,7 @@ module Mongo
   class URIParser
 
     DEFAULT_PORT = 27017
-    MONGODB_URI_MATCHER = /(([-.\w]+):([^@]+)@)?([-.\w]+)(:([\w]+))?(\/([-\w]+))?/
+    MONGODB_URI_MATCHER = /(([-.\w]+):([^@,]+)@)?((?:(?:[-.\w]+)(?::(?:[\w]+))?,?)+)(\/([-\w]+))?/
     MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]"
     SPEC_ATTRS = [:nodes, :auths]
     OPT_ATTRS  = [:connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync]
@@ -108,35 +108,43 @@ module Mongo
 
     private
 
-    def parse_hosts(hosts)
+    def parse_hosts(uri_without_proto)
       @nodes = []
       @auths = []
-      specs = hosts.split(',')
-      specs.each do |spec|
-        matches  = MONGODB_URI_MATCHER.match(spec)
-        if !matches
-          raise MongoArgumentError, "MongoDB URI must match this spec: #{MONGODB_URI_SPEC}"
-        end
 
-        uname = matches[2]
-        pwd   = matches[3]
-        host  = matches[4]
-        port  = matches[6] || DEFAULT_PORT
+      matches = MONGODB_URI_MATCHER.match(uri_without_proto)
+
+      if !matches
+        raise MongoArgumentError, "MongoDB URI must match this spec: #{MONGODB_URI_SPEC}"
+      end
+
+      uname    = matches[2]
+      pwd      = matches[3]
+      hosturis = matches[4].split(',')
+      db       = matches[6]
+
+      hosturis.each do |hosturi|
+        # If port is present, use it, otherwise use default port
+        host, port = hosturi.split(':') + [DEFAULT_PORT]
+
         if !(port.to_s =~ /^\d+$/)
           raise MongoArgumentError, "Invalid port #{port}; port must be specified as digits."
         end
-        port    = port.to_i
-        db      = matches[8]
 
-        if uname && pwd && db
-          auths << {'db_name' => db, 'username' => uname, 'password' => pwd}
-        elsif uname || pwd
-          raise MongoArgumentError, "MongoDB URI must include username, password, " +
-            "and db if username or password are specified."
-        end
+        port = port.to_i
 
         @nodes << [host, port]
       end
+
+      if uname && pwd && db
+        auths << {'db_name' => db, 'username' => uname, 'password' => pwd}
+      elsif uname || pwd
+        raise MongoArgumentError, "MongoDB URI must include username, password, "
+          "and db if username and password are specified."
+      end
+
+      # The auths are repeated for each host in a replica set
+      @auths *= hosturis.length
     end
 
     # This method uses the lambdas defined in OPT_VALID and OPT_CONV to validate
