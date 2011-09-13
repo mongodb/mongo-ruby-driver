@@ -30,9 +30,6 @@ module Mongo
     Mutex = ::Mutex
     ConditionVariable = ::ConditionVariable
 
-    # Abort connections if a ConnectionError is raised.
-    Thread.abort_on_exception = true
-
     DEFAULT_PORT = 27017
     STANDARD_HEADER_SIZE = 16
     RESPONSE_HEADER_SIZE = 20

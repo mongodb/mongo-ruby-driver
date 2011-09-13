@@ -53,7 +53,7 @@ module Mongo
     def initialize(name, db, opts={})
       if db.is_a?(String) && name.is_a?(Mongo::DB)
         warn "Warning: the order of parameters to initialize a collection have changed. " +
-             "Please specify the collection name first, followed by the db. This will be made permanent"
+             "Please specify the collection name first, followed by the db. This will be made permanent" +
              "in v2.0."
         db, name = name, db
       end

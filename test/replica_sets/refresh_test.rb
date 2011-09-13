@@ -6,6 +6,10 @@ require 'benchmark'
 class ReplicaSetRefreshTest < Test::Unit::TestCase
   include Mongo
 
+  def setup
+    @conn = nil
+  end
+
   def teardown
     RS.restart_killed_nodes
     @conn.close if @conn
@@ -98,7 +102,6 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
   end
 
   def test_adding_and_removing_nodes
-    puts "ADDING AND REMOVING"
     @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
       [RS.host, RS.ports[2]], :refresh_interval => 2, :auto_refresh => true)
 

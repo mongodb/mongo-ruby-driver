@@ -23,31 +23,29 @@ module Mongo
       @members = members
     end
 
-    # Ensure that the view of the replica set is current by
-    # running the ismaster command and checking to see whether
-    # we've connected to all known nodes. If not, automatically
-    # connect to these unconnected nodes. This is handy when we've
-    # connected to a replica set with no primary or when a secondary
-    # node comes up after we've connected.
-    #
-    # If we're connected to nodes that are no longer part of the set,
-    # remove these from our set of secondary pools.
-    def update_required?(hosts)
-      if !@refresh_node || !@refresh_node.set_config
-        begin
-          @refresh_node = get_valid_seed_node
-        rescue ConnectionFailure
-          warn "Could not refresh config because no valid seed node was available."
-          return
-        end
-      end
-
-      hosts != @refresh_node.node_list
-    end
-
     private
 
     def initialize_data
+      begin
+        if @primary_pool
+          @primary_pool.close
+        end
+
+        if @secondary_pools
+          @secondary_pools.each do |pool|
+            pool.close
+          end
+        end
+
+        if @members
+          @members.each do |member|
+            member.close
+          end
+        end
+
+        rescue ConnectionFailure
+      end
+
       @primary = nil
       @primary_pool = nil
       @read_pool = nil

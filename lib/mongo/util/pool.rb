@@ -52,17 +52,19 @@ module Mongo
     end
 
     def close
-      @sockets.each do |sock|
-        begin
-          sock.close
-        rescue IOError => ex
-          warn "IOError when attempting to close socket connected to #{@host}:#{@port}: #{ex.inspect}"
+      @connection_mutex.synchronize do
+        (@sockets - @checked_out).each do |sock|
+          begin
+            sock.close
+          rescue IOError => ex
+            warn "IOError when attempting to close socket connected to #{@host}:#{@port}: #{ex.inspect}"
+          end
         end
+        @host = @port = nil
+        @sockets.clear
+        @pids.clear
+        @checked_out.clear
       end
-      @host = @port = nil
-      @sockets.clear
-      @pids.clear
-      @checked_out.clear
     end
 
     def inspect
@@ -188,7 +190,7 @@ module Mongo
       if @pids[socket] != Process.pid
          @pids[socket] = nil
          @sockets.delete(socket)
-         socket.close
+         socket.close if socket
          checkout_new_socket
       else
         @checked_out << socket

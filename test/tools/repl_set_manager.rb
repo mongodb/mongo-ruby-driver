@@ -21,7 +21,7 @@ class ReplSetManager
     @config     = {"_id" => @name, "members" => []}
     @durable    = opts.fetch(:durable, false)
     @path       = File.join(File.expand_path(File.dirname(__FILE__)), "data")
-    @oplog_size = opts.fetch(:oplog_size, 512)
+    @oplog_size = opts.fetch(:oplog_size, 32)
     @tags = [{"dc" => "ny", "rack" => "a", "db" => "main"},
              {"dc" => "ny", "rack" => "b", "db" => "main"},
              {"dc" => "sf", "rack" => "a", "db" => "main"}]

@@ -2,7 +2,7 @@ module Mongo
   module Logging
 
     # Log a message with the given level.
-    def log(level, message)
+    def log(level, msg)
       return unless @logger
       case level
         when :debug then

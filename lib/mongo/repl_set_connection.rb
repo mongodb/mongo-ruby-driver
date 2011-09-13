@@ -23,7 +23,7 @@ module Mongo
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
     attr_reader :nodes, :secondaries, :arbiters, :secondary_pools,
-      :replica_set_name, :read_pool, :seeds, :tags_to_pools, :refresh_interval
+      :replica_set_name, :read_pool, :seeds, :tags_to_pools, :refresh_interval, :auto_refresh
 
     # Create a connection to a MongoDB replica set.
     #
@@ -62,6 +62,8 @@ module Mongo
     #   prevent you from having to reconnect manually.
     # @option opts [Integer] :refresh_interval (90) If :auto_refresh is enabled, this is the number of seconds
     #   that the background thread will sleep between calls to check the replica set's state.
+    # @option opts [Boolean] :require_primary (true) If true, require a primary node for the connection
+    #   to succeed. Otherwise, connection will succeed as long as there's at least one secondary.
     #
     # @example Connect to a replica set and provide two seed nodes. Note that the number of seed nodes does
     #   not have to be equal to the number of replica set members. The purpose of seed nodes is to permit
@@ -148,6 +150,9 @@ module Mongo
         @replica_set_name = opts[:name]
       end
 
+      # Require a primary node to connect?
+      @require_primary = opts.fetch(:require_primary, false)
+
       setup(opts)
     end
 
@@ -158,6 +163,7 @@ module Mongo
 
     # Initiate a connection to the replica set.
     def connect
+      log(:debug, "Connecting.")
       sync_synchronize(:EX) do
         return if @connected
         manager = PoolManager.new(self, @seeds)
@@ -166,8 +172,10 @@ module Mongo
         update_config(manager)
         initiate_auto_refresh
 
-        if @primary.nil? #TODO: in v2.0, we'll let this be optional and do a lazy connect.
+        if @require_primary && @primary.nil? #TODO: in v2.0, we'll let this be optional and do a lazy connect.
           raise ConnectionFailure, "Failed to connect to primary node."
+        elsif !@read_pool
+          raise ConnectionFailure, "Failed to connect to any node."
         else
           @connected = true
         end
@@ -205,11 +213,14 @@ module Mongo
       end
 
       background_manager = Thread.current[:background]
-      if background_manager.update_required?(@hosts)
-        sync_synchronize(:EX) do
-          background_manager.connect
-          update_config(background_manager)
-        end
+
+      # Return if another thread is already in the process of refreshing.
+      return if sync_exclusive?
+
+      sync_synchronize(:EX) do
+        log(:debug, "Refreshing...")
+        background_manager.connect
+        update_config(background_manager)
       end
     end
 
@@ -259,35 +270,36 @@ module Mongo
     # Close the connection to the database.
     # TODO: we should get an exclusive lock here.
     def close
-      @connected = false
+      sync_synchronize(:EX) do
+        @connected = false
+        super
 
-      super
-
-      if @refresh_thread
-        @refresh_thread.kill
-        @refresh_thread = nil
-      end
-
-      if @nodes
-        @nodes.each do |member|
-          member.disconnect
+        if @refresh_thread
+          @refresh_thread.kill
+          @refresh_thread = nil
         end
-      end
 
-      @nodes = []
-      @read_pool = nil
-
-      if @secondary_pools
-        @secondary_pools.each do |pool|
-          pool.close
+        if @nodes
+          @nodes.each do |member|
+            member.disconnect
+          end
         end
-      end
 
-      @secondaries     = []
-      @secondary_pools = []
-      @arbiters        = []
-      @tags_to_pools.clear
-      @sockets_to_pools.clear
+        @nodes = []
+        @read_pool = nil
+
+        if @secondary_pools
+          @secondary_pools.each do |pool|
+            pool.close
+          end
+        end
+
+        @secondaries     = []
+        @secondary_pools = []
+        @arbiters        = []
+        @tags_to_pools.clear
+        @sockets_to_pools.clear
+      end
     end
 
     # If a ConnectionFailure is raised, this method will be called
@@ -342,17 +354,25 @@ module Mongo
     # if no read pool has been defined.
     def checkout_reader
       connect unless connected?
+      socket = get_socket_from_pool(@read_pool)
 
-      sync_synchronize(:SH) do
-        socket = @read_pool.checkout
-        @sockets_to_pools[socket] = @read_pool
+      if !socket
+        refresh
+        socket = get_socket_from_pool(@primary_pool)
+      end
+
+      if socket
         socket
+      else
+        raise ConnectionFailure.new("Could not connect to a node for reading.")
       end
     end
 
     # Checkout a socket connected to a node with one of
     # the provided tags. If no such node exists, raise
     # an exception.
+    #
+    # NOTE: will be available in driver release v2.0.
     def checkout_tagged(tags)
       sync_synchronize(:SH) do
         tags.each do |k, v|
@@ -372,13 +392,33 @@ module Mongo
     # Checkout a socket for writing (i.e., a primary node).
     def checkout_writer
       connect unless connected?
+      socket = get_socket_from_pool(@primary_pool)
 
-      sync_synchronize(:SH) do
-        if @primary_pool
-          socket = @primary_pool.checkout
-          @sockets_to_pools[socket] = @primary_pool
-          socket
+      if !socket
+        refresh
+        socket = get_socket_from_pool(@primary_pool)
+      end
+
+      if socket
+        socket
+      else
+        raise ConnectionFailure.new("Could not connect to primary node.")
+      end
+    end
+
+    def get_socket_from_pool(pool)
+      begin
+        sync_synchronize(:SH) do
+          if pool
+            socket = pool.checkout
+            @sockets_to_pools[socket] = pool
+            socket
+          end
         end
+
+      rescue ConnectionFailure => ex
+        log(:info, "Failed to checkout from #{pool} with #{ex.class}; #{ex.message}")
+        return nil
       end
     end
 
@@ -397,8 +437,12 @@ module Mongo
     end
 
     def checkin(socket)
-      if pool = @sockets_to_pools[socket]
-        pool.checkin(socket)
+      sync_synchronize(:SH) do
+        if pool = @sockets_to_pools[socket]
+          pool.checkin(socket)
+        elsif socket
+          socket.close
+        end
       end
     end
   end
