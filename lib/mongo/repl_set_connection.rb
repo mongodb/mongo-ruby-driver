@@ -214,9 +214,7 @@ module Mongo
     end
 
     def connected?
-      sync_synchronize(:SH) do
-        @connected
-      end
+      @primary_pool || @read_pool
     end
 
     # @deprecated
