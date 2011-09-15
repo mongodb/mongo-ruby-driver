@@ -5,7 +5,7 @@ class PoolManagerTest < Test::Unit::TestCase
 
   context "Initialization: " do
 
-    def setup
+    should "populate pools correctly" do
       TCPSocket.stubs(:new).returns(new_mock_socket)
       @db = new_mock_db
 
@@ -14,9 +14,7 @@ class PoolManagerTest < Test::Unit::TestCase
       @connection.stubs(:pool_size).returns(2)
       @connection.stubs(:socket_class).returns(TCPSocket)
       @connection.stubs(:[]).returns(@db)
-    end
 
-    should "populate pools correctly" do
       @connection.stubs(:replica_set_name).returns(nil)
       @connection.stubs(:log)
       @arbiters = ['localhost:27020']

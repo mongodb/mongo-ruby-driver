@@ -23,7 +23,8 @@ module Mongo
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
     attr_reader :nodes, :secondaries, :arbiters, :secondary_pools,
-      :replica_set_name, :read_pool, :seeds, :tags_to_pools, :refresh_interval, :auto_refresh
+      :replica_set_name, :read_pool, :seeds, :tags_to_pools,
+      :refresh_interval, :background_refresh
 
     # Create a connection to a MongoDB replica set.
     #
@@ -56,11 +57,12 @@ module Mongo
     # @option opts [Float] :connect_timeout (nil) The number of seconds to wait before timing out a
     #   connection attempt.
     # @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
-    # @option opts [Boolean] :auto_refresh (false) Set this to true to enable a background thread that
+    # @option opts [Boolean] :background_refresh (false) Set this to true to enable a background thread that
     #   periodically updates the state of the connection. If, for example, you initially connect while a secondary
-    #   is down, :auto_refresh will reconnect to that secondary behind the scenes to
-    #   prevent you from having to reconnect manually.
-    # @option opts [Integer] :refresh_interval (90) If :auto_refresh is enabled, this is the number of seconds
+    #   is down, :background_refresh will reconnect to that secondary behind the scenes to
+    #   prevent you from having to reconnect manually. If set to +false+, background refresh will happen
+    #   synchronously.
+    # @option opts [Integer] :refresh_interval (90) If :background_refresh is enabled, this is the number of seconds
     #   that the background thread will sleep between calls to check the replica set's state.
     # @option opts [Boolean] :require_primary (true) If true, require a primary node for the connection
     #   to succeed. Otherwise, connection will succeed as long as there's at least one secondary.
@@ -118,7 +120,7 @@ module Mongo
       @arbiters = []
 
       # Refresh
-      @auto_refresh = opts.fetch(:auto_refresh, false)
+      @background_refresh = opts.fetch(:background_refresh, false)
       @refresh_interval = opts[:refresh_interval] || 90
 
       # Are we allowing reads from secondaries?
@@ -151,7 +153,7 @@ module Mongo
       end
 
       # Require a primary node to connect?
-      @require_primary = opts.fetch(:require_primary, false)
+      @require_primary = opts.fetch(:require_primary, true)
 
       setup(opts)
     end
@@ -163,14 +165,14 @@ module Mongo
 
     # Initiate a connection to the replica set.
     def connect
-      log(:debug, "Connecting.")
+      log(:debug, "Connecting...")
       sync_synchronize(:EX) do
         return if @connected
         manager = PoolManager.new(self, @seeds)
         manager.connect
 
         update_config(manager)
-        initiate_auto_refresh
+        initiate_background_refresh
 
         if @require_primary && @primary.nil? #TODO: in v2.0, we'll let this be optional and do a lazy connect.
           raise ConnectionFailure, "Failed to connect to primary node."
@@ -241,7 +243,8 @@ module Mongo
     end
 
     def nodes
-      warn "DEPRECATED"
+      warn "ReplSetConnection#nodes is DEPRECATED and will be removed in v2.0. " +
+        "Please use ReplSetConnection#seeds instead."
       @seeds
     end
 
@@ -261,7 +264,6 @@ module Mongo
     end
 
     # Close the connection to the database.
-    # TODO: we should get an exclusive lock here.
     def close
       sync_synchronize(:EX) do
         @connected = false
@@ -331,8 +333,8 @@ module Mongo
 
     private
 
-    def initiate_auto_refresh
-      if @auto_refresh
+    def initiate_background_refresh
+      if @background_refresh
         return if @refresh_thread && @refresh_thread.alive?
         @refresh_thread = Thread.new do
           while true do
@@ -441,7 +443,9 @@ module Mongo
         end
       end
 
-      if !@auto_refresh &&
+      # Refresh synchronously every @refresh_interval seconds
+      # if @background_refresh is false.
+      if !@background_refresh &&
         ((Time.now - @last_refresh) > @refresh_interval)
         refresh
       end

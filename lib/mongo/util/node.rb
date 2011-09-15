@@ -4,15 +4,15 @@ module Mongo
     attr_accessor :host, :port, :address, :config, :connection, :socket
 
     def initialize(connection, data)
-      self.connection = connection
+      @connection = connection
       if data.is_a?(String)
-        self.host, self.port = split_nodes(data)
+        @host, @port = split_nodes(data)
       else
-        self.host = data[0]
-        self.port = data[1].nil? ? Connection::DEFAULT_PORT : data[1].to_i
+        @host = data[0]
+        @port = data[1].nil? ? Connection::DEFAULT_PORT : data[1].to_i
       end
-      self.address = "#{host}:#{port}"
-      self.config = nil
+      @address = "#{host}:#{port}"
+      @config = nil
     end
 
     def eql?(other)
@@ -34,12 +34,12 @@ module Mongo
     def connect
       begin
         socket = nil
-        if self.connection.connect_timeout
-          Mongo::TimeoutHandler.timeout(self.connection.connect_timeout, OperationTimeout) do
-            socket = self.connection.socket_class.new(self.host, self.port)
+        if @connection.connect_timeout
+          Mongo::TimeoutHandler.timeout(@connection.connect_timeout, OperationTimeout) do
+            socket = @connection.socket_class.new(@host, @port)
           end
         else
-          socket = self.connection.socket_class.new(self.host, self.port)
+          socket = @connection.socket_class.new(@host, @port)
         end
 
         if socket.nil?
@@ -48,29 +48,29 @@ module Mongo
           socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
         end
       rescue OperationTimeout, OperationFailure, SocketError, SystemCallError, IOError => ex
-        self.connection.log(:debug, "Failed connection to #{host_string} with #{ex.class}, #{ex.message}.")
+        @connection.log(:debug, "Failed connection to #{host_string} with #{ex.class}, #{ex.message}.")
         socket.close if socket
         return nil
       end
 
-      self.socket = socket
+      @socket = socket
     end
 
     def close
-      if self.socket
-        self.socket.close
-        self.socket = nil
-        self.config = nil
+      if @socket
+        @socket.close
+        @socket = nil
+        @config = nil
       end
     end
 
     def connected?
-      self.socket != nil
+      @socket != nil
     end
 
     def active?
       begin
-        result = self.connection['admin'].command({:ping => 1}, :socket => self.socket)
+        result = @connection['admin'].command({:ping => 1}, :socket => @socket)
         return result['ok'] == 1
       rescue OperationFailure, SocketError, SystemCallError, IOError => ex
         return nil
@@ -82,28 +82,28 @@ module Mongo
     # matches with the name provided.
     def set_config
       begin
-        self.config = self.connection['admin'].command({:ismaster => 1}, :socket => self.socket)
+        @config = @connection['admin'].command({:ismaster => 1}, :socket => @socket)
 
-        if self.config['msg'] && @logger
-          self.connection.log(:warn, "#{config['msg']}")
+        if @config['msg'] && @logger
+          @connection.log(:warn, "#{config['msg']}")
         end
 
         check_set_membership(config)
         check_set_name(config)
       rescue ConnectionFailure, OperationFailure, SocketError, SystemCallError, IOError => ex
-        self.connection.log(:warn, "Attempted connection to node #{host_string} raised " +
+        @connection.log(:warn, "Attempted connection to node #{host_string} raised " +
                             "#{ex.class}: #{ex.message}")
         return nil
       end
 
-      self.config
+      @config
     end
 
     # Return a list of replica set nodes from the config.
     # Note: this excludes arbiters.
     def node_list
       connect unless connected?
-      set_config unless self.config
+      set_config unless @config
 
       return [] unless config
 
@@ -115,7 +115,7 @@ module Mongo
 
     def arbiters
       connect unless connected?
-      set_config unless self.config
+      set_config unless @config
       return [] unless config['arbiters']
 
       config['arbiters'].map do |arbiter|
@@ -125,22 +125,22 @@ module Mongo
 
     def tags
       connect unless connected?
-      set_config unless self.config
+      set_config unless @config
       return {} unless config['tags'] && !config['tags'].empty?
 
       config['tags']
     end
 
     def primary?
-      self.config['ismaster'] == true || self.config['ismaster'] == 1
+      @config['ismaster'] == true || @config['ismaster'] == 1
     end
 
     def secondary?
-      self.config['secondary'] == true || self.config['secondary'] == 1
+      @config['secondary'] == true || @config['secondary'] == 1
     end
 
     def host_port
-      [self.host, self.port]
+      [@host, @port]
     end
 
     def hash
@@ -168,13 +168,13 @@ module Mongo
 
     # Ensure that this node is part of a replica set of the expected name.
     def check_set_name(config)
-      if self.connection.replica_set_name
+      if @connection.replica_set_name
         if !config['setName']
-          self.connection.log(:warn, "Could not verify replica set name for member #{host_string} " +
+          @connection.log(:warn, "Could not verify replica set name for member #{host_string} " +
             "because ismaster does not return name in this version of MongoDB")
-        elsif self.connection.replica_set_name != config['setName']
+        elsif @connection.replica_set_name != config['setName']
           message = "Attempting to connect to replica set '#{config['setName']}' on member #{host_string} " +
-            "but expected '#{self.connection.replica_set_name}'"
+            "but expected '#{@connection.replica_set_name}'"
           raise ReplicaSetConnectionError, message
         end
       end
