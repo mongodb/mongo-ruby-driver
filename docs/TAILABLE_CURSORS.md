@@ -1,4 +1,4 @@
-# Tailable in Ruby
+# Tailable cursors in Ruby
 
 Tailable cursors are cursors that remain open even after they've returned
 a final result. This way, if more documents are added to a collection (i.e.,

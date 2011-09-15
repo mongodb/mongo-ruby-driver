@@ -69,7 +69,7 @@ module Mongo
 
     def inspect
       "#<Mongo::Pool:0x#{self.object_id.to_s(16)} @host=#{@host} @port=#{port} " +
-        "@ping_time=#{ping_time} #{@checked_out.size}/#{@size} sockets available.>"
+        "@ping_time=#{@ping_time} #{@checked_out.size}/#{@size} sockets available.>"
     end
 
     def host_string

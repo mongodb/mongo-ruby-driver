@@ -24,7 +24,7 @@ module Mongo
   class ReplSetConnection < Connection
     attr_reader :nodes, :secondaries, :arbiters, :secondary_pools,
       :replica_set_name, :read_pool, :seeds, :tags_to_pools,
-      :refresh_interval, :background_refresh
+      :refresh_interval, :refresh_mode
 
     # Create a connection to a MongoDB replica set.
     #
@@ -46,7 +46,7 @@ module Mongo
     #   objects created from this connection object. If +:secondary+ is chosen, reads will be sent
     #   to one of the closest available secondary nodes. If a secondary node cannot be located, the
     #   read will be sent to the primary.
-    # @option options [Logger, #debug] :logger (nil) Logger instance to receive driver operation log.
+    # @option options [Logger] :logger (nil) Logger instance to receive driver operation log.
     # @option options [Integer] :pool_size (1) The maximum number of socket connections allowed per
     #   connection pool. Note: this setting is relevant only for multi-threaded applications.
     # @option options [Float] :pool_timeout (5.0) When all of the connections a pool are checked out,
@@ -57,15 +57,15 @@ module Mongo
     # @option opts [Float] :connect_timeout (nil) The number of seconds to wait before timing out a
     #   connection attempt.
     # @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
-    # @option opts [Boolean] :background_refresh (false) Set this to true to enable a background thread that
+    # @option opts [Boolean] :refresh_mode (:sync) Set this to :async to enable a background thread that
     #   periodically updates the state of the connection. If, for example, you initially connect while a secondary
-    #   is down, :background_refresh will reconnect to that secondary behind the scenes to
-    #   prevent you from having to reconnect manually. If set to +false+, background refresh will happen
-    #   synchronously.
-    # @option opts [Integer] :refresh_interval (90) If :background_refresh is enabled, this is the number of seconds
-    #   that the background thread will sleep between calls to check the replica set's state.
+    #   is down, this will reconnect to that secondary behind the scenes to
+    #   prevent you from having to reconnect manually. If set to :sync, refresh will happen
+    #   synchronously. If +false+, no automatic refresh will occur unless there's a connection failure.
+    # @option opts [Integer] :refresh_interval (90) If :refresh_mode is enabled, this is the number of seconds
+    #   between calls to check the replica set's state.
     # @option opts [Boolean] :require_primary (true) If true, require a primary node for the connection
-    #   to succeed. Otherwise, connection will succeed as long as there's at least one secondary.
+    #   to succeed. Otherwise, connection will succeed as long as there's at least one secondary node.
     #
     # @example Connect to a replica set and provide two seed nodes. Note that the number of seed nodes does
     #   not have to be equal to the number of replica set members. The purpose of seed nodes is to permit
@@ -120,8 +120,13 @@ module Mongo
       @arbiters = []
 
       # Refresh
-      @background_refresh = opts.fetch(:background_refresh, false)
+      @refresh_mode = opts.fetch(:refresh_mode, :sync)
       @refresh_interval = opts[:refresh_interval] || 90
+
+      if ![:sync, :async, false].include?(@refresh_mode)
+        raise MongoArgumentError,
+          "Refresh mode must be one of :sync, :async, or false."
+      end
 
       # Are we allowing reads from secondaries?
       if opts[:read_secondary]
@@ -165,14 +170,14 @@ module Mongo
 
     # Initiate a connection to the replica set.
     def connect
-      log(:debug, "Connecting...")
+      log(:info, "Connecting...")
       sync_synchronize(:EX) do
         return if @connected
         manager = PoolManager.new(self, @seeds)
         manager.connect
 
         update_config(manager)
-        initiate_background_refresh
+        initiate_refresh_mode
 
         if @require_primary && @primary.nil? #TODO: in v2.0, we'll let this be optional and do a lazy connect.
           raise ConnectionFailure, "Failed to connect to primary node."
@@ -210,7 +215,7 @@ module Mongo
       return if sync_exclusive?
 
       sync_synchronize(:EX) do
-        log(:debug, "Refreshing...")
+        log(:info, "Refreshing...")
         @background_manager ||= PoolManager.new(self, @seeds)
         @background_manager.connect
         update_config(@background_manager)
@@ -220,11 +225,12 @@ module Mongo
     end
 
     def connected?
-      @primary_pool || @read_pool
+      !@primary_pool.nil? || !@read_pool.nil?
     end
 
     # @deprecated
     def connecting?
+      warn "ReplSetConnection#connecting? is deprecated and will be removed in v2.0."
       false
     end
 
@@ -333,8 +339,8 @@ module Mongo
 
     private
 
-    def initiate_background_refresh
-      if @background_refresh
+    def initiate_refresh_mode
+      if @refresh_mode == :async
         return if @refresh_thread && @refresh_thread.alive?
         @refresh_thread = Thread.new do
           while true do
@@ -342,9 +348,9 @@ module Mongo
             refresh
           end
         end
-      else
-        @last_refresh = Time.now
       end
+
+      @last_refresh = Time.now
     end
 
     # Checkout a socket for reading (i.e., a secondary node).
@@ -444,8 +450,8 @@ module Mongo
       end
 
       # Refresh synchronously every @refresh_interval seconds
-      # if @background_refresh is false.
-      if !@background_refresh &&
+      # if synchronous refresh mode is enabled.
+      if @refresh_mode == :sync &&
         ((Time.now - @last_refresh) > @refresh_interval)
         refresh
       end
