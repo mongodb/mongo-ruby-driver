@@ -53,7 +53,7 @@ module Mongo
 
     def close
       @connection_mutex.synchronize do
-        (@sockets - @checked_out).each do |sock|
+        @sockets.each do |sock|
           begin
             sock.close
           rescue IOError => ex
@@ -140,6 +140,7 @@ module Mongo
       rescue => ex
         socket.close if socket
         raise ConnectionFailure, "Failed to connect to host #{@host} and port #{@port}: #{ex}"
+        @node.close if @node
       end
 
       # If any saved authentications exist, we want to apply those

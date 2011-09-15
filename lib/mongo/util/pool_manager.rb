@@ -9,6 +9,7 @@ module Mongo
       @connection = connection
       @seeds = seeds
       @refresh_node = nil
+      @previously_connected = false
     end
 
     def inspect
@@ -16,16 +17,28 @@ module Mongo
     end
 
     def connect
+      if @previously_connected
+        close
+      end
+
       initialize_data
       members = connect_to_members
       initialize_pools(members)
       update_seed_list(members)
+
       @members = members
+      @previously_connected = true
     end
 
-    private
+    def healthy?
+      if !@refresh_node || !refresh_node.set_config
+        return false
+      end
 
-    def initialize_data
+      #if refresh_node.node_list
+    end
+
+    def close
       begin
         if @primary_pool
           @primary_pool.close
@@ -45,7 +58,11 @@ module Mongo
 
         rescue ConnectionFailure
       end
+    end
 
+    private
+
+    def initialize_data
       @primary = nil
       @primary_pool = nil
       @read_pool = nil
@@ -71,6 +88,7 @@ module Mongo
           members << node
         end
       end
+      seed.close
 
       if members.empty?
         raise ConnectionFailure, "Failed to connect to any given member."
@@ -174,7 +192,7 @@ module Mongo
         if node.connect && node.set_config
           return node
         else
-          node.disconnect
+          node.close
         end
       end
 

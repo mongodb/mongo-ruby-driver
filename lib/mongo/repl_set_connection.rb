@@ -200,28 +200,21 @@ module Mongo
       @max_bson_size = manager.max_bson_size
     end
 
-    # If ismaster doesn't match our current view
-    # then create a new PoolManager, passing in our
-    # existing view. It should be able to do the diff.
-    # Then take out the connection lock and replace
-    # our current values.
-    def refresh
-      return if !connected?
-
-      if !Thread.current[:background]
-        Thread.current[:background] = PoolManager.new(self, @seeds)
-      end
-
-      background_manager = Thread.current[:background]
+    # Refresh the current replica set configuration.
+    def refresh(opts={})
+      return false if !connected?
 
       # Return if another thread is already in the process of refreshing.
       return if sync_exclusive?
 
       sync_synchronize(:EX) do
         log(:debug, "Refreshing...")
-        background_manager.connect
-        update_config(background_manager)
+        @background_manager ||= PoolManager.new(self, @seeds)
+        @background_manager.connect
+        update_config(@background_manager)
       end
+
+      return true
     end
 
     def connected?
@@ -281,7 +274,7 @@ module Mongo
 
         if @nodes
           @nodes.each do |member|
-            member.disconnect
+            member.close
           end
         end
 
@@ -339,13 +332,16 @@ module Mongo
     private
 
     def initiate_auto_refresh
-      return unless @auto_refresh
-      return if @refresh_thread && @refresh_thread.alive?
-      @refresh_thread = Thread.new do
-        while true do
-          sleep(@refresh_interval)
-          refresh
+      if @auto_refresh
+        return if @refresh_thread && @refresh_thread.alive?
+        @refresh_thread = Thread.new do
+          while true do
+            sleep(@refresh_interval)
+            refresh
+          end
         end
+      else
+        @last_refresh = Time.now
       end
     end
 
@@ -443,6 +439,11 @@ module Mongo
         elsif socket
           socket.close
         end
+      end
+
+      if !@auto_refresh &&
+        ((Time.now - @last_refresh) > @refresh_interval)
+        refresh
       end
     end
   end

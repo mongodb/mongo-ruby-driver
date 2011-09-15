@@ -20,10 +20,6 @@ module Mongo
     end
     alias :== :eql?
 
-    def close
-      self.socket.close if self.socket
-    end
-
     def host_string
       address
     end
@@ -60,7 +56,7 @@ module Mongo
       self.socket = socket
     end
 
-    def disconnect
+    def close
       if self.socket
         self.socket.close
         self.socket = nil
