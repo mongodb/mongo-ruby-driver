@@ -1,12 +1,13 @@
 # MongoDB Ruby Driver History
 
 ### 1.4.0
-UNRELEASED
+2011-9-19
 
 * Attempt to automatically refresh internal replica set state using ReplSetConnection#refresh.
 * Two automated refresh modes: :async and :sync. Automated refresh can also be disabled.
 * Choose secondary for reads based on ping time.
 * Read preference API: specify whether queries should go to primary or secondary on a per-query basis.
+* Pass :require_primary => false to ReplSetConnection to connect without requiring a primary node.
 * Enable exhaust-mode queries with OP_QUERY_EXHAUST.
 * Collection#count takes a query selector.
 * Support continue_on_error flag for bulk inserts (use :continue_on_error => true)
