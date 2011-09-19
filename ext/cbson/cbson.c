@@ -904,7 +904,7 @@ static VALUE objectid_generate(int argc, VALUE* args, VALUE self)
     if(argc == 0 || (argc == 1 && *args == Qnil)) {
         t = htonl((int)time(NULL));
     } else {
-        t = htonl(FIX2INT(rb_funcall(*args, rb_intern("to_i"), 0)));
+        t = htonl(NUM2UINT(rb_funcall(*args, rb_intern("to_i"), 0)));
     }
     MEMCPY(&oid_bytes, &t, unsigned char, 4);
 
