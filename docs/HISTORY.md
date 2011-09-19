@@ -3,7 +3,19 @@
 ### 1.4.0
 UNRELEASED
 
+* Attempt to automatically refresh internal replica set state using ReplSetConnection#refresh.
+* Two automated refresh modes: :async and :sync. Automated refresh can also be disabled.
+* Choose secondary for reads based on ping time.
+* Read preference API: specify whether queries should go to primary or secondary on a per-query basis.
+* Enable exhaust-mode queries with OP_QUERY_EXHAUST.
+* Collection#count takes a query selector.
+* Support continue_on_error flag for bulk inserts (use :continue_on_error => true)
 * Add Cursor#add_option. Deprecate Cursor#query_opts and replace with Cursor#options.
+* Initial SSL support (connect with :ssl => true)
+* Update to latest Java driver for JRuby.
+* Check max BSON size on a per-connection basis.
+* Fixed two platform-specific BSON serialization issues.
+* Lots of bug fixes and code cleanup.
 
 ### 1.3.1
 2011-5-10
