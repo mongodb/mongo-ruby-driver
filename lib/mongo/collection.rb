@@ -611,6 +611,9 @@ module Mongo
       hash['map'] = map
       hash['reduce'] = reduce
       hash.merge! opts
+      if hash[:sort]
+        hash[:sort] = Mongo::Support.format_order_clause(hash[:sort])
+      end
 
       result = @db.command(hash)
       unless Mongo::Support.ok?(result)
