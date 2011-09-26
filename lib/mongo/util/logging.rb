@@ -20,7 +20,10 @@ module Mongo
 
     # Execute the block and log the operation described by name and payload.
     def instrument(name, payload = {}, &blk)
+      before = Time.now
       res = yield
+      after = Time.now
+      payload[:duration] = 1000.0 * (after - before) if payload
       log_operation(name, payload)
       res
     end
@@ -35,7 +38,7 @@ module Mongo
       msg += ".skip(#{payload[:skip]})"  if payload[:skip]
       msg += ".limit(#{payload[:limit]})"  if payload[:limit]
       msg += ".sort(#{payload[:order]})"  if payload[:order]
-      @logger.debug "MONGODB #{msg}"
+      @logger.debug "MONGODB (%.1fms) #{msg}" % payload[:duration]
     end
 
   end
