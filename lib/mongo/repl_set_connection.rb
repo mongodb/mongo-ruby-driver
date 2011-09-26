@@ -164,7 +164,7 @@ module Mongo
     end
 
     def inspect
-      "<Mongo::ReplSetConnection:0x#{self.object_id.to_s(16)} @seeds=#{@seeds} " +
+      "<Mongo::ReplSetConnection:0x#{self.object_id.to_s(16)} @seeds=#{@seeds.inspect} " +
         "@connected=#{@connected}>"
     end
 

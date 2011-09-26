@@ -71,10 +71,6 @@ class ConnectionTest < Test::Unit::TestCase
         assert_raise MongoArgumentError do
           Connection.from_uri("mongodb://localhost:abc", :connect => false)
         end
-
-        assert_raise MongoArgumentError do
-          Connection.from_uri("mongodb://localhost:27017, my.db.com:27018, ", :connect => false)
-        end
       end
 
       should "require all of username, if password and db are specified" do
