@@ -40,6 +40,12 @@ class ConnectionTest < Test::Unit::TestCase
         assert_equal [host_name, 27017], @conn.host_to_try
       end
 
+      should "allow db without username and password" do
+        host_name = "foo.bar-12345.org"
+        @conn = Connection.from_uri("mongodb://#{host_name}/foo", :connect => false)
+        assert_equal [host_name, 27017], @conn.host_to_try
+      end
+
       should "parse a uri with a hyphen & underscore in the username or password" do
         @conn = Connection.from_uri("mongodb://hyphen-user_name:p-s_s@localhost:27017/db", :connect => false)
         assert_equal ['localhost', 27017], @conn.host_to_try
@@ -71,10 +77,8 @@ class ConnectionTest < Test::Unit::TestCase
         end
       end
 
-      should "require all of username, password, and database if any one is specified" do
-        assert_raise MongoArgumentError do
-          Connection.from_uri("mongodb://localhost/db", :connect => false)
-        end
+      should "require all of username, if password and db are specified" do
+        assert Connection.from_uri("mongodb://kyle:jones@localhost/db", :connect => false)
 
         assert_raise MongoArgumentError do
           Connection.from_uri("mongodb://kyle:password@localhost", :connect => false)
