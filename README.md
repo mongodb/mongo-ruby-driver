@@ -208,14 +208,14 @@ keys. This is the PKFactory that comes with the MongoRecord code (an
 ActiveRecord-like framework for non-Rails apps) and the AR Mongo adapter code
 (for Rails):
 
-  class PKFactory
-    def create_pk(row)
-      return row if row[:_id]
-      row.delete(:_id)      # in case it exists but the value is nil
-      row['_id'] ||= Mongo::ObjectID.new
-      row
+    class PKFactory
+      def create_pk(row)
+        return row if row[:_id]
+        row.delete(:_id)      # in case it exists but the value is nil
+        row['_id'] ||= Mongo::ObjectID.new
+        row
+      end
     end
-  end
 
 A database's PK factory object may be set either when a DB object is created
 or immediately after you obtain it, but only once. The only reason it is
