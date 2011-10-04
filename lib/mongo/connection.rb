@@ -149,9 +149,9 @@ module Mongo
       uri = URIParser.new(string)
       opts = uri.connection_options
       opts.merge!(extra_opts)
+      opts.merge!({:auths => uri.auths})
 
       if uri.nodes.length == 1
-        opts.merge!({:auths => uri.auths})
         Connection.new(uri.nodes[0][0], uri.nodes[0][1], opts)
       elsif uri.nodes.length > 1
         nodes = uri.nodes.clone
