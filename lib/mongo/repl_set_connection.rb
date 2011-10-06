@@ -454,6 +454,7 @@ module Mongo
       if @refresh_mode == :sync &&
         ((Time.now - @last_refresh) > @refresh_interval)
         refresh
+        @last_refresh = Time.now
       end
     end
   end
