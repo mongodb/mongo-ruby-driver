@@ -216,7 +216,7 @@ module Mongo
 
       sync_synchronize(:EX) do
         log(:info, "Refreshing...")
-        @background_manager ||= PoolManager.new(self, @seeds)
+        @background_manager = PoolManager.new(self, @seeds)
         @background_manager.connect
         update_config(@background_manager)
       end
