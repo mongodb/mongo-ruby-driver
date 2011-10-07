@@ -8,7 +8,6 @@ module Mongo
     def initialize(connection, seeds)
       @connection = connection
       @seeds = seeds
-      @refresh_node = nil
       @previously_connected = false
     end
 
@@ -31,11 +30,7 @@ module Mongo
     end
 
     def healthy?
-      if !@refresh_node || !refresh_node.set_config
-        return false
-      end
 
-      #if refresh_node.node_list
     end
 
     def close

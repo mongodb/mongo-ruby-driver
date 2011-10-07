@@ -22,7 +22,7 @@ module Mongo
 
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
-    attr_reader :nodes, :secondaries, :arbiters, :secondary_pools,
+    attr_reader :secondaries, :arbiters, :secondary_pools,
       :replica_set_name, :read_pool, :seeds, :tags_to_pools,
       :refresh_interval, :refresh_mode
 
@@ -100,9 +100,6 @@ module Mongo
 
       # TODO: get rid of this
       @nodes = @seeds.dup
-
-      # The members of the replica set, stored as instances of Mongo::Node.
-      @members = []
 
       # Connection pool for primary node
       @primary      = nil
