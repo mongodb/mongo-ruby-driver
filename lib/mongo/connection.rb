@@ -436,10 +436,8 @@ module Mongo
       packed_message = message.append!(last_error_message).to_s
       begin
         sock = checkout_writer
-        @safe_mutexes[sock].synchronize do
-          send_message_on_socket(packed_message, sock)
-          docs, num_received, cursor_id = receive(sock, last_error_id)
-        end
+        send_message_on_socket(packed_message, sock)
+        docs, num_received, cursor_id = receive(sock, last_error_id)
       ensure
         checkin(sock)
       end
@@ -467,7 +465,8 @@ module Mongo
     # @return [Array]
     #   An array whose indexes include [0] documents returned, [1] number of document received,
     #   and [3] a cursor_id.
-    def receive_message(operation, message, log_message=nil, socket=nil, command=false, read=:primary, exhaust=false)
+    def receive_message(operation, message, log_message=nil, socket=nil, command=false,
+                        read=:primary, exhaust=false)
       request_id = add_message_headers(message, operation)
       packed_message = message.to_s
       begin
@@ -488,10 +487,8 @@ module Mongo
         end
 
         result = ''
-        @safe_mutexes[sock].synchronize do
-          send_message_on_socket(packed_message, sock)
-          result = receive(sock, request_id, exhaust)
-        end
+        send_message_on_socket(packed_message, sock)
+        result = receive(sock, request_id, exhaust)
       ensure
         if should_checkin
           checkin(sock)
@@ -665,10 +662,6 @@ module Mongo
 
       # Global safe option. This is false by default.
       @safe = opts[:safe] || false
-
-            # Create a mutex when a new key, in this case a socket,
-      # is added to the hash.
-      @safe_mutexes = Hash.new { |h, k| h[k] = Mutex.new }
 
       # Condition variable for signal and wait
       @queue = ConditionVariable.new
