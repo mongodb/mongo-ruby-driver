@@ -86,6 +86,7 @@ module Mongo
 
       @db, @name  = db, name
       @connection = @db.connection
+      @logger     = @connection.logger
       @cache_time = @db.cache_time
       @cache = Hash.new(0)
       unless pk_factory

@@ -124,5 +124,15 @@ class CollectionTest < Test::Unit::TestCase
 
       @coll.ensure_index [["x", Mongo::DESCENDING], ["y", Mongo::DESCENDING]]
     end
+
+    should "use the connection's logger" do
+      @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
+      @db   = @conn['testing']
+      @coll = @db.collection('books')
+      @logger.expects(:warn).with do |msg|
+        msg == "MONGODB [WARNING] test warning"
+      end
+      @coll.log(:warn, "test warning")
+    end
   end
 end
