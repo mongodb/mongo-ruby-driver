@@ -5,11 +5,22 @@ require './test/replica_sets/rs_test_helper'
 class ReadPreferenceTest < Test::Unit::TestCase
   include Mongo
 
-  #def setup
-  #  @conn = ReplSetConnection.new([RS.host, RS.ports[0], RS.host, RS.ports[1]], :read => :secondary, :pool_size => 50)
-  #  @db = @conn.db(MONGO_TEST_DB)
-  #  @db.drop_collection("test-sets")
-  #end
+  def test_long_write_with_async_refresh
+    conn = ReplSetConnection.new([RS.host, RS.ports[0], RS.host, RS.ports[1]],
+          :read => :secondary, :pool_size => 50,
+          :refresh_mode => :async, :refresh_interval => 5)
+
+    db = conn.db(MONGO_TEST_DB)
+    db.drop_collection("test-sets")
+    col = @db['mongo-test']
+
+    100000.times do |n|
+      col.insert({:n => n, :str => "0000000000"})
+    end
+
+    assert col.find.to_a
+    col.remove
+  end
 
   # TODO: enable this once we enable reads from tags.
   # def test_query_tagged
