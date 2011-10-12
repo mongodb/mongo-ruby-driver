@@ -19,10 +19,10 @@ module Mongo
   class Pool
     PING_ATTEMPTS = 6
 
-    attr_accessor :host, :port, :size, :timeout, :safe, :checked_out, :connection
+    attr_accessor :host, :port, :address,
+      :size, :timeout, :safe, :checked_out, :connection
 
     # Create a new pool of connections.
-    #
     def initialize(connection, host, port, opts={})
       @connection  = connection
 
@@ -30,6 +30,9 @@ module Mongo
 
       # A Mongo::Node object.
       @node = opts[:node]
+
+      # The string address
+      @address = "#{@host}:#{@port}"
 
       # Pool size and timeout.
       @size      = opts[:size] || 1

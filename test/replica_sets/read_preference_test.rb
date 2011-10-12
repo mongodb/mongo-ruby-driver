@@ -1,18 +1,20 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require './test/replica_sets/rs_test_helper'
+require 'logger'
 
 # TODO: enable this once we enable reads from tags.
 class ReadPreferenceTest < Test::Unit::TestCase
   include Mongo
 
   def test_long_write_with_async_refresh
+    log = Logger.new("test.log")
     conn = ReplSetConnection.new([RS.host, RS.ports[0], RS.host, RS.ports[1]],
           :read => :secondary, :pool_size => 50,
-          :refresh_mode => :async, :refresh_interval => 5)
+          :refresh_mode => :sync, :refresh_interval => 5, :logger => log)
 
     db = conn.db(MONGO_TEST_DB)
     db.drop_collection("test-sets")
-    col = @db['mongo-test']
+    col = db['mongo-test']
 
     100000.times do |n|
       col.insert({:n => n, :str => "0000000000"})

@@ -3,7 +3,7 @@ module Mongo
 
     attr_reader :connection, :seeds, :arbiters, :primary, :secondaries,
       :primary_pool, :read_pool, :secondary_pools, :hosts, :nodes, :max_bson_size,
-      :tags_to_pools, :members
+      :tags_to_pools, :primary_tag_pool, :members
 
     def initialize(connection, seeds)
       @connection = connection
@@ -24,13 +24,50 @@ module Mongo
       members = connect_to_members
       initialize_pools(members)
       update_seed_list(members)
+      set_read_pool
+      set_primary_tag_pools
 
       @members = members
       @previously_connected = true
     end
 
-    def healthy?
+    # We're healthy if all members are pingable and if the view
+    # of the replica set returned by isMaster is equivalent
+    # to our view. If any of these isn't the case,
+    # set @refresh_require to true, and return.
+    def check_connection_health
+      @refresh_required = false
 
+      begin
+        seed = get_valid_seed_node
+      rescue ConnectionFailure
+        @refresh_required = true
+        return
+      end
+
+      config = seed.set_config
+      if !config
+        @refresh_required = true
+        return
+      end
+
+      config['hosts'].each do |host|
+        member = @members.detect do |m|
+          m.address == host
+        end
+
+        if member && validate_existing_member(member)
+          next
+        else
+          @refresh_required = true
+          return false
+        end
+      end
+    end
+
+    # The replica set connection should initiate a full refresh.
+    def refresh_required?
+      @refresh_required
     end
 
     def close
@@ -57,6 +94,24 @@ module Mongo
 
     private
 
+    def validate_existing_member(member)
+      config = member.set_config
+      if !config
+        return false
+      else
+        if member.primary?
+          if member.last_state == :primary
+            return true
+          else # This node is now primary, but didn't used to be.
+            return false
+          end
+        elsif member.last_state == :secondary &&
+          member.secondary?
+          return true
+        end
+      end
+    end
+
     def initialize_data
       @primary = nil
       @primary_pool = nil
@@ -67,6 +122,7 @@ module Mongo
       @hosts = Set.new
       @members = Set.new
       @tags_to_pools = {}
+      @primary_tag_pool = {}
     end
 
     # Connect to each member of the replica set
@@ -105,40 +161,46 @@ module Mongo
         @hosts << member.host_string
 
         if member.primary?
-          @primary = member.host_port
-          @primary_pool = Pool.new(self.connection, member.host, member.port,
-                                  :size => self.connection.pool_size,
-                                  :timeout => self.connection.connect_timeout,
-                                  :node => member)
-          associate_tags_with_pool(member.tags, @primary_pool)
+          assign_primary(member)
         elsif member.secondary? && !@secondaries.include?(member.host_port)
-          @secondaries << member.host_port
-          pool = Pool.new(self.connection, member.host, member.port,
-                                       :size => self.connection.pool_size,
-                                       :timeout => self.connection.connect_timeout,
-                                       :node => member)
-          @secondary_pools << pool
-          associate_tags_with_pool(member.tags, pool)
+          assign_secondary(member)
         end
       end
-
 
       @max_bson_size = members.first.config['maxBsonObjectSize'] ||
         Mongo::DEFAULT_MAX_BSON_SIZE
       @arbiters = members.first.arbiters
+    end
 
-      set_read_pool
-      set_primary_tag_pools
+    def assign_primary(member)
+      member.last_state = :primary
+      @primary = member.host_port
+      @primary_pool = Pool.new(self.connection, member.host, member.port,
+                              :size => self.connection.pool_size,
+                              :timeout => self.connection.connect_timeout,
+                              :node => member)
+      associate_tags_with_pool(member.tags, @primary_pool)
+    end
+
+    def assign_secondary(member)
+      member.last_state = :secondary
+      @secondaries << member.host_port
+      pool = Pool.new(self.connection, member.host, member.port,
+                                   :size => self.connection.pool_size,
+                                   :timeout => self.connection.connect_timeout,
+                                   :node => member)
+      @secondary_pools << pool
+      associate_tags_with_pool(member.tags, pool)
     end
 
     # If there's more than one pool associated with
     # a given tag, choose a close one using the bucket method.
     def set_primary_tag_pools
-      @tags_to_pools.each do |k, pool_list|
+      @tags_to_pools.each do |key, pool_list|
         if pool_list.length == 1
-          @tags_to_pools[k] = pool_list.first
+          @primary_tag_pool[key] = pool_list.first
         else
-          @tags_to_pools[k] = nearby_pool_from_set(pool_list)
+          @primary_tag_pool[key] = nearby_pool_from_set(pool_list)
         end
       end
     end
