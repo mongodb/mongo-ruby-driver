@@ -40,7 +40,8 @@ enabled in synchronous mode by default. Here's how to specify this explicitly:
 
     @connection = ReplSetConnection.new(['n1.mydb.net', 27017], :refresh_mode => :sync)
 
-If you want to refresh to happen via a background thread, use the `:async` mode:
+If you want to refresh to happen via a background thread, use the `:async` mode. NOTE: the background
+version may be more effective on platforms that use native threads, such as JRuby:
 
     @connection = ReplSetConnection.new(['n1.mydb.net', 27017], :refresh_mode => :async)
 
@@ -48,6 +49,8 @@ If you want to change the default refresh interval of 90 seconds, you can do so 
 
     @connection = ReplSetConnection.new(['n1.mydb.net', 27017], :refresh_mode => :async,
         :refresh_interval => 60)
+
+Do not set this value to anything lower than 30, or you may start to experience performance issues.
 
 You can also disable refresh mode altogether:
 
