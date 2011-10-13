@@ -20,7 +20,7 @@
 #include "bson_buffer.h"
 
 #define INITIAL_BUFFER_SIZE 256
-#define DEFAULT_MAX_SIZE 4 * 1024 * 1024
+#define DEFAULT_MAX_SIZE 16 * 1024 * 1024
 
 struct bson_buffer {
     char* buffer;

@@ -997,5 +997,5 @@ void Init_cbson() {
     memcpy(hostname_digest, RSTRING_PTR(digest), 16);
     hostname_digest[16] = '\0';
 
-    max_bson_size = 4 * 1024 * 1024;
+    max_bson_size = 16 * 1024 * 1024;
 }

@@ -61,7 +61,7 @@ public class RubyBSONEncoder extends BSONEncoder {
     private boolean _check_keys;
     private boolean _move_id;
 
-    private static final int DEFAULT_MAX_BSON_SIZE = 4 * 1024 * 1024;
+    private static final int DEFAULT_MAX_BSON_SIZE = 16 * 1024 * 1024;
     private static int _max_bson_size = DEFAULT_MAX_BSON_SIZE;
     private static final int BIT_SIZE = 64;
     private static final long MAX = (1L << (BIT_SIZE - 1)) - 1;
