@@ -14,6 +14,7 @@ module Mongo
       end
       @address = "#{host}:#{port}"
       @config = nil
+      @socket = nil
     end
 
     def eql?(other)

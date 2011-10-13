@@ -23,7 +23,7 @@ module Mongo
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
     attr_reader :secondaries, :arbiters, :secondary_pools,
-      :replica_set_name, :read_pool, :seeds, :primary_tag_pool,
+      :replica_set_name, :read_pool, :seeds, :tag_map,
       :refresh_interval, :refresh_mode
 
     # Create a connection to a MongoDB replica set.
@@ -143,7 +143,7 @@ module Mongo
 
       # Maps
       @sockets_to_pools = {}
-      @primary_tag_pool = nil
+      @tag_map = nil
 
       # Replica set name
       if opts[:rs_name]
@@ -197,7 +197,10 @@ module Mongo
     #   to get the refresh lock.
     def refresh(opts={})
       if !connected?
-        @logger.warn("Not connected")
+        log(:info, "Trying to refresh but not connected..." +
+           "skipping replica set health check.")
+        hard_refresh!
+        return true
       end
 
       log(:info, "Checking replica set connection health...")
@@ -286,13 +289,6 @@ module Mongo
           @refresh_thread = nil
         end
 
-        if @nodes
-          @nodes.each do |member|
-            member.close
-          end
-        end
-
-        @nodes = []
         @read_pool = nil
 
         if @secondary_pools
@@ -304,7 +300,7 @@ module Mongo
         @secondaries      = []
         @secondary_pools  = []
         @arbiters         = []
-        @primary_tag_pool = nil
+        @tag_map = nil
         @sockets_to_pools.clear
       end
     end
@@ -359,7 +355,7 @@ module Mongo
       @primary_pool = manager.primary_pool
       @read_pool    = manager.read_pool
       @secondary_pools = manager.secondary_pools
-      @primary_tag_pool = manager.primary_tag_pool
+      @tag_map = manager.tag_map
       @seeds = manager.seeds
       @manager = manager
       @nodes = manager.nodes
@@ -407,7 +403,7 @@ module Mongo
     def checkout_tagged(tags)
       sync_synchronize(:SH) do
         tags.each do |k, v|
-          pool = @primary_tag_pool[{k.to_s => v}]
+          pool = @tag_map[{k.to_s => v}]
           if pool
             socket = pool.checkout
             @sockets_to_pools[socket] = pool
@@ -472,7 +468,11 @@ module Mongo
         if pool = @sockets_to_pools[socket]
           pool.checkin(socket)
         elsif socket
+          begin
           socket.close
+          rescue IOError
+            log(:info, "Tried to close socket #{socket} but already closed.")
+          end
         end
       end
 

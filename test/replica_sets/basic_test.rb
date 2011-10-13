@@ -40,7 +40,7 @@ class ConnectTest < Test::Unit::TestCase
     assert @conn.secondary_pools.include?(@conn.read_pool)
     assert_equal seeds.sort {|a,b| a[1] <=> b[1]},
       @conn.seeds.sort {|a,b| a[1] <=> b[1]}
-    assert_equal 5, @conn.tags_to_pools.keys.length
+    assert_equal 5, @conn.tag_map.keys.length
     assert_equal 90, @conn.refresh_interval
     assert_equal @conn.refresh_mode, :sync
   end
