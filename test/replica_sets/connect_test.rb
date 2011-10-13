@@ -11,6 +11,8 @@ class ConnectTest < Test::Unit::TestCase
     @conn.close if defined?(@conn) && @conn
   end
 
+  # TODO: test connect timeout.
+
   def test_connect_with_deprecated_multi
     @conn = Connection.multi([[RS.host, RS.ports[0]], [RS.host, RS.ports[1]]], :name => RS.name)
     assert @conn.is_a?(ReplSetConnection)
@@ -22,43 +24,6 @@ class ConnectTest < Test::Unit::TestCase
       @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
         [RS.host, RS.ports[2]], :name => RS.name + "-wrong")
     end
-  end
-
- # def test_connect_timeout
- #   passed = false
- #   timeout = 3
- #   begin
- #     t0 = Time.now
- #     @conn = ReplSetConnection.new(['192.169.169.1', 27017], :connect_timeout => timeout)
- #   rescue OperationTimeout
- #     passed = true
- #     t1 = Time.now
- #   end
-
- #   assert passed
- #   assert t1 - t0 < timeout + 1
- # end
-
-  def test_connect
-    @conn = ReplSetConnection.new([RS.host, RS.ports[1]], [RS.host, RS.ports[0]],
-      [RS.host, RS.ports[2]], :name => RS.name)
-    assert @conn.connected?
-
-    assert_equal RS.primary, @conn.primary
-    assert_equal RS.secondaries.sort, @conn.secondaries.sort
-    assert_equal RS.arbiters.sort, @conn.arbiters.sort
-
-    @conn = ReplSetConnection.new([RS.host, RS.ports[1]], [RS.host, RS.ports[0]],
-      :name => RS.name)
-    assert @conn.connected?
-  end
-
-  def test_host_port_accessors
-    @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
-      [RS.host, RS.ports[2]], :name => RS.name)
-
-    assert_equal @conn.host, RS.primary[0]
-    assert_equal @conn.port, RS.primary[1]
   end
 
   def test_connect_with_primary_node_killed

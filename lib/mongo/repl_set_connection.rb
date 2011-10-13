@@ -22,8 +22,8 @@ module Mongo
 
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
-    attr_reader :nodes, :secondaries, :arbiters, :secondary_pools,
-      :replica_set_name, :read_pool, :seeds, :tags_to_pools,
+    attr_reader :secondaries, :arbiters, :secondary_pools,
+      :replica_set_name, :read_pool, :seeds, :primary_tag_pool,
       :refresh_interval, :refresh_mode
 
     # Create a connection to a MongoDB replica set.
@@ -101,9 +101,6 @@ module Mongo
       # TODO: get rid of this
       @nodes = @seeds.dup
 
-      # The members of the replica set, stored as instances of Mongo::Node.
-      @members = []
-
       # Connection pool for primary node
       @primary      = nil
       @primary_pool = nil
@@ -146,7 +143,7 @@ module Mongo
 
       # Maps
       @sockets_to_pools = {}
-      @tags_to_pools = {}
+      @primary_tag_pool = nil
 
       # Replica set name
       if opts[:rs_name]
@@ -189,35 +186,44 @@ module Mongo
       end
     end
 
-    # Note: this method must be called from within
-    # an exclusive lock.
-    def update_config(manager)
-      @arbiters = manager.arbiters.nil? ? [] : manager.arbiters.dup
-      @primary = manager.primary.nil? ? nil : manager.primary.dup
-      @secondaries = manager.secondaries.dup
-      @hosts = manager.hosts.dup
+    # Refresh the current replica set configuration.
+    # This method will attempt to do a soft refresh,
+    # updating only those parts of the replica set that
+    # have changed. If that's not possible, the method
+    # will perform a hard refresh.
+    #
+    # @return [Boolean] +true+ if hard refresh
+    #   occurred. +false+ is returned when unable
+    #   to get the refresh lock.
+    def refresh(opts={})
+      if !connected?
+        @logger.warn("Not connected")
+      end
 
-      @primary_pool = manager.primary_pool
-      @read_pool    = manager.read_pool
-      @secondary_pools = manager.secondary_pools
-      @tags_to_pools   = manager.tags_to_pools
-      @seeds = manager.seeds
-      @manager = manager
-      @nodes = manager.nodes
-      @max_bson_size = manager.max_bson_size
+      log(:info, "Checking replica set connection health...")
+      @manager.check_connection_health
+
+      if @manager.refresh_required?
+        hard_refresh!
+      end
+
+      return true
     end
 
-    # Refresh the current replica set configuration.
-    def refresh(opts={})
-      return false if !connected?
+    # Force a hard refresh of this connection's view
+    # of the replica set.
+    #
+    # @return [Boolean] +true+ if hard refresh
+    #   occurred. +false+ is returned when unable
+    #   to get the refresh lock.
+    def hard_refresh!
+      return false if sync_exclusive?
 
-      # Return if another thread is already in the process of refreshing.
-      return if sync_exclusive?
+      log(:info, "Initiating hard refresh...")
+      @background_manager = PoolManager.new(self, @seeds)
+      @background_manager.connect
 
       sync_synchronize(:EX) do
-        log(:info, "Refreshing...")
-        @background_manager ||= PoolManager.new(self, @seeds)
-        @background_manager.connect
         update_config(@background_manager)
       end
 
@@ -295,10 +301,10 @@ module Mongo
           end
         end
 
-        @secondaries     = []
-        @secondary_pools = []
-        @arbiters        = []
-        @tags_to_pools.clear
+        @secondaries      = []
+        @secondary_pools  = []
+        @arbiters         = []
+        @primary_tag_pool = nil
         @sockets_to_pools.clear
       end
     end
@@ -338,6 +344,27 @@ module Mongo
     end
 
     private
+
+    # Given a pool manager, update this connection's
+    # view of the replica set.
+    #
+    # This method must be called within
+    # an exclusive lock.
+    def update_config(manager)
+      @arbiters = manager.arbiters.nil? ? [] : manager.arbiters.dup
+      @primary = manager.primary.nil? ? nil : manager.primary.dup
+      @secondaries = manager.secondaries.dup
+      @hosts = manager.hosts.dup
+
+      @primary_pool = manager.primary_pool
+      @read_pool    = manager.read_pool
+      @secondary_pools = manager.secondary_pools
+      @primary_tag_pool = manager.primary_tag_pool
+      @seeds = manager.seeds
+      @manager = manager
+      @nodes = manager.nodes
+      @max_bson_size = manager.max_bson_size
+    end
 
     def initiate_refresh_mode
       if @refresh_mode == :async
@@ -380,7 +407,7 @@ module Mongo
     def checkout_tagged(tags)
       sync_synchronize(:SH) do
         tags.each do |k, v|
-          pool = @tags_to_pools[{k.to_s => v}]
+          pool = @primary_tag_pool[{k.to_s => v}]
           if pool
             socket = pool.checkout
             @sockets_to_pools[socket] = pool
@@ -454,6 +481,7 @@ module Mongo
       if @refresh_mode == :sync &&
         ((Time.now - @last_refresh) > @refresh_interval)
         refresh
+        @last_refresh = Time.now
       end
     end
   end
