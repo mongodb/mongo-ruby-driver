@@ -22,11 +22,11 @@ MINIMUM_BSON_EXT_VERSION = "1.4.0"
 
 module BSON
   VERSION = "1.4.0"
-
+  
   if defined? Mongo::DEFAULT_MAX_BSON_SIZE
     DEFAULT_MAX_BSON_SIZE = Mongo::DEFAULT_MAX_BSON_SIZE
   else
-    DEFAULT_MAX_BSON_SIZE = 4 * 1024 * 1024
+    DEFAULT_MAX_BSON_SIZE = 16 * 1024 * 1024
   end
 
   def self.serialize(obj, check_keys=false, move_id=false)
