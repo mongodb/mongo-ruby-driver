@@ -20,7 +20,7 @@ module BSON
   # A BSON seralizer/deserializer in pure Ruby.
   class BSON_RUBY
 
-    DEFAULT_MAX_BSON_SIZE = 4 * 1024 * 1024
+    DEFAULT_MAX_BSON_SIZE = 16 * 1024 * 1024
 
     @@max_bson_size = DEFAULT_MAX_BSON_SIZE
 
