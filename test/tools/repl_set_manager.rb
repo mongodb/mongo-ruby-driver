@@ -158,7 +158,7 @@ class ReplSetManager
     @config['version'] = config['version'] + 1
 
     begin
-    con['admin'].command({'replSetReconfig' => @config})
+      con['admin'].command({'replSetReconfig' => @config})
     rescue Mongo::ConnectionFailure
     end
 

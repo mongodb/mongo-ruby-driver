@@ -186,28 +186,25 @@ module Mongo
       end
     end
 
-    # Refresh the current replica set configuration.
-    # This method will attempt to do a soft refresh,
-    # updating only those parts of the replica set that
-    # have changed. If that's not possible, the method
-    # will perform a hard refresh.
+    # Determine whether a replica set refresh is
+    # required. If so, run a hard refresh. You can
+    # force a hard refresh by running
+    # ReplSetConnection#hard_refresh!
     #
-    # @return [Boolean] +true+ if hard refresh
-    #   occurred. +false+ is returned when unable
-    #   to get the refresh lock.
+    # @return [Boolean] +true+ unless a hard refresh
+    #   is run and the refresh lock can't be acquired.
     def refresh(opts={})
       if !connected?
-        log(:info, "Trying to refresh but not connected..." +
-           "skipping replica set health check.")
-        hard_refresh!
-        return true
+        log(:info, "Trying to check replica set health but not " +
+          "connected...")
+        return hard_refresh!
       end
 
       log(:info, "Checking replica set connection health...")
       @manager.check_connection_health
 
       if @manager.refresh_required?
-        hard_refresh!
+        return hard_refresh!
       end
 
       return true
@@ -227,8 +224,11 @@ module Mongo
       @background_manager.connect
 
       sync_synchronize(:EX) do
+        @manager.close
         update_config(@background_manager)
       end
+
+      initiate_refresh_mode
 
       return true
     end
@@ -360,6 +360,7 @@ module Mongo
       @manager = manager
       @nodes = manager.nodes
       @max_bson_size = manager.max_bson_size
+      @sockets_to_pools.clear
     end
 
     def initiate_refresh_mode

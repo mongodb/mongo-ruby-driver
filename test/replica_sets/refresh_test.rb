@@ -70,7 +70,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
 
     rescue_connection_failure do
       @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
-        [RS.host, RS.ports[2]], :refresh_interval => 2, :refresh_mode => :sync)
+        [RS.host, RS.ports[2]], :refresh_interval => 2, :refresh_mode => :async)
     end
 
     assert_equal [], @conn.secondaries
@@ -78,8 +78,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     assert_equal @conn.read_pool, @conn.primary_pool
 
     RS.restart_killed_nodes
-
-    sleep(3)
+    sleep(4)
 
     assert @conn.read_pool != @conn.primary_pool, "Read pool and primary pool are identical."
     assert @conn.secondaries.length > 0, "No secondaries have been added."
@@ -87,9 +86,9 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
 
   def test_automated_refresh_with_removed_node
     @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
-      [RS.host, RS.ports[2]], :refresh_interval => 2, :refresh_mode => :sync)
+      [RS.host, RS.ports[2]], :refresh_interval => 2, :refresh_mode => :async)
 
-    p @conn.secondary_pools
+    @conn.secondary_pools
     assert_equal 2, @conn.secondary_pools.length
     assert_equal 2, @conn.secondaries.length
 
@@ -107,7 +106,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
       [RS.host, RS.ports[2]], :refresh_interval => 2, :refresh_mode => :async)
 
     RS.add_node
-    sleep(5)
+    sleep(4)
 
     @conn2 = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
       [RS.host, RS.ports[2]], :refresh_interval => 2, :refresh_mode => :async)
@@ -116,8 +115,12 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     assert_equal 3, @conn.secondary_pools.length
     assert_equal 3, @conn.secondaries.length
 
+    config = @conn['admin'].command({:ismaster => 1})
+
     RS.remove_secondary_node
     sleep(4)
+    config = @conn['admin'].command({:ismaster => 1})
+
     assert_equal 2, @conn.secondary_pools.length
     assert_equal 2, @conn.secondaries.length
   end

@@ -47,6 +47,13 @@ module Mongo
       config = seed.set_config
       if !config
         @refresh_required = true
+        seed.close
+        return
+      end
+
+      if config['hosts'].length != @members.length
+        @refresh_required = true
+        seed.close
         return
       end
 
@@ -59,9 +66,12 @@ module Mongo
           next
         else
           @refresh_required = true
+          seed.close
           return false
         end
       end
+
+      seed.close
     end
 
     # The replica set connection should initiate a full refresh.
