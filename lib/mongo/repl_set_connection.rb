@@ -470,7 +470,7 @@ module Mongo
           pool.checkin(socket)
         elsif socket
           begin
-          socket.close
+            socket.close
           rescue IOError
             log(:info, "Tried to close socket #{socket} but already closed.")
           end
