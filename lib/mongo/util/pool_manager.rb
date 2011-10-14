@@ -3,12 +3,13 @@ module Mongo
 
     attr_reader :connection, :seeds, :arbiters, :primary, :secondaries,
       :primary_pool, :read_pool, :secondary_pools, :hosts, :nodes, :max_bson_size,
-      :tags_to_pools, :primary_tag_pool, :members
+      :tags_to_pools, :tag_map, :members
 
     def initialize(connection, seeds)
       @connection = connection
       @seeds = seeds
       @previously_connected = false
+      @refresh_required = false
     end
 
     def inspect
@@ -25,7 +26,7 @@ module Mongo
       initialize_pools(members)
       update_seed_list(members)
       set_read_pool
-      set_primary_tag_pools
+      set_tag_mappings
 
       @members = members
       @previously_connected = true
@@ -36,8 +37,6 @@ module Mongo
     # to our view. If any of these isn't the case,
     # set @refresh_require to true, and return.
     def check_connection_health
-      @refresh_required = false
-
       begin
         seed = get_valid_seed_node
       rescue ConnectionFailure
@@ -48,6 +47,13 @@ module Mongo
       config = seed.set_config
       if !config
         @refresh_required = true
+        seed.close
+        return
+      end
+
+      if config['hosts'].length != @members.length
+        @refresh_required = true
+        seed.close
         return
       end
 
@@ -60,9 +66,12 @@ module Mongo
           next
         else
           @refresh_required = true
+          seed.close
           return false
         end
       end
+
+      seed.close
     end
 
     # The replica set connection should initiate a full refresh.
@@ -108,6 +117,8 @@ module Mongo
         elsif member.last_state == :secondary &&
           member.secondary?
           return true
+        else # This node isn't what it used to be.
+          return false
         end
       end
     end
@@ -122,7 +133,7 @@ module Mongo
       @hosts = Set.new
       @members = Set.new
       @tags_to_pools = {}
-      @primary_tag_pool = {}
+      @tag_map = {}
     end
 
     # Connect to each member of the replica set
@@ -195,12 +206,12 @@ module Mongo
 
     # If there's more than one pool associated with
     # a given tag, choose a close one using the bucket method.
-    def set_primary_tag_pools
+    def set_tag_mappings
       @tags_to_pools.each do |key, pool_list|
         if pool_list.length == 1
-          @primary_tag_pool[key] = pool_list.first
+          @tag_map[key] = pool_list.first
         else
-          @primary_tag_pool[key] = nearby_pool_from_set(pool_list)
+          @tag_map[key] = nearby_pool_from_set(pool_list)
         end
       end
     end

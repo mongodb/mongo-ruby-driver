@@ -46,6 +46,7 @@ class ReplSetManager
     begin
     con = Mongo::Connection.new(@host, @start_port)
       rescue Mongo::ConnectionFailure
+      con = false
     end
 
     if con && ensure_up(1, con)
@@ -157,7 +158,7 @@ class ReplSetManager
     @config['version'] = config['version'] + 1
 
     begin
-    con['admin'].command({'replSetReconfig' => @config})
+      con['admin'].command({'replSetReconfig' => @config})
     rescue Mongo::ConnectionFailure
     end
 
@@ -187,10 +188,7 @@ class ReplSetManager
   def kill(node, signal=2)
     pid = @mongods[node]['pid']
     puts "** Killing node with pid #{pid} at port #{@mongods[node]['port']}"
-    begin
-      get_connection(node)['admin'].command({'shutdown' => 1})
-    rescue Mongo::ConnectionFailure
-    end
+    system("kill -2 #{pid}")
     @mongods[node]['up'] = false
   end
 
@@ -300,10 +298,11 @@ class ReplSetManager
   private
 
   def initiate
+    puts "Initiating replica set..."
     con = get_connection
 
     attempt do
-      con['admin'].command({'replSetInitiate' => @config})
+      p con['admin'].command({'replSetInitiate' => @config})
     end
 
     con.close

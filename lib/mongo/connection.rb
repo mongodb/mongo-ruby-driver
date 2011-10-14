@@ -30,6 +30,8 @@ module Mongo
     Mutex = ::Mutex
     ConditionVariable = ::ConditionVariable
 
+    Thread.abort_on_exception = true
+
     DEFAULT_PORT = 27017
     STANDARD_HEADER_SIZE = 16
     RESPONSE_HEADER_SIZE = 20
@@ -487,8 +489,10 @@ module Mongo
         end
 
         result = ''
-        send_message_on_socket(packed_message, sock)
-        result = receive(sock, request_id, exhaust)
+        @safe_mutexes[sock].synchronize do
+          send_message_on_socket(packed_message, sock)
+          result = receive(sock, request_id, exhaust)
+        end
       ensure
         if should_checkin
           checkin(sock)
@@ -627,6 +631,9 @@ module Mongo
     def setup(opts)
       # Default maximum BSON object size
       @max_bson_size = Mongo::DEFAULT_MAX_BSON_SIZE
+
+      @safe_mutex_lock = Mutex.new
+      @safe_mutexes = Hash.new {|hash, key| hash[key] = Mutex.new}
 
       # Determine whether to use SSL.
       @ssl = opts.fetch(:ssl, false)

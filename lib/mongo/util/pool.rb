@@ -56,7 +56,7 @@ module Mongo
 
     def close
       @connection_mutex.synchronize do
-        @sockets.each do |sock|
+        (@sockets - @checked_out).each do |sock|
           begin
             sock.close
           rescue IOError => ex

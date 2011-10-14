@@ -23,7 +23,7 @@ module Mongo
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
     attr_reader :secondaries, :arbiters, :secondary_pools,
-      :replica_set_name, :read_pool, :seeds, :primary_tag_pool,
+      :replica_set_name, :read_pool, :seeds, :tag_map,
       :refresh_interval, :refresh_mode
 
     # Create a connection to a MongoDB replica set.
@@ -143,7 +143,7 @@ module Mongo
 
       # Maps
       @sockets_to_pools = {}
-      @primary_tag_pool = nil
+      @tag_map = nil
 
       # Replica set name
       if opts[:rs_name]
@@ -186,25 +186,25 @@ module Mongo
       end
     end
 
-    # Refresh the current replica set configuration.
-    # This method will attempt to do a soft refresh,
-    # updating only those parts of the replica set that
-    # have changed. If that's not possible, the method
-    # will perform a hard refresh.
+    # Determine whether a replica set refresh is
+    # required. If so, run a hard refresh. You can
+    # force a hard refresh by running
+    # ReplSetConnection#hard_refresh!
     #
-    # @return [Boolean] +true+ if hard refresh
-    #   occurred. +false+ is returned when unable
-    #   to get the refresh lock.
+    # @return [Boolean] +true+ unless a hard refresh
+    #   is run and the refresh lock can't be acquired.
     def refresh(opts={})
       if !connected?
-        @logger.warn("Not connected")
+        log(:info, "Trying to check replica set health but not " +
+          "connected...")
+        return hard_refresh!
       end
 
       log(:info, "Checking replica set connection health...")
       @manager.check_connection_health
 
       if @manager.refresh_required?
-        hard_refresh!
+        return hard_refresh!
       end
 
       return true
@@ -224,8 +224,11 @@ module Mongo
       @background_manager.connect
 
       sync_synchronize(:EX) do
+        @manager.close
         update_config(@background_manager)
       end
+
+      initiate_refresh_mode
 
       return true
     end
@@ -286,13 +289,6 @@ module Mongo
           @refresh_thread = nil
         end
 
-        if @nodes
-          @nodes.each do |member|
-            member.close
-          end
-        end
-
-        @nodes = []
         @read_pool = nil
 
         if @secondary_pools
@@ -304,7 +300,7 @@ module Mongo
         @secondaries      = []
         @secondary_pools  = []
         @arbiters         = []
-        @primary_tag_pool = nil
+        @tag_map = nil
         @sockets_to_pools.clear
       end
     end
@@ -359,11 +355,12 @@ module Mongo
       @primary_pool = manager.primary_pool
       @read_pool    = manager.read_pool
       @secondary_pools = manager.secondary_pools
-      @primary_tag_pool = manager.primary_tag_pool
+      @tag_map = manager.tag_map
       @seeds = manager.seeds
       @manager = manager
       @nodes = manager.nodes
       @max_bson_size = manager.max_bson_size
+      @sockets_to_pools.clear
     end
 
     def initiate_refresh_mode
@@ -407,7 +404,7 @@ module Mongo
     def checkout_tagged(tags)
       sync_synchronize(:SH) do
         tags.each do |k, v|
-          pool = @primary_tag_pool[{k.to_s => v}]
+          pool = @tag_map[{k.to_s => v}]
           if pool
             socket = pool.checkout
             @sockets_to_pools[socket] = pool
@@ -472,7 +469,11 @@ module Mongo
         if pool = @sockets_to_pools[socket]
           pool.checkin(socket)
         elsif socket
-          socket.close
+          begin
+            socket.close
+          rescue IOError
+            log(:info, "Tried to close socket #{socket} but already closed.")
+          end
         end
       end
 
