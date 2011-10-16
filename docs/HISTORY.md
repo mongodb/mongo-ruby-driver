@@ -1,5 +1,11 @@
 # MongoDB Ruby Driver History
 
+### 1.4.1
+2011-10-15
+
+* Simplified replica set refresh.
+* Fix bugs associated with replica set refresh.
+
 ### 1.4.0
 2011-9-19
 
