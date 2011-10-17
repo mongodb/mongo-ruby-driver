@@ -28,19 +28,24 @@ Imagine that either the master node or one of the read nodes goes offline. How w
 
 If any read operation fails, the driver will raise a *ConnectionFailure* exception. It then becomes the client's responsibility to decide how to handle this.
 
-If the client decides to retry, it's not guaranteed that another member of the replica set will have been promoted to master right away, so it's still possible that the driver will raise another *ConnectionFailure*. However, once a member has been promoted to master, typically within a few seconds, subsequent operations will succeed.
+If the client decides to retry, it's not guaranteed that another member of the replica set will have been promoted to master right away, so it's still possible that the driver will raise another *ConnectionFailure*. However, once a member has been promoted to master, typically within a few seconds, subsequent operations will succeed. *Note that this does not prevent
+exception in the event of a primary failover.*
 
 The driver will essentially cycle through all known seed addresses until a node identifies itself as master.
 
 ### Refresh mode
 
 You can now specify a refresh mode and refresh interval for a replica set connection. This will help to ensure that
-changes to a replica set's configuration are quickly reflected on the driver side. Refresh mode is
-enabled in synchronous mode by default. Here's how to specify this explicitly:
+changes to a replica set's configuration are quickly reflected on the driver side. In particular, if you change
+the state of any secondary node, the automated refresh will ensure that this state is recorded on the client side.
+If you add a secondary that responds to pings much faster than the existing nodes, then the new secondary will
+be used for reads.
+
+Refresh mode is enabled in synchronous mode by default. This is the recommended setting, but here's how to specify this explicitly:
 
     @connection = ReplSetConnection.new(['n1.mydb.net', 27017], :refresh_mode => :sync)
 
-If you want to refresh to happen via a background thread, use the `:async` mode. NOTE: the background
+If you want to refresh via a background thread, use the `:async` mode. NOTE: the background
 version may be more effective on platforms that use native threads, such as JRuby:
 
     @connection = ReplSetConnection.new(['n1.mydb.net', 27017], :refresh_mode => :async)
@@ -55,6 +60,10 @@ Do not set this value to anything lower than 30, or you may start to experience 
 You can also disable refresh mode altogether:
 
     @connection = ReplSetConnection.new(['n1.mydb.net', 27017], :refresh_mode => false)
+
+And you can call `refresh` manually on any replica set connection:
+
+    @connection.refresh
 
 ### Recovery
 
