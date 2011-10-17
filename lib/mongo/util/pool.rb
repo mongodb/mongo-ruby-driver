@@ -18,6 +18,7 @@
 module Mongo
   class Pool
     PING_ATTEMPTS = 6
+    MAX_PING_TIME = 1_000_000
 
     attr_accessor :host, :port, :address,
       :size, :timeout, :safe, :checked_out, :connection
@@ -35,7 +36,7 @@ module Mongo
       @address = "#{@host}:#{@port}"
 
       # Pool size and timeout.
-      @size      = opts[:size] || 1
+      @size      = opts[:size] || 10
       @timeout   = opts[:timeout]   || 5.0
 
       # Mutex for synchronizing pool access
@@ -52,6 +53,7 @@ module Mongo
       @checked_out  = []
       @ping_time    = nil
       @last_ping    = nil
+      @closed       = false
     end
 
     def close
@@ -67,7 +69,12 @@ module Mongo
         @sockets.clear
         @pids.clear
         @checked_out.clear
+        @closed = true
       end
+    end
+
+    def closed?
+      @closed
     end
 
     def inspect
@@ -101,14 +108,12 @@ module Mongo
     # to do a round-trip against this node.
     def refresh_ping_time
       trials = []
-      begin
-         PING_ATTEMPTS.times do
-           t1 = Time.now
-           self.connection['admin'].command({:ping => 1}, :socket => @node.socket)
-           trials << (Time.now - t1) * 1000
-         end
-       rescue OperationFailure, SocketError, SystemCallError, IOError => ex
-         return nil
+      PING_ATTEMPTS.times do
+        t1 = Time.now
+        if !self.ping
+          return MAX_PING_TIME
+        end
+        trials << (Time.now - t1) * 1000
       end
 
       trials.sort!
@@ -121,6 +126,14 @@ module Mongo
       trials.each { |t| total += t }
 
       (total / trials.length).ceil
+    end
+
+    def ping
+      begin
+        return self.connection['admin'].command({:ping => 1}, :socket => @node.socket)
+      rescue OperationFailure, SocketError, SystemCallError, IOError => ex
+        return false
+      end
     end
 
     # Return a socket to the pool.

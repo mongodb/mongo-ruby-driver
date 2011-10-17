@@ -565,6 +565,13 @@ module Mongo
     end
     alias :primary? :read_primary?
 
+    # The socket pool that this connection reads from.
+    #
+    # @return [Mongo::Pool]
+    def read_pool
+      @primary_pool
+    end
+
     # The value of the read preference. Because
     # this is a single-node connection, the value
     # is +:primary+, and the connection will read

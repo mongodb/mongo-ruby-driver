@@ -98,6 +98,10 @@ module Mongo
       else
         @command = false
       end
+
+      @checkin_read_pool = false
+      @checkin_connection = false
+      @read_pool = nil
     end
 
     # Guess whether the cursor is alive on the server.
@@ -460,10 +464,15 @@ module Mongo
     def send_initial_query
       message = construct_query_message
       payload = instrument_payload if @logger
+      sock    = @socket || checkout_socket_from_connection
       instrument(:find, payload) do
+        begin
         results, @n_received, @cursor_id = @connection.receive_message(
-          Mongo::Constants::OP_QUERY, message, nil, @socket, @command,
-          @read_preference, @options & OP_QUERY_EXHAUST != 0)
+          Mongo::Constants::OP_QUERY, message, nil, sock, @command,
+          nil, @options & OP_QUERY_EXHAUST != 0)
+        ensure
+          checkin_socket(sock) unless @socket
+        end
         @returned += @n_received
         @cache += results
         @query_run = true
@@ -491,11 +500,61 @@ module Mongo
       # Cursor id.
       message.put_long(@cursor_id)
       log(:debug, "cursor.refresh() for cursor #{@cursor_id}") if @logger
+      sock = @socket || checkout_socket_for_op_get_more
+
+      begin
       results, @n_received, @cursor_id = @connection.receive_message(
-          Mongo::Constants::OP_GET_MORE, message, nil, @socket, @command, @read_preference)
+        Mongo::Constants::OP_GET_MORE, message, nil, sock, @command, nil)
+      ensure
+        checkin_socket(sock) unless @socket
+      end
       @returned += @n_received
       @cache += results
       close_cursor_if_query_complete
+    end
+
+    def checkout_socket_from_connection
+      @checkin_connection = true
+      if @read_preference == :primary
+        @connection.checkout_writer
+      else
+        @read_pool = @connection.read_pool
+        @connection.checkout_reader
+      end
+    end
+
+    def checkout_socket_for_op_get_more
+      if @read_pool && (@read_pool != @connection.read_pool)
+        checkout_socket_from_read_pool
+      else
+        checkout_socket_from_connection
+      end
+    end
+
+    def checkout_socket_from_read_pool
+      new_pool = @connection.secondary_pools.detect do |pool|
+        pool.host == @read_pool.host && pool.port == @read_pool.port
+      end
+      if new_pool
+        @read_pool = new_pool
+        sock = new_pool.checkout
+        @checkin_read_pool = true
+        return sock
+      else
+        raise Mongo::OperationFailure, "Failure to continue iterating " +
+          "cursor because the the replica set member persisting this " +
+          " cursor cannot be found."
+      end
+    end
+
+    def checkin_socket(sock)
+      if @checkin_read_pool
+        @read_pool.checkin(sock)
+        @checkin_read_pool = false
+      elsif @checkin_connection
+        @connection.checkin(sock)
+        @checkin_connection = false
+      end
     end
 
     def construct_query_message

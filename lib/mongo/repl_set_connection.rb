@@ -119,6 +119,7 @@ module Mongo
       # Refresh
       @refresh_mode = opts.fetch(:refresh_mode, :sync)
       @refresh_interval = opts[:refresh_interval] || 90
+      @last_refresh = Time.now
 
       if ![:sync, :async, false].include?(@refresh_mode)
         raise MongoArgumentError,
@@ -339,6 +340,80 @@ module Mongo
       end
     end
 
+    # Checkout a socket for reading (i.e., a secondary node).
+    # Note that @read_pool might point to the primary pool
+    # if no read pool has been defined.
+    def checkout_reader
+      connect unless connected?
+      socket = get_socket_from_pool(@read_pool)
+
+      if !socket
+        refresh
+        socket = get_socket_from_pool(@primary_pool)
+      end
+
+      if socket
+        socket
+      else
+        raise ConnectionFailure.new("Could not connect to a node for reading.")
+      end
+    end
+
+    # Checkout a socket for writing (i.e., a primary node).
+    def checkout_writer
+      connect unless connected?
+      socket = get_socket_from_pool(@primary_pool)
+
+      if !socket
+        refresh
+        socket = get_socket_from_pool(@primary_pool)
+      end
+
+      if socket
+        socket
+      else
+        raise ConnectionFailure.new("Could not connect to primary node.")
+      end
+    end
+
+    def checkin(socket)
+      sync_synchronize(:SH) do
+        if pool = @sockets_to_pools[socket]
+          pool.checkin(socket)
+        elsif socket
+          begin
+            socket.close
+          rescue IOError
+            log(:info, "Tried to close socket #{socket} but already closed.")
+          end
+        end
+      end
+
+      # Refresh synchronously every @refresh_interval seconds
+      # if synchronous refresh mode is enabled.
+      if @refresh_mode == :sync &&
+        ((Time.now - @last_refresh) > @refresh_interval)
+        refresh
+        @last_refresh = Time.now
+      end
+    end
+
+    def get_socket_from_pool(pool)
+      begin
+        sync_synchronize(:SH) do
+          if pool
+            socket = pool.checkout
+            @sockets_to_pools[socket] = pool
+            socket
+          end
+        end
+
+      rescue ConnectionFailure => ex
+        log(:info, "Failed to checkout from #{pool} with #{ex.class}; #{ex.message}")
+        return nil
+      end
+    end
+
     private
 
     # Given a pool manager, update this connection's
@@ -377,25 +452,6 @@ module Mongo
       @last_refresh = Time.now
     end
 
-    # Checkout a socket for reading (i.e., a secondary node).
-    # Note that @read_pool might point to the primary pool
-    # if no read pool has been defined.
-    def checkout_reader
-      connect unless connected?
-      socket = get_socket_from_pool(@read_pool)
-
-      if !socket
-        refresh
-        socket = get_socket_from_pool(@primary_pool)
-      end
-
-      if socket
-        socket
-      else
-        raise ConnectionFailure.new("Could not connect to a node for reading.")
-      end
-    end
-
     # Checkout a socket connected to a node with one of
     # the provided tags. If no such node exists, raise
     # an exception.
@@ -417,39 +473,6 @@ module Mongo
         "Could not find a connection tagged with #{tags}."
     end
 
-    # Checkout a socket for writing (i.e., a primary node).
-    def checkout_writer
-      connect unless connected?
-      socket = get_socket_from_pool(@primary_pool)
-
-      if !socket
-        refresh
-        socket = get_socket_from_pool(@primary_pool)
-      end
-
-      if socket
-        socket
-      else
-        raise ConnectionFailure.new("Could not connect to primary node.")
-      end
-    end
-
-    def get_socket_from_pool(pool)
-      begin
-        sync_synchronize(:SH) do
-          if pool
-            socket = pool.checkout
-            @sockets_to_pools[socket] = pool
-            socket
-          end
-        end
-
-      rescue ConnectionFailure => ex
-        log(:info, "Failed to checkout from #{pool} with #{ex.class}; #{ex.message}")
-        return nil
-      end
-    end
-
     # Checkin a socket used for reading.
     def checkin_reader(socket)
       warn "ReplSetConnection#checkin_writer is deprecated and will be removed " +
@@ -462,28 +485,6 @@ module Mongo
       warn "ReplSetConnection#checkin_writer is deprecated and will be removed " +
         "in driver v2.0. Use ReplSetConnection#checkin instead."
       checkin(socket)
-    end
-
-    def checkin(socket)
-      sync_synchronize(:SH) do
-        if pool = @sockets_to_pools[socket]
-          pool.checkin(socket)
-        elsif socket
-          begin
-            socket.close
-          rescue IOError
-            log(:info, "Tried to close socket #{socket} but already closed.")
-          end
-        end
-      end
-
-      # Refresh synchronously every @refresh_interval seconds
-      # if synchronous refresh mode is enabled.
-      if @refresh_mode == :sync &&
-        ((Time.now - @last_refresh) > @refresh_interval)
-        refresh
-        @last_refresh = Time.now
-      end
     end
   end
 end

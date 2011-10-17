@@ -318,7 +318,7 @@ class TestConnection < Test::Unit::TestCase
       TCPSocket.stubs(:new).returns(fake_socket)
 
       @con.primary_pool.checkout_new_socket
-      assert_equal [], @con.primary_pool.close
+      assert @con.primary_pool.close
     end
   end
 end
