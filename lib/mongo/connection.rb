@@ -537,7 +537,7 @@ module Mongo
     # NOTE: Do check if this needs to be more stringent.
     # Probably not since if any node raises a connection failure, all nodes will be closed.
     def connected?
-      @primary_pool && @primary_pool.host && @primary_pool.port
+      @primary_pool && !@primary_pool.closed?
     end
 
     # Determine if the connection is active. In a normal case the *server_info* operation
