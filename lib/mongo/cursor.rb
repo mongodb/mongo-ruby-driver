@@ -543,7 +543,7 @@ module Mongo
       else
         raise Mongo::OperationFailure, "Failure to continue iterating " +
           "cursor because the the replica set member persisting this " +
-          " cursor cannot be found."
+          "cursor at #{@read_pool.host_string} cannot be found."
       end
     end
 

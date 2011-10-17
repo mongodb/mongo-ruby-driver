@@ -65,7 +65,6 @@ module Mongo
             warn "IOError when attempting to close socket connected to #{@host}:#{@port}: #{ex.inspect}"
           end
         end
-        @host = @port = nil
         @sockets.clear
         @pids.clear
         @checked_out.clear
