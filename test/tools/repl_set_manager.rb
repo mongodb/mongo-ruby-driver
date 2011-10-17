@@ -188,7 +188,7 @@ class ReplSetManager
   def kill(node, signal=2)
     pid = @mongods[node]['pid']
     puts "** Killing node with pid #{pid} at port #{@mongods[node]['port']}"
-    system("kill -2 #{pid}")
+    system("kill #{pid}")
     @mongods[node]['up'] = false
   end
 
