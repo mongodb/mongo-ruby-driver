@@ -54,7 +54,7 @@ class CursorTest < Test::Unit::TestCase
     if @@version >= "2.0"
       @@coll.remove
       data = "1" * 100_000
-      10_000.times do |n|
+      5000.times do |n|
         @@coll.insert({:n => n, :data => data})
       end
 
@@ -65,7 +65,7 @@ class CursorTest < Test::Unit::TestCase
 
       c = Cursor.new(@@coll)
       c.add_option(OP_QUERY_EXHAUST)
-      9999.times do
+      4999.times do
         c.next
       end
       assert c.has_next?

@@ -10,7 +10,7 @@ class ReadTest < Test::Unit::TestCase
 
   end
 
-  context "Read mode on connection: " do
+  context "Read mode on replica set connection: " do
     setup do
       @read_preference = :secondary
       @con = Mongo::ReplSetConnection.new(['localhost', 27017], :read => @read_preference, :connect => false)
@@ -71,19 +71,27 @@ class ReadTest < Test::Unit::TestCase
       end
 
       should "use default value on query" do
+        @cursor = @col.find({:a => 1})
+        sock = mock()
+        sock.expects(:close)
+        @con.expects(:checkout_reader).returns(sock)
         @con.expects(:receive_message).with do |o, m, l, s, c, r|
-          r == :secondary
+          r == nil
         end.returns([[], 0, 0])
 
-        @col.find_one({:a => 1})
+        @cursor.next
       end
 
       should "allow override default value on query" do
+        @cursor = @col.find({:a => 1}, :read => :primary)
+        sock = mock()
+        sock.expects(:close)
+        @con.expects(:checkout_writer).returns(sock)
         @con.expects(:receive_message).with do |o, m, l, s, c, r|
-          r == :primary
+          r == nil
         end.returns([[], 0, 0])
 
-        @col.find_one({:a => 1}, :read => :primary)
+        @cursor.next
       end
 
       should "allow override alternate value on query" do

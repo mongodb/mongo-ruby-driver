@@ -26,7 +26,8 @@ class ConnectTest < Test::Unit::TestCase
   def test_accessors
     seeds = [RS.host, RS.ports[0]], [RS.host, RS.ports[1]],
       [RS.host, RS.ports[2]]
-    @conn = ReplSetConnection.new(*seeds, :name => RS.name)
+    args = seeds << {:name => RS.name}
+    @conn = ReplSetConnection.new(*args)
 
     assert_equal @conn.host, RS.primary[0]
     assert_equal @conn.port, RS.primary[1]

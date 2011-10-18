@@ -1,5 +1,15 @@
 # MongoDB Ruby Driver History
 
+### 1.4.1
+2011-10-17
+
+If you're using 1.4.0, this is a necessary upgrade.
+
+* Simplified replica set refresh.
+* Fix bugs associated with replica set refresh.
+* Make cursor smart enough to continue functioning
+even if a refresh is triggered.
+
 ### 1.4.0
 2011-9-19
 
