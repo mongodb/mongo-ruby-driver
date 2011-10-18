@@ -660,13 +660,13 @@ class TestCollection < Test::Unit::TestCase
 
     @@test.ensure_index([["x", Mongo::DESCENDING]], {})
     assert_equal 2, @@test.index_information.keys.count
-    assert @@test.index_information.keys.include? "x_-1"
+    assert @@test.index_information.keys.include?("x_-1")
 
     @@test.ensure_index([["x", Mongo::ASCENDING]])
-    assert @@test.index_information.keys.include? "x_1"
+    assert @@test.index_information.keys.include?("x_1")
 
     @@test.ensure_index([["type", 1], ["date", -1]])
-    assert @@test.index_information.keys.include? "type_1_date_-1"
+    assert @@test.index_information.keys.include?("type_1_date_-1")
 
     @@test.drop_index("x_1")
     assert_equal 3, @@test.index_information.keys.count
@@ -675,7 +675,7 @@ class TestCollection < Test::Unit::TestCase
 
     @@test.ensure_index([["x", Mongo::DESCENDING]], {})
     assert_equal 3, @@test.index_information.keys.count
-    assert @@test.index_information.keys.include? "x_-1"
+    assert @@test.index_information.keys.include?("x_-1")
 
     # Make sure that drop_index expires cache properly
     @@test.ensure_index([['a', 1]])
