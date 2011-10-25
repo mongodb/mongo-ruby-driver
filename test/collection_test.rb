@@ -191,6 +191,14 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  if @@version >= "2.0.0"
+    def test_safe_mode_with_journal_commit_option
+      @@test.insert({:foo => 1}, :safe => {:j => true})
+      @@test.update({:foo => 1}, {:foo => 2}, :safe => {:j => true})
+      @@test.remove({:foo => 2}, :safe => {:j => true})
+    end
+  end
+  
   if @@version >= "1.5.1"
     def test_safe_mode_with_advanced_safe_with_invalid_options
       assert_raise_error ArgumentError, "Unknown key(s): wtime" do
