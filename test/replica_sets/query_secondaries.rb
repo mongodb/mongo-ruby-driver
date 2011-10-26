@@ -7,7 +7,9 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
   include Mongo
 
   def setup
+    RS.restart_killed_nodes
     @conn = ReplSetConnection.new([RS.host, RS.ports[0]], :read => :secondary)
+    @secondary = Connection.new(@conn.read_pool.host, @conn.read_pool.port, :slave_ok => true)
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
   end
@@ -37,7 +39,10 @@ class ReplicaSetQuerySecondariesTest < Test::Unit::TestCase
     @coll.save({:a => 30})
     @coll.save({:a => 40})
     results = []
+    queries_before = @secondary['admin'].command({:serverStatus => 1})['opcounters']['query']
     @coll.find.each {|r| results << r["a"]}
+    queries_after = @secondary['admin'].command({:serverStatus => 1})['opcounters']['query']
+    assert_equal 1, queries_after - queries_before
     assert results.include?(20)
     assert results.include?(30)
     assert results.include?(40)
