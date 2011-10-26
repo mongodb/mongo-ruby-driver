@@ -57,7 +57,7 @@ module Mongo
     # @option opts [Float] :connect_timeout (nil) The number of seconds to wait before timing out a
     #   connection attempt.
     # @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
-    # @option opts [Boolean] :refresh_mode (:sync) Set this to :async to enable a background thread that
+    # @option opts [Boolean] :refresh_mode (false) Set this to :async to enable a background thread that
     #   periodically updates the state of the connection. If, for example, you initially connect while a secondary
     #   is down, this will reconnect to that secondary behind the scenes to
     #   prevent you from having to reconnect manually. If set to :sync, refresh will happen
@@ -117,7 +117,7 @@ module Mongo
       @arbiters = []
 
       # Refresh
-      @refresh_mode = opts.fetch(:refresh_mode, :sync)
+      @refresh_mode = opts.fetch(:refresh_mode, false)
       @refresh_interval = opts[:refresh_interval] || 90
       @last_refresh = Time.now
 

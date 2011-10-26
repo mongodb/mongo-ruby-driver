@@ -41,7 +41,11 @@ the state of any secondary node, the automated refresh will ensure that this sta
 If you add a secondary that responds to pings much faster than the existing nodes, then the new secondary will
 be used for reads.
 
-Refresh mode is enabled in synchronous mode by default. This is the recommended setting, but here's how to specify this explicitly:
+Refresh mode is disabled by default.
+
+However, if you expect to make live changes to your secondaries, and you want this to be reflected without
+having to manually restart your app server, then you should enable it. You can enable synchronously, which will
+refresh the replica set data in a synchronous fashion (which may ocassionally slow down your queries):
 
     @connection = ReplSetConnection.new(['n1.mydb.net', 27017], :refresh_mode => :sync)
 
