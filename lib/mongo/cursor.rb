@@ -515,7 +515,7 @@ module Mongo
 
     def checkout_socket_from_connection
       @checkin_connection = true
-      if @read_preference == :primary
+      if @command || @read_preference == :primary
         @connection.checkout_writer
       else
         @read_pool = @connection.read_pool
