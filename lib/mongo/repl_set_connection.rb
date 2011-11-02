@@ -101,26 +101,12 @@ module Mongo
       # TODO: get rid of this
       @nodes = @seeds.dup
 
-      # Connection pool for primary node
-      @primary      = nil
-      @primary_pool = nil
-
-      # Connection pools for each secondary node
-      @secondaries = []
-      @secondary_pools = []
-
-      # The secondary pool to which we'll be sending reads.
-      # This may be identical to the primary pool.
-      @read_pool = nil
-
-      # A list of arbiter addresses (for client information only)
-      @arbiters = []
-
       # Refresh
       @refresh_mode = opts.fetch(:refresh_mode, false)
       @refresh_interval = opts[:refresh_interval] || 90
       @last_refresh = Time.now
 
+      # No connection manager by default.
       @manager = nil
 
       if ![:sync, :async, false].include?(@refresh_mode)
@@ -179,9 +165,11 @@ module Mongo
         update_config(manager)
         initiate_refresh_mode
 
-        if @require_primary && @primary.nil? #TODO: in v2.0, we'll let this be optional and do a lazy connect.
+        if @require_primary && self.primary.nil? #TODO: in v2.0, we'll let this be optional and do a lazy connect.
+          close
           raise ConnectionFailure, "Failed to connect to primary node."
-        elsif !@read_pool
+        elsif self.read_pool.nil?
+          close
           raise ConnectionFailure, "Failed to connect to any node."
         else
           @connected = true
@@ -234,7 +222,7 @@ module Mongo
     end
 
     def connected?
-      !@primary_pool.nil? || !@read_pool.nil?
+      self.primary_pool || self.read_pool
     end
 
     # @deprecated
@@ -268,9 +256,7 @@ module Mongo
     #
     # @return [Boolean]
     def read_primary?
-      sync_synchronize(:SH) do
-        @read_pool == @primary_pool
-      end
+      self.read_pool == self.primary_pool
     end
     alias :primary? :read_primary?
 
@@ -289,18 +275,7 @@ module Mongo
           @refresh_thread = nil
         end
 
-        @read_pool = nil
-
-        if @secondary_pools
-          @secondary_pools.each do |pool|
-            pool.close
-          end
-        end
-
-        @secondaries      = []
-        @secondary_pools  = []
-        @arbiters         = []
-        @tag_map = nil
+        @manager.close if @manager
         @sockets_to_pools.clear
       end
     end
@@ -327,14 +302,14 @@ module Mongo
 
     def authenticate_pools
       super
-      @secondary_pools.each do |pool|
+      self.secondary_pools.each do |pool|
         pool.authenticate_existing
       end
     end
 
     def logout_pools(db)
       super
-      @secondary_pools.each do |pool|
+      self.secondary_pools.each do |pool|
         pool.logout_existing(db)
       end
     end
@@ -344,11 +319,11 @@ module Mongo
     # if no read pool has been defined.
     def checkout_reader
       connect unless connected?
-      socket = get_socket_from_pool(@read_pool)
+      socket = get_socket_from_pool(self.read_pool)
 
       if !socket
         refresh
-        socket = get_socket_from_pool(@primary_pool)
+        socket = get_socket_from_pool(self.primary_pool)
       end
 
       if socket
@@ -361,11 +336,11 @@ module Mongo
     # Checkout a socket for writing (i.e., a primary node).
     def checkout_writer
       connect unless connected?
-      socket = get_socket_from_pool(@primary_pool)
+      socket = get_socket_from_pool(self.primary_pool)
 
       if !socket
         refresh
-        socket = get_socket_from_pool(@primary_pool)
+        socket = get_socket_from_pool(self.primary_pool)
       end
 
       if socket
@@ -414,19 +389,20 @@ module Mongo
     end
 
     def arbiters
-      @manager.arbiters.nil? ? [] : manager.arbiters.dup
+      @manager.arbiters.nil? ? [] : @manager.arbiters
     end
 
     def primary
-      @manager.primary.nil? ? nil : manager.primary.dup
+      @manager.primary
     end
 
+    # Note: might want to freeze these after connecting.
     def secondaries
-      @manager.secondaries.dup
+      @manager.secondaries
     end
 
     def hosts
-      @manager.hosts.dup
+      @manager.hosts
     end
 
     def primary_pool
@@ -464,6 +440,9 @@ module Mongo
       old_manager.close if old_manager
     end
 
+    # If we're using async refresh, start
+    # a background thread to run the refresh method
+    # every @refresh_interval seconds.
     def initiate_refresh_mode
       if @refresh_mode == :async
         return if @refresh_thread && @refresh_thread.alive?
@@ -486,7 +465,7 @@ module Mongo
     def checkout_tagged(tags)
       sync_synchronize(:SH) do
         tags.each do |k, v|
-          pool = @tag_map[{k.to_s => v}]
+          pool = self.tag_map[{k.to_s => v}]
           if pool
             socket = pool.checkout
             @sockets_to_pools[socket] = pool
