@@ -121,6 +121,8 @@ module Mongo
       @refresh_interval = opts[:refresh_interval] || 90
       @last_refresh = Time.now
 
+      @manager = nil
+
       if ![:sync, :async, false].include?(@refresh_mode)
         raise MongoArgumentError,
           "Refresh mode must be one of :sync, :async, or false."
@@ -221,14 +223,11 @@ module Mongo
       return false if sync_exclusive?
 
       log(:info, "Initiating hard refresh...")
-      @background_manager = PoolManager.new(self, @seeds)
-      @background_manager.connect
+      background_manager = PoolManager.new(self, @seeds)
+      background_manager.connect
 
-      sync_synchronize(:EX) do
-        @manager.close
-        update_config(@background_manager)
-      end
-
+      # TODO: make sure that connect as succeeded
+      update_config(background_manager)
       initiate_refresh_mode
 
       return true
@@ -414,28 +413,55 @@ module Mongo
       end
     end
 
+    def arbiters
+      @manager.arbiters.nil? ? [] : manager.arbiters.dup
+    end
+
+    def primary
+      @manager.primary.nil? ? nil : manager.primary.dup
+    end
+
+    def secondaries
+      @manager.secondaries.dup
+    end
+
+    def hosts
+      @manager.hosts.dup
+    end
+
+    def primary_pool
+      @manager.primary_pool
+    end
+
+    def read_pool
+      @manager.read_pool
+    end
+
+    def secondary_pools
+      @manager.secondary_pools
+    end
+
+    def tag_map
+      @manager.tag_map
+    end
+
+    def seeds
+      @manager.seeds
+    end
+
+    def max_bson_size
+      @manager.max_bson_size
+    end
+
     private
 
     # Given a pool manager, update this connection's
     # view of the replica set.
-    #
-    # This method must be called within
-    # an exclusive lock.
-    def update_config(manager)
-      @arbiters = manager.arbiters.nil? ? [] : manager.arbiters.dup
-      @primary = manager.primary.nil? ? nil : manager.primary.dup
-      @secondaries = manager.secondaries.dup
-      @hosts = manager.hosts.dup
-
-      @primary_pool = manager.primary_pool
-      @read_pool    = manager.read_pool
-      @secondary_pools = manager.secondary_pools
-      @tag_map = manager.tag_map
-      @seeds = manager.seeds
-      @manager = manager
-      @nodes = manager.nodes
-      @max_bson_size = manager.max_bson_size
+    def update_config(new_manager)
+      old_manager = @manager
+      @manager = new_manager
       @sockets_to_pools.clear
+      old_manager.close if old_manager
     end
 
     def initiate_refresh_mode

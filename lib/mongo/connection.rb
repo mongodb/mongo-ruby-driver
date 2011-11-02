@@ -501,6 +501,14 @@ module Mongo
       result
     end
 
+    def get_socket_from_thread_local
+      Thread.current[:socket_map] ||= {}
+      Thread.current[:socket_map][self] ||= {}
+      Thread.current[:socket_map][self][:writer] ||= checkout_writer
+      Thread.current[:socket_map][self][:reader] = 
+        Thread.current[:socket_map][self][:writer]
+    end
+
     # Create a new socket and attempt to connect to master.
     # If successful, sets host and port to master and returns the socket.
     #
