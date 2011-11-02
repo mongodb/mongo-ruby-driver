@@ -851,7 +851,7 @@ module Mongo
       cmd = BSON::OrderedHash.new
       cmd[:getlasterror] = 1
       if opts.is_a?(Hash)
-        opts.assert_valid_keys(:w, :wtimeout, :fsync)
+        opts.assert_valid_keys(:w, :wtimeout, :fsync, :j)
         cmd.merge!(opts)
       end
       message.put_binary(BSON::BSON_CODER.serialize(cmd, false).to_s)
