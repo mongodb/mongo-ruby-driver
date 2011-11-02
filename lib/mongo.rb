@@ -65,6 +65,7 @@ require 'mongo/util/ssl_socket'
 require 'mongo/util/uri_parser'
 
 require 'mongo/collection'
+require 'mongo/networking'
 require 'mongo/connection'
 require 'mongo/repl_set_connection'
 require 'mongo/cursor'

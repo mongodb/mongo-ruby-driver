@@ -422,6 +422,67 @@ module Mongo
 
     private
 
+    # Generic initialization code.
+    def setup(opts)
+      # Default maximum BSON object size
+      @max_bson_size = Mongo::DEFAULT_MAX_BSON_SIZE
+
+      @safe_mutex_lock = Mutex.new
+      @safe_mutexes = Hash.new {|hash, key| hash[key] = Mutex.new}
+
+      # Determine whether to use SSL.
+      @ssl = opts.fetch(:ssl, false)
+      if @ssl
+        @socket_class = Mongo::SSLSocket
+      else
+        @socket_class = ::TCPSocket
+      end
+
+      # Authentication objects
+      @auths = opts.fetch(:auths, [])
+
+      # Lock for request ids.
+      @id_lock = Mutex.new
+
+      # Pool size and timeout.
+      @pool_size = opts[:pool_size] || 1
+      if opts[:timeout]
+        warn "The :timeout option has been deprecated " +
+          "and will be removed in the 2.0 release. Use :pool_timeout instead."
+      end
+      @pool_timeout = opts[:pool_timeout] || opts[:timeout] || 5.0
+
+      # Timeout on socket read operation.
+      @op_timeout = opts[:op_timeout] || nil
+
+      # Timeout on socket connect.
+      @connect_timeout = opts[:connect_timeout] || nil
+
+      # Mutex for synchronizing pool access
+      # TODO: remove this.
+      @connection_mutex = Mutex.new
+
+      # Global safe option. This is false by default.
+      @safe = opts[:safe] || false
+
+      # Condition variable for signal and wait
+      @queue = ConditionVariable.new
+
+      # Connection pool for primay node
+      @primary      = nil
+      @primary_pool = nil
+
+      @logger = opts[:logger] || nil
+
+      if @logger
+        @logger.debug("MongoDB logging. Please note that logging negatively impacts performance " +
+        "and should be disabled for high-performance production apps.")
+      end
+
+      should_connect = opts.fetch(:connect, true)
+      connect if should_connect
+    end
+
     # Given a pool manager, update this connection's
     # view of the replica set.
     def update_config(new_manager)
