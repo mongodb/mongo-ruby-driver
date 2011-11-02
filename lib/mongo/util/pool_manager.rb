@@ -188,7 +188,7 @@ module Mongo
       @primary = member.host_port
       @primary_pool = Pool.new(self.connection, member.host, member.port,
                               :size => self.connection.pool_size,
-                              :timeout => self.connection.connect_timeout,
+                              :timeout => self.connection.pool_timeout,
                               :node => member)
       associate_tags_with_pool(member.tags, @primary_pool)
     end
@@ -198,7 +198,7 @@ module Mongo
       @secondaries << member.host_port
       pool = Pool.new(self.connection, member.host, member.port,
                                    :size => self.connection.pool_size,
-                                   :timeout => self.connection.connect_timeout,
+                                   :timeout => self.connection.pool_timeout,
                                    :node => member)
       @secondary_pools << pool
       associate_tags_with_pool(member.tags, pool)

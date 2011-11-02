@@ -37,7 +37,8 @@ module Mongo
     RESPONSE_HEADER_SIZE = 20
 
     attr_reader :logger, :size, :auths, :primary, :safe, :host_to_try,
-      :pool_size, :connect_timeout, :primary_pool, :socket_class
+      :pool_size, :connect_timeout, :pool_timeout,
+      :primary_pool, :socket_class
 
     # Counter for generating unique request ids.
     @@current_request_id = 0
@@ -670,7 +671,7 @@ module Mongo
         warn "The :timeout option has been deprecated " +
           "and will be removed in the 2.0 release. Use :pool_timeout instead."
       end
-      @timeout = opts[:pool_timeout] || opts[:timeout] || 5.0
+      @pool_timeout = opts[:pool_timeout] || opts[:timeout] || 5.0
 
       # Timeout on socket read operation.
       @op_timeout = opts[:op_timeout] || nil
@@ -758,7 +759,7 @@ module Mongo
     def set_primary(node)
       host, port = *node
       @primary = [host, port]
-      @primary_pool = Pool.new(self, host, port, :size => @pool_size, :timeout => @timeout)
+      @primary_pool = Pool.new(self, host, port, :size => @pool_size, :timeout => @pool_timeout)
     end
 
     ## Low-level connection methods.
