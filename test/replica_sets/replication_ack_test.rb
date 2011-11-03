@@ -1,14 +1,11 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require './test/replica_sets/rs_test_helper'
 
-# NOTE: This test expects a replica set of three nodes to be running on local host.
 class ReplicaSetAckTest < Test::Unit::TestCase
-  include Mongo
+  include ReplicaSetTest
 
   def setup
-    RS.ensure_up
-
-    @conn = ReplSetConnection.new([RS.host, RS.ports[0]])
+    @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0]])
 
     @slave1 = Connection.new(@conn.secondary_pools[0].host,
       @conn.secondary_pools[0].port, :slave_ok => true)
@@ -21,7 +18,7 @@ class ReplicaSetAckTest < Test::Unit::TestCase
   end
 
   def teardown
-    RS.restart_killed_nodes
+    self.rs.restart_killed_nodes
     @conn.close if @conn
   end
 

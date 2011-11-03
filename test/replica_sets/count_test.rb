@@ -1,13 +1,12 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require './test/replica_sets/rs_test_helper'
 
-# NOTE: This test expects a replica set of three nodes to be running
-# on the local host.
 class ReplicaSetCountTest < Test::Unit::TestCase
-  include Mongo
+  include ReplicaSetTest
 
   def setup
-    @conn = ReplSetConnection.new([RS.host, RS.ports[0]], [RS.host, RS.ports[1]], [RS.host, RS.ports[2]],
+    @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0]],
+                                  [self.rs.host, self.rs.ports[1]], [self.rs.host, self.rs.ports[2]],
                                   :read => :secondary)
     assert @conn.primary_pool
     @primary = Connection.new(@conn.primary_pool.host, @conn.primary_pool.port)
@@ -17,7 +16,7 @@ class ReplicaSetCountTest < Test::Unit::TestCase
   end
 
   def teardown
-    RS.restart_killed_nodes
+    self.rs.restart_killed_nodes
     @conn.close if @conn
   end
 
@@ -26,7 +25,7 @@ class ReplicaSetCountTest < Test::Unit::TestCase
     assert_equal 1, @coll.count
 
     # Kill the current master node
-    @node = RS.kill_primary
+    @node = self.rs.kill_primary
 
     rescue_connection_failure do
       @coll.insert({:a => 30}, :safe => true)

@@ -154,12 +154,19 @@ module Mongo
     def connect
       log(:info, "Connecting...")
       return if @connected
+      p @seeds
       manager = PoolManager.new(self, @seeds)
       manager.connect
 
       update_config(manager)
       initiate_refresh_mode
 
+      puts "Primary: #{@manager.primary}"
+      puts "Secondaries: #{@manager.secondaries}"
+      if @manager.read_pool
+        c = Connection.new(@manager.read_pool.host, @manager.read_pool.port, :slave_ok => true)
+        p c['admin'].command({:replSetGetStatus => 1})
+      end
       if @require_primary && self.primary.nil? #TODO: in v2.0, we'll let this be optional and do a lazy connect.
         close
         raise ConnectionFailure, "Failed to connect to primary node."
@@ -311,7 +318,7 @@ module Mongo
       socket = get_socket_from_pool(self.read_pool)
 
       if !socket
-        refresh
+        connect
         socket = get_socket_from_pool(self.primary_pool)
       end
 
@@ -328,7 +335,7 @@ module Mongo
       socket = get_socket_from_pool(self.primary_pool)
 
       if !socket
-        refresh
+        connect
         socket = get_socket_from_pool(self.primary_pool)
       end
 
@@ -412,10 +419,6 @@ module Mongo
       @manager.tag_map
     end
 
-    def seeds
-      @manager.seeds
-    end
-
     def max_bson_size
       @manager.max_bson_size
     end
@@ -468,10 +471,6 @@ module Mongo
       # Condition variable for signal and wait
       @queue = ConditionVariable.new
 
-      # Connection pool for primay node
-      @primary      = nil
-      @primary_pool = nil
-
       @logger = opts[:logger] || nil
 
       if @logger
@@ -488,6 +487,7 @@ module Mongo
     def update_config(new_manager)
       old_manager = @manager
       @manager = new_manager
+      @seeds   = @manager.seeds.dup
       @sockets_to_pools.clear
       old_manager.close if old_manager
     end

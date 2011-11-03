@@ -2,12 +2,19 @@ $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require './test/test_helper'
 require './test/tools/repl_set_manager'
 
-unless defined? RS
-  RS = ReplSetManager.new
-  RS.start_set
-end
+module ReplicaSetTest
 
-class Test::Unit::TestCase
+  def self.rs
+    unless defined?(@rs)
+      @rs = ReplSetManager.new
+      @rs.start_set
+    end
+    @rs
+  end
+
+  def rs
+    ReplicaSetTest.rs
+  end
 
   # Generic code for rescuing connection failures and retrying operations.
   # This could be combined with some timeout functionality.
@@ -23,5 +30,4 @@ class Test::Unit::TestCase
       retry
     end
   end
-
 end

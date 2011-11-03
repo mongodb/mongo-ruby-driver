@@ -1,20 +1,18 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require './test/replica_sets/rs_test_helper'
 
-# NOTE: This test expects a replica set of three nodes to be running
-# on the local host.
 class ReplicaSetQueryTest < Test::Unit::TestCase
-  include Mongo
+  include ReplicaSetTest
 
   def setup
-    @conn = ReplSetConnection.new([RS.host, RS.ports[0], RS.ports[1]])
+    @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0], self.rs.ports[1]])
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets")
   end
 
   def teardown
-    RS.restart_killed_nodes
+    self.rs.restart_killed_nodes
     @conn.close if @conn
   end
 
@@ -30,7 +28,7 @@ class ReplicaSetQueryTest < Test::Unit::TestCase
 
     puts "Benchmark before failover: #{benchmark_queries}"
 
-    RS.kill_primary
+    self.rs.kill_primary
 
     results = []
     rescue_connection_failure do
