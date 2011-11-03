@@ -481,30 +481,21 @@ module Mongo
       @max_bson_size
     end
 
-
     def get_local_reader
      self.connections ||= {}
      self.connections[self.object_id] ||= {}
      self.connections[self.object_id][:reader] ||= checkout_reader
-
-     # Thread.current[:connections] ||= {}
-     # Thread.current[:connections][self.object_id] ||= {}
-     # Thread.current[:connections][self.object_id][:reader] ||= checkout_reader
     end
 
     def get_local_writer
      self.connections ||= {}
      self.connections[self.object_id] ||= {}
      self.connections[self.object_id][:writer] ||= checkout_writer
-    #  Thread.current[:connections] ||= {}
-    #  Thread.current[:connections][self.object_id] ||= {}
-    #  Thread.current[:connections][self.object_id][:writer] ||= checkout_writer
     end
 
     # Used to close, check in, or refresh sockets held
     # in thread-local variables.
     def local_socket_done(socket)
-      #checkin(socket)
       puts "Done. Threads: #{Thread.list.size}, pool_size: #{self.pool_size}"
        if self.connections[self.object_id][:reader] == socket
          if self.read_pool.sockets_low?
@@ -521,13 +512,6 @@ module Mongo
            self.connections[self.object_id][:writer] = nil
          end
        end
-
-       # if Thread.current[:connections][self.object_id][:reader] == socket
-       #   Thread.current[:connections][self.object_id][:reader] = nil
-       # end
-       # if Thread.current[:connections][self.object_id][:writer] == socket
-       #   Thread.current[:connections][self.object_id][:writer] = nil
-       # end
     end
 
     # Checkout a socket for reading (i.e., a secondary node).
