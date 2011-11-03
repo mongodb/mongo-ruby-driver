@@ -21,7 +21,8 @@ module Mongo
     MAX_PING_TIME = 1_000_000
 
     attr_accessor :host, :port, :address,
-      :size, :timeout, :safe, :checked_out, :connection
+      :size, :timeout, :safe, :checked_out, :connection,
+      :sockets_low
 
     # Create a new pool of connections.
     def initialize(connection, host, port, opts={})
@@ -36,7 +37,7 @@ module Mongo
       @address = "#{@host}:#{@port}"
 
       # Pool size and timeout.
-      @size      = opts[:size] || 10
+      @size      = opts[:size] || 10000
       @timeout   = opts[:timeout]   || 5.0
 
       # Mutex for synchronizing pool access
@@ -48,9 +49,11 @@ module Mongo
       # Operations to perform on a socket
       @socket_ops = Hash.new { |h, k| h[k] = [] }
 
+      @sockets_low  = true
       @sockets      = []
       @pids         = {}
       @checked_out  = []
+      @threads      = {}
       @ping_time    = nil
       @last_ping    = nil
       @closed       = false
@@ -74,6 +77,10 @@ module Mongo
 
     def closed?
       @closed
+    end
+
+    def sockets_low?
+      @sockets_low
     end
 
     def inspect
@@ -138,7 +145,9 @@ module Mongo
     # Return a socket to the pool.
     def checkin(socket)
       @connection_mutex.synchronize do
+        puts "deleting #{socket}, size: #{@checked_out.size}"
         @checked_out.delete(socket)
+        puts "size now: #{@checked_out.size}"
         @queue.signal
       end
       true
@@ -166,6 +175,7 @@ module Mongo
       @sockets << socket
       @pids[socket] = Process.pid
       @checked_out << socket
+      @threads[socket] = Thread.current.object_id
       socket
     end
 
@@ -211,8 +221,34 @@ module Mongo
          checkout_new_socket
       else
         @checked_out << socket
+        @threads[socket] = Thread.current.object_id
         socket
       end
+    end
+
+    def cleanup
+      return unless @sockets.size > @size
+              puts "-----CLEANUP*****"
+                     alive = {}
+                     Thread.list.each do |t|
+                       if t.alive?
+                         alive[t.object_id] = true
+                       end
+                     end
+
+                     @checked_out.each do |socket|
+                       if !alive[@threads[socket]]
+                         @checked_out.delete(socket)
+                         if @sockets.size > @size
+                           puts "CLEANING: #{socket}"
+                           socket.close
+                           @sockets.delete(socket)
+                         end
+                       end
+                     end
+
+
+
     end
 
     # Check out an existing socket or create a new socket if the maximum
@@ -228,21 +264,28 @@ module Mongo
               "consider increasing the pool size or timeout."
         end
 
+        puts "CHECKING OUT"
+        #@sockets_low = @checked_out.size > @size / 2
         @connection_mutex.synchronize do
+          if @sockets.size > 0.7 * @size
+            @sockets_low = true
+          else
+            @sockets_low = false
+          end
           socket = if @checked_out.size < @sockets.size
+                     p "checkout existing from size #{@sockets.size}"
                      checkout_existing_socket
-                   elsif @sockets.size < @size
+                   else
                      checkout_new_socket
                    end
 
           if socket
-
-          # This calls all procs, in order, scoped to existing sockets.
-          # At the moment, we use this to lazily authenticate and
-          # logout existing socket connections.
-          @socket_ops[socket].reject! do |op|
-            op.call
-          end
+            # This calls all procs, in order, scoped to existing sockets.
+            # At the moment, we use this to lazily authenticate and
+            # logout existing socket connections.
+            @socket_ops[socket].reject! do |op|
+              op.call
+            end
 
             return socket
           else

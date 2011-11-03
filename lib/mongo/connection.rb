@@ -19,10 +19,9 @@
 require 'set'
 require 'socket'
 require 'thread'
-
 module Mongo
 
-  # Instantiates and manages connections to MongoDB.
+  # Instantiates and manages self.connections to MongoDB.
   class Connection
     include Mongo::Logging
     include Mongo::Networking
@@ -35,10 +34,11 @@ module Mongo
 
     DEFAULT_PORT = 27017
 
+    mongo_thread_local_accessor :connections
+
     attr_reader :logger, :size, :auths, :primary, :safe, :host_to_try,
       :pool_size, :connect_timeout, :pool_timeout,
       :primary_pool, :socket_class
-
 
     # Create a connection to single MongoDB instance.
     #
@@ -63,9 +63,9 @@ module Mongo
     #   to a single, slave node.
     # @option opts [Logger, #debug] :logger (nil) A Logger instance for debugging driver ops. Note that
     #   logging negatively impacts performance; therefore, it should not be used for high-performance apps.
-    # @option opts [Integer] :pool_size (1) The maximum number of socket connections allowed per
+    # @option opts [Integer] :pool_size (1) The maximum number of socket self.connections allowed per
     #   connection pool. Note: this setting is relevant only for multi-threaded applications.
-    # @option opts [Float] :pool_timeout (5.0) When all of the connections a pool are checked out,
+    # @option opts [Float] :pool_timeout (5.0) When all of the self.connections a pool are checked out,
     #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
     #   Note: this setting is relevant only for multi-threaded applications (which in Ruby are rare).
     # @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.
@@ -80,7 +80,7 @@ module Mongo
     # @example localhost, 27017
     #   Connection.new("localhost")
     #
-    # @example localhost, 3000, max 5 connections, with max 5 seconds of wait time.
+    # @example localhost, 3000, max 5 self.connections, with max 5 seconds of wait time.
     #   Connection.new("localhost", 3000, :pool_size => 5, :timeout => 5)
     #
     # @example localhost, 3000, where this node may be a slave
@@ -91,7 +91,7 @@ module Mongo
     # @raise [ReplicaSetConnectionError] This is raised if a replica set name is specified and the
     #   driver fails to connect to a replica set with that name.
     #
-    # @core connections
+    # @core self.connections
     def initialize(host=nil, port=nil, opts={})
       @host_to_try = format_pair(host, port)
 
@@ -481,6 +481,55 @@ module Mongo
       @max_bson_size
     end
 
+
+    def get_local_reader
+     self.connections ||= {}
+     self.connections[self.object_id] ||= {}
+     self.connections[self.object_id][:reader] ||= checkout_reader
+
+     # Thread.current[:connections] ||= {}
+     # Thread.current[:connections][self.object_id] ||= {}
+     # Thread.current[:connections][self.object_id][:reader] ||= checkout_reader
+    end
+
+    def get_local_writer
+     self.connections ||= {}
+     self.connections[self.object_id] ||= {}
+     self.connections[self.object_id][:writer] ||= checkout_writer
+    #  Thread.current[:connections] ||= {}
+    #  Thread.current[:connections][self.object_id] ||= {}
+    #  Thread.current[:connections][self.object_id][:writer] ||= checkout_writer
+    end
+
+    # Used to close, check in, or refresh sockets held
+    # in thread-local variables.
+    def local_socket_done(socket)
+      #checkin(socket)
+      puts "Done. Threads: #{Thread.list.size}, pool_size: #{self.pool_size}"
+       if self.connections[self.object_id][:reader] == socket
+         if self.read_pool.sockets_low?
+           puts "***SOCKETS ARE LOW! READER****"
+           checkin(socket)
+           self.connections[self.object_id][:reader] = nil
+         end
+       end
+
+       if self.connections[self.object_id][:writer] == socket
+         if self.primary_pool && self.primary_pool.sockets_low?
+           puts "***SOCKETS ARE LOW! WRITER****"
+           checkin(socket)
+           self.connections[self.object_id][:writer] = nil
+         end
+       end
+
+       # if Thread.current[:connections][self.object_id][:reader] == socket
+       #   Thread.current[:connections][self.object_id][:reader] = nil
+       # end
+       # if Thread.current[:connections][self.object_id][:writer] == socket
+       #   Thread.current[:connections][self.object_id][:writer] = nil
+       # end
+    end
+
     # Checkout a socket for reading (i.e., a secondary node).
     # Note: this is overridden in ReplSetConnection.
     def checkout_reader
@@ -524,9 +573,6 @@ module Mongo
     def setup(opts)
       # Default maximum BSON object size
       @max_bson_size = Mongo::DEFAULT_MAX_BSON_SIZE
-
-      @safe_mutex_lock = Mutex.new
-      @safe_mutexes = Hash.new {|hash, key| hash[key] = Mutex.new}
 
       # Determine whether to use SSL.
       @ssl = opts.fetch(:ssl, false)

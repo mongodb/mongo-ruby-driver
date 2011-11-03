@@ -20,7 +20,8 @@ module Mongo
 
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
-    attr_reader :replica_set_name, :seeds, :refresh_interval, :refresh_mode
+    attr_reader :replica_set_name, :seeds, :refresh_interval, :refresh_mode,
+      :refresh_version
 
     # Create a connection to a MongoDB replica set.
     #
@@ -122,7 +123,8 @@ module Mongo
       @connected = false
 
       # Store the refresher thread
-      @refresh_thread = nil
+      @refresh_thread  = nil
+      @refresh_version = 0
 
       # Maps
       @sockets_to_pools = {}
@@ -299,6 +301,36 @@ module Mongo
       self.secondary_pools.each do |pool|
         pool.logout_existing(db)
       end
+    end
+
+    def get_local_reader
+      Thread.current[:connections] ||= {}
+      Thread.current[:connections][self.object_id] ||= {}
+      Thread.current[:connections][self.object_id][:version] ||= self.refresh_version
+      Thread.current[:connections][self.object_id][:reader] ||= checkout_reader
+    end
+
+    def get_local_writer
+      Thread.current[:connections] ||= {}
+      Thread.current[:connections][self.object_id] ||= {}
+      Thread.current[:connections][self.object_id][:version] ||= self.refresh_version
+      Thread.current[:connections][self.object_id][:writer] ||= checkout_writer
+    end
+
+    # Used to close, check in, or refresh sockets held
+    # in thread-local variables.
+    def local_socket_done
+      if Thread.current[:connections][self.object_id][:version] != self.refresh_version
+        checkin(Thread.current[:connections][self.object_id][:reader])
+        Thread.current[:connections][self.object_id][:reader] ||= checkout_reader
+      end
+    end
+
+    def checkin_sockets
+      checkin(Thread.current[:connections][self.object_id][:reader])
+      checkin(Thread.current[:connections][self.object_id][:writer])
+      Thread.current[:connections][self.object_id][:writer] = nil
+      Thread.current[:connections][self.object_id][:reader] = nil
     end
 
     # Checkout a socket for reading (i.e., a secondary node).
@@ -480,6 +512,7 @@ module Mongo
       @manager = new_manager
       @seeds   = @manager.seeds.dup
       @sockets_to_pools.clear
+      @refresh_version += 1
       old_manager.close if old_manager
     end
 

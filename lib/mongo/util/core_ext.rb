@@ -58,3 +58,28 @@ class String
   end
 
 end
+
+#:nodoc:
+class Class
+  def mongo_thread_local_accessor name, options = {}
+    m = Module.new
+    m.module_eval do
+      class_variable_set :"@@#{name}", Hash.new {|h,k| h[k] = options[:default] }
+    end
+    m.module_eval %{
+
+      def #{name}
+        @@#{name}[Thread.current.object_id]
+      end
+
+      def #{name}=(val)
+        @@#{name}[Thread.current.object_id] = val
+      end
+    }
+
+    class_eval do
+      include m
+      extend m
+    end
+  end
+end

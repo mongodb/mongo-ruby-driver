@@ -470,9 +470,11 @@ module Mongo
         results, @n_received, @cursor_id = @connection.receive_message(
           Mongo::Constants::OP_QUERY, message, nil, sock, @command,
           nil, @options & OP_QUERY_EXHAUST != 0)
-        ensure
-          checkin_socket(sock) unless @socket
+        rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
+          force_checkin_socket(sock)
+          raise ex
         end
+        checkin_socket(sock) unless @socket
         @returned += @n_received
         @cache += results
         @query_run = true
@@ -505,9 +507,11 @@ module Mongo
       begin
       results, @n_received, @cursor_id = @connection.receive_message(
         Mongo::Constants::OP_GET_MORE, message, nil, sock, @command, nil)
-      ensure
-        checkin_socket(sock) unless @socket
+      rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
+        force_checkin_socket(sock)
+        raise ex
       end
+      checkin_socket(sock) unless @socket
       @returned += @n_received
       @cache += results
       close_cursor_if_query_complete
@@ -516,10 +520,10 @@ module Mongo
     def checkout_socket_from_connection
       @checkin_connection = true
       if @command || @read_preference == :primary
-        @connection.checkout_writer
+        @connection.get_local_writer
       else
         @read_pool = @connection.read_pool
-        @connection.checkout_reader
+        @connection.get_local_reader
       end
     end
 
@@ -552,6 +556,16 @@ module Mongo
         @read_pool.checkin(sock)
         @checkin_read_pool = false
       elsif @checkin_connection
+        @connection.local_socket_done(sock)
+        @checkin_connection = false
+      end
+    end
+
+    def force_checkin_socket(sock)
+      if @checkin_read_pool
+        @read_pool.checkin(sock)
+        @checkin_read_pool = false
+      else
         @connection.checkin(sock)
         @checkin_connection = false
       end

@@ -4,7 +4,7 @@ class TestThreading < Test::Unit::TestCase
 
   include Mongo
 
-  @@db = standard_connection(:pool_size => 1, :timeout => 30).db(MONGO_TEST_DB)
+  @@db = standard_connection(:pool_size => 10, :timeout => 30).db(MONGO_TEST_DB)
   @@coll = @@db.collection('thread-test-collection')
 
   def set_up_safe_data
@@ -21,16 +21,23 @@ class TestThreading < Test::Unit::TestCase
   end
 
   def test_safe_update
+    times = []
     set_up_safe_data
     threads = []
     100.times do |i|
       threads[i] = Thread.new do
-        if i % 2 == 0
-          assert_raise Mongo::OperationFailure do
-            @unique.update({"test" => "insert"}, {"$set" => {"test" => "update"}}, :safe => true)
+        10.times do
+          if i % 2 == 0
+            assert_raise Mongo::OperationFailure do
+              t1 = Time.now
+              @unique.update({"test" => "insert"}, {"$set" => {"test" => "update"}}, :safe => true)
+              times << Time.now - t1
+            end
+          else
+            t1 = Time.now
+            @duplicate.update({"test" => "insert"}, {"$set" => {"test" => "update"}}, :safe => true)
+            times << Time.now - t1
           end
-        else
-          @duplicate.update({"test" => "insert"}, {"$set" => {"test" => "update"}}, :safe => true)
         end
       end
     end

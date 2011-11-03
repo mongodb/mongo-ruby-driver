@@ -30,14 +30,16 @@ module Mongo
         packed_message = message.to_s
 
         if connection == :writer
-          socket = checkout_writer
+          sock = get_local_writer
         else
-          socket = checkout_reader
+          sock = get_local_reader
         end
 
-        send_message_on_socket(packed_message, socket)
-      ensure
-        checkin(socket)
+        send_message_on_socket(packed_message, sock)
+        local_socket_done(sock)
+      rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
+        checkin(sock)
+        raise ex
       end
     end
 
@@ -63,11 +65,13 @@ module Mongo
 
       packed_message = message.append!(last_error_message).to_s
       begin
-        sock = checkout_writer
+        sock = get_local_writer
         send_message_on_socket(packed_message, sock)
         docs, num_received, cursor_id = receive(sock, last_error_id)
-      ensure
+        local_socket_done(sock)
+      rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
         checkin(sock)
+        raise ex
       end
 
       if num_received == 1 && (error = docs[0]['err'] || docs[0]['errmsg'])
@@ -103,11 +107,11 @@ module Mongo
           should_checkin = false
         else
           if command
-            sock = checkout_writer
+            sock = get_local_writer
           elsif read == :primary
-            sock = checkout_writer
+            sock = get_local_writer
           elsif read == :secondary
-            sock = checkout_reader
+            sock = get_local_reader
           else
             sock = checkout_tagged(read)
           end
@@ -115,14 +119,12 @@ module Mongo
         end
 
         result = ''
-        @safe_mutexes[sock].synchronize do
-          send_message_on_socket(packed_message, sock)
-          result = receive(sock, request_id, exhaust)
-        end
-      ensure
-        if should_checkin
-          checkin(sock)
-        end
+        send_message_on_socket(packed_message, sock)
+        result = receive(sock, request_id, exhaust)
+        local_socket_done(sock) if should_checkin
+      rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
+        checkin(sock) if should_checkin
+        raise ex
       end
       result
     end
