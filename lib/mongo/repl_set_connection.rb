@@ -304,33 +304,36 @@ module Mongo
     end
 
     def get_local_reader
-      Thread.current[:connections] ||= {}
-      Thread.current[:connections][self.object_id] ||= {}
-      Thread.current[:connections][self.object_id][:version] ||= self.refresh_version
-      Thread.current[:connections][self.object_id][:reader] ||= checkout_reader
+     self.connections ||= {}
+     self.connections[self.object_id] ||= {}
+     self.connections[self.object_id][:reader] ||= checkout_reader
     end
 
     def get_local_writer
-      Thread.current[:connections] ||= {}
-      Thread.current[:connections][self.object_id] ||= {}
-      Thread.current[:connections][self.object_id][:version] ||= self.refresh_version
-      Thread.current[:connections][self.object_id][:writer] ||= checkout_writer
+     self.connections ||= {}
+     self.connections[self.object_id] ||= {}
+     self.connections[self.object_id][:writer] ||= checkout_writer
     end
 
     # Used to close, check in, or refresh sockets held
     # in thread-local variables.
-    def local_socket_done
-      if Thread.current[:connections][self.object_id][:version] != self.refresh_version
-        checkin(Thread.current[:connections][self.object_id][:reader])
-        Thread.current[:connections][self.object_id][:reader] ||= checkout_reader
-      end
-    end
+    def local_socket_done(socket)
+      puts "Done. Threads: #{Thread.list.size}, pool_size: #{self.pool_size}"
+       if self.connections[self.object_id][:reader] == socket
+         if self.read_pool.sockets_low?
+           puts "***SOCKETS ARE LOW! READER****"
+           checkin(socket)
+           self.connections[self.object_id][:reader] = nil
+         end
+       end
 
-    def checkin_sockets
-      checkin(Thread.current[:connections][self.object_id][:reader])
-      checkin(Thread.current[:connections][self.object_id][:writer])
-      Thread.current[:connections][self.object_id][:writer] = nil
-      Thread.current[:connections][self.object_id][:reader] = nil
+       if self.connections[self.object_id][:writer] == socket
+         if self.primary_pool && self.primary_pool.sockets_low?
+           puts "***SOCKETS ARE LOW! WRITER****"
+           checkin(socket)
+           self.connections[self.object_id][:writer] = nil
+         end
+       end
     end
 
     # Checkout a socket for reading (i.e., a secondary node).
