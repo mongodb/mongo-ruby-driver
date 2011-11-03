@@ -154,19 +154,12 @@ module Mongo
     def connect
       log(:info, "Connecting...")
       return if @connected
-      p @seeds
       manager = PoolManager.new(self, @seeds)
       manager.connect
 
       update_config(manager)
       initiate_refresh_mode
 
-      puts "Primary: #{@manager.primary}"
-      puts "Secondaries: #{@manager.secondaries}"
-      if @manager.read_pool
-        c = Connection.new(@manager.read_pool.host, @manager.read_pool.port, :slave_ok => true)
-        p c['admin'].command({:replSetGetStatus => 1})
-      end
       if @require_primary && self.primary.nil? #TODO: in v2.0, we'll let this be optional and do a lazy connect.
         close
         raise ConnectionFailure, "Failed to connect to primary node."
