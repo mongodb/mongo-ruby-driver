@@ -20,9 +20,7 @@ module Mongo
 
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
-    attr_reader :secondaries, :arbiters, :secondary_pools,
-      :replica_set_name, :read_pool, :seeds, :tag_map,
-      :refresh_interval, :refresh_mode
+    attr_reader :replica_set_name, :seeds, :refresh_interval, :refresh_mode
 
     # Create a connection to a MongoDB replica set.
     #
