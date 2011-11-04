@@ -59,9 +59,18 @@ module Mongo
       @closed       = false
     end
 
-    def close
+    # Close this pool.
+    #
+    # @option opts [Boolean] :soft (false) If true,
+    #   close only those sockets that are not checked out.
+    def close(opts={})
       @connection_mutex.synchronize do
-        (@sockets - @checked_out).each do |sock|
+        if opts[:soft]
+          sockets_to_close = @sockets - @checked_out
+        else
+          sockets_to_close = @sockets
+        end
+        sockets_to_close.each do |sock|
           begin
             sock.close
           rescue IOError => ex

@@ -496,10 +496,8 @@ module Mongo
     # Used to close, check in, or refresh sockets held
     # in thread-local variables.
     def local_socket_done(socket)
-      puts "Done. Threads: #{Thread.list.size}, pool_size: #{self.pool_size}"
        if self.connections[self.object_id][:reader] == socket
          if self.read_pool.sockets_low?
-           puts "***SOCKETS ARE LOW! READER****"
            checkin(socket)
            self.connections[self.object_id][:reader] = nil
          end
@@ -507,7 +505,6 @@ module Mongo
 
        if self.connections[self.object_id][:writer] == socket
          if self.primary_pool && self.primary_pool.sockets_low?
-           puts "***SOCKETS ARE LOW! WRITER****"
            checkin(socket)
            self.connections[self.object_id][:writer] = nil
          end

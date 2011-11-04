@@ -207,7 +207,9 @@ module Mongo
       background_manager.connect
 
       # TODO: make sure that connect has succeeded
+      old_manager = @manager
       update_config(background_manager)
+      old_manager.close(:soft => true)
       initiate_refresh_mode
 
       return true
@@ -516,7 +518,6 @@ module Mongo
       @seeds   = @manager.seeds.dup
       @sockets_to_pools.clear
       @refresh_version += 1
-      old_manager.close if old_manager
     end
 
     # If we're using async refresh, start
