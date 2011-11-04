@@ -53,7 +53,7 @@ class CursorTest < Test::Unit::TestCase
   def test_exhaust
     if @@version >= "2.0"
       @@coll.remove
-      data = "1" * 100_000
+      data = "1" * 10_000
       5000.times do |n|
         @@coll.insert({:n => n, :data => data})
       end

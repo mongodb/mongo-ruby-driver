@@ -301,6 +301,7 @@ class TestCollection < Test::Unit::TestCase
     @conn = standard_connection
     @db   = @conn[MONGO_TEST_DB]
     @test = @db['test-safe-remove']
+    @test.remove
     @test.save({:a => 50})
     assert_equal 1, @test.remove({}, :safe => true)["n"]
     @test.drop
@@ -782,6 +783,7 @@ class TestCollection < Test::Unit::TestCase
   context "A collection with two records" do
     setup do
       @collection = @@db.collection('test-collection')
+      @collection.remove
       @collection.insert({:name => "Jones"})
       @collection.insert({:name => "Smith"})
     end

@@ -311,18 +311,24 @@ module Mongo
 
     def get_local_reader
      self.connections ||= {}
-     self.connections[self.object_id] ||= {}
+     if !connected? && self.connections[self.object_id]
+       self.connections[self.object_id]
+     else
+       self.connections[self.object_id] = {}
+     end
      socket = self.connections[self.object_id][:reader] ||= checkout_reader
      @threads_to_sockets[Thread.current][:reader] = socket
-     socket
     end
 
     def get_local_writer
      self.connections ||= {}
-     self.connections[self.object_id] ||= {}
+     if !connected? && self.connections[self.object_id]
+       self.connections[self.object_id]
+     else
+       self.connections[self.object_id] = {}
+     end
      socket = self.connections[self.object_id][:writer] ||= checkout_writer
      @threads_to_sockets[Thread.current][:writer] = socket
-     socket
     end
 
     # Used to close, check in, or refresh sockets held

@@ -12,6 +12,7 @@ class PoolManagerTest < Test::Unit::TestCase
       @connection = stub("Connection")
       @connection.stubs(:connect_timeout).returns(5000)
       @connection.stubs(:pool_size).returns(2)
+      @connection.stubs(:pool_timeout).returns(100)
       @connection.stubs(:socket_class).returns(TCPSocket)
       @connection.stubs(:[]).returns(@db)
 

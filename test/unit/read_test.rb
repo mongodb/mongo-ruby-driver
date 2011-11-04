@@ -74,6 +74,10 @@ class ReadTest < Test::Unit::TestCase
         @cursor = @col.find({:a => 1})
         sock = mock()
         sock.expects(:close)
+        read_pool = stub(:sockets_low? => false)
+        @con.stubs(:read_pool).returns(read_pool)
+        primary_pool = stub(:sockets_low? => false)
+        @con.stubs(:primary_pool).returns(primary_pool)
         @con.expects(:checkout_reader).returns(sock)
         @con.expects(:receive_message).with do |o, m, l, s, c, r|
           r == nil
@@ -86,6 +90,8 @@ class ReadTest < Test::Unit::TestCase
         @cursor = @col.find({:a => 1}, :read => :primary)
         sock = mock()
         sock.expects(:close)
+        primary_pool = stub(:sockets_low? => false)
+        @con.stubs(:primary_pool).returns(primary_pool)
         @con.expects(:checkout_writer).returns(sock)
         @con.expects(:receive_message).with do |o, m, l, s, c, r|
           r == nil

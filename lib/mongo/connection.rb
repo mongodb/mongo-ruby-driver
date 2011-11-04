@@ -483,13 +483,21 @@ module Mongo
 
     def get_local_reader
      self.connections ||= {}
-     self.connections[self.object_id] ||= {}
+     if !connected? && self.connections[self.object_id]
+       self.connections[self.object_id]
+     else
+       self.connections[self.object_id] = {}
+     end
      self.connections[self.object_id][:reader] ||= checkout_reader
     end
 
     def get_local_writer
      self.connections ||= {}
-     self.connections[self.object_id] ||= {}
+     if !connected? && self.connections[self.object_id]
+       self.connections[self.object_id]
+     else
+       self.connections[self.object_id] = {}
+     end
      self.connections[self.object_id][:writer] ||= checkout_writer
     end
 
