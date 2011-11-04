@@ -308,34 +308,37 @@ module Mongo
     def get_local_reader
      self.connections ||= {}
      self.connections[self.object_id] ||= {}
-     self.connections[self.object_id][:reader] ||= checkout_reader
+     socket = self.connections[self.object_id][:reader] ||= checkout_reader
+     threads_to_sockets[Thread.current] ||= {}
+     threads_to_sockets[Thread.current][:reader] = socket
     end
 
     def get_local_writer
      self.connections ||= {}
      self.connections[self.object_id] ||= {}
      self.connections[self.object_id][:writer] ||= checkout_writer
+     threads_to_sockets[Thread.current] ||= {}
+     threads_to_sockets[Thread.current][:reader] = socket
     end
 
     # Used to close, check in, or refresh sockets held
     # in thread-local variables.
     def local_socket_done(socket)
-      puts "Done. Threads: #{Thread.list.size}, pool_size: #{self.pool_size}"
-       if self.connections[self.object_id][:reader] == socket
-         if self.read_pool.sockets_low?
-           puts "***SOCKETS ARE LOW! READER****"
-           checkin(socket)
-           self.connections[self.object_id][:reader] = nil
-         end
-       end
+      if self.connections[self.object_id][:reader] == socket
+        if self.read_pool.sockets_low? ||
+          self.read_pool != @sockets_to_pools[socket]
+          checkin(socket)
+          self.connections[self.object_id][:reader] = nil
+        end
+      end
 
-       if self.connections[self.object_id][:writer] == socket
-         if self.primary_pool && self.primary_pool.sockets_low?
-           puts "***SOCKETS ARE LOW! WRITER****"
-           checkin(socket)
-           self.connections[self.object_id][:writer] = nil
-         end
-       end
+      if self.connections[self.object_id][:writer] == socket
+        if self.primary_pool && (self.primary_pool.sockets_low? ||
+                                 self.primary_pool != @sockets_to_pools[socket])
+          checkin(socket)
+          self.connections[self.object_id][:writer] = nil
+        end
+      end
     end
 
     # Checkout a socket for reading (i.e., a secondary node).
@@ -383,6 +386,8 @@ module Mongo
       elsif socket
         close_socket(socket)
       end
+
+      @sockets_to_pools.delete(socket)
 
       # Refresh synchronously every @refresh_interval seconds
       # if synchronous refresh mode is enabled.

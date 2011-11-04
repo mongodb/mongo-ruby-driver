@@ -235,31 +235,6 @@ module Mongo
       end
     end
 
-    def cleanup
-      return unless @sockets.size > @size
-              puts "-----CLEANUP*****"
-                     alive = {}
-                     Thread.list.each do |t|
-                       if t.alive?
-                         alive[t.object_id] = true
-                       end
-                     end
-
-                     @checked_out.each do |socket|
-                       if !alive[@threads[socket]]
-                         @checked_out.delete(socket)
-                         if @sockets.size > @size
-                           puts "CLEANING: #{socket}"
-                           socket.close
-                           @sockets.delete(socket)
-                         end
-                       end
-                     end
-
-
-
-    end
-
     # Check out an existing socket or create a new socket if the maximum
     # pool size has not been exceeded. Otherwise, wait for the next
     # available socket.
