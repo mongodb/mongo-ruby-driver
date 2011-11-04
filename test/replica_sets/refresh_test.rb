@@ -101,14 +101,18 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
   end
 
   def test_adding_and_removing_nodes
-    @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0]], [self.rs.host, self.rs.ports[1]],
-      [self.rs.host, self.rs.ports[2]], :refresh_interval => 2, :refresh_mode => :async)
+    @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0]],
+                                  [self.rs.host, self.rs.ports[1]],
+                                  [self.rs.host, self.rs.ports[2]],
+                                  :refresh_interval => 2, :refresh_mode => :async)
 
     self.rs.add_node
     sleep(4)
 
-    @conn2 = ReplSetConnection.new([self.rs.host, self.rs.ports[0]], [self.rs.host, self.rs.ports[1]],
-      [self.rs.host, self.rs.ports[2]], :refresh_interval => 2, :refresh_mode => :async)
+    @conn2 = ReplSetConnection.new([self.rs.host, self.rs.ports[0]],
+                                   [self.rs.host, self.rs.ports[1]],
+                                   [self.rs.host, self.rs.ports[2]],
+                                   :refresh_interval => 2, :refresh_mode => :async)
 
     assert @conn2.secondaries == @conn.secondaries
     assert_equal 3, @conn.secondary_pools.length

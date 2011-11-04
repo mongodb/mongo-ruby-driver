@@ -79,15 +79,15 @@ module Mongo
       @refresh_required
     end
 
-    def close
+    def close(opts={})
       begin
         if @primary_pool
-          @primary_pool.close
+          @primary_pool.close(opts)
         end
 
         if @secondary_pools
           @secondary_pools.each do |pool|
-            pool.close
+            pool.close(opts)
           end
         end
 
