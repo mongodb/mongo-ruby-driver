@@ -46,7 +46,6 @@ class ReplSetManager
   def start_set
     system("killall mongod")
     sleep(1)
-    p system("ps aux | grep mongod")
     should_start = true
     puts "** Starting a replica set with #{@count} nodes"
 
@@ -75,7 +74,6 @@ class ReplSetManager
     end
 
     initiate
-    p system("ps aux | grep mongod")
     ensure_up
   end
 
@@ -243,7 +241,12 @@ class ReplSetManager
     attempt(n) do
       print "."
       con = connection || get_connection
-      status = con['admin'].command({:replSetGetStatus => 1})
+      begin
+        status = con['admin'].command({:replSetGetStatus => 1})
+      rescue Mongo::OperationFailure => ex
+        con.close
+        raise ex
+      end
       if status['members'].all? { |m| m['health'] == 1 &&
         [1, 2, 7].include?(m['state']) } &&
         status['members'].any? { |m| m['state'] == 1 }
@@ -254,12 +257,13 @@ class ReplSetManager
          begin
            host, port = member['name'].split(':')
            port = port.to_i
-           con = Mongo::Connection.new(host, port, :slave_ok => true)
-           connections << con
-           state = con['admin'].command({:ismaster => 1})
+           conn = Mongo::Connection.new(host, port, :slave_ok => true)
+           connections << conn
+           state = conn['admin'].command({:ismaster => 1})
            states << state
-         rescue ConnectionFailure
+         rescue Mongo::ConnectionFailure
            connections.each {|c| c.close }
+           con.close
            raise Mongo::OperationFailure
          end
        end
@@ -270,6 +274,7 @@ class ReplSetManager
          con.close
          return status
        else
+         con.close
          raise Mongo::OperationFailure
        end
      else
@@ -310,7 +315,8 @@ class ReplSetManager
     con = get_connection
 
     attempt do
-      p con['admin'].command({'replSetInitiate' => @config})
+      con.object_id
+      con['admin'].command({'replSetInitiate' => @config})
     end
 
     con.close
