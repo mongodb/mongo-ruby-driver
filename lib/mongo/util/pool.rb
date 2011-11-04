@@ -17,8 +17,9 @@
 
 module Mongo
   class Pool
-    PING_ATTEMPTS = 6
-    MAX_PING_TIME = 1_000_000
+    PRUNE_INTERVAL = 300
+    PING_ATTEMPTS  = 6
+    MAX_PING_TIME  = 1_000_000
 
     attr_accessor :host, :port, :address,
       :size, :timeout, :safe, :checked_out, :connection,
@@ -57,6 +58,7 @@ module Mongo
       @ping_time    = nil
       @last_ping    = nil
       @closed       = false
+      @last_pruning = Time.now
     end
 
     # Close this pool.
@@ -154,9 +156,7 @@ module Mongo
     # Return a socket to the pool.
     def checkin(socket)
       @connection_mutex.synchronize do
-        puts "deleting #{socket}, size: #{@checked_out.size}"
         @checked_out.delete(socket)
-        puts "size now: #{@checked_out.size}"
         @queue.signal
       end
       true
@@ -168,7 +168,6 @@ module Mongo
     # therefore, it runs within a mutex.
     def checkout_new_socket
       begin
-        puts "Creating connection in pool to #{@host}:#{@port}"
         socket = self.connection.socket_class.new(@host, @port)
         socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
       rescue => ex
@@ -235,6 +234,21 @@ module Mongo
       end
     end
 
+    # If we have more sockets than the soft limit specified
+    # by the max pool size, then we should prune those
+    # extraneous sockets.
+    #
+    # Note: this must be called from within a mutex.
+    def prune
+      surplus = @size - @sockets.size
+      return if surplus <= 0
+      idle_sockets = @sockets - @checked_out
+      [surplus, idle_sockets.length].min.times do |n|
+        idle_sockets[n].close
+        @sockets.delete(idle_sockets[n])
+      end
+    end
+
     # Check out an existing socket or create a new socket if the maximum
     # pool size has not been exceeded. Otherwise, wait for the next
     # available socket.
@@ -248,16 +262,19 @@ module Mongo
               "consider increasing the pool size or timeout."
         end
 
-        puts "CHECKING OUT"
-        #@sockets_low = @checked_out.size > @size / 2
         @connection_mutex.synchronize do
           if @sockets.size > 0.7 * @size
             @sockets_low = true
           else
             @sockets_low = false
           end
+
+          if (Time.now - @last_pruning) > PRUNE_INTERVAL
+            prune
+            @last_pruning = Time.now
+          end
+
           socket = if @checked_out.size < @sockets.size
-                     p "checkout existing from size #{@sockets.size}"
                      checkout_existing_socket
                    else
                      checkout_new_socket

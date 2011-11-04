@@ -20,6 +20,8 @@ module Mongo
 
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
+    CLEANUP_INTERVAL = 300
+
     attr_reader :replica_set_name, :seeds, :refresh_interval, :refresh_mode,
       :refresh_version
 
@@ -128,6 +130,7 @@ module Mongo
 
       # Maps
       @sockets_to_pools = {}
+      @threads_to_sockets = Hash.new { |h, k| h[k] = Hash.new }
       @tag_map = nil
 
       # Replica set name
@@ -269,6 +272,7 @@ module Mongo
 
       @manager.close if @manager
       @sockets_to_pools.clear
+      @threads_to_sockets.clear
     end
 
     # If a ConnectionFailure is raised, this method will be called
@@ -309,16 +313,16 @@ module Mongo
      self.connections ||= {}
      self.connections[self.object_id] ||= {}
      socket = self.connections[self.object_id][:reader] ||= checkout_reader
-     threads_to_sockets[Thread.current] ||= {}
-     threads_to_sockets[Thread.current][:reader] = socket
+     @threads_to_sockets[Thread.current][:reader] = socket
+     socket
     end
 
     def get_local_writer
      self.connections ||= {}
      self.connections[self.object_id] ||= {}
-     self.connections[self.object_id][:writer] ||= checkout_writer
-     threads_to_sockets[Thread.current] ||= {}
-     threads_to_sockets[Thread.current][:reader] = socket
+     socket = self.connections[self.object_id][:writer] ||= checkout_writer
+     @threads_to_sockets[Thread.current][:writer] = socket
+     socket
     end
 
     # Used to close, check in, or refresh sockets held
@@ -333,11 +337,25 @@ module Mongo
       end
 
       if self.connections[self.object_id][:writer] == socket
-        if self.primary_pool && (self.primary_pool.sockets_low? ||
-                                 self.primary_pool != @sockets_to_pools[socket])
+        if self.primary_pool &&
+          (self.primary_pool.sockets_low? ||
+           self.primary_pool != @sockets_to_pools[socket])
           checkin(socket)
           self.connections[self.object_id][:writer] = nil
         end
+      end
+
+      if (Time.now - @last_cleanup) > CLEANUP_INTERVAL &&
+           @cleanup_lock.try_lock
+        @threads_to_sockets.each do |thread, sockets|
+          if !thread.alive?
+            checkin(sockets[:reader])
+            checkin(sockets[:writer])
+            @threads_to_sockets.delete(thread)
+          end
+        end
+
+        @cleanup_lock.unlock
       end
     end
 
@@ -505,6 +523,10 @@ module Mongo
       @queue = ConditionVariable.new
 
       @logger = opts[:logger] || nil
+
+      # Clean up connections to dead threads.
+      @last_cleanup = Time.now
+      @cleanup_lock = Mutex.new
 
       if @logger
         @logger.debug("MongoDB logging. Please note that logging negatively impacts performance " +

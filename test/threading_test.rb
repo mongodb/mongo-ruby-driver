@@ -26,7 +26,7 @@ class TestThreading < Test::Unit::TestCase
     threads = []
     100.times do |i|
       threads[i] = Thread.new do
-        10.times do
+        100.times do
           if i % 2 == 0
             assert_raise Mongo::OperationFailure do
               t1 = Time.now
