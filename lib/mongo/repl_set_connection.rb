@@ -266,7 +266,6 @@ module Mongo
       @connected = false
 
       if @refresh_thread
-        @refresh_thread.kill
         @refresh_thread = nil
       end
 
@@ -569,7 +568,7 @@ module Mongo
       if @refresh_mode == :async
         return if @refresh_thread && @refresh_thread.alive?
         @refresh_thread = Thread.new do
-          while true do
+          while true && @connected do
             sleep(@refresh_interval)
             refresh
           end
