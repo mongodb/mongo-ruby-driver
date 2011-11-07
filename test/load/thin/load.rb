@@ -1,7 +1,7 @@
 require File.join(File.dirname(__FILE__), '..', '..', '..', 'lib', 'mongo')
 require 'logger'
 
-$con = Mongo::Connection.new
+$con = Mongo::ReplSetConnection.new(['localhost', 30000], ['localhost', 30001], :read => :secondary, :refresh_mode => :async, :refresh_interval => 30)
 $db = $con['foo']
 
 class Load < Sinatra::Base
@@ -13,12 +13,9 @@ class Load < Sinatra::Base
   end
 
   get '/' do
-    3.times do |n|
-      if (v=$db.eval("1 + #{n}")) != 1 + n
-        STDERR << "#{1 + n} expected but got #{v}"
-        raise StandardError, "#{1 + n} expected but got #{v}"
-      end
-    end
+    $db['test'].insert({:a => rand(1000)})
+    $db['test'].find({:a => {'$gt' => rand(2)}}, :read => :secondary).limit(2).to_a
+    "ok"
   end
 
 end
