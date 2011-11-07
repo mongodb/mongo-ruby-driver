@@ -93,8 +93,14 @@ class Test::Unit::TestCase
     begin
       yield
     rescue => e
-      assert_equal klass, e.class
-      assert e.message.include?(message), "#{e.message} does not include #{message}."
+      if klass.to_s != e.class.to_s
+        flunk "Expected exception class #{klass} but got #{e.class}.\n #{e.backtrace}"
+      end
+
+      if !e.message.include?(message)
+        p e.backtrace
+        flunk "#{e.message} does not include #{message}.\n#{e.backtrace}"
+      end
     else
       flunk "Expected assertion #{klass} but none was raised."
     end

@@ -257,7 +257,9 @@ module Mongo
     def get_valid_seed_node
       @seeds.each do |seed|
         node = Mongo::Node.new(self.connection, seed)
-        if node.connect && node.set_config
+        if !node.connect
+          next
+        elsif node.set_config
           return node
         else
           node.close

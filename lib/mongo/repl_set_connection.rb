@@ -317,6 +317,11 @@ module Mongo
        self.connections[self.object_id] = {}
      end
      socket = self.connections[self.object_id][:reader] ||= checkout_reader
+     if self.read_pool != @sockets_to_pools[socket]
+       checkin(socket)
+       socket = self.connections[self.object_id][:reader] = checkout_reader
+     end
+
      @threads_to_sockets[Thread.current][:reader] = socket
     end
 
@@ -328,6 +333,10 @@ module Mongo
        self.connections[self.object_id] = {}
      end
      socket = self.connections[self.object_id][:writer] ||= checkout_writer
+     if self.primary_pool != @sockets_to_pools[socket]
+       checkin(socket)
+       socket = self.connections[self.object_id][:writer] = checkout_writer
+     end
      @threads_to_sockets[Thread.current][:writer] = socket
     end
 

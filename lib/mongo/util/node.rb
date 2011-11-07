@@ -60,11 +60,11 @@ module Mongo
     end
 
     def close
-      if @socket
+      if @socket && !@socket.closed?
         @socket.close
-        @socket = nil
-        @config = nil
       end
+      @socket = nil
+      @config = nil
     end
 
     def connected?
