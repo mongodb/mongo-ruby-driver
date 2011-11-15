@@ -36,6 +36,11 @@ class TestThreading < Test::Unit::TestCase
     assert_equal "s-_3#%R.t", parser.auths[0]["password"]
   end
 
+  def test_complex_usernames
+    parser = Mongo::URIParser.new('mongodb://b:ob:secret.word@a.example.com:27018/test')
+    assert_equal "b:ob", parser.auths[0]["username"]
+  end
+
   def test_passwords_contain_no_commas
     assert_raise MongoArgumentError do
       Mongo::URIParser.new('mongodb://bob:a,b@a.example.com:27018/test')

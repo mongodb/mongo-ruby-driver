@@ -20,7 +20,7 @@ module Mongo
   class URIParser
 
     DEFAULT_PORT = 27017
-    MONGODB_URI_MATCHER = /(([-.\w]+):([^@,]+)@)?((?:(?:[-.\w]+)(?::(?:[\w]+))?,?)+)(\/([-\w]+))?/
+    MONGODB_URI_MATCHER = /(([-.\w:]+):([^@,]+)@)?((?:(?:[-.\w]+)(?::(?:[\w]+))?,?)+)(\/([-\w]+))?/
     MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]"
     SPEC_ATTRS = [:nodes, :auths]
     OPT_ATTRS  = [:connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync]
