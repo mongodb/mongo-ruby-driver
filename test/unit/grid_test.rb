@@ -19,7 +19,8 @@ class GridTest < Test::Unit::TestCase
 
     context "Grid classe with standard connections" do
       setup do
-        @conn.expects(:slave_ok?).returns(false)
+        @conn.expects(:class).returns(Connection)
+        @conn.expects(:read_primary?).returns(true)
       end
 
       should "create indexes for Grid" do
@@ -36,7 +37,8 @@ class GridTest < Test::Unit::TestCase
 
     context "Grid classes with slave connection" do
       setup do
-        @conn.expects(:slave_ok?).returns(true)
+        @conn.expects(:class).twice.returns(Connection)
+        @conn.expects(:read_primary?).returns(false)
       end
 
       should "not create indexes for Grid" do
