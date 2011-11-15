@@ -1,6 +1,11 @@
 module Mongo
   module Logging
 
+    def write_logging_startup_message
+      log(:warn, "Please note that logging negatively impacts client-side performance. " +
+      "You should set your logging level no lower than :info in production.")
+    end
+
     # Log a message with the given level.
     def log(level, msg)
       return unless @logger

@@ -608,8 +608,7 @@ module Mongo
       @logger = opts[:logger] || nil
 
       if @logger
-        @logger.debug("MongoDB logging. Please note that logging negatively impacts performance " +
-        "and should be disabled for high-performance production apps.")
+        write_logging_startup_message
       end
 
       should_connect = opts.fetch(:connect, true)

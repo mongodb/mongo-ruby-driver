@@ -5,7 +5,7 @@ class CollectionTest < Test::Unit::TestCase
   context "Basic operations: " do
     setup do
       @logger = mock()
-      @logger.expects(:debug)
+      @logger.expects(:warn)
     end
 
     should "send update message" do
