@@ -10,23 +10,6 @@ def silently
   result
 end
 
-begin
-  require 'rubygems' if RUBY_VERSION < "1.9.0" && !ENV['C_EXT']
-  silently { require 'shoulda' }
-  silently { require 'mocha' }
-rescue LoadError
-  puts <<MSG
-
-This test suite requires shoulda and mocha.
-You can install them as follows:
-  gem install shoulda
-  gem install mocha
-
-MSG
-
-  exit
-end
-
 require 'bson_ext/cbson' if !(RUBY_PLATFORM =~ /java/) && ENV['C_EXT']
 
 class Test::Unit::TestCase

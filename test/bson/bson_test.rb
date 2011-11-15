@@ -9,6 +9,7 @@ end
 require 'bigdecimal'
 
 begin
+  require 'date'
   require 'tzinfo'
   require 'active_support/core_ext'
   Time.zone = "Pacific Time (US & Canada)"
