@@ -38,8 +38,10 @@ module Mongo
       @chunks  = @db["#{fs_name}.chunks"]
       @fs_name = fs_name
 
-      # Ensure indexes only if not connected to slave.
-      unless db.connection.slave_ok?
+      # Create indexes only if we're connected to a primary node.
+      connection = @db.connection
+      if (connection.class == Connection && connection.read_primary?) ||
+          (connection.class == ReplSetConnection && connection.primary)
         @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
       end
     end

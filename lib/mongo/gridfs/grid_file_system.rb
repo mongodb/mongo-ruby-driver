@@ -39,8 +39,10 @@ module Mongo
 
       @default_query_opts = {:sort => [['filename', 1], ['uploadDate', -1]], :limit => 1}
 
-      # Ensure indexes only if not connected to slave.
-      unless db.connection.slave_ok?
+      # Create indexes only if we're connected to a primary node.
+      connection = @db.connection
+      if (connection.class == Connection && connection.read_primary?) ||
+          (connection.class == ReplSetConnection && connection.primary)
         @files.create_index([['filename', 1], ['uploadDate', -1]])
         @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
       end
