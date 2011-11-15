@@ -188,7 +188,7 @@ module Mongo
         return hard_refresh!
       end
 
-      log(:info, "Checking replica set connection health...")
+      log(:debug, "Checking replica set connection health...")
       @manager.check_connection_health
 
       if @manager.refresh_required?
