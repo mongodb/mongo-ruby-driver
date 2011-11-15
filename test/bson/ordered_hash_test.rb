@@ -212,6 +212,8 @@ class OrderedHashTest < Test::Unit::TestCase
     assert @oh.keys.include?('z')
     @oh.delete_if { |k,v| k == 'z' }
     assert !@oh.keys.include?('z')
+    @oh.delete_if { |k, v| v > 0 }
+    assert @oh.keys.empty?
   end
 
   def test_reject
