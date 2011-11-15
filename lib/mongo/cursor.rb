@@ -26,7 +26,7 @@ module Mongo
     attr_reader :collection, :selector, :fields,
       :order, :hint, :snapshot, :timeout,
       :full_collection_name, :transformer,
-      :options, :cursor_id
+      :options, :cursor_id, :show_disk_loc
 
     # Create a new cursor.
     #
@@ -600,7 +600,7 @@ module Mongo
       spec['$hint']     = @hint if @hint && @hint.length > 0
       spec['$explain']  = true if @explain
       spec['$snapshot'] = true if @snapshot
-      spec['$maxscan']  = @max_scan if @max_scan
+      spec['$maxScan']  = @max_scan if @max_scan
       spec['$returnKey']   = true if @return_key
       spec['$showDiskLoc'] = true if @show_disk_loc
       spec
@@ -608,7 +608,8 @@ module Mongo
 
     # Returns true if the query contains order, explain, hint, or snapshot.
     def query_contains_special_fields?
-      @order || @explain || @hint || @snapshot
+      @order || @explain || @hint || @snapshot || @show_disk_loc ||
+        @max_scan || @return_key
     end
 
     def close_cursor_if_query_complete

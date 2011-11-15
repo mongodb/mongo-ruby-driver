@@ -217,7 +217,7 @@ module Mongo
       max_scan   = opts.delete(:max_scan)
       return_key = opts.delete(:return_key)
       transformer = opts.delete(:transformer)
-      show_disk_loc = opts.delete(:max_scan)
+      show_disk_loc = opts.delete(:show_disk_loc)
       read          = opts.delete(:read) || @read_preference
 
       if timeout == false && !block_given?

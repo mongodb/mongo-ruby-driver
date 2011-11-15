@@ -705,6 +705,26 @@ class TestCollection < Test::Unit::TestCase
     coll.ensure_index([['a', 1]])
   end
 
+
+  if @@version > '2.0.0'
+    def test_show_disk_loc
+      @@test.save({:a => 1})
+      @@test.save({:a => 2})
+      assert @@test.find({:a => 1}, :show_disk_loc => true).show_disk_loc
+      assert @@test.find({:a => 1}, :show_disk_loc => true).next['$diskLoc']
+      @@test.remove
+    end
+
+    def test_max_scan
+      1000.times do |n|
+        @@test.save({:a => n})
+      end
+      assert @@test.find({:a => 999}).next
+      assert !@@test.find({:a => 999}, :max_scan => 500).next
+      @@test.remove
+    end
+  end
+
   context "Grouping" do
     setup do
       @@test.remove
