@@ -50,7 +50,7 @@ module Mongo
       # Operations to perform on a socket
       @socket_ops = Hash.new { |h, k| h[k] = [] }
 
-      @sockets_low  = true
+      @sockets_low  = false
       @sockets      = []
       @pids         = {}
       @checked_out  = []
@@ -263,7 +263,7 @@ module Mongo
         end
 
         @connection_mutex.synchronize do
-          if @sockets.size > 0.7 * @size
+          if @size > 10 && @sockets.size > 0.7 * @size
             @sockets_low = true
           else
             @sockets_low = false
