@@ -83,3 +83,23 @@ class Class
     end
   end
 end
+
+# Fix a bug in the interaction of
+# mutexes and timeouts in Ruby 1.9.
+# See https://jira.mongodb.org/browse/RUBY-364 for details.
+if RUBY_VERSION > '1.9'
+  class Mutex
+    def lock_with_hack
+      lock_without_hack
+      rescue ThreadError => e
+      if e.message != "deadlock; recursive locking"
+        raise
+      else
+        unlock
+        lock_without_hack
+      end
+    end
+      alias_method :lock_without_hack, :lock
+      alias_method :lock, :lock_with_hack
+  end
+end
