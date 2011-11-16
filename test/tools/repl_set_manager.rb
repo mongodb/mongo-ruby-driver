@@ -155,8 +155,8 @@ class ReplSetManager
   def add_node(n=nil)
     primary = get_node_with_state(1)
     con = get_connection(primary)
-    init_node(n || @mongods.length)
 
+    init_node(n || @mongods.length)
     config = con['local']['system.replset'].find_one
     @config['version'] = config['version'] + 1
 
