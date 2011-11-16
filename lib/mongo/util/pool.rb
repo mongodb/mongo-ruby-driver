@@ -263,7 +263,7 @@ module Mongo
         end
 
         @connection_mutex.synchronize do
-          if @size > 10
+          if @size > 1000
             if @sockets.size > 0.7 * @size
               @sockets_low = true
             else

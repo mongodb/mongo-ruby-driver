@@ -501,6 +501,30 @@ module Mongo
      self.connections[self.object_id][:writer] ||= checkout_writer
     end
 
+    # Allow the current thread’s connection to return to the pool.
+    #
+    # Calling this method allows the socket that has been reserved
+    # for this thread to be returned to the pool. Other threads will
+    # then be able to re-use that socket. If your application uses many
+    # threads, or has long-running threads that infrequently perform MongoDB
+    # operations, then judicious use of this method can lead to performance gains.
+    # Care should be taken, however, to make sure that end_request is not called
+    # in the middle of a sequence of operations in which ordering is important. This
+    # could lead to unexpected results.
+    #
+    # One important case is when a thread is dying permanently. It is best to call
+    # end_request when you know a thread is finished, as otherwise its socket will
+    # not be reclaimed.
+    def end_request
+      if socket = self.connections[self.object_id][:reader]
+        checkin(socket)
+      end
+
+      if socket = self.connections[self.object_id][:writer]
+        checkin(socket)
+      end
+    end
+
     # Used to close, check in, or refresh sockets held
     # in thread-local variables.
     def local_socket_done(socket)
