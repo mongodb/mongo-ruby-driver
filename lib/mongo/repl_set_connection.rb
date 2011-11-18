@@ -56,11 +56,10 @@ module Mongo
     # @option opts [Float] :connect_timeout (nil) The number of seconds to wait before timing out a
     #   connection attempt.
     # @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
-    # @option opts [Boolean] :refresh_mode (false) Set this to :async to enable a background thread that
-    #   periodically updates the state of the connection. If, for example, you initially connect while a secondary
-    #   is down, this will reconnect to that secondary behind the scenes to
-    #   prevent you from having to reconnect manually. If set to :sync, refresh will happen
-    #   synchronously. If +false+, no automatic refresh will occur unless there's a connection failure.
+    # @option opts [Boolean] :refresh_mode (false) Set this to :sync to periodically update the
+    #   state of the connection every :refresh_interval seconds. Replica set connection failures
+    #   will always trigger a complete refresh. This option is useful when you want to add new nodes
+    #   or remove replica set nodes not currently in use by the driver.
     # @option opts [Integer] :refresh_interval (90) If :refresh_mode is enabled, this is the number of seconds
     #   between calls to check the replica set's state.
     # @option opts [Boolean] :require_primary (true) If true, require a primary node for the connection
@@ -107,9 +106,12 @@ module Mongo
       @manager = nil
       @pool_mutex = Mutex.new
 
-      if ![:sync, :async, false].include?(@refresh_mode)
+      if @refresh_mode == :async
+        warn ":async refresh mode has been deprecated. Refresh
+        mode will be disabled."
+      elsif ![:sync, false].include?(@refresh_mode)
         raise MongoArgumentError,
-          "Refresh mode must be one of :sync, :async, or false."
+          "Refresh mode must be either :sync or false."
       end
 
       # Are we allowing reads from secondaries?
@@ -124,14 +126,7 @@ module Mongo
       end
 
       @connected = false
-
-      # Store the refresher thread
-      @refresh_thread  = nil
       @refresh_version = 0
-
-      # Maps
-      @threads_to_sockets = Hash.new { |h, k| h[k] = Hash.new }
-      @tag_map = nil
 
       # Replica set name
       if opts[:rs_name]
@@ -161,7 +156,6 @@ module Mongo
       manager.connect
 
       update_config(manager)
-      initiate_refresh_mode
 
       if @require_primary && self.primary.nil? #TODO: in v2.0, we'll let this be optional and do a lazy connect.
         close
@@ -213,7 +207,6 @@ module Mongo
       old_manager = @manager
       update_config(background_manager)
       old_manager.close(:soft => true)
-      initiate_refresh_mode
 
       return true
     end
@@ -265,7 +258,6 @@ module Mongo
     def close
       @connected = false
       @manager.close(:soft => true) if @manager
-      @threads_to_sockets.clear
     end
 
     # If a ConnectionFailure is raised, this method will be called
@@ -470,6 +462,8 @@ module Mongo
         write_logging_startup_message
       end
 
+      @last_refresh = Time.now
+
       should_connect = opts.fetch(:connect, true)
       connect if should_connect
     end
@@ -480,24 +474,6 @@ module Mongo
       @manager = new_manager
       @seeds   = @manager.seeds.dup
       @refresh_version += 1
-    end
-
-    # If we're using async refresh, start
-    # a background thread to run the refresh method
-    # every @refresh_interval seconds.
-    def initiate_refresh_mode
-      if @refresh_mode == :async
-        return if @refresh_thread && @refresh_thread.alive?
-        @refresh_thread = Thread.new do
-          while true do
-            sleep(@refresh_interval)
-            refresh
-          end
-        end
-        @refresh_thread.priority = 1000
-      end
-
-      @last_refresh = Time.now
     end
 
     # Checkout a socket connected to a node with one of

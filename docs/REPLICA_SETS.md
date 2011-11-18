@@ -44,19 +44,15 @@ be used for reads.
 Refresh mode is disabled by default.
 
 However, if you expect to make live changes to your secondaries, and you want this to be reflected without
-having to manually restart your app server, then you should enable it. You can enable synchronously, which will
-refresh the replica set data in a synchronous fashion (which may ocassionally slow down your queries):
+having to manually restart your app server, then you should enable it. You can enable this mode
+synchronously, which will refresh the replica set data in a synchronous fashion (which may
+ocassionally slow down your queries):
 
     @connection = ReplSetConnection.new(['n1.mydb.net', 27017], :refresh_mode => :sync)
 
-If you want to refresh via a background thread, use the `:async` mode. NOTE: the background
-version may be more effective on platforms that use native threads, such as JRuby:
-
-    @connection = ReplSetConnection.new(['n1.mydb.net', 27017], :refresh_mode => :async)
-
 If you want to change the default refresh interval of 90 seconds, you can do so like this:
 
-    @connection = ReplSetConnection.new(['n1.mydb.net', 27017], :refresh_mode => :async,
+    @connection = ReplSetConnection.new(['n1.mydb.net', 27017], :refresh_mode => :sync,
         :refresh_interval => 60)
 
 Do not set this value to anything lower than 30, or you may start to experience performance issues.
