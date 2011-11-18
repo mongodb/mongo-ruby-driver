@@ -17,13 +17,11 @@
 
 module Mongo
   class Pool
-    PRUNE_INTERVAL = 300
     PING_ATTEMPTS  = 6
     MAX_PING_TIME  = 1_000_000
 
     attr_accessor :host, :port, :address,
-      :size, :timeout, :safe, :checked_out, :connection,
-      :sockets_low
+      :size, :timeout, :safe, :checked_out, :connection
 
     # Create a new pool of connections.
     def initialize(connection, host, port, opts={})
@@ -50,7 +48,6 @@ module Mongo
       # Operations to perform on a socket
       @socket_ops = Hash.new { |h, k| h[k] = [] }
 
-      @sockets_low  = true
       @sockets      = []
       @pids         = {}
       @checked_out  = []
@@ -74,7 +71,7 @@ module Mongo
         end
         sockets_to_close.each do |sock|
           begin
-            sock.close
+            sock.close unless sock.closed?
           rescue IOError => ex
             warn "IOError when attempting to close socket connected to #{@host}:#{@port}: #{ex.inspect}"
           end
@@ -88,10 +85,6 @@ module Mongo
 
     def closed?
       @closed
-    end
-
-    def sockets_low?
-      @sockets_low
     end
 
     def inspect
@@ -156,8 +149,11 @@ module Mongo
     # Return a socket to the pool.
     def checkin(socket)
       @connection_mutex.synchronize do
-        @checked_out.delete(socket)
-        @queue.signal
+        if @checked_out.delete(socket)
+          @queue.signal
+        else
+          return false
+        end
       end
       true
     end
@@ -263,18 +259,7 @@ module Mongo
         end
 
         @connection_mutex.synchronize do
-          if @size > 1000
-            if @sockets.size > 0.7 * @size
-              @sockets_low = true
-            else
-              @sockets_low = false
-            end
-
-            if (Time.now - @last_pruning) > PRUNE_INTERVAL
-              prune
-              @last_pruning = Time.now
-            end
-          end
+          #prune
 
           socket = if @checked_out.size < @sockets.size
                      checkout_existing_socket

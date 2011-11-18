@@ -520,10 +520,10 @@ module Mongo
     def checkout_socket_from_connection
       @checkin_connection = true
       if @command || @read_preference == :primary
-        @connection.get_local_writer
+        @connection.checkout_writer
       else
         @read_pool = @connection.read_pool
-        @connection.get_local_reader
+        @connection.checkout_reader
       end
     end
 
@@ -556,7 +556,11 @@ module Mongo
         @read_pool.checkin(sock)
         @checkin_read_pool = false
       elsif @checkin_connection
-        @connection.local_socket_done(sock)
+        if @command || @read_preference == :primary
+          @connection.checkin_writer(sock)
+        else
+          @connection.checkin_reader(sock)
+        end
         @checkin_connection = false
       end
     end
@@ -566,7 +570,11 @@ module Mongo
         @read_pool.checkin(sock)
         @checkin_read_pool = false
       else
-        @connection.checkin(sock)
+        if @command || @read_preference == :primary
+          @connection.checkin_writer(sock)
+        else
+          @connection.checkin_reader(sock)
+        end
         @checkin_connection = false
       end
     end

@@ -36,7 +36,6 @@ module Mongo
     def connect
       begin
         socket = nil
-        puts "Creating connection in node to #{@host}:#{@port}"
         if @connection.connect_timeout
           Mongo::TimeoutHandler.timeout(@connection.connect_timeout, OperationTimeout) do
             socket = @connection.socket_class.new(@host, @port)

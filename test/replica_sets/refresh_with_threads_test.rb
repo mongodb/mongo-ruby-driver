@@ -18,7 +18,8 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
     @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0]],
                                   [self.rs.host, self.rs.ports[1]],
                                   [self.rs.host, self.rs.ports[2]],
-                                  :refresh_interval => 2, :refresh_mode => :async,
+                                  :refresh_interval => 5,
+                                  :refresh_mode => :sync,
                                   :read => :secondary)
     @duplicate = @conn[MONGO_TEST_DB]['duplicate']
     @unique    = @conn[MONGO_TEST_DB]['unique']
@@ -29,9 +30,9 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
     @unique.create_index("test", :unique => true)
 
     threads = []
-    100.times do
+    10.times do
       threads << Thread.new do
-        100.times do |i|
+        1000.times do |i|
           if i % 2 == 0
             assert_raise Mongo::OperationFailure do
               @unique.insert({"test" => "insert"}, :safe => true)
@@ -40,17 +41,15 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
             @duplicate.insert({"test" => "insert"}, :safe => true)
           end
         end
-        @conn.end_request
       end
     end
 
     self.rs.add_node
-    sleep(4)
+    threads.each {|t| t.join }
+
     config = @conn['admin'].command({:ismaster => 1})
 
     assert_equal 3, @conn.secondary_pools.length
     assert_equal 3, @conn.secondaries.length
-
-    threads.each {|t| t.join }
   end
 end

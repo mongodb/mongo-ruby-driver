@@ -39,7 +39,6 @@ class TestThreading < Test::Unit::TestCase
             @duplicate.update({"test" => "insert"}, {"$set" => {"test" => "update"}}, :safe => true)
             times << Time.now - t1
           end
-          @@con.end_request
         end
       end
     end
@@ -61,7 +60,6 @@ class TestThreading < Test::Unit::TestCase
         else
           @duplicate.insert({"test" => "insert"}, :safe => true)
         end
-        @@con.end_request
       end
     end
 
@@ -87,7 +85,6 @@ class TestThreading < Test::Unit::TestCase
           sum += document["x"]
         end
         assert_equal 499500, sum
-        @@con.end_request
       end
     end
 

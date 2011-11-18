@@ -25,21 +25,23 @@ module Mongo
 
       connection = opts.fetch(:connection, :writer)
 
+      add_message_headers(message, operation)
+      packed_message = message.to_s
+
+      if connection == :writer
+        sock = checkout_writer
+      else
+        sock = checkout_reader
+      end
+
       begin
-        add_message_headers(message, operation)
-        packed_message = message.to_s
-
-        if connection == :writer
-          sock = get_local_writer
-        else
-          sock = get_local_reader
-        end
-
         send_message_on_socket(packed_message, sock)
-        local_socket_done(sock)
-      rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
-        checkin(sock)
-        raise ex
+      ensure
+        if connection == :writer
+          checkin_writer(sock)
+        else
+          checkin_reader(sock)
+        end
       end
     end
 
@@ -64,13 +66,13 @@ module Mongo
       last_error_id = add_message_headers(last_error_message, Mongo::Constants::OP_QUERY)
 
       packed_message = message.append!(last_error_message).to_s
+      sock = checkout_writer
       begin
-        sock = get_local_writer
         send_message_on_socket(packed_message, sock)
         docs, num_received, cursor_id = receive(sock, last_error_id)
-        local_socket_done(sock)
+        checkin_writer(sock)
       rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
-        checkin(sock)
+        checkin_writer(sock)
         raise ex
       end
 
@@ -101,30 +103,34 @@ module Mongo
                         read=:primary, exhaust=false)
       request_id = add_message_headers(message, operation)
       packed_message = message.to_s
-      begin
-        if socket
-          sock = socket
-          should_checkin = false
+      if socket
+        sock = socket
+        should_checkin = false
+      else
+        if command || read == :primary
+          sock = checkout_writer
+        elsif read == :secondary
+          sock = checkout_reader
         else
-          if command
-            sock = get_local_writer
-          elsif read == :primary
-            sock = get_local_writer
-          elsif read == :secondary
-            sock = get_local_reader
-          else
-            sock = checkout_tagged(read)
-          end
-          should_checkin = true
+          sock = checkout_tagged(read)
         end
+        should_checkin = true
+      end
 
-        result = ''
+      result = ''
+      begin
         send_message_on_socket(packed_message, sock)
         result = receive(sock, request_id, exhaust)
-        local_socket_done(sock) if should_checkin
-      rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
-        checkin(sock) if should_checkin
-        raise ex
+      ensure
+        if should_checkin
+          if command || read == :primary
+            checkin_writer(sock)
+          elsif read == :secondary
+            checkin_reader(sock)
+          else
+            # TODO: sock = checkout_tagged(read)
+          end
+        end
       end
       result
     end
@@ -281,7 +287,7 @@ module Mongo
       total_bytes_sent
       rescue => ex
         close
-        raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
+        raise ConnectionFailure, "Operation failed with the following exception: #{ex}:#{ex.message}"
       end
     end
 

@@ -73,12 +73,11 @@ class ReadTest < Test::Unit::TestCase
       should "use default value on query" do
         @cursor = @col.find({:a => 1})
         sock = mock()
-        sock.expects(:close).twice
-        read_pool = stub(:sockets_low? => false)
+        read_pool = stub(:checkin => true)
         @con.stubs(:read_pool).returns(read_pool)
-        primary_pool = stub(:sockets_low? => false)
+        primary_pool = stub(:checkin => true)
         @con.stubs(:primary_pool).returns(primary_pool)
-        @con.expects(:checkout_reader).twice.returns(sock)
+        @con.expects(:checkout_reader).returns(sock)
         @con.expects(:receive_message).with do |o, m, l, s, c, r|
           r == nil
         end.returns([[], 0, 0])
@@ -89,10 +88,9 @@ class ReadTest < Test::Unit::TestCase
       should "allow override default value on query" do
         @cursor = @col.find({:a => 1}, :read => :primary)
         sock = mock()
-        sock.expects(:close).twice
-        primary_pool = stub(:sockets_low? => false)
+        primary_pool = stub(:checkin => true)
         @con.stubs(:primary_pool).returns(primary_pool)
-        @con.expects(:checkout_writer).twice.returns(sock)
+        @con.expects(:checkout_writer).returns(sock)
         @con.expects(:receive_message).with do |o, m, l, s, c, r|
           r == nil
         end.returns([[], 0, 0])

@@ -248,8 +248,8 @@ class ReplSetManager
         raise ex
       end
       if status['members'].all? { |m| m['health'] == 1 &&
-        [1, 2, 7].include?(m['state']) } &&
-        status['members'].any? { |m| m['state'] == 1 }
+       [1, 2, 7].include?(m['state']) } &&
+       status['members'].any? { |m| m['state'] == 1 }
 
        connections = []
        states      = []
@@ -281,7 +281,7 @@ class ReplSetManager
        con.close
        raise Mongo::OperationFailure
      end
-    end
+     end
     return false
   end
 
