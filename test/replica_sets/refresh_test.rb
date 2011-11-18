@@ -90,7 +90,6 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     sleep(4)
     @conn['foo']['bar'].find_one
     @conn['foo']['bar'].insert({:a => 1})
-    puts "Old: #{old_refresh_version} New: #{@conn.refresh_version}"
 
     assert @conn.refresh_version > old_refresh_version,
       "Refresh version hasn't changed."
@@ -113,7 +112,6 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     n = self.rs.remove_secondary_node
     sleep(4)
     @conn['foo']['bar'].find_one
-    puts "Old: #{old_refresh_version} New: #{@conn.refresh_version}"
 
     assert @conn.refresh_version > old_refresh_version,
       "Refresh version hasn't changed."
