@@ -1,3 +1,3 @@
 module Mongo
-  VERSION = "1.5.0.rc0"
+  VERSION = "1.5.0"
 end
