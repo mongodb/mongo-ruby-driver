@@ -206,6 +206,14 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  if @@version >= "2.0.0"
+    def test_safe_mode_with_journal_commit_option
+      @@test.insert({:foo => 1}, :safe => {:j => true})
+      @@test.update({:foo => 1}, {:foo => 2}, :safe => {:j => true})
+      @@test.remove({:foo => 2}, :safe => {:j => true})
+    end
+  end
+
   def test_update
     id1 = @@test.save("x" => 5)
     @@test.update({}, {"$inc" => {"x" => 1}})
