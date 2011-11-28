@@ -1,5 +1,24 @@
 # MongoDB Ruby Driver History
 
+### 1.5.0
+2011-11-28
+
+This releases fixes bugs introduced in 1.4.0 and 1.4.1 that
+were introduced as a result of adding replica set refresh modes.
+
+* Removed :async refresh mode.
+* Disabled auto refresh mode by default. If you want the driver
+to automatically check the state of the replica set, you must
+use :sync mode. Note that replica set refresh is designed only to
+account for benign changes to the replica set (adding and removing
+nodes that don't affect current connections).
+* Fixed bug with commands being sent to secondary nodes. The next
+release will allow you to specify where commands can be sent.
+* Support :j safe mode option.
+* Fix :max_scan and :show_disk_loc Cursor options.
+
+You can see the remaining issues at https://jira.mongodb.org/secure/ReleaseNote.jspa?projectId=10005&version=10992
+
 ### 1.5.0.rc0
 2011-11-18
 
