@@ -1,5 +1,12 @@
 # MongoDB Ruby Driver History
 
+### 1.5.1
+2011-11-29
+
+Release due to corrupted gemspec. This was a bug having
+to do with rubygems. Apparently, gems must still be
+built with Ruby 1.8.
+
 ### 1.5.0
 2011-11-28
 
