@@ -153,6 +153,7 @@ module Mongo
       log(:info, "Connecting...")
       return if @connected
       manager = PoolManager.new(self, @seeds)
+      @manager = manager
       manager.connect
 
       update_config(manager)
@@ -341,7 +342,7 @@ module Mongo
 
     # Checkin a socket used for writing.
     def checkin_writer(socket)
-      if !self.primary_pool.checkin(socket)
+      if !self.primary_pool || !self.primary_pool.checkin(socket)
         close_socket(socket)
       end
       sync_refresh
