@@ -300,11 +300,16 @@ module Mongo
     # if no read pool has been defined.
     def checkout_reader
       connect unless connected?
-      socket = get_socket_from_pool(self.read_pool)
+      begin
+        socket = get_socket_from_pool(self.read_pool)
 
-      if !socket
-        connect
-        socket = get_socket_from_pool(self.primary_pool)
+        if !socket
+          connect
+          socket = get_socket_from_pool(self.primary_pool)
+        end
+      rescue => ex
+        checkin(socket) if socket
+        raise ex
       end
 
       if socket
@@ -317,11 +322,16 @@ module Mongo
     # Checkout a socket for writing (i.e., a primary node).
     def checkout_writer
       connect unless connected?
-      socket = get_socket_from_pool(self.primary_pool)
-
-      if !socket
-        connect
+      begin
         socket = get_socket_from_pool(self.primary_pool)
+
+        if !socket
+          connect
+          socket = get_socket_from_pool(self.primary_pool)
+        end
+      rescue => ex
+        checkin(socket)
+        raise ex
       end
 
       if socket

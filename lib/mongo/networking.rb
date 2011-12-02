@@ -28,19 +28,25 @@ module Mongo
       add_message_headers(message, operation)
       packed_message = message.to_s
 
-      if connection == :writer
-        sock = checkout_writer
-      else
-        sock = checkout_reader
-      end
-
+      sock = nil
       begin
-        send_message_on_socket(packed_message, sock)
-      ensure
         if connection == :writer
-          checkin_writer(sock)
+          sock = checkout_writer
         else
-          checkin_reader(sock)
+          sock = checkout_reader
+        end
+
+        send_message_on_socket(packed_message, sock)
+      rescue SystemStackError, NoMemoryError, SystemCallError => ex
+        close
+        raise ex
+      ensure
+        if sock
+          if connection == :writer
+            checkin_writer(sock)
+          else
+            checkin_reader(sock)
+          end
         end
       end
     end
@@ -66,13 +72,17 @@ module Mongo
       last_error_id = add_message_headers(last_error_message, Mongo::Constants::OP_QUERY)
 
       packed_message = message.append!(last_error_message).to_s
-      sock = checkout_writer
+      sock = nil
       begin
+        sock = checkout_writer
         send_message_on_socket(packed_message, sock)
         docs, num_received, cursor_id = receive(sock, last_error_id)
         checkin_writer(sock)
       rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
         checkin_writer(sock)
+        raise ex
+      rescue SystemStackError, NoMemoryError, SystemCallError => ex
+        close
         raise ex
       end
 
@@ -103,24 +113,29 @@ module Mongo
                         read=:primary, exhaust=false)
       request_id = add_message_headers(message, operation)
       packed_message = message.to_s
-      if socket
-        sock = socket
-        should_checkin = false
-      else
-        if command || read == :primary
-          sock = checkout_writer
-        elsif read == :secondary
-          sock = checkout_reader
-        else
-          sock = checkout_tagged(read)
-        end
-        should_checkin = true
-      end
 
       result = ''
+      sock   = nil
       begin
+        if socket
+          sock = socket
+          should_checkin = false
+        else
+          if command || read == :primary
+            sock = checkout_writer
+          elsif read == :secondary
+            sock = checkout_reader
+          else
+            sock = checkout_tagged(read)
+          end
+          should_checkin = true
+        end
+
         send_message_on_socket(packed_message, sock)
         result = receive(sock, request_id, exhaust)
+      rescue SystemStackError, NoMemoryError, SystemCallError => ex
+        close
+        raise ex
       ensure
         if should_checkin
           if command || read == :primary

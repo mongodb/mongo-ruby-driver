@@ -518,13 +518,21 @@ module Mongo
     end
 
     def checkout_socket_from_connection
-      @checkin_connection = true
-      if @command || @read_preference == :primary
-        @connection.checkout_writer
-      else
-        @read_pool = @connection.read_pool
-        @connection.checkout_reader
+      socket = nil
+      begin
+        @checkin_connection = true
+        if @command || @read_preference == :primary
+          socket = @connection.checkout_writer
+        else
+          @read_pool = @connection.read_pool
+          socket = @connection.checkout_reader
+        end
+      rescue SystemStackError, NoMemoryError, SystemCallError => ex
+        @connection.close
+        raise ex
       end
+
+      socket
     end
 
     def checkout_socket_for_op_get_more
@@ -540,9 +548,15 @@ module Mongo
         pool.host == @read_pool.host && pool.port == @read_pool.port
       end
       if new_pool
-        @read_pool = new_pool
-        sock = new_pool.checkout
-        @checkin_read_pool = true
+        sock = nil
+        begin
+          @read_pool = new_pool
+          sock = new_pool.checkout
+          @checkin_read_pool = true
+        rescue SystemStackError, NoMemoryError, SystemCallError => ex
+          @connection.close
+          raise ex
+        end
         return sock
       else
         raise Mongo::OperationFailure, "Failure to continue iterating " +
