@@ -271,7 +271,8 @@ module Mongo
     end
 
     def update_seed_list(members)
-      @seeds = members.map { |n| n.host_port }
+      current_members = members.map { |n| n.host_port }
+      @seeds = (@seeds + current_members).uniq
     end
 
   end

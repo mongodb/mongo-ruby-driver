@@ -23,6 +23,13 @@ class BasicTest < Test::Unit::TestCase
     assert @conn.connected?
   end
 
+  def test_cache_original_seed_nodes
+    @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[1]], [self.rs.host, self.rs.ports[0]],
+      [self.rs.host, self.rs.ports[2]], [self.rs.host, 19356], :name => self.rs.name)
+    assert @conn.connected?
+    assert @conn.seeds.include?([self.rs.host, 19356]), "Original seed nodes not cached!"
+  end
+
   def test_accessors
     seeds = [[self.rs.host, self.rs.ports[0]], [self.rs.host, self.rs.ports[1]],
       [self.rs.host, self.rs.ports[2]]]
