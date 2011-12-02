@@ -28,6 +28,7 @@ class BasicTest < Test::Unit::TestCase
       [self.rs.host, self.rs.ports[2]], [self.rs.host, 19356], :name => self.rs.name)
     assert @conn.connected?
     assert @conn.seeds.include?([self.rs.host, 19356]), "Original seed nodes not cached!"
+    assert_equal [self.rs.host, 19356], @conn.seeds.last, "Original seed nodes not cached!"
   end
 
   def test_accessors
