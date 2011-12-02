@@ -312,22 +312,6 @@ class TestConnection < Test::Unit::TestCase
         end
       end
     end
-
-    context "checking out readers" do
-      setup do
-        @con = standard_connection(:pool_size => 10, :timeout => 10, :slave_ok => true)
-        @coll = @con[MONGO_TEST_DB]['test-connection-exceptions']
-      end
-
-      should "close the connection on receive_message for major exceptions" do
-        @con.expects(:checkout_reader).raises(SystemStackError)
-        @con.expects(:close)
-        begin
-          @coll.find.next
-        rescue SystemStackError
-        end
-      end
-    end
   end
 
   context "Connection exceptions" do
