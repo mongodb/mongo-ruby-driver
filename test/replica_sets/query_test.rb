@@ -5,7 +5,7 @@ class ReplicaSetQueryTest < Test::Unit::TestCase
   include ReplicaSetTest
 
   def setup
-    @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0], self.rs.ports[1]])
+    @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0]])
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets")

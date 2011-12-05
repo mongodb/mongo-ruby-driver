@@ -458,12 +458,13 @@ module Mongo
       @primary_pool
     end
 
-    # The value of the read preference. Because
-    # this is a single-node connection, the value
-    # is +:primary+, and the connection will read
-    # from whichever type of node it's connected to.
+    # The value of the read preference.
     def read_preference
-      :primary
+      if slave_ok?
+        :secondary
+      else
+        :primary
+      end
     end
 
     # Close the connection to the database.

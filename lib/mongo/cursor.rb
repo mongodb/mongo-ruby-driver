@@ -86,7 +86,7 @@ module Mongo
       if(!@timeout)
         add_option(OP_QUERY_NO_CURSOR_TIMEOUT)
       end
-      if(@connection.slave_ok?)
+      if(@read_preference != :primary)
         add_option(OP_QUERY_SLAVE_OK)
       end
       if(@tailable)
@@ -136,7 +136,7 @@ module Mongo
         # If the server has stopped being the master (e.g., it's one of a
         # pair but it has died or something like that) then we close that
         # connection. The next request will re-open on master server.
-        if err == "not master"
+        if err.include?("not master")
           @connection.close
           raise ConnectionFailure.new(err, doc['code'], doc)
         end

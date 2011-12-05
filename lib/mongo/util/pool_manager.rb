@@ -109,7 +109,7 @@ module Mongo
     # The set of nodes that this class has discovered and
     # successfully connected to.
     def seeds
-      @seeds
+      @seeds || []
     end
 
     private
@@ -280,7 +280,7 @@ module Mongo
       end
 
       raise ConnectionFailure, "Cannot connect to a replica set using seeds " +
-        "#{@seeds.map {|s| "#{s[0]}:#{s[1]}" }.join(', ')}"
+        "#{seed_list.map {|s| "#{s[0]}:#{s[1]}" }.join(', ')}"
     end
 
     def seed_list

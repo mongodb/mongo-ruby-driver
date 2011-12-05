@@ -205,7 +205,7 @@ module Mongo
     def hard_refresh!
       log(:info, "Initiating hard refresh...")
       discovered_seeds = @manager ? @manager.seeds : []
-      background_manager = PoolManager.new(self, discovered_seeds | @original_seeds)
+      background_manager = PoolManager.new(self, discovered_seeds | @seeds)
       background_manager.connect
 
       # TODO: make sure that connect has succeeded
@@ -218,7 +218,7 @@ module Mongo
     end
 
     def connected?
-      self.primary_pool || self.read_pool
+      @connected && (self.primary_pool || self.read_pool)
     end
 
     # @deprecated
@@ -261,9 +261,13 @@ module Mongo
     end
 
     # Close the connection to the database.
-    def close
+    def close(opts={})
+      if opts[:soft]
+        @manager.close(:soft => true) if @manager
+      else
+        @manager.close if @manager
+      end
       @connected = false
-      @manager.close(:soft => true) if @manager
     end
 
     # If a ConnectionFailure is raised, this method will be called
@@ -348,8 +352,8 @@ module Mongo
 
     # Checkin a socket used for reading.
     def checkin_reader(socket)
-      if !self.read_pool.checkin(socket) &&
-        !self.primary_pool.checkin(socket)
+      if !((self.read_pool && self.read_pool.checkin(socket)) ||
+        (self.primary_pool && self.primary_pool.checkin(socket)))
         close_socket(socket)
       end
       sync_refresh
@@ -365,7 +369,7 @@ module Mongo
 
     def close_socket(socket)
       begin
-        socket.close
+        socket.close if socket
       rescue IOError
         log(:info, "Tried to close socket #{socket} but already closed.")
       end
@@ -388,36 +392,40 @@ module Mongo
     end
 
     def primary
-      @manager.primary
+      @manager ? @manager.primary : nil
     end
 
     # Note: might want to freeze these after connecting.
     def secondaries
-      @manager.secondaries
+      @manager ? @manager.secondaries : []
     end
 
     def hosts
-      @manager.hosts
+      @manager ? @manager.hosts : []
     end
 
     def primary_pool
-      @manager.primary_pool
+      @manager ? @manager.primary_pool : nil
     end
 
     def read_pool
-      @manager.read_pool
+      @manager ? @manager.read_pool : nil
     end
 
     def secondary_pools
-      @manager.secondary_pools
+      @manager ? @manager.secondary_pools : []
     end
 
     def tag_map
-      @manager.tag_map
+      @manager ? @manager.tag_map : {}
     end
 
     def max_bson_size
-      @manager.max_bson_size
+      if @manager && @manager.max_bson_size
+        @manager.max_bson_size
+      else
+        Mongo::DEFAULT_MAX_BSON_SIZE
+      end
     end
 
     private
