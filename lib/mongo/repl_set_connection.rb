@@ -177,20 +177,26 @@ module Mongo
     # @return [Boolean] +true+ unless a hard refresh
     #   is run and the refresh lock can't be acquired.
     def refresh(opts={})
-      if !connected?
-        log(:info, "Trying to check replica set health but not " +
-          "connected...")
-        return hard_refresh!
+      begin
+        @refreshing = true
+
+        if !connected?
+          log(:info, "Trying to check replica set health but not " +
+              "connected...")
+          return hard_refresh!
+        end
+
+        log(:debug, "Checking replica set connection health...")
+        @manager.check_connection_health
+
+        if @manager.refresh_required?
+          return hard_refresh!
+        end
+
+        return true
+      ensure
+        @refreshing = false
       end
-
-      log(:debug, "Checking replica set connection health...")
-      @manager.check_connection_health
-
-      if @manager.refresh_required?
-        return hard_refresh!
-      end
-
-      return true
     end
 
     # Force a hard refresh of this connection's view
@@ -507,6 +513,7 @@ module Mongo
 
     def sync_refresh
       if @refresh_mode == :sync &&
+        !@refreshing &&
         ((Time.now - @last_refresh) > @refresh_interval)
         @last_refresh = Time.now
         refresh
