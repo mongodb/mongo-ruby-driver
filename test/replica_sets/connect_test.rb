@@ -62,13 +62,22 @@ class ConnectTest < Test::Unit::TestCase
   end
 
   def test_connect_with_primary_stepped_down
-    self.rs.step_down_primary
+    @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0]], [self.rs.host, self.rs.ports[1]],
+      [self.rs.host, self.rs.ports[2]])
+    @conn[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 3}})
+    assert @conn[MONGO_TEST_DB]['bar'].find_one
+
+    primary = Mongo::Connection.new(@conn.primary_pool.host, @conn.primary_pool.port)
+    primary['admin'].command({:replSetStepDown => 60})
+    assert @conn.connected?
+    assert_raise_error Mongo::ConnectionFailure, "not master" do
+      @conn[MONGO_TEST_DB]['bar'].find_one
+    end
+    assert !@conn.connected?
 
     rescue_connection_failure do
-      @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0]], [self.rs.host, self.rs.ports[1]],
-        [self.rs.host, self.rs.ports[2]])
+      @conn[MONGO_TEST_DB]['bar'].find_one
     end
-    assert @conn.connected?
   end
 
   def test_connect_with_connection_string
