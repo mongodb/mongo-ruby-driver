@@ -1,15 +1,22 @@
 module Mongo
   class PoolManager
 
-    attr_reader :connection, :seeds, :arbiters, :primary, :secondaries,
-      :primary_pool, :read_pool, :secondary_pools, :hosts, :nodes, :max_bson_size,
+    attr_reader :connection, :arbiters, :primary, :secondaries, :primary_pool,
+      :read_pool, :secondary_pools, :hosts, :nodes, :max_bson_size,
       :tags_to_pools, :tag_map, :members
 
-    def initialize(connection, seeds)
+    # Create a new set of connection pools.
+    #
+    # The pool manager will by default use the original seed list passed
+    # to the connection objects, accessible via connection.seeds. In addition,
+    # the user may pass an additional list of seeds nodes discovered in real
+    # time. The union of these lists will be used when attempting to connect,
+    # with the newly-discovered nodes being used first.
+    def initialize(connection, seeds=[])
       @connection = connection
+      @original_seeds = connection.seeds
       @seeds = seeds
       @previously_connected = false
-      @refresh_required = false
     end
 
     def inspect
@@ -17,14 +24,12 @@ module Mongo
     end
 
     def connect
-      if @previously_connected
-        close
-      end
+      close if @previously_connected
 
       initialize_data
       members = connect_to_members
       initialize_pools(members)
-      update_seed_list(members)
+      cache_discovered_seeds(members)
       set_read_pool
       set_tag_mappings
 
@@ -35,7 +40,7 @@ module Mongo
     # We're healthy if all members are pingable and if the view
     # of the replica set returned by isMaster is equivalent
     # to our view. If any of these isn't the case,
-    # set @refresh_require to true, and return.
+    # set @refresh_required to true, and return.
     def check_connection_health
       begin
         seed = get_valid_seed_node
@@ -101,6 +106,12 @@ module Mongo
       end
     end
 
+    # The set of nodes that this class has discovered and
+    # successfully connected to.
+    def seeds
+      @seeds
+    end
+
     private
 
     def validate_existing_member(member)
@@ -124,6 +135,7 @@ module Mongo
     end
 
     def initialize_data
+      @seeds = []
       @primary = nil
       @primary_pool = nil
       @read_pool = nil
@@ -134,6 +146,7 @@ module Mongo
       @members = Set.new
       @tags_to_pools = {}
       @tag_map = {}
+      @refresh_required = false
     end
 
     # Connect to each member of the replica set
@@ -255,7 +268,7 @@ module Mongo
     #
     # If we don't get a response, raise an exception.
     def get_valid_seed_node
-      @seeds.each do |seed|
+      seed_list.each do |seed|
         node = Mongo::Node.new(self.connection, seed)
         if !node.connect
           next
@@ -270,9 +283,12 @@ module Mongo
         "#{@seeds.map {|s| "#{s[0]}:#{s[1]}" }.join(', ')}"
     end
 
-    def update_seed_list(members)
-      current_members = members.map { |n| n.host_port }
-      @seeds = (current_members + @seeds).uniq
+    def seed_list
+      @seeds | @original_seeds
+    end
+
+    def cache_discovered_seeds(members)
+      @seeds = members.map { |n| n.host_port }
     end
 
   end

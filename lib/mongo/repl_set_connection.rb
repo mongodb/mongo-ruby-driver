@@ -91,8 +91,10 @@ module Mongo
         raise MongoArgumentError, "A ReplSetConnection requires at least one seed node."
       end
 
-      # The list of seed nodes
+      # The original, immutable list of seed node.
+      # TODO: add a method for replacing this list of node.
       @seeds = args
+      @seeds.freeze
 
       # TODO: get rid of this
       @nodes = @seeds.dup
@@ -152,11 +154,12 @@ module Mongo
     def connect
       log(:info, "Connecting...")
       return if @connected
-      manager = PoolManager.new(self, @seeds)
-      @manager = manager
-      manager.connect
 
-      update_config(manager)
+      discovered_seeds = @manager ? @manager.seeds : []
+      @manager = PoolManager.new(self, discovered_seeds)
+
+      @manager.connect
+      @refresh_version += 1
 
       if @require_primary && self.primary.nil? #TODO: in v2.0, we'll let this be optional and do a lazy connect.
         close
@@ -201,13 +204,15 @@ module Mongo
     #   to get the refresh lock.
     def hard_refresh!
       log(:info, "Initiating hard refresh...")
-      background_manager = PoolManager.new(self, @seeds)
+      discovered_seeds = @manager ? @manager.seeds : []
+      background_manager = PoolManager.new(self, discovered_seeds | @original_seeds)
       background_manager.connect
 
       # TODO: make sure that connect has succeeded
       old_manager = @manager
-      update_config(background_manager)
+      @manager = background_manager
       old_manager.close(:soft => true)
+      @refresh_version += 1
 
       return true
     end
@@ -477,14 +482,6 @@ module Mongo
 
       should_connect = opts.fetch(:connect, true)
       connect if should_connect
-    end
-
-    # Given a pool manager, update this connection's
-    # view of the replica set.
-    def update_config(new_manager)
-      @manager = new_manager
-      @seeds   = @manager.seeds.dup
-      @refresh_version += 1
     end
 
     # Checkout a socket connected to a node with one of
