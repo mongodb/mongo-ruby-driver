@@ -39,7 +39,26 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     end
   end
 
-  def test_connect_and_manual_refresh_with_secondaries_down
+  def test_refresh_with_small_refresh_interval_zero
+    @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0]],
+                                  [self.rs.host, self.rs.ports[1]],
+                                  [self.rs.host, self.rs.ports[2]],
+                                  :refresh_mode => :sync, :refresh_interval => 1)
+
+    @conn[MONGO_TEST_DB]['foo'].insert({:a => 1}, {:safe => {:w => 3}})
+    primary = Mongo::Connection.new(@conn.primary_pool.host, @conn.primary_pool.port)
+    primary['admin'].command({:replSetStepDown => 60})
+
+    assert_raise_error Mongo::OperationFailure, "not master" do
+      @conn[MONGO_TEST_DB]['foo'].insert({:a => 1}, {:safe => true})
+    end
+
+    rescue_connection_failure do
+      assert @conn[MONGO_TEST_DB]['foo'].insert({:a => 1}, {:safe => true})
+    end
+  end
+
+ def test_connect_and_manual_refresh_with_secondaries_down
     self.rs.kill_all_secondaries
 
     rescue_connection_failure do
