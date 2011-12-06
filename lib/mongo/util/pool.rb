@@ -236,12 +236,10 @@ module Mongo
     #
     # Note: this must be called from within a mutex.
     def prune
-      surplus = @size - @sockets.size
-      return if surplus <= 0
       idle_sockets = @sockets - @checked_out
-      [surplus, idle_sockets.length].min.times do |n|
-        idle_sockets[n].close
-        @sockets.delete(idle_sockets[n])
+      idle_sockets.each do |socket|
+        socket.close unless socket.closed?
+        @sockets.delete(socket)
       end
     end
 
@@ -259,7 +257,9 @@ module Mongo
         end
 
         @connection_mutex.synchronize do
-          #prune
+          if @sockets.size > @size * 1.5
+            prune
+          end
 
           socket = if @checked_out.size < @sockets.size
                      checkout_existing_socket
