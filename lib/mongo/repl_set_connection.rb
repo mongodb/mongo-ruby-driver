@@ -308,7 +308,12 @@ module Mongo
     # Note that @read_pool might point to the primary pool
     # if no read pool has been defined.
     def checkout_reader
-      connect unless connected?
+      if connected?
+        sync_refresh
+      else
+        connect
+      end
+
       begin
         socket = get_socket_from_pool(self.read_pool)
 
@@ -330,7 +335,11 @@ module Mongo
 
     # Checkout a socket for writing (i.e., a primary node).
     def checkout_writer
-      connect unless connected?
+      if connected?
+        sync_refresh
+      else
+        connect
+      end
       begin
         socket = get_socket_from_pool(self.primary_pool)
 
