@@ -51,8 +51,7 @@ module Mongo
     # @option options [Float] :pool_timeout (5.0) When all of the connections a pool are checked out,
     #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
     #   Note: this setting is relevant only for multi-threaded applications.
-    # @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.
-    #   Disabled by default.
+    # @option opts [Float] :op_timeout (30) The number of seconds to wait for a read operation to time out.
     # @option opts [Float] :connect_timeout (nil) The number of seconds to wait before timing out a
     #   connection attempt.
     # @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
@@ -470,7 +469,7 @@ module Mongo
       @pool_timeout = opts[:pool_timeout] || opts[:timeout] || 5.0
 
       # Timeout on socket read operation.
-      @op_timeout = opts[:op_timeout] || nil
+      @op_timeout = opts[:op_timeout] || 30
 
       # Timeout on socket connect.
       @connect_timeout = opts[:connect_timeout] || nil

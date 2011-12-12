@@ -92,7 +92,7 @@ module Mongo
 
         check_set_membership(config)
         check_set_name(config)
-      rescue ConnectionFailure, OperationFailure, SocketError, SystemCallError, IOError => ex
+      rescue ConnectionFailure, OperationFailure, OperationTimeout, SocketError, SystemCallError, IOError => ex
         @connection.log(:warn, "Attempted connection to node #{host_string} raised " +
                             "#{ex.class}: #{ex.message}")
         return nil
