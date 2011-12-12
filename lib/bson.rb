@@ -16,6 +16,8 @@
 # limitations under the License.
 # ++
 
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+
 MINIMUM_BSON_EXT_VERSION = "1.5.1"
 
 module BSON

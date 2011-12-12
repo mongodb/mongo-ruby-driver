@@ -16,6 +16,8 @@
 # limitations under the License.
 # ++
 
+$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+
 require 'mongo/version'
 
 module Mongo
