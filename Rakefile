@@ -160,11 +160,10 @@ namespace :bamboo do
 
   namespace :test do
     task :ruby do
-      Rake::Task['ci:setup:testunit']
       Rake::Task['test:ruby'].invoke
     end
 
-    task :c => [:ci_reporter, "ci:setup:testunit"] do
+    task :c do
       Rake::Task['gem:install_extensions'].invoke
       Rake::Task['test:c'].invoke
     end
