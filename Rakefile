@@ -1,11 +1,16 @@
 # -*- mode: ruby; -*-
-require 'rubygems'
-require 'rubygems/specification'
+if RUBY_VERSION < '1.9.0'
+  require 'rubygems'
+  require 'rubygems/specification'
+end
 require 'fileutils'
-require 'rake'
 require 'rake/testtask'
-require 'rake/gempackagetask'
 require 'rbconfig'
+require 'rake'
+begin
+  require 'ci/reporter/rake/test_unit'
+  rescue LoadError
+end
 include Config
 ENV['TEST_MODE'] = 'TRUE'
 
@@ -154,7 +159,8 @@ namespace :bamboo do
   end
 
   namespace :test do
-    task :ruby => [:ci_reporter, "ci:setup:testunit"] do
+    task :ruby do
+      Rake::Task['ci:setup:testunit']
       Rake::Task['test:ruby'].invoke
     end
 
