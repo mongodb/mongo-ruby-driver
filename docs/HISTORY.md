@@ -1,5 +1,12 @@
 # MongoDB Ruby Driver History
 
+### 1.5.2
+2011-12-13
+
+* Lots of fixes for replica set connection edge cases.
+* Set default op_timeout and connect_timeout to 30 seconds.
+* Support GeoHaystack indexing.
+
 ### 1.5.1
 2011-11-29
 
