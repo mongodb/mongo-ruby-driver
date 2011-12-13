@@ -615,7 +615,13 @@ module Mongo
           socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
         end
 
-        config = self['admin'].command({:ismaster => 1}, :socket => socket)
+        if @connect_timeout
+          Mongo::TimeoutHandler.timeout(@connect_timeout, OperationTimeout) do
+            config = self['admin'].command({:ismaster => 1}, :socket => socket)
+          end
+        else
+          config = self['admin'].command({:ismaster => 1}, :socket => socket)
+        end
       rescue OperationFailure, SocketError, SystemCallError, IOError => ex
         close
       ensure
