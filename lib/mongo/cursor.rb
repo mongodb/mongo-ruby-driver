@@ -463,9 +463,8 @@ module Mongo
 
     def send_initial_query
       message = construct_query_message
-      payload = instrument_payload if @logger
       sock    = @socket || checkout_socket_from_connection
-      instrument(:find, payload) do
+      instrument(:find, instrument_payload) do
         begin
         results, @n_received, @cursor_id = @connection.receive_message(
           Mongo::Constants::OP_QUERY, message, nil, sock, @command,
