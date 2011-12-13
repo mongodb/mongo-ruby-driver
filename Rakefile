@@ -143,6 +143,7 @@ end
 
 desc "Generate YARD documentation"
 task :ydoc do
+  $:.unshift(File.join(File.dirname(__FILE__), 'lib'))
   require File.join(File.dirname(__FILE__), 'lib', 'mongo')
   out = File.join('ydoc', Mongo::VERSION)
   FileUtils.rm_rf('ydoc')
