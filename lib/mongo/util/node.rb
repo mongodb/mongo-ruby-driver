@@ -84,7 +84,13 @@ module Mongo
     # matches with the name provided.
     def set_config
       begin
-        @config = @connection['admin'].command({:ismaster => 1}, :socket => @socket)
+        if @connection.connect_timeout
+          Mongo::TimeoutHandler.timeout(@connection.connect_timeout, OperationTimeout) do
+            @config = @connection['admin'].command({:ismaster => 1}, :socket => @socket)
+          end
+        else
+          @config = @connection['admin'].command({:ismaster => 1}, :socket => @socket)
+        end
 
         if @config['msg'] && @logger
           @connection.log(:warn, "#{config['msg']}")
@@ -95,6 +101,7 @@ module Mongo
       rescue ConnectionFailure, OperationFailure, OperationTimeout, SocketError, SystemCallError, IOError => ex
         @connection.log(:warn, "Attempted connection to node #{host_string} raised " +
                             "#{ex.class}: #{ex.message}")
+        @socket.close unless @socket.closed?
         return nil
       end
 

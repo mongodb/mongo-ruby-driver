@@ -52,7 +52,7 @@ module Mongo
     #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
     #   Note: this setting is relevant only for multi-threaded applications.
     # @option opts [Float] :op_timeout (30) The number of seconds to wait for a read operation to time out.
-    # @option opts [Float] :connect_timeout (nil) The number of seconds to wait before timing out a
+    # @option opts [Float] :connect_timeout (30) The number of seconds to wait before timing out a
     #   connection attempt.
     # @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
     # @option opts [Boolean] :refresh_mode (false) Set this to :sync to periodically update the
@@ -472,7 +472,7 @@ module Mongo
       @op_timeout = opts[:op_timeout] || 30
 
       # Timeout on socket connect.
-      @connect_timeout = opts[:connect_timeout] || nil
+      @connect_timeout = opts[:connect_timeout] || 30
 
       # Mutex for synchronizing pool access
       # TODO: remove this.
