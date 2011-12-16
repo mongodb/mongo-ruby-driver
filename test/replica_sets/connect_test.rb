@@ -80,6 +80,23 @@ class ConnectTest < Test::Unit::TestCase
     end
   end
 
+  def test_save_with_primary_stepped_down
+    @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0]], [self.rs.host, self.rs.ports[1]],
+      [self.rs.host, self.rs.ports[2]])
+
+    primary = Mongo::Connection.new(@conn.primary_pool.host, @conn.primary_pool.port)
+
+    # Adding force=true to avoid 'no secondaries within 10 seconds of my optime' errors
+    step_down_command = BSON::OrderedHash.new
+    step_down_command[:replSetStepDown] = 60
+    step_down_command[:force]           = true
+    primary['admin'].command(step_down_command)
+
+    rescue_connection_failure do
+      @conn[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 3}})
+    end
+  end
+
   def test_connect_with_connection_string
     @conn = Connection.from_uri("mongodb://#{self.rs.host}:#{self.rs.ports[0]},#{self.rs.host}:#{self.rs.ports[1]}?replicaset=#{self.rs.name}")
     assert @conn.is_a?(ReplSetConnection)
