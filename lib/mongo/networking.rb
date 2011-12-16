@@ -87,9 +87,13 @@ module Mongo
       end
 
       if num_received == 1 && (error = docs[0]['err'] || docs[0]['errmsg'])
-        close if error == "not master"
-        error = "wtimeout" if error == "timeout"
-        raise OperationFailure.new(docs[0]['code'].to_s + ': ' + error, docs[0]['code'], docs[0])
+        if error.include?("not master")
+          close
+          raise ConnectionFailure.new(docs[0]['code'].to_s + ': ' + error, docs[0]['code'], docs[0])
+        else
+          error = "wtimeout" if error == "timeout"
+          raise OperationFailure.new(docs[0]['code'].to_s + ': ' + error, docs[0]['code'], docs[0])
+        end
       end
 
       docs[0]
