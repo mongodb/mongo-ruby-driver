@@ -21,15 +21,15 @@ module Mongo
 
     DEFAULT_PORT = 27017
 
-    USER_REGEX = /([-.\w:]+)/
-    PASS_REGEX = /([^@,]+)/
-    AUTH_REGEX = /(#{USER_REGEX}:#{PASS_REGEX}@)?/
+    USER_REGEX = /(?<username>[-.\w:]+)/
+    PASS_REGEX = /(?<password>[^@,]+)/
+    AUTH_REGEX = /(?<auth>#{USER_REGEX}:#{PASS_REGEX}@)?/
 
-    HOST_REGEX = /(?:[-.\w]+)/
-    PORT_REGEX = /(?::(?:[\d]+))/
-    NODE_REGEX = /((?:#{HOST_REGEX}#{PORT_REGEX}?,?)+)/
+    HOST_REGEX = /(?<host>[-.\w]+)/
+    PORT_REGEX = /(?::(?<port>\d+))?/
+    NODE_REGEX = /((?<nodes>#{HOST_REGEX}#{PORT_REGEX},?)+)/
 
-    PATH_REGEX = /(\/([-\w]+))?/
+    PATH_REGEX = /(?:\/(?<path>[-\w]+))?/
 
     MONGODB_URI_MATCHER = /#{AUTH_REGEX}#{NODE_REGEX}#{PATH_REGEX}/
     MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]"
@@ -130,10 +130,10 @@ module Mongo
         raise MongoArgumentError, "MongoDB URI must match this spec: #{MONGODB_URI_SPEC}"
       end
 
-      uname    = matches[2]
-      pwd      = matches[3]
-      hosturis = matches[4].split(',')
-      db       = matches[6]
+      uname    = matches['username']
+      pwd      = matches['password']
+      hosturis = matches['nodes'].split(',')
+      db       = matches['path']
 
       hosturis.each do |hosturi|
         # If port is present, use it, otherwise use default port
