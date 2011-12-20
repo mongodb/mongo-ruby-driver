@@ -26,7 +26,7 @@ module Mongo
     AUTH_REGEX = /(?<auth>#{USER_REGEX}:#{PASS_REGEX}@)?/
 
     HOST_REGEX = /(?<host>[-.\w]+)/
-    PORT_REGEX = /(?::(?<port>\d+))?/
+    PORT_REGEX = /(?::(?<port>\w+))?/
     NODE_REGEX = /((?<nodes>#{HOST_REGEX}#{PORT_REGEX},?)+)/
 
     PATH_REGEX = /(?:\/(?<path>[-\w]+))?/
