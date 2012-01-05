@@ -97,7 +97,7 @@ module Mongo
     def open(filename, mode, opts={})
       opts = opts.dup
       opts.merge!(default_grid_io_opts(filename))
-      del  = opts.delete(:delete_old) && mode == 'w'
+      versions  = opts.delete(:versions) && mode == 'w'
       file = GridIO.new(@files, @chunks, filename, mode, opts)
       return file unless block_given?
       result = nil
@@ -105,9 +105,9 @@ module Mongo
         result = yield file
       ensure
         id = file.close
-        if del
+        if versions
           self.delete do
-            @files.find({'filename' => filename, '_id' => {'$ne' => id}}, :fields => ['_id'])
+            @files.find({'filename' => filename, '_id' => {'$ne' => id}}, :fields => ['_id'], :sort => ['uploadDate', -1], :skip => (versions -1))
           end
         end
       end
