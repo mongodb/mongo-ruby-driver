@@ -604,6 +604,8 @@ module Mongo
     def check_is_master(node)
       begin
         host, port = *node
+        socket = nil
+        config = nil
 
         if @connect_timeout
           Mongo::TimeoutHandler.timeout(@connect_timeout, OperationTimeout) do
