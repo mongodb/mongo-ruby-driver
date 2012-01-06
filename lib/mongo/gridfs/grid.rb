@@ -70,7 +70,7 @@ module Mongo
       opts     = opts.dup
       filename = opts[:filename]
       opts.merge!(default_grid_io_opts)
-      file = GridIO.new(@files, @chunks, filename, 'w', opts=opts)
+      file = GridIO.new(@files, @chunks, filename, 'w', opts)
       file.write(data)
       file.close
       file.files_id
