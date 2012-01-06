@@ -333,6 +333,10 @@ module Mongo
     # @option opts [Boolean] :continue_on_error (+false+) If true, then
     #   continue a bulk insert even if one of the documents inserted
     #   triggers a database assertion (as in a duplicate insert, for instance).
+    #   If not using safe mode, the list of ids returned will
+    #   include the object ids of all documents attempted on insert, even
+    #   if some are rejected on error. When safe mode is
+    #   enabled, any error will raise an OperationFailure exception.
     #   MongoDB v2.0+.
     #
     # @core insert insert-instance_method

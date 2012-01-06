@@ -151,6 +151,19 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  def test_bulk_insert
+    @@test.remove
+    docs = []
+    docs << {:foo => 1}
+    docs << {:foo => 2}
+    docs << {:foo => 3}
+    response = @@test.insert(docs)
+    assert_equal 3, response.length
+    assert response.all? {|id| id.is_a?(BSON::ObjectId)}
+    assert_equal 3, @@test.count
+    @@test.remove
+  end
+
   def test_bulk_insert_with_continue_on_error
     if @@version >= "2.0"
       @@test.create_index([["foo", 1]], :unique => true)
