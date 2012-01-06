@@ -193,6 +193,34 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  def test_bson_invalid_key_serialize_error_with_continue_on_error
+    docs = []
+    docs << {:foo           => 1}
+    docs << {'$invalid-key' => 1}
+    docs << {'invalid.key'  => 1}
+    docs << {:bar           => 1}
+    assert_raise BSON::InvalidKeyName do
+      @@test.insert(docs, :continue_on_error => false)
+    end
+    assert_equal 0, @@test.count
+    @@test.insert(docs, :continue_on_error => true)
+    assert_equal 2, @@test.count
+  end
+
+  def test_bson_invalid_encoding__serialize_error_with_continue_on_error
+    docs = []
+    docs << {:foo            => 1}
+    docs << {"\223\372\226{" => 1} # non utf8 encoding
+    docs << {:bar            => 1}
+    assert_raise BSON::InvalidStringEncoding do
+      @@test.insert(docs, :continue_on_error => false)
+    end
+    assert_equal 0, @@test.count
+    @@test.insert(docs, :continue_on_error => true)
+    assert_equal 2, @@test.count
+  end
+
+
   def test_maximum_insert_size
     docs = []
     16.times do

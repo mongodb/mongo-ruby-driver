@@ -933,7 +933,8 @@ module Mongo
     # Takes an array of +documents+, an optional +collection_name+, and a
     # +check_keys+ setting.
     def insert_documents(documents, collection_name=@name, check_keys=true, safe=false, flags={})
-      if flags[:continue_on_error]
+      continue_on_error = !!flags[:continue_on_error]
+      if continue_on_error
         message = BSON::ByteBuffer.new
         message.put_int(1)
       else
@@ -941,7 +942,17 @@ module Mongo
       end
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{collection_name}")
       documents.each do |doc|
-        message.put_binary(BSON::BSON_CODER.serialize(doc, check_keys, true, @connection.max_bson_size).to_s)
+        begin
+          bin = BSON::BSON_CODER.serialize(doc, check_keys, true, @connection.max_bson_size).to_s
+        rescue Exception => e
+          if continue_on_error
+            @logger.error("rescue BSON serialize error: #{e.class}: #{e.message}") if @logger && @logger.respond_to?(:error)
+            next
+          else
+            raise e
+          end
+        end
+        message.put_binary(bin)
       end
       raise InvalidOperation, "Exceded maximum insert size of 16,000,000 bytes" if message.size > 16_000_000
 
