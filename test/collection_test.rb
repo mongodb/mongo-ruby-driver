@@ -559,6 +559,19 @@ class TestCollection < Test::Unit::TestCase
         @@test.map_reduce(m, r, :raw => true, :out => {:inline => 1})
         assert res["results"]
       end
+      
+      def test_map_reduce_with_collection_output_to_other_db
+        @@test << {:user_id => 1}
+        @@test << {:user_id => 2}
+        
+        m = Code.new("function() { emit(this.user_id, 1); }")
+        r = Code.new("function(k,vals) { return 1; }")
+        res = @@test.map_reduce(m, r, :out => {:replace => 'foo', :db => 'somedb'})
+        assert res["result"]
+        assert res["counts"]
+        assert res["timeMillis"]
+        assert res.find.to_a.any? {|doc| doc["_id"] == 2 && doc["value"] == 1}
+      end
     end
   end
 
