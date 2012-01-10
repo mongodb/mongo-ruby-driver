@@ -97,7 +97,12 @@ module Mongo
     def open(filename, mode, opts={})
       opts = opts.dup
       opts.merge!(default_grid_io_opts(filename))
-      versions  = opts.delete(:versions) && mode == 'w'
+      if mode == 'w'
+        versions = opts.delete(:versions)
+        if opts.delete(:delete_old) || (versions && versions < 1)
+          versions = 1
+        end
+      end
       file = GridIO.new(@files, @chunks, filename, mode, opts)
       return file unless block_given?
       result = nil
