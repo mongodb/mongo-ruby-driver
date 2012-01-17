@@ -332,6 +332,7 @@ module Mongo
     # @option opts [Boolean] :fsync (false)
     # @option opts [Integer] :w (nil)
     # @option opts [Integer] :wtimeout (nil)
+    # @option opts [Boolean] :j (false)
     #
     # @return [Hash] the entire response to getlasterror.
     #

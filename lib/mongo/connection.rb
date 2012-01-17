@@ -38,7 +38,7 @@ module Mongo
 
     attr_reader :logger, :size, :auths, :primary, :safe, :host_to_try,
       :pool_size, :connect_timeout, :pool_timeout,
-      :primary_pool, :socket_class
+      :primary_pool, :socket_class, :op_timeout
 
     # Create a connection to single MongoDB instance.
     #
@@ -52,7 +52,7 @@ module Mongo
     # Connection#arbiters. This is useful if your application needs to connect manually to nodes other
     # than the primary.
     #
-    # @param [String, Hash] host.
+    # @param [String, Hash] host
     # @param [Integer] port specify a port number here if only one host is being specified.
     #
     # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
