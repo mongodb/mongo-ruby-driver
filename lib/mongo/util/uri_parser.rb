@@ -48,7 +48,7 @@ module Mongo
                   :journal          => "must be 'true' or 'false'",
                   :connectTimeoutMS => "must be an integer specifying milliseconds a connection can take to be opened before timing out",
                   :socketTimeoutMS  => "must be an integer specifying milliseconds a send or receive on a socket can take before timing out",
-                  :wtimeoutMS  => "must be an integer specifying milliseconds a send or receive on a socket can take before timing out"
+                  :wtimeoutMS       => "must be an integer specifying milliseconds a send or receive on a socket can take before timing out"
                  }
 
     OPT_CONV   = {:connect          => lambda {|arg| arg},
