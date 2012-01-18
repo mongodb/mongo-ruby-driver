@@ -151,6 +151,19 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  def test_bulk_insert
+    @@test.remove
+    docs = []
+    docs << {:foo => 1}
+    docs << {:foo => 2}
+    docs << {:foo => 3}
+    response = @@test.insert(docs)
+    assert_equal 3, response.length
+    assert response.all? {|id| id.is_a?(BSON::ObjectId)}
+    assert_equal 3, @@test.count
+    @@test.remove
+  end
+
   def test_bulk_insert_with_continue_on_error
     if @@version >= "2.0"
       @@test.create_index([["foo", 1]], :unique => true)
@@ -545,6 +558,19 @@ class TestCollection < Test::Unit::TestCase
 
         @@test.map_reduce(m, r, :raw => true, :out => {:inline => 1})
         assert res["results"]
+      end
+      
+      def test_map_reduce_with_collection_output_to_other_db
+        @@test << {:user_id => 1}
+        @@test << {:user_id => 2}
+        
+        m = Code.new("function() { emit(this.user_id, 1); }")
+        r = Code.new("function(k,vals) { return 1; }")
+        res = @@test.map_reduce(m, r, :out => {:replace => 'foo', :db => 'somedb'})
+        assert res["result"]
+        assert res["counts"]
+        assert res["timeMillis"]
+        assert res.find.to_a.any? {|doc| doc["_id"] == 2 && doc["value"] == 1}
       end
     end
   end

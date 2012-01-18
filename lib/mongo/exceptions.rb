@@ -37,9 +37,6 @@ module Mongo
      end
   end
 
-  # Raised when configuration options cause connections, queries, etc., to fail.
-  class ConfigurationError < MongoRubyError; end
-
   # Raised on fatal errors to GridFS.
   class GridError < MongoRubyError; end
 

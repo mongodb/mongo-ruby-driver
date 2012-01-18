@@ -333,6 +333,10 @@ module Mongo
     # @option opts [Boolean] :continue_on_error (+false+) If true, then
     #   continue a bulk insert even if one of the documents inserted
     #   triggers a database assertion (as in a duplicate insert, for instance).
+    #   If not using safe mode, the list of ids returned will
+    #   include the object ids of all documents attempted on insert, even
+    #   if some are rejected on error. When safe mode is
+    #   enabled, any error will raise an OperationFailure exception.
     #   MongoDB v2.0+.
     #
     # @core insert insert-instance_method
@@ -624,7 +628,12 @@ module Mongo
       if raw
         result
       elsif result["result"]
-        @db[result["result"]]
+        if result['result'].is_a? BSON::OrderedHash and result['result'].has_key? 'db' and result['result'].has_key? 'collection'
+          otherdb = @db.connection[result['result']['db']]
+          otherdb[result['result']['collection']]
+        else
+          @db[result["result"]]
+        end
       else
         raise ArgumentError, "Could not instantiate collection from result. If you specified " +
           "{:out => {:inline => true}}, then you must also specify :raw => true to get the results."
