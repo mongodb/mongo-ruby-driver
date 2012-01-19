@@ -323,8 +323,8 @@ module Mongo
     #   The _id of the inserted document or a list of _ids of all inserted documents.
     # @return [[ObjectId, Array], [Hash, Array]]
     #   1st, the _id of the inserted document or a list of _ids of all inserted documents.
-    #   2nd, a list of invalid documents as a BSON.
-    #   Return this result format when :collect_on_error is true.
+    #   2nd, a list of invalid documents.
+    #   Return this result format only when :collect_on_error is true.
     #
     # @option opts [Boolean, Hash] :safe (+false+)
     #   run the operation in safe mode, which run a getlasterror command on the
@@ -343,7 +343,7 @@ module Mongo
     #   enabled, any error will raise an OperationFailure exception.
     #   MongoDB v2.0+.
     # @option opts [Boolean] :collect_on_error (+false+) if true, then
-    #   collects invalid documents as a BSON. This option changes result format.
+    #   collects invalid documents as an array. Note that this option changes the result format.
     #
     # @core insert insert-instance_method
     def insert(doc_or_docs, opts={})

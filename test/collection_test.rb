@@ -152,7 +152,6 @@ class TestCollection < Test::Unit::TestCase
   end
 
   def test_bulk_insert
-    @@test.remove
     docs = []
     docs << {:foo => 1}
     docs << {:foo => 2}
@@ -161,7 +160,6 @@ class TestCollection < Test::Unit::TestCase
     assert_equal 3, response.length
     assert response.all? {|id| id.is_a?(BSON::ObjectId)}
     assert_equal 3, @@test.count
-    @@test.remove
   end
 
   def test_bulk_insert_with_continue_on_error
@@ -191,6 +189,15 @@ class TestCollection < Test::Unit::TestCase
       @@test.remove
       @@test.drop_index("foo_1")
     end
+  end
+
+  def test_bson_valid_with_collect_on_error
+    docs = []
+    docs << {:foo => 1}
+    docs << {:bar => 1}
+    doc_ids, error_docs = @@test.insert(docs, :collect_on_error => true)
+    assert_equal 2, @@test.count
+    assert_equal error_docs, []
   end
 
   def test_bson_invalid_key_serialize_error_with_collect_on_error
