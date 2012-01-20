@@ -15,6 +15,7 @@ class ComplexConnectTest < Test::Unit::TestCase
     @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[2]], [self.rs.host, self.rs.ports[1]],
       [self.rs.host, self.rs.ports[0]])
 
+    @conn['test']['foo'].insert({:a => 1})
     assert @conn['test']['foo'].find_one
 
     config = primary['local']['system.replset'].find_one
