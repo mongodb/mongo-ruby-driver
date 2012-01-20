@@ -45,6 +45,28 @@ class ConnectionTest < Test::Unit::TestCase
         @conn = Connection.from_uri("mongodb://#{host_name}/foo", :connect => false)
         assert_equal [host_name, 27017], @conn.host_to_try
       end
+      
+      should "set safe options on connection" do
+        host_name = "localhost"
+        opts = "safe=true&w=2&wtimeoutMS=10000&fsync=true&journal=true"
+        @conn = Connection.from_uri("mongodb://#{host_name}/foo?#{opts}", :connect => false)
+        assert_equal({:w => 2, :wtimeout => 10, :fsync => true, :j => true}, @conn.safe)
+      end
+      
+      should "have wtimeoutMS take precidence over the depricated wtimeout" do
+        host_name = "localhost"
+        opts = "safe=true&wtimeout=10&wtimeoutMS=2000"
+        @conn = Connection.from_uri("mongodb://#{host_name}/foo?#{opts}", :connect => false)
+        assert_equal({:wtimeout => 2}, @conn.safe)
+      end
+      
+      should "set timeout options on connection" do
+        host_name = "localhost"
+        opts = "connectTimeoutMS=1000&socketTimeoutMS=5000"
+        @conn = Connection.from_uri("mongodb://#{host_name}/foo?#{opts}", :connect => false)
+        assert_equal 1, @conn.connect_timeout
+        assert_equal 5, @conn.op_timeout
+      end
 
       should "parse a uri with a hyphen & underscore in the username or password" do
         @conn = Connection.from_uri("mongodb://hyphen-user_name:p-s_s@localhost:27017/db", :connect => false)
