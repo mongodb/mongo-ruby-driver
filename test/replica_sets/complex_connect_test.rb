@@ -1,4 +1,5 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+require 'logger'
 require './test/replica_sets/rs_test_helper'
 
 class ComplexConnectTest < Test::Unit::TestCase
@@ -10,10 +11,11 @@ class ComplexConnectTest < Test::Unit::TestCase
   end
 
   def test_complex_connect
+    logger = Logger.new(STDOUT)
     primary = Connection.new(self.rs.host, self.rs.ports[0])
 
     @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[2]], [self.rs.host, self.rs.ports[1]],
-      [self.rs.host, self.rs.ports[0]])
+      [self.rs.host, self.rs.ports[0]], :logger => logger)
 
     @conn['test']['foo'].insert({:a => 1})
     assert @conn['test']['foo'].find_one
