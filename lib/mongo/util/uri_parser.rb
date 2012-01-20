@@ -35,36 +35,48 @@ module Mongo
     MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]"
 
     SPEC_ATTRS = [:nodes, :auths]
-    OPT_ATTRS  = [:connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync]
+    OPT_ATTRS  = [:connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync, :journal, :connectTimeoutMS, :socketTimeoutMS, :wtimeoutMS]
 
-    OPT_VALID  = {:connect    => lambda {|arg| ['direct', 'replicaset'].include?(arg)},
-                  :replicaset => lambda {|arg| arg.length > 0},
-                  :slaveok    => lambda {|arg| ['true', 'false'].include?(arg)},
-                  :safe       => lambda {|arg| ['true', 'false'].include?(arg)},
-                  :w          => lambda {|arg| arg =~ /^\d+$/ },
-                  :wtimeout   => lambda {|arg| arg =~ /^\d+$/ },
-                  :fsync      => lambda {|arg| ['true', 'false'].include?(arg)}
+    OPT_VALID  = {:connect          => lambda {|arg| ['direct', 'replicaset'].include?(arg)},
+                  :replicaset       => lambda {|arg| arg.length > 0},
+                  :slaveok          => lambda {|arg| ['true', 'false'].include?(arg)},
+                  :safe             => lambda {|arg| ['true', 'false'].include?(arg)},
+                  :w                => lambda {|arg| arg =~ /^\d+$/ },
+                  :wtimeout         => lambda {|arg| arg =~ /^\d+$/ },
+                  :fsync            => lambda {|arg| ['true', 'false'].include?(arg)},
+                  :journal          => lambda {|arg| ['true', 'false'].include?(arg)},
+                  :connectTimeoutMS => lambda {|arg| arg =~ /^\d+$/ },
+                  :socketTimeoutMS  => lambda {|arg| arg =~ /^\d+$/ },
+                  :wtimeoutMS       => lambda {|arg| arg =~ /^\d+$/ }
                  }
 
-    OPT_ERR    = {:connect    => "must be 'direct' or 'replicaset'",
-                  :replicaset => "must be a string containing the name of the replica set to connect to",
-                  :slaveok    => "must be 'true' or 'false'",
-                  :safe       => "must be 'true' or 'false'",
-                  :w          => "must be an integer specifying number of nodes to replica to",
-                  :wtimeout   => "must be an integer specifying milliseconds",
-                  :fsync      => "must be 'true' or 'false'"
+    OPT_ERR    = {:connect          => "must be 'direct' or 'replicaset'",
+                  :replicaset       => "must be a string containing the name of the replica set to connect to",
+                  :slaveok          => "must be 'true' or 'false'",
+                  :safe             => "must be 'true' or 'false'",
+                  :w                => "must be an integer specifying number of nodes to replica to",
+                  :wtimeout         => "must be an integer specifying milliseconds",
+                  :fsync            => "must be 'true' or 'false'",
+                  :journal          => "must be 'true' or 'false'",
+                  :connectTimeoutMS => "must be an integer specifying milliseconds a connection can take to be opened before timing out",
+                  :socketTimeoutMS  => "must be an integer specifying milliseconds a send or receive on a socket can take before timing out",
+                  :wtimeoutMS       => "must be an integer specifying milliseconds a send or receive on a socket can take before timing out"
                  }
 
-    OPT_CONV   = {:connect    => lambda {|arg| arg},
-                  :replicaset => lambda {|arg| arg},
-                  :slaveok    => lambda {|arg| arg == 'true' ? true : false},
-                  :safe       => lambda {|arg| arg == 'true' ? true : false},
-                  :w          => lambda {|arg| arg.to_i},
-                  :wtimeout   => lambda {|arg| arg.to_i},
-                  :fsync      => lambda {|arg| arg == 'true' ? true : false}
+    OPT_CONV   = {:connect          => lambda {|arg| arg},
+                  :replicaset       => lambda {|arg| arg},
+                  :slaveok          => lambda {|arg| arg == 'true' ? true : false},
+                  :safe             => lambda {|arg| arg == 'true' ? true : false},
+                  :w                => lambda {|arg| arg.to_i},
+                  :wtimeout         => lambda {|arg| arg.to_i},
+                  :fsync            => lambda {|arg| arg == 'true' ? true : false},
+                  :journal          => lambda {|arg| arg == 'true' ? true : false},
+                  :connectTimeoutMS => lambda {|arg| arg.to_i },
+                  :socketTimeoutMS  => lambda {|arg| arg.to_i },
+                  :wtimeoutMS       => lambda {|arg| arg.to_i }
                  }
 
-    attr_reader :nodes, :auths, :connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync
+    attr_reader :nodes, :auths, :connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync, :journal, :connectTimeoutMS, :socketTimeoutMS, :wtimeoutMS
 
     # Parse a MongoDB URI. This method is used by Connection.from_uri.
     # Returns an array of nodes and an array of db authorizations, if applicable.
@@ -88,21 +100,39 @@ module Mongo
     def connection_options
       opts = {}
 
-      if (@w || @wtimeout || @fsync) && !@safe
-        raise MongoArgumentError, "Safe must be true if w, wtimeout, or fsync is specified"
+      if (@w || @journal || @wtimeout || @fsync || @wtimeoutMS) && !@safe
+        raise MongoArgumentError, "Safe must be true if w, journal, wtimeoutMS, or fsync is specified"
       end
 
       if @safe
-        if @w || @wtimeout || @fsync
+        if @w || @journal || @wtimeout || @fsync || @wtimeoutMS
           safe_opts = {}
           safe_opts[:w] = @w if @w
-          safe_opts[:wtimeout] = @wtimeout if @wtimeout
+          safe_opts[:j] = @journal if @journal
+          
+          if @wtimeout
+            warn "Using wtimeout in a URI is deprecated, please use wtimeoutMS. It will be removed in v2.0."
+            safe_opts[:wtimeout] = @wtimeout
+          end
+          
+          if @wtimeoutMS
+            safe_opts[:wtimeout] = @wtimeoutMS / 1000
+          end
+          
           safe_opts[:fsync] = @fsync if @fsync
         else
           safe_opts = true
         end
 
         opts[:safe] = safe_opts
+      end
+      
+      if @connectTimeoutMS
+        opts[:connect_timeout] = @connectTimeoutMS / 1000
+      end
+      
+      if @socketTimeoutMS
+        opts[:op_timeout] = @socketTimeoutMS / 1000
       end
 
       if @slaveok
