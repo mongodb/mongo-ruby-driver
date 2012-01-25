@@ -98,6 +98,28 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     assert @conn.read_pool != @conn.primary_pool,
       "Read pool and primary pool are identical."
   end
+  
+  def test_automated_refresh_when_secondary_goes_down
+    @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0]],
+                                  [self.rs.host, self.rs.ports[1]],
+                                  [self.rs.host, self.rs.ports[2]],
+                                  :refresh_interval => 2,
+                                  :refresh_mode => :sync)
+
+    num_secondaries = @conn.secondary_pools.length
+    old_refresh_version = @conn.refresh_version
+
+    n = self.rs.kill_secondary
+    sleep(4)
+    @conn['foo']['bar'].find_one
+
+    assert @conn.refresh_version > old_refresh_version,
+      "Refresh version hasn't changed."
+    assert_equal num_secondaries - 1, @conn.secondaries.length
+    assert_equal num_secondaries - 1, @conn.secondary_pools.length
+
+    self.rs.restart_killed_nodes
+  end
 
   def test_automated_refresh_with_removed_node
     @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0]],

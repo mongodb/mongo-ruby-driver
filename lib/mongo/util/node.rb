@@ -101,7 +101,12 @@ module Mongo
       rescue ConnectionFailure, OperationFailure, OperationTimeout, SocketError, SystemCallError, IOError => ex
         @connection.log(:warn, "Attempted connection to node #{host_string} raised " +
                             "#{ex.class}: #{ex.message}")
-        @socket.close unless @socket.closed?
+        
+        # Socket may already be nil from issuing command
+        if @socket && !@socket.closed?
+          @socket.close
+        end
+        
         return nil
       end
 
