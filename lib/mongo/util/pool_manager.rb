@@ -135,7 +135,6 @@ module Mongo
     end
 
     def initialize_data
-      @seeds = []
       @primary = nil
       @primary_pool = nil
       @read_pool = nil
