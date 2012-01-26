@@ -68,9 +68,11 @@ class ConnectTest < Test::Unit::TestCase
     assert @conn[MONGO_TEST_DB]['bar'].find_one
 
     primary = Mongo::Connection.new(@conn.primary_pool.host, @conn.primary_pool.port)
-    primary['admin'].command({:replSetStepDown => 60})
+    assert_raise Mongo::ConnectionFailure do
+      primary['admin'].command({:replSetStepDown => 60})
+    end
     assert @conn.connected?
-    assert_raise_error Mongo::ConnectionFailure, "not master" do
+    assert_raise Mongo::ConnectionFailure do
       @conn[MONGO_TEST_DB]['bar'].find_one
     end
     assert !@conn.connected?
@@ -90,7 +92,9 @@ class ConnectTest < Test::Unit::TestCase
     step_down_command = BSON::OrderedHash.new
     step_down_command[:replSetStepDown] = 60
     step_down_command[:force]           = true
-    primary['admin'].command(step_down_command)
+    assert_raise Mongo::ConnectionFailure do
+      primary['admin'].command(step_down_command)
+    end
 
     rescue_connection_failure do
       @conn[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 3}})
