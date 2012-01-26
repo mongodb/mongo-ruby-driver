@@ -87,10 +87,10 @@ class TestThreading < Test::Unit::TestCase
     assert_equal 200, parser.wtimeoutMS
   end
   
-  def test_opts_unsafe_timeout
-    parser = Mongo::URIParser.new('mongodb://localhost:27018?connectTimeoutMS=5000&socketTimeoutMS=10000')
-    assert_equal 5000, parser.connectTimeoutMS
-    assert_equal 10000, parser.socketTimeoutMS
+  def test_opts_nonsafe_timeout
+    parser = Mongo::URIParser.new('mongodb://localhost:27018?connectTimeoutMS=5500&socketTimeoutMS=500')
+    assert_equal 5.5, parser.connectTimeoutMS
+    assert_equal 0.5, parser.socketTimeoutMS
   end
 
   def test_opts_replica_set

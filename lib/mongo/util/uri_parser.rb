@@ -32,7 +32,7 @@ module Mongo
     PATH_REGEX = /(?:\/(?<path>[-\w]+))?/
 
     MONGODB_URI_MATCHER = /#{AUTH_REGEX}#{NODE_REGEX}#{PATH_REGEX}/
-    MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]"
+    MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]"
 
     SPEC_ATTRS = [:nodes, :auths]
     OPT_ATTRS  = [:connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync, :journal, :connectTimeoutMS, :socketTimeoutMS, :wtimeoutMS]
@@ -58,9 +58,9 @@ module Mongo
                   :wtimeout         => "must be an integer specifying milliseconds",
                   :fsync            => "must be 'true' or 'false'",
                   :journal          => "must be 'true' or 'false'",
-                  :connectTimeoutMS => "must be an integer specifying milliseconds a connection can take to be opened before timing out",
-                  :socketTimeoutMS  => "must be an integer specifying milliseconds a send or receive on a socket can take before timing out",
-                  :wtimeoutMS       => "must be an integer specifying milliseconds a send or receive on a socket can take before timing out"
+                  :connectTimeoutMS => "must be an integer specifying milliseconds",
+                  :socketTimeoutMS  => "must be an integer specifying milliseconds",
+                  :wtimeoutMS       => "must be an integer specifying milliseconds"
                  }
 
     OPT_CONV   = {:connect          => lambda {|arg| arg},
@@ -71,8 +71,8 @@ module Mongo
                   :wtimeout         => lambda {|arg| arg.to_i},
                   :fsync            => lambda {|arg| arg == 'true' ? true : false},
                   :journal          => lambda {|arg| arg == 'true' ? true : false},
-                  :connectTimeoutMS => lambda {|arg| arg.to_i },
-                  :socketTimeoutMS  => lambda {|arg| arg.to_i },
+                  :connectTimeoutMS => lambda {|arg| arg.to_f / 1000 }, # stored as seconds
+                  :socketTimeoutMS  => lambda {|arg| arg.to_f / 1000 }, # stored as seconds
                   :wtimeoutMS       => lambda {|arg| arg.to_i }
                  }
 
@@ -116,7 +116,7 @@ module Mongo
           end
           
           if @wtimeoutMS
-            safe_opts[:wtimeout] = @wtimeoutMS / 1000
+            safe_opts[:wtimeout] = @wtimeoutMS
           end
           
           safe_opts[:fsync] = @fsync if @fsync
@@ -128,11 +128,11 @@ module Mongo
       end
       
       if @connectTimeoutMS
-        opts[:connect_timeout] = @connectTimeoutMS / 1000
+        opts[:connect_timeout] = @connectTimeoutMS
       end
       
       if @socketTimeoutMS
-        opts[:op_timeout] = @socketTimeoutMS / 1000
+        opts[:op_timeout] = @socketTimeoutMS
       end
 
       if @slaveok

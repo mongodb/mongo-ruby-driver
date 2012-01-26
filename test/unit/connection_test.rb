@@ -48,16 +48,16 @@ class ConnectionTest < Test::Unit::TestCase
       
       should "set safe options on connection" do
         host_name = "localhost"
-        opts = "safe=true&w=2&wtimeoutMS=10000&fsync=true&journal=true"
+        opts = "safe=true&w=2&wtimeoutMS=1000&fsync=true&journal=true"
         @conn = Connection.from_uri("mongodb://#{host_name}/foo?#{opts}", :connect => false)
-        assert_equal({:w => 2, :wtimeout => 10, :fsync => true, :j => true}, @conn.safe)
+        assert_equal({:w => 2, :wtimeout => 1000, :fsync => true, :j => true}, @conn.safe)
       end
       
       should "have wtimeoutMS take precidence over the depricated wtimeout" do
         host_name = "localhost"
-        opts = "safe=true&wtimeout=10&wtimeoutMS=2000"
+        opts = "safe=true&wtimeout=100&wtimeoutMS=500"
         @conn = Connection.from_uri("mongodb://#{host_name}/foo?#{opts}", :connect => false)
-        assert_equal({:wtimeout => 2}, @conn.safe)
+        assert_equal({:wtimeout => 500}, @conn.safe)
       end
       
       should "set timeout options on connection" do
