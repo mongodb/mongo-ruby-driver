@@ -18,4 +18,5 @@ benchmark
 *.log
 test/load/unicorn/unicorn.rb
 test/load/thin/config.yml
+test/tools/data/
 .rvmrc
