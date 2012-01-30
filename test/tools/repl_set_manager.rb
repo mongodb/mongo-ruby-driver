@@ -248,40 +248,40 @@ class ReplSetManager
         raise ex
       end
       if status['members'].all? { |m| m['health'] == 1 &&
-       [1, 2, 7].include?(m['state']) } &&
-       status['members'].any? { |m| m['state'] == 1 }
+        [1, 2, 7].include?(m['state']) } &&
+        status['members'].any? { |m| m['state'] == 1 }
 
-       connections = []
-       states      = []
-       status['members'].each do |member|
-         begin
-           host, port = member['name'].split(':')
-           port = port.to_i
-           conn = Mongo::Connection.new(host, port, :slave_ok => true)
-           connections << conn
-           state = conn['admin'].command({:ismaster => 1})
-           states << state
-         rescue Mongo::ConnectionFailure
-           connections.each {|c| c.close }
-           con.close
-           raise Mongo::OperationFailure
-         end
-       end
+        connections = []
+        states      = []
+        status['members'].each do |member|
+        begin
+          host, port = member['name'].split(':')
+          port = port.to_i
+          conn = Mongo::Connection.new(host, port, :slave_ok => true)
+          connections << conn
+          state = conn['admin'].command({:ismaster => 1})
+          states << state
+        rescue Mongo::ConnectionFailure
+          connections.each {|c| c.close }
+          con.close
+          raise Mongo::OperationFailure
+        end
+      end
 
-       if states.any? {|s| s['ismaster']}
-         print "all members up!\n\n"
-         connections.each {|c| c.close }
-         con.close
-         return status
-       else
-         con.close
-         raise Mongo::OperationFailure
-       end
-     else
-       con.close
-       raise Mongo::OperationFailure
-     end
-     end
+      if states.any? {|s| s['ismaster']}
+        print "all members up!\n\n"
+        connections.each {|c| c.close }
+        con.close
+        return status
+      else
+        con.close
+        raise Mongo::OperationFailure
+      end
+      else
+        con.close
+        raise Mongo::OperationFailure
+      end
+    end
     return false
   end
 
