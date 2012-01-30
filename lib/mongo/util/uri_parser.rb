@@ -35,7 +35,7 @@ module Mongo
     MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]"
 
     SPEC_ATTRS = [:nodes, :auths]
-    OPT_ATTRS  = [:connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync, :journal, :connectTimeoutMS, :socketTimeoutMS, :wtimeoutMS]
+    OPT_ATTRS  = [:connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync, :journal, :connecttimeoutms, :sockettimeoutms, :wtimeoutms]
 
     OPT_VALID  = {:connect          => lambda {|arg| ['direct', 'replicaset'].include?(arg)},
                   :replicaset       => lambda {|arg| arg.length > 0},
@@ -45,9 +45,9 @@ module Mongo
                   :wtimeout         => lambda {|arg| arg =~ /^\d+$/ },
                   :fsync            => lambda {|arg| ['true', 'false'].include?(arg)},
                   :journal          => lambda {|arg| ['true', 'false'].include?(arg)},
-                  :connectTimeoutMS => lambda {|arg| arg =~ /^\d+$/ },
-                  :socketTimeoutMS  => lambda {|arg| arg =~ /^\d+$/ },
-                  :wtimeoutMS       => lambda {|arg| arg =~ /^\d+$/ }
+                  :connecttimeoutms => lambda {|arg| arg =~ /^\d+$/ },
+                  :sockettimeoutms  => lambda {|arg| arg =~ /^\d+$/ },
+                  :wtimeoutms       => lambda {|arg| arg =~ /^\d+$/ }
                  }
 
     OPT_ERR    = {:connect          => "must be 'direct' or 'replicaset'",
@@ -58,9 +58,9 @@ module Mongo
                   :wtimeout         => "must be an integer specifying milliseconds",
                   :fsync            => "must be 'true' or 'false'",
                   :journal          => "must be 'true' or 'false'",
-                  :connectTimeoutMS => "must be an integer specifying milliseconds",
-                  :socketTimeoutMS  => "must be an integer specifying milliseconds",
-                  :wtimeoutMS       => "must be an integer specifying milliseconds"
+                  :connecttimeoutms => "must be an integer specifying milliseconds",
+                  :sockettimeoutms  => "must be an integer specifying milliseconds",
+                  :wtimeoutms       => "must be an integer specifying milliseconds"
                  }
 
     OPT_CONV   = {:connect          => lambda {|arg| arg},
@@ -71,12 +71,12 @@ module Mongo
                   :wtimeout         => lambda {|arg| arg.to_i},
                   :fsync            => lambda {|arg| arg == 'true' ? true : false},
                   :journal          => lambda {|arg| arg == 'true' ? true : false},
-                  :connectTimeoutMS => lambda {|arg| arg.to_f / 1000 }, # stored as seconds
-                  :socketTimeoutMS  => lambda {|arg| arg.to_f / 1000 }, # stored as seconds
-                  :wtimeoutMS       => lambda {|arg| arg.to_i }
+                  :connecttimeoutms => lambda {|arg| arg.to_f / 1000 }, # stored as seconds
+                  :sockettimeoutms  => lambda {|arg| arg.to_f / 1000 }, # stored as seconds
+                  :wtimeoutms       => lambda {|arg| arg.to_i }
                  }
 
-    attr_reader :nodes, :auths, :connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync, :journal, :connectTimeoutMS, :socketTimeoutMS, :wtimeoutMS
+    attr_reader :nodes, :auths, :connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync, :journal, :connecttimeoutms, :sockettimeoutms, :wtimeoutms
 
     # Parse a MongoDB URI. This method is used by Connection.from_uri.
     # Returns an array of nodes and an array of db authorizations, if applicable.
@@ -100,12 +100,12 @@ module Mongo
     def connection_options
       opts = {}
 
-      if (@w || @journal || @wtimeout || @fsync || @wtimeoutMS) && !@safe
+      if (@w || @journal || @wtimeout || @fsync || @wtimeoutms) && !@safe
         raise MongoArgumentError, "Safe must be true if w, journal, wtimeoutMS, or fsync is specified"
       end
 
       if @safe
-        if @w || @journal || @wtimeout || @fsync || @wtimeoutMS
+        if @w || @journal || @wtimeout || @fsync || @wtimeoutms
           safe_opts = {}
           safe_opts[:w] = @w if @w
           safe_opts[:j] = @journal if @journal
@@ -115,8 +115,8 @@ module Mongo
             safe_opts[:wtimeout] = @wtimeout
           end
           
-          if @wtimeoutMS
-            safe_opts[:wtimeout] = @wtimeoutMS
+          if @wtimeoutms
+            safe_opts[:wtimeout] = @wtimeoutms
           end
           
           safe_opts[:fsync] = @fsync if @fsync
@@ -127,12 +127,12 @@ module Mongo
         opts[:safe] = safe_opts
       end
       
-      if @connectTimeoutMS
-        opts[:connect_timeout] = @connectTimeoutMS
+      if @connecttimeoutms
+        opts[:connect_timeout] = @connecttimeoutms
       end
       
-      if @socketTimeoutMS
-        opts[:op_timeout] = @socketTimeoutMS
+      if @sockettimeoutms
+        opts[:op_timeout] = @sockettimeoutms
       end
 
       if @slaveok
@@ -200,7 +200,7 @@ module Mongo
       separator = opts.include?('&') ? '&' : ';'
       opts.split(separator).each do |attr|
         key, value = attr.split('=')
-        key   = key.to_sym
+        key = key.to_sym.downcase
         value = value.strip.downcase
         if !OPT_ATTRS.include?(key)
           raise MongoArgumentError, "Invalid Mongo URI option #{key}"

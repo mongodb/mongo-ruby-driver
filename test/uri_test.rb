@@ -1,6 +1,6 @@
 require './test/test_helper'
 
-class TestThreading < Test::Unit::TestCase
+class URITest < Test::Unit::TestCase
   include Mongo
 
   def test_uri_without_port
@@ -84,13 +84,13 @@ class TestThreading < Test::Unit::TestCase
     assert_equal 200, parser.wtimeout
     assert parser.fsync
     assert parser.journal
-    assert_equal 200, parser.wtimeoutMS
+    assert_equal 200, parser.wtimeoutms
   end
   
   def test_opts_nonsafe_timeout
     parser = Mongo::URIParser.new('mongodb://localhost:27018?connectTimeoutMS=5500&socketTimeoutMS=500')
-    assert_equal 5.5, parser.connectTimeoutMS
-    assert_equal 0.5, parser.socketTimeoutMS
+    assert_equal 5.5, parser.connecttimeoutms
+    assert_equal 0.5, parser.sockettimeoutms
   end
 
   def test_opts_replica_set
@@ -100,5 +100,12 @@ class TestThreading < Test::Unit::TestCase
     parser = Mongo::URIParser.new('mongodb://localhost:27018?connect=replicaset;replicaset=foo')
     assert_equal 'foo', parser.replicaset
     assert_equal 'replicaset', parser.connect
+  end
+
+  def test_case_insensitivity
+    parser = Mongo::URIParser.new('mongodb://localhost:27018?wtimeoutms=500&JOURNAL=true&SaFe=true')
+    assert_equal 500, parser.wtimeoutms
+    assert_equal true, parser.journal
+    assert_equal true, parser.safe
   end
 end
