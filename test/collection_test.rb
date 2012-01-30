@@ -608,7 +608,7 @@ class TestCollection < Test::Unit::TestCase
         
         m = Code.new("function() { emit(this.user_id, 1); }")
         r = Code.new("function(k,vals) { return 1; }")
-        res = @@test.map_reduce(m, r, :out => {:replace => 'foo', :db => 'somedb'})
+        res = @@test.map_reduce(m, r, :out => {:replace => "foo", :db => 'somedb'})
         assert res["result"]
         assert res["counts"]
         assert res["timeMillis"]
