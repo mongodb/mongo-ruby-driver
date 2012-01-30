@@ -215,10 +215,6 @@ module Mongo
     end
 
     def configure_connect
-      if @nodes.length > 1 && !@connect
-        @connect = 'replicaset'
-      end
-
       if !@connect
         if @nodes.length > 1
           @connect = 'replicaset'
