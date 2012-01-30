@@ -2,10 +2,10 @@ $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require './test/replica_sets/rs_test_helper'
 
 class ReplicaSetAckTest < Test::Unit::TestCase
-  include ReplicaSetTest
 
   def setup
-    @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0]])
+    ensure_rs
+    @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]])
 
     @slave1 = Connection.new(@conn.secondary_pools[0].host,
       @conn.secondary_pools[0].port, :slave_ok => true)
@@ -18,7 +18,7 @@ class ReplicaSetAckTest < Test::Unit::TestCase
   end
 
   def teardown
-    self.rs.restart_killed_nodes
+    @rs.restart_killed_nodes
     @conn.close if @conn
   end
 

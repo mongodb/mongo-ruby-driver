@@ -2,18 +2,16 @@ $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require './test/test_helper'
 require './test/tools/repl_set_manager'
 
-module ReplicaSetTest
-
-  def self.rs
-    unless defined?(@rs)
-      @rs = ReplSetManager.new
-      @rs.start_set
+class Test::Unit::TestCase
+  # Ensure replica set is available as an instance variable and that
+  # a new set is spun up for each TestCase class
+  def ensure_rs
+    unless defined?(@@current_class) and @@current_class == self.class
+      @@current_class = self.class 
+      @@rs = ReplSetManager.new
+      @@rs.start_set
     end
-    @rs
-  end
-
-  def rs
-    ReplicaSetTest.rs
+    @rs = @@rs
   end
 
   # Generic code for rescuing connection failures and retrying operations.

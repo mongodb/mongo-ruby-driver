@@ -2,11 +2,11 @@ $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require './test/replica_sets/rs_test_helper'
 
 class ReplicaSetCountTest < Test::Unit::TestCase
-  include ReplicaSetTest
 
   def setup
-    @conn = ReplSetConnection.new([self.rs.host, self.rs.ports[0]],
-                                  [self.rs.host, self.rs.ports[1]], [self.rs.host, self.rs.ports[2]],
+    ensure_rs
+    @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]],
+                                  [@rs.host, @rs.ports[1]], [@rs.host, @rs.ports[2]],
                                   :read => :secondary)
     assert @conn.primary_pool
     @primary = Connection.new(@conn.primary_pool.host, @conn.primary_pool.port)
@@ -16,7 +16,7 @@ class ReplicaSetCountTest < Test::Unit::TestCase
   end
 
   def teardown
-    self.rs.restart_killed_nodes
+    @rs.restart_killed_nodes
     @conn.close if @conn
   end
 
@@ -25,7 +25,7 @@ class ReplicaSetCountTest < Test::Unit::TestCase
     assert_equal 1, @coll.count
 
     # Kill the current master node
-    @node = self.rs.kill_primary
+    @node = @rs.kill_primary
 
     rescue_connection_failure do
       @coll.insert({:a => 30}, :safe => true)

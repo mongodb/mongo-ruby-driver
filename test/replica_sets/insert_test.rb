@@ -2,25 +2,25 @@ $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require './test/replica_sets/rs_test_helper'
 
 class ReplicaSetInsertTest < Test::Unit::TestCase
-  include ReplicaSetTest
 
   def setup
-    @conn = ReplSetConnection.new([TEST_HOST, self.rs.ports[0]],
-                                  [TEST_HOST, self.rs.ports[1]], [TEST_HOST, self.rs.ports[2]])
+    ensure_rs
+    @conn = ReplSetConnection.new([TEST_HOST, @rs.ports[0]],
+                                  [TEST_HOST, @rs.ports[1]], [TEST_HOST, @rs.ports[2]])
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets")
   end
 
   def teardown
-    self.rs.restart_killed_nodes
+    @rs.restart_killed_nodes
     @conn.close if @conn
   end
 
   def test_insert
     @coll.save({:a => 20}, :safe => true)
 
-    self.rs.kill_primary
+    @rs.kill_primary
 
     rescue_connection_failure do
       @coll.save({:a => 30}, :safe => true)
@@ -32,7 +32,7 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
     @coll.save({:a => 70}, :safe => true)
 
     # Restart the old master and wait for sync
-    self.rs.restart_killed_nodes
+    @rs.restart_killed_nodes
     sleep(1)
     results = []
 
