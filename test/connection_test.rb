@@ -137,6 +137,15 @@ class TestConnection < Test::Unit::TestCase
     assert output.string.include?("admin['$cmd'].find")
   end
 
+  def test_logging_duration
+    output = StringIO.new
+    logger = Logger.new(output)
+    logger.level = Logger::DEBUG
+    connection = standard_connection(:logger => logger, :log_duration => true).db(MONGO_TEST_DB)
+    assert output.string.index(/\(0.\d+s\)/)
+    assert output.string.include?("admin['$cmd'].find")
+  end
+
   def test_connection_logger
     output = StringIO.new
     logger = Logger.new(output)
