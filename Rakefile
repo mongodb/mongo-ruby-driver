@@ -45,7 +45,7 @@ end
 namespace :test do
 
   desc "Test the driver with the C extension enabled."
-  task :c do
+  task :c => :path do
     ENV['C_EXT'] = 'TRUE'
     if ENV['TEST']
       Rake::Task['test:functional'].invoke
@@ -60,7 +60,7 @@ namespace :test do
   end
 
   desc "Test the driver using pure ruby (no C extension)"
-  task :ruby do
+  task :ruby => :path do
     ENV['C_EXT'] = nil
     if ENV['TEST']
       Rake::Task['test:functional'].invoke
@@ -122,9 +122,9 @@ namespace :test do
     t.ruby_opts << '-w'
   end
 
-  task :drop_databases do |t|
+  task :drop_databases => :path do |t|
     puts "Dropping test databases..."
-    require './lib/mongo'
+    require 'mongo'
     con = Mongo::Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
       ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Connection::DEFAULT_PORT)
     con.database_names.each do |name|
@@ -142,12 +142,15 @@ task :rdoc do
 end
 
 desc "Generate YARD documentation"
-task :ydoc do
-  $:.unshift(File.join(File.dirname(__FILE__), 'lib'))
+task :ydoc => :path do
   require File.join(File.dirname(__FILE__), 'lib', 'mongo')
   out = File.join('ydoc', Mongo::VERSION)
   FileUtils.rm_rf('ydoc')
   system "yardoc lib/**/*.rb lib/mongo/**/*.rb lib/bson/**/*.rb -e ./yard/yard_ext.rb -p yard/templates -o #{out} --title MongoRuby-#{Mongo::VERSION} --files docs/TUTORIAL.md,docs/GridFS.md,docs/FAQ.md,docs/REPLICA_SETS.md,docs/WRITE_CONCERN.md,docs/READ_PREFERENCE.md,docs/HISTORY.md,docs/CREDITS.md,docs/RELEASES.md,docs/CREDITS.md,docs/TAILABLE_CURSORS.md"
+end
+
+task :path do
+  $:.unshift(File.join(File.dirname(__FILE__), 'lib'))
 end
 
 namespace :bamboo do
