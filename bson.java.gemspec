@@ -1,4 +1,4 @@
-require "./lib/bson"
+require File.expand_path('../lib/bson', __FILE__)
 
 Gem::Specification.new do |s|
   s.name = 'bson'
