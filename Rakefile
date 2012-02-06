@@ -43,7 +43,8 @@ task :test do
 end
 
 namespace :test do
-
+  $:.unshift(File.join(File.dirname(__FILE__), 'lib'))
+  
   desc "Test the driver with the C extension enabled."
   task :c do
     ENV['C_EXT'] = 'TRUE'
@@ -124,7 +125,7 @@ namespace :test do
 
   task :drop_databases do |t|
     puts "Dropping test databases..."
-    require './lib/mongo'
+    require 'mongo'
     con = Mongo::Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
       ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Connection::DEFAULT_PORT)
     con.database_names.each do |name|
@@ -143,8 +144,7 @@ end
 
 desc "Generate YARD documentation"
 task :ydoc do
-  $:.unshift(File.join(File.dirname(__FILE__), 'lib'))
-  require File.join(File.dirname(__FILE__), 'lib', 'mongo')
+  require 'mongo'
   out = File.join('ydoc', Mongo::VERSION)
   FileUtils.rm_rf('ydoc')
   system "yardoc lib/**/*.rb lib/mongo/**/*.rb lib/bson/**/*.rb -e ./yard/yard_ext.rb -p yard/templates -o #{out} --title MongoRuby-#{Mongo::VERSION} --files docs/TUTORIAL.md,docs/GridFS.md,docs/FAQ.md,docs/REPLICA_SETS.md,docs/WRITE_CONCERN.md,docs/READ_PREFERENCE.md,docs/HISTORY.md,docs/CREDITS.md,docs/RELEASES.md,docs/CREDITS.md,docs/TAILABLE_CURSORS.md"

@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.version = Mongo::VERSION
 
   s.platform = Gem::Platform::RUBY
-  s.summary = 'Ruby driver for the MongoDB'
+  s.summary = 'Ruby driver for MongoDB'
   s.description = 'A Ruby driver for MongoDB. For more information about Mongo, see http://www.mongodb.org.'
 
   s.require_paths = ['lib']
