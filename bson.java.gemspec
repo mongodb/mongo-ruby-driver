@@ -1,4 +1,5 @@
-require "./lib/bson"
+$:.unshift(File.join(File.dirname(__FILE__), 'lib'))
+require 'bson'
 
 Gem::Specification.new do |s|
   s.name = 'bson'
