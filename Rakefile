@@ -42,11 +42,14 @@ task :test do
   puts "To test the pure ruby driver: \nrake test:ruby\n\n"
 end
 
+task :path do
+    $:.unshift(File.join(File.dirname(__FILE__), 'lib'))
+end
+
 namespace :test do
-  $:.unshift(File.join(File.dirname(__FILE__), 'lib'))
-  
+
   desc "Test the driver with the C extension enabled."
-  task :c do
+  task :c => :path do
     ENV['C_EXT'] = 'TRUE'
     if ENV['TEST']
       Rake::Task['test:functional'].invoke
@@ -61,7 +64,7 @@ namespace :test do
   end
 
   desc "Test the driver using pure ruby (no C extension)"
-  task :ruby do
+  task :ruby => :path do
     ENV['C_EXT'] = nil
     if ENV['TEST']
       Rake::Task['test:functional'].invoke
@@ -123,7 +126,7 @@ namespace :test do
     t.ruby_opts << '-w'
   end
 
-  task :drop_databases do |t|
+  task :drop_databases => :path do |t|
     puts "Dropping test databases..."
     require 'mongo'
     con = Mongo::Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
@@ -205,7 +208,7 @@ end
 
 namespace :ci do
   namespace :test do
-    task :c do
+    task :c => :path do
       Rake::Task['gem:install'].invoke
       Rake::Task['gem:install_extensions'].invoke
       Rake::Task['test:c'].invoke
