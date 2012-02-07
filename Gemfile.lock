@@ -1,0 +1,39 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    bouncy-castle-java (1.5.0146.1)
+    bson (1.5.2)
+    bson (1.5.2-java)
+    bson_ext (1.5.2)
+      bson (= 1.5.2)
+    builder (3.0.0)
+    ci_reporter (1.7.0)
+      builder (>= 2.1.2)
+    jruby-launcher (1.0.12-java)
+    jruby-openssl (0.7.5)
+      bouncy-castle-java (>= 1.5.0146.1)
+    json (1.6.5)
+    json (1.6.5-java)
+    metaclass (0.0.1)
+    mocha (0.10.3)
+      metaclass (~> 0.0.1)
+    rake (0.9.2.2)
+    shoulda (2.11.3)
+    test-unit (2.4.5)
+
+PLATFORMS
+  java
+  ruby
+
+DEPENDENCIES
+  bouncy-castle-java
+  bson_ext
+  bundler
+  ci_reporter
+  jruby-launcher
+  jruby-openssl
+  json
+  mocha
+  rake
+  shoulda
+  test-unit
