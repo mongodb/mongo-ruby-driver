@@ -12,6 +12,7 @@ begin
   rescue LoadError
 end
 include Config
+
 ENV['TEST_MODE'] = 'TRUE'
 
 task :java do
@@ -153,7 +154,7 @@ task :ydoc do
   system "yardoc lib/**/*.rb lib/mongo/**/*.rb lib/bson/**/*.rb -e ./yard/yard_ext.rb -p yard/templates -o #{out} --title MongoRuby-#{Mongo::VERSION} --files docs/TUTORIAL.md,docs/GridFS.md,docs/FAQ.md,docs/REPLICA_SETS.md,docs/WRITE_CONCERN.md,docs/READ_PREFERENCE.md,docs/HISTORY.md,docs/CREDITS.md,docs/RELEASES.md,docs/CREDITS.md,docs/TAILABLE_CURSORS.md"
 end
 
-namespace :bamboo do
+namespace :jenkins do
   task :ci_reporter do
     begin
       require 'ci/reporter/rake/test_unit'
@@ -187,10 +188,14 @@ namespace :gem do
     `rm mongo-*.gem`
     `rm bson-*.gem`
   end
+  
+  desc "Uninstall the optional c extensions"
+  task :uninstall_extensions do
+    `gem uninstall bson_ext`
+  end
 
   desc "Install the optional c extensions"
   task :install_extensions do
-    `gem uninstall bson_ext`
     `gem build bson_ext.gemspec`
     `gem install --no-rdoc --no-ri bson_ext-*.gem`
     `rm bson_ext-*.gem`
