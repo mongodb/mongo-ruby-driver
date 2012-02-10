@@ -39,7 +39,7 @@ class ReplSetManager
     end
 
     @mongods   = {}
-    version_string = `mongod --version`
+    version_string = `#{@mongod} --version`
     version_string =~ /(\d\.\d\.\d)/
     @version = $1.split(".").map {|d| d.to_i }
   end
