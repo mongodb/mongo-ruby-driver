@@ -13,6 +13,7 @@ class ReplSetManager
   attr_accessor :host, :start_port, :ports, :name, :mongods, :tags, :version
 
   def initialize(opts={})
+    @mongod     = ENV['mongod'] || 'mongod'
     @start_port = opts[:start_port] || 30000
     @ports      = []
     @name       = opts[:name] || 'replica-set-foo'
@@ -124,7 +125,7 @@ class ReplSetManager
   end
 
   def start_cmd(n)
-    @mongods[n]['start'] = "mongod --replSet #{@name} --logpath '#{@mongods[n]['log_path']}' " +
+    @mongods[n]['start'] = "#{@mongod} --replSet #{@name} --logpath '#{@mongods[n]['log_path']}' " +
      "--oplogSize #{@oplog_size} #{journal_switch} --dbpath #{@mongods[n]['db_path']} --port #{@mongods[n]['port']} --fork"
     @mongods[n]['start'] += " --dur" if @durable
     @mongods[n]['start'] += " --smallfiles" if @smallfiles
