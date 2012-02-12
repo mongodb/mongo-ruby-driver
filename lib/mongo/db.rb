@@ -173,6 +173,8 @@ module Mongo
     #
     # @param [String] username
     # @param [String] password
+    # @param [Boolean] read_only
+    #   Create a read-only user.
     #
     # @return [Hash] an object representing the user.
     def add_user(username, password, read_only = false)
