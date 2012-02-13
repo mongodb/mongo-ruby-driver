@@ -39,6 +39,7 @@ class BasicTest < Test::Unit::TestCase
       [@rs.host, @rs.ports[2]]]
     args = seeds << {:name => @rs.name}
     @conn = ReplSetConnection.new(*args)
+    @major_version = @rs.version.first
 
     assert_equal @conn.host, @rs.primary[0]
     assert_equal @conn.port, @rs.primary[1]
@@ -50,9 +51,9 @@ class BasicTest < Test::Unit::TestCase
     assert_equal 2, @conn.secondary_pools.length
     assert_equal @rs.name, @conn.replica_set_name
     assert @conn.secondary_pools.include?(@conn.read_pool)
-    assert_equal 5, @conn.tag_map.keys.length
     assert_equal 90, @conn.refresh_interval
     assert_equal @conn.refresh_mode, false
+    assert_equal 5, @conn.tag_map.keys.length unless @major_version < 2
   end
 
   context "Socket pools" do
