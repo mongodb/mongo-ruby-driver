@@ -85,6 +85,13 @@ namespace :test do
     t.ruby_opts << '-w'
   end
 
+  desc "Run the replica set test suite"
+  Rake::TestTask.new(:rs_no_threads) do |t|
+    t.test_files = FileList['test/replica_sets/*_test.rb'] - ["test/replica_sets/refresh_with_threads_test.rb"]
+    t.verbose    = true
+    t.ruby_opts << '-w'
+  end
+
   Rake::TestTask.new(:unit) do |t|
     t.test_files = FileList['test/unit/*_test.rb']
     t.verbose    = true
