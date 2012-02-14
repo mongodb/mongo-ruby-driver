@@ -469,6 +469,12 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 SAFE_WRITE(buffer, (const char*)&time_since_epoch, 8);
                 break;
             }
+            // Date classes are TYPE T_DATA in Ruby >= 1.9.3
+            if (strcmp(cls, "DateTime") == 0 || strcmp(cls, "Date") == 0 || strcmp(cls, "ActiveSupport::TimeWithZone") == 0) {
+                bson_buffer_free(buffer);
+                rb_raise(InvalidDocument, "%s is not currently supported; use a UTC Time instance instead.", cls);
+                break;
+            }
             if(strcmp(cls, "BigDecimal") == 0) {
                 bson_buffer_free(buffer);
                 rb_raise(InvalidDocument, "Cannot serialize the Numeric type %s as BSON; only Bignum, Fixnum, and Float are supported.", cls);
