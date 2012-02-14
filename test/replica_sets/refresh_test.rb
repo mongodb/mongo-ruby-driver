@@ -6,7 +6,6 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
 
   def setup
     ensure_rs
-    @conn = nil
   end
 
   def teardown
@@ -41,6 +40,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
 
   def test_connect_and_manual_refresh_with_secondaries_down
     @rs.kill_all_secondaries
+    sleep(4)
 
     rescue_connection_failure do
       @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]],
@@ -72,7 +72,8 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
 
   def test_automated_refresh_with_secondaries_down
     @rs.kill_all_secondaries
-
+    sleep(4)
+    
     rescue_connection_failure do
       @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]],
                                     [@rs.host, @rs.ports[1]],
