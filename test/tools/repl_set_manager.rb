@@ -22,6 +22,7 @@ class ReplSetManager
     @config     = {"_id" => @name, "members" => []}
     @durable    = opts.fetch(:durable, false)
     @smallfiles = opts.fetch(:smallfiles, true)
+    @prealloc   = opts.fetch(:prealloc, false)
     @path       = File.join(File.expand_path(File.dirname(__FILE__)), "data")
     @oplog_size = opts.fetch(:oplog_size, 16)
     @tags = [{"dc" => "ny", "rack" => "a", "db" => "main"},
@@ -129,6 +130,7 @@ class ReplSetManager
      "--oplogSize #{@oplog_size} #{journal_switch} --dbpath #{@mongods[n]['db_path']} --port #{@mongods[n]['port']} --fork"
     @mongods[n]['start'] += " --dur" if @durable
     @mongods[n]['start'] += " --smallfiles" if @smallfiles
+    @mongods[n]['start'] += " --noprealloc" unless @prealloc
     @mongods[n]['start']
   end
 
