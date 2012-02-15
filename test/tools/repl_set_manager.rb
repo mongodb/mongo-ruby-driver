@@ -172,12 +172,27 @@ class ReplSetManager
     con.close
     ensure_up
   end
+  
+  def wait_for_death(pid)
+    @retries.times do
+      if `ps a | grep mongod`.include?("#{pid}")
+        puts "waiting for mongod @ pid #{pid} to die..."
+        sleep(1)
+      else
+        puts "mongod @ pid #{pid} was killed successfully"
+        return true
+      end
+    end
+    puts "mongod never died"
+    return false
+  end
 
   def kill(node, signal=2)
     pid = @mongods[node]['pid']
     puts "** Killing node with pid #{pid} at port #{@mongods[node]['port']}"
     system("kill #{pid}")
-    @mongods[node]['up'] = false
+    dead = wait_for_death(pid)
+    @mongods[node]['up'] = false if dead
   end
 
   def kill_primary(signal=2)
