@@ -38,7 +38,7 @@ class ReplicaSetPooledInsertTest < Test::Unit::TestCase
 
     # Restart the old master and wait for sync
     @rs.restart_killed_nodes
-    sleep(1)
+    sleep(5)
     results = []
 
     rescue_connection_failure do
