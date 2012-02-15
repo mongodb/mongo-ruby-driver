@@ -24,10 +24,24 @@ Before each relese to Rubygems.org, the following steps will be taken:
 
 1. All driver tests will be run on Linux, OS X, and Windows via continuous integration system.
 
-2. HISTORY file will document all significant commits.
+2. Update the HISTORY file and document all significant commits.
 
-3. Version number will be incremented per the semantic version spec described above.
+3. Update the version in lib/bson.rb, lib/mongo/version.rb, and ext/version.h.
 
-4. Appropriate branches and tags will be created in Git repository, as necessary.
+4. Commit: "Release [VERSION]"
 
-5. Docs will be updated to the latest version of the driver and posted [online](http://api.mongodb.org/ruby/current/index.html).
+5. git tag [version]
+
+6. Build gems. Ensure that they have the correct versions.
+
+7. Push tags and commit to GitHub (git push origin master, git push --tags).
+
+8. Build and push docs.
+
+9. Push gems to Rubygems.org.
+
+10. Test that the gem is downloadable from Rubygems.org.
+
+11. Close out release in JIRA.
+
+12. Annouce release on mongodb-user and mongodb-dev.
