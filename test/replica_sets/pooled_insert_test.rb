@@ -21,7 +21,7 @@ class ReplicaSetPooledInsertTest < Test::Unit::TestCase
 
   def test_insert
     expected_results = [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    @coll.save({:a => -1}, :safe => true)
+    @coll.save({:a => -1}, :safe => {:w => 2})
 
     @rs.kill_primary
 
@@ -29,7 +29,7 @@ class ReplicaSetPooledInsertTest < Test::Unit::TestCase
     10.times do |i|
       threads[i] = Thread.new do
         rescue_connection_failure do
-          @coll.save({:a => i}, :safe => true)
+          @coll.save({:a => i}, :safe => {:w => 2})
         end
       end
     end
@@ -48,7 +48,7 @@ class ReplicaSetPooledInsertTest < Test::Unit::TestCase
       end
     end
 
-    @coll.save({:a => 10}, :safe => true)
+    @coll.save({:a => 10}, :safe => {:w => 2})
     @coll.find.each {|r| results << r}
     (expected_results + [10]).each do |a|
       assert results.any? {|r| r['a'] == a}, "Could not find record for a => #{a} on second find"
