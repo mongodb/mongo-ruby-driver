@@ -87,6 +87,7 @@ module Mongo
       @db, @name  = db, name
       @connection = @db.connection
       @logger     = @connection.logger
+      @log_duration = @connection.log_duration
       @cache_time = @db.cache_time
       @cache = Hash.new(0)
       unless pk_factory
@@ -264,8 +265,8 @@ module Mongo
     # @return [OrderedHash, Nil]
     #   a single document or nil if no result is found.
     #
-    # @param [Hash, ObjectId, Nil] spec_or_object_id a hash specifying elements 
-    #   which must be present for a document to be included in the result set or an 
+    # @param [Hash, ObjectId, Nil] spec_or_object_id a hash specifying elements
+    #   which must be present for a document to be included in the result set or an
     #   instance of ObjectId to be used as the value for an _id query.
     #   If nil, an empty selector, {}, will be used.
     #
@@ -413,7 +414,7 @@ module Mongo
     # @option opts [Boolean] :upsert (+false+) if true, performs an upsert (update or insert)
     # @option opts [Boolean] :multi (+false+) update all documents matching the selector, as opposed to
     #   just the first matching document. Note: only works in MongoDB 1.1.3 or later.
-    # @option opts [Boolean] :safe (+false+) 
+    # @option opts [Boolean] :safe (+false+)
     #   If true, check that the save succeeded. OperationFailure
     #   will be raised on an error. Note that a safe check requires an extra
     #   round-trip to the database. Safe options provided here will override any safe
@@ -906,12 +907,12 @@ module Mongo
           if [Mongo::ASCENDING, Mongo::DESCENDING, Mongo::GEO2D, Mongo::GEOHAYSTACK].include?(f[1])
             field_spec[f[0].to_s] = f[1]
           else
-            raise MongoArgumentError, "Invalid index field #{f[1].inspect}; " + 
+            raise MongoArgumentError, "Invalid index field #{f[1].inspect}; " +
               "should be one of Mongo::ASCENDING (1), Mongo::DESCENDING (-1) or Mongo::GEO2D ('2d')."
           end
         end
       else
-        raise MongoArgumentError, "Invalid index specification #{spec.inspect}; " + 
+        raise MongoArgumentError, "Invalid index specification #{spec.inspect}; " +
           "should be either a string, symbol, or an array of arrays."
       end
       field_spec

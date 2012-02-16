@@ -25,14 +25,15 @@ module Mongo
 
     # Execute the block and log the operation described by name and payload.
     def instrument(name, payload = {}, &blk)
+      time_elapse = @log_duration ? Time.now : nil
       res = yield
-      log_operation(name, payload)
+      log_operation(name, payload, time_elapse)
       res
     end
 
     protected
 
-    def log_operation(name, payload)
+    def log_operation(name, payload, time_elapse=nil)
       @logger ||= nil
       return unless @logger
       msg = "#{payload[:database]}['#{payload[:collection]}'].#{name}("
@@ -40,7 +41,11 @@ module Mongo
       msg += ".skip(#{payload[:skip]})"  if payload[:skip]
       msg += ".limit(#{payload[:limit]})"  if payload[:limit]
       msg += ".sort(#{payload[:order]})"  if payload[:order]
-      @logger.debug "MONGODB #{msg}"
+      if time_elapse
+        @logger.debug "MONGODB (#{Time.now - time_elapse}s) #{msg}"
+      else
+        @logger.debug "MONGODB #{msg}"
+      end
     end
 
   end
