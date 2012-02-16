@@ -137,6 +137,15 @@ class TestConnection < Test::Unit::TestCase
     assert output.string.include?("admin['$cmd'].find")
   end
 
+  def test_logging_duration
+    output = StringIO.new
+    logger = Logger.new(output)
+    logger.level = Logger::DEBUG
+    connection = standard_connection(:logger => logger, :log_duration => true).db(MONGO_TEST_DB)
+    assert output.string.index(/\(0.\d+s\)/)
+    assert output.string.include?("admin['$cmd'].find")
+  end
+
   def test_connection_logger
     output = StringIO.new
     logger = Logger.new(output)
@@ -146,6 +155,21 @@ class TestConnection < Test::Unit::TestCase
 
     connection.logger.debug 'testing'
     assert output.string.include?('testing')
+  end
+
+  def test_connection_log_duration_with_logger
+    output = StringIO.new
+    logger = Logger.new(output)
+    logger.level = Logger::DEBUG
+    connection = standard_connection(:logger => logger, :log_duration => true)
+    assert logger, connection.logger
+    assert connection.log_duration
+  end
+
+  def test_connection_log_duration_without_logger
+    connection = standard_connection(:log_duration => true)
+    assert_nil connection.logger
+    assert !connection.log_duration
   end
 
   def test_drop_database

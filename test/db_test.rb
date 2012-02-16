@@ -151,6 +151,13 @@ class DBTest < Test::Unit::TestCase
     @@db.remove_user('foo:bar')
   end
 
+  def test_authenticate_read_only
+    @@db.add_user('joebob', 'user', true) # read-only user
+    assert @@db.authenticate('joebob', 'user')
+    @@db.logout
+    @@db.remove_user('joebob')
+  end
+
   def test_authenticate_with_connection_uri
     @@db.add_user('spongebob', 'squarepants')
     assert Mongo::Connection.from_uri("mongodb://spongebob:squarepants@#{host_port}/#{@@db.name}")

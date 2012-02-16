@@ -71,6 +71,9 @@ module Mongo
     #  GridFileSystem#delete.
     # @option opts [Boolean] :safe (false) When safe mode is enabled, the chunks sent to the server
     #   will be validated using an md5 hash. If validation fails, an exception will be raised.
+    # @option opts [Integer] :versions (false) deletes all versions which exceed the number specified to 
+    #   retain ordered by uploadDate. This option only works in 'w' mode. Certain precautions must be taken when 
+    #   deleting GridFS files. See the notes under GridFileSystem#delete.
     #
     # @example
     #
@@ -97,7 +100,12 @@ module Mongo
     def open(filename, mode, opts={})
       opts = opts.dup
       opts.merge!(default_grid_io_opts(filename))
-      del  = opts.delete(:delete_old) && mode == 'w'
+      if mode == 'w'
+        versions = opts.delete(:versions)
+        if opts.delete(:delete_old) || (versions && versions < 1)
+          versions = 1
+        end
+      end
       file = GridIO.new(@files, @chunks, filename, mode, opts)
       return file unless block_given?
       result = nil
@@ -105,9 +113,9 @@ module Mongo
         result = yield file
       ensure
         id = file.close
-        if del
+        if versions
           self.delete do
-            @files.find({'filename' => filename, '_id' => {'$ne' => id}}, :fields => ['_id'])
+            @files.find({'filename' => filename, '_id' => {'$ne' => id}}, :fields => ['_id'], :sort => ['uploadDate', -1], :skip => (versions -1))
           end
         end
       end

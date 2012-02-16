@@ -36,7 +36,7 @@ module Mongo
 
     mongo_thread_local_accessor :connections
 
-    attr_reader :logger, :size, :auths, :primary, :safe, :host_to_try,
+    attr_reader :logger, :log_duration, :size, :auths, :primary, :safe, :host_to_try,
       :pool_size, :connect_timeout, :pool_timeout,
       :primary_pool, :socket_class, :op_timeout
 
@@ -63,6 +63,8 @@ module Mongo
     #   to a single, slave node.
     # @option opts [Logger, #debug] :logger (nil) A Logger instance for debugging driver ops. Note that
     #   logging negatively impacts performance; therefore, it should not be used for high-performance apps.
+    # @option opts [Boolean, #debug] :log_duration (nil) A boolean to say if you want see information about log_duration on logger
+    #   like logging, log_duration negatively impacts performance; therefore, it should not be used for high-performance apps.
     # @option opts [Integer] :pool_size (1) The maximum number of socket self.connections allowed per
     #   connection pool. Note: this setting is relevant only for multi-threaded applications.
     # @option opts [Float] :pool_timeout (5.0) When all of the self.connections a pool are checked out,
@@ -348,7 +350,7 @@ module Mongo
       self["admin"].command(oh)
     end
 
-    # Checks if a server is alive. This command will return immediately 
+    # Checks if a server is alive. This command will return immediately
     # even if the server is in a lock.
     #
     # @return [Hash]
@@ -383,7 +385,7 @@ module Mongo
       Thread.current[:socket_map] ||= {}
       Thread.current[:socket_map][self] ||= {}
       Thread.current[:socket_map][self][:writer] ||= checkout_writer
-      Thread.current[:socket_map][self][:reader] = 
+      Thread.current[:socket_map][self][:reader] =
         Thread.current[:socket_map][self][:writer]
     end
 
@@ -568,6 +570,7 @@ module Mongo
 
       if @logger
         write_logging_startup_message
+        @log_duration = opts[:log_duration] || false
       end
 
       should_connect = opts.fetch(:connect, true)

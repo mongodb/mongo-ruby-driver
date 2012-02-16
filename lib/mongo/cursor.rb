@@ -43,6 +43,7 @@ module Mongo
       @collection = collection
       @connection = @db.connection
       @logger     = @connection.logger
+      @log_duration = @connection.log_duration
 
       # Query selector
       @selector   = opts[:selector] || {}
@@ -199,7 +200,7 @@ module Mongo
     # This method overrides any sort order specified in the Collection#find
     # method, and only the last sort applied has an effect.
     #
-    # @param [Symbol, Array] key_or_list either 1) a key to sort by or 2) 
+    # @param [Symbol, Array] key_or_list either 1) a key to sort by or 2)
     #   an array of [key, direction] pairs to sort by. Direction should
     #   be specified as Mongo::ASCENDING (or :ascending / :asc) or Mongo::DESCENDING (or :descending / :desc)
     #

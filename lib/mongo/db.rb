@@ -173,12 +173,15 @@ module Mongo
     #
     # @param [String] username
     # @param [String] password
+    # @param [Boolean] read_only
+    #   Create a read-only user.
     #
     # @return [Hash] an object representing the user.
-    def add_user(username, password)
+    def add_user(username, password, read_only = false)
       users = self[SYSTEM_USER_COLLECTION]
       user  = users.find_one({:user => username}) || {:user => username}
       user['pwd'] = Mongo::Support.hash_password(username, password)
+      user['readOnly'] = true if read_only;
       users.save(user)
       return user
     end
