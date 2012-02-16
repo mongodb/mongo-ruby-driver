@@ -85,14 +85,26 @@ module Mongo
       else
         opts = {}
       end
-
+      
       unless args.length > 0
         raise MongoArgumentError, "A ReplSetConnection requires at least one seed node."
       end
+      
+      # This is temporary until support for the old format is dropped
+      @seeds = []
+      if args.first.last.is_a?(Integer)
+        warn "Initiating a ReplSetConnection with seeds passed as individual [host, port] array arguments is deprecated."
+        warn "Please specify hosts as 'host:port' strings; the old format will be removed in v2.0"
+        @seeds = args
+      else
+        args.first.map do |host_port|
+          seed = host_port.split(":")
+          seed[1] = seed[1].to_i
+          seeds << seed
+        end
+      end
 
-      # The original, immutable list of seed node.
       # TODO: add a method for replacing this list of node.
-      @seeds = args
       @seeds.freeze
 
       # TODO: get rid of this

@@ -108,6 +108,11 @@ class ConnectTest < Test::Unit::TestCase
     assert @conn.is_a?(ReplSetConnection)
     assert @conn.connected?
   end
+  
+  def test_connect_with_new_seed_format
+    @conn = ReplSetConnection.new(["#{@rs.host}:#{@rs.ports[0]}','#{@rs.host}:#{@rs.ports[1]}','#{@rs.host}:#{@rs.ports[2]}"])
+    assert @conn.connected?
+  end
 
   def test_connect_with_full_connection_string
     @conn = Connection.from_uri("mongodb://#{@rs.host}:#{@rs.ports[0]},#{@rs.host}:#{@rs.ports[1]}?replicaset=#{@rs.name};safe=true;w=2;fsync=true;slaveok=true")
