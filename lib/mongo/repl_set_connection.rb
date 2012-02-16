@@ -440,19 +440,18 @@ module Mongo
 
     # Generic initialization code.
     def setup(opts)
-      super opts
-      
       @safe_mutex_lock = Mutex.new
       @safe_mutexes = Hash.new {|hash, key| hash[key] = Mutex.new}
-
-      # Timeout on socket connect.
-      @connect_timeout = opts[:connect_timeout] || 30
 
       # Clean up connections to dead threads.
       @last_cleanup = Time.now
       @cleanup_lock = Mutex.new
 
       @last_refresh = Time.now
+      
+      opts[:connect_timeout] = opts[:connect_timeout] || 30
+      
+      super opts
     end
 
     # Checkout a socket connected to a node with one of
