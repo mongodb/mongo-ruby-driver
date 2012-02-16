@@ -13,7 +13,6 @@ class ReadPreferenceTest < Test::Unit::TestCase
           :refresh_mode => false, :refresh_interval => 5, :logger => log)
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
-    col = @db['mongo-test']
   end
 
   def teardown
@@ -32,6 +31,20 @@ class ReadPreferenceTest < Test::Unit::TestCase
     assert @conn.read_pool, "No read pool!"
     assert @conn.primary_pool.port != @conn.read_pool.port,
       "Primary port and read port at the same!"
+  end
+
+  def test_read_secondary_only
+    @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]], :read => :secondary_only)
+    assert_equal @conn.read_preference, :secondary_only
+    
+    @db = @conn.db(MONGO_TEST_DB)
+    @coll = @db.collection("test-sets")
+    @coll.save({:a => 20})
+    @rs.kill_all_secondaries
+    
+    assert_raise ConnectionFailure do
+      @coll.find_one
+    end
   end
 
   def test_query_secondaries

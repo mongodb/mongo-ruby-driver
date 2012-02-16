@@ -224,7 +224,6 @@ module Mongo
       @manager = background_manager
       old_manager.close(:soft => true)
       @refresh_version += 1
-
       return true
     end
 
@@ -324,11 +323,9 @@ module Mongo
       else
         connect
       end
-
       begin
         socket = get_socket_from_pool(self.read_pool)
-
-        if !socket
+        if !socket && @read != :secondary_only
           connect
           socket = get_socket_from_pool(self.primary_pool)
         end

@@ -232,7 +232,7 @@ module Mongo
     # If more than one node is available, use the ping
     # time to figure out which nodes to choose from.
     def set_read_pool
-      if @secondary_pools.empty?
+      if @secondary_pools.empty? && @connection.read_preference != :secondary_only
          @read_pool = @primary_pool
       elsif @secondary_pools.size == 1
          @read_pool = @secondary_pools[0]

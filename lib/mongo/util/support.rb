@@ -59,11 +59,11 @@ module Mongo
     end
 
     def validate_read_preference(value)
-      if [:primary, :secondary, nil].include?(value)
+      if [:primary, :secondary, :secondary_only, nil].include?(value)
         return true
       else
         raise MongoArgumentError, "#{value} is not a valid read preference. " +
-          "Please specify either :primary or :secondary."
+          "Please specify either :primary or :secondary or :secondary_only."
       end
     end
 
