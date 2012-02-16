@@ -43,7 +43,6 @@ module Mongo
       @collection = collection
       @connection = @db.connection
       @logger     = @connection.logger
-      @log_duration = @connection.log_duration
 
       # Query selector
       @selector   = opts[:selector] || {}
