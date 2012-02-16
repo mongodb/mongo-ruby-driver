@@ -94,7 +94,7 @@ module Mongo
       @seeds = []
       if args.first.last.is_a?(Integer)
         warn "Initiating a ReplSetConnection with seeds passed as individual [host, port] array arguments is deprecated."
-        warn "Please specify hosts as 'host:port' strings; the old format will be removed in v2.0"
+        warn "Please specify hosts as an array of 'host:port' strings; the old format will be removed in v2.0"
         @seeds = args
       else
         args.first.map do |host_port|
