@@ -13,7 +13,7 @@ class ReadTest < Test::Unit::TestCase
   context "Read mode on replica set connection: " do
     setup do
       @read_preference = :secondary
-      @con = Mongo::ReplSetConnection.new(['localhost', 27017], :read => @read_preference, :connect => false)
+      @con = Mongo::ReplSetConnection.new(['localhost:27017'], :read => @read_preference, :connect => false)
     end
 
     should "store read preference on Connection" do

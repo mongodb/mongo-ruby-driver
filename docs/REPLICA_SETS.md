@@ -11,13 +11,13 @@ takes a list of seed nodes followed by any connection options. You'll want to sp
 the driver more chances to connect in the event that any one seed node is offline. Once the driver connects, it will
 cache the replica set topology as reported by the given seed node and use that information if a failover is later required.
 
-    @connection = ReplSetConnection.new(['n1.mydb.net', 27017], ['n2.mydb.net', 27017], ['n3.mydb.net', 27017])
+    @connection = ReplSetConnection.new(['n1.mydb.net:27017', 'n2.mydb.net:27017', 'n3.mydb.net:27017'])
 
 ### Read slaves
 
 If you want to read from a secondary node, you can pass :read => :secondary to ReplSetConnection#new.
 
-    @connection = ReplSetConnection.new(['n1.mydb.net', 27017], ['n2.mydb.net', 27017], ['n3.mydb.net', 27017],
+    @connection = ReplSetConnection.new(['n1.mydb.net:27017', 'n2.mydb.net:27017', 'n3.mydb.net:27017'],
                   :read => :secondary)
 
 A random secondary will be chosen to be read from. In a typical multi-process Ruby application, you'll have a good distribution of reads across secondary nodes.
@@ -48,18 +48,18 @@ having to manually restart your app server, then you should enable it. You can e
 synchronously, which will refresh the replica set data in a synchronous fashion (which may
 ocassionally slow down your queries):
 
-    @connection = ReplSetConnection.new(['n1.mydb.net', 27017], :refresh_mode => :sync)
+    @connection = ReplSetConnection.new(['n1.mydb.net:27017'], :refresh_mode => :sync)
 
 If you want to change the default refresh interval of 90 seconds, you can do so like this:
 
-    @connection = ReplSetConnection.new(['n1.mydb.net', 27017], :refresh_mode => :sync,
+    @connection = ReplSetConnection.new(['n1.mydb.net:27017'], :refresh_mode => :sync,
         :refresh_interval => 60)
 
 Do not set this value to anything lower than 30, or you may start to experience performance issues.
 
 You can also disable refresh mode altogether:
 
-    @connection = ReplSetConnection.new(['n1.mydb.net', 27017], :refresh_mode => false)
+    @connection = ReplSetConnection.new(['n1.mydb.net:27017'], :refresh_mode => false)
 
 And you can call `refresh` manually on any replica set connection:
 

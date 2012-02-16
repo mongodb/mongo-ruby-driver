@@ -17,7 +17,7 @@ The Ruby driver allows you to set read preference on each of four levels: the co
 Objects will inherit the default read preference from their parents. Thus, if you set a read preference of `{:read => :secondary}` when creating
 a new connection, then all databases and collections created from that connection will inherit the same setting. See this code example:
 
-    @con = Mongo::ReplSetConnection.new([['localhost', 27017], ['localhost', 27018]], :read => :secondary)
+    @con = Mongo::ReplSetConnection.new(['localhost:27017','localhost:27018'], :read => :secondary)
     @db  = @con['test']
     @collection = @db['foo']
     @collection.find({:name => 'foo'})
