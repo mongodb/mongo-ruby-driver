@@ -20,7 +20,6 @@ module Mongo
 
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
-    CLEANUP_INTERVAL = 300
 
     attr_reader :replica_set_name, :seeds, :refresh_interval, :refresh_mode,
       :refresh_version
@@ -107,13 +106,11 @@ module Mongo
       # TODO: add a method for replacing this list of node.
       @seeds.freeze
 
-      # TODO: get rid of this
-      @nodes = @seeds.dup
-
       # Refresh
       @refresh_mode = opts.fetch(:refresh_mode, false)
       @refresh_interval = opts[:refresh_interval] || 90
       @last_refresh = Time.now
+      @refresh_version = 0
 
       # No connection manager by default.
       @manager = nil
@@ -139,7 +136,6 @@ module Mongo
       end
 
       @connected = false
-      @refresh_version = 0
 
       # Replica set name
       if opts[:rs_name]

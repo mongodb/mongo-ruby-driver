@@ -407,10 +407,6 @@ module Mongo
     end
     alias :reconnect :connect
 
-    def connecting?
-      @nodes_to_try.length > 0
-    end
-
     # It's possible that we defined connected as all nodes being connected???
     # NOTE: Do check if this needs to be more stringent.
     # Probably not since if any node raises a connection failure, all nodes will be closed.
