@@ -451,12 +451,6 @@ module Mongo
     def setup(opts)
       @safe_mutex_lock = Mutex.new
       @safe_mutexes = Hash.new {|hash, key| hash[key] = Mutex.new}
-
-      # Clean up connections to dead threads.
-      @last_cleanup = Time.now
-      @cleanup_lock = Mutex.new
-
-      @last_refresh = Time.now
       
       opts[:connect_timeout] = opts[:connect_timeout] || 30
       

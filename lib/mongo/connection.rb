@@ -542,16 +542,9 @@ module Mongo
       # Timeout on socket connect.
       @connect_timeout = opts[:connect_timeout] || nil
 
-      # Mutex for synchronizing pool access
-      # TODO: remove this.
-      @connection_mutex = Mutex.new
-
       # Global safe option. This is false by default.
       @safe = opts[:safe] || false
-
-      # Condition variable for signal and wait
-      @queue = ConditionVariable.new
-
+      
       # Connection pool for primay node
       @primary      = nil
       @primary_pool = nil
