@@ -155,11 +155,11 @@ class ReplSetManager
     return secondary
   end
 
-  def add_node(n=nil)
+  def add_node(n=nil, &block)
     primary = get_node_with_state(1)
     con = get_connection(primary)
 
-    init_node(n || @mongods.length)
+    init_node(n || @mongods.length, &block)
     config = con['local']['system.replset'].find_one
     @config['version'] = config['version'] + 1
 
@@ -171,6 +171,12 @@ class ReplSetManager
 
     con.close
     ensure_up
+  end
+  
+  def add_arbiter
+    add_node do |attrs|
+      attrs['arbiterOnly'] = true
+    end
   end
   
   def wait_for_death(pid)
