@@ -2,8 +2,8 @@ module Mongo
   class PoolManager
 
     attr_reader :connection, :arbiters, :primary, :secondaries, :primary_pool,
-      :read_pool, :secondary_pools, :hosts, :nodes, :max_bson_size,
-      :tags_to_pools, :tag_map, :members
+      :read_pool, :secondary_pool, :secondary_pools, :hosts, :nodes,
+      :max_bson_size, :tags_to_pools, :tag_map, :members
 
     # Create a new set of connection pools.
     #
@@ -140,6 +140,7 @@ module Mongo
       @read_pool = nil
       @arbiters = []
       @secondaries = []
+      @secondary_pool = nil
       @secondary_pools = []
       @hosts = Set.new
       @members = Set.new
@@ -232,12 +233,14 @@ module Mongo
     # If more than one node is available, use the ping
     # time to figure out which nodes to choose from.
     def set_read_pool
-      if @secondary_pools.empty? && @connection.read_preference != :secondary_only
-         @read_pool = @primary_pool
+      if @secondary_pools.empty?
+        @read_pool = @primary_pool
       elsif @secondary_pools.size == 1
-         @read_pool = @secondary_pools[0]
+        @read_pool = @secondary_pools[0]
+        @secondary_pool = @read_pool
       else
         @read_pool = nearby_pool_from_set(@secondary_pools)
+        @secondary_pool = @read_pool
       end
     end
 

@@ -321,7 +321,7 @@ module Mongo
       end
       begin
         socket = get_socket_from_pool(self.read_pool)
-        if !socket && @read != :secondary_only
+        if !socket
           connect
           socket = get_socket_from_pool(self.primary_pool)
         end
@@ -334,6 +334,26 @@ module Mongo
         socket
       else
         raise ConnectionFailure.new("Could not connect to a node for reading.")
+      end
+    end
+    
+    def checkout_secondary
+      if connected?
+        sync_refresh
+      else
+        connect
+      end
+      begin
+        socket = get_socket_from_pool(self.secondary_pool)
+      rescue => ex
+        checkin(socket) if socket
+        raise ex
+      end
+
+      if socket
+        socket
+      else
+        raise ConnectionFailure.new("Could not connect to a secondary for reading.")
       end
     end
 
@@ -423,6 +443,10 @@ module Mongo
 
     def read_pool
       @manager ? @manager.read_pool : nil
+    end
+    
+    def secondary_pool
+      @manager ? @manager.secondary_pool : nil
     end
 
     def secondary_pools

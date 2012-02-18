@@ -522,6 +522,8 @@ module Mongo
         @checkin_connection = true
         if @command || @read_preference == :primary
           socket = @connection.checkout_writer
+        elsif @read_preference == :secondary_only
+          socket = @connection.checkout_secondary
         else
           @read_pool = @connection.read_pool
           socket = @connection.checkout_reader

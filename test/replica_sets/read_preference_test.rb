@@ -34,17 +34,34 @@ class ReadPreferenceTest < Test::Unit::TestCase
   end
 
   def test_read_secondary_only
-    @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]], :read => :secondary_only)
-    assert_equal @conn.read_preference, :secondary_only
+    @rs.add_arbiter
+    @rs.remove_secondary_node
     
+    @conn = ReplSetConnection.new(["#{@rs.host}:#{@rs.ports[0]}","#{@rs.host}:#{@rs.ports[1]}"],
+      :read => :secondary_only)
+
     @db = @conn.db(MONGO_TEST_DB)
     @coll = @db.collection("test-sets")
-    @coll.save({:a => 20})
-    @rs.kill_all_secondaries
     
-    assert_raise ConnectionFailure do
+    @coll.save({:a => 20}, :safe => {:w => 2})
+
+    # Test that reads are going to secondary on ReplSetConnection
+    @secondary = Connection.new(@rs.host, @conn.read_pool.port, :slave_ok => true)
+    queries_before = @secondary['admin'].command({:serverStatus => 1})['opcounters']['query']
+    @coll.find_one
+    queries_after = @secondary['admin'].command({:serverStatus => 1})['opcounters']['query']
+    assert_equal 1, queries_after - queries_before
+
+    @rs.kill_secondary
+    @conn.refresh
+    
+    # Test that reads are only allowed from secondaries
+    assert_raise ConnectionFailure.new("Could not connect to a secondary for reading.") do
       @coll.find_one
     end
+        
+    @rs = ReplSetManager.new
+    @rs.start_set
   end
 
   def test_query_secondaries
