@@ -33,20 +33,20 @@ module Mongo
     #
     # @param [Array] seeds "host:port" strings
     #
-    # @option options [String] :rs_name (nil) The name of the replica set to connect to. You
+    # @option opts [String] :rs_name (nil) The name of the replica set to connect to. You
     #   can use this option to verify that you're connecting to the right replica set.
-    # @option options [Boolean, Hash] :safe (false) Set the default safe-mode options
+    # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
     #   propogated to DB objects instantiated off of this Connection. This
     #   default can be overridden upon instantiation of any DB by explicity setting a :safe value
     #   on initialization.
-    # @option options [:primary, :secondary] :read (:primary) The default read preference for Mongo::DB
+    # @option opts [:primary, :secondary] :read (:primary) The default read preference for Mongo::DB
     #   objects created from this connection object. If +:secondary+ is chosen, reads will be sent
     #   to one of the closest available secondary nodes. If a secondary node cannot be located, the
     #   read will be sent to the primary.
-    # @option options [Logger] :logger (nil) Logger instance to receive driver operation log.
-    # @option options [Integer] :pool_size (1) The maximum number of socket connections allowed per
+    # @option opts [Logger] :logger (nil) Logger instance to receive driver operation log.
+    # @option opts [Integer] :pool_size (1) The maximum number of socket connections allowed per
     #   connection pool. Note: this setting is relevant only for multi-threaded applications.
-    # @option options [Float] :pool_timeout (5.0) When all of the connections a pool are checked out,
+    # @option opts [Float] :pool_timeout (5.0) When all of the connections a pool are checked out,
     #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
     #   Note: this setting is relevant only for multi-threaded applications.
     # @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.
