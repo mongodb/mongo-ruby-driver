@@ -7,10 +7,15 @@ class ReadPreferenceTest < Test::Unit::TestCase
   def setup
     ensure_rs
     log = Logger.new("test.log")
-    @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]],
-                                 [@rs.host, @rs.ports[1]],
-          :read => :secondary, :pool_size => 50,
-          :refresh_mode => false, :refresh_interval => 5, :logger => log)
+    seeds = build_seeds(2)
+    args = {
+      :read => :secondary,
+      :pool_size => 50,
+      :refresh_mode => false,
+      :refresh_interval => 5,
+      :logger => log
+    }
+    @conn = ReplSetConnection.new(seeds, args)
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
   end
@@ -37,8 +42,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
     @rs.add_arbiter
     @rs.remove_secondary_node
     
-    @conn = ReplSetConnection.new(["#{@rs.host}:#{@rs.ports[0]}","#{@rs.host}:#{@rs.ports[1]}"],
-      :read => :secondary_only)
+    @conn = ReplSetConnection.new(build_seeds(2), :read => :secondary_only)
 
     @db = @conn.db(MONGO_TEST_DB)
     @coll = @db.collection("test-sets")

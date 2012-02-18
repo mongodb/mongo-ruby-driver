@@ -13,32 +13,30 @@ class BasicTest < Test::Unit::TestCase
   end
 
   def test_connect
-    @conn = ReplSetConnection.new([@rs.host, @rs.ports[1]], [@rs.host, @rs.ports[0]],
-      [@rs.host, @rs.ports[2]], :name => @rs.name)
+    @conn = ReplSetConnection.new(build_seeds(3), :name => @rs.name)
     assert @conn.connected?
 
     assert_equal @rs.primary, @conn.primary
     assert_equal @rs.secondaries.sort, @conn.secondaries.sort
     assert_equal @rs.arbiters.sort, @conn.arbiters.sort
 
-    @conn = ReplSetConnection.new([@rs.host, @rs.ports[1]], [@rs.host, @rs.ports[0]],
+    @conn = ReplSetConnection.new(["#{@rs.host}:#{@rs.ports[1]}","#{@rs.host}:#{@rs.ports[0]}"],
       :name => @rs.name)
     assert @conn.connected?
   end
 
   def test_cache_original_seed_nodes
-    @conn = ReplSetConnection.new([@rs.host, @rs.ports[1]], [@rs.host, @rs.ports[0]],
-      [@rs.host, @rs.ports[2]], [@rs.host, 19356], :name => @rs.name)
+    seeds = build_seeds(3) << "#{@rs.host}:19356"
+    @conn = ReplSetConnection.new(seeds, :name => @rs.name)
     assert @conn.connected?
     assert @conn.seeds.include?([@rs.host, 19356]), "Original seed nodes not cached!"
     assert_equal [@rs.host, 19356], @conn.seeds.last, "Original seed nodes not cached!"
   end
 
   def test_accessors
-    seeds = [[@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]],
-      [@rs.host, @rs.ports[2]]]
-    args = seeds << {:name => @rs.name}
-    @conn = ReplSetConnection.new(*args)
+    seeds = build_seeds(3)
+    args = {:name => @rs.name}
+    @conn = ReplSetConnection.new(seeds, args)
     @major_version = @rs.version.first
 
     assert_equal @conn.host, @rs.primary[0]
@@ -59,10 +57,9 @@ class BasicTest < Test::Unit::TestCase
   context "Socket pools" do
     context "checking out writers" do
       setup do
-        seeds = [[@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]],
-          [@rs.host, @rs.ports[2]]]
-        args = seeds << {:name => @rs.name}
-        @con = ReplSetConnection.new(*args)
+        seeds = build_seeds(3)
+        args = {:name => @rs.name}
+        @con = ReplSetConnection.new(seeds, args)
         @coll = @con[MONGO_TEST_DB]['test-connection-exceptions']
       end
 

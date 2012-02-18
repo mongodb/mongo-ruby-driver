@@ -28,4 +28,12 @@ class Test::Unit::TestCase
       retry
     end
   end
+  
+  def build_seeds(num_hosts)
+    seeds = []
+    num_hosts.times do |n|
+      seeds << "#{@rs.host}:#{@rs.ports[n]}"
+    end
+    seeds
+  end
 end

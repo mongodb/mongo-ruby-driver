@@ -1,7 +1,7 @@
 require File.join(File.dirname(__FILE__), '..', '..', '..', 'lib', 'mongo')
 require 'logger'
 
-$con = Mongo::ReplSetConnection.new(['localhost', 30000], ['localhost', 30001], :read => :secondary, :refresh_mode => :sync, :refresh_interval => 30)
+$con = Mongo::ReplSetConnection.new(['localhost:30000', 'localhost:30001'], :read => :secondary, :refresh_mode => :sync, :refresh_interval => 30)
 $db = $con['foo']
 
 class Load < Sinatra::Base

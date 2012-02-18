@@ -15,8 +15,7 @@ class AuthTest < Test::Unit::TestCase
   end
 
   def test_repl_set_auth
-    @conn = ReplSetConnection.new([@manager.host, @manager.ports[0]], [@manager.host, @manager.ports[1]],
-      [@manager.host, @manager.ports[2]], :name => @manager.name)
+    @conn = ReplSetConnection.new(build_seeds(3), :name => @manager.name)
 
     # Add an admin user
     @conn['admin'].add_user("me", "secret")

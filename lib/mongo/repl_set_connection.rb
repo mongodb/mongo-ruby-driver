@@ -31,8 +31,7 @@ module Mongo
     # Connection#arbiters. This is useful if your application needs to connect manually to nodes other
     # than the primary.
     #
-    # @param [Array] args A list of host-port pairs to be used as seed nodes followed by a
-    #   hash containing any options. See the examples below for exactly how to use the constructor.
+    # @param [Array] seeds "host:port" strings
     #
     # @option options [String] :rs_name (nil) The name of the replica set to connect to. You
     #   can use this option to verify that you're connecting to the right replica set.
@@ -62,10 +61,10 @@ module Mongo
     #   between calls to check the replica set's state.
     # @option opts [Boolean] :require_primary (true) If true, require a primary node for the connection
     #   to succeed. Otherwise, connection will succeed as long as there's at least one secondary node.
+    # Note: that the number of seed nodes does not have to be equal to the number of replica set members.
+    # The purpose of seed nodes is to permit the driver to find at least one replica set member even if a member is down.
     #
-    # @example Connect to a replica set and provide two seed nodes. Note that the number of seed nodes does
-    #   not have to be equal to the number of replica set members. The purpose of seed nodes is to permit
-    #   the driver to find at least one replica set member even if a member is down.
+    # @example Connect to a replica set and provide two seed nodes.
     #   ReplSetConnection.new(['localhost:30000', 'localhost:30001'])
     #
     # @example Connect to a replica set providing two seed nodes and ensuring a connection to the replica set named 'prod':

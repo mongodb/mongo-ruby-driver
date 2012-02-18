@@ -5,9 +5,7 @@ class ReplicaSetCountTest < Test::Unit::TestCase
 
   def setup
     ensure_rs
-    @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]],
-                                  [@rs.host, @rs.ports[1]], [@rs.host, @rs.ports[2]],
-                                  :read => :secondary)
+    @conn = ReplSetConnection.new(build_seeds(3), :read => :secondary)
     assert @conn.primary_pool
     @primary = Connection.new(@conn.primary_pool.host, @conn.primary_pool.port)
     @db = @conn.db(MONGO_TEST_DB)

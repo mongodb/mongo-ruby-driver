@@ -5,8 +5,7 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
 
   def setup
     ensure_rs
-    @conn = ReplSetConnection.new([TEST_HOST, @rs.ports[0]],
-                                  [TEST_HOST, @rs.ports[1]], [TEST_HOST, @rs.ports[2]])
+    @conn = ReplSetConnection.new build_seeds(3)
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets")

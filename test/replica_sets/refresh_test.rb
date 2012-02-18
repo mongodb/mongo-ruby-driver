@@ -17,17 +17,11 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     Benchmark.bm do |x|
       x.report("Connect") do
         10.times do
-          ReplSetConnection.new([@rs.host, @rs.ports[0]],
-                                [@rs.host, @rs.ports[1]],
-                                [@rs.host, @rs.ports[2]],
-                                :refresh_mode => false)
+          ReplSetConnection.new(build_seeds(3), :refresh_mode => false)
         end
       end
 
-          @con = ReplSetConnection.new([@rs.host, @rs.ports[0]],
-                                       [@rs.host, @rs.ports[1]],
-                                       [@rs.host, @rs.ports[2]],
-                                       :refresh_mode => false)
+      @con = ReplSetConnection.new(build_seeds(3), :refresh_mode => false)
 
       x.report("manager") do
         man = Mongo::PoolManager.new(@con, @con.seeds)
@@ -43,10 +37,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     sleep(4)
 
     rescue_connection_failure do
-      @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]],
-                                    [@rs.host, @rs.ports[1]],
-                                    [@rs.host, @rs.ports[2]],
-                                    :refresh_mode => false)
+      @conn = ReplSetConnection.new(build_seeds(3), :refresh_mode => false)
     end
 
     assert_equal [], @conn.secondaries
@@ -75,11 +66,8 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     sleep(4)
     
     rescue_connection_failure do
-      @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]],
-                                    [@rs.host, @rs.ports[1]],
-                                    [@rs.host, @rs.ports[2]],
-                                    :refresh_interval => 2,
-                                    :refresh_mode => :sync)
+      @conn = ReplSetConnection.new(build_seeds(3),
+        :refresh_interval => 2, :refresh_mode => :sync)
     end
 
     assert_equal [], @conn.secondaries
@@ -101,11 +89,8 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
   end
   
   def test_automated_refresh_when_secondary_goes_down
-    @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]],
-                                  [@rs.host, @rs.ports[1]],
-                                  [@rs.host, @rs.ports[2]],
-                                  :refresh_interval => 2,
-                                  :refresh_mode => :sync)
+    @conn = ReplSetConnection.new(build_seeds(3),
+      :refresh_interval => 2, :refresh_mode => :sync)
 
     num_secondaries = @conn.secondary_pools.length
     old_refresh_version = @conn.refresh_version
@@ -123,11 +108,8 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
   end
 
   def test_automated_refresh_with_removed_node
-    @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]],
-                                  [@rs.host, @rs.ports[1]],
-                                  [@rs.host, @rs.ports[2]],
-                                  :refresh_interval => 2,
-                                  :refresh_mode => :sync)
+    @conn = ReplSetConnection.new(build_seeds(3),
+      :refresh_interval => 2, :refresh_mode => :sync)
 
     num_secondaries = @conn.secondary_pools.length
     old_refresh_version = @conn.refresh_version
@@ -145,19 +127,15 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
   end
 
   def test_adding_and_removing_nodes
-    @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]],
-                                  [@rs.host, @rs.ports[1]],
-                                  [@rs.host, @rs.ports[2]],
-                                  :refresh_interval => 2, :refresh_mode => :sync)
+    @conn = ReplSetConnection.new(build_seeds(3),
+      :refresh_interval => 2, :refresh_mode => :sync)
 
     @rs.add_node
     sleep(4)
     @conn['foo']['bar'].find_one
 
-    @conn2 = ReplSetConnection.new([@rs.host, @rs.ports[0]],
-                                   [@rs.host, @rs.ports[1]],
-                                   [@rs.host, @rs.ports[2]],
-                                   :refresh_interval => 2, :refresh_mode => :sync)
+    @conn2 = ReplSetConnection.new(build_seeds(3),
+      :refresh_interval => 2, :refresh_mode => :sync)
 
     assert @conn2.secondaries.sort == @conn.secondaries.sort,
       "Second connection secondaries not equal to first."

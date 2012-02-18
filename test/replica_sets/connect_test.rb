@@ -21,8 +21,7 @@ class ConnectTest < Test::Unit::TestCase
 
   def test_connect_bad_name
     assert_raise_error(ReplicaSetConnectionError, "-wrong") do
-      @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]],
-        [@rs.host, @rs.ports[2]], :name => @rs.name + "-wrong")
+      @conn = ReplSetConnection.new(build_seeds(3), :name => @rs.name + "-wrong")
     end
   end
 
@@ -32,14 +31,12 @@ class ConnectTest < Test::Unit::TestCase
     # Becuase we're killing the primary and trying to connect right away,
     # this is going to fail right away.
     assert_raise_error(ConnectionFailure, "Failed to connect to primary node") do
-      @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]],
-        [@rs.host, @rs.ports[2]])
+      @conn = ReplSetConnection.new build_seeds(3)
     end
 
     # This allows the secondary to come up as a primary
     rescue_connection_failure do
-      @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]],
-        [@rs.host, @rs.ports[2]])
+      @conn = ReplSetConnection.new build_seeds(3)
     end
   end
 
@@ -47,8 +44,7 @@ class ConnectTest < Test::Unit::TestCase
     node = @rs.kill_secondary
 
     rescue_connection_failure do
-      @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]],
-        [@rs.host, @rs.ports[2]])
+      @conn = ReplSetConnection.new build_seeds(3)
     end
     assert @conn.connected?
   end
@@ -57,15 +53,13 @@ class ConnectTest < Test::Unit::TestCase
     @rs.kill(@rs.get_node_from_port(@rs.ports[2]))
 
     rescue_connection_failure do
-      @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]],
-        [@rs.host, @rs.ports[2]])
+      @conn = ReplSetConnection.new build_seeds(3)
     end
     assert @conn.connected?
   end
 
   def test_connect_with_primary_stepped_down
-    @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]],
-      [@rs.host, @rs.ports[2]])
+    @conn = ReplSetConnection.new build_seeds(3)
     @conn[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 3}})
     assert @conn[MONGO_TEST_DB]['bar'].find_one
 
@@ -85,8 +79,7 @@ class ConnectTest < Test::Unit::TestCase
   end
 
   def test_save_with_primary_stepped_down
-    @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]],
-      [@rs.host, @rs.ports[2]])
+    @conn = ReplSetConnection.new build_seeds(3)
 
     primary = Mongo::Connection.new(@conn.primary_pool.host, @conn.primary_pool.port)
 
@@ -110,7 +103,12 @@ class ConnectTest < Test::Unit::TestCase
   end
   
   def test_connect_with_new_seed_format
-    @conn = ReplSetConnection.new(["#{@rs.host}:#{@rs.ports[0]}','#{@rs.host}:#{@rs.ports[1]}','#{@rs.host}:#{@rs.ports[2]}"])
+    @conn = ReplSetConnection.new build_seeds(3)
+    assert @conn.connected?
+  end
+  
+  def test_connect_with_old_seed_format
+    @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]], [@rs.host, @rs.ports[2]])
     assert @conn.connected?
   end
 

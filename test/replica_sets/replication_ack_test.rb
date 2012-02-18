@@ -5,7 +5,7 @@ class ReplicaSetAckTest < Test::Unit::TestCase
 
   def setup
     ensure_rs
-    @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]])
+    @conn = ReplSetConnection.new(build_seeds(1))
 
     @slave1 = Connection.new(@conn.secondary_pools[0].host,
       @conn.secondary_pools[0].port, :slave_ok => true)

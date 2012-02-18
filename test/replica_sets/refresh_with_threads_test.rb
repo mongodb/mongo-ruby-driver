@@ -15,12 +15,13 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
   end
 
   def test_read_write_load_with_added_nodes
-    @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]],
-                                  [@rs.host, @rs.ports[1]],
-                                  [@rs.host, @rs.ports[2]],
-                                  :refresh_interval => 5,
-                                  :refresh_mode => :sync,
-                                  :read => :secondary)
+    seeds = build_seeds(3)
+    args = {
+      :refresh_interval => 5,
+      :refresh_mode => :sync,
+      :read => :secondary
+    }
+    @conn = ReplSetConnection.new(seeds, args)
     @duplicate = @conn[MONGO_TEST_DB]['duplicate']
     @unique    = @conn[MONGO_TEST_DB]['unique']
     @duplicate.insert("test" => "insert")
