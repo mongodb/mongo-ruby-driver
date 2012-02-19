@@ -89,7 +89,16 @@ class BasicTest < Test::Unit::TestCase
         rescue SystemStackError
         end
       end
-
+    end
+    
+    context "checking out readers" do
+      setup do
+        seeds = build_seeds(3)
+        args = {:name => @rs.name}
+        @con = ReplSetConnection.new(seeds, args)
+        @coll = @con[MONGO_TEST_DB]['test-connection-exceptions']
+      end
+      
       should "close the connection on receive_message for major exceptions" do
         @con.expects(:checkout_reader).raises(SystemStackError)
         @con.expects(:close)

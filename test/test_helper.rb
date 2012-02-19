@@ -1,7 +1,7 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'rubygems' if RUBY_VERSION < '1.9.0' && ENV['C_EXT']
+require 'rubygems' if RUBY_VERSION
 require 'mongo'
-gem 'test-unit' if RUBY_VERSION > '1.9.0'
+gem 'test-unit'
 require 'test/unit'
 
 def silently
