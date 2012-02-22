@@ -16,10 +16,10 @@
 # limitations under the License.
 # ++
 
-MINIMUM_BSON_EXT_VERSION = "1.5.2"
+MINIMUM_BSON_EXT_VERSION = "1.6.0"
 
 module BSON
-  VERSION = "1.5.2"
+  VERSION = "1.6.0"
 
   if defined? Mongo::DEFAULT_MAX_BSON_SIZE
     DEFAULT_MAX_BSON_SIZE = Mongo::DEFAULT_MAX_BSON_SIZE

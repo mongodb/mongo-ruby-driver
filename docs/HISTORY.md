@@ -1,5 +1,20 @@
 # MongoDB Ruby Driver History
 
+### 1.6.0
+2012-02-22
+
+* Added Gemfile
+* ReplSetConnection seed format is now array of 'host:port' strings
+* Added read preference :secondary_only
+* Added ability to log duration -- enabled by default (Cyril Mougel)
+* Added read_only option for DB#add_user (Ariel Salomon)
+* Added :collect_on_error option for bulk-insert (Masahiro Nakagawa)
+* Added and updated URI options (now case insensitive)
+* Bug fix for ReplSet refresh attempting to close a closed socket
+* Default op_timeout for ReplSetConnection is now disabled (was 30 seconds)
+* Support db output option for map reduce (John Ewart)
+* Support for keeping limited versions of files using GridFS (VvanGemert)
+
 ### 1.5.2
 2011-12-13
 
