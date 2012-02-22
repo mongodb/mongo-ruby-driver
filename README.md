@@ -37,7 +37,7 @@ for much more:
 
 ### Ruby Versions
 
-The driver works and is consistently tested on Ruby 1.8.6, 1.8.7, and 1.9.2, and JRuby 1.5.1.
+The driver works and is consistently tested on Ruby 1.8.7 and 1.9.3 as well as JRuby 1.6.6.
 
 Note that if you're on 1.8.7, be sure that you're using a patchlevel >= 249. There
 are some IO bugs in earlier versions.
