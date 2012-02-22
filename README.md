@@ -198,7 +198,7 @@ Here is a sample primary key factory, taken from the tests:
 
     class TestPKFactory
       def create_pk(row)
-        row['_id'] ||= Mongo::ObjectID.new
+        row['_id'] ||= BSON::ObjectId.new
         row
       end
     end
@@ -212,7 +212,7 @@ ActiveRecord-like framework for non-Rails apps) and the AR Mongo adapter code
       def create_pk(row)
         return row if row[:_id]
         row.delete(:_id)      # in case it exists but the value is nil
-        row['_id'] ||= Mongo::ObjectID.new
+        row['_id'] ||= BSON::ObjectId.new
         row
       end
     end
