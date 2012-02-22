@@ -283,12 +283,9 @@ To run any individual rake tasks with the C extension enabled, just pass C_EXT=t
 
     $ rake test:unit C_EXT=true
 
-If you want to test replica set, you can run the following tests
-individually:
+If you want to test replica set, you can run the following task:
 
-    $ rake test:replica_set_count
-    $ rake test:replica_set_insert
-    $ rake test:replica_set_query
+    $ rake test:rs
 
 ### Shoulda and Mocha
 
