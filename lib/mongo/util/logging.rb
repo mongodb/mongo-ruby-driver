@@ -31,7 +31,7 @@ module Mongo
     def instrument(name, payload = {}, &blk)
       start_time = Time.now
       res = yield
-      if @logger && (@logger.level == DEBUG_LEVEL)
+      if @logger && @logger.respond_to?("level") && (@logger.level == DEBUG_LEVEL)
         log_operation(name, payload, start_time)
       end
       res
