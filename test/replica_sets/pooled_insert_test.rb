@@ -7,7 +7,7 @@ class ReplicaSetPooledInsertTest < Test::Unit::TestCase
 
   def setup
     ensure_rs
-    @conn = ReplSetConnection.new(build_seeds(3), :pool_size => 5, :timeout => 5, :refresh_mode => false)
+    @conn = ReplSetConnection.new(build_seeds(3), :pool_size => 10, :timeout => 5, :refresh_mode => false)
     @db = @conn.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets")
