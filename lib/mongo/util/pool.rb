@@ -19,6 +19,7 @@ module Mongo
   class Pool
     PING_ATTEMPTS  = 6
     MAX_PING_TIME  = 1_000_000
+    PRUNE_INTERVAL = 1000
 
     attr_accessor :host, :port, :address,
       :size, :timeout, :safe, :checked_out, :connection
@@ -36,8 +37,8 @@ module Mongo
       @address = "#{@host}:#{@port}"
 
       # Pool size and timeout.
-      @size      = opts[:size] || 10000
-      @timeout   = opts[:timeout]   || 5.0
+      @size    = opts.fetch(:size, 20)
+      @timeout = opts.fetch(:timeout, 30)
 
       # Mutex for synchronizing pool access
       @connection_mutex = Mutex.new
@@ -51,11 +52,11 @@ module Mongo
       @sockets      = []
       @pids         = {}
       @checked_out  = []
-      @threads      = {}
       @ping_time    = nil
       @last_ping    = nil
       @closed       = false
-      @last_pruning = Time.now
+      @threads_to_sockets = {}
+      @checkout_counter   = 0
     end
 
     # Close this pool.
@@ -179,7 +180,7 @@ module Mongo
       @sockets << socket
       @pids[socket] = Process.pid
       @checked_out << socket
-      @threads[socket] = Thread.current.object_id
+      @threads_to_sockets[Thread.current] = socket
       socket
     end
 
@@ -216,8 +217,11 @@ module Mongo
     #
     # This method is called exclusively from #checkout;
     # therefore, it runs within a mutex.
-    def checkout_existing_socket
-      socket = (@sockets - @checked_out).first
+    def checkout_existing_socket(socket=nil)
+      if !socket
+        socket = (@sockets - @checked_out).first
+      end
+
       if @pids[socket] != Process.pid
          @pids[socket] = nil
          @sockets.delete(socket)
@@ -225,21 +229,21 @@ module Mongo
          checkout_new_socket
       else
         @checked_out << socket
-        @threads[socket] = Thread.current.object_id
+        @threads_to_sockets[Thread.current] = socket
         socket
       end
     end
 
-    # If we have more sockets than the soft limit specified
-    # by the max pool size, then we should prune those
-    # extraneous sockets.
-    #
-    # Note: this must be called from within a mutex.
-    def prune
-      idle_sockets = @sockets - @checked_out
-      idle_sockets.each do |socket|
-        socket.close unless socket.closed?
-        @sockets.delete(socket)
+    def prune_thread_socket_hash
+      map = {}
+      Thread.list.each do |t|
+        map[t] = 1
+      end
+
+      @threads_to_sockets.keys.each do |key|
+        if !map[key]
+          @threads_to_sockets.delete(key)
+        end
       end
     end
 
@@ -257,15 +261,27 @@ module Mongo
         end
 
         @connection_mutex.synchronize do
-          if @sockets.size > @size * 1.5
-            prune
+          if @checkout_counter > PRUNE_INTERVAL
+            @checkout_counter = 0
+            prune_thread_socket_hash
+          else
+            @checkout_counter += 1
           end
 
-          socket = if @checked_out.size < @sockets.size
-                     checkout_existing_socket
-                   else
-                     checkout_new_socket
-                   end
+          if socket_for_thread = @threads_to_sockets[Thread.current]
+            if !@checked_out.include?(socket_for_thread)
+              socket = checkout_existing_socket(socket_for_thread)
+            end
+          else # First checkout for this thread
+            thread_length = @threads_to_sockets.keys.length
+            if (thread_length <= @sockets.size) && (@sockets.size < @size)
+              socket = checkout_new_socket
+            elsif @checked_out.size < @sockets.size
+              socket = checkout_existing_socket
+            elsif @sockets.size < @size
+              socket = checkout_new_socket
+            end
+          end
 
           if socket
             # This calls all procs, in order, scoped to existing sockets.
