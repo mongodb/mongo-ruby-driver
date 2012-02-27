@@ -26,6 +26,34 @@ class ConnectionTest < Test::Unit::TestCase
       should "default slave_ok to false" do
         assert !@conn.slave_ok?
       end
+      
+      should "warn if invalid options are specified" do
+        conn = Connection.allocate
+        opts = {:connect => false}
+        
+        ReplSetConnection::REPL_SET_OPTS.each do |opt|
+          conn.expects(:warn).with("#{opt} is not a valid option for #{conn.class}")
+          opts[opt] = true
+        end
+        
+        args = ['localhost', 27017, opts]
+        conn.send(:initialize, *args)
+      end
+      
+      context "given a replica set" do
+        should "warn if invalid options are specified" do
+          conn = ReplSetConnection.allocate
+          opts = {:connect => false}
+          
+          Connection::CONNECTION_OPTS.each do |opt|
+            conn.expects(:warn).with("#{opt} is not a valid option for #{conn.class}")
+            opts[opt] = true
+          end
+          
+          args = [['localhost:27017'], opts]
+          conn.send(:initialize, *args)
+        end
+      end
     end
 
     context "initializing with a mongodb uri" do

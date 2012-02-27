@@ -33,6 +33,8 @@ module Mongo
     Thread.abort_on_exception = true
 
     DEFAULT_PORT = 27017
+    GENERIC_OPTS = [:ssl, :auths, :pool_size, :pool_timeout, :timeout, :op_timeout, :connect_timeout, :safe, :logger, :connect]
+    CONNECTION_OPTS = [:slave_ok]
 
     mongo_thread_local_accessor :connections
 
@@ -97,10 +99,18 @@ module Mongo
 
       # Host and port of current master.
       @host = @port = nil
+      
+      # Default maximum BSON object size
+      @max_bson_size = Mongo::DEFAULT_MAX_BSON_SIZE
+      
+      # Lock for request ids.
+      @id_lock = Mutex.new
+      
+      # Connection pool for primay node
+      @primary      = nil
+      @primary_pool = nil
 
-      # slave_ok can be true only if one node is specified
-      @slave_ok = opts[:slave_ok]
-
+      check_opts(opts)
       setup(opts)
     end
 
@@ -504,12 +514,24 @@ module Mongo
     end
 
     protected
+    
+    def valid_opts
+      GENERIC_OPTS + CONNECTION_OPTS
+    end
+    
+    def check_opts(opts)
+      bad_opts = opts.keys.reject { |opt| valid_opts.include?(opt) }
 
-    # Generic initialization code.
+      unless bad_opts.empty?
+        bad_opts.each {|opt| warn "#{opt} is not a valid option for #{self.class}"}
+      end
+    end
+
+    # Parse option hash
     def setup(opts)
-      # Default maximum BSON object size
-      @max_bson_size = Mongo::DEFAULT_MAX_BSON_SIZE
-
+      # slave_ok can be true only if one node is specified
+      @slave_ok = opts[:slave_ok]
+      
       # Determine whether to use SSL.
       @ssl = opts.fetch(:ssl, false)
       if @ssl
@@ -520,9 +542,6 @@ module Mongo
 
       # Authentication objects
       @auths = opts.fetch(:auths, [])
-
-      # Lock for request ids.
-      @id_lock = Mutex.new
 
       # Pool size and timeout.
       @pool_size = opts[:pool_size] || 1
@@ -540,10 +559,6 @@ module Mongo
 
       # Global safe option. This is false by default.
       @safe = opts[:safe] || false
-      
-      # Connection pool for primay node
-      @primary      = nil
-      @primary_pool = nil
 
       @logger = opts.fetch(:logger, nil)
 

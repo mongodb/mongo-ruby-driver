@@ -20,6 +20,8 @@ module Mongo
 
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
+    
+    REPL_SET_OPTS = [:read, :refresh_mode, :refresh_interval, :require_primary, :read_secondary, :rs_name]
 
     attr_reader :replica_set_name, :seeds, :refresh_interval, :refresh_mode,
       :refresh_version
@@ -101,54 +103,32 @@ module Mongo
           seeds << seed
         end
       end
-
+      
       # TODO: add a method for replacing this list of node.
       @seeds.freeze
-
+      
       # Refresh
-      @refresh_mode = opts.fetch(:refresh_mode, false)
-      @refresh_interval = opts[:refresh_interval] || 90
       @last_refresh = Time.now
       @refresh_version = 0
 
       # No connection manager by default.
       @manager = nil
+      
+      # Lock for request ids.
+      @id_lock = Mutex.new
+      
       @pool_mutex = Mutex.new
-
-      if @refresh_mode == :async
-        warn ":async refresh mode has been deprecated. Refresh
-        mode will be disabled."
-      elsif ![:sync, false].include?(@refresh_mode)
-        raise MongoArgumentError,
-          "Refresh mode must be either :sync or false."
-      end
-
-      # Are we allowing reads from secondaries?
-      if opts[:read_secondary]
-        warn ":read_secondary options has now been deprecated and will " +
-          "be removed in driver v2.0. Use the :read option instead."
-        @read_secondary = opts.fetch(:read_secondary, false)
-        @read = :secondary
-      else
-        @read = opts.fetch(:read, :primary)
-        Mongo::Support.validate_read_preference(@read)
-      end
-
       @connected = false
-
-      # Replica set name
-      if opts[:rs_name]
-        warn ":rs_name option has been deprecated and will be removed in v2.0. " +
-          "Please use :name instead."
-        @replica_set_name = opts[:rs_name]
-      else
-        @replica_set_name = opts[:name]
-      end
-
-      # Require a primary node to connect?
-      @require_primary = opts.fetch(:require_primary, true)
-
+      
+      @safe_mutex_lock = Mutex.new
+      @safe_mutexes = Hash.new {|hash, key| hash[key] = Mutex.new}
+      
+      check_opts(opts)
       setup(opts)
+    end
+    
+    def valid_opts
+      GENERIC_OPTS + REPL_SET_OPTS
     end
 
     def inspect
@@ -466,10 +446,42 @@ module Mongo
 
     private
 
-    # Generic initialization code.
+    # Parse option hash
     def setup(opts)
-      @safe_mutex_lock = Mutex.new
-      @safe_mutexes = Hash.new {|hash, key| hash[key] = Mutex.new}
+      # Require a primary node to connect?
+      @require_primary = opts.fetch(:require_primary, true)
+      
+      # Refresh
+      @refresh_mode = opts.fetch(:refresh_mode, false)
+      @refresh_interval = opts[:refresh_interval] || 90
+      
+      if @refresh_mode == :async
+        warn ":async refresh mode has been deprecated. Refresh
+        mode will be disabled."
+      elsif ![:sync, false].include?(@refresh_mode)
+        raise MongoArgumentError,
+          "Refresh mode must be either :sync or false."
+      end
+
+      # Are we allowing reads from secondaries?
+      if opts[:read_secondary]
+        warn ":read_secondary options has now been deprecated and will " +
+          "be removed in driver v2.0. Use the :read option instead."
+        @read_secondary = opts.fetch(:read_secondary, false)
+        @read = :secondary
+      else
+        @read = opts.fetch(:read, :primary)
+        Mongo::Support.validate_read_preference(@read)
+      end
+
+      # Replica set name
+      if opts[:rs_name]
+        warn ":rs_name option has been deprecated and will be removed in v2.0. " +
+          "Please use :name instead."
+        @replica_set_name = opts[:rs_name]
+      else
+        @replica_set_name = opts[:name]
+      end
       
       opts[:connect_timeout] = opts[:connect_timeout] || 30
       
