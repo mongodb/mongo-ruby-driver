@@ -5,13 +5,11 @@ if RUBY_VERSION < '1.9.0'
 end
 require 'fileutils'
 require 'rake/testtask'
-require 'rbconfig'
 require 'rake'
 begin
   require 'ci/reporter/rake/test_unit'
   rescue LoadError
 end
-include Config
 
 ENV['TEST_MODE'] = 'TRUE'
 
