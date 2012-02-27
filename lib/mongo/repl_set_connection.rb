@@ -514,12 +514,10 @@ module Mongo
     end
 
     def sync_refresh
-      @connect_mutex.synchronize do
-        if @refresh_mode == :sync &&
-          ((Time.now - @last_refresh) > @refresh_interval)
-          @last_refresh = Time.now
-          refresh
-        end
+      if @refresh_mode == :sync &&
+        ((Time.now - @last_refresh) > @refresh_interval)
+        @last_refresh = Time.now
+        refresh
       end
     end
   end
