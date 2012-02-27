@@ -20,7 +20,7 @@ module Mongo
 
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
-    
+
     REPL_SET_OPTS = [:read, :refresh_mode, :refresh_interval, :require_primary, :read_secondary, :rs_name]
 
     attr_reader :replica_set_name, :seeds, :refresh_interval, :refresh_mode,
@@ -85,11 +85,11 @@ module Mongo
       else
         opts = {}
       end
-      
+
       unless args.length > 0
         raise MongoArgumentError, "A ReplSetConnection requires at least one seed node."
       end
-      
+
       # This is temporary until support for the old format is dropped
       @seeds = []
       if args.first.last.is_a?(Integer)
@@ -103,30 +103,30 @@ module Mongo
           seeds << seed
         end
       end
-      
+
       # TODO: add a method for replacing this list of node.
       @seeds.freeze
-      
+
       # Refresh
       @last_refresh = Time.now
       @refresh_version = 0
 
       # No connection manager by default.
       @manager = nil
-      
+
       # Lock for request ids.
       @id_lock = Mutex.new
-      
+
       @pool_mutex = Mutex.new
       @connected = false
-      
+
       @safe_mutex_lock = Mutex.new
       @safe_mutexes = Hash.new {|hash, key| hash[key] = Mutex.new}
-      
+
       check_opts(opts)
       setup(opts)
     end
-    
+
     def valid_opts
       GENERIC_OPTS + REPL_SET_OPTS
     end
@@ -450,11 +450,11 @@ module Mongo
     def setup(opts)
       # Require a primary node to connect?
       @require_primary = opts.fetch(:require_primary, true)
-      
+
       # Refresh
       @refresh_mode = opts.fetch(:refresh_mode, false)
       @refresh_interval = opts[:refresh_interval] || 90
-      
+
       if @refresh_mode == :async
         warn ":async refresh mode has been deprecated. Refresh
         mode will be disabled."

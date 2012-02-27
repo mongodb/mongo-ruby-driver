@@ -514,11 +514,11 @@ module Mongo
     end
 
     protected
-    
+
     def valid_opts
       GENERIC_OPTS + CONNECTION_OPTS
     end
-    
+
     def check_opts(opts)
       bad_opts = opts.keys.reject { |opt| valid_opts.include?(opt) }
 
