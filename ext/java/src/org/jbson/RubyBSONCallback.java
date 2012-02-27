@@ -9,6 +9,7 @@ import org.jruby.runtime.builtin.IRubyObject;
 import org.jruby.runtime.Block;
 import org.jruby.runtime.CallType;
 import org.jruby.runtime.callsite.CacheEntry;
+import org.jruby.util.RegexpOptions;
 
 import org.jruby.javasupport.JavaEmbedUtils;
 import org.jruby.javasupport.JavaUtil;
@@ -226,22 +227,23 @@ public class RubyBSONCallback implements BSONCallback {
 
     public void gotRegex( String name , String pattern , String flags ){
       int f = 0;
+      RegexpOptions opts = new RegexpOptions();
       ByteList b = new ByteList(pattern.getBytes());
 
       if(flags.contains("i")) {
-        f = f | ReOptions.RE_OPTION_IGNORECASE;
+        opts.setIgnorecase(true);
       }
       if(flags.contains("m")) {
-        f = f | ReOptions.RE_OPTION_MULTILINE;
+        opts.setMultiline(true);
       }
       if(flags.contains("s")) {
-        f = f | ReOptions.RE_OPTION_MULTILINE;
+        opts.setMultiline(true);
       }
       if(flags.contains("x")) {
-        f = f | ReOptions.RE_OPTION_EXTENDED;
+        opts.setExtended(true);
       }
 
-      _put( name , RubyRegexp.newRegexp(_runtime, b, f) );
+      _put( name , RubyRegexp.newRegexp(_runtime, b, opts) );
     }
 
     public void gotString( String name , String v ){
