@@ -20,3 +20,4 @@ test/load/unicorn/unicorn.rb
 test/load/thin/config.yml
 test/tools/data/
 .rvmrc
+Gemfile.lock
