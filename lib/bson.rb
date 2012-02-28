@@ -16,11 +16,9 @@
 # limitations under the License.
 # ++
 
-MINIMUM_BSON_EXT_VERSION = "1.6.0"
+require 'bson/version'
 
 module BSON
-  VERSION = "1.6.0"
-
   if defined? Mongo::DEFAULT_MAX_BSON_SIZE
     DEFAULT_MAX_BSON_SIZE = Mongo::DEFAULT_MAX_BSON_SIZE
   else
@@ -65,15 +63,12 @@ else
     # Need this for running test with and without c ext in Ruby 1.9.
     raise LoadError if ENV['TEST_MODE'] && !ENV['C_EXT']
 
-    # Raise LoadError unless little endian
+    # Raise LoadError unless little endian, since the C extensions
+    # only work on little-endian architectures.
     raise LoadError unless "\x01\x00\x00\x00".unpack("i").first == 1
 
     require 'bson_ext/cbson'
     raise LoadError unless defined?(CBson::VERSION)
-    if CBson::VERSION < MINIMUM_BSON_EXT_VERSION
-      puts "Able to load bson_ext version #{CBson::VERSION}, but >= #{MINIMUM_BSON_EXT_VERSION} is required."
-      raise LoadError
-    end
     require 'bson/bson_c'
     module BSON
       BSON_CODER = BSON_C
