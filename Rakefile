@@ -6,6 +6,8 @@ end
 require 'fileutils'
 require 'rake/testtask'
 require 'rake'
+require 'git'
+require 'logger'
 begin
   require 'ci/reporter/rake/test_unit'
   rescue LoadError
@@ -280,6 +282,14 @@ namespace :deploy do
     check_version(args[:version])
     puts args[:version]
     change_version(args[:version])
+  end
+
+  task :git, [:version] do |t, args|
+    g = Git.open(Dir.getwd(), :log => Logger.new(STDOUT))
+    check_version(args[:version])
+    g.commit "RELEASE #{:version}"
+    g.add_tag(:version)
+    #g.push
   end
 
   task :gems, [:version] do |t, args|
