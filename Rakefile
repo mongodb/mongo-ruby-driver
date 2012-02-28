@@ -226,6 +226,36 @@ namespace :ci do
   end
 end
 
+# Deployment
+VERSION_FILES = %w(lib/bson/version.rb lib/mongo/version.rb ext/cbson/version.h)
+
+def current_version
+  f = File.open("lib/mongo/version.rb")
+  str = f.read
+  str =~ /VERSION\s+=\s+([.\d"]+)$/
+  return $1
+end
+
+def change_version(new_version)
+  version = current_version
+  VERSION_FILES.each do |filename|
+    f = File.open(filename)
+    str = f.read
+    f.close
+    str.gsub!(version, "\"#{new_version}\"")
+    File.open(filename, 'w') do |f|
+      f.write(str)
+    end
+  end
+end
+
+namespace :deploy do
+  task :version, [:version] do |t, args|
+    puts args[:version]
+    change_version(args[:version])
+  end
+end
+
 task :default => :list
 
 task :list do
