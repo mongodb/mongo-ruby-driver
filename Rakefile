@@ -284,12 +284,18 @@ namespace :deploy do
     change_version(args[:version])
   end
 
-  task :git, [:version] do |t, args|
-    g = Git.open(Dir.getwd(), :log => Logger.new(STDOUT))
-    check_version(args[:version])
-    g.commit "RELEASE #{:version}"
-    g.add_tag(:version)
-    #g.push
+  task :git_prepare, [:version] do |t, args|
+    g = Git.open(Dir.getwd())
+    version = args[:version]
+    check_version(version)
+    g.add(VERSION_FILES)
+    g.commit "RELEASE #{version}"
+    g.add_tag("#{version}")
+  end
+
+  task :git_push
+    g = Git.open(Dir.getwd())
+    g.push
   end
 
   task :gems, [:version] do |t, args|
