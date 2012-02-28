@@ -208,10 +208,12 @@ namespace :gem do
 
   desc "Build all gems"
   task :build_all do
+    `rm *.gem`
     `gem build mongo.gemspec`
     `gem build bson.gemspec`
     `gem build bson.java.gemspec`
     `gem build bson_ext.gemspec`
+    puts `ls *.gem`
   end
 
 end
@@ -228,6 +230,30 @@ end
 
 # Deployment
 VERSION_FILES = %w(lib/bson/version.rb lib/mongo/version.rb ext/cbson/version.h)
+GEMSPECS = %w(bson.gemspec bson.java.gemspec bson_ext.gemspec mongo.gemspec)
+
+def gem_list(version)
+  files = []
+  files << "bson-#{version}.gem"
+  files << "bson-#{version}-java.gem"
+  files << "bson_ext-#{version}.gem"
+  files << "mongo-#{version}.gem"
+  return files
+end
+
+def check_gem_list_existence(version)
+  gem_list(version).each do |filename|
+    if !File.exists?(filename)
+      raise "#{filename} does not exist!"
+    end
+  end
+end
+
+def check_version(version)
+  if !(version =~ /\d\.\d\.\d/)
+    raise "Must specify a valid version (e.g., x.y.z)"
+  end
+end
 
 def current_version
   f = File.open("lib/mongo/version.rb")
@@ -251,8 +277,15 @@ end
 
 namespace :deploy do
   task :version, [:version] do |t, args|
+    check_version(args[:version])
     puts args[:version]
     change_version(args[:version])
+  end
+
+  task :gems, [:version] do |t, args|
+    check_version(args[:version])
+    check_gem_list_existence(args[:version])
+    gem_list
   end
 end
 
