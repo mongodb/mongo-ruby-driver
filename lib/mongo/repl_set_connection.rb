@@ -21,7 +21,8 @@ module Mongo
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
 
-    REPL_SET_OPTS = [:read, :refresh_mode, :refresh_interval, :require_primary, :read_secondary, :rs_name]
+    REPL_SET_OPTS = [:read, :refresh_mode, :refresh_interval, :require_primary,
+      :read_secondary, :rs_name, :name]
 
     attr_reader :replica_set_name, :seeds, :refresh_interval, :refresh_mode,
       :refresh_version
@@ -35,7 +36,7 @@ module Mongo
     #
     # @param [Array] seeds "host:port" strings
     #
-    # @option opts [String] :rs_name (nil) The name of the replica set to connect to. You
+    # @option opts [String] :name (nil) The name of the replica set to connect to. You
     #   can use this option to verify that you're connecting to the right replica set.
     # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
     #   propogated to DB objects instantiated off of this Connection. This
