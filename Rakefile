@@ -7,7 +7,11 @@ end
 require 'fileutils'
 require 'rake/testtask'
 require 'rake'
-require 'git' unless ENV['TEST']
+
+begin
+  require 'git'
+  rescue LoadError
+end
 
 begin
   require 'ci/reporter/rake/test_unit'
