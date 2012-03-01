@@ -7,6 +7,9 @@ group :development, :test do
   gem "json"
   gem "bson_ext"
 
+  # Deployment
+  gem "git"
+
   # Testing
   gem "mocha"
   gem "shoulda"

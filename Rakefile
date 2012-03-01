@@ -3,11 +3,12 @@ if RUBY_VERSION < '1.9.0'
   require 'rubygems'
   require 'rubygems/specification'
 end
+
 require 'fileutils'
 require 'rake/testtask'
 require 'rake'
-require 'git'
-require 'logger'
+require 'git' unless ENV['TEST']
+
 begin
   require 'ci/reporter/rake/test_unit'
   rescue LoadError
