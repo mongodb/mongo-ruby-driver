@@ -293,7 +293,7 @@ namespace :deploy do
     g.add_tag("#{version}")
   end
 
-  task :git_push
+  task :git_pushi do
     g = Git.open(Dir.getwd())
     g.push
   end
