@@ -238,7 +238,7 @@ class TestConnection < Test::Unit::TestCase
     assert !conn.active?
 
     # Simulate a dropped connection.
-    dropped_socket = Mocha::Mock.new
+    dropped_socket = mock('dropped_socket')
     dropped_socket.stubs(:read).raises(Errno::ECONNRESET)
     dropped_socket.stubs(:send).raises(Errno::ECONNRESET)
     dropped_socket.stub_everything
@@ -357,7 +357,7 @@ class TestConnection < Test::Unit::TestCase
     end
 
     should "show a proper exception message if an IOError is raised while closing a socket" do
-      fake_socket = Mocha::Mock.new
+      fake_socket = mock('fake_socket')
       fake_socket.stubs(:close).raises(IOError.new)
       fake_socket.stub_everything
       TCPSocket.stubs(:new).returns(fake_socket)
