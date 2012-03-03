@@ -224,10 +224,10 @@ module Mongo
       end
 
       if @pids[socket] != Process.pid
-         @pids[socket] = nil
-         @sockets.delete(socket)
-         socket.close if socket
-         checkout_new_socket
+        @pids[socket] = nil
+        @sockets.delete(socket)
+        socket.close if socket
+        checkout_new_socket
       else
         @checked_out << socket
         @threads_to_sockets[Thread.current] = socket
