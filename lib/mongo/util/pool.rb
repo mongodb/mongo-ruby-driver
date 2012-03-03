@@ -65,22 +65,12 @@ module Mongo
     #   close only those sockets that are not checked out.
     def close(opts={})
       @connection_mutex.synchronize do
-        if opts[:soft]
-          sockets_to_close = @sockets - @checked_out
+        if opts[:soft] && !@checked_out.empty?
+          close_sockets(@sockets - @checked_out)
         else
-          sockets_to_close = @sockets
+          close_sockets(@sockets)
+          @closed = true
         end
-        sockets_to_close.each do |sock|
-          begin
-            sock.close unless sock.closed?
-          rescue IOError => ex
-            warn "IOError when attempting to close socket connected to #{@host}:#{@port}: #{ex.inspect}"
-          end
-        end
-        @sockets.clear
-        @pids.clear
-        @checked_out.clear
-        @closed = true
       end
     end
 
@@ -256,9 +246,9 @@ module Mongo
       start_time = Time.now
       loop do
         if (Time.now - start_time) > @timeout
-            raise ConnectionTimeoutError, "could not obtain connection within " +
-              "#{@timeout} seconds. The max pool size is currently #{@size}; " +
-              "consider increasing the pool size or timeout."
+          raise ConnectionTimeoutError, "could not obtain connection within " +
+            "#{@timeout} seconds. The max pool size is currently #{@size}; " +
+            "consider increasing the pool size or timeout."
         end
 
         @connection_mutex.synchronize do
@@ -300,5 +290,18 @@ module Mongo
         end
       end
     end
+
+    private
+
+    def close_sockets(sockets)
+      sockets.each do |socket|
+        begin
+          socket.close unless socket.closed?
+        rescue IOError => ex
+          warn "IOError when attempting to close socket connected to #{@host}:#{@port}: #{ex.inspect}"
+        end
+      end
+    end
+
   end
 end

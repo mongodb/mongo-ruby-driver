@@ -84,6 +84,10 @@ module Mongo
       @refresh_required
     end
 
+    def closed?
+      pools.all? { |pool| pool.closed? }
+    end
+
     def close(opts={})
       begin
         if @primary_pool
@@ -113,6 +117,10 @@ module Mongo
     end
 
     private
+
+    def pools
+      [@primary_pool, *@secondary_pools]
+    end
 
     def validate_existing_member(member)
       config = member.set_config
