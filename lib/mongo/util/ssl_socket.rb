@@ -7,6 +7,8 @@ module Mongo
   # mirroring Ruby's TCPSocket, vis., TCPSocket#send and TCPSocket#read.
   class SSLSocket
 
+    attr_accessor :pool
+
     def initialize(host, port)
       @socket = ::TCPSocket.new(host, port)
       @ssl = OpenSSL::SSL::SSLSocket.new(@socket)
@@ -33,6 +35,5 @@ module Mongo
     def close
       @ssl.close
     end
-
   end
 end

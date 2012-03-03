@@ -537,7 +537,7 @@ module Mongo
       if @ssl
         @socket_class = Mongo::SSLSocket
       else
-        @socket_class = ::TCPSocket
+        @socket_class = Mongo::TCPSocket
       end
 
       # Authentication objects

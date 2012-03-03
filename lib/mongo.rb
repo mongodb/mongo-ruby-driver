@@ -61,6 +61,7 @@ require 'mongo/util/pool'
 require 'mongo/util/pool_manager'
 require 'mongo/util/server_version'
 require 'mongo/util/ssl_socket'
+require 'mongo/util/tcp_socket'
 require 'mongo/util/uri_parser'
 
 require 'mongo/collection'
