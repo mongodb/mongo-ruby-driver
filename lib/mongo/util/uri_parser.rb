@@ -76,7 +76,7 @@ module Mongo
                   :wtimeoutms       => lambda {|arg| arg.to_i }
                  }
 
-    attr_reader :nodes, :auths, :connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync, :journal, :connecttimeoutms, :sockettimeoutms, :wtimeoutms
+    attr_reader :nodes, :auths, :connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync, :journal, :connecttimeoutms, :sockettimeoutms, :wtimeoutms, :database_name
 
     # Parse a MongoDB URI. This method is used by Connection.from_uri.
     # Returns an array of nodes and an array of db authorizations, if applicable.
@@ -164,6 +164,8 @@ module Mongo
       pwd      = matches[3]
       hosturis = matches[4].split(',')
       db       = matches[8]
+
+      @database_name = db
 
       hosturis.each do |hosturi|
         # If port is present, use it, otherwise use default port

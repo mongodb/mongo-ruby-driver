@@ -17,6 +17,11 @@ class URITest < Test::Unit::TestCase
     assert_equal 27018, parser.nodes[0][1]
   end
 
+  def test_basic_uri_with_database
+    parser = Mongo::URIParser.new('mongodb://localhost/test_db')
+    assert_equal 'test_db', parser.database_name
+  end
+
   def test_multiple_uris
     parser = Mongo::URIParser.new('mongodb://a.example.com:27018,b.example.com')
     assert_equal 2, parser.nodes.length
