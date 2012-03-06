@@ -84,6 +84,7 @@ class Test::Unit::TestCase
     socket.stubs(:setsockopt).with(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
     socket.stubs(:close)
     socket.stubs(:closed?)
+    socket.stubs(:pool)
     socket
   end
 
