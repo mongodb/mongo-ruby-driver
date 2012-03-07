@@ -4,8 +4,11 @@ module Mongo
     DEBUG_LEVEL = defined?(Logger) ? Logger::DEBUG : 0
 
     def write_logging_startup_message
-      log(:debug, "Please note that logging negatively impacts client-side performance. " +
-      "You should set your logging level no lower than :info in production.")
+      if @logger && (@logger.level == DEBUG_LEVEL)
+        log(:debug, "Logging level is currently :debug which could negatively impact " +
+          "client-side performance. You should set your logging level no lower than " +
+          ":info in production.")
+      end
     end
 
     # Log a message with the given level.
