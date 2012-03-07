@@ -160,7 +160,7 @@ end
 
 desc "Generate YARD documentation"
 task :ydoc do
-  require 'mongo'
+  require './lib/mongo/version.rb'
   out = File.join('ydoc', Mongo::VERSION)
   FileUtils.rm_rf('ydoc')
   system "yardoc lib/**/*.rb lib/mongo/**/*.rb lib/bson/**/*.rb -e ./yard/yard_ext.rb -p yard/templates -o #{out} --title MongoRuby-#{Mongo::VERSION} --files docs/TUTORIAL.md,docs/GridFS.md,docs/FAQ.md,docs/REPLICA_SETS.md,docs/WRITE_CONCERN.md,docs/READ_PREFERENCE.md,docs/HISTORY.md,docs/CREDITS.md,docs/RELEASES.md,docs/CREDITS.md,docs/TAILABLE_CURSORS.md"
