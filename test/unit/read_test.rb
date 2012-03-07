@@ -67,12 +67,12 @@ class ReadTest < Test::Unit::TestCase
     context "on read mode ops" do
       setup do
         @col = @con['foo']['bar']
-        @mock_socket = stub()
+        @mock_socket = new_mock_socket
       end
 
       should "use default value on query" do
         @cursor = @col.find({:a => 1})
-        sock = mock()
+        sock = new_mock_socket
         read_pool = stub(:checkin => true)
         @con.stubs(:read_pool).returns(read_pool)
         primary_pool = stub(:checkin => true)
@@ -87,7 +87,7 @@ class ReadTest < Test::Unit::TestCase
 
       should "allow override default value on query" do
         @cursor = @col.find({:a => 1}, :read => :primary)
-        sock = mock()
+        sock = new_mock_socket
         primary_pool = stub(:checkin => true)
         @con.stubs(:primary_pool).returns(primary_pool)
         @con.expects(:checkout_writer).returns(sock)
