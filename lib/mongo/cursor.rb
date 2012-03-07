@@ -470,7 +470,7 @@ module Mongo
           Mongo::Constants::OP_QUERY, message, nil, sock, @command,
           nil, @options & OP_QUERY_EXHAUST != 0)
         rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
-          force_checkin_socket(sock)
+          force_checkin_socket(sock) unless @socket
           raise ex
         end
         checkin_socket(sock) unless @socket

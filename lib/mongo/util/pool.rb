@@ -19,7 +19,7 @@ module Mongo
   class Pool
     PING_ATTEMPTS  = 6
     MAX_PING_TIME  = 1_000_000
-    PRUNE_INTERVAL = 1000
+    PRUNE_INTERVAL = 10000
 
     attr_accessor :host, :port, :address,
       :size, :timeout, :safe, :checked_out, :connection
@@ -66,6 +66,7 @@ module Mongo
     def close(opts={})
       @connection_mutex.synchronize do
         if opts[:soft] && !@checked_out.empty?
+          @closing = true
           close_sockets(@sockets - @checked_out)
         else
           close_sockets(@sockets)
@@ -282,6 +283,18 @@ module Mongo
               op.call
             end
 
+            if socket.closed?
+              @checked_out.delete(socket)
+              @sockets.delete(socket)
+              @threads_to_sockets.each do |k,v|
+                if v == socket
+                  @threads_to_sockets.delete(k)
+                end
+              end
+
+              socket = checkout_new_socket
+            end
+            
             return socket
           else
             # Otherwise, wait
@@ -295,6 +308,7 @@ module Mongo
 
     def close_sockets(sockets)
       sockets.each do |socket|
+        @sockets.delete(socket)
         begin
           socket.close unless socket.closed?
         rescue IOError => ex
