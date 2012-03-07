@@ -38,8 +38,16 @@ The driver will essentially cycle through all known seed addresses until a node 
 You can now specify a refresh mode and refresh interval for a replica set connection. This will help to ensure that
 changes to a replica set's configuration are quickly reflected on the driver side. In particular, if you change
 the state of any secondary node, the automated refresh will ensure that this state is recorded on the client side.
+
+There are two secenarios in which refresh is helpful and does not raise exceptions:
+
+# You add a new secondary node to an existing replica set
+# You remove an unused secondary from an existing replica set
+
+If using MongoDB earlier than 2.0 any changes to replica set state will raise exceptions therefore refresh mode will not be useful.
+
 If you add a secondary that responds to pings much faster than the existing nodes, then the new secondary will
-be used for reads.
+be used for reads if :read_preference is :secondary or :secondary_only
 
 Refresh mode is disabled by default.
 
