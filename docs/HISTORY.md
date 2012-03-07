@@ -1,5 +1,13 @@
 # MongoDB Ruby Driver History
 
+### 1.6.1
+2012-03-07
+
+* Added thread affinity to Mongo::Pool
+* Added deploy tasks
+* Added Travis CI support (Cyril Mougel)
+* Logging warning message is only displayed for level :debug
+
 ### 1.6.0
 2012-02-22
 
