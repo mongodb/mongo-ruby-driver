@@ -508,8 +508,8 @@ module Mongo
 
     # Check a socket back into its pool.
     def checkin(socket)
-      if @primary_pool
-        @primary_pool.checkin(socket)
+      if @primary_pool && socket
+        socket.pool.checkin(socket)
       end
     end
 

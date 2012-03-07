@@ -149,6 +149,7 @@ module Mongo
 
         discovered_seeds = @manager ? @manager.seeds : []
         @manager = PoolManager.new(self, discovered_seeds)
+        
         Thread.current[:manager] = @manager
 
         @manager.connect
@@ -200,7 +201,9 @@ module Mongo
       log(:info, "Initiating hard refresh...")
       discovered_seeds = @manager ? @manager.seeds : []
       new_manager = PoolManager.new(self, discovered_seeds | @seeds)
-      new_manager.connect 
+      new_manager.connect
+
+      Thread.current[:manager] = new_manager
 
       # TODO: make sure that connect has succeeded
       @old_managers << @manager
@@ -284,15 +287,15 @@ module Mongo
     end
 
     def authenticate_pools
-      self.primary_pool.authenticate_existing
-      self.secondary_pools.each do |pool|
+      primary_pool.authenticate_existing
+      secondary_pools.each do |pool|
         pool.authenticate_existing
       end
     end
 
     def logout_pools(db)
-      self.primary_pool.logout_existing(db)
-      self.secondary_pools.each do |pool|
+      primary_pool.logout_existing(db)
+      secondary_pools.each do |pool|
         pool.logout_existing(db)
       end
     end
@@ -317,7 +320,7 @@ module Mongo
         socket
       else
         @connected = false
-        raise ConnectionFailure.new("Could not checkout a socket")
+        raise ConnectionFailure.new("Could not checkout a socket.")
       end
     end
     
@@ -352,13 +355,17 @@ module Mongo
 
     # Checkin a socket used for reading.
     def checkin_reader(socket)
-      socket.pool.checkin(socket)
+      if socket && socket.pool
+        socket.pool.checkin(socket)
+      end
       sync_refresh
     end
 
     # Checkin a socket used for writing.
     def checkin_writer(socket)
-      socket.pool.checkin(socket)
+      if socket && socket.pool
+        socket.pool.checkin(socket)
+      end
       sync_refresh
     end
 
@@ -374,7 +381,7 @@ module Mongo
       if Thread.current[:manager] != @manager
         Thread.current[:manager] = @manager
       end
-
+      
       pool = case pool_type
         when :primary
           primary_pool
@@ -386,8 +393,7 @@ module Mongo
 
       begin
         if pool
-          socket = pool.checkout
-          socket
+          pool.checkout
         end
       rescue ConnectionFailure => ex
         log(:info, "Failed to checkout from #{pool} with #{ex.class}; #{ex.message}")
@@ -525,8 +531,8 @@ module Mongo
         
         if @refresh_mutex.try_lock
           begin
-            prune_managers
             refresh
+            prune_managers
           ensure
             @refresh_mutex.unlock
           end
