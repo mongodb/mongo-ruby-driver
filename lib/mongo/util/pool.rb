@@ -19,7 +19,7 @@ module Mongo
   class Pool
     PING_ATTEMPTS  = 6
     MAX_PING_TIME  = 1_000_000
-    PRUNE_INTERVAL = 10000
+    PRUNE_INTERVAL = 10_000
 
     attr_accessor :host, :port, :address,
       :size, :timeout, :safe, :checked_out, :connection

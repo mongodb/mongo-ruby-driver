@@ -48,7 +48,7 @@ class PoolTest < Test::Unit::TestCase
     assert_equal 10, @pool.instance_variable_get(:@threads_to_sockets).size
 
     # Thread-socket pool
-    1000.times do
+    10000.times do
       @pool.checkin(@pool.checkout)
     end
 
