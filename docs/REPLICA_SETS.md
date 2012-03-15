@@ -41,8 +41,8 @@ the state of any secondary node, the automated refresh will ensure that this sta
 
 There are two secenarios in which refresh is helpful and does not raise exceptions:
 
-# You add a new secondary node to an existing replica set
-# You remove an unused secondary from an existing replica set
+1. You add a new secondary node to an existing replica set
+2. You remove an unused secondary from an existing replica set
 
 If using MongoDB earlier than 2.0 any changes to replica set state will raise exceptions therefore refresh mode will not be useful.
 
