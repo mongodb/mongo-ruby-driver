@@ -287,14 +287,18 @@ module Mongo
     end
 
     def authenticate_pools
-      primary_pool.authenticate_existing
+      if primary_pool
+        primary_pool.authenticate_existing
+      end
       secondary_pools.each do |pool|
         pool.authenticate_existing
       end
     end
 
     def logout_pools(db)
-      primary_pool.logout_existing(db)
+      if primary_pool
+        primary_pool.logout_existing(db)
+      end
       secondary_pools.each do |pool|
         pool.logout_existing(db)
       end
@@ -321,6 +325,19 @@ module Mongo
       else
         @connected = false
         raise ConnectionFailure.new("Could not checkout a socket.")
+      end
+    end
+
+    # Checkout best available socket by trying primary
+    # pool first and then falling back to secondary.
+    def checkout_best
+      checkout do
+        socket = get_socket_from_pool(:primary)
+        if !socket
+          connect
+          socket = get_socket_from_pool(:secondary)
+        end
+        socket
       end
     end
     

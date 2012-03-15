@@ -1,21 +1,22 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require './test/test_helper'
 require './test/tools/auth_repl_set_manager'
+require './test/replica_sets/rs_test_helper'
 
 class AuthTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @manager = AuthReplSetManager.new(:start_port => 40000)
-    @manager.start_set
+    @rs = AuthReplSetManager.new(:start_port => 40000)
+    @rs.start_set
   end
 
   def teardown
-    @manager.cleanup_set
+    #@rs.cleanup_set
   end
 
   def test_repl_set_auth
-    @conn = ReplSetConnection.new(build_seeds(3), :name => @manager.name)
+    @conn = ReplSetConnection.new(build_seeds(3), :name => @rs.name)
 
     # Add an admin user
     @conn['admin'].add_user("me", "secret")
@@ -51,7 +52,20 @@ class AuthTest < Test::Unit::TestCase
     end
 
     # But not when authenticated
-    @slave1['admin'].authenticate("me", "secret")
+    assert @slave1['admin'].authenticate("me", "secret")
     assert @slave1['foo']['stuff'].find_one
+
+    # Same should apply when using :secondary_only
+    @second_only = ReplSetConnection.new(build_seeds(3), 
+      :require_primary => false, :read => :secondary_only)
+
+    # Find should fail
+    assert_raise_error Mongo::OperationFailure, "unauthorized" do
+      @second_only['foo']['stuff'].find_one
+    end
+
+    # But not when authenticated
+    assert @second_only['admin'].authenticate("me", "secret")
+    assert @second_only['foo']['stuff'].find_one
   end
 end

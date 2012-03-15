@@ -111,10 +111,13 @@ module Mongo
         if !save_auth
           raise MongoArgumentError, "If using connection pooling, :save_auth must be set to true."
         end
-        @connection.authenticate_pools
       end
 
-      issue_authentication(username, password, save_auth)
+      @connection.best_available_socket do |socket|
+        issue_authentication(username, password, save_auth, :socket => socket)
+      end
+
+      @connection.authenticate_pools
     end
 
     def issue_authentication(username, password, save_auth=true, opts={})
