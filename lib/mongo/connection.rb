@@ -639,7 +639,7 @@ module Mongo
         else
           config = self['admin'].command({:ismaster => 1}, :socket => socket)
         end
-      rescue OperationFailure, SocketError, SystemCallError, IOError => ex
+      rescue OperationFailure, SocketError, SystemCallError, IOError
         close
       ensure
         socket.close if socket

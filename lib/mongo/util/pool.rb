@@ -133,7 +133,7 @@ module Mongo
     def ping
       begin
         return self.connection['admin'].command({:ping => 1}, :socket => @node.socket)
-      rescue OperationFailure, SocketError, SystemCallError, IOError => ex
+      rescue OperationFailure, SocketError, SystemCallError, IOError
         return false
       end
     end

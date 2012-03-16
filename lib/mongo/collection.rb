@@ -961,7 +961,7 @@ module Mongo
             begin
               message.put_binary(BSON::BSON_CODER.serialize(doc, check_keys, true, @connection.max_bson_size).to_s)
               true
-            rescue StandardError => e  # StandardError will be replaced with BSONError
+            rescue StandardError # StandardError will be replaced with BSONError
               doc.delete(:_id)
               error_docs << doc
               false

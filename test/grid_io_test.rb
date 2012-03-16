@@ -45,7 +45,7 @@ class GridIOTest < Test::Unit::TestCase
       should "read data character by character using" do
         bytes = 0
         file = GridIO.new(@files, @chunks, nil, "r", :query => {:_id => @file.files_id})
-        while char = file.getc
+        while file.getc
           bytes += 1
         end
         assert_equal bytes, 1_000_000
@@ -111,7 +111,7 @@ class GridIOTest < Test::Unit::TestCase
 
       should "tell position, eof, and rewind" do
         file = GridIO.new(@files, @chunks, nil, "r", :query => {:_id => @file.files_id})
-        string = file.read(1000)
+        file.read(1000)
         assert_equal 1000, file.pos
         assert !file.eof?
         file.read

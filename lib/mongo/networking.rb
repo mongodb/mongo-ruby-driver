@@ -186,7 +186,10 @@ module Mongo
 
     def receive_header(sock, expected_response, exhaust=false)
       header = receive_message_on_socket(16, sock)
-      size, request_id, response_to = header.unpack('VVV')
+
+      # unpacks to size, request_id, response_to
+      response_to = header.unpack('VVV')[2]
+
       if !exhaust && expected_response != response_to
         raise Mongo::ConnectionFailure, "Expected response #{expected_response} but got #{response_to}"
       end
@@ -204,7 +207,10 @@ module Mongo
         raise "Short read for DB response header; " +
           "expected #{RESPONSE_HEADER_SIZE} bytes, saw #{header_buf.length}"
       end
-      flags, cursor_id_a, cursor_id_b, starting_from, number_remaining = header_buf.unpack('VVVVV')
+
+      # unpacks to flags, cursor_id_a, cursor_id_b, starting_from, number_remaining
+      flags, cursor_id_a, cursor_id_b, _, number_remaining = header_buf.unpack('VVVVV')
+      
       check_response_flags(flags)
       cursor_id = (cursor_id_b << 32) + cursor_id_a
       [number_remaining, cursor_id]

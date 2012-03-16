@@ -81,13 +81,6 @@ class ConnectionTest < Test::Unit::TestCase
         assert_equal({:w => 2, :wtimeout => 1000, :fsync => true, :j => true}, @conn.safe)
       end
 
-      should "have wtimeoutMS take precidence over the depricated wtimeout" do
-        host_name = "localhost"
-        opts = "safe=true&wtimeout=100&wtimeoutMS=500"
-        @conn = Connection.from_uri("mongodb://#{host_name}/foo?#{opts}", :connect => false)
-        assert_equal({:wtimeout => 500}, @conn.safe)
-      end
-
       should "set timeout options on connection" do
         host_name = "localhost"
         opts = "connectTimeoutMS=1000&socketTimeoutMS=5000"

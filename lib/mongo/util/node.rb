@@ -74,7 +74,7 @@ module Mongo
       begin
         result = @connection['admin'].command({:ping => 1}, :socket => @socket)
         return result['ok'] == 1
-      rescue OperationFailure, SocketError, SystemCallError, IOError => ex
+      rescue OperationFailure, SocketError, SystemCallError, IOError
         return nil
       end
     end

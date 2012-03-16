@@ -7,8 +7,11 @@ require 'test/unit'
 def silently
   warn_level = $VERBOSE
   $VERBOSE = nil
-  result = yield
-  $VERBOSE = warn_level
+  begin
+    result = yield
+  ensure
+    $VERBOSE = warn_level
+  end
   result
 end
 
@@ -25,7 +28,6 @@ You can install them as follows:
   gem install mocha
 
 MSG
-
   exit
 end
 
@@ -88,7 +90,7 @@ class Test::Unit::TestCase
   end
 
   def new_mock_db
-    db = Object.new
+    Object.new
   end
 
   def assert_raise_error(klass, message)

@@ -14,7 +14,9 @@ class ConnectTest < Test::Unit::TestCase
   # TODO: test connect timeout.
 
   def test_connect_with_deprecated_multi
-    @conn = Connection.multi([[@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]]], :name => @rs.name)
+    silently do
+      @conn = Connection.multi([[@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]]], :name => @rs.name)
+    end
     assert @conn.is_a?(ReplSetConnection)
     assert @conn.connected?
   end

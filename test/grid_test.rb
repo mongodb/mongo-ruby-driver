@@ -142,7 +142,9 @@ class GridTest < Test::Unit::TestCase
       end
 
       should "ignore special keys" do
-        id = @grid.put(@data, :file_length => 100, :phrase => "blimey")
+        id = silently do
+          @grid.put(@data, :file_length => 100, :phrase => "blimey")
+        end
         file = @grid.get(id)
 
         assert_equal "blimey", file['phrase']
@@ -153,8 +155,9 @@ class GridTest < Test::Unit::TestCase
     context "Storing data with a length of zero" do
       setup do
         @grid = Grid.new(@db, 'test-fs')
-        @id   = @grid.put('', :filename => 'sample',
-                          :metadata => {'app' => 'photos'})
+        @id = silently do
+          @grid.put('', :filename => 'sample', :metadata => {'app' => 'photos'})
+        end
       end
 
       should "return the zero length" do
@@ -201,7 +204,9 @@ class GridTest < Test::Unit::TestCase
         @grid = Grid.new(@db, 'test-fs')
         filename = 'empty_data'
         @io   = File.open(File.join(File.dirname(__FILE__), 'data', filename), 'r')
-        id    = @grid.put(@io, :filename => filename)
+        id = silently do
+          @grid.put(@io, :filename => filename)
+        end
         @file = @grid.get(id)
         @io.rewind
         @data = @io.read
@@ -239,7 +244,9 @@ class GridTest < Test::Unit::TestCase
       end
 
       should "put and get an empty io object" do
-        read_and_write_stream('empty_data', 1)
+        silently do
+          read_and_write_stream('empty_data', 1)
+        end
       end
 
       should "put and get a small io object" do

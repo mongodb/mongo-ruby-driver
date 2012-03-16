@@ -57,7 +57,7 @@ module BSON
       def self.to_utf8_binary(str)
         begin
         str.unpack("U*")
-        rescue => ex
+        rescue
           raise InvalidStringEncoding, "String not valid utf-8: #{str.inspect}"
         end
         str

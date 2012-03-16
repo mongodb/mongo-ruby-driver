@@ -263,7 +263,9 @@ class GridFileSystemTest < Test::Unit::TestCase
 
       should "seek only in read mode" do
         assert_raise GridError do
-          @grid.open('hello', 'w') {|f| f.seek(0) }
+          silently do
+            @grid.open('hello', 'w') { |f| f.seek(0) }
+          end
         end
       end
     end

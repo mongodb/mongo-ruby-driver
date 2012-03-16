@@ -4,7 +4,7 @@ class TestThreading < Test::Unit::TestCase
 
   include Mongo
 
-  @@con = standard_connection(:pool_size => 10, :timeout => 30)
+  @@con = standard_connection(:pool_size => 10, :pool_timeout => 30)
   @@db  = @@con[MONGO_TEST_DB]
   @@coll = @@db.collection('thread-test-collection')
 

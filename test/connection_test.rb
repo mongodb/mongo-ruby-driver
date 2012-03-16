@@ -133,7 +133,7 @@ class TestConnection < Test::Unit::TestCase
     output = StringIO.new
     logger = Logger.new(output)
     logger.level = Logger::DEBUG
-    connection = standard_connection(:logger => logger).db(MONGO_TEST_DB)
+    standard_connection(:logger => logger).db(MONGO_TEST_DB)
     assert output.string.include?("admin['$cmd'].find")
   end
 
@@ -141,8 +141,8 @@ class TestConnection < Test::Unit::TestCase
     output = StringIO.new
     logger = Logger.new(output)
     logger.level = Logger::DEBUG
-    connection = standard_connection(:logger => logger).db(MONGO_TEST_DB)
-    assert_match /\(\d+ms\)/, output.string
+    standard_connection(:logger => logger).db(MONGO_TEST_DB)
+    assert_match(/\(\d+ms\)/, output.string)
     assert output.string.include?("admin['$cmd'].find")
   end
 
@@ -170,8 +170,10 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_nodes
-    conn = Connection.multi([['foo', 27017], ['bar', 27018]], :connect => false)
-    nodes = conn.nodes
+    silently do
+      @conn = Connection.multi([['foo', 27017], ['bar', 27018]], :connect => false)
+    end
+    nodes = @conn.seeds
     assert_equal 2, nodes.length
     assert_equal ['foo', 27017], nodes[0]
     assert_equal ['bar', 27018], nodes[1]
@@ -227,7 +229,7 @@ class TestConnection < Test::Unit::TestCase
     conn.expects(:[]).with('admin').returns(admin_db)
 
     conn.connect
-    assert_equal Mongo::DEFAULT_MAX_BSON_SIZE, BSON::BSON_CODER.max_bson_size
+    assert_equal Mongo::DEFAULT_MAX_BSON_SIZE, conn.max_bson_size
   end
 
   def test_connection_activity
@@ -290,7 +292,7 @@ class TestConnection < Test::Unit::TestCase
   context "Socket pools" do
     context "checking out writers" do
       setup do
-        @con = standard_connection(:pool_size => 10, :timeout => 10)
+        @con = standard_connection(:pool_size => 10, :pool_timeout => 10)
         @coll = @con[MONGO_TEST_DB]['test-connection-exceptions']
       end
 
@@ -325,7 +327,7 @@ class TestConnection < Test::Unit::TestCase
 
   context "Connection exceptions" do
     setup do
-      @con = standard_connection(:pool_size => 10, :timeout => 10)
+      @con = standard_connection(:pool_size => 10, :pool_timeout => 10)
       @coll = @con[MONGO_TEST_DB]['test-connection-exceptions']
     end
 
@@ -363,6 +365,7 @@ class TestConnection < Test::Unit::TestCase
       TCPSocket.stubs(:new).returns(fake_socket)
 
       @con.primary_pool.checkout_new_socket
+      @con.primary_pool.expects(:warn)
       assert @con.primary_pool.close
     end
   end

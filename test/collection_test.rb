@@ -42,8 +42,10 @@ class TestCollection < Test::Unit::TestCase
   end
 
   def test_pk_factory_on_collection
-    @coll = Collection.new('foo', @@db, TestPK)
-    assert_equal TestPK, @coll.pk_factory
+    silently do
+      @coll = Collection.new('foo', @@db, TestPK)
+      assert_equal TestPK, @coll.pk_factory
+    end
 
 
     @coll2 = Collection.new('foo', @@db, :pk => TestPK)
@@ -197,6 +199,7 @@ class TestCollection < Test::Unit::TestCase
     docs << {:bar => 1}
     doc_ids, error_docs = @@test.insert(docs, :collect_on_error => true)
     assert_equal 2, @@test.count
+    assert_equal 2, doc_ids.count
     assert_equal error_docs, []
   end
 
@@ -215,6 +218,7 @@ class TestCollection < Test::Unit::TestCase
 
     doc_ids, error_docs = @@test.insert(docs, :collect_on_error => true)
     assert_equal 2, @@test.count
+    assert_equal 2, doc_ids.count
     assert_equal error_docs, invalid_docs
   end
 
@@ -232,6 +236,7 @@ class TestCollection < Test::Unit::TestCase
 
     doc_ids, error_docs = @@test.insert(docs, :collect_on_error => true)
     assert_equal 2, @@test.count
+    assert_equal 2, doc_ids.count
     assert_equal error_docs, invalid_docs
   end
 

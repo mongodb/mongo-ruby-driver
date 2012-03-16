@@ -78,10 +78,9 @@ class URITest < Test::Unit::TestCase
   end
 
   def test_opts_safe
-    parser = Mongo::URIParser.new('mongodb://localhost:27018?safe=true;w=2;journal=true;wtimeout=200;fsync=true;wtimeoutMS=200')
+    parser = Mongo::URIParser.new('mongodb://localhost:27018?safe=true;w=2;journal=true;fsync=true;wtimeoutMS=200')
     assert parser.safe
     assert_equal 2, parser.w
-    assert_equal 200, parser.wtimeout
     assert parser.fsync
     assert parser.journal
     assert_equal 200, parser.wtimeoutms

@@ -192,33 +192,37 @@ module BSON
       @@index = 0
       @@machine_id = Digest::MD5.digest(Socket.gethostname)[0, 3]
 
-      # This gets overwritten by the C extension if it loads.
-      def generate(oid_time=nil)
-        oid = ''
+      # We need to check whether BSON_CODER is defined because it's required by
+      # the BSON C extensions.
+      if defined?(BSON::BSON_CODER) && BSON::BSON_CODER == BSON::BSON_RUBY
+        # This gets overwritten by the C extension if it loads.
+        def generate(oid_time=nil)
+          oid = ''
 
-        # 4 bytes current time
-        if oid_time
-          t = oid_time.to_i
-        else
-          t = Time.new.to_i
+          # 4 bytes current time
+          if oid_time
+            t = oid_time.to_i
+          else
+            t = Time.new.to_i
+          end
+          oid += [t].pack("N")
+
+          # 3 bytes machine
+          oid += @@machine_id
+
+          # 2 bytes pid
+          oid += [Process.pid % 0xFFFF].pack("n")
+
+          # 3 bytes inc
+          oid += [get_inc].pack("N")[1, 3]
+
+          oid.unpack("C12")
         end
-        oid += [t].pack("N")
 
-        # 3 bytes machine
-        oid += @@machine_id
-
-        # 2 bytes pid
-        oid += [Process.pid % 0xFFFF].pack("n")
-
-        # 3 bytes inc
-        oid += [get_inc].pack("N")[1, 3]
-
-        oid.unpack("C12")
-      end
-
-      def get_inc
-        @@lock.synchronize do
-          @@index = (@@index + 1) % 0xFFFFFF
+        def get_inc
+          @@lock.synchronize do
+            @@index = (@@index + 1) % 0xFFFFFF
+          end
         end
       end
     end

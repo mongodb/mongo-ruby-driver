@@ -59,7 +59,7 @@ module BSON
       def self.to_utf8_binary(str)
         begin
           str.unpack("U*")
-        rescue => ex
+        rescue
           raise InvalidStringEncoding, "String not valid utf-8: #{str.inspect}"
         end
         str.encode(UTF8_ENCODING).force_encoding(BINARY_ENCODING)
@@ -70,7 +70,7 @@ module BSON
       def self.to_utf8_binary(str)
         begin
           str.unpack("U*")
-        rescue => ex
+        rescue
           raise InvalidStringEncoding, "String not valid utf-8: #{str.inspect}"
         end
         str

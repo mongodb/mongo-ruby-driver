@@ -115,7 +115,7 @@ module Mongo
         id = file.close
         if versions
           self.delete do
-            @files.find({'filename' => filename, '_id' => {'$ne' => id}}, :fields => ['_id'], :sort => ['uploadDate', -1], :skip => (versions -1))
+            @files.find({'filename' => filename, '_id' => {'$ne' => id}}, :fields => ['_id'], :sort => ['uploadDate', -1], :skip => (versions - 1))
           end
         end
       end
