@@ -41,6 +41,12 @@ class ConnectionTest < Test::Unit::TestCase
       end
 
       context "given a replica set" do
+        should "enforce a minimum refresh_interval" do
+          @conn = ReplSetConnection.new(['localhost:27017'],
+            :connect => false, :refresh_mode => :sync, :refresh_interval => 10)
+          assert_equal 60, @conn.refresh_interval
+        end
+
         should "warn if invalid options are specified" do
           conn = ReplSetConnection.allocate
           opts = {:connect => false}

@@ -476,7 +476,10 @@ module Mongo
 
       # Refresh
       @refresh_mode = opts.fetch(:refresh_mode, false)
-      @refresh_interval = opts[:refresh_interval] || 90
+      @refresh_interval = opts.fetch(:refresh_interval, 90)
+      if @refresh_mode && @refresh_interval < 60
+        @refresh_interval = 60
+      end
 
       if @refresh_mode == :async
         warn ":async refresh mode has been deprecated. Refresh
