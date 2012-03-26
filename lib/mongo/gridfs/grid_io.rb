@@ -67,7 +67,7 @@ module Mongo
       case @mode
         when 'r' then init_read
         when 'w' then init_write(opts)
-        when 'a' then init_append
+        when 'a' then init_append(opts)
         else
           raise GridError, "Invalid file mode #{@mode}. Mode should be 'r', 'w' or 'a'."
       end
@@ -437,13 +437,11 @@ module Mongo
     end
     
     # Initialize the class for appending to a file.
-    def init_append
+    def init_append(opts)
       doc = @files.find(@query, @query_opts).next_document
-      raise GridFileNotFound, "Could not open file matching #{@query.inspect} #{@query_opts.inspect}" unless doc
+      return init_write(opts) unless doc
       
       opts = doc.dup
-      
-      puts opts
       
       @files_id     = opts.delete('_id')
       @content_type = opts.delete('contentType')
@@ -455,8 +453,6 @@ module Mongo
       @md5          = opts.delete('md5')
       @filename     = opts.delete('filename')
       @custom_attrs = opts
-      
-      puts opts
       
       last_chunk = @file_length / @chunk_size
       @current_chunk = get_chunk(last_chunk)
