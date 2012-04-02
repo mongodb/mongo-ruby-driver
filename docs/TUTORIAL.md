@@ -9,8 +9,11 @@ As always, the [latest source for the Ruby driver](http://github.com/mongodb/mon
 ## Installation
 
 The mongo-ruby-driver gem is served through Rubygems.org. To install, make sure you have the latest version of rubygems.
+
     gem update --system
+
 Next, install the mongo rubygem:
+
     gem install mongo
 
 The required `bson` gem will be installed automatically.
@@ -32,26 +35,32 @@ All of the code here assumes that you have already executed the following Ruby c
 
 #### Making a Connection
 
-An `Mongo::Connection` instance represents a connection to MongoDB. You use a Connection instance to obtain an Mongo:DB instance, which represents a named database. The database doesn't have to exist - if it doesn't, MongoDB will create it for you.
+An `Mongo::Connection` instance represents a connection to MongoDB.  You can optionally specify the MongoDB server address and port when connecting. The following example shows three ways to connect to the local machine:
 
-You can optionally specify the MongoDB server address and port when connecting. The following example shows three ways to connect to the database "mydb" on the local machine:
-
-    db = Mongo::Connection.new.db("mydb")
-    db = Mongo::Connection.new("localhost").db("mydb")
-    db = Mongo::Connection.new("localhost", 27017).db("mydb")
-
-At this point, the `db` object will be a connection to a MongoDB server for the specified database. Each DB instance uses a separate socket connection to the server.
-
-If you're trying to connect to a replica set, see [Replica Sets in Ruby](http://www.mongodb.org/display/DOCS/Replica+Sets+in+Ruby).
+    connection = Mongo::Connection.new # (optional host/port args)
+    connection = Mongo::Connection.new("localhost")
+    connection = Mongo::Connection.new("localhost", 27017)
 
 #### Listing All Databases
 
-    connection = Mongo::Connection.new # (optional host/port args)
     connection.database_names.each { |name| puts name }
     connection.database_info.each { |info| puts info.inspect}
 
     #### Dropping a Database
     connection.drop_database('database_name')
+
+#### Using a Database
+
+You use a Connection instance to obtain an Mongo:DB instance, which represents a named database. The database doesn't have to exist - if it doesn't, MongoDB will create it for you. The following examples use the database "mydb":
+
+    db = connection.db("mydb")
+    db = Mongo::Connection.new.db("mydb")
+
+At this point, the `db` object will be a connection to a MongoDB server for the specified database. Each DB instance uses a separate socket connection to the server.
+
+If you're trying to connect to a replica set, see [Replica Sets in Ruby](http://www.mongodb.org/display/DOCS/Replica+Sets+in+Ruby).
+
+#### Authentication
 
 MongoDB can be run in a secure mode where access to databases is controlled through name and password authentication.  When run in this mode, any client application must provide a name and password before doing any operations.  In the Ruby driver, you simply do the following with the connected mongo object:
 
@@ -75,8 +84,11 @@ as the output.
 #### Getting a Collection
 
 You can get a collection to use using the `collection` method:
+
     coll = db.collection("testCollection")
+
 This is aliased to the \[\] method:
+
     coll = db["testCollection"]
 
 Once you have this collection object, you can now do things like insert data, query for data, etc.
