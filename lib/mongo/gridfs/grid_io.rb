@@ -282,7 +282,7 @@ module Mongo
     
     def get_chunk(n)
       chunk = @chunks.find({'files_id' => @files_id, 'n' => n}).next_document
-      @chunk_position = @mode == ?a ? chunk['data'].size : 0
+      @chunk_position = (@mode == ?a ? chunk['data'].size : 0) unless chunk.nil?
       chunk
     end
     
