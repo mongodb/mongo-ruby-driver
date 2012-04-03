@@ -26,7 +26,7 @@ module Mongo
     include Mongo::Logging
     include Mongo::Networking
 
-    TCPSocket = ::TCPSocket
+    TCPSocket = Mongo::TCPSocket
     Mutex = ::Mutex
     ConditionVariable = ::ConditionVariable
 
@@ -67,7 +67,7 @@ module Mongo
     #   logging negatively impacts performance; therefore, it should not be used for high-performance apps.
     # @option opts [Integer] :pool_size (1) The maximum number of socket self.connections allowed per
     #   connection pool. Note: this setting is relevant only for multi-threaded applications.
-    # @option opts [Float] :pool_timeout (5.0) When all of the self.connections a pool are checked out,
+    # @option opts [Float] :timeout (5.0) When all of the self.connections a pool are checked out,
     #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
     #   Note: this setting is relevant only for multi-threaded applications (which in Ruby are rare).
     # @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.
@@ -622,23 +622,10 @@ module Mongo
         socket = nil
         config = nil
 
-        if @connect_timeout
-          Mongo::TimeoutHandler.timeout(@connect_timeout, OperationTimeout) do
-            socket = @socket_class.new(host, port)
-            socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
-          end
-        else
-          socket = @socket_class.new(host, port)
-          socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
-        end
+        socket = @socket_class.new(host, port, @op_timeout, @connect_timeout)
+        socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 
-        if @connect_timeout
-          Mongo::TimeoutHandler.timeout(@connect_timeout, OperationTimeout) do
-            config = self['admin'].command({:ismaster => 1}, :socket => socket)
-          end
-        else
-          config = self['admin'].command({:ismaster => 1}, :socket => socket)
-        end
+        config = self['admin'].command({:ismaster => 1}, :socket => socket)
       rescue OperationFailure, SocketError, SystemCallError, IOError
         close
       ensure

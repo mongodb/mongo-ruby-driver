@@ -36,13 +36,9 @@ module Mongo
     def connect
       begin
         socket = nil
-        if @connection.connect_timeout
-          Mongo::TimeoutHandler.timeout(@connection.connect_timeout, OperationTimeout) do
-            socket = @connection.socket_class.new(@host, @port)
-          end
-        else
-          socket = @connection.socket_class.new(@host, @port)
-        end
+        socket = @connection.socket_class.new(@host, @port, 
+          @connection.op_timeout, @connection.connect_timeout
+        )
 
         if socket.nil?
           return nil
@@ -84,13 +80,7 @@ module Mongo
     # matches with the name provided.
     def set_config
       begin
-        if @connection.connect_timeout
-          Mongo::TimeoutHandler.timeout(@connection.connect_timeout, OperationTimeout) do
-            @config = @connection['admin'].command({:ismaster => 1}, :socket => @socket)
-          end
-        else
-          @config = @connection['admin'].command({:ismaster => 1}, :socket => @socket)
-        end
+        @config = @connection['admin'].command({:ismaster => 1}, :socket => @socket)
 
         if @config['msg'] && @logger
           @connection.log(:warn, "#{config['msg']}")

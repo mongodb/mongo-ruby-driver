@@ -78,6 +78,3 @@ if RUBY_PLATFORM =~ /java/
   require 'mongo/gridfs/grid_io_fix'
 end
 require 'mongo/gridfs/grid_file_system'
-
-require 'timeout'
-Mongo::TimeoutHandler = Timeout
