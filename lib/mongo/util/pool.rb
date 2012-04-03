@@ -227,15 +227,10 @@ module Mongo
     end
 
     def prune_thread_socket_hash
-      map = {}
-      Thread.list.each do |t|
-        map[t] = 1
-      end
+      current_threads = Set[*Thread.list]
 
-      @threads_to_sockets.keys.each do |key|
-        if !map[key]
-          @threads_to_sockets.delete(key)
-        end
+      @threads_to_sockets.delete_if do |thread, socket|
+        !current_threads.include?(thread)
       end
     end
 

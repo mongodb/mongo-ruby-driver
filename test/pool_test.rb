@@ -12,12 +12,10 @@ class PoolTest < Test::Unit::TestCase
     @pool = Pool.new(@connection, TEST_HOST, TEST_PORT, :size => 5)
 
     @threads    = []
-    @sockets    = []
 
     10.times do
       @threads << Thread.new do
         original_socket = @pool.checkout
-        @sockets << original_socket
         @pool.checkin(original_socket)
         5000.times do
           socket = @pool.checkout
