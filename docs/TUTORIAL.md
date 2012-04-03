@@ -26,9 +26,15 @@ After installing, you may want to look at the [examples](http://github.com/mongo
 
 ## Getting started
 
+Note that the output in the following has been updated to Ruby 1.9, so if you are using Ruby 1.8, you will see some minor differences.  To follow this tutorial interactively, at the command line, run the Interactive Ruby Shell.
+
+    irb
+
+As you execute commands, irb will output the result using the `inspect` method.  If you are editing and running a script for this tutorial, you can view output using the `puts` or `p` methods.
+
 #### Using the gem
 
-All of the code here assumes that you have already executed the following Ruby code:
+Use the `mongo` gem via the `require` kernel method.
 
     require 'rubygems'  # not necessary for Ruby 1.9
     require 'mongo'
@@ -43,15 +49,15 @@ An `Mongo::Connection` instance represents a connection to MongoDB.  You can opt
 
 #### Listing All Databases
 
-    connection.database_names.each { |name| puts name }
-    connection.database_info.each { |info| puts info.inspect}
+    connection.database_names
+    connection.database_info.each { |info| puts info.inspect }
 
     #### Dropping a Database
     connection.drop_database('database_name')
 
-#### Using a Database
+## Using a Database
 
-You use a Connection instance to obtain an Mongo:DB instance, which represents a named database. The database doesn't have to exist - if it doesn't, MongoDB will create it for you. The following examples use the database "mydb":
+You use a Connection instance to obtain an Mongo::DB instance, which represents a named database. The database doesn't have to exist - if it doesn't, MongoDB will create it for you. The following examples use the database "mydb":
 
     db = connection.db("mydb")
     db = Mongo::Connection.new.db("mydb")
@@ -68,20 +74,7 @@ MongoDB can be run in a secure mode where access to databases is controlled thro
 
 If the name and password are valid for the database, `auth` will be `true`.  Otherwise, it will be `false`.  You should look at the MongoDB log for further information if available.
 
-#### Getting a List Of Collections
-
-Each database has zero or more collections.  You can retrieve a list of them from the db (and print out any that are there):
-
-    db.collection_names.each { |name| puts name }
-
-and assuming that there are two collections, name and address, in the database, you would see
-
-    name
-    address
-
-as the output.
-
-#### Getting a Collection
+## Using a Collection
 
 You can get a collection to use using the `collection` method:
 
@@ -91,11 +84,11 @@ This is aliased to the \[\] method:
 
     coll = db["testCollection"]
 
-Once you have this collection object, you can now do things like insert data, query for data, etc.
+Once you have this collection object, you can now do create, read, update, and delete (CRUD) functions on persistent storage.
 
-#### Inserting a Document
+### Creating Documents
 
-Once you have the collection object, you can insert documents into the collection.  For example, lets make a little document that in JSON would be represented as
+Once you have the collection object, you can create or `insert` documents into the collection.  For example, lets make a little document that in JSON would be represented as
 
       {
          "name" : "MongoDB",
@@ -107,111 +100,152 @@ Once you have the collection object, you can insert documents into the collectio
                    }
       }
 
-Notice that the above has an "inner" document embedded within it.  To do this, we can use a Hash or the driver's OrderedHash (which preserves key order) to create the document (including the inner document), and then just simply insert it into the collection using the `insert()` method.
+Notice that the above has an "inner" document embedded within it.  To do this, we can use a Hash or the driver's OrderedHash (which preserves key order) to create the document (including the inner document), and then just simply insert it into the collection using the `insert` method.
 
-    doc = {"name" => "MongoDB", "type" => "database", "count" => 1,
-           "info" => {"x" => 203, "y" => '102'}}
-    coll.insert(doc)
+    doc = {"name" => "MongoDB", "type" => "database", "count" => 1, "info" => {"x" => 203, "y" => '102'}}
+    id = coll.insert(doc)
 
-#### Updating a Document
+We have saved the `id` for future use below.  Now the collection has been created and you can list it.
 
-We can update the previous document using the `update` method. There are a couple ways to update a document. We can rewrite it:
+#### Getting a List Of Collections
 
-    doc["name"] = "MongoDB Ruby"
-    coll.update({"_id" => doc["_id"]}, doc)
+Each database has zero or more collections.  You can retrieve a list of them from the db (and print out any that are there):
 
-Or we can use an atomic operator to change a single value:
+	db.collection_names
 
-    coll.update({"_id" => doc["_id"]}, {"$set" => {"name" => "MongoDB Ruby"}})
+You should see
 
-Read [more about updating documents|Updating].
-
-#### Finding the First Document In a Collection using `find_one()`
-
-To show that the document we inserted in the previous step is there, we can do a simple `find_one()` operation to get the first document in the collection.  This method returns a single document (rather than the `Cursor` that the `find()` operation returns).
-
-    my_doc = coll.find_one()
-    puts my_doc.inspect
-
-and you should see:
-
-    {"_id"=>#<BSON::ObjectID:0x118576c ...>, "name"=>"MongoDB",
-     "info"=>{"x"=>203, "y"=>102}, "type"=>"database", "count"=>1}
-
-Note the `_id` element has been added automatically by MongoDB to your document.
+	\["testCollection", "system.indexes"\]
 
 #### Adding Multiple Documents
 
 To demonstrate some more interesting queries, let's add multiple simple documents to the collection.  These documents will have the following form:
-    {
-       "i" : value
-    }
+
+	{
+	    "i" : value
+	}
 
 Here's how to insert them:
 
-    100.times { |i| coll.insert("i" => i) }
+	100.times { |i| coll.insert("i" => i) }
 
 Notice that we can insert documents of different "shapes" into the same collection. These records are in the same collection as the complex record we inserted above.  This aspect is what we mean when we say that MongoDB is "schema-free".
 
-#### Counting Documents in a Collection
+### Reading Documents
 
-Now that we've inserted 101 documents (the 100 we did in the loop, plus the first one), we can check to see if we have them all using the `count()` method.
+#### Reading the First Document in a Collection using `find_one`
 
-    puts coll.count()
+To retrieve the document that we inserted, we can do a simple `find_one` method to get the first document in the collection.  This method returns a single document directly.
 
-and it should print `101`.
+	coll.find_one
 
-#### Using a Cursor to get all of the Documents
+and you should something like:
 
-To get all the documents from the collection, we use the `find()` method. `find()` returns a `Cursor` object, which allows us to iterate over the set of documents that matches our query.  The Ruby driver's Cursor implemented Enumerable, which allows us to use `Enumerable#each`, `Enumerable#map}, etc. For instance:
+	{"_id"=>BSON::ObjectId('4f7b1ea6e4d30b35c9000001'), "name"=>"MongoDB", "type"=>"database", "count"=>1, "info"=>{"x"=>203, "y"=>"102"}}
 
-    coll.find().each { |row| puts row.inspect }
+Note the `_id` element has been added automatically by MongoDB to your document.
 
-and that should print all 101 documents in the collection.
+#### Reading All of the Documents with a Cursor using `find`
 
-#### Getting a Single Document with a Query
+To get all the documents from the collection, we use the `find` method. `find` returns a `Cursor` object, which allows us to iterate over the set of documents that matches our query.  The Ruby driver's Cursor implemented Enumerable, which allows us to use `Enumerable#each`, `Enumerable#map}, etc. For instance:
 
-We can create a _query_ hash to pass to the `find()` method to get a subset of the documents in our collection.  For example, if we wanted to find the document for which the value of the "i" field is 71, we would do the following ;
+	coll.find.each { |row| puts row.inspect }
 
-    coll.find("i" => 71).each { |row| puts row.inspect }
+and that should print all 101 documents in the collection.  You can take advantage of `Enumerable#to_a`.
+
+    puts coll.find.to_a
+
+#### Specific Queries
+
+We can create a _query_ hash to pass to the `find` method to get a subset of the documents in our collection.  To check that our update worked, find the document by id:
+
+    coll.find("_id" => id).to_a
+
+If we wanted to find the document for which the value of the "i" field is 71, we would do the following:
+
+    coll.find("i" => 71).to_a
 
 and it should just print just one document:
 
-    {"_id"=>#<BSON::ObjectID:0x117de90 ...>, "i"=>71}
+    {"_id"=>BSON::ObjectId('4f7b20b4e4d30b35c9000049'), "i"=>71}
+
+#### Counting Documents in a Collection
+
+Now that we've inserted 101 documents (the 100 we did in the loop, plus the first one), we can check to see if we have them all using the `count` method.
+
+    coll.count
+
+and it should print `101`.
 
 #### Getting a Set of Documents With a Query
 
 We can use the query to get a set of documents from our collection.  For example, if we wanted to get all documents where "i" > 50, we could write:
 
-    coll.find("i" => {"$gt" => 50}).each { |row| puts row }
+    puts coll.find("i" => {"$gt" => 50}).to_a
 
 which should print the documents where i > 50.  We could also get a range, say   20 < i <= 30:
 
-    coll.find("i" => {"$gt" => 20, "$lte" => 30}).each { |row| puts row }
+    puts coll.find("i" => {"$gt" => 20, "$lte" => 30}).to_a
 
-#### Selecting a subset of fields for a query
+#### Selecting a Subset of Fields for a Query
 
-Use the `:fields` option. If you just want fields "a" and "b":
+Use the `:fields` option to specify fields to return.
 
-    coll.find("i" => {"$gt" => 50}, :fields => ["a", "b"]).each { |row| puts row }
+    puts coll.find("_id" => id, :fields => ["name", "type"]).to_a
 
 #### Querying with Regular Expressions
 
 Regular expressions can be used to query MongoDB. To find all names that begin with 'a':
 
-    coll.find({"name" => /^a/})
+    puts coll.find({"name" => /^M/}).to_a
 
 You can also construct a regular expression dynamically. To match a given search string:
 
+    params = {'search' => 'DB'}
     search_string = params['search']
 
     # Constructor syntax
-    coll.find({"name" => Regexp.new(search_string)})
+    puts coll.find({"name" => Regexp.new(search_string)}).to_a
 
     # Literal syntax
-    coll.find({"name" => /#{search_string}/})
+    puts coll.find({"name" => /#{search_string}/}).to_a
 
 Although MongoDB isn't vulnerable to anything like SQL-injection, it may be worth checking the search string for anything malicious.
+
+### Updating Documents
+
+We can update the previous document using the `update` method. There are a couple ways to update a document. We can rewrite it:
+
+    doc["name"] = "MongoDB Ruby"
+    coll.update({"_id" => id}, doc)
+
+Or we can use an atomic operator to change a single value:
+
+    coll.update({"_id" => id}, {"$set" => {"name" => "MongoDB Ruby"}})
+
+Verify the update.
+
+    puts coll.find("_id" => id).to_a
+
+Read [more about updating documents|Updating].
+
+### Deleting Documents
+
+Use the `remove` method to delete documents.
+
+    coll.count
+    coll.remove("i" => 71)
+    coll.count
+    puts coll.find("i" => 71).to_a
+
+The above shows that the count has been reduced and that the document can no longer be found.
+
+Without arguments, the `remove` method deletes all documents.
+
+    coll.remove
+    coll.count
+
+Please program carefully.
 
 ## Indexing
 
@@ -227,7 +261,19 @@ To specify complex indexes or a descending index you need to use a slightly more
     # Explicit "ascending"
     coll.create_index([["i", Mongo::ASCENDING]])
 
-#### Creating and querying on a geospatial index
+Use the `explain` method on the cursor to show how MongoDB will run the query.
+
+    coll.find("_id" => id).explain
+    coll.find("i" => 71).explain
+    coll.find("type" => "database").explain
+
+The above shows that the query by `_id` and `i` will use faster indexed BtreeCursor, while the query by `type` will use a slower BasicCursor.
+
+#### Getting a List of Indexes on a Collection
+
+You can get a list of the indexes on a collection using `coll.index_information`.
+
+#### Creating and Querying on a Geospatial Index
 
 First, create the index on a field containing long-lat values:
 
@@ -238,10 +284,6 @@ Then get a list of the twenty locations nearest to the point 50, 50:
     people.find({"loc" => {"$near" => [50, 50]}}, {:limit => 20}).each do |p|
       puts p.inspect 
     end
-
-#### Getting a List of Indexes on a Collection
-
-You can get a list of the indexes on a collection using `coll.index_information()`.
 
 ## Database Administration
 
