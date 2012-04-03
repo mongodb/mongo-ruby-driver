@@ -3,19 +3,21 @@ require './test/bson/test_helper'
 require 'set'
 
 if RUBY_VERSION < '1.9'
-  require 'complex'
-  require 'rational'
+  silently do
+    require 'complex'
+    require 'rational'
+  end
 end
 require 'bigdecimal'
 
 begin
   require 'date'
   require 'tzinfo'
-  require 'active_support/core_ext'
+  require 'active_support/timezone'
   Time.zone = "Pacific Time (US & Canada)"
   Zone = Time.zone.now
 rescue LoadError
-  warn 'Mocking time with zone'
+  #warn 'Mocking time with zone'
   module ActiveSupport
     class TimeWithZone
       def initialize(utc_time, zone)
@@ -278,6 +280,7 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_date_before_epoch
+    if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/ then return true end 
     begin
       doc = {'date' => Time.utc(1600)}
       bson = @encoder.serialize(doc)

@@ -73,7 +73,7 @@ class TestThreading < Test::Unit::TestCase
     @@coll = @@db.collection('thread-test-collection')
 
     1000.times do |i|
-      @@coll.insert("x" => i)
+      @@coll.insert("x" => i, :safe => true)
     end
 
     threads = []
