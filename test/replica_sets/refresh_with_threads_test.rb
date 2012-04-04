@@ -10,7 +10,6 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
   end
 
   def teardown
-    @rs.restart_killed_nodes
     @conn.close if @conn
   end
 
@@ -45,11 +44,14 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
       end
     end
 
-    rescue_connection_failure do
-      @rs.add_node
-      threads.each {|t| t.join }
-    end
+    @rs.add_node
 
+    begin
+      threads.each {|t| t.join }
+    rescue ConnectionFailure
+      # 1.8x will raise connection failures
+    end
+    
     @conn['admin'].command({:ismaster => 1})
 
     assert_equal 3, @conn.secondary_pools.length

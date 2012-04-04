@@ -46,7 +46,7 @@ class ReplSetManager
   end
 
   def start_set
-    system("killall mongod > /dev/null 2>/dev/null")
+    system("killall mongod > /dev/null 2> /dev/null")
     sleep(1)
     should_start = true
     #puts "** Starting a replica set with #{@count} nodes"
