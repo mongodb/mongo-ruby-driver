@@ -175,8 +175,8 @@ class TestConnection < Test::Unit::TestCase
     end
     seeds = @conn.seeds
     assert_equal 2, seeds.length
-    assert_equal ['foo', 27017], nodes[0]
-    assert_equal ['bar', 27018], nodes[1]
+    assert_equal ['foo', 27017], seeds[0]
+    assert_equal ['bar', 27018], seeds[1]
   end
 
   def test_fsync_lock

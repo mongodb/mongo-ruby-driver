@@ -139,11 +139,11 @@ module Mongo
         if @connect == 'direct'
           opts[:slave_ok] = true
         else
-          opts[:read_secondary] = true
+          opts[:read] = :secondary
         end
       end
 
-      opts[:rs_name] = @replicaset if @replicaset
+      opts[:name] = @replicaset if @replicaset
 
       opts
     end

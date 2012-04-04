@@ -87,7 +87,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
 
     results = []
     rescue_connection_failure do
-      puts "@coll.find().each"
+      #puts "@coll.find().each"
       @coll.find.each {|r| results << r}
       [20, 30, 40].each do |a|
         assert results.any? {|r| r['a'] == a}, "Could not find record for a => #{a}"

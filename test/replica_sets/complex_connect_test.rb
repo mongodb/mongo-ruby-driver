@@ -15,11 +15,11 @@ class ComplexConnectTest < Test::Unit::TestCase
   def test_complex_connect
     primary = Connection.new(@rs.host, @rs.ports[0])
 
-    @conn = ReplSetConnection.new(
-      [@rs.host, @rs.ports[2]],
-      [@rs.host, @rs.ports[1]],
-      [@rs.host, @rs.ports[0]]
-    )
+    @conn = ReplSetConnection.new([
+      "#{@rs.host}:#{@rs.ports[2]}",
+      "#{@rs.host}:#{@rs.ports[1]}",
+      "#{@rs.host}:#{@rs.ports[0]}",
+    ])
 
     @conn['test']['foo'].insert({:a => 1})
     assert @conn['test']['foo'].find_one

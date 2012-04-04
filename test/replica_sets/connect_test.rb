@@ -99,7 +99,9 @@ class ConnectTest < Test::Unit::TestCase
   end
 
   def test_connect_with_connection_string
-    @conn = Connection.from_uri("mongodb://#{@rs.host}:#{@rs.ports[0]},#{@rs.host}:#{@rs.ports[1]}?replicaset=#{@rs.name}")
+    silently do
+      @conn = Connection.from_uri("mongodb://#{@rs.host}:#{@rs.ports[0]},#{@rs.host}:#{@rs.ports[1]}?replicaset=#{@rs.name}")
+    end
     assert @conn.is_a?(ReplSetConnection)
     assert @conn.connected?
   end
@@ -117,7 +119,9 @@ class ConnectTest < Test::Unit::TestCase
   end
 
   def test_connect_with_full_connection_string
-    @conn = Connection.from_uri("mongodb://#{@rs.host}:#{@rs.ports[0]},#{@rs.host}:#{@rs.ports[1]}?replicaset=#{@rs.name};safe=true;w=2;fsync=true;slaveok=true")
+    silently do
+      @conn = Connection.from_uri("mongodb://#{@rs.host}:#{@rs.ports[0]},#{@rs.host}:#{@rs.ports[1]}?replicaset=#{@rs.name};safe=true;w=2;fsync=true;slaveok=true")
+    end
     assert @conn.is_a?(ReplSetConnection)
     assert @conn.connected?
     assert_equal 2, @conn.safe[:w]

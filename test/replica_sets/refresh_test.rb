@@ -10,9 +10,10 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
 
   def teardown
     @rs.restart_killed_nodes
-    @conn.close if @conn
+    @conn.close if defined?(@conn)
   end
 
+=begin
   def test_connect_speed
     Benchmark.bm do |x|
       x.report("Connect") do
@@ -31,6 +32,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
       end
     end
   end
+=end
 
   def test_connect_and_manual_refresh_with_secondaries_down
     @rs.kill_all_secondaries
