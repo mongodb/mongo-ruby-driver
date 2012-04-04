@@ -28,7 +28,7 @@ class ConnectTest < Test::Unit::TestCase
   end
 
   def test_connect_with_primary_node_killed
-    node = @rs.kill_primary
+    @rs.kill_primary
 
     # Becuase we're killing the primary and trying to connect right away,
     # this is going to fail right away.
@@ -43,7 +43,7 @@ class ConnectTest < Test::Unit::TestCase
   end
 
   def test_connect_with_secondary_node_killed
-    node = @rs.kill_secondary
+    @rs.kill_secondary
 
     rescue_connection_failure do
       @conn = ReplSetConnection.new build_seeds(3)

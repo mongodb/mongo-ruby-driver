@@ -56,7 +56,7 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
       threads.each {|t| t.join }
     end
 
-    config = @conn['admin'].command({:ismaster => 1})
+    @conn['admin'].command({:ismaster => 1})
 
     assert_equal 3, @conn.secondary_pools.length
     assert_equal 3, @conn.secondaries.length
