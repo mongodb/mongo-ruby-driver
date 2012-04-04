@@ -60,8 +60,14 @@ module Mongo
 
     def read(maxlen, buffer)
       # Block on data to read for @op_timeout seconds
-      if IO.select([@socket], nil, nil, @op_timeout)
-        @socket.readpartial(maxlen, buffer)
+      if IO.select([@socket], nil, [@socket], @op_timeout)
+        begin
+          @socket.readpartial(maxlen, buffer)
+        rescue EOFError
+          return ConnectionError
+        rescue Errno::ECONNRESET
+          raise ConnectionFailure 
+        end
       else
         raise OperationTimeout
       end
