@@ -131,6 +131,7 @@ class ReplSetManager
     @mongods[n]['start'] += " --dur" if @durable
     @mongods[n]['start'] += " --smallfiles" if @smallfiles
     @mongods[n]['start'] += " --noprealloc" unless @prealloc
+    @mongods[n]['start'] += "> /dev/null 2>/dev/null"
     @mongods[n]['start']
   end
 

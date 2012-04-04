@@ -105,7 +105,6 @@ class ReadPreferenceTest < Test::Unit::TestCase
     @rs.kill_primary
     assert_equal 2, @coll.find.to_a.length
     rescue_connection_failure do
-      puts "@coll.save()"
       @coll.save({:a => 50}, :safe => {:w => 2, :wtimeout => 10000})
     end
     @rs.restart_killed_nodes

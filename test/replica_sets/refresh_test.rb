@@ -95,7 +95,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     num_secondaries = @conn.secondary_pools.length
     old_refresh_version = @conn.refresh_version
 
-    n = @rs.kill_secondary
+    @rs.kill_secondary
     sleep(4)
     @conn['foo']['bar'].find_one
 
