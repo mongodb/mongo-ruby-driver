@@ -45,13 +45,7 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
       end
     end
 
-    # MongoDB < 2.0 will disconnect clients on rs.reconfig()
-    if @rs.version.first < 2
-      assert_raise Mongo::ConnectionFailure do
-        @rs.add_node
-        threads.each {|t| t.join }
-      end
-    else
+    rescue_connection_failure do
       @rs.add_node
       threads.each {|t| t.join }
     end

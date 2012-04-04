@@ -110,7 +110,9 @@ class ConnectTest < Test::Unit::TestCase
   end
   
   def test_connect_with_old_seed_format
-    @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]], [@rs.host, @rs.ports[2]])
+    silently do
+      @conn = ReplSetConnection.new([@rs.host, @rs.ports[0]], [@rs.host, @rs.ports[1]], [@rs.host, @rs.ports[2]])
+    end
     assert @conn.connected?
   end
 

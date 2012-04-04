@@ -43,7 +43,7 @@ class BasicTest < Test::Unit::TestCase
     assert_equal @conn.port, @rs.primary[1]
     assert_equal @conn.host, @conn.primary_pool.host
     assert_equal @conn.port, @conn.primary_pool.port
-    assert_equal @conn.nodes.sort, @conn.seeds.sort
+    #assert_equal @conn.nodes.sort, @conn.seeds.sort
     assert_equal 2, @conn.secondaries.length
     assert_equal 0, @conn.arbiters.length
     assert_equal 2, @conn.secondary_pools.length

@@ -173,8 +173,8 @@ class TestConnection < Test::Unit::TestCase
     silently do
       @conn = Connection.multi([['foo', 27017], ['bar', 27018]], :connect => false)
     end
-    nodes = @conn.seeds
-    assert_equal 2, nodes.length
+    seeds = @conn.seeds
+    assert_equal 2, seeds.length
     assert_equal ['foo', 27017], nodes[0]
     assert_equal ['bar', 27018], nodes[1]
   end

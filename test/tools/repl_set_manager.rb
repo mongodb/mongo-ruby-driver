@@ -46,10 +46,10 @@ class ReplSetManager
   end
 
   def start_set
-    system("killall mongod")
+    system("killall mongod > /dev/null 2>/dev/null")
     sleep(1)
     should_start = true
-    puts "** Starting a replica set with #{@count} nodes"
+    #puts "** Starting a replica set with #{@count} nodes"
 
     n = 0
     (@primary_count + @secondary_count).times do
@@ -186,7 +186,7 @@ class ReplSetManager
         puts "waiting for mongod @ pid #{pid} to die..."
         sleep(1)
       else
-        puts "mongod @ pid #{pid} was killed successfully"
+        #puts "mongod @ pid #{pid} was killed successfully"
         return true
       end
     end
@@ -196,7 +196,7 @@ class ReplSetManager
 
   def kill(node, signal=2)
     pid = @mongods[node]['pid']
-    puts "** Killing node with pid #{pid} at port #{@mongods[node]['port']}"
+    #puts "** Killing node with pid #{pid} at port #{@mongods[node]['port']}"
     system("kill #{pid}")
     dead = wait_for_death(pid)
     @mongods[node]['up'] = false if dead
@@ -261,10 +261,10 @@ class ReplSetManager
   alias :restart :start
 
   def ensure_up(n=nil, connection=nil)
-    print "** Ensuring members are up..."
+    #print "** Ensuring members are up..."
 
     attempt(n) do
-      print "."
+      #print "."
       con = connection || get_connection
       begin
         status = con['admin'].command({:replSetGetStatus => 1})
@@ -294,7 +294,7 @@ class ReplSetManager
       end
 
       if states.any? {|s| s['ismaster']}
-        print "all members up!\n\n"
+        #puts "all members up!"
         connections.each {|c| c.close }
         con.close
         return status
@@ -336,7 +336,7 @@ class ReplSetManager
   private
 
   def initiate
-    puts "Initiating replica set..."
+    #puts "Initiating replica set..."
     con = get_connection
 
     attempt do

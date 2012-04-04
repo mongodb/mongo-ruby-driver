@@ -13,7 +13,6 @@ class ComplexConnectTest < Test::Unit::TestCase
   end
 
   def test_complex_connect
-    logger = Logger.new(STDOUT)
     primary = Connection.new(@rs.host, @rs.ports[0])
 
     @conn = ReplSetConnection.new(
