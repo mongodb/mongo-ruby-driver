@@ -32,14 +32,14 @@ Note that the output in the following has been updated to Ruby 1.9, so if you ar
 
 As you execute commands, irb will output the result using the `inspect` method.  If you are editing and running a script for this tutorial, you can view output using the `puts` or `p` methods.
 
-#### Using the gem
+### Using the gem
 
 Use the `mongo` gem via the `require` kernel method.
 
     require 'rubygems'  # not necessary for Ruby 1.9
     require 'mongo'
 
-#### Making a Connection
+### Making a Connection
 
 An `Mongo::Connection` instance represents a connection to MongoDB.  You can optionally specify the MongoDB server address and port when connecting. The following example shows three ways to connect to the local machine:
 
@@ -47,13 +47,12 @@ An `Mongo::Connection` instance represents a connection to MongoDB.  You can opt
     connection = Mongo::Connection.new("localhost")
     connection = Mongo::Connection.new("localhost", 27017)
 
-#### Listing All Databases
+### Listing All Databases
 
     connection.database_names
     connection.database_info.each { |info| puts info.inspect }
 
-    #### Dropping a Database
-    connection.drop_database('database_name')
+The `database_info` method returns a hash mapping database names to the size of the database in bytes.
 
 ## Using a Database
 
@@ -66,7 +65,7 @@ At this point, the `db` object will be a connection to a MongoDB server for the 
 
 If you're trying to connect to a replica set, see [Replica Sets in Ruby](http://www.mongodb.org/display/DOCS/Replica+Sets+in+Ruby).
 
-#### Authentication
+### Authentication
 
 MongoDB can be run in a secure mode where access to databases is controlled through name and password authentication.  When run in this mode, any client application must provide a name and password before doing any operations.  In the Ruby driver, you simply do the following with the connected mongo object:
 
@@ -86,7 +85,7 @@ This is aliased to the \[\] method:
 
 Once you have this collection object, you can now do create, read, update, and delete (CRUD) functions on persistent storage.
 
-### Creating Documents
+### Creating Documents with `insert`
 
 Once you have the collection object, you can create or `insert` documents into the collection.  For example, lets make a little document that in JSON would be represented as
 
@@ -131,7 +130,7 @@ Here's how to insert them:
 
 Notice that we can insert documents of different "shapes" into the same collection. These records are in the same collection as the complex record we inserted above.  This aspect is what we mean when we say that MongoDB is "schema-free".
 
-### Reading Documents
+### Reading Documents with `find_one` and `find`
 
 #### Reading the First Document in a Collection using `find_one`
 
@@ -154,6 +153,8 @@ To get all the documents from the collection, we use the `find` method. `find` r
 and that should print all 101 documents in the collection.  You can take advantage of `Enumerable#to_a`.
 
     puts coll.find.to_a
+
+Important note - using `to_a` pulls all of the full result set into memory and is inefficient if you can process by each individual document.  To process with more memory efficiency, use the `each` method with a code block for the cursor.
 
 #### Specific Queries
 
@@ -212,7 +213,7 @@ You can also construct a regular expression dynamically. To match a given search
 
 Although MongoDB isn't vulnerable to anything like SQL-injection, it may be worth checking the search string for anything malicious.
 
-### Updating Documents
+### Updating Documents with `update`
 
 We can update the previous document using the `update` method. There are a couple ways to update a document. We can rewrite it:
 
@@ -229,7 +230,7 @@ Verify the update.
 
 Read [more about updating documents|Updating].
 
-### Deleting Documents
+### Deleting Documents with `remove`
 
 Use the `remove` method to delete documents.
 
@@ -249,7 +250,7 @@ Please program carefully.
 
 ## Indexing
 
-#### Creating An Index
+### Creating An Index
 
 MongoDB supports indexes, and they are very easy to add on a collection.  To create an index, you specify an index name and an array of field names to be indexed, or a single field name. The following creates an ascending index on the "i" field:
 
@@ -269,11 +270,13 @@ Use the `explain` method on the cursor to show how MongoDB will run the query.
 
 The above shows that the query by `_id` and `i` will use faster indexed BtreeCursor, while the query by `type` will use a slower BasicCursor.
 
-#### Getting a List of Indexes on a Collection
+### Getting a List of Indexes on a Collection
 
-You can get a list of the indexes on a collection using `coll.index_information`.
+You can get a list of the indexes on a collection.
 
-#### Creating and Querying on a Geospatial Index
+    coll.index_information
+
+### Creating and Querying on a Geospatial Index
 
 First, create the index on a field containing long-lat values:
 
@@ -282,8 +285,48 @@ First, create the index on a field containing long-lat values:
 Then get a list of the twenty locations nearest to the point 50, 50:
 
     people.find({"loc" => {"$near" => [50, 50]}}, {:limit => 20}).each do |p|
-      puts p.inspect 
+      puts p.inspect
     end
+
+## Dropping
+
+### Drop an Index
+
+To drop a secondary index, use the `drop_index` method on the collection.
+
+    coll.drop_index("i_1")
+    coll.index_information
+
+The dropped index is no longer listed.
+
+### Drop All Indexes
+
+To drop all secondary indexes, use the `drop_indexes` method on the collection.
+
+    coll.drop_indexes
+    coll.index_information
+
+Only the primary index "_id_" is listed.
+
+### Drop a Collection
+
+To drop a collection, use the `drop` method on the collection.
+
+    coll.drop
+    db.collection_names
+
+The dropped collection is no longer listed.  The `drop_collection` method can be used on the database as an alternative.
+
+    db.drop_collection("testCollection")
+
+### Drop a Database
+
+To drop a database, use the `drop_database` method on the connection.
+
+    connection.drop_database("mydb")
+    connection.database_names
+
+The dropped database is no longer listed.
 
 ## Database Administration
 
