@@ -217,7 +217,9 @@ module Mongo
       if @pids[socket] != Process.pid
         @pids[socket] = nil
         @sockets.delete(socket)
-        socket.close if socket
+        if socket
+          socket.close unless socket.closed?
+        end
         checkout_new_socket
       else
         @checked_out << socket
