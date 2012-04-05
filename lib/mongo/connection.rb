@@ -629,7 +629,9 @@ module Mongo
       rescue OperationFailure, SocketError, SystemCallError, IOError
         close
       ensure
-        socket.close if socket
+        if socket
+          socket.close unless socket.closed?
+        end
       end
 
       config
