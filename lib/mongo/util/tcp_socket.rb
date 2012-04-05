@@ -65,9 +65,9 @@ module Mongo
           @socket.readpartial(maxlen, buffer)
         rescue EOFError
           return ConnectionError
-        rescue Errno::ECONNRESET, Errno::ENOTCONN, Errno::EBADF
+        rescue Errno::ENOTCONN, Errno::EBADF, Errno::ECONNRESET, Errno::EPIPE
           raise ConnectionFailure
-        rescue Errno::EINTR, Errno::EIO, Errno::EPIPE 
+        rescue Errno::EINTR, Errno::EIO 
           raise OperationFailure 
         end
       else
