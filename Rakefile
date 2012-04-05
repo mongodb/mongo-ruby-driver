@@ -282,7 +282,8 @@ namespace :deploy do
   task :git_prepare do |t, args|
     g = Git.open(Dir.getwd())
     version = current_version
-    g.add(VERSION_FILES)
+    to_commit = VERSION_FILES << 'docs/HISTORY.md'
+    g.add(to_commit)
     g.commit "RELEASE #{version}"
     g.add_tag("#{version}")
   end
