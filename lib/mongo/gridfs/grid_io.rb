@@ -456,6 +456,10 @@ module Mongo
       
       last_chunk = @file_length / @chunk_size
       @current_chunk = get_chunk(last_chunk)
+      if @current_chunk.nil?
+        chunk = get_chunk last_chunk-1
+      end
+      @current_chunk ||= create_chunk(last_chunk)
       @file_position = @chunk_size * last_chunk + @current_chunk['data'].size
     end
     
@@ -464,7 +468,7 @@ module Mongo
         raise GridError, "Attempting to overwrite with Grid#put. You must delete the file first."
       end
     end
-
+    
     def to_mongo_object
       h                = BSON::OrderedHash.new
       h['_id']         = @files_id
