@@ -1,4 +1,6 @@
+require 'socket'
 require 'openssl'
+require 'timeout'
 
 module Mongo
 
@@ -9,31 +11,51 @@ module Mongo
 
     attr_accessor :pool
 
-    def initialize(host, port)
-      @socket = ::TCPSocket.new(host, port)
+    def initialize(host, port, op_timeout=nil, connect_timeout=nil)
+      @op_timeout = op_timeout
+      @connect_timeout = connect_timeout
+
+      @socket = ::TCPSocket.new(host, port) 
       @ssl = OpenSSL::SSL::SSLSocket.new(@socket)
       @ssl.sync_close = true
-      @ssl.connect
+      
+      connect
     end
 
-    def setsockopt(key, value, n)
-      @socket.setsockopt(key, value, n)
+    def connect
+      if @connect_timeout
+        Timeout::timeout(@connect_timeout, ConnectionTimeoutError) do
+          @ssl.connect
+        end
+      else
+        @ssl.connect
+      end
     end
 
-    # Write to the SSL socket.
-    #
-    # @param buffer a buffer to send.
-    # @param flags socket flags. Because Ruby's SSL
-    def send(buffer, flags=0)
-      @ssl.syswrite(buffer)
+    def send(data)
+      @ssl.syswrite(data)
     end
 
     def read(length, buffer)
-      @ssl.sysread(length, buffer)
+      if @op_timeout
+        Timeout::timeout(@op_timeout, OperationTimeout) do
+          @ssl.sysread(length, buffer)
+        end
+      else
+        @ssl.sysread(length, buffer)
+      end 
+    end
+
+    def setsockopt(key, value, n)
+      @ssl.setsockopt(key, value, n)
     end
 
     def close
       @ssl.close
+    end
+
+    def closed?
+      @ssl.closed?
     end
   end
 end

@@ -300,11 +300,11 @@ module Mongo
     # @return [Integer] number of bytes sent
     def send_message_on_socket(packed_message, socket)
       begin
-      total_bytes_sent = socket.send(packed_message, 0)
+      total_bytes_sent = socket.send(packed_message)
       if total_bytes_sent != packed_message.size
         packed_message.slice!(0, total_bytes_sent)
         while packed_message.size > 0
-          byte_sent = socket.send(packed_message, 0)
+          byte_sent = socket.send(packed_message)
           total_bytes_sent += byte_sent
           packed_message.slice!(0, byte_sent)
         end
@@ -320,22 +320,15 @@ module Mongo
     # Requires length and an available socket.
     def receive_message_on_socket(length, socket)
       begin
-        if @op_timeout
-          message = nil
-          Mongo::TimeoutHandler.timeout(@op_timeout, OperationTimeout) do
-            message = receive_data(length, socket)
-          end
-        else
           message = receive_data(length, socket)
-        end
-        rescue => ex
-          close
+      rescue OperationTimeout, ConnectionFailure => ex
+        close
 
-          if ex.class == OperationTimeout
-            raise OperationTimeout, "Timed out waiting on socket read."
-          else
-            raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
-          end
+        if ex.class == OperationTimeout
+          raise OperationTimeout, "Timed out waiting on socket read."
+        else
+          raise ConnectionFailure, "Operation failed with the following exception: #{ex}"
+        end
       end
       message
     end
@@ -343,6 +336,7 @@ module Mongo
     def receive_data(length, socket)
       message = new_binary_string
       socket.read(length, message)
+ 
       raise ConnectionFailure, "connection closed" unless message && message.length > 0
       if message.length < length
         chunk = new_binary_string

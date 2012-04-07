@@ -17,7 +17,6 @@
 # ++
 
 require 'socket'
-require 'timeout'
 require 'thread'
 
 module Mongo

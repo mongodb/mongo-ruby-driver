@@ -87,7 +87,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
 
     results = []
     rescue_connection_failure do
-      puts "@coll.find().each"
+      #puts "@coll.find().each"
       @coll.find.each {|r| results << r}
       [20, 30, 40].each do |a|
         assert results.any? {|r| r['a'] == a}, "Could not find record for a => #{a}"
@@ -105,7 +105,6 @@ class ReadPreferenceTest < Test::Unit::TestCase
     @rs.kill_primary
     assert_equal 2, @coll.find.to_a.length
     rescue_connection_failure do
-      puts "@coll.save()"
       @coll.save({:a => 50}, :safe => {:w => 2, :wtimeout => 10000})
     end
     @rs.restart_killed_nodes

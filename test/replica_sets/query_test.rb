@@ -26,7 +26,7 @@ class ReplicaSetQueryTest < Test::Unit::TestCase
       assert results.any? {|r| r['a'] == a}, "Could not find record for a => #{a}"
     end
 
-    puts "Benchmark before failover: #{benchmark_queries}"
+    #puts "Benchmark before failover: #{benchmark_queries}"
 
     @rs.kill_primary
 
@@ -37,7 +37,7 @@ class ReplicaSetQueryTest < Test::Unit::TestCase
         assert results.any? {|r| r['a'] == a}, "Could not find record for a => #{a}"
       end
 
-    puts "Benchmark after failover: #{benchmark_queries}"
+    #puts "Benchmark after failover: #{benchmark_queries}"
     end
   end
 

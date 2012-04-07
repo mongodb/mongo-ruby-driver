@@ -15,6 +15,7 @@ class NodeTest < Test::Unit::TestCase
     admin_db = new_mock_db
     admin_db.stubs(:command).returns({'ok' => 1, 'ismaster' => 1})
     @connection.stubs(:[]).with('admin').returns(admin_db)
+    @connection.stubs(:op_timeout).returns(nil)
     @connection.stubs(:connect_timeout).returns(nil)
     @connection.expects(:log)
 

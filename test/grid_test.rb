@@ -2,7 +2,7 @@ require './test/test_helper'
 include Mongo
 
 def read_and_write_stream(filename, read_length, opts={})
-  io   = File.open(File.join(File.dirname(__FILE__), 'data', filename), 'r')
+  io   = File.open(File.join(File.dirname(__FILE__), 'data', filename), 'r+b')
   id   = @grid.put(io, opts.merge!(:filename => filename + read_length.to_s))
   file = @grid.get(id)
   io.rewind

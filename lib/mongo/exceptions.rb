@@ -71,7 +71,7 @@ module Mongo
   class OperationFailure < MongoDBError; end
 
   # Raised when a socket read operation times out.
-  class OperationTimeout < ::Timeout::Error; end
+  class OperationTimeout < SocketError; end
 
   # Raised when a client attempts to perform an invalid operation.
   class InvalidOperation < MongoDBError; end

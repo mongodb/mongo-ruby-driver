@@ -188,7 +188,6 @@ namespace :jenkins do
 end
 
 namespace :gem do
-
   desc "Install the gem locally"
   task :install do
     `gem build bson.gemspec`
@@ -212,17 +211,6 @@ namespace :gem do
     `gem install --no-rdoc --no-ri bson_ext-*.gem`
     `rm bson_ext-*.gem`
   end
-
-  desc "Build all gems"
-  task :build_all do
-    `rm *.gem`
-    `gem build mongo.gemspec`
-    `gem build bson.gemspec`
-    `gem build bson.java.gemspec`
-    `gem build bson_ext.gemspec`
-    puts `ls *.gem`
-  end
-
 end
 
 namespace :ci do
@@ -271,6 +259,7 @@ end
 
 def change_version(new_version)
   version = current_version
+  puts "Changing version from #{version} to #{new_version}"
   VERSION_FILES.each do |filename|
     f = File.open(filename)
     str = f.read
@@ -283,30 +272,47 @@ def change_version(new_version)
 end
 
 namespace :deploy do
-  task :version, [:version] do |t, args|
-    check_version(args[:version])
-    puts args[:version]
+  desc "Change version to new release"
+  task :change_version, [:version] do |t, args|
+    check_version(args[:version]) 
     change_version(args[:version])
   end
 
-  task :git_prepare, [:version] do |t, args|
+  desc "Add version files, commit, tag release"
+  task :git_prepare do |t, args|
     g = Git.open(Dir.getwd())
-    version = args[:version]
-    check_version(version)
-    g.add(VERSION_FILES)
+    version = current_version
+    to_commit = VERSION_FILES << 'docs/HISTORY.md'
+    g.add(to_commit)
     g.commit "RELEASE #{version}"
     g.add_tag("#{version}")
   end
 
+  desc "Push release to github"
   task :git_push do
     g = Git.open(Dir.getwd())
     g.push
   end
 
-  task :gems, [:version] do |t, args|
-    check_version(args[:version])
-    check_gem_list_existence(args[:version])
-    gem_list
+  desc "Build all gems"
+  task :gem_build do
+    `rm *.gem`
+    `gem build mongo.gemspec`
+    `gem build bson.gemspec`
+    `gem build bson.java.gemspec`
+    `gem build bson_ext.gemspec`
+    puts `ls *.gem`
+  end
+
+  desc "Push all gems to RubyGems"
+  task :gem_push do |t, args|
+    check_gem_list_existence(current_version)
+    gem_list.each do |gem|
+      puts "Push #{gem} to RubyGems? (y/N)"
+      if gets.chomp! == 'y'
+        system "gem push #{gem}"
+      end
+    end
   end
 end
 

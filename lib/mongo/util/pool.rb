@@ -156,7 +156,7 @@ module Mongo
     # therefore, it runs within a mutex.
     def checkout_new_socket
       begin
-        socket = self.connection.socket_class.new(@host, @port)
+        socket = @connection.socket_class.new(@host, @port, @connection.op_timeout)
         socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
         socket.pool = self
       rescue => ex
@@ -217,7 +217,9 @@ module Mongo
       if @pids[socket] != Process.pid
         @pids[socket] = nil
         @sockets.delete(socket)
-        socket.close if socket
+        if socket
+          socket.close unless socket.closed?
+        end
         checkout_new_socket
       else
         @checked_out << socket
@@ -227,15 +229,10 @@ module Mongo
     end
 
     def prune_thread_socket_hash
-      map = {}
-      Thread.list.each do |t|
-        map[t] = 1
-      end
+      current_threads = Set[*Thread.list]
 
-      @threads_to_sockets.keys.each do |key|
-        if !map[key]
-          @threads_to_sockets.delete(key)
-        end
+      @threads_to_sockets.delete_if do |thread, socket|
+        !current_threads.include?(thread)
       end
     end
 

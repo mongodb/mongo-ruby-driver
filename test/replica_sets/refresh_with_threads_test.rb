@@ -10,11 +10,13 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
   end
 
   def teardown
-    @rs.restart_killed_nodes
     @conn.close if @conn
   end
 
   def test_read_write_load_with_added_nodes
+    # MongoDB < 2.0 will disconnect clients on rs.reconfig()
+    return true if @rs.version.first < 2
+
     seeds = build_seeds(3)
     args = {
       :refresh_interval => 5,
@@ -45,18 +47,10 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
       end
     end
 
-    # MongoDB < 2.0 will disconnect clients on rs.reconfig()
-    if @rs.version.first < 2
-      assert_raise Mongo::ConnectionFailure do
-        @rs.add_node
-        threads.each {|t| t.join }
-      end
-    else
-      @rs.add_node
-      threads.each {|t| t.join }
-    end
-
-    config = @conn['admin'].command({:ismaster => 1})
+    @rs.add_node
+    threads.each {|t| t.join }
+    
+    @conn['admin'].command({:ismaster => 1})
 
     assert_equal 3, @conn.secondary_pools.length
     assert_equal 3, @conn.secondaries.length

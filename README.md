@@ -62,7 +62,7 @@ And for a significant performance boost, you'll want to install the C extensions
     $ gem install bson_ext
 
 Note that bson_ext isn't used with JRuby. Instead, some native Java extensions are bundled with the bson gem.
-If you ever need to modify these extenions, you can recompile with the following rake task:
+If you ever need to modify these extensions, you can recompile with the following rake task:
 
     $ rake build:java
 
@@ -103,7 +103,7 @@ See also the test code, especially test/test_db_api.rb.
 
 The Ruby driver include two abstractions for storing large files: Grid and GridFileSystem.
 The Grid class is a Ruby implementation of MongoDB's GridFS file storage
-specification. GridFileSystem is essentailly the same, but provides a more filesystem-like API
+specification. GridFileSystem is essentially the same, but provides a more filesystem-like API
 and assumes that filenames are unique.
 
 An instance of both classes represents an individual file store. See the API reference
@@ -264,9 +264,22 @@ If implementing higher-level timeouts, using tools like `Rack::Timeout`, it's ve
 to call `Mongo::Connection#close` to prevent the subsequent operation from receiving the previous
 request.
 
+### Test-Unit, Shoulda, and Mocha
+
+Running the test suite requires test-unit, shoulda, and mocha.  You can install them as follows:
+
+    $ gem install test-unit
+    $ gem install shoulda
+    $ gem install mocha
+
+The tests assume that the Mongo database is running on the default port. You
+can override the default host (localhost) and port (Connection::DEFAULT_PORT) by
+using the environment variables MONGO_RUBY_DRIVER_HOST and
+MONGO_RUBY_DRIVER_PORT.
+
 # Testing
 
-If you have the source code, you can run the tests.
+If you have the source code, you can run the tests.  Skip this test with the C extension if you're running JRuby.
 
     $ rake test:c
 
@@ -279,25 +292,13 @@ These will run both unit and functional tests. To run these tests alone:
     $ rake test:unit
     $ rake test:functional
 
-To run any individual rake tasks with the C extension enabled, just pass C_EXT=true to the task:
+To run any individual rake tasks with the C extension enabled, just pass C_EXT=true to the task (don't do this with JRuby):
 
     $ rake test:unit C_EXT=true
 
 If you want to test replica set, you can run the following task:
 
     $ rake test:rs
-
-### Shoulda and Mocha
-
-Running the test suite requires shoulda and mocha.  You can install them as follows:
-
-    $ gem install shoulda
-    $ gem install mocha
-
-The tests assume that the Mongo database is running on the default port. You
-can override the default host (localhost) and port (Connection::DEFAULT_PORT) by
-using the environment variables MONGO_RUBY_DRIVER_HOST and
-MONGO_RUBY_DRIVER_PORT.
 
 # Documentation
 

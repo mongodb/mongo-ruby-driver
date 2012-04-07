@@ -36,20 +36,16 @@ module Mongo
     def connect
       begin
         socket = nil
-        if @connection.connect_timeout
-          Mongo::TimeoutHandler.timeout(@connection.connect_timeout, OperationTimeout) do
-            socket = @connection.socket_class.new(@host, @port)
-          end
-        else
-          socket = @connection.socket_class.new(@host, @port)
-        end
+        socket = @connection.socket_class.new(@host, @port, 
+          @connection.op_timeout, @connection.connect_timeout
+        )
 
         if socket.nil?
           return nil
         else
           socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
         end
-      rescue OperationTimeout, OperationFailure, SocketError, SystemCallError, IOError => ex
+      rescue OperationTimeout, ConnectionFailure, OperationFailure, SocketError, SystemCallError, IOError => ex
         @connection.log(:debug, "Failed connection to #{host_string} with #{ex.class}, #{ex.message}.")
         socket.close if socket
         return nil
@@ -84,13 +80,7 @@ module Mongo
     # matches with the name provided.
     def set_config
       begin
-        if @connection.connect_timeout
-          Mongo::TimeoutHandler.timeout(@connection.connect_timeout, OperationTimeout) do
-            @config = @connection['admin'].command({:ismaster => 1}, :socket => @socket)
-          end
-        else
-          @config = @connection['admin'].command({:ismaster => 1}, :socket => @socket)
-        end
+        @config = @connection['admin'].command({:ismaster => 1}, :socket => @socket)
 
         if @config['msg'] && @logger
           @connection.log(:warn, "#{config['msg']}")

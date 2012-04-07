@@ -1,5 +1,15 @@
 # MongoDB Ruby Driver History
 
+### 1.6.2
+2012-04-05
+
+* Implements socket timeouts via non-blocking IO instead of Timeout module
+which should greately increase performance in highly threaded applications
+* Added ability to authentication via secondary if primary node unavailable
+* Replica set refresh interval now enforces a lower bound of 60 seconds
+* Added documentation for dropping indexes, collections, databases
+* Test output cleanup (...)s unless failure occurs
+
 ### 1.6.1
 2012-03-07
 
