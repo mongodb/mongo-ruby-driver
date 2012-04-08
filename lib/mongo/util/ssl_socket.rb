@@ -15,7 +15,9 @@ module Mongo
       @op_timeout = op_timeout
       @connect_timeout = connect_timeout
 
-      @socket = ::TCPSocket.new(host, port) 
+      @socket = ::TCPSocket.new(host, port)
+      @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+
       @ssl = OpenSSL::SSL::SSLSocket.new(@socket)
       @ssl.sync_close = true
       

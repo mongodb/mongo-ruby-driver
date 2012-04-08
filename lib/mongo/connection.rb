@@ -622,9 +622,7 @@ module Mongo
         socket = nil
         config = nil
 
-        socket = @socket_class.new(host, port, @op_timeout, @connect_timeout)
-        socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
-
+        socket = @socket_class.new(host, port, @op_timeout, @connect_timeout) 
         config = self['admin'].command({:ismaster => 1}, :socket => socket)
       rescue OperationFailure, SocketError, SystemCallError, IOError
         close

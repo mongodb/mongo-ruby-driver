@@ -40,11 +40,7 @@ module Mongo
           @connection.op_timeout, @connection.connect_timeout
         )
 
-        if socket.nil?
-          return nil
-        else
-          socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
-        end
+        return nil if socket.nil?
       rescue OperationTimeout, ConnectionFailure, OperationFailure, SocketError, SystemCallError, IOError => ex
         @connection.log(:debug, "Failed connection to #{host_string} with #{ex.class}, #{ex.message}.")
         socket.close if socket

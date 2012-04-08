@@ -157,7 +157,6 @@ module Mongo
     def checkout_new_socket
       begin
         socket = @connection.socket_class.new(@host, @port, @connection.op_timeout)
-        socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
         socket.pool = self
       rescue => ex
         socket.close if socket
