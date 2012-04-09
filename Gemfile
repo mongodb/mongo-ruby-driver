@@ -15,6 +15,7 @@ group :development, :test do
   gem "shoulda"
   gem "test-unit"
   gem "ci_reporter"
+  gem "ruby-prof"
 
   # Java
   platforms :jruby do
