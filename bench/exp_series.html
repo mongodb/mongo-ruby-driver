@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+ <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Exp Series Performance Tests</title>
+    <!-- http://code.google.com/p/flot/ -->
+    <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="excanvas.min.js"></script><![endif]-->
+    <script language="javascript" type="text/javascript" src="jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="jquery.flot.js"></script>
+    <script language="javascript" type="text/javascript" src="exp_series.js"></script>
+    <style type="text/css">
+    body {
+        font-family: sans-serif;
+        font-size: 16px;
+        margin: 50px;
+        max-width: 1000px;
+    }
+    div.graph {
+        width:800px;
+        height:400px;
+    }
+    </style>
+ </head>
+ <body>
+    <h1>Exp Series Performance Tests</h1>
+    y-axis is operations per user-time CPU-second
+    <div id="placeholder"></div>
+
+<script type="text/javascript">
+    function genOpXY(a, xMax, base, gen, op, xKey, yKey) {
+        var genOpA = $.grep(a, function(e, i){return (e.exp2 <= xMax && e.base == base && e.generator == gen && e.operation == op);});
+        return $.map(genOpA, function(e, i){return [[e[xKey], e[yKey]]];});
+    }
+    function flotSeries(expSeries, xMax, a) {
+        return $.map(a, function(e, i){
+            var base = e[0]; gen = e[1]; var op = e[2];
+            return {
+                label: gen + '-' + base,
+                data: genOpXY(expSeries, xMax, base, gen, op, 'exp2', 'ops'),
+                lines: { show: true },
+                points: { show: true }
+            };
+        });
+    }
+
+$(function () {
+
+    function xExpTicks(axis) {
+        var res = [];
+        for (var i = axis.min; i <= axis.max; i++) {
+            res.push([i, i + ':' + Math.pow(2,i)]);
+        }
+        return res;
+    }
+    function doPlot(title, series) {
+        var id = title.replace(/\W/g,'_');
+        $("#placeholder").append('<h1>' + title + '</h1><div id="' + id + '" class="graph"></div>');
+        $.plot($('#' + id),
+           series,
+           { 
+               xaxis: { ticks: xExpTicks },
+               yaxes: [ { min: 0 } ],
+               legend: { position: 'ne' }
+           });
+    }
+
+    // comment pending
+    var graph = [
+        [ 'value_string_size insert', 14, [
+                [2, 'value_string_size', 'insert']
+            ]
+        ],
+        [ 'key_string_size insert', 14, [
+                [2, 'key_string_size', 'insert']
+            ]
+        ],
+        [ 'array_size_fixnum insert', 12, [
+                [2, 'array_size_fixnum', 'insert']
+            ]
+        ],
+        [ 'hash_size_fixnum insert', 12, [
+                [2, 'hash_size_fixnum', 'insert']
+            ]
+        ],
+        [ 'array_nest_fixnum insert', 12, [
+                [2, 'array_nest_fixnum', 'insert'],
+                [4, 'array_nest_fixnum', 'insert'],
+                [8, 'array_nest_fixnum', 'insert'],
+                [16, 'array_nest_fixnum', 'insert'],
+                [32, 'array_nest_fixnum', 'insert']
+            ]
+        ],
+        [ 'hash_nest_fixnum insert', 12, [
+                [2, 'hash_nest_fixnum', 'insert'],
+                [4, 'hash_nest_fixnum', 'insert'],
+                [8, 'hash_nest_fixnum', 'insert'],
+                [16, 'hash_nest_fixnum', 'insert'],
+                [32, 'hash_nest_fixnum', 'insert']
+            ]
+        ],
+        [ 'compare array_size_fixnum hash_size_fixnum insert', 12, [
+                [2, 'array_size_fixnum', 'insert'],
+                [2, 'hash_size_fixnum', 'insert']
+            ]
+        ],
+
+    ];
+    $.each(graph, function(i, e){
+        var title = e[0];
+        var xMax = e[1];
+        var baseSeriesGenOp = e[2];
+        var series = flotSeries(expSeries, xMax, baseSeriesGenOp);
+        doPlot(title, series);
+    });
+
+});
+</script>
+ </body>
+</html>
