@@ -5,7 +5,7 @@ group :development, :test do
   gem "bundler"
   gem "rake"
   gem "json"
-  gem "bson_ext" unless RUBY_PLATFORM == "java"
+  gem "bson_ext" unless RUBY_PLATFORM =~ /java/
 
   # Deployment
   gem "git"
@@ -15,7 +15,7 @@ group :development, :test do
   gem "shoulda"
   gem "test-unit"
   gem "ci_reporter"
-  gem "ruby-prof" unless RUBY_PLATFORM == "java"
+  gem "ruby-prof" unless RUBY_PLATFORM =~ /java/
 
   # Java
   platforms :jruby do
