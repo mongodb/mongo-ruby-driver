@@ -170,6 +170,18 @@ and it should just print just one document:
 
     {"_id"=>BSON::ObjectId('4f7b20b4e4d30b35c9000049'), "i"=>71}
 
+#### Sorting Documents in a Collection
+
+To sort documents, simply use the `sort` method. The method can either take a key or an array of [key, direction] pairs to sort by.
+
+Direction defaults to ascending order but can be specified as Mongo::ASCENDING, :ascending, or :asc whereas descending order can be specified with Mongo::DESCENDING, :descending, or :desc.
+
+    # Sort in ascending order by :i
+    coll.find.sort(:i)
+
+    # Sort in descending order by :i
+    coll.find.sort([:i, :desc])
+
 #### Counting Documents in a Collection
 
 Now that we've inserted 101 documents (the 100 we did in the loop, plus the first one), we can check to see if we have them all using the `count` method.
