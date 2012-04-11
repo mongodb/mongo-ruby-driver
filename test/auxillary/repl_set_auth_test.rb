@@ -1,5 +1,5 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-require './test/test_helper'
+require File.expand_path("../../test_helper", __FILE__)
 require './test/tools/auth_repl_set_manager'
 require './test/replica_sets/rs_test_helper'
 

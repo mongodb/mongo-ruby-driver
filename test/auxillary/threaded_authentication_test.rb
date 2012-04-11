@@ -2,7 +2,7 @@ $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'mongo'
 require 'thread'
 require 'test/unit'
-require './test/test_helper'
+require File.expand_path("../../test_helper", __FILE__)
 
 # NOTE: This test requires bouncing the server.
 # It also requires that a user exists on the admin database.

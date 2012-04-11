@@ -1,5 +1,5 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-require './test/test_helper'
+require File.expand_path("../../test_helper", __FILE__)
 require './test/tools/repl_set_manager'
 
 class Test::Unit::TestCase

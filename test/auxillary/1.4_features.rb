@@ -1,7 +1,7 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'mongo'
 require 'test/unit'
-require './test/test_helper'
+require File.expand_path("../../test_helper", __FILE__)
 
 # Demonstrate features in MongoDB 1.4
 class Features14Test < Test::Unit::TestCase

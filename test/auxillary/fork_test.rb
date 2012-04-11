@@ -1,7 +1,7 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'mongo'
 require 'test/unit'
-require './test/test_helper'
+require File.expand_path("../../test_helper", __FILE__)
 
 class ForkTest < Test::Unit::TestCase
   include Mongo

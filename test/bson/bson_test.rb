@@ -1,5 +1,5 @@
 # encoding:utf-8
-require './test/bson/test_helper'
+require File.expand_path("../test_helper", __FILE__)
 require 'set'
 
 if RUBY_VERSION < '1.9'

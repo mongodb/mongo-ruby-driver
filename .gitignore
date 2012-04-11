@@ -21,3 +21,5 @@ test/load/thin/config.yml
 test/tools/data/
 .rvmrc
 Gemfile.lock
+.idea/*
+

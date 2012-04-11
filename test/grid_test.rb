@@ -1,4 +1,4 @@
-require './test/test_helper'
+require File.expand_path("../test_helper", __FILE__)
 include Mongo
 
 def read_and_write_stream(filename, read_length, opts={})

@@ -1,4 +1,4 @@
-require './test/test_helper'
+require File.expand_path("../test_helper", __FILE__)
 require 'digest/md5'
 require 'stringio'
 require 'logger'
