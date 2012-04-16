@@ -1,7 +1,24 @@
 #!/usr/bin/env ruby
-$LOAD_PATH[0, 0] = File.join(File.dirname(__FILE__), '..', 'lib')
-#
-# review load path
+$LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
+
+def set_mongo_driver_mode(mode)
+  case mode
+    when :c
+      ENV.delete('TEST_MODE')
+      ENV['C_EXT'] = 'TRUE'
+    when :ruby
+      ENV['TEST_MODE'] = 'TRUE'
+      ENV.delete('C_EXT')
+    else
+      raise 'mode must be :c or :ruby'
+  end
+  ENV['MONGO_DRIVER_MODE'] = mode.to_s
+end
+
+$mode = ARGV[0].to_sym if ARGV[0]
+set_mongo_driver_mode($mode || :c)
+ENV['HOSTNAME'] = `uname -n`[/([^.]*)/,1]
+ENV['OSNAME'] = `uname -s`.strip
 
 # Exploratory/Experimental/Exponential tests for performance tuning
 
@@ -13,8 +30,31 @@ require 'benchmark'
 
 $calibration_runtime = 0.1
 $target_runtime = 5.0
-$db_name = "benchmark"
-$collection_name = "exp_series"
+$db_name = 'benchmark'
+$collection_name = 'exp_series'
+
+class Hash
+  def store_embedded(key, value)
+    case key
+      when /([^.]*)\.(.*)/
+        store($1, Hash.new) unless fetch($1, nil)
+        self[$1].store_embedded($2, value)
+      else
+        store(key, value)
+    end
+  end
+end
+
+def sys_info
+  h = Hash.new
+  if FileTest.executable?('/usr/sbin/sysctl')
+    text = `/usr/sbin/sysctl -a kern.ostype kern.version kern.hostname hw.machine hw.model hw.cputype hw.busfrequency hw.cpufrequency`
+    values = text.split(/\n/).collect{|line| /([^:]*) *[:=] *(.*)/.match(line)[1..2]}
+    h = Hash.new
+    values.each{|key, value| h.store_embedded(key, value) }
+  end
+  return h
+end
 
 class TestExpPerformance < Test::Unit::TestCase
 
@@ -67,22 +107,24 @@ class TestExpPerformance < Test::Unit::TestCase
       size, doc = generator.call(base, power)
       iterations, utime, rtime, etime = valuate(db, coll, setup, teardown) { operation.call(coll, doc) }
       result = {
-          "base" => base,
-          "power" => power,
-          "size" => size,
-          "exp2" => Math.log2(size).to_i,
-          "generator" => generator.name.to_s,
-          "operation" => operation.name.to_s,
-          "iterations" => iterations,
-          "utime" => utime.round(2),
-          "etime" => etime.round(2),
-          "rtime" => rtime.round(2),
-          "ops" => (iterations.to_f / utime.to_f).round(1),
-          "usec" => (1000000.0 * utime.to_f / iterations.to_f).round(1),
-          # "git" => git, # thinking
-          # "datetime" +> Time.now, # thinking
-          # "hostname" => hostname, # thinking
-          # "nbench-int" => nbench.int, # thinking
+          'base' => base,
+          'power' => power,
+          'size' => size,
+          'exp2' => Math.log2(size).to_i,
+          'generator' => generator.name.to_s,
+          'operation' => operation.name.to_s,
+          'iterations' => iterations,
+          'utime' => utime.round(2),
+          'etime' => etime.round(2),
+          'rtime' => rtime.round(2),
+          'ops' => (iterations.to_f / utime.to_f).round(1),
+          'usec' => (1000000.0 * utime.to_f / iterations.to_f).round(1),
+          'mongo_driver_mode' => ENV['MONGO_DRIVER_MODE'],
+          'hostname' => ENV['HOSTNAME'],
+          'osname' => ENV['OSNAME'],
+          # 'git' => git, # thinking
+          # 'datetime' +> Time.now, # thinking
+          # 'nbench-int' => nbench.int, # thinking
       }
       STDERR.puts result.inspect
       STDERR.flush
@@ -92,19 +134,19 @@ class TestExpPerformance < Test::Unit::TestCase
 
   def value_string_size(base, power)
     n = base ** power
-    return [n, {n.to_s => ("*" * n)}]
+    return [n, {n.to_s => ('*' * n)}]
   end
 
   def key_string_size(base, power)
     n = base ** power
-    return [n, {("*" * n) => n}]
+    return [n, {('*' * n) => n}]
   end
 
   def hash_size_fixnum(base, power)
     n = base ** power
     h = Hash.new
     (0...n).each { |i| h[i.to_s] = i }
-    return [n, h]
+    return [n, {n.to_s => h}] # embedded like array_size_fixnum
   end
 
   def array_size_fixnum(base, power)
@@ -166,10 +208,14 @@ class TestExpPerformance < Test::Unit::TestCase
   end
 
   # Performance Tuning Engineering
+  ## Completed
+  ### How to measure and compare pure Ruby versus C extension performance
+  ## Current Work Items
+  ### Profiling of C extension
   ## Overall Strategy
-  ### Prioritize/Review Ruby 1.9.3, Ruby 1.8.7, JRuby 1.6.7
+  ### Prioritize/Review Ruby 1.9.3, JRuby 1.6.7, Ruby 1.8.7
   ### Run spectrum of exploratory performance tests
-  ### Graph results, probably with gnuplot, with HTML wrapper
+  ### Graph results with flot in HTML wrapper - http://code.google.com/p/flot/
   ### Select test for profiling
   ### Find where time is being spent
   ### Construct specific performance test
@@ -185,9 +231,14 @@ class TestExpPerformance < Test::Unit::TestCase
   ### Knowledge of Ruby driver and techniques
   ### Perhaps architecture and design improvements
   ### Lessons transferable to other drivers
+  ## HW Info
+  ### Linux - /proc/cpuinfo
+  ### Mac OS X - sysctl -a hw
 
   def test_zzz_exp_blanket
     puts
+    puts sys_info
+
     conn = Mongo::Connection.new
     conn.drop_database($db_name)
     db = conn.db($db_name)
@@ -222,13 +273,13 @@ class TestExpPerformance < Test::Unit::TestCase
     ]
     results = []
     tests.each do |base, max_power, generator, setup, operation, teardown|
-      # consider moving "method" as permitted by scope
+      # consider moving 'method' as permitted by scope
       results += power_test(base, max_power, db, coll, method(generator), method(setup), method(operation), method(teardown))
     end
     # consider inserting the results into a database collection
     # Test::Unit::TestCase pollutes STDOUT, so write to a file
-    File.open("exp_series.js", "w"){|f|
-        f.puts("expSeries = #{results.to_json.gsub(/(\[|},)/, "\\1\n")};")
+    File.open("exp_series-#{Time.now.strftime('%Y%m%d-%H%M')}.js", 'w'){|f|
+      f.puts("#{results.to_json.gsub(/\[/, "").gsub(/(}[\],])/, "},\n")}")
     }
 
     conn.drop_database($db_name)

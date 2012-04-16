@@ -16,6 +16,7 @@ group :development, :test do
   gem "test-unit"
   gem "ci_reporter"
   gem "ruby-prof" unless RUBY_PLATFORM =~ /java/
+  gem "perftools.rb" unless RUBY_PLATFORM =~ /java/
 
   # Java
   platforms :jruby do
