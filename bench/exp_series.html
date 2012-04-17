@@ -23,7 +23,9 @@
  </head>
  <body>
     <h1>Exp Series Performance Tests</h1>
-    y-axis is operations per user-time CPU-second
+    x-axis is power of 2, log base 2 of size<br>
+    y-axis is operations per user-time CPU-second<br>
+    Note that this is not operations per real-time second that includes DB real-time<br>
     <div id="placeholder"></div>
 
 <script type="text/javascript">
@@ -37,11 +39,11 @@
         });
         return $.map(genOpA, function(e, i){return [[e[xKey], e[yKey]]];});
     }
-    function flotSeries(expSeries, xMax, plotSpecs) {
+    function flotSeries(expSeries, xMax, labelSpec, plotSpecs) {
         return $.map(plotSpecs, function(plotSpec, i){
             var base = plotSpec.base; var gen = plotSpec.generator; var op = plotSpec.operation;
             return {
-                label: gen + '-' + base,
+                label: labelSpec + ': ' + plotSpec[labelSpec],
                 data: genOpXY(expSeries, xMax, plotSpec, 'exp2', 'ops'),
                 lines: { show: true },
                 points: { show: true }
@@ -72,27 +74,43 @@ $(function () {
 
     // comment pending
     var graph = [
-        [ 'value_string_size insert C', 14,
+        [ 'value_string_size insert C versus Ruby', 14, 'mongo_driver_mode',
             [
-                { base:2, generator:'value_string_size', operation:'insert', mongo_driver_mode: 'c' }
+                { base:2, generator:'value_string_size', operation:'insert', mongo_driver_mode: 'c' },
+                { base:2, generator:'value_string_size', operation:'insert', mongo_driver_mode: 'ruby' }
             ]
         ],
-        [ 'key_string_size insert C', 14,
+        [ 'key_string_size insert C versus Ruby', 14, 'mongo_driver_mode',
             [
-                { base:2, generator:'key_string_size', operation:'insert', mongo_driver_mode: 'c' }
+                { base:2, generator:'key_string_size', operation:'insert', mongo_driver_mode: 'c' },
+                { base:2, generator:'key_string_size', operation:'insert', mongo_driver_mode: 'ruby' }
             ]
         ],
-        [ 'array_size_fixnum insert C', 12,
+        [ 'array_size_fixnum insert C versus Ruby', 12, 'mongo_driver_mode',
             [
-                { base:2, generator:'array_size_fixnum', operation:'insert', mongo_driver_mode: 'c' }
+                { base:2, generator:'array_size_fixnum', operation:'insert', mongo_driver_mode: 'c' },
+                { base:2, generator:'array_size_fixnum', operation:'insert', mongo_driver_mode: 'ruby' }
             ]
         ],
-        [ 'hash_size_fixnum insert C', 12,
+        [ 'hash_size_fixnum insert C versus Ruby', 12, 'mongo_driver_mode',
             [
-                { base:2, generator:'hash_size_fixnum', operation:'insert', mongo_driver_mode: 'c' }
+                { base:2, generator:'hash_size_fixnum', operation:'insert', mongo_driver_mode: 'c' },
+                { base:2, generator:'hash_size_fixnum', operation:'insert', mongo_driver_mode: 'ruby' }
             ]
         ],
-        [ 'array_nest_fixnum insert C', 12,
+        [ 'array_nest_fixnum base 2 insert C versus Ruby', 12, 'mongo_driver_mode',
+            [
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mongo_driver_mode:'c' },
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mongo_driver_mode:'ruby' }
+            ]
+        ],
+        [ 'hash_nest_fixnum base 2 insert C versus Ruby', 12, 'mongo_driver_mode',
+            [
+                { base:2, generator:'hash_nest_fixnum', operation:'insert', mongo_driver_mode: 'c' },
+                { base:2, generator:'hash_nest_fixnum', operation:'insert', mongo_driver_mode: 'ruby' }
+            ]
+        ],
+        [ 'array_nest_fixnum insert C by base', 12, 'base',
             [
                 { base:2, generator:'array_nest_fixnum', operation:'insert', mongo_driver_mode: 'c' },
                 { base:4, generator:'array_nest_fixnum', operation:'insert', mongo_driver_mode: 'c' },
@@ -101,7 +119,7 @@ $(function () {
                 { base:32, generator:'array_nest_fixnum', operation:'insert', mongo_driver_mode: 'c' }
             ]
         ],
-        [ 'hash_nest_fixnum insert C', 12,
+        [ 'hash_nest_fixnum insert C by base', 12, 'base',
             [
                 { base:2, generator:'hash_nest_fixnum', operation:'insert', mongo_driver_mode: 'c' },
                 { base:4, generator:'hash_nest_fixnum', operation:'insert', mongo_driver_mode: 'c' },
@@ -110,7 +128,7 @@ $(function () {
                 { base:32, generator:'hash_nest_fixnum', operation:'insert', mongo_driver_mode: 'c' }
             ]
         ],
-        [ 'compare array_size_fixnum hash_size_fixnum insert C', 12,
+        [ 'array_size_fixnum versus hash_size_fixnum insert C', 12, 'generator',
             [
                 { base:2, generator:'array_size_fixnum', operation:'insert', mongo_driver_mode: 'c' },
                 { base:2, generator:'hash_size_fixnum', operation:'insert', mongo_driver_mode: 'c' }
@@ -120,8 +138,9 @@ $(function () {
     $.each(graph, function(i, e){
         var title = e[0];
         var xMax = e[1];
-        var plotSpecs = e[2];
-        var series = flotSeries(expSeries, xMax, plotSpecs);
+        var labelSpec = e[2];
+        var plotSpecs = e[3];
+        var series = flotSeries(expSeries, xMax, labelSpec, plotSpecs);
         doPlot(title, series);
     });
 

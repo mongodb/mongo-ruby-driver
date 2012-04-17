@@ -16,6 +16,7 @@ def set_mongo_driver_mode(mode)
 end
 
 $mode = ARGV[0].to_sym if ARGV[0]
+#p (ARGV[0] && ARGV[0].to_sym || :c)
 set_mongo_driver_mode($mode || :c)
 
 require 'rubygems'
