@@ -140,6 +140,11 @@ module Mongo
       rescue SystemStackError, NoMemoryError, SystemCallError => ex
         close
         raise ex
+      rescue Exception => ex
+        if defined?(IRB)
+          close if ex.class == IRB::Abort
+        end
+        raise ex
       ensure
         if should_checkin
           if command || read == :primary
