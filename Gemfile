@@ -16,7 +16,6 @@ group :development, :test do
   gem "test-unit"
   gem "ci_reporter"
   gem "ruby-prof" unless RUBY_PLATFORM =~ /java/
-  gem "perftools.rb" unless RUBY_PLATFORM =~ /java/
   gem "rake-compiler"
 
   # Java
@@ -26,3 +25,5 @@ group :development, :test do
     gem "jruby-openssl"
   end
 end
+
+gem "perftools.rb", :group => :development unless RUBY_PLATFORM =~ /java/
