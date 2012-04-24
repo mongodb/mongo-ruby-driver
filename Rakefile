@@ -7,6 +7,8 @@ end
 require 'fileutils'
 require 'rake/testtask'
 require 'rake'
+require 'rake/extensiontask'
+require 'rake/javaextensiontask'
 
 begin
   require 'git'
@@ -19,6 +21,14 @@ begin
 end
 
 ENV['TEST_MODE'] = 'TRUE'
+
+Rake::ExtensionTask.new('cbson') do |ext|
+  ext.lib_dir = "lib/bson_ext"
+end
+
+#Rake::JavaExtensionTask.new('jbson') do |ext| # not yet functional
+#  ext.ext_dir = 'ext/src/org/jbson'
+#end
 
 task :java do
   Rake::Task['build:java'].invoke

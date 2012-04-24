@@ -25,7 +25,7 @@
     <h1>Exp Series Performance Tests</h1>
     x-axis is power of 2, log base 2 of size<br>
     y-axis is operations per user-time CPU-second<br>
-    Note that this is not operations per real-time second that includes DB real-time<br>
+    Note that this is not operations per real-time second that include DB real-time<br>
     <div id="placeholder"></div>
 
 <script type="text/javascript">
@@ -136,10 +136,8 @@ $(function () {
         ]
     ];
     $.each(graph, function(i, e){
-        var title = e[0];
-        var xMax = e[1];
-        var labelSpec = e[2];
-        var plotSpecs = e[3];
+        var title, xMax, labelSpec, plotSpecs;
+        title = e[0]; xMax = e[1]; labelSpec = e[2]; plotSpecs = e[3]; //[title, xMax, labelSpec, plotSpecs] = e;
         var series = flotSeries(expSeries, xMax, labelSpec, plotSpecs);
         doPlot(title, series);
     });
