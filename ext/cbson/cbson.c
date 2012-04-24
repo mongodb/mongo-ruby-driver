@@ -742,7 +742,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
         }
     case 9:
         {
-            long long millis;
+            int64_t millis;
             memcpy(&millis, buffer + *position, 8);
 
             value = rb_time_new(millis / 1000, (millis % 1000) * 1000);
