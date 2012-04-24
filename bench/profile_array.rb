@@ -16,7 +16,6 @@ def set_mongo_driver_mode(mode)
 end
 
 $mode = ARGV[0].to_sym if ARGV[0]
-#p (ARGV[0] && ARGV[0].to_sym || :c)
 set_mongo_driver_mode($mode || :c)
 
 require 'rubygems'
@@ -40,6 +39,16 @@ def insert(coll, h)
   coll.insert(h) # note that insert stores :_id in h and subsequent inserts are updates
 end
 
+def benchmark(iterations)
+  btms = Benchmark.measure do
+    (0...iterations).each do
+      yield
+    end
+  end
+  utime = btms.utime
+  p ({'ops' => (iterations.to_f / utime.to_f).round(1)})
+end
+
 def ruby_prof(iterations)
   RubyProf.start
   puts Benchmark.measure {
@@ -57,7 +66,7 @@ def ruby_prof(iterations)
 end
 
 def perftools(iterations)
-  profile_file_name = "/tmp/profile_array.perftools"
+  profile_file_name = '/tmp/profile_array.perftools'
   PerfTools::CpuProfiler.start(profile_file_name) do
     iterations.times { yield }
   end
@@ -71,12 +80,17 @@ db  = conn['benchmark']
 coll = db['profile']
 
 coll.remove
-puts "coll.count: #{coll.count}"
+#puts "coll.count: #{coll.count}"
 
-n, doc = array_size_fixnum(2, 6)
-ruby_prof(1000) { insert(coll, doc) }
+base = 2
+power = 6
+n, doc = array_size_fixnum(base, power)
+p ({'generator' => 'array_size_fixnum', 'operation' => 'insert',  'base' => base, 'power' => power})
+
+benchmark(10000) { insert(coll, doc)} # valgrind --tool=callgrind ruby bench/profile_array.rb; callgrind_annotate ...
+#ruby_prof(1000) { insert(coll, doc) }
 #perftools(10000) { insert(coll, doc) }
 
-puts "coll.count: #{coll.count}"
+#puts "coll.count: #{coll.count}"
 coll.remove
 
