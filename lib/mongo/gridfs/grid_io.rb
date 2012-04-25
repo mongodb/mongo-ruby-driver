@@ -275,7 +275,7 @@ module Mongo
     end
 
     def save_chunk(chunk)
-      @chunks.insert(chunk)
+      @chunks.save(chunk)
     end
 
     def get_chunk(n)
