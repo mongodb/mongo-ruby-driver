@@ -139,38 +139,14 @@ static void write_utf8(bson_buffer_t buffer, VALUE string, char check_null) {
 #define EXTENDED RE_OPTION_EXTENDED
 #endif
 
-/* TODO we ought to check that the malloc or asprintf was successful
- * and raise an exception if not. */
-/* TODO maybe we can use something more portable like vsnprintf instead
- * of this hack. And share it with the Python extension ;) */
-/* If we don't have ASPRINTF, there are two possibilities:
- * either use _scprintf and _snprintf on for Windows or
- * use snprintf for solaris. */
-#ifndef HAVE_ASPRINTF
+/* TODO review malloc versus Ruby Enterprise Edition with tcmalloc */
+/* TODO we ought to check that the malloc was successful and raise an exception if not. */
 #ifdef _WIN32 || _MSC_VER
-#define INT2STRING(buffer, i)                   \
-    {                                           \
-        int vslength = _scprintf("%d", i) + 1;  \
-        *buffer = malloc(vslength);             \
-        _snprintf(*buffer, vslength, "%d", i);  \
-    }
-#define FREE_INTSTRING(buffer) free(buffer)
+#define SCINT(i) (_scprintf("%d", i) + 1)
+#define SNPRINTF _snprintf
 #else
-#define INT2STRING(buffer, i)                   \
-    {                                           \
-        int vslength = snprintf(NULL, 0, "%d", i) + 1;  \
-        *buffer = malloc(vslength);             \
-        snprintf(*buffer, vslength, "%d", i);   \
-    }
-#define FREE_INTSTRING(buffer) free(buffer)
-#endif
-#else
-#define INT2STRING(buffer, i) asprintf(buffer, "%d", i);
-#ifdef USING_SYSTEM_ALLOCATOR_LIBRARY /* Ruby Enterprise Edition with tcmalloc */
-#define FREE_INTSTRING(buffer) system_free(buffer)
-#else
-#define FREE_INTSTRING(buffer) free(buffer)
-#endif
+#define SCINT(i) (snprintf(NULL, 0, "%d", i) + 1)
+#define SNPRINTF snprintf
 #endif
 
 #ifndef RREGEXP_SRC
@@ -312,15 +288,15 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             }
 
             items = RARRAY_LENINT(value);
+            int vslength = SCINT(items);
+            char* name = malloc(vslength);
             for(i = 0; i < items; i++) {
-                char* name;
                 VALUE key;
-                INT2STRING(&name, i);
+                SNPRINTF(name, vslength, "%d", i);
                 key = rb_str_new2(name);
                 write_element_with_id(key, rb_ary_entry(value, i), pack_extra(buffer, check_keys));
-                FREE_INTSTRING(name);
             }
-
+            free(name);
             // write null byte and fill in length
             SAFE_WRITE(buffer, &zero, 1);
             obj_length = bson_buffer_get_position(buffer) - start_position;

@@ -1,37 +1,57 @@
 #!/usr/bin/env ruby
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
-def set_mongo_driver_mode(mode)
+require 'rubygems'
+require 'getoptlong'
+require 'json'
+require 'benchmark'
+require 'test-unit'
+
+def set_mode(mode)
   case mode
-    when :c
+    when 'c'
       ENV.delete('TEST_MODE')
       ENV['C_EXT'] = 'TRUE'
-    when :ruby
+    when 'ruby'
       ENV['TEST_MODE'] = 'TRUE'
       ENV.delete('C_EXT')
     else
-      raise 'mode must be :c or :ruby'
+      raise 'mode must be c or ruby'
   end
-  ENV['MONGO_DRIVER_MODE'] = mode.to_s
+  return mode
 end
 
-$mode = ARGV[0].to_sym if ARGV[0]
-set_mongo_driver_mode($mode || :c)
-ENV['HOSTNAME'] = `uname -n`[/([^.]*)/,1]
-ENV['OSNAME'] = `uname -s`.strip
-
-# Exploratory/Experimental/Exponential tests for performance tuning
-
-require 'rubygems'
-require 'test-unit'
-require 'json'
-require 'mongo'
-require 'benchmark'
-
+$description = 'Exploratory/Experimental/Exponential tests for Ruby-driver performance tuning'
 $calibration_runtime = 0.1
 $target_runtime = 5.0
 $db_name = 'benchmark'
 $collection_name = 'exp_series'
+$mode = set_mode('ruby')
+$hostname = `uname -n`[/([^.]*)/,1]
+$osname = `uname -s`.strip
+$tag = `git log -1 --format=oneline`.split[0]
+$date = Time.now.strftime('%Y%m%d-%H%M')
+
+options_with_help = [
+    [ '--help', '-h', GetoptLong::NO_ARGUMENT, '', 'show help' ],
+    [ '--mode', '-m', GetoptLong::OPTIONAL_ARGUMENT, ' mode', 'set mode to "c" or "ruby" (default)' ],
+    [ '--tag', '-t', GetoptLong::OPTIONAL_ARGUMENT, ' tag', 'set tag for run, default is git commit key' ]
+]
+options = options_with_help.collect{|option|option[0...3]}
+GetoptLong.new(*options).each do |opt, arg|
+  case opt
+    when '--help'
+      puts "#{$0} -- #{$description}\nusage: #{$0} [options]\noptions:"
+      options_with_help.each{|option| puts "#{option[0]}#{option[3]}, #{option[1]}#{option[3]}\n\t#{option[4]}"}
+      exit 0
+    when '--mode'
+      $mode = set_mode(arg)
+    when '--tag'
+      $tag = arg
+  end
+end
+
+require 'mongo' # must be after option processing
 
 class Hash
   def store_embedded(key, value)
@@ -70,12 +90,12 @@ class TestExpPerformance < Test::Unit::TestCase
      return h
    end
 
-  def estimate_iterations(db, coll, setup, teardown)
+  def estimate_iterations(db, coll, doc, setup, teardown)
     start_time = Time.now
     iterations = 1
     utime = 0.0
     while utime <= $calibration_runtime do
-      setup.call(db, coll)
+      setup.call(db, coll, doc, iterations)
       btms = Benchmark.measure do
         (0...iterations).each do
           yield
@@ -89,23 +109,23 @@ class TestExpPerformance < Test::Unit::TestCase
     return [(iterations.to_f * $target_runtime / utime).to_i, etime]
   end
 
-  def measure_iterations(db, coll, setup, teardown, iterations)
-    setup.call(db, coll)
+  def measure_iterations(db, coll, doc, setup, teardown, iterations)
+    setup.call(db, coll, doc, iterations)
     btms = Benchmark.measure { iterations.times { yield } }
     teardown.call(db, coll)
     return [btms.utime, btms.real]
   end
 
-  def valuate(db, coll, setup, teardown)
-    iterations, etime = estimate_iterations(db, coll, setup, teardown) { yield }
-    utime, rtime = measure_iterations(db, coll, setup, teardown, iterations) { yield }
+  def valuate(db, coll, doc, setup, teardown)
+    iterations, etime = estimate_iterations(db, coll, doc, setup, teardown) { yield }
+    utime, rtime = measure_iterations(db, coll, doc, setup, teardown, iterations) { yield }
     return [iterations, utime, rtime, etime]
   end
 
   def power_test(base, max_power, db, coll, generator, setup, operation, teardown)
     return (0..max_power).collect do |power|
       size, doc = generator.call(base, power)
-      iterations, utime, rtime, etime = valuate(db, coll, setup, teardown) { operation.call(coll, doc) }
+      iterations, utime, rtime, etime = valuate(db, coll, doc, setup, teardown) { operation.call(coll, doc) }
       result = {
           'base' => base,
           'power' => power,
@@ -119,11 +139,11 @@ class TestExpPerformance < Test::Unit::TestCase
           'rtime' => rtime.round(2),
           'ops' => (iterations.to_f / utime.to_f).round(1),
           'usec' => (1000000.0 * utime.to_f / iterations.to_f).round(1),
-          'mongo_driver_mode' => ENV['MONGO_DRIVER_MODE'],
-          'hostname' => ENV['HOSTNAME'],
-          'osname' => ENV['OSNAME'],
-          # 'git' => git, # thinking
-          # 'datetime' +> Time.now, # thinking
+          'mode' => $mode,
+          'hostname' => $hostname,
+          'osname' => $osname,
+          'date' => $date,
+          'tag' => $tag,
           # 'nbench-int' => nbench.int, # thinking
       }
       STDERR.puts result.inspect
@@ -164,19 +184,46 @@ class TestExpPerformance < Test::Unit::TestCase
     return [n, {n.to_s => hash_nest(base, power, n)}]
   end
 
-  def null_setup(db, coll)
+  def null_setup(db, coll, doc, iterations)
 
   end
 
-  def insert(coll, h)
-    h.delete(:_id) # delete :_id to insert
-    coll.insert(h) # note that insert stores :_id in h and subsequent inserts are updates
+  def find_one_setup(db, coll, doc, iterations)
+    insert(coll, doc)
+  end
+
+  def cursor_setup(db, coll, doc, iterations)
+    (0...iterations).each{insert(coll, doc)}
+    @cursor = coll.find
+    @queries = 1
+  end
+
+  def insert(coll, doc)
+    doc.delete(:_id) # delete :_id to insert
+    coll.insert(doc) # note that insert stores :_id in doc and subsequent inserts are updates
+  end
+
+  def find_one(coll, doc)
+    h = coll.find_one
+    raise "find_one failed" unless h
+  end
+
+  def cursor_next(coll, doc)
+    h = @cursor.next
+    unless h
+      @cursor = coll.find
+      @queries += 1
+      @cursor.next
+    end
   end
 
   def default_teardown(db, coll)
     coll.remove
-    #cmd = Hash.new.store('compact', $collection_name)
-    #db.command(cmd)
+  end
+
+  def cursor_teardown(db, coll)
+    coll.remove
+    puts "queries: #{@queries}"
   end
 
   def test_array_nest
@@ -237,6 +284,7 @@ class TestExpPerformance < Test::Unit::TestCase
 
   def test_zzz_exp_blanket
     puts
+    p ({'mode' => $mode , 'hostname' => $hostname, 'osname' => $osname, 'date' => $date, 'tag' => $tag})
     puts sys_info
 
     conn = Mongo::Connection.new
@@ -264,7 +312,41 @@ class TestExpPerformance < Test::Unit::TestCase
 
         # synthesized mix, real-world data pending
 
-        # Read/findOne/find pending
+        # Read/find_one
+=begin
+        [2, 15, :value_string_size, :find_one_setup, :find_one, :default_teardown],
+        [2, 15, :key_string_size, :find_one_setup, :find_one, :default_teardown],
+        [2, 14, :array_size_fixnum, :find_one_setup, :find_one, :default_teardown],
+        [2, 17, :hash_size_fixnum, :find_one_setup, :find_one, :default_teardown],
+        [2, 12, :array_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
+        [4, 6, :array_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
+        [8, 4, :array_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
+        [16, 3, :array_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
+        [32, 2, :array_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
+        [2, 15, :hash_nest_fixnum, :find_one_setup, :find_one, :default_teardown ],
+        [4, 8, :hash_nest_fixnum, :find_one_setup, :find_one, :default_teardown ],
+        [8, 4, :hash_nest_fixnum, :find_one_setup, :find_one, :default_teardown ],
+        [16, 4, :hash_nest_fixnum, :find_one_setup, :find_one, :default_teardown ],
+        [32, 3, :hash_nest_fixnum, :find_one_setup, :find_one, :default_teardown ],
+=end
+
+        # Read/find/next
+=begin
+        [2, 15, :value_string_size, :cursor_setup, :cursor_next, :cursor_teardown],
+        [2, 15, :key_string_size, :cursor_setup, :cursor_next, :cursor_teardown],
+        [2, 14, :array_size_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
+        [2, 17, :hash_size_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
+        [2, 12, :array_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
+        [4, 6, :array_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
+        [8, 4, :array_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
+        [16, 3, :array_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
+        [32, 2, :array_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
+        [2, 15, :hash_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown ],
+        [4, 8, :hash_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown ],
+        [8, 4, :hash_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown ],
+        [16, 4, :hash_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown ],
+        [32, 3, :hash_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown ],
+=end
 
         # Update pending
 
@@ -278,7 +360,7 @@ class TestExpPerformance < Test::Unit::TestCase
     end
     # consider inserting the results into a database collection
     # Test::Unit::TestCase pollutes STDOUT, so write to a file
-    File.open("exp_series-#{Time.now.strftime('%Y%m%d-%H%M')}.js", 'w'){|f|
+    File.open("exp_series-#{$date}-#{$tag}.js", 'w'){|f|
       f.puts("#{results.to_json.gsub(/\[/, "").gsub(/(}[\],])/, "},\n")}")
     }
 
