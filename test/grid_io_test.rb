@@ -122,6 +122,35 @@ class GridIOTest < Test::Unit::TestCase
       end
     end
 
+    context "Writing" do
+      setup do
+        @filename = 'test'
+        @length = 50000
+        @times = 10
+      end
+
+      should "correctly write multiple chunks from mutiple writes" do
+        file = GridIO.new(@files, @chunks, @filename, 'w')
+
+        @times.times do
+          file.write("1" * @length)
+        end
+
+        file.close
+
+        file = GridIO.new(@files, @chunks, @filename, 'r')
+
+        total_size = 0
+        while !file.eof?
+          total_size += file.read(@length).length
+        end
+
+        file.close
+
+        assert_equal total_size, @times * @length
+      end
+    end
+
     context "Seeking" do
       setup do
         @filename = 'test'
