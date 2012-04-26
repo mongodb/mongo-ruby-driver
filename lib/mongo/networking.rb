@@ -137,8 +137,13 @@ module Mongo
 
         send_message_on_socket(packed_message, sock)
         result = receive(sock, request_id, exhaust)
-      rescue SystemStackError, NoMemoryError, SystemCallError, IRB::Abort => ex
+      rescue SystemStackError, NoMemoryError, SystemCallError => ex
         close
+        raise ex
+      rescue Exception => ex
+        if defined?(IRB)
+          close if ex.class == IRB::Abort
+        end
         raise ex
       ensure
         if should_checkin
