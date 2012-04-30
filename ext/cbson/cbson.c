@@ -139,13 +139,13 @@ static void write_utf8(bson_buffer_t buffer, VALUE string, char check_null) {
 #define EXTENDED RE_OPTION_EXTENDED
 #endif
 
-/* TODO review malloc versus Ruby Enterprise Edition with tcmalloc */
-/* TODO we ought to check that the malloc was successful and raise an exception if not. */
+#define ARRAY_KEY_BUFFER_SIZE 10
+// use 8^(ARRAY_KEY_BUFFER_SIZE-1) as CPP safe bounds approximation for limit of 10^(ARRAY_KEY_BUFFER_SIZE-1)-1
+#define ARRAY_KEY_MAX_CPP (1 << (3 * (ARRAY_KEY_BUFFER_SIZE-1)))
+
 #ifdef _WIN32 || _MSC_VER
-#define SCINT(i) (_scprintf("%d", i) + 1)
 #define SNPRINTF _snprintf
 #else
-#define SCINT(i) (snprintf(NULL, 0, "%d", i) + 1)
 #define SNPRINTF snprintf
 #endif
 
@@ -277,6 +277,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             bson_buffer_position length_location, start_position, obj_length;
             int items, i;
             VALUE* values;
+            char name[ARRAY_KEY_BUFFER_SIZE];
 
             write_name_and_type(buffer, key, 0x04);
             start_position = bson_buffer_get_position(buffer);
@@ -288,15 +289,14 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             }
 
             items = RARRAY_LENINT(value);
-            int vslength = SCINT(items);
-            char* name = malloc(vslength);
+            if (items > ARRAY_KEY_MAX_CPP)
+                rb_raise(rb_eTypeError, "array size too large");
             for(i = 0; i < items; i++) {
                 VALUE key;
-                SNPRINTF(name, vslength, "%d", i);
+                SNPRINTF(name, ARRAY_KEY_BUFFER_SIZE, "%d", i);
                 key = rb_str_new2(name);
                 write_element_with_id(key, rb_ary_entry(value, i), pack_extra(buffer, check_keys));
             }
-            free(name);
             // write null byte and fill in length
             SAFE_WRITE(buffer, &zero, 1);
             obj_length = bson_buffer_get_position(buffer) - start_position;

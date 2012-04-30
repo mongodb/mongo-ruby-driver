@@ -13,7 +13,6 @@
         font-family: sans-serif;
         font-size: 16px;
         margin: 50px;
-        max-width: 1000px;
     }
     div.graph {
         width:800px;
@@ -134,18 +133,36 @@ $(function () {
                 { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' }
             ]
         ],
+        [ 'array_size_fixnum slow versus fast insert C', 12, 'tag',
+            [
+                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
+                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' }
+            ]
+        ],
         [ 'array_size_fixnum fast versus hash_size_fixnum insert C', 12, 'generator',
             [
                 { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' },
                 { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' }
             ]
         ],
-        [ 'array_size_fixnum slow versus fast insert C', 12, 'tag',
+        [ 'array_nest_fixnum slow versus hash_nest_fixnum insert C base 2', 12, 'generator',
             [
-                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' }
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
+                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' }
             ]
-        ]
+        ],
+        [ 'array_nest_fixnum slow versus fast insert C base 2', 12, 'tag',
+            [
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' }
+            ]
+        ],
+        [ 'array_nest_fixnum fast versus hash_nest_fixnum insert C base 2', 12, 'generator',
+            [
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' },
+                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' }
+            ]
+        ],
     ];
     $.each(graph, function(i, e){
         var title, xMax, labelSpec, plotSpecs;
