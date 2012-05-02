@@ -68,13 +68,13 @@ module Mongo
     # The purpose of seed nodes is to permit the driver to find at least one replica set member even if a member is down.
     #
     # @example Connect to a replica set and provide two seed nodes.
-    #   ReplSetConnection.new(['localhost:30000', 'localhost:30001'])
+    #   Mongo::ReplSetConnection.new(['localhost:30000', 'localhost:30001'])
     #
     # @example Connect to a replica set providing two seed nodes and ensuring a connection to the replica set named 'prod':
-    #   ReplSetConnection.new(['localhost:30000', 'localhost:30001'], :name => 'prod')
+    #   Mongo::ReplSetConnection.new(['localhost:30000', 'localhost:30001'], :name => 'prod')
     #
     # @example Connect to a replica set providing two seed nodes and allowing reads from a secondary node:
-    #   ReplSetConnection.new(['localhost:30000', 'localhost:30001'], :read => :secondary)
+    #   Mongo::ReplSetConnection.new(['localhost:30000', 'localhost:30001'], :read => :secondary)
     #
     # @see http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html Replica sets in Ruby
     #

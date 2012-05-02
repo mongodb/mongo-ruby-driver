@@ -33,19 +33,19 @@ module Mongo
       # @example
       #
       #   # Check for the existence of a given filename
-      #   @grid = GridFileSystem.new(@db)
+      #   @grid = Mongo::GridFileSystem.new(@db)
       #   @grid.exist?(:filename => 'foo.txt')
       #
       #   # Check for existence filename and content type
-      #   @grid = GridFileSystem.new(@db)
+      #   @grid = Mongo::GridFileSystem.new(@db)
       #   @grid.exist?(:filename => 'foo.txt', :content_type => 'image/jpg')
       #
       #   # Check for existence by _id
-      #   @grid = Grid.new(@db)
+      #   @grid = Mongo::Grid.new(@db)
       #   @grid.exist?(:_id => BSON::ObjectId.from_string('4bddcd24beffd95a7db9b8c8'))
       #
       #   # Check for existence by an arbitrary attribute.
-      #   @grid = Grid.new(@db)
+      #   @grid = Mongo::Grid.new(@db)
       #   @grid.exist?(:tags => {'$in' => ['nature', 'zen', 'photography']})
       #
       # @return [nil, Hash] either nil for the file's metadata as a hash.

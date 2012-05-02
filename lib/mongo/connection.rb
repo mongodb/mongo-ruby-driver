@@ -77,16 +77,16 @@ module Mongo
     # @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
     #
     # @example localhost, 27017
-    #   Connection.new
+    #   Mongo::Connection.new
     #
     # @example localhost, 27017
-    #   Connection.new("localhost")
+    #   Mongo::Connection.new("localhost")
     #
     # @example localhost, 3000, max 5 self.connections, with max 5 seconds of wait time.
-    #   Connection.new("localhost", 3000, :pool_size => 5, :timeout => 5)
+    #   Mongo::Connection.new("localhost", 3000, :pool_size => 5, :timeout => 5)
     #
     # @example localhost, 3000, where this node may be a slave
-    #   Connection.new("localhost", 3000, :slave_ok => true)
+    #   Mongo::Connection.new("localhost", 3000, :slave_ok => true)
     #
     # @see http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html Replica sets in Ruby
     #
@@ -131,10 +131,10 @@ module Mongo
     #   to send reads to.
     #
     # @example
-    #   Connection.multi([["db1.example.com", 27017], ["db2.example.com", 27017]])
+    #   Mongo::Connection.multi([["db1.example.com", 27017], ["db2.example.com", 27017]])
     #
     # @example This connection will read from a random secondary node.
-    #   Connection.multi([["db1.example.com", 27017], ["db2.example.com", 27017], ["db3.example.com", 27017]],
+    #   Mongo::Connection.multi([["db1.example.com", 27017], ["db2.example.com", 27017], ["db3.example.com", 27017]],
     #                   :read_secondary => true)
     #
     # @return [Mongo::Connection]

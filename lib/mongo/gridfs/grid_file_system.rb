@@ -78,20 +78,20 @@ module Mongo
     # @example
     #
     #  # Store the text "Hello, world!" in the grid file system.
-    #  @grid = GridFileSystem.new(@db)
+    #  @grid = Mongo::GridFileSystem.new(@db)
     #  @grid.open('filename', 'w') do |f|
     #    f.write "Hello, world!"
     #  end
     #
     #  # Output "Hello, world!"
-    #  @grid = GridFileSystem.new(@db)
+    #  @grid = Mongo::GridFileSystem.new(@db)
     #  @grid.open('filename', 'r') do |f|
     #    puts f.read
     #  end
     #
     #  # Write a file on disk to the GridFileSystem
     #  @file = File.open('image.jpg')
-    #  @grid = GridFileSystem.new(@db)
+    #  @grid = Mongo::GridFileSystem.new(@db)
     #  @grid.open('image.jpg, 'w') do |f|
     #    f.write @file
     #  end
