@@ -1,3 +1,17 @@
+# Documentation
+
+This API documentation is available online at [http://api.mongodb.org/ruby](http://api.mongodb.org/ruby)
+for all releases of the MongoDB Ruby driver.  Please reference the exact version of the documentation
+that matches the release of the Ruby driver that you are using.  Note that the
+[Ruby Language Center for MongoDB](http://www.mongodb.org/display/DOCS/Ruby+Language+Center)
+has a link to API Documentation for the current release.
+
+If you have the source, you can generate the matching documentation  by typing
+
+    $ rake ydoc
+
+Then open the file +ydoc/index.html+.
+
 # Introduction
 
 This is the 10gen-supported Ruby driver for [MongoDB](http://www.mongodb.org).
@@ -299,15 +313,6 @@ To run any individual rake tasks with the C extension enabled, just pass C_EXT=t
 If you want to test replica set, you can run the following task:
 
     $ rake test:rs
-
-# Documentation
-
-This documentation is available online at [http://api.mongodb.org/ruby](http://api.mongodb.org/ruby). You can
-generate the documentation if you have the source by typing
-
-    $ rake ydoc
-
-Then open the file +ydoc/index.html+.
 
 # Release Notes
 

@@ -26,7 +26,7 @@ $calibration_runtime = 0.1
 $target_runtime = 5.0
 $db_name = 'benchmark'
 $collection_name = 'exp_series'
-$mode = set_mode('ruby')
+$mode = set_mode('c')
 $hostname = `uname -n`[/([^.]*)/,1]
 $osname = `uname -s`.strip
 $tag = `git log -1 --format=oneline`.split[0]
@@ -34,7 +34,7 @@ $date = Time.now.strftime('%Y%m%d-%H%M')
 
 options_with_help = [
     [ '--help', '-h', GetoptLong::NO_ARGUMENT, '', 'show help' ],
-    [ '--mode', '-m', GetoptLong::OPTIONAL_ARGUMENT, ' mode', 'set mode to "c" or "ruby" (default)' ],
+    [ '--mode', '-m', GetoptLong::OPTIONAL_ARGUMENT, ' mode', 'set mode to "c" or "ruby" (c)' ],
     [ '--tag', '-t', GetoptLong::OPTIONAL_ARGUMENT, ' tag', 'set tag for run, default is git commit key' ]
 ]
 options = options_with_help.collect{|option|option[0...3]}
@@ -88,13 +88,6 @@ class TestExpPerformance < Test::Unit::TestCase
     return Array.new(base, array_nest(base, level - 1, obj))
   end
 
-   def hash_nest(base, level, obj)
-     return obj if level == 0
-     h = Hash.new
-     (0...base).each{|i| h[i.to_s] = hash_nest(base, level - 1, obj)}
-     return h
-   end
-
   def test__array_nest
     assert_equal(1, array_nest(2,0,1))
     assert_equal([1, 1], array_nest(2,1,1))
@@ -105,6 +98,13 @@ class TestExpPerformance < Test::Unit::TestCase
     assert_equal([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]], array_nest(4,2,1))
     assert_equal(1, array_nest(8,0,1))
     assert_equal([1, 1, 1, 1, 1, 1, 1, 1], array_nest(8,1,1))
+  end
+
+  def hash_nest(base, level, obj)
+    return obj if level == 0
+    h = Hash.new
+    (0...base).each{|i| h[i.to_s] = hash_nest(base, level - 1, obj)}
+    return h
   end
 
   def test__hash_nest
@@ -121,6 +121,25 @@ class TestExpPerformance < Test::Unit::TestCase
                   "3"=>{"0"=>1, "1"=>1, "2"=>1, "3"=>1}}, hash_nest(4,2,1))
     assert_equal(1, hash_nest(8,0,1))
     assert_equal({"0"=>1, "1"=>1, "2"=>1, "3"=>1, "4"=>1, "5"=>1, "6"=>1, "7"=>1}, hash_nest(8,1,1))
+  end
+
+  def multi_doc(multi_power, doc)
+    return doc if multi_power == -1
+    return (2 ** multi_power).times.collect{doc.dup}
+  end
+
+  def test_multi_doc
+    doc = {'a' => 1}
+    assert_equal({"a"=>1}, multi_doc(-1, doc))
+    assert_equal([{"a"=>1}], multi_doc(0, doc))
+    assert_equal([{"a"=>1}, {"a"=>1}], multi_doc(1, doc))
+    assert_equal([{"a"=>1}, {"a"=>1}, {"a"=>1}, {"a"=>1}], multi_doc(2, doc))
+    assert_equal(8, multi_doc(3, doc).size)
+    assert_equal(16, multi_doc(4, doc).size)
+    assert_equal(32, multi_doc(5, doc).size)
+    mdoc = multi_doc(2, doc)
+    mdoc[0]['b'] = 2
+    assert_equal([{"a"=>1, "b"=>2}, {"a"=>1}, {"a"=>1}, {"a"=>1}], mdoc, 'non-dup doc will fail for insert many safe')
   end
 
   # Performance Tuning Engineering
@@ -167,7 +186,7 @@ class TestExpPerformance < Test::Unit::TestCase
    # consider inserting the results into a database collection
     # Test::Unit::TestCase pollutes STDOUT, so write to a file
     File.open("exp_series-#{$date}-#{$tag}.js", 'w+'){|f|
-      f.puts("#{@results.to_json.gsub(/\[/, "").gsub(/(}[\],])/, "},\n")}") unless @results.empty?
+      f.puts(@results.to_json.gsub(/\[/, "").gsub(/}[\],]/, "},\n")) unless @results.empty?
     }
     @conn.drop_database($db_name)
   end
@@ -206,34 +225,46 @@ class TestExpPerformance < Test::Unit::TestCase
     return [iterations, utime, rtime, etime]
   end
 
-  def power_test(base, max_power, db, coll, generator, setup, operation, teardown)
+  def power_test(args)
+    base, max_power, multi, generator, setup, operation, teardown = args
+    generator, setup, operation, teardown = method(generator), method(setup), method(operation), method(teardown)
     return (0..max_power).collect do |power|
-      size, doc = generator.call(base, power)
-      iterations, utime, rtime, etime = valuate(db, coll, doc, setup, teardown) { operation.call(coll, doc) }
-      result = {
-          'base' => base,
-          'power' => power,
-          'size' => size,
-          'exp2' => Math.log2(size).to_i,
-          'generator' => generator.name.to_s,
-          'operation' => operation.name.to_s,
-          'iterations' => iterations,
-          'utime' => utime.round(2),
-          'etime' => etime.round(2),
-          'rtime' => rtime.round(2),
-          'ops' => (iterations.to_f / utime.to_f).round(1),
-          'usec' => (1000000.0 * utime.to_f / iterations.to_f).round(1),
-          'mode' => $mode,
-          'hostname' => $hostname,
-          'osname' => $osname,
-          'date' => $date,
-          'tag' => $tag,
-          # 'nbench-int' => nbench.int, # thinking
-      }
-      STDERR.puts result.inspect
-      STDERR.flush
-      result
-    end
+      multi_start, multi_end = (multi == -1) ? [-1, -1] : [0, multi]
+      (multi_start..multi_end).collect do |multi_power|
+        size, doc = generator.call(base, power)
+        doc = multi_doc(multi_power, doc)
+        multi_size = (doc.class == Array) ? doc.size : 1;
+        iterations, utime, rtime, etime = valuate(@db, @coll, doc, setup, teardown) { operation.call(@coll, doc) }
+        multi_iterations = multi_size.to_f * iterations.to_f
+        result = {
+            'base' => base,
+            'power' => power,
+            'size' => size,
+            'exp2' => Math.log2(size).to_i,
+            'multi_power' => multi_power,
+            'multi_size' => multi_size,
+            'generator' => generator.name.to_s,
+            'operation' => operation.name.to_s,
+            'iterations' => iterations,
+            'utime' => utime.round(2),
+            'rtime' => rtime.round(2),
+            'ut_ops' => (multi_iterations / utime.to_f).round(1),
+            'rt_ops' => (multi_iterations / rtime.to_f).round(1),
+            'ut_usec' => (1000000.0 * utime.to_f / multi_iterations).round(1),
+            'rt_usec' => (1000000.0 * rtime.to_f / multi_iterations).round(1),
+            'etime' => etime.round(2),
+            'mode' => $mode,
+            'hostname' => $hostname,
+            'osname' => $osname,
+            'date' => $date,
+            'tag' => $tag,
+            # 'nbench-int' => nbench.int, # thinking
+        }
+        STDERR.puts result.inspect
+        STDERR.flush
+        result
+      end
+    end.flatten
   end
 
   def value_string_size(base, power)
@@ -277,19 +308,27 @@ class TestExpPerformance < Test::Unit::TestCase
   end
 
   def cursor_setup(db, coll, doc, iterations)
-    (0...(iterations - coll.size)).each{insert(coll, doc)}
+    (0...(iterations - coll.size)).each{insert(coll, doc)} #TODO - insert many
     @cursor = coll.find
     @queries = 1
   end
 
+  def clear_ids(doc) # delete :_id to really insert, required for safe
+    if doc.class == Array
+      doc.each{|d|d.delete(:_id)}
+    else
+      doc.delete(:_id)
+    end
+  end
+
   def insert(coll, doc)
-    doc.delete(:_id) # delete :_id to insert
+    clear_ids(doc)
     coll.insert(doc) # note that insert stores :_id in doc and subsequent inserts are updates
   end
 
   def insert_safe(coll, doc)
-    doc.delete(:_id) # delete :_id to insert
-    coll.insert(doc, :safe => true) # note that insert stores :_id in doc and subsequent inserts are updates
+    clear_ids(doc)
+    coll.insert(doc, :safe => true) # note that insert stores :_id in doc and subsequent inserts with :_id are updates
   end
 
   def cursor_next(coll, doc)
@@ -317,123 +356,99 @@ class TestExpPerformance < Test::Unit::TestCase
   end
 
   def test_insert
-    tests = [
-        [2, 15, :value_string_size, :null_setup, :insert, :default_teardown],
-        [2, 15, :key_string_size, :null_setup, :insert, :default_teardown],
-        [2, 14, :array_size_fixnum, :null_setup, :insert, :default_teardown],
-        [2, 17, :hash_size_fixnum, :null_setup, :insert, :default_teardown],
-        [2, 12, :array_nest_fixnum, :null_setup, :insert, :default_teardown],
-        [4, 6, :array_nest_fixnum, :null_setup, :insert, :default_teardown],
-        [8, 4, :array_nest_fixnum, :null_setup, :insert, :default_teardown],
-        [16, 3, :array_nest_fixnum, :null_setup, :insert, :default_teardown],
-        [32, 2, :array_nest_fixnum, :null_setup, :insert, :default_teardown],
-        [2, 15, :hash_nest_fixnum, :null_setup, :insert, :default_teardown],
-        [4, 8, :hash_nest_fixnum, :null_setup, :insert, :default_teardown],
-        [8, 4, :hash_nest_fixnum, :null_setup, :insert, :default_teardown],
-        [16, 4, :hash_nest_fixnum, :null_setup, :insert, :default_teardown],
-        [32, 3, :hash_nest_fixnum, :null_setup, :insert, :default_teardown],
-    ]
-    tests.each do |base, max_power, generator, setup, operation, teardown|
-      # consider moving 'method' as permitted by scope
-      @results += power_test(base, max_power, @db, @coll, method(generator), method(setup), method(operation), method(teardown))
-    end
+    [
+        [2, 15, -1, :value_string_size, :null_setup, :insert, :default_teardown],
+        [2, 15, -1, :key_string_size, :null_setup, :insert, :default_teardown],
+        [2, 14, -1, :array_size_fixnum, :null_setup, :insert, :default_teardown],
+        [2, 17, -1, :hash_size_fixnum, :null_setup, :insert, :default_teardown],
+        [2, 12, -1, :array_nest_fixnum, :null_setup, :insert, :default_teardown],
+        [2, 15, -1, :hash_nest_fixnum, :null_setup, :insert, :default_teardown],
+    ].each{|args| @results += power_test(args)}
+  end
+
+  def test_insert_nest_full
+    [
+        [2, 12, -1, :array_nest_fixnum, :null_setup, :insert, :default_teardown],
+        [4, 6, -1, :array_nest_fixnum, :null_setup, :insert, :default_teardown],
+        [8, 4, -1, :array_nest_fixnum, :null_setup, :insert, :default_teardown],
+        [16, 3, -1, :array_nest_fixnum, :null_setup, :insert, :default_teardown],
+        [32, 2, -1, :array_nest_fixnum, :null_setup, :insert, :default_teardown],
+        [2, 15, -1, :hash_nest_fixnum, :null_setup, :insert, :default_teardown],
+        [4, 8, -1, :hash_nest_fixnum, :null_setup, :insert, :default_teardown],
+        [8, 4, -1, :hash_nest_fixnum, :null_setup, :insert, :default_teardown],
+        [16, 4, -1, :hash_nest_fixnum, :null_setup, :insert, :default_teardown],
+        [32, 3, -1, :hash_nest_fixnum, :null_setup, :insert, :default_teardown],
+    ].each{|args| @results += power_test(args)}
+  end
+
+  def test_array_fast
+    [
+        [2, 14, -1, :array_size_fixnum, :null_setup, :insert, :default_teardown],
+        [2, 17, -1, :hash_size_fixnum, :null_setup, :insert, :default_teardown],
+        [2, 12, -1, :array_nest_fixnum, :null_setup, :insert, :default_teardown],
+        [2, 15, -1, :hash_nest_fixnum, :null_setup, :insert, :default_teardown],
+    ].each{|args| @results += power_test(args)}
   end
 
   def test_insert_safe
-    tests = [
-        [2, 15, :value_string_size, :null_setup, :insert_safe, :default_teardown],
-        [2, 15, :key_string_size, :null_setup, :insert_safe, :default_teardown],
-        [2, 14, :array_size_fixnum, :null_setup, :insert_safe, :default_teardown],
-        [2, 17, :hash_size_fixnum, :null_setup, :insert_safe, :default_teardown],
-        [2, 12, :array_nest_fixnum, :null_setup, :insert_safe, :default_teardown],
-        [4, 6, :array_nest_fixnum, :null_setup, :insert_safe, :default_teardown],
-        [8, 4, :array_nest_fixnum, :null_setup, :insert_safe, :default_teardown],
-        [16, 3, :array_nest_fixnum, :null_setup, :insert_safe, :default_teardown],
-        [32, 2, :array_nest_fixnum, :null_setup, :insert_safe, :default_teardown],
-        [2, 15, :hash_nest_fixnum, :null_setup, :insert_safe, :default_teardown],
-        [4, 8, :hash_nest_fixnum, :null_setup, :insert_safe, :default_teardown],
-        [8, 4, :hash_nest_fixnum, :null_setup, :insert_safe, :default_teardown],
-        [16, 4, :hash_nest_fixnum, :null_setup, :insert_safe, :default_teardown],
-        [32, 3, :hash_nest_fixnum, :null_setup, :insert_safe, :default_teardown],
-    ]
-    tests.each do |base, max_power, generator, setup, operation, teardown|
-      # consider moving 'method' as permitted by scope
-      @results += power_test(base, max_power, @db, @coll, method(generator), method(setup), method(operation), method(teardown))
-    end
+    [
+        [2, 15, -1, :value_string_size, :null_setup, :insert_safe, :default_teardown],
+        [2, 15, -1, :key_string_size, :null_setup, :insert_safe, :default_teardown],
+        [2, 14, -1, :array_size_fixnum, :null_setup, :insert_safe, :default_teardown],
+        [2, 17, -1, :hash_size_fixnum, :null_setup, :insert_safe, :default_teardown],
+        [2, 12, -1, :array_nest_fixnum, :null_setup, :insert_safe, :default_teardown],
+        [2, 15, -1, :hash_nest_fixnum, :null_setup, :insert_safe, :default_teardown],
+    ].each{|args| @results += power_test(args)}
   end
 
-  def xtest_insert_many
-
+  def test_insert_many
+    [
+        [2, 2, 10, :value_string_size, :null_setup, :insert, :default_teardown],
+        [2, 14, 10, :hash_size_fixnum, :null_setup, :insert, :default_teardown],
+        [2, 14, 10, :array_size_fixnum, :null_setup, :insert, :default_teardown],
+    ].each{|args| @results += power_test(args)}
   end
 
-  def xtest_insert_many_safe
-
+  def test_insert_many_safe
+    [
+        [2, 2, 10, :value_string_size, :null_setup, :insert_safe, :default_teardown],
+        [2, 14, 10, :hash_size_fixnum, :null_setup, :insert_safe, :default_teardown],
+        [2, 14, 10, :array_size_fixnum, :null_setup, :insert_safe, :default_teardown],
+    ].each{|args| @results += power_test(args)}
   end
 
   def test_find
-    tests = [
-        [2, 15, :value_string_size, :cursor_setup, :cursor_next, :cursor_teardown],
-        [2, 15, :key_string_size, :cursor_setup, :cursor_next, :cursor_teardown],
-        [2, 14, :array_size_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
-        [2, 17, :hash_size_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
-        [2, 12, :array_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
-        [4, 6, :array_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
-        [8, 4, :array_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
-        [16, 3, :array_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
-        [32, 2, :array_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
-        [2, 15, :hash_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
-        [4, 8, :hash_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
-        [8, 4, :hash_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
-        [16, 4, :hash_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
-        [32, 3, :hash_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
-    ]
-    tests.each do |base, max_power, generator, setup, operation, teardown|
-      # consider moving 'method' as permitted by scope
-      @results += power_test(base, max_power, @db, @coll, method(generator), method(setup), method(operation), method(teardown))
-    end
+    [
+        [2, 15, -1, :value_string_size, :cursor_setup, :cursor_next, :cursor_teardown],
+        [2, 15, -1, :key_string_size, :cursor_setup, :cursor_next, :cursor_teardown],
+        [2, 14, -1, :array_size_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
+        [2, 17, -1, :hash_size_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
+        [2, 12, -1, :array_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
+        [2, 15, -1, :hash_nest_fixnum, :cursor_setup, :cursor_next, :cursor_teardown],
+    ].each{|args| @results += power_test(args)}
   end
 
   def test_find_one
-    tests = [
-        [2, 15, :value_string_size, :find_one_setup, :find_one, :default_teardown],
-        [2, 15, :key_string_size, :find_one_setup, :find_one, :default_teardown],
-        [2, 14, :array_size_fixnum, :find_one_setup, :find_one, :default_teardown],
-        [2, 17, :hash_size_fixnum, :find_one_setup, :find_one, :default_teardown],
-        [2, 12, :array_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
-        [4, 6, :array_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
-        [8, 4, :array_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
-        [16, 3, :array_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
-        [32, 2, :array_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
-        [2, 15, :hash_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
-        [4, 8, :hash_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
-        [8, 4, :hash_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
-        [16, 4, :hash_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
-        [32, 3, :hash_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
-    ]
-    tests.each do |base, max_power, generator, setup, operation, teardown|
-      # consider moving 'method' as permitted by scope
-      @results += power_test(base, max_power, @db, @coll, method(generator), method(setup), method(operation), method(teardown))
-    end
+    [
+        [2, 15, -1, :value_string_size, :find_one_setup, :find_one, :default_teardown],
+        [2, 15, -1, :key_string_size, :find_one_setup, :find_one, :default_teardown],
+        [2, 14, -1, :array_size_fixnum, :find_one_setup, :find_one, :default_teardown],
+        [2, 17, -1, :hash_size_fixnum, :find_one_setup, :find_one, :default_teardown],
+        [2, 12, -1, :array_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
+        [2, 15, -1, :hash_nest_fixnum, :find_one_setup, :find_one, :default_teardown],
+    ].each{|args| @results += power_test(args)}
   end
 
   def xtest_update
-    tests = [
+    [
         # pending
-    ]
-    tests.each do |base, max_power, generator, setup, operation, teardown|
-      # consider moving 'method' as permitted by scope
-      @results += power_test(base, max_power, @db, @coll, method(generator), method(setup), method(operation), method(teardown))
-    end
+    ].each{|args| @results += power_test(args)}
   end
 
   def xtest_remove
-    tests = [
+    [
         # pending
-    ]
-    tests.each do |base, max_power, generator, setup, operation, teardown|
-      # consider moving 'method' as permitted by scope
-      @results += power_test(base, max_power, @db, @coll, method(generator), method(setup), method(operation), method(teardown))
-    end
+    ].each{|args| @results += power_test(args)}
   end
 
   # synthesized mix, real-world data pending

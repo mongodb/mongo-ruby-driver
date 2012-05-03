@@ -18,13 +18,18 @@
         width:800px;
         height:400px;
     }
+    div.hidden {
+        //display: none; //visibility: hidden; // to collapse, use display: none
+    }
     </style>
  </head>
  <body>
     <h1>Exp Series Performance Tests</h1>
     x-axis is power of 2, log base 2 of size<br>
-    y-axis is operations per user-time CPU-second<br>
-    Note that this is not operations per real-time second that include DB real-time<br>
+    y-axis is "document" operations per second, ex., total document insertions per second<br>
+    <br>
+    For measuring Ruby driver performance, we are interested primarily in the "user" CPU time.<br>
+    The "user" time is the time used by the Ruby driver, typically much less than real time.<br>
     <div id="placeholder"></div>
 
 <script type="text/javascript">
@@ -42,7 +47,7 @@
         return $.map(plotSpecs, function(plotSpec, i){
             return {
                 label: labelSpec + ': ' + plotSpec[labelSpec],
-                data: genOpXY(expSeries, xMax, plotSpec, 'exp2', 'ops'),
+                data: genOpXY(expSeries, xMax, plotSpec, 'exp2', 'ut_ops'),
                 lines: { show: true },
                 points: { show: true }
             };
@@ -58,106 +63,108 @@ $(function () {
         }
         return res;
     }
-    function doPlot(title, series) {
+    function doPlot(title, series, classes) {
         var id = title.replace(/\W/g,'_');
-        $("#placeholder").append('<h1>' + title + '</h1><div id="' + id + '" class="graph"></div>');
-        $.plot($('#' + id),
-           series,
-           { 
-               xaxis: { ticks: xExpTicks },
-               yaxes: [ { min: 0 } ],
-               legend: { position: 'ne' },
-               grid: { hoverable: true }
-           });
+        $("#placeholder").append('<h3>' + title + '</h3><div id="show_hide_' + id + '" class="show_hide">Show/Hide</div><div id="' + id + '" class="graph"></div>');
+        var e = $('#' + id);
+        $.plot(e, series, {
+            xaxis:{ ticks:xExpTicks },
+            yaxes:[
+                { min:0 }
+            ],
+            legend:{ position:'ne' },
+            grid:{ hoverable:true }
+        });
+        e.addClass(classes);
     }
 
     // comment pending
     var graph = [
-        [ 'value_string_size insert C versus Ruby', 14, 'mode',
+        [ '#placeholder', 'value_string_size insert C versus Ruby', 'hidden', 14, 'mode',
             [
-                { base:2, generator:'value_string_size', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:2, generator:'value_string_size', operation:'insert', mode: 'ruby', tag: 'orig_ruby' }
+                { base:2, generator:'value_string_size', operation:'insert', mode: 'c', tag: 'base_c' },
+                { base:2, generator:'value_string_size', operation:'insert', mode: 'ruby', tag: 'base_ruby' }
             ]
         ],
-        [ 'key_string_size insert C versus Ruby', 14, 'mode',
+        [ '#placeholder', 'key_string_size insert C versus Ruby', 'hidden', 14, 'mode',
             [
-                { base:2, generator:'key_string_size', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:2, generator:'key_string_size', operation:'insert', mode: 'ruby', tag: 'orig_ruby' }
+                { base:2, generator:'key_string_size', operation:'insert', mode: 'c', tag: 'base_c' },
+                { base:2, generator:'key_string_size', operation:'insert', mode: 'ruby', tag: 'base_ruby' }
             ]
         ],
-        [ 'array_size_fixnum insert C versus Ruby', 12, 'mode',
+        [ '#placeholder', 'array_size_fixnum insert C versus Ruby', 'hidden', 12, 'mode',
             [
-                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'ruby', tag: 'orig_ruby' }
+                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
+                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'ruby', tag: 'base_ruby' }
             ]
         ],
-        [ 'hash_size_fixnum insert C versus Ruby', 12, 'mode',
+        [ '#placeholder', 'hash_size_fixnum insert C versus Ruby', 'hidden', 12, 'mode',
             [
-                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'ruby', tag: 'orig_ruby' }
+                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
+                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'ruby', tag: 'base_ruby' }
             ]
         ],
-        [ 'array_nest_fixnum base 2 insert C versus Ruby', 12, 'mode',
+        [ '#placeholder', 'array_nest_fixnum base 2 insert C versus Ruby', 'hidden', 12, 'mode',
             [
-                { base:2, generator:'array_nest_fixnum', operation:'insert', mode:'c', tag: 'array_slow' },
-                { base:2, generator:'array_nest_fixnum', operation:'insert', mode:'ruby', tag: 'orig_ruby' }
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mode:'c', tag: 'base_c' },
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mode:'ruby', tag: 'base_ruby' }
             ]
         ],
-        [ 'hash_nest_fixnum base 2 insert C versus Ruby', 12, 'mode',
+        [ '#placeholder', 'hash_nest_fixnum base 2 insert C versus Ruby', 'hidden', 12, 'mode',
             [
-                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'ruby', tag: 'orig_ruby' }
+                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
+                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'ruby', tag: 'base_ruby' }
             ]
         ],
-        [ 'array_nest_fixnum insert C by base', 12, 'base',
+        [ '#placeholder', 'array_nest_fixnum insert C by base', 'hidden', 12, 'base',
             [
-                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:4, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:8, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:16, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:32, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' }
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
+                { base:4, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
+                { base:8, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
+                { base:16, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
+                { base:32, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' }
             ]
         ],
-        [ 'hash_nest_fixnum insert C by base', 12, 'base',
+        [ '#placeholder', 'hash_nest_fixnum insert C by base', 'hidden', 12, 'base',
             [
-                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:4, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:8, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:16, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:32, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' }
+                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
+                { base:4, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
+                { base:8, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
+                { base:16, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
+                { base:32, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' }
             ]
         ],
-        [ 'array_size_fixnum slow versus hash_size_fixnum insert C', 12, 'generator',
+        [ '#placeholder', 'array_size_fixnum slow versus hash_size_fixnum insert C', '', 12, 'generator',
             [
-                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' }
+                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
+                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' }
             ]
         ],
-        [ 'array_size_fixnum slow versus fast insert C', 12, 'tag',
+        [ '#placeholder', 'array_size_fixnum slow versus fast insert C', 'hidden', 12, 'tag',
             [
-                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
+                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
                 { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' }
             ]
         ],
-        [ 'array_size_fixnum fast versus hash_size_fixnum insert C', 12, 'generator',
+        [ '#placeholder', 'array_size_fixnum fast versus hash_size_fixnum insert C', 'hidden', 12, 'generator',
             [
                 { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' },
-                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' }
+                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' }
             ]
         ],
-        [ 'array_nest_fixnum slow versus hash_nest_fixnum insert C base 2', 12, 'generator',
+        [ '#placeholder', 'array_nest_fixnum slow versus hash_nest_fixnum insert C base 2', 'hidden', 12, 'generator',
             [
-                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
-                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' }
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
+                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c' }
             ]
         ],
-        [ 'array_nest_fixnum slow versus fast insert C base 2', 12, 'tag',
+        [ '#placeholder', 'array_nest_fixnum slow versus fast insert C base 2', 'hidden', 12, 'tag',
             [
-                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_slow' },
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
                 { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' }
             ]
         ],
-        [ 'array_nest_fixnum fast versus hash_nest_fixnum insert C base 2', 12, 'generator',
+        [ '#placeholder', 'array_nest_fixnum fast versus hash_nest_fixnum insert C base 2', 'hidden', 12, 'generator',
             [
                 { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' },
                 { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' }
@@ -165,10 +172,11 @@ $(function () {
         ],
     ];
     $.each(graph, function(i, e){
-        var title, xMax, labelSpec, plotSpecs;
-        title = e[0]; xMax = e[1]; labelSpec = e[2]; plotSpecs = e[3]; //[title, xMax, labelSpec, plotSpecs] = e;
+        var section, title, classes, xMax, labelSpec, plotSpecs;
+        //[section, title, classes, xMax, labelSpec, plotSpecs] = e;
+        section = e[0], title = e[1]; classes = e[2], xMax = e[3]; labelSpec = e[4]; plotSpecs = e[5];
         var series = flotSeries(expSeries, xMax, labelSpec, plotSpecs);
-        doPlot(title, series);
+        doPlot(title, series, classes);
     });
 
     function showTooltip(x, y, contents) {
@@ -204,6 +212,11 @@ $(function () {
             $("#tooltip").remove();
             previousPoint = null;
         }
+    });
+
+    $('.show_hide').bind('click', function(event) {
+        var id = $(this).attr('id').replace(/^show_hide_/, '');
+        $('#' + id).toggleClass('hidden');
     });
 
 });

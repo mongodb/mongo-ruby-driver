@@ -9,6 +9,8 @@ group :development, :test do
 
   # Deployment
   gem "git"
+  gem "redcarpet"
+  gem "yard"
 
   # Testing
   gem "mocha"

@@ -139,14 +139,38 @@ static void write_utf8(bson_buffer_t buffer, VALUE string, char check_null) {
 #define EXTENDED RE_OPTION_EXTENDED
 #endif
 
-#define ARRAY_KEY_BUFFER_SIZE 10
-// use 8^(ARRAY_KEY_BUFFER_SIZE-1) as CPP safe bounds approximation for limit of 10^(ARRAY_KEY_BUFFER_SIZE-1)-1
-#define ARRAY_KEY_MAX_CPP (1 << (3 * (ARRAY_KEY_BUFFER_SIZE-1)))
-
+/* TODO we ought to check that the malloc or asprintf was successful
+ * and raise an exception if not. */
+/* TODO maybe we can use something more portable like vsnprintf instead
+ * of this hack. And share it with the Python extension ;) */
+/* If we don't have ASPRINTF, there are two possibilities:
+ * either use _scprintf and _snprintf on for Windows or
+ * use snprintf for solaris. */
+#ifndef HAVE_ASPRINTF
 #ifdef _WIN32 || _MSC_VER
-#define SNPRINTF _snprintf
+#define INT2STRING(buffer, i)                   \
+    {                                           \
+        int vslength = _scprintf("%d", i) + 1;  \
+        *buffer = malloc(vslength);             \
+        _snprintf(*buffer, vslength, "%d", i);  \
+    }
+#define FREE_INTSTRING(buffer) free(buffer)
 #else
-#define SNPRINTF snprintf
+#define INT2STRING(buffer, i)                   \
+    {                                           \
+        int vslength = snprintf(NULL, 0, "%d", i) + 1;  \
+        *buffer = malloc(vslength);             \
+        snprintf(*buffer, vslength, "%d", i);   \
+    }
+#define FREE_INTSTRING(buffer) free(buffer)
+#endif
+#else
+#define INT2STRING(buffer, i) asprintf(buffer, "%d", i);
+#ifdef USING_SYSTEM_ALLOCATOR_LIBRARY /* Ruby Enterprise Edition with tcmalloc */
+#define FREE_INTSTRING(buffer) system_free(buffer)
+#else
+#define FREE_INTSTRING(buffer) free(buffer)
+#endif
 #endif
 
 #ifndef RREGEXP_SRC
@@ -277,7 +301,6 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             bson_buffer_position length_location, start_position, obj_length;
             int items, i;
             VALUE* values;
-            char name[ARRAY_KEY_BUFFER_SIZE];
 
             write_name_and_type(buffer, key, 0x04);
             start_position = bson_buffer_get_position(buffer);
@@ -289,14 +312,15 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             }
 
             items = RARRAY_LENINT(value);
-            if (items > ARRAY_KEY_MAX_CPP)
-                rb_raise(rb_eTypeError, "array size too large");
             for(i = 0; i < items; i++) {
+                char* name;
                 VALUE key;
-                SNPRINTF(name, ARRAY_KEY_BUFFER_SIZE, "%d", i);
+                INT2STRING(&name, i);
                 key = rb_str_new2(name);
                 write_element_with_id(key, rb_ary_entry(value, i), pack_extra(buffer, check_keys));
+                FREE_INTSTRING(name);
             }
+
             // write null byte and fill in length
             SAFE_WRITE(buffer, &zero, 1);
             obj_length = bson_buffer_get_position(buffer) - start_position;
