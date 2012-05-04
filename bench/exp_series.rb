@@ -71,7 +71,7 @@ end
 def sys_info
   h = Hash.new
   if FileTest.executable?('/usr/sbin/sysctl')
-    text = `/usr/sbin/sysctl -a kern.ostype kern.version kern.hostname hw.machine hw.model hw.cputype hw.busfrequency hw.cpufrequency`
+    text = `/usr/sbin/sysctl -a kern.ostype kern.version kern.hostname hw.machine hw.model hw.cputype hw.cpusubtype hw.busfrequency hw.cpufrequency hw.memsize hw.physicalcpu hw.logicalcpu hw.packages`
     values = text.split(/\n/).collect{|line| /([^:]*) *[:=] *(.*)/.match(line)[1..2]}
     h = Hash.new
     values.each{|key, value| h.store_embedded(key, value) }
@@ -178,8 +178,8 @@ class TestExpPerformance < Test::Unit::TestCase
     @coll.remove
     @results = []
     puts
-    p ({'mode' => $mode , 'hostname' => $hostname, 'osname' => $osname, 'date' => $date, 'tag' => $tag})
-    puts sys_info
+    puts JSON.pretty_generate({'mode' => $mode , 'hostname' => $hostname, 'osname' => $osname, 'date' => $date, 'tag' => $tag})
+    puts JSON.pretty_generate(sys_info)
   end
 
   def teardown_test_set
@@ -353,6 +353,10 @@ class TestExpPerformance < Test::Unit::TestCase
   def cursor_teardown(db, coll)
     puts "queries: #{@queries}" if @queries > 1
     default_teardown(db, coll)
+  end
+
+  def test_null
+    # just setup/teardown for options parsing and sys_info
   end
 
   def test_insert

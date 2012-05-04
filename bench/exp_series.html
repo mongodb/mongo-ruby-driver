@@ -14,23 +14,40 @@
         font-size: 16px;
         margin: 50px;
     }
-    div.graph {
+    .graph {
         width:800px;
         height:400px;
     }
-    div.hidden {
-        //display: none; //visibility: hidden; // to collapse, use display: none
+    .note {
+
+    }
+    .show_hide {
+        padding: 1px;
+        line-height: 200%;
+        margin: 20px;
+        cursor: pointer;
+        background-color: LightGray;
+    }
+    .hidden {
+        display: none; //visibility: hidden; // to collapse, use display: none
     }
     </style>
  </head>
  <body>
     <h1>Exp Series Performance Tests</h1>
-    x-axis is power of 2, log base 2 of size<br>
-    y-axis is "document" operations per second, ex., total document insertions per second<br>
-    <br>
-    For measuring Ruby driver performance, we are interested primarily in the "user" CPU time.<br>
-    The "user" time is the time used by the Ruby driver, typically much less than real time.<br>
-    <div id="placeholder"></div>
+    x-axis is power of 2, log base 2 of size<br/>
+    y-axis is "document" operations per second, ex., total document insertions per second<br/>
+    <br/>
+    For measuring Ruby driver performance, we are interested primarily in the "user" CPU time.<br/>
+    The "user" time is the time used by the Ruby driver, typically much less than real time.<br/>
+    <br/>
+    <hr/>
+    <h2>Issues</h2><div id="array_slow"></div>
+    <hr/>
+    <h2>Nested Structures</h2><div id="nested"></div>
+    <hr/>
+    <h2>C versus Ruby</h2><div id="c_vs_ruby"></div>
+    <hr/>
 
 <script type="text/javascript">
     function genOpXY(a, xMax, plotSpec, xKey, yKey) {
@@ -63,9 +80,13 @@ $(function () {
         }
         return res;
     }
-    function doPlot(title, series, classes) {
+    function doPlot(section, title, series, classes, notes) {
         var id = title.replace(/\W/g,'_');
-        $("#placeholder").append('<h3>' + title + '</h3><div id="show_hide_' + id + '" class="show_hide">Show/Hide</div><div id="' + id + '" class="graph"></div>');
+        $(section).append('<hr/><h3>' + title + '</h3>' +
+                '<div id="note_' + id + '" class="note"></div>' +
+                '<span id="show_hide_' + id + '" class="show_hide">Show/Hide</span>' +
+                '<div id="' + id + '" class="graph"></div>');
+        $('#note_' + id).text(notes);
         var e = $('#' + id);
         $.plot(e, series, {
             xaxis:{ ticks:xExpTicks },
@@ -80,103 +101,118 @@ $(function () {
 
     // comment pending
     var graph = [
-        [ '#placeholder', 'value_string_size insert C versus Ruby', 'hidden', 14, 'mode',
-            [
-                { base:2, generator:'value_string_size', operation:'insert', mode: 'c', tag: 'base_c' },
-                { base:2, generator:'value_string_size', operation:'insert', mode: 'ruby', tag: 'base_ruby' }
-            ]
-        ],
-        [ '#placeholder', 'key_string_size insert C versus Ruby', 'hidden', 14, 'mode',
-            [
-                { base:2, generator:'key_string_size', operation:'insert', mode: 'c', tag: 'base_c' },
-                { base:2, generator:'key_string_size', operation:'insert', mode: 'ruby', tag: 'base_ruby' }
-            ]
-        ],
-        [ '#placeholder', 'array_size_fixnum insert C versus Ruby', 'hidden', 12, 'mode',
+        [ '#array_slow', 'array_size_fixnum slow versus hash_size_fixnum insert C', '', 12, 'generator',
             [
                 { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
-                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'ruby', tag: 'base_ruby' }
-            ]
+                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' }
+            ],
+            'Array insertion is significantly slower than hash insertion.  ' +
+            'Investigation shows that there is an extra malloc/free for each array index key.  '
         ],
-        [ '#placeholder', 'hash_size_fixnum insert C versus Ruby', 'hidden', 12, 'mode',
+        [ '#array_slow', 'array_size_fixnum slow versus fast insert C', '', 12, 'tag',
             [
-                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
-                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'ruby', tag: 'base_ruby' }
-            ]
+                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
+                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' }
+            ],
+            'Pending: Array insertion is now faster.'
         ],
-        [ '#placeholder', 'array_nest_fixnum base 2 insert C versus Ruby', 'hidden', 12, 'mode',
+        [ '#array_slow', 'array_size_fixnum fast versus hash_size_fixnum insert C', '', 12, 'generator',
             [
-                { base:2, generator:'array_nest_fixnum', operation:'insert', mode:'c', tag: 'base_c' },
-                { base:2, generator:'array_nest_fixnum', operation:'insert', mode:'ruby', tag: 'base_ruby' }
-            ]
+                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' },
+                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' }
+            ],
+            'Pending: Array insertion is now as fast as hash insertion.'
         ],
-        [ '#placeholder', 'hash_nest_fixnum base 2 insert C versus Ruby', 'hidden', 12, 'mode',
+        [ '#array_slow', 'array_nest_fixnum slow versus hash_nest_fixnum insert C base 2', '', 12, 'generator',
             [
-                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
-                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'ruby', tag: 'base_ruby' }
-            ]
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
+                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c' }
+            ],
+            'Nested array insertion is significantly slower than nested hash insertion.'
         ],
-        [ '#placeholder', 'array_nest_fixnum insert C by base', 'hidden', 12, 'base',
+        [ '#array_slow', 'array_nest_fixnum slow versus fast insert C base 2', 'hidden', 12, 'tag',
+            [
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' }
+            ],
+            'Pending: Nested array insertion is now faster.'
+        ],
+        [ '#array_slow', 'array_nest_fixnum fast versus hash_nest_fixnum insert C base 2', 'hidden', 12, 'generator',
+            [
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' },
+                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c' }
+            ],
+            'Pending: Nested array insertion is now as fast as nested hash insertion.'
+        ],
+        [ '#nested', 'array_nest_fixnum insert C by base', 'hidden', 12, 'base',
             [
                 { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
                 { base:4, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
                 { base:8, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
                 { base:16, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
                 { base:32, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' }
-            ]
+            ],
+            'The deeper binary nested array is slower than broader structures with the same number of leaves.'
         ],
-        [ '#placeholder', 'hash_nest_fixnum insert C by base', 'hidden', 12, 'base',
+        [ '#nested', 'hash_nest_fixnum insert C by base', 'hidden', 12, 'base',
             [
                 { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
                 { base:4, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
                 { base:8, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
                 { base:16, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' },
                 { base:32, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c_nest_full' }
-            ]
+            ],
+            'The deeper binary nested hash is slower than broader structures with the same number of leaves.'
         ],
-        [ '#placeholder', 'array_size_fixnum slow versus hash_size_fixnum insert C', '', 12, 'generator',
+        [ '#c_vs_ruby', 'value_string_size insert C versus Ruby', 'hidden', 14, 'mode',
+            [
+                { base:2, generator:'value_string_size', operation:'insert', mode: 'c', tag: 'base_c' },
+                { base:2, generator:'value_string_size', operation:'insert', mode: 'ruby', tag: 'base_ruby' }
+            ],
+            'The C extension is significantly faster than Ruby, as expected.'
+        ],
+        [ '#c_vs_ruby', 'key_string_size insert C versus Ruby', 'hidden', 14, 'mode',
+            [
+                { base:2, generator:'key_string_size', operation:'insert', mode: 'c', tag: 'base_c' },
+                { base:2, generator:'key_string_size', operation:'insert', mode: 'ruby', tag: 'base_ruby' }
+            ],
+            'The C extension is significantly faster than Ruby, as expected.'
+        ],
+        [ '#c_vs_ruby', 'array_size_fixnum insert C versus Ruby', 'hidden', 12, 'mode',
             [
                 { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
-                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' }
-            ]
+                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'ruby', tag: 'base_ruby' }
+            ],
+            'The C extension is significantly faster than Ruby, as expected.'
         ],
-        [ '#placeholder', 'array_size_fixnum slow versus fast insert C', 'hidden', 12, 'tag',
+        [ '#c_vs_ruby', 'hash_size_fixnum insert C versus Ruby', 'hidden', 12, 'mode',
             [
-                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
-                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' }
-            ]
+                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
+                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'ruby', tag: 'base_ruby' }
+            ],
+            'The C extension is significantly faster than Ruby, as expected.'
         ],
-        [ '#placeholder', 'array_size_fixnum fast versus hash_size_fixnum insert C', 'hidden', 12, 'generator',
+        [ '#c_vs_ruby', 'array_nest_fixnum base 2 insert C versus Ruby', 'hidden', 12, 'mode',
             [
-                { base:2, generator:'array_size_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' },
-                { base:2, generator:'hash_size_fixnum', operation:'insert', mode: 'c', tag: 'base_c' }
-            ]
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mode:'c', tag: 'base_c' },
+                { base:2, generator:'array_nest_fixnum', operation:'insert', mode:'ruby', tag: 'base_ruby' }
+            ],
+            'The C extension is significantly faster than Ruby, as expected.'
         ],
-        [ '#placeholder', 'array_nest_fixnum slow versus hash_nest_fixnum insert C base 2', 'hidden', 12, 'generator',
+        [ '#c_vs_ruby', 'hash_nest_fixnum base 2 insert C versus Ruby', 'hidden', 12, 'mode',
             [
-                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
-                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c' }
-            ]
-        ],
-        [ '#placeholder', 'array_nest_fixnum slow versus fast insert C base 2', 'hidden', 12, 'tag',
-            [
-                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
-                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' }
-            ]
-        ],
-        [ '#placeholder', 'array_nest_fixnum fast versus hash_nest_fixnum insert C base 2', 'hidden', 12, 'generator',
-            [
-                { base:2, generator:'array_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' },
-                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'array_fast' }
-            ]
+                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'c', tag: 'base_c' },
+                { base:2, generator:'hash_nest_fixnum', operation:'insert', mode: 'ruby', tag: 'base_ruby' }
+            ],
+            'The C extension is significantly faster than Ruby, as expected.'
         ],
     ];
     $.each(graph, function(i, e){
         var section, title, classes, xMax, labelSpec, plotSpecs;
-        //[section, title, classes, xMax, labelSpec, plotSpecs] = e;
-        section = e[0], title = e[1]; classes = e[2], xMax = e[3]; labelSpec = e[4]; plotSpecs = e[5];
+        //[section, title, classes, xMax, labelSpec, plotSpecs, notes] = e;
+        section = e[0], title = e[1]; classes = e[2], xMax = e[3]; labelSpec = e[4]; plotSpecs = e[5], notes = e[6];
         var series = flotSeries(expSeries, xMax, labelSpec, plotSpecs);
-        doPlot(title, series, classes);
+        doPlot(section, title, series, classes, notes);
     });
 
     function showTooltip(x, y, contents) {

@@ -22,4 +22,6 @@ test/tools/data/
 .rvmrc
 Gemfile.lock
 .idea/*
+tmp
+
 
