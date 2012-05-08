@@ -440,6 +440,22 @@ module Mongo
       false
     end
 
+    # Determine if the connection is active. In a normal case the *server_info* operation
+    # will be performed without issues, but if the connection was dropped by the server or
+    # for some reason the sockets are unsynchronized, a ConnectionFailure will be raised and
+    # the return will be false.
+    #
+    # @return [Boolean]
+    def active?
+      return false unless connected?
+
+      server_info
+      true
+
+      rescue ConnectionFailure
+      false
+    end
+
     # Determine whether we're reading from a primary node. If false,
     # this connection connects to a secondary node and @slave_ok is true.
     #

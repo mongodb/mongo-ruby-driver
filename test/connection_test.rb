@@ -253,6 +253,26 @@ class TestConnection < Test::Unit::TestCase
     assert !conn.active?
   end
 
+  def test_connection_activity
+    conn = standard_connection
+    assert conn.active?
+
+    conn.primary_pool.close
+    assert !conn.active?
+
+    # Simulate a dropped connection.
+    dropped_socket = Mocha::Mock.new
+    dropped_socket.stubs(:read).raises(Errno::ECONNRESET)
+    dropped_socket.stubs(:send).raises(Errno::ECONNRESET)
+    dropped_socket.stub_everything
+
+    conn.primary_pool.host = 'localhost'
+    conn.primary_pool.port = Mongo::Connection::DEFAULT_PORT
+    conn.primary_pool.instance_variable_set("@sockets", [dropped_socket])
+
+    assert !conn.active?
+  end
+
   context "Saved authentications" do
     setup do
       @conn = standard_connection
