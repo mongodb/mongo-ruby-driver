@@ -478,6 +478,12 @@ module Mongo
     def ok?(doc)
       Mongo::Support.ok?(doc)
     end
+    
+    # Tells you whether the current mongo is the master or not.
+    # @return [Boolean]
+    def is_master?
+      self.command({:ismaster => 1})['ismaster']
+    end
 
     # Send a command to the database.
     #
