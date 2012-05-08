@@ -266,7 +266,6 @@ module Mongo
 
     def create_chunk(n)
       chunk = BSON::OrderedHash.new
-      chunk['_id']      = BSON::ObjectId.new
       chunk['n']        = n
       chunk['files_id'] = @files_id
       chunk['data']     = ''
