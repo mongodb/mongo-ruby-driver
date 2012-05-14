@@ -10,26 +10,33 @@ If you have the source, you can generate the matching documentation  by typing
 
     $ rake ydoc
 
-Then open the file +ydoc/index.html+.
+Then open the file ydoc/index.html in your browser.
 
 # Introduction
 
 This is the 10gen-supported Ruby driver for [MongoDB](http://www.mongodb.org).
 
-This documentation includes other articles of interest, include:
+For the reference manual, use the links in the upper-left and upper-right corners for quick navigation to the following.
 
-1. [A tutorial](http://api.mongodb.org/ruby/current/file.TUTORIAL.html).
-2. [Replica Sets in Ruby](http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html).
-3. [Write Concern in Ruby](http://api.mongodb.org/ruby/current/file.WRITE_CONCERN.html).
-4. [Tailable Cursors in Ruby](http://api.mongodb.org/ruby/current/file.TAILABLE_CURSORS.html).
-5. [Read Preference in Ruby](http://api.mongodb.org/ruby/current/file.READ_PREFERENCE.html).
-6. [GridFS in Ruby](http://api.mongodb.org/ruby/current/file.GridFS.html).
-7. [Frequently Asked Questions](http://api.mongodb.org/ruby/current/file.FAQ.html).
-8. [History](http://api.mongodb.org/ruby/current/file.HISTORY.html).
-9. [Release plan](http://api.mongodb.org/ruby/current/file.RELEASES.html).
-10. [Credits](http://api.mongodb.org/ruby/current/file.CREDITS.html).
+* [Alphabetic Index](_index.html)
+* [Class List](class_list.html)
+* [Method List](method_list.html)
+* [File List](file_list.html)
 
-Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](http://api.mongodb.org/ruby/current/file.TUTORIAL.html)
+This documentation has other articles of interest, including:
+
+1. [A tutorial](file.TUTORIAL.html).
+2. [Replica Sets in Ruby](file.REPLICA_SETS.html).
+3. [Write Concern in Ruby](file.WRITE_CONCERN.html).
+4. [Tailable Cursors in Ruby](file.TAILABLE_CURSORS.html).
+5. [Read Preference in Ruby](file.READ_PREFERENCE.html).
+6. [GridFS in Ruby](file.GridFS.html).
+7. [Frequently Asked Questions](file.FAQ.html).
+8. [History](file.HISTORY.html).
+9. [Release plan](file.RELEASES.html).
+10. [Credits](file.CREDITS.html).
+
+Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](file.TUTORIAL.html)
 for much more:
 
     require 'rubygems'

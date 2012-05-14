@@ -88,7 +88,7 @@ Deleting a file is as simple as providing the id:
 
 ### The GridFileSystem class
 
-[GridFileSystem](http://api.mongodb.org/ruby/current/Mongo/GridFileSystem.html) is a light emulation of a file system and therefore has a couple of unique properties. The first is that filenames are assumed to be unique. The second, a consequence of the first, is that files are versioned. To see what this means, let's create a GridFileSystem instance:
+[GridFileSystem](Mongo/GridFileSystem.html) is a light emulation of a file system and therefore has a couple of unique properties. The first is that filenames are assumed to be unique. The second, a consequence of the first, is that files are versioned. To see what this means, let's create a GridFileSystem instance:
 
 #### Saving files
 
@@ -154,5 +154,5 @@ All of the options for storing metadata and saving in safe mode are available fo
 
 ### Advanced Users
 
-Astute code readers will notice that the Grid and GridFileSystem classes are merely thin wrappers around an underlying [GridIO class](http://api.mongodb.org/ruby/current/Mongo/GridIO.html). This means that it's easy to customize the GridFS implementation presented here; just use GridIO for all the low-level work, and build the API you need in an external manager class similar to Grid or GridFileSystem.
+Astute code readers will notice that the Grid and GridFileSystem classes are merely thin wrappers around an underlying [GridIO class](Mongo/GridIO.html). This means that it's easy to customize the GridFS implementation presented here; just use GridIO for all the low-level work, and build the API you need in an external manager class similar to Grid or GridFileSystem.
 
