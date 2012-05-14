@@ -258,6 +258,9 @@ module Mongo
     #
     # Note that the batch size will take effect only on queries
     # where the number to be returned is greater than 100.
+    # 
+    # This can not override MongoDB's limit on the amount of data it will
+    # return to the client. Depending on server version this can be 4-16mb.
     #
     # @param [Integer] size either 0 or some integer greater than 1. If 0,
     #   the server will determine the batch size.

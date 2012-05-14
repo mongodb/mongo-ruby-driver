@@ -184,7 +184,7 @@ module Mongo
     #   end of the query's execution.
     #   For details see http://www.mongodb.org/display/DOCS/How+to+do+Snapshotting+in+the+Mongo+Database
     # @option opts [Boolean] :batch_size (100) the number of documents to returned by the database per
-    #   GETMORE operation. A value of 0 will let the database server decide how many results to returns.
+    #   GETMORE operation. A value of 0 will let the database server decide how many results to return.
     #   This option can be ignored for most use cases.
     # @option opts [Boolean] :timeout (true) when +true+, the returned cursor will be subject to
     #   the normal cursor timeout behavior of the mongod process. When +false+, the returned cursor will
