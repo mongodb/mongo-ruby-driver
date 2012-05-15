@@ -69,13 +69,11 @@ module Mongo
       end
       if ready
         begin
-          @socket.read(maxlen, buffer)
-        rescue EOFError, Errno::ETIMEDOUT
-          raise ConnectionError
-        rescue Errno::ENOTCONN, Errno::EBADF, Errno::ECONNRESET, Errno::EPIPE
+          @socket.sysread(maxlen, buffer)
+        rescue Errno::ENOTCONN, Errno::EBADF, Errno::ECONNRESET, Errno::EPIPE, Errno::ETIMEDOUT, EOFError
           raise ConnectionFailure
-        rescue Errno::EINTR, Errno::EIO, IOError 
-          raise OperationFailure 
+        rescue Errno::EINTR, Errno::EIO, IOError
+          raise OperationFailure
         end
       else
         raise OperationTimeout
