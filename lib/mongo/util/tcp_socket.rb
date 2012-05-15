@@ -70,10 +70,14 @@ module Mongo
       if ready
         begin
           @socket.sysread(maxlen, buffer)
-        rescue Errno::ENOTCONN, Errno::EBADF, Errno::ECONNRESET, Errno::EPIPE, Errno::ETIMEDOUT, EOFError
-          raise ConnectionFailure
-        rescue Errno::EINTR, Errno::EIO, IOError
-          raise OperationFailure
+        rescue SystemCallError => ex
+          # Needed because sometimes JRUBY doesn't throw Errno::ECONNRESET as it should
+          # http://jira.codehaus.org/browse/JRUBY-6180
+          raise ConnectionFailure, ex
+        rescue Errno::ENOTCONN, Errno::EBADF, Errno::ECONNRESET, Errno::EPIPE, Errno::ETIMEDOUT, EOFError => ex
+          raise ConnectionFailure, ex
+        rescue Errno::EINTR, Errno::EIO, IOError => ex
+          raise OperationFailure, ex
         end
       else
         raise OperationTimeout
