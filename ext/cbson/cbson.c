@@ -21,6 +21,7 @@
  */
 
 #include "ruby.h"
+#include "version.h"
 
 /* Ensure compatibility with early releases of Ruby 1.8.5 */
 #ifndef RSTRING_PTR
@@ -742,10 +743,23 @@ static VALUE get_value(const char* buffer, int* position, int type) {
         }
     case 9:
         {
-            long long millis;
+            int64_t millis;
             memcpy(&millis, buffer + *position, 8);
 
-            value = rb_time_new(millis / 1000, (millis % 1000) * 1000);
+            // Support 64-bit time values in 32 bit environments in Ruby > 1.9
+            // Note: rb_time_num_new is not available pre Ruby 1.9
+            #if RUBY_API_VERSION_CODE >= 10900
+                #define add(x,y) (rb_funcall((x), '+', 1, (y)))
+                #define mul(x,y) (rb_funcall((x), '*', 1, (y)))
+                #define quo(x,y) (rb_funcall((x), rb_intern("quo"), 1, (y)))
+                VALUE d, timev;
+                d = LL2NUM(1000LL);
+                timev = add(LL2NUM(millis / 1000), quo(LL2NUM(millis % 1000), d));
+                value = rb_time_num_new(timev, Qnil);
+            #else
+                value = rb_time_new(millis / 1000, (millis % 1000) * 1000);
+            #endif
+
             value = rb_funcall(value, utc_method, 0);
             *position += 8;
             break;
