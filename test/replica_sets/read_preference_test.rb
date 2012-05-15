@@ -108,6 +108,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
       @coll.save({:a => 50}, :safe => {:w => 2, :wtimeout => 10000})
     end
     @rs.restart_killed_nodes
+    sleep(1)
     @coll.save({:a => 50}, :safe => {:w => 2, :wtimeout => 10000})
     assert_equal 4, @coll.find.to_a.length
   end

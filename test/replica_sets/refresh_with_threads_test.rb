@@ -49,6 +49,8 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
 
     @rs.add_node
     threads.each {|t| t.join }
+
+    sleep(1)
     
     @conn['admin'].command({:ismaster => 1})
 
