@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
   s.has_rdoc = false
   s.extensions << 'ext/cbson/extconf.rb'
 
-  s.author = 'Mike Dirolf'
+  s.authors = ['Mike Dirolf', 'Kyle Banker', 'Tyler Brock', 'Gary Murakami']
   s.email = 'mongodb-dev@googlegroups.com'
   s.homepage = 'http://www.mongodb.org'
   s.add_dependency('bson', "~> #{BSON::VERSION}")
