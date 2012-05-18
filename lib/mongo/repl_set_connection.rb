@@ -29,6 +29,8 @@ module Mongo
 
     # Create a connection to a MongoDB replica set.
     #
+    # If no args are provided, it will check <code>ENV["MONGODB_URI"]</code>.
+    #
     # Once connected to a replica set, you can find out which nodes are primary, secondary, and
     # arbiters with the corresponding accessors: Connection#primary, Connection#secondaries, and
     # Connection#arbiters. This is useful if your application needs to connect manually to nodes other
@@ -78,6 +80,8 @@ module Mongo
     #
     # @see http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html Replica sets in Ruby
     #
+    # @raise [MongoArgumentError] If called with no arguments and <code>ENV["MONGODB_URI"]</code> implies a direct connection.
+    #
     # @raise [ReplicaSetConnectionError] This is raised if a replica set name is specified and the
     #   driver fails to connect to a replica set with that name.
     def initialize(*args)
@@ -87,21 +91,30 @@ module Mongo
         opts = {}
       end
 
-      unless args.length > 0
+      nodes = args
+
+      if nodes.empty? and ENV.has_key?('MONGODB_URI')
+        parser = URIParser.new ENV['MONGODB_URI'], opts
+        if parser.direct?
+          raise MongoArgumentError, "Mongo::ReplSetConnection.new called with no arguments, but ENV['MONGODB_URI'] implies a direct connection."
+        end
+        opts = parser.connection_options
+        nodes = parser.nodes
+      end
+
+      unless nodes.length > 0
         raise MongoArgumentError, "A ReplSetConnection requires at least one seed node."
       end
 
       # This is temporary until support for the old format is dropped
-      @seeds = []
-      if args.first.last.is_a?(Integer)
+      if nodes.first.last.is_a?(Integer)
         warn "Initiating a ReplSetConnection with seeds passed as individual [host, port] array arguments is deprecated."
         warn "Please specify hosts as an array of 'host:port' strings; the old format will be removed in v2.0"
-        @seeds = args
+        @seeds = nodes
       else
-        args.first.map do |host_port|
-          seed = host_port.split(":")
-          seed[1] = seed[1].to_i
-          seeds << seed
+        @seeds = nodes.first.map do |host_port|
+          host, port = host_port.split(":")
+          [ host, port.to_i ]
         end
       end
 
