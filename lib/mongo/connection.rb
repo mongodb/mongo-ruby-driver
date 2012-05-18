@@ -32,6 +32,7 @@ module Mongo
 
     Thread.abort_on_exception = true
 
+    DEFAULT_HOST = 'localhost'
     DEFAULT_PORT = 27017
     GENERIC_OPTS = [:ssl, :auths, :pool_size, :pool_timeout, :timeout, :op_timeout, :connect_timeout, :safe, :logger, :connect]
     CONNECTION_OPTS = [:slave_ok]
@@ -43,6 +44,8 @@ module Mongo
       :primary_pool, :socket_class, :op_timeout
 
     # Create a connection to single MongoDB instance.
+    #
+    # If no args are provided, it will check <code>ENV["MONGODB_URI"]</code>.
     #
     # You may specify whether connection to slave is permitted.
     # In all cases, the default host is "localhost" and the default port is 27017.
@@ -76,7 +79,7 @@ module Mongo
     #   connection attempt.
     # @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
     #
-    # @example localhost, 27017
+    # @example localhost, 27017 (or <code>ENV["MONGODB_URI"]</code> if available)
     #   Mongo::Connection.new
     #
     # @example localhost, 27017
@@ -93,9 +96,22 @@ module Mongo
     # @raise [ReplicaSetConnectionError] This is raised if a replica set name is specified and the
     #   driver fails to connect to a replica set with that name.
     #
+    # @raise [MongoArgumentError] If called with no arguments and <code>ENV["MONGODB_URI"]</code> implies a replica set.
+    #
     # @core self.connections
     def initialize(host=nil, port=nil, opts={})
-      @host_to_try = format_pair(host, port)
+      if host.nil? and ENV.has_key?('MONGODB_URI')
+        parser = URIParser.new ENV['MONGODB_URI'], opts
+        if parser.replicaset?
+          raise MongoArgumentError, "Mongo::Connection.new called with no arguments, but ENV['MONGODB_URI'] implies a replica set."
+        end
+        opts = parser.connection_options
+        @host_to_try = [parser.host, parser.port]
+      elsif host.is_a?(String)
+        @host_to_try = [host, (port || DEFAULT_PORT).to_i]
+      else
+        @host_to_try = [DEFAULT_HOST, DEFAULT_PORT]
+      end
 
       # Host and port of current master.
       @host = @port = nil
@@ -143,8 +159,7 @@ module Mongo
     def self.multi(nodes, opts={})
       warn "Connection.multi is now deprecated and will be removed in v2.0. Please use ReplSetConnection.new instead."
 
-      nodes << opts
-      ReplSetConnection.new(*nodes)
+      ReplSetConnection.new(*(nodes+[opts]))
     end
 
     # Initialize a connection to MongoDB using the MongoDB URI spec:
@@ -155,21 +170,9 @@ module Mongo
     # @param opts Any of the options available for Connection.new
     #
     # @return [Mongo::Connection, Mongo::ReplSetConnection]
-    def self.from_uri(string, extra_opts={})
-      uri = URIParser.new(string)
-      opts = uri.connection_options
-      opts.merge!(extra_opts)
-
-      if uri.nodes.length == 1
-        opts.merge!({:auths => uri.auths})
-        Connection.new(uri.nodes[0][0], uri.nodes[0][1], opts)
-      elsif uri.nodes.length > 1
-        nodes = uri.nodes.clone
-        nodes_with_opts = nodes << opts
-        ReplSetConnection.new(*nodes_with_opts)
-      else
-        raise MongoArgumentError, "No nodes specified. Please ensure that you've provided at least one node."
-      end
+    def self.from_uri(uri, extra_opts={})
+      parser = URIParser.new uri, extra_opts
+      parser.connection
     end
 
     # The host name used for this connection.
@@ -337,7 +340,7 @@ module Mongo
     # @param [String] from_host host of the 'from' database.
     # @param [String] username username for authentication against from_db (>=1.3.x).
     # @param [String] password password for authentication against from_db (>=1.3.x).
-    def copy_database(from, to, from_host="localhost", username=nil, password=nil)
+    def copy_database(from, to, from_host=DEFAULT_HOST, username=nil, password=nil)
       oh = BSON::OrderedHash.new
       oh[:copydb]   = 1
       oh[:fromhost] = from_host
@@ -585,23 +588,8 @@ module Mongo
         write_logging_startup_message
       end
 
-      should_connect = opts.fetch(:connect, true)
-      connect if should_connect
-    end
-
-    ## Configuration helper methods
-
-    # Returns a host-port pair.
-    #
-    # @return [Array]
-    #
-    # @private
-    def format_pair(host, port)
-      case host
-        when String
-          [host, port ? port.to_i : DEFAULT_PORT]
-        when nil
-          ['localhost', DEFAULT_PORT]
+      if opts.fetch(:connect, true)
+        connect
       end
     end
 
