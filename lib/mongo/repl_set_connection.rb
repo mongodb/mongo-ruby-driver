@@ -25,7 +25,7 @@ module Mongo
       :read_secondary, :rs_name, :name]
 
     attr_reader :replica_set_name, :seeds, :refresh_interval, :refresh_mode,
-      :refresh_version
+      :refresh_version, :manager
 
     # Create a connection to a MongoDB replica set.
     #
@@ -149,8 +149,9 @@ module Mongo
 
         discovered_seeds = @manager ? @manager.seeds : []
         @manager = PoolManager.new(self, discovered_seeds)
-        
-        Thread.current[:manager] = @manager
+
+        Thread.current[:managers] ||= Hash.new
+        Thread.current[:managers][self] = @manager
 
         @manager.connect
         @refresh_version += 1
@@ -203,7 +204,7 @@ module Mongo
       new_manager = PoolManager.new(self, discovered_seeds | @seeds)
       new_manager.connect
 
-      Thread.current[:manager] = new_manager
+      Thread.current[:managers][self] = new_manager
 
       # TODO: make sure that connect has succeeded
       @old_managers << @manager
@@ -263,6 +264,12 @@ module Mongo
       else
         @manager.close if @manager
       end
+
+      # Clear the reference to this object.
+      if Thread.current[:managers]
+        Thread.current[:managers].delete(self)
+      end
+
       @connected = false
     end
 
@@ -395,10 +402,10 @@ module Mongo
     end
 
     def get_socket_from_pool(pool_type)
-      if Thread.current[:manager] != @manager
-        Thread.current[:manager] = @manager
+      if Thread.current[:managers][self] != @manager
+        Thread.current[:managers][self] = @manager
       end
-      
+
       pool = case pool_type
         when :primary
           primary_pool
@@ -417,9 +424,9 @@ module Mongo
         return nil
       end
     end
-    
+
     def local_manager
-      Thread.current[:manager]
+      Thread.current[:managers][self]
     end
 
     def arbiters
