@@ -135,4 +135,10 @@ class ObjectIdTest < Test::Unit::TestCase
     id = ObjectId.new
     assert_equal({"$oid" => id.to_s}, id.as_json)
   end
+
+  def test_to_ary
+    id = ObjectId.new
+    assert_equal [id], id.to_ary
+    assert_equal Array(id), id.to_ary
+  end
 end
