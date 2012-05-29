@@ -438,7 +438,7 @@ module Mongo
     #
     # @return [True] returns +true+ on success.
     #
-    # @raise MongoDBError if there's an error renaming the collection.
+    # @raise MongoDBError if there's an error dropping the index.
     def drop_index(collection_name, index_name)
       oh = BSON::OrderedHash.new
       oh[:deleteIndexes] = collection_name
