@@ -12,10 +12,7 @@ require 'rake/javaextensiontask'
 
 begin
   require 'git'
-  rescue LoadError
-end
-
-begin
+  require 'devkit'
   require 'ci/reporter/rake/test_unit'
   rescue LoadError
 end
