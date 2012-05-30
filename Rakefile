@@ -30,6 +30,12 @@ end
 #  ext.ext_dir = 'ext/src/org/jbson'
 #end
 
+desc "Compiles and tests MongoDB Ruby driver w/ C extensions."
+task :c do
+  Rake::Task['compile:cbson'].invoke
+  Rake::Task['test:c'].invoke
+end
+
 task :java do
   Rake::Task['build:java'].invoke
   Rake::Task['test:ruby'].invoke
