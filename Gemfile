@@ -26,6 +26,3 @@ group :development, :test do
     gem "jruby-openssl"
   end
 end
-
-gem "perftools.rb", :group => :development unless RUBY_PLATFORM =~ /java/
-

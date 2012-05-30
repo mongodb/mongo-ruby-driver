@@ -22,7 +22,6 @@ require 'rubygems'
 require 'mongo'
 require 'benchmark'
 require 'ruby-prof'
-require 'perftools'
 
 def array_size_fixnum(base, power)
   n = base ** power
@@ -65,14 +64,14 @@ def ruby_prof(iterations)
   printer.print(STDOUT, {})
 end
 
-def perftools(iterations)
-  profile_file_name = '/tmp/profile_array.perftools'
-  PerfTools::CpuProfiler.start(profile_file_name) do
-    iterations.times { yield }
-  end
-  cmd = "pprof.rb --ignore=IO --text \"#{profile_file_name}\""
-  system(cmd)
-end
+#def perftools(iterations)
+#  profile_file_name = '/tmp/profile_array.perftools'
+#  PerfTools::CpuProfiler.start(profile_file_name) do
+#    iterations.times { yield }
+#  end
+#  cmd = "pprof.rb --ignore=IO --text \"#{profile_file_name}\""
+#  system(cmd)
+#end
 
 conn = Mongo::Connection.new
 
