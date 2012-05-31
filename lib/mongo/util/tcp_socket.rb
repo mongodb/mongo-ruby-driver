@@ -1,4 +1,5 @@
 require 'socket'
+require 'timeout'
 
 module Mongo
   # Wrapper class for Socket
@@ -25,34 +26,12 @@ module Mongo
     end
 
     def connect
-      # Connect nonblock is broken in current versions of JRuby
-      if RUBY_PLATFORM == 'java'
-        require 'timeout'
-        if @connect_timeout
-          Timeout::timeout(@connect_timeout, OperationTimeout) do
-            @socket.connect(@socket_address)
-          end
-        else
+      if @connect_timeout
+        Timeout::timeout(@connect_timeout, OperationTimeout) do
           @socket.connect(@socket_address)
         end
       else
-        # Try to connect for @connect_timeout seconds
-        begin
-          @socket.connect_nonblock(@socket_address)
-        rescue Errno::EINPROGRESS
-          # Block until there is a response or error
-          resp = IO.select([@socket], [@socket], [@socket], @connect_timeout)
-          if resp.nil?
-            raise ConnectionTimeoutError
-          end
-        end
-
-        # If there was a failure this will raise an Error
-        begin
-          @socket.connect_nonblock(@socket_address)
-        rescue Errno::EISCONN
-          # Successfully connected
-        end
+        @socket.connect(@socket_address)
       end
     end
 
