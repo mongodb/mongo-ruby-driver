@@ -126,7 +126,7 @@ static void write_utf8(bson_buffer_t buffer, VALUE string, char check_null) {
         rb_raise(InvalidStringEncoding, "String not valid UTF-8");
     }
     string = TO_UTF8(string);
-    SAFE_WRITE(buffer, RSTRING_PTR(string), RSTRING_LEN(string));
+    SAFE_WRITE(buffer, RSTRING_PTR(string), (int)RSTRING_LEN(string));
 }
 
 // this sucks. but for some reason these moved around between 1.8 and 1.9
@@ -436,10 +436,14 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 break;
             }
             if (strcmp(cls, "BSON::Timestamp") == 0) {
+                unsigned int seconds;
+                unsigned int increment;
+                
                 write_name_and_type(buffer, key, 0x11);
-                unsigned int seconds = NUM2UINT(
+
+                seconds = NUM2UINT(
                     rb_funcall(value, rb_intern("seconds"), 0));
-                unsigned int increment = NUM2UINT(
+                increment = NUM2UINT(
                     rb_funcall(value, rb_intern("increment"), 0));
 
                 SAFE_WRITE(buffer, (const char*)&increment, 4);
