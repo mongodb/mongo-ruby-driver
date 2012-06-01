@@ -402,7 +402,7 @@ module Mongo
     end
 
     def get_socket_from_pool(pool_type)
-      if Thread.current[:managers][self] != @manager
+      if Thread.current[:managers] && Thread.current[:managers][self] != @manager
         Thread.current[:managers][self] = @manager
       end
 
@@ -426,7 +426,7 @@ module Mongo
     end
 
     def local_manager
-      Thread.current[:managers][self]
+      Thread.current[:managers][self] if Thread.current[:managers]
     end
 
     def arbiters
