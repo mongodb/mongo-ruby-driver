@@ -401,10 +401,16 @@ module Mongo
       end
     end
 
-    def get_socket_from_pool(pool_type)
-      if Thread.current[:managers] && Thread.current[:managers][self] != @manager
+    def ensure_manager
+      Thread.current[:managers] ||= Hash.new
+
+      if Thread.current[:managers][self] != @manager
         Thread.current[:managers][self] = @manager
       end
+    end
+
+    def get_socket_from_pool(pool_type)
+      ensure_manager
 
       pool = case pool_type
         when :primary
