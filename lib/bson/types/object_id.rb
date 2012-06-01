@@ -116,6 +116,13 @@ module BSON
       @data.dup
     end
 
+    # Returns the object id as a single element in an array for use with Kernel#Array
+    #
+    # @return [Array]
+    def to_ary
+      [ self ]
+    end
+
     # Given a string representation of an ObjectId, return a new ObjectId
     # with that value.
     #
