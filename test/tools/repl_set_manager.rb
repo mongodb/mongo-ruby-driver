@@ -152,6 +152,7 @@ class ReplSetManager
     end
 
     con.close
+    ensure_up
 
     return secondary
   end
