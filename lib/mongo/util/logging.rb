@@ -12,17 +12,17 @@ module Mongo
       return unless @logger
       case level
         when :fatal then
-          @logger.fatal { "MONGODB [FATAL] #{msg}" }
+          @logger.fatal "MONGODB [FATAL] #{msg}"
         when :error then
-          @logger.error { "MONGODB [ERROR] #{msg}" }
+          @logger.error "MONGODB [ERROR] #{msg}"
         when :warn then
-          @logger.warn { "MONGODB [WARNING] #{msg}" }
+          @logger.warn "MONGODB [WARNING] #{msg}"
         when :info then
-          @logger.info { "MONGODB [INFO] #{msg}" }
+          @logger.info "MONGODB [INFO] #{msg}"
         when :debug then
-          @logger.debug { "MONGODB [DEBUG] #{msg}" }
+          @logger.debug "MONGODB [DEBUG] #{msg}"
         else
-          @logger.debug { "MONGODB [DEBUG] #{msg}" }
+          @logger.debug "MONGODB [DEBUG] #{msg}"
       end
     end
 
