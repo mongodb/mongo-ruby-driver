@@ -51,6 +51,7 @@ module Mongo
     # @option opts [Boolean] :safe (false) When safe mode is enabled, the chunks sent to the server
     #   will be validated using an md5 hash. If validation fails, an exception will be raised.
     def initialize(files, chunks, filename, mode, opts={})
+      
       @files        = files
       @chunks       = chunks
       @filename     = filename
@@ -62,19 +63,20 @@ module Mongo
       @safe         = opts.delete(:safe) || false
       @local_md5    = Digest::MD5.new if @safe
       @custom_attrs = {}
-
+      
       case @mode
         when 'r' then init_read
         when 'w' then init_write(opts)
+        when 'a' then init_append(opts)
         else
-          raise GridError, "Invalid file mode #{@mode}. Mode should be 'r' or 'w'."
+          raise GridError, "Invalid file mode #{@mode}. Mode should be 'r', 'w' or 'a'."
       end
     end
-
+    
     def [](key)
       @custom_attrs[key] || instance_variable_get("@#{key.to_s}")
     end
-
+    
     def []=(key, value)
       if PROTECTED_ATTRS.include?(key.to_sym)
         warn "Attempting to overwrite protected value."
@@ -111,7 +113,8 @@ module Mongo
     # @return [Integer]
     #   the number of bytes written.
     def write(io)
-      raise GridError, "file not opened for write" unless @mode[0] == ?w
+      raise GridError, "file not opened for write" unless @mode[0] == ?w or @mode[0] == ?a
+      
       if io.is_a? String
         if @safe
           @local_md5.update(io)
@@ -230,16 +233,15 @@ module Mongo
     #
     # @return [BSON::ObjectId]
     def close
-      if @mode[0] == ?w
-        if @current_chunk['n'].zero? && @chunk_position.zero?
-          warn "Warning: Storing a file with zero length."
-        end
-        @upload_date = Time.now.utc
-        id = @files.insert(to_mongo_object)
+      if @current_chunk['n'].zero? && @chunk_position.zero?
+        warn "Warning: Storing a file with zero length."
       end
+      @upload_date = Time.now.utc
+      object = to_mongo_object
+      id = @files.update({_id: object['_id']}, object, {upsert: true})
       id
     end
-
+    
     # Read a chunk of the data from the file and yield it to the given
     # block.
     #
@@ -273,17 +275,17 @@ module Mongo
       @chunk_position   = 0
       chunk
     end
-
+    
     def save_chunk(chunk)
-      @chunks.insert(chunk)
+      @chunks.update({_id: chunk['_id']}, chunk, {upsert: true}) # upsert
     end
-
+    
     def get_chunk(n)
       chunk = @chunks.find({'files_id' => @files_id, 'n' => n}).next_document
-      @chunk_position = 0
+      @chunk_position = (@mode == ?a ? chunk['data'].size : 0) unless chunk.nil?
       chunk
     end
-
+    
     # Read a file in its entirety.
     def read_all
       buf = ''
@@ -298,7 +300,7 @@ module Mongo
       end
       buf
     end
-
+    
     # Read a file incrementally.
     def read_length(length)
       cache_chunk_data
@@ -309,7 +311,7 @@ module Mongo
         to_read = length > remaining ? remaining : length
       end
       return nil unless remaining > 0
-
+      
       buf        =  ''
       while to_read > 0
         if @chunk_position == @chunk_data_length
@@ -325,7 +327,7 @@ module Mongo
       end
       buf
     end
-
+    
     def read_to_character(character="\n", length=nil)
       result = ''
       len = 0
@@ -336,7 +338,7 @@ module Mongo
       end
       result.length > 0 ? result : nil
     end
-
+    
     def read_to_string(string="\n", length=nil)
       result = ''
       len = 0
@@ -367,7 +369,7 @@ module Mongo
       end
       result.length > 0 ? result : nil
     end
-
+    
     def cache_chunk_data
       @current_chunk_data = @current_chunk['data'].to_s
       if @current_chunk_data.respond_to?(:force_encoding)
@@ -375,13 +377,13 @@ module Mongo
       end
       @chunk_data_length  = @current_chunk['data'].length
     end
-
+    
     def write_string(string)
       # Since Ruby 1.9.1 doesn't necessarily store one character per byte.
       if string.respond_to?(:force_encoding)
         string.force_encoding("binary")
       end
-
+      
       to_write = string.length
       while (to_write > 0) do
         if @current_chunk && @chunk_position == @chunk_size
@@ -397,12 +399,12 @@ module Mongo
       end
       string.length - to_write
     end
-
+    
     # Initialize the class for reading a file.
-    def init_read
+    def init_read      
       doc = @files.find(@query, @query_opts).next_document
       raise GridFileNotFound, "Could not open file matching #{@query.inspect} #{@query_opts.inspect}" unless doc
-
+      
       @files_id     = doc['_id']
       @content_type = doc['contentType']
       @chunk_size   = doc['chunkSize']
@@ -413,11 +415,11 @@ module Mongo
       @md5          = doc['md5']
       @filename     = doc['filename']
       @custom_attrs = doc
-
+      
       @current_chunk = get_chunk(0)
       @file_position = 0
     end
-
+    
     # Initialize the class for writing a file.
     def init_write(opts)
       opts           = opts.dup
@@ -429,17 +431,44 @@ module Mongo
       @file_length   = 0
       opts.each {|k, v| self[k] = v}
       check_existing_file if @safe
-
+      
       @current_chunk = create_chunk(0)
       @file_position = 0
     end
-
+    
+    # Initialize the class for appending to a file.
+    def init_append(opts)
+      doc = @files.find(@query, @query_opts).next_document
+      return init_write(opts) unless doc
+      
+      opts = doc.dup
+      
+      @files_id     = opts.delete('_id')
+      @content_type = opts.delete('contentType')
+      @chunk_size   = opts.delete('chunkSize')
+      @upload_date  = opts.delete('uploadDate')
+      @aliases      = opts.delete('aliases')
+      @file_length  = opts.delete('length')
+      @metadata     = opts.delete('metadata')
+      @md5          = opts.delete('md5')
+      @filename     = opts.delete('filename')
+      @custom_attrs = opts
+      
+      last_chunk = @file_length / @chunk_size
+      @current_chunk = get_chunk(last_chunk)
+      if @current_chunk.nil?
+        chunk = get_chunk last_chunk-1
+      end
+      @current_chunk ||= create_chunk(last_chunk)
+      @file_position = @chunk_size * last_chunk + @current_chunk['data'].size
+    end
+    
     def check_existing_file
       if @files.find_one('_id' => @files_id)
         raise GridError, "Attempting to overwrite with Grid#put. You must delete the file first."
       end
     end
-
+    
     def to_mongo_object
       h                = BSON::OrderedHash.new
       h['_id']         = @files_id
