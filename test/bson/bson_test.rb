@@ -141,6 +141,13 @@ class BSONTest < Test::Unit::TestCase
       end
     end
 
+    def test_forced_encoding_with_valid_utf8
+      doc = {'doc' => "\xC3\xB6".force_encoding("ISO-8859-1")}
+      serialized = @encoder.serialize(doc)
+      deserialized = @encoder.deserialize(serialized)
+      assert_equal(doc['doc'], deserialized['doc'].force_encoding("ISO-8859-1"))
+    end
+
     # Based on a test from sqlite3-ruby
     def test_default_internal_is_honored
       before_enc = Encoding.default_internal

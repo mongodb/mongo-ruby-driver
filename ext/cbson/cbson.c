@@ -109,10 +109,8 @@ static int max_bson_size;
         }                                                               \
         _str;                                                           \
     })
-#define TO_UTF8(string) rb_str_export_to_enc((string), rb_utf8_encoding())
 #else
 #define STR_NEW(p,n) rb_str_new((p), (n))
-#define TO_UTF8(string) (string)
 #endif
 
 static void write_utf8(bson_buffer_t buffer, VALUE string, char check_null) {
@@ -125,7 +123,6 @@ static void write_utf8(bson_buffer_t buffer, VALUE string, char check_null) {
         bson_buffer_free(buffer);
         rb_raise(InvalidStringEncoding, "String not valid UTF-8");
     }
-    string = TO_UTF8(string);
     SAFE_WRITE(buffer, RSTRING_PTR(string), (int)RSTRING_LEN(string));
 }
 

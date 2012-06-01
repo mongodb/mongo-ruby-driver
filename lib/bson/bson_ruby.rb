@@ -62,7 +62,7 @@ module BSON
         rescue
           raise InvalidStringEncoding, "String not valid utf-8: #{str.inspect}"
         end
-        str.encode(UTF8_ENCODING).force_encoding(BINARY_ENCODING)
+        str.dup.force_encoding(BINARY_ENCODING)
       end
     else
       NULL_BYTE = "\0"
