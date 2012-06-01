@@ -42,7 +42,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
     @rs.add_arbiter
     @rs.remove_secondary_node
     
-    @conn = ReplSetConnection.new(build_seeds(2), :read => :secondary_only)
+    @conn = ReplSetConnection.new(build_seeds(3), :read => :secondary_only)
 
     @db = @conn.db(MONGO_TEST_DB)
     @coll = @db.collection("test-sets")
