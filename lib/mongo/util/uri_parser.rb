@@ -16,10 +16,10 @@
 # limitations under the License.
 # ++
 
+require 'uri'
+
 module Mongo
   class URIParser
-
-    DEFAULT_PORT = 27017
 
     USER_REGEX = /([-.\w:]+)/
     PASS_REGEX = /([^@,]+)/
@@ -37,7 +37,7 @@ module Mongo
     SPEC_ATTRS = [:nodes, :auths]
     OPT_ATTRS  = [:connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync, :journal, :connecttimeoutms, :sockettimeoutms, :wtimeoutms]
 
-    OPT_VALID  = {:connect          => lambda {|arg| ['direct', 'replicaset'].include?(arg)},
+    OPT_VALID  = {:connect          => lambda {|arg| ['direct', 'replicaset', 'true', 'false', true, false].include?(arg)},
                   :replicaset       => lambda {|arg| arg.length > 0},
                   :slaveok          => lambda {|arg| ['true', 'false'].include?(arg)},
                   :safe             => lambda {|arg| ['true', 'false'].include?(arg)},
@@ -50,7 +50,7 @@ module Mongo
                   :wtimeoutms       => lambda {|arg| arg =~ /^\d+$/ }
                  }
 
-    OPT_ERR    = {:connect          => "must be 'direct' or 'replicaset'",
+    OPT_ERR    = {:connect          => "must be 'direct', 'replicaset', 'true', or 'false'",
                   :replicaset       => "must be a string containing the name of the replica set to connect to",
                   :slaveok          => "must be 'true' or 'false'",
                   :safe             => "must be 'true' or 'false'",
@@ -63,7 +63,7 @@ module Mongo
                   :wtimeoutms       => "must be an integer specifying milliseconds"
                  }
 
-    OPT_CONV   = {:connect          => lambda {|arg| arg},
+    OPT_CONV   = {:connect          => lambda {|arg| arg == 'false' ? false : arg}, # be sure to convert 'false' to FalseClass
                   :replicaset       => lambda {|arg| arg},
                   :slaveok          => lambda {|arg| arg == 'true' ? true : false},
                   :safe             => lambda {|arg| arg == 'true' ? true : false},
@@ -81,22 +81,73 @@ module Mongo
     # Parse a MongoDB URI. This method is used by Connection.from_uri.
     # Returns an array of nodes and an array of db authorizations, if applicable.
     #
-    # Note: passwords can contain any character except for a ','.
+    # @note Passwords can contain any character except for ','
+    #
+    # @param [String] uri The MongoDB URI string.
+    # @param [Hash,nil] extra_opts Extra options. Will override anything already specified in the URI.
     #
     # @core connections
-    def initialize(string)
-      if string =~ /^mongodb:\/\//
-        string = string[10..-1]
+    def initialize(uri, extra_opts={})
+      if uri.start_with?('mongodb://')
+        uri = uri[10..-1]
       else
         raise MongoArgumentError, "MongoDB URI must match this spec: #{MONGODB_URI_SPEC}"
       end
 
-      hosts, opts = string.split('?')
+      hosts, opts = uri.split('?')
       parse_hosts(hosts)
-      parse_options(opts)
-      configure_connect
+      parse_options(opts, extra_opts)
+      validate_connect
     end
 
+    # Create a Mongo::Connection or a Mongo::ReplSetConnection based on the URI.
+    #
+    # @note Don't confuse this with attribute getter method #connect.
+    #
+    # @return [Connection,ReplSetConnection]
+    def connection
+      if replicaset?
+        ReplSetConnection.new(*(nodes+[connection_options]))
+      else
+        Connection.new(host, port, connection_options)
+      end
+    end
+
+    # Whether this represents a replica set.
+    # @return [true,false]
+    def replicaset?
+      replicaset.is_a?(String) || nodes.length > 1
+    end
+
+    # Whether to immediately connect to the MongoDB node[s]. Defaults to true.
+    # @return [true, false]
+    def connect?
+      connect != false
+    end
+
+    # Whether this represents a direct connection.
+    #
+    # @note Specifying :connect => 'direct' has no effect... other than to raise an exception if other variables suggest a replicaset.
+    #
+    # @return [true,false]
+    def direct?
+      !replicaset?
+    end
+
+    # For direct connections, the host of the (only) node.
+    # @return [String]
+    def host
+      nodes[0][0]
+    end
+
+    # For direct connections, the port of the (only) node.
+    # @return [Integer]
+    def port
+      nodes[0][1].to_i
+    end
+
+    # Options that can be passed to Mongo::Connection.new or Mongo::ReplSetConnection.new
+    # @return [Hash]
     def connection_options
       opts = {}
 
@@ -136,14 +187,22 @@ module Mongo
       end
 
       if @slaveok
-        if @connect == 'direct'
+        if direct?
           opts[:slave_ok] = true
         else
           opts[:read] = :secondary
         end
       end
 
-      opts[:name] = @replicaset if @replicaset
+      if direct?
+        opts[:auths] = auths
+      end
+
+      if replicaset.is_a?(String)
+        opts[:name] = replicaset
+      end
+
+      opts[:connect] = connect?
 
       opts
     end
@@ -167,7 +226,7 @@ module Mongo
 
       hosturis.each do |hosturi|
         # If port is present, use it, otherwise use default port
-        host, port = hosturi.split(':') + [DEFAULT_PORT]
+        host, port = hosturi.split(':') + [Connection::DEFAULT_PORT]
 
         if !(port.to_s =~ /^\d+$/)
           raise MongoArgumentError, "Invalid port #{port}; port must be specified as digits."
@@ -176,6 +235,10 @@ module Mongo
         port = port.to_i
 
         @nodes << [host, port]
+      end
+
+      if @nodes.empty?
+        raise MongoArgumentError, "No nodes specified. Please ensure that you've provided at least one node."
       end
 
       if uname && pwd && db
@@ -191,40 +254,37 @@ module Mongo
 
     # This method uses the lambdas defined in OPT_VALID and OPT_CONV to validate
     # and convert the given options.
-    def parse_options(opts)
+    def parse_options(string_opts, extra_opts={})
       # initialize instance variables for available options
       OPT_VALID.keys.each { |k| instance_variable_set("@#{k}", nil) }
 
-      return unless opts
+      string_opts ||= ''
 
-      separator = opts.include?('&') ? '&' : ';'
-      opts.split(separator).each do |attr|
-        key, value = attr.split('=')
-        key = key.downcase.to_sym
-        value = value.strip.downcase
+      return if string_opts.empty? && extra_opts.empty?
+
+      opts = URI.decode_www_form(string_opts).inject({}) do |memo, (key, value)|
+        memo[key.downcase.to_sym] = value.strip.downcase
+        memo
+      end
+
+      opts.merge! extra_opts
+
+      opts.each do |key, value|
         if !OPT_ATTRS.include?(key)
           raise MongoArgumentError, "Invalid Mongo URI option #{key}"
         end
-
         if OPT_VALID[key].call(value)
           instance_variable_set("@#{key}", OPT_CONV[key].call(value))
         else
-          raise MongoArgumentError, "Invalid value for #{key}: #{OPT_ERR[key]}"
+          raise MongoArgumentError, "Invalid value #{value.inspect} for #{key}: #{OPT_ERR[key]}"
         end
       end
     end
 
-    def configure_connect
-      if !@connect
-        if @nodes.length > 1
-          @connect = 'replicaset'
-        else
-          @connect = 'direct'
-        end
-      end
-
-      if @connect == 'direct' && @replicaset
-        raise MongoArgumentError, "If specifying a replica set name, please also specify that connect=replicaset"
+    def validate_connect
+      if replicaset? and @connect == 'direct'
+        # Make sure the user doesn't specify something contradictory
+        raise MongoArgumentError, "connect=direct conflicts with setting a replicaset name"
       end
     end
   end

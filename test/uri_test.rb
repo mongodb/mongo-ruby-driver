@@ -63,9 +63,10 @@ class URITest < Test::Unit::TestCase
     assert_equal "test", parser.auths[1]["db_name"]
   end
 
-  def test_opts_basic
+  def test_opts_with_semincolon_separator
     parser = Mongo::URIParser.new('mongodb://localhost:27018?connect=direct;slaveok=true;safe=true')
     assert_equal 'direct', parser.connect
+    assert parser.direct?
     assert parser.slaveok
     assert parser.safe
   end
@@ -73,8 +74,15 @@ class URITest < Test::Unit::TestCase
   def test_opts_with_amp_separator
     parser = Mongo::URIParser.new('mongodb://localhost:27018?connect=direct&slaveok=true&safe=true')
     assert_equal 'direct', parser.connect
+    assert parser.direct?
     assert parser.slaveok
     assert parser.safe
+  end
+
+  def test_opts_made_invalid_by_mixed_separators
+    assert_raise_error ArgumentError, "invalid data of application/x-www-form-urlencoded (replicaset=foo;bar&slaveok=true&safe=true)" do
+      Mongo::URIParser.new('mongodb://localhost:27018?replicaset=foo;bar&slaveok=true&safe=true')
+    end
   end
 
   def test_opts_safe
@@ -93,12 +101,16 @@ class URITest < Test::Unit::TestCase
   end
 
   def test_opts_replica_set
-    assert_raise_error MongoArgumentError, "specify that connect=replicaset" do
-      Mongo::URIParser.new('mongodb://localhost:27018?replicaset=foo')
-    end
     parser = Mongo::URIParser.new('mongodb://localhost:27018?connect=replicaset;replicaset=foo')
     assert_equal 'foo', parser.replicaset
     assert_equal 'replicaset', parser.connect
+    assert parser.replicaset?
+  end
+
+  def test_opts_conflicting_replica_set
+    assert_raise_error MongoArgumentError, "connect=direct conflicts with setting a replicaset name" do
+      Mongo::URIParser.new('mongodb://localhost:27018?connect=direct;replicaset=foo')
+    end
   end
 
   def test_case_insensitivity
