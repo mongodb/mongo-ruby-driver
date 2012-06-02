@@ -105,6 +105,20 @@ class ConnectTest < Test::Unit::TestCase
     assert @conn.is_a?(ReplSetConnection)
     assert @conn.connected?
   end
+
+  def test_connect_with_connection_string_in_env_var
+    begin
+      old_mongodb_uri = ENV['MONGODB_URI']
+      ENV['MONGODB_URI'] = "mongodb://#{@rs.host}:#{@rs.ports[0]},#{@rs.host}:#{@rs.ports[1]}?replicaset=#{@rs.name}"
+      silently do
+        @conn = ReplSetConnection.new
+      end
+      assert @conn.is_a?(ReplSetConnection)
+      assert @conn.connected?
+    ensure
+      ENV['MONGODB_URI'] = old_mongodb_uri
+    end
+  end
   
   def test_connect_with_new_seed_format
     @conn = ReplSetConnection.new build_seeds(3)
@@ -127,5 +141,22 @@ class ConnectTest < Test::Unit::TestCase
     assert_equal 2, @conn.safe[:w]
     assert @conn.safe[:fsync]
     assert @conn.read_pool
+  end
+
+  def test_connect_with_full_connection_string_in_env_var
+    begin
+      old_mongodb_uri = ENV['MONGODB_URI']
+      ENV['MONGODB_URI'] = "mongodb://#{@rs.host}:#{@rs.ports[0]},#{@rs.host}:#{@rs.ports[1]}?replicaset=#{@rs.name};safe=true;w=2;fsync=true;slaveok=true"
+      silently do
+        @conn = ReplSetConnection.new
+      end
+      assert @conn.is_a?(ReplSetConnection)
+      assert @conn.connected?
+      assert_equal 2, @conn.safe[:w]
+      assert @conn.safe[:fsync]
+      assert @conn.read_pool
+    ensure
+      ENV['MONGODB_URI'] = old_mongodb_uri
+    end
   end
 end

@@ -173,6 +173,14 @@ Certain Ruby application servers work by forking, and it has long been necessary
 re-establish the child process's connection to the database after fork. But with the release
 of v1.3.0, the Ruby driver detects forking and reconnects automatically.
 
+## Environment variable `MONGODB_URI`
+
+`Mongo::Connection.new` and `Mongo::ReplSetConnection.new` will use <code>ENV["MONGODB_URI"]</code> if no other args are provided.
+
+The URI must fit this specification:
+
+    mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
+
 ## String Encoding
 
 The BSON ("Binary JSON") format used to communicate with Mongo requires that
