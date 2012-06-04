@@ -16,8 +16,6 @@
 # limitations under the License.
 # ++
 
-require 'uri'
-
 module Mongo
   class URIParser
 
@@ -262,7 +260,8 @@ module Mongo
 
       return if string_opts.empty? && extra_opts.empty?
 
-      opts = URI.decode_www_form(string_opts).inject({}) do |memo, (key, value)|
+      opts = string_opts.split(/&|;/).inject({}) do |memo, kv|
+        key, value = kv.split('=')
         memo[key.downcase.to_sym] = value.strip.downcase
         memo
       end
