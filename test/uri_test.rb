@@ -79,11 +79,19 @@ class URITest < Test::Unit::TestCase
     assert parser.safe
   end
 
-  #def test_opts_made_invalid_by_mixed_separators
-  #  assert_raise_error ArgumentError, "invalid data of application/x-www-form-urlencoded (replicaset=foo;bar&slaveok=true&safe=true)" do
-  #    Mongo::URIParser.new('mongodb://localhost:27018?replicaset=foo;bar&slaveok=true&safe=true')
-  #  end
-  #end
+  def test_opts_with_uri_encoded_stuff
+    parser = Mongo::URIParser.new('mongodb://localhost:27018?connect=%64%69%72%65%63%74&slaveok=%74%72%75%65&safe=true')
+    assert_equal 'direct', parser.connect
+    assert parser.direct?
+    assert parser.slaveok
+    assert parser.safe
+  end
+
+  def test_opts_made_invalid_by_mixed_separators
+    assert_raise_error MongoArgumentError, "must not mix URL separators ; and &" do
+      Mongo::URIParser.new('mongodb://localhost:27018?replicaset=foo;bar&slaveok=true&safe=true')
+    end
+  end
 
   def test_opts_safe
     parser = Mongo::URIParser.new('mongodb://localhost:27018?safe=true;w=2;journal=true;fsync=true;wtimeoutMS=200')
