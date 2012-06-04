@@ -267,7 +267,7 @@ module Mongo
       end
 
       opts = CGI.parse(string_opts).inject({}) do |memo, (key, value)|
-        value = value[0]
+        value = value.first
         memo[key.downcase.to_sym] = value.strip.downcase
         memo
       end
