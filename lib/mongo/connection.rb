@@ -327,6 +327,22 @@ module Mongo
       DB.new(db_name, self)
     end
 
+    # Return the database specified in ENV['MONGODB_URI']
+    #
+    # @param [String] uri the uri to use
+    # @param [Hash] opts options to be passed to the DB constructor.
+    #
+    # @return [Mongo::DB]
+    #
+    # @core databases db_from_uri-instance_method
+    def db_from_uri(uri=ENV['MONGODB_URI'], opts={})
+      if db_name = uri[%r{/([^/\?]+)(\?|$)}, 1]
+        DB.new(db_name, self, opts)
+      else
+        raise ArgumentError.new("No database name found in #{uri}")
+      end
+    end
+
     # Drop a database.
     #
     # @param [String] name name of an existing database.

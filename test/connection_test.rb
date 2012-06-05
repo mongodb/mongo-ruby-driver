@@ -82,6 +82,46 @@ class TestConnection < Test::Unit::TestCase
     end
   end
 
+  def test_db_from_uri_exists_no_options
+    begin
+      db_name = "_database"
+
+      old_mongodb_uri = ENV['MONGODB_URI']
+      ENV['MONGODB_URI'] = "mongodb://#{host_port}/#{db_name}"
+      con = Connection.from_uri
+      db = con.db_from_uri
+      assert_equal db.name, db_name
+    ensure
+      ENV['MONGODB_URI'] = old_mongodb_uri
+    end
+  end
+
+  def test_db_from_uri_exists_options
+    begin
+      db_name = "_database"
+
+      old_mongodb_uri = ENV['MONGODB_URI']
+      ENV['MONGODB_URI'] = "mongodb://#{host_port}/#{db_name}?"
+      con = Connection.from_uri
+      db = con.db_from_uri
+      assert_equal db.name, db_name
+    ensure
+      ENV['MONGODB_URI'] = old_mongodb_uri
+    end
+  end
+
+  def test_db_from_uri_exists_no_db_name
+    begin
+      old_mongodb_uri = ENV['MONGODB_URI']
+      ENV['MONGODB_URI'] = "mongodb://#{host_port}/"
+      con = Connection.from_uri
+
+      assert_raise ArgumentError do con.db_from_uri end
+    ensure
+      ENV['MONGODB_URI'] = old_mongodb_uri
+    end
+  end
+
   def test_server_version
     assert_match(/\d\.\d+(\.\d+)?/, @conn.server_version.to_s)
   end
