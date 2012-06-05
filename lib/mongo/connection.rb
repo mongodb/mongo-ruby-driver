@@ -162,7 +162,9 @@ module Mongo
       ReplSetConnection.new(*(nodes+[opts]))
     end
 
-    # Initialize a connection to MongoDB using the MongoDB URI spec:
+    # Initialize a connection to MongoDB using the MongoDB URI spec.
+    #
+    # Since Connection.new cannot be used with any <code>ENV["MONGODB_URI"]</code> that has multiple hosts (implying a replicaset), you may use this when the type of your connection varies by environment and should be determined solely from <code>ENV["MONGODB_URI"]</code>.
     #
     # @param uri [String]
     #   A string of the format mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]
@@ -170,7 +172,7 @@ module Mongo
     # @param opts Any of the options available for Connection.new
     #
     # @return [Mongo::Connection, Mongo::ReplSetConnection]
-    def self.from_uri(uri, extra_opts={})
+    def self.from_uri(uri = ENV['MONGODB_URI'], extra_opts={})
       parser = URIParser.new uri, extra_opts
       parser.connection
     end

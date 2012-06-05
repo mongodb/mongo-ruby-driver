@@ -175,11 +175,13 @@ of v1.3.0, the Ruby driver detects forking and reconnects automatically.
 
 ## Environment variable `MONGODB_URI`
 
-`Mongo::Connection.new` and `Mongo::ReplSetConnection.new` will use <code>ENV["MONGODB_URI"]</code> if no other args are provided.
+`Mongo::Connection.from_uri`, `Mongo::Connection.new` and `Mongo::ReplSetConnection.new` will use <code>ENV["MONGODB_URI"]</code> if no other args are provided.
 
 The URI must fit this specification:
 
     mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
+
+If the type of connection (direct or replica set) should be determined entirely from <code>ENV["MONGODB_URI"]</code>, you may want to use `Mongo::Connection.from_uri` because it will return either `Mongo::Connection` or a `Mongo::ReplSetConnection` depending on how many hosts are specified. Trying to use `Mongo::Connection.new` with multiple hosts in <code>ENV["MONGODB_URI"]</code> will raise an exception.
 
 ## String Encoding
 

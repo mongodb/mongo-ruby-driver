@@ -70,6 +70,18 @@ class TestConnection < Test::Unit::TestCase
     end
   end
 
+  def test_from_uri_implicit_mongodb_uri
+    begin
+      old_mongodb_uri = ENV['MONGODB_URI']
+      ENV['MONGODB_URI'] = "mongodb://#{host_port}"
+      con = Connection.from_uri
+      assert_equal mongo_host, con.primary_pool.host
+      assert_equal mongo_port, con.primary_pool.port
+    ensure
+      ENV['MONGODB_URI'] = old_mongodb_uri
+    end
+  end
+
   def test_server_version
     assert_match(/\d\.\d+(\.\d+)?/, @conn.server_version.to_s)
   end

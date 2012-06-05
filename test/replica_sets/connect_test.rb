@@ -119,6 +119,20 @@ class ConnectTest < Test::Unit::TestCase
       ENV['MONGODB_URI'] = old_mongodb_uri
     end
   end
+
+  def test_connect_with_connection_string_in_implicit_mongodb_uri
+    begin
+      old_mongodb_uri = ENV['MONGODB_URI']
+      ENV['MONGODB_URI'] = "mongodb://#{@rs.host}:#{@rs.ports[0]},#{@rs.host}:#{@rs.ports[1]}?replicaset=#{@rs.name}"
+      silently do
+        @conn = Connection.from_uri
+      end
+      assert @conn.is_a?(ReplSetConnection)
+      assert @conn.connected?
+    ensure
+      ENV['MONGODB_URI'] = old_mongodb_uri
+    end
+  end
   
   def test_connect_with_new_seed_format
     @conn = ReplSetConnection.new build_seeds(3)
