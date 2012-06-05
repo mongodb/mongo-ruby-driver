@@ -16,6 +16,8 @@
 # limitations under the License.
 # ++
 
+require 'cgi'
+
 module Mongo
   class URIParser
 
@@ -260,8 +262,12 @@ module Mongo
 
       return if string_opts.empty? && extra_opts.empty?
 
-      opts = string_opts.split(/&|;/).inject({}) do |memo, kv|
-        key, value = kv.split('=')
+      if string_opts.include?(';') and string_opts.include?('&')
+        raise MongoArgumentError, "must not mix URL separators ; and &"
+      end
+
+      opts = CGI.parse(string_opts).inject({}) do |memo, (key, value)|
+        value = value.first
         memo[key.downcase.to_sym] = value.strip.downcase
         memo
       end
