@@ -89,7 +89,7 @@ class TestConnection < Test::Unit::TestCase
       old_mongodb_uri = ENV['MONGODB_URI']
       ENV['MONGODB_URI'] = "mongodb://#{host_port}/#{db_name}"
       con = Connection.from_uri
-      db = con.db_from_uri
+      db = con.db
       assert_equal db.name, db_name
     ensure
       ENV['MONGODB_URI'] = old_mongodb_uri
@@ -103,7 +103,7 @@ class TestConnection < Test::Unit::TestCase
       old_mongodb_uri = ENV['MONGODB_URI']
       ENV['MONGODB_URI'] = "mongodb://#{host_port}/#{db_name}?"
       con = Connection.from_uri
-      db = con.db_from_uri
+      db = con.db
       assert_equal db.name, db_name
     ensure
       ENV['MONGODB_URI'] = old_mongodb_uri
@@ -115,8 +115,8 @@ class TestConnection < Test::Unit::TestCase
       old_mongodb_uri = ENV['MONGODB_URI']
       ENV['MONGODB_URI'] = "mongodb://#{host_port}/"
       con = Connection.from_uri
-
-      assert_raise ArgumentError do con.db_from_uri end
+      db = con.db
+      assert_equal db.name, Mongo::Connection::DEFAULT_DB_NAME
     ensure
       ENV['MONGODB_URI'] = old_mongodb_uri
     end
