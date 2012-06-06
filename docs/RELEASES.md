@@ -26,7 +26,7 @@ Before each relese to Rubygems.org, the following steps will be taken:
 
 2. Update the HISTORY file and document all significant commits.
 
-3. Update the version in lib/bson.rb, lib/mongo/version.rb, and ext/version.h.
+3. Update the version in lib/bson.rb, lib/mongo/version.rb, and ext/cbson/version.h.
 
 4. Commit: "RELEASE [VERSION]"
 
@@ -36,7 +36,7 @@ Before each relese to Rubygems.org, the following steps will be taken:
 
 7. Push tags and commit to GitHub (git push origin master, git push --tags).
 
-8. Build and push docs.
+8. Build and push docs. (git: mongodb/apidocs)
 
 9. Push gems to Rubygems.org.
 
@@ -47,7 +47,7 @@ Before each relese to Rubygems.org, the following steps will be taken:
 12. Annouce release on mongodb-user and mongodb-dev.
 
 ## Rake Deploy Tasks
-1. rake deploy:change_version[1.6.1]
+1. rake deploy:change_version[x.x.x]
 2. rake deploy:git_prepare
 3. rake deploy:git_push
 4. rake deploy:gem_build
