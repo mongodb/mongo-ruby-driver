@@ -28,7 +28,7 @@ Before each relese to Rubygems.org, the following steps will be taken:
 
 3. Update the version in lib/bson.rb, lib/mongo/version.rb, and ext/version.h.
 
-4. Commit: "Release [VERSION]"
+4. Commit: "RELEASE [VERSION]"
 
 5. git tag [version]
 
