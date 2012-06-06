@@ -136,9 +136,13 @@ class ObjectIdTest < Test::Unit::TestCase
     assert_equal({"$oid" => id.to_s}, id.as_json)
   end
 
-  def test_to_ary
+  def test_object_id_array_flatten
     id = ObjectId.new
-    assert_equal [id], id.to_ary
-    assert_equal Array(id), id.to_ary
+    assert_equal [ id ], [[ id ]].flatten
+  end
+
+  def test_object_id_array_flatten_bang
+    id = ObjectId.new
+    assert_equal [ id ], [[ id ]].flatten!
   end
 end
