@@ -34,6 +34,7 @@ module Mongo
 
     DEFAULT_HOST = 'localhost'
     DEFAULT_PORT = 27017
+    DEFAULT_DB_NAME = 'test'
     GENERIC_OPTS = [:ssl, :auths, :pool_size, :pool_timeout, :timeout, :op_timeout, :connect_timeout, :safe, :logger, :connect]
     CONNECTION_OPTS = [:slave_ok]
 
@@ -312,7 +313,13 @@ module Mongo
     # @return [Mongo::DB]
     #
     # @core databases db-instance_method
-    def db(db_name, opts={})
+    def db(db_name=nil, opts={})
+      if !db_name && uri = ENV['MONGODB_URI']
+        db_name = uri[%r{/([^/\?]+)(\?|$)}, 1]
+      end
+
+      db_name ||= DEFAULT_DB_NAME
+
       DB.new(db_name, self, opts)
     end
 
