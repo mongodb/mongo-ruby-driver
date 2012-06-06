@@ -183,13 +183,67 @@ class DBAPITest < Test::Unit::TestCase
     # Sorting using empty array; no order guarantee should not blow up.
     docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => []).to_a
     assert_equal 4, docs.size
+  end
 
+  def test_find_sorting_with_hash
     # Sorting using ordered hash. You can use an unordered one, but then the
     # order of the keys won't be guaranteed thus your sort won't make sense.
+
+    @@coll.remove
+    @@coll.insert('a' => 1, 'b' => 2)
+    @@coll.insert('a' => 2, 'b' => 1)
+    @@coll.insert('a' => 3, 'b' => 2)
+    @@coll.insert('a' => 4, 'b' => 1)
+    
     oh = BSON::OrderedHash.new
     oh['a'] = -1
-    assert_raise InvalidSortValueError do 
-      docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => oh).to_a
+
+    # Sort as a method
+    docs = @@coll.find.sort(oh).to_a
+    assert_equal 4, docs.size
+    assert_equal 4, docs[0]['a']
+    assert_equal 3, docs[1]['a']
+    assert_equal 2, docs[2]['a']
+    assert_equal 1, docs[3]['a']
+
+    # Sort as an option
+    docs = @@coll.find({}, :sort => oh).to_a
+    assert_equal 4, docs.size
+    assert_equal 4, docs[0]['a']
+    assert_equal 3, docs[1]['a']
+    assert_equal 2, docs[2]['a']
+    assert_equal 1, docs[3]['a']
+
+    if RUBY_VERSION > '1.9'
+      docs = @@coll.find({}, :sort => {:a => -1}).to_a
+      assert_equal 4, docs.size
+      assert_equal 4, docs[0]['a']
+      assert_equal 3, docs[1]['a']
+      assert_equal 2, docs[2]['a']
+      assert_equal 1, docs[3]['a']
+
+      docs = @@coll.find.sort(:a => -1).to_a
+      assert_equal 4, docs.size
+      assert_equal 4, docs[0]['a']
+      assert_equal 3, docs[1]['a']
+      assert_equal 2, docs[2]['a']
+      assert_equal 1, docs[3]['a']
+
+      docs = @@coll.find.sort(:b => -1, :a => 1).to_a
+      assert_equal 4, docs.size
+      assert_equal 1, docs[0]['a']
+      assert_equal 3, docs[1]['a']
+      assert_equal 2, docs[2]['a']
+      assert_equal 4, docs[3]['a']
+    else
+      # Sort as an option
+      assert_raise InvalidSortValueError do
+        @@coll.find({}, :sort => {:a => -1}).to_a
+      end
+      # Sort as a method
+      assert_raise InvalidSortValueError do
+        @@coll.find.sort(:a => -1).to_a
+      end
     end
   end
 

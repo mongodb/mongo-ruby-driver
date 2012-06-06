@@ -69,6 +69,7 @@ module Mongo
 
     def format_order_clause(order)
       case order
+        when Hash, BSON::OrderedHash then hash_as_sort_parameters(order)
         when String, Symbol then string_as_sort_parameters(order)
         when Array then array_as_sort_parameters(order)
         else

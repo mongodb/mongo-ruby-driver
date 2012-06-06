@@ -24,6 +24,29 @@ module Mongo #:nodoc:
     ASCENDING_CONVERSION  = ["ascending", "asc", "1"]
     DESCENDING_CONVERSION = ["descending", "desc", "-1"]
 
+    # Allows sort parameters to be defined as a Hash.
+    # Does not allow usage of un-ordered hashes, therefore
+    # Ruby 1.8.x users must use BSON::OrderedHash.
+    #
+    # Example:
+    #
+    # <tt>hash_as_sort_parameters({:field1 => :asc, "field2" => :desc})</tt> =>
+    # <tt>{ "field1" => 1, "field2" => -1}</tt>
+    def hash_as_sort_parameters(value)
+      if RUBY_VERSION < '1.9' && !value.is_a?(BSON::OrderedHash)
+        raise InvalidSortValueError.new(
+          "Hashes used to supply sort order must maintain ordering." +
+          "Use BSON::OrderedHash."
+        )
+      else
+        order_by = value.inject({}) do |memo, (key, direction)|
+          memo[key.to_s] = sort_value(direction.to_s.downcase)
+          memo
+        end
+      end
+      order_by
+    end
+
     # Converts the supplied +Array+ to a +Hash+ to pass to mongo as
     # sorting parameters. The returned +Hash+ will vary depending 
     # on whether the passed +Array+ is one or two dimensional.
