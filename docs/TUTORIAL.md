@@ -180,7 +180,7 @@ Direction defaults to ascending order but can be specified as Mongo::ASCENDING, 
     coll.find.sort(:i)
 
     # Sort in descending order by :i
-    coll.find.sort([:i, :desc])
+    coll.find.sort(:i => :desc)
 
 #### Counting Documents in a Collection
 
