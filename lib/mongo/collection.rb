@@ -972,7 +972,7 @@ module Mongo
             message.put_binary(BSON::BSON_CODER.serialize(doc, check_keys, true, @connection.max_bson_size).to_s)
           end
         end
-      raise InvalidOperation, "Exceded maximum insert size of 16,000,000 bytes" if message.size > 16_000_000
+      raise InvalidOperation, "Exceded maximum insert size of 16,777,216 bytes" if message.size > @connection.max_bson_size
 
       instrument(:insert, :database => @db.name, :collection => collection_name, :documents => documents) do
         if safe
