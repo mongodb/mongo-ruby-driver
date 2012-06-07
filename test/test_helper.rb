@@ -1,5 +1,5 @@
 $:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'rubygems' if RUBY_VERSION
+require 'rubygems'
 require 'mongo'
 gem 'test-unit'
 require 'test/unit'
