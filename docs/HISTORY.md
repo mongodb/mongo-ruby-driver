@@ -1,5 +1,11 @@
 # MongoDB Ruby Driver History
 
+### 1.6.4
+2012-06-06
+
+* Added ability to declare sort ordering via an ordered hash
+* Addresses major compatability issue with mongoid created by v1.6.3
+
 ### 1.6.3
 2012-06-05
 
