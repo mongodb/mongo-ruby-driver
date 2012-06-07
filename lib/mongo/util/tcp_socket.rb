@@ -43,23 +43,18 @@ module Mongo
       # Block on data to read for @op_timeout seconds
       begin
         ready = IO.select([@socket], nil, [@socket], @op_timeout)
-      rescue IOError
-        raise OperationFailure
-      end
-      if ready
-        begin
-          @socket.sysread(maxlen, buffer)
-        rescue SystemCallError => ex
-          # Needed because sometimes JRUBY doesn't throw Errno::ECONNRESET as it should
-          # http://jira.codehaus.org/browse/JRUBY-6180
-          raise ConnectionFailure, ex
-        rescue Errno::ENOTCONN, Errno::EBADF, Errno::ECONNRESET, Errno::EPIPE, Errno::ETIMEDOUT, EOFError => ex
-          raise ConnectionFailure, ex
-        rescue Errno::EINTR, Errno::EIO, IOError => ex
-          raise OperationFailure, ex
+        unless ready
+          raise OperationTimeout
         end
-      else
-        raise OperationTimeout
+      rescue IOError
+        raise ConnectionFailure
+      end
+
+      # Read data from socket
+      begin
+        @socket.sysread(maxlen, buffer)
+      rescue SystemCallError, IOError => ex
+        raise ConnectionFailure, ex
       end
     end
 
