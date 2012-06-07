@@ -247,7 +247,7 @@ class TestCollection < Test::Unit::TestCase
   def test_maximum_insert_size
     docs = []
     16.times do
-      docs << {'foo' => 'a' * 1_000_000}
+      docs << {'foo' => 'a' * 1024 * 1024}
     end
 
     assert_raise InvalidOperation do
