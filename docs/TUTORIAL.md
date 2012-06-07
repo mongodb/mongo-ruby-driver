@@ -208,7 +208,7 @@ Use the `:fields` option to specify fields to return.
 
 #### Querying with Regular Expressions
 
-Regular expressions can be used to query MongoDB. To find all names that begin with 'a':
+Regular expressions can be used to query MongoDB. To find all names that begin with 'M':
 
     puts coll.find({"name" => /^M/}).to_a
 
