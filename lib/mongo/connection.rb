@@ -102,11 +102,11 @@ module Mongo
     # @core self.connections
     def initialize(host=nil, port=nil, opts={})
       if host.nil? and ENV.has_key?('MONGODB_URI')
-        parser = URIParser.new ENV['MONGODB_URI'], opts
+        parser = URIParser.new ENV['MONGODB_URI']
         if parser.replicaset?
           raise MongoArgumentError, "Mongo::Connection.new called with no arguments, but ENV['MONGODB_URI'] implies a replica set."
         end
-        opts = parser.connection_options
+        opts = parser.connection_options.merge! opts
         @host_to_try = [parser.host, parser.port]
       elsif host.is_a?(String)
         @host_to_try = [host, (port || DEFAULT_PORT).to_i]
@@ -174,8 +174,8 @@ module Mongo
     #
     # @return [Mongo::Connection, Mongo::ReplSetConnection]
     def self.from_uri(uri = ENV['MONGODB_URI'], extra_opts={})
-      parser = URIParser.new uri, extra_opts
-      parser.connection
+      parser = URIParser.new uri
+      parser.connection(extra_opts)
     end
 
     # The host name used for this connection.

@@ -87,7 +87,7 @@ module Mongo
     # @param [Hash,nil] extra_opts Extra options. Will override anything already specified in the URI.
     #
     # @core connections
-    def initialize(uri, extra_opts={})
+    def initialize(uri)
       if uri.start_with?('mongodb://')
         uri = uri[10..-1]
       else
@@ -96,7 +96,7 @@ module Mongo
 
       hosts, opts = uri.split('?')
       parse_hosts(hosts)
-      parse_options(opts, extra_opts)
+      parse_options(opts)
       validate_connect
     end
 
@@ -105,11 +105,12 @@ module Mongo
     # @note Don't confuse this with attribute getter method #connect.
     #
     # @return [Connection,ReplSetConnection]
-    def connection
+    def connection(extra_opts)
+      opts = connection_options.merge! extra_opts
       if replicaset?
-        ReplSetConnection.new(*(nodes+[connection_options]))
+        ReplSetConnection.new(*(nodes+[opts]))
       else
-        Connection.new(host, port, connection_options)
+        Connection.new(host, port, opts)
       end
     end
 
@@ -254,13 +255,13 @@ module Mongo
 
     # This method uses the lambdas defined in OPT_VALID and OPT_CONV to validate
     # and convert the given options.
-    def parse_options(string_opts, extra_opts={})
+    def parse_options(string_opts)
       # initialize instance variables for available options
       OPT_VALID.keys.each { |k| instance_variable_set("@#{k}", nil) }
 
       string_opts ||= ''
 
-      return if string_opts.empty? && extra_opts.empty?
+      return if string_opts.empty?
 
       if string_opts.include?(';') and string_opts.include?('&')
         raise MongoArgumentError, "must not mix URL separators ; and &"
@@ -271,8 +272,6 @@ module Mongo
         memo[key.downcase.to_sym] = value.strip.downcase
         memo
       end
-
-      opts.merge! extra_opts
 
       opts.each do |key, value|
         if !OPT_ATTRS.include?(key)
