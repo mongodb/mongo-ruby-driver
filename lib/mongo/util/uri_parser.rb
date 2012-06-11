@@ -76,7 +76,7 @@ module Mongo
                   :wtimeoutms       => lambda {|arg| arg.to_i }
                  }
 
-    attr_reader :nodes, :auths, :connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync, :journal, :connecttimeoutms, :sockettimeoutms, :wtimeoutms
+    attr_reader :auths, :connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync, :journal, :connecttimeoutms, :sockettimeoutms, :wtimeoutms
 
     # Parse a MongoDB URI. This method is used by Connection.from_uri.
     # Returns an array of nodes and an array of db authorizations, if applicable.
@@ -108,7 +108,7 @@ module Mongo
     def connection(extra_opts)
       opts = connection_options.merge! extra_opts
       if replicaset?
-        ReplSetConnection.new(*(nodes+[opts]))
+        ReplSetConnection.new(nodes, opts)
       else
         Connection.new(host, port, opts)
       end
@@ -206,6 +206,14 @@ module Mongo
       opts[:connect] = connect?
 
       opts
+    end
+
+    def nodes
+      if @nodes.length == 1
+        @nodes
+      else
+        @nodes.collect {|node| "#{node[0]}:#{node[1]}"}
+      end
     end
 
     private

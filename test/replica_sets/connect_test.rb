@@ -173,4 +173,12 @@ class ConnectTest < Test::Unit::TestCase
       ENV['MONGODB_URI'] = old_mongodb_uri
     end
   end
+
+  def test_connect_options_override_env_var
+    ENV['MONGODB_URI'] = "mongodb://#{@rs.host}:#{@rs.ports[0]},#{@rs.host}:#{@rs.ports[1]}?replicaset=#{@rs.name};safe=true;w=2;fsync=true;slaveok=true"
+    @conn = ReplSetConnection.new({:safe => false})
+    assert @conn.is_a?(ReplSetConnection)
+    assert @conn.connected?
+    assert_equal @conn.safe, false
+  end
 end

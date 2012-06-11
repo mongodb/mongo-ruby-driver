@@ -94,12 +94,12 @@ module Mongo
       nodes = args
 
       if nodes.empty? and ENV.has_key?('MONGODB_URI')
-        parser = URIParser.new ENV['MONGODB_URI'], opts
+        parser = URIParser.new ENV['MONGODB_URI']
         if parser.direct?
           raise MongoArgumentError, "Mongo::ReplSetConnection.new called with no arguments, but ENV['MONGODB_URI'] implies a direct connection."
         end
-        opts = parser.connection_options
-        nodes = parser.nodes
+        opts = parser.connection_options.merge! opts
+        nodes = [parser.nodes]
       end
 
       unless nodes.length > 0
