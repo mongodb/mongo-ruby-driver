@@ -455,9 +455,7 @@ module Mongo
       
       last_chunk = @file_length / @chunk_size
       @current_chunk = get_chunk(last_chunk)
-      if @current_chunk.nil?
-        chunk = get_chunk last_chunk-1
-      end
+      chunk = get_chunk(last_chunk-1) if @current_chunk.nil?
       @current_chunk ||= create_chunk(last_chunk)
       @file_position = @chunk_size * last_chunk + @current_chunk['data'].size
     end
