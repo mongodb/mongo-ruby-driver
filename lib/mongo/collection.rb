@@ -432,9 +432,13 @@ module Mongo
       update_options  = 0
       update_options += 1 if opts[:upsert]
       update_options += 2 if opts[:multi]
+
+      # Determine if update document has modifiers and check keys if so
+      check_keys = document.keys.first[0] != "$" ? true : false
+
       message.put_int(update_options)
       message.put_binary(BSON::BSON_CODER.serialize(selector, false, true).to_s)
-      message.put_binary(BSON::BSON_CODER.serialize(document, false, true, @connection.max_bson_size).to_s)
+      message.put_binary(BSON::BSON_CODER.serialize(document, check_keys, true, @connection.max_bson_size).to_s)
 
       instrument(:update, :database => @db.name, :collection => @name, :selector => selector, :document => document) do
         if safe

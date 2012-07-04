@@ -290,6 +290,16 @@ class TestCollection < Test::Unit::TestCase
     assert_equal 1, @@test.find_one(:_id => id2)["x"]
   end
 
+  def test_update_check_keys
+    @@test.save("x" => 1)
+    @@test.update({"x" => 1}, {"$set" => {"a.b" => 2}})
+    assert_equal 2, @@test.find_one("x" => 1)["a"]["b"]
+
+    assert_raise_error BSON::InvalidKeyName, "a.b - key must not contain '.'" do
+      @@test.update({"x" => 1}, {"a.b" => 3})
+    end
+  end
+
   if @@version >= "1.1.3"
     def test_multi_update
       @@test.save("num" => 10)
