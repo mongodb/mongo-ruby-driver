@@ -227,12 +227,12 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         int i;
         if (RSTRING_LEN(key) > 0 && RSTRING_PTR(key)[0] == '$') {
             bson_buffer_free(buffer);
-            rb_raise(InvalidKeyName, "%s - key must not start with '$'", RSTRING_PTR(key));
+            rb_raise(InvalidKeyName, "key %s must not start with '$'", RSTRING_PTR(key));
         }
         for (i = 0; i < RSTRING_LEN(key); i++) {
             if (RSTRING_PTR(key)[i] == '.') {
                 bson_buffer_free(buffer);
-                rb_raise(InvalidKeyName, "%s - key must not contain '.'", RSTRING_PTR(key));
+                rb_raise(InvalidKeyName, "key %s must not contain '.'", RSTRING_PTR(key));
             }
         }
     }

@@ -439,7 +439,7 @@ public class RubyBSONEncoder extends BSONEncoder {
          if(bytes[j] == '\u0000')
              _rbRaise( (RubyClass)_rbclsInvalidDocument, "Null not allowed");
          if(bytes[j] == 46)
-             _rbRaise( (RubyClass)_rbclsInvalidKeyName, ". not allowed in key name.");
+             _rbRaise( (RubyClass)_rbclsInvalidKeyName, "key " + str + " must not contain '.'");
        }
     }
 

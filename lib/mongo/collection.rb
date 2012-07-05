@@ -434,7 +434,7 @@ module Mongo
       update_options += 2 if opts[:multi]
 
       # Determine if update document has modifiers and check keys if so
-      check_keys = document.keys.first[0] != "$" ? true : false
+      check_keys = document.keys.first.to_s.start_with?("$") ? false : true
 
       message.put_int(update_options)
       message.put_binary(BSON::BSON_CODER.serialize(selector, false, true).to_s)
