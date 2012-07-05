@@ -221,7 +221,12 @@ class DBTest < Test::Unit::TestCase
       assert ex.message.include?("forced error"),
         "error message does not contain 'forced error'"
       assert_equal 10038, ex.error_code
-      assert_equal 10038, ex.result['assertionCode']
+
+      if @@version >= "2.1.0"
+        assert_equal 10038, ex.result['code']
+      else
+        assert_equal 10038, ex.result['assertionCode']
+      end
     ensure
       assert raised, "No assertion raised!"
     end

@@ -109,7 +109,7 @@ module Mongo
     #
     # @return [Boolean]
     def capped?
-      @db.command({:collstats => @name})['capped'] == 1
+      [1, true].include? @db.command({:collstats => @name})['capped']
     end
 
     # Return a sub-collection of this collection by name. If 'users' is a collection, then

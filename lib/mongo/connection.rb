@@ -207,7 +207,7 @@ module Mongo
     #
     # @return [Boolean]
     def locked?
-      self['admin']['$cmd.sys.inprog'].find_one['fsyncLock'] == 1
+      [1, true].include? self['admin']['$cmd.sys.inprog'].find_one['fsyncLock']
     end
 
     # Unlock a previously fsync-locked mongod process.
