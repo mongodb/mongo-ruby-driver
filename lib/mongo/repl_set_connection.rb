@@ -41,8 +41,8 @@ module Mongo
     # @option opts [String] :name (nil) The name of the replica set to connect to. You
     #   can use this option to verify that you're connecting to the right replica set.
     # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
-    #   propogated to DB objects instantiated off of this Connection. This
-    #   default can be overridden upon instantiation of any DB by explicity setting a :safe value
+    #   propagated to DB objects instantiated off of this Connection. This
+    #   default can be overridden upon instantiation of any DB by explicitly setting a :safe value
     #   on initialization.
     # @option opts [:primary, :secondary] :read (:primary) The default read preference for Mongo::DB
     #   objects created from this connection object. If +:secondary+ is chosen, reads will be sent
@@ -80,10 +80,9 @@ module Mongo
     #
     # @see http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html Replica sets in Ruby
     #
-    # @raise [MongoArgumentError] If called with no arguments and <code>ENV["MONGODB_URI"]</code> implies a direct connection.
+    # @raise [MongoArgumentError] This is raised for usage errors.
     #
-    # @raise [ReplicaSetConnectionError] This is raised if a replica set name is specified and the
-    #   driver fails to connect to a replica set with that name.
+    # @raise [ConnectionFailure] This is raised for the various connection failures.
     def initialize(*args)
       if args.last.is_a?(Hash)
         opts = args.pop
