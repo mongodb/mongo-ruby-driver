@@ -23,30 +23,24 @@ module Mongo
         opts = {}
       end
 
-      connection = opts.fetch(:connection, :writer)
-
       add_message_headers(message, operation)
       packed_message = message.to_s
 
       sock = nil
       begin
-        if connection == :writer
-          sock = checkout_writer
-        else
+        if operation == Mongo::Constants::OP_KILL_CURSORS && read_preference != :primary
           sock = checkout_reader
+        else
+          sock = checkout_writer
         end
-
         send_message_on_socket(packed_message, sock)
       rescue SystemStackError, NoMemoryError, SystemCallError => ex
         close
         raise ex
       ensure
         if sock
-          if connection == :writer
-            checkin_writer(sock)
-          else
-            checkin_reader(sock)
-          end
+          sock.pool.checkin(sock)
+          sync_refresh if self.class == "ReplSetConnection"
         end
       end
     end
@@ -77,9 +71,9 @@ module Mongo
         sock = checkout_writer
         send_message_on_socket(packed_message, sock)
         docs, num_received, cursor_id = receive(sock, last_error_id)
-        checkin_writer(sock)
+        checkin(sock)
       rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
-        checkin_writer(sock)
+        checkin(sock)
         raise ex
       rescue SystemStackError, NoMemoryError, SystemCallError => ex
         close
@@ -147,13 +141,7 @@ module Mongo
         raise ex
       ensure
         if should_checkin
-          if command || read == :primary
-            checkin_writer(sock)
-          elsif read == :secondary
-            checkin_reader(sock)
-          else
-            # TODO: sock = checkout_tagged(read)
-          end
+          checkin(sock)
         end
       end
       result

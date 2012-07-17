@@ -512,19 +512,8 @@ module Mongo
       @primary_pool.checkout
     end
 
-    # Checkin a socket used for reading.
-    # Note: this is overridden in ReplSetConnection.
-    def checkin_reader(socket)
-      checkin(socket)
-    end
-
-    # Checkin a socket used for writing.
-    # Note: this is overridden in ReplSetConnection.
-    def checkin_writer(socket)
-      checkin(socket)
-    end
-
     # Check a socket back into its pool.
+    # Note: this is overridden in ReplSetConnection.
     def checkin(socket)
       if @primary_pool && socket
         socket.pool.checkin(socket)

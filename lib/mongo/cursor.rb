@@ -339,7 +339,7 @@ module Mongo
         message.put_int(1)
         message.put_long(@cursor_id)
         log(:debug, "Cursor#close #{@cursor_id}")
-        @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message, :connection => :reader)
+        @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message)
       end
       @cursor_id = 0
       @closed    = true
@@ -572,11 +572,7 @@ module Mongo
         @read_pool.checkin(sock)
         @checkin_read_pool = false
       elsif @checkin_connection
-        if @command || @read_preference == :primary
-          @connection.checkin_writer(sock)
-        else
-          @connection.checkin_reader(sock)
-        end
+        @connection.checkin(sock)
         @checkin_connection = false
       end
     end
@@ -586,11 +582,7 @@ module Mongo
         @read_pool.checkin(sock)
         @checkin_read_pool = false
       else
-        if @command || @read_preference == :primary
-          @connection.checkin_writer(sock)
-        else
-          @connection.checkin_reader(sock)
-        end
+        @connection.checkin(sock)
         @checkin_connection = false
       end
     end
