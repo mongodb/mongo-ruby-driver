@@ -21,6 +21,8 @@ class ComplexConnectTest < Test::Unit::TestCase
       "#{@rs.host}:#{@rs.ports[0]}",
     ])
 
+    version = @conn.server_version
+
     @conn['test']['foo'].insert({:a => 1})
     assert @conn['test']['foo'].find_one
 
@@ -34,11 +36,21 @@ class ComplexConnectTest < Test::Unit::TestCase
       primary['admin'].command({:replSetReconfig => config})
     end
     @rs.ensure_up
+
+    force_stepdown = BSON::OrderedHash.new
+    force_stepdown[:replSetStepDown] = 1
+    force_stepdown[:force] = true
+
     assert_raise ConnectionFailure do
-      primary['admin'].command({:replSetStepDown => 1})
+      primary['admin'].command(force_stepdown)
     end
 
-    rescue_connection_failure do
+    # isMaster is currently broken in 2.1+ when called on removed nodes
+    if version < "2.1"
+      rescue_connection_failure do
+        assert @conn['test']['foo'].find_one
+      end
+
       assert @conn['test']['foo'].find_one
     end
   end
