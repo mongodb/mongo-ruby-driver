@@ -167,7 +167,7 @@ module Mongo
 
       seed.node_list.each do |host|
         node = Mongo::Node.new(self.connection, host)
-        if node.connect && node.set_config
+        if node.connect && node.set_config && node.healthy?
           members << node
         end
       end
@@ -282,7 +282,7 @@ module Mongo
         node = Mongo::Node.new(self.connection, seed)
         if !node.connect
           next
-        elsif node.set_config
+        elsif node.set_config && node.healthy?
           return node
         else
           node.close

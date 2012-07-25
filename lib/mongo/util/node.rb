@@ -1,24 +1,18 @@
 module Mongo
   class Node
 
-    attr_accessor :host, :port, :address, :config, :connection, :socket,
-      :last_state
+    attr_accessor :host, :port, :address, :config, :connection, :socket, :last_state
 
-    def initialize(connection, data)
+    def initialize(connection, host_port)
       @connection = connection
-      if data.is_a?(String)
-        @host, @port = split_nodes(data)
-      else
-        @host = data[0]
-        @port = data[1].nil? ? Connection::DEFAULT_PORT : data[1].to_i
-      end
+      @host, @port = split_node(host_port)
       @address = "#{host}:#{port}"
       @config = nil
       @socket = nil
     end
 
     def eql?(other)
-      other.is_a?(Node) && host == other.host && port == other.port
+      other.is_a?(Node) && @address == other.address
     end
     alias :== :eql?
 
@@ -35,16 +29,12 @@ module Mongo
     # return nil.
     def connect
       begin
-        socket = nil
         socket = @connection.socket_class.new(@host, @port, 
           @connection.op_timeout, @connection.connect_timeout
         )
-
-        return nil if socket.nil?
       rescue OperationTimeout, ConnectionFailure, OperationFailure, SocketError, SystemCallError, IOError => ex
         @connection.log(:debug, "Failed connection to #{host_string} with #{ex.class}, #{ex.message}.")
         socket.close if socket
-        return nil
       end
 
       @socket = socket
@@ -65,10 +55,10 @@ module Mongo
     def active?
       begin
         result = @connection['admin'].command({:ping => 1}, :socket => @socket)
-        return result['ok'] == 1
       rescue OperationFailure, SocketError, SystemCallError, IOError
         return nil
       end
+      result['ok'] == 1
     end
 
     # Get the configuration for the provided node as returned by the
@@ -78,7 +68,7 @@ module Mongo
       begin
         @config = @connection['admin'].command({:ismaster => 1}, :socket => @socket)
 
-        if @config['msg'] && @logger
+        if @config['msg']
           @connection.log(:warn, "#{config['msg']}")
         end
 
@@ -92,8 +82,6 @@ module Mongo
         if @socket && !@socket.closed?
           @socket.close
         end
-
-        return nil
       end
 
       @config
@@ -119,7 +107,7 @@ module Mongo
       return [] unless config['arbiters']
 
       config['arbiters'].map do |arbiter|
-        split_nodes(arbiter)
+        split_node(arbiter)
       end
     end
 
@@ -147,19 +135,30 @@ module Mongo
       address.hash
     end
 
+    def healthy?
+      if @config.has_key?('secondary')
+        @config['ismaster'] || @config['secondary']
+      else
+        true
+      end
+    end
+
     private
 
-    def split_nodes(host_string)
-      data = host_string.split(":")
-      host = data[0]
-      port = data[1].nil? ? Connection::DEFAULT_PORT : data[1].to_i
+    def split_node(host_port)
+      if host_port.is_a?(String)
+        host_port = host_port.split(":")
+      end
+
+      host = host_port[0]
+      port = host_port[1].nil? ? Connection::DEFAULT_PORT : host_port[1].to_i
 
       [host, port]
     end
 
     # Ensure that this node is a healty member of a replica set.
     def check_set_membership(config)
-      if !config['hosts']
+      if !config.has_key?('hosts')
         message = "Will not connect to #{host_string} because it's not a member " +
           "of a replica set."
         raise ConnectionFailure, message
