@@ -110,6 +110,11 @@ class ConnectTest < Test::Unit::TestCase
     ENV['MONGODB_URI'] = "mongodb://#{@rs.host}:#{@rs.ports[0]},#{@rs.host}:#{@rs.ports[1]}?replicaset=#{@rs.name}"
     @conn = ReplSetConnection.new
     assert @conn.is_a?(ReplSetConnection)
+    assert_equal 2, @conn.seeds.length
+    assert_equal @rs.host, @conn.seeds[0][0]
+    assert_equal @rs.host, @conn.seeds[1][0]
+    assert_equal @rs.ports[0], @conn.seeds[0][1]
+    assert_equal @rs.ports[1], @conn.seeds[1][1]
     assert @conn.connected?
   end
 
@@ -117,6 +122,12 @@ class ConnectTest < Test::Unit::TestCase
     ENV['MONGODB_URI'] = "mongodb://#{@rs.host}:#{@rs.ports[0]},#{@rs.host}:#{@rs.ports[1]}?replicaset=#{@rs.name}"
     @conn = Connection.from_uri
     assert @conn.is_a?(ReplSetConnection)
+    assert_equal 2, @conn.seeds.length
+    assert_equal @rs.host, @conn.seeds[0][0]
+    assert_equal @rs.host, @conn.seeds[1][0]
+    assert_equal @rs.ports[0], @conn.seeds[0][1]
+    assert_equal @rs.ports[1], @conn.seeds[1][1]
+    assert_equal @rs.name, @conn.replica_set_name
     assert @conn.connected?
   end
   
