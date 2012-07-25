@@ -36,38 +36,37 @@ module Mongo
     # Connection#arbiters. This is useful if your application needs to connect manually to nodes other
     # than the primary.
     #
-    # @param [Array] seeds "host:port" strings
+    # @overload initialize(seeds=ENV["MONGODB_URI"], opts={})
+    #   @param [Array<String>, Array<Array(String, Integer)>] seeds
     #
-    # @option opts [String] :name (nil) The name of the replica set to connect to. You
-    #   can use this option to verify that you're connecting to the right replica set.
-    # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
-    #   propagated to DB objects instantiated off of this Connection. This
-    #   default can be overridden upon instantiation of any DB by explicitly setting a :safe value
-    #   on initialization.
-    # @option opts [:primary, :secondary] :read (:primary) The default read preference for Mongo::DB
-    #   objects created from this connection object. If +:secondary+ is chosen, reads will be sent
-    #   to one of the closest available secondary nodes. If a secondary node cannot be located, the
-    #   read will be sent to the primary.
-    # @option opts [Logger] :logger (nil) Logger instance to receive driver operation log.
-    # @option opts [Integer] :pool_size (1) The maximum number of socket connections allowed per
-    #   connection pool. Note: this setting is relevant only for multi-threaded applications.
-    # @option opts [Float] :pool_timeout (5.0) When all of the connections a pool are checked out,
-    #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
-    #   Note: this setting is relevant only for multi-threaded applications.
-    # @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.
-    # @option opts [Float] :connect_timeout (30) The number of seconds to wait before timing out a
-    #   connection attempt.
-    # @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
-    # @option opts [Boolean] :refresh_mode (false) Set this to :sync to periodically update the
-    #   state of the connection every :refresh_interval seconds. Replica set connection failures
-    #   will always trigger a complete refresh. This option is useful when you want to add new nodes
-    #   or remove replica set nodes not currently in use by the driver.
-    # @option opts [Integer] :refresh_interval (90) If :refresh_mode is enabled, this is the number of seconds
-    #   between calls to check the replica set's state.
-    # @option opts [Boolean] :require_primary (true) If true, require a primary node for the connection
-    #   to succeed. Otherwise, connection will succeed as long as there's at least one secondary node.
-    # Note: that the number of seed nodes does not have to be equal to the number of replica set members.
-    # The purpose of seed nodes is to permit the driver to find at least one replica set member even if a member is down.
+    #   @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
+    #     propagated to DB objects instantiated off of this Connection. This
+    #     default can be overridden upon instantiation of any DB by explicitly setting a :safe value
+    #     on initialization.
+    #   @option opts [:primary, :secondary, :secondary_only] :read (:primary) The default read preference for Mongo::DB
+    #     objects created from this connection object. If +:secondary+ is chosen, reads will be sent
+    #     to one of the closest available secondary nodes. If a secondary node cannot be located, the
+    #     read will be sent to the primary.
+    #   @option opts [Logger] :logger (nil) Logger instance to receive driver operation log.
+    #   @option opts [Integer] :pool_size (1) The maximum number of socket connections allowed per
+    #     connection pool. Note: this setting is relevant only for multi-threaded applications.
+    #   @option opts [Float] :pool_timeout (5.0) When all of the connections a pool are checked out,
+    #     this is the number of seconds to wait for a new connection to be released before throwing an exception.
+    #     Note: this setting is relevant only for multi-threaded applications.
+    #   @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.
+    #   @option opts [Float] :connect_timeout (30) The number of seconds to wait before timing out a
+    #     connection attempt.
+    #   @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
+    #   @option opts [Boolean] :refresh_mode (false) Set this to :sync to periodically update the
+    #     state of the connection every :refresh_interval seconds. Replica set connection failures
+    #     will always trigger a complete refresh. This option is useful when you want to add new nodes
+    #     or remove replica set nodes not currently in use by the driver.
+    #   @option opts [Integer] :refresh_interval (90) If :refresh_mode is enabled, this is the number of seconds
+    #     between calls to check the replica set's state.
+    #   @option opts [Boolean] :require_primary (true) If true, require a primary node for the connection
+    #     to succeed. Otherwise, connection will succeed as long as there's at least one secondary node.  
+    #   @note the number of seed nodes does not have to be equal to the number of replica set members.
+    #     The purpose of seed nodes is to permit the driver to find at least one replica set member even if a member is down.
     #
     # @example Connect to a replica set and provide two seed nodes.
     #   Mongo::ReplSetConnection.new(['localhost:30000', 'localhost:30001'])
@@ -84,12 +83,7 @@ module Mongo
     #
     # @raise [ConnectionFailure] This is raised for the various connection failures.
     def initialize(*args)
-      if args.last.is_a?(Hash)
-        opts = args.pop
-      else
-        opts = {}
-      end
-
+      opts = args.last.is_a?(Hash) ? args.pop : {}
       nodes = args
 
       if nodes.empty? and ENV.has_key?('MONGODB_URI')
@@ -117,7 +111,6 @@ module Mongo
         end
       end
 
-      # TODO: add a method for replacing this list of node.
       @seeds.freeze
 
       # Refresh
