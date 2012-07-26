@@ -9,6 +9,7 @@ nbproject
 *.o
 ext/cbson/Makefile
 lib/mongo_ext/Makefile
+lib/bson_ext
 benchmark
 *~
 *#*
@@ -23,5 +24,4 @@ test/tools/data/
 Gemfile.lock
 .idea/*
 tmp
-
 
