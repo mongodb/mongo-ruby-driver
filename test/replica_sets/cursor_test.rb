@@ -4,10 +4,6 @@ require './test/replica_sets/rs_test_helper'
 class ReplicaSetCursorTest < Test::Unit::TestCase
   def setup
     ensure_rs
-
-    # Setup Direct Connections
-    @primary = Mongo::Connection.new("#{@rs.host}", @rs.ports[0])
-    @secondary = Mongo::Connection.new("#{@rs.host}", @rs.ports[1])
   end
 
   def setup_connection(read=:primary)
@@ -16,6 +12,10 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
       build_seeds(2),
       :read => read
     )
+
+    # Setup Direct Connections
+    @primary = Mongo::Connection.new(*@replconn.manager.primary)
+    @secondary = Mongo::Connection.new(*@replconn.manager.read)
   end
 
   def setup_collection

@@ -50,7 +50,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
     @coll.save({:a => 20}, :safe => {:w => 2})
 
     # Test that reads are going to secondary on ReplSetConnection
-    @secondary = Connection.new(@rs.host, @conn.secondary_pool.port, :slave_ok => true)
+    @secondary = Connection.new(@rs.host, @conn.read_pool.port, :slave_ok => true)
     queries_before = @secondary['admin'].command({:serverStatus => 1})['opcounters']['query']
     @coll.find_one
     queries_after = @secondary['admin'].command({:serverStatus => 1})['opcounters']['query']

@@ -2,7 +2,7 @@ module Mongo
   class PoolManager
 
     attr_reader :connection, :arbiters, :primary, :secondaries, :primary_pool,
-      :read_pool, :secondary_pool, :secondary_pools, :hosts, :nodes,
+      :read_pool, :secondary_pool, :read, :secondary_pools, :hosts, :nodes,
       :max_bson_size, :tags_to_pools, :tag_map, :members
 
     # Create a new set of connection pools.
@@ -145,6 +145,7 @@ module Mongo
     def initialize_data
       @primary = nil
       @primary_pool = nil
+      @read = nil
       @read_pool = nil
       @arbiters = []
       @secondaries = []
@@ -250,6 +251,7 @@ module Mongo
         @read_pool = nearby_pool_from_set(@secondary_pools)
         @secondary_pool = @read_pool
       end
+      @read = [@read_pool.host, @read_pool.port]
     end
 
     def nearby_pool_from_set(pool_set)
