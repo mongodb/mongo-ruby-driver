@@ -3,7 +3,7 @@ module Mongo
 
     attr_reader :connection, :arbiters, :primary, :secondaries, :primary_pool,
       :read_pool, :secondary_pool, :read, :secondary_pools, :hosts, :nodes,
-      :max_bson_size, :tags_to_pools, :tag_map, :members
+      :max_bson_size, :members, :seeds
 
     # Create a new set of connection pools.
     #
@@ -14,7 +14,6 @@ module Mongo
     # with the newly-discovered nodes being used first.
     def initialize(connection, seeds=[])
       @connection = connection
-      @original_seeds = connection.seeds
       @seeds = seeds
       @previously_connected = false
     end
@@ -31,7 +30,6 @@ module Mongo
       initialize_pools(members)
       cache_discovered_seeds(members)
       set_read_pool
-      set_tag_mappings
 
       @members = members
       @previously_connected = true
@@ -90,30 +88,10 @@ module Mongo
 
     def close(opts={})
       begin
-        if @primary_pool
-          @primary_pool.close(opts)
-        end
-
-        if @secondary_pools
-          @secondary_pools.each do |pool|
-            pool.close(opts)
-          end
-        end
-
-        if @members
-          @members.each do |member|
-            member.close
-          end
-        end
-
-        rescue ConnectionFailure
+        pools.each { |pool| pool.close(opts) if pool }
+        @members.each { |member| member.close }
+      rescue ConnectionFailure
       end
-    end
-
-    # The set of nodes that this class has discovered and
-    # successfully connected to.
-    def seeds
-      @seeds || []
     end
 
     private
@@ -153,8 +131,6 @@ module Mongo
       @secondary_pools = []
       @hosts = Set.new
       @members = Set.new
-      @tags_to_pools = {}
-      @tag_map = {}
       @refresh_required = false
     end
 
@@ -181,13 +157,6 @@ module Mongo
       members
     end
 
-    def associate_tags_with_pool(tags, pool)
-      tags.each_key do |key|
-        @tags_to_pools[{key => tags[key]}] ||= []
-        @tags_to_pools[{key => tags[key]}] << pool
-      end
-    end
-
     # Initialize the connection pools for the primary and secondary nodes.
     def initialize_pools(members)
       members.each do |member|
@@ -212,7 +181,6 @@ module Mongo
                               :size => self.connection.pool_size,
                               :timeout => self.connection.pool_timeout,
                               :node => member)
-      associate_tags_with_pool(member.tags, @primary_pool)
     end
 
     def assign_secondary(member)
@@ -223,19 +191,6 @@ module Mongo
                                    :timeout => self.connection.pool_timeout,
                                    :node => member)
       @secondary_pools << pool
-      associate_tags_with_pool(member.tags, pool)
-    end
-
-    # If there's more than one pool associated with
-    # a given tag, choose a close one using the bucket method.
-    def set_tag_mappings
-      @tags_to_pools.each do |key, pool_list|
-        if pool_list.length == 1
-          @tag_map[key] = pool_list.first
-        else
-          @tag_map[key] = nearby_pool_from_set(pool_list)
-        end
-      end
     end
 
     # Pick a node from the set of possible secondaries.
@@ -280,7 +235,7 @@ module Mongo
     #
     # If we don't get a response, raise an exception.
     def get_valid_seed_node
-      seed_list.each do |seed|
+      @seeds.each do |seed|
         node = Mongo::Node.new(self.connection, seed)
         if !node.connect
           next
@@ -292,12 +247,10 @@ module Mongo
       end
 
       raise ConnectionFailure, "Cannot connect to a replica set using seeds " +
-        "#{seed_list.map {|s| "#{s[0]}:#{s[1]}" }.join(', ')}"
+        "#{@seeds.map {|s| "#{s[0]}:#{s[1]}" }.join(', ')}"
     end
 
-    def seed_list
-      @seeds | @original_seeds
-    end
+    private
 
     def cache_discovered_seeds(members)
       @seeds = members.map { |n| n.host_port }

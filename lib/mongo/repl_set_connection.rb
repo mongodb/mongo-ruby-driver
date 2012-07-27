@@ -152,8 +152,8 @@ module Mongo
       @connect_mutex.synchronize do
         return if @connected
 
-        discovered_seeds = @manager ? @manager.seeds : []
-        @manager = PoolManager.new(self, discovered_seeds)
+        seeds = @manager.nil? ? @seeds : @manager.seeds
+        @manager = PoolManager.new(self, seeds)
 
         Thread.current[:managers] ||= Hash.new
         Thread.current[:managers][self] = @manager
@@ -205,7 +205,7 @@ module Mongo
     #   to get the refresh lock.
     def hard_refresh!
       log(:info, "Initiating hard refresh...")
-      discovered_seeds = @manager ? @manager.seeds : []
+      discovered_seeds = @manager.seeds
       new_manager = PoolManager.new(self, discovered_seeds | @seeds)
       new_manager.connect
 

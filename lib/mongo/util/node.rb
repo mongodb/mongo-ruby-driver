@@ -6,7 +6,7 @@ module Mongo
     def initialize(connection, host_port)
       @connection = connection
       @host, @port = split_node(host_port)
-      @address = "#{host}:#{port}"
+      @address = "#{@host}:#{@port}"
       @config = nil
       @socket = nil
     end
@@ -109,14 +109,6 @@ module Mongo
       config['arbiters'].map do |arbiter|
         split_node(arbiter)
       end
-    end
-
-    def tags
-      connect unless connected?
-      set_config unless @config
-      return {} unless config['tags'] && !config['tags'].empty?
-
-      config['tags']
     end
 
     def primary?
