@@ -535,6 +535,140 @@ class TestCollection < Test::Unit::TestCase
     end
     assert c.closed?
   end
+  
+  def setup_aggregate_data
+    # save some data
+    @@test.save( {
+        "_id" => 1,
+        "title" => "this is my title", 
+        "author" => "bob", 
+        "posted" => Time.utc(1500), 
+        "pageViews" => 5 , 
+        "tags" => [ "fun" , "good" , "fun" ],
+        "comments" => [ 
+                        { "author" => "joe", "text" => "this is cool" }, 
+                        { "author" => "sam", "text" => "this is bad" } 
+            ],
+        "other" => { "foo" => 5 }
+        } )
+    
+    @@test.save( {
+         "_id" => 2,
+         "title" => "this is your title", 
+         "author" => "dave", 
+         "posted" => Time.utc(1600), 
+         "pageViews" => 7, 
+         "tags" => [ "fun" , "nasty" ],
+         "comments" => [ 
+                         { "author" => "barbara" , "text" => "this is interesting" }, 
+                         { "author" => "jenny", "text" => "i like to play pinball", votes: 10 } 
+         ],
+          "other" => { "bar" => 14 }
+        })
+        
+    @@test.save( {
+            "_id" => 3,
+            "title" => "this is some other title", 
+            "author" => "jane", 
+            "posted" => Time.utc(1700), 
+            "pageViews" => 6 , 
+            "tags" => [ "nasty", "filthy" ],
+            "comments" => [ 
+                { "author" => "will" , "text" => "i don't like the color" } , 
+                { "author" => "jenny" , "text" => "can i get that in green?" } 
+            ],
+            "other" => { "bar" => 14 }
+        })
+    
+  end
+  
+  if @@version > '2.1.1'
+    def test_reponds_to_aggregate
+      assert_respond_to @@test, :aggregate
+    end
+
+    def test_aggregate_requires_arguments
+      assert_raise MongoArgumentError do
+        @@test.aggregate()
+      end
+    end
+
+    def test_aggregate_requires_valid_array_of_hashes
+      assert_raise MongoArgumentError do
+        @@test.aggregate([])
+      end
+    end
+
+    def test_aggregate_requires_valid_hashes
+      assert_raise MongoArgumentError do
+        @@test.aggregate({})
+      end
+    end
+
+    def test_aggregate_pipeline_operator_format
+      assert_raise Mongo::OperationFailure do
+        @@test.aggregate({"$project" => "_id"})
+      end
+    end
+
+    def test_aggregate_pipeline_operators_using_strings
+      setup_aggregate_data
+      desired_results = [ {"_id"=>1, "pageViews"=>5, "tags"=>["fun", "good", "fun"]}, 
+                          {"_id"=>2, "pageViews"=>7, "tags"=>["fun", "nasty"]}, 
+                          {"_id"=>3, "pageViews"=>6, "tags"=>["nasty", "filthy"]} ]
+      results = @@test.aggregate({"$project" => {"tags" => 1, "pageViews" => 1}})
+      assert_equal desired_results, results
+    end
+
+    def test_aggregate_pipeline_operators_using_symbols
+      setup_aggregate_data
+      desired_results = [ {"_id"=>1, "pageViews"=>5, "tags"=>["fun", "good", "fun"]}, 
+                          {"_id"=>2, "pageViews"=>7, "tags"=>["fun", "nasty"]}, 
+                          {"_id"=>3, "pageViews"=>6, "tags"=>["nasty", "filthy"]} ]
+      results = @@test.aggregate({"$project" => {:tags => 1, :pageViews => 1}})
+      assert_equal desired_results, results
+    end
+
+    def test_aggregate_pipeline_operators_as_array
+      setup_aggregate_data
+      results = @@test.aggregate([{"$project" => {"tags" => 1, "pageViews" => 1}}, {"$match" => {"pageViews" => 7}}])
+      assert_equal 1, results.length
+    end
+
+    def test_aggregate_pipeline_operators_as_hashes
+      setup_aggregate_data
+      results = @@test.aggregate({"$project" => {"tags" => 1, "pageViews" => 1}}, {"$match" => {"pageViews" => 7}})
+      assert_equal 1, results.length
+    end
+
+    def test_aggregate_pipeline_unwind                    
+      setup_aggregate_data
+      desired_results = [ {"_id"=>1, "title"=>"this is my title", "author"=>"bob", "posted"=>Time.utc(1500), 
+                          "pageViews"=>5, "tags"=>"fun", "comments"=>[{"author"=>"joe", "text"=>"this is cool"}, 
+                            {"author"=>"sam", "text"=>"this is bad"}], "other"=>{"foo"=>5 } },
+                          {"_id"=>1, "title"=>"this is my title", "author"=>"bob", "posted"=>Time.utc(1500), 
+                            "pageViews"=>5, "tags"=>"good", "comments"=>[{"author"=>"joe", "text"=>"this is cool"}, 
+                            {"author"=>"sam", "text"=>"this is bad"}], "other"=>{"foo"=>5 } },
+                          {"_id"=>1, "title"=>"this is my title", "author"=>"bob", "posted"=>Time.utc(1500), 
+                            "pageViews"=>5, "tags"=>"fun", "comments"=>[{"author"=>"joe", "text"=>"this is cool"}, 
+                              {"author"=>"sam", "text"=>"this is bad"}], "other"=>{"foo"=>5 } },
+                          {"_id"=>2, "title"=>"this is your title", "author"=>"dave", "posted"=>Time.utc(1600), 
+                            "pageViews"=>7, "tags"=>"fun", "comments"=>[{"author"=>"barbara", "text"=>"this is interesting"}, 
+                              {"author"=>"jenny", "text"=>"i like to play pinball", "votes"=>10 }], "other"=>{"bar"=>14 } },
+                          {"_id"=>2, "title"=>"this is your title", "author"=>"dave", "posted"=>Time.utc(1600), 
+                            "pageViews"=>7, "tags"=>"nasty", "comments"=>[{"author"=>"barbara", "text"=>"this is interesting"}, 
+                              {"author"=>"jenny", "text"=>"i like to play pinball", "votes"=>10 }], "other"=>{"bar"=>14 } },
+                          {"_id"=>3, "title"=>"this is some other title", "author"=>"jane", "posted"=>Time.utc(1700), 
+                            "pageViews"=>6, "tags"=>"nasty", "comments"=>[{"author"=>"will", "text"=>"i don't like the color"}, 
+                              {"author"=>"jenny", "text"=>"can i get that in green?"}], "other"=>{"bar"=>14 } },
+                          {"_id"=>3, "title"=>"this is some other title", "author"=>"jane", "posted"=>Time.utc(1700), 
+                            "pageViews"=>6, "tags"=>"filthy", "comments"=>[{"author"=>"will", "text"=>"i don't like the color"}, 
+                              {"author"=>"jenny", "text"=>"can i get that in green?"}], "other"=>{"bar"=>14 } }
+                          ]
+      results = @@test.aggregate({"$unwind"=> "$tags"})
+      assert_equal desired_results, results
+    end
+  end
 
   if @@version > "1.1.1"
     def test_map_reduce
