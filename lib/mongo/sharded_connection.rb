@@ -19,11 +19,11 @@
 module Mongo
 
   # Instantiates and manages connections to a MongoDB sharded cluster for high availability.
-  class ShardedConnection < Connection
+  class ShardedConnection < ReplSetConnection
 
-    SHAREDED_CLUSTER_OPTS = [:read, :refresh_mode, :refresh_interval, :name]
+    SHARDED_CLUSTER_OPTS = [:refresh_mode, :refresh_interval]
 
-    attr_reader :sharded_cluster_name, :seeds, :refresh_interval, :refresh_mode,
+    attr_reader :seeds, :refresh_interval, :refresh_mode,
                 :refresh_version, :manager
 
     # Create a connection to a MongoDB sharded cluster.
@@ -60,11 +60,162 @@ module Mongo
     # @example Connect to a sharded cluster and provide two seed nodes.
     #   Mongo::ShardedConnection.new(['localhost:30000', 'localhost:30001'])
     #
-    # @example Connect to a sharded cluster providing two seed nodes and ensuring a connection to the sharded cluster named 'prod':
-    #   Mongo::ShardedConnection.new(['localhost:30000', 'localhost:30001'], :name => 'prod')
-    #
     # @raise [MongoArgumentError] This is raised for usage errors.
     #
     # @raise [ConnectionFailure] This is raised for the various connection failures.
+    def initialize(*args)
+      opts = args.last.is_a?(Hash) ? args.pop : {}
+
+      nodes = args.flatten
+
+      if nodes.empty? and ENV.has_key?('MONGODB_URI')
+        parser = URIParser.new ENV['MONGODB_URI']
+        if parser.direct?
+          raise MongoArgumentError, "Mongo::ShardedConnection.new called with no arguments, but ENV['MONGODB_URI'] implies a direct connection."
+        end
+        opts = parser.connection_options.merge! opts
+        nodes = [parser.nodes]
+      end
+
+      unless nodes.length > 0
+        raise MongoArgumentError, "A ShardedConnection requires at least one seed node."
+      end
+
+      @seeds = nodes.map do |host_port|
+        host, port = host_port.split(":")
+        [ host, port.to_i ]
+      end
+
+      # TODO: add a method for replacing this list of node.
+      @seeds.freeze
+
+      # Refresh
+      @last_refresh = Time.now
+      @refresh_version = 0
+
+      # No connection manager by default.
+      @manager = nil
+      @old_managers = []
+
+      # Lock for request ids.
+      @id_lock = Mutex.new
+
+      @pool_mutex = Mutex.new
+      @connected = false
+
+      @safe_mutex_lock = Mutex.new
+      @safe_mutexes = Hash.new {|hash, key| hash[key] = Mutex.new}
+
+      @connect_mutex = Mutex.new
+      @refresh_mutex = Mutex.new
+
+      check_opts(opts)
+      setup(opts)
+    end
+
+    def valid_opts
+      GENERIC_OPTS + SHARDED_CLUSTER_OPTS
+    end
+
+    def inspect
+      "<Mongo::ShardedConnection:0x#{self.object_id.to_s(16)} @seeds=#{@seeds.inspect} " +
+          "@connected=#{@connected}>"
+    end
+
+    # Initiate a connection to the sharded cluster.
+    def connect(force = !@connected)
+      return unless force
+      log(:info, "Connecting...")
+      @connect_mutex.synchronize do
+        discovered_seeds = @manager ? @manager.seeds : []
+        @old_managers << @manager if @manager
+        @manager = ShardingPoolManager.new(self, discovered_seeds | @seeds)
+
+        Thread.current[:managers] ||= Hash.new
+        Thread.current[:managers][self] = @manager
+
+        @manager.connect
+        @refresh_version += 1
+        @last_refresh = Time.now
+        @connected = true
+      end
+    end
+
+    # Force a hard refresh of this connection's view
+    # of the sharded cluster.
+    #
+    # @return [Boolean] +true+ if hard refresh
+    #   occurred. +false+ is returned when unable
+    #   to get the refresh lock.
+    def hard_refresh!
+      log(:info, "Initiating hard refresh...")
+      connect(true)
+      return true
+    end
+
+    def connected?
+      @connected && @manager.primary_pool
+    end
+
+    # Returns +true+ if it's okay to read from a secondary node.
+    # Since this is a sharded cluster, this must always be false.
+    #
+    # This method exist primarily so that Cursor objects will
+    # generate query messages with a slaveOkay value of +true+.
+    #
+    # @return [Boolean] +true+
+    def slave_ok?
+      false
+    end
+
+    def checkout(&block)
+      2.times do
+        if connected?
+          sync_refresh
+        else
+          connect
+        end
+
+        begin
+          socket = block.call
+        rescue => ex
+          checkin(socket) if socket
+          raise ex
+        end
+
+        if socket
+          return socket
+        else
+          @connected = false
+          #raise ConnectionFailure.new("Could not checkout a socket.")
+        end
+      end
+    end
+
+    private
+
+    # Parse option hash
+    def setup(opts)
+      # Refresh
+      @refresh_mode = opts.fetch(:refresh_mode, false)
+      @refresh_interval = opts.fetch(:refresh_interval, 90)
+
+      if @refresh_mode && @refresh_interval < 60
+        @refresh_interval = 60 unless ENV['TEST_MODE'] = 'TRUE'
+      end
+
+      if @refresh_mode == :async
+        warn ":async refresh mode has been deprecated. Refresh
+        mode will be disabled."
+      elsif ![:sync, false].include?(@refresh_mode)
+        raise MongoArgumentError,
+          "Refresh mode must be either :sync or false."
+      end
+
+      opts[:connect_timeout] = opts[:connect_timeout] || 30
+
+      super opts
+    end
+
   end
 end

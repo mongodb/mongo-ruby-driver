@@ -110,6 +110,13 @@ namespace :test do
     t.ruby_opts << '-w'
   end
 
+  desc "Run the sharded cluster test suite"
+  Rake::TestTask.new(:sc) do |t|
+    t.test_files = FileList['test/sharded_cluster/*_test.rb']
+    t.verbose    = true
+    t.ruby_opts << '-w'
+  end
+
   Rake::TestTask.new(:unit) do |t|
     t.test_files = FileList['test/unit/*_test.rb']
     t.verbose    = true
