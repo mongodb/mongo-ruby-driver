@@ -429,9 +429,9 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_array
-    @@coll.remove
-    @@coll.insert({'b' => [1, 2, 3]})
-    @@coll.insert({'b' => [1, 2, 3]})
+    @@coll.remove({}, :safe => true)
+    @@coll.insert({'b' => [1, 2, 3]}, :safe => true)
+    @@coll.insert({'b' => [1, 2, 3]}, :safe => true)
     rows = @@coll.find({}, {:fields => ['b']}).to_a
     assert_equal 2, rows.length
     assert_equal [1, 2, 3], rows[1]['b']

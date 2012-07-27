@@ -23,9 +23,9 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     @db.drop_collection("cursor_tests")
     @coll = @db.collection("cursor_tests")
 
-    @coll.insert({:a => 1})
-    @coll.insert({:b => 2})
-    @coll.insert({:c => 3})
+    @coll.insert({:a => 1}, :safe => true)
+    @coll.insert({:b => 2}, :safe => true)
+    @coll.insert({:c => 3}, :safe => true)
   end
 
   def cursor_count(connection)
@@ -37,6 +37,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     before_secondary = cursor_count(@secondary)
 
     @coll.find.limit(2).to_a
+    sleep(1)
 
     after_primary   = cursor_count(@primary)
     after_secondary = cursor_count(@secondary)
