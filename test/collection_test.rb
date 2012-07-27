@@ -593,13 +593,7 @@ class TestCollection < Test::Unit::TestCase
       end
     end
 
-    def test_aggregate_requires_valid_array_of_hashes
-      assert_raise MongoArgumentError do
-        @@test.aggregate([])
-      end
-    end
-
-    def test_aggregate_requires_valid_hashes
+    def test_aggregate_requires_valid_arguments
       assert_raise MongoArgumentError do
         @@test.aggregate({})
       end
@@ -607,7 +601,7 @@ class TestCollection < Test::Unit::TestCase
 
     def test_aggregate_pipeline_operator_format
       assert_raise Mongo::OperationFailure do
-        @@test.aggregate({"$project" => "_id"})
+        @@test.aggregate([{"$project" => "_id"}])
       end
     end
 
@@ -616,7 +610,7 @@ class TestCollection < Test::Unit::TestCase
       desired_results = [ {"_id"=>1, "pageViews"=>5, "tags"=>["fun", "good", "fun"]}, 
                           {"_id"=>2, "pageViews"=>7, "tags"=>["fun", "nasty"]}, 
                           {"_id"=>3, "pageViews"=>6, "tags"=>["nasty", "filthy"]} ]
-      results = @@test.aggregate({"$project" => {"tags" => 1, "pageViews" => 1}})
+      results = @@test.aggregate([{"$project" => {"tags" => 1, "pageViews" => 1}}])
       assert_equal desired_results, results
     end
 
@@ -625,19 +619,13 @@ class TestCollection < Test::Unit::TestCase
       desired_results = [ {"_id"=>1, "pageViews"=>5, "tags"=>["fun", "good", "fun"]}, 
                           {"_id"=>2, "pageViews"=>7, "tags"=>["fun", "nasty"]}, 
                           {"_id"=>3, "pageViews"=>6, "tags"=>["nasty", "filthy"]} ]
-      results = @@test.aggregate({"$project" => {:tags => 1, :pageViews => 1}})
+      results = @@test.aggregate([{"$project" => {:tags => 1, :pageViews => 1}}])
       assert_equal desired_results, results
     end
 
-    def test_aggregate_pipeline_operators_as_array
+    def test_aggregate_pipeline_multiple_operators
       setup_aggregate_data
       results = @@test.aggregate([{"$project" => {"tags" => 1, "pageViews" => 1}}, {"$match" => {"pageViews" => 7}}])
-      assert_equal 1, results.length
-    end
-
-    def test_aggregate_pipeline_operators_as_hashes
-      setup_aggregate_data
-      results = @@test.aggregate({"$project" => {"tags" => 1, "pageViews" => 1}}, {"$match" => {"pageViews" => 7}})
       assert_equal 1, results.length
     end
 
@@ -665,7 +653,7 @@ class TestCollection < Test::Unit::TestCase
                             "pageViews"=>6, "tags"=>"filthy", "comments"=>[{"author"=>"will", "text"=>"i don't like the color"}, 
                               {"author"=>"jenny", "text"=>"can i get that in green?"}], "other"=>{"bar"=>14 } }
                           ]
-      results = @@test.aggregate({"$unwind"=> "$tags"})
+      results = @@test.aggregate([{"$unwind"=> "$tags"}])
       assert_equal desired_results, results
     end
   end

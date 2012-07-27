@@ -590,13 +590,10 @@ module Mongo
     # @note Aggregate requires server version >= 2.1.1
     # @note Field References: Within an expression, field names must be quoted and prefixed by a dollar sign ($).
     #
-    # @example Define the pipeline as operator hashes:
-    #   coll.aggregate({"$project" => {"last_name" => 1, "first_name" => 1 }}, {"$match" => {"last_name" => "Jones"}})
-    #
     # @example Define the pipeline as an array of operator hashes:
     #   coll.aggregate([ {"$project" => {"last_name" => 1, "first_name" => 1 }}, {"$match" => {"last_name" => "Jones"}} ])
     #
-    # @param [Hash, Array] pipeline Should be either a single array of pipeline operator hashes or the operator hashes as arguments.
+    # @param [Array] pipeline Should be a single array of pipeline operator hashes.
     #   
     #   '$project' Reshapes a document stream by including fields, excluding fields, inserting computed fields, 
     #   renaming fields,or creating/populating fields that hold sub-documents.
@@ -618,37 +615,19 @@ module Mongo
     # @raise MongoArgumentError if operators either aren't supplied or aren't in the correct format.
     # @raise MongoOperationFailure if the aggregate command fails.
     #
-    def aggregate(*pipeline)
-      # One argument is passed in, it must be either an array of hashes or a single hash
-      if pipeline.length == 1 and pipeline[0].class == Array and pipeline[0].length > 0
-        raise MongoArgumentError unless pipeline[0].all? { |op| op.class == Hash }
+    def aggregate(pipeline=nil)
+      raise MongoArgumentError, "pipeline must be an array of operators" unless pipeline.class == Array
+      raise MongoArgumentError, "pipeline operators must be hashes" unless pipeline.all? { |op| op.class == Hash }
 
-        hash = BSON::OrderedHash.new
-        hash['aggregate'] = self.name
-        hash['pipeline'] = pipeline[0]
+      hash = BSON::OrderedHash.new
+      hash['aggregate'] = self.name
+      hash['pipeline'] = pipeline
 
-        result = @db.command(hash)
-        unless Mongo::Support.ok?(result)
-          raise Mongo::OperationFailure, "aggregate failed: #{result['errmsg']}"
-        end
-
-      # Operators are passed in separately
-      elsif pipeline.length > 0 
-        raise MongoArgumentError unless pipeline.all? { |op| op.class == Hash and op.keys.length > 0 }
-
-        hash = BSON::OrderedHash.new
-        hash['aggregate'] = self.name
-        hash['pipeline'] = pipeline
-
-        result = @db.command(hash)
-        unless Mongo::Support.ok?(result)
-          raise Mongo::OperationFailure, "aggregate failed: #{result['errmsg']}"
-        end
-
-      else
-        raise MongoArgumentError, "Aggregate requires at least one operator."
+      result = @db.command(hash)
+      unless Mongo::Support.ok?(result)
+        raise Mongo::OperationFailure, "aggregate failed: #{result['errmsg']}"
       end
-
+      
       return result["result"]
     end
     
