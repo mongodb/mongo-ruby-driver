@@ -98,10 +98,6 @@ module Mongo
       else
         @command = false
       end
-
-      @checkin_read_pool = false
-      @checkin_connection = false
-      @read_pool = nil
     end
 
     # Guess whether the cursor is alive on the server.
@@ -471,7 +467,7 @@ module Mongo
           Mongo::Constants::OP_QUERY, message, nil, sock, @command,
           nil, @options & OP_QUERY_EXHAUST != 0)
         rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
-          force_checkin_socket(sock) unless @socket
+          checkin_socket(sock) unless @socket
           raise ex
         end
         checkin_socket(sock) unless @socket
@@ -502,13 +498,13 @@ module Mongo
       # Cursor id.
       message.put_long(@cursor_id)
       log(:debug, "cursor.refresh() for cursor #{@cursor_id}") if @logger
-      sock = @socket || checkout_socket_for_op_get_more
+      sock = @socket || checkout_socket_from_connection
 
       begin
       results, @n_received, @cursor_id = @connection.receive_message(
         Mongo::Constants::OP_GET_MORE, message, nil, sock, @command, nil)
       rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
-        force_checkin_socket(sock)
+        checkin_socket(sock) unless @socket
         raise ex
       end
       checkin_socket(sock) unless @socket
@@ -526,7 +522,6 @@ module Mongo
         elsif @read_preference == :secondary_only
           socket = @connection.checkout_secondary
         else
-          @read_pool = @connection.read_pool
           socket = @connection.checkout_reader
         end
       rescue SystemStackError, NoMemoryError, SystemCallError => ex
@@ -537,54 +532,8 @@ module Mongo
       socket
     end
 
-    def checkout_socket_for_op_get_more
-      if @read_pool && (@read_pool != @connection.read_pool)
-        checkout_socket_from_read_pool
-      else
-        checkout_socket_from_connection
-      end
-    end
-
-    def checkout_socket_from_read_pool
-      new_pool = @connection.secondary_pools.detect do |pool|
-        pool.host == @read_pool.host && pool.port == @read_pool.port
-      end
-      if new_pool
-        sock = nil
-        begin
-          @read_pool = new_pool
-          sock = new_pool.checkout
-          @checkin_read_pool = true
-        rescue SystemStackError, NoMemoryError, SystemCallError => ex
-          @connection.close
-          raise ex
-        end
-        return sock
-      else
-        raise Mongo::OperationFailure, "Failure to continue iterating " +
-          "cursor because the the replica set member persisting this " +
-          "cursor at #{@read_pool.host_string} cannot be found."
-      end
-    end
-
     def checkin_socket(sock)
-      if @checkin_read_pool
-        @read_pool.checkin(sock)
-        @checkin_read_pool = false
-      elsif @checkin_connection
-        @connection.checkin(sock)
-        @checkin_connection = false
-      end
-    end
-
-    def force_checkin_socket(sock)
-      if @checkin_read_pool
-        @read_pool.checkin(sock)
-        @checkin_read_pool = false
-      else
-        @connection.checkin(sock)
-        @checkin_connection = false
-      end
+      @connection.checkin(sock)
     end
 
     def construct_query_message
