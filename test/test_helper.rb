@@ -93,7 +93,7 @@ class Test::Unit::TestCase
     Object.new
   end
 
-  def assert_raise_error(klass, message)
+  def assert_raise_error(klass, message=nil)
     begin
       yield
     rescue => e
@@ -101,7 +101,7 @@ class Test::Unit::TestCase
         flunk "Expected exception class #{klass} but got #{e.class}.\n #{e.backtrace}"
       end
 
-      if !e.message.include?(message)
+      if message && !e.message.include?(message)
         p e.backtrace
         flunk "#{e.message} does not include #{message}.\n#{e.backtrace}"
       end
