@@ -178,18 +178,20 @@ module Mongo
       member.last_state = :primary
       @primary = member.host_port
       @primary_pool = Pool.new(self.connection, member.host, member.port,
-                              :size => self.connection.pool_size,
-                              :timeout => self.connection.pool_timeout,
-                              :node => member)
+        :size => self.connection.pool_size,
+        :timeout => self.connection.pool_timeout,
+        :node => member
+      )
     end
 
     def assign_secondary(member)
       member.last_state = :secondary
       @secondaries << member.host_port
       pool = Pool.new(self.connection, member.host, member.port,
-                                   :size => self.connection.pool_size,
-                                   :timeout => self.connection.pool_timeout,
-                                   :node => member)
+        :size => self.connection.pool_size,
+        :timeout => self.connection.pool_timeout,
+        :node => member
+      )
       @secondary_pools << pool
     end
 
