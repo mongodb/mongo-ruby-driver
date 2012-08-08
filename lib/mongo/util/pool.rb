@@ -72,7 +72,13 @@ module Mongo
           close_sockets(@sockets)
           @closed = true
         end
+        @node.close if @node
       end
+      true
+    end
+
+    def tags
+      @node.tags
     end
 
     def closed?
@@ -81,7 +87,8 @@ module Mongo
 
     def inspect
       "#<Mongo::Pool:0x#{self.object_id.to_s(16)} @host=#{@host} @port=#{port} " +
-        "@ping_time=#{@ping_time} #{@checked_out.size}/#{@size} sockets available.>"
+        "@ping_time=#{@ping_time} #{@checked_out.size}/#{@size} sockets available " +
+        "up=#{!closed?}>"
     end
 
     def host_string
@@ -132,8 +139,8 @@ module Mongo
 
     def ping
       begin
-        return self.connection['admin'].command({:ping => 1}, :socket => @node.socket)
-      rescue OperationFailure, SocketError, SystemCallError, IOError
+        return self.connection['admin'].command({:ping => 1}, :socket => @node.socket, :timeout => 1)
+      rescue ConnectionFailure, OperationFailure, SocketError, SystemCallError, IOError
         return false
       end
     end

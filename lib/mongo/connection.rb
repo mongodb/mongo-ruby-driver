@@ -42,7 +42,7 @@ module Mongo
 
     attr_reader :logger, :size, :auths, :primary, :safe, :host_to_try,
       :pool_size, :connect_timeout, :pool_timeout,
-      :primary_pool, :socket_class, :op_timeout
+      :primary_pool, :socket_class, :op_timeout, :tag_sets, :acceptable_latency
 
     # Create a connection to single MongoDB instance.
     #
@@ -126,6 +126,10 @@ module Mongo
       # Connection pool for primay node
       @primary      = nil
       @primary_pool = nil
+
+      # Not set for direct connection
+      @tag_sets = {}
+      @acceptable_latency = 15
 
       check_opts(opts)
       setup(opts)
@@ -334,6 +338,15 @@ module Mongo
       DB.new(db_name, self)
     end
 
+    def refresh
+    end
+
+    def pin_pool(pool)
+    end
+
+    def unpin_pool(pool)
+    end
+
     # Drop a database.
     #
     # @param [String] name name of an existing database.
@@ -471,7 +484,7 @@ module Mongo
     # The value of the read preference.
     def read_preference
       if slave_ok?
-        :secondary
+        :secondary_preferred
       else
         :primary
       end
@@ -492,15 +505,9 @@ module Mongo
       @max_bson_size
     end
 
-    # Prefer primary pool but fall back to secondary
-    def checkout_best
-      connect unless connected?
-      @primary_pool.checkout
-    end
-
     # Checkout a socket for reading (i.e., a secondary node).
     # Note: this is overridden in ReplSetConnection.
-    def checkout_reader
+    def checkout_reader(mode=:primary, tag_sets={}, acceptable_latency=15)
       connect unless connected?
       @primary_pool.checkout
     end
@@ -515,21 +522,8 @@ module Mongo
     # Check a socket back into its pool.
     # Note: this is overridden in ReplSetConnection.
     def checkin(socket)
-      if @primary_pool && socket
+      if @primary_pool && socket && socket.pool
         socket.pool.checkin(socket)
-      end
-    end
-
-    # Excecutes block with the best available socket
-    def best_available_socket
-      socket = nil
-      begin
-        socket = checkout_best
-        yield socket
-      ensure
-        if socket
-          socket.pool.checkin(socket)
-        end
       end
     end
 

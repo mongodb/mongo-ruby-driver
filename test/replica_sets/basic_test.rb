@@ -58,7 +58,7 @@ class BasicTest < Test::Unit::TestCase
     assert_equal 0, @conn.arbiters.length
     assert_equal 2, @conn.secondary_pools.length
     assert_equal @rs.name, @conn.replica_set_name
-    assert @conn.secondary_pools.include?(@conn.read_pool)
+    assert @conn.secondary_pools.include?(@conn.read_pool(:secondary))
     assert_equal 90, @conn.refresh_interval
     assert_equal @conn.refresh_mode, false
     #assert_equal 5, @conn.tag_map.keys.length unless @major_version < 2
@@ -92,10 +92,10 @@ class BasicTest < Test::Unit::TestCase
       end
 
       should "close the connection on receive_message for major exceptions" do
-        @con.expects(:checkout_writer).raises(SystemStackError)
+        @con.expects(:checkout_reader).raises(SystemStackError)
         @con.expects(:close)
         begin
-          @coll.find.next
+          @coll.find({}, :read => :primary).next
         rescue SystemStackError
         end
       end

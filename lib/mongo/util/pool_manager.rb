@@ -2,8 +2,10 @@ module Mongo
   class PoolManager
 
     attr_reader :connection, :arbiters, :primary, :secondaries, :primary_pool,
-      :read_pool, :secondary_pool, :read, :secondary_pools, :hosts, :nodes,
-      :max_bson_size, :members, :seeds
+      :secondary_pool, :secondary_pools, :hosts, :nodes, :members, :seeds,
+      :max_bson_size
+
+    attr_accessor :pinned_pools
 
     # Create a new set of connection pools.
     #
@@ -13,6 +15,7 @@ module Mongo
     # time. The union of these lists will be used when attempting to connect,
     # with the newly-discovered nodes being used first.
     def initialize(connection, seeds=[])
+      @pinned_pools = {}
       @connection = connection
       @seeds = seeds
       @previously_connected = false
@@ -29,7 +32,6 @@ module Mongo
       members = connect_to_members
       initialize_pools(members)
       cache_discovered_seeds(members)
-      set_read_pool
 
       @members = members
       @previously_connected = true
@@ -88,17 +90,53 @@ module Mongo
 
     def close(opts={})
       begin
-        pools.each { |pool| pool.close(opts) if pool }
-        @members.each { |member| member.close }
+        pools.each { |pool| pool.close(opts) }
       rescue ConnectionFailure
       end
     end
 
-    private
+    def read
+      read_pool.host_port
+    end
+
+    def read_pool(mode=@connection.read_preference, tags=@connection.tag_sets, 
+      acceptable_latency=@connection.acceptable_latency)
+
+      if mode == :primary && !tags.empty?
+        raise MongoArgumentError, "Read preferecy :primary cannot be combined with tags"
+      end
+
+      pinned = @pinned_pools[Thread.current]
+      if mode && pinned && select_pool([pinned], tags, acceptable_latency) && !pinned.closed?
+        pool = pinned
+      else
+        pool = case mode
+        when :primary
+          @primary_pool
+        when :primary_preferred
+          @primary_pool || select_pool(@secondary_pools, tags, acceptable_latency)
+        when :secondary
+          select_pool(@secondary_pools, tags, acceptable_latency)
+        when :secondary_preferred
+          select_pool(@secondary_pools, tags, acceptable_latency) || @primary_pool
+        when :nearest
+          select_pool(pools, tags, acceptable_latency)
+        end
+      end
+
+      unless pool
+        raise ConnectionFailure, "No replica set member available for query " +
+          "with read preference matching mode #{mode} and tags matching #{tags}."
+      end
+
+      pool
+    end
 
     def pools
-      [@primary_pool, *@secondary_pools]
+      [@primary_pool, *@secondary_pools].compact
     end
+
+    private
 
     def validate_existing_member(member)
       config = member.set_config
@@ -132,6 +170,7 @@ module Mongo
       @hosts = Set.new
       @members = Set.new
       @refresh_required = false
+      @pinned_pools = {}
     end
 
     # Connect to each member of the replica set
@@ -195,40 +234,31 @@ module Mongo
       @secondary_pools << pool
     end
 
-    # Pick a node from the set of possible secondaries.
-    # If more than one node is available, use the ping
-    # time to figure out which nodes to choose from.
-    def set_read_pool
-      if @secondary_pools.empty?
-        @read_pool = @primary_pool
-      elsif @secondary_pools.size == 1
-        @read_pool = @secondary_pools[0]
-        @secondary_pool = @read_pool
+    def select_pool(candidates, tag_sets, acceptable_latency)
+      tag_sets = [tag_sets] unless tag_sets.is_a?(Array)
+
+      if !tag_sets.empty?
+        matches = []
+        tag_sets.detect do |tag_set|
+          matches = candidates.select do |candidate|
+            tag_set.none? { |k,v| candidate.tags[k.to_s] != v } &&
+            candidate.ping_time
+          end
+          !matches.empty?
+        end
       else
-        @read_pool = nearby_pool_from_set(@secondary_pools)
-        @secondary_pool = @read_pool
+        matches = candidates
       end
-      @read = [@read_pool.host, @read_pool.port]
+
+      matches.empty? ? nil : near_pool(matches, acceptable_latency)
     end
 
-    def nearby_pool_from_set(pool_set)
-      ping_ranges = Array.new(3) { |i| Array.new }
-        pool_set.each do |pool|
-          case pool.ping_time
-            when 0..150
-              ping_ranges[0] << pool
-            when 150..1000
-              ping_ranges[1] << pool
-            else
-              ping_ranges[2] << pool
-          end
-        end
-
-        for list in ping_ranges do
-          break if !list.empty?
-        end
-
-      list[rand(list.length)]
+    def near_pool(pool_set, acceptable_latency)
+      nearest_pool = pool_set.min_by { |pool| pool.ping_time }
+      near_pools = pool_set.select do |pool|
+        (pool.ping_time - nearest_pool.ping_time) <= acceptable_latency
+      end
+      near_pools[ rand(near_pools.length) ]
     end
 
     # Iterate through the list of provided seed

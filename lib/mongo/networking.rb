@@ -26,12 +26,12 @@ module Mongo
       add_message_headers(message, operation)
       packed_message = message.to_s
 
-      sock = nil
+      sock = opts.fetch(:socket, nil)
       begin
         if operation == Mongo::Constants::OP_KILL_CURSORS && read_preference != :primary
-          sock = checkout_reader
+          sock ||= checkout_reader
         else
-          sock = checkout_writer
+          sock ||= checkout_writer
         end
         send_message_on_socket(packed_message, sock)
       rescue SystemStackError, NoMemoryError, SystemCallError => ex
@@ -40,7 +40,6 @@ module Mongo
       ensure
         if sock
           sock.pool.checkin(sock)
-          sync_refresh if self.class == "ReplSetConnection"
         end
       end
     end
@@ -113,24 +112,13 @@ module Mongo
       packed_message = message.to_s
 
       result = ''
-      sock   = nil
-      begin
-        if socket
-          sock = socket
-          should_checkin = false
-        else
-          if command || read == :primary
-            sock = checkout_writer
-          elsif read == :secondary
-            sock = checkout_reader
-          else
-            sock = checkout_tagged(read)
-          end
-          should_checkin = true
-        end
 
-        send_message_on_socket(packed_message, sock)
-        result = receive(sock, request_id, exhaust)
+      begin
+        send_message_on_socket(packed_message, socket)
+        result = receive(socket, request_id, exhaust)
+      rescue ConnectionFailure => ex
+        checkin(socket)
+        raise ex
       rescue SystemStackError, NoMemoryError, SystemCallError => ex
         close
         raise ex
@@ -139,10 +127,6 @@ module Mongo
           close if ex.class == IRB::Abort
         end
         raise ex
-      ensure
-        if should_checkin
-          checkin(sock)
-        end
       end
       result
     end
@@ -150,30 +134,25 @@ module Mongo
     private
 
     def receive(sock, cursor_id, exhaust=false)
-      begin
-        if exhaust
-          docs = []
-          num_received = 0
+      if exhaust
+        docs = []
+        num_received = 0
 
-          while(cursor_id != 0) do
-            receive_header(sock, cursor_id, exhaust)
-            number_received, cursor_id = receive_response_header(sock)
-            new_docs, n = read_documents(number_received, sock)
-            docs += new_docs
-            num_received += n
-          end
-
-          return [docs, num_received, cursor_id]
-        else
+        while(cursor_id != 0) do
           receive_header(sock, cursor_id, exhaust)
           number_received, cursor_id = receive_response_header(sock)
-          docs, num_received = read_documents(number_received, sock)
-
-          return [docs, num_received, cursor_id]
+          new_docs, n = read_documents(number_received, sock)
+          docs += new_docs
+          num_received += n
         end
-      rescue Mongo::ConnectionFailure => ex
-        close
-        raise ex
+
+        return [docs, num_received, cursor_id]
+      else
+        receive_header(sock, cursor_id, exhaust)
+        number_received, cursor_id = receive_response_header(sock)
+        docs, num_received = read_documents(number_received, sock)
+
+        return [docs, num_received, cursor_id]
       end
     end
 
@@ -182,7 +161,6 @@ module Mongo
 
       # unpacks to size, request_id, response_to
       response_to = header.unpack('VVV')[2]
-
       if !exhaust && expected_response != response_to
         raise Mongo::ConnectionFailure, "Expected response #{expected_response} but got #{response_to}"
       end
@@ -304,7 +282,6 @@ module Mongo
       end
       total_bytes_sent
       rescue => ex
-        close
         raise ConnectionFailure, "Operation failed with the following exception: #{ex}:#{ex.message}"
       end
     end
@@ -315,7 +292,7 @@ module Mongo
       begin
           message = receive_data(length, socket)
       rescue OperationTimeout, ConnectionFailure => ex
-        close
+        socket.close
 
         if ex.class == OperationTimeout
           raise OperationTimeout, "Timed out waiting on socket read."

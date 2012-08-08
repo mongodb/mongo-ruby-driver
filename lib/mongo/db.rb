@@ -53,6 +53,9 @@ module Mongo
     # The length of time that Collection.ensure_index should cache index calls
     attr_accessor :cache_time
 
+    # Read Preference
+    attr_accessor :read_preference, :tag_sets, :acceptable_latency
+
     # Instances of DB are normally obtained by calling Mongo#db.
     #
     # @param [String] name the database name.
@@ -72,6 +75,7 @@ module Mongo
     #   value is provided, the default value set on this instance's Connection object will be used. This
     #   default can be overridden upon instantiation of any collection by explicity setting a :safe value
     #   on initialization
+    #
     # @option opts [Integer] :cache_time (300) Set the time that all ensure_index calls should cache the command.
     #
     # @core databases constructor_details
@@ -87,6 +91,8 @@ module Mongo
         value = @connection.read_preference
       end
       @read_preference = value.is_a?(Hash) ? value.dup : value
+      @tag_sets = opts.fetch(:tag_sets, @connection.tag_sets)
+      @acceptable_latency = opts.fetch(:acceptable_latency, @connection.acceptable_latency)
       @cache_time = opts[:cache_time] || 300 #5 minutes.
     end
 
@@ -112,8 +118,11 @@ module Mongo
         end
       end
 
-      @connection.best_available_socket do |socket|
+      begin
+        socket = @connection.checkout_reader(:primary_preferred)
         issue_authentication(username, password, save_auth, :socket => socket)
+      ensure
+        socket.pool.checkin(socket) if socket
       end
 
       @connection.authenticate_pools
@@ -626,13 +635,6 @@ module Mongo
         raise MongoDBError, "Error: invalid collection #{name}: #{doc.inspect}"
       end
       doc
-    end
-
-    # The value of the read preference. This will be
-    # either +:primary+, +:secondary+, or an object
-    # representing the tags to be read from.
-    def read_preference
-      @read_preference
     end
 
     private

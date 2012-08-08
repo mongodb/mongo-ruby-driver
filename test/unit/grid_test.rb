@@ -7,6 +7,8 @@ class GridTest < Test::Unit::TestCase
       @conn   = stub()
       @conn.stubs(:safe)
       @conn.stubs(:read_preference)
+      @conn.stubs(:tag_sets)
+      @conn.stubs(:acceptable_latency)
       @db     = DB.new("testing", @conn)
       @files  = mock()
       @chunks = mock()

@@ -37,7 +37,7 @@ class CollectionTest < Test::Unit::TestCase
       @conn = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @conn['testing']
       @coll = @db.collection('books')
-      @conn.expects(:checkout_writer).returns(mock())
+      @conn.expects(:checkout_reader).returns(mock(:pool))
       @conn.expects(:receive_message).with do |op, msg, log, sock|
         op == 2004
       end.returns([[], 0, 0])

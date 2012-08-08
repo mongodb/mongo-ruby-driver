@@ -69,12 +69,12 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     
     rescue_connection_failure do
       @conn = ReplSetConnection.new(build_seeds(3),
-        :refresh_interval => 2, :refresh_mode => :sync)
+        :refresh_interval => 2, :refresh_mode => :sync, :read => :secondary_preferred)
     end
 
     assert_equal [], @conn.secondaries
     assert @conn.connected?
-    assert_equal @conn.read_pool, @conn.primary_pool
+    assert_equal @conn.manager.read, @conn.manager.primary
     old_refresh_version = @conn.refresh_version
 
     @rs.restart_killed_nodes
@@ -86,7 +86,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
       "Refresh version hasn't changed."
     assert @conn.secondaries.length > 0,
       "No secondaries have been added."
-    assert @conn.read_pool != @conn.primary_pool,
+    assert @conn.manager.read != @conn.manager.primary,
       "Read pool and primary pool are identical."
   end
   

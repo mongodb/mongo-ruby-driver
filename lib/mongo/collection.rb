@@ -23,6 +23,9 @@ module Mongo
 
     attr_reader :db, :name, :pk_factory, :hint, :safe
 
+    # Read Preference
+    attr_accessor :read_preference, :tag_sets, :acceptable_latency
+
     # Initialize a collection object.
     #
     # @param [String, Symbol] name the name of the collection.
@@ -97,6 +100,8 @@ module Mongo
           value = @db.read_preference
         end
         @read_preference = value.is_a?(Hash) ? value.dup : value
+        @tag_sets = opts.fetch(:tag_sets, @db.tag_sets)
+        @acceptable_latency = opts.fetch(:acceptable_latency, @db.acceptable_latency)
       end
       @pk_factory = pk_factory || opts[:pk] || BSON::ObjectId
       @hint = nil
@@ -220,6 +225,8 @@ module Mongo
       transformer = opts.delete(:transformer)
       show_disk_loc = opts.delete(:show_disk_loc)
       read          = opts.delete(:read) || @read_preference
+      tag_sets      = opts.delete(:tag_sets) || @tag_sets
+      acceptable_latency = opts.delete(:acceptable_latency) || @acceptable_latency
 
       if timeout == false && !block_given?
         raise ArgumentError, "Collection#find must be invoked with a block when timeout is disabled."
@@ -247,7 +254,9 @@ module Mongo
         :max_scan    => max_scan,
         :show_disk_loc => show_disk_loc,
         :return_key    => return_key,
-        :read          => read
+        :read          => read,
+        :tag_sets      => tag_sets,
+        :acceptable_latency => acceptable_latency
       })
 
       if block_given?
@@ -761,13 +770,6 @@ module Mongo
       else
         raise OperationFailure, "group command failed: #{result['errmsg']}"
       end
-    end
-
-    # The value of the read preference. This will be
-    # either +:primary+, +:secondary+, or an object
-    # representing the tags to be read from.
-    def read_preference
-      @read_preference
     end
 
     private

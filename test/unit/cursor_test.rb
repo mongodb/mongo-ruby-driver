@@ -6,10 +6,13 @@ class CursorTest < Test::Unit::TestCase
       @logger     = mock()
       @logger.stubs(:debug)
       @connection = stub(:class => Connection, :logger => @logger,
-        :slave_ok? => false, :read_preference => :primary, :log_duration => false)
+        :slave_ok? => false, :read_preference => :primary, :log_duration => false,
+        :tag_sets => {}, :acceptable_latency => 10)
       @db         = stub(:name => "testing", :slave_ok? => false,
-        :connection => @connection, :read_preference => :primary)
-      @collection = stub(:db => @db, :name => "items", :read_preference => :primary)
+        :connection => @connection, :read_preference => :primary,
+        :tag_sets => {}, :acceptable_latency => 10)
+      @collection = stub(:db => @db, :name => "items", :read_preference => :primary,
+        :tag_sets => {}, :acceptable_latency => 10)
       @cursor     = Cursor.new(@collection)
     end
 
@@ -103,9 +106,11 @@ class CursorTest < Test::Unit::TestCase
       @logger     = mock()
       @logger.stubs(:debug)
       @connection = stub(:class => Connection, :logger => @logger, :slave_ok? => false,
-        :log_duration => false)
-      @db = stub(:slave_ok? => true, :name => "testing", :connection => @connection)
-      @collection = stub(:db => @db, :name => "items", :read_preference => :primary)
+        :log_duration => false, :tag_sets =>{}, :acceptable_latency => 10)
+      @db = stub(:slave_ok? => true, :name => "testing", :connection => @connection,
+        :tag_sets => {}, :acceptable_latency => 10)
+      @collection = stub(:db => @db, :name => "items", :read_preference => :primary,
+        :tag_sets => {}, :acceptable_latency => 10)
     end
 
     should "when an array should return a hash with each key" do

@@ -79,9 +79,7 @@ module Mongo
                             "#{ex.class}: #{ex.message}")
 
         # Socket may already be nil from issuing command
-        if @socket && !@socket.closed?
-          @socket.close
-        end
+        close
       end
 
       @config
@@ -117,6 +115,10 @@ module Mongo
 
     def secondary?
       @config['secondary'] == true || @config['secondary'] == 1
+    end
+
+    def tags
+      @config['tags'] || {}
     end
 
     def host_port

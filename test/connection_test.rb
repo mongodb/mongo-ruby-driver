@@ -385,7 +385,7 @@ class TestConnection < Test::Unit::TestCase
       end
 
       should "close the connection on receive_message for major exceptions" do
-        @con.expects(:checkout_writer).raises(SystemStackError)
+        @con.expects(:checkout_reader).raises(SystemStackError)
         @con.expects(:close)
         begin
           @coll.find.next
@@ -421,11 +421,11 @@ class TestConnection < Test::Unit::TestCase
 
     should "release connection if an exception is raised on receive_message" do
       @con.stubs(:receive).raises(ConnectionFailure)
-      assert_equal 0, @con.primary_pool.checked_out.size
+      assert_equal 0, @con.read_pool.checked_out.size
       assert_raise ConnectionFailure do
         @coll.find.to_a
       end
-      assert_equal 0, @con.primary_pool.checked_out.size
+      assert_equal 0, @con.read_pool.checked_out.size
     end
 
     should "show a proper exception message if an IOError is raised while closing a socket" do

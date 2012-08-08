@@ -77,6 +77,9 @@ module Mongo
         value = collection.read_preference
       end
       @read_preference = value.is_a?(Hash) ? value.dup : value
+      @tag_sets = opts.fetch(:tag_sets, @collection.tag_sets)
+      @acceptable_latency = opts.fetch(:acceptable_latency, @collection.acceptable_latency)
+
       batch_size(opts[:batch_size] || 0)
 
       @full_collection_name = "#{@collection.db.name}.#{@collection.name}"
@@ -335,7 +338,7 @@ module Mongo
         message.put_int(1)
         message.put_long(@cursor_id)
         log(:debug, "Cursor#close #{@cursor_id}")
-        @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message)
+        @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message, :socket => @socket)
       end
       @cursor_id = 0
       @closed    = true
@@ -458,19 +461,37 @@ module Mongo
       end
     end
 
+    # Sends initial query -- which is always a read unless it is a command
+    #
+    # Upon ConnectionFailure, tries query 3 times if socket was not provided
+    # and the query is either not a command or is a secondary_ok command.
+    # 
+    # Pins pools upon successful read and unpins pool upon ConnectionFailure
+    #
     def send_initial_query
-      message = construct_query_message
-      sock    = @socket || checkout_socket_from_connection
+      tries = 0
       instrument(:find, instrument_payload) do
         begin
-        results, @n_received, @cursor_id = @connection.receive_message(
-          Mongo::Constants::OP_QUERY, message, nil, sock, @command,
-          nil, @options & OP_QUERY_EXHAUST != 0)
-        rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
-          checkin_socket(sock) unless @socket
+          tries += 1
+          message = construct_query_message
+          sock    = @socket || checkout_socket_from_connection
+          results, @n_received, @cursor_id = @connection.receive_message(
+            Mongo::Constants::OP_QUERY, message, nil, sock, @command,
+            nil, @options & OP_QUERY_EXHAUST != 0)
+        rescue ConnectionFailure => ex
+          if tries < 3 && !@socket && (!@command || Mongo::Support.secondary_ok?(@selector))
+            @connection.unpin_pool(sock.pool) if sock
+            @connection.refresh
+            retry
+          else
+            raise ex
+          end
+        rescue OperationFailure, OperationTimeout => ex
           raise ex
+        ensure
+          checkin_socket(sock) unless @socket
         end
-        checkin_socket(sock) unless @socket
+        @connection.pin_pool(sock.pool) if !@command && !@socket
         @returned += @n_received
         @cache += results
         @query_run = true
@@ -498,38 +519,32 @@ module Mongo
       # Cursor id.
       message.put_long(@cursor_id)
       log(:debug, "cursor.refresh() for cursor #{@cursor_id}") if @logger
+
       sock = @socket || checkout_socket_from_connection
 
       begin
-      results, @n_received, @cursor_id = @connection.receive_message(
-        Mongo::Constants::OP_GET_MORE, message, nil, sock, @command, nil)
-      rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
+        results, @n_received, @cursor_id = @connection.receive_message(
+          Mongo::Constants::OP_GET_MORE, message, nil, sock, @command, nil)
+      ensure
         checkin_socket(sock) unless @socket
-        raise ex
       end
-      checkin_socket(sock) unless @socket
+      
       @returned += @n_received
       @cache += results
       close_cursor_if_query_complete
     end
 
     def checkout_socket_from_connection
-      socket = nil
       begin
-        @checkin_connection = true
-        if @command || @read_preference == :primary
-          socket = @connection.checkout_writer
-        elsif @read_preference == :secondary_only
-          socket = @connection.checkout_secondary
+        if @command && !Mongo::Support::secondary_ok?(@selector)
+          @connection.checkout_reader(:primary)
         else
-          socket = @connection.checkout_reader
+          @connection.checkout_reader(@read_preference, @tag_sets, @acceptable_latency)
         end
       rescue SystemStackError, NoMemoryError, SystemCallError => ex
         @connection.close
         raise ex
       end
-
-      socket
     end
 
     def checkin_socket(sock)

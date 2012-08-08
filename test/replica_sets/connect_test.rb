@@ -13,6 +13,14 @@ class ConnectTest < Test::Unit::TestCase
     ENV['MONGODB_URI'] = @old_mongodb_uri
   end
 
+  def step_down_command
+    # Adding force=true to avoid 'no secondaries within 10 seconds of my optime' errors
+    step_down_command = BSON::OrderedHash.new
+    step_down_command[:replSetStepDown] = 60
+    step_down_command[:force]           = true
+    step_down_command
+  end
+
   # TODO: test connect timeout.
 
   def test_connect_with_deprecated_multi
@@ -26,21 +34,6 @@ class ConnectTest < Test::Unit::TestCase
   def test_connect_bad_name
     assert_raise_error(ReplicaSetConnectionError, "-wrong") do
       @conn = ReplSetConnection.new(build_seeds(3), :name => @rs.name + "-wrong")
-    end
-  end
-
-  def test_connect_with_primary_node_killed
-    @rs.kill_primary
-
-    # Becuase we're killing the primary and trying to connect right away,
-    # this is going to fail right away.
-    assert_raise_error(ConnectionFailure, "Failed to connect to primary node") do
-      @conn = ReplSetConnection.new build_seeds(3)
-    end
-
-    # This allows the secondary to come up as a primary
-    rescue_connection_failure do
-      @conn = ReplSetConnection.new build_seeds(3)
     end
   end
 
@@ -69,13 +62,9 @@ class ConnectTest < Test::Unit::TestCase
 
     primary = Mongo::Connection.new(@conn.primary_pool.host, @conn.primary_pool.port)
     assert_raise Mongo::ConnectionFailure do
-      primary['admin'].command({:replSetStepDown => 60})
+      primary['admin'].command(step_down_command)
     end
     assert @conn.connected?
-    assert_raise Mongo::ConnectionFailure do
-      @conn[MONGO_TEST_DB]['bar'].find_one
-    end
-    assert !@conn.connected?
 
     rescue_connection_failure do
       @conn[MONGO_TEST_DB]['bar'].find_one
@@ -86,11 +75,6 @@ class ConnectTest < Test::Unit::TestCase
     @conn = ReplSetConnection.new build_seeds(3)
 
     primary = Mongo::Connection.new(@conn.primary_pool.host, @conn.primary_pool.port)
-
-    # Adding force=true to avoid 'no secondaries within 10 seconds of my optime' errors
-    step_down_command = BSON::OrderedHash.new
-    step_down_command[:replSetStepDown] = 60
-    step_down_command[:force]           = true
     assert_raise Mongo::ConnectionFailure do
       primary['admin'].command(step_down_command)
     end

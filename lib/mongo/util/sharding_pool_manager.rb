@@ -80,7 +80,6 @@ module Mongo
     # or the members have changed, set @refresh_required to true, and return.
     # The config.mongos find can't be part of the connect call chain due to infinite recursion
     def check_connection_health
-      puts "check_connection_health"
       begin
         seeds = @connection['config']['mongos'].find.to_a.map{|doc| doc['_id']}
         if @seeds != seeds

@@ -10,33 +10,54 @@ class ReadTest < Test::Unit::TestCase
 
   end
 
-  context "Read mode on replica set connection: " do
+  context "Read preferences on replica set connection: " do
     setup do
-      @read_preference = :secondary
-      @con = Mongo::ReplSetConnection.new(['localhost:27017'], :read => @read_preference, :connect => false)
+      @read_preference = :secondary_preferred
+      @acceptable_latency = 100
+      @tags = {"dc" => "Tyler", "rack" => "Brock"}
+      @bad_tags = {"wow" => "cool"}
+      @con = Mongo::ReplSetConnection.new(
+        ['localhost:27017'],
+        :read => @read_preference,
+        :tag_sets => @tags,
+        :secondary_acceptable_latency_ms => @acceptable_latency,
+        :connect => false
+      )
     end
 
     should "store read preference on Connection" do
       assert_equal @read_preference, @con.read_preference
+      assert_equal @tags, @con.tag_sets
+      assert_equal @acceptable_latency, @con.acceptable_latency
     end
 
     should "propogate to DB" do
       db = @con['foo']
       assert_equal @read_preference, db.read_preference
+      assert_equal @tags, db.tag_sets
+      assert_equal @acceptable_latency, db.acceptable_latency
 
       db = @con.db('foo')
       assert_equal @read_preference, db.read_preference
+      assert_equal @tags, db.tag_sets
+      assert_equal @acceptable_latency, db.acceptable_latency
 
       db = DB.new('foo', @con)
       assert_equal @read_preference, db.read_preference
+      assert_equal @tags, db.tag_sets
+      assert_equal @acceptable_latency, db.acceptable_latency
     end
 
     should "allow db override" do
-      db = DB.new('foo', @con, :read => :primary)
+      db = DB.new('foo', @con, :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
       assert_equal :primary, db.read_preference
+      assert_equal @bad_tags, db.tag_sets
+      assert_equal 25, db.acceptable_latency
 
-      db = @con.db('foo', :read => :primary)
+      db = @con.db('foo', :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
       assert_equal :primary, db.read_preference
+      assert_equal @bad_tags, db.tag_sets
+      assert_equal 25, db.acceptable_latency
     end
 
     context "on DB: " do
@@ -47,20 +68,30 @@ class ReadTest < Test::Unit::TestCase
       should "propogate to collection" do
         col = @db.collection('bar')
         assert_equal @read_preference, col.read_preference
+        assert_equal @tags, col.tag_sets
+        assert_equal @acceptable_latency, col.acceptable_latency
 
         col = @db['bar']
         assert_equal @read_preference, col.read_preference
+        assert_equal @tags, col.tag_sets
+        assert_equal @acceptable_latency, col.acceptable_latency
 
         col = Collection.new('bar', @db)
         assert_equal @read_preference, col.read_preference
+        assert_equal @tags, col.tag_sets
+        assert_equal @acceptable_latency, col.acceptable_latency
       end
 
       should "allow override on collection" do
-        col = @db.collection('bar', :read => :primary)
+        col = @db.collection('bar', :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
         assert_equal :primary, col.read_preference
+        assert_equal @bad_tags, col.tag_sets
+        assert_equal 25, col.acceptable_latency
 
-        col = Collection.new('bar', @db, :read => :primary)
+        col = Collection.new('bar', @db, :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
         assert_equal :primary, col.read_preference
+        assert_equal @bad_tags, col.tag_sets
+        assert_equal 25, col.acceptable_latency
       end
     end
 
@@ -92,7 +123,7 @@ class ReadTest < Test::Unit::TestCase
         primary_pool = stub(:checkin => true)
         sock.stubs(:pool).returns(primary_pool)
         @con.stubs(:primary_pool).returns(primary_pool)
-        @con.expects(:checkout_writer).returns(sock)
+        @con.expects(:checkout_reader).returns(sock)
         @con.expects(:receive_message).with do |o, m, l, s, c, r|
           r == nil
         end.returns([[], 0, 0])

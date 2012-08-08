@@ -23,6 +23,13 @@ module Mongo
     include Mongo::Conversions
     extend self
 
+    READ_PREFERENCES = [:primary, :primary_preferred, :secondary, :secondary_preferred, :nearest]
+
+    # Commands that may be sent to replica-set secondaries, depending on
+    # read preference and tags. All other commands are always run on the primary.
+    SECONDARY_OK_COMMANDS = ['group', 'aggregate', 'collstats', 'dbstats', 'count', 'distinct',
+      'geonear', 'geosearch', 'geowalk']
+
     # Generate an MD5 for authentication.
     #
     # @param [String] username
@@ -58,12 +65,25 @@ module Mongo
       db_name
     end
 
+    def secondary_ok?(selector)
+      command = selector.keys.first.to_s.downcase
+
+      if command == 'mapreduce'
+        map_reduce = selector[command]
+        if map_reduce && map_reduce.is_a?(Hash) && map_reduce.has_key?('out')
+          map_reduce['out'] == 'inline' ? false : true
+        end
+      else
+        SECONDARY_OK_COMMANDS.member?(command)
+      end
+    end
+
     def validate_read_preference(value)
-      if [:primary, :secondary, :secondary_only, nil].include?(value)
+      if READ_PREFERENCES.include?(value)
         return true
       else
         raise MongoArgumentError, "#{value} is not a valid read preference. " +
-          "Please specify either :primary or :secondary or :secondary_only."
+          "Please specify one of the following read preferences as a symbol: #{READ_PREFERENCES}"
       end
     end
 

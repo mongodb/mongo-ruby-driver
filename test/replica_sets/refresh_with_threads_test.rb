@@ -21,7 +21,7 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
     args = {
       :refresh_interval => 5,
       :refresh_mode => :sync,
-      :read => :secondary
+      :read => :secondary_preferred
     }
     @conn = ReplSetConnection.new(seeds, args)
     @duplicate = @conn[MONGO_TEST_DB]['duplicate']

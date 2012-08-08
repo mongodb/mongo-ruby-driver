@@ -16,9 +16,13 @@ class DBTest < Test::Unit::TestCase
         @conn = stub()
         @conn.stubs(:safe)
         @conn.stubs(:read_preference)
+        @conn.stubs(:tag_sets)
+        @conn.stubs(:acceptable_latency)
         @db   = DB.new("testing", @conn)
         @db.stubs(:safe)
         @db.stubs(:read_preference)
+        @db.stubs(:tag_sets)
+        @db.stubs(:acceptable_latency)
         @collection = mock()
         @db.stubs(:system_command_collection).returns(@collection)
       end

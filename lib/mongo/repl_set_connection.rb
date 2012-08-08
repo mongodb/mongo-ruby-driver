@@ -21,11 +21,11 @@ module Mongo
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetConnection < Connection
 
-    REPL_SET_OPTS = [:read, :refresh_mode, :refresh_interval, :require_primary,
-      :read_secondary, :rs_name, :name]
+    REPL_SET_OPTS = [:read, :refresh_mode, :refresh_interval, :read_secondary, 
+      :rs_name, :name, :tag_sets, :secondary_acceptable_latency_ms]
 
     attr_reader :replica_set_name, :seeds, :refresh_interval, :refresh_mode,
-      :refresh_version, :manager
+      :refresh_version, :manager, :tag_sets, :acceptable_latency
 
     # Create a connection to a MongoDB replica set.
     #
@@ -43,10 +43,23 @@ module Mongo
     #     propagated to DB objects instantiated off of this Connection. This
     #     default can be overridden upon instantiation of any DB by explicitly setting a :safe value
     #     on initialization.
-    #   @option opts [:primary, :secondary, :secondary_only] :read (:primary) The default read preference for Mongo::DB
-    #     objects created from this connection object. If +:secondary+ is chosen, reads will be sent
-    #     to one of the closest available secondary nodes. If a secondary node cannot be located, the
-    #     read will be sent to the primary.
+    #   @option opts [:primary, :primary_preferred, :secondary, :secondary_preferred, :nearest] :read_preference (:primary)
+    #     A "read preference" determines the candidate replica set members to which a query or command can be sent.
+    #     [:primary]
+    #       * Read from primary only.
+    #       * Cannot be combined with tags.
+    #     [:primary_preferred]
+    #       * Read from primary if available, otherwise read from a secondary.
+    #     [:secondary]
+    #       * Read from secondary if available.
+    #     [:secondary_preferred]
+    #       * Read from a secondary if available, otherwise read from the primary.
+    #     [:nearest]
+    #       * Read from any member.
+    #   @option opts [Array<Hash{ String, Symbol => Tag Value }>] :tag_sets ([])
+    #     Read from replica-set members with these tags.
+    #   @option opts [Integer] :secondary_acceptable_latency_ms (15) The acceptable
+    #     nearest available member for a member to be considered "near".
     #   @option opts [Logger] :logger (nil) Logger instance to receive driver operation log.
     #   @option opts [Integer] :pool_size (1) The maximum number of socket connections allowed per
     #     connection pool. Note: this setting is relevant only for multi-threaded applications.
@@ -62,9 +75,7 @@ module Mongo
     #     will always trigger a complete refresh. This option is useful when you want to add new nodes
     #     or remove replica set nodes not currently in use by the driver.
     #   @option opts [Integer] :refresh_interval (90) If :refresh_mode is enabled, this is the number of seconds
-    #     between calls to check the replica set's state.
-    #   @option opts [Boolean] :require_primary (true) If true, require a primary node for the connection
-    #     to succeed. Otherwise, connection will succeed as long as there's at least one secondary node.  
+    #     between calls to check the replica set's state. 
     #   @note the number of seed nodes does not have to be equal to the number of replica set members.
     #     The purpose of seed nodes is to permit the driver to find at least one replica set member even if a member is down.
     #
@@ -161,10 +172,7 @@ module Mongo
         @manager.connect
         @refresh_version += 1
 
-        if @require_primary && @manager.primary.nil? #TODO: in v2.0, we'll let this be optional and do a lazy connect.
-          close
-          raise ConnectionFailure, "Failed to connect to primary node."
-        elsif @manager.read_pool.nil?
+        if @manager.pools.empty?
           close
           raise ConnectionFailure, "Failed to connect to any node."
         else
@@ -220,7 +228,7 @@ module Mongo
     end
 
     def connected?
-      @connected && (@manager.primary_pool || @manager.read_pool)
+      @connected && !@manager.pools.empty?
     end
 
     # @deprecated
@@ -288,114 +296,66 @@ module Mongo
     end
 
     # Returns +true+ if it's okay to read from a secondary node.
-    # Since this is a replica set, this must always be true.
     #
     # This method exist primarily so that Cursor objects will
     # generate query messages with a slaveOkay value of +true+.
     #
     # @return [Boolean] +true+
     def slave_ok?
-      true
+      @read != :primary
     end
 
     def authenticate_pools
-      if primary_pool
-        primary_pool.authenticate_existing
-      end
-      secondary_pools.each do |pool|
-        pool.authenticate_existing
-      end
+      pools.each { |pool| pool.authenticate_existing }
     end
 
     def logout_pools(db)
-      if primary_pool
-        primary_pool.logout_existing(db)
-      end
-      secondary_pools.each do |pool|
-        pool.logout_existing(db)
-      end
+      pools.each { |pool| pool.logout_existing(db) }
     end
 
     # Generic socket checkout
     # Takes a block that returns a socket from pool
-    def checkout(&block)
-      if connected?
-        sync_refresh
-      else
-        connect
-      end
-      
+    def checkout
+      ensure_manager
+
+      connected? ? sync_refresh : connect
+
       begin
-        socket = block.call
+        socket = yield
       rescue => ex
         checkin(socket) if socket
         raise ex
       end
-      
+
       if socket
         socket
       else
         @connected = false
         raise ConnectionFailure.new("Could not checkout a socket.")
       end
-    end
-
-    # Checkout best available socket by trying primary
-    # pool first and then falling back to secondary.
-    def checkout_best
-      checkout do
-        socket = get_socket_from_pool(:primary)
-        if !socket
-          connect
-          socket = get_socket_from_pool(:secondary)
-        end
-        socket
-      end
+      socket
     end
     
-    # Checkout a socket for reading (i.e., a secondary node).
-    # Note that @read_pool might point to the primary pool
-    # if no read pool has been defined.
-    def checkout_reader
+    def checkout_reader(mode=@read, tag_sets=@tag_sets, acceptable_latency=@acceptable_latency)
       checkout do
-        socket = get_socket_from_pool(:read)
-        if !socket
-          connect
-          socket = get_socket_from_pool(:primary)
-        end
-        socket
-      end
-    end
-
-    # Checkout a socket from a secondary
-    # For :read_preference => :secondary_only
-    def checkout_secondary
-      checkout do
-        get_socket_from_pool(:secondary)
+        pool = read_pool(mode, tag_sets, acceptable_latency)
+        get_socket_from_pool(pool)
       end
     end
 
     # Checkout a socket for writing (i.e., a primary node).
     def checkout_writer
       checkout do
-        get_socket_from_pool(:primary)
+        get_socket_from_pool(primary_pool)
       end
     end
 
     # Checkin a socket used for reading.
     def checkin(socket)
-      if socket
+      if socket && socket.pool
         socket.pool.checkin(socket)
       end
       sync_refresh
-    end
-
-    def close_socket(socket)
-      begin
-        socket.close if socket
-      rescue IOError
-        log(:info, "Tried to close socket #{socket} but already closed.")
-      end
     end
 
     def ensure_manager
@@ -406,25 +366,19 @@ module Mongo
       end
     end
 
-    def get_socket_from_pool(pool_type)
-      ensure_manager
+    def pin_pool(pool)
+      @manager.pinned_pools[Thread.current] = pool if @manager
+    end
 
-      pool = case pool_type
-        when :primary
-          primary_pool
-        when :secondary
-          secondary_pool
-        when :read
-          read_pool
-      end
+    def unpin_pool(pool)
+      @manager.pinned_pools[Thread.current] = nil if @manager
+    end
 
+    def get_socket_from_pool(pool)
       begin
-        if pool
-          pool.checkout
-        end
-      rescue ConnectionFailure => ex
-        log(:info, "Failed to checkout from #{pool} with #{ex.class}; #{ex.message}")
-        return nil
+        pool.checkout if pool
+      rescue ConnectionFailure
+        nil
       end
     end
 
@@ -453,8 +407,8 @@ module Mongo
       local_manager ? local_manager.primary_pool : nil
     end
 
-    def read_pool
-      local_manager ? local_manager.read_pool : nil
+    def read_pool(mode=@read, tags=@tag_sets, acceptable_latency=@acceptable_latency)
+      local_manager ? local_manager.read_pool(mode, tags, acceptable_latency) : nil
     end
 
     def secondary_pool
@@ -481,9 +435,6 @@ module Mongo
 
     # Parse option hash
     def setup(opts)
-      # Require a primary node to connect?
-      @require_primary = opts.fetch(:require_primary, true)
-
       # Refresh
       @refresh_mode = opts.fetch(:refresh_mode, false)
       @refresh_interval = opts.fetch(:refresh_interval, 90)
@@ -500,16 +451,19 @@ module Mongo
           "Refresh mode must be either :sync or false."
       end
 
-      # Are we allowing reads from secondaries?
+      # Determine read preference
       if opts[:read_secondary]
         warn ":read_secondary options has now been deprecated and will " +
           "be removed in driver v2.0. Use the :read option instead."
         @read_secondary = opts.fetch(:read_secondary, false)
-        @read = :secondary
+        @read = :secondary_preferred
       else
         @read = opts.fetch(:read, :primary)
         Mongo::Support.validate_read_preference(@read)
       end
+
+      @tag_sets = opts.fetch(:tag_sets, [])
+      @acceptable_latency = opts.fetch(:secondary_acceptable_latency_ms, 15)
 
       # Replica set name
       if opts[:rs_name]
@@ -523,24 +477,6 @@ module Mongo
       opts[:connect_timeout] = opts[:connect_timeout] || 30
 
       super opts
-    end
-
-    # Checkout a socket connected to a node with one of
-    # the provided tags. If no such node exists, raise
-    # an exception.
-    #
-    # NOTE: will be available in driver release v2.0.
-    def checkout_tagged(tags)
-      tags.each do |k, v|
-        pool = self.tag_map[{k.to_s => v}]
-        if pool
-          socket = pool.checkout
-          return socket
-        end
-      end
-
-      raise NodeWithTagsNotFound,
-        "Could not find a connection tagged with #{tags}."
     end
     
     def prune_managers
@@ -558,8 +494,9 @@ module Mongo
     def sync_refresh
       if @refresh_mode == :sync &&
         ((Time.now - @last_refresh) > @refresh_interval)
+
         @last_refresh = Time.now
-        
+
         if @refresh_mutex.try_lock
           begin
             refresh

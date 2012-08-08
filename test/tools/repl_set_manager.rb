@@ -138,13 +138,13 @@ class ReplSetManager
   def remove_secondary_node
     primary = get_node_with_state(1)
     con = get_connection(primary)
-    config = con['local']['system.replset'].find_one
+    @config = con['local']['system.replset'].find_one
     secondary = get_node_with_state(2)
     host_port = "#{@host}:#{@mongods[secondary]['port']}"
     kill(secondary)
     @mongods.delete(secondary)
     @config['members'].reject! {|m| m['host'] == host_port}
-    @config['version'] = config['version'] + 1
+    @config['version'] += 1
 
     begin
       con['admin'].command({'replSetReconfig' => @config})
@@ -161,9 +161,9 @@ class ReplSetManager
     primary = get_node_with_state(1)
     con = get_connection(primary)
 
+    @config = con['local']['system.replset'].find_one
     init_node(n || @mongods.length, &block)
-    config = con['local']['system.replset'].find_one
-    @config['version'] = config['version'] + 1
+    @config['version'] += 1
 
     # We expect a connection failure on reconfigure here.
     begin
@@ -175,8 +175,8 @@ class ReplSetManager
     ensure_up
   end
   
-  def add_arbiter
-    add_node do |attrs|
+  def add_arbiter(n=nil)
+    add_node(n) do |attrs|
       attrs['arbiterOnly'] = true
     end
   end
@@ -184,14 +184,14 @@ class ReplSetManager
   def wait_for_death(pid)
     @retries.times do
       if `ps a | grep mongod`.include?("#{pid}")
-        puts "waiting for mongod @ pid #{pid} to die..."
+        #puts "waiting for mongod @ pid #{pid} to die..."
         sleep(1)
       else
         #puts "mongod @ pid #{pid} was killed successfully"
         return true
       end
     end
-    puts "mongod never died"
+    #puts "mongod never died"
     return false
   end
 
@@ -334,7 +334,7 @@ class ReplSetManager
     str
   end
 
-  private
+  #private
 
   def initiate
     #puts "Initiating replica set..."

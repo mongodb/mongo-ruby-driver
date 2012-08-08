@@ -5,10 +5,10 @@ require './test/tools/repl_set_manager'
 class Test::Unit::TestCase
   # Ensure replica set is available as an instance variable and that
   # a new set is spun up for each TestCase class
-  def ensure_rs
+  def ensure_rs(opts={})
     unless defined?(@@current_class) and @@current_class == self.class
       @@current_class = self.class 
-      @@rs = ReplSetManager.new
+      @@rs = ReplSetManager.new(opts)
       @@rs.start_set
     end
     @rs = @@rs
