@@ -561,7 +561,7 @@ class TestCollection < Test::Unit::TestCase
          "tags" => [ "fun" , "nasty" ],
          "comments" => [ 
                          { "author" => "barbara" , "text" => "this is interesting" }, 
-                         { "author" => "jenny", "text" => "i like to play pinball", votes: 10 } 
+                         { "author" => "jenny", "text" => "i like to play pinball", "votes" => 10 } 
          ],
           "other" => { "bar" => 14 }
         })
