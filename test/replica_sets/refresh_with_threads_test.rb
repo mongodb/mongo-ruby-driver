@@ -15,7 +15,7 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
 
   def test_read_write_load_with_added_nodes
     # MongoDB < 2.0 will disconnect clients on rs.reconfig()
-    return true if @rs.version.first < 2
+    return true if @rs.version < "2"
 
     seeds = build_seeds(3)
     args = {

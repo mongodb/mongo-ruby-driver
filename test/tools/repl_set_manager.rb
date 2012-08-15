@@ -42,7 +42,7 @@ class ReplSetManager
     @mongods   = {}
     version_string = `#{@mongod} --version`
     version_string =~ /(\d\.\d\.\d)/
-    @version = $1.split(".").map {|d| d.to_i }
+    @version = $1
   end
 
   def start_set
@@ -54,7 +54,7 @@ class ReplSetManager
     n = 0
     (@primary_count + @secondary_count).times do
       init_node(n, should_start) do |attrs|
-        if @version[0] >= 2
+        if @version >= "2"
           attrs['tags'] = @tags[n % @tags.size]
         end
       end
@@ -114,7 +114,7 @@ class ReplSetManager
   end
 
   def journal_switch
-    if @version[0] >= 2
+    if @version >= "2"
       if @durable
         "--journal"
       else

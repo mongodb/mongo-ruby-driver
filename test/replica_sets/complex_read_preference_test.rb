@@ -27,6 +27,8 @@ class ComplexReadPreferenceTest < Test::Unit::TestCase
   end
 
   def test_tags
+    return true if @rs.version < "2.1"
+
     assert_read_pool(:primary, {}, 0)
     assert_read_pool(:primary_preferred, {}, 0)
     assert_read_pool(:secondary, {}, [1,2])
@@ -82,6 +84,8 @@ class ComplexReadPreferenceTest < Test::Unit::TestCase
   end
 
   def test_tag_sets
+    return true if @rs.version < "2.1"
+
     # Test primary_preferred overrides any tags when primary is available
     assert_read_pool(:primary_preferred, [
       {"dc" => "sf"}
@@ -177,6 +181,8 @@ class ComplexReadPreferenceTest < Test::Unit::TestCase
   end
 
   def test_tags_and_nearest
+    return true if @rs.version < "2.1"
+
     # Test connection's read pool matches tags
     assert_read_pool(:secondary_preferred, {"dc" => "sf"}, 2, [100,110,130])
 

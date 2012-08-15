@@ -98,6 +98,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
 
     # Restore set
     @rs.restart_killed_nodes
+    sleep(1)
     @repl_cons.each { |con| con.refresh }
     sleep(1)
     @primary_direct = Connection.new(
@@ -134,6 +135,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
 
     # Restore set
     @rs.restart_killed_nodes
+    sleep(1)
     @repl_cons.each { |con| con.refresh }
     sleep(1)
     @secondary_direct = Connection.new(
