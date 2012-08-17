@@ -429,7 +429,7 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_array
-    @@coll.remove({}, :safe => true)
+    @@coll.remove({'$atomic' => true}, :safe => true)
     @@coll.insert({'b' => [1, 2, 3]}, :safe => true)
     @@coll.insert({'b' => [1, 2, 3]}, :safe => true)
     rows = @@coll.find({}, {:fields => ['b']}).to_a
