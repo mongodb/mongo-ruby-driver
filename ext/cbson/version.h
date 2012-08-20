@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-#define VERSION "1.6.4"
+#define VERSION "1.7.0.rc0"
