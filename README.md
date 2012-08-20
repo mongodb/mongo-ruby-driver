@@ -25,18 +25,18 @@ For the reference manual, use the links in the upper-left and upper-right corner
 
 This documentation has other articles of interest, including:
 
-1. [A tutorial](docs/TUTORIAL.md).
-2. [Replica Sets in Ruby](docs/REPLICA_SETS.md).
-3. [Write Concern in Ruby](docs/WRITE_CONCERN.md).
-4. [Tailable Cursors in Ruby](docs/TAILABLE_CURSORS.md).
-5. [Read Preference in Ruby](docs/READ_PREFERENCE.md).
-6. [GridFS in Ruby](docs/GridFS.md).
-7. [Frequently Asked Questions](docs/FAQ.md).
-8. [History](docs/HISTORY.md).
-9. [Release plan](docs/RELEASES.md).
-10. [Credits](docs/CREDITS.md).
+1. [A tutorial](file.TUTORIAL.html).
+2. [Replica Sets in Ruby](file.REPLICA_SETS.html).
+3. [Write Concern in Ruby](file.WRITE_CONCERN.html).
+4. [Tailable Cursors in Ruby](file.TAILABLE_CURSORS.html).
+5. [Read Preference in Ruby](file.READ_PREFERENCE.html).
+6. [GridFS in Ruby](file.GRID_FS.html).
+7. [Frequently Asked Questions](file.FAQ.html).
+8. [History](file.HISTORY.html).
+9. [Release plan](file.RELEASES.html).
+10. [Credits](file.CREDITS.html).
 
-Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](docs/TUTORIAL.md)
+Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](file.TUTORIAL.html)
 for much more:
 
     require 'rubygems'
@@ -104,7 +104,7 @@ That's all there is to it!
 
 # Examples
 
-For extensive examples, see the [MongoDB Ruby Tutorial](http://api.mongodb.org/ruby/current/file.TUTORIAL.html).
+For extensive examples, see the [MongoDB Ruby Tutorial](file.TUTORIAL.html).
 
 Bundled with the driver are many examples, located in the "docs/examples" subdirectory. Samples include using
 the driver and using the GridFS class GridStore. MongoDB must be running for

@@ -1,5 +1,15 @@
 # MongoDB Ruby Driver History
 
+### 1.7.0
+2012-08-20
+
+* Added testing and full support for MongoDB 2.1 & 2.2
+* Added Aggregation Framework helper method
+* Added support for Mongos high availability
+* Modified and added new read preferences (details in documentation)
+* Added support for data center awareness (tag_sets)
+* Fixed bug which attempted to close cursors on wrong replica set member
+
 ### 1.6.4
 2012-06-06
 
