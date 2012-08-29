@@ -9,6 +9,7 @@ Gem::Specification.new do |s|
   s.platform = 'java'
   s.summary = 'Ruby implementation of BSON'
   s.description = 'A Ruby BSON implementation for MongoDB. For more information about Mongo, see http://www.mongodb.org. For more information on BSON, see http://www.bsonspec.org.'
+  s.rubyforge_project = 'nowarning'
 
   s.require_paths = ['lib']
 
