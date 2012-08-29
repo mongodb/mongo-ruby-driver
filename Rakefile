@@ -255,7 +255,7 @@ def check_gem_list_existence(version)
 end
 
 def check_version(version)
-  if !(version =~ /\d\.\d\.\d/)
+  if !(version =~ /(\d).(\d).(\d)(.rc(\d))?/)
     raise "Must specify a valid version (e.g., x.y.z)"
   end
 end
@@ -263,7 +263,7 @@ end
 def current_version
   f = File.open("lib/mongo/version.rb")
   str = f.read
-  str =~ /VERSION\s+=\s+([.\d"]+)$/
+  str =~ /VERSION\s+=\s+([.\drc"]+)$/
   return $1
 end
 
