@@ -246,14 +246,6 @@ def gem_list(version)
   return files
 end
 
-def check_gem_list_existence(version)
-  gem_list(version).each do |filename|
-    if !File.exists?(filename)
-      raise "#{filename} does not exist!"
-    end
-  end
-end
-
 def check_version(version)
   if !(version =~ /(\d).(\d).(\d)(.rc(\d))?/)
     raise "Must specify a valid version (e.g., x.y.z)"
@@ -263,7 +255,7 @@ end
 def current_version
   f = File.open("lib/mongo/version.rb")
   str = f.read
-  str =~ /VERSION\s+=\s+([.\drc"]+)$/
+  str =~ /VERSION\s+=\s+"([.\drc]+)"$/
   return $1
 end
 
@@ -274,7 +266,7 @@ def change_version(new_version)
     f = File.open(filename)
     str = f.read
     f.close
-    str.gsub!(version, "\"#{new_version}\"")
+    str.gsub!("\"#{version}\"", "\"#{new_version}\"")
     File.open(filename, 'w') do |f|
       f.write(str)
     end
@@ -315,12 +307,11 @@ namespace :deploy do
   end
 
   desc "Push all gems to RubyGems"
-  task :gem_push do |t, args|
-    check_gem_list_existence(current_version)
-    gem_list.each do |gem|
-      puts "Push #{gem} to RubyGems? (y/N)"
-      if gets.chomp! == 'y'
-        system "gem push #{gem}"
+  task :gem_push do
+    gem_list(current_version).each do |gem_name|
+      puts "Push #{gem_name} to RubyGems? (y/N)"
+      if STDIN.gets.chomp == 'y'
+        system "gem push #{gem_name}"
       end
     end
   end
