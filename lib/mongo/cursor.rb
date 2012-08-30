@@ -26,7 +26,8 @@ module Mongo
     attr_reader :collection, :selector, :fields,
       :order, :hint, :snapshot, :timeout,
       :full_collection_name, :transformer,
-      :options, :cursor_id, :show_disk_loc
+      :options, :cursor_id, :show_disk_loc,
+      :comment
 
     # Create a new cursor.
     #
@@ -55,6 +56,7 @@ module Mongo
       @max_scan   = opts.fetch(:max_scan, nil)
       @return_key = opts.fetch(:return_key, nil)
       @show_disk_loc = opts.fetch(:show_disk_loc, nil)
+      @comment    = opts[:comment]
 
       # Wire-protocol settings
       @fields     = convert_fields_for_query(opts[:fields])
@@ -408,7 +410,8 @@ module Mongo
         :timeout  => @timeout,
         :max_scan => @max_scan,
         :return_key => @return_key,
-        :show_disk_loc => @show_disk_loc }
+        :show_disk_loc => @show_disk_loc,
+        :comment  => @comment }
     end
 
     # Clean output for inspect.
@@ -568,13 +571,14 @@ module Mongo
       spec['$maxScan']  = @max_scan if @max_scan
       spec['$returnKey']   = true if @return_key
       spec['$showDiskLoc'] = true if @show_disk_loc
+      spec['$comment']  = @comment if @comment
       spec
     end
 
     # Returns true if the query contains order, explain, hint, or snapshot.
     def query_contains_special_fields?
       @order || @explain || @hint || @snapshot || @show_disk_loc ||
-        @max_scan || @return_key
+        @max_scan || @return_key || @comment
     end
 
     def close_cursor_if_query_complete
