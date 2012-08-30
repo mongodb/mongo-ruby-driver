@@ -75,6 +75,14 @@ class CursorTest < Test::Unit::TestCase
       assert_equal "name", @cursor.query_options_hash[:hint]
     end
 
+    should "set comment" do
+      assert_nil @cursor.comment
+
+      @cursor = Cursor.new(@collection, :comment => "comment")
+      assert_equal "comment", @cursor.comment
+      assert_equal "comment", @cursor.query_options_hash[:comment]
+    end
+
     should "cache full collection name" do
       assert_equal "testing.items", @cursor.full_collection_name
     end
