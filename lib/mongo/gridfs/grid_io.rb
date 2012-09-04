@@ -66,8 +66,9 @@ module Mongo
       case @mode
         when 'r' then init_read
         when 'w' then init_write(opts)
+        when 'a' then init_append(opts)
         else
-          raise GridError, "Invalid file mode #{@mode}. Mode should be 'r' or 'w'."
+          raise GridError, "Invalid file mode #{@mode}. Mode should be 'r', 'w' or 'a'."
       end
     end
 
@@ -111,7 +112,8 @@ module Mongo
     # @return [Integer]
     #   the number of bytes written.
     def write(io)
-      raise GridError, "file not opened for write" unless @mode[0] == ?w
+      raise GridError, "file not opened for write" unless @mode[0] == ?w or @mode[0] == ?a
+      
       if io.is_a? String
         if @safe
           @local_md5.update(io)
@@ -230,13 +232,12 @@ module Mongo
     #
     # @return [BSON::ObjectId]
     def close
-      if @mode[0] == ?w
-        if @current_chunk['n'].zero? && @chunk_position.zero?
-          warn "Warning: Storing a file with zero length."
-        end
-        @upload_date = Time.now.utc
-        id = @files.insert(to_mongo_object)
+      if @current_chunk['n'].zero? && @chunk_position.zero?
+        warn "Warning: Storing a file with zero length."
       end
+      @upload_date = Time.now.utc
+      object = to_mongo_object
+      id = @files.update({_id: object['_id']}, object, {upsert: true})
       id
     end
 
@@ -280,7 +281,7 @@ module Mongo
 
     def get_chunk(n)
       chunk = @chunks.find({'files_id' => @files_id, 'n' => n}).next_document
-      @chunk_position = 0
+      @chunk_position = (@mode == ?a ? chunk['data'].size : 0) unless chunk.nil?
       chunk
     end
 
@@ -433,7 +434,32 @@ module Mongo
       @current_chunk = create_chunk(0)
       @file_position = 0
     end
-
+    
+    # Initialize the class for appending to a file.
+    def init_append(opts)
+      doc = @files.find(@query, @query_opts).next_document
+      return init_write(opts) unless doc
+      
+      opts = doc.dup
+      
+      @files_id     = opts.delete('_id')
+      @content_type = opts.delete('contentType')
+      @chunk_size   = opts.delete('chunkSize')
+      @upload_date  = opts.delete('uploadDate')
+      @aliases      = opts.delete('aliases')
+      @file_length  = opts.delete('length')
+      @metadata     = opts.delete('metadata')
+      @md5          = opts.delete('md5')
+      @filename     = opts.delete('filename')
+      @custom_attrs = opts
+      
+      last_chunk = @file_length / @chunk_size
+      @current_chunk = get_chunk(last_chunk)
+      chunk = get_chunk(last_chunk-1) if @current_chunk.nil?
+      @current_chunk ||= create_chunk(last_chunk)
+      @file_position = @chunk_size * last_chunk + @current_chunk['data'].size
+    end
+    
     def check_existing_file
       if @files.find_one('_id' => @files_id)
         raise GridError, "Attempting to overwrite with Grid#put. You must delete the file first."
