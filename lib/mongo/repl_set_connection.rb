@@ -306,11 +306,11 @@ module Mongo
     end
 
     def authenticate_pools
-      pools.each { |pool| pool.authenticate_existing }
+      @manager.pools.each { |pool| pool.authenticate_existing }
     end
 
     def logout_pools(db)
-      pools.each { |pool| pool.logout_existing(db) }
+      @manager.pools.each { |pool| pool.logout_existing(db) }
     end
 
     # Generic socket checkout
