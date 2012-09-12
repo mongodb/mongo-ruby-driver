@@ -231,13 +231,28 @@ module Mongo
     # on GridIO#open is passed a block. Otherwise, it must be called manually.
     #
     # @return [BSON::ObjectId]
+    #def close
+    #  if @current_chunk['n'].zero? && @chunk_position.zero?
+    #    warn "Warning: Storing a file with zero length."
+    #  end
+    #  @upload_date = Time.now.utc
+    #  object = to_mongo_object
+    #  id = @files.update({_id: object['_id']}, object, {upsert: true})
+    #  id
+    #end
     def close
-      if @current_chunk['n'].zero? && @chunk_position.zero?
-        warn "Warning: Storing a file with zero length."
+      if @mode[0] == ?w or @mode[0] == ?a
+        if @current_chunk['n'].zero? && @chunk_position.zero?
+          warn "Warning: Storing a file with zero length."
+        end
+        @upload_date = Time.now.utc
+        if @mode[0] == ?w
+          id = @files.insert(to_mongo_object)
+        elsif @mode[0] == ?a
+          object = to_mongo_object
+          id = @files.update({_id: object['_id']}, object, {upsert: true})
+        end
       end
-      @upload_date = Time.now.utc
-      object = to_mongo_object
-      id = @files.update({_id: object['_id']}, object, {upsert: true})
       id
     end
 
