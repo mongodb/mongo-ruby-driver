@@ -204,7 +204,7 @@ which should print the documents where i > 50.  We could also get a range, say  
 
 Use the `:fields` option to specify fields to return.
 
-    puts coll.find("_id" => id, :fields => ["name", "type"]).to_a
+    puts coll.find({"_id" => id}, :fields => ["name", "type"]).to_a
 
 #### Querying with Regular Expressions
 
