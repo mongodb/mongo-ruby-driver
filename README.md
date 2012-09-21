@@ -104,7 +104,7 @@ That's all there is to it!
 
 # Examples
 
-For extensive examples, see the [MongoDB Ruby Tutorial](file.TUTORIAL.html).
+For extensive examples, see the [MongoDB Ruby Tutorial](mongo-ruby-driver/blob/master/docs/TUTORIAL.md).
 
 Bundled with the driver are many examples, located in the "docs/examples" subdirectory. Samples include using
 the driver and using the GridFS class GridStore. MongoDB must be running for
