@@ -61,7 +61,7 @@ class TestConnection < Test::Unit::TestCase
   def test_uri_with_extra_opts
     con = Connection.from_uri("mongodb://#{host_port}", :pool_size => 10, :slave_ok => true)
     assert_equal 10, con.pool_size
-    assert_true con.slave_ok?
+    assert con.slave_ok?
   end
 
   def test_env_mongodb_uri
