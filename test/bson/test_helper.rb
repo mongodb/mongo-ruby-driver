@@ -1,6 +1,5 @@
 require File.join(File.dirname(__FILE__), '..', '..', 'lib', 'bson')
 require 'rubygems' if RUBY_VERSION < '1.9.0'
-gem 'test-unit'
 require 'test/unit'
 
 def silently

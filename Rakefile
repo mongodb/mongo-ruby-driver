@@ -5,8 +5,8 @@ if RUBY_VERSION < '1.9.0'
 end
 
 require 'fileutils'
-require 'rake/testtask'
 require 'rake'
+require 'rake/testtask'
 require 'rake/extensiontask'
 require 'rake/javaextensiontask'
 
@@ -294,6 +294,7 @@ namespace :deploy do
   task :git_push do
     g = Git.open(Dir.getwd())
     g.push
+    g.push(g.tag(current_version))
   end
 
   desc "Build all gems"

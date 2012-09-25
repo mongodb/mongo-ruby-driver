@@ -14,7 +14,6 @@ group :development, :test do
   # Testing
   gem "mocha"
   gem "shoulda"
-  gem "test-unit", "2.5.0"
   gem "ci_reporter"
   gem "ruby-prof" unless RUBY_PLATFORM =~ /java/
   gem "rake-compiler"
