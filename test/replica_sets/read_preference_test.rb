@@ -40,6 +40,12 @@ class ReadPreferenceTest < Test::Unit::TestCase
     end
   end
 
+  def test_read_secondary_then_primary
+    conn = make_connection
+    conn[MONGO_TEST_DB]['test-sets'].find_one({}, {:read => :secondary})
+    assert conn[MONGO_TEST_DB]['test-sets'].find_one
+  end
+
   def test_connection_pools
     conn = make_connection
     assert conn.primary_pool, "No primary pool!"
