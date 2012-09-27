@@ -37,7 +37,7 @@ class ConnectTest < Test::Unit::TestCase
     end
   end
 
-  def test_connect_with_secondary_node_killed
+  def test_connect_with_secondary_node_terminated
     @rs.kill_secondary
 
     rescue_connection_failure do
@@ -46,7 +46,7 @@ class ConnectTest < Test::Unit::TestCase
     assert @conn.connected?
   end
 
-  def test_connect_with_third_node_killed
+  def test_connect_with_third_node_terminated
     @rs.kill(@rs.get_node_from_port(@rs.ports[2]))
 
     rescue_connection_failure do
@@ -71,6 +71,18 @@ class ConnectTest < Test::Unit::TestCase
     end
   end
 
+  def test_connect_with_primary_killed
+    @conn = ReplSetConnection.new build_seeds(3)
+    @conn[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 3}})
+    assert @conn[MONGO_TEST_DB]['bar'].find_one
+
+    @rs.kill_primary(Signal.list['KILL'])
+
+    rescue_connection_failure do
+      @conn[MONGO_TEST_DB]['bar'].find_one
+    end
+  end
+
   def test_save_with_primary_stepped_down
     @conn = ReplSetConnection.new build_seeds(3)
 
@@ -81,6 +93,86 @@ class ConnectTest < Test::Unit::TestCase
 
     rescue_connection_failure do
       @conn[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 3}})
+    end
+  end
+
+  def test_save_with_primary_killed
+    @conn = ReplSetConnection.new build_seeds(3)
+
+    @rs.kill_primary(Signal.list['KILL'])
+
+    rescue_connection_failure do
+      @conn[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 2}})
+    end
+  end
+
+  def test_connect_with_first_node_removed
+    @conn = ReplSetConnection.new build_seeds(3)
+    @conn[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 3}})
+
+    old_primary = [@conn.primary_pool.host, @conn.primary_pool.port]
+    old_primary_conn = Mongo::Connection.new(*old_primary)
+    assert_raise Mongo::ConnectionFailure do
+      old_primary_conn['admin'].command(step_down_command)
+    end
+
+    # Wait for new primary
+    rescue_connection_failure do
+      sleep 1 until @rs.get_node_with_state(1)
+    end
+
+    new_primary = @rs.get_all_host_pairs_with_state(1).first
+    new_primary_conn = Mongo::Connection.new(*new_primary)
+
+    config = nil
+
+    # Remove old primary from replset
+    rescue_connection_failure do
+      config = @conn['local']['system.replset'].find_one
+    end
+
+    old_member = config['members'].select {|m| m['host'] == old_primary.join(':')}.first
+    config['members'].reject! {|m| m['host'] == old_primary.join(':')}
+    config['version'] += 1
+
+    begin
+      new_primary_conn['admin'].command({'replSetReconfig' => config})
+    rescue Mongo::ConnectionFailure
+    end
+
+    # Wait for the dust to settle
+    rescue_connection_failure do
+      assert @conn[MONGO_TEST_DB]['bar'].find_one
+    end
+
+    # Make sure a new connection skips the old primary
+    @new_conn = ReplSetConnection.new build_seeds(3)
+    @new_conn.connect
+    new_nodes = [@new_conn.primary] + @new_conn.secondaries
+    assert !(new_nodes).include?(old_primary)
+
+    # Add the old primary back
+    config['members'] << old_member
+    config['version'] += 1
+
+    begin
+      new_primary_conn['admin'].command({'replSetReconfig' => config})
+    rescue Mongo::ConnectionFailure
+    end
+  end
+
+  def test_connect_with_hung_first_node
+    hung_node = nil
+    begin
+      hung_node = IO.popen('nc -lk 127.0.0.1 29999 >/dev/null 2>&1')
+
+      @conn = ReplSetConnection.new(['localhost:29999'] + build_seeds(3),
+        :connect_timeout => 2)
+      @conn.connect
+      assert ['localhost:29999'] != @conn.primary
+      assert !@conn.secondaries.include?('localhost:29999')
+    ensure
+      Process.kill("KILL", hung_node.pid) if hung_node
     end
   end
 
