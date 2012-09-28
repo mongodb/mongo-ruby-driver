@@ -222,9 +222,9 @@ class ReplSetManager
     con.close
   end
 
-  def kill_secondary
+  def kill_secondary(signal=2)
     node = get_node_with_state(2)
-    kill(node)
+    kill(node, signal)
     return node
   end
 
