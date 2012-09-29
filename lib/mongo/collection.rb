@@ -260,8 +260,11 @@ module Mongo
       })
 
       if block_given?
-        yield cursor
-        cursor.close
+        begin
+          yield cursor
+        ensure
+          cursor.close
+        end
         nil
       else
         cursor
@@ -594,7 +597,7 @@ module Mongo
 
       @db.command(cmd)['value']
     end
-    
+
     # Perform an aggregation using the aggregation framework on the current collection.
     # @note Aggregate requires server version >= 2.1.1
     # @note Field References: Within an expression, field names must be quoted and prefixed by a dollar sign ($).
@@ -636,10 +639,10 @@ module Mongo
       unless Mongo::Support.ok?(result)
         raise Mongo::OperationFailure, "aggregate failed: #{result['errmsg']}"
       end
-      
+
       return result["result"]
     end
-    
+
     # Perform a map-reduce operation on the current collection.
     #
     # @param [String, BSON::Code] map a map function, written in JavaScript.
