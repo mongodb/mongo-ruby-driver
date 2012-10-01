@@ -107,7 +107,7 @@ module Mongo
       end
 
       pinned = @pinned_pools[Thread.current]
-      if mode && pinned && select_pool([pinned], tags, acceptable_latency) && !pinned.closed?
+      if pinned && pinned.matches_mode(mode) && pinned.matches_tag_sets(tags) && pinned.up?
         pool = pinned
       else
         pool = case mode
