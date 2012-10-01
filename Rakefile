@@ -120,7 +120,7 @@ namespace :test do
   end
 
   Rake::TestTask.new(:functional) do |t|
-    t.test_files = FileList['test/*_test.rb']
+    t.test_files = FileList['test/*_test.rb'] - ["test/db_api_test.rb"]
     t.ruby_opts << '-w'
   end
 
