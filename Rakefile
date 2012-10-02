@@ -98,7 +98,7 @@ namespace :test do
 
   desc "Run the replica set test suite"
   Rake::TestTask.new(:rs) do |t|
-    t.test_files = FileList['test/replica_sets/*_test.rb']
+    t.test_files = []#FileList['test/replica_sets/*_test.rb']
     t.ruby_opts << '-w'
   end
 
