@@ -31,19 +31,27 @@ class BasicTest < Test::Unit::TestCase
   end
 
   # TODO member.primary? ==> true
+  # To reset after (test) failure
+  #     $ killall mongod; rm -fr rs
+
   def test_connect
-    seeds = @rs.mongos_seeds
-    @con = Mongo::ShardedConnection.new(seeds)
-    assert @con.connected?
-    assert_equal(seeds.size, @con.seeds.size)
-    probe(seeds.size)
-    @con.close
+    seeds = @rs.replica_seeds
+    @conn = Mongo::ReplSetConnection.new(seeds, :name => @rs.name)
+    assert @conn.connected?
+
+    p @rs
+
+    p @conn.primary
+    #assert_equal @rs.primary, @conn.primary
+    p @conn.secondaries.sort
+    #assert_equal @rs.secondaries.sort, @conn.secondaries.sort
+    p @conn.arbiters.sort
+    #assert_equal @rs.arbiters.sort, @conn.arbiters.sort
+
+    assert_equal(seeds.size, @conn.seeds.size)
+    @conn.close
   end
 
   private
-
-  def probe(size)
-    assert_equal(size, @con['config']['mongos'].find.to_a.size)
-  end
 
 end

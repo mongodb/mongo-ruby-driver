@@ -238,12 +238,21 @@ module Mongo
 
       def repl_set_startup
         response = nil
-        60.times do |i|
-          break if (response = repl_set_get_status)['ok'] == 1.0
+        120.times do |i|
+          response = repl_set_get_status
+          members = response['members']
+          return response if response['ok'] == 1.0 && response['myState'] == 1 && members.collect{|m| m['state']}.max <= 2
           sleep 1
         end
-        raise Mongo::OperationFailure, "replSet startup failed - status: #{repsonse.inspect}" unless response && response['ok'] == 1.0
-        response
+        raise Mongo::OperationFailure, "replSet startup failed - status: #{response.inspect}"
+      end
+
+      def replica_seeds
+        @config[:replicas].collect{|router| "#{router[:host]}:#{router[:port]}"}
+      end
+
+      def name
+        @config[:replicas].first[:replSet]
       end
 
       def mongos_seeds
