@@ -76,7 +76,7 @@ namespace :test do
       Rake::Task['test:unit'].invoke
       Rake::Task['test:functional'].invoke
       Rake::Task['test:bson'].invoke
-      Rake::Task['test:pooled_threading'].invoke
+      #Rake::Task['test:pooled_threading'].invoke
       Rake::Task['test:drop_databases'].invoke
     end
     ENV['C_EXT'] = nil
@@ -91,7 +91,7 @@ namespace :test do
       Rake::Task['test:unit'].invoke
       Rake::Task['test:functional'].invoke
       Rake::Task['test:bson'].invoke
-      Rake::Task['test:pooled_threading'].invoke
+      #Rake::Task['test:pooled_threading'].invoke
       Rake::Task['test:drop_databases'].invoke
     end
   end
