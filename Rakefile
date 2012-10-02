@@ -76,7 +76,7 @@ namespace :test do
       Rake::Task['test:unit'].invoke
       Rake::Task['test:functional'].invoke
       Rake::Task['test:bson'].invoke
-      Rake::Task['test:pooled_threading'].invoke
+      #Rake::Task['test:pooled_threading'].invoke
       Rake::Task['test:drop_databases'].invoke
     end
     ENV['C_EXT'] = nil
@@ -91,7 +91,7 @@ namespace :test do
       Rake::Task['test:unit'].invoke
       Rake::Task['test:functional'].invoke
       Rake::Task['test:bson'].invoke
-      Rake::Task['test:pooled_threading'].invoke
+      #Rake::Task['test:pooled_threading'].invoke
       Rake::Task['test:drop_databases'].invoke
     end
   end
@@ -120,7 +120,7 @@ namespace :test do
   end
 
   Rake::TestTask.new(:functional) do |t|
-    t.test_files = FileList['test/*_test.rb']
+    t.test_files = FileList['test/*_test.rb'] - ["test/db_api_test.rb"]
     t.ruby_opts << '-w'
   end
 
