@@ -1,6 +1,4 @@
-$:.unshift(File.expand_path('../..', File.dirname(__FILE__)))
-require 'test/sharded_cluster/sc_test_helper'
-require 'test/tools/mongo_config'
+require 'test_helper'
 
 class BasicTest < Test::Unit::TestCase
 
