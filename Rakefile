@@ -1,6 +1,5 @@
 # -*- mode: ruby; -*-
 require 'fileutils'
-require 'rake'
 require 'rake/testtask'
 require 'rake/extensiontask'
 require 'rake/javaextensiontask'
