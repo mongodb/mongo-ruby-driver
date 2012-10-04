@@ -1,3 +1,5 @@
+require 'jruby'
+
 include Java
 module BSON
   class BSON_JAVA
