@@ -201,6 +201,7 @@ module Mongo
     # @option opts [Boolean] :return_key (false) Return the index key used to obtain the result (for debugging).
     # @option opts [Block] :transformer (nil) a block for tranforming returned documents.
     #   This is normally used by object mappers to convert each returned document to an instance of a class.
+    # @option opts [String] :comment (nil) a comment to include in profiling logs
     #
     # @raise [ArgumentError]
     #   if timeout is set to false and find is not invoked in a block
@@ -224,6 +225,7 @@ module Mongo
       return_key = opts.delete(:return_key)
       transformer = opts.delete(:transformer)
       show_disk_loc = opts.delete(:show_disk_loc)
+      comment       = opts.delete(:comment)
       read          = opts.delete(:read) || @read_preference
       tag_sets      = opts.delete(:tag_sets) || @tag_sets
       acceptable_latency = opts.delete(:acceptable_latency) || @acceptable_latency
@@ -256,6 +258,7 @@ module Mongo
         :return_key    => return_key,
         :read          => read,
         :tag_sets      => tag_sets,
+        :comment       => comment,
         :acceptable_latency => acceptable_latency
       })
 
