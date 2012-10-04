@@ -1,13 +1,10 @@
 #!/usr/bin/env ruby
 require 'socket'
 require 'fileutils'
+require 'mongo'
 
 $debug_level = 2
 STDOUT.sync = true
-
-unless defined? Mongo
-  require File.join(File.dirname(__FILE__), '..', '..', 'lib', 'mongo')
-end
 
 def debug(level, arg)
   if level <= $debug_level
