@@ -276,7 +276,7 @@ module Mongo
     end
 
     # Iterate over each document in this cursor, yielding it to the given
-    # block.
+    # block, if provided. An Enumerator is returned if no block is given.
     #
     # Iterating over an entire cursor will close it.
     #
@@ -287,11 +287,18 @@ module Mongo
     #     puts doc['user']
     #   end
     def each
-      while doc = self.next
-        yield doc
+      if block_given?
+        while doc = self.next
+          yield doc
+        end
+      else
+        Enumerator.new do |yielder|
+          while doc = self.next
+            yielder.yield doc
+          end
+        end
       end
     end
-
     # Receive all the documents from this cursor as an array of hashes.
     #
     # Notes:
