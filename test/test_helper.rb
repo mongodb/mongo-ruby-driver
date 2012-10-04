@@ -21,7 +21,10 @@ class Test::Unit::TestCase
         opts = Mongo::Config::DEFAULT_SHARDED_SIMPLE
         opts.merge!(:routers => 4)
       end
-
+      puts "****"
+      puts "MONGOD: #{ENV['MONGOD']}"
+      puts "****"
+      opts.merge!(:command => ENV['MONGOD'])
       opts.merge!(:dbpath => dbpath)
 
       #debug 1, opts
