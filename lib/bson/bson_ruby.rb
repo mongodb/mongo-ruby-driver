@@ -628,7 +628,9 @@ module BSON
         raise InvalidDocument, "#{o.class} is not currently supported; " +
         "use a UTC Time instance instead."
       else
-        if defined?(ActiveSupport::TimeWithZone) && o.is_a?(ActiveSupport::TimeWithZone)
+        if defined?(ActiveSupport::Multibyte::Chars) && o.is_a?(ActiveSupport::Multibyte::Chars)
+          STRING
+        elsif defined?(ActiveSupport::TimeWithZone) && o.is_a?(ActiveSupport::TimeWithZone)
           raise InvalidDocument, "ActiveSupport::TimeWithZone is not currently supported; " +
           "use a UTC Time instance instead."
         else
