@@ -12,6 +12,7 @@ group :development, :test do
   gem "yard"
 
   # Testing
+  gem "test-unit"
   gem "mocha"
   gem "shoulda"
   gem "ci_reporter"

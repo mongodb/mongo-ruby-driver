@@ -1,30 +1,13 @@
 require 'test_helper'
 
 class BasicTest < Test::Unit::TestCase
-
-  def self.suite
-    s = super
-    def s.setup
-
-    end
-    def s.teardown
-      @@sc.stop
-      @@sc.clobber
-    end
-    def s.run(*args)
-      setup
-      super
-      teardown
-    end
-    s
-  end
-
   def setup
-    ensure_sc
+    ensure_cluster(:sc)
   end
 
-  def teardown
-
+  def self.shutdown
+    @@cluster.stop
+    @@cluster.clobber
   end
 
   # TODO member.primary? ==> true

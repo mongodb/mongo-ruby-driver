@@ -1,39 +1,37 @@
+gem 'test-unit'
 require 'test/unit'
 require 'tools/mongo_config'
 
-class Test::Unit::TestCase
-  # Ensure sharded cluster is available as an instance variable and that
-  # a new set is spun up for each TestCase class
-  def ensure_sc
-    if defined?(@@current_class) and @@current_class == self.class
-      @@sc.start
-    else
-      @@current_class = self.class
-      dbpath = 'sc'
-      opts = Mongo::Config::DEFAULT_SHARDED_SIMPLE.merge(:dbpath => dbpath).merge(:routers => 4)
-      #debug 1, opts
-      config = Mongo::Config.cluster(opts)
-      #debug 1, config
-      @@sc = Mongo::Config::ClusterManager.new(config)
-      @@sc.start
-    end
-    @sc = @@sc
-  end
+TEST_DATA = File.join(File.dirname(__FILE__), 'data')
 
-  def ensure_rs
+class Test::Unit::TestCase
+
+  def ensure_cluster(kind=nil)
     if defined?(@@current_class) and @@current_class == self.class
-      @@rs.start
+      @@cluster.start
     else
       @@current_class = self.class
-      dbpath = 'rs'
-      opts = Mongo::Config::DEFAULT_REPLICA_SET.merge(:dbpath => dbpath)
+
+      if kind == :rs
+        dbpath = 'rs'
+        opts = Mongo::Config::DEFAULT_REPLICA_SET
+        opts.merge(:oplog_size => 10)
+        opts.merge(:journal => false)
+      else
+        dbpath = 'sc'
+        opts = Mongo::Config::DEFAULT_SHARDED_SIMPLE
+        opts.merge(:routers => 4)
+      end
+
+      opts.merge(:dbpath => dbpath)
+
       #debug 1, opts
       config = Mongo::Config.cluster(opts)
       #debug 1, config
-      @@rs = Mongo::Config::ClusterManager.new(config)
-      @@rs.start
+      @@cluster = Mongo::Config::ClusterManager.new(config)
+      @@cluster.start
     end
-    @rs = @@rs
+    instance_variable_set("@#{kind}", @@cluster)
   end
 
   # Generic code for rescuing connection failures and retrying operations.
@@ -64,7 +62,6 @@ def silently
 end
 
 begin
-  require 'rubygems' if RUBY_VERSION < "1.9.0" && !ENV['C_EXT']
   silently { require 'shoulda' }
   silently { require 'mocha' }
 rescue LoadError

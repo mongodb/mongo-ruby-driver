@@ -1,4 +1,4 @@
-require File.expand_path("../../test_helper", __FILE__)
+require 'test_helper'
 
 def insert_message(db, documents)
   documents = [documents] unless documents.is_a?(Array)

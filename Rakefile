@@ -1,4 +1,5 @@
 # -*- mode: ruby; -*-
+require 'rake'
 require 'fileutils'
 require 'rake/testtask'
 require 'rake/extensiontask'
@@ -7,7 +8,6 @@ require 'rake/javaextensiontask'
 begin
   require 'git'
   require 'devkit'
-  require 'ci/reporter/rake/test_unit'
   rescue LoadError
 end
 
@@ -110,7 +110,7 @@ namespace :test do
   end
 
   Rake::TestTask.new(:functional) do |t|
-    t.test_files = FileList['test/*_test.rb'] - ["test/db_api_test.rb"]
+    t.test_files = FileList['test/functional/*_test.rb'] - ["test/functional/db_api_test.rb"]
     t.libs << 'test'
     t.ruby_opts << '-w'
   end
@@ -172,27 +172,6 @@ task :ydoc do
   system "yardoc -o #{out} --title MongoRuby-#{Mongo::VERSION}"
 end
 
-namespace :jenkins do
-  task :ci_reporter do
-    begin
-      require 'ci/reporter/rake/test_unit'
-    rescue LoadError
-      warn "Warning: Unable to load ci_reporter gem."
-    end
-  end
-
-  namespace :test do
-    task :ruby do
-      Rake::Task['test:ruby'].invoke
-    end
-
-    task :c do
-      Rake::Task['gem:install_extensions'].invoke
-      Rake::Task['test:c'].invoke
-    end
-  end
-end
-
 namespace :gem do
   desc "Install the gem locally"
   task :install do
@@ -216,16 +195,6 @@ namespace :gem do
     `gem build bson_ext.gemspec`
     `gem install --no-rdoc --no-ri bson_ext-*.gem`
     `rm bson_ext-*.gem`
-  end
-end
-
-namespace :ci do
-  namespace :test do
-    task :c => :path do
-      Rake::Task['gem:install'].invoke
-      Rake::Task['gem:install_extensions'].invoke
-      Rake::Task['test:c'].invoke
-    end
   end
 end
 

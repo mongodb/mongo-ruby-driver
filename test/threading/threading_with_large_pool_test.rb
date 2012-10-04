@@ -1,4 +1,4 @@
-require File.expand_path("../../test_helper", __FILE__)
+require 'test_helper'
 
 # Essentialy the same as test_threading.rb but with an expanded pool for
 # testing multiple connections.

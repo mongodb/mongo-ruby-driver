@@ -1,5 +1,4 @@
-require File.expand_path("../test_helper", __FILE__)
-require 'rubygems'
+require 'test_helper'
 require 'json'
 
 class JSONTest < Test::Unit::TestCase

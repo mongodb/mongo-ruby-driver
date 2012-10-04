@@ -1,4 +1,4 @@
-require File.expand_path("../test_helper", __FILE__)
+require 'test_helper'
 
 class TestTimeout < Test::Unit::TestCase
   def test_op_timeout
