@@ -457,6 +457,16 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 rb_raise(InvalidDocument, "Cannot serialize the Numeric type %s as BSON; only Bignum, Fixnum, and Float are supported.", cls);
                 break;
             }
+            if (strcmp(cls, "ActiveSupport::Multibyte::Chars") == 0) {
+                int length;
+                VALUE str = StringValue(value);
+                write_name_and_type(buffer, key, 0x02);
+                length = RSTRING_LENINT(str) + 1;
+                SAFE_WRITE(buffer, (char*)&length, 4);
+                write_utf8(buffer, str, 0);
+                SAFE_WRITE(buffer, &zero, 1);
+                break;
+            }
             bson_buffer_free(buffer);
             rb_raise(InvalidDocument, "Cannot serialize an object of class %s into BSON.", cls);
             break;

@@ -27,6 +27,18 @@ rescue LoadError
   Zone = ActiveSupport::TimeWithZone.new(Time.now.utc, 'EST')
 end
 
+begin
+  require 'active_support/multibyte/chars'
+rescue LoadError
+  warn 'Mocking ActiveSupport::Multibyte::Chars'
+  module ActiveSupport
+    module Multibyte
+      class Chars < String
+      end
+    end
+  end
+end
+
 class BSONTest < Test::Unit::TestCase
 
   include BSON
@@ -68,6 +80,15 @@ class BSONTest < Test::Unit::TestCase
   def test_valid_utf8_string
     doc = {'doc' => 'aé'}
     assert_doc_pass(doc)
+  end
+
+  def test_valid_active_support_multibyte_chars
+    doc = {'doc' => ActiveSupport::Multibyte::Chars.new('aé')}
+    assert_doc_pass(doc)
+
+    bson = @encoder.serialize(doc)
+    doc = @encoder.deserialize(bson)
+    assert_equal doc['doc'], 'aé'
   end
 
   def test_valid_utf8_key
@@ -287,7 +308,7 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_date_before_epoch
-    if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/ then return true end 
+    if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/ then return true end
     begin
       doc = {'date' => Time.utc(1600)}
       bson = @encoder.serialize(doc)
