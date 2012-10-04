@@ -104,9 +104,9 @@ module Mongo
         return @pid if running?
         begin
           @pid = fork do
-            STDIN.reopen '/dev/null'
-            STDOUT.reopen '/dev/null', 'a'
-            STDERR.reopen STDOUT
+            #STDIN.reopen '/dev/null'
+            #STDOUT.reopen '/dev/null', 'a'
+            #STDERR.reopen STDOUT
             exec cmd # spawn(@cmd, [:in, :out, :err] => :close) #
           end
           verify(verifies) if verifies > 0
