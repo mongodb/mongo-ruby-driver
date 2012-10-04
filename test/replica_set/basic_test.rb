@@ -8,7 +8,7 @@ class BasicTest < Test::Unit::TestCase
 
   def self.shutdown
     @@cluster.stop
-    @@cluster.clobber
+    #@@cluster.clobber
   end
 
   # TODO member.primary? ==> true

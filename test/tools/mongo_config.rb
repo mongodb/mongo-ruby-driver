@@ -20,8 +20,6 @@ end
 #     can be supplied with any configuration to run.
 #     A configuration can be edited, modified, copied into a test file, and supplied to a cluster manager
 #     as a parameter.
-# To Do
-#     Addition of arbiters - http://docs.mongodb.org/manual/administration/replica-sets/#replica-set-arbiters
 #
 module Mongo
   class Config
@@ -32,7 +30,7 @@ module Mongo
 
     SERVER_PRELUDE_KEYS = [:host, :command]
     SHARDING_OPT_KEYS = [:shards, :configs, :routers]
-    REPLICA_OPT_KEYS = [:replicas] #[:replicas, :arbiters] # TODO - complete arbiters
+    REPLICA_OPT_KEYS = [:replicas, :arbiters]
     MONGODS_OPT_KEYS = [:mongods]
     CLUSTER_OPT_KEYS = SHARDING_OPT_KEYS + REPLICA_OPT_KEYS + MONGODS_OPT_KEYS
 
@@ -61,7 +59,7 @@ module Mongo
             server_params = { :host => opts[:host], :port => self.get_available_port, :logpath => logpath }
             case key
               when :replicas; server_params.merge!( :command => 'mongod', :dbpath => dbpath, :replSet => File.basename(opts[:dbpath]) )
-              when :arbiters; server_params.merge!( :command => 'mongod', :replSet => File.basename(opts[:dbpath]) ) # TODO - complete arbiters
+              when :arbiters; server_params.merge!( :command => 'mongod', :dbpath => dbpath, :replSet => File.basename(opts[:dbpath]) )
               when :configs;  server_params.merge!( :command => 'mongod', :dbpath => dbpath, :configsvr => nil )
               when :routers;  server_params.merge!( :command => 'mongos', :configdb => self.configdb(config) ) # mongos, NO dbpath
               else            server_params.merge!( :command => 'mongod', :dbpath => dbpath ) # :mongods, :shards
@@ -235,10 +233,12 @@ module Mongo
       end
 
       def repl_set_initiate( cfg = nil )
-        # TODO - add arbiters
+        members = []
+        @config[:replicas].each{|s| members << { :_id => members.size, :host => "#{s[:host]}:#{s[:port]}" } }
+        @config[:arbiters].each{|s| members << { :_id => members.size, :host => "#{s[:host]}:#{s[:port]}", :arbiterOnly => true } }
         cfg ||= {
             :_id => @config[:replicas].first[:replSet],
-            :members => (@config[:replicas]).each_with_index.collect{|s, i| { :_id => i, :host => "#{s[:host]}:#{s[:port]}" } },
+            :members => members
         }
         command( @config[:replicas].first, 'admin', { :replSetInitiate => cfg } )
       end
@@ -248,7 +248,7 @@ module Mongo
         120.times do |i|
           response = repl_set_get_status
           members = response['members']
-          return response if response['ok'] == 1.0 && response['myState'] == 1 && members.collect{|m| m['state']}.max <= 2
+          return response if response['ok'] == 1.0 && response['myState'] == 1 && members.collect{|m| m['state']}.all?{|state| [1,2,7].find(state)}
           sleep 1
         end
         raise Mongo::OperationFailure, "replSet startup failed - status: #{response.inspect}"
