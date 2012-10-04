@@ -35,9 +35,9 @@ module Mongo
     #   other than the default BSON::ObjectId.
     #
     # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
-    #   for insert, update, and remove method called on this Collection instance. If no
+    #   for +insert+, +update+, and +remove+ method called on this Collection instance. If no
     #   value is provided, the default value set on this instance's DB will be used. This
-    #   default can be overridden for any invocation of insert, update, or remove.
+    #   default can be overridden for any invocation of +insert+, +update+, or +remove+.
     # @option options [:primary, :secondary] :read The default read preference for queries
     #   initiates from this connection object. If +:secondary+ is chosen, reads will be sent
     #   to one of the closest available secondary nodes. If a secondary node cannot be located, the
@@ -310,12 +310,14 @@ module Mongo
     # @return [ObjectId] the _id of the saved document.
     #
     # @option opts [Boolean, Hash] :safe (+false+)
-    #   run the operation in safe mode, which run a getlasterror command on the
+    #   run the operation in safe mode, which runs a +getlasterror+ command on the
     #   database to report any assertion. In addition, a hash can be provided to
-    #   run an fsync and/or wait for replication of the save (>= 1.5.1). See the options
-    #   for DB#error.
+    #   run an fsync and/or wait for replication (>= 1.5.1). Safe
+    #   options provided here will override any safe options set on this collection,
+    #   its database object, or the current connection. See the options
+    #   for +DB#get_last_error+.
     #
-    # @raise [OperationFailure] when :safe mode fails.
+    # @raise [Mongo::OperationFailure] will be raised iff safe mode is enabled and the operation fails.
     def save(doc, opts={})
       if doc.has_key?(:_id) || doc.has_key?('_id')
         id = doc[:_id] || doc['_id']
@@ -339,12 +341,12 @@ module Mongo
     #   Return this result format only when :collect_on_error is true.
     #
     # @option opts [Boolean, Hash] :safe (+false+)
-    #   run the operation in safe mode, which run a getlasterror command on the
+    #   run the operation in safe mode, which runs a +getlasterror+ command on the
     #   database to report any assertion. In addition, a hash can be provided to
     #   run an fsync and/or wait for replication of the insert (>= 1.5.1). Safe
     #   options provided here will override any safe options set on this collection,
-    #   its database object, or the current connection. See the options on
-    #   for DB#get_last_error.
+    #   its database object, or the current connection. See the options
+    #   for +DB#get_last_error+.
     #
     # @option opts [Boolean] :continue_on_error (+false+) If true, then
     #   continue a bulk insert even if one of the documents inserted
@@ -356,6 +358,8 @@ module Mongo
     #   MongoDB v2.0+.
     # @option opts [Boolean] :collect_on_error (+false+) if true, then
     #   collects invalid documents as an array. Note that this option changes the result format.
+    #
+    # @raise [Mongo::OperationFailure] will be raised iff safe mode is enabled and the operation fails.
     #
     # @core insert insert-instance_method
     def insert(doc_or_docs, opts={})
@@ -373,11 +377,12 @@ module Mongo
     #   If specified, only matching documents will be removed.
     #
     # @option opts [Boolean, Hash] :safe (+false+)
-    #   run the operation in safe mode, which will run a getlasterror command on the
+    #   run the operation in safe mode, which runs a +getlasterror+ command on the
     #   database to report any assertion. In addition, a hash can be provided to
     #   run an fsync and/or wait for replication of the remove (>= 1.5.1). Safe
     #   options provided here will override any safe options set on this collection,
-    #   its database, or the current connection. See the options for DB#get_last_error for more details.
+    #   its database object, or the current connection. See the options
+    #   for +DB#get_last_error+.
     #
     # @example remove all documents from the 'users' collection:
     #   users.remove
@@ -389,8 +394,7 @@ module Mongo
     # @return [Hash, true] Returns a Hash containing the last error object if running in safe mode.
     #   Otherwise, returns true.
     #
-    # @raise [Mongo::OperationFailure] an exception will be raised iff safe mode is enabled
-    #   and the operation fails.
+    # @raise [Mongo::OperationFailure] will be raised iff safe mode is enabled and the operation fails.
     #
     # @core remove remove-instance_method
     def remove(selector={}, opts={})
@@ -425,15 +429,18 @@ module Mongo
     # @option opts [Boolean] :upsert (+false+) if true, performs an upsert (update or insert)
     # @option opts [Boolean] :multi (+false+) update all documents matching the selector, as opposed to
     #   just the first matching document. Note: only works in MongoDB 1.1.3 or later.
-    # @option opts [Boolean] :safe (+false+)
-    #   If true, check that the save succeeded. OperationFailure
-    #   will be raised on an error. Note that a safe check requires an extra
-    #   round-trip to the database. Safe options provided here will override any safe
-    #   options set on this collection, its database object, or the current collection.
-    #   See the options for DB#get_last_error for details.
+    # @option opts [Boolean, Hash] :safe (+false+)
+    #   run the operation in safe mode, which runs a +getlasterror+ command on the
+    #   database to report any assertion. In addition, a hash can be provided to
+    #   run an fsync and/or wait for replication of the update (>= 1.5.1). Safe
+    #   options provided here will override any safe options set on this collection,
+    #   its database object, or the current connection. See the options
+    #   for +DB#get_last_error+.
     #
     # @return [Hash, true] Returns a Hash containing the last error object if running in safe mode.
     #   Otherwise, returns true.
+    #
+    # @raise [Mongo::OperationFailure] will be raised iff safe mode is enabled and the operation fails.
     #
     # @core update update-instance_method
     def update(selector, document, opts={})
