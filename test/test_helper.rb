@@ -15,15 +15,14 @@ class Test::Unit::TestCase
       if kind == :rs
         dbpath = 'rs'
         opts = Mongo::Config::DEFAULT_REPLICA_SET
-        opts.merge(:oplog_size => 10)
-        opts.merge(:journal => false)
+        opts.merge!(:arbiters => 2, :oplog_size => 10, :journal => false)
       else
         dbpath = 'sc'
         opts = Mongo::Config::DEFAULT_SHARDED_SIMPLE
-        opts.merge(:routers => 4)
+        opts.merge!(:routers => 4)
       end
 
-      opts.merge(:dbpath => dbpath)
+      opts.merge!(:dbpath => dbpath)
 
       #debug 1, opts
       config = Mongo::Config.cluster(opts)

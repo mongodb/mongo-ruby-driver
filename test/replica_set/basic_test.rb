@@ -1,4 +1,5 @@
 require 'test_helper'
+require 'pp'
 
 class BasicTest < Test::Unit::TestCase
   def setup
@@ -7,7 +8,7 @@ class BasicTest < Test::Unit::TestCase
 
   def self.shutdown
     @@cluster.stop
-    @@cluster.clobber
+    #@@cluster.clobber
   end
 
   # TODO member.primary? ==> true
@@ -15,8 +16,8 @@ class BasicTest < Test::Unit::TestCase
   #     $ killall mongod; rm -fr rs
 
   def test_connect
-    seeds = @rs.replica_seeds
-    @conn = Mongo::ReplSetConnection.new(seeds, :name => @rs.name)
+    seeds = @rs.repl_set_seeds
+    @conn = Mongo::ReplSetConnection.new(seeds, :name => @rs.repl_set_name)
     assert @conn.connected?
 
     p @rs

@@ -331,6 +331,18 @@ If you want to test replica set, you can run the following task:
 
     $ rake test:rs
 
+To run a single test at the top level, add -Itest since we no longer modify LOAD_PATH:
+
+    $ ruby -Itest test/bson/bson_test.rb
+
+To run a single test from the test directory, add -I. since we no longer modify LOAD_PATH:
+
+    $ ruby -I. bson/bson_test.rb
+
+To run a single test from its subdirectory, add -I.. since we no longer modify LOAD_PATH:
+
+    $ ruby -I.. bson_test.rb
+
 # Release Notes
 
 See HISTORY.

@@ -14,6 +14,15 @@ def debug(level, arg)
   end
 end
 
+#
+# Design Notes
+#     Configuration and Cluster Management are modularized with the concept that the Cluster Manager
+#     can be supplied with any configuration to run.
+#     A configuration can be edited, modified, copied into a test file, and supplied to a cluster manager
+#     as a parameter.
+# To Do
+#     Addition of arbiters - http://docs.mongodb.org/manual/administration/replica-sets/#replica-set-arbiters
+#
 module Mongo
   class Config
     DEFAULT_BASE_OPTS = { :host => 'localhost', :logpath => 'data/log', :dbpath => 'data' }
@@ -23,7 +32,7 @@ module Mongo
 
     SERVER_PRELUDE_KEYS = [:host, :command]
     SHARDING_OPT_KEYS = [:shards, :configs, :routers]
-    REPLICA_OPT_KEYS = [:replicas]
+    REPLICA_OPT_KEYS = [:replicas] #[:replicas, :arbiters] # TODO - complete arbiters
     MONGODS_OPT_KEYS = [:mongods]
     CLUSTER_OPT_KEYS = SHARDING_OPT_KEYS + REPLICA_OPT_KEYS + MONGODS_OPT_KEYS
 
@@ -52,6 +61,7 @@ module Mongo
             server_params = { :host => opts[:host], :port => self.get_available_port, :logpath => logpath }
             case key
               when :replicas; server_params.merge!( :command => 'mongod', :dbpath => dbpath, :replSet => File.basename(opts[:dbpath]) )
+              when :arbiters; server_params.merge!( :command => 'mongod', :replSet => File.basename(opts[:dbpath]) ) # TODO - complete arbiters
               when :configs;  server_params.merge!( :command => 'mongod', :dbpath => dbpath, :configsvr => nil )
               when :routers;  server_params.merge!( :command => 'mongos', :configdb => self.configdb(config) ) # mongos, NO dbpath
               else            server_params.merge!( :command => 'mongod', :dbpath => dbpath ) # :mongods, :shards
@@ -225,9 +235,10 @@ module Mongo
       end
 
       def repl_set_initiate( cfg = nil )
+        # TODO - add arbiters
         cfg ||= {
             :_id => @config[:replicas].first[:replSet],
-            :members => @config[:replicas].each_with_index.collect{|s, i| { :_id => i, :host => "#{s[:host]}:#{s[:port]}" } },
+            :members => (@config[:replicas]).each_with_index.collect{|s, i| { :_id => i, :host => "#{s[:host]}:#{s[:port]}" } },
         }
         command( @config[:replicas].first, 'admin', { :replSetInitiate => cfg } )
       end
@@ -243,11 +254,11 @@ module Mongo
         raise Mongo::OperationFailure, "replSet startup failed - status: #{response.inspect}"
       end
 
-      def replica_seeds
+      def repl_set_seeds
         @config[:replicas].collect{|router| "#{router[:host]}:#{router[:port]}"}
       end
 
-      def name
+      def repl_set_name
         @config[:replicas].first[:replSet]
       end
 
