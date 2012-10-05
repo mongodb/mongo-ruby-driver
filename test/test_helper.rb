@@ -22,7 +22,7 @@ class Test::Unit::TestCase
 
       #debug 1, opts
       config = Mongo::Config.cluster(opts)
-      #debug 1, config
+      debug 1, config
       @@cluster = Mongo::Config::ClusterManager.new(config)
       @@cluster.start
     end
