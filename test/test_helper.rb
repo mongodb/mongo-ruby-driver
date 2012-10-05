@@ -13,19 +13,12 @@ class Test::Unit::TestCase
       @@current_class = self.class
 
       if kind == :rs
-        dbpath = 'rs'
         opts = Mongo::Config::DEFAULT_REPLICA_SET
         opts.merge!(:arbiters => 2, :oplog_size => 10, :journal => false)
       else
-        dbpath = 'sc'
         opts = Mongo::Config::DEFAULT_SHARDED_SIMPLE
         opts.merge!(:routers => 4)
       end
-      puts "****"
-      puts "MONGOD: #{ENV['MONGOD']}"
-      puts "****"
-      opts.merge!(:command => ENV['MONGOD'])
-      opts.merge!(:dbpath => dbpath)
 
       #debug 1, opts
       config = Mongo::Config.cluster(opts)
