@@ -122,9 +122,9 @@ module Mongo
         wait
       end
 
-      def kill
+      def kill(signal_no = 3)
         begin
-          @pid && Process.kill(3, @pid) && true
+          @pid && Process.kill(signal_no, @pid) && true
         rescue Errno::ESRCH
           false
         end
@@ -269,21 +269,41 @@ module Mongo
         @config[:replicas].first[:replSet]
       end
 
-      def members_by_state(state)
+      def member_names_by_state(state)
         status = repl_set_get_status
         status['members'].find_all{|member| member['state'] == state }.collect{|member| member['name']}
       end
 
+      def primary_name
+        member_names_by_state(1).first
+      end
+
+      def secondary_names
+        member_names_by_state(2)
+      end
+
+      def arbiter_names
+        member_names_by_state(7)
+      end
+
+      def members_by_name(names)
+        names.collect do |name|
+          host, port = name.split(':')
+          port = port.to_i
+          @servers[:replicas].find{|server| server.host == host && server.port == port}
+        end
+      end
+
       def primary
-        members_by_state(1).first
+        members_by_name([primary_name]).first
       end
 
       def secondaries
-        members_by_state(2)
+        members_by_name(secondary_names)
       end
 
       def arbiters
-        members_by_state(7)
+        members_by_name(arbiter_names)
       end
 
       def mongos_seeds

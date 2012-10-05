@@ -1,3 +1,4 @@
+$:.unshift(File.join(File.dirname(__FILE__), '../..', 'lib'))
 require 'test_helper'
 
 class BasicTest < Test::Unit::TestCase
@@ -11,16 +12,15 @@ class BasicTest < Test::Unit::TestCase
     @@cluster.clobber
   end
 
-  # TODO member.primary? ==> true
   # To reset after (test) failure
   #     $ killall mongod; rm -fr rs
 
   def test_connect
     conn = Mongo::ReplSetConnection.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
     assert conn.connected?
-    assert_equal @rs.primary, conn.primary.join(':')
-    assert_equal @rs.secondaries.sort, conn.secondaries.collect{|s| s.join(':')}.sort
-    assert_equal @rs.arbiters.sort, conn.arbiters.collect{|s| s.join(':')}.sort
+    assert_equal @rs.primary_name, conn.primary.join(':')
+    assert_equal @rs.secondary_names.sort, conn.secondaries.collect{|s| s.join(':')}.sort
+    assert_equal @rs.arbiter_names.sort, conn.arbiters.collect{|s| s.join(':')}.sort
     conn.close
 
     conn = Mongo::ReplSetConnection.new(@rs.repl_set_seeds_old, :name => @rs.repl_set_name)
@@ -53,7 +53,7 @@ class BasicTest < Test::Unit::TestCase
     seeds = @rs.repl_set_seeds
     args = {:name => @rs.repl_set_name}
     conn = ReplSetConnection.new(seeds, args)
-    assert_equal @rs.primary, [conn.host, conn.port].join(':')
+    assert_equal @rs.primary_name, [conn.host, conn.port].join(':')
     assert_equal conn.host, conn.primary_pool.host
     assert_equal conn.port, conn.primary_pool.port
     assert_equal 2, conn.secondaries.length
