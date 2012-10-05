@@ -96,6 +96,7 @@ module Mongo
     def initialize(*args)
       opts = args.last.is_a?(Hash) ? args.pop : {}
       nodes = args
+      nodes = nodes.flatten(1) if nodes.first.is_a?(Array) && nodes.first.first.is_a?(Array)
 
       if nodes.empty? and ENV.has_key?('MONGODB_URI')
         parser = URIParser.new ENV['MONGODB_URI']

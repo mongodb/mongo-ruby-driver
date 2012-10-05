@@ -45,6 +45,7 @@ module Mongo
     def self.cluster(opts = DEFAULT_SHARDED_SIMPLE)
       mongod = ENV['MONGOD'] || 'mongod'
       mongos = ENV['MONGOS'] || 'mongos'
+      replSet = opts[:replSet] || File.basename(opts[:dbpath])
       raise "missing required option" if [:host, :dbpath].any?{|k| !opts[k]}
       config = opts.reject{|k,v| CLUSTER_OPT_KEYS.include?(k)}
       keys = SHARDING_OPT_KEYS.any?{|k| opts[k]} ? SHARDING_OPT_KEYS : nil
@@ -60,8 +61,8 @@ module Mongo
           else
             server_params = { :host => opts[:host], :port => self.get_available_port, :logpath => logpath }
             case key
-              when :replicas; server_params.merge!( :command => mongod, :dbpath => dbpath, :replSet => File.basename(opts[:dbpath]) )
-              when :arbiters; server_params.merge!( :command => mongod, :dbpath => dbpath, :replSet => File.basename(opts[:dbpath]) )
+              when :replicas; server_params.merge!( :command => mongod, :dbpath => dbpath, :replSet => replSet )
+              when :arbiters; server_params.merge!( :command => mongod, :dbpath => dbpath, :replSet => replSet )
               when :configs;  server_params.merge!( :command => mongod, :dbpath => dbpath, :configsvr => nil )
               when :routers;  server_params.merge!( :command => mongos, :configdb => self.configdb(config) ) # mongos, NO dbpath
               else            server_params.merge!( :command => mongod, :dbpath => dbpath ) # :mongods, :shards
@@ -250,7 +251,7 @@ module Mongo
         300.times do |i|
           response = repl_set_get_status
           members = response['members']
-          return response if response['ok'] == 1.0 && response['myState'] == 1 && members.collect{|m| m['state']}.all?{|state| [1,2,7].index(state)}
+          return response if response['ok'] == 1.0 && members.collect{|m| m['state']}.all?{|state| [1,2,7].index(state)}
           sleep 1
         end
         raise Mongo::OperationFailure, "replSet startup failed - status: #{response.inspect}"
