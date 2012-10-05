@@ -1,4 +1,3 @@
-$:.unshift(File.join(File.dirname(__FILE__), '../..', 'lib'))
 require 'test_helper'
 
 class ConnectTest < Test::Unit::TestCase

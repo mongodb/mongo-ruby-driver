@@ -333,15 +333,15 @@ If you want to test replica set, you can run the following task:
 
 To run a single test at the top level, add -Itest since we no longer modify LOAD_PATH:
 
-    $ ruby -Itest test/bson/bson_test.rb
+    $ ruby -Itest -Ilib test/bson/bson_test.rb
 
 To run a single test from the test directory, add -I. since we no longer modify LOAD_PATH:
 
-    $ ruby -I. bson/bson_test.rb
+    $ ruby -I. -I../lib bson/bson_test.rb
 
 To run a single test from its subdirectory, add -I.. since we no longer modify LOAD_PATH:
 
-    $ ruby -I.. bson_test.rb
+    $ ruby -I.. -I../../lib bson_test.rb
 
 # Release Notes
 
