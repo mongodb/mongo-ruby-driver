@@ -179,7 +179,7 @@ module Mongo
         verify(verifies)
       end
 
-      def verify(verifies = 10)
+      def verify(verifies = 60)
         verifies.times do |i|
           #puts "DbServer.verify - port: #{@port} iteration: #{i}"
           begin
