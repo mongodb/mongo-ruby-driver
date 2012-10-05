@@ -23,7 +23,7 @@ end
 #
 module Mongo
   class Config
-    DEFAULT_BASE_OPTS = { :host => 'localhost', :logpath => 'data/log', :dbpath => 'data' }
+    DEFAULT_BASE_OPTS = { :host => 'localhost', :dbpath => 'data' }
     DEFAULT_REPLICA_SET = DEFAULT_BASE_OPTS.merge( :replicas => 3 )
     DEFAULT_SHARDED_SIMPLE = DEFAULT_BASE_OPTS.merge( :shards => 2, :configs => 1, :routers => 2 )
     DEFAULT_SHARDED_REPLICA = DEFAULT_SHARDED_SIMPLE.merge( :replicas => 3 )
@@ -33,6 +33,8 @@ module Mongo
     REPLICA_OPT_KEYS = [:replicas, :arbiters]
     MONGODS_OPT_KEYS = [:mongods]
     CLUSTER_OPT_KEYS = SHARDING_OPT_KEYS + REPLICA_OPT_KEYS + MONGODS_OPT_KEYS
+
+    FLAGS = [:noprealloc, :nojournal]
 
     DEFAULT_VERIFIES = 60
     BASE_PORT = 3000
@@ -45,27 +47,44 @@ module Mongo
     def self.cluster(opts = DEFAULT_SHARDED_SIMPLE)
       mongod = ENV['MONGOD'] || 'mongod'
       mongos = ENV['MONGOS'] || 'mongos'
-      replSet = opts[:replSet] || File.basename(opts[:dbpath])
+      dbpath = ENV['DBPATH'] || opts[:dbpath]
+
+      replSet    = opts[:replSet] || File.basename(dbpath)
+      oplog_size = opts[:oplog_size] || 10
+      journal    = opts[:nojournal] || true
+      prealloc   = opts[:noprealloc] || true
+
       raise "missing required option" if [:host, :dbpath].any?{|k| !opts[k]}
-      config = opts.reject{|k,v| CLUSTER_OPT_KEYS.include?(k)}
-      keys = SHARDING_OPT_KEYS.any?{|k| opts[k]} ? SHARDING_OPT_KEYS : nil
-      keys ||= REPLICA_OPT_KEYS.any?{|k| opts[k]} ? REPLICA_OPT_KEYS : nil
-      keys ||= MONGODS_OPT_KEYS
+
+      config = opts.reject {|k,v| CLUSTER_OPT_KEYS.include?(k)}
+      keys   = opts.collect {|k,v| CLUSTER_OPT_KEYS.include?(k) ? k : nil}
+
       keys.each do |key|
         config[key] = opts.fetch(key,1).times.collect do |i| #default to 1 of whatever
           server_base = key.to_s.chop
-          dbpath = "#{opts[:dbpath]}/#{server_base}#{i}"
-          logpath = "#{dbpath}/#{server_base}.log"
+          path = "#{dbpath}/#{server_base}#{i}"
+          logpath = "#{path}/#{server_base}.log"
           if key == :shards && opts[:replicas]
-            self.cluster(opts.reject{|k,v| SHARDING_OPT_KEYS.include?(k)}.merge(:dbpath => dbpath))
+            self.cluster(opts.reject{|k,v| SHARDING_OPT_KEYS.include?(k)}.merge(:dbpath => path))
           else
-            server_params = { :host => opts[:host], :port => self.get_available_port, :logpath => logpath }
+            server_params = {
+              :host => opts[:host],
+              :port => self.get_available_port,
+              :logpath => logpath,
+              :noprealloc => prealloc,
+              :nojournal => journal
+            }
             case key
-              when :replicas; server_params.merge!( :command => mongod, :dbpath => dbpath, :replSet => replSet )
-              when :arbiters; server_params.merge!( :command => mongod, :dbpath => dbpath, :replSet => replSet )
-              when :configs;  server_params.merge!( :command => mongod, :dbpath => dbpath, :configsvr => nil )
-              when :routers;  server_params.merge!( :command => mongos, :configdb => self.configdb(config) ) # mongos, NO dbpath
-              else            server_params.merge!( :command => mongod, :dbpath => dbpath ) # :mongods, :shards
+              when :replicas
+                server_params.merge!( :command => mongod, :dbpath => path, :replSet => replSet, :oplogSize => oplog_size )
+              when :arbiters
+                server_params.merge!( :command => mongod, :dbpath => path, :replSet => replSet, :oplogSize => oplog_size)
+              when :configs
+                server_params.merge!( :command => mongod, :dbpath => path, :configsvr => nil )
+              when :routers
+                server_params.merge!( :command => mongos, :configdb => self.configdb(config) ) # mongos, NO dbpath
+              else
+                server_params.merge!( :command => mongod, :dbpath => path ) # :mongods, :shards
             end
           end
         end
@@ -107,9 +126,9 @@ module Mongo
         return @pid if running?
         begin
           @pid = fork do
-            #STDIN.reopen '/dev/null'
-            #STDOUT.reopen '/dev/null', 'a'
-            #STDERR.reopen STDOUT
+            STDIN.reopen '/dev/null'
+            STDOUT.reopen '/dev/null', 'a'
+            STDERR.reopen STDOUT
             exec cmd # spawn(@cmd, [:in, :out, :err] => :close) #
           end
           verify(verifies) if verifies > 0
@@ -169,8 +188,16 @@ module Mongo
         dbpath = @config[:dbpath]
         [dbpath, File.dirname(@config[:logpath])].compact.each{|dir| FileUtils.mkdir_p(dir) unless File.directory?(dir) }
         command = @config[:command] || 'mongod'
-        arguments = @config.reject{|k,v| SERVER_PRELUDE_KEYS.include?(k)}
-        cmd = [command, arguments.collect{|k,v| ['--' + k.to_s, v ]}].flatten.join(' ')
+        params = @config.reject{|k,v| SERVER_PRELUDE_KEYS.include?(k)}
+        arguments = params.collect do |arg, value|
+          argument = '--' + arg.to_s
+          if FLAGS.member?(arg) && value == true
+            [argument]
+          else
+            [argument, value]
+          end
+        end
+        cmd = [command, arguments].flatten.join(' ')
         super(cmd, @config[:host], @config[:port])
       end
 

@@ -15,7 +15,7 @@ class Test::Unit::TestCase
 
       if kind == :rs
         opts = Mongo::Config::DEFAULT_REPLICA_SET
-        opts.merge!(:arbiters => 2, :oplog_size => 10, :journal => false)
+        opts.merge!(:arbiters => 2)
       else
         opts = Mongo::Config::DEFAULT_SHARDED_SIMPLE
         opts.merge!(:routers => 4)

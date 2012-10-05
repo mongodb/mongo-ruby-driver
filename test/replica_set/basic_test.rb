@@ -22,7 +22,10 @@ class BasicTest < Test::Unit::TestCase
     assert_equal @rs.arbiter_names.sort, conn.arbiters.collect{|s| s.join(':')}.sort
     conn.close
 
-    conn = Mongo::ReplSetConnection.new(@rs.repl_set_seeds_old, :name => @rs.repl_set_name)
+    silently do
+      conn = Mongo::ReplSetConnection.new(@rs.repl_set_seeds_old, :name => @rs.repl_set_name)
+    end
+
     assert conn.connected?
     conn.close
   end
