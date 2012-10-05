@@ -16,21 +16,16 @@ class BasicTest < Test::Unit::TestCase
   #     $ killall mongod; rm -fr rs
 
   def test_connect
-    seeds = @rs.repl_set_seeds
-    @conn = Mongo::ReplSetConnection.new(seeds, :name => @rs.repl_set_name)
-    assert @conn.connected?
+    conn = Mongo::ReplSetConnection.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
+    assert conn.connected?
+    assert_equal @rs.primary, conn.primary.join(':')
+    assert_equal @rs.secondaries.sort, conn.secondaries.collect{|s| s.join(':')}.sort
+    assert_equal @rs.arbiters.sort, conn.arbiters.collect{|s| s.join(':')}.sort
+    conn.close
 
-    p @rs
-
-    p @conn.primary
-    #assert_equal @rs.primary, @conn.primary
-    p @conn.secondaries.sort
-    #assert_equal @rs.secondaries.sort, @conn.secondaries.sort
-    p @conn.arbiters.sort
-    #assert_equal @rs.arbiters.sort, @conn.arbiters.sort
-
-    assert_equal(seeds.size, @conn.seeds.size)
-    @conn.close
+    conn = Mongo::ReplSetConnection.new(*@rs.repl_set_seeds_old, :name => @rs.repl_set_name)
+    assert conn.connected?
+    conn.close
   end
 
   private

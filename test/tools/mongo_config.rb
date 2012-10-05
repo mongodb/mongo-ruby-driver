@@ -247,10 +247,10 @@ module Mongo
 
       def repl_set_startup
         response = nil
-        120.times do |i|
+        300.times do |i|
           response = repl_set_get_status
           members = response['members']
-          return response if response['ok'] == 1.0 && response['myState'] == 1 && members.collect{|m| m['state']}.all?{|state| [1,2,7].find(state)}
+          return response if response['ok'] == 1.0 && response['myState'] == 1 && members.collect{|m| m['state']}.all?{|state| [1,2,7].index(state)}
           sleep 1
         end
         raise Mongo::OperationFailure, "replSet startup failed - status: #{response.inspect}"
@@ -260,8 +260,29 @@ module Mongo
         @config[:replicas].collect{|router| "#{router[:host]}:#{router[:port]}"}
       end
 
+      def repl_set_seeds_old
+        @config[:replicas].collect{|router| [router[:host], router[:port]]}
+      end
+
       def repl_set_name
         @config[:replicas].first[:replSet]
+      end
+
+      def members_by_state(state)
+        status = repl_set_get_status
+        status['members'].find_all{|member| member['state'] == state }.collect{|member| member['name']}
+      end
+
+      def primary
+        members_by_state(1).first
+      end
+
+      def secondaries
+        members_by_state(2)
+      end
+
+      def arbiters
+        members_by_state(7)
       end
 
       def mongos_seeds
