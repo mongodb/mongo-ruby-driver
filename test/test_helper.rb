@@ -21,6 +21,9 @@ class Test::Unit::TestCase
         opts.merge!(:routers => 4)
       end
 
+      dbpath = ENV['DBPATH'] || 'data'
+      opts.merge!(:dbpath => dbpath)
+
       #debug 1, opts
       config = Mongo::Config.cluster(opts)
       #debug 1, config

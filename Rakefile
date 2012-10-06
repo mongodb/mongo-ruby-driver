@@ -150,6 +150,12 @@ namespace :test do
     t.ruby_opts << '-w'
   end
 
+  Rake::TestTask.new(:config) do |t|
+    t.test_files = FileList['test/tools/mongo_config_test.rb']
+    t.libs << 'test'
+    t.ruby_opts << '-w'
+  end
+
   task :drop_databases => :path do |t|
     puts "Dropping test databases..."
     require 'mongo'

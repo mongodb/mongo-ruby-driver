@@ -1,3 +1,4 @@
+require 'test_helper'
 require 'tools/mongo_config'
 
 class MongoConfig < Test::Unit::TestCase

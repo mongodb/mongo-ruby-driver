@@ -35,7 +35,7 @@ module Mongo
     MONGODS_OPT_KEYS = [:mongods]
     CLUSTER_OPT_KEYS = SHARDING_OPT_KEYS + REPLICA_OPT_KEYS + MONGODS_OPT_KEYS
 
-    FLAGS = [:noprealloc, :nojournal]
+    FLAGS = [:noprealloc, :nojournal, :smallfiles, :logappend]
 
     DEFAULT_VERIFIES = 60
     BASE_PORT = 3000
@@ -48,44 +48,48 @@ module Mongo
     def self.cluster(opts = DEFAULT_SHARDED_SIMPLE)
       mongod = ENV['MONGOD'] || 'mongod'
       mongos = ENV['MONGOS'] || 'mongos'
-      dbpath = ENV['DBPATH'] || opts[:dbpath]
 
-      replSet    = opts[:replSet] || File.basename(dbpath)
+      dbpath     = opts[:dbpath]
+      replSet    = opts[:replSet]    || 'ruby-driver-test'
       oplog_size = opts[:oplog_size] || 10
-      journal    = opts[:nojournal] || true
-      prealloc   = opts[:noprealloc] || true
+      nojournal  = opts[:nojournal]  || true
+      noprealloc = opts[:noprealloc] || true
+      smallfiles = opts[:smallfiles] || true
+      logappend  = opts[:logappend]  || true
 
       raise "missing required option" if [:host, :dbpath].any?{|k| !opts[k]}
 
       config = opts.reject {|k,v| CLUSTER_OPT_KEYS.include?(k)}
-      keys   = opts.collect {|k,v| CLUSTER_OPT_KEYS.include?(k) ? k : nil}
+      kinds = opts.keys.select {|k| CLUSTER_OPT_KEYS.include?(k)}
 
-      keys.each do |key|
-        config[key] = opts.fetch(key,1).times.collect do |i| #default to 1 of whatever
-          server_base = key.to_s.chop
+      kinds.each do |kind|
+        config[kind] = opts.fetch(kind,1).times.collect do |i| #default to 1 of whatever
+
+          server_base = kind.to_s.chop
           path = "#{dbpath}/#{server_base}#{i}"
           logpath = "#{path}/#{server_base}.log"
-          if key == :shards && opts[:replicas]
+
+          if kind == :shards && opts[:replicas]
             self.cluster(opts.reject{|k,v| SHARDING_OPT_KEYS.include?(k)}.merge(:dbpath => path))
           else
             server_params = {
               :host => opts[:host],
               :port => self.get_available_port,
               :logpath => logpath,
-              :noprealloc => prealloc,
-              :nojournal => journal
+              :logappend => logappend
             }
-            case key
+            #TODO: make this not awful
+            case kind
               when :replicas
-                server_params.merge!( :command => mongod, :dbpath => path, :replSet => replSet, :oplogSize => oplog_size )
+                server_params.merge!( :command => mongod, :dbpath => path, :replSet => replSet, :oplogSize => oplog_size, :smallfiles => smallfiles, :nojournal => nojournal, :noprealloc => noprealloc )
               when :arbiters
-                server_params.merge!( :command => mongod, :dbpath => path, :replSet => replSet, :oplogSize => oplog_size)
+                server_params.merge!( :command => mongod, :dbpath => path, :replSet => replSet, :oplogSize => oplog_size, :smallfiles => smallfiles, :nojournal => nojournal, :noprealloc => noprealloc )
               when :configs
-                server_params.merge!( :command => mongod, :dbpath => path, :configsvr => nil )
+                server_params.merge!( :command => mongod, :dbpath => path, :configsvr => nil, :nojournal => nojournal, :noprealloc => noprealloc )
               when :routers
                 server_params.merge!( :command => mongos, :configdb => self.configdb(config) ) # mongos, NO dbpath
               else
-                server_params.merge!( :command => mongod, :dbpath => path ) # :mongods, :shards
+                server_params.merge!( :command => mongod, :dbpath => path, :nojournal => nojournal, :noprealloc => noprealloc ) # :mongods, :shards
             end
           end
         end
@@ -133,8 +137,9 @@ module Mongo
               STDIN.reopen '/dev/null'
               STDOUT.reopen '/dev/null', 'a'
               STDERR.reopen STDOUT
-              exec cmd # spawn(@cmd, [:in, :out, :err] => :close) #
+              exec cmd
             end
+            #@pid = Process.spawn(@cmd, [:in, :out, :err] => :close)
           end
           verify(verifies) if verifies > 0
           @pid
@@ -146,7 +151,7 @@ module Mongo
         wait
       end
 
-      def kill(signal_no = 3)
+      def kill(signal_no = 2)
         begin
           @pid && Process.kill(signal_no, @pid) && true
         rescue Errno::ESRCH
@@ -280,7 +285,7 @@ module Mongo
 
       def repl_set_startup
         response = nil
-        300.times do |i|
+        60.times do |i|
           response = repl_set_get_status
           members = response['members']
           return response if response['ok'] == 1.0 && members.collect{|m| m['state']}.all?{|state| [1,2,7].index(state)}
@@ -372,6 +377,8 @@ module Mongo
       end
 
       def start
+        # Must start configs before mongos -- hash order not guaranteed on 1.8.X
+        servers(:configs).each{|server| server.start}
         servers.each{|server| server.start}
         # TODO - sharded replica sets - pending
         if @config[:replicas]
@@ -390,7 +397,7 @@ module Mongo
       end
 
       def clobber
-        system "rm -fr #{@config[:dbpath]}"
+        system "rm -fr #{@config[:dbpath]}/*"
         self
       end
     end
