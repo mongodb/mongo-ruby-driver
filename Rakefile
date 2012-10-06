@@ -110,7 +110,12 @@ namespace :test do
   end
 
   Rake::TestTask.new(:functional) do |t|
-    t.test_files = FileList['test/functional/*_test.rb'] - ["test/functional/db_api_test.rb", "test/functional/pool_test.rb", "test/functional/threading_test.rb"]
+    t.test_files = FileList['test/functional/*_test.rb'] - [
+      "test/functional/db_api_test.rb",
+      "test/functional/pool_test.rb",
+      "test/functional/threading_test.rb",
+      "test/functional/grid_io_test.rb"
+    ]
     t.libs << 'test'
     t.ruby_opts << '-w'
   end
