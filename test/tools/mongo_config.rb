@@ -2,6 +2,7 @@
 require 'socket'
 require 'fileutils'
 require 'mongo'
+require 'posix/spawn' if RUBY_PLATFORM == 'java'
 
 $debug_level = 2
 STDOUT.sync = true
@@ -125,11 +126,15 @@ module Mongo
       def start(verifies = 0)
         return @pid if running?
         begin
-          @pid = fork do
-            STDIN.reopen '/dev/null'
-            STDOUT.reopen '/dev/null', 'a'
-            STDERR.reopen STDOUT
-            exec cmd # spawn(@cmd, [:in, :out, :err] => :close) #
+          if RUBY_PLATFORM == 'java'
+            @pid = POSIX::Spawn::spawn(@cmd, [:in, :out, :err] => :close)
+          else
+            @pid = fork do
+              STDIN.reopen '/dev/null'
+              STDOUT.reopen '/dev/null', 'a'
+              STDERR.reopen STDOUT
+              exec cmd # spawn(@cmd, [:in, :out, :err] => :close) #
+            end
           end
           verify(verifies) if verifies > 0
           @pid
