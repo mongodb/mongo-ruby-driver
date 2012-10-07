@@ -114,7 +114,8 @@ namespace :test do
       "test/functional/db_api_test.rb",
       "test/functional/pool_test.rb",
       "test/functional/threading_test.rb",
-      "test/functional/grid_io_test.rb"
+      "test/functional/grid_io_test.rb",
+      "test/functional/grid_test.rb"
     ]
     t.libs << 'test'
     t.ruby_opts << '-w'
