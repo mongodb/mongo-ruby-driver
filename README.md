@@ -25,8 +25,8 @@ For the reference manual, use the links in the upper-left and upper-right corner
 
 This documentation has other articles of interest, including:
 
-1. [A tutorial](file.TUTORIAL.html).
-2. [Replica Sets in Ruby](file.REPLICA_SETS.html).
+1. [A tutorial](http://api.mongodb.org/ruby/current/file.TUTORIAL.html).
+2. [Replica Sets in Ruby](http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html).
 3. [Write Concern in Ruby](file.WRITE_CONCERN.html).
 4. [Tailable Cursors in Ruby](file.TAILABLE_CURSORS.html).
 5. [Read Preference in Ruby](file.READ_PREFERENCE.html).
