@@ -52,7 +52,7 @@ module Mongo
       dbpath     = opts[:dbpath]
       replSet    = opts[:replSet]    || 'ruby-driver-test'
       oplog_size = opts[:oplog_size] || 10
-      nojournal  = opts[:nojournal]  || true
+      nojournal  = opts[:nojournal]  || nil
       noprealloc = opts[:noprealloc] || true
       smallfiles = opts[:smallfiles] || true
       logappend  = opts[:logappend]  || true
