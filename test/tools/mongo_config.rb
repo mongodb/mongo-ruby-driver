@@ -189,6 +189,10 @@ module Mongo
         @host = host
         @port = port
       end
+
+      def host_port
+        [@host, @port].join(':')
+      end
     end
 
     class DbServer < Server
