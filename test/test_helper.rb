@@ -1,7 +1,53 @@
-$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'mongo'
-require 'rubygems' if RUBY_VERSION < '1.9.0'
+require 'rubygems'
+gem 'test-unit'
 require 'test/unit'
+require 'tools/mongo_config'
+
+TEST_DATA = File.join(File.dirname(__FILE__), 'data')
+
+class Test::Unit::TestCase
+
+  def ensure_cluster(kind=nil)
+    if defined?(@@current_class) and @@current_class == self.class
+      @@cluster.start
+    else
+      @@current_class = self.class
+
+      if kind == :rs
+        opts = Mongo::Config::DEFAULT_REPLICA_SET
+        opts.merge!(:arbiters => 2)
+      else
+        opts = Mongo::Config::DEFAULT_SHARDED_SIMPLE
+        opts.merge!(:routers => 4)
+      end
+
+      dbpath = ENV['DBPATH'] || 'data'
+      opts.merge!(:dbpath => dbpath)
+
+      #debug 1, opts
+      config = Mongo::Config.cluster(opts)
+      #debug 1, config
+      @@cluster = Mongo::Config::ClusterManager.new(config)
+      @@cluster.start
+    end
+    instance_variable_set("@#{kind}", @@cluster)
+  end
+
+  # Generic code for rescuing connection failures and retrying operations.
+  # This could be combined with some timeout functionality.
+  def rescue_connection_failure(max_retries=30)
+    retries = 0
+    begin
+      yield
+    rescue Mongo::ConnectionFailure => ex
+      #puts "Rescue attempt #{retries}: from #{ex}"
+      retries += 1
+      raise ex if retries > max_retries
+      sleep(2)
+      retry
+    end
+  end
+end
 
 def silently
   warn_level = $VERBOSE
@@ -15,7 +61,6 @@ def silently
 end
 
 begin
-  require 'rubygems' if RUBY_VERSION < "1.9.0" && !ENV['C_EXT']
   silently { require 'shoulda' }
   silently { require 'mocha' }
 rescue LoadError

@@ -1,5 +1,5 @@
-require File.expand_path("../test_helper", __FILE__)
 require 'rbconfig'
+require 'test_helper'
 
 class TestCollection < Test::Unit::TestCase
   @@connection ||= standard_connection(:op_timeout => 10)

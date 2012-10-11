@@ -1,11 +1,6 @@
 # -*- mode: ruby; -*-
-if RUBY_VERSION < '1.9.0'
-  require 'rubygems'
-  require 'rubygems/specification'
-end
-
-require 'fileutils'
 require 'rake'
+require 'fileutils'
 require 'rake/testtask'
 require 'rake/extensiontask'
 require 'rake/javaextensiontask'
@@ -13,7 +8,6 @@ require 'rake/javaextensiontask'
 begin
   require 'git'
   require 'devkit'
-  require 'ci/reporter/rake/test_unit'
   rescue LoadError
 end
 
@@ -62,11 +56,10 @@ task :test do
 end
 
 task :path do
-    $:.unshift(File.join(File.dirname(__FILE__), 'lib'))
+  $:.unshift(File.join(File.dirname(__FILE__), 'lib'))
 end
 
 namespace :test do
-
   desc "Test the driver with the C extension enabled."
   task :c => :path do
     ENV['C_EXT'] = 'TRUE'
@@ -76,7 +69,7 @@ namespace :test do
       Rake::Task['test:unit'].invoke
       Rake::Task['test:functional'].invoke
       Rake::Task['test:bson'].invoke
-      Rake::Task['test:pooled_threading'].invoke
+      #Rake::Task['test:pooled_threading'].invoke
       Rake::Task['test:drop_databases'].invoke
     end
     ENV['C_EXT'] = nil
@@ -91,61 +84,76 @@ namespace :test do
       Rake::Task['test:unit'].invoke
       Rake::Task['test:functional'].invoke
       Rake::Task['test:bson'].invoke
-      Rake::Task['test:pooled_threading'].invoke
+      #Rake::Task['test:pooled_threading'].invoke
       Rake::Task['test:drop_databases'].invoke
     end
   end
 
   desc "Run the replica set test suite"
   Rake::TestTask.new(:rs) do |t|
-    t.test_files = FileList['test/replica_sets/*_test.rb']
-    t.ruby_opts << '-w'
-  end
-
-  desc "Run the replica set test suite"
-  Rake::TestTask.new(:rs_no_threads) do |t|
-    t.test_files = FileList['test/replica_sets/*_test.rb'] - ["test/replica_sets/refresh_with_threads_test.rb"]
+    t.test_files = FileList['test/replica_set/*_test.rb']
+    t.libs << 'test'
     t.ruby_opts << '-w'
   end
 
   desc "Run the sharded cluster test suite"
   Rake::TestTask.new(:sc) do |t|
     t.test_files = FileList['test/sharded_cluster/*_test.rb']
+    t.libs << 'test'
     t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:unit) do |t|
     t.test_files = FileList['test/unit/*_test.rb']
+    t.libs << 'test'
     t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:functional) do |t|
-    t.test_files = FileList['test/*_test.rb'] - ["test/db_api_test.rb"]
+    t.test_files = FileList['test/functional/*_test.rb'] - [
+      "test/functional/db_api_test.rb",
+      "test/functional/pool_test.rb",
+      "test/functional/threading_test.rb",
+      "test/functional/grid_io_test.rb",
+      "test/functional/grid_test.rb"
+    ]
+    t.libs << 'test'
     t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:pooled_threading) do |t|
     t.test_files = FileList['test/threading/*_test.rb']
+    t.libs << 'test'
     t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:auto_reconnect) do |t|
     t.test_files = FileList['test/auxillary/autoreconnect_test.rb']
+    t.libs << 'test'
     t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:authentication) do |t|
     t.test_files = FileList['test/auxillary/authentication_test.rb']
+    t.libs << 'test'
     t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:new_features) do |t|
     t.test_files = FileList['test/auxillary/1.4_features.rb']
+    t.libs << 'test'
     t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:bson) do |t|
     t.test_files = FileList['test/bson/*_test.rb']
+    t.libs << 'test'
+    t.ruby_opts << '-w'
+  end
+
+  Rake::TestTask.new(:config) do |t|
+    t.test_files = FileList['test/tools/mongo_config_test.rb']
+    t.libs << 'test'
     t.ruby_opts << '-w'
   end
 
@@ -176,27 +184,6 @@ task :ydoc do
   system "yardoc -o #{out} --title MongoRuby-#{Mongo::VERSION}"
 end
 
-namespace :jenkins do
-  task :ci_reporter do
-    begin
-      require 'ci/reporter/rake/test_unit'
-    rescue LoadError
-      warn "Warning: Unable to load ci_reporter gem."
-    end
-  end
-
-  namespace :test do
-    task :ruby do
-      Rake::Task['test:ruby'].invoke
-    end
-
-    task :c do
-      Rake::Task['gem:install_extensions'].invoke
-      Rake::Task['test:c'].invoke
-    end
-  end
-end
-
 namespace :gem do
   desc "Install the gem locally"
   task :install do
@@ -220,16 +207,6 @@ namespace :gem do
     `gem build bson_ext.gemspec`
     `gem install --no-rdoc --no-ri bson_ext-*.gem`
     `rm bson_ext-*.gem`
-  end
-end
-
-namespace :ci do
-  namespace :test do
-    task :c => :path do
-      Rake::Task['gem:install'].invoke
-      Rake::Task['gem:install_extensions'].invoke
-      Rake::Task['test:c'].invoke
-    end
   end
 end
 

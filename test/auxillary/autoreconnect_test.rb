@@ -1,7 +1,5 @@
-$:.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+require 'test_helper'
 require 'mongo'
-require 'test/unit'
-require File.expand_path("../../test_helper", __FILE__)
 
 # NOTE: This test requires bouncing the server
 class AutoreconnectTest < Test::Unit::TestCase

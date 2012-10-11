@@ -1,14 +1,11 @@
 #!/usr/bin/env ruby
-
 require 'socket'
 require 'fileutils'
+require 'mongo'
+require 'posix/spawn' if RUBY_PLATFORM == 'java'
 
 $debug_level = 2
 STDOUT.sync = true
-
-unless defined? Mongo
-  require File.join(File.dirname(__FILE__), '..', '..', 'lib', 'mongo')
-end
 
 def debug(level, arg)
   if level <= $debug_level
@@ -18,18 +15,27 @@ def debug(level, arg)
   end
 end
 
+#
+# Design Notes
+#     Configuration and Cluster Management are modularized with the concept that the Cluster Manager
+#     can be supplied with any configuration to run.
+#     A configuration can be edited, modified, copied into a test file, and supplied to a cluster manager
+#     as a parameter.
+#
 module Mongo
   class Config
-    DEFAULT_BASE_OPTS = { :host => 'localhost', :logpath => 'data/log', :dbpath => 'data' }
+    DEFAULT_BASE_OPTS = { :host => 'localhost', :dbpath => 'data' }
     DEFAULT_REPLICA_SET = DEFAULT_BASE_OPTS.merge( :replicas => 3 )
     DEFAULT_SHARDED_SIMPLE = DEFAULT_BASE_OPTS.merge( :shards => 2, :configs => 1, :routers => 2 )
     DEFAULT_SHARDED_REPLICA = DEFAULT_SHARDED_SIMPLE.merge( :replicas => 3 )
 
     SERVER_PRELUDE_KEYS = [:host, :command]
     SHARDING_OPT_KEYS = [:shards, :configs, :routers]
-    REPLICA_OPT_KEYS = [:replicas]
+    REPLICA_OPT_KEYS = [:replicas, :arbiters]
     MONGODS_OPT_KEYS = [:mongods]
     CLUSTER_OPT_KEYS = SHARDING_OPT_KEYS + REPLICA_OPT_KEYS + MONGODS_OPT_KEYS
+
+    FLAGS = [:noprealloc, :nojournal, :smallfiles, :logappend]
 
     DEFAULT_VERIFIES = 60
     BASE_PORT = 3000
@@ -40,25 +46,50 @@ module Mongo
     end
 
     def self.cluster(opts = DEFAULT_SHARDED_SIMPLE)
+      mongod = ENV['MONGOD'] || 'mongod'
+      mongos = ENV['MONGOS'] || 'mongos'
+
+      dbpath     = opts[:dbpath]
+      replSet    = opts[:replSet]    || 'ruby-driver-test'
+      oplog_size = opts[:oplog_size] || 10
+      nojournal  = opts[:nojournal]  || nil
+      noprealloc = opts[:noprealloc] || true
+      smallfiles = opts[:smallfiles] || true
+      logappend  = opts[:logappend]  || true
+
       raise "missing required option" if [:host, :dbpath].any?{|k| !opts[k]}
-      config = opts.reject{|k,v| CLUSTER_OPT_KEYS.include?(k)}
-      keys = SHARDING_OPT_KEYS.any?{|k| opts[k]} ? SHARDING_OPT_KEYS : nil
-      keys ||= REPLICA_OPT_KEYS.any?{|k| opts[k]} ? REPLICA_OPT_KEYS : nil
-      keys ||= MONGODS_OPT_KEYS
-      keys.each do |key|
-        config[key] = opts.fetch(key,1).times.collect do |i| #default to 1 of whatever
-          server_base = key.to_s.chop
-          dbpath = "#{opts[:dbpath]}/#{server_base}#{i}"
-          logpath = "#{dbpath}/#{server_base}.log"
-          if key == :shards && opts[:replicas]
-            self.cluster(opts.reject{|k,v| SHARDING_OPT_KEYS.include?(k)}.merge(:dbpath => dbpath))
+
+      config = opts.reject {|k,v| CLUSTER_OPT_KEYS.include?(k)}
+      kinds = opts.keys.select {|k| CLUSTER_OPT_KEYS.include?(k)}
+
+      kinds.each do |kind|
+        config[kind] = opts.fetch(kind,1).times.collect do |i| #default to 1 of whatever
+
+          server_base = kind.to_s.chop
+          path = "#{dbpath}/#{server_base}#{i}"
+          logpath = "#{path}/#{server_base}.log"
+
+          if kind == :shards && opts[:replicas]
+            self.cluster(opts.reject{|k,v| SHARDING_OPT_KEYS.include?(k)}.merge(:dbpath => path))
           else
-            server_params = { :host => opts[:host], :port => self.get_available_port, :logpath => logpath }
-            case key
-              when :replicas; server_params.merge!( :command => 'mongod', :dbpath => dbpath, :replSet => File.basename(opts[:dbpath]) )
-              when :configs;  server_params.merge!( :command => 'mongod', :dbpath => dbpath, :configsvr => nil )
-              when :routers;  server_params.merge!( :command => 'mongos', :configdb => self.configdb(config) ) # mongos, NO dbpath
-              else            server_params.merge!( :command => 'mongod', :dbpath => dbpath ) # :mongods, :shards
+            server_params = {
+              :host => opts[:host],
+              :port => self.get_available_port,
+              :logpath => logpath,
+              :logappend => logappend
+            }
+            #TODO: make this not awful
+            case kind
+              when :replicas
+                server_params.merge!( :command => mongod, :dbpath => path, :replSet => replSet, :oplogSize => oplog_size, :smallfiles => smallfiles, :nojournal => nojournal, :noprealloc => noprealloc )
+              when :arbiters
+                server_params.merge!( :command => mongod, :dbpath => path, :replSet => replSet, :oplogSize => oplog_size, :smallfiles => smallfiles, :nojournal => nojournal, :noprealloc => noprealloc )
+              when :configs
+                server_params.merge!( :command => mongod, :dbpath => path, :configsvr => nil, :nojournal => nojournal, :noprealloc => noprealloc )
+              when :routers
+                server_params.merge!( :command => mongos, :configdb => self.configdb(config) ) # mongos, NO dbpath
+              else
+                server_params.merge!( :command => mongod, :dbpath => path, :nojournal => nojournal, :noprealloc => noprealloc ) # :mongods, :shards
             end
           end
         end
@@ -99,11 +130,16 @@ module Mongo
       def start(verifies = 0)
         return @pid if running?
         begin
-          @pid = fork do
-            STDIN.reopen '/dev/null'
-            STDOUT.reopen '/dev/null', 'a'
-            STDERR.reopen STDOUT
-            exec cmd # spawn(@cmd, [:in, :out, :err] => :close) #
+          if RUBY_PLATFORM == 'java'
+            @pid = POSIX::Spawn::spawn(@cmd, [:in, :out, :err] => :close)
+          else
+            @pid = fork do
+              STDIN.reopen '/dev/null'
+              STDOUT.reopen '/dev/null', 'a'
+              STDERR.reopen STDOUT
+              exec cmd
+            end
+            #@pid = Process.spawn(@cmd, [:in, :out, :err] => :close)
           end
           verify(verifies) if verifies > 0
           @pid
@@ -115,9 +151,9 @@ module Mongo
         wait
       end
 
-      def kill
+      def kill(signal_no = 2)
         begin
-          @pid && Process.kill(3, @pid) && true
+          @pid && Process.kill(signal_no, @pid) && true
         rescue Errno::ESRCH
           false
         end
@@ -153,6 +189,10 @@ module Mongo
         @host = host
         @port = port
       end
+
+      def host_port
+        [@host, @port].join(':')
+      end
     end
 
     class DbServer < Server
@@ -162,8 +202,16 @@ module Mongo
         dbpath = @config[:dbpath]
         [dbpath, File.dirname(@config[:logpath])].compact.each{|dir| FileUtils.mkdir_p(dir) unless File.directory?(dir) }
         command = @config[:command] || 'mongod'
-        arguments = @config.reject{|k,v| SERVER_PRELUDE_KEYS.include?(k)}
-        cmd = [command, arguments.collect{|k,v| ['--' + k.to_s, v ]}].flatten.join(' ')
+        params = @config.reject{|k,v| SERVER_PRELUDE_KEYS.include?(k)}
+        arguments = params.collect do |arg, value|
+          argument = '--' + arg.to_s
+          if FLAGS.member?(arg) && value == true
+            [argument]
+          else
+            [argument, value]
+          end
+        end
+        cmd = [command, arguments].flatten.join(' ')
         super(cmd, @config[:host], @config[:port])
       end
 
@@ -172,7 +220,7 @@ module Mongo
         verify(verifies)
       end
 
-      def verify(verifies = 10)
+      def verify(verifies = 60)
         verifies.times do |i|
           #puts "DbServer.verify - port: #{@port} iteration: #{i}"
           begin
@@ -229,9 +277,12 @@ module Mongo
       end
 
       def repl_set_initiate( cfg = nil )
+        members = []
+        @config[:replicas].each{|s| members << { :_id => members.size, :host => "#{s[:host]}:#{s[:port]}" } }
+        @config[:arbiters].each{|s| members << { :_id => members.size, :host => "#{s[:host]}:#{s[:port]}", :arbiterOnly => true } }
         cfg ||= {
             :_id => @config[:replicas].first[:replSet],
-            :members => @config[:replicas].each_with_index.collect{|s, i| { :_id => i, :host => "#{s[:host]}:#{s[:port]}" } },
+            :members => members
         }
         command( @config[:replicas].first, 'admin', { :replSetInitiate => cfg } )
       end
@@ -239,11 +290,61 @@ module Mongo
       def repl_set_startup
         response = nil
         60.times do |i|
-          break if (response = repl_set_get_status)['ok'] == 1.0
+          response = repl_set_get_status
+          members = response['members']
+          return response if response['ok'] == 1.0 && members.collect{|m| m['state']}.all?{|state| [1,2,7].index(state)}
           sleep 1
         end
-        raise Mongo::OperationFailure, "replSet startup failed - status: #{repsonse.inspect}" unless response && response['ok'] == 1.0
-        response
+        raise Mongo::OperationFailure, "replSet startup failed - status: #{response.inspect}"
+      end
+
+      def repl_set_seeds
+        @config[:replicas].collect{|router| "#{router[:host]}:#{router[:port]}"}
+      end
+
+      def repl_set_seeds_old
+        @config[:replicas].collect{|router| [router[:host], router[:port]]}
+      end
+
+      def repl_set_name
+        @config[:replicas].first[:replSet]
+      end
+
+      def member_names_by_state(state)
+        status = repl_set_get_status
+        status['members'].find_all{|member| member['state'] == state }.collect{|member| member['name']}
+      end
+
+      def primary_name
+        member_names_by_state(1).first
+      end
+
+      def secondary_names
+        member_names_by_state(2)
+      end
+
+      def arbiter_names
+        member_names_by_state(7)
+      end
+
+      def members_by_name(names)
+        names.collect do |name|
+          host, port = name.split(':')
+          port = port.to_i
+          @servers[:replicas].find{|server| server.host == host && server.port == port}
+        end
+      end
+
+      def primary
+        members_by_name([primary_name]).first
+      end
+
+      def secondaries
+        members_by_name(secondary_names)
+      end
+
+      def arbiters
+        members_by_name(arbiter_names)
       end
 
       def mongos_seeds
@@ -280,6 +381,8 @@ module Mongo
       end
 
       def start
+        # Must start configs before mongos -- hash order not guaranteed on 1.8.X
+        servers(:configs).each{|server| server.start}
         servers.each{|server| server.start}
         # TODO - sharded replica sets - pending
         if @config[:replicas]
@@ -298,7 +401,7 @@ module Mongo
       end
 
       def clobber
-        system "rm -fr #{@config[:dbpath]}"
+        system "rm -fr #{@config[:dbpath]}/*"
         self
       end
     end

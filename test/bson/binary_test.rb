@@ -1,5 +1,5 @@
 # encoding:utf-8
-require File.expand_path("../test_helper", __FILE__)
+require 'test_helper'
 
 class BinaryTest < Test::Unit::TestCase
   def setup

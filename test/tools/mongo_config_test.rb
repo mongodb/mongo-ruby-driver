@@ -1,24 +1,7 @@
-$:.unshift(File.expand_path('../../lib', File.dirname(__FILE__))).unshift(File.expand_path('../..', File.dirname(__FILE__)))
-require 'test-unit'
-require 'test/tools/mongo_config'
+require 'test_helper'
+require 'tools/mongo_config'
 
 class MongoConfig < Test::Unit::TestCase
-
-  def self.suite
-    s = super
-    def s.setup
-
-    end
-    def s.teardown
-
-    end
-    def s.run(*args)
-      setup
-      super
-      teardown
-    end
-    s
-  end
 
   test "config defaults" do
     [ Mongo::Config::DEFAULT_BASE_OPTS,

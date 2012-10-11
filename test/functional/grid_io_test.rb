@@ -1,4 +1,4 @@
-require File.expand_path("../test_helper", __FILE__)
+require 'test_helper'
 
 class GridIOTest < Test::Unit::TestCase
 
@@ -193,7 +193,7 @@ class GridIOTest < Test::Unit::TestCase
       end
 
       should "validate with a large file" do
-        io = File.open(File.join(File.dirname(__FILE__), 'data', 'sample_file.pdf'), 'r')
+        io = File.open(File.join(TEST_DATA, 'sample_file.pdf'), 'r')
         file = GridIO.new(@files, @chunks, 'bigfile', 'w', :safe => true)
         file.write(io)
         assert file.close
@@ -201,7 +201,7 @@ class GridIOTest < Test::Unit::TestCase
       end
 
       should "raise an exception when check fails" do
-        io = File.open(File.join(File.dirname(__FILE__), 'data', 'sample_file.pdf'), 'r')
+        io = File.open(File.join(TEST_DATA, 'sample_file.pdf'), 'r')
         @db.stubs(:command).returns({'md5' => '12345'})
         file = GridIO.new(@files, @chunks, 'bigfile', 'w', :safe => true)
         file.write(io)

@@ -1,6 +1,6 @@
 # encoding:utf-8
-require File.expand_path("../test_helper", __FILE__)
-require './test/support/hash_with_indifferent_access'
+require 'test_helper'
+require 'support/hash_with_indifferent_access'
 
 class HashWithIndifferentAccessTest < Test::Unit::TestCase
   include BSON
