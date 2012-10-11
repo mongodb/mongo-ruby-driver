@@ -90,8 +90,8 @@ module Mongo
     end
 
     def matches_mode(mode)
-      if mode == :primary && @node.secondary? ||
-        mode == :secondary && @node.primary?
+      if [:primary, :primary_preferred].include?(mode) && @node.secondary? ||
+          [:secondary, :secondary_preferred].include?(mode) && @node.primary?
         false
       else
         true
