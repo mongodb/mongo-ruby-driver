@@ -289,7 +289,7 @@ module Mongo
     #     puts doc['user']
     #   end
     def each
-      if block_given?
+      if block_given? || !defined?(Enumerator)
         while doc = self.next
           yield doc
         end

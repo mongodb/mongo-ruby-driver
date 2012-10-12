@@ -94,7 +94,7 @@ class CursorTest < Test::Unit::TestCase
   end
 
   def test_each_with_no_block
-    assert_kind_of Enumerator, @@coll.find().each
+    assert_kind_of(Enumerator, @@coll.find().each) if defined? Enumerator
   end
 
   def test_count
