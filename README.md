@@ -345,6 +345,10 @@ To run a single test from its subdirectory, add -I.. since we no longer modify L
 
     $ ruby -I.. -I../../lib bson_test.rb
 
+To fix the following error on Mac OS X - "/.../lib/bson_ext/cbson.bundle: [BUG] Segmentation fault":
+
+    $ rake compile
+
 # Release Notes
 
 See HISTORY.

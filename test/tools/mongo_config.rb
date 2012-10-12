@@ -24,10 +24,10 @@ end
 #
 module Mongo
   class Config
-    DEFAULT_BASE_OPTS = { :host => 'localhost', :dbpath => 'data' }
-    DEFAULT_REPLICA_SET = DEFAULT_BASE_OPTS.merge( :replicas => 3 )
+    DEFAULT_BASE_OPTS = { :host => 'localhost', :dbpath => 'data', :logpath => 'data/log'}
+    DEFAULT_REPLICA_SET = DEFAULT_BASE_OPTS.merge( :replicas => 3, :arbiters => 0 )
     DEFAULT_SHARDED_SIMPLE = DEFAULT_BASE_OPTS.merge( :shards => 2, :configs => 1, :routers => 2 )
-    DEFAULT_SHARDED_REPLICA = DEFAULT_SHARDED_SIMPLE.merge( :replicas => 3 )
+    DEFAULT_SHARDED_REPLICA = DEFAULT_SHARDED_SIMPLE.merge( :replicas => 3, :arbiters => 0)
 
     SERVER_PRELUDE_KEYS = [:host, :command]
     SHARDING_OPT_KEYS = [:shards, :configs, :routers]
@@ -127,7 +127,15 @@ module Mongo
         @cmd = cmd
       end
 
+      def clear_zombie
+        if @pid
+          pid = Process.wait(@pid, Process::WNOHANG)
+          @pid = nil if pid && pid > 0
+        end
+      end
+
       def start(verifies = 0)
+        clear_zombie
         return @pid if running?
         begin
           if RUBY_PLATFORM == 'java'
@@ -141,6 +149,7 @@ module Mongo
             end
             #@pid = Process.spawn(@cmd, [:in, :out, :err] => :close)
           end
+          sleep 1 # relinquish the processor so the child runs
           verify(verifies) if verifies > 0
           @pid
         end
@@ -193,6 +202,10 @@ module Mongo
       def host_port
         [@host, @port].join(':')
       end
+
+      def host_port_a # for old format
+        [@host, @port]
+      end
     end
 
     class DbServer < Server
@@ -203,15 +216,15 @@ module Mongo
         [dbpath, File.dirname(@config[:logpath])].compact.each{|dir| FileUtils.mkdir_p(dir) unless File.directory?(dir) }
         command = @config[:command] || 'mongod'
         params = @config.reject{|k,v| SERVER_PRELUDE_KEYS.include?(k)}
-        arguments = params.collect do |arg, value|
+        arguments = params.sort{|a, b| a[0].to_s <=> b[0].to_s}.collect do |arg, value| # sort block is needed for 1.8.7 which lacks Symbol#<=>
           argument = '--' + arg.to_s
-          if FLAGS.member?(arg) && value == true
-            [argument]
+          if FLAGS.member?(arg)
+            [value && argument]
           else
             [argument, value]
           end
         end
-        cmd = [command, arguments].flatten.join(' ')
+        cmd = [command, arguments].flatten.compact.join(' ')
         super(cmd, @config[:host], @config[:port])
       end
 
@@ -222,7 +235,7 @@ module Mongo
 
       def verify(verifies = 60)
         verifies.times do |i|
-          #puts "DbServer.verify - port: #{@port} iteration: #{i}"
+          #puts "DbServer.verify - port: #{@port} iteration: #{i} @pid:#{@pid.inspect} kill:#{Process.kill(0, @pid).inspect} running?:#{running?.inspect} cmd:#{cmd}"
           begin
             raise Mongo::ConnectionFailure unless running?
             Mongo::Connection.new(@host, @port).close
@@ -311,8 +324,9 @@ module Mongo
       end
 
       def member_names_by_state(state)
+        states = Array(state)
         status = repl_set_get_status
-        status['members'].find_all{|member| member['state'] == state }.collect{|member| member['name']}
+        status['members'].find_all{|member| states.index(member['state']) }.collect{|member| member['name']}
       end
 
       def primary_name
@@ -323,6 +337,10 @@ module Mongo
         member_names_by_state(2)
       end
 
+      def replica_names
+        member_names_by_state([1,2])
+      end
+
       def arbiter_names
         member_names_by_state(7)
       end
@@ -331,8 +349,8 @@ module Mongo
         names.collect do |name|
           host, port = name.split(':')
           port = port.to_i
-          @servers[:replicas].find{|server| server.host == host && server.port == port}
-        end
+          servers.find{|server| server.host == host && server.port == port}
+        end.compact
       end
 
       def primary
@@ -341,6 +359,10 @@ module Mongo
 
       def secondaries
         members_by_name(secondary_names)
+      end
+
+      def replicas
+        members_by_name(replica_names)
       end
 
       def arbiters
