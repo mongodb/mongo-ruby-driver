@@ -228,6 +228,28 @@ module Mongo
         cmd = [command, arguments].flatten.compact.join(' ')
         super(cmd, @config[:host], @config[:port])
       end
+
+      def start(verifies = DEFAULT_VERIFIES)
+        super(verifies)
+        verify(verifies)
+      end
+
+      def verify(verifies = 120)
+        verifies.times do |i|
+          #puts "DbServer.verify via connection probe - port:#{@port.inspect} iteration:#{i} @pid:#{@pid.inspect} kill:#{Process.kill(0, @pid).inspect} running?:#{running?.inspect} cmd:#{cmd.inspect}"
+          begin
+            raise Mongo::ConnectionFailure unless running?
+            Mongo::Connection.new(@host, @port).close
+            #puts "DbServer.verified via connection - port: #{@port} iteration: #{i}"
+            return @pid
+          rescue Mongo::ConnectionFailure
+            sleep 1
+          end
+        end
+        system "ps -fp #{@pid}"
+        raise Mongo::ConnectionFailure, "DbServer.start verify via connection probe failed - port:#{@port.inspect} @pid:#{@pid.inspect} kill:#{Process.kill(0, @pid).inspect} running?:#{running?.inspect} cmd:#{cmd.inspect}"
+      end
+
     end
 
     class ClusterManager
