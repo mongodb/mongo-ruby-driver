@@ -234,7 +234,7 @@ module Mongo
         verify(verifies)
       end
 
-      def verify(verifies = 120)
+      def verify(verifies = 600)
         verifies.times do |i|
           #puts "DbServer.verify via connection probe - port:#{@port.inspect} iteration:#{i} @pid:#{@pid.inspect} kill:#{Process.kill(0, @pid).inspect} running?:#{running?.inspect} cmd:#{cmd.inspect}"
           begin
@@ -246,7 +246,7 @@ module Mongo
             sleep 1
           end
         end
-        system "ps -fp #{@pid}"
+        system "ps -fp #{@pid}; cat #{@config[:logpath]}"
         raise Mongo::ConnectionFailure, "DbServer.start verify via connection probe failed - port:#{@port.inspect} @pid:#{@pid.inspect} kill:#{Process.kill(0, @pid).inspect} running?:#{running?.inspect} cmd:#{cmd.inspect}"
       end
 
