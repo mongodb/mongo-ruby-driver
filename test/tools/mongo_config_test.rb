@@ -92,32 +92,38 @@ class MongoConfig < Test::Unit::TestCase
     manager = Mongo::Config::ClusterManager.new(config)
     assert_equal(config, manager.config)
     manager.start
-    #assert_not_nil(Mongo::Connection.new(manager.servers.first.host, manager.servers.first.port)) # servers is [] for DEFAULT_BASE_OPTS
+    yield manager
     manager.stop
     manager.servers.each{|s| assert(!s.running?)}
     manager.clobber
   end
 
   test "cluster manager base" do
-    cluster_test(Mongo::Config::DEFAULT_BASE_OPTS)
+    cluster_test(Mongo::Config::DEFAULT_BASE_OPTS) do |manager|
+
+    end
   end
 
   test "cluster manager replica set" do
-    cluster_test(Mongo::Config::DEFAULT_REPLICA_SET)
+    cluster_test(Mongo::Config::DEFAULT_REPLICA_SET) do |manager|
+      server = manager.replicas.first
+      assert_not_nil(Mongo::Connection.new(server.host, server.port))
+      assert_match(/oplogSize/, server.cmd, '--oplogSize option should be specified')
+      assert_match(/smallfiles/, server.cmd, '--smallfiles option should be specified')
+      assert_no_match(/nojournal/, server.cmd, '--nojournal option should not be specified')
+      assert_match(/noprealloc/, server.cmd, '--noprealloc option should be specified')
+    end
   end
 
   test "cluster manager sharded simple" do
-    opts = Mongo::Config::DEFAULT_SHARDED_SIMPLE
-    #debug 1, opts.inspect
-    config =  Mongo::Config.cluster(opts)
-    #debug 1, config.inspect
-    manager = Mongo::Config::ClusterManager.new(config)
-    assert_equal(config, manager.config)
-    assert_no_match(/nojournal/, manager.servers.first.cmd, '--nojournal option should not be specified')
-    manager.start
-    #debug 1, manager.ismaster
-    #debug 1, manager.mongos_discover
-    manager.stop.clobber
+    cluster_test(Mongo::Config::DEFAULT_SHARDED_SIMPLE) do |manager|
+      server = manager.servers.first
+      assert_not_nil(Mongo::Connection.new(server.host, server.port))
+      assert_match(/oplogSize/, server.cmd, '--oplogSize option should be specified')
+      assert_match(/smallfiles/, server.cmd, '--smallfiles option should be specified')
+      assert_no_match(/nojournal/, server.cmd, '--nojournal option should not be specified')
+      assert_match(/noprealloc/, server.cmd, '--noprealloc option should be specified')
+    end
   end
 
   test "cluster manager sharded replica" do

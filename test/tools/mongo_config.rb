@@ -89,7 +89,7 @@ module Mongo
               when :routers
                 server_params.merge!( :command => mongos, :configdb => self.configdb(config) ) # mongos, NO dbpath
               else
-                server_params.merge!( :command => mongod, :dbpath => path, :nojournal => nojournal, :noprealloc => noprealloc ) # :mongods, :shards
+                server_params.merge!( :command => mongod, :dbpath => path, :oplogSize => oplog_size, :smallfiles => smallfiles, :nojournal => nojournal, :noprealloc => noprealloc ) # :mongods, :shards
             end
           end
         end
