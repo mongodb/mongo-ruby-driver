@@ -235,7 +235,7 @@ module Mongo
 
       def verify(verifies = 60)
         verifies.times do |i|
-          #puts "DbServer.verify - port: #{@port} iteration: #{i} @pid:#{@pid.inspect} kill:#{Process.kill(0, @pid).inspect} running?:#{running?.inspect} cmd:#{cmd}"
+          #puts "DbServer.verify - port:#{@port.inspect} iteration:#{i} @pid:#{@pid.inspect} kill:#{Process.kill(0, @pid).inspect} running?:#{running?.inspect} cmd:#{cmd.inspect}"
           begin
             raise Mongo::ConnectionFailure unless running?
             Mongo::Connection.new(@host, @port).close
@@ -245,7 +245,8 @@ module Mongo
             sleep 1
           end
         end
-        raise Mongo::ConnectionFailure, "DbServer.start verification via connection failed - port: #{@port}"
+        system "ps -fp #{@pid}"
+        raise Mongo::ConnectionFailure, "DbServer.start verification via connection failed - port:#{@port.inspect} @pid:#{@pid.inspect} kill:#{Process.kill(0, @pid).inspect} running?:#{running?.inspect} cmd:#{cmd.inspect}"
       end
 
     end
