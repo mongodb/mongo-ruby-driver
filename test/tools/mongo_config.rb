@@ -210,6 +210,7 @@ module Mongo
 
     class DbServer < Server
       attr_accessor :config
+
       def initialize(config)
         @config = config
         dbpath = @config[:dbpath]
@@ -227,28 +228,6 @@ module Mongo
         cmd = [command, arguments].flatten.compact.join(' ')
         super(cmd, @config[:host], @config[:port])
       end
-
-      def start(verifies = DEFAULT_VERIFIES)
-        super(verifies)
-        #verify(verifies) # TODO - re-evaluate if this is necessary or even invalid
-      end
-
-      def verify(verifies = 60) # TODO - re-evaluate if this is necessary or even invalid
-        verifies.times do |i|
-          #puts "DbServer.verify - port:#{@port.inspect} iteration:#{i} @pid:#{@pid.inspect} kill:#{Process.kill(0, @pid).inspect} running?:#{running?.inspect} cmd:#{cmd.inspect}"
-          begin
-            raise Mongo::ConnectionFailure unless running?
-            Mongo::Connection.new(@host, @port).close
-            #puts "DbServer.verified via connection - port: #{@port} iteration: #{i}"
-            return @pid
-          rescue Mongo::ConnectionFailure
-            sleep 1
-          end
-        end
-        system "ps -fp #{@pid}"
-        raise Mongo::ConnectionFailure, "DbServer.start verification via connection failed - port:#{@port.inspect} @pid:#{@pid.inspect} kill:#{Process.kill(0, @pid).inspect} running?:#{running?.inspect} cmd:#{cmd.inspect}"
-      end
-
     end
 
     class ClusterManager
