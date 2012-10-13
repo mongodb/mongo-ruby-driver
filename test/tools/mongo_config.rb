@@ -230,10 +230,10 @@ module Mongo
 
       def start(verifies = DEFAULT_VERIFIES)
         super(verifies)
-        verify(verifies)
+        #verify(verifies) # TODO - re-evaluate if this is necessary or even invalid
       end
 
-      def verify(verifies = 60)
+      def verify(verifies = 60) # TODO - re-evaluate if this is necessary or even invalid
         verifies.times do |i|
           #puts "DbServer.verify - port:#{@port.inspect} iteration:#{i} @pid:#{@pid.inspect} kill:#{Process.kill(0, @pid).inspect} running?:#{running?.inspect} cmd:#{cmd.inspect}"
           begin
