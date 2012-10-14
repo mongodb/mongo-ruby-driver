@@ -13,7 +13,7 @@ group :development, :test do
 
   # Testing
   gem "test-unit"
-  gem "mocha"
+  gem "mocha", ">=0.12.4" #0.12.3 is broken for us
   gem "shoulda"
   gem "ci_reporter"
   gem "ruby-prof" unless RUBY_PLATFORM =~ /java/
