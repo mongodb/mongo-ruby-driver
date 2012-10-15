@@ -106,23 +106,27 @@ class MongoConfig < Test::Unit::TestCase
 
   test "cluster manager replica set" do
     cluster_test(Mongo::Config::DEFAULT_REPLICA_SET) do |manager|
-      server = manager.replicas.first
-      assert_not_nil(Mongo::Connection.new(server.host, server.port))
-      assert_match(/oplogSize/, server.cmd, '--oplogSize option should be specified')
-      assert_match(/smallfiles/, server.cmd, '--smallfiles option should be specified')
-      assert_no_match(/nojournal/, server.cmd, '--nojournal option should not be specified')
-      assert_match(/noprealloc/, server.cmd, '--noprealloc option should be specified')
+      servers = manager.servers
+      servers.each do |server|    
+        assert_not_nil(Mongo::Connection.new(server.host, server.port))
+        assert_match(/oplogSize/, server.cmd, '--oplogSize option should be specified')
+        assert_match(/smallfiles/, server.cmd, '--smallfiles option should be specified')
+        assert_no_match(/nojournal/, server.cmd, '--nojournal option should not be specified')
+        assert_match(/noprealloc/, server.cmd, '--noprealloc option should be specified')
+      end
     end
   end
 
   test "cluster manager sharded simple" do
     cluster_test(Mongo::Config::DEFAULT_SHARDED_SIMPLE) do |manager|
-      server = manager.servers.first #TODO - assertions on configs
-      assert_not_nil(Mongo::Connection.new(server.host, server.port))
-      assert_match(/oplogSize/, server.cmd, '--oplogSize option should be specified')
-      assert_match(/smallfiles/, server.cmd, '--smallfiles option should be specified')
-      assert_no_match(/nojournal/, server.cmd, '--nojournal option should not be specified')
-      assert_match(/noprealloc/, server.cmd, '--noprealloc option should be specified')
+      servers = manager.shards + manager.configs
+      servers.each do |server|
+        assert_not_nil(Mongo::Connection.new(server.host, server.port))
+        assert_match(/oplogSize/, server.cmd, '--oplogSize option should be specified')
+        assert_match(/smallfiles/, server.cmd, '--smallfiles option should be specified')
+        assert_no_match(/nojournal/, server.cmd, '--nojournal option should not be specified')
+        assert_match(/noprealloc/, server.cmd, '--noprealloc option should be specified')
+      end
     end
   end
 

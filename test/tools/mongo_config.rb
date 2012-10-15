@@ -60,7 +60,7 @@ module Mongo
       raise "missing required option" if [:host, :dbpath].any?{|k| !opts[k]}
 
       config = opts.reject {|k,v| CLUSTER_OPT_KEYS.include?(k)}
-      kinds = opts.keys.select {|k| CLUSTER_OPT_KEYS.include?(k)}
+      kinds = CLUSTER_OPT_KEYS.select{|key| opts.has_key?(key)} # order is significant
 
       kinds.each do |kind|
         config[kind] = opts.fetch(kind,1).times.collect do |i| #default to 1 of whatever
@@ -349,9 +349,7 @@ module Mongo
 
       def members_by_name(names)
         names.collect do |name|
-          host, port = name.split(':')
-          port = port.to_i
-          servers.find{|server| server.host == host && server.port == port}
+          servers.find{|server| server.host_port == name}
         end.compact
       end
 
@@ -371,8 +369,24 @@ module Mongo
         members_by_name(arbiter_names)
       end
 
+      def config_names_by_kind(kind)
+        @config[kind].collect{|conf| "#{conf[:host]}:#{conf[:port]}"}
+      end
+
+      def shards
+        members_by_name(config_names_by_kind(:shards))
+      end
+
+      def configs
+        members_by_name(config_names_by_kind(:configs))
+      end
+
+      def routers
+        members_by_name(config_names_by_kind(:routers))
+      end
+
       def mongos_seeds
-        @config[:routers].collect{|router| "#{router[:host]}:#{router[:port]}"}
+        config_names_by_kind(:routers)
       end
 
       def ismaster
