@@ -83,12 +83,14 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_valid_active_support_multibyte_chars
-    doc = {'doc' => ActiveSupport::Multibyte::Chars.new('aé')}
-    assert_doc_pass(doc)
+    unless RUBY_PLATFORM =~ /java/
+      doc = {'doc' => ActiveSupport::Multibyte::Chars.new('aé')}
+      assert_doc_pass(doc)
 
-    bson = @encoder.serialize(doc)
-    doc = @encoder.deserialize(bson)
-    assert_equal doc['doc'], 'aé'
+      bson = @encoder.serialize(doc)
+      doc = @encoder.deserialize(bson)
+      assert_equal doc['doc'], 'aé'
+    end
   end
 
   def test_valid_utf8_key
