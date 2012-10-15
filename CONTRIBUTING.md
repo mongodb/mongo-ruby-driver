@@ -61,4 +61,4 @@ Talk To Us
 
 We love to hear from you. If you want to work on something or have
 questions / complaints please reach out to us by creating a [question]
-(https://jira.mongodb.org/secure/CreateIssue.jspa?pid=10005&issuetype=2)
+(https://jira.mongodb.org/secure/CreateIssue.jspa?pid=10005&issuetype=6)
