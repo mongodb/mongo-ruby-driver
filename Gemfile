@@ -8,7 +8,7 @@ group :development, :test do
 
   # Deployment
   gem "git"
-  gem "redcarpet" unless RUBY_PLATFORM =~ /java/
+  gem "redcarpet", "2.2.0" unless RUBY_PLATFORM =~ /java/
   gem "yard"
 
   # Testing
