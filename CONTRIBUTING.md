@@ -35,7 +35,7 @@ known as release and the master (default) branch is considered under
 development.
 
 Tests should pass under all Ruby interpreters which the MongoDB Ruby 
-driver currently supports (1.8.7, 1.9.3, JRuby) and will be 
+driver currently supports (1.8.7, 1.9.3, JRuby 1.6.x and 1.7.x) and will be 
 automatically tested.
 
 The results of pull request testing will be appended to the request.
