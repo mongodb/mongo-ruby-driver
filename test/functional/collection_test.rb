@@ -542,7 +542,7 @@ class TestCollection < Test::Unit::TestCase
         "_id" => 1,
         "title" => "this is my title", 
         "author" => "bob", 
-        "posted" => Time.utc(1500), 
+        "posted" => Time.utc(2000),
         "pageViews" => 5 , 
         "tags" => [ "fun" , "good" , "fun" ],
         "comments" => [ 
@@ -556,7 +556,7 @@ class TestCollection < Test::Unit::TestCase
          "_id" => 2,
          "title" => "this is your title", 
          "author" => "dave", 
-         "posted" => Time.utc(1600), 
+         "posted" => Time.utc(2001),
          "pageViews" => 7, 
          "tags" => [ "fun" , "nasty" ],
          "comments" => [ 
@@ -570,7 +570,7 @@ class TestCollection < Test::Unit::TestCase
             "_id" => 3,
             "title" => "this is some other title", 
             "author" => "jane", 
-            "posted" => Time.utc(1700), 
+            "posted" => Time.utc(2002),
             "pageViews" => 6 , 
             "tags" => [ "nasty", "filthy" ],
             "comments" => [ 
@@ -631,25 +631,25 @@ class TestCollection < Test::Unit::TestCase
 
     def test_aggregate_pipeline_unwind                    
       setup_aggregate_data
-      desired_results = [ {"_id"=>1, "title"=>"this is my title", "author"=>"bob", "posted"=>Time.utc(1500), 
+      desired_results = [ {"_id"=>1, "title"=>"this is my title", "author"=>"bob", "posted"=>Time.utc(2000),
                           "pageViews"=>5, "tags"=>"fun", "comments"=>[{"author"=>"joe", "text"=>"this is cool"}, 
                             {"author"=>"sam", "text"=>"this is bad"}], "other"=>{"foo"=>5 } },
-                          {"_id"=>1, "title"=>"this is my title", "author"=>"bob", "posted"=>Time.utc(1500), 
+                          {"_id"=>1, "title"=>"this is my title", "author"=>"bob", "posted"=>Time.utc(2000),
                             "pageViews"=>5, "tags"=>"good", "comments"=>[{"author"=>"joe", "text"=>"this is cool"}, 
                             {"author"=>"sam", "text"=>"this is bad"}], "other"=>{"foo"=>5 } },
-                          {"_id"=>1, "title"=>"this is my title", "author"=>"bob", "posted"=>Time.utc(1500), 
+                          {"_id"=>1, "title"=>"this is my title", "author"=>"bob", "posted"=>Time.utc(2000),
                             "pageViews"=>5, "tags"=>"fun", "comments"=>[{"author"=>"joe", "text"=>"this is cool"}, 
                               {"author"=>"sam", "text"=>"this is bad"}], "other"=>{"foo"=>5 } },
-                          {"_id"=>2, "title"=>"this is your title", "author"=>"dave", "posted"=>Time.utc(1600), 
+                          {"_id"=>2, "title"=>"this is your title", "author"=>"dave", "posted"=>Time.utc(2001),
                             "pageViews"=>7, "tags"=>"fun", "comments"=>[{"author"=>"barbara", "text"=>"this is interesting"}, 
                               {"author"=>"jenny", "text"=>"i like to play pinball", "votes"=>10 }], "other"=>{"bar"=>14 } },
-                          {"_id"=>2, "title"=>"this is your title", "author"=>"dave", "posted"=>Time.utc(1600), 
+                          {"_id"=>2, "title"=>"this is your title", "author"=>"dave", "posted"=>Time.utc(2001),
                             "pageViews"=>7, "tags"=>"nasty", "comments"=>[{"author"=>"barbara", "text"=>"this is interesting"}, 
                               {"author"=>"jenny", "text"=>"i like to play pinball", "votes"=>10 }], "other"=>{"bar"=>14 } },
-                          {"_id"=>3, "title"=>"this is some other title", "author"=>"jane", "posted"=>Time.utc(1700), 
+                          {"_id"=>3, "title"=>"this is some other title", "author"=>"jane", "posted"=>Time.utc(2002),
                             "pageViews"=>6, "tags"=>"nasty", "comments"=>[{"author"=>"will", "text"=>"i don't like the color"}, 
                               {"author"=>"jenny", "text"=>"can i get that in green?"}], "other"=>{"bar"=>14 } },
-                          {"_id"=>3, "title"=>"this is some other title", "author"=>"jane", "posted"=>Time.utc(1700), 
+                          {"_id"=>3, "title"=>"this is some other title", "author"=>"jane", "posted"=>Time.utc(2002),
                             "pageViews"=>6, "tags"=>"filthy", "comments"=>[{"author"=>"will", "text"=>"i don't like the color"}, 
                               {"author"=>"jenny", "text"=>"can i get that in green?"}], "other"=>{"bar"=>14 } }
                           ]
