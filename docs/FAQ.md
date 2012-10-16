@@ -8,7 +8,7 @@ Yes. You can run any of the [available database commands|List of Database Comman
 
 
     # This command is run on the admin database.
-    @db = Mongo::Connection.new.db('admin')  
+    @db = Mongo::Connection.new('localhost', 27017, :safe => true).db('admin')
 
     # Build the command.
     cmd = OrderedHash.new
@@ -111,6 +111,6 @@ Because of the indeterminacy involved, the MongoDB drivers will not retry operat
 
 The drivers will reconnect on the subsequent operation.
 
-#### I ocassionally get an error saying that responses are out of order. What's happening?
+#### I occasionally get an error saying that responses are out of order. What's happening?
 
 See (this JIRA issue)[http://jira.mongodb.org/browse/RUBY-221].

@@ -24,7 +24,7 @@ The Ruby driver allows you to set read preference on each of four levels: the co
 Objects will inherit the default read preference from their parents. Thus, if you set a read preference of `{:read => :secondary}` when creating
 a new connection, then all databases and collections created from that connection will inherit the same setting. See this code example:
 
-    @con = Mongo::ReplSetConnection.new(['localhost:27017','localhost:27018'], :read => :secondary)
+    @con = Mongo::ReplSetConnection.new(['localhost:27017','localhost:27018'], :safe => true, :read => :secondary)
     @db  = @con['test']
     @collection = @db['foo']
     @collection.find({:name => 'foo'})
@@ -92,8 +92,8 @@ Tag set keys may be symbols or strings. Tag set values should be specified using
 
 Tag sets are used in conjunction with read preference mode. In this example, because we specified a mode of secondary_preferred, if no secondaries can be found that match the tag_set `{:rack => '2'}` then the primary will be used for the query.
 
-If only one tag set is provided, the set can be passed as a single hash parameter iteself without the enclosing array.
+If only one tag set is provided, the set can be passed as a single hash parameter itself without the enclosing array.
 
     @collection.find({:name => 'foo'}, :read => :secondary_preferred, :tag_sets => {:rack => '2'})
 
-Specifiying tag_sets for mode `:primary` is considered an error and will raise a MongoArgumentError as tag_sets do not affect selection of primary members and only primary members can be selected in that particular mode.
+Specifying tag_sets for mode `:primary` is considered an error and will raise a MongoArgumentError as tag_sets do not affect selection of primary members and only primary members can be selected in that particular mode.

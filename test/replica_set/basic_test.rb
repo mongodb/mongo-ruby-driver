@@ -30,6 +30,21 @@ class BasicTest < Test::Unit::TestCase
     conn.close
   end
 
+  def test_safe_option
+    conn = Mongo::ReplSetConnection.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
+    assert conn.connected?
+    assert !conn.safe
+    conn.close
+    conn = Mongo::ReplSetConnection.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :safe => false)
+    assert conn.connected?
+    assert !conn.safe
+    conn.close
+    conn = Mongo::ReplSetConnection.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :safe => true)
+    assert conn.connected?
+    assert conn.safe
+    conn.close
+  end
+
   def test_multiple_concurrent_replica_set_connection
     conn1 = ReplSetConnection.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
     conn2 = ReplSetConnection.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)

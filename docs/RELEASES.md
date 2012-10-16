@@ -44,7 +44,7 @@ Before each relese to Rubygems.org, the following steps will be taken:
 
 11. Close out release in JIRA.
 
-12. Annouce release on mongodb-user and mongodb-dev.
+12. Announce release on mongodb-user and mongodb-dev.
 
 ## Rake Deploy Tasks
 1. rake deploy:change_version[x.x.x]

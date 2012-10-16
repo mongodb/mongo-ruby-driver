@@ -253,7 +253,7 @@ Lots of cleanup and minor bug fixes.
 ## 1.1
 2010-10-4
 
-* Official JRuby support via Java extensons for BSON (beta)
+* Official JRuby support via Java extensions for BSON (beta)
 * Connection#lock! and Connection#unlock! for easy fsync lock
 * Note: BSON::Code is no longer a subclass of String.
 
@@ -265,7 +265,7 @@ Lots of cleanup and minor bug fixes.
 ### 1.0.8
 2010-8-27
 
-* Cursor#rewind! and more consistent Cursor Enumberable behavior
+* Cursor#rewind! and more consistent Cursor Enumerable behavior
 * Deprecated ObjectID for ObjectId
 * Numerous minor bug fixes.
 
@@ -303,7 +303,7 @@ Lots of cleanup and minor bug fixes.
 * MapReduce can return raw command output using :raw
 * BSON::OrderedHash equality with other Ruby hashes (Ryan Angilly)
 * Fix for broken Socket.send with large payloads (Frédéric De Jaeger)
-* Lots of minor improvements. See commmits.
+* Lots of minor improvements. See commits.
 
 ### 1.0.3
 2010-6-15

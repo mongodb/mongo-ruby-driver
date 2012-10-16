@@ -7,7 +7,7 @@ GridFS, which stands for "Grid File Store," is a specification for storing large
 The [Grid class](Mongo/Grid.html) represents the core GridFS implementation. Grid gives you a simple file store, keyed on a unique ID. This means that duplicate filenames aren't a problem. To use the Grid class, first make sure you have a database, and then instantiate a Grid:
 
 
-    @db = Mongo::Connection.new.db('social_site')
+    @db = Mongo::Connection.new('localhost', 27017, :safe => true).db('social_site')
     @grid = Grid.new(@db)
 
 #### Saving files
@@ -92,7 +92,7 @@ Deleting a file is as simple as providing the id:
 
 #### Saving files
 
-    @db = Mongo::Connection.new.db("social_site")
+    @db = Mongo::Connection.new('localhost', 27017, :safe => true).db("social_site")
     @fs = GridFileSystem.new(@db)
 
 Now suppose we want to save the file 'me.jpg.' This is easily done using a filesystem-like API:

@@ -161,7 +161,7 @@ namespace :test do
     puts "Dropping test databases..."
     require 'mongo'
     con = Mongo::Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-      ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Connection::DEFAULT_PORT)
+      ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Connection::DEFAULT_PORT, :safe => true)
     con.database_names.each do |name|
       con.drop_database(name) if name =~ /^ruby-test/
     end

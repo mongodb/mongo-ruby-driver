@@ -1,6 +1,6 @@
 require File.join(File.dirname(__FILE__), '..', '..', 'lib', 'mongo')
 
-$con = Mongo::Connection.new
+$con = Mongo::Connection.new('localhost', 27017, :safe => true)
 $db = $con['foo']
 
 class Load < Sinatra::Base

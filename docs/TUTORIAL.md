@@ -41,11 +41,19 @@ Use the `mongo` gem via the `require` kernel method.
 
 ### Making a Connection
 
-An `Mongo::Connection` instance represents a connection to MongoDB.  You can optionally specify the MongoDB server address and port when connecting. The following example shows three ways to connect to the local machine:
+An `Mongo::Connection` instance represents a connection to MongoDB.
+
+    connection = Mongo::Connection.new("localhost", 27017, :safe => true)
+
+The option :safe => true is highly recommended.  This specifies that the driver sends a getlasterror command after every update to ensure that the update succeeded.
+
+You can optionally specify the MongoDB server address and port when connecting. The following example shows three ways to connect to the local machine:
 
     connection = Mongo::Connection.new # (optional host/port args)
     connection = Mongo::Connection.new("localhost")
     connection = Mongo::Connection.new("localhost", 27017)
+
+In these cases, the :safe option defaults to false, and updates are fire-and-forget with higher performance.  We do not recommend the default :safe => false unless your application can tolerate the potential loss of updates.
 
 ### Listing All Databases
 
@@ -59,7 +67,7 @@ The `database_info` method returns a hash mapping database names to the size of 
 You use a Connection instance to obtain an Mongo::DB instance, which represents a named database. The database doesn't have to exist - if it doesn't, MongoDB will create it for you. The following examples use the database "mydb":
 
     db = connection.db("mydb")
-    db = Mongo::Connection.new.db("mydb")
+    db = Mongo::Connection.new("localhost", 27017, :safe => true).db("mydb")
 
 At this point, the `db` object will be a connection to a MongoDB server for the specified database. Each DB instance uses a separate socket connection to the server.
 

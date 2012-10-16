@@ -7,7 +7,7 @@ host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
 port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
 
 puts "Connecting to #{host}:#{port}"
-db = Connection.new(host, port).db('ruby-mongo-examples')
+db = Connection.new(host, port, :safe => true).db('ruby-mongo-examples')
 db.drop_collection('test')
 
 # A capped collection has a max size and, optionally, a max number of records.

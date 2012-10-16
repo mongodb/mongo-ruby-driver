@@ -150,7 +150,7 @@ module Mongo
       [host, port]
     end
 
-    # Ensure that this node is a healty member of a replica set.
+    # Ensure that this node is a healthy member of a replica set.
     def check_set_membership(config)
       if !config.has_key?('hosts')
         message = "Will not connect to #{host_string} because it's not a member " +

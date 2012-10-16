@@ -62,8 +62,8 @@ module Mongo
     # @param [Integer] port specify a port number here if only one host is being specified.
     #
     # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
-    #   propogated to DB objects instantiated off of this Connection. This
-    #   default can be overridden upon instantiation of any DB by explicity setting a :safe value
+    #   propagated to DB objects instantiated off of this Connection. This
+    #   default can be overridden upon instantiation of any DB by explicitly setting a :safe value
     #   on initialization.
     # @option opts [Boolean] :slave_ok (false) Must be set to +true+ when connecting
     #   to a single, slave node.
@@ -108,8 +108,10 @@ module Mongo
         end
         opts = parser.connection_options.merge! opts
         @host_to_try = [parser.host, parser.port]
-      elsif host.is_a?(String)
+      elsif host.is_a?(String) && (port || DEFAULT_PORT).respond_to?(:to_i)
         @host_to_try = [host, (port || DEFAULT_PORT).to_i]
+      elsif host || port
+        raise MongoArgumentError, "Mongo::Connection.new host or port argument error, host:#{host.inspect}, port:#{port.inspect}"
       else
         @host_to_try = [DEFAULT_HOST, DEFAULT_PORT]
       end
@@ -140,7 +142,7 @@ module Mongo
     # Initialize a connection to a MongoDB replica set using an array of seed nodes.
     #
     # The seed nodes specified will be used on the initial connection to the replica set, but note
-    # that this list of nodes will be replced by the list of canonical nodes returned by running the
+    # that this list of nodes will be replaced by the list of canonical nodes returned by running the
     # is_master command on the replica set.
     #
     # @param nodes [Array] An array of arrays, each of which specifies a host and port.
@@ -223,7 +225,7 @@ module Mongo
 
     # Apply each of the saved database authentications.
     #
-    # @return [Boolean] returns true if authentications exist and succeeed, false
+    # @return [Boolean] returns true if authentications exist and succeeds, false
     #   if none exists.
     #
     # @raise [AuthenticationError] raises an exception if any one
@@ -239,7 +241,7 @@ module Mongo
 
     # Save an authentication to this connection. When connecting,
     # the connection will attempt to re-authenticate on every db
-    # specificed in the list of auths. This method is called automatically
+    # specified in the list of auths. This method is called automatically
     # by DB#authenticate.
     #
     # Note: this method will not actually issue an authentication command. To do that,
@@ -274,7 +276,7 @@ module Mongo
       end
     end
 
-    # Remove all authenication information stored in this connection.
+    # Remove all authentication information stored in this connection.
     #
     # @return [true] this operation return true because it always succeeds.
     def clear_auths

@@ -945,7 +945,7 @@ static VALUE objectid_generate(int argc, VALUE* args, VALUE self)
     MEMCPY(&oid_bytes[7], &pid, unsigned char, 2);
 
     /* No need to synchronize modification of this counter between threads;
-     * MRI global interpreter lock guarantees serializaility.
+     * MRI global interpreter lock guarantees serializability.
      *
      * Compiler should optimize out impossible branch.
      */

@@ -9,7 +9,7 @@ host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
 port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
 
 puts "Connecting to #{host}:#{port}"
-con  = Mongo::Connection.new(host, port)
+con  = Mongo::Connection.new(host, port, :safe => true)
 db   = con.db('ruby-mongo-examples')
 coll = db.create_collection('test')
 

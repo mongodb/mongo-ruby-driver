@@ -44,7 +44,7 @@ for much more:
     require 'rubygems'
     require 'mongo'
 
-    @conn = Mongo::Connection.new
+    @conn = Mongo::Connection.new('localhost', 27017, :safe => true)
     @db   = @conn['sample-db']
     @coll = @db['test']
 
@@ -164,7 +164,7 @@ timeout for waiting for old connections to be released to the pool.
 
 To set up a pooled connection to a single MongoDB instance:
 
-    @conn = Connection.new("localhost", 27017, :pool_size => 5, :timeout => 5)
+    @conn = Connection.new("localhost", 27017, :safe => true, :pool_size => 5, :timeout => 5)
 
 Though the pooling architecture will undoubtedly evolve, it currently owes much credit
 to the connection pooling implementations in ActiveRecord and PyMongo.
@@ -215,7 +215,7 @@ using a PK factory lets you do so.
 You can tell the Ruby Mongo driver how to create primary keys by passing in
 the :pk option to the Connection#db method.
 
-    db = Mongo::Connection.new.db('dbname', :pk => MyPKFactory.new)
+    db = Mongo::Connection.new('localhost', 27017, :safe => true).db('dbname', :pk => MyPKFactory.new)
 
 A primary key factory object must respond to :create_pk, which should
 take a hash and return a hash which merges the original hash with any
@@ -268,7 +268,7 @@ completely harmless; strict mode is a programmer convenience only.
 To turn on strict mode, either pass in :strict => true when obtaining a DB
 object or call the `:strict=` method:
 
-    db = Connection.new.db('dbname', :strict => true)
+    db = Connection.new('localhost', 27017, :safe => true).db('dbname', :strict => true)
     # I'm feeling lax
     db.strict = false
     # No, I'm not!

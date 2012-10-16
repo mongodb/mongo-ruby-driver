@@ -14,7 +14,7 @@ port = org_argv[1] || ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
 dbnm = org_argv[2] || ENV['MONGO_RUBY_DRIVER_DB']   || 'ruby-mongo-console'
 
 puts "Connecting to #{host}:#{port} (CONN) on with database #{dbnm} (DB)"
-CONN = Connection.new(host, port)
+CONN = Connection.new(host, port, :safe => true)
 DB = CONN.db(dbnm)
 
 puts "Starting IRB session..."

@@ -6,19 +6,19 @@ Here follow a few considerations for those using the MongoDB Ruby driver with [r
 
 First, make sure that you've configured and initialized a replica set.
 
-Use `ReplSetConnection.new` to connect to a replica set. This method, which accepts a variable number of arugments,
+Use `ReplSetConnection.new` to connect to a replica set. This method, which accepts a variable number of arguments,
 takes a list of seed nodes followed by any connection options. You'll want to specify at least two seed nodes. This gives
 the driver more chances to connect in the event that any one seed node is offline. Once the driver connects, it will
 cache the replica set topology as reported by the given seed node and use that information if a failover is later required.
 
-    @connection = ReplSetConnection.new(['n1.mydb.net:27017', 'n2.mydb.net:27017', 'n3.mydb.net:27017'])
+    @connection = ReplSetConnection.new(['n1.mydb.net:27017', 'n2.mydb.net:27017', 'n3.mydb.net:27017'], :safe => true)
 
 ### Read slaves
 
 If you want to read from a secondary node, you can pass :read => :secondary to ReplSetConnection#new.
 
     @connection = ReplSetConnection.new(['n1.mydb.net:27017', 'n2.mydb.net:27017', 'n3.mydb.net:27017'],
-                  :read => :secondary)
+                  :safe => true, :read => :secondary)
 
 A random secondary will be chosen to be read from. In a typical multi-process Ruby application, you'll have a good distribution of reads across secondary nodes.
 
@@ -39,7 +39,7 @@ You can now specify a refresh mode and refresh interval for a replica set connec
 changes to a replica set's configuration are quickly reflected on the driver side. In particular, if you change
 the state of any secondary node, the automated refresh will ensure that this state is recorded on the client side.
 
-There are two secenarios in which refresh is helpful and does not raise exceptions:
+There are two scenarios in which refresh is helpful and does not raise exceptions:
 
 1. You add a new secondary node to an existing replica set
 2. You remove an unused secondary from an existing replica set
@@ -54,20 +54,20 @@ Refresh mode is disabled by default.
 However, if you expect to make live changes to your secondaries, and you want this to be reflected without
 having to manually restart your app server, then you should enable it. You can enable this mode
 synchronously, which will refresh the replica set data in a synchronous fashion (which may
-ocassionally slow down your queries):
+occasionally slow down your queries):
 
-    @connection = ReplSetConnection.new(['n1.mydb.net:27017'], :refresh_mode => :sync)
+    @connection = ReplSetConnection.new(['n1.mydb.net:27017'], :safe => true, :refresh_mode => :sync)
 
 If you want to change the default refresh interval of 90 seconds, you can do so like this:
 
-    @connection = ReplSetConnection.new(['n1.mydb.net:27017'], :refresh_mode => :sync,
+    @connection = ReplSetConnection.new(['n1.mydb.net:27017'], :safe => true, :refresh_mode => :sync,
         :refresh_interval => 60)
 
 Do not set this value to anything lower than 30, or you may start to experience performance issues.
 
 You can also disable refresh mode altogether:
 
-    @connection = ReplSetConnection.new(['n1.mydb.net:27017'], :refresh_mode => false)
+    @connection = ReplSetConnection.new(['n1.mydb.net:27017'], :safe => true, :refresh_mode => false)
 
 And you can call `refresh` manually on any replica set connection:
 
@@ -110,4 +110,4 @@ of individual node failures. Note that the `mongod` executable must be in the se
 ### Further Reading
 
 * [Replica Sets](http://www.mongodb.org/display/DOCS/Replica+Set+Configuration)
-* [Replics Set Configuration](http://www.mongodb.org/display/DOCS/Replica+Set+Configuration)
+* [Replica Set Configuration](http://www.mongodb.org/display/DOCS/Replica+Set+Configuration)

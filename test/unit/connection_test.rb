@@ -5,13 +5,17 @@ class ConnectionTest < Test::Unit::TestCase
   context "Initialization: " do
     context "given a single node" do
       setup do
-        @conn = Connection.new('localhost', 27017, :connect => false)
+        @conn = Connection.new('localhost', 27017, :safe => true, :connect => false)
         TCPSocket.stubs(:new).returns(new_mock_socket)
 
         admin_db = new_mock_db
         admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1})
         @conn.expects(:[]).with('admin').returns(admin_db)
         @conn.connect
+      end
+
+      should "set safe mode true" do
+        assert_equal true, @conn.safe
       end
 
       should "set localhost and port to master" do
@@ -25,6 +29,15 @@ class ConnectionTest < Test::Unit::TestCase
 
       should "default slave_ok to false" do
         assert !@conn.slave_ok?
+      end
+
+      should "raise exception for invalid host or port" do
+        assert_raise MongoArgumentError do
+          Connection.new(:safe => true)
+        end
+        assert_raise MongoArgumentError do
+          Connection.new('localhost', :safe => true)
+        end
       end
 
       should "warn if invalid options are specified" do

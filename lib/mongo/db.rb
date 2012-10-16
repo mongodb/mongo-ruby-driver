@@ -73,7 +73,7 @@ module Mongo
     # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
     #   propagated to Collection objects instantiated off of this DB. If no
     #   value is provided, the default value set on this instance's Connection object will be used. This
-    #   default can be overridden upon instantiation of any collection by explicity setting a :safe value
+    #   default can be overridden upon instantiation of any collection by explicitly setting a :safe value
     #   on initialization
     #
     # @option opts [Integer] :cache_time (300) Set the time that all ensure_index calls should cache the command.
@@ -258,7 +258,7 @@ module Mongo
     # a cursor which can be iterated over. For each collection, a hash
     # will be yielded containing a 'name' string and, optionally, an 'options' hash.
     #
-    # @param [String] coll_name return info for the specifed collection only.
+    # @param [String] coll_name return info for the specified collection only.
     #
     # @return [Mongo::Cursor]
     def collections_info(coll_name=nil)
@@ -368,9 +368,9 @@ module Mongo
       get_last_error['err'] != nil
     end
 
-    # Get the most recent error to have occured on this database.
+    # Get the most recent error to have occurred on this database.
     #
-    # This command only returns errors that have occured since the last call to
+    # This command only returns errors that have occurred since the last call to
     # DB#reset_error_history - returns +nil+ if there is no such error.
     #
     # @return [String, Nil] the text of the error or +nil+ if no error has occurred.

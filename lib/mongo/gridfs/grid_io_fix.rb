@@ -19,7 +19,7 @@
 module Mongo
   class GridIO
 
-    # This fixes a comparson issue in JRuby 1.9
+    # This fixes a comparison issue in JRuby 1.9
     def get_md5
       md5_command            = BSON::OrderedHash.new
       md5_command['filemd5'] = @files_id

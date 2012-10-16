@@ -169,7 +169,7 @@ module Mongo
     #   to Ruby 1.8).
     #
     # @option opts [Array, Hash] :fields field names that should be returned in the result
-    #   set ("_id" will be included unless explicity excluded). By limiting results to a certain subset of fields,
+    #   set ("_id" will be included unless explicitly excluded). By limiting results to a certain subset of fields,
     #   you can cut down on network traffic and decoding time. If using a Hash, keys should be field
     #   names and values should be either 1 or 0, depending on whether you want to include or exclude
     #   the given field.
@@ -194,12 +194,12 @@ module Mongo
     # @option opts [Boolean] :timeout (true) when +true+, the returned cursor will be subject to
     #   the normal cursor timeout behavior of the mongod process. When +false+, the returned cursor will
     #   never timeout. Note that disabling timeout will only work when #find is invoked with a block.
-    #   This is to prevent any inadvertant failure to close the cursor, as the cursor is explicitly
+    #   This is to prevent any inadvertent failure to close the cursor, as the cursor is explicitly
     #   closed when block code finishes.
     # @option opts [Integer] :max_scan (nil) Limit the number of items to scan on both collection scans and indexed queries..
     # @option opts [Boolean] :show_disk_loc (false) Return the disk location of each query result (for debugging).
     # @option opts [Boolean] :return_key (false) Return the index key used to obtain the result (for debugging).
-    # @option opts [Block] :transformer (nil) a block for tranforming returned documents.
+    # @option opts [Block] :transformer (nil) a block for transforming returned documents.
     #   This is normally used by object mappers to convert each returned document to an instance of a class.
     # @option opts [String] :comment (nil) a comment to include in profiling logs
     #
@@ -526,7 +526,7 @@ module Mongo
 
     # Calls create_index and sets a flag to not do so again for another X minutes.
     # this time can be specified as an option when initializing a Mongo::DB object as options[:cache_time]
-    # Any changes to an index will be propogated through regardless of cache time (e.g., a change of index direction)
+    # Any changes to an index will be propagated through regardless of cache time (e.g., a change of index direction)
     #
     # The parameters and options for this methods are the same as those for Collection#create_index.
     #
@@ -622,7 +622,7 @@ module Mongo
     #
     #   '$match' Query-like interface for filtering documents out of the aggregation pipeline.
     #
-    #   '$limit' Restricts the number of documents that pass through the pipline.
+    #   '$limit' Restricts the number of documents that pass through the pipeline.
     #
     #   '$skip' Skips over the specified number of documents and passes the rest along the pipeline.
     #
@@ -668,7 +668,7 @@ module Mongo
     # @option opts [String] :out (nil) a valid output type. In versions of MongoDB prior to v1.7.6,
     #   this option takes the name of a collection for the output results. In versions 1.7.6 and later,
     #   this option specifies the output type. See the core docs for available output types.
-    # @option opts [Boolean] :keeptemp (false) if true, the generated collection will be persisted. The defualt
+    # @option opts [Boolean] :keeptemp (false) if true, the generated collection will be persisted. The default
     #   is false. Note that this option has no effect is versions of MongoDB > v1.7.6.
     # @option opts [Boolean ] :verbose (false) if true, provides statistics on job execution time.
     # @option opts [Boolean] :raw (false) if true, return the raw result object from the map_reduce command, and not
