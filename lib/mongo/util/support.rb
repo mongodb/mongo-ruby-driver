@@ -69,10 +69,10 @@ module Mongo
       command = selector.keys.first.to_s.downcase
 
       if command == 'mapreduce'
-        map_reduce = selector[command]
-        if map_reduce && map_reduce.is_a?(Hash) && map_reduce.has_key?('out')
-          map_reduce['out'] == 'inline' ? false : true
-        end
+        out = selector.select { |k, v| k.to_s.downcase == 'out' }.first.last
+        # mongo looks at the first key in the out object, and doesn't
+        # look at the value
+        out.is_a?(Hash) && out.keys.first.to_s.downcase == 'inline' ? true : false
       else
         SECONDARY_OK_COMMANDS.member?(command)
       end
