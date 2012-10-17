@@ -32,12 +32,14 @@ class ConnectTest < Test::Unit::TestCase
   def test_connect_with_deprecated_multi
     #replica_host_ports = @rs.replicas.collect{|replica| [replica.host, replica.port]}
     host = @rs.replicas.first.host
-    @conn = Connection.multi([
-      # guaranteed to have one data-holding member
-      [host, @rs.replicas[0].port],
-      [host, @rs.replicas[1].port],
-      [host, @rs.replicas[2].port],
-    ], :name => @rs.repl_set_name)
+    silently do
+      @conn = Connection.multi([
+        # guaranteed to have one data-holding member
+        [host, @rs.replicas[0].port],
+        [host, @rs.replicas[1].port],
+        [host, @rs.replicas[2].port],
+      ], :name => @rs.repl_set_name)
+    end
     assert @conn.is_a?(ReplSetConnection)
     assert @conn.connected?
   end
