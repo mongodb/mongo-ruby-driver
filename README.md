@@ -27,18 +27,18 @@ For the reference manual, use the links in the upper-left and upper-right corner
 
 This documentation has other articles of interest, including:
 
-1. [A tutorial](file.TUTORIAL.html).
-2. [Replica Sets in Ruby](file.REPLICA_SETS.html).
-3. [Write Concern in Ruby](file.WRITE_CONCERN.html).
-4. [Tailable Cursors in Ruby](file.TAILABLE_CURSORS.html).
-5. [Read Preference in Ruby](file.READ_PREFERENCE.html).
-6. [GridFS in Ruby](file.GRID_FS.html).
-7. [Frequently Asked Questions](file.FAQ.html).
-8. [History](file.HISTORY.html).
-9. [Release plan](file.RELEASES.html).
-10. [Credits](file.CREDITS.html).
+1. [A tutorial](mongo-ruby-driver/blob/master/docs/TUTORIAL.md).
+2. [Replica Sets in Ruby](mongo-ruby-driver/blob/master/docs/REPLICA_SETS.md).
+3. [Write Concern in Ruby](mongo-ruby-driver/blob/master/docs/WRITE_CONCERN.md).
+4. [Tailable Cursors in Ruby](mongo-ruby-driver/blob/master/docs/TAILABLE_CURSORS.md).
+5. [Read Preference in Ruby](mongo-ruby-driver/blob/master/docs/READ_PREFERENCE.md).
+6. [GridFS in Ruby](mongo-ruby-driver/blob/master/docs/GRID_FS.md).
+7. [Frequently Asked Questions](mongo-ruby-driver/blob/master/docs/FAQ.md).
+8. [History](mongo-ruby-driver/blob/master/docs/HISTORY.md).
+9. [Release plan](mongo-ruby-driver/blob/master/docs/RELEASES.md).
+10. [Credits](mongo-ruby-driver/blob/master/docs/CREDITS.md).
 
-Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](file.TUTORIAL.html)
+Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](mongo-ruby-driver/blob/master/docs/TUTORIAL.md)
 for much more:
 
     require 'rubygems'
@@ -106,7 +106,7 @@ That's all there is to it!
 
 # Examples
 
-For extensive examples, see the [MongoDB Ruby Tutorial](file.TUTORIAL.html).
+For extensive examples, see the [MongoDB Ruby Tutorial](mongo-ruby-driver/blob/master/docs/TUTORIAL.md).
 
 Bundled with the driver are many examples, located in the "docs/examples" subdirectory. Samples include using
 the driver and using the GridFS class GridStore. MongoDB must be running for
