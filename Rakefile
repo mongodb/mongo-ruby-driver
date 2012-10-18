@@ -93,20 +93,17 @@ namespace :test do
   Rake::TestTask.new(:rs) do |t|
     t.test_files = FileList['test/replica_set/*_test.rb'] - ['test/replica_set/count_test.rb']
     t.libs << 'test'
-    t.ruby_opts << '-w'
   end
 
   desc "Run the sharded cluster test suite"
   Rake::TestTask.new(:sc) do |t|
     t.test_files = FileList['test/sharded_cluster/*_test.rb']
     t.libs << 'test'
-    t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:unit) do |t|
     t.test_files = FileList['test/unit/*_test.rb']
     t.libs << 'test'
-    t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:functional) do |t|
@@ -118,43 +115,36 @@ namespace :test do
       "test/functional/grid_test.rb"
     ]
     t.libs << 'test'
-    t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:pooled_threading) do |t|
     t.test_files = FileList['test/threading/*_test.rb']
     t.libs << 'test'
-    t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:auto_reconnect) do |t|
     t.test_files = FileList['test/auxillary/autoreconnect_test.rb']
     t.libs << 'test'
-    t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:authentication) do |t|
     t.test_files = FileList['test/auxillary/authentication_test.rb']
     t.libs << 'test'
-    t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:new_features) do |t|
     t.test_files = FileList['test/auxillary/1.4_features.rb']
     t.libs << 'test'
-    t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:bson) do |t|
     t.test_files = FileList['test/bson/*_test.rb']
     t.libs << 'test'
-    t.ruby_opts << '-w'
   end
 
   Rake::TestTask.new(:config) do |t|
     t.test_files = FileList['test/tools/mongo_config_test.rb']
     t.libs << 'test'
-    t.ruby_opts << '-w'
   end
 
   task :drop_databases => :path do |t|
