@@ -66,9 +66,9 @@ module Mongo
               when :configs
                 make_config(opts)
               when :routers
-                make_router(config)
+                make_router(config, opts)
               else
-                make_mongo(opts)
+                make_mongod(kind, opts)
             end
 
             replica_count += 1 if [:replicas, :arbiters].member?(kind)
@@ -130,7 +130,7 @@ module Mongo
       params.merge(:configsvr => nil)
     end
 
-    def self.make_router(config)
+    def self.make_router(config, opts)
       params = make_mongo('routers', opts)
       mongos = ENV['MONGOS'] || 'mongos'
 
