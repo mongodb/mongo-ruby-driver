@@ -52,7 +52,7 @@ class AuthenticationTest < Test::Unit::TestCase
 
     assert @db1['stuff'].insert({:a => 2}, :safe => true)
     assert @db2['stuff'].insert({:a => 2}, :safe => true)
-    assert @db2['stuff'].find(:safe => true)
+    assert @db2['stuff'].find({}, :safe => true)
 
     @db1.logout
     assert_raise Mongo::OperationFailure do
@@ -65,7 +65,7 @@ class AuthenticationTest < Test::Unit::TestCase
     end
 
     @db2.authenticate('userRO', 'secret')
-    assert @db2['stuff'].find(:safe => true)
+    assert @db2['stuff'].find({}, :safe => true)
     assert_raise Mongo::OperationFailure do
       assert @db2['stuff'].insert({:a => 2}, :safe => true)
     end

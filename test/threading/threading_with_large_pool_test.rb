@@ -67,7 +67,7 @@ class TestThreadingLargePool < Test::Unit::TestCase
     @@coll = @@db.collection('thread-test-collection')
 
     1000.times do |i|
-      @@coll.insert("x" => i, :safe => true)
+      @@coll.insert({ "x" => i }, :safe => true)
     end
 
     threads = []
@@ -86,5 +86,4 @@ class TestThreadingLargePool < Test::Unit::TestCase
       threads[i].join
     end
   end
-
 end
