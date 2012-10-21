@@ -5,6 +5,7 @@ group :development, :test do
   gem "bundler"
   gem "rake"
   gem "json"
+  gem "activesupport"
 
   # Deployment
   gem "git"
