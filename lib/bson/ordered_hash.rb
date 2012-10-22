@@ -71,6 +71,7 @@ module BSON
       end
 
       def []=(key, value)
+        key = convert_key(key)
         unless has_key?(key)
           @ordered_keys << key
         end

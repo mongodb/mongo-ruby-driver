@@ -132,7 +132,7 @@ module BSON
         end
         obj.each {|k, v| serialize_key_value(k, v, check_keys) unless k == '_id' || k == :_id }
       else
-        if obj.has_key?('_id') && obj.has_key?(:_id)
+        if !obj.respond_to?(:convert_key) && obj.has_key?('_id') && obj.has_key?(:_id)
           obj['_id'] = obj.delete(:_id)
         end
         obj.each {|k, v| serialize_key_value(k, v, check_keys) }
