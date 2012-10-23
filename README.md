@@ -1,4 +1,9 @@
-[![Build Status](https://travis-ci.org/mongodb/mongo-ruby-driver.png)](https://travis-ci.org/mongodb/mongo-ruby-driver)
+[![Build Status][travis-img]][travis-url] [![Code Climate][codeclimate-img]][codeclimate-url]
+
+[travis-img]: https://secure.travis-ci.org/mongodb/mongo-ruby-driver.png
+[travis-url]: http://travis-ci.org/mongodb/mongo-ruby-driver
+[codeclimate-img]: https://codeclimate.com/badge.png
+[codeclimate-url]: https://codeclimate.com/github/mongodb/mongo-ruby-driver
 
 # Documentation
 
