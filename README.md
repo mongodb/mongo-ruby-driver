@@ -4,6 +4,7 @@
 [travis-url]: http://travis-ci.org/mongodb/mongo-ruby-driver
 [codeclimate-img]: https://codeclimate.com/badge.png
 [codeclimate-url]: https://codeclimate.com/github/mongodb/mongo-ruby-driver
+[api-url]: http://api.mongodb.org/ruby/current
 
 # Documentation
 
@@ -23,28 +24,22 @@ Then open the file ydoc/index.html in your browser.
 
 This is the 10gen-supported Ruby driver for [MongoDB](http://www.mongodb.org).
 
-For the reference manual, use the links in the upper-left and upper-right corners for quick navigation to the following.
+For the api reference please see the [API][api-url]
 
-* [Alphabetic Index](_index.html)
-* [Class List](class_list.html)
-* [Method List](method_list.html)
-* [File List](file_list.html)
+The [wiki](https://github.com/mongodb/mongo-ruby-driver/wiki) has other articles of interest, including:
 
-This documentation has other articles of interest, including:
+1. [A tutorial](https://github.com/mongodb/mongo-ruby-driver/wiki/Tutorial).
+2. [Replica Sets in Ruby](https://github.com/mongodb/mongo-ruby-driver/wiki/Replica-Sets.html).
+3. [Write Concern in Ruby](https://github.com/mongodb/mongo-ruby-driver/wiki/Write-Concern).
+4. [Tailable Cursors in Ruby](https://github.com/mongodb/mongo-ruby-driver/wiki/Tailable-Cursors).
+5. [Read Preference in Ruby](https://github.com/mongodb/mongo-ruby-driver/wiki/Read-Preference).
+6. [GridFS in Ruby](https://github.com/mongodb/mongo-ruby-driver/wiki/GridFS).
+7. [Frequently Asked Questions](https://github.com/mongodb/mongo-ruby-driver/wiki/FAQ).
+8. [History](https://github.com/mongodb/mongo-ruby-driver/wiki/History).
+9. [Release plan](https://github.com/mongodb/mongo-ruby-driver/wiki/Releases).
+10. [Credits](https://github.com/mongodb/mongo-ruby-driver/wiki/Credits).
 
-1. [A tutorial](file.TUTORIAL.html).
-2. [Replica Sets in Ruby](file.REPLICA_SETS.html).
-3. [Write Concern in Ruby](file.WRITE_CONCERN.html).
-4. [Tailable Cursors in Ruby](file.TAILABLE_CURSORS.html).
-5. [Read Preference in Ruby](file.READ_PREFERENCE.html).
-6. [GridFS in Ruby](file.GRID_FS.html).
-7. [Frequently Asked Questions](file.FAQ.html).
-8. [History](file.HISTORY.html).
-9. [Release plan](file.RELEASES.html).
-10. [Credits](file.CREDITS.html).
-
-Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](file.TUTORIAL.html)
-for much more:
+Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](https://github.com/mongodb/mongo-ruby-driver/wiki/Tutorial) for much more:
 
     require 'rubygems'
     require 'mongo'
@@ -111,7 +106,7 @@ That's all there is to it!
 
 # Examples
 
-For extensive examples, see the [MongoDB Ruby Tutorial](file.TUTORIAL.html).
+For extensive examples, see the [MongoDB Ruby Tutorial](https://github.com/mongodb/mongo-ruby-driver/wiki/Tutorial).
 
 Bundled with the driver are many examples, located in the "docs/examples" subdirectory. Samples include using
 the driver and using the GridFS class GridStore. MongoDB must be running for
@@ -356,11 +351,12 @@ To fix the following error on Mac OS X - "/.../lib/bson_ext/cbson.bundle: [BUG] 
 
 # Release Notes
 
-See HISTORY.
+See [history](https://github.com/mongodb/mongo-ruby-driver/wiki/History).
+
 
 # Credits
 
-See CREDITS.
+See [credits](https://github.com/mongodb/mongo-ruby-driver/wiki/Credits).
 
 # License
 
