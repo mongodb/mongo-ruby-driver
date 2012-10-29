@@ -43,6 +43,9 @@ module Mongo
       # Mutex for synchronizing pool access
       @connection_mutex = Mutex.new
 
+      # Mutex for synchronizing pings
+      @ping_mutex = Mutex.new
+
       # Condition variable for signal and wait
       @queue = ConditionVariable.new
 
@@ -125,15 +128,13 @@ module Mongo
     # Refresh ping time only if we haven't
     # checked within the last five minutes.
     def ping_time
-      if !@last_ping
-        @last_ping = Time.now
-        @ping_time = refresh_ping_time
-      elsif Time.now - @last_ping > 300
-        @last_ping = Time.now
-        @ping_time = refresh_ping_time
-      else
-        @ping_time
+      @ping_mutex.synchronize do
+        if !@last_ping || (Time.now - @last_ping) > 300
+          @ping_time = refresh_ping_time
+          @last_ping = Time.now
+        end
       end
+      @ping_time
     end
 
     # Return the time it takes on average
@@ -162,7 +163,7 @@ module Mongo
 
     def ping
       begin
-        return self.connection['admin'].command({:ping => 1}, :socket => @node.socket, :timeout => 1)
+        return self.connection['admin'].command({:ping => 1}, :socket => @node.socket, :timeout => MAX_PING_TIME)
       rescue ConnectionFailure, OperationFailure, SocketError, SystemCallError, IOError
         return false
       end
