@@ -87,6 +87,9 @@ else
   end
 end
 
+require 'active_support'
+require 'active_support/hash_with_indifferent_access'
+
 require 'bson/types/binary'
 require 'bson/types/code'
 require 'bson/types/dbref'
