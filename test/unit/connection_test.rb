@@ -41,37 +41,47 @@ class ConnectionTest < Test::Unit::TestCase
       end
 
       should "warn if invalid options are specified" do
-        conn = Connection.allocate
+        client = Client.allocate
         opts = {:connect => false}
 
-        ReplSetConnection::REPL_SET_OPTS.each do |opt|
-          conn.expects(:warn).with("#{opt} is not a valid option for #{conn.class}")
+        ReplSetClient::REPL_SET_OPTS.each do |opt|
+          client.expects(:warn).with("#{opt} is not a valid option for #{client.class}")
           opts[opt] = true
         end
 
         args = ['localhost', 27017, opts]
+        client.send(:initialize, *args)
+      end
+
+      should "warn if deprecated connection class is used" do
+        conn = Connection.allocate
+        conn.expects(:warn).with('[DEPRECATED] Mongo::Connection has been replaced with Mongo::Client.')
+        args = ['localhost', 27017, {:connect => false}]
         conn.send(:initialize, *args)
       end
 
       context "given a replica set" do
-        #should "enforce a minimum refresh_interval" do
-        #  @conn = ReplSetConnection.new(['localhost:27017'],
-        #    :connect => false, :refresh_mode => :sync, :refresh_interval => 10)
-        #  assert_equal 60, @conn.refresh_interval
-        #end
 
         should "warn if invalid options are specified" do
-          conn = ReplSetConnection.allocate
+          client = ReplSetClient.allocate
           opts = {:connect => false}
 
-          Connection::CONNECTION_OPTS.each do |opt|
-            conn.expects(:warn).with("#{opt} is not a valid option for #{conn.class}")
+          Client::CONNECTION_OPTS.each do |opt|
+            client.expects(:warn).with("#{opt} is not a valid option for #{client.class}")
             opts[opt] = true
           end
 
           args = [['localhost:27017'], opts]
+          client.send(:initialize, *args)
+        end
+
+        should "warn if deprecated connection class is used" do
+          conn = ReplSetConnection.allocate
+          conn.expects(:warn).with('[DEPRECATED] Mongo::ReplSetConnection has been replaced with Mongo::ReplSetClient.')
+          args = [['localhost:27017'], {:connect => false}]
           conn.send(:initialize, *args)
         end
+
       end
     end
 

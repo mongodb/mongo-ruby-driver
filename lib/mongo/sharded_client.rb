@@ -19,7 +19,7 @@
 module Mongo
 
   # Instantiates and manages connections to a MongoDB sharded cluster for high availability.
-  class ShardedConnection < ReplSetConnection
+  class ShardedClient < ReplSetClient
 
     SHARDED_CLUSTER_OPTS = [:refresh_mode, :refresh_interval]
 

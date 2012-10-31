@@ -22,7 +22,7 @@ require 'thread'
 module Mongo
 
   # Instantiates and manages self.connections to MongoDB.
-  class Connection
+  class Client
     include Mongo::Logging
     include Mongo::Networking
 

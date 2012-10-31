@@ -19,7 +19,7 @@
 module Mongo
 
   # Instantiates and manages connections to a MongoDB replica set.
-  class ReplSetConnection < Connection
+  class ReplSetClient < Client
 
     REPL_SET_OPTS = [:read, :refresh_mode, :refresh_interval, :read_secondary, 
       :rs_name, :name, :tag_sets, :secondary_acceptable_latency_ms]

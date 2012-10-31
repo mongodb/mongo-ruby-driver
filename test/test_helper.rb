@@ -1,5 +1,4 @@
 require 'rubygems'
-gem 'test-unit'
 require 'test/unit'
 require 'tools/mongo_config'
 
