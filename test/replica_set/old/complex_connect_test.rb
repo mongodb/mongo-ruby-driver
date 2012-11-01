@@ -9,22 +9,22 @@ class ComplexConnectTest < Test::Unit::TestCase
 
   def teardown
     @rs.restart_killed_nodes
-    @conn.close if defined?(@conn) && @conn
+    @client.close if defined?(@conn) && @conn
   end
 
   def test_complex_connect
-    primary = Connection.new(@rs.host, @rs.ports[0])
+    primary = Client.new(@rs.host, @rs.ports[0])
 
-    @conn = ReplSetConnection.new([
+    @client = ReplSetClient.new([
       "#{@rs.host}:#{@rs.ports[2]}",
       "#{@rs.host}:#{@rs.ports[1]}",
       "#{@rs.host}:#{@rs.ports[0]}",
     ])
 
-    version = @conn.server_version
+    version = @client.server_version
 
-    @conn['test']['foo'].insert({:a => 1})
-    assert @conn['test']['foo'].find_one
+    @client['test']['foo'].insert({:a => 1})
+    assert @client['test']['foo'].find_one
 
     config = primary['local']['system.replset'].find_one
     config['version'] += 1
@@ -48,10 +48,10 @@ class ComplexConnectTest < Test::Unit::TestCase
     # isMaster is currently broken in 2.1+ when called on removed nodes
     if version < "2.1"
       rescue_connection_failure do
-        assert @conn['test']['foo'].find_one
+        assert @client['test']['foo'].find_one
       end
 
-      assert @conn['test']['foo'].find_one
+      assert @client['test']['foo'].find_one
     end
   end
 end

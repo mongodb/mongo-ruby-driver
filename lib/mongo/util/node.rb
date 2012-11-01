@@ -1,10 +1,10 @@
 module Mongo
   class Node
 
-    attr_accessor :host, :port, :address, :config, :connection, :socket, :last_state
+    attr_accessor :host, :port, :address, :config, :client, :socket, :last_state
 
-    def initialize(connection, host_port)
-      @connection = connection
+    def initialize(client, host_port)
+      @client = client
       @host, @port = split_node(host_port)
       @address = "#{@host}:#{@port}"
       @config = nil
@@ -29,11 +29,11 @@ module Mongo
     # return nil.
     def connect
       begin
-        socket = @connection.socket_class.new(@host, @port, 
-          @connection.op_timeout, @connection.connect_timeout
+        socket = @client.socket_class.new(@host, @port, 
+          @client.op_timeout, @client.connect_timeout
         )
       rescue OperationTimeout, ConnectionFailure, OperationFailure, SocketError, SystemCallError, IOError => ex
-        @connection.log(:debug, "Failed connection to #{host_string} with #{ex.class}, #{ex.message}.")
+        @client.log(:debug, "Failed connection to #{host_string} with #{ex.class}, #{ex.message}.")
         socket.close if socket
       end
 
@@ -54,7 +54,7 @@ module Mongo
 
     def active?
       begin
-        result = @connection['admin'].command({:ping => 1}, :socket => @socket)
+        result = @client['admin'].command({:ping => 1}, :socket => @socket)
       rescue OperationFailure, SocketError, SystemCallError, IOError
         return nil
       end
@@ -66,16 +66,16 @@ module Mongo
     # matches with the name provided.
     def set_config
       begin
-        @config = @connection['admin'].command({:ismaster => 1}, :socket => @socket)
+        @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
 
         if @config['msg']
-          @connection.log(:warn, "#{config['msg']}")
+          @client.log(:warn, "#{config['msg']}")
         end
 
         check_set_membership(config)
         check_set_name(config)
       rescue ConnectionFailure, OperationFailure, OperationTimeout, SocketError, SystemCallError, IOError => ex
-        @connection.log(:warn, "Attempted connection to node #{host_string} raised " +
+        @client.log(:warn, "Attempted connection to node #{host_string} raised " +
                             "#{ex.class}: #{ex.message}")
 
         # Socket may already be nil from issuing command
@@ -145,7 +145,7 @@ module Mongo
       end
 
       host = host_port[0]
-      port = host_port[1].nil? ? Connection::DEFAULT_PORT : host_port[1].to_i
+      port = host_port[1].nil? ? Client::DEFAULT_PORT : host_port[1].to_i
 
       [host, port]
     end
@@ -165,13 +165,13 @@ module Mongo
 
     # Ensure that this node is part of a replica set of the expected name.
     def check_set_name(config)
-      if @connection.replica_set_name
+      if @client.replica_set_name
         if !config['setName']
-          @connection.log(:warn, "Could not verify replica set name for member #{host_string} " +
+          @client.log(:warn, "Could not verify replica set name for member #{host_string} " +
             "because ismaster does not return name in this version of MongoDB")
-        elsif @connection.replica_set_name != config['setName']
+        elsif @client.replica_set_name != config['setName']
           message = "Attempting to connect to replica set '#{config['setName']}' on member #{host_string} " +
-            "but expected '#{@connection.replica_set_name}'"
+            "but expected '#{@client.replica_set_name}'"
           raise ReplicaSetConnectionError, message
         end
       end

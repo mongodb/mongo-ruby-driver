@@ -81,7 +81,7 @@ unless defined? MONGO_TEST_DB
 end
 
 unless defined? TEST_PORT
-  TEST_PORT = ENV['MONGO_RUBY_DRIVER_PORT'] ? ENV['MONGO_RUBY_DRIVER_PORT'].to_i : Mongo::Connection::DEFAULT_PORT
+  TEST_PORT = ENV['MONGO_RUBY_DRIVER_PORT'] ? ENV['MONGO_RUBY_DRIVER_PORT'].to_i : Mongo::Client::DEFAULT_PORT
 end
 
 unless defined? TEST_HOST
@@ -93,7 +93,7 @@ class Test::Unit::TestCase
   include BSON
 
   def self.standard_connection(options={})
-    Connection.new(TEST_HOST, TEST_PORT, options)
+    Client.new(TEST_HOST, TEST_PORT, options)
   end
 
   def standard_connection(options={})

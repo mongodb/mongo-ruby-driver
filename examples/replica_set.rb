@@ -4,7 +4,7 @@ require 'mongo'
 cons = []
 
 10.times do
-  cons << Mongo::ReplSetConnection(['localhost:27017'], :read => :secondary)
+  cons << Mongo::ReplSetClient(['localhost:27017'], :read => :secondary)
 end
 
 ports = cons.map do |con|

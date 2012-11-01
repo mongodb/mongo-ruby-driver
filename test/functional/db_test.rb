@@ -14,14 +14,14 @@ class DBTest < Test::Unit::TestCase
 
   include Mongo
 
-  @@conn  = standard_connection
-  @@db    = @@conn.db(MONGO_TEST_DB)
+  @@client  = standard_connection
+  @@db    = @@client.db(MONGO_TEST_DB)
   @@users = @@db.collection('system.users')
-  @@version = @@conn.server_version
+  @@version = @@client.server_version
 
   def test_close
-    @@conn.close
-    assert !@@conn.connected?
+    @@client.close
+    assert !@@client.connected?
     begin
       @@db.collection('test').insert('a' => 1)
       fail "expected 'NilClass' exception"
@@ -44,7 +44,7 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_get_and_drop_collection
-    db = @@conn.db(MONGO_TEST_DB, :strict => true)
+    db = @@client.db(MONGO_TEST_DB, :strict => true)
     db.create_collection('foo')
     assert db.collection('foo')
     assert db.drop_collection('foo')
@@ -160,11 +160,11 @@ class DBTest < Test::Unit::TestCase
 
   def test_authenticate_with_connection_uri
     @@db.add_user('spongebob', 'squarepants')
-    assert Mongo::Connection.from_uri("mongodb://spongebob:squarepants@#{host_port}/#{@@db.name}")
+    assert Mongo::Client.from_uri("mongodb://spongebob:squarepants@#{host_port}/#{@@db.name}")
 
     assert_raise Mongo::AuthenticationError do
-      con = Mongo::Connection.from_uri("mongodb://wrong:info@#{host_port}/#{@@db.name}")
-      con['test']['foo'].find_one
+      client = Mongo::Client.from_uri("mongodb://wrong:info@#{host_port}/#{@@db.name}")
+      client['test']['foo'].find_one
     end
   end
 
@@ -244,8 +244,8 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_text_port_number_raises_no_errors
-    conn = standard_connection
-    db   = conn[MONGO_TEST_DB]
+    client = standard_connection
+    db   = client[MONGO_TEST_DB]
     db.collection('users').remove
   end
 
@@ -287,7 +287,7 @@ class DBTest < Test::Unit::TestCase
 
   context "database profiling" do
     setup do
-      @db  = @@conn[MONGO_TEST_DB]
+      @db  = @@client[MONGO_TEST_DB]
       @coll = @db['test']
       @coll.remove
       @r1 = @coll.insert('a' => 1) # collection not created until it's used

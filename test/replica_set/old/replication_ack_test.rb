@@ -5,21 +5,21 @@ class ReplicaSetAckTest < Test::Unit::TestCase
 
   def setup
     ensure_rs
-    @conn = ReplSetConnection.new(build_seeds(1))
+    @client = ReplSetClient.new(build_seeds(1))
 
-    @slave1 = Connection.new(@conn.secondary_pools[0].host,
-      @conn.secondary_pools[0].port, :slave_ok => true)
+    @slave1 = Client.new(@client.secondary_pools[0].host,
+      @client.secondary_pools[0].port, :slave_ok => true)
 
     assert !@slave1.read_primary?
 
-    @db = @conn.db(MONGO_TEST_DB)
+    @db = @client.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @col = @db.collection("test-sets")
   end
 
   def teardown
     @rs.restart_killed_nodes
-    @conn.close if @conn
+    @client.close if @conn
   end
 
   def test_safe_mode_with_w_failure

@@ -15,72 +15,72 @@ class BasicTest < Test::Unit::TestCase
   #     $ killall mongod; rm -fr rs
 
   def test_connect
-    conn = Mongo::ReplSetConnection.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
-    assert conn.connected?
-    assert_equal @rs.primary_name, conn.primary.join(':')
-    assert_equal @rs.secondary_names.sort, conn.secondaries.collect{|s| s.join(':')}.sort
-    assert_equal @rs.arbiter_names.sort, conn.arbiters.collect{|s| s.join(':')}.sort
-    conn.close
+    client = Mongo::ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
+    assert client.clientected?
+    assert_equal @rs.primary_name, client.primary.join(':')
+    assert_equal @rs.secondary_names.sort, client.secondaries.collect{|s| s.join(':')}.sort
+    assert_equal @rs.arbiter_names.sort, client.arbiters.collect{|s| s.join(':')}.sort
+    client.close
 
     silently do
-      conn = Mongo::ReplSetConnection.new(@rs.repl_set_seeds_old, :name => @rs.repl_set_name)
+      client = Mongo::ReplSetClient.new(@rs.repl_set_seeds_old, :name => @rs.repl_set_name)
     end
 
-    assert conn.connected?
-    conn.close
+    assert client.connected?
+    client.close
   end
 
   def test_safe_option
-    conn = Mongo::ReplSetConnection.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
-    assert conn.connected?
-    assert !conn.safe
-    conn.close
-    conn = Mongo::ReplSetConnection.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :safe => false)
-    assert conn.connected?
-    assert !conn.safe
-    conn.close
-    conn = Mongo::ReplSetConnection.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :safe => true)
-    assert conn.connected?
-    assert conn.safe
-    conn.close
+    client = Mongo::ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
+    assert client.connected?
+    assert !client.safe
+    client.close
+    client = Mongo::ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :safe => false)
+    assert client.connected?
+    assert !client.safe
+    client.close
+    client = Mongo::ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :safe => true)
+    assert client.connected?
+    assert client.safe
+    client.close
   end
 
   def test_multiple_concurrent_replica_set_connection
-    conn1 = ReplSetConnection.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
-    conn2 = ReplSetConnection.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
-    assert conn1.connected?
-    assert conn2.connected?
-    assert conn1.manager != conn2.manager
-    assert conn1.local_manager != conn2.local_manager
-    conn1.close
-    conn2.close
+    client1 = ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
+    client2 = ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
+    assert client1.connected?
+    assert client2.connected?
+    assert client1.manager != client2.manager
+    assert client1.local_manager != client2.local_manager
+    client1.close
+    client2.close
   end
 
   def test_cache_original_seed_nodes
     host = @rs.servers.first.host
     seeds = @rs.repl_set_seeds << "#{host}:19356"
-    conn = ReplSetConnection.new(seeds, :name => @rs.repl_set_name)
-    assert conn.connected?
-    assert conn.seeds.include?([host, 19356]), "Original seed nodes not cached!"
-    assert_equal [host, 19356], conn.seeds.last, "Original seed nodes not cached!"
-    conn.close
+    client = ReplSetClient.new(seeds, :name => @rs.repl_set_name)
+    assert client.connected?
+    assert client.seeds.include?([host, 19356]), "Original seed nodes not cached!"
+    assert_equal [host, 19356], client.seeds.last, "Original seed nodes not cached!"
+    client.close
   end
 
   def test_accessors
     seeds = @rs.repl_set_seeds
     args = {:name => @rs.repl_set_name}
-    conn = ReplSetConnection.new(seeds, args)
-    assert_equal @rs.primary_name, [conn.host, conn.port].join(':')
-    assert_equal conn.host, conn.primary_pool.host
-    assert_equal conn.port, conn.primary_pool.port
-    assert_equal 2, conn.secondaries.length
-    assert_equal 2, conn.arbiters.length
-    assert_equal 2, conn.secondary_pools.length
-    assert_equal @rs.repl_set_name, conn.replica_set_name
-    assert conn.secondary_pools.include?(conn.read_pool(:secondary))
-    assert_equal 90, conn.refresh_interval
-    assert_equal conn.refresh_mode, false
-    conn.close
+    client = ReplSetClient.new(seeds, args)
+    assert_equal @rs.primary_name, [client.host, client.port].join(':')
+    assert_equal client.host, client.primary_pool.host
+    assert_equal client.port, client.primary_pool.port
+    assert_equal 2, client.secondaries.length
+    assert_equal 2, client.arbiters.length
+    assert_equal 2, client.secondary_pools.length
+    assert_equal @rs.repl_set_name, client.replica_set_name
+    assert client.secondary_pools.include?(client.read_pool(:secondary))
+    assert_equal 90, client.refresh_interval
+    assert_equal client.refresh_mode, false
+    client.close
   end
 
   context "Socket pools" do
@@ -88,13 +88,13 @@ class BasicTest < Test::Unit::TestCase
       setup do
         seeds = @rs.repl_set_seeds
         args = {:name => @rs.repl_set_name}
-        @con = ReplSetConnection.new(seeds, args)
-        @coll = @con[MONGO_TEST_DB]['test-connection-exceptions']
+        @client = ReplSetClient.new(seeds, args)
+        @coll = @client[MONGO_TEST_DB]['test-connection-exceptions']
       end
 
       should "close the connection on send_message for major exceptions" do
-        @con.expects(:checkout_writer).raises(SystemStackError)
-        @con.expects(:close)
+        @client.expects(:checkout_writer).raises(SystemStackError)
+        @client.expects(:close)
         begin
           @coll.insert({:foo => "bar"})
         rescue SystemStackError
@@ -102,8 +102,8 @@ class BasicTest < Test::Unit::TestCase
       end
 
       should "close the connection on send_message_with_safe_check for major exceptions" do
-        @con.expects(:checkout_writer).raises(SystemStackError)
-        @con.expects(:close)
+        @client.expects(:checkout_writer).raises(SystemStackError)
+        @client.expects(:close)
         begin
           @coll.insert({:foo => "bar"}, :safe => true)
         rescue SystemStackError
@@ -111,8 +111,8 @@ class BasicTest < Test::Unit::TestCase
       end
 
       should "close the connection on receive_message for major exceptions" do
-        @con.expects(:checkout_reader).raises(SystemStackError)
-        @con.expects(:close)
+        @client.expects(:checkout_reader).raises(SystemStackError)
+        @client.expects(:close)
         begin
           @coll.find({}, :read => :primary).next
         rescue SystemStackError
@@ -124,13 +124,13 @@ class BasicTest < Test::Unit::TestCase
       setup do
         seeds = @rs.repl_set_seeds
         args = {:name => @rs.repl_set_name}
-        @con = ReplSetConnection.new(seeds, args)
-        @coll = @con[MONGO_TEST_DB]['test-connection-exceptions']
+        @client = ReplSetClient.new(seeds, args)
+        @coll = @client[MONGO_TEST_DB]['test-connection-exceptions']
       end
 
       should "close the connection on receive_message for major exceptions" do
-        @con.expects(:checkout_reader).raises(SystemStackError)
-        @con.expects(:close)
+        @client.expects(:checkout_reader).raises(SystemStackError)
+        @client.expects(:close)
         begin
           @coll.find({}, :read => :secondary).next
         rescue SystemStackError

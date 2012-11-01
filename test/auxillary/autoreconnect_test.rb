@@ -6,8 +6,8 @@ class AutoreconnectTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @conn = Mongo::Connection.new
-    @db = @conn.db('mongo-ruby-test')
+    @client = Mongo::Client.new
+    @db = @client.db('mongo-ruby-test')
     @db.drop_collection("test-connect")
     @coll = @db.collection("test-connect")
   end

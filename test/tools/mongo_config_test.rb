@@ -108,7 +108,7 @@ class MongoConfig < Test::Unit::TestCase
     cluster_test(Mongo::Config::DEFAULT_REPLICA_SET) do |manager|
       servers = manager.servers
       servers.each do |server|    
-        assert_not_nil(Mongo::Connection.new(server.host, server.port))
+        assert_not_nil(Mongo::Client.new(server.host, server.port))
         assert_match(/oplogSize/, server.cmd, '--oplogSize option should be specified')
         assert_match(/smallfiles/, server.cmd, '--smallfiles option should be specified')
         assert_no_match(/nojournal/, server.cmd, '--nojournal option should not be specified')
@@ -121,7 +121,7 @@ class MongoConfig < Test::Unit::TestCase
     cluster_test(Mongo::Config::DEFAULT_SHARDED_SIMPLE) do |manager|
       servers = manager.shards + manager.configs
       servers.each do |server|
-        assert_not_nil(Mongo::Connection.new(server.host, server.port))
+        assert_not_nil(Mongo::Client.new(server.host, server.port))
         assert_match(/oplogSize/, server.cmd, '--oplogSize option should be specified')
         assert_match(/smallfiles/, server.cmd, '--smallfiles option should be specified')
         assert_no_match(/nojournal/, server.cmd, '--nojournal option should not be specified')

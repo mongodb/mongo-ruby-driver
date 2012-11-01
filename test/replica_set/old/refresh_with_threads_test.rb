@@ -6,11 +6,11 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
 
   def setup
     ensure_rs
-    @conn = nil
+    @client = nil
   end
 
   def teardown
-    @conn.close if @conn
+    @client.close if @conn
   end
 
   def test_read_write_load_with_added_nodes
@@ -23,9 +23,9 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
       :refresh_mode => :sync,
       :read => :secondary_preferred
     }
-    @conn = ReplSetConnection.new(seeds, args)
-    @duplicate = @conn[MONGO_TEST_DB]['duplicate']
-    @unique    = @conn[MONGO_TEST_DB]['unique']
+    @client = ReplSetClient.new(seeds, args)
+    @duplicate = @client[MONGO_TEST_DB]['duplicate']
+    @unique    = @client[MONGO_TEST_DB]['unique']
     @duplicate.insert("test" => "insert")
     @duplicate.insert("test" => "update")
     @unique.insert("test" => "insert")
@@ -52,9 +52,9 @@ class ReplicaSetRefreshWithThreadsTest < Test::Unit::TestCase
 
     sleep(1)
     
-    @conn['admin'].command({:ismaster => 1})
+    @client['admin'].command({:ismaster => 1})
 
-    assert_equal 3, @conn.secondary_pools.length
-    assert_equal 3, @conn.secondaries.length
+    assert_equal 3, @client.secondary_pools.length
+    assert_equal 3, @client.secondaries.length
   end
 end

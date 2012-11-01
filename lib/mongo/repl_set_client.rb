@@ -32,15 +32,15 @@ module Mongo
     # If no args are provided, it will check <code>ENV["MONGODB_URI"]</code>.
     #
     # Once connected to a replica set, you can find out which nodes are primary, secondary, and
-    # arbiters with the corresponding accessors: Connection#primary, Connection#secondaries, and
-    # Connection#arbiters. This is useful if your application needs to connect manually to nodes other
+    # arbiters with the corresponding accessors: Client#primary, Client#secondaries, and
+    # Client#arbiters. This is useful if your application needs to connect manually to nodes other
     # than the primary.
     #
     # @overload initialize(seeds=ENV["MONGODB_URI"], opts={})
     #   @param [Array<String>, Array<Array(String, Integer)>] seeds
     #
     #   @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
-    #     propagated to DB objects instantiated off of this Connection. This
+    #     propagated to DB objects instantiated off of this Client. This
     #     default can be overridden upon instantiation of any DB by explicitly setting a :safe value
     #     on initialization.
     #   @option opts [:primary, :primary_preferred, :secondary, :secondary_preferred, :nearest] :read_preference (:primary)
@@ -75,18 +75,18 @@ module Mongo
     #     will always trigger a complete refresh. This option is useful when you want to add new nodes
     #     or remove replica set nodes not currently in use by the driver.
     #   @option opts [Integer] :refresh_interval (90) If :refresh_mode is enabled, this is the number of seconds
-    #     between calls to check the replica set's state. 
+    #     between calls to check the replica set's state.
     #   @note the number of seed nodes does not have to be equal to the number of replica set members.
     #     The purpose of seed nodes is to permit the driver to find at least one replica set member even if a member is down.
     #
     # @example Connect to a replica set and provide two seed nodes.
-    #   Mongo::ReplSetConnection.new(['localhost:30000', 'localhost:30001'])
+    #   Mongo::ReplSetClient.new(['localhost:30000', 'localhost:30001'])
     #
     # @example Connect to a replica set providing two seed nodes and ensuring a connection to the replica set named 'prod':
-    #   Mongo::ReplSetConnection.new(['localhost:30000', 'localhost:30001'], :name => 'prod')
+    #   Mongo::ReplSetClient.new(['localhost:30000', 'localhost:30001'], :name => 'prod')
     #
     # @example Connect to a replica set providing two seed nodes and allowing reads from a secondary node:
-    #   Mongo::ReplSetConnection.new(['localhost:30000', 'localhost:30001'], :read => :secondary)
+    #   Mongo::ReplSetClient.new(['localhost:30000', 'localhost:30001'], :read => :secondary)
     #
     # @see http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html Replica sets in Ruby
     #
@@ -101,19 +101,19 @@ module Mongo
       if nodes.empty? and ENV.has_key?('MONGODB_URI')
         parser = URIParser.new ENV['MONGODB_URI']
         if parser.direct?
-          raise MongoArgumentError, "Mongo::ReplSetConnection.new called with no arguments, but ENV['MONGODB_URI'] implies a direct connection."
+          raise MongoArgumentError, "Mongo::ReplSetClient.new called with no arguments, but ENV['MONGODB_URI'] implies a direct connection."
         end
         opts = parser.connection_options.merge! opts
         nodes = [parser.nodes]
       end
 
       unless nodes.length > 0
-        raise MongoArgumentError, "A ReplSetConnection requires at least one seed node."
+        raise MongoArgumentError, "A ReplSetClient requires at least one seed node."
       end
 
       # This is temporary until support for the old format is dropped
       if nodes.first.last.is_a?(Integer)
-        warn "Initiating a ReplSetConnection with seeds passed as individual [host, port] array arguments is deprecated."
+        warn "Initiating a ReplSetClient with seeds passed as individual [host, port] array arguments is deprecated."
         warn "Please specify hosts as an array of 'host:port' strings; the old format will be removed in v2.0"
         @seeds = nodes
       else
@@ -154,7 +154,7 @@ module Mongo
     end
 
     def inspect
-      "<Mongo::ReplSetConnection:0x#{self.object_id.to_s(16)} @seeds=#{@seeds.inspect} " +
+      "<Mongo::ReplSetClient:0x#{self.object_id.to_s(16)} @seeds=#{@seeds.inspect} " +
         "@connected=#{@connected}>"
     end
 
@@ -185,7 +185,7 @@ module Mongo
     # Determine whether a replica set refresh is
     # required. If so, run a hard refresh. You can
     # force a hard refresh by running
-    # ReplSetConnection#hard_refresh!
+    # ReplSetClient#hard_refresh!
     #
     # @return [Boolean] +true+ unless a hard refresh
     #   is run and the refresh lock can't be acquired.
@@ -234,7 +234,7 @@ module Mongo
 
     # @deprecated
     def connecting?
-      warn "ReplSetConnection#connecting? is deprecated and will be removed in v2.0."
+      warn "ReplSetClient#connecting? is deprecated and will be removed in v2.0."
       false
     end
 
@@ -253,8 +253,8 @@ module Mongo
     end
 
     def nodes
-      warn "ReplSetConnection#nodes is DEPRECATED and will be removed in v2.0. " +
-        "Please use ReplSetConnection#seeds instead."
+      warn "ReplSetClient#nodes is DEPRECATED and will be removed in v2.0. " +
+        "Please use ReplSetClient#seeds instead."
       @seeds
     end
 
@@ -292,8 +292,8 @@ module Mongo
     # @deprecated
     def reset_connection
       close
-      warn "ReplSetConnection#reset_connection is now deprecated and will be removed in v2.0. " +
-        "Use ReplSetConnection#close instead."
+      warn "ReplSetClient#reset_connection is now deprecated and will be removed in v2.0. " +
+        "Use ReplSetClient#close instead."
     end
 
     # Returns +true+ if it's okay to read from a secondary node.
@@ -336,7 +336,7 @@ module Mongo
       end
       socket
     end
-    
+
     def checkout_reader(mode=@read, tag_sets=@tag_sets, acceptable_latency=@acceptable_latency)
       checkout do
         pool = read_pool(mode, tag_sets, acceptable_latency)
@@ -479,7 +479,7 @@ module Mongo
 
       super opts
     end
-    
+
     def prune_managers
       @old_managers.each do |manager|
         if manager != @manager

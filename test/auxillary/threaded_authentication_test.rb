@@ -8,17 +8,17 @@ class AuthenticationTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @conn = standard_connection(:pool_size => 10)
-    @db1 = @conn.db('mongo-ruby-test-auth1')
-    @db2 = @conn.db('mongo-ruby-test-auth2')
-    @admin = @conn.db('admin')
+    @client = standard_connection(:pool_size => 10)
+    @db1 = @client.db('mongo-ruby-test-auth1')
+    @db2 = @client.db('mongo-ruby-test-auth2')
+    @admin = @client.db('admin')
   end
 
   def teardown
     @db1.authenticate('user1', 'secret')
     @db2.authenticate('user2', 'secret')
-    @conn.drop_database('mongo-ruby-test-auth1')
-    @conn.drop_database('mongo-ruby-test-auth2')
+    @client.drop_database('mongo-ruby-test-auth1')
+    @client.drop_database('mongo-ruby-test-auth2')
   end
 
   def threaded_exec

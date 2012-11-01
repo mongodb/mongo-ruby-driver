@@ -47,7 +47,7 @@ module Mongo
     # The name of the database and the local safe option.
     attr_reader :name, :safe
 
-    # The Mongo::Connection instance connecting to the MongoDB server.
+    # The Mongo::Client instance connecting to the MongoDB server.
     attr_reader :connection
 
     # The length of time that Collection.ensure_index should cache index calls
@@ -59,8 +59,8 @@ module Mongo
     # Instances of DB are normally obtained by calling Mongo#db.
     #
     # @param [String] name the database name.
-    # @param [Mongo::Connection] connection a connection object pointing to MongoDB. Note
-    #   that databases are usually instantiated via the Connection class. See the examples below.
+    # @param [Mongo::Client] client a connection object pointing to MongoDB. Note
+    #   that databases are usually instantiated via the Client class. See the examples below.
     #
     # @option opts [Boolean] :strict (False) If true, collections must exist to be accessed and must
     #   not exist to be created. See DB#collection and DB#create_collection.
@@ -72,16 +72,16 @@ module Mongo
     #
     # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
     #   propagated to Collection objects instantiated off of this DB. If no
-    #   value is provided, the default value set on this instance's Connection object will be used. This
+    #   value is provided, the default value set on this instance's Client object will be used. This
     #   default can be overridden upon instantiation of any collection by explicitly setting a :safe value
     #   on initialization
     #
     # @option opts [Integer] :cache_time (300) Set the time that all ensure_index calls should cache the command.
     #
     # @core databases constructor_details
-    def initialize(name, connection, opts={})
+    def initialize(name, client, opts={})
       @name       = Mongo::Support.validate_db_name(name)
-      @connection = connection
+      @connection = client
       @strict     = opts[:strict]
       @pk_factory = opts[:pk]
       @safe       = opts.fetch(:safe, @connection.safe)
@@ -102,7 +102,7 @@ module Mongo
     # @param [String] username
     # @param [String] password
     # @param [Boolean] save_auth
-    #   Save this authentication to the connection object using Connection#add_auth. This
+    #   Save this authentication to the client object using Client#add_auth. This
     #   will ensure that the authentication will be applied on database reconnect. Note
     #   that this value must be true when using connection pooling.
     #
@@ -211,8 +211,8 @@ module Mongo
       end
     end
 
-    # Deauthorizes use for this database for this connection. Also removes
-    # any saved authentication in the connection class associated with this
+    # Deauthorizes use for this database for this client connection. Also removes
+    # any saved authentication in the Client class associated with this
     # database.
     #
     # @raise [MongoDBError] if logging out fails.

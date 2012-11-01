@@ -13,81 +13,79 @@ class BasicTest < Test::Unit::TestCase
   # TODO member.primary? ==> true
   def test_connect
     seeds = @sc.mongos_seeds
-    @con = Mongo::ShardedConnection.new(seeds)
-    assert @con.connected?
-    assert_equal(seeds.size, @con.seeds.size)
+    @client = Mongo::ShardedClient.new(seeds)
+    assert @client.connected?
+    assert_equal(seeds.size, @client.seeds.size)
     probe(seeds.size)
-    @con.close
+    @client.close
   end
 
   def test_hard_refresh
     seeds = @sc.mongos_seeds
-    @con = Mongo::ShardedConnection.new(seeds)
-    assert @con.connected?
-    @con.hard_refresh!
-    assert @con.connected?
-    @con.close
+    @client = Mongo::ShardedClient.new(seeds)
+    assert @client.connected?
+    @client.hard_refresh!
+    assert @client.connected?
+    @client.close
   end
 
   def test_reconnect
     seeds = @sc.mongos_seeds
-    @con = Mongo::ShardedConnection.new(seeds)
-    assert @con.connected?
+    @client = Mongo::ShardedClient.new(seeds)
+    assert @client.connected?
     router = @sc.servers(:routers).first
     router.stop
     probe(seeds.size)
-    assert @con.connected?
-    @con.close
+    assert @client.connected?
+    @client.close
   end
 
   def test_all_down
     seeds = @sc.mongos_seeds
-    @con = Mongo::ShardedConnection.new(seeds)
-    assert @con.connected?
+    @client = Mongo::ShardedClient.new(seeds)
+    assert @client.connected?
     @sc.servers(:routers).each{|router| router.stop}
     assert_raises Mongo::ConnectionFailure do
       probe(seeds.size)
     end
-    assert_false @con.connected?
-    @con.close
+    assert_false @client.connected?
+    @client.close
   end
 
   def test_cycle
     seeds = @sc.mongos_seeds
-    @con = Mongo::ShardedConnection.new(seeds)
-    assert @con.connected?
+    @client = Mongo::ShardedClient.new(seeds)
+    assert @client.connected?
     routers = @sc.servers(:routers)
     while routers.size > 0 do
       rescue_connection_failure do
         probe(seeds.size)
       end
       probe(seeds.size)
-      #p @con.manager.primary
-      router = routers.detect{|r| r.port == @con.manager.primary.last}
+      router = routers.detect{|r| r.port == @client.manager.primary.last}
       routers.delete(router)
       router.stop
     end
     assert_raises Mongo::ConnectionFailure do
       probe(seeds.size)
     end
-    assert_false @con.connected?
+    assert_false @client.connected?
     routers = @sc.servers(:routers).reverse
     routers.each do |r|
       r.start
-      @con.hard_refresh!
-      #p @con.manager.primary
+      @client.hard_refresh!
       rescue_connection_failure do
         probe(seeds.size)
       end
       probe(seeds.size)
     end
-    @con.close
+    @client.close
   end
 
   private
 
   def probe(size)
-    assert_equal(size, @con['config']['mongos'].find.to_a.size)
+    assert_equal(size, @client['config']['mongos'].find.to_a.size)
   end
 
 end

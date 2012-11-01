@@ -8,7 +8,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
     ensure_rs(:secondary_count => 1, :arbiter_count => 1)
 
     # Insert data
-    conn = Connection.new(@rs.host, @rs.primary[1])
+    conn = Client.new(@rs.host, @rs.primary[1])
     db = conn.db(MONGO_TEST_DB)
     coll = db.collection("test-sets")
     coll.save({:a => 20}, :safe => {:w => 2})
@@ -107,7 +107,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
     sleep(1)
     @repl_cons.each { |con| con.refresh }
     sleep(1)
-    @primary_direct = Connection.new(
+    @primary_direct = Client.new(
       @rs.host,
       @primary.read_pool.port
     )
@@ -144,7 +144,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
     sleep(1)
     @repl_cons.each { |con| con.refresh }
     sleep(1)
-    @secondary_direct = Connection.new(
+    @secondary_direct = Client.new(
       @rs.host,
       @secondary.read_pool.port,
       :slave_ok => true
@@ -158,8 +158,8 @@ class ReadPreferenceTest < Test::Unit::TestCase
   end
 
   def test_write_conecern
-    @conn = make_connection(:secondary_preferred)
-    @db = @conn[MONGO_TEST_DB]
+    @client = make_connection(:secondary_preferred)
+    @db = @client[MONGO_TEST_DB]
     @coll = @db.collection("test-sets", :safe => {
       :w => 2, :wtimeout => 20000
     })
@@ -169,7 +169,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
 
     # pin the read pool
     @coll.find_one
-    @secondary = Connection.new(@rs.host, @conn.read_pool.port, :slave_ok => true)
+    @secondary = Client.new(@rs.host, @client.read_pool.port, :slave_ok => true)
 
     results = []
     @coll.find.each {|r| results << r["a"]}
@@ -191,8 +191,8 @@ class ReadPreferenceTest < Test::Unit::TestCase
   end
 
   def test_write_lots_of_data
-    @conn = make_connection(:secondary_preferred)
-    @db = @conn[MONGO_TEST_DB]
+    @client = make_connection(:secondary_preferred)
+    @db = @client[MONGO_TEST_DB]
     @coll = @db.collection("test-sets", {:safe => {:w => 2}})
 
     6000.times do |n|
@@ -215,13 +215,13 @@ class ReadPreferenceTest < Test::Unit::TestCase
     @repl_cons = [@primary, @primary_preferred, @secondary, @secondary_preferred]
 
     # Setup direct connections
-    @primary_direct = Connection.new(@rs.host, @primary.read_pool.port)
-    @secondary_direct = Connection.new(@rs.host, @secondary.read_pool.port, :slave_ok => true)
+    @primary_direct = Client.new(@rs.host, @primary.read_pool.port)
+    @secondary_direct = Client.new(@rs.host, @secondary.read_pool.port, :slave_ok => true)
   end
 
   def make_connection(mode = :primary, opts = {})
     opts.merge!({:read => mode})
-    ReplSetConnection.new(build_seeds(3), opts)
+    ReplSetClient.new(build_seeds(3), opts)
   end
 
   def query_count(connection)

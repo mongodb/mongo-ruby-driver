@@ -4,20 +4,20 @@ class ReplicaSetAckTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
-    @conn = ReplSetConnection.new(@rs.repl_set_seeds)
+    @client = ReplSetClient.new(@rs.repl_set_seeds)
 
-    @slave1 = Connection.new(@conn.secondary_pools[0].host,
-      @conn.secondary_pools[0].port, :slave_ok => true)
+    @slave1 = Client.new(@client.secondary_pools[0].host,
+      @client.secondary_pools[0].port, :slave_ok => true)
 
     assert !@slave1.read_primary?
 
-    @db = @conn.db(MONGO_TEST_DB)
+    @db = @client.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @col = @db.collection("test-sets")
   end
 
   def teardown
-    @conn.close if @conn
+    @client.close if @conn
   end
 
   def self.shutdown

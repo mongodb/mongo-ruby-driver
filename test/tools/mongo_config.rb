@@ -282,7 +282,7 @@ module Mongo
           #puts "DbServer.verify via connection probe - port:#{@port.inspect} iteration:#{i} @pid:#{@pid.inspect} kill:#{Process.kill(0, @pid).inspect} running?:#{running?.inspect} cmd:#{cmd.inspect}"
           begin
             raise Mongo::ConnectionFailure unless running?
-            Mongo::Connection.new(@host, @port).close
+            Mongo::Client.new(@host, @port).close
             #puts "DbServer.verified via connection - port: #{@port} iteration: #{i}"
             return @pid
           rescue Mongo::ConnectionFailure
@@ -317,15 +317,15 @@ module Mongo
         cmd_servers.each do |cmd_server|
           debug 3, cmd_server.inspect
           cmd_server = cmd_server.config if cmd_server.is_a?(DbServer)
-          conn = Mongo::Connection.new(cmd_server[:host], cmd_server[:port])
+          client = Mongo::Client.new(cmd_server[:host], cmd_server[:port])
           cmd.each do |c|
             debug 3,  "ClusterManager.command c:#{c.inspect}"
-            response = conn[db_name].command( c, opts )
+            response = client[db_name].command( c, opts )
             debug 3,  "ClusterManager.command response:#{response.inspect}"
             raise Mongo::OperationFailure, "c:#{c.inspect} opts:#{opts.inspect} failed" unless response["ok"] == 1.0 || opts.fetch(:check_response, true) == false
             ret << response
           end
-          conn.close
+          client.close
         end
         debug 3, "command ret:#{ret.inspect}"
         ret.size == 1 ? ret.first : ret
@@ -337,8 +337,8 @@ module Mongo
 
       def repl_set_get_config
         host, port = primary_name.split(":")
-        conn = Mongo::Connection.new(host, port)
-        conn['local']['system.replset'].find_one
+        client = Mongo::Client.new(host, port)
+        client['local']['system.replset'].find_one
       end
 
       def repl_set_config
@@ -481,9 +481,9 @@ module Mongo
 
       def mongos_discover # can also do @config[:routers] find but only want mongos for connections
         (@config[:configs]).collect do |cmd_server|
-          conn = Mongo::Connection.new(cmd_server[:host], cmd_server[:port])
-          result = conn['config']['mongos'].find.to_a
-          conn.close
+          client = Mongo::Client.new(cmd_server[:host], cmd_server[:port])
+          result = client['config']['mongos'].find.to_a
+          client.close
           result
         end
       end

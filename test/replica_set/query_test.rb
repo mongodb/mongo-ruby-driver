@@ -4,14 +4,14 @@ class ReplicaSetQueryTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
-    @conn = ReplSetConnection.new @rs.repl_set_seeds
-    @db = @conn.db(MONGO_TEST_DB)
+    @client = ReplSetClient.new @rs.repl_set_seeds
+    @db = @client.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets")
   end
 
   def teardown
-    @conn.close if @conn
+    @client.close if @conn
   end
 
   def self.shutdown

@@ -14,10 +14,10 @@ module Mongo
     # the user may pass an additional list of seeds nodes discovered in real
     # time. The union of these lists will be used when attempting to connect,
     # with the newly-discovered nodes being used first.
-    def initialize(connection, seeds=[])
-      @pinned_pools = {}
-      @connection = connection
-      @seeds = seeds
+    def initialize(client, seeds=[])
+      @pinned_pools         = {}
+      @connection           = client
+      @seeds                = seeds
       @previously_connected = false
     end
 
@@ -99,8 +99,9 @@ module Mongo
       read_pool.host_port
     end
 
-    def read_pool(mode=@connection.read_preference, tags=@connection.tag_sets, 
-      acceptable_latency=@connection.acceptable_latency)
+    def read_pool(mode=@connection.read_preference,
+                  tags=@connection.tag_sets,
+                  acceptable_latency=@connection.acceptable_latency)
 
       if mode == :primary && !tags.empty?
         raise MongoArgumentError, "Read preferecy :primary cannot be combined with tags"
@@ -159,18 +160,18 @@ module Mongo
     end
 
     def initialize_data
-      @primary = nil
-      @primary_pool = nil
-      @read = nil
-      @read_pool = nil
-      @arbiters = []
-      @secondaries = []
-      @secondary_pool = nil
-      @secondary_pools = []
-      @hosts = Set.new
-      @members = Set.new
+      @primary          = nil
+      @primary_pool     = nil
+      @read             = nil
+      @read_pool        = nil
+      @arbiters         = []
+      @secondaries      = []
+      @secondary_pool   = nil
+      @secondary_pools  = []
+      @hosts            = Set.new
+      @members          = Set.new
       @refresh_required = false
-      @pinned_pools = {}
+      @pinned_pools     = {}
     end
 
     # Connect to each member of the replica set

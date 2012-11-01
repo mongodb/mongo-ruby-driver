@@ -78,7 +78,7 @@ module Mongo
 
     attr_reader :auths, :connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync, :journal, :connecttimeoutms, :sockettimeoutms, :wtimeoutms
 
-    # Parse a MongoDB URI. This method is used by Connection.from_uri.
+    # Parse a MongoDB URI. This method is used by Client.from_uri.
     # Returns an array of nodes and an array of db authorizations, if applicable.
     #
     # @note Passwords can contain any character except for ','
@@ -100,17 +100,17 @@ module Mongo
       validate_connect
     end
 
-    # Create a Mongo::Connection or a Mongo::ReplSetConnection based on the URI.
+    # Create a Mongo::Client or a Mongo::ReplSetClient based on the URI.
     #
     # @note Don't confuse this with attribute getter method #connect.
     #
-    # @return [Connection,ReplSetConnection]
+    # @return [Client,ReplSetClient]
     def connection(extra_opts)
       opts = connection_options.merge! extra_opts
       if replicaset?
-        ReplSetConnection.new(nodes, opts)
+        ReplSetClient.new(nodes, opts)
       else
-        Connection.new(host, port, opts)
+        Client.new(host, port, opts)
       end
     end
 
@@ -147,7 +147,7 @@ module Mongo
       nodes[0][1].to_i
     end
 
-    # Options that can be passed to Mongo::Connection.new or Mongo::ReplSetConnection.new
+    # Options that can be passed to Mongo::Client.new or Mongo::ReplSetClient.new
     # @return [Hash]
     def connection_options
       opts = {}
@@ -161,16 +161,16 @@ module Mongo
           safe_opts = {}
           safe_opts[:w] = @w if @w
           safe_opts[:j] = @journal if @journal
-          
+
           if @wtimeout
             warn "Using wtimeout in a URI is deprecated, please use wtimeoutMS. It will be removed in v2.0."
             safe_opts[:wtimeout] = @wtimeout
           end
-          
+
           if @wtimeoutms
             safe_opts[:wtimeout] = @wtimeoutms
           end
-          
+
           safe_opts[:fsync] = @fsync if @fsync
         else
           safe_opts = true
@@ -178,11 +178,11 @@ module Mongo
 
         opts[:safe] = safe_opts
       end
-      
+
       if @connecttimeoutms
         opts[:connect_timeout] = @connecttimeoutms
       end
-      
+
       if @sockettimeoutms
         opts[:op_timeout] = @sockettimeoutms
       end
@@ -235,7 +235,7 @@ module Mongo
 
       hosturis.each do |hosturi|
         # If port is present, use it, otherwise use default port
-        host, port = hosturi.split(':') + [Connection::DEFAULT_PORT]
+        host, port = hosturi.split(':') + [Client::DEFAULT_PORT]
 
         if !(port.to_s =~ /^\d+$/)
           raise MongoArgumentError, "Invalid port #{port}; port must be specified as digits."

@@ -39,7 +39,6 @@ module Mongo
     # @core cursors constructor_details
     def initialize(collection, opts={})
       @cursor_id  = nil
-
       @db         = collection.db
       @collection = collection
       @connection = @db.connection
@@ -211,9 +210,7 @@ module Mongo
     # @raise [InvalidSortValueError] if the specified order is invalid.
     def sort(order, direction=nil)
       check_modifiable
-
       order = [[order, direction]] unless direction.nil?
-
       @order = order
       self
     end
@@ -231,7 +228,6 @@ module Mongo
     def limit(number_to_return=nil)
       return @limit unless number_to_return
       check_modifiable
-
       @limit = number_to_return
       self
     end
@@ -257,7 +253,7 @@ module Mongo
     #
     # Note that the batch size will take effect only on queries
     # where the number to be returned is greater than 100.
-    # 
+    #
     # This can not override MongoDB's limit on the amount of data it will
     # return to the client. Depending on server version this can be 4-16mb.
     #
@@ -538,7 +534,7 @@ module Mongo
       ensure
         checkin_socket(sock) unless @socket
       end
-      
+
       @returned += @n_received
       @cache += results
       close_cursor_if_query_complete

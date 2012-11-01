@@ -73,9 +73,8 @@ end
 #  system(cmd)
 #end
 
-conn = Mongo::Connection.new
-
-db  = conn['benchmark']
+client = Mongo::Client.new
+db  = client['benchmark']
 coll = db['profile']
 
 coll.remove

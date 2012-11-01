@@ -5,10 +5,10 @@ require 'mongo'
 include Mongo
 
 host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
+port = ENV['MONGO_RUBY_DRIVER_PORT'] || Client::DEFAULT_PORT
 
 puts ">> Connecting to #{host}:#{port}"
-db = Connection.new(host, port, :safe => true).db('ruby-mongo-index_test')
+db = Client.new(host, port, :safe => true).db('ruby-mongo-index_test')
 
 class Exception
   def errmsg

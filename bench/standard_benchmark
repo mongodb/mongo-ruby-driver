@@ -84,9 +84,9 @@ def benchmark(str, n, coll_name, data, create_index=false, verbosity=true)
 end
 
 host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
+port = ENV['MONGO_RUBY_DRIVER_PORT'] || Client::DEFAULT_PORT
 
-connection = Connection.new(host, port)
+connection = Client.new(host, port)
 connection.drop_database("benchmark")
 @db = connection.db('benchmark')
 

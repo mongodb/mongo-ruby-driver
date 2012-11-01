@@ -10,11 +10,11 @@ require 'mongo'
 include Mongo
 
 host = org_argv[0] || ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-port = org_argv[1] || ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
+port = org_argv[1] || ENV['MONGO_RUBY_DRIVER_PORT'] || Client::DEFAULT_PORT
 dbnm = org_argv[2] || ENV['MONGO_RUBY_DRIVER_DB']   || 'ruby-mongo-console'
 
 puts "Connecting to #{host}:#{port} (CONN) on with database #{dbnm} (DB)"
-CONN = Connection.new(host, port, :safe => true)
+CONN = Client.new(host, port, :safe => true)
 DB = CONN.db(dbnm)
 
 puts "Starting IRB session..."

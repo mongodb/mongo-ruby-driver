@@ -91,7 +91,7 @@ module Mongo
       @connection = @db.connection
       @logger     = @connection.logger
       @cache_time = @db.cache_time
-      @cache = Hash.new(0)
+      @cache      = Hash.new(0)
       unless pk_factory
         @safe = opts.fetch(:safe, @db.safe)
         if value = opts[:read]
@@ -99,8 +99,8 @@ module Mongo
         else
           value = @db.read_preference
         end
-        @read_preference = value.is_a?(Hash) ? value.dup : value
-        @tag_sets = opts.fetch(:tag_sets, @db.tag_sets)
+        @read_preference    = value.is_a?(Hash) ? value.dup : value
+        @tag_sets           = opts.fetch(:tag_sets, @db.tag_sets)
         @acceptable_latency = opts.fetch(:acceptable_latency, @db.acceptable_latency)
       end
       @pk_factory = pk_factory || opts[:pk] || BSON::ObjectId
@@ -211,23 +211,23 @@ module Mongo
     #
     # @core find find-instance_method
     def find(selector={}, opts={})
-      opts   = opts.dup
-      fields = opts.delete(:fields)
-      fields = ["_id"] if fields && fields.empty?
-      skip   = opts.delete(:skip) || skip || 0
-      limit  = opts.delete(:limit) || 0
-      sort   = opts.delete(:sort)
-      hint   = opts.delete(:hint)
-      snapshot   = opts.delete(:snapshot)
-      batch_size = opts.delete(:batch_size)
-      timeout    = (opts.delete(:timeout) == false) ? false : true
-      max_scan   = opts.delete(:max_scan)
-      return_key = opts.delete(:return_key)
-      transformer = opts.delete(:transformer)
-      show_disk_loc = opts.delete(:show_disk_loc)
-      comment       = opts.delete(:comment)
-      read          = opts.delete(:read) || @read_preference
-      tag_sets      = opts.delete(:tag_sets) || @tag_sets
+      opts               = opts.dup
+      fields             = opts.delete(:fields)
+      fields             = ["_id"] if fields && fields.empty?
+      skip               = opts.delete(:skip) || skip || 0
+      limit              = opts.delete(:limit) || 0
+      sort               = opts.delete(:sort)
+      hint               = opts.delete(:hint)
+      snapshot           = opts.delete(:snapshot)
+      batch_size         = opts.delete(:batch_size)
+      timeout            = (opts.delete(:timeout) == false) ? false : true
+      max_scan           = opts.delete(:max_scan)
+      return_key         = opts.delete(:return_key)
+      transformer        = opts.delete(:transformer)
+      show_disk_loc      = opts.delete(:show_disk_loc)
+      comment            = opts.delete(:comment)
+      read               = opts.delete(:read) || @read_preference
+      tag_sets           = opts.delete(:tag_sets) || @tag_sets
       acceptable_latency = opts.delete(:acceptable_latency) || @acceptable_latency
 
       if timeout == false && !block_given?
@@ -243,22 +243,22 @@ module Mongo
       raise RuntimeError, "Unknown options [#{opts.inspect}]" unless opts.empty?
 
       cursor = Cursor.new(self, {
-        :selector    => selector,
-        :fields      => fields,
-        :skip        => skip,
-        :limit       => limit,
-        :order       => sort,
-        :hint        => hint,
-        :snapshot    => snapshot,
-        :timeout     => timeout,
-        :batch_size  => batch_size,
-        :transformer => transformer,
-        :max_scan    => max_scan,
-        :show_disk_loc => show_disk_loc,
-        :return_key    => return_key,
-        :read          => read,
-        :tag_sets      => tag_sets,
-        :comment       => comment,
+        :selector           => selector,
+        :fields             => fields,
+        :skip               => skip,
+        :limit              => limit,
+        :order              => sort,
+        :hint               => hint,
+        :snapshot           => snapshot,
+        :timeout            => timeout,
+        :batch_size         => batch_size,
+        :transformer        => transformer,
+        :max_scan           => max_scan,
+        :show_disk_loc      => show_disk_loc,
+        :return_key         => return_key,
+        :read               => read,
+        :tag_sets           => tag_sets,
+        :comment            => comment,
         :acceptable_latency => acceptable_latency
       })
 
@@ -515,11 +515,10 @@ module Mongo
     # @core indexes create_index-instance_method
     def create_index(spec, opts={})
       opts[:dropDups] = opts[:drop_dups] if opts[:drop_dups]
-      field_spec = parse_index_spec(spec)
-      opts = opts.dup
-      name = opts.delete(:name) || generate_index_name(field_spec)
-      name = name.to_s if name
-
+      field_spec      = parse_index_spec(spec)
+      opts            = opts.dup
+      name            = opts.delete(:name) || generate_index_name(field_spec)
+      name            = name.to_s if name
       generate_indexes(field_spec, name, opts)
       name
     end
@@ -541,12 +540,11 @@ module Mongo
     #
     # @return [String] the name of the index.
     def ensure_index(spec, opts={})
-      now = Time.now.utc.to_i
+      now             = Time.now.utc.to_i
       opts[:dropDups] = opts[:drop_dups] if opts[:drop_dups]
-      field_spec = parse_index_spec(spec)
-
-      name = opts[:name] || generate_index_name(field_spec)
-      name = name.to_s if name
+      field_spec      = parse_index_spec(spec)
+      name            = opts[:name] || generate_index_name(field_spec)
+      name            = name.to_s if name
 
       if !@cache[name] || @cache[name] <= now
         generate_indexes(field_spec, name, opts)
@@ -616,7 +614,7 @@ module Mongo
     #   coll.aggregate([ {"$project" => {"last_name" => 1, "first_name" => 1 }}, {"$match" => {"last_name" => "Jones"}} ])
     #
     # @param [Array] pipeline Should be a single array of pipeline operator hashes.
-    #   
+    #
     #   '$project' Reshapes a document stream by including fields, excluding fields, inserting computed fields, 
     #   renaming fields,or creating/populating fields that hold sub-documents.
     #
@@ -854,11 +852,10 @@ module Mongo
     # @return [Array] an array of distinct values.
     def distinct(key, query=nil)
       raise MongoArgumentError unless [String, Symbol].include?(key.class)
-      command = BSON::OrderedHash.new
+      command            = BSON::OrderedHash.new
       command[:distinct] = @name
       command[:key]      = key.to_s
       command[:query]    = query
-
       @db.command(command)["values"]
     end
 

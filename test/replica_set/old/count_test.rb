@@ -5,17 +5,17 @@ class ReplicaSetCountTest < Test::Unit::TestCase
 
   def setup
     ensure_rs
-    @conn = ReplSetConnection.new(build_seeds(3), :read => :primary_preferred)
-    assert @conn.primary_pool
-    @primary = Connection.new(@conn.primary_pool.host, @conn.primary_pool.port)
-    @db = @conn.db(MONGO_TEST_DB)
+    @client = ReplSetClient.new(build_seeds(3), :read => :primary_preferred)
+    assert @client.primary_pool
+    @primary = Client.new(@client.primary_pool.host, @client.primary_pool.port)
+    @db = @client.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets")
   end
 
   def teardown
     @rs.restart_killed_nodes
-    @conn.close if @conn
+    @client.close if @conn
   end
 
   def test_correct_count_after_insertion_reconnect

@@ -28,8 +28,8 @@ class TestCollection < Test::Unit::TestCase
     assert_equal BSON::ObjectId, @coll_default_pk.pk_factory
 
     # Create a db with a pk_factory.
-    @db = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                         ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT).db(MONGO_TEST_DB, :pk => Object.new)
+    @db = Client.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+                         ENV['MONGO_RUBY_DRIVER_PORT'] || Client::DEFAULT_PORT).db(MONGO_TEST_DB, :pk => Object.new)
     @coll = @db.collection('coll-with-pk')
     assert @coll.pk_factory.is_a?(Object)
 
@@ -367,11 +367,11 @@ class TestCollection < Test::Unit::TestCase
   end
 
   def test_mocked_safe_remove
-    @conn = standard_connection
-    @db   = @conn[MONGO_TEST_DB]
+    @client = standard_connection
+    @db   = @client[MONGO_TEST_DB]
     @test = @db['test-safe-remove']
     @test.save({:a => 20})
-    @conn.stubs(:receive).returns([[{'ok' => 0, 'err' => 'failed'}], 1, 0])
+    @client.stubs(:receive).returns([[{'ok' => 0, 'err' => 'failed'}], 1, 0])
 
     assert_raise OperationFailure do
       @test.remove({}, :safe => true)
@@ -380,8 +380,8 @@ class TestCollection < Test::Unit::TestCase
   end
 
   def test_safe_remove
-    @conn = standard_connection
-    @db   = @conn[MONGO_TEST_DB]
+    @client = standard_connection
+    @db   = @client[MONGO_TEST_DB]
     @test = @db['test-safe-remove']
     @test.remove
     @test.save({:a => 50})

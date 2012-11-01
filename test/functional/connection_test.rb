@@ -9,57 +9,43 @@ class TestConnection < Test::Unit::TestCase
   include BSON
 
   def setup
-    @conn = standard_connection
+    @client = standard_connection
   end
 
   def teardown
-    @conn.close
+    @client.close
   end
 
   def test_connection_failure
     assert_raise Mongo::ConnectionFailure do
-      Mongo::Connection.new('localhost', 27347)
+      Mongo::Client.new('localhost', 27347)
     end
   end
 
- # def test_connection_timeout
- #   passed = false
- #   begin
- #     t0 = Time.now
- #     Mongo::Connection.new('foo.bar', 27017, :connect_timeout => 3)
- #   rescue OperationTimeout
- #     passed = true
- #     t1 = Time.now
- #   end
-
- #   assert passed
- #   assert t1 - t0 < 4
- # end
-
   def test_host_port_accessors
-    assert_equal @conn.host, TEST_HOST
-    assert_equal @conn.port, TEST_PORT
+    assert_equal @client.host, TEST_HOST
+    assert_equal @client.port, TEST_PORT
   end
 
   def test_server_info
-    server_info = @conn.server_info
+    server_info = @client.server_info
     assert server_info.keys.include?("version")
     assert Mongo::Support.ok?(server_info)
   end
 
   def test_ping
-    ping = @conn.ping
+    ping = @client.ping
     assert ping['ok']
   end
 
   def test_connection_uri
-    con = Connection.from_uri("mongodb://#{host_port}")
+    con = Client.from_uri("mongodb://#{host_port}")
     assert_equal mongo_host, con.primary_pool.host
     assert_equal mongo_port, con.primary_pool.port
   end
 
   def test_uri_with_extra_opts
-    con = Connection.from_uri("mongodb://#{host_port}", :pool_size => 10, :slave_ok => true)
+    con = Client.from_uri("mongodb://#{host_port}", :pool_size => 10, :slave_ok => true)
     assert_equal 10, con.pool_size
     assert con.slave_ok?
   end
@@ -68,7 +54,7 @@ class TestConnection < Test::Unit::TestCase
     begin
       old_mongodb_uri = ENV['MONGODB_URI']
       ENV['MONGODB_URI'] = "mongodb://#{host_port}"
-      con = Connection.new
+      con = Client.new
       assert_equal mongo_host, con.primary_pool.host
       assert_equal mongo_port, con.primary_pool.port
     ensure
@@ -80,7 +66,7 @@ class TestConnection < Test::Unit::TestCase
     begin
       old_mongodb_uri = ENV['MONGODB_URI']
       ENV['MONGODB_URI'] = "mongodb://#{host_port}"
-      con = Connection.from_uri
+      con = Client.from_uri
       assert_equal mongo_host, con.primary_pool.host
       assert_equal mongo_port, con.primary_pool.port
     ensure
@@ -94,7 +80,7 @@ class TestConnection < Test::Unit::TestCase
 
       old_mongodb_uri = ENV['MONGODB_URI']
       ENV['MONGODB_URI'] = "mongodb://#{host_port}/#{db_name}"
-      con = Connection.from_uri
+      con = Client.from_uri
       db = con.db
       assert_equal db.name, db_name
     ensure
@@ -108,7 +94,7 @@ class TestConnection < Test::Unit::TestCase
 
       old_mongodb_uri = ENV['MONGODB_URI']
       ENV['MONGODB_URI'] = "mongodb://#{host_port}/#{db_name}?"
-      con = Connection.from_uri
+      con = Client.from_uri
       db = con.db
       assert_equal db.name, db_name
     ensure
@@ -120,79 +106,79 @@ class TestConnection < Test::Unit::TestCase
     begin
       old_mongodb_uri = ENV['MONGODB_URI']
       ENV['MONGODB_URI'] = "mongodb://#{host_port}/"
-      con = Connection.from_uri
+      con = Client.from_uri
       db = con.db
-      assert_equal db.name, Mongo::Connection::DEFAULT_DB_NAME
+      assert_equal db.name, Mongo::Client::DEFAULT_DB_NAME
     ensure
       ENV['MONGODB_URI'] = old_mongodb_uri
     end
   end
 
   def test_server_version
-    assert_match(/\d\.\d+(\.\d+)?/, @conn.server_version.to_s)
+    assert_match(/\d\.\d+(\.\d+)?/, @client.server_version.to_s)
   end
 
   def test_invalid_database_names
-    assert_raise TypeError do @conn.db(4) end
+    assert_raise TypeError do @client.db(4) end
 
-    assert_raise Mongo::InvalidNSName do @conn.db('') end
-    assert_raise Mongo::InvalidNSName do @conn.db('te$t') end
-    assert_raise Mongo::InvalidNSName do @conn.db('te.t') end
-    assert_raise Mongo::InvalidNSName do @conn.db('te\\t') end
-    assert_raise Mongo::InvalidNSName do @conn.db('te/t') end
-    assert_raise Mongo::InvalidNSName do @conn.db('te st') end
+    assert_raise Mongo::InvalidNSName do @client.db('') end
+    assert_raise Mongo::InvalidNSName do @client.db('te$t') end
+    assert_raise Mongo::InvalidNSName do @client.db('te.t') end
+    assert_raise Mongo::InvalidNSName do @client.db('te\\t') end
+    assert_raise Mongo::InvalidNSName do @client.db('te/t') end
+    assert_raise Mongo::InvalidNSName do @client.db('te st') end
   end
 
   def test_options_passed_to_db
     @pk_mock = Object.new
-    db = @conn.db('test', :pk => @pk_mock, :strict => true)
+    db = @client.db('test', :pk => @pk_mock, :strict => true)
     assert_equal @pk_mock, db.pk_factory
     assert db.strict?
   end
 
   def test_database_info
-    @conn.drop_database(MONGO_TEST_DB)
-    @conn.db(MONGO_TEST_DB).collection('info-test').insert('a' => 1)
+    @client.drop_database(MONGO_TEST_DB)
+    @client.db(MONGO_TEST_DB).collection('info-test').insert('a' => 1)
 
-    info = @conn.database_info
+    info = @client.database_info
     assert_not_nil info
     assert_kind_of Hash, info
     assert_not_nil info[MONGO_TEST_DB]
     assert info[MONGO_TEST_DB] > 0
 
-    @conn.drop_database(MONGO_TEST_DB)
+    @client.drop_database(MONGO_TEST_DB)
   end
 
   def test_copy_database
-    @conn.db('old').collection('copy-test').insert('a' => 1)
-    @conn.copy_database('old', 'new', host_port)
-    old_object = @conn.db('old').collection('copy-test').find.next_document
-    new_object = @conn.db('new').collection('copy-test').find.next_document
+    @client.db('old').collection('copy-test').insert('a' => 1)
+    @client.copy_database('old', 'new', host_port)
+    old_object = @client.db('old').collection('copy-test').find.next_document
+    new_object = @client.db('new').collection('copy-test').find.next_document
     assert_equal old_object, new_object
-    @conn.drop_database('old')
-    @conn.drop_database('new')
+    @client.drop_database('old')
+    @client.drop_database('new')
   end
 
   def test_copy_database_with_auth
-    @conn.db('old').collection('copy-test').insert('a' => 1)
-    @conn.db('old').add_user('bob', 'secret')
+    @client.db('old').collection('copy-test').insert('a' => 1)
+    @client.db('old').add_user('bob', 'secret')
 
     assert_raise Mongo::OperationFailure do
-      @conn.copy_database('old', 'new', host_port, 'bob', 'badpassword')
+      @client.copy_database('old', 'new', host_port, 'bob', 'badpassword')
     end
 
-    result = @conn.copy_database('old', 'new', host_port, 'bob', 'secret')
+    result = @client.copy_database('old', 'new', host_port, 'bob', 'secret')
     assert Mongo::Support.ok?(result)
 
-    @conn.drop_database('old')
-    @conn.drop_database('new')
+    @client.drop_database('old')
+    @client.drop_database('new')
   end
 
   def test_database_names
-    @conn.drop_database(MONGO_TEST_DB)
-    @conn.db(MONGO_TEST_DB).collection('info-test').insert('a' => 1)
+    @client.drop_database(MONGO_TEST_DB)
+    @client.db(MONGO_TEST_DB).collection('info-test').insert('a' => 1)
 
-    names = @conn.database_names
+    names = @client.database_names
     assert_not_nil names
     assert_kind_of Array, names
     assert names.length >= 1
@@ -228,37 +214,37 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_drop_database
-    db = @conn.db('ruby-mongo-will-be-deleted')
+    db = @client.db('ruby-mongo-will-be-deleted')
     coll = db.collection('temp')
     coll.remove
     coll.insert(:name => 'temp')
     assert_equal 1, coll.count()
-    assert @conn.database_names.include?('ruby-mongo-will-be-deleted')
+    assert @client.database_names.include?('ruby-mongo-will-be-deleted')
 
-    @conn.drop_database('ruby-mongo-will-be-deleted')
-    assert !@conn.database_names.include?('ruby-mongo-will-be-deleted')
+    @client.drop_database('ruby-mongo-will-be-deleted')
+    assert !@client.database_names.include?('ruby-mongo-will-be-deleted')
   end
 
   def test_nodes
     silently do
-      @conn = Connection.multi([['foo', 27017], ['bar', 27018]], :connect => false)
+      @client = Client.multi([['foo', 27017], ['bar', 27018]], :connect => false)
     end
-    seeds = @conn.seeds
+    seeds = @client.seeds
     assert_equal 2, seeds.length
     assert_equal ['foo', 27017], seeds[0]
     assert_equal ['bar', 27018], seeds[1]
   end
 
   def test_fsync_lock
-    assert !@conn.locked?
-    @conn.lock!
-    assert @conn.locked?
-    assert [1, true].include?(@conn['admin']['$cmd.sys.inprog'].find_one['fsyncLock'])
-    assert_match(/unlock/, @conn.unlock!['info'])
+    assert !@client.locked?
+    @client.lock!
+    assert @client.locked?
+    assert [1, true].include?(@client['admin']['$cmd.sys.inprog'].find_one['fsyncLock'])
+    assert_match(/unlock/, @client.unlock!['info'])
     unlocked = false
     counter  = 0
     while counter < 5
-      if @conn['admin']['$cmd.sys.inprog'].find_one['fsyncLock'].nil?
+      if @client['admin']['$cmd.sys.inprog'].find_one['fsyncLock'].nil?
         unlocked = true
         break
       else
@@ -266,7 +252,7 @@ class TestConnection < Test::Unit::TestCase
         counter += 1
       end
     end
-    assert !@conn.locked?
+    assert !@client.locked?
     assert unlocked, "mongod failed to unlock"
   end
 
@@ -287,7 +273,7 @@ class TestConnection < Test::Unit::TestCase
     conn.connect
     doc = {'n' => 'a' * (conn.max_bson_size)}
     assert_raise InvalidDocument do
-      assert BSON::BSON_CODER.serialize(doc, false, true, @conn.max_bson_size)
+      assert BSON::BSON_CODER.serialize(doc, false, true, @client.max_bson_size)
     end
   end
 
@@ -316,7 +302,7 @@ class TestConnection < Test::Unit::TestCase
     dropped_socket.stub_everything
 
     conn.primary_pool.host = 'localhost'
-    conn.primary_pool.port = Mongo::Connection::DEFAULT_PORT
+    conn.primary_pool.port = Mongo::Client::DEFAULT_PORT
     conn.primary_pool.instance_variable_set("@pids", {dropped_socket => Process.pid})
     conn.primary_pool.instance_variable_set("@sockets", [dropped_socket])
 
@@ -325,37 +311,37 @@ class TestConnection < Test::Unit::TestCase
 
   context "Saved authentications" do
     setup do
-      @conn = standard_connection
+      @client = standard_connection
       @auth = {'db_name' => 'test', 'username' => 'bob', 'password' => 'secret'}
-      @conn.add_auth(@auth['db_name'], @auth['username'], @auth['password'])
+      @client.add_auth(@auth['db_name'], @auth['username'], @auth['password'])
     end
 
     teardown do
-      @conn.clear_auths
+      @client.clear_auths
     end
 
     should "save the authentication" do
-      assert_equal @auth, @conn.auths[0]
+      assert_equal @auth, @client.auths[0]
     end
 
     should "replace the auth if given a new auth for the same db" do
       auth = {'db_name' => 'test', 'username' => 'mickey', 'password' => 'm0u53'}
-      @conn.add_auth(auth['db_name'], auth['username'], auth['password'])
-      assert_equal 1, @conn.auths.length
-      assert_equal auth, @conn.auths[0]
+      @client.add_auth(auth['db_name'], auth['username'], auth['password'])
+      assert_equal 1, @client.auths.length
+      assert_equal auth, @client.auths[0]
     end
 
     should "remove auths by database" do
-      @conn.remove_auth('non-existent database')
-      assert_equal 1, @conn.auths.length
+      @client.remove_auth('non-existent database')
+      assert_equal 1, @client.auths.length
 
-      @conn.remove_auth('test')
-      assert_equal 0, @conn.auths.length
+      @client.remove_auth('test')
+      assert_equal 0, @client.auths.length
     end
 
     should "remove all auths" do
-      @conn.clear_auths
-      assert_equal 0, @conn.auths.length
+      @client.clear_auths
+      assert_equal 0, @client.auths.length
     end
   end
 

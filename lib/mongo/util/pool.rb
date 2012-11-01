@@ -25,8 +25,8 @@ module Mongo
       :size, :timeout, :safe, :checked_out, :connection
 
     # Create a new pool of connections.
-    def initialize(connection, host, port, opts={})
-      @connection  = connection
+    def initialize(client, host, port, opts={})
+      @connection  = client
 
       @host, @port = host, port
 
@@ -52,12 +52,12 @@ module Mongo
       # Operations to perform on a socket
       @socket_ops = Hash.new { |h, k| h[k] = [] }
 
-      @sockets      = []
-      @pids         = {}
-      @checked_out  = []
-      @ping_time    = nil
-      @last_ping    = nil
-      @closed       = false
+      @sockets            = []
+      @pids               = {}
+      @checked_out        = []
+      @ping_time          = nil
+      @last_ping          = nil
+      @closed             = false
       @threads_to_sockets = {}
       @checkout_counter   = 0
     end
@@ -321,7 +321,7 @@ module Mongo
 
               socket = checkout_new_socket
             end
-            
+
             return socket
           else
             # Otherwise, wait

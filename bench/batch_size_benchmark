@@ -28,9 +28,8 @@ large = {
 }
 
 
-con = Mongo::Connection.new
-
-db  = con['benchmark']
+client = Mongo::Client.new
+db  = client['benchmark']
 col = db['bigdocs']
 
 col.remove()

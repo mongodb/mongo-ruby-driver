@@ -40,8 +40,8 @@ module Mongo
 
       # Create indexes only if we're connected to a primary node.
       connection = @db.connection
-      if (connection.class == Connection && connection.read_primary?) ||
-          (connection.class == ReplSetConnection && connection.primary)
+      if (connection.class == Client && connection.read_primary?) ||
+          (connection.class == ReplSetClient && connection.primary)
         @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
       end
     end

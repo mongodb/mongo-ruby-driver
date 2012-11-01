@@ -4,16 +4,16 @@ class ReplicaSetCountTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
-    @conn = ReplSetConnection.new(@rs.repl_set_seeds, :read => :primary_preferred)
-    assert @conn.primary_pool
-    @primary = Connection.new(@conn.primary_pool.host, @conn.primary_pool.port)
-    @db = @conn.db(MONGO_TEST_DB)
+    @client = ReplSetClient.new(@rs.repl_set_seeds, :read => :primary_preferred)
+    assert @client.primary_pool
+    @primary = Client.new(@client.primary_pool.host, @client.primary_pool.port)
+    @db = @client.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets")
   end
 
   def teardown
-    @conn.close if @conn
+    @client.close if @conn
   end
 
   def self.shutdown

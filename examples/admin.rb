@@ -6,17 +6,17 @@ require 'pp'
 include Mongo
 
 host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-port = ENV['MONGO_RUBY_DRIVER_PORT'] || Connection::DEFAULT_PORT
+port = ENV['MONGO_RUBY_DRIVER_PORT'] || Client::DEFAULT_PORT
 
 puts "Connecting to #{host}:#{port}"
-con  = Mongo::Connection.new(host, port, :safe => true)
-db   = con.db('ruby-mongo-examples')
+client  = Mongo::Client.new(host, port, :safe => true)
+db   = client.db('ruby-mongo-examples')
 coll = db.create_collection('test')
 
 # Erase all records from collection, if any
 coll.remove
 
-admin = con['admin']
+admin = client['admin']
 
 # Profiling level set/get
 puts "Profiling level: #{admin.profiling_level}"

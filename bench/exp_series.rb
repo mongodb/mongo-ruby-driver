@@ -178,9 +178,9 @@ class TestExpPerformance < Test::Unit::TestCase
   ### Mac OS X - sysctl -a hw
 
   def setup_test_set
-    @conn = Mongo::Connection.new
-    @conn.drop_database($db_name)
-    @db = @conn.db($db_name)
+    @client = Mongo::Client.new
+    @client.drop_database($db_name)
+    @db = @client.db($db_name)
     @coll = @db.collection($collection_name)
     @coll.remove
     @results = []
@@ -195,7 +195,7 @@ class TestExpPerformance < Test::Unit::TestCase
     File.open($file_name, 'a'){|f|
       f.puts(@results.to_json.gsub(/\[/, "").gsub(/}[\],]/, "},\n")) if @results != []
     }
-    @conn.drop_database($db_name)
+    @client.drop_database($db_name)
   end
 
   def estimate_iterations(db, coll, doc, setup, teardown)
@@ -225,9 +225,9 @@ class TestExpPerformance < Test::Unit::TestCase
   end
 
   def valuate(db, coll, doc, setup, teardown)
-    @conn.drop_database($db_name) # hack to reduce paging
+    @client.drop_database($db_name) # hack to reduce paging
     iterations, etime = estimate_iterations(db, coll, doc, setup, teardown) { yield }
-    @conn.drop_database($db_name) # hack to reduce paging
+    @client.drop_database($db_name) # hack to reduce paging
     utime, rtime = measure_iterations(db, coll, doc, setup, teardown, iterations) { yield }
     return [iterations, utime, rtime, etime]
   end

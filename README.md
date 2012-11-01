@@ -44,9 +44,9 @@ Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](https://githu
     require 'rubygems'
     require 'mongo'
 
-    @conn = Mongo::Connection.new('localhost', 27017, :safe => true)
-    @db   = @conn['sample-db']
-    @coll = @db['test']
+    @client = Mongo::Client.new('localhost', 27017, :safe => true)
+    @db     = @client['sample-db']
+    @coll   = @db['test']
 
     @coll.remove
     3.times do |i|
@@ -164,7 +164,7 @@ timeout for waiting for old connections to be released to the pool.
 
 To set up a pooled connection to a single MongoDB instance:
 
-    @conn = Connection.new("localhost", 27017, :safe => true, :pool_size => 5, :timeout => 5)
+    @client = Client.new("localhost", 27017, :safe => true, :pool_size => 5, :timeout => 5)
 
 Though the pooling architecture will undoubtedly evolve, it currently owes much credit
 to the connection pooling implementations in ActiveRecord and PyMongo.
@@ -177,13 +177,13 @@ of v1.3.0, the Ruby driver detects forking and reconnects automatically.
 
 ## Environment variable `MONGODB_URI`
 
-`Mongo::Connection.from_uri`, `Mongo::Connection.new` and `Mongo::ReplSetConnection.new` will use <code>ENV["MONGODB_URI"]</code> if no other args are provided.
+`Mongo::Client.from_uri`, `Mongo::Client.new` and `Mongo::ReplSetClient.new` will use <code>ENV["MONGODB_URI"]</code> if no other args are provided.
 
 The URI must fit this specification:
 
     mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
 
-If the type of connection (direct or replica set) should be determined entirely from <code>ENV["MONGODB_URI"]</code>, you may want to use `Mongo::Connection.from_uri` because it will return either `Mongo::Connection` or a `Mongo::ReplSetConnection` depending on how many hosts are specified. Trying to use `Mongo::Connection.new` with multiple hosts in <code>ENV["MONGODB_URI"]</code> will raise an exception.
+If the type of connection (direct or replica set) should be determined entirely from <code>ENV["MONGODB_URI"]</code>, you may want to use `Mongo::Client.from_uri` because it will return either `Mongo::Client` or a `Mongo::ReplSetClient` depending on how many hosts are specified. Trying to use `Mongo::Client.new` with multiple hosts in <code>ENV["MONGODB_URI"]</code> will raise an exception.
 
 ## String Encoding
 
@@ -213,9 +213,9 @@ generate _id values. If you want to control _id values or even their types,
 using a PK factory lets you do so.
 
 You can tell the Ruby Mongo driver how to create primary keys by passing in
-the :pk option to the Connection#db method.
+the :pk option to the Client#db method.
 
-    db = Mongo::Connection.new('localhost', 27017, :safe => true).db('dbname', :pk => MyPKFactory.new)
+    db = Mongo::Client.new('localhost', 27017, :safe => true).db('dbname', :pk => MyPKFactory.new)
 
 A primary key factory object must respond to :create_pk, which should
 take a hash and return a hash which merges the original hash with any
@@ -268,7 +268,7 @@ completely harmless; strict mode is a programmer convenience only.
 To turn on strict mode, either pass in :strict => true when obtaining a DB
 object or call the `:strict=` method:
 
-    db = Connection.new('localhost', 27017, :safe => true).db('dbname', :strict => true)
+    db = Client.new('localhost', 27017, :safe => true).db('dbname', :strict => true)
     # I'm feeling lax
     db.strict = false
     # No, I'm not!
@@ -291,10 +291,10 @@ Notes:
 ## Socket timeouts
 
 The Ruby driver support timeouts on socket read operations. To enable them, set the
-`:op_timeout` option when you create a `Mongo::Connection` object.
+`:op_timeout` option when you create a `Mongo::Client` object.
 
 If implementing higher-level timeouts, using tools like `Rack::Timeout`, it's very important
-to call `Mongo::Connection#close` to prevent the subsequent operation from receiving the previous
+to call `Mongo::Client#close` to prevent the subsequent operation from receiving the previous
 request.
 
 ### Test-Unit, Shoulda, and Mocha
@@ -306,7 +306,7 @@ Running the test suite requires test-unit, shoulda, and mocha.  You can install 
     $ gem install mocha
 
 The tests assume that the Mongo database is running on the default port. You
-can override the default host (localhost) and port (Connection::DEFAULT_PORT) by
+can override the default host (localhost) and port (Client::DEFAULT_PORT) by
 using the environment variables MONGO_RUBY_DRIVER_HOST and
 MONGO_RUBY_DRIVER_PORT.
 

@@ -9,7 +9,7 @@ class PoolManagerTest < Test::Unit::TestCase
       TCPSocket.stubs(:new).returns(new_mock_socket)
       @db = new_mock_db
 
-      @connection = stub("Connection")
+      @connection = stub("Client")
       @connection.stubs(:connect_timeout).returns(5)
       @connection.stubs(:op_timeout).returns(5)
       @connection.stubs(:pool_size).returns(2)

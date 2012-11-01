@@ -7,15 +7,15 @@ class ReplicaSetPooledInsertTest < Test::Unit::TestCase
 
   def setup
     ensure_rs
-    @conn = ReplSetConnection.new(build_seeds(3), :pool_size => 10, :pool_timeout => 5, :refresh_mode => false)
-    @db = @conn.db(MONGO_TEST_DB)
+    @client = ReplSetClient.new(build_seeds(3), :pool_size => 10, :pool_timeout => 5, :refresh_mode => false)
+    @db = @client.db(MONGO_TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets")
   end
 
   def teardown
     @rs.restart_killed_nodes
-    @conn.close if @conn
+    @client.close if @conn
   end
 
   def test_insert

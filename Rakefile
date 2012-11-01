@@ -150,10 +150,10 @@ namespace :test do
   task :drop_databases => :path do |t|
     puts "Dropping test databases..."
     require 'mongo'
-    con = Mongo::Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-      ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Connection::DEFAULT_PORT, :safe => true)
-    con.database_names.each do |name|
-      con.drop_database(name) if name =~ /^ruby-test/
+    client = Mongo::Client.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+      ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Client::DEFAULT_PORT, :safe => true)
+    client.database_names.each do |name|
+      client.drop_database(name) if name =~ /^ruby-test/
     end
   end
 end

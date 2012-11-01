@@ -18,7 +18,7 @@ module Mongo
     # @return [Integer] number of bytes sent
     def send_message(operation, message, opts={})
       if opts.is_a?(String)
-        warn "Connection#send_message no longer takes a string log message. " +
+        warn "Client#send_message no longer takes a string log message. " +
           "Logging is now handled within the Collection and Cursor classes."
         opts = {}
       end
@@ -181,7 +181,7 @@ module Mongo
 
       # unpacks to flags, cursor_id_a, cursor_id_b, starting_from, number_remaining
       flags, cursor_id_a, cursor_id_b, _, number_remaining = header_buf.unpack('VVVVV')
-      
+
       check_response_flags(flags)
       cursor_id = (cursor_id_b << 32) + cursor_id_a
       [number_remaining, cursor_id]
@@ -210,7 +210,7 @@ module Mongo
     end
 
     # Constructs a getlasterror message. This method is used exclusively by
-    # Connection#send_message_with_safe_check.
+    # Client#send_message_with_safe_check.
     #
     # Because it modifies message by reference, we don't need to return it.
     def build_last_error_message(message, db_name, opts)
@@ -306,7 +306,7 @@ module Mongo
     def receive_data(length, socket)
       message = new_binary_string
       socket.read(length, message)
- 
+
       raise ConnectionFailure, "connection closed" unless message && message.length > 0
       if message.length < length
         chunk = new_binary_string

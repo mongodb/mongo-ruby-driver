@@ -5,7 +5,7 @@ class CursorTest < Test::Unit::TestCase
     setup do
       @logger     = mock()
       @logger.stubs(:debug)
-      @connection = stub(:class => Connection, :logger => @logger,
+      @connection = stub(:class => Client, :logger => @logger,
         :slave_ok? => false, :read_preference => :primary, :log_duration => false,
         :tag_sets => {}, :acceptable_latency => 10)
       @db         = stub(:name => "testing", :slave_ok? => false,
@@ -89,20 +89,20 @@ class CursorTest < Test::Unit::TestCase
     should "cache full collection name" do
       assert_equal "testing.items", @cursor.full_collection_name
     end
-    
+
     should "raise error when batch_size is 1" do
       e = assert_raise ArgumentError do
         @cursor.batch_size(1)
         end
         assert_equal "Invalid value for batch_size 1; must be 0 or > 1.", e.message
     end
-    
+
     should "use the limit for batch size when it's smaller than the specified batch_size" do
       @cursor.limit(99)
       @cursor.batch_size(100)
       assert_equal 99, @cursor.batch_size
       end
-      
+
     should "use the specified batch_size" do
       @cursor.batch_size(100)
       assert_equal 100, @cursor.batch_size
@@ -113,7 +113,7 @@ class CursorTest < Test::Unit::TestCase
     setup do
       @logger     = mock()
       @logger.stubs(:debug)
-      @connection = stub(:class => Connection, :logger => @logger, :slave_ok? => false,
+      @connection = stub(:class => Client, :logger => @logger, :slave_ok? => false,
         :log_duration => false, :tag_sets =>{}, :acceptable_latency => 10)
       @db = stub(:slave_ok? => true, :name => "testing", :connection => @connection,
         :tag_sets => {}, :acceptable_latency => 10)

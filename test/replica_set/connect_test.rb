@@ -4,11 +4,11 @@ class ConnectTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
-    @conn = nil
+    @client = nil
   end
 
   def teardown
-    @conn.close if @conn
+    @client.close if @client
   end
 
   def self.shutdown
@@ -33,20 +33,20 @@ class ConnectTest < Test::Unit::TestCase
     #replica_host_ports = @rs.replicas.collect{|replica| [replica.host, replica.port]}
     host = @rs.replicas.first.host
     silently do
-      @conn = Connection.multi([
+      @client = Client.multi([
         # guaranteed to have one data-holding member
         [host, @rs.replicas[0].port],
         [host, @rs.replicas[1].port],
         [host, @rs.replicas[2].port],
       ], :name => @rs.repl_set_name)
     end
-    assert @conn.is_a?(ReplSetConnection)
-    assert @conn.connected?
+    assert @client.is_a?(ReplSetClient)
+    assert @client.connected?
   end
 
   def test_connect_bad_name
     assert_raise_error(ReplicaSetConnectionError, "-wrong") do
-      @conn = ReplSetConnection.new(@rs.repl_set_seeds, :name => @rs.repl_set_name + "-wrong")
+      @client = ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name + "-wrong")
     end
   end
 
@@ -54,69 +54,69 @@ class ConnectTest < Test::Unit::TestCase
     @rs.secondaries.first.stop
 
     rescue_connection_failure do
-      @conn = ReplSetConnection.new @rs.repl_set_seeds
+      @client = ReplSetClient.new @rs.repl_set_seeds
     end
-    assert @conn.connected?
+    assert @client.connected?
   end
 
   def test_connect_with_last_secondary_node_terminated
     @rs.secondaries.last.stop
 
     rescue_connection_failure do
-      @conn = ReplSetConnection.new @rs.repl_set_seeds
+      @client = ReplSetClient.new @rs.repl_set_seeds
     end
-    assert @conn.connected?
+    assert @client.connected?
   end
 
   def test_connect_with_primary_stepped_down
-    @conn = ReplSetConnection.new @rs.repl_set_seeds
-    @conn[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 3}})
-    assert @conn[MONGO_TEST_DB]['bar'].find_one
+    @client = ReplSetClient.new @rs.repl_set_seeds
+    @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 3}})
+    assert @client[MONGO_TEST_DB]['bar'].find_one
 
-    primary = Mongo::Connection.new(@conn.primary_pool.host, @conn.primary_pool.port)
+    primary = Mongo::Client.new(@client.primary_pool.host, @client.primary_pool.port)
     assert_raise Mongo::ConnectionFailure do
       primary['admin'].command(step_down_command)
     end
-    assert @conn.connected?
+    assert @client.connected?
 
     rescue_connection_failure do
-      @conn[MONGO_TEST_DB]['bar'].find_one
+      @client[MONGO_TEST_DB]['bar'].find_one
     end
   end
 
   def test_connect_with_primary_killed
-    @conn = ReplSetConnection.new @rs.repl_set_seeds
-    assert @conn.connected?
-    @conn[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 3}})
-    assert @conn[MONGO_TEST_DB]['bar'].find_one
+    @client = ReplSetClient.new @rs.repl_set_seeds
+    assert @client.connected?
+    @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 3}})
+    assert @client[MONGO_TEST_DB]['bar'].find_one
 
     @rs.primary.kill(Signal.list['KILL'])
 
     rescue_connection_failure do
-      @conn[MONGO_TEST_DB]['bar'].find_one
+      @client[MONGO_TEST_DB]['bar'].find_one
     end
   end
 
   def test_save_with_primary_stepped_down
-    @conn = ReplSetConnection.new @rs.repl_set_seeds
-    assert @conn.connected?
+    @client = ReplSetClient.new @rs.repl_set_seeds
+    assert @client.connected?
 
-    primary = Mongo::Connection.new(@conn.primary_pool.host, @conn.primary_pool.port)
+    primary = Mongo::Client.new(@client.primary_pool.host, @client.primary_pool.port)
     assert_raise Mongo::ConnectionFailure do
       primary['admin'].command(step_down_command)
     end
 
     rescue_connection_failure do
-      @conn[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 3}})
+      @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 3}})
     end
   end
 
   #def test_connect_with_first_node_removed
-  #  @conn = ReplSetConnection.new @rs.repl_set_seeds
-  #  @conn[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 3}})
+  #  @client = ReplSetClient.new @rs.repl_set_seeds
+  #  @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:safe => {:w => 3}})
   #
-  #  old_primary = [@conn.primary_pool.host, @conn.primary_pool.port]
-  #  old_primary_conn = Mongo::Connection.new(*old_primary)
+  #  old_primary = [@client.primary_pool.host, @client.primary_pool.port]
+  #  old_primary_conn = Mongo::Client.new(*old_primary)
   #  assert_raise Mongo::ConnectionFailure do
   #    old_primary_conn['admin'].command(step_down_command)
   #  end
@@ -127,13 +127,13 @@ class ConnectTest < Test::Unit::TestCase
   #  end
   #
   #  new_primary = @rs.get_all_host_pairs_with_state(1).first
-  #  new_primary_conn = Mongo::Connection.new(*new_primary)
+  #  new_primary_conn = Mongo::Client.new(*new_primary)
   #
   #  config = nil
   #
   #  # Remove old primary from replset
   #  rescue_connection_failure do
-  #    config = @conn['local']['system.replset'].find_one
+  #    config = @client['local']['system.replset'].find_one
   #  end
   #
   #  old_member = config['members'].select {|m| m['host'] == old_primary.join(':')}.first
@@ -147,11 +147,11 @@ class ConnectTest < Test::Unit::TestCase
   #
   #  # Wait for the dust to settle
   #  rescue_connection_failure do
-  #    assert @conn[MONGO_TEST_DB]['bar'].find_one
+  #    assert @client[MONGO_TEST_DB]['bar'].find_one
   #  end
   #
   #  # Make sure a new connection skips the old primary
-  #  @new_conn = ReplSetConnection.new @rs.repl_set_seeds
+  #  @new_conn = ReplSetClient.new @rs.repl_set_seeds
   #  @new_conn.connect
   #  new_nodes = [@new_conn.primary] + @new_conn.secondaries
   #  assert !(new_nodes).include?(old_primary)
@@ -171,85 +171,85 @@ class ConnectTest < Test::Unit::TestCase
   #  begin
   #    hung_node = IO.popen('nc -lk 127.0.0.1 29999 >/dev/null 2>&1')
   #
-  #    @conn = ReplSetConnection.new(['localhost:29999'] + @rs.repl_set_seeds,
+  #    @client = ReplSetClient.new(['localhost:29999'] + @rs.repl_set_seeds,
   #                                  :connect_timeout => 2)
-  #    @conn.connect
-  #    assert ['localhost:29999'] != @conn.primary
-  #    assert !@conn.secondaries.include?('localhost:29999')
+  #    @client.connect
+  #    assert ['localhost:29999'] != @client.primary
+  #    assert !@client.secondaries.include?('localhost:29999')
   #  ensure
   #    Process.kill("KILL", hung_node.pid) if hung_node
   #  end
   #end
 
   def test_connect_with_connection_string
-    @conn = Connection.from_uri("mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}")
-    assert @conn.is_a?(ReplSetConnection)
-    assert @conn.connected?
+    @client = Client.from_uri("mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}")
+    assert @client.is_a?(ReplSetClient)
+    assert @client.connected?
   end
 
   def test_connect_with_connection_string_in_env_var
     ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}"
-    @conn = ReplSetConnection.new
-    assert @conn.is_a?(ReplSetConnection)
-    assert_equal 2, @conn.seeds.length
-    assert_equal @rs.replicas[0].host, @conn.seeds[0][0]
-    assert_equal @rs.replicas[1].host, @conn.seeds[1][0]
-    assert_equal @rs.replicas[0].port, @conn.seeds[0][1]
-    assert_equal @rs.replicas[1].port, @conn.seeds[1][1]
-    assert_equal @rs.repl_set_name, @conn.replica_set_name
-    assert @conn.connected?
+    @client = ReplSetClient.new
+    assert @client.is_a?(ReplSetClient)
+    assert_equal 2, @client.seeds.length
+    assert_equal @rs.replicas[0].host, @client.seeds[0][0]
+    assert_equal @rs.replicas[1].host, @client.seeds[1][0]
+    assert_equal @rs.replicas[0].port, @client.seeds[0][1]
+    assert_equal @rs.replicas[1].port, @client.seeds[1][1]
+    assert_equal @rs.repl_set_name, @client.replica_set_name
+    assert @client.connected?
   end
 
   def test_connect_with_connection_string_in_implicit_mongodb_uri
     ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}"
-    @conn = Connection.from_uri
-    assert @conn.is_a?(ReplSetConnection)
-    assert_equal 2, @conn.seeds.length
-    assert_equal @rs.replicas[0].host, @conn.seeds[0][0]
-    assert_equal @rs.replicas[1].host, @conn.seeds[1][0]
-    assert_equal @rs.replicas[0].port, @conn.seeds[0][1]
-    assert_equal @rs.replicas[1].port, @conn.seeds[1][1]
-    assert_equal @rs.repl_set_name, @conn.replica_set_name
-    assert @conn.connected?
+    @client = Client.from_uri
+    assert @client.is_a?(ReplSetClient)
+    assert_equal 2, @client.seeds.length
+    assert_equal @rs.replicas[0].host, @client.seeds[0][0]
+    assert_equal @rs.replicas[1].host, @client.seeds[1][0]
+    assert_equal @rs.replicas[0].port, @client.seeds[0][1]
+    assert_equal @rs.replicas[1].port, @client.seeds[1][1]
+    assert_equal @rs.repl_set_name, @client.replica_set_name
+    assert @client.connected?
   end
 
   def test_connect_with_new_seed_format
-    @conn = ReplSetConnection.new @rs.repl_set_seeds
-    assert @conn.connected?
+    @client = ReplSetClient.new @rs.repl_set_seeds
+    assert @client.connected?
   end
 
   def test_connect_with_old_seed_format
     silently do
-      @conn = ReplSetConnection.new(@rs.replicas[0].host_port_a, @rs.replicas[1].host_port_a)
+      @client = ReplSetClient.new(@rs.replicas[0].host_port_a, @rs.replicas[1].host_port_a)
     end
-    assert @conn.connected?
+    assert @client.connected?
   end
 
   def test_connect_with_full_connection_string
-    @conn = Connection.from_uri("mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name};safe=true;w=2;fsync=true;slaveok=true")
-    assert @conn.is_a?(ReplSetConnection)
-    assert @conn.connected?
-    assert_equal 2, @conn.safe[:w]
-    assert @conn.safe[:fsync]
-    assert @conn.read_pool
+    @client = Client.from_uri("mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name};safe=true;w=2;fsync=true;slaveok=true")
+    assert @client.is_a?(ReplSetClient)
+    assert @client.connected?
+    assert_equal 2, @client.safe[:w]
+    assert @client.safe[:fsync]
+    assert @client.read_pool
   end
 
   def test_connect_with_full_connection_string_in_env_var
     ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name};safe=true;w=2;fsync=true;slaveok=true"
-    @conn = ReplSetConnection.new
-    assert @conn.is_a?(ReplSetConnection)
-    assert @conn.connected?
-    assert_equal 2, @conn.safe[:w]
-    assert @conn.safe[:fsync]
-    assert @conn.read_pool
+    @client = ReplSetClient.new
+    assert @client.is_a?(ReplSetClient)
+    assert @client.connected?
+    assert_equal 2, @client.safe[:w]
+    assert @client.safe[:fsync]
+    assert @client.read_pool
   end
 
   def test_connect_options_override_env_var
     ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name};safe=true;w=2;fsync=true;slaveok=true"
-    @conn = ReplSetConnection.new({:safe => false})
-    assert @conn.is_a?(ReplSetConnection)
-    assert @conn.connected?
-    assert_equal @conn.safe, false
+    @client = ReplSetClient.new({:safe => false})
+    assert @client.is_a?(ReplSetClient)
+    assert @client.connected?
+    assert_equal @client.safe, false
   end
 
 end

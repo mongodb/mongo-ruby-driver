@@ -13,12 +13,12 @@ class DBTest < Test::Unit::TestCase
   context "DBTest: " do
     context "DB commands" do
       setup do
-        @conn = stub()
-        @conn.stubs(:safe)
-        @conn.stubs(:read_preference)
-        @conn.stubs(:tag_sets)
-        @conn.stubs(:acceptable_latency)
-        @db   = DB.new("testing", @conn)
+        @client = stub()
+        @client.stubs(:safe)
+        @client.stubs(:read_preference)
+        @client.stubs(:tag_sets)
+        @client.stubs(:acceptable_latency)
+        @db = DB.new("testing", @client)
         @db.stubs(:safe)
         @db.stubs(:read_preference)
         @db.stubs(:tag_sets)
@@ -61,7 +61,7 @@ class DBTest < Test::Unit::TestCase
 
       should "raise an error if logging out fails" do
         @db.expects(:command).returns({})
-        @conn.expects(:pool_size).returns(1)
+        @client.expects(:pool_size).returns(1)
         assert_raise Mongo::MongoDBError do
           @db.logout
         end

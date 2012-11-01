@@ -12,7 +12,7 @@ class ComplexReadPreferenceTest < Test::Unit::TestCase
     ensure_rs
 
     # Insert data
-    conn = Connection.new(@rs.host, @rs.primary[1])
+    conn = Client.new(@rs.host, @rs.primary[1])
     db = conn.db(MONGO_TEST_DB)
     coll = db.collection("test-sets")
     coll.save({:a => 20}, :safe => {:w => 2})
@@ -202,7 +202,7 @@ class ComplexReadPreferenceTest < Test::Unit::TestCase
   end
 
   def make_connection(opts = {})
-    ReplSetConnection.new(build_seeds(3), opts)
+    ReplSetClient.new(build_seeds(3), opts)
   end
 
   def assert_read_pool(mode=:primary, tags=[], node_nums=[0], pings=[], latency=10)

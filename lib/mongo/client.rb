@@ -51,18 +51,18 @@ module Mongo
     # You may specify whether connection to slave is permitted.
     # In all cases, the default host is "localhost" and the default port is 27017.
     #
-    # If you're connecting to a replica set, you'll need to use ReplSetConnection.new instead.
+    # If you're connecting to a replica set, you'll need to use ReplSetClient.new instead.
     #
     # Once connected to a replica set, you can find out which nodes are primary, secondary, and
-    # arbiters with the corresponding accessors: Connection#primary, Connection#secondaries, and
-    # Connection#arbiters. This is useful if your application needs to connect manually to nodes other
+    # arbiters with the corresponding accessors: Client#primary, Client#secondaries, and
+    # Client#arbiters. This is useful if your application needs to connect manually to nodes other
     # than the primary.
     #
     # @param [String, Hash] host
     # @param [Integer] port specify a port number here if only one host is being specified.
     #
     # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
-    #   propagated to DB objects instantiated off of this Connection. This
+    #   propagated to DB objects instantiated off of this Client. This
     #   default can be overridden upon instantiation of any DB by explicitly setting a :safe value
     #   on initialization.
     # @option opts [Boolean] :slave_ok (false) Must be set to +true+ when connecting
@@ -81,16 +81,16 @@ module Mongo
     # @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
     #
     # @example localhost, 27017 (or <code>ENV["MONGODB_URI"]</code> if available)
-    #   Mongo::Connection.new
+    #   Mongo::Client.new
     #
     # @example localhost, 27017
-    #   Mongo::Connection.new("localhost")
+    #   Mongo::Client.new("localhost")
     #
     # @example localhost, 3000, max 5 self.connections, with max 5 seconds of wait time.
-    #   Mongo::Connection.new("localhost", 3000, :pool_size => 5, :timeout => 5)
+    #   Mongo::Client.new("localhost", 3000, :pool_size => 5, :timeout => 5)
     #
     # @example localhost, 3000, where this node may be a slave
-    #   Mongo::Connection.new("localhost", 3000, :slave_ok => true)
+    #   Mongo::Client.new("localhost", 3000, :slave_ok => true)
     #
     # @see http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html Replica sets in Ruby
     #
@@ -104,27 +104,27 @@ module Mongo
       if host.nil? and ENV.has_key?('MONGODB_URI')
         parser = URIParser.new ENV['MONGODB_URI']
         if parser.replicaset?
-          raise MongoArgumentError, "Mongo::Connection.new called with no arguments, but ENV['MONGODB_URI'] implies a replica set."
+          raise MongoArgumentError, "Mongo::Client.new called with no arguments, but ENV['MONGODB_URI'] implies a replica set."
         end
         opts = parser.connection_options.merge! opts
         @host_to_try = [parser.host, parser.port]
       elsif host.is_a?(String) && (port || DEFAULT_PORT).respond_to?(:to_i)
         @host_to_try = [host, (port || DEFAULT_PORT).to_i]
       elsif host || port
-        raise MongoArgumentError, "Mongo::Connection.new host or port argument error, host:#{host.inspect}, port:#{port.inspect}"
+        raise MongoArgumentError, "Mongo::Client.new host or port argument error, host:#{host.inspect}, port:#{port.inspect}"
       else
         @host_to_try = [DEFAULT_HOST, DEFAULT_PORT]
       end
 
       # Host and port of current master.
       @host = @port = nil
-      
+
       # Default maximum BSON object size
       @max_bson_size = Mongo::DEFAULT_MAX_BSON_SIZE
-      
+
       # Lock for request ids.
       @id_lock = Mutex.new
-      
+
       # Connection pool for primay node
       @primary      = nil
       @primary_pool = nil
@@ -146,7 +146,7 @@ module Mongo
     # is_master command on the replica set.
     #
     # @param nodes [Array] An array of arrays, each of which specifies a host and port.
-    # @param opts [Hash] Any of the available options that can be passed to Connection.new.
+    # @param opts [Hash] Any of the available options that can be passed to Client.new.
     #
     # @option opts [String] :rs_name (nil) The name of the replica set to connect to. An exception will be
     #   raised if unable to connect to a replica set with this name.
@@ -154,31 +154,31 @@ module Mongo
     #   to send reads to.
     #
     # @example
-    #   Mongo::Connection.multi([["db1.example.com", 27017], ["db2.example.com", 27017]])
+    #   Mongo::Client.multi([["db1.example.com", 27017], ["db2.example.com", 27017]])
     #
     # @example This connection will read from a random secondary node.
-    #   Mongo::Connection.multi([["db1.example.com", 27017], ["db2.example.com", 27017], ["db3.example.com", 27017]],
+    #   Mongo::Client.multi([["db1.example.com", 27017], ["db2.example.com", 27017], ["db3.example.com", 27017]],
     #                   :read_secondary => true)
     #
-    # @return [Mongo::Connection]
+    # @return [Mongo::Client]
     #
     # @deprecated
     def self.multi(nodes, opts={})
-      warn "Connection.multi is now deprecated and will be removed in v2.0. Please use ReplSetConnection.new instead."
+      warn "Client.multi is now deprecated and will be removed in v2.0. Please use ReplSetClient.new instead."
 
-      ReplSetConnection.new(*(nodes+[opts]))
+      ReplSetClient.new(*(nodes+[opts]))
     end
 
     # Initialize a connection to MongoDB using the MongoDB URI spec.
     #
-    # Since Connection.new cannot be used with any <code>ENV["MONGODB_URI"]</code> that has multiple hosts (implying a replicaset), you may use this when the type of your connection varies by environment and should be determined solely from <code>ENV["MONGODB_URI"]</code>.
+    # Since Client.new cannot be used with any <code>ENV["MONGODB_URI"]</code> that has multiple hosts (implying a replicaset), you may use this when the type of your connection varies by environment and should be determined solely from <code>ENV["MONGODB_URI"]</code>.
     #
     # @param uri [String]
     #   A string of the format mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]
     #
-    # @param opts Any of the options available for Connection.new
+    # @param opts Any of the options available for Client.new
     #
-    # @return [Mongo::Connection, Mongo::ReplSetConnection]
+    # @return [Mongo::Client, Mongo::ReplSetClient]
     def self.from_uri(uri = ENV['MONGODB_URI'], extra_opts={})
       parser = URIParser.new uri
       parser.connection(extra_opts)
@@ -245,7 +245,7 @@ module Mongo
     # by DB#authenticate.
     #
     # Note: this method will not actually issue an authentication command. To do that,
-    # either run Connection#apply_saved_authentication or DB#authenticate.
+    # either run Client#apply_saved_authentication or DB#authenticate.
     #
     # @param [String] db_name
     # @param [String] username
@@ -508,21 +508,21 @@ module Mongo
     end
 
     # Checkout a socket for reading (i.e., a secondary node).
-    # Note: this is overridden in ReplSetConnection.
+    # Note: this is overridden in ReplSetClient.
     def checkout_reader(mode=:primary, tag_sets={}, acceptable_latency=15)
       connect unless connected?
       @primary_pool.checkout
     end
 
     # Checkout a socket for writing (i.e., a primary node).
-    # Note: this is overridden in ReplSetConnection.
+    # Note: this is overridden in ReplSetClient.
     def checkout_writer
       connect unless connected?
       @primary_pool.checkout
     end
 
     # Check a socket back into its pool.
-    # Note: this is overridden in ReplSetConnection.
+    # Note: this is overridden in ReplSetClient.
     def checkin(socket)
       if @primary_pool && socket && socket.pool
         socket.pool.checkin(socket)
@@ -547,7 +547,7 @@ module Mongo
     def setup(opts)
       # slave_ok can be true only if one node is specified
       @slave_ok = opts[:slave_ok]
-      
+
       # Determine whether to use SSL.
       @ssl = opts.fetch(:ssl, false)
       if @ssl
