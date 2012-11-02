@@ -16,7 +16,7 @@ class BasicTest < Test::Unit::TestCase
 
   def test_connect
     client = Mongo::ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
-    assert client.clientected?
+    assert client.connected?
     assert_equal @rs.primary_name, client.primary.join(':')
     assert_equal @rs.secondary_names.sort, client.secondaries.collect{|s| s.join(':')}.sort
     assert_equal @rs.arbiter_names.sort, client.arbiters.collect{|s| s.join(':')}.sort
