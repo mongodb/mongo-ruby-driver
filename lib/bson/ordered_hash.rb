@@ -22,7 +22,7 @@
 # Hash already keeps its keys ordered by order of insertion.
 
 module BSON
-  class OrderedHash < HashWithIndifferentAccess
+  class OrderedHash < Hash
 
     def ==(other)
       begin

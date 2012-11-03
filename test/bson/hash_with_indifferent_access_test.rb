@@ -1,5 +1,6 @@
 # encoding:utf-8
 require 'test_helper'
+require 'support/hash_with_indifferent_access'
 
 class HashWithIndifferentAccessTest < Test::Unit::TestCase
   include BSON
@@ -33,19 +34,5 @@ class HashWithIndifferentAccessTest < Test::Unit::TestCase
 
     bson = @encoder.serialize(person)
     assert_equal person, @encoder.deserialize(bson.to_s)
-  end
-
-  def test_deserialize_returns_hash_with_indifferent_access
-    doc = {:a => 1, 'b' => 2, :c => {:d => 4, 'e' => 5}}
-    bson = @encoder.serialize(doc)
-    hash = @encoder.deserialize(bson.to_s)
-    assert_equal(1, hash['a'])
-    assert_equal(1, hash[:a])
-    assert_equal(2, hash['b'])
-    assert_equal(2, hash[:b])
-    assert_equal(4, hash['c']['d'])
-    assert_equal(4, hash[:c][:d])
-    assert_equal(5, hash['c']['e'])
-    assert_equal(5, hash[:c][:e])
   end
 end

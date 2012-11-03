@@ -104,7 +104,7 @@ class OrderedHashTest < Test::Unit::TestCase
     h2[:d] = 4
     h1.replace(h2)
 
-    assert_equal ["c", "d"], h1.keys # HashWithIndifferentAccess converts keys to strings
+    assert_equal [:c, :d], h1.keys
     assert_equal [3, 4], h1.values
     assert h1.keys.object_id != h2.keys.object_id
   end
@@ -178,13 +178,9 @@ class OrderedHashTest < Test::Unit::TestCase
     o[:a] = 1
     o[:b] = 2
     o[:c] = 3
-    r = HashWithIndifferentAccess.new(:a => 1, :b => 2, :c => 3)
+    r = {:a => 1, :b => 2, :c => 3}
     assert r == o
     assert o == r
-    # this appears to be problematic
-    #q = HashWithIndifferentAccess[:a => 1, :b => 2, :c => 3]
-    #assert q == o
-    #assert o == q
   end
 
   def test_update

@@ -50,8 +50,6 @@ module Mongo
   end
 end
 
-require 'active_support/core_ext/hash/indifferent_access'
-
 require 'bson'
 
 require 'mongo/util/conversions'
