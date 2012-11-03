@@ -11,9 +11,6 @@ class BasicTest < Test::Unit::TestCase
     @@cluster.clobber
   end
 
-  # To reset after (test) failure
-  #     $ killall mongod; rm -fr rs
-
   def test_connect
     client = Mongo::ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
     assert client.connected?

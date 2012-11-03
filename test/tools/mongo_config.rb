@@ -35,7 +35,7 @@ module Mongo
     MONGODS_OPT_KEYS = [:mongods]
     CLUSTER_OPT_KEYS = SHARDING_OPT_KEYS + REPLICA_OPT_KEYS + MONGODS_OPT_KEYS
 
-    FLAGS = [:noprealloc, :smallfiles, :logappend, :configsvr, :shardsvr]
+    FLAGS = [:noprealloc, :smallfiles, :logappend, :configsvr, :shardsvr, :quiet]
 
     DEFAULT_VERIFIES = 60
     BASE_PORT = 3000
@@ -101,12 +101,14 @@ module Mongo
 
       noprealloc = opts[:noprealloc] || true
       smallfiles = opts[:smallfiles] || true
+      quiet      = opts[:quiet]      || true
 
       params.merge(
         :command => mongod,
         :dbpath => path,
         :smallfiles => smallfiles,
-        :noprealloc => noprealloc
+        :noprealloc => noprealloc,
+        :quiet => quiet
       )
     end
 
@@ -170,7 +172,11 @@ module Mongo
 
       def clear_zombie
         if @pid
-          pid = Process.wait(@pid, Process::WNOHANG)
+          begin
+            pid = Process.waitpid(@pid, Process::WNOHANG)
+          rescue Errno::ECHILD
+            # JVM might have already reaped the exit status
+          end
           @pid = nil if pid && pid > 0
         end
       end
@@ -179,7 +185,8 @@ module Mongo
         clear_zombie
         return @pid if running?
         begin
-          @pid = Process.spawn(*@cmd)
+          @pid = Process.spawn(*@cmd) # redirection not supported in jruby
+          sleep 1
           verify(verifies) if verifies > 0
           @pid
         end
@@ -199,7 +206,11 @@ module Mongo
       end
 
       def wait
-        Process.wait(@pid) if @pid
+        begin
+          Process.waitpid(@pid) if @pid
+        rescue Errno::ECHILD
+          # JVM might have already reaped the exit status
+        end
         @pid = nil
       end
 
