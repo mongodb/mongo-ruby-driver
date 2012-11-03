@@ -2,7 +2,7 @@
 require 'socket'
 require 'fileutils'
 require 'mongo'
-require 'posix/spawn' if RUBY_PLATFORM == 'java'
+require 'sfl'
 
 $debug_level = 2
 STDOUT.sync = true
@@ -35,7 +35,7 @@ module Mongo
     MONGODS_OPT_KEYS = [:mongods]
     CLUSTER_OPT_KEYS = SHARDING_OPT_KEYS + REPLICA_OPT_KEYS + MONGODS_OPT_KEYS
 
-    FLAGS = [:noprealloc, :nojournal, :smallfiles, :logappend]
+    FLAGS = [:noprealloc, :smallfiles, :logappend, :configsvr, :shardsvr]
 
     DEFAULT_VERIFIES = 60
     BASE_PORT = 3000
@@ -99,7 +99,6 @@ module Mongo
       mongod = ENV['MONGOD'] || 'mongod'
       path = File.dirname(params[:logpath])
 
-      nojournal  = opts[:nojournal]  || nil
       noprealloc = opts[:noprealloc] || true
       smallfiles = opts[:smallfiles] || true
 
@@ -107,7 +106,6 @@ module Mongo
         :command => mongod,
         :dbpath => path,
         :smallfiles => smallfiles,
-        :nojournal => nojournal,
         :noprealloc => noprealloc
       )
     end
@@ -181,18 +179,7 @@ module Mongo
         clear_zombie
         return @pid if running?
         begin
-          if RUBY_PLATFORM == 'java'
-            @pid = POSIX::Spawn::spawn(@cmd, [:in, :out, :err] => :close)
-          else
-            @pid = fork do
-              STDIN.reopen '/dev/null'
-              STDOUT.reopen '/dev/null', 'a'
-              STDERR.reopen STDOUT
-              exec @cmd
-            end
-            #@pid = Process.spawn(@cmd, [:in, :out, :err] => :close)
-          end
-          sleep 1 # relinquish the processor so the child runs
+          @pid = Process.spawn(*@cmd)
           verify(verifies) if verifies > 0
           @pid
         end
@@ -263,12 +250,12 @@ module Mongo
         arguments = params.sort{|a, b| a[0].to_s <=> b[0].to_s}.collect do |arg, value| # sort block is needed for 1.8.7 which lacks Symbol#<=>
           argument = '--' + arg.to_s
           if FLAGS.member?(arg)
-            [value && argument]
+            [argument]
           else
-            [argument, value]
+            [argument, value.to_s]
           end
         end
-        cmd = [command, arguments].flatten.compact.join(' ')
+        cmd = [command, arguments].flatten.compact
         super(cmd, @config[:host], @config[:port])
       end
 
