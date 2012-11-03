@@ -22,11 +22,11 @@ module Mongo
     PRUNE_INTERVAL = 10_000
 
     attr_accessor :host, :port, :address,
-      :size, :timeout, :safe, :checked_out, :connection
+      :size, :timeout, :safe, :checked_out, :client
 
     # Create a new pool of connections.
     def initialize(client, host, port, opts={})
-      @connection  = client
+      @client = client
 
       @host, @port = host, port
 
@@ -163,7 +163,7 @@ module Mongo
 
     def ping
       begin
-        return self.connection['admin'].command({:ping => 1}, :socket => @node.socket, :timeout => MAX_PING_TIME)
+        return self.client['admin'].command({:ping => 1}, :socket => @node.socket, :timeout => MAX_PING_TIME)
       rescue ConnectionFailure, OperationFailure, SocketError, SystemCallError, IOError
         return false
       end
@@ -187,7 +187,7 @@ module Mongo
     # therefore, it runs within a mutex.
     def checkout_new_socket
       begin
-        socket = @connection.socket_class.new(@host, @port, @connection.op_timeout)
+        socket = @client.socket_class.new(@host, @port, @client.op_timeout)
         socket.pool = self
       rescue => ex
         socket.close if socket
@@ -197,7 +197,7 @@ module Mongo
 
       # If any saved authentications exist, we want to apply those
       # when creating new sockets.
-      @connection.apply_saved_authentication(:socket => socket)
+      @client.apply_saved_authentication(:socket => socket)
 
       @sockets << socket
       @pids[socket] = Process.pid
@@ -214,7 +214,7 @@ module Mongo
       @connection_mutex.synchronize do
         @sockets.each do |socket|
           @socket_ops[socket] << Proc.new do
-            @connection.apply_saved_authentication(:socket => socket)
+            @client.apply_saved_authentication(:socket => socket)
           end
         end
       end
@@ -226,7 +226,7 @@ module Mongo
       @connection_mutex.synchronize do
         @sockets.each do |socket|
           @socket_ops[socket] << Proc.new do
-            @connection.db(db).issue_logout(:socket => socket)
+            @client.db(db).issue_logout(:socket => socket)
           end
         end
       end
@@ -270,7 +270,7 @@ module Mongo
     # pool size has not been exceeded. Otherwise, wait for the next
     # available socket.
     def checkout
-      @connection.connect if !@connection.connected?
+      @client.connect if !@client.connected?
       start_time = Time.now
       loop do
         if (Time.now - start_time) > @timeout

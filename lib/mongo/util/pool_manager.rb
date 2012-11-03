@@ -1,7 +1,7 @@
 module Mongo
   class PoolManager
 
-    attr_reader :connection, :arbiters, :primary, :secondaries, :primary_pool,
+    attr_reader :client, :arbiters, :primary, :secondaries, :primary_pool,
       :secondary_pool, :secondary_pools, :hosts, :nodes, :members, :seeds,
       :max_bson_size
 
@@ -16,7 +16,7 @@ module Mongo
     # with the newly-discovered nodes being used first.
     def initialize(client, seeds=[])
       @pinned_pools         = {}
-      @connection           = client
+      @client               = client
       @seeds                = seeds
       @previously_connected = false
     end
@@ -99,9 +99,9 @@ module Mongo
       read_pool.host_port
     end
 
-    def read_pool(mode=@connection.read_preference,
-                  tags=@connection.tag_sets,
-                  acceptable_latency=@connection.acceptable_latency)
+    def read_pool(mode=@client.read_preference,
+                  tags=@client.tag_sets,
+                  acceptable_latency=@client.acceptable_latency)
 
       if mode == :primary && !tags.empty?
         raise MongoArgumentError, "Read preferecy :primary cannot be combined with tags"
@@ -183,7 +183,7 @@ module Mongo
       seed = get_valid_seed_node
 
       seed.node_list.each do |host|
-        node = Mongo::Node.new(self.connection, host)
+        node = Mongo::Node.new(self.client, host)
         if node.connect && node.set_config && node.healthy?
           members << node
         end
@@ -217,9 +217,9 @@ module Mongo
     def assign_primary(member)
       member.last_state = :primary
       @primary = member.host_port
-      @primary_pool = Pool.new(self.connection, member.host, member.port,
-        :size => self.connection.pool_size,
-        :timeout => self.connection.pool_timeout,
+      @primary_pool = Pool.new(self.client, member.host, member.port,
+        :size => self.client.pool_size,
+        :timeout => self.client.pool_timeout,
         :node => member
       )
     end
@@ -227,9 +227,9 @@ module Mongo
     def assign_secondary(member)
       member.last_state = :secondary
       @secondaries << member.host_port
-      pool = Pool.new(self.connection, member.host, member.port,
-        :size => self.connection.pool_size,
-        :timeout => self.connection.pool_timeout,
+      pool = Pool.new(self.client, member.host, member.port,
+        :size => self.client.pool_size,
+        :timeout => self.client.pool_timeout,
         :node => member
       )
       @secondary_pools << pool
@@ -269,7 +269,7 @@ module Mongo
     # If we don't get a response, raise an exception.
     def get_valid_seed_node
       @seeds.each do |seed|
-        node = Mongo::Node.new(self.connection, seed)
+        node = Mongo::Node.new(self.client, seed)
         if !node.connect
           next
         elsif node.set_config && node.healthy?

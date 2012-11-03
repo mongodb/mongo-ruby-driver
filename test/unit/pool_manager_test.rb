@@ -9,17 +9,17 @@ class PoolManagerTest < Test::Unit::TestCase
       TCPSocket.stubs(:new).returns(new_mock_socket)
       @db = new_mock_db
 
-      @connection = stub("Client")
-      @connection.stubs(:connect_timeout).returns(5)
-      @connection.stubs(:op_timeout).returns(5)
-      @connection.stubs(:pool_size).returns(2)
-      @connection.stubs(:pool_timeout).returns(100)
-      @connection.stubs(:seeds).returns(['localhost:30000'])
-      @connection.stubs(:socket_class).returns(TCPSocket)
-      @connection.stubs(:[]).returns(@db)
+      @client = stub("Client")
+      @client.stubs(:connect_timeout).returns(5)
+      @client.stubs(:op_timeout).returns(5)
+      @client.stubs(:pool_size).returns(2)
+      @client.stubs(:pool_timeout).returns(100)
+      @client.stubs(:seeds).returns(['localhost:30000'])
+      @client.stubs(:socket_class).returns(TCPSocket)
+      @client.stubs(:[]).returns(@db)
 
-      @connection.stubs(:replica_set_name).returns(nil)
-      @connection.stubs(:log)
+      @client.stubs(:replica_set_name).returns(nil)
+      @client.stubs(:log)
       @arbiters = ['localhost:27020']
       @hosts = ['localhost:27017', 'localhost:27018', 'localhost:27019',
         'localhost:27020']
@@ -35,7 +35,7 @@ class PoolManagerTest < Test::Unit::TestCase
         {'arbiterOnly' => true, 'hosts' => @hosts, 'arbiters' => @arbiters})
 
       seeds = [['localhost', 27017]]
-      manager = Mongo::PoolManager.new(@connection, seeds)
+      manager = Mongo::PoolManager.new(@client, seeds)
       manager.connect
 
       assert_equal ['localhost', 27017], manager.primary

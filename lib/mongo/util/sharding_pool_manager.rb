@@ -3,15 +3,15 @@ module Mongo
   module ShardingNode
     def set_config
       begin
-        @config = @connection['admin'].command({:ismaster => 1}, :socket => @socket)
+        @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
 
         # warning: instance variable @logger not initialized
         #if @config['msg'] && @logger
-        #  @connection.log(:warn, "#{config['msg']}")
+        #  @client.log(:warn, "#{config['msg']}")
         #end
 
       rescue ConnectionFailure, OperationFailure, OperationTimeout, SocketError, SystemCallError, IOError => ex
-        @connection.log(:warn, "Attempted connection to node #{host_string} raised " +
+        @client.log(:warn, "Attempted connection to node #{host_string} raised " +
             "#{ex.class}: #{ex.message}")
 
         # Socket may already be nil from issuing command
@@ -39,7 +39,7 @@ module Mongo
 
   class ShardingPoolManager < PoolManager
 
-    attr_reader :connection, :primary, :primary_pool, :hosts, :nodes,
+    attr_reader :client, :primary, :primary_pool, :hosts, :nodes,
       :max_bson_size, :members
 
     # Create a new set of connection pools.
@@ -49,7 +49,7 @@ module Mongo
     # the user may pass an additional list of seeds nodes discovered in real
     # time. The union of these lists will be used when attempting to connect,
     # with the newly-discovered nodes being used first.
-    def initialize(connection, seeds=[])
+    def initialize(client, seeds=[])
       super
     end
 
@@ -81,7 +81,7 @@ module Mongo
     # The config.mongos find can't be part of the connect call chain due to infinite recursion
     def check_connection_health
       begin
-        seeds = @connection['config']['mongos'].find.to_a.map{|doc| doc['_id']}
+        seeds = @client['config']['mongos'].find.to_a.map{|doc| doc['_id']}
         if @seeds != seeds
           @seeds = seeds
           @refresh_required = true
@@ -102,7 +102,7 @@ module Mongo
       seed = get_valid_seed_node
 
       seed.node_list.each do |host|
-        node = Mongo::Node.new(self.connection, host)
+        node = Mongo::Node.new(self.client, host)
         node.extend ShardingNode
         if node.connect && node.set_config
           members << node
@@ -124,7 +124,7 @@ module Mongo
     # If we don't get a response, raise an exception.
     def get_valid_seed_node
       @seeds.each do |seed|
-        node = Mongo::Node.new(self.connection, seed)
+        node = Mongo::Node.new(self.client, seed)
         node.extend ShardingNode
         if !node.connect
           next
