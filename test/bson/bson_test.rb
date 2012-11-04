@@ -124,12 +124,11 @@ class BSONTest < Test::Unit::TestCase
   # In 1.8 we test that other string encodings raise an exception.
   # In 1.9 we test that they get auto-converted.
   if RUBY_VERSION < '1.9'
-    if ! RUBY_PLATFORM =~ /java/
+    unless RUBY_PLATFORM == 'java'
       require 'iconv'
       def test_non_utf8_string
         string = Iconv.conv('iso-8859-1', 'utf-8', 'aé')
         doc = {'doc' => string}
-        assert_doc_pass(doc)
         assert_raise InvalidStringEncoding do
           @encoder.serialize(doc)
         end
@@ -144,48 +143,50 @@ class BSONTest < Test::Unit::TestCase
       end
     end
   else
-    def test_non_utf8_string
-      assert_raise BSON::InvalidStringEncoding do
-        BSON::BSON_CODER.serialize({'str' => 'aé'.encode('iso-8859-1')})
+    unless RUBY_PLATFORM == 'java'
+      def test_non_utf8_string
+        assert_raise BSON::InvalidStringEncoding do
+          BSON::BSON_CODER.serialize({'str' => 'aé'.encode('iso-8859-1')})
+        end
       end
-    end
 
-    def test_invalid_utf8_string
-      str = "123\xD9"
-      assert !str.valid_encoding?
-      assert_raise BSON::InvalidStringEncoding do
-        BSON::BSON_CODER.serialize({'str' => str})
+      def test_invalid_utf8_string
+        str = "123\xD9"
+        assert !str.valid_encoding?
+        assert_raise BSON::InvalidStringEncoding do
+          BSON::BSON_CODER.serialize({'str' => str})
+        end
       end
-    end
 
-    def test_non_utf8_key
-      assert_raise BSON::InvalidStringEncoding do
-        BSON::BSON_CODER.serialize({'aé'.encode('iso-8859-1') => 'hello'})
+      def test_non_utf8_key
+        assert_raise BSON::InvalidStringEncoding do
+          BSON::BSON_CODER.serialize({'aé'.encode('iso-8859-1') => 'hello'})
+        end
       end
-    end
 
-    def test_forced_encoding_with_valid_utf8
-      doc = {'doc' => "\xC3\xB6".force_encoding("ISO-8859-1")}
-      serialized = @encoder.serialize(doc)
-      deserialized = @encoder.deserialize(serialized)
-      assert_equal(doc['doc'], deserialized['doc'].force_encoding("ISO-8859-1"))
-    end
+      def test_forced_encoding_with_valid_utf8
+        doc = {'doc' => "\xC3\xB6".force_encoding("ISO-8859-1")}
+        serialized = @encoder.serialize(doc)
+        deserialized = @encoder.deserialize(serialized)
+        assert_equal(doc['doc'], deserialized['doc'].force_encoding("ISO-8859-1"))
+      end
 
-    # Based on a test from sqlite3-ruby
-    def test_default_internal_is_honored
-      before_enc = Encoding.default_internal
+      # Based on a test from sqlite3-ruby
+      def test_default_internal_is_honored
+        before_enc = Encoding.default_internal
 
-      str = "壁に耳あり、障子に目あり"
-      bson = BSON::BSON_CODER.serialize("x" => str)
+        str = "壁に耳あり、障子に目あり"
+        bson = BSON::BSON_CODER.serialize("x" => str)
 
-      silently { Encoding.default_internal = 'EUC-JP' }
-      out = BSON::BSON_CODER.deserialize(bson)["x"]
+        silently { Encoding.default_internal = 'EUC-JP' }
+        out = BSON::BSON_CODER.deserialize(bson)["x"]
 
-      assert_equal Encoding.default_internal, out.encoding
-      assert_equal str.encode('EUC-JP'), out
-      assert_equal str, out.encode(str.encoding)
-    ensure
-      silently { Encoding.default_internal = before_enc }
+        assert_equal Encoding.default_internal, out.encoding
+        assert_equal str.encode('EUC-JP'), out
+        assert_equal str, out.encode(str.encoding)
+      ensure
+        silently { Encoding.default_internal = before_enc }
+      end
     end
   end
 
