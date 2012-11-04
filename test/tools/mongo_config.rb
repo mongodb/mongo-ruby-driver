@@ -358,7 +358,9 @@ module Mongo
         60.times do |i|
           response = repl_set_get_status
           members = response['members']
-          return response if response['ok'] == 1.0 && members.collect{|m| m['state']}.all?{|state| [1,2,7].index(state)}
+          if response['ok'] == 1.0 && members.collect{|m| m['state']}.all?{|state| [1,2,7].index(state)}
+            return response if members.any?{|m| m['state'] == 1}
+          end
           sleep 1
         end
         raise Mongo::OperationFailure, "replSet startup failed - status: #{response.inspect}"
