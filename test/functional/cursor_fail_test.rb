@@ -20,7 +20,7 @@ class CursorFailTest < Test::Unit::TestCase
     assert_equal 1, @@coll.count
     1000.times { |i|
       assert_equal 1 + i, @@coll.count
-      @@coll.insert('a' => i)
+      @@coll.insert({'a' => i}, {:safe => true})
     }
 
     assert_equal 1001, @@coll.count
