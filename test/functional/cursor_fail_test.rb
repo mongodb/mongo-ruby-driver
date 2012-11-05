@@ -11,8 +11,8 @@ class CursorFailTest < Test::Unit::TestCase
   @@version = @@connection.server_version
 
   def setup
-    @@coll.remove
-    @@coll.insert('a' => 1)     # collection not created until it's used
+    @@coll.remove({}, :safe => true)
+    @@coll.insert({'a' => 1}, :safe => true)     # collection not created until it's used
     @@coll_full_name = "#{MONGO_TEST_DB}.test"
   end
 
@@ -20,7 +20,7 @@ class CursorFailTest < Test::Unit::TestCase
     assert_equal 1, @@coll.count
     1000.times { |i|
       assert_equal 1 + i, @@coll.count
-      @@coll.insert({'a' => i}, {:safe => true})
+      @@coll.insert({'a' => i}, :safe => true)
     }
 
     assert_equal 1001, @@coll.count
