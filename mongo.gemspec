@@ -27,7 +27,7 @@ Gem::Specification.new do |s|
   s.rdoc_options = ['--main', 'README.md', '--inline-source']
   s.extra_rdoc_files = ['README.md']
 
-  s.authors = ['Jim Menard', 'Mike Dirolf', 'Kyle Banker', 'Tyler Brock']
+  s.authors = ['Tyler Brock', 'Gary Murakami', 'Emily Stolfo', 'Brandon Black']
   s.email = 'mongodb-dev@googlegroups.com'
   s.homepage = 'http://www.mongodb.org'
 

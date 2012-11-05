@@ -17,10 +17,6 @@ Rake::ExtensionTask.new('cbson') do |ext|
   ext.lib_dir = "lib/bson_ext"
 end
 
-#Rake::JavaExtensionTask.new('jbson') do |ext| # not yet functional
-#  ext.ext_dir = 'ext/src/org/jbson'
-#end
-
 desc "Compiles and tests MongoDB Ruby driver w/ C extensions."
 task :c do
   Rake::Task['compile:cbson'].invoke
@@ -186,7 +182,7 @@ namespace :gem do
     `rm mongo-*.gem`
     `rm bson-*.gem`
   end
-  
+
   desc "Uninstall the optional c extensions"
   task :uninstall_extensions do
     `gem uninstall bson_ext`
@@ -202,12 +198,11 @@ end
 
 # Deployment
 VERSION_FILES = %w(lib/bson/version.rb lib/mongo/version.rb ext/cbson/version.h)
-GEMSPECS = %w(bson.gemspec bson.java.gemspec bson_ext.gemspec mongo.gemspec)
+GEMSPECS = %w(bson.gemspec bson_ext.gemspec mongo.gemspec)
 
 def gem_list(version)
   files = []
   files << "bson-#{version}.gem"
-  files << "bson-#{version}-java.gem"
   files << "bson_ext-#{version}.gem"
   files << "mongo-#{version}.gem"
   return files
@@ -269,7 +264,6 @@ namespace :deploy do
     `rm *.gem`
     `gem build mongo.gemspec`
     `gem build bson.gemspec`
-    `gem build bson.java.gemspec`
     `gem build bson_ext.gemspec`
     puts `ls *.gem`
   end
