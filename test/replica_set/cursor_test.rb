@@ -16,10 +16,10 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     assert_cursor_count
   end
 
-  def test_cursors_get_closed_secondary
-    setup_client(:secondary)
-    assert_cursor_count
-  end
+  #def test_cursors_get_closed_secondary
+  #  setup_client(:secondary)
+  #  assert_cursor_count
+  #end
 
   private
 
