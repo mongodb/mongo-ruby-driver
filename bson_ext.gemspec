@@ -1,8 +1,8 @@
 $:.unshift(File.join(File.dirname(__FILE__), 'lib'))
 require 'bson/version'
 
-BSON_VERSION_HEADER = File.open(File.join(File.dirname(__FILE__), 'ext', 'cbson', 'version.h'), "r")
-BSON_VERSION        = BSON_VERSION_HEADER.read.scan(/VERSION "(\d[^"]+)"/)[0][0]
+BSON_VERSION_HEADER = File.read(File.join(File.dirname(__FILE__), 'ext', 'cbson', 'version.h'))
+BSON_VERSION        = BSON_VERSION_HEADER.scan(/VERSION "(\d[^"]+)"/)[0][0]
 Gem::Specification.new do |s|
   s.name = 'bson_ext'
 
