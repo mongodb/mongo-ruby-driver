@@ -30,8 +30,6 @@ module Mongo
     Mutex = ::Mutex
     ConditionVariable = ::ConditionVariable
 
-    Thread.abort_on_exception = true
-
     DEFAULT_HOST = 'localhost'
     DEFAULT_PORT = 27017
     DEFAULT_DB_NAME = 'test'
