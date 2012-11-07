@@ -41,20 +41,23 @@ The [wiki](https://github.com/mongodb/mongo-ruby-driver/wiki) has other articles
 
 Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](https://github.com/mongodb/mongo-ruby-driver/wiki/Tutorial) for much more:
 
-    require 'rubygems'
-    require 'mongo'
+```ruby
+require 'rubygems'
+require 'mongo'
 
-    @client = Mongo::Client.new('localhost', 27017, :safe => true)
-    @db     = @client['sample-db']
-    @coll   = @db['test']
+@client = Mongo::Client.new('localhost', 27017, :safe => true)
+@db     = @client['sample-db']
+@coll   = @db['test']
 
-    @coll.remove
-    3.times do |i|
-      @coll.insert({'a' => i+1})
-    end
+@coll.remove
 
-    puts "There are #{@coll.count} records. Here they are:"
-    @coll.find.each { |doc| puts doc.inspect }
+3.times do |i|
+  @coll.insert({'a' => i+1})
+end
+
+puts "There are #{@coll.count} records. Here they are:"
+@coll.find.each { |doc| puts doc.inspect }
+```
 
 # Installation
 
@@ -135,19 +138,21 @@ features (metadata, content type, seek, tell, etc).
 
 Examples:
 
-      # Write a file on disk to the Grid
-      file = File.open('image.jpg')
-      grid = Mongo::Grid.new(db)
-      id   = grid.put(file)
+```ruby
+# Write a file on disk to the Grid
+file = File.open('image.jpg')
+grid = Mongo::Grid.new(db)
+id   = grid.put(file)
 
-      # Retrieve the file
-      file = grid.get(id)
-      file.read
+# Retrieve the file
+file = grid.get(id)
+file.read
 
-      # Get all the file's metata
-      file.filename
-      file.content_type
-      file.metadata
+# Get all the file's metata
+file.filename
+file.content_type
+file.metadata
+```
 
 # Notes
 
@@ -164,7 +169,9 @@ timeout for waiting for old connections to be released to the pool.
 
 To set up a pooled connection to a single MongoDB instance:
 
-    @client = Client.new("localhost", 27017, :safe => true, :pool_size => 5, :timeout => 5)
+```ruby
+  @client = Client.new("localhost", 27017, :safe => true, :pool_size => 5, :timeout => 5)
+```
 
 Though the pooling architecture will undoubtedly evolve, it currently owes much credit
 to the connection pooling implementations in ActiveRecord and PyMongo.
@@ -215,7 +222,9 @@ using a PK factory lets you do so.
 You can tell the Ruby Mongo driver how to create primary keys by passing in
 the :pk option to the Client#db method.
 
-    db = Mongo::Client.new('localhost', 27017, :safe => true).db('dbname', :pk => MyPKFactory.new)
+```ruby
+db = Mongo::Client.new('localhost', 27017, :safe => true).db('dbname', :pk => MyPKFactory.new)
+```
 
 A primary key factory object must respond to :create_pk, which should
 take a hash and return a hash which merges the original hash with any
@@ -228,27 +237,28 @@ database.  The idea here is that whenever a record is inserted, the
 returned will be inserted.
 
 Here is a sample primary key factory, taken from the tests:
-
-    class TestPKFactory
-      def create_pk(row)
-        row['_id'] ||= BSON::ObjectId.new
-        row
-      end
-    end
-
+```ruby
+class TestPKFactory
+  def create_pk(row)
+    row['_id'] ||= BSON::ObjectId.new
+    row
+  end
+end
+```
 Here's a slightly more sophisticated one that handles both symbol and string
 keys. This is the PKFactory that comes with the MongoRecord code (an
 ActiveRecord-like framework for non-Rails apps) and the AR Mongo adapter code
 (for Rails):
-
-    class PKFactory
-      def create_pk(row)
-        return row if row[:_id]
-        row.delete(:_id)      # in case it exists but the value is nil
-        row['_id'] ||= BSON::ObjectId.new
-        row
-      end
-    end
+```ruby
+class PKFactory
+  def create_pk(row)
+    return row if row[:_id]
+    row.delete(:_id)      # in case it exists but the value is nil
+    row['_id'] ||= BSON::ObjectId.new
+    row
+  end
+end
+```
 
 A database's PK factory object may be set either when a DB object is created
 or immediately after you obtain it, but only once. The only reason it is
@@ -268,11 +278,13 @@ completely harmless; strict mode is a programmer convenience only.
 To turn on strict mode, either pass in :strict => true when obtaining a DB
 object or call the `:strict=` method:
 
-    db = Client.new('localhost', 27017, :safe => true).db('dbname', :strict => true)
-    # I'm feeling lax
-    db.strict = false
-    # No, I'm not!
-    db.strict = true
+```ruby
+db = Client.new('localhost', 27017, :safe => true).db('dbname', :strict => true)
+# I'm feeling lax
+db.strict = false
+# No, I'm not!
+db.strict = true
+```
 
 The method DB#strict? returns the current value of that flag.
 
