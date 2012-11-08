@@ -2,9 +2,9 @@ require 'rubygems'
 require 'test/unit'
 require 'tools/mongo_config'
 
-TEST_DATA = File.join(File.dirname(__FILE__), 'data')
-
 class Test::Unit::TestCase
+
+  TEST_DATA = File.join(File.dirname(__FILE__), 'data')
 
   def ensure_cluster(kind=nil)
     if defined?(@@current_class) and @@current_class == self.class
