@@ -1,12 +1,10 @@
 $:.unshift(File.join(File.dirname(__FILE__), 'lib'))
 require 'bson/version'
 
-BSON_VERSION_HEADER = File.read(File.join(File.dirname(__FILE__), 'ext', 'cbson', 'version.h'))
-BSON_VERSION        = BSON_VERSION_HEADER.scan(/VERSION "(\d[^"]+)"/)[0][0]
 Gem::Specification.new do |s|
   s.name = 'bson_ext'
 
-  s.version  = BSON_VERSION
+  s.version  = File.read(File.join(File.dirname(__FILE__), 'VERSION'))
   s.platform = Gem::Platform::RUBY
   s.summary  = 'C extensions for Ruby BSON.'
   s.description = 'C extensions to accelerate the Ruby BSON serialization. For more information about BSON, see http://bsonspec.org.  For information about MongoDB, see http://www.mongodb.org.'

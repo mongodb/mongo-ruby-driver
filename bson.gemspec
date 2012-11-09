@@ -3,14 +3,15 @@ require 'bson/version'
 
 Gem::Specification.new do |s|
   s.name = 'bson'
-  s.version = BSON::VERSION
+
+  s.version = File.read(File.join(File.dirname(__FILE__), 'VERSION'))
   s.summary = 'Ruby implementation of BSON'
   s.description = 'A Ruby BSON implementation for MongoDB. For more information about Mongo, see http://www.mongodb.org. For more information on BSON, see http://www.bsonspec.org.'
 
   s.rubyforge_project = 'nowarning'
   s.require_paths = ['lib']
 
-  s.files  = ['LICENSE.txt']
+  s.files  = ['LICENSE']
   s.files += ['lib/bson.rb'] + Dir['lib/bson/**/*.rb']
   s.files += ['bin/b2json', 'bin/j2bson']
   if RUBY_PLATFORM =~ /java/

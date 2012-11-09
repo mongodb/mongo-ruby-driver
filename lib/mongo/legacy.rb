@@ -17,6 +17,7 @@
 # ++
 
 module Mongo
+  # @deprecated Use Mongo::Client instead.
   class Connection < Client
     def initialize(host=nil, port=nil, opts={})
       warn '[DEPRECATED] Mongo::Connection has been replaced with Mongo::Client.'
@@ -24,6 +25,7 @@ module Mongo
     end
   end
 
+  # @deprecated Use Mongo::ReplSetClient instead.
   class ReplSetConnection < ReplSetClient
     def initialize(*args)
       warn '[DEPRECATED] Mongo::ReplSetConnection has been replaced with Mongo::ReplSetClient.'
@@ -31,6 +33,7 @@ module Mongo
     end
   end
 
+  # @deprecated Use Mongo::ShardedClient instead.
   class ShardedConnection < ShardedClient
     def initialize(*args)
       warn '[DEPRECATED] Mongo::ShardedConnection has been replaced with Mongo::ShardedClient.'

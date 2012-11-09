@@ -16,8 +16,6 @@
 # limitations under the License.
 # ++
 
-require 'bson/version'
-
 module BSON
   if defined? Mongo::DEFAULT_MAX_BSON_SIZE
     DEFAULT_MAX_BSON_SIZE = Mongo::DEFAULT_MAX_BSON_SIZE

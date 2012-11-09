@@ -16,8 +16,6 @@
 # limitations under the License.
 # ++
 
-require 'mongo/version'
-
 module Mongo
   ASCENDING   =  1
   DESCENDING  = -1

@@ -1,10 +1,10 @@
-require File.expand_path('../lib/mongo/version', __FILE__)
+$:.unshift(File.join(File.dirname(__FILE__), 'lib'))
+require 'mongo/version'
 
 Gem::Specification.new do |s|
   s.name = 'mongo'
 
-  s.version = Mongo::VERSION
-
+  s.version = File.read(File.join(File.dirname(__FILE__), 'VERSION'))
   s.platform = Gem::Platform::RUBY
   s.summary = 'Ruby driver for MongoDB'
   s.description = 'A Ruby driver for MongoDB. For more information about Mongo, see http://www.mongodb.org.'
@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
 
   s.require_paths = ['lib']
 
-  s.files  = ['README.md', 'Rakefile', 'mongo.gemspec', 'LICENSE.txt']
+  s.files  = ['README.md', 'Rakefile', 'mongo.gemspec', 'LICENSE']
   s.files += ['lib/mongo.rb'] + Dir['lib/mongo/**/*.rb']
   s.files += Dir['docs/**/*.md'] + Dir['examples/**/*.rb'] + Dir['bin/**/*.rb']
   s.files += Dir['bin/mongo_console']

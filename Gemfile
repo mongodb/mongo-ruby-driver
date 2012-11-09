@@ -1,29 +1,27 @@
 source :rubygems
 
-# Generic
-gem "bundler"
-gem "rake"
-gem "json"
+gem 'json'
+gem 'rake', :require => ['rake/testtask']
 
-# Testing
-group :test do
-  gem "test-unit"
-  gem "mocha", ">=0.12.4" #0.12.3 is broken for us
-  gem "shoulda"
-  gem "rake-compiler"
-  gem "sfl"
+group :deployment do
+  gem 'git'
+  gem 'yard'
+  gem 'rdoc'
+  gem 'rake-compiler', :require => ['rake/extensiontask', 'rake/javaextensiontask']
+  gem 'version_bumper'
+  gem 'rvm'
+  gem 'redcarpet' unless RUBY_PLATFORM =~ /java/
 end
 
-# Deployment
-group :deploy do
-  gem "git"
-  gem "yard"
-  gem "redcarpet", "2.2.0" unless RUBY_PLATFORM =~ /java/
+group :testing do
+  gem 'test-unit'
+  gem 'mocha', '>=0.12.4', :require => ['mocha/setup'] #0.12.3 is broken for us
+  gem 'shoulda'
+  gem 'sfl'
 end
 
-# Java
 platforms :jruby do
-  gem "bouncy-castle-java"
-  gem "jruby-launcher"
-  gem "jruby-openssl"
+  gem 'bouncy-castle-java'
+  gem 'jruby-launcher'
+  gem 'jruby-openssl'
 end
