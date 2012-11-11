@@ -6,8 +6,6 @@ rvm:
   - ruby-head
   - jruby-head
 
-bundler_args: --without deployment
-
 script: bundle exec rake test:ruby
 
 notifications:
@@ -26,3 +24,4 @@ matrix:
   allow_failures:
     - rvm: ruby-head
     - rvm: jruby-head
+
