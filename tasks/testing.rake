@@ -5,6 +5,7 @@ task :test => 'test:ruby'
 
 namespace :test do
   DEFAULT_TESTS = ['functional', 'unit', 'bson', 'threading']
+  ENV['TEST_MODE'] = 'TRUE'
 
   desc "Run default test suites with the BSON C-extension enabled."
   task :c do
