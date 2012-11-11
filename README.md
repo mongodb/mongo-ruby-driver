@@ -16,9 +16,9 @@ has a link to API Documentation for the current release.
 
 If you have the source, you can generate the matching documentation  by typing
 
-    $ rake ydoc
+    $ rake docs:yard
 
-Then open the file ydoc/index.html in your browser.
+Then open the file docs/yard/index.html in your browser.
 
 # Introduction
 
