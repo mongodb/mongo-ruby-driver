@@ -5,9 +5,9 @@ require 'rubygems'
 begin
   require 'bundler'
   if ENV['TEST']
-    Bundler.require(:default, :deployment, :testing)
-  else
     Bundler.require(:default, :testing)
+  else
+    Bundler.require(:default, :deployment, :testing)
   end
   # Bundler::GemHelper.install_tasks
 rescue LoadError
