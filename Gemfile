@@ -2,12 +2,12 @@ source :rubygems
 
 gem 'json'
 gem 'rake', :require => ['rake/testtask']
+gem 'rake-compiler', :require => ['rake/extensiontask', 'rake/javaextensiontask']
 
 group :deployment do
   gem 'git'
   gem 'yard'
   gem 'rdoc'
-  gem 'rake-compiler', :require => ['rake/extensiontask', 'rake/javaextensiontask']
   gem 'version_bumper'
   gem 'rvm'
   gem 'redcarpet' unless RUBY_PLATFORM =~ /java/

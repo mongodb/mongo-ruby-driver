@@ -9,13 +9,18 @@ namespace :test do
   desc "Run default test suites with the BSON C-extension enabled."
   task :c do
     ENV['C_EXT'] = 'TRUE'
+    Rake::Task['compile:cbson'].invoke
     Rake::Task['test:ruby'].invoke
     ENV['C_EXT'] = nil
   end
 
   desc "Runs default test suites"
   task :ruby do
-    DEFAULT_TESTS.each { |t| Rake::Task["test:#{t}"].invoke }
+    if ENV['TEST']
+      Rake::Task['test:functional'].invoke
+    else
+      DEFAULT_TESTS.each { |t| Rake::Task["test:#{t}"].invoke }
+    end
     Rake::Task['test:cleanup'].invoke
   end
 

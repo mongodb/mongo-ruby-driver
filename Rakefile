@@ -4,10 +4,14 @@ require 'rubygems'
 
 begin
   require 'bundler'
-  Bundler.require(:default, :deployment, :testing)
+  if ENV['TEST']
+    Bundler.require(:default, :deployment, :testing)
+  else
+    Bundler.require(:default, :testing)
+  end
   # Bundler::GemHelper.install_tasks
 rescue LoadError
   raise '[FAIL] Bundler not found! Install it with `gem install bundler; bundle install`.'
 end
 
-Dir.glob(File.join("tasks", "**", "*.rake")).sort.each { |rake| load File.expand_path(rake) }
+Dir.glob(File.join('tasks', '**', '*.rake')).sort.each { |rake| load File.expand_path(rake) }
