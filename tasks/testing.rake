@@ -52,7 +52,7 @@ namespace :test do
       ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Client::DEFAULT_PORT, :safe => true)
     client.database_names.each {|name| client.drop_database(name) if name =~ /^ruby-test/ }
 
-    if Dir.exists?('data')
+    if File.directory?('data')
       puts "[CLEAN-UP] Removing replica set data files..."
       Dir.delete('data')
     end
