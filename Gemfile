@@ -15,7 +15,7 @@ end
 
 group :testing do
   gem 'test-unit'
-  gem 'mocha', '>=0.12.4' #0.12.3 is broken for us
+  gem 'mocha', '0.12.7'
   gem 'shoulda'
   gem 'sfl'
 end
