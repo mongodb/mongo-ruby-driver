@@ -61,7 +61,7 @@ end
 
 begin
   silently { require 'shoulda' }
-  silently { require 'mocha/setup' }
+  silently { require 'mocha' }
 rescue LoadError
   puts <<MSG
 
