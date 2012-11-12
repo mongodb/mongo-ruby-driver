@@ -17,6 +17,12 @@ namespace :test do
 
   desc "Runs default test suites"
   task :ruby do
+    SimpleCov.start do
+      add_group "Mongo", 'lib/mongo'
+      add_group "BSON", 'lib/bson'
+      add_filter "/test/"
+    end
+
     if ENV['TEST']
       Rake::Task['test:functional'].invoke
     else
@@ -55,12 +61,12 @@ namespace :test do
     require 'mongo'
     client = Mongo::Client.new(
       ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-      ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Client::DEFAULT_PORT, :safe => true)
+      ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Client::DEFAULT_PORT)
     client.database_names.each {|name| client.drop_database(name) if name =~ /^ruby-test/ }
 
     if File.directory?('data')
       puts "[CLEAN-UP] Removing replica set data files..."
-      Dir.delete('data')
+      FileUtils.rm_rf 'data'
     end
   end
 

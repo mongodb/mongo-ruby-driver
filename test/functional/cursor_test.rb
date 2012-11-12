@@ -195,15 +195,15 @@ class CursorTest < Test::Unit::TestCase
 
     t1 = Time.now
     t1_id = ObjectId.from_time(t1)
-    @@coll.save({:t => 't1'}, {:safe => true})
-    @@coll.save({:t => 't1'}, {:safe => true})
-    @@coll.save({:t => 't1'}, {:safe => true})
+    @@coll.save({:t => 't1'})
+    @@coll.save({:t => 't1'})
+    @@coll.save({:t => 't1'})
     sleep(2)
     t2 = Time.now
     t2_id = ObjectId.from_time(t2)
-    @@coll.save({:t => 't2'}, {:safe => true})
-    @@coll.save({:t => 't2'}, {:safe => true})
-    @@coll.save({:t => 't2'}, {:safe => true})
+    @@coll.save({:t => 't2'})
+    @@coll.save({:t => 't2'})
+    @@coll.save({:t => 't2'})
 
     assert_equal 3, @@coll.find({'_id' => {'$gt' => t1_id, '$lt' => t2_id}}).count
     @@coll.find({'_id' => {'$gt' => t2_id}}).each do |doc|

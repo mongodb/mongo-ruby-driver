@@ -186,7 +186,7 @@ class GridIOTest < Test::Unit::TestCase
 
     context "Grid MD5 check" do
       should "run in safe mode" do
-        file = GridIO.new(@files, @chunks, 'smallfile', 'w', :safe => true)
+        file = GridIO.new(@files, @chunks, 'smallfile', 'w')
         file.write("DATA" * 100)
         assert file.close
         assert_equal file.server_md5, file.client_md5
@@ -194,7 +194,7 @@ class GridIOTest < Test::Unit::TestCase
 
       should "validate with a large file" do
         io = File.open(File.join(TEST_DATA, 'sample_file.pdf'), 'r')
-        file = GridIO.new(@files, @chunks, 'bigfile', 'w', :safe => true)
+        file = GridIO.new(@files, @chunks, 'bigfile', 'w')
         file.write(io)
         assert file.close
         assert_equal file.server_md5, file.client_md5
@@ -203,7 +203,7 @@ class GridIOTest < Test::Unit::TestCase
       should "raise an exception when check fails" do
         io = File.open(File.join(TEST_DATA, 'sample_file.pdf'), 'r')
         @db.stubs(:command).returns({'md5' => '12345'})
-        file = GridIO.new(@files, @chunks, 'bigfile', 'w', :safe => true)
+        file = GridIO.new(@files, @chunks, 'bigfile', 'w')
         file.write(io)
         assert_raise GridMD5Failure do
           assert file.close

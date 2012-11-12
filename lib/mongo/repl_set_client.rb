@@ -21,11 +21,25 @@ module Mongo
   # Instantiates and manages connections to a MongoDB replica set.
   class ReplSetClient < Client
 
-    REPL_SET_OPTS = [:read, :refresh_mode, :refresh_interval, :read_secondary, 
-      :rs_name, :name, :tag_sets, :secondary_acceptable_latency_ms]
+    REPL_SET_OPTS = [
+      :read,
+      :refresh_mode,
+      :refresh_interval,
+      :read_secondary,
+      :rs_name,
+      :name,
+      :tag_sets,
+      :secondary_acceptable_latency_ms
+    ]
 
-    attr_reader :replica_set_name, :seeds, :refresh_interval, :refresh_mode,
-      :refresh_version, :manager, :tag_sets, :acceptable_latency
+    attr_reader :replica_set_name,
+                :seeds,
+                :refresh_interval,
+                :refresh_mode,
+                :refresh_version,
+                :manager,
+                :tag_sets,
+                :acceptable_latency
 
     # Create a connection to a MongoDB replica set.
     #
@@ -39,9 +53,9 @@ module Mongo
     # @overload initialize(seeds=ENV["MONGODB_URI"], opts={})
     #   @param [Array<String>, Array<Array(String, Integer)>] seeds
     #
-    #   @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
+    #   @option opts [Hash] :w (1), :j (false), :wtimeout (false), :fsync (false) Set the default write concern
     #     propagated to DB objects instantiated off of this Client. This
-    #     default can be overridden upon instantiation of any DB by explicitly setting a :safe value
+    #     default can be overridden upon instantiation of any DB by explicitly setting write concern values
     #     on initialization.
     #   @option opts [:primary, :primary_preferred, :secondary, :secondary_preferred, :nearest] :read_preference (:primary)
     #     A "read preference" determines the candidate replica set members to which a query or command can be sent.
@@ -150,7 +164,7 @@ module Mongo
     end
 
     def valid_opts
-      GENERIC_OPTS + REPL_SET_OPTS
+      super + REPL_SET_OPTS - CLIENT_ONLY_OPTS
     end
 
     def inspect
@@ -437,8 +451,8 @@ module Mongo
     # Parse option hash
     def setup(opts)
       # Refresh
-      @refresh_mode = opts.fetch(:refresh_mode, false)
-      @refresh_interval = opts.fetch(:refresh_interval, 90)
+      @refresh_mode = opts.delete(:refresh_mode) || false
+      @refresh_interval = opts.delete(:refresh_interval) || 90
 
       if @refresh_mode && @refresh_interval < 60
         @refresh_interval = 60 unless ENV['TEST_MODE'] = 'TRUE'
@@ -456,26 +470,26 @@ module Mongo
       if opts[:read_secondary]
         warn ":read_secondary options has now been deprecated and will " +
           "be removed in driver v2.0. Use the :read option instead."
-        @read_secondary = opts.fetch(:read_secondary, false)
+        @read_secondary = opts.delete(:read_secondary) || false
         @read = :secondary_preferred
       else
-        @read = opts.fetch(:read, :primary)
+        @read = opts.delete(:read) || :primary
         Mongo::Support.validate_read_preference(@read)
       end
 
-      @tag_sets = opts.fetch(:tag_sets, [])
-      @acceptable_latency = opts.fetch(:secondary_acceptable_latency_ms, 15)
+      @tag_sets = opts.delete(:tag_sets) || []
+      @acceptable_latency = opts.delete(:secondary_acceptable_latency_ms) || 15
 
       # Replica set name
       if opts[:rs_name]
         warn ":rs_name option has been deprecated and will be removed in v2.0. " +
           "Please use :name instead."
-        @replica_set_name = opts[:rs_name]
+        @replica_set_name = opts.delete(:rs_name)
       else
-        @replica_set_name = opts[:name]
+        @replica_set_name = opts.delete(:name)
       end
 
-      opts[:connect_timeout] = opts[:connect_timeout] || 30
+      opts[:connect_timeout] = opts.delete(:connect_timeout) || 30
 
       super opts
     end

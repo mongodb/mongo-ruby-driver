@@ -1,155 +1,140 @@
 require 'test_helper'
-include Mongo
 
 class ConnectionTest < Test::Unit::TestCase
-  context "Initialization: " do
+  context "Mongo::Client intialization " do
     context "given a single node" do
       setup do
-        @client = Client.new('localhost', 27017, :safe => true, :connect => false)
+        @connection = Mongo::Connection.new('localhost', 27017, :safe => true, :connect => false)
         TCPSocket.stubs(:new).returns(new_mock_socket)
 
         admin_db = new_mock_db
         admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1})
-        @client.expects(:[]).with('admin').returns(admin_db)
-        @client.connect
+        @connection.expects(:[]).with('admin').returns(admin_db)
+        @connection.connect
       end
 
       should "set safe mode true" do
-        assert_equal true, @client.safe
+        assert_equal true, @connection.safe
       end
 
       should "set localhost and port to master" do
-        assert_equal 'localhost', @client.primary_pool.host
-        assert_equal 27017, @client.primary_pool.port
+        assert_equal 'localhost', @connection.primary_pool.host
+        assert_equal 27017, @connection.primary_pool.port
       end
 
       should "set connection pool to 1" do
-        assert_equal 1, @client.primary_pool.size
+        assert_equal 1, @connection.primary_pool.size
       end
 
       should "default slave_ok to false" do
-        assert !@client.slave_ok?
+        assert !@connection.slave_ok?
       end
 
       should "raise exception for invalid host or port" do
         assert_raise MongoArgumentError do
-          Client.new(:safe => true)
+          Mongo::Connection.new(:safe => true)
         end
         assert_raise MongoArgumentError do
-          Client.new('localhost', :safe => true)
+          Mongo::Connection.new('localhost', :safe => true)
         end
       end
 
       should "warn if invalid options are specified" do
-        client = Client.allocate
+        connection = Mongo::Connection.allocate
         opts = {:connect => false}
 
-        ReplSetClient::REPL_SET_OPTS.each do |opt|
-          client.expects(:warn).with("#{opt} is not a valid option for #{client.class}")
+        Mongo::ReplSetConnection::REPL_SET_OPTS.each do |opt|
+          connection.expects(:warn).with("#{opt} is not a valid option for #{connection.class}")
           opts[opt] = true
         end
 
         args = ['localhost', 27017, opts]
-        client.send(:initialize, *args)
-      end
-
-      should "warn if deprecated connection class is used" do
-        conn = Connection.allocate
-        conn.expects(:warn).with('[DEPRECATED] Mongo::Connection has been replaced with Mongo::Client.')
-        args = ['localhost', 27017, {:connect => false}]
-        conn.send(:initialize, *args)
+        connection.send(:initialize, *args)
       end
 
       context "given a replica set" do
 
-        should "warn if invalid options are specified" do
-          client = ReplSetClient.allocate
-          opts = {:connect => false}
+        # should "warn if invalid options are specified" do
+        #   connection = Mongo::ReplSetConnection.allocate
+        #   opts = {:connect => false}
 
-          Client::CONNECTION_OPTS.each do |opt|
-            client.expects(:warn).with("#{opt} is not a valid option for #{client.class}")
-            opts[opt] = true
-          end
+        #   # Mongo::Connection::CLIENT_ONLY_OPTS.each do |opt|
+        #     connection.expects(:warn).with("#{:slave_ok} is not a valid option for #{connection.class}")
+        #     opts[:slave_ok] = true
+        #   # end
 
-          args = [['localhost:27017'], opts]
-          client.send(:initialize, *args)
-        end
-
-        should "warn if deprecated connection class is used" do
-          conn = ReplSetConnection.allocate
-          conn.expects(:warn).with('[DEPRECATED] Mongo::ReplSetConnection has been replaced with Mongo::ReplSetClient.')
-          args = [['localhost:27017'], {:connect => false}]
-          conn.send(:initialize, *args)
-        end
+        #   args = [['localhost:27017'], opts]
+        #   connection.send(:initialize, *args)
+        # end
 
       end
     end
 
     context "initializing with a mongodb uri" do
       should "parse a simple uri" do
-        @client = Client.from_uri("mongodb://localhost", :connect => false)
-        assert_equal ['localhost', 27017], @client.host_to_try
+        @connection = Mongo::Connection.from_uri("mongodb://localhost", :connect => false)
+        assert_equal ['localhost', 27017], @connection.host_to_try
       end
 
       should "allow a complex host names" do
         host_name = "foo.bar-12345.org"
-        @client = Client.from_uri("mongodb://#{host_name}", :connect => false)
-        assert_equal [host_name, 27017], @client.host_to_try
+        @connection = Mongo::Connection.from_uri("mongodb://#{host_name}", :connect => false)
+        assert_equal [host_name, 27017], @connection.host_to_try
       end
 
       should "allow db without username and password" do
         host_name = "foo.bar-12345.org"
-        @client = Client.from_uri("mongodb://#{host_name}/foo", :connect => false)
-        assert_equal [host_name, 27017], @client.host_to_try
+        @connection = Mongo::Connection.from_uri("mongodb://#{host_name}/foo", :connect => false)
+        assert_equal [host_name, 27017], @connection.host_to_try
       end
 
       should "set safe options on connection" do
         host_name = "localhost"
         opts = "safe=true&w=2&wtimeoutMS=1000&fsync=true&journal=true"
-        @client = Client.from_uri("mongodb://#{host_name}/foo?#{opts}", :connect => false)
-        assert_equal({:w => 2, :wtimeout => 1000, :fsync => true, :j => true}, @client.safe)
+        @connection = Mongo::Connection.from_uri("mongodb://#{host_name}/foo?#{opts}", :connect => false)
+        assert_equal({:w => 2, :wtimeout => 1000, :fsync => true, :j => true}, @connection.write_concern)
       end
 
       should "set timeout options on connection" do
         host_name = "localhost"
         opts = "connectTimeoutMS=1000&socketTimeoutMS=5000"
-        @client = Client.from_uri("mongodb://#{host_name}/foo?#{opts}", :connect => false)
-        assert_equal 1, @client.connect_timeout
-        assert_equal 5, @client.op_timeout
+        @connection = Mongo::Connection.from_uri("mongodb://#{host_name}/foo?#{opts}", :connect => false)
+        assert_equal 1, @connection.connect_timeout
+        assert_equal 5, @connection.op_timeout
       end
 
       should "parse a uri with a hyphen & underscore in the username or password" do
-        @client = Client.from_uri("mongodb://hyphen-user_name:p-s_s@localhost:27017/db", :connect => false)
-        assert_equal ['localhost', 27017], @client.host_to_try
+        @connection = Mongo::Connection.from_uri("mongodb://hyphen-user_name:p-s_s@localhost:27017/db", :connect => false)
+        assert_equal ['localhost', 27017], @connection.host_to_try
         auth_hash = { 'db_name' => 'db', 'username' => 'hyphen-user_name', "password" => 'p-s_s' }
-        assert_equal auth_hash, @client.auths[0]
+        assert_equal auth_hash, @connection.auths[0]
       end
 
       should "attempt to connect" do
         TCPSocket.stubs(:new).returns(new_mock_socket)
-        @client = Client.from_uri("mongodb://localhost", :connect => false)
+        @connection = Mongo::Connection.from_uri("mongodb://localhost", :connect => false)
 
         admin_db = new_mock_db
         admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1})
-        @client.expects(:[]).with('admin').returns(admin_db)
-        @client.connect
+        @connection.expects(:[]).with('admin').returns(admin_db)
+        @connection.connect
       end
 
       should "raise an error on invalid uris" do
         assert_raise MongoArgumentError do
-          Client.from_uri("mongo://localhost", :connect => false)
+          Mongo::Connection.from_uri("mongo://localhost", :connect => false)
         end
 
         assert_raise MongoArgumentError do
-          Client.from_uri("mongodb://localhost:abc", :connect => false)
+          Mongo::Connection.from_uri("mongodb://localhost:abc", :connect => false)
         end
       end
 
       should "require all of username, if password and db are specified" do
-        assert Client.from_uri("mongodb://kyle:jones@localhost/db", :connect => false)
+        assert Mongo::Connection.from_uri("mongodb://kyle:jones@localhost/db", :connect => false)
 
         assert_raise MongoArgumentError do
-          Client.from_uri("mongodb://kyle:password@localhost", :connect => false)
+          Mongo::Connection.from_uri("mongodb://kyle:password@localhost", :connect => false)
         end
       end
     end
@@ -165,79 +150,79 @@ class ConnectionTest < Test::Unit::TestCase
 
       should "parse a simple uri" do
         ENV['MONGODB_URI'] = "mongodb://localhost?connect=false"
-        @client = Client.new
-        assert_equal ['localhost', 27017], @client.host_to_try
+        @connection = Mongo::Connection.new
+        assert_equal ['localhost', 27017], @connection.host_to_try
       end
 
       should "allow a complex host names" do
         host_name = "foo.bar-12345.org"
         ENV['MONGODB_URI'] = "mongodb://#{host_name}?connect=false"
-        @client = Client.new
-        assert_equal [host_name, 27017], @client.host_to_try
+        @connection = Mongo::Connection.new
+        assert_equal [host_name, 27017], @connection.host_to_try
       end
 
       should "allow db without username and password" do
         host_name = "foo.bar-12345.org"
         ENV['MONGODB_URI'] = "mongodb://#{host_name}/foo?connect=false"
-        @client = Client.new
-        assert_equal [host_name, 27017], @client.host_to_try
+        @connection = Mongo::Connection.new
+        assert_equal [host_name, 27017], @connection.host_to_try
       end
 
       should "set safe options on connection" do
         host_name = "localhost"
         opts = "safe=true&w=2&wtimeoutMS=1000&fsync=true&journal=true&connect=false"
         ENV['MONGODB_URI'] = "mongodb://#{host_name}/foo?#{opts}"
-        @client = Client.new
-        assert_equal({:w => 2, :wtimeout => 1000, :fsync => true, :j => true}, @client.safe)
+        @connection = Mongo::Connection.new
+        assert_equal({:w => 2, :wtimeout => 1000, :fsync => true, :j => true}, @connection.safe)
       end
 
       should "set timeout options on connection" do
         host_name = "localhost"
         opts = "connectTimeoutMS=1000&socketTimeoutMS=5000&connect=false"
         ENV['MONGODB_URI'] = "mongodb://#{host_name}/foo?#{opts}"
-        @client = Client.new
-        assert_equal 1, @client.connect_timeout
-        assert_equal 5, @client.op_timeout
+        @connection = Mongo::Connection.new
+        assert_equal 1, @connection.connect_timeout
+        assert_equal 5, @connection.op_timeout
       end
 
       should "parse a uri with a hyphen & underscore in the username or password" do
         ENV['MONGODB_URI'] = "mongodb://hyphen-user_name:p-s_s@localhost:27017/db?connect=false"
-        @client = Client.new
-        assert_equal ['localhost', 27017], @client.host_to_try
+        @connection = Mongo::Connection.new
+        assert_equal ['localhost', 27017], @connection.host_to_try
         auth_hash = { 'db_name' => 'db', 'username' => 'hyphen-user_name', "password" => 'p-s_s' }
-        assert_equal auth_hash, @client.auths[0]
+        assert_equal auth_hash, @connection.auths[0]
       end
 
       should "attempt to connect" do
         TCPSocket.stubs(:new).returns(new_mock_socket)
         ENV['MONGODB_URI'] = "mongodb://localhost?connect=false" # connect=false ??
-        @client = Client.new
+        @connection = Mongo::Connection.new
 
         admin_db = new_mock_db
         admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1})
-        @client.expects(:[]).with('admin').returns(admin_db)
-        @client.connect
+        @connection.expects(:[]).with('admin').returns(admin_db)
+        @connection.connect
       end
 
       should "raise an error on invalid uris" do
         ENV['MONGODB_URI'] = "mongo://localhost"
         assert_raise MongoArgumentError do
-          Client.new
+          Mongo::Connection.new
         end
 
         ENV['MONGODB_URI'] = "mongodb://localhost:abc"
         assert_raise MongoArgumentError do
-          Client.new
+          Mongo::Connection.new
         end
       end
 
       should "require all of username, if password and db are specified" do
         ENV['MONGODB_URI'] = "mongodb://kyle:jones@localhost/db?connect=false"
-        assert Client.new
+        assert Mongo::Connection.new
 
         ENV['MONGODB_URI'] = "mongodb://kyle:password@localhost"
         assert_raise MongoArgumentError do
-          Client.new
+          Mongo::Connection.new
         end
       end
     end

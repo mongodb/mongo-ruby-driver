@@ -6,7 +6,8 @@ class ReplicaSetAckTest < Test::Unit::TestCase
     ensure_cluster(:rs)
     @client = ReplSetClient.new(@rs.repl_set_seeds)
 
-    @slave1 = Client.new(@client.secondary_pools[0].host,
+    @slave1 = Client.new(
+      @client.secondary_pools[0].host,
       @client.secondary_pools[0].port, :slave_ok => true)
 
     assert !@slave1.read_primary?
@@ -27,26 +28,26 @@ class ReplicaSetAckTest < Test::Unit::TestCase
 
   def test_safe_mode_with_w_failure
     assert_raise_error OperationFailure, "timeout" do
-      @col.insert({:foo => 1}, :safe => {:w => 4, :wtimeout => 1, :fsync => true})
+      @col.insert({:foo => 1}, :w => 4, :wtimeout => 1, :fsync => true)
     end
     assert_raise_error OperationFailure, "timeout" do
-      @col.update({:foo => 1}, {:foo => 2}, :safe => {:w => 4, :wtimeout => 1, :fsync => true})
+      @col.update({:foo => 1}, {:foo => 2}, :w => 4, :wtimeout => 1, :fsync => true)
     end
     assert_raise_error OperationFailure, "timeout" do
-      @col.remove({:foo => 2}, :safe => {:w => 4, :wtimeout => 1, :fsync => true})
+      @col.remove({:foo => 2}, :w => 4, :wtimeout => 1, :fsync => true)
     end
   end
 
   def test_safe_mode_replication_ack
-    @col.insert({:baz => "bar"}, :safe => {:w => 3, :wtimeout => 5000})
+    @col.insert({:baz => "bar"}, :w => 3, :wtimeout => 5000)
 
-    assert @col.insert({:foo => "0" * 5000}, :safe => {:w => 3, :wtimeout => 5000})
+    assert @col.insert({:foo => "0" * 5000}, :w => 3, :wtimeout => 5000)
     assert_equal 2, @slave1[MONGO_TEST_DB]["test-sets"].count
 
-    assert @col.update({:baz => "bar"}, {:baz => "foo"}, :safe => {:w => 3, :wtimeout => 5000})
+    assert @col.update({:baz => "bar"}, {:baz => "foo"}, :w => 3, :wtimeout => 5000)
     assert @slave1[MONGO_TEST_DB]["test-sets"].find_one({:baz => "foo"})
 
-    assert @col.remove({}, :safe => {:w => 3, :wtimeout => 5000})
+    assert @col.remove({}, :w => 3, :wtimeout => 5000)
     assert_equal 0, @slave1[MONGO_TEST_DB]["test-sets"].count
   end
 
@@ -56,7 +57,7 @@ class ReplicaSetAckTest < Test::Unit::TestCase
     assert response['ok'] == 1
     assert response['lastOp']
 
-    @col.update({}, {:baz => "foo"}, :multi => true)
+    @col.update({}, {:baz => "foo"})
     response = @db.get_last_error(:w => 2, :wtimeout => 5000)
     assert response['ok'] == 1
     assert response['lastOp']

@@ -69,7 +69,8 @@ module Mongo
     # @option opts [Boolean] :delete_old (false) ensure that old versions of the file are deleted. This option
     #  only work in 'w' mode. Certain precautions must be taken when deleting GridFS files. See the notes under
     #  GridFileSystem#delete.
-    # @option opts [Boolean] :safe (false) When safe mode is enabled, the chunks sent to the server
+    # @option opts [Boolean] :w (1), :j (false), :wtimeout (false), :fsync (false) Set the default write concern
+    #   When :w > 0, the chunks sent to the server
     #   will be validated using an md5 hash. If validation fails, an exception will be raised.
     # @option opts [Integer] :versions (false) deletes all versions which exceed the number specified to 
     #   retain ordered by uploadDate. This option only works in 'w' mode. Certain precautions must be taken when 

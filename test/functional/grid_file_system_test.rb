@@ -16,7 +16,7 @@ class GridFileSystemTest < Test::Unit::TestCase
       setup do
         @chunks_data = "CHUNKS" * 50000
         @grid = GridFileSystem.new(@db)
-        @opts = {:safe => true}
+        @opts = {:w => 1}
         @original_opts = @opts.dup
         @grid.open('sample.file', 'w', @opts) do |f|
           f.write @chunks_data

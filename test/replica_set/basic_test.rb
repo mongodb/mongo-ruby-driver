@@ -30,15 +30,15 @@ class BasicTest < Test::Unit::TestCase
   def test_safe_option
     client = Mongo::ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
     assert client.connected?
-    assert !client.safe
+    assert client.write_concern[:w] > 0
     client.close
-    client = Mongo::ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :safe => false)
+    client = Mongo::ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :w => 0)
     assert client.connected?
-    assert !client.safe
+    assert client.write_concern[:w] < 1
     client.close
-    client = Mongo::ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :safe => true)
+    client = Mongo::ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :w => 2)
     assert client.connected?
-    assert client.safe
+    assert client.write_concern[:w] > 0
     client.close
   end
 
@@ -98,11 +98,11 @@ class BasicTest < Test::Unit::TestCase
         end
       end
 
-      should "close the connection on send_message_with_safe_check for major exceptions" do
+      should "close the connection on send_message_with_acknowledge for major exceptions" do
         @client.expects(:checkout_writer).raises(SystemStackError)
         @client.expects(:close)
         begin
-          @coll.insert({:foo => "bar"}, :safe => true)
+          @coll.insert({:foo => "bar"})
         rescue SystemStackError
         end
       end

@@ -14,6 +14,7 @@ group :deploy do
 end
 
 group :testing do
+  gem 'simplecov'
   gem 'test-unit'
   gem 'mocha', '0.12.7'
   gem 'shoulda'

@@ -20,11 +20,18 @@ module Mongo
   # A named collection of documents in a database.
   class Collection
     include Mongo::Logging
+    include Mongo::WriteConcern
 
-    attr_reader :db, :name, :pk_factory, :hint, :safe
+    attr_reader :db,
+                :name,
+                :pk_factory,
+                :hint,
+                :write_concern
 
     # Read Preference
-    attr_accessor :read_preference, :tag_sets, :acceptable_latency
+    attr_accessor :read_preference,
+                  :tag_sets,
+                  :acceptable_latency
 
     # Initialize a collection object.
     #
@@ -34,10 +41,10 @@ module Mongo
     # @option opts [:create_pk] :pk (BSON::ObjectId) A primary key factory to use
     #   other than the default BSON::ObjectId.
     #
-    # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
+    # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the default write concern
     #   for +insert+, +update+, and +remove+ method called on this Collection instance. If no
-    #   value is provided, the default value set on this instance's DB will be used. This
-    #   default can be overridden for any invocation of +insert+, +update+, or +remove+.
+    #   value is provided, the default values set on this instance's DB will be used. These option 
+    #   values can be overridden for any invocation of +insert+, +update+, or +remove+.
     # @option options [:primary, :secondary] :read The default read preference for queries
     #   initiates from this connection object. If +:secondary+ is chosen, reads will be sent
     #   to one of the closest available secondary nodes. If a secondary node cannot be located, the
@@ -93,7 +100,7 @@ module Mongo
       @cache_time = @db.cache_time
       @cache      = Hash.new(0)
       unless pk_factory
-        @safe = opts.fetch(:safe, @db.safe)
+        @write_concern = get_write_concern(opts, db)
         if value = opts[:read]
           Mongo::Support.validate_read_preference(value)
         else
@@ -312,22 +319,24 @@ module Mongo
     #
     # @return [ObjectId] the _id of the saved document.
     #
-    # @option opts [Boolean, Hash] :safe (+false+)
-    #   run the operation in safe mode, which runs a +getlasterror+ command on the
-    #   database to report any assertion. In addition, a hash can be provided to
-    #   run an fsync and/or wait for replication (>= 1.5.1). Safe
-    #   options provided here will override any safe options set on this collection,
+    # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the write concern for this operation.
+    #   :w > 0 will run a +getlasterror+ command on the database to report any assertion. 
+    #   :j will confirm a write has been committed to the journal
+    #   :wtimeout specifies how long to wait for write confirmation
+    #   :fsync will confirm that a write has been fsynced 
+    #   options provided here will override any write concern options set on this collection,
     #   its database object, or the current connection. See the options
     #   for +DB#get_last_error+.
     #
-    # @raise [Mongo::OperationFailure] will be raised iff safe mode is enabled and the operation fails.
+    # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails.
     def save(doc, opts={})
+      write_concern = get_write_concern(opts, self)
       if doc.has_key?(:_id) || doc.has_key?('_id')
         id = doc[:_id] || doc['_id']
-        update({:_id => id}, doc, :upsert => true, :safe => opts.fetch(:safe, @safe))
+        update({:_id => id}, doc, :upsert => true, :write_concern => write_concern)
         id
       else
-        insert(doc, :safe => opts.fetch(:safe, @safe))
+        insert(doc, write_concern)
       end
     end
 
@@ -343,33 +352,34 @@ module Mongo
     #   2nd, a list of invalid documents.
     #   Return this result format only when :collect_on_error is true.
     #
-    # @option opts [Boolean, Hash] :safe (+false+)
-    #   run the operation in safe mode, which runs a +getlasterror+ command on the
-    #   database to report any assertion. In addition, a hash can be provided to
-    #   run an fsync and/or wait for replication of the insert (>= 1.5.1). Safe
-    #   options provided here will override any safe options set on this collection,
+    # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the write concern for this operation.
+    #   :w > 0 will run a +getlasterror+ command on the database to report any assertion. 
+    #   :j will confirm a write has been committed to the journal
+    #   :wtimeout specifies how long to wait for write confirmation
+    #   :fsync will confirm that a write has been fsynced 
+    #   options provided here will override any write concern options set on this collection,
     #   its database object, or the current connection. See the options
     #   for +DB#get_last_error+.
     #
     # @option opts [Boolean] :continue_on_error (+false+) If true, then
     #   continue a bulk insert even if one of the documents inserted
     #   triggers a database assertion (as in a duplicate insert, for instance).
-    #   If not using safe mode, the list of ids returned will
+    #   If not acknowledging writes, the list of ids returned will
     #   include the object ids of all documents attempted on insert, even
-    #   if some are rejected on error. When safe mode is
-    #   enabled, any error will raise an OperationFailure exception.
+    #   if some are rejected on error. When acknowledging writes, any error will raise an 
+    #   OperationFailure exception.
     #   MongoDB v2.0+.
     # @option opts [Boolean] :collect_on_error (+false+) if true, then
     #   collects invalid documents as an array. Note that this option changes the result format.
     #
-    # @raise [Mongo::OperationFailure] will be raised iff safe mode is enabled and the operation fails.
+    # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails. 
     #
     # @core insert insert-instance_method
     def insert(doc_or_docs, opts={})
       doc_or_docs = [doc_or_docs] unless doc_or_docs.is_a?(Array)
       doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
-      safe = opts.fetch(:safe, @safe)
-      result = insert_documents(doc_or_docs, @name, true, safe, opts)
+      write_concern = get_write_concern(opts, self)
+      result = insert_documents(doc_or_docs, @name, true, write_concern, opts)
       result.size > 1 ? result : result.first
     end
     alias_method :<<, :insert
@@ -379,13 +389,14 @@ module Mongo
     # @param [Hash] selector
     #   If specified, only matching documents will be removed.
     #
-    # @option opts [Boolean, Hash] :safe (+false+)
-    #   run the operation in safe mode, which runs a +getlasterror+ command on the
-    #   database to report any assertion. In addition, a hash can be provided to
-    #   run an fsync and/or wait for replication of the remove (>= 1.5.1). Safe
-    #   options provided here will override any safe options set on this collection,
+    # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the write concern for this operation.
+    #   :w > 0 will run a +getlasterror+ command on the database to report any assertion. 
+    #   :j will confirm a write has been committed to the journal
+    #   :wtimeout specifies how long to wait for write confirmation
+    #   :fsync will confirm that a write has been fsynced 
+    #   options provided here will override any write concern options set on this collection,
     #   its database object, or the current connection. See the options
-    #   for +DB#get_last_error+.
+    #   for +DB#get_last_error+. 
     #
     # @example remove all documents from the 'users' collection:
     #   users.remove
@@ -394,23 +405,22 @@ module Mongo
     # @example remove only documents that have expired:
     #   users.remove({:expire => {"$lte" => Time.now}})
     #
-    # @return [Hash, true] Returns a Hash containing the last error object if running in safe mode.
+    # @return [Hash, true] Returns a Hash containing the last error object if acknowledging writes
     #   Otherwise, returns true.
     #
-    # @raise [Mongo::OperationFailure] will be raised iff safe mode is enabled and the operation fails.
+    # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails.
     #
     # @core remove remove-instance_method
     def remove(selector={}, opts={})
-      # Initial byte is 0.
-      safe = opts.fetch(:safe, @safe)
+      write_concern = get_write_concern(opts, self)
       message = BSON::ByteBuffer.new("\0\0\0\0")
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
       message.put_binary(BSON::BSON_CODER.serialize(selector, false, true, @connection.max_bson_size).to_s)
 
       instrument(:remove, :database => @db.name, :collection => @name, :selector => selector) do
-        if safe
-          @connection.send_message_with_safe_check(Mongo::Constants::OP_DELETE, message, @db.name, nil, safe)
+        if Mongo::WriteConcern.gle?(write_concern)
+          @connection.send_message_with_acknowledge(Mongo::Constants::OP_DELETE, message, @db.name, nil, write_concern)
         else
           @connection.send_message(Mongo::Constants::OP_DELETE, message)
           true
@@ -432,23 +442,24 @@ module Mongo
     # @option opts [Boolean] :upsert (+false+) if true, performs an upsert (update or insert)
     # @option opts [Boolean] :multi (+false+) update all documents matching the selector, as opposed to
     #   just the first matching document. Note: only works in MongoDB 1.1.3 or later.
-    # @option opts [Boolean, Hash] :safe (+false+)
-    #   run the operation in safe mode, which runs a +getlasterror+ command on the
-    #   database to report any assertion. In addition, a hash can be provided to
-    #   run an fsync and/or wait for replication of the update (>= 1.5.1). Safe
-    #   options provided here will override any safe options set on this collection,
+    # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the write concern for this operation.
+    #   :w > 0 will run a +getlasterror+ command on the database to report any assertion. 
+    #   :j will confirm a write has been committed to the journal
+    #   :wtimeout specifies how long to wait for write confirmation
+    #   :fsync will confirm that a write has been fsynced 
+    #   options provided here will override any write concern options set on this collection,
     #   its database object, or the current connection. See the options
-    #   for +DB#get_last_error+.
+    #   for +DB#get_last_error+. 
     #
-    # @return [Hash, true] Returns a Hash containing the last error object if running in safe mode.
+    # @return [Hash, true] Returns a Hash containing the last error object if acknowledging writes.
     #   Otherwise, returns true.
     #
-    # @raise [Mongo::OperationFailure] will be raised iff safe mode is enabled and the operation fails.
+    # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails.
     #
     # @core update update-instance_method
     def update(selector, document, opts={})
       # Initial byte is 0.
-      safe = opts.fetch(:safe, @safe)
+      write_concern = get_write_concern(opts, self)
       message = BSON::ByteBuffer.new("\0\0\0\0")
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       update_options  = 0
@@ -463,8 +474,8 @@ module Mongo
       message.put_binary(BSON::BSON_CODER.serialize(document, check_keys, true, @connection.max_bson_size).to_s)
 
       instrument(:update, :database => @db.name, :collection => @name, :selector => selector, :document => document) do
-        if safe
-          @connection.send_message_with_safe_check(Mongo::Constants::OP_UPDATE, message, @db.name, nil, safe)
+        if Mongo::WriteConcern.gle?(write_concern)
+          @connection.send_message_with_acknowledge(Mongo::Constants::OP_UPDATE, message, @db.name, nil, write_concern)
         else
           @connection.send_message(Mongo::Constants::OP_UPDATE, message)
         end
@@ -987,7 +998,7 @@ module Mongo
       selector.merge!(opts)
 
       begin
-      insert_documents([selector], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, true)
+      insert_documents([selector], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, {:w => 1})
 
       rescue Mongo::OperationFailure => e
         if selector[:dropDups] && e.message =~ /^11000/
@@ -1004,7 +1015,7 @@ module Mongo
     # Sends a Mongo::Constants::OP_INSERT message to the database.
     # Takes an array of +documents+, an optional +collection_name+, and a
     # +check_keys+ setting.
-    def insert_documents(documents, collection_name=@name, check_keys=true, safe=false, flags={})
+    def insert_documents(documents, collection_name=@name, check_keys=true, write_concern={}, flags={})
       if flags[:continue_on_error]
         message = BSON::ByteBuffer.new
         message.put_int(1)
@@ -1036,8 +1047,8 @@ module Mongo
       raise InvalidOperation, "Exceded maximum insert size of 16,777,216 bytes" if message.size > @connection.max_bson_size
 
       instrument(:insert, :database => @db.name, :collection => collection_name, :documents => documents) do
-        if safe
-          @connection.send_message_with_safe_check(Mongo::Constants::OP_INSERT, message, @db.name, nil, safe)
+        if Mongo::WriteConcern.gle?(write_concern)
+          @connection.send_message_with_acknowledge(Mongo::Constants::OP_INSERT, message, @db.name, nil, write_concern)
         else
           @connection.send_message(Mongo::Constants::OP_INSERT, message)
         end

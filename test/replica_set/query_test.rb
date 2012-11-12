@@ -20,9 +20,9 @@ class ReplicaSetQueryTest < Test::Unit::TestCase
   end
 
   def test_query
-    @coll.save({:a => 20}, :safe => {:w => 3})
-    @coll.save({:a => 30}, :safe => {:w => 3})
-    @coll.save({:a => 40}, :safe => {:w => 3})
+    @coll.save({:a => 20}, :w => 3)
+    @coll.save({:a => 30}, :w => 3)
+    @coll.save({:a => 40}, :w => 3)
     results = []
     @coll.find.each {|r| results << r}
     [20, 30, 40].each do |a|

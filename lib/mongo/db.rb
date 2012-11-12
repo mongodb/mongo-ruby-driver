@@ -23,13 +23,14 @@ module Mongo
 
   # A MongoDB database.
   class DB
+    include Mongo::WriteConcern
 
-    SYSTEM_NAMESPACE_COLLECTION = "system.namespaces"
-    SYSTEM_INDEX_COLLECTION = "system.indexes"
-    SYSTEM_PROFILE_COLLECTION = "system.profile"
-    SYSTEM_USER_COLLECTION = "system.users"
-    SYSTEM_JS_COLLECTION = "system.js"
-    SYSTEM_COMMAND_COLLECTION = "$cmd"
+    SYSTEM_NAMESPACE_COLLECTION = 'system.namespaces'
+    SYSTEM_INDEX_COLLECTION     = 'system.indexes'
+    SYSTEM_PROFILE_COLLECTION   = 'system.profile'
+    SYSTEM_USER_COLLECTION      = 'system.users'
+    SYSTEM_JS_COLLECTION        = 'system.js'
+    SYSTEM_COMMAND_COLLECTION   = '$cmd'
 
     # Counter for generating unique request ids.
     @@current_request_id = 0
@@ -44,8 +45,8 @@ module Mongo
     # Returns the value of the +strict+ flag.
     def strict?; @strict; end
 
-    # The name of the database and the local safe option.
-    attr_reader :name, :safe
+    # The name of the database and the local write concern options.
+    attr_reader :name, :write_concern
 
     # The Mongo::Client instance connecting to the MongoDB server.
     attr_reader :connection
@@ -70,10 +71,10 @@ module Mongo
     #   fields the factory wishes to inject. (NOTE: if the object already has a primary key,
     #   the factory should not inject a new key).
     #
-    # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
-    #   propagated to Collection objects instantiated off of this DB. If no
-    #   value is provided, the default value set on this instance's Client object will be used. This
-    #   default can be overridden upon instantiation of any collection by explicitly setting a :safe value
+    # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the default write concern for this database.
+    #   Propagated to Collection objects instantiated off of this DB. If no
+    #   options are provided, the default write concern set on this instance's Client object will be used. This
+    #   default can be overridden upon instantiation of any collection by explicitly setting write concern values
     #   on initialization
     #
     # @option opts [Integer] :cache_time (300) Set the time that all ensure_index calls should cache the command.
@@ -84,7 +85,9 @@ module Mongo
       @connection = client
       @strict     = opts[:strict]
       @pk_factory = opts[:pk]
-      @safe       = opts.fetch(:safe, @connection.safe)
+
+      @write_concern = get_write_concern(opts, client)
+
       if value = opts[:read]
         Mongo::Support.validate_read_preference(value)
       else
@@ -173,7 +176,7 @@ module Mongo
     # @return [Boolean]
     def remove_stored_function(function_name)
       if self[SYSTEM_JS_COLLECTION].find_one({"_id" => function_name})
-        self[SYSTEM_JS_COLLECTION].remove({"_id" => function_name}, :safe => true)
+        self[SYSTEM_JS_COLLECTION].remove({"_id" => function_name}, :w => 1)
       else
         return false
       end
@@ -205,7 +208,7 @@ module Mongo
     # @return [Boolean]
     def remove_user(username)
       if self[SYSTEM_USER_COLLECTION].find_one({:user => username})
-        self[SYSTEM_USER_COLLECTION].remove({:user => username}, :safe => true)
+        self[SYSTEM_USER_COLLECTION].remove({:user => username}, :w => 1)
       else
         return false
       end
@@ -323,7 +326,6 @@ module Mongo
           "Currently in strict mode."
       else
         opts = opts.dup
-        opts[:safe] = opts.fetch(:safe, @safe)
         opts.merge!(:pk => @pk_factory) unless opts[:pk]
         Collection.new(name, self, opts)
       end

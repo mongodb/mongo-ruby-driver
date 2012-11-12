@@ -1,5 +1,6 @@
 docs
 .yardoc
+coverage
 *.gem
 nbproject
 *.bundle

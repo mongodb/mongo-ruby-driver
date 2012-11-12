@@ -20,15 +20,31 @@ require 'digest/md5'
 
 module Mongo
   module Support
+
     include Mongo::Conversions
     extend self
 
-    READ_PREFERENCES = [:primary, :primary_preferred, :secondary, :secondary_preferred, :nearest]
+    READ_PREFERENCES = [
+      :primary,
+      :primary_preferred,
+      :secondary,
+      :secondary_preferred,
+      :nearest
+    ]
 
     # Commands that may be sent to replica-set secondaries, depending on
     # read preference and tags. All other commands are always run on the primary.
-    SECONDARY_OK_COMMANDS = ['group', 'aggregate', 'collstats', 'dbstats', 'count', 'distinct',
-      'geonear', 'geosearch', 'geowalk']
+    SECONDARY_OK_COMMANDS = [
+      'group',
+      'aggregate',
+      'collstats',
+      'dbstats',
+      'count',
+      'distinct',
+      'geonear',
+      'geosearch',
+      'geowalk'
+    ]
 
     # Generate an MD5 for authentication.
     #

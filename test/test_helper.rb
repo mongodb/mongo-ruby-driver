@@ -92,12 +92,16 @@ class Test::Unit::TestCase
   include Mongo
   include BSON
 
-  def self.standard_connection(options={})
-    Client.new(TEST_HOST, TEST_PORT, options)
+  def self.standard_connection(options={}, legacy=false)
+    if legacy
+      Connection.new(TEST_HOST, TEST_PORT, options)
+    else
+      Client.new(TEST_HOST, TEST_PORT, options)
+    end
   end
 
-  def standard_connection(options={})
-    self.class.standard_connection(options)
+  def standard_connection(options={}, legacy=false)
+    self.class.standard_connection(options, legacy)
   end
 
   def self.host_port

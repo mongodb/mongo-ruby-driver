@@ -12,7 +12,7 @@ script: bundle exec rake test:ruby
 
 notifications:
   email: false
-  #TODO: flowdock: [api token]
+  flowdock: 1da4416b8ff98d1880986472428b1b1b
 
 services:
   - mongodb

@@ -20,7 +20,7 @@ module Mongo
 
       @ssl = OpenSSL::SSL::SSLSocket.new(@socket)
       @ssl.sync_close = true
-      
+
       connect
     end
 

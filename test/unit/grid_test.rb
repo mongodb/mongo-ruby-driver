@@ -5,7 +5,7 @@ class GridTest < Test::Unit::TestCase
   context "GridFS: " do
     setup do
       @client   = stub()
-      @client.stubs(:safe)
+      @client.stubs(:write_concern).returns({})
       @client.stubs(:read_preference)
       @client.stubs(:tag_sets)
       @client.stubs(:acceptable_latency)

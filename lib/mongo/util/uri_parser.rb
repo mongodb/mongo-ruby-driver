@@ -35,7 +35,20 @@ module Mongo
     MONGODB_URI_SPEC = "mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]"
 
     SPEC_ATTRS = [:nodes, :auths]
-    OPT_ATTRS  = [:connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync, :journal, :connecttimeoutms, :sockettimeoutms, :wtimeoutms]
+
+    OPT_ATTRS  = [
+      :connect,
+      :replicaset,
+      :slaveok,
+      :safe,
+      :w,
+      :wtimeout,
+      :fsync,
+      :journal,
+      :connecttimeoutms,
+      :sockettimeoutms,
+      :wtimeoutms
+    ]
 
     OPT_VALID  = {:connect          => lambda {|arg| ['direct', 'replicaset', 'true', 'false', true, false].include?(arg)},
                   :replicaset       => lambda {|arg| arg.length > 0},
@@ -76,7 +89,18 @@ module Mongo
                   :wtimeoutms       => lambda {|arg| arg.to_i }
                  }
 
-    attr_reader :auths, :connect, :replicaset, :slaveok, :safe, :w, :wtimeout, :fsync, :journal, :connecttimeoutms, :sockettimeoutms, :wtimeoutms
+    attr_reader :auths,
+                :connect,
+                :replicaset,
+                :slaveok,
+                :safe,
+                :w,
+                :wtimeout,
+                :fsync,
+                :journal,
+                :connecttimeoutms,
+                :sockettimeoutms,
+                :wtimeoutms
 
     # Parse a MongoDB URI. This method is used by Client.from_uri.
     # Returns an array of nodes and an array of db authorizations, if applicable.
@@ -105,12 +129,20 @@ module Mongo
     # @note Don't confuse this with attribute getter method #connect.
     #
     # @return [Client,ReplSetClient]
-    def connection(extra_opts)
+    def connection(extra_opts, legacy=false)
       opts = connection_options.merge! extra_opts
-      if replicaset?
-        ReplSetClient.new(nodes, opts)
+      if(legacy)
+        if replicaset?
+          ReplSetConnection.new(nodes, opts)
+        else
+          Connection.new(host, port, opts)
+        end
       else
-        Client.new(host, port, opts)
+        if replicaset?
+          ReplSetClient.new(nodes, opts)
+        else
+          Client.new(host, port, opts)
+        end
       end
     end
 
@@ -152,32 +184,16 @@ module Mongo
     def connection_options
       opts = {}
 
-      if (@w || @journal || @wtimeout || @fsync || @wtimeoutms) && !@safe
-        raise MongoArgumentError, "Safe must be true if w, journal, wtimeoutMS, or fsync is specified"
+      if @wtimeout
+        warn "Using wtimeout in a URI is deprecated, please use wtimeoutMS. It will be removed in v2.0."
+        opts[:wtimeout] = @wtimeout
       end
+      opts[:wtimeout] = @wtimeoutms
 
-      if @safe
-        if @w || @journal || @wtimeout || @fsync || @wtimeoutms
-          safe_opts = {}
-          safe_opts[:w] = @w if @w
-          safe_opts[:j] = @journal if @journal
-
-          if @wtimeout
-            warn "Using wtimeout in a URI is deprecated, please use wtimeoutMS. It will be removed in v2.0."
-            safe_opts[:wtimeout] = @wtimeout
-          end
-
-          if @wtimeoutms
-            safe_opts[:wtimeout] = @wtimeoutms
-          end
-
-          safe_opts[:fsync] = @fsync if @fsync
-        else
-          safe_opts = true
-        end
-
-        opts[:safe] = safe_opts
-      end
+      opts[:w] = 1 if @safe
+      opts[:w] = @w if @w
+      opts[:j] = @journal
+      opts[:fsync] = @fsync
 
       if @connecttimeoutms
         opts[:connect_timeout] = @connecttimeoutms

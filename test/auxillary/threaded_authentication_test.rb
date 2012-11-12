@@ -43,13 +43,13 @@ class AuthenticationTest < Test::Unit::TestCase
 
     threaded_exec do
       assert_raise Mongo::OperationFailure do
-        @db1['stuff'].insert({:a => 2}, :safe => true)
+        @db1['stuff'].insert({:a => 2})
       end
     end
 
     threaded_exec do
       assert_raise Mongo::OperationFailure do
-        @db2['stuff'].insert({:a => 2}, :safe => true)
+        @db2['stuff'].insert({:a => 2})
       end
     end
 
@@ -57,11 +57,11 @@ class AuthenticationTest < Test::Unit::TestCase
     @db2.authenticate('user2', 'secret')
 
     threaded_exec do
-      assert @db1['stuff'].insert({:a => 2}, :safe => true)
+      assert @db1['stuff'].insert({:a => 2})
     end
 
     threaded_exec do
-      assert @db2['stuff'].insert({:a => 2}, :safe => true)
+      assert @db2['stuff'].insert({:a => 2})
     end
 
     puts "Please bounce the server."
@@ -74,24 +74,24 @@ class AuthenticationTest < Test::Unit::TestCase
     end
 
     threaded_exec do
-      assert @db1['stuff'].insert({:a => 2}, :safe => true)
+      assert @db1['stuff'].insert({:a => 2})
     end
 
     threaded_exec do
-      assert @db2['stuff'].insert({:a => 2}, :safe => true)
+      assert @db2['stuff'].insert({:a => 2})
     end
 
     @db1.logout
     threaded_exec do
       assert_raise Mongo::OperationFailure do
-        @db1['stuff'].insert({:a => 2}, :safe => true)
+        @db1['stuff'].insert({:a => 2})
       end
     end
 
     @db2.logout
     threaded_exec do
       assert_raise Mongo::OperationFailure do
-        assert @db2['stuff'].insert({:a => 2}, :safe => true)
+        assert @db2['stuff'].insert({:a => 2})
       end
     end
   end

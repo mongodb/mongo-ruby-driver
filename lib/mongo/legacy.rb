@@ -17,26 +17,65 @@
 # ++
 
 module Mongo
-  # @deprecated Use Mongo::Client instead.
+  module LegacyWriteConcern
+    @legacy_write_concern = true
+
+    def safe=(value)
+      @write_concern = value
+    end
+
+    def safe
+      if @write_concern[:w] == 0
+        return false
+      elsif @write_concern[:w] == 1
+        return true
+      else
+        return @write_concern
+      end
+    end
+
+    def self.from_uri(uri = ENV['MONGODB_URI'], extra_opts={})
+      parser = URIParser.new uri
+      parser.connection(extra_opts, true)
+    end
+  end
+end
+
+module Mongo
+  # @deprecated Use Mongo::Client instead. Support will be removed after v2.0
   class Connection < Client
+    include Mongo::LegacyWriteConcern
+
     def initialize(host=nil, port=nil, opts={})
-      warn '[DEPRECATED] Mongo::Connection has been replaced with Mongo::Client.'
+      write_concern_from_legacy(opts)
       super
     end
   end
 
-  # @deprecated Use Mongo::ReplSetClient instead.
+  # @deprecated Use Mongo::ReplSetClient instead. Support will be removed after v2.0
   class ReplSetConnection < ReplSetClient
+    include Mongo::LegacyWriteConcern
+
     def initialize(*args)
-      warn '[DEPRECATED] Mongo::ReplSetConnection has been replaced with Mongo::ReplSetClient.'
+      if args.last.is_a?(Hash)
+        opts = args.pop
+        write_concern_from_legacy(opts)
+        args.push(opts)
+      end
       super
     end
   end
 
-  # @deprecated Use Mongo::ShardedClient instead.
+  # @deprecated Use Mongo::ShardedClient instead. Support will be removed after v2.0
   class ShardedConnection < ShardedClient
+    include Mongo::LegacyWriteConcern
+
     def initialize(*args)
-      warn '[DEPRECATED] Mongo::ShardedConnection has been replaced with Mongo::ShardedClient.'
+      if args.last.is_a?(Hash)
+        opts = args.pop
+        write_concern_from_legacy(opts)
+        args.push(opts)
+      end
       super
     end
   end

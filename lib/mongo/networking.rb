@@ -56,7 +56,7 @@ module Mongo
     # @see DB#get_last_error for valid last error params.
     #
     # @return [Hash] The document returned by the call to getlasterror.
-    def send_message_with_safe_check(operation, message, db_name, log_message=nil, last_error_params=false)
+    def send_message_with_acknowledge(operation, message, db_name, log_message=nil, last_error_params=false)
       docs = num_received = cursor_id = ''
       add_message_headers(message, operation)
 
@@ -210,14 +210,23 @@ module Mongo
     end
 
     # Constructs a getlasterror message. This method is used exclusively by
-    # Client#send_message_with_safe_check.
+    # Client#send_message_with_acknowledge.
     #
     # Because it modifies message by reference, we don't need to return it.
     def build_last_error_message(message, db_name, opts)
+
+      # flags bit vector
       message.put_int(0)
+
+      # namespace
       BSON::BSON_RUBY.serialize_cstr(message, "#{db_name}.$cmd")
+
+      # number to skip
       message.put_int(0)
+
+      # numer to return (-1 closes cursor)
       message.put_int(-1)
+
       cmd = BSON::OrderedHash.new
       cmd[:getlasterror] = 1
       if opts.is_a?(Hash)

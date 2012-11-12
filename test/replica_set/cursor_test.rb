@@ -34,9 +34,9 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     @db.drop_collection("cursor_tests")
     @coll = @db.collection("cursor_tests")
 
-    @coll.insert({:a => 1}, :safe => true, :w => 3)
-    @coll.insert({:b => 2}, :safe => true, :w => 3)
-    @coll.insert({:c => 3}, :safe => true, :w => 3)
+    @coll.insert({:a => 1}, :w => 3)
+    @coll.insert({:b => 2}, :w => 3)
+    @coll.insert({:c => 3}, :w => 3)
 
     # Pin reader
     @coll.find_one

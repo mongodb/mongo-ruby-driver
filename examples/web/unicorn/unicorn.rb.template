@@ -23,7 +23,7 @@ stdout_path "#{@dir}log/unicorn.stdout.log"
 # NOTE: You need this when using forking web servers!
 after_fork do |server, worker|
   $client.close if $client
-  $client = Mongo::Client.new('localhost', 27017, :safe => true)
+  $client = Mongo::Client.new('localhost', 27017)
   $db = $client['foo']
   STDERR << "FORKED #{server} #{worker}"
 end

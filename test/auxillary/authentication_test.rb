@@ -28,18 +28,18 @@ class AuthenticationTest < Test::Unit::TestCase
     @admin.logout
 
     assert_raise Mongo::OperationFailure do
-      @db1['stuff'].insert({:a => 2}, :safe => true)
+      @db1['stuff'].insert({:a => 2})
     end
 
     assert_raise Mongo::OperationFailure do
-      @db2['stuff'].insert({:a => 2}, :safe => true)
+      @db2['stuff'].insert({:a => 2})
     end
 
     @db1.authenticate('user1', 'secret')
     @db2.authenticate('user2', 'secret')
 
-    assert @db1['stuff'].insert({:a => 2}, :safe => true)
-    assert @db2['stuff'].insert({:a => 2}, :safe => true)
+    assert @db1['stuff'].insert({:a => 2})
+    assert @db2['stuff'].insert({:a => 2})
 
     puts "Please bounce the server."
     gets
@@ -50,24 +50,24 @@ class AuthenticationTest < Test::Unit::TestCase
       rescue Mongo::ConnectionFailure
     end
 
-    assert @db1['stuff'].insert({:a => 2}, :safe => true)
-    assert @db2['stuff'].insert({:a => 2}, :safe => true)
-    assert @db2['stuff'].find({}, :safe => true)
+    assert @db1['stuff'].insert({:a => 2})
+    assert @db2['stuff'].insert({:a => 2})
+    assert @db2['stuff'].find({})
 
     @db1.logout
     assert_raise Mongo::OperationFailure do
-      @db1['stuff'].insert({:a => 2}, :safe => true)
+      @db1['stuff'].insert({:a => 2})
     end
 
     @db2.logout
     assert_raise Mongo::OperationFailure do
-      assert @db2['stuff'].insert({:a => 2}, :safe => true)
+      assert @db2['stuff'].insert({:a => 2})
     end
 
     @db2.authenticate('userRO', 'secret')
-    assert @db2['stuff'].find({}, :safe => true)
+    assert @db2['stuff'].find({})
     assert_raise Mongo::OperationFailure do
-      assert @db2['stuff'].insert({:a => 2}, :safe => true)
+      assert @db2['stuff'].insert({:a => 2})
     end
   end
 

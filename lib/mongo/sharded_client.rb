@@ -34,9 +34,9 @@ module Mongo
     #
     # @option opts [String] :name (nil) The name of the sharded cluster to connect to. You
     #   can use this option to verify that you're connecting to the right sharded cluster.
-    # @option opts [Boolean, Hash] :safe (false) Set the default safe-mode options
+    # @option opts [Hash] ::w (1), :j (false), :wtimeout (false), :fsync (false) Set the default write concern
     #   propagated to DB objects instantiated off of this Client. This
-    #   default can be overridden upon instantiation of any DB by explicitly setting a :safe value
+    #   default can be overridden upon instantiation of any DB by explicitly setting a write concern values
     #   on initialization.
     # @option opts [Logger] :logger (nil) Logger instance to receive driver operation log.
     # @option opts [Integer] :pool_size (1) The maximum number of socket connections allowed per

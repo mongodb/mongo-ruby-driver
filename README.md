@@ -45,7 +45,7 @@ Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](https://githu
 require 'rubygems'
 require 'mongo'
 
-@client = Mongo::Client.new('localhost', 27017, :safe => true)
+@client = Mongo::Client.new('localhost', 27017)
 @db     = @client['sample-db']
 @coll   = @db['test']
 
