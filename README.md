@@ -29,7 +29,7 @@ For the api reference please see the [API][api-url]
 The [wiki](https://github.com/mongodb/mongo-ruby-driver/wiki) has other articles of interest, including:
 
 1. [A tutorial](https://github.com/mongodb/mongo-ruby-driver/wiki/Tutorial).
-2. [Replica Sets in Ruby](https://github.com/mongodb/mongo-ruby-driver/wiki/Replica-Sets.html).
+2. [Replica Sets in Ruby](https://github.com/mongodb/mongo-ruby-driver/wiki/Replica-Sets).
 3. [Write Concern in Ruby](https://github.com/mongodb/mongo-ruby-driver/wiki/Write-Concern).
 4. [Tailable Cursors in Ruby](https://github.com/mongodb/mongo-ruby-driver/wiki/Tailable-Cursors).
 5. [Read Preference in Ruby](https://github.com/mongodb/mongo-ruby-driver/wiki/Read-Preference).
