@@ -4,7 +4,6 @@ desc "Runs default deploy task (release)"
 task :deploy => 'deploy:release'
 
 namespace :deploy do
-
   VERSION_MATCH = /"\d\.\d\.\d{1,3}"|"\d\.\d\.\d{1,3}\.\w*"|"\d\.\d\.\d{1,3}\-\w*"/
   def update_version(value=bumper_version.to_s)
     filename = File.join(File.dirname(__FILE__), '../ext/cbson/version.h')

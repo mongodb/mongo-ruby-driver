@@ -11,7 +11,7 @@ end
 if ENV['TEST']
   Bundler.require(:default, :testing)
 else
-  Bundler.require(:default, :deployment, :testing)
+  Bundler.require(:default, :deploy, :testing)
 end
 
 Dir.glob(File.join('tasks', '**', '*.rake')).sort.each { |rake| load File.expand_path(rake) }
