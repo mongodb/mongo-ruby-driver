@@ -30,16 +30,17 @@ module Mongo
     def instrument(name, payload = {})
       start_time = Time.now
       res = yield
-      log_operation(name, payload, start_time)
+      duration = Time.now - start_time
+      log_operation(name, payload, duration)
       res
     end
 
     protected
 
-    def log_operation(name, payload, start_time)
+    def log_operation(name, payload, duration)
       @logger && @logger.debug do
         msg = "MONGODB "
-        msg << "(#{((Time.now - start_time) * 1000).to_i}ms) "
+        msg << "(#{(duration * 1000).to_i}ms) "
         msg << "#{payload[:database]}['#{payload[:collection]}'].#{name}("
         msg << payload.values_at(:selector, :document, :documents, :fields ).compact.map(&:inspect).join(', ') + ")"
         msg << ".skip(#{payload[:skip]})"   if payload[:skip]
