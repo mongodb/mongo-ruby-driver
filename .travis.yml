@@ -6,7 +6,7 @@ rvm:
   - ruby-head
   - jruby-head
 
-bundler_args: --without deployment
+bundler_args: --without deploy
 
 script: bundle exec rake test:ruby
 
