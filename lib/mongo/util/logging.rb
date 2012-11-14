@@ -29,10 +29,20 @@ module Mongo
     # Execute the block and log the operation described by name and payload.
     def instrument(name, payload = {})
       start_time = Time.now
-      res = yield
+      res = Logging.instrumenter.instrument(name, payload) do
+        yield
+      end
       duration = Time.now - start_time
       log_operation(name, payload, duration)
       res
+    end
+
+    def self.instrumenter
+      @instrumenter || Instrumenter
+    end
+
+    def self.instrumenter=(instrumenter)
+      @instrumenter = instrumenter
     end
 
     protected
@@ -50,5 +60,10 @@ module Mongo
       end
     end
 
+    module Instrumenter
+      def self.instrument(name, payload = {})
+        yield
+      end
+    end
   end
 end
