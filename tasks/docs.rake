@@ -1,7 +1,7 @@
 # -*- mode: ruby; -*-
 
 desc "Generate all documentation"
-task :docs => ['docs:yard', 'docs:rdoc']
+task :docs => 'docs:yard'
 
 namespace :docs do
 
@@ -11,13 +11,6 @@ namespace :docs do
     out = File.join('docs', 'yard', version)
     FileUtils.rm_rf(out)
     system "yardoc -o #{out} --title mongo-#{version}"
-  end
-
-  desc "Generate rdoc documention"
-  task :rdoc do
-    out = File.join('docs', 'rdoc', bumper_version.to_s)
-    FileUtils.rm_rf(out)
-    system "rdoc --main README.md --op #{out} --inline-source --quiet README.md `find lib -name '*.rb'`"
   end
 
 end

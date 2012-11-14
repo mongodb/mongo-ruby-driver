@@ -14,8 +14,8 @@ Gem::Specification.new do |s|
   s.files             += Dir['ext/**/*.rb'] + Dir['ext/**/*.c'] + Dir['ext/**/*.h']
 
   s.require_paths     = ['ext/bson_ext']
-  s.has_rdoc          = false
   s.extensions        = ['ext/cbson/extconf.rb']
+  s.has_rdoc          = 'yard'
 
   s.add_dependency('bson', "~> #{s.version}")
 end

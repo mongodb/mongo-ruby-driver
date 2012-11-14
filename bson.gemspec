@@ -23,7 +23,7 @@ Gem::Specification.new do |s|
   s.test_files        = Dir['test/bson/*.rb', 'test/support/hash_with_indifferent_access.rb']
   s.executables       = ['b2json', 'j2bson']
   s.require_paths     = ['lib']
-  s.has_rdoc          = true
+  s.has_rdoc          = 'yard'
 
   s.add_dependency('activesupport')
 end

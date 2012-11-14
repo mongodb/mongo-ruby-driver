@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
   s.test_files        = Dir['test/**/*.rb']
   s.executables       = ['mongo_console']
   s.require_paths     = ['lib']
-  s.has_rdoc          = true
+  s.has_rdoc          = 'yard'
 
   s.add_dependency('bson', "~> #{s.version}")
 end

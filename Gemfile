@@ -8,7 +8,6 @@ gem 'activesupport'
 group :deploy do
   gem 'git'
   gem 'yard'
-  gem 'rdoc'
   gem 'rvm'
   gem 'version_bumper'
   gem 'redcarpet' unless RUBY_PLATFORM =~ /java/
