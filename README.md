@@ -239,9 +239,9 @@ returned will be inserted.
 Here is a sample primary key factory, taken from the tests:
 ```ruby
 class TestPKFactory
-  def create_pk(row)
-    row['_id'] ||= BSON::ObjectId.new
-    row
+  def create_pk(doc)
+    doc['_id'] ||= BSON::ObjectId.new
+    doc
   end
 end
 ```
@@ -251,11 +251,11 @@ ActiveRecord-like framework for non-Rails apps) and the AR Mongo adapter code
 (for Rails):
 ```ruby
 class PKFactory
-  def create_pk(row)
-    return row if row[:_id]
-    row.delete(:_id)      # in case it exists but the value is nil
-    row['_id'] ||= BSON::ObjectId.new
-    row
+  def create_pk(doc)
+    return doc if doc[:_id]
+    doc.delete(:_id)      # in case it exists but the value is nil
+    doc['_id'] ||= BSON::ObjectId.new
+    doc
   end
 end
 ```
