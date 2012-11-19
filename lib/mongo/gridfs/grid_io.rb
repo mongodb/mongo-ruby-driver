@@ -22,7 +22,9 @@ module Mongo
 
   # GridIO objects represent files in the GridFS specification. This class
   # manages the reading and writing of file chunks and metadata.
-  class GridIO
+  class GridIO 
+    include Mongo::WriteConcern
+    
     DEFAULT_CHUNK_SIZE   = 256 * 1024
     DEFAULT_CONTENT_TYPE = 'binary/octet-stream'
     PROTECTED_ATTRS      = [:files_id, :file_length, :client_md5, :server_md5]
@@ -48,21 +50,21 @@ module Mongo
     # @option opts [String] :content_type ('binary/octet-stream') If no content type is specified,
     #   the content type will may be inferred from the filename extension if the mime-types gem can be
     #   loaded. Otherwise, the content type 'binary/octet-stream' will be used.
-    # @option opts [Boolean] :w (1), :j (false), :wtimeout (false), :fsync (false) Set the default write concern
+    # @option opts [Hash] :w (1) Set the default write concern
     #   When :w > 0, the chunks sent to the server
     #   will be validated using an md5 hash. If validation fails, an exception will be raised.
     def initialize(files, chunks, filename, mode, opts={})
-      @files        = files
-      @chunks       = chunks
-      @filename     = filename
-      @mode         = mode
-      opts          = opts.dup
-      @query        = opts.delete(:query) || {}
-      @query_opts   = opts.delete(:query_opts) || {}
-      @fs_name      = opts.delete(:fs_name) || Grid::DEFAULT_FS_NAME
-      @safe         = opts.delete(:safe) || false
-      @local_md5    = Digest::MD5.new if @safe
-      @custom_attrs = {}
+      @files          = files
+      @chunks         = chunks
+      @filename       = filename
+      @mode           = mode
+      opts            = opts.dup
+      @query          = opts.delete(:query) || {}
+      @query_opts     = opts.delete(:query_opts) || {}
+      @fs_name        = opts.delete(:fs_name) || Grid::DEFAULT_FS_NAME
+      @write_concern  = get_write_concern(opts)
+      @local_md5      = Digest::MD5.new if Mongo::WriteConcern.gle?(@write_concern)
+      @custom_attrs   = {}
 
       case @mode
         when 'r' then init_read
@@ -114,13 +116,13 @@ module Mongo
     def write(io)
       raise GridError, "file not opened for write" unless @mode[0] == ?w
       if io.is_a? String
-        if @safe
+        if Mongo::WriteConcern.gle?(@write_concern)
           @local_md5.update(io)
         end
         write_string(io)
       else
         length = 0
-        if @safe
+        if Mongo::WriteConcern.gle?(@write_concern)
           while(string = io.read(@chunk_size))
             @local_md5.update(string)
             length += write_string(string)
@@ -429,7 +431,7 @@ module Mongo
       @aliases       = opts.delete(:aliases)
       @file_length   = 0
       opts.each {|k, v| self[k] = v}
-      check_existing_file if @safe
+      check_existing_file if Mongo::WriteConcern.gle?(@write_concern)
 
       @current_chunk = create_chunk(0)
       @file_position = 0
@@ -456,13 +458,13 @@ module Mongo
       h
     end
 
-    # Get a server-side md5 and validate against the client if running in safe mode.
+    # Get a server-side md5 and validate against the client if running with acknowledged writes
     def get_md5
       md5_command            = BSON::OrderedHash.new
       md5_command['filemd5'] = @files_id
       md5_command['root']    = @fs_name
       @server_md5 = @files.db.command(md5_command)['md5']
-      if @safe
+      if Mongo::WriteConcern.gle?(@write_concern)
         @client_md5 = @local_md5.hexdigest
         if @local_md5 == @server_md5
           @server_md5

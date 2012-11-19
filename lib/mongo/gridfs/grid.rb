@@ -62,7 +62,7 @@ module Mongo
     #   the content type will may be inferred from the filename extension if the mime-types gem can be
     #   loaded. Otherwise, the content type 'binary/octet-stream' will be used.
     # @option opts [Integer] (262144) :chunk_size size of file chunks in bytes.
-    # @option opts [Boolean] :w (1), :j (false), :wtimeout (false), :fsync (false) Set the default write concern
+    # @option opts [Boolean] :w (1) Set the write concern
     #   When :w > 0, the chunks sent to the server are validated using an md5 hash. 
     #   If validation fails, an exception will be raised.
     #
@@ -73,7 +73,7 @@ module Mongo
       opts.merge!(default_grid_io_opts)
       file = GridIO.new(@files, @chunks, filename, 'w', opts)
       file.write(data)
-      file.close
+      file.close  
       file.files_id
     end
 
