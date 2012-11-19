@@ -66,23 +66,6 @@ class WriteConcernTest < Test::Unit::TestCase
       assert_equal 3, response['n']
     end
   end
-  
-  context "Write concern in gridfs" do
-    setup do
-      @db = standard_connection.db(MONGO_TEST_DB)
-      @data = "GRIDDATA" * 50000
-      @grid = Grid.new(@db, 'test-fs')
-      @metadata = {'app' => 'photos'}
-    end
 
-    should "should check client md5 against server md5" do
-      id = @grid.put(@data, :filename => 'sample', :metadata => @metadata)
-      file = @grid.get(id)
-      #server_md5 = file
-      #assert_equal file
-      
-    end
-
-  end
 
 end
