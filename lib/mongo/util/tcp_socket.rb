@@ -58,10 +58,6 @@ module Mongo
       end
     end
 
-    def setsockopt(key, value, n)
-      @socket.setsockopt(key, value, n)
-    end
-
     def close
       @socket.close
     end

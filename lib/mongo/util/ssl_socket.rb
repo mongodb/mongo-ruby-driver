@@ -48,10 +48,6 @@ module Mongo
       end 
     end
 
-    def setsockopt(key, value, n)
-      @ssl.setsockopt(key, value, n)
-    end
-
     def close
       @ssl.close
     end
