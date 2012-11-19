@@ -59,7 +59,7 @@ class WriteConcernTest < Test::Unit::TestCase
       end
 
       should "use default value on insert" do
-        @client.expects(:send_message_with_acknowledge).with do |op, msg, log, n, safe|
+        @client.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
           safe == @safe_value
         end
 
@@ -67,7 +67,7 @@ class WriteConcernTest < Test::Unit::TestCase
       end
 
       should "allow override alternate value on insert" do
-        @client.expects(:send_message_with_acknowledge).with do |op, msg, log, n, safe|
+        @client.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
           safe == {:w => 100, :j => false, :fsync => false, :wtimeout => false}
         end
 
@@ -80,7 +80,7 @@ class WriteConcernTest < Test::Unit::TestCase
       end
 
       should "use default value on update" do
-        @client.expects(:send_message_with_acknowledge).with do |op, msg, log, n, safe|
+        @client.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
           safe == @safe_value
         end
 
@@ -88,7 +88,7 @@ class WriteConcernTest < Test::Unit::TestCase
       end
 
       should "allow override alternate value on update" do
-        @client.expects(:send_message_with_acknowledge).with do |op, msg, log, n, safe|
+        @client.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
           safe == {:w => 100, :j => false, :fsync => false, :wtimeout => false}
         end
 
@@ -101,7 +101,7 @@ class WriteConcernTest < Test::Unit::TestCase
       end
 
       should "use default value on remove" do
-        @client.expects(:send_message_with_acknowledge).with do |op, msg, log, n, safe|
+        @client.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
           safe == @safe_value
         end
 
@@ -109,7 +109,7 @@ class WriteConcernTest < Test::Unit::TestCase
       end
 
       should "allow override alternate value on remove" do
-        @client.expects(:send_message_with_acknowledge).with do |op, msg, log, n, safe|
+        @client.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
           safe == {:w => 100, :j => false, :fsync => false, :wtimeout => false}
         end
 

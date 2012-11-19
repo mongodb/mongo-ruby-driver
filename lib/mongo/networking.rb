@@ -56,7 +56,7 @@ module Mongo
     # @see DB#get_last_error for valid last error params.
     #
     # @return [Hash] The document returned by the call to getlasterror.
-    def send_message_with_acknowledge(operation, message, db_name, log_message=nil, last_error_params=false)
+    def send_message_with_gle(operation, message, db_name, log_message=nil, last_error_params=false)
       docs = num_received = cursor_id = ''
       add_message_headers(message, operation)
 
@@ -210,7 +210,7 @@ module Mongo
     end
 
     # Constructs a getlasterror message. This method is used exclusively by
-    # Client#send_message_with_acknowledge.
+    # Client#send_message_with_gle.
     #
     # Because it modifies message by reference, we don't need to return it.
     def build_last_error_message(message, db_name, opts)

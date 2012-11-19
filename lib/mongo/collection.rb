@@ -420,7 +420,7 @@ module Mongo
 
       instrument(:remove, :database => @db.name, :collection => @name, :selector => selector) do
         if Mongo::WriteConcern.gle?(write_concern)
-          @connection.send_message_with_acknowledge(Mongo::Constants::OP_DELETE, message, @db.name, nil, write_concern)
+          @connection.send_message_with_gle(Mongo::Constants::OP_DELETE, message, @db.name, nil, write_concern)
         else
           @connection.send_message(Mongo::Constants::OP_DELETE, message)
           true
@@ -475,7 +475,7 @@ module Mongo
 
       instrument(:update, :database => @db.name, :collection => @name, :selector => selector, :document => document) do
         if Mongo::WriteConcern.gle?(write_concern)
-          @connection.send_message_with_acknowledge(Mongo::Constants::OP_UPDATE, message, @db.name, nil, write_concern)
+          @connection.send_message_with_gle(Mongo::Constants::OP_UPDATE, message, @db.name, nil, write_concern)
         else
           @connection.send_message(Mongo::Constants::OP_UPDATE, message)
         end
@@ -1048,7 +1048,7 @@ module Mongo
 
       instrument(:insert, :database => @db.name, :collection => collection_name, :documents => documents) do
         if Mongo::WriteConcern.gle?(write_concern)
-          @connection.send_message_with_acknowledge(Mongo::Constants::OP_INSERT, message, @db.name, nil, write_concern)
+          @connection.send_message_with_gle(Mongo::Constants::OP_INSERT, message, @db.name, nil, write_concern)
         else
           @connection.send_message(Mongo::Constants::OP_INSERT, message)
         end

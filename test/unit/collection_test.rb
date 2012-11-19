@@ -13,7 +13,7 @@ class CollectionTest < Test::Unit::TestCase
       @client = Client.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @client['testing']
       @coll = @db.collection('books')
-      @client.expects(:send_message_with_acknowledge).with do |op, msg, log|
+      @client.expects(:send_message_with_gle).with do |op, msg, log|
         op == 2001
       end
       @coll.stubs(:log_operation)
@@ -24,7 +24,7 @@ class CollectionTest < Test::Unit::TestCase
       @client = Client.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @client['testing']
       @coll = @db.collection('books')
-      @client.expects(:send_message_with_acknowledge).with do |op, msg, log|
+      @client.expects(:send_message_with_gle).with do |op, msg, log|
         op == 2002
       end
       @coll.expects(:log_operation).with do |name, payload|
@@ -50,7 +50,7 @@ class CollectionTest < Test::Unit::TestCase
       @db   = @client['testing']
       @coll = @db.collection('books')
       data = BSON::Binary.new(("BINARY " * 1000).unpack("c*"))
-      @client.expects(:send_message_with_acknowledge).with do |op, msg, log|
+      @client.expects(:send_message_with_gle).with do |op, msg, log|
         op == 2002
       end
       @coll.expects(:log_operation).with do |name, payload|
@@ -63,7 +63,7 @@ class CollectionTest < Test::Unit::TestCase
       @client = Client.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @client['testing']
       @coll = @db.collection('books')
-      @client.expects(:send_message_with_acknowledge).with do |op, msg, db_name, log|
+      @client.expects(:send_message_with_gle).with do |op, msg, db_name, log|
         op == 2001
       end
       @coll.expects(:log_operation).with do |name, payload|
@@ -76,7 +76,7 @@ class CollectionTest < Test::Unit::TestCase
       @client = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @client['testing']
       @coll = @db.collection('books')
-      @client.expects(:send_message_with_acknowledge).with do |op, msg, db_name, log|
+      @client.expects(:send_message_with_gle).with do |op, msg, db_name, log|
         op == 2001
       end
       @coll.expects(:log_operation).with do |name, payload|
@@ -89,7 +89,7 @@ class CollectionTest < Test::Unit::TestCase
       @client = Client.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @client['testing']
       @coll = @db.collection('books')
-      @client.expects(:send_message_with_acknowledge).with do |op, msg, db_name, log|
+      @client.expects(:send_message_with_gle).with do |op, msg, db_name, log|
         op == 2001
       end
       @coll.stubs(:log_operation)
@@ -100,7 +100,7 @@ class CollectionTest < Test::Unit::TestCase
       @client = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @client['testing']
       @coll = @db.collection('books')
-      @client.expects(:send_message_with_acknowledge).with do |op, msg, db_name, log|
+      @client.expects(:send_message_with_gle).with do |op, msg, db_name, log|
         op == 2001
       end
       @coll.stubs(:log_operation)

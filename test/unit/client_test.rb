@@ -14,7 +14,7 @@ class ClientTest < Test::Unit::TestCase
         @client.connect
       end
 
-      should "acknowledge writes by default" do
+      should "gle writes by default" do
         assert_equal 1, @client.write_concern[:w]
       end
 

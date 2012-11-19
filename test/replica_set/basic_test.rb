@@ -98,7 +98,7 @@ class BasicTest < Test::Unit::TestCase
         end
       end
 
-      should "close the connection on send_message_with_acknowledge for major exceptions" do
+      should "close the connection on send_message_with_gle for major exceptions" do
         @client.expects(:checkout_writer).raises(SystemStackError)
         @client.expects(:close)
         begin
