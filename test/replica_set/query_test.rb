@@ -52,7 +52,7 @@ class ReplicaSetQueryTest < Test::Unit::TestCase
   # primary, where it does not exist.
   def test_secondary_getmore
     200.times do |i|
-      @coll.save({:a => i}, :safe => {:w => 3})
+      @coll.save({:a => i}, :w => 3)
     end
     as = []
     # Set an explicit batch size, in case the default ever changes.
