@@ -55,7 +55,7 @@ module Mongo
         :wtimeout => false
       }
       write_concern.merge!(parent.write_concern) if parent
-      write_concern.merge!(opts.select {|k| write_concern.keys.include?(k)})
+      write_concern.merge!(opts.reject {|k,v| !write_concern.keys.include?(k)})
       write_concern
     end
 
