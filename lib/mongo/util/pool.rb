@@ -21,8 +21,13 @@ module Mongo
     MAX_PING_TIME  = 1_000_000
     PRUNE_INTERVAL = 10_000
 
-    attr_accessor :host, :port, :address,
-      :size, :timeout, :safe, :checked_out, :client
+    attr_accessor :host,
+                  :port,
+                  :address,
+                  :size,
+                  :timeout,
+                  :checked_out,
+                  :client
 
     # Create a new pool of connections.
     def initialize(client, host, port, opts={})
@@ -64,7 +69,7 @@ module Mongo
 
     # Close this pool.
     #
-    # @option opts [Boolean] :soft (false) If true,
+    # @option opts [Boolean]:soft (false) If true,
     #   close only those sockets that are not checked out.
     def close(opts={})
       @connection_mutex.synchronize do

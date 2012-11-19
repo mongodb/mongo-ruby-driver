@@ -2,10 +2,10 @@ require 'rbconfig'
 require 'test_helper'
 
 class TestCollection < Test::Unit::TestCase
-  @@connection ||= standard_connection(:op_timeout => 10)
-  @@db   = @@connection.db(MONGO_TEST_DB)
-  @@test = @@db.collection("test")
-  @@version = @@connection.server_version
+  @@client       ||= standard_connection(:op_timeout => 10)
+  @@db           = @@client.db(MONGO_TEST_DB)
+  @@test         = @@db.collection("test")
+  @@version      = @@client.server_version
 
   def setup
     @@test.remove

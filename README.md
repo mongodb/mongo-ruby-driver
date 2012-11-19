@@ -172,7 +172,7 @@ timeout for waiting for old connections to be released to the pool.
 To set up a pooled connection to a single MongoDB instance:
 
 ```ruby
-  @client = Client.new("localhost", 27017, :safe => true, :pool_size => 5, :timeout => 5)
+  @client = Client.new("localhost", 27017, :pool_size => 5, :timeout => 5)
 ```
 
 Though the pooling architecture will undoubtedly evolve, it currently owes much credit
@@ -225,7 +225,7 @@ You can tell the Ruby Mongo driver how to create primary keys by passing in
 the :pk option to the Client#db method.
 
 ```ruby
-db = Mongo::Client.new('localhost', 27017, :safe => true).db('dbname', :pk => MyPKFactory.new)
+db = Mongo::Client.new('localhost', 27017).db('dbname', :pk => MyPKFactory.new)
 ```
 
 A primary key factory object must respond to :create_pk, which should
@@ -281,7 +281,7 @@ To turn on strict mode, either pass in :strict => true when obtaining a DB
 object or call the `:strict=` method:
 
 ```ruby
-db = Client.new('localhost', 27017, :safe => true).db('dbname', :strict => true)
+db = Client.new('localhost', 27017).db('dbname', :strict => true)
 # I'm feeling lax
 db.strict = false
 # No, I'm not!

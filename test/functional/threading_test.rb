@@ -4,9 +4,9 @@ class TestThreading < Test::Unit::TestCase
 
   include Mongo
 
-  @@con = standard_connection(:pool_size => 10, :pool_timeout => 30)
-  @@db  = @@con[MONGO_TEST_DB]
-  @@coll = @@db.collection('thread-test-collection')
+  @@client = standard_connection(:pool_size => 10, :pool_timeout => 30)
+  @@db     = @@client[MONGO_TEST_DB]
+  @@coll   = @@db.collection('thread-test-collection')
 
   def set_up_safe_data
     @@db.drop_collection('duplicate')
@@ -31,12 +31,12 @@ class TestThreading < Test::Unit::TestCase
           if i % 2 == 0
             assert_raise Mongo::OperationFailure do
               t1 = Time.now
-              @unique.update({"test" => "insert"}, {"$set" => {"test" => "update"}}, :safe => true)
+              @unique.update({"test" => "insert"}, {"$set" => {"test" => "update"}})
               times << Time.now - t1
             end
           else
             t1 = Time.now
-            @duplicate.update({"test" => "insert"}, {"$set" => {"test" => "update"}}, :safe => true)
+            @duplicate.update({"test" => "insert"}, {"$set" => {"test" => "update"}})
             times << Time.now - t1
           end
         end
@@ -55,10 +55,10 @@ class TestThreading < Test::Unit::TestCase
       threads[i] = Thread.new do
         if i % 2 == 0
           assert_raise Mongo::OperationFailure do
-            @unique.insert({"test" => "insert"}, :safe => true)
+            @unique.insert({"test" => "insert"})
           end
         else
-          @duplicate.insert({"test" => "insert"}, :safe => true)
+          @duplicate.insert({"test" => "insert"})
         end
       end
     end
@@ -73,7 +73,7 @@ class TestThreading < Test::Unit::TestCase
     @@coll = @@db.collection('thread-test-collection')
 
     1000.times do |i|
-      @@coll.insert({"x" => i}, :safe => true)
+      @@coll.insert({"x" => i})
     end
 
     threads = []

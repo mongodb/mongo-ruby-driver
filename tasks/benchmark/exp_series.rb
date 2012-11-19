@@ -338,7 +338,7 @@ class TestExpPerformance < Test::Unit::TestCase
 
   def insert_safe(coll, doc)
     clear_ids(doc)
-    coll.insert(doc, :safe => true) # note that insert stores :_id in doc and subsequent inserts with :_id are updates
+    coll.insert(doc) # note that insert stores :_id in doc and subsequent inserts with :_id are updates
   end
 
   def find_one_setup(db, coll, doc, iterations)

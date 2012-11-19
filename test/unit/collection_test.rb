@@ -73,7 +73,7 @@ class CollectionTest < Test::Unit::TestCase
     end
 
     should "send safe update message with legacy" do
-      @client = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
+      @client = Connection.new('localhost', 27017, :logger => @logger, :safe => true, :connect => false)
       @db   = @client['testing']
       @coll = @db.collection('books')
       @client.expects(:send_message_with_gle).with do |op, msg, db_name, log|
@@ -82,7 +82,7 @@ class CollectionTest < Test::Unit::TestCase
       @coll.expects(:log_operation).with do |name, payload|
         (name == :update) && payload[:document][:title].include?('Moby')
       end
-      @coll.update({}, {:title => 'Moby Dick'}, :safe => true)
+      @coll.update({}, {:title => 'Moby Dick'})
     end
 
     should "send safe insert message" do
@@ -94,17 +94,6 @@ class CollectionTest < Test::Unit::TestCase
       end
       @coll.stubs(:log_operation)
       @coll.update({}, {:title => 'Moby Dick'})
-    end
-
-    should "send safe insert message with legacy" do
-      @client = Connection.new('localhost', 27017, :logger => @logger, :connect => false)
-      @db   = @client['testing']
-      @coll = @db.collection('books')
-      @client.expects(:send_message_with_gle).with do |op, msg, db_name, log|
-        op == 2001
-      end
-      @coll.stubs(:log_operation)
-      @coll.update({}, {:title => 'Moby Dick'}, :safe => true)
     end
 
     should "not call insert for each ensure_index call" do
