@@ -42,7 +42,7 @@ namespace :deploy do
   task :package do
     # TODO: Make this work for rbenv too
     version = bumper_version.to_s
-    RVM.use 'jruby-1.7.0'
+    RVM.use 'jruby'
     system "gem build bson.gemspec; mv bson-#{version}.gem bson-java-#{version}.gem"
     RVM.reset_current!
 
