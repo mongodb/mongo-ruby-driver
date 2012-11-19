@@ -19,7 +19,6 @@ namespace :test do
   task :ruby do
     if RUBY_VERSION >= "1.9.0" && RUBY_ENGINE == 'ruby'
       require 'simplecov'
-
       SimpleCov.start do
         add_group "Mongo", 'lib/mongo'
         add_group "BSON", 'lib/bson'
