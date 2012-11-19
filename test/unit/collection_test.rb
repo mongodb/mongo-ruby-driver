@@ -73,10 +73,10 @@ class CollectionTest < Test::Unit::TestCase
     end
 
     should "send safe update message with legacy" do
-      @client = Connection.new('localhost', 27017, :logger => @logger, :safe => true, :connect => false)
-      @db   = @client['testing']
-      @coll = @db.collection('books')
-      @client.expects(:send_message_with_gle).with do |op, msg, db_name, log|
+      @connection = Connection.new('localhost', 27017, :logger => @logger, :safe => true, :connect => false)
+      @db         = @connection['testing']
+      @coll       = @db.collection('books')
+      @connection.expects(:send_message_with_gle).with do |op, msg, db_name, log|
         op == 2001
       end
       @coll.expects(:log_operation).with do |name, payload|
