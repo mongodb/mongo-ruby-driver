@@ -18,11 +18,13 @@ namespace :test do
   desc "Runs default test suites"
   task :ruby do
     if RUBY_VERSION >= "1.9.0" && RUBY_ENGINE == 'ruby'
-      require 'simplecov'
-      SimpleCov.start do
-        add_group "Mongo", 'lib/mongo'
-        add_group "BSON", 'lib/bson'
-        add_filter "/test/"
+      if ENV['COVERAGE']
+        require 'simplecov'
+        SimpleCov.start do
+          add_group "Mongo", 'lib/mongo'
+          add_group "BSON", 'lib/bson'
+          add_filter "/test/"
+        end
       end
     end
 
