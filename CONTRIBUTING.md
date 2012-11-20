@@ -49,8 +49,8 @@ If your bug fix or enhancement deals with Cluster or Replica Set
 code, please run all relevant tests for those code subsets before
 issuing the request.
 
-* `rake test:sc` for sharded clusters
-* `rake test:rs` for replica sets
+* `rake test:sharded_cluster` for sharded clusters
+* `rake test:replica_set` for replica sets
 
 Cluster and Replica Set testing is currently **not** automatically
 performed so it is important they are run in a thorough fashion under

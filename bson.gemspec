@@ -9,9 +9,9 @@ Gem::Specification.new do |s|
   s.description       = 'A Ruby BSON implementation for MongoDB. For more information about Mongo, see http://www.mongodb.org. For more information on BSON, see http://www.bsonspec.org.'
   s.rubyforge_project = 'bson'
 
-  s.files             = ['LICENSE']
-  s.files             += ['lib/bson.rb'] + Dir['lib/bson/**/*.rb']
-  s.files             += ['bin/b2json', 'bin/j2bson']
+  s.files             = ['bson.gemspec', 'LICENSE', 'HISTORY.md', 'VERSION']
+  s.files             += ['bin/b2json', 'bin/j2bson', 'lib/bson.rb']
+  s.files             += Dir['lib/bson/**/*.rb']
 
   if RUBY_PLATFORM =~ /java/
     s.files           += ['ext/java/jar/jbson.jar', 'ext/java/jar/mongo-2.6.5.jar']
@@ -20,7 +20,7 @@ Gem::Specification.new do |s|
     s.platform        = Gem::Platform::RUBY
   end
 
-  s.test_files        = Dir['test/bson/*.rb', 'test/support/hash_with_indifferent_access.rb']
+  s.test_files        = Dir['test/bson/*.rb']
   s.executables       = ['b2json', 'j2bson']
   s.require_paths     = ['lib']
   s.has_rdoc          = 'yard'

@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.description       = 'C extensions to accelerate the Ruby BSON serialization. For more information about BSON, see http://bsonspec.org.  For information about MongoDB, see http://www.mongodb.org.'
   s.rubyforge_project = 'bson_ext'
 
-  s.files             = ['Rakefile', 'bson_ext.gemspec']
+  s.files             = ['bson_ext.gemspec', 'LICENSE', 'HISTORY.md', 'VERSION']
   s.files             += Dir['ext/**/*.rb'] + Dir['ext/**/*.c'] + Dir['ext/**/*.h']
 
   s.require_paths     = ['ext/bson_ext']

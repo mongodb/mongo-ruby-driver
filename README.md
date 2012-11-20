@@ -18,9 +18,9 @@ has a link to API Documentation for the current release.
 
 If you have the source, you can generate the matching documentation  by typing
 
-    $ rake docs:yard
+    $ rake docs
 
-Then open the file docs/yard/index.html in your browser.
+Once generated, the API documentation can be found in the docs/ folder.
 
 # Introduction
 
@@ -65,49 +65,31 @@ puts "There are #{@coll.count} records. Here they are:"
 
 ### Ruby Versions
 
-The driver works and is consistently tested on Ruby 1.8.7 and 1.9.3 as well as JRuby 1.6.6.
+The driver works and is consistently tested on Ruby 1.8.7 and 1.9.3 as well as JRuby 1.6.x and 1.7.x.
 
-Note that if you're on 1.8.7, be sure that you're using a patchlevel >= 249. There
-are some IO bugs in earlier versions.
+Note that if you're on 1.8.7, be sure that you're using a patchlevel >= 249. There are some IO bugs in earlier versions.
 
 ### Gems
 
-The driver's gems are hosted at [Rubygems.org](http://rubygems.org). Make sure you're
-using the latest version of rubygems:
-
     $ gem update --system
-
-Then you can install the mongo gem as follows:
-
     $ gem install mongo
 
-The driver also requires the bson gem:
-
-    $ gem install bson
-
-And for a significant performance boost, you'll want to install the C extensions:
+For a significant performance boost, you'll want to install the C extension:
 
     $ gem install bson_ext
 
-Note that bson_ext isn't used with JRuby. Instead, some native Java extensions are bundled with the bson gem.
-If you ever need to modify these extensions, you can recompile with the following rake task:
+Note that bson_ext isn't used with JRuby. Instead, we use some native Java extensions are bundled with the bson gem. If you ever need to modify these extensions, you can recompile with the following rake task:
 
-    $ rake build:java
+    $ rake compile:jbson
 
 ### From the GitHub source
 
 The source code is available at http://github.com/mongodb/mongo-ruby-driver.
 You can either clone the git repository or download a tarball or zip file.
 Once you have the source, you can use it from wherever you downloaded it or
-you can install it as a gem from the source by typing
+you can install it as a gem from the source by typing:
 
-    $ rake gem:install
-
-To install the C extensions from source, type this instead:
-
-    $ rake gem:install_extensions
-
-That's all there is to it!
+    $ rake install
 
 # Examples
 
@@ -311,20 +293,15 @@ If implementing higher-level timeouts, using tools like `Rack::Timeout`, it's ve
 to call `Mongo::Client#close` to prevent the subsequent operation from receiving the previous
 request.
 
-### Test-Unit, Shoulda, and Mocha
-
-Running the test suite requires test-unit, shoulda, and mocha.  You can install them as follows:
-
-    $ gem install test-unit
-    $ gem install shoulda
-    $ gem install mocha
-
-The tests assume that the Mongo database is running on the default port. You
-can override the default host (localhost) and port (Client::DEFAULT_PORT) by
-using the environment variables MONGO_RUBY_DRIVER_HOST and
-MONGO_RUBY_DRIVER_PORT.
-
 # Testing
+
+Before running the tests, make sure you install all test dependencies by running:
+
+    $ gem install bundler; bundle install
+
+To run all default test suites, just type:
+
+    $ rake test
 
 If you have the source code, you can run the tests.  Skip this test with the C extension if you're running JRuby.
 
@@ -345,7 +322,7 @@ To run any individual rake tasks with the C extension enabled, just pass C_EXT=t
 
 If you want to test replica set, you can run the following task:
 
-    $ rake test:rs
+    $ rake test:replica_set
 
 To run a single test at the top level, add -Itest since we no longer modify LOAD_PATH:
 

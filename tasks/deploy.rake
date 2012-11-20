@@ -1,5 +1,11 @@
 # -*- mode: ruby; -*-
 
+desc "Installs gems from source"
+task :install => ['deploy:package'] do
+  Dir.glob('*.gem').each { |file| "gem install #{file}" }
+  Rake::Task['deploy:cleanup']
+end
+
 desc "Runs default deploy task (release)"
 task :deploy => 'deploy:release'
 
