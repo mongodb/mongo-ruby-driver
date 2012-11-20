@@ -24,6 +24,22 @@ class SafeTest < Test::Unit::TestCase
       @collection.insert({:a => 1}, :safe => false)
     end
 
+    should "allow safe override on save" do
+      @collection.insert({:a => 1})
+      id = @collection.insert({:a => 2})
+      assert_nothing_raised do
+        @collection.save({:_id => id.to_s, :a => 1}, :safe => false)
+      end
+    end
+
+    should "propogate safe option on save" do
+      @collection.insert({:a => 1})
+      id = @collection.insert({:a => 2})
+      assert_raise(OperationFailure) do
+        @collection.save({:_id => id.to_s, :a => 1})
+      end
+    end
+
     should "propogate safe option on update" do
       @collection.insert({:a => 1})
       @collection.insert({:a => 2})

@@ -117,6 +117,25 @@ class WriteConcernTest < Test::Unit::TestCase
         @collection.update({:a => 1}, {:a => 2}, :w => 0)
       end
 
+      should "use default value on save" do
+        @client.expects(:send_message_with_gle).with do |op, msg, log, n, wc|
+          wc == @write_concern
+        end
+        @collection.save({:a => 1})
+      end
+
+      should "allow override alternate value on save" do
+        @client.expects(:send_message_with_gle).with do |op, msg, log, n, wc|
+          wc == @write_concern.merge(:w => 1)
+        end
+        @collection.save({:a => 1}, :w => 1)
+      end
+
+      should "allow override to disable on save" do
+        @client.expects(:send_message)
+        @collection.save({:a => 1}, :w => 0)
+      end
+
       should "use default value on remove" do
         @client.expects(:send_message_with_gle).with do |op, msg, log, n, wc|
           wc == @write_concern

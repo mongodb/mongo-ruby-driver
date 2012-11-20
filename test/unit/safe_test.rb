@@ -1,36 +1,36 @@
 require 'test_helper'
 
-class WriteConcernTest < Test::Unit::TestCase
+class SafeTest < Test::Unit::TestCase
 
   context "Write-Concern modes on Mongo::Connection " do
     setup do
       @safe_value = {:w => 7, :j => false, :fsync => false, :wtimeout => false}
-      @client = Mongo::Connection.new('localhost', 27017, :safe => @safe_value, :connect => false)
+      @connection = Mongo::Connection.new('localhost', 27017, :safe => @safe_value, :connect => false)
     end
 
     should "propogate to DB" do
-      db = @client['foo']
+      db = @connection['foo']
       assert_equal @safe_value[:w], db.write_concern[:w]
 
 
-      db = @client.db('foo')
+      db = @connection.db('foo')
       assert_equal @safe_value[:w], db.write_concern[:w]
 
-      db = DB.new('foo', @client)
+      db = DB.new('foo', @connection)
       assert_equal @safe_value[:w], db.write_concern[:w]
     end
 
     should "allow db override" do
-      db = DB.new('foo', @client, :safe => false)
+      db = DB.new('foo', @connection, :safe => false)
       assert_equal 0, db.write_concern[:w]
 
-      db = @client.db('foo', :safe => false)
+      db = @connection.db('foo', :safe => false)
       assert_equal 0, db.write_concern[:w]
     end
 
     context "on DB: " do
       setup do
-        @db = @client['foo']
+        @db = @connection['foo']
       end
 
       should "propogate to collection" do
@@ -55,11 +55,11 @@ class WriteConcernTest < Test::Unit::TestCase
 
     context "on operations supporting safe mode" do
       setup do
-        @col = @client['foo']['bar']
+        @col = @connection['foo']['bar']
       end
 
       should "use default value on insert" do
-        @client.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
+        @connection.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
           safe == @safe_value
         end
 
@@ -67,7 +67,7 @@ class WriteConcernTest < Test::Unit::TestCase
       end
 
       should "allow override alternate value on insert" do
-        @client.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
+        @connection.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
           safe == {:w => 100, :j => false, :fsync => false, :wtimeout => false}
         end
 
@@ -75,12 +75,12 @@ class WriteConcernTest < Test::Unit::TestCase
       end
 
       should "allow override to disable on insert" do
-        @client.expects(:send_message)
+        @connection.expects(:send_message)
         @col.insert({:a => 1}, :safe => false)
       end
 
       should "use default value on update" do
-        @client.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
+        @connection.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
           safe == @safe_value
         end
 
@@ -88,7 +88,7 @@ class WriteConcernTest < Test::Unit::TestCase
       end
 
       should "allow override alternate value on update" do
-        @client.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
+        @connection.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
           safe == {:w => 100, :j => false, :fsync => false, :wtimeout => false}
         end
 
@@ -96,12 +96,31 @@ class WriteConcernTest < Test::Unit::TestCase
       end
 
       should "allow override to disable on update" do
-        @client.expects(:send_message)
+        @connection.expects(:send_message)
         @col.update({:a => 1}, {:a => 2}, :safe => false)
       end
 
+      should "use default value on save" do
+        @connection.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
+          safe == @safe_value
+        end
+        @col.save({:a => 1})
+      end
+
+      should "allow override alternate value on save" do
+        @connection.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
+          safe == @safe_value.merge(:w => 1)
+        end
+        @col.save({:a => 1}, :safe => true)
+      end
+
+      should "allow override to disable on save" do
+        @connection.expects(:send_message)
+        @col.save({:a => 1}, :safe => false)
+      end
+
       should "use default value on remove" do
-        @client.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
+        @connection.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
           safe == @safe_value
         end
 
@@ -109,7 +128,7 @@ class WriteConcernTest < Test::Unit::TestCase
       end
 
       should "allow override alternate value on remove" do
-        @client.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
+        @connection.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
           safe == {:w => 100, :j => false, :fsync => false, :wtimeout => false}
         end
 
@@ -117,7 +136,7 @@ class WriteConcernTest < Test::Unit::TestCase
       end
 
       should "allow override to disable on remove" do
-        @client.expects(:send_message)
+        @connection.expects(:send_message)
         @col.remove({}, :safe => false)
       end
     end

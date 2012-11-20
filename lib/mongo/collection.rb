@@ -330,13 +330,12 @@ module Mongo
     #
     # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails.
     def save(doc, opts={})
-      write_concern = get_write_concern(opts, self)
       if doc.has_key?(:_id) || doc.has_key?('_id')
         id = doc[:_id] || doc['_id']
-        update({:_id => id}, doc, :upsert => true, :write_concern => write_concern)
+        update({:_id => id}, doc, opts.merge!({:upsert => true}))
         id
       else
-        insert(doc, write_concern)
+        insert(doc, opts)
       end
     end
 
