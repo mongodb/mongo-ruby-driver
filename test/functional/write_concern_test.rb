@@ -66,6 +66,45 @@ class WriteConcernTest < Test::Unit::TestCase
       assert_equal 3, response['n']
     end
   end
+  
+  context "Write concern in gridfs" do
+    setup do
+      @db = standard_connection.db(MONGO_TEST_DB)
+      @grid = Mongo::GridFileSystem.new(@db)
+      @filename = 'sample'
+    end
+    
+    teardown do
+      @grid.delete(@filename)
+    end
 
+    should "should acknowledge writes by default using md5" do
+       
+      file = @grid.open(@filename, 'w')
+      file.write "Hello world!"
+      file.close
+      assert_equal file.client_md5, file.server_md5
+      
+    end
+    
+    should "should allow for unacknowledged writes" do
+
+      file = @grid.open(@filename, 'w', {:w => 0} )
+      file.write "Hello world!"
+      file.close
+      assert_nil file.client_md5, file.server_md5
+      
+    end
+    
+    should "should support legacy write concern api" do
+
+      file = @grid.open(@filename, 'w', {:safe => false} )
+      file.write "Hello world!"
+      file.close
+      assert_nil file.client_md5, file.server_md5
+      
+    end
+
+  end
 
 end
