@@ -11,6 +11,10 @@ class WriteConcernTest < Test::Unit::TestCase
         :wtimeout => false
       }
 
+      class Mongo::Client
+        public :build_get_last_error_message, :build_command_message
+      end
+
       @client =
         Mongo::Client.new('localhost', 27017, 
           @write_concern.merge({:connect => false}))
@@ -64,6 +68,11 @@ class WriteConcernTest < Test::Unit::TestCase
     context "on operations supporting 'gle' mode" do
       setup do
         @collection = @client['foo']['bar']
+      end
+
+      should "not send w = 1 to the server" do
+        gle = @client.build_get_last_error_message("fake", {:w => 1})
+        assert_equal gle, @client.build_command_message("fake", {:getlasterror => 1})
       end
 
       should "use default value on insert" do
