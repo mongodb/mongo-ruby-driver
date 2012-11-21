@@ -42,8 +42,8 @@ module Mongo
 end
 
 module Mongo
-  # @deprecated Use Mongo::Client instead. Support will be removed after v2.0
-  class Connection < Client
+  # @deprecated Use Mongo::MongoClient instead. Support will be removed after v2.0
+  class Connection < MongoClient
     include Mongo::LegacyWriteConcern
 
     def initialize(host=nil, port=nil, opts={})
@@ -52,8 +52,8 @@ module Mongo
     end
   end
 
-  # @deprecated Use Mongo::ReplSetClient instead. Support will be removed after v2.0
-  class ReplSetConnection < ReplSetClient
+  # @deprecated Use Mongo::MongoReplicaSetClient instead. Support will be removed after v2.0
+  class ReplSetConnection < MongoReplicaSetClient
     include Mongo::LegacyWriteConcern
 
     def initialize(*args)
@@ -66,8 +66,8 @@ module Mongo
     end
   end
 
-  # @deprecated Use Mongo::ShardedClient instead. Support will be removed after v2.0
-  class ShardedConnection < ShardedClient
+  # @deprecated Use Mongo::MongoShardedClient instead. Support will be removed after v2.0
+  class ShardedConnection < MongoShardedClient
     include Mongo::LegacyWriteConcern
 
     def initialize(*args)

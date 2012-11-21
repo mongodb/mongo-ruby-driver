@@ -33,8 +33,8 @@ class NodeTest < Test::Unit::TestCase
   should "should default the port for an array" do
     node = Node.new(@client, ['power.level.com'])
     assert_equal 'power.level.com', node.host
-    assert_equal Client::DEFAULT_PORT, node.port
-    assert_equal "power.level.com:#{Client::DEFAULT_PORT}", node.address
+    assert_equal MongoClient::DEFAULT_PORT, node.port
+    assert_equal "power.level.com:#{MongoClient::DEFAULT_PORT}", node.address
   end
 
   should "load a node from a string" do
@@ -47,23 +47,23 @@ class NodeTest < Test::Unit::TestCase
   should "should default the port for a string" do
     node = Node.new(@client, '192.168.0.1')
     assert_equal '192.168.0.1', node.host
-    assert_equal Client::DEFAULT_PORT, node.port
-    assert_equal "192.168.0.1:#{Client::DEFAULT_PORT}", node.address
+    assert_equal MongoClient::DEFAULT_PORT, node.port
+    assert_equal "192.168.0.1:#{MongoClient::DEFAULT_PORT}", node.address
   end
 
   should "two nodes with the same address should be equal" do
     assert_equal Node.new(@client, '192.168.0.1'),
-      Node.new(@client, ['192.168.0.1', Client::DEFAULT_PORT])
+      Node.new(@client, ['192.168.0.1', MongoClient::DEFAULT_PORT])
   end
 
   should "two nodes with the same address should have the same hash" do
     assert_equal Node.new(@client, '192.168.0.1').hash,
-      Node.new(@client, ['192.168.0.1', Client::DEFAULT_PORT]).hash
+      Node.new(@client, ['192.168.0.1', MongoClient::DEFAULT_PORT]).hash
   end
 
   should "two nodes with different addresses should not be equal" do
     assert_not_equal Node.new(@client, '192.168.0.2'),
-      Node.new(@client, ['192.168.0.1', Client::DEFAULT_PORT])
+      Node.new(@client, ['192.168.0.1', MongoClient::DEFAULT_PORT])
   end
 
   should "two nodes with the same address should have the same hash negate" do

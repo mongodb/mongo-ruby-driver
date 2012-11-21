@@ -14,7 +14,7 @@ class AuthTest < Test::Unit::TestCase
   end
 
   def test_repl_set_auth
-    @client = ReplSetClient.new(build_seeds(3), :name => @rs.name)
+    @client = MongoReplicaSetClient.new(build_seeds(3), :name => @rs.name)
 
     # Add an admin user
     @client['admin'].add_user("me", "secret")
@@ -41,7 +41,7 @@ class AuthTest < Test::Unit::TestCase
     end
 
     # Same should apply to a random secondary
-    @slave1 = Client.new(@client.secondary_pools[0].host,
+    @slave1 = MongoClient.new(@client.secondary_pools[0].host,
       @client.secondary_pools[0].port, :slave_ok => true)
 
     # Find should fail
@@ -54,7 +54,7 @@ class AuthTest < Test::Unit::TestCase
     assert @slave1['foo']['stuff'].find_one
 
     # Same should apply when using :secondary_only
-    @second_only = ReplSetClient.new(build_seeds(3), 
+    @second_only = MongoReplicaSetClient.new(build_seeds(3), 
       :require_primary => false, :read => :secondary_only)
 
     # Find should fail

@@ -280,7 +280,7 @@ module Mongo
           #puts "DbServer.verify via connection probe - port:#{@port.inspect} iteration:#{i} @pid:#{@pid.inspect} kill:#{Process.kill(0, @pid).inspect} running?:#{running?.inspect} cmd:#{cmd.inspect}"
           begin
             raise Mongo::ConnectionFailure unless running?
-            Mongo::Client.new(@host, @port).close
+            Mongo::MongoClient.new(@host, @port).close
             #puts "DbServer.verified via connection - port: #{@port} iteration: #{i}"
             return @pid
           rescue Mongo::ConnectionFailure
@@ -315,7 +315,7 @@ module Mongo
         cmd_servers.each do |cmd_server|
           debug 3, cmd_server.inspect
           cmd_server = cmd_server.config if cmd_server.is_a?(DbServer)
-          client = Mongo::Client.new(cmd_server[:host], cmd_server[:port])
+          client = Mongo::MongoClient.new(cmd_server[:host], cmd_server[:port])
           cmd.each do |c|
             debug 3,  "ClusterManager.command c:#{c.inspect}"
             response = client[db_name].command( c, opts )
@@ -335,7 +335,7 @@ module Mongo
 
       def repl_set_get_config
         host, port = primary_name.split(":")
-        client = Mongo::Client.new(host, port)
+        client = Mongo::MongoClient.new(host, port)
         client['local']['system.replset'].find_one
       end
 
@@ -481,7 +481,7 @@ module Mongo
 
       def mongos_discover # can also do @config[:routers] find but only want mongos for connections
         (@config[:configs]).collect do |cmd_server|
-          client = Mongo::Client.new(cmd_server[:host], cmd_server[:port])
+          client = Mongo::MongoClient.new(cmd_server[:host], cmd_server[:port])
           result = client['config']['mongos'].find.to_a
           client.close
           result

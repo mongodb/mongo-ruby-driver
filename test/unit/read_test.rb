@@ -5,7 +5,7 @@ class ReadTest < Test::Unit::TestCase
   context "Read mode on standard connection: " do
     setup do
       @read_preference = :secondary
-      @client = Mongo::Client.new('localhost', 27017, :read => @read_preference, :connect => false)
+      @client = Mongo::MongoClient.new('localhost', 27017, :read => @read_preference, :connect => false)
     end
 
   end
@@ -16,7 +16,7 @@ class ReadTest < Test::Unit::TestCase
       @acceptable_latency = 100
       @tags = {"dc" => "Tyler", "rack" => "Brock"}
       @bad_tags = {"wow" => "cool"}
-      @client = Mongo::ReplSetClient.new(
+      @client = Mongo::MongoReplicaSetClient.new(
         ['localhost:27017'],
         :read => @read_preference,
         :tag_sets => @tags,
@@ -25,7 +25,7 @@ class ReadTest < Test::Unit::TestCase
       )
     end
 
-    should "store read preference on Client" do
+    should "store read preference on MongoClient" do
       assert_equal @read_preference, @client.read_preference
       assert_equal @tags, @client.tag_sets
       assert_equal @acceptable_latency, @client.acceptable_latency

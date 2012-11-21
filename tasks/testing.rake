@@ -60,9 +60,9 @@ namespace :test do
     puts "[CLEAN-UP] Dropping test databases..."
     $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
     require 'mongo'
-    client = Mongo::Client.new(
+    client = Mongo::MongoClient.new(
       ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-      ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::Client::DEFAULT_PORT)
+      ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::MongoClient::DEFAULT_PORT)
     client.database_names.each {|name| client.drop_database(name) if name =~ /^ruby-test/ }
 
     if File.directory?('data')

@@ -19,7 +19,7 @@
 module Mongo
 
   # Instantiates and manages connections to a MongoDB replica set.
-  class ReplSetClient < Client
+  class MongoReplicaSetClient < MongoClient
 
     REPL_SET_OPTS = [
       :read,
@@ -46,15 +46,15 @@ module Mongo
     # If no args are provided, it will check <code>ENV["MONGODB_URI"]</code>.
     #
     # Once connected to a replica set, you can find out which nodes are primary, secondary, and
-    # arbiters with the corresponding accessors: Client#primary, Client#secondaries, and
-    # Client#arbiters. This is useful if your application needs to connect manually to nodes other
+    # arbiters with the corresponding accessors: MongoClient#primary, MongoClient#secondaries, and
+    # MongoClient#arbiters. This is useful if your application needs to connect manually to nodes other
     # than the primary.
     #
     # @overload initialize(seeds=ENV["MONGODB_URI"], opts={})
     #   @param [Array<String>, Array<Array(String, Integer)>] seeds
     #
     #   @option opts [Hash] :w (1), :j (false), :wtimeout (false), :fsync (false) Set the default write concern
-    #     propagated to DB objects instantiated off of this Client. This
+    #     propagated to DB objects instantiated off of this MongoClient. This
     #     default can be overridden upon instantiation of any DB by explicitly setting write concern values
     #     on initialization.
     #   @option opts [:primary, :primary_preferred, :secondary, :secondary_preferred, :nearest] :read_preference (:primary)
@@ -94,13 +94,13 @@ module Mongo
     #     The purpose of seed nodes is to permit the driver to find at least one replica set member even if a member is down.
     #
     # @example Connect to a replica set and provide two seed nodes.
-    #   Mongo::ReplSetClient.new(['localhost:30000', 'localhost:30001'])
+    #   Mongo::MongoReplicaSetClient.new(['localhost:30000', 'localhost:30001'])
     #
     # @example Connect to a replica set providing two seed nodes and ensuring a connection to the replica set named 'prod':
-    #   Mongo::ReplSetClient.new(['localhost:30000', 'localhost:30001'], :name => 'prod')
+    #   Mongo::MongoReplicaSetClient.new(['localhost:30000', 'localhost:30001'], :name => 'prod')
     #
     # @example Connect to a replica set providing two seed nodes and allowing reads from a secondary node:
-    #   Mongo::ReplSetClient.new(['localhost:30000', 'localhost:30001'], :read => :secondary)
+    #   Mongo::MongoReplicaSetClient.new(['localhost:30000', 'localhost:30001'], :read => :secondary)
     #
     # @see http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html Replica sets in Ruby
     #
@@ -115,19 +115,19 @@ module Mongo
       if nodes.empty? and ENV.has_key?('MONGODB_URI')
         parser = URIParser.new ENV['MONGODB_URI']
         if parser.direct?
-          raise MongoArgumentError, "Mongo::ReplSetClient.new called with no arguments, but ENV['MONGODB_URI'] implies a direct connection."
+          raise MongoArgumentError, "Mongo::MongoReplicaSetClient.new called with no arguments, but ENV['MONGODB_URI'] implies a direct connection."
         end
         opts = parser.connection_options.merge! opts
         nodes = [parser.nodes]
       end
 
       unless nodes.length > 0
-        raise MongoArgumentError, "A ReplSetClient requires at least one seed node."
+        raise MongoArgumentError, "A MongoReplicaSetClient requires at least one seed node."
       end
 
       # This is temporary until support for the old format is dropped
       if nodes.first.last.is_a?(Integer)
-        warn "Initiating a ReplSetClient with seeds passed as individual [host, port] array arguments is deprecated."
+        warn "Initiating a MongoReplicaSetClient with seeds passed as individual [host, port] array arguments is deprecated."
         warn "Please specify hosts as an array of 'host:port' strings; the old format will be removed in v2.0"
         @seeds = nodes
       else
@@ -168,7 +168,7 @@ module Mongo
     end
 
     def inspect
-      "<Mongo::ReplSetClient:0x#{self.object_id.to_s(16)} @seeds=#{@seeds.inspect} " +
+      "<Mongo::MongoReplicaSetClient:0x#{self.object_id.to_s(16)} @seeds=#{@seeds.inspect} " +
         "@connected=#{@connected}>"
     end
 
@@ -199,7 +199,7 @@ module Mongo
     # Determine whether a replica set refresh is
     # required. If so, run a hard refresh. You can
     # force a hard refresh by running
-    # ReplSetClient#hard_refresh!
+    # MongoReplicaSetClient#hard_refresh!
     #
     # @return [Boolean] +true+ unless a hard refresh
     #   is run and the refresh lock can't be acquired.
@@ -248,7 +248,7 @@ module Mongo
 
     # @deprecated
     def connecting?
-      warn "ReplSetClient#connecting? is deprecated and will be removed in v2.0."
+      warn "MongoReplicaSetClient#connecting? is deprecated and will be removed in v2.0."
       false
     end
 
@@ -267,8 +267,8 @@ module Mongo
     end
 
     def nodes
-      warn "ReplSetClient#nodes is DEPRECATED and will be removed in v2.0. " +
-        "Please use ReplSetClient#seeds instead."
+      warn "MongoReplicaSetClient#nodes is DEPRECATED and will be removed in v2.0. " +
+        "Please use MongoReplicaSetClient#seeds instead."
       @seeds
     end
 
@@ -306,8 +306,8 @@ module Mongo
     # @deprecated
     def reset_connection
       close
-      warn "ReplSetClient#reset_connection is now deprecated and will be removed in v2.0. " +
-        "Use ReplSetClient#close instead."
+      warn "MongoReplicaSetClient#reset_connection is now deprecated and will be removed in v2.0. " +
+        "Use MongoReplicaSetClient#close instead."
     end
 
     # Returns +true+ if it's okay to read from a secondary node.

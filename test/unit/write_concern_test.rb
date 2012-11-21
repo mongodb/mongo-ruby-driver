@@ -2,7 +2,7 @@ require 'test_helper'
 
 class WriteConcernTest < Test::Unit::TestCase
 
-  context "Write-Concern modes on Mongo::Client " do
+  context "Write-Concern modes on Mongo::MongoClient " do
     setup do
       @write_concern = {
         :w        => 7,
@@ -11,12 +11,12 @@ class WriteConcernTest < Test::Unit::TestCase
         :wtimeout => false
       }
 
-      class Mongo::Client
+      class Mongo::MongoClient
         public :build_get_last_error_message, :build_command_message
       end
 
       @client =
-        Mongo::Client.new('localhost', 27017, 
+        Mongo::MongoClient.new('localhost', 27017, 
           @write_concern.merge({:connect => false}))
     end
 

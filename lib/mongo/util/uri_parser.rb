@@ -102,7 +102,7 @@ module Mongo
                 :sockettimeoutms,
                 :wtimeoutms
 
-    # Parse a MongoDB URI. This method is used by Client.from_uri.
+    # Parse a MongoDB URI. This method is used by MongoClient.from_uri.
     # Returns an array of nodes and an array of db authorizations, if applicable.
     #
     # @note Passwords can contain any character except for ','
@@ -124,11 +124,11 @@ module Mongo
       validate_connect
     end
 
-    # Create a Mongo::Client or a Mongo::ReplSetClient based on the URI.
+    # Create a Mongo::MongoClient or a Mongo::MongoReplicaSetClient based on the URI.
     #
     # @note Don't confuse this with attribute getter method #connect.
     #
-    # @return [Client,ReplSetClient]
+    # @return [MongoClient,MongoReplicaSetClient]
     def connection(extra_opts, legacy=false)
       opts = connection_options.merge! extra_opts
       if(legacy)
@@ -139,9 +139,9 @@ module Mongo
         end
       else
         if replicaset?
-          ReplSetClient.new(nodes, opts)
+          MongoReplicaSetClient.new(nodes, opts)
         else
-          Client.new(host, port, opts)
+          MongoClient.new(host, port, opts)
         end
       end
     end
@@ -179,7 +179,7 @@ module Mongo
       nodes[0][1].to_i
     end
 
-    # Options that can be passed to Mongo::Client.new or Mongo::ReplSetClient.new
+    # Options that can be passed to Mongo::MongoClient.new or Mongo::MongoReplicaSetClient.new
     # @return [Hash]
     def connection_options
       opts = {}
@@ -251,7 +251,7 @@ module Mongo
 
       hosturis.each do |hosturi|
         # If port is present, use it, otherwise use default port
-        host, port = hosturi.split(':') + [Client::DEFAULT_PORT]
+        host, port = hosturi.split(':') + [MongoClient::DEFAULT_PORT]
 
         if !(port.to_s =~ /^\d+$/)
           raise MongoArgumentError, "Invalid port #{port}; port must be specified as digits."

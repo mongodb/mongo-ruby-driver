@@ -4,9 +4,9 @@ class ReplicaSetAckTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
-    @client = ReplSetClient.new(@rs.repl_set_seeds)
+    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds)
 
-    @slave1 = Client.new(
+    @slave1 = MongoClient.new(
       @client.secondary_pools[0].host,
       @client.secondary_pools[0].port, :slave_ok => true)
 

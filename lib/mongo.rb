@@ -66,9 +66,9 @@ require 'mongo/util/uri_parser'
 
 
 require 'mongo/networking'
-require 'mongo/client'
-require 'mongo/repl_set_client'
-require 'mongo/sharded_client'
+require 'mongo/mongo_client'
+require 'mongo/mongo_replica_set_client'
+require 'mongo/mongo_sharded_client'
 require 'mongo/legacy'
 require 'mongo/collection'
 require 'mongo/cursor'

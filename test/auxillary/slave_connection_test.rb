@@ -7,8 +7,8 @@ class SlaveConnectionTest < Test::Unit::TestCase
 
   def self.connect_to_slave
     @@host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
-    @@port = ENV['MONGO_RUBY_DRIVER_PORT'] || Client::DEFAULT_PORT
-    conn = Client.new(@@host, @@port, :slave_ok => true)
+    @@port = ENV['MONGO_RUBY_DRIVER_PORT'] || MongoClient::DEFAULT_PORT
+    conn = MongoClient.new(@@host, @@port, :slave_ok => true)
     response = conn['admin'].command(:ismaster => 1)
     Mongo::Support.ok?(response) && response['ismaster'] != 1
   end
@@ -18,19 +18,19 @@ class SlaveConnectionTest < Test::Unit::TestCase
 
     def test_connect_to_slave
       assert_raise Mongo::ConnectionFailure do
-        @db = Client.new(@@host, @@port, :slave_ok => false).db('ruby-mongo-demo')
+        @db = MongoClient.new(@@host, @@port, :slave_ok => false).db('ruby-mongo-demo')
       end
     end
 
     def test_slave_ok_sent_to_queries
-      @con = Client.new(@@host, @@port, :slave_ok => true)
+      @con = MongoClient.new(@@host, @@port, :slave_ok => true)
       assert_equal true, @con.slave_ok?
     end
   else
     puts "Not connected to slave; skipping slave connection tests."
 
     def test_slave_ok_false_on_queries
-      @client = Client.new(@@host, @@port)
+      @client = MongoClient.new(@@host, @@port)
       assert !@client.slave_ok?
     end
   end

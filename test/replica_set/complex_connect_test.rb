@@ -17,9 +17,9 @@ class ComplexConnectTest < Test::Unit::TestCase
 
   def test_complex_connect
     host = @rs.servers.first.host
-    primary = Client.new(host, @rs.primary.port)
+    primary = MongoClient.new(host, @rs.primary.port)
 
-    @client = ReplSetClient.new([
+    @client = MongoReplicaSetClient.new([
       @rs.servers[2].host_port,
       @rs.servers[1].host_port,
       @rs.servers[0].host_port

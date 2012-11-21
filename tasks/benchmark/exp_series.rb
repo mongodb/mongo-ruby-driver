@@ -178,7 +178,7 @@ class TestExpPerformance < Test::Unit::TestCase
   ### Mac OS X - sysctl -a hw
 
   def setup_test_set
-    @client = Mongo::Client.new
+    @client = Mongo::MongoClient.new
     @client.drop_database($db_name)
     @db = @client.db($db_name)
     @coll = @db.collection($collection_name)

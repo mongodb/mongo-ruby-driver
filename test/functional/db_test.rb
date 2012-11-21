@@ -160,10 +160,10 @@ class DBTest < Test::Unit::TestCase
 
   def test_authenticate_with_connection_uri
     @@db.add_user('spongebob', 'squarepants')
-    assert Mongo::Client.from_uri("mongodb://spongebob:squarepants@#{host_port}/#{@@db.name}")
+    assert Mongo::MongoClient.from_uri("mongodb://spongebob:squarepants@#{host_port}/#{@@db.name}")
 
     assert_raise Mongo::AuthenticationError do
-      client = Mongo::Client.from_uri("mongodb://wrong:info@#{host_port}/#{@@db.name}")
+      client = Mongo::MongoClient.from_uri("mongodb://wrong:info@#{host_port}/#{@@db.name}")
       client['test']['foo'].find_one
     end
   end

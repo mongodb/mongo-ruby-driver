@@ -9,7 +9,7 @@ class PoolManagerTest < Test::Unit::TestCase
       TCPSocket.stubs(:new).returns(new_mock_socket)
       @db = new_mock_db
 
-      @client = stub("Client")
+      @client = stub("MongoClient")
       @client.stubs(:connect_timeout).returns(5)
       @client.stubs(:op_timeout).returns(5)
       @client.stubs(:pool_size).returns(2)

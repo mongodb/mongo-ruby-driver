@@ -81,7 +81,7 @@ unless defined? MONGO_TEST_DB
 end
 
 unless defined? TEST_PORT
-  TEST_PORT = ENV['MONGO_RUBY_DRIVER_PORT'] ? ENV['MONGO_RUBY_DRIVER_PORT'].to_i : Mongo::Client::DEFAULT_PORT
+  TEST_PORT = ENV['MONGO_RUBY_DRIVER_PORT'] ? ENV['MONGO_RUBY_DRIVER_PORT'].to_i : Mongo::MongoClient::DEFAULT_PORT
 end
 
 unless defined? TEST_HOST
@@ -96,7 +96,7 @@ class Test::Unit::TestCase
     if legacy
       Connection.new(TEST_HOST, TEST_PORT, options)
     else
-      Client.new(TEST_HOST, TEST_PORT, options)
+      MongoClient.new(TEST_HOST, TEST_PORT, options)
     end
   end
 

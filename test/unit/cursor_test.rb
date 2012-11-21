@@ -5,7 +5,7 @@ class CursorTest < Test::Unit::TestCase
     setup do
       @logger     = mock()
       @logger.stubs(:debug)
-      @connection = stub(:class => Client, :logger => @logger,
+      @connection = stub(:class => MongoClient, :logger => @logger,
         :slave_ok? => false, :read_preference => :primary, :log_duration => false,
         :tag_sets => {}, :acceptable_latency => 10)
       @db         = stub(:name => "testing", :slave_ok? => false,
@@ -113,7 +113,7 @@ class CursorTest < Test::Unit::TestCase
     setup do
       @logger     = mock()
       @logger.stubs(:debug)
-      @connection = stub(:class => Client, :logger => @logger, :slave_ok? => false,
+      @connection = stub(:class => MongoClient, :logger => @logger, :slave_ok? => false,
         :log_duration => false, :tag_sets =>{}, :acceptable_latency => 10)
       @db = stub(:slave_ok? => true, :name => "testing", :connection => @connection,
         :tag_sets => {}, :acceptable_latency => 10)

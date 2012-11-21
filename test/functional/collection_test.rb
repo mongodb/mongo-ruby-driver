@@ -28,8 +28,8 @@ class TestCollection < Test::Unit::TestCase
     assert_equal BSON::ObjectId, @coll_default_pk.pk_factory
 
     # Create a db with a pk_factory.
-    @db = Client.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                         ENV['MONGO_RUBY_DRIVER_PORT'] || Client::DEFAULT_PORT).db(MONGO_TEST_DB, :pk => Object.new)
+    @db = MongoClient.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+                         ENV['MONGO_RUBY_DRIVER_PORT'] || MongoClient::DEFAULT_PORT).db(MONGO_TEST_DB, :pk => Object.new)
     @coll = @db.collection('coll-with-pk')
     assert @coll.pk_factory.is_a?(Object)
 

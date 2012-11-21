@@ -47,7 +47,7 @@ Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](https://githu
 require 'rubygems'
 require 'mongo'
 
-@client = Mongo::Client.new('localhost', 27017)
+@client = Mongo::MongoClient.new('localhost', 27017)
 @db     = @client['sample-db']
 @coll   = @db['test']
 
@@ -154,7 +154,7 @@ timeout for waiting for old connections to be released to the pool.
 To set up a pooled connection to a single MongoDB instance:
 
 ```ruby
-  @client = Client.new("localhost", 27017, :pool_size => 5, :timeout => 5)
+  @client = MongoClient.new("localhost", 27017, :pool_size => 5, :timeout => 5)
 ```
 
 Though the pooling architecture will undoubtedly evolve, it currently owes much credit
@@ -168,13 +168,13 @@ of v1.3.0, the Ruby driver detects forking and reconnects automatically.
 
 ## Environment variable `MONGODB_URI`
 
-`Mongo::Client.from_uri`, `Mongo::Client.new` and `Mongo::ReplSetClient.new` will use <code>ENV["MONGODB_URI"]</code> if no other args are provided.
+`Mongo::MongoClient.from_uri`, `Mongo::MongoClient.new` and `Mongo::MongoReplicaSetClient.new` will use <code>ENV["MONGODB_URI"]</code> if no other args are provided.
 
 The URI must fit this specification:
 
     mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
 
-If the type of connection (direct or replica set) should be determined entirely from <code>ENV["MONGODB_URI"]</code>, you may want to use `Mongo::Client.from_uri` because it will return either `Mongo::Client` or a `Mongo::ReplSetClient` depending on how many hosts are specified. Trying to use `Mongo::Client.new` with multiple hosts in <code>ENV["MONGODB_URI"]</code> will raise an exception.
+If the type of connection (direct or replica set) should be determined entirely from <code>ENV["MONGODB_URI"]</code>, you may want to use `Mongo::MongoClient.from_uri` because it will return either `Mongo::MongoClient` or a `Mongo::MongoReplicaSetClient` depending on how many hosts are specified. Trying to use `Mongo::MongoClient.new` with multiple hosts in <code>ENV["MONGODB_URI"]</code> will raise an exception.
 
 ## String Encoding
 
@@ -204,10 +204,10 @@ generate _id values. If you want to control _id values or even their types,
 using a PK factory lets you do so.
 
 You can tell the Ruby Mongo driver how to create primary keys by passing in
-the :pk option to the Client#db method.
+the :pk option to the MongoClient#db method.
 
 ```ruby
-db = Mongo::Client.new('localhost', 27017).db('dbname', :pk => MyPKFactory.new)
+db = Mongo::MongoClient.new('localhost', 27017).db('dbname', :pk => MyPKFactory.new)
 ```
 
 A primary key factory object must respond to :create_pk, which should
@@ -263,7 +263,7 @@ To turn on strict mode, either pass in :strict => true when obtaining a DB
 object or call the `:strict=` method:
 
 ```ruby
-db = Client.new('localhost', 27017).db('dbname', :strict => true)
+db = MongoClient.new('localhost', 27017).db('dbname', :strict => true)
 # I'm feeling lax
 db.strict = false
 # No, I'm not!
@@ -287,10 +287,10 @@ Notes:
 ## Socket timeouts
 
 The Ruby driver support timeouts on socket read operations. To enable them, set the
-`:op_timeout` option when you create a `Mongo::Client` object.
+`:op_timeout` option when you create a `Mongo::MongoClient` object.
 
 If implementing higher-level timeouts, using tools like `Rack::Timeout`, it's very important
-to call `Mongo::Client#close` to prevent the subsequent operation from receiving the previous
+to call `Mongo::MongoClient#close` to prevent the subsequent operation from receiving the previous
 request.
 
 # Testing

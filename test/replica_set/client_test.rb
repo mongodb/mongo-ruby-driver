@@ -33,7 +33,7 @@ class ClientTest < Test::Unit::TestCase
     #replica_host_ports = @rs.replicas.collect{|replica| [replica.host, replica.port]}
     host = @rs.replicas.first.host
     silently do
-      @client = Client.multi([
+      @client = MongoClient.multi([
         # guaranteed to have one data-holding member
         [host, @rs.replicas[0].port],
         [host, @rs.replicas[1].port],
@@ -46,7 +46,7 @@ class ClientTest < Test::Unit::TestCase
 
   def test_connect_bad_name
     assert_raise_error(ReplicaSetConnectionError, "-wrong") do
-      @client = ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name + "-wrong")
+      @client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name + "-wrong")
     end
   end
 
@@ -54,7 +54,7 @@ class ClientTest < Test::Unit::TestCase
     @rs.secondaries.first.stop
 
     rescue_connection_failure do
-      @client = ReplSetClient.new @rs.repl_set_seeds
+      @client = MongoReplicaSetClient.new @rs.repl_set_seeds
     end
     assert @client.connected?
   end
@@ -63,17 +63,17 @@ class ClientTest < Test::Unit::TestCase
     @rs.secondaries.last.stop
 
     rescue_connection_failure do
-      @client = ReplSetClient.new @rs.repl_set_seeds
+      @client = MongoReplicaSetClient.new @rs.repl_set_seeds
     end
     assert @client.connected?
   end
 
   def test_connect_with_primary_stepped_down
-    @client = ReplSetClient.new @rs.repl_set_seeds
+    @client = MongoReplicaSetClient.new @rs.repl_set_seeds
     @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 3})
     assert @client[MONGO_TEST_DB]['bar'].find_one
 
-    primary = Mongo::Client.new(@client.primary_pool.host, @client.primary_pool.port)
+    primary = Mongo::MongoClient.new(@client.primary_pool.host, @client.primary_pool.port)
     assert_raise Mongo::ConnectionFailure do
       primary['admin'].command(step_down_command)
     end
@@ -85,7 +85,7 @@ class ClientTest < Test::Unit::TestCase
   end
 
   def test_connect_with_primary_killed
-    @client = ReplSetClient.new @rs.repl_set_seeds
+    @client = MongoReplicaSetClient.new @rs.repl_set_seeds
     assert @client.connected?
     @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 3})
     assert @client[MONGO_TEST_DB]['bar'].find_one
@@ -98,10 +98,10 @@ class ClientTest < Test::Unit::TestCase
   end
 
   def test_save_with_primary_stepped_down
-    @client = ReplSetClient.new @rs.repl_set_seeds
+    @client = MongoReplicaSetClient.new @rs.repl_set_seeds
     assert @client.connected?
 
-    primary = Mongo::Client.new(@client.primary_pool.host, @client.primary_pool.port)
+    primary = Mongo::MongoClient.new(@client.primary_pool.host, @client.primary_pool.port)
     assert_raise Mongo::ConnectionFailure do
       primary['admin'].command(step_down_command)
     end
@@ -112,11 +112,11 @@ class ClientTest < Test::Unit::TestCase
   end
 
   #def test_connect_with_first_node_removed
-  #  @client = ReplSetClient.new @rs.repl_set_seeds
+  #  @client = MongoReplicaSetClient.new @rs.repl_set_seeds
   #  @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 3})
   #
   #  old_primary = [@client.primary_pool.host, @client.primary_pool.port]
-  #  old_primary_conn = Mongo::Client.new(*old_primary)
+  #  old_primary_conn = Mongo::MongoClient.new(*old_primary)
   #  assert_raise Mongo::ConnectionFailure do
   #    old_primary_conn['admin'].command(step_down_command)
   #  end
@@ -127,7 +127,7 @@ class ClientTest < Test::Unit::TestCase
   #  end
   #
   #  new_primary = @rs.get_all_host_pairs_with_state(1).first
-  #  new_primary_conn = Mongo::Client.new(*new_primary)
+  #  new_primary_conn = Mongo::MongoClient.new(*new_primary)
   #
   #  config = nil
   #
@@ -151,7 +151,7 @@ class ClientTest < Test::Unit::TestCase
   #  end
   #
   #  # Make sure a new connection skips the old primary
-  #  @new_conn = ReplSetClient.new @rs.repl_set_seeds
+  #  @new_conn = MongoReplicaSetClient.new @rs.repl_set_seeds
   #  @new_conn.connect
   #  new_nodes = [@new_conn.primary] + @new_conn.secondaries
   #  assert !(new_nodes).include?(old_primary)
@@ -171,7 +171,7 @@ class ClientTest < Test::Unit::TestCase
   #  begin
   #    hung_node = IO.popen('nc -lk 127.0.0.1 29999 >/dev/null 2>&1')
   #
-  #    @client = ReplSetClient.new(['localhost:29999'] + @rs.repl_set_seeds,
+  #    @client = MongoReplicaSetClient.new(['localhost:29999'] + @rs.repl_set_seeds,
   #                                  :connect_timeout => 2)
   #    @client.connect
   #    assert ['localhost:29999'] != @client.primary
@@ -182,14 +182,14 @@ class ClientTest < Test::Unit::TestCase
   #end
 
   def test_connect_with_connection_string
-    @client = Client.from_uri("mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}")
+    @client = MongoClient.from_uri("mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}")
     assert !@client.nil?
     assert @client.connected?
   end
 
   def test_connect_with_connection_string_in_env_var
     ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}"
-    @client = ReplSetClient.new
+    @client = MongoReplicaSetClient.new
     assert !@client.nil?
     assert_equal 2, @client.seeds.length
     assert_equal @rs.replicas[0].host, @client.seeds[0][0]
@@ -202,7 +202,7 @@ class ClientTest < Test::Unit::TestCase
 
   def test_connect_with_connection_string_in_implicit_mongodb_uri
     ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}"
-    @client = Client.from_uri
+    @client = MongoClient.from_uri
     assert !@client.nil?
     assert_equal 2, @client.seeds.length
     assert_equal @rs.replicas[0].host, @client.seeds[0][0]
@@ -214,19 +214,19 @@ class ClientTest < Test::Unit::TestCase
   end
 
   def test_connect_with_new_seed_format
-    @client = ReplSetClient.new @rs.repl_set_seeds
+    @client = MongoReplicaSetClient.new @rs.repl_set_seeds
     assert @client.connected?
   end
 
   def test_connect_with_old_seed_format
     silently do
-      @client = ReplSetClient.new(@rs.replicas[0].host_port_a, @rs.replicas[1].host_port_a)
+      @client = MongoReplicaSetClient.new(@rs.replicas[0].host_port_a, @rs.replicas[1].host_port_a)
     end
     assert @client.connected?
   end
 
   def test_connect_with_full_connection_string
-    @client = Client.from_uri("mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name};w=2;fsync=true;slaveok=true")
+    @client = MongoClient.from_uri("mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name};w=2;fsync=true;slaveok=true")
     assert !@client.nil?
     assert @client.connected?
     assert_equal 2, @client.write_concern[:w]
@@ -236,7 +236,7 @@ class ClientTest < Test::Unit::TestCase
 
   def test_connect_with_full_connection_string_in_env_var
     ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name};w=2;fsync=true;slaveok=true"
-    @client = ReplSetClient.new
+    @client = MongoReplicaSetClient.new
     assert !@client.nil?
     assert @client.connected?
     assert_equal 2, @client.write_concern[:w]
@@ -246,7 +246,7 @@ class ClientTest < Test::Unit::TestCase
 
   def test_connect_options_override_env_var
     ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name};w=2;fsync=true;slaveok=true"
-    @client = ReplSetClient.new({:w => 0})
+    @client = MongoReplicaSetClient.new({:w => 0})
     assert !@client.nil?
     assert @client.connected?
     assert_equal 0, @client.write_concern[:w]

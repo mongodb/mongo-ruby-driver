@@ -18,7 +18,7 @@ module Mongo
     # @return [Integer] number of bytes sent
     def send_message(operation, message, opts={})
       if opts.is_a?(String)
-        warn "Client#send_message no longer takes a string log message. " +
+        warn "MongoClient#send_message no longer takes a string log message. " +
           "Logging is now handled within the Collection and Cursor classes."
         opts = {}
       end
@@ -220,7 +220,7 @@ module Mongo
     end
 
     # Constructs a getlasterror message. This method is used exclusively by
-    # Client#send_message_with_gle.
+    # MongoClient#send_message_with_gle.
     def build_get_last_error_message(db_name, write_concern)
       gle = BSON::OrderedHash.new
       gle[:getlasterror] = 1

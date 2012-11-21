@@ -7,7 +7,7 @@ class Features14Test < Test::Unit::TestCase
 
   context "MongoDB 1.4" do
     setup do
-      @client = Mongo::Client.new
+      @client = Mongo::MongoClient.new
       @db  = @client['mongo-ruby-test']
       @col = @db['new-features']
     end

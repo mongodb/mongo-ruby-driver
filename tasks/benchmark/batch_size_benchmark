@@ -28,7 +28,7 @@ large = {
 }
 
 
-client = Mongo::Client.new
+client = Mongo::MongoClient.new
 db  = client['benchmark']
 col = db['bigdocs']
 

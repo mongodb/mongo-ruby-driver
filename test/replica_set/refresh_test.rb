@@ -16,7 +16,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     @rs.secondaries.each{|s| s.stop}
 
     rescue_connection_failure do
-      @client = ReplSetClient.new(@rs.repl_set_seeds, :refresh_mode => false)
+      @client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :refresh_mode => false)
     end
 
     assert_equal [], @client.secondaries
@@ -45,7 +45,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     @rs.secondaries.each{|s| s.stop}
     
     rescue_connection_failure do
-      @client = ReplSetClient.new(@rs.repl_set_seeds,
+      @client = MongoReplicaSetClient.new(@rs.repl_set_seeds,
         :refresh_interval => 1, :refresh_mode => :sync, :read => :secondary_preferred)
     end
 
@@ -74,7 +74,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
   end
   
   def test_automated_refresh_when_secondary_goes_down
-    @client = ReplSetClient.new(@rs.repl_set_seeds,
+    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds,
       :refresh_interval => 1, :refresh_mode => :sync)
 
     num_secondaries = @client.secondary_pools.length
@@ -103,7 +103,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
   end
 =begin
   def test_automated_refresh_with_removed_node
-    @client = ReplSetClient.new(@rs.repl_set_seeds,
+    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds,
       :refresh_interval => 1, :refresh_mode => :sync)
 
     num_secondaries = @client.secondary_pools.length
@@ -125,14 +125,14 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
   end
 
   def test_adding_and_removing_nodes
-    @client = ReplSetClient.new(build_seeds(3),
+    @client = MongoReplicaSetClient.new(build_seeds(3),
       :refresh_interval => 2, :refresh_mode => :sync)
 
     @rs.add_node
     sleep(4)
     @client['foo']['bar'].find_one
 
-    @conn2 = ReplSetClient.new(build_seeds(3),
+    @conn2 = MongoReplicaSetClient.new(build_seeds(3),
       :refresh_interval => 2, :refresh_mode => :sync)
 
     assert @conn2.secondaries.sort == @client.secondaries.sort,

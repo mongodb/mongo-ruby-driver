@@ -12,7 +12,7 @@ class BasicTest < Test::Unit::TestCase
   end
 
   def test_connect
-    client = Mongo::ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
+    client = Mongo::MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
     assert client.connected?
     assert_equal @rs.primary_name, client.primary.join(':')
     assert_equal @rs.secondary_names.sort, client.secondaries.collect{|s| s.join(':')}.sort
@@ -20,7 +20,7 @@ class BasicTest < Test::Unit::TestCase
     client.close
 
     silently do
-      client = Mongo::ReplSetClient.new(@rs.repl_set_seeds_old, :name => @rs.repl_set_name)
+      client = Mongo::MongoReplicaSetClient.new(@rs.repl_set_seeds_old, :name => @rs.repl_set_name)
     end
 
     assert client.connected?
@@ -28,23 +28,23 @@ class BasicTest < Test::Unit::TestCase
   end
 
   def test_safe_option
-    client = Mongo::ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
+    client = Mongo::MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
     assert client.connected?
     assert client.write_concern[:w] > 0
     client.close
-    client = Mongo::ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :w => 0)
+    client = Mongo::MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :w => 0)
     assert client.connected?
     assert client.write_concern[:w] < 1
     client.close
-    client = Mongo::ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :w => 2)
+    client = Mongo::MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :w => 2)
     assert client.connected?
     assert client.write_concern[:w] > 0
     client.close
   end
 
   def test_multiple_concurrent_replica_set_connection
-    client1 = ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
-    client2 = ReplSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
+    client1 = MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
+    client2 = MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
     assert client1.connected?
     assert client2.connected?
     assert client1.manager != client2.manager
@@ -56,7 +56,7 @@ class BasicTest < Test::Unit::TestCase
   def test_cache_original_seed_nodes
     host = @rs.servers.first.host
     seeds = @rs.repl_set_seeds << "#{host}:19356"
-    client = ReplSetClient.new(seeds, :name => @rs.repl_set_name)
+    client = MongoReplicaSetClient.new(seeds, :name => @rs.repl_set_name)
     assert client.connected?
     assert client.seeds.include?([host, 19356]), "Original seed nodes not cached!"
     assert_equal [host, 19356], client.seeds.last, "Original seed nodes not cached!"
@@ -66,7 +66,7 @@ class BasicTest < Test::Unit::TestCase
   def test_accessors
     seeds = @rs.repl_set_seeds
     args = {:name => @rs.repl_set_name}
-    client = ReplSetClient.new(seeds, args)
+    client = MongoReplicaSetClient.new(seeds, args)
     assert_equal @rs.primary_name, [client.host, client.port].join(':')
     assert_equal client.host, client.primary_pool.host
     assert_equal client.port, client.primary_pool.port
@@ -85,7 +85,7 @@ class BasicTest < Test::Unit::TestCase
       setup do
         seeds = @rs.repl_set_seeds
         args = {:name => @rs.repl_set_name}
-        @client = ReplSetClient.new(seeds, args)
+        @client = MongoReplicaSetClient.new(seeds, args)
         @coll = @client[MONGO_TEST_DB]['test-connection-exceptions']
       end
 
@@ -121,7 +121,7 @@ class BasicTest < Test::Unit::TestCase
       setup do
         seeds = @rs.repl_set_seeds
         args = {:name => @rs.repl_set_name}
-        @client = ReplSetClient.new(seeds, args)
+        @client = MongoReplicaSetClient.new(seeds, args)
         @coll = @client[MONGO_TEST_DB]['test-connection-exceptions']
       end
 

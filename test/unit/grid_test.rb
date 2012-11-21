@@ -21,7 +21,7 @@ class GridTest < Test::Unit::TestCase
 
     context "Grid classe with standard connections" do
       setup do
-        @client.expects(:class).returns(Client)
+        @client.expects(:class).returns(MongoClient)
         @client.expects(:read_primary?).returns(true)
       end
 
@@ -39,7 +39,7 @@ class GridTest < Test::Unit::TestCase
 
     context "Grid classes with slave connection" do
       setup do
-        @client.expects(:class).twice.returns(Client)
+        @client.expects(:class).twice.returns(MongoClient)
         @client.expects(:read_primary?).returns(false)
       end
 

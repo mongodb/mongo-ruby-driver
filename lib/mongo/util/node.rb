@@ -145,7 +145,7 @@ module Mongo
       end
 
       host = host_port[0]
-      port = host_port[1].nil? ? Client::DEFAULT_PORT : host_port[1].to_i
+      port = host_port[1].nil? ? MongoClient::DEFAULT_PORT : host_port[1].to_i
 
       [host, port]
     end

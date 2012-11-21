@@ -19,7 +19,7 @@
 module Mongo
 
   # Instantiates and manages connections to a MongoDB sharded cluster for high availability.
-  class ShardedClient < ReplSetClient
+  class MongoShardedClient < MongoReplicaSetClient
 
     SHARDED_CLUSTER_OPTS = [:refresh_mode, :refresh_interval]
 
@@ -35,7 +35,7 @@ module Mongo
     # @option opts [String] :name (nil) The name of the sharded cluster to connect to. You
     #   can use this option to verify that you're connecting to the right sharded cluster.
     # @option opts [Hash] ::w (1), :j (false), :wtimeout (false), :fsync (false) Set the default write concern
-    #   propagated to DB objects instantiated off of this Client. This
+    #   propagated to DB objects instantiated off of this MongoClient. This
     #   default can be overridden upon instantiation of any DB by explicitly setting a write concern values
     #   on initialization.
     # @option opts [Logger] :logger (nil) Logger instance to receive driver operation log.
@@ -58,7 +58,7 @@ module Mongo
     # The purpose of seed nodes is to permit the driver to find at least one sharded cluster member even if a member is down.
     #
     # @example Connect to a sharded cluster and provide two seed nodes.
-    #   Mongo::ShardedClient.new(['localhost:30000', 'localhost:30001'])
+    #   Mongo::MongoShardedClient.new(['localhost:30000', 'localhost:30001'])
     #
     # @raise [MongoArgumentError] This is raised for usage errors.
     #
@@ -71,14 +71,14 @@ module Mongo
       if nodes.empty? and ENV.has_key?('MONGODB_URI')
         parser = URIParser.new ENV['MONGODB_URI']
         if parser.direct?
-          raise MongoArgumentError, "Mongo::ShardedClient.new called with no arguments, but ENV['MONGODB_URI'] implies a direct connection."
+          raise MongoArgumentError, "Mongo::MongoShardedClient.new called with no arguments, but ENV['MONGODB_URI'] implies a direct connection."
         end
         opts = parser.connection_options.merge! opts
         nodes = [parser.nodes]
       end
 
       unless nodes.length > 0
-        raise MongoArgumentError, "A ShardedClient requires at least one seed node."
+        raise MongoArgumentError, "A MongoShardedClient requires at least one seed node."
       end
 
       @seeds = nodes.map do |host_port|
@@ -118,7 +118,7 @@ module Mongo
     end
 
     def inspect
-      "<Mongo::ShardedClient:0x#{self.object_id.to_s(16)} @seeds=#{@seeds.inspect} " +
+      "<Mongo::MongoShardedClient:0x#{self.object_id.to_s(16)} @seeds=#{@seeds.inspect} " +
           "@connected=#{@connected}>"
     end
 

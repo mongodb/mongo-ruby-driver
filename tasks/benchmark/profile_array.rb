@@ -73,7 +73,7 @@ end
 #  system(cmd)
 #end
 
-client = Mongo::Client.new
+client = Mongo::MongoClient.new
 db  = client['benchmark']
 coll = db['profile']
 

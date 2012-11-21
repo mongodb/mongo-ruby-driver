@@ -48,7 +48,7 @@ module Mongo
     # The name of the database and the local write concern options.
     attr_reader :name, :write_concern
 
-    # The Mongo::Client instance connecting to the MongoDB server.
+    # The Mongo::MongoClient instance connecting to the MongoDB server.
     attr_reader :connection
 
     # The length of time that Collection.ensure_index should cache index calls
@@ -60,8 +60,8 @@ module Mongo
     # Instances of DB are normally obtained by calling Mongo#db.
     #
     # @param [String] name the database name.
-    # @param [Mongo::Client] client a connection object pointing to MongoDB. Note
-    #   that databases are usually instantiated via the Client class. See the examples below.
+    # @param [Mongo::MongoClient] client a connection object pointing to MongoDB. Note
+    #   that databases are usually instantiated via the MongoClient class. See the examples below.
     #
     # @option opts [Boolean] :strict (False) If true, collections must exist to be accessed and must
     #   not exist to be created. See DB#collection and DB#create_collection.
@@ -73,7 +73,7 @@ module Mongo
     #
     # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the default write concern for this database.
     #   Propagated to Collection objects instantiated off of this DB. If no
-    #   options are provided, the default write concern set on this instance's Client object will be used. This
+    #   options are provided, the default write concern set on this instance's MongoClient object will be used. This
     #   default can be overridden upon instantiation of any collection by explicitly setting write concern values
     #   on initialization
     #
@@ -105,7 +105,7 @@ module Mongo
     # @param [String] username
     # @param [String] password
     # @param [Boolean] save_auth
-    #   Save this authentication to the client object using Client#add_auth. This
+    #   Save this authentication to the client object using MongoClient#add_auth. This
     #   will ensure that the authentication will be applied on database reconnect. Note
     #   that this value must be true when using connection pooling.
     #
@@ -215,7 +215,7 @@ module Mongo
     end
 
     # Deauthorizes use for this database for this client connection. Also removes
-    # any saved authentication in the Client class associated with this
+    # any saved authentication in the MongoClient class associated with this
     # database.
     #
     # @raise [MongoDBError] if logging out fails.

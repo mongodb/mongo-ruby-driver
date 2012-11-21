@@ -18,7 +18,7 @@ class TestConnection < Test::Unit::TestCase
 
   def test_connection_failure
     assert_raise Mongo::ConnectionFailure do
-      Mongo::Client.new('localhost', 27347)
+      Mongo::MongoClient.new('localhost', 27347)
     end
   end
 
@@ -39,13 +39,13 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_connection_uri
-    con = Client.from_uri("mongodb://#{host_port}")
+    con = MongoClient.from_uri("mongodb://#{host_port}")
     assert_equal mongo_host, con.primary_pool.host
     assert_equal mongo_port, con.primary_pool.port
   end
 
   def test_uri_with_extra_opts
-    con = Client.from_uri("mongodb://#{host_port}", :pool_size => 10, :slave_ok => true)
+    con = MongoClient.from_uri("mongodb://#{host_port}", :pool_size => 10, :slave_ok => true)
     assert_equal 10, con.pool_size
     assert con.slave_ok?
   end
@@ -54,7 +54,7 @@ class TestConnection < Test::Unit::TestCase
     begin
       old_mongodb_uri = ENV['MONGODB_URI']
       ENV['MONGODB_URI'] = "mongodb://#{host_port}"
-      con = Client.new
+      con = MongoClient.new
       assert_equal mongo_host, con.primary_pool.host
       assert_equal mongo_port, con.primary_pool.port
     ensure
@@ -66,7 +66,7 @@ class TestConnection < Test::Unit::TestCase
     begin
       old_mongodb_uri = ENV['MONGODB_URI']
       ENV['MONGODB_URI'] = "mongodb://#{host_port}"
-      con = Client.from_uri
+      con = MongoClient.from_uri
       assert_equal mongo_host, con.primary_pool.host
       assert_equal mongo_port, con.primary_pool.port
     ensure
@@ -80,7 +80,7 @@ class TestConnection < Test::Unit::TestCase
 
       old_mongodb_uri = ENV['MONGODB_URI']
       ENV['MONGODB_URI'] = "mongodb://#{host_port}/#{db_name}"
-      con = Client.from_uri
+      con = MongoClient.from_uri
       db = con.db
       assert_equal db.name, db_name
     ensure
@@ -94,7 +94,7 @@ class TestConnection < Test::Unit::TestCase
 
       old_mongodb_uri = ENV['MONGODB_URI']
       ENV['MONGODB_URI'] = "mongodb://#{host_port}/#{db_name}?"
-      con = Client.from_uri
+      con = MongoClient.from_uri
       db = con.db
       assert_equal db.name, db_name
     ensure
@@ -106,9 +106,9 @@ class TestConnection < Test::Unit::TestCase
     begin
       old_mongodb_uri = ENV['MONGODB_URI']
       ENV['MONGODB_URI'] = "mongodb://#{host_port}/"
-      con = Client.from_uri
+      con = MongoClient.from_uri
       db = con.db
-      assert_equal db.name, Mongo::Client::DEFAULT_DB_NAME
+      assert_equal db.name, Mongo::MongoClient::DEFAULT_DB_NAME
     ensure
       ENV['MONGODB_URI'] = old_mongodb_uri
     end
@@ -227,7 +227,7 @@ class TestConnection < Test::Unit::TestCase
 
   def test_nodes
     silently do
-      @client = Client.multi([['foo', 27017], ['bar', 27018]], :connect => false)
+      @client = MongoClient.multi([['foo', 27017], ['bar', 27018]], :connect => false)
     end
     seeds = @client.seeds
     assert_equal 2, seeds.length
@@ -302,7 +302,7 @@ class TestConnection < Test::Unit::TestCase
     dropped_socket.stub_everything
 
     conn.primary_pool.host = 'localhost'
-    conn.primary_pool.port = Mongo::Client::DEFAULT_PORT
+    conn.primary_pool.port = Mongo::MongoClient::DEFAULT_PORT
     conn.primary_pool.instance_variable_set("@pids", {dropped_socket => Process.pid})
     conn.primary_pool.instance_variable_set("@sockets", [dropped_socket])
 

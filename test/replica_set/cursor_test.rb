@@ -25,7 +25,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
 
   def setup_client(read=:primary)
     # Setup ReplicaSet Connection
-    @client = Mongo::ReplSetClient.new(
+    @client = Mongo::MongoReplicaSetClient.new(
         @rs.repl_set_seeds,
       :read => read
     )
@@ -42,8 +42,8 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     @coll.find_one
 
     # Setup Direct Connections
-    @primary = Mongo::Client.new(*@client.manager.primary)
-    @read = Mongo::Client.new(*@client.manager.read)
+    @primary = Mongo::MongoClient.new(*@client.manager.primary)
+    @read = Mongo::MongoClient.new(*@client.manager.read)
   end
 
   def cursor_count(client)

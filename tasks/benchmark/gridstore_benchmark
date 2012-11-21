@@ -4,7 +4,7 @@ require 'mongo'
 
 include Mongo
 
-db = Client.new['benchmark-gridfs']
+db = MongoClient.new['benchmark-gridfs']
 sample_data = File.open(File.join(File.dirname(__FILE__), 'sample_file.pdf'), 'r').read
 db['fs.files'].remove
 db['fs.chunks'].remove
