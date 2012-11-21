@@ -50,7 +50,7 @@ module Mongo
     def log_operation(name, payload, duration)
       @logger && @logger.debug do
         msg = "MONGODB "
-        msg << "(#{(duration * 1000).to_i}ms) "
+        msg << "(%.1fms) " % (duration * 1000)
         msg << "#{payload[:database]}['#{payload[:collection]}'].#{name}("
         msg << payload.values_at(:selector, :document, :documents, :fields ).compact.map(&:inspect).join(', ') + ")"
         msg << ".skip(#{payload[:skip]})"   if payload[:skip]
