@@ -28,11 +28,7 @@ namespace :test do
       end
     end
 
-    if ENV['TEST']
-      Rake::Task['test:functional'].invoke
-    else
-      DEFAULT_TESTS.each { |t| Rake::Task["test:#{t}"].invoke }
-    end
+    DEFAULT_TESTS.each { |t| Rake::Task["test:#{t}"].invoke }
     Rake::Task['test:cleanup'].invoke
   end
 
