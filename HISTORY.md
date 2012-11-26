@@ -1,3 +1,13 @@
+### 1.8.0
+2012-11-26
+
+* Numerous significant bug fixes and improvements.
+* Change in default write-concern settings (getLastError is now enabled by default)
+* Deprecation of the 'safe' parameter in favor of 'w'
+* Deprecation of Mongo::Connection in favor of Mongo::MongoClient
+* Deprecation of Mongo::ReplSetConnection in favor of Mongo::MongoReplicaSetClient
+* Deprecation of Mongo::ShardedConnection in favor of Mongo::MongoShardedClient
+
 ### 1.7.1
 2012-11-16
 
