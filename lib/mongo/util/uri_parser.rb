@@ -179,7 +179,7 @@ module Mongo
       nodes[0][1].to_i
     end
 
-    # Options that can be passed to Mongo::MongoClient.new or Mongo::MongoReplicaSetClient.new
+    # Options that can be passed to MongoClient.new or MongoReplicaSetClient.new
     # @return [Hash]
     def connection_options
       opts = {}

@@ -1,10 +1,12 @@
 # This code assumes a running replica set with at least one node at localhost:27017.
 require 'mongo'
 
+include Mongo
+
 cons = []
 
 10.times do
-  cons << Mongo::MongoReplicaSetClient(['localhost:27017'], :read => :secondary)
+  cons << MongoReplicaSetClient(['localhost:27017'], :read => :secondary)
 end
 
 ports = cons.map do |con|

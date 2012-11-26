@@ -58,7 +58,7 @@ module Mongo
     # The purpose of seed nodes is to permit the driver to find at least one sharded cluster member even if a member is down.
     #
     # @example Connect to a sharded cluster and provide two seed nodes.
-    #   Mongo::MongoShardedClient.new(['localhost:30000', 'localhost:30001'])
+    #   MongoShardedClient.new(['localhost:30000', 'localhost:30001'])
     #
     # @raise [MongoArgumentError] This is raised for usage errors.
     #

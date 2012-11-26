@@ -16,7 +16,7 @@ class WriteConcernTest < Test::Unit::TestCase
       end
 
       @client =
-        Mongo::MongoClient.new('localhost', 27017, 
+        MongoClient.new('localhost', 27017, 
           @write_concern.merge({:connect => false}))
     end
 

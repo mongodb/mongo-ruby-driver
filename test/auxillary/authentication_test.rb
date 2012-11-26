@@ -7,7 +7,7 @@ class AuthenticationTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @client = Mongo::MongoClient.new
+    @client = MongoClient.new
     @db1 = @client.db('mongo-ruby-test-auth1')
     @db2 = @client.db('mongo-ruby-test-auth2')
     @admin = @client.db('admin')

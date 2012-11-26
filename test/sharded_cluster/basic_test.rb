@@ -1,6 +1,8 @@
 require 'test_helper'
+include Mongo
 
 class BasicTest < Test::Unit::TestCase
+  
   def setup
     ensure_cluster(:sc)
   end
@@ -13,7 +15,7 @@ class BasicTest < Test::Unit::TestCase
   # TODO member.primary? ==> true
   def test_connect
     seeds = @sc.mongos_seeds
-    @client = Mongo::MongoShardedClient.new(seeds)
+    @client = MongoShardedClient.new(seeds)
     assert @client.connected?
     assert_equal(seeds.size, @client.seeds.size)
     probe(seeds.size)
@@ -22,7 +24,7 @@ class BasicTest < Test::Unit::TestCase
 
   def test_hard_refresh
     seeds = @sc.mongos_seeds
-    @client = Mongo::MongoShardedClient.new(seeds)
+    @client = MongoShardedClient.new(seeds)
     assert @client.connected?
     @client.hard_refresh!
     assert @client.connected?
@@ -31,7 +33,7 @@ class BasicTest < Test::Unit::TestCase
 
   def test_reconnect
     seeds = @sc.mongos_seeds
-    @client = Mongo::MongoShardedClient.new(seeds)
+    @client = MongoShardedClient.new(seeds)
     assert @client.connected?
     router = @sc.servers(:routers).first
     router.stop
@@ -42,7 +44,7 @@ class BasicTest < Test::Unit::TestCase
 
   def test_all_down
     seeds = @sc.mongos_seeds
-    @client = Mongo::MongoShardedClient.new(seeds)
+    @client = MongoShardedClient.new(seeds)
     assert @client.connected?
     @sc.servers(:routers).each{|router| router.stop}
     assert_raises Mongo::ConnectionFailure do
@@ -54,7 +56,7 @@ class BasicTest < Test::Unit::TestCase
 
   def test_cycle
     seeds = @sc.mongos_seeds
-    @client = Mongo::MongoShardedClient.new(seeds)
+    @client = MongoShardedClient.new(seeds)
     assert @client.connected?
     routers = @sc.servers(:routers)
     while routers.size > 0 do

@@ -12,7 +12,7 @@ class BasicTest < Test::Unit::TestCase
   end
 
   def test_connect
-    client = Mongo::MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
+    client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
     assert client.connected?
     assert_equal @rs.primary_name, client.primary.join(':')
     assert_equal @rs.secondary_names.sort, client.secondaries.collect{|s| s.join(':')}.sort
@@ -20,7 +20,7 @@ class BasicTest < Test::Unit::TestCase
     client.close
 
     silently do
-      client = Mongo::MongoReplicaSetClient.new(@rs.repl_set_seeds_old, :name => @rs.repl_set_name)
+      client = MongoReplicaSetClient.new(@rs.repl_set_seeds_old, :name => @rs.repl_set_name)
     end
 
     assert client.connected?
@@ -28,15 +28,15 @@ class BasicTest < Test::Unit::TestCase
   end
 
   def test_safe_option
-    client = Mongo::MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
+    client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
     assert client.connected?
     assert client.write_concern[:w] > 0
     client.close
-    client = Mongo::MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :w => 0)
+    client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :w => 0)
     assert client.connected?
     assert client.write_concern[:w] < 1
     client.close
-    client = Mongo::MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :w => 2)
+    client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :w => 2)
     assert client.connected?
     assert client.write_concern[:w] > 0
     client.close

@@ -1,6 +1,8 @@
-require File.join(File.dirname(__FILE__), '..', '..', 'lib', 'mongo')
+require File.join(File.dirname(__FILE__), '..', '..', 'lib', 'mongo') 
 
-$client = Mongo::MongoClient.new('localhost', 27017)
+include Mongo
+
+$client = MongoClient.new('localhost', 27017)
 $db = $client['foo']
 
 class Load < Sinatra::Base

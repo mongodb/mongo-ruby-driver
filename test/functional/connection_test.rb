@@ -18,7 +18,7 @@ class TestConnection < Test::Unit::TestCase
 
   def test_connection_failure
     assert_raise Mongo::ConnectionFailure do
-      Mongo::MongoClient.new('localhost', 27347)
+      MongoClient.new('localhost', 27347)
     end
   end
 

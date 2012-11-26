@@ -95,16 +95,16 @@ module Mongo
     # @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
     #
     # @example localhost, 27017 (or <code>ENV["MONGODB_URI"]</code> if available)
-    #   Mongo::MongoClient.new
+    #   MongoClient.new
     #
     # @example localhost, 27017
-    #   Mongo::MongoClient.new("localhost")
+    #   MongoClient.new("localhost")
     #
     # @example localhost, 3000, max 5 self.connections, with max 5 seconds of wait time.
-    #   Mongo::MongoClient.new("localhost", 3000, :pool_size => 5, :timeout => 5)
+    #   MongoClient.new("localhost", 3000, :pool_size => 5, :timeout => 5)
     #
     # @example localhost, 3000, where this node may be a slave
-    #   Mongo::MongoClient.new("localhost", 3000, :slave_ok => true)
+    #   MongoClient.new("localhost", 3000, :slave_ok => true)
     #
     # @see http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html Replica sets in Ruby
     #

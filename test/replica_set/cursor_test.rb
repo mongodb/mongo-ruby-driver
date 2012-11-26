@@ -25,7 +25,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
 
   def setup_client(read=:primary)
     # Setup ReplicaSet Connection
-    @client = Mongo::MongoReplicaSetClient.new(
+    @client = MongoReplicaSetClient.new(
         @rs.repl_set_seeds,
       :read => read
     )

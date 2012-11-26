@@ -47,7 +47,9 @@ Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](https://githu
 require 'rubygems'
 require 'mongo'
 
-@client = Mongo::MongoClient.new('localhost', 27017)
+include Mongo
+
+@client = MongoClient.new('localhost', 27017)
 @db     = @client['sample-db']
 @coll   = @db['test']
 
@@ -207,7 +209,8 @@ You can tell the Ruby Mongo driver how to create primary keys by passing in
 the :pk option to the MongoClient#db method.
 
 ```ruby
-db = Mongo::MongoClient.new('localhost', 27017).db('dbname', :pk => MyPKFactory.new)
+include Mongo
+db = MongoClient.new('localhost', 27017).db('dbname', :pk => MyPKFactory.new)
 ```
 
 A primary key factory object must respond to :create_pk, which should

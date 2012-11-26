@@ -1,7 +1,9 @@
 require File.join(File.dirname(__FILE__), '..', '..', '..', 'lib', 'mongo')
 require 'logger'
 
-$con = Mongo::MongoReplicaSetClient.new(['localhost:30000', 'localhost:30001'], :read => :secondary, :refresh_mode => :sync, :refresh_interval => 30)
+include Mongo
+
+$con = MongoReplicaSetClient.new(['localhost:30000', 'localhost:30001'], :read => :secondary, :refresh_mode => :sync, :refresh_interval => 30)
 $db = $con['foo']
 
 class Load < Sinatra::Base
