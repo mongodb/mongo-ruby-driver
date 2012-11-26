@@ -54,7 +54,7 @@ module Mongo
     #   @param [Array<String>, Array<Array(String, Integer)>] seeds
     #
     #   @option opts [Hash] :w (1), :j (false), :wtimeout (false), :fsync (false) Set the default write concern
-    #     propagated to DB objects instantiated off of this MongoClient. This
+    #     propagated to DB objects instantiated off of this MongoReplicaSetClient. This
     #     default can be overridden upon instantiation of any DB by explicitly setting write concern values
     #     on initialization.
     #   @option opts [:primary, :primary_preferred, :secondary, :secondary_preferred, :nearest] :read_preference (:primary)

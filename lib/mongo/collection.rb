@@ -321,10 +321,10 @@ module Mongo
     #
     # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the write concern for this operation.
     #   :w > 0 will run a +getlasterror+ command on the database to report any assertion. 
-    #   :j will confirm a write has been committed to the journal
-    #   :wtimeout specifies how long to wait for write confirmation
-    #   :fsync will confirm that a write has been fsynced 
-    #   options provided here will override any write concern options set on this collection,
+    #   :j will confirm a write has been committed to the journal,
+    #   :wtimeout specifies how long to wait for write confirmation,
+    #   :fsync will confirm that a write has been fsynced. 
+    #   Options provided here will override any write concern options set on this collection,
     #   its database object, or the current connection. See the options
     #   for +DB#get_last_error+.
     #
@@ -353,10 +353,10 @@ module Mongo
     #
     # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the write concern for this operation.
     #   :w > 0 will run a +getlasterror+ command on the database to report any assertion. 
-    #   :j will confirm a write has been committed to the journal
-    #   :wtimeout specifies how long to wait for write confirmation
-    #   :fsync will confirm that a write has been fsynced 
-    #   options provided here will override any write concern options set on this collection,
+    #   :j will confirm a write has been committed to the journal,
+    #   :wtimeout specifies how long to wait for write confirmation,
+    #   :fsync will confirm that a write has been fsynced. 
+    #   Options provided here will override any write concern options set on this collection,
     #   its database object, or the current connection. See the options
     #   for +DB#get_last_error+.
     #
@@ -390,10 +390,10 @@ module Mongo
     #
     # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the write concern for this operation.
     #   :w > 0 will run a +getlasterror+ command on the database to report any assertion. 
-    #   :j will confirm a write has been committed to the journal
-    #   :wtimeout specifies how long to wait for write confirmation
-    #   :fsync will confirm that a write has been fsynced 
-    #   options provided here will override any write concern options set on this collection,
+    #   :j will confirm a write has been committed to the journal,
+    #   :wtimeout specifies how long to wait for write confirmation,
+    #   :fsync will confirm that a write has been fsynced. 
+    #   Options provided here will override any write concern options set on this collection,
     #   its database object, or the current connection. See the options
     #   for +DB#get_last_error+. 
     #
@@ -443,10 +443,10 @@ module Mongo
     #   just the first matching document. Note: only works in MongoDB 1.1.3 or later.
     # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the write concern for this operation.
     #   :w > 0 will run a +getlasterror+ command on the database to report any assertion. 
-    #   :j will confirm a write has been committed to the journal
-    #   :wtimeout specifies how long to wait for write confirmation
-    #   :fsync will confirm that a write has been fsynced 
-    #   options provided here will override any write concern options set on this collection,
+    #   :j will confirm a write has been committed to the journal,
+    #   :wtimeout specifies how long to wait for write confirmation,
+    #   :fsync will confirm that a write has been fsynced. 
+    #   Options provided here will override any write concern options set on this collection,
     #   its database object, or the current connection. See the options
     #   for +DB#get_last_error+. 
     #
