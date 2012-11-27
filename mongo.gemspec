@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.description       = 'A Ruby driver for MongoDB. For more information about Mongo, see http://www.mongodb.org.'
   s.rubyforge_project = 'mongo'
 
-  s.files             = ['mongo.gemspec', 'LICENSE', 'HISTORY.md', 'VERSION']
+  s.files             = ['mongo.gemspec', 'LICENSE', 'VERSION']
   s.files             += ['README.md', 'Rakefile', 'bin/mongo_console']
   s.files             += ['lib/mongo.rb'] + Dir['lib/mongo/**/*.rb'] + Dir['examples/**/*.rb']
 
