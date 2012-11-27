@@ -43,6 +43,7 @@ end
 
 module Mongo
   # @deprecated Use Mongo::MongoClient instead. Support will be removed after v2.0
+  # Please see old documentation for the Connection class
   class Connection < MongoClient
     include Mongo::LegacyWriteConcern
 
@@ -53,6 +54,7 @@ module Mongo
   end
 
   # @deprecated Use Mongo::MongoReplicaSetClient instead. Support will be removed after v2.0
+  # Please see old documentation for the ReplSetConnection class
   class ReplSetConnection < MongoReplicaSetClient
     include Mongo::LegacyWriteConcern
 
@@ -67,6 +69,7 @@ module Mongo
   end
 
   # @deprecated Use Mongo::MongoShardedClient instead. Support will be removed after v2.0
+  # Please see old documentation for the ShardedConnection class
   class ShardedConnection < MongoShardedClient
     include Mongo::LegacyWriteConcern
 

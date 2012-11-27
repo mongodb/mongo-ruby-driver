@@ -50,9 +50,11 @@ module Mongo
     # @option opts [String] :content_type ('binary/octet-stream') If no content type is specified,
     #   the content type will may be inferred from the filename extension if the mime-types gem can be
     #   loaded. Otherwise, the content type 'binary/octet-stream' will be used.
-    # @option opts [Hash] :w (1) Set the default write concern
-    #   When :w > 0, the chunks sent to the server
-    #   will be validated using an md5 hash. If validation fails, an exception will be raised.
+    # @option opts [String, Integer, Symbol] :w (1) Set the write concern
+    #
+    #   Notes on write concern:
+    #     When :w > 0, the chunks sent to the server
+    #     will be validated using an md5 hash. If validation fails, an exception will be raised.
     def initialize(files, chunks, filename, mode, opts={})
       @files          = files
       @chunks         = chunks

@@ -26,43 +26,6 @@ module Mongo
     attr_reader :seeds, :refresh_interval, :refresh_mode,
                 :refresh_version, :manager
 
-    # Create a connection to a MongoDB sharded cluster.
-    #
-    # If no args are provided, it will check <code>ENV["MONGODB_URI"]</code>.
-    #
-    # @param [Array] seeds "host:port" strings
-    #
-    # @option opts [String] :name (nil) The name of the sharded cluster to connect to. You
-    #   can use this option to verify that you're connecting to the right sharded cluster.
-    # @option opts [Hash] ::w (1), :j (false), :wtimeout (false), :fsync (false) Set the default write concern
-    #   propagated to DB objects instantiated off of this MongoClient. This
-    #   default can be overridden upon instantiation of any DB by explicitly setting a write concern values
-    #   on initialization.
-    # @option opts [Logger] :logger (nil) Logger instance to receive driver operation log.
-    # @option opts [Integer] :pool_size (1) The maximum number of socket connections allowed per
-    #   connection pool. Note: this setting is relevant only for multi-threaded applications.
-    # @option opts [Float] :pool_timeout (5.0) When all of the connections a pool are checked out,
-    #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
-    #   Note: this setting is relevant only for multi-threaded applications.
-    # @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.
-    # @option opts [Float] :connect_timeout (30) The number of seconds to wait before timing out a
-    #   connection attempt.
-    # @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
-    # @option opts [Boolean] :refresh_mode (false) Set this to :sync to periodically update the
-    #   state of the connection every :refresh_interval seconds. Sharded cluster connection failures
-    #   will always trigger a complete refresh. This option is useful when you want to add new nodes
-    #   or remove sharded cluster nodes not currently in use by the driver.
-    # @option opts [Integer] :refresh_interval (90) If :refresh_mode is enabled, this is the number of seconds
-    #   between calls to check the sharded cluster's state.
-    # Note: that the number of seed nodes does not have to be equal to the number of sharded cluster members.
-    # The purpose of seed nodes is to permit the driver to find at least one sharded cluster member even if a member is down.
-    #
-    # @example Connect to a sharded cluster and provide two seed nodes.
-    #   MongoShardedClient.new(['localhost:30000', 'localhost:30001'])
-    #
-    # @raise [MongoArgumentError] This is raised for usage errors.
-    #
-    # @raise [ConnectionFailure] This is raised for the various connection failures.
     def initialize(*args)
       opts = args.last.is_a?(Hash) ? args.pop : {}
 

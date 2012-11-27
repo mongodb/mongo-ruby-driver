@@ -71,11 +71,17 @@ module Mongo
     #   fields the factory wishes to inject. (NOTE: if the object already has a primary key,
     #   the factory should not inject a new key).
     #
-    # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the default write concern for this database.
-    #   Propagated to Collection objects instantiated off of this DB. If no
-    #   options are provided, the default write concern set on this instance's MongoClient object will be used. This
-    #   default can be overridden upon instantiation of any collection by explicitly setting write concern values
-    #   on initialization
+    # @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
+    #   should be acknowledged
+    # @option opts [Boolean] :j (false) Set journal acknowledgement
+    # @option opts [Integer] :wtimeout (false) Set replica set acknowledgement timeout
+    # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
+    #
+    #   Notes on write concern:
+    #     These write concern options are propagated to Collection objects instantiated off of this DB. If no
+    #     options are provided, the default write concern set on this instance's MongoClient object will be used. This
+    #     default can be overridden upon instantiation of any collection by explicitly setting write concern options
+    #     on initialization or at the time of an operation.
     #
     # @option opts [Integer] :cache_time (300) Set the time that all ensure_index calls should cache the command.
     #

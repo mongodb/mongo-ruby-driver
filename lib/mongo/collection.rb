@@ -37,15 +37,21 @@ module Mongo
     #
     # @param [String, Symbol] name the name of the collection.
     # @param [DB] db a MongoDB database instance.
+    # 
+    # @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
+    #   should be acknowledged
+    # @option opts [Boolean] :j (false) Set journal acknowledgement
+    # @option opts [Integer] :wtimeout (false) Set replica set acknowledgement timeout
+    # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
+    #   
+    #   Notes about write concern:
+    #     These write concern options will be used for insert, update, and remove methods called on this  
+    #     Collection instance. If no value is provided, the default values set on this instance's DB will be used. 
+    #     These option values can be overridden for any invocation of insert, update, or remove.
     #
     # @option opts [:create_pk] :pk (BSON::ObjectId) A primary key factory to use
-    #   other than the default BSON::ObjectId.
-    #
-    # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the default write concern
-    #   for +insert+, +update+, and +remove+ method called on this Collection instance. If no
-    #   value is provided, the default values set on this instance's DB will be used. These option 
-    #   values can be overridden for any invocation of +insert+, +update+, or +remove+.
-    # @option options [:primary, :secondary] :read The default read preference for queries
+    #   other than the default BSON::ObjectId. 
+    # @option opts [:primary, :secondary] :read The default read preference for queries
     #   initiates from this connection object. If +:secondary+ is chosen, reads will be sent
     #   to one of the closest available secondary nodes. If a secondary node cannot be located, the
     #   read will be sent to the primary. If this option is left unspecified, the value of the read
@@ -326,7 +332,7 @@ module Mongo
     #   :fsync will confirm that a write has been fsynced. 
     #   Options provided here will override any write concern options set on this collection,
     #   its database object, or the current connection. See the options
-    #   for +DB#get_last_error+.
+    #   for DB#get_last_error.
     #
     # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails.
     def save(doc, opts={})
@@ -351,14 +357,15 @@ module Mongo
     #   2nd, a list of invalid documents.
     #   Return this result format only when :collect_on_error is true.
     #
-    # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the write concern for this operation.
-    #   :w > 0 will run a +getlasterror+ command on the database to report any assertion. 
-    #   :j will confirm a write has been committed to the journal,
-    #   :wtimeout specifies how long to wait for write confirmation,
-    #   :fsync will confirm that a write has been fsynced. 
-    #   Options provided here will override any write concern options set on this collection,
-    #   its database object, or the current connection. See the options
-    #   for +DB#get_last_error+.
+    # @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
+    #   should be acknowledged
+    # @option opts [Boolean] :j (false) Set journal acknowledgement
+    # @option opts [Integer] :wtimeout (false) Set replica set acknowledgement timeout
+    # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
+    #   
+    #   Notes on write concern:
+    #     Options provided here will override any write concern options set on this collection,
+    #     its database object, or the current connection. See the options for +DB#get_last_error+. 
     #
     # @option opts [Boolean] :continue_on_error (+false+) If true, then
     #   continue a bulk insert even if one of the documents inserted
@@ -388,14 +395,15 @@ module Mongo
     # @param [Hash] selector
     #   If specified, only matching documents will be removed.
     #
-    # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the write concern for this operation.
-    #   :w > 0 will run a +getlasterror+ command on the database to report any assertion. 
-    #   :j will confirm a write has been committed to the journal,
-    #   :wtimeout specifies how long to wait for write confirmation,
-    #   :fsync will confirm that a write has been fsynced. 
-    #   Options provided here will override any write concern options set on this collection,
-    #   its database object, or the current connection. See the options
-    #   for +DB#get_last_error+. 
+    # @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
+    #   should be acknowledged
+    # @option opts [Boolean] :j (false) Set journal acknowledgement
+    # @option opts [Integer] :wtimeout (false) Set replica set acknowledgement timeout
+    # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
+    #
+    #   Notes on write concern:
+    #     Options provided here will override any write concern options set on this collection,
+    #     its database object, or the current connection. See the options for +DB#get_last_error+.  
     #
     # @example remove all documents from the 'users' collection:
     #   users.remove
@@ -441,14 +449,15 @@ module Mongo
     # @option opts [Boolean] :upsert (+false+) if true, performs an upsert (update or insert)
     # @option opts [Boolean] :multi (+false+) update all documents matching the selector, as opposed to
     #   just the first matching document. Note: only works in MongoDB 1.1.3 or later.
-    # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the write concern for this operation.
-    #   :w > 0 will run a +getlasterror+ command on the database to report any assertion. 
-    #   :j will confirm a write has been committed to the journal,
-    #   :wtimeout specifies how long to wait for write confirmation,
-    #   :fsync will confirm that a write has been fsynced. 
-    #   Options provided here will override any write concern options set on this collection,
-    #   its database object, or the current connection. See the options
-    #   for +DB#get_last_error+. 
+    # @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
+    #   should be acknowledged
+    # @option opts [Boolean] :j (false) Set journal acknowledgement
+    # @option opts [Integer] :wtimeout (false) Set replica set acknowledgement timeout
+    # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
+    #
+    #   Notes on write concern:
+    #     Options provided here will override any write concern options set on this collection,
+    #     its database object, or the current connection. See the options for DB#get_last_error. 
     #
     # @return [Hash, true] Returns a Hash containing the last error object if acknowledging writes.
     #   Otherwise, returns true.
