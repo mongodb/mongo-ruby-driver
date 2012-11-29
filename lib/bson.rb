@@ -86,7 +86,12 @@ else
 end
 
 require 'active_support'
-require 'active_support/hash_with_indifferent_access'
+begin
+  require 'active_support/hash_with_indifferent_access'
+rescue LoadError
+  # For ActiveSupport 2
+  require 'active_support/core_ext/hash/indifferent_access'
+end
 
 require 'bson/types/binary'
 require 'bson/types/code'
