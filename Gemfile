@@ -19,6 +19,7 @@ group :testing do
   gem 'mocha', :require => 'mocha/setup'
   gem 'shoulda'
   gem 'sfl'
+  gem 'rspec'
 end
 
 platforms :jruby do

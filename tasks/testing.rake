@@ -1,4 +1,5 @@
 # -*- mode: ruby; -*-
+require "rspec/core/rake_task"
 
 desc "Run the default test suite (Ruby)"
 task :test => 'test:ruby'
@@ -13,6 +14,10 @@ namespace :test do
     Rake::Task['compile:cbson'].invoke
     Rake::Task['test:ruby'].invoke
     ENV['C_EXT'] = nil
+  end
+
+  RSpec::Core::RakeTask.new(:spec) do |spec|
+    spec.pattern = "spec/**/*_spec.rb"
   end
 
   desc "Runs default test suites"
