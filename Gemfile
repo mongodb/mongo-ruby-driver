@@ -16,8 +16,8 @@ end
 group :testing do
   gem 'simplecov', :require => false
   gem 'test-unit'
-  gem 'mocha', :require => 'mocha/setup'
-  gem 'shoulda'
+  gem 'mocha', "0.13.0", :require => 'mocha/setup'
+  gem 'shoulda', "3.3.2"
   gem 'sfl'
   gem 'rspec'
 end
