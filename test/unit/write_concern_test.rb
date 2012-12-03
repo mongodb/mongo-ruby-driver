@@ -8,7 +8,7 @@ class WriteConcernTest < Test::Unit::TestCase
         :w        => 7,
         :j        => false,
         :fsync    => false,
-        :wtimeout => false
+        :wtimeout => nil
       }
 
       class Mongo::MongoClient
@@ -85,7 +85,7 @@ class WriteConcernTest < Test::Unit::TestCase
 
       should "allow override alternate value on insert" do
         @client.expects(:send_message_with_gle).with do |op, msg, log, n, wc|
-          wc == {:w => 100, :j => false, :fsync => false, :wtimeout => false}
+          wc == {:w => 100, :j => false, :fsync => false, :wtimeout => nil}
         end
 
         @collection.insert({:a => 1}, {:w => 100})
@@ -106,7 +106,7 @@ class WriteConcernTest < Test::Unit::TestCase
 
       should "allow override alternate value on update" do
         @client.expects(:send_message_with_gle).with do |op, msg, log, n, wc|
-          wc == {:w => 100, :j => false, :fsync => false, :wtimeout => false}
+          wc == {:w => 100, :j => false, :fsync => false, :wtimeout => nil}
         end
 
         @collection.update({:a => 1}, {:a => 2}, {:w => 100})
@@ -146,7 +146,7 @@ class WriteConcernTest < Test::Unit::TestCase
 
       should "allow override alternate value on remove" do
         @client.expects(:send_message_with_gle).with do |op, msg, log, n, wc|
-          wc == {:w => 100, :j => false, :fsync => false, :wtimeout => false}
+          wc == {:w => 100, :j => false, :fsync => false, :wtimeout => nil}
         end
 
         @collection.remove({}, {:w => 100})

@@ -4,7 +4,7 @@ class SafeTest < Test::Unit::TestCase
 
   context "Write-Concern modes on Mongo::Connection " do
     setup do
-      @safe_value = {:w => 7, :j => false, :fsync => false, :wtimeout => false}
+      @safe_value = {:w => 7, :j => false, :fsync => false, :wtimeout => nil}
       @connection = Mongo::Connection.new('localhost', 27017, :safe => @safe_value, :connect => false)
     end
 
@@ -68,7 +68,7 @@ class SafeTest < Test::Unit::TestCase
 
       should "allow override alternate value on insert" do
         @connection.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
-          safe == {:w => 100, :j => false, :fsync => false, :wtimeout => false}
+          safe == {:w => 100, :j => false, :fsync => false, :wtimeout => nil}
         end
 
         @col.insert({:a => 1}, :safe => {:w => 100})
@@ -89,7 +89,7 @@ class SafeTest < Test::Unit::TestCase
 
       should "allow override alternate value on update" do
         @connection.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
-          safe == {:w => 100, :j => false, :fsync => false, :wtimeout => false}
+          safe == {:w => 100, :j => false, :fsync => false, :wtimeout => nil}
         end
 
         @col.update({:a => 1}, {:a => 2}, :safe => {:w => 100})
@@ -129,7 +129,7 @@ class SafeTest < Test::Unit::TestCase
 
       should "allow override alternate value on remove" do
         @connection.expects(:send_message_with_gle).with do |op, msg, log, n, safe|
-          safe == {:w => 100, :j => false, :fsync => false, :wtimeout => false}
+          safe == {:w => 100, :j => false, :fsync => false, :wtimeout => nil}
         end
 
         @col.remove({}, :safe => {:w => 100})
