@@ -229,6 +229,7 @@ module Mongo
         gle.merge!(write_concern)
         gle.delete(:w) if gle[:w] == 1
       end
+      gle[:w] = gle[:w].to_s if gle[:w].is_a?(Symbol)
       build_command_message(db_name, gle)
     end
 

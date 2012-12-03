@@ -52,7 +52,7 @@ class ReplicaSetAckTest < Test::Unit::TestCase
 
     assert @col.insert({:foo => "bar"}, :w => "majority")
 
-    #assert @col.insert({:bar => "baz"}, :w => :majority)
+    assert @col.insert({:bar => "baz"}, :w => :majority)
 
     assert @col.remove({}, :w => 3, :wtimeout => 5000)
     assert_equal 0, @slave1[MONGO_TEST_DB]["test-sets"].count
