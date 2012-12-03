@@ -81,7 +81,7 @@ module Mongo
                   :replicaset       => lambda {|arg| arg},
                   :slaveok          => lambda {|arg| arg == 'true' ? true : false},
                   :safe             => lambda {|arg| arg == 'true' ? true : false},
-                  :w                => lambda {|arg| Mongo::Support.str_is_i?(arg) ? arg.to_i : arg.to_s },
+                  :w                => lambda {|arg| Mongo::Support.is_i?(arg) ? arg.to_i : arg.to_sym },
                   :wtimeout         => lambda {|arg| arg.to_i},
                   :fsync            => lambda {|arg| arg == 'true' ? true : false},
                   :journal          => lambda {|arg| arg == 'true' ? true : false},

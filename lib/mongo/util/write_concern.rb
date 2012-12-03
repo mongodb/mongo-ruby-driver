@@ -60,7 +60,12 @@ module Mongo
     end
 
     def self.gle?(write_concern)
-      (write_concern[:w].is_a? String) || write_concern[:w] > 0 || write_concern[:j] || write_concern[:fsync] || write_concern[:wtimeout]
+      #(write_concern[:w].is_a? Symbol) ||
+      (write_concern[:w].is_a? String) ||
+      write_concern[:w] > 0 ||
+      write_concern[:j] ||
+      write_concern[:fsync] ||
+      write_concern[:wtimeout]
     end
 
   end

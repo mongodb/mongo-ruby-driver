@@ -114,9 +114,8 @@ module Mongo
       end
     end
 
-    def str_is_i?(str)
-      raise TypeError, "must be called with a string" unless str.class == String
-      return !!(str =~ /^[0-9]+$/)
+    def is_i?(value)
+      return !!(value =~ /^\d+$/)
     end
 
     # Determine if a database command has succeeded by

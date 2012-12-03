@@ -36,6 +36,9 @@ class ReplicaSetAckTest < Test::Unit::TestCase
     assert_raise_error OperationFailure, "timeout" do
       @col.remove({:foo => 2}, :w => 4, :wtimeout => 1, :fsync => true)
     end
+    assert_raise_error OperationFailure do
+      @col.insert({:foo => 3}, :w => "test-tag")
+    end
   end
 
   def test_safe_mode_replication_ack
@@ -46,6 +49,10 @@ class ReplicaSetAckTest < Test::Unit::TestCase
 
     assert @col.update({:baz => "bar"}, {:baz => "foo"}, :w => 3, :wtimeout => 5000)
     assert @slave1[MONGO_TEST_DB]["test-sets"].find_one({:baz => "foo"})
+
+    assert @col.insert({:foo => "bar"}, :w => "majority")
+
+    #assert @col.insert({:bar => "baz"}, :w => :majority)
 
     assert @col.remove({}, :w => 3, :wtimeout => 5000)
     assert_equal 0, @slave1[MONGO_TEST_DB]["test-sets"].count
