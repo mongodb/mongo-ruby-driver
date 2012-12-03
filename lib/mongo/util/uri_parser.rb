@@ -226,11 +226,7 @@ module Mongo
     end
 
     def nodes
-      if @nodes.length == 1
-        @nodes
-      else
-        @nodes.collect {|node| "#{node[0]}:#{node[1]}"}
-      end
+      @nodes
     end
 
     private

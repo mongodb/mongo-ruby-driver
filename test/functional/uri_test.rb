@@ -20,8 +20,8 @@ class URITest < Test::Unit::TestCase
   def test_multiple_uris
     parser = Mongo::URIParser.new('mongodb://a.example.com:27018,b.example.com')
     assert_equal 2, parser.nodes.length
-    assert_equal 'a.example.com:27018', parser.nodes[0]
-    assert_equal 'b.example.com:27017', parser.nodes[1]
+    assert_equal ['a.example.com', 27018], parser.nodes[0]
+    assert_equal ['b.example.com', 27017], parser.nodes[1]
   end
 
   def test_complex_passwords
@@ -48,8 +48,8 @@ class URITest < Test::Unit::TestCase
   def test_multiple_uris_with_auths
     parser = Mongo::URIParser.new('mongodb://bob:secret@a.example.com:27018,b.example.com/test')
     assert_equal 2, parser.nodes.length
-    assert_equal 'a.example.com:27018', parser.nodes[0]
-    assert_equal 'b.example.com:27017', parser.nodes[1]
+    assert_equal ['a.example.com', 27018], parser.nodes[0]
+    assert_equal ['b.example.com', 27017], parser.nodes[1]
     assert_equal 2, parser.auths.length
     assert_equal "bob", parser.auths[0]["username"]
     assert_equal "secret", parser.auths[0]["password"]

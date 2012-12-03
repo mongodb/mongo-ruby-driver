@@ -119,16 +119,16 @@ module Mongo
 
       raise MongoArgumentError, "Too many arguments" unless args.empty?
 
-      if nodes.empty? and ENV.has_key?('MONGODB_URI')
+      if !nodes && ENV.has_key?('MONGODB_URI')
         parser = URIParser.new ENV['MONGODB_URI']
         if parser.direct?
           raise MongoArgumentError, "Mongo::MongoReplicaSetClient.new called with no arguments, but ENV['MONGODB_URI'] implies a direct connection."
         end
         opts = parser.connection_options.merge! opts
-        nodes = [parser.nodes]
+        nodes = parser.nodes
       end
 
-      unless nodes.length > 0
+      if nodes.length.zero?
         raise MongoArgumentError, "A MongoReplicaSetClient requires at least one seed node."
       end
 

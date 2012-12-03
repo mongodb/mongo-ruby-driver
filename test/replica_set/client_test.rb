@@ -220,7 +220,7 @@ class ClientTest < Test::Unit::TestCase
 
   def test_connect_with_old_seed_format
     silently do
-      @client = MongoReplicaSetClient.new(@rs.replicas[0].host_port_a, @rs.replicas[1].host_port_a)
+      @client = MongoReplicaSetClient.new([@rs.replicas[0].host_port_a, @rs.replicas[1].host_port_a])
     end
     assert @client.connected?
   end
