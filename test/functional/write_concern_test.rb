@@ -67,6 +67,42 @@ class WriteConcernTest < Test::Unit::TestCase
     end
   end
 
+  context "Write concern options" do
+    def setup
+      ensure_cluster(:rs)
+      @client = MongoReplicaSetClient.new @rs.repl_set_seeds
+      @db = @client.db(MONGO_TEST_DB)
+      @db.drop_collection("test-sets")
+      @coll = @db.collection("test-sets")
+    end
+
+    def teardown
+      @db.drop_collection("test-sets")
+      @client.close if @conn
+    end
+
+    def self.shutdown
+      @@cluster.stop
+      @@cluster.clobber
+    end
+
+    should "accept a string 'majority' for write concern in a replica set" do
+      @coll.insert({:a => 1}, :w => "majority")
+    end
+
+    should "accept a string specificying a getLastErrorMode for write concern in a replica set" do
+      assert_raise Mongo::OperationFailure do
+        @coll.insert({:b => 2}, :w => "test-tag")
+      end
+    end
+
+    should "accept an integer write concern for a replica set" do
+      @coll.insert({:d => 4}, :w => 2 )
+    end
+
+  end
+
+
   context "Write concern in gridfs" do
     setup do
       @db = standard_connection.db(MONGO_TEST_DB)
