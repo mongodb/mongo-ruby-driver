@@ -186,7 +186,7 @@ module Mongo
     def self.multi(nodes, opts={})
       warn "MongoClient.multi is now deprecated and will be removed in v2.0. Please use MongoReplicaSetClient.new instead."
 
-      MongoReplicaSetClient.new(*(nodes+[opts]))
+      MongoReplicaSetClient.new(nodes, opts)
     end
 
     # Initialize a connection to MongoDB using the MongoDB URI spec.

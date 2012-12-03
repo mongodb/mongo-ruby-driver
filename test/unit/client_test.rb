@@ -67,6 +67,12 @@ class ClientTest < Test::Unit::TestCase
           args = [['localhost:27017'], opts]
           client.send(:initialize, *args)
         end
+
+        should "throw error if superlous arguments are specified" do
+          assert_raise MongoArgumentError do
+            MongoReplicaSetClient.new(['localhost:27017'], ['localhost:27018'], {:connect => false})
+          end
+        end
       end
     end
 
