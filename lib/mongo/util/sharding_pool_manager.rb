@@ -130,8 +130,6 @@ module Mongo
           next
         elsif node.set_config && node.healthy?
           return node
-        else
-          node.close
         end
       end
 

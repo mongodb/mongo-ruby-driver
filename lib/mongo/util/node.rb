@@ -1,7 +1,7 @@
 module Mongo
   class Node
 
-    attr_accessor :host, :port, :address, :config, :client, :socket, :last_state
+    attr_accessor :host, :port, :address, :client, :socket, :last_state
 
     def initialize(client, host_port)
       @client = client
@@ -9,6 +9,7 @@ module Mongo
       @address = "#{@host}:#{@port}"
       @config = nil
       @socket = nil
+      @node_mutex = Mutex.new
     end
 
     def eql?(other)
@@ -20,6 +21,11 @@ module Mongo
       address
     end
 
+    def config
+      connect unless connected?
+      @config || set_config
+    end
+
     def inspect
       "<Mongo::Node:0x#{self.object_id.to_s(16)} @host=#{@host} @port=#{@port}>"
     end
@@ -28,18 +34,20 @@ module Mongo
     # and, if successful, return the socket. Otherwise,
     # return nil.
     def connect
-      begin
-        socket = @client.socket_class.new(@host, @port, 
-          @client.op_timeout, @client.connect_timeout
-        )
-      rescue OperationTimeout, ConnectionFailure, OperationFailure, SocketError, SystemCallError, IOError => ex
-        @client.log(:debug, "Failed connection to #{host_string} with #{ex.class}, #{ex.message}.")
-        socket.close if socket
+      @node_mutex.synchronize do
+        return if connected?
+        begin
+          @socket = @client.socket_class.new(@host, @port,
+            @client.op_timeout, @client.connect_timeout
+          )
+        rescue OperationTimeout, ConnectionFailure, OperationFailure, SocketError, SystemCallError, IOError => ex
+          @client.log(:debug, "Failed connection to #{host_string} with #{ex.class}, #{ex.message}.")
+          close
+        end
       end
-
-      @socket = socket
     end
 
+    # This should only be called within a mutex
     def close
       if @socket && !@socket.closed?
         @socket.close
@@ -65,34 +73,30 @@ module Mongo
     # ismaster command. Additionally, check that the replica set name
     # matches with the name provided.
     def set_config
-      begin
-        @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
+      @node_mutex.synchronize do
+        begin
+          @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
 
-        if @config['msg']
-          @client.log(:warn, "#{config['msg']}")
+          if @config['msg']
+            @client.log(:warn, "#{config['msg']}")
+          end
+
+          check_set_membership(config)
+          check_set_name(config)
+        rescue ConnectionFailure, OperationFailure, OperationTimeout, SocketError, SystemCallError, IOError => ex
+          @client.log(:warn, "Attempted connection to node #{host_string} raised " +
+                              "#{ex.class}: #{ex.message}")
+
+          # Socket may already be nil from issuing command
+          close
         end
-
-        check_set_membership(config)
-        check_set_name(config)
-      rescue ConnectionFailure, OperationFailure, OperationTimeout, SocketError, SystemCallError, IOError => ex
-        @client.log(:warn, "Attempted connection to node #{host_string} raised " +
-                            "#{ex.class}: #{ex.message}")
-
-        # Socket may already be nil from issuing command
-        close
       end
-
       @config
     end
 
     # Return a list of replica set nodes from the config.
     # Note: this excludes arbiters.
     def node_list
-      connect unless connected?
-      set_config unless @config
-
-      return [] unless config
-
       nodes = []
       nodes += config['hosts'] if config['hosts']
       nodes += config['passives'] if config['passives']
@@ -100,8 +104,6 @@ module Mongo
     end
 
     def arbiters
-      connect unless connected?
-      set_config unless @config
       return [] unless config['arbiters']
 
       config['arbiters'].map do |arbiter|
@@ -110,15 +112,15 @@ module Mongo
     end
 
     def primary?
-      @config['ismaster'] == true || @config['ismaster'] == 1
+      config['ismaster'] == true || @config['ismaster'] == 1
     end
 
     def secondary?
-      @config['secondary'] == true || @config['secondary'] == 1
+      config['secondary'] == true || @config['secondary'] == 1
     end
 
     def tags
-      @config['tags'] || {}
+      config['tags'] || {}
     end
 
     def host_port
@@ -130,8 +132,8 @@ module Mongo
     end
 
     def healthy?
-      if @config.has_key?('secondary')
-        @config['ismaster'] || @config['secondary']
+      if config.has_key?('secondary')
+        config['ismaster'] || config['secondary']
       else
         true
       end
