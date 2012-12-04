@@ -145,7 +145,7 @@ module Mongo
       # Lock for request ids.
       @id_lock = Mutex.new
 
-      # Connection pool for primay node
+      # Connection pool for primary node
       @primary      = nil
       @primary_pool = nil
 

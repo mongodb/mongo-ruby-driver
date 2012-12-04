@@ -2,7 +2,7 @@ require 'test_helper'
 include Mongo
 
 class ClientTest < Test::Unit::TestCase
-  context "Mongo::MongoClient intialization " do
+  context "Mongo::MongoClient initialization " do
     context "given a single node" do
       setup do
         @client = MongoClient.new('localhost', 27017, :connect => false)
@@ -68,7 +68,7 @@ class ClientTest < Test::Unit::TestCase
           client.send(:initialize, *args)
         end
 
-        should "throw error if superlous arguments are specified" do
+        should "throw error if superflous arguments are specified" do
           assert_raise MongoArgumentError do
             MongoReplicaSetClient.new(['localhost:27017'], ['localhost:27018'], {:connect => false})
           end

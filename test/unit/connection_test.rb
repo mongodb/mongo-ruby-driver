@@ -1,7 +1,7 @@
 require 'test_helper'
 
 class ConnectionTest < Test::Unit::TestCase
-  context "Mongo::MongoClient intialization " do
+  context "Mongo::MongoClient initialization " do
     context "given a single node" do
       setup do
         @connection = Mongo::Connection.new('localhost', 27017, :safe => true, :connect => false)
