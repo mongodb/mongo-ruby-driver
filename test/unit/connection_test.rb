@@ -71,14 +71,13 @@ class ConnectionTest < Test::Unit::TestCase
     end
 
     context "initializing with a unix socket" do
-        setup do 
-            @file = '/tmp/mysocket.sock'
-            File.unlink(@file) if File.exists?(@file) && File.socket?(@file)
-            @sock =  UNIXServer.new(@file)
-            @connection = Mongo::Connection.new(@file,:socket)
+
+        setup do
+            @connection = Mongo::Connection.new('/tmp/mongod.sock', :socket, :safe => true, :connect => false)
+            UNIXSocket.stubs(:new).returns(new_mock_unix_socket)
         end
         should "parse a unix socket" do
-            assert_equal [@file,:socket], @connection.host_to_try
+            assert_equal ["/tmp/mongod.sock",:socket], @connection.host_to_try
         end
     end
     context "initializing with a mongodb uri" do
