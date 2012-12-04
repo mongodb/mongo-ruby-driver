@@ -101,7 +101,8 @@ module Mongo
                 :journal,
                 :connecttimeoutms,
                 :sockettimeoutms,
-                :wtimeoutms
+                :wtimeoutms,
+                :nodes
 
     # Parse a MongoDB URI. This method is used by MongoClient.from_uri.
     # Returns an array of nodes and an array of db authorizations, if applicable.
@@ -134,13 +135,13 @@ module Mongo
       opts = connection_options.merge! extra_opts
       if(legacy)
         if replicaset?
-          ReplSetConnection.new(nodes, opts)
+          ReplSetConnection.new(node_strings, opts)
         else
           Connection.new(host, port, opts)
         end
       else
         if replicaset?
-          MongoReplicaSetClient.new(nodes, opts)
+          MongoReplicaSetClient.new(node_strings, opts)
         else
           MongoClient.new(host, port, opts)
         end
@@ -225,8 +226,8 @@ module Mongo
       opts
     end
 
-    def nodes
-      @nodes
+    def node_strings
+      nodes.map { |node| node.join(':') }
     end
 
     private

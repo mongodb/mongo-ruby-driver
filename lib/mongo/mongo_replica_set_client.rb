@@ -115,35 +115,35 @@ module Mongo
     # @raise [ConnectionFailure] This is raised for the various connection failures.
     def initialize(*args)
       opts = args.last.is_a?(Hash) ? args.pop : {}
-      nodes = args.shift
+      nodes = args.shift || []
 
       raise MongoArgumentError, "Too many arguments" unless args.empty?
 
-      if !nodes && ENV.has_key?('MONGODB_URI')
+      # This is temporary until support for the old format is dropped
+      @seeds = nodes.collect do |node|
+        if node.is_a?(Array)
+          warn "Initiating a MongoReplicaSetClient with seeds passed as individual [host, port] array arguments is deprecated."
+          warn "Please specify hosts as an array of 'host:port' strings; the old format will be removed in v2.0"
+          node
+        elsif node.is_a?(String)
+          host, port = node.split(":")
+          [ host, port.to_i ]
+        else
+          raise MongoArgumentError "Bad seed format!"
+        end
+      end
+
+      if @seeds.empty? && ENV.has_key?('MONGODB_URI')
         parser = URIParser.new ENV['MONGODB_URI']
         if parser.direct?
           raise MongoArgumentError, "Mongo::MongoReplicaSetClient.new called with no arguments, but ENV['MONGODB_URI'] implies a direct connection."
         end
         opts = parser.connection_options.merge! opts
-        nodes = parser.nodes
+        @seeds = parser.nodes
       end
 
-      if nodes.length.zero?
+      if @seeds.length.zero?
         raise MongoArgumentError, "A MongoReplicaSetClient requires at least one seed node."
-      end
-
-      # This is temporary until support for the old format is dropped
-      @seeds = nodes.inject(Array.new) do |seeds, node|
-        if node.is_a?(Array)
-          warn "Initiating a MongoReplicaSetClient with seeds passed as individual [host, port] array arguments is deprecated."
-          warn "Please specify hosts as an array of 'host:port' strings; the old format will be removed in v2.0"
-          seeds << node
-        elsif node.is_a?(String)
-          host, port = node.split(":")
-          seeds << [ host, port.to_i ]
-        else
-          raise MongoArgumentError "Bad seed format!"
-        end
       end
 
       @seeds.freeze
