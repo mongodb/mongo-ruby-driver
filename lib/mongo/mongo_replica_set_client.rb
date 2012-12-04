@@ -140,7 +140,7 @@ module Mongo
           seeds << node
         elsif node.is_a?(String)
           host, port = node.split(":")
-          seeds << [ host, port.to_i ]
+          seeds << [ host,  port == :socket ? port : port.to_i ]
         else
           raise MongoArgumentError "Bad seed format!"
         end

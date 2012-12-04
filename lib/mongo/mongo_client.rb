@@ -29,6 +29,7 @@ module Mongo
     include Mongo::WriteConcern
 
     TCPSocket          = Mongo::TCPSocket
+    UNIXSocket         = Mongo::UNIXSocket
     Mutex              = ::Mutex
     ConditionVariable  = ::ConditionVariable
 
@@ -111,6 +112,8 @@ module Mongo
     #
     # @example localhost, 3000, where this node may be a slave
     #   MongoClient.new("localhost", 3000, :slave_ok => true)
+    ## @example Unix Domain Socket
+    #   MongoClient.new("/var/run/mongodb.sock", :socket)
     #
     # @see http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html Replica sets in Ruby
     #
@@ -121,6 +124,7 @@ module Mongo
     #
     # @core self.connections
     def initialize(host=nil, port=nil, opts={})
+      
       if host.nil? and ENV.has_key?('MONGODB_URI')
         parser = URIParser.new ENV['MONGODB_URI']
         if parser.replicaset?
@@ -128,9 +132,12 @@ module Mongo
         end
         opts.merge!(parser.connection_options)
         @host_to_try = [parser.host, parser.port]
+      # hack because of ruby 1.8.7. a symbol respond_to :to_i and :socket was being coerced to int
+      elsif host.is_a?(String) && port.respond_to?(:to_sym) && port.to_s =~/socket/
+        @host_to_try = [host,port.to_sym]
       elsif host.is_a?(String) && (port || DEFAULT_PORT).respond_to?(:to_i)
         @host_to_try = [host, (port || DEFAULT_PORT).to_i]
-      elsif host || port
+     elsif host || port
         raise MongoArgumentError, "Mongo::MongoClient.new host or port argument error, host:#{host.inspect}, port:#{port.inspect}"
       else
         @host_to_try = [DEFAULT_HOST, DEFAULT_PORT]
@@ -448,6 +455,7 @@ module Mongo
       close
 
       config = check_is_master(@host_to_try)
+
       if config
         if config['ismaster'] == 1 || config['ismaster'] == true
           @read_primary = true
@@ -577,6 +585,12 @@ module Mongo
       @ssl = opts.delete(:ssl)
       if @ssl
         @socket_class = Mongo::SSLSocket
+      elsif ! @host_to_try.nil?
+        @socket_class = if @host_to_try[1] == :socket
+                            Mongo::UNIXSocket 
+                        else
+                            Mongo::TCPSocket
+                        end
       else
         @socket_class = Mongo::TCPSocket
       end

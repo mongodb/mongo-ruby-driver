@@ -62,6 +62,7 @@ require 'mongo/util/sharding_pool_manager'
 require 'mongo/util/server_version'
 require 'mongo/util/ssl_socket'
 require 'mongo/util/tcp_socket'
+require 'mongo/util/unix_socket'
 require 'mongo/util/uri_parser'
 
 
