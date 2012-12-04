@@ -582,8 +582,12 @@ module Mongo
       @ssl = opts.delete(:ssl)
       if @ssl
         @socket_class = Mongo::SSLSocket
-      elsif @host_to_try[1] == :socket
-        @socket_class = Mongo::UNIXSocket
+      elsif ! @host_to_try.nil?
+        @socket_class = if @host_to_try[1] == :socket
+                            Mongo::UNIXSocket 
+                        else
+                            Mongo::TCPSocket
+                        end
       else
         @socket_class = Mongo::TCPSocket
       end
