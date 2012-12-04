@@ -3,7 +3,10 @@ org_argv = ARGV.dup
 ARGV.clear
 
 require 'irb'
-
+require 'rubygems'
+if RUBY_VERSION < "1.9"
+    require 'active_support'
+end
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
 
