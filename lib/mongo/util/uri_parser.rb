@@ -250,12 +250,12 @@ module Mongo
         # If port is present, use it, otherwise use default port
         host, port = hosturi.split(':') + [MongoClient::DEFAULT_PORT]
 
-        if !(port.to_s =~ /^\d+$/)
-          raise MongoArgumentError, "Invalid port #{port}; port must be specified as digits."
+        unless port == :socket
+            if !(port.to_s =~ /^\d+$/)
+              raise MongoArgumentError, "Invalid port #{port}; port must be specified as digits."
+            end
+            port = port.to_i
         end
-
-        port = port.to_i
-
         @nodes << [host, port]
       end
 
