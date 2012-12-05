@@ -136,6 +136,14 @@ class Test::Unit::TestCase
     socket
   end
 
+  def new_mock_unix_socket(sockfile='/tmp/mongod.sock')
+    socket = Object.new
+    socket.stubs(:setsockopt).with(Socket::IPPROTO_TCP)
+    socket.stubs(:close)
+    socket.stubs(:closed?)
+    socket
+  end
+
   def new_mock_db
     Object.new
   end

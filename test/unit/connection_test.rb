@@ -30,12 +30,12 @@ class ConnectionTest < Test::Unit::TestCase
         assert !@connection.slave_ok?
       end
 
-      should "raise exception for invalid host or port" do
-        assert_raise MongoArgumentError do
-          Mongo::Connection.new(:safe => true)
+      should "not raise error if no host or port is supplied" do
+        assert_nothing_raised do
+          Mongo::Connection.new(:safe => true, :connect => false)
         end
-        assert_raise MongoArgumentError do
-          Mongo::Connection.new('localhost', :safe => true)
+        assert_nothing_raised do
+          Mongo::Connection.new('localhost', :safe => true, :connect => false)
         end
       end
 
@@ -70,22 +70,38 @@ class ConnectionTest < Test::Unit::TestCase
       end
     end
 
+    context "initializing with a unix socket" do
+      setup do
+          @connection = Mongo::Connection.new('/tmp/mongod.sock', :safe => true, :connect => false)
+          UNIXSocket.stubs(:new).returns(new_mock_unix_socket)
+      end
+      should "parse a unix socket" do
+          assert_equal "/tmp/mongod.sock", @connection.host_port.first
+      end
+    end
+
     context "initializing with a mongodb uri" do
       should "parse a simple uri" do
         @connection = Mongo::Connection.from_uri("mongodb://localhost", :connect => false)
-        assert_equal ['localhost', 27017], @connection.host_to_try
+        assert_equal ['localhost', 27017], @connection.host_port
       end
+
+      #should "parse a unix socket" do
+      #  socket_address = "/tmp/mongodb-27017.sock"
+      #  @client = MongoClient.from_uri("mongodb://#{socket_address}")
+      #  assert_equal socket_address, @client.host_port.first
+      #end
 
       should "allow a complex host names" do
         host_name = "foo.bar-12345.org"
         @connection = Mongo::Connection.from_uri("mongodb://#{host_name}", :connect => false)
-        assert_equal [host_name, 27017], @connection.host_to_try
+        assert_equal [host_name, 27017], @connection.host_port
       end
 
       should "allow db without username and password" do
         host_name = "foo.bar-12345.org"
         @connection = Mongo::Connection.from_uri("mongodb://#{host_name}/foo", :connect => false)
-        assert_equal [host_name, 27017], @connection.host_to_try
+        assert_equal [host_name, 27017], @connection.host_port
       end
 
       should "set safe options on connection" do
@@ -105,7 +121,7 @@ class ConnectionTest < Test::Unit::TestCase
 
       should "parse a uri with a hyphen & underscore in the username or password" do
         @connection = Mongo::Connection.from_uri("mongodb://hyphen-user_name:p-s_s@localhost:27017/db", :connect => false)
-        assert_equal ['localhost', 27017], @connection.host_to_try
+        assert_equal ['localhost', 27017], @connection.host_port
         auth_hash = { 'db_name' => 'db', 'username' => 'hyphen-user_name', "password" => 'p-s_s' }
         assert_equal auth_hash, @connection.auths[0]
       end
@@ -151,21 +167,21 @@ class ConnectionTest < Test::Unit::TestCase
       should "parse a simple uri" do
         ENV['MONGODB_URI'] = "mongodb://localhost?connect=false"
         @connection = Mongo::Connection.new
-        assert_equal ['localhost', 27017], @connection.host_to_try
+        assert_equal ['localhost', 27017], @connection.host_port
       end
 
       should "allow a complex host names" do
         host_name = "foo.bar-12345.org"
         ENV['MONGODB_URI'] = "mongodb://#{host_name}?connect=false"
         @connection = Mongo::Connection.new
-        assert_equal [host_name, 27017], @connection.host_to_try
+        assert_equal [host_name, 27017], @connection.host_port
       end
 
       should "allow db without username and password" do
         host_name = "foo.bar-12345.org"
         ENV['MONGODB_URI'] = "mongodb://#{host_name}/foo?connect=false"
         @connection = Mongo::Connection.new
-        assert_equal [host_name, 27017], @connection.host_to_try
+        assert_equal [host_name, 27017], @connection.host_port
       end
 
       should "set safe options on connection" do
@@ -188,7 +204,7 @@ class ConnectionTest < Test::Unit::TestCase
       should "parse a uri with a hyphen & underscore in the username or password" do
         ENV['MONGODB_URI'] = "mongodb://hyphen-user_name:p-s_s@localhost:27017/db?connect=false"
         @connection = Mongo::Connection.new
-        assert_equal ['localhost', 27017], @connection.host_to_try
+        assert_equal ['localhost', 27017], @connection.host_port
         auth_hash = { 'db_name' => 'db', 'username' => 'hyphen-user_name', "password" => 'p-s_s' }
         assert_equal auth_hash, @connection.auths[0]
       end

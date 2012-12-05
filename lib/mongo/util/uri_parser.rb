@@ -256,7 +256,6 @@ module Mongo
         end
 
         port = port.to_i
-
         @nodes << [host, port]
       end
 

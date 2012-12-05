@@ -47,8 +47,12 @@ module Mongo
   class Connection < MongoClient
     include Mongo::LegacyWriteConcern
 
-    def initialize(host=nil, port=nil, opts={})
-      write_concern_from_legacy(opts)
+    def initialize(*args)
+      if args.last.is_a?(Hash)
+        opts = args.pop
+        write_concern_from_legacy(opts)
+        args.push(opts)
+      end
       super
     end
   end
