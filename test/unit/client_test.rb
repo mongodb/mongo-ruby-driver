@@ -31,12 +31,12 @@ class ClientTest < Test::Unit::TestCase
         assert !@client.slave_ok?
       end
 
-      should "raise exception for invalid host or port" do
-        assert_raise MongoArgumentError do
-          MongoClient.new(:w => 1)
+      should "not raise error if no host or port is supplied" do
+        assert_nothing_raised do
+          MongoClient.new(:w => 1, :connect => false)
         end
-        assert_raise MongoArgumentError do
-          MongoClient.new('localhost', :w => 1)
+        assert_nothing_raised do
+          MongoClient.new('localhost', :w => 1, :connect=> false)
         end
       end
 
@@ -76,22 +76,38 @@ class ClientTest < Test::Unit::TestCase
       end
     end
 
+    context "initializing with a unix socket" do
+      setup do
+          @connection = Mongo::Connection.new('/tmp/mongod.sock', :safe => true, :connect => false)
+          UNIXSocket.stubs(:new).returns(new_mock_unix_socket)
+      end
+      should "parse a unix socket" do
+          assert_equal "/tmp/mongod.sock", @connection.host_port.first
+      end
+    end
+
     context "initializing with a mongodb uri" do
       should "parse a simple uri" do
         @client = MongoClient.from_uri("mongodb://localhost", :connect => false)
-        assert_equal ['localhost', 27017], @client.host_to_try
+        assert_equal ['localhost', 27017], @client.host_port
       end
+
+      #should "parse a unix socket" do
+      #  socket_address = "/tmp/mongodb-27017.sock"
+      #  @client = MongoClient.from_uri("mongodb://#{socket_address}")
+      #  assert_equal socket_address, @client.host_port.first
+      #end
 
       should "allow a complex host names" do
         host_name = "foo.bar-12345.org"
         @client = MongoClient.from_uri("mongodb://#{host_name}", :connect => false)
-        assert_equal [host_name, 27017], @client.host_to_try
+        assert_equal [host_name, 27017], @client.host_port
       end
 
       should "allow db without username and password" do
         host_name = "foo.bar-12345.org"
         @client = MongoClient.from_uri("mongodb://#{host_name}/foo", :connect => false)
-        assert_equal [host_name, 27017], @client.host_to_try
+        assert_equal [host_name, 27017], @client.host_port
       end
 
       should "set write concern options on connection" do
@@ -111,7 +127,7 @@ class ClientTest < Test::Unit::TestCase
 
       should "parse a uri with a hyphen & underscore in the username or password" do
         @client = MongoClient.from_uri("mongodb://hyphen-user_name:p-s_s@localhost:27017/db", :connect => false)
-        assert_equal ['localhost', 27017], @client.host_to_try
+        assert_equal ['localhost', 27017], @client.host_port
         auth_hash = { 'db_name' => 'db', 'username' => 'hyphen-user_name', "password" => 'p-s_s' }
         assert_equal auth_hash, @client.auths[0]
       end
@@ -157,21 +173,21 @@ class ClientTest < Test::Unit::TestCase
       should "parse a simple uri" do
         ENV['MONGODB_URI'] = "mongodb://localhost?connect=false"
         @client = MongoClient.new
-        assert_equal ['localhost', 27017], @client.host_to_try
+        assert_equal ['localhost', 27017], @client.host_port
       end
 
       should "allow a complex host names" do
         host_name = "foo.bar-12345.org"
         ENV['MONGODB_URI'] = "mongodb://#{host_name}?connect=false"
         @client = MongoClient.new
-        assert_equal [host_name, 27017], @client.host_to_try
+        assert_equal [host_name, 27017], @client.host_port
       end
 
       should "allow db without username and password" do
         host_name = "foo.bar-12345.org"
         ENV['MONGODB_URI'] = "mongodb://#{host_name}/foo?connect=false"
         @client = MongoClient.new
-        assert_equal [host_name, 27017], @client.host_to_try
+        assert_equal [host_name, 27017], @client.host_port
       end
 
       should "set write concern options on connection" do
@@ -194,7 +210,7 @@ class ClientTest < Test::Unit::TestCase
       should "parse a uri with a hyphen & underscore in the username or password" do
         ENV['MONGODB_URI'] = "mongodb://hyphen-user_name:p-s_s@localhost:27017/db?connect=false"
         @client = MongoClient.new
-        assert_equal ['localhost', 27017], @client.host_to_try
+        assert_equal ['localhost', 27017], @client.host_port
         auth_hash = { 'db_name' => 'db', 'username' => 'hyphen-user_name', "password" => 'p-s_s' }
         assert_equal auth_hash, @client.auths[0]
       end

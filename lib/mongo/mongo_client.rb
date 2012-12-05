@@ -28,7 +28,6 @@ module Mongo
     include Mongo::Networking
     include Mongo::WriteConcern
 
-    TCPSocket          = Mongo::TCPSocket
     Mutex              = ::Mutex
     ConditionVariable  = ::ConditionVariable
 
@@ -111,6 +110,8 @@ module Mongo
     #
     # @example localhost, 3000, where this node may be a slave
     #   MongoClient.new("localhost", 3000, :slave_ok => true)
+    ## @example Unix Domain Socket
+    #   MongoClient.new("/var/run/mongodb.sock")
     #
     # @see http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html Replica sets in Ruby
     #
@@ -120,24 +121,9 @@ module Mongo
     # @raise [MongoArgumentError] If called with no arguments and <code>ENV["MONGODB_URI"]</code> implies a replica set.
     #
     # @core self.connections
-    def initialize(host=nil, port=nil, opts={})
-      if host.nil? and ENV.has_key?('MONGODB_URI')
-        parser = URIParser.new ENV['MONGODB_URI']
-        if parser.replicaset?
-          raise MongoArgumentError, "Mongo::MongoClient.new called with no arguments, but ENV['MONGODB_URI'] implies a replica set."
-        end
-        opts.merge!(parser.connection_options)
-        @host_to_try = [parser.host, parser.port]
-      elsif host.is_a?(String) && (port || DEFAULT_PORT).respond_to?(:to_i)
-        @host_to_try = [host, (port || DEFAULT_PORT).to_i]
-      elsif host || port
-        raise MongoArgumentError, "Mongo::MongoClient.new host or port argument error, host:#{host.inspect}, port:#{port.inspect}"
-      else
-        @host_to_try = [DEFAULT_HOST, DEFAULT_PORT]
-      end
-
-      # Host and port of current master.
-      @host = @port = nil
+    def initialize(*args)
+      opts = args.last.is_a?(Hash) ? args.pop : {}
+      @host, @port = parse_init(args[0], args[1], opts)
 
       # Default maximum BSON object size
       @max_bson_size = Mongo::DEFAULT_MAX_BSON_SIZE
@@ -205,6 +191,16 @@ module Mongo
       parser.connection(extra_opts)
     end
 
+    def parse_init(host, port, opts)
+      if host.nil? && port.nil? && ENV.has_key?('MONGODB_URI')
+        parser = URIParser.new(ENV['MONGODB_URI'])
+        opts.merge! parser.connection_options
+        [parser.host, parser.port]
+      else
+        [host || DEFAULT_HOST, port || DEFAULT_PORT]
+      end
+    end
+
     # The host name used for this connection.
     #
     # @return [String]
@@ -217,6 +213,10 @@ module Mongo
     # @return [Integer]
     def port
       @primary_pool.port
+    end
+
+    def host_port
+      [@host, @port]
     end
 
     # Fsync, then lock the mongod process against writes. Use this to get
@@ -421,7 +421,6 @@ module Mongo
       self["admin"].command({:buildinfo => 1})
     end
 
-
     # Get the build version of the current server.
     #
     # @return [Mongo::ServerVersion]
@@ -447,7 +446,8 @@ module Mongo
     def connect
       close
 
-      config = check_is_master(@host_to_try)
+      config = check_is_master(host_port)
+
       if config
         if config['ismaster'] == 1 || config['ismaster'] == true
           @read_primary = true
@@ -456,11 +456,11 @@ module Mongo
         end
 
         @max_bson_size = config['maxBsonObjectSize'] || Mongo::DEFAULT_MAX_BSON_SIZE
-        set_primary(@host_to_try)
+        set_primary(host_port)
       end
 
       if !connected?
-        raise ConnectionFailure, "Failed to connect to a master node at #{@host_to_try[0]}:#{@host_to_try[1]}"
+        raise ConnectionFailure, "Failed to connect to a master node at #{host_port.join(":")}"
       end
     end
     alias :reconnect :connect
@@ -573,10 +573,13 @@ module Mongo
       # slave_ok can be true only if one node is specified
       @slave_ok = opts.delete(:slave_ok)
 
-      # Determine whether to use SSL.
       @ssl = opts.delete(:ssl)
+      @unix = @host ? @host.end_with?('.sock') : false
+
       if @ssl
         @socket_class = Mongo::SSLSocket
+      elsif @unix
+        @socket_class = Mongo::UNIXSocket
       else
         @socket_class = Mongo::TCPSocket
       end
