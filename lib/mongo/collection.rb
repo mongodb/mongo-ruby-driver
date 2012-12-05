@@ -649,20 +649,29 @@ module Mongo
     #
     #   '$sort' Sorts all input documents and returns them to the pipeline in sorted order.
     #
+    # @option opts [:primary, :secondary] :read Read preference indicating which server to perform this query
+    #  on. See Collection#find for more details.
+    #
     # @return [Array] An Array with the aggregate command's results.
     #
     # @raise MongoArgumentError if operators either aren't supplied or aren't in the correct format.
     # @raise MongoOperationFailure if the aggregate command fails.
     #
-    def aggregate(pipeline=nil)
+    def aggregate(pipeline=nil, opts={})
       raise MongoArgumentError, "pipeline must be an array of operators" unless pipeline.class == Array
       raise MongoArgumentError, "pipeline operators must be hashes" unless pipeline.all? { |op| op.class == Hash }
+
+      if read_pref = opts[:read]
+        Mongo::Support.validate_read_preference(read_pref)
+      else
+        read_pref = read_preference
+      end
 
       hash = BSON::OrderedHash.new
       hash['aggregate'] = self.name
       hash['pipeline'] = pipeline
 
-      result = @db.command(hash)
+      result = @db.command(hash, :read => read_pref)
       unless Mongo::Support.ok?(result)
         raise Mongo::OperationFailure, "aggregate failed: #{result['errmsg']}"
       end
