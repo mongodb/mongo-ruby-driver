@@ -71,7 +71,7 @@ module Mongo
     # MongoClient#arbiters. This is useful if your application needs to connect manually to nodes other
     # than the primary.
     #
-    # @param [String, Hash] host
+    # @param [String] host
     # @param [Integer] port specify a port number here if only one host is being specified.
     #
     # @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
@@ -110,7 +110,8 @@ module Mongo
     #
     # @example localhost, 3000, where this node may be a slave
     #   MongoClient.new("localhost", 3000, :slave_ok => true)
-    ## @example Unix Domain Socket
+    #
+    # @example Unix Domain Socket
     #   MongoClient.new("/var/run/mongodb.sock")
     #
     # @see http://api.mongodb.org/ruby/current/file.REPLICA_SETS.html Replica sets in Ruby
@@ -194,6 +195,10 @@ module Mongo
     def parse_init(host, port, opts)
       if host.nil? && port.nil? && ENV.has_key?('MONGODB_URI')
         parser = URIParser.new(ENV['MONGODB_URI'])
+        if parser.replicaset?
+          raise MongoArgumentError,
+            "ENV['MONGODB_URI'] implies a replica set."
+        end
         opts.merge! parser.connection_options
         [parser.host, parser.port]
       else

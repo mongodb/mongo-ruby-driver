@@ -136,7 +136,8 @@ module Mongo
       if @seeds.empty? && ENV.has_key?('MONGODB_URI')
         parser = URIParser.new ENV['MONGODB_URI']
         if parser.direct?
-          raise MongoArgumentError, "Mongo::MongoReplicaSetClient.new called with no arguments, but ENV['MONGODB_URI'] implies a direct connection."
+          raise MongoArgumentError,
+            "ENV['MONGODB_URI'] implies a direct connection."
         end
         opts = parser.connection_options.merge! opts
         @seeds = parser.nodes
