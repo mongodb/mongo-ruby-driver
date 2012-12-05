@@ -1027,7 +1027,7 @@ module Mongo
           if RUBY_VERSION < '1.9' && !spec.is_a?(BSON::OrderedHash)
               raise MongoArgumentError, "Must used OrderedHash in Ruby < 1.9.0"
           else
-              field_spec = BSON::OrderedHash.try_convert(spec)
+              field_spec = spec.is_a?(BSON::OrderedHash) ? spec : BSON::OrderedHash.try_convert(spec)
           end
       elsif spec.is_a?(Array) && spec.all? {|field| field.is_a?(Array) }
         spec.each do |f|

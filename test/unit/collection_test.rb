@@ -149,8 +149,16 @@ class CollectionTest < Test::Unit::TestCase
         a == {"x"=>-1, "y"=>-1}
       end
 
-      @coll.ensure_index({"x" => Mongo::DESCENDING, "y" => Mongo::DESCENDING})
+      if RUBY_VERSION > '1.9'
+          @coll.ensure_index({"x" => Mongo::DESCENDING, "y" => Mongo::DESCENDING})
+      else
+          ordered_hash = BSON::OrderedHash.new
+          ordered_hash['x'] = Mongo::DESCENDING
+          ordered_hash['y'] = Mongo::DESCENDING
+          @coll.ensure_index(ordered_hash)
+      end
     end
+
 
     should "use the connection's logger" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
