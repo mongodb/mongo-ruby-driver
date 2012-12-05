@@ -140,6 +140,18 @@ class CollectionTest < Test::Unit::TestCase
       @coll.ensure_index [["x", Mongo::DESCENDING], ["y", Mongo::DESCENDING]]
     end
 
+    should "call generate_indexes for each key when calling ensure_indexes with a hash" do
+      @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
+      @db   = @client['testing']
+      @db.cache_time = 300
+      @coll = @db.collection('books')
+      @coll.expects(:generate_indexes).once.with do |a, b, c|
+        a == {"x"=>-1, "y"=>-1}
+      end
+
+      @coll.ensure_index({"x" => Mongo::DESCENDING, "y" => Mongo::DESCENDING})
+    end
+
     should "use the connection's logger" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @client['testing']

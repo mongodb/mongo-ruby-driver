@@ -518,6 +518,9 @@ module Mongo
     # @example Creating a compound index:
     #   @posts.create_index([['subject', Mongo::ASCENDING], ['created_at', Mongo::DESCENDING]])
     #
+    # @example New format
+    #   @posts.create_index({'subject' => Mongo::ASCENDING, 'created_at' => Mongo::DESCENDING})
+    #
     # @example Creating a geospatial index:
     #   @restaurants.create_index([['location', Mongo::GEO2D]])
     #
@@ -1020,6 +1023,12 @@ module Mongo
       field_spec = BSON::OrderedHash.new
       if spec.is_a?(String) || spec.is_a?(Symbol)
         field_spec[spec.to_s] = 1
+      elsif spec.is_a?(Hash)
+          if RUBY_VERSION < '1.9' && !spec.is_a?(BSON::OrderedHash)
+              raise MongoArgumentError, "Must used OrderedHash in Ruby < 1.9.0"
+          else
+              field_spec = BSON::OrderedHash.try_convert(spec)
+          end
       elsif spec.is_a?(Array) && spec.all? {|field| field.is_a?(Array) }
         spec.each do |f|
           if [Mongo::ASCENDING, Mongo::DESCENDING, Mongo::GEO2D, Mongo::GEOHAYSTACK].include?(f[1])
@@ -1031,7 +1040,7 @@ module Mongo
         end
       else
         raise MongoArgumentError, "Invalid index specification #{spec.inspect}; " +
-          "should be either a string, symbol, or an array of arrays."
+          "should be either a hash (orderedHash), string, symbol, or an array of arrays."
       end
       field_spec
     end
