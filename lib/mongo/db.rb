@@ -512,6 +512,8 @@ module Mongo
     # @option opts [Boolean] :check_response (true) If +true+, raises an exception if the
     # command fails.
     # @option opts [Socket] :socket a socket to use for sending the command. This is mainly for internal use.
+    # @option opts [:primary, :secondary] :read Read preference for this command. See Collection#find for
+    #  more details.
     #
     # @return [Hash]
     #
@@ -524,9 +526,16 @@ module Mongo
         raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
       end
 
+      if read_pref = opts[:read]
+        Mongo::Support.validate_read_preference(read_pref)
+        if read_pref != :primary && !Mongo::Support::secondary_ok?(selector)
+          raise Mongo.ArgumentError, "Command is not supported on secondaries: #{selector.keys.first}"
+        end
+      end
+
       begin
         result = Cursor.new(system_command_collection,
-          :limit => -1, :selector => selector, :socket => socket).next_document
+          :limit => -1, :selector => selector, :socket => socket, :read => read_pref).next_document
       rescue OperationFailure => ex
         raise OperationFailure, "Database command '#{selector.keys.first}' failed: #{ex.message}"
       end
