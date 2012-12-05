@@ -692,6 +692,8 @@ module Mongo
     #   the instantiated collection that's returned by default. Note if a collection name isn't returned in the
     #   map-reduce output (as, for example, when using :out => { :inline => 1 }), then you must specify this option
     #   or an ArgumentError will be raised.
+    # @option opts [:primary, :secondary] :read Read preference indicating which server to run this map-reduce
+    #  on. See Collection#find for more details.
     #
     # @return [Collection, Hash] a Mongo::Collection object or a Hash with the map-reduce command's results.
     #
@@ -705,6 +707,12 @@ module Mongo
       reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
       raw    = opts.delete(:raw)
 
+      if read_pref = opts[:read]
+        Mongo::Support.validate_read_preference(read_pref)
+      else
+        read_pref = read_preference
+      end
+
       hash = BSON::OrderedHash.new
       hash['mapreduce'] = self.name
       hash['map'] = map
@@ -714,7 +722,7 @@ module Mongo
         hash[:sort] = Mongo::Support.format_order_clause(hash[:sort])
       end
 
-      result = @db.command(hash)
+      result = @db.command(hash, :read => read_pref)
       unless Mongo::Support.ok?(result)
         raise Mongo::OperationFailure, "map-reduce failed: #{result['errmsg']}"
       end
