@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class TestThreadingLargePool < Test::Unit::TestCase
+class TestThreading < Test::Unit::TestCase
 
   include Mongo
 
