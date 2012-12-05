@@ -188,7 +188,7 @@ module Mongo
 
       command.merge!(BSON::OrderedHash["fields", @fields])
 
-      response = @db.command(command)
+      response = @db.command(command, :read => @read_preference)
       return response['n'].to_i if Mongo::Support.ok?(response)
       return 0 if response['errmsg'] == "ns missing"
       raise OperationFailure.new("Count failed: #{response['errmsg']}", response['code'], response)

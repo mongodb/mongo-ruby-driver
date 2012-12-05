@@ -940,12 +940,15 @@ module Mongo
     # @option opts [Hash] :query ({}) A query selector for filtering the documents counted.
     # @option opts [Integer] :skip (nil) The number of documents to skip.
     # @option opts [Integer] :limit (nil) The number of documents to limit.
+    # @option opts [:primary, :secondary] :read Read preference for this command. See Collection#find for
+    #  more details.
     #
     # @return [Integer]
     def count(opts={})
       find(opts[:query],
-           :skip => opts[:skip],
-           :limit => opts[:limit]).count(true)
+           :skip  => opts[:skip],
+           :limit => opts[:limit],
+           :read  => opts[:read]).count(true)
     end
 
     alias :size :count
