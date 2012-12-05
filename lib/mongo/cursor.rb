@@ -188,7 +188,13 @@ module Mongo
 
       command.merge!(BSON::OrderedHash["fields", @fields])
 
-      response = @db.command(command)
+      sock = @socket || checkout_socket_from_connection
+      begin
+        response = @db.command(command, :socket => sock)
+      ensure
+        checkin_socket(sock) unless @socket
+      end
+
       return response['n'].to_i if Mongo::Support.ok?(response)
       return 0 if response['errmsg'] == "ns missing"
       raise OperationFailure.new("Count failed: #{response['errmsg']}", response['code'], response)
