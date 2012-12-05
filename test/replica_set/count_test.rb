@@ -43,4 +43,13 @@ class ReplicaSetCountTest < Test::Unit::TestCase
     count_after = @primary['admin'].command({:serverStatus => 1})['opcounters']['command']
     assert_equal 2, count_after - count_before
   end
+
+  def test_count_with_read_preference
+    @coll.insert({:a => 20}, :w => 2, :wtimeout => 10000)
+    count_before = @primary['admin'].command({:serverStatus => 1})['opcounters']['command']
+    assert_equal 1, @coll.count(:read => :secondary)
+    assert_equal 1, @coll.find({}, :read => :secondary).count()
+    count_after = @primary['admin'].command({:serverStatus => 1})['opcounters']['command']
+    assert_equal 1, count_after - count_before
+  end
 end

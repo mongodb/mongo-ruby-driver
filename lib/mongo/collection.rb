@@ -649,20 +649,29 @@ module Mongo
     #
     #   '$sort' Sorts all input documents and returns them to the pipeline in sorted order.
     #
+    # @option opts [:primary, :secondary] :read Read preference indicating which server to perform this query
+    #  on. See Collection#find for more details.
+    #
     # @return [Array] An Array with the aggregate command's results.
     #
     # @raise MongoArgumentError if operators either aren't supplied or aren't in the correct format.
     # @raise MongoOperationFailure if the aggregate command fails.
     #
-    def aggregate(pipeline=nil)
+    def aggregate(pipeline=nil, opts={})
       raise MongoArgumentError, "pipeline must be an array of operators" unless pipeline.class == Array
       raise MongoArgumentError, "pipeline operators must be hashes" unless pipeline.all? { |op| op.class == Hash }
+
+      if read_pref = opts[:read]
+        Mongo::Support.validate_read_preference(read_pref)
+      else
+        read_pref = read_preference
+      end
 
       hash = BSON::OrderedHash.new
       hash['aggregate'] = self.name
       hash['pipeline'] = pipeline
 
-      result = @db.command(hash)
+      result = @db.command(hash, :read => read_pref)
       unless Mongo::Support.ok?(result)
         raise Mongo::OperationFailure, "aggregate failed: #{result['errmsg']}"
       end
@@ -692,6 +701,8 @@ module Mongo
     #   the instantiated collection that's returned by default. Note if a collection name isn't returned in the
     #   map-reduce output (as, for example, when using :out => { :inline => 1 }), then you must specify this option
     #   or an ArgumentError will be raised.
+    # @option opts [:primary, :secondary] :read Read preference indicating which server to run this map-reduce
+    #  on. See Collection#find for more details.
     #
     # @return [Collection, Hash] a Mongo::Collection object or a Hash with the map-reduce command's results.
     #
@@ -705,6 +716,12 @@ module Mongo
       reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
       raw    = opts.delete(:raw)
 
+      if read_pref = opts[:read]
+        Mongo::Support.validate_read_preference(read_pref)
+      else
+        read_pref = read_preference
+      end
+
       hash = BSON::OrderedHash.new
       hash['mapreduce'] = self.name
       hash['map'] = map
@@ -714,7 +731,7 @@ module Mongo
         hash[:sort] = Mongo::Support.format_order_clause(hash[:sort])
       end
 
-      result = @db.command(hash)
+      result = @db.command(hash, :read => read_pref)
       unless Mongo::Support.ok?(result)
         raise Mongo::OperationFailure, "map-reduce failed: #{result['errmsg']}"
       end
@@ -749,6 +766,8 @@ module Mongo
     # @option opts [String, BSON::Code] :finalize (nil) a JavaScript function that receives and modifies
     #   each of the resultant grouped objects. Available only when group is run with command
     #   set to true.
+    # @option opts [:primary, :secondary] :read Read preference indicating which server to perform this group
+    #  on. See Collection#find for more details.
     #
     # @return [Array] the command response consisting of grouped items.
     def group(opts, condition={}, initial={}, reduce=nil, finalize=nil)
@@ -814,6 +833,12 @@ module Mongo
         raise MongoArgumentError, "Group requires at minimum values for initial and reduce."
       end
 
+      if read_pref = opts[:read]
+        Mongo::Support.validate_read_preference(read_pref)
+      else
+        read_pref = read_preference
+      end
+
       cmd = {
         "group" => {
           "ns"      => @name,
@@ -838,7 +863,7 @@ module Mongo
         cmd["group"]["$keyf"] = keyf.to_bson_code
       end
 
-      result = @db.command(cmd)
+      result = @db.command(cmd, :read => read_pref)
       result["retval"]
     end
 
@@ -850,6 +875,10 @@ module Mongo
     #
     # @param [String, Symbol, OrderedHash] key or hash to group by.
     # @param [Hash] query a selector for limiting the result set over which to group.
+    # @param [Hash] opts the options for this distinct operation.
+    #
+    # @option opts [:primary, :secondary] :read Read preference indicating which server to perform this query
+    #  on. See Collection#find for more details.
     #
     # @example Saving zip codes and ages and returning distinct results.
     #   @collection.save({:zip => 10010, :name => {:age => 27}})
@@ -869,13 +898,20 @@ module Mongo
     #     [27]
     #
     # @return [Array] an array of distinct values.
-    def distinct(key, query=nil)
+    def distinct(key, query=nil, opts={})
       raise MongoArgumentError unless [String, Symbol].include?(key.class)
       command            = BSON::OrderedHash.new
       command[:distinct] = @name
       command[:key]      = key.to_s
       command[:query]    = query
-      @db.command(command)["values"]
+
+      if read_pref = opts[:read]
+        Mongo::Support.validate_read_preference(read_pref)
+      else
+        read_pref = read_preference
+      end
+
+      @db.command(command, :read => read_pref)["values"]
     end
 
     # Rename this collection.
@@ -940,12 +976,15 @@ module Mongo
     # @option opts [Hash] :query ({}) A query selector for filtering the documents counted.
     # @option opts [Integer] :skip (nil) The number of documents to skip.
     # @option opts [Integer] :limit (nil) The number of documents to limit.
+    # @option opts [:primary, :secondary] :read Read preference for this command. See Collection#find for
+    #  more details.
     #
     # @return [Integer]
     def count(opts={})
       find(opts[:query],
-           :skip => opts[:skip],
-           :limit => opts[:limit]).count(true)
+           :skip  => opts[:skip],
+           :limit => opts[:limit],
+           :read  => opts[:read]).count(true)
     end
 
     alias :size :count

@@ -43,7 +43,8 @@ module Mongo
       'distinct',
       'geonear',
       'geosearch',
-      'geowalk'
+      'geowalk',
+      'mapreduce'
     ]
 
     # Generate an MD5 for authentication.
