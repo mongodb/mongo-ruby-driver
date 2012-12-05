@@ -757,6 +757,8 @@ module Mongo
     # @option opts [String, BSON::Code] :finalize (nil) a JavaScript function that receives and modifies
     #   each of the resultant grouped objects. Available only when group is run with command
     #   set to true.
+    # @option opts [:primary, :secondary] :read Read preference indicating which server to perform this group
+    #  on. See Collection#find for more details.
     #
     # @return [Array] the command response consisting of grouped items.
     def group(opts, condition={}, initial={}, reduce=nil, finalize=nil)
@@ -822,6 +824,12 @@ module Mongo
         raise MongoArgumentError, "Group requires at minimum values for initial and reduce."
       end
 
+      if read_pref = opts[:read]
+        Mongo::Support.validate_read_preference(read_pref)
+      else
+        read_pref = read_preference
+      end
+
       cmd = {
         "group" => {
           "ns"      => @name,
@@ -846,7 +854,7 @@ module Mongo
         cmd["group"]["$keyf"] = keyf.to_bson_code
       end
 
-      result = @db.command(cmd)
+      result = @db.command(cmd, :read => read_pref)
       result["retval"]
     end
 
@@ -858,6 +866,10 @@ module Mongo
     #
     # @param [String, Symbol, OrderedHash] key or hash to group by.
     # @param [Hash] query a selector for limiting the result set over which to group.
+    # @param [Hash] opts the options for this distinct operation.
+    #
+    # @option opts [:primary, :secondary] :read Read preference indicating which server to perform this query
+    #  on. See Collection#find for more details.
     #
     # @example Saving zip codes and ages and returning distinct results.
     #   @collection.save({:zip => 10010, :name => {:age => 27}})
@@ -877,13 +889,20 @@ module Mongo
     #     [27]
     #
     # @return [Array] an array of distinct values.
-    def distinct(key, query=nil)
+    def distinct(key, query=nil, opts={})
       raise MongoArgumentError unless [String, Symbol].include?(key.class)
       command            = BSON::OrderedHash.new
       command[:distinct] = @name
       command[:key]      = key.to_s
       command[:query]    = query
-      @db.command(command)["values"]
+
+      if read_pref = opts[:read]
+        Mongo::Support.validate_read_preference(read_pref)
+      else
+        read_pref = read_preference
+      end
+
+      @db.command(command, :read => read_pref)["values"]
     end
 
     # Rename this collection.
