@@ -514,6 +514,7 @@ module Mongo
     # @option opts [Socket] :socket a socket to use for sending the command. This is mainly for internal use.
     # @option opts [:primary, :secondary] :read Read preference for this command. See Collection#find for
     #  more details.
+    # @option opts [String]  :comment (nil) a comment to include in profiling logs
     #
     # @return [Hash]
     #
@@ -535,7 +536,11 @@ module Mongo
 
       begin
         result = Cursor.new(system_command_collection,
-          :limit => -1, :selector => selector, :socket => socket, :read => read_pref).next_document
+                            :limit => -1,
+                            :selector => selector,
+                            :socket => socket,
+                            :read => read_pref,
+                            :comment => opts[:comment]).next_document
       rescue OperationFailure => ex
         raise OperationFailure, "Database command '#{selector.keys.first}' failed: #{ex.message}"
       end
