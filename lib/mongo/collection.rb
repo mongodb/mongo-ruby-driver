@@ -518,7 +518,7 @@ module Mongo
     # @example Creating a compound index:
     #   @posts.create_index([['subject', Mongo::ASCENDING], ['created_at', Mongo::DESCENDING]])
     #
-    # @example New format
+    # @example Creating a compound index using a hash: (Ruby 1.9 and above)
     #   @posts.create_index({'subject' => Mongo::ASCENDING, 'created_at' => Mongo::DESCENDING})
     #
     # @example Creating a geospatial index:
