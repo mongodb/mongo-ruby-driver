@@ -6,25 +6,25 @@ class Test::Unit::TestCase
 
   TEST_DATA = File.join(File.dirname(__FILE__), 'data')
 
-  def ensure_cluster(kind=nil)
+  def ensure_cluster(kind=nil, opts={})
     if defined?(@@current_class) and @@current_class == self.class
       @@cluster.start
     else
       @@current_class = self.class
 
       if kind == :rs
-        opts = Mongo::Config::DEFAULT_REPLICA_SET
-        opts.merge!(:arbiters => 2)
+        cluster_opts = Mongo::Config::DEFAULT_REPLICA_SET.dup
       else
-        opts = Mongo::Config::DEFAULT_SHARDED_SIMPLE
-        opts.merge!(:routers => 4)
+        cluster_opts = Mongo::Config::DEFAULT_SHARDED_SIMPLE.dup
       end
 
+      cluster_opts.merge!(opts)
+
       dbpath = ENV['DBPATH'] || 'data'
-      opts.merge!(:dbpath => dbpath)
+      cluster_opts.merge!(:dbpath => dbpath)
 
       #debug 1, opts
-      config = Mongo::Config.cluster(opts)
+      config = Mongo::Config.cluster(cluster_opts)
       #debug 1, config
       @@cluster = Mongo::Config::ClusterManager.new(config)
       @@cluster.start
