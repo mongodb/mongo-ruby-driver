@@ -7,8 +7,8 @@ class ReplicaSetAckTest < Test::Unit::TestCase
     @client = MongoReplicaSetClient.new(@rs.repl_set_seeds)
 
     @slave1 = MongoClient.new(
-      @client.secondary_pools[0].host,
-      @client.secondary_pools[0].port, :slave_ok => true)
+      @client.secondary_pools.first.host,
+      @client.secondary_pools.first.port, :slave_ok => true)
 
     assert !@slave1.read_primary?
 
