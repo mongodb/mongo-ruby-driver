@@ -44,7 +44,8 @@ class DBTest < Test::Unit::TestCase
       should "create the proper cursor" do
         @cursor = mock(:next_document => {"ok" => 1})
         Cursor.expects(:new).with(@collection,
-          :limit => -1, :selector => {:buildinfo => 1}, :socket => nil, :read => nil).returns(@cursor)
+          :limit => -1, :selector => {:buildinfo => 1},
+          :socket => nil, :read => nil, :comment => nil).returns(@cursor)
         command = {:buildinfo => 1}
         @db.command(command, :check_response => true)
       end
@@ -52,10 +53,22 @@ class DBTest < Test::Unit::TestCase
       should "raise an error when the command fails" do
         @cursor = mock(:next_document => {"ok" => 0})
         Cursor.expects(:new).with(@collection,
-          :limit => -1, :selector => {:buildinfo => 1}, :socket => nil, :read => nil).returns(@cursor)
+          :limit => -1, :selector => {:buildinfo => 1},
+          :socket => nil, :read => nil, :comment => nil).returns(@cursor)
         assert_raise OperationFailure do
           command = {:buildinfo => 1}
           @db.command(command, :check_response => true)
+        end
+      end
+
+      should "pass on the comment" do
+        @cursor = mock(:next_document => {"ok" => 0})
+        Cursor.expects(:new).with(@collection,
+          :limit => -1, :selector => {:buildinfo => 1},
+          :socket => nil, :read => nil, :comment => "my comment").returns(@cursor)
+        assert_raise OperationFailure do
+          command = {:buildinfo => 1}
+          @db.command(command, :check_response => true, :comment => 'my comment')
         end
       end
 
