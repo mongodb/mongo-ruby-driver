@@ -209,7 +209,7 @@ module Mongo
         if direct?
           opts[:slave_ok] = true
         else
-          opts[:read] = :secondary
+          opts[:read] = :secondary_preferred
         end
       end
 
