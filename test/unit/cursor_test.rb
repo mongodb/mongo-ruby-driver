@@ -140,4 +140,31 @@ class CursorTest < Test::Unit::TestCase
       assert_nil @cursor.fields
     end
   end
+
+  context "counts" do
+    setup do
+      @logger     = mock()
+      @logger.stubs(:debug)
+      @connection = stub(:class => Connection, :logger => @logger,
+        :slave_ok? => false, :read_preference => :primary, :log_duration => false,
+        :tag_sets => {}, :acceptable_latency => 10)
+      @db         = stub(:name => "testing", :slave_ok? => false,
+        :connection => @connection, :read_preference => :primary,
+        :tag_sets => {}, :acceptable_latency => 10)
+      @collection = stub(:db => @db, :name => "items", :read_preference => :primary,
+        :tag_sets => {}, :acceptable_latency => 10)
+      @cursor     = Cursor.new(@collection)
+    end
+
+    should "pass the comment parameter" do
+      query = {:field => 7}
+      @db.expects(:command).with({ 'count' => "items",
+                                   'query' => query,
+                                   'fields' => nil},
+                                 { :read => :primary,
+                                   :comment => "my comment"}).
+        returns({'ok' => 1, 'n' => 1})
+      assert_equal(1, Cursor.new(@collection, :selector => query, :comment => 'my comment').count())
+    end
+  end
 end
