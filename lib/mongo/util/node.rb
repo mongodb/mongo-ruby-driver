@@ -74,6 +74,7 @@ module Mongo
     # matches with the name provided.
     def set_config
       @node_mutex.synchronize do
+        return unless connected?
         begin
           @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
 
@@ -86,7 +87,6 @@ module Mongo
         rescue ConnectionFailure, OperationFailure, OperationTimeout, SocketError, SystemCallError, IOError => ex
           @client.log(:warn, "Attempted connection to node #{host_string} raised " +
                               "#{ex.class}: #{ex.message}")
-
           # Socket may already be nil from issuing command
           close
         end
@@ -132,6 +132,7 @@ module Mongo
     end
 
     def healthy?
+      return false unless config
       if config.has_key?('secondary')
         config['ismaster'] || config['secondary']
       else

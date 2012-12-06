@@ -21,14 +21,14 @@ class AuthTest < Test::Unit::TestCase
 
     # Ensure that insert fails
     assert_raise_error Mongo::OperationFailure, "unauthorized" do
-      @client['foo']['stuff'].insert({:a => 2}, {:w => 3})
+      @client['foo']['stuff'].insert({:a => 2}, {:w => 2})
     end
 
     # Then authenticate
     assert @client['admin'].authenticate("me", "secret")
 
     # Insert should succeed now
-    assert @client['foo']['stuff'].insert({:a => 2}, {:w => 3})
+    assert @client['foo']['stuff'].insert({:a => 2}, {:w => 2})
 
     # So should a query
     assert @client['foo']['stuff'].find_one

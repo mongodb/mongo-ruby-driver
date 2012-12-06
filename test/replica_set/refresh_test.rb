@@ -7,11 +7,6 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     ensure_cluster(:rs)
   end
 
-  def self.shutdown
-    @@cluster.stop
-    @@cluster.clobber
-  end
-
   def test_connect_and_manual_refresh_with_secondaries_down
     @rs.secondaries.each{|s| s.stop}
 
@@ -67,7 +62,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
 
     assert @client.refresh_version > old_refresh_version,
       "Refresh version hasn't changed."
-    assert @client.secondaries.length == 2,
+    assert @client.secondaries.length == 1,
       "No secondaries have been added."
     assert @client.manager.read != @client.manager.primary,
       "Read pool and primary pool are identical."

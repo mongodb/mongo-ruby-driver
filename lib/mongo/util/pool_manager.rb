@@ -102,7 +102,6 @@ module Mongo
     def read_pool(mode=@client.read_preference,
                   tags=@client.tag_sets,
                   acceptable_latency=@client.acceptable_latency)
-
       if mode == :primary && !tags.empty?
         raise MongoArgumentError, "Read preferecy :primary cannot be combined with tags"
       end
@@ -184,7 +183,7 @@ module Mongo
 
       seed.node_list.each do |host|
         node = Mongo::Node.new(self.client, host)
-        if node.connect && node.set_config && node.healthy?
+        if node.healthy?
           members << node
         end
       end
@@ -201,7 +200,6 @@ module Mongo
     def initialize_pools(members)
       members.each do |member|
         @hosts << member.host_string
-
         if member.primary?
           assign_primary(member)
         elsif member.secondary? && !@secondaries.include?(member.host_port)

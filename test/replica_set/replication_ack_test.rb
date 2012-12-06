@@ -21,20 +21,15 @@ class ReplicaSetAckTest < Test::Unit::TestCase
     @client.close if @conn
   end
 
-  def self.shutdown
-    @@cluster.stop
-    @@cluster.clobber
-  end
-
   def test_safe_mode_with_w_failure
     assert_raise_error OperationFailure, "timeout" do
-      @col.insert({:foo => 1}, :w => 4, :wtimeout => 1, :fsync => true)
+      @col.insert({:foo => 1}, :w => 3, :wtimeout => 1, :fsync => true)
     end
     assert_raise_error OperationFailure, "timeout" do
-      @col.update({:foo => 1}, {:foo => 2}, :w => 4, :wtimeout => 1, :fsync => true)
+      @col.update({:foo => 1}, {:foo => 2}, :w => 3, :wtimeout => 1, :fsync => true)
     end
     assert_raise_error OperationFailure, "timeout" do
-      @col.remove({:foo => 2}, :w => 4, :wtimeout => 1, :fsync => true)
+      @col.remove({:foo => 2}, :w => 3, :wtimeout => 1, :fsync => true)
     end
     assert_raise_error OperationFailure do
       @col.insert({:foo => 3}, :w => "test-tag")
@@ -42,19 +37,19 @@ class ReplicaSetAckTest < Test::Unit::TestCase
   end
 
   def test_safe_mode_replication_ack
-    @col.insert({:baz => "bar"}, :w => 3, :wtimeout => 5000)
+    @col.insert({:baz => "bar"}, :w => 2, :wtimeout => 5000)
 
-    assert @col.insert({:foo => "0" * 5000}, :w => 3, :wtimeout => 5000)
+    assert @col.insert({:foo => "0" * 5000}, :w => 2, :wtimeout => 5000)
     assert_equal 2, @slave1[MONGO_TEST_DB]["test-sets"].count
 
-    assert @col.update({:baz => "bar"}, {:baz => "foo"}, :w => 3, :wtimeout => 5000)
+    assert @col.update({:baz => "bar"}, {:baz => "foo"}, :w => 2, :wtimeout => 5000)
     assert @slave1[MONGO_TEST_DB]["test-sets"].find_one({:baz => "foo"})
 
     assert @col.insert({:foo => "bar"}, :w => "majority")
 
     assert @col.insert({:bar => "baz"}, :w => :majority)
 
-    assert @col.remove({}, :w => 3, :wtimeout => 5000)
+    assert @col.remove({}, :w => 2, :wtimeout => 5000)
     assert_equal 0, @slave1[MONGO_TEST_DB]["test-sets"].count
   end
 

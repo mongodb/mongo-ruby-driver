@@ -7,11 +7,9 @@ class Test::Unit::TestCase
   TEST_DATA = File.join(File.dirname(__FILE__), 'data')
 
   def ensure_cluster(kind=nil, opts={})
-    if defined?(@@current_class) and @@current_class == self.class
-      @@cluster.start
-    else
-      @@current_class = self.class
+    @@cluster ||= false
 
+    unless @@cluster
       if kind == :rs
         cluster_opts = Mongo::Config::DEFAULT_REPLICA_SET.dup
       else
@@ -27,8 +25,9 @@ class Test::Unit::TestCase
       config = Mongo::Config.cluster(cluster_opts)
       #debug 1, config
       @@cluster = Mongo::Config::ClusterManager.new(config)
-      @@cluster.start
     end
+
+    @@cluster.start
     instance_variable_set("@#{kind}", @@cluster)
   end
 
@@ -126,6 +125,11 @@ class Test::Unit::TestCase
 
   def mongo_port
     self.class.mongo_port
+  end
+
+  def method_name
+    caller[0]=~/`(.*?)'/
+    $1
   end
 
   def new_mock_socket(host='localhost', port=27017)

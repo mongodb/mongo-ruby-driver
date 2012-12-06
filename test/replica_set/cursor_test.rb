@@ -6,11 +6,6 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     ensure_cluster(:rs)
   end
 
-  def self.shutdown
-    @@cluster.stop
-    @@cluster.clobber
-  end
-
   def test_cursors_get_closed
     setup_client
     assert_cursor_count
@@ -34,9 +29,9 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     @db.drop_collection("cursor_tests")
     @coll = @db.collection("cursor_tests")
 
-    @coll.insert({:a => 1}, :w => 3)
-    @coll.insert({:b => 2}, :w => 3)
-    @coll.insert({:c => 3}, :w => 3)
+    @coll.insert({:a => 1}, :w => 2)
+    @coll.insert({:b => 2}, :w => 2)
+    @coll.insert({:c => 3}, :w => 2)
 
     # Pin reader
     @coll.find_one

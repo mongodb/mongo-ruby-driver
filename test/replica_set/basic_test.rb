@@ -6,11 +6,6 @@ class BasicTest < Test::Unit::TestCase
     ensure_cluster(:rs)
   end
 
-  def self.shutdown
-    @@cluster.stop
-    @@cluster.clobber
-  end
-
   def test_connect
     client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
     assert client.connected?
@@ -70,9 +65,9 @@ class BasicTest < Test::Unit::TestCase
     assert_equal @rs.primary_name, [client.host, client.port].join(':')
     assert_equal client.host, client.primary_pool.host
     assert_equal client.port, client.primary_pool.port
-    assert_equal 2, client.secondaries.length
-    assert_equal 2, client.arbiters.length
-    assert_equal 2, client.secondary_pools.length
+    assert_equal 1, client.secondaries.length
+    assert_equal 1, client.arbiters.length
+    assert_equal 1, client.secondary_pools.length
     assert_equal @rs.repl_set_name, client.replica_set_name
     assert client.secondary_pools.include?(client.read_pool(:secondary))
     assert_equal 90, client.refresh_interval

@@ -16,11 +16,6 @@ class ReplicaSetCountTest < Test::Unit::TestCase
     @client.close if @conn
   end
 
-  def self.shutdown
-    @@cluster.stop
-    @@cluster.clobber
-  end
-
   def test_correct_count_after_insertion_reconnect
     @coll.insert({:a => 20}, :w => 2, :wtimeout => 10000)
     assert_equal 1, @coll.count

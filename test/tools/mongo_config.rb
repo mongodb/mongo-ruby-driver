@@ -25,7 +25,7 @@ end
 module Mongo
   class Config
     DEFAULT_BASE_OPTS = { :host => 'localhost', :dbpath => 'data', :logpath => 'data/log'}
-    DEFAULT_REPLICA_SET = DEFAULT_BASE_OPTS.merge( :replicas => 3, :arbiters => 2 )
+    DEFAULT_REPLICA_SET = DEFAULT_BASE_OPTS.merge( :replicas => 2, :arbiters => 1 )
     DEFAULT_SHARDED_SIMPLE = DEFAULT_BASE_OPTS.merge( :shards => 2, :configs => 1, :routers => 4 )
     DEFAULT_SHARDED_REPLICA = DEFAULT_SHARDED_SIMPLE.merge( :replicas => 3, :arbiters => 0)
 
@@ -35,7 +35,7 @@ module Mongo
     MONGODS_OPT_KEYS = [:mongods]
     CLUSTER_OPT_KEYS = SHARDING_OPT_KEYS + REPLICA_OPT_KEYS + MONGODS_OPT_KEYS
 
-    FLAGS = [:noprealloc, :smallfiles, :logappend, :configsvr, :shardsvr, :quiet]
+    FLAGS = [:noprealloc, :smallfiles, :logappend, :configsvr, :shardsvr, :quiet, :fastsync]
 
     DEFAULT_VERIFIES = 60
     BASE_PORT = 3000
@@ -102,13 +102,15 @@ module Mongo
       noprealloc = opts[:noprealloc] || true
       smallfiles = opts[:smallfiles] || true
       quiet      = opts[:quiet]      || true
+      fast_sync  = opts[:fastsync]   || true
 
       params.merge(
         :command => mongod,
         :dbpath => path,
         :smallfiles => smallfiles,
         :noprealloc => noprealloc,
-        :quiet => quiet
+        :quiet => quiet,
+        :fastsync => fast_sync
       )
     end
 
@@ -116,7 +118,7 @@ module Mongo
       params = make_mongod('replicas', opts)
 
       replSet    = opts[:replSet]    || 'ruby-driver-test'
-      oplog_size = opts[:oplog_size] || 10
+      oplog_size = opts[:oplog_size] || 5
 
       params.merge(
         :_id => count,
@@ -185,7 +187,8 @@ module Mongo
         clear_zombie
         return @pid if running?
         begin
-          @pid = Process.spawn(*@cmd) # redirection not supported in jruby
+          # redirection not supported in jruby
+          @pid = Process.spawn(*@cmd)
           sleep 1
           verify(verifies) if verifies > 0
           @pid
@@ -260,9 +263,9 @@ module Mongo
         params = @config.reject{|k,v| IGNORE_KEYS.include?(k)}
         arguments = params.sort{|a, b| a[0].to_s <=> b[0].to_s}.collect do |arg, value| # sort block is needed for 1.8.7 which lacks Symbol#<=>
           argument = '--' + arg.to_s
-          if FLAGS.member?(arg)
+          if FLAGS.member?(arg) && value == true
             [argument]
-          else
+          elsif !FLAGS.member?(arg)
             [argument, value.to_s]
           end
         end

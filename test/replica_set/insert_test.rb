@@ -14,24 +14,19 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
     @client.close if @conn
   end
 
-  def self.shutdown
-    @@cluster.stop
-    @@cluster.clobber
-  end
-
   def test_insert
     @coll.save({:a => 20}, :w => 2)
 
     @rs.primary.stop
 
     rescue_connection_failure do
-      @coll.save({:a => 30}, :w => 2)
+      @coll.save({:a => 30}, :w => 1)
     end
 
-    @coll.save({:a => 40}, :w => 2)
-    @coll.save({:a => 50}, :w => 2)
-    @coll.save({:a => 60}, :w => 2)
-    @coll.save({:a => 70}, :w => 2)
+    @coll.save({:a => 40}, :w => 1)
+    @coll.save({:a => 50}, :w => 1)
+    @coll.save({:a => 60}, :w => 1)
+    @coll.save({:a => 70}, :w => 1)
 
     # Restart the old master and wait for sync
     @rs.start

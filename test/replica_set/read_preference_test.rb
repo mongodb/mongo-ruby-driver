@@ -13,11 +13,6 @@ class ReadPreferenceTest < Test::Unit::TestCase
     coll.save({:a => 20}, {:w => 2})
   end
 
-  def self.shutdown
-    @@cluster.stop
-    @@cluster.clobber
-  end
-
   def test_read_primary
     conn = make_connection
     rescue_connection_failure do

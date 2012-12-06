@@ -6,11 +6,6 @@ class ComplexConnectTest < Test::Unit::TestCase
     ensure_cluster(:rs)
   end
 
-  def self.shutdown
-    @@cluster.stop
-    @@cluster.clobber
-  end
-
   def teardown
     @client.close if defined?(@conn) && @conn
   end
@@ -31,8 +26,12 @@ class ComplexConnectTest < Test::Unit::TestCase
     assert @client['test']['foo'].find_one
 
     config = primary['local']['system.replset'].find_one
+    old_config = config.dup
     config['version'] += 1
-    port_to_delete = @rs.servers.collect(&:port).find{|port| port != primary.port}.to_s # eliminate exception: can't find self in new replset config
+
+    # eliminate exception: can't find self in new replset config
+    port_to_delete = @rs.servers.collect(&:port).find{|port| port != primary.port}.to_s
+
     config['members'].delete_if do |member|
       member['host'].include?(port_to_delete)
     end
@@ -51,12 +50,18 @@ class ComplexConnectTest < Test::Unit::TestCase
     end
 
     # isMaster is currently broken in 2.1+ when called on removed nodes
+    puts version
     if version < "2.1"
       rescue_connection_failure do
         assert @client['test']['foo'].find_one
       end
 
       assert @client['test']['foo'].find_one
+    end
+
+    primary = MongoClient.new(host, @rs.primary.port)
+    assert_raise ConnectionFailure do
+      primary['admin'].command({:replSetReconfig => old_config})
     end
   end
 end

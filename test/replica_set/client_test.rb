@@ -11,18 +11,10 @@ class ClientTest < Test::Unit::TestCase
     @client.close if @client
   end
 
-  def self.shutdown
-    @@cluster.stop
-    @@cluster.clobber
-  end
-
-  # To reset after (test) failure
-  #     rake test:cleanup
-
   def step_down_command
     # Adding force=true to avoid 'no secondaries within 10 seconds of my optime' errors
     step_down_command = BSON::OrderedHash.new
-    step_down_command[:replSetStepDown] = 60
+    step_down_command[:replSetStepDown] = 5
     step_down_command[:force]           = true
     step_down_command
   end
@@ -30,15 +22,9 @@ class ClientTest < Test::Unit::TestCase
   # TODO: test connect timeout.
 
   def test_connect_with_deprecated_multi
-    #replica_host_ports = @rs.replicas.collect{|replica| [replica.host, replica.port]}
-    host = @rs.replicas.first.host
     silently do
-      @client = MongoClient.multi([
-        # guaranteed to have one data-holding member
-        [host, @rs.replicas[0].port],
-        [host, @rs.replicas[1].port],
-        [host, @rs.replicas[2].port],
-      ], :name => @rs.repl_set_name)
+      # guaranteed to have one data-holding member
+      @client = MongoClient.multi(@rs.repl_set_seeds_old, :name => @rs.repl_set_name)
     end
     assert !@client.nil?
     assert @client.connected?
@@ -70,7 +56,7 @@ class ClientTest < Test::Unit::TestCase
 
   def test_connect_with_primary_stepped_down
     @client = MongoReplicaSetClient.new @rs.repl_set_seeds
-    @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 3})
+    @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 2})
     assert @client[MONGO_TEST_DB]['bar'].find_one
 
     primary = Mongo::MongoClient.new(@client.primary_pool.host, @client.primary_pool.port)
@@ -87,7 +73,7 @@ class ClientTest < Test::Unit::TestCase
   def test_connect_with_primary_killed
     @client = MongoReplicaSetClient.new @rs.repl_set_seeds
     assert @client.connected?
-    @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 3})
+    @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 1})
     assert @client[MONGO_TEST_DB]['bar'].find_one
 
     @rs.primary.kill(Signal.list['KILL'])
@@ -107,13 +93,13 @@ class ClientTest < Test::Unit::TestCase
     end
 
     rescue_connection_failure do
-      @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 3})
+      @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 2})
     end
   end
 
   #def test_connect_with_first_node_removed
   #  @client = MongoReplicaSetClient.new @rs.repl_set_seeds
-  #  @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 3})
+  #  @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 2})
   #
   #  old_primary = [@client.primary_pool.host, @client.primary_pool.port]
   #  old_primary_conn = Mongo::MongoClient.new(*old_primary)
@@ -251,5 +237,4 @@ class ClientTest < Test::Unit::TestCase
     assert @client.connected?
     assert_equal 0, @client.write_concern[:w]
   end
-
 end
