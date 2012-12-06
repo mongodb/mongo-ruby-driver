@@ -45,7 +45,10 @@ namespace :test do
   end
 
   Rake::TestTask.new(:replica_set) do |t|
-    t.test_files = FileList['test/replica_set/*_test.rb'] - ['test/replica_set/count_test.rb']
+    t.test_files = FileList['test/replica_set/*_test.rb'] - [
+      'test/replica_set/count_test.rb',
+      'test/replica_set/read_preference_test.rb'
+    ]
     t.libs << 'test'
   end
 
