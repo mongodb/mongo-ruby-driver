@@ -654,6 +654,7 @@ module Mongo
     #
     # @option opts [:primary, :secondary] :read Read preference indicating which server to perform this query
     #  on. See Collection#find for more details.
+    # @option opts [String]  :comment (nil) a comment to include in profiling logs
     #
     # @return [Array] An Array with the aggregate command's results.
     #
@@ -664,17 +665,11 @@ module Mongo
       raise MongoArgumentError, "pipeline must be an array of operators" unless pipeline.class == Array
       raise MongoArgumentError, "pipeline operators must be hashes" unless pipeline.all? { |op| op.class == Hash }
 
-      if read_pref = opts[:read]
-        Mongo::Support.validate_read_preference(read_pref)
-      else
-        read_pref = read_preference
-      end
-
       hash = BSON::OrderedHash.new
       hash['aggregate'] = self.name
       hash['pipeline'] = pipeline
 
-      result = @db.command(hash, :read => read_pref)
+      result = @db.command(hash, command_options(opts))
       unless Mongo::Support.ok?(result)
         raise Mongo::OperationFailure, "aggregate failed: #{result['errmsg']}"
       end
@@ -706,6 +701,7 @@ module Mongo
     #   or an ArgumentError will be raised.
     # @option opts [:primary, :secondary] :read Read preference indicating which server to run this map-reduce
     #  on. See Collection#find for more details.
+    # @option opts [String]  :comment (nil) a comment to include in profiling logs
     #
     # @return [Collection, Hash] a Mongo::Collection object or a Hash with the map-reduce command's results.
     #
@@ -719,12 +715,6 @@ module Mongo
       reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
       raw    = opts.delete(:raw)
 
-      if read_pref = opts[:read]
-        Mongo::Support.validate_read_preference(read_pref)
-      else
-        read_pref = read_preference
-      end
-
       hash = BSON::OrderedHash.new
       hash['mapreduce'] = self.name
       hash['map'] = map
@@ -734,7 +724,7 @@ module Mongo
         hash[:sort] = Mongo::Support.format_order_clause(hash[:sort])
       end
 
-      result = @db.command(hash, :read => read_pref)
+      result = @db.command(hash, command_options(opts))
       unless Mongo::Support.ok?(result)
         raise Mongo::OperationFailure, "map-reduce failed: #{result['errmsg']}"
       end
@@ -771,6 +761,7 @@ module Mongo
     #   set to true.
     # @option opts [:primary, :secondary] :read Read preference indicating which server to perform this group
     #  on. See Collection#find for more details.
+    # @option opts [String]  :comment (nil) a comment to include in profiling logs
     #
     # @return [Array] the command response consisting of grouped items.
     def group(opts, condition={}, initial={}, reduce=nil, finalize=nil)
@@ -836,12 +827,6 @@ module Mongo
         raise MongoArgumentError, "Group requires at minimum values for initial and reduce."
       end
 
-      if read_pref = opts[:read]
-        Mongo::Support.validate_read_preference(read_pref)
-      else
-        read_pref = read_preference
-      end
-
       cmd = {
         "group" => {
           "ns"      => @name,
@@ -866,7 +851,7 @@ module Mongo
         cmd["group"]["$keyf"] = keyf.to_bson_code
       end
 
-      result = @db.command(cmd, :read => read_pref)
+      result = @db.command(cmd, command_options(opts))
       result["retval"]
     end
 
@@ -882,6 +867,7 @@ module Mongo
     #
     # @option opts [:primary, :secondary] :read Read preference indicating which server to perform this query
     #  on. See Collection#find for more details.
+    # @option opts [String]  :comment (nil) a comment to include in profiling logs
     #
     # @example Saving zip codes and ages and returning distinct results.
     #   @collection.save({:zip => 10010, :name => {:age => 27}})
@@ -908,13 +894,7 @@ module Mongo
       command[:key]      = key.to_s
       command[:query]    = query
 
-      if read_pref = opts[:read]
-        Mongo::Support.validate_read_preference(read_pref)
-      else
-        read_pref = read_preference
-      end
-
-      @db.command(command, :read => read_pref)["values"]
+      @db.command(command, command_options(opts))["values"]
     end
 
     # Rename this collection.
@@ -981,18 +961,35 @@ module Mongo
     # @option opts [Integer] :limit (nil) The number of documents to limit.
     # @option opts [:primary, :secondary] :read Read preference for this command. See Collection#find for
     #  more details.
+    # @option opts [String]  :comment (nil) a comment to include in profiling logs
     #
     # @return [Integer]
     def count(opts={})
       find(opts[:query],
            :skip  => opts[:skip],
            :limit => opts[:limit],
-           :read  => opts[:read]).count(true)
+           :read  => opts[:read],
+           :comment => opts[:comment]).count(true)
     end
 
     alias :size :count
 
     protected
+
+    # Parse common options for read-only commands from an input @opts
+    # hash and return a hash suitable for passing to DB#command.
+    def command_options(opts)
+      out = {}
+
+      if read_pref = opts[:read]
+        Mongo::Support.validate_read_preference(read_pref)
+      else
+        read_pref = read_preference
+      end
+      out[:read] = read_pref
+      out[:comment] = opts[:comment] if opts[:comment]
+      out
+    end
 
     def normalize_hint_fields(hint)
       case hint
