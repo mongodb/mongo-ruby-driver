@@ -41,12 +41,9 @@ class ComplexConnectTest < Test::Unit::TestCase
     end
     @rs.start
 
-    force_stepdown = BSON::OrderedHash.new
-    force_stepdown[:replSetStepDown] = 1
-    force_stepdown[:force] = true
 
     assert_raise ConnectionFailure do
-      primary['admin'].command(force_stepdown)
+      primary['admin'].command(step_down_command)
     end
 
     # isMaster is currently broken in 2.1+ when called on removed nodes

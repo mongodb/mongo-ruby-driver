@@ -11,14 +11,6 @@ class ConnectionTest < Test::Unit::TestCase
     @connection.close if @connection
   end
 
-  def step_down_command
-    # Adding force=true to avoid 'no secondaries within 10 seconds of my optime' errors
-    step_down_command = BSON::OrderedHash.new
-    step_down_command[:replSetStepDown] = 5
-    step_down_command[:force]           = true
-    step_down_command
-  end
-
   # TODO: test connect timeout.
 
   def test_connect_with_deprecated_multi

@@ -132,6 +132,14 @@ class Test::Unit::TestCase
     $1
   end
 
+  def step_down_command
+    # Adding force=true to avoid 'no secondaries within 10 seconds of my optime' errors
+    step_down_command = BSON::OrderedHash.new
+    step_down_command[:replSetStepDown] = 5
+    step_down_command[:force]           = true
+    step_down_command
+  end
+
   def new_mock_socket(host='localhost', port=27017)
     socket = Object.new
     socket.stubs(:setsockopt).with(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
