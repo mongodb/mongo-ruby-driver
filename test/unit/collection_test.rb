@@ -145,8 +145,11 @@ class CollectionTest < Test::Unit::TestCase
       @db   = @client['testing']
       @db.cache_time = 300
       @coll = @db.collection('books')
+      oh = BSON::OrderedHash.new
+      oh['x'] = Mongo::DESCENDING
+      oh['y'] = Mongo::DESCENDING
       @coll.expects(:generate_indexes).once.with do |a, b, c|
-        a == {"x"=>-1, "y"=>-1}
+        a == oh
       end
 
       if RUBY_VERSION > '1.9'

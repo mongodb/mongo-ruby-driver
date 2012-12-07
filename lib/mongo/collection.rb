@@ -515,11 +515,11 @@ module Mongo
     # @option opts [Integer] :min (nil) specify the minimum longitude and latitude for a geo index.
     # @option opts [Integer] :max (nil) specify the maximum longitude and latitude for a geo index.
     #
-    # @example Creating a compound index:
-    #   @posts.create_index([['subject', Mongo::ASCENDING], ['created_at', Mongo::DESCENDING]])
-    #
     # @example Creating a compound index using a hash: (Ruby 1.9 and above)
     #   @posts.create_index({'subject' => Mongo::ASCENDING, 'created_at' => Mongo::DESCENDING})
+    #
+    # @example Creating a compound index:
+    #   @posts.create_index([['subject', Mongo::ASCENDING], ['created_at', Mongo::DESCENDING]])
     #
     # @example Creating a geospatial index:
     #   @restaurants.create_index([['location', Mongo::GEO2D]])
@@ -1022,7 +1022,7 @@ module Mongo
         field_spec[spec.to_s] = 1
       elsif spec.is_a?(Hash)
           if RUBY_VERSION < '1.9' && !spec.is_a?(BSON::OrderedHash)
-              raise MongoArgumentError, "Must used OrderedHash in Ruby < 1.9.0"
+              raise MongoArgumentError, "Must use OrderedHash in Ruby < 1.9.0"
           else
               field_spec = spec.is_a?(BSON::OrderedHash) ? spec : BSON::OrderedHash.try_convert(spec)
           end
@@ -1037,7 +1037,7 @@ module Mongo
         end
       else
         raise MongoArgumentError, "Invalid index specification #{spec.inspect}; " +
-          "should be either a hash (orderedHash), string, symbol, or an array of arrays."
+          "should be either a hash (OrderedHash), string, symbol, or an array of arrays."
       end
       field_spec
     end
