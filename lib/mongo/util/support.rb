@@ -24,14 +24,6 @@ module Mongo
     include Mongo::Conversions
     extend self
 
-    READ_PREFERENCES = [
-      :primary,
-      :primary_preferred,
-      :secondary,
-      :secondary_preferred,
-      :nearest
-    ]
-
     # Commands that may be sent to replica-set secondaries, depending on
     # read preference and tags. All other commands are always run on the primary.
     SECONDARY_OK_COMMANDS = [
@@ -92,15 +84,6 @@ module Mongo
         out.is_a?(Hash) && out.keys.first.to_s.downcase == 'inline' ? true : false
       else
         SECONDARY_OK_COMMANDS.member?(command)
-      end
-    end
-
-    def validate_read_preference(value)
-      if READ_PREFERENCES.include?(value)
-        return true
-      else
-        raise MongoArgumentError, "#{value} is not a valid read preference. " +
-          "Please specify one of the following read preferences as a symbol: #{READ_PREFERENCES}"
       end
     end
 

@@ -73,7 +73,7 @@ module Mongo
 
       @transformer = opts[:transformer]
       if value = opts[:read]
-        Mongo::Support.validate_read_preference(value)
+        Mongo::ReadPreference::validate(value)
       else
         value = collection.read_preference
       end
@@ -485,7 +485,7 @@ module Mongo
             Mongo::Constants::OP_QUERY, message, nil, sock, @command,
             nil, @options & OP_QUERY_EXHAUST != 0)
         rescue ConnectionFailure => ex
-          if tries < 3 && !@socket && (!@command || Mongo::Support.secondary_ok?(@selector))
+          if tries < 3 && !@socket && (!@command || Mongo::Support::secondary_ok?(@selector))
             @connection.unpin_pool(sock.pool) if sock
             @connection.refresh
             retry

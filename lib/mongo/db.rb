@@ -95,7 +95,7 @@ module Mongo
       @write_concern = get_write_concern(opts, client)
 
       if value = opts[:read]
-        Mongo::Support.validate_read_preference(value)
+        Mongo::ReadPreference::validate(value)
       else
         value = @connection.read_preference
       end
@@ -528,7 +528,7 @@ module Mongo
       end
 
       if read_pref = opts[:read]
-        Mongo::Support.validate_read_preference(read_pref)
+        Mongo::ReadPreference::validate(read_pref)
         if read_pref != :primary && !Mongo::Support::secondary_ok?(selector)
           raise Mongo.ArgumentError, "Command is not supported on secondaries: #{selector.keys.first}"
         end

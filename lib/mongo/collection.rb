@@ -108,7 +108,7 @@ module Mongo
       unless pk_factory
         @write_concern = get_write_concern(opts, db)
         if value = opts[:read]
-          Mongo::Support.validate_read_preference(value)
+          Mongo::ReadPreference::validate(value)
         else
           value = @db.read_preference
         end
@@ -982,7 +982,7 @@ module Mongo
       out = {}
 
       if read_pref = opts[:read]
-        Mongo::Support.validate_read_preference(read_pref)
+        Mongo::ReadPreference::validate(read_pref)
       else
         read_pref = read_preference
       end

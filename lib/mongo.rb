@@ -52,6 +52,7 @@ require 'bson'
 
 require 'mongo/util/conversions'
 require 'mongo/util/support'
+require 'mongo/util/read_preference'
 require 'mongo/util/write_concern'
 require 'mongo/util/core_ext'
 require 'mongo/util/logging'

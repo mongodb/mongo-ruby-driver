@@ -484,7 +484,7 @@ module Mongo
         @read = :secondary_preferred
       else
         @read = opts.delete(:read) || :primary
-        Mongo::Support.validate_read_preference(@read)
+        Mongo::ReadPreference::validate(@read)
       end
 
       @tag_sets = opts.delete(:tag_sets) || []
