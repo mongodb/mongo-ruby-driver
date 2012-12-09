@@ -47,7 +47,8 @@ module Mongo
       :journal,
       :connecttimeoutms,
       :sockettimeoutms,
-      :wtimeoutms
+      :wtimeoutms,
+      :pool_size
     ]
 
     OPT_VALID  = {:connect          => lambda {|arg| ['direct', 'replicaset', 'true', 'false', true, false].include?(arg)},
@@ -60,7 +61,8 @@ module Mongo
                   :journal          => lambda {|arg| ['true', 'false'].include?(arg)},
                   :connecttimeoutms => lambda {|arg| arg =~ /^\d+$/ },
                   :sockettimeoutms  => lambda {|arg| arg =~ /^\d+$/ },
-                  :wtimeoutms       => lambda {|arg| arg =~ /^\d+$/ }
+                  :wtimeoutms       => lambda {|arg| arg =~ /^\d+$/ },
+                  :pool_size        => lambda {|arg| arg.to_i > 0 }
                  }
 
     OPT_ERR    = {:connect          => "must be 'direct', 'replicaset', 'true', or 'false'",
@@ -74,7 +76,8 @@ module Mongo
                   :journal          => "must be 'true' or 'false'",
                   :connecttimeoutms => "must be an integer specifying milliseconds",
                   :sockettimeoutms  => "must be an integer specifying milliseconds",
-                  :wtimeoutms       => "must be an integer specifying milliseconds"
+                  :wtimeoutms       => "must be an integer specifying milliseconds",
+                  :pool_size        => "must be an integer greater than zero"
                  }
 
     OPT_CONV   = {:connect          => lambda {|arg| arg == 'false' ? false : arg}, # be sure to convert 'false' to FalseClass
@@ -87,7 +90,8 @@ module Mongo
                   :journal          => lambda {|arg| arg == 'true' ? true : false},
                   :connecttimeoutms => lambda {|arg| arg.to_f / 1000 }, # stored as seconds
                   :sockettimeoutms  => lambda {|arg| arg.to_f / 1000 }, # stored as seconds
-                  :wtimeoutms       => lambda {|arg| arg.to_i }
+                  :wtimeoutms       => lambda {|arg| arg.to_i },
+                  :pool_size        => lambda {|arg| arg.to_i }
                  }
 
     attr_reader :auths,
@@ -102,6 +106,7 @@ module Mongo
                 :connecttimeoutms,
                 :sockettimeoutms,
                 :wtimeoutms,
+                :pool_size,
                 :nodes
 
     # Parse a MongoDB URI. This method is used by MongoClient.from_uri.
@@ -203,6 +208,10 @@ module Mongo
 
       if @sockettimeoutms
         opts[:op_timeout] = @sockettimeoutms
+      end
+
+      if @pool_size
+        opts[:pool_size] = @pool_size
       end
 
       if @slaveok
