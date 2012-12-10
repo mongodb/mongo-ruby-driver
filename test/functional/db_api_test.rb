@@ -330,7 +330,7 @@ class DBAPITest < Test::Unit::TestCase
     @@db.create_collection('foobar')
 
     coll = @@db.create_collection('foobar')
-    assert_equal true, coll.safe
+    assert_equal true, Mongo::WriteConcern.gle?(coll.write_concern)
   end
 
 
@@ -404,8 +404,9 @@ class DBAPITest < Test::Unit::TestCase
 
     test.insert("hello" => "world")
     test.insert("hello" => "mike")
-    test.insert("hello" => "world")
-    assert @@db.error?
+    assert_raise OperationFailure do
+      test.insert("hello" => "world")
+    end
   end
 
   def test_index_on_subfield
@@ -423,8 +424,9 @@ class DBAPITest < Test::Unit::TestCase
 
     test.insert("hello" => {"a" => 4, "b" => 5})
     test.insert("hello" => {"a" => 7, "b" => 2})
-    test.insert("hello" => {"a" => 4, "b" => 10})
-    assert @@db.error?
+    assert_raise OperationFailure do
+      test.insert("hello" => {"a" => 4, "b" => 10} )
+    end
   end
 
   def test_array
