@@ -525,8 +525,8 @@ module Mongo
 
       if read_pref = opts[:read]
         Mongo::ReadPreference::validate(read_pref)
-        if read_pref != :primary && !Mongo::Support::secondary_ok?(selector)
-          raise Mongo.ArgumentError, "Command is not supported on secondaries: #{selector.keys.first}"
+        unless read_pref == :primary || Mongo::Support::secondary_ok?(selector)
+          raise MongoArgumentError, "Command is not supported on secondaries: #{selector.keys.first}"
         end
       end
 
