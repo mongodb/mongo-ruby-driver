@@ -51,7 +51,7 @@ class ClientTest < Test::Unit::TestCase
     @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 2})
     assert @client[MONGO_TEST_DB]['bar'].find_one
 
-    primary = Mongo::MongoClient.new(@client.primary_pool.host, @client.primary_pool.port)
+    primary = Mongo::MongoClient.new(*@client.primary)
     assert_raise Mongo::ConnectionFailure do
       primary['admin'].command(step_down_command)
     end
@@ -60,26 +60,30 @@ class ClientTest < Test::Unit::TestCase
     rescue_connection_failure do
       @client[MONGO_TEST_DB]['bar'].find_one
     end
+    @client[MONGO_TEST_DB]['bar'].find_one
   end
 
   def test_connect_with_primary_killed
     @client = MongoReplicaSetClient.new @rs.repl_set_seeds
     assert @client.connected?
-    @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 1})
+    @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 2})
     assert @client[MONGO_TEST_DB]['bar'].find_one
 
     @rs.primary.kill(Signal.list['KILL'])
 
+    sleep(3)
+
     rescue_connection_failure do
       @client[MONGO_TEST_DB]['bar'].find_one
     end
+    @client[MONGO_TEST_DB]['bar'].find_one
   end
 
   def test_save_with_primary_stepped_down
     @client = MongoReplicaSetClient.new @rs.repl_set_seeds
     assert @client.connected?
 
-    primary = Mongo::MongoClient.new(@client.primary_pool.host, @client.primary_pool.port)
+    primary = Mongo::MongoClient.new(*@client.primary)
     assert_raise Mongo::ConnectionFailure do
       primary['admin'].command(step_down_command)
     end
@@ -87,6 +91,7 @@ class ClientTest < Test::Unit::TestCase
     rescue_connection_failure do
       @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 2})
     end
+    @client[MONGO_TEST_DB]['bar'].find_one
   end
 
   #def test_connect_with_first_node_removed
