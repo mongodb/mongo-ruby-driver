@@ -164,7 +164,7 @@ module Mongo
       @read             = nil
       @read_pool        = nil
       @arbiters         = []
-      @secondaries      = []
+      @secondaries      = Set.new
       @secondary_pool   = nil
       @secondary_pools  = []
       @hosts            = Set.new
