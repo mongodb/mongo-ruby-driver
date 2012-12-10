@@ -29,7 +29,7 @@ module Mongo
                 :write_concern
 
     # Read Preference
-    attr_accessor :read_preference,
+    attr_accessor :read,
                   :tag_sets,
                   :acceptable_latency
 
@@ -107,12 +107,8 @@ module Mongo
       @cache      = Hash.new(0)
       unless pk_factory
         @write_concern = get_write_concern(opts, db)
-        if value = opts[:read]
-          Mongo::ReadPreference::validate(value)
-        else
-          value = @db.read_preference
-        end
-        @read_preference    = value.is_a?(Hash) ? value.dup : value
+        @read =  opts[:read] || @db.read
+        Mongo::ReadPreference::validate(@read)
         @tag_sets           = opts.fetch(:tag_sets, @db.tag_sets)
         @acceptable_latency = opts.fetch(:acceptable_latency, @db.acceptable_latency)
       end
@@ -239,7 +235,7 @@ module Mongo
       transformer        = opts.delete(:transformer)
       show_disk_loc      = opts.delete(:show_disk_loc)
       comment            = opts.delete(:comment)
-      read               = opts.delete(:read) || @read_preference
+      read               = opts.delete(:read) || @read
       tag_sets           = opts.delete(:tag_sets) || @tag_sets
       acceptable_latency = opts.delete(:acceptable_latency) || @acceptable_latency
 
@@ -981,12 +977,12 @@ module Mongo
     def command_options(opts)
       out = {}
 
-      if read_pref = opts[:read]
-        Mongo::ReadPreference::validate(read_pref)
+      if read = opts[:read]
+        Mongo::ReadPreference::validate(read)
       else
-        read_pref = read_preference
+        read = @read
       end
-      out[:read] = read_pref
+      out[:read] = read
       out[:comment] = opts[:comment] if opts[:comment]
       out
     end

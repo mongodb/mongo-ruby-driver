@@ -99,7 +99,7 @@ module Mongo
       read_pool.host_port
     end
 
-    def read_pool(mode=@client.read_preference,
+    def read_pool(mode=@client.read,
                   tags=@client.tag_sets,
                   acceptable_latency=@client.acceptable_latency)
       if mode == :primary && !tags.empty?

@@ -6,7 +6,7 @@ class GridTest < Test::Unit::TestCase
     setup do
       @client   = stub()
       @client.stubs(:write_concern).returns({})
-      @client.stubs(:read_preference)
+      @client.stubs(:read).returns(:primary)
       @client.stubs(:tag_sets)
       @client.stubs(:acceptable_latency)
       @db     = DB.new("testing", @client)
@@ -16,7 +16,7 @@ class GridTest < Test::Unit::TestCase
       @db.expects(:[]).with('fs.files').returns(@files)
       @db.expects(:[]).with('fs.chunks').returns(@chunks)
       @db.stubs(:safe)
-      @db.stubs(:read_preference)
+      @db.stubs(:read).returns(:primary)
     end
 
     context "Grid classe with standard connections" do

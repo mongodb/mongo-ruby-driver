@@ -21,7 +21,7 @@ module Mongo
   # Instantiates and manages connections to a MongoDB sharded cluster for high availability.
   class MongoShardedClient < MongoReplicaSetClient
 
-    SHARDED_CLUSTER_OPTS = [:refresh_mode, :refresh_interval]
+    SHARDED_CLUSTER_OPTS = [:refresh_mode, :refresh_interval, :tag_sets, :read]
 
     attr_reader :seeds, :refresh_interval, :refresh_mode,
                 :refresh_version, :manager
@@ -71,6 +71,8 @@ module Mongo
 
       @connect_mutex = Mutex.new
       @refresh_mutex = Mutex.new
+
+      @mongos        = true
 
       check_opts(opts)
       setup(opts)
@@ -154,31 +156,5 @@ module Mongo
         end
       end
     end
-
-    private
-
-    # Parse option hash
-    def setup(opts)
-      # Refresh
-      @refresh_mode = opts.fetch(:refresh_mode, false)
-      @refresh_interval = opts.fetch(:refresh_interval, 90)
-
-      if @refresh_mode && @refresh_interval < 60
-        @refresh_interval = 60 unless ENV['TEST_MODE'] = 'TRUE'
-      end
-
-      if @refresh_mode == :async
-        warn ":async refresh mode has been deprecated. Refresh
-        mode will be disabled."
-      elsif ![:sync, false].include?(@refresh_mode)
-        raise MongoArgumentError,
-          "Refresh mode must be either :sync or false."
-      end
-
-      opts[:connect_timeout] = opts[:connect_timeout] || 30
-
-      super opts
-    end
-
   end
 end

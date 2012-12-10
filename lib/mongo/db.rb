@@ -55,7 +55,7 @@ module Mongo
     attr_accessor :cache_time
 
     # Read Preference
-    attr_accessor :read_preference, :tag_sets, :acceptable_latency
+    attr_accessor :read, :tag_sets, :acceptable_latency
 
     # Instances of DB are normally obtained by calling Mongo#db.
     #
@@ -94,12 +94,8 @@ module Mongo
 
       @write_concern = get_write_concern(opts, client)
 
-      if value = opts[:read]
-        Mongo::ReadPreference::validate(value)
-      else
-        value = @connection.read_preference
-      end
-      @read_preference = value.is_a?(Hash) ? value.dup : value
+      @read = opts[:read] || @connection.read
+      Mongo::ReadPreference::validate(@read)
       @tag_sets = opts.fetch(:tag_sets, @connection.tag_sets)
       @acceptable_latency = opts.fetch(:acceptable_latency, @connection.acceptable_latency)
       @cache_time = opts[:cache_time] || 300 #5 minutes.

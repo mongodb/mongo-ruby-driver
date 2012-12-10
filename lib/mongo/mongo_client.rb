@@ -509,15 +509,6 @@ module Mongo
       @primary_pool
     end
 
-    # The value of the read preference.
-    def read_preference
-      if slave_ok?
-        :secondary_preferred
-      else
-        :primary
-      end
-    end
-
     # Close the connection to the database.
     def close
       @primary_pool.close if @primary_pool

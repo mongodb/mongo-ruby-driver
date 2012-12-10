@@ -63,7 +63,7 @@ module Mongo
     #       Write concern options are propagated to objects instantiated from this MongoReplicaSetClient.
     #       These defaults can be overridden upon instantiation of any object by explicitly setting an options hash
     #       on initialization.
-    #   @option opts [:primary, :primary_preferred, :secondary, :secondary_preferred, :nearest] :read_preference (:primary)
+    #   @option opts [:primary, :primary_preferred, :secondary, :secondary_preferred, :nearest] :read (:primary)
     #     A "read preference" determines the candidate replica set members to which a query or command can be sent.
     #     [:primary]
     #       * Read from primary only.
@@ -290,10 +290,6 @@ module Mongo
       @manager.read_pool == @manager.primary_pool
     end
     alias :primary? :read_primary?
-
-    def read_preference
-      @read
-    end
 
     # Close the connection to the database.
     def close(opts={})

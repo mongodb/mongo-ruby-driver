@@ -4,21 +4,21 @@ class ReadTest < Test::Unit::TestCase
 
   context "Read mode on standard connection: " do
     setup do
-      @read_preference = :secondary
-      @client = MongoClient.new('localhost', 27017, :read => @read_preference, :connect => false)
+      @read = :secondary
+      @client = MongoClient.new('localhost', 27017, :read => @read, :connect => false)
     end
 
   end
 
   context "Read preferences on replica set connection: " do
     setup do
-      @read_preference = :secondary_preferred
+      @read = :secondary_preferred
       @acceptable_latency = 100
       @tags = {"dc" => "Tyler", "rack" => "Brock"}
       @bad_tags = {"wow" => "cool"}
       @client = MongoReplicaSetClient.new(
         ['localhost:27017'],
-        :read => @read_preference,
+        :read => @read,
         :tag_sets => @tags,
         :secondary_acceptable_latency_ms => @acceptable_latency,
         :connect => false
@@ -26,36 +26,36 @@ class ReadTest < Test::Unit::TestCase
     end
 
     should "store read preference on MongoClient" do
-      assert_equal @read_preference, @client.read_preference
+      assert_equal @read, @client.read
       assert_equal @tags, @client.tag_sets
       assert_equal @acceptable_latency, @client.acceptable_latency
     end
 
     should "propogate to DB" do
       db = @client['foo']
-      assert_equal @read_preference, db.read_preference
+      assert_equal @read, db.read
       assert_equal @tags, db.tag_sets
       assert_equal @acceptable_latency, db.acceptable_latency
 
       db = @client.db('foo')
-      assert_equal @read_preference, db.read_preference
+      assert_equal @read, db.read
       assert_equal @tags, db.tag_sets
       assert_equal @acceptable_latency, db.acceptable_latency
 
       db = DB.new('foo', @client)
-      assert_equal @read_preference, db.read_preference
+      assert_equal @read, db.read
       assert_equal @tags, db.tag_sets
       assert_equal @acceptable_latency, db.acceptable_latency
     end
 
     should "allow db override" do
       db = DB.new('foo', @client, :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
-      assert_equal :primary, db.read_preference
+      assert_equal :primary, db.read
       assert_equal @bad_tags, db.tag_sets
       assert_equal 25, db.acceptable_latency
 
       db = @client.db('foo', :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
-      assert_equal :primary, db.read_preference
+      assert_equal :primary, db.read
       assert_equal @bad_tags, db.tag_sets
       assert_equal 25, db.acceptable_latency
     end
@@ -67,29 +67,29 @@ class ReadTest < Test::Unit::TestCase
 
       should "propogate to collection" do
         col = @db.collection('bar')
-        assert_equal @read_preference, col.read_preference
+        assert_equal @read, col.read
         assert_equal @tags, col.tag_sets
         assert_equal @acceptable_latency, col.acceptable_latency
 
         col = @db['bar']
-        assert_equal @read_preference, col.read_preference
+        assert_equal @read, col.read
         assert_equal @tags, col.tag_sets
         assert_equal @acceptable_latency, col.acceptable_latency
 
         col = Collection.new('bar', @db)
-        assert_equal @read_preference, col.read_preference
+        assert_equal @read, col.read
         assert_equal @tags, col.tag_sets
         assert_equal @acceptable_latency, col.acceptable_latency
       end
 
       should "allow override on collection" do
         col = @db.collection('bar', :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
-        assert_equal :primary, col.read_preference
+        assert_equal :primary, col.read
         assert_equal @bad_tags, col.tag_sets
         assert_equal 25, col.acceptable_latency
 
         col = Collection.new('bar', @db, :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
-        assert_equal :primary, col.read_preference
+        assert_equal :primary, col.read
         assert_equal @bad_tags, col.tag_sets
         assert_equal 25, col.acceptable_latency
       end

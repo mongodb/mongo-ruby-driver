@@ -28,7 +28,7 @@ module Mongo
 
       sock = opts.fetch(:socket, nil)
       begin
-        if operation == Mongo::Constants::OP_KILL_CURSORS && read_preference != :primary
+        if operation == Mongo::Constants::OP_KILL_CURSORS && @read != :primary
           sock ||= checkout_reader
         else
           sock ||= checkout_writer

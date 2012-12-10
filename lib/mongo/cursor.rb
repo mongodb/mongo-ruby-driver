@@ -72,14 +72,8 @@ module Mongo
       @query_run    = false
 
       @transformer = opts[:transformer]
-      if value = opts[:read]
-        Mongo::ReadPreference::validate(value)
-      else
-        value = collection.read_preference
-      end
-      @read_preference = value.is_a?(Hash) ? value.dup : value
-      @tag_sets = opts.fetch(:tag_sets, @collection.tag_sets)
-      @acceptable_latency = opts.fetch(:acceptable_latency, @collection.acceptable_latency)
+      @read =  opts[:read] || @collection.read
+      Mongo::ReadPreference::validate(@read)
 
       batch_size(opts[:batch_size] || 0)
 
@@ -90,7 +84,7 @@ module Mongo
       if(!@timeout)
         add_option(OP_QUERY_NO_CURSOR_TIMEOUT)
       end
-      if(@read_preference != :primary)
+      if(@read != :primary)
         add_option(OP_QUERY_SLAVE_OK)
       end
       if(@tailable)
@@ -188,7 +182,7 @@ module Mongo
 
       command.merge!(BSON::OrderedHash["fields", @fields])
 
-      response = @db.command(command, :read => @read_preference, :comment => @comment)
+      response = @db.command(command, :read => @read, :comment => @comment)
       return response['n'].to_i if Mongo::Support.ok?(response)
       return 0 if response['errmsg'] == "ns missing"
       raise OperationFailure.new("Count failed: #{response['errmsg']}", response['code'], response)
@@ -545,7 +539,7 @@ module Mongo
         if @command && !Mongo::Support::secondary_ok?(@selector)
           @connection.checkout_reader(:primary)
         else
-          @connection.checkout_reader(@read_preference, @tag_sets, @acceptable_latency)
+          @connection.checkout_reader(@read, @tag_sets, @acceptable_latency)
         end
       rescue SystemStackError, NoMemoryError, SystemCallError => ex
         @connection.close
