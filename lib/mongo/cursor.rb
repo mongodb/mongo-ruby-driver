@@ -27,7 +27,7 @@ module Mongo
       :order, :hint, :snapshot, :timeout,
       :full_collection_name, :transformer,
       :options, :cursor_id, :show_disk_loc,
-      :comment
+      :comment, :read, :tag_sets
 
     # Create a new cursor.
     #
@@ -74,6 +74,8 @@ module Mongo
       @transformer = opts[:transformer]
       @read =  opts[:read] || @collection.read
       Mongo::ReadPreference::validate(@read)
+      @tag_sets = opts[:tag_sets] || @collection.tag_sets
+      @acceptable_latency = opts[:acceptable_latency] || @collection.acceptable_latency
 
       batch_size(opts[:batch_size] || 0)
 
@@ -557,7 +559,7 @@ module Mongo
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@collection.name}")
       message.put_int(@skip)
       message.put_int(@limit)
-      spec = query_contains_special_fields? ? construct_query_spec : @selector
+      spec = construct_query_spec
       message.put_binary(BSON::BSON_CODER.serialize(spec, false).to_s)
       message.put_binary(BSON::BSON_CODER.serialize(@fields, false).to_s) if @fields
       message
@@ -584,13 +586,11 @@ module Mongo
       spec['$returnKey']   = true if @return_key
       spec['$showDiskLoc'] = true if @show_disk_loc
       spec['$comment']  = @comment if @comment
+      if @connection.mongos? && @read != :primary
+        read_pref = Mongo::ReadPreference::mongos(@read, @tag_sets)
+        spec['$readPreference'] = read_pref if read_pref
+      end
       spec
-    end
-
-    # Returns true if the query contains order, explain, hint, or snapshot.
-    def query_contains_special_fields?
-      @order || @explain || @hint || @snapshot || @show_disk_loc ||
-        @max_scan || @return_key || @comment
     end
 
     def close_cursor_if_query_complete

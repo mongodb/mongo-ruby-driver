@@ -1,6 +1,10 @@
 require 'test_helper'
 include Mongo
 
+class Cursor
+  public :construct_query_spec
+end
+
 class BasicTest < Test::Unit::TestCase
   
   def setup
@@ -20,6 +24,32 @@ class BasicTest < Test::Unit::TestCase
     assert_equal(seeds.size, @client.seeds.size)
     probe(seeds.size)
     @client.close
+  end
+
+  def test_connect_from_standard_client
+    mongos = @sc.mongos_seeds.first
+    @client = MongoClient.new(*mongos.split(':'))
+    assert @client.connected?
+    assert @client.mongos?
+    @client.close
+  end
+
+  def test_read_from_client
+    mongos = @sc.mongos_seeds.first
+    tags = [{:dc => "mongolia"}] 
+    @client = MongoClient.new(*mongos.split(':'), {:read => :secondary, :tag_sets => tags})
+    assert @client.connected?
+    cursor = Cursor.new(@client[MONGO_TEST_DB]['whatever'], {})
+    assert_equal cursor.construct_query_spec['$readPreference'], {:mode => :secondary, :tags => tags}
+  end
+
+  def test_read_from_sharded_client
+    seeds = @sc.mongos_seeds
+    tags = [{:dc => "mongolia"}] 
+    @client = MongoShardedClient.new(seeds, {:read => :secondary, :tag_sets => tags})
+    assert @client.connected?
+    cursor = Cursor.new(@client[MONGO_TEST_DB]['whatever'], {})
+    assert_equal cursor.construct_query_spec['$readPreference'], {:mode => :secondary, :tags => tags}
   end
 
   def test_hard_refresh

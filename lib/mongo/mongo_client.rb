@@ -137,6 +137,7 @@ module Mongo
       # Connection pool for primary node
       @primary      = nil
       @primary_pool = nil
+      @mongos       = false
 
       # Not set for direct connection
       @tag_sets = []
@@ -443,6 +444,10 @@ module Mongo
       @slave_ok
     end
 
+    def mongos?
+      @mongos
+    end
+
     # Create a new socket and attempt to connect to master.
     # If successful, sets host and port to master and returns the socket.
     #
@@ -460,6 +465,10 @@ module Mongo
           @read_primary = true
         elsif @slave_ok
           @read_primary = false
+        end
+
+        if config.has_key?('msg') && config['msg'] == 'isdbgrid'
+          @mongos = true
         end
 
         @max_bson_size = config['maxBsonObjectSize'] || Mongo::DEFAULT_MAX_BSON_SIZE

@@ -1,5 +1,6 @@
 module Mongo
   class PoolManager
+    include Mongo::ReadPreference
 
     attr_reader :client, :arbiters, :primary, :secondaries, :primary_pool,
       :secondary_pool, :secondary_pools, :hosts, :nodes, :members, :seeds,

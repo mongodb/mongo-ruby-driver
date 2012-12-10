@@ -8,6 +8,22 @@ module Mongo
       :nearest
     ]
 
+    MONGOS_MODES = {
+      :primary              => :primary,
+      :primary_preferred    => :primaryPreferred,
+      :secondary            => :secondary,
+      :secondary_preferred  => :secondaryPreferred,
+      :nearest              => :nearest
+    }
+
+    def self.mongos(mode, tag_sets)
+      if mode != :secondary_preferred || !tag_sets.empty?
+        mongos_read_preference = BSON::OrderedHash[:mode => MONGOS_MODES[mode]]
+        mongos_read_preference[:tags] = tag_sets if !tag_sets.empty?
+      end
+      mongos_read_preference
+    end
+
     def self.validate(value)
       if READ_PREFERENCES.include?(value)
         return true

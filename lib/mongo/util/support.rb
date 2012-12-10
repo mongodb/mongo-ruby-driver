@@ -36,7 +36,9 @@ module Mongo
       'geonear',
       'geosearch',
       'geowalk',
-      'mapreduce'
+      'mapreduce',
+      'replSetGetStatus',
+      'ismaster',
     ]
 
     # Generate an MD5 for authentication.

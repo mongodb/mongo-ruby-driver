@@ -164,6 +164,8 @@ module Mongo
       @connect_mutex = Mutex.new
       @refresh_mutex = Mutex.new
 
+      @mongos = false
+
       check_opts(opts)
       setup(opts.dup)
     end
