@@ -332,8 +332,9 @@ module Mongo
         ret.size == 1 ? ret.first : ret
       end
 
-      def repl_set_get_status
-        command( @config[:replicas].first, 'admin', { :replSetGetStatus => 1 }, {:check_response => false } )
+      def repl_set_get_status(replica=nil)
+        replica ||= @config[:replicas].first
+        command( replica , 'admin', { :replSetGetStatus => 1 }, {:check_response => false } )
       end
 
       def repl_set_get_config
@@ -359,12 +360,15 @@ module Mongo
       def repl_set_startup
         response = nil
         60.times do |i|
-          response = repl_set_get_status
-          members = response['members']
-          if response['ok'] == 1.0 && members.collect{|m| m['state']}.all?{|state| [1,2,7].index(state)}
-            return response if members.any?{|m| m['state'] == 1}
+          set_healthy = @config[:replicas].all? do |replica|
+            response = repl_set_get_status(replica)
+            members = response['members']
+            if response['ok'] == 1.0 && members.collect{|m| m['state']}.all?{|state| [1,2,7].index(state)}
+              members.any?{|m| m['state'] == 1}
+            end
           end
           sleep 1
+          return true if set_healthy
         end
         raise Mongo::OperationFailure, "replSet startup failed - status: #{response.inspect}"
       end
@@ -415,6 +419,14 @@ module Mongo
 
       def secondaries
         members_by_name(secondary_names)
+      end
+
+      def kill_primary
+        primary.kill
+      end
+
+      def kill_secondary
+        secondaries[rand(secondaries.length)].kill
       end
 
       def replicas
