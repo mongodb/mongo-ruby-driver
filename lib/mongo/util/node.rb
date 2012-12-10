@@ -112,11 +112,11 @@ module Mongo
     end
 
     def primary?
-      config['ismaster'] == true || @config['ismaster'] == 1
+      config['ismaster'] == true || config['ismaster'] == 1
     end
 
     def secondary?
-      config['secondary'] == true || @config['secondary'] == 1
+      config['secondary'] == true || config['secondary'] == 1
     end
 
     def tags
