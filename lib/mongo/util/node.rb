@@ -23,7 +23,7 @@ module Mongo
 
     def config
       connect unless connected?
-      @config || set_config
+      @config || set_config || {}
     end
 
     def inspect
@@ -35,7 +35,6 @@ module Mongo
     # return nil.
     def connect
       @node_mutex.synchronize do
-        return if connected?
         begin
           @socket = @client.socket_class.new(@host, @port,
             @client.op_timeout, @client.connect_timeout
@@ -74,8 +73,8 @@ module Mongo
     # matches with the name provided.
     def set_config
       @node_mutex.synchronize do
-        return unless connected?
         begin
+          return unless connected?
           @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
 
           if @config['msg']
@@ -132,12 +131,7 @@ module Mongo
     end
 
     def healthy?
-      return false unless config
-      if config.has_key?('secondary')
-        config['ismaster'] || config['secondary']
-      else
-        true
-      end
+      primary? || secondary?
     end
 
     private

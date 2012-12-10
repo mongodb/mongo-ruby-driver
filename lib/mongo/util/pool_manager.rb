@@ -183,9 +183,8 @@ module Mongo
 
       seed.node_list.each do |host|
         node = Mongo::Node.new(self.client, host)
-        if node.healthy?
-          members << node
-        end
+        node.connect
+        members << node if node.healthy?
       end
       seed.close
 
@@ -202,7 +201,8 @@ module Mongo
         @hosts << member.host_string
         if member.primary?
           assign_primary(member)
-        elsif member.secondary? && !@secondaries.include?(member.host_port)
+        else
+          # member could be not primary but secondary still is false
           assign_secondary(member)
         end
       end
@@ -241,11 +241,8 @@ module Mongo
     def get_valid_seed_node
       @seeds.each do |seed|
         node = Mongo::Node.new(self.client, seed)
-        if !node.connect
-          next
-        elsif node.set_config && node.healthy?
-          return node
-        end
+        node.connect
+        return node if node.healthy?
       end
 
       raise ConnectionFailure, "Cannot connect to a replica set using seeds " +

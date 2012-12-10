@@ -2,26 +2,22 @@
 module Mongo
   module ShardingNode
     def set_config
-      begin
-        @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
+      @node_mutex.synchronize do
+        begin
+          return unless connected?
+          @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
 
-        # warning: instance variable @logger not initialized
-        #if @config['msg'] && @logger
-        #  @client.log(:warn, "#{config['msg']}")
-        #end
+          if @config['msg']
+            @client.log(:warn, "#{config['msg']}")
+          end
 
-      rescue ConnectionFailure, OperationFailure, OperationTimeout, SocketError, SystemCallError, IOError => ex
-        @client.log(:warn, "Attempted connection to node #{host_string} raised " +
-            "#{ex.class}: #{ex.message}")
-
-        # Socket may already be nil from issuing command
-        if @socket && !@socket.closed?
-          @socket.close
+        rescue ConnectionFailure, OperationFailure, OperationTimeout, SocketError, SystemCallError, IOError => ex
+          @client.log(:warn, "Attempted connection to node #{host_string} raised " +
+                              "#{ex.class}: #{ex.message}")
+          # Socket may already be nil from issuing command
+          close
         end
-
-        return nil
       end
-
       @config
     end
 
@@ -104,9 +100,8 @@ module Mongo
       seed.node_list.each do |host|
         node = Mongo::Node.new(self.client, host)
         node.extend ShardingNode
-        if node.connect && node.set_config
-          members << node
-        end
+        node.connect
+        members << node if node.healthy?
       end
       seed.close
 
@@ -126,11 +121,8 @@ module Mongo
       @seeds.each do |seed|
         node = Mongo::Node.new(self.client, seed)
         node.extend ShardingNode
-        if !node.connect
-          next
-        elsif node.set_config && node.healthy?
-          return node
-        end
+        node.connect
+        return node if node.healthy?
       end
 
       raise ConnectionFailure, "Cannot connect to a sharded cluster using seeds " +
