@@ -31,15 +31,15 @@ module Mongo
     Mutex              = ::Mutex
     ConditionVariable  = ::ConditionVariable
 
-    DEFAULT_HOST       = 'localhost'
-    DEFAULT_PORT       = 27017
-    DEFAULT_DB_NAME    = 'test'
-    GENERIC_OPTS       = [:ssl, :auths, :logger, :connect]
-    TIMEOUT_OPTS       = [:timeout, :op_timeout, :connect_timeout]
-    POOL_OPTS          = [:pool_size, :pool_timeout]
-    WRITE_CONCERN_OPTS = [:w, :j, :fsync, :wtimeout]
-    CLIENT_ONLY_OPTS   = [:slave_ok]
+    DEFAULT_HOST         = 'localhost'
+    DEFAULT_PORT         = 27017
+    DEFAULT_DB_NAME      = 'test'
+    GENERIC_OPTS         = [:ssl, :auths, :logger, :connect]
+    TIMEOUT_OPTS         = [:timeout, :op_timeout, :connect_timeout]
+    POOL_OPTS            = [:pool_size, :pool_timeout]
     READ_PREFERENCE_OPTS = [:read, :tag_sets, :secondary_acceptable_latency_ms]
+    WRITE_CONCERN_OPTS   = [:w, :j, :fsync, :wtimeout]
+    CLIENT_ONLY_OPTS     = [:slave_ok]
 
     mongo_thread_local_accessor :connections
 
