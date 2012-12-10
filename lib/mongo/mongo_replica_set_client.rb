@@ -22,14 +22,11 @@ module Mongo
   class MongoReplicaSetClient < MongoClient
 
     REPL_SET_OPTS = [
-      :read,
       :refresh_mode,
       :refresh_interval,
       :read_secondary,
       :rs_name,
-      :name,
-      :tag_sets,
-      :secondary_acceptable_latency_ms
+      :name
     ]
 
     attr_reader :replica_set_name,
@@ -37,9 +34,7 @@ module Mongo
                 :refresh_interval,
                 :refresh_mode,
                 :refresh_version,
-                :manager,
-                :tag_sets,
-                :acceptable_latency
+                :manager
 
     # Create a connection to a MongoDB replica set.
     #
@@ -170,7 +165,7 @@ module Mongo
       @refresh_mutex = Mutex.new
 
       check_opts(opts)
-      setup(opts)
+      setup(opts.dup)
     end
 
     def valid_opts
@@ -472,19 +467,11 @@ module Mongo
           "Refresh mode must be either :sync or false."
       end
 
-      # Determine read preference
       if opts[:read_secondary]
         warn ":read_secondary options has now been deprecated and will " +
           "be removed in driver v2.0. Use the :read option instead."
         @read_secondary = opts.delete(:read_secondary) || false
-        @read = :secondary_preferred
-      else
-        @read = opts.delete(:read) || :primary
-        Mongo::ReadPreference::validate(@read)
       end
-
-      @tag_sets = opts.delete(:tag_sets) || []
-      @acceptable_latency = opts.delete(:secondary_acceptable_latency_ms) || 15
 
       # Replica set name
       if opts[:rs_name]
@@ -494,8 +481,6 @@ module Mongo
       else
         @replica_set_name = opts.delete(:name)
       end
-
-      opts[:connect_timeout] = opts.delete(:connect_timeout) || 30
 
       super opts
     end

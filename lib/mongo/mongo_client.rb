@@ -39,6 +39,7 @@ module Mongo
     POOL_OPTS          = [:pool_size, :pool_timeout]
     WRITE_CONCERN_OPTS = [:w, :j, :fsync, :wtimeout]
     CLIENT_ONLY_OPTS   = [:slave_ok]
+    READ_PREFERENCE_OPTS = [:read, :tag_sets, :secondary_acceptable_latency_ms]
 
     mongo_thread_local_accessor :connections
 
@@ -55,7 +56,8 @@ module Mongo
                 :socket_class,
                 :op_timeout,
                 :tag_sets,
-                :acceptable_latency
+                :acceptable_latency,
+                :read
 
     # Create a connection to single MongoDB instance.
     #
@@ -137,11 +139,11 @@ module Mongo
       @primary_pool = nil
 
       # Not set for direct connection
-      @tag_sets = {}
+      @tag_sets = []
       @acceptable_latency = 15
 
       check_opts(opts)
-      setup(opts)
+      setup(opts.dup)
     end
 
     # DEPRECATED
@@ -552,6 +554,7 @@ module Mongo
       GENERIC_OPTS +
       CLIENT_ONLY_OPTS +
       POOL_OPTS +
+      READ_PREFERENCE_OPTS +
       WRITE_CONCERN_OPTS +
       TIMEOUT_OPTS
     end
@@ -566,7 +569,6 @@ module Mongo
 
     # Parse option hash
     def setup(opts)
-      # slave_ok can be true only if one node is specified
       @slave_ok = opts.delete(:slave_ok)
 
       @ssl = opts.delete(:ssl)
@@ -595,32 +597,32 @@ module Mongo
       @op_timeout = opts.delete(:op_timeout) || nil
 
       # Timeout on socket connect.
-      @connect_timeout = opts.delete(:connect_timeout) || nil
+      @connect_timeout = opts.delete(:connect_timeout) || 30
 
-      @logger = opts.fetch(:logger, nil)
-
-      # Connection level write concern options.
-      @write_concern = get_write_concern(opts)
+      @logger = opts.delete(:logger) || nil
 
       if @logger
         write_logging_startup_message
       end
 
-      if opts.fetch(:connect, true)
-        connect
+      # Determine read preference
+      if defined?(@slave_ok) && (@slave_ok) || defined?(@read_secondary) && @read_secondary
+        @read = :secondary_preferred
+      else
+        @read = opts.delete(:read) || :primary
       end
+      Mongo::ReadPreference::validate(@read)
+
+      @tag_sets = opts.delete(:tag_sets) || []
+      @acceptable_latency = opts.delete(:secondary_acceptable_latency_ms) || 15
+
+      # Connection level write concern options.
+      @write_concern = get_write_concern(opts)
+
+      connect if opts.fetch(:connect, true)
     end
 
     private
-
-    ## Methods for establishing a connection:
-
-    # If a ConnectionFailure is raised, this method will be called
-    # to close the connection and reset connection values.
-    # TODO: evaluate whether this method is actually necessary
-    def reset_connection
-      close
-    end
 
     def check_is_master(node)
       begin
