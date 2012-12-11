@@ -50,8 +50,8 @@ module Mongo
         return
       end
 
-      config = seed.set_config
-      if !config
+      config = seed.config
+      if config
         @refresh_required = true
         seed.close
         return
@@ -140,8 +140,8 @@ module Mongo
     private
 
     def validate_existing_member(member)
-      config = member.set_config
-      if !config
+      config = member.config
+      if config
         return false
       else
         if member.primary?
@@ -202,7 +202,7 @@ module Mongo
         @hosts << member.host_string
         if member.primary?
           assign_primary(member)
-        else
+        elsif member.secondary?
           # member could be not primary but secondary still is false
           assign_secondary(member)
         end

@@ -23,7 +23,8 @@ module Mongo
 
     def config
       connect unless connected?
-      @config || set_config || {}
+      set_config unless @config
+      @config
     end
 
     def inspect
@@ -74,15 +75,16 @@ module Mongo
     def set_config
       @node_mutex.synchronize do
         begin
-          return unless connected?
           @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
 
           if @config['msg']
             @client.log(:warn, "#{config['msg']}")
           end
 
-          check_set_membership(config)
-          check_set_name(config)
+          unless @client.mongos?
+            check_set_membership(@config)
+            check_set_name(@config)
+          end
         rescue ConnectionFailure, OperationFailure, OperationTimeout, SocketError, SystemCallError, IOError => ex
           @client.log(:warn, "Attempted connection to node #{host_string} raised " +
                               "#{ex.class}: #{ex.message}")
@@ -90,7 +92,6 @@ module Mongo
           close
         end
       end
-      @config
     end
 
     # Return a list of replica set nodes from the config.
@@ -99,6 +100,7 @@ module Mongo
       nodes = []
       nodes += config['hosts'] if config['hosts']
       nodes += config['passives'] if config['passives']
+      nodes += ["#{@host}:#{@port}"] if @client.mongos?
       nodes
     end
 
@@ -131,10 +133,10 @@ module Mongo
     end
 
     def healthy?
-      primary? || secondary?
+      connected? && config
     end
 
-    private
+    protected
 
     def split_node(host_port)
       if host_port.is_a?(String)

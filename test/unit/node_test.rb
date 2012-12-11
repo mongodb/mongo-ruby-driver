@@ -18,9 +18,10 @@ class NodeTest < Test::Unit::TestCase
     @client.stubs(:op_timeout).returns(nil)
     @client.stubs(:connect_timeout).returns(nil)
     @client.expects(:log)
+    @client.expects(:mongos?).returns(false)
 
     assert node.connect
-    node.set_config
+    node.config
   end
 
   should "load a node from an array" do

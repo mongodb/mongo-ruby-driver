@@ -16,6 +16,7 @@ class PoolManagerTest < Test::Unit::TestCase
       @client.stubs(:pool_timeout).returns(100)
       @client.stubs(:seeds).returns(['localhost:30000'])
       @client.stubs(:socket_class).returns(TCPSocket)
+      @client.stubs(:mongos?).returns(false)
       @client.stubs(:[]).returns(@db)
 
       @client.stubs(:replica_set_name).returns(nil)

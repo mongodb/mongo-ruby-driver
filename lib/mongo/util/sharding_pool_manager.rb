@@ -1,38 +1,5 @@
 
 module Mongo
-  module ShardingNode
-    def set_config
-      @node_mutex.synchronize do
-        begin
-          return unless connected?
-          @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
-
-          if @config['msg']
-            @client.log(:warn, "#{config['msg']}")
-          end
-
-        rescue ConnectionFailure, OperationFailure, OperationTimeout, SocketError, SystemCallError, IOError => ex
-          @client.log(:warn, "Attempted connection to node #{host_string} raised " +
-                              "#{ex.class}: #{ex.message}")
-          # Socket may already be nil from issuing command
-          close
-        end
-      end
-      @config
-    end
-
-    # Return a list of sharded cluster nodes from the config - currently just the current node.
-    def node_list
-      connect unless connected?
-      set_config unless @config
-
-      return [] unless config
-
-      ["#{@host}:#{@port}"]
-    end
-
-  end
-
   class ShardingPoolManager < PoolManager
 
     attr_reader :client, :primary, :primary_pool, :hosts, :nodes,
@@ -86,48 +53,5 @@ module Mongo
         @refresh_required = true
       end
     end
-
-    private
-
-    # Connect to each member of the sharded cluster
-    # as reported by the given seed node, and return
-    # as a list of Mongo::Node objects.
-    def connect_to_members
-      members = []
-
-      seed = get_valid_seed_node
-
-      seed.node_list.each do |host|
-        node = Mongo::Node.new(self.client, host)
-        node.extend ShardingNode
-        node.connect
-        members << node if node.healthy?
-      end
-      seed.close
-
-      if members.empty?
-        raise ConnectionFailure, "Failed to connect to any given member."
-      end
-
-      members
-    end
-
-    # Iterate through the list of provided seed
-    # nodes until we've gotten a response from the
-    # sharded cluster we're trying to connect to.
-    #
-    # If we don't get a response, raise an exception.
-    def get_valid_seed_node
-      @seeds.each do |seed|
-        node = Mongo::Node.new(self.client, seed)
-        node.extend ShardingNode
-        node.connect
-        return node if node.healthy?
-      end
-
-      raise ConnectionFailure, "Cannot connect to a sharded cluster using seeds " +
-          "#{@seeds.map {|s| "#{s[0]}:#{s[1]}" }.join(', ')}"
-    end
-
   end
 end
