@@ -234,4 +234,16 @@ class ClientTest < Test::Unit::TestCase
     assert @client.connected?
     assert_equal 0, @client.write_concern[:w]
   end
+
+  def test_find_and_modify_with_secondary_read_preference
+    @client = MongoReplicaSetClient.new
+    collection = @client[MONGO_TEST_DB].collection('test', :read => :secondary)
+    collection << { :a => 1, :processed => false}
+
+    collection.find_and_modify(
+      :query => {},
+      :update => {"$set" => {:processed => true}}
+    )
+    assert_equal collection.find_one({}, :fields => {:_id => 0}, :read => :primary), {'a' => 1, 'processed' => true}
+  end
 end
