@@ -402,7 +402,8 @@ module Mongo
     #
     # @return [Hash]
     def query_options_hash
-      { :selector => @selector,
+      BSON::OrderedHash[
+        :selector => @selector,
         :fields   => @fields,
         :skip     => @skip,
         :limit    => @limit,
@@ -413,7 +414,7 @@ module Mongo
         :max_scan => @max_scan,
         :return_key => @return_key,
         :show_disk_loc => @show_disk_loc,
-        :comment  => @comment }
+        :comment  => @comment ]
     end
 
     # Clean output for inspect.
