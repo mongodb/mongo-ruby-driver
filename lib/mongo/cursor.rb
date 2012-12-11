@@ -559,8 +559,7 @@ module Mongo
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@collection.name}")
       message.put_int(@skip)
       message.put_int(@limit)
-      spec = construct_query_spec
-      message.put_binary(BSON::BSON_CODER.serialize(spec, false).to_s)
+      message.put_binary(BSON::BSON_CODER.serialize(construct_query_spec, false).to_s)
       message.put_binary(BSON::BSON_CODER.serialize(@fields, false).to_s) if @fields
       message
     end

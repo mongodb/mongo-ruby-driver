@@ -37,7 +37,7 @@ module Mongo
       'geosearch',
       'geowalk',
       'mapreduce',
-      'replSetGetStatus',
+      'replsetgetstatus',
       'ismaster',
     ]
 
