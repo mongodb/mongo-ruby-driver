@@ -35,9 +35,9 @@ class BasicTest < Test::Unit::TestCase
   end
 
   def test_read_from_client
-    mongos = @sc.mongos_seeds.first
+    host, port = @sc.mongos_seeds.first.split(':')
     tags = [{:dc => "mongolia"}] 
-    @client = MongoClient.new(*mongos.split(':'), {:read => :secondary, :tag_sets => tags})
+    @client = MongoClient.new(host, port, {:read => :secondary, :tag_sets => tags})
     assert @client.connected?
     cursor = Cursor.new(@client[MONGO_TEST_DB]['whatever'], {})
     assert_equal cursor.construct_query_spec['$readPreference'], {:mode => :secondary, :tags => tags}
