@@ -332,9 +332,8 @@ module Mongo
         ret.size == 1 ? ret.first : ret
       end
 
-      def repl_set_get_status(replica=nil)
-        replica ||= @config[:replicas].first
-        command( replica , 'admin', { :replSetGetStatus => 1 }, {:check_response => false } )
+      def repl_set_get_status
+        command( @config[:replicas], 'admin', { :replSetGetStatus => 1 }, {:check_response => false } )
       end
 
       def repl_set_get_config
@@ -358,19 +357,26 @@ module Mongo
       end
 
       def repl_set_startup
-        response = nil
-        60.times do |i|
-          set_healthy = @config[:replicas].all? do |replica|
-            response = repl_set_get_status(replica)
-            members = response['members']
-            if response['ok'] == 1.0 && members.collect{|m| m['state']}.all?{|state| [1,2,7].index(state)}
-              members.any?{|m| m['state'] == 1}
+        60.times do
+          states = repl_set_get_status.zip(repl_set_is_master)
+          healthy = states.all? do |status, is_master|
+            members = status['members']
+            if status['ok'] == 1.0 && members.collect{|m| m['state']}.all?{|state| [1,2,7].index(state)}
+              members.any?{|m| m['state'] == 1} &&
+                case status['myState']
+                when 1
+                  is_master['ismaster'] == true && is_master['secondary'] == false
+                when 2
+                  is_master['ismaster'] == false && is_master['secondary'] == true
+                when 7
+                  is_master['ismaster'] == false && is_master['secondary'] == false
+                end
             end
           end
-          sleep 1
-          return true if set_healthy
+          return true if healthy
+          sleep(1)
         end
-        raise Mongo::OperationFailure, "replSet startup failed - status: #{response.inspect}"
+        raise Mongo::OperationFailure, "replSet startup failed - status: #{states.inspect}"
       end
 
       def repl_set_seeds
@@ -387,7 +393,7 @@ module Mongo
 
       def member_names_by_state(state)
         states = Array(state)
-        status = repl_set_get_status
+        status = repl_set_get_status.first
         status['members'].find_all{|member| states.index(member['state']) }.collect{|member| member['name']}
       end
 
@@ -474,8 +480,16 @@ module Mongo
         config_names_by_kind(:routers)
       end
 
-      def ismaster
-        command( @config[:routers], 'admin', { :ismaster => 1 } )
+      def ismaster(servers)
+        command( servers, 'admin', { :ismaster => 1 } )
+      end
+
+      def sharded_cluster_is_master
+        ismaster(@config[:routers])
+      end
+
+      def repl_set_is_master
+        ismaster(@config[:replicas])
       end
 
       def addshards(shards = @config[:shards])
@@ -509,7 +523,7 @@ module Mongo
         servers.each{|server| server.start}
         # TODO - sharded replica sets - pending
         if @config[:replicas]
-          repl_set_initiate if repl_set_get_status['startupStatus'] == 3
+          repl_set_initiate if repl_set_get_status.first['startupStatus'] == 3
           repl_set_startup
         end
         if @config[:routers]
