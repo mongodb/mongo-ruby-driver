@@ -194,19 +194,19 @@ class CursorTest < Test::Unit::TestCase
         cursor = Cursor.new(@collection, { :read => :primary })
         assert !cursor.construct_query_spec.has_key?('$readPreference')
 
-        cursor = Cursor.new(@collection, { :read => :secondary })
+        cursor = Cursor.new(@collection, { :read => :primary_preferred })
         assert !cursor.construct_query_spec.has_key?('$readPreference')
 
         cursor = Cursor.new(@collection, { :read => :secondary })
         assert !cursor.construct_query_spec.has_key?('$readPreference')
 
-        cursor = Cursor.new(@collection, { :read => :secondary })
+        cursor = Cursor.new(@collection, { :read => :secondary_preferred })
         assert !cursor.construct_query_spec.has_key?('$readPreference')
 
-        cursor = Cursor.new(@collection, { :read => :secondary })
+        cursor = Cursor.new(@collection, { :read => :nearest })
         assert !cursor.construct_query_spec.has_key?('$readPreference')
 
-        cursor = Cursor.new(@collection, { :read => :secondary })
+        cursor = Cursor.new(@collection, { :read => :secondary , :tag_sets => @tag_sets})
         assert !cursor.construct_query_spec.has_key?('$readPreference')
       end
     end
