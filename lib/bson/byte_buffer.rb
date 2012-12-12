@@ -22,6 +22,10 @@ module BSON
 
     attr_reader :order, :max_size
 
+    INT32_PACK = 'l<'.freeze
+    INT64_PACK = 'q<'.freeze
+    DOUBLE_PACK = 'E'.freeze
+
     def initialize(initial_data="", max_size=BSON::DEFAULT_MAX_BSON_SIZE)
       @str = case initial_data
         when String then
@@ -37,43 +41,7 @@ module BSON
       end
 
       @cursor = @str.length
-      @order  = :little_endian
-      @int_pack_order    = 'V'
-      @double_pack_order = 'E'
       @max_size = max_size
-    end
-
-    if RUBY_VERSION >= '1.9'
-      NULL_BYTE       = "\0".force_encoding('binary').freeze
-      UTF8_ENCODING   = Encoding.find('utf-8')
-      BINARY_ENCODING = Encoding.find('binary')
-      
-      def self.to_utf8_binary(str)
-        str.encode(UTF8_ENCODING).force_encoding(BINARY_ENCODING)
-      end
-    else
-      NULL_BYTE = "\0"
-      
-      def self.to_utf8_binary(str)
-        begin
-        str.unpack("U*")
-        rescue
-          raise InvalidStringEncoding, "String not valid utf-8: #{str.inspect}"
-        end
-        str
-      end
-    end
-
-    def self.serialize_cstr(buf, val)
-      buf.append!(to_utf8_binary(val.to_s))
-      buf.append!(NULL_BYTE)
-    end
-
-    # +endianness+ should be :little_endian or :big_endian. Default is :little_endian
-    def order=(endianness)
-      @order = endianness
-      @int_pack_order = endianness == :little_endian ? 'V' : 'N'
-      @double_pack_order = endianness == :little_endian ? 'E' : 'G'
     end
 
     def rewind
@@ -147,31 +115,29 @@ module BSON
       @cursor += array.length
     end
 
-    def put_int(i, offset=nil)
+    def put_num(i, offset, bytes)
+      pack_type = bytes == 4 ? INT32_PACK : INT64_PACK
       @cursor = offset if offset
       if more?
-        @str[@cursor, 4] = [i].pack(@int_pack_order)
+        @str[@cursor, bytes] = [i].pack(pack_type)
       else
         ensure_length(@cursor)
-        @str << [i].pack(@int_pack_order)
+        @str << [i].pack(pack_type)
       end
-      @cursor += 4
+      @cursor += bytes
+    end
+
+    def put_int(i, offset=nil)
+      put_num(i, offset, 4)
     end
 
     def put_long(i, offset=nil)
-      offset = @cursor unless offset
-      if @int_pack_order == 'N'
-        put_int(i >> 32, offset)
-        put_int(i & 0xffffffff, offset + 4)
-      else
-        put_int(i & 0xffffffff, offset)
-        put_int(i >> 32, offset + 4)
-      end
+      put_num(i, offset, 8)
     end
 
     def put_double(d, offset=nil)
       a = []
-      [d].pack(@double_pack_order).each_byte { |b| a << b }
+      [d].pack(DOUBLE_PACK).each_byte { |b| a << b }
       put_array(a, offset)
     end
 
@@ -209,24 +175,21 @@ module BSON
       check_read_length(4)
       vals = @str[@cursor..@cursor+3]
       @cursor += 4
-      vals.unpack(@int_pack_order)[0]
+      vals.unpack(INT32_PACK)[0]
     end
 
     def get_long
-      i1 = get_int
-      i2 = get_int
-      if @int_pack_order == 'N'
-        (i1 << 32) + i2
-      else
-        (i2 << 32) + i1
-      end
+      check_read_length(8)
+      vals = @str[@cursor..@cursor+7]
+      @cursor += 8
+      vals.unpack(INT64_PACK)[0]
     end
 
     def get_double
       check_read_length(8)
       vals = @str[@cursor..@cursor+7]
       @cursor += 8
-      vals.unpack(@double_pack_order)[0]
+      vals.unpack(DOUBLE_PACK)[0]
     end
 
     def more?

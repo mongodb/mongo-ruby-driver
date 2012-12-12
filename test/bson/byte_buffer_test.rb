@@ -45,10 +45,6 @@ class ByteBufferTest < Test::Unit::TestCase
     assert_equal 4, @buf.length
   end
 
-  def test_default_order
-    assert_equal :little_endian, @buf.order
-  end
-
   def test_long_length
     @buf.put_long 1027
     assert_equal 8, @buf.length
@@ -66,29 +62,31 @@ class ByteBufferTest < Test::Unit::TestCase
     assert_equal 41.2, @buf.get_double
   end
   
-  if defined?(Encoding)
-    def test_serialize_cstr_converts_encoding_to_utf8
-      theta = "hello \xC8".force_encoding("ISO-8859-7")
-      ByteBuffer.serialize_cstr(@buf, theta)
-      assert_equal "hello \xCE\x98\0", @buf.to_s
-      assert_equal Encoding.find('binary'), @buf.to_s.encoding
-    end
-    
-    def test_serialize_cstr_validates_data_as_utf8
-      assert_raises(Encoding::UndefinedConversionError) do
-        ByteBuffer.serialize_cstr(@buf, "hello \xFF")
+  if BSON_CODER == BSON::BSON_RUBY
+    if defined?(Encoding)
+      def test_serialize_cstr_throws_error_for_bad_utf8
+        bad = "hello \xC8".force_encoding("ISO-8859-7")
+        assert_raises(BSON::InvalidStringEncoding) do
+          BSON_CODER::serialize_cstr(@buf, bad)
+        end
       end
-    end
-  else
-    def test_serialize_cstr_forces_encoding_to_utf8
-      # Unicode snowman (\u2603)
-      ByteBuffer.serialize_cstr(@buf, "hello \342\230\203")
-      assert_equal "hello \342\230\203\0", @buf.to_s
-    end
-    
-    def test_serialize_cstr_validates_data_as_utf8
-      assert_raises(BSON::InvalidStringEncoding) do
-        ByteBuffer.serialize_cstr(@buf, "hello \xFF")
+
+      def test_serialize_cstr_does_not_validate_data_as_utf8
+        assert_raises(BSON::InvalidStringEncoding) do
+          BSON_CODER::serialize_cstr(@buf, "hello \xFF")
+        end
+      end
+    else
+      def test_serialize_cstr_forces_encoding_to_utf8
+        # Unicode snowman (\u2603)
+        BSON_CODER::serialize_cstr(@buf, "hello \342\230\203")
+        assert_equal "hello \342\230\203\0", @buf.to_s
+      end
+
+      def test_serialize_cstr_validates_data_as_utf8
+        assert_raises(BSON::InvalidStringEncoding) do
+          BSON_CODER::serialize_cstr(@buf, "hello \xFF")
+        end
       end
     end
   end

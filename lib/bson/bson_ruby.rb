@@ -17,6 +17,8 @@
 # ++
 
 module BSON
+  NULL_BYTE = "\x00"
+
   # A BSON seralizer/deserializer in pure Ruby.
   class BSON_RUBY
 
@@ -46,13 +48,17 @@ module BSON
     NUMBER_LONG = 18
     MAXKEY = 127
 
+    INT32_MIN = -(1 << 31) + 1
+    INT32_MAX =  (1 << 31) - 1
+    INT64_MIN = -2**64 / 2
+    INT64_MAX =  2**64 / 2 - 1
+
     def initialize(max_bson_size=BSON::DEFAULT_MAX_BSON_SIZE)
       @buf = ByteBuffer.new('', max_bson_size)
       @encoder = BSON_RUBY
     end
 
     if RUBY_VERSION >= '1.9'
-      NULL_BYTE       = "\0".force_encoding('binary').freeze
       UTF8_ENCODING   = Encoding.find('utf-8')
       BINARY_ENCODING = Encoding.find('binary')
 
@@ -65,8 +71,6 @@ module BSON
         str.dup.force_encoding(BINARY_ENCODING)
       end
     else
-      NULL_BYTE = "\0"
-
       def self.to_utf8_binary(str)
         begin
           str.unpack("U*")
@@ -299,8 +303,7 @@ module BSON
     end
 
     def deserialize_date_data(buf)
-      unsigned = buf.get_long()
-      milliseconds = unsigned >= 2 ** 64 / 2 ? unsigned - 2**64 : unsigned
+      milliseconds = buf.get_long
       Time.at(milliseconds.to_f / 1000.0).utc # at() takes fractional seconds
     end
 
@@ -313,13 +316,11 @@ module BSON
     end
 
     def deserialize_number_int_data(buf)
-      unsigned = buf.get_int
-      unsigned >= 2**32 / 2 ? unsigned - 2**32 : unsigned
+      buf.get_int
     end
 
     def deserialize_number_long_data(buf)
-      unsigned = buf.get_long
-      unsigned >= 2 ** 64 / 2 ? unsigned - 2**64 : unsigned
+      buf.get_long
     end
 
     def deserialize_object_data(buf)
@@ -463,10 +464,10 @@ module BSON
         self.class.serialize_key(buf, key)
         buf.put_double(val)
       else
-        if val > 2**64 / 2 - 1 or val < -2**64 / 2
+        if val > INT64_MAX or val < INT64_MIN
           raise RangeError.new("MongoDB can only handle 8-byte ints")
         end
-        if val > 2**32 / 2 - 1 or val < -2**32 / 2
+        if val > INT32_MAX or val < INT32_MIN
           buf.put(NUMBER_LONG)
           self.class.serialize_key(buf, key)
           buf.put_long(val)
