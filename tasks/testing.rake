@@ -1,12 +1,14 @@
 # -*- mode: ruby; -*-
-require "rspec/core/rake_task"
+require 'rspec/core/rake_task'
 
 desc "Run the default test suite (Ruby)"
-task :test => 'test:ruby'
+task :test => ['test:spec','test:ruby']
 
 namespace :test do
   DEFAULT_TESTS = ['functional', 'unit', 'bson', 'threading']
   ENV['TEST_MODE'] = 'TRUE'
+
+  RSpec::Core::RakeTask.new(:spec)
 
   desc "Run default test suites with the BSON C-extension enabled."
   task :c do
@@ -14,10 +16,6 @@ namespace :test do
     Rake::Task['compile:cbson'].invoke
     Rake::Task['test:ruby'].invoke
     ENV['C_EXT'] = nil
-  end
-
-  RSpec::Core::RakeTask.new(:spec) do |spec|
-    spec.pattern = "spec/**/*_spec.rb"
   end
 
   desc "Runs default test suites"

@@ -93,15 +93,15 @@ rescue LoadError
   require 'active_support/core_ext/hash/indifferent_access'
 end
 
+
+require 'base64'
+require 'bson/bson_ruby'
+require 'bson/byte_buffer'
+require 'bson/exceptions'
+require 'bson/ordered_hash'
 require 'bson/types/binary'
 require 'bson/types/code'
 require 'bson/types/dbref'
-require 'bson/types/object_id'
 require 'bson/types/min_max_keys'
+require 'bson/types/object_id'
 require 'bson/types/timestamp'
-
-require 'base64'
-require 'bson/ordered_hash'
-require 'bson/byte_buffer'
-require 'bson/bson_ruby'
-require 'bson/exceptions'

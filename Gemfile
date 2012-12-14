@@ -14,12 +14,17 @@ group :deploy do
 end
 
 group :testing do
-  gem 'simplecov', :require => false
-  gem 'test-unit'
-  gem 'shoulda', ">=3.3.2"
   gem 'mocha', ">=0.13.0", :require => 'mocha/setup'
-  gem 'sfl'
+  gem 'shoulda', ">=3.3.2"
+  gem 'test-unit'
+
+  gem 'growl'
+  gem 'guard-rspec'
+  gem 'rb-fsevent'
   gem 'rspec'
+
+  gem 'sfl'
+  gem 'simplecov', :require => false
 end
 
 platforms :jruby do

@@ -26,10 +26,10 @@ module BSON
   # Use this class when storing binary data in documents.
   class Binary < ByteBuffer
 
-    SUBTYPE_SIMPLE = 0x00
-    SUBTYPE_BYTES  = 0x02
-    SUBTYPE_UUID   = 0x03
-    SUBTYPE_MD5    = 0x05
+    SUBTYPE_SIMPLE       = 0x00
+    SUBTYPE_BYTES        = 0x02
+    SUBTYPE_UUID         = 0x03
+    SUBTYPE_MD5          = 0x05
     SUBTYPE_USER_DEFINED = 0x80
 
     # One of the SUBTYPE_* constants. Default is SUBTYPE_BYTES.
