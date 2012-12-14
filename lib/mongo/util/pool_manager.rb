@@ -103,26 +103,13 @@ module Mongo
     def read_pool(mode=@client.read,
                   tags=@client.tag_sets,
                   acceptable_latency=@client.acceptable_latency)
-      if mode == :primary && !tags.empty?
-        raise MongoArgumentError, "Read preferecy :primary cannot be combined with tags"
-      end
 
-      pinned = @pinned_pools[Thread.current]
+      pinned = pinned_pools[Thread.current]
+
       if pinned && pinned.matches_mode(mode) && pinned.matches_tag_sets(tags) && pinned.up?
         pool = pinned
       else
-        pool = case mode
-        when :primary
-          @primary_pool
-        when :primary_preferred
-          @primary_pool || select_read_pool(@secondary_pools, tags, acceptable_latency)
-        when :secondary
-          select_read_pool(@secondary_pools, tags, acceptable_latency)
-        when :secondary_preferred
-          select_read_pool(@secondary_pools, tags, acceptable_latency) || @primary_pool
-        when :nearest
-          select_read_pool(pools, tags, acceptable_latency)
-        end
+        pool = select_pool(mode, tags, acceptable_latency)
       end
 
       unless pool

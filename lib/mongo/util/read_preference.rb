@@ -33,7 +33,26 @@ module Mongo
       end
     end
 
-    def select_read_pool(candidates, tag_sets, acceptable_latency)
+    def select_pool(mode, tags, latency)
+      if mode == :primary && !tags.empty?
+        raise MongoArgumentError, "Read preferecy :primary cannot be combined with tags"
+      end
+
+      case mode
+        when :primary
+          primary_pool
+        when :primary_preferred
+          primary_pool || select_secondary_pool(secondary_pools, tags, latency)
+        when :secondary
+          select_secondary_pool(secondary_pools, tags, latency)
+        when :secondary_preferred
+          select_secondary_pool(secondary_pools, tags, latency) || primary_pool
+        when :nearest
+          select_secondary_pool(pools, tags, latency)
+      end
+    end
+
+    def select_secondary_pool(candidates, tag_sets, latency)
       tag_sets = [tag_sets] unless tag_sets.is_a?(Array)
 
       if !tag_sets.empty?
@@ -49,13 +68,13 @@ module Mongo
         matches = candidates
       end
 
-      matches.empty? ? nil : select_near_pool(matches, acceptable_latency)
+      matches.empty? ? nil : select_near_pool(matches, latency)
     end
 
-    def select_near_pool(pool_set, acceptable_latency)
-      nearest_pool = pool_set.min_by { |pool| pool.ping_time }
-      near_pools = pool_set.select do |pool|
-        (pool.ping_time - nearest_pool.ping_time) <= acceptable_latency
+    def select_near_pool(candidates, latency)
+      nearest_pool = candidates.min_by { |candidate| candidate.ping_time }
+      near_pools = candidates.select do |candidate|
+        (candidate.ping_time - nearest_pool.ping_time) <= latency
       end
       near_pools[ rand(near_pools.length) ]
     end
