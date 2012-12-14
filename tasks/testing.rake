@@ -2,7 +2,7 @@
 require 'rspec/core/rake_task'
 
 desc "Run the default test suite (Ruby)"
-task :test => ['test:spec','test:ruby']
+task :test => ['test:ruby']
 
 namespace :test do
   DEFAULT_TESTS = ['functional', 'unit', 'bson', 'threading']

@@ -1,6 +1,5 @@
 # encoding: utf-8
 require 'spec_helper'
-include BSON
 
 describe BSON do
 
