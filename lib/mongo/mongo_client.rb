@@ -639,8 +639,14 @@ module Mongo
         socket = nil
         config = nil
 
-        socket = @socket_class.new(host, port, @op_timeout, @connect_timeout) 
-        config = self['admin'].command({:ismaster => 1}, :socket => socket)
+        socket = @socket_class.new(host, port, @op_timeout, @connect_timeout)
+        if(@connect_timeout)
+          Timeout::timeout(@connect_timeout, OperationTimeout) do
+            config = self['admin'].command({:ismaster => 1}, :socket => socket)
+          end
+        else
+          config = self['admin'].command({:ismaster => 1}, :socket => socket)
+        end
       rescue OperationFailure, SocketError, SystemCallError, IOError
         close
       ensure

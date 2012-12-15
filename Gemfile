@@ -14,9 +14,9 @@ group :deploy do
 end
 
 group :testing do
+  gem 'test-unit'
   gem 'mocha', ">=0.13.0", :require => 'mocha/setup'
   gem 'shoulda', ">=3.3.2"
-  gem 'test-unit'
 
   gem 'growl'
   gem 'guard-rspec'
