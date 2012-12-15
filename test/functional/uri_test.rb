@@ -97,7 +97,12 @@ class URITest < Test::Unit::TestCase
     assert parser.journal
     assert_equal 200, parser.wtimeoutms
   end
-  
+
+  def test_opts_ssl
+    parser = Mongo::URIParser.new('mongodb://localhost:27018?ssl=true;w=2;journal=true;fsync=true;wtimeoutMS=200')
+    assert parser.ssl
+  end
+
   def test_opts_nonsafe_timeout
     parser = Mongo::URIParser.new('mongodb://localhost:27018?connectTimeoutMS=5500&socketTimeoutMS=500')
     assert_equal 5.5, parser.connecttimeoutms
