@@ -26,27 +26,27 @@ module BSON
 
     @@max_bson_size = DEFAULT_MAX_BSON_SIZE
 
-    MINKEY = -1
-    EOO = 0
-    NUMBER = 1
-    STRING = 2
-    OBJECT = 3
-    ARRAY = 4
-    BINARY = 5
-    UNDEFINED = 6
-    OID = 7
-    BOOLEAN = 8
-    DATE = 9
-    NULL = 10
-    REGEX = 11
-    REF = 12
-    CODE = 13
-    SYMBOL = 14
+    MINKEY       = -1
+    EOO          = 0
+    NUMBER       = 1
+    STRING       = 2
+    OBJECT       = 3
+    ARRAY        = 4
+    BINARY       = 5
+    UNDEFINED    = 6
+    OID          = 7
+    BOOLEAN      = 8
+    DATE         = 9
+    NULL         = 10
+    REGEX        = 11
+    REF          = 12
+    CODE         = 13
+    SYMBOL       = 14
     CODE_W_SCOPE = 15
-    NUMBER_INT = 16
-    TIMESTAMP = 17
-    NUMBER_LONG = 18
-    MAXKEY = 127
+    NUMBER_INT   = 16
+    TIMESTAMP    = 17
+    NUMBER_LONG  = 18
+    MAXKEY       = 127
 
     INT32_MIN = -(1 << 31) + 1
     INT32_MAX =  (1 << 31) - 1

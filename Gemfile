@@ -31,4 +31,5 @@ platforms :jruby do
   gem 'bouncy-castle-java'
   gem 'jruby-launcher'
   gem 'jruby-openssl'
+  gem 'jruby-jars'
 end

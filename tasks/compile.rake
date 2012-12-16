@@ -1,24 +1,20 @@
 # -*- mode: ruby; -*-
 
-Rake::ExtensionTask.new('cbson') do |ext|
-  ext.lib_dir = "lib/bson_ext"
-end
-
-# Rake::JavaExtensionTask.new('jbson') do |ext|
-# end
-
-desc "Runs default compile tasks (cbson, jbson)"
-task :compile => ['compile:jbson', 'compile:cbson', 'clobber']
-
-namespace :compile do
-  desc "Compile jbson"
-  task :jbson do
-    java_dir  = File.join(File.dirname(__FILE__), 'ext', 'java')
-    jar_dir   = File.join(java_dir, 'jar')
-    jruby_jar = File.join(jar_dir, 'jruby.jar')
-    mongo_jar = File.join(jar_dir, 'mongo-2.6.5.jar')
-    src_base   = File.join(java_dir, 'src')
-    system("javac -Xlint:deprecation -Xlint:unchecked -classpath #{jruby_jar}:#{mongo_jar} #{File.join(src_base, 'org', 'jbson', '*.java')}")
-    system("cd #{src_base} && jar cf #{File.join(jar_dir, 'jbson.jar')} #{File.join('.', 'org', 'jbson', '*.class')}")
+if RUBY_PLATFORM =~ /java/
+  require 'jruby-jars'
+  Rake::JavaExtensionTask.new('jbson') do |ext|
+    ext.ext_dir = 'ext/jbson'
+    ext.lib_dir = ext.tmp_dir = 'ext/jbson/target'
+    jars = ['ext/jbson/lib/java-bson.jar', JRubyJars.core_jar_path]
+    ext.classpath = jars.map { |x| File.expand_path x }.join(':')
+    Rake::Task['clean'].invoke
+  end
+else
+  Rake::ExtensionTask.new('cbson') do |ext|
+    ext.lib_dir = "lib/bson_ext"
+    Rake::Task['clean'].invoke
   end
 end
+
+desc "Run the default compile task"
+task :compile => RUBY_PLATFORM =~ /java/ ? 'compile:jbson' : 'compile:cbson'

@@ -1,6 +1,16 @@
 # encoding:utf-8
 require 'test_helper'
-require 'support/hash_with_indifferent_access'
+
+# Note: HashWithIndifferentAccess is so commonly used
+# that we always need to make sure that the driver works
+# with it. However, the bson gem should never need to
+# depend on it.
+
+# As a result, ActiveSupport is no longer a gem dependency and it should remain
+# that way. It must be required by the application code or
+# via bundler for developmet.
+
+require 'bson/support/hash_with_indifferent_access'
 
 class HashWithIndifferentAccessTest < Test::Unit::TestCase
   include BSON

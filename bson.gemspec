@@ -14,16 +14,14 @@ Gem::Specification.new do |s|
   s.files             += Dir['lib/bson/**/*.rb']
 
   if RUBY_PLATFORM =~ /java/
-    s.files           += ['ext/java/jar/jbson.jar', 'ext/java/jar/mongo-2.6.5.jar']
-    s.platform        = Gem::Platform::JAVA
+    s.platform = 'java'
+    s.files    += ['ext/jbson/target/jbson.jar', 'ext/jbson/lib/java-bson.jar']
   else
-    s.platform        = Gem::Platform::RUBY
+    s.platform = Gem::Platform::RUBY
   end
 
   s.test_files        = Dir['test/bson/*.rb']
   s.executables       = ['b2json', 'j2bson']
   s.require_paths     = ['lib']
   s.has_rdoc          = 'yard'
-
-  s.add_dependency('activesupport')
 end

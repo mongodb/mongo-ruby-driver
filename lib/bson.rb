@@ -49,9 +49,6 @@ module BSON
 end
 
 if RUBY_PLATFORM =~ /java/
-  jar_dir = File.join(File.dirname(__FILE__), '..', 'ext', 'java', 'jar')
-  require File.join(jar_dir, 'mongo-2.6.5.jar')
-  require File.join(jar_dir, 'jbson.jar')
   require 'bson/bson_java'
   module BSON
     BSON_CODER = BSON_JAVA
@@ -84,15 +81,6 @@ else
     end
   end
 end
-
-require 'active_support'
-begin
-  require 'active_support/hash_with_indifferent_access'
-rescue LoadError
-  # For ActiveSupport 2
-  require 'active_support/core_ext/hash/indifferent_access'
-end
-
 
 require 'base64'
 require 'bson/bson_ruby'

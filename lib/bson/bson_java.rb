@@ -1,11 +1,13 @@
 require 'jruby'
 
 include Java
+
+jar_dir = File.join(File.dirname(__FILE__), '../../ext/jbson')
+require File.join(jar_dir, 'lib/java-bson.jar')
+require File.join(jar_dir, 'target/jbson.jar')
+
 module BSON
   class BSON_JAVA
-
-    # TODO: Pool or cache instances of RubyBSONEncoder so that
-    # we don't create a new one on each call to #serialize.
     def self.serialize(obj, check_keys=false, move_id=false, max_bson_size=BSON::DEFAULT_MAX_BSON_SIZE)
       raise InvalidDocument, "BSON_JAVA.serialize takes a Hash" unless obj.is_a?(Hash)
       enc = Java::OrgJbson::RubyBSONEncoder.new(JRuby.runtime, check_keys, move_id, max_bson_size)
