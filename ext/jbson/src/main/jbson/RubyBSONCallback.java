@@ -91,7 +91,7 @@ public class RubyBSONCallback implements BSONCallback {
             writeRubyHash(key, (RubyHash)lastObject, (IRubyObject)hash);
         }
         else {
-            writeRubyArray(key, (RubyArray)lastObject, (IRubyObject)hash); 
+            writeRubyArray(key, (RubyArray)lastObject, (IRubyObject)hash);
         }
 
         _stack.addLast( (RubyObject)hash );
@@ -120,7 +120,7 @@ public class RubyBSONCallback implements BSONCallback {
             writeRubyHash(key, (RubyHash)lastObject, (IRubyObject)array);
         }
         else {
-            writeRubyArray(key, (RubyArray)lastObject, (IRubyObject)array); 
+            writeRubyArray(key, (RubyArray)lastObject, (IRubyObject)array);
         }
 
         _stack.addLast( (RubyObject)array );
@@ -149,9 +149,7 @@ public class RubyBSONCallback implements BSONCallback {
     }
 
     @Deprecated
-    public void gotUndefined( String name ){
-        throw new UnsupportedOperationException();
-    }
+    public void gotUndefined( String name ) { }
 
     public void gotUUID( String name , long part1, long part2) {
       throw new UnsupportedOperationException();
