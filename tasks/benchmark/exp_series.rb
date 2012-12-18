@@ -7,31 +7,34 @@ require 'json'
 require 'benchmark'
 require 'test-unit'
 
-def set_mode(mode)
+def set_mode(mode.to_sym)
   case mode
-    when 'c'
+    when :c
       ENV.delete('TEST_MODE')
-      ENV['C_EXT'] = 'TRUE'
-    when 'ruby'
+      ENV.delete('BSON_EXT_DISABLED')
+    when :ruby
+      ENV['TEST_MODE']         = 'TRUE'
+      ENV['BSON_EXT_DISABLED'] = 'TRUE'
+    when :java
       ENV['TEST_MODE'] = 'TRUE'
-      ENV.delete('C_EXT')
+      ENV.delete('BSON_EXT_DISABLED')
     else
-      raise 'mode must be c or ruby'
+      raise 'Valid modes include: c, ruby, java.'
   end
   return mode
 end
 
-$description = 'Exploratory/Experimental/Exponential tests for Ruby-driver performance tuning'
+$description         = 'Exploratory/Experimental/Exponential tests for Ruby-driver performance tuning'
 $calibration_runtime = 0.5
-$target_runtime = 15.0
-$db_name = 'benchmark'
-$collection_name = 'exp_series'
-$mode = set_mode('c')
-$hostname = `uname -n`[/([^.]*)/,1]
-$osname = `uname -s`.strip
-$tag = `git log -1 --format=oneline`.split[0]
-$date = Time.now.strftime('%Y%m%d-%H%M')
-$file_name_opt = nil
+$target_runtime      = 15.0
+$db_name             = 'benchmark'
+$collection_name     = 'exp_series'
+$mode                = set_mode('c')
+$hostname            = `uname -n`[/([^.]*)/,1]
+$osname              = `uname -s`.strip
+$tag                 = `git log -1 --format=oneline`.split[0]
+$date                = Time.now.strftime('%Y%m%d-%H%M')
+$file_name_opt       = nil
 
 options_with_help = [
     [ '--help', '-h', GetoptLong::NO_ARGUMENT, '', 'show help' ],
@@ -251,28 +254,28 @@ class TestExpPerformance < Test::Unit::TestCase
         user_ops = (multi_iterations / utime.to_f).round(1)
         real_ops = (multi_iterations / rtime.to_f).round(1)
         result = {
-            'base' => base,
-            'power' => power,
-            'size' => size,
-            'exp2' => Math.log2(size).to_i,
+            'base'        => base,
+            'power'       => power,
+            'size'        => size,
+            'exp2'        => Math.log2(size).to_i,
             'multi_power' => multi_power,
-            'multi_size' => multi_size,
-            'generator' => generator.name.to_s,
-            'operation' => operation.name.to_s,
-            'iterations' => iterations,
-            'user_time' => utime.round(2),
-            'real_time' => rtime.round(2),
-            'user_ops' => user_ops.nan? ? 0 : user_ops,
-            'real_ops' => real_ops.nan? ? 0 : real_ops,
-            'user_usec' => (1000000.0 * utime.to_f / [multi_iterations, 1].max).round(1),
-            'real_usec' => (1000000.0 * rtime.to_f / [multi_iterations, 1].max).round(1),
-            'est_time' => etime.round(2),
-            'mode' => $mode,
-            'hostname' => $hostname,
-            'osname' => $osname,
-            'date' => $date,
-            'tag' => $tag,
-            'status' => status,
+            'multi_size'  => multi_size,
+            'generator'   => generator.name.to_s,
+            'operation'   => operation.name.to_s,
+            'iterations'  => iterations,
+            'user_time'   => utime.round(2),
+            'real_time'   => rtime.round(2),
+            'user_ops'    => user_ops.nan? ? 0 : user_ops,
+            'real_ops'    => real_ops.nan? ? 0 : real_ops,
+            'user_usec'   => (1000000.0 * utime.to_f / [multi_iterations, 1].max).round(1),
+            'real_usec'   => (1000000.0 * rtime.to_f / [multi_iterations, 1].max).round(1),
+            'est_time'    => etime.round(2),
+            'mode'        => $mode,
+            'hostname'    => $hostname,
+            'osname'      => $osname,
+            'date'        => $date,
+            'tag'         => $tag,
+            'status'      => status,
             # 'nbench-int' => nbench.int, # thinking
         }
         STDERR.puts result.to_json #result.inspect

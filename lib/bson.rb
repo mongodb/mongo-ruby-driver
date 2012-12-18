@@ -46,38 +46,63 @@ module BSON
     bytebuf.rewind
     return BSON.deserialize(bytebuf)
   end
+
+  def self.extension?
+    !((ENV.key?('BSON_EXT_DISABLED') && RUBY_PLATFORM =~ /java/) ||
+      (ENV.key?('BSON_EXT_DISABLED') || "\x01\x00\x00\x00".unpack("i")[0] != 1))
+  end
 end
 
-if RUBY_PLATFORM =~ /java/
-  require 'bson/bson_java'
-  module BSON
-    BSON_CODER = BSON_JAVA
-  end
-else
-  begin
-    # Need this for running test with and without c ext in Ruby 1.9.
-    raise LoadError if ENV['TEST_MODE'] && !ENV['C_EXT']
+begin
+  # Skips loading extensions if one of the following is true:
+  # 1) JRuby and BSON_EXT_DISABLED is set.
+  #     -OR-
+  # 2) Ruby MRI and big endian or BSON_EXT_DISABLED is set.
+  raise LoadError unless BSON.extension?
 
-    # Raise LoadError unless little endian, since the C extensions
-    # only work on little-endian architectures.
-    raise LoadError unless "\x01\x00\x00\x00".unpack("i").first == 1
-
+  if RUBY_PLATFORM =~ /java/
+    require 'bson/bson_java'
+    module BSON
+      BSON_CODER = BSON_JAVA
+    end
+  else
     require 'bson_ext/cbson'
     raise LoadError unless defined?(CBson::VERSION)
     require 'bson/bson_c'
     module BSON
       BSON_CODER = BSON_C
     end
-  rescue LoadError
-    require 'bson/bson_ruby'
-    module BSON
-      BSON_CODER = BSON_RUBY
-    end
+  end
+rescue LoadError
+  require 'bson/bson_ruby'
+  module BSON
+    BSON_CODER = BSON_RUBY
+  end
+
+  if RUBY_PLATFORM =~ /java/
     unless ENV['TEST_MODE']
-      warn "\n**Notice: C extension not loaded. This is required for optimum MongoDB Ruby driver performance."
-      warn "  You can install the extension as follows:\n  gem install bson_ext\n"
-      warn "  If you continue to receive this message after installing, make sure that the"
-      warn "  bson_ext gem is in your load path and that the bson_ext and mongo gems are of the same version.\n"
+      warn <<-NOTICE
+      ** Notice: The BSON extension was not loaded. **
+
+      For optimal performance, use of the BSON extension is recommended. To
+      enable the extension make sure ENV['BSON_EXT_DISABLED'] is not set.
+      NOTICE
+    end
+  else
+    unless ENV['TEST_MODE']
+      warn <<-NOTICE
+      ** Notice: The native BSON extension was not loaded. **
+
+      For optimal performance, use of the BSON extension is recommended.
+
+      To enable the extension make sure ENV['BSON_EXT_DISABLED'] is not set
+      and run the following command:
+
+        gem install bson_ext
+
+      If you continue to receive this message after installing, make sure that
+      the bson_ext gem is in your load path.
+      NOTICE
     end
   end
 end

@@ -302,26 +302,22 @@ Before running the tests, make sure you install all test dependencies by running
 
     $ gem install bundler; bundle install
 
-To run all default test suites, just type:
+To run all default test suites (without the BSON extensions) just type:
 
     $ rake test
 
-If you have the source code, you can run the tests.  Skip this test with the C extension if you're running JRuby.
+If you want to run the default test suite using the BSON extensions:
 
-    $ rake test:c
-
-If you want to test the basic Ruby encoder, without the C extension, or if you're running JRuby:
-
-    $ rake test:ruby
+    $ rake test:ext
 
 These will run both unit and functional tests. To run these tests alone:
 
     $ rake test:unit
     $ rake test:functional
 
-To run any individual rake tasks with the C extension enabled, just pass C_EXT=true to the task (don't do this with JRuby):
+To run any individual rake tasks with the BSON extension disabled, just pass BSON_EXT_DISABLED=true to the task:
 
-    $ rake test:unit C_EXT=true
+    $ rake test:unit BSON_EXT_DISABLED=true
 
 If you want to test replica set, you can run the following task:
 

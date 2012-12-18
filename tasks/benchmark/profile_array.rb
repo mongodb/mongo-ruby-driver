@@ -1,22 +1,25 @@
 #!/usr/bin/env ruby
 $LOAD_PATH.unshift(File.expand_path("../../lib", __FILE__))
 
-def set_mongo_driver_mode(mode)
+def set_mode(mode.to_sym)
   case mode
     when :c
       ENV.delete('TEST_MODE')
-      ENV['C_EXT'] = 'TRUE'
+      ENV.delete('BSON_EXT_DISABLED')
     when :ruby
+      ENV['TEST_MODE']         = 'TRUE'
+      ENV['BSON_EXT_DISABLED'] = 'TRUE'
+    when :java
       ENV['TEST_MODE'] = 'TRUE'
-      ENV.delete('C_EXT')
+      ENV.delete('BSON_EXT_DISABLED')
     else
-      raise 'mode must be :c or :ruby'
+      raise 'Valid modes include: c, ruby, java.'
   end
-  ENV['MONGO_DRIVER_MODE'] = mode.to_s
+  return mode
 end
 
 $mode = ARGV[0].to_sym if ARGV[0]
-set_mongo_driver_mode($mode || :c)
+set_mode($mode || :c)
 
 require 'rubygems'
 require 'mongo'

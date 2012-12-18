@@ -173,7 +173,7 @@ module BSON
 
     private
 
-    if RUBY_PLATFORM =~ /java/
+    if RUBY_PLATFORM =~ /java/ && BSON.extension?
       @@generator = Java::OrgBsonTypes::ObjectId
       @@machine_id = [@@generator.genMachineId].pack("N")[0,3]
 

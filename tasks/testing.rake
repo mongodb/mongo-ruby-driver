@@ -10,17 +10,23 @@ namespace :test do
 
   RSpec::Core::RakeTask.new(:spec)
 
-  desc "Run default test suites with the BSON C-extension enabled."
-  task :c do
-    ENV['C_EXT'] = 'TRUE'
-    Rake::Task['compile:cbson'].invoke
-    Rake::Task['test:ruby'].invoke
-    ENV['C_EXT'] = nil
+  desc "Run default test suites with BSON extensions enabled."
+  task :ext do
+    ENV.delete('BSON_EXT_DISABLED')
+    Rake::Task['compile'].invoke
+    Rake::Task['test:default'].invoke
+  end
+
+  desc "Runs default test suites in pure Ruby."
+  task :ruby do
+    ENV['BSON_EXT_DISABLED'] = 'TRUE'
+    Rake::Task['test:default'].invoke
+    ENV.delete('BSON_EXT_DISABLED')
   end
 
   desc "Runs default test suites"
-  task :ruby do
-    if RUBY_VERSION >= "1.9.0" && RUBY_ENGINE == 'ruby'
+  task :default do
+    if RUBY_VERSION >= '1.9.0' && RUBY_ENGINE == 'ruby'
       if ENV['COVERAGE']
         require 'simplecov'
         SimpleCov.start do

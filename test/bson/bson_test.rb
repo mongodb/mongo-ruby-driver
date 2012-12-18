@@ -349,7 +349,7 @@ class BSONTest < Test::Unit::TestCase
     doc2 = @encoder.deserialize(bson)
 
     # Java doesn't deserialize to DBRefs
-    if RUBY_PLATFORM =~ /java/
+    if RUBY_PLATFORM =~ /java/ && BSON.extension?
       assert_equal 'namespace', doc2['dbref']['$ns']
       assert_equal oid, doc2['dbref']['$id']
     else
