@@ -13,7 +13,7 @@ namespace :test do
   desc "Run default test suites with BSON extensions enabled."
   task :ext do
     ENV.delete('BSON_EXT_DISABLED')
-    Rake::Task['compile'].invoke
+    Rake::Task['compile'].invoke unless RUBY_PLATFORM =~ /java/
     Rake::Task['test:default'].invoke
   end
 
