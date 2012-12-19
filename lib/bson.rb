@@ -1,5 +1,3 @@
-# encoding: UTF-8
-#
 # --
 # Copyright (C) 2008-2012 10gen Inc.
 #

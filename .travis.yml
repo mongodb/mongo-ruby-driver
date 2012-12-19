@@ -9,6 +9,8 @@ rvm:
 
 bundler_args: --without deploy
 
+env: TRAVIS_TEST=true
+
 script: bundle exec rake test
 
 notifications:
@@ -25,6 +27,5 @@ branches:
 
 matrix:
   allow_failures:
-    - rvm: jruby
     - rvm: ruby-head
     - rvm: jruby-head

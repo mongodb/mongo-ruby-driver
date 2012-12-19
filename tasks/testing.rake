@@ -2,7 +2,7 @@
 require 'rspec/core/rake_task'
 
 desc "Run the default test suite (Ruby)"
-task :test => ['test:ruby']
+task :test => ENV.key?('TRAVIS_TEST') ? 'test:default' : 'test:ruby'
 
 namespace :test do
   DEFAULT_TESTS = ['functional', 'unit', 'bson', 'threading']
@@ -27,7 +27,7 @@ namespace :test do
   desc "Runs default test suites"
   task :default do
     if RUBY_VERSION >= '1.9.0' && RUBY_ENGINE == 'ruby'
-      if ENV['COVERAGE']
+      if ENV.key?('COVERAGE')
         require 'simplecov'
         SimpleCov.start do
           add_group "Mongo", 'lib/mongo'
