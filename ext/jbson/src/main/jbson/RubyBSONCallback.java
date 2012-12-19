@@ -320,16 +320,20 @@ public class RubyBSONCallback implements BSONCallback {
       return _stack.size() < 1;
     }
 
-    private static HashMap<String, Object> _getRuntimeCache(Ruby runtime) {
-      // each JRuby runtime may have different objects for these constants,
-      // so cache them separately for each runtime
+    private static HashMap<String, Object> _getRuntimeCache(final Ruby runtime) {
       @SuppressWarnings("unchecked")
       HashMap<String, Object> cache = _runtimeCache.get( runtime );
 
       if(cache == null) {
         cache = new HashMap<String, Object>();
         _runtimeCache.put( runtime, cache );
+        runtime.addFinalizer( new Finalizable() {
+          public void finalize() {
+            _runtimeCache.remove(runtime);
+          }
+        });
       }
+
       return cache;
     }
 

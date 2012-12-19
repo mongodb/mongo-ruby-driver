@@ -763,15 +763,19 @@ public class RubyBSONEncoder extends BasicBSONEncoder {
     private ByteBuffer _stringB = ByteBuffer.wrap( new byte[1024 + 1] );
     private CharsetEncoder _encoder = Charset.forName( "UTF-8" ).newEncoder();
 
-    private static Map _getRuntimeCache(Ruby runtime) {
-        // each JRuby runtime may have different objects for these constants,
-        // so cache them separately for each runtime
-        Map cache = (Map) _runtimeCache.get( runtime );
+    private static Map _getRuntimeCache(final Ruby runtime) {
+        Map cache = (Map) _runtimeCache.get(runtime);
 
         if(cache == null) {
             cache = new HashMap();
-            _runtimeCache.put( runtime, cache );
+            _runtimeCache.put(runtime, cache);
+            runtime.addFinalizer( new Finalizable() {
+              public void finalize() {
+                _runtimeCache.remove( runtime );
+              }
+            });
         }
+
         return cache;
     }
 
