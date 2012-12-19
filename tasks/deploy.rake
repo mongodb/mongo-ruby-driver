@@ -39,8 +39,10 @@ namespace :deploy do
     g.add(['VERSION', 'ext/cbson/version.h'])
     g.commit "RELEASE #{bumper_version}"
     g.add_tag("#{bumper_version}")
-
     g.push('origin', 'master', true)
+
+    g.checkout('release')
+    g.pull('origin', 'master')
     g.push('origin', 'release', true)
   end
 
