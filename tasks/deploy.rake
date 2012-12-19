@@ -48,10 +48,8 @@ namespace :deploy do
 
   desc "Package all gems for release (Run from MRI)"
   task :package do
-    version = bumper_version.to_s
     RVM.use 'jruby'
     system "gem build bson.gemspec"
-    system "mv bson-#{version}.gem bson-java-#{version}.gem"
 
     RVM.reset_current!
     Dir.glob('*.gemspec').each { |file| system "gem build #{file}" }
