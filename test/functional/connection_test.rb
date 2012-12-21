@@ -415,10 +415,7 @@ class TestConnection < Test::Unit::TestCase
     end
 
     should "show a proper exception message if an IOError is raised while closing a socket" do
-      fake_socket = mock('fake_socket')
-      fake_socket.stubs(:close).raises(IOError.new)
-      fake_socket.stub_everything
-      TCPSocket.stubs(:new).returns(fake_socket)
+      TCPSocket.any_instance.stubs(:close).raises(IOError.new)
 
       @con.primary_pool.checkout_new_socket
       @con.primary_pool.expects(:warn)

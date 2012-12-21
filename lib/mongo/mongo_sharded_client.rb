@@ -96,8 +96,8 @@ module Mongo
         @old_managers << @manager if @manager
         @manager = ShardingPoolManager.new(self, discovered_seeds | @seeds)
 
-        Thread.current[:managers] ||= Hash.new
-        Thread.current[:managers][self] = @manager
+        Thread.current[:mongo_pool_managers] ||= Hash.new
+        Thread.current[:mongo_pool_managers][self] = @manager
 
         @manager.connect
         @refresh_version += 1

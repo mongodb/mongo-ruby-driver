@@ -8,11 +8,12 @@ module Mongo
   # sans Timeout::timeout
   #
   class TCPSocket
-    attr_accessor :pool
+    attr_accessor :pool, :pid
 
     def initialize(host, port, op_timeout=nil, connect_timeout=nil)
-      @op_timeout = op_timeout 
+      @op_timeout = op_timeout
       @connect_timeout = connect_timeout
+      @pid = Process.pid
 
       # TODO: Prefer ipv6 if server is ipv6 enabled
       @address = Socket.getaddrinfo(host, nil, Socket::AF_INET).first[3]
