@@ -357,6 +357,7 @@ module Mongo
       end
 
       def repl_set_startup
+        states = nil
         60.times do
           states = repl_set_get_status.zip(repl_set_is_master)
           healthy = states.all? do |status, is_master|
