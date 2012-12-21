@@ -6,8 +6,6 @@ module Mongo
       :secondary_pool, :secondary_pools, :hosts, :nodes, :members, :seeds,
       :max_bson_size
 
-    attr_accessor :pinned_pools
-
     # Create a new set of connection pools.
     #
     # The pool manager will by default use the original seed list passed
@@ -16,7 +14,6 @@ module Mongo
     # time. The union of these lists will be used when attempting to connect,
     # with the newly-discovered nodes being used first.
     def initialize(client, seeds=[])
-      @pinned_pools         = {}
       @client               = client
       @seeds                = seeds
       @previously_connected = false
@@ -104,7 +101,7 @@ module Mongo
                   tags=@client.tag_sets,
                   acceptable_latency=@client.acceptable_latency)
 
-      pinned = pinned_pools[Thread.current]
+      pinned = Thread.current[:"mongo_pinned_pool_#{self.object_id}"]
 
       if pinned && pinned.matches_mode(mode) && pinned.matches_tag_sets(tags) && pinned.up?
         pool = pinned
@@ -158,7 +155,6 @@ module Mongo
       @hosts            = Set.new
       @members          = Set.new
       @refresh_required = false
-      @pinned_pools     = {}
     end
 
     # Connect to each member of the replica set
