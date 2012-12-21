@@ -188,8 +188,12 @@ module Mongo
         return @pid if running?
         begin
           # redirection not supported in jruby
-          @pid = Process.spawn(*@cmd)
-          sleep 1
+          if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'jruby'
+            @pid = Process.spawn(*@cmd)
+          else
+            cmd_and_opts = [@cmd, {:in => :close, :out => :close}].flatten
+            @pid = Process.spawn(*cmd_and_opts)
+          end
           verify(verifies) if verifies > 0
           @pid
         end
@@ -206,6 +210,8 @@ module Mongo
         rescue Errno::ESRCH
           false
         end
+        # cleanup lock if unclean shutdown
+        File.delete(File.join(@config[:dbpath], 'mongod.lock')) if @config[:dbpath]
       end
 
       def wait
