@@ -11,19 +11,16 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     assert_cursor_count
   end
 
-  #def test_cursors_get_closed_secondary
-  #  setup_client(:secondary)
-  #  assert_cursor_count
-  #end
+  def test_cursors_get_closed_secondary
+    setup_client(:secondary)
+    assert_cursor_count
+  end
 
   private
 
   def setup_client(read=:primary)
     # Setup ReplicaSet Connection
-    @client = MongoReplicaSetClient.new(
-        @rs.repl_set_seeds,
-      :read => read
-    )
+    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :read => read)
 
     @db = @client.db(MONGO_TEST_DB)
     @db.drop_collection("cursor_tests")
@@ -50,21 +47,19 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
   end
 
   def assert_cursor_count
-    before_primary = cursor_count(@primary)
-    before_read = cursor_count(@read)
-    before_query = query_count(@read)
+    before_primary_cursor = cursor_count(@primary)
+    before_read_cursor = cursor_count(@read)
+    before_read_query = query_count(@read)
 
     @coll.find.limit(2).to_a
-    sleep(1)
 
-    after_primary = cursor_count(@primary)
-    after_read = cursor_count(@read)
-    after_query = query_count(@read)
+    after_primary_cursor = cursor_count(@primary)
+    after_read_cursor = cursor_count(@read)
+    after_read_query = query_count(@read)
 
-    assert_equal before_primary, after_primary
-    assert_equal before_read, after_read
-    assert_equal 1, after_query - before_query
+    assert_equal before_primary_cursor, after_primary_cursor
+    assert_equal before_read_cursor, after_read_cursor
+    assert_equal 1, after_read_query - before_read_query
   end
 
 end
-
