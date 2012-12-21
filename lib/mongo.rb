@@ -50,6 +50,7 @@ end
 
 require 'bson'
 
+require 'mongo/util/thread_local_variable_manager'
 require 'mongo/util/conversions'
 require 'mongo/util/support'
 require 'mongo/util/read_preference'

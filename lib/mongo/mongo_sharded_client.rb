@@ -20,6 +20,7 @@ module Mongo
 
   # Instantiates and manages connections to a MongoDB sharded cluster for high availability.
   class MongoShardedClient < MongoReplicaSetClient
+    include ThreadLocalVariableManager
 
     SHARDED_CLUSTER_OPTS = [:refresh_mode, :refresh_interval, :tag_sets, :read]
 
@@ -96,8 +97,7 @@ module Mongo
         @old_managers << @manager if @manager
         @manager = ShardingPoolManager.new(self, discovered_seeds | @seeds)
 
-        Thread.current[:mongo_pool_managers] ||= Hash.new
-        Thread.current[:mongo_pool_managers][self] = @manager
+        thread_local[:managers][self] = @manager
 
         @manager.connect
         @refresh_version += 1
