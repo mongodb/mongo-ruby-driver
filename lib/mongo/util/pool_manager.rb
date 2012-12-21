@@ -102,7 +102,7 @@ module Mongo
                   tags=@client.tag_sets,
                   acceptable_latency=@client.acceptable_latency)
 
-      pinned = thread_local[:pinned_pools] && thread_local[:pinned_pools][self.object_id]
+      pinned = thread_local[:pinned_pools][self.object_id]
 
       if pinned && pinned.matches_mode(mode) && pinned.matches_tag_sets(tags) && pinned.up?
         pool = pinned

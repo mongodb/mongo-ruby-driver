@@ -205,7 +205,6 @@ module Mongo
       @sockets << socket
       @checked_out << socket
 
-      thread_local[:sockets] ||= {}
       thread_local[:sockets][self.object_id] = socket
       socket
     end
@@ -256,7 +255,6 @@ module Mongo
         checkout_new_socket
       else
         @checked_out << socket
-        thread_local[:sockets] ||= {}
         thread_local[:sockets][self.object_id] = socket
         socket
       end
@@ -276,7 +274,7 @@ module Mongo
         end
 
         @connection_mutex.synchronize do
-          if thread_local[:sockets] && socket_for_thread = thread_local[:sockets][self.object_id]
+          if socket_for_thread = thread_local[:sockets][self.object_id]
             if !@checked_out.include?(socket_for_thread)
               socket = checkout_existing_socket(socket_for_thread)
             end
@@ -299,7 +297,7 @@ module Mongo
             if socket.closed?
               @checked_out.delete(socket)
               @sockets.delete(socket)
-              thread_local[:sockets].delete self.object_id if thread_local[:sockets]
+              thread_local[:sockets].delete self.object_id
               socket = checkout_new_socket
             end
 
