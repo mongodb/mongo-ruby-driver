@@ -506,10 +506,10 @@ module Mongo
     # hashes are ordered by default.
     #
     # @option opts [Boolean] :check_response (true) If +true+, raises an exception if the
-    # command fails.
+    #   command fails.
     # @option opts [Socket] :socket a socket to use for sending the command. This is mainly for internal use.
     # @option opts [:primary, :secondary] :read Read preference for this command. See Collection#find for
-    #  more details.
+    #   more details.
     # @option opts [String]  :comment (nil) a comment to include in profiling logs
     #
     # @return [Hash]
