@@ -188,8 +188,8 @@ module Mongo
         seeds = @manager.nil? ? @seeds : @manager.seeds
         @manager = PoolManager.new(self, seeds)
 
-        Thread.current[:managers] ||= Hash.new
-        Thread.current[:managers][self] = @manager
+        Thread.current[:mongo_pool_managers] ||= Hash.new
+        Thread.current[:mongo_pool_managers][self] = @manager
 
         @manager.connect
         @refresh_version += 1
@@ -239,7 +239,7 @@ module Mongo
       new_manager = PoolManager.new(self, discovered_seeds | @seeds)
       new_manager.connect
 
-      Thread.current[:managers][self] = new_manager
+      Thread.current[:mongo_pool_managers][self] = new_manager
 
       # TODO: make sure that connect has succeeded
       @old_managers << @manager
@@ -297,8 +297,8 @@ module Mongo
       end
 
       # Clear the reference to this object.
-      if Thread.current[:managers]
-        Thread.current[:managers].delete(self)
+      if Thread.current[:mongo_pool_managers]
+        Thread.current[:mongo_pool_managers].delete(self)
       end
 
       @connected = false
@@ -377,10 +377,10 @@ module Mongo
     end
 
     def ensure_manager
-      Thread.current[:managers] ||= Hash.new
+      Thread.current[:mongo_pool_managers] ||= Hash.new
 
-      if Thread.current[:managers][self] != @manager
-        Thread.current[:managers][self] = @manager
+      if Thread.current[:mongo_pool_managers][self] != @manager
+        Thread.current[:mongo_pool_managers][self] = @manager
       end
     end
 
@@ -401,7 +401,7 @@ module Mongo
     end
 
     def local_manager
-      Thread.current[:managers][self] if Thread.current[:managers]
+      Thread.current[:mongo_pool_managers][self] if Thread.current[:mongo_pool_managers]
     end
 
     def arbiters
