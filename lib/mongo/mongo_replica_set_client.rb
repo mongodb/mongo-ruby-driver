@@ -385,11 +385,11 @@ module Mongo
     end
 
     def pin_pool(pool)
-      Thread.current[:"mongo_pinned_pool_#{@manager.object_id}"] = pool if @manager
+      Thread.current["mongo_pinned_pool_#{@manager.object_id}"] = pool if @manager
     end
 
     def unpin_pool(pool)
-      Thread.current[:"mongo_pinned_pool_#{@manager.object_id}"] = nil if @manager
+      Thread.current["mongo_pinned_pool_#{@manager.object_id}"] = nil if @manager
     end
 
     def get_socket_from_pool(pool)

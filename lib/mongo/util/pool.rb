@@ -57,7 +57,6 @@ module Mongo
       @socket_ops = Hash.new { |h, k| h[k] = [] }
 
       @sockets            = []
-      @pids               = {}
       @checked_out        = []
       @ping_time          = nil
       @last_ping          = nil
@@ -203,9 +202,8 @@ module Mongo
       @client.apply_saved_authentication(:socket => socket)
 
       @sockets << socket
-      @pids[socket] = Process.pid
       @checked_out << socket
-      Thread.current[:mongo_affiliated_socket] = socket
+      Thread.current["mongo_affiliated_socket_#{self.object_id}"] = socket
       socket
     end
 
@@ -247,8 +245,7 @@ module Mongo
         socket = (@sockets - @checked_out).first
       end
 
-      if @pids[socket] != Process.pid
-        @pids[socket] = nil
+      if socket.pid != Process.pid
         @sockets.delete(socket)
         if socket
           socket.close unless socket.closed?
@@ -256,7 +253,7 @@ module Mongo
         checkout_new_socket
       else
         @checked_out << socket
-        Thread.current[:mongo_affiliated_socket] = socket
+        Thread.current["mongo_affiliated_socket_#{self.object_id}"] = socket
         socket
       end
     end
@@ -275,7 +272,7 @@ module Mongo
         end
 
         @connection_mutex.synchronize do
-          if socket_for_thread = Thread.current[:mongo_affiliated_socket]
+          if socket_for_thread = Thread.current["mongo_affiliated_socket_#{self.object_id}"]
             if !@checked_out.include?(socket_for_thread)
               socket = checkout_existing_socket(socket_for_thread)
             end
@@ -298,7 +295,7 @@ module Mongo
             if socket.closed?
               @checked_out.delete(socket)
               @sockets.delete(socket)
-              Thread.current[:mongo_affiliated_socket] = nil
+              Thread.current["mongo_affiliated_socket_#{self.object_id}"] = nil
               socket = checkout_new_socket
             end
 
