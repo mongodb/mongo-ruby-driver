@@ -19,6 +19,7 @@ module Mongo
   class Pool
     PING_ATTEMPTS  = 6
     MAX_PING_TIME  = 1_000_000
+    include ThreadLocalVariableManager
 
     attr_accessor :host,
                   :port,
@@ -203,7 +204,9 @@ module Mongo
 
       @sockets << socket
       @checked_out << socket
-      Thread.current["mongo_affiliated_socket_#{self.object_id}"] = socket
+
+      thread_local[:sockets] ||= {}
+      thread_local[:sockets][self.object_id] = socket
       socket
     end
 
@@ -253,7 +256,8 @@ module Mongo
         checkout_new_socket
       else
         @checked_out << socket
-        Thread.current["mongo_affiliated_socket_#{self.object_id}"] = socket
+        thread_local[:sockets] ||= {}
+        thread_local[:sockets][self.object_id] = socket
         socket
       end
     end
@@ -272,7 +276,7 @@ module Mongo
         end
 
         @connection_mutex.synchronize do
-          if socket_for_thread = Thread.current["mongo_affiliated_socket_#{self.object_id}"]
+          if thread_local[:sockets] && socket_for_thread = thread_local[:sockets][self.object_id]
             if !@checked_out.include?(socket_for_thread)
               socket = checkout_existing_socket(socket_for_thread)
             end
@@ -295,7 +299,7 @@ module Mongo
             if socket.closed?
               @checked_out.delete(socket)
               @sockets.delete(socket)
-              Thread.current["mongo_affiliated_socket_#{self.object_id}"] = nil
+              thread_local[:sockets].delete self.object_id if thread_local[:sockets]
               socket = checkout_new_socket
             end
 

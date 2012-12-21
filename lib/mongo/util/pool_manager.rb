@@ -1,6 +1,7 @@
 module Mongo
   class PoolManager
     include Mongo::ReadPreference
+    include ThreadLocalVariableManager
 
     attr_reader :client, :arbiters, :primary, :secondaries, :primary_pool,
       :secondary_pool, :secondary_pools, :hosts, :nodes, :members, :seeds,
@@ -101,7 +102,7 @@ module Mongo
                   tags=@client.tag_sets,
                   acceptable_latency=@client.acceptable_latency)
 
-      pinned = Thread.current["mongo_pinned_pool_#{self.object_id}"]
+      pinned = thread_local[:pinned_pools] && thread_local[:pinned_pools][self.object_id]
 
       if pinned && pinned.matches_mode(mode) && pinned.matches_tag_sets(tags) && pinned.up?
         pool = pinned

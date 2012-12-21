@@ -20,6 +20,7 @@ module Mongo
 
   # Instantiates and manages connections to a MongoDB replica set.
   class MongoReplicaSetClient < MongoClient
+    include ThreadLocalVariableManager
 
     REPL_SET_OPTS = [
       :refresh_mode,
@@ -188,8 +189,8 @@ module Mongo
         seeds = @manager.nil? ? @seeds : @manager.seeds
         @manager = PoolManager.new(self, seeds)
 
-        Thread.current[:mongo_pool_managers] ||= Hash.new
-        Thread.current[:mongo_pool_managers][self] = @manager
+        thread_local[:managers] ||= Hash.new
+        thread_local[:managers][self] = @manager
 
         @manager.connect
         @refresh_version += 1
@@ -239,7 +240,8 @@ module Mongo
       new_manager = PoolManager.new(self, discovered_seeds | @seeds)
       new_manager.connect
 
-      Thread.current[:mongo_pool_managers][self] = new_manager
+      thread_local[:managers] ||= {}
+      thread_local[:managers][self] = new_manager
 
       # TODO: make sure that connect has succeeded
       @old_managers << @manager
@@ -297,9 +299,7 @@ module Mongo
       end
 
       # Clear the reference to this object.
-      if Thread.current[:mongo_pool_managers]
-        Thread.current[:mongo_pool_managers].delete(self)
-      end
+      thread_local[:managers].delete(self) if thread_local[:managers]
 
       @connected = false
     end
@@ -377,19 +377,17 @@ module Mongo
     end
 
     def ensure_manager
-      Thread.current[:mongo_pool_managers] ||= Hash.new
-
-      if Thread.current[:mongo_pool_managers][self] != @manager
-        Thread.current[:mongo_pool_managers][self] = @manager
-      end
+      thread_local[:managers] ||= Hash.new
+      thread_local[:managers][self] = @manager
     end
 
     def pin_pool(pool)
-      Thread.current["mongo_pinned_pool_#{@manager.object_id}"] = pool if @manager
+      thread_local[:pinned_pools] ||= {}
+      thread_local[:pinned_pools][@manager.object_id] = pool if @manager
     end
 
     def unpin_pool(pool)
-      Thread.current["mongo_pinned_pool_#{@manager.object_id}"] = nil if @manager
+      thread_local[:pinned_pools].delete @manager.object_id if @manager && thread_local[:pinned_pools]
     end
 
     def get_socket_from_pool(pool)
@@ -401,7 +399,7 @@ module Mongo
     end
 
     def local_manager
-      Thread.current[:mongo_pool_managers][self] if Thread.current[:mongo_pool_managers]
+      thread_local[:managers][self] if thread_local[:managers]
     end
 
     def arbiters
