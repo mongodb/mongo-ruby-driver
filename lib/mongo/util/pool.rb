@@ -19,7 +19,6 @@ module Mongo
   class Pool
     PING_ATTEMPTS  = 6
     MAX_PING_TIME  = 1_000_000
-    PRUNE_INTERVAL = 10_000
 
     attr_accessor :host,
                   :port,
@@ -63,7 +62,6 @@ module Mongo
       @ping_time          = nil
       @last_ping          = nil
       @closed             = false
-      @threads_to_sockets = {}
       @checkout_counter   = 0
     end
 
@@ -207,7 +205,7 @@ module Mongo
       @sockets << socket
       @pids[socket] = Process.pid
       @checked_out << socket
-      @threads_to_sockets[Thread.current] = socket
+      Thread.current[:mongo_affiliated_socket] = socket
       socket
     end
 
@@ -258,16 +256,8 @@ module Mongo
         checkout_new_socket
       else
         @checked_out << socket
-        @threads_to_sockets[Thread.current] = socket
+        Thread.current[:mongo_affiliated_socket] = socket
         socket
-      end
-    end
-
-    def prune_thread_socket_hash
-      current_threads = Set[*Thread.list]
-
-      @threads_to_sockets.delete_if do |thread, socket|
-        !current_threads.include?(thread)
       end
     end
 
@@ -285,22 +275,12 @@ module Mongo
         end
 
         @connection_mutex.synchronize do
-          if @checkout_counter > PRUNE_INTERVAL
-            @checkout_counter = 0
-            prune_thread_socket_hash
-          else
-            @checkout_counter += 1
-          end
-
-          if socket_for_thread = @threads_to_sockets[Thread.current]
+          if socket_for_thread = Thread.current[:mongo_affiliated_socket]
             if !@checked_out.include?(socket_for_thread)
               socket = checkout_existing_socket(socket_for_thread)
             end
           else # First checkout for this thread
-            thread_length = @threads_to_sockets.keys.length
-            if (thread_length <= @sockets.size) && (@sockets.size < @size)
-              socket = checkout_new_socket
-            elsif @checked_out.size < @sockets.size
+            if @checked_out.size < @sockets.size
               socket = checkout_existing_socket
             elsif @sockets.size < @size
               socket = checkout_new_socket
@@ -318,12 +298,7 @@ module Mongo
             if socket.closed?
               @checked_out.delete(socket)
               @sockets.delete(socket)
-              @threads_to_sockets.each do |k,v|
-                if v == socket
-                  @threads_to_sockets.delete(k)
-                end
-              end
-
+              Thread.current[:mongo_affiliated_socket] = nil
               socket = checkout_new_socket
             end
 
