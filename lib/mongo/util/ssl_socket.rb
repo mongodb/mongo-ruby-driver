@@ -9,11 +9,12 @@ module Mongo
   # mirroring Ruby's TCPSocket, vis., TCPSocket#send and TCPSocket#read.
   class SSLSocket
 
-    attr_accessor :pool
+    attr_accessor :pool, :pid
 
     def initialize(host, port, op_timeout=nil, connect_timeout=nil)
       @op_timeout = op_timeout
       @connect_timeout = connect_timeout
+      @pid = Process.pid
 
       @socket = ::TCPSocket.new(host, port)
       @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
