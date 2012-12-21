@@ -388,6 +388,10 @@ module Mongo
         @config[:replicas].collect{|node| [node[:host], node[:port]]}
       end
 
+      def repl_set_seeds_uri
+        repl_set_seeds.join(',')
+      end
+
       def repl_set_name
         @config[:replicas].first[:replSet]
       end

@@ -39,13 +39,13 @@ class ConnectionTest < Test::Unit::TestCase
   end
 
   def test_connect_with_connection_string
-    @connection = Connection.from_uri("mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}")
+    @connection = Connection.from_uri("mongodb://#{@rs.repl_set_seeds_uri}?replicaset=#{@rs.repl_set_name}")
     assert !@connection.nil?
     assert @connection.connected?
   end
 
   def test_connect_with_connection_string_in_env_var
-    ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}"
+    ENV['MONGODB_URI'] = "mongodb://#{@rs.repl_set_seeds_uri}?replicaset=#{@rs.repl_set_name}"
     @connection = ReplSetConnection.new
     assert !@connection.nil?
     assert_equal 2, @connection.seeds.length
@@ -58,7 +58,7 @@ class ConnectionTest < Test::Unit::TestCase
   end
 
   def test_connect_with_connection_string_in_implicit_mongodb_uri
-    ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}"
+    ENV['MONGODB_URI'] = "mongodb://#{@rs.repl_set_seeds_uri}?replicaset=#{@rs.repl_set_name}"
     @connection = Connection.from_uri
     assert !@connection.nil?
     assert_equal 2, @connection.seeds.length
@@ -77,13 +77,13 @@ class ConnectionTest < Test::Unit::TestCase
 
   def test_connect_with_old_seed_format
     silently do
-      @connection = ReplSetConnection.new([@rs.replicas[0].host_port_a, @rs.replicas[1].host_port_a])
+      @connection = ReplSetConnection.new(@rs.repl_set_seeds_old)
     end
     assert @connection.connected?
   end
 
   def test_connect_with_full_connection_string
-    @connection = Connection.from_uri("mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name};safe=true;w=2;fsync=true;slaveok=true")
+    @connection = Connection.from_uri("mongodb://#{@rs.repl_set_seeds_uri}?replicaset=#{@rs.repl_set_name};safe=true;w=2;fsync=true;slaveok=true")
     assert !@connection.nil?
     assert @connection.connected?
     assert_equal 2, @connection.write_concern[:w]
@@ -92,7 +92,7 @@ class ConnectionTest < Test::Unit::TestCase
   end
 
   def test_connect_with_full_connection_string_in_env_var
-    ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name};safe=true;w=2;fsync=true;slaveok=true"
+    ENV['MONGODB_URI'] = "mongodb://#{@rs.repl_set_seeds_uri}?replicaset=#{@rs.repl_set_name};safe=true;w=2;fsync=true;slaveok=true"
     @connection = ReplSetConnection.new
     assert !@connection.nil?
     assert @connection.connected?
@@ -102,7 +102,7 @@ class ConnectionTest < Test::Unit::TestCase
   end
 
   def test_connect_options_override_env_var
-    ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name};safe=true;w=2;fsync=true;slaveok=true"
+    ENV['MONGODB_URI'] = "mongodb://#{@rs.repl_set_seeds_uri}?replicaset=#{@rs.repl_set_name};safe=true;w=2;fsync=true;slaveok=true"
     @connection = ReplSetConnection.new({:safe => {:w => 1}})
     assert !@connection.nil?
     assert @connection.connected?
