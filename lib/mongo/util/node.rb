@@ -32,7 +32,7 @@ module Mongo
 
     def config
       connect unless connected?
-      set_config unless @config
+      set_config unless @config or !connected?
       @config
     end
 
@@ -66,7 +66,7 @@ module Mongo
     end
 
     def connected?
-      @socket != nil
+      @socket != nil && !@socket.closed?
     end
 
     def active?

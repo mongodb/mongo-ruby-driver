@@ -150,20 +150,25 @@ module Mongo
 
     # For any existing members, close and remove any that are unhealthy or already closed.
     def disconnect_old_members
-      @members.each {|node| node.close unless node.healthy? }.reject! {|node| !node.active? }
+      @pools.reject!   {|pool| !pool.healthy? }
+      @members.reject! {|node| !node.healthy? }
     end
 
     # Connect to each member of the replica set
     # as reported by the given seed node.
     def connect_to_members
       seed = get_valid_seed_node
-
       seed.node_list.each do |host|
         if existing = @members.detect {|node| node =~ host }
           if existing.healthy?
             # Refresh this node's configuration
             existing.set_config
-            next
+            # If we are unhealthy after refreshing our config, drop from the set.
+            if !existing.healthy?
+              @members.delete existing
+            else
+              next
+            end
           else
             existing.close
             @members.delete existing
@@ -188,7 +193,6 @@ module Mongo
       @secondaries.clear
       @secondary_pools.clear
       @hosts.clear
-      @pools.reject! &:closed?
 
       members.each do |member|
         member.last_state = nil

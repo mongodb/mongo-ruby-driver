@@ -134,26 +134,12 @@ module Mongo
     end
 
     def checkout(&block)
-      2.times do
-        if connected?
-          sync_refresh
-        else
-          connect
-        end
-
-        begin
-          socket = block.call
-        rescue => ex
-          checkin(socket) if socket
-          raise ex
-        end
-
-        if socket
-          return socket
-        else
-          @connected = false
-          #raise ConnectionFailure.new("Could not checkout a socket.")
-        end
+      tries = 0
+      begin
+        super(&block)
+      rescue ConnectionFailure
+        tries +=1
+        tries < 2 ? retry : raise
       end
     end
   end

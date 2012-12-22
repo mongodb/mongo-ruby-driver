@@ -185,12 +185,14 @@ module Mongo
       @connect_mutex.synchronize do
         return if @connected
 
-        seeds = @manager.nil? ? @seeds : @manager.seeds
-        @manager = PoolManager.new(self, seeds)
+        if @manager
+          @manager.refresh! @seeds
+        else
+          @manager = PoolManager.new(self, @seeds)
+          thread_local[:managers][self] = @manager
+          @manager.connect
+        end
 
-        thread_local[:managers][self] = @manager
-
-        @manager.connect
         @refresh_version += 1
 
         if @manager.pools.empty?
@@ -335,12 +337,11 @@ module Mongo
       end
 
       if socket
-        socket
+        return socket
       else
         @connected = false
         raise ConnectionFailure.new("Could not checkout a socket.")
       end
-      socket
     end
 
     def checkout_reader(mode=@read, tag_sets=@tag_sets, acceptable_latency=@acceptable_latency)

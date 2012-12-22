@@ -88,6 +88,11 @@ module Mongo
       @node.tags
     end
 
+    def healthy?
+      close if @sockets.all?(&:closed?)
+      !closed? and node.healthy?
+    end
+
     def closed?
       @closed
     end
