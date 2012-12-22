@@ -27,14 +27,10 @@ module Mongo
     end
 
     def connect
-      close if @previously_connected
-
-      initialize_data
-      members = connect_to_members
-      initialize_pools(best(members))
-
-      @members = members
-      @previously_connected = true
+      # initialize_data
+      disconnect_old_members
+      connect_to_members
+      initialize_pools best(members)
     end
 
     # We want to refresh to the member with the fastest ping time

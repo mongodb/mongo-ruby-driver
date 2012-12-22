@@ -151,7 +151,6 @@ module Mongo
 
       # No connection manager by default.
       @manager = nil
-      @old_managers = []
 
       # Lock for request ids.
       @id_lock = Mutex.new
@@ -235,15 +234,7 @@ module Mongo
     #   to get the refresh lock.
     def hard_refresh!
       log(:info, "Initiating hard refresh...")
-      discovered_seeds = @manager.seeds
-      new_manager = PoolManager.new(self, discovered_seeds | @seeds)
-      new_manager.connect
-
-      thread_local[:managers][self] = new_manager
-
-      # TODO: make sure that connect has succeeded
-      @old_managers << @manager
-      @manager = new_manager
+      @manager.refresh! @seeds
 
       @refresh_version += 1
       return true
@@ -481,18 +472,6 @@ module Mongo
       super opts
     end
 
-    def prune_managers
-      @old_managers.each do |manager|
-        if manager != @manager
-          if manager.closed?
-            @old_managers.delete(manager)
-          else
-            manager.close(:soft => true)
-          end
-        end
-      end
-    end
-
     def sync_refresh
       if @refresh_mode == :sync &&
         ((Time.now - @last_refresh) > @refresh_interval)
@@ -502,7 +481,6 @@ module Mongo
         if @refresh_mutex.try_lock
           begin
             refresh
-            prune_managers
           ensure
             @refresh_mutex.unlock
           end
