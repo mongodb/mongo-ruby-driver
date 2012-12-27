@@ -191,7 +191,7 @@ module Mongo
           if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'jruby'
             @pid = Process.spawn(*@cmd)
           else
-            cmd_and_opts = [@cmd, {:in => :close, :out => :close}].flatten
+            cmd_and_opts = [@cmd, {:out => :close}].flatten
             @pid = Process.spawn(*cmd_and_opts)
           end
           verify(verifies) if verifies > 0
