@@ -197,7 +197,7 @@ module Mongo
     #
     # @param [Symbol, Array, Hash, OrderedHash] order either 1) a key to sort by 2)
     #   an array of [key, direction] pairs to sort by or 3) a hash of
-    #   field => direction pairs to sort by. Direction should be specified as 
+    #   field => direction pairs to sort by. Direction should be specified as
     #   Mongo::ASCENDING (or :ascending / :asc) or Mongo::DESCENDING
     #   (or :descending / :desc)
     #
@@ -468,26 +468,26 @@ module Mongo
     #
     # Upon ConnectionFailure, tries query 3 times if socket was not provided
     # and the query is either not a command or is a secondary_ok command.
-    # 
+    #
     # Pins pools upon successful read and unpins pool upon ConnectionFailure
     #
     def send_initial_query
       tries = 0
       instrument(:find, instrument_payload) do
         begin
-          tries += 1
           message = construct_query_message
           sock    = @socket || checkout_socket_from_connection
           results, @n_received, @cursor_id = @connection.receive_message(
             Mongo::Constants::OP_QUERY, message, nil, sock, @command,
             nil, @options & OP_QUERY_EXHAUST != 0)
         rescue ConnectionFailure => ex
+          @connection.unpin_pool(sock.pool) if sock
+          @connection.refresh
           if tries < 3 && !@socket && (!@command || Mongo::Support::secondary_ok?(@selector))
-            @connection.unpin_pool(sock.pool) if sock
-            @connection.refresh
+            tries += 1
             retry
           else
-            raise ex
+            raise
           end
         rescue OperationFailure, OperationTimeout => ex
           raise ex
