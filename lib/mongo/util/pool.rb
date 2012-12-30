@@ -90,7 +90,7 @@ module Mongo
 
     def healthy?
       close if @sockets.all?(&:closed?)
-      !closed? and node.healthy?
+      !closed? && node.healthy?
     end
 
     def closed?

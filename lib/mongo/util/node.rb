@@ -32,7 +32,7 @@ module Mongo
 
     def config
       connect unless connected?
-      set_config unless @config or !connected?
+      set_config unless @config || !connected?
       @config
     end
 
