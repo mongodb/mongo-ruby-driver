@@ -45,8 +45,7 @@ class PoolManagerTest < Test::Unit::TestCase
       assert_equal ['localhost', 27017], manager.primary
       assert_equal 27017, manager.primary_pool.port
       assert_equal 2, manager.secondaries.length
-      assert_equal 27018, manager.secondary_pools[0].port
-      assert_equal 27019, manager.secondary_pools[1].port
+      assert_equal [27018, 27019], manager.secondary_pools.map(&:port).sort
       assert_equal [['localhost', 27020]], manager.arbiters
     end
 

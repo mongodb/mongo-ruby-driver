@@ -211,7 +211,10 @@ module Mongo
           false
         end
         # cleanup lock if unclean shutdown
-        File.delete(File.join(@config[:dbpath], 'mongod.lock')) if @config[:dbpath]
+        begin
+          File.delete(File.join(@config[:dbpath], 'mongod.lock')) if @config[:dbpath]
+        rescue Errno::ENOENT
+        end
       end
 
       def wait

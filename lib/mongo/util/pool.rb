@@ -27,7 +27,8 @@ module Mongo
                   :size,
                   :timeout,
                   :checked_out,
-                  :client
+                  :client,
+                  :node
 
     # Create a new pool of connections.
     def initialize(client, host, port, opts={})
@@ -85,6 +86,11 @@ module Mongo
 
     def tags
       @node.tags
+    end
+
+    def healthy?
+      close if @sockets.all?(&:closed?)
+      !closed? && node.healthy?
     end
 
     def closed?
