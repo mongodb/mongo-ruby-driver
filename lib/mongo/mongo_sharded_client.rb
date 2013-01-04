@@ -59,7 +59,6 @@ module Mongo
 
       # No connection manager by default.
       @manager = nil
-      @old_managers = []
 
       # Lock for request ids.
       @id_lock = Mutex.new
@@ -93,13 +92,14 @@ module Mongo
       return unless force
       log(:info, "Connecting...")
       @connect_mutex.synchronize do
-        discovered_seeds = @manager ? @manager.seeds : []
-        @old_managers << @manager if @manager
-        @manager = ShardingPoolManager.new(self, discovered_seeds | @seeds)
+        if @manager
+          @manager.refresh! @seeds
+        else
+          @manager = ShardingPoolManager.new(self, @seeds)
+          thread_local[:managers][self] = @manager
+          @manager.connect
+        end
 
-        thread_local[:managers][self] = @manager
-
-        @manager.connect
         @refresh_version += 1
         @last_refresh = Time.now
         @connected = true
@@ -134,26 +134,12 @@ module Mongo
     end
 
     def checkout(&block)
-      2.times do
-        if connected?
-          sync_refresh
-        else
-          connect
-        end
-
-        begin
-          socket = block.call
-        rescue => ex
-          checkin(socket) if socket
-          raise ex
-        end
-
-        if socket
-          return socket
-        else
-          @connected = false
-          #raise ConnectionFailure.new("Could not checkout a socket.")
-        end
+      tries = 0
+      begin
+        super(&block)
+      rescue ConnectionFailure
+        tries +=1
+        tries < 2 ? retry : raise
       end
     end
   end

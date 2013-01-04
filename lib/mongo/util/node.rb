@@ -13,9 +13,18 @@ module Mongo
     end
 
     def eql?(other)
-      other.is_a?(Node) && @address == other.address
+      (other.is_a?(Node) && @address == other.address)
     end
     alias :== :eql?
+
+    def =~(other)
+      if other.is_a?(String)
+        h, p = split_node(other)
+        h == @host && p == @port
+      else
+        false
+      end
+    end
 
     def host_string
       address
@@ -23,7 +32,7 @@ module Mongo
 
     def config
       connect unless connected?
-      set_config unless @config
+      set_config unless @config || !connected?
       @config
     end
 
@@ -57,7 +66,7 @@ module Mongo
     end
 
     def connected?
-      @socket != nil
+      @socket != nil && !@socket.closed?
     end
 
     def active?

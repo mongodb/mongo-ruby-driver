@@ -6,7 +6,7 @@ class Cursor
 end
 
 class BasicTest < Test::Unit::TestCase
-  
+
   def setup
     ensure_cluster(:sc)
   end
@@ -36,7 +36,7 @@ class BasicTest < Test::Unit::TestCase
 
   def test_read_from_client
     host, port = @sc.mongos_seeds.first.split(':')
-    tags = [{:dc => "mongolia"}] 
+    tags = [{:dc => "mongolia"}]
     @client = MongoClient.new(host, port, {:read => :secondary, :tag_sets => tags})
     assert @client.connected?
     cursor = Cursor.new(@client[MONGO_TEST_DB]['whatever'], {})
@@ -45,7 +45,7 @@ class BasicTest < Test::Unit::TestCase
 
   def test_read_from_sharded_client
     seeds = @sc.mongos_seeds
-    tags = [{:dc => "mongolia"}] 
+    tags = [{:dc => "mongolia"}]
     @client = MongoShardedClient.new(seeds, {:read => :secondary, :tag_sets => tags})
     assert @client.connected?
     cursor = Cursor.new(@client[MONGO_TEST_DB]['whatever'], {})
