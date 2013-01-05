@@ -182,17 +182,26 @@ module Mongo
     # Initiate a connection to the replica set.
     def connect
       log(:info, "Connecting...")
+
+      # Prevent recursive connection attempts from the same thread.
+      # This is done rather than using a Monitor to prevent potentially recursing
+      # infinitely while attempting to connect and continually failing. Instead, fail fast.
+      raise ConnectionFailure, "Failed to get node data." if thread_local[:locks][:connecting] == true
+
       @connect_mutex.synchronize do
         return if @connected
-
-        if @manager
-          @manager.refresh! @seeds
-        else
-          @manager = PoolManager.new(self, @seeds)
-          thread_local[:managers][self] = @manager
-          @manager.connect
+        begin
+          thread_local[:locks][:connecting] = true
+          if @manager
+            @manager.refresh! @seeds
+          else
+            @manager = PoolManager.new(self, @seeds)
+            thread_local[:managers][self] = @manager
+            @manager.connect
+          end
+        ensure
+          thread_local[:locks][:connecting] = false
         end
-
         @refresh_version += 1
 
         if @manager.pools.empty?
