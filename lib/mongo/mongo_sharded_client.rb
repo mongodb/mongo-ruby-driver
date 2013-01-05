@@ -91,13 +91,24 @@ module Mongo
     def connect(force = !@connected)
       return unless force
       log(:info, "Connecting...")
+
+      # Prevent recursive connection attempts from the same thread.
+      # This is done rather than using a Monitor to prevent potentially recursing
+      # infinitely while attempting to connect and continually failing. Instead, fail fast.
+      raise ConnectionFailure, "Failed to get node data." if thread_local[:locks][:connecting]
+
       @connect_mutex.synchronize do
-        if @manager
-          @manager.refresh! @seeds
-        else
-          @manager = ShardingPoolManager.new(self, @seeds)
-          thread_local[:managers][self] = @manager
-          @manager.connect
+        begin
+          thread_local[:locks][:connecting] = true
+          if @manager
+            @manager.refresh! @seeds
+          else
+            @manager = ShardingPoolManager.new(self, @seeds)
+            thread_local[:managers][self] = @manager
+            @manager.connect
+          end
+        ensure
+          thread_local[:locks][:connecting] = false
         end
 
         @refresh_version += 1
