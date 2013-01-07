@@ -145,6 +145,7 @@ module Mongo
     def self.port_available?(port)
       ret = false
       socket = Socket.new(Socket::Constants::AF_INET, Socket::Constants::SOCK_STREAM, 0)
+      socket.setsockopt(:SOCKET, :REUSEADDR, 1)
       sockaddr = Socket.sockaddr_in(port, '0.0.0.0')
       begin
         socket.bind(sockaddr)
