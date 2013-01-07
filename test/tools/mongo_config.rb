@@ -102,7 +102,7 @@ module Mongo
       noprealloc = opts[:noprealloc] || true
       smallfiles = opts[:smallfiles] || true
       quiet      = opts[:quiet]      || true
-      fast_sync  = opts[:fastsync]   || true
+      fast_sync  = opts[:fastsync]   || false
 
       params.merge(
         :command => mongod,
