@@ -2,18 +2,16 @@ require 'test_helper'
 
 class TestTimeout < Test::Unit::TestCase
   def test_op_timeout
-    connection = standard_connection(:op_timeout => 2)
+    connection = standard_connection(:op_timeout => 1)
     
     admin = connection.db('admin')
 
-    command = BSON::OrderedHash.new
-    command[:sleep] = 1
-    command[:secs] = 1
+    command = {:eval => "sleep(500)"}
     # Should not timeout
     assert admin.command(command)
    
     # Should timeout
-    command[:secs] = 3
+    command = {:eval => "sleep(1500)"}
     assert_raise Mongo::OperationTimeout do
       admin.command(command) 
     end
