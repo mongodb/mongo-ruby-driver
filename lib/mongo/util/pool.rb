@@ -78,7 +78,9 @@ module Mongo
         else
           close_sockets(@sockets)
           @closed = true
+          thread_local[:sockets].delete(self.object_id)
         end
+        clean_expired_sockets
         @node.close if @node
       end
       true
@@ -280,6 +282,7 @@ module Mongo
         end
 
         @connection_mutex.synchronize do
+          clean_expired_sockets
           if socket_for_thread = thread_local[:sockets][self.object_id]
             if !@checked_out.include?(socket_for_thread)
               socket = checkout_existing_socket(socket_for_thread)
@@ -301,9 +304,7 @@ module Mongo
             end
 
             if socket.closed?
-              @checked_out.delete(socket)
-              @sockets.delete(socket)
-              thread_local[:sockets].delete self.object_id
+              clean_expired_sockets(socket)
               socket = checkout_new_socket
             end
 
@@ -318,15 +319,25 @@ module Mongo
 
     private
 
+    def clean_expired_sockets(explicit_socket = nil)
+      closed = @sockets.select &:closed?
+      closed << explicit_socket if explicit_socket && !closed.include?(explicit_socket)
+
+      @checked_out -= closed
+      @sockets     -= closed
+      thread_local[:sockets].delete(self.object_id) if closed.include? thread_local[:sockets][self.object_id]
+      closed.each {|socket| @socket_ops.delete socket }
+    end
+
     def close_sockets(sockets)
       sockets.each do |socket|
-        @sockets.delete(socket)
         begin
           socket.close unless socket.closed?
         rescue IOError => ex
           warn "IOError when attempting to close socket connected to #{@host}:#{@port}: #{ex.inspect}"
         end
       end
+      clean_expired_sockets
     end
 
   end

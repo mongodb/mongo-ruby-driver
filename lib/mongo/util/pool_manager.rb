@@ -163,13 +163,13 @@ module Mongo
           if existing.healthy?
             # Refresh this node's configuration
             existing.set_config
-            # If we are unhealthy after refreshing our config, drop from the set.
-            if !existing.healthy?
-              @members.delete existing
-            else
-              next
-            end
+          end
+
+          if existing.healthy?
+            # A healthy node doesn't need anything done to it.
+            next
           else
+            # If we are unhealthy after refreshing our config, drop from the set.
             existing.close
             @members.delete existing
           end
@@ -180,6 +180,10 @@ module Mongo
         @members << node if node.healthy?
       end
       seed.close
+
+      # After refreshing the node list, we might have invalidated some pools.
+      # Clean them out so they don't get reused.
+      disconnect_old_members
 
       if @members.empty?
         raise ConnectionFailure, "Failed to connect to any given member."
