@@ -60,7 +60,11 @@ module Mongo
     end
 
     def close
-      @socket.close
+      @pool = nil
+      begin
+        @socket.close
+      rescue IOError
+      end
     end
 
     def closed?

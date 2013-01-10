@@ -46,11 +46,15 @@ module Mongo
         end
       else
         @ssl.sysread(length, buffer)
-      end 
+      end
     end
 
     def close
-      @ssl.close
+      @pool = nil
+      begin
+        @socket.close
+      rescue IOError
+      end
     end
 
     def closed?
