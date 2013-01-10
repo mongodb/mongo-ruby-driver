@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
 
   s.files             = ['mongo.gemspec', 'LICENSE', 'VERSION']
   s.files             += ['README.md', 'Rakefile', 'bin/mongo_console']
-  s.files             += ['lib/mongo.rb'] + Dir['lib/mongo/**/*.rb'] + Dir['examples/**/*.rb']
+  s.files             += ['lib/mongo.rb'] + Dir['lib/mongo/**/*.rb']
 
   s.test_files        = Dir['test/**/*.rb']
   s.executables       = ['mongo_console']
