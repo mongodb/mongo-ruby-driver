@@ -102,30 +102,14 @@ you can install it as a gem from the source by typing:
 
 For extensive examples, see the [MongoDB Ruby Tutorial](https://github.com/mongodb/mongo-ruby-driver/wiki/Tutorial).
 
-Bundled with the driver are many examples, located in the "docs/examples" subdirectory. Samples include using
-the driver and using the GridFS class GridStore. MongoDB must be running for
-these examples to work, of course.
-
-Here's how to start MongoDB and run the "simple.rb" example:
-
-      $ cd path/to/mongo
-      $ ./mongod run
-      ... then in another window ...
-      $ cd path/to/mongo-ruby-driver
-      $ ruby docs/examples/simple.rb
-
-See also the test code, especially test/test_db_api.rb.
-
 # GridFS
 
 The Ruby driver include two abstractions for storing large files: Grid and GridFileSystem.
-The Grid class is a Ruby implementation of MongoDB's GridFS file storage
-specification. GridFileSystem is essentially the same, but provides a more filesystem-like API
-and assumes that filenames are unique.
 
-An instance of both classes represents an individual file store. See the API reference
-for details, and see examples/gridfs.rb for code that uses many of the Grid
-features (metadata, content type, seek, tell, etc).
+The Grid class is a Ruby implementation of MongoDB's GridFS file storage
+specification. GridFileSystem is essentially the same, but provides a more filesystem-like API and assumes that filenames are unique.
+
+An instance of both classes represents an individual file store. See the API reference for details.
 
 Examples:
 
