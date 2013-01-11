@@ -62,4 +62,16 @@ class PoolReuseTest < Test::Unit::TestCase
     # Reconnect and verify that we can read again
     assert_equal db.collection_names, []
   end
+
+  def test_socket_reference_cleanup
+    @conn.hard_refresh!
+    GC.start
+    sockets_before = ObjectSpace.each_object(Mongo::TCPSocket) {}
+    10.times do
+      connect
+    end
+    GC.start
+    sockets_after  = ObjectSpace.each_object(Mongo::TCPSocket) {}
+    assert_equal sockets_before, sockets_after
+  end
 end
