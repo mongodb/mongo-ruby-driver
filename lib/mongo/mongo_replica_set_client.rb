@@ -212,7 +212,6 @@ module Mongo
         end
       end
     end
-    alias :reconnect :connect
 
     # Determine whether a replica set refresh is
     # required. If so, run a hard refresh. You can
@@ -289,7 +288,6 @@ module Mongo
     def read_primary?
       @manager.read_pool == @manager.primary_pool
     end
-    alias :primary? :read_primary?
 
     # Close the connection to the database.
     def close(opts={})
