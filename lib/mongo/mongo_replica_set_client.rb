@@ -212,6 +212,7 @@ module Mongo
         end
       end
     end
+    alias :reconnect :connect
 
     # Determine whether a replica set refresh is
     # required. If so, run a hard refresh. You can
