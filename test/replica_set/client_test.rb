@@ -28,6 +28,28 @@ class ClientTest < Test::Unit::TestCase
     end
   end
 
+  def test_reconnect_method_override
+    rescue_connection_failure do
+      @client = MongoReplicaSetClient.new(@rs.repl_set_seeds)
+    end
+
+    MongoReplicaSetClient.any_instance.expects(:connect)
+    MongoClient.any_instance.expects(:connect).never
+    assert_nothing_raised Mongo::ConnectionFailure do
+      @client.reconnect
+    end
+  end
+
+  def test_primary_method_override
+    rescue_connection_failure do
+      @client = MongoReplicaSetClient.new(@rs.repl_set_seeds)
+    end
+
+    MongoReplicaSetClient.any_instance.expects(:read_primary?)
+    MongoClient.any_instance.expects(:read_primary?).never
+    @client.primary?
+  end
+
   def test_connect_with_first_secondary_node_terminated
     @rs.secondaries.first.stop
 
