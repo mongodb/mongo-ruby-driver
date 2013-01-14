@@ -38,11 +38,11 @@ module Mongo
       @chunks  = @db["#{fs_name}.chunks"]
       @fs_name = fs_name
 
-      # Create indexes only if we're connected to a primary node.
+      # This will create indexes only if we're connected to a primary node.
       connection = @db.connection
-      if (connection.class == MongoClient && connection.read_primary?) ||
-          (connection.class == MongoReplicaSetClient && connection.primary)
-        @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
+      begin
+        @chunks.ensure_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
+      rescue Mongo::ConnectionFailure
       end
     end
 
@@ -70,13 +70,20 @@ module Mongo
     #
     # @return [BSON::ObjectId] the file's id.
     def put(data, opts={})
-      opts     = opts.dup
-      filename = opts.delete(:filename)
-      opts.merge!(default_grid_io_opts)
-      file = GridIO.new(@files, @chunks, filename, 'w', opts)
-      file.write(data)
-      file.close  
-      file.files_id
+      begin
+        # Ensure there is an index on files_id and n, as state may have changed since instantiation of self.
+        # Recall that index definitions are cached with ensure_index so this statement won't unneccesarily repeat index creation.
+        @chunks.ensure_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
+        opts     = opts.dup
+        filename = opts.delete(:filename)
+        opts.merge!(default_grid_io_opts)
+        file = GridIO.new(@files, @chunks, filename, 'w', opts)
+        file.write(data)
+        file.close
+        file.files_id
+      rescue Mongo::ConnectionFailure => e
+        raise e, "Failed to create necessary index and write data."
+      end
     end
 
     # Read a file from the file store.

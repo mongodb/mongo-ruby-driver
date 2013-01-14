@@ -39,12 +39,12 @@ module Mongo
 
       @default_query_opts = {:sort => [['filename', 1], ['uploadDate', -1]], :limit => 1}
 
-      # Create indexes only if we're connected to a primary node.
+      # This will create indexes only if we're connected to a primary node.
       connection = @db.connection
-      if (connection.class == MongoClient && connection.read_primary?) ||
-          (connection.class == MongoReplicaSetClient && connection.primary)
-        @files.create_index([['filename', 1], ['uploadDate', -1]])
-        @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
+      begin
+        @files.ensure_index([['filename', 1], ['uploadDate', -1]])
+        @chunks.ensure_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
+      rescue Mongo::ConnectionFailure
       end
     end
 
@@ -104,9 +104,18 @@ module Mongo
       opts = opts.dup
       opts.merge!(default_grid_io_opts(filename))
       if mode == 'w'
-        versions = opts.delete(:versions)
-        if opts.delete(:delete_old) || (versions && versions < 1)
-          versions = 1
+        begin
+          # Ensure there are the appropriate indexes, as state may have changed since instantiation of self.
+          # Recall that index definitions are cached with ensure_index so this statement won't unneccesarily repeat index creation.
+          @files.ensure_index([['filename', 1], ['uploadDate', -1]])
+          @chunks.ensure_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
+          versions = opts.delete(:versions)
+          if opts.delete(:delete_old) || (versions && versions < 1)
+            versions = 1
+          end
+        rescue Mongo::ConnectionFailure => e
+          raise e, "Failed to create necessary indexes and write data."
+          return
         end
       end
       file = GridIO.new(@files, @chunks, filename, mode, opts)
