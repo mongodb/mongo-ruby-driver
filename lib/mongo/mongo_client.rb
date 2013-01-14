@@ -181,7 +181,7 @@ module Mongo
 
     # Initialize a connection to MongoDB using the MongoDB URI spec.
     #
-    # Since MongoClient.new cannot be used with any <code>ENV["MONGODB_URI"]</code> that has multiple hosts (implying a replicaset), 
+    # Since MongoClient.new cannot be used with any <code>ENV["MONGODB_URI"]</code> that has multiple hosts (implying a replicaset),
     # you may use this when the type of your connection varies by environment and should be determined solely from <code>ENV["MONGODB_URI"]</code>.
     #
     # @param uri [String]
@@ -479,7 +479,10 @@ module Mongo
         raise ConnectionFailure, "Failed to connect to a master node at #{host_port.join(":")}"
       end
     end
-    alias :reconnect :connect
+
+    # Ensures that the alias carries over to the overridden connect method when using
+    # the replica set or sharded clients.
+    def reconnect; connect end
 
     # It's possible that we defined connected as all nodes being connected???
     # NOTE: Do check if this needs to be more stringent.
@@ -511,7 +514,10 @@ module Mongo
     def read_primary?
       @read_primary
     end
-    alias :primary? :read_primary?
+
+    # Ensures that the alias carries over to the overridden connect method when using
+    # the replica set or sharded clients.
+    def primary?; read_primary? end
 
     # The socket pool that this connection reads from.
     #
