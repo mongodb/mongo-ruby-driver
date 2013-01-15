@@ -560,7 +560,8 @@ module Mongo
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@collection.name}")
       message.put_int(@skip)
       message.put_int(@limit)
-      message.put_binary(BSON::BSON_CODER.serialize(construct_query_spec, false).to_s)
+      spec = query_contains_special_fields? ? construct_query_spec : @selector
+      message.put_binary(BSON::BSON_CODER.serialize(spec, false).to_s)
       message.put_binary(BSON::BSON_CODER.serialize(@fields, false).to_s) if @fields
       message
     end
@@ -591,6 +592,11 @@ module Mongo
         spec['$readPreference'] = read_pref if read_pref
       end
       spec
+    end
+
+    def query_contains_special_fields?
+      @order || @explain || @hint || @snapshot || @show_disk_loc ||
+        @max_scan || @return_key || @comment || @connection.mongos?
     end
 
     def close_cursor_if_query_complete
