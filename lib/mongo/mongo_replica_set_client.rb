@@ -288,7 +288,6 @@ module Mongo
     def read_primary?
       @manager.read_pool == @manager.primary_pool
     end
-    alias :primary? :read_primary?
 
     # Close the connection to the database.
     def close(opts={})
