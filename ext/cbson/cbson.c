@@ -620,7 +620,7 @@ static void write_doc(bson_buffer_t buffer, VALUE hash, VALUE check_keys, VALUE 
     if (length > bson_buffer_get_max_size(buffer)) {
       bson_buffer_free(buffer);
       rb_raise(InvalidDocument,
-          "Document too large: This BSON documents is limited to %d bytes.",
+          "Document too large: This BSON document is limited to %d bytes.",
           bson_buffer_get_max_size(buffer));
       return;
     }

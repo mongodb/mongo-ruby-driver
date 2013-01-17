@@ -145,7 +145,7 @@ module BSON
       serialize_eoo_element(@buf)
       if @buf.size > @buf.max_size
         raise InvalidDocument, "Document is too large (#{@buf.size}). " +
-         "This BSON documents is limited to #{@buf.max_size} bytes."
+         "This BSON document is limited to #{@buf.max_size} bytes."
       end
       @buf.put_int(@buf.size, 0)
       @buf
