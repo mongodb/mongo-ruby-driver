@@ -437,11 +437,13 @@ module Mongo
     end
 
     def max_bson_size
-      if local_manager && local_manager.max_bson_size
-        local_manager.max_bson_size
-      else
-        Mongo::DEFAULT_MAX_BSON_SIZE
-      end
+      return local_manager.max_bson_size if local_manager
+      DEFAULT_MAX_BSON_SIZE
+    end
+
+    def max_message_size
+      return local_manager.max_message_size if local_manager
+      DEFAULT_MAX_MESSAGE_SIZE
     end
 
     private

@@ -244,14 +244,103 @@ class TestCollection < Test::Unit::TestCase
     assert_equal error_docs, invalid_docs
   end
 
+  def limited_collection
+    conn = standard_connection(:connect => false)
+    admin_db = Object.new
+    admin_db.expects(:command).returns({
+      'ok' => 1,
+      'ismaster' => 1,
+      'maxBsonObjectSize' => 1024,
+      'maxMessageSizeBytes' => 3 * 1024
+    })
+    conn.expects(:[]).with('admin').returns(admin_db)
+    conn.connect
+    return conn.db(MONGO_TEST_DB)["test"]
+  end
+
   def test_maximum_insert_size
     docs = []
-    16.times do
-      docs << {'foo' => 'a' * 1024 * 1024}
+    3.times do
+      docs << {'foo' => 'a' * 950}
+    end
+    assert_equal limited_collection.insert(docs).length, 3
+  end
+
+  def test_maximum_document_size
+    assert_raise InvalidDocument do
+      limited_collection.insert({'foo' => 'a' * 1024})
+    end
+  end
+
+  def test_maximum_message_size
+    docs = []
+    4.times do
+      docs << {'foo' => 'a' * 950}
     end
 
     assert_raise InvalidOperation do
-      @@test.insert(docs)
+      limited_collection.insert(docs)
+    end
+  end
+
+  def test_maximum_save_size
+    assert limited_collection.save({'foo' => 'a' * 950})
+    assert_raise InvalidDocument do
+      limited_collection.save({'foo' => 'a' * 1024})
+    end
+  end
+
+  def test_maximum_remove_size
+    assert limited_collection.remove({'foo' => 'a' * 950})
+    assert_raise InvalidDocument do
+      limited_collection.remove({'foo' => 'a' * 1024})
+    end
+  end
+
+  def test_maximum_update_size
+    assert_raise InvalidDocument do
+      limited_collection.update(
+        {'foo' => 'a' * 1024},
+        {'foo' => 'a' * 950}
+      )
+    end
+
+    assert_raise InvalidDocument do
+      limited_collection.update(
+        {'foo' => 'a' * 950},
+        {'foo' => 'a' * 1024}
+      )
+    end
+
+    assert_raise InvalidDocument do
+      limited_collection.update(
+        {'foo' => 'a' * 1024},
+        {'foo' => 'a' * 1024}
+      )
+    end
+
+    assert limited_collection.update(
+      {'foo' => 'a' * 950},
+      {'foo' => 'a' * 950}
+    )
+  end
+
+  def test_maximum_query_size
+    assert limited_collection.find({'foo' => 'a' * 950}).to_a
+    assert limited_collection.find(
+      {'foo' => 'a' * 950},
+      {:fields => {'foo' => 'a' * 950}}
+    ).to_a
+
+    assert_raise InvalidDocument do
+      limited_collection.find({'foo' => 'a' * 1024}).to_a
+    end
+
+    assert_raise InvalidDocument do
+      limited_collection.find(
+        {'foo' => 'a' * 950},
+        {:fields => {'foo' => 'a' * 1024}}
+      ).to_a
     end
   end
 

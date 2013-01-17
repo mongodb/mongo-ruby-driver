@@ -416,7 +416,7 @@ module Mongo
     # @core remove remove-instance_method
     def remove(selector={}, opts={})
       write_concern = get_write_concern(opts, self)
-      message = BSON::ByteBuffer.new("\0\0\0\0")
+      message = BSON::ByteBuffer.new("\0\0\0\0", @connection.max_message_size)
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       message.put_int(0)
       message.put_binary(BSON::BSON_CODER.serialize(selector, false, true, @connection.max_bson_size).to_s)
@@ -464,7 +464,7 @@ module Mongo
     def update(selector, document, opts={})
       # Initial byte is 0.
       write_concern = get_write_concern(opts, self)
-      message = BSON::ByteBuffer.new("\0\0\0\0")
+      message = BSON::ByteBuffer.new("\0\0\0\0", @connection.max_message_size)
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       update_options  = 0
       update_options += 1 if opts[:upsert]
@@ -474,7 +474,7 @@ module Mongo
       check_keys = document.keys.first.to_s.start_with?("$") ? false : true
 
       message.put_int(update_options)
-      message.put_binary(BSON::BSON_CODER.serialize(selector, false, true).to_s)
+      message.put_binary(BSON::BSON_CODER.serialize(selector, false, true, @connection.max_bson_size).to_s)
       message.put_binary(BSON::BSON_CODER.serialize(document, check_keys, true, @connection.max_bson_size).to_s)
 
       instrument(:update, :database => @db.name, :collection => @name, :selector => selector, :document => document) do
@@ -1065,11 +1065,11 @@ module Mongo
     # Takes an array of +documents+, an optional +collection_name+, and a
     # +check_keys+ setting.
     def insert_documents(documents, collection_name=@name, check_keys=true, write_concern={}, flags={})
+      message = BSON::ByteBuffer.new("", @connection.max_message_size)
       if flags[:continue_on_error]
-        message = BSON::ByteBuffer.new
         message.put_int(1)
       else
-        message = BSON::ByteBuffer.new("\0\0\0\0")
+        message.put_int(0)
       end
 
       collect_on_error = !!flags[:collect_on_error]
@@ -1093,7 +1093,10 @@ module Mongo
             message.put_binary(BSON::BSON_CODER.serialize(doc, check_keys, true, @connection.max_bson_size).to_s)
           end
         end
-      raise InvalidOperation, "Exceded maximum insert size of 16,777,216 bytes" if message.size > @connection.max_bson_size
+
+      if message.size > @connection.max_message_size
+        raise InvalidOperation, "Exceded maximum insert size of #{@connection.max_message_size} bytes"
+      end
 
       instrument(:insert, :database => @db.name, :collection => collection_name, :documents => documents) do
         if Mongo::WriteConcern.gle?(write_concern)

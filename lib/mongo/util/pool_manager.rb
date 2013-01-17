@@ -3,8 +3,17 @@ module Mongo
     include Mongo::ReadPreference
     include ThreadLocalVariableManager
 
-    attr_reader :client, :arbiters, :primary, :secondaries, :primary_pool,
-      :secondary_pools, :hosts, :nodes, :members, :seeds, :max_bson_size, :pools
+    attr_reader :client,
+                :arbiters,
+                :primary,
+                :secondaries,
+                :primary_pool,
+                :secondary_pools,
+                :hosts,
+                :nodes,
+                :members,
+                :seeds,
+                :pools
 
     # Create a new set of connection pools.
     #
@@ -126,6 +135,14 @@ module Mongo
       pool
     end
 
+    def max_bson_size
+      @max_bson_size ||= config_min('maxBsonObjectSize', Mongo::DEFAULT_MAX_BSON_SIZE)
+    end
+
+    def max_message_size
+      @max_message_size ||= config_min('maxMessageSizeBytes', Mongo::DEFAULT_MAX_MESSAGE_SIZE)
+    end
+
     private
 
     def validate_existing_member(member)
@@ -205,9 +222,12 @@ module Mongo
         end
       end
 
-      @max_bson_size = members.first.config['maxBsonObjectSize'] ||
-        Mongo::DEFAULT_MAX_BSON_SIZE
       @arbiters = members.first.arbiters
+    end
+
+    def config_min(attribute, default)
+      @members.reject {|m| !m.config[attribute]}
+      @members.map {|m| m.config[attribute]}.min || default
     end
 
     def assign_primary(member)

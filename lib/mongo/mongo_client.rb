@@ -128,9 +128,6 @@ module Mongo
       opts = args.last.is_a?(Hash) ? args.pop : {}
       @host, @port = parse_init(args[0], args[1], opts)
 
-      # Default maximum BSON object size
-      @max_bson_size = Mongo::DEFAULT_MAX_BSON_SIZE
-
       # Lock for request ids.
       @id_lock = Mutex.new
 
@@ -471,7 +468,8 @@ module Mongo
           @mongos = true
         end
 
-        @max_bson_size = config['maxBsonObjectSize'] || Mongo::DEFAULT_MAX_BSON_SIZE
+        @max_bson_size = config['maxBsonObjectSize']
+        @max_message_size = config['maxMessageSizeBytes']
         set_primary(host_port)
       end
 
@@ -532,7 +530,11 @@ module Mongo
     #
     # @return [Integer]
     def max_bson_size
-      @max_bson_size
+      @max_bson_size || Mongo::DEFAULT_MAX_BSON_SIZE
+    end
+
+    def max_message_size
+      @max_message_size || Mongo::DEFAULT_MAX_MESSAGE_SIZE
     end
 
     # Checkout a socket for reading (i.e., a secondary node).

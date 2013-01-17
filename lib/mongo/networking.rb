@@ -209,13 +209,13 @@ module Mongo
     end
 
     def build_command_message(db_name, query, projection=nil, skip=0, limit=-1)
-      message = BSON::ByteBuffer.new
+      message = BSON::ByteBuffer.new("", max_message_size)
       message.put_int(0)
       BSON::BSON_RUBY.serialize_cstr(message, "#{db_name}.$cmd")
       message.put_int(skip)
       message.put_int(limit)
-      message.put_binary(BSON::BSON_CODER.serialize(query, false).to_s)
-      message.put_binary(BSON::BSON_CODER.serialize(projection, false).to_s) if projection
+      message.put_binary(BSON::BSON_CODER.serialize(query, false, false, max_bson_size).to_s)
+      message.put_binary(BSON::BSON_CODER.serialize(projection, false, false, max_bson_size).to_s) if projection
       message
     end
 

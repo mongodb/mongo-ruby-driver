@@ -22,21 +22,33 @@ class PoolManagerTest < Test::Unit::TestCase
       @client.stubs(:replica_set_name).returns(nil)
       @client.stubs(:log)
       @arbiters = ['localhost:27020']
-      @hosts = ['localhost:27017', 'localhost:27018', 'localhost:27019',
-        'localhost:27020']
+      @hosts = [
+        'localhost:27017',
+        'localhost:27018',
+        'localhost:27019',
+        'localhost:27020'
+      ]
+
+      @ismaster = {
+        'hosts' => @hosts,
+        'arbiters' => @arbiters,
+        'maxMessageSizeBytes' => 1024 * 2.5,
+        'maxBsonObjectSize' => 1024
+      }
     end
 
     should "populate pools correctly" do
 
       @db.stubs(:command).returns(
         # First call to get a socket.
-        {'ismaster' => true, 'hosts' => @hosts, 'arbiters' => @arbiters},
+        @ismaster.merge({'ismaster' => true}),
 
         # Subsequent calls to configure pools.
-        {'ismaster' => true, 'hosts' => @hosts, 'arbiters' => @arbiters},
-        {'secondary' => true, 'hosts' => @hosts, 'arbiters' => @arbiters},
-        {'secondary' => true, 'hosts' => @hosts, 'arbiters' => @arbiters},
-        {'arbiterOnly' => true, 'hosts' => @hosts, 'arbiters' => @arbiters})
+        @ismaster.merge({'ismaster' => true}),
+        @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 700}),
+        @ismaster.merge({'secondary' => true, 'maxBsonObjectSize' => 500}),
+        @ismaster.merge({'arbiterOnly' => true})
+      )
 
       seeds = [['localhost', 27017]]
       manager = Mongo::PoolManager.new(@client, seeds)
@@ -47,19 +59,22 @@ class PoolManagerTest < Test::Unit::TestCase
       assert_equal 2, manager.secondaries.length
       assert_equal [27018, 27019], manager.secondary_pools.map(&:port).sort
       assert_equal [['localhost', 27020]], manager.arbiters
+      assert_equal 500, manager.max_bson_size
+      assert_equal 700 , manager.max_message_size
     end
 
     should "populate pools with single unqueryable seed" do
 
       @db.stubs(:command).returns(
         # First call to recovering node
-        {'ismaster' => false, 'secondary' => false, 'hosts' => @hosts, 'arbiters' => @arbiters},
+        @ismaster.merge({'ismaster' => false, 'secondary' => false}),
 
         # Subsequent calls to configure pools.
-        {'ismaster' => false, 'secondary' => false, 'hosts' => @hosts, 'arbiters' => @arbiters},
-        {'ismaster' => true, 'hosts' => @hosts, 'arbiters' => @arbiters},
-        {'secondary' => true, 'hosts' => @hosts, 'arbiters' => @arbiters},
-        {'arbiterOnly' => true, 'hosts' => @hosts, 'arbiters' => @arbiters})
+        @ismaster.merge({'ismaster' => false, 'secondary' => false}),
+        @ismaster.merge({'ismaster' => true}),
+        @ismaster.merge({'secondary' => true}),
+        @ismaster.merge({'arbiterOnly' => true})
+      )
 
       seeds = [['localhost', 27017]]
       manager = Mongo::PoolManager.new(@client, seeds)

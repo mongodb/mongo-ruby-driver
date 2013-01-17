@@ -269,11 +269,21 @@ class TestConnection < Test::Unit::TestCase
     if conn.server_version > "1.7.2"
       assert_equal conn['admin'].command({:ismaster => 1})['maxBsonObjectSize'], conn.max_bson_size
     end
+  end
 
+  def test_max_message_size_value
+    conn = standard_connection(:connect => false)
+
+    admin_db = Object.new
+    admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1, 'maxMessageSizeBytes' => 20_000_000})
+    conn.expects(:[]).with('admin').returns(admin_db)
     conn.connect
-    doc = {'n' => 'a' * (conn.max_bson_size)}
-    assert_raise InvalidDocument do
-      assert BSON::BSON_CODER.serialize(doc, false, true, @client.max_bson_size)
+
+    assert_equal 20_000_000, conn.max_message_size
+
+    conn = standard_connection
+    if conn.server_version > "2.3.2"
+      assert_equal conn['admin'].command({:ismaster => 1})['maxMessageSizeBytes'], conn.max_bson_size
     end
   end
 
@@ -286,6 +296,17 @@ class TestConnection < Test::Unit::TestCase
 
     conn.connect
     assert_equal Mongo::DEFAULT_MAX_BSON_SIZE, conn.max_bson_size
+  end
+
+  def test_max_message_size_with_no_reported_max_size
+    conn = standard_connection(:connect => false)
+
+    admin_db = Object.new
+    admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1})
+    conn.expects(:[]).with('admin').returns(admin_db)
+
+    conn.connect
+    assert_equal Mongo::DEFAULT_MAX_MESSAGE_SIZE, conn.max_message_size
   end
 
   def test_connection_activity
