@@ -17,7 +17,6 @@ module Mongo
   class Pool
     PING_ATTEMPTS  = 6
     MAX_PING_TIME  = 1_000_000
-    include ThreadLocalVariableManager
 
     attr_accessor :host,
                   :port,
@@ -26,7 +25,8 @@ module Mongo
                   :timeout,
                   :checked_out,
                   :client,
-                  :node
+                  :node,
+                  :manager
 
     # Create a new pool of connections.
     def initialize(client, host, port, opts={})
@@ -47,11 +47,16 @@ module Mongo
       # Mutex for synchronizing pool access
       @connection_mutex = Mutex.new
 
+
       # Mutex for synchronizing pings
       @ping_mutex = Mutex.new
 
       # Condition variable for signal and wait
       @queue = ConditionVariable.new
+
+      # Mutex for synchronize socket pinning
+      @pin_mutex = Mutex.new
+      @thread_socket_affinity = {}
 
       # Operations to perform on a socket
       @socket_ops = Hash.new { |h, k| h[k] = [] }
@@ -62,6 +67,7 @@ module Mongo
       @last_ping          = nil
       @closed             = false
       @checkout_counter   = 0
+      @manager            = opts[:manager]
     end
 
     # Close this pool.
@@ -76,7 +82,10 @@ module Mongo
         else
           close_sockets(@sockets)
           @closed = true
+          unpin_all_sockets
         end
+        clean_expired_sockets
+        manager.unpin_from_all_threads(self) if @manager
         @node.close if @node
       end
       true
@@ -87,7 +96,7 @@ module Mongo
     end
 
     def healthy?
-      close if @sockets.all?(&:closed?)
+      close if @sockets.all?(&:closed?) || !node.healthy?
       !closed? && node.healthy?
     end
 
@@ -209,7 +218,7 @@ module Mongo
       @sockets << socket
       @checked_out << socket
 
-      thread_local[:sockets][self.object_id] = socket
+      pin_socket socket
       socket
     end
 
@@ -259,7 +268,7 @@ module Mongo
         checkout_new_socket
       else
         @checked_out << socket
-        thread_local[:sockets][self.object_id] = socket
+        pin_socket socket
         socket
       end
     end
@@ -278,7 +287,8 @@ module Mongo
         end
 
         @connection_mutex.synchronize do
-          if socket_for_thread = thread_local[:sockets][self.object_id]
+          clean_expired_sockets
+          if socket_for_thread = pinned_socket
             if !@checked_out.include?(socket_for_thread)
               socket = checkout_existing_socket(socket_for_thread)
             end
@@ -299,9 +309,7 @@ module Mongo
             end
 
             if socket.closed?
-              @checked_out.delete(socket)
-              @sockets.delete(socket)
-              thread_local[:sockets].delete self.object_id
+              clean_expired_sockets
               socket = checkout_new_socket
             end
 
@@ -316,16 +324,54 @@ module Mongo
 
     private
 
+    def clean_expired_sockets
+      closed = @sockets.select &:closed?
+
+      @checked_out -= closed
+      @sockets     -= closed
+      closed.each {|socket| @socket_ops.delete socket }
+      unpin_sockets closed
+    end
+
     def close_sockets(sockets)
       sockets.each do |socket|
-        @sockets.delete(socket)
         begin
           socket.close unless socket.closed?
         rescue IOError => ex
           warn "IOError when attempting to close socket connected to #{@host}:#{@port}: #{ex.inspect}"
         end
       end
+      clean_expired_sockets
     end
 
+    def pin_socket(socket)
+      @pin_mutex.synchronize do
+        @thread_socket_affinity[Thread.current.object_id] = socket
+      end
+    end
+
+    def pinned_socket
+      @pin_mutex.synchronize do
+        @thread_socket_affinity[Thread.current.object_id]
+      end
+    end
+
+    def unpin_socket(socket)
+      @pin_mutex.synchronize do
+        @thread_socket_affinity.delete Thread.current.object_id
+      end
+    end
+
+    def unpin_sockets(sockets)
+      @pin_mutex.synchronize do
+        @thread_socket_affinity.reject! {|thread_id, socket| sockets.include? socket }
+      end
+    end
+
+    def unpin_all_sockets
+      @pin_mutex.synchronize do
+        @thread_socket_affinity.clear
+      end
+    end
   end
 end

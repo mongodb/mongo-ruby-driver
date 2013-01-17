@@ -25,6 +25,8 @@ module Mongo
       @hosts                = Set.new
       @members              = Set.new
       @refresh_required     = false
+      @pinned_pools         = {}
+      @pin_mutex = Mutex.new
     end
 
     def inspect
@@ -109,9 +111,7 @@ module Mongo
     def read_pool(mode=@client.read,
                   tags=@client.tag_sets,
                   acceptable_latency=@client.acceptable_latency)
-
-      pinned = thread_local[:pinned_pools][self.object_id]
-
+      pinned = pinned_pool
       if pinned && pinned.matches_mode(mode) && pinned.matches_tag_sets(tags) && pinned.up?
         pool = pinned
       else
@@ -124,6 +124,30 @@ module Mongo
       end
 
       pool
+    end
+
+    def pin_pool(pool)
+      @pin_mutex.synchronize do
+        @pinned_pools[Thread.current.object_id] = pool
+      end
+    end
+
+    def unpin_pool(pool)
+      @pin_mutex.synchronize do
+        @pinned_pools.delete Thread.current.object_id
+      end
+    end
+
+    def pinned_pool
+      @pin_mutex.synchronize do
+        @pinned_pools[Thread.current.object_id]
+      end
+    end
+
+    def unpin_from_all_threads(pool)
+      @pin_mutex.synchronize do
+        @pinned_pools.reject! {|k, v| v == pool }
+      end
     end
 
     private
@@ -163,13 +187,13 @@ module Mongo
           if existing.healthy?
             # Refresh this node's configuration
             existing.set_config
-            # If we are unhealthy after refreshing our config, drop from the set.
-            if !existing.healthy?
-              @members.delete existing
-            else
-              next
-            end
+          end
+
+          if existing.healthy?
+            # A healthy node doesn't need anything done to it.
+            next
           else
+            # If we are unhealthy after refreshing our config, drop from the set.
             existing.close
             @members.delete existing
           end
@@ -180,6 +204,10 @@ module Mongo
         @members << node if node.healthy?
       end
       seed.close
+
+      # After refreshing the node list, we might have invalidated some pools.
+      # Clean them out so they don't get reused.
+      disconnect_old_members
 
       if @members.empty?
         raise ConnectionFailure, "Failed to connect to any given member."
@@ -219,7 +247,8 @@ module Mongo
         @primary_pool = Pool.new(self.client, member.host, member.port,
           :size => self.client.pool_size,
           :timeout => self.client.pool_timeout,
-          :node => member
+          :node => member,
+          :manager => self
         )
         @pools << @primary_pool
       end
@@ -234,7 +263,8 @@ module Mongo
         pool = Pool.new(self.client, member.host, member.port,
           :size => self.client.pool_size,
           :timeout => self.client.pool_timeout,
-          :node => member
+          :node => member,
+          :manager => self
         )
         @secondary_pools << pool
         @pools << pool
@@ -256,8 +286,6 @@ module Mongo
       raise ConnectionFailure, "Cannot connect to a replica set using seeds " +
         "#{@seeds.map {|s| "#{s[0]}:#{s[1]}" }.join(', ')}"
     end
-
-    private
 
     def cache_discovered_seeds
       @seeds = @members.map &:host_port

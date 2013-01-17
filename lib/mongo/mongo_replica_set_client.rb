@@ -143,6 +143,8 @@ module Mongo
         raise MongoArgumentError, "A MongoReplicaSetClient requires at least one seed node."
       end
 
+      @pinned_pools = []
+
       @seeds.freeze
 
       # Refresh
@@ -379,11 +381,11 @@ module Mongo
     end
 
     def pin_pool(pool)
-      thread_local[:pinned_pools][@manager.object_id] = pool if @manager
+      @manager.pin_pool(pool) if @manager
     end
 
     def unpin_pool(pool)
-      thread_local[:pinned_pools].delete @manager.object_id if @manager
+      @manager.unpin_pool(pool) if @manager
     end
 
     def get_socket_from_pool(pool)
