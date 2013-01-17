@@ -326,7 +326,7 @@ module BSON
     def deserialize_object_data(buf)
       size = buf.get_int
       buf.position -= 4
-      object = @encoder.new().deserialize(buf.get(size))
+      object = @encoder.new.deserialize(buf.get(size))
       if object.has_key? "$ref"
         DBRef.new(object["$ref"], object["$id"])
       else
@@ -388,7 +388,7 @@ module BSON
 
       scope_size = buf.get_int
       buf.position -= 4
-      scope = @encoder.new().deserialize(buf.get(scope_size))
+      scope = @encoder.new.deserialize(buf.get(scope_size))
 
       Code.new(encoded_str(code), scope)
     end
