@@ -1,5 +1,3 @@
-# encoding: UTF-8
-
 # --
 # Copyright (C) 2008-2012 10gen Inc.
 #
@@ -272,11 +270,11 @@ module Mongo
             if !@checked_out.include?(socket_for_thread)
               socket = checkout_existing_socket(socket_for_thread)
             end
-          else # First checkout for this thread
-            if @checked_out.size < @sockets.size
-              socket = checkout_existing_socket
-            elsif @sockets.size < @size
+          else
+            if @sockets.size < @size
               socket = checkout_new_socket
+            elsif @checked_out.size < @sockets.size
+              socket = checkout_existing_socket
             end
           end
 

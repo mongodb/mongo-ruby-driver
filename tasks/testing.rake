@@ -59,7 +59,6 @@ namespace :test do
 
   Rake::TestTask.new(:functional) do |t|
     t.test_files = FileList['test/functional/*_test.rb'] - [
-      "test/functional/pool_test.rb",
       "test/functional/grid_io_test.rb",
       "test/functional/grid_test.rb"
     ]
