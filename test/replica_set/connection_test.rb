@@ -108,5 +108,4 @@ class ConnectionTest < Test::Unit::TestCase
     assert @connection.connected?
     assert_equal 1, @connection.write_concern[:w]
   end
-
 end
