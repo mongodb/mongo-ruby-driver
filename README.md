@@ -1,4 +1,7 @@
-[![Build Status][travis-img]][travis-url] [![Jenkins Status][jenkins-img]][jenkins-url] [![Code Climate][codeclimate-img]][codeclimate-url]
+[![Build Status][travis-img]][travis-url]
+[![Jenkins Status][jenkins-img]][jenkins-url]
+[![Code Climate][codeclimate-img]][codeclimate-url]
+[![Latest Version][version-img]][version-url]
 
 [travis-img]: https://secure.travis-ci.org/mongodb/mongo-ruby-driver.png
 [travis-url]: http://travis-ci.org/mongodb/mongo-ruby-driver
@@ -6,6 +9,8 @@
 [codeclimate-url]: https://codeclimate.com/github/mongodb/mongo-ruby-driver
 [jenkins-img]: https://jenkins.10gen.com/job/mongo-ruby-driver/badge/icon
 [jenkins-url]: https://jenkins.10gen.com/job/mongo-ruby-driver/
+[version-img]: https://badge.fury.io/rb/mongo.png
+[version-url]: http://badge.fury.io/rb/mongo
 [api-url]: http://api.mongodb.org/ruby/current
 
 # Documentation
