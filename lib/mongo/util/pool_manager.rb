@@ -136,11 +136,11 @@ module Mongo
     end
 
     def max_bson_size
-      @max_bson_size ||= config_min('maxBsonObjectSize', Mongo::DEFAULT_MAX_BSON_SIZE)
+      @max_bson_size ||= config_min('maxBsonObjectSize', DEFAULT_MAX_BSON_SIZE)
     end
 
     def max_message_size
-      @max_message_size ||= config_min('maxMessageSizeBytes', Mongo::DEFAULT_MAX_MESSAGE_SIZE)
+      @max_message_size ||= config_min('maxMessageSizeBytes', DEFAULT_MAX_MESSAGE_SIZE)
     end
 
     private

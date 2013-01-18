@@ -26,7 +26,7 @@ module BSON
     INT64_PACK = 'q<'.freeze
     DOUBLE_PACK = 'E'.freeze
 
-    def initialize(initial_data="", max_size=BSON::DEFAULT_MAX_BSON_SIZE)
+    def initialize(initial_data="", max_size=DEFAULT_MAX_BSON_SIZE)
       @str = case initial_data
         when String then
           if initial_data.respond_to?(:force_encoding)

@@ -530,11 +530,11 @@ module Mongo
     #
     # @return [Integer]
     def max_bson_size
-      @max_bson_size || Mongo::DEFAULT_MAX_BSON_SIZE
+      @max_bson_size || DEFAULT_MAX_BSON_SIZE
     end
 
     def max_message_size
-      @max_message_size || Mongo::DEFAULT_MAX_MESSAGE_SIZE
+      @max_message_size || DEFAULT_MAX_MESSAGE_SIZE
     end
 
     # Checkout a socket for reading (i.e., a secondary node).

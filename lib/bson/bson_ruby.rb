@@ -50,7 +50,7 @@ module BSON
     INT64_MIN = -2**64 / 2
     INT64_MAX =  2**64 / 2 - 1
 
-    def initialize(max_bson_size=BSON::DEFAULT_MAX_BSON_SIZE)
+    def initialize(max_bson_size=DEFAULT_MAX_BSON_SIZE)
       @buf = ByteBuffer.new('', max_bson_size)
       @encoder = BSON_RUBY
     end
@@ -108,7 +108,7 @@ module BSON
 
     # Serializes an object.
     # Implemented to ensure an API compatible with BSON extension.
-    def self.serialize(obj, check_keys=false, move_id=false, max_bson_size=BSON::DEFAULT_MAX_BSON_SIZE)
+    def self.serialize(obj, check_keys=false, move_id=false, max_bson_size=DEFAULT_MAX_BSON_SIZE)
       new(max_bson_size).serialize(obj, check_keys, move_id)
     end
 
