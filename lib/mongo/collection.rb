@@ -155,6 +155,13 @@ module Mongo
       self
     end
 
+    # Set a hint field using a named index.
+    # @param [String] hinted index name
+    def named_hint=(hint=nil)
+      @hint = hint
+      self
+    end
+
     # Query the database.
     #
     # The +selector+ argument is a prototype document that all results must
@@ -193,6 +200,8 @@ module Mongo
     #   be specified as Mongo::ASCENDING (or :ascending / :asc) or Mongo::DESCENDING (or :descending / :desc)
     # @option opts [String, Array, OrderedHash] :hint hint for query optimizer, usually not necessary if
     #   using MongoDB > 1.1
+    # @option opts [String] :named_hint for specifying a named index as a hint, will be overriden by :hint
+    #   if :hint is also provided.
     # @option opts [Boolean] :snapshot (false) if true, snapshot mode will be used for this query.
     #   Snapshot mode assures no duplicates are returned, or objects missed, which were preset at both the start and
     #   end of the query's execution.
@@ -227,6 +236,7 @@ module Mongo
       limit              = opts.delete(:limit) || 0
       sort               = opts.delete(:sort)
       hint               = opts.delete(:hint)
+      named_hint         = opts.delete(:named_hint)
       snapshot           = opts.delete(:snapshot)
       batch_size         = opts.delete(:batch_size)
       timeout            = (opts.delete(:timeout) == false) ? false : true
@@ -257,7 +267,7 @@ module Mongo
         :skip               => skip,
         :limit              => limit,
         :order              => sort,
-        :hint               => hint,
+        :hint               => hint || named_hint,
         :snapshot           => snapshot,
         :timeout            => timeout,
         :batch_size         => batch_size,

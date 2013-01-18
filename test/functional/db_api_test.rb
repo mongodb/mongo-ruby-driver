@@ -575,6 +575,17 @@ HERE
     end
   end
 
+  def test_named_hint
+    name = @@coll.create_index('a', :name => 'named_index')
+    begin
+      assert_nil @@coll.hint
+      assert_equal 1, @@coll.find({'a' => 1}, :named_hint => 'named_index').to_a.size
+      assert_equal 1, @@coll.find({'a' => 1}, :hint => 'a', :named_hint => "bad_hint").to_a.size
+    ensure
+      @@coll.drop_index('named_index')
+    end
+  end
+
   def test_hash_default_value_id
     val = Hash.new(0)
     val["x"] = 5
