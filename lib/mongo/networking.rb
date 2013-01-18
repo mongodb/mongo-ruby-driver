@@ -141,7 +141,7 @@ module Mongo
           receive_header(sock, cursor_id, exhaust)
           number_received, cursor_id = receive_response_header(sock)
           new_docs, n = read_documents(number_received, sock)
-          docs += new_docs
+          docs.concat new_docs
           num_received += n
         end
 
@@ -296,7 +296,7 @@ module Mongo
     # Requires length and an available socket.
     def receive_message_on_socket(length, socket)
       begin
-          message = receive_data(length, socket)
+        message = receive_data(length, socket)
       rescue OperationTimeout, ConnectionFailure => ex
         socket.close
 

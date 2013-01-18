@@ -22,6 +22,7 @@ module Mongo
       @socket_address = Socket.pack_sockaddr_in(@port, @address)
       @socket = Socket.new(Socket::AF_INET, Socket::SOCK_STREAM, 0)
       @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+      @socket_array = [@socket]
 
       connect
     end
@@ -43,10 +44,8 @@ module Mongo
     def read(maxlen, buffer)
       # Block on data to read for @op_timeout seconds
       begin
-        ready = IO.select([@socket], nil, [@socket], @op_timeout)
-        unless ready
-          raise OperationTimeout
-        end
+        ready = IO.select(@socket_array, nil, @socket_array, @op_timeout)
+        raise OperationTimeout unless ready
       rescue IOError
         raise ConnectionFailure
       end
