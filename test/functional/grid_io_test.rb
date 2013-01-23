@@ -151,6 +151,43 @@ class GridIOTest < Test::Unit::TestCase
       end
     end
 
+    context "Appending" do
+      setup do
+        @filename = 'test'
+        @length = nil
+        @times = 2
+      end
+
+      should "correctly append two chunks" do
+
+        @times.times do |t|
+          file = GridIO.new(@files, @chunks, @filename, 'a')
+          file.write "#{t}" * 100
+          file.close
+        end
+
+        file = GridIO.new(@files, @chunks, @filename, 'r')
+        data = file.read
+        file.close
+
+        assert_equal data, @times.times.map {|i| "#{i}" * 100}.join
+      end
+
+      should "append two chunks of exactly chunk_size" do
+        @times.times do |t|
+          file = GridIO.new(@files, @chunks, @filename, 'a')
+          file.write "#{t}" * file.chunk_size
+          file.close
+        end
+
+        file = GridIO.new(@files, @chunks, @filename, 'r')
+        data = file.read
+        file.close
+
+        assert_equal data, @times.times.map {|i| "#{i}" * file.chunk_size}.join
+      end
+    end
+
     context "Seeking" do
       setup do
         @filename = 'test'
