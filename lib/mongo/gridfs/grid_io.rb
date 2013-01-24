@@ -459,9 +459,9 @@ module Mongo
     def init_append(opts)
       doc = @files.find(@query, @query_opts).next_document
       return init_write(opts) unless doc
-      
+
       opts = doc.dup
-      
+
       @files_id     = opts.delete('_id')
       @content_type = opts.delete('contentType')
       @chunk_size   = opts.delete('chunkSize')
@@ -472,7 +472,16 @@ module Mongo
       @md5          = opts.delete('md5')
       @filename     = opts.delete('filename')
       @custom_attrs = opts
-      
+
+      # recalculate the md5 of the previous chunks
+      if Mongo::WriteConcern.gle?(@write_concern)
+        @current_chunk = get_chunk(0)
+        @file_position = 0
+        @local_md5 = Digest::MD5.new
+        @local_md5.update(read_all)
+      end
+
+      # position at the end of the file (last chunk)
       last_chunk = @file_length / @chunk_size
       @current_chunk = get_chunk(last_chunk)
       chunk = get_chunk(last_chunk-1) if @current_chunk.nil?
@@ -507,6 +516,7 @@ module Mongo
       md5_command['filemd5'] = @files_id
       md5_command['root']    = @fs_name
       @server_md5 = @files.db.command(md5_command)['md5']
+
       if Mongo::WriteConcern.gle?(@write_concern)
         @client_md5 = @local_md5.hexdigest
         if @local_md5 == @server_md5
