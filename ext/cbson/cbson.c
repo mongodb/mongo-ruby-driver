@@ -419,7 +419,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             if (strcmp(cls, "BSON::Timestamp") == 0) {
                 unsigned int seconds;
                 unsigned int increment;
-                
+
                 write_name_and_type(buffer, key, 0x11);
 
                 seconds = NUM2UINT(
@@ -966,6 +966,27 @@ static VALUE objectid_from_string(VALUE self, VALUE str)
     return rb_class_new_instance(1, &oid, ObjectId);
 }
 
+static VALUE objectid_to_s(VALUE self)
+{
+    VALUE data;
+    char cstr[25];
+    VALUE rstr;
+    VALUE *data_arr;
+
+    data = rb_iv_get(self, "@data");
+    data_arr = RARRAY_PTR(data);
+
+    sprintf(cstr, "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+        (unsigned)NUM2INT(data_arr[0]), (unsigned)NUM2INT(data_arr[1]), (unsigned)NUM2INT(data_arr[2]), (unsigned)NUM2INT(data_arr[3]),
+        (unsigned)NUM2INT(data_arr[4]), (unsigned)NUM2INT(data_arr[5]), (unsigned)NUM2INT(data_arr[6]), (unsigned)NUM2INT(data_arr[7]),
+        (unsigned)NUM2INT(data_arr[8]), (unsigned)NUM2INT(data_arr[9]), (unsigned)NUM2INT(data_arr[10]), (unsigned)NUM2INT(data_arr[11]));
+
+    rstr = rb_str_new(cstr, 24);
+
+    return rstr;
+}
+
+
 static VALUE objectid_generate(int argc, VALUE* args, VALUE self)
 {
     VALUE oid;
@@ -1063,6 +1084,7 @@ void Init_cbson() {
 
     rb_define_singleton_method(ObjectId, "legal?", objectid_legal, 1);
     rb_define_singleton_method(ObjectId, "from_string", objectid_from_string, 1);
+    rb_define_method(ObjectId, "to_s", objectid_to_s, 0);
     rb_define_method(ObjectId, "generate", objectid_generate, -1);
 
     if (gethostname(hostname, MAX_HOSTNAME_LENGTH) != 0) {
