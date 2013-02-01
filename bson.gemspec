@@ -2,12 +2,15 @@ Gem::Specification.new do |s|
   s.name              = 'bson'
 
   s.version           = File.read(File.join(File.dirname(__FILE__), 'VERSION'))
-  s.authors           = ['Tyler Brock', 'Gary Murakami', 'Emily Stolfo', 'Brandon Black']
+  s.authors           = ['Tyler Brock', 'Gary Murakami', 'Emily Stolfo', 'Brandon Black', 'Durran Jordan']
   s.email             = 'mongodb-dev@googlegroups.com'
   s.homepage          = 'http://www.mongodb.org'
   s.summary           = 'Ruby implementation of BSON'
   s.description       = 'A Ruby BSON implementation for MongoDB. For more information about Mongo, see http://www.mongodb.org. For more information on BSON, see http://www.bsonspec.org.'
   s.rubyforge_project = 'bson'
+
+  s.signing_key       = 'gem-private_key.pem'
+  s.cert_chain        = ['gem-public_cert.pem']
 
   s.files             = ['bson.gemspec', 'LICENSE', 'VERSION']
   s.files             += ['bin/b2json', 'bin/j2bson', 'lib/bson.rb']
