@@ -65,20 +65,19 @@ module Mongo
         return
       end
 
-      config = seed.config
-      if config
+      if !seed.config
         @refresh_required = true
         seed.close
         return
       end
 
-      if config['hosts'].length != @members.length
+      if seed.config['hosts'].length != @members.length
         @refresh_required = true
         seed.close
         return
       end
 
-      config['hosts'].each do |host|
+      seed.config['hosts'].each do |host|
         member = @members.detect do |m|
           m.address == host
         end
@@ -146,8 +145,7 @@ module Mongo
     private
 
     def validate_existing_member(member)
-      config = member.config
-      if config
+      if !member.config
         return false
       else
         if member.primary?
