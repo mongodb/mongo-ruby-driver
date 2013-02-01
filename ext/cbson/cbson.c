@@ -99,7 +99,7 @@ static int max_bson_size;
 #endif
 
 static void write_utf8(bson_buffer_t buffer, VALUE string, char check_null) {
-    result_t status = check_string(RSTRING_PTR(string), RSTRING_LEN(string),
+    result_t status = check_string((unsigned char*)RSTRING_PTR(string), RSTRING_LEN(string),
                                    1, check_null);
     if (status == HAS_NULL) {
         bson_buffer_free(buffer);
@@ -283,7 +283,6 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         {
             bson_buffer_position length_location, start_position, obj_length;
             int items, i;
-            VALUE* values;
 
             write_name_and_type(buffer, key, 0x04);
             start_position = bson_buffer_get_position(buffer);
