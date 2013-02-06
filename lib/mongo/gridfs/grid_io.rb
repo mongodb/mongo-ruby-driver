@@ -237,7 +237,7 @@ module Mongo
           id = @files.insert(to_mongo_object)
         elsif @mode[0] == ?a
           object = to_mongo_object
-          id = @files.update({_id: object['_id']}, object, {upsert: true})
+          id = @files.update({:_id => object['_id']}, object, {:upsert => true})
         end
       end
       id
