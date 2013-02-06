@@ -145,7 +145,7 @@ module Mongo
     private
 
     def validate_existing_member(member)
-      if !member.config
+      if member.config
         return false
       else
         if member.primary?
