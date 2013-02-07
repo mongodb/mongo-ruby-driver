@@ -70,7 +70,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     old_refresh_version = client.refresh_version
 
     @rs.kill_secondary
-    sleep(2)
+    sleep(1)
 
     assert client.refresh_version == old_refresh_version,
       "Refresh version has changed."
