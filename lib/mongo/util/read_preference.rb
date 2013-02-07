@@ -34,6 +34,8 @@ module Mongo
     end
 
     def select_pool(mode, tags, latency)
+      return primary_pool if @client.mongos?
+
       if mode == :primary && !tags.empty?
         raise MongoArgumentError, "Read preferecy :primary cannot be combined with tags"
       end
