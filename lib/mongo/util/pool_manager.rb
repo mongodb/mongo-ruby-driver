@@ -65,24 +65,24 @@ module Mongo
         return
       end
 
-      if !seed.config
+      unless current_config = seed.config
         @refresh_required = true
         seed.close
         return
       end
 
-      if seed.config['hosts'].length != @members.length
+      if current_config['hosts'].length != @members.length
         @refresh_required = true
         seed.close
         return
       end
 
-      seed.config['hosts'].each do |host|
+      current_config['hosts'].each do |host|
         member = @members.detect do |m|
           m.address == host
         end
 
-        if member && validate_existing_member(member)
+        if member && validate_existing_member(current_config, member)
           next
         else
           @refresh_required = true
@@ -144,23 +144,13 @@ module Mongo
 
     private
 
-    def validate_existing_member(member)
-      if !member.config
+    def validate_existing_member(current_config, member)
+      if current_config['ismaster'] && member.last_state != :primary
         return false
-      else
-        if member.primary?
-          if member.last_state == :primary
-            return true
-          else # This node is now primary, but didn't used to be.
-            return false
-          end
-        elsif member.last_state == :secondary &&
-          member.secondary?
-          return true
-        else # This node isn't what it used to be.
-          return false
-        end
+      elsif member.last_state != :other
+        return false
       end
+      return true
     end
 
     # For any existing members, close and remove any that are unhealthy or already closed.

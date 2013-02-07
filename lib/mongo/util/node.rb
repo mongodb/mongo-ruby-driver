@@ -84,6 +84,10 @@ module Mongo
     def set_config
       @node_mutex.synchronize do
         begin
+          if @config
+            @last_state = @config['ismaster'] ? :primary : :other
+          end
+
           @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
 
           if @config['msg']
