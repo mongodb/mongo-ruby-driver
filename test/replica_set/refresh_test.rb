@@ -30,7 +30,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     # Refresh and ensure state
     client.refresh
     assert_equal client.read_pool, client.primary_pool
-    assert_equal 1, client.secondaries.length
+    assert_equal 2, client.secondaries.length
   end
 
   def test_automated_refresh_with_secondaries_down
@@ -56,7 +56,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
 
     assert client.refresh_version > old_refresh_version,
       "Refresh version hasn't changed."
-    assert client.secondaries.length == 1,
+    assert client.secondaries.length == 2,
       "No secondaries have been added."
     assert client.manager.read_pool != client.manager.primary,
       "Read pool and primary pool are identical."

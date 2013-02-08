@@ -48,7 +48,7 @@ class ConnectionTest < Test::Unit::TestCase
     ENV['MONGODB_URI'] = "mongodb://#{@rs.repl_set_seeds_uri}?replicaset=#{@rs.repl_set_name}"
     @connection = ReplSetConnection.new
     assert !@connection.nil?
-    assert_equal 2, @connection.seeds.length
+    assert_equal 3, @connection.seeds.length
     assert_equal @rs.replicas[0].host, @connection.seeds[0][0]
     assert_equal @rs.replicas[1].host, @connection.seeds[1][0]
     assert_equal @rs.replicas[0].port, @connection.seeds[0][1]
@@ -61,7 +61,7 @@ class ConnectionTest < Test::Unit::TestCase
     ENV['MONGODB_URI'] = "mongodb://#{@rs.repl_set_seeds_uri}?replicaset=#{@rs.repl_set_name}"
     @connection = Connection.from_uri
     assert !@connection.nil?
-    assert_equal 2, @connection.seeds.length
+    assert_equal 3, @connection.seeds.length
     assert_equal @rs.replicas[0].host, @connection.seeds[0][0]
     assert_equal @rs.replicas[1].host, @connection.seeds[1][0]
     assert_equal @rs.replicas[0].port, @connection.seeds[0][1]
