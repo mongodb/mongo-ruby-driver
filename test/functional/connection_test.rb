@@ -282,8 +282,11 @@ class TestConnection < Test::Unit::TestCase
     assert_equal 20_000_000, conn.max_message_size
 
     conn = standard_connection
-    if conn.server_version > "2.3.2"
-      assert_equal conn['admin'].command({:ismaster => 1})['maxMessageSizeBytes'], conn.max_bson_size
+    maxMessageSizeBytes = conn['admin'].command({:ismaster => 1})['maxMessageSizeBytes']
+    if conn.server_version.to_s[/([^-]+)/,1] >= "2.4.0"
+      assert_equal 48_000_000, maxMessageSizeBytes
+    elsif conn.server_version > "2.3.2"
+      assert_equal conn.max_bson_size, maxMessageSizeBytes
     end
   end
 
@@ -386,7 +389,7 @@ class TestConnection < Test::Unit::TestCase
         @con.expects(:checkout_writer).raises(SystemStackError)
         @con.expects(:close)
         begin
-          @coll.insert({:foo => "bar"}, :safe => true)
+          @coll.insert({:foo => "bar"}, :w => 1)
         rescue SystemStackError
         end
       end
@@ -417,11 +420,11 @@ class TestConnection < Test::Unit::TestCase
       assert_equal 0, @con.primary_pool.checked_out.size
     end
 
-    should "release connection if an exception is raised on send_with_safe_check" do
+    should "release connection if an exception is raised on write concern :w => 1" do
       @con.stubs(:receive).raises(ConnectionFailure)
       assert_equal 0, @con.primary_pool.checked_out.size
       assert_raise ConnectionFailure do
-        @coll.insert({:test => "insert"}, :safe => true)
+        @coll.insert({:test => "insert"}, :w => 1)
       end
       assert_equal 0, @con.primary_pool.checked_out.size
     end
