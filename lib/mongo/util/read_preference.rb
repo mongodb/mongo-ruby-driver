@@ -37,7 +37,7 @@ module Mongo
       return primary_pool if @client.mongos?
 
       if mode == :primary && !tags.empty?
-        raise MongoArgumentError, "Read preferecy :primary cannot be combined with tags"
+        raise MongoArgumentError, "Read preference :primary cannot be combined with tags"
       end
 
       case mode
