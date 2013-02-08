@@ -2,6 +2,7 @@ module Mongo
   class Pool
     PING_ATTEMPTS  = 6
     MAX_PING_TIME  = 1_000_000
+    PRUNE_INTERVAL = 10_000
 
     attr_accessor :host,
                   :port,
@@ -46,6 +47,7 @@ module Mongo
       @last_ping             = nil
       @closed                = false
       @thread_ids_to_sockets = {}
+      @checkout_counter      = 0
     end
 
     # Close this pool.
@@ -255,6 +257,15 @@ module Mongo
       end
     end
 
+    def check_prune
+      if @checkout_counter > PRUNE_INTERVAL
+          @checkout_counter = 0
+          prune_threads
+      else
+        @checkout_counter += 1
+      end
+    end
+
     # Check out an existing socket or create a new socket if the maximum
     # pool size has not been exceeded. Otherwise, wait for the next
     # available socket.
@@ -269,7 +280,7 @@ module Mongo
         end
 
         @connection_mutex.synchronize do
-          prune_threads
+          check_prune
           socket = nil
           if socket_for_thread = @thread_ids_to_sockets[Thread.current.object_id]
             if !@checked_out.include?(socket_for_thread)
