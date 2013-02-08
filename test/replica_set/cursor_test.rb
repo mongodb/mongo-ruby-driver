@@ -16,6 +16,11 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     assert_cursor_count
   end
 
+  def test_cusors_get_closed_secondary_query
+    setup_client
+    assert_cursor_count(:secondary)
+  end
+
   private
 
   def setup_client(read=:primary)
@@ -46,12 +51,12 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     client['admin'].command({:serverStatus => 1})['opcounters']['query']
   end
 
-  def assert_cursor_count
+  def assert_cursor_count(read=:primary)
     before_primary_cursor = cursor_count(@primary)
     before_read_cursor = cursor_count(@read)
     before_read_query = query_count(@read)
 
-    @coll.find.limit(2).to_a
+    @coll.find({}, :read => read).limit(2).to_a
 
     after_primary_cursor = cursor_count(@primary)
     after_read_cursor = cursor_count(@read)
