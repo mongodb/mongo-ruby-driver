@@ -50,7 +50,8 @@ module Mongo
       @options    = 0
 
       # Use this socket for the query
-      @socket     = opts[:socket]
+      @socket            = opts[:socket]
+      @socket_provided   = !!@socket
 
       @closed       = false
       @query_run    = false
@@ -475,7 +476,7 @@ module Mongo
         rescue OperationFailure, OperationTimeout => ex
           raise ex
         ensure
-          @socket.pool.checkin(@socket) if @socket && @socket.pool
+          @socket.pool.checkin(@socket) if @socket && @socket.pool && !@socket_provided
         end
         @returned += @n_received
         @cache += results

@@ -16,7 +16,7 @@ class CursorTest < Test::Unit::TestCase
     @@coll_full_name = "#{MONGO_TEST_DB}.test"
   end
 
-  def test_alive
+  def test_alive_and_cursor_socket_affinity
     batch = []
     5000.times do |n|
       batch << {:a => n}
@@ -24,10 +24,16 @@ class CursorTest < Test::Unit::TestCase
 
     @@coll.insert(batch)
     cursor = @@coll.find
+    assert !cursor.instance_variable_get(:@socket)
     assert !cursor.alive?
     cursor.next
+    socket = cursor.instance_variable_get(:@socket)
+    assert socket
     assert cursor.alive?
+    200.times { cursor.next }
+    assert_equal socket, cursor.instance_variable_get(:@socket)
     cursor.close
+    assert_equal socket, cursor.instance_variable_get(:@socket)
     assert !cursor.alive?
     @@coll.remove
   end
