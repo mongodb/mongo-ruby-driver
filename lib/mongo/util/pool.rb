@@ -2,7 +2,6 @@ module Mongo
   class Pool
     PING_ATTEMPTS  = 6
     MAX_PING_TIME  = 1_000_000
-    include ThreadLocalVariableManager
 
     attr_accessor :host,
                   :port,
@@ -41,12 +40,12 @@ module Mongo
       # Operations to perform on a socket
       @socket_ops = Hash.new { |h, k| h[k] = [] }
 
-      @sockets            = []
-      @checked_out        = []
-      @ping_time          = nil
-      @last_ping          = nil
-      @closed             = false
-      @checkout_counter   = 0
+      @sockets               = []
+      @checked_out           = []
+      @ping_time             = nil
+      @last_ping             = nil
+      @closed                = false
+      @thread_ids_to_sockets = {}
     end
 
     # Close this pool.
@@ -193,8 +192,7 @@ module Mongo
 
       @sockets << socket
       @checked_out << socket
-
-      thread_local[:sockets][self.object_id] = socket
+      @thread_ids_to_sockets[Thread.current.object_id] = socket
       socket
     end
 
@@ -244,8 +242,15 @@ module Mongo
         checkout_new_socket
       else
         @checked_out << socket
-        thread_local[:sockets][self.object_id] = socket
+        @thread_ids_to_sockets[Thread.current.object_id] = socket
         socket
+      end
+    end
+
+    def prune_threads
+      live_threads = Thread.list.map(&:object_id)
+      @thread_ids_to_sockets.reject! do |key, value|
+        !live_threads.include?(key)
       end
     end
 
@@ -263,7 +268,9 @@ module Mongo
         end
 
         @connection_mutex.synchronize do
-          if socket_for_thread = thread_local[:sockets][self.object_id]
+          prune_threads
+          socket = nil
+          if socket_for_thread = @thread_ids_to_sockets[Thread.current.object_id]
             if !@checked_out.include?(socket_for_thread)
               socket = checkout_existing_socket(socket_for_thread)
             end
@@ -286,7 +293,7 @@ module Mongo
             if socket.closed?
               @checked_out.delete(socket)
               @sockets.delete(socket)
-              thread_local[:sockets].delete self.object_id
+              @thread_ids_to_sockets.delete(Thread.current.object_id)
               socket = checkout_new_socket
             end
 
