@@ -231,7 +231,8 @@ module Mongo
     # therefore, it runs within a mutex.
     def checkout_existing_socket(socket=nil)
       if !socket
-        socket = (@sockets - @checked_out).first
+        available = @sockets - @checked_out
+        socket = available[rand(available.length)]
       end
 
       if socket.pid != Process.pid
