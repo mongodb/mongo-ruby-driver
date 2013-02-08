@@ -13,12 +13,18 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
 
   def test_cursors_get_closed_secondary
     setup_client(:secondary)
-    assert_cursor_count
+    assert_cursor_count(:secondary)
+  end
+
+  def test_cusors_get_closed_secondary_query
+    setup_client(:primary, :secondary)
+    assert_cursor_count(:secondary)
   end
 
   private
 
-  def setup_client(read=:primary)
+  def setup_client(read=:primary, route_read=nil)
+    route_read ||= read
     # Setup ReplicaSet Connection
     @client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :read => read)
 
@@ -35,7 +41,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
 
     # Setup Direct Connections
     @primary = Mongo::MongoClient.new(*@client.manager.primary)
-    @read = Mongo::MongoClient.new(*@client.manager.read)
+    @read = Mongo::MongoClient.new(*@client.manager.read_pool(route_read).host_port)
   end
 
   def cursor_count(client)
@@ -46,12 +52,12 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     client['admin'].command({:serverStatus => 1})['opcounters']['query']
   end
 
-  def assert_cursor_count
+  def assert_cursor_count(read=:primary)
     before_primary_cursor = cursor_count(@primary)
     before_read_cursor = cursor_count(@read)
     before_read_query = query_count(@read)
 
-    @coll.find.limit(2).to_a
+    @coll.find({}, :read => read).limit(2).to_a
 
     after_primary_cursor = cursor_count(@primary)
     after_read_cursor = cursor_count(@read)
