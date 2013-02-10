@@ -140,8 +140,8 @@ module Mongo
     # @note Don't confuse this with attribute getter method #connect.
     #
     # @return [MongoClient,MongoReplicaSetClient]
-    def connection(extra_opts, legacy=false)
-      opts = connection_options.merge! extra_opts
+    def connection(extra_opts, legacy = false, sharded = false)
+      opts = connection_options.merge!(extra_opts)
       if(legacy)
         if replicaset?
           ReplSetConnection.new(node_strings, opts)
@@ -149,7 +149,9 @@ module Mongo
           Connection.new(host, port, opts)
         end
       else
-        if replicaset?
+        if sharded
+          MongoShardedClient.new(node_strings, opts)
+        elsif replicaset?
           MongoReplicaSetClient.new(node_strings, opts)
         else
           MongoClient.new(host, port, opts)

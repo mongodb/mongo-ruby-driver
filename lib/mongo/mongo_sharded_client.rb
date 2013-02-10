@@ -16,11 +16,8 @@ module Mongo
 
       if nodes.empty? and ENV.has_key?('MONGODB_URI')
         parser = URIParser.new ENV['MONGODB_URI']
-        if parser.direct?
-          raise MongoArgumentError, "Mongo::MongoShardedClient.new called with no arguments, but ENV['MONGODB_URI'] implies a direct connection."
-        end
         opts = parser.connection_options.merge! opts
-        nodes = [parser.nodes]
+        nodes = parser.node_strings
       end
 
       unless nodes.length > 0
@@ -61,7 +58,7 @@ module Mongo
     end
 
     def valid_opts
-      GENERIC_OPTS + SHARDED_CLUSTER_OPTS
+      GENERIC_OPTS + SHARDED_CLUSTER_OPTS + READ_PREFERENCE_OPTS + WRITE_CONCERN_OPTS
     end
 
     def inspect
@@ -134,6 +131,18 @@ module Mongo
         tries +=1
         tries < 2 ? retry : raise
       end
+    end
+
+    # Initialize a connection to MongoDB using the MongoDB URI spec.
+    #
+    # @param uri [ String ]  string of the format:
+    #   mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]
+    #
+    # @param opts [ Hash ] Any of the options available for MongoShardedClient.new
+    #
+    # @return [ Mongo::MongoShardedClient ] The sharded client.
+    def self.from_uri(uri = ENV['MONGODB_URI'], options = {})
+      URIParser.new(uri).connection(options, false, true)
     end
   end
 end
