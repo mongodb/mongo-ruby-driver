@@ -15,8 +15,31 @@ class TestTimeout < Test::Unit::TestCase
     assert_raise Mongo::OperationTimeout do
       admin.command(command) 
     end
-
   end
+
+  def test_external_timeout_does_not_leave_socket_in_bad_state
+    client = Mongo::MongoClient.new
+    db = client['testdb']
+    coll = db['testcoll']
+
+    # prepare the database
+    coll.drop
+    coll.insert({:a => 1})
+
+    # use external timeout to mangle socket
+    begin
+      Timeout::timeout(1) do
+        db.command({:eval => "sleep(1500)"})
+      end
+    rescue Timeout::Error => ex
+      #puts "Thread timed out and has now mangled the socket"
+    end
+
+    assert_nothing_raised do
+      coll.find_one
+    end
+  end
+
 =begin
   def test_ssl_op_timeout
     connection = standard_connection(:op_timeout => 1, :ssl => true)
