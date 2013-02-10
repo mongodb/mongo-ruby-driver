@@ -1,4 +1,16 @@
 require 'rubygems'
+# SimpleCov must load before our code - A coverage report summary line will print after each test suite
+if RUBY_VERSION >= '1.9.0' && RUBY_ENGINE == 'ruby'
+  if ENV.key?('COVERAGE')
+    require 'simplecov'
+    SimpleCov.start do
+      add_group "Mongo", 'lib/mongo'
+      add_group "BSON", 'lib/bson'
+      add_filter "/test/"
+    end
+  end
+end
+gem 'test-unit' # Do NOT remove this line - gem version is needed for Test::Unit::TestCase.shutdown
 require 'test/unit'
 require 'tools/mongo_config'
 
@@ -7,7 +19,7 @@ class Test::Unit::TestCase
   TEST_DATA = File.join(File.dirname(__FILE__), 'data')
 
   def ensure_cluster(kind=nil, opts={})
-    @@cluster ||= false
+    @@cluster ||= nil
 
     unless @@cluster
       if kind == :rs
@@ -25,6 +37,17 @@ class Test::Unit::TestCase
       config = Mongo::Config.cluster(cluster_opts)
       #debug 1, config
       @@cluster = Mongo::Config::ClusterManager.new(config)
+
+      Test::Unit::TestCase.class_eval do
+        @@force_shutdown = false
+
+        def self.shutdown
+          if @@force_shutdown || /rake_test_loader/ !~ $0
+            @@cluster.stop
+            @@cluster.clobber
+          end
+        end
+      end
     end
 
     @@cluster.start

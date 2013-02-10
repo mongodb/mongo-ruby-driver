@@ -13,11 +13,6 @@ class BasicTest < Test::Unit::TestCase
     @seeds = @sc.mongos_seeds
   end
 
-  def self.shutdown
-    @@cluster.stop
-    @@cluster.clobber
-  end
-
   # TODO member.primary? ==> true
   def test_connect
     @client = MongoShardedClient.new(@seeds)

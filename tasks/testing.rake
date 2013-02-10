@@ -14,31 +14,33 @@ namespace :test do
   task :ext do
     ENV.delete('BSON_EXT_DISABLED')
     Rake::Task['compile'].invoke unless RUBY_PLATFORM =~ /java/
-    Rake::Task['test:default'].invoke
+    Rake::Task['test:default'].execute
   end
 
   desc "Runs default test suites in pure Ruby."
   task :ruby do
     ENV['BSON_EXT_DISABLED'] = 'TRUE'
-    Rake::Task['test:default'].invoke
+    Rake::Task['test:default'].execute
     ENV.delete('BSON_EXT_DISABLED')
   end
 
   desc "Runs default test suites"
   task :default do
-    if RUBY_VERSION >= '1.9.0' && RUBY_ENGINE == 'ruby'
-      if ENV.key?('COVERAGE')
-        require 'simplecov'
-        SimpleCov.start do
-          add_group "Mongo", 'lib/mongo'
-          add_group "BSON", 'lib/bson'
-          add_filter "/test/"
-        end
-      end
-    end
+    DEFAULT_TESTS.each { |t| Rake::Task["test:#{t}"].execute }
+    Rake::Task['test:cleanup'].execute
+  end
 
-    DEFAULT_TESTS.each { |t| Rake::Task["test:#{t}"].invoke }
-    Rake::Task['test:cleanup'].invoke
+  desc "Runs commit test suites"
+  task :commit do
+    COMMIT_TESTS = %w(ext ruby replica_set sharded_cluster)
+    COMMIT_TESTS.each{|task| puts "test:#{task}"; Rake::Task["test:#{task}"].execute}
+    Rake::Task['test:cleanup'].execute
+  end
+
+  desc "Runs coverage test suites"
+  task :coverage do
+    ENV['COVERAGE'] = 'true'
+    Rake::Task['test:commit'].invoke
   end
 
   %w(sharded_cluster unit threading auxillary bson tools).each do |suite|
@@ -55,6 +57,8 @@ namespace :test do
       'test/replica_set/read_preference_test.rb'
     ]
     t.libs << 'test'
+    #t.verbose = true
+    #t.options = '-v'
   end
 
   Rake::TestTask.new(:functional) do |t|

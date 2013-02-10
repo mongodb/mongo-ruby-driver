@@ -554,7 +554,7 @@ module Mongo
       end
 
       def clobber
-        system "rm -fr #{@config[:dbpath]}/*"
+        FileUtils.rm_rf @config[:dbpath]
         self
       end
     end
