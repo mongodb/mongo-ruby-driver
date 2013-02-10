@@ -128,4 +128,50 @@ class URITest < Test::Unit::TestCase
     assert_equal true, parser.journal
     assert_equal true, parser.safe
   end
+
+  def test_read_preference_option_primary
+    parser = Mongo::URIParser.new("mongodb://localhost:27018?readPreference=primary")
+    assert_equal :primary, parser.readpreference
+  end
+
+  def test_read_preference_option_primary_preferred
+    parser = Mongo::URIParser.new("mongodb://localhost:27018?readPreference=primaryPreferred")
+    assert_equal :primary_preferred, parser.readpreference
+  end
+
+  def test_read_preference_option_secondary
+    parser = Mongo::URIParser.new("mongodb://localhost:27018?readPreference=secondary")
+    assert_equal :secondary, parser.readpreference
+  end
+
+  def test_read_preference_option_secondary_preferred
+    parser = Mongo::URIParser.new("mongodb://localhost:27018?readPreference=secondaryPreferred")
+    assert_equal :secondary_preferred, parser.readpreference
+  end
+
+  def test_read_preference_option_nearest
+    parser = Mongo::URIParser.new("mongodb://localhost:27018?readPreference=nearest")
+    assert_equal :nearest, parser.readpreference
+  end
+
+  def test_read_preference_option_with_invalid
+    assert_raise_error MongoArgumentError  do
+      Mongo::URIParser.new("mongodb://localhost:27018?readPreference=invalid")
+    end
+  end
+
+  def test_read_preference_connection_options
+    parser = Mongo::URIParser.new("mongodb://localhost:27018?replicaset=test&readPreference=nearest")
+    assert_equal :nearest, parser.connection_options[:read]
+  end
+
+  def test_read_preference_connection_options_prefers_preference_over_slaveok
+    parser = Mongo::URIParser.new("mongodb://localhost:27018?replicaset=test&readPreference=nearest&slaveok=true")
+    assert_equal :nearest, parser.connection_options[:read]
+  end
+
+  def test_read_preference_when_no_replica_set
+    parser = Mongo::URIParser.new("mongodb://localhost:27018?readPreference=nearest")
+    assert_nil parser.connection_options[:read]
+  end
 end
