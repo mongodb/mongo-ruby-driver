@@ -174,4 +174,27 @@ class URITest < Test::Unit::TestCase
     parser = Mongo::URIParser.new("mongodb://localhost:27018?readPreference=nearest")
     assert_nil parser.connection_options[:read]
   end
+
+  def test_connection_when_sharded_with_no_options
+    parser = Mongo::URIParser.new("mongodb://localhost:27017,localhost:27018")
+    client = parser.connection({}, false, true)
+    assert_equal [[ "localhost", 27017 ], [ "localhost", 27018 ]], client.seeds
+    assert_true client.mongos?
+  end
+
+  def test_connection_when_sharded_with_options
+    parser = Mongo::URIParser.new("mongodb://localhost:27017,localhost:27018")
+    client = parser.connection({ :refresh_interval => 10 }, false, true)
+    assert_equal [[ "localhost", 27017 ], [ "localhost", 27018 ]], client.seeds
+    assert_equal 10, client.refresh_interval
+    assert_true client.mongos?
+  end
+
+  def test_connection_when_sharded_with_uri_options
+    parser = Mongo::URIParser.new("mongodb://localhost:27017,localhost:27018?readPreference=nearest")
+    client = parser.connection({}, false, true)
+    assert_equal [[ "localhost", 27017 ], [ "localhost", 27018 ]], client.seeds
+    assert_equal :nearest, client.read
+    assert_true client.mongos?
+  end
 end
