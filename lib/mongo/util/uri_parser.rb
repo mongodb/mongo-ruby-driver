@@ -18,83 +18,100 @@ module Mongo
 
     SPEC_ATTRS = [:nodes, :auths]
 
+    READ_PREFERENCES = {
+      "primary" => :primary,
+      "primarypreferred" => :primary_preferred,
+      "secondary" => :secondary,
+      "secondarypreferred" => :secondary_preferred,
+      "nearest" => :nearest
+    }
+
     OPT_ATTRS  = [
       :connect,
-      :replicaset,
-      :slaveok,
-      :ssl,
-      :safe,
-      :w,
-      :wtimeout,
+      :connecttimeoutms,
       :fsync,
       :journal,
-      :connecttimeoutms,
+      :pool_size,
+      :readpreference,
+      :replicaset,
+      :safe,
+      :slaveok,
       :sockettimeoutms,
-      :wtimeoutms,
-      :pool_size
+      :ssl,
+      :w,
+      :wtimeout,
+      :wtimeoutms
     ]
 
-    OPT_VALID  = {:connect          => lambda {|arg| ['direct', 'replicaset', 'true', 'false', true, false].include?(arg)},
-                  :replicaset       => lambda {|arg| arg.length > 0},
-                  :slaveok          => lambda {|arg| ['true', 'false'].include?(arg)},
-                  :ssl              => lambda {|arg| ['true', 'false'].include?(arg)},
-                  :safe             => lambda {|arg| ['true', 'false'].include?(arg)},
-                  :w                => lambda {|arg| arg =~ /^\w+$/ },
-                  :wtimeout         => lambda {|arg| arg =~ /^\d+$/ },
-                  :fsync            => lambda {|arg| ['true', 'false'].include?(arg)},
-                  :journal          => lambda {|arg| ['true', 'false'].include?(arg)},
-                  :connecttimeoutms => lambda {|arg| arg =~ /^\d+$/ },
-                  :sockettimeoutms  => lambda {|arg| arg =~ /^\d+$/ },
-                  :wtimeoutms       => lambda {|arg| arg =~ /^\d+$/ },
-                  :pool_size        => lambda {|arg| arg.to_i > 0 }
-                 }
+    OPT_VALID = {
+      :connect          => lambda { |arg| [ 'direct', 'replicaset', 'true', 'false', true, false ].include?(arg) },
+      :connecttimeoutms => lambda { |arg| arg =~ /^\d+$/ },
+      :fsync            => lambda { |arg| ['true', 'false'].include?(arg) },
+      :journal          => lambda { |arg| ['true', 'false'].include?(arg) },
+      :pool_size        => lambda { |arg| arg.to_i > 0 },
+      :readpreference   => lambda { |arg| READ_PREFERENCES.keys.include?(arg) },
+      :replicaset       => lambda { |arg| arg.length > 0 },
+      :safe             => lambda { |arg| ['true', 'false'].include?(arg) },
+      :slaveok          => lambda { |arg| ['true', 'false'].include?(arg) },
+      :sockettimeoutms  => lambda { |arg| arg =~ /^\d+$/ },
+      :ssl              => lambda { |arg| ['true', 'false'].include?(arg) },
+      :w                => lambda { |arg| arg =~ /^\w+$/ },
+      :wtimeout         => lambda { |arg| arg =~ /^\d+$/ },
+      :wtimeoutms       => lambda { |arg| arg =~ /^\d+$/ }
+     }
 
-    OPT_ERR    = {:connect          => "must be 'direct', 'replicaset', 'true', or 'false'",
-                  :replicaset       => "must be a string containing the name of the replica set to connect to",
-                  :slaveok          => "must be 'true' or 'false'",
-                  :ssl              => "must be 'true' or 'false'",
-                  :safe             => "must be 'true' or 'false'",
-                  :w                => "must be an integer indicating number of nodes to replicate to or a string specifying
-                                        that replication is required to the majority or nodes with a particilar getLastErrorMode.",
-                  :wtimeout         => "must be an integer specifying milliseconds",
-                  :fsync            => "must be 'true' or 'false'",
-                  :journal          => "must be 'true' or 'false'",
-                  :connecttimeoutms => "must be an integer specifying milliseconds",
-                  :sockettimeoutms  => "must be an integer specifying milliseconds",
-                  :wtimeoutms       => "must be an integer specifying milliseconds",
-                  :pool_size        => "must be an integer greater than zero"
-                 }
+    OPT_ERR = {
+      :connect          => "must be 'direct', 'replicaset', 'true', or 'false'",
+      :connecttimeoutms => "must be an integer specifying milliseconds",
+      :fsync            => "must be 'true' or 'false'",
+      :journal          => "must be 'true' or 'false'",
+      :pool_size        => "must be an integer greater than zero",
+      :readpreference   => "must be on of #{READ_PREFERENCES.keys.map(&:inspect).join(",")}",
+      :replicaset       => "must be a string containing the name of the replica set to connect to",
+      :safe             => "must be 'true' or 'false'",
+      :slaveok          => "must be 'true' or 'false'",
+      :sockettimeoutms  => "must be an integer specifying milliseconds",
+      :ssl              => "must be 'true' or 'false'",
+      :w                => "must be an integer indicating number of nodes to replicate to or a string " +
+                           "specifying that replication is required to the majority or nodes with a " +
+                           "particilar getLastErrorMode.",
+      :wtimeout         => "must be an integer specifying milliseconds",
+      :wtimeoutms       => "must be an integer specifying milliseconds"
+    }
 
-    OPT_CONV   = {:connect          => lambda {|arg| arg == 'false' ? false : arg}, # be sure to convert 'false' to FalseClass
-                  :replicaset       => lambda {|arg| arg},
-                  :slaveok          => lambda {|arg| arg == 'true' ? true : false},
-                  :ssl              => lambda {|arg| arg == 'true' ? true : false},
-                  :safe             => lambda {|arg| arg == 'true' ? true : false},
-                  :w                => lambda {|arg| Mongo::Support.is_i?(arg) ? arg.to_i : arg.to_sym },
-                  :wtimeout         => lambda {|arg| arg.to_i},
-                  :fsync            => lambda {|arg| arg == 'true' ? true : false},
-                  :journal          => lambda {|arg| arg == 'true' ? true : false},
-                  :connecttimeoutms => lambda {|arg| arg.to_f / 1000 }, # stored as seconds
-                  :sockettimeoutms  => lambda {|arg| arg.to_f / 1000 }, # stored as seconds
-                  :wtimeoutms       => lambda {|arg| arg.to_i },
-                  :pool_size        => lambda {|arg| arg.to_i }
-                 }
+    OPT_CONV = {
+      :connect          => lambda { |arg| arg == 'false' ? false : arg }, # convert 'false' to FalseClass
+      :connecttimeoutms => lambda { |arg| arg.to_f / 1000 }, # stored as seconds
+      :fsync            => lambda { |arg| arg == 'true' ? true : false },
+      :journal          => lambda { |arg| arg == 'true' ? true : false },
+      :pool_size        => lambda { |arg| arg.to_i },
+      :readpreference   => lambda { |arg| READ_PREFERENCES[arg] },
+      :replicaset       => lambda { |arg| arg },
+      :safe             => lambda { |arg| arg == 'true' ? true : false },
+      :slaveok          => lambda { |arg| arg == 'true' ? true : false },
+      :sockettimeoutms  => lambda { |arg| arg.to_f / 1000 }, # stored as seconds
+      :ssl              => lambda { |arg| arg == 'true' ? true : false },
+      :w                => lambda { |arg| Mongo::Support.is_i?(arg) ? arg.to_i : arg.to_sym },
+      :wtimeout         => lambda { |arg| arg.to_i },
+      :wtimeoutms       => lambda { |arg| arg.to_i }
+     }
 
     attr_reader :auths,
                 :connect,
-                :replicaset,
-                :slaveok,
-                :ssl,
-                :safe,
-                :w,
-                :wtimeout,
+                :connecttimeoutms,
                 :fsync,
                 :journal,
-                :connecttimeoutms,
-                :sockettimeoutms,
-                :wtimeoutms,
+                :nodes,
                 :pool_size,
-                :nodes
+                :readpreference,
+                :replicaset,
+                :safe,
+                :slaveok,
+                :sockettimeoutms,
+                :ssl,
+                :w,
+                :wtimeout,
+                :wtimeoutms
 
     # Parse a MongoDB URI. This method is used by MongoClient.from_uri.
     # Returns an array of nodes and an array of db authorizations, if applicable.
@@ -201,7 +218,11 @@ module Mongo
         opts[:pool_size] = @pool_size
       end
 
-      if @slaveok
+      if @readpreference && replicaset?
+        opts[:read] = @readpreference
+      end
+
+      if @slaveok && !@readpreference
         if direct?
           opts[:slave_ok] = true
         else
