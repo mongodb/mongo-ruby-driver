@@ -30,7 +30,6 @@ import static org.bson.BSON.*;
 public class RubyBSONEncoder extends BasicBSONEncoder {
 
     private static final boolean DEBUG = false;
-    private static final Map _runtimeCache = new HashMap();
 
     private Ruby _runtime;
 
@@ -58,12 +57,12 @@ public class RubyBSONEncoder extends BasicBSONEncoder {
         _check_keys           = check_keys;
         _move_id              = move_id;
         _runtime              = runtime;
-        _rbclsByteBuffer      = _lookupConstant( _runtime, "BSON::ByteBuffer" );
-        _rbclsInvalidDocument = _lookupConstant( _runtime, "BSON::InvalidDocument" );
-        _rbclsInvalidKeyName  = _lookupConstant( _runtime, "BSON::InvalidKeyName" );
-        _rbclsRangeError      = _lookupConstant( _runtime, "RangeError" );
-        _idAsSym              = _lookupSymbol( _runtime, "_id" );
-        _tfAsString           = _lookupString( _runtime, "_transientFields" );
+        _rbclsByteBuffer      = runtime.getClassFromPath( "BSON::ByteBuffer" );
+        _rbclsInvalidDocument = runtime.getClassFromPath( "BSON::InvalidDocument" );
+        _rbclsInvalidKeyName  = runtime.getClassFromPath( "BSON::InvalidKeyName" );
+        _rbclsRangeError      = runtime.getClassFromPath( "RangeError" );
+        _idAsSym              = runtime.newSymbol( "_id" );
+        _tfAsString           = runtime.newString( "_transientFields" );
 
         if(_idAsString == null) {
             _idAsString = _runtime.newString( "_id" );
@@ -762,57 +761,4 @@ public class RubyBSONEncoder extends BasicBSONEncoder {
     private CharBuffer _stringC = CharBuffer.wrap( new char[256 + 1] );
     private ByteBuffer _stringB = ByteBuffer.wrap( new byte[1024 + 1] );
     private CharsetEncoder _encoder = Charset.forName( "UTF-8" ).newEncoder();
-
-    private static Map _getRuntimeCache(final Ruby runtime) {
-        Map cache = (Map) _runtimeCache.get(runtime);
-
-        if(cache == null) {
-            cache = new HashMap();
-            _runtimeCache.put(runtime, cache);
-            runtime.addFinalizer( new Finalizable() {
-              public void finalize() {
-                _runtimeCache.remove( runtime );
-              }
-            });
-        }
-
-        return cache;
-    }
-
-    private static RubyModule _lookupConstant(Ruby runtime, String name)
-    {
-        Map cache = _getRuntimeCache( runtime );
-        RubyModule module = (RubyModule) cache.get( name );
-
-        if(module == null && !cache.containsKey( name )) {
-            module = runtime.getClassFromPath( name );
-            cache.put( name, module );
-        }
-        return module;
-    }
-
-    private static RubySymbol _lookupSymbol(Ruby runtime, String name)
-    {
-        Map cache = _getRuntimeCache( runtime );
-        RubySymbol symbol = (RubySymbol) cache.get( name );
-
-        if(symbol == null && !cache.containsKey( name )) {
-            symbol = runtime.newSymbol( name );
-            cache.put( name, symbol );
-        }
-        return symbol;
-    }
-
-    private static RubyString _lookupString(Ruby runtime, String name)
-    {
-        Map cache = _getRuntimeCache( runtime );
-        RubyString string = (RubyString) cache.get( name );
-
-        if(string == null && !cache.containsKey( name )) {
-            string = runtime.newString( name );
-            cache.put( name, string );
-        }
-        return string;
-    }
-
 }

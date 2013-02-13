@@ -5,7 +5,7 @@ class TestThreading < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @client = standard_connection(:pool_size => 50, :pool_timeout => 60)
+    @client = standard_connection(:pool_size => 10, :pool_timeout => 30)
     @db = @client.db(MONGO_TEST_DB)
     @coll = @db.collection('thread-test-collection')
     @coll.drop
@@ -58,22 +58,23 @@ class TestThreading < Test::Unit::TestCase
     threads.each {|thread| thread.join}
   end
 
-  def test_count
+  def test_concurrent_find
+    n_threads = 50
+
     1000.times do |i|
-      @coll.insert({ "x" => i })
+      @coll.insert({ "x" => "a" })
     end
 
     threads = []
-    10.times do |i|
+    n_threads.times do |i|
       threads << Thread.new do
         sum = 0
-        @coll.find().each do |document|
-          sum += document["x"]
-        end
-        assert_equal 499500, sum
+        @coll.find.to_a.size
       end
     end
 
-    threads.each {|thread| thread.join}
+    thread_values = threads.map(&:value)
+    assert thread_values.all?{|v| v == 1000}
+    assert_equal thread_values.size, n_threads
   end
 end

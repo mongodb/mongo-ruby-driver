@@ -29,17 +29,16 @@ public class RubyBSONCallback implements BSONCallback {
     private final LinkedList<RubyObject> _stack = new LinkedList<RubyObject>();
     private final LinkedList<String> _nameStack = new LinkedList<String>();
     private Ruby _runtime;
-    private static final HashMap<Ruby, HashMap> _runtimeCache = new HashMap<Ruby, HashMap>();
 
     public RubyBSONCallback(Ruby runtime) {
       _runtime          = runtime;
-      _rbclsOrderedHash = _lookupConstant( _runtime, "BSON::OrderedHash" );
-      _rbclsBinary      = _lookupConstant( _runtime, "BSON::Binary" );
-      _rbclsCode        = _lookupConstant( _runtime, "BSON::Code" );
-      _rbclsMinKey      = _lookupConstant( _runtime, "BSON::MinKey" );
-      _rbclsMaxKey      = _lookupConstant( _runtime, "BSON::MaxKey" );
-      _rbclsTimestamp   = _lookupConstant( _runtime, "BSON::Timestamp" );
-      _rbclsObjectId    = _lookupConstant( _runtime, "BSON::ObjectId");
+      _rbclsOrderedHash = runtime.getClassFromPath( "BSON::OrderedHash" );
+      _rbclsBinary      = runtime.getClassFromPath( "BSON::Binary" );
+      _rbclsCode        = runtime.getClassFromPath( "BSON::Code" );
+      _rbclsMinKey      = runtime.getClassFromPath( "BSON::MinKey" );
+      _rbclsMaxKey      = runtime.getClassFromPath( "BSON::MaxKey" );
+      _rbclsTimestamp   = runtime.getClassFromPath( "BSON::Timestamp" );
+      _rbclsObjectId    = runtime.getClassFromPath( "BSON::ObjectId" );
     }
 
     public BSONCallback createBSONCallback(){
@@ -318,34 +317,5 @@ public class RubyBSONCallback implements BSONCallback {
 
     protected boolean isStackEmpty() {
       return _stack.size() < 1;
-    }
-
-    private static HashMap<String, Object> _getRuntimeCache(final Ruby runtime) {
-      @SuppressWarnings("unchecked")
-      HashMap<String, Object> cache = _runtimeCache.get( runtime );
-
-      if(cache == null) {
-        cache = new HashMap<String, Object>();
-        _runtimeCache.put( runtime, cache );
-        runtime.addFinalizer( new Finalizable() {
-          public void finalize() {
-            _runtimeCache.remove(runtime);
-          }
-        });
-      }
-
-      return cache;
-    }
-
-    private static RubyModule _lookupConstant(Ruby runtime, String name)
-    {
-      HashMap<String, Object> cache = _getRuntimeCache( runtime );
-      RubyModule module = (RubyModule) cache.get( name );
-
-      if(module == null && !cache.containsKey( name )) {
-        module = runtime.getClassFromPath( name );
-        cache.put( (String)name, (Object)module );
-      }
-      return module;
     }
 }
