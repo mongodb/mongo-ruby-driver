@@ -166,7 +166,7 @@ module Mongo
     def checkin(socket)
       @connection_mutex.synchronize do
         if @checked_out.delete(socket)
-          @queue.signal
+          @queue.broadcast
         else
           return false
         end
