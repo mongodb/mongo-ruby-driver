@@ -37,7 +37,7 @@ class CollectionTest < Test::Unit::TestCase
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @client['testing']
       @coll = @db.collection('books')
-      @client.expects(:checkout_reader).returns(mock(:pool))
+      @client.expects(:checkout_reader).returns(new_mock_socket)
       @client.expects(:receive_message).with do |op, msg, log, sock|
         op == 2004
       end.returns([[], 0, 0])

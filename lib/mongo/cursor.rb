@@ -50,8 +50,8 @@ module Mongo
       @options    = 0
 
       # Use this socket for the query
-      @socket            = opts[:socket]
-      @socket_provided   = !!@socket
+      @socket = opts[:socket]
+      @pool   = nil
 
       @closed       = false
       @query_run    = false
@@ -324,7 +324,16 @@ module Mongo
         message.put_int(1)
         message.put_long(@cursor_id)
         log(:debug, "Cursor#close #{@cursor_id}")
-        @connection.send_message(Mongo::Constants::OP_KILL_CURSORS, message, :socket => @socket)
+        begin
+          socket = @pool.checkout
+          @connection.send_message(
+            Mongo::Constants::OP_KILL_CURSORS,
+            message,
+            :socket => socket
+          )
+        ensure
+          socket.checkin
+        end
       end
       @cursor_id = 0
       @closed    = true
@@ -461,22 +470,23 @@ module Mongo
       instrument(:find, instrument_payload) do
         begin
           message = construct_query_message
-          @socket ||= checkout_socket_from_connection
+          socket = @socket || checkout_socket_from_connection
           results, @n_received, @cursor_id = @connection.receive_message(
-            Mongo::Constants::OP_QUERY, message, nil, @socket, @command,
+            Mongo::Constants::OP_QUERY, message, nil, socket, @command,
             nil, @options & OP_QUERY_EXHAUST != 0)
         rescue ConnectionFailure => ex
+          socket.close if socket
           @connection.refresh
           if tries < 3 && !@socket && (!@command || Mongo::Support::secondary_ok?(@selector))
             tries += 1
             retry
           else
-            raise
+            raise ex
           end
         rescue OperationFailure, OperationTimeout => ex
           raise ex
         ensure
-          @socket.pool.checkin(@socket) if @socket && @socket.pool && !@socket_provided
+          socket.checkin unless @socket || socket.nil?
         end
         @returned += @n_received
         @cache += results
@@ -506,13 +516,13 @@ module Mongo
       message.put_long(@cursor_id)
       log(:debug, "cursor.refresh() for cursor #{@cursor_id}") if @logger
 
-      @socket.pool.checkout if @socket.pool
+      socket = checkout_socket_from_connection
 
       begin
         results, @n_received, @cursor_id = @connection.receive_message(
-          Mongo::Constants::OP_GET_MORE, message, nil, @socket, @command, nil)
+          Mongo::Constants::OP_GET_MORE, message, nil, socket, @command, nil)
       ensure
-        @socket.pool.checkin(@socket) if @socket.pool
+        socket.checkin
       end
 
       @returned += @n_received
@@ -523,14 +533,16 @@ module Mongo
     def checkout_socket_from_connection
       begin
         if @command && !Mongo::Support::secondary_ok?(@selector)
-          @connection.checkout_reader(:primary)
+          socket = @connection.checkout_reader(:primary)
         else
-          @connection.checkout_reader(@read, @tag_sets, @acceptable_latency)
+          socket = @connection.checkout_reader(@read, @tag_sets, @acceptable_latency)
         end
       rescue SystemStackError, NoMemoryError, SystemCallError => ex
         @connection.close
         raise ex
       end
+      @pool = socket.pool
+      socket
     end
 
     def checkin_socket(sock)

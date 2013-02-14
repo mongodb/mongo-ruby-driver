@@ -352,7 +352,7 @@ module Mongo
     # Checkin a socket used for reading.
     def checkin(socket)
       if socket && socket.pool
-        socket.pool.checkin(socket)
+        socket.checkin
       end
       sync_refresh
     end

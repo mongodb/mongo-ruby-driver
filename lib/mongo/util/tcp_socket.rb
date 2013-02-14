@@ -8,7 +8,7 @@ module Mongo
   # sans Timeout::timeout
   #
   class TCPSocket
-    attr_accessor :pool, :pid
+    include SocketUtil
 
     def initialize(host, port, op_timeout=nil, connect_timeout=nil)
       @op_timeout = op_timeout
@@ -57,14 +57,6 @@ module Mongo
       rescue SystemCallError, IOError => ex
         raise ConnectionFailure, ex
       end
-    end
-
-    def close
-      @socket.close
-    end
-
-    def closed?
-      @socket.closed?
     end
   end
 end

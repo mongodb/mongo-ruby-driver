@@ -537,7 +537,7 @@ module Mongo
     # Note: this is overridden in MongoReplicaSetClient.
     def checkin(socket)
       if @primary_pool && socket && socket.pool
-        socket.pool.checkin(socket)
+        socket.checkin
       end
     end
 

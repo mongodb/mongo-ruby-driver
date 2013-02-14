@@ -39,7 +39,7 @@ module Mongo
         raise ex
       ensure
         if sock
-          sock.pool.checkin(sock)
+          sock.checkin
         end
       end
     end
@@ -116,6 +116,7 @@ module Mongo
         send_message_on_socket(packed_message, socket)
         result = receive(socket, request_id, exhaust)
       rescue ConnectionFailure => ex
+        socket.close
         checkin(socket)
         raise ex
       rescue SystemStackError, NoMemoryError, SystemCallError => ex

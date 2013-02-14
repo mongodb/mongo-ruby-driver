@@ -109,7 +109,7 @@ module Mongo
         socket = @connection.checkout_reader(:primary_preferred)
         issue_authentication(username, password, save_auth, :socket => socket)
       ensure
-        socket.pool.checkin(socket) if socket
+        socket.checkin if socket
       end
 
       @connection.authenticate_pools

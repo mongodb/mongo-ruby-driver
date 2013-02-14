@@ -8,19 +8,18 @@ module Mongo
   # a TCP connection over SSL and then provides an basic interface
   # mirroring Ruby's TCPSocket, vis., TCPSocket#send and TCPSocket#read.
   class SSLSocket
-
-    attr_accessor :pool, :pid
+    include SocketUtil
 
     def initialize(host, port, op_timeout=nil, connect_timeout=nil)
       @op_timeout = op_timeout
       @connect_timeout = connect_timeout
       @pid = Process.pid
 
-      @socket = ::TCPSocket.new(host, port)
-      @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+      @tcp_socket = ::TCPSocket.new(host, port)
+      @tcp_socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 
-      @ssl = OpenSSL::SSL::SSLSocket.new(@socket)
-      @ssl.sync_close = true
+      @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket)
+      @socket.sync_close = true
 
       connect
     end
@@ -28,33 +27,25 @@ module Mongo
     def connect
       if @connect_timeout
         Timeout::timeout(@connect_timeout, ConnectionTimeoutError) do
-          @ssl.connect
+          @socket.connect
         end
       else
-        @ssl.connect
+        @socket.connect
       end
     end
 
     def send(data)
-      @ssl.syswrite(data)
+      @socket.syswrite(data)
     end
 
     def read(length, buffer)
       if @op_timeout
         Timeout::timeout(@op_timeout, OperationTimeout) do
-          @ssl.sysread(length, buffer)
+          @socket.sysread(length, buffer)
         end
       else
-        @ssl.sysread(length, buffer)
+        @socket.sysread(length, buffer)
       end 
-    end
-
-    def close
-      @ssl.close
-    end
-
-    def closed?
-      @ssl.closed?
     end
   end
 end
