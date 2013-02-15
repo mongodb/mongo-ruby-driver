@@ -15,6 +15,16 @@ class ByteBufferTest < Test::Unit::TestCase
     assert_equal 0, @buf.length
   end
 
+  def test_initialize_with_string_and_clear
+    @buf = ByteBuffer.new("a")
+    assert_equal 1, @buf.size
+    assert_equal 1, @buf.position
+    @buf.clear
+    assert_equal 0, @buf.position
+    assert_equal "", @buf.to_s
+    assert_equal 0, @buf.size
+  end
+
   def test_nil_get_returns_one_byte
     @buf.put_array([1, 2, 3, 4])
     @buf.rewind
@@ -202,5 +212,4 @@ class ByteBufferTest < Test::Unit::TestCase
     assert_not_equal @buf, 123
     assert_not_equal @buf, nil
   end
-
 end

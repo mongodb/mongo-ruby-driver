@@ -132,7 +132,7 @@ module BSON
 
     # Returns the array stored in the buffer.
     # Implemented to ensure an API compatible with BSON extension.
-    def unpack(arg)
+    def unpack
       @buf.to_a
     end
 
@@ -398,7 +398,7 @@ module BSON
       self.class.serialize_key(buf, key)
     end
 
-    def serialize_dbref_element(buf, key, val)
+    def serialize_dbref_element(buf, key, val) # this does NOT use the BSON "\x0C" DBPointer type
       oh = BSON::OrderedHash.new
       oh['$ref'] = val.namespace
       oh['$id'] = val.object_id

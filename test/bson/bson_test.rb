@@ -58,6 +58,68 @@ class BSONTest < Test::Unit::TestCase
     assert_equal doc, @encoder.deserialize(bson)
   end
 
+  def test_interface
+    doc = { 'a' => 1 }
+    bson = BSON.serialize(doc)
+    assert_equal doc, BSON.deserialize(bson)
+  end
+
+  def test_read_bson_document
+    bson_file_data_h_star = ["21000000075f6964005115883c3d75c94d3aa18b63016100000000000000f03f00"]
+    strio = StringIO.new(bson_file_data_h_star.pack('H*'))
+    bson = BSON.read_bson_document(strio)
+    doc = {"_id"=>BSON::ObjectId('5115883c3d75c94d3aa18b63'), "a"=>1.0}
+    assert_equal doc, bson
+  end
+
+  def test_bson_ruby_interface
+    doc = { 'a' => 1 }
+    buf = BSON_RUBY.serialize(doc)
+    bson = BSON::BSON_RUBY.new
+    bson.instance_variable_set(:@buf, buf)
+    assert_equal [12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0], bson.to_a
+    assert_equal "\f\x00\x00\x00\x10a\x00\x01\x00\x00\x00\x00", bson.to_s
+    assert_equal [12, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0], bson.unpack
+  end
+
+  def test_bson_ruby_hex_dump
+    doc = { 'a' => 1 }
+    buf = BSON_RUBY.serialize(doc)
+    bson = BSON_RUBY.new
+    bson.instance_variable_set(:@buf, buf)
+    doc_hex_dump = "   0:  0C 00 00 00 10 61 00 01\n   8:  00 00 00 00"
+    assert_equal doc_hex_dump, bson.hex_dump
+  end
+
+  def test_bson_ruby_dbref_not_used
+    buf = BSON::ByteBuffer.new
+    val = ns = 'namespace'
+
+    # Make a hole for the length
+    len_pos = buf.position
+    buf.put_int(0)
+
+    # Save the string
+    start_pos = buf.position
+    BSON::BSON_RUBY.serialize_cstr(buf, val)
+    end_pos = buf.position
+
+    # Put the string size in front
+    buf.put_int(end_pos - start_pos, len_pos)
+
+    # Go back to where we were
+    buf.position = end_pos
+
+    oid = ObjectId.new
+    buf.put_array(oid.to_a)
+    buf.rewind
+
+    bson = BSON::BSON_RUBY.new
+    bson.instance_variable_set(:@buf, buf)
+
+    assert_equal DBRef.new(ns, oid).to_s, bson.deserialize_dbref_data(buf).to_s
+  end
+
   def test_require_hash
     assert_raise_error InvalidDocument, "takes a Hash" do
       BSON.serialize('foo')
@@ -191,8 +253,14 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_code
-    doc = {'$where' => Code.new('this.a.b < this.b')}
+    code = Code.new('this.a.b < this.b')
+    assert_equal 17, code.length
+    assert_match /<BSON::Code:\d+ @data="this.a.b < this.b" @scope="{}">/, code.inspect
+    doc = {'$where' => code}
     assert_doc_pass(doc)
+    code = 'this.c.d < this.e'.to_bson_code # core_ext.rb
+    assert_equal BSON::Code, code.class
+    assert_equal code, code.to_bson_code
   end
 
   def test_code_with_symbol
@@ -343,8 +411,11 @@ class BSONTest < Test::Unit::TestCase
 
   def test_dbref
     oid = ObjectId.new
+    ns = 'namespace'
     doc = {}
-    doc['dbref'] = DBRef.new('namespace', oid)
+    dbref = DBRef.new(ns, oid)
+    assert_equal({"$id"=>oid, "$ns"=>ns}, dbref.to_hash)
+    doc['dbref'] = dbref
     bson = @encoder.serialize(doc)
     doc2 = @encoder.deserialize(bson)
 

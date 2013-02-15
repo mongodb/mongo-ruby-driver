@@ -2,6 +2,11 @@ require 'test_helper'
 
 class TimestampTest < Test::Unit::TestCase
 
+  def test_timestamp_to_s
+    t1 = Timestamp.new(5000, 200)
+    assert_equal "seconds: 5000, increment: 200", t1.to_s
+  end
+
   def test_timestamp_equality
     t1 = Timestamp.new(5000, 200)
     t2 = Timestamp.new(5000, 200)
