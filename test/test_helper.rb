@@ -7,6 +7,8 @@ if RUBY_VERSION >= '1.9.0' && RUBY_ENGINE == 'ruby'
       add_group "Mongo", 'lib/mongo'
       add_group "BSON", 'lib/bson'
       add_filter "/test/"
+      merge_timeout 3600
+      command_name ENV['SIMPLECOV_COMMAND_NAME'] if ENV.has_key?('SIMPLECOV_COMMAND_NAME')
     end
   end
 end

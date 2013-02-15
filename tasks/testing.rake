@@ -4,6 +4,25 @@ require 'rspec/core/rake_task'
 desc "Run the default test suite (Ruby)"
 task :test => ENV.key?('TRAVIS_TEST') ? 'test:default' : 'test:ruby'
 
+# generate distinct SimpleCov command names and pass them via ENV to test_helper
+module Rake
+  class Task
+    @@simplecov_command_name = nil
+    alias_method :orig_enhance, :enhance
+    def enhance(deps= nil, &block)
+      command_name_block = Proc.new do
+        old_command_name = @@simplecov_command_name
+        @@simplecov_command_name = [@@simplecov_command_name, name].compact.join(' ')
+        ENV['SIMPLECOV_COMMAND_NAME'] = @@simplecov_command_name
+        block.call
+        ENV.delete('SIMPLECOV_COMMAND_NAME')
+        @@simplecov_command_name = old_command_name
+      end
+      orig_enhance(deps, &command_name_block)
+    end
+  end
+end
+
 namespace :test do
   DEFAULT_TESTS = ['functional', 'unit', 'bson', 'threading']
   ENV['TEST_MODE'] = 'TRUE'
