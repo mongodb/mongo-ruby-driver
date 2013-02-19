@@ -6,6 +6,26 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     ensure_cluster(:rs)
   end
 
+  def test_get_more_primary
+    setup_client(:primary)
+    cursor_get_more_test(:primary)
+  end
+
+  def test_get_more_secondary
+    setup_client(:secondary)
+    cursor_get_more_test(:secondary)
+  end
+
+  def test_close_primary
+    setup_client(:primary)
+    cursor_close_test(:primary)
+  end
+
+  def test_close_secondary
+    setup_client(:secondary)
+    cursor_close_test(:secondary)
+  end
+
   def test_cursors_get_closed
     setup_client
     assert_cursor_count
@@ -68,4 +88,50 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     assert_equal 1, after_read_query - before_read_query
   end
 
+  # batch from send_initial_query is 101 documents
+  def cursor_get_more_test(read=:primary)
+    102.times do |i|
+      @coll.insert({:i =>i}, :w => 2)
+    end
+    60.times do |i|
+      count = @coll.count(:read => :secondary)
+      if count < 102
+        puts "cursor_get_more_test count:#{count} - sleep #{i}"
+        sleep 1 # wait for oplog to be processed
+      end
+    end
+    10.times do
+      cursor = @coll.find({}, :read => read)
+      cursor.next
+      port = cursor.instance_variable_get(:@pool).port
+      assert cursor.alive?
+      while cursor.has_next?
+        cursor.next
+        assert_equal port, cursor.instance_variable_get(:@pool).port
+      end
+      assert !cursor.alive?
+      cursor.close #cursor is already closed
+    end
+  end
+
+  # batch from get_more can be huge, so close after send_initial_query
+  def cursor_close_test(read=:primary)
+    102.times do |i|
+      @coll.insert({:i =>i}, :w => 2)
+    end
+    60.times do |i|
+      count = @coll.count(:read => :secondary)
+      if count < 102
+        puts "cursor_get_more_test count:#{count} - sleep #{i}"
+        sleep 1 # wait for oplog to be processed
+      end
+    end
+    10.times do
+      cursor = @coll.find({}, :read => read)
+      cursor.next
+      assert cursor.instance_variable_get(:@pool)
+      assert cursor.alive?
+      cursor.close
+    end
+  end
 end
