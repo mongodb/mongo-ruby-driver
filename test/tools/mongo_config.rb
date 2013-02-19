@@ -354,7 +354,7 @@ module Mongo
 
       def repl_set_config
         members = []
-        @config[:replicas].each{|s| members << { :_id => s[:_id], :host => "#{s[:host]}:#{s[:port]}" } }
+        @config[:replicas].each{|s| members << { :_id => s[:_id], :host => "#{s[:host]}:#{s[:port]}", :tags => { :node => s[:_id].to_s } } }
         @config[:arbiters].each{|s| members << { :_id => s[:_id], :host => "#{s[:host]}:#{s[:port]}", :arbiterOnly => true } }
         {
           :_id => @config[:replicas].first[:replSet],

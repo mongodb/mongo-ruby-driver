@@ -36,14 +36,14 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     assert_cursor_count(:secondary)
   end
 
-  def test_cusors_get_closed_secondary_query
-    setup_client(:primary, :secondary)
+  def test_cursors_get_closed_secondary_query
+    setup_client(:primary)
     assert_cursor_count(:secondary)
   end
 
   private
 
-  def setup_client(read=:primary, route_read=nil)
+  def setup_client(read=:primary)
     route_read ||= read
     # Setup ReplicaSet Connection
     @client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :read => read)
@@ -61,7 +61,6 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
 
     # Setup Direct Connections
     @primary = Mongo::MongoClient.new(*@client.manager.primary)
-    @read = Mongo::MongoClient.new(*@client.manager.read_pool(route_read).host_port)
   end
 
   def cursor_count(client)
@@ -72,12 +71,33 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     client['admin'].command({:serverStatus => 1})['opcounters']['query']
   end
 
+  def set_read_client_and_tag(read)
+    read_opts = {:read => read}
+    @tag = (0...3).map{|i|i.to_s}.detect do |tag|
+      begin
+        read_opts[:tag_sets] = [{:node => tag}] unless read == :primary
+        cursor = @coll.find({}, read_opts)
+        cursor.next
+        pool = cursor.instance_variable_get(:@pool)
+        cursor.close
+        @read = Mongo::MongoClient.new(pool.host, pool.port)
+        tag
+      rescue Mongo::ConnectionFailure
+        false
+      end
+    end
+  end
+
   def assert_cursor_count(read=:primary)
+    set_read_client_and_tag(read)
+
     before_primary_cursor = cursor_count(@primary)
     before_read_cursor = cursor_count(@read)
     before_read_query = query_count(@read)
 
-    @coll.find({}, :read => read).limit(2).to_a
+    read_opts = {:read => read}
+    read_opts[:tag_sets] = [{:node => @tag}] unless read == :primary
+    @coll.find({}, read_opts).limit(2).to_a
 
     after_primary_cursor = cursor_count(@primary)
     after_read_cursor = cursor_count(@read)
@@ -88,18 +108,32 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     assert_equal 1, after_read_query - before_read_query
   end
 
-  # batch from send_initial_query is 101 documents
-  def cursor_get_more_test(read=:primary)
+  def wait_for_replication(node, db_name, coll_name, coll_count)
+    client = Mongo::MongoClient.new(node[0], node[1])
+    coll = client.db(db_name).collection(coll_name)
+    begin
+      60.times do |i|
+        return if coll.count(:read => :secondary) >= coll_count
+        sleep 1 # wait for oplog to be processed
+      end
+      raise "failed to replicate in allotted time"
+    ensure
+      client.close
+    end
+  end
+
+  def insert_docs_and_wait
     102.times do |i|
       @coll.insert({:i =>i}, :w => 2)
     end
-    60.times do |i|
-      count = @coll.count(:read => :secondary)
-      if count < 102
-        puts "cursor_get_more_test count:#{count} - sleep #{i}"
-        sleep 1 # wait for oplog to be processed
-      end
+    @client.secondaries.each do |node|
+      wait_for_replication(node, MONGO_TEST_DB, "cursor_tests", 102)
     end
+  end
+
+  # batch from send_initial_query is 101 documents
+  def cursor_get_more_test(read=:primary)
+    insert_docs_and_wait
     10.times do
       cursor = @coll.find({}, :read => read)
       cursor.next
@@ -116,16 +150,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
 
   # batch from get_more can be huge, so close after send_initial_query
   def cursor_close_test(read=:primary)
-    102.times do |i|
-      @coll.insert({:i =>i}, :w => 2)
-    end
-    60.times do |i|
-      count = @coll.count(:read => :secondary)
-      if count < 102
-        puts "cursor_get_more_test count:#{count} - sleep #{i}"
-        sleep 1 # wait for oplog to be processed
-      end
-    end
+    insert_docs_and_wait
     10.times do
       cursor = @coll.find({}, :read => read)
       cursor.next
