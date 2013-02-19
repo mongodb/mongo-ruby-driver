@@ -124,7 +124,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
 
   def insert_docs_and_wait
     102.times do |i|
-      @coll.insert({:i =>i}, :w => 2)
+      @coll.insert({:i =>i}, :w => 3)
     end
     @client.secondaries.each do |node|
       wait_for_replication(node, MONGO_TEST_DB, "cursor_tests", 102)
