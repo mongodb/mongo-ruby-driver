@@ -511,7 +511,7 @@ module Mongo
       message.put_long(@cursor_id)
       log(:debug, "cursor.refresh() for cursor #{@cursor_id}") if @logger
 
-      socket = checkout_socket_from_connection
+      socket = @pool.checkout
 
       begin
         results, @n_received, @cursor_id = @connection.receive_message(
