@@ -52,9 +52,9 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     @db.drop_collection("cursor_tests")
     @coll = @db.collection("cursor_tests")
 
-    @coll.insert({:a => 1}, :w => 2)
-    @coll.insert({:b => 2}, :w => 2)
-    @coll.insert({:c => 3}, :w => 2)
+    @coll.insert({:a => 1}, :w => 3)
+    @coll.insert({:b => 2}, :w => 3)
+    @coll.insert({:c => 3}, :w => 3)
 
     # Pin reader
     @coll.find_one
@@ -108,32 +108,15 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     assert_equal 1, after_read_query - before_read_query
   end
 
-  def wait_for_replication(node, db_name, coll_name, coll_count)
-    client = Mongo::MongoClient.new(node[0], node[1])
-    coll = client.db(db_name).collection(coll_name)
-    begin
-      60.times do |i|
-        return if coll.count(:read => :secondary) >= coll_count
-        sleep 1 # wait for oplog to be processed
-      end
-      raise "failed to replicate in allotted time"
-    ensure
-      client.close
-    end
-  end
-
-  def insert_docs_and_wait
+  def insert_docs
     102.times do |i|
       @coll.insert({:i =>i}, :w => 3)
-    end
-    @client.secondaries.each do |node|
-      wait_for_replication(node, MONGO_TEST_DB, "cursor_tests", 102)
     end
   end
 
   # batch from send_initial_query is 101 documents
   def cursor_get_more_test(read=:primary)
-    insert_docs_and_wait
+    insert_docs
     10.times do
       cursor = @coll.find({}, :read => read)
       cursor.next
@@ -150,7 +133,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
 
   # batch from get_more can be huge, so close after send_initial_query
   def cursor_close_test(read=:primary)
-    insert_docs_and_wait
+    insert_docs
     10.times do
       cursor = @coll.find({}, :read => read)
       cursor.next

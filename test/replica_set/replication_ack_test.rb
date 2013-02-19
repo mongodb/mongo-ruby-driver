@@ -23,13 +23,13 @@ class ReplicaSetAckTest < Test::Unit::TestCase
 
   def test_safe_mode_with_w_failure
     assert_raise_error OperationFailure, "timeout" do
-      @col.insert({:foo => 1}, :w => 3, :wtimeout => 1, :fsync => true)
+      @col.insert({:foo => 1}, :w => 4, :wtimeout => 1, :fsync => true)
     end
     assert_raise_error OperationFailure, "timeout" do
-      @col.update({:foo => 1}, {:foo => 2}, :w => 3, :wtimeout => 1, :fsync => true)
+      @col.update({:foo => 1}, {:foo => 2}, :w => 4, :wtimeout => 1, :fsync => true)
     end
     assert_raise_error OperationFailure, "timeout" do
-      @col.remove({:foo => 2}, :w => 3, :wtimeout => 1, :fsync => true)
+      @col.remove({:foo => 2}, :w => 4, :wtimeout => 1, :fsync => true)
     end
     assert_raise_error OperationFailure do
       @col.insert({:foo => 3}, :w => "test-tag")
@@ -55,17 +55,17 @@ class ReplicaSetAckTest < Test::Unit::TestCase
 
   def test_last_error_responses
     20.times { @col.insert({:baz => "bar"}) }
-    response = @db.get_last_error(:w => 2, :wtimeout => 5000)
+    response = @db.get_last_error(:w => 3, :wtimeout => 5000)
     assert response['ok'] == 1
     assert response['lastOp']
 
     @col.update({}, {:baz => "foo"})
-    response = @db.get_last_error(:w => 2, :wtimeout => 5000)
+    response = @db.get_last_error(:w => 3, :wtimeout => 5000)
     assert response['ok'] == 1
     assert response['lastOp']
 
     @col.remove({})
-    response =  @db.get_last_error(:w => 2, :wtimeout => 5000)
+    response =  @db.get_last_error(:w => 3, :wtimeout => 5000)
     assert response['ok'] == 1
     assert response['n'] == 20
     assert response['lastOp']

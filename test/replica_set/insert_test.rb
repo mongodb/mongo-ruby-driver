@@ -15,7 +15,7 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
   end
 
   def test_insert
-    @coll.save({:a => 20}, :w => 2)
+    @coll.save({:a => 20}, :w => 3)
 
     @rs.primary.stop
 
@@ -40,7 +40,7 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
       end
     end
 
-    @coll.save({:a => 80}, :w => 2)
+    @coll.save({:a => 80}, :w => 3)
     @coll.find.each {|r| results << r}
     [20, 30, 40, 50, 60, 70, 80].each do |a|
       assert results.any? {|r| r['a'] == a}, "Could not find record for a => #{a} on second find"

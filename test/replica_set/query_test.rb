@@ -15,9 +15,9 @@ class ReplicaSetQueryTest < Test::Unit::TestCase
   end
 
   def test_query
-    @coll.save({:a => 20}, :w => 2)
-    @coll.save({:a => 30}, :w => 2)
-    @coll.save({:a => 40}, :w => 2)
+    @coll.save({:a => 20}, :w => 3)
+    @coll.save({:a => 30}, :w => 3)
+    @coll.save({:a => 40}, :w => 3)
     results = []
     @coll.find.each {|r| results << r}
     [20, 30, 40].each do |a|
@@ -43,7 +43,7 @@ class ReplicaSetQueryTest < Test::Unit::TestCase
   # primary, where it does not exist.
   # def test_secondary_getmore
   #   200.times do |i|
-  #     @coll.save({:a => i}, :w => 2)
+  #     @coll.save({:a => i}, :w => 3)
   #   end
   #   as = []
   #   # Set an explicit batch size, in case the default ever changes.
