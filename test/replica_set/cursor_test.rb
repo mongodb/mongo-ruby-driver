@@ -55,12 +55,10 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
   end
 
   def assert_query_route
-    read_results = @read.db(MONGO_TEST_DB).collection('system.profile').find()
     # do a query on system.profile to see if it was used for the query
     profiled_queries = @read.db(MONGO_TEST_DB).collection('system.profile').find({
       'ns' => "#{MONGO_TEST_DB}.cursor_tests", "query.x" => @object_id })
     # confirm that the query has been done on the member to which the read should have been routed
-    puts "profiled queries: #{profiled_queries.count}"
     assert_equal 1, profiled_queries.count
   end
 
