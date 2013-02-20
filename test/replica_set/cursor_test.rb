@@ -104,27 +104,28 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     # do a query on system.profile of the reader to see if it was used for the query
     profiled_queries = @read.db(MONGO_TEST_DB).collection('system.profile').find({
       'ns' => "#{MONGO_TEST_DB}.cursor_tests", "query.x" => @object_id })
-    # confirm that the query has been done on the member to which the read should have been routed
+
     assert_equal 1, profiled_queries.count
   end
 
   # batch from send_initial_query is 101 documents
+  # check that you get n_docs back from the query, with the same port
   def cursor_get_more_test(read=:primary)
     set_read_client_and_tag(read)
     10.times do
       insert_docs
       # assert that the query went to the correct member
       route_query(read)
-      count = 1
+      docs_count = 1
       port = @cursor.instance_variable_get(:@pool).port
       assert @cursor.alive?
       while @cursor.has_next?
-        count += 1
+        docs_count += 1
         @cursor.next
         assert_equal port, @cursor.instance_variable_get(:@pool).port
       end
       assert !@cursor.alive?
-      assert_equal @n_docs, count
+      assert_equal @n_docs, docs_count
       @cursor.close #cursor is already closed
     end
   end
@@ -155,11 +156,11 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     insert_docs
     # assert that the query went to the correct member
     route_query(read)
-    port = @cursor.instance_variable_get(:@pool).port
     cursor_id = @cursor.cursor_id
     cursor_clone = @cursor.clone
     assert_equal cursor_id, cursor_clone.cursor_id
     assert @cursor.instance_variable_get(:@pool)
+    port = @cursor.instance_variable_get(:@pool).port
     while @cursor.has_next?
       @cursor.next
       assert_equal port, @cursor.instance_variable_get(:@pool).port
