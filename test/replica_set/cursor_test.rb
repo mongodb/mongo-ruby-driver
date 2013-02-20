@@ -18,27 +18,27 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
 
   def test_close_primary
     setup_client(:primary)
-    cursor_close_test(:primary)
+    kill_cursor_test(:primary)
   end
 
   def test_close_secondary
     setup_client(:secondary)
-    cursor_close_test(:secondary)
+    kill_cursor_test(:secondary)
   end
 
   def test_cursors_get_closed
     setup_client
-    assert_cursor_count
+    assert_cursors_on_members
   end
 
   def test_cursors_get_closed_secondary
     setup_client(:secondary)
-    assert_cursor_count(:secondary)
+    assert_cursors_on_members(:secondary)
   end
 
   def test_cursors_get_closed_secondary_query
     setup_client(:primary)
-    assert_cursor_count(:secondary)
+    assert_cursors_on_members(:secondary)
   end
 
   private
@@ -51,24 +51,17 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     @db = @client.db(MONGO_TEST_DB)
     @db.drop_collection("cursor_tests")
     @coll = @db.collection("cursor_tests")
-
-    @coll.insert({:a => 1}, :w => 3)
-    @coll.insert({:b => 2}, :w => 3)
-    @coll.insert({:c => 3}, :w => 3)
-
-    # Pin reader
-    @coll.find_one
+    insert_docs
 
     # Setup Direct Connections
     @primary = Mongo::MongoClient.new(*@client.manager.primary)
   end
 
-  def cursor_count(client)
-    client['cursor_tests'].command({:cursorInfo => 1})['totalOpen']
-  end
-
-  def query_count(client)
-    client['admin'].command({:serverStatus => 1})['opcounters']['query']
+  def insert_docs
+    @n_docs = 102 # batch size is 101
+    @n_docs.times do |i|
+      @coll.insert({ "x" => i }, :w => 3)
+    end
   end
 
   def set_read_client_and_tag(read)
@@ -80,7 +73,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
         cursor.next
         pool = cursor.instance_variable_get(:@pool)
         cursor.close
-        @read = Mongo::MongoClient.new(pool.host, pool.port)
+        @read = Mongo::MongoClient.new(pool.host, pool.port, :slave_ok => true)
         tag
       rescue Mongo::ConnectionFailure
         false
@@ -88,58 +81,92 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     end
   end
 
-  def assert_cursor_count(read=:primary)
-    set_read_client_and_tag(read)
-
-    before_primary_cursor = cursor_count(@primary)
-    before_read_cursor = cursor_count(@read)
-    before_read_query = query_count(@read)
-
+  def route_query(read)
     read_opts = {:read => read}
     read_opts[:tag_sets] = [{:node => @tag}] unless read == :primary
-    @coll.find({}, read_opts).limit(2).to_a
+    object_id = BSON::ObjectId.new
+    read_opts[:comment] = object_id
 
-    after_primary_cursor = cursor_count(@primary)
-    after_read_cursor = cursor_count(@read)
-    after_read_query = query_count(@read)
-
-    assert_equal before_primary_cursor, after_primary_cursor
-    assert_equal before_read_cursor, after_read_cursor
-    assert_equal 1, after_read_query - before_read_query
-  end
-
-  def insert_docs
-    102.times do |i|
-      @coll.insert({:i =>i}, :w => 3)
+    # set profiling level to 2 on client and member to which the query will be routed
+    @client.db(MONGO_TEST_DB).profiling_level = :all
+    @client.secondaries.each do |node|
+      node = Mongo::MongoClient.new(node[0], node[1], :slave_ok => true)
+      node.db(MONGO_TEST_DB).profiling_level = :all
     end
+
+    @cursor = @coll.find({}, read_opts)
+    @cursor.next
+
+    # on client and other members set profiling level to 0
+    @client.db(MONGO_TEST_DB).profiling_level = :off
+    @client.secondaries.each do |node|
+      node = Mongo::MongoClient.new(node[0], node[1], :slave_ok => true)
+      node.db(MONGO_TEST_DB).profiling_level = :off
+    end
+    # do a query on system.profile of the reader to see if it was used for the query
+    profiled_queries = @read.db(MONGO_TEST_DB).collection('system.profile').find({
+      'ns' => "#{MONGO_TEST_DB}.cursor_tests", "query.$comment" => object_id })
+
+    assert_equal 1, profiled_queries.count
   end
 
   # batch from send_initial_query is 101 documents
+  # check that you get n_docs back from the query, with the same port
   def cursor_get_more_test(read=:primary)
-    insert_docs
+    set_read_client_and_tag(read)
     10.times do
-      cursor = @coll.find({}, :read => read)
-      cursor.next
-      port = cursor.instance_variable_get(:@pool).port
-      assert cursor.alive?
-      while cursor.has_next?
-        cursor.next
-        assert_equal port, cursor.instance_variable_get(:@pool).port
+      # assert that the query went to the correct member
+      route_query(read)
+      docs_count = 1
+      port = @cursor.instance_variable_get(:@pool).port
+      assert @cursor.alive?
+      while @cursor.has_next?
+        docs_count += 1
+        @cursor.next
+        assert_equal port, @cursor.instance_variable_get(:@pool).port
       end
-      assert !cursor.alive?
-      cursor.close #cursor is already closed
+      assert !@cursor.alive?
+      assert_equal @n_docs, docs_count
+      @cursor.close #cursor is already closed
     end
   end
 
   # batch from get_more can be huge, so close after send_initial_query
-  def cursor_close_test(read=:primary)
-    insert_docs
+  def kill_cursor_test(read=:primary)
+    set_read_client_and_tag(read)
     10.times do
-      cursor = @coll.find({}, :read => read)
-      cursor.next
-      assert cursor.instance_variable_get(:@pool)
-      assert cursor.alive?
-      cursor.close
+      # assert that the query went to the correct member
+      route_query(read)
+      cursor_id = @cursor.cursor_id
+      cursor_clone = @cursor.clone
+      assert_equal cursor_id, cursor_clone.cursor_id
+      assert @cursor.instance_variable_get(:@pool)
+      # .next was called once already and leave one for get more
+      (@n_docs-2).times { @cursor.next }
+      @cursor.close
+      # an exception confirms the cursor has indeed been closed
+      assert_raise Mongo::OperationFailure do
+        cursor_clone.next
+      end
+    end
+  end
+
+  def assert_cursors_on_members(read=:primary)
+    set_read_client_and_tag(read)
+    # assert that the query went to the correct member
+    route_query(read)
+    cursor_id = @cursor.cursor_id
+    cursor_clone = @cursor.clone
+    assert_equal cursor_id, cursor_clone.cursor_id
+    assert @cursor.instance_variable_get(:@pool)
+    port = @cursor.instance_variable_get(:@pool).port
+    while @cursor.has_next?
+      @cursor.next
+      assert_equal port, @cursor.instance_variable_get(:@pool).port
+    end
+    # an exception confirms the cursor has indeed been closed after query
+    assert_raise Mongo::OperationFailure do
+      cursor_clone.next
     end
   end
 end
