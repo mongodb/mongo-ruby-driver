@@ -17,7 +17,7 @@ class ReplicaSetCountTest < Test::Unit::TestCase
   end
 
   def test_correct_count_after_insertion_reconnect
-    @coll.insert({:a => 20}, :w => 2, :wtimeout => 10000)
+    @coll.insert({:a => 20}, :w => 3, :wtimeout => 10000)
     assert_equal 1, @coll.count
 
     # Kill the current master node
@@ -32,7 +32,7 @@ class ReplicaSetCountTest < Test::Unit::TestCase
   end
 
   def test_count_command_sent_to_primary
-    @coll.insert({:a => 20}, :w => 2, :wtimeout => 10000)
+    @coll.insert({:a => 20}, :w => 3, :wtimeout => 10000)
     count_before = @primary['admin'].command({:serverStatus => 1})['opcounters']['command']
     assert_equal 1, @coll.count
     count_after = @primary['admin'].command({:serverStatus => 1})['opcounters']['command']
@@ -40,7 +40,7 @@ class ReplicaSetCountTest < Test::Unit::TestCase
   end
 
   def test_count_with_read
-    @coll.insert({:a => 20}, :w => 2, :wtimeout => 10000)
+    @coll.insert({:a => 20}, :w => 3, :wtimeout => 10000)
     count_before = @primary['admin'].command({:serverStatus => 1})['opcounters']['command']
     assert_equal 1, @coll.count(:read => :secondary)
     assert_equal 1, @coll.find({}, :read => :secondary).count()

@@ -26,10 +26,12 @@ module Mongo
       add_message_headers(message, operation)
       packed_message = message.to_s
 
-      sock = opts.fetch(:socket, nil)
+      sock = nil
+      pool = opts.fetch(:pool, nil)
       begin
-        if operation == Mongo::Constants::OP_KILL_CURSORS && @read != :primary
-          sock ||= checkout_reader
+        if pool
+          #puts "send_message pool.port:#{pool.port}"
+          sock = pool.checkout
         else
           sock ||= checkout_writer
         end

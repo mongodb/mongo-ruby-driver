@@ -48,7 +48,7 @@ class ClientTest < Test::Unit::TestCase
 
   def test_connect_with_primary_stepped_down
     @client = MongoReplicaSetClient.new @rs.repl_set_seeds
-    @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 2})
+    @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 3})
     assert @client[MONGO_TEST_DB]['bar'].find_one
 
     primary = Mongo::MongoClient.new(*@client.primary)
@@ -66,7 +66,7 @@ class ClientTest < Test::Unit::TestCase
   def test_connect_with_primary_killed
     @client = MongoReplicaSetClient.new @rs.repl_set_seeds
     assert @client.connected?
-    @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 2})
+    @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 3})
     assert @client[MONGO_TEST_DB]['bar'].find_one
 
     @rs.primary.kill(Signal.list['KILL'])
@@ -96,7 +96,7 @@ class ClientTest < Test::Unit::TestCase
 
   #def test_connect_with_first_node_removed
   #  @client = MongoReplicaSetClient.new @rs.repl_set_seeds
-  #  @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 2})
+  #  @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 3})
   #
   #  old_primary = [@client.primary_pool.host, @client.primary_pool.port]
   #  old_primary_conn = Mongo::MongoClient.new(*old_primary)

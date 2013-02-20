@@ -25,7 +25,7 @@ end
 module Mongo
   class Config
     DEFAULT_BASE_OPTS = { :host => 'localhost', :dbpath => 'data', :logpath => 'data/log'}
-    DEFAULT_REPLICA_SET = DEFAULT_BASE_OPTS.merge( :replicas => 2, :arbiters => 1 )
+    DEFAULT_REPLICA_SET = DEFAULT_BASE_OPTS.merge( :replicas => 3, :arbiters => 0 )
     DEFAULT_SHARDED_SIMPLE = DEFAULT_BASE_OPTS.merge( :shards => 2, :configs => 1, :routers => 4 )
     DEFAULT_SHARDED_REPLICA = DEFAULT_SHARDED_SIMPLE.merge( :replicas => 3, :arbiters => 0)
 
@@ -354,7 +354,7 @@ module Mongo
 
       def repl_set_config
         members = []
-        @config[:replicas].each{|s| members << { :_id => s[:_id], :host => "#{s[:host]}:#{s[:port]}" } }
+        @config[:replicas].each{|s| members << { :_id => s[:_id], :host => "#{s[:host]}:#{s[:port]}", :tags => { :node => s[:_id].to_s } } }
         @config[:arbiters].each{|s| members << { :_id => s[:_id], :host => "#{s[:host]}:#{s[:port]}", :arbiterOnly => true } }
         {
           :_id => @config[:replicas].first[:replSet],

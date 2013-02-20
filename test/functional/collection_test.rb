@@ -840,7 +840,7 @@ class TestCollection < Test::Unit::TestCase
         r = Code.new("function(k,vals) { return 1; }")
         oh = BSON::OrderedHash.new
         oh[:replace] = 'foo'
-        oh[:db] = 'somedb'
+        oh[:db] = MONGO_TEST_DB
         res = @@test.map_reduce(m, r, :out => (oh))
         assert res["result"]
         assert res["counts"]

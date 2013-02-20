@@ -324,16 +324,11 @@ module Mongo
         message.put_int(1)
         message.put_long(@cursor_id)
         log(:debug, "Cursor#close #{@cursor_id}")
-        begin
-          socket = @pool.checkout
-          @connection.send_message(
-            Mongo::Constants::OP_KILL_CURSORS,
-            message,
-            :socket => socket
-          )
-        ensure
-          socket.checkin
-        end
+        @connection.send_message(
+          Mongo::Constants::OP_KILL_CURSORS,
+          message,
+          :pool => @pool
+        )
       end
       @cursor_id = 0
       @closed    = true
@@ -516,7 +511,7 @@ module Mongo
       message.put_long(@cursor_id)
       log(:debug, "cursor.refresh() for cursor #{@cursor_id}") if @logger
 
-      socket = checkout_socket_from_connection
+      socket = @pool.checkout
 
       begin
         results, @n_received, @cursor_id = @connection.receive_message(
@@ -532,7 +527,9 @@ module Mongo
 
     def checkout_socket_from_connection
       begin
-        if @command && !Mongo::Support::secondary_ok?(@selector)
+        if @pool
+          socket = @pool.checkout
+        elsif @command && !Mongo::Support::secondary_ok?(@selector)
           socket = @connection.checkout_reader(:primary)
         else
           socket = @connection.checkout_reader(@read, @tag_sets, @acceptable_latency)
@@ -542,6 +539,7 @@ module Mongo
         raise ex
       end
       @pool = socket.pool
+      #puts "checkout_socket_from_connection caller:#{caller[0][/:in `([^']+)'/,1]} self:#{self.object_id} @pool.port:#{@pool.port}"
       socket
     end
 

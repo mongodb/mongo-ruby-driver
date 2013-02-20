@@ -255,7 +255,7 @@ class BSONTest < Test::Unit::TestCase
   def test_code
     code = Code.new('this.a.b < this.b')
     assert_equal 17, code.length
-    assert_match /<BSON::Code:\d+ @data="this.a.b < this.b" @scope="{}">/, code.inspect
+    assert_match /<BSON::Code:.*@data="this.a.b < this.b".*>/, code.inspect
     doc = {'$where' => code}
     assert_doc_pass(doc)
     code = 'this.c.d < this.e'.to_bson_code # core_ext.rb
