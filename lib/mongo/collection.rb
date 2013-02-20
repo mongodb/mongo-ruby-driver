@@ -20,20 +20,20 @@ module Mongo
     #
     # @param [String, Symbol] name the name of the collection.
     # @param [DB] db a MongoDB database instance.
-    # 
+    #
     # @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
     #   should be acknowledged
     # @option opts [Boolean] :j (false) Set journal acknowledgement
     # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout
     # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
-    #   
+    #
     #   Notes about write concern:
-    #     These write concern options will be used for insert, update, and remove methods called on this  
-    #     Collection instance. If no value is provided, the default values set on this instance's DB will be used. 
+    #     These write concern options will be used for insert, update, and remove methods called on this
+    #     Collection instance. If no value is provided, the default values set on this instance's DB will be used.
     #     These option values can be overridden for any invocation of insert, update, or remove.
     #
     # @option opts [:create_pk] :pk (BSON::ObjectId) A primary key factory to use
-    #   other than the default BSON::ObjectId. 
+    #   other than the default BSON::ObjectId.
     # @option opts [:primary, :secondary] :read The default read preference for queries
     #   initiates from this connection object. If +:secondary+ is chosen, reads will be sent
     #   to one of the closest available secondary nodes. If a secondary node cannot be located, the
@@ -315,10 +315,10 @@ module Mongo
     # @return [ObjectId] the _id of the saved document.
     #
     # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the write concern for this operation.
-    #   :w > 0 will run a +getlasterror+ command on the database to report any assertion. 
+    #   :w > 0 will run a +getlasterror+ command on the database to report any assertion.
     #   :j will confirm a write has been committed to the journal,
     #   :wtimeout specifies how long to wait for write confirmation,
-    #   :fsync will confirm that a write has been fsynced. 
+    #   :fsync will confirm that a write has been fsynced.
     #   Options provided here will override any write concern options set on this collection,
     #   its database object, or the current connection. See the options
     #   for DB#get_last_error.
@@ -351,23 +351,23 @@ module Mongo
     # @option opts [Boolean] :j (false) Set journal acknowledgement
     # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout
     # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
-    #   
+    #
     #   Notes on write concern:
     #     Options provided here will override any write concern options set on this collection,
-    #     its database object, or the current connection. See the options for +DB#get_last_error+. 
+    #     its database object, or the current connection. See the options for +DB#get_last_error+.
     #
     # @option opts [Boolean] :continue_on_error (+false+) If true, then
     #   continue a bulk insert even if one of the documents inserted
     #   triggers a database assertion (as in a duplicate insert, for instance).
     #   If not acknowledging writes, the list of ids returned will
     #   include the object ids of all documents attempted on insert, even
-    #   if some are rejected on error. When acknowledging writes, any error will raise an 
+    #   if some are rejected on error. When acknowledging writes, any error will raise an
     #   OperationFailure exception.
     #   MongoDB v2.0+.
     # @option opts [Boolean] :collect_on_error (+false+) if true, then
     #   collects invalid documents as an array. Note that this option changes the result format.
     #
-    # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails. 
+    # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails.
     #
     # @core insert insert-instance_method
     def insert(doc_or_docs, opts={})
@@ -392,7 +392,7 @@ module Mongo
     #
     #   Notes on write concern:
     #     Options provided here will override any write concern options set on this collection,
-    #     its database object, or the current connection. See the options for +DB#get_last_error+.  
+    #     its database object, or the current connection. See the options for +DB#get_last_error+.
     #
     # @example remove all documents from the 'users' collection:
     #   users.remove
@@ -446,7 +446,7 @@ module Mongo
     #
     #   Notes on write concern:
     #     Options provided here will override any write concern options set on this collection,
-    #     its database object, or the current connection. See the options for DB#get_last_error. 
+    #     its database object, or the current connection. See the options for DB#get_last_error.
     #
     # @return [Hash, true] Returns a Hash containing the last error object if acknowledging writes.
     #   Otherwise, returns true.
@@ -460,8 +460,8 @@ module Mongo
       message = BSON::ByteBuffer.new("\0\0\0\0", @connection.max_message_size)
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
       update_options  = 0
-      update_options += 1 if opts[:upsert]
-      update_options += 2 if opts[:multi]
+      update_options += 1 if opts[:upsert] || opts['upsert']
+      update_options += 2 if opts[:multi] || opts['multi']
 
       # Determine if update document has modifiers and check keys if so
       check_keys = document.keys.first.to_s.start_with?("$") ? false : true
@@ -626,7 +626,7 @@ module Mongo
     #
     # @param [Array] pipeline Should be a single array of pipeline operator hashes.
     #
-    #   '$project' Reshapes a document stream by including fields, excluding fields, inserting computed fields, 
+    #   '$project' Reshapes a document stream by including fields, excluding fields, inserting computed fields,
     #   renaming fields,or creating/populating fields that hold sub-documents.
     #
     #   '$match' Query-like interface for filtering documents out of the aggregation pipeline.
