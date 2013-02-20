@@ -51,6 +51,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     @db = @client.db(MONGO_TEST_DB)
     @db.drop_collection("cursor_tests")
     @coll = @db.collection("cursor_tests")
+    insert_docs
 
     # Setup Direct Connections
     @primary = Mongo::MongoClient.new(*@client.manager.primary)
@@ -58,9 +59,8 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
 
   def insert_docs
     @n_docs = 102 # batch size is 101
-    @object_id = BSON::ObjectId.new
     @n_docs.times do |i|
-      @coll.insert({ "x" => @object_id }, :w => 3)
+      @coll.insert({ "x" => i }, :w => 3)
     end
   end
 
@@ -84,6 +84,8 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
   def route_query(read)
     read_opts = {:read => read}
     read_opts[:tag_sets] = [{:node => @tag}] unless read == :primary
+    object_id = BSON::ObjectId.new
+    read_opts[:comment] = object_id
 
     # set profiling level to 2 on client and member to which the query will be routed
     @client.db(MONGO_TEST_DB).profiling_level = :all
@@ -92,7 +94,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
       node.db(MONGO_TEST_DB).profiling_level = :all
     end
 
-    @cursor = @coll.find({"x" => @object_id }, read_opts)
+    @cursor = @coll.find({}, read_opts)
     @cursor.next
 
     # on client and other members set profiling level to 0
@@ -103,7 +105,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     end
     # do a query on system.profile of the reader to see if it was used for the query
     profiled_queries = @read.db(MONGO_TEST_DB).collection('system.profile').find({
-      'ns' => "#{MONGO_TEST_DB}.cursor_tests", "query.x" => @object_id })
+      'ns' => "#{MONGO_TEST_DB}.cursor_tests", "query.$comment" => object_id })
 
     assert_equal 1, profiled_queries.count
   end
@@ -113,7 +115,6 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
   def cursor_get_more_test(read=:primary)
     set_read_client_and_tag(read)
     10.times do
-      insert_docs
       # assert that the query went to the correct member
       route_query(read)
       docs_count = 1
@@ -134,7 +135,6 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
   def kill_cursor_test(read=:primary)
     set_read_client_and_tag(read)
     10.times do
-      insert_docs
       # assert that the query went to the correct member
       route_query(read)
       cursor_id = @cursor.cursor_id
@@ -153,7 +153,6 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
 
   def assert_cursors_on_members(read=:primary)
     set_read_client_and_tag(read)
-    insert_docs
     # assert that the query went to the correct member
     route_query(read)
     cursor_id = @cursor.cursor_id
