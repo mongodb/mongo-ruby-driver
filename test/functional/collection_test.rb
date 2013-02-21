@@ -902,6 +902,72 @@ class TestCollection < Test::Unit::TestCase
     # assert_equal :mike, @@test.find_one("foo" => "mike")["foo"]
   end
 
+  def test_batch_size
+    n_docs = 6
+    batch_size = n_docs/2
+    n_docs.times do |i|
+      @@test.save(:foo => i)
+    end
+
+    doc_count = 0
+    cursor = @@test.find({}, :batch_size => batch_size)
+    cursor.next
+    n_returned = cursor.instance_variable_get(:@returned)
+    assert_equal batch_size, n_returned
+    doc_count += batch_size
+    batch_size.times { cursor.next }
+    n_returned = cursor.instance_variable_get(:@returned)
+    assert_equal doc_count + batch_size, n_returned
+    doc_count += batch_size
+    assert_equal n_docs, doc_count
+  end
+
+  def test_batch_size_with_smaller_limit
+    n_docs = 6
+    batch_size = n_docs/2
+    n_docs.times do |i|
+      @@test.insert(:foo => i)
+    end
+
+    cursor = @@test.find({}, :batch_size => batch_size, :limit => 2)
+    cursor.next
+    n_returned = cursor.instance_variable_get(:@returned)
+    assert_equal 2, n_returned
+  end
+
+  def test_batch_size_with_larger_limit
+    n_docs = 6
+    batch_size = n_docs/2
+    n_docs.times do |i|
+      @@test.insert(:foo => i)
+    end
+
+    doc_count = 0
+    cursor = @@test.find({}, :batch_size => batch_size, :limit => n_docs + 5)
+    cursor.next
+    n_returned = cursor.instance_variable_get(:@returned)
+    assert_equal batch_size, n_returned
+    doc_count += batch_size
+    batch_size.times { cursor.next }
+    n_returned = cursor.instance_variable_get(:@returned)
+    assert_equal doc_count + batch_size, n_returned
+    doc_count += batch_size
+    assert_equal n_docs, doc_count
+end
+
+  def test_batch_size_with_negative_limit
+    n_docs = 6
+    batch_size = n_docs/2
+    n_docs.times do |i|
+      @@test.insert(:foo => i)
+    end
+
+    cursor = @@test.find({}, :batch_size => batch_size, :limit => -7)
+    cursor.next
+    n_returned = cursor.instance_variable_get(:@returned)
+    assert_equal n_docs, n_returned
+  end
+
   def test_limit_and_skip
     10.times do |i|
       @@test.save(:foo => i)
