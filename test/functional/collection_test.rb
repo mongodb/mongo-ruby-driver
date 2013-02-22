@@ -912,12 +912,10 @@ class TestCollection < Test::Unit::TestCase
     doc_count = 0
     cursor = @@test.find({}, :batch_size => batch_size)
     cursor.next
-    n_returned = cursor.instance_variable_get(:@returned)
-    assert_equal batch_size, n_returned
+    assert_equal batch_size, cursor.instance_variable_get(:@returned)
     doc_count += batch_size
     batch_size.times { cursor.next }
-    n_returned = cursor.instance_variable_get(:@returned)
-    assert_equal doc_count + batch_size, n_returned
+    assert_equal doc_count + batch_size, cursor.instance_variable_get(:@returned)
     doc_count += batch_size
     assert_equal n_docs, doc_count
   end
@@ -931,8 +929,7 @@ class TestCollection < Test::Unit::TestCase
 
     cursor = @@test.find({}, :batch_size => batch_size, :limit => 2)
     cursor.next
-    n_returned = cursor.instance_variable_get(:@returned)
-    assert_equal 2, n_returned
+    assert_equal 2, cursor.instance_variable_get(:@returned)
   end
 
   def test_batch_size_with_larger_limit
@@ -945,12 +942,10 @@ class TestCollection < Test::Unit::TestCase
     doc_count = 0
     cursor = @@test.find({}, :batch_size => batch_size, :limit => n_docs + 5)
     cursor.next
-    n_returned = cursor.instance_variable_get(:@returned)
-    assert_equal batch_size, n_returned
+    assert_equal batch_size, cursor.instance_variable_get(:@returned)
     doc_count += batch_size
     batch_size.times { cursor.next }
-    n_returned = cursor.instance_variable_get(:@returned)
-    assert_equal doc_count + batch_size, n_returned
+    assert_equal doc_count + batch_size, cursor.instance_variable_get(:@returned)
     doc_count += batch_size
     assert_equal n_docs, doc_count
 end
@@ -964,8 +959,7 @@ end
 
     cursor = @@test.find({}, :batch_size => batch_size, :limit => -7)
     cursor.next
-    n_returned = cursor.instance_variable_get(:@returned)
-    assert_equal n_docs, n_returned
+    assert_equal n_docs, cursor.instance_variable_get(:@returned)
   end
 
   def test_limit_and_skip
