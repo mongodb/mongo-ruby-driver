@@ -8,40 +8,51 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
   end
 
   def test_connect_and_manual_refresh_with_secondaries_down
-    @rs.secondaries.each{|s| s.stop}
+    num_secondaries = @rs.secondaries.size
     client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :refresh_mode => false)
 
-    assert_equal Set.new, client.secondaries
+    assert_equal num_secondaries, client.secondaries.size
     assert client.connected?
     assert_equal client.read_pool, client.primary_pool
 
-    # Refresh with no change to set
+    @rs.secondaries.each {|s| s.stop}
+
     client.refresh
-    assert_equal Set.new, client.secondaries
+    assert client.secondaries.empty?
     assert client.connected?
     assert_equal client.read_pool, client.primary_pool
 
     # Test no changes after restart until manual refresh
     @rs.restart
-    assert_equal Set.new, client.secondaries
+    assert client.secondaries.empty?
     assert client.connected?
     assert_equal client.read_pool, client.primary_pool
 
     # Refresh and ensure state
     client.refresh
     assert_equal client.read_pool, client.primary_pool
-    assert_equal 2, client.secondaries.length
+    assert_equal num_secondaries, client.secondaries.size
   end
 
   def test_automated_refresh_with_secondaries_down
-    @rs.secondaries.each{|s| s.stop}
+    num_secondaries = @rs.secondaries.size
     client = MongoReplicaSetClient.new(@rs.repl_set_seeds,
       :refresh_interval => 1, :refresh_mode => :sync, :read => :secondary_preferred)
 
     # Ensure secondaries not available and read from primary
-    assert_equal Set.new, client.secondaries
+    assert_equal num_secondaries, client.secondaries.size
     assert client.connected?
-    assert client.manager.pools.member?(client.manager.read_pool)
+    assert client.secondary_pools.include?(client.read_pool)
+
+    @rs.secondaries.each{|s| s.stop}
+    sleep(2)
+
+    client['foo']['bar'].find_one
+
+    assert client.secondaries.empty?
+    assert client.connected?
+    assert_equal client.read_pool, client.primary_pool
+
     old_refresh_version = client.refresh_version
 
     # Restart nodes and ensure refresh interval has passed
@@ -56,7 +67,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
 
     assert client.refresh_version > old_refresh_version,
       "Refresh version hasn't changed."
-    assert client.secondaries.length == 2,
+    assert_equal num_secondaries, client.secondaries.size
       "No secondaries have been added."
     assert client.manager.read_pool != client.manager.primary,
       "Read pool and primary pool are identical."
@@ -66,11 +77,11 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     client = MongoReplicaSetClient.new(@rs.repl_set_seeds,
       :refresh_interval => 1, :refresh_mode => :sync)
 
-    num_secondaries = client.secondary_pools.length
+    num_secondaries = client.secondary_pools.size
     old_refresh_version = client.refresh_version
 
-    @rs.kill_secondary
-    sleep(1)
+    @rs.stop_secondary
+    sleep(2)
 
     assert client.refresh_version == old_refresh_version,
       "Refresh version has changed."
@@ -79,16 +90,16 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
 
     assert client.refresh_version > old_refresh_version,
       "Refresh version hasn't changed."
-    assert_equal num_secondaries - 1, client.secondaries.length
-    assert_equal num_secondaries - 1, client.secondary_pools.length
+    assert_equal num_secondaries - 1, client.secondaries.size
+    assert_equal num_secondaries - 1, client.secondary_pools.size
 
-    @rs.start
+    @rs.restart
     sleep(2)
 
     client['foo']['bar'].find_one
 
-    assert_equal num_secondaries, client.secondaries.length
-    assert_equal num_secondaries, client.secondary_pools.length
+    assert_equal num_secondaries, client.secondaries.size
+    assert_equal num_secondaries, client.secondary_pools.size
   end
 =begin
   def test_automated_refresh_with_removed_node
