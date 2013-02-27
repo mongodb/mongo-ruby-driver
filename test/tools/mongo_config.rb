@@ -442,12 +442,12 @@ module Mongo
         members_by_name(secondary_names)
       end
 
-      def kill_primary
-        primary.kill
+      def stop_primary
+        primary.stop
       end
 
-      def kill_secondary
-        secondaries[rand(secondaries.length)].kill
+      def stop_secondary
+        secondaries[rand(secondaries.length)].stop
       end
 
       def replicas
