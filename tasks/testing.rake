@@ -66,7 +66,6 @@ namespace :test do
     Rake::TestTask.new(suite.to_sym) do |t|
       t.test_files = FileList["test/#{suite}/*_test.rb"]
       t.libs << 'test'
-      t.ruby_opts.concat ['-J-d32', '-J-client'] if RUBY_PLATFORM =~ /java/
     end
   end
 
@@ -77,7 +76,6 @@ namespace :test do
       'test/replica_set/read_preference_test.rb'
     ]
     t.libs << 'test'
-    t.ruby_opts.concat ['-J-d32', '-J-client'] if RUBY_PLATFORM =~ /java/
     #t.verbose = true
     #t.options = '-v'
   end
@@ -88,7 +86,6 @@ namespace :test do
       "test/functional/grid_test.rb"
     ]
     t.libs << 'test'
-    t.ruby_opts.concat ['-J-d32', '-J-client'] if RUBY_PLATFORM =~ /java/
   end
 
   desc "Runs test cleanup"
