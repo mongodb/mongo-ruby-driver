@@ -552,7 +552,7 @@ module Mongo
       message.put_int(@options)
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@collection.name}")
       message.put_int(@skip)
-      message.put_int(@limit)
+      @batch_size > 1 ? message.put_int(@batch_size) : message.put_int(@limit)
       spec = query_contains_special_fields? ? construct_query_spec : @selector
       message.put_binary(BSON::BSON_CODER.serialize(spec, false, false, @connection.max_bson_size).to_s)
       message.put_binary(BSON::BSON_CODER.serialize(@fields, false, false, @connection.max_bson_size).to_s) if @fields
