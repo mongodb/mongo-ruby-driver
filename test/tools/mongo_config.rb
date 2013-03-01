@@ -430,8 +430,12 @@ module Mongo
 
       def members_by_name(names)
         names.collect do |name|
-          servers.find{|server| server.host_port == name}
+          member_by_name(name)
         end.compact
+      end
+
+      def member_by_name(name)
+        servers.find{|server| server.host_port == name}
       end
 
       def primary
