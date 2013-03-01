@@ -41,6 +41,11 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     assert_cursors_on_members(:secondary)
   end
 
+  def test_intervening_query_secondary
+    setup_client(:primary)
+    refresh_while_iterating(:secondary)
+  end
+
   private
 
   def setup_client(read=:primary)
@@ -168,5 +173,26 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     assert_raise Mongo::OperationFailure do
       cursor_clone.next
     end
+  end
+
+  def refresh_while_iterating(read)
+    set_read_client_and_tag(read)
+
+    read_opts = {:read => read}
+    read_opts[:tag_sets] = [{:node => @tag}]
+    read_opts[:batch_size] = 2
+    cursor = @coll.find({}, read_opts)
+
+    2.times { cursor.next }
+    port = cursor.instance_variable_get(:@pool).port
+    host = cursor.instance_variable_get(:@pool).host
+    # Refresh connection
+    @client.refresh
+    assert_nothing_raised do
+      cursor.next
+    end
+
+    assert_equal port, cursor.instance_variable_get(:@pool).port
+    assert_equal host, cursor.instance_variable_get(:@pool).host
   end
 end
