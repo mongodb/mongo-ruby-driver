@@ -106,7 +106,7 @@ class CollectionTest < Test::Unit::TestCase
       @coll.ensure_index [["x", Mongo::DESCENDING]]
     end
 
-    should "call generate_indexes for a new direction on the same field for ensure_index" do
+    should "call generate_indexes for a new type on the same field for ensure_index" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @client['testing']
       @coll = @db.collection('books')

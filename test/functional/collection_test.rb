@@ -1252,10 +1252,34 @@ end
       assert_nil @geo.index_information['baz']
     end
 
+    #should "create a text index" do
+    #  @geo.save({'title' => "some text"})
+    #  @geo.create_index([['title', Mongo::TEXT]])
+    #  assert @geo.index_information['title_text']
+    #end
+
+    should "create a hashed index" do
+      @geo.save({'a' => 1})
+      @geo.create_index([['a', Mongo::HASHED]])
+      assert @geo.index_information['a_hashed']
+    end
+
     should "create a geospatial index" do
       @geo.save({'loc' => [-100, 100]})
       @geo.create_index([['loc', Mongo::GEO2D]])
       assert @geo.index_information['loc_2d']
+    end
+
+    should "create a geoHaystack index" do
+      @geo.save({ "_id" => 100, "pos" => { "long" => 126.9, "lat" => 35.2 }, "type" => "restaurant"})
+      @geo.create_index([['pos', Mongo::GEOHAYSTACK], ['type', Mongo::ASCENDING]], :bucket_size => 1)
+      puts @geo.index_information['loc_geoHaystack_type_1']
+    end
+
+    should "create a geo 2dsphere index" do
+      @collection.insert({"coordinates" => [ 5 , 5 ], "type" => "Point"})
+      @geo.create_index([['coordinates', Mongo::GEO2DSPHERE]])
+      assert @geo.index_information['coordinates_2dsphere']
     end
 
     should "create a unique index" do
