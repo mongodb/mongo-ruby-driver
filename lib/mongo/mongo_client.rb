@@ -241,7 +241,7 @@ module Mongo
     def apply_saved_authentication(opts={})
       return false if @auths.empty?
       @auths.each do |auth|
-        self[auth['db_name']].issue_authentication(auth['username'], auth['password'], false,
+        self[auth[:db_name]].issue_authentication(auth[:username], auth[:password], false,
           :socket => opts[:socket])
       end
       true
@@ -261,11 +261,15 @@ module Mongo
     #
     # @return [Hash] a hash representing the authentication just added.
     def add_auth(db_name, username, password)
-      remove_auth(db_name)
-      auth = {}
-      auth['db_name']  = db_name
-      auth['username'] = username
-      auth['password'] = password
+      if @auths.any? {|a| a[:db_name] == db_name}
+        raise MongoArgumentError, "Cannot apply multiple authentications to database '#{db_name}'"
+      end
+
+      auth = {
+        :db_name  => db_name,
+        :username => username,
+        :password => password
+      }
       @auths << auth
       auth
     end
@@ -277,11 +281,7 @@ module Mongo
     # @return [Boolean]
     def remove_auth(db_name)
       return unless @auths
-      if @auths.reject! { |a| a['db_name'] == db_name }
-        true
-      else
-        false
-      end
+      @auths.reject! { |a| a[:db_name] == db_name } ? true : false
     end
 
     # Remove all authentication information stored in this connection.

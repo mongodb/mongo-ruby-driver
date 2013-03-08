@@ -99,10 +99,8 @@ module Mongo
     #
     # @core authenticate authenticate-instance_method
     def authenticate(username, password, save_auth=true)
-      if @connection.pool_size > 1
-        if !save_auth
-          raise MongoArgumentError, "If using connection pooling, :save_auth must be set to true."
-        end
+      if @connection.pool_size > 1 && !save_auth
+        raise MongoArgumentError, "If using connection pooling, :save_auth must be set to true."
       end
 
       begin
@@ -206,16 +204,12 @@ module Mongo
     #
     # @return [Boolean]
     def logout(opts={})
-      if @connection.pool_size > 1
-        @connection.logout_pools(@name)
-      end
-
+      @connection.logout_pools(@name) if @connection.pool_size > 1
       issue_logout(opts)
     end
 
     def issue_logout(opts={})
-      doc = command({:logout => 1}, :socket => opts[:socket])
-      if ok?(doc)
+      if ok?(doc = command({:logout => 1}, :socket => opts[:socket]))
         @connection.remove_auth(@name)
         true
       else

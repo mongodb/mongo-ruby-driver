@@ -26,17 +26,17 @@ class URITest < Test::Unit::TestCase
 
   def test_complex_passwords
     parser = Mongo::URIParser.new('mongodb://bob:secret.word@a.example.com:27018/test')
-    assert_equal "bob", parser.auths[0]["username"]
-    assert_equal "secret.word", parser.auths[0]["password"]
+    assert_equal "bob", parser.auths[0][:username]
+    assert_equal "secret.word", parser.auths[0][:password]
 
     parser = Mongo::URIParser.new('mongodb://bob:s-_3#%R.t@a.example.com:27018/test')
-    assert_equal "bob", parser.auths[0]["username"]
-    assert_equal "s-_3#%R.t", parser.auths[0]["password"]
+    assert_equal "bob", parser.auths[0][:username]
+    assert_equal "s-_3#%R.t", parser.auths[0][:password]
   end
 
   def test_complex_usernames
     parser = Mongo::URIParser.new('mongodb://b:ob:secret.word@a.example.com:27018/test')
-    assert_equal "b:ob", parser.auths[0]["username"]
+    assert_equal "b:ob", parser.auths[0][:username]
   end
 
   def test_passwords_contain_no_commas
@@ -51,12 +51,12 @@ class URITest < Test::Unit::TestCase
     assert_equal ['a.example.com', 27018], parser.nodes[0]
     assert_equal ['b.example.com', 27017], parser.nodes[1]
     assert_equal 2, parser.auths.length
-    assert_equal "bob", parser.auths[0]["username"]
-    assert_equal "secret", parser.auths[0]["password"]
-    assert_equal "test", parser.auths[0]["db_name"]
-    assert_equal "bob", parser.auths[1]["username"]
-    assert_equal "secret", parser.auths[1]["password"]
-    assert_equal "test", parser.auths[1]["db_name"]
+    assert_equal "bob", parser.auths[0][:username]
+    assert_equal "secret", parser.auths[0][:password]
+    assert_equal "test", parser.auths[0][:db_name]
+    assert_equal "bob", parser.auths[1][:username]
+    assert_equal "secret", parser.auths[1][:password]
+    assert_equal "test", parser.auths[1][:db_name]
   end
 
   def test_opts_with_semincolon_separator
