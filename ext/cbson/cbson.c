@@ -954,7 +954,13 @@ static VALUE objectid_from_string(VALUE self, VALUE str)
     int i;
 
     if (!legal_objectid_str(str)) {
+      if (TYPE(str) == T_STRING) {
         rb_raise(InvalidObjectId, "illegal ObjectId format: %s", RSTRING_PTR(str));
+      } else {
+        VALUE inspect;
+        inspect = rb_funcall(str, rb_intern("to_s"), 0);
+        rb_raise(InvalidObjectId, "not a String: %s", inspect);
+      }
     }
 
     oid = rb_ary_new2(12);
