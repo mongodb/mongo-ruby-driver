@@ -128,7 +128,7 @@ class ClientTest < Test::Unit::TestCase
       should "parse a uri with a hyphen & underscore in the username or password" do
         @client = MongoClient.from_uri("mongodb://hyphen-user_name:p-s_s@localhost:27017/db", :connect => false)
         assert_equal ['localhost', 27017], @client.host_port
-        auth_hash = { 'db_name' => 'db', 'username' => 'hyphen-user_name', "password" => 'p-s_s' }
+        auth_hash = { :db_name => 'db', :username => 'hyphen-user_name', :password => 'p-s_s' }
         assert_equal auth_hash, @client.auths[0]
       end
 
@@ -211,7 +211,7 @@ class ClientTest < Test::Unit::TestCase
         ENV['MONGODB_URI'] = "mongodb://hyphen-user_name:p-s_s@localhost:27017/db?connect=false"
         @client = MongoClient.new
         assert_equal ['localhost', 27017], @client.host_port
-        auth_hash = { 'db_name' => 'db', 'username' => 'hyphen-user_name', "password" => 'p-s_s' }
+        auth_hash = { :db_name => 'db', :username => 'hyphen-user_name', :password => 'p-s_s' }
         assert_equal auth_hash, @client.auths[0]
       end
 

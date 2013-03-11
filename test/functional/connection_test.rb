@@ -336,8 +336,8 @@ class TestConnection < Test::Unit::TestCase
   context "Saved authentications" do
     setup do
       @client = standard_connection
-      @auth = {'db_name' => 'test', 'username' => 'bob', 'password' => 'secret'}
-      @client.add_auth(@auth['db_name'], @auth['username'], @auth['password'])
+      @auth = {:db_name => 'test', :username => 'bob', :password => 'secret'}
+      @client.add_auth(@auth[:db_name], @auth[:username], @auth[:password])
     end
 
     teardown do
@@ -348,11 +348,11 @@ class TestConnection < Test::Unit::TestCase
       assert_equal @auth, @client.auths[0]
     end
 
-    should "replace the auth if given a new auth for the same db" do
-      auth = {'db_name' => 'test', 'username' => 'mickey', 'password' => 'm0u53'}
-      @client.add_auth(auth['db_name'], auth['username'], auth['password'])
-      assert_equal 1, @client.auths.length
-      assert_equal auth, @client.auths[0]
+    should "not allow multiple authentications for the same db" do
+      auth = {:db_name => 'test', :username => 'mickey', :password => 'm0u53'}
+      assert_raise Mongo::MongoArgumentError do
+        @client.add_auth(auth[:db_name], auth[:username], auth[:password])
+      end
     end
 
     should "remove auths by database" do

@@ -285,7 +285,7 @@ module Mongo
       end
 
       if uname && pwd && db
-        auths << {'db_name' => db, 'username' => uname, 'password' => pwd}
+        auths << {:db_name => db, :username => uname, :password => pwd}
       elsif uname || pwd
         raise MongoArgumentError, "MongoDB URI must include username, password, "
           "and db if username and password are specified."
