@@ -165,14 +165,14 @@ class URITest < Test::Unit::TestCase
     assert_equal :nearest, parser.connection_options[:read]
   end
 
-  def test_read_preference_connection_options_prefers_preference_over_slaveok
-    parser = Mongo::URIParser.new("mongodb://localhost:27018?replicaset=test&readPreference=nearest&slaveok=true")
+  def test_read_preference_connection_options_with_no_replica_set
+    parser = Mongo::URIParser.new("mongodb://localhost:27018?readPreference=nearest")
     assert_equal :nearest, parser.connection_options[:read]
   end
 
-  def test_read_preference_when_no_replica_set
-    parser = Mongo::URIParser.new("mongodb://localhost:27018?readPreference=nearest")
-    assert_nil parser.connection_options[:read]
+  def test_read_preference_connection_options_prefers_preference_over_slaveok
+    parser = Mongo::URIParser.new("mongodb://localhost:27018?replicaset=test&readPreference=nearest&slaveok=true")
+    assert_equal :nearest, parser.connection_options[:read]
   end
 
   def test_connection_when_sharded_with_no_options

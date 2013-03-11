@@ -220,7 +220,7 @@ module Mongo
         opts[:pool_size] = @pool_size
       end
 
-      if @readpreference && replicaset?
+      if @readpreference
         opts[:read] = @readpreference
       end
 
