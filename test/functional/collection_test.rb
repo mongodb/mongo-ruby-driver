@@ -692,12 +692,12 @@ class TestCollection < Test::Unit::TestCase
     class MyArray < Array; end
     def test_aggregate_accepts_class_extensions_in_args
       setup_aggregate_data
-      hash = MyHash.new
-      hash["$project"] = {"tags" => 1, "pageViews" => 1}
-      hash["$match"] = {"pageViews" => 7}
-      array = MyArray.new
-      array << hash
-      results = @@test.aggregate(array)
+      my_hash = MyHash.new
+      my_hash["$project"] = {"tags" => 1, "pageViews" => 1}
+      my_hash["$match"] = {"pageViews" => 7}
+      my_array = Array.new
+      my_array << my_hash
+      results = @@test.aggregate(my_array)
       assert_equal 1, results.length
     end
 
