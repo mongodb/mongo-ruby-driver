@@ -441,7 +441,7 @@ module Mongo
     #
     # @param [String] collection_name
     #
-    # @return [Hash] keys are index names and the values are lists of [key, direction] pairs
+    # @return [Hash] keys are index names and the values are lists of [key, type] pairs
     #   defining the index.
     def index_information(collection_name)
       sel  = {:ns => full_collection_name(collection_name)}

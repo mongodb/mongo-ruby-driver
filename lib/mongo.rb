@@ -2,7 +2,18 @@ module Mongo
   ASCENDING   =  1
   DESCENDING  = -1
   GEO2D       = '2d'
+  GEO2DSPHERE = '2dsphere'
   GEOHAYSTACK = 'geoHaystack'
+  TEXT        = 'text'
+  HASHED      = 'hashed'
+  INDEX_TYPES = [ ASCENDING,
+                  DESCENDING,
+                  GEO2D,
+                  GEO2DSPHERE,
+                  GEOHAYSTACK,
+                  TEXT,
+                  HASHED
+                ]
 
   DEFAULT_MAX_BSON_SIZE = 4 * 1024 * 1024
   DEFAULT_MAX_MESSAGE_SIZE = DEFAULT_MAX_BSON_SIZE * 2
