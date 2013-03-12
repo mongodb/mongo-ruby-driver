@@ -651,8 +651,8 @@ module Mongo
     # @raise MongoOperationFailure if the aggregate command fails.
     #
     def aggregate(pipeline=nil, opts={})
-      raise MongoArgumentError, "pipeline must be an array of operators" unless pipeline.class == Array
-      raise MongoArgumentError, "pipeline operators must be hashes" unless pipeline.all? { |op| op.class == Hash }
+      raise MongoArgumentError, "pipeline must be an array of operators" unless pipeline.is_a? Array
+      raise MongoArgumentError, "pipeline operators must be hashes" unless pipeline.all? { |op| op.is_a? Hash }
 
       hash = BSON::OrderedHash.new
       hash['aggregate'] = self.name
