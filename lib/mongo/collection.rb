@@ -483,8 +483,9 @@ module Mongo
     #
     # @param [String, Array] spec
     #   should be either a single field name or an array of
-    #   [field name, direction] pairs. Directions should be specified
-    #   as Mongo::ASCENDING, Mongo::DESCENDING, or Mongo::GEO2D.
+    #   [field name, type] pairs. Index types should be specified
+    #   as Mongo::ASCENDING, Mongo::DESCENDING, Mongo::GEO2D, Mongo::GEO2DSPHERE, Mongo::GEOHAYSTACK,
+    #   Mongo::TEXT or Mongo::HASHED.
     #
     #   Note that geospatial indexing only works with versions of MongoDB >= 1.3.3+. Keep in mind, too,
     #   that in order to geo-index a given field, that field must reference either an array or a sub-object
@@ -501,6 +502,8 @@ module Mongo
     #   feature is only available in MongoDB >= 1.3.2.
     # @option opts [Boolean] :drop_dups (nil) If creating a unique index on a collection with pre-existing records,
     #   this option will keep the first document the database indexes and drop all subsequent with duplicate values.
+    # @option opts [Integer] :bucket_size (nil) For use with geoHaystack indexes. Number of documents to group
+    #   together within a certain proximity to a given longitude and latitude.
     # @option opts [Integer] :min (nil) specify the minimum longitude and latitude for a geo index.
     # @option opts [Integer] :max (nil) specify the maximum longitude and latitude for a geo index.
     #
@@ -525,11 +528,12 @@ module Mongo
     #
     # @core indexes create_index-instance_method
     def create_index(spec, opts={})
-      opts[:dropDups] = opts[:drop_dups] if opts[:drop_dups]
-      field_spec      = parse_index_spec(spec)
-      opts            = opts.dup
-      name            = opts.delete(:name) || generate_index_name(field_spec)
-      name            = name.to_s if name
+      opts[:dropDups]   = opts[:drop_dups] if opts[:drop_dups]
+      opts[:bucketSize] = opts[:bucket_size] if opts[:bucket_size]
+      field_spec        = parse_index_spec(spec)
+      opts              = opts.dup
+      name              = opts.delete(:name) || generate_index_name(field_spec)
+      name              = name.to_s if name
       generate_indexes(field_spec, name, opts)
       name
     end
@@ -551,11 +555,12 @@ module Mongo
     #
     # @return [String] the name of the index.
     def ensure_index(spec, opts={})
-      now             = Time.now.utc.to_i
-      opts[:dropDups] = opts[:drop_dups] if opts[:drop_dups]
-      field_spec      = parse_index_spec(spec)
-      name            = opts[:name] || generate_index_name(field_spec)
-      name            = name.to_s if name
+      now               = Time.now.utc.to_i
+      opts[:dropDups]   = opts[:drop_dups] if opts[:drop_dups]
+      opts[:bucketSize] = opts[:bucket_size] if opts[:bucket_size]
+      field_spec        = parse_index_spec(spec)
+      name              = opts[:name] || generate_index_name(field_spec)
+      name              = name.to_s if name
 
       if !@cache[name] || @cache[name] <= now
         generate_indexes(field_spec, name, opts)
@@ -1017,11 +1022,13 @@ module Mongo
           end
       elsif spec.is_a?(Array) && spec.all? {|field| field.is_a?(Array) }
         spec.each do |f|
-          if [Mongo::ASCENDING, Mongo::DESCENDING, Mongo::GEO2D, Mongo::GEOHAYSTACK].include?(f[1])
+          if Mongo::INDEX_TYPES.include?(f[1])
             field_spec[f[0].to_s] = f[1]
           else
             raise MongoArgumentError, "Invalid index field #{f[1].inspect}; " +
-              "should be one of Mongo::ASCENDING (1), Mongo::DESCENDING (-1) or Mongo::GEO2D ('2d')."
+              "should be one of Mongo::ASCENDING (#{Mongo::ASCENDING}), Mongo::DESCENDING (#{Mongo::DESCENDING}), " +
+              "Mongo::GEOHAYSTACK ('#{Mongo::GEOHAYSTACK}'), Mongo::GEO2DSPHERE ('#{Mongo::GEO2DSPHERE}'), " +
+              "Mongo::TEXT ('#{Mongo::TEXT}'), or Mongo::HASHED ('#{Mongo::HASHED}')"
           end
         end
       else
@@ -1109,8 +1116,8 @@ module Mongo
 
     def generate_index_name(spec)
       indexes = []
-      spec.each_pair do |field, direction|
-        indexes.push("#{field}_#{direction}")
+      spec.each_pair do |field, type|
+        indexes.push("#{field}_#{type}")
       end
       indexes.join("_")
     end
