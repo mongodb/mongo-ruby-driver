@@ -539,7 +539,6 @@ module Mongo
         raise ex
       end
       @pool = socket.pool
-      #puts "checkout_socket_from_connection caller:#{caller[0][/:in `([^']+)'/,1]} self:#{self.object_id} @pool.port:#{@pool.port}"
       socket
     end
 
