@@ -2,6 +2,7 @@ module Mongo
 
   # Instantiates and manages connections to a MongoDB replica set.
   class MongoReplicaSetClient < MongoClient
+    include ReadPreference
     include ThreadLocalVariableManager
 
     REPL_SET_OPTS = [
@@ -268,7 +269,7 @@ module Mongo
     #
     # @return [Boolean]
     def read_primary?
-      @manager.read_pool == @manager.primary_pool
+      read_pool == primary_pool
     end
     alias :primary? :read_primary?
 
@@ -282,6 +283,7 @@ module Mongo
 
       # Clear the reference to this object.
       thread_local[:managers].delete(self)
+      unpin_pool
 
       @connected = false
     end
@@ -335,9 +337,9 @@ module Mongo
       end
     end
 
-    def checkout_reader(mode=@read, tag_sets=@tag_sets, acceptable_latency=@acceptable_latency)
+    def checkout_reader(read_pref=nil)
       checkout do
-        pool = read_pool(mode, tag_sets, acceptable_latency)
+        pool = read_pool(read_pref)
         get_socket_from_pool(pool)
       end
     end
@@ -361,11 +363,20 @@ module Mongo
       thread_local[:managers][self] = @manager
     end
 
-    def pin_pool(pool)
-      thread_local[:pinned_pools][@manager.object_id] = pool if @manager
+    def pinned_pool
+      thread_local[:pinned_pools][@manager.object_id] if @manager
     end
 
-    def unpin_pool(pool)
+    def pin_pool(pool, read_preference)
+      if @manager
+        thread_local[:pinned_pools][@manager.object_id] = {
+          :pool => pool,
+          :read_preference => read_preference
+        }
+      end
+    end
+
+    def unpin_pool
       thread_local[:pinned_pools].delete @manager.object_id if @manager
     end
 
@@ -400,10 +411,6 @@ module Mongo
 
     def primary_pool
       local_manager ? local_manager.primary_pool : nil
-    end
-
-    def read_pool(mode=@read, tags=@tag_sets, acceptable_latency=@acceptable_latency)
-      local_manager ? local_manager.read_pool(mode, tags, acceptable_latency) : nil
     end
 
     def secondary_pool

@@ -6,12 +6,13 @@ module Mongo
     include Mongo::Constants
     include Mongo::Conversions
     include Mongo::Logging
+    include Mongo::ReadPreference
 
     attr_reader :collection, :selector, :fields,
       :order, :hint, :snapshot, :timeout,
       :full_collection_name, :transformer,
       :options, :cursor_id, :show_disk_loc,
-      :comment, :read, :tag_sets
+      :comment, :read, :tag_sets, :acceptable_latency
 
     # Create a new cursor.
     #
@@ -471,6 +472,7 @@ module Mongo
             nil, @options & OP_QUERY_EXHAUST != 0)
         rescue ConnectionFailure => ex
           socket.close if socket
+          @connection.unpin_pool
           @connection.refresh
           if tries < 3 && !@socket && (!@command || Mongo::Support::secondary_ok?(@selector))
             tries += 1
@@ -482,6 +484,9 @@ module Mongo
           raise ex
         ensure
           socket.checkin unless @socket || socket.nil?
+        end
+        if !@socket && !@command
+          @connection.pin_pool(socket.pool, read_preference)
         end
         @returned += @n_received
         @cache += results
@@ -530,9 +535,9 @@ module Mongo
         if @pool
           socket = @pool.checkout
         elsif @command && !Mongo::Support::secondary_ok?(@selector)
-          socket = @connection.checkout_reader(:primary)
+          socket = @connection.checkout_reader({:mode => :primary})
         else
-          socket = @connection.checkout_reader(@read, @tag_sets, @acceptable_latency)
+          socket = @connection.checkout_reader(read_preference)
         end
       rescue SystemStackError, NoMemoryError, SystemCallError => ex
         @connection.close

@@ -85,25 +85,6 @@ module Mongo
       !@closed
     end
 
-    def matches_mode(mode)
-      if mode == :primary && @node.secondary? ||
-        mode == :secondary && @node.primary?
-        false
-      else
-        true
-      end
-    end
-
-    def matches_tag_set(tag_set)
-      tag_set.all? do |tag, value|
-        tags.has_key?(tag) && tags[tag] == value
-      end
-    end
-
-    def matches_tag_sets(tag_sets)
-      tag_sets.all? {|set| matches_tag_set(set)}
-    end
-
     def inspect
       "#<Mongo::Pool:0x#{self.object_id.to_s(16)} @host=#{@host} @port=#{port} " +
         "@ping_time=#{@ping_time} #{@checked_out.size}/#{@size} sockets available " +

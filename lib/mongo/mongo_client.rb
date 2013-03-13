@@ -351,10 +351,14 @@ module Mongo
     def refresh
     end
 
-    def pin_pool(pool)
+    def pinned_pool
+      @primary_pool
     end
 
-    def unpin_pool(pool)
+    def pin_pool(pool, read_prefs)
+    end
+
+    def unpin_pool
     end
 
     # Drop a database.
@@ -521,7 +525,7 @@ module Mongo
 
     # Checkout a socket for reading (i.e., a secondary node).
     # Note: this is overridden in MongoReplicaSetClient.
-    def checkout_reader(mode=:primary, tag_sets={}, acceptable_latency=15)
+    def checkout_reader(read_preference)
       connect unless connected?
       @primary_pool.checkout
     end

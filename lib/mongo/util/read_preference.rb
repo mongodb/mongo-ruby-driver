@@ -33,29 +33,57 @@ module Mongo
       end
     end
 
-    def select_pool(mode, tags, latency)
-      return primary_pool if @client.mongos?
+    def read_preference
+      {
+        :mode => @read,
+        :tags => @tag_sets,
+        :latency => @acceptable_latency
+      }
+    end
 
-      if mode == :primary && !tags.empty?
+    def read_pool(read_preference_override={})
+      return primary_pool if mongos?
+
+      read_pref = read_preference.merge read_preference_override
+
+      if pinned_pool && pinned_pool[:read_preference] == read_pref
+        pool = pinned_pool[:pool]
+      else
+        unpin_pool
+        pool = select_pool(read_pref)
+      end
+
+      unless pool
+        raise ConnectionFailure, "No replica set member available for query " +
+          "with read preference matching mode #{read_pref[:mode]} and tags " +
+          "matching #{read_pref[:tags]}."
+      end
+
+      pool
+    end
+
+    def select_pool(read_pref)
+      if read_pref[:mode] == :primary && !read_pref[:tags].empty?
         raise MongoArgumentError, "Read preference :primary cannot be combined with tags"
       end
 
-      case mode
+      case read_pref[:mode]
         when :primary
           primary_pool
         when :primary_preferred
-          primary_pool || select_secondary_pool(secondary_pools, tags, latency)
+          primary_pool || select_secondary_pool(secondary_pools, read_pref)
         when :secondary
-          select_secondary_pool(secondary_pools, tags, latency)
+          select_secondary_pool(secondary_pools, read_pref)
         when :secondary_preferred
-          select_secondary_pool(secondary_pools, tags, latency) || primary_pool
+          select_secondary_pool(secondary_pools, read_pref) || primary_pool
         when :nearest
-          select_secondary_pool(pools, tags, latency)
+          select_secondary_pool(pools, read_pref)
       end
     end
 
-    def select_secondary_pool(candidates, tag_sets, latency)
-      tag_sets = [tag_sets] unless tag_sets.is_a?(Array)
+    def select_secondary_pool(candidates, read_pref)
+      tag_sets = read_pref[:tags]
+      #tag_sets = [tag_sets] unless tag_sets.is_a?(Array)
 
       if !tag_sets.empty?
         matches = []
@@ -70,10 +98,11 @@ module Mongo
         matches = candidates
       end
 
-      matches.empty? ? nil : select_near_pool(matches, latency)
+      matches.empty? ? nil : select_near_pool(matches, read_pref)
     end
 
-    def select_near_pool(candidates, latency)
+    def select_near_pool(candidates, read_pref)
+      latency = read_pref[:latency]
       nearest_pool = candidates.min_by { |candidate| candidate.ping_time }
       near_pools = candidates.select do |candidate|
         (candidate.ping_time - nearest_pool.ping_time) <= latency
