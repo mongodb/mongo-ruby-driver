@@ -283,6 +283,7 @@ module Mongo
 
       # Clear the reference to this object.
       thread_local[:managers].delete(self)
+      unpin_pool
 
       @connected = false
     end
@@ -363,7 +364,7 @@ module Mongo
     end
 
     def pinned_pool
-      thread_local[:pinned_pools][@manager.object_id]
+      thread_local[:pinned_pools][@manager.object_id] if @manager
     end
 
     def pin_pool(pool, read_preference)

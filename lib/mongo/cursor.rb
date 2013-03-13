@@ -472,6 +472,7 @@ module Mongo
             nil, @options & OP_QUERY_EXHAUST != 0)
         rescue ConnectionFailure => ex
           socket.close if socket
+          @connection.unpin_pool
           @connection.refresh
           if tries < 3 && !@socket && (!@command || Mongo::Support::secondary_ok?(@selector))
             tries += 1
@@ -483,6 +484,9 @@ module Mongo
           raise ex
         ensure
           socket.checkin unless @socket || socket.nil?
+        end
+        if !@socket && !@command
+          @connection.pin_pool(socket.pool, read_preference)
         end
         @returned += @n_received
         @cache += results
