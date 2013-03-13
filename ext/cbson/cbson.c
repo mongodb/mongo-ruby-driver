@@ -600,7 +600,7 @@ static void write_doc(bson_buffer_t buffer, VALUE hash, VALUE check_keys, VALUE 
     SAFE_WRITE(buffer, &zero, 1);
     length = bson_buffer_get_position(buffer) - start_position;
 
-    // make sure that length doesn't exceed 4MB
+    // make sure that length doesn't exceed the max size (determined by server, defaults to 4mb)
     if (length > bson_buffer_get_max_size(buffer)) {
       bson_buffer_free(buffer);
       rb_raise(InvalidDocument,
