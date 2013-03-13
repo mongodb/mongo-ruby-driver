@@ -6,12 +6,13 @@ module Mongo
     include Mongo::Constants
     include Mongo::Conversions
     include Mongo::Logging
+    include Mongo::ReadPreference
 
     attr_reader :collection, :selector, :fields,
       :order, :hint, :snapshot, :timeout,
       :full_collection_name, :transformer,
       :options, :cursor_id, :show_disk_loc,
-      :comment, :read, :tag_sets
+      :comment, :read, :tag_sets, :acceptable_latency
 
     # Create a new cursor.
     #
@@ -530,9 +531,9 @@ module Mongo
         if @pool
           socket = @pool.checkout
         elsif @command && !Mongo::Support::secondary_ok?(@selector)
-          socket = @connection.checkout_reader(:primary)
+          socket = @connection.checkout_reader({:mode => :primary})
         else
-          socket = @connection.checkout_reader(@read, @tag_sets, @acceptable_latency)
+          socket = @connection.checkout_reader(read_preference)
         end
       rescue SystemStackError, NoMemoryError, SystemCallError => ex
         @connection.close

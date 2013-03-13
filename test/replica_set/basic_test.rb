@@ -68,7 +68,7 @@ class BasicTest < Test::Unit::TestCase
     assert_equal 2, client.secondaries.length
     assert_equal 2, client.secondary_pools.length
     assert_equal @rs.repl_set_name, client.replica_set_name
-    assert client.secondary_pools.include?(client.read_pool(:secondary))
+    assert client.secondary_pools.include?(client.read_pool({:mode => :secondary}))
     assert_equal 90, client.refresh_interval
     assert_equal client.refresh_mode, false
     client.close

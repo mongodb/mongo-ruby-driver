@@ -1,6 +1,5 @@
 module Mongo
   class PoolManager
-    include Mongo::ReadPreference
     include ThreadLocalVariableManager
 
     attr_reader :client,
@@ -112,26 +111,6 @@ module Mongo
 
     def read
       read_pool.host_port
-    end
-
-    def read_pool(mode=@client.read,
-                  tags=@client.tag_sets,
-                  acceptable_latency=@client.acceptable_latency)
-
-      pinned = thread_local[:pinned_pools][self.object_id]
-
-      if pinned && pinned.matches_mode(mode) && pinned.matches_tag_sets(tags) && pinned.up?
-        pool = pinned
-      else
-        pool = select_pool(mode, tags, acceptable_latency)
-      end
-
-      unless pool
-        raise ConnectionFailure, "No replica set member available for query " +
-          "with read preference matching mode #{mode} and tags matching #{tags}."
-      end
-
-      pool
     end
 
     def max_bson_size
