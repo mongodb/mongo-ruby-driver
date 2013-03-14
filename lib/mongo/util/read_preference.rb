@@ -44,7 +44,7 @@ module Mongo
     def read_pool(read_preference_override={})
       return primary_pool if mongos?
 
-      read_pref = read_preference.merge read_preference_override
+      read_pref = read_preference.merge(read_preference_override)
 
       if pinned_pool && pinned_pool[:read_preference] == read_pref
         pool = pinned_pool[:pool]
