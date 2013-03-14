@@ -11,6 +11,7 @@
 .DS_Store
 .idea/*
 .rvmrc
+.ruby-version
 .yardoc
 coverage
 data
