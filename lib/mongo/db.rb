@@ -14,6 +14,12 @@ module Mongo
     SYSTEM_JS_COLLECTION        = 'system.js'
     SYSTEM_COMMAND_COLLECTION   = '$cmd'
 
+    PROFILE_LEVEL = {
+      :off       => 0,
+      :slow_only => 1,
+      :all       => 2
+    }
+
     # Counter for generating unique request ids.
     @@current_request_id = 0
 
@@ -59,8 +65,9 @@ module Mongo
     # @param [Mongo::MongoClient] client a connection object pointing to MongoDB. Note
     #   that databases are usually instantiated via the MongoClient class. See the examples below.
     #
-    # @option opts [Boolean] :strict (False) If true, collections must exist to be accessed and must
-    #   not exist to be created. See DB#collection and DB#create_collection.
+    # @option opts [Boolean] :strict (False) [DEPRECATED] If true, collections existence checks are
+    # performed during a number of relevant operations. See DB#collection, DB#create_collection and
+    # DB#drop_collection.
     #
     # @option opts [Object, #create_pk(doc)] :pk (BSON::ObjectId) A primary key factory object,
     #   which should take a hash and return a hash which merges the original hash with any primary key
@@ -138,17 +145,15 @@ module Mongo
       auth['nonce'] = nonce
       auth['key'] = Mongo::Support.auth_key(username, password, nonce)
       if ok?(doc = self.command(auth, :check_response => false, :socket => opts[:socket]))
-        if save_auth
-          @connection.add_auth(@name, username, password)
-        end
-        true
+        @connection.add_auth(@name, username, password) if save_auth
       else
         message = "Failed to authenticate user '#{username}' on db '#{self.name}'"
         raise Mongo::AuthenticationError.new(message, doc['code'], doc)
       end
+      true
     end
 
-    # Adds a stored Javascript function to the database which can executed  
+    # Adds a stored Javascript function to the database which can executed
     # server-side in map_reduce, db.eval and $where clauses.
     #
     # @param [String] function_name
@@ -158,7 +163,7 @@ module Mongo
     def add_stored_function(function_name, code)
       self[SYSTEM_JS_COLLECTION].save(
         {
-          "_id" => function_name, 
+          "_id" => function_name,
           :value => BSON::Code.new(code)
         }
       )
@@ -171,11 +176,8 @@ module Mongo
     #
     # @return [Boolean]
     def remove_stored_function(function_name)
-      if self[SYSTEM_JS_COLLECTION].find_one({"_id" => function_name})
-        self[SYSTEM_JS_COLLECTION].remove({"_id" => function_name}, :w => 1)
-      else
-        return false
-      end
+      return false unless self[SYSTEM_JS_COLLECTION].find_one({"_id" => function_name})
+      self[SYSTEM_JS_COLLECTION].remove({"_id" => function_name}, :w => 1)
     end
 
     # Adds a user to this database for use with authentication. If the user already
@@ -193,7 +195,7 @@ module Mongo
       user['pwd'] = Mongo::Support.hash_password(username, password)
       user['readOnly'] = true if read_only;
       users.save(user)
-      return user
+      user
     end
 
     # Remove the given user from this database. Returns false if the user
@@ -206,7 +208,7 @@ module Mongo
       if self[SYSTEM_USER_COLLECTION].find_one({:user => username})
         self[SYSTEM_USER_COLLECTION].remove({:user => username}, :w => 1)
       else
-        return false
+        false
       end
     end
 
@@ -225,10 +227,10 @@ module Mongo
     def issue_logout(opts={})
       if ok?(doc = command({:logout => 1}, :socket => opts[:socket]))
         @connection.remove_auth(@name)
-        true
       else
-        raise MongoDBError, "error logging out: #{doc.inspect}"
+        raise MongoDBError, "Error logging out: #{doc.inspect}"
       end
+      true
     end
 
     # Get an array of collection names in this database.
@@ -330,7 +332,7 @@ module Mongo
     def drop_collection(name)
       return false if strict? && !collection_names.include?(name.to_s)
       begin
-        ok?(command(:drop => name, :check_response => false))
+        ok?(command(:drop => name))
       rescue OperationFailure => e
         false
       end
@@ -351,7 +353,7 @@ module Mongo
       cmd[:getlasterror] = 1
       cmd.merge!(opts)
       doc = command(cmd, :check_response => false)
-      raise MongoDBError, "error retrieving last error: #{doc.inspect}" unless ok?(doc)
+      raise MongoDBError, "Error retrieving last error: #{doc.inspect}" unless ok?(doc)
       doc
     end
 
@@ -371,11 +373,7 @@ module Mongo
     # @return [String, Nil] the text of the error or +nil+ if no error has occurred.
     def previous_error
       error = command(:getpreverror => 1)
-      if error["err"]
-        error
-      else
-        nil
-      end
+      error["err"] ? error : nil
     end
 
     # Reset the error history of this database
@@ -402,19 +400,19 @@ module Mongo
     # Evaluate a JavaScript expression in MongoDB.
     #
     # @param [String, Code] code a JavaScript expression to evaluate server-side.
-    # @param [Integer, Hash] args any additional argument to be passed to the +code+ expression when 
+    # @param [Integer, Hash] args any additional argument to be passed to the +code+ expression when
     #   it's run on the server.
     #
     # @return [String] the return value of the function.
     def eval(code, *args)
-      if not code.is_a? BSON::Code
+      unless code.is_a?(BSON::Code)
         code = BSON::Code.new(code)
       end
 
-      oh = BSON::OrderedHash.new
-      oh[:$eval] = code
-      oh[:args]  = args
-      doc = command(oh)
+      cmd = BSON::OrderedHash.new
+      cmd[:$eval] = code
+      cmd[:args] = args
+      doc = command(cmd)
       doc['retval']
     end
 
@@ -427,10 +425,10 @@ module Mongo
     #
     # @raise MongoDBError if there's an error renaming the collection.
     def rename_collection(from, to)
-      oh = BSON::OrderedHash.new
-      oh[:renameCollection] = "#{@name}.#{from}"
-      oh[:to] = "#{@name}.#{to}"
-      doc = DB.new('admin', @connection).command(oh, :check_response => false)
+      cmd = BSON::OrderedHash.new
+      cmd[:renameCollection] = "#{@name}.#{from}"
+      cmd[:to] = "#{@name}.#{to}"
+      doc = DB.new('admin', @connection).command(cmd, :check_response => false)
       ok?(doc) || raise(MongoDBError, "Error renaming collection: #{doc.inspect}")
     end
 
@@ -444,10 +442,10 @@ module Mongo
     #
     # @raise MongoDBError if there's an error dropping the index.
     def drop_index(collection_name, index_name)
-      oh = BSON::OrderedHash.new
-      oh[:deleteIndexes] = collection_name
-      oh[:index] = index_name.to_s
-      doc = command(oh, :check_response => false)
+      cmd = BSON::OrderedHash.new
+      cmd[:deleteIndexes] = collection_name
+      cmd[:index] = index_name.to_s
+      doc = command(cmd, :check_response => false)
       ok?(doc) || raise(MongoDBError, "Error with drop_index command: #{doc.inspect}")
     end
 
@@ -508,8 +506,9 @@ module Mongo
     # @core commands command_instance-method
     def command(selector, opts={})
       check_response = opts.fetch(:check_response, true)
-      socket         = opts[:socket]
-      raise MongoArgumentError, "command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
+      socket = opts[:socket]
+      raise MongoArgumentError, "Command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
+
       if selector.keys.length > 1 && RUBY_VERSION < '1.9' && selector.class != BSON::OrderedHash
         raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
       end
@@ -522,19 +521,21 @@ module Mongo
       end
 
       begin
-        result = Cursor.new(system_command_collection,
-                            :limit => -1,
-                            :selector => selector,
-                            :socket => socket,
-                            :read => read_pref,
-                            :comment => opts[:comment]).next_document
+        result = Cursor.new(
+          system_command_collection,
+          :limit => -1,
+          :selector => selector,
+          :socket => socket,
+          :read => read_pref,
+          :comment => opts[:comment]).next_document
       rescue OperationFailure => ex
         raise OperationFailure, "Database command '#{selector.keys.first}' failed: #{ex.message}"
       end
 
-      if result.nil?
-        raise OperationFailure, "Database command '#{selector.keys.first}' failed: returned null."
-      elsif (check_response && !ok?(result))
+      raise OperationFailure,
+        "Database command '#{selector.keys.first}' failed: returned null." unless result
+
+      if check_response && !ok?(result)
         message = "Database command '#{selector.keys.first}' failed: ("
         message << result.map do |key, value|
           "#{key}: '#{value}'"
@@ -542,9 +543,9 @@ module Mongo
         message << ').'
         code = result['code'] || result['assertionCode']
         raise OperationFailure.new(message, code, result)
-      else
-        result
       end
+
+      result
     end
 
     # A shortcut returning db plus dot plus collection name.
@@ -567,9 +568,8 @@ module Mongo
     #
     # @raise [MongoArgumentError] if the primary key factory has already been set.
     def pk_factory=(pk_factory)
-      if @pk_factory
-        raise MongoArgumentError, "Cannot change primary key factory once it's been set"
-      end
+      raise MongoArgumentError,
+        "Cannot change primary key factory once it's been set" if @pk_factory
 
       @pk_factory = pk_factory
     end
@@ -581,20 +581,15 @@ module Mongo
     #
     # @core profiling profiling_level-instance_method
     def profiling_level
-      oh = BSON::OrderedHash.new
-      oh[:profile] = -1
-      doc = command(oh, :check_response => false)
-      raise "Error with profile command: #{doc.inspect}" unless ok?(doc) && doc['was'].kind_of?(Numeric)
-      case doc['was'].to_i
-      when 0
-        :off
-      when 1
-        :slow_only
-      when 2
-        :all
-      else
-        raise "Error: illegal profiling level value #{doc['was']}"
-      end
+      cmd = BSON::OrderedHash.new
+      cmd[:profile] = -1
+      doc = command(cmd, :check_response => false)
+
+      raise "Error with profile command: #{doc.inspect}" unless ok?(doc)
+
+      level_sym = PROFILE_LEVEL.invert[doc['was'].to_i]
+      raise "Error: illegal profiling level value #{doc['was']}" unless level_sym
+      level_sym
     end
 
     # Set this database's profiling level. If profiling is enabled, you can
@@ -602,18 +597,9 @@ module Mongo
     #
     # @param [Symbol] level acceptable options are +:off+, +:slow_only+, or +:all+.
     def profiling_level=(level)
-      oh = BSON::OrderedHash.new
-      oh[:profile] = case level
-                     when :off
-                       0
-                     when :slow_only
-                       1
-                     when :all
-                       2
-                     else
-                       raise "Error: illegal profiling level value #{level}"
-                     end
-      doc = command(oh, :check_response => false)
+      cmd = BSON::OrderedHash.new
+      cmd[:profile] = PROFILE_LEVEL[level]
+      doc = command(cmd, :check_response => false)
       ok?(doc) || raise(MongoDBError, "Error with profile command: #{doc.inspect}")
     end
 
@@ -637,9 +623,9 @@ module Mongo
       cmd[:validate] = name
       cmd[:full] = true
       doc = command(cmd, :check_response => false)
-      if !ok?(doc)
-        raise MongoDBError, "Error with validate command: #{doc.inspect}"
-      end
+
+      raise MongoDBError, "Error with validate command: #{doc.inspect}" unless ok?(doc)
+
       if (doc.has_key?('valid') && !doc['valid']) || (doc['result'] =~ /\b(exception|corrupt)\b/i)
         raise MongoDBError, "Error: invalid collection #{name}: #{doc.inspect}"
       end
