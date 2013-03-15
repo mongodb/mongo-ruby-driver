@@ -313,10 +313,10 @@ module Mongo
     # @return [ObjectId] the _id of the saved document.
     #
     # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the write concern for this operation.
-    #   :w > 0 will run a +getlasterror+ command on the database to report any assertion. 
+    #   :w > 0 will run a +getlasterror+ command on the database to report any assertion.
     #   :j will confirm a write has been committed to the journal,
     #   :wtimeout specifies how long to wait for write confirmation,
-    #   :fsync will confirm that a write has been fsynced. 
+    #   :fsync will confirm that a write has been fsynced.
     #   Options provided here will override any write concern options set on this collection,
     #   its database object, or the current connection. See the options
     #   for DB#get_last_error.
@@ -349,10 +349,10 @@ module Mongo
     # @option opts [Boolean] :j (false) Set journal acknowledgement
     # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout
     # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
-    #   
+    #
     #   Notes on write concern:
     #     Options provided here will override any write concern options set on this collection,
-    #     its database object, or the current connection. See the options for +DB#get_last_error+. 
+    #     its database object, or the current connection. See the options for +DB#get_last_error+.
     #
     # @option opts [Boolean] :continue_on_error (+false+) If true, then
     #   continue a bulk insert even if one of the documents inserted
@@ -369,6 +369,9 @@ module Mongo
     #
     # @core insert insert-instance_method
     def insert(doc_or_docs, opts={})
+      if name.start_with?("system.") && name !~ /(\Asystem\.users)|(\Asystem\.indexes)/
+        raise Mongo::InvalidNSName, "cannot insert into system collections."
+      end
       doc_or_docs = [doc_or_docs] unless doc_or_docs.is_a?(Array)
       doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
       write_concern = get_write_concern(opts, self)
