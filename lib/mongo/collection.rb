@@ -9,7 +9,8 @@ module Mongo
                 :name,
                 :pk_factory,
                 :hint,
-                :write_concern
+                :write_concern,
+                :capped
 
     # Read Preference
     attr_accessor :read,
@@ -20,20 +21,20 @@ module Mongo
     #
     # @param [String, Symbol] name the name of the collection.
     # @param [DB] db a MongoDB database instance.
-    # 
+    #
     # @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
     #   should be acknowledged
     # @option opts [Boolean] :j (false) Set journal acknowledgement
     # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout
     # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
-    #   
+    #
     #   Notes about write concern:
-    #     These write concern options will be used for insert, update, and remove methods called on this  
-    #     Collection instance. If no value is provided, the default values set on this instance's DB will be used. 
+    #     These write concern options will be used for insert, update, and remove methods called on this
+    #     Collection instance. If no value is provided, the default values set on this instance's DB will be used.
     #     These option values can be overridden for any invocation of insert, update, or remove.
     #
     # @option opts [:create_pk] :pk (BSON::ObjectId) A primary key factory to use
-    #   other than the default BSON::ObjectId. 
+    #   other than the default BSON::ObjectId.
     # @option opts [:primary, :secondary] :read The default read preference for queries
     #   initiates from this connection object. If +:secondary+ is chosen, reads will be sent
     #   to one of the closest available secondary nodes. If a secondary node cannot be located, the
@@ -57,30 +58,26 @@ module Mongo
         db, name = name, db
       end
 
-      case name
-      when Symbol, String
-      else
-        raise TypeError, "new_name must be a string or symbol"
-      end
-
+      raise TypeError,
+        "Collection name must be a String or Symbol." unless [String, Symbol].include?(name.class)
       name = name.to_s
 
-      if name.empty? or name.include? ".."
-        raise Mongo::InvalidNSName, "collection names cannot be empty"
-      end
-      if name.include? "$"
-        raise Mongo::InvalidNSName, "collection names must not contain '$'" unless name =~ /((^\$cmd)|(oplog\.\$main))/
-      end
-      if name.match(/^\./) or name.match(/\.$/)
-        raise Mongo::InvalidNSName, "collection names must not start or end with '.'"
+      raise Mongo::InvalidNSName,
+        "Collection names cannot be empty." if name.empty? || name.include?("..")
+
+      if name.include?("$")
+        raise Mongo::InvalidNSName,
+          "Collection names must not contain '$'" unless name =~ /((^\$cmd)|(oplog\.\$main))/
       end
 
+      raise Mongo::InvalidNSName,
+        "Collection names must not start or end with '.'" if name.match(/^\./) || name.match(/\.$/)
+
+      pk_factory = nil
       if opts.respond_to?(:create_pk) || !opts.is_a?(Hash)
         warn "The method for specifying a primary key factory on a Collection has changed.\n" +
-          "Please specify it as an option (e.g., :pk => PkFactory)."
+             "Please specify it as an option (e.g., :pk => PkFactory)."
         pk_factory = opts
-      else
-        pk_factory = nil
       end
 
       @db, @name  = db, name
@@ -92,6 +89,7 @@ module Mongo
         @write_concern = get_write_concern(opts, db)
         @read =  opts[:read] || @db.read
         Mongo::ReadPreference::validate(@read)
+        @capped             = opts[:capped]
         @tag_sets           = opts.fetch(:tag_sets, @db.tag_sets)
         @acceptable_latency = opts.fetch(:acceptable_latency, @db.acceptable_latency)
       end
@@ -106,7 +104,7 @@ module Mongo
     #
     # @return [Boolean]
     def capped?
-      [1, true].include? @db.command({:collstats => @name})['capped']
+      @capped ||= [1, true].include?(@db.command({:collstats => @name})['capped'])
     end
 
     # Return a sub-collection of this collection by name. If 'users' is a collection, then
@@ -361,13 +359,13 @@ module Mongo
     #   triggers a database assertion (as in a duplicate insert, for instance).
     #   If not acknowledging writes, the list of ids returned will
     #   include the object ids of all documents attempted on insert, even
-    #   if some are rejected on error. When acknowledging writes, any error will raise an 
+    #   if some are rejected on error. When acknowledging writes, any error will raise an
     #   OperationFailure exception.
     #   MongoDB v2.0+.
     # @option opts [Boolean] :collect_on_error (+false+) if true, then
     #   collects invalid documents as an array. Note that this option changes the result format.
     #
-    # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails. 
+    # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails.
     #
     # @core insert insert-instance_method
     def insert(doc_or_docs, opts={})
@@ -392,7 +390,7 @@ module Mongo
     #
     #   Notes on write concern:
     #     Options provided here will override any write concern options set on this collection,
-    #     its database object, or the current connection. See the options for +DB#get_last_error+.  
+    #     its database object, or the current connection. See the options for +DB#get_last_error+.
     #
     # @example remove all documents from the 'users' collection:
     #   users.remove
@@ -446,7 +444,7 @@ module Mongo
     #
     #   Notes on write concern:
     #     Options provided here will override any write concern options set on this collection,
-    #     its database object, or the current connection. See the options for DB#get_last_error. 
+    #     its database object, or the current connection. See the options for DB#get_last_error.
     #
     # @return [Hash, true] Returns a Hash containing the last error object if acknowledging writes.
     #   Otherwise, returns true.
@@ -631,7 +629,7 @@ module Mongo
     #
     # @param [Array] pipeline Should be a single array of pipeline operator hashes.
     #
-    #   '$project' Reshapes a document stream by including fields, excluding fields, inserting computed fields, 
+    #   '$project' Reshapes a document stream by including fields, excluding fields, inserting computed fields,
     #   renaming fields,or creating/populating fields that hold sub-documents.
     #
     #   '$match' Query-like interface for filtering documents out of the aggregation pipeline.
