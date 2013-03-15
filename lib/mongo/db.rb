@@ -22,10 +22,24 @@ module Mongo
     # collection that already exists, raises an error.
     #
     # Strict mode is disabled by default, but enabled (+true+) at any time.
-    attr_writer :strict
+    #
+    # @deprecated Support for strict mode has been deprecated and will be
+    # removed in version 2.0 of the driver.
+    def strict=(value)
+      unless ENV['TEST_MODE']
+        warn "Support for strict mode has been deprecated and will be " +
+             "removed in version 2.0 of the driver."
+      end
+      @strict = value
+    end
 
     # Returns the value of the +strict+ flag.
-    def strict?; @strict; end
+    #
+    # @deprecated Support for strict mode has been deprecated and will be
+    # removed in version 2.0 of the driver.
+    def strict?
+      @strict
+    end
 
     # The name of the database and the local write concern options.
     attr_reader :name, :write_concern
@@ -272,20 +286,19 @@ module Mongo
     # @return [Mongo::Collection]
     def create_collection(name, opts={})
       name = name.to_s
-      if collection_names.include?(name)
-        if strict?
-          raise MongoDBError, "Collection #{name} already exists. " +
-            "Currently in strict mode."
-        else
-          return Collection.new(name, self, opts)
-        end
+      if strict? && collection_names.include?(name)
+        raise MongoDBError, "Collection '#{name}' already exists. (strict=true)"
       end
 
-      # Create a new collection.
-      oh = BSON::OrderedHash.new
-      oh[:create] = name
-      doc = command(oh.merge(opts || {}))
-      return Collection.new(name, self, :pk => @pk_factory) if ok?(doc)
+      begin
+        cmd = BSON::OrderedHash.new
+        cmd[:create] = name
+        doc = command(cmd.merge(opts || {}))
+        return Collection.new(name, self, :pk => @pk_factory) if ok?(doc)
+      rescue OperationFailure => e
+        return Collection.new(name, self, :pk => @pk_factory) if e.message =~ /exists/
+        raise e
+      end
       raise MongoDBError, "Error creating collection: #{doc.inspect}"
     end
 
@@ -300,8 +313,7 @@ module Mongo
     # @return [Mongo::Collection]
     def collection(name, opts={})
       if strict? && !collection_names.include?(name.to_s)
-        raise Mongo::MongoDBError, "Collection #{name} doesn't exist. " +
-          "Currently in strict mode."
+        raise MongoDBError, "Collection '#{name}' doesn't exist. (strict=true)"
       else
         opts = opts.dup
         opts.merge!(:pk => @pk_factory) unless opts[:pk]
@@ -316,9 +328,12 @@ module Mongo
     #
     # @return [Boolean] +true+ on success or +false+ if the collection name doesn't exist.
     def drop_collection(name)
-      return true unless collection_names.include?(name.to_s)
-
-      ok?(command(:drop => name))
+      return false if strict? && !collection_names.include?(name.to_s)
+      begin
+        ok?(command(:drop => name, :check_response => false))
+      rescue OperationFailure => e
+        false
+      end
     end
 
     # Run the getlasterror command with the specified replication options.

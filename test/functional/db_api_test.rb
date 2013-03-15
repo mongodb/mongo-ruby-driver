@@ -92,7 +92,7 @@ class DBAPITest < Test::Unit::TestCase
     # Can't compare _id values because at insert, an _id was added to @r1 by
     # the database but we don't know what it is without re-reading the record
     # (which is what we are doing right now).
-#   assert_equal doc['_id'], @r1['_id']
+    # assert_equal doc['_id'], @r1['_id']
     assert_equal doc['a'], @r1['a']
   end
 
@@ -194,7 +194,7 @@ class DBAPITest < Test::Unit::TestCase
     @@coll.insert('a' => 2, 'b' => 1)
     @@coll.insert('a' => 3, 'b' => 2)
     @@coll.insert('a' => 4, 'b' => 1)
-    
+
     oh = BSON::OrderedHash.new
     oh['a'] = -1
 
@@ -312,7 +312,7 @@ class DBAPITest < Test::Unit::TestCase
 
     begin
       coll = @@db.create_collection('foobar', :capped => true, :size => 1024)
-      options = coll.options()
+      options = coll.options
       assert_equal 'foobar', options['create']
       assert_equal true, options['capped']
       assert_equal 1024, options['size']
@@ -488,7 +488,7 @@ HERE
       fail "expected exception"
     rescue => ex
       assert_equal Mongo::MongoDBError, ex.class
-      assert_equal "Collection does-not-exist doesn't exist. Currently in strict mode.", ex.to_s
+      assert_equal "Collection 'does-not-exist' doesn't exist. (strict=true)", ex.to_s
     ensure
       @@db.strict = false
       @@db.drop_collection('does-not-exist')
@@ -500,8 +500,7 @@ HERE
     @@db.strict = true
 
     begin
-      @@db.create_collection('foobar')
-      assert true
+      assert @@db.create_collection('foobar')
     rescue => ex
       fail "did not expect exception \"#{ex}\""
     end
