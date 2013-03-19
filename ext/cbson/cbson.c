@@ -959,7 +959,7 @@ static VALUE objectid_from_string(VALUE self, VALUE str)
       } else {
         VALUE inspect;
         inspect = rb_funcall(str, rb_intern("to_s"), 0);
-        rb_raise(InvalidObjectId, "not a String: %s", inspect);
+        rb_raise(InvalidObjectId, "not a String: %s", (char *)inspect);
       }
     }
 
