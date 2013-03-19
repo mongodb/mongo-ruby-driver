@@ -29,8 +29,7 @@ module Mongo
     #
     # Strict mode is disabled by default, but enabled (+true+) at any time.
     #
-    # @deprecated Support for strict mode has been deprecated and will be
-    # removed in version 2.0 of the driver.
+    # @deprecated Support for strict will be removed in version 2.0 of the driver.
     def strict=(value)
       unless ENV['TEST_MODE']
         warn "Support for strict mode has been deprecated and will be " +
@@ -41,8 +40,7 @@ module Mongo
 
     # Returns the value of the +strict+ flag.
     #
-    # @deprecated Support for strict mode has been deprecated and will be
-    # removed in version 2.0 of the driver.
+    # @deprecated Support for strict will be removed in version 2.0 of the driver.
     def strict?
       @strict
     end
