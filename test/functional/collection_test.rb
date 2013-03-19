@@ -1075,20 +1075,6 @@ end
     coll.ensure_index([['a', 1]])
   end
 
-  def test_insert_raises_exception_on_system_collection
-    collection = @@db["system.foo"]
-    assert_raise Mongo::InvalidNSName do
-      collection.insert({ :a => 1 })
-    end
-  end
-
-  def test_save_raises_exception_on_system_collection
-    collection = @@db["system.foo"]
-    assert_raise Mongo::InvalidNSName do
-      collection.save({ :a => 1 })
-    end
-  end
-
   if @@version > '2.0.0'
     def test_show_disk_loc
       @@test.save({:a => 1})

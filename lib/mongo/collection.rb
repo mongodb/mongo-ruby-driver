@@ -369,9 +369,6 @@ module Mongo
     #
     # @core insert insert-instance_method
     def insert(doc_or_docs, opts={})
-      if name.start_with?("system.") && name !~ /(\Asystem\.users)|(\Asystem\.indexes)/
-        raise Mongo::InvalidNSName, "cannot insert into system collections."
-      end
       doc_or_docs = [doc_or_docs] unless doc_or_docs.is_a?(Array)
       doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
       write_concern = get_write_concern(opts, self)
