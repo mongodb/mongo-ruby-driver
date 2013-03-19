@@ -46,12 +46,8 @@ namespace :deploy do
     g.push('origin', 'release', true)
   end
 
-  desc "Package all gems for release (Run from MRI)"
+  desc "Package all gems for release"
   task :package do
-    RVM.use 'jruby'
-    system "gem build bson.gemspec"
-
-    RVM.reset_current!
     Dir.glob('*.gemspec').each { |file| system "gem build #{file}" }
   end
 
