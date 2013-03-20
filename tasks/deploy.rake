@@ -39,10 +39,7 @@ namespace :deploy do
     g.add(['VERSION', 'ext/cbson/version.h'])
     g.commit "RELEASE #{bumper_version}"
     g.add_tag("#{bumper_version}")
-    g.push('origin', 'master', true)
-
-    g.checkout('release')
-    g.pull('origin', 'master')
+    g.push('origin', 'master', false)
     g.push('origin', 'release', true)
   end
 
@@ -52,7 +49,7 @@ namespace :deploy do
   end
 
   desc "Release all the things!"
-  task :release => [:version, :git, :package] do
+  task :release do
     Dir.glob('*.gem').each { |file| system "gem push #{file}" }
     Rake::Task['deploy:cleanup'].invoke
   end
