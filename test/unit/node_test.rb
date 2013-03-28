@@ -4,6 +4,9 @@ class NodeTest < Test::Unit::TestCase
 
   def setup
     @client = stub()
+    manager = mock('pool_manager')
+    manager.stubs(:update_max_sizes)
+    @client.stubs(:local_manager).returns(manager)
   end
 
   should "refuse to connect to node without 'hosts' key" do

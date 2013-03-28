@@ -309,7 +309,7 @@ class TestConnection < Test::Unit::TestCase
     conn.expects(:[]).with('admin').returns(admin_db)
 
     conn.connect
-    assert_equal Mongo::DEFAULT_MAX_MESSAGE_SIZE, conn.max_message_size
+    assert_equal Mongo::DEFAULT_MAX_BSON_SIZE * Mongo::MESSAGE_SIZE_FACTOR, conn.max_message_size
   end
 
   def test_connection_activity

@@ -520,7 +520,7 @@ module Mongo
     end
 
     def max_message_size
-      @max_message_size || DEFAULT_MAX_MESSAGE_SIZE
+      @max_message_size || max_bson_size * MESSAGE_SIZE_FACTOR
     end
 
     # Checkout a socket for reading (i.e., a secondary node).

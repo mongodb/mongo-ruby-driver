@@ -432,7 +432,7 @@ module Mongo
 
     def max_message_size
       return local_manager.max_message_size if local_manager
-      DEFAULT_MAX_MESSAGE_SIZE
+      max_bson_size * MESSAGE_SIZE_FACTOR
     end
 
     private

@@ -5,6 +5,7 @@ module Mongo
 
     def initialize(client, host_port)
       @client = client
+      @manager = @client.local_manager
       @host, @port = split_node(host_port)
       @address = "#{@host}:#{@port}"
       @config = nil
@@ -105,6 +106,7 @@ module Mongo
           close
         end
       end
+      @manager.update_max_sizes
     end
 
     # Return a list of replica set nodes from the config.
@@ -147,6 +149,14 @@ module Mongo
 
     def healthy?
       connected? && config
+    end
+
+    def max_bson_size
+      max = config['maxBsonObjectSize'] || DEFAULT_MAX_BSON_SIZE
+    end
+
+    def max_message_size
+      max = config['maxMessageSizeBytes'] || max_bson_size * MESSAGE_SIZE_FACTOR
     end
 
     protected

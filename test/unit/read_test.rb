@@ -106,6 +106,8 @@ class ReadTest < Test::Unit::TestCase
         sock = new_mock_socket
         read_pool = stub(:checkin => true)
         @client.stubs(:read_pool).returns(read_pool)
+        local_manager = PoolManager.new(@client, @client.seeds)
+        @client.stubs(:local_manager).returns(local_manager)
         primary_pool = stub(:checkin => true)
         sock.stubs(:pool).returns(primary_pool)
         @client.stubs(:primary_pool).returns(primary_pool)
@@ -120,6 +122,8 @@ class ReadTest < Test::Unit::TestCase
       should "allow override default value on query" do
         @cursor = @col.find({:a => 1}, :read => :primary)
         sock = new_mock_socket
+        local_manager = PoolManager.new(@client, @client.seeds)
+        @client.stubs(:local_manager).returns(local_manager)
         primary_pool = stub(:checkin => true)
         sock.stubs(:pool).returns(primary_pool)
         @client.stubs(:primary_pool).returns(primary_pool)
