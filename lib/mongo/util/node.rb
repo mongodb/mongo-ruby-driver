@@ -5,6 +5,7 @@ module Mongo
 
     def initialize(client, host_port)
       @client = client
+      @manager = @client.local_manager
       @host, @port = split_node(host_port)
       @address = "#{@host}:#{@port}"
       @config = nil
@@ -105,6 +106,7 @@ module Mongo
           close
         end
       end
+      @manager.update_max_sizes
     end
 
     # Return a list of replica set nodes from the config.

@@ -52,6 +52,7 @@ class PoolManagerTest < Test::Unit::TestCase
 
       seeds = [['localhost', 27017]]
       manager = Mongo::PoolManager.new(@client, seeds)
+      @client.stubs(:local_manager).returns(manager)
       manager.connect
 
       assert_equal ['localhost', 27017], manager.primary
@@ -77,7 +78,8 @@ class PoolManagerTest < Test::Unit::TestCase
       )
 
       seeds = [['localhost', 27017]]
-      manager = Mongo::PoolManager.new(@client, seeds)
+      manager = PoolManager.new(@client, seeds)
+      @client.stubs(:local_manager).returns(manager)
       manager.connect
 
       assert_equal ['localhost', 27018], manager.primary
