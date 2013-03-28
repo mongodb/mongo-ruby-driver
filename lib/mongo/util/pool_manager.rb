@@ -12,7 +12,9 @@ module Mongo
                 :nodes,
                 :members,
                 :seeds,
-                :pools
+                :pools,
+                :max_bson_size,
+                :max_message_size
 
     # Create a new set of connection pools.
     #
@@ -33,6 +35,8 @@ module Mongo
       @hosts                = Set.new
       @members              = Set.new
       @refresh_required     = false
+      @max_bson_size        = DEFAULT_MAX_BSON_SIZE
+      @max_message_size     = DEFAULT_MAX_MESSAGE_SIZE
     end
 
     def inspect
@@ -113,12 +117,11 @@ module Mongo
       read_pool.host_port
     end
 
-    def max_bson_size
-      @max_bson_size ||= config_min('maxBsonObjectSize', DEFAULT_MAX_BSON_SIZE)
-    end
-
-    def max_message_size
-      @max_message_size ||= config_min('maxMessageSizeBytes', DEFAULT_MAX_MESSAGE_SIZE)
+    def update_max_sizes
+      @max_bson_size = @members.map {|m| m.config['maxBsonObjectSize'].nil? ? 
+          DEFAULT_MAX_BSON_SIZE : m.config['maxBsonObjectSize']}.min unless @members.size == 0
+      @max_message_size = @members.map {|m| m.config['maxMessageSizeBytes'].nil? ? 
+          DEFAULT_MAX_MESSAGE_SIZE : m.config['maxMessageSizeBytes']}.min unless @members.size == 0
     end
 
     private
@@ -192,11 +195,6 @@ module Mongo
       @arbiters = members.first.arbiters
     end
 
-    def config_min(attribute, default)
-      @members.reject {|m| !m.config[attribute]}
-      @members.map {|m| m.config[attribute]}.min || default
-    end
-
     def assign_primary(member)
       member.last_state = :primary
       @primary = member.host_port
@@ -243,8 +241,6 @@ module Mongo
       raise ConnectionFailure, "Cannot connect to a replica set using seeds " +
         "#{@seeds.map {|s| "#{s[0]}:#{s[1]}" }.join(', ')}"
     end
-
-    private
 
     def cache_discovered_seeds
       @seeds = @members.map &:host_port
