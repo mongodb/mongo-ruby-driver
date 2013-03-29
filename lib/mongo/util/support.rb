@@ -82,6 +82,29 @@ module Mongo
       end
     end
 
+    def check_hostport_pairs(pairs, hostports)
+      pairs.each do |host,port|
+        if !host.is_a?(String) || port == nil || !port.is_a?(Fixnum)
+          raise "host-port specification error for #{hostports.inspect}"
+        end
+      end
+    end
+
+    def hostports_to_pairs(hostports)
+      pairs = Array(hostports)
+      pairs = [ hostports ] if pairs.last.is_a?(Fixnum)
+      pairs = pairs.collect do |hostport|
+        if hostport.is_a?(String)
+          host, port = hostport.split(':')
+          [ host, port && port.to_i || MongoClient::DEFAULT_PORT ]
+        else
+          hostport
+        end
+      end
+      self.check_hostport_pairs(pairs, hostports)
+      pairs.length > 1 ? pairs : pairs.first
+    end
+
     def is_i?(value)
       return !!(value =~ /^\d+$/)
     end
