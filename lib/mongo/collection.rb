@@ -505,11 +505,14 @@ module Mongo
     # @option opts [Integer] :min (nil) specify the minimum longitude and latitude for a geo index.
     # @option opts [Integer] :max (nil) specify the maximum longitude and latitude for a geo index.
     #
-    # @example Creating a compound index using a hash: (Ruby 1.9 and above)
+    # @example Creating a compound index using a hash: (Ruby 1.9+ Syntax)
     #   @posts.create_index({'subject' => Mongo::ASCENDING, 'created_at' => Mongo::DESCENDING})
     #
     # @example Creating a compound index:
     #   @posts.create_index([['subject', Mongo::ASCENDING], ['created_at', Mongo::DESCENDING]])
+    #
+    # @example Creating a geospatial index using a hash: (Ruby 1.9+ Syntax)
+    #   @restaurants.create_index(:location => Mongo::GEO2D)
     #
     # @example Creating a geospatial index:
     #   @restaurants.create_index([['location', Mongo::GEO2D]])
@@ -542,13 +545,13 @@ module Mongo
     #
     # The parameters and options for this methods are the same as those for Collection#create_index.
     #
-    # @example Call sequence:
-    #   Time t: @posts.ensure_index([['subject', Mongo::ASCENDING])  -- calls create_index and
+    # @example Call sequence (Ruby 1.9+ Syntax):
+    #   Time t: @posts.ensure_index(:subject => Mongo::ASCENDING) -- calls create_index and
     #     sets the 5 minute cache
-    #   Time t+2min : @posts.ensure_index([['subject', Mongo::ASCENDING])  -- doesn't do anything
-    #   Time t+3min : @posts.ensure_index([['something_else', Mongo::ASCENDING])  -- calls create_index
+    #   Time t+2min : @posts.ensure_index(:subject => Mongo::ASCENDING) -- doesn't do anything
+    #   Time t+3min : @posts.ensure_index(:something_else => Mongo::ASCENDING) -- calls create_index
     #     and sets 5 minute cache
-    #   Time t+10min : @posts.ensure_index([['subject', Mongo::ASCENDING])  -- calls create_index and
+    #   Time t+10min : @posts.ensure_index(:subject => Mongo::ASCENDING) -- calls create_index and
     #     resets the 5 minute counter
     #
     # @return [String] the name of the index.
