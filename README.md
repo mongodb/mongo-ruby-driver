@@ -241,6 +241,8 @@ for the first time.
 
 ### Strict mode
 
+_**NOTE:** Support for strict mode has been deprecated and will be removed in version 2.0 of the driver._
+
 Each database has an optional strict mode. If strict mode is on, then asking
 for a collection that does not exist will raise an error, as will asking to
 create a collection that already exists. Note that both these operations are
