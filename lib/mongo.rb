@@ -6,14 +6,16 @@ module Mongo
   GEOHAYSTACK = 'geoHaystack'
   TEXT        = 'text'
   HASHED      = 'hashed'
-  INDEX_TYPES = [ ASCENDING,
-                  DESCENDING,
-                  GEO2D,
-                  GEO2DSPHERE,
-                  GEOHAYSTACK,
-                  TEXT,
-                  HASHED
-                ]
+
+  INDEX_TYPES = {
+    'ASCENDING'   => ASCENDING,
+    'DESCENDING'  => DESCENDING,
+    'GEO2D'       => GEO2D,
+    'GEO2DSPHERE' => GEO2DSPHERE,
+    'GEOHAYSTACK' => GEOHAYSTACK,
+    'TEXT'        => TEXT,
+    'HASHED'      => HASHED
+  }
 
   DEFAULT_MAX_BSON_SIZE = 4 * 1024 * 1024
   DEFAULT_MAX_MESSAGE_SIZE = DEFAULT_MAX_BSON_SIZE * 2

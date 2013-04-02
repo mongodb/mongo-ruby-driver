@@ -1016,27 +1016,31 @@ module Mongo
       if spec.is_a?(String) || spec.is_a?(Symbol)
         field_spec[spec.to_s] = 1
       elsif spec.is_a?(Hash)
-          if RUBY_VERSION < '1.9' && !spec.is_a?(BSON::OrderedHash)
-              raise MongoArgumentError, "Must use OrderedHash in Ruby < 1.9.0"
-          else
-              field_spec = spec.is_a?(BSON::OrderedHash) ? spec : BSON::OrderedHash.try_convert(spec)
-          end
+        if RUBY_VERSION < '1.9' && !spec.is_a?(BSON::OrderedHash)
+          raise MongoArgumentError, "Must use OrderedHash in Ruby < 1.9.0"
+        end
+        validate_index_types(spec.values)
+        field_spec = spec.is_a?(BSON::OrderedHash) ? spec : BSON::OrderedHash.try_convert(spec)
       elsif spec.is_a?(Array) && spec.all? {|field| field.is_a?(Array) }
         spec.each do |f|
-          if Mongo::INDEX_TYPES.include?(f[1])
-            field_spec[f[0].to_s] = f[1]
-          else
-            raise MongoArgumentError, "Invalid index field #{f[1].inspect}; " +
-              "should be one of Mongo::ASCENDING (#{Mongo::ASCENDING}), Mongo::DESCENDING (#{Mongo::DESCENDING}), " +
-              "Mongo::GEOHAYSTACK ('#{Mongo::GEOHAYSTACK}'), Mongo::GEO2DSPHERE ('#{Mongo::GEO2DSPHERE}'), " +
-              "Mongo::TEXT ('#{Mongo::TEXT}'), or Mongo::HASHED ('#{Mongo::HASHED}')"
-          end
+          validate_index_types(f[1])
+          field_spec[f[0].to_s] = f[1]
         end
       else
         raise MongoArgumentError, "Invalid index specification #{spec.inspect}; " +
           "should be either a hash (OrderedHash), string, symbol, or an array of arrays."
       end
       field_spec
+    end
+
+    def validate_index_types(*types)
+      types.flatten!
+      types.each do |t|
+        unless Mongo::INDEX_TYPES.values.include?(t)
+          raise MongoArgumentError, "Invalid index field #{t.inspect}; " +
+                "should be one of " + Mongo::INDEX_TYPES.map {|k,v| "Mongo::#{k} (#{v})"}.join(', ')
+        end
+      end
     end
 
     def generate_indexes(field_spec, name, opts)
