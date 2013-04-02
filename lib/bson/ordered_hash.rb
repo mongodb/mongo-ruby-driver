@@ -142,6 +142,11 @@ module BSON
         @ordered_keys = []
       end
 
+      def initialize_copy(original)
+        super
+        @ordered_keys = original.ordered_keys.dup
+      end
+
       if RUBY_VERSION =~ /1.8.6/
         def hash
           code = 17
@@ -159,10 +164,6 @@ module BSON
             false
           end
         end
-      end
-
-      def clone
-        Marshal::load(Marshal.dump(self))
       end
     end
   end
