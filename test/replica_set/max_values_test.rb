@@ -18,13 +18,44 @@ class MaxValuesTest < Test::Unit::TestCase
     # stub max sizes for one member
     @client.local_manager.members.each_with_index do |m, i|
       if i % 2 == 0
-        m.stubs(:config).returns({'maxMessageSizeBytes' => 1024 * 2.5, 'maxBsonObjectSize' => 1024})
+        m.stubs(:config).returns({'maxMessageSizeBytes' => 1024 * MESSAGE_SIZE_FACTOR, 'maxBsonObjectSize' => 1024})
         m.set_config
       end
     end
-    # check that max sizes match what was changed
-    assert_equal 1024 * 2.5, @client.max_message_size
+
     assert_equal 1024, @client.max_bson_size
+    assert_equal 1024 * MESSAGE_SIZE_FACTOR, @client.max_message_size
+  end
+
+  def test_neither_max_sizes_in_config
+    @client.local_manager.members.each do |m|
+      m.stubs(:config).returns({})
+      m.set_config
+    end
+
+    assert_equal DEFAULT_MAX_BSON_SIZE, @client.max_bson_size
+    assert_equal DEFAULT_MAX_BSON_SIZE * MESSAGE_SIZE_FACTOR, @client.max_message_size
+  end
+
+  def test_only_bson_size_in_config
+    @client.local_manager.members.each do |m|
+      m.stubs(:config).returns({'maxBsonObjectSize' => 1024})
+      m.set_config
+    end
+    assert_equal 1024, @client.max_bson_size
+    assert_equal 1024 * MESSAGE_SIZE_FACTOR, @client.max_message_size
+  end
+
+  def test_both_sizes_in_config
+    @client.local_manager.members.each do |m|
+      m.stubs(:config).returns({'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR,
+                                'maxBsonObjectSize' => 1024})
+      m.set_config
+    end
+
+    assert_equal 1024, @client.max_bson_size
+    assert_equal 1024 * 2 * MESSAGE_SIZE_FACTOR, @client.max_message_size
   end
 
 end
+

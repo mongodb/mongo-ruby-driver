@@ -151,6 +151,14 @@ module Mongo
       connected? && config
     end
 
+    def max_bson_size
+      max = config['maxBsonObjectSize'] || DEFAULT_MAX_BSON_SIZE
+    end
+
+    def max_message_size
+      max = config['maxMessageSizeBytes'] || max_bson_size * MESSAGE_SIZE_FACTOR
+    end
+
     protected
 
     def split_node(host_port)

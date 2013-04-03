@@ -36,7 +36,7 @@ module Mongo
       @members              = Set.new
       @refresh_required     = false
       @max_bson_size        = DEFAULT_MAX_BSON_SIZE
-      @max_message_size     = DEFAULT_MAX_MESSAGE_SIZE
+      @max_message_size     = @max_bson_size * MESSAGE_SIZE_FACTOR
     end
 
     def inspect
@@ -118,10 +118,10 @@ module Mongo
     end
 
     def update_max_sizes
-      @max_bson_size = @members.map {|m| m.config['maxBsonObjectSize'].nil? ? 
-          DEFAULT_MAX_BSON_SIZE : m.config['maxBsonObjectSize']}.min unless @members.size == 0
-      @max_message_size = @members.map {|m| m.config['maxMessageSizeBytes'].nil? ? 
-          DEFAULT_MAX_MESSAGE_SIZE : m.config['maxMessageSizeBytes']}.min unless @members.size == 0
+      unless @members.size == 0
+        @max_bson_size = @members.map(&:max_bson_size).min
+        @max_message_size = @members.map(&:max_message_size).min
+      end
     end
 
     private
