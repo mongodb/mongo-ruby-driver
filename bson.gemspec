@@ -24,7 +24,6 @@ Gem::Specification.new do |s|
     s.platform = Gem::Platform::RUBY
   end
 
-  s.test_files        = Dir['test/bson/*.rb']
   s.executables       = ['b2json', 'j2bson']
   s.require_paths     = ['lib']
   s.has_rdoc          = 'yard'

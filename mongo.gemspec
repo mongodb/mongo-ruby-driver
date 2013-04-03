@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.files             += ['README.md', 'Rakefile', 'bin/mongo_console']
   s.files             += ['lib/mongo.rb'] + Dir['lib/mongo/**/*.rb']
 
-  s.test_files        = Dir['test/**/*.rb']
+  s.test_files        = Dir['test/**/*.rb'] - Dir['test/bson/*']
   s.executables       = ['mongo_console']
   s.require_paths     = ['lib']
   s.has_rdoc          = 'yard'
