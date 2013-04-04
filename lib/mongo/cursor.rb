@@ -584,16 +584,20 @@ module Mongo
       spec['$returnKey']   = true if @return_key
       spec['$showDiskLoc'] = true if @show_disk_loc
       spec['$comment']  = @comment if @comment
-      if @connection.mongos? && @read != :primary
+      if needs_read_pref?
         read_pref = Mongo::ReadPreference::mongos(@read, @tag_sets)
         spec['$readPreference'] = read_pref if read_pref
       end
       spec
     end
 
+    def needs_read_pref?
+      @connection.mongos? && @read != :primary
+    end
+
     def query_contains_special_fields?
       @order || @explain || @hint || @snapshot || @show_disk_loc ||
-        @max_scan || @return_key || @comment || @connection.mongos?
+        @max_scan || @return_key || @comment || needs_read_pref?
     end
 
     def close_cursor_if_query_complete
