@@ -11,8 +11,12 @@ Gem::Specification.new do |s|
   s.rubyforge_project = 'bson_ext'
   s.license           = 'Apache License Version 2.0'
 
-  s.signing_key       = 'gem-private_key.pem'
-  s.cert_chain        = ['gem-public_cert.pem']
+  if File.exists?('gem-private_key.pem')
+    s.signing_key = 'gem-private_key.pem'
+    s.cert_chain  = ['gem-public_cert.pem']
+  else
+    warn 'Warning: No private key present, creating unsigned gem.'
+  end
 
   s.files             = ['bson_ext.gemspec', 'LICENSE', 'VERSION']
   s.files             += Dir['ext/**/*.rb'] + Dir['ext/**/*.c'] + Dir['ext/**/*.h']
