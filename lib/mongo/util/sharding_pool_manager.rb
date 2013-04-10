@@ -16,6 +16,7 @@ module Mongo
       disconnect_old_members
       connect_to_members
       initialize_pools best(@members)
+      @seeds = discovered_seeds
     end
 
     # We want to refresh to the member with the fastest ping time
@@ -25,8 +26,10 @@ module Mongo
     # The config.mongos find can't be part of the connect call chain due to infinite recursion
     def check_connection_health
       begin
-        seeds = @client['config']['mongos'].find.to_a.map{|doc| doc['_id']}
-        if @seeds != seeds
+        seeds = @client['config']['mongos'].find.map do |mongos|
+                  Support.normalize_seeds(mongos['_id'])
+                end
+        if discovered_seeds != seeds
           @seeds = seeds
           @refresh_required = true
         end

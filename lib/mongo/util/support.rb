@@ -82,6 +82,20 @@ module Mongo
       end
     end
 
+    def normalize_seeds(seeds)
+      pairs = Array(seeds)
+      pairs = [ seeds ] if pairs.last.is_a?(Fixnum)
+      pairs = pairs.collect do |hostport|
+        if hostport.is_a?(String)
+          host, port = hostport.split(':')
+          [ host, port && port.to_i || MongoClient::DEFAULT_PORT ]
+        else
+          hostport
+        end
+      end
+      pairs.length > 1 ? pairs : pairs.first
+    end
+
     def is_i?(value)
       return !!(value =~ /^\d+$/)
     end

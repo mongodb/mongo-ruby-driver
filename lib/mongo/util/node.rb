@@ -6,7 +6,7 @@ module Mongo
     def initialize(client, host_port)
       @client = client
       @manager = @client.local_manager
-      @host, @port = split_node(host_port)
+      @host, @port = Support.normalize_seeds(host_port)
       @address = "#{@host}:#{@port}"
       @config = nil
       @socket = nil
@@ -20,7 +20,7 @@ module Mongo
 
     def =~(other)
       if other.is_a?(String)
-        h, p = split_node(other)
+        h, p = Support.normalize_seeds(other)
         h == @host && p == @port
       else
         false
@@ -121,9 +121,8 @@ module Mongo
 
     def arbiters
       return [] unless config['arbiters']
-
       config['arbiters'].map do |arbiter|
-        split_node(arbiter)
+        Support.normalize_seeds(arbiter)
       end
     end
 
@@ -160,17 +159,6 @@ module Mongo
     end
 
     protected
-
-    def split_node(host_port)
-      if host_port.is_a?(String)
-        host_port = host_port.split(":")
-      end
-
-      host = host_port[0]
-      port = host_port[1].nil? ? MongoClient::DEFAULT_PORT : host_port[1].to_i
-
-      [host, port]
-    end
 
     # Ensure that this node is a healthy member of a replica set.
     def check_set_membership(config)

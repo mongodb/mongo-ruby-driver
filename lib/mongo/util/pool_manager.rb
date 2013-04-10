@@ -48,7 +48,7 @@ module Mongo
       disconnect_old_members
       connect_to_members
       initialize_pools(@members)
-      cache_discovered_seeds
+      @seeds = discovered_seeds
     end
 
     def refresh!(additional_seeds)
@@ -242,8 +242,10 @@ module Mongo
         "#{@seeds.map {|s| "#{s[0]}:#{s[1]}" }.join(', ')}"
     end
 
-    def cache_discovered_seeds
-      @seeds = @members.map &:host_port
+    private
+
+    def discovered_seeds
+      @members.map(&:host_port)
     end
 
   end
