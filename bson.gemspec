@@ -10,8 +10,10 @@ Gem::Specification.new do |s|
   s.rubyforge_project = 'bson'
   s.license           = 'Apache License Version 2.0'
 
-  s.signing_key       = 'gem-private_key.pem'
-  s.cert_chain        = ['gem-public_cert.pem']
+  if File.exists?('gem-private_key.pem')
+    s.signing_key = 'gem-private_key.pem'
+    s.cert_chain  = ['gem-public_cert.pem']
+  end
 
   s.files             = ['bson.gemspec', 'LICENSE', 'VERSION']
   s.files             += ['bin/b2json', 'bin/j2bson', 'lib/bson.rb']

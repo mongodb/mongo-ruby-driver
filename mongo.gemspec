@@ -11,8 +11,10 @@ Gem::Specification.new do |s|
   s.rubyforge_project = 'mongo'
   s.license           = 'Apache License Version 2.0'
 
-  s.signing_key       = 'gem-private_key.pem'
-  s.cert_chain        = ['gem-public_cert.pem']
+  if File.exists?('gem-private_key.pem')
+    s.signing_key = 'gem-private_key.pem'
+    s.cert_chain  = ['gem-public_cert.pem']
+  end
 
   s.files             = ['mongo.gemspec', 'LICENSE', 'VERSION']
   s.files             += ['README.md', 'Rakefile', 'bin/mongo_console']
