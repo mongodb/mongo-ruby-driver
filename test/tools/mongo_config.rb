@@ -24,7 +24,7 @@ end
 #
 module Mongo
   class Config
-    DEFAULT_BASE_OPTS = { :host => 'localhost', :dbpath => 'data', :logpath => 'data/log'}
+    DEFAULT_BASE_OPTS = { :host => 'localhost', :dbpath => 'data', :logpath => 'data/log' }
     DEFAULT_REPLICA_SET = DEFAULT_BASE_OPTS.merge( :replicas => 3, :arbiters => 0 )
     DEFAULT_SHARDED_SIMPLE = DEFAULT_BASE_OPTS.merge( :shards => 2, :configs => 1, :routers => 4 )
     DEFAULT_SHARDED_REPLICA = DEFAULT_SHARDED_SIMPLE.merge( :replicas => 3, :arbiters => 0)
@@ -35,7 +35,7 @@ module Mongo
     MONGODS_OPT_KEYS = [:mongods]
     CLUSTER_OPT_KEYS = SHARDING_OPT_KEYS + REPLICA_OPT_KEYS + MONGODS_OPT_KEYS
 
-    FLAGS = [:noprealloc, :smallfiles, :logappend, :configsvr, :shardsvr, :quiet, :fastsync]
+    FLAGS = [:noprealloc, :smallfiles, :logappend, :configsvr, :shardsvr, :quiet, :fastsync, :auth]
 
     DEFAULT_VERIFIES = 60
     BASE_PORT = 3000
@@ -80,51 +80,52 @@ module Mongo
     end
 
     def self.make_mongo(kind, opts)
-      dbpath = opts[:dbpath]
-      port = self.get_available_port
-      path = "#{dbpath}/#{kind}-#{port}"
+      dbpath  = opts[:dbpath]
+      port    = self.get_available_port
+      path    = "#{dbpath}/#{kind}-#{port}"
       logpath = "#{path}/#{kind}.log"
 
-      {
-        :host => opts[:host],
-        :port => port,
-        :logpath => logpath,
-        :logappend => true
-      }
+      { :host      => opts[:host],
+        :port      => port,
+        :logpath   => logpath,
+        :logappend => true }
     end
 
     def self.make_mongod(kind, opts)
       params = make_mongo('mongods', opts)
 
       mongod = ENV['MONGOD'] || 'mongod'
-      path = File.dirname(params[:logpath])
+      path   = File.dirname(params[:logpath])
 
       noprealloc = opts[:noprealloc] || true
       smallfiles = opts[:smallfiles] || true
       quiet      = opts[:quiet]      || true
       fast_sync  = opts[:fastsync]   || false
+      auth       = opts[:auth]       || true
 
-      params.merge(
-        :command => mongod,
-        :dbpath => path,
-        :smallfiles => smallfiles,
-        :noprealloc => noprealloc,
-        :quiet => quiet,
-        :fastsync => fast_sync
-      )
+      params.merge(:command    => mongod,
+                   :dbpath     => path,
+                   :smallfiles => smallfiles,
+                   :noprealloc => noprealloc,
+                   :quiet      => quiet,
+                   :fastsync   => fast_sync,
+                   :auth       => auth)
     end
 
     def self.make_replica(opts, count)
-      params = make_mongod('replicas', opts)
+      params     = make_mongod('replicas', opts)
 
       replSet    = opts[:replSet]    || 'ruby-driver-test'
       oplog_size = opts[:oplog_size] || 5
+      keyFile    = opts[:keyFile]    || '/test/tools/keyfile.txt'
 
-      params.merge(
-        :_id => count,
-        :replSet => replSet,
-        :oplogSize => oplog_size
-      )
+      keyFile    = Dir.pwd << keyFile
+      system "chmod 600 #{keyFile}"
+
+      params.merge(:_id       => count,
+                   :replSet   => replSet,
+                   :oplogSize => oplog_size,
+                   :keyFile   => keyFile)
     end
 
     def self.make_config(opts)

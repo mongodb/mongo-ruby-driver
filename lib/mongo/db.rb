@@ -123,7 +123,7 @@ module Mongo
       end
 
       begin
-        socket = @connection.checkout_reader(:primary_preferred)
+        socket = @connection.checkout_reader(:mode => :primary_preferred)
         issue_authentication(username, password, save_auth, :socket => socket)
       ensure
         socket.checkin if socket

@@ -131,47 +131,6 @@ class DBTest < Test::Unit::TestCase
     end
   end
 
-  def test_authenticate
-    @@db.add_user('spongebob', 'squarepants')
-    assert_raise Mongo::AuthenticationError do
-      assert !@@db.authenticate('nobody', 'nopassword')
-    end
-    assert_raise Mongo::AuthenticationError do
-      assert !@@db.authenticate('spongebob' , 'squareliederhosen')
-    end
-    assert @@db.authenticate('spongebob', 'squarepants')
-    @@db.logout
-    @@db.remove_user('spongebob')
-  end
-
-  def test_authenticate_with_special_characters
-    assert @@db.add_user('foo:bar', '@foo')
-    assert @@db.authenticate('foo:bar', '@foo')
-    @@db.logout
-    @@db.remove_user('foo:bar')
-  end
-
-  def test_authenticate_read_only
-    @@db.add_user('joebob', 'user', true) # read-only user
-    assert @@db.authenticate('joebob', 'user')
-    @@db.logout
-    @@db.remove_user('joebob')
-  end
-
-  def test_authenticate_with_connection_uri
-    @@db.add_user('spongebob', 'squarepants')
-    assert Mongo::MongoClient.from_uri("mongodb://spongebob:squarepants@#{host_port}/#{@@db.name}")
-
-    assert_raise Mongo::AuthenticationError do
-      client = Mongo::MongoClient.from_uri("mongodb://wrong:info@#{host_port}/#{@@db.name}")
-      client['test']['foo'].find_one
-    end
-  end
-
-  def test_logout
-    assert @@db.logout
-  end
-
   def test_command
     assert_raise OperationFailure do
       @@db.command({:non_command => 1}, :check_response => true)
@@ -249,25 +208,11 @@ class DBTest < Test::Unit::TestCase
     db.collection('users').remove
   end
 
-  def test_user_management
-    @@db.add_user("bob", "secret")
-    assert @@db.authenticate("bob", "secret")
-    @@db.logout
-    assert @@db.remove_user("bob")
-    assert_raise Mongo::AuthenticationError do
-      @@db.authenticate("bob", "secret")
-    end
-  end
-
-  def test_remove_non_existant_user
-    assert !@@db.remove_user("joe")
-  end
-
   def test_stored_function_management
     @@db.add_stored_function("sum", "function (x, y) { return x + y; }")
     assert_equal @@db.eval("return sum(2,3);"), 5
     assert @@db.remove_stored_function("sum")
-    assert_raise OperationFailure do 
+    assert_raise OperationFailure do
       @@db.eval("return sum(2,3);")
     end
   end
