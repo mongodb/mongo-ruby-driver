@@ -25,8 +25,7 @@ module Mongo
       end
 
       @seeds = nodes.map do |host_port|
-        host, port = host_port.split(":")
-        [ host, port.to_i ]
+        Support.hostports_to_pairs(host_port)
       end
 
       # TODO: add a method for replacing this list of node.

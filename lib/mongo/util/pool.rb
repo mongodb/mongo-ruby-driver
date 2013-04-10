@@ -165,8 +165,8 @@ module Mongo
         socket.pool = self
       rescue => ex
         socket.close if socket
-        raise ConnectionFailure, "Failed to connect to host #{@host} and port #{@port}: #{ex}"
         @node.close if @node
+        raise ConnectionFailure, "Failed to connect to host #{@host} and port #{@port}: #{ex}"
       end
 
       # If any saved authentications exist, we want to apply those

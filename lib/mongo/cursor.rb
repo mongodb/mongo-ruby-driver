@@ -472,6 +472,7 @@ module Mongo
             nil, @options & OP_QUERY_EXHAUST != 0)
         rescue ConnectionFailure => ex
           socket.close if socket
+          @pool = nil
           @connection.unpin_pool
           @connection.refresh
           if tries < 3 && !@socket && (!@command || Mongo::Support::secondary_ok?(@selector))

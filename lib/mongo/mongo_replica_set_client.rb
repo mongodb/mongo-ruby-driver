@@ -105,8 +105,7 @@ module Mongo
           warn "Please specify hosts as an array of 'host:port' strings; the old format will be removed in v2.0"
           node
         elsif node.is_a?(String)
-          host, port = node.split(":")
-          [ host, port.to_i ]
+          Support.hostports_to_pairs(node)
         else
           raise MongoArgumentError "Bad seed format!"
         end
