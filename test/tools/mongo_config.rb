@@ -35,7 +35,7 @@ module Mongo
     MONGODS_OPT_KEYS = [:mongods]
     CLUSTER_OPT_KEYS = SHARDING_OPT_KEYS + REPLICA_OPT_KEYS + MONGODS_OPT_KEYS
 
-    FLAGS = [:noprealloc, :smallfiles, :logappend, :configsvr, :shardsvr, :quiet, :fastsync, :auth]
+    FLAGS = [:noprealloc, :smallfiles, :logappend, :configsvr, :shardsvr, :quiet, :fastsync]
 
     DEFAULT_VERIFIES = 60
     BASE_PORT = 3000
@@ -108,8 +108,7 @@ module Mongo
                    :smallfiles => smallfiles,
                    :noprealloc => noprealloc,
                    :quiet      => quiet,
-                   :fastsync   => fast_sync,
-                   :auth       => auth)
+                   :fastsync   => fast_sync)
     end
 
     def self.make_replica(opts, count)
@@ -117,15 +116,10 @@ module Mongo
 
       replSet    = opts[:replSet]    || 'ruby-driver-test'
       oplog_size = opts[:oplog_size] || 5
-      keyFile    = opts[:keyFile]    || '/test/tools/keyfile.txt'
-
-      keyFile    = Dir.pwd << keyFile
-      system "chmod 600 #{keyFile}"
 
       params.merge(:_id       => count,
                    :replSet   => replSet,
-                   :oplogSize => oplog_size,
-                   :keyFile   => keyFile)
+                   :oplogSize => oplog_size)
     end
 
     def self.make_config(opts)
