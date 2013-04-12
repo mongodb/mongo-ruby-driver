@@ -175,10 +175,11 @@ module Mongo
         begin
           thread_local[:locks][:connecting] = true
           if @manager
+            ensure_manager
             @manager.refresh! @seeds
           else
             @manager = PoolManager.new(self, @seeds)
-            thread_local[:managers][self] = @manager
+            ensure_manager
             @manager.connect
           end
         ensure
@@ -210,6 +211,7 @@ module Mongo
       end
 
       log(:debug, "Checking replica set connection health...")
+      ensure_manager
       @manager.check_connection_health
 
       if @manager.refresh_required?

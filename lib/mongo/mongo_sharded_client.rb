@@ -79,10 +79,11 @@ module Mongo
         begin
           thread_local[:locks][:connecting] = true
           if @manager
+            thread_local[:managers][self] = @manager
             @manager.refresh! @seeds
           else
             @manager = ShardingPoolManager.new(self, @seeds)
-            thread_local[:managers][self] = @manager
+            ensure_manager
             @manager.connect
           end
         ensure
