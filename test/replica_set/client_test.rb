@@ -11,6 +11,21 @@ class ClientTest < Test::Unit::TestCase
     @client.close if @client
   end
 
+  def test_reconnection
+    @client = MongoReplicaSetClient.new @rs.repl_set_seeds
+    assert @client.connected?
+
+    manager = @client.local_manager
+
+    @client.close
+    assert !@client.connected?
+    assert !@client.local_manager
+
+    @client.connect
+    assert @client.connected?
+    assert_equal @client.local_manager, manager
+  end
+
   # TODO: test connect timeout.
 
   def test_connect_with_deprecated_multi
