@@ -22,6 +22,18 @@ If you have the source, you can generate the matching documentation  by typing
 
 Once generated, the API documentation can be found in the docs/ folder.
 
+# Compatibility
+
+The MongoDB Ruby driver aims to support and is [tested against](https://travis-ci.org/mongodb/mongo-ruby-driver) the following versions of Ruby:
+
+* Ruby 1.8.7
+* Ruby 1.9.2
+* Ruby 1.9.3
+* Ruby 2.0.0
+* JRuby (1.6.8 and greater)
+
+Note: If you're on 1.8.7, be sure that you're using a patchlevel >= 249 as there are some IO-related bugs in earlier versions.
+
 # Introduction
 
 This is the 10gen-supported Ruby driver for [MongoDB](http://www.mongodb.org).
@@ -64,12 +76,6 @@ puts "There are #{@coll.count} records. Here they are:"
 ```
 
 # Installation
-
-### Ruby Versions
-
-The driver works and is consistently tested on Ruby 1.8.7 and 1.9.3 as well as JRuby 1.6.x and 1.7.x.
-
-Note that if you're on 1.8.7, be sure that you're using a patchlevel >= 249. There are some IO bugs in earlier versions.
 
 ### Gems
 
