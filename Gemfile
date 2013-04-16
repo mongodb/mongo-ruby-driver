@@ -23,8 +23,6 @@ group :testing do
 end
 
 platforms :jruby do
-  gem 'bouncy-castle-java'
-  gem 'jruby-openssl'
   gem 'jruby-launcher'
   gem 'jruby-jars'
 end
