@@ -35,7 +35,7 @@ module Mongo
     MONGODS_OPT_KEYS = [:mongods]
     CLUSTER_OPT_KEYS = SHARDING_OPT_KEYS + REPLICA_OPT_KEYS + MONGODS_OPT_KEYS
 
-    FLAGS = [:noprealloc, :smallfiles, :logappend, :configsvr, :shardsvr, :quiet, :fastsync]
+    FLAGS = [:noprealloc, :smallfiles, :logappend, :configsvr, :shardsvr, :quiet, :fastsync, :auth]
 
     DEFAULT_VERIFIES = 60
     BASE_PORT = 3000
@@ -108,18 +108,24 @@ module Mongo
                    :smallfiles => smallfiles,
                    :noprealloc => noprealloc,
                    :quiet      => quiet,
-                   :fastsync   => fast_sync)
+                   :fastsync   => fast_sync,
+                   :auth       => auth)
     end
 
-    def self.make_replica(opts, count)
+    def self.make_replica(opts, id)
       params     = make_mongod('replicas', opts)
 
       replSet    = opts[:replSet]    || 'ruby-driver-test'
-      oplog_size = opts[:oplog_size] || 5
+      oplogSize  = opts[:oplog_size] || 5
+      keyFile    = opts[:key_file]   || '/test/tools/keyfile.txt'
 
-      params.merge(:_id       => count,
+      keyFile    = Dir.pwd << keyFile
+      system "chmod 600 #{keyFile}"
+
+      params.merge(:_id       => id,
                    :replSet   => replSet,
-                   :oplogSize => oplog_size)
+                   :oplogSize => oplogSize,
+                   :keyFile   => keyFile)
     end
 
     def self.make_config(opts)
@@ -187,7 +193,7 @@ module Mongo
           if defined?(RUBY_ENGINE) && RUBY_ENGINE == 'jruby'
             @pid = Process.spawn(*@cmd)
           else
-            cmd_and_opts = [@cmd, {:out => :close}].flatten
+            cmd_and_opts = [@cmd, {:out => '/dev/null'}].flatten
             @pid = Process.spawn(*cmd_and_opts)
           end
           verify(verifies) if verifies > 0
