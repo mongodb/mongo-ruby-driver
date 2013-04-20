@@ -1,4 +1,21 @@
 module AuthenticationTests
+
+  def init_auth
+    # enable authentication by creating and logging in as admin user
+    @admin = @client['admin']
+    @admin.add_user('admin', 'password')
+    @admin.authenticate('admin', 'password')
+  end
+
+  def teardown
+    @admin.logout
+    @admin.authenticate('admin','password')
+    @admin['system.users'].remove
+    @db['system.users'].remove
+    @db['test'].remove
+    @admin.logout
+  end
+
   def test_add_user
     @db.add_user('bob','user')
     assert @db['system.users'].find_one({:user => 'bob'})
