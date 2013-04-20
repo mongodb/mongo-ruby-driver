@@ -76,8 +76,6 @@ namespace :test do
       'test/replica_set/read_preference_test.rb'
     ]
 
-    disabled << 'test/replica_set/authentication_test.rb' if ENV['MONGOD']
-
     t.test_files = FileList['test/replica_set/*_test.rb'] - disabled
     t.libs << 'test'
     #t.verbose = true
