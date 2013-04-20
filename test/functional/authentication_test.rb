@@ -8,10 +8,7 @@ class AuthenticationTest < Test::Unit::TestCase
   def setup
     @client = MongoClient.new
     @db     = @client[MONGO_TEST_DB]
-  end
-
-  def teardown
-    @db['system.users'].remove
+    init_auth
   end
 
   def test_authenticate_with_connection_uri
