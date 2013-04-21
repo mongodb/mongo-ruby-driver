@@ -140,7 +140,8 @@ module Mongo
     # @param opts [ Hash ] Any of the options available for MongoShardedClient.new
     #
     # @return [ Mongo::MongoShardedClient ] The sharded client.
-    def self.from_uri(uri = ENV['MONGODB_URI'], options = {})
+    def self.from_uri(uri, options = {})
+      uri ||= ENV['MONGODB_URI']
       URIParser.new(uri).connection(options, false, true)
     end
   end
