@@ -1,5 +1,4 @@
 # -*- mode: ruby; -*-
-require 'rspec/core/rake_task'
 
 desc "Run the default test suite (Ruby)"
 task :test => ENV.key?('TRAVIS_TEST') ? 'test:default' : 'test:ruby'
@@ -26,8 +25,6 @@ end
 namespace :test do
   DEFAULT_TESTS = ['functional', 'unit', 'bson', 'threading']
   ENV['TEST_MODE'] = 'TRUE'
-
-  RSpec::Core::RakeTask.new(:spec)
 
   desc "Run default test suites with BSON extensions enabled."
   task :ext do
