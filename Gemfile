@@ -1,6 +1,10 @@
 source 'https://rubygems.org'
 
+# TODO: replace with gemspec once bson 2.0 has been released
 gem 'bson', :git => 'git://github.com/mongodb/bson-ruby.git'
+# gemspec
+
+gem 'rake'
 
 group :deploy do
   gem 'git'
@@ -9,15 +13,22 @@ group :deploy do
 end
 
 group :testing do
-  gem 'rake'
   gem 'rspec'
+  if RUBY_VERSION > '1.9'
+    gem 'tailor', :require => false
+    gem 'coveralls', :require => false
+  end
 end
 
 group :development do
+  gem 'pry-rescue'
+  gem 'pry-nav'
+  gem 'guard-rspec'
 
-end
+  gem 'rb-inotify', :require => false # Linux
+  gem 'rb-fsevent', :require => false # OS X
+  gem 'rb-fchange', :require => false # Windows
+  gem 'terminal-notifier-guard'
 
-platforms :jruby do
-  gem 'jruby-launcher'
-  gem 'jruby-jars'
+  gem 'ruby-prof', :platforms => :mri
 end

@@ -1,0 +1,9 @@
+Tailor.config do |config|
+  config.formatters 'text', 'yaml'
+  config.file_set 'lib/**/*.rb' do |style|
+    style.max_line_length 100, level: :warn
+  end
+
+  # config.file_set 'spec/**/*.rb', :spec do |style|
+  # end
+end
