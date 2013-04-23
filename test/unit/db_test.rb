@@ -88,7 +88,7 @@ class DBTest < Test::Unit::TestCase
 
       should "raise an error if logging out fails" do
         @db.expects(:command).returns({})
-        @client.expects(:pool_size).returns(1)
+        @client.expects(:auths).returns([])
         assert_raise Mongo::MongoDBError do
           @db.logout
         end
