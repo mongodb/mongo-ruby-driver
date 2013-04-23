@@ -349,8 +349,8 @@ class TestConnection < Test::Unit::TestCase
   context "Saved authentications" do
     setup do
       @client = standard_connection
-      @auth = {:db_name => 'test', :username => 'bob', :password => 'secret'}
-      @client.add_auth(@auth[:db_name], @auth[:username], @auth[:password])
+      @auth = {:db_name => 'test', :username => 'bob', :password => 'secret', :source => nil}
+      @client.add_auth(@auth[:db_name], @auth[:username], @auth[:password], @auth[:source])
     end
 
     teardown do
@@ -362,9 +362,9 @@ class TestConnection < Test::Unit::TestCase
     end
 
     should "not allow multiple authentications for the same db" do
-      auth = {:db_name => 'test', :username => 'mickey', :password => 'm0u53'}
+      auth = {:db_name => 'test', :username => 'mickey', :password => 'm0u53', :source => nil}
       assert_raise Mongo::MongoArgumentError do
-        @client.add_auth(auth[:db_name], auth[:username], auth[:password])
+        @client.add_auth(auth[:db_name], auth[:username], auth[:password], auth[:source])
       end
     end
 
