@@ -57,6 +57,43 @@ module AuthenticationTests
     end
   end
 
+  def test_delegated_authentication
+    return if @client.server_version < '2.4'
+
+    doc = {'_id' => 'test'}
+    # create accounts database to hold user credentials
+    accounts = @client['accounts']
+    accounts['system.users'].remove
+    accounts.add_user('tyler', 'brock', nil, :roles => [])
+
+    # insert test data and give user permissions on test db
+    @db['test'].remove
+    @db['test'].insert(doc)
+    @db.add_user('tyler', nil, nil, :roles => ['read'], :userSource => 'accounts')
+    @admin.logout
+
+    # auth must occur on the db where the user is defined
+    assert_raise Mongo::AuthenticationError do
+      @db.authenticate('tyler', 'brock')
+    end
+
+    # auth directly
+    assert accounts.authenticate('tyler', 'brock')
+    assert_equal doc, @db['test'].find_one
+    accounts.logout
+    assert_raise Mongo::OperationFailure do
+      @db['test'].find_one
+    end
+
+    # auth using source
+    @db.authenticate('tyler', 'brock', true, 'accounts')
+    assert_equal doc, @db['test'].find_one
+    @db.logout
+    assert_raise Mongo::OperationFailure do
+      @db['test'].find_one
+    end
+  end
+
   def test_logout
     @db.add_user('peggy', 'user')
     assert @db.authenticate('peggy', 'user')
