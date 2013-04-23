@@ -2,11 +2,16 @@ language: ruby
 
 rvm:
   - 1.8.7
+  - 1.9.2
   - 1.9.3
   - 2.0.0
-  - jruby
   - ruby-head
+  - jruby-18mode
+  - jruby-19mode
   - jruby-head
+  - rbx-18mode
+  - rbx-19mode
+  - ree
 
 bundler_args: --without deploy
 
@@ -23,10 +28,15 @@ services:
 
 branches:
   only:
+    - 2.x-development
     - master
-    - release
+    - 1.x-stable
+    - 2.x-stable
 
 matrix:
   allow_failures:
     - rvm: ruby-head
     - rvm: jruby-head
+    - rvm: rbx-18mode
+    - rvm: rbx-19mode
+    - rvm: ree
