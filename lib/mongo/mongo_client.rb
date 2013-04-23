@@ -259,7 +259,7 @@ module Mongo
       return false if @auths.empty?
       @auths.each do |auth|
         self[auth[:db_name]].issue_authentication(auth[:username], auth[:password], false,
-          :socket => opts[:socket])
+          :source => auth[:source], :socket => opts[:socket])
       end
       true
     end
@@ -277,7 +277,7 @@ module Mongo
     # @param [String] password
     #
     # @return [Hash] a hash representing the authentication just added.
-    def add_auth(db_name, username, password)
+    def add_auth(db_name, username, password, source)
       if @auths.any? {|a| a[:db_name] == db_name}
         raise MongoArgumentError, "Cannot apply multiple authentications to database '#{db_name}'"
       end
@@ -285,7 +285,8 @@ module Mongo
       auth = {
         :db_name  => db_name,
         :username => username,
-        :password => password
+        :password => password,
+        :source => source
       }
       @auths << auth
       auth
