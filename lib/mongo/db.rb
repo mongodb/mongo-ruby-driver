@@ -123,27 +123,35 @@ module Mongo
     # @param [String] password
     # @param [Boolean] save_auth
     #   Save this authentication to the client object using MongoClient#add_auth. This
-    #   will ensure that the authentication will be applied on database reconnect. Note
-    #   that this value must be true when using connection pooling.
+    #   will ensure that the authentication will be applied to all sockets and upon
+    #   database reconnect.
+    # @param source [String] Database with user credentials. This should be used to
+    #   authenticate against a database when the credentials exist elsewhere.
+    #
+    # @note save_auth must be true when using connection pooling or providing a source
+    #   for credentials.
     #
     # @return [Boolean]
     #
     # @raise [AuthenticationError]
     #
     # @core authenticate authenticate-instance_method
-    def authenticate(username, password, save_auth=true)
-      if @connection.pool_size > 1 && !save_auth
-        raise MongoArgumentError, "If using connection pooling, :save_auth must be set to true."
+    def authenticate(username, password=nil, save_auth=true, source=nil)
+      if (@connection.pool_size > 1 || source) && !save_auth
+        raise MongoArgumentError, "If using connection pooling or delegated auth, " +
+          ":save_auth must be set to true."
       end
 
       begin
         socket = @connection.checkout_reader(:mode => :primary_preferred)
-        issue_authentication(username, password, save_auth, :socket => socket)
+        issue_authentication(username, password, save_auth,
+          :socket => socket, :source => source)
       ensure
         socket.checkin if socket
       end
 
       @connection.authenticate_pools
+      true
     end
 
     def issue_authentication(username, password, save_auth=true, opts={})
@@ -151,15 +159,19 @@ module Mongo
       raise MongoDBError, "Error retrieving nonce: #{doc}" unless ok?(doc)
       nonce = doc['nonce']
 
+      # issue authentication against this database if source option not provided
+      source = opts[:source]
+      db = source ? @connection[source] : self
+
       auth = BSON::OrderedHash.new
       auth['authenticate'] = 1
       auth['user'] = username
       auth['nonce'] = nonce
       auth['key'] = Mongo::Support.auth_key(username, password, nonce)
-      if ok?(doc = self.command(auth, :check_response => false, :socket => opts[:socket]))
-        @connection.add_auth(@name, username, password) if save_auth
+      if ok?(doc = db.command(auth, :check_response => false, :socket => opts[:socket]))
+        @connection.add_auth(name, username, password, source) if save_auth
       else
-        message = "Failed to authenticate user '#{username}' on db '#{self.name}'"
+        message = "Failed to authenticate user '#{username}' on db '#{db.name}'"
         raise Mongo::AuthenticationError.new(message, doc['code'], doc)
       end
       true
@@ -248,14 +260,14 @@ module Mongo
     #
     # @return [Boolean]
     def logout(opts={})
-      @connection.logout_pools(@name) if @connection.pool_size > 1
-      issue_logout(opts)
+      auth = @connection.auths.find { |a| a[:db_name] == name }
+      db = auth && auth[:source] ? @connection[auth[:source]] : self
+      auth ? @connection.logout_pools(db.name) : db.issue_logout(opts)
+      @connection.remove_auth(db.name)
     end
 
     def issue_logout(opts={})
-      if ok?(doc = command({:logout => 1}, :socket => opts[:socket]))
-        @connection.remove_auth(@name)
-      else
+      unless ok?(doc = command({:logout => 1}, :socket => opts[:socket]))
         raise MongoDBError, "Error logging out: #{doc.inspect}"
       end
       true
