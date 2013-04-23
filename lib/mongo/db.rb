@@ -193,19 +193,30 @@ module Mongo
     end
 
     # Adds a user to this database for use with authentication. If the user already
-    # exists in the system, the password will be updated.
+    # exists in the system, the password and any additional fields provided in opts
+    # will be updated.
     #
     # @param [String] username
     # @param [String] password
     # @param [Boolean] read_only
     #   Create a read-only user.
     #
+    # @param [Hash] opts
+    #   Optional fields for the user document (e.g. +userSource+, or +roles+)
+    #
+    #   See {http://docs.mongodb.org/manual/reference/privilege-documents}
+    #   for more information.
+    #
+    # @note The use of the opts argument to provide or update additional fields
+    #   on the user document requires MongoDB >= 2.4.0
+    #
     # @return [Hash] an object representing the user.
-    def add_user(username, password, read_only = false)
+    def add_user(username, password=nil, read_only=false, opts={})
       users = self[SYSTEM_USER_COLLECTION]
       user  = users.find_one({:user => username}) || {:user => username}
-      user['pwd'] = Mongo::Support.hash_password(username, password)
-      user['readOnly'] = true if read_only;
+      user['pwd'] = Mongo::Support.hash_password(username, password) if password
+      user['readOnly'] = true if read_only
+      user.merge!(opts)
       begin
         users.save(user)
       rescue OperationFailure => ex
