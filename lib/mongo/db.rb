@@ -192,7 +192,12 @@ module Mongo
       user  = users.find_one({:user => username}) || {:user => username}
       user['pwd'] = Mongo::Support.hash_password(username, password)
       user['readOnly'] = true if read_only;
-      users.save(user)
+      begin
+        users.save(user)
+      rescue OperationFailure => ex
+        # adding first admin user fails GLE in MongoDB 2.2
+        raise ex unless ex.message =~ /login/
+      end
       user
     end
 
