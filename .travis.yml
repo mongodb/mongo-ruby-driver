@@ -13,7 +13,7 @@ rvm:
   - rbx-19mode
   - ree
 
-bundler_args: --without deploy
+bundler_args: --without deploy development
 
 env: TRAVIS_TEST="true"
 

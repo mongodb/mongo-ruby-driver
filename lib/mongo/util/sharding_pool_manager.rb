@@ -19,23 +19,28 @@ module Mongo
       @seeds = discovered_seeds
     end
 
-    # We want to refresh to the member with the fastest ping time
-    # but also want to minimize refreshes
-    # We're healthy if the primary is pingable. If this isn't the case,
-    # or the members have changed, set @refresh_required to true, and return.
-    # The config.mongos find can't be part of the connect call chain due to infinite recursion
+    # Checks that each node is healthy (via check_is_master) and that each
+    # node is in fact a mongos. If either criteria are not true, a refresh is
+    # set to be triggered and close() is called on the node.
+    #
+    # @return [Boolean] indicating if a refresh is required.
     def check_connection_health
-      begin
-        seeds = @client['config']['mongos'].find.map do |mongos|
-                  Support.normalize_seeds(mongos['_id'])
-                end
-        if discovered_seeds != seeds
-          @seeds = seeds
+      @refresh_required = false
+      @members.each do |member|
+        begin
+          config = @client.check_is_master([member.host, member.port])
+          unless config && config.has_key?['msg']
+            @refresh_required = true
+            member.close
+          end
+        rescue OperationTimeout
           @refresh_required = true
+          member.close
         end
-      rescue Mongo::OperationFailure
-        @refresh_required = true
+        return @refresh_required if @refresh_required
       end
+      @refresh_required
     end
+
   end
 end

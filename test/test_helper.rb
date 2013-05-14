@@ -1,4 +1,10 @@
-require 'rubygems'
+begin
+  require 'pry-rescue'
+  require 'pry-nav'
+rescue LoadError
+  # failed to load, skipping pry
+end
+
 # SimpleCov must load before our code - A coverage report summary line will print after each test suite
 if RUBY_VERSION >= '1.9.0' && RUBY_ENGINE == 'ruby'
   if ENV.key?('COVERAGE')
