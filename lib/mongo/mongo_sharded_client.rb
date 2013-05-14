@@ -44,7 +44,6 @@ module Mongo
       @connected = false
 
       @connect_mutex = Mutex.new
-      @refresh_mutex = Mutex.new
 
       @mongos        = true
 
@@ -62,7 +61,7 @@ module Mongo
     end
 
     # Initiate a connection to the sharded cluster.
-    def connect(force = !@connected)
+    def connect(force = !connected?)
       return unless force
       log(:info, "Connecting...")
 

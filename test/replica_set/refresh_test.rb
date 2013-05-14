@@ -78,6 +78,37 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
       "No secondaries have been added."
     assert_equal num_secondaries, client.secondary_pools.size
   end
+
+  def test_concurrent_refreshes
+    factor = 5
+    nthreads = factor * 10
+    threads = []
+    client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :refresh_mode => :sync, :refresh_interval => 1)
+
+    nthreads.times do |i|
+      threads << Thread.new do
+        # force a connection failure every couple of threads that causes a refresh
+        if i % factor == 0
+          cursor = client['foo']['bar'].find
+          cursor.stubs(:checkout_socket_from_connection).raises(ConnectionFailure)
+          begin
+            cursor.next
+          rescue => ex
+            raise ex unless ex.class == ConnectionFailure
+            next
+          end
+        else
+          # synchronous refreshes will happen every couple of find_ones
+          cursor = client['foo']['bar'].find_one
+        end
+      end
+    end
+
+    threads.each do |t|
+      t.join
+    end
+  end
+
 =begin
   def test_automated_refresh_with_removed_node
     client = MongoReplicaSetClient.new(@rs.repl_set_seeds,

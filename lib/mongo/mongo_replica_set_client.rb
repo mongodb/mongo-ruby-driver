@@ -140,7 +140,6 @@ module Mongo
       @connected = false
 
       @connect_mutex = Mutex.new
-      @refresh_mutex = Mutex.new
 
       @mongos = false
 
@@ -158,7 +157,8 @@ module Mongo
     end
 
     # Initiate a connection to the replica set.
-    def connect
+    def connect(force = !connected?)
+      return unless force
       log(:info, "Connecting...")
 
       # Prevent recursive connection attempts from the same thread.
@@ -166,13 +166,15 @@ module Mongo
       # infinitely while attempting to connect and continually failing. Instead, fail fast.
       raise ConnectionFailure, "Failed to get node data." if thread_local[:locks][:connecting] == true
 
+      current_version = @refresh_version
       @connect_mutex.synchronize do
-        return if @connected
+        # don't try to connect if another thread has done so while we were waiting for the lock
+        return unless current_version == @refresh_version
         begin
           thread_local[:locks][:connecting] = true
           if @manager
             ensure_manager
-            @manager.refresh! @seeds
+            @manager.refresh!(@seeds)
           else
             @manager = PoolManager.new(self, @seeds)
             ensure_manager
@@ -225,9 +227,7 @@ module Mongo
     #   to get the refresh lock.
     def hard_refresh!
       log(:info, "Initiating hard refresh...")
-      @manager.refresh! @seeds
-
-      @refresh_version += 1
+      connect(true)
       return true
     end
 
@@ -477,16 +477,8 @@ module Mongo
     def sync_refresh
       if @refresh_mode == :sync &&
         ((Time.now - @last_refresh) > @refresh_interval)
-
         @last_refresh = Time.now
-
-        if @refresh_mutex.try_lock
-          begin
-            refresh
-          ensure
-            @refresh_mutex.unlock
-          end
-        end
+        refresh
       end
     end
   end
