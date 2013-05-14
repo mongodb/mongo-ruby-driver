@@ -104,7 +104,7 @@ module Mongo
     end
 
     def connected?
-      @connected && @manager.primary_pool
+      !!(@connected && @manager.primary_pool)
     end
 
     # Returns +true+ if it's okay to read from a secondary node.
