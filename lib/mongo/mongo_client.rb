@@ -160,7 +160,7 @@ module Mongo
 
     # Initialize a connection to MongoDB using the MongoDB URI spec.
     #
-    # Since MongoClient.new cannot be used with any <code>ENV["MONGODB_URI"]</code> that has multiple hosts (implying a replicaset), 
+    # Since MongoClient.new cannot be used with any <code>ENV["MONGODB_URI"]</code> that has multiple hosts (implying a replicaset),
     # you may use this when the type of your connection varies by environment and should be determined solely from <code>ENV["MONGODB_URI"]</code>.
     #
     # @param uri [String]
@@ -469,7 +469,7 @@ module Mongo
     # NOTE: Do check if this needs to be more stringent.
     # Probably not since if any node raises a connection failure, all nodes will be closed.
     def connected?
-      @primary_pool && !@primary_pool.closed?
+      !!(@primary_pool && !@primary_pool.closed?)
     end
 
     # Determine if the connection is active. In a normal case the *server_info* operation
@@ -543,6 +543,32 @@ module Mongo
       if @primary_pool && socket && socket.pool
         socket.checkin
       end
+    end
+
+    # Internal method for checking isMaster() on a given node.
+    #
+    # @param  node [Array] Port and host for the target node
+    # @return [Hash] Response from isMaster()
+    #
+    # @private
+    def check_is_master(node)
+      begin
+        host, port = *node
+        config = nil
+        socket = @socket_class.new(host, port, @op_timeout, @connect_timeout)
+        if @connect_timeout
+          Timeout::timeout(@connect_timeout, OperationTimeout) do
+            config = self['admin'].command({:ismaster => 1}, :socket => socket)
+          end
+        else
+          config = self['admin'].command({:ismaster => 1}, :socket => socket)
+        end
+      rescue OperationFailure, SocketError, SystemCallError, IOError
+        close
+      ensure
+        socket.close unless socket.nil? || socket.closed?
+      end
+      config
     end
 
     protected
@@ -620,31 +646,6 @@ module Mongo
     end
 
     private
-
-    def check_is_master(node)
-      begin
-        host, port = *node
-        socket = nil
-        config = nil
-
-        socket = @socket_class.new(host, port, @op_timeout, @connect_timeout)
-        if(@connect_timeout)
-          Timeout::timeout(@connect_timeout, OperationTimeout) do
-            config = self['admin'].command({:ismaster => 1}, :socket => socket)
-          end
-        else
-          config = self['admin'].command({:ismaster => 1}, :socket => socket)
-        end
-      rescue OperationFailure, SocketError, SystemCallError, IOError
-        close
-      ensure
-        if socket
-          socket.close unless socket.closed?
-        end
-      end
-
-      config
-    end
 
     # Set the specified node as primary.
     def set_primary(node)
