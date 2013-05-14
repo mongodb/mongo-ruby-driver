@@ -12,11 +12,19 @@ module Mongo
     end
 
     def connect
-      @refresh_required = false
-      disconnect_old_members
-      connect_to_members
-      initialize_pools best(@members)
-      @seeds = discovered_seeds
+      @connect_mutex.synchronize do
+        begin
+          thread_local[:locks][:connecting_manager] = true
+          @refresh_required = false
+          disconnect_old_members
+          connect_to_members
+          initialize_pools best(@members)
+          update_max_sizes
+          @seeds = discovered_seeds
+        ensure
+          thread_local[:locks][:connecting_manager] = false
+        end
+      end
     end
 
     # We want to refresh to the member with the fastest ping time
@@ -25,6 +33,7 @@ module Mongo
     # or the members have changed, set @refresh_required to true, and return.
     # The config.mongos find can't be part of the connect call chain due to infinite recursion
     def check_connection_health
+      return if thread_local[:locks][:connecting_manager]
       begin
         seeds = @client['config']['mongos'].find.map do |mongos|
                   Support.normalize_seeds(mongos['_id'])
