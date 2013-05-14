@@ -41,11 +41,7 @@ module Mongo
       # Lock for request ids.
       @id_lock = Mutex.new
 
-      @pool_mutex = Mutex.new
       @connected = false
-
-      @safe_mutex_lock = Mutex.new
-      @safe_mutexes = Hash.new {|hash, key| hash[key] = Mutex.new}
 
       @connect_mutex = Mutex.new
       @refresh_mutex = Mutex.new
