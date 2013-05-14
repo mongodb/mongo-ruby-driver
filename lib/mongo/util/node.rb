@@ -90,6 +90,7 @@ module Mongo
           end
 
           @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
+          update_max_sizes
 
           if @config['msg']
             @client.log(:warn, "#{config['msg']}")
@@ -106,7 +107,6 @@ module Mongo
           close
         end
       end
-      @manager.update_max_sizes
     end
 
     # Return a list of replica set nodes from the config.
@@ -151,11 +151,11 @@ module Mongo
     end
 
     def max_bson_size
-      max = config['maxBsonObjectSize'] || DEFAULT_MAX_BSON_SIZE
+      @max_bson_size || DEFAULT_MAX_BSON_SIZE
     end
 
     def max_message_size
-      max = config['maxMessageSizeBytes'] || max_bson_size * MESSAGE_SIZE_FACTOR
+      @max_message_size || max_bson_size * MESSAGE_SIZE_FACTOR
     end
 
     protected
@@ -185,6 +185,13 @@ module Mongo
           raise ReplicaSetConnectionError, message
         end
       end
+    end
+
+    private
+
+    def update_max_sizes
+      @max_bson_size = config['maxBsonObjectSize'] || DEFAULT_MAX_BSON_SIZE
+      @max_message_size = config['maxMessageSizeBytes'] || @max_bson_size * MESSAGE_SIZE_FACTOR
     end
   end
 end
