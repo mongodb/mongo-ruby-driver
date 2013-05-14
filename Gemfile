@@ -22,6 +22,11 @@ group :testing do
   gem 'simplecov', :require => false
 end
 
+group :development do
+  gem 'pry-rescue'
+  gem 'pry-nav'
+end
+
 platforms :jruby do
   gem 'jruby-launcher'
   gem 'jruby-jars'
