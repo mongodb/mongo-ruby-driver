@@ -9,7 +9,6 @@ module Mongo
                 :primary_pool,
                 :secondary_pools,
                 :hosts,
-                :nodes,
                 :members,
                 :seeds,
                 :pools,
@@ -152,13 +151,13 @@ module Mongo
             existing.set_config
             # If we are unhealthy after refreshing our config, drop from the set.
             if !existing.healthy?
-              @members.delete existing
+              @members.delete(existing)
             else
               next
             end
           else
             existing.close
-            @members.delete existing
+            @members.delete(existing)
           end
         end
 
@@ -241,8 +240,6 @@ module Mongo
       raise ConnectionFailure, "Cannot connect to a replica set using seeds " +
         "#{@seeds.map {|s| "#{s[0]}:#{s[1]}" }.join(', ')}"
     end
-
-    private
 
     def discovered_seeds
       @members.map(&:host_port)
