@@ -59,30 +59,5 @@ class ShardingPoolManagerTest < Test::Unit::TestCase
       assert_equal 500, manager.max_bson_size
       assert_equal 700 , manager.max_message_size
     end
-
-    should "maintain seed format when checking connection health" do
-
-      @db.stubs(:command).returns(
-        # First call to get a socket.
-        @ismaster.merge({'ismaster' => true}),
-
-        # Subsequent calls to configure pools.
-        @ismaster.merge({'ismaster' => true}),
-        @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 700}),
-        @ismaster.merge({'secondary' => true, 'maxBsonObjectSize' => 500}),
-        @ismaster.merge({'arbiterOnly' => true})
-      )
-
-      config_db = new_mock_db
-      mongos_coll = mock('collection')
-      mongos_coll.stubs(:find).returns(@hosts.map{|h| {'_id' => h}})
-      config_db.stubs(:[]).with('mongos').returns(mongos_coll)
-      @client.stubs(:[]).with('config').returns(config_db)
-
-      manager = Mongo::ShardingPoolManager.new(@client, @hosts)
-      manager.check_connection_health
-
-      assert manager.seeds.all? {|s| s.is_a?(Array) && s[0].is_a?(String) && s[1].is_a?(Integer)}
-    end
   end
 end
