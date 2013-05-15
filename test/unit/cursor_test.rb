@@ -124,7 +124,7 @@ class CursorTest < Test::Unit::TestCase
 
         spec = cursor.construct_query_spec
         assert spec.has_key?('$readPreference')
-        assert_equal :secondary, spec['$readPreference'][:mode]
+        assert_equal 'secondary', spec['$readPreference'][:mode]
         assert !spec['$readPreference'].has_key?(:tags)
 
         # secondary preferred with tags
@@ -132,7 +132,7 @@ class CursorTest < Test::Unit::TestCase
 
         spec = cursor.construct_query_spec
         assert spec.has_key?('$readPreference')
-        assert_equal :secondaryPreferred, spec['$readPreference'][:mode]
+        assert_equal 'secondaryPreferred', spec['$readPreference'][:mode]
         assert_equal @tag_sets, spec['$readPreference'][:tags]
 
         # primary preferred
@@ -140,7 +140,7 @@ class CursorTest < Test::Unit::TestCase
 
         spec = cursor.construct_query_spec
         assert spec.has_key?('$readPreference')
-        assert_equal :primaryPreferred, spec['$readPreference'][:mode]
+        assert_equal 'primaryPreferred', spec['$readPreference'][:mode]
         assert !spec['$readPreference'].has_key?(:tags)
 
         # primary preferred with tags
@@ -148,7 +148,7 @@ class CursorTest < Test::Unit::TestCase
 
         spec = cursor.construct_query_spec
         assert spec.has_key?('$readPreference')
-        assert_equal :primaryPreferred, spec['$readPreference'][:mode]
+        assert_equal 'primaryPreferred', spec['$readPreference'][:mode]
         assert_equal @tag_sets, spec['$readPreference'][:tags]
 
         # nearest
@@ -156,7 +156,7 @@ class CursorTest < Test::Unit::TestCase
 
         spec = cursor.construct_query_spec
         assert spec.has_key?('$readPreference')
-        assert_equal :nearest, spec['$readPreference'][:mode]
+        assert_equal 'nearest', spec['$readPreference'][:mode]
         assert !spec['$readPreference'].has_key?(:tags)
 
         # nearest with tags
@@ -164,7 +164,7 @@ class CursorTest < Test::Unit::TestCase
 
         spec = cursor.construct_query_spec
         assert spec.has_key?('$readPreference')
-        assert_equal :nearest, spec['$readPreference'][:mode]
+        assert_equal 'nearest', spec['$readPreference'][:mode]
         assert_equal @tag_sets, spec['$readPreference'][:tags]
       end
 
