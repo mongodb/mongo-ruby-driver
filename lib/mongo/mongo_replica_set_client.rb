@@ -422,6 +422,10 @@ module Mongo
       local_manager ? local_manager.secondary_pools : []
     end
 
+    def pools
+      local_manager ? local_manager.pools : []
+    end
+
     def tag_map
       local_manager ? local_manager.tag_map : {}
     end

@@ -77,7 +77,7 @@ module Mongo
         when :secondary_preferred
           select_secondary_pool(secondary_pools, read_pref) || primary_pool
         when :nearest
-          select_secondary_pool(pools, read_pref)
+          select_near_pool(pools, read_pref)
       end
     end
 
