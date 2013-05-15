@@ -36,7 +36,7 @@ class BasicTest < Test::Unit::TestCase
     @client = MongoClient.new(host, port, {:read => :secondary, :tag_sets => tags})
     assert @client.connected?
     cursor = Cursor.new(@client[MONGO_TEST_DB]['whatever'], {})
-    assert_equal cursor.construct_query_spec['$readPreference'], {:mode => :secondary, :tags => tags}
+    assert_equal cursor.construct_query_spec['$readPreference'], {:mode => 'secondary', :tags => tags}
   end
 
   def test_find_one_with_read_secondary
@@ -68,7 +68,7 @@ class BasicTest < Test::Unit::TestCase
     @client = MongoShardedClient.new(@seeds, {:read => :secondary, :tag_sets => tags})
     assert @client.connected?
     cursor = Cursor.new(@client[MONGO_TEST_DB]['whatever'], {})
-    assert_equal cursor.construct_query_spec['$readPreference'], {:mode => :secondary, :tags => tags}
+    assert_equal cursor.construct_query_spec['$readPreference'], {:mode => 'secondary', :tags => tags}
   end
 
   def test_hard_refresh
