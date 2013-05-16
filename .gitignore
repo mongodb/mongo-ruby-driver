@@ -12,6 +12,7 @@
 .idea/*
 .rvmrc
 .ruby-version
+.ruby-gemset
 .yardoc
 coverage
 data
