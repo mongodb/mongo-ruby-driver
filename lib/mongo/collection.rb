@@ -1080,43 +1080,32 @@ module Mongo
       nil
     end
 
-    # Sends a Mongo::Constants::OP_INSERT message to the database.
-    # Takes an array of +documents+, an optional +collection_name+, and a
-    # +check_keys+ setting.
-    def insert_documents(documents, collection_name=@name, check_keys=true, write_concern={}, flags={})
+    def generate_index_name(spec)
+      indexes = []
+      spec.each_pair do |field, type|
+        indexes.push("#{field}_#{type}")
+      end
+      indexes.join("_")
+    end
+
+    def insert_buffer(collection_name, continue_on_error)
       message = BSON::ByteBuffer.new("", @connection.max_message_size)
-      if flags[:continue_on_error]
-        message.put_int(1)
-      else
-        message.put_int(0)
-      end
-
-      collect_on_error = !!flags[:collect_on_error]
-      error_docs = [] if collect_on_error
-
+      message.put_int(continue_on_error ? 1 : 0)
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{collection_name}")
-      documents =
-        if collect_on_error
-          documents.select do |doc|
-            begin
-              message.put_binary(BSON::BSON_CODER.serialize(doc, check_keys, true, @connection.max_bson_size).to_s)
-              true
-            rescue StandardError # StandardError will be replaced with BSONError
-              doc.delete(:_id)
-              error_docs << doc
-              false
-            end
-          end
-        else
-          documents.each do |doc|
-            message.put_binary(BSON::BSON_CODER.serialize(doc, check_keys, true, @connection.max_bson_size).to_s)
-          end
-        end
+      message
+    end
 
-      if message.size > @connection.max_message_size
-        raise InvalidOperation, "Exceded maximum insert size of #{@connection.max_message_size} bytes"
+    def insert_batch(message, documents, write_concern, continue_on_error, errors, collection_name=@name)
+      begin
+        send_insert_message(message, documents, collection_name, write_concern)
+      rescue ConnectionFailure, OperationFailure, OperationTimeout, SystemStackError,
+        NoMemoryError, SystemCallError => ex
+        raise ex unless continue_on_error
+        errors << ex
       end
+    end
 
+    def send_insert_message(message, documents, collection_name, write_concern)
       instrument(:insert, :database => @db.name, :collection => collection_name, :documents => documents) do
         if Mongo::WriteConcern.gle?(write_concern)
           @connection.send_message_with_gle(Mongo::Constants::OP_INSERT, message, @db.name, nil, write_concern)
@@ -1124,21 +1113,56 @@ module Mongo
           @connection.send_message(Mongo::Constants::OP_INSERT, message)
         end
       end
-
-      doc_ids = documents.collect { |o| o[:_id] || o['_id'] }
-      if collect_on_error
-        return doc_ids, error_docs
-      else
-        doc_ids
-      end
     end
 
-    def generate_index_name(spec)
-      indexes = []
-      spec.each_pair do |field, type|
-        indexes.push("#{field}_#{type}")
+    # Sends a Mongo::Constants::OP_INSERT message to the database.
+    # Takes an array of +documents+, an optional +collection_name+, and a
+    # +check_keys+ setting.
+    def insert_documents(documents, collection_name=@name, check_keys=true, write_concern={}, flags={})
+      continue_on_error = !!flags[:continue_on_error]
+      collect_on_error = !!flags[:collect_on_error]
+      error_docs = [] # docs with errors on serialization
+      errors = [] # for all errors on insertion
+      batch_start = 0
+
+      message = insert_buffer(collection_name, continue_on_error)
+
+      documents.each_with_index do |doc, index|
+        begin
+          serialized_doc = BSON::BSON_CODER.serialize(doc, check_keys, true, @connection.max_bson_size)
+        rescue BSON::InvalidDocument, BSON::InvalidKeyName, BSON::InvalidStringEncoding => ex
+          raise ex unless collect_on_error
+          error_docs << doc
+          next
+        end
+
+        # Check if the current msg has room for this doc. If not, send current msg and create a new one.
+        # GLE is a sep msg with its own header so shouldn't be included in padding with header size.
+        total_message_size = Networking::STANDARD_HEADER_SIZE + message.size + serialized_doc.size
+        if total_message_size > @connection.max_message_size
+          docs_to_insert = documents[batch_start..index] - error_docs
+          insert_batch(message, docs_to_insert, write_concern, continue_on_error, errors, collection_name)
+          batch_start = index
+          message = insert_buffer(collection_name, continue_on_error)
+          redo
+        else
+          message.put_binary(serialized_doc.to_s)
+        end
       end
-      indexes.join("_")
+
+      docs_to_insert = documents[batch_start..-1] - error_docs
+      inserted_docs = documents - error_docs
+      inserted_ids = inserted_docs.collect {|o| o[:_id] || o['_id']}
+
+      # Avoid insertion if all docs failed serialization and collect_on_error
+      if error_docs.empty? || !docs_to_insert.empty?
+        insert_batch(message, docs_to_insert, write_concern, continue_on_error, errors, collection_name)
+        # insert_batch collects errors if w > 0 and continue_on_error is true,
+        # so raise the error here, as this is the last or only msg sent
+        raise errors.first unless errors.empty?
+      end
+
+      collect_on_error ? [inserted_ids, error_docs] : inserted_ids
     end
   end
 
