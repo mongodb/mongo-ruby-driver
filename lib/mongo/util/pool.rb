@@ -161,7 +161,7 @@ module Mongo
     # therefore, it runs within a mutex.
     def checkout_new_socket
       begin
-        socket = @client.socket_class.new(@host, @port, @client.op_timeout)
+        socket = @client.socket_class.new(@host, @port, @client.op_timeout, @client.connect_timeout)
         socket.pool = self
       rescue => ex
         socket.close if socket
