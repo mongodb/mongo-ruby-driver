@@ -616,10 +616,10 @@ static VALUE method_serialize(VALUE self, VALUE doc, VALUE check_keys,
 
     VALUE result;
     bson_buffer_t buffer = bson_buffer_new();
-    bson_buffer_set_max_size(buffer, FIX2INT(max_size));
     if (buffer == NULL) {
         rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
     }
+    bson_buffer_set_max_size(buffer, FIX2INT(max_size));
 
     write_doc(buffer, doc, check_keys, move_id);
 
