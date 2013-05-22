@@ -541,6 +541,7 @@ static void write_doc(bson_buffer_t buffer, VALUE hash, VALUE check_keys, VALUE 
     bson_buffer_position length_location = bson_buffer_save_space(buffer, 4);
     bson_buffer_position length;
     int allow_id;
+    int max_size;
     int (*write_function)(VALUE, VALUE, VALUE) = NULL;
     VALUE id_str = rb_str_new2("_id");
     VALUE id_sym = ID2SYM(rb_intern("_id"));
@@ -601,12 +602,12 @@ static void write_doc(bson_buffer_t buffer, VALUE hash, VALUE check_keys, VALUE 
     length = bson_buffer_get_position(buffer) - start_position;
 
     // make sure that length doesn't exceed the max size (determined by server, defaults to 4mb)
-    if (length > bson_buffer_get_max_size(buffer)) {
-      bson_buffer_free(buffer);
-      rb_raise(InvalidDocument,
-          "Document too large: This BSON document is limited to %d bytes.",
-          bson_buffer_get_max_size(buffer));
-      return;
+    max_size = bson_buffer_get_max_size(buffer);
+    if (length > max_size) {
+        bson_buffer_free(buffer);
+        rb_raise(InvalidDocument,
+            "Document too large: This BSON document is limited to %d bytes.",
+            max_size);
     }
     SAFE_WRITE_AT_POS(buffer, length_location, (const char*)&length, 4);
 }
