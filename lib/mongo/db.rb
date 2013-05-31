@@ -580,10 +580,12 @@ module Mongo
     # Return the current database profiling level. If profiling is enabled, you can
     # get the results using DB#profiling_info.
     #
-    # @return [Symbol] :off, :slow_only, or :all
+    # @return [Symbol] +Integer+ if slowms is true, Symbol is one of :off, :slow_only, or :all
+
     #
     # @core profiling profiling_level-instance_method
-    def profiling_level
+    # @param [Boolean] slowms by default it doesn't return slowms current value
+    def profiling_level(slowms=false)
       cmd = BSON::OrderedHash.new
       cmd[:profile] = -1
       doc = command(cmd, :check_response => false)
@@ -592,7 +594,12 @@ module Mongo
 
       level_sym = PROFILE_LEVEL.invert[doc['was'].to_i]
       raise "Error: illegal profiling level value #{doc['was']}" unless level_sym
-      level_sym
+      if slowms
+        ms  = doc['slowms'].to_i
+        return level_sym, ms
+      else
+        level_sym
+      end
     end
 
     # Set this database's profiling level. If profiling is enabled, you can
@@ -604,6 +611,23 @@ module Mongo
       cmd[:profile] = PROFILE_LEVEL[level]
       doc = command(cmd, :check_response => false)
       ok?(doc) || raise(MongoDBError, "Error with profile command: #{doc.inspect}")
+    end
+
+    # Set this database's profiling level including slowms. If profiling is enabled, you can
+    # get the results using DB#profiling_info.
+    #
+    # @param [Symbol] level acceptable options are +:off+, +:slow_only+, or +:all+.
+    # @param [Integer] slowms optionally modify the threshold for the profiler, defaults to 100ms
+    def set_profiling_level(level,slowms=100)
+      unless slowms.integer? && slowms > 0
+        raise "ERROR: invalid value '#{slowms}' for slowms, it must be an integer > 0, defaults to 100 if omitted"
+      end
+      cmd = BSON::OrderedHash.new
+      cmd[:profile] = PROFILE_LEVEL[level]
+      cmd[:slowms] = slowms
+      doc = command(cmd, :check_response => false)
+      ok?(doc) || raise(MongoDBError, "Error with profile command: #{doc.inspect}")
+      return level,slowms
     end
 
     # Get the current profiling information.
