@@ -580,12 +580,10 @@ module Mongo
     # Return the current database profiling level. If profiling is enabled, you can
     # get the results using DB#profiling_info.
     #
-    # @return [Symbol] +Integer+ if slowms is true, Symbol is one of :off, :slow_only, or :all
-
+    # @return [Symbol] :off, :slow_only, or :all
     #
     # @core profiling profiling_level-instance_method
-    # @param [Boolean] slowms by default it doesn't return slowms current value
-    def profiling_level(slowms=false)
+    def profiling_level
       cmd = BSON::OrderedHash.new
       cmd[:profile] = -1
       doc = command(cmd, :check_response => false)
@@ -594,12 +592,26 @@ module Mongo
 
       level_sym = PROFILE_LEVEL.invert[doc['was'].to_i]
       raise "Error: illegal profiling level value #{doc['was']}" unless level_sym
-      if slowms
-        ms  = doc['slowms'].to_i
-        return level_sym, ms
-      else
-        level_sym
-      end
+      level_sym
+    end
+
+    # Return the current database profiling level including slowms. If profiling is enabled, you can
+    # get the results using DB#profiling_info.
+    #
+    # @return [Symbol,Fixnum], Symbol is one of :off, :slow_only, or :all
+    #
+    # @core profiling profiling_status-instance_method
+    def profiling_status
+      cmd = BSON::OrderedHash.new
+      cmd[:profile] = -1
+      doc = command(cmd, :check_response => false)
+
+      raise "Error with profile command: #{doc.inspect}" unless ok?(doc)
+
+      level_sym = PROFILE_LEVEL.invert[doc['was'].to_i]
+      raise "Error: illegal profiling level value #{doc['was']}" unless level_sym
+      slowms = doc['slowms']
+      return level_sym, slowms
     end
 
     # Set this database's profiling level. If profiling is enabled, you can
