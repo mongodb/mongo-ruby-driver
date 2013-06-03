@@ -24,6 +24,5 @@ gem-private_key.pem
 lib/bson_ext
 lib/mongo_ext/Makefile
 nbproject
-tasks/benchmark/exp_series_suite_*.js
 test/tools/data/
 tmp

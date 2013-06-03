@@ -1,3 +1,17 @@
+# Copyright (C) 2013 10gen Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 require 'thread'
 require 'socket'
 require 'digest/md5'
@@ -69,7 +83,7 @@ module BSON
     #
     # @param [Hash] doc a document requiring an _id.
     #
-    # @return [BSON::ObjectId, Object] returns a newly-created or 
+    # @return [BSON::ObjectId, Object] returns a newly-created or
     #   current _id for the given document.
     def self.create_pk(doc)
       doc.has_key?(:_id) || doc.has_key?('_id') ? doc : doc.merge!(:_id => self.new)
@@ -132,7 +146,7 @@ module BSON
       "{\"$oid\": \"#{to_s}\"}"
     end
 
-    # Create the JSON hash structure convert to MongoDB extended format. Rails 2.3.3 
+    # Create the JSON hash structure convert to MongoDB extended format. Rails 2.3.3
     # introduced as_json to create the needed hash structure to encode objects into JSON.
     #
     # @return [Hash] the hash representation as MongoDB extended JSON

@@ -1,3 +1,17 @@
+# Copyright (C) 2013 10gen Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 require 'test_helper'
 
 class MongoConfig < Test::Unit::TestCase
@@ -107,7 +121,7 @@ class MongoConfig < Test::Unit::TestCase
   test "cluster manager replica set" do
     cluster_test(Mongo::Config::DEFAULT_REPLICA_SET) do |manager|
       servers = manager.servers
-      servers.each do |server|    
+      servers.each do |server|
         assert_not_nil(Mongo::MongoClient.new(server.host, server.port))
         assert_match(/oplogSize/, server.cmd, '--oplogSize option should be specified')
         assert_match(/smallfiles/, server.cmd, '--smallfiles option should be specified')

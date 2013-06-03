@@ -1,3 +1,17 @@
+# Copyright (C) 2013 10gen Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 require 'rbconfig'
 require 'test_helper'
 
@@ -629,42 +643,42 @@ class TestCollection < Test::Unit::TestCase
     # save some data
     @@test.save( {
         "_id" => 1,
-        "title" => "this is my title", 
-        "author" => "bob", 
+        "title" => "this is my title",
+        "author" => "bob",
         "posted" => Time.utc(2000),
-        "pageViews" => 5 , 
+        "pageViews" => 5 ,
         "tags" => [ "fun" , "good" , "fun" ],
-        "comments" => [ 
-                        { "author" => "joe", "text" => "this is cool" }, 
-                        { "author" => "sam", "text" => "this is bad" } 
+        "comments" => [
+                        { "author" => "joe", "text" => "this is cool" },
+                        { "author" => "sam", "text" => "this is bad" }
             ],
         "other" => { "foo" => 5 }
         } )
 
     @@test.save( {
          "_id" => 2,
-         "title" => "this is your title", 
-         "author" => "dave", 
+         "title" => "this is your title",
+         "author" => "dave",
          "posted" => Time.utc(2001),
-         "pageViews" => 7, 
+         "pageViews" => 7,
          "tags" => [ "fun" , "nasty" ],
-         "comments" => [ 
-                         { "author" => "barbara" , "text" => "this is interesting" }, 
-                         { "author" => "jenny", "text" => "i like to play pinball", "votes" => 10 } 
+         "comments" => [
+                         { "author" => "barbara" , "text" => "this is interesting" },
+                         { "author" => "jenny", "text" => "i like to play pinball", "votes" => 10 }
          ],
           "other" => { "bar" => 14 }
         })
 
     @@test.save( {
             "_id" => 3,
-            "title" => "this is some other title", 
-            "author" => "jane", 
+            "title" => "this is some other title",
+            "author" => "jane",
             "posted" => Time.utc(2002),
-            "pageViews" => 6 , 
+            "pageViews" => 6 ,
             "tags" => [ "nasty", "filthy" ],
-            "comments" => [ 
-                { "author" => "will" , "text" => "i don't like the color" } , 
-                { "author" => "jenny" , "text" => "can i get that in green?" } 
+            "comments" => [
+                { "author" => "will" , "text" => "i don't like the color" } ,
+                { "author" => "jenny" , "text" => "can i get that in green?" }
             ],
             "other" => { "bar" => 14 }
         })
@@ -696,8 +710,8 @@ class TestCollection < Test::Unit::TestCase
 
     def test_aggregate_pipeline_operators_using_strings
       setup_aggregate_data
-      desired_results = [ {"_id"=>1, "pageViews"=>5, "tags"=>["fun", "good", "fun"]}, 
-                          {"_id"=>2, "pageViews"=>7, "tags"=>["fun", "nasty"]}, 
+      desired_results = [ {"_id"=>1, "pageViews"=>5, "tags"=>["fun", "good", "fun"]},
+                          {"_id"=>2, "pageViews"=>7, "tags"=>["fun", "nasty"]},
                           {"_id"=>3, "pageViews"=>6, "tags"=>["nasty", "filthy"]} ]
       results = @@test.aggregate([{"$project" => {"tags" => 1, "pageViews" => 1}}])
       assert_equal desired_results, results
@@ -705,8 +719,8 @@ class TestCollection < Test::Unit::TestCase
 
     def test_aggregate_pipeline_operators_using_symbols
       setup_aggregate_data
-      desired_results = [ {"_id"=>1, "pageViews"=>5, "tags"=>["fun", "good", "fun"]}, 
-                          {"_id"=>2, "pageViews"=>7, "tags"=>["fun", "nasty"]}, 
+      desired_results = [ {"_id"=>1, "pageViews"=>5, "tags"=>["fun", "good", "fun"]},
+                          {"_id"=>2, "pageViews"=>7, "tags"=>["fun", "nasty"]},
                           {"_id"=>3, "pageViews"=>6, "tags"=>["nasty", "filthy"]} ]
       results = @@test.aggregate([{"$project" => {:tags => 1, :pageViews => 1}}])
       assert_equal desired_results, results
@@ -721,25 +735,25 @@ class TestCollection < Test::Unit::TestCase
     def test_aggregate_pipeline_unwind
       setup_aggregate_data
       desired_results = [ {"_id"=>1, "title"=>"this is my title", "author"=>"bob", "posted"=>Time.utc(2000),
-                          "pageViews"=>5, "tags"=>"fun", "comments"=>[{"author"=>"joe", "text"=>"this is cool"}, 
+                          "pageViews"=>5, "tags"=>"fun", "comments"=>[{"author"=>"joe", "text"=>"this is cool"},
                             {"author"=>"sam", "text"=>"this is bad"}], "other"=>{"foo"=>5 } },
                           {"_id"=>1, "title"=>"this is my title", "author"=>"bob", "posted"=>Time.utc(2000),
-                            "pageViews"=>5, "tags"=>"good", "comments"=>[{"author"=>"joe", "text"=>"this is cool"}, 
+                            "pageViews"=>5, "tags"=>"good", "comments"=>[{"author"=>"joe", "text"=>"this is cool"},
                             {"author"=>"sam", "text"=>"this is bad"}], "other"=>{"foo"=>5 } },
                           {"_id"=>1, "title"=>"this is my title", "author"=>"bob", "posted"=>Time.utc(2000),
-                            "pageViews"=>5, "tags"=>"fun", "comments"=>[{"author"=>"joe", "text"=>"this is cool"}, 
+                            "pageViews"=>5, "tags"=>"fun", "comments"=>[{"author"=>"joe", "text"=>"this is cool"},
                               {"author"=>"sam", "text"=>"this is bad"}], "other"=>{"foo"=>5 } },
                           {"_id"=>2, "title"=>"this is your title", "author"=>"dave", "posted"=>Time.utc(2001),
-                            "pageViews"=>7, "tags"=>"fun", "comments"=>[{"author"=>"barbara", "text"=>"this is interesting"}, 
+                            "pageViews"=>7, "tags"=>"fun", "comments"=>[{"author"=>"barbara", "text"=>"this is interesting"},
                               {"author"=>"jenny", "text"=>"i like to play pinball", "votes"=>10 }], "other"=>{"bar"=>14 } },
                           {"_id"=>2, "title"=>"this is your title", "author"=>"dave", "posted"=>Time.utc(2001),
-                            "pageViews"=>7, "tags"=>"nasty", "comments"=>[{"author"=>"barbara", "text"=>"this is interesting"}, 
+                            "pageViews"=>7, "tags"=>"nasty", "comments"=>[{"author"=>"barbara", "text"=>"this is interesting"},
                               {"author"=>"jenny", "text"=>"i like to play pinball", "votes"=>10 }], "other"=>{"bar"=>14 } },
                           {"_id"=>3, "title"=>"this is some other title", "author"=>"jane", "posted"=>Time.utc(2002),
-                            "pageViews"=>6, "tags"=>"nasty", "comments"=>[{"author"=>"will", "text"=>"i don't like the color"}, 
+                            "pageViews"=>6, "tags"=>"nasty", "comments"=>[{"author"=>"will", "text"=>"i don't like the color"},
                               {"author"=>"jenny", "text"=>"can i get that in green?"}], "other"=>{"bar"=>14 } },
                           {"_id"=>3, "title"=>"this is some other title", "author"=>"jane", "posted"=>Time.utc(2002),
-                            "pageViews"=>6, "tags"=>"filthy", "comments"=>[{"author"=>"will", "text"=>"i don't like the color"}, 
+                            "pageViews"=>6, "tags"=>"filthy", "comments"=>[{"author"=>"will", "text"=>"i don't like the color"},
                               {"author"=>"jenny", "text"=>"can i get that in green?"}], "other"=>{"bar"=>14 } }
                           ]
       results = @@test.aggregate([{"$unwind"=> "$tags"}])
@@ -1143,7 +1157,7 @@ end
   end
 
   context "Grouping with a key function" do
-    setup do 
+    setup do
       @@test.remove
       @@test.save("a" => 1)
       @@test.save("a" => 2)
