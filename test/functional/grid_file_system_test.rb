@@ -1,3 +1,17 @@
+# Copyright (C) 2013 10gen Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 require 'test_helper'
 
 class GridFileSystemTest < Test::Unit::TestCase
@@ -73,7 +87,7 @@ class GridFileSystemTest < Test::Unit::TestCase
       end
 
       should "return the first n bytes even with an offset" do
-        data = @grid.open('sample.file', 'r') do |f| 
+        data = @grid.open('sample.file', 'r') do |f|
           f.seek(1000)
           f.read(288888)
         end
@@ -176,7 +190,7 @@ class GridFileSystemTest < Test::Unit::TestCase
            assert !@ids.include?(id)
            assert_equal @versions, @db['fs.files'].find({'filename' => 'sample'}).count
          end
-         
+
          should "delete old versions on write with :delete_old is passed in" do
            @grid.open('sample', 'w', :delete_old => true) do |f|
              f.write @new_data
