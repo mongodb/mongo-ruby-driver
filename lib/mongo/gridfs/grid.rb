@@ -21,7 +21,6 @@ module Mongo
       @fs_name = fs_name
 
       # This will create indexes only if we're connected to a primary node.
-      connection = @db.connection
       begin
         @chunks.ensure_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
       rescue Mongo::ConnectionFailure

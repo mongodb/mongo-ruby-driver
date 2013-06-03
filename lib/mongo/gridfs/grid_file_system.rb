@@ -22,7 +22,6 @@ module Mongo
       @default_query_opts = {:sort => [['filename', 1], ['uploadDate', -1]], :limit => 1}
 
       # This will create indexes only if we're connected to a primary node.
-      connection = @db.connection
       begin
         @files.ensure_index([['filename', 1], ['uploadDate', -1]])
         @chunks.ensure_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)

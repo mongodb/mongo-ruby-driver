@@ -264,7 +264,6 @@ module Mongo
          end
        end
        members
-     end
-
+    end
   end
 end
