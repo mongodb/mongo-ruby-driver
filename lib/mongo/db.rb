@@ -336,7 +336,7 @@ module Mongo
       return false if strict? && !collection_names.include?(name.to_s)
       begin
         ok?(command(:drop => name))
-      rescue OperationFailure => e
+      rescue OperationFailure
         false
       end
     end

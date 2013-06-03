@@ -122,6 +122,9 @@ module Mongo
       @tag_sets = []
       @acceptable_latency = 15
 
+      @max_message_size = nil
+      @max_bson_size = nil
+
       check_opts(opts)
       setup(opts.dup)
     end

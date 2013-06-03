@@ -29,7 +29,7 @@ module Mongo
 
     # todo: throw exception for conflicting write concern options
     def get_write_concern(opts, parent=nil)
-      write_concern_from_legacy(opts) if opts.key?(:safe) || @legacy_write_concern
+      write_concern_from_legacy(opts) if opts.key?(:safe) || legacy_write_concern
       write_concern = {
         :w        => 1,
         :j        => false,

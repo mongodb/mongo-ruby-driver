@@ -1,6 +1,14 @@
 module Mongo
   module Logging
 
+    module Instrumenter
+      def self.instrument(name, payload = {})
+        yield
+      end
+    end
+
+    @instrumenter = Instrumenter
+
     def write_logging_startup_message
       log(:debug, "Logging level is currently :debug which could negatively impact " +
           "client-side performance. You should set your logging level no lower than " +
@@ -38,7 +46,7 @@ module Mongo
     end
 
     def self.instrumenter
-      @instrumenter || Instrumenter
+      @instrumenter
     end
 
     def self.instrumenter=(instrumenter)
@@ -57,12 +65,6 @@ module Mongo
         msg << ".limit(#{payload[:limit]})" if payload[:limit]
         msg << ".sort(#{payload[:order]})"  if payload[:order]
         msg
-      end
-    end
-
-    module Instrumenter
-      def self.instrument(name, payload = {})
-        yield
       end
     end
   end
