@@ -59,20 +59,6 @@ class URITest < Test::Unit::TestCase
     end
   end
 
-  def test_multiple_uris_with_auths
-    parser = Mongo::URIParser.new('mongodb://bob:secret@a.example.com:27018,b.example.com/test')
-    assert_equal 2, parser.nodes.length
-    assert_equal ['a.example.com', 27018], parser.nodes[0]
-    assert_equal ['b.example.com', 27017], parser.nodes[1]
-    assert_equal 2, parser.auths.length
-    assert_equal "bob", parser.auths[0][:username]
-    assert_equal "secret", parser.auths[0][:password]
-    assert_equal "test", parser.auths[0][:db_name]
-    assert_equal "bob", parser.auths[1][:username]
-    assert_equal "secret", parser.auths[1][:password]
-    assert_equal "test", parser.auths[1][:db_name]
-  end
-
   def test_opts_with_semincolon_separator
     parser = Mongo::URIParser.new('mongodb://localhost:27018?connect=direct;slaveok=true;safe=true')
     assert_equal 'direct', parser.connect

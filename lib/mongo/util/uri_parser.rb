@@ -239,7 +239,7 @@ module Mongo
       end
 
       if @slaveok && !@readpreference
-        if direct?
+        unless replicaset?
           opts[:slave_ok] = true
         else
           opts[:read] = :secondary_preferred
@@ -247,10 +247,7 @@ module Mongo
       end
 
       opts[:ssl] = @ssl
-
-      if direct?
-        opts[:auths] = auths
-      end
+      opts[:auths] = auths
 
       if replicaset.is_a?(String)
         opts[:name] = replicaset
@@ -304,9 +301,6 @@ module Mongo
         raise MongoArgumentError, "MongoDB URI must include username, password, "
           "and db if username and password are specified."
       end
-
-      # The auths are repeated for each host in a replica set
-      @auths *= hosturis.length
     end
 
     # This method uses the lambdas defined in OPT_VALID and OPT_CONV to validate
