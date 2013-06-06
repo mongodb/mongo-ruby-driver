@@ -18,7 +18,7 @@ class TestThreading < Test::Unit::TestCase
 
   include Mongo
 
-  @@client = standard_connection(:pool_size => 10, :pool_timeout => 30)
+  @@client = standard_connection(:pool_size => 2, :pool_timeout => 30)
   @@db     = @@client[MONGO_TEST_DB]
   @@coll   = @@db.collection('thread-test-collection')
 
@@ -39,7 +39,7 @@ class TestThreading < Test::Unit::TestCase
     times = []
     set_up_safe_data
     threads = []
-    100.times do |i|
+    25.times do |i|
       threads[i] = Thread.new do
         100.times do
           if i % 2 == 0
@@ -57,7 +57,7 @@ class TestThreading < Test::Unit::TestCase
       end
     end
 
-    100.times do |i|
+    25.times do |i|
       threads[i].join
     end
   end
@@ -65,7 +65,7 @@ class TestThreading < Test::Unit::TestCase
   def test_safe_insert
     set_up_safe_data
     threads = []
-    100.times do |i|
+    25.times do |i|
       threads[i] = Thread.new do
         if i % 2 == 0
           assert_raise Mongo::OperationFailure do
@@ -77,7 +77,7 @@ class TestThreading < Test::Unit::TestCase
       end
     end
 
-    100.times do |i|
+    25.times do |i|
       threads[i].join
     end
   end
@@ -86,9 +86,9 @@ class TestThreading < Test::Unit::TestCase
     @@coll.drop
     @@coll = @@db.collection('thread-test-collection')
 
-    1000.times do |i|
-      @@coll.insert({"x" => i})
-    end
+    docs = []
+    1000.times {|i| docs << {:x => i}}
+    @@coll.insert(docs)
 
     threads = []
 

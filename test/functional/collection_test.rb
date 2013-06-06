@@ -1158,7 +1158,7 @@ end
   end
 
   def test_ensure_index_timeout
-    @@db.cache_time = 2
+    @@db.cache_time = 1
     coll = @@db['ensure_test']
     coll.expects(:generate_indexes).twice
     coll.ensure_index([['a', 1]])
@@ -1169,7 +1169,7 @@ end
     coll.ensure_index([['a', 1]])
     coll.ensure_index([['a', 1]])
 
-    sleep(3)
+    sleep(1)
     # This won't be, so generate_indexes will be called twice
     coll.ensure_index([['a', 1]])
   end

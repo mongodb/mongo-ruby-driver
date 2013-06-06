@@ -19,7 +19,7 @@ class PoolTest < Test::Unit::TestCase
   include Mongo
 
   def setup
-    @client    ||= standard_connection({:pool_size => 500, :pool_timeout => 5})
+    @client    ||= standard_connection({:pool_size => 15, :pool_timeout => 5})
     @db         = @client.db(MONGO_TEST_DB)
     @collection = @db.collection("pool_test")
   end
@@ -32,7 +32,7 @@ class PoolTest < Test::Unit::TestCase
       threads << Thread.new do
         original_socket = pool.checkout
         pool.checkin(original_socket)
-        5000.times do
+        500.times do
           socket = pool.checkout
           assert_equal original_socket, socket
           pool.checkin(socket)
@@ -44,17 +44,19 @@ class PoolTest < Test::Unit::TestCase
   end
 
   def test_pool_affinity_max_size
-    8000.times {|x| @collection.insert({:value => x})}
+    docs = []
+    8000.times {|x| docs << {:value => x}}
+    @collection.insert(docs)
+
     threads = []
     threads << Thread.new do
       @collection.find({"value" => {"$lt" => 100}}).each {|e| e}
       Thread.pass
-      sleep(5)
+      sleep(0.125)
       @collection.find({"value" => {"$gt" => 100}}).each {|e| e}
     end
-    sleep(1)
     threads << Thread.new do
-      @collection.find({'$where' => "function() {for(i=0;i<8000;i++) {this.value};}"}).each {|e| e}
+      @collection.find({'$where' => "function() {for(i=0;i<1000;i++) {this.value};}"}).each {|e| e}
     end
     threads.each(&:join)
   end

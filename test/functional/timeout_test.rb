@@ -16,16 +16,16 @@ require 'test_helper'
 
 class TestTimeout < Test::Unit::TestCase
   def test_op_timeout
-    connection = standard_connection(:op_timeout => 1)
+    connection = standard_connection(:op_timeout => 0.5)
 
     admin = connection.db('admin')
 
-    command = {:eval => "sleep(500)"}
+    command = {:eval => "sleep(100)"}
     # Should not timeout
     assert admin.command(command)
 
     # Should timeout
-    command = {:eval => "sleep(1500)"}
+    command = {:eval => "sleep(1000)"}
     assert_raise Mongo::OperationTimeout do
       admin.command(command)
     end
@@ -42,10 +42,10 @@ class TestTimeout < Test::Unit::TestCase
 
     # use external timeout to mangle socket
     begin
-      Timeout::timeout(1) do
-        db.command({:eval => "sleep(1500)"})
+      Timeout::timeout(0.5) do
+        db.command({:eval => "sleep(1000)"})
       end
-    rescue Timeout::Error => ex
+    rescue Timeout::Error
       #puts "Thread timed out and has now mangled the socket"
     end
 

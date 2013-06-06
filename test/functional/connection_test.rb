@@ -257,12 +257,11 @@ class TestConnection < Test::Unit::TestCase
     assert_match(/unlock/, @client.unlock!['info'])
     unlocked = false
     counter  = 0
-    while counter < 5
+    while counter < 100
       if @client['admin']['$cmd.sys.inprog'].find_one['fsyncLock'].nil?
         unlocked = true
         break
       else
-        sleep(1)
         counter += 1
       end
     end
