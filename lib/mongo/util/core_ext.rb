@@ -24,17 +24,6 @@ class Object
 end
 
 #:nodoc:
-module Enumerable
-
-  #:nodoc:
-  def each_with_object(memo)
-    each { |element| yield(element, memo) }
-    memo
-  end unless [].respond_to?(:each_with_object)
-
-end
-
-#:nodoc:
 class Hash
 
   #:nodoc:

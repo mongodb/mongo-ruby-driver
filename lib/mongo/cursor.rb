@@ -438,7 +438,7 @@ module Mongo
           {fields => 1}
         when Array
           return nil if fields.length.zero?
-          fields.each_with_object({}) { |field, hash| hash[field] = 1 }
+          fields.inject({}) { |hash, field| hash[field] = 1; hash }
         when Hash
           return fields
       end
