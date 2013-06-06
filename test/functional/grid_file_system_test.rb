@@ -137,7 +137,6 @@ class GridFileSystemTest < Test::Unit::TestCase
          @old = @grid.open('sample', 'r')
 
          @new_data = "DATA" * 10
-         sleep(2)
          @grid.open('sample', 'w') do |f|
            f.write @new_data
          end
@@ -159,7 +158,6 @@ class GridFileSystemTest < Test::Unit::TestCase
 
        context "and on a second overwrite" do
          setup do
-           sleep(2)
            @new_data = "NEW" * 1000
            @grid.open('sample', 'w') do |f|
              f.write @new_data

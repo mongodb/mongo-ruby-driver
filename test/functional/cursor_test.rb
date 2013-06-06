@@ -212,7 +212,7 @@ class CursorTest < Test::Unit::TestCase
     @@coll.save({:t => 't1'})
     @@coll.save({:t => 't1'})
     @@coll.save({:t => 't1'})
-    sleep(2)
+    sleep(1)
     t2 = Time.now
     t2_id = ObjectId.from_time(t2)
     @@coll.save({:t => 't2'})
