@@ -258,6 +258,26 @@ class TestCollection < Test::Unit::TestCase
     assert_equal error_docs, invalid_docs
   end
 
+  def test_insert_one_error_doc_with_collect_on_error
+    invalid_doc = {'$invalid-key' => 1}
+    invalid_docs = [invalid_doc]
+    doc_ids, error_docs = @@test.insert(invalid_docs, :collect_on_error => true)
+    assert_equal [], doc_ids
+    assert_equal [invalid_doc], error_docs
+  end
+
+  def test_insert_empty_docs_raises_exception
+    assert_raise OperationFailure do
+      @@test.insert([])
+    end
+  end
+
+  def test_insert_empty_docs_with_collect_on_error_raises_exception
+    assert_raise OperationFailure do
+      @@test.insert([], :collect_on_error => true)
+    end
+  end
+
   def limited_collection
     conn = standard_connection(:connect => false)
     admin_db = Object.new
@@ -272,6 +292,82 @@ class TestCollection < Test::Unit::TestCase
     return conn.db(MONGO_TEST_DB)["test"]
   end
 
+  def test_chunking_batch_insert
+     docs = []
+     10.times do
+       docs << {'foo' => 'a' * 950}
+     end
+     limited_collection.insert(docs)
+     assert_equal 10, limited_collection.count
+   end
+
+  def test_chunking_batch_insert_without_collect_on_error
+    docs = []
+    4.times do
+      docs << {'foo' => 'a' * 950}
+    end
+    invalid_docs = []
+    invalid_docs << {'$invalid-key' => 1} # non utf8 encoding
+    docs += invalid_docs
+    4.times do
+      docs << {'foo' => 'a' * 950}
+    end
+    assert_raise BSON::InvalidKeyName do
+      limited_collection.insert(docs, :collect_on_error => false)
+    end
+  end
+
+  def test_chunking_batch_insert_with_collect_on_error
+   # Broken for current JRuby
+   if RUBY_PLATFORM == 'java' then return end
+    docs = []
+    4.times do
+      docs << {'foo' => 'a' * 950}
+    end
+    invalid_docs = []
+    invalid_docs << {'$invalid-key' => 1} # non utf8 encoding
+    docs += invalid_docs
+    4.times do
+      docs << {'foo' => 'a' * 950}
+    end
+    doc_ids, error_docs = limited_collection.insert(docs, :collect_on_error => true)
+    assert_equal 8, doc_ids.count
+    assert_equal doc_ids.count, limited_collection.count
+    assert_equal error_docs, invalid_docs
+  end
+
+  def test_chunking_batch_insert_with_continue_on_error
+    docs = []
+    4.times do
+      docs << {'foo' => 'a' * 950}
+    end
+    docs << {'_id' => 'b', 'foo' => 'a'}
+    docs << {'_id' => 'b', 'foo' => 'c'}
+    4.times do
+      docs << {'foo' => 'a' * 950}
+    end
+    assert_raise OperationFailure do
+      limited_collection.insert(docs, :continue_on_error => true)
+    end
+    assert_equal 9, limited_collection.count
+  end
+
+  def test_chunking_batch_insert_without_continue_on_error
+    docs = []
+    4.times do
+      docs << {'foo' => 'a' * 950}
+    end
+    docs << {'_id' => 'b', 'foo' => 'a'}
+    docs << {'_id' => 'b', 'foo' => 'c'}
+    4.times do
+      docs << {'foo' => 'a' * 950}
+    end
+    assert_raise OperationFailure do
+      limited_collection.insert(docs, :continue_on_error => false)
+    end
+    assert_equal 5, limited_collection.count
+  end
+
   def test_maximum_insert_size
     docs = []
     3.times do
@@ -283,17 +379,6 @@ class TestCollection < Test::Unit::TestCase
   def test_maximum_document_size
     assert_raise InvalidDocument do
       limited_collection.insert({'foo' => 'a' * 1024})
-    end
-  end
-
-  def test_maximum_message_size
-    docs = []
-    4.times do
-      docs << {'foo' => 'a' * 950}
-    end
-
-    assert_raise InvalidOperation do
-      limited_collection.insert(docs)
     end
   end
 
