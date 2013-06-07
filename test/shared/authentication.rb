@@ -60,6 +60,10 @@ module AuthenticationTests
   def test_delegated_authentication
     return if @client.server_version < '2.4'
 
+    # TODO: remove this line when slaves have this code:
+    # https://github.com/travis-ci/travis-cookbooks/pull/180
+    return if ENV['TRAVIS']
+
     doc = {'_id' => 'test'}
     # create accounts database to hold user credentials
     accounts = @client['accounts']
