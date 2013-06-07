@@ -62,8 +62,9 @@ module Mongo
       @node_mutex.synchronize do
         begin
           @socket = @client.socket_class.new(@host, @port,
-            @client.op_timeout, @client.connect_timeout
-          )
+                                             @client.op_timeout,
+                                             @client.connect_timeout,
+                                             @client.socket_opts)
         rescue OperationTimeout, ConnectionFailure, OperationFailure, SocketError, SystemCallError, IOError => ex
           @client.log(:debug, "Failed connection to #{host_string} with #{ex.class}, #{ex.message}.")
           close

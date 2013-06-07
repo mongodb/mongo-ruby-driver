@@ -24,14 +24,14 @@ module Mongo
   class TCPSocket
     include SocketUtil
 
-    def initialize(host, port, op_timeout=nil, connect_timeout=nil)
-      @op_timeout = op_timeout
+    def initialize(host, port, op_timeout=nil, connect_timeout=nil, opts={})
+      @op_timeout      = op_timeout
       @connect_timeout = connect_timeout
-      @pid = Process.pid
+      @pid             = Process.pid
 
       # TODO: Prefer ipv6 if server is ipv6 enabled
       @address = Socket.getaddrinfo(host, nil, Socket::AF_INET).first[3]
-      @port = port
+      @port    = port
 
       @socket_address = Socket.pack_sockaddr_in(@port, @address)
       @socket = Socket.new(Socket::AF_INET, Socket::SOCK_STREAM, 0)

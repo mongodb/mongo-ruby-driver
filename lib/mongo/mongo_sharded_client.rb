@@ -66,7 +66,7 @@ module Mongo
     end
 
     def valid_opts
-      GENERIC_OPTS + SHARDED_CLUSTER_OPTS + READ_PREFERENCE_OPTS + WRITE_CONCERN_OPTS
+      super + SHARDED_CLUSTER_OPTS
     end
 
     def inspect

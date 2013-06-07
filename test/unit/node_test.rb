@@ -36,6 +36,7 @@ class NodeTest < Test::Unit::TestCase
     @client.stubs(:connect_timeout).returns(nil)
     @client.expects(:log)
     @client.expects(:mongos?).returns(false)
+    @client.stubs(:socket_opts)
 
     assert node.connect
     node.config

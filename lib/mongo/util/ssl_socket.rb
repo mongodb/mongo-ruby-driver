@@ -24,18 +24,45 @@ module Mongo
   class SSLSocket
     include SocketUtil
 
-    def initialize(host, port, op_timeout=nil, connect_timeout=nil)
-      @op_timeout = op_timeout
+    def initialize(host, port, op_timeout=nil, connect_timeout=nil, opts={})
+      @pid             = Process.pid
+      @op_timeout      = op_timeout
       @connect_timeout = connect_timeout
-      @pid = Process.pid
 
       @tcp_socket = ::TCPSocket.new(host, port)
       @tcp_socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
 
-      @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket)
-      @socket.sync_close = true
+      @context = OpenSSL::SSL::SSLContext.new
 
-      connect
+      if opts[:cert]
+        @context.cert = OpenSSL::X509::Certificate.new(File.open(opts[:cert]))
+      end
+
+      if opts[:key]
+        @context.key = OpenSSL::PKey::RSA.new(File.open(opts[:key]))
+      end
+
+      if opts[:verify]
+        @context.ca_file = opts[:ca_cert]
+        @context.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      end
+
+      begin
+        @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, @context)
+        @socket.sync_close = true
+        connect
+      rescue SSLError
+        raise ConnectionFailure, "SSL handshake failed. MongoDB may " +
+                                 "not be configured with SSL support."
+      end
+
+      if opts[:verify]
+        unless OpenSSL::SSL.verify_certificate_identity(@socket.peer_cert, host)
+          raise ConnectionFailure, "SSL handshake failed. Hostname mismatch."
+        end
+      end
+
+      self
     end
 
     def connect

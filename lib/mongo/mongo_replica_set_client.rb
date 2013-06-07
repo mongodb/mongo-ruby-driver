@@ -83,6 +83,13 @@ module Mongo
     #   @option opts [Float] :connect_timeout (30) The number of seconds to wait before timing out a
     #     connection attempt.
     #   @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
+    #   @option opts [String] :ssl_cert (nil) The certificate file used to identify the local connection against MongoDB.
+    #   @option opts [String] :ssl_key (nil) The private keyfile used to identify the local connection against MongoDB.
+    #     If included with the :ssl_cert then only :ssl_cert is needed.
+    #   @option opts [Boolean] :ssl_verify (nil) Specifies whether or not peer certification validation should occur.
+    #   @option opts [String] :ssl_ca_cert (nil) The ca_certs file contains a set of concatenated "certification authority"
+    #     certificates, which are used to validate certificates passed from the other end of the connection.
+    #     Required for :ssl_verify.
     #   @option opts [Boolean] :refresh_mode (false) Set this to :sync to periodically update the
     #     state of the connection every :refresh_interval seconds. Replica set connection failures
     #     will always trigger a complete refresh. This option is useful when you want to add new nodes
