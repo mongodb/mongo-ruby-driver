@@ -132,7 +132,7 @@ module Mongo
 
       replSet    = opts[:replSet]    || 'ruby-driver-test'
       oplogSize  = opts[:oplog_size] || 5
-      keyFile    = opts[:key_file]   || '/test/tools/keyfile.txt'
+      keyFile    = opts[:key_file]   || '/test/fixtures/auth/keyfile'
 
       keyFile    = Dir.pwd << keyFile
       system "chmod 600 #{keyFile}"
