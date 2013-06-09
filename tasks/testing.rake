@@ -78,24 +78,24 @@ namespace :test do
     end
   end
 
+  Rake::TestTask.new(:functional) do |t|
+    t.test_files = FileList['test/functional/*_test.rb'] - [
+      'test/functional/grid_io_test.rb',
+      'test/functional/grid_test.rb',
+      'test/functional/ssl_test.rb'
+    ]
+    t.libs << 'test'
+  end
+
   Rake::TestTask.new(:replica_set) do |t|
     disabled = [
       'test/replica_set/complex_connect_test.rb',
       'test/replica_set/count_test.rb',
-      'test/replica_set/read_preference_test.rb'
+      'test/replica_set/read_preference_test.rb',
+      'test/replica_set/ssl_test.rb'
     ]
 
     t.test_files = FileList['test/replica_set/*_test.rb'] - disabled
-    t.libs << 'test'
-    #t.verbose = true
-    #t.options = '-v'
-  end
-
-  Rake::TestTask.new(:functional) do |t|
-    t.test_files = FileList['test/functional/*_test.rb'] - [
-      "test/functional/grid_io_test.rb",
-      "test/functional/grid_test.rb"
-    ]
     t.libs << 'test'
   end
 
