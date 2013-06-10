@@ -30,8 +30,9 @@ module Mongo
     DEFAULT_HOST         = 'localhost'
     DEFAULT_PORT         = 27017
     DEFAULT_DB_NAME      = 'test'
-    GENERIC_OPTS         = [:ssl, :auths, :logger, :connect]
+    GENERIC_OPTS         = [:auths, :logger, :connect]
     TIMEOUT_OPTS         = [:timeout, :op_timeout, :connect_timeout]
+    SSL_OPTS             = [:ssl, :ssl_key, :ssl_cert, :ssl_verify, :ssl_ca_cert]
     POOL_OPTS            = [:pool_size, :pool_timeout]
     READ_PREFERENCE_OPTS = [:read, :tag_sets, :secondary_acceptable_latency_ms]
     WRITE_CONCERN_OPTS   = [:w, :j, :fsync, :wtimeout]
@@ -50,6 +51,7 @@ module Mongo
                 :pool_timeout,
                 :primary_pool,
                 :socket_class,
+                :socket_opts,
                 :op_timeout,
                 :tag_sets,
                 :acceptable_latency,
@@ -69,33 +71,43 @@ module Mongo
     # MongoClient#arbiters. This is useful if your application needs to connect manually to nodes other
     # than the primary.
     #
-    # @param [String] host
-    # @param [Integer] port specify a port number here if only one host is being specified.
+    # @overload initialize(host, port, opts={})
+    #  @param [String] host hostname for the target MongoDB server.
+    #  @param [Integer] port specify a port number here if only one host is being specified.
+    #  @param [Hash] opts hash of optional settings and configuration values.
     #
-    # @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
-    #   should be acknowledged
-    # @option opts [Boolean] :j (false) Set journal acknowledgement
-    # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout
-    # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
+    #  @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
+    #    should be acknowledged
+    #  @option opts [Boolean] :j (false) Set journal acknowledgement
+    #  @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout
+    #  @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
     #
-    #     Notes about write concern options:
-    #       Write concern options are propagated to objects instantiated from this MongoClient.
-    #       These defaults can be overridden upon instantiation of any object by explicitly setting an options hash
-    #       on initialization.
-    # @option opts [Boolean] :slave_ok (false) Must be set to +true+ when connecting
-    #   to a single, slave node.
-    # @option opts [Logger, #debug] :logger (nil) A Logger instance for debugging driver ops. Note that
-    #   logging negatively impacts performance; therefore, it should not be used for high-performance apps.
-    # @option opts [Integer] :pool_size (1) The maximum number of socket self.connections allowed per
-    #   connection pool. Note: this setting is relevant only for multi-threaded applications.
-    # @option opts [Float] :timeout (5.0) When all of the self.connections a pool are checked out,
-    #   this is the number of seconds to wait for a new connection to be released before throwing an exception.
-    #   Note: this setting is relevant only for multi-threaded applications (which in Ruby are rare).
-    # @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.
-    #   Disabled by default.
-    # @option opts [Float] :connect_timeout (nil) The number of seconds to wait before timing out a
-    #   connection attempt.
-    # @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
+    #  Notes about Write-Concern Options:
+    #   Write concern options are propagated to objects instantiated from this MongoClient.
+    #   These defaults can be overridden upon instantiation of any object by explicitly setting an options hash
+    #   on initialization.
+    #
+    #  @option opts [Boolean] :ssl (false) If true, create the connection to the server using SSL.
+    #  @option opts [String] :ssl_cert (nil) The certificate file used to identify the local connection against MongoDB.
+    #  @option opts [String] :ssl_key (nil) The private keyfile used to identify the local connection against MongoDB.
+    #    If included with the :ssl_cert then only :ssl_cert is needed.
+    #  @option opts [Boolean] :ssl_verify (nil) Specifies whether or not peer certification validation should occur.
+    #  @option opts [String] :ssl_ca_cert (nil) The ca_certs file contains a set of concatenated "certification authority"
+    #    certificates, which are used to validate certificates passed from the other end of the connection.
+    #    Required for :ssl_verify.
+    #  @option opts [Boolean] :slave_ok (false) Must be set to +true+ when connecting
+    #    to a single, slave node.
+    #  @option opts [Logger, #debug] :logger (nil) A Logger instance for debugging driver ops. Note that
+    #    logging negatively impacts performance; therefore, it should not be used for high-performance apps.
+    #  @option opts [Integer] :pool_size (1) The maximum number of socket self.connections allowed per
+    #    connection pool. Note: this setting is relevant only for multi-threaded applications.
+    #  @option opts [Float] :timeout (5.0) When all of the self.connections a pool are checked out,
+    #    this is the number of seconds to wait for a new connection to be released before throwing an exception.
+    #    Note: this setting is relevant only for multi-threaded applications.
+    #  @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.
+    #    Disabled by default.
+    #  @option opts [Float] :connect_timeout (nil) The number of seconds to wait before timing out a
+    #    connection attempt.
     #
     # @example localhost, 27017 (or <code>ENV["MONGODB_URI"]</code> if available)
     #   MongoClient.new
@@ -459,9 +471,7 @@ module Mongo
     # @raise [ConnectionFailure] if unable to connect to any host or port.
     def connect
       close
-
       config = check_is_master(host_port)
-
       if config
         if config['ismaster'] == 1 || config['ismaster'] == true
           @read_primary = true
@@ -481,6 +491,7 @@ module Mongo
       if !connected?
         raise ConnectionFailure, "Failed to connect to a master node at #{host_port.join(":")}"
       end
+      true
     end
     alias :reconnect :connect
 
@@ -574,7 +585,7 @@ module Mongo
       begin
         host, port = *node
         config = nil
-        socket = @socket_class.new(host, port, @op_timeout, @connect_timeout)
+        socket = @socket_class.new(host, port, @op_timeout, @connect_timeout, @socket_opts)
         if @connect_timeout
           Timeout::timeout(@connect_timeout, OperationTimeout) do
             config = self['admin'].command({:ismaster => 1}, :socket => socket)
@@ -598,7 +609,8 @@ module Mongo
       POOL_OPTS +
       READ_PREFERENCE_OPTS +
       WRITE_CONCERN_OPTS +
-      TIMEOUT_OPTS
+      TIMEOUT_OPTS +
+      SSL_OPTS
     end
 
     def check_opts(opts)
@@ -612,11 +624,32 @@ module Mongo
     # Parse option hash
     def setup(opts)
       @slave_ok = opts.delete(:slave_ok)
+      @ssl      = opts.delete(:ssl)
+      @unix     = @host ? @host.end_with?('.sock') : false
 
-      @ssl = opts.delete(:ssl)
-      @unix = @host ? @host.end_with?('.sock') : false
+      # if ssl options are present, but ssl is nil/false raise for misconfig
+      ssl_opts = opts.keys.select { |k| k.to_s.start_with?('ssl') }
+      if ssl_opts.size > 0 && !@ssl
+        raise MongoArgumentError, "SSL has not been enabled (:ssl=false) " +
+          "but the following  SSL related options were " +
+          "specified: #{ssl_opts.join(', ')}"
+      end
 
+      @socket_opts = {}
       if @ssl
+        # construct ssl socket opts
+        @socket_opts[:key]     = opts.delete(:ssl_key)
+        @socket_opts[:cert]    = opts.delete(:ssl_cert)
+        @socket_opts[:verify]  = opts.delete(:ssl_verify)
+        @socket_opts[:ca_cert] = opts.delete(:ssl_ca_cert)
+
+        # verify peer requires ca_cert, raise if only one is present
+        if @socket_opts[:verify] && !@socket_opts[:ca_cert]
+          raise MongoArgumentError,
+            "If :ssl_verify_mode has been specified, then you must include " +
+            ":ssl_ca_cert in order to perform server validation."
+        end
+
         @socket_class = Mongo::SSLSocket
       elsif @unix
         @socket_class = Mongo::UNIXSocket
@@ -631,7 +664,8 @@ module Mongo
       @pool_size = opts.delete(:pool_size) || 1
       if opts[:timeout]
         warn "The :timeout option has been deprecated " +
-          "and will be removed in the 2.0 release. Use :pool_timeout instead."
+             "and will be removed in the 2.0 release. " +
+             "Use :pool_timeout instead."
       end
       @pool_timeout = opts.delete(:pool_timeout) || opts.delete(:timeout) || 5.0
 

@@ -24,5 +24,4 @@ gem-private_key.pem
 lib/bson_ext
 lib/mongo_ext/Makefile
 nbproject
-test/tools/data/
 tmp

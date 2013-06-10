@@ -38,7 +38,7 @@ require 'tools/mongo_config'
 
 class Test::Unit::TestCase
 
-  TEST_DATA = File.join(File.dirname(__FILE__), 'data')
+  TEST_DATA = File.join(File.dirname(__FILE__), 'fixtures/data')
 
   def ensure_cluster(kind=nil, opts={})
     @@cluster ||= nil

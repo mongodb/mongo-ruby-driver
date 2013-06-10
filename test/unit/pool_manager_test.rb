@@ -32,6 +32,7 @@ class PoolManagerTest < Test::Unit::TestCase
       @client.stubs(:socket_class).returns(TCPSocket)
       @client.stubs(:mongos?).returns(false)
       @client.stubs(:[]).returns(@db)
+      @client.stubs(:socket_opts)
 
       @client.stubs(:replica_set_name).returns(nil)
       @client.stubs(:log)
