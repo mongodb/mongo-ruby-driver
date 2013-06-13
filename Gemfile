@@ -1,8 +1,6 @@
 source 'https://rubygems.org'
 
-# TODO: replace with gemspec once bson 2.0 has been released
-gem 'bson', :git => 'git://github.com/mongodb/bson-ruby.git'
-# gemspec
+gemspec
 
 gem 'rake'
 

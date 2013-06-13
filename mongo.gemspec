@@ -30,7 +30,6 @@ Gem::Specification.new do |s|
   s.has_rdoc          = 'yard'
   s.bindir            = 'bin'
 
-  # TODO: uncomment after bson 2.0 release, for now use gemfile
-  # s.add_dependency             = 'bson', '>= 2.0.0'
-  s.add_development_dependency = 'bundler', '>= 1.3.0'
+  s.add_dependency 'bson', '~> 2.0.0.alpha'
+  s.add_development_dependency 'bundler', '~> 1.3.0'
 end
