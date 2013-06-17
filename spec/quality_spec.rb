@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'Code Quality' do
-  if RUBY_VERSION > '1.9'
+  if RUBY_VERSION > '1.9' && RUBY_PLATFORM != 'java'
 
     it 'has no style-guide violations' do
       require 'tailor/cli'
@@ -13,9 +13,8 @@ describe 'Code Quality' do
       expect(result.size).to eq(0)
     end
 
-    it 'has adequate test coverage' do
-      expect(SimpleCov.result.covered_percent).to be >= 90
+    it 'has full test coverage' do
+      expect(SimpleCov.result.covered_percent).to be >= 99
     end
-
   end
 end

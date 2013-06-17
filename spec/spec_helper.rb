@@ -1,4 +1,4 @@
-if RUBY_VERSION > '1.9'
+if RUBY_VERSION > '1.9' && RUBY_PLATFORM != 'java'
   require 'coveralls'
   Coveralls.wear!
 end
