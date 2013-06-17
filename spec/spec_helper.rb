@@ -12,4 +12,9 @@ RSpec.configure do |config|
   config.fail_fast = true unless ENV['CI']
   config.formatter = 'documentation'
   config.include Helpers
+
+  # disables should syntax
+  config.expect_with :rspec do |c|
+    c.syntax = :expect
+  end
 end
