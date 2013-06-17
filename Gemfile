@@ -11,6 +11,7 @@ group :deploy do
 end
 
 group :testing do
+  gem 'json', :platforms => [ :ruby_18, :jruby ]
   gem 'rspec'
   if RUBY_VERSION > '1.9'
     gem 'tailor', :require => false
