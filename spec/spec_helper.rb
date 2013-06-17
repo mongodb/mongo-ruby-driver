@@ -18,3 +18,6 @@ RSpec.configure do |config|
     c.syntax = :expect
   end
 end
+
+TEST_DB = 'ruby-driver'
+TEST_COLL = 'test'
