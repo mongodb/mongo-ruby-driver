@@ -140,7 +140,7 @@ timeout for waiting for old connections to be released to the pool.
 To set up a pooled connection to a single MongoDB instance:
 
 ```ruby
-  @client = MongoClient.new("localhost", 27017, :pool_size => 5, :timeout => 5)
+  @client = MongoClient.new("localhost", 27017, :pool_size => 5, :pool_timeout => 5)
 ```
 
 Though the pooling architecture will undoubtedly evolve, it currently owes much credit
