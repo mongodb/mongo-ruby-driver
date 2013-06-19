@@ -101,7 +101,7 @@ module Mongo
     #    logging negatively impacts performance; therefore, it should not be used for high-performance apps.
     #  @option opts [Integer] :pool_size (1) The maximum number of socket self.connections allowed per
     #    connection pool. Note: this setting is relevant only for multi-threaded applications.
-    #  @option opts [Float] :timeout (5.0) When all of the self.connections a pool are checked out,
+    #  @option opts [Float] :pool_timeout (5.0) When all of the self.connections a pool are checked out,
     #    this is the number of seconds to wait for a new connection to be released before throwing an exception.
     #    Note: this setting is relevant only for multi-threaded applications.
     #  @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.
@@ -116,7 +116,7 @@ module Mongo
     #   MongoClient.new("localhost")
     #
     # @example localhost, 3000, max 5 self.connections, with max 5 seconds of wait time.
-    #   MongoClient.new("localhost", 3000, :pool_size => 5, :timeout => 5)
+    #   MongoClient.new("localhost", 3000, :pool_size => 5, :pool_timeout => 5)
     #
     # @example localhost, 3000, where this node may be a slave
     #   MongoClient.new("localhost", 3000, :slave_ok => true)
