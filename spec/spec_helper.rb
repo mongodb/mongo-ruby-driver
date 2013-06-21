@@ -5,6 +5,8 @@ end
 
 require 'mongo'
 require 'support/helpers'
+require 'support/matchers'
+require 'support/shared_examples'
 require 'rspec/autorun'
 
 RSpec.configure do |config|
