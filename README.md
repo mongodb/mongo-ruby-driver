@@ -18,7 +18,9 @@ has a link to API Documentation for the current release.
 
 If you have the source, you can generate the matching documentation  by typing
 
-    $ rake docs
+```sh
+$ rake docs
+```
 
 Once generated, the API documentation can be found in the docs/ folder.
 
@@ -73,16 +75,22 @@ Note that if you're on 1.8.7, be sure that you're using a patchlevel >= 249. The
 
 ### Gems
 
-    $ gem update --system
-    $ gem install mongo
+```sh
+$ gem update --system
+$ gem install mongo
+```
 
 For a significant performance boost, you'll want to install the C extension:
 
-    $ gem install bson_ext
+```sh
+$ gem install bson_ext
+```
 
 Note that bson_ext isn't used with JRuby. Instead, we use some native Java extensions are bundled with the bson gem. If you ever need to modify these extensions, you can recompile with the following rake task:
 
-    $ rake compile:jbson
+```sh
+$ rake compile:jbson
+```
 
 ### From the GitHub source
 
@@ -91,7 +99,9 @@ You can either clone the git repository or download a tarball or zip file.
 Once you have the source, you can use it from wherever you downloaded it or
 you can install it as a gem from the source by typing:
 
-    $ rake install
+```sh
+$ rake install
+```
 
 # Examples
 
@@ -140,7 +150,7 @@ timeout for waiting for old connections to be released to the pool.
 To set up a pooled connection to a single MongoDB instance:
 
 ```ruby
-  @client = MongoClient.new("localhost", 27017, :pool_size => 5, :pool_timeout => 5)
+@client = MongoClient.new("localhost", 27017, :pool_size => 5, :pool_timeout => 5)
 ```
 
 Though the pooling architecture will undoubtedly evolve, it currently owes much credit
@@ -208,6 +218,7 @@ database.  The idea here is that whenever a record is inserted, the
 returned will be inserted.
 
 Here is a sample primary key factory, taken from the tests:
+
 ```ruby
 class TestPKFactory
   def create_pk(doc)
@@ -216,10 +227,12 @@ class TestPKFactory
   end
 end
 ```
+
 Here's a slightly more sophisticated one that handles both symbol and string
 keys. This is the PKFactory that comes with the MongoRecord code (an
 ActiveRecord-like framework for non-Rails apps) and the AR Mongo adapter code
 (for Rails):
+
 ```ruby
 class PKFactory
   def create_pk(doc)
@@ -286,44 +299,64 @@ request.
 
 Before running the tests, make sure you install all test dependencies by running:
 
-    $ gem install bundler; bundle install
+```sh
+$ gem install bundler; bundle install
+```
 
 To run all default test suites (without the BSON extensions) just type:
 
-    $ rake test
+```sh
+$ rake test
+```
 
 If you want to run the default test suite using the BSON extensions:
 
-    $ rake test:ext
+```sh
+$ rake test:ext
+```
 
 These will run both unit and functional tests. To run these tests alone:
 
-    $ rake test:unit
-    $ rake test:functional
+```sh
+$ rake test:unit
+$ rake test:functional
+```
 
 To run any individual rake tasks with the BSON extension disabled, just pass BSON_EXT_DISABLED=true to the task:
 
-    $ rake test:unit BSON_EXT_DISABLED=true
+```sh
+$ rake test:unit BSON_EXT_DISABLED=true
+```
 
 If you want to test replica set, you can run the following task:
 
-    $ rake test:replica_set
+```sh
+$ rake test:replica_set
+```
 
 To run a single test at the top level, add -Itest since we no longer modify LOAD_PATH:
 
-    $ ruby -Itest -Ilib test/bson/bson_test.rb
+```sh
+$ ruby -Itest -Ilib test/bson/bson_test.rb
+```
 
 To run a single test from the test directory, add -I. since we no longer modify LOAD_PATH:
 
-    $ ruby -I. -I../lib bson/bson_test.rb
+```sh
+$ ruby -I. -I../lib bson/bson_test.rb
+```
 
 To run a single test from its subdirectory, add -I.. since we no longer modify LOAD_PATH:
 
-    $ ruby -I.. -I../../lib bson_test.rb
+```sh
+$ ruby -I.. -I../../lib bson_test.rb
+```
 
 To fix the following error on Mac OS X - "/.../lib/bson_ext/cbson.bundle: [BUG] Segmentation fault":
 
-    $ rake compile
+```sh
+$ rake compile
+```
 
 # Release Notes
 
