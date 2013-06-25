@@ -49,9 +49,9 @@ module Mongo
       # @param selector [Hash] The query selector.
       # @param options [Hash] The additional query options.
       #
+      # @option options :project [Hash] The projection.
       # @option options :skip [Integer] The number of documents to skip.
       # @option options :limit [Integer] The number of documents to return.
-      # @option options :fields [Hash] The fields to return.
       # @option options :flags [Array] The flags for the query message.
       #
       #   Supported flags: +:tailable_cursor+, +:slave_ok+, +:oplog_replay+,
