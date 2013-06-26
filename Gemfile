@@ -3,7 +3,7 @@ source 'https://rubygems.org'
 gem 'rake'
 gem 'bson', '2.0.0.rc1'
 
-group :deploy do
+group :release do
   gem 'git'
   gem 'yard'
   gem 'redcarpet' unless RUBY_PLATFORM =~ /java/
