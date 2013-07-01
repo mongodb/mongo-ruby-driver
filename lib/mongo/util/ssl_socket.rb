@@ -51,7 +51,7 @@ module Mongo
         @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, @context)
         @socket.sync_close = true
         connect
-      rescue SSLError
+      rescue OpenSSL::SSL::SSLError
         raise ConnectionFailure, "SSL handshake failed. MongoDB may " +
                                  "not be configured with SSL support."
       end
