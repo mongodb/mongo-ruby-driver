@@ -42,7 +42,7 @@ module Mongo
 
     def connect
       if @connect_timeout
-        Timeout::timeout(@connect_timeout, OperationTimeout) do
+        Timeout::timeout(@connect_timeout, ConnectionTimeoutError) do
           @socket.connect(@socket_address)
         end
       else
