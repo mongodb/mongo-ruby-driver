@@ -51,7 +51,7 @@ namespace :deploy do
     g.add(['VERSION', 'ext/cbson/version.h'])
     g.commit "RELEASE #{bumper_version}"
     g.add_tag("#{bumper_version}")
-    g.push('origin', 'master', true)
+    g.push('origin', '1.x-stable', true)
   end
 
   desc "Package all gems for release"
