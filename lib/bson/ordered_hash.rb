@@ -33,6 +33,14 @@ module BSON
       end
     end
 
+    # Allows activesupport Array#extract_options! to extract options
+    # when they are instance of BSON::OrderedHash
+    #
+    # @return [true, false] true if options can be extracted
+    def extractable_options?
+      instance_of?(BSON::OrderedHash)
+    end
+
     # We only need the body of this class if the RUBY_VERSION is before 1.9
     if RUBY_VERSION < '1.9'
       attr_accessor :ordered_keys

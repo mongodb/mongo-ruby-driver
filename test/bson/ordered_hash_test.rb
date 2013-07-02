@@ -258,4 +258,16 @@ class OrderedHashTest < Test::Unit::TestCase
     assert_nil @oh['f']
     assert_equal ['c', 'a', 'z'], @oh.keys
   end
+
+  def test_extractable_options_for_ordered_hash
+    assert @oh.extractable_options?
+  end
+
+  # Extractable_options should not be enabled by default for
+  # classes inherited from BSON::OrderedHash
+  #
+  def test_extractable_options_for_ordered_hash_inherited_classes_is_false
+    oh_child_class = Class.new(BSON::OrderedHash)
+    assert_false oh_child_class.new.extractable_options?
+  end
 end
