@@ -1,12 +1,12 @@
-[![Build Status][travis-img]][travis-url] [![Jenkins Status][jenkins-img]][jenkins-url] [![Code Climate][codeclimate-img]][codeclimate-url]
+# Build Status
 
-[travis-img]: https://secure.travis-ci.org/mongodb/mongo-ruby-driver.png
+[travis-img]: https://travis-ci.org/mongodb/mongo-ruby-driver.png?branch=1.x-stable
 [travis-url]: http://travis-ci.org/mongodb/mongo-ruby-driver
-[codeclimate-img]: https://codeclimate.com/github/mongodb/mongo-ruby-driver.png
-[codeclimate-url]: https://codeclimate.com/github/mongodb/mongo-ruby-driver
-[jenkins-img]: https://jenkins.10gen.com/job/mongo-ruby-driver/badge/icon
-[jenkins-url]: https://jenkins.10gen.com/job/mongo-ruby-driver/
+[jenkins-img]: https://jenkins.10gen.com/job/mongo-ruby-driver-1.x-stable/badge/icon
+[jenkins-url]: https://jenkins.10gen.com/job/mongo-ruby-driver-1.x-stable/
 [api-url]: http://api.mongodb.org/ruby/current
+- TravisCI [![Travis Status][travis-img]][travis-url]
+- Jenkins [![Jenkins Status][jenkins-img]][jenkins-url]
 
 # Documentation
 
