@@ -31,5 +31,4 @@ Gem::Specification.new do |s|
   s.bindir            = 'bin'
 
   s.add_dependency 'bson', '2.0.0.rc1'
-  s.add_development_dependency 'bundler', '~> 1.3.0'
 end

@@ -1,8 +1,7 @@
 source 'https://rubygems.org'
 
-gemspec
-
 gem 'rake'
+gem 'bson', '2.0.0.rc1'
 
 group :deploy do
   gem 'git'
