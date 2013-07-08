@@ -115,7 +115,7 @@ module Mongo
       # Serializes and de-serializes one 32-bit integer.
       module Int32
 
-        # Serializes a 32-bit fixnum into the buffer
+        # Serializes a fixnum to a 4-byte 32-bit integer
         #
         # @param buffer [String] Buffer to receive the serialized Int32.
         # @param value [Fixnum] 32-bit integer to be serialized.
@@ -138,10 +138,10 @@ module Mongo
       # Serializes and de-serializes one 64-bit integer.
       module Int64
 
-        # Serializes a 64-bit fixnum into the buffer
+        # Serializes a fixnum to an 8-byte 64-bit integer
         #
         # @param buffer [String] Buffer to receive the serialized Int64.
-        # @param value [Fixnum] (ZERO) 64-bit integer to be serialized.
+        # @param value [Fixnum] 64-bit integer to be serialized.
         # @return [String] Buffer with serialized value.
         def self.serialize(buffer, value)
           buffer << [value].pack(INT64_PACK)
