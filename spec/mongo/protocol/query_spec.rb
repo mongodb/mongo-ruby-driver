@@ -6,7 +6,7 @@ describe Mongo::Protocol::Query do
   let(:db)       { TEST_DB }
   let(:coll)     { TEST_COLL }
   let(:ns)       { "#{db}.#{coll}" }
-  let(:selector) { { :name => "Tyler" } }
+  let(:selector) { { :name => 'Tyler' } }
   let(:opts)     { { } }
 
   let(:message) do

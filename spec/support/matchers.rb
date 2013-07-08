@@ -12,7 +12,7 @@ end
 
 RSpec::Matchers.define :be_int64_sequence do |array|
   match do |actual|
-    actual == array.inject(String.new) do |buffer, num|
+    actual == array.reduce(String.new) do |buffer, num|
       buffer << [num].pack('q<')
     end
   end
@@ -32,6 +32,6 @@ end
 
 RSpec::Matchers.define :be_bson_sequence do |array|
   match do |actual|
-    actual == array.collect(&:to_bson).join
+    actual == array.map(&:to_bson).join
   end
 end

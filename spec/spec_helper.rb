@@ -25,4 +25,4 @@ TEST_COLL    = 'test'
 COVERAGE_MIN = 99
 
 # require all shared examples
-Dir['./spec/support/shared/*.rb'].sort.each {|file| require file}
+Dir['./spec/support/shared/*.rb'].sort.each { |file| require file }

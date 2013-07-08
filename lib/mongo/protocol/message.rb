@@ -56,11 +56,11 @@ module Mongo
         serialize_header(buffer)
         serialize_fields(buffer)
         length = buffer.bytesize - start
-        buffer[start, 4] = Int32::serialize('', length)
+        buffer[start, 4] = Int32.serialize('', length)
         buffer
       end
 
-      alias :to_s :serialize
+      alias_method :to_s, :serialize
 
       # Deserializes messages from an IO stream
       #
@@ -107,10 +107,10 @@ module Mongo
           value = instance_variable_get(field[:name])
           if field[:multi]
             value.each do |item|
-              field[:type]::serialize(buffer, item)
+              field[:type].serialize(buffer, item)
             end
           else
-            field[:type]::serialize(buffer, value)
+            field[:type].serialize(buffer, value)
           end
         end
       end
@@ -139,7 +139,7 @@ module Mongo
       # @return [String] Serialized header
       def serialize_header(buffer)
         set_request_id
-        Header::serialize(buffer, [0, request_id, 0, op_code])
+        Header.serialize(buffer, [0, request_id, 0, op_code])
       end
 
       # Deserializes the header of the message
@@ -147,7 +147,7 @@ module Mongo
       # @param io [IO] Stream containing the header.
       # @return [Array<Fixnum>] Deserialized header.
       def self.deserialize_header(io)
-        @length, @request_id, @response_to, @op_code = Header::deserialize(io)
+        @length, @request_id, @response_to, @op_code = Header.deserialize(io)
       end
 
       # A method for declaring a message field
@@ -165,7 +165,7 @@ module Mongo
       #     fields that use the number.
       #
       # @return [NilClass]
-      def self.field(name, type, multi=false)
+      def self.field(name, type, multi = false)
         fields << {
           :name => "@#{name}".intern,
           :type => type,
@@ -188,7 +188,7 @@ module Mongo
       def self.deserialize_array(message, io, field)
         elements = []
         count = message.instance_variable_get(field[:multi])
-        count.times { elements << field[:type]::deserialize(io) }
+        count.times { elements << field[:type].deserialize(io) }
         message.instance_variable_set(field[:name], elements)
       end
 
@@ -201,7 +201,7 @@ module Mongo
       def self.deserialize_field(message, io, field)
         message.instance_variable_set(
           field[:name],
-          field[:type]::deserialize(io)
+          field[:type].deserialize(io)
         )
       end
     end
