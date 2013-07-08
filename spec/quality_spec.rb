@@ -1,20 +1,19 @@
 require 'spec_helper'
 
-describe 'Code Quality' do
-  if RUBY_VERSION > '1.9' && RUBY_PLATFORM != 'java'
+describe 'Code Quality', :quality => true do
 
+  unless RUBY_VERSION < '1.9'
     it 'has no style-guide violations' do
-      require 'tailor/cli'
-      result = silence do
-        t = Tailor::CLI.new %w(lib)
-        t.result
-      end
-      result = result.values.flatten.select {|v| !v.empty?}
-      expect(result.size).to eq(0)
+      require 'rubocop'
+      result = silence { Rubocop::CLI.new.run }
+      puts '[FAIL] Style issues found! To view a report, ' +
+           'please run "rubocop" from the project root.' unless result == 0
+      expect(result).to equal(0)
     end
 
-    it 'has full test coverage' do
-      expect(SimpleCov.result.covered_percent).to be >= 99
+    it 'has required minimum test coverage' do
+      expect(SimpleCov.result.covered_percent).to be >= COVERAGE_MIN
     end
   end
+
 end
