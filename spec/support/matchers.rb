@@ -35,3 +35,9 @@ RSpec::Matchers.define :be_bson_sequence do |array|
     actual == array.map(&:to_bson).join
   end
 end
+
+RSpec::Matchers.define :be_String do
+  match do |object|
+    object.is_a?(String)
+  end
+end
