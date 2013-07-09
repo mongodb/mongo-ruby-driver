@@ -4,10 +4,10 @@ describe Mongo::Protocol::Update do
 
   let(:opcode)   { 2001 }
   let(:db)       { TEST_DB }
-  let(:coll)     { TEST_COLL}
+  let(:coll)     { TEST_COLL }
   let(:ns)       { "#{db}.#{coll}" }
-  let(:selector) { { :name => "Tyler" } }
-  let(:update_doc) { { :name => "Bob" } }
+  let(:selector) { { :name => 'Tyler' } }
+  let(:update_doc) { { :name => 'Bob' } }
   let(:opts)       { { } }
   let(:message) do
     described_class.new(db, coll, selector, update_doc, opts)

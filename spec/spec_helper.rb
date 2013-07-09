@@ -1,4 +1,4 @@
-if RUBY_VERSION > '1.9' && RUBY_PLATFORM != 'java'
+unless RUBY_VERSION < '1.9'
   require 'coveralls'
   Coveralls.wear!
 end
@@ -6,7 +6,6 @@ end
 require 'mongo'
 require 'support/helpers'
 require 'support/matchers'
-require 'support/shared_examples'
 require 'rspec/autorun'
 
 RSpec.configure do |config|
@@ -21,5 +20,9 @@ RSpec.configure do |config|
   end
 end
 
-TEST_DB = 'ruby-driver'
-TEST_COLL = 'test'
+TEST_DB      = 'ruby-driver'
+TEST_COLL    = 'test'
+COVERAGE_MIN = 99
+
+# require all shared examples
+Dir['./spec/support/shared/*.rb'].sort.each { |file| require file }

@@ -28,7 +28,7 @@ module Mongo
         def initialize(layout)
           @masks = {}
           layout.each_with_index do |field, index|
-            @masks[field] = 2 ** index
+            @masks[field] = 2**index
           end
         end
 

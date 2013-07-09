@@ -3,18 +3,19 @@ source 'https://rubygems.org'
 gem 'rake'
 gem 'bson', '2.0.0.rc1'
 
-group :deploy do
+group :release do
   gem 'git'
   gem 'yard'
-  gem 'redcarpet' unless RUBY_PLATFORM =~ /java/
+  gem 'redcarpet', :platforms => :mri
 end
 
 group :testing do
   gem 'json', :platforms => [ :ruby_18, :jruby ]
   gem 'rspec'
-  if RUBY_VERSION > '1.9'
-    gem 'tailor', :require => false
+
+  platforms :ruby_19, :ruby_20, :jruby do
     gem 'coveralls', :require => false
+    gem 'rubocop' unless RUBY_VERSION < '1.9'
   end
 end
 
@@ -28,5 +29,6 @@ group :development do
   gem 'rb-fchange', :require => false # Windows
   gem 'terminal-notifier-guard'
 
+  gem 'guard-rubocop', :platforms => [:ruby_19, :ruby_20, :jruby]
   gem 'ruby-prof', :platforms => :mri
 end

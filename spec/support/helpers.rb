@@ -9,7 +9,7 @@ module Helpers
   #
   # @param A code block to execute.
   # @return Original $stdout value.
-  def silence &block
+  def silence(&block)
     original_stdout = $stdout
     original_stderr = $stderr
     $stdout = $stderr = File.new('/dev/null', 'w')

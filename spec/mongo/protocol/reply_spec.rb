@@ -9,8 +9,8 @@ describe Mongo::Protocol::Reply do
   let(:flags)       { 0 }
   let(:start)       { 0 }
   let(:n_returned)  { 2 }
-  let(:cursor_id)   { 999999 }
-  let(:doc)         { {:name => 'Tyler'} }
+  let(:cursor_id)   { 999_999 }
+  let(:doc)         { { :name => 'Tyler' } }
 
   let(:header) do
     [length, request_id, response_to, op_code].pack('l<l<l<l<')

@@ -8,7 +8,7 @@ rvm:
   - jruby-19mode
   - ree
 
-bundler_args: --without deploy development
+bundler_args: --without release development
 
 env: CI="travis"
 
@@ -23,7 +23,6 @@ services:
 
 branches:
   only:
-    - 2.x-development
     - master
     - 1.x-stable
     - 2.x-stable

@@ -36,7 +36,8 @@ module Mongo
       #   Query.new('xgen', 'users', {:name => 'Tyler'})
       #
       # @example Find all users named Tyler skipping 5 and returning 10.
-      #   Query.new('xgen', 'users', {:name => 'Tyler'}, :skip => 5, limit => 10)
+      #   Query.new('xgen', 'users', {:name => 'Tyler'}, :skip => 5,
+      #                                                  :limit => 10)
       #
       # @example Find all users with slave ok bit set
       #   Query.new('xgen', 'users', {:name => 'Tyler', :flags => [:slave_ok]})

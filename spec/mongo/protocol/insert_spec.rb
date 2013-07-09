@@ -6,9 +6,9 @@ describe Mongo::Protocol::Insert do
   let(:db)     { TEST_DB }
   let(:coll)   { TEST_COLL }
   let(:ns)     { "#{db}.#{coll}" }
-  let(:doc1)   { { :name => "Tyler" } }
-  let(:doc2)   { { :name => "Brandon" } }
-  let(:docs)   { [doc1, doc2 ] }
+  let(:doc1)   { { :name => 'Tyler' } }
+  let(:doc2)   { { :name => 'Brandon' } }
+  let(:docs)   { [doc1, doc2] }
   let(:opts)   { { } }
 
   let(:message) do
