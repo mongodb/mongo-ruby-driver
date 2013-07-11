@@ -23,6 +23,7 @@ end
 
 TEST_DB      = 'ruby-driver'
 TEST_COLL    = 'test'
+TEST_SET     = 'ruby-driver-rs'
 COVERAGE_MIN = 99
 
 # require all shared examples
