@@ -12,9 +12,10 @@ RSpec.configure do |config|
   config.color     = true
   config.fail_fast = true unless ENV['CI']
   config.formatter = 'documentation'
+  config.treat_symbols_as_metadata_keys_with_true_values = true
   config.include Helpers
 
-  # disables should syntax
+  # disables 'should' syntax
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
