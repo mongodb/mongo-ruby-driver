@@ -29,15 +29,23 @@ describe Mongo::Scope do
       expect(scope.selector).to eq(selector)
     end
 
+    it 'dups the selector' do
+      expect(scope.selector.object_id).not_to eq(selector.object_id)
+    end
+
     it 'sets the options' do
-      expect(scope.limit).to eq(5)
+      expect(scope.opts).to eq(opts)
+    end
+
+    it 'dups the options' do
+      expect(scope.opts.object_id).not_to eq(opts.object_id)
     end
 
   end
 
   describe '#inspect' do
     it 'returns a string' do
-      expect(scope.inspect).to be_String
+      expect(scope.inspect).to be_a(String)
     end
 
   end
@@ -49,13 +57,12 @@ describe Mongo::Scope do
       let(:new_comment) { "test2" }
 
       it 'sets the comment' do
-        scope.comment(new_comment)
-        expect(scope.comment).to eq(new_comment)
+        new_scope = scope.comment(new_comment)
+        expect(new_scope.comment).to eq(new_comment)
       end
 
-      it 'returns self' do
-        scope_self = scope
-        expect(scope.comment(new_comment)).to eq(scope_self)
+      it 'returns a new Scope' do
+        expect(scope.comment(new_comment)).not_to eq(scope)
       end
     end
 
@@ -69,6 +76,21 @@ describe Mongo::Scope do
 
   end
 
+  describe '#comment!' do
+
+    context 'when a comment is specified' do
+      let(:opts) { { :comment => "test1" } }
+      let(:new_comment) { "test2" }
+
+      it 'sets the comment on the same Scope' do
+        scope.comment!(new_comment)
+        expect(scope.comment).to eq(new_comment)
+      end
+
+    end
+
+  end
+
   describe '#fields' do
 
     context 'when fields are specified' do
@@ -76,13 +98,12 @@ describe Mongo::Scope do
       let(:new_fields) { { "y" => 1 } }
 
       it 'sets the fields' do
-        scope.fields(new_fields)
-        expect(scope.fields).to eq(new_fields)
+        new_scope = scope.fields(new_fields)
+        expect(new_scope.fields).to eq(new_fields)
       end
 
-      it 'returns self' do
-        scope_self = scope
-        expect(scope.fields(new_fields)).to eq(scope_self)
+      it 'returns a new Scope' do
+        expect(scope.fields(new_fields)).not_to eq(scope)
       end
     end
 
@@ -96,6 +117,21 @@ describe Mongo::Scope do
 
   end
 
+  describe '#fields!' do
+
+    context 'when fields are specified' do
+      let(:opts) { {:fields => {"x" => 1 } } }
+      let(:new_fields) { { "y" => 1 } }
+
+      it 'sets the fields on the same Scope' do
+        scope.fields!(new_fields)
+        expect(scope.fields).to eq(new_fields)
+      end
+
+    end
+
+  end
+
   describe '#hint' do
 
     context 'when a hint is specified' do
@@ -103,13 +139,12 @@ describe Mongo::Scope do
       let(:new_hint) { {"x" => descending} }
 
       it 'sets the hint' do
-        scope.hint(new_hint)
-        expect(scope.hint).to eq(new_hint)
+        new_scope = scope.hint(new_hint)
+        expect(new_scope.hint).to eq(new_hint)
       end
 
-      it 'returns self' do
-        scope_self = scope
-        expect(scope.hint(new_hint)).to eq(scope_self)
+      it 'returns a new Scope' do
+        expect(scope.hint(new_hint)).not_to eq(scope)
       end
     end
 
@@ -123,6 +158,21 @@ describe Mongo::Scope do
 
   end
 
+  describe '#hint!' do
+
+    context 'when a hint is specified' do
+      let(:opts) { {:hint => {"x" => ascending} } }
+      let(:new_hint) { {"x" => descending} }
+
+      it 'sets the hint on the same Scope' do
+        scope.hint!(new_hint)
+        expect(scope.hint).to eq(new_hint)
+      end
+
+    end
+
+  end
+
   describe '#limit' do
 
     context 'when a limit is specified' do
@@ -130,13 +180,12 @@ describe Mongo::Scope do
       let(:new_limit) { 10 }
 
       it 'sets the limit' do
-        scope.limit(new_limit)
-        expect(scope.limit).to eq(new_limit)
+        new_scope = scope.limit(new_limit)
+        expect(new_scope.limit).to eq(new_limit)
       end
 
-      it 'returns self' do
-        scope_self = scope
-        expect(scope.limit(new_limit)).to eq(scope_self)
+      it 'returns a new Scope' do
+        expect(scope.limit(new_limit)).not_to eq(scope)
       end
     end
 
@@ -150,6 +199,21 @@ describe Mongo::Scope do
 
   end
 
+  describe '#limit!' do
+
+    context 'when a limit is specified' do
+      let(:opts) { {:limit => 5} }
+      let(:new_limit) { 10 }
+
+      it 'sets the limit on the same Scope' do
+        scope.limit!(new_limit)
+        expect(scope.limit).to eq(new_limit)
+      end
+
+    end
+
+  end
+
   describe '#skip' do
 
     context 'when a skip is specified' do
@@ -157,13 +221,12 @@ describe Mongo::Scope do
       let(:new_skip) { 10 }
 
       it 'sets the skip value' do
-        scope.skip(new_skip)
-        expect(scope.skip).to eq(new_skip)
+        new_scope = scope.skip(new_skip)
+        expect(new_scope.skip).to eq(new_skip)
       end
 
-      it 'returns self' do
-        scope_self = scope
-        expect(scope.skip(new_skip)).to eq(scope_self)
+      it 'returns a new Scope' do
+        expect(scope.skip(new_skip)).not_to eq(scope)
       end
     end
 
@@ -177,58 +240,45 @@ describe Mongo::Scope do
 
   end
 
-  describe '#max_scan' do
+  describe '#skip!' do
 
-    context 'when a max_scan is specified' do
-      let(:opts) { {:max_scan => 5} }
-      let(:new_max_scan) { 10 }
+    context 'when a skip is specified' do
+      let(:opts) { {:skip => 5} }
+      let(:new_skip) { 10 }
 
-      it 'sets the max_scan' do
-        scope.max_scan(new_max_scan)
-        expect(scope.max_scan).to eq(new_max_scan)
+      it 'sets the skip value on the same Scope' do
+        scope.skip!(new_skip)
+        expect(scope.skip).to eq(new_skip)
       end
 
-      it 'returns self' do
-        scope_self = scope
-        expect(scope.max_scan(new_max_scan)).to eq(scope_self)
-      end
-    end
-
-    context 'when a max_scan is not specified' do
-      let(:opts) { {:max_scan => 5 } }
-
-      it 'returns the max_scan' do
-        expect(scope.max_scan).to eq(opts[:max_scan])
-      end
     end
 
   end
 
   describe '#read' do
 
-    context 'when a read option is specified' do
+    context 'when a read pref is specified' do
       let(:opts) { {:read =>  :secondary} }
       let(:new_read) { :secondary_preferred }
 
       it 'sets the read preference' do
-        scope.read(new_read)
-        expect(scope.read).to eq(new_read)
+        new_scope = scope.read(new_read)
+        expect(new_scope.read).to eq(new_read)
       end
 
-      it 'returns self' do
-        scope_self = scope
-        expect(scope.read(new_read)).to eq(scope_self)
+      it 'returns a new Scope' do
+        expect(scope.read(new_read)).not_to eq(scope)
       end
     end
 
-    context 'when a read is not specified' do
+    context 'when a read pref is not specified' do
       let(:opts) { {:read => :secondary } }
 
       it 'returns the read preference' do
         expect(scope.read).to eq(opts[:read])
       end
 
-      context 'when no read is set on initializaiton' do
+      context 'when no read pref is set on initializaiton' do
         let(:opts) { {} }
         let(:collection_read) {:primary_preferred}
 
@@ -243,83 +293,17 @@ describe Mongo::Scope do
 
   end
 
-  describe '#return_key' do
+  describe '#read!' do
 
-    context 'when a return_key option is specified' do
-      let(:opts) { {:return_key => true} }
-      let(:new_return_key) { false }
+    context 'when a read pref is specified' do
+      let(:opts) { {:read =>  :secondary} }
+      let(:new_read) { :secondary_preferred }
 
-      it 'sets the return_key option' do
-        scope.return_key(new_return_key)
-        expect(scope.return_key).to eq(new_return_key)
+      it 'sets the read preference on the same Scope' do
+        scope.read!(new_read)
+        expect(scope.read).to eq(new_read)
       end
 
-      it 'returns self' do
-        scope_self = scope
-        expect(scope.return_key(new_return_key)).to eq(scope_self)
-      end
-    end
-
-    context 'when a return_key option is not specified' do
-      let(:opts) { { :return_key => true } }
-
-      it 'returns the return_key' do
-        expect(scope.return_key).to eq(opts[:return_key])
-      end
-    end
-
-  end
-
-  describe '#show_disk_loc' do
-
-    context 'when a show_disk_loc option is specified' do
-      let(:opts) { {:show_disk_loc => true} }
-      let(:new_show_disk_loc) { false }
-
-      it 'sets the show_disk_loc option' do
-        scope.show_disk_loc(new_show_disk_loc)
-        expect(scope.show_disk_loc).to eq(new_show_disk_loc)
-      end
-
-      it 'returns self' do
-        scope_self = scope
-        expect(scope.show_disk_loc(new_show_disk_loc)).to eq(scope_self)
-      end
-    end
-
-    context 'when a show_disk_loc option is not specified' do
-      let(:opts) { { :show_disk_loc => true } }
-
-      it 'returns the show_disk_loc' do
-        expect(scope.show_disk_loc).to eq(opts[:show_disk_loc])
-      end
-    end
-
-  end
-
-  describe '#snapshot' do
-
-    context 'when a snapshot option is specified' do
-      let(:opts) { {:snapshot => true} }
-      let(:new_snapshot) { false }
-
-      it 'sets the snapshot option' do
-        scope.snapshot(new_snapshot)
-        expect(scope.snapshot).to eq(new_snapshot)
-      end
-
-      it 'returns self' do
-        scope_self = scope
-        expect(scope.snapshot(new_snapshot)).to eq(scope_self)
-      end
-    end
-
-    context 'when a snapshot option is not specified' do
-      let(:opts) { { :snapshot => true } }
-
-      it 'returns the snapshot' do
-        expect(scope.snapshot).to eq(opts[:snapshot])
-      end
     end
 
   end
@@ -331,13 +315,12 @@ describe Mongo::Scope do
       let(:new_sort) { {"x" => descending }  }
 
       it 'sets the sort option' do
-        scope.sort(new_sort)
-        expect(scope.sort).to eq(new_sort)
+        new_scope = scope.sort(new_sort)
+        expect(new_scope.sort).to eq(new_sort)
       end
 
-      it 'returns self' do
-        scope_self = scope
-        expect(scope.sort(new_sort)).to eq(scope_self)
+      it 'returns a new Scope' do
+        expect(scope.sort(new_sort)).not_to eq(scope)
       end
     end
 
@@ -347,6 +330,62 @@ describe Mongo::Scope do
       it 'returns the sort' do
         expect(scope.sort).to eq(opts[:sort])
       end
+    end
+
+  end
+
+  describe '#sort!' do
+
+    context 'when a sort is specified' do
+      let(:opts) { { "x" => ascending } }
+      let(:new_sort) { {"x" => descending }  }
+
+      it 'sets the sort option on the same Scope' do
+        scope.sort!(new_sort)
+        expect(scope.sort).to eq(new_sort)
+      end
+
+    end
+
+  end
+
+  describe '#query_opts' do
+
+    context 'when query_opts are specified' do
+      let(:opts) { { :snapshot => true } }
+      let(:new_query_opts) { {:max_scan => 100 }  }
+
+      it 'sets the query opts' do
+        new_scope = scope.query_opts(new_query_opts)
+        expect(new_scope.query_opts).to eq(new_query_opts)
+      end
+
+      it 'returns a new Scope' do
+        expect(scope.query_opts(new_query_opts)).not_to eq(scope)
+      end
+    end
+
+    context 'when query_opts are not specified' do
+      let(:opts) { { :snapshot => true } }
+
+      it 'returns the query opts' do
+        expect(scope.query_opts).to eq(opts)
+      end
+    end
+
+  end
+
+  describe '#query_opts!' do
+
+    context 'when query_opts are specified' do
+      let(:opts) { { :snapshot => true } }
+      let(:new_query_opts) { {:max_scan => 100, :snapshot => false}  }
+
+      it 'sets the query options on the same Scope' do
+        scope.query_opts!(new_query_opts)
+        expect(scope.query_opts).to eq(new_query_opts)
+      end
+
     end
 
   end
@@ -373,52 +412,62 @@ describe Mongo::Scope do
 
   end
 
-  describe '#intersect' do
+  describe '#distinct' do
+    let(:client) { double("client") }
 
-    context 'when there is already a selector and opts defined' do
-      let(:selector) { {"x" => 1} }
-      let(:opts) { {:limit => 5, :comment => "emily"} }
+    it "calls distinct on collection" do
+      collection.stub(:client) { client }
+      collection.stub(:distinct) { {"values" => [1,2], "stats" => {"n" => 3} } }
+      expect(scope.distinct("name")).to eq({"values" => [1,2], "stats" => {"n" => 3} })
+    end
+  end
 
-      it 'merges the new selector with the existing one' do
-        scope.intersect({"x" => 2, "y" => 1})
-        expect(scope.selector).to eq({"x" => 2, "y" => 1})
+  describe "#==" do
+
+    context "when the scopes have the same collection, selector, and opts" do
+      let(:other) { described_class.new(collection, selector, opts) }
+
+      it "returns true" do
+        expect(scope).to eq(other)
       end
+    end
+  end
 
-      it 'doesnt alter the query opts' do
-        scope.intersect({"x" => 2, "y" => 1})
-        expect(scope.limit).to eq(5)
-        expect(scope.comment).to eq("emily")
-      end
+  describe '#hash' do
 
+    it "returns a unique value based on collection, selector, opts" do
+      collection.stub(:full_namespace) { "#{TEST_DB}.#{TEST_COLL}" }
+      other_scope = described_class.new(collection, selector, opts)
+      expect(scope.hash).to eq(other_scope.hash)
     end
 
-    context 'when there is no selector defined' do
-      let(:opts) { {:limit => 5, :comment => "emily"} }
+  end
 
-      it 'merges the new selector with the existing one' do
-        scope.intersect({"x" => 2, "y" => 1})
-        expect(scope.selector).to eq({"x" => 2, "y" => 1})
-      end
+  describe 'copy' do
+    let(:scope_clone) { scope.clone }
 
-      it 'doesnt alter the query opts' do
-        scope.intersect({"x" => 2, "y" => 1})
-        expect(scope.limit).to eq(5)
-        expect(scope.comment).to eq("emily")
-      end
+    it 'dups the options' do
+      expect(scope.opts.object_id).not_to eq(scope_clone.opts.object_id)
+    end
 
+    it 'dups the selector' do
+      expect(scope.selector.object_id).not_to eq(scope_clone.selector.object_id)
+    end
+
+    it 'references the same collection' do
+      expect(scope.collection.object_id).to eq(scope_clone.collection.object_id)
     end
 
   end
 
   describe 'chaining' do
 
-    context 'when an intersect is chained with a helper method' do
+    context 'when helper methods are chained' do
 
       it 'alters the scope' do
-        scope.intersect(selector).limit(5).skip(10)
-        expect(scope.selector).to eq(selector)
-        expect(scope.limit).to eq(5)
-        expect(scope.skip).to eq(10)
+        new_scope = scope.limit(5).skip(10)
+        expect(new_scope.limit).to eq(5)
+        expect(new_scope.skip).to eq(10)
       end
 
     end
