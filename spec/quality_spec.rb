@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'Code Quality', :quality => true do
+describe 'Code Quality', :quality do
 
   unless RUBY_VERSION < '1.9'
     it 'has no style-guide violations' do
