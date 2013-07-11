@@ -8,7 +8,7 @@ describe 'Code Quality', :quality do
       result = silence { Rubocop::CLI.new.run }
       puts '[FAIL] Style issues found! To view a report, ' +
            'please run "rubocop" from the project root.' unless result == 0
-      expect(result).to equal(0)
+      expect(result).to eq(0)
     end
 
     it 'has required minimum test coverage' do
