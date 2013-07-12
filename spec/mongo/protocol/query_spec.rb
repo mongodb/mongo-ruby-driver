@@ -152,9 +152,6 @@ describe Mongo::Protocol::Query do
 
       context 'when skip is provided' do
         let(:opts) { { :skip => 5 } }
-        let(:query) do
-          described_class.new(db, coll, selector, opts)
-        end
 
         it 'serializes the skip' do
           expect(field).to be_int32(opts[:skip])
