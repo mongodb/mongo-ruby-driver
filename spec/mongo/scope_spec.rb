@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe Mongo::Scope do
 
-  let(:db) { double("db") }
-  let(:collection) { double("collection") }
+  let(:db) { double('db') }
+  let(:collection) { double('collection') }
 
   let(:selector) { {} }
   let(:opts) { {} }
@@ -19,7 +19,7 @@ describe Mongo::Scope do
   end
 
   describe '#initialize' do
-    let(:opts) { {:limit => 5} }
+    let(:opts) { { :limit => 5 } }
 
     it 'sets the collection' do
       expect(scope.collection).to eq(collection)
@@ -53,8 +53,8 @@ describe Mongo::Scope do
   describe '#comment' do
 
     context 'when a comment is specified' do
-      let(:opts) { { :comment => "test1" } }
-      let(:new_comment) { "test2" }
+      let(:opts) { { :comment => 'test1' } }
+      let(:new_comment) { 'test2' }
 
       it 'sets the comment' do
         new_scope = scope.comment(new_comment)
@@ -67,7 +67,7 @@ describe Mongo::Scope do
     end
 
     context 'when a comment is not specified' do
-      let(:opts) { { :comment => "test1" } }
+      let(:opts) { { :comment => 'test1' } }
 
       it 'returns the comment' do
         expect(scope.comment).to eq(opts[:comment])
@@ -79,8 +79,8 @@ describe Mongo::Scope do
   describe '#comment!' do
 
     context 'when a comment is specified' do
-      let(:opts) { { :comment => "test1" } }
-      let(:new_comment) { "test2" }
+      let(:opts) { { :comment => 'test1' } }
+      let(:new_comment) { 'test2' }
 
       it 'sets the comment on the same Scope' do
         scope.comment!(new_comment)
@@ -94,8 +94,8 @@ describe Mongo::Scope do
   describe '#fields' do
 
     context 'when fields are specified' do
-      let(:opts) { {:fields => {"x" => 1 } } }
-      let(:new_fields) { { "y" => 1 } }
+      let(:opts) { { :fields => { 'x' => 1 } } }
+      let(:new_fields) { { 'y' => 1 } }
 
       it 'sets the fields' do
         new_scope = scope.fields(new_fields)
@@ -108,7 +108,7 @@ describe Mongo::Scope do
     end
 
     context 'when fields are not specified' do
-      let(:opts) { {:fields => {"x" => 1 } } }
+      let(:opts) { { :fields => { 'x' => 1 } } }
 
       it 'returns the fields' do
         expect(scope.fields).to eq(opts[:fields])
@@ -120,8 +120,8 @@ describe Mongo::Scope do
   describe '#fields!' do
 
     context 'when fields are specified' do
-      let(:opts) { {:fields => {"x" => 1 } } }
-      let(:new_fields) { { "y" => 1 } }
+      let(:opts) { { :fields => { 'x' => 1 } } }
+      let(:new_fields) { { 'y' => 1 } }
 
       it 'sets the fields on the same Scope' do
         scope.fields!(new_fields)
@@ -135,8 +135,8 @@ describe Mongo::Scope do
   describe '#hint' do
 
     context 'when a hint is specified' do
-      let(:opts) { {:hint => {"x" => ascending} } }
-      let(:new_hint) { {"x" => descending} }
+      let(:opts) { { :hint => { 'x' => ascending } } }
+      let(:new_hint) { { 'x' => descending } }
 
       it 'sets the hint' do
         new_scope = scope.hint(new_hint)
@@ -149,7 +149,7 @@ describe Mongo::Scope do
     end
 
     context 'when a hint is not specified' do
-      let(:opts) { {:hint => "x" } }
+      let(:opts) { { :hint => 'x' } }
 
       it 'returns the hint' do
         expect(scope.hint).to eq(opts[:hint])
@@ -161,8 +161,8 @@ describe Mongo::Scope do
   describe '#hint!' do
 
     context 'when a hint is specified' do
-      let(:opts) { {:hint => {"x" => ascending} } }
-      let(:new_hint) { {"x" => descending} }
+      let(:opts) { { :hint => { 'x' => ascending } } }
+      let(:new_hint) { { 'x' => descending } }
 
       it 'sets the hint on the same Scope' do
         scope.hint!(new_hint)
@@ -176,7 +176,7 @@ describe Mongo::Scope do
   describe '#limit' do
 
     context 'when a limit is specified' do
-      let(:opts) { {:limit => 5} }
+      let(:opts) { { :limit => 5 } }
       let(:new_limit) { 10 }
 
       it 'sets the limit' do
@@ -190,7 +190,7 @@ describe Mongo::Scope do
     end
 
     context 'when a limit is not specified' do
-      let(:opts) { {:limit => 5 } }
+      let(:opts) { { :limit => 5 } }
 
       it 'returns the limit' do
         expect(scope.limit).to eq(opts[:limit])
@@ -202,7 +202,7 @@ describe Mongo::Scope do
   describe '#limit!' do
 
     context 'when a limit is specified' do
-      let(:opts) { {:limit => 5} }
+      let(:opts) { { :limit => 5 } }
       let(:new_limit) { 10 }
 
       it 'sets the limit on the same Scope' do
@@ -217,7 +217,7 @@ describe Mongo::Scope do
   describe '#skip' do
 
     context 'when a skip is specified' do
-      let(:opts) { {:skip => 5} }
+      let(:opts) { { :skip => 5 } }
       let(:new_skip) { 10 }
 
       it 'sets the skip value' do
@@ -231,7 +231,7 @@ describe Mongo::Scope do
     end
 
     context 'when a skip is not specified' do
-      let(:opts) { {:skip => 5 } }
+      let(:opts) { { :skip => 5 } }
 
       it 'returns the skip value' do
         expect(scope.skip).to eq(opts[:skip])
@@ -243,7 +243,7 @@ describe Mongo::Scope do
   describe '#skip!' do
 
     context 'when a skip is specified' do
-      let(:opts) { {:skip => 5} }
+      let(:opts) { { :skip => 5 } }
       let(:new_skip) { 10 }
 
       it 'sets the skip value on the same Scope' do
@@ -258,7 +258,7 @@ describe Mongo::Scope do
   describe '#read' do
 
     context 'when a read pref is specified' do
-      let(:opts) { {:read =>  :secondary} }
+      let(:opts) { { :read =>  :secondary } }
       let(:new_read) { :secondary_preferred }
 
       it 'sets the read preference' do
@@ -272,7 +272,7 @@ describe Mongo::Scope do
     end
 
     context 'when a read pref is not specified' do
-      let(:opts) { {:read => :secondary } }
+      let(:opts) { { :read => :secondary } }
 
       it 'returns the read preference' do
         expect(scope.read).to eq(opts[:read])
@@ -280,7 +280,7 @@ describe Mongo::Scope do
 
       context 'when no read pref is set on initializaiton' do
         let(:opts) { {} }
-        let(:collection_read) {:primary_preferred}
+        let(:collection_read) { :primary_preferred }
 
         it 'returns the collection read preference' do
           collection.stub(:read) { collection_read }
@@ -296,7 +296,7 @@ describe Mongo::Scope do
   describe '#read!' do
 
     context 'when a read pref is specified' do
-      let(:opts) { {:read =>  :secondary} }
+      let(:opts) { { :read =>  :secondary } }
       let(:new_read) { :secondary_preferred }
 
       it 'sets the read preference on the same Scope' do
@@ -311,8 +311,8 @@ describe Mongo::Scope do
   describe '#sort' do
 
     context 'when a sort is specified' do
-      let(:opts) { { "x" => ascending } }
-      let(:new_sort) { {"x" => descending }  }
+      let(:opts) { { 'x' => ascending } }
+      let(:new_sort) { { 'x' => descending }  }
 
       it 'sets the sort option' do
         new_scope = scope.sort(new_sort)
@@ -325,7 +325,7 @@ describe Mongo::Scope do
     end
 
     context 'when a sort is not specified' do
-      let(:opts) { { "x" => ascending } }
+      let(:opts) { { 'x' => ascending } }
 
       it 'returns the sort' do
         expect(scope.sort).to eq(opts[:sort])
@@ -337,8 +337,8 @@ describe Mongo::Scope do
   describe '#sort!' do
 
     context 'when a sort is specified' do
-      let(:opts) { { "x" => ascending } }
-      let(:new_sort) { {"x" => descending }  }
+      let(:opts) { { 'x' => ascending } }
+      let(:new_sort) { { 'x' => descending }  }
 
       it 'sets the sort option on the same Scope' do
         scope.sort!(new_sort)
@@ -353,7 +353,7 @@ describe Mongo::Scope do
 
     context 'when query_opts are specified' do
       let(:opts) { { :snapshot => true } }
-      let(:new_query_opts) { {:max_scan => 100 }  }
+      let(:new_query_opts) { { :max_scan => 100 }  }
 
       it 'sets the query opts' do
         new_scope = scope.query_opts(new_query_opts)
@@ -379,7 +379,7 @@ describe Mongo::Scope do
 
     context 'when query_opts are specified' do
       let(:opts) { { :snapshot => true } }
-      let(:new_query_opts) { {:max_scan => 100, :snapshot => false}  }
+      let(:new_query_opts) { { :max_scan => 100, :snapshot => false } }
 
       it 'sets the query options on the same Scope' do
         scope.query_opts!(new_query_opts)
@@ -391,9 +391,9 @@ describe Mongo::Scope do
   end
 
   describe '#count' do
-    let(:client) { double("client") }
+    let(:client) { double('client') }
 
-    it "calls count on collection" do
+    it 'calls count on collection' do
       collection.stub(:client) { client }
       collection.stub(:count) { 10 }
       expect(scope.count).to eq(10)
@@ -402,32 +402,33 @@ describe Mongo::Scope do
   end
 
   describe '#explain' do
-    let(:client) { double("client") }
+    let(:client) { double('client') }
 
-    it "calls explain on collection" do
+    it 'calls explain on collection' do
       collection.stub(:client) { client }
-      collection.stub(:explain) { {"n" => 10, "nscanned" => 11} }
-      expect(scope.explain).to eq({"n" => 10, "nscanned" => 11})
+      collection.stub(:explain) { { 'n' => 10, 'nscanned' => 11 } }
+      expect(scope.explain).to eq({ 'n' => 10, 'nscanned' => 11 })
     end
 
   end
 
   describe '#distinct' do
-    let(:client) { double("client") }
+    let(:client) { double('client') }
+    let(:distinct_status) { { 'values' => [1], 'stats' => { 'n' => 3 } } }
 
-    it "calls distinct on collection" do
+    it 'calls distinct on collection' do
       collection.stub(:client) { client }
-      collection.stub(:distinct) { {"values" => [1,2], "stats" => {"n" => 3} } }
-      expect(scope.distinct("name")).to eq({"values" => [1,2], "stats" => {"n" => 3} })
+      collection.stub(:distinct) { distinct_status }
+      expect(scope.distinct('name')).to eq(distinct_status)
     end
   end
 
-  describe "#==" do
+  describe '#==' do
 
-    context "when the scopes have the same collection, selector, and opts" do
+    context 'when the scopes have the same collection, selector, and opts' do
       let(:other) { described_class.new(collection, selector, opts) }
 
-      it "returns true" do
+      it 'returns true' do
         expect(scope).to eq(other)
       end
     end
@@ -435,7 +436,7 @@ describe Mongo::Scope do
 
   describe '#hash' do
 
-    it "returns a unique value based on collection, selector, opts" do
+    it 'returns a unique value based on collection, selector, opts' do
       collection.stub(:full_namespace) { "#{TEST_DB}.#{TEST_COLL}" }
       other_scope = described_class.new(collection, selector, opts)
       expect(scope.hash).to eq(other_scope.hash)
@@ -473,8 +474,8 @@ describe Mongo::Scope do
     end
 
     context 'when a scope is chained with a terminator' do
-      let(:scope ) { described_class.new(collection, selector, opts) }
-      let(:client) { double("client") }
+      let(:scope) { described_class.new(collection, selector, opts) }
+      let(:client) { double('client') }
 
       it 'terminates the chaining' do
         collection.stub(:client) { client }

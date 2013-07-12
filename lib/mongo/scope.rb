@@ -51,16 +51,22 @@ module Mongo
     # @param options [Hash] The additional query options.
     #
     # @option options :comment [String] Associate a comment with the query.
-    # @option options :batch_size [Integer] The number of docs to return in responses.
-    # @option options :fields [Hash] The fields to include or exclude in returned docs.
+    # @option options :batch_size [Integer] The number of docs to return in
+    #   each response from MongoDB.
+    # @option options :fields [Hash] The fields to include or exclude in
+    #   returned docs.
     # @option options :hint [Hash] Override default index selection.
     # @option options :limit [Integer] Max number of docs to return.
     # @option options :max_scan [Integer] The max number of docs to scan.
     # @option options :read [Symbol] The read preference to use for this query.
-    # @option options :show_disk_loc [Boolean] Return disk location info with each doc.
+    #   If none is provided, the collection's default read preference is used.
+    # @option options :show_disk_loc [Boolean] Return disk location info as a
+    #   field in each doc.
     # @option options :skip [Integer] The number of documents to skip.
-    # @option options :snapshot [Boolean] Prevents returning a doc more than once.
-    # @option options :sort [Hash] The attributes/directions used to sort the results.
+    # @option options :snapshot [Boolean] Prevents returning a doc more than
+    #   once.
+    # @option options :sort [Hash] The attributes/directions used to sort the
+    #   results.
     #
     def initialize(collection, selector = {}, opts = {})
       @collection = collection
@@ -91,7 +97,7 @@ module Mongo
     #
     def explain
       explain_limit = limit || 0
-      opts = @opts.merge({ :limit => -explain_limit.abs, explain: true })
+      opts = @opts.merge({ :limit => -explain_limit.abs, :explain => true })
       @collection.explain(Scope.new(@collection, @selector, opts))
     end
 
@@ -114,9 +120,9 @@ module Mongo
     #
     # @return [String, Scope] either the comment or a new Scope.
     #
-    def comment(comment=nil)
+    def comment(comment = nil)
       return @opts[:comment] if comment.nil?
-      Scope.new(collection, selector, @opts.merge(comment: comment))
+      Scope.new(collection, selector, @opts.merge(:comment => comment))
     end
 
     # Modify this Scope to associate a comment with the query.
@@ -125,32 +131,32 @@ module Mongo
     #
     # @return [Scope] self.
     #
-    def comment!(comment=nil)
-      @opts.merge!(comment: comment) unless comment.nil?
+    def comment!(comment = nil)
+      @opts.merge!(:comment => comment) unless comment.nil?
       self
     end
 
-    # The number of documents returned in each batch of results from MongoDB.
+    # The number of documents returned in each batch of results.
     # Specifying 1 or a negative number is analogous to setting a limit.
     #
-    # @param batch_size [Integer] The size of each batch of results from MongoDB.
+    # @param batch_size [Integer] The size of each batch of results.
     #
     # @return [Integer, Scope] either the batch_size value or a new Scope.
     #
-    def batch_size(batch_size=nil)
+    def batch_size(batch_size = nil)
       return @opts[:batch_size] if batch_size.nil?
-      Scope.new(collection, selector, @opts.merge(batch_size: batch_size))
+      Scope.new(collection, selector, @opts.merge(:batch_size => batch_size))
     end
 
     # Modify this Scope to define the number of documents returned in each batch
     # of results from MongoDB.
     #
-    # @param batch_size [Integer] The size of each batch of results from MongoDB.
+    # @param batch_size [Integer] The size of each batch of results.
     #
     # @return [Scope] self.
     #
-    def batch_size!(batch_size=nil)
-      @opts.merge!(batch_size: batch_size) unless batch_size.nil?
+    def batch_size!(batch_size = nil)
+      @opts.merge!(:batch_size => batch_size) unless batch_size.nil?
       self
     end
 
@@ -163,9 +169,9 @@ module Mongo
     #
     # @return [Scope] either the fields or a new Scope.
     #
-    def fields(fields=nil)
+    def fields(fields = nil)
       return @opts[:fields] if fields.nil?
-      Scope.new(collection, selector, @opts.merge(fields: fields))
+      Scope.new(collection, selector, @opts.merge(:fields => fields))
     end
 
     # Modify this Scope to define the fields to include or exclude from each doc
@@ -175,8 +181,8 @@ module Mongo
     #
     # @return [Scope] self.
     #
-    def fields!(fields=nil)
-      @opts.merge!(fields: fields) unless fields.nil?
+    def fields!(fields = nil)
+      @opts.merge!(:fields => fields) unless fields.nil?
       self
     end
 
@@ -186,9 +192,9 @@ module Mongo
     #
     # @return [Hash, Scope] either the hint or a new Scope.
     #
-    def hint(hint=nil)
+    def hint(hint = nil)
       return @opts[:hint] if hint.nil?
-      Scope.new(collection, selector, @opts.merge(hint: hint))
+      Scope.new(collection, selector, @opts.merge(:hint => hint))
     end
 
     # Modify this Scope to define the index that MongoDB will be forced
@@ -198,8 +204,8 @@ module Mongo
     #
     # @return [Scope] self.
     #
-    def hint!(hint=nil)
-      @opts.merge!(hint: hint) unless hint.nil?
+    def hint!(hint = nil)
+      @opts.merge!(:hint => hint) unless hint.nil?
       self
     end
 
@@ -209,9 +215,9 @@ module Mongo
     #
     # @return [Integer, Scope] either the limit or a new Scope.
     #
-    def limit(limit=nil)
+    def limit(limit = nil)
       return @opts[:limit] if limit.nil?
-      Scope.new(collection, selector, @opts.merge(limit: limit))
+      Scope.new(collection, selector, @opts.merge(:limit => limit))
     end
 
     # Modify this Scope to define the max number of docs to return from
@@ -221,8 +227,8 @@ module Mongo
     #
     # @return [Scope] self.
     #
-    def limit!(limit=nil)
-      @opts.merge!(limit: limit) unless limit.nil?
+    def limit!(limit = nil)
+      @opts.merge!(:limit => limit) unless limit.nil?
       self
     end
 
@@ -234,9 +240,9 @@ module Mongo
     #
     # @return [Symbol, Scope] either the read preference or a new Scope.
     #
-    def read(read=nil)
+    def read(read = nil)
       return default_read if read.nil?
-      Scope.new(collection, selector, @opts.merge(read: read))
+      Scope.new(collection, selector, @opts.merge(:read => read))
     end
 
     # Modify this Scope to define the read preference to use for this query.
@@ -245,8 +251,8 @@ module Mongo
     #
     # @return [Scope] self.
     #
-    def read!(read=nil)
-      @opts.merge!(read: read) unless read.nil?
+    def read!(read = nil)
+      @opts.merge!(:read => read) unless read.nil?
       self
     end
 
@@ -256,9 +262,9 @@ module Mongo
     #
     # @return [Integer, Scope] either the skip value or a new Scope.
     #
-    def skip(skip=nil)
+    def skip(skip = nil)
       return @opts[:skip] if skip.nil?
-      Scope.new(collection, selector, @opts.merge(skip: skip))
+      Scope.new(collection, selector, @opts.merge(:skip => skip))
     end
 
     # Modify this Scope to define the number of docs to skip before returning
@@ -268,8 +274,8 @@ module Mongo
     #
     # @return [Scope] self.
     #
-    def skip!(skip=nil)
-      @opts.merge!(skip: skip) unless skip.nil?
+    def skip!(skip = nil)
+      @opts.merge!(:skip => skip) unless skip.nil?
       self
     end
 
@@ -279,9 +285,9 @@ module Mongo
     #
     # @return [Hash, Scope] either the sort setting or a new Scope.
     #
-    def sort(sort=nil)
+    def sort(sort = nil)
       return @opts[:sort] if sort.nil?
-      Scope.new(collection, selector, @opts.merge(sort: sort))
+      Scope.new(collection, selector, @opts.merge(:sort => sort))
     end
 
     # Modify this Scope to define the attributes by which the result set
@@ -291,8 +297,8 @@ module Mongo
     #
     # @return [Scope] self.
     #
-    def sort!(sort=nil)
-      @opts.merge!(sort: sort) unless sort.nil?
+    def sort!(sort = nil)
+      @opts.merge!(:sort => sort) unless sort.nil?
       self
     end
 
@@ -300,18 +306,15 @@ module Mongo
     #
     # @param q_opts [Hash] Query options.
     #
-    # @option q_opts :snapshot [Boolean] Prevents returning a doc more than once.
+    # @option q_opts :snapshot [Boolean] Prevents returning docs more than once.
     # @option q_opts :max_scan [Integer] The max number of docs to scan.
-    # @option q_opts :show_disk_loc [Boolean] Return disk location info with each doc.
+    # @option q_opts :show_disk_loc [Boolean] Return disk location info as a
+    #   field in each doc.
     #
     # @return [Hash, Scope] either the q_opts or a new Scope
     #
-    def query_opts(q_opts=nil)
-      if q_opts.nil?
-        return @opts.select do |k, v|
-          [:snapshot, :max_scan, :show_disk_loc].include?(k)
-        end
-      end
+    def query_opts(q_opts = nil)
+      return query_opts_hash if q_opts.nil?
       opts = @opts.dup
       [:snapshot, :max_scan, :show_disk_loc].each do |k|
         q_opts[k].nil? ? opts.delete(k) : opts.merge!(k => q_opts[k])
@@ -323,13 +326,14 @@ module Mongo
     #
     # @param q_opts [Hash] Query options.
     #
-    # @option q_opts :snapshot [Boolean] Prevents returning a doc more than once.
+    # @option q_opts :snapshot [Boolean] Prevents returning docs more than once.
     # @option q_opts :max_scan [Integer] The max number of docs to scan.
-    # @option q_opts :show_disk_loc [Boolean] Return disk location info with each doc.
+    # @option q_opts :show_disk_loc [Boolean] Return disk location info as a
+    #   field in each doc.
     #
     # @return [Scope] self
     #
-    def query_opts!(q_opts=nil)
+    def query_opts!(q_opts = nil)
       return self if q_opts.nil?
       [:snapshot, :max_scan, :show_disk_loc].each do |k|
         q_opts[k].nil? ? @opts.delete(k) : opts.merge!(k => q_opts[k])
@@ -339,14 +343,15 @@ module Mongo
 
     # Compare two Scope objects.
     #
-    # @return [Boolean] equal if collection, selector, and opts of two Scopes match.
+    # @return [Boolean] equal if collection, selector, and opts of two
+    #   Scopes match.
     #
     def ==(other)
       @collection == other.collection &&
         @selector == other.selector &&
         @opts == other.opts
     end
-    alias :eql? :==
+    alias_method :eql?, :==
 
     def hash
       [@collection.full_namespace, @opts.hash, @selector.hash].hash
@@ -364,8 +369,21 @@ module Mongo
     #
     # @return [Symbol] this operation's read preference.
     #
-    def default_read(read=nil)
+    def default_read(read = nil)
       @opts[:read] || @collection.read
+    end
+
+    # Extract query opts from @opts and return them in a separate hash.
+    #
+    # @return [Hash] The query options in their own hash.
+    #
+    def query_opts_hash
+      opts = @opts[:snapshot].nil? ? {} : { :snapshot => @opts[:snapshot] }
+      opts[:max_scan] = @opts[:max_scan] unless @opts[:max_scan].nil?
+      unless @opts[:show_disk_loc].nil?
+        opts[:show_disk_loc] = @opts[:show_disk_loc]
+      end
+      opts
     end
 
   end
