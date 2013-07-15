@@ -15,6 +15,7 @@ describe Mongo::Scope do
     db.stub(:name) { TEST_DB }
     collection.stub(:name) { TEST_COLL }
     collection.stub(:db) { db }
+    collection.stub(:full_namespace) { "#{TEST_DB}.#{TEST_COLL}" }
     described_class.new(collection, selector, opts)
   end
 
@@ -22,7 +23,7 @@ describe Mongo::Scope do
     let(:opts) { { :limit => 5 } }
 
     it 'sets the collection' do
-      expect(scope.collection).to eq(collection)
+      expect(scope.collection).to be(collection)
     end
 
     it 'sets the selector' do
@@ -30,7 +31,7 @@ describe Mongo::Scope do
     end
 
     it 'dups the selector' do
-      expect(scope.selector.object_id).not_to eq(selector.object_id)
+      expect(scope.selector).not_to be(selector)
     end
 
     it 'sets the options' do
@@ -38,22 +39,39 @@ describe Mongo::Scope do
     end
 
     it 'dups the options' do
-      expect(scope.opts.object_id).not_to eq(opts.object_id)
+      expect(scope.opts).not_to be(opts)
     end
 
   end
 
   describe '#inspect' do
-    it 'returns a string' do
-      expect(scope.inspect).to be_a(String)
-    end
+    context 'when there is a namespace, selector, and opts' do
+      let(:opts) { { :limit => 5 } }
+      let(:selector) { { 'name' => 'Emily' } }
 
+      it 'returns a string' do
+        expect(scope.inspect).to be_a(String)
+      end
+
+      it 'returns a string containing the collection namespace' do
+        expect(scope.inspect).to match(/.*#{collection.full_namespace}.*/)
+      end
+
+      it 'returns a string containing the selector' do
+        expect(scope.inspect).to match(/.*#{selector.inspect}.*/)
+      end
+
+      it 'returns a string containing the opts' do
+        expect(scope.inspect).to match(/.*#{opts.inspect}.*/)
+      end
+
+    end
   end
 
   describe '#comment' do
+    let(:opts) { { :comment => 'test1' } }
 
     context 'when a comment is specified' do
-      let(:opts) { { :comment => 'test1' } }
       let(:new_comment) { 'test2' }
 
       it 'sets the comment' do
@@ -62,12 +80,11 @@ describe Mongo::Scope do
       end
 
       it 'returns a new Scope' do
-        expect(scope.comment(new_comment)).not_to eq(scope)
+        expect(scope.comment(new_comment)).not_to be(scope)
       end
     end
 
     context 'when a comment is not specified' do
-      let(:opts) { { :comment => 'test1' } }
 
       it 'returns the comment' do
         expect(scope.comment).to eq(opts[:comment])
@@ -103,7 +120,7 @@ describe Mongo::Scope do
       end
 
       it 'returns a new Scope' do
-        expect(scope.fields(new_fields)).not_to eq(scope)
+        expect(scope.fields(new_fields)).not_to be(scope)
       end
     end
 
@@ -144,7 +161,7 @@ describe Mongo::Scope do
       end
 
       it 'returns a new Scope' do
-        expect(scope.hint(new_hint)).not_to eq(scope)
+        expect(scope.hint(new_hint)).not_to be(scope)
       end
     end
 
@@ -185,7 +202,7 @@ describe Mongo::Scope do
       end
 
       it 'returns a new Scope' do
-        expect(scope.limit(new_limit)).not_to eq(scope)
+        expect(scope.limit(new_limit)).not_to be(scope)
       end
     end
 
@@ -226,7 +243,7 @@ describe Mongo::Scope do
       end
 
       it 'returns a new Scope' do
-        expect(scope.skip(new_skip)).not_to eq(scope)
+        expect(scope.skip(new_skip)).not_to be(scope)
       end
     end
 
@@ -267,7 +284,7 @@ describe Mongo::Scope do
       end
 
       it 'returns a new Scope' do
-        expect(scope.read(new_read)).not_to eq(scope)
+        expect(scope.read(new_read)).not_to be(scope)
       end
     end
 
@@ -320,7 +337,7 @@ describe Mongo::Scope do
       end
 
       it 'returns a new Scope' do
-        expect(scope.sort(new_sort)).not_to eq(scope)
+        expect(scope.sort(new_sort)).not_to be(scope)
       end
     end
 
@@ -361,7 +378,7 @@ describe Mongo::Scope do
       end
 
       it 'returns a new Scope' do
-        expect(scope.query_opts(new_query_opts)).not_to eq(scope)
+        expect(scope.query_opts(new_query_opts)).not_to be(scope)
       end
     end
 
@@ -414,12 +431,12 @@ describe Mongo::Scope do
 
   describe '#distinct' do
     let(:client) { double('client') }
-    let(:distinct_status) { { 'values' => [1], 'stats' => { 'n' => 3 } } }
+    let(:distinct_stats) { { 'values' => [1], 'stats' => { 'n' => 3 } } }
 
     it 'calls distinct on collection' do
       collection.stub(:client) { client }
-      collection.stub(:distinct) { distinct_status }
-      expect(scope.distinct('name')).to eq(distinct_status)
+      collection.stub(:distinct) { distinct_stats }
+      expect(scope.distinct('name')).to eq(distinct_stats)
     end
   end
 
@@ -432,14 +449,69 @@ describe Mongo::Scope do
         expect(scope).to eq(other)
       end
     end
+
+    context 'when two scopes have a different collection' do
+      let(:other_collection) { double('collection') }
+      let(:other) { described_class.new(other_collection, selector, opts) }
+
+      it 'returns false' do
+        expect(scope).not_to eq(other)
+      end
+    end
+
+    context 'when two scopes have a different selector' do
+      let(:other_selector) { { 'name' => 'Emily' } }
+      let(:other) { described_class.new(collection, other_selector, opts) }
+
+      it 'returns false' do
+        expect(scope).not_to eq(other)
+      end
+    end
+
+    context 'when two scopes have different opts' do
+      let(:other_opts) { { 'limit' => 20 } }
+      let(:other) { described_class.new(collection, selector, other_opts) }
+
+      it 'returns false' do
+        expect(scope).not_to eq(other)
+      end
+    end
+
   end
 
   describe '#hash' do
+    let(:other) { described_class.new(collection, selector, opts) }
 
     it 'returns a unique value based on collection, selector, opts' do
-      collection.stub(:full_namespace) { "#{TEST_DB}.#{TEST_COLL}" }
-      other_scope = described_class.new(collection, selector, opts)
-      expect(scope.hash).to eq(other_scope.hash)
+      expect(scope.hash).to eq(other.hash)
+    end
+
+    context 'when two scopes only have different collections' do
+      let(:other_collection) { double('collection') }
+      let(:other) { described_class.new(other_collection, selector, opts) }
+
+      it 'returns different hash values' do
+        other_collection.stub(:full_namespace) { "#{TEST_DB}.OTHER_COLL" }
+        expect(scope.hash).not_to eq(other.hash)
+      end
+    end
+
+    context 'when two scopes only have different selectors' do
+      let(:other_selector) { { 'name' => 'Emily' } }
+      let(:other) { described_class.new(collection, other_selector, opts) }
+
+      it 'returns different hash values' do
+        expect(scope.hash).not_to eq(other.hash)
+      end
+    end
+
+    context 'when two scopes only have different opts' do
+      let(:other_opts) { { 'limit' => 20 } }
+      let(:other) { described_class.new(collection, selector, other_opts) }
+
+      it 'returns different hash values' do
+        expect(scope.hash).not_to eq(other.hash)
+      end
     end
 
   end
@@ -448,15 +520,15 @@ describe Mongo::Scope do
     let(:scope_clone) { scope.clone }
 
     it 'dups the options' do
-      expect(scope.opts.object_id).not_to eq(scope_clone.opts.object_id)
+      expect(scope.opts).not_to be(scope_clone.opts)
     end
 
     it 'dups the selector' do
-      expect(scope.selector.object_id).not_to eq(scope_clone.selector.object_id)
+      expect(scope.selector).not_to be(scope_clone.selector)
     end
 
     it 'references the same collection' do
-      expect(scope.collection.object_id).to eq(scope_clone.collection.object_id)
+      expect(scope.collection).to be(scope_clone.collection)
     end
 
   end
