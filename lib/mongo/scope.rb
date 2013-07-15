@@ -124,8 +124,7 @@ module Mongo
     # @return [String, Scope] Either the comment or a new +Scope+.
     #
     def comment(comment = nil)
-      return @opts[:comment] if comment.nil?
-      Scope.new(collection, selector, @opts.merge(:comment => comment))
+      set_option(:comment, comment)
     end
 
     # Modify this +Scope+ to associate a comment with the query.
@@ -135,8 +134,7 @@ module Mongo
     # @return [Scope] self.
     #
     def comment!(comment = nil)
-      @opts.merge!(:comment => comment) unless comment.nil?
-      self
+      mutate(:comment, comment)
     end
 
     # The number of documents returned in each batch of results from MongoDB.
@@ -147,8 +145,7 @@ module Mongo
     # @return [Integer, Scope] Either the batch_size value or a new +Scope+.
     #
     def batch_size(batch_size = nil)
-      return @opts[:batch_size] if batch_size.nil?
-      Scope.new(collection, selector, @opts.merge(:batch_size => batch_size))
+      set_option(:batch_size, batch_size)
     end
 
     # Modify this +Scope+ to define the number of documents returned in each
@@ -159,8 +156,7 @@ module Mongo
     # @return [Scope] self.
     #
     def batch_size!(batch_size = nil)
-      @opts.merge!(:batch_size => batch_size) unless batch_size.nil?
-      self
+      mutate(:batch_size, batch_size)
     end
 
     # The fields to include or exclude from each doc in the result set.
@@ -173,8 +169,7 @@ module Mongo
     # @return [Scope] Either the fields or a new +Scope+.
     #
     def fields(fields = nil)
-      return @opts[:fields] if fields.nil?
-      Scope.new(collection, selector, @opts.merge(:fields => fields))
+      set_option(:fields, fields)
     end
 
     # Modify this +Scope+ to define the fields to include or exclude from each
@@ -185,8 +180,7 @@ module Mongo
     # @return [Scope] self.
     #
     def fields!(fields = nil)
-      @opts.merge!(:fields => fields) unless fields.nil?
-      self
+      mutate(:fields, fields)
     end
 
     # The index that MongoDB will be forced to use for the query.
@@ -196,8 +190,7 @@ module Mongo
     # @return [Hash, Scope] Either the hint or a new +Scope+.
     #
     def hint(hint = nil)
-      return @opts[:hint] if hint.nil?
-      Scope.new(collection, selector, @opts.merge(:hint => hint))
+      set_option(:hint, hint)
     end
 
     # Modify this +Scope+ to define the index that MongoDB will be forced
@@ -208,8 +201,7 @@ module Mongo
     # @return [Scope] self.
     #
     def hint!(hint = nil)
-      @opts.merge!(:hint => hint) unless hint.nil?
-      self
+      mutate(:hint, hint)
     end
 
     # The max number of docs to return from the query.
@@ -219,8 +211,7 @@ module Mongo
     # @return [Integer, Scope] Either the limit or a new +Scope+.
     #
     def limit(limit = nil)
-      return @opts[:limit] if limit.nil?
-      Scope.new(collection, selector, @opts.merge(:limit => limit))
+      set_option(:limit, limit)
     end
 
     # Modify this +Scope+ to define the max number of docs to return from
@@ -231,8 +222,7 @@ module Mongo
     # @return [Scope] self.
     #
     def limit!(limit = nil)
-      @opts.merge!(:limit => limit) unless limit.nil?
-      self
+      mutate(:limit, limit)
     end
 
     # The read preference to use for the query.
@@ -245,7 +235,7 @@ module Mongo
     #
     def read(read = nil)
       return default_read if read.nil?
-      Scope.new(collection, selector, @opts.merge(:read => read))
+      set_option(:read, read)
     end
 
     # Modify this +Scope+ to define the read preference to use for the query.
@@ -255,8 +245,7 @@ module Mongo
     # @return [Scope] self.
     #
     def read!(read = nil)
-      @opts.merge!(:read => read) unless read.nil?
-      self
+      mutate(:read, read)
     end
 
     # The number of docs to skip before returning results.
@@ -266,8 +255,7 @@ module Mongo
     # @return [Integer, Scope] Either the skip value or a new +Scope+.
     #
     def skip(skip = nil)
-      return @opts[:skip] if skip.nil?
-      Scope.new(collection, selector, @opts.merge(:skip => skip))
+      set_option(:skip, skip)
     end
 
     # Modify this +Scope+ to define the number of docs to skip before returning
@@ -278,8 +266,7 @@ module Mongo
     # @return [Scope] self.
     #
     def skip!(skip = nil)
-      @opts.merge!(:skip => skip) unless skip.nil?
-      self
+      mutate(:skip, skip)
     end
 
     # The key and direction pairs by which the result set will be sorted.
@@ -289,8 +276,7 @@ module Mongo
     # @return [Hash, Scope] Either the sort setting or a new +Scope+.
     #
     def sort(sort = nil)
-      return @opts[:sort] if sort.nil?
-      Scope.new(collection, selector, @opts.merge(:sort => sort))
+      set_option(:sort, sort)
     end
 
     # Modify this +Scope+ to define the attributes by which the result set
@@ -301,8 +287,7 @@ module Mongo
     # @return [Scope] self.
     #
     def sort!(sort = nil)
-      @opts.merge!(:sort => sort) unless sort.nil?
-      self
+      mutate(:sort, sort)
     end
 
     # Set options for the query.
@@ -403,6 +388,25 @@ module Mongo
         q_opts[:show_disk_loc] = @opts[:show_disk_loc]
       end
       q_opts
+    end
+
+    # Either return the option value or create a new +Scope+ with the option
+    # value set.
+    #
+    # @return [Object, Scope] Either the option value or a new +Scope+.
+    #
+    def set_option(field, value)
+      return @opts[field] if value.nil?
+      Scope.new(collection, selector, @opts.merge(field => value))
+    end
+
+    # Set the option value on this +Scope+.
+    #
+    # @return [Scope] self.
+    #
+    def mutate(field, value)
+      @opts.merge!(field => value) unless value.nil?
+      self
     end
 
   end
