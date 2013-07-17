@@ -110,16 +110,16 @@ module Mongo
       end
     end
 
-    def apply_transform(value, transform = nil)
-      if transform
-        send(transform, value)
+    def apply_transform(value, type = nil)
+      if type
+        send(type, value)
       else
         cast(value)
       end
     end
 
-    def select_target(options, type = nil)
-      type ? options[type] : options
+    def select_target(options, group = nil)
+      group ? options[group] : options
     end
 
     def merge_option(target, value, name)
@@ -131,8 +131,8 @@ module Mongo
     end
 
     def add_option(strategy, value, options)
-      target = select_target(options, strategy[:type])
-      value = apply_transform(value, strategy[:transform])
+      target = select_target(options, strategy[:group])
+      value = apply_transform(value, strategy[:type])
       merge_option(target, value, strategy[:name])
     end
 
