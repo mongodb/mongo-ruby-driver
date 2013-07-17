@@ -955,7 +955,9 @@ class TestCollection < Test::Unit::TestCase
       @@test << { :a => 2, :processed => false }
       @@test << { :a => 3, :processed => false }
 
-      @@test.find_and_modify(:query => {}, :sort => [['a', -1]], :update => {"$set" => {:processed => true}})
+      @@test.find_and_modify(:query => {},
+                             :sort => [['a', -1]],
+                             :update => {"$set" => {:processed => true}})
 
       assert @@test.find_one({:a => 3})['processed']
     end
@@ -968,6 +970,21 @@ class TestCollection < Test::Unit::TestCase
       assert_raise Mongo::OperationFailure do
         @@test.find_and_modify(:blimey => {})
       end
+    end
+
+    def test_find_and_modify_with_full_response
+      @@test << { :a => 1, :processed => false }
+      @@test << { :a => 2, :processed => false }
+      @@test << { :a => 3, :processed => false }
+
+      doc = @@test.find_and_modify(:query => {},
+                                   :sort => [['a', -1]],
+                                   :update => {"$set" => {:processed => true}},
+                                   :full_response => true,
+                                   :new => true)
+
+      assert doc['value']['processed']
+      assert ['ok', 'value', 'lastErrorObject'].all? { |key| doc.key?(key) }
     end
   end
 

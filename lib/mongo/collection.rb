@@ -616,25 +616,36 @@ module Mongo
 
     # Atomically update and return a document using MongoDB's findAndModify command. (MongoDB > 1.3.0)
     #
-    # @option opts [Hash] :query ({}) a query selector document for matching the desired document.
-    # @option opts [Hash] :update (nil) the update operation to perform on the matched document.
-    # @option opts [Array, String, OrderedHash] :sort ({}) specify a sort option for the query using any
-    #   of the sort options available for Cursor#sort. Sort order is important if the query will be matching
-    #   multiple documents since only the first matching document will be updated and returned.
-    # @option opts [Boolean] :remove (false) If true, removes the the returned document from the collection.
-    # @option opts [Boolean] :new (false) If true, returns the updated document; otherwise, returns the document
-    #   prior to update.
+    # @option opts [Hash] :query ({}) a query selector document for matching
+    #  the desired document.
+    # @option opts [Hash] :update (nil) the update operation to perform on the
+    #  matched document.
+    # @option opts [Array, String, OrderedHash] :sort ({}) specify a sort
+    #  option for the query using any
+    #  of the sort options available for Cursor#sort. Sort order is important
+    #  if the query will be matching multiple documents since only the first
+    #  matching document will be updated and returned.
+    # @option opts [Boolean] :remove (false) If true, removes the the returned
+    #  document from the collection.
+    # @option opts [Boolean] :new (false) If true, returns the updated
+    #  document; otherwise, returns the document prior to update.
+    # @option opts [Boolean] :full_response (false) If true, returns the entire
+    #  response object from the server including 'ok' and 'lastErrorObject'.
     #
     # @return [Hash] the matched document.
     #
     # @core findandmodify find_and_modify-instance_method
     def find_and_modify(opts={})
+      full_response = opts.delete(:full_response)
+
       cmd = BSON::OrderedHash.new
       cmd[:findandmodify] = @name
       cmd.merge!(opts)
-      cmd[:sort] = Mongo::Support.format_order_clause(opts[:sort]) if opts[:sort]
 
-      @db.command(cmd)['value']
+      cmd[:sort] =
+        Mongo::Support.format_order_clause(opts[:sort]) if opts[:sort]
+
+      full_response ? @db.command(cmd) : @db.command(cmd)['value']
     end
 
     # Perform an aggregation using the aggregation framework on the current collection.
