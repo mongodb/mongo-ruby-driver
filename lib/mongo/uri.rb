@@ -46,20 +46,31 @@ module Mongo
       OPTION_MAP[uri_key] = { :name => name }.merge(extra)
     end
 
-    option 'replicaSet', :replica_set, :transform => :replica_set
+    # Replica Set
+    option 'replicaSet', :replica_set, :type => :replica_set
+
+    # Timeout
     option 'connectTimeoutMS', :connect_timeout
     option 'socketTimeoutMS', :socket_timeout
-    option 'w', :w, :type => :write
-    option 'j', :j, :type => :write
-    option 'fsync', :fsync, :type => :write
-    option 'wtimeoutMS', :timeout, :type => :write
-    option 'safe', :w, :type => :write, :transform => :safe
-    option 'readPreference', :mode, :type => :read, :transform => :read_mode
-    option 'readPreferenceTags', :tags, :type => :read, :transform => :read_tags
-    option 'slaveOk', :mode, :type => :read, :transform => :slave_ok
+
+    # Write
+    option 'w', :w, :group => :write
+    option 'j', :j, :group => :write
+    option 'fsync', :fsync, :group => :write
+    option 'wtimeoutMS', :timeout, :group => :write
+    option 'safe', :safe, :group => :write
+
+    # Read
+    option 'readPreference', :mode, :group => :read, :type => :read_mode
+    option 'readPreferenceTags', :tags, :group => :read, :type => :read_tags
+    option 'slaveOk', :slave_ok, :group => :read
+
+    # Security
     option 'ssl', :ssl
-    option 'authSource', :source, :type => :auth, :transform => :auth_source
-    option 'authMechanism', :mechanism, :type => :auth, :transform => :auth_mech
+
+    # Auth
+    option 'authSource', :source, :group => :auth, :type => :auth_source
+    option 'authMechanism', :mechanism, :group => :auth, :type => :auth_mech
 
     READ_MODE_MAP = {
       'primary' => :primary,
