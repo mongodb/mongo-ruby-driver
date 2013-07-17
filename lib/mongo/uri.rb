@@ -136,10 +136,6 @@ module Mongo
       merge_option(target, value, strategy[:name])
     end
 
-    def safe(value)
-      value == 'true' ? 1 : 0
-    end
-
     def slave_ok(value)
       value == 'true' ? :secondary_preferred : :primary
     end

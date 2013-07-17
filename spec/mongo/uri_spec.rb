@@ -110,11 +110,23 @@ describe Mongo::URI do
     context 'write concern options provided' do
 
       context 'safe' do
-        let(:options) { 'safe=true' }
-        let(:concern) { { :w => 1 } }
+        let(:options) { "safe=#{safe}" }
+        let(:write) { { :safe => safe } }
 
-        it 'sets the write concern options' do
-          expect(uri.options[:write]).to eq(concern)
+        context 'true' do
+          let(:safe) { true }
+
+          it 'sets the write concern options' do
+            expect(uri.options[:write]).to eq(write)
+          end
+        end
+
+        context 'false' do
+          let(:safe) { false }
+
+          it 'sets the write concern options' do
+            expect(uri.options[:write]).to eq(write)
+          end
         end
       end
 
@@ -215,12 +227,21 @@ describe Mongo::URI do
     end
 
     context 'slaveOk' do
-      let(:options) { 'slaveOk=true' }
-      let(:mode) { 'secondaryPreferred' }
-      let(:read) { { :mode => :secondary_preferred } }
+      let(:options) { "slaveOk=#{slave_ok}" }
+      let(:read) { { :slave_ok => slave_ok } }
 
-      it 'sets the read preference to secondary preferred' do
-        expect(uri.options[:read]).to eq(read)
+      context 'true' do
+        let(:slave_ok) { true }
+        it 'sets slave ok to true' do
+          expect(uri.options[:read]).to eq(read)
+        end
+      end
+
+      context 'false' do
+        let(:slave_ok) { false }
+        it 'sets slave ok to false' do
+          expect(uri.options[:read]).to eq(read)
+        end
       end
     end
 
@@ -271,7 +292,7 @@ describe Mongo::URI do
         let(:mechanism) { 'PLAIN' }
         let(:auth) { { :mechanism => :plain } }
 
-        it 'sets the auth mechanism' do
+        it 'sets the auth mechanism to :plain' do
           expect(uri.options[:auth]).to eq(auth)
         end
       end
@@ -280,7 +301,7 @@ describe Mongo::URI do
         let(:mechanism) { 'MONGODB-CR' }
         let(:auth) { { :mechanism => :mongodb_cr } }
 
-        it 'sets the auth mechanism' do
+        it 'sets the auth mechanism to :mongodb_cr' do
           expect(uri.options[:auth]).to eq(auth)
         end
       end
@@ -289,7 +310,7 @@ describe Mongo::URI do
         let(:mechanism) { 'GSSAPI' }
         let(:auth) { { :mechanism => :gssapi } }
 
-        it 'sets the auth mechanism' do
+        it 'sets the auth mechanism to :gssapi' do
           expect(uri.options[:auth]).to eq(auth)
         end
       end
@@ -302,7 +323,7 @@ describe Mongo::URI do
         let(:source) { 'foo' }
         let(:auth) { { :source => 'foo' } }
 
-        it 'sets the auth source' do
+        it 'sets the auth source to the database' do
           expect(uri.options[:auth]).to eq(auth)
         end
       end
@@ -311,7 +332,7 @@ describe Mongo::URI do
         let(:source) { '$external' }
         let(:auth) { { :source => :external } }
 
-        it 'sets the auth source' do
+        it 'sets the auth source to :external' do
           expect(uri.options[:auth]).to eq(auth)
         end
       end
@@ -321,7 +342,7 @@ describe Mongo::URI do
       let(:timeout) { 4567 }
       let(:options) { "connectTimeoutMS=#{timeout}" }
 
-      it 'sets the write concern options' do
+      it 'sets the the connect timeout' do
         expect(uri.options[:connect_timeout]).to eq(timeout)
       end
     end
@@ -330,16 +351,28 @@ describe Mongo::URI do
       let(:timeout) { 8910 }
       let(:options) { "socketTimeoutMS=#{timeout}" }
 
-      it 'sets the write concern options' do
+      it 'sets the socket timeout' do
         expect(uri.options[:socket_timeout]).to eq(timeout)
       end
     end
 
-    context 'ssl option provided' do
-      let(:options) { 'ssl=true' }
+    context 'ssl' do
+      let(:options) { "ssl=#{ssl}" }
 
-      it 'sets the ssl option' do
-        expect(uri.options[:ssl]).to be_true
+      context 'true' do
+        let(:ssl) { true }
+
+        it 'sets the ssl option to true' do
+          expect(uri.options[:ssl]).to be_true
+        end
+      end
+
+      context 'false' do
+        let(:ssl) { false }
+
+        it 'sets the ssl option to false' do
+          expect(uri.options[:ssl]).to be_false
+        end
       end
     end
   end
