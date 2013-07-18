@@ -20,16 +20,16 @@ module Mongo
   # @since 2.0.0
   class Collection
 
-    # @!attribute client
-    #   @return [ Mongo::Client ] The database client.
+    # @!attribute database
+    #   @return [ Mongo::Database ] The database the collection resides in.
     # @!attribute name
     #   @return [ String ] The name of the collection.
-    attr_reader :client, :name
+    attr_reader :database, :name
 
     # @todo: durran: implement.
-    def initialize(client, name)
+    def initialize(database, name)
       raise InvalidName.new unless name
-      @client = client
+      @database = database
       @name = name.to_s
     end
 

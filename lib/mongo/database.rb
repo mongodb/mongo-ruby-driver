@@ -20,6 +20,11 @@ module Mongo
   # @since 2.0.0
   class Database
 
+    # The "collection" that database commands operate against.
+    #
+    # @since 2.0.0
+    COMMAND = "$cmd".freeze
+
     # @!attribute client
     #   @return [ Mongo::Client ] The database client.
     # @!attribute name
@@ -37,7 +42,11 @@ module Mongo
     #
     # @since 2.0.0
     def [](collection_name)
-      Collection.new(client, collection_name)
+      Collection.new(self, collection_name)
+    end
+
+    # @todo: durran: need read preference and node for this.
+    def command(operation)
     end
 
     # Instantiate a new database object.
