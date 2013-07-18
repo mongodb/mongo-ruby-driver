@@ -5,12 +5,14 @@ describe Mongo::Client do
   describe '#[]' do
 
     let(:client) do
-      described_class.new(['127.0.0.1:27017']).tap do |c|
-        c.use(:dbtest)
-      end
+      described_class.new(['127.0.0.1:27017'])
     end
 
     shared_examples_for 'a collection switching object' do
+
+      before do
+        client.use(:dbtest)
+      end
 
       it 'returns the new collection' do
         expect(collection.name).to eq('users')
@@ -19,7 +21,7 @@ describe Mongo::Client do
 
     context 'when provided a string' do
 
-      let!(:collection) do
+      let(:collection) do
         client['users']
       end
 
@@ -28,11 +30,20 @@ describe Mongo::Client do
 
     context 'when provided a symbol' do
 
-      let!(:collection) do
+      let(:collection) do
         client[:users]
       end
 
       it_behaves_like 'a collection switching object'
+    end
+
+    context 'when a database has not been selected' do
+
+      it 'raises an error' do
+        expect {
+          client[:users]
+        }.to raise_error(Mongo::Client::NoDatabase)
+      end
     end
   end
 
