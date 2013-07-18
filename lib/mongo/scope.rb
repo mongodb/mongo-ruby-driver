@@ -61,10 +61,10 @@ module Mongo
     #   specified number of docs. Use to prevent queries from running too long.
     # @option opts :read [Symbol] The read preference to use for the query.
     #   If none is provided, the collection's default read preference is used.
-    # @option opts :show_disk_loc [Boolean] Return disk location info as a
-    #   field in each doc.
+    # @option opts :show_disk_loc [true, false] Return disk location info as
+    #   a field in each doc.
     # @option opts :skip [Integer] The number of documents to skip.
-    # @option opts :snapshot [Boolean] Prevents returning a doc more than
+    # @option opts :snapshot [true, false] Prevents returning a doc more than
     #   once.
     # @option opts :sort [Hash] The key and direction pairs used to sort the
     #   results.
@@ -294,11 +294,12 @@ module Mongo
     #
     # @param q_opts [Hash] Query options.
     #
-    # @option q_opts :snapshot [Boolean] Prevents returning docs more than once.
+    # @option q_opts :snapshot [true, false] Prevents returning docs more
+    #   than once.
     # @option q_opts :max_scan [Integer] Constrain the query to only scan the
     #   specified number of docs.
-    # @option q_opts :show_disk_loc [Boolean] Return disk location info as a
-    #   field in each doc.
+    # @option q_opts :show_disk_loc [true, false] Return disk location info
+    #   as a field in each doc.
     #
     # @return [Hash, Scope] Either the query options or a new +Scope+.
     #
@@ -315,11 +316,12 @@ module Mongo
     #
     # @param q_opts [Hash] Query options.
     #
-    # @option q_opts :snapshot [Boolean] Prevents returning docs more than once.
+    # @option q_opts :snapshot [true, false] Prevents returning docs more
+    #   than once.
     # @option q_opts :max_scan [Integer] Constrain the query to only scan the
     #   specified number of docs.
-    # @option q_opts :show_disk_loc [Boolean] Return disk location info as a
-    #   field in each doc.
+    # @option q_opts :show_disk_loc [true, false] Return disk location info
+    #   as a field in each doc.
     #
     # @return [Scope] self
     #
@@ -333,7 +335,7 @@ module Mongo
 
     # Compare two +Scope+ objects.
     #
-    # @return [Boolean] Equal if collection, selector, and opts of two
+    # @return [true, false] Equal if collection, selector, and opts of two
     #   +Scopes+ match.
     #
     def ==(other)

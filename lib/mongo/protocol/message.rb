@@ -154,7 +154,7 @@ module Mongo
       #
       # @param name [String] Name of the field
       # @param type [Module] Type specific serialization strategies
-      # @param multi [ Boolean, Symbol ] Specify as +true+ to
+      # @param multi [true, false, Symbol] Specify as +true+ to
       #   serialize the field's value as an array of type +:type+ or as a
       #   symbol describing the field having the number of items in the
       #   array (used upon deserialization)
