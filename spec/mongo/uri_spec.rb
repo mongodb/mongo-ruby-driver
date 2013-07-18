@@ -4,6 +4,15 @@ describe Mongo::URI do
   let(:scheme) { 'mongodb://' }
   let(:uri) { described_class.new(string) }
 
+  describe '#initialize' do
+    context 'string is not uri' do
+      let(:string) { 'tyler' }
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::URI::BadURI)
+      end
+    end
+  end
+
   describe '#nodes' do
     let(:string) { "#{scheme}#{nodes}" }
 
@@ -109,27 +118,6 @@ describe Mongo::URI do
 
     context 'write concern options provided' do
 
-      context 'safe' do
-        let(:options) { "safe=#{safe}" }
-        let(:write) { { :safe => safe } }
-
-        context 'true' do
-          let(:safe) { true }
-
-          it 'sets the write concern options' do
-            expect(uri.options[:write]).to eq(write)
-          end
-        end
-
-        context 'false' do
-          let(:safe) { false }
-
-          it 'sets the write concern options' do
-            expect(uri.options[:write]).to eq(write)
-          end
-        end
-      end
-
       context 'numerical w value' do
         let(:options) { 'w=1' }
         let(:concern) { { :w => 1 } }
@@ -221,25 +209,6 @@ describe Mongo::URI do
         let(:read) { { :mode => :nearest } }
 
         it 'sets the read preference' do
-          expect(uri.options[:read]).to eq(read)
-        end
-      end
-    end
-
-    context 'slaveOk' do
-      let(:options) { "slaveOk=#{slave_ok}" }
-      let(:read) { { :slave_ok => slave_ok } }
-
-      context 'true' do
-        let(:slave_ok) { true }
-        it 'sets slave ok to true' do
-          expect(uri.options[:read]).to eq(read)
-        end
-      end
-
-      context 'false' do
-        let(:slave_ok) { false }
-        it 'sets slave ok to false' do
           expect(uri.options[:read]).to eq(read)
         end
       end
