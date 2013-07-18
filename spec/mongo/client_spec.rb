@@ -144,6 +144,22 @@ describe Mongo::Client do
     end
   end
 
+  describe '#inspect' do
+
+    let(:client) do
+      described_class.new(
+        ['1.0.0.1:2', '1.0.0.1:1'],
+        :read => :primary
+      )
+    end
+
+    it 'returns the cluster information' do
+      expect(client.inspect).to eq(
+        "<Mongo::Client:0x#{client.object_id} cluster=1.0.0.1:2, 1.0.0.1:1>"
+      )
+    end
+  end
+
   describe '#initialize' do
 
     context 'when providing no options' do

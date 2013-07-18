@@ -88,6 +88,18 @@ module Mongo
       use(db) if db
     end
 
+    # Get an inspection of the client as a string.
+    #
+    # @example Inspect the client.
+    #   client.inspect
+    #
+    # @return [ String ] The inspection string.
+    #
+    # @since 2.0.0
+    def inspect
+      "<Mongo::Client:0x#{object_id} cluster=#{cluster.addresses.join(', ')}>"
+    end
+
     # Use the database with the provided name. This will switch the current
     # database the client is operating on.
     #
