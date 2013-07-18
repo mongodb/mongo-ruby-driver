@@ -120,5 +120,49 @@ describe Mongo::Client do
 
       it_behaves_like 'a database switching object'
     end
+
+    context 'when providing nil' do
+
+      it 'raises an error' do
+        expect do
+          client.use(nil)
+        end.to raise_error(Mongo::Database::InvalidName)
+      end
+    end
+  end
+
+  describe '#with' do
+
+    let(:client) do
+      described_class.new(
+        ['127.0.0.1:27017'],
+        :read => :secondary, :write => { :w => 1 }
+      )
+    end
+
+    let!(:new_client) do
+      client.with(:read => :primary)
+    end
+
+    it 'returns a new client' do
+      expect(new_client).not_to equal(client)
+    end
+
+    it 'replaces the existing options' do
+      expect(new_client.options).to eq(
+        { :read => :primary, :write => { :w => 1 } }
+      )
+    end
+
+    it 'does not modify the original client' do
+      expect(client.options).to eq(
+        { :read => :secondary, :write => { :w => 1 } }
+      )
+    end
+
+    it 'clones the cluster addresses' do
+      expect(new_client.cluster.addresses)
+        .not_to equal(client.cluster.addresses)
+    end
   end
 end

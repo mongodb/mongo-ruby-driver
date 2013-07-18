@@ -75,6 +75,22 @@ module Mongo
       @database = Database.new(database_name)
     end
 
+    # Provides a new client with the passed options merged over the existing
+    # options of this client. Useful for one-offs to change specific options
+    # without altering the original client.
+    #
+    # @example Get a client with changed options.
+    #   client.with(:read => :primary_preferred)
+    #
+    # @param [ Hash ] new_options The new options to use.
+    #
+    # @return [ Mongo::Client ] A new client instance.
+    #
+    # @since 2.0.0
+    def with(new_options = {})
+      Client.new(cluster.addresses.dup, options.merge(new_options))
+    end
+
     # Exception that is raised when trying to perform operations before ever
     # telling the client which database to execute ops on.
     #

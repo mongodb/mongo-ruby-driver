@@ -23,7 +23,18 @@ module Mongo
     end
 
     def initialize(name)
+      raise InvalidName.new unless name
       @name = name.to_s
+    end
+
+    class InvalidName < RuntimeError
+
+      MESSAGE = 'nil is an invalid database name. ' +
+        'Please provide a string or symbol.'
+
+      def initialize
+        super(MESSAGE)
+      end
     end
   end
 end

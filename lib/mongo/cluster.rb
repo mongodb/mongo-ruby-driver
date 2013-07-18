@@ -16,7 +16,10 @@ module Mongo
 
   class Cluster
 
+    attr_reader :addresses
+
     def initialize(addresses)
+      @addresses = addresses
     end
   end
 end
