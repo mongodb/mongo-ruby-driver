@@ -40,9 +40,9 @@ describe Mongo::Client do
     context 'when a database has not been selected' do
 
       it 'raises an error' do
-        expect {
+        expect do
           client[:users]
-        }.to raise_error(Mongo::Client::NoDatabase)
+        end.to raise_error(Mongo::Client::NoDatabase)
       end
     end
   end
@@ -63,6 +63,31 @@ describe Mongo::Client do
         expect(client.cluster).to be_a(Mongo::Cluster)
       end
     end
+
+    context 'when providing options' do
+
+      context 'when no database is provided' do
+
+        let(:client) do
+          described_class.new(['127.0.0.1:27017'], :read => :secondary)
+        end
+
+        it 'sets the options on the client' do
+          expect(client.options).to eq(:read => :secondary)
+        end
+      end
+
+      context 'when a database is provided' do
+
+        let(:client) do
+          described_class.new(['127.0.0.1:27017'], :database => :testdb)
+        end
+
+        it 'sets the current database' do
+          expect(client[:users].name).to eq('users')
+        end
+      end
+    end
   end
 
   describe '#use' do
@@ -80,7 +105,7 @@ describe Mongo::Client do
 
     context 'when provided a string' do
 
-      let!(:database) do
+      let(:database) do
         client.use('testdb')
       end
 
@@ -89,7 +114,7 @@ describe Mongo::Client do
 
     context 'when provided a symbol' do
 
-      let!(:database) do
+      let(:database) do
         client.use(:testdb)
       end
 

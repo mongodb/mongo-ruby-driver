@@ -56,6 +56,8 @@ module Mongo
     def initialize(addresses, options = {})
       @cluster = Cluster.new(addresses)
       @options = options
+      db = options[:database]
+      use(db) if db
     end
 
     # Use the database with the provided name. This will switch the current
