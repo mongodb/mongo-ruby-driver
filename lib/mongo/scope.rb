@@ -80,9 +80,8 @@ module Mongo
     # @return [String] A string representation of a +Scope+ instance.
     #
     def inspect
-      "<Mongo::Scope:0x#{self.object_id} " +
-        "namespace='#{@collection.full_namespace} " +
-        "@selector=#{@selector.inspect} @opts=#{@opts.inspect}>"
+      "<Mongo::Scope:0x#{object_id} namespace='#{@collection.full_namespace}" +
+      " @selector=#{@selector.inspect} @opts=#{@opts.inspect}>"
     end
 
     # Get the size of the result set for the query.
