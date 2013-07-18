@@ -29,7 +29,6 @@ module Mongo
   #
   # @note The +Scope+ API is semipublic.
   # @api semipublic
-  #
   class Scope
 
     attr_reader :collection, :selector, :opts
@@ -68,7 +67,6 @@ module Mongo
     #   once.
     # @option opts :sort [Hash] The key and direction pairs used to sort the
     #   results.
-    #
     def initialize(collection, selector = {}, opts = {})
       @collection = collection
       @selector = selector.dup
@@ -78,7 +76,6 @@ module Mongo
     # Get a human-readable string representation of +Scope+.
     #
     # @return [String] A string representation of a +Scope+ instance.
-    #
     def inspect
       "<Mongo::Scope:0x#{object_id} namespace='#{@collection.full_namespace}" +
       " @selector=#{@selector.inspect} @opts=#{@opts.inspect}>"
@@ -87,7 +84,6 @@ module Mongo
     # Get the size of the result set for the query.
     #
     # @return [Integer] The number of documents in the result set.
-    #
     def count
       @collection.count(Scope.new(@collection, @selector, @opts))
     end
@@ -95,7 +91,6 @@ module Mongo
     # Get the explain plan for the query.
     #
     # @return [Hash] A single document with the explain plan.
-    #
     def explain
       explain_limit = limit || 0
       opts = @opts.merge({ :limit => -explain_limit.abs, :explain => true })
@@ -109,7 +104,6 @@ module Mongo
     # @param key [Symbol, String] The field to collect distinct values from.
     #
     # @return [Hash] A doc with an array of the distinct values and query plan.
-    #
     def distinct(key)
       @collection.distinct(self, key)
     end
@@ -121,7 +115,6 @@ module Mongo
     # @param comment [String] The comment to be associated with the query.
     #
     # @return [String, Scope] Either the comment or a new +Scope+.
-    #
     def comment(comment = nil)
       set_option(:comment, comment)
     end
@@ -131,7 +124,6 @@ module Mongo
     # @param comment [String] The comment to be associated with the query.
     #
     # @return [Scope] self.
-    #
     def comment!(comment = nil)
       mutate(:comment, comment)
     end
@@ -142,7 +134,6 @@ module Mongo
     # @param batch_size [Integer] The size of each batch of results.
     #
     # @return [Integer, Scope] Either the batch_size value or a new +Scope+.
-    #
     def batch_size(batch_size = nil)
       set_option(:batch_size, batch_size)
     end
@@ -153,7 +144,6 @@ module Mongo
     # @param batch_size [Integer] The size of each batch of results.
     #
     # @return [Scope] self.
-    #
     def batch_size!(batch_size = nil)
       mutate(:batch_size, batch_size)
     end
@@ -166,7 +156,6 @@ module Mongo
     # @param fields [Hash] The field and 1 or 0, to include or exclude it.
     #
     # @return [Scope] Either the fields or a new +Scope+.
-    #
     def fields(fields = nil)
       set_option(:fields, fields)
     end
@@ -177,7 +166,6 @@ module Mongo
     # @param fields [Hash] The field and 1 or 0, to include or exclude it.
     #
     # @return [Scope] self.
-    #
     def fields!(fields = nil)
       mutate(:fields, fields)
     end
@@ -187,7 +175,6 @@ module Mongo
     # @param hint [Hash] The index to use for the query.
     #
     # @return [Hash, Scope] Either the hint or a new +Scope+.
-    #
     def hint(hint = nil)
       set_option(:hint, hint)
     end
@@ -198,7 +185,6 @@ module Mongo
     # @param hint [Hash] The index to use for the query.
     #
     # @return [Scope] self.
-    #
     def hint!(hint = nil)
       mutate(:hint, hint)
     end
@@ -208,7 +194,6 @@ module Mongo
     # @param limit [Integer] The number of docs to return.
     #
     # @return [Integer, Scope] Either the limit or a new +Scope+.
-    #
     def limit(limit = nil)
       set_option(:limit, limit)
     end
@@ -219,7 +204,6 @@ module Mongo
     # @param limit [Integer] The number of docs to return.
     #
     # @return [Scope] self.
-    #
     def limit!(limit = nil)
       mutate(:limit, limit)
     end
@@ -231,7 +215,6 @@ module Mongo
     # @param read [Symbol] The read preference to use for the query.
     #
     # @return [Symbol, Scope] Either the read preference or a new +Scope+.
-    #
     def read(read = nil)
       return default_read if read.nil?
       set_option(:read, read)
@@ -242,7 +225,6 @@ module Mongo
     # @param read [Symbol] The read preference to use for the query.
     #
     # @return [Scope] self.
-    #
     def read!(read = nil)
       mutate(:read, read)
     end
@@ -252,7 +234,6 @@ module Mongo
     # @param skip [Integer] Number of docs to skip.
     #
     # @return [Integer, Scope] Either the skip value or a new +Scope+.
-    #
     def skip(skip = nil)
       set_option(:skip, skip)
     end
@@ -263,7 +244,6 @@ module Mongo
     # @param skip [Integer] Number of docs to skip.
     #
     # @return [Scope] self.
-    #
     def skip!(skip = nil)
       mutate(:skip, skip)
     end
@@ -273,7 +253,6 @@ module Mongo
     # @param sort [Hash] The attributes and directions to sort by.
     #
     # @return [Hash, Scope] Either the sort setting or a new +Scope+.
-    #
     def sort(sort = nil)
       set_option(:sort, sort)
     end
@@ -284,7 +263,6 @@ module Mongo
     # @param sort [Hash] The attributes and directions to sort by.
     #
     # @return [Scope] self.
-    #
     def sort!(sort = nil)
       mutate(:sort, sort)
     end
@@ -301,7 +279,6 @@ module Mongo
     #   as a field in each doc.
     #
     # @return [Hash, Scope] Either the query options or a new +Scope+.
-    #
     def query_opts(q_opts = nil)
       return query_opts_hash if q_opts.nil?
       opts = @opts.dup
@@ -323,7 +300,6 @@ module Mongo
     #   as a field in each doc.
     #
     # @return [Scope] self
-    #
     def query_opts!(q_opts = nil)
       return self if q_opts.nil?
       [:snapshot, :max_scan, :show_disk_loc].each do |k|
@@ -336,7 +312,6 @@ module Mongo
     #
     # @return [true, false] Equal if collection, selector, and opts of two
     #   +Scopes+ match.
-    #
     def ==(other)
       @collection == other.collection &&
         @selector == other.selector &&
@@ -348,7 +323,6 @@ module Mongo
     # hash of the options and hash of the selector.
     #
     # @return [Integer] A hash value of the +Scope+ object.
-    #
     def hash
       [@collection.full_namespace, @opts.hash, @selector.hash].hash
     end
@@ -360,10 +334,9 @@ module Mongo
     # The @opt and @selector instance variables are duped and the
     # +Collection+ reference remains intact.
     #
-    # @param [Scope] The +Scope+ to be cloned.
+    # @param other [Scope] The +Scope+ to be cloned.
     #
     # @return [Scope] The new +Scope+.
-    #
     def initialize_copy(other)
       @collection = other.collection
       @opts = other.opts.dup
@@ -373,7 +346,6 @@ module Mongo
     # The read preference for this operation.
     #
     # @return [Symbol] This operation's read preference.
-    #
     def default_read(read = nil)
       @opts[:read] || @collection.read
     end
@@ -381,7 +353,6 @@ module Mongo
     # Extract query opts from @opts and return them in a separate hash.
     #
     # @return [Hash] The query options in their own hash.
-    #
     def query_opts_hash
       q_opts = @opts[:snapshot].nil? ? {} : { :snapshot => @opts[:snapshot] }
       q_opts[:max_scan] = @opts[:max_scan] unless @opts[:max_scan].nil?
@@ -395,7 +366,6 @@ module Mongo
     # value set.
     #
     # @return [Object, Scope] Either the option value or a new +Scope+.
-    #
     def set_option(field, value)
       return @opts[field] if value.nil?
       Scope.new(collection, selector, @opts.merge(field => value))
@@ -404,7 +374,6 @@ module Mongo
     # Set the option value on this +Scope+.
     #
     # @return [Scope] self.
-    #
     def mutate(field, value)
       @opts.merge!(field => value) unless value.nil?
       self
