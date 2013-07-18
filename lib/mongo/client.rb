@@ -112,7 +112,7 @@ module Mongo
     #
     # @since 2.0.0
     def use(database_name)
-      @database = Database.new(database_name)
+      @database = Database.new(self, database_name)
     end
 
     # Provides a new client with the passed options merged over the existing

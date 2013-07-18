@@ -14,12 +14,45 @@
 
 module Mongo
 
+  # Represents a collection in the database and operations that can directly be
+  # applied to one.
+  #
+  # @since 2.0.0
   class Collection
 
-    attr_reader :name
+    # @!attribute client
+    #   @return [ Mongo::Client ] The database client.
+    # @!attribute name
+    #   @return [ String ] The name of the collection.
+    attr_reader :client, :name
 
-    def initialize(name)
+    # @todo: durran: implement.
+    def initialize(client, name)
+      raise InvalidName.new unless name
+      @client = client
       @name = name.to_s
+    end
+
+    # Exception that is raised when trying to create a collection with no name.
+    #
+    # @since 2.0.0
+    class InvalidName < RuntimeError
+
+      # The message is constant.
+      #
+      # @since 2.0.0
+      MESSAGE = 'nil is an invalid collection name. ' +
+        'Please provide a string or symbol.'
+
+      # Instantiate the new exception.
+      #
+      # @example Instantiate the exception.
+      #   Mongo::Collection::InvalidName.new
+      #
+      # @since 2.0.0
+      def initialize
+        super(MESSAGE)
+      end
     end
   end
 end
