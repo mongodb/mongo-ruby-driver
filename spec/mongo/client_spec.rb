@@ -2,6 +2,45 @@ require 'spec_helper'
 
 describe Mongo::Client do
 
+  describe '#==' do
+
+    let(:client) do
+      described_class.new(['127.0.0.1:27017'], :read => :primary)
+    end
+
+    context 'when the other is a client' do
+
+      context 'when the options and cluster are equal' do
+
+        let(:other) do
+          described_class.new(['127.0.0.1:27017'], :read => :primary)
+        end
+
+        it 'returns true' do
+          expect(client).to eq(other)
+        end
+      end
+
+      context 'when the options and cluster are not equal' do
+
+        let(:other) do
+          described_class.new(['127.0.0.1:27017'], :read => :secondary)
+        end
+
+        it 'returns true' do
+          expect(client).not_to eq(other)
+        end
+      end
+    end
+
+    context 'when the other is not a client' do
+
+      it 'returns false' do
+        expect(client).not_to eq('test')
+      end
+    end
+  end
+
   describe '#[]' do
 
     let(:client) do
@@ -44,6 +83,64 @@ describe Mongo::Client do
           client[:users]
         end.to raise_error(Mongo::Client::NoDatabase)
       end
+    end
+  end
+
+  describe '#eql' do
+
+    let(:client) do
+      described_class.new(['127.0.0.1:27017'], :read => :primary)
+    end
+
+    context 'when the other is a client' do
+
+      context 'when the options and cluster are equal' do
+
+        let(:other) do
+          described_class.new(['127.0.0.1:27017'], :read => :primary)
+        end
+
+        it 'returns true' do
+          expect(client).to eql(other)
+        end
+      end
+
+      context 'when the options and cluster are not equal' do
+
+        let(:other) do
+          described_class.new(['127.0.0.1:27017'], :read => :secondary)
+        end
+
+        it 'returns true' do
+          expect(client).not_to eql(other)
+        end
+      end
+    end
+
+    context 'when the other is not a client' do
+
+      let(:client) do
+        described_class.new(['127.0.0.1:27017'], :read => :primary)
+      end
+
+      it 'returns false' do
+        expect(client).not_to eql('test')
+      end
+    end
+  end
+
+  describe '#hash' do
+
+    let(:client) do
+      described_class.new(['127.0.0.1:27017'], :read => :primary)
+    end
+
+    let(:expected) do
+      [client.cluster, :read => :primary].hash
+    end
+
+    it 'returns a hash of the cluster and options' do
+      expect(client.hash).to eq(expected)
     end
   end
 

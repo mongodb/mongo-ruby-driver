@@ -18,6 +18,10 @@ module Mongo
 
     attr_reader :addresses
 
+    def ==(other)
+      addresses == other.addresses
+    end
+
     def initialize(addresses)
       @addresses = addresses
     end

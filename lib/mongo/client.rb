@@ -26,6 +26,22 @@ module Mongo
     #   @return [ Hash ] The configuration options.
     attr_reader :cluster, :options
 
+    # Determine if this client is equivalent to another object.
+    #
+    # @example Check client equality.
+    #   client == other
+    #
+    # @param [ Object ] other The object to compare to.
+    #
+    # @return [ true, false ] If the objects are equal.
+    #
+    # @since 2.0.0
+    def ==(other)
+      return false unless other.is_a?(Client)
+      cluster == other.cluster && options == other.options
+    end
+    alias_method :eql?, :==
+
     # Get a collection object for the provided collection name.
     #
     # @example Get the collection.
@@ -38,6 +54,18 @@ module Mongo
     # @since 2.0.0
     def [](collection_name)
       database[collection_name]
+    end
+
+    # Get the hash value of the client.
+    #
+    # @example Get the client hash value.
+    #   client.hash
+    #
+    # @return [ Integer ] The client hash value.
+    #
+    # @since 2.0.0
+    def hash
+      [cluster, options].hash
     end
 
     # Instantiate a new driver client.
