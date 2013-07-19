@@ -20,6 +20,50 @@ describe Mongo::Protocol::KillCursors do
     end
   end
 
+  describe '#==' do
+
+    context 'when the other is a killcursors' do
+
+      context 'when the cursor ids are equal' do
+        let(:other) do
+          described_class.new(cursor_ids)
+        end
+
+        it 'returns true' do
+          expect(message).to eq(other)
+        end
+      end
+
+      context 'when the cursor ids are not equal' do
+        let(:other) do
+          described_class.new([123, 456])
+        end
+
+        it 'returns false' do
+          expect(message).not_to eq(other)
+        end
+      end
+    end
+
+    context 'when the other is not a killcursors' do
+      let(:other) do
+        expect(message).not_to eq('test')
+      end
+    end
+  end
+
+  describe '#hash' do
+    let(:values) do
+      message.send(:fields).map do |field|
+        message.instance_variable_get(field[:name])
+      end
+    end
+
+    it 'returns a hash of the field values' do
+      expect(message.hash).to eq(values.hash)
+    end
+  end
+
   describe '#serialize' do
     let(:bytes) { message.serialize }
 

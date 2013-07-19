@@ -79,6 +79,28 @@ module Mongo
         message
       end
 
+      # Tests for equality between two wire protocol messages
+      # by comparing class and field values.
+      #
+      # @param other [Mongo::Protocol::Message] The wire protocol message.
+      # @return [true, false] The equality of the messages.
+      def ==(other)
+        return false if self.class != other.class
+        fields.all? do |field|
+          name = field[:name]
+          instance_variable_get(name) ==
+            other.instance_variable_get(name)
+        end
+      end
+      alias_method :eql?, :==
+
+      # Creates a hash from the values of the fields of a message.
+      #
+      # @return [ Fixnum ] The hash code for the message.
+      def hash
+        fields.map { |field| instance_variable_get(field[:name]) }.hash
+      end
+
       private
 
       @@request_id = 0
