@@ -35,6 +35,80 @@ describe Mongo::Protocol::Delete do
     end
   end
 
+  describe '#==' do
+
+    context 'when the other is a delete' do
+
+      context 'when the fields are equal' do
+        let(:other) do
+          described_class.new(db, coll, selector, opts)
+        end
+
+        it 'returns true' do
+          expect(message).to eq(other)
+        end
+      end
+
+      context 'when the database is not equal' do
+        let(:other) do
+          described_class.new('tyler', coll, selector, opts)
+        end
+
+        it 'returns false' do
+          expect(message).not_to eq(other)
+        end
+      end
+
+      context 'when the collection is not equal' do
+        let(:other) do
+          described_class.new(db, 'tyler', selector, opts)
+        end
+
+        it 'returns false' do
+          expect(message).not_to eq(other)
+        end
+      end
+
+      context 'when the selector is not equal' do
+        let(:other) do
+          described_class.new(db, coll, { :a => 1 }, opts)
+        end
+
+        it 'returns false' do
+          expect(message).not_to eq(other)
+        end
+      end
+
+      context 'when the options are not equal' do
+        let(:other) do
+          described_class.new(db, coll, selector, :flags => [:single_remove])
+        end
+
+        it 'returns false' do
+          expect(message).not_to eq(other)
+        end
+      end
+    end
+
+    context 'when the other is not a delete' do
+      let(:other) do
+        expect(message).not_to eq('test')
+      end
+    end
+  end
+
+  describe '#hash' do
+    let(:values) do
+      message.send(:fields).map do |field|
+        message.instance_variable_get(field[:name])
+      end
+    end
+
+    it 'returns a hash of the field values' do
+      expect(message.hash).to eq(values.hash)
+    end
+  end
+
   describe '#serialize' do
     let(:bytes) { message.serialize }
 

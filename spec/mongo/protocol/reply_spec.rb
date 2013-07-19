@@ -28,6 +28,62 @@ describe Mongo::Protocol::Reply do
   let(:io)    { StringIO.new(header + data) }
   let(:reply) { described_class.deserialize(io) }
 
+  describe '#==' do
+
+    context 'when the other is a reply' do
+
+      context 'when the fields are equal' do
+        let(:other) do
+          other = described_class.allocate
+          other.instance_variable_set(:@flags, [])
+          other.instance_variable_set(:@number_returned, n_returned)
+          other.instance_variable_set(:@cursor_id, cursor_id)
+          other.instance_variable_set(:@documents, documents)
+          other.instance_variable_set(:@starting_from, start)
+          other
+        end
+
+        it 'returns true' do
+          expect(reply).to eq(other)
+        end
+      end
+
+      context 'when fields are not equal' do
+        let(:other) do
+          other = described_class.allocate
+          other.instance_variable_set(:@flags, [:await_capable])
+          other.instance_variable_set(:@number_returned, n_returned)
+          other.instance_variable_set(:@cursor_id, cursor_id)
+          other.instance_variable_set(:@documents, documents)
+          other.instance_variable_set(:@starting_from, start)
+          other
+        end
+
+        it 'returns false' do
+          expect(reply).not_to eq(other)
+        end
+      end
+    end
+
+    context 'when the other is not a reply' do
+      let(:other) do
+        expect(message).not_to eq('test')
+      end
+    end
+  end
+
+  describe '#hash' do
+    let(:values) do
+      reply.send(:fields).map do |field|
+        reply.instance_variable_get(field[:name])
+      end
+    end
+
+    it 'returns a hash of the field values' do
+      expect(reply.hash).to eq(values.hash)
+    end
+  end
+
   describe '#deserialize' do
 
     describe 'response flags' do

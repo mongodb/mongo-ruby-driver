@@ -37,6 +37,80 @@ describe Mongo::Protocol::Insert do
     end
   end
 
+  describe '#==' do
+
+    context 'when the other is an insert' do
+
+      context 'when the fields are equal' do
+        let(:other) do
+          described_class.new(db, coll, docs, opts)
+        end
+
+        it 'returns true' do
+          expect(message).to eq(other)
+        end
+      end
+
+      context 'when the database is not equal' do
+        let(:other) do
+          described_class.new('tyler', coll, docs, opts)
+        end
+
+        it 'returns false' do
+          expect(message).not_to eq(other)
+        end
+      end
+
+      context 'when the collection is not equal' do
+        let(:other) do
+          described_class.new(db, 'tyler', docs, opts)
+        end
+
+        it 'returns false' do
+          expect(message).not_to eq(other)
+        end
+      end
+
+      context 'when the documents are not equal' do
+        let(:other) do
+          described_class.new(db, coll, docs[1..1], opts)
+        end
+
+        it 'returns false' do
+          expect(message).not_to eq(other)
+        end
+      end
+
+      context 'when the opts are not equal' do
+        let(:other) do
+          described_class.new(db, coll, docs, :flags => [:continue_on_error])
+        end
+
+        it 'returns false' do
+          expect(message).not_to eq(other)
+        end
+      end
+    end
+
+    context 'when the other is not an insert' do
+      let(:other) do
+        expect(message).not_to eq('test')
+      end
+    end
+  end
+
+  describe '#hash' do
+    let(:values) do
+      message.send(:fields).map do |field|
+        message.instance_variable_get(field[:name])
+      end
+    end
+
+    it 'returns a hash of the field values' do
+      expect(message.hash).to eq(values.hash)
+    end
+  end
+
   describe '#serialize' do
     let(:bytes) { message.serialize }
 
