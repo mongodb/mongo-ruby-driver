@@ -10,7 +10,8 @@ describe Mongo::Protocol::Reply do
   let(:start)       { 0 }
   let(:n_returned)  { 2 }
   let(:cursor_id)   { 999_999 }
-  let(:doc)         { { :name => 'Tyler' } }
+  let(:doc)         { { 'name' => 'Tyler' } }
+  let(:documents)   { [doc] * 2 }
 
   let(:header) do
     [length, request_id, response_to, op_code].pack('l<l<l<l<')
@@ -21,7 +22,7 @@ describe Mongo::Protocol::Reply do
     data << [cursor_id].pack('q<')
     data << [start].pack('l<')
     data << [n_returned].pack('l<')
-    data << ([doc] * n_returned).map(&:to_bson).join
+    data << documents.map(&:to_bson).join
   end
 
   let(:io)    { StringIO.new(header + data) }
@@ -93,7 +94,7 @@ describe Mongo::Protocol::Reply do
 
     describe 'documents' do
       it 'sets the documents attribute' do
-        expect(reply.number_returned).to eq(n_returned)
+        expect(reply.documents).to eq(documents)
       end
     end
   end
