@@ -136,7 +136,7 @@ describe Mongo::Client do
     end
 
     let(:expected) do
-      [client.cluster, :read => :primary].hash
+      [client.cluster, { :read => :primary }].hash
     end
 
     it 'returns a hash of the cluster and options' do
