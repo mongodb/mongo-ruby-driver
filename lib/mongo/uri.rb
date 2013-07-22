@@ -93,7 +93,9 @@ module Mongo
     #   * :mode [Symbol]  read mode
     #   * :tags [Array<Hash>] read tag sets
     def options
-      @match[5].split('&').reduce(Hash.new) do |options, option|
+      opts = @match[5]
+      return {} unless opts
+      opts.split('&').reduce(Hash.new) do |options, option|
         key, value = option.split('=')
         strategy = OPTION_MAP[key]
         add_option(strategy, value, options)

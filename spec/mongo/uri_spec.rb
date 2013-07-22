@@ -116,6 +116,14 @@ describe Mongo::URI do
     let(:nodes)  { 'localhost' }
     let(:string) { "#{scheme}#{nodes}/?#{options}" }
 
+    context 'when no options were provided' do
+      let(:string) { "#{scheme}#{nodes}" }
+
+      it 'returns an empty hash' do
+        expect(uri.options).to be_empty
+      end
+    end
+
     context 'write concern options provided' do
 
       context 'numerical w value' do
