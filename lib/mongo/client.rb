@@ -20,14 +20,10 @@ module Mongo
   # @since 2.0.0
   class Client
 
-    # @!attribute cluster
-    #   @return [ Mongo::Cluster ] The cluster of nodes for the client.
-    #
-    # @!attribute options
-    #   @return [ Hash ] The configuration options.
-
-
-    attr_reader :cluster, :options
+    # @return [ Mongo::Cluster ] The cluster of nodes for the client.
+    attr_reader :cluster
+    # @return [ Hash ] The configuration options.
+    attr_reader :options
 
     # Determine if this client is equivalent to another object.
     #

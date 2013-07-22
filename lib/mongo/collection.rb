@@ -20,13 +20,10 @@ module Mongo
   # @since 2.0.0
   class Collection
 
-    # @!attribute database
-    #   @return [ Mongo::Database ] The database the collection resides in.
-    # @!attribute name
-    #   @return [ String ] The name of the collection.
-
-
-    attr_reader :database, :name
+    # @return [ Mongo::Database ] The database the collection resides in.
+    attr_reader :database
+    # @return [ String ] The name of the collection.
+    attr_reader :name
 
     # @todo: durran: implement.
     def initialize(database, name)

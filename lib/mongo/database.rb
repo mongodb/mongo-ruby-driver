@@ -25,13 +25,11 @@ module Mongo
     # @since 2.0.0
     COMMAND = '$cmd'.freeze
 
-    # @!attribute client
-    #   @return [ Mongo::Client ] The database client.
-    # @!attribute name
-    #   @return [ String ] The name of the collection.
+    # @return [ Mongo::Client ] The database client.
+    attr_reader :client
+    # @return [ String ] The name of the collection.
+    attr_reader :name
 
-
-    attr_reader :client, :name
 
     # Get a collection in this database by the provided name.
     #
