@@ -23,7 +23,7 @@ module Mongo
     # The "collection" that database commands operate against.
     #
     # @since 2.0.0
-    COMMAND = "$cmd".freeze
+    COMMAND = '$cmd'.freeze
 
     # @!attribute client
     #   @return [ Mongo::Client ] The database client.

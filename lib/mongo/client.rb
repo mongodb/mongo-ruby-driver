@@ -154,6 +154,17 @@ module Mongo
       end
     end
 
+    class << self
+
+      def connect(connection_string)
+        uri = URI.new(connection_string)
+        client = new(uri.nodes, uri.options)
+        database = uri.database
+        client.use(database) if database
+        client
+      end
+    end
+
     private
 
     # Get the current database that the client is operating on.

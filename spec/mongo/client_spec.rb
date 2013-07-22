@@ -86,6 +86,53 @@ describe Mongo::Client do
     end
   end
 
+  describe '.connect' do
+
+    context 'when a database is provided' do
+
+      let!(:uri) do
+        'mongodb://127.0.0.1:27017/testdb'
+      end
+
+      let(:client) do
+        described_class.connect(uri)
+      end
+
+      it 'sets the database' do
+        expect { client[:users] }.to_not raise_error
+      end
+    end
+
+    context 'when a database is not provided' do
+
+      let!(:uri) do
+        'mongodb://127.0.0.1:27017'
+      end
+
+      let(:client) do
+        described_class.connect(uri)
+      end
+      it 'does not set the database' do
+        expect { client[:users] }.to raise_error(Mongo::Client::NoDatabase)
+      end
+    end
+
+    context 'when options are provided' do
+
+      let!(:uri) do
+        'mongodb://127.0.0.1:27017/testdb?w=3'
+      end
+
+      let(:client) do
+        described_class.connect(uri)
+      end
+
+      it 'sets the options' do
+        expect(client.options).to eq(:write => { :w => 3 })
+      end
+    end
+  end
+
   describe '#eql' do
 
     let(:client) do
