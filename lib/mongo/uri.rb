@@ -273,7 +273,7 @@ module Mongo
     # @return [Hash] The target for the option.
     def select_target(options, group = nil)
       if group
-        options[group] ||= Hash.new
+        options[group] ||= {}
       else
         options
       end

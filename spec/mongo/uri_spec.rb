@@ -344,5 +344,13 @@ describe Mongo::URI do
         end
       end
     end
+
+    context 'grouped and non-grouped options provided' do
+      let(:options) { 'w=1&ssl=true' }
+
+      it 'do not overshadow top level options' do
+        expect(uri.options).not_to be_empty
+      end
+    end
   end
 end
