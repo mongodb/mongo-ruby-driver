@@ -156,6 +156,16 @@ module Mongo
 
     class << self
 
+      # Gets a new client given the provided uri connection string.
+      #
+      # @example Get a client from the connection string.
+      #   Mongo::Client.connect("mongodb://127.0.0.1:27017/testdb?w=3")
+      #
+      # @param [ String ] connection_string The connection string.
+      #
+      # @see http://docs.mongodb.org/manual/reference/connection-string/
+      #
+      # @since 2.0.0
       def connect(connection_string)
         uri = URI.new(connection_string)
         client = new(uri.nodes, uri.options)
