@@ -29,6 +29,8 @@ module Mongo
     #   @return [ Mongo::Client ] The database client.
     # @!attribute name
     #   @return [ String ] The name of the collection.
+
+
     attr_reader :client, :name
 
     # Get a collection in this database by the provided name.

@@ -24,6 +24,8 @@ module Mongo
     #   @return [ Mongo::Database ] The database the collection resides in.
     # @!attribute name
     #   @return [ String ] The name of the collection.
+
+
     attr_reader :database, :name
 
     # @todo: durran: implement.
