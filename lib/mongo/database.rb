@@ -30,7 +30,6 @@ module Mongo
     # @return [ String ] The name of the collection.
     attr_reader :name
 
-
     # Get a collection in this database by the provided name.
     #
     # @example Get a collection.
