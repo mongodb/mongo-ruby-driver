@@ -270,12 +270,6 @@ module Mongo
       @client.connect if !@client.connected?
       start_time = Time.now
       loop do
-        if (Time.now - start_time) > @timeout
-          raise ConnectionTimeoutError, "could not obtain connection within " +
-            "#{@timeout} seconds. The max pool size is currently #{@size}; " +
-            "consider increasing the pool size or timeout."
-        end
-
         @connection_mutex.synchronize do
           check_prune
           socket = nil
@@ -311,6 +305,12 @@ module Mongo
             # Otherwise, wait
             @queue.wait(@connection_mutex)
           end
+        end
+
+        if (Time.now - start_time) > @timeout
+          raise ConnectionTimeoutError, "could not obtain connection within " +
+            "#{@timeout} seconds. The max pool size is currently #{@size}; " +
+            "consider increasing the pool size or timeout."
         end
       end
     end
