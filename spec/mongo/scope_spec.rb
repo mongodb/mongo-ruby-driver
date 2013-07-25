@@ -2,20 +2,13 @@ require 'spec_helper'
 
 describe Mongo::Scope do
 
-  let(:db) { double('db') }
-  let(:collection) { double('collection') }
+  include_context 'shared client'
 
   let(:selector) { {} }
   let(:opts) { {} }
 
-  let(:ascending) { 1 }
-  let(:descending) { -1 }
-
   let(:scope) do
-    db.stub(:name) { TEST_DB }
-    collection.stub(:name) { TEST_COLL }
-    collection.stub(:db) { db }
-    collection.stub(:full_namespace) { "#{TEST_DB}.#{TEST_COLL}" }
+    stub!
     described_class.new(collection, selector, opts)
   end
 
@@ -297,11 +290,10 @@ describe Mongo::Scope do
 
       context 'when no read pref is set on initializaiton' do
         let(:opts) { {} }
-        let(:collection_read) { :primary_preferred }
+        let(:read) { :primary_preferred }
 
         it 'returns the collection read preference' do
-          collection.stub(:read) { collection_read }
-          expect(scope.read).to eq(collection_read)
+          expect(scope.read).to eq(read)
         end
 
       end
@@ -411,7 +403,6 @@ describe Mongo::Scope do
     let(:client) { double('client') }
 
     it 'calls count on collection' do
-      collection.stub(:client) { client }
       collection.stub(:count) { 10 }
       expect(scope.count).to eq(10)
     end
@@ -422,7 +413,6 @@ describe Mongo::Scope do
     let(:client) { double('client') }
 
     it 'calls explain on collection' do
-      collection.stub(:client) { client }
       collection.stub(:explain) { { 'n' => 10, 'nscanned' => 11 } }
       expect(scope.explain).to eq({ 'n' => 10, 'nscanned' => 11 })
     end
@@ -434,7 +424,6 @@ describe Mongo::Scope do
     let(:distinct_stats) { { 'values' => [1], 'stats' => { 'n' => 3 } } }
 
     it 'calls distinct on collection' do
-      collection.stub(:client) { client }
       collection.stub(:distinct) { distinct_stats }
       expect(scope.distinct('name')).to eq(distinct_stats)
     end
@@ -550,7 +539,6 @@ describe Mongo::Scope do
       let(:client) { double('client') }
 
       it 'terminates the chaining' do
-        collection.stub(:client) { client }
         collection.stub(:count) { 10 }
         expect(scope.limit(5).skip(10).count).to eq(10)
       end
