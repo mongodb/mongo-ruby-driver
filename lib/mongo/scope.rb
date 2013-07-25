@@ -31,7 +31,12 @@ module Mongo
   # @api semipublic
   class Scope
 
-    attr_reader :collection, :selector, :opts
+    # @return [Collection] The +Collection+ to query.
+    attr_reader :collection
+    # @return [Hash] The query selector.
+    attr_reader :selector
+    # @return [Hash] The additional query options.
+    attr_reader :opts
 
     # Creates a new +Scope+.
     #
