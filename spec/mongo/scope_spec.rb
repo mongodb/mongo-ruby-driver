@@ -553,6 +553,42 @@ describe Mongo::Scope do
     end
   end
 
+  describe 'enumerable' do
+    let(:n_docs) { 5 }
+    let(:results) do
+      { :cursor_id => 0,
+        :nreturned => n_docs,
+        :docs => (0...n_docs).to_a
+      }
+    end
+    before(:each) { connection.stub(:send_and_receive) { [results, node] } }
+
+    describe '#each' do
+
+      context 'when a block is provided' do
+
+        it 'yields each doc to the block' do
+          expect { |b| scope.each(&b) }.to yield_control.exactly(n_docs).times
+        end
+
+      end
+
+      context 'when a block is not provided' do
+
+        it 'returns an enumerator' do
+          if !defined?(Enumerator)
+            expect(scope.each).to be_a(Enumerable::Enumerator)
+          else
+            expect(scope.each).to be_a(Enumerator)
+          end
+        end
+
+      end
+
+    end
+
+  end
+
   describe 'chaining' do
 
     context 'when helper methods are chained' do
@@ -567,9 +603,27 @@ describe Mongo::Scope do
     context 'when a scope is chained with a terminator' do
       let(:scope) { described_class.new(collection, selector, opts) }
 
-      it 'terminates the chaining' do
-        allow(collection).to receive(:count).and_return(10)
-        expect(scope.limit(5).skip(10).count).to eq(10)
+      describe '#count' do
+        it 'terminates the chaining and returns a value' do
+          collection.stub(:count) { 10 }
+          expect(scope.limit(5).skip(10).count).to eq(10)
+        end
+      end
+
+      describe '#to_a' do
+        let(:n_docs) { 5 }
+        let(:results) do
+          { :cursor_id => 0,
+            :nreturned => n_docs,
+            :docs => (0...n_docs).to_a
+          }
+        end
+
+        it 'terminates chaining by returning an array of results' do
+          connection.stub(:send_and_receive) { [results, node] }
+          expect(scope.limit(5).skip(10).to_a).to eq(results[:docs])
+        end
+
       end
     end
   end

@@ -30,6 +30,7 @@ module Mongo
   # @note The +Scope+ API is semipublic.
   # @api semipublic
   class Scope
+    include Enumerable
 
     # @return [Collection] The +Collection+ to query.
     attr_reader :collection
@@ -332,7 +333,27 @@ module Mongo
       [@collection.full_namespace, @opts.hash, @selector.hash].hash
     end
 
+    # Iterate through documents returned by a query with this +Scope+.
+    #
+    # @return [Enumerator] The enumerator.
+    #
+    # @yieldparam doc [Hash] Each matching document.
+    def each
+      enum = cursor.to_enum
+      return enum unless block_given?
+      enum.each do |doc|
+        yield doc
+      end
+    end
+
     private
+
+    # Create a +Cursor+ using this +Scope+.
+    #
+    # @return [Cursor] The new +Cursor+ with this +Scope+.
+    def cursor
+      Cursor.new(self)
+    end
 
     # Clone or dup the current +Scope+.
     #
