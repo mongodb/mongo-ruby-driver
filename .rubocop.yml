@@ -16,15 +16,11 @@ LineLength:
 
 # Avoid methods longer than 10 lines of code
 MethodLength:
-  CountComments: false  # count full line comments?
-  Max: 10
-  Enabled: true
+  Enabled: false
 
 # Avoid parameter lists longer than five parameters.
 ParameterLists:
-  Max: 5
-  CountKeywordArgs: true
-  Enabled: true
+  Enabled: false
 
 # Don't use semicolons to terminate expressions.
 Semicolon:
