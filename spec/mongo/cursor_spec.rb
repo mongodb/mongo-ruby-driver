@@ -165,7 +165,7 @@ describe Mongo::Cursor do
 
         it 'does not limit the first query message' do
           expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-            expect(opts[:limit]).to eq(0)
+            expect(opts[:limit]).to eq(nil)
           end
           cursor.each(&b)
         end
@@ -199,14 +199,14 @@ describe Mongo::Cursor do
 
         it 'does not limit the first query message' do
           expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-            expect(opts[:limit]).to eq(0)
+            expect(opts[:limit]).to eq(nil)
           end
           cursor.each(&b)
         end
 
         it 'does not limit the get more message' do
           expect(Mongo::Protocol::GetMore).to receive(:new) do |a, b, num, c|
-            expect(num).to eq(0)
+            expect(num).to eq(nil)
           end
           cursor.each(&b)
         end

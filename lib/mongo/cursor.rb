@@ -33,51 +33,34 @@ module Mongo
     end
 
     def each
-      yield next_doc while cache
+      yield fetch_doc until done?
     end
 
     private
 
-    def cache
-      return true unless @cache.empty?
-      return close if finished_requests?
-      fetch_docs
+    def done?
+      @cache.empty? && exhausted?
     end
 
-    def next_doc
+    def fetch_doc
+      request_docs if @cache.empty?
       doc = @cache.shift
-      check_err_doc(doc)
+      error?(doc)
+      doc
     end
 
     def close
-      return nil unless @node
-      return nil if closed?
+      return nil if @node.nil? || closed?
       kill_cursors
     end
 
-    def has_special_fields?
-      @scope.query_opts.length > 0 ||
-      !!sort                       ||
-      !!hint                       ||
-      !!comment                    ||
-      needs_read_pref
-    end
-
-    def special_selector
-      query =      { :$query => selector }
-      query.merge!({ :$readPreference => read })
-      query.merge!({ :$orderby => sort })              if sort
-      query.merge!({ :$hint => hint })                 if hint
-      query.merge!({ :$comment => comment })           if comment
-      query.merge!({ :$snapshot => snapshot })         if snapshot
-      query.merge!({ :$maxScan => max_scan })          if max_scan
-      query.merge!({ :$showDiskLoc => show_disk_loc }) if show_disk_loc
-      query
-    end
-
-    def fetch_docs
-      return send_initial_query unless query_run?
-      send_get_more
+    def request_docs
+      if !query_run?
+        send_initial_query
+      else
+        send_get_more
+      end
+      close if exhausted?
     end
 
     # @todo: Brandon: verify connecton interface
@@ -122,7 +105,30 @@ module Mongo
         connection.send_message(kill_cursors_message)
       end
       @cursor_id = 0
-      nil
+    end
+
+    def has_special_fields?
+      !!(opts || sort || hint || comment || read_pref)
+    end
+
+    def read_pref
+      if @client.mongos?
+        read.mongos
+      else
+        read
+      end
+    end
+
+    def special_selector
+      query =      { :$query => selector }
+      query.merge!({ :$readPreference => read_pref })  if read_pref
+      query.merge!({ :$orderby => sort })              if sort
+      query.merge!({ :$hint => hint })                 if hint
+      query.merge!({ :$comment => comment })           if comment
+      query.merge!({ :$snapshot => snapshot })         if snapshot
+      query.merge!({ :$maxScan => max_scan })          if max_scan
+      query.merge!({ :$showDiskLoc => show_disk_loc }) if show_disk_loc
+      query
     end
 
     def query_opts
@@ -134,33 +140,27 @@ module Mongo
       }
     end
 
-    # @todo: add no_cursor_timeout option
-    def flags(flags = [])
-      flags << :slave_ok if secondary?
+    def opts
+      @scope.query_opts.empty? ? nil : @scope.query_opts
     end
 
-    def needs_read_pref
-      @client.mongos? &&
-      !primary? &&
-      (!secondary_preferred? || tags_set?)
+    # @todo: add no_cursor_timeout option
+    def flags(flags = [])
+      flags << :slave_ok if need_slave_ok?
     end
 
     # @todo: Emily: do this.
-    def check_err_doc(doc)
-      doc
-    end
-
-    def query_limit
-      @scope.limit || 0
+    def error?(doc)
+      false
     end
 
     def remaining_limit
-      query_limit - @returned
+      limit - @returned
     end
 
     def batch_size
-      return query_limit unless @scope.batch_size
-      @scope.batch_size > 0 ? @scope.batch_size : query_limit
+      return limit unless @scope.batch_size
+      @scope.batch_size > 0 ? @scope.batch_size : limit
     end
 
     def to_return
@@ -172,7 +172,7 @@ module Mongo
     end
 
     def limited?
-      query_limit > 0
+      limit > 0 if limit
     end
 
     def closed?
@@ -195,26 +195,17 @@ module Mongo
       !@node.nil?
     end
 
-    def finished_requests?
+    def exhausted?
       return closed? unless limited?
-      @returned >= query_limit
+      @returned >= limit
     end
 
-    # @todo: verify client interface
-    def secondary_preferred?
-      @client.secondary_preferred?(read)
-    end
-
-    def secondary?
-      @client.secondary?(read)
+    def need_slave_ok?
+      !primary?
     end
 
     def primary?
-      @client.primary?(read)
-    end
-
-    def tags_set?
-      @client.tags_set?(read)
+      read.primary?
     end
 
     def selector
@@ -243,6 +234,10 @@ module Mongo
 
     def comment
       @scope.comment
+    end
+
+    def limit
+      @scope.limit
     end
 
   end
