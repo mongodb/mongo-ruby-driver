@@ -4,7 +4,6 @@ describe Mongo::Cursor do
 
   include_context 'shared client'
 
-  # auxiliary
   let(:more) { 1 }
   let(:no_more) { 0 }
   let(:diff) { 2 }
@@ -32,12 +31,13 @@ describe Mongo::Cursor do
 
     context 'when the query has special fields' do
       let(:scope) { Mongo::Scope.new(collection, {}, { :comment => 'test' }) }
+      let(:results) do
+        { :cursor_id => no_more,
+          :nreturned => 5,
+          :docs => (0...5).to_a }
+      end
       before(:each) do
-        results = { :cursor_id => no_more,
-                    :nreturned => 5,
-                    :docs => (0...5).to_a
-                  }
-        connection.stub(:send_and_receive) { [results, node] }
+        allow(connection).to receive(:send_and_receive) { [results, node] }
       end
 
       it 'creates a special selector with $query' do
@@ -55,12 +55,13 @@ describe Mongo::Cursor do
 
     context 'when a block is provided' do
       let(:n_docs) { 5 }
+      let(:results) do
+        { :cursor_id => no_more,
+          :nreturned => n_docs,
+          :docs => (0...n_docs).to_a }
+      end
       before(:each) do
-        results = { :cursor_id => no_more,
-                    :nreturned => n_docs,
-                    :docs => (0...n_docs).to_a
-                  }
-        connection.stub(:send_and_receive) { [results, node] }
+        allow(connection).to receive(:send_and_receive) { [results, node] }
       end
 
       it 'yields each doc to the block' do
@@ -74,18 +75,19 @@ describe Mongo::Cursor do
   end
 
   describe 'iteration' do
+    before(:each) do
+      allow(connection).to receive(:send_and_receive) { [results, node] }
+    end
 
     context 'when the query has a limit' do
       let(:limit) { 5 }
       let(:scope) { Mongo::Scope.new(collection, {}, { :limit => limit }) }
 
       context 'when all docs are retreived in one request' do
-        before(:each) do
-          results = { :cursor_id => no_more,
-                      :nreturned => limit,
-                      :docs => (0...limit).to_a
-                    }
-          connection.stub(:send_and_receive) { [results, node] }
+        let(:results) do
+          { :cursor_id => no_more,
+            :nreturned => limit,
+            :docs => (0...limit).to_a }
         end
 
         it 'requests that number of docs in first query message' do
@@ -109,17 +111,19 @@ describe Mongo::Cursor do
       end
 
       context 'when multiple requests are needed' do
+        let(:result1) do
+          { :cursor_id => more,
+            :nreturned => limit - diff,
+            :docs => (0...limit - diff).to_a }
+        end
+        let(:result2) do
+          { :cursor_id => more,
+            :nreturned => diff,
+            :docs => (0...diff).to_a }
+        end
         before(:each) do
-          result1 = { :cursor_id => more,
-                      :nreturned => limit - diff,
-                      :docs => (0...limit - diff).to_a
-                    }
-          result2 = { :cursor_id => more,
-                      :nreturned => diff,
-                      :docs => (0...diff).to_a
-                    }
-          connection.stub(:send_and_receive).and_return([result1, node],
-                                                        [result2, node])
+          allow(connection).to receive(:send_and_receive).and_return(
+            [result1, node], [result2, node])
         end
 
         it 'requests that number of docs in first query message' do
@@ -155,12 +159,10 @@ describe Mongo::Cursor do
       let(:total_docs) { 6 }
 
       context 'when all docs are retreived in one request' do
-        before(:each) do
-          results = { :cursor_id => no_more,
-                      :nreturned => total_docs,
-                      :docs => (0...total_docs).to_a
-                    }
-          connection.stub(:send_and_receive) { [results, node] }
+        let(:results) do
+          { :cursor_id => no_more,
+            :nreturned => total_docs,
+            :docs => (0...total_docs).to_a }
         end
 
         it 'does not limit the first query message' do
@@ -184,17 +186,19 @@ describe Mongo::Cursor do
       end
 
       context 'when multiple requests are needed' do
+        let(:result1) do
+          { :cursor_id => more,
+            :nreturned => total_docs - diff,
+            :docs => (0...total_docs - diff).to_a }
+        end
+        let(:result2) do
+          { :cursor_id => no_more,
+            :nreturned => diff,
+            :docs => (0...diff).to_a }
+        end
         before(:each) do
-          result1 = { :cursor_id => more,
-                      :nreturned => total_docs - diff,
-                      :docs => (0...total_docs - diff).to_a
-                    }
-          result2 = { :cursor_id => no_more,
-                      :nreturned => diff,
-                      :docs => (0...diff).to_a
-                    }
-          connection.stub(:send_and_receive).and_return([result1, node],
-                                                        [result2, node])
+          allow(connection).to receive(:send_and_receive).and_return(
+            [result1, node], [result2, node])
         end
 
         it 'does not limit the first query message' do
@@ -231,12 +235,10 @@ describe Mongo::Cursor do
       let(:scope) { Mongo::Scope.new(collection, {}, { :limit => limit }) }
 
       context 'when all results are retreived in one request' do
-        before(:each) do
-          results = { :cursor_id => no_more,
-                      :nreturned => limit.abs,
-                      :docs => (0...limit.abs).to_a
-                    }
-          connection.stub(:send_and_receive) { [results, node] }
+        let(:results) do
+          { :cursor_id => no_more,
+            :nreturned => limit.abs,
+            :docs => (0...limit.abs).to_a }
         end
 
         it 'requests that number of docs in the first query message' do
@@ -265,12 +267,10 @@ describe Mongo::Cursor do
       end
 
       context 'when not all results are returned in one request' do
-        before(:each) do
-          results = { :cursor_id => no_more,
-                      :nreturned => limit.abs - diff,
-                      :docs => (0...limit.abs - diff).to_a
-                    }
-          connection.stub(:send_and_receive) { [results, node] }
+        let(:results) do
+          { :cursor_id => no_more,
+            :nreturned => limit.abs - diff,
+            :docs => (0...limit.abs - diff).to_a }
         end
 
         it 'does not send a get more message' do
@@ -291,12 +291,10 @@ describe Mongo::Cursor do
       end
 
       context 'when all docs are retreived in one request' do
-        before(:each) do
-          results = { :cursor_id => no_more,
-                      :nreturned => limit,
-                      :docs => (0...limit).to_a
-                    }
-          connection.stub(:send_and_receive) { [results, node] }
+        let(:results) do
+          { :cursor_id => no_more,
+            :nreturned => limit,
+            :docs => (0...limit).to_a }
         end
 
         it 'requests the limit number of docs in first query message' do
@@ -325,17 +323,19 @@ describe Mongo::Cursor do
       end
 
       context 'when multiple requests are needed' do
+        let(:result1) do
+          { :cursor_id => more,
+            :nreturned => limit - diff,
+            :docs => (0...limit - diff).to_a }
+        end
+        let(:result2) do
+          { :cursor_id => more,
+            :nreturned => diff,
+            :docs => (0...diff).to_a }
+        end
         before(:each) do
-          result1 = { :cursor_id => more,
-                      :nreturned => limit - diff,
-                      :docs => (0...limit - diff).to_a
-                    }
-          result2 = { :cursor_id => more,
-                      :nreturned => diff,
-                      :docs => (0...diff).to_a
-                    }
-          connection.stub(:send_and_receive).and_return([result1, node],
-                                                        [result2, node])
+          allow(connection).to receive(:send_and_receive).and_return(
+            [result1, node], [result2, node])
         end
 
         it 'requests the limit in the first query message' do
@@ -374,23 +374,27 @@ describe Mongo::Cursor do
         Mongo::Scope.new(collection, {}, { :limit => limit,
                                            :batch_size => batch_size })
       end
-      before(:each) do
-        result1 = { :cursor_id => more,
-                    :nreturned => batch_size,
-                    :docs => (0...batch_size).to_a
-                  }
-        result2 = { :cursor_id => more,
-                    :nreturned => batch_size,
-                    :docs => (0...batch_size).to_a
-                  }
-        result3 = { :cursor_id => more,
-                    :nreturned => batch_size,
-                    :docs => (0...batch_size).to_a
-                  }
-        connection.stub(:send_and_receive).and_return([result1, node],
-                                                      [result2, node],
-                                                      [result3, node])
+      let(:result1) do
+        { :cursor_id => more,
+          :nreturned => batch_size,
+          :docs => (0...batch_size).to_a }
       end
+      let(:result2) do
+        { :cursor_id => more,
+          :nreturned => batch_size,
+          :docs => (0...batch_size).to_a }
+      end
+      let(:result3) do
+        { :cursor_id => more,
+          :nreturned => batch_size,
+          :docs => (0...batch_size).to_a }
+      end
+        before(:each) do
+          allow(connection).to receive(:send_and_receive).and_return(
+            [result1, node],
+            [result2, node],
+            [result3, node])
+        end
 
       it 'requests the batch size in the first query message' do
         expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
@@ -425,17 +429,14 @@ describe Mongo::Cursor do
     context 'when the query has a batch size set but no limit' do
       let(:batch_size) { 6 }
       let(:scope) do
-        Mongo::Scope.new(collection, {},
-                         { :batch_size => batch_size })
+        Mongo::Scope.new(collection, {}, { :batch_size => batch_size })
       end
 
       context 'when all docs are retreived in one request' do
-        before(:each) do
-          results = { :cursor_id => no_more,
-                      :nreturned => batch_size,
-                      :docs => (0...batch_size).to_a
-                    }
-          connection.stub(:send_and_receive) { [results, node] }
+        let(:results) do
+          { :cursor_id => no_more,
+            :nreturned => batch_size,
+            :docs => (0...batch_size).to_a }
         end
 
         it 'requests the batch size in the first query message' do
@@ -464,17 +465,19 @@ describe Mongo::Cursor do
       end
 
       context 'when multiple requests are needed' do
+        let(:result1) do
+          { :cursor_id => more,
+            :nreturned => batch_size,
+            :docs => (0...batch_size).to_a }
+        end
+        let(:result2) do
+          { :cursor_id => no_more,
+            :nreturned => diff,
+            :docs => (0...diff).to_a }
+        end
         before(:each) do
-          result1 = { :cursor_id => more,
-                      :nreturned => batch_size,
-                      :docs => (0...batch_size).to_a
-                    }
-          result2 = { :cursor_id => no_more,
-                      :nreturned => diff,
-                      :docs => (0...diff).to_a
-                    }
-          connection.stub(:send_and_receive).and_return([result1, node],
-                                                        [result2, node])
+          allow(connection).to receive(:send_and_receive).and_return(
+            [result1, node], [result2, node])
         end
 
         it 'requests the batch size in the first query message' do

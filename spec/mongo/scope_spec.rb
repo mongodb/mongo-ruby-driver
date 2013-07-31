@@ -561,7 +561,9 @@ describe Mongo::Scope do
         :docs => (0...n_docs).to_a
       }
     end
-    before(:each) { connection.stub(:send_and_receive) { [results, node] } }
+    before(:each) do
+      allow(connection).to receive(:send_and_receive) { [results, node] }
+    end
 
     describe '#each' do
 
@@ -605,7 +607,7 @@ describe Mongo::Scope do
 
       describe '#count' do
         it 'terminates the chaining and returns a value' do
-          collection.stub(:count) { 10 }
+          allow(collection).to receive(:count).and_return(10)
           expect(scope.limit(5).skip(10).count).to eq(10)
         end
       end
@@ -620,7 +622,7 @@ describe Mongo::Scope do
         end
 
         it 'terminates chaining by returning an array of results' do
-          connection.stub(:send_and_receive) { [results, node] }
+          allow(connection).to receive(:send_and_receive) { [results, node] }
           expect(scope.limit(5).skip(10).to_a).to eq(results[:docs])
         end
 
