@@ -14,13 +14,16 @@ LineLength:
   Max: 80
   Enabled: true
 
-# Avoid methods longer than 10 lines of code
+# Avoid methods longer than 30 lines of code
 MethodLength:
-  Enabled: false
+  Max: 30
+  Enabled: true
 
-# Avoid parameter lists longer than five parameters.
+# Avoid parameter lists longer than 5 parameters.
 ParameterLists:
-  Enabled: false
+  Max: 5
+  CountKeywordArgs: true
+  Enabled: true
 
 # Don't use semicolons to terminate expressions.
 Semicolon:
