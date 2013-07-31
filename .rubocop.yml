@@ -17,6 +17,7 @@ LineLength:
 # Avoid methods longer than 30 lines of code
 MethodLength:
   Max: 30
+  CountComments: false
   Enabled: true
 
 # Avoid parameter lists longer than 5 parameters.
