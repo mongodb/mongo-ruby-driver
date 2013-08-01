@@ -290,10 +290,9 @@ describe Mongo::Scope do
 
       context 'when no read pref is set on initializaiton' do
         let(:opts) { {} }
-        let(:read) { :primary_preferred }
 
         it 'returns the collection read preference' do
-          expect(scope.read).to eq(read)
+          expect(scope.read).to eq(collection.read)
         end
 
       end
@@ -403,7 +402,7 @@ describe Mongo::Scope do
     let(:client) { double('client') }
 
     it 'calls count on collection' do
-      collection.stub(:count) { 10 }
+      allow(collection).to receive(:count).and_return(10)
       expect(scope.count).to eq(10)
     end
 
@@ -413,7 +412,9 @@ describe Mongo::Scope do
     let(:client) { double('client') }
 
     it 'calls explain on collection' do
-      collection.stub(:explain) { { 'n' => 10, 'nscanned' => 11 } }
+      allow(collection).to receive(:explain) do
+        { 'n' => 10, 'nscanned' => 11 }
+      end
       expect(scope.explain).to eq({ 'n' => 10, 'nscanned' => 11 })
     end
 
@@ -424,7 +425,7 @@ describe Mongo::Scope do
     let(:distinct_stats) { { 'values' => [1], 'stats' => { 'n' => 3 } } }
 
     it 'calls distinct on collection' do
-      collection.stub(:distinct) { distinct_stats }
+      allow(collection).to receive(:distinct).and_return(distinct_stats)
       expect(scope.distinct('name')).to eq(distinct_stats)
     end
   end
@@ -480,7 +481,9 @@ describe Mongo::Scope do
       let(:other) { described_class.new(other_collection, selector, opts) }
 
       it 'returns different hash values' do
-        other_collection.stub(:full_namespace) { "#{TEST_DB}.OTHER_COLL" }
+        allow(other_collection).to receive(:full_namespace) do
+          "#{TEST_DB}.OTHER_COLL"
+        end
         expect(scope.hash).not_to eq(other.hash)
       end
     end
@@ -539,7 +542,7 @@ describe Mongo::Scope do
       let(:client) { double('client') }
 
       it 'terminates the chaining' do
-        collection.stub(:count) { 10 }
+        allow(collection).to receive(:count).and_return(10)
         expect(scope.limit(5).skip(10).count).to eq(10)
       end
 
