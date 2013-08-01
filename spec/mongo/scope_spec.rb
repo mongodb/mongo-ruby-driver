@@ -34,6 +34,7 @@ describe Mongo::Scope do
   end
 
   describe '#inspect' do
+
     context 'when there is a namespace, selector, and opts' do
       let(:opts) { { :limit => 5 } }
       let(:selector) { { 'name' => 'Emily' } }
@@ -572,7 +573,6 @@ describe Mongo::Scope do
         it 'yields each doc to the block' do
           expect { |b| scope.each(&b) }.to yield_control.exactly(n_docs).times
         end
-
       end
 
       context 'when a block is not provided' do
@@ -584,11 +584,8 @@ describe Mongo::Scope do
             expect(scope.each).to be_a(Enumerator)
           end
         end
-
       end
-
     end
-
   end
 
   describe 'chaining' do
@@ -615,7 +612,7 @@ describe Mongo::Scope do
       describe '#to_a' do
         let(:n_docs) { 5 }
         let(:results) do
-          { :cursor_id => 0,
+          { :cursor_id => no_more,
             :nreturned => n_docs,
             :docs => (0...n_docs).to_a
           }
@@ -625,7 +622,6 @@ describe Mongo::Scope do
           allow(connection).to receive(:send_and_receive) { [results, node] }
           expect(scope.limit(5).skip(10).to_a).to eq(results[:docs])
         end
-
       end
     end
   end

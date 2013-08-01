@@ -3,11 +3,7 @@ require 'spec_helper'
 describe Mongo::Cursor do
 
   include_context 'shared client'
-
-  let(:more) { 1 }
-  let(:no_more) { 0 }
-  let(:diff) { 2 }
-  let(:b) { proc { |d| d } }
+  include_context 'shared cursor'
 
   let(:scope) { Mongo::Scope.new(collection, {}, {}) }
   let(:cursor) do
@@ -24,7 +20,6 @@ describe Mongo::Cursor do
     it 'returns a string containing the scope inspect string' do
       expect(cursor.inspect).to match(/.*#{scope.inspect}.*/)
     end
-
   end
 
   describe 'special fields' do
@@ -46,9 +41,7 @@ describe Mongo::Cursor do
         end
         cursor.each(&b)
       end
-
     end
-
   end
 
   describe '#each' do
@@ -69,9 +62,7 @@ describe Mongo::Cursor do
           cursor.each(&b)
         end.to yield_control.exactly(n_docs).times
       end
-
     end
-
   end
 
   describe 'iteration' do
@@ -107,7 +98,6 @@ describe Mongo::Cursor do
           expect(Mongo::Protocol::KillCursors).not_to receive(:new)
           cursor.each(&b)
         end
-
       end
 
       context 'when multiple requests are needed' do
@@ -150,9 +140,7 @@ describe Mongo::Cursor do
           expect(Mongo::Protocol::KillCursors).to receive(:new)
           cursor.each(&b)
         end
-
       end
-
     end
 
     context 'when the query has no limit' do
@@ -182,7 +170,6 @@ describe Mongo::Cursor do
           expect(Mongo::Protocol::KillCursors).not_to receive(:new)
           cursor.each(&b)
         end
-
       end
 
       context 'when multiple requests are needed' do
@@ -225,9 +212,7 @@ describe Mongo::Cursor do
           expect(Mongo::Protocol::KillCursors).not_to receive(:new)
           cursor.each(&b)
         end
-
       end
-
     end
 
     context 'when the query has a negative limit' do
@@ -263,7 +248,6 @@ describe Mongo::Cursor do
           expect(Mongo::Protocol::KillCursors).not_to receive(:new)
           cursor.each(&b)
         end
-
       end
 
       context 'when not all results are returned in one request' do
@@ -277,9 +261,7 @@ describe Mongo::Cursor do
           expect(Mongo::Protocol::GetMore).not_to receive(:new)
           cursor.each(&b)
         end
-
       end
-
     end
 
     context 'when the query has a batch size greater than limit' do
@@ -319,7 +301,6 @@ describe Mongo::Cursor do
           expect(Mongo::Protocol::KillCursors).not_to receive(:new)
           cursor.each(&b)
         end
-
       end
 
       context 'when multiple requests are needed' do
@@ -362,9 +343,7 @@ describe Mongo::Cursor do
           expect(Mongo::Protocol::KillCursors).to receive(:new)
           cursor.each(&b)
         end
-
       end
-
     end
 
     context 'when the query has a limit greater than batch size' do
@@ -423,7 +402,6 @@ describe Mongo::Cursor do
          expect(Mongo::Protocol::KillCursors).to receive(:new)
          cursor.each(&b)
        end
-
     end
 
     context 'when the query has a batch size set but no limit' do
@@ -461,7 +439,6 @@ describe Mongo::Cursor do
           expect(Mongo::Protocol::KillCursors).not_to receive(:new)
           cursor.each(&b)
         end
-
       end
 
       context 'when multiple requests are needed' do
@@ -504,10 +481,7 @@ describe Mongo::Cursor do
           expect(Mongo::Protocol::KillCursors).not_to receive(:new)
           cursor.each(&b)
         end
-
       end
     end
-
   end
-
 end
