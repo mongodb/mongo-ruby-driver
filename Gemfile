@@ -11,7 +11,7 @@ end
 
 group :testing do
   gem 'json', :platforms => [ :ruby_18, :jruby ]
-  gem 'rspec'
+  gem 'rspec', '~> 2.14'
 
   platforms :ruby_19, :ruby_20, :jruby do
     gem 'coveralls', :require => false
