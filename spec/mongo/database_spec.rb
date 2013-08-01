@@ -31,6 +31,31 @@ describe Mongo::Database do
     end
   end
 
+  describe '#command' do
+
+    let(:query) do
+      Mongo::Protocol::Query.new(
+        'test',
+        '$cmd',
+        { :ismaster => 1 },
+        { :limit => -1, :read => :secondary }
+      )
+    end
+
+    let(:cluster) { double('cluster') }
+    let(:database) { described_class.new(client, :test) }
+
+    before do
+      expect(client).to receive(:cluster).and_return(cluster)
+      expect(client).to receive(:read_preference).and_return(:secondary)
+      expect(cluster).to receive(:execute).with(query).and_return(:ok => 1)
+    end
+
+    it 'sends the query command to the cluster' do
+      expect(database.command(:ismaster => 1)).to eq(:ok => 1)
+    end
+  end
+
   describe '#initialize' do
 
     context 'when provided a valid name' do

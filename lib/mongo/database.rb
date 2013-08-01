@@ -44,8 +44,22 @@ module Mongo
       Collection.new(self, collection_name)
     end
 
-    # @todo: durran: need read preference and node for this.
+    # Execute a command on the database.
+    #
+    # @example Execute a command.
+    #   database.command(:ismaster => 1)
+    #
+    # @param [ Hash ] operation The command to execute.
+    #
+    # @return [ Hash ] The result of the command execution.
     def command(operation)
+      cmd = Protocol::Query.new(
+        name,
+        COMMAND,
+        operation,
+        :limit => -1, :read => client.read_preference
+      )
+      cluster.execute(cmd)
     end
 
     # Instantiate a new database object.
@@ -85,6 +99,22 @@ module Mongo
       def initialize
         super(MESSAGE)
       end
+    end
+
+    private
+
+    # Get the cluster from the client to execute operations on.
+    #
+    # @api private
+    #
+    # @example Get the cluster.
+    #   database.cluster
+    #
+    # @return [ Mongo::Cluster ] The cluster.
+    #
+    # @since 2.0.0
+    def cluster
+      client.cluster
     end
   end
 end
