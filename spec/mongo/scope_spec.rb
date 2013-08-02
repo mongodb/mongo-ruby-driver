@@ -600,7 +600,7 @@ describe Mongo::Scope do
     end
 
     context 'when a scope is chained with a terminator' do
-      let(:scope) { described_class.new(collection, selector, opts) }
+      include_context 'shared cursor'
 
       describe '#count' do
         it 'terminates the chaining and returns a value' do
@@ -610,17 +610,9 @@ describe Mongo::Scope do
       end
 
       describe '#to_a' do
-        let(:n_docs) { 5 }
-        let(:results) do
-          { :cursor_id => no_more,
-            :nreturned => n_docs,
-            :docs => (0...n_docs).to_a
-          }
-        end
-
         it 'terminates chaining by returning an array of results' do
-          allow(connection).to receive(:send_and_receive) { [results, node] }
-          expect(scope.limit(5).skip(10).to_a).to eq(results[:docs])
+          allow(connection).to receive(:send_and_receive).and_return(responses)
+          expect(scope.limit(5).skip(10).to_a).to eq(results.first[:docs])
         end
       end
     end
