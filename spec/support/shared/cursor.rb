@@ -1,8 +1,19 @@
 shared_context 'shared cursor' do
 
-  let(:more) { 1 }
-  let(:no_more) { 0 }
-  let(:diff) { 2 }
+  let(:scope_opts) { { } }
+  let(:scope) { Mongo::Scope.new(collection, {}, scope_opts) }
+
+  let(:nonzero) { 1 }
   let(:b) { proc { |d| d } }
 
+  def results(cursor_id = 0, nreturned = 5)
+    [{ :cursor_id => cursor_id,
+       :nreturned => nreturned,
+       :docs => (0...nreturned).to_a },
+     node]
+  end
+
+  let(:responses) do
+    results
+  end
 end
