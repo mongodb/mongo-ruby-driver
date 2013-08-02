@@ -7,10 +7,7 @@ describe Mongo::Scope do
   let(:selector) { {} }
   let(:opts) { {} }
 
-  let(:scope) do
-    stub!
-    described_class.new(collection, selector, opts)
-  end
+  let(:scope) { described_class.new(collection, selector, opts) }
 
   describe '#initialize' do
     let(:opts) { { :limit => 5 } }
@@ -34,7 +31,6 @@ describe Mongo::Scope do
     it 'dups the options' do
       expect(scope.opts).not_to be(opts)
     end
-
   end
 
   describe '#inspect' do
@@ -57,7 +53,6 @@ describe Mongo::Scope do
       it 'returns a string containing the opts' do
         expect(scope.inspect).to match(/.*#{opts.inspect}.*/)
       end
-
     end
   end
 
@@ -83,7 +78,6 @@ describe Mongo::Scope do
         expect(scope.comment).to eq(opts[:comment])
       end
     end
-
   end
 
   describe '#comment!' do
@@ -96,9 +90,7 @@ describe Mongo::Scope do
         scope.comment!(new_comment)
         expect(scope.comment).to eq(new_comment)
       end
-
     end
-
   end
 
   describe '#fields' do
@@ -124,7 +116,6 @@ describe Mongo::Scope do
         expect(scope.fields).to eq(opts[:fields])
       end
     end
-
   end
 
   describe '#fields!' do
@@ -137,9 +128,7 @@ describe Mongo::Scope do
         scope.fields!(new_fields)
         expect(scope.fields).to eq(new_fields)
       end
-
     end
-
   end
 
   describe '#hint' do
@@ -165,7 +154,6 @@ describe Mongo::Scope do
         expect(scope.hint).to eq(opts[:hint])
       end
     end
-
   end
 
   describe '#hint!' do
@@ -178,9 +166,7 @@ describe Mongo::Scope do
         scope.hint!(new_hint)
         expect(scope.hint).to eq(new_hint)
       end
-
     end
-
   end
 
   describe '#limit' do
@@ -206,7 +192,6 @@ describe Mongo::Scope do
         expect(scope.limit).to eq(opts[:limit])
       end
     end
-
   end
 
   describe '#limit!' do
@@ -219,9 +204,7 @@ describe Mongo::Scope do
         scope.limit!(new_limit)
         expect(scope.limit).to eq(new_limit)
       end
-
     end
-
   end
 
   describe '#skip' do
@@ -247,7 +230,6 @@ describe Mongo::Scope do
         expect(scope.skip).to eq(opts[:skip])
       end
     end
-
   end
 
   describe '#skip!' do
@@ -260,9 +242,7 @@ describe Mongo::Scope do
         scope.skip!(new_skip)
         expect(scope.skip).to eq(new_skip)
       end
-
     end
-
   end
 
   describe '#read' do
@@ -294,11 +274,8 @@ describe Mongo::Scope do
         it 'returns the collection read preference' do
           expect(scope.read).to eq(collection.read)
         end
-
       end
-
     end
-
   end
 
   describe '#read!' do
@@ -311,9 +288,7 @@ describe Mongo::Scope do
         scope.read!(new_read)
         expect(scope.read).to eq(new_read)
       end
-
     end
-
   end
 
   describe '#sort' do
@@ -339,7 +314,6 @@ describe Mongo::Scope do
         expect(scope.sort).to eq(opts[:sort])
       end
     end
-
   end
 
   describe '#sort!' do
@@ -352,9 +326,7 @@ describe Mongo::Scope do
         scope.sort!(new_sort)
         expect(scope.sort).to eq(new_sort)
       end
-
     end
-
   end
 
   describe '#query_opts' do
@@ -380,7 +352,6 @@ describe Mongo::Scope do
         expect(scope.query_opts).to eq(opts)
       end
     end
-
   end
 
   describe '#query_opts!' do
@@ -393,23 +364,18 @@ describe Mongo::Scope do
         scope.query_opts!(new_query_opts)
         expect(scope.query_opts).to eq(new_query_opts)
       end
-
     end
-
   end
 
   describe '#count' do
-    let(:client) { double('client') }
 
     it 'calls count on collection' do
       allow(collection).to receive(:count).and_return(10)
       expect(scope.count).to eq(10)
     end
-
   end
 
   describe '#explain' do
-    let(:client) { double('client') }
 
     it 'calls explain on collection' do
       allow(collection).to receive(:explain) do
@@ -417,11 +383,9 @@ describe Mongo::Scope do
       end
       expect(scope.explain).to eq({ 'n' => 10, 'nscanned' => 11 })
     end
-
   end
 
   describe '#distinct' do
-    let(:client) { double('client') }
     let(:distinct_stats) { { 'values' => [1], 'stats' => { 'n' => 3 } } }
 
     it 'calls distinct on collection' do
@@ -466,7 +430,6 @@ describe Mongo::Scope do
         expect(scope).not_to eq(other)
       end
     end
-
   end
 
   describe '#hash' do
@@ -505,7 +468,6 @@ describe Mongo::Scope do
         expect(scope.hash).not_to eq(other.hash)
       end
     end
-
   end
 
   describe 'copy' do
@@ -522,7 +484,6 @@ describe Mongo::Scope do
     it 'references the same collection' do
       expect(scope.collection).to be(scope_clone.collection)
     end
-
   end
 
   describe 'chaining' do
@@ -534,20 +495,15 @@ describe Mongo::Scope do
         expect(new_scope.limit).to eq(5)
         expect(new_scope.skip).to eq(10)
       end
-
     end
 
     context 'when a scope is chained with a terminator' do
       let(:scope) { described_class.new(collection, selector, opts) }
-      let(:client) { double('client') }
 
       it 'terminates the chaining' do
         allow(collection).to receive(:count).and_return(10)
         expect(scope.limit(5).skip(10).count).to eq(10)
       end
-
     end
-
   end
-
 end
