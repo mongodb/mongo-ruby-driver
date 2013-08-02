@@ -340,10 +340,10 @@ module Mongo
     # @yieldparam doc [Hash] Each matching document.
     def each
       enum = cursor.to_enum
-      return enum unless block_given?
       enum.each do |doc|
         yield doc
-      end
+      end if block_given?
+      enum
     end
 
     private
