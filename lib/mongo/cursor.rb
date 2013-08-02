@@ -222,7 +222,7 @@ module Mongo
     #
     # @return [Array] List of flags to be set on the query message.
     # @todo: add no_cursor_timeout option
-    def flags(flags = [])
+    def flags
       flags << :slave_ok if need_slave_ok?
     end
 
