@@ -123,75 +123,92 @@ class ClientTest < Test::Unit::TestCase
     @client[MONGO_TEST_DB]['bar'].find_one
   end
 
-  #def test_connect_with_first_node_removed
-  #  @client = MongoReplicaSetClient.new @rs.repl_set_seeds
-  #  @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 3})
-  #
-  #  old_primary = [@client.primary_pool.host, @client.primary_pool.port]
-  #  old_primary_conn = Mongo::MongoClient.new(*old_primary)
-  #  assert_raise Mongo::ConnectionFailure do
-  #    old_primary_conn['admin'].command(step_down_command)
-  #  end
-  #
-  #  # Wait for new primary
-  #  rescue_connection_failure do
-  #    sleep 1 until @rs.get_node_with_state(1)
-  #  end
-  #
-  #  new_primary = @rs.get_all_host_pairs_with_state(1).first
-  #  new_primary_conn = Mongo::MongoClient.new(*new_primary)
-  #
-  #  config = nil
-  #
-  #  # Remove old primary from replset
-  #  rescue_connection_failure do
-  #    config = @client['local']['system.replset'].find_one
-  #  end
-  #
-  #  old_member = config['members'].select {|m| m['host'] == old_primary.join(':')}.first
-  #  config['members'].reject! {|m| m['host'] == old_primary.join(':')}
-  #  config['version'] += 1
-  #
-  #  begin
-  #    new_primary_conn['admin'].command({'replSetReconfig' => config})
-  #  rescue Mongo::ConnectionFailure
-  #  end
-  #
-  #  # Wait for the dust to settle
-  #  rescue_connection_failure do
-  #    assert @client[MONGO_TEST_DB]['bar'].find_one
-  #  end
-  #
-  #  # Make sure a new connection skips the old primary
-  #  @new_conn = MongoReplicaSetClient.new @rs.repl_set_seeds
-  #  @new_conn.connect
-  #  new_nodes = [@new_conn.primary] + @new_conn.secondaries
-  #  assert !(new_nodes).include?(old_primary)
-  #
-  #  # Add the old primary back
-  #  config['members'] << old_member
-  #  config['version'] += 1
-  #
-  #  begin
-  #    new_primary_conn['admin'].command({'replSetReconfig' => config})
-  #  rescue Mongo::ConnectionFailure
-  #  end
-  #end
+  # def test_connect_with_first_node_removed
+  #   @client = MongoReplicaSetClient.new @rs.repl_set_seeds
+  #   @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 3})
 
-  #def test_connect_with_hung_first_node
-  #  hung_node = nil
-  #  begin
-  #    hung_node = IO.popen('nc -lk 127.0.0.1 29999 >/dev/null 2>&1')
-  #
-  #    @client = MongoReplicaSetClient.new(['localhost:29999'] + @rs.repl_set_seeds,
-  #                                  :connect_timeout => 2)
-  #    @client.connect
-  #    assert ['localhost:29999'] != @client.primary
-  #    assert !@client.secondaries.include?('localhost:29999')
-  #  ensure
-  #    Process.kill("KILL", hung_node.pid) if hung_node
-  #  end
-  #end
+  #   # Make sure everyone's views of optimes are caught up
+  #   loop do
+  #     break if @rs.repl_set_get_status.all? do |status|
+  #       members = status['members']
+  #       primary_optime = members.find{|m| m['state'] == 1}['optime'].seconds
+  #       members.any?{|m| m['state'] == 2 && primary_optime - m['optime'].seconds < 5}
+  #     end
+  #     sleep 1
+  #   end
+
+  #   old_primary = [@client.primary_pool.host, @client.primary_pool.port]
+  #   old_primary_conn = Mongo::MongoClient.new(*old_primary)
+
+  #   assert_raise Mongo::ConnectionFailure do
+  #     old_primary_conn['admin'].command(step_down_command)
+  #   end
+
+  #   # Wait for new primary
+  #   rescue_connection_failure do
+  #     sleep 1 until @rs.primary
+  #   end
+
+  #   new_primary = [@rs.primary.host, @rs.primary.port]
+  #   new_primary_conn = Mongo::MongoClient.new(*new_primary)
+
+  #   assert new_primary != old_primary
+
+  #   config = nil
+
+  #   # Remove old primary from replset
+  #   rescue_connection_failure do
+  #     config = @client['local']['system.replset'].find_one
+  #   end
+
+  #   old_member = config['members'].select {|m| m['host'] == old_primary.join(':')}.first
+  #   config['members'].reject! {|m| m['host'] == old_primary.join(':')}
+  #   config['version'] += 1
+
+  #   begin
+  #     new_primary_conn['admin'].command({'replSetReconfig' => config})
+  #   rescue Mongo::ConnectionFailure
+  #   end
+
+  #   # Wait for the dust to settle
+  #   rescue_connection_failure do
+  #     assert @client[MONGO_TEST_DB]['bar'].find_one
+  #   end
+
+  #   begin
+  #     # Make sure a new connection skips the old primary
+  #     @new_conn = MongoReplicaSetClient.new @rs.repl_set_seeds
+  #     @new_conn.connect
+  #     new_nodes = @new_conn.secondaries + [@new_conn.primary]
+  #     assert !new_nodes.include?(old_primary)
+  #   ensure
+  #     # Add the old primary back
+  #     config['members'] << old_member
+  #     config['version'] += 1
+
+  #     begin
+  #       new_primary_conn['admin'].command({'replSetReconfig' => config})
+  #     rescue Mongo::ConnectionFailure
+  #     end
+  #   end
+  # end
+
+  def test_connect_with_hung_first_node
+    hung_node = nil
+    begin
+      hung_node = IO.popen('nc -lk 127.0.0.1 29999 >/dev/null 2>&1')
+
+      Timeout.timeout(3) do
+        @client = MongoReplicaSetClient.new(['localhost:29999'] + @rs.repl_set_seeds,
+          :connect_timeout => 2)
+        @client.connect
+      end
+      assert ['localhost:29999'] != @client.primary
+      assert !@client.secondaries.include?('localhost:29999')
+    ensure
+      Process.kill("KILL", hung_node.pid) if hung_node
+    end
+  end
 
   def test_connect_with_connection_string
     @client = MongoClient.from_uri("mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}")
