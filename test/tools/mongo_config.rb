@@ -426,7 +426,8 @@ module Mongo
 
       def member_names_by_state(state)
         states = Array(state)
-        status = repl_set_get_status.first
+        # Any status with a REMOVED node won't have the full cluster state
+        status = repl_set_get_status.find {|status| status['members'].find {|m| m['state'] == 'REMOVED'}.nil?}
         status['members'].find_all{|member| states.index(member['state']) }.collect{|member| member['name']}
       end
 
