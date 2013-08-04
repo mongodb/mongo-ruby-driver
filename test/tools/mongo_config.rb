@@ -390,6 +390,8 @@ module Mongo
             members = status['members']
             if status['ok'] == 1.0 && members.collect{|m| m['state']}.all?{|state| [1,2,7].index(state)}
               members.any?{|m| m['state'] == 1} &&
+                (primary_optime = members.find{|m| m['state'] == 1}['optime'].seconds) &&
+                members.all? {|m| m['state'] == 7 || primary_optime - m['optime'].seconds < 5} &&
                 case status['myState']
                 when 1
                   is_master['ismaster'] == true && is_master['secondary'] == false
