@@ -25,10 +25,31 @@ module Mongo
     # @since 2.0.0
     COMMAND = '$cmd'.freeze
 
+    # The name of the collection that holds all the collection names.
+    #
+    # @since 2.0.0
+    NAMESPACES = 'system.namespaces'.freeze
+
     # @return [ Mongo::Client ] The database client.
     attr_reader :client
     # @return [ String ] The name of the collection.
     attr_reader :name
+
+    # Check equality of the database object against another. Will simply check
+    # if the names are the same.
+    #
+    # @example Check database equality.
+    #   database == other
+    #
+    # @param [ Object ] other The object to check against.
+    #
+    # @return [ true, false ] If the objects are equal.
+    #
+    # @since 2.0.0
+    def ==(other)
+      return false unless other.is_a?(Database)
+      name == other.name
+    end
 
     # Get a collection in this database by the provided name.
     #
@@ -42,6 +63,37 @@ module Mongo
     # @since 2.0.0
     def [](collection_name)
       Collection.new(self, collection_name)
+    end
+    alias_method :collection, :[]
+
+    # Get all the names of the non system collections in the database.
+    #
+    # @example Get the collection names.
+    #   database.collection_names
+    #
+    # @return [ Array<String> ] The names of all non-system collections.
+    #
+    # @since 2.0.0
+    def collection_names
+      namespaces = collection(NAMESPACES).find(
+        :name => { '$not' => /#{name}\.system\,|\$/ }
+      )
+      namespaces.map do |document|
+        collection = document['name']
+        collection[name.length + 1, collection.length]
+      end
+    end
+
+    # Get all the collections that belong to this database.
+    #
+    # @example Get all the collections.
+    #   database.collections
+    #
+    # @return [ Array<Mongo::Collection> ] All the collections.
+    #
+    # @since 2.0.0
+    def collections
+      collection_names.map { |name| collection(name) }
     end
 
     # Execute a command on the database.

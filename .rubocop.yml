@@ -74,7 +74,7 @@ CollectionMethods:
 # Muli-line method chaining should be done with leading dots.
 DotPosition:
   Style: 'leading'
-  Enabled: true
+  Enabled: false
 
 # Enforce UTF-8 Encoding for Ruby 1.9
 Encoding:
