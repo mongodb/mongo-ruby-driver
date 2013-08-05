@@ -23,7 +23,7 @@ Gem::Specification.new do |s|
   end
 
   s.files             = Dir.glob('{bin,lib,spec}/**/*')
-  s.files             += %w(mongo.gemspec LICENSE README.md CONTRIBUTING.md Rakefile)
+  s.files             += %w[mongo.gemspec LICENSE README.md CONTRIBUTING.md Rakefile]
   s.test_files        = Dir.glob('spec/**/*')
 
   s.require_paths     = ['lib']
