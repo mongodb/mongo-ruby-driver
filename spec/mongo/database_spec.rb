@@ -4,6 +4,36 @@ describe Mongo::Database do
 
   let(:client) { double('client') }
 
+  describe '#==' do
+
+    let(:database) { described_class.new(client, :test) }
+
+    context 'when the names are the same' do
+
+      let(:other) { described_class.new(client, :test) }
+
+      it 'returns true' do
+        expect(database).to eq(other)
+      end
+    end
+
+    context 'when the names are not the same' do
+
+      let(:other) { described_class.new(client, :testing) }
+
+      it 'returns false' do
+        expect(database).to_not eq(other)
+      end
+    end
+
+    context 'when the object is not a database' do
+
+      it 'returns false' do
+        expect(database).to_not eq('test')
+      end
+    end
+  end
+
   describe '#[]' do
 
     let(:database) do
