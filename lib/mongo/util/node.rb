@@ -105,7 +105,14 @@ module Mongo
             @last_state = @config['ismaster'] ? :primary : :other
           end
 
-          @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
+          if @client.connect_timeout
+            Timeout::timeout(@client.connect_timeout, OperationTimeout) do
+              @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
+            end
+          else
+            @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
+          end
+
           update_max_sizes
 
           if @config['msg']
