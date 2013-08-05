@@ -25,6 +25,11 @@ module Mongo
     # @since 2.0.0
     COMMAND = '$cmd'.freeze
 
+    # The name of the collection that holds all the collection names.
+    #
+    # @since 2.0.0
+    NAMESPACES = 'system.namespaces'.freeze
+
     # @return [ Mongo::Client ] The database client.
     attr_reader :client
     # @return [ String ] The name of the collection.
@@ -42,6 +47,24 @@ module Mongo
     # @since 2.0.0
     def [](collection_name)
       Collection.new(self, collection_name)
+    end
+    alias_method :collection, :[]
+
+    # Get all the names of the non system collections in the database.
+    #
+    # @example Get the collection names.
+    #   database.collection_names
+    #
+    # @return [ Array<String> ] The names of all non-system collections.
+    #
+    # @since 2.0.0
+    def collection_names
+      namespaces = collection(NAMESPACES)
+        .find(:name => { '$not' => /#{name}\.system\,|\$/ })
+      namespaces.map do |document|
+        collection = document['name']
+        collection[name.length + 1, collection.length]
+      end
     end
 
     # Execute a command on the database.

@@ -31,6 +31,27 @@ describe Mongo::Database do
     end
   end
 
+  describe '#collection_names' do
+
+    let(:names) do
+      [{ 'name' => 'test.users' }, { 'name' => 'test.sounds' }]
+    end
+
+    let(:collection) { double('collection') }
+    let(:database) { described_class.new(client, :test) }
+
+    before do
+      expect(database).to receive(:collection)
+        .with('system.namespaces').and_return(collection)
+      expect(collection).to receive(:find)
+        .with(:name => { '$not' => /test\.system\,|\$/ }).and_return(names)
+    end
+
+    it 'returns the stripped names of the collections' do
+      expect(database.collection_names).to eq(%w[users sounds])
+    end
+  end
+
   describe '#command' do
 
     let(:query) do
