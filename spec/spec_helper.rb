@@ -1,6 +1,22 @@
 unless RUBY_VERSION < '1.9'
   require 'coveralls'
-  Coveralls.wear!
+  require 'simplecov'
+
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+    SimpleCov::Formatter::HTMLFormatter,
+    Coveralls::SimpleCov::Formatter
+  ]
+
+  SimpleCov.start do
+    # report groups
+    add_group 'Wire Protocol', 'lib/mongo/protocol'
+    add_group 'Connection Pool', 'lib/mongo/pool'
+
+    # filters
+    add_filter 'tasks'
+    add_filter 'spec'
+    add_filter 'bin'
+  end
 end
 
 require 'mongo'
