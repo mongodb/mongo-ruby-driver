@@ -25,6 +25,17 @@ module Mongo
     # @return [ String ] The name of the collection.
     attr_reader :name
 
+    # Check if a collection is equal to another object. Will check the name and
+    # the database for equality.
+    #
+    # @example Check collection equality.
+    #   collection == other
+    #
+    # @param [ Object ] other The object to check.
+    #
+    # @return [ true, false ] If the objects are equal.
+    #
+    # @since 2.0.0
     def ==(other)
       return false unless other.is_a?(Collection)
       name == other.name && database == other.database
