@@ -67,6 +67,18 @@ module Mongo
       end
     end
 
+    # Get all the collections that belong to this database.
+    #
+    # @example Get all the collections.
+    #   database.collections
+    #
+    # @return [ Array<Mongo::Collection> ] All the collections.
+    #
+    # @since 2.0.0
+    def collections
+      collection_names.map { |name| collection(name) }
+    end
+
     # Execute a command on the database.
     #
     # @example Execute a command.

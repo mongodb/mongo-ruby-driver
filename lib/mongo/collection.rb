@@ -25,6 +25,11 @@ module Mongo
     # @return [ String ] The name of the collection.
     attr_reader :name
 
+    def ==(other)
+      return false unless other.is_a?(Collection)
+      name == other.name && database == other.database
+    end
+
     # @todo: durran: implement.
     def initialize(database, name)
       raise InvalidName.new unless name

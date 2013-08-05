@@ -52,6 +52,20 @@ describe Mongo::Database do
     end
   end
 
+  describe '#collections' do
+
+    let(:database) { described_class.new(client, :test) }
+    let(:collection) { Mongo::Collection.new(database, 'users') }
+
+    before do
+      expect(database).to receive(:collection_names).and_return(['users'])
+    end
+
+    it 'returns collection objects for each name' do
+      expect(database.collections).to eq([collection])
+    end
+  end
+
   describe '#command' do
 
     let(:query) do
