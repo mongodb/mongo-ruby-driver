@@ -33,6 +33,17 @@ describe Mongo::Cursor do
     end
   end
 
+  context 'mongos' do
+
+    it 'creates a special selector with $query' do
+      allow(client).to receive(:mongos?).and_return(true)
+      expect(Mongo::Protocol::Query).to receive(:new) do |a, b, selector, c|
+        expect(selector[:$query]).to eq(scope.selector)
+      end
+      cursor.each(&b)
+    end
+  end
+
   describe '#each' do
 
     context 'when a block is provided' do
