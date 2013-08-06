@@ -77,14 +77,6 @@ module Mongo
           buffer << value
           buffer << NULL
         end
-
-        # Deserializes a C style string from the IO stream
-        #
-        # @param io [IO] IO stream containing the CString.
-        # @return [String] Deserialized CString.
-        def self.deserialize(io)
-          io.gets(NULL)
-        end
       end
 
       # MongoDB wire protocol serialization strategy for 32-bit Zero.
@@ -99,14 +91,6 @@ module Mongo
         # @return [String] Buffer with serialized value.
         def self.serialize(buffer, value)
           buffer << [ZERO].pack(INT32_PACK)
-        end
-
-        # Deserializes a 32-bit Zero from the IO stream
-        #
-        # @param io [IO] IO stream containing the 32-bit Zero.
-        # @return [Fixnum] Deserialized Zero.
-        def self.deserialize(io)
-          io.read(4).unpack(INT32_PACK).first
         end
       end
 
