@@ -93,6 +93,43 @@ describe Mongo::Scope do
     end
   end
 
+  describe '#batch_size' do
+    let(:opts) { { :batch_size => 13 } }
+
+    context 'when a batch size is specified' do
+      let(:new_batch_size) { 15 }
+
+      it 'sets the batch size' do
+        new_scope = scope.batch_size(new_batch_size)
+        expect(new_scope.batch_size).to eq(new_batch_size)
+      end
+
+      it 'retuns a new scope' do
+        expect(scope.batch_size(new_batch_size)).not_to be(scope)
+      end
+    end
+
+    context 'when a batch size is not specified' do
+
+      it 'returns the batch_size' do
+        expect(scope.batch_size).to eq(opts[:batch_size])
+      end
+    end
+  end
+
+  describe '#batch_size!' do
+
+    context 'when a batch size is specified' do
+      let(:opts) { { :batch_size => 13 } }
+      let(:new_batch_size) { 15 }
+
+      it 'sets the batch size on the same Scope' do
+        scope.batch_size!(new_batch_size)
+        expect(scope.batch_size).to eq(new_batch_size)
+      end
+    end
+  end
+
   describe '#fields' do
 
     context 'when fields are specified' do
