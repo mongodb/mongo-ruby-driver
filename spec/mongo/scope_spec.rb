@@ -369,16 +369,46 @@ describe Mongo::Scope do
   describe '#query_opts' do
 
     context 'when query_opts are specified' do
-      let(:opts) { { :snapshot => true } }
-      let(:new_query_opts) { { :max_scan => 100 }  }
+      context 'snapshot' do
+        let(:opts) { { :snapshot => true } }
 
-      it 'sets the query opts' do
-        new_scope = scope.query_opts(new_query_opts)
-        expect(new_scope.query_opts).to eq(new_query_opts)
+        it 'returns shapshot in the query options' do
+          expect(scope.query_opts).to eq(opts)
+        end
       end
 
-      it 'returns a new Scope' do
-        expect(scope.query_opts(new_query_opts)).not_to be(scope)
+      context 'max_scan' do
+        let(:opts) { { :max_scan => true } }
+
+        it 'returns max_scan in the query options' do
+          expect(scope.query_opts).to eq(opts)
+        end
+      end
+
+      context 'show_disk_loc' do
+        let(:opts) { { :show_disk_loc => true } }
+
+        it 'returns show_disk_loc in the query options' do
+          expect(scope.query_opts).to eq(opts)
+        end
+      end
+
+      describe 'replacement' do
+        let(:opts) { { :snapshot => true } }
+        let(:new_query_opts) { { :max_scan => 100 }  }
+
+        it 'replaces the old query opts' do
+          new_scope = scope.query_opts(new_query_opts)
+          expect(new_scope.query_opts).to eq(new_query_opts)
+        end
+      end
+
+      describe 'immutability' do
+        let(:new_query_opts) { { :max_scan => 100 }  }
+
+        it 'returns a new Scope' do
+          expect(scope.query_opts(new_query_opts)).not_to be(scope)
+        end
       end
     end
 
