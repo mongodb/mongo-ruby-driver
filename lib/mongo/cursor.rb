@@ -177,11 +177,7 @@ module Mongo
     #
     # @return [Hash, nil] The read preference or nil.
     def read_pref
-      if @client.mongos?
-        read.mongos
-      else
-        read
-      end
+      @client.mongos? ? read.mongos : read
     end
 
     # Build a special query selector.
@@ -248,19 +244,21 @@ module Mongo
     # @return [Integer] The number of documents to return in each batch from
     #   the server.
     def batch_size
-      return limit unless @scope.batch_size
-      @scope.batch_size > 0 ? @scope.batch_size : limit
+      @scope.batch_size && @scope.batch_size > 0 ? @scope.batch_size : limit
+    end
+
+    # Whether a limit should be specified.
+    #
+    # @return [true, false] Whether a limit should be specified.
+    def use_limit?
+      limited? && batch_size >= remaining_limit
     end
 
     # The number of documents to return in the next batch.
     #
     # @return [Integer] The number of documents to return in the next batch.
     def to_return
-      if limited?
-        batch_size < remaining_limit ? batch_size : remaining_limit
-      else
-        batch_size
-      end
+      use_limit? ? remaining_limit : batch_size
     end
 
     # Whether this query has a limit.
@@ -311,8 +309,7 @@ module Mongo
     # @return [true, false] Whether all results have been retrieved from
     #   the server.
     def exhausted?
-      return closed? unless limited?
-      @returned >= limit
+      limited? ? (@returned >= limit) : closed?
     end
 
     # Whether the slave ok bit needs to be set on the wire protocol message.
