@@ -3,70 +3,8 @@ require 'spec_helper'
 describe Mongo::ReadPreference::Secondary do
   include_context 'read preference'
 
-  describe '#name' do
-    it 'returns the name' do
-      expect(pref.name).to eq(:secondary)
-    end
-  end
-
-  describe '#tag_sets' do
-    context 'tags not provided' do
-      it 'returns an empty array' do
-        expect(pref.tag_sets).to be_empty
-      end
-    end
-
-    context 'tag sets provided' do
-      let(:tag_sets) { [tag_set] }
-      it 'returns the tag sets' do
-        expect(pref.tag_sets).to eq(tag_sets)
-      end
-    end
-  end
-
-  describe '#==' do
-    context 'when mode is the same' do
-      let(:other) { described_class.new }
-
-      context 'tag sets and acceptable latency are the same' do
-        it 'returns true' do
-          expect(pref).to eq(other)
-        end
-      end
-
-      context 'tag sets are different' do
-        let(:tag_sets) { { 'not' => 'eq' } }
-        it 'returns false' do
-          expect(pref).not_to eq(other)
-        end
-      end
-
-      context 'acceptable latency is different' do
-        let(:acceptable_latency) { 100 }
-        it 'returns false' do
-          expect(pref).not_to eq(other)
-        end
-      end
-    end
-
-    context 'when mode is different' do
-      let(:other) do
-        double('Mode').tap do |mode|
-          allow(mode).to receive(:name).and_return(:other)
-        end
-      end
-
-      it 'returns false' do
-        expect(pref).not_to eq(other)
-      end
-    end
-  end
-
-  describe '#hash' do
-    let(:values) { [pref.name, pref.tag_sets, pref.acceptable_latency] }
-    it 'returns a hash of the name, tag_sets, and acceptable latency' do
-      expect(pref.hash).to eq(values.hash)
-    end
+  it_behaves_like 'a read preference mode' do
+    let(:name) { :secondary }
   end
 
   describe '#to_mongos' do
