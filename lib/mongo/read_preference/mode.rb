@@ -27,7 +27,7 @@ module Mongo
       end
 
       def ==(other)
-        mode == other.mode &&
+        name == other.name &&
           tag_sets == other.tag_sets &&
           acceptable_latency == other.acceptable_latency
       end

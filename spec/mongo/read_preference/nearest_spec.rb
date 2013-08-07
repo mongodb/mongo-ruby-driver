@@ -24,6 +24,51 @@ describe Mongo::ReadPreference::Nearest do
     end
   end
 
+  describe '#==' do
+    context 'when mode is the same' do
+      let(:other) { described_class.new }
+
+      context 'tag sets and acceptable latency are the same' do
+        it 'returns true' do
+          expect(pref).to eq(other)
+        end
+      end
+
+      context 'tag sets are different' do
+        let(:tag_sets) { { 'not' => 'eq' } }
+        it 'returns false' do
+          expect(pref).not_to eq(other)
+        end
+      end
+
+      context 'acceptable latency is different' do
+        let(:acceptable_latency) { 100 }
+        it 'returns false' do
+          expect(pref).not_to eq(other)
+        end
+      end
+    end
+
+    context 'when mode is different' do
+      let(:other) do
+        double('Mode').tap do |mode|
+          allow(mode).to receive(:name).and_return(:other)
+        end
+      end
+
+      it 'returns false' do
+        expect(pref).not_to eq(other)
+      end
+    end
+  end
+
+  describe '#hash' do
+    let(:values) { [pref.name, pref.tag_sets, pref.acceptable_latency] }
+    it 'returns a hash of the name, tag_sets, and acceptable latency' do
+      expect(pref.hash).to eq(values.hash)
+    end
+  end
+
   describe '#to_mongos' do
     it 'returns mongos readPreference' do
       expect(pref.to_mongos).to eq(
