@@ -61,6 +61,17 @@ module Mongo
 
     MAX_QUERY_TRIES = 3
 
+    SPECIAL_FIELDS = [
+      [:$query,          :selector],
+      [:$readPreference, :read_pref],
+      [:$orderby,        :sort],
+      [:$hint,           :hint],
+      [:$comment,        :comment],
+      [:$snapshot,       :snapshot],
+      [:$maxScan,        :max_scan],
+      [:$showDiskLoc,    :show_disk_loc]
+    ]
+
     # Whether we have iterated through all documents in the cache and retrieved
     # all results from the server.
     #
@@ -184,15 +195,12 @@ module Mongo
     #
     # @return [Hash] The special query selector.
     def special_selector
-      query =      { :$query => selector }
-      query.merge!({ :$readPreference => read_pref })  if read_pref
-      query.merge!({ :$orderby => sort })              if sort
-      query.merge!({ :$hint => hint })                 if hint
-      query.merge!({ :$comment => comment })           if comment
-      query.merge!({ :$snapshot => snapshot })         if snapshot
-      query.merge!({ :$maxScan => max_scan })          if max_scan
-      query.merge!({ :$showDiskLoc => show_disk_loc }) if show_disk_loc
-      query
+      SPECIAL_FIELDS.reduce({}) do |hash, pair|
+        key, method = pair
+        value = send(method)
+        hash[key] = value if value
+        hash
+      end
     end
 
     # Get a hash of the query options.
