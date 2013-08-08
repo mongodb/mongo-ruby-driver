@@ -292,6 +292,18 @@ class TestCollection < Test::Unit::TestCase
     return conn.db(MONGO_TEST_DB)["test"]
   end
 
+  def test_non_operation_failure_halts_insertion_with_continue_on_error
+    coll = limited_collection
+    coll.stubs(:send_insert_message).raises(OperationTimeout).times(1)
+    docs = []
+    10.times do
+      docs << {'foo' => 'a' * 950}
+    end
+    assert_raise OperationTimeout do
+      coll.insert(docs, :continue_on_error => true)
+    end
+  end
+
   def test_chunking_batch_insert
      docs = []
      10.times do
