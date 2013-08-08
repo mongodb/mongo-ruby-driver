@@ -1109,8 +1109,7 @@ module Mongo
     def insert_batch(message, documents, write_concern, continue_on_error, errors, collection_name=@name)
       begin
         send_insert_message(message, documents, collection_name, write_concern)
-      rescue ConnectionFailure, OperationFailure, OperationTimeout, SystemStackError,
-        NoMemoryError, SystemCallError => ex
+      rescue OperationFailure => ex
         raise ex unless continue_on_error
         errors << ex
       end
@@ -1170,7 +1169,7 @@ module Mongo
         insert_batch(message, docs_to_insert, write_concern, continue_on_error, errors, collection_name)
         # insert_batch collects errors if w > 0 and continue_on_error is true,
         # so raise the error here, as this is the last or only msg sent
-        raise errors.first unless errors.empty?
+        raise errors.last unless errors.empty?
       end
 
       collect_on_error ? [inserted_ids, error_docs] : inserted_ids
