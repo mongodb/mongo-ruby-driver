@@ -44,7 +44,7 @@ end
 TEST_DB      = 'ruby-driver'
 TEST_COLL    = 'test'
 TEST_SET     = 'ruby-driver-rs'
-COVERAGE_MIN = 99
+COVERAGE_MIN = 90
 
 # require all shared examples
 Dir['./spec/support/shared/*.rb'].sort.each { |file| require file }
