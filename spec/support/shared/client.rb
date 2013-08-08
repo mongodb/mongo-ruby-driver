@@ -13,6 +13,7 @@ shared_context 'shared client' do
       allow(read_obj).to receive(:primary_preferred?).and_return(false)
       allow(read_obj).to receive(:nearest?).and_return(false)
       allow(read_obj).to receive(:tags_set?).and_return(false)
+      allow(read_obj).to receive(:mongos).and_return({ :mode => 'secondary' })
     end
   end
 
