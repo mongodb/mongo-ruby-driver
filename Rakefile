@@ -1,4 +1,4 @@
-# -*- mode: ruby; -*-
+#!/usr/bin/env ruby
 
 require 'rubygems'
 
