@@ -11,6 +11,7 @@ unless RUBY_VERSION < '1.9'
     # report groups
     add_group 'Wire Protocol', 'lib/mongo/protocol'
     add_group 'Connection Pool', 'lib/mongo/pool'
+    add_group 'Read Preference', 'lib/mongo/read_preference'
 
     # filters
     add_filter 'tasks'
