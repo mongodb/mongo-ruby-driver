@@ -5,6 +5,7 @@ describe Mongo::ReadPreference::Nearest do
 
   it_behaves_like 'a read preference mode' do
     let(:name) { :nearest }
+    let(:slave_ok) { true }
   end
 
   describe '#to_mongos' do

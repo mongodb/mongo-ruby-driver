@@ -31,6 +31,13 @@ module Mongo
         :primary
       end
 
+      # Whether or not the slave ok bit should be set for this mode.
+      #
+      # @return [false] The slave ok bit should not be set.
+      def slave_ok?
+        false
+      end
+
       # Converts this read preference mode instance into a format compatible
       # with mongos.
       #

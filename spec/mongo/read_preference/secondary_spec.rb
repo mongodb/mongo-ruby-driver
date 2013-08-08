@@ -5,6 +5,7 @@ describe Mongo::ReadPreference::Secondary do
 
   it_behaves_like 'a read preference mode' do
     let(:name) { :secondary }
+    let(:slave_ok) { true }
   end
 
   describe '#to_mongos' do

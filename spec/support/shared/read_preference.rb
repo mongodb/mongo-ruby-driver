@@ -14,6 +14,12 @@ shared_examples 'a read preference mode' do
     end
   end
 
+  describe 'slave_ok?' do
+    it 'returns the appropriate slave_ok bit' do
+      expect(pref.slave_ok?).to eq(slave_ok)
+    end
+  end
+
   describe '#tag_sets' do
     context 'tags not provided' do
       it 'returns an empty array' do

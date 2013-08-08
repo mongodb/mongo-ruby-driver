@@ -5,6 +5,7 @@ describe Mongo::ReadPreference::Primary do
 
   it_behaves_like 'a read preference mode' do
     let(:name) { :primary }
+    let(:slave_ok) { false }
   end
 
   describe '#to_mongos' do
