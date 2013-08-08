@@ -588,6 +588,94 @@ describe Mongo::Scope do
     end
   end
 
+  context 'find_and_modify' do
+    include_context 'shared find_and_modify'
+
+    describe '#get_one_then_remove' do
+
+      it 'executes a find_and_modify with remove true' do
+        expect(Mongo::Operation::FindAndModify).to receive(:new).
+          with(scope, :remove => true).and_call_original
+        scope.get_one_then_remove
+      end
+    end
+
+    describe '#get_one_then_replace' do
+
+      it 'executes a find_and_modify with the replacement doc' do
+        expect(Mongo::Operation::FindAndModify).to receive(:new).
+          with(scope, :replace => replacement).and_call_original
+        scope.get_one_then_replace(replacement)
+      end
+    end
+
+    describe '#get_one_then_repsert' do
+
+      it 'executes a find_and_modify with replacement doc and upsert true' do
+        expect(Mongo::Operation::FindAndModify).to receive(:new).
+          with(scope, :replace => replacement, :upsert => true).
+          and_call_original
+        scope.get_one_then_repsert(replacement)
+      end
+    end
+
+    describe '#get_one_then_update' do
+
+      it 'executes a find_and_modify with update doc' do
+        expect(Mongo::Operation::FindAndModify).to receive(:new).
+          with(scope, :update => update).and_call_original
+        scope.get_one_then_update(update)
+      end
+    end
+
+    describe '#get_one_then_upsert' do
+
+      it 'executes a find_and_modify with update doc and upsert true' do
+        expect(Mongo::Operation::FindAndModify).to receive(:new).
+          with(scope, :update => update, :upsert => true).and_call_original
+        scope.get_one_then_upsert(update)
+      end
+    end
+
+    describe '#replace_one_then_get' do
+
+      it 'executes a find_and_modify with replacement doc and new true' do
+        expect(Mongo::Operation::FindAndModify).to receive(:new).
+          with(scope, :replace => replacement, :new => true).and_call_original
+        scope.replace_one_then_get(replacement)
+      end
+    end
+
+    describe '#update_one_then_get' do
+
+      it 'executes a find_and_modify with update doc and new true' do
+        expect(Mongo::Operation::FindAndModify).to receive(:new).
+          with(scope, :update => update, :new => true).and_call_original
+        scope.update_one_then_get(update)
+      end
+    end
+
+    describe '#repsert_one_then_get' do
+
+      it 'executes a find_and_modify with update doc and new true' do
+        expect(Mongo::Operation::FindAndModify).to receive(:new).
+          with(scope, :replace => replacement, :upsert => true, :new => true).
+            and_call_original
+        scope.repsert_one_then_get(replacement)
+      end
+    end
+
+    describe '#upsert_one_then_get' do
+
+      it 'executes a find_and_modify with update doc and new true' do
+        expect(Mongo::Operation::FindAndModify).to receive(:new).
+          with(scope, :update => update, :upsert => true, :new => true).
+            and_call_original
+        scope.upsert_one_then_get(update)
+      end
+    end
+  end
+
   describe 'chaining' do
 
     context 'when helper methods are chained' do
