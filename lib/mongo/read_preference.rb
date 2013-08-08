@@ -1,0 +1,6 @@
+require 'mongo/read_preference/mode'
+require 'mongo/read_preference/nearest'
+require 'mongo/read_preference/primary'
+require 'mongo/read_preference/primary_preferred'
+require 'mongo/read_preference/secondary'
+require 'mongo/read_preference/secondary_preferred'

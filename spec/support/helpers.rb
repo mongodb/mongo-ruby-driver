@@ -19,4 +19,22 @@ module Helpers
     $stderr = original_stderr
   end
 
+  def node(state, opts = {})
+    tags = opts.fetch(:tags, {})
+    ping = opts.fetch(:ping, 0)
+
+    double(state.to_s.capitalize).tap do |node|
+      allow(node).to receive(:primary?) do
+        state == :primary ? true : false
+      end
+      allow(node).to receive(:secondary?) do
+        state == :secondary ? true : false
+      end
+      allow(node).to receive(:tags) { tags }
+      allow(node).to receive(:matches_tags?) do |tag_set|
+        tag_set.none? { |k, v| node.tags[k.to_s] != v }
+      end
+      allow(node).to receive(:ping_time) { ping }
+    end
+  end
 end
