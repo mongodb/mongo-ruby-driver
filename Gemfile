@@ -5,8 +5,8 @@ gem 'bson', '2.0.0.rc1'
 
 group :release do
   gem 'git'
+  gem 'kramdown'
   gem 'yard'
-  gem 'redcarpet', :platforms => :mri
 end
 
 group :testing do
@@ -15,20 +15,23 @@ group :testing do
 
   platforms :ruby_19, :ruby_20, :jruby do
     gem 'coveralls', :require => false
-    gem 'rubocop' unless RUBY_VERSION < '1.9'
+    gem 'rubocop' if RUBY_VERSION > '1.9'
   end
 end
 
 group :development do
-  gem 'pry-rescue'
-  gem 'pry-nav'
-  gem 'guard-rspec'
-
-  gem 'rb-inotify', :require => false # Linux
-  gem 'rb-fsevent', :require => false # OS X
   gem 'rb-fchange', :require => false # Windows
+  gem 'rb-fsevent', :require => false # OS X
+  gem 'rb-inotify', :require => false # Linux
   gem 'terminal-notifier-guard'
 
+  gem 'guard-bundler'
+  gem 'guard-rspec', :platforms => :mri
+  gem 'guard-jruby-rspec', :platforms => :jruby
   gem 'guard-rubocop', :platforms => [:ruby_19, :ruby_20, :jruby]
+  gem 'guard-yard', :platforms => [:mri_19, :mri_20]
+
   gem 'ruby-prof', :platforms => :mri
+  gem 'pry-rescue'
+  gem 'pry-nav'
 end
