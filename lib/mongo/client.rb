@@ -11,6 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+require 'mongo/write_concern/mode'
+require 'mongo/write_concern/acknowledged'
+require 'mongo/write_concern/unacknowledged'
 
 module Mongo
 
@@ -128,6 +131,10 @@ module Mongo
     # @since 2.0.0
     def with(new_options = {})
       Client.new(cluster.addresses.dup, options.merge(new_options))
+    end
+
+    def write_concern
+      @write_concern ||= WriteConcern::Mode.get(options[:write])
     end
 
     # Exception that is raised when trying to perform operations before ever

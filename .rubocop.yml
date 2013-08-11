@@ -66,7 +66,6 @@ RegexpLiteral:
 CollectionMethods:
   PreferredMethods:
     collect: 'map'
-    inject: 'reduce'
     detect: 'find'
     find_all: 'select'
   Enabled: true

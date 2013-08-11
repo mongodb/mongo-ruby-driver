@@ -326,4 +326,57 @@ describe Mongo::Client do
       end.not_to equal(client.cluster.addresses)
     end
   end
+
+  describe '#write_concern' do
+
+    let(:concern) { client.write_concern }
+
+    context 'when no option was provided to the client' do
+
+      let(:client) { described_class.new(['127.0.0.1:27017']) }
+
+      it 'returns a acknowledged write concern' do
+        expect(concern.get_last_error).to eq(:getlasterror => 1, :w => 1)
+      end
+    end
+
+    context 'when an option is provided' do
+
+      context 'when the option is acknowledged' do
+
+        let(:client) do
+          described_class.new(['127.0.0.1:27017'], :write => { :j => true })
+        end
+
+        it 'returns a acknowledged write concern' do
+          expect(concern.get_last_error).to eq(:getlasterror => 1, :j => true)
+        end
+      end
+
+      context 'when the option is unacknowledged' do
+
+        context 'when the w is 0' do
+
+          let(:client) do
+            described_class.new(['127.0.0.1:27017'], :write => { :w => 0 })
+          end
+
+          it 'returns an unacknowledged write concern' do
+            expect(concern.get_last_error).to be_nil
+          end
+        end
+
+        context 'when the w is -1' do
+
+          let(:client) do
+            described_class.new(['127.0.0.1:27017'], :write => { :w => -1 })
+          end
+
+          it 'returns an unacknowledged write concern' do
+            expect(concern.get_last_error).to be_nil
+          end
+        end
+      end
+    end
+  end
 end
