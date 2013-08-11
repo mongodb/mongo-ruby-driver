@@ -133,6 +133,15 @@ module Mongo
       Client.new(cluster.addresses.dup, options.merge(new_options))
     end
 
+    # Get the write concern for this client. If no option was provided, then a
+    # default single server acknowledgement will be used.
+    #
+    # @example Get the client write concern.
+    #   client.write_concern
+    #
+    # @return [ Mongo::WriteConcern::Mode ] The write concern.
+    #
+    # @since 2.0.0
     def write_concern
       @write_concern ||= WriteConcern::Mode.get(options[:write])
     end

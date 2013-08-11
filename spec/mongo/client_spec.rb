@@ -293,37 +293,78 @@ describe Mongo::Client do
 
   describe '#with' do
 
-    let(:client) do
-      described_class.new(
-        ['127.0.0.1:27017'],
-        :read => :secondary, :write => { :w => 1 }
-      )
+    context 'when the write concern is not changed' do
+
+      let(:client) do
+        described_class.new(
+          ['127.0.0.1:27017'],
+          :read => :secondary, :write => { :w => 1 }
+        )
+      end
+
+      let!(:new_client) do
+        client.with(:read => :primary)
+      end
+
+      it 'returns a new client' do
+        expect(new_client).not_to equal(client)
+      end
+
+      it 'replaces the existing options' do
+        expect(new_client.options).to eq(
+          { :read => :primary, :write => { :w => 1 } }
+        )
+      end
+
+      it 'does not modify the original client' do
+        expect(client.options).to eq(
+          { :read => :secondary, :write => { :w => 1 } }
+        )
+      end
+
+      it 'clones the cluster addresses' do
+        expect do
+          new_client.cluster.addresses
+        end.not_to equal(client.cluster.addresses)
+      end
     end
 
-    let!(:new_client) do
-      client.with(:read => :primary)
-    end
+    context 'when the write concern is changed' do
 
-    it 'returns a new client' do
-      expect(new_client).not_to equal(client)
-    end
+      let(:client) do
+        described_class.new(['127.0.0.1:27017'], :write => { :w => 1 })
+      end
 
-    it 'replaces the existing options' do
-      expect(new_client.options).to eq(
-        { :read => :primary, :write => { :w => 1 } }
-      )
-    end
+      context 'when the write concern has not been accessed' do
 
-    it 'does not modify the original client' do
-      expect(client.options).to eq(
-        { :read => :secondary, :write => { :w => 1 } }
-      )
-    end
+        let!(:new_client) do
+          client.with(:write => { :w => 0 })
+        end
 
-    it 'clones the cluster addresses' do
-      expect do
-        new_client.cluster.addresses
-      end.not_to equal(client.cluster.addresses)
+        let(:get_last_error) do
+          new_client.write_concern.get_last_error
+        end
+
+        it 'returns the correct write concern' do
+          expect(get_last_error).to be_nil
+        end
+      end
+
+      context 'when the write concern has been accessed' do
+
+        let!(:new_client) do
+          client.write_concern
+          client.with(:write => { :w => 0 })
+        end
+
+        let(:get_last_error) do
+          new_client.write_concern.get_last_error
+        end
+
+        it 'returns the correct write concern' do
+          expect(get_last_error).to be_nil
+        end
+      end
     end
   end
 
