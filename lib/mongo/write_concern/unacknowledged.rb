@@ -15,10 +15,25 @@
 module Mongo
   module WriteConcern
 
+    # An unacknowledged write concern will provide no error on write outside of
+    # network and connection exceptions.
+    #
+    # @since 2.0.0
     class Unacknowledged < Mode
 
+      # The noop constant for the gle.
+      #
+      # @since 2.0.0
       NOOP = nil
 
+      # Get the gle command for an unacknowledged write.
+      #
+      # @example Get the gle command.
+      #   unacknowledged.get_last_error
+      #
+      # @return [ nil ] The noop.
+      #
+      # @since 2.0.0
       def get_last_error
         NOOP
       end

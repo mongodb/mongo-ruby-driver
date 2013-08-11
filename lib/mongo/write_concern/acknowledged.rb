@@ -15,10 +15,22 @@
 module Mongo
   module WriteConcern
 
+    # An acknowledged write concern provides a get last error command with the
+    # appropriate options on each write operation.
+    #
+    # @since 2.0.0
     class Acknowledged < Mode
 
+      # Get the get last error command for the concern.
+      #
+      # @example Get the gle command.
+      #   acknowledged.get_last_error
+      #
+      # @return [ Hash ] The gle command.
+      #
+      # @since 2.0.0
       def get_last_error
-        @get_last_error ||= { :getlasterror => 1 }.merge(options)
+        @get_last_error ||= { :getlasterror => 1 }.merge(normalize(options))
       end
     end
   end

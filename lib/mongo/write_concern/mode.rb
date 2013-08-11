@@ -52,6 +52,28 @@ module Mongo
         @options = options
       end
 
+      private
+
+      # Normalizes symbol option values into strings, since symbol will raise
+      # an error on the server side with the gle.
+      #
+      # @api private
+      #
+      # @example Normalize the options.
+      #   mode.normalize(:w => :majority)
+      #
+      # @param [ Hash ] options The options to normalize.
+      #
+      # @return [ Hash ] The hash with normalized values.
+      #
+      # @since 2.0.0
+      def normalize(options)
+        options.reduce({}) do |opts, (key, value)|
+          opts[key] = value.is_a?(Symbol) ? value.to_s : value
+          opts
+        end
+      end
+
       class << self
 
         # Get a write concern mode for the provided options.
