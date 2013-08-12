@@ -51,7 +51,7 @@ module Mongo
     # Exception that is raised when trying to create a collection with no name.
     #
     # @since 2.0.0
-    class InvalidName < RuntimeError
+    class InvalidName < DriverError
 
       # The message is constant.
       #

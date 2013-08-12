@@ -134,7 +134,7 @@ module Mongo
     # telling the client which database to execute ops on.
     #
     # @since 2.0.0
-    class NoDatabase < RuntimeError
+    class NoDatabase < DriverError
 
       # The message does not need to be dynamic, so is held in a constant.
       #
