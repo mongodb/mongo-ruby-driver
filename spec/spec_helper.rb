@@ -1,6 +1,6 @@
 unless RUBY_VERSION < '1.9'
-  require 'coveralls'
   require 'simplecov'
+  require 'coveralls'
 
   SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
     SimpleCov::Formatter::HTMLFormatter,
