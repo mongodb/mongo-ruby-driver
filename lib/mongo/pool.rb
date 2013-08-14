@@ -1,8 +1,8 @@
 require 'mongo/pool/socket'
+require 'mongo/pool/connection'
 
-# TODO: here for now, but these should be relocated
 module Mongo
-  class ConnectionError < StandardError; end
-  class SocketTimeoutError < StandardError; end
   class SocketError < StandardError; end
+  class SocketTimeoutError < SocketError; end
+  class ConnectionError < StandardError; end
 end
