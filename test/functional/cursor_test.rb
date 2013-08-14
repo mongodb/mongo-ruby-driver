@@ -91,6 +91,21 @@ class CursorTest < Test::Unit::TestCase
     end
   end
 
+  def test_exhaust_after_limit_error
+    c = Cursor.new(@@coll, :limit => 17)
+    assert_raise MongoArgumentError do
+      c.add_option(OP_QUERY_EXHAUST)
+    end
+  end
+
+  def test_limit_after_exhaust_error
+    c = Cursor.new(@@coll)
+    c.add_option(OP_QUERY_EXHAUST)
+    assert_raise MongoArgumentError do
+      c.limit(17)
+    end
+  end
+
   def test_inspect
     selector = {:a => 1}
     cursor = @@coll.find(selector)

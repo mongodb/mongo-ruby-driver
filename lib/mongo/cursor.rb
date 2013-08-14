@@ -224,6 +224,12 @@ module Mongo
     def limit(number_to_return=nil)
       return @limit unless number_to_return
       check_modifiable
+
+      if (number_to_return != 0) && exhaust?
+        raise MongoArgumentError, "Limit is incompatible with exhaust option" +
+          ". Please remove the exhaust option in order to set the limit."
+      end
+
       @limit = number_to_return
       self
     end
@@ -380,6 +386,11 @@ module Mongo
     # @see http://www.mongodb.org/display/DOCS/Mongo+Wire+Protocol#MongoWireProtocol-Mongo::Constants::OPQUERY
     def add_option(opt)
       check_modifiable
+
+      if (opt == OP_QUERY_EXHAUST) && (@limit != 0)
+        raise MongoArgumentError, "Exhaust option is incompatible with limit" +
+          ". Please set the limit to 0 in order to enable the exhaust flag."
+      end
 
       @options |= opt
       @options
