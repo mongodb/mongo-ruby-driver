@@ -13,11 +13,12 @@
 # limitations under the License.
 
 require 'cgi'
+require 'uri'
 
 module Mongo
   class URIParser
 
-    USER_REGEX = /([-.\w:]+)/
+    USER_REGEX = /(.+)/
     PASS_REGEX = /([^@,]+)/
     AUTH_REGEX = /(#{USER_REGEX}:#{PASS_REGEX}@)?/
 
@@ -296,6 +297,9 @@ module Mongo
       end
 
       if uname && pwd && db
+        uname = URI.unescape(uname)
+        pwd = URI.unescape(pwd)
+
         auths << {:db_name => db, :username => uname, :password => pwd}
       elsif uname || pwd
         raise MongoArgumentError, "MongoDB URI must include username, password, "
