@@ -108,7 +108,7 @@ module Mongo
       :w                => lambda { |arg| Mongo::Support.is_i?(arg) ? arg.to_i : arg.to_sym },
       :wtimeout         => lambda { |arg| arg.to_i },
       :wtimeoutms       => lambda { |arg| arg.to_i }
-     }
+    }
 
     attr_reader :auths,
                 :connect,
@@ -253,6 +253,7 @@ module Mongo
         opts[:name] = replicaset
       end
 
+      opts[:default_db] = @db
       opts[:connect] = connect?
 
       opts
@@ -277,7 +278,7 @@ module Mongo
       uname    = matches[2]
       pwd      = matches[3]
       hosturis = matches[4].split(',')
-      db       = matches[8]
+      @db      = matches[8]
 
       hosturis.each do |hosturi|
         # If port is present, use it, otherwise use default port
@@ -295,8 +296,8 @@ module Mongo
         raise MongoArgumentError, "No nodes specified. Please ensure that you've provided at least one node."
       end
 
-      if uname && pwd && db
-        auths << {:db_name => db, :username => uname, :password => pwd}
+      if uname && pwd && @db
+        auths << {:db_name => @db, :username => uname, :password => pwd}
       elsif uname || pwd
         raise MongoArgumentError, "MongoDB URI must include username, password, "
           "and db if username and password are specified."
