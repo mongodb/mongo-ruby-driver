@@ -53,6 +53,18 @@ class URITest < Test::Unit::TestCase
     assert_equal "b:ob", parser.auths[0][:username]
   end
 
+  def test_username_with_encoded_symbol
+    parser = Mongo::URIParser.new('mongodb://f%40o:bar@localhost/admin')
+    username = parser.auths.first[:username]
+    assert_equal 'f@o', username
+  end
+
+  def test_password_with_encoded_symbol
+    parser = Mongo::URIParser.new('mongodb://foo:b%40r@localhost/admin')
+    password = parser.auths.first[:password]
+    assert_equal 'b@r', password
+  end
+
   def test_passwords_contain_no_commas
     assert_raise MongoArgumentError do
       Mongo::URIParser.new('mongodb://bob:a,b@a.example.com:27018/test')
