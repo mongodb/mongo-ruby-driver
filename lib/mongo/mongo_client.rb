@@ -30,7 +30,7 @@ module Mongo
     DEFAULT_HOST         = 'localhost'
     DEFAULT_PORT         = 27017
     DEFAULT_DB_NAME      = 'test'
-    GENERIC_OPTS         = [:auths, :logger, :connect]
+    GENERIC_OPTS         = [:auths, :logger, :connect, :default_db]
     TIMEOUT_OPTS         = [:timeout, :op_timeout, :connect_timeout]
     SSL_OPTS             = [:ssl, :ssl_key, :ssl_cert, :ssl_verify, :ssl_ca_cert]
     POOL_OPTS            = [:pool_size, :pool_timeout]
@@ -199,7 +199,7 @@ module Mongo
     #
     # @return [Mongo::MongoClient, Mongo::MongoReplicaSetClient]
     def self.from_uri(uri = ENV['MONGODB_URI'], extra_opts={})
-      parser = URIParser.new uri
+      parser = URIParser.new(uri)
       parser.connection(extra_opts)
     end
 
@@ -210,7 +210,7 @@ module Mongo
           raise MongoArgumentError,
             "ENV['MONGODB_URI'] implies a replica set."
         end
-        opts.merge! parser.connection_options
+        opts.merge!(parser.connection_options)
         [parser.host, parser.port]
       else
         [host || DEFAULT_HOST, port || DEFAULT_PORT]
@@ -358,13 +358,7 @@ module Mongo
     # @return [Mongo::DB]
     #
     # @core databases db-instance_method
-    def db(db_name=nil, opts={})
-      if !db_name && uri = ENV['MONGODB_URI']
-        db_name = uri[%r{/([^/\?]+)(\?|$)}, 1]
-      end
-
-      db_name ||= DEFAULT_DB_NAME
-
+    def db(db_name = @default_db, opts = {})
       DB.new(db_name, self, opts)
     end
 
@@ -689,6 +683,7 @@ module Mongo
       end
       Mongo::ReadPreference::validate(@read)
 
+      @default_db = opts.delete(:default_db) || DEFAULT_DB_NAME
       @tag_sets = opts.delete(:tag_sets) || []
       @acceptable_latency = opts.delete(:secondary_acceptable_latency_ms) || 15
 
