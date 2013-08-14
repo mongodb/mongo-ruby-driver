@@ -226,8 +226,7 @@ module Mongo
       check_modifiable
 
       if (number_to_return != 0) && exhaust?
-        raise MongoArgumentError, "Limit is incompatible with exhaust option" +
-          ". Please remove the exhaust option in order to set the limit."
+        raise MongoArgumentError, "Limit is incompatible with exhaust option."
       end
 
       @limit = number_to_return
@@ -388,8 +387,7 @@ module Mongo
       check_modifiable
 
       if (opt == OP_QUERY_EXHAUST) && (@limit != 0)
-        raise MongoArgumentError, "Exhaust option is incompatible with limit" +
-          ". Please set the limit to 0 in order to enable the exhaust flag."
+        raise MongoArgumentError, "Exhaust option is incompatible with limit."
       end
 
       @options |= opt
