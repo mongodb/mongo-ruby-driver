@@ -13,7 +13,7 @@ group :deploy do
   gem 'git'
   gem 'yard'
   gem 'version_bumper'
-  gem 'redcarpet' unless RUBY_PLATFORM =~ /java/
+  gem 'kramdown'
 end
 
 group :testing do
