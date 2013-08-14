@@ -122,11 +122,23 @@ class TestConnection < Test::Unit::TestCase
       ENV['MONGODB_URI'] = "mongodb://#{host_port}/"
       con = MongoClient.from_uri
       db = con.db
-      assert_equal db.name, Mongo::MongoClient::DEFAULT_DB_NAME
+      assert_equal db.name, MongoClient::DEFAULT_DB_NAME
     ensure
       ENV['MONGODB_URI'] = old_mongodb_uri
     end
   end
+
+  def test_db_from_uri_from_string_param
+    db_name = "_database"
+    db = MongoClient.from_uri("mongodb://#{host_port}/#{db_name}").db
+    assert_equal db.name, db_name
+  end
+
+  def test_db_from_uri_from_string_param_no_db_name
+    db = MongoClient.from_uri("mongodb://#{host_port}").db
+    assert_equal db.name, MongoClient::DEFAULT_DB_NAME
+  end
+
 
   def test_server_version
     assert_match(/\d\.\d+(\.\d+)?/, @client.server_version.to_s)
