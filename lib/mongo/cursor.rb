@@ -117,7 +117,7 @@ module Mongo
     # @return [Hash, Nil] the next document or Nil if no documents remain.
     def next
       if @cache.length == 0
-        if @query_run && (@options & OP_QUERY_EXHAUST != 0)
+        if @query_run && exhaust?
           close
           return nil
         else
@@ -224,6 +224,11 @@ module Mongo
     def limit(number_to_return=nil)
       return @limit unless number_to_return
       check_modifiable
+
+      if (number_to_return != 0) && exhaust?
+        raise MongoArgumentError, "Limit is incompatible with exhaust option."
+      end
+
       @limit = number_to_return
       self
     end
@@ -381,6 +386,10 @@ module Mongo
     def add_option(opt)
       check_modifiable
 
+      if (opt == OP_QUERY_EXHAUST) && (@limit != 0)
+        raise MongoArgumentError, "Exhaust option is incompatible with limit."
+      end
+
       @options |= opt
       @options
     end
@@ -447,7 +456,7 @@ module Mongo
     # Return the number of documents remaining for this cursor.
     def num_remaining
       if @cache.length == 0
-        if @query_run && (@options & OP_QUERY_EXHAUST != 0)
+        if @query_run && exhaust?
           close
           return 0
         else
@@ -483,7 +492,7 @@ module Mongo
           socket = @socket || checkout_socket_from_connection
           results, @n_received, @cursor_id = @connection.receive_message(
             Mongo::Constants::OP_QUERY, message, nil, socket, @command,
-            nil, @options & OP_QUERY_EXHAUST != 0)
+            nil, exhaust?)
         rescue ConnectionFailure => ex
           socket.close if socket
           @pool = nil
@@ -619,6 +628,13 @@ module Mongo
       if @limit > 0 && @returned >= @limit
         close
       end
+    end
+
+    # Check whether the exhaust option is set
+    #
+    # @return [true, false] The state of the exhaust flag.
+    def exhaust?
+      !(@options & OP_QUERY_EXHAUST).zero?
     end
 
     def check_modifiable
