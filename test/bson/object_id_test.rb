@@ -26,10 +26,16 @@ class ObjectIdTest < Test::Unit::TestCase
   end
 
   def test_array_uniq_for_equilavent_ids
-    a = ObjectId.new('123')
-    b = ObjectId.new('123')
+    a = ObjectId.new('123456789101'.unpack('C*'))
+    b = ObjectId.new('123456789101'.unpack('C*'))
     assert_equal a, b
     assert_equal 1, [a, b].uniq.size
+  end
+
+  def test_initialization_with_bad_data
+    assert_raise InvalidObjectId do
+      ObjectId.new('\xff')
+    end
   end
 
   def test_create_pk_method
