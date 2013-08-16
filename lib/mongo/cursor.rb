@@ -386,7 +386,7 @@ module Mongo
     def add_option(opt)
       check_modifiable
 
-      if (opt == OP_QUERY_EXHAUST) && (@limit != 0)
+      if exhaust?(opt) && (@limit != 0)
         raise MongoArgumentError, "Exhaust option is incompatible with limit."
       end
 
@@ -633,8 +633,8 @@ module Mongo
     # Check whether the exhaust option is set
     #
     # @return [true, false] The state of the exhaust flag.
-    def exhaust?
-      !(@options & OP_QUERY_EXHAUST).zero?
+    def exhaust?(opts = options)
+      !(opts & OP_QUERY_EXHAUST).zero?
     end
 
     def check_modifiable
