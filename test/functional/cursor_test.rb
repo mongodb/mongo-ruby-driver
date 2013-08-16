@@ -96,6 +96,10 @@ class CursorTest < Test::Unit::TestCase
     assert_raise MongoArgumentError do
       c.add_option(OP_QUERY_EXHAUST)
     end
+
+    assert_raise MongoArgumentError do
+      c.add_option(OP_QUERY_EXHAUST + OP_QUERY_SLAVE_OK)
+    end
   end
 
   def test_limit_after_exhaust_error
@@ -103,6 +107,15 @@ class CursorTest < Test::Unit::TestCase
     c.add_option(OP_QUERY_EXHAUST)
     assert_raise MongoArgumentError do
       c.limit(17)
+    end
+  end
+
+  def test_exhaust_with_mongos
+    @@connection.expects(:mongos?).returns(:true)
+    c = Cursor.new(@@coll)
+
+    assert_raise MongoArgumentError do
+      c.add_option(OP_QUERY_EXHAUST)
     end
   end
 
