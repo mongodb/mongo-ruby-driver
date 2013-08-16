@@ -386,8 +386,12 @@ module Mongo
     def add_option(opt)
       check_modifiable
 
-      if exhaust?(opt) && (@limit != 0)
-        raise MongoArgumentError, "Exhaust option is incompatible with limit."
+      if exhaust?(opt)
+        if @limit != 0
+          raise MongoArgumentError, "Exhaust is incompatible with limit."
+        elsif @connection.mongos?
+          raise MongoArgumentError, "Exhaust is incompatible with mongos."
+        end
       end
 
       @options |= opt

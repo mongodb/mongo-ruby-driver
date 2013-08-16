@@ -110,6 +110,15 @@ class CursorTest < Test::Unit::TestCase
     end
   end
 
+  def test_exhaust_with_mongos
+    @@connection.expects(:mongos?).returns(:true)
+    c = Cursor.new(@@coll)
+
+    assert_raise MongoArgumentError do
+      c.add_option(OP_QUERY_EXHAUST)
+    end
+  end
+
   def test_inspect
     selector = {:a => 1}
     cursor = @@coll.find(selector)
