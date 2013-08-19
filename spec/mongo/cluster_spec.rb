@@ -62,9 +62,44 @@ describe Mongo::Cluster do
     it 'sets the configured addresses' do
       expect(cluster.addresses).to eq(addresses)
     end
+  end
 
-    it 'sets the initial nodes for the addresses' do
-      expect(cluster.nodes).to eq(nodes)
+  describe '#nodes' do
+
+    let(:addresses) do
+      ['127.0.0.1:27017', '127.0.0.1:27019']
+    end
+
+    let(:cluster) do
+      described_class.new(addresses)
+    end
+
+    let(:nodes_internal) do
+      cluster.instance_variable_get(:@nodes)
+    end
+
+    context 'when all nodes are alive' do
+
+      before do
+        expect(nodes_internal.first).to receive(:operable?).and_return(true)
+        expect(nodes_internal.last).to receive(:operable?).and_return(true)
+      end
+
+      it 'returns all nodes' do
+        expect(cluster.nodes.size).to eq(2)
+      end
+    end
+
+    context 'when some nodes are not alive' do
+
+      before do
+        expect(nodes_internal.first).to receive(:operable?).and_return(true)
+        expect(nodes_internal.last).to receive(:operable?).and_return(false)
+      end
+
+      it 'returns all alive nodes' do
+        expect(cluster.nodes.size).to eq(1)
+      end
     end
   end
 end
