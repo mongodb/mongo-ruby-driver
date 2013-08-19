@@ -16,18 +16,22 @@ module Mongo
 
   class Node
 
-    attr_reader :address
+    attr_reader :address, :cluster, :options
 
     def ==(other)
       address == other.address
     end
 
+    # @todo This should be synchronized. I envison this checks if the node is
+    # alive and a primary or secondary. (no arbiters)
     def operable?
-      !!@operable
+      true
     end
 
-    def initialize(address, options = {})
+    def initialize(cluster, address, options = {})
+      @cluster = cluster
       @address = address
+      @options = options
     end
   end
 end
