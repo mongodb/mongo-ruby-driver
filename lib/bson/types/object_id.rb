@@ -41,6 +41,9 @@ module BSON
     #   the remaining bytes will consist of the standard machine id, pid, and counter. If
     #   you need a zeroed timestamp, used ObjectId.from_time.
     def initialize(data=nil, time=nil)
+      if data && (!data.is_a?(Array) || data.size != 12)
+        raise InvalidObjectId, 'ObjectId requires 12 byte array'
+      end
       @data = data || generate(time)
     end
 
