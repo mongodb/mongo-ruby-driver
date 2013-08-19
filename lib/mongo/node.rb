@@ -22,6 +22,10 @@ module Mongo
       address == other.address
     end
 
+    def operable?
+      !!@operable
+    end
+
     def initialize(address, options = {})
       @address = address
     end

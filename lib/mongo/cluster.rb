@@ -20,7 +20,8 @@ module Mongo
   # @since 2.0.0
   class Cluster
 
-    attr_reader :addresses, :nodes
+    # @return [ Array<String> ] The provided seed addresses.
+    attr_reader :addresses
 
     # Determine if this cluster of nodes is equal to another object. Checks the
     # nodes currently in the cluster, not what was configured.
@@ -35,7 +36,7 @@ module Mongo
     # @since 2.0.0
     def ==(other)
       return false unless other.is_a?(Cluster)
-      nodes == other.nodes
+      addresses == other.addresses
     end
 
     # Instantiate the new cluster.
@@ -50,6 +51,19 @@ module Mongo
     def initialize(addresses, options = {})
       @addresses = addresses
       @nodes = addresses.map { |address| Node.new(address, options) }
+    end
+
+    # Get a list of node candidates from the cluster that can have operations
+    # executed on them.
+    #
+    # @example Get the node candidates for an operation.
+    #   cluster.nodes
+    #
+    # @return [ Array<Node> ] The candidate nodes.
+    #
+    # @since 2.0.0
+    def nodes
+      @nodes.select { |node| node.operable? }
     end
   end
 end
