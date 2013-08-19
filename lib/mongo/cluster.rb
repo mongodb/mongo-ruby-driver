@@ -22,6 +22,8 @@ module Mongo
 
     # @return [ Array<String> ] The provided seed addresses.
     attr_reader :addresses
+    # @return [ Hash ] The options hash.
+    attr_reader :options
 
     # Determine if this cluster of nodes is equal to another object. Checks the
     # nodes currently in the cluster, not what was configured.
@@ -39,6 +41,27 @@ module Mongo
       addresses == other.addresses
     end
 
+    # Add a node to the cluster with the provided address. Useful in
+    # auto-discovery of new nodes when an existing node executes an ismaster
+    # and potentially non-configured nodes were included.
+    #
+    # @example Add the node for the address to the cluster.
+    #   cluster.add('127.0.0.1:27018')
+    #
+    # @param [ String ] address The address of the node to add.
+    #
+    # @return [ Node ] The newly added node, if not present already.
+    #
+    # @since 2.0.0
+    def add(address)
+      unless addresses.include?(address)
+        node = Node.new(self, address, options)
+        addresses.push(address)
+        @nodes.push(node)
+        node
+      end
+    end
+
     # Instantiate the new cluster.
     #
     # @example Instantiate the cluster.
@@ -50,7 +73,8 @@ module Mongo
     # @since 2.0.0
     def initialize(addresses, options = {})
       @addresses = addresses
-      @nodes = addresses.map { |address| Node.new(address, options) }
+      @options = options
+      @nodes = addresses.map { |address| Node.new(self, address, options) }
     end
 
     # Get a list of node candidates from the cluster that can have operations
