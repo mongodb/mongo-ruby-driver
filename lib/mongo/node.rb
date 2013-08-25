@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/node/refresh'
+
 module Mongo
 
   # Represents a single node on the server side that can be standalone, part of
@@ -63,8 +65,8 @@ module Mongo
       @cluster = cluster
       @address = address
       @options = options
-      @refresher = Refresher.new(self, refresh_interval)
-      @refresher.run
+      @refresh = Refresh.new(self, refresh_interval)
+      @refresh.run
     end
 
     # @todo This should be synchronized. I envison this checks if the node is
@@ -88,50 +90,6 @@ module Mongo
     # @since 2.0.0
     def refresh_interval
       @refresh_interval ||= options[:refresh_interval] || REFRESH_INTERVAL
-    end
-
-    # This object is responsible for keeping node status up to date, running in
-    # a separate thread as to not disrupt other operations.
-    #
-    # @since 2.0.0
-    class Refresher
-
-      # @return [ Mongo::Node ] The node the refresher refreshes.
-      attr_reader :node
-      # @return [ Integer ] The interval the refresh happens on, in seconds.
-      attr_reader :interval
-
-      # Create the new node refresher.
-      #
-      # @example Create the node refresher.
-      #   Mongo::Node::Refresher.new(node, 5)
-      #
-      # @param [ Mongo::Node ] node The node to refresh.
-      # @param [ Integer ] interval The refresh interval in seconds.
-      #
-      # @since 2.0.0
-      def initialize(node, interval)
-        @node = node
-        @interval = interval
-      end
-
-      # Runs the node refresher. Refreshing happens on a separate thread per
-      # node.
-      #
-      # @example Run the refresher.
-      #   refresher.run
-      #
-      # @return [ Thread ] The thread the refresher runs on.
-      #
-      # @since 2.0.0
-      def run
-        Thread.new(interval, node) do |i, n|
-          loop do
-            n.refresh
-            sleep(i)
-          end
-        end
-      end
     end
 
     private
