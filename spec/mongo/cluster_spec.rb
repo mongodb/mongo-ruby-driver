@@ -2,6 +2,10 @@ require 'spec_helper'
 
 describe Mongo::Cluster do
 
+  let(:client) do
+    double('client')
+  end
+
   describe '#==' do
 
     let(:addresses) do
@@ -9,7 +13,7 @@ describe Mongo::Cluster do
     end
 
     let(:cluster) do
-      described_class.new(addresses)
+      described_class.new(client, addresses)
     end
 
     context 'when the other is not a cluster' do
@@ -24,7 +28,7 @@ describe Mongo::Cluster do
       context 'when the nodes are equal' do
 
         let(:other) do
-          described_class.new(addresses)
+          described_class.new(client, addresses)
         end
 
         it 'returns true' do
@@ -35,7 +39,7 @@ describe Mongo::Cluster do
       context 'when the nodes are not equal' do
 
         let(:other) do
-          described_class.new(['127.0.0.1:27021'])
+          described_class.new(client, ['127.0.0.1:27021'])
         end
 
         it 'returns false' do
@@ -52,7 +56,7 @@ describe Mongo::Cluster do
     end
 
     let(:cluster) do
-      described_class.new(addresses)
+      described_class.new(client, addresses)
     end
 
     context 'when a node with the address does not exist' do
@@ -101,11 +105,15 @@ describe Mongo::Cluster do
     end
 
     let(:cluster) do
-      described_class.new(addresses)
+      described_class.new(client, addresses)
     end
 
     it 'sets the configured addresses' do
       expect(cluster.addresses).to eq(addresses)
+    end
+
+    it 'sets the client' do
+      expect(cluster.client).to eq(client)
     end
   end
 
@@ -116,7 +124,7 @@ describe Mongo::Cluster do
     end
 
     let(:cluster) do
-      described_class.new(addresses)
+      described_class.new(client, addresses)
     end
 
     let(:nodes_internal) do

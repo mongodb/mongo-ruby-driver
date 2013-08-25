@@ -20,6 +20,8 @@ module Mongo
   # @since 2.0.0
   class Cluster
 
+    # @return [ Mongo::Client ] The cluster's client.
+    attr_reader :client
     # @return [ Array<String> ] The provided seed addresses.
     attr_reader :addresses
     # @return [ Hash ] The options hash.
@@ -71,7 +73,8 @@ module Mongo
     # @param [ Hash ] options The options.
     #
     # @since 2.0.0
-    def initialize(addresses, options = {})
+    def initialize(client, addresses, options = {})
+      @client = client
       @addresses = addresses
       @options = options
       @nodes = addresses.map { |address| Node.new(self, address, options) }
