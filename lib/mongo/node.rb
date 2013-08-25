@@ -14,12 +14,32 @@
 
 module Mongo
 
+  # Represents a single node on the server side that can be standalone, part of
+  # a replica set, or a mongos.
+  #
+  # @since 2.0.0
   class Node
 
-    attr_reader :address, :cluster, :options
+    # The default time for a node to refresh its status is 5 seconds.
+    #
+    # @since 2.0.0
+    REFRESH_INTERVAL = 5.freeze
+
+    # @return [ String ] The configured address for the node.
+    attr_reader :address
+    # @return [ Mongo::Cluster ] The cluster the node belongs to.
+    attr_reader :cluster
+    # @return [ Hash ] The options hash.
+    attr_reader :options
 
     def ==(other)
       address == other.address
+    end
+
+    def initialize(cluster, address, options = {})
+      @cluster = cluster
+      @address = address
+      @options = options
     end
 
     # @todo This should be synchronized. I envison this checks if the node is
@@ -28,10 +48,17 @@ module Mongo
       true
     end
 
-    def initialize(cluster, address, options = {})
-      @cluster = cluster
-      @address = address
-      @options = options
+    # Get the refresh interval for the node. This will be defined via an option
+    # or will default to 5.
+    #
+    # @example Get the refresh interval.
+    #   node.refresh_interval
+    #
+    # @return [ Integer ] The refresh interval, in seconds.
+    #
+    # @since 2.0.0
+    def refresh_interval
+      @refresh_interval ||= options[:refresh_interval] || REFRESH_INTERVAL
     end
   end
 end
