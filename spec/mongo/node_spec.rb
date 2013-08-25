@@ -101,6 +101,10 @@ describe Mongo::Node do
         it 'flags the mode as operable' do
 
         end
+
+        it 'sets the node latency' do
+
+        end
       end
 
       context 'when the node is down' do
@@ -110,6 +114,10 @@ describe Mongo::Node do
         end
 
         it 'does not flag the node as operable' do
+
+        end
+
+        it 'removes the node latency' do
 
         end
       end

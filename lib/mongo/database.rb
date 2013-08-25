@@ -20,6 +20,11 @@ module Mongo
   # @since 2.0.0
   class Database
 
+    # The admin database name.
+    #
+    # @since 2.0.0
+    ADMIN = 'admin'.freeze
+
     # The "collection" that database commands operate against.
     #
     # @since 2.0.0

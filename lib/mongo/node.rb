@@ -25,6 +25,11 @@ module Mongo
     # @since 2.0.0
     REFRESH_INTERVAL = 5.freeze
 
+    # The command used for determining node status.
+    #
+    # @since 2.0.0
+    STATUS = { :ismaster => 1 }.freeze
+
     # @return [ String ] The configured address for the node.
     attr_reader :address
     # @return [ Mongo::Cluster ] The cluster the node belongs to.
@@ -47,6 +52,11 @@ module Mongo
     # @since 2.0.0
     def alive?
       !!@alive
+    end
+
+    # @todo: Send the operation to the connection.
+    def execute(operation)
+
     end
 
     def initialize(cluster, address, options = {})
@@ -72,6 +82,24 @@ module Mongo
     # @since 2.0.0
     def refresh_interval
       @refresh_interval ||= options[:refresh_interval] || REFRESH_INTERVAL
+    end
+
+    private
+
+    # Gets the wire protocol query that will be used to send when refreshing.
+    #
+    # @api private
+    #
+    # @return [ Mongo::Protocol::Query ] The refresh command.
+    #
+    # @since 2.0.0
+    def refresh_command
+      Protocol::Query.new(
+        Database::ADMIN,
+        Database::COMMAND,
+        STATUS,
+        :limit => -1, :read => cluster.client.read_preference
+      )
     end
   end
 end
