@@ -36,6 +36,19 @@ module Mongo
       address == other.address
     end
 
+    # Returns whether or not the node is alive - ie it is connected to and
+    # healthy.
+    #
+    # @example Is the node alive?
+    #   node.alive?
+    #
+    # @return [ true, false ] If the node is alive and healthy.
+    #
+    # @since 2.0.0
+    def alive?
+      !!@alive
+    end
+
     def initialize(cluster, address, options = {})
       @cluster = cluster
       @address = address

@@ -2,6 +2,53 @@ require 'spec_helper'
 
 describe Mongo::Node do
 
+  describe '#alive?' do
+
+    let(:cluster) do
+      double('cluster')
+    end
+
+    let(:address) do
+      '127.0.0.1:27017'
+    end
+
+    let(:node) do
+      described_class.new(cluster, address)
+    end
+
+    context 'when the node has been refreshed' do
+
+      context 'when the node is alive' do
+
+        before do
+          node.instance_variable_set(:@alive, true)
+        end
+
+        it 'returns true' do
+          expect(node).to be_alive
+        end
+      end
+
+      context 'when the node is not alive' do
+
+        before do
+          node.instance_variable_set(:@alive, false)
+        end
+
+        it 'returns false' do
+          expect(node).to_not be_alive
+        end
+      end
+    end
+
+    context 'when the node has not been refreshed' do
+
+      it 'returns false' do
+        expect(node).to_not be_alive
+      end
+    end
+  end
+
   describe '#initialize' do
 
     let(:cluster) do
@@ -31,8 +78,41 @@ describe Mongo::Node do
 
   describe '#refresh' do
 
+    let(:cluster) do
+      double('cluster')
+    end
+
+    let(:address) do
+      '127.0.0.1:27017'
+    end
+
     context 'when the server is a single node' do
 
+      let(:node) do
+        described_class.new(cluster, address)
+      end
+
+      context 'when the node is available' do
+
+        it 'flags the node as master' do
+
+        end
+
+        it 'flags the mode as operable' do
+
+        end
+      end
+
+      context 'when the node is down' do
+
+        it 'flags the node as down' do
+
+        end
+
+        it 'does not flag the node as operable' do
+
+        end
+      end
     end
 
     context 'when the server is a replica set' do
