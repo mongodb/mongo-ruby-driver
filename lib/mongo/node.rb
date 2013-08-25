@@ -36,6 +36,8 @@ module Mongo
     attr_reader :address
     # @return [ Mongo::Cluster ] The cluster the node belongs to.
     attr_reader :cluster
+    # @return [ Mutex ] The refresh operation mutex.
+    attr_reader :mutex
     # @return [ Hash ] The options hash.
     attr_reader :options
 
@@ -65,6 +67,7 @@ module Mongo
       @cluster = cluster
       @address = address
       @options = options
+      @mutex = Mutex.new
       @refresh = Refresh.new(self, refresh_interval)
       @refresh.run
     end
@@ -72,11 +75,15 @@ module Mongo
     # @todo This should be synchronized. I envison this checks if the node is
     # alive and a primary or secondary. (no arbiters)
     def operable?
-      true
+      mutex.synchronize do
+        true
+      end
     end
 
     def refresh
-      p 'Refreshing node...'
+      mutex.synchronize do
+        p 'Refreshing node...'
+      end
     end
 
     # Get the refresh interval for the node. This will be defined via an option
