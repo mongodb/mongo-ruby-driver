@@ -48,7 +48,8 @@ module Mongo
         :w        => 1,
         :j        => false,
         :fsync    => false,
-        :wtimeout => nil
+        :wtimeout => nil,
+        :no_grid_ensure_index => false
       }
       write_concern.merge!(parent.write_concern) if parent
       write_concern.merge!(opts.reject {|k,v| !write_concern.keys.include?(k)})

@@ -35,7 +35,7 @@ module Mongo
     SSL_OPTS             = [:ssl, :ssl_key, :ssl_cert, :ssl_verify, :ssl_ca_cert]
     POOL_OPTS            = [:pool_size, :pool_timeout]
     READ_PREFERENCE_OPTS = [:read, :tag_sets, :secondary_acceptable_latency_ms]
-    WRITE_CONCERN_OPTS   = [:w, :j, :fsync, :wtimeout]
+    WRITE_CONCERN_OPTS   = [:w, :j, :fsync, :wtimeout, :no_grid_ensure_index]
     CLIENT_ONLY_OPTS     = [:slave_ok]
 
     mongo_thread_local_accessor :connections
@@ -143,6 +143,7 @@ module Mongo
       @primary      = nil
       @primary_pool = nil
       @mongos       = false
+      p "**************INITIALIZE******************"
 
       # Not set for direct connection
       @tag_sets = []

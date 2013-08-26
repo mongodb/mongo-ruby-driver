@@ -30,14 +30,17 @@ module Mongo
       raise MongoArgumentError, "db must be a Mongo::DB." unless db.is_a?(Mongo::DB)
 
       @db      = db
+      @no_ensure = db.write_concern[:no_grid_ensure_index]
       @files   = @db["#{fs_name}.files"]
       @chunks  = @db["#{fs_name}.chunks"]
       @fs_name = fs_name
 
       # This will create indexes only if we're connected to a primary node.
-      begin
-        @chunks.ensure_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
-      rescue Mongo::ConnectionFailure
+      unless @no_ensure
+        begin
+          @chunks.ensure_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
+        rescue Mongo::ConnectionFailure
+        end
       end
     end
 
@@ -68,7 +71,11 @@ module Mongo
       begin
         # Ensure there is an index on files_id and n, as state may have changed since instantiation of self.
         # Recall that index definitions are cached with ensure_index so this statement won't unneccesarily repeat index creation.
-        @chunks.ensure_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
+        # ensure_index does not cache index definitions because every time the chunks are loaded from @db, a new collection is instatiated, resulting in no cache.
+        # add +no_grid_ensure_index: true+ to your database config to disable index recreation (like in production...)
+        unless @no_ensure
+          @chunks.ensure_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]], :unique => true)
+        end
         opts     = opts.dup
         filename = opts.delete(:filename)
         opts.merge!(default_grid_io_opts)

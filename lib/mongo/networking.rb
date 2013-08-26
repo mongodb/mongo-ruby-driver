@@ -242,7 +242,7 @@ module Mongo
       gle = BSON::OrderedHash.new
       gle[:getlasterror] = 1
       if write_concern.is_a?(Hash)
-        write_concern.assert_valid_keys(:w, :wtimeout, :fsync, :j)
+        write_concern.assert_valid_keys(:w, :wtimeout, :fsync, :j, :no_grid_ensure_index)
         gle.merge!(write_concern)
         gle.delete(:w) if gle[:w] == 1
       end
