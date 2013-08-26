@@ -26,7 +26,7 @@ Once generated, the API documentation can be found in the docs/ folder.
 
 # Introduction
 
-This is the 10gen-supported Ruby driver for [MongoDB](http://www.mongodb.org).
+This is the officially supported Ruby driver for [MongoDB](http://www.mongodb.org).
 
 For the api reference please see the [API][api-url]
 
@@ -369,7 +369,7 @@ See [credits](https://github.com/mongodb/mongo-ruby-driver/wiki/Credits).
 
 # License
 
- Copyright (C) 2008-2013 10gen Inc.
+ Copyright (C) 2013 MongoDB, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
