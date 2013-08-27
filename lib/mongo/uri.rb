@@ -293,7 +293,7 @@ module Mongo
     # @param value [Object] The value to be merged.
     # @param name [Symbol] The name of the option.
     def merge_option(target, value, name)
-      if target.has_key?(name)
+      if target.key?(name)
         target[name] += value
       else
         target.merge!({ name => value })

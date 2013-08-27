@@ -322,10 +322,6 @@ ClassMethods:
 WordArray:
   Enabled: true
 
-# Avoid the use of line continuation (/).
-LineContinuation:
-  Enabled: true
-
 # Comments should start with a space.
 LeadingCommentSpace:
   Enabled: true

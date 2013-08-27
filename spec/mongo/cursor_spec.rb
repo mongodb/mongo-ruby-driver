@@ -189,7 +189,7 @@ describe Mongo::Cursor do
 
         it 'requests that number of docs in the first query message' do
           expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-              expect(opts[:limit]).to eq(limit)
+            expect(opts[:limit]).to eq(limit)
           end
           cursor.each(&b)
         end
@@ -232,7 +232,7 @@ describe Mongo::Cursor do
 
         it 'requests the limit number of docs in first query message' do
           expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-              expect(opts[:limit]).to eq(limit)
+            expect(opts[:limit]).to eq(limit)
           end
           cursor.each(&b)
         end
@@ -263,7 +263,7 @@ describe Mongo::Cursor do
 
         it 'requests the limit in the first query message' do
           expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-              expect(opts[:limit]).to eq(limit)
+            expect(opts[:limit]).to eq(limit)
           end
           cursor.each(&b)
         end
@@ -296,7 +296,7 @@ describe Mongo::Cursor do
 
       it 'requests the batch size in the first query message' do
         expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-            expect(opts[:limit]).to eq(batch_size)
+          expect(opts[:limit]).to eq(batch_size)
         end
         cursor.each(&b)
       end
@@ -332,7 +332,7 @@ describe Mongo::Cursor do
 
         it 'requests the batch size in the first query message' do
           expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-              expect(opts[:limit]).to eq(batch_size)
+            expect(opts[:limit]).to eq(batch_size)
           end
           cursor.each(&b)
         end
@@ -363,7 +363,7 @@ describe Mongo::Cursor do
 
         it 'requests the batch size in the first query message' do
           expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-              expect(opts[:limit]).to eq(batch_size)
+            expect(opts[:limit]).to eq(batch_size)
           end
           cursor.each(&b)
         end
