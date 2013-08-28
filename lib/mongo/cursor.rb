@@ -128,16 +128,22 @@ module Mongo
 
       if doc && doc['$err']
         err = doc['$err']
+        code = doc['code']
 
         # If the server has stopped being the master (e.g., it's one of a
         # pair but it has died or something like that) then we close that
         # connection. The next request will re-open on master server.
         if err.include?("not master")
           @connection.close
-          raise ConnectionFailure.new(err, doc['code'], doc)
+          raise ConnectionFailure.new(err, code, doc)
         end
 
-        raise OperationFailure.new(err, doc['code'], doc)
+        # Handle server side operation execution timeout
+        if [16712,16986].member?(code)
+          raise ExecutionTimeout.new(err, code, doc)
+        end
+
+        raise OperationFailure.new(err, code, doc)
       end
 
       if @transformer.nil?
@@ -247,6 +253,31 @@ module Mongo
       check_modifiable
 
       @skip = number_to_skip
+      self
+    end
+
+    # Instruct the server to abort queries after they exceed the specified
+    # wall-clock execution time.
+    #
+    # A query that completes in under its time limit will "roll over"
+    # remaining time to the first getmore op (which will then "roll over"
+    # its remaining time to the second getmore op and so on, until the
+    # time limit is hit).
+    #
+    # Cursors returned by successful time-limited queries will still obey
+    # the default cursor idle timeout (unless the "no cursor idle timeout"
+    # flag has been set).
+    #
+    # @note This can only be used with MongoDB 2.5+
+    #
+    # @param max_time_ms [Fixnum] max execution time (in milliseconds)
+    #
+    # @return [Fixnum, Cursor] either the current max_time_ms or cursor
+    def max_time(max_time_ms=nil)
+      return @max_time_ms unless max_time_ms
+      check_modifiable
+
+      @max_time_ms = max_time_ms
       self
     end
 
@@ -612,6 +643,7 @@ module Mongo
       spec['$returnKey']   = true if @return_key
       spec['$showDiskLoc'] = true if @show_disk_loc
       spec['$comment']  = @comment if @comment
+      spec['$maxTimeMS'] = @max_time_ms if @max_time_ms
       if needs_read_pref?
         read_pref = Mongo::ReadPreference::mongos(@read, @tag_sets)
         spec['$readPreference'] = read_pref if read_pref
@@ -625,7 +657,7 @@ module Mongo
 
     def query_contains_special_fields?
       @order || @explain || @hint || @snapshot || @show_disk_loc ||
-        @max_scan || @return_key || @comment || needs_read_pref?
+        @max_scan || @return_key || @comment || @max_time_ms || needs_read_pref?
     end
 
     def close_cursor_if_query_complete

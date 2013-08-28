@@ -65,6 +65,9 @@ module Mongo
   # Raised when a database operation fails.
   class OperationFailure < MongoDBError; end
 
+  # Raised when a database operation exceeds maximum specified time.
+  class ExecutionTimeout < OperationFailure; end
+
   # Raised when a socket read operation times out.
   class OperationTimeout < SocketError; end
 
