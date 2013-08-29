@@ -139,7 +139,7 @@ module Mongo
         end
 
         # Handle server side operation execution timeout
-        if [16712,16986].member?(code)
+        if [16712,16986].include?(code)
           raise ExecutionTimeout.new(err, code, doc)
         end
 
