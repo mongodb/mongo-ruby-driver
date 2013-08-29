@@ -25,8 +25,8 @@ class TestCollection < Test::Unit::TestCase
     @@test.remove
   end
 
-  def test_aggregation_cursor
-    if @@version >= '2.5.1'
+  if @@version >= '2.5.1'
+    def test_aggregation_cursor
       [10, 1000].each do |size|
         @@test.drop
         size.times {|i| @@test.insert({ :_id => i }) }
@@ -45,12 +45,10 @@ class TestCollection < Test::Unit::TestCase
 
         assert_equal expected_sum, cursor_sum
       end
+      @@test.drop
     end
-    @@test.drop
-  end
 
-  def test_aggregation_cursor_invalid_ops
-    if @@version >= '2.5.1'
+    def test_aggregation_cursor_invalid_ops
       cursor = @@test.aggregate([], :cursor => {})
       assert_raise(Mongo::InvalidOperation) { cursor.rewind! }
       assert_raise(Mongo::InvalidOperation) { cursor.explain }
