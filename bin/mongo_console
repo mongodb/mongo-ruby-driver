@@ -17,7 +17,7 @@
 org_argv = ARGV.dup
 ARGV.clear
 
-require 'irb'
+require 'pry'
 
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
 require 'mongo'
@@ -32,5 +32,5 @@ puts "Connecting to #{host}:#{port} (CLIENT) on with database #{dbnm} (DB)"
 CLIENT = MongoClient.new(host, port)
 DB = CLIENT.db(dbnm)
 
-puts "Starting IRB session..."
-IRB.start(__FILE__)
+puts "Starting Pry session..."
+Pry.start(__FILE__)
