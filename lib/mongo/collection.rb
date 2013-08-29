@@ -675,6 +675,7 @@ module Mongo
     # @option opts [:primary, :secondary] :read Read preference indicating which server to perform this query
     #  on. See Collection#find for more details.
     # @option opts [String]  :comment (nil) a comment to include in profiling logs
+    # @option opts [Hash] :cursor cursor options for aggregation
     #
     # @return [Array] An Array with the aggregate command's results.
     #
@@ -688,13 +689,26 @@ module Mongo
       hash = BSON::OrderedHash.new
       hash['aggregate'] = self.name
       hash['pipeline'] = pipeline
+      hash['cursor'] = opts[:cursor] if opts[:cursor]
 
       result = @db.command(hash, command_options(opts))
       unless Mongo::Support.ok?(result)
         raise Mongo::OperationFailure, "aggregate failed: #{result['errmsg']}"
       end
 
-      return result["result"]
+      if result.key?('cursor')
+        cursor_info = result['cursor']
+
+        seed = {
+          :cursor_id => cursor_info['id'],
+          :first_batch => cursor_info['firstBatch'],
+          :pool => @connection.pinned_pool
+        }
+
+        Cursor.new(self, seed)
+      else
+        result['result']
+      end
     end
 
     # Perform a map-reduce operation on the current collection.
