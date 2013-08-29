@@ -27,6 +27,7 @@ group :testing do
 end
 
 group :development do
+  gem 'pry'
   gem 'pry-rescue'
   gem 'pry-nav'
 end
