@@ -91,32 +91,34 @@ class CursorTest < Test::Unit::TestCase
     end
   end
 
-  def test_cursor_timeout
-    cursor = @@coll.find
-    cursor.stubs(:send_initial_query).returns(true)
+  if @@version >= "2.5.2"
+    def test_cursor_timeout
+      cursor = @@coll.find
+      cursor.stubs(:send_initial_query).returns(true)
 
-    cursor.instance_variable_set(:@cache, [{
-      '$err' => 'operation exceeded time limit',
-      'code' => 16986
-    }])
-
-    assert_raise ExecutionTimeout do
-      cursor.to_a
-    end
-  end
-
-  def test_cursor_timeout_js
-    if @@version >= "2.5"
-      2.times { @@coll.insert({}) }
-
-      cursor = @@coll.find({'$where' => 'sleep(100); return true'})
-      cursor.max_time(100);
+      cursor.instance_variable_set(:@cache, [{
+        '$err' => 'operation exceeded time limit',
+        'code' => 16986
+      }])
 
       assert_raise ExecutionTimeout do
         cursor.to_a
       end
+    end
 
-      @@coll.remove
+    def test_cursor_timeout_js
+      if @@version >= "2.5"
+        2.times { @@coll.insert({}) }
+
+        cursor = @@coll.find({'$where' => 'sleep(100); return true'})
+        cursor.max_time(100);
+
+        assert_raise ExecutionTimeout do
+          cursor.to_a
+        end
+
+        @@coll.remove
+      end
     end
   end
 
