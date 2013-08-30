@@ -69,7 +69,7 @@ puts "There are #{@coll.count} records. Here they are:"
 
 ### Ruby Versions
 
-The driver works and is consistently tested on Ruby 1.8.7 and 1.9.3 as well as JRuby 1.6.x and 1.7.x.
+The driver is stable and is consistently tested on Ruby 1.8.7, 1.9.3, and 2.0.0 as well as JRuby 1.7.x.
 
 Note that if you're on 1.8.7, be sure that you're using a patchlevel >= 249. There are some IO bugs in earlier versions.
 
@@ -138,7 +138,7 @@ file.metadata
 
 ## Thread Safety
 
-The driver is thread-safe.
+The driver is thread-safe in Ruby MRI/YARV and JRuby.
 
 ## Connection Pooling
 
