@@ -37,7 +37,7 @@ module Mongo
     #
     # @core cursors constructor_details
     def initialize(collection, opts={})
-      @cursor_id  = nil
+      @cursor_id  = opts[:cursor_id]
       @db         = collection.db
       @collection = collection
       @connection = @db.connection
@@ -66,7 +66,7 @@ module Mongo
 
       # Use this socket for the query
       @socket = opts[:socket]
-      @pool   = nil
+      @pool   = opts[:pool]
 
       @closed       = false
       @query_run    = false
@@ -80,7 +80,7 @@ module Mongo
       batch_size(opts[:batch_size] || 0)
 
       @full_collection_name = "#{@collection.db.name}.#{@collection.name}"
-      @cache        = []
+      @cache        = opts[:first_batch] || []
       @returned     = 0
 
       if(!@timeout)
@@ -91,6 +91,12 @@ module Mongo
       end
       if(@tailable)
         add_option(OP_QUERY_TAILABLE)
+      end
+
+      # If a cursor_id is provided, this is a cursor for a command
+      if @cursor_id
+        @command_cursor = true
+        @query_run = true
       end
 
       if @collection.name =~ /^\$cmd/ || @collection.name =~ /^system/
@@ -157,6 +163,7 @@ module Mongo
     # Reset this cursor on the server. Cursor options, such as the
     # query string and the values for skip and limit, are preserved.
     def rewind!
+      check_command_cursor
       close
       @cache.clear
       @cursor_id  = nil
@@ -181,6 +188,7 @@ module Mongo
     #
     # @raise [OperationFailure] on a database error.
     def count(skip_and_limit = false)
+      check_command_cursor
       command = BSON::OrderedHash["count",  @collection.name, "query",  @selector]
 
       if skip_and_limit
@@ -351,6 +359,7 @@ module Mongo
     #
     # @core explain explain-instance_method
     def explain
+      check_command_cursor
       c = Cursor.new(@collection,
         query_options_hash.merge(:limit => -@limit.abs, :explain => true))
       explanation = c.next_document
@@ -676,6 +685,12 @@ module Mongo
     def check_modifiable
       if @query_run || @closed
         raise InvalidOperation, "Cannot modify the query once it has been run or closed."
+      end
+    end
+
+    def check_command_cursor
+      if @command_cursor
+        raise InvalidOperation, "Cannot call #{caller.first} on command cursors"
       end
     end
   end

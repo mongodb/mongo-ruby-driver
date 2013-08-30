@@ -25,6 +25,37 @@ class TestCollection < Test::Unit::TestCase
     @@test.remove
   end
 
+  if @@version >= '2.5.1'
+    def test_aggregation_cursor
+      [10, 1000].each do |size|
+        @@test.drop
+        size.times {|i| @@test.insert({ :_id => i }) }
+        expected_sum = size.times.reduce(:+)
+
+        cursor = @@test.aggregate(
+          [{ :$project => {:_id => '$_id'}} ],
+          :cursor => {}
+        )
+
+        assert_equal Mongo::Cursor, cursor.class
+
+        cursor_sum = cursor.reduce(0) do |sum, doc|
+          sum += doc['_id']
+        end
+
+        assert_equal expected_sum, cursor_sum
+      end
+      @@test.drop
+    end
+
+    def test_aggregation_cursor_invalid_ops
+      cursor = @@test.aggregate([], :cursor => {})
+      assert_raise(Mongo::InvalidOperation) { cursor.rewind! }
+      assert_raise(Mongo::InvalidOperation) { cursor.explain }
+      assert_raise(Mongo::InvalidOperation) { cursor.count }
+    end
+  end
+
   def test_capped_method
     @@db.create_collection('normal')
     assert !@@db['normal'].capped?
