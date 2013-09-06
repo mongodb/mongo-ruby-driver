@@ -896,7 +896,7 @@ class TestCollection < Test::Unit::TestCase
 
       m = "function() { emit(this.user_id, 1); }"
       r = "function(k,vals) { return 1; }"
-      res = @@test.map_reduce(m, r, :out => 'foo');
+      res = @@test.map_reduce(m, r, :out => 'foo')
       assert res.find_one({"_id" => 1})
       assert res.find_one({"_id" => 2})
     end
@@ -907,7 +907,7 @@ class TestCollection < Test::Unit::TestCase
 
       m = Code.new("function() { emit(this.user_id, 1); }")
       r = Code.new("function(k,vals) { return 1; }")
-      res = @@test.map_reduce(m, r, :out => 'foo');
+      res = @@test.map_reduce(m, r, :out => 'foo')
       assert res.find_one({"_id" => 1})
       assert res.find_one({"_id" => 2})
     end
@@ -920,7 +920,7 @@ class TestCollection < Test::Unit::TestCase
 
       m = Code.new("function() { emit(this.user_id, 1); }")
       r = Code.new("function(k,vals) { return 1; }")
-      res = @@test.map_reduce(m, r, :query => {"user_id" => {"$gt" => 1}}, :out => 'foo');
+      res = @@test.map_reduce(m, r, :query => {"user_id" => {"$gt" => 1}}, :out => 'foo')
       assert_equal 2, res.count
       assert res.find_one({"_id" => 2})
       assert res.find_one({"_id" => 3})
