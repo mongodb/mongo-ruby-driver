@@ -17,11 +17,9 @@
 org_argv = ARGV.dup
 ARGV.clear
 
-require 'irb'
-
 $LOAD_PATH[0,0] = File.join(File.dirname(__FILE__), '..', 'lib')
-require 'mongo'
 
+require 'mongo'
 include Mongo
 
 host = org_argv[0] || ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
@@ -32,5 +30,14 @@ puts "Connecting to #{host}:#{port} (CLIENT) on with database #{dbnm} (DB)"
 CLIENT = MongoClient.new(host, port)
 DB = CLIENT.db(dbnm)
 
-puts "Starting IRB session..."
-IRB.start(__FILE__)
+# try pry if available, fall back to irb
+begin
+  require 'pry'
+  CONSOLE_CLASS = Pry
+rescue LoadError
+  require 'irb'
+  CONSOLE_CLASS = IRB
+end
+
+puts "Starting #{CONSOLE_CLASS.name} session..."
+CONSOLE_CLASS.start(__FILE__)

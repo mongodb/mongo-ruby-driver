@@ -13,8 +13,6 @@
 # limitations under the License.
 
 require 'test_helper'
-require 'mongo/exceptions'
-require 'mongo/util/conversions'
 
 class ConversionsTest < Test::Unit::TestCase
   include Mongo::Conversions

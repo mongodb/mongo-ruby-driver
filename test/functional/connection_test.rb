@@ -13,9 +13,6 @@
 # limitations under the License.
 
 require 'test_helper'
-require 'logger'
-require 'stringio'
-require 'thread'
 
 class TestConnection < Test::Unit::TestCase
 

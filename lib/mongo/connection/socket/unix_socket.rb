@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'socket'
-
 module Mongo
   # Wrapper class for Socket
   #
@@ -34,4 +32,3 @@ module Mongo
     end
   end
 end
-
