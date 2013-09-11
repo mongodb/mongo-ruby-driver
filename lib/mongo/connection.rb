@@ -12,23 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module SocketUtil
-
-  attr_accessor :pool, :pid
-
-  def checkout
-    @pool.checkout if @pool
-  end
-
-  def checkin
-    @pool.checkin(self) if @pool
-  end
-
-  def close
-    @socket.close unless closed?
-  end
-
-  def closed?
-    @socket.closed?
-  end
-end
+require 'mongo/connection/socket'
+require 'mongo/connection/node'
+require 'mongo/connection/pool'
+require 'mongo/connection/pool_manager'
+require 'mongo/connection/sharding_pool_manager'
