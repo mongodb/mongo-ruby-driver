@@ -80,6 +80,8 @@ module Mongo
         # mongo looks at the first key in the out object, and doesn't
         # look at the value
         out.is_a?(Hash) && out.keys.first.to_s.downcase == 'inline' ? true : false
+      elsif command == 'aggregate'
+        selector['pipeline'].any? { |op| op['$out'] || op[:$out] } ? false : true
       else
         SECONDARY_OK_COMMANDS.member?(command)
       end

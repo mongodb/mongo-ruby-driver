@@ -685,8 +685,10 @@ module Mongo
     #
     #   '$sort' Sorts all input documents and returns them to the pipeline in sorted order.
     #
+    #   '$out' The name of a collection to which the result set will be saved.
+    #
     # @option opts [:primary, :secondary] :read Read preference indicating which server to perform this query
-    #  on. See Collection#find for more details.
+    #  on. Must be :primary if $out is used. See Collection#find for more details.
     # @option opts [String]  :comment (nil) a comment to include in profiling logs
     # @option opts [Hash] :cursor cursor options for aggregation
     #
@@ -719,6 +721,8 @@ module Mongo
         }
 
         Cursor.new(self, seed)
+      elsif hash['pipeline'].any? { |op| op['$out'] || op[:$out] }
+        result
       else
         result['result']
       end
