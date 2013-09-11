@@ -58,6 +58,7 @@ module Mongo
           sock.checkin
         end
       end
+      true
     end
 
     # Sends a message to the database, waits for a response, and raises

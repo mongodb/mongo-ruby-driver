@@ -19,6 +19,12 @@ module Mongo
     include Mongo::Logging
     include Mongo::WriteConcern
 
+    OPCODE = {
+          :insert => Mongo::Constants::OP_INSERT,
+          :update => Mongo::Constants::OP_UPDATE,
+          :delete => Mongo::Constants::OP_DELETE
+    }
+
     attr_reader :db,
                 :name,
                 :pk_factory,
@@ -288,6 +294,43 @@ module Mongo
       end
     end
 
+    private
+
+    def send_write_operation(type, selector, documents, opts, collection_name=@name)
+      write_concern = get_write_concern(opts, self)
+      message = BSON::ByteBuffer.new("", @connection.max_message_size)
+      message.put_int((type == :insert && !!opts[:continue_on_error]) ? 1 : 0)
+      BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{collection_name}")
+      if type == :update
+        update_options  = 0
+        update_options += 1 if opts[:upsert]
+        update_options += 2 if opts[:multi]
+        message.put_int(update_options)
+      elsif type == :delete
+        delete_options = 0
+        delete_options += 1 if opts[:limit]
+        message.put_int(delete_options)
+      end
+      message.put_binary(BSON::BSON_CODER.serialize(selector, false, true, @connection.max_bson_size).to_s) if selector
+      check_keys = (type == :update && documents.keys.first.to_s.start_with?("$")) ? false : true # Determine if update document has modifiers and check keys if so
+      [documents].flatten.compact.each do |document|
+        message.put_binary(BSON::BSON_CODER.serialize(document, check_keys, true, @connection.max_bson_size).to_s)
+        if message.size > @connection.max_message_size
+          raise InvalidDocument, "Message is too large. This message is limited to #{@connection.max_message_size} bytes."
+        end
+      end
+      instrument(type, :database => @db.name, :collection => collection_name, :selector => selector, :documents => documents) do
+        op = Mongo::Collection::OPCODE[type]
+        if Mongo::WriteConcern.gle?(write_concern)
+          @connection.send_message_with_gle(op, message, @db.name, nil, write_concern)
+        else
+          @connection.send_message(op, message)
+        end
+      end
+    end
+
+    public
+
     # Return a single object from the database.
     #
     # @return [OrderedHash, Nil]
@@ -420,20 +463,7 @@ module Mongo
     #
     # @core remove remove-instance_method
     def remove(selector={}, opts={})
-      write_concern = get_write_concern(opts, self)
-      message = BSON::ByteBuffer.new("\0\0\0\0", @connection.max_message_size)
-      BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
-      message.put_int(0)
-      message.put_binary(BSON::BSON_CODER.serialize(selector, false, true, @connection.max_bson_size).to_s)
-
-      instrument(:remove, :database => @db.name, :collection => @name, :selector => selector) do
-        if Mongo::WriteConcern.gle?(write_concern)
-          @connection.send_message_with_gle(Mongo::Constants::OP_DELETE, message, @db.name, nil, write_concern)
-        else
-          @connection.send_message(Mongo::Constants::OP_DELETE, message)
-          true
-        end
-      end
+      send_write_operation(:delete, selector, nil, opts)
     end
 
     # Update one or more documents in this collection.
@@ -467,28 +497,7 @@ module Mongo
     #
     # @core update update-instance_method
     def update(selector, document, opts={})
-      # Initial byte is 0.
-      write_concern = get_write_concern(opts, self)
-      message = BSON::ByteBuffer.new("\0\0\0\0", @connection.max_message_size)
-      BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
-      update_options  = 0
-      update_options += 1 if opts[:upsert]
-      update_options += 2 if opts[:multi]
-
-      # Determine if update document has modifiers and check keys if so
-      check_keys = document.keys.first.to_s.start_with?("$") ? false : true
-
-      message.put_int(update_options)
-      message.put_binary(BSON::BSON_CODER.serialize(selector, false, true, @connection.max_bson_size).to_s)
-      message.put_binary(BSON::BSON_CODER.serialize(document, check_keys, true, @connection.max_bson_size).to_s)
-
-      instrument(:update, :database => @db.name, :collection => @name, :selector => selector, :document => document) do
-        if Mongo::WriteConcern.gle?(write_concern)
-          @connection.send_message_with_gle(Mongo::Constants::OP_UPDATE, message, @db.name, nil, write_concern)
-        else
-          @connection.send_message(Mongo::Constants::OP_UPDATE, message)
-        end
-      end
+      send_write_operation(:update, selector, document, opts)
     end
 
     # Create a new index.
