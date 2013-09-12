@@ -296,7 +296,7 @@ module Mongo
 
     private
 
-    def send_write_operation(type, selector, documents, opts, collection_name=@name)
+    def send_write_operation(type, selector, documents, check_keys, opts, collection_name=@name)
       write_concern = get_write_concern(opts, self)
       message = BSON::ByteBuffer.new("", @connection.max_message_size)
       message.put_int((type == :insert && !!opts[:continue_on_error]) ? 1 : 0)
@@ -312,7 +312,6 @@ module Mongo
         message.put_int(delete_options)
       end
       message.put_binary(BSON::BSON_CODER.serialize(selector, false, true, @connection.max_bson_size).to_s) if selector
-      check_keys = (type == :update && documents.keys.first.to_s.start_with?("$")) ? false : true # Determine if update document has modifiers and check keys if so
       [documents].flatten.compact.each do |document|
         message.put_binary(BSON::BSON_CODER.serialize(document, check_keys, true, @connection.max_bson_size).to_s)
         if message.size > @connection.max_message_size
@@ -463,7 +462,7 @@ module Mongo
     #
     # @core remove remove-instance_method
     def remove(selector={}, opts={})
-      send_write_operation(:delete, selector, nil, opts)
+      send_write_operation(:delete, selector, nil, nil, opts)
     end
 
     # Update one or more documents in this collection.
@@ -497,7 +496,7 @@ module Mongo
     #
     # @core update update-instance_method
     def update(selector, document, opts={})
-      send_write_operation(:update, selector, document, opts)
+      send_write_operation(:update, selector, document, !document.keys.first.to_s.start_with?("$"), opts)
     end
 
     # Create a new index.
@@ -1100,8 +1099,7 @@ module Mongo
       selector.merge!(opts)
 
       begin
-      insert_documents([selector], Mongo::DB::SYSTEM_INDEX_COLLECTION, false, {:w => 1})
-
+        send_write_operation(:insert, nil, selector, false, {:w => 1}, Mongo::DB::SYSTEM_INDEX_COLLECTION)
       rescue Mongo::OperationFailure => e
         if selector[:dropDups] && e.message =~ /^11000/
           # NOP. If the user is intentionally dropping dups, we can ignore duplicate key errors.
