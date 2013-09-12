@@ -296,17 +296,17 @@ module Mongo
 
     private
 
-    def send_write_operation(type, selector, documents, check_keys, opts, collection_name=@name)
+    def send_write_operation(op_type, selector, documents, check_keys, opts, collection_name=@name)
       write_concern = get_write_concern(opts, self)
       message = BSON::ByteBuffer.new("", @connection.max_message_size)
-      message.put_int((type == :insert && !!opts[:continue_on_error]) ? 1 : 0)
+      message.put_int((op_type == :insert && !!opts[:continue_on_error]) ? 1 : 0)
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{collection_name}")
-      if type == :update
+      if op_type == :update
         update_options  = 0
         update_options += 1 if opts[:upsert]
         update_options += 2 if opts[:multi]
         message.put_int(update_options)
-      elsif type == :delete
+      elsif op_type == :delete
         delete_options = 0
         delete_options += 1 if opts[:limit]
         message.put_int(delete_options)
@@ -318,12 +318,12 @@ module Mongo
           raise InvalidDocument, "Message is too large. This message is limited to #{@connection.max_message_size} bytes."
         end
       end
-      instrument(type, :database => @db.name, :collection => collection_name, :selector => selector, :documents => documents) do
-        op = Mongo::Collection::OPCODE[type]
+      instrument(op_type, :database => @db.name, :collection => collection_name, :selector => selector, :documents => documents) do
+        op_code = Mongo::Collection::OPCODE[op_type]
         if Mongo::WriteConcern.gle?(write_concern)
-          @connection.send_message_with_gle(op, message, @db.name, nil, write_concern)
+          @connection.send_message_with_gle(op_code, message, @db.name, nil, write_concern)
         else
-          @connection.send_message(op, message)
+          @connection.send_message(op_code, message)
         end
       end
     end
