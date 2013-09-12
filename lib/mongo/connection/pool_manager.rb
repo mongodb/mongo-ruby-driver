@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require 'set'
+require 'thread'
 
 module Mongo
   class PoolManager

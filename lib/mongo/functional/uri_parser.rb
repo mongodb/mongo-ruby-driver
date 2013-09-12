@@ -134,9 +134,8 @@ module Mongo
     # @note Passwords can contain any character except for ','
     #
     # @param [String] uri The MongoDB URI string.
-    # @param [Hash,nil] extra_opts Extra options. Will override anything already specified in the URI.
-    #
-    # @core connections
+    # @param [Hash,nil] extra_opts Extra options. Will override anything
+    #   already specified in the URI.
     def initialize(uri)
       if uri.start_with?('mongodb://')
         uri = uri[10..-1]

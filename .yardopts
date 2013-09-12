@@ -1,1 +1,1 @@
-lib/**/*.rb lib/mongo/**/*.rb lib/bson/**/*.rb -e ./tasks/yard/yard_ext.rb -p tasks/yard/templates
+lib/**/*.rb lib/mongo/**/*.rb lib/bson/**/*.rb

@@ -34,8 +34,6 @@ module Mongo
     # similar methods. Application developers shouldn't have to create cursors manually.
     #
     # @return [Cursor]
-    #
-    # @core cursors constructor_details
     def initialize(collection, opts={})
       opts = opts.dup
       @cursor_id  = opts.delete(:cursor_id)
@@ -236,8 +234,6 @@ module Mongo
     # @return [Integer] the current number_to_return if no parameter is given.
     #
     # @raise [InvalidOperation] if this cursor has already been used.
-    #
-    # @core limit limit-instance_method
     def limit(number_to_return=nil)
       return @limit unless number_to_return
       check_modifiable
@@ -359,8 +355,6 @@ module Mongo
     # Get the explain plan for this cursor.
     #
     # @return [Hash] a document containing the explain plan for this cursor.
-    #
-    # @core explain explain-instance_method
     def explain
       check_command_cursor
       c = Cursor.new(@collection,
