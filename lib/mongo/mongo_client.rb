@@ -55,7 +55,8 @@ module Mongo
                 :op_timeout,
                 :tag_sets,
                 :acceptable_latency,
-                :read
+                :read,
+                :max_wire_version
 
     # Create a connection to single MongoDB instance.
     #
@@ -148,8 +149,9 @@ module Mongo
       @tag_sets = []
       @acceptable_latency = 15
 
-      @max_message_size = nil
       @max_bson_size = nil
+      @max_message_size = nil
+      @max_wire_version = nil
 
       check_opts(opts)
       setup(opts.dup)
@@ -479,6 +481,7 @@ module Mongo
 
         @max_bson_size = config['maxBsonObjectSize']
         @max_message_size = config['maxMessageSizeBytes']
+        @max_wire_version = config['maxWireVersion']
         set_primary(host_port)
       end
 
@@ -545,6 +548,10 @@ module Mongo
 
     def max_message_size
       @max_message_size || max_bson_size * MESSAGE_SIZE_FACTOR
+    end
+
+    def max_wire_version
+      @max_wire_version || 0
     end
 
     # Checkout a socket for reading (i.e., a secondary node).

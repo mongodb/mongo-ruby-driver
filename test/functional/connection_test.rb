@@ -337,6 +337,28 @@ class TestConnection < Test::Unit::TestCase
     assert_equal Mongo::DEFAULT_MAX_BSON_SIZE * Mongo::MESSAGE_SIZE_FACTOR, conn.max_message_size
   end
 
+  def test_max_wire_vesion_value
+    conn = standard_connection(:connect => false)
+
+    admin_db = Object.new
+    admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1, 'maxWireVersion' => 1})
+    conn.expects(:[]).with('admin').returns(admin_db)
+    conn.connect
+
+    assert_equal 1, conn.max_wire_version
+  end
+
+  def test_max_wire_vesion_value_with_no_reported_max_wire_version
+    conn = standard_connection(:connect => false)
+
+    admin_db = Object.new
+    admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1})
+    conn.expects(:[]).with('admin').returns(admin_db)
+    conn.connect
+
+    assert_equal 0, conn.max_wire_version
+  end
+
   def test_connection_activity
     conn = standard_connection
     assert conn.active?
