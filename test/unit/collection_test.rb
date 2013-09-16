@@ -81,7 +81,7 @@ class CollectionTest < Test::Unit::TestCase
         op == 2001
       end
       @coll.expects(:log_operation).with do |name, payload|
-        (name == :update) && payload[:document][:title].include?('Moby')
+        (name == :update) && payload[:documents][:title].include?('Moby')
       end
       @coll.update({}, {:title => 'Moby Dick'})
     end
@@ -94,7 +94,7 @@ class CollectionTest < Test::Unit::TestCase
         op == 2001
       end
       @coll.expects(:log_operation).with do |name, payload|
-        (name == :update) && payload[:document][:title].include?('Moby')
+        (name == :update) && payload[:documents][:title].include?('Moby')
       end
       @coll.update({}, {:title => 'Moby Dick'})
     end

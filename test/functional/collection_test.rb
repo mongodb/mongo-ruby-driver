@@ -1503,8 +1503,8 @@ end
     end
 
     should "generate indexes in the proper order" do
-      @collection.expects(:insert_documents) do |sel, coll, safe|
-        assert_equal 'b_1_a_1', sel[:name]
+      @collection.expects(:send_write_operation) do |type, selector, documents, check_keys, opts, collection_name|
+        assert_equal 'b_1_a_1', selector[:name]
       end
       @collection.create_index([['b', 1], ['a', 1]])
     end
