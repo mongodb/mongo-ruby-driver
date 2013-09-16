@@ -457,6 +457,11 @@ module Mongo
       max_bson_size * MESSAGE_SIZE_FACTOR
     end
 
+    def max_wire_version
+      return local_manager.max_wire_version if local_manager
+      0
+    end
+
     private
 
     # Parse option hash
