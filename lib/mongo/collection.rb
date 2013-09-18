@@ -637,10 +637,13 @@ module Mongo
     #  document from the collection.
     # @option opts [Boolean] :new (false) If true, returns the updated
     #  document; otherwise, returns the document prior to update.
-    # @option opts [Boolean] :full_response (false) If true, returns the entire
-    #  response object from the server including 'ok' and 'lastErrorObject'.
     # @option opts [Boolean] :upsert (false) If true, creates a new document
     #  if the query returns no document.
+    # @option opts [Hash] :fields (nil) A subset of fields to return.
+    #  Specify an inclusion of a field with 1. _id is included by default and must
+    #  be explicitly excluded.
+    # @option opts [Boolean] :full_response (false) If true, returns the entire
+    #  response object from the server including 'ok' and 'lastErrorObject'.
     #
     # @return [Hash] the matched document.
     #
