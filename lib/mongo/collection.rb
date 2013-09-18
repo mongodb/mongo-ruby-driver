@@ -639,6 +639,8 @@ module Mongo
     #  document; otherwise, returns the document prior to update.
     # @option opts [Boolean] :full_response (false) If true, returns the entire
     #  response object from the server including 'ok' and 'lastErrorObject'.
+    # @option opts [Boolean] :upsert (false) If true, creates a new document
+    #  if the query returns no document.
     #
     # @return [Hash] the matched document.
     #
