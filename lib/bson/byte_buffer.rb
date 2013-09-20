@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'bson/grow'
+
 module BSON
   class ByteBuffer
+    include BSON::Grow
 
     attr_reader :order, :max_size
 
