@@ -276,29 +276,34 @@ module Mongo
       true
     end
 
-    # Save an authentication to this connection. When connecting,
-    # the connection will attempt to re-authenticate on every db
-    # specified in the list of auths. This method is called automatically
-    # by DB#authenticate.
+    # Save an authentication to this connection.
     #
-    # Note: this method will not actually issue an authentication command. To do that,
-    # either run MongoClient#apply_saved_authentication or DB#authenticate.
+    # When connecting, the connection will attempt to re-authenticate on
+    # every database specified in the list of auths. This method is called
+    # automatically by DB#authenticate.
     #
-    # @param [String] db_name
-    # @param [String] username
-    # @param [String] password
+    # Note: this method will not actually issue an authentication command.
+    # To do that, either run MongoClient#apply_saved_authentication or
+    # DB#authenticate.
+    #
+    # @param db_name [String] the database name.
+    # @param username [String] the username.
+    # @param password [String] the users password.
+    # @param source [String] (nil) optional database name if authenticating
+    # against a different database than specified with db_name.
     #
     # @return [Hash] a hash representing the authentication just added.
-    def add_auth(db_name, username, password, source)
+    def add_auth(db_name, username, password, source=nil)
       if @auths.any? {|a| a[:db_name] == db_name}
-        raise MongoArgumentError, "Cannot apply multiple authentications to database '#{db_name}'"
+        raise MongoArgumentError,
+            "Cannot apply multiple authentications to database '#{db_name}'"
       end
 
       auth = {
         :db_name  => db_name,
         :username => username,
         :password => password,
-        :source => source
+        :source   => source
       }
       @auths << auth
       auth
