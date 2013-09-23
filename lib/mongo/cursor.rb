@@ -145,7 +145,7 @@ module Mongo
         end
 
         # Handle server side operation execution timeout
-        if [16712,16986].include?(code)
+        if code == 50
           raise ExecutionTimeout.new(err, code, doc)
         end
 
