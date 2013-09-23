@@ -383,29 +383,55 @@ module Mongo
       end
 
       def repl_set_startup
-        states = nil
-        60.times do
+        # enter the thunderdome...
+        states     = nil
+        healthy    = false
+        start_time = Time.now
+
+        until(healthy) do
+          # fetch replica set state
           states = repl_set_get_status.zip(repl_set_is_master)
-          healthy = states.all? do |status, is_master|
-            members = status['members']
-            if status['ok'] == 1.0 && members.collect{|m| m['state']}.all?{|state| [1,2,7].index(state)}
-              members.any?{|m| m['state'] == 1} &&
-                (primary_optime = members.find{|m| m['state'] == 1}['optime'].seconds) &&
-                members.all? {|m| m['state'] == 7 || primary_optime - m['optime'].seconds < 5} &&
-                case status['myState']
-                when 1
-                  is_master['ismaster'] == true && is_master['secondary'] == false
-                when 2
-                  is_master['ismaster'] == false && is_master['secondary'] == true
-                when 7
-                  is_master['ismaster'] == false && is_master['secondary'] == false
-                end
+
+          # raise operation failure if timeout is exceeded
+          if (Time.now - start_time) > 60
+            raise Mongo::OperationFailure,
+              "replSet startup failed - status: #{states.inspect}"
+          end
+
+          states.all? do |status, is_master|
+            # check replica set status for member list
+            next unless status['ok'] == 1.0 && (members = status['members'])
+
+            # ensure all replica set members are in a valid state
+            next unless members.all? { |m| [1,2,7].include?(m['state']) }
+
+            # check for primary replica set member
+            next unless (primary = members.find { |m| m['state'] == 1 })
+
+            # check replica set member optimes
+            primary_optime = primary['optime'].seconds
+            next unless primary_optime && members.all? do |m|
+              m['state'] == 7 || primary_optime - m['optime'].seconds < 5
+            end
+
+            # check replica set state
+            healthy = case status['myState']
+              when 1
+                is_master['ismaster']  == true &&
+                is_master['secondary'] == false
+              when 2
+                is_master['ismaster']  == false &&
+                is_master['secondary'] == true
+              when 7
+                is_master['ismaster']  == false &&
+                is_master['secondary'] == false
             end
           end
-          return true if healthy
-          sleep(1)
+
+          sleep(1) unless healthy
         end
-        raise Mongo::OperationFailure, "replSet startup failed - status: #{states.inspect}"
+
+        healthy
       end
 
       def repl_set_seeds
