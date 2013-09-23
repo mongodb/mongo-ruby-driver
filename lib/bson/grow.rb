@@ -37,7 +37,7 @@ module BSON
 
     def unfinish! # Backup past terminating null bytes
       @b_pos ||= [0]
-      @cursor -= @b_pos.size
+      @cursor = @str.size - @b_pos.size # BSON::BSON_CODER.serialize may not restore @cursor
       self
     end
 
