@@ -75,7 +75,7 @@ module BSON
       @a_index ||= [0]
       @b_pos << @cursor # mark position of size
       @a_index << 0
-      put_int(5)
+      put_int(0)
       self
     end
 
@@ -104,7 +104,7 @@ module BSON
 
     def b_end! # End object/array unfinished - next operation will be up one level
       @b_pos ||= [0]
-      finish_one!(@b_pos[-1], @b_pos.size)
+      finish_one!(@b_pos[-1], 0)
       @b_pos.pop
       @a_index ||= [0]
       @a_index.pop

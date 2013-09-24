@@ -26,7 +26,9 @@ end
 
 class Hash
   def to_bson
-    BSON::BSON_CODER.serialize(self, false, true)
+    byte_buffer = BSON::BSON_CODER.serialize(self, false, true)
+    byte_buffer.position = byte_buffer.size
+    byte_buffer
   end
 end
 
@@ -106,7 +108,7 @@ class TestCollection < Test::Unit::TestCase
 
   def test_b_end_bang
     message = @bson_a.unfinish!.array!("c").grow!(99).b_end!.grow!(@bson_b).finish!
-    assert_equal({"a"=>0, "b"=>1, "c"=>[99]}, message.to_ruby)
+    assert_equal({"a"=>0, "c"=>[99], "b"=>1}, message.to_ruby)
   end
 
   def test_b_end
