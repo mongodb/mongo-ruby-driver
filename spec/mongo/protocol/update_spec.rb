@@ -176,4 +176,3 @@ describe Mongo::Protocol::Update do
     end
   end
 end
-

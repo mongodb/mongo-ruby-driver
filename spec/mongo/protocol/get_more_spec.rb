@@ -137,4 +137,3 @@ describe Mongo::Protocol::GetMore do
     end
   end
 end
-

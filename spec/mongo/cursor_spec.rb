@@ -149,8 +149,7 @@ describe Mongo::Cursor do
 
       context 'when multiple requests are needed' do
         let(:responses) do
-          [results(nonzero, total_docs - delta),
-          results(0, delta)]
+          [results(nonzero, total_docs - delta), results(0, delta)]
         end
 
         it 'does not limit the first query message' do

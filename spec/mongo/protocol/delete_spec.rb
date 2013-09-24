@@ -158,4 +158,3 @@ describe Mongo::Protocol::Delete do
     end
   end
 end
-

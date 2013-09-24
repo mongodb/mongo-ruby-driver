@@ -104,10 +104,6 @@ EmptyLines:
 SpaceAroundOperators:
   Enabled: true
 
-# Use spaces around { and before }.
-SpaceAroundBraces:
-  Enabled: true
-
 # No spaces after ( or before ).
 SpaceInsideParens:
   Enabled: true
@@ -234,20 +230,12 @@ MethodAndVariableSnakeCase:
 ClassAndModuleCamelCase:
   Enabled: true
 
-# Prefer each over for.
-AvoidFor:
-  Enabled: true
+# Allow class vars (but please don't use them)
+ClassVars:
+  Enabled: false
 
-# Avoid Perl-style global variables.
-AvoidPerlisms:
-  Enabled: true
-
-# Avoid Perl-style regex back references.
-AvoidPerlBackrefs:
-  Enabled: true
-
-# Avoid the use of class variables.
-AvoidClassVars:
+# We don't require numeric any formatting, but for larger numbers you should
+NumericLiterals:
   Enabled: false
 
 # Don't interpolate global, instance and class variables directly in strings.
@@ -330,10 +318,6 @@ LeadingCommentSpace:
 ColonMethodCall:
   Enabled: true
 
-# Do not introduce global variables.
-AvoidGlobalVars:
-  Enabled: true
-
 # The use of eval represents a serious security risk.
 Eval:
   Enabled: true
@@ -395,10 +379,6 @@ Void:
 
 # Unreachable code.
 UnreachableCode:
-  Enabled: true
-
-# Unused local variable.
-UnusedLocalVariable:
   Enabled: true
 
 # Do not use the same name as outer local variable
