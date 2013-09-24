@@ -723,6 +723,16 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  def test_find_one_with_server_op_timeout
+    pend("This will fail until SERVER-10382 is completely resolved")
+    2.times { @@test.insert({}) }
+    timeout = 100
+    assert_raise ExecutionTimeout do
+      @@test.find_one({ '$where' => 'sleep(#{timeout}); return true' },
+                      { :server_op_timeout => timeout })
+    end
+  end
+
   def test_insert_adds_id
     doc = {"hello" => "world"}
     @@test.insert(doc)
