@@ -28,9 +28,9 @@ module BSON
       @str[4...-1]
     end
 
-    def finish_one!(offset = 0, level = 0) # Appends terminating null byte and sets size
+    def finish_one!(offset = 0) # Appends terminating null byte and sets size
       put(0)
-      put_int(@str.size - offset - level, offset)
+      put_int(@str.size - offset, offset)
       @cursor = @str.size
       self
     end
@@ -43,7 +43,7 @@ module BSON
 
     def finish! # Append all terminating null bytes and set all sizes
       @b_pos ||= [0]
-      @b_pos.each_with_index{|a_pos, i| finish_one!(a_pos, i)}
+      (@b_pos.size-1).downto(0){|i| finish_one!(@b_pos[i])}
       self
     end
 
@@ -104,7 +104,7 @@ module BSON
 
     def b_end! # End object/array unfinished - next operation will be up one level
       @b_pos ||= [0]
-      finish_one!(@b_pos[-1], 0)
+      finish_one!(@b_pos[-1])
       @b_pos.pop
       @a_index ||= [0]
       @a_index.pop
