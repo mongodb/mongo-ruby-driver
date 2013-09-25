@@ -91,7 +91,7 @@ class CursorTest < Test::Unit::TestCase
     end
   end
 
-  def test_server_op_timeout
+  def test_server_op_timeout_error
     cursor = @@coll.find
     cursor.stubs(:send_initial_query).returns(true)
 
@@ -105,18 +105,15 @@ class CursorTest < Test::Unit::TestCase
     end
   end
 
-  def test_server_op_timeout_js
-    pend("This will fail until SERVER-10382 is completely resolved")
-    2.times { @@coll.insert({}) }
-
-    cursor = @@coll.find({'$where' => 'sleep(100); return true'})
-    cursor.server_op_timeout(100);
-
-    assert_raise ExecutionTimeout do
-      cursor.to_a
+  if @@version >= "2.5.3"
+    def test_server_op_timeout
+      with_forced_timeout(@@connection) do
+        assert_raise ExecutionTimeout do
+          cursor = @@coll.find.server_op_timeout(100)
+          cursor.to_a
+        end
+      end
     end
-
-    @@coll.remove
   end
 
   def test_exhaust_after_limit_error
