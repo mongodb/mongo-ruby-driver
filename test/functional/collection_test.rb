@@ -723,13 +723,13 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
-  def test_find_one_with_server_op_timeout
-    pend("This will fail until SERVER-10382 is completely resolved")
-    2.times { @@test.insert({}) }
-    timeout = 100
-    assert_raise ExecutionTimeout do
-      @@test.find_one({ '$where' => 'sleep(#{timeout}); return true' },
-                      { :server_op_timeout => timeout })
+  if @@version >= "2.5.3"
+    def test_find_one_with_server_op_timeout
+      with_forced_timeout(@@client) do
+        assert_raise ExecutionTimeout do
+          @@test.find_one({}, { :server_op_timeout => 100 })
+        end
+      end
     end
   end
 
