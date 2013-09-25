@@ -383,22 +383,13 @@ module Mongo
       end
 
       def repl_set_startup
-        # enter the thunderdome...
         states     = nil
         healthy    = false
-        start_time = Time.now
 
-        until(healthy) do
-          # fetch replica set state
-          states = repl_set_get_status.zip(repl_set_is_master)
-
-          # raise operation failure if timeout is exceeded
-          if (Time.now - start_time) > 60
-            raise Mongo::OperationFailure,
-              "replSet startup failed - status: #{states.inspect}"
-          end
-
-          states.all? do |status, is_master|
+        60.times do
+          # enter the thunderdome...
+          states  = repl_set_get_status.zip(repl_set_is_master)
+          healthy = states.all? do |status, is_master|
             # check replica set status for member list
             next unless status['ok'] == 1.0 && (members = status['members'])
 
@@ -415,7 +406,7 @@ module Mongo
             end
 
             # check replica set state
-            healthy = case status['myState']
+            case status['myState']
               when 1
                 is_master['ismaster']  == true &&
                 is_master['secondary'] == false
@@ -428,10 +419,12 @@ module Mongo
             end
           end
 
-          sleep(1) unless healthy
+          return healthy if healthy
+          sleep(1)
         end
 
-        healthy
+        raise Mongo::OperationFailure,
+          "replSet startup failed - status: #{states.inspect}"
       end
 
       def repl_set_seeds
