@@ -37,51 +37,52 @@ module Mongo
     #
     # @core cursors constructor_details
     def initialize(collection, opts={})
-      @cursor_id  = opts[:cursor_id]
+      opts = opts.dup
+      @cursor_id  = opts.delete(:cursor_id)
       @db         = collection.db
       @collection = collection
       @connection = @db.connection
       @logger     = @connection.logger
 
       # Query selector
-      @selector   = opts[:selector] || {}
+      @selector   = opts.delete(:selector) || {}
 
       # Special operators that form part of $query
-      @order      = opts[:order]
-      @explain    = opts[:explain]
-      @hint       = opts[:hint]
-      @snapshot   = opts[:snapshot]
-      @max_scan   = opts.fetch(:max_scan, nil)
-      @return_key = opts.fetch(:return_key, nil)
-      @show_disk_loc = opts.fetch(:show_disk_loc, nil)
-      @comment    = opts[:comment]
+      @order         = opts.delete(:order)
+      @explain       = opts.delete(:explain)
+      @hint          = opts.delete(:hint)
+      @snapshot      = opts.delete(:snapshot)
+      @max_scan      = opts.delete(:max_scan)
+      @return_key    = opts.delete(:return_key)
+      @show_disk_loc = opts.delete(:show_disk_loc)
+      @comment       = opts.delete(:comment)
 
       # Wire-protocol settings
-      @fields     = convert_fields_for_query(opts[:fields])
-      @skip       = opts[:skip]     || 0
-      @limit      = opts[:limit]    || 0
-      @tailable   = opts[:tailable] || false
-      @timeout    = opts.fetch(:timeout, true)
-      @options    = 0
+      @fields   = convert_fields_for_query(opts.delete(:fields))
+      @skip     = opts.delete(:skip)     || 0
+      @limit    = opts.delete(:limit)    || 0
+      @tailable = opts.delete(:tailable)
+      @timeout  = opts[:timeout].nil? ? true : opts.delete(:timeout)
+      @options  = 0
 
       # Use this socket for the query
-      @socket = opts[:socket]
-      @pool   = opts[:pool]
+      @socket = opts.delete(:socket)
+      @pool   = opts.delete(:pool)
 
-      @closed       = false
-      @query_run    = false
+      @closed    = false
+      @query_run = false
 
-      @transformer = opts[:transformer]
-      @read =  opts[:read] || @collection.read
+      @transformer        = opts.delete(:transformer)
+      @read               = opts.delete(:read)               || @collection.read
       Mongo::ReadPreference::validate(@read)
-      @tag_sets = opts[:tag_sets] || @collection.tag_sets
-      @acceptable_latency = opts[:acceptable_latency] || @collection.acceptable_latency
+      @tag_sets           = opts.delete(:tag_sets)           || @collection.tag_sets
+      @acceptable_latency = opts.delete(:acceptable_latency) || @collection.acceptable_latency
 
-      batch_size(opts[:batch_size] || 0)
+      batch_size(opts.delete(:batch_size) || 0)
 
       @full_collection_name = "#{@collection.db.name}.#{@collection.name}"
-      @cache        = opts[:first_batch] || []
-      @returned     = 0
+      @cache                = opts.delete(:first_batch) || []
+      @returned             = 0
 
       if(!@timeout)
         add_option(OP_QUERY_NO_CURSOR_TIMEOUT)
@@ -96,7 +97,7 @@ module Mongo
       # If a cursor_id is provided, this is a cursor for a command
       if @cursor_id
         @command_cursor = true
-        @query_run = true
+        @query_run      = true
       end
 
       if @collection.name =~ /^\$cmd/ || @collection.name =~ /^system/
@@ -104,6 +105,8 @@ module Mongo
       else
         @command = false
       end
+
+      @opts = opts
     end
 
     # Guess whether the cursor is alive on the server.
@@ -626,6 +629,7 @@ module Mongo
       message.put_int(@skip)
       @batch_size > 1 ? message.put_int(@batch_size) : message.put_int(@limit)
       spec = query_contains_special_fields? ? construct_query_spec : @selector
+      spec.merge!(@opts)
       message.put_binary(BSON::BSON_CODER.serialize(spec, false, false, @connection.max_bson_size).to_s)
       message.put_binary(BSON::BSON_CODER.serialize(@fields, false, false, @connection.max_bson_size).to_s) if @fields
       message
