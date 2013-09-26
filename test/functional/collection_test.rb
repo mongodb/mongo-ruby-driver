@@ -899,6 +899,44 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  if @@version >= "2.5.2"
+    def test_out_aggregate
+      setup_aggregate_data
+      pipeline = [{:$out => 'test_out'}]
+      docs = @@test.find.to_a
+      result = @@test.aggregate(pipeline)
+      assert_equal docs, @@db.collection('test_out').find.to_a
+    end
+
+    def test_out_aggregate_nonprimary_raises_expection
+      pipeline = [{:$out => 'test_out'}]
+      assert_raise MongoArgumentError do
+        @@test.aggregate(pipeline, :read => :secondary)
+      end
+    end
+
+    def test_out_aggregate_nonprimary_raises_expection_with_string
+      pipeline = [{'$out' => 'test_out'}]
+      assert_raise MongoArgumentError do
+        @@test.aggregate(pipeline, :read => :secondary)
+      end
+    end
+
+    def test_out_aggregate_returns_raw_response
+      pipeline = [{:$out => 'test_out'}]
+      response = @@test.aggregate(pipeline)
+      assert response.key?('result')
+      assert response.key?('ok')
+    end
+
+    def test_out_aggregate_raw_response_with_string
+      pipeline = [{'$out' => 'test_out'}]
+      response = @@test.aggregate(pipeline)
+      assert response.key?('result')
+      assert response.key?('ok')
+    end
+  end
+
   if @@version > "1.1.1"
     def test_map_reduce
       @@test << { "user_id" => 1 }
