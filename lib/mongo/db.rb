@@ -24,6 +24,7 @@ module Mongo
     SYSTEM_USER_COLLECTION      = 'system.users'
     SYSTEM_JS_COLLECTION        = 'system.js'
     SYSTEM_COMMAND_COLLECTION   = '$cmd'
+    SERVER_OP_TIMEOUT_CODE      = 50
 
     PROFILE_LEVEL = {
       :off       => 0,
@@ -542,29 +543,25 @@ module Mongo
     #
     # @core commands command_instance-method
     def command(selector, opts={})
-      check_response = opts.fetch(:check_response, true)
-      socket = opts[:socket]
+      cmd_opts = opts.dup.merge!({ :limit => -1, :selector => selector })
+      # deletes :check_response and returns the value, if nil defaults to the block result
+      check_response = cmd_opts.delete(:check_response) { true }
       raise MongoArgumentError, "Command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
 
       if selector.keys.length > 1 && RUBY_VERSION < '1.9' && selector.class != BSON::OrderedHash
         raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
       end
 
-      if read_pref = opts[:read]
+      if read_pref = cmd_opts.delete(:read)
         Mongo::ReadPreference::validate(read_pref)
         unless read_pref == :primary || Mongo::Support::secondary_ok?(selector)
           raise MongoArgumentError, "Command is not supported on secondaries: #{selector.keys.first}"
         end
+        cmd_opts[:read] = read_pref
       end
 
       begin
-        result = Cursor.new(
-          system_command_collection,
-          :limit => -1,
-          :selector => selector,
-          :socket => socket,
-          :read => read_pref,
-          :comment => opts[:comment]).next_document
+        result = Cursor.new(system_command_collection, cmd_opts).next_document
       rescue OperationFailure => ex
         raise OperationFailure, "Database command '#{selector.keys.first}' failed: #{ex.message}"
       end
@@ -579,6 +576,7 @@ module Mongo
         end.join('; ')
         message << ').'
         code = result['code'] || result['assertionCode']
+        raise ExecutionTimeout.new(message, code, result) if code == SERVER_OP_TIMEOUT_CODE
         raise OperationFailure.new(message, code, result)
       end
 
