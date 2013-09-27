@@ -723,12 +723,10 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
-  if @@version >= "2.5.3"
-    def test_find_one_with_server_op_timeout
-      with_forced_timeout(@@client) do
-        assert_raise ExecutionTimeout do
-          @@test.find_one({}, { :server_op_timeout => 100 })
-        end
+  def test_find_one_with_server_op_timeout
+    with_forced_timeout(@@client) do
+      assert_raise ExecutionTimeout do
+        @@test.find_one({}, { :server_op_timeout => 100 })
       end
     end
   end

@@ -222,13 +222,15 @@ class Test::Unit::TestCase
 
   def with_forced_timeout(client)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['argv']
-    if cmd_line_args.include?('enableTestCommands=1')
-      #Force any query or command with valid non-zero max time to fail (SERVER-10650)
-      client['admin'].command({ :configureFailPoint => 'maxTimeAlwaysTimeOut',
-                                :mode => 'alwaysOn' })
-      yield if block_given?
-      client['admin'].command({ :configureFailPoint => 'maxTimeAlwaysTimeOut',
-                                :mode => 'off' })
+    if cmd_line_args.include?('enableTestCommands=1') && client.server_version >= "2.5.3"
+      begin
+        #Force any query or command with valid non-zero max time to fail (SERVER-10650)
+        client['admin'].command({ :configureFailPoint => 'maxTimeAlwaysTimeOut',
+                                  :mode => 'alwaysOn' })
+        yield if block_given?
+        client['admin'].command({ :configureFailPoint => 'maxTimeAlwaysTimeOut',
+                                  :mode => 'off' })
+      end
     end
   end
 end

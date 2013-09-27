@@ -105,13 +105,11 @@ class CursorTest < Test::Unit::TestCase
     end
   end
 
-  if @@version >= "2.5.3"
-    def test_server_op_timeout
-      with_forced_timeout(@@connection) do
-        assert_raise ExecutionTimeout do
-          cursor = @@coll.find.server_op_timeout(100)
-          cursor.to_a
-        end
+  def test_server_op_timeout
+    with_forced_timeout(@@connection) do
+      assert_raise ExecutionTimeout do
+        cursor = @@coll.find.server_op_timeout(100)
+        cursor.to_a
       end
     end
   end
