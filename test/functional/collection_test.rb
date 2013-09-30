@@ -56,6 +56,21 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  def test_aggregation_invalid_read_pref
+    assert_raise Mongo::MongoArgumentError do
+      @@test.aggregate([], :read => :invalid_read_pref)
+    end
+  end
+
+  if @@version >= '2.5.2'
+    def test_aggregation_arbitrary_opts
+      @@db.expects(:command).with do |selector, opts|
+        opts[:allowDiskUsage] == true
+      end.returns({ 'ok' => 1 })
+      @@test.aggregate([], :allowDiskUsage => true)
+    end
+  end
+
   def test_capped_method
     @@db.create_collection('normal')
     assert !@@db['normal'].capped?

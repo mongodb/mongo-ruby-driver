@@ -760,6 +760,7 @@ module Mongo
     #
     # @core mapreduce map_reduce-instance_method
     def map_reduce(map, reduce, opts={})
+      opts = opts.dup
       map    = BSON::Code.new(map) unless map.is_a?(BSON::Code)
       reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
       raw    = opts.delete(:raw)
@@ -768,9 +769,8 @@ module Mongo
       hash['mapreduce'] = self.name
       hash['map'] = map
       hash['reduce'] = reduce
-      hash.merge! opts
-      if hash[:sort]
-        hash[:sort] = Mongo::Support.format_order_clause(hash[:sort])
+      if sort = opts.delete(:sort)
+        hash[:sort] = Mongo::Support.format_order_clause(sort)
       end
 
       result = @db.command(hash, command_options(opts))
@@ -780,8 +780,10 @@ module Mongo
 
       if raw
         result
-      elsif result["result"]
-        if result['result'].is_a? BSON::OrderedHash and result['result'].has_key? 'db' and result['result'].has_key? 'collection'
+      elsif result['result']
+        if result['result'].is_a?(BSON::OrderedHash) &&
+            result['result'].has_key?('db') &&
+            result['result'].has_key?('collection')
           otherdb = @db.connection[result['result']['db']]
           otherdb[result['result']['collection']]
         else
@@ -1025,19 +1027,11 @@ module Mongo
 
     protected
 
-    # Parse common options for read-only commands from an input @opts
-    # hash and return a hash suitable for passing to DB#command.
+    # Provide required command options if they are missing in the command options hash.
+    #
+    # @return [Hash] The command options hash
     def command_options(opts)
-      out = {}
-
-      if read = opts[:read]
-        Mongo::ReadPreference::validate(read)
-      else
-        read = @read
-      end
-      out[:read] = read
-      out[:comment] = opts[:comment] if opts[:comment]
-      out
+      opts[:read] ? opts : opts.merge(:read => @read)
     end
 
     def normalize_hint_fields(hint)
