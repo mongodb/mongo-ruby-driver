@@ -205,6 +205,14 @@ class DBTest < Test::Unit::TestCase
     end
   end
 
+  def test_arbitrary_command_opts
+    with_forced_timeout(@@client) do
+      assert_raise ExecutionTimeout do
+        @@db.command({ :ping => 1, :maxTimeMS => 100 })
+      end
+    end
+  end
+
   def test_last_status
     @@db['test'].remove
     @@db['test'].save("i" => 1)
