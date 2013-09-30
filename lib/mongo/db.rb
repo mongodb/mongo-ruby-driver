@@ -543,7 +543,8 @@ module Mongo
     #
     # @core commands command_instance-method
     def command(selector, opts={})
-      cmd_opts = opts.dup.merge!({ :limit => -1, :selector => selector })
+      cmd_opts = opts.dup
+      cmd_opts.merge!({ :limit => -1, :selector => selector })
       # deletes :check_response and returns the value, if nil defaults to the block result
       check_response = cmd_opts.delete(:check_response) { true }
       raise MongoArgumentError, "Command must be given a selector" unless selector.is_a?(Hash) && !selector.empty?
