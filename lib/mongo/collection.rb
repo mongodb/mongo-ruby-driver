@@ -816,12 +816,16 @@ module Mongo
     #
     # @return [Array] the command response consisting of grouped items.
     def group(opts, condition={}, initial={}, reduce=nil, finalize=nil)
+      opts = opts.dup
       if opts.is_a?(Hash)
         return new_group(opts)
-      else
-        warn "Collection#group no longer take a list of parameters. This usage is deprecated and will be remove in v2.0." +
-             "Check out the new API at http://api.mongodb.org/ruby/current/Mongo/Collection.html#group-instance_method"
+      elsif opts.is_a?(Symbol)
+        raise MongoArgumentError, "Group takes either an array of fields to group by or a JavaScript function" +
+          "in the form of a String or BSON::Code."
       end
+
+      warn "Collection#group no longer takes a list of parameters. This usage is deprecated and will be removed in v2.0." +
+             "Check out the new API at http://api.mongodb.org/ruby/current/Mongo/Collection.html#group-instance_method"
 
       reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
 
@@ -833,11 +837,6 @@ module Mongo
           "initial" => initial
         }
       }
-
-      if opts.is_a?(Symbol)
-        raise MongoArgumentError, "Group takes either an array of fields to group by or a JavaScript function" +
-          "in the form of a String or BSON::Code."
-      end
 
       unless opts.nil?
         if opts.is_a? Array
@@ -869,10 +868,10 @@ module Mongo
     private
 
     def new_group(opts={})
-      reduce   =  opts[:reduce]
-      finalize =  opts[:finalize]
-      cond     =  opts.fetch(:cond, {})
-      initial  =  opts[:initial]
+      reduce   =  opts.delete(:reduce)
+      finalize =  opts.delete(:finalize)
+      cond     =  opts.delete(:cond) || {}
+      initial  =  opts.delete(:initial)
 
       if !(reduce && initial)
         raise MongoArgumentError, "Group requires at minimum values for initial and reduce."
@@ -891,14 +890,14 @@ module Mongo
         cmd['group']['finalize'] = finalize.to_bson_code
       end
 
-      if key = opts[:key]
+      if key = opts.delete(:key)
         if key.is_a?(String) || key.is_a?(Symbol)
           key = [key]
         end
         key_value = {}
         key.each { |k| key_value[k] = 1 }
         cmd["group"]["key"] = key_value
-      elsif keyf = opts[:keyf]
+      elsif keyf = opts.delete(:keyf)
         cmd["group"]["$keyf"] = keyf.to_bson_code
       end
 

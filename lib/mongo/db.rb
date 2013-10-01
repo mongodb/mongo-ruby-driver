@@ -529,8 +529,8 @@ module Mongo
     # to see how it works.
     #
     # @param [OrderedHash, Hash] selector an OrderedHash, or a standard Hash with just one
-    # key, specifying the command to be performed. In Ruby 1.9, OrderedHash isn't necessary since
-    # hashes are ordered by default.
+    # key, specifying the command to be performed. In Ruby 1.9 and above, OrderedHash isn't necessary
+    # because hashes are ordered by default.
     #
     # @option opts [Boolean] :check_response (true) If +true+, raises an exception if the
     #   command fails.
