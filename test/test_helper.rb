@@ -225,11 +225,13 @@ class Test::Unit::TestCase
     if cmd_line_args.include?('enableTestCommands=1') && client.server_version >= "2.5.3"
       begin
         #Force any query or command with valid non-zero max time to fail (SERVER-10650)
-        client['admin'].command({ :configureFailPoint => 'maxTimeAlwaysTimeOut',
-                                  :mode => 'alwaysOn' })
+        fail_point_cmd = OrderedHash.new
+        fail_point_cmd[:configureFailPoint] = 'maxTimeAlwaysTimeOut'
+        fail_point_cmd[:mode] = 'alwaysOn'
+        client['admin'].command(fail_point_cmd)
         yield if block_given?
-        client['admin'].command({ :configureFailPoint => 'maxTimeAlwaysTimeOut',
-                                  :mode => 'off' })
+        fail_point_cmd[:mode] = 'off'
+        client['admin'].command(fail_point_cmd)
       end
     end
   end
