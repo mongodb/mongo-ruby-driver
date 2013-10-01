@@ -208,7 +208,10 @@ class DBTest < Test::Unit::TestCase
   def test_arbitrary_command_opts
     with_forced_timeout(@@client) do
       assert_raise ExecutionTimeout do
-        @@db.command({ :ping => 1, :maxTimeMS => 100 })
+        cmd = OrderedHash.new
+        cmd[:ping] = 1
+        cmd[:maxTimeMS] = 100
+        @@db.command(cmd)
       end
     end
   end
