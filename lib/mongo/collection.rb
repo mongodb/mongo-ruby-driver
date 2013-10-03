@@ -769,9 +769,7 @@ module Mongo
       hash['mapreduce'] = self.name
       hash['map'] = map
       hash['reduce'] = reduce
-      if sort = opts.delete(:sort)
-        hash[:sort] = Mongo::Support.format_order_clause(sort)
-      end
+      hash[:sort] = Mongo::Support.format_order_clause(opts.delete(:sort)) if opts.key?(:sort)
 
       result = @db.command(hash, command_options(opts))
       unless Mongo::Support.ok?(result)
@@ -782,8 +780,8 @@ module Mongo
         result
       elsif result['result']
         if result['result'].is_a?(BSON::OrderedHash) &&
-            result['result'].has_key?('db') &&
-            result['result'].has_key?('collection')
+            result['result'].key?('db') &&
+            result['result'].key?('collection')
           otherdb = @db.connection[result['result']['db']]
           otherdb[result['result']['collection']]
         else
