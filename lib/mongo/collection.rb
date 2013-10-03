@@ -704,7 +704,6 @@ module Mongo
       hash = BSON::OrderedHash.new
       hash['aggregate'] = self.name
       hash['pipeline'] = pipeline
-      hash['cursor'] = opts[:cursor] if opts[:cursor]
 
       result = @db.command(hash, command_options(opts))
       unless Mongo::Support.ok?(result)
