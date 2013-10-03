@@ -704,7 +704,6 @@ module Mongo
       hash = BSON::OrderedHash.new
       hash['aggregate'] = self.name
       hash['pipeline'] = pipeline
-      hash['cursor'] = opts[:cursor] if opts[:cursor]
 
       result = @db.command(hash, command_options(opts))
       unless Mongo::Support.ok?(result)
@@ -760,6 +759,7 @@ module Mongo
     #
     # @core mapreduce map_reduce-instance_method
     def map_reduce(map, reduce, opts={})
+      opts = opts.dup
       map    = BSON::Code.new(map) unless map.is_a?(BSON::Code)
       reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
       raw    = opts.delete(:raw)
@@ -768,10 +768,7 @@ module Mongo
       hash['mapreduce'] = self.name
       hash['map'] = map
       hash['reduce'] = reduce
-      hash.merge! opts
-      if hash[:sort]
-        hash[:sort] = Mongo::Support.format_order_clause(hash[:sort])
-      end
+      hash[:sort] = Mongo::Support.format_order_clause(opts.delete(:sort)) if opts.key?(:sort)
 
       result = @db.command(hash, command_options(opts))
       unless Mongo::Support.ok?(result)
@@ -780,8 +777,10 @@ module Mongo
 
       if raw
         result
-      elsif result["result"]
-        if result['result'].is_a? BSON::OrderedHash and result['result'].has_key? 'db' and result['result'].has_key? 'collection'
+      elsif result['result']
+        if result['result'].is_a?(BSON::OrderedHash) &&
+            result['result'].key?('db') &&
+            result['result'].key?('collection')
           otherdb = @db.connection[result['result']['db']]
           otherdb[result['result']['collection']]
         else
@@ -814,12 +813,16 @@ module Mongo
     #
     # @return [Array] the command response consisting of grouped items.
     def group(opts, condition={}, initial={}, reduce=nil, finalize=nil)
+      opts = opts.dup
       if opts.is_a?(Hash)
         return new_group(opts)
-      else
-        warn "Collection#group no longer take a list of parameters. This usage is deprecated and will be remove in v2.0." +
-             "Check out the new API at http://api.mongodb.org/ruby/current/Mongo/Collection.html#group-instance_method"
+      elsif opts.is_a?(Symbol)
+        raise MongoArgumentError, "Group takes either an array of fields to group by or a JavaScript function" +
+          "in the form of a String or BSON::Code."
       end
+
+      warn "Collection#group no longer takes a list of parameters. This usage is deprecated and will be removed in v2.0." +
+             "Check out the new API at http://api.mongodb.org/ruby/current/Mongo/Collection.html#group-instance_method"
 
       reduce = BSON::Code.new(reduce) unless reduce.is_a?(BSON::Code)
 
@@ -831,11 +834,6 @@ module Mongo
           "initial" => initial
         }
       }
-
-      if opts.is_a?(Symbol)
-        raise MongoArgumentError, "Group takes either an array of fields to group by or a JavaScript function" +
-          "in the form of a String or BSON::Code."
-      end
 
       unless opts.nil?
         if opts.is_a? Array
@@ -867,10 +865,10 @@ module Mongo
     private
 
     def new_group(opts={})
-      reduce   =  opts[:reduce]
-      finalize =  opts[:finalize]
-      cond     =  opts.fetch(:cond, {})
-      initial  =  opts[:initial]
+      reduce   =  opts.delete(:reduce)
+      finalize =  opts.delete(:finalize)
+      cond     =  opts.delete(:cond) || {}
+      initial  =  opts.delete(:initial)
 
       if !(reduce && initial)
         raise MongoArgumentError, "Group requires at minimum values for initial and reduce."
@@ -889,14 +887,14 @@ module Mongo
         cmd['group']['finalize'] = finalize.to_bson_code
       end
 
-      if key = opts[:key]
+      if key = opts.delete(:key)
         if key.is_a?(String) || key.is_a?(Symbol)
           key = [key]
         end
         key_value = {}
         key.each { |k| key_value[k] = 1 }
         cmd["group"]["key"] = key_value
-      elsif keyf = opts[:keyf]
+      elsif keyf = opts.delete(:keyf)
         cmd["group"]["$keyf"] = keyf.to_bson_code
       end
 
@@ -1025,19 +1023,11 @@ module Mongo
 
     protected
 
-    # Parse common options for read-only commands from an input @opts
-    # hash and return a hash suitable for passing to DB#command.
+    # Provide required command options if they are missing in the command options hash.
+    #
+    # @return [Hash] The command options hash
     def command_options(opts)
-      out = {}
-
-      if read = opts[:read]
-        Mongo::ReadPreference::validate(read)
-      else
-        read = @read
-      end
-      out[:read] = read
-      out[:comment] = opts[:comment] if opts[:comment]
-      out
+      opts[:read] ? opts : opts.merge(:read => @read)
     end
 
     def normalize_hint_fields(hint)
