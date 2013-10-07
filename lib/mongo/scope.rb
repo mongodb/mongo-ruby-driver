@@ -314,6 +314,42 @@ module Mongo
       self
     end
 
+    def get_one_then_remove
+      find_and_modify(:remove => true)
+    end
+
+    def get_one_then_replace(replacement)
+      find_and_modify(:replace => replacement)
+    end
+
+    def get_one_then_repsert(replacement)
+      find_and_modify(:replace => replacement, :upsert => true)
+    end
+
+    def get_one_then_update(update)
+      find_and_modify(:update => update)
+    end
+
+    def get_one_then_upsert(update)
+      find_and_modify(:update => update, :upsert => true)
+    end
+
+    def replace_one_then_get(replacement)
+      find_and_modify(:replace => replacement, :new => true)
+    end
+
+    def update_one_then_get(update)
+      find_and_modify(:update => update, :new => true)
+    end
+
+    def repsert_one_then_get(replacement)
+      find_and_modify(:replace => replacement, :new => true, :upsert => true)
+    end
+
+    def upsert_one_then_get(update)
+      find_and_modify(:update => update, :new => true, :upsert => true)
+    end
+
     # Compare two +Scope+ objects.
     #
     # @return [true, false] Equal if collection, selector, and opts of two
@@ -403,6 +439,10 @@ module Mongo
     def mutate(field, value)
       @opts.merge!(field => value) unless value.nil?
       self
+    end
+
+    def find_and_modify(opts)
+      Mongo::Operation::FindAndModify.new(self, opts).execute
     end
 
   end
