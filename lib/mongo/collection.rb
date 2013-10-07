@@ -768,7 +768,7 @@ module Mongo
       hash['mapreduce'] = self.name
       hash['map'] = map
       hash['reduce'] = reduce
-      hash[:sort] = Mongo::Support.format_order_clause(opts.delete(:sort)) if opts.key?(:sort)
+      hash['sort'] = Mongo::Support.format_order_clause(opts.delete(:sort)) if opts.key?(:sort)
 
       result = @db.command(hash, command_options(opts))
       unless Mongo::Support.ok?(result)
