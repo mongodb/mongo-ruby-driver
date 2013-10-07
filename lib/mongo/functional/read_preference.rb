@@ -30,6 +30,23 @@ module Mongo
       :nearest              => 'nearest'
     }
 
+    # Commands that may be sent to replica-set secondaries, depending on
+    # read preference and tags. All other commands are always run on the primary.
+    SECONDARY_OK_COMMANDS = [
+      'group',
+      'aggregate',
+      'collstats',
+      'dbstats',
+      'count',
+      'distinct',
+      'geonear',
+      'geosearch',
+      'geowalk',
+      'mapreduce',
+      'replsetgetstatus',
+      'ismaster',
+    ]
+
     def self.mongos(mode, tag_sets)
       if mode != :secondary_preferred || !tag_sets.empty?
         mongos_read_preference = BSON::OrderedHash[:mode => MONGOS_MODES[mode]]
@@ -45,6 +62,34 @@ module Mongo
         raise MongoArgumentError, "#{value} is not a valid read preference. " +
           "Please specify one of the following read preferences as a symbol: #{READ_PREFERENCES}"
       end
+    end
+
+    # Returns true if it's ok to run the command on a secondary
+    def self.secondary_ok?(selector)
+      command = selector.keys.first.to_s.downcase
+
+      if command == 'mapreduce'
+        out = selector.select { |k, v| k.to_s.downcase == 'out' }.first.last
+        # the server only looks at the first key in the out object
+        return out.respond_to?(:keys) && out.keys.first.to_s.downcase == 'inline' ? true : false
+      end
+      SECONDARY_OK_COMMANDS.member?(command)
+    end
+
+    # Returns true if the command should be rerouted to the primary.
+    def self.reroute_cmd_primary?(read_pref, selector)
+      return false if read_pref == :primary
+      !secondary_ok?(selector)
+    end
+
+    # Given a command and read preference, possibly reroute to primary.
+    def self.cmd_read_pref(read_pref, selector)
+      ReadPreference::validate(read_pref)
+      if reroute_cmd_primary?(read_pref, selector)
+        warn "Database command '#{selector.keys.first}' rerouted to primary node"
+        read_pref = :primary
+      end
+      read_pref
     end
 
     def read_preference
