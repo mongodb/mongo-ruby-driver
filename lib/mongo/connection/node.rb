@@ -185,6 +185,10 @@ module Mongo
        @max_wire_version || 0
     end
 
+    def min_wire_version
+      @min_wire_version || 0
+    end
+
     protected
 
     # Ensure that this node is a healthy member of a replica set.
@@ -220,6 +224,7 @@ module Mongo
       @max_bson_size = config['maxBsonObjectSize'] || DEFAULT_MAX_BSON_SIZE
       @max_message_size = config['maxMessageSizeBytes'] || @max_bson_size * MESSAGE_SIZE_FACTOR
       @max_wire_version = config['maxWireVersion'] || 0
+      @min_wire_version = config['minWireVersion'] || 0
     end
   end
 end

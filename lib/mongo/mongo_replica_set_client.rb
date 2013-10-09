@@ -462,6 +462,11 @@ module Mongo
       0
     end
 
+    def min_wire_version
+      return local_manager.min_wire_version if local_manager
+      0
+    end
+
     private
 
     # Parse option hash

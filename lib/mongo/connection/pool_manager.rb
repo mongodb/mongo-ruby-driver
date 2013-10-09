@@ -29,7 +29,8 @@ module Mongo
                 :pools,
                 :max_bson_size,
                 :max_message_size,
-                :max_wire_version
+                :max_wire_version,
+                :min_wire_version
 
     # Create a new set of connection pools.
     #
@@ -53,6 +54,7 @@ module Mongo
       @max_bson_size                            = DEFAULT_MAX_BSON_SIZE
       @max_message_size                         = @max_bson_size * MESSAGE_SIZE_FACTOR
       @max_wire_version                         = 0
+      @min_wire_version                         = 0
       @connect_mutex                            = Mutex.new
       thread_local[:locks][:connecting_manager] = false
     end
@@ -152,6 +154,7 @@ module Mongo
         @max_bson_size = @members.map(&:max_bson_size).min
         @max_message_size = @members.map(&:max_message_size).min
         @max_wire_version = @members.map(&:max_wire_version).min
+        @min_wire_version = @members.map(&:min_wire_version).max
       end
     end
 

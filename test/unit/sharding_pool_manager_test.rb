@@ -47,7 +47,8 @@ class ShardingPoolManagerTest < Test::Unit::TestCase
         'arbiters' => @arbiters,
         'maxBsonObjectSize' => 1024,
         'maxMessageSizeBytes' => 1024 * 2.5,
-        'maxWireVersion' => 1
+        'maxWireVersion' => 1,
+        'minWireVersion' => 0
       }
     end
 
@@ -62,6 +63,7 @@ class ShardingPoolManagerTest < Test::Unit::TestCase
         @ismaster.merge({'secondary' => true, 'maxBsonObjectSize' => 500}),
         @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 700}),
         @ismaster.merge({'secondary' => true, 'maxWireVersion' => 0}),
+        @ismaster.merge({'secondary' => true, 'minWireVersion' => 0}),
         @ismaster.merge({'arbiterOnly' => true})
       )
 
@@ -76,6 +78,7 @@ class ShardingPoolManagerTest < Test::Unit::TestCase
       assert_equal 500, manager.max_bson_size
       assert_equal 700, manager.max_message_size
       assert_equal 0, manager.max_wire_version
+      assert_equal 0, manager.min_wire_version
     end
   end
 end
