@@ -29,18 +29,20 @@ class MaxValuesTest < Test::Unit::TestCase
     }
   end
 
-  def test_initial_max_values
+  def test_initial_max_and_min_values
     assert @client.max_bson_size
     assert @client.max_message_size
     assert @client.max_wire_version
+    assert @client.min_wire_version
   end
 
-  def test_updated_max_sizes_after_node_config_change
+  def test_updated_max_and_min_sizes_after_node_config_change
     @db.stubs(:command).returns(
       @ismaster.merge({'ismaster' => true}),
       @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 1024 * MESSAGE_SIZE_FACTOR}),
       @ismaster.merge({'secondary' => true, 'maxBsonObjectSize' => 1024}),
-      @ismaster.merge({'secondary' => true, 'maxWireVersion' => 0})
+      @ismaster.merge({'secondary' => true, 'maxWireVersion' => 0}),
+      @ismaster.merge({'secondary' => true, 'minWireVersion' => 0})
     )
     @client.local_manager.stubs(:refresh_required?).returns(true)
     @client.refresh
@@ -48,6 +50,7 @@ class MaxValuesTest < Test::Unit::TestCase
     assert_equal 1024, @client.max_bson_size
     assert_equal 1024 * MESSAGE_SIZE_FACTOR, @client.max_message_size
     assert_equal 0, @client.max_wire_version
+    assert_equal 0, @client.min_wire_version
   end
 
   def test_no_values_in_config
@@ -62,6 +65,7 @@ class MaxValuesTest < Test::Unit::TestCase
     assert_equal DEFAULT_MAX_BSON_SIZE, @client.max_bson_size
     assert_equal DEFAULT_MAX_BSON_SIZE * MESSAGE_SIZE_FACTOR, @client.max_message_size
     assert_equal 0, @client.max_wire_version
+    assert_equal 0, @client.min_wire_version
   end
 
   def test_only_bson_size_in_config
@@ -76,20 +80,22 @@ class MaxValuesTest < Test::Unit::TestCase
     assert_equal 1024, @client.max_bson_size
     assert_equal 1024 * MESSAGE_SIZE_FACTOR, @client.max_message_size
     assert_equal 0, @client.max_wire_version
+    assert_equal 0, @client.min_wire_version
   end
 
   def test_values_in_config
     @db.stubs(:command).returns(
-      @ismaster.merge({'ismaster' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR, 'maxBsonObjectSize' => 1024, 'maxWireVersion' => 1}),
-      @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR, 'maxBsonObjectSize' => 1024, 'maxWireVersion' => 1}),
-      @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR, 'maxBsonObjectSize' => 1024, 'maxWireVersion' => 1})
+      @ismaster.merge({'ismaster' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR, 'maxBsonObjectSize' => 1024, 'maxWireVersion' => 2, 'minWireVersion' => 1},),
+      @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR, 'maxBsonObjectSize' => 1024, 'maxWireVersion' => 2, 'minWireVersion' => 1}),
+      @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR, 'maxBsonObjectSize' => 1024, 'maxWireVersion' => 1, 'minWireVersion' => 0})
     )
     @client.local_manager.stubs(:refresh_required?).returns(true)
     @client.refresh
 
     assert_equal 1024, @client.max_bson_size
     assert_equal 1024 * 2 * MESSAGE_SIZE_FACTOR, @client.max_message_size
-    assert_equal 1, @client.max_wire_version
+    assert_equal 1, @client.max_wire_version # minimum of all max_wire_version
+    assert_equal 1, @client.min_wire_version # maximum of all min_wire_version
   end
 
 end
