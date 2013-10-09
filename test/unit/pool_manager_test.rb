@@ -49,7 +49,8 @@ class PoolManagerTest < Test::Unit::TestCase
         'arbiters' => @arbiters,
         'maxBsonObjectSize' => 1024,
         'maxMessageSizeBytes' => 1024 * 2.5,
-        'maxWireVersion' => 1
+        'maxWireVersion' => 1,
+        'minWireVersion' => 0
       }
     end
 
