@@ -97,8 +97,8 @@ class MaxValuesTest < Test::Unit::TestCase
 
     assert_equal 1024, @client.max_bson_size
     assert_equal 1024 * 2 * MESSAGE_SIZE_FACTOR, @client.max_message_size
-    assert_equal 1, @client.max_wire_version # minimum of all max_wire_version
-    assert_equal 1, @client.min_wire_version # maximum of all min_wire_version
+    assert_equal 1, @client.max_wire_version # maximum of all max_wire_version
+    assert_equal 0, @client.min_wire_version # minimum of all min_wire_version
   end
 
 end
