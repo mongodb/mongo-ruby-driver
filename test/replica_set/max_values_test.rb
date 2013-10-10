@@ -85,9 +85,12 @@ class MaxValuesTest < Test::Unit::TestCase
 
   def test_values_in_config
     @db.stubs(:command).returns(
-      @ismaster.merge({'ismaster' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR, 'maxBsonObjectSize' => 1024, 'maxWireVersion' => 2, 'minWireVersion' => 1},),
-      @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR, 'maxBsonObjectSize' => 1024, 'maxWireVersion' => 2, 'minWireVersion' => 1}),
-      @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR, 'maxBsonObjectSize' => 1024, 'maxWireVersion' => 1, 'minWireVersion' => 0})
+      @ismaster.merge({'ismaster' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR,
+                       'maxBsonObjectSize' => 1024, 'maxWireVersion' => 2, 'minWireVersion' => 1}),
+      @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR,
+                       'maxBsonObjectSize' => 1024, 'maxWireVersion' => 2, 'minWireVersion' => 1}),
+      @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR,
+                       'maxBsonObjectSize' => 1024, 'maxWireVersion' => 1, 'minWireVersion' => 0})
     )
     @client.local_manager.stubs(:refresh_required?).returns(true)
     @client.refresh

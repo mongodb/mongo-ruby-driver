@@ -968,7 +968,6 @@ class TestCollection < Test::Unit::TestCase
       assert res["timeMillis"]
     end
 
-
     if @@version >= "1.8.0"
       def test_map_reduce_with_collection_merge
         @@test << {:user_id => 1}
