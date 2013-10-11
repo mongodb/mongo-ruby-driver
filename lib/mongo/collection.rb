@@ -719,10 +719,10 @@ module Mongo
           :pool => @connection.pinned_pool
         }
 
-        Cursor.new(self, seed)
-      else
-        result['result']
+        return Cursor.new(self, seed)
       end
+
+      result['result'] || result
     end
 
     # Perform a map-reduce operation on the current collection.
