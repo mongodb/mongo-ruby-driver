@@ -74,14 +74,14 @@ class ReadPrefTest < Test::Unit::TestCase
   end
 
   def test_cmd_reroute_with_secondary
-    ReadPreference::expects(:warn).with("Database command 'mapreduce' rerouted to primary node")
+    ReadPreference::expects(:warn).with(regexp_matches(/rerouted to primary/))
     command = BSON::OrderedHash['mapreduce', 'test-collection',
                                 'out', 'new-test-collection']
     assert_equal :primary, ReadPreference::cmd_read_pref(:secondary, command)
   end
 
   def test_findAndModify_reroute_with_secondary
-    ReadPreference::expects(:warn).with("Database command 'findAndModify' rerouted to primary node")
+    ReadPreference::expects(:warn).with(regexp_matches(/rerouted to primary/))
     command = BSON::OrderedHash['findAndModify', 'test-collection',
                                 'query', {}]
     assert_equal :primary, ReadPreference::cmd_read_pref(:secondary, command)

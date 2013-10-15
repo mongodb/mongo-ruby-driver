@@ -972,7 +972,7 @@ class TestCollection < Test::Unit::TestCase
       output_collection = "test-map-coll"
       m = Code.new("function() { emit(this.user_id, 1); }")
       r = Code.new("function(k,vals) { return 1; }")
-      Mongo::ReadPreference.expects(:warn).with("Database command 'mapreduce' rerouted to primary node")
+      Mongo::ReadPreference.expects(:warn).with(regexp_matches(/rerouted to primary/))
       res = @@test.map_reduce(m, r, :raw => true, :out => output_collection, :read => :secondary)
     end
 
