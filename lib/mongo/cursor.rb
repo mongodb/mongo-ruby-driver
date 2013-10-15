@@ -545,7 +545,7 @@ module Mongo
           @pool = nil
           @connection.unpin_pool
           @connection.refresh
-          if tries < 3 && !@socket && (!@command || Mongo::Support::secondary_ok?(@selector))
+          if tries < 3 && !@socket && (!@command || Mongo::ReadPreference::secondary_ok?(@selector))
             tries += 1
             retry
           else
@@ -605,7 +605,7 @@ module Mongo
       begin
         if @pool
           socket = @pool.checkout
-        elsif @command && !Mongo::Support::secondary_ok?(@selector)
+        elsif @command && !Mongo::ReadPreference::secondary_ok?(@selector)
           socket = @connection.checkout_reader({:mode => :primary})
         else
           socket = @connection.checkout_reader(read_preference)

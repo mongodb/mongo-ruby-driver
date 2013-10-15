@@ -737,9 +737,10 @@ module Mongo
     # @option opts [Integer] :limit (nil) if passing a query, number of objects to return from the collection.
     # @option opts [String, BSON::Code] :finalize (nil) a javascript function to apply to the result set after the
     #   map/reduce operation has finished.
-    # @option opts [String] :out (nil) a valid output type. In versions of MongoDB prior to v1.7.6,
-    #   this option takes the name of a collection for the output results. In versions 1.7.6 and later,
-    #   this option specifies the output type. See the core docs for available output types.
+    # @option opts [String, Hash] :out Location of the result of the map-reduce operation. You can output to a
+    #   collection, output to a collection with an action, or output inline. You may output to a collection
+    #   when performing map reduce operations on the primary members of the set; on secondary members you
+    #   may only use the inline output. See the server mapReduce documentation for available options.
     # @option opts [Boolean] :keeptemp (false) if true, the generated collection will be persisted. The default
     #   is false. Note that this option has no effect is versions of MongoDB > v1.7.6.
     # @option opts [Boolean ] :verbose (false) if true, provides statistics on job execution time.
@@ -768,6 +769,7 @@ module Mongo
       hash['mapreduce'] = self.name
       hash['map'] = map
       hash['reduce'] = reduce
+      hash['out'] = opts.delete(:out)
       hash['sort'] = Mongo::Support.format_order_clause(opts.delete(:sort)) if opts.key?(:sort)
 
       result = @db.command(hash, command_options(opts))

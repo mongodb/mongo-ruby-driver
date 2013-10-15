@@ -968,6 +968,14 @@ class TestCollection < Test::Unit::TestCase
       assert res["timeMillis"]
     end
 
+    def test_map_reduce_nonprimary_output_collection_reroutes
+      output_collection = "test-map-coll"
+      m = Code.new("function() { emit(this.user_id, 1); }")
+      r = Code.new("function(k,vals) { return 1; }")
+      Mongo::ReadPreference.expects(:warn).with(regexp_matches(/rerouted to primary/))
+      res = @@test.map_reduce(m, r, :raw => true, :out => output_collection, :read => :secondary)
+    end
+
     if @@version >= "1.8.0"
       def test_map_reduce_with_collection_merge
         @@test << {:user_id => 1}

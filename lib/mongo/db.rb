@@ -553,13 +553,7 @@ module Mongo
         raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
       end
 
-      if read_pref = cmd_opts.delete(:read)
-        Mongo::ReadPreference::validate(read_pref)
-        unless read_pref == :primary || Mongo::Support::secondary_ok?(selector)
-          raise MongoArgumentError, "Command is not supported on secondaries: #{selector.keys.first}"
-        end
-        cmd_opts[:read] = read_pref
-      end
+      cmd_opts[:read] = Mongo::ReadPreference::cmd_read_pref(cmd_opts[:read], selector) if cmd_opts[:read]
 
       begin
         result = Cursor.new(system_command_collection, cmd_opts).next_document

@@ -20,23 +20,6 @@ module Mongo
     include Mongo::Conversions
     extend self
 
-    # Commands that may be sent to replica-set secondaries, depending on
-    # read preference and tags. All other commands are always run on the primary.
-    SECONDARY_OK_COMMANDS = [
-      'group',
-      'aggregate',
-      'collstats',
-      'dbstats',
-      'count',
-      'distinct',
-      'geonear',
-      'geosearch',
-      'geowalk',
-      'mapreduce',
-      'replsetgetstatus',
-      'ismaster',
-    ]
-
     # Generate an MD5 for authentication.
     #
     # @param [String] username
@@ -70,19 +53,6 @@ module Mongo
       end
       raise Mongo::InvalidNSName, "database name cannot be the empty string" if db_name.empty?
       db_name
-    end
-
-    def secondary_ok?(selector)
-      command = selector.keys.first.to_s.downcase
-
-      if command == 'mapreduce'
-        out = selector.select { |k, v| k.to_s.downcase == 'out' }.first.last
-        # mongo looks at the first key in the out object, and doesn't
-        # look at the value
-        out.is_a?(Hash) && out.keys.first.to_s.downcase == 'inline' ? true : false
-      else
-        SECONDARY_OK_COMMANDS.member?(command)
-      end
     end
 
     def format_order_clause(order)
