@@ -62,12 +62,24 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
-  if @@version >= '2.5.2'
-    def test_aggregation_arbitrary_opts
+  if @@version >= '2.5.3'
+    def test_aggregation_allow_disk_usage
       @@db.expects(:command).with do |selector, opts|
         opts[:allowDiskUsage] == true
       end.returns({ 'ok' => 1 })
       @@test.aggregate([], :allowDiskUsage => true)
+    end
+
+    def test_aggregation_supports_explain
+      @@db.expects(:command).with do |selector, opts|
+        opts[:explain] == true
+      end.returns({ 'ok' => 1 })
+      @@test.aggregate([], :explain => true)
+    end
+
+    def test_aggregation_explain_returns_raw_result
+      response = @@test.aggregate([], :explain => true)
+      assert response['stages']
     end
   end
 
