@@ -84,11 +84,16 @@ class MaxValuesTest < Test::Unit::TestCase
   end
 
   def test_values_in_config
+    #ismaster is called three times on the first node
     @db.stubs(:command).returns(
       @ismaster.merge({'ismaster' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR,
                        'maxBsonObjectSize' => 1024, 'maxWireVersion' => 2, 'minWireVersion' => 1}),
-      @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR,
+      @ismaster.merge({'ismaster' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR,
                        'maxBsonObjectSize' => 1024, 'maxWireVersion' => 2, 'minWireVersion' => 1}),
+      @ismaster.merge({'ismaster' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR,
+                       'maxBsonObjectSize' => 1024, 'maxWireVersion' => 2, 'minWireVersion' => 1}),
+      @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR,
+                       'maxBsonObjectSize' => 1024, 'maxWireVersion' => 2, 'minWireVersion' => 0}),
       @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 1024 * 2 * MESSAGE_SIZE_FACTOR,
                        'maxBsonObjectSize' => 1024, 'maxWireVersion' => 1, 'minWireVersion' => 0})
     )
@@ -97,8 +102,8 @@ class MaxValuesTest < Test::Unit::TestCase
 
     assert_equal 1024, @client.max_bson_size
     assert_equal 1024 * 2 * MESSAGE_SIZE_FACTOR, @client.max_message_size
-    assert_equal 1, @client.max_wire_version # maximum of all max_wire_version
-    assert_equal 0, @client.min_wire_version # minimum of all min_wire_version
+    assert_equal 1, @client.max_wire_version # minimum of all max_wire_version
+    assert_equal 1, @client.min_wire_version # maximum of all min_wire_version
   end
 
 end
