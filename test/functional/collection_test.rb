@@ -15,14 +15,37 @@
 require 'rbconfig'
 require 'test_helper'
 
+def limited_collection
+  conn = standard_connection(:connect => false)
+  admin_db = Object.new
+  admin_db.expects(:command).returns({
+                                         'ok' => 1,
+                                         'ismaster' => 1,
+                                         'maxBsonObjectSize' => 1024,
+                                         'maxMessageSizeBytes' => 3 * 1024
+                                     })
+  conn.expects(:[]).with('admin').returns(admin_db)
+  conn.connect
+  test = conn.db(MONGO_TEST_DB)["test"]
+  test.remove
+  return test
+end
+
 class TestCollection < Test::Unit::TestCase
   @@client       ||= standard_connection(:op_timeout => 10)
   @@db           = @@client.db(MONGO_TEST_DB)
   @@test         = @@db.collection("test")
   @@version      = @@client.server_version
+  @@limited_collection = limited_collection
+
+  def set_max_wire_version(n)
+    @@db.connection.instance_variable_set(:@max_wire_version, n) # SERVER-9038 imcomplete so != @@db.connection.check_is_master(@@db.connection.host_port)['maxWireVersion']
+  end
 
   def setup
     @@test.remove
+    @@limited_collection.remove
+    set_max_wire_version(0)
   end
 
   if @@version >= '2.5.1'
@@ -247,7 +270,7 @@ class TestCollection < Test::Unit::TestCase
       assert_raise OperationFailure do
         @@test.insert(docs, :continue_on_error => true)
       end
-      assert_equal 3, @@test.count
+      assert @@test.count < docs.size
 
       @@test.remove
       @@test.drop_index("foo_1")
@@ -275,12 +298,11 @@ class TestCollection < Test::Unit::TestCase
     assert_raise BSON::InvalidKeyName do
       @@test.insert(docs, :collect_on_error => false)
     end
-    assert_equal 0, @@test.count
+    assert @@test.count < docs.size
 
     doc_ids, error_docs = @@test.insert(docs, :collect_on_error => true)
-    assert_equal 2, @@test.count
-    assert_equal 2, doc_ids.count
-    assert_equal error_docs, invalid_docs
+    assert @@test.count < docs.size
+    invalid_docs.each{|invalid_doc| assert error_docs.include?(invalid_doc) }
   end
 
   def test_bson_invalid_encoding_serialize_error_with_collect_on_error
@@ -296,12 +318,11 @@ class TestCollection < Test::Unit::TestCase
     assert_raise BSON::InvalidStringEncoding do
       @@test.insert(docs, :collect_on_error => false)
     end
-    assert_equal 0, @@test.count
+    assert @@test.count < docs.size
 
     doc_ids, error_docs = @@test.insert(docs, :collect_on_error => true)
-    assert_equal 2, @@test.count
-    assert_equal 2, doc_ids.count
-    assert_equal error_docs, invalid_docs
+    assert @@test.count < docs.size
+    invalid_docs.each{|invalid_doc| assert error_docs.include?(invalid_doc) }
   end
 
   def test_insert_one_error_doc_with_collect_on_error
@@ -324,23 +345,10 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
-  def limited_collection
-    conn = standard_connection(:connect => false)
-    admin_db = Object.new
-    admin_db.expects(:command).returns({
-      'ok' => 1,
-      'ismaster' => 1,
-      'maxBsonObjectSize' => 1024,
-      'maxMessageSizeBytes' => 3 * 1024
-    })
-    conn.expects(:[]).with('admin').returns(admin_db)
-    conn.connect
-    return conn.db(MONGO_TEST_DB)["test"]
-  end
-
   def test_non_operation_failure_halts_insertion_with_continue_on_error
     coll = limited_collection
-    coll.stubs(:send_insert_message).raises(OperationTimeout).times(1)
+    coll.stubs(:send_write_operation).raises(OperationTimeout)
+    coll.stubs(:send_write_command).raises(OperationTimeout)
     docs = []
     10.times do
       docs << {'foo' => 'a' * 950}
@@ -355,8 +363,8 @@ class TestCollection < Test::Unit::TestCase
      10.times do
        docs << {'foo' => 'a' * 950}
      end
-     limited_collection.insert(docs)
-     assert_equal 10, limited_collection.count
+     @@limited_collection.insert(docs)
+     assert_equal 10, @@limited_collection.count
    end
 
   def test_chunking_batch_insert_without_collect_on_error
@@ -371,7 +379,7 @@ class TestCollection < Test::Unit::TestCase
       docs << {'foo' => 'a' * 950}
     end
     assert_raise BSON::InvalidKeyName do
-      limited_collection.insert(docs, :collect_on_error => false)
+      @@limited_collection.insert(docs, :collect_on_error => false)
     end
   end
 
@@ -388,10 +396,10 @@ class TestCollection < Test::Unit::TestCase
     4.times do
       docs << {'foo' => 'a' * 950}
     end
-    doc_ids, error_docs = limited_collection.insert(docs, :collect_on_error => true)
-    assert_equal 8, doc_ids.count
-    assert_equal doc_ids.count, limited_collection.count
-    assert_equal error_docs, invalid_docs
+    doc_ids, error_docs = @@limited_collection.insert(docs, :collect_on_error => true)
+    assert doc_ids.count < docs.size
+    assert_equal doc_ids.count, @@limited_collection.count
+    invalid_docs.each{|invalid_doc| assert error_docs.include?(invalid_doc) }
   end
 
   def test_chunking_batch_insert_with_continue_on_error
@@ -405,9 +413,9 @@ class TestCollection < Test::Unit::TestCase
       docs << {'foo' => 'a' * 950}
     end
     assert_raise OperationFailure do
-      limited_collection.insert(docs, :continue_on_error => true)
+      @@limited_collection.insert(docs, :continue_on_error => true)
     end
-    assert_equal 9, limited_collection.count
+    assert @@limited_collection.count < docs.size
   end
 
   def test_chunking_batch_insert_without_continue_on_error
@@ -421,9 +429,9 @@ class TestCollection < Test::Unit::TestCase
       docs << {'foo' => 'a' * 950}
     end
     assert_raise OperationFailure do
-      limited_collection.insert(docs, :continue_on_error => false)
+      @@limited_collection.insert(docs, :continue_on_error => false)
     end
-    assert_equal 5, limited_collection.count
+    assert_equal 5, @@limited_collection.count
   end
 
   def test_maximum_insert_size
@@ -431,70 +439,70 @@ class TestCollection < Test::Unit::TestCase
     3.times do
       docs << {'foo' => 'a' * 950}
     end
-    assert_equal limited_collection.insert(docs).length, 3
+    assert_equal @@limited_collection.insert(docs).length, 3
   end
 
   def test_maximum_document_size
     assert_raise InvalidDocument do
-      limited_collection.insert({'foo' => 'a' * 1024})
+      @@limited_collection.insert({'foo' => 'a' * 1024})
     end
   end
 
   def test_maximum_save_size
-    assert limited_collection.save({'foo' => 'a' * 950})
+    assert @@limited_collection.save({'foo' => 'a' * 950})
     assert_raise InvalidDocument do
-      limited_collection.save({'foo' => 'a' * 1024})
+      @@limited_collection.save({'foo' => 'a' * 1024})
     end
   end
 
   def test_maximum_remove_size
-    assert limited_collection.remove({'foo' => 'a' * 950})
+    assert @@limited_collection.remove({'foo' => 'a' * 950})
     assert_raise InvalidDocument do
-      limited_collection.remove({'foo' => 'a' * 1024})
+      @@limited_collection.remove({'foo' => 'a' * 1024})
     end
   end
 
   def test_maximum_update_size
     assert_raise InvalidDocument do
-      limited_collection.update(
+      @@limited_collection.update(
         {'foo' => 'a' * 1024},
         {'foo' => 'a' * 950}
       )
     end
 
     assert_raise InvalidDocument do
-      limited_collection.update(
+      @@limited_collection.update(
         {'foo' => 'a' * 950},
         {'foo' => 'a' * 1024}
       )
     end
 
     assert_raise InvalidDocument do
-      limited_collection.update(
+      @@limited_collection.update(
         {'foo' => 'a' * 1024},
         {'foo' => 'a' * 1024}
       )
     end
 
-    assert limited_collection.update(
+    assert @@limited_collection.update(
       {'foo' => 'a' * 950},
       {'foo' => 'a' * 950}
     )
   end
 
   def test_maximum_query_size
-    assert limited_collection.find({'foo' => 'a' * 950}).to_a
-    assert limited_collection.find(
+    assert @@limited_collection.find({'foo' => 'a' * 950}).to_a
+    assert @@limited_collection.find(
       {'foo' => 'a' * 950},
       {:fields => {'foo' => 'a' * 950}}
     ).to_a
 
     assert_raise InvalidDocument do
-      limited_collection.find({'foo' => 'a' * 1024}).to_a
+      @@limited_collection.find({'foo' => 'a' * 1024}).to_a
     end
 
     assert_raise InvalidDocument do
-      limited_collection.find(
+      @@limited_collection.find(
         {'foo' => 'a' * 950},
         {:fields => {'foo' => 'a' * 1024}}
       ).to_a
@@ -1283,6 +1291,64 @@ end
     end
   end
 
+  if @@version >= "2.5.2"
+    def test_new_write_operations
+      set_max_wire_version(2)
+      documents = (0..4).collect{|i| {:n => i}}
+      opts = {:writeConcern => {:w => 1}, :continueOnError => false}
+      @@test.insert(documents, opts)
+      documents.each do |doc|
+        assert_equal 1, @@test.find(doc).to_a.size
+      end
+      updates = [
+        {:q => {:n => 1}, :u => {:n => 1, :y => 1}, :upsert => true},
+        {:q => {:n => 3}, :u => {:n => 3, :y => 3}, :upsert => true},
+        {:q => {:n => 5}, :u => {:n => 5, :y => 5}, :upsert => true},
+        {:q => {:n => 7}, :u => {:n => 7, :y => 7}, :upsert => false},
+        {:q => {:n => {'$gte' => 3}}, :u => {'$inc' => {:y => 1}}, :multi => true}
+      ]
+      opts = {:writeConcern => {:w => 1}, :continueOnError => false}
+      @@test.update(updates, nil, opts)
+      [
+        {:n => 0},
+        {:n => 1, :y => 1},
+        {:n => 2},
+        {:n => 3, :y => 4},
+        {:n => 4, :y => 1},
+        {:n => 5, :y => 6}
+      ].each do |doc|
+        assert_equal 1, @@test.find(doc).to_a.size
+      end
+      deletes = [{:q => {:n => 1}}, {:q => {:n => {'$gte' => 3}}, :limit => 2}] # SERVER-9038 limit not yet complete
+      opts = {:writeConcern => {:w => 1}, :continueOnError => false}
+      @@test.remove(deletes, opts)
+      assert_equal 2, @@test.count
+      [
+        {:n => 0},
+        {:n => 2}
+      ].each do |doc|
+        assert_equal 1, @@test.find(doc).to_a.size
+      end
+    end
+
+    def test_insert_versions
+      [0, 2].each do |wire_version|
+        set_max_wire_version(wire_version)
+        [
+          {:n => 1},
+          [{:n => 1}, {:n => 2}]
+        ].each do |documents|
+          @@test.insert(documents)
+          documents_a = documents.is_a?(Hash) ? [documents] : documents
+          documents_a.each do |doc|
+            assert_equal 1, @@test.find(doc).to_a.size
+          end
+          @@test.remove
+        end
+      end
+    end
+  end
+
   context "Grouping" do
     setup do
       @@test.remove
@@ -1533,7 +1599,7 @@ end
     end
 
     should "generate indexes in the proper order" do
-      @collection.expects(:send_write_operation) do |type, selector, documents, check_keys, opts, collection_name|
+      @collection.stubs(:send_write_operation) do |type, selector, documents, check_keys, opts, collection_name|
         assert_equal 'b_1_a_1', selector[:name]
       end
       @collection.create_index([['b', 1], ['a', 1]])
