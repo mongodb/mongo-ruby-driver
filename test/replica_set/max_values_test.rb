@@ -106,5 +106,21 @@ class MaxValuesTest < Test::Unit::TestCase
     assert_equal 1, @client.min_wire_version # maximum of all min_wire_version
   end
 
+  def test_wire_version_not_in_range
+    min_wire_version, max_wire_version = [Mongo::MongoClient::MIN_WIRE_VERSION-1, Mongo::MongoClient::MIN_WIRE_VERSION-1]
+    #ismaster is called three times on the first node
+    @db.stubs(:command).returns(
+      @ismaster.merge({'ismaster' => true, 'maxWireVersion' => max_wire_version, 'minWireVersion' => min_wire_version}),
+      @ismaster.merge({'ismaster' => true, 'maxWireVersion' => max_wire_version, 'minWireVersion' => min_wire_version}),
+      @ismaster.merge({'ismaster' => true, 'maxWireVersion' => max_wire_version, 'minWireVersion' => min_wire_version}),
+      @ismaster.merge({'secondary' => true, 'maxWireVersion' => max_wire_version, 'minWireVersion' => min_wire_version}),
+      @ismaster.merge({'secondary' => true, 'maxWireVersion' => max_wire_version, 'minWireVersion' => min_wire_version})
+    )
+    @client.local_manager.stubs(:refresh_required?).returns(true)
+    assert_raises Mongo::ConnectionFailure do
+      @client.refresh
+    end
+  end
+
 end
 

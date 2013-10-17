@@ -209,9 +209,9 @@ module Mongo
         if @manager.pools.empty?
           close
           raise ConnectionFailure, "Failed to connect to any node."
-        else
-          @connected = true
         end
+        check_wire_version_in_range
+        @connected = true
       end
     end
 

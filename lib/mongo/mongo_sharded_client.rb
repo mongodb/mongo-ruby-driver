@@ -94,6 +94,7 @@ module Mongo
             @manager = ShardingPoolManager.new(self, @seeds)
             ensure_manager
             @manager.connect
+            check_wire_version_in_range
           end
         ensure
           thread_local[:locks][:connecting] = false

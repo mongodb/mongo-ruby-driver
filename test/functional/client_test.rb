@@ -359,6 +359,20 @@ class ClientTest < Test::Unit::TestCase
     assert_equal 0, conn.min_wire_version
   end
 
+  def test_wire_version_not_in_range
+    [
+      [Mongo::MongoClient::MAX_WIRE_VERSION+1, Mongo::MongoClient::MAX_WIRE_VERSION+1],
+      [Mongo::MongoClient::MIN_WIRE_VERSION-1, Mongo::MongoClient::MIN_WIRE_VERSION-1]
+    ].each do |min_wire_version, max_wire_version|
+      conn = standard_connection(:connect => false)
+      admin_db = Object.new
+      admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1, 'maxWireVersion' => max_wire_version, 'minWireVersion' => min_wire_version})
+      conn.expects(:[]).with('admin').returns(admin_db)
+      assert_raises Mongo::ConnectionFailure do
+        conn.connect
+      end
+    end
+  end
 
   def test_connection_activity
     conn = standard_connection
