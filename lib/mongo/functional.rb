@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/functional/authentication'
 require 'mongo/functional/logging'
 require 'mongo/functional/read_preference'
 require 'mongo/functional/write_concern'

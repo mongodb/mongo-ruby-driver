@@ -68,8 +68,6 @@ module Mongo
     #   if collection name is not a string or symbol
     #
     # @return [Collection]
-    #
-    # @core collections constructor_details
     def initialize(name, db, opts={})
       if db.is_a?(String) && name.is_a?(Mongo::DB)
         warn "Warning: the order of parameters to initialize a collection have changed. " +
@@ -227,8 +225,6 @@ module Mongo
     #
     # @raise [RuntimeError]
     #   if given unknown options
-    #
-    # @core find find-instance_method
     def find(selector={}, opts={})
       opts               = opts.dup
       fields             = opts.delete(:fields)
@@ -424,8 +420,6 @@ module Mongo
     #   collects invalid documents as an array. Note that this option changes the result format.
     #
     # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails.
-    #
-    # @core insert insert-instance_method
     def insert(doc_or_docs, opts={})
       doc_or_docs = [doc_or_docs] unless doc_or_docs.is_a?(Array)
       doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
@@ -461,8 +455,6 @@ module Mongo
     #   Otherwise, returns true.
     #
     # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails.
-    #
-    # @core remove remove-instance_method
     def remove(selector={}, opts={})
       send_write_operation(:delete, selector, nil, nil, opts)
     end
@@ -495,8 +487,6 @@ module Mongo
     #   Otherwise, returns true.
     #
     # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails.
-    #
-    # @core update update-instance_method
     def update(selector, document, opts={})
       send_write_operation(:update, selector, document, !document.keys.first.to_s.start_with?("$"), opts)
     end
@@ -550,8 +540,6 @@ module Mongo
     #   @restaurants.create_index([['location', Mongo::GEO2D]], :min => 500, :max => 500)
     #
     # @return [String] the name of the index created.
-    #
-    # @core indexes create_index-instance_method
     def create_index(spec, opts={})
       opts[:dropDups]   = opts[:drop_dups] if opts[:drop_dups]
       opts[:bucketSize] = opts[:bucket_size] if opts[:bucket_size]
@@ -599,8 +587,6 @@ module Mongo
     # Drop a specified index.
     #
     # @param [String] name
-    #
-    # @core indexes
     def drop_index(name)
       if name.is_a?(Array)
         return drop_index(index_name(name))
@@ -610,8 +596,6 @@ module Mongo
     end
 
     # Drop all indexes.
-    #
-    # @core indexes
     def drop_indexes
       @cache = {}
 
@@ -648,8 +632,6 @@ module Mongo
     #  response object from the server including 'ok' and 'lastErrorObject'.
     #
     # @return [Hash] the matched document.
-    #
-    # @core findandmodify find_and_modify-instance_method
     def find_and_modify(opts={})
       full_response = opts.delete(:full_response)
 
@@ -757,8 +739,6 @@ module Mongo
     # @raise ArgumentError if you specify { :out => { :inline => true }} but don't specify :raw => true.
     #
     # @see http://www.mongodb.org/display/DOCS/MapReduce Offical MongoDB map/reduce documentation.
-    #
-    # @core mapreduce map_reduce-instance_method
     def map_reduce(map, reduce, opts={})
       opts = opts.dup
       map    = BSON::Code.new(map) unless map.is_a?(BSON::Code)
@@ -982,8 +962,6 @@ module Mongo
     # Get information on the indexes for this collection.
     #
     # @return [Hash] a hash where the keys are index names.
-    #
-    # @core indexes
     def index_information
       @db.index_information(@name)
     end
