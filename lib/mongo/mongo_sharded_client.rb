@@ -94,10 +94,7 @@ module Mongo
             @manager = ShardingPoolManager.new(self, @seeds)
             ensure_manager
             @manager.connect
-            unless wire_version_in_range
-              close
-              raise ConnectionFailure, "Client wire-version range #{MIN_WIRE_VERSION} to #{MAX_WIRE_VERSION} does not support server range #{min_wire_version} to #{max_wire_version}, please update clients or servers"
-            end
+            check_wire_version_in_range
           end
         ensure
           thread_local[:locks][:connecting] = false
