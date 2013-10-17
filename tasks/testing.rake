@@ -61,7 +61,10 @@ namespace :test do
   desc "Runs commit test suites"
   task :commit do
     COMMIT_TESTS = %w(ext ruby replica_set sharded_cluster)
-    COMMIT_TESTS.each{|task| puts "test:#{task}"; Rake::Task["test:#{task}"].execute}
+    COMMIT_TESTS.each do |task|
+      puts "[RUNNING] test:#{task}"
+      Rake::Task["test:#{task}"].execute
+    end
     Rake::Task['test:cleanup'].execute
   end
 

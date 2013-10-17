@@ -21,6 +21,7 @@ module Mongo
     include Mongo::Logging
     include Mongo::Networking
     include Mongo::WriteConcern
+    include Mongo::Authentication
 
     # Wire version
     RELEASE_2_4_AND_BEFORE = 0 # Everything before we started tracking.
@@ -137,8 +138,6 @@ module Mongo
     #   driver fails to connect to a replica set with that name.
     #
     # @raise [MongoArgumentError] If called with no arguments and <code>ENV["MONGODB_URI"]</code> implies a replica set.
-    #
-    # @core self.connections
     def initialize(*args)
       opts = args.last.is_a?(Hash) ? args.pop : {}
       @host, @port = parse_init(args[0], args[1], opts)
@@ -269,81 +268,6 @@ module Mongo
       self['admin']['$cmd.sys.unlock'].find_one
     end
 
-    # Apply each of the saved database authentications.
-    #
-    # @return [Boolean] returns true if authentications exist and succeeds, false
-    #   if none exists.
-    #
-    # @raise [AuthenticationError] raises an exception if any one
-    #   authentication fails.
-    def apply_saved_authentication(opts={})
-      return false if @auths.empty?
-      @auths.each do |auth|
-        self[auth[:db_name]].issue_authentication(auth[:username], auth[:password], false,
-          :source => auth[:source], :socket => opts[:socket])
-      end
-      true
-    end
-
-    # Save an authentication to this connection.
-    #
-    # When connecting, the connection will attempt to re-authenticate on
-    # every database specified in the list of auths. This method is called
-    # automatically by DB#authenticate.
-    #
-    # Note: this method will not actually issue an authentication command.
-    # To do that, either run MongoClient#apply_saved_authentication or
-    # DB#authenticate.
-    #
-    # @param db_name [String] the database name.
-    # @param username [String] the username.
-    # @param password [String] the users password.
-    # @param source [String] (nil) optional database name if authenticating
-    # against a different database than specified with db_name.
-    #
-    # @return [Hash] a hash representing the authentication just added.
-    def add_auth(db_name, username, password, source=nil)
-      if @auths.any? {|a| a[:db_name] == db_name}
-        raise MongoArgumentError,
-            "Cannot apply multiple authentications to database '#{db_name}'"
-      end
-
-      auth = {
-        :db_name  => db_name,
-        :username => username,
-        :password => password,
-        :source   => source
-      }
-      @auths << auth
-      auth
-    end
-
-    # Remove a saved authentication for this connection.
-    #
-    # @param [String] db_name
-    #
-    # @return [Boolean]
-    def remove_auth(db_name)
-      return unless @auths
-      @auths.reject! { |a| a[:db_name] == db_name } ? true : false
-    end
-
-    # Remove all authentication information stored in this connection.
-    #
-    # @return [true] this operation return true because it always succeeds.
-    def clear_auths
-      @auths = []
-      true
-    end
-
-    def authenticate_pools
-      @primary_pool.authenticate_existing
-    end
-
-    def logout_pools(db)
-      @primary_pool.logout_existing(db)
-    end
-
     # Return a hash with all database names
     # and their respective sizes on disk.
     #
@@ -369,9 +293,7 @@ module Mongo
     # @param [String] db_name a valid database name.
     # @param [Hash] opts options to be passed to the DB constructor.
     #
-    # @return [Mongo::DB]
-    #
-    # @core databases db-instance_method
+    # @return [DB]
     def db(db_name = @default_db, opts = {})
       DB.new(db_name, self, opts)
     end
@@ -380,9 +302,7 @@ module Mongo
     #
     # @param [String] db_name a valid database name.
     #
-    # @return [Mongo::DB]
-    #
-    # @core databases []-instance_method
+    # @return [DB]
     def [](db_name)
       DB.new(db_name, self)
     end
@@ -410,11 +330,13 @@ module Mongo
     # Copy the database +from+ to +to+ on localhost. The +from+ database is
     # assumed to be on localhost, but an alternate host can be specified.
     #
-    # @param [String] from name of the database to copy from.
-    # @param [String] to name of the database to copy to.
-    # @param [String] from_host host of the 'from' database.
-    # @param [String] username username for authentication against from_db (>=1.3.x).
-    # @param [String] password password for authentication against from_db (>=1.3.x).
+    # @param from [String] name of the database to copy from.
+    # @param to [String] name of the database to copy to.
+    # @param from_host [String] host of the 'from' database.
+    # @param username [String] username (applies to 'from' db)
+    # @param password [String] password (applies to 'from' db)
+    #
+    # @note This command only supports the MONGODB-CR authentication mechanism.
     def copy_database(from, to, from_host=DEFAULT_HOST, username=nil, password=nil)
       oh = BSON::OrderedHash.new
       oh[:copydb]   = 1
@@ -431,7 +353,7 @@ module Mongo
         result = self["admin"].command(nonce_cmd)
         oh[:nonce] = result["nonce"]
         oh[:username] = username
-        oh[:key] = Mongo::Support.auth_key(username, password, oh[:nonce])
+        oh[:key] = Mongo::Authentication.auth_key(username, password, oh[:nonce])
       end
       self["admin"].command(oh)
     end

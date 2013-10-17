@@ -22,8 +22,6 @@ module BSON
   end
 
   # Generates MongoDB object ids.
-  #
-  # @core objectids
   class ObjectId
     attr_accessor :data
 

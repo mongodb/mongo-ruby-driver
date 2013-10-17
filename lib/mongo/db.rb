@@ -61,7 +61,10 @@ module Mongo
     attr_reader :name, :write_concern
 
     # The Mongo::MongoClient instance connecting to the MongoDB server.
-    attr_reader :connection
+    attr_reader :client
+
+    # for backward compatibility
+    alias_method :connection, :client
 
     # The length of time that Collection.ensure_index should cache index calls
     attr_accessor :cache_time
@@ -97,20 +100,20 @@ module Mongo
     #     on initialization or at the time of an operation.
     #
     # @option opts [Integer] :cache_time (300) Set the time that all ensure_index calls should cache the command.
-    #
-    # @core databases constructor_details
+
     def initialize(name, client, opts={})
       @name       = Mongo::Support.validate_db_name(name)
-      @connection = client
+      @client     = client
       @strict     = opts[:strict]
       @pk_factory = opts[:pk]
 
       @write_concern = get_write_concern(opts, client)
 
-      @read = opts[:read] || @connection.read
+      @read = opts[:read] || @client.read
       Mongo::ReadPreference::validate(@read)
-      @tag_sets = opts.fetch(:tag_sets, @connection.tag_sets)
-      @acceptable_latency = opts.fetch(:acceptable_latency, @connection.acceptable_latency)
+      @tag_sets = opts.fetch(:tag_sets, @client.tag_sets)
+      @acceptable_latency = opts.fetch(:acceptable_latency,
+                                       @client.acceptable_latency)
       @cache_time = opts[:cache_time] || 300 #5 minutes.
     end
 
@@ -132,23 +135,22 @@ module Mongo
     # @return [Boolean]
     #
     # @raise [AuthenticationError]
-    #
-    # @core authenticate authenticate-instance_method
     def authenticate(username, password=nil, save_auth=true, source=nil)
-      if (@connection.pool_size > 1 || source) && !save_auth
-        raise MongoArgumentError, "If using connection pooling or delegated auth, " +
+      if (@client.pool_size > 1 || source) && !save_auth
+        raise MongoArgumentError,
+          "If using connection pooling or delegated auth, " +
           ":save_auth must be set to true."
       end
 
       begin
-        socket = @connection.checkout_reader(:mode => :primary_preferred)
+        socket = @client.checkout_reader(:mode => :primary_preferred)
         issue_authentication(username, password, save_auth,
           :socket => socket, :source => source)
       ensure
         socket.checkin if socket
       end
 
-      @connection.authenticate_pools
+      @client.authenticate_pools
       true
     end
 
@@ -159,15 +161,15 @@ module Mongo
 
       # issue authentication against this database if source option not provided
       source = opts[:source]
-      db = source ? @connection[source] : self
+      db = source ? @client[source] : self
 
       auth = BSON::OrderedHash.new
       auth['authenticate'] = 1
       auth['user'] = username
       auth['nonce'] = nonce
-      auth['key'] = Mongo::Support.auth_key(username, password, nonce)
+      auth['key'] = Mongo::Authentication.auth_key(username, password, nonce)
       if ok?(doc = db.command(auth, :check_response => false, :socket => opts[:socket]))
-        @connection.add_auth(name, username, password, source) if save_auth
+        @client.add_auth(name, username, password, source) if save_auth
       else
         message = "Failed to authenticate user '#{username}' on db '#{db.name}'"
         raise Mongo::AuthenticationError.new(message, doc['code'], doc)
@@ -224,7 +226,8 @@ module Mongo
     def add_user(username, password=nil, read_only=false, opts={})
       users = self[SYSTEM_USER_COLLECTION]
       user  = users.find_one({:user => username}) || {:user => username}
-      user['pwd'] = Mongo::Support.hash_password(username, password) if password
+      user['pwd'] =
+        Mongo::Authentication.hash_password(username, password) if password
       user['readOnly'] = true if read_only
       user.merge!(opts)
       begin
@@ -258,10 +261,10 @@ module Mongo
     #
     # @return [Boolean]
     def logout(opts={})
-      auth = @connection.auths.find { |a| a[:db_name] == name }
-      db = auth && auth[:source] ? @connection[auth[:source]] : self
-      auth ? @connection.logout_pools(db.name) : db.issue_logout(opts)
-      @connection.remove_auth(db.name)
+      auth = @client.auths.find { |a| a[:db_name] == name }
+      db = auth && auth[:source] ? @client[auth[:source]] : self
+      auth ? @client.logout_pools(db.name) : db.issue_logout(opts)
+      @client.remove_auth(db.name)
     end
 
     def issue_logout(opts={})
@@ -466,7 +469,7 @@ module Mongo
       cmd = BSON::OrderedHash.new
       cmd[:renameCollection] = "#{@name}.#{from}"
       cmd[:to] = "#{@name}.#{to}"
-      doc = DB.new('admin', @connection).command(cmd, :check_response => false)
+      doc = DB.new('admin', @client).command(cmd, :check_response => false)
       ok?(doc) || raise(MongoDBError, "Error renaming collection: #{doc.inspect}")
     end
 
@@ -540,8 +543,6 @@ module Mongo
     # @option opts [String]  :comment (nil) a comment to include in profiling logs
     #
     # @return [Hash]
-    #
-    # @core commands command_instance-method
     def command(selector, opts={})
       raise MongoArgumentError, "Command must be given a selector" unless selector.respond_to?(:keys) && !selector.empty?
 
@@ -614,8 +615,6 @@ module Mongo
     # get the results using DB#profiling_info.
     #
     # @return [Symbol] :off, :slow_only, or :all
-    #
-    # @core profiling profiling_level-instance_method
     def profiling_level
       cmd = BSON::OrderedHash.new
       cmd[:profile] = -1

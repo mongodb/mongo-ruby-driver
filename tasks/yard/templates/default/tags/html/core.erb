@@ -1,8 +1,0 @@
-<% if object.has_tag?(:core) %>
-  <p class="tag_title"><strong>Core Docs:</strong></p>
-  <ul class="see">
-    <% for tag in object.tags(:core) %>
-      <li><a href='<%= "http://dochub.mongodb.org/core/#{tag.name}" %>' name='<%= tag.text %>'><%= tag.name.capitalize %></a></li>
-    <% end %>
-  </ul>
-<% end %>

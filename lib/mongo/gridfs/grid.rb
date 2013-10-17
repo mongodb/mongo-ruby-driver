@@ -23,8 +23,6 @@ module Mongo
     # Initialize a new Grid instance, consisting of a MongoDB database
     # and a filesystem prefix if not using the default.
     #
-    # @core gridfs
-    #
     # @see GridFileSystem
     def initialize(db, fs_name=DEFAULT_FS_NAME)
       raise MongoArgumentError, "db must be a Mongo::DB." unless db.is_a?(Mongo::DB)

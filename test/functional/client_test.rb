@@ -15,7 +15,7 @@
 require 'test_helper'
 require 'logger'
 
-class TestConnection < Test::Unit::TestCase
+class ClientTest < Test::Unit::TestCase
 
   include Mongo
   include BSON
