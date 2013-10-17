@@ -419,7 +419,7 @@ module Mongo
         @min_wire_version = config['minWireVersion']
         unless wire_version_in_range
           close
-          raise ConnectionFailure, "Client wire-version range #{MIN_WIRE_VERSION} to #{MAX_WIRE_VERSION} does not support server range [#{min_wire_version} to #{max_wire_version}, please update clients or servers"
+          raise ConnectionFailure, "Client wire-version range #{MIN_WIRE_VERSION} to #{MAX_WIRE_VERSION} does not support server range #{min_wire_version} to #{max_wire_version}, please update clients or servers"
         end
         set_primary(host_port)
       end
