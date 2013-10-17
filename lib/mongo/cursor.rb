@@ -281,14 +281,14 @@ module Mongo
     #
     # @note This will only have an effect in MongoDB 2.5+
     #
-    # @param server_op_timeout [Fixnum] max execution time (in milliseconds)
+    # @param max_time_ms [Fixnum] max execution time (in milliseconds)
     #
-    # @return [Fixnum, Cursor] either the current server_op_timeout or cursor
-    def server_op_timeout(server_op_timeout=nil)
-      return @server_op_timeout unless server_op_timeout
+    # @return [Fixnum, Cursor] either the current max_time_ms or cursor
+    def max_time_ms(max_time_ms=nil)
+      return @max_time_ms unless max_time_ms
       check_modifiable
 
-      @server_op_timeout = server_op_timeout
+      @max_time_ms = max_time_ms
       self
     end
 
@@ -656,7 +656,7 @@ module Mongo
       spec['$returnKey']   = true if @return_key
       spec['$showDiskLoc'] = true if @show_disk_loc
       spec['$comment']  = @comment if @comment
-      spec['$maxTimeMS'] = @server_op_timeout if @server_op_timeout
+      spec['$maxTimeMS'] = @max_time_ms if @max_time_ms
       if needs_read_pref?
         read_pref = Mongo::ReadPreference::mongos(@read, @tag_sets)
         spec['$readPreference'] = read_pref if read_pref
@@ -670,7 +670,7 @@ module Mongo
 
     def query_contains_special_fields?
       @order || @explain || @hint || @snapshot || @show_disk_loc ||
-        @max_scan || @return_key || @comment || @server_op_timeout || needs_read_pref?
+        @max_scan || @return_key || @comment || @max_time_ms || needs_read_pref?
     end
 
     def close_cursor_if_query_complete

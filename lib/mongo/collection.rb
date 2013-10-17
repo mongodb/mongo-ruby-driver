@@ -356,9 +356,9 @@ module Mongo
              else
                raise TypeError, "spec_or_object_id must be an instance of ObjectId or Hash, or nil"
              end
-      timeout = opts.delete(:server_op_timeout)
+      timeout = opts.delete(:max_time_ms)
       cursor = find(spec, opts.merge(:limit => -1))
-      timeout ? cursor.server_op_timeout(timeout).next_document : cursor.next_document
+      timeout ? cursor.max_time_ms(timeout).next_document : cursor.next_document
     end
 
     # Save a document to this collection.

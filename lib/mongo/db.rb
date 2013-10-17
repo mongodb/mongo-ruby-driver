@@ -24,7 +24,7 @@ module Mongo
     SYSTEM_USER_COLLECTION      = 'system.users'
     SYSTEM_JS_COLLECTION        = 'system.js'
     SYSTEM_COMMAND_COLLECTION   = '$cmd'
-    SERVER_OP_TIMEOUT_CODE      = 50
+    MAX_TIME_MS_CODE      = 50
 
     PROFILE_LEVEL = {
       :off       => 0,
@@ -577,7 +577,7 @@ module Mongo
         end.join('; ')
         message << ').'
         code = result['code'] || result['assertionCode']
-        raise ExecutionTimeout.new(message, code, result) if code == SERVER_OP_TIMEOUT_CODE
+        raise ExecutionTimeout.new(message, code, result) if code == MAX_TIME_MS_CODE
         raise OperationFailure.new(message, code, result)
       end
 

@@ -738,10 +738,10 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
-  def test_find_one_with_server_op_timeout
+  def test_find_one_with_max_time_ms
     with_forced_timeout(@@client) do
       assert_raise ExecutionTimeout do
-        @@test.find_one({}, { :server_op_timeout => 100 })
+        @@test.find_one({}, { :max_time_ms => 100 })
       end
     end
   end
