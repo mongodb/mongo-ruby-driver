@@ -209,9 +209,12 @@ module Mongo
         if @manager.pools.empty?
           close
           raise ConnectionFailure, "Failed to connect to any node."
-        else
-          @connected = true
         end
+        unless wire_version_in_range
+          close
+          raise ConnectionFailure, "Client wire-version range #{MIN_WIRE_VERSION} to #{MAX_WIRE_VERSION} does not support server range [#{min_wire_version} to #{max_wire_version}, please update clients or servers"
+        end
+        @connected = true
       end
     end
 

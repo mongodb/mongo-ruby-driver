@@ -161,6 +161,34 @@ class BasicTest < Test::Unit::TestCase
     @client.close
   end
 
+  def test_wire_version_not_in_range
+    [
+      [Mongo::MongoClient::MAX_WIRE_VERSION+1, Mongo::MongoClient::MAX_WIRE_VERSION+1],
+      [Mongo::MongoClient::MIN_WIRE_VERSION-1, Mongo::MongoClient::MIN_WIRE_VERSION-1]
+    ].each do |min_wire_version_value, max_wire_version_value|
+      Mongo.module_eval <<-EVAL
+        class ShardingPoolManager
+          def max_wire_version
+            return #{max_wire_version_value}
+          end
+          def min_wire_version
+            return #{min_wire_version_value}
+          end
+        end
+      EVAL
+      @client = MongoShardedClient.new(@seeds, :connect => false)
+      assert !@client.connected?
+      assert_raises Mongo::ConnectionFailure do
+        @client.connect
+      end
+    end
+    Mongo.module_eval <<-EVAL
+      class ShardingPoolManager
+        attr_reader :max_wire_version, :min_wire_version
+      end
+    EVAL
+  end
+
   private
 
   def probe(size)
