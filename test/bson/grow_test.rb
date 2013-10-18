@@ -32,6 +32,12 @@ class Hash
   end
 end
 
+class Fixnum
+  def to_bson
+    {"0" => self}.to_bson
+  end
+end
+
 class TestCollection < Test::Unit::TestCase
 
   def setup
@@ -44,6 +50,14 @@ class TestCollection < Test::Unit::TestCase
 
   def test_to_e
     assert_equal "\x10a\x00\x00\x00\x00\x00", {:a=>0}.to_bson.to_e
+  end
+
+  def test_to_t
+    assert_equal "\x10", {:a=>0}.to_bson.to_t
+  end
+
+  def test_to_v
+    assert_equal "\x00\x00\x00\x00", {:a=>0}.to_bson.to_v
   end
 
   def test_finish_one_bang
@@ -96,23 +110,33 @@ class TestCollection < Test::Unit::TestCase
     assert_equal({"a"=>0, "c"=>{"0"=>99}}, message.to_ruby)
   end
 
-  def test_array_grow_bang
-    message = @bson_a.unfinish!.array!("c").grow!(99).grow!(101).finish!
+  def test_array_push_bang
+    message = @bson_a.unfinish!.array!("c").push!(99.to_bson).push!(101.to_bson).finish!
     assert_equal({"a"=>0, "c"=>[99, 101]}, message.to_ruby)
   end
 
-  def test_array_grow
-    message = @bson_a.array("c").grow(99).grow(101)
+  def test_array_push
+    message = @bson_a.array("c").push(99.to_bson).push(101.to_bson)
     assert_equal({"a"=>0, "c"=>[99, 101]}, message.to_ruby)
+  end
+
+  def test_array_push_doc_bang
+    message = @bson_a.unfinish!.array!("c").push_doc!({"A"=>1}.to_bson).push_doc!({"B"=>2}.to_bson).finish!
+    assert_equal({"a"=>0, "c"=>[{"A"=>1}, {"B"=>2}]}, message.to_ruby)
+  end
+
+  def test_array_push_doc
+    message = @bson_a.array("c").push_doc({"A"=>1}.to_bson).push_doc({"B"=>2}.to_bson)
+    assert_equal({"a"=>0, "c"=>[{"A"=>1}, {"B"=>2}]}, message.to_ruby)
   end
 
   def test_b_end_bang
-    message = @bson_a.unfinish!.array!("c").grow!(99).b_end!.grow!(@bson_b).finish!
+    message = @bson_a.unfinish!.array!("c").push!(99.to_bson).b_end!.grow!(@bson_b).finish!
     assert_equal({"a"=>0, "c"=>[99], "b"=>1}, message.to_ruby)
   end
 
   def test_b_end
-    message = @bson_a.array("c").grow(99).b_end.grow(@bson_b)
+    message = @bson_a.array("c").push(99.to_bson).b_end.grow(@bson_b)
     assert_equal({"a"=>0, "c"=>[99], "b"=>1}, message.to_ruby)
   end
 
