@@ -24,7 +24,7 @@ module BSON
     # finish! must be called to finish BSON after using bang! methods
     # corresponding non-bang methods work on finished BSON
     # object/array methods should be paired, ex., array!/b_end! and array/b_end
-    # push!/push append to arrays, overriding with correct keys
+    # push!/push and push_doc!/push_doc append to arrays with correct keys
     # b_end needs a better name
 
     def to_e # Extract bytes for elements from BSON
@@ -69,7 +69,7 @@ module BSON
       finish!
     end
 
-    def push!(bson) # Appends BSON array element with correct key unfinished
+    def push!(bson) # Appends BSON element value with correct key unfinished
       @a_index ||= [0]
       @b_pos ||= [0]
       put_binary(bson.to_t)
@@ -80,7 +80,7 @@ module BSON
       self
     end
 
-    def push(bson) # Appends BSON array element with correct key finished
+    def push(bson) # Appends BSON element value with correct key finished
       @a_index ||= [0]
       @b_pos ||= [0]
       put_binary(bson.to_t, @str.size - @b_pos.size)
@@ -88,6 +88,28 @@ module BSON
       put_binary(NULL_BYTE)
       @a_index[-1] += 1
       put_binary(bson.to_v)
+      finish!
+    end
+
+    def push_doc!(bson) # Appends BSON doc with correct key unfinished
+      @a_index ||= [0]
+      @b_pos ||= [0]
+      put(BSON::BSON_RUBY::OBJECT)
+      put_binary(@a_index[-1].to_s)
+      put(0)
+      @a_index[-1] += 1
+      put_binary(bson.to_s)
+      self
+    end
+
+    def push_doc(bson) # Appends BSON doc with correct key finished
+      @a_index ||= [0]
+      @b_pos ||= [0]
+      put(BSON::BSON_RUBY::OBJECT, @str.size - @b_pos.size)
+      put_binary(@a_index[-1].to_s)
+      put(0)
+      @a_index[-1] += 1
+      put_binary(bson.to_s)
       finish!
     end
 

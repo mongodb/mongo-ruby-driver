@@ -110,14 +110,24 @@ class TestCollection < Test::Unit::TestCase
     assert_equal({"a"=>0, "c"=>{"0"=>99}}, message.to_ruby)
   end
 
-  def test_array_grow_bang
+  def test_array_push_bang
     message = @bson_a.unfinish!.array!("c").push!(99.to_bson).push!(101.to_bson).finish!
     assert_equal({"a"=>0, "c"=>[99, 101]}, message.to_ruby)
   end
 
-  def test_array_grow
+  def test_array_push
     message = @bson_a.array("c").push(99.to_bson).push(101.to_bson)
     assert_equal({"a"=>0, "c"=>[99, 101]}, message.to_ruby)
+  end
+
+  def test_array_push_doc_bang
+    message = @bson_a.unfinish!.array!("c").push_doc!({"A"=>1}.to_bson).push_doc!({"B"=>2}.to_bson).finish!
+    assert_equal({"a"=>0, "c"=>[{"A"=>1}, {"B"=>2}]}, message.to_ruby)
+  end
+
+  def test_array_push_doc
+    message = @bson_a.array("c").push_doc({"A"=>1}.to_bson).push_doc({"B"=>2}.to_bson)
+    assert_equal({"a"=>0, "c"=>[{"A"=>1}, {"B"=>2}]}, message.to_ruby)
   end
 
   def test_b_end_bang
