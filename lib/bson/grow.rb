@@ -17,15 +17,26 @@
 module BSON
   module Grow
     # module with methods to grow BSON docs/objects/arrays
-    # #unfinish! returns unfinished BSON for faster growing with bang! methods
+    # this module is intended for internal use and is subject to change
+    # proper usage is essential as minimal overhead is preferred over usage checks
+    # unfinish! returns unfinished BSON for faster growing with bang! methods
     # bang! methods work on unfinished BSON with neither terminating nulls nor proper sizes
     # finish! must be called to finish BSON after using bang! methods
     # corresponding non-bang methods work on finished BSON
     # object/array methods should be paired, ex., array!/b_end! and array/b_end
+    # push!/push append to arrays, overriding with correct keys
     # b_end needs a better name
 
     def to_e # Extract bytes for elements from BSON
       @str[4...-1]
+    end
+
+    def to_t # Extract type from (single-element) BSON
+      @str[4,1]
+    end
+
+    def to_v # Extract value from (single-element) BSON
+      @str[(@str.index(NULL_BYTE,5)+1)...-1]
     end
 
     def finish_one!(offset = 0) # Appends terminating null byte and sets size
@@ -47,24 +58,36 @@ module BSON
       self
     end
 
-    def grow!(bson_or_value) # Appends BSON elements or Ruby array element  unfinished
-      unless bson_or_value.is_a?(BSON::ByteBuffer)
-        @a_index ||= [0]
-        bson_or_value = BSON::BSON_CODER.serialize({@a_index[-1].to_s => bson_or_value})
-        @a_index[-1] += 1
-      end
-      put_binary(bson_or_value.to_e)
+    def grow!(bson) # Appends BSON elements unfinished
+      put_binary(bson.to_e)
       self
     end
 
-    def grow(bson_or_value) # Appends BSON elements or Ruby array element finished
-      unless bson_or_value.is_a?(BSON::ByteBuffer)
-        @a_index ||= [0]
-        bson_or_value = BSON::BSON_CODER.serialize({@a_index[-1].to_s => bson_or_value})
-        @a_index[-1] += 1
-      end
+    def grow(bson) # Appends BSON elements finished
       @b_pos ||= [0]
-      put_binary(bson_or_value.to_e, @str.size - @b_pos.size)
+      put_binary(bson.to_e, @str.size - @b_pos.size)
+      finish!
+    end
+
+    def push!(bson) # Appends BSON array element with correct key unfinished
+      @a_index ||= [0]
+      @b_pos ||= [0]
+      put_binary(bson.to_t)
+      put_binary(@a_index[-1].to_s)
+      put_binary(NULL_BYTE)
+      @a_index[-1] += 1
+      put_binary(bson.to_v)
+      self
+    end
+
+    def push(bson) # Appends BSON array element with correct key finished
+      @a_index ||= [0]
+      @b_pos ||= [0]
+      put_binary(bson.to_t, @str.size - @b_pos.size)
+      put_binary(@a_index[-1].to_s)
+      put_binary(NULL_BYTE)
+      @a_index[-1] += 1
+      put_binary(bson.to_v)
       finish!
     end
 
