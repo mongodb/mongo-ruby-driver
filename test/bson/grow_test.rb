@@ -140,4 +140,10 @@ class TestCollection < Test::Unit::TestCase
     assert_equal({"a"=>0, "c"=>[99], "b"=>1}, message.to_ruby)
   end
 
+  def test_clear_bang
+    message = @bson_a.unfinish!.array!("c").push!(99.to_bson).push!(101.to_bson).finish!.clear!
+    assert_nil message.instance_variable_get(:@b_pos)
+    assert_nil message.instance_variable_get(:@a_index)
+  end
+
 end
