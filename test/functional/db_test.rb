@@ -216,6 +216,13 @@ class DBTest < Test::Unit::TestCase
     end
   end
 
+  def test_command_with_bson
+    normal_response = @@db.command({:buildInfo => 1})
+    bson = BSON::BSON_CODER.serialize({:buildInfo => 1}, false, false)
+    bson_response = @@db.command({:bson => bson})
+    assert_equal normal_response, bson_response
+  end
+
   def test_last_status
     @@db['test'].remove
     @@db['test'].save("i" => 1)

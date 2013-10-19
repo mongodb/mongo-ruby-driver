@@ -45,6 +45,9 @@ module Mongo
       # Query selector
       @selector   = opts.delete(:selector) || {}
 
+      # Query pre-serialized bson to append
+      @bson    = @selector.delete(:bson)
+
       # Special operators that form part of $query
       @order         = opts.delete(:order)
       @explain       = opts.delete(:explain)
@@ -624,7 +627,9 @@ module Mongo
       @batch_size > 1 ? message.put_int(@batch_size) : message.put_int(@limit)
       spec = query_contains_special_fields? ? construct_query_spec : @selector
       spec.merge!(@opts)
-      message.put_binary(BSON::BSON_CODER.serialize(spec, false, false, @connection.max_bson_size).to_s)
+      query_message = BSON::BSON_CODER.serialize(spec, false, false, @connection.max_bson_size)
+      query_message.grow(@bson) if @bson
+      message.put_binary(query_message.to_s)
       message.put_binary(BSON::BSON_CODER.serialize(@fields, false, false, @connection.max_bson_size).to_s) if @fields
       message
     end

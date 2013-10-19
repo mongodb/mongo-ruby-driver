@@ -164,5 +164,10 @@ module BSON
       self
     end
 
+    def clear! # Clear internal state for reuse
+      @b_pos = @a_index = nil
+      self
+    end
+
   end
 end
