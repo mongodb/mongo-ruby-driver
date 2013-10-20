@@ -344,6 +344,16 @@ class ClientTest < Test::Unit::TestCase
     assert_equal 0, conn.min_wire_version
   end
 
+  def test_wire_version_feature
+    conn = standard_connection(:connect => false)
+    conn.stubs(:min_wire_version).returns(0)
+    conn.stubs(:max_wire_version).returns(1)
+    assert_true conn.wire_version_feature?(0)
+    assert_true conn.wire_version_feature?(1)
+    assert_false conn.wire_version_feature?(2)
+    assert_false conn.wire_version_feature?(-1)
+  end
+
   def test_wire_version_not_in_range
     [
       [Mongo::MongoClient::MAX_WIRE_VERSION+1, Mongo::MongoClient::MAX_WIRE_VERSION+1],
@@ -424,7 +434,8 @@ class ClientTest < Test::Unit::TestCase
       end
 
       should "close the connection on send_message for major exceptions" do
-        @con.expects(:checkout_writer).raises(SystemStackError)
+        @con.stubs(:checkout_writer).raises(SystemStackError)
+        @con.stubs(:checkout_reader).raises(SystemStackError)
         @con.expects(:close)
         begin
           @coll.insert({:foo => "bar"})
@@ -433,7 +444,8 @@ class ClientTest < Test::Unit::TestCase
       end
 
       should "close the connection on send_message_with_gle for major exceptions" do
-        @con.expects(:checkout_writer).raises(SystemStackError)
+        @con.stubs(:checkout_writer).raises(SystemStackError)
+        @con.stubs(:checkout_reader).raises(SystemStackError)
         @con.expects(:close)
         begin
           @coll.insert({:foo => "bar"}, :w => 1)

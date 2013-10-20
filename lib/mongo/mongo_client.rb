@@ -494,6 +494,10 @@ module Mongo
       @min_wire_version || 0
     end
 
+    def wire_version_feature?(feature)
+      min_wire_version <= feature && feature <= max_wire_version
+    end
+
     # Checkout a socket for reading (i.e., a secondary node).
     # Note: this is overridden in MongoReplicaSetClient.
     def checkout_reader(read_preference)
