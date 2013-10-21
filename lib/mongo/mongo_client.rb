@@ -26,7 +26,7 @@ module Mongo
     # Wire version
     RELEASE_2_4_AND_BEFORE = 0 # Everything before we started tracking.
     AGG_RETURNS_CURSORS    = 1 # The aggregation command may now be requested to return cursors.
-    BATCH_COMMANDS         = 2 # insert, update, and delele batch command
+    BATCH_COMMANDS         = 2 # insert, update, and delete batch command
     MAX_WIRE_VERSION       = BATCH_COMMANDS # supported by this client implementation
     MIN_WIRE_VERSION       = RELEASE_2_4_AND_BEFORE # supported by this client implementation
 
