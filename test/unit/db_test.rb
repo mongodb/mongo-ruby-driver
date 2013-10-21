@@ -55,6 +55,14 @@ class DBTest < Test::Unit::TestCase
         end
       end
 
+      should "not include named nil opts in selector" do
+        @cursor = mock(:next_document => {"ok" => 1})
+        Cursor.expects(:new).with(@collection, :limit => -1,
+          :selector => {:ping => 1}, :socket => nil).returns(@cursor)
+        command = {:ping => 1}
+        @db.command(command, :socket => nil)
+      end
+
       should "create the proper cursor" do
         @cursor = mock(:next_document => {"ok" => 1})
         Cursor.expects(:new).with(@collection,
