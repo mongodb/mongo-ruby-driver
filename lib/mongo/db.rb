@@ -555,10 +555,10 @@ module Mongo
       check_response = opts.delete(:check_response) { true }
 
       # build up the command hash
-      command = opts[:socket] ? { :socket => opts.delete(:socket) } : {}
-      command.merge!({ :comment => opts.delete(:comment) }) if opts[:comment]
+      command = opts.key?(:socket) ? { :socket => opts.delete(:socket) } : {}
+      command.merge!({ :comment => opts.delete(:comment) }) if opts.key?(:comment)
       command[:limit] = -1
-      command[:read] = Mongo::ReadPreference::cmd_read_pref(opts.delete(:read), selector) if opts[:read]
+      command[:read] = Mongo::ReadPreference::cmd_read_pref(opts.delete(:read), selector) if opts.key?(:read)
       # arbitrary opts are merged into the selector
       command[:selector] = selector.merge!(opts)
 
