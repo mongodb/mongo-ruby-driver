@@ -669,8 +669,11 @@ module Mongo
     #
     #   '$sort' Sorts all input documents and returns them to the pipeline in sorted order.
     #
-    # @option opts [:primary, :secondary] :read Read preference indicating which server to perform this query
-    #  on. See Collection#find for more details.
+    #   '$out' The name of a collection to which the result set will be saved.
+    #
+    # @option opts [:primary, :secondary] :read Read preference indicating which server to perform this operation
+    #  on. If $out is specified and :read is not :primary, the aggregation will be rerouted to the primary with
+    #  a warning. See Collection#find for more details.
     # @option opts [String]  :comment (nil) a comment to include in profiling logs
     # @option opts [Hash] :cursor cursor options for aggregation
     #
@@ -683,11 +686,11 @@ module Mongo
       raise MongoArgumentError, "pipeline must be an array of operators" unless pipeline.class == Array
       raise MongoArgumentError, "pipeline operators must be hashes" unless pipeline.all? { |op| op.class == Hash }
 
-      hash = BSON::OrderedHash.new
-      hash['aggregate'] = self.name
-      hash['pipeline'] = pipeline
+      selector = BSON::OrderedHash.new
+      selector['aggregate'] = self.name
+      selector['pipeline'] = pipeline
 
-      result = @db.command(hash, command_options(opts))
+      result = @db.command(selector, command_options(opts))
       unless Mongo::Support.ok?(result)
         raise Mongo::OperationFailure, "aggregate failed: #{result['errmsg']}"
       end
@@ -702,6 +705,9 @@ module Mongo
         }
 
         return Cursor.new(self, seed)
+
+      elsif selector['pipeline'].any? { |op| op.key?('$out') || op.key?(:$out) }
+        return result
       end
 
       result['result'] || result
