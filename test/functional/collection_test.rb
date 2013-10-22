@@ -924,6 +924,42 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
+  if @@version >= "2.5.2"
+    def test_out_aggregate
+      out_collection = 'test_out'
+      @@db.drop_collection(out_collection)
+      setup_aggregate_data
+      docs = @@test.find.to_a
+      pipeline = [{:$out => out_collection}]
+      @@test.aggregate(pipeline)
+      assert_equal docs, @@db.collection(out_collection).find.to_a
+    end
+
+    def test_out_aggregate_nonprimary_sym_warns
+      ReadPreference::expects(:warn).with(regexp_matches(/rerouted to primary/))
+      pipeline = [{:$out => 'test_out'}]
+      @@test.aggregate(pipeline, :read => :secondary)
+    end
+
+    def test_out_aggregate_nonprimary_string_warns
+      ReadPreference::expects(:warn).with(regexp_matches(/rerouted to primary/))
+      pipeline = [{'$out' => 'test_out'}]
+      @@test.aggregate(pipeline, :read => :secondary)
+    end
+
+    def test_out_aggregate_string_returns_raw_response
+      pipeline = [{'$out' => 'test_out'}]
+      response = @@test.aggregate(pipeline)
+      assert response.respond_to?(:keys)
+    end
+
+    def test_out_aggregate_sym_returns_raw_response
+      pipeline = [{:$out => 'test_out'}]
+      response = @@test.aggregate(pipeline)
+      assert response.respond_to?(:keys)
+    end
+  end
+
   if @@version > "1.1.1"
     def test_map_reduce
       @@test << { "user_id" => 1 }
