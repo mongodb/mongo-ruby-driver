@@ -27,7 +27,7 @@ group :testing do
 end
 
 group :development do
-  gem 'pry-rescue'
+  gem 'pry-rescue' unless RUBY_PLATFORM =~ /java/
   gem 'pry-nav'
 end
 
