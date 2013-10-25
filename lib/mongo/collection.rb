@@ -315,8 +315,9 @@ module Mongo
         else
           raise ArgumentError, "Write operation type must be :insert, :update or :delete"
         end
-        request = {op_type => collection_name, WRITE_COMMAND_ARG_KEY[op_type] => argument,
-                   :writeConcern => write_concern, :ordered => !opts[:continue_on_error]}.merge!(opts)
+        request = BSON::OrderedHash[op_type, collection_name, WRITE_COMMAND_ARG_KEY[op_type], argument]
+        request.merge!(:writeConcern => write_concern, :ordered => !opts[:continue_on_error])
+        request.merge!(opts)
         @db.command(request)
       else
         message = BSON::ByteBuffer.new("", @connection.max_message_size)
@@ -1153,8 +1154,8 @@ module Mongo
       begin
         if use_write_command?(write_concern)
           message.finish!
-          opts = {:writeConcern => write_concern, :ordered => !continue_on_error}
-          request = {op => @name, :bson => message}.merge!(opts)
+          request = BSON::OrderedHash[op, @name, :bson, message]
+          request.merge!(:writeConcern => write_concern, :ordered => !continue_on_error)
           @db.command(request)
         else
           instrument(:insert, :database => @db.name, :collection => @name, :documents => batch_docs) do
