@@ -63,7 +63,7 @@ module Mongo
       @skip     = opts.delete(:skip)     || 0
       @limit    = opts.delete(:limit)    || 0
       @tailable = opts.delete(:tailable)
-      @timeout  = opts[:timeout].nil? ? true : opts.delete(:timeout)
+      @timeout  = opts.key?(:timeout) ? opts.delete(:timeout) : true
       @options  = 0
 
       # Use this socket for the query

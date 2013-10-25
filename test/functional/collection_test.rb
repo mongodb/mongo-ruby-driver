@@ -62,12 +62,24 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
-  if @@version >= '2.5.2'
-    def test_aggregation_arbitrary_opts
+  if @@version >= '2.5.3'
+    def test_aggregation_allow_disk_usage
       @@db.expects(:command).with do |selector, opts|
         opts[:allowDiskUsage] == true
       end.returns({ 'ok' => 1 })
       @@test.aggregate([], :allowDiskUsage => true)
+    end
+
+    def test_aggregation_supports_explain
+      @@db.expects(:command).with do |selector, opts|
+        opts[:explain] == true
+      end.returns({ 'ok' => 1 })
+      @@test.aggregate([], :explain => true)
+    end
+
+    def test_aggregation_explain_returns_raw_result
+      response = @@test.aggregate([], :explain => true)
+      assert response['stages']
     end
   end
 
@@ -914,6 +926,42 @@ class TestCollection < Test::Unit::TestCase
                           ]
       results = @@test.aggregate([{"$unwind"=> "$tags"}])
       assert_equal desired_results, results
+    end
+  end
+
+  if @@version >= "2.5.2"
+    def test_out_aggregate
+      out_collection = 'test_out'
+      @@db.drop_collection(out_collection)
+      setup_aggregate_data
+      docs = @@test.find.to_a
+      pipeline = [{:$out => out_collection}]
+      @@test.aggregate(pipeline)
+      assert_equal docs, @@db.collection(out_collection).find.to_a
+    end
+
+    def test_out_aggregate_nonprimary_sym_warns
+      ReadPreference::expects(:warn).with(regexp_matches(/rerouted to primary/))
+      pipeline = [{:$out => 'test_out'}]
+      @@test.aggregate(pipeline, :read => :secondary)
+    end
+
+    def test_out_aggregate_nonprimary_string_warns
+      ReadPreference::expects(:warn).with(regexp_matches(/rerouted to primary/))
+      pipeline = [{'$out' => 'test_out'}]
+      @@test.aggregate(pipeline, :read => :secondary)
+    end
+
+    def test_out_aggregate_string_returns_raw_response
+      pipeline = [{'$out' => 'test_out'}]
+      response = @@test.aggregate(pipeline)
+      assert response.respond_to?(:keys)
+    end
+
+    def test_out_aggregate_sym_returns_raw_response
+      pipeline = [{:$out => 'test_out'}]
+      response = @@test.aggregate(pipeline)
+      assert response.respond_to?(:keys)
     end
   end
 

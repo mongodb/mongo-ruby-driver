@@ -546,19 +546,27 @@ module Mongo
     def command(selector, opts={})
       raise MongoArgumentError, "Command must be given a selector" unless selector.respond_to?(:keys) && !selector.empty?
 
-      if selector.keys.length > 1 && RUBY_VERSION < '1.9' && selector.class != BSON::OrderedHash
-        raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
-      end
-
       opts = opts.dup
       # deletes :check_response and returns the value, if nil defaults to the block result
       check_response = opts.delete(:check_response) { true }
 
       # build up the command hash
-      command = opts[:socket] ? { :socket => opts.delete(:socket) } : {}
-      command.merge!({ :comment => opts.delete(:comment) }) if opts[:comment]
+      command = opts.key?(:socket) ? { :socket => opts.delete(:socket) } : {}
+      command.merge!({ :comment => opts.delete(:comment) }) if opts.key?(:comment)
       command[:limit] = -1
-      command[:read] = Mongo::ReadPreference::cmd_read_pref(opts.delete(:read), selector) if opts[:read]
+      command[:read] = Mongo::ReadPreference::cmd_read_pref(opts.delete(:read), selector) if opts.key?(:read)
+
+      if RUBY_VERSION < '1.9' && selector.class != BSON::OrderedHash
+        if selector.keys.length > 1
+          raise MongoArgumentError, "DB#command requires an OrderedHash when hash contains multiple keys"
+        end
+        if opts.keys.size > 0
+          # extra opts will be merged into the selector, so make sure it's an OH in versions < 1.9
+          selector = selector.dup
+          selector = BSON::OrderedHash.new.merge!(selector)
+        end
+      end
+
       # arbitrary opts are merged into the selector
       command[:selector] = selector.merge!(opts)
 
