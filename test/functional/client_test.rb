@@ -183,21 +183,6 @@ class ClientTest < Test::Unit::TestCase
     @client.drop_database('new')
   end
 
-  def test_copy_database_with_auth
-    @client.db('old').collection('copy-test').insert('a' => 1)
-    @client.db('old').add_user('bob', 'secret')
-
-    assert_raise Mongo::OperationFailure do
-      @client.copy_database('old', 'new', host_port, 'bob', 'badpassword')
-    end
-
-    result = @client.copy_database('old', 'new', host_port, 'bob', 'secret')
-    assert Mongo::Support.ok?(result)
-
-    @client.drop_database('old')
-    @client.drop_database('new')
-  end
-
   def test_database_names
     @client.drop_database(MONGO_TEST_DB)
     @client.db(MONGO_TEST_DB).collection('info-test').insert('a' => 1)

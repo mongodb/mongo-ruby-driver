@@ -30,7 +30,6 @@ class DBTest < Test::Unit::TestCase
 
   @@client  = standard_connection
   @@db    = @@client.db(MONGO_TEST_DB)
-  @@users = @@db.collection('system.users')
   @@version = @@client.server_version
 
   def test_close
@@ -43,7 +42,6 @@ class DBTest < Test::Unit::TestCase
       assert_match(/NilClass/, ex.to_s)
     ensure
       @@db = standard_connection.db(MONGO_TEST_DB)
-      @@users = @@db.collection('system.users')
     end
   end
 
