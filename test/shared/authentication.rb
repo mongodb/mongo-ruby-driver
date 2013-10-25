@@ -32,12 +32,14 @@ module AuthenticationTests
 
   def test_add_user
     @db.add_user('bob','user')
-    assert @db['system.users'].find_one({:user => 'bob'})
+    assert @db.authenticate('bob', 'user')
   end
 
    def test_remove_user
     @db.remove_user('bob')
-    assert_nil @db['system.users'].find_one({:user => 'bob'})
+    assert_raise Mongo::AuthenticationError do
+      @db.authenticate('bob', 'user')
+    end
   end
 
   def test_remove_non_existent_user
