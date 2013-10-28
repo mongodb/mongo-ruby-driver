@@ -27,20 +27,22 @@ class ReplicaSetAuthenticationTest < Test::Unit::TestCase
   end
 
   def test_authenticate_with_connection_uri
-    @db.add_user('eunice', 'uritest')
+    silently do
+      @db.add_user('eunice', 'uritest')
 
-    client =
-      MongoReplicaSetClient.from_uri(
-        "mongodb://eunice:uritest@#{@rs.repl_set_seeds.join(',')}/#{@db.name}" +
-        "?replicaSet=#{@rs.repl_set_name}")
+      client =
+        MongoReplicaSetClient.from_uri(
+          "mongodb://eunice:uritest@#{@rs.repl_set_seeds.join(',')}/#{@db.name}" +
+          "?replicaSet=#{@rs.repl_set_name}")
 
-    assert client
-    assert_equal client.auths.size, 1
-    assert client[MONGO_TEST_DB]['auth_test'].count
+      assert client
+      assert_equal client.auths.size, 1
+      assert client[MONGO_TEST_DB]['auth_test'].count
 
-    auth = client.auths.first
-    assert_equal @db.name, auth[:db_name]
-    assert_equal 'eunice', auth[:username]
-    assert_equal 'uritest', auth[:password]
+      auth = client.auths.first
+      assert_equal @db.name, auth[:db_name]
+      assert_equal 'eunice', auth[:username]
+      assert_equal 'uritest', auth[:password]
+    end
   end
 end
