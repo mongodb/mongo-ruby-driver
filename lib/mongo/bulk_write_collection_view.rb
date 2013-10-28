@@ -140,17 +140,16 @@ module Mongo
           documents.collect! { |doc| @collection.pk_factory.create_pk(doc) }
           check_keys = true
         end
-        #puts "execute op: #{op.inspect}, documents: #{documents.inspect}, check_keys: #{check_keys}"
         begin
           result << @collection.batch_write_incremental(op, documents, check_keys,
             options.merge(:continue_on_error => !@options[:ordered], :collect_on_error => true))
         rescue => ex
-          #puts "execute ex: #{ex.inspect}"
           errors << ex
           break if @options[:ordered]
         end
       end
       @ops = []
+      #raise errors.last unless errors.empty?
       [result, errors] # TODO - handle, collect, process errors and return values
     end
 

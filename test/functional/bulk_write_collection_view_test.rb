@@ -57,8 +57,12 @@ def assert_is_bulk_write_collection_view(view)
 end
 
 class BulkWriteCollectionViewTest < Test::Unit::TestCase
+  @@client       ||= standard_connection(:op_timeout => 10)
+  @@db           = @@client.db(MONGO_TEST_DB)
+  @@test         = @@db.collection("test")
+  @@version      = @@client.server_version
 
-  DATABASE_NAME = 'collection_view_test'
+  DATABASE_NAME = 'bulk_write_collection_view_test'
   COLLECTION_NAME = 'test'
 
   def pp_with_caller(obj)
@@ -261,34 +265,50 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       assert_equal [], @bulk.ops
     end
 
-    should "run big example for #execute" do
-      @bulk.insert({ :a => 1 })
-      @bulk.insert({ :a => 2 })
-      @bulk.insert({ :a => 3 })
-      @bulk.insert({ :a => 4 })
-      @bulk.insert({ :a => 5 })
-      # Update one document matching the selector
-      @bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
-      # Update all documents matching the selector
-      @bulk.find({:a => 2}).update({"$inc" => { :x => 2 }})
-      # Replace entire document (update with whole doc replace)
-      @bulk.find({:a => 3}).replace_one({ :x => 3 })
-      # Update one document matching the selector or upsert
-      @bulk.find({:a => 1}).upsert.update_one({"$inc" => { :x => 1 }})
-      # Update all documents matching the selector or upsert
-      @bulk.find({:a => 2}).upsert.update({"$inc" => { :x => 2 }})
-      # Replaces a single document matching the selector or upsert
-      @bulk.find({:a => 3}).upsert.replace_one({ :x => 3 })
-      # Remove a single document matching the selector
-      @bulk.find({:a => 4}).remove_one()
-      # Remove all documents matching the selector
-      @bulk.find({:a => 5}).remove()
-      # Insert a document
-      @bulk.insert({ :x => 4 })
-      write_concern = {:w => 1, :j => 1}
-      result = @bulk.execute(write_concern)
-      #pp_with_caller result
-      assert_equal [{"x" => 3}, {"a" => 1, "x" => 2}, {"a" => 2, "x" => 4}, {"x" => 3}, {"x" => 4}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }
+    if @@version >= '2.5.3'
+      should "run big example for #execute" do
+        @bulk.insert({ :a => 1 })
+        @bulk.insert({ :a => 2 })
+        @bulk.insert({ :a => 3 })
+        @bulk.insert({ :a => 4 })
+        @bulk.insert({ :a => 5 })
+        # Update one document matching the selector
+        @bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
+        # Update all documents matching the selector
+        @bulk.find({:a => 2}).update({"$inc" => { :x => 2 }})
+        # Replace entire document (update with whole doc replace)
+        @bulk.find({:a => 3}).replace_one({ :x => 3 })
+        # Update one document matching the selector or upsert
+        @bulk.find({:a => 1}).upsert.update_one({"$inc" => { :x => 1 }})
+        # Update all documents matching the selector or upsert
+        @bulk.find({:a => 2}).upsert.update({"$inc" => { :x => 2 }})
+        # Replaces a single document matching the selector or upsert
+        @bulk.find({:a => 3}).upsert.replace_one({ :x => 3 })
+        # Remove a single document matching the selector
+        @bulk.find({:a => 4}).remove_one()
+        # Remove all documents matching the selector
+        @bulk.find({:a => 5}).remove()
+        # Insert a document
+        @bulk.insert({ :x => 4 })
+        write_concern = {:w => 1, :j => 1}
+        result = @bulk.execute(write_concern)
+        #pp_with_caller result
+        assert_equal [{"x" => 3}, {"a" => 1, "x" => 2}, {"a" => 2, "x" => 4}, {"x" => 3}, {"x" => 4}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }
+      end
+    else # @@version < '2.5.3'
+      should "return an error for an update operation on #execute" do
+        @bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
+        write_concern = {:w => 1, :j => 1}
+        result = @bulk.execute(write_concern)
+        assert_equal Mongo::MongoArgumentError, result.last.first.class
+      end
+
+      should "return an error for a remove operation on #execute" do
+        @bulk.find({}).remove()
+        write_concern = {:w => 1, :j => 1}
+        result = @bulk.execute(write_concern)
+        assert_equal Mongo::MongoArgumentError, result.last.first.class
+      end
     end
 
     should "run ordered @bulk insert with duplicate id" do

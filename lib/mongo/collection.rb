@@ -1180,6 +1180,9 @@ module Mongo
 
     def batch_write_incremental(op, documents, check_keys=true, opts={})
       raise Mongo::OperationFailure, "Request contains no documents" if documents.empty?
+      raise MongoArgumentError, "Bulk write commands for :update and :delete are not available " +
+          "with max_wire_version #{@connection.max_wire_version} " +
+          "and write concern #{write_concern.inspect}" if op != :insert && !use_write_command?(write_concern)
       message_size_limit = @connection.max_message_size
       write_concern = get_write_concern(opts, self)
       continue_on_error = !!opts[:continue_on_error]
