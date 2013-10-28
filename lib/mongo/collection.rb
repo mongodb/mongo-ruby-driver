@@ -318,7 +318,9 @@ module Mongo
         request = BSON::OrderedHash[op_type, collection_name, WRITE_COMMAND_ARG_KEY[op_type], argument]
         request.merge!(:writeConcern => write_concern, :ordered => !opts[:continue_on_error])
         request.merge!(opts)
-        @db.command(request)
+        instrument(op_type, :database => @db.name, :collection => collection_name, :selector => selector, :documents => doc_or_docs) do
+          @db.command(request)
+        end
       else
         message = BSON::ByteBuffer.new("", @connection.max_message_size)
         message.put_int((op_type == :insert && !!opts[:continue_on_error]) ? 1 : 0)
@@ -1156,7 +1158,9 @@ module Mongo
           message.finish!
           request = BSON::OrderedHash[op, @name, :bson, message]
           request.merge!(:writeConcern => write_concern, :ordered => !continue_on_error)
-          @db.command(request)
+          instrument(:insert, :database => @db.name, :collection => @name, :documents => batch_docs) do
+            @db.command(request)
+          end
         else
           instrument(:insert, :database => @db.name, :collection => @name, :documents => batch_docs) do
             if Mongo::WriteConcern.gle?(write_concern)

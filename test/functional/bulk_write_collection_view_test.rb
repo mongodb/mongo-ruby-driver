@@ -1,0 +1,316 @@
+# Copyright (C) 2013 MongoDB, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License")
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+require 'test_helper'
+
+class Hash
+  def stringify_keys
+    dup.stringify_keys!
+  end
+
+  def stringify_keys!
+    keys.each do |key|
+      self[key.to_s] = delete(key)
+    end
+    self
+  end
+
+  def except(*keys)
+    dup.except!(*keys)
+  end
+
+  # Replaces the hash without the given keys.
+  def except!(*keys)
+    keys.each { |key| delete(key) }
+    self
+  end
+end
+
+module Mongo
+  class BulkWriteCollectionView
+    public :copy, :update_doc?, :replace_doc?, :ordered_group_by_first, :generate_batch_commands
+  end
+end
+
+def assert_doc_equal_without_id(q, r)
+  assert r, "result document should not be nil"
+  assert_equal q.stringify_keys, r.except('_id')
+end
+
+def assert_bulk_op_pushed(expected, view)
+  assert_equal expected, view.ops.last
+end
+
+def assert_is_bulk_write_collection_view(view)
+  assert_equal Mongo::BulkWriteCollectionView, view.class
+end
+
+class BulkWriteCollectionViewTest < Test::Unit::TestCase
+
+  DATABASE_NAME = 'collection_view_test'
+  COLLECTION_NAME = 'test'
+
+  def pp_with_caller(obj)
+    puts "#{caller(1,1).first[/(.*):in/, 1]}:"
+    pp obj
+  end
+
+  def default_setup
+    @client = MongoClient.new
+    @db = @client[DATABASE_NAME]
+    @collection = @db[COLLECTION_NAME]
+    @collection.remove
+    @bulk = @collection.initialize_ordered_bulk_op
+    @q = {:a => 1}
+    @u = {"$inc" => { :x => 1 }}
+    @r = {:b => 2}
+  end
+
+  context "Bulk API Spec Collection" do
+    setup do
+      default_setup
+    end
+
+    should "check first key is operation for #update_doc?" do
+      assert_not_nil @bulk.update_doc?({"$inc" => { :x => 1 }})
+      assert_false @bulk.update_doc?({})
+      assert_nil @bulk.update_doc?({ :x => 1 })
+    end
+
+    should "check no top-leve key is operation for #replace_doc?" do
+      assert_true @bulk.replace_doc?({ :x => 1 })
+      assert_true @bulk.replace_doc?({})
+      assert_false @bulk.replace_doc?({"$inc" => { :x => 1 }})
+      assert_false @bulk.replace_doc?({ :a => 1, "$inc" => { :x => 1 }})
+    end
+
+    should "calculate ordered_group_by_first" do
+      pairs = [
+          [:insert, {:n => 0}],
+          [:update, {:n => 1}], [:update, {:n => 2}],
+          [:delete, {:n => 3}],
+          [:insert, {:n => 5}], [:insert, {:n => 6}], [:insert, {:n => 7}],
+          [:update, {:n => 8}],
+          [:delete, {:n => 9}], [:delete, {:n => 10}]
+      ]
+      result = @bulk.ordered_group_by_first(pairs)
+      expected = [
+          [:insert, [{:n => 0}]],
+          [:update, [{:n => 1}, {:n => 2}]],
+          [:delete, [{:n => 3}]],
+          [:insert, [{:n => 5}, {:n => 6}, {:n => 7}]],
+          [:update, [{:n => 8}]],
+          [:delete, [{:n => 9}, {:n => 10}]]
+      ]
+      assert_equal expected, result
+    end
+
+    should "generate_batch_commands" do
+      groups = [
+          [:insert, [{:n => 0}]],
+          [:update, [{:n => 1}, {:n => 2}]],
+          [:delete, [{:n => 3}]],
+          [:insert, [{:n => 5}, {:n => 6}, {:n => 7}]],
+          [:update, [{:n => 8}]],
+          [:delete, [{:n => 9}, {:n => 10}]]
+      ]
+      write_concern = {:w => 1, :j => 1}
+      result = @bulk.generate_batch_commands(groups, write_concern)
+      expected = [
+          [:insert, {:insert => COLLECTION_NAME, :documents => [{:n => 0}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}],
+          [:update, {:update => COLLECTION_NAME, :updates => [{:n => 1}, {:n => 2}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}],
+          [:delete, {:delete => COLLECTION_NAME, :deletes => [{:n => 3}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}],
+          [:insert, {:insert => COLLECTION_NAME, :documents => [{:n => 5}, {:n => 6}, {:n => 7}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}],
+          [:update, {:update => COLLECTION_NAME, :updates => [{:n => 8}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}],
+          [:delete, {:delete => COLLECTION_NAME, :deletes => [{:n => 9}, {:n => 10}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}]
+      ]
+      assert_equal expected, result
+    end
+
+    should "return view and set @collection and options for #initialize_ordered_bulk_op" do
+      assert_is_bulk_write_collection_view(@bulk)
+      assert_equal @collection, @bulk.collection
+      assert_equal true, @bulk.options[:ordered]
+    end
+
+    should "return view and set @collection and options for #initialize_unordered_bulk_op" do
+      @bulk = @collection.initialize_unordered_bulk_op
+      assert_is_bulk_write_collection_view(@bulk)
+      assert_equal @collection, @bulk.collection
+      assert_equal false, @bulk.options[:ordered]
+    end
+  end
+
+  context "Bulk API Spec CollectionView" do
+    setup do
+      default_setup
+    end
+
+    should "set :q and return view for #find" do #TODO - review im/mutable
+      result = @bulk.find(@q)
+      assert_is_bulk_write_collection_view(result)
+      assert_equal @q, @bulk.op_args[:q]
+    end
+
+    should "set :upsert for #upsert" do #TODO - review im/mutable
+      result = @bulk.find(@q).upsert
+      assert_is_bulk_write_collection_view(result)
+      assert_true result.op_args[:upsert]
+    end
+
+    should "check arg for update, set :update, :u, :top, terminate and return view for #update_one" do
+      assert_raise MongoArgumentError do
+        @bulk.find(@q).update_one(@r)
+      end
+      result = @bulk.find(@q).update_one(@u)
+      assert_is_bulk_write_collection_view(result)
+      assert_bulk_op_pushed [:update, {:q => @q, :u => @u, :top => 1}], @bulk
+    end
+
+    should "check arg for update, set :update, :u, :top, terminate and return view for #update" do
+      assert_raise MongoArgumentError do
+        @bulk.find(@q).replace_one(@u)
+      end
+      result = @bulk.find(@q).update(@u)
+      assert_is_bulk_write_collection_view(result)
+      assert_bulk_op_pushed [:update, {:q => @q, :u => @u, :top => 0}], @bulk
+    end
+
+    should "check arg for replacement, set :update, :u, :top, terminate and return view for #replace_one" do
+      assert_raise MongoArgumentError do
+        @bulk.find(@q).replace_one(@u)
+      end
+      result = @bulk.find(@q).replace_one(@r)
+      assert_is_bulk_write_collection_view(result)
+      assert_bulk_op_pushed [:update, {:q => @q, :u => @r, :top => 1}], @bulk
+    end
+
+    should "set :remove, :q, :top, terminate and return view for #remove_one" do
+      result = @bulk.find(@q).remove_one
+      assert_is_bulk_write_collection_view(result)
+      assert_bulk_op_pushed [:delete, {:q => @q, :top => 1}], @bulk
+
+    end
+
+    should "set :remove, :q, :top, terminate and return view for #remove" do
+      result = @bulk.find(@q).remove
+      assert_is_bulk_write_collection_view(result)
+      assert_bulk_op_pushed [:delete, {:q => @q, :top => 0}], @bulk
+    end
+
+    should "set :insert, :documents, terminate and return view for #insert" do
+      document = {:a => 5}
+      result = @bulk.insert(document)
+      assert_is_bulk_write_collection_view(result)
+      assert_bulk_op_pushed [:insert, document], @bulk
+    end
+
+    should "handle spec examples" do
+      @bulk = @collection.initialize_ordered_bulk_op
+
+      # Update one document matching the selector
+      @bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
+
+      # Update all documents matching the selector
+      @bulk.find({:a => 2}).update({"$inc" => { :x => 2 }})
+
+      # Replace entire document (update with whole doc replace)
+      @bulk.find({:a => 3}).replace_one({ :x => 3 })
+
+      # Update one document matching the selector or upsert
+      @bulk.find({:a => 1}).upsert.update_one({"$inc" => { :x => 1 }})
+
+      # Update all documents matching the selector or upsert
+      @bulk.find({:a => 2}).upsert.update({"$inc" => { :x => 2 }})
+
+      # Replaces a single document matching the selector or upsert
+      @bulk.find({:a => 3}).upsert.replace_one({ :x => 3 })
+
+      # Remove a single document matching the selector
+      @bulk.find({:a => 4}).remove_one()
+
+      # Remove all documents matching the selector
+      @bulk.find({:a => 5}).remove()
+
+      # Insert a document
+      @bulk.insert({ :x => 4 })
+
+      # Execute the bulk operation, with an optional writeConcern overwritting the default w:1
+      write_concern = {:w => 1, :j => 1}
+      #@bulk.execute(write_concern)
+    end
+
+    should "execute, return result and reset @ops for #execute" do
+      @bulk.insert({ :x => 1 })
+      @bulk.insert({ :x => 2 })
+      write_concern = {:w => 1}
+      result = @bulk.execute(write_concern)
+      #puts "result: #{result}"
+      assert_equal 2, @collection.count
+      assert_equal [], @bulk.ops
+    end
+
+    should "run big example for #execute" do
+      @bulk.insert({ :a => 1 })
+      @bulk.insert({ :a => 2 })
+      @bulk.insert({ :a => 3 })
+      @bulk.insert({ :a => 4 })
+      @bulk.insert({ :a => 5 })
+      # Update one document matching the selector
+      @bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
+      # Update all documents matching the selector
+      @bulk.find({:a => 2}).update({"$inc" => { :x => 2 }})
+      # Replace entire document (update with whole doc replace)
+      @bulk.find({:a => 3}).replace_one({ :x => 3 })
+      # Update one document matching the selector or upsert
+      @bulk.find({:a => 1}).upsert.update_one({"$inc" => { :x => 1 }})
+      # Update all documents matching the selector or upsert
+      @bulk.find({:a => 2}).upsert.update({"$inc" => { :x => 2 }})
+      # Replaces a single document matching the selector or upsert
+      @bulk.find({:a => 3}).upsert.replace_one({ :x => 3 })
+      # Remove a single document matching the selector
+      @bulk.find({:a => 4}).remove_one()
+      # Remove all documents matching the selector
+      @bulk.find({:a => 5}).remove()
+      # Insert a document
+      @bulk.insert({ :x => 4 })
+      write_concern = {:w => 1, :j => 1}
+      result = @bulk.execute(write_concern)
+      #pp_with_caller result
+      assert_equal [{"x" => 3}, {"a" => 1, "x" => 2}, {"a" => 2, "x" => 4}, {"x" => 3}, {"x" => 4}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }
+    end
+
+    should "run ordered @bulk insert with duplicate id" do
+      @bulk.insert({:_id => 1, :a => 1})
+      @bulk.insert({:_id => 1, :a => 2})
+      @bulk.insert({:_id => 3, :a => 3})
+      result = @bulk.execute
+      #pp_with_caller result
+      assert result[1].first.message[/duplicate key error/]
+      assert_equal [{"_id" => 1, "a" => 1}], @collection.find.to_a
+    end
+
+    should "run unordered bulk insert with duplicate id" do
+      bulk = @collection.initialize_unordered_bulk_op
+      bulk.insert({:_id => 1, :a => 1})
+      bulk.insert({:_id => 1, :a => 2})
+      bulk.insert({:_id => 3, :a => 3})
+      result = bulk.execute
+      #pp_with_caller result
+      assert result[1].first.message[/duplicate key error/]
+      assert_equal [{"_id" => 1, "a" => 1}, {"_id" => 3, "a" => 3}], @collection.find.to_a
+    end
+  end
+
+end
