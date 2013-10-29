@@ -311,15 +311,13 @@ describe Mongo::Client do
       end
 
       it 'replaces the existing options' do
-        expect(new_client.options).to eq(
-          { :read => :primary, :write => { :w => 1 } }
-        )
+        expect(new_client.options).to eq(:read => :primary,
+                                         :write => { :w => 1 })
       end
 
       it 'does not modify the original client' do
-        expect(client.options).to eq(
-          { :read => :secondary, :write => { :w => 1 } }
-        )
+        expect(client.options).to eq(:read => :secondary,
+                                     :write => { :w => 1 })
       end
 
       it 'clones the cluster addresses' do

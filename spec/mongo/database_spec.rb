@@ -71,12 +71,11 @@ describe Mongo::Database do
     let(:database) { described_class.new(client, :test) }
 
     before do
-      expect(database).to receive(:collection).
-        with('system.namespaces').
-        and_return(collection)
-      expect(collection).to receive(:find).
-        with(:name => { '$not' => /test\.system\,|\$/ }).
-        and_return(names)
+      expect(database).to receive(:collection).with(
+        'system.namespaces').and_return(collection)
+
+      expect(collection).to receive(:find).with(
+        :name => { '$not' => /test\.system\,|\$/ }).and_return(names)
     end
 
     it 'returns the stripped names of the collections' do
