@@ -16,7 +16,7 @@ group :testing do
 
   platforms :ruby_19, :ruby_20, :jruby do
     gem 'coveralls', :require => false
-    gem 'rubocop', '0.13.1' if RUBY_VERSION > '1.9'
+    gem 'rubocop', '0.14.1' if RUBY_VERSION > '1.9'
   end
 end
 
