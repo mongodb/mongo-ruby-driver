@@ -13,7 +13,6 @@
 # limitations under the License.
 
 require 'test_helper'
-require 'thread'
 
 class PoolTest < Test::Unit::TestCase
   include Mongo

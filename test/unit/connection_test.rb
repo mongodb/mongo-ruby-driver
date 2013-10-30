@@ -137,7 +137,7 @@ class ConnectionTest < Test::Unit::TestCase
         @connection = Mongo::Connection.from_uri("mongodb://hyphen-user_name:p-s_s@localhost:27017/db", :connect => false)
         assert_equal ['localhost', 27017], @connection.host_port
         auth_hash = { :db_name => 'db', :username => 'hyphen-user_name', :password => 'p-s_s' }
-        assert_equal auth_hash, @connection.auths[0]
+        assert_equal auth_hash, @connection.auths.first
       end
 
       should "attempt to connect" do
@@ -220,7 +220,7 @@ class ConnectionTest < Test::Unit::TestCase
         @connection = Mongo::Connection.new
         assert_equal ['localhost', 27017], @connection.host_port
         auth_hash = { :db_name => 'db', :username => 'hyphen-user_name', :password => 'p-s_s' }
-        assert_equal auth_hash, @connection.auths[0]
+        assert_equal auth_hash, @connection.auths.first
       end
 
       should "attempt to connect" do

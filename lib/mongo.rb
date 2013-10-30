@@ -60,6 +60,9 @@ end
 
 require 'bson'
 
+require 'set'
+require 'thread'
+
 require 'mongo/utils'
 require 'mongo/exception'
 require 'mongo/functional'
