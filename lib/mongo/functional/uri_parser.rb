@@ -267,7 +267,7 @@ module Mongo
 
     def parse_hosts(uri_without_proto)
       @nodes = []
-      @auths = []
+      @auths = Set.new
 
       matches = MONGODB_URI_MATCHER.match(uri_without_proto)
 
