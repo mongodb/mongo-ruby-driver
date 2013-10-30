@@ -91,7 +91,8 @@ module Mongo
     #   should be acknowledged
     # @option opts [Boolean] :j (false) Set journal acknowledgement
     # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout
-    # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
+    # @option opts [Boolean] :fsync (false) Deprecated; do not use. Forces an fsync of all server
+    #   data and returns acknowledgment only after completion. Use the ``j`` option instead.
     #
     #   Notes on write concern:
     #     These write concern options are propagated to Collection objects instantiated off of this DB. If no

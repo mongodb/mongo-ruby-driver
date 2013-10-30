@@ -88,7 +88,8 @@ module Mongo
     #    should be acknowledged
     #  @option opts [Boolean] :j (false) Set journal acknowledgement
     #  @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout
-    #  @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
+    #  @option opts [Boolean] :fsync (false) Deprecated; do not use. Forces an fsync of all server
+    #   data and returns acknowledgment only after completion. Use the ``j`` option instead.
     #
     #  Notes about Write-Concern Options:
     #   Write concern options are propagated to objects instantiated from this MongoClient.
@@ -243,8 +244,9 @@ module Mongo
       [@host, @port]
     end
 
-    # Fsync, then lock the mongod process against writes. Use this to get
-    # the datafiles in a state safe for snapshotting, backing up, etc.
+    # Fsync: Deprecated; do not use. Forces an fsync of all server
+    # data and returns acknowledgment only after completion.
+    # Use the ``j`` option instead.
     #
     # @return [BSON::OrderedHash] the command response
     def lock!
