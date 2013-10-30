@@ -402,7 +402,7 @@ class ClientTest < Test::Unit::TestCase
     end
 
     should "save the authentication" do
-      assert_equal @auth, @client.auths[0]
+      assert_equal @auth, @client.auths.first
     end
 
     should "not allow multiple authentications for the same db" do

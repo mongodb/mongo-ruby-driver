@@ -40,17 +40,17 @@ class URITest < Test::Unit::TestCase
 
   def test_complex_passwords
     parser = Mongo::URIParser.new('mongodb://bob:secret.word@a.example.com:27018/test')
-    assert_equal "bob", parser.auths[0][:username]
-    assert_equal "secret.word", parser.auths[0][:password]
+    assert_equal "bob", parser.auths.first[:username]
+    assert_equal "secret.word", parser.auths.first[:password]
 
     parser = Mongo::URIParser.new('mongodb://bob:s-_3#%R.t@a.example.com:27018/test')
-    assert_equal "bob", parser.auths[0][:username]
-    assert_equal "s-_3#%R.t", parser.auths[0][:password]
+    assert_equal "bob", parser.auths.first[:username]
+    assert_equal "s-_3#%R.t", parser.auths.first[:password]
   end
 
   def test_complex_usernames
     parser = Mongo::URIParser.new('mongodb://b:ob:secret.word@a.example.com:27018/test')
-    assert_equal "b:ob", parser.auths[0][:username]
+    assert_equal "b:ob", parser.auths.first[:username]
   end
 
   def test_username_with_encoded_symbol
