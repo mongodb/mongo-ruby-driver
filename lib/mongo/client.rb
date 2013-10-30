@@ -84,7 +84,7 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(addresses, options = {})
-      @cluster = Cluster.new(addresses)
+      @cluster = Cluster.new(self, addresses)
       @options = options
       db = options[:database]
       use(db) if db
