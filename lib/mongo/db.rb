@@ -261,10 +261,8 @@ module Mongo
     #
     # @return [Boolean]
     def logout(opts={})
-      auth = @client.auths.find { |a| a[:db_name] == name }
-      db = auth && auth[:source] ? @client[auth[:source]] : self
-      auth ? @client.logout_pools(db.name) : db.issue_logout(opts)
-      @client.remove_auth(db.name)
+      self.issue_logout(opts)
+      @client.remove_auth(self.name)
     end
 
     def issue_logout(opts={})

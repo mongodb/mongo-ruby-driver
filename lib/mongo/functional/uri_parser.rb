@@ -18,9 +18,7 @@ require 'uri'
 module Mongo
   class URIParser
 
-    USER_REGEX = /(.+)/
-    PASS_REGEX = /([^@,]+)/
-    AUTH_REGEX = /(#{USER_REGEX}:#{PASS_REGEX}@)?/
+    AUTH_REGEX = /((.+)@)?/
 
     HOST_REGEX = /([-.\w]+)/
     PORT_REGEX = /(?::(\w+))?/
@@ -34,14 +32,16 @@ module Mongo
     SPEC_ATTRS = [:nodes, :auths]
 
     READ_PREFERENCES = {
-      "primary" => :primary,
-      "primarypreferred" => :primary_preferred,
-      "secondary" => :secondary,
-      "secondarypreferred" => :secondary_preferred,
-      "nearest" => :nearest
+      'primary'            => :primary,
+      'primarypreferred'   => :primary_preferred,
+      'secondary'          => :secondary,
+      'secondarypreferred' => :secondary_preferred,
+      'nearest'            => :nearest
     }
 
     OPT_ATTRS  = [
+      :authmechanism,
+      :authsource,
       :connect,
       :connecttimeoutms,
       :fsync,
@@ -59,6 +59,8 @@ module Mongo
     ]
 
     OPT_VALID = {
+      :authmechanism    => lambda { |arg| Mongo::Authentication.validate_mechanism(arg) },
+      :authsource       => lambda { |arg| arg.length > 0 },
       :connect          => lambda { |arg| [ 'direct', 'replicaset', 'true', 'false', true, false ].include?(arg) },
       :connecttimeoutms => lambda { |arg| arg =~ /^\d+$/ },
       :fsync            => lambda { |arg| ['true', 'false'].include?(arg) },
@@ -76,6 +78,8 @@ module Mongo
      }
 
     OPT_ERR = {
+      :authmechanism    => "must be one of #{Mongo::Authentication::MECHANISMS.join(', ')}",
+      :authsource       => "must be a string containing the name of the database being used for authentication",
       :connect          => "must be 'direct', 'replicaset', 'true', or 'false'",
       :connecttimeoutms => "must be an integer specifying milliseconds",
       :fsync            => "must be 'true' or 'false'",
@@ -85,7 +89,7 @@ module Mongo
       :replicaset       => "must be a string containing the name of the replica set to connect to",
       :safe             => "must be 'true' or 'false'",
       :slaveok          => "must be 'true' or 'false'",
-      :sockettimeoutms  => "must be an integer specifying milliseconds",
+      :settimeoutms     => "must be an integer specifying milliseconds",
       :ssl              => "must be 'true' or 'false'",
       :w                => "must be an integer indicating number of nodes to replicate to or a string " +
                            "specifying that replication is required to the majority or nodes with a " +
@@ -95,6 +99,8 @@ module Mongo
     }
 
     OPT_CONV = {
+      :authmechanism    => lambda { |arg| arg.upcase },
+      :authsource       => lambda { |arg| arg },
       :connect          => lambda { |arg| arg == 'false' ? false : arg }, # convert 'false' to FalseClass
       :connecttimeoutms => lambda { |arg| arg.to_f / 1000 }, # stored as seconds
       :fsync            => lambda { |arg| arg == 'true' ? true : false },
@@ -112,8 +118,11 @@ module Mongo
     }
 
     attr_reader :auths,
+                :authmechanism,
+                :authsource,
                 :connect,
                 :connecttimeoutms,
+                :db_name,
                 :fsync,
                 :journal,
                 :nodes,
@@ -144,8 +153,8 @@ module Mongo
       end
 
       hosts, opts = uri.split('?')
-      parse_hosts(hosts)
       parse_options(opts)
+      parse_hosts(hosts)
       validate_connect
     end
 
@@ -217,26 +226,15 @@ module Mongo
       end
       opts[:wtimeout] = @wtimeoutms
 
-      opts[:w] = 1 if @safe
-      opts[:w] = @w if @w
-      opts[:j] = @journal
+      opts[:w]     = 1 if @safe
+      opts[:w]     = @w if @w
+      opts[:j]     = @journal
       opts[:fsync] = @fsync
 
-      if @connecttimeoutms
-        opts[:connect_timeout] = @connecttimeoutms
-      end
-
-      if @sockettimeoutms
-        opts[:op_timeout] = @sockettimeoutms
-      end
-
-      if @pool_size
-        opts[:pool_size] = @pool_size
-      end
-
-      if @readpreference
-        opts[:read] = @readpreference
-      end
+      opts[:connect_timeout] = @connecttimeoutms if @connecttimeoutms
+      opts[:op_timeout]      = @sockettimeoutms if @sockettimeoutms
+      opts[:pool_size]       = @pool_size if @pool_size
+      opts[:read]            = @readpreference if @readpreference
 
       if @slaveok && !@readpreference
         unless replicaset?
@@ -246,14 +244,13 @@ module Mongo
         end
       end
 
-      opts[:ssl] = @ssl
-      opts[:auths] = auths
-
       if replicaset.is_a?(String)
         opts[:name] = replicaset
       end
 
-      opts[:default_db] = @db
+      opts[:db_name] = @db_name if @db_name
+      opts[:auths]   = @auths if @auths
+      opts[:ssl]     = @ssl
       opts[:connect] = connect?
 
       opts
@@ -265,47 +262,58 @@ module Mongo
 
     private
 
-    def parse_hosts(uri_without_proto)
+    def parse_hosts(uri_without_protocol)
       @nodes = []
       @auths = Set.new
 
-      matches = MONGODB_URI_MATCHER.match(uri_without_proto)
-
-      if !matches
-        raise MongoArgumentError, "MongoDB URI must match this spec: #{MONGODB_URI_SPEC}"
+      unless matches = MONGODB_URI_MATCHER.match(uri_without_protocol)
+        raise MongoArgumentError,
+          "MongoDB URI must match this spec: #{MONGODB_URI_SPEC}"
       end
 
-      uname    = matches[2]
-      pwd      = matches[3]
-      hosturis = matches[4].split(',')
-      @db      = matches[8]
+      user_info = matches[2].split(':') if matches[2]
+      host_info = matches[3].split(',')
+      @db_name  = matches[7]
 
-      hosturis.each do |hosturi|
-        # If port is present, use it, otherwise use default port
-        host, port = hosturi.split(':') + [MongoClient::DEFAULT_PORT]
-
-        if !(port.to_s =~ /^\d+$/)
-          raise MongoArgumentError, "Invalid port #{port}; port must be specified as digits."
+      host_info.each do |host|
+        host, port = host.split(':') << MongoClient::DEFAULT_PORT
+        unless port.to_s =~ /^\d+$/
+          raise MongoArgumentError,
+            "Invalid port #{port}; port must be specified as digits."
         end
-
-        port = port.to_i
-        @nodes << [host, port]
+        @nodes << [host, port.to_i]
       end
 
       if @nodes.empty?
-        raise MongoArgumentError, "No nodes specified. Please ensure that you've provided at least one node."
+        raise MongoArgumentError,
+          "No nodes specified. Please ensure that you've provided at " +
+          "least one node."
       end
 
-      if uname && pwd && @db
-        auths << {
-          :db_name  => @db,
-          :username => URI.unescape(uname),
-          :password => URI.unescape(pwd)
-        }
-      elsif uname || pwd
-        raise MongoArgumentError, 'MongoDB URI must include username, ' +
-                                  'password, and db if username and ' +
-                                  'password are specified.'
+      # no user info to parse, exit here
+      return unless user_info
+
+      # check for url encoding for username and password
+      username, password = user_info
+      if user_info.size > 2 ||
+         (username && username.include?('@')) ||
+         (password && password.include?('@'))
+
+        raise MongoArgumentError,
+          "The characters ':' and '@' in a username or password " +
+          "must be escaped (RFC 2396)."
+      end
+
+      # if username exists, proceed adding to auth set
+      unless username.nil? || username.empty?
+        auth = Authentication.validate_credentials({
+          :db_name   => @db_name,
+          :username  => URI.unescape(username),
+          :password  => password ? URI.unescape(password) : nil,
+          :source    => @authsource,
+          :mechanism => @authmechanism
+        })
+        @auths << auth
       end
     end
 
@@ -320,7 +328,7 @@ module Mongo
       return if string_opts.empty?
 
       if string_opts.include?(';') and string_opts.include?('&')
-        raise MongoArgumentError, "must not mix URL separators ; and &"
+        raise MongoArgumentError, 'must not mix URL separators ; and &'
       end
 
       opts = CGI.parse(string_opts).inject({}) do |memo, (key, value)|
