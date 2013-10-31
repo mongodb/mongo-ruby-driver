@@ -31,15 +31,13 @@ module Mongo
       # @raise [ArgumentError] if raise_error and not a valid auth mechanism.
       # @return [Boolean] returns the validation result.
       def validate_mechanism(mechanism, raise_error=false)
-        unless MECHANISMS.include?(mechanism.upcase)
-          if raise_error
-            raise ArgumentError,
-              "Invalid authentication mechanism provided. Must be one of " +
-              "#{Mongo::Authentication::MECHANISMS.join(', ')}."
-          end
-          return false
+        return true if MECHANISMS.include?(mechanism.upcase)
+        if raise_error
+          raise ArgumentError,
+            "Invalid authentication mechanism provided. Must be one of " +
+            "#{Mongo::Authentication::MECHANISMS.join(', ')}."
         end
-        true
+        false
       end
 
 
@@ -54,35 +52,34 @@ module Mongo
         auth[:mechanism] ||= DEFAULT_MECHANISM
 
         # set the default auth source if not defined
-        auth[:source] =
-          auth[:source] || auth[:db_name] || MongoClient::DEFAULT_DB_NAME
+        auth[:source] = auth[:source] || auth[:db_name] || 'admin'
 
-        if auth[:mechanism] == 'MONGODB-CR'
-          # when using legacy auth, require presence of password
+        if auth[:mechanism] == 'MONGODB-CR' && !auth[:password]
+          # require password when using legacy auth
           raise MongoArgumentError,
             'When using the default authentication mechanism (MONGODB-CR) ' +
-            'both username and password are required.' unless auth[:password]
+            'both username and password are required.'
         end
         auth
       end
 
       # Generate an MD5 for authentication.
       #
-      # @param [String] username
-      # @param [String] password
-      # @param [String] nonce
+      # @param username [String] The username.
+      # @param password [String] The user's password.
+      # @param nonce [String] The nonce value.
       #
-      # @return [String] a key for db authentication.
+      # @return [String] MD5 key for db authentication.
       def auth_key(username, password, nonce)
         Digest::MD5.hexdigest("#{nonce}#{username}#{hash_password(username, password)}")
       end
 
       # Return a hashed password for auth.
       #
-      # @param username [String]
-      # @param password [String]
+      # @param username [String] The username.
+      # @param password [String] The users's password.
       #
-      # @return [String]
+      # @return [String] The hashed password value.
       def hash_password(username, password)
         Digest::MD5.hexdigest("#{username}:mongo:#{password}")
       end
