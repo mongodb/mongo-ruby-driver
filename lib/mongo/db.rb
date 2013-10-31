@@ -452,6 +452,7 @@ module Mongo
 
       cmd = BSON::OrderedHash.new
       cmd[:$eval] = code
+      cmd.merge!(args.pop) if args.last.respond_to?(:keys) && args.last.key?(:nolock)
       cmd[:args] = args
       doc = command(cmd)
       doc['retval']
