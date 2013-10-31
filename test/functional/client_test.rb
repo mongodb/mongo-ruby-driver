@@ -393,22 +393,48 @@ class ClientTest < Test::Unit::TestCase
   context "Saved authentications" do
     setup do
       @client = standard_connection
-      @auth = {:db_name => 'test', :username => 'bob', :password => 'secret', :source => nil}
-      @client.add_auth(@auth[:db_name], @auth[:username], @auth[:password], @auth[:source])
+
+      @auth = {
+        :db_name   => 'test',
+        :username  => 'bob',
+        :password  => 'secret',
+        :source    => nil,
+        :mechanism => nil
+      }
+
+      @client.add_auth(
+        @auth[:db_name],
+        @auth[:username],
+        @auth[:password],
+        @auth[:source],
+        @auth[:mechanism])
     end
 
     teardown do
       @client.clear_auths
     end
 
-    should "save the authentication" do
-      assert_equal @auth, @client.auths.first
+    should "save and validate the authentication" do
+      assert_equal Authentication.validate_credentials(@auth),
+                   @client.auths.first
     end
 
     should "not allow multiple authentications for the same db" do
-      auth = {:db_name => 'test', :username => 'mickey', :password => 'm0u53', :source => nil}
+      auth = {
+        :db_name   => 'test',
+        :username  => 'mickey',
+        :password  => 'm0u53',
+        :source    => nil,
+        :mechanism => nil
+      }
+
       assert_raise Mongo::MongoArgumentError do
-        @client.add_auth(auth[:db_name], auth[:username], auth[:password], auth[:source])
+        @client.add_auth(
+          auth[:db_name],
+          auth[:username],
+          auth[:password],
+          auth[:source],
+          auth[:mechanism])
       end
     end
 

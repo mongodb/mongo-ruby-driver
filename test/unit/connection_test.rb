@@ -66,22 +66,6 @@ class ConnectionTest < Test::Unit::TestCase
         connection.send(:initialize, *args)
       end
 
-      context "given a replica set" do
-
-        # should "warn if invalid options are specified" do
-        #   connection = Mongo::ReplSetConnection.allocate
-        #   opts = {:connect => false}
-
-        #   # Mongo::Connection::CLIENT_ONLY_OPTS.each do |opt|
-        #     connection.expects(:warn).with("#{:slave_ok} is not a valid option for #{connection.class}")
-        #     opts[:slave_ok] = true
-        #   # end
-
-        #   args = [['localhost:27017'], opts]
-        #   connection.send(:initialize, *args)
-        # end
-
-      end
     end
 
     context "initializing with a unix socket" do
@@ -100,11 +84,19 @@ class ConnectionTest < Test::Unit::TestCase
         assert_equal ['localhost', 27017], @connection.host_port
       end
 
-      #should "parse a unix socket" do
-      #  socket_address = "/tmp/mongodb-27017.sock"
-      #  @client = MongoClient.from_uri("mongodb://#{socket_address}")
-      #  assert_equal socket_address, @client.host_port.first
-      #end
+      should "set auth source" do
+        @connection = Mongo::Connection.from_uri("mongodb://user:pass@localhost?authSource=foo", :connect => false)
+        assert_equal 'foo', @connection.auths.first[:source]
+      end
+
+      should "set auth mechanism" do
+        @connection = Mongo::Connection.from_uri("mongodb://user@localhost?authMechanism=MONGODB-X509", :connect => false)
+        assert_equal 'MONGODB-X509', @connection.auths.first[:mechanism]
+
+        assert_raise MongoArgumentError do
+          Mongo::Connection.from_uri("mongodb://localhost?authMechanism=INVALID", :connect => false)
+        end
+      end
 
       should "allow a complex host names" do
         host_name = "foo.bar-12345.org"
@@ -136,7 +128,14 @@ class ConnectionTest < Test::Unit::TestCase
       should "parse a uri with a hyphen & underscore in the username or password" do
         @connection = Mongo::Connection.from_uri("mongodb://hyphen-user_name:p-s_s@localhost:27017/db", :connect => false)
         assert_equal ['localhost', 27017], @connection.host_port
-        auth_hash = { :db_name => 'db', :username => 'hyphen-user_name', :password => 'p-s_s' }
+
+        auth_hash = {
+          :db_name   => 'db',
+          :username  => 'hyphen-user_name',
+          :password  => 'p-s_s',
+          :source    => 'db',
+          :mechanism => Authentication::DEFAULT_MECHANISM
+        }
         assert_equal auth_hash, @connection.auths.first
       end
 
@@ -160,11 +159,15 @@ class ConnectionTest < Test::Unit::TestCase
         end
       end
 
-      should "require all of username, if password and db are specified" do
+      should "require password if using legacy auth and username present" do
         assert Mongo::Connection.from_uri("mongodb://kyle:jones@localhost/db", :connect => false)
 
         assert_raise MongoArgumentError do
-          Mongo::Connection.from_uri("mongodb://kyle:password@localhost", :connect => false)
+          Mongo::Connection.from_uri("mongodb://kyle:@localhost", :connect => false)
+        end
+
+        assert_raise MongoArgumentError do
+          Mongo::Connection.from_uri("mongodb://kyle@localhost", :connect => false)
         end
       end
     end
@@ -182,6 +185,23 @@ class ConnectionTest < Test::Unit::TestCase
         ENV['MONGODB_URI'] = "mongodb://localhost?connect=false"
         @connection = Mongo::Connection.new
         assert_equal ['localhost', 27017], @connection.host_port
+      end
+
+      should "set auth source" do
+        ENV['MONGODB_URI'] = "mongodb://user:pass@localhost?authSource=foo&connect=false"
+        @connection = Mongo::Connection.new
+        assert_equal 'foo', @connection.auths.first[:source]
+      end
+
+      should "set auth mechanism" do
+        ENV['MONGODB_URI'] = "mongodb://user@localhost?authMechanism=MONGODB-X509&connect=false"
+        @connection = Mongo::Connection.new
+        assert_equal 'MONGODB-X509', @connection.auths.first[:mechanism]
+
+        ENV['MONGODB_URI'] = "mongodb://user@localhost?authMechanism=INVALID&connect=false"
+        assert_raise MongoArgumentError do
+          Mongo::Connection.new
+        end
       end
 
       should "allow a complex host names" do
@@ -219,7 +239,14 @@ class ConnectionTest < Test::Unit::TestCase
         ENV['MONGODB_URI'] = "mongodb://hyphen-user_name:p-s_s@localhost:27017/db?connect=false"
         @connection = Mongo::Connection.new
         assert_equal ['localhost', 27017], @connection.host_port
-        auth_hash = { :db_name => 'db', :username => 'hyphen-user_name', :password => 'p-s_s' }
+
+        auth_hash = {
+          :db_name   => 'db',
+          :username  => 'hyphen-user_name',
+          :password  => 'p-s_s',
+          :source    => 'db',
+          :mechanism => Authentication::DEFAULT_MECHANISM
+        }
         assert_equal auth_hash, @connection.auths.first
       end
 
@@ -246,11 +273,16 @@ class ConnectionTest < Test::Unit::TestCase
         end
       end
 
-      should "require all of username, if password and db are specified" do
+      should "require password if using legacy auth and username present" do
         ENV['MONGODB_URI'] = "mongodb://kyle:jones@localhost/db?connect=false"
         assert Mongo::Connection.new
 
-        ENV['MONGODB_URI'] = "mongodb://kyle:password@localhost"
+        ENV['MONGODB_URI'] = "mongodb://kyle:@localhost"
+        assert_raise MongoArgumentError do
+          Mongo::Connection.new
+        end
+
+        ENV['MONGODB_URI'] = "mongodb://kyle@localhost"
         assert_raise MongoArgumentError do
           Mongo::Connection.new
         end
