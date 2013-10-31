@@ -252,6 +252,14 @@ class DBTest < Test::Unit::TestCase
     assert_equal 'hello', @@db['system'].find_one['_id']
   end
 
+  def test_eval_nolock
+    function = "db.system.save({_id:'hello', value: function(string) { print(string); } })"
+    @@db.expects(:command).with do |selector, opts|
+        selector[:nolock] == true
+    end.returns({ 'ok' => 1, 'retval' => 1 })
+    @@db.eval(function, 'hello', :nolock => true)
+  end
+
   if @@version >= "1.3.5"
     def test_db_stats
       stats = @@db.stats
