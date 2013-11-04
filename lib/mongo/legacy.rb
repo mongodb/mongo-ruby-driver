@@ -82,4 +82,24 @@ module Mongo
       super
     end
   end
+
+  class DB
+
+    # @deprecated Please use MongoClient#issue_authentication instead. Support will be removed after v2.0
+    def issue_authentication(username, password, save_auth=true, opts={})
+      auth = Authentication.validate_credentials({
+        :db_name  => self.name,
+        :username => username,
+        :password => password
+      })
+      opts[:save_auth] = save_auth
+      @client.issue_authentication(auth, opts)
+    end
+
+    # @deprecated Please use MongoClient#issue_logout instead. Support will be removed after v2.0
+    def issue_logout(opts={})
+      @client.issue_logout(self.name, opts)
+    end
+
+  end
 end
