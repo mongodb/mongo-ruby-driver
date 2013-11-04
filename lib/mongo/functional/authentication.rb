@@ -155,6 +155,25 @@ module Mongo
       true
     end
 
+    # Method to handle and issue logout commands.
+    #
+    # @note This method should not be called directly. Use DB#logout.
+    #
+    # @param db_name [String] The database name.
+    # @param opts [Hash] Hash of optional settings and configuration values.
+    #
+    # @option opts [Socket] socket (nil) Optional socket instance to use.
+    #
+    # @raise [MongoDBError] Raised if the logout operation fails.
+    # @return [Boolean] The result of the logout operation.
+    def issue_logout(db_name, opts={})
+      doc = db(db_name).command({:logout => 1}, :socket => opts[:socket])
+      unless Support.ok?(doc)
+        raise MongoDBError, "Error logging out on DB #{db_name}."
+      end
+      true # somewhat pointless, but here to preserve the existing API
+    end
+
     # Method to handle and issue authenication commands.
     #
     # @note This method should not be called directly. Use DB#authenticate.
