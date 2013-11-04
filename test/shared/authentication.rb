@@ -94,6 +94,14 @@ module AuthenticationTests
     # auth using source
     @db.authenticate('tyler', 'brock', true, 'accounts')
     assert_equal doc, @db['test'].find_one
+
+    # Under delegated auth, logging out on the db instance doesn't revoke
+    # auth privileges. The user must logout on the source db they logged in on.
+    @db.logout
+    assert_equal doc, @db['test'].find_one # this should still work
+
+    source_db = @client['accounts']
+    source_db.logout
     @db.logout
     assert_raise Mongo::OperationFailure do
       @db['test'].find_one

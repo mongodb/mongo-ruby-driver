@@ -38,6 +38,23 @@ class URITest < Test::Unit::TestCase
     assert_equal ['b.example.com', 27017], parser.nodes[1]
   end
 
+  def test_username_without_password
+    parser = Mongo::URIParser.new('mongodb://bob:@localhost?authMechanism=GSSAPI')
+    assert_equal "bob", parser.auths.first[:username]
+    assert_equal nil, parser.auths.first[:password]
+
+    parser = Mongo::URIParser.new('mongodb://bob@localhost?authMechanism=GSSAPI')
+    assert_equal nil, parser.auths.first[:password]
+
+    assert_raise_error MongoArgumentError do
+      Mongo::URIParser.new('mongodb://bob:@localhost')
+    end
+
+    assert_raise_error MongoArgumentError do
+      Mongo::URIParser.new('mongodb://bob@localhost')
+    end
+  end
+
   def test_complex_passwords
     parser = Mongo::URIParser.new('mongodb://bob:secret.word@a.example.com:27018/test')
     assert_equal "bob", parser.auths.first[:username]
@@ -46,29 +63,47 @@ class URITest < Test::Unit::TestCase
     parser = Mongo::URIParser.new('mongodb://bob:s-_3#%R.t@a.example.com:27018/test')
     assert_equal "bob", parser.auths.first[:username]
     assert_equal "s-_3#%R.t", parser.auths.first[:password]
+
+    assert_raise_error MongoArgumentError do
+      Mongo::URIParser.new('mongodb://doctor:bad:wolf@gallifrey.com:27018/test')
+    end
+
+    assert_raise_error MongoArgumentError do
+      Mongo::URIParser.new('mongodb://doctor:bow@tie@gallifrey.com:27018/test')
+    end
   end
 
   def test_complex_usernames
-    parser = Mongo::URIParser.new('mongodb://b:ob:secret.word@a.example.com:27018/test')
-    assert_equal "b:ob", parser.auths.first[:username]
+    parser = Mongo::URIParser.new('mongodb://s-_3#%R.t:secret.word@a.example.com:27018/test')
+    assert_equal "s-_3#%R.t", parser.auths.first[:username]
+
+    assert_raise_error MongoArgumentError do
+      Mongo::URIParser.new('mongodb://doc:tor:badwolf@gallifrey.com:27018/test')
+    end
+
+    assert_raise_error MongoArgumentError do
+      Mongo::URIParser.new('mongodb://d@ctor:bowtie@gallifrey.com:27018/test')
+    end
   end
 
   def test_username_with_encoded_symbol
     parser = Mongo::URIParser.new('mongodb://f%40o:bar@localhost/admin')
     username = parser.auths.first[:username]
     assert_equal 'f@o', username
+
+    parser = Mongo::URIParser.new('mongodb://f%3Ao:bar@localhost/admin')
+    username = parser.auths.first[:username]
+    assert_equal 'f:o', username
   end
 
   def test_password_with_encoded_symbol
     parser = Mongo::URIParser.new('mongodb://foo:b%40r@localhost/admin')
     password = parser.auths.first[:password]
     assert_equal 'b@r', password
-  end
 
-  def test_passwords_contain_no_commas
-    assert_raise MongoArgumentError do
-      Mongo::URIParser.new('mongodb://bob:a,b@a.example.com:27018/test')
-    end
+    parser = Mongo::URIParser.new('mongodb://foo:b%3Ar@localhost/admin')
+    password = parser.auths.first[:password]
+    assert_equal 'b:r', password
   end
 
   def test_opts_with_semincolon_separator
@@ -208,5 +243,19 @@ class URITest < Test::Unit::TestCase
     assert_equal [[ "localhost", 27017 ], [ "localhost", 27018 ]], client.seeds
     assert_equal :nearest, client.read
     assert_true client.mongos?
+  end
+
+  def test_auth_source
+    parser = Mongo::URIParser.new("mongodb://user:pass@localhost?authSource=foobar")
+    assert_equal 'foobar', parser.authsource
+  end
+
+  def test_auth_mechanism
+    parser = Mongo::URIParser.new("mongodb://user@localhost?authMechanism=MONGODB-X509")
+    assert_equal 'MONGODB-X509', parser.authmechanism
+
+    assert_raise_error MongoArgumentError  do
+      Mongo::URIParser.new("mongodb://user@localhost?authMechanism=INVALID")
+    end
   end
 end

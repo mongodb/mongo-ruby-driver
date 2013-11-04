@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'thread'
-
 module Mongo
 
   # Instantiates and manages self.connections to MongoDB.
@@ -36,7 +34,7 @@ module Mongo
     DEFAULT_HOST         = 'localhost'
     DEFAULT_PORT         = 27017
     DEFAULT_DB_NAME      = 'test'
-    GENERIC_OPTS         = [:auths, :logger, :connect, :default_db]
+    GENERIC_OPTS         = [:auths, :logger, :connect, :db_name]
     TIMEOUT_OPTS         = [:timeout, :op_timeout, :connect_timeout]
     SSL_OPTS             = [:ssl, :ssl_key, :ssl_cert, :ssl_verify, :ssl_ca_cert]
     POOL_OPTS            = [:pool_size, :pool_timeout]
@@ -139,7 +137,7 @@ module Mongo
     #
     # @raise [MongoArgumentError] If called with no arguments and <code>ENV["MONGODB_URI"]</code> implies a replica set.
     def initialize(*args)
-      opts = args.last.is_a?(Hash) ? args.pop : {}
+      opts         = args.last.is_a?(Hash) ? args.pop : {}
       @host, @port = parse_init(args[0], args[1], opts)
 
       # Lock for request ids.
@@ -151,10 +149,10 @@ module Mongo
       @mongos       = false
 
       # Not set for direct connection
-      @tag_sets = []
+      @tag_sets           = []
       @acceptable_latency = 15
 
-      @max_bson_size = nil
+      @max_bson_size    = nil
       @max_message_size = nil
       @max_wire_version = nil
       @min_wire_version = nil
@@ -190,8 +188,7 @@ module Mongo
     #
     # @deprecated
     def self.multi(nodes, opts={})
-      warn "MongoClient.multi is now deprecated and will be removed in v2.0. Please use MongoReplicaSetClient.new instead."
-
+      warn 'MongoClient.multi is now deprecated and will be removed in v2.0. Please use MongoReplicaSetClient.new instead.'
       MongoReplicaSetClient.new(nodes, opts)
     end
 
@@ -209,20 +206,6 @@ module Mongo
     def self.from_uri(uri = ENV['MONGODB_URI'], extra_opts={})
       parser = URIParser.new(uri)
       parser.connection(extra_opts)
-    end
-
-    def parse_init(host, port, opts)
-      if host.nil? && port.nil? && ENV.has_key?('MONGODB_URI')
-        parser = URIParser.new(ENV['MONGODB_URI'])
-        if parser.replicaset?
-          raise MongoArgumentError,
-            "ENV['MONGODB_URI'] implies a replica set."
-        end
-        opts.merge!(parser.connection_options)
-        [parser.host, parser.port]
-      else
-        [host || DEFAULT_HOST, port || DEFAULT_PORT]
-      end
     end
 
     # The host name used for this connection.
@@ -290,41 +273,38 @@ module Mongo
     # Return a database with the given name.
     # See DB#new for valid options hash parameters.
     #
-    # @param [String] db_name a valid database name.
-    # @param [Hash] opts options to be passed to the DB constructor.
+    # @param name [String] The name of the database.
+    # @param opts [Hash] A hash of options to be passed to the DB constructor.
     #
-    # @return [DB]
-    def db(db_name = @default_db, opts = {})
-      DB.new(db_name, self, opts)
+    # @return [DB] The DB instance.
+    def db(name = nil, opts = {})
+      DB.new(name || @db_name || DEFAULT_DB_NAME, self, opts)
     end
 
-    # Shortcut for returning a database. Use DB#db to accept options.
+    # Shortcut for returning a database. Use MongoClient#db to accept options.
     #
-    # @param [String] db_name a valid database name.
+    # @param name [String] The name of the database.
     #
-    # @return [DB]
-    def [](db_name)
-      DB.new(db_name, self)
+    # @return [DB] The DB instance.
+    def [](name)
+      DB.new(name, self)
     end
 
-    def refresh
-    end
+    def refresh; end
 
     def pinned_pool
       @primary_pool
     end
 
-    def pin_pool(pool, read_prefs)
-    end
+    def pin_pool(pool, read_prefs); end
 
-    def unpin_pool
-    end
+    def unpin_pool; end
 
     # Drop a database.
     #
-    # @param [String] name name of an existing database.
-    def drop_database(name)
-      self[name].command(:dropDatabase => 1)
+    # @param database [String] name of an existing database.
+    def drop_database(database)
+      self[database].command(:dropDatabase => 1)
     end
 
     # Copy the database +from+ to +to+ on localhost. The +from+ database is
@@ -345,17 +325,18 @@ module Mongo
       oh[:todb]     = to
       if username || password
         unless username && password
-          raise MongoArgumentError, "Both username and password must be supplied for authentication."
+          raise MongoArgumentError,
+            'Both username and password must be supplied for authentication.'
         end
         nonce_cmd = BSON::OrderedHash.new
         nonce_cmd[:copydbgetnonce] = 1
         nonce_cmd[:fromhost] = from_host
-        result = self["admin"].command(nonce_cmd)
-        oh[:nonce] = result["nonce"]
+        result = self['admin'].command(nonce_cmd)
+        oh[:nonce] = result['nonce']
         oh[:username] = username
         oh[:key] = Mongo::Authentication.auth_key(username, password, oh[:nonce])
       end
-      self["admin"].command(oh)
+      self['admin'].command(oh)
     end
 
     # Checks if a server is alive. This command will return immediately
@@ -363,14 +344,14 @@ module Mongo
     #
     # @return [Hash]
     def ping
-      self["admin"].command({:ping => 1})
+      self['admin'].command({:ping => 1})
     end
 
     # Get the build information for the current connection.
     #
     # @return [Hash]
     def server_info
-      self["admin"].command({:buildinfo => 1})
+      self['admin'].command({:buildinfo => 1})
     end
 
     # Get the build version of the current server.
@@ -378,7 +359,7 @@ module Mongo
     # @return [Mongo::ServerVersion]
     #   object allowing easy comparability of version.
     def server_version
-      ServerVersion.new(server_info["version"])
+      ServerVersion.new(server_info['version'])
     end
 
     # Is it okay to connect to a slave?
@@ -413,7 +394,7 @@ module Mongo
           @mongos = true
         end
 
-        @max_bson_size = config['maxBsonObjectSize']
+        @max_bson_size    = config['maxBsonObjectSize']
         @max_message_size = config['maxMessageSizeBytes']
         @max_wire_version = config['maxWireVersion']
         @min_wire_version = config['minWireVersion']
@@ -421,9 +402,11 @@ module Mongo
         set_primary(host_port)
       end
 
-      if !connected?
-        raise ConnectionFailure, "Failed to connect to a master node at #{host_port.join(":")}"
+      unless connected?
+        raise ConnectionFailure,
+          "Failed to connect to a master node at #{host_port.join(":")}"
       end
+
       true
     end
     alias :reconnect :connect
@@ -471,7 +454,7 @@ module Mongo
     def close
       @primary_pool.close if @primary_pool
       @primary_pool = nil
-      @primary = nil
+      @primary      = nil
     end
 
     # Returns the maximum BSON object size as returned by the core server.
@@ -533,10 +516,10 @@ module Mongo
         socket = @socket_class.new(host, port, @op_timeout, @connect_timeout, @socket_opts)
         if @connect_timeout
           Timeout::timeout(@connect_timeout, OperationTimeout) do
-            config = self['admin'].command({:ismaster => 1}, :socket => socket)
+            config = self['admin'].command({:isMaster => 1}, :socket => socket)
           end
         else
-          config = self['admin'].command({:ismaster => 1}, :socket => socket)
+          config = self['admin'].command({:isMaster => 1}, :socket => socket)
         end
       rescue OperationFailure, SocketError, SystemCallError, IOError
         close
@@ -591,8 +574,8 @@ module Mongo
         # verify peer requires ca_cert, raise if only one is present
         if @socket_opts[:verify] && !@socket_opts[:ca_cert]
           raise MongoArgumentError,
-            "If :ssl_verify_mode has been specified, then you must include " +
-            ":ssl_ca_cert in order to perform server validation."
+            'If :ssl_verify_mode has been specified, then you must include ' +
+            ':ssl_ca_cert in order to perform server validation.'
         end
 
         @socket_class = Mongo::SSLSocket
@@ -602,26 +585,25 @@ module Mongo
         @socket_class = Mongo::TCPSocket
       end
 
-      # Authentication objects
-      @auths = opts.delete(:auths) || []
+      @db_name = opts.delete(:db_name)
+      @auths   = opts.delete(:auths) || Set.new
 
       # Pool size and timeout.
       @pool_size = opts.delete(:pool_size) || 1
       if opts[:timeout]
-        warn "The :timeout option has been deprecated " +
-             "and will be removed in the 2.0 release. " +
-             "Use :pool_timeout instead."
+        warn 'The :timeout option has been deprecated ' +
+             'and will be removed in the 2.0 release. ' +
+             'Use :pool_timeout instead.'
       end
       @pool_timeout = opts.delete(:pool_timeout) || opts.delete(:timeout) || 5.0
 
       # Timeout on socket read operation.
-      @op_timeout = opts.delete(:op_timeout) || nil
+      @op_timeout = opts.delete(:op_timeout)
 
       # Timeout on socket connect.
       @connect_timeout = opts.delete(:connect_timeout) || 30
 
-      @logger = opts.delete(:logger) || nil
-
+      @logger = opts.delete(:logger)
       if @logger
         write_logging_startup_message
       end
@@ -634,7 +616,6 @@ module Mongo
       end
       Mongo::ReadPreference::validate(@read)
 
-      @default_db = opts.delete(:default_db) || DEFAULT_DB_NAME
       @tag_sets = opts.delete(:tag_sets) || []
       @acceptable_latency = opts.delete(:secondary_acceptable_latency_ms) || 15
 
@@ -646,19 +627,38 @@ module Mongo
 
     private
 
-    # Set the specified node as primary.
+    # Parses client initialization info from MONGODB_URI env variable
+    def parse_init(host, port, opts)
+      if host.nil? && port.nil? && ENV.has_key?('MONGODB_URI')
+        parser = URIParser.new(ENV['MONGODB_URI'])
+        if parser.replicaset?
+          raise MongoArgumentError,
+            'ENV[\'MONGODB_URI\'] implies a replica set.'
+        end
+        opts.merge!(parser.connection_options)
+        [parser.host, parser.port]
+      else
+        [host || DEFAULT_HOST, port || DEFAULT_PORT]
+      end
+    end
+
+    # Set the specified node as primary
     def set_primary(node)
-      host, port = *node
-      @primary = [host, port]
+      host, port    = *node
+      @primary      = [host, port]
       @primary_pool = Pool.new(self, host, port, :size => @pool_size, :timeout => @pool_timeout)
     end
 
     # calculate wire version in range
     def check_wire_version_in_range
-      wire_version_in_range = MIN_WIRE_VERSION <= max_wire_version && MAX_WIRE_VERSION >= min_wire_version
-      unless wire_version_in_range
+      unless MIN_WIRE_VERSION <= max_wire_version &&
+             MAX_WIRE_VERSION >= min_wire_version
         close
-        raise ConnectionFailure, "Client wire-version range #{MIN_WIRE_VERSION} to #{MAX_WIRE_VERSION} does not support server range #{min_wire_version} to #{max_wire_version}, please update clients or servers"
+        raise ConnectionFailure,
+            "Client wire-version range #{MIN_WIRE_VERSION} to " +
+            "#{MAX_WIRE_VERSION} does not support server range " +
+            "#{min_wire_version} to #{max_wire_version}, please update " +
+            "clients or servers"
       end
     end
   end
