@@ -93,9 +93,11 @@ class DBTest < Test::Unit::TestCase
       end
 
       should "raise an error if logging out fails" do
-        @db.expects(:command).returns({})
+        client = MongoClient.new
+        DB.any_instance.stubs(:command).returns({"ok" => 0})
+        db = DB.new('testing', client)
         assert_raise Mongo::MongoDBError do
-          @db.logout
+          db.logout
         end
       end
 

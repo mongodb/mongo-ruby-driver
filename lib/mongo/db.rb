@@ -247,14 +247,7 @@ module Mongo
     #
     # @return [Boolean]
     def logout(opts={})
-      self.issue_logout(opts) && @client.remove_auth(self.name)
-    end
-
-    def issue_logout(opts={})
-      unless ok?(doc = command({:logout => 1}, :socket => opts[:socket]))
-        raise MongoDBError, "Error logging out: #{doc.inspect}"
-      end
-      true
+      @client.issue_logout(self.name, opts) && @client.remove_auth(self.name)
     end
 
     # Get an array of collection names in this database.
