@@ -120,12 +120,12 @@ module Mongo
 
     # Remove a saved authentication for this connection.
     #
-    # @param [String] The database name.
+    # @param db_name [String] The database name.
     #
     # @return [Boolean] The result of the operation.
-    def remove_auth(database)
-      return unless @auths
-      @auths.reject! { |a| a[:source] == database } ? true : false
+    def remove_auth(db_name)
+      return false unless @auths
+      @auths.reject! { |a| a[:source] == db_name } ? true : false
     end
 
     # Remove all authentication information stored in this connection.
@@ -146,22 +146,133 @@ module Mongo
 
     # Apply each of the saved database authentications.
     #
+    # @raise [AuthenticationError] Raised if any one authentication fails.
     # @return [Boolean] returns true if authentications exist and succeeds,
     #   false if none exists.
-    #
-    # @raise [AuthenticationError] raises an exception if any one
-    #   authentication fails.
     def apply_saved_authentication(opts={})
       return false if @auths.empty?
-      @auths.each do |auth|
-        self[auth[:source]].issue_authentication(
-          auth[:username],
-          auth[:password],
-          false,
-          :source => auth[:source],
-          :socket => opts[:socket])
-      end
+      @auths.each { |auth| issue_authentication(auth, opts) }
       true
+    end
+
+    # Method to handle and issue authenication commands.
+    #
+    # @note This method should not be called directly. Use DB#authenticate.
+    #
+    # @param auth [Hash] The authentication credentials to be used.
+    # @param opts [Hash] Hash of optional settings and configuration values.
+    #
+    # @option opts [Socket] socket (nil) Optional socket instance to use.
+    # @option opts [Boolean] save_auth (nil) Option to store credentials on
+    #   the client instance for re-use (requried in some situations).
+    #
+    # @raise [AuthenticationError] Raised if the authentication fails.
+    # @return [Boolean] Result of the authentication operation.
+    def issue_authentication(auth, opts={})
+      result = case auth[:mechanism]
+        when 'MONGODB-CR'
+          issue_cr(auth, opts)
+        when 'MONGODB-X509'
+          issue_x509(auth, opts)
+        when 'PLAIN'
+          issue_plain(auth, opts)
+        when 'GSSAPI'
+          issue_gssapi(auth, opts)
+      end
+
+      # raise on unsuccessful attempt to authenicate
+      raise AuthenticationError,
+        "Failed to authenticate user '#{auth[:username]}' " +
+        "on db '#{auth[:db_name]}'." unless result
+
+      # save authentication to the client (if specified)
+      add_auth(auth[:db_name], auth[:username], auth[:password],
+               auth[:source], auth[:mechanism]) if opts[:save_auth]
+
+      result
+    end
+
+    private
+
+    # Handles issuing authentication commands for the MONGODB-CR auth mechanism.
+    #
+    # @param auth [Hash] The authentication credentials to be used.
+    # @param opts [Hash] Hash of optional settings and configuration values.
+    #
+    # @option opts [Socket] socket (nil) Optional socket instance to use.
+    #
+    # @return [Boolean] Result of the authentication operation.
+    #
+    # @private
+    def issue_cr(auth, opts={})
+      database = db(auth[:source])
+      nonce    = get_nonce(database, opts)
+
+      # build auth command document
+      cmd = BSON::OrderedHash.new
+      cmd['authenticate'] = 1
+      cmd['user'] = auth[:username]
+      cmd['nonce'] = nonce
+      cmd['key'] = Authentication.auth_key(auth[:username],
+                                           auth[:password],
+                                           nonce)
+
+      doc = database.command(cmd, :check_response => false,
+                                  :socket         => opts[:socket])
+      Support.ok?(doc)
+    end
+
+    # Handles issuing authentication commands for the MONGODB-X509 auth mechanism.
+    #
+    # @param auth [Hash] The authentication credentials to be used.
+    # @param opts [Hash] Hash of optional settings and configuration values.
+    #
+    # @private
+    def issue_x509(auth, opts={})
+      raise NotImplementedError,
+        "The #{auth[:mechanism]} authentication mechanism is not yet supported."
+    end
+
+    # Handles issuing authentication commands for the PLAIN auth mechanism.
+    #
+    # @param auth [Hash] The authentication credentials to be used.
+    # @param opts [Hash] Hash of optional settings and configuration values.
+    #
+    # @private
+    def issue_plain(auth, opts={})
+      raise NotImplementedError,
+        "The #{auth[:mechanism]} authentication mechanism is not yet supported."
+    end
+
+    # Handles issuing authentication commands for the GSSAPI auth mechanism.
+    #
+    # @param auth [Hash] The authentication credentials to be used.
+    # @param opts [Hash] Hash of optional settings and configuration values.
+    #
+    # @private
+    def issue_gssapi(auth, opts={})
+      raise NotImplementedError,
+        "The #{auth[:mechanism]} authentication mechanism is not yet supported."
+    end
+
+    # Helper to fetch a nonce value from a given database instance.
+    #
+    # @param db [Mongo::DB] The DB instance to use for issue the nonce command.
+    # @param opts [Hash] Hash of optional settings and configuration values.
+    #
+    # @option opts [Socket] socket (nil) Optional socket instance to use.
+    #
+    # @raise [MongoDBError] Raised if there is an error executing the command.
+    # @return [String] Returns the nonce value.
+    #
+    # @private
+    def get_nonce(database, opts={})
+      doc = database.command({:getnonce => 1}, :check_response => false,
+                                               :socket         => opts[:socket])
+      unless Support.ok?(doc)
+        raise MongoDBError, "Error retrieving nonce: #{doc}"
+      end
+      doc['nonce']
     end
 
   end
