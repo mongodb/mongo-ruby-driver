@@ -17,7 +17,7 @@ require 'timeout'
 
 module SocketUtil
 
-  attr_accessor :pool, :pid
+  attr_accessor :pool, :pid, :auths
 
   def checkout
     @pool.checkout if @pool

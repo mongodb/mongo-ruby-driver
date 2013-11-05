@@ -25,6 +25,7 @@ module Mongo
       @op_timeout      = op_timeout
       @connect_timeout = connect_timeout
       @pid             = Process.pid
+      @auths           = Set.new
 
       # TODO: Prefer ipv6 if server is ipv6 enabled
       @address = Socket.getaddrinfo(host, nil, Socket::AF_INET).first[3]

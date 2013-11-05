@@ -38,8 +38,8 @@ module Mongo
 end
 
 module Mongo
-  # @deprecated Use Mongo::MongoClient instead. Support will be removed after v2.0
-  # Please see old documentation for the Connection class
+  # @deprecated Use Mongo::MongoClient instead. Support will be removed after
+  #   v2.0. Please see old documentation for the Connection class.
   class Connection < MongoClient
     include Mongo::LegacyWriteConcern
 
@@ -53,8 +53,9 @@ module Mongo
     end
   end
 
-  # @deprecated Use Mongo::MongoReplicaSetClient instead. Support will be removed after v2.0
-  # Please see old documentation for the ReplSetConnection class
+  # @deprecated Use Mongo::MongoReplicaSetClient instead. Support will be
+  #   removed after v2.0. Please see old documentation for the
+  #   ReplSetConnection class.
   class ReplSetConnection < MongoReplicaSetClient
     include Mongo::LegacyWriteConcern
 
@@ -68,8 +69,8 @@ module Mongo
     end
   end
 
-  # @deprecated Use Mongo::MongoShardedClient instead. Support will be removed after v2.0
-  # Please see old documentation for the ShardedConnection class
+  # @deprecated Use Mongo::MongoShardedClient instead. Support will be removed
+  #   after v2.0. Please see old documentation for the ShardedConnection class.
   class ShardedConnection < MongoShardedClient
     include Mongo::LegacyWriteConcern
 
@@ -83,9 +84,43 @@ module Mongo
     end
   end
 
-  class DB
+  class MongoClient
+    # @deprecated This method is no longer in use and never needs to be called
+    #   directly. Support will be removed after v2.0
+    def authenticate_pools
+      @primary_pool.authenticate_existing
+    end
 
-    # @deprecated Please use MongoClient#issue_authentication instead. Support will be removed after v2.0
+    # @deprecated This method is no longer in use and never needs to be called
+    #   directly. Support will be removed after v2.0
+    def logout_pools(database)
+      @primary_pool.logout_existing(database)
+    end
+
+    # @deprecated This method is no longer in use and never needs to be called
+    #   directly. Support will be removed after v2.0
+    def apply_saved_authentication
+      true
+    end
+  end
+
+  class MongoReplicaSetClient
+    # @deprecated This method is no longer in use and never needs to be called
+    #   directly. Support will be removed after v2.0
+    def authenticate_pools
+      @manager.pools.each { |pool| pool.authenticate_existing }
+    end
+
+    # @deprecated This method is no longer in use and never needs to be called
+    #   directly. Support will be removed after v2.0
+    def logout_pools(database)
+      @manager.pools.each { |pool| pool.logout_existing(database) }
+    end
+  end
+
+  class DB
+    # @deprecated Please use MongoClient#issue_authentication instead. Support
+    #   will be removed after v2.0
     def issue_authentication(username, password, save_auth=true, opts={})
       auth = Authentication.validate_credentials({
         :db_name  => self.name,
@@ -96,10 +131,10 @@ module Mongo
       @client.issue_authentication(auth, opts)
     end
 
-    # @deprecated Please use MongoClient#issue_logout instead. Support will be removed after v2.0
+    # @deprecated Please use MongoClient#issue_logout instead. Support will be
+    #   removed after v2.0
     def issue_logout(opts={})
       @client.issue_logout(self.name, opts)
     end
-
   end
 end
