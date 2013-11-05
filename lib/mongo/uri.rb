@@ -208,18 +208,18 @@ module Mongo
 
     # Map of URI read preference modes to ruby driver read preference modes
     READ_MODE_MAP = {
-      'primary' => :primary,
-      'primaryPreferred' => :primary_preferred,
-      'secondary' => :secondary,
+      'primary'            => :primary,
+      'primaryPreferred'   => :primary_preferred,
+      'secondary'          => :secondary,
       'secondaryPreferred' => :secondary_preferred,
-      'nearest' => :nearest
+      'nearest'            => :nearest
     }.freeze
 
     # Map of URI authentication mechanisms to ruby driver mechanisms
     AUTH_MECH_MAP = {
-      'PLAIN' => :plain,
+      'PLAIN'      => :plain,
       'MONGODB-CR' => :mongodb_cr,
-      'GSSAPI' => :gssapi
+      'GSSAPI'     => :gssapi
     }.freeze
 
     # Gets the user provided in the URI
@@ -296,7 +296,7 @@ module Mongo
       if target.key?(name)
         target[name] += value
       else
-        target.merge!({ name => value })
+        target.merge!(name => value)
       end
     end
 
@@ -369,7 +369,7 @@ module Mongo
     def read_set(value)
       value.split(',').reduce({}) do |set, tag|
         k, v = tag.split(':')
-        set.merge({ k.to_sym => v })
+        set.merge(k.to_sym => v)
       end
     end
   end

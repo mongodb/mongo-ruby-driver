@@ -449,7 +449,7 @@ describe Mongo::Scope do
       allow(collection).to receive(:explain) do
         { 'n' => 10, 'nscanned' => 11 }
       end
-      expect(scope.explain).to eq({ 'n' => 10, 'nscanned' => 11 })
+      expect(scope.explain).to eq('n' => 10, 'nscanned' => 11)
     end
   end
 

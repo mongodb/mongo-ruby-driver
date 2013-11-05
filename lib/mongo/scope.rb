@@ -99,7 +99,7 @@ module Mongo
     # @return [Hash] A single document with the explain plan.
     def explain
       explain_limit = limit || 0
-      opts = @opts.merge({ :limit => -explain_limit.abs, :explain => true })
+      opts = @opts.merge(:limit => -explain_limit.abs, :explain => true)
       @collection.explain(Scope.new(@collection, @selector, opts))
     end
 

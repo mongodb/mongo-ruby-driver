@@ -14,6 +14,7 @@
 
 module Mongo
 
+  # Model for a MongoDB node (replica set member or single instance)
   class Node
 
     attr_reader :address, :cluster, :options
