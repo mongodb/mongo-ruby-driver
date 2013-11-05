@@ -102,7 +102,10 @@ module Mongo
     # @option opts [Integer] :cache_time (300) Set the time that all ensure_index calls should cache the command.
 
     def initialize(name, client, opts={})
-      @name       = Mongo::Support.validate_db_name(name)
+      # A database name of '$external' is permitted for some auth types
+      Support.validate_db_name(name) unless name == '$external'
+
+      @name       = name
       @client     = client
       @strict     = opts[:strict]
       @pk_factory = opts[:pk]
@@ -110,10 +113,12 @@ module Mongo
       @write_concern = get_write_concern(opts, client)
 
       @read = opts[:read] || @client.read
-      Mongo::ReadPreference::validate(@read)
+      ReadPreference::validate(@read)
+
       @tag_sets = opts.fetch(:tag_sets, @client.tag_sets)
       @acceptable_latency = opts.fetch(:acceptable_latency,
                                        @client.acceptable_latency)
+
       @cache_time = opts[:cache_time] || 300 #5 minutes.
     end
 

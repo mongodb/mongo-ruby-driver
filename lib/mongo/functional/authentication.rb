@@ -59,6 +59,10 @@ module Mongo
           raise MongoArgumentError,
             'When using the default authentication mechanism (MONGODB-CR) ' +
             'both username and password are required.'
+        elsif auth[:mechanism] == 'PLAIN' && !auth[:password]
+          raise MongoArgumentError,
+            'When the authentication mechanism (PLAIN) ' +
+            'both username and password are required.'
         end
         auth
       end
@@ -183,7 +187,7 @@ module Mongo
       # raise on unsuccessful attempt to authenticate
       raise AuthenticationError,
         "Failed to authenticate user '#{auth[:username]}' " +
-        "on db '#{auth[:db_name]}'." unless result
+        "on db '#{auth[:source]}'." unless result
 
       # save authentication to the client (if specified)
       add_auth(auth[:db_name], auth[:username], auth[:password],
@@ -238,10 +242,26 @@ module Mongo
     # @param auth [Hash] The authentication credentials to be used.
     # @param opts [Hash] Hash of optional settings and configuration values.
     #
+    # @option opts [Socket] socket (nil) Optional socket instance to use.
+    #
+    # @return [Boolean] Result of the authentication operation.
+    #
     # @private
     def issue_plain(auth, opts={})
-      raise NotImplementedError,
-        "The #{auth[:mechanism]} authentication mechanism is not yet supported."
+      database = db(auth[:source])
+      payload  = "\x00#{auth[:username]}\x00#{auth[:password]}"
+
+      cmd = BSON::OrderedHash.new
+      cmd[:saslStart]     = 1
+      cmd[:mechanism]     = auth[:mechanism]
+      cmd[:username]      = auth[:username]
+      cmd[:payload]       = BSON::Binary.new(payload)
+      cmd[:autoAuthorize] = 1
+
+      doc = database.command(cmd, :check_response => false,
+                                  :socket         => opts[:socket])
+
+      Support.ok?(doc)
     end
 
     # Handles issuing authentication commands for the GSSAPI auth mechanism.
