@@ -128,4 +128,29 @@ module AuthenticationTests
     @db.remove_user('randy')
     @db.logout
   end
+
+  def test_socket_auths
+    db_a = @client['test_a']
+    db_a.add_user('user_a', 'password')
+    assert db_a.authenticate('user_a', 'password')
+
+    db_b = @client['test_b']
+    db_b.add_user('user_b', 'password')
+    assert db_b.authenticate('user_b', 'password')
+
+    db_c = @client['test_c']
+    db_c.add_user('user_c', 'password')
+    assert db_c.authenticate('user_c', 'password')
+
+    socket = @client.checkout_reader(:mode => :primary)
+    assert_equal 4, socket.auths.size
+    assert_equal @client.auths, socket.auths
+    @client.checkin(socket)
+
+    assert db_b.logout
+    socket = @client.checkout_reader(:mode => :primary)
+    assert_equal 3, socket.auths.size
+    assert_equal @client.auths, socket.auths
+    @client.checkin(socket)
+  end
 end
