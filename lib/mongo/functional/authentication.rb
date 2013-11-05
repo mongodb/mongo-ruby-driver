@@ -136,25 +136,6 @@ module Mongo
       true
     end
 
-    def authenticate_pools
-      @primary_pool.authenticate_existing
-    end
-
-    def logout_pools(database)
-      @primary_pool.logout_existing(database)
-    end
-
-    # Apply each of the saved database authentications.
-    #
-    # @raise [AuthenticationError] Raised if any one authentication fails.
-    # @return [Boolean] returns true if authentications exist and succeeds,
-    #   false if none exists.
-    def apply_saved_authentication(opts={})
-      return false if @auths.empty?
-      @auths.each { |auth| issue_authentication(auth, opts) }
-      true
-    end
-
     # Method to handle and issue logout commands.
     #
     # @note This method should not be called directly. Use DB#logout.

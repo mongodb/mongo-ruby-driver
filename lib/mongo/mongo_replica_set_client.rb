@@ -325,14 +325,6 @@ module Mongo
       @read != :primary
     end
 
-    def authenticate_pools
-      @manager.pools.each { |pool| pool.authenticate_existing }
-    end
-
-    def logout_pools(db)
-      @manager.pools.each { |pool| pool.logout_existing(db) }
-    end
-
     # Generic socket checkout
     # Takes a block that returns a socket from pool
     def checkout

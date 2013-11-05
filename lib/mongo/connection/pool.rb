@@ -52,9 +52,6 @@ module Mongo
       # Condition variable for signal and wait
       @queue = ConditionVariable.new
 
-      # Operations to perform on a socket
-      @socket_ops = Hash.new { |h, k| h[k] = [] }
-
       @sockets               = []
       @checked_out           = []
       @ping_time             = nil
@@ -186,8 +183,8 @@ module Mongo
       end
 
       # If any saved authentications exist, we want to apply those
-      # when creating new sockets.
-      @client.apply_saved_authentication(:socket => socket)
+      # when creating new sockets and process logouts.
+      check_auths(socket)
 
       @sockets << socket
       @checked_out << socket
@@ -199,24 +196,26 @@ module Mongo
     # then we need a way to apply the authentication on each socket.
     # So we store the apply_authentication method, and this will be
     # applied right before the next use of each socket.
+    #
+    # @deprecated This method has been replaced by Pool#check_auths (private)
+    # and it isn't necessary to ever invoke this method directly.
     def authenticate_existing
       @connection_mutex.synchronize do
         @sockets.each do |socket|
-          @socket_ops[socket] << Proc.new do
-            @client.apply_saved_authentication(:socket => socket)
-          end
+          check_auths(socket)
         end
       end
     end
 
     # Store the logout op for each existing socket to be applied before
     # the next use of each socket.
-    def logout_existing(db)
+    #
+    # @deprecated This method has been replaced by Pool#check_auths (private)
+    # and it isn't necessary to ever invoke this method directly.
+    def logout_existing(database)
       @connection_mutex.synchronize do
         @sockets.each do |socket|
-          @socket_ops[socket] << Proc.new do
-            @client.db(db).issue_logout(:socket => socket)
-          end
+          check_auths(socket)
         end
       end
     end
@@ -292,12 +291,7 @@ module Mongo
           end
 
           if socket
-            # This calls all procs, in order, scoped to existing sockets.
-            # At the moment, we use this to lazily authenticate and
-            # logout existing socket connections.
-            @socket_ops[socket].reject! do |op|
-              op.call
-            end
+            check_auths(socket)
 
             if socket.closed?
               @checked_out.delete(socket)
@@ -316,6 +310,29 @@ module Mongo
     end
 
     private
+
+    # Helper method to handle keeping track of auths/logouts for sockets.
+    #
+    # @param socket [Socket] The socket instance to be checked.
+    #
+    # @return [Socket] The authenticated socket instance.
+    def check_auths(socket)
+      return socket if @client.auths.empty?
+
+      # find and handle logouts
+      (socket.auths - @client.auths).each do |auth|
+        @client.issue_logout(auth[:source], :socket => socket)
+        socket.auths.delete(auth)
+      end
+
+      # find and handle new auths
+      (@client.auths - socket.auths).each do |auth|
+        @client.issue_authentication(auth, :socket => socket)
+        socket.auths.add(auth)
+      end
+
+      socket
+    end
 
     def close_sockets(sockets)
       sockets.each do |socket|
