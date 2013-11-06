@@ -258,4 +258,22 @@ class URITest < Test::Unit::TestCase
       Mongo::URIParser.new("mongodb://user@localhost?authMechanism=INVALID")
     end
   end
+
+  def test_sasl_plain
+    parser = Mongo::URIParser.new("mongodb://user:pass@localhost?authMechanism=PLAIN")
+    assert_equal 'PLAIN', parser.auths.first[:mechanism]
+    assert_equal 'user', parser.auths.first[:username]
+    assert_equal 'pass', parser.auths.first[:password]
+    assert_equal 'admin', parser.auths.first[:source]
+
+    parser = Mongo::URIParser.new("mongodb://foo%2Fbar%40example.net:pass@localhost/some_db?authMechanism=PLAIN")
+    assert_equal 'PLAIN', parser.auths.first[:mechanism]
+    assert_equal 'foo/bar@example.net', parser.auths.first[:username]
+    assert_equal 'pass', parser.auths.first[:password]
+    assert_equal 'some_db', parser.auths.first[:source]
+
+    assert_raise_error MongoArgumentError  do
+      Mongo::URIParser.new("mongodb://user@localhost/some_db?authMechanism=PLAIN")
+    end
+  end
 end

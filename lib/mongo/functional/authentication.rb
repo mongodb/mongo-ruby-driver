@@ -54,15 +54,10 @@ module Mongo
         # set the default auth source if not defined
         auth[:source] = auth[:source] || auth[:db_name] || 'admin'
 
-        if auth[:mechanism] == 'MONGODB-CR' && !auth[:password]
-          # require password when using legacy auth
+        if (auth[:mechanism] == 'MONGODB-CR' || auth[:mechanism] == 'PLAIN') && !auth[:password]
           raise MongoArgumentError,
-            'When using the default authentication mechanism (MONGODB-CR) ' +
-            'both username and password are required.'
-        elsif auth[:mechanism] == 'PLAIN' && !auth[:password]
-          raise MongoArgumentError,
-            'When the authentication mechanism (PLAIN) ' +
-            'both username and password are required.'
+            "When using the authentication mechanism #{auth[:mechanism]} " +
+            "both username and password are required."
         end
         auth
       end
