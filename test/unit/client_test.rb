@@ -309,6 +309,21 @@ class ClientTest < Test::Unit::TestCase
           MongoClient.new
         end
       end
+
+      should "require password if using PLAIN auth and username present" do
+        ENV['MONGODB_URI'] = "mongodb://kyle:jones@localhost?connect=false&authMechanism=PLAIN"
+        assert MongoClient.new
+
+        ENV['MONGODB_URI'] = "mongodb://kyle:@localhost?connect=false&authMechanism=PLAIN"
+        assert_raise MongoArgumentError do
+          MongoClient.new
+        end
+
+        ENV['MONGODB_URI'] = "mongodb://kyle@localhost?connect=false&authMechanism=PLAIN"
+        assert_raise MongoArgumentError do
+          MongoClient.new
+        end
+      end
     end
   end
 end

@@ -277,12 +277,27 @@ class ConnectionTest < Test::Unit::TestCase
         ENV['MONGODB_URI'] = "mongodb://kyle:jones@localhost/db?connect=false"
         assert Mongo::Connection.new
 
-        ENV['MONGODB_URI'] = "mongodb://kyle:@localhost"
+        ENV['MONGODB_URI'] = "mongodb://kyle:@localhost?connect=false"
         assert_raise MongoArgumentError do
           Mongo::Connection.new
         end
 
-        ENV['MONGODB_URI'] = "mongodb://kyle@localhost"
+        ENV['MONGODB_URI'] = "mongodb://kyle@localhost?connect=false"
+        assert_raise MongoArgumentError do
+          Mongo::Connection.new
+        end
+      end
+
+      should "require password if using PLAIN auth and username present" do
+        ENV['MONGODB_URI'] = "mongodb://kyle:jones@localhost/db?connect=false&authMechanism=PLAIN"
+        assert Mongo::Connection.new
+
+        ENV['MONGODB_URI'] = "mongodb://kyle:@localhost?connect=false&authMechanism=PLAIN"
+        assert_raise MongoArgumentError do
+          Mongo::Connection.new
+        end
+
+        ENV['MONGODB_URI'] = "mongodb://kyle@localhost?connect=false&authMechanism=PLAIN"
         assert_raise MongoArgumentError do
           Mongo::Connection.new
         end
