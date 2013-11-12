@@ -40,7 +40,7 @@ module AuthenticationTests
     if @client.server_version < '2.5'
       db['system.users'].remove
     else
-      db.command({ :dropUsersFromDatabase => 1 })
+      db.command(:dropUsersFromDatabase => 1)
     end
     db.logout
   end
@@ -130,24 +130,17 @@ module AuthenticationTests
       # add read-only user and verify that role is 'read'
       @db.add_user('randy', 'password', nil, :roles => ['read'])
       @db.authenticate('randy', 'password')
-      users = @db.command({'usersInfo' => 'randy'})['users']
+      users = @db.command(:usersInfo => 'randy')['users']
       assert_equal 'read', users.first['roles'].first['role']
       @db.logout
 
       # add dbOwner (default) user and verify role
       @db.add_user('emily', 'password')
       @db.authenticate('emily', 'password')
-      users = @db.command({'usersInfo' => 'emily'})['users']
+      users = @db.command(:usersInfo => 'emily')['users']
       assert_equal 'dbOwner', users.first['roles'].first['role']
       @db.logout
     end
-  end
-
-  def test_authenticate_read_only
-    @db.add_user('randy', 'readonly', true)
-    assert @db.authenticate('randy', 'readonly')
-    @db.remove_user('randy')
-    @db.logout
   end
 
   def test_socket_auths

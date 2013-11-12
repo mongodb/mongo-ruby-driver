@@ -211,7 +211,7 @@ module Mongo
     # @return [Hash] an object representing the user.
     def add_user(username, password=nil, read_only=false, opts={})
       begin
-        user_info = command({ 'usersInfo' => username })
+        user_info = command(:usersInfo => username)
       # MongoDB >= 2.5.3 requires the use of commands to manage users.
       # "No such command" error didn't return an error code (59) before
       # MongoDB 2.4.7 so we assume that a nil error code means the userInfo
@@ -236,7 +236,7 @@ module Mongo
     # @return [Boolean]
     def remove_user(username)
       begin
-        command({ :dropUser => username })
+        command(:dropUser => username)
       rescue OperationFailure => ex
         raise ex unless ex.error_code == 59 || ex.error_code.nil?
         response = self[SYSTEM_USER_COLLECTION].remove({:user => username}, :w => 1)
@@ -492,7 +492,7 @@ module Mongo
     #
     # @return [Hash]
     def stats
-      self.command({:dbstats => 1})
+      self.command(:dbstats => 1)
     end
 
     # Return +true+ if the supplied +doc+ contains an 'ok' field with the value 1.
@@ -534,7 +534,7 @@ module Mongo
 
       # build up the command hash
       command = opts.key?(:socket) ? { :socket => opts.delete(:socket) } : {}
-      command.merge!({ :comment => opts.delete(:comment) }) if opts.key?(:comment)
+      command.merge!(:comment => opts.delete(:comment)) if opts.key?(:comment)
       command[:limit] = -1
       command[:read] = Mongo::ReadPreference::cmd_read_pref(opts.delete(:read), selector) if opts.key?(:read)
 
@@ -673,7 +673,7 @@ module Mongo
       if opts.key?(:digestPassword)
         raise MongoArgumentError,
           "The digestPassword option is not available via DB#add_user. " +
-          "Use DB#command({ :createUser => ... }) instead for this option."
+          "Use DB#command(:createUser => ...) instead for this option."
       end
 
       opts = opts.dup
@@ -700,7 +700,7 @@ module Mongo
       if opts.key?(:digestPassword)
         raise MongoArgumentError,
           "The digestPassword option is not available via DB#add_user. " +
-          "Use DB#command({ :createUser => ... }) instead for this option."
+          "Use DB#command(:createUser => ...) instead for this option."
       end
 
       opts = opts.dup
@@ -716,7 +716,7 @@ module Mongo
 
     def legacy_add_user(username, password=nil, read_only=false, opts={})
       users = self[SYSTEM_USER_COLLECTION]
-      user  = users.find_one({:user => username}) || {:user => username}
+      user  = users.find_one(:user => username) || {:user => username}
       user['pwd'] =
         Mongo::Authentication.hash_password(username, password) if password
       user['readOnly'] = true if read_only
