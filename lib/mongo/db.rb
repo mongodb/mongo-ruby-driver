@@ -210,19 +210,22 @@ module Mongo
     #
     # @return [Hash] an object representing the user.
     def add_user(username, password=nil, read_only=false, opts={})
-      users = self[SYSTEM_USER_COLLECTION]
-      user  = users.find_one({:user => username}) || {:user => username}
-      user['pwd'] =
-        Mongo::Authentication.hash_password(username, password) if password
-      user['readOnly'] = true if read_only
-      user.merge!(opts)
       begin
-        users.save(user)
+        user_info = command(:usersInfo => username)
+      # MongoDB >= 2.5.3 requires the use of commands to manage users.
+      # "No such command" error didn't return an error code (59) before
+      # MongoDB 2.4.7 so we assume that a nil error code means the usersInfo
+      # command doesn't exist and we should fall back to the legacy add user code.
       rescue OperationFailure => ex
-        # adding first admin user fails GLE in MongoDB 2.2
-        raise ex unless ex.message =~ /login/
+        raise ex unless ex.error_code == 59 || ex.error_code.nil?
+        return legacy_add_user(username, password, read_only, opts)
       end
-      user
+
+      if user_info.key?('users') && !user_info['users'].empty?
+        update_user(username, password, opts)
+      else
+        create_user(username, password, read_only, opts)
+      end
     end
 
     # Remove the given user from this database. Returns false if the user
@@ -232,10 +235,12 @@ module Mongo
     #
     # @return [Boolean]
     def remove_user(username)
-      if self[SYSTEM_USER_COLLECTION].find_one({:user => username})
-        self[SYSTEM_USER_COLLECTION].remove({:user => username}, :w => 1)
-      else
-        false
+      begin
+        command(:dropUser => username)
+      rescue OperationFailure => ex
+        raise ex unless ex.error_code == 59 || ex.error_code.nil?
+        response = self[SYSTEM_USER_COLLECTION].remove({:user => username}, :w => 1)
+        response.key?('n') && response['n'] > 0 ? response : false
       end
     end
 
@@ -487,7 +492,7 @@ module Mongo
     #
     # @return [Hash]
     def stats
-      self.command({:dbstats => 1})
+      self.command(:dbstats => 1)
     end
 
     # Return +true+ if the supplied +doc+ contains an 'ok' field with the value 1.
@@ -529,7 +534,7 @@ module Mongo
 
       # build up the command hash
       command = opts.key?(:socket) ? { :socket => opts.delete(:socket) } : {}
-      command.merge!({ :comment => opts.delete(:comment) }) if opts.key?(:comment)
+      command.merge!(:comment => opts.delete(:comment)) if opts.key?(:comment)
       command[:limit] = -1
       command[:read] = Mongo::ReadPreference::cmd_read_pref(opts.delete(:read), selector) if opts.key?(:read)
 
@@ -656,6 +661,97 @@ module Mongo
 
     def system_command_collection
       Collection.new(SYSTEM_COMMAND_COLLECTION, self)
+    end
+
+    # Create a new user.
+    #
+    # @param username [String] The username.
+    # @param password [String] The user's password.
+    # @param read_only [Boolean] Create a read-only user (deprecated in MongoDB >= 2.6)
+    # @param opts [Hash]
+    #
+    # @private
+    def create_user(username, password, read_only, opts)
+      if read_only || !opts.key?(:roles)
+        warn "Creating a user with the read_only option or without roles is " +
+             "deprecated in MongoDB >= 2.6"
+      end
+
+      # The password is always salted and hashed by the driver.
+      if opts.key?(:digestPassword)
+        raise MongoArgumentError,
+          "The digestPassword option is not available via DB#add_user. " +
+          "Use DB#command(:createUser => ...) instead for this option."
+      end
+
+      opts = opts.dup
+      pwd = Mongo::Authentication.hash_password(username, password) if password
+      create_opts = pwd ? { :pwd => pwd } : {}
+      # specify that the server shouldn't digest the password because the driver does
+      create_opts[:digestPassword] = false
+      unless opts.key?(:roles)
+        if name == 'admin'
+          roles = read_only ? ['readAnyDatabase'] : ['root']
+        else
+          roles = read_only ? ['read'] : ["dbOwner"]
+        end
+        create_opts[:roles] = roles
+      end
+      create_opts[:writeConcern] =
+        opts.key?(:writeConcern) ? opts.delete(:writeConcern) : { :w => 1 }
+      create_opts.merge!(opts)
+      command({ :createUser => username }, create_opts)
+    end
+
+    # Update a user.
+    #
+    # @param username [String] The username.
+    # @param password [String] The user's password.
+    # @param opts [Hash]
+    #
+    # @private
+    def update_user(username, password, opts)
+      # The password is always salted and hashed by the driver.
+      if opts.key?(:digestPassword)
+        raise MongoArgumentError,
+          "The digestPassword option is not available via DB#add_user. " +
+          "Use DB#command(:createUser => ...) instead for this option."
+      end
+
+      opts = opts.dup
+      pwd = Mongo::Authentication.hash_password(username, password) if password
+      update_opts = pwd ? { :pwd => pwd } : {}
+      # specify that the server shouldn't digest the password because the driver does
+      update_opts[:digestPassword] = false
+      update_opts[:writeConcern] =
+        opts.key?(:writeConcern) ? opts.delete(:writeConcern) : { :w => 1 }
+      update_opts.merge!(opts)
+      command({ :updateUser => username }, update_opts)
+    end
+
+    # Create a user in MongoDB versions < 2.5.3.
+    # Called by #add_user if the 'usersInfo' command fails.
+    #
+    # @param username [String] The username.
+    # @param password [String] (nil) The user's password.
+    # @param read_only [Boolean] (false) Create a read-only user.
+    # @param opts [Hash]
+    #
+    # @private
+    def legacy_add_user(username, password=nil, read_only=false, opts={})
+      users = self[SYSTEM_USER_COLLECTION]
+      user  = users.find_one(:user => username) || {:user => username}
+      user['pwd'] =
+        Mongo::Authentication.hash_password(username, password) if password
+      user['readOnly'] = true if read_only
+      user.merge!(opts)
+      begin
+        users.save(user)
+      rescue OperationFailure => ex
+        # adding first admin user fails GLE in MongoDB 2.2
+        raise ex unless ex.message =~ /login/
+      end
+      user
     end
   end
 end
