@@ -214,7 +214,7 @@ module Mongo
         user_info = command(:usersInfo => username)
       # MongoDB >= 2.5.3 requires the use of commands to manage users.
       # "No such command" error didn't return an error code (59) before
-      # MongoDB 2.4.7 so we assume that a nil error code means the userInfo
+      # MongoDB 2.4.7 so we assume that a nil error code means the usersInfo
       # command doesn't exist and we should fall back to the legacy add user code.
       rescue OperationFailure => ex
         raise ex unless ex.error_code == 59 || ex.error_code.nil?
@@ -663,6 +663,14 @@ module Mongo
       Collection.new(SYSTEM_COMMAND_COLLECTION, self)
     end
 
+    # Create a new user.
+    #
+    # @param username [String] The username.
+    # @param password [String] The user's password.
+    # @param read_only [Boolean] Create a read-only user (deprecated in MongoDB >= 2.6)
+    # @param opts [Hash]
+    #
+    # @private
     def create_user(username, password, read_only, opts)
       if read_only || !opts.key?(:roles)
         warn "Creating a user with the read_only option or without roles is " +
@@ -695,6 +703,13 @@ module Mongo
       command({ :createUser => username }, create_opts)
     end
 
+    # Update a user.
+    #
+    # @param username [String] The username.
+    # @param password [String] The user's password.
+    # @param opts [Hash]
+    #
+    # @private
     def update_user(username, password, opts)
       # The password is always salted and hashed by the driver.
       if opts.key?(:digestPassword)
@@ -714,6 +729,15 @@ module Mongo
       command({ :updateUser => username }, update_opts)
     end
 
+    # Create a user in MongoDB versions < 2.5.3.
+    # Called by #add_user if the 'usersInfo' command fails.
+    #
+    # @param username [String] The username.
+    # @param password [String] (nil) The user's password.
+    # @param read_only [Boolean] (false) Create a read-only user.
+    # @param opts [Hash]
+    #
+    # @private
     def legacy_add_user(username, password=nil, read_only=false, opts={})
       users = self[SYSTEM_USER_COLLECTION]
       user  = users.find_one(:user => username) || {:user => username}
