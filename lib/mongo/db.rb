@@ -668,8 +668,19 @@ module Mongo
         warn "Creating a user with the read_only option or without roles is " +
              "deprecated in MongoDB >= 2.6"
       end
+
+      # The password is always salted and hashed by the driver.
+      if opts.key?(:digestPassword)
+        raise MongoArgumentError,
+          "The digestPassword option is not available via DB#add_user. " +
+          "Use DB#command({ :createUser => ... }) instead for this option."
+      end
+
       opts = opts.dup
-      create_opts = password ? { :pwd => password } : {}
+      pwd = Mongo::Authentication.hash_password(username, password) if password
+      create_opts = pwd ? { :pwd => pwd } : {}
+      # specify that the server shouldn't digest the password because the driver does
+      create_opts[:digestPassword] = false
       unless opts.key?(:roles)
         if name == 'admin'
           roles = read_only ? ['readAnyDatabase'] : ['root']
@@ -685,8 +696,18 @@ module Mongo
     end
 
     def update_user(username, password, opts)
+      # The password is always salted and hashed by the driver.
+      if opts.key?(:digestPassword)
+        raise MongoArgumentError,
+          "The digestPassword option is not available via DB#add_user. " +
+          "Use DB#command({ :createUser => ... }) instead for this option."
+      end
+
       opts = opts.dup
-      update_opts = password ? { :pwd => password } : {}
+      pwd = Mongo::Authentication.hash_password(username, password) if password
+      update_opts = pwd ? { :pwd => pwd } : {}
+      # specify that the server shouldn't digest the password because the driver does
+      update_opts[:digestPassword] = false
       update_opts[:writeConcern] =
         opts.key?(:writeConcern) ? opts.delete(:writeConcern) : { :w => 1 }
       update_opts.merge!(opts)
