@@ -31,11 +31,7 @@ module AuthenticationTests
   end
 
   def remove_all_users(db)
-    begin
-      db.logout
-    rescue => e
-      # silence error if we're not logged in and try to logout
-    end
+    db.logout
     db.authenticate('admin', 'password')
     if @client.server_version < '2.5'
       db['system.users'].remove
