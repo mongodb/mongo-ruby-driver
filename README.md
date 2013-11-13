@@ -39,9 +39,9 @@ The [wiki](https://github.com/mongodb/mongo-ruby-driver/wiki) has other articles
 5. [Read Preference in Ruby](https://github.com/mongodb/mongo-ruby-driver/wiki/Read-Preference).
 6. [GridFS in Ruby](https://github.com/mongodb/mongo-ruby-driver/wiki/GridFS).
 7. [Frequently Asked Questions](https://github.com/mongodb/mongo-ruby-driver/wiki/FAQ).
-8. [History](https://github.com/mongodb/mongo-ruby-driver/wiki/History).
-9. [Release plan](https://github.com/mongodb/mongo-ruby-driver/wiki/Releases).
-10. [Credits](https://github.com/mongodb/mongo-ruby-driver/wiki/Credits).
+8. [History](https://github.com/mongodb/mongo-ruby-driver/releases).
+9. [Credits](https://github.com/mongodb/mongo-ruby-driver/wiki/Credits).
+10. [Contributors] (https://github.com/mongodb/mongo-ruby-driver/graphs/contributors).
 
 Here's a quick code sample. Again, see the [MongoDB Ruby Tutorial](https://github.com/mongodb/mongo-ruby-driver/wiki/Tutorial) for much more:
 
@@ -58,7 +58,7 @@ include Mongo
 @coll.remove
 
 3.times do |i|
-  @coll.insert({'a' => i+1})
+  @coll.insert({ 'a' => i+1 })
 end
 
 puts "There are #{@coll.count} records. Here they are:"
@@ -109,12 +109,12 @@ For extensive examples, see the [MongoDB Ruby Tutorial](https://github.com/mongo
 
 # GridFS
 
-The Ruby driver include two abstractions for storing large files: Grid and GridFileSystem.
+The Ruby driver includes two abstractions for storing large files: Grid and GridFileSystem.
 
 The Grid class is a Ruby implementation of MongoDB's GridFS file storage
 specification. GridFileSystem is essentially the same, but provides a more filesystem-like API and assumes that filenames are unique.
 
-An instance of both classes represents an individual file store. See the API reference for details.
+An instance of either class represents an individual file store. See the API reference for details.
 
 Examples:
 
@@ -128,7 +128,7 @@ id   = grid.put(file)
 file = grid.get(id)
 file.read
 
-# Get all the file's metata
+# Get all the file's metadata
 file.filename
 file.content_type
 file.metadata
@@ -199,7 +199,7 @@ A primary key factory is a class you supply to a DB object that knows how to
 generate _id values. If you want to control _id values or even their types,
 using a PK factory lets you do so.
 
-You can tell the Ruby Mongo driver how to create primary keys by passing in
+You can tell the Ruby MongoDB driver how to create primary keys by passing in
 the :pk option to the MongoClient#db method.
 
 ```ruby
@@ -280,7 +280,7 @@ Notes:
 
 * Cursors are enumerable (and have a #to_a method).
 
-* The query doesn't get run until you actually attempt to retrieve data from a
+* The query isn't sent to the server until you actually attempt to retrieve data from a
   cursor.
 
 * Cursors will timeout on the server after 10 minutes. If you need to keep a cursor
@@ -288,7 +288,7 @@ Notes:
 
 ## Socket timeouts
 
-The Ruby driver support timeouts on socket read operations. To enable them, set the
+The Ruby driver supports timeouts on socket read operations. To enable them, set the
 `:op_timeout` option when you create a `Mongo::MongoClient` object.
 
 If implementing higher-level timeouts, using tools like `Rack::Timeout`, it's very important
@@ -328,7 +328,7 @@ To run any individual rake tasks with the BSON extension disabled, just pass BSO
 $ rake test:unit BSON_EXT_DISABLED=true
 ```
 
-If you want to test replica set, you can run the following task:
+If you want to test replica sets, you can run the following task:
 
 ```sh
 $ rake test:replica_set
@@ -358,9 +358,35 @@ To fix the following error on Mac OS X - "/.../lib/bson_ext/cbson.bundle: [BUG] 
 $ rake compile
 ```
 
+# Support / Feedback
+
+For issues with, questions about, or feedback for the Ruby driver, please look into
+our [support channels] (http://www.mongodb.org/about/support). Please
+do not email any of the Ruby developers directly with issues or
+questions - you're more likely to get an answer quickly on the [mongodb-user list]
+(http://groups.google.com/group/mongodb-user) on Google Groups.
+
+# Bugs / Feature Requests
+
+Think you’ve found a bug? Want to see a new feature in the Ruby driver? Please open a
+case in our issue management tool, JIRA:
+
+- [Create an account and login] (https://jira.mongodb.org).
+- Navigate to [the RUBY project] (https://jira.mongodb.org/browse/RUBY).
+- Click **Create Issue** - Please provide as much information as possible about the issue type, how to reproduce it, and the driver version you're using.
+
+Bug reports in JIRA for all driver projects (i.e. RUBY, CSHARP, JAVA) and the
+Core Server (i.e. SERVER) project are **public**.
+
+# Security Vulnerabilities
+
+If you’ve identified a security vulnerability in a driver or any other
+MongoDB project, please report it according to the [instructions here]
+(http://docs.mongodb.org/manual/tutorial/create-a-vulnerability-report).
+
 # Release Notes
 
-See [history](https://github.com/mongodb/mongo-ruby-driver/wiki/History).
+See [releases](https://github.com/mongodb/mongo-ruby-driver/releases).
 
 
 # Credits
