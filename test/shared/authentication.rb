@@ -16,29 +16,39 @@ module AuthenticationTests
 
   def init_auth
     silently do
+      roles = { :roles => ['readAnyDatabase',
+                           'readWriteAnyDatabase',
+                           'userAdminAnyDatabase',
+                           'dbAdminAnyDatabase',
+                           'clusterAdmin'] }
+
       # enable authentication by creating and logging in as admin user
       @admin = @client['admin']
-      @admin.add_user('admin', 'password')
+      @admin.add_user('admin', 'password', false, roles)
       @admin.authenticate('admin', 'password')
+
       # create a user who can remove all others in teardown
       @db.add_user('admin', 'password')
     end
   end
 
   def teardown
-    remove_all_users(@admin)
-    remove_all_users(@db)
+    remove_all_users(@admin, 'admin', 'password') if has_auth?(@admin.name)
+    remove_all_users(@db, 'admin', 'password') if has_auth?(@db.name)
   end
 
-  def remove_all_users(db)
-    db.logout
-    db.authenticate('admin', 'password')
+  def remove_all_users(database, username, password)
+    database.authenticate(username, password, false)
     if @client.server_version < '2.5'
-      db['system.users'].remove
+      database['system.users'].remove
     else
       db.command(:dropAllUsersFromDatabase => 1)
     end
-    db.logout
+    database.logout
+  end
+
+  def has_auth?(db_name)
+    @client.auths.any? { |a| a[:source] == db_name }
   end
 
   def test_add_remove_user
@@ -120,9 +130,9 @@ module AuthenticationTests
   end
 
   def test_non_admin_default_roles
-    silently do
-      return if @client.server_version < '2.5'
+    return if @client.server_version < '2.5'
 
+    silently do
       # add read-only user and verify that role is 'read'
       @db.add_user('randy', 'password', nil, :roles => ['read'])
       @db.authenticate('randy', 'password')
@@ -140,72 +150,77 @@ module AuthenticationTests
   end
 
   def test_socket_auths
-    db_a = @client['test_a']
-    db_a.add_user('user_a', 'password')
-    assert db_a.authenticate('user_a', 'password')
+    silently do
+      # setup
+      db_a = @client['test_a']
+      db_a.add_user('user_a', 'password')
+      assert db_a.authenticate('user_a', 'password')
 
-    db_b = @client['test_b']
-    db_b.add_user('user_b', 'password')
-    assert db_b.authenticate('user_b', 'password')
+      db_b = @client['test_b']
+      db_b.add_user('user_b', 'password')
+      assert db_b.authenticate('user_b', 'password')
 
-    db_c = @client['test_c']
-    db_c.add_user('user_c', 'password')
-    assert db_c.authenticate('user_c', 'password')
+      db_c = @client['test_c']
+      db_c.add_user('user_c', 'password')
+      assert db_c.authenticate('user_c', 'password')
 
-    socket = @client.checkout_reader(:mode => :primary)
-    assert_equal 4, socket.auths.size
-    assert_equal @client.auths, socket.auths
-    @client.checkin(socket)
+      # client auths should be applied to socket on checkout
+      socket = @client.checkout_reader(:mode => :primary)
+      assert_equal 4, socket.auths.size
+      assert_equal @client.auths, socket.auths
+      @client.checkin(socket)
 
-    assert db_b.logout
-    socket = @client.checkout_reader(:mode => :primary)
-    assert_equal 3, socket.auths.size
-    assert_equal @client.auths, socket.auths
-    @client.checkin(socket)
+      # logout should remove saved auth on socket and client
+      assert db_b.logout
+      socket = @client.checkout_reader(:mode => :primary)
+      assert_equal 3, socket.auths.size
+      assert_equal @client.auths, socket.auths
+      @client.checkin(socket)
+
+      # clean-up
+      db_b.authenticate('user_b', 'password')
+      remove_all_users(db_a, 'user_a', 'password')
+      remove_all_users(db_b, 'user_b', 'password')
+      remove_all_users(db_c, 'user_c', 'password')
+    end
   end
 
-  #def test_delegated_authentication
-  #  return unless @client.server_version >= '2.4' && @client.server_version < '2.5'
-#
-  #  # TODO: remove this line when slaves have this code:
-  #  # https://github.com/travis-ci/travis-cookbooks/pull/180
-  #  return if ENV['TRAVIS']
-#
-  #  doc = {'_id' => 'test'}
-  #  # create accounts database to hold user credentials
-  #  accounts = @client['accounts']
-  #  accounts['system.users'].remove
-  #  accounts.add_user('tyler', 'brock', nil, :roles => [])
-#
-  #  # insert test data and give user permissions on test db
-  #  @db['test'].remove
-  #  @db['test'].insert(doc)
-  #  @db.add_user('tyler', nil, nil, :roles => ['read'], :userSource => 'accounts')
-  #  @admin.logout
-#
-  #  # auth must occur on the db where the user is defined
-  #  assert_raise Mongo::AuthenticationError do
-  #    @db.authenticate('tyler', 'brock')
-  #  end
-#
-  #  # auth directly
-  #  assert accounts.authenticate('tyler', 'brock')
-  #  assert_equal doc, @db['test'].find_one
-  #  accounts.logout
-  #  assert_raise Mongo::OperationFailure do
-  #    @db['test'].find_one
-  #  end
-#
-  #  # auth using source
-  #  @db.authenticate('tyler', 'brock', true, 'accounts')
-  #  assert_equal doc, @db['test'].find_one
-  #  @db.logout
-  #  assert_raise Mongo::OperationFailure do
-  #    @db['test'].find_one
-  #  end
-#
-  #  @db.authenticate('tyler', 'brock', true, 'accounts')
-  #  @db.remove_user('tyler')
-  #  @db.logout
-  #end
+  def test_delegated_authentication
+    return unless @client.server_version >= '2.4' && @client.server_version < '2.5'
+
+    silently do
+      # create user in source database
+      accounts = @client['accounts']
+      accounts.add_user('debbie', 'delegate')
+
+      # add user to test database
+      @db.add_user('debbie', nil, nil, :roles => ['read'], :userSource => 'accounts')
+      @admin.logout
+
+      # auth must occur on the source database
+      assert_raise Mongo::AuthenticationError do
+        @db.authenticate('debbie', 'delegate')
+      end
+
+      # validate direct auth
+      assert accounts.authenticate('debbie', 'delegate')
+      assert @db.collection_names
+      accounts.logout
+      assert_raise Mongo::OperationFailure do
+        @db.collection_names
+      end
+
+      # validate auth using source database
+      @db.authenticate('debbie', 'delegate', true, 'accounts')
+      assert @db.collection_names
+      accounts.logout
+      assert_raise Mongo::OperationFailure do
+        @db.collection_names
+      end
+
+      # clean-up
+      @admin.authenticate('admin', 'password')
+      remove_all_users(accounts, 'debbie', 'delegate')
+    end
+  end
 end
