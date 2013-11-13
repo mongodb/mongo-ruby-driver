@@ -84,51 +84,50 @@ module Mongo
     end
 
     def inspect
-      str = "#<Mongo::BulkWriteCollectionView:0x#{self.object_id} {"
-      str << "@collection=#<Mongo::Collection:0x#{@collection.object_id}>, "
-      str << "#{[:@options, :@ops, :@op_args].collect{|var| "#{var}=#{instance_variable_get(var).inspect}"}.join(', ')}"
-      str << '}>'
+      vars = [:@options, :@ops, :@op_args]
+      vars_inspect = vars.collect{|var| "#{var}=#{instance_variable_get(var).inspect}"}
+      "#<Mongo::BulkWriteCollectionView:0x#{self.object_id} " <<
+      "@collection=#<Mongo::Collection:0x#{@collection.object_id}>, #{vars_inspect.join(', ')}>"
     end
 
     def find(q)
-      op_arg_set_and_return_self :q, q
+      op_arg_set_and_return_self(:q, q)
       self
     end
 
     def upsert!(value = true)
-      op_arg_set_and_return_self :upsert, value
+      op_arg_set_and_return_self(:upsert, value)
     end
 
     def upsert(value = true)
-      #TODO: re-spec to terminator
       self.copy.upsert!(value)
     end
 
     def update(u)
       raise MongoArgumentError, "document must start with an operator" unless update_doc?(u)
-      op_push_and_return_self [:update, @op_args.merge(:u => u, :top => 0)]
+      op_push_and_return_self([:update, @op_args.merge(:u => u, :multi => true)])
     end
 
     def update_one(u)
       raise MongoArgumentError, "document must start with an operator" unless update_doc?(u)
-      op_push_and_return_self [:update, @op_args.merge(:u => u, :top => 1)]
+      op_push_and_return_self([:update, @op_args.merge(:u => u, :multi => false)])
     end
 
     def replace_one(u)
       raise MongoArgumentError, "document must not contain any operators" unless replace_doc?(u)
-      op_push_and_return_self [:update, @op_args.merge(:u => u, :top => 1)]
+      op_push_and_return_self([:update, @op_args.merge(:u => u, :multi => false)])
     end
 
     def remove_one
-      op_push_and_return_self [:delete, @op_args.merge(:top => 1)]
+      op_push_and_return_self([:delete, @op_args.merge(:limit => 1)])
     end
 
     def remove
-      op_push_and_return_self [:delete, @op_args.merge(:top => 0)]
+      op_push_and_return_self([:delete, @op_args.merge(:limit => 0)])
     end
 
     def insert(document)
-      op_push_and_return_self [:insert, document]
+      op_push_and_return_self([:insert, document])
     end
 
     def execute(options = {})
@@ -149,8 +148,7 @@ module Mongo
         end
       end
       @ops = []
-      #raise errors.last unless errors.empty?
-      [result, errors] # TODO - handle, collect, process errors and return values
+      [result, errors]
     end
 
   end
