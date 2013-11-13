@@ -30,5 +30,5 @@ Gem::Specification.new do |s|
   s.has_rdoc          = 'yard'
   s.bindir            = 'bin'
 
-  s.add_dependency 'bson', '2.0.0.rc1'
+  s.add_dependency 'bson', '2.0.0.rc3'
 end
