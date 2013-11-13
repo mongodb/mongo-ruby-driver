@@ -308,10 +308,10 @@ module Mongo
         if op_type == :insert
           argument = [doc_or_docs].flatten(1).compact
         elsif op_type == :update
-          argument = [{:q => selector, :u => doc_or_docs, :top => (opts[:multi] ? 0 : 1)}] #top replaced multi, TODO - server implementation pending
+          argument = [{:q => selector, :u => doc_or_docs, :multi => !!opts[:multi]}]
           argument.first.merge!(:upsert => opts[:upsert]) if opts[:upsert]
         elsif op_type == :delete
-          argument = [{:q => selector, :top => 0}] #top replaced limit
+          argument = [{:q => selector, :limit => 0}]
         else
           raise ArgumentError, "Write operation type must be :insert, :update or :delete"
         end
