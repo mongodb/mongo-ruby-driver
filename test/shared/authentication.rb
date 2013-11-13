@@ -36,7 +36,7 @@ module AuthenticationTests
     if @client.server_version < '2.5'
       db['system.users'].remove
     else
-      db.command(:dropUsersFromDatabase => 1)
+      db.command(:dropAllUsersFromDatabase => 1)
     end
     db.logout
   end
