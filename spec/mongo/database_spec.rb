@@ -104,7 +104,8 @@ describe Mongo::Database do
         'test',
         '$cmd',
         { :ismaster => 1 },
-        { :limit => -1, :read => :secondary }
+        :limit => -1,
+        :read => :secondary
       )
     end
 

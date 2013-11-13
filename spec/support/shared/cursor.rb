@@ -1,6 +1,6 @@
 shared_context 'shared cursor' do
 
-  let(:scope_opts) { { } }
+  let(:scope_opts) { Hash.new }
   let(:scope) { Mongo::Scope.new(collection, {}, scope_opts) }
 
   let(:nonzero) { 1 }

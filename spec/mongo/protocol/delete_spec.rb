@@ -7,7 +7,7 @@ describe Mongo::Protocol::Delete do
   let(:coll)     { TEST_COLL }
   let(:ns)       { "#{db}.#{coll}" }
   let(:selector) { { :name => 'Tyler' } }
-  let(:opts)     { { } }
+  let(:opts)     { Hash.new }
 
   let(:message) do
     described_class.new(db, coll, selector, opts)

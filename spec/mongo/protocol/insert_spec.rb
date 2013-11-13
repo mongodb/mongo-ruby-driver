@@ -9,7 +9,7 @@ describe Mongo::Protocol::Insert do
   let(:doc1)   { { :name => 'Tyler' } }
   let(:doc2)   { { :name => 'Brandon' } }
   let(:docs)   { [doc1, doc2] }
-  let(:opts)   { { } }
+  let(:opts)   { Hash.new }
 
   let(:message) do
     described_class.new(db, coll, docs, opts)

@@ -7,7 +7,7 @@ describe Mongo::Protocol::Query do
   let(:coll)     { TEST_COLL }
   let(:ns)       { "#{db}.#{coll}" }
   let(:selector) { { :name => 'Tyler' } }
-  let(:opts)     { { } }
+  let(:opts)     { Hash.new }
 
   let(:message) do
     described_class.new(db, coll, selector, opts)
@@ -105,7 +105,7 @@ describe Mongo::Protocol::Query do
 
       context 'when the options are not equal' do
         let(:other) do
-          described_class.new(db, coll, selector, { :skip => 2 })
+          described_class.new(db, coll, selector, :skip => 2)
         end
 
         it 'returns false' do

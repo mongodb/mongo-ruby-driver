@@ -8,7 +8,8 @@ describe Mongo::Protocol::Update do
   let(:ns)       { "#{db}.#{coll}" }
   let(:selector) { { :name => 'Tyler' } }
   let(:update_doc) { { :name => 'Bob' } }
-  let(:opts)       { { } }
+  let(:opts)       { Hash.new }
+
   let(:message) do
     described_class.new(db, coll, selector, update_doc, opts)
   end
