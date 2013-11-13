@@ -58,6 +58,10 @@ ClassLength:
 Encoding:
   Enabled: false
 
+EmptyLinesAroundBody:
+  Description: 'Keeps track of blank lines around expression bodies.'
+  Enabled: false
+
 # because ruby 1.8.x, that's why
 DotPosition:
   Enabled: false
