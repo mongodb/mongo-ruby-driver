@@ -24,58 +24,6 @@ module Mongo
 
     attr_reader :collection, :options, :ops, :op_args
 
-    private
-
-    def copy
-      a_copy = self.dup
-      a_copy.instance_variable_set(:@options, self.options.dup)
-      a_copy
-    end
-
-    def op_arg_set_and_return_self(op, value)
-      @op_args[op] = value
-      self
-    end
-
-    def op_push_and_return_self(op)
-      @ops << op
-      self
-    end
-
-    def update_doc?(doc)
-      !doc.empty? && doc.keys.first.to_s =~ /^\$/
-    end
-
-    def replace_doc?(doc)
-      doc.keys.all?{|key| key !~ /^\$/}
-    end
-
-    def ordered_group_by_first(pairs)
-      pairs.inject([[], nil]) do |memo, pair|
-        result, previous_value = memo
-        current_value = pair.first
-        result << [current_value, []] if previous_value != current_value
-        result.last.last << pair.last
-        [result, current_value]
-      end.first
-    end
-
-    def generate_batch_commands(groups, write_concern) # unused, just a reference for now
-      groups.collect do |op, documents|
-        [
-            op,
-            {
-                op => @collection.name,
-                Mongo::Collection::WRITE_COMMAND_ARG_KEY[op] => documents,
-                :ordered => @options[:ordered],
-                :writeConcern => write_concern
-            }
-        ]
-      end
-    end
-
-    public
-
     def initialize(collection, options = {})
       @collection = collection
       @options = options
@@ -149,6 +97,56 @@ module Mongo
       end
       @ops = []
       [result, errors]
+    end
+
+    private
+
+    def copy
+      a_copy = self.dup
+      a_copy.instance_variable_set(:@options, self.options.dup)
+      a_copy
+    end
+
+    def op_arg_set_and_return_self(op, value)
+      @op_args[op] = value
+      self
+    end
+
+    def op_push_and_return_self(op)
+      @ops << op
+      self
+    end
+
+    def update_doc?(doc)
+      !doc.empty? && doc.keys.first.to_s =~ /^\$/
+    end
+
+    def replace_doc?(doc)
+      doc.keys.all?{|key| key !~ /^\$/}
+    end
+
+    def ordered_group_by_first(pairs)
+      pairs.inject([[], nil]) do |memo, pair|
+        result, previous_value = memo
+        current_value = pair.first
+        result << [current_value, []] if previous_value != current_value
+        result.last.last << pair.last
+        [result, current_value]
+      end.first
+    end
+
+    def generate_batch_commands(groups, write_concern) # unused, just a reference for now
+      groups.collect do |op, documents|
+        [
+            op,
+            {
+                op => @collection.name,
+                Mongo::Collection::WRITE_COMMAND_ARG_KEY[op] => documents,
+                :ordered => @options[:ordered],
+                :writeConcern => write_concern
+            }
+        ]
+      end
     end
 
   end
