@@ -296,65 +296,6 @@ module Mongo
       end
     end
 
-    private
-
-    def use_write_command?(write_concern)
-      write_concern[:w] != 0 && @db.connection.wire_version_feature?(Mongo::MongoClient::BATCH_COMMANDS)
-    end
-
-    def send_write_operation(op_type, selector, doc_or_docs, check_keys, opts, collection_name=@name)
-      write_concern = get_write_concern(opts, self)
-      if use_write_command?(write_concern)
-        if op_type == :insert
-          argument = [doc_or_docs].flatten(1).compact
-        elsif op_type == :update
-          argument = [{:q => selector, :u => doc_or_docs, :multi => !!opts[:multi]}]
-          argument.first.merge!(:upsert => opts[:upsert]) if opts[:upsert]
-        elsif op_type == :delete
-          argument = [{:q => selector, :limit => 0}]
-        else
-          raise ArgumentError, "Write operation type must be :insert, :update or :delete"
-        end
-        request = BSON::OrderedHash[op_type, collection_name, WRITE_COMMAND_ARG_KEY[op_type], argument]
-        request.merge!(:writeConcern => write_concern, :ordered => !opts[:continue_on_error])
-        request.merge!(opts)
-        instrument(op_type, :database => @db.name, :collection => collection_name, :selector => selector, :documents => doc_or_docs) do
-          @db.command(request)
-        end
-      else
-        message = BSON::ByteBuffer.new("", @connection.max_message_size)
-        message.put_int((op_type == :insert && !!opts[:continue_on_error]) ? 1 : 0)
-        BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{collection_name}")
-        if op_type == :update
-          update_options  = 0
-          update_options += 1 if opts[:upsert]
-          update_options += 2 if opts[:multi]
-          message.put_int(update_options)
-        elsif op_type == :delete
-          delete_options = 0
-          delete_options += 1 if opts[:limit]
-          message.put_int(delete_options)
-        end
-        message.put_binary(BSON::BSON_CODER.serialize(selector, false, true, @connection.max_bson_size).to_s) if selector
-        [doc_or_docs].flatten(1).compact.each do |document|
-          message.put_binary(BSON::BSON_CODER.serialize(document, check_keys, true, @connection.max_bson_size).to_s)
-          if message.size > @connection.max_message_size
-            raise BSON::InvalidDocument, "Message is too large. This message is limited to #{@connection.max_message_size} bytes."
-          end
-        end
-        instrument(op_type, :database => @db.name, :collection => collection_name, :selector => selector, :documents => doc_or_docs) do
-          op_code = Mongo::Collection::OPCODE[op_type]
-          if Mongo::WriteConcern.gle?(write_concern)
-            @connection.send_message_with_gle(op_code, message, @db.name, nil, write_concern)
-          else
-            @connection.send_message(op_code, message)
-          end
-        end
-      end
-    end
-
-    public
-
     # Return a single object from the database.
     #
     # @return [OrderedHash, Nil]
@@ -450,11 +391,15 @@ module Mongo
     #
     # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails.
     def insert(doc_or_docs, opts={})
-      doc_or_docs = [doc_or_docs] unless doc_or_docs.is_a?(Array)
-      doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
       write_concern = get_write_concern(opts, self)
-      result = batch_write_incremental(:insert, doc_or_docs, true, opts)
-      result.size > 1 ? result : result.first
+      if doc_or_docs.is_a?(Array)
+        doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
+        return batch_write_incremental(:insert, doc_or_docs, true, opts)
+      else
+        @pk_factory.create_pk(doc_or_docs)
+        send_write(:insert, nil, doc_or_docs, true, opts)
+        return doc_or_docs[:_id] || doc_or_docs['_id']
+      end
     end
     alias_method :<<, :insert
 
@@ -485,7 +430,7 @@ module Mongo
     #
     # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails.
     def remove(selector={}, opts={})
-      send_write_operation(:delete, selector, nil, nil, opts)
+      send_write(:delete, selector, nil, nil, opts)
     end
 
     # Update one or more documents in this collection.
@@ -517,7 +462,7 @@ module Mongo
     #
     # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails.
     def update(selector, document, opts={})
-      send_write_operation(:update, selector, document, !document.keys.first.to_s.start_with?("$"), opts)
+      send_write(:update, selector, document, !document.keys.first.to_s.start_with?("$"), opts)
     end
 
     # Create a new index.
@@ -1062,6 +1007,69 @@ module Mongo
 
     private
 
+    def use_write_command?(write_concern)
+      write_concern[:w] != 0 && @db.connection.wire_version_feature?(Mongo::MongoClient::BATCH_COMMANDS)
+    end
+
+    def send_write_command(op_type, selector, doc_or_docs, check_keys, opts, write_concern, collection_name=@name)
+      if op_type == :insert
+        argument = [doc_or_docs].flatten(1).compact
+      elsif op_type == :update
+        argument = [{:q => selector, :u => doc_or_docs, :multi => !!opts[:multi]}]
+        argument.first.merge!(:upsert => opts[:upsert]) if opts[:upsert]
+      elsif op_type == :delete
+        argument = [{:q => selector, :limit => (opts[:limit] || 0)}]
+      else
+        raise ArgumentError, "Write operation type must be :insert, :update or :delete"
+      end
+      request = BSON::OrderedHash[op_type, collection_name, WRITE_COMMAND_ARG_KEY[op_type], argument]
+      request.merge!(:writeConcern => write_concern, :ordered => !opts[:continue_on_error])
+      request.merge!(opts)
+      instrument(op_type, :database => @db.name, :collection => collection_name, :selector => selector, :documents => doc_or_docs) do
+        @db.command(request)
+      end
+    end
+
+    def send_write_operation(op_type, selector, doc_or_docs, check_keys, opts, write_concern, collection_name=@name)
+      message = BSON::ByteBuffer.new("", @connection.max_message_size)
+      message.put_int((op_type == :insert && !!opts[:continue_on_error]) ? 1 : 0)
+      BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{collection_name}")
+      if op_type == :update
+        update_options  = 0
+        update_options += 1 if opts[:upsert]
+        update_options += 2 if opts[:multi]
+        message.put_int(update_options)
+      elsif op_type == :delete
+        delete_options = 0
+        delete_options += 1 if opts[:limit] && opts[:limit] != 0
+        message.put_int(delete_options)
+      end
+      message.put_binary(BSON::BSON_CODER.serialize(selector, false, true, @connection.max_bson_size).to_s) if selector
+      [doc_or_docs].flatten(1).compact.each do |document|
+        message.put_binary(BSON::BSON_CODER.serialize(document, check_keys, true, @connection.max_bson_size).to_s)
+        if message.size > @connection.max_message_size
+          raise BSON::InvalidDocument, "Message is too large. This message is limited to #{@connection.max_message_size} bytes."
+        end
+      end
+      instrument(op_type, :database => @db.name, :collection => collection_name, :selector => selector, :documents => doc_or_docs) do
+        op_code = Mongo::Collection::OPCODE[op_type]
+        if Mongo::WriteConcern.gle?(write_concern)
+          @connection.send_message_with_gle(op_code, message, @db.name, nil, write_concern)
+        else
+          @connection.send_message(op_code, message)
+        end
+      end
+    end
+
+    def send_write(op_type, selector, doc_or_docs, check_keys, opts, collection_name=@name)
+      write_concern = get_write_concern(opts, self)
+      if use_write_command?(write_concern)
+        send_write_command(op_type, selector, doc_or_docs, check_keys, opts, write_concern, collection_name)
+      else
+        send_write_operation(op_type, selector, doc_or_docs, check_keys, opts, write_concern, collection_name)
+      end
+    end
+
     def index_name(spec)
       field_spec = parse_index_spec(spec)
       index_information.each do |index|
@@ -1111,7 +1119,7 @@ module Mongo
       selector.merge!(opts)
 
       begin
-        send_write_operation(:insert, nil, selector, false, {:w => 1}, Mongo::DB::SYSTEM_INDEX_COLLECTION)
+        send_write(:insert, nil, selector, false, {:w => 1}, Mongo::DB::SYSTEM_INDEX_COLLECTION)
       rescue Mongo::OperationFailure => e
         if selector[:dropDups] && e.message =~ /^11000/
           # NOP. If the user is intentionally dropping dups, we can ignore duplicate key errors.
@@ -1175,8 +1183,6 @@ module Mongo
         errors << ex
       end
     end
-
-    public
 
     def batch_write_incremental(op, documents, check_keys=true, opts={})
       raise Mongo::OperationFailure, "Request contains no documents" if documents.empty?

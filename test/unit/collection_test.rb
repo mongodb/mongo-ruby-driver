@@ -42,7 +42,7 @@ class CollectionTest < Test::Unit::TestCase
         op == 2002
       end
       @coll.expects(:log_operation).with do |name, payload|
-        (name == :insert) && payload[:documents][0][:title].include?('Moby')
+        (name == :insert) && payload[:documents][:title].include?('Moby')
       end
       @coll.insert({:title => 'Moby Dick'})
     end
@@ -68,7 +68,7 @@ class CollectionTest < Test::Unit::TestCase
         op == 2002
       end
       @coll.expects(:log_operation).with do |name, payload|
-        (name == :insert) && payload[:documents][0][:data].inspect.include?('Binary')
+        (name == :insert) && payload[:documents][:data].inspect.include?('Binary')
       end
       @coll.insert({:data => data})
     end
