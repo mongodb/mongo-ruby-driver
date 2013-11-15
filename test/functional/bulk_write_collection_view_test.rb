@@ -39,7 +39,19 @@ end
 
 module Mongo
   class BulkWriteCollectionView
-    public :copy, :update_doc?, :replace_doc?, :ordered_group_by_first, :generate_batch_commands
+    public :update_doc?, :replace_doc?, :ordered_group_by_first
+
+    # for reference and future server direction
+    def generate_batch_commands(groups, write_concern)
+      groups.collect do |op, documents|
+        {
+            op => @collection.name,
+            Mongo::Collection::WRITE_COMMAND_ARG_KEY[op] => documents,
+            :ordered => @options[:ordered],
+            :writeConcern => write_concern
+        }
+      end
+    end
   end
 end
 
@@ -136,12 +148,12 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       write_concern = {:w => 1, :j => 1}
       result = @bulk.generate_batch_commands(groups, write_concern)
       expected = [
-          [:insert, {:insert => COLLECTION_NAME, :documents => [{:n => 0}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}],
-          [:update, {:update => COLLECTION_NAME, :updates => [{:n => 1}, {:n => 2}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}],
-          [:delete, {:delete => COLLECTION_NAME, :deletes => [{:n => 3}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}],
-          [:insert, {:insert => COLLECTION_NAME, :documents => [{:n => 5}, {:n => 6}, {:n => 7}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}],
-          [:update, {:update => COLLECTION_NAME, :updates => [{:n => 8}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}],
-          [:delete, {:delete => COLLECTION_NAME, :deletes => [{:n => 9}, {:n => 10}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}]
+          {:insert => COLLECTION_NAME, :documents => [{:n => 0}], :ordered => true, :writeConcern => {:j => 1, :w => 1}},
+          {:update => COLLECTION_NAME, :updates => [{:n => 1}, {:n => 2}], :ordered => true, :writeConcern => {:j => 1, :w => 1}},
+          {:delete => COLLECTION_NAME, :deletes => [{:n => 3}], :ordered => true, :writeConcern => {:j => 1, :w => 1}},
+          {:insert => COLLECTION_NAME, :documents => [{:n => 5}, {:n => 6}, {:n => 7}], :ordered => true, :writeConcern => {:j => 1, :w => 1}},
+          {:update => COLLECTION_NAME, :updates => [{:n => 8}], :ordered => true, :writeConcern => {:j => 1, :w => 1}},
+          {:delete => COLLECTION_NAME, :deletes => [{:n => 9}, {:n => 10}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}
       ]
       assert_equal expected, result
     end

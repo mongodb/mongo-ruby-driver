@@ -39,43 +39,42 @@ module Mongo
     end
 
     def find(q)
-      op_arg_set_and_return_self(:q, q)
-      self
+      op_args_set(:q, q)
     end
 
     def upsert!(value = true)
-      op_arg_set_and_return_self(:upsert, value)
+      op_args_set(:upsert, value)
     end
 
     def upsert(value = true)
-      self.copy.upsert!(value)
+      dup.upsert!(value)
     end
 
     def update(u)
       raise MongoArgumentError, "document must start with an operator" unless update_doc?(u)
-      op_push_and_return_self([:update, @op_args.merge(:u => u, :multi => true)])
+      op_push([:update, @op_args.merge(:u => u, :multi => true)])
     end
 
     def update_one(u)
       raise MongoArgumentError, "document must start with an operator" unless update_doc?(u)
-      op_push_and_return_self([:update, @op_args.merge(:u => u, :multi => false)])
+      op_push([:update, @op_args.merge(:u => u, :multi => false)])
     end
 
     def replace_one(u)
       raise MongoArgumentError, "document must not contain any operators" unless replace_doc?(u)
-      op_push_and_return_self([:update, @op_args.merge(:u => u, :multi => false)])
+      op_push([:update, @op_args.merge(:u => u, :multi => false)])
     end
 
     def remove_one
-      op_push_and_return_self([:delete, @op_args.merge(:limit => 1)])
+      op_push([:delete, @op_args.merge(:limit => 1)])
     end
 
     def remove
-      op_push_and_return_self([:delete, @op_args.merge(:limit => 0)])
+      op_push([:delete, @op_args.merge(:limit => 0)])
     end
 
     def insert(document)
-      op_push_and_return_self([:insert, document])
+      op_push([:insert, document])
     end
 
     def execute(options = {})
@@ -101,18 +100,16 @@ module Mongo
 
     private
 
-    def copy
-      a_copy = self.dup
-      a_copy.instance_variable_set(:@options, self.options.dup)
-      a_copy
+    def initialize_copy(other)
+      other.instance_variable_set(:@options, other.options.dup)
     end
 
-    def op_arg_set_and_return_self(op, value)
+    def op_args_set(op, value)
       @op_args[op] = value
       self
     end
 
-    def op_push_and_return_self(op)
+    def op_push(op)
       @ops << op
       self
     end
@@ -133,20 +130,6 @@ module Mongo
         result.last.last << pair.last
         [result, current_value]
       end.first
-    end
-
-    def generate_batch_commands(groups, write_concern) # unused, just a reference for now
-      groups.collect do |op, documents|
-        [
-            op,
-            {
-                op => @collection.name,
-                Mongo::Collection::WRITE_COMMAND_ARG_KEY[op] => documents,
-                :ordered => @options[:ordered],
-                :writeConcern => write_concern
-            }
-        ]
-      end
     end
 
   end
