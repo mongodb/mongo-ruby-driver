@@ -413,6 +413,7 @@ module Mongo
     # @option opts [Boolean] :j (false) Set journal acknowledgement
     # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout
     # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
+    # @option opts [Integer] :limit (0) Set limit option, currently only 0 for all or 1 for just one.
     #
     #   Notes on write concern:
     #     Options provided here will override any write concern options set on this collection,
