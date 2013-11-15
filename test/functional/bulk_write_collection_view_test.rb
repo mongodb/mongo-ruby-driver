@@ -39,7 +39,19 @@ end
 
 module Mongo
   class BulkWriteCollectionView
-    public :copy, :update_doc?, :replace_doc?, :ordered_group_by_first, :generate_batch_commands
+    public :update_doc?, :replace_doc?, :ordered_group_by_first
+
+    # for reference and future server direction
+    def generate_batch_commands(groups, write_concern)
+      groups.collect do |op, documents|
+        {
+            op => @collection.name,
+            Mongo::Collection::WRITE_COMMAND_ARG_KEY[op] => documents,
+            :ordered => @options[:ordered],
+            :writeConcern => write_concern
+        }
+      end
+    end
   end
 end
 
@@ -84,6 +96,10 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
   context "Bulk API Spec Collection" do
     setup do
       default_setup
+    end
+
+    should "inspect" do
+      assert_equal String, @bulk.inspect.class
     end
 
     should "check first key is operation for #update_doc?" do
@@ -132,12 +148,12 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       write_concern = {:w => 1, :j => 1}
       result = @bulk.generate_batch_commands(groups, write_concern)
       expected = [
-          [:insert, {:insert => COLLECTION_NAME, :documents => [{:n => 0}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}],
-          [:update, {:update => COLLECTION_NAME, :updates => [{:n => 1}, {:n => 2}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}],
-          [:delete, {:delete => COLLECTION_NAME, :deletes => [{:n => 3}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}],
-          [:insert, {:insert => COLLECTION_NAME, :documents => [{:n => 5}, {:n => 6}, {:n => 7}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}],
-          [:update, {:update => COLLECTION_NAME, :updates => [{:n => 8}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}],
-          [:delete, {:delete => COLLECTION_NAME, :deletes => [{:n => 9}, {:n => 10}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}]
+          {:insert => COLLECTION_NAME, :documents => [{:n => 0}], :ordered => true, :writeConcern => {:j => 1, :w => 1}},
+          {:update => COLLECTION_NAME, :updates => [{:n => 1}, {:n => 2}], :ordered => true, :writeConcern => {:j => 1, :w => 1}},
+          {:delete => COLLECTION_NAME, :deletes => [{:n => 3}], :ordered => true, :writeConcern => {:j => 1, :w => 1}},
+          {:insert => COLLECTION_NAME, :documents => [{:n => 5}, {:n => 6}, {:n => 7}], :ordered => true, :writeConcern => {:j => 1, :w => 1}},
+          {:update => COLLECTION_NAME, :updates => [{:n => 8}], :ordered => true, :writeConcern => {:j => 1, :w => 1}},
+          {:delete => COLLECTION_NAME, :deletes => [{:n => 9}, {:n => 10}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}
       ]
       assert_equal expected, result
     end
@@ -161,56 +177,56 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       default_setup
     end
 
-    should "set :q and return view for #find" do #TODO - review im/mutable
+    should "set :q and return view for #find" do
       result = @bulk.find(@q)
       assert_is_bulk_write_collection_view(result)
       assert_equal @q, @bulk.op_args[:q]
     end
 
-    should "set :upsert for #upsert" do #TODO - review im/mutable
+    should "set :upsert for #upsert" do
       result = @bulk.find(@q).upsert
       assert_is_bulk_write_collection_view(result)
       assert_true result.op_args[:upsert]
     end
 
-    should "check arg for update, set :update, :u, :top, terminate and return view for #update_one" do
+    should "check arg for update, set :update, :u, :multi, terminate and return view for #update_one" do
       assert_raise MongoArgumentError do
         @bulk.find(@q).update_one(@r)
       end
       result = @bulk.find(@q).update_one(@u)
       assert_is_bulk_write_collection_view(result)
-      assert_bulk_op_pushed [:update, {:q => @q, :u => @u, :top => 1}], @bulk
+      assert_bulk_op_pushed [:update, {:q => @q, :u => @u, :multi => false}], @bulk
     end
 
-    should "check arg for update, set :update, :u, :top, terminate and return view for #update" do
+    should "check arg for update, set :update, :u, :multi, terminate and return view for #update" do
       assert_raise MongoArgumentError do
         @bulk.find(@q).replace_one(@u)
       end
       result = @bulk.find(@q).update(@u)
       assert_is_bulk_write_collection_view(result)
-      assert_bulk_op_pushed [:update, {:q => @q, :u => @u, :top => 0}], @bulk
+      assert_bulk_op_pushed [:update, {:q => @q, :u => @u, :multi => true}], @bulk
     end
 
-    should "check arg for replacement, set :update, :u, :top, terminate and return view for #replace_one" do
+    should "check arg for replacement, set :update, :u, :multi, terminate and return view for #replace_one" do
       assert_raise MongoArgumentError do
         @bulk.find(@q).replace_one(@u)
       end
       result = @bulk.find(@q).replace_one(@r)
       assert_is_bulk_write_collection_view(result)
-      assert_bulk_op_pushed [:update, {:q => @q, :u => @r, :top => 1}], @bulk
+      assert_bulk_op_pushed [:update, {:q => @q, :u => @r, :multi => false}], @bulk
     end
 
-    should "set :remove, :q, :top, terminate and return view for #remove_one" do
+    should "set :remove, :q, :limit, terminate and return view for #remove_one" do
       result = @bulk.find(@q).remove_one
       assert_is_bulk_write_collection_view(result)
-      assert_bulk_op_pushed [:delete, {:q => @q, :top => 1}], @bulk
+      assert_bulk_op_pushed [:delete, {:q => @q, :limit => 1}], @bulk
 
     end
 
-    should "set :remove, :q, :top, terminate and return view for #remove" do
+    should "set :remove, :q, :limit, terminate and return view for #remove" do
       result = @bulk.find(@q).remove
       assert_is_bulk_write_collection_view(result)
-      assert_bulk_op_pushed [:delete, {:q => @q, :top => 0}], @bulk
+      assert_bulk_op_pushed [:delete, {:q => @q, :limit => 0}], @bulk
     end
 
     should "set :insert, :documents, terminate and return view for #insert" do

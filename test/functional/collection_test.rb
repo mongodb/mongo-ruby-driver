@@ -563,7 +563,7 @@ class TestCollection < Test::Unit::TestCase
     end
   end
 
-  if @@version >= "1.1.3" && @@version < "2.5.3"  # TODO - top implementation incomplete for update command
+  if @@version >= "1.1.3"
     def test_multi_update
       @@test.save("num" => 10)
       @@test.save("num" => 10)
