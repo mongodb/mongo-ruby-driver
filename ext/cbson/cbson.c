@@ -99,6 +99,10 @@ static VALUE RB_HASH;
 
 static int max_bson_size;
 
+struct deserialize_opts {
+    int compile_regex;
+};
+
 #if HAVE_RUBY_ENCODING_H
 #include "ruby/encoding.h"
 #define STR_NEW(p,n)                                                    \
@@ -195,7 +199,7 @@ static int cmp_char(const void* a, const void* b) {
 static void write_doc(bson_buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_id);
 static int write_element_with_id(VALUE key, VALUE value, VALUE extra);
 static int write_element_without_id(VALUE key, VALUE value, VALUE extra);
-static VALUE elements_to_hash(const char* buffer, int max);
+static VALUE elements_to_hash(const char* buffer, int max, struct deserialize_opts * opts);
 
 static VALUE pack_extra(bson_buffer_t buffer, VALUE check_keys) {
     return rb_ary_new3(2, LL2NUM((long long)buffer), check_keys);
@@ -648,7 +652,7 @@ static VALUE method_serialize(VALUE self, VALUE doc, VALUE check_keys,
     return result;
 }
 
-static VALUE get_value(const char* buffer, int* position, int type) {
+static VALUE get_value(const char* buffer, int* position, int type, struct deserialize_opts * opts) {
     VALUE value;
     switch (type) {
     case -1:
@@ -689,10 +693,10 @@ static VALUE get_value(const char* buffer, int* position, int type) {
                 offset += collection_length + 1;
                 id_type = buffer[offset];
                 offset += 5;
-                argv[1] = get_value(buffer, &offset, (int)id_type);
+                argv[1] = get_value(buffer, &offset, (int)id_type, opts);
                 value = rb_class_new_instance(2, argv, DBRef);
             } else {
-                value = elements_to_hash(buffer + *position + 4, size - 5);
+                value = elements_to_hash(buffer + *position + 4, size - 5, opts);
             }
             *position += size;
             break;
@@ -711,7 +715,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
                 VALUE to_append;
 
                 *position += key_size + 1; // just skip the key, they're in order.
-                to_append = get_value(buffer, position, type);
+                to_append = get_value(buffer, position, type, opts);
                 rb_ary_push(value, to_append);
             }
             (*position)++;
@@ -808,6 +812,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             }
             argv[0] = pattern;
             argv[1] = INT2FIX(flags);
+            // TODO: check compile_regex to see if Regexp should be compiled
             value = rb_class_new_instance(2, argv, Regexp);
             *position += flags_length + 1;
             break;
@@ -850,7 +855,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
             *position += code_length + 1;
 
             memcpy(&scope_size, buffer + *position, 4);
-            scope = elements_to_hash(buffer + *position + 4, scope_size - 5);
+            scope = elements_to_hash(buffer + *position + 4, scope_size - 5, opts);
             *position += scope_size;
 
             argv[0] = code;
@@ -900,7 +905,7 @@ static VALUE get_value(const char* buffer, int* position, int type) {
     return value;
 }
 
-static VALUE elements_to_hash(const char* buffer, int max) {
+static VALUE elements_to_hash(const char* buffer, int max, struct deserialize_opts * opts) {
     VALUE hash = rb_class_new_instance(0, NULL, OrderedHash);
     int position = 0;
     while (position < max) {
@@ -909,21 +914,23 @@ static VALUE elements_to_hash(const char* buffer, int max) {
         VALUE name = STR_NEW(buffer + position, name_length);
         VALUE value;
         position += name_length + 1;
-        value = get_value(buffer, &position, type);
+        value = get_value(buffer, &position, type, opts);
         rb_funcall(hash, element_assignment_method, 2, name, value);
     }
     return hash;
 }
 
-static VALUE method_deserialize(VALUE self, VALUE bson) {
+static VALUE method_deserialize(VALUE self, VALUE bson, VALUE opts) {
     const char* buffer = RSTRING_PTR(bson);
     int remaining = RSTRING_LENINT(bson);
+    struct deserialize_opts deserialize_opts;
+    deserialize_opts.compile_regex = RTEST(rb_hash_aref(opts, ID2SYM(rb_intern("compile_regex"))));
 
     // NOTE we just swallow the size and end byte here
     buffer += 4;
     remaining -= 5;
 
-    return elements_to_hash(buffer, remaining);
+    return elements_to_hash(buffer, remaining, &deserialize_opts);
 }
 
 static int legal_objectid_str(VALUE str) {
@@ -1098,7 +1105,7 @@ void Init_cbson() {
     ext_version = rb_str_new2(VERSION);
     rb_define_const(CBson, "VERSION", ext_version);
     rb_define_module_function(CBson, "serialize", method_serialize, 4);
-    rb_define_module_function(CBson, "deserialize", method_deserialize, 1);
+    rb_define_module_function(CBson, "deserialize", method_deserialize, 2);
     rb_define_module_function(CBson, "max_bson_size", method_max_bson_size, 0);
     rb_define_module_function(CBson, "update_max_bson_size", method_update_max_bson_size, 1);
 

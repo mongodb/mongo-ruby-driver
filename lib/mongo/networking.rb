@@ -123,15 +123,17 @@ module Mongo
     #   An array whose indexes include [0] documents returned, [1] number of document received,
     #   and [3] a cursor_id.
     def receive_message(operation, message, log_message=nil, socket=nil, command=false,
-                        read=:primary, exhaust=false)
-      request_id = add_message_headers(message, operation)
+                        read=:primary, exhaust=false, compile_regex=true)
+      request_id     = add_message_headers(message, operation)
       packed_message = message.to_s
+      opts = { :exhaust => exhaust,
+               :compile_regex => compile_regex }
 
       result = ''
 
       begin
         send_message_on_socket(packed_message, socket)
-        result = receive(socket, request_id, exhaust)
+        result = receive(socket, request_id, opts)
       rescue ConnectionFailure => ex
         socket.close
         checkin(socket)
@@ -150,7 +152,9 @@ module Mongo
 
     private
 
-    def receive(sock, cursor_id, exhaust=false)
+    def receive(sock, cursor_id, opts={})
+      exhaust    = !!opts.delete(:exhaust)
+
       if exhaust
         docs = []
         num_received = 0
@@ -158,7 +162,7 @@ module Mongo
         while(cursor_id != 0) do
           receive_header(sock, cursor_id, exhaust)
           number_received, cursor_id = receive_response_header(sock)
-          new_docs, n = read_documents(number_received, sock)
+          new_docs, n = read_documents(number_received, sock, opts)
           docs += new_docs
           num_received += n
         end
@@ -167,7 +171,7 @@ module Mongo
       else
         receive_header(sock, cursor_id, exhaust)
         number_received, cursor_id = receive_response_header(sock)
-        docs, num_received = read_documents(number_received, sock)
+        docs, num_received = read_documents(number_received, sock, opts)
 
         return [docs, num_received, cursor_id]
       end
@@ -213,7 +217,7 @@ module Mongo
       end
     end
 
-    def read_documents(number_received, sock)
+    def read_documents(number_received, sock, opts)
       docs = []
       number_remaining = number_received
       while number_remaining > 0 do
@@ -221,7 +225,7 @@ module Mongo
         size = buf.unpack('V')[0]
         buf << receive_message_on_socket(size - 4, sock)
         number_remaining -= 1
-        docs << BSON::BSON_CODER.deserialize(buf)
+        docs << BSON::BSON_CODER.deserialize(buf, opts)
       end
       [docs, number_received]
     end

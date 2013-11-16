@@ -225,6 +225,8 @@ module Mongo
     # @option opts [Block] :transformer (nil) a block for transforming returned documents.
     #   This is normally used by object mappers to convert each returned document to an instance of a class.
     # @option opts [String] :comment (nil) a comment to include in profiling logs
+    # @option opts [Boolean] :compile_regex (true) whether BSON regex objects should be compiled into Ruby regexes.
+    #   If false, a BSON::Regexp object will be returned instead.
     #
     # @raise [ArgumentError]
     #   if timeout is set to false and find is not invoked in a block
@@ -251,6 +253,7 @@ module Mongo
       read               = opts.delete(:read) || @read
       tag_sets           = opts.delete(:tag_sets) || @tag_sets
       acceptable_latency = opts.delete(:acceptable_latency) || @acceptable_latency
+      compile_regex      = opts.key?(:compile_regex) ? opts.delete(:compile_regex) : true
 
       if timeout == false && !block_given?
         raise ArgumentError, "Collection#find must be invoked with a block when timeout is disabled."
@@ -281,7 +284,8 @@ module Mongo
         :read               => read,
         :tag_sets           => tag_sets,
         :comment            => comment,
-        :acceptable_latency => acceptable_latency
+        :acceptable_latency => acceptable_latency,
+        :compile_regex      => compile_regex
       })
 
       if block_given?

@@ -20,8 +20,8 @@ module BSON
       ByteBuffer.new(CBson.serialize(obj, check_keys, move_id, max_bson_size))
     end
 
-    def self.deserialize(buf=nil)
-      CBson.deserialize(ByteBuffer.new(buf).to_s)
+    def self.deserialize(buf=nil, opts={})
+      CBson.deserialize(ByteBuffer.new(buf).to_s, opts)
     end
 
     def self.max_bson_size
