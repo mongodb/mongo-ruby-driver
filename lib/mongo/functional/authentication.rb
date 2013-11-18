@@ -228,8 +228,17 @@ module Mongo
     #
     # @private
     def issue_x509(auth, opts={})
-      raise NotImplementedError,
-        "The #{auth[:mechanism]} authentication mechanism is not yet supported."
+      database = db('$external')
+
+      cmd = BSON::OrderedHash.new
+      cmd[:authenticate] = 1
+      cmd[:mechanism]    = auth[:mechanism]
+      cmd[:user]         = auth[:username]
+
+      doc = database.command(cmd, :check_response => false,
+                                  :socket         => opts[:socket])
+
+      Support.ok?(doc)
     end
 
     # Handles issuing authentication commands for the PLAIN auth mechanism.
