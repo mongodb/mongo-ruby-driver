@@ -249,7 +249,6 @@ module Mongo
       cmd = BSON::OrderedHash.new
       cmd[:saslStart]     = 1
       cmd[:mechanism]     = auth[:mechanism]
-      cmd[:username]      = auth[:username]
       cmd[:payload]       = BSON::Binary.new(payload)
       cmd[:autoAuthorize] = 1
 
