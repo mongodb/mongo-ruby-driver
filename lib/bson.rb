@@ -19,8 +19,8 @@ module BSON
     BSON_CODER.serialize(obj, check_keys, move_id)
   end
 
-  def self.deserialize(buf=nil)
-    BSON_CODER.deserialize(buf)
+  def self.deserialize(buf=nil, opts={})
+    BSON_CODER.deserialize(buf, opts)
   end
 
   # Reads a single BSON document from an IO object.

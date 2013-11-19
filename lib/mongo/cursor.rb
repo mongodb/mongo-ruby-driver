@@ -26,7 +26,8 @@ module Mongo
       :order, :hint, :snapshot, :timeout,
       :full_collection_name, :transformer,
       :options, :cursor_id, :show_disk_loc,
-      :comment, :read, :tag_sets, :acceptable_latency
+      :comment, :compile_regex, :read, :tag_sets,
+      :acceptable_latency
 
     # Create a new cursor.
     #
@@ -57,6 +58,7 @@ module Mongo
       @return_key    = opts.delete(:return_key)
       @show_disk_loc = opts.delete(:show_disk_loc)
       @comment       = opts.delete(:comment)
+      @compile_regex = opts.key?(:compile_regex) ? opts.delete(:compile_regex) : true
 
       # Wire-protocol settings
       @fields   = convert_fields_for_query(opts.delete(:fields))
@@ -536,7 +538,7 @@ module Mongo
           socket = @socket || checkout_socket_from_connection
           results, @n_received, @cursor_id = @connection.receive_message(
             Mongo::Constants::OP_QUERY, message, nil, socket, @command,
-            nil, exhaust?)
+            nil, exhaust?, compile_regex?)
         rescue ConnectionFailure => ex
           socket.close if socket
           @pool = nil
@@ -695,6 +697,10 @@ module Mongo
       if @command_cursor
         raise InvalidOperation, "Cannot call #{caller.first} on command cursors"
       end
+    end
+
+    def compile_regex?
+      @compile_regex
     end
   end
 end

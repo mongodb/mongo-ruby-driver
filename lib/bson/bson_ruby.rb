@@ -108,8 +108,8 @@ module BSON
       new(max_bson_size).serialize(obj, check_keys, move_id)
     end
 
-    def self.deserialize(buf=nil)
-      new.deserialize(buf)
+    def self.deserialize(buf=nil, opts={})
+      new.deserialize(buf, opts)
     end
 
     def serialize(obj, check_keys=false, move_id=false)
@@ -199,7 +199,7 @@ module BSON
       end
     end
 
-    def deserialize(buf=nil)
+    def deserialize(buf=nil, opts={})
       # If buf is nil, use @buf, assumed to contain already-serialized BSON.
       # This is only true during testing.
       if buf.is_a? String
@@ -236,7 +236,7 @@ module BSON
           doc[key] = deserialize_array_data(@buf)
         when REGEX
           key = deserialize_cstr(@buf)
-          doc[key] = deserialize_regex_data(@buf)
+          doc[key] = deserialize_regex_data(@buf, opts)
         when OBJECT
           key = deserialize_cstr(@buf)
           doc[key] = deserialize_object_data(@buf)
@@ -334,7 +334,8 @@ module BSON
       a
     end
 
-    def deserialize_regex_data(buf)
+    def deserialize_regex_data(buf, opts={})
+      # TODO: check opts to see if Regexp should be compiled
       str = deserialize_cstr(buf)
       options_str = deserialize_cstr(buf)
       opts = 0
