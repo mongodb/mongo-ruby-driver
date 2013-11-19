@@ -23,10 +23,6 @@ module Mongo
 
     # Initialize a bulk-write-view object to a collection with default query selector {}.
     #
-    # A modify method sets a value on the current object.
-    # A set methods returns a duplicate of the current object with a value set.
-    # A terminator write method appends a write operation to the bulk batch collected in the view.
-    #
     # A bulk write operation is initialized from a collection object.
     # For example, for an ordered bulk write view:
     #
@@ -46,6 +42,10 @@ module Mongo
     # While the API supports mixing of write operation types in a bulk operation,
     # currently only contiguous commands of the same type are submitted as a batch and
     # benefit from performance gains.
+    #
+    # A modify method sets a value on the current object.
+    # A set methods returns a duplicate of the current object with a value set.
+    # A terminator write method appends a write operation to the bulk batch collected in the view.
     #
     # @param [Collection] collection the parent collection object
     #
