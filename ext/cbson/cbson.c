@@ -183,7 +183,7 @@ static void write_utf8(bson_buffer_t buffer, VALUE string, int allow_null) {
 
 // rubinius compatibility
 #ifndef RREGEXP_OPTIONS
-#define RREGEXP_OPTIONS(r) RREGEXP(value)->ptr->options
+#define RREGEXP_OPTIONS(r) RREGEXP(r)->ptr->options
 #endif
 
 static char zero = 0;
