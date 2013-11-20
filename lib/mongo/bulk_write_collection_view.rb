@@ -178,6 +178,7 @@ module Mongo
     def execute(options = {})
       result = []
       errors = []
+      @ops = @ops.sort{|x,y| x.first <=> y.first } if @options[:ordered] == false # sort by write-type
       ordered_group_by_first(@ops).each do |op, documents|
         check_keys = false
         if op == :insert

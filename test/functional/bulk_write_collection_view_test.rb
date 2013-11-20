@@ -350,6 +350,21 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       assert result[1].first.message[/duplicate key error/]
       assert_equal [{"_id" => 1, "a" => 1}, {"_id" => 3, "a" => 3}], @collection.find.to_a
     end
+
+    should "run unordered bulk operations in one batch per write-type" do
+      @collection.expects(:batch_write_incremental).times(3).returns({})
+      bulk = @collection.initialize_unordered_bulk_op
+      bulk.insert({:_id => 1, :a => 1})
+      bulk.find({:_id => 1, :a => 1}).update({"$inc" => {:x => 1}})
+      bulk.find({:_id => 1, :a => 1}).remove
+      bulk.insert({:_id => 2, :a => 2})
+      bulk.find({:_id => 2, :a => 2}).update({"$inc" => {:x => 2}})
+      bulk.find({:_id => 2, :a => 2}).remove
+      bulk.insert({:_id => 3, :a => 3})
+      bulk.find({:_id => 3, :a => 3}).update({"$inc" => {:x => 3}})
+      bulk.find({:_id => 3, :a => 3}).remove
+      result = bulk.execute
+    end
   end
 
 end
