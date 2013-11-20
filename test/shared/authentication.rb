@@ -231,14 +231,14 @@ module AuthenticationTests
   #
   # In order to run these tests, set the following environment variables:
   #
-  #   export SASL_HOST='server.domain.com'
-  #   export SASL_USER='application%2Fuser%40example.com'
-  #   export SASL_PASS='password'
+  #   export MONGODB_SASL_HOST='server.domain.com'
+  #   export MONGODB_SASL_USER='application%2Fuser%40example.com'
+  #   export MONGODB_SASL_PASS='password'
   #
   #   # optional (defaults to '$external')
-  #   export SASL_SOURCE='source_database'
+  #   export MONGODB_SASL_SOURCE='source_database'
   #
-  if ENV.key?('SASL_HOST') && ENV.key?('SASL_USER') && ENV.key?('SASL_PASS')
+  if ENV.key?('MONGODB_SASL_HOST') && ENV.key?('MONGODB_SASL_USER') && ENV.key?('MONGODB_SASL_PASS')
 
     def test_plain_authenticate
       replica_set = @client.class.name == 'Mongo::MongoReplicaSetClient'
@@ -246,32 +246,32 @@ module AuthenticationTests
       # TODO: Remove this once we have a replica set configured for SASL in CI
       return if ENV.key?('CI') && replica_set
 
-      host   = replica_set ? [ENV['SASL_HOST']] : ENV['SASL_HOST']
+      host   = replica_set ? [ENV['MONGODB_SASL_HOST']] : ENV['MONGODB_SASL_HOST']
       client = @client.class.new(host)
-      source = ENV['SASL_SOURCE'] || '$external'
+      source = ENV['MONGODB_SASL_SOURCE'] || '$external'
       db     = client['test']
 
       # should successfully authenticate
-      assert db.authenticate(ENV['SASL_USER'], ENV['SASL_PASS'], true, source, 'PLAIN')
+      assert db.authenticate(ENV['MONGODB_SASL_USER'], ENV['MONGODB_SASL_PASS'], true, source, 'PLAIN')
       assert client[source].logout
 
       # should raise on missing password
       ex = assert_raise Mongo::MongoArgumentError do
-        db.authenticate(ENV['SASL_USER'], nil, true, source, 'PLAIN')
+        db.authenticate(ENV['MONGODB_SASL_USER'], nil, true, source, 'PLAIN')
       end
       assert_match /username and password are required/, ex.message
 
       # should raise on invalid password
       assert_raise Mongo::AuthenticationError do
-        db.authenticate(ENV['SASL_USER'], 'foo', true, source, 'PLAIN')
+        db.authenticate(ENV['MONGODB_SASL_USER'], 'foo', true, source, 'PLAIN')
       end
     end
 
     def test_plain_authenticate_from_uri
-      source = ENV['SASL_SOURCE'] || '$external'
+      source = ENV['MONGODB_SASL_SOURCE'] || '$external'
 
-      uri    = "mongodb://#{ENV['SASL_USER']}:#{ENV['SASL_PASS']}@" +
-               "#{ENV['SASL_HOST']}/some_db?authSource=#{source}" +
+      uri    = "mongodb://#{ENV['MONGODB_SASL_USER']}:#{ENV['MONGODB_SASL_PASS']}@" +
+               "#{ENV['MONGODB_SASL_HOST']}/some_db?authSource=#{source}" +
                "&authMechanism=PLAIN"
 
       client = @client.class.from_uri(uri)
@@ -282,8 +282,8 @@ module AuthenticationTests
       client[source].logout(:socket => socket)
       client.checkin(socket)
 
-      uri = "mongodb://#{ENV['SASL_USER']}@#{ENV['SASL_HOST']}/some_db?" +
-            "authSource=#{source}&authMechanism=PLAIN"
+      uri = "mongodb://#{ENV['MONGODB_SASL_USER']}@#{ENV['MONGODB_SASL_HOST']}/" +
+            "some_db?authSource=#{source}&authMechanism=PLAIN"
 
       # should raise for missing password
       ex = assert_raise Mongo::MongoArgumentError do
@@ -291,8 +291,8 @@ module AuthenticationTests
       end
       assert_match /username and password are required/, ex.message
 
-      uri = "mongodb://#{ENV['SASL_USER']}:foo@#{ENV['SASL_HOST']}/some_db?" +
-            "authSource=#{source}&authMechanism=PLAIN"
+      uri = "mongodb://#{ENV['MONGODB_SASL_USER']}:foo@#{ENV['MONGODB_SASL_HOST']}/" +
+            "some_db?authSource=#{source}&authMechanism=PLAIN"
 
       # should raise for invalid password
       client = @client.class.from_uri(uri)
