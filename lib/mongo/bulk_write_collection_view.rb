@@ -14,16 +14,44 @@
 
 module Mongo
 
-  # References
-  #   Fluent Interface - https://wiki.mongodb.com/display/10GEN/Fluent+Interface
-  #   Bulk API Spec - https://github.com/10gen/specifications/blob/master/source/driver-bulk-update.rst
-
+  # A bulk write view to a collection of documents in a database.
   class BulkWriteCollectionView
 
     DEFAULT_OP_ARGS = {:q => {}}
 
     attr_reader :collection, :options, :ops, :op_args
 
+    # Initialize a bulk-write-view object to a collection with default query selector {}.
+    #
+    # A bulk write operation is initialized from a collection object.
+    # For example, for an ordered bulk write view:
+    #
+    #   bulk = collection.initialize_ordered_bulk_op
+    #
+    # or for an unordered bulk write view:
+    #
+    #   bulk = collection.initialize_unordered_bulk_op
+    #
+    # The bulk write view collects individual write operations together so that they can be
+    # executed as a batch for significant performance gains.
+    # The ordered bulk operation will execute each operation serially in order.
+    # Execution will stop at the first occurrence of an error for an ordered bulk operation.
+    # The unordered bulk operation will be executed and may take advantage of parallelism.
+    # There are no guarantees for the order of execution of the operations on the server.
+    # Execution will continue even if there are errors for an unordered bulk operation.
+    # While the API supports mixing of write operation types in a bulk operation,
+    # currently only contiguous commands of the same type are submitted as a batch and
+    # benefit from performance gains.
+    #
+    # A modify method sets a value on the current object.
+    # A set methods returns a duplicate of the current object with a value set.
+    # A terminator write method appends a write operation to the bulk batch collected in the view.
+    #
+    # @param [Collection] collection the parent collection object
+    #
+    # @option opts [Boolean] :ordered (true) Set bulk execution for ordered or unordered
+    #
+    # @return [BulkWriteCollectionView]
     def initialize(collection, options = {})
       @collection = collection
       @options = options
@@ -38,45 +66,115 @@ module Mongo
       "@collection=#<Mongo::Collection:0x#{@collection.object_id}>, #{vars_inspect.join(', ')}>"
     end
 
+    # Modify the query selector for subsequent bulk write operations.
+    # The default query selector on creation of the bulk write view is {}.
+    #
+    # @param [Hash] q the query selector
+    #
+    # @return [BulkWriteCollectionView]
     def find(q)
       op_args_set(:q, q)
     end
 
+    # Modify the upsert option argument for subsequent bulk write operations.
+    #
+    # @param [Boolean] value (true) the upsert option value
+    #
+    # @return [BulkWriteCollectionView]
     def upsert!(value = true)
       op_args_set(:upsert, value)
     end
 
+    # Set the upsert option argument for subsequent bulk write operations.
+    #
+    # @param [Boolean] value (true) the upsert option value
+    #
+    # @return [BulkWriteCollectionView] a duplicated object
     def upsert(value = true)
       dup.upsert!(value)
     end
 
-    def update(u)
-      raise MongoArgumentError, "document must start with an operator" unless update_doc?(u)
-      op_push([:update, @op_args.merge(:u => u, :multi => true)])
-    end
-
+    # Update one document matching the selector.
+    #
+    #   bulk.find({"a" => 1}).update_one({"$inc" => {"x" => 1}})
+    #
+    # Use the upsert! or upsert method to specify an upsert. For example:
+    #
+    #   bulk.find({"a" => 1}).upsert.updateOne({"$inc" => {"x" => 1}})
+    #
+    # @param [Hash] u the update document
+    #
+    # @return [BulkWriteCollectionView]
     def update_one(u)
       raise MongoArgumentError, "document must start with an operator" unless update_doc?(u)
       op_push([:update, @op_args.merge(:u => u, :multi => false)])
     end
 
+    # Update all documents matching the selector. For example:
+    #
+    #   bulk.find({"a" => 2}).update({"$inc" => {"x" => 2}})
+    #
+    # Use the upsert! or upsert method to specify an upsert.  For example:
+    #
+    #   bulk.find({"a" => 2}).upsert.update({"$inc" => {"x" => 2}})
+    #
+    # @param [Hash] u the update document
+    #
+    # @return [BulkWriteCollectionView]
+    def update(u)
+      raise MongoArgumentError, "document must start with an operator" unless update_doc?(u)
+      op_push([:update, @op_args.merge(:u => u, :multi => true)])
+    end
+
+    # Replace entire document (update with whole doc replace). For example:
+    #
+    #   bulk.find({"a" => 3}).replace_one({"x" => 3})
+    #
+    # @param [Hash] u the replacement document
+    #
+    # @return [BulkWriteCollectionView]
     def replace_one(u)
       raise MongoArgumentError, "document must not contain any operators" unless replace_doc?(u)
       op_push([:update, @op_args.merge(:u => u, :multi => false)])
     end
 
+    # Remove a single document matching the selector. For example:
+    #
+    #   bulk.find({"a" => 4}).remove_one;
+    #
+    # @return [BulkWriteCollectionView]
     def remove_one
       op_push([:delete, @op_args.merge(:limit => 1)])
     end
 
+    # Remove all documents matching the selector. For example:
+    #
+    #   bulk.find({"a" => 5}).remove;
+    #
+    # @return [BulkWriteCollectionView]
     def remove
       op_push([:delete, @op_args.merge(:limit => 0)])
     end
 
+    # Insert a document. For example:
+    #
+    #   bulk.insert({"x" => 4})
+    #
+    # @return [BulkWriteCollectionView]
     def insert(document)
       op_push([:insert, document])
     end
 
+    # Execute the bulk operation, with an optional write concern overwriting the default w:1.
+    # For example:
+    #
+    #   write_concern = {:w => 1, :j => 1}
+    #   bulk.execute({write_concern})
+    #
+    # On return from execute, the bulk operation is cleared,
+    # but the selector and upsert settings are preserved.
+    #
+    # @return [BulkWriteCollectionView]
     def execute(options = {})
       result = []
       errors = []
@@ -136,10 +234,20 @@ module Mongo
 
   class Collection
 
+    # Initialize an ordered bulk write view for this collection
+    # Execution will stop at the first occurrence of an error for an ordered bulk operation.
+    #
+    # @return [BulkWriteCollectionView]
     def initialize_ordered_bulk_op
       BulkWriteCollectionView.new(self, :ordered => true)
     end
 
+    # Initialize an unordered bulk write view for this collection
+    # The unordered bulk operation will be executed and may take advantage of parallelism.
+    # There are no guarantees for the order of execution of the operations on the server.
+    # Execution will continue even if there are errors for an unordered bulk operation.
+    #
+    # @return [BulkWriteCollectionView]
     def initialize_unordered_bulk_op
       BulkWriteCollectionView.new(self, :ordered => false)
     end
