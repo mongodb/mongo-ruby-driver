@@ -652,10 +652,11 @@ static VALUE method_serialize(VALUE self, VALUE doc, VALUE check_keys,
     return result;
 }
 
-static VALUE get_value(const char* buffer, int* position, int type, struct deserialize_opts * opts) {
+static VALUE get_value(const char* buffer, int* position,
+                       unsigned char type, struct deserialize_opts * opts) {
     VALUE value;
     switch (type) {
-    case -1:
+    case 255:
         {
             value = rb_class_new_instance(0, NULL, MinKey);
             break;
@@ -686,14 +687,14 @@ static VALUE get_value(const char* buffer, int* position, int type, struct deser
                 int offset = *position + 10;
                 VALUE argv[2];
                 int collection_length = *(int*)(buffer + offset) - 1;
-                char id_type;
+                unsigned char id_type;
                 offset += 4;
 
                 argv[0] = STR_NEW(buffer + offset, collection_length);
                 offset += collection_length + 1;
-                id_type = buffer[offset];
+                id_type = (unsigned char)buffer[offset];
                 offset += 5;
-                argv[1] = get_value(buffer, &offset, (int)id_type, opts);
+                argv[1] = get_value(buffer, &offset, id_type, opts);
                 value = rb_class_new_instance(2, argv, DBRef);
             } else {
                 value = elements_to_hash(buffer + *position + 4, size - 5, opts);
@@ -710,7 +711,7 @@ static VALUE get_value(const char* buffer, int* position, int type, struct deser
 
             value = rb_ary_new();
             while (*position < end) {
-                int type = (int)buffer[(*position)++];
+                unsigned char type = (unsigned char)buffer[(*position)++];
                 int key_size = (int)strlen(buffer + *position);
                 VALUE to_append;
 
@@ -909,7 +910,7 @@ static VALUE elements_to_hash(const char* buffer, int max, struct deserialize_op
     VALUE hash = rb_class_new_instance(0, NULL, OrderedHash);
     int position = 0;
     while (position < max) {
-        int type = (int)buffer[position++];
+        unsigned char type = (unsigned char)buffer[position++];
         int name_length = (int)strlen(buffer + position);
         VALUE name = STR_NEW(buffer + position, name_length);
         VALUE value;
