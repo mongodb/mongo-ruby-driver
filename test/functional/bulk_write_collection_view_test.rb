@@ -38,6 +38,9 @@ class Hash
 end
 
 module Mongo
+  class Collection
+    public :batch_write_incremental
+  end
   class BulkWriteCollectionView
     public :update_doc?, :replace_doc?, :ordered_group_by_first
 

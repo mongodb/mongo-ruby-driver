@@ -656,6 +656,14 @@ class TestCollection < Test::Unit::TestCase
     assert_equal true, @@test.remove({}, :w => 0)
   end
 
+  def test_remove_with_limit
+    @@test.insert([{:n => 1},{:n => 2},{:n => 3}])
+    @@test.remove({}, :limit => 1)
+    assert_equal 2, @@test.count
+    @@test.remove({}, :limit => 0)
+    assert_equal 0, @@test.count
+  end
+
   def test_count
     @@test.drop
 
@@ -1592,7 +1600,7 @@ end
     end
 
     should "generate indexes in the proper order" do
-      @collection.expects(:send_write_operation) do |type, selector, documents, check_keys, opts, collection_name|
+      @collection.expects(:send_write) do |type, selector, documents, check_keys, opts, collection_name|
         assert_equal 'b_1_a_1', selector[:name]
       end
       @collection.create_index([['b', 1], ['a', 1]])
