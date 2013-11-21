@@ -25,6 +25,64 @@ class TestCollection < Test::Unit::TestCase
     @@test.remove
   end
 
+  def get_max_wire_version
+    @@db.connection.instance_variable_get(:@max_wire_version)
+  end
+
+  def set_max_wire_version(n)
+    @@db.connection.instance_variable_set(:@max_wire_version, n)
+  end
+
+  def with_max_wire_version(n)
+    old_max_wire_version = get_max_wire_version
+    new_max_wire_version = set_max_wire_version(n)
+    #puts "max_wire_version: #{new_max_wire_version}"
+    yield
+    set_max_wire_version(old_max_wire_version)
+  end
+
+  @@wv0 = Mongo::MongoClient::RELEASE_2_4_AND_BEFORE
+  @@wv2 = Mongo::MongoClient::BATCH_COMMANDS
+  @@a_h = Mongo::Collection::APPEND_HEADROOM
+  @@s_h = Mongo::Collection::SERIALIZE_HEADROOM
+
+  MAX_SIZE_EXCEPTION = [
+      [@@wv0, @@client.max_bson_size,         nil,                     /xyzzy/],
+      [@@wv0, @@client.max_bson_size + 1,     BSON::InvalidDocument,   /Document.* too large/]
+  ]
+  MAX_SIZE_EXCEPTION_COMMANDS = [
+      [@@wv2, @@client.max_bson_size,         nil,                     /xyzzy/],
+      [@@wv2, @@client.max_bson_size + 1,     Mongo::OperationFailure, /object to insert too large/],
+      [@@wv2, @@client.max_bson_size + @@s_h, Mongo::OperationFailure, /object to insert too large/],
+      [@@wv2, @@client.max_bson_size + @@a_h, BSON::InvalidDocument,   /Document.* too large/]
+  ]
+
+  MAX_SIZE_EXCEPTION += MAX_SIZE_EXCEPTION_COMMANDS if @@version >= "2.5.2"
+
+  def generate_sized_doc(size)
+    doc = {"_id" => BSON::ObjectId.new, "x" => "y"}
+    serialize_doc = BSON::BSON_CODER.serialize(doc, false, false, size)
+    doc = {"_id" => BSON::ObjectId.new, "x" => "y" * (1 + size - serialize_doc.size)}
+    assert_equal size, BSON::BSON_CODER.serialize(doc, false, false, size).size
+    doc
+  end
+
+  def test_insert_batch_max_sizes
+    MAX_SIZE_EXCEPTION.each do |wire_version, size, exc, regexp|
+      with_max_wire_version(wire_version) do
+        doc = generate_sized_doc(size)
+        begin
+          @@test.insert([doc.dup])
+          assert_equal nil, exc
+        rescue => e
+          #puts "wire_version:#{wire_version}, size:#{size}, exc:#{exc}, e:#{e.message.inspect}"
+          assert_equal exc, e.class, "wire_version:#{wire_version}, size:#{size}, exc:#{exc} e:#{e.message.inspect}"
+          assert_match regexp, e.message
+        end
+      end
+    end
+  end
+
   if @@version >= '2.5.1'
     def test_aggregation_cursor
       [10, 1000].each do |size|
