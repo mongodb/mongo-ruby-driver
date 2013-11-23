@@ -182,13 +182,13 @@ module Mongo
       # raise on unsuccessful attempt to authenticate
       raise AuthenticationError,
         "Failed to authenticate user '#{auth[:username]}' " +
-        "on db '#{auth[:source]}'." unless result
+        "on db '#{auth[:source]}'." unless Support.ok?(result)
 
       # save authentication to the client (if specified)
       add_auth(auth[:db_name], auth[:username], auth[:password],
                auth[:source], auth[:mechanism]) if opts[:save_auth]
 
-      result
+      true
     end
 
     private
@@ -216,9 +216,8 @@ module Mongo
                                            auth[:password],
                                            nonce)
 
-      doc = database.command(cmd, :check_response => false,
-                                  :socket         => opts[:socket])
-      Support.ok?(doc)
+      database.command(cmd, :check_response => false,
+                            :socket         => opts[:socket])
     end
 
     # Handles issuing authentication commands for the MONGODB-X509 auth mechanism.
@@ -235,10 +234,8 @@ module Mongo
       cmd[:mechanism]    = auth[:mechanism]
       cmd[:user]         = auth[:username]
 
-      doc = database.command(cmd, :check_response => false,
-                                  :socket         => opts[:socket])
-
-      Support.ok?(doc)
+      database.command(cmd, :check_response => false,
+                            :socket         => opts[:socket])
     end
 
     # Handles issuing authentication commands for the PLAIN auth mechanism.
@@ -261,10 +258,8 @@ module Mongo
       cmd[:payload]       = BSON::Binary.new(payload)
       cmd[:autoAuthorize] = 1
 
-      doc = database.command(cmd, :check_response => false,
-                                  :socket         => opts[:socket])
-
-      Support.ok?(doc)
+      database.command(cmd, :check_response => false,
+                            :socket         => opts[:socket])
     end
 
     # Handles issuing authentication commands for the GSSAPI auth mechanism.
