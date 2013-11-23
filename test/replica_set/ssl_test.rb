@@ -111,4 +111,49 @@ class ReplicaSetSSLCertValidationTest < Test::Unit::TestCase
     end
   end
 
+  # X509 Authentication Tests
+  #
+  # Requires MongoDB built with SSL and the follow options:
+  #
+  # mongod --auth --dbpath /path/to/data/directory --sslOnNormalPorts \
+  # --sslPEMKeyFile /path/to/server.pem \
+  # --sslCAFile /path/to/ca.pem \
+  # --sslCRLFile /path/to/crl.pem
+  #
+  if ENV.key?('MONGODB_X509_USER')
+
+    def test_x509_authentication
+      mechanism = 'MONGODB-X509'
+      ssl_opts  = { :ssl => true, :ssl_cert => CLIENT_CERT }
+      client    = MongoReplicaSetClient.new(SEEDS, ssl_opts)
+
+      return unless client.server_version > '2.5.2'
+
+      user     = ENV['MONGODB_X509_USER']
+      db       = client.db('$external')
+
+      # add user for test (enable auth)
+      roles    = [{:role => 'readWriteAnyDatabase', :db => 'admin'},
+                  {:role => 'userAdminAnyDatabase', :db => 'admin'}]
+      db.add_user(user, nil, false, :roles => roles)
+
+      assert db.authenticate(user, nil, nil, nil, mechanism)
+      assert db.collection_names
+
+      assert db.logout
+      assert_raise Mongo::AuthenticationError do
+        db.collection_names
+      end
+
+      assert MongoReplicaSetClient.from_uri(
+        "mongodb://#{user}@#{SEEDS.join(',')}/admin?authMechanism=#{mechanism}")
+      assert db.collection_names
+
+      # clean up and remove all users
+      db.command(:dropAllUsersFromDatabase => 1)
+      db.logout
+    end
+
+  end
+
 end
