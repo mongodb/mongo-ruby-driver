@@ -178,6 +178,7 @@ module Mongo
     def execute(options = {})
       result = []
       errors = []
+      @ops = sort_by_first_sym(@ops) if @options[:ordered] == false # sort by write-type
       ordered_group_by_first(@ops).each do |op, documents|
         check_keys = false
         if op == :insert
@@ -218,6 +219,12 @@ module Mongo
 
     def replace_doc?(doc)
       doc.keys.all?{|key| key !~ /^\$/}
+    end
+
+    def sort_by_first_sym(pairs)
+      pairs = pairs.collect{|first, rest| [first.to_s, rest]} #stringify_first
+      pairs = pairs.sort{|x,y| x.first <=> y.first }
+      pairs.collect{|first, rest| [first.to_sym, rest]} #symbolize_first
     end
 
     def ordered_group_by_first(pairs)

@@ -29,7 +29,10 @@ module Mongo
       :update => :updates,
       :delete => :deletes
     }
-    BATCH_SIZE_LIMIT = 10_000
+    COMMAND_HEADROOM   = 16_384
+    APPEND_HEADROOM    = COMMAND_HEADROOM / 2
+    SERIALIZE_HEADROOM = APPEND_HEADROOM / 2
+    MAX_BATCH_SIZE     = 10_000
 
     attr_reader :db,
                 :name,
@@ -1189,33 +1192,45 @@ module Mongo
       end
     end
 
+    def batch_write_max_sizes(write_concern)
+      if use_write_command?(write_concern)
+        headroom = [COMMAND_HEADROOM, APPEND_HEADROOM, SERIALIZE_HEADROOM]
+        max_message_size, max_append_size, max_serialize_size = headroom.collect{|h| @connection.max_bson_size + h}
+      else
+        max_message_size = @connection.max_message_size
+        max_append_size = max_message_size
+        max_serialize_size = @connection.max_bson_size
+      end
+      [max_message_size, max_append_size, max_serialize_size]
+    end
+
     def batch_write_incremental(op, documents, check_keys=true, opts={})
       raise Mongo::OperationFailure, "Request contains no documents" if documents.empty?
+      write_concern = get_write_concern(opts, self)
       raise MongoArgumentError, "Bulk write commands for :update and :delete are not available " +
           "with max_wire_version #{@connection.max_wire_version} " +
           "and write concern #{write_concern.inspect}" if op != :insert && !use_write_command?(write_concern)
-      message_size_limit = @connection.max_message_size
-      write_concern = get_write_concern(opts, self)
+      max_message_size, max_append_size, max_serialize_size = batch_write_max_sizes(write_concern)
       continue_on_error = !!opts[:continue_on_error]
       collect_on_error = !!opts[:collect_on_error]
       error_docs = [] # docs with serialization errors
       errors = [] # for all db errors
       responses = []
       serialized_doc = nil
-      message = BSON::ByteBuffer.new("", @connection.max_message_size)
+      message = BSON::ByteBuffer.new("", max_message_size)
       docs = documents.dup
       until docs.empty? # process documents a batch at a time
         batch_docs = []
         batch_message_initialize(message, op, continue_on_error, write_concern)
-        while !docs.empty? && batch_docs.size < BATCH_SIZE_LIMIT
+        while !docs.empty? && batch_docs.size < MAX_BATCH_SIZE
           begin
-            serialized_doc ||= BSON::BSON_CODER.serialize(docs.first, check_keys, true, @connection.max_bson_size)
+            serialized_doc ||= BSON::BSON_CODER.serialize(docs.first, check_keys, true, max_serialize_size)
           rescue BSON::InvalidDocument, BSON::InvalidKeyName, BSON::InvalidStringEncoding => ex
             raise ex unless collect_on_error
             error_docs << docs.shift
             next
           end
-          break if message.size + serialized_doc.size > message_size_limit
+          break if message.size + serialized_doc.size > max_append_size
           batch_docs << docs.shift
           batch_message_append(message, serialized_doc, write_concern)
           serialized_doc = nil

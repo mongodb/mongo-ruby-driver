@@ -42,7 +42,7 @@ module Mongo
     public :batch_write_incremental
   end
   class BulkWriteCollectionView
-    public :update_doc?, :replace_doc?, :ordered_group_by_first
+    public :update_doc?, :replace_doc?, :sort_by_first_sym, :ordered_group_by_first
 
     # for reference and future server direction
     def generate_batch_commands(groups, write_concern)
@@ -116,6 +116,24 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       assert_true @bulk.replace_doc?({})
       assert_false @bulk.replace_doc?({"$inc" => { :x => 1 }})
       assert_false @bulk.replace_doc?({ :a => 1, "$inc" => { :x => 1 }})
+    end
+
+    should "sort_by_first_sym for grouping unordered ops" do
+      pairs = [
+          [:insert, {:n => 0}],
+          [:update, {:n => 1}], [:update, {:n => 2}],
+          [:delete, {:n => 3}],
+          [:insert, {:n => 5}], [:insert, {:n => 6}], [:insert, {:n => 7}],
+          [:update, {:n => 8}],
+          [:delete, {:n => 9}], [:delete, {:n => 10}]
+      ]
+      result = @bulk.sort_by_first_sym(pairs)
+      expected = [
+          :delete, :delete, :delete,
+          :insert, :insert, :insert, :insert,
+          :update, :update, :update
+      ]
+      assert_equal expected, result.collect{|first, rest| first}
     end
 
     should "calculate ordered_group_by_first" do
@@ -349,6 +367,21 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       #pp_with_caller result
       assert result[1].first.message[/duplicate key error/]
       assert_equal [{"_id" => 1, "a" => 1}, {"_id" => 3, "a" => 3}], @collection.find.to_a
+    end
+
+    should "run unordered bulk operations in one batch per write-type" do
+      @collection.expects(:batch_write_incremental).times(3).returns({})
+      bulk = @collection.initialize_unordered_bulk_op
+      bulk.insert({:_id => 1, :a => 1})
+      bulk.find({:_id => 1, :a => 1}).update({"$inc" => {:x => 1}})
+      bulk.find({:_id => 1, :a => 1}).remove
+      bulk.insert({:_id => 2, :a => 2})
+      bulk.find({:_id => 2, :a => 2}).update({"$inc" => {:x => 2}})
+      bulk.find({:_id => 2, :a => 2}).remove
+      bulk.insert({:_id => 3, :a => 3})
+      bulk.find({:_id => 3, :a => 3}).update({"$inc" => {:x => 3}})
+      bulk.find({:_id => 3, :a => 3}).remove
+      result = bulk.execute
     end
   end
 
