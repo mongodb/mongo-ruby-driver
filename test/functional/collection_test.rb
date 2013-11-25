@@ -47,8 +47,13 @@ class TestCollection < Test::Unit::TestCase
   @@s_h = Mongo::Collection::SERIALIZE_HEADROOM
 
   MAX_SIZE_EXCEPTION_TEST = [
-      [@@wv0, @@client.max_bson_size,         nil,                     /xyzzy/],
+      [@@wv0, @@client.max_bson_size, nil, /xyzzy/],
+  ]
+  MAX_SIZE_EXCEPTION_CRUBY_TEST = [
       [@@wv0, @@client.max_bson_size + 1,     BSON::InvalidDocument,   /Document.* too large/]
+  ]
+  MAX_SIZE_EXCEPTION_JRUBY_TEST = [
+      [@@wv0, @@client.max_bson_size + 1,     Mongo::OperationFailure, /object to insert too large/]
   ]
   MAX_SIZE_EXCEPTION_COMMANDS_TEST = [
       [@@wv2, @@client.max_bson_size,         nil,                     /xyzzy/],
@@ -58,6 +63,8 @@ class TestCollection < Test::Unit::TestCase
   ]
 
   @@max_size_exception_test = MAX_SIZE_EXCEPTION_TEST
+  @@max_size_exception_test += MAX_SIZE_EXCEPTION_CRUBY_TEST unless RUBY_PLATFORM == 'java'
+  @@max_size_exception_test += MAX_SIZE_EXCEPTION_JRUBY_TEST if RUBY_PLATFORM == 'java'
   @@max_size_exception_test += MAX_SIZE_EXCEPTION_COMMANDS_TEST if @@version >= "2.5.2"
 
   def generate_sized_doc(size)
@@ -77,7 +84,7 @@ class TestCollection < Test::Unit::TestCase
           assert_equal nil, exc
         rescue => e
           #puts "wire_version:#{wire_version}, size:#{size}, exc:#{exc}, e:#{e.message.inspect}"
-          assert_equal exc, e.class, "wire_version:#{wire_version}, size:#{size}, exc:#{exc} e:#{e.message.inspect}"
+          assert_equal exc, e.class, "wire_version:#{wire_version}, size:#{size}, exc:#{exc} e:#{e.message.inspect} @@version:#{@@version}"
           assert_match regexp, e.message
         end
       end
