@@ -46,18 +46,19 @@ class TestCollection < Test::Unit::TestCase
   @@a_h = Mongo::Collection::APPEND_HEADROOM
   @@s_h = Mongo::Collection::SERIALIZE_HEADROOM
 
-  MAX_SIZE_EXCEPTION = [
+  MAX_SIZE_EXCEPTION_TEST = [
       [@@wv0, @@client.max_bson_size,         nil,                     /xyzzy/],
       [@@wv0, @@client.max_bson_size + 1,     BSON::InvalidDocument,   /Document.* too large/]
   ]
-  MAX_SIZE_EXCEPTION_COMMANDS = [
+  MAX_SIZE_EXCEPTION_COMMANDS_TEST = [
       [@@wv2, @@client.max_bson_size,         nil,                     /xyzzy/],
       [@@wv2, @@client.max_bson_size + 1,     Mongo::OperationFailure, /object to insert too large/],
       [@@wv2, @@client.max_bson_size + @@s_h, Mongo::OperationFailure, /object to insert too large/],
       [@@wv2, @@client.max_bson_size + @@a_h, BSON::InvalidDocument,   /Document.* too large/]
   ]
 
-  MAX_SIZE_EXCEPTION += MAX_SIZE_EXCEPTION_COMMANDS if @@version >= "2.5.2"
+  @@max_size_exception_test = MAX_SIZE_EXCEPTION_TEST
+  @@max_size_exception_test += MAX_SIZE_EXCEPTION_COMMANDS_TEST if @@version >= "2.5.2"
 
   def generate_sized_doc(size)
     doc = {"_id" => BSON::ObjectId.new, "x" => "y"}
@@ -68,7 +69,7 @@ class TestCollection < Test::Unit::TestCase
   end
 
   def test_insert_batch_max_sizes
-    MAX_SIZE_EXCEPTION.each do |wire_version, size, exc, regexp|
+    @@max_size_exception_test.each do |wire_version, size, exc, regexp|
       with_max_wire_version(wire_version) do
         doc = generate_sized_doc(size)
         begin

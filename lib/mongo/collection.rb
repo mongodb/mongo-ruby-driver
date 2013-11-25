@@ -1193,9 +1193,10 @@ module Mongo
     end
 
     def batch_write_max_sizes(write_concern)
-      headroom = [COMMAND_HEADROOM, APPEND_HEADROOM, SERIALIZE_HEADROOM]
-      max_message_size, max_append_size, max_serialize_size = headroom.collect{|h| @connection.max_bson_size + h}
-      unless use_write_command?(write_concern)
+      if use_write_command?(write_concern)
+        headroom = [COMMAND_HEADROOM, APPEND_HEADROOM, SERIALIZE_HEADROOM]
+        max_message_size, max_append_size, max_serialize_size = headroom.collect{|h| @connection.max_bson_size + h}
+      else
         max_message_size = @connection.max_message_size
         max_append_size = max_message_size
         max_serialize_size = @connection.max_bson_size
