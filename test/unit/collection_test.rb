@@ -176,7 +176,6 @@ class CollectionTest < Test::Unit::TestCase
       end
     end
 
-
     should "use the connection's logger" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
       @db   = @client['testing']
