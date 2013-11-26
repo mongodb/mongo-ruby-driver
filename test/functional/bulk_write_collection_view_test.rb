@@ -49,7 +49,7 @@ module Mongo
       groups.collect do |op, documents|
         {
             op => @collection.name,
-            Mongo::Collection::WRITE_COMMAND_ARG_KEY[op] => documents,
+            Mongo::CollectionWriter::WRITE_COMMAND_ARG_KEY[op] => documents,
             :ordered => @options[:ordered],
             :writeConcern => write_concern
         }
@@ -297,7 +297,6 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       @bulk.insert({ :x => 2 })
       write_concern = {:w => 1}
       result = @bulk.execute(write_concern)
-      #puts "result: #{result}"
       assert_equal 2, @collection.count
       assert_equal [], @bulk.ops
     end
