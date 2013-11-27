@@ -42,16 +42,10 @@ module Mongo
       @max_write_batch_size = MAX_WRITE_BATCH_SIZE
     end
 
-    def use_write_command?(write_concern)
-      write_concern[:w] != 0 && @db.connection.wire_version_feature?(Mongo::MongoClient::BATCH_COMMANDS)
-    end
-
+    # common implementation only for new batch write commands (insert, update, delete) and old batch insert
     def batch_write_incremental(op, documents, check_keys=true, opts={})
       raise Mongo::OperationFailure, "Request contains no documents" if documents.empty?
       write_concern = get_write_concern(opts, @collection)
-      raise MongoArgumentError, "Bulk write commands for :update and :delete are not available " +
-          "with max_wire_version #{@connection.max_wire_version} " +
-          "and write concern #{write_concern.inspect}" if op != :insert && !use_write_command?(write_concern)
       max_message_size, max_append_size, max_serialize_size = batch_write_max_sizes(write_concern)
       continue_on_error = !!opts[:continue_on_error]
       collect_on_error = !!opts[:collect_on_error]

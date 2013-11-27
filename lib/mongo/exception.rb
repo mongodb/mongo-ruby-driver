@@ -79,4 +79,7 @@ module Mongo
 
   # Raised when the client supplies an invalid value to sort by.
   class InvalidSortValueError < MongoRubyError; end
+
+  # Raised for bulk write errors.
+  class BulkWriteError < OperationFailure; end
 end

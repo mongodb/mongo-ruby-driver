@@ -24,7 +24,9 @@ module Mongo
                 :pk_factory,
                 :hint,
                 :write_concern,
-                :capped
+                :capped,
+                :operation_writer,
+                :command_writer
 
     # Read Preference
     attr_accessor :read,
@@ -1000,11 +1002,13 @@ module Mongo
       end
     end
 
-    private
+    public
 
     def use_write_command?(write_concern)
       write_concern[:w] != 0 && @db.connection.wire_version_feature?(Mongo::MongoClient::BATCH_COMMANDS)
     end
+
+    private
 
     def send_write(op_type, selector, doc_or_docs, check_keys, opts, collection_name=@name)
       write_concern = get_write_concern(opts, self)
