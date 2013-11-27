@@ -390,7 +390,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     end
 
     should "run unordered bulk operations in one batch per write-type" do
-      @collection.expects(:batch_write_incremental).times(3).returns({})
+      @collection.expects(:batch_write_incremental).at_most(3).returns({})
       bulk = @collection.initialize_unordered_bulk_op
       bulk.insert({:_id => 1, :a => 1})
       bulk.find({:_id => 1, :a => 1}).update({"$inc" => {:x => 1}})

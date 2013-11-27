@@ -182,7 +182,7 @@ module Mongo
       results = []
       errors = []
       @ops = sort_by_first_sym(@ops) if @options[:ordered] == false # sort by write-type
-      catch (:ordered) do
+      catch(:ordered) do
         ordered_group_by_first(@ops).each do |op, documents|
           check_keys = false
           if op == :insert
