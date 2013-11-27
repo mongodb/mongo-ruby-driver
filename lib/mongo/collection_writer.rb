@@ -14,7 +14,6 @@
 
 module Mongo
 
-  # A named collection of documents in a database.
   class CollectionWriter
     include Mongo::Logging
     include Mongo::WriteConcern
@@ -40,6 +39,7 @@ module Mongo
       @db = @collection.db
       @connection = @db.connection
       @logger     = @connection.logger
+      @max_write_batch_size = MAX_WRITE_BATCH_SIZE
     end
 
     def use_write_command?(write_concern)
@@ -64,7 +64,7 @@ module Mongo
       until docs.empty? # process documents a batch at a time
         batch_docs = []
         batch_message_initialize(message, op, continue_on_error, write_concern)
-        while !docs.empty? && batch_docs.size < MAX_WRITE_BATCH_SIZE
+        while !docs.empty? && batch_docs.size < @max_write_batch_size
           begin
             serialized_doc ||= BSON::BSON_CODER.serialize(docs.first, check_keys, true, max_serialize_size)
           rescue BSON::InvalidDocument, BSON::InvalidKeyName, BSON::InvalidStringEncoding => ex
