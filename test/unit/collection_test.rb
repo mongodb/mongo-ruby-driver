@@ -14,6 +14,13 @@
 
 require 'test_helper'
 
+module Mongo
+  class Collection
+    attr_reader :operation_writer,
+                :command_writer
+  end
+end
+
 class CollectionTest < Test::Unit::TestCase
 
   context "Basic operations: " do
@@ -30,7 +37,7 @@ class CollectionTest < Test::Unit::TestCase
       @client.expects(:send_message_with_gle).with do |op, msg, log|
         op == 2001
       end
-      @coll.stubs(:log_operation)
+      @coll.operation_writer.stubs(:log_operation)
       @coll.update({}, {:title => 'Moby Dick'})
     end
 
@@ -41,7 +48,7 @@ class CollectionTest < Test::Unit::TestCase
       @client.expects(:send_message_with_gle).with do |op, msg, log|
         op == 2002
       end
-      @coll.expects(:log_operation).with do |name, payload|
+      @coll.operation_writer.expects(:log_operation).with do |name, payload|
         (name == :insert) && payload[:documents][:title].include?('Moby')
       end
       @coll.insert({:title => 'Moby Dick'})
@@ -67,7 +74,7 @@ class CollectionTest < Test::Unit::TestCase
       @client.expects(:send_message_with_gle).with do |op, msg, log|
         op == 2002
       end
-      @coll.expects(:log_operation).with do |name, payload|
+      @coll.operation_writer.expects(:log_operation).with do |name, payload|
         (name == :insert) && payload[:documents][:data].inspect.include?('Binary')
       end
       @coll.insert({:data => data})
@@ -80,7 +87,7 @@ class CollectionTest < Test::Unit::TestCase
       @client.expects(:send_message_with_gle).with do |op, msg, db_name, log|
         op == 2001
       end
-      @coll.expects(:log_operation).with do |name, payload|
+      @coll.operation_writer.expects(:log_operation).with do |name, payload|
         (name == :update) && payload[:documents][:title].include?('Moby')
       end
       @coll.update({}, {:title => 'Moby Dick'})
@@ -93,7 +100,7 @@ class CollectionTest < Test::Unit::TestCase
       @connection.expects(:send_message_with_gle).with do |op, msg, db_name, log|
         op == 2001
       end
-      @coll.expects(:log_operation).with do |name, payload|
+      @coll.operation_writer.expects(:log_operation).with do |name, payload|
         (name == :update) && payload[:documents][:title].include?('Moby')
       end
       @coll.update({}, {:title => 'Moby Dick'})
@@ -106,7 +113,7 @@ class CollectionTest < Test::Unit::TestCase
       @client.expects(:send_message_with_gle).with do |op, msg, db_name, log|
         op == 2001
       end
-      @coll.stubs(:log_operation)
+      @coll.operation_writer.stubs(:log_operation)
       @coll.update({}, {:title => 'Moby Dick'})
     end
 
