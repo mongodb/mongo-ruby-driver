@@ -12,6 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Enables coverage reports/coveralls locally and on Travis
+unless RUBY_VERSION < '1.9' || ENV.key?('JENKINS_CI')
+  require 'simplecov'
+  require 'coveralls'
+
+  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
+    SimpleCov::Formatter::HTMLFormatter,
+    Coveralls::SimpleCov::Formatter
+  ]
+
+  SimpleCov.start do
+    add_group 'Driver', 'lib/mongo'
+    add_group 'BSON', 'lib/bson'
+
+    add_filter 'tasks'
+    add_filter 'test'
+    add_filter 'bin'
+
+    merge_timeout 3600
+    command_name ENV['SCOV_COMMAND'] if ENV.has_key?('SCOV_COMMAND')
+  end
+end
+
 begin
   require 'pry-rescue'
   require 'pry-nav'
@@ -19,19 +42,6 @@ rescue LoadError
   # failed to load, skipping pry
 end
 
-# SimpleCov must load before our code - A coverage report summary line will print after each test suite
-if RUBY_VERSION >= '1.9.0' && RUBY_ENGINE == 'ruby'
-  if ENV.key?('COVERAGE')
-    require 'simplecov'
-    SimpleCov.start do
-      add_group "Mongo", 'lib/mongo'
-      add_group "BSON", 'lib/bson'
-      add_filter "/test/"
-      merge_timeout 3600
-      command_name ENV['SIMPLECOV_COMMAND_NAME'] if ENV.has_key?('SIMPLECOV_COMMAND_NAME')
-    end
-  end
-end
 gem 'test-unit' # Do NOT remove this line - gem version is needed for Test::Unit::TestCase.shutdown
 require 'test/unit'
 require 'tools/mongo_config'

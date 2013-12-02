@@ -12,69 +12,71 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-desc "Run the default test suite (Ruby)"
-task :test => ENV.key?('TRAVIS_TEST') ? 'test:default' : 'test:ruby'
+default_tasks = ['test:ruby', 'test:ext', 'test:default']
+if RUBY_VERSION > '1.9'
+  require 'coveralls/rake/task'
+  Coveralls::RakeTask.new
+  default_tasks << 'coveralls:push'
+end
 
-# generate distinct SimpleCov command names and pass them via ENV to test_helper
+desc "Run the default test suites."
+task :test => default_tasks
+task :default => :test
+
+# Generates commands for SimpleCov reporting
 module Rake
   class Task
-    @@simplecov_command_name = nil
+    @@simplecov_cmd = nil
     alias_method :orig_enhance, :enhance
     def enhance(deps= nil, &block)
-      command_name_block = Proc.new do
-        old_command_name = @@simplecov_command_name
-        @@simplecov_command_name = [@@simplecov_command_name, name].compact.join(' ')
-        ENV['SIMPLECOV_COMMAND_NAME'] = @@simplecov_command_name
+      command_block = Proc.new do
+        old_cmd = @@simplecov_cmd
+        @@simplecov_cmd = [@@simplecov_cmd, name].compact.join(' ')
+        ENV['SCOV_COMMAND'] = @@simplecov_cmd
         block.call
-        ENV.delete('SIMPLECOV_COMMAND_NAME')
-        @@simplecov_command_name = old_command_name
+        ENV.delete('SCOV_COMMAND')
+        @@simplecov_cmd = old_cmd
       end
-      orig_enhance(deps, &command_name_block)
+      orig_enhance(deps, &command_block)
     end
   end
 end
 
 namespace :test do
-  DEFAULT_TESTS = ['functional', 'unit', 'bson', 'threading']
   ENV['TEST_MODE'] = 'TRUE'
 
-  desc "Run default test suites with BSON extensions enabled."
+  desc "Run BSON test suite with extensions enabled."
   task :ext do
     ENV.delete('BSON_EXT_DISABLED')
     Rake::Task['compile'].invoke unless RUBY_PLATFORM =~ /java/
-    Rake::Task['test:default'].execute
+    Rake::Task['test:bson'].execute
   end
 
-  desc "Runs default test suites in pure Ruby."
+  desc "Runs BSON test suite in pure Ruby."
   task :ruby do
     ENV['BSON_EXT_DISABLED'] = 'TRUE'
-    Rake::Task['test:default'].execute
+    Rake::Task['test:bson'].execute
     ENV.delete('BSON_EXT_DISABLED')
   end
 
-  desc "Runs default test suites"
+  desc "Runs default driver test suites."
   task :default do
-    DEFAULT_TESTS.each { |t| Rake::Task["test:#{t}"].execute }
-    Rake::Task['test:cleanup'].execute
-  end
-
-  desc "Runs commit test suites"
-  task :commit do
-    COMMIT_TESTS = %w(ext ruby replica_set sharded_cluster)
-    COMMIT_TESTS.each do |task|
-      puts "[RUNNING] test:#{task}"
-      Rake::Task["test:#{task}"].execute
+    %w(unit functional threading).each do |suite|
+      Rake::Task["test:#{suite}"].execute
     end
     Rake::Task['test:cleanup'].execute
   end
 
-  desc "Runs coverage test suites"
-  task :coverage do
-    ENV['COVERAGE'] = 'true'
-    Rake::Task['test:commit'].invoke
+  desc "Runs commit test suites."
+  task :commit do
+    %w(ext without_ext default replica_set sharded_cluster).each do |suite|
+      puts "[RUNNING] test:#{suite}"
+      Rake::Task["test:#{suite}"].execute
+    end
+    Rake::Task['test:cleanup'].execute
   end
 
-  %w(sharded_cluster unit threading auxillary bson tools).each do |suite|
+  %w(sharded_cluster unit threading bson tools).each do |suite|
     Rake::TestTask.new(suite.to_sym) do |t|
       t.test_files = FileList["test/#{suite}/*_test.rb"]
       t.libs << 'test'
@@ -102,7 +104,7 @@ namespace :test do
     t.libs << 'test'
   end
 
-  desc "Runs test cleanup"
+  desc "Cleans up from all tests."
   task :cleanup do |t|
     puts "[CLEAN-UP] Dropping test databases..."
     $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
