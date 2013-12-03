@@ -79,11 +79,6 @@ module Mongo
           errors << ex
         end
       end
-      unless ordered.nil?
-        return responses if errors.empty?
-        bulk_message = "Bulk write failed - #{errors.last.message} - examine result for complete information"
-        raise BulkWriteError.new(bulk_message, 65, {"results" => responses, "errors" => errors})
-      end
       [error_docs, responses, errors]
     end
 

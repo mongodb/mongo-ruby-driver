@@ -204,8 +204,11 @@ module Mongo
             next
           end
           begin
-            results << @collection.batch_write_incremental(op, documents, check_keys,
+            error_docs, responses, batch_errors = @collection.batch_write_incremental(op, documents, check_keys,
               opts.merge(:ordered => @options[:ordered], :continue_on_error => !@options[:ordered], :collect_on_error => true))
+            results += responses
+            errors += batch_errors
+            throw(:ordered) if @options[:ordered] && !batch_errors.empty?
           rescue OperationFailure => ex
             results << ex.result if ex.respond_to?(:result)
             errors << ex
