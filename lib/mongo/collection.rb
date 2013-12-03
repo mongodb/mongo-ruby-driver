@@ -387,7 +387,6 @@ module Mongo
     #
     # @raise [Mongo::OperationFailure] will be raised iff :w > 0 and the operation fails.
     def insert(doc_or_docs, opts={})
-      write_concern = get_write_concern(opts, self)
       if doc_or_docs.respond_to?(:collect!)
         doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
         return batch_write_incremental(:insert, doc_or_docs, true, opts)
@@ -1090,6 +1089,7 @@ module Mongo
     end
 
     def batch_write_incremental(op, documents, check_keys=true, opts={})
+      write_concern = get_write_concern(opts, self)
       if use_write_command?(write_concern)
         return @command_writer.batch_write_incremental(op, documents, check_keys, opts)
       else
