@@ -373,7 +373,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       ex = assert_raise BulkWriteError do
         @bulk.execute
       end
-      assert ex.result["errors"].first.message[/duplicate key error/]
+      assert_match(/duplicate key error/, ex.result["errors"].first.message)
       assert_equal [{"_id" => 1, "a" => 1}], @collection.find.to_a
     end
 
@@ -385,7 +385,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       ex = assert_raise BulkWriteError do
         bulk.execute
       end
-      assert ex.result["errors"].first.message[/duplicate key error/]
+      assert_match(/duplicate key error/, ex.result["errors"].first.message)
       assert_equal [{"_id" => 1, "a" => 1}, {"_id" => 3, "a" => 3}], @collection.find.to_a
     end
 
