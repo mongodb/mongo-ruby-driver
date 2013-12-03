@@ -19,6 +19,7 @@ module Mongo
     include Mongo::WriteConcern
 
     DEFAULT_OP_ARGS = {:q => {}}
+    MULTIPLE_ERRORS_OCCURRED = 65 # MongoDB Core Server mongo/base/error_codes.err MultipleErrorsOccurred
 
     attr_reader :collection, :options, :ops, :op_args
 
@@ -195,7 +196,7 @@ module Mongo
               u = doc_opts.delete(:u)
               begin
                 results << @collection.operation_writer.send_write_operation(op, q, u, false, doc_opts, write_concern)
-              rescue => ex
+              rescue Mongo::OperationFailure => ex
                 results << ex.result if ex.respond_to?(:result)
                 errors << ex
                 throw(:ordered) if @options[:ordered]
@@ -203,21 +204,17 @@ module Mongo
             end
             next
           end
-          begin
-            results << @collection.batch_write_incremental(op, documents, check_keys,
-              opts.merge(:continue_on_error => !@options[:ordered], :collect_on_error => true))
-          rescue => ex
-            results << ex.result if ex.respond_to?(:result)
-            errors << ex
-            throw(:ordered) if @options[:ordered]
-          end
+          error_docs, responses, batch_errors = @collection.batch_write_incremental(op, documents, check_keys,
+            opts.merge(:continue_on_error => !@options[:ordered], :collect_on_error => true))
+          results += responses
+          errors += batch_errors
+          throw(:ordered) if @options[:ordered] && !batch_errors.empty?
         end
       end
       @ops = []
       unless errors.empty?
         bulk_message = "Bulk write failed - #{errors.last.message} - examine result for complete information"
-        bulk_result = {"results" => results, "errors" => errors}
-        raise BulkWriteError.new(bulk_message, 65, bulk_result)
+        raise BulkWriteError.new(bulk_message, MULTIPLE_ERRORS_OCCURRED, {"results" => results, "errors" => errors})
       end
       results
     end
