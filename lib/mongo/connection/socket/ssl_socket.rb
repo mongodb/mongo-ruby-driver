@@ -23,9 +23,9 @@ module Mongo
     include SocketUtil
 
     def initialize(host, port, op_timeout=nil, connect_timeout=nil, opts={})
-      @pid             = Process.pid
       @op_timeout      = op_timeout
       @connect_timeout = connect_timeout
+      @pid             = Process.pid
       @auths           = Set.new
 
       @tcp_socket = ::TCPSocket.new(host, port)

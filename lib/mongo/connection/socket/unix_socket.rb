@@ -25,6 +25,7 @@ module Mongo
     def initialize(socket_path, port=:socket, op_timeout=nil, connect_timeout=nil, opts={})
       @op_timeout      = op_timeout
       @connect_timeout = connect_timeout
+      @pid             = Process.pid
       @auths           = Set.new
 
       @address         = socket_path
