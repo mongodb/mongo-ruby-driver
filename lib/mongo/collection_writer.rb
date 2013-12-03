@@ -47,6 +47,7 @@ module Mongo
       raise Mongo::OperationFailure, "Request contains no documents" if documents.empty?
       write_concern = get_write_concern(opts, @collection)
       max_message_size, max_append_size, max_serialize_size = batch_write_max_sizes(write_concern)
+      ordered = opts[:ordered]
       continue_on_error = !!opts[:continue_on_error]
       collect_on_error = !!opts[:collect_on_error]
       error_docs = [] # docs with serialization errors
@@ -78,10 +79,12 @@ module Mongo
           errors << ex
         end
       end
-      raise errors.last unless errors.empty?
-      inserted_docs = documents - error_docs
-      inserted_ids = inserted_docs.collect {|o| o[:_id] || o['_id']}
-      collect_on_error ? [inserted_ids, error_docs, responses, errors ] : inserted_ids
+      unless ordered.nil?
+        return responses if errors.empty?
+        bulk_message = "Bulk write failed - #{errors.last.message} - examine result for complete information"
+        raise BulkWriteError.new(bulk_message, 65, {"results" => responses, "errors" => errors})
+      end
+      [error_docs, responses, errors]
     end
 
   end

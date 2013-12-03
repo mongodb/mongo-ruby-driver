@@ -205,7 +205,7 @@ module Mongo
           end
           begin
             results << @collection.batch_write_incremental(op, documents, check_keys,
-              opts.merge(:continue_on_error => !@options[:ordered], :collect_on_error => true))
+              opts.merge(:ordered => @options[:ordered], :continue_on_error => !@options[:ordered], :collect_on_error => true))
           rescue OperationFailure => ex
             results << ex.result if ex.respond_to?(:result)
             errors << ex
@@ -216,8 +216,7 @@ module Mongo
       @ops = []
       unless errors.empty?
         bulk_message = "Bulk write failed - #{errors.last.message} - examine result for complete information"
-        bulk_result = {"results" => results, "errors" => errors}
-        raise BulkWriteError.new(bulk_message, 65, bulk_result)
+        raise BulkWriteError.new(bulk_message, 65, {"results" => results, "errors" => errors})
       end
       results
     end
