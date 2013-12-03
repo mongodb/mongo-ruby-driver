@@ -19,6 +19,7 @@ module Mongo
     include Mongo::WriteConcern
 
     DEFAULT_OP_ARGS = {:q => {}}
+    MULTIPLE_ERRORS_OCCURRED = 65 # MongoDB Core Server mongo/base/error_codes.err MultipleErrorsOccurred
 
     attr_reader :collection, :options, :ops, :op_args
 
@@ -213,7 +214,7 @@ module Mongo
       @ops = []
       unless errors.empty?
         bulk_message = "Bulk write failed - #{errors.last.message} - examine result for complete information"
-        raise BulkWriteError.new(bulk_message, 65, {"results" => results, "errors" => errors})
+        raise BulkWriteError.new(bulk_message, MULTIPLE_ERRORS_OCCURRED, {"results" => results, "errors" => errors})
       end
       results
     end
