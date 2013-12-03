@@ -195,7 +195,7 @@ module Mongo
               u = doc_opts.delete(:u)
               begin
                 results << @collection.operation_writer.send_write_operation(op, q, u, false, doc_opts, write_concern)
-              rescue => ex
+              rescue OperationFailure => ex
                 results << ex.result if ex.respond_to?(:result)
                 errors << ex
                 throw(:ordered) if @options[:ordered]
@@ -206,7 +206,7 @@ module Mongo
           begin
             results << @collection.batch_write_incremental(op, documents, check_keys,
               opts.merge(:continue_on_error => !@options[:ordered], :collect_on_error => true))
-          rescue => ex
+          rescue OperationFailure => ex
             results << ex.result if ex.respond_to?(:result)
             errors << ex
             throw(:ordered) if @options[:ordered]
