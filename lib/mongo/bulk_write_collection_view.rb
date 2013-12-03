@@ -16,6 +16,7 @@ module Mongo
 
   # A bulk write view to a collection of documents in a database.
   class BulkWriteCollectionView
+    include Mongo::WriteConcern
 
     DEFAULT_OP_ARGS = {:q => {}}
 
@@ -175,26 +176,50 @@ module Mongo
     # but the selector and upsert settings are preserved.
     #
     # @return [BulkWriteCollectionView]
-    def execute(options = {})
-      result = []
+    def execute(opts = {})
+      write_concern = get_write_concern(opts, @collection)
+      use_write_command = @collection.use_write_command?(write_concern)
+      results = []
       errors = []
       @ops = sort_by_first_sym(@ops) if @options[:ordered] == false # sort by write-type
-      ordered_group_by_first(@ops).each do |op, documents|
-        check_keys = false
-        if op == :insert
-          documents.collect! { |doc| @collection.pk_factory.create_pk(doc) }
-          check_keys = true
-        end
-        begin
-          result << @collection.batch_write_incremental(op, documents, check_keys,
-            options.merge(:continue_on_error => !@options[:ordered], :collect_on_error => true))
-        rescue => ex
-          errors << ex
-          break if @options[:ordered]
+      catch(:ordered) do
+        ordered_group_by_first(@ops).each do |op, documents|
+          check_keys = false
+          if op == :insert
+            documents.collect! { |doc| @collection.pk_factory.create_pk(doc) }
+            check_keys = true
+          elsif !use_write_command # emulate batch update and delete with old write operations
+            documents.each do |doc|
+              doc_opts = doc.merge(opts)
+              q = doc_opts.delete(:q)
+              u = doc_opts.delete(:u)
+              begin
+                results << @collection.operation_writer.send_write_operation(op, q, u, false, doc_opts, write_concern)
+              rescue => ex
+                results << ex.result if ex.respond_to?(:result)
+                errors << ex
+                throw(:ordered) if @options[:ordered]
+              end
+            end
+            next
+          end
+          begin
+            results << @collection.batch_write_incremental(op, documents, check_keys,
+              opts.merge(:continue_on_error => !@options[:ordered], :collect_on_error => true))
+          rescue => ex
+            results << ex.result if ex.respond_to?(:result)
+            errors << ex
+            throw(:ordered) if @options[:ordered]
+          end
         end
       end
       @ops = []
-      [result, errors]
+      unless errors.empty?
+        bulk_message = "Bulk write failed - #{errors.last.message} - examine result for complete information"
+        bulk_result = {"results" => results, "errors" => errors}
+        raise BulkWriteError.new(bulk_message, 65, bulk_result)
+      end
+      results
     end
 
     private

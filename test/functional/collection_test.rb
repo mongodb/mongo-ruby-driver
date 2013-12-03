@@ -36,15 +36,14 @@ class TestCollection < Test::Unit::TestCase
   def with_max_wire_version(n)
     old_max_wire_version = get_max_wire_version
     new_max_wire_version = set_max_wire_version(n)
-    #puts "max_wire_version: #{new_max_wire_version}"
     yield
     set_max_wire_version(old_max_wire_version)
   end
 
   @@wv0 = Mongo::MongoClient::RELEASE_2_4_AND_BEFORE
   @@wv2 = Mongo::MongoClient::BATCH_COMMANDS
-  @@a_h = Mongo::Collection::APPEND_HEADROOM
-  @@s_h = Mongo::Collection::SERIALIZE_HEADROOM
+  @@a_h = Mongo::CollectionWriter::APPEND_HEADROOM
+  @@s_h = Mongo::CollectionWriter::SERIALIZE_HEADROOM
 
   MAX_SIZE_EXCEPTION_TEST = [
       [@@wv0, @@client.max_bson_size, nil, /xyzzy/],
@@ -64,7 +63,7 @@ class TestCollection < Test::Unit::TestCase
 
   @@max_size_exception_test = MAX_SIZE_EXCEPTION_TEST
   @@max_size_exception_test += MAX_SIZE_EXCEPTION_CRUBY_TEST unless RUBY_PLATFORM == 'java'
-  @@max_size_exception_test += MAX_SIZE_EXCEPTION_JRUBY_TEST if RUBY_PLATFORM == 'java'
+  #@@max_size_exception_test += MAX_SIZE_EXCEPTION_JRUBY_TEST if RUBY_PLATFORM == 'java'
   @@max_size_exception_test += MAX_SIZE_EXCEPTION_COMMANDS_TEST if @@version >= "2.5.2"
 
   def generate_sized_doc(size)
@@ -83,7 +82,6 @@ class TestCollection < Test::Unit::TestCase
           @@test.insert([doc.dup])
           assert_equal nil, exc
         rescue => e
-          #puts "wire_version:#{wire_version}, size:#{size}, exc:#{exc}, e:#{e.message.inspect}"
           assert_equal exc, e.class, "wire_version:#{wire_version}, size:#{size}, exc:#{exc} e:#{e.message.inspect} @@version:#{@@version}"
           assert_match regexp, e.message
         end

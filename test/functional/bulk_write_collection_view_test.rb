@@ -49,7 +49,7 @@ module Mongo
       groups.collect do |op, documents|
         {
             op => @collection.name,
-            Mongo::Collection::WRITE_COMMAND_ARG_KEY[op] => documents,
+            Mongo::CollectionWriter::WRITE_COMMAND_ARG_KEY[op] => documents,
             :ordered => @options[:ordered],
             :writeConcern => write_concern
         }
@@ -94,6 +94,21 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     @q = {:a => 1}
     @u = {"$inc" => { :x => 1 }}
     @r = {:b => 2}
+  end
+
+  def get_max_wire_version
+    @db.connection.instance_variable_get(:@max_wire_version)
+  end
+
+  def set_max_wire_version(n)
+    @db.connection.instance_variable_set(:@max_wire_version, n)
+  end
+
+  def with_max_wire_version(n)
+    old_max_wire_version = get_max_wire_version
+    new_max_wire_version = set_max_wire_version(n)
+    yield
+    set_max_wire_version(old_max_wire_version)
   end
 
   context "Bulk API Spec Collection" do
@@ -297,54 +312,57 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       @bulk.insert({ :x => 2 })
       write_concern = {:w => 1}
       result = @bulk.execute(write_concern)
-      #puts "result: #{result}"
       assert_equal 2, @collection.count
       assert_equal [], @bulk.ops
     end
 
-    if @@version >= '2.5.3'
-      should "run big example for #execute" do
+    should "run big example for #execute" do
+      @bulk.insert({ :a => 1 })
+      @bulk.insert({ :a => 2 })
+      @bulk.insert({ :a => 3 })
+      @bulk.insert({ :a => 4 })
+      @bulk.insert({ :a => 5 })
+      # Update one document matching the selector
+      @bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
+      # Update all documents matching the selector
+      @bulk.find({:a => 2}).update({"$inc" => { :x => 2 }})
+      # Replace entire document (update with whole doc replace)
+      @bulk.find({:a => 3}).replace_one({ :x => 3 })
+      # Update one document matching the selector or upsert
+      @bulk.find({:a => 1}).upsert.update_one({"$inc" => { :x => 1 }})
+      # Update all documents matching the selector or upsert
+      @bulk.find({:a => 2}).upsert.update({"$inc" => { :x => 2 }})
+      # Replaces a single document matching the selector or upsert
+      @bulk.find({:a => 3}).upsert.replace_one({ :x => 3 })
+      # Remove a single document matching the selector
+      @bulk.find({:a => 4}).remove_one()
+      # Remove all documents matching the selector
+      @bulk.find({:a => 5}).remove()
+      # Insert a document
+      @bulk.insert({ :x => 4 })
+      write_concern = {:w => 1, :j => 1}
+      result = @bulk.execute(write_concern)
+      #pp_with_caller result
+      assert_equal [{"x" => 3}, {"a" => 1, "x" => 2}, {"a" => 2, "x" => 4}, {"x" => 3}, {"x" => 4}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }
+    end
+
+    should "run old write operations with MIN_WIRE_VERSION" do
+      with_max_wire_version(Mongo::MongoClient::MIN_WIRE_VERSION) do
         @bulk.insert({ :a => 1 })
         @bulk.insert({ :a => 2 })
         @bulk.insert({ :a => 3 })
         @bulk.insert({ :a => 4 })
         @bulk.insert({ :a => 5 })
-        # Update one document matching the selector
         @bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
-        # Update all documents matching the selector
         @bulk.find({:a => 2}).update({"$inc" => { :x => 2 }})
-        # Replace entire document (update with whole doc replace)
-        @bulk.find({:a => 3}).replace_one({ :x => 3 })
-        # Update one document matching the selector or upsert
-        @bulk.find({:a => 1}).upsert.update_one({"$inc" => { :x => 1 }})
-        # Update all documents matching the selector or upsert
-        @bulk.find({:a => 2}).upsert.update({"$inc" => { :x => 2 }})
-        # Replaces a single document matching the selector or upsert
-        @bulk.find({:a => 3}).upsert.replace_one({ :x => 3 })
-        # Remove a single document matching the selector
         @bulk.find({:a => 4}).remove_one()
-        # Remove all documents matching the selector
         @bulk.find({:a => 5}).remove()
-        # Insert a document
-        @bulk.insert({ :x => 4 })
+        @bulk.insert({ :x => 3 })
+        @bulk.find({:a => 3}).replace_one({ :x => 3 })
+        @bulk.find({:x => 3}).remove()
         write_concern = {:w => 1, :j => 1}
         result = @bulk.execute(write_concern)
-        #pp_with_caller result
-        assert_equal [{"x" => 3}, {"a" => 1, "x" => 2}, {"a" => 2, "x" => 4}, {"x" => 3}, {"x" => 4}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }
-      end
-    else # @@version < '2.5.3'
-      should "return an error for an update operation on #execute" do
-        @bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
-        write_concern = {:w => 1, :j => 1}
-        result = @bulk.execute(write_concern)
-        assert_equal Mongo::MongoArgumentError, result.last.first.class
-      end
-
-      should "return an error for a remove operation on #execute" do
-        @bulk.find({}).remove()
-        write_concern = {:w => 1, :j => 1}
-        result = @bulk.execute(write_concern)
-        assert_equal Mongo::MongoArgumentError, result.last.first.class
+        assert_equal [{"a" => 1, "x" => 1}, {"a" => 2, "x" => 2}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }
       end
     end
 
@@ -352,9 +370,10 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       @bulk.insert({:_id => 1, :a => 1})
       @bulk.insert({:_id => 1, :a => 2})
       @bulk.insert({:_id => 3, :a => 3})
-      result = @bulk.execute
-      #pp_with_caller result
-      assert result[1].first.message[/duplicate key error/]
+      ex = assert_raise BulkWriteError do
+        @bulk.execute
+      end
+      assert ex.result["errors"].first.message[/duplicate key error/]
       assert_equal [{"_id" => 1, "a" => 1}], @collection.find.to_a
     end
 
@@ -363,14 +382,15 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       bulk.insert({:_id => 1, :a => 1})
       bulk.insert({:_id => 1, :a => 2})
       bulk.insert({:_id => 3, :a => 3})
-      result = bulk.execute
-      #pp_with_caller result
-      assert result[1].first.message[/duplicate key error/]
+      ex = assert_raise BulkWriteError do
+        bulk.execute
+      end
+      assert ex.result["errors"].first.message[/duplicate key error/]
       assert_equal [{"_id" => 1, "a" => 1}, {"_id" => 3, "a" => 3}], @collection.find.to_a
     end
 
     should "run unordered bulk operations in one batch per write-type" do
-      @collection.expects(:batch_write_incremental).times(3).returns({})
+      @collection.expects(:batch_write_incremental).at_most(3).returns({})
       bulk = @collection.initialize_unordered_bulk_op
       bulk.insert({:_id => 1, :a => 1})
       bulk.find({:_id => 1, :a => 1}).update({"$inc" => {:x => 1}})
