@@ -56,27 +56,30 @@ module Mongo
       serialized_doc = nil
       message = BSON::ByteBuffer.new("", max_message_size)
       docs = documents.dup
-      until docs.empty? # process documents a batch at a time
-        batch_docs = []
-        batch_message_initialize(message, op, continue_on_error, write_concern)
-        while !docs.empty? && batch_docs.size < @max_write_batch_size
-          begin
-            serialized_doc ||= BSON::BSON_CODER.serialize(docs.first, check_keys, true, max_serialize_size)
-          rescue BSON::InvalidDocument, BSON::InvalidKeyName, BSON::InvalidStringEncoding => ex
-            raise ex unless collect_on_error
-            error_docs << docs.shift
-            next
+      catch(:error) do
+        until docs.empty? # process documents a batch at a time
+          batch_docs = []
+          batch_message_initialize(message, op, continue_on_error, write_concern)
+          while !docs.empty? && batch_docs.size < @max_write_batch_size
+            begin
+              serialized_doc ||= BSON::BSON_CODER.serialize(docs.first, check_keys, true, max_serialize_size)
+            rescue BSON::InvalidDocument, BSON::InvalidKeyName, BSON::InvalidStringEncoding => ex
+              errors << ex
+              error_docs << docs.shift
+              throw (:error) unless collect_on_error
+              next
+            end
+            break if message.size + serialized_doc.size > max_append_size
+            batch_docs << docs.shift
+            batch_message_append(message, serialized_doc, write_concern)
+            serialized_doc = nil
           end
-          break if message.size + serialized_doc.size > max_append_size
-          batch_docs << docs.shift
-          batch_message_append(message, serialized_doc, write_concern)
-          serialized_doc = nil
-        end
-        begin
-          responses << batch_message_send(message, op, batch_docs, write_concern, continue_on_error) if batch_docs.size > 0
-        rescue OperationFailure => ex
-          raise ex unless continue_on_error
-          errors << ex
+          begin
+            responses << batch_message_send(message, op, batch_docs, write_concern, continue_on_error) if batch_docs.size > 0
+          rescue OperationFailure => ex
+            errors << ex
+            throw (:error) unless continue_on_error
+          end
         end
       end
       [error_docs, responses, errors]
