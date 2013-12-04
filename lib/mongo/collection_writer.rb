@@ -81,7 +81,7 @@ module Mongo
           end
         end
       end
-      [error_docs, responses, errors]
+      [error_docs, errors, responses]
     end
 
   end
