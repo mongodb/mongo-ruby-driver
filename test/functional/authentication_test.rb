@@ -13,11 +13,13 @@
 # limitations under the License.
 
 require 'test_helper'
-require 'shared/authentication'
+require 'shared/authentication/authentication_shared'
+require 'shared/authentication/sasl_plain_shared'
 
 class AuthenticationTest < Test::Unit::TestCase
   include Mongo
   include AuthenticationTests
+  include SASLPlainTests
 
   def setup
     @client = MongoClient.new
