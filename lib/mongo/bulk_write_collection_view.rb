@@ -180,8 +180,8 @@ module Mongo
     def execute(opts = {})
       write_concern = get_write_concern(opts, @collection)
       use_write_command = @collection.use_write_command?(write_concern)
-      results = []
       errors = []
+      exchanges = []
       @ops = sort_by_first_sym(@ops) if @options[:ordered] == false # sort by write-type
       catch(:ordered) do
         ordered_group_by_first(@ops).each do |op, documents|
@@ -195,28 +195,29 @@ module Mongo
               q = doc_opts.delete(:q)
               u = doc_opts.delete(:u)
               begin
-                results << @collection.operation_writer.send_write_operation(op, q, u, false, doc_opts, write_concern)
+                response = @collection.operation_writer.send_write_operation(op, q, u, false, doc_opts, write_concern)
+                exchanges << {:op => op, :params => doc, :opts => opts, :response => response}
               rescue Mongo::OperationFailure => ex
-                results << ex.result if ex.respond_to?(:result)
                 errors << ex
+                exchanges << {:op => op, :params => doc, :opts => opts, :response => ex.result}
                 throw(:ordered) if @options[:ordered]
               end
             end
             next
           end
-          error_docs, batch_errors, responses = @collection.batch_write_incremental(op, documents, check_keys,
-            opts.merge(:continue_on_error => !@options[:ordered], :collect_on_error => true))
+          error_docs, batch_errors, batch_exchanges =
+            @collection.batch_write_incremental(op, documents, check_keys, opts.merge(:ordered => @options[:ordered]))
           errors += batch_errors
-          results += responses
+          exchanges += batch_exchanges
           throw(:ordered) if @options[:ordered] && !batch_errors.empty?
         end
       end
       @ops = []
       unless errors.empty?
-        bulk_message = "Bulk write failed - #{errors.last.message} - examine result for complete information"
-        raise BulkWriteError.new(bulk_message, MULTIPLE_ERRORS_OCCURRED, {"results" => results, "errors" => errors})
+        bulk_message = "Bulk write error - #{errors.last.message} - examine result for complete information"
+        raise BulkWriteError.new(bulk_message, MULTIPLE_ERRORS_OCCURRED, {:errors => errors, :exchanges => exchanges})
       end
-      results
+      exchanges
     end
 
     private
