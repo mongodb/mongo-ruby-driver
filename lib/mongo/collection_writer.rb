@@ -55,28 +55,33 @@ module Mongo
       serialized_doc = nil
       message = BSON::ByteBuffer.new("", max_message_size)
       docs = documents.dup
-      until docs.empty? # process documents a batch at a time
-        batch_docs = []
-        batch_message_initialize(message, op, continue_on_error, write_concern)
-        while !docs.empty? && batch_docs.size < @max_write_batch_size
-          begin
-            serialized_doc ||= BSON::BSON_CODER.serialize(docs.first, check_keys, true, max_serialize_size)
-          rescue BSON::InvalidDocument, BSON::InvalidKeyName, BSON::InvalidStringEncoding => ex
-            raise ex unless collect_on_error
-            error_docs << docs.shift
-            next
+      catch(:error) do
+        until docs.empty? # process documents a batch at a time
+          batch_docs = []
+          batch_message_initialize(message, op, continue_on_error, write_concern)
+          while !docs.empty? && batch_docs.size < @max_write_batch_size
+            begin
+              serialized_doc ||= BSON::BSON_CODER.serialize(docs.first, check_keys, true, max_serialize_size)
+            rescue BSON::InvalidDocument, BSON::InvalidKeyName, BSON::InvalidStringEncoding => ex
+              errors << ex
+              error_docs << docs.shift
+              throw (:error) unless collect_on_error
+              next
+            end
+            break if message.size + serialized_doc.size > max_append_size
+            batch_docs << docs.shift
+            batch_message_append(message, serialized_doc, write_concern)
+            serialized_doc = nil
           end
-          break if message.size + serialized_doc.size > max_append_size
-          batch_docs << docs.shift
-          batch_message_append(message, serialized_doc, write_concern)
-          serialized_doc = nil
+          begin
+            responses << batch_message_send(message, op, batch_docs, write_concern, continue_on_error) if batch_docs.size > 0
+          rescue Mongo::OperationFailure => ex
+            errors << ex
+            throw (:error) unless continue_on_error
+          end
         end
-        responses << batch_message_send(message, op, batch_docs, write_concern, continue_on_error, errors) if batch_docs.size > 0
       end
-      raise errors.last unless errors.empty?
-      inserted_docs = documents - error_docs
-      inserted_ids = inserted_docs.collect {|o| o[:_id] || o['_id']}
-      collect_on_error ? [inserted_ids, error_docs, responses, errors ] : inserted_ids
+      [error_docs, responses, errors]
     end
 
   end
@@ -129,18 +134,13 @@ module Mongo
       message.put_binary(serialized_doc.to_s)
     end
 
-    def batch_message_send(message, op, batch_docs, write_concern, continue_on_error, errors)
-      begin
-        instrument(:insert, :database => @db.name, :collection => @name, :documents => batch_docs) do
-          if Mongo::WriteConcern.gle?(write_concern)
-            @connection.send_message_with_gle(Mongo::Constants::OP_INSERT, message, @db.name, nil, write_concern)
-          else
-            @connection.send_message(Mongo::Constants::OP_INSERT, message)
-          end
+    def batch_message_send(message, op, batch_docs, write_concern, continue_on_error)
+      instrument(:insert, :database => @db.name, :collection => @name, :documents => batch_docs) do
+        if Mongo::WriteConcern.gle?(write_concern)
+          @connection.send_message_with_gle(Mongo::Constants::OP_INSERT, message, @db.name, nil, write_concern)
+        else
+          @connection.send_message(Mongo::Constants::OP_INSERT, message)
         end
-      rescue OperationFailure => ex
-        raise ex unless continue_on_error
-        errors << ex
       end
     end
 
@@ -187,17 +187,12 @@ module Mongo
       message.push_doc!(serialized_doc)
     end
 
-    def batch_message_send(message, op, batch_docs, write_concern, continue_on_error, errors)
-      begin
-        message.finish!
-        request = BSON::OrderedHash[op, @name, :bson, message]
-        request.merge!(:writeConcern => write_concern, :ordered => !continue_on_error)
-        instrument(:insert, :database => @db.name, :collection => @name, :documents => batch_docs) do
-          @db.command(request)
-        end
-      rescue OperationFailure => ex
-        raise ex unless continue_on_error
-        errors << ex
+    def batch_message_send(message, op, batch_docs, write_concern, continue_on_error)
+      message.finish!
+      request = BSON::OrderedHash[op, @name, :bson, message]
+      request.merge!(:writeConcern => write_concern, :ordered => !continue_on_error)
+      instrument(:insert, :database => @db.name, :collection => @name, :documents => batch_docs) do
+        @db.command(request)
       end
     end
 
