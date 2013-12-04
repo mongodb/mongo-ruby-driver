@@ -9,7 +9,7 @@ rvm:
 
 bundler_args: --without deploy development
 
-env: TRAVIS_TEST="true"
+env: TRAVIS_CI="true"
 
 script: bundle exec rake test
 

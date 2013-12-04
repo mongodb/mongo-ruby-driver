@@ -23,7 +23,7 @@ group :testing do
   gem 'shoulda-matchers', '~>1.0'
 
   gem 'sfl'
-  gem 'simplecov', :require => false
+  gem 'coveralls', :require => false, :platforms => [:ruby_19, :ruby_20, :jruby]
 end
 
 group :development do
