@@ -164,7 +164,6 @@ module Mongo
         socket.checkin if socket
       end
 
-      @client.authenticate_pools
       true
     end
 
