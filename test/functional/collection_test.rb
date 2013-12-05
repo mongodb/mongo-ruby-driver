@@ -835,8 +835,8 @@ class CollectionTest < Test::Unit::TestCase
   end
 
   def test_find_one_with_compile_regex_option
-    # TODO: remove the following line when c and java ext changes are complete
-    return unless defined?(BSON::BSON_RUBY) && BSON::BSON_CODER == BSON::BSON_RUBY
+    # TODO: remove the following line when java ext changes are complete
+    return if defined?(BSON::BSON_JAVA) && BSON::BSON_CODER == BSON::BSON_JAVA
     regex = /.*/
     @@test.insert('r' => /.*/)
     assert_kind_of Regexp, @@test.find_one({})['r']
@@ -1010,8 +1010,8 @@ class CollectionTest < Test::Unit::TestCase
     end
 
     def test_aggregate_with_compile_regex_option
-      # TODO: remove the following line when c and java ext changes are complete
-      return unless defined?(BSON::BSON_RUBY) && BSON::BSON_CODER == BSON::BSON_RUBY
+      # TODO: remove the following line java ext changes are complete
+      return if defined?(BSON::BSON_JAVA) && BSON::BSON_CODER == BSON::BSON_JAVA
       # see SERVER-6470
       @@test.insert({ 'r' => /.*/ })
       result1 = @@test.aggregate([])
