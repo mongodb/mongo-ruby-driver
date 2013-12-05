@@ -366,6 +366,46 @@ class BSONTest < Test::Unit::TestCase
     assert_doc_pass(doc)
   end
 
+  def test_regex_wrapper
+    # TODO: remove the following line when c and java ext changes are complete
+    return unless defined?(BSON::BSON_RUBY) && BSON::BSON_CODER == BSON::BSON_RUBY
+    doc = { 'doc' => BSON::MongoRegexp.new('foobar') }
+    bson = @encoder.serialize(doc)
+    assert_equal @encoder.serialize(doc).to_a, bson.to_a
+    assert_equal doc, @encoder.deserialize(bson, :compile_regex => false)
+  end
+
+  def test_regex_wrapper_with_nonruby_flags
+    # TODO: remove the following line when c and java ext changes are complete
+    return unless defined?(BSON::BSON_RUBY) && BSON::BSON_CODER == BSON::BSON_RUBY
+    # create a regexp wrapper with more flags than can be represented in Ruby
+    mongo_regexp = BSON::MongoRegexp.new('foobar', 'i', 'l', 'm', 's', 'u', 'x')
+    doc = { 'doc' => mongo_regexp }
+    assert_equal 31, mongo_regexp.options
+    bson = @encoder.serialize(doc)
+    assert_equal @encoder.serialize(doc).to_a, bson.to_a
+    assert_equal doc, @encoder.deserialize(bson, :compile_regex => false)
+  end
+
+  def test_regex_wrapper_to_ruby_regexp
+    # TODO: remove the following line when c and java ext changes are complete
+    return unless defined?(BSON::BSON_RUBY) && BSON::BSON_CODER == BSON::BSON_RUBY
+    mongo_regexp = BSON::MongoRegexp.new('foobar', 'i', 'l', 'm', 's', 'u', 'x')
+    doc = { 'doc' => mongo_regexp }
+    bson = @encoder.serialize(doc)
+    assert @encoder.deserialize(bson, :compile_regex => true)
+    assert_equal 7, @encoder.deserialize(bson, :compile_regex => true)['doc'].options
+  end
+
+  def test_ruby_regexp_to_regexp_wrapper
+    # TODO: remove the following line when c and java ext changes are complete
+    return unless defined?(BSON::BSON_RUBY) && BSON::BSON_CODER == BSON::BSON_RUBY
+    regexp = Regexp.new(/foobar/imx)
+    doc = { 'doc' => regexp }
+    bson = @encoder.serialize(doc)
+    assert_equal 7, @encoder.deserialize(bson, :compile_regex => false)['doc'].options
+  end
+
   def test_boolean
     doc = {'doc' => true}
     assert_doc_pass(doc)

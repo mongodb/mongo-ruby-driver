@@ -834,6 +834,16 @@ class CollectionTest < Test::Unit::TestCase
     end
   end
 
+  def test_find_one_with_compile_regex_option
+    # TODO: remove the following line when c and java ext changes are complete
+    return unless defined?(BSON::BSON_RUBY) && BSON::BSON_CODER == BSON::BSON_RUBY
+    regex = /.*/
+    @@test.insert('r' => /.*/)
+    assert_kind_of Regexp, @@test.find_one({})['r']
+    assert_kind_of Regexp, @@test.find_one({}, :compile_regex => true)['r']
+    assert_equal BSON::MongoRegexp, @@test.find_one({}, :compile_regex => false)['r'].class
+  end
+
   def test_insert_adds_id
     doc = {"hello" => "world"}
     @@test.insert(doc)
@@ -997,6 +1007,22 @@ class CollectionTest < Test::Unit::TestCase
                           ]
       results = @@test.aggregate([{"$unwind"=> "$tags"}])
       assert_equal desired_results, results
+    end
+
+    def test_aggregate_with_compile_regex_option
+      # TODO: remove the following line when c and java ext changes are complete
+      return unless defined?(BSON::BSON_RUBY) && BSON::BSON_CODER == BSON::BSON_RUBY
+      # see SERVER-6470
+      @@test.insert({ 'r' => /.*/ })
+      result1 = @@test.aggregate([])
+      assert_kind_of Regexp, result1.first['r']
+
+      result2 = @@test.aggregate([], :compile_regex => false)
+      assert_kind_of BSON::MongoRegexp, result2.first['r']
+
+      return unless @@version >= '2.5.1'
+      result = @@test.aggregate([], :compile_regex => false, :cursor => {})
+      assert_kind_of BSON::MongoRegexp, result.first['r']
     end
   end
 

@@ -218,7 +218,7 @@ module Mongo
     #   This is normally used by object mappers to convert each returned document to an instance of a class.
     # @option opts [String] :comment (nil) a comment to include in profiling logs
     # @option opts [Boolean] :compile_regex (true) whether BSON regex objects should be compiled into Ruby regexes.
-    #   If false, a BSON::Regexp object will be returned instead.
+    #   If false, a BSON::MongoRegexp object will be returned instead.
     #
     # @raise [ArgumentError]
     #   if timeout is set to false and find is not invoked in a block
@@ -678,7 +678,7 @@ module Mongo
           :pool => @connection.pinned_pool
         }
 
-        return Cursor.new(self, seed)
+        return Cursor.new(self, seed.merge!(opts))
 
       elsif selector['pipeline'].any? { |op| op.key?('$out') || op.key?(:$out) }
         return result
