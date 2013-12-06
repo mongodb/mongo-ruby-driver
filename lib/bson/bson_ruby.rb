@@ -339,15 +339,8 @@ module BSON
       compile = true if compile.nil?
       str = deserialize_cstr(buf)
       options_str = deserialize_cstr(buf)
-      if compile
-        options = 0
-        options |= Regexp::IGNORECASE if options_str.include?('i')
-        options |= Regexp::MULTILINE if options_str.include?('s')
-        options |= Regexp::EXTENDED if options_str.include?('x')
-        Regexp.new(str, options)
-      else
-        MongoRegexp.new(str, options_str)
-      end
+      mongo_regexp = BSON::MongoRegexp.new(str, options_str)
+      compile ? mongo_regexp.unsafe_compile : mongo_regexp
     end
 
     def deserialize_timestamp_data(buf)
@@ -500,13 +493,25 @@ module BSON
       # length (can't contain the NULL byte).
       self.class.serialize_key(buf, str)
 
-      options = val.options
-      options_str = ''
-      options_str << 'i' if ((options & Regexp::IGNORECASE) != 0)
-      options_str << 'l' if ((options & MongoRegexp::LOCALE_DEPENDENT) != 0)
-      options_str << 's' if ((options & Regexp::MULTILINE) != 0)
-      options_str << 'u' if ((options & MongoRegexp::UNICODE) != 0)
-      options_str << 'x' if ((options & Regexp::EXTENDED) != 0)
+      if val.is_a?(BSON::MongoRegexp)
+        options = val.options
+        options_str = ''
+        options_str << 'i' if ((options & MongoRegexp::IGNORECASE) != 0)
+        options_str << 'l' if ((options & MongoRegexp::LOCALE_DEPENDENT) != 0)
+        options_str << 'm' if ((options & MongoRegexp::MULTILINE) != 0)
+        options_str << 's' if ((options & MongoRegexp::DOTALL) != 0)
+        options_str << 'u' if ((options & MongoRegexp::UNICODE) != 0)
+        options_str << 'x' if ((options & MongoRegexp::EXTENDED) != 0)
+      else
+        options = val.options
+        options_str = ''
+        options_str << 'm' # Ruby regular expressions always use multiline mode
+        options_str << 'i' if ((options & Regexp::IGNORECASE) != 0)
+        # dotall on the server is multiline in Ruby
+        options_str << 's' if ((options & Regexp::MULTILINE) != 0)
+        options_str << 'x' if ((options & Regexp::EXTENDED) != 0)
+      end
+
       options_str << val.extra_options_str if val.respond_to?(:extra_options_str)
       # Must store option chars in alphabetical order
       self.class.serialize_cstr(buf, options_str.split(//).sort.uniq.join)

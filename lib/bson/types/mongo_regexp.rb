@@ -18,10 +18,12 @@ module BSON
   # can represent flags not supported in Ruby's core Regexp class before compilation.
   class MongoRegexp
 
-    # DOTALL in other implementations is MULTILINE in Ruby
-    DOTALL = Regexp::MULTILINE
+    IGNORECASE       = 1
+    EXTENDED         = IGNORECASE<<1
+    MULTILINE        = EXTENDED<<1
+    DOTALL           = MULTILINE<<1
     LOCALE_DEPENDENT = DOTALL<<1
-    UNICODE = LOCALE_DEPENDENT<<1
+    UNICODE          = LOCALE_DEPENDENT<<1
 
     attr_accessor :pattern
     alias_method  :source, :pattern
@@ -45,9 +47,9 @@ module BSON
       warn 'Ruby Regexps use different syntax and set of flags than BSON regular expressions.'
       pattern = regexp.source
       opts = 0
-      opts |= Regexp::IGNORECASE if (Regexp::IGNORECASE & regexp.options != 0)
-      opts |= DOTALL             if (Regexp::MULTILINE & regexp.options != 0)
-      opts |= Regexp::EXTENDED   if (Regexp::EXTENDED & regexp.options != 0)
+      opts |= IGNORECASE if (Regexp::IGNORECASE & regexp.options != 0)
+      opts |= DOTALL     if (Regexp::MULTILINE  & regexp.options != 0)
+      opts |= EXTENDED   if (Regexp::EXTENDED   & regexp.options != 0)
       self.new(pattern, opts)
     end
 
@@ -82,9 +84,9 @@ module BSON
       warn 'Regular expressions retreived from the server may contain a pattern or flags ' <<
            'not supported by Ruby Regexp objects.'
       regexp_opts = 0
-      regexp_opts |= Regexp::IGNORECASE if (options & Regexp::IGNORECASE != 0)
+      regexp_opts |= Regexp::IGNORECASE if (options & IGNORECASE != 0)
       regexp_opts |= Regexp::MULTILINE  if (options & DOTALL != 0)
-      regexp_opts |= Regexp::EXTENDED   if (options & Regexp::EXTENDED != 0)
+      regexp_opts |= Regexp::EXTENDED   if (options & EXTENDED != 0)
       Regexp.new(pattern, regexp_opts)
     end
 
@@ -94,11 +96,12 @@ module BSON
     # @return [Fixnum] The Integer representation of the options.
     def str_opts_to_int(str_opts="")
       opts = 0
-      opts |= Regexp::IGNORECASE if str_opts.include?('i')
+      opts |= IGNORECASE       if str_opts.include?('i')
       opts |= LOCALE_DEPENDENT if str_opts.include?('l')
-      opts |= DOTALL  if str_opts.include?('s')
-      opts |= UNICODE if str_opts.include?('u')
-      opts |= Regexp::EXTENDED  if str_opts.include?('x')
+      opts |= MULTILINE        if str_opts.include?('m')
+      opts |= DOTALL           if str_opts.include?('s')
+      opts |= UNICODE          if str_opts.include?('u')
+      opts |= EXTENDED         if str_opts.include?('x')
       opts
     end
   end
