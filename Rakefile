@@ -17,13 +17,15 @@ require 'rubygems'
 begin
   require 'bundler'
 rescue LoadError
-  raise '[FAIL] Bundler not found! Install it with `gem install bundler; bundle install`.'
+  raise '[FAIL] Bundler not found! Install it with `gem install bundler && bundle`.'
 end
 
-if ENV.has_key?('TEST') || ENV.has_key?('TRAVIS_TEST')
+rake_tasks = Dir.glob(File.join('tasks', '**', '*.rake')).sort
+if ENV.keys.any? { |k| k.end_with?('_CI') }
   Bundler.require(:default, :testing)
+  rake_tasks.reject! { |r| r =~ /deploy/ }
 else
   Bundler.require(:default, :testing, :deploy, :development)
 end
 
-Dir.glob(File.join('tasks', '**', '*.rake')).sort.each { |rake| load File.expand_path(rake) }
+rake_tasks.each { |rake| load File.expand_path(rake) }

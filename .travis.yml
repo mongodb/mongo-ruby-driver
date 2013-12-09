@@ -9,7 +9,7 @@ rvm:
 
 bundler_args: --without deploy development
 
-env: TRAVIS_TEST="true"
+env: TRAVIS_CI="true"
 
 script: bundle exec rake test
 
@@ -22,7 +22,6 @@ services:
 
 branches:
   only:
-    - 2.x-development
     - master
     - 1.x-stable
     - 2.x-stable
