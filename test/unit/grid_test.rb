@@ -14,7 +14,7 @@
 
 require 'test_helper'
 
-class GridTest < Test::Unit::TestCase
+class GridUnitTest < Test::Unit::TestCase
 
   context "GridFS: " do
     setup do

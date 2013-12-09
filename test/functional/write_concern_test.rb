@@ -19,7 +19,7 @@ class WriteConcernTest < Test::Unit::TestCase
   context "Write concern propogation: " do
     setup do
       @con = standard_connection
-      @db  = @con[MONGO_TEST_DB]
+      @db  = @con[TEST_DB]
       @col = @db['test-safe']
       @col.create_index([[:a, 1]], :unique => true)
       @col.remove
@@ -59,7 +59,7 @@ class WriteConcernTest < Test::Unit::TestCase
   context "Write concern error objects" do
     setup do
       @con = standard_connection
-      @db  = @con[MONGO_TEST_DB]
+      @db  = @con[TEST_DB]
       @col = @db['test']
       @col.remove
       @col.insert({:a => 1})
@@ -83,7 +83,7 @@ class WriteConcernTest < Test::Unit::TestCase
 
   context "Write concern in gridfs" do
     setup do
-      @db = standard_connection.db(MONGO_TEST_DB)
+      @db = standard_connection.db(TEST_DB)
       @grid = Mongo::GridFileSystem.new(@db)
       @filename = 'sample'
     end

@@ -67,7 +67,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     # Setup ReplicaSet Connection
     @client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :read => read)
 
-    @db = @client.db(MONGO_TEST_DB)
+    @db = @client.db(TEST_DB)
     @db.drop_collection("cursor_tests")
     @coll = @db.collection("cursor_tests")
     insert_docs
@@ -107,24 +107,24 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     read_opts[:comment] = object_id
 
     # set profiling level to 2 on client and member to which the query will be routed
-    @client.db(MONGO_TEST_DB).profiling_level = :all
+    @client.db(TEST_DB).profiling_level = :all
     @client.secondaries.each do |node|
       node = Mongo::MongoClient.new(node[0], node[1], :slave_ok => true)
-      node.db(MONGO_TEST_DB).profiling_level = :all
+      node.db(TEST_DB).profiling_level = :all
     end
 
     @cursor = @coll.find({}, read_opts)
     @cursor.next
 
     # on client and other members set profiling level to 0
-    @client.db(MONGO_TEST_DB).profiling_level = :off
+    @client.db(TEST_DB).profiling_level = :off
     @client.secondaries.each do |node|
       node = Mongo::MongoClient.new(node[0], node[1], :slave_ok => true)
-      node.db(MONGO_TEST_DB).profiling_level = :off
+      node.db(TEST_DB).profiling_level = :off
     end
     # do a query on system.profile of the reader to see if it was used for the query
-    profiled_queries = @read.db(MONGO_TEST_DB).collection('system.profile').find({
-      'ns' => "#{MONGO_TEST_DB}.cursor_tests", "query.$comment" => object_id })
+    profiled_queries = @read.db(TEST_DB).collection('system.profile').find({
+      'ns' => "#{TEST_DB}.cursor_tests", "query.$comment" => object_id })
 
     assert_equal 1, profiled_queries.count
   end

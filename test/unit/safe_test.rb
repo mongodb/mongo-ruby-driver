@@ -14,7 +14,7 @@
 
 require 'test_helper'
 
-class SafeTest < Test::Unit::TestCase
+class SafeUnitTest < Test::Unit::TestCase
 
   context "Write-Concern modes on Mongo::Connection " do
     setup do
@@ -23,28 +23,28 @@ class SafeTest < Test::Unit::TestCase
     end
 
     should "propogate to DB" do
-      db = @connection['foo']
+      db = @connection[TEST_DB]
       assert_equal @safe_value[:w], db.write_concern[:w]
 
 
-      db = @connection.db('foo')
+      db = @connection.db(TEST_DB)
       assert_equal @safe_value[:w], db.write_concern[:w]
 
-      db = DB.new('foo', @connection)
+      db = DB.new(TEST_DB, @connection)
       assert_equal @safe_value[:w], db.write_concern[:w]
     end
 
     should "allow db override" do
-      db = DB.new('foo', @connection, :safe => false)
+      db = DB.new(TEST_DB, @connection, :safe => false)
       assert_equal 0, db.write_concern[:w]
 
-      db = @connection.db('foo', :safe => false)
+      db = @connection.db(TEST_DB, :safe => false)
       assert_equal 0, db.write_concern[:w]
     end
 
     context "on DB: " do
       setup do
-        @db = @connection['foo']
+        @db = @connection[TEST_DB]
       end
 
       should "propogate to collection" do
@@ -69,7 +69,7 @@ class SafeTest < Test::Unit::TestCase
 
     context "on operations supporting safe mode" do
       setup do
-        @col = @connection['foo']['bar']
+        @col = @connection[TEST_DB]['bar']
       end
 
       should "use default value on insert" do

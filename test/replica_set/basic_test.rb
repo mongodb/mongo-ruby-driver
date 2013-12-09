@@ -14,7 +14,7 @@
 
 require 'test_helper'
 
-class BasicTest < Test::Unit::TestCase
+class ReplicaSetBasicTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
@@ -94,7 +94,7 @@ class BasicTest < Test::Unit::TestCase
         seeds = @rs.repl_set_seeds
         args = {:name => @rs.repl_set_name}
         @client = MongoReplicaSetClient.new(seeds, args)
-        @coll = @client[MONGO_TEST_DB]['test-connection-exceptions']
+        @coll = @client[TEST_DB]['test-connection-exceptions']
       end
 
       should "close the connection on send_message for major exceptions" do
@@ -130,7 +130,7 @@ class BasicTest < Test::Unit::TestCase
         seeds = @rs.repl_set_seeds
         args = {:name => @rs.repl_set_name}
         @client = MongoReplicaSetClient.new(seeds, args)
-        @coll = @client[MONGO_TEST_DB]['test-connection-exceptions']
+        @coll = @client[TEST_DB]['test-connection-exceptions']
       end
 
       should "close the connection on receive_message for major exceptions" do

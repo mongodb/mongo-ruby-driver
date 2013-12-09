@@ -18,7 +18,7 @@ class GridFileSystemTest < Test::Unit::TestCase
   context "GridFileSystem:" do
     setup do
       @con = standard_connection
-      @db  = @con.db(MONGO_TEST_DB)
+      @db  = @con.db(TEST_DB)
     end
 
     teardown do

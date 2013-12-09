@@ -38,7 +38,7 @@ class Fixnum
   end
 end
 
-class TestCollection < Test::Unit::TestCase
+class BSONGrowTest < Test::Unit::TestCase
 
   def setup
     @doc_a = {"a"=>0}

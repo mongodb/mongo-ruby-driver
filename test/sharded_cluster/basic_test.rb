@@ -19,12 +19,12 @@ class Cursor
   public :construct_query_spec
 end
 
-class BasicTest < Test::Unit::TestCase
+class ShardedClusterBasicTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:sc)
     @document = { "name" => "test_user" }
-    @seeds = @sc.mongos_seeds
+    @seeds    = @sc.mongos_seeds
   end
 
   # TODO member.primary? ==> true
@@ -49,39 +49,39 @@ class BasicTest < Test::Unit::TestCase
     tags = [{:dc => "mongolia"}]
     @client = MongoClient.new(host, port, {:read => :secondary, :tag_sets => tags})
     assert @client.connected?
-    cursor = Cursor.new(@client[MONGO_TEST_DB]['whatever'], {})
+    cursor = Cursor.new(@client[TEST_DB]['whatever'], {})
     assert_equal cursor.construct_query_spec['$readPreference'], {:mode => 'secondary', :tags => tags}
   end
 
   def test_find_one_with_read_secondary
     @client = MongoShardedClient.new(@seeds, { :read => :secondary })
-    @client[MONGO_TEST_DB]["users"].insert([ @document ])
-    assert_equal @client[MONGO_TEST_DB]['users'].find_one["name"], "test_user"
+    @client[TEST_DB]["users"].insert([ @document ])
+    assert_equal @client[TEST_DB]['users'].find_one["name"], "test_user"
   end
 
   def test_find_one_with_read_secondary_preferred
     @client = MongoShardedClient.new(@seeds, { :read => :secondary_preferred })
-    @client[MONGO_TEST_DB]["users"].insert([ @document ])
-    assert_equal @client[MONGO_TEST_DB]['users'].find_one["name"], "test_user"
+    @client[TEST_DB]["users"].insert([ @document ])
+    assert_equal @client[TEST_DB]['users'].find_one["name"], "test_user"
   end
 
   def test_find_one_with_read_primary
     @client = MongoShardedClient.new(@seeds, { :read => :primary })
-    @client[MONGO_TEST_DB]["users"].insert([ @document ])
-    assert_equal @client[MONGO_TEST_DB]['users'].find_one["name"], "test_user"
+    @client[TEST_DB]["users"].insert([ @document ])
+    assert_equal @client[TEST_DB]['users'].find_one["name"], "test_user"
   end
 
   def test_find_one_with_read_primary_preferred
     @client = MongoShardedClient.new(@seeds, { :read => :primary_preferred })
-    @client[MONGO_TEST_DB]["users"].insert([ @document ])
-    assert_equal @client[MONGO_TEST_DB]['users'].find_one["name"], "test_user"
+    @client[TEST_DB]["users"].insert([ @document ])
+    assert_equal @client[TEST_DB]['users'].find_one["name"], "test_user"
   end
 
   def test_read_from_sharded_client
     tags = [{:dc => "mongolia"}]
     @client = MongoShardedClient.new(@seeds, {:read => :secondary, :tag_sets => tags})
     assert @client.connected?
-    cursor = Cursor.new(@client[MONGO_TEST_DB]['whatever'], {})
+    cursor = Cursor.new(@client[TEST_DB]['whatever'], {})
     assert_equal cursor.construct_query_spec['$readPreference'], {:mode => 'secondary', :tags => tags}
   end
 
@@ -107,13 +107,13 @@ class BasicTest < Test::Unit::TestCase
     @client = MongoShardedClient.new(@seeds, :refresh_interval => 5, :refresh_mode => :sync)
     assert @client.connected?
     # do a find to pin a pool
-    @client['MONGO_TEST_DB']['test'].find_one
+    @client[TEST_DB]['test'].find_one
     original_primary = @client.manager.primary
     # stop the pinned member
     @sc.member_by_name("#{original_primary[0]}:#{original_primary[1]}").stop
     # assert that the client fails over to the next available mongos
     assert_nothing_raised do
-      @client['MONGO_TEST_DB']['test'].find_one
+      @client[TEST_DB]['test'].find_one
     end
 
     assert_not_equal original_primary, @client.manager.primary
