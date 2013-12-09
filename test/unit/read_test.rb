@@ -14,7 +14,7 @@
 
 require 'test_helper'
 
-class ReadTest < Test::Unit::TestCase
+class ReadUnitTest < Test::Unit::TestCase
 
   context "Read mode on standard connection: " do
     setup do
@@ -46,29 +46,29 @@ class ReadTest < Test::Unit::TestCase
     end
 
     should "propogate to DB" do
-      db = @client['foo']
+      db = @client[TEST_DB]
       assert_equal @read, db.read
       assert_equal @tags, db.tag_sets
       assert_equal @acceptable_latency, db.acceptable_latency
 
-      db = @client.db('foo')
+      db = @client.db(TEST_DB)
       assert_equal @read, db.read
       assert_equal @tags, db.tag_sets
       assert_equal @acceptable_latency, db.acceptable_latency
 
-      db = DB.new('foo', @client)
+      db = DB.new(TEST_DB, @client)
       assert_equal @read, db.read
       assert_equal @tags, db.tag_sets
       assert_equal @acceptable_latency, db.acceptable_latency
     end
 
     should "allow db override" do
-      db = DB.new('foo', @client, :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
+      db = DB.new(TEST_DB, @client, :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
       assert_equal :primary, db.read
       assert_equal @bad_tags, db.tag_sets
       assert_equal 25, db.acceptable_latency
 
-      db = @client.db('foo', :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
+      db = @client.db(TEST_DB, :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
       assert_equal :primary, db.read
       assert_equal @bad_tags, db.tag_sets
       assert_equal 25, db.acceptable_latency
@@ -76,33 +76,33 @@ class ReadTest < Test::Unit::TestCase
 
     context "on DB: " do
       setup do
-        @db = @client['foo']
+        @db = @client[TEST_DB]
       end
 
       should "propogate to collection" do
-        col = @db.collection('bar')
+        col = @db.collection('read-unit-test')
         assert_equal @read, col.read
         assert_equal @tags, col.tag_sets
         assert_equal @acceptable_latency, col.acceptable_latency
 
-        col = @db['bar']
+        col = @db['read-unit-test']
         assert_equal @read, col.read
         assert_equal @tags, col.tag_sets
         assert_equal @acceptable_latency, col.acceptable_latency
 
-        col = Collection.new('bar', @db)
+        col = Collection.new('read-unit-test', @db)
         assert_equal @read, col.read
         assert_equal @tags, col.tag_sets
         assert_equal @acceptable_latency, col.acceptable_latency
       end
 
       should "allow override on collection" do
-        col = @db.collection('bar', :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
+        col = @db.collection('read-unit-test', :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
         assert_equal :primary, col.read
         assert_equal @bad_tags, col.tag_sets
         assert_equal 25, col.acceptable_latency
 
-        col = Collection.new('bar', @db, :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
+        col = Collection.new('read-unit-test', @db, :read => :primary, :tag_sets => @bad_tags, :acceptable_latency => 25)
         assert_equal :primary, col.read
         assert_equal @bad_tags, col.tag_sets
         assert_equal 25, col.acceptable_latency
@@ -111,7 +111,7 @@ class ReadTest < Test::Unit::TestCase
 
     context "on read mode ops" do
       setup do
-        @col = @client['foo']['bar']
+        @col = @client[TEST_DB]['read-unit-test']
         @mock_socket = new_mock_socket
       end
 

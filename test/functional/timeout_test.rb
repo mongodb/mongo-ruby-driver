@@ -14,7 +14,8 @@
 
 require 'test_helper'
 
-class TestTimeout < Test::Unit::TestCase
+class TimeoutTest < Test::Unit::TestCase
+
   def test_op_timeout
     connection = standard_connection(:op_timeout => 0.5)
 
@@ -32,9 +33,9 @@ class TestTimeout < Test::Unit::TestCase
   end
 
   def test_external_timeout_does_not_leave_socket_in_bad_state
-    client = Mongo::MongoClient.new
-    db = client[MONGO_TEST_DB]
-    coll = db['timeout-tests']
+    client = standard_connection
+    db     = client[TEST_DB]
+    coll   = db['timeout-tests']
 
     # prepare the database
     coll.drop
@@ -54,21 +55,4 @@ class TestTimeout < Test::Unit::TestCase
     end
   end
 
-=begin
-  def test_ssl_op_timeout
-    connection = standard_connection(:op_timeout => 1, :ssl => true)
-
-    coll = connection.db(MONGO_TEST_DB).collection("test")
-    coll.insert({:a => 1})
-    # Should not timeout
-    assert coll.find_one({"$where" => "sleep(100); return true;"})
-
-    # Should timeout
-    assert_raise Mongo::OperationTimeout do
-      coll.find_one({"$where" => "sleep(5 * 1000); return true;"})
-    end
-
-    coll.remove
-  end
-=end
 end

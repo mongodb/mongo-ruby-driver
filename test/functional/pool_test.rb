@@ -19,7 +19,7 @@ class PoolTest < Test::Unit::TestCase
 
   def setup
     @client    ||= standard_connection({:pool_size => 15, :pool_timeout => 5})
-    @db         = @client.db(MONGO_TEST_DB)
+    @db         = @client.db(TEST_DB)
     @collection = @db.collection("pool_test")
   end
 

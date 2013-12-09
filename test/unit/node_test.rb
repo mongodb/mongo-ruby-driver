@@ -14,7 +14,7 @@
 
 require 'test_helper'
 
-class NodeTest < Test::Unit::TestCase
+class NodeUnitTest < Test::Unit::TestCase
 
   def setup
     @client = stub()

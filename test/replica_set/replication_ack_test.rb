@@ -26,7 +26,7 @@ class ReplicaSetAckTest < Test::Unit::TestCase
 
     assert !@slave1.read_primary?
 
-    @db = @client.db(MONGO_TEST_DB)
+    @db = @client.db(TEST_DB)
     @db.drop_collection("test-sets")
     @col = @db.collection("test-sets")
   end
@@ -54,17 +54,17 @@ class ReplicaSetAckTest < Test::Unit::TestCase
     @col.insert({:baz => "bar"}, :w => 3, :wtimeout => 5000)
 
     assert @col.insert({:foo => "0" * 5000}, :w => 3, :wtimeout => 5000)
-    assert_equal 2, @slave1[MONGO_TEST_DB]["test-sets"].count
+    assert_equal 2, @slave1[TEST_DB]["test-sets"].count
 
     assert @col.update({:baz => "bar"}, {:baz => "foo"}, :w => 3, :wtimeout => 5000)
-    assert @slave1[MONGO_TEST_DB]["test-sets"].find_one({:baz => "foo"})
+    assert @slave1[TEST_DB]["test-sets"].find_one({:baz => "foo"})
 
     assert @col.insert({:foo => "bar"}, :w => "majority")
 
     assert @col.insert({:bar => "baz"}, :w => :majority)
 
     assert @col.remove({}, :w => 3, :wtimeout => 5000)
-    assert_equal 0, @slave1[MONGO_TEST_DB]["test-sets"].count
+    assert_equal 0, @slave1[TEST_DB]["test-sets"].count
   end
 
   def test_last_error_responses

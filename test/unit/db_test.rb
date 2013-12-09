@@ -23,7 +23,7 @@ def insert_message(db, documents)
   message = db.add_message_headers(Mongo::Constants::OP_INSERT, message)
 end
 
-class DBTest < Test::Unit::TestCase
+class DBUnitTest < Test::Unit::TestCase
   context "DBTest: " do
     context "DB commands" do
       setup do
@@ -95,7 +95,7 @@ class DBTest < Test::Unit::TestCase
       should "raise an error if logging out fails" do
         client = MongoClient.new
         DB.any_instance.stubs(:command).returns({"ok" => 0})
-        db = DB.new('testing', client)
+        db = DB.new(TEST_DB, client)
         assert_raise Mongo::MongoDBError do
           db.logout
         end

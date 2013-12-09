@@ -22,8 +22,8 @@ class AuthenticationTest < Test::Unit::TestCase
   include SASLPlainTests
 
   def setup
-    @client = MongoClient.new
-    @db     = @client[MONGO_TEST_DB]
+    @client = MongoClient.new(TEST_HOST, TEST_PORT)
+    @db     = @client[TEST_DB]
     init_auth
   end
 
@@ -36,7 +36,7 @@ class AuthenticationTest < Test::Unit::TestCase
 
       assert client
       assert_equal client.auths.size, 1
-      assert client[MONGO_TEST_DB]['auth_test'].count
+      assert client[TEST_DB]['auth_test'].count
 
       auth = client.auths.first
       assert_equal @db.name, auth[:db_name]

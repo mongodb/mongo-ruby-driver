@@ -14,13 +14,13 @@
 
 require 'test_helper'
 
-class TestThreading < Test::Unit::TestCase
+class ThreadingTest < Test::Unit::TestCase
 
   include Mongo
 
   def setup
     @client = standard_connection(:pool_size => 10, :pool_timeout => 30)
-    @db = @client.db(MONGO_TEST_DB)
+    @db = @client.db(TEST_DB)
     @coll = @db.collection('thread-test-collection')
     @coll.drop
 
@@ -91,4 +91,30 @@ class TestThreading < Test::Unit::TestCase
     assert thread_values.all?{|v| v == 1000}
     assert_equal thread_values.size, n_threads
   end
+
+  def test_threading
+    @coll.drop
+    @coll = @db.collection('thread-test-collection')
+
+    docs = []
+    1000.times {|i| docs << {:x => i}}
+    @coll.insert(docs)
+
+    threads = []
+
+    10.times do |i|
+      threads[i] = Thread.new do
+        sum = 0
+        @coll.find().each do |document|
+          sum += document["x"]
+        end
+        assert_equal 499500, sum
+      end
+    end
+
+    10.times do |i|
+      threads[i].join
+    end
+  end
+
 end

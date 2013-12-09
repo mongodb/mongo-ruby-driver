@@ -161,44 +161,46 @@ class ClientTest < Test::Unit::TestCase
   end
 
   def test_database_info
-    @client.drop_database(MONGO_TEST_DB)
-    @client.db(MONGO_TEST_DB).collection('info-test').insert('a' => 1)
+    @client.drop_database(TEST_DB)
+    @client.db(TEST_DB).collection('info-test').insert('a' => 1)
 
     info = @client.database_info
     assert_not_nil info
     assert_kind_of Hash, info
-    assert_not_nil info[MONGO_TEST_DB]
-    assert info[MONGO_TEST_DB] > 0
+    assert_not_nil info[TEST_DB]
+    assert info[TEST_DB] > 0
 
-    @client.drop_database(MONGO_TEST_DB)
+    @client.drop_database(TEST_DB)
   end
 
   def test_copy_database
-    @client.db('old').collection('copy-test').insert('a' => 1)
-    @client.copy_database('old', 'new', host_port)
-    old_object = @client.db('old').collection('copy-test').find.next_document
-    new_object = @client.db('new').collection('copy-test').find.next_document
+    old_name = TEST_DB + '_old'
+    new_name = TEST_DB + '_new'
+
+    @client.db(old_name).collection('copy-test').insert('a' => 1)
+    @client.copy_database(old_name, new_name, host_port)
+
+    old_object = @client.db(old_name).collection('copy-test').find.next_document
+    new_object = @client.db(new_name).collection('copy-test').find.next_document
     assert_equal old_object, new_object
-    @client.drop_database('old')
-    @client.drop_database('new')
   end
 
   def test_database_names
-    @client.drop_database(MONGO_TEST_DB)
-    @client.db(MONGO_TEST_DB).collection('info-test').insert('a' => 1)
+    @client.drop_database(TEST_DB)
+    @client.db(TEST_DB).collection('info-test').insert('a' => 1)
 
     names = @client.database_names
     assert_not_nil names
     assert_kind_of Array, names
     assert names.length >= 1
-    assert names.include?(MONGO_TEST_DB)
+    assert names.include?(TEST_DB)
   end
 
   def test_logging
     output = StringIO.new
     logger = Logger.new(output)
     logger.level = Logger::DEBUG
-    standard_connection(:logger => logger).db(MONGO_TEST_DB)
+    standard_connection(:logger => logger).db(TEST_DB)
     assert output.string.include?("admin['$cmd'].find")
   end
 
@@ -206,7 +208,7 @@ class ClientTest < Test::Unit::TestCase
     output = StringIO.new
     logger = Logger.new(output)
     logger.level = Logger::DEBUG
-    standard_connection(:logger => logger).db(MONGO_TEST_DB)
+    standard_connection(:logger => logger).db(TEST_DB)
     assert_match(/\(\d+.\d{1}ms\)/, output.string)
     assert output.string.include?("admin['$cmd'].find")
   end
@@ -223,15 +225,15 @@ class ClientTest < Test::Unit::TestCase
   end
 
   def test_drop_database
-    db = @client.db('ruby-mongo-will-be-deleted')
+    db = @client.db(TEST_DB + '_drop_test')
     coll = db.collection('temp')
     coll.remove
     coll.insert(:name => 'temp')
     assert_equal 1, coll.count()
-    assert @client.database_names.include?('ruby-mongo-will-be-deleted')
+    assert @client.database_names.include?(TEST_DB + '_drop_test')
 
-    @client.drop_database('ruby-mongo-will-be-deleted')
-    assert !@client.database_names.include?('ruby-mongo-will-be-deleted')
+    @client.drop_database(TEST_DB + '_drop_test')
+    assert !@client.database_names.include?(TEST_DB + '_drop_test')
   end
 
   def test_nodes
@@ -456,7 +458,7 @@ class ClientTest < Test::Unit::TestCase
     context "checking out writers" do
       setup do
         @con = standard_connection(:pool_size => 10, :pool_timeout => 10)
-        @coll = @con[MONGO_TEST_DB]['test-connection-exceptions']
+        @coll = @con[TEST_DB]['test-connection-exceptions']
       end
 
       should "close the connection on send_message for major exceptions" do
@@ -493,7 +495,7 @@ class ClientTest < Test::Unit::TestCase
   context "Connection exceptions" do
     setup do
       @con = standard_connection(:pool_size => 10, :pool_timeout => 10)
-      @coll = @con[MONGO_TEST_DB]['test-connection-exceptions']
+      @coll = @con[TEST_DB]['test-connection-exceptions']
     end
 
     should "release connection if an exception is raised on send_message" do

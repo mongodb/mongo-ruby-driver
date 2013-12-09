@@ -73,12 +73,12 @@ end
 
 class BulkWriteCollectionViewTest < Test::Unit::TestCase
   @@client       ||= standard_connection(:op_timeout => 10)
-  @@db           = @@client.db(MONGO_TEST_DB)
+  @@db           = @@client.db(TEST_DB)
   @@test         = @@db.collection("test")
   @@version      = @@client.server_version
 
-  DATABASE_NAME = 'bulk_write_collection_view_test'
-  COLLECTION_NAME = 'test'
+  DATABASE_NAME   = TEST_DB
+  COLLECTION_NAME = 'bulk_write_collection_view_test'
 
   def pp_with_caller(obj)
     puts "#{caller(1,1).first[/(.*):in/, 1]}:"

@@ -18,7 +18,7 @@ class ReplicaSetPinningTest < Test::Unit::TestCase
   def setup
     ensure_cluster(:rs)
     @client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
-    @db = @client.db(MONGO_TEST_DB)
+    @db = @client.db(TEST_DB)
     @coll = @db.collection("test-sets")
     @coll.insert({:a => 1})
   end

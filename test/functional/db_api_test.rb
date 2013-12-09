@@ -19,7 +19,7 @@ class DBAPITest < Test::Unit::TestCase
   include BSON
 
   @@client = standard_connection
-  @@db   = @@client.db(MONGO_TEST_DB)
+  @@db   = @@client.db(TEST_DB)
   @@coll = @@db.collection('test')
   @@version = @@client.server_version
 
@@ -27,7 +27,7 @@ class DBAPITest < Test::Unit::TestCase
     @@coll.remove
     @r1 = {'a' => 1}
     @@coll.insert(@r1) # collection not created until it's used
-    @@coll_full_name = "#{MONGO_TEST_DB}.test"
+    @@coll_full_name = "#{TEST_DB}.test"
   end
 
   def teardown

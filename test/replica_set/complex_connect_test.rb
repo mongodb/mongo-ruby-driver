@@ -36,8 +36,8 @@ class ComplexConnectTest < Test::Unit::TestCase
 
     version = @client.server_version
 
-    @client['test']['foo'].insert({:a => 1})
-    assert @client['test']['foo'].find_one
+    @client[TEST_DB]['complext-connect-test'].insert({:a => 1})
+    assert @client[TEST_DB]['complext-connect-test'].find_one
 
     config = primary['local']['system.replset'].find_one
     old_config = config.dup
@@ -64,10 +64,10 @@ class ComplexConnectTest < Test::Unit::TestCase
     puts version
     if version < "2.1"
       rescue_connection_failure do
-        assert @client['test']['foo'].find_one
+        assert @client[TEST_DB]['complext-connect-test'].find_one
       end
 
-      assert @client['test']['foo'].find_one
+      assert @client[TEST_DB]['complext-connect-test'].find_one
     end
 
     primary = MongoClient.new(host, @rs.primary.port)

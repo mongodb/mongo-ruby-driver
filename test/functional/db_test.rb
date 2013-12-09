@@ -29,7 +29,7 @@ class DBTest < Test::Unit::TestCase
   include Mongo
 
   @@client  = standard_connection
-  @@db    = @@client.db(MONGO_TEST_DB)
+  @@db    = @@client.db(TEST_DB)
   @@version = @@client.server_version
 
   def test_close
@@ -41,7 +41,7 @@ class DBTest < Test::Unit::TestCase
     rescue => ex
       assert_match(/NilClass/, ex.to_s)
     ensure
-      @@db = standard_connection.db(MONGO_TEST_DB)
+      @@db = standard_connection.db(TEST_DB)
     end
   end
 
@@ -56,7 +56,7 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_get_and_drop_collection
-    db = @@client.db(MONGO_TEST_DB, :strict => true)
+    db = @@client.db(TEST_DB, :strict => true)
     db.create_collection('foo')
     assert db.collection('foo')
     assert db.drop_collection('foo')
@@ -79,7 +79,7 @@ class DBTest < Test::Unit::TestCase
 
   def test_full_coll_name
     coll = @@db.collection('test')
-    assert_equal "#{MONGO_TEST_DB}.test", @@db.full_collection_name(coll.name)
+    assert_equal "#{TEST_DB}.test", @@db.full_collection_name(coll.name)
   end
 
   def test_collection_names
@@ -107,7 +107,7 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_pk_factory
-    db = standard_connection.db(MONGO_TEST_DB, :pk => TestPKFactory.new)
+    db = standard_connection.db(TEST_DB, :pk => TestPKFactory.new)
     coll = db.collection('test')
     coll.remove
 
@@ -131,7 +131,7 @@ class DBTest < Test::Unit::TestCase
 
   def test_pk_factory_reset
     conn = standard_connection
-    db   = conn.db(MONGO_TEST_DB)
+    db   = conn.db(TEST_DB)
     db.pk_factory = Object.new # first time
     begin
       db.pk_factory = Object.new
@@ -234,7 +234,7 @@ class DBTest < Test::Unit::TestCase
 
   def test_text_port_number_raises_no_errors
     client = standard_connection
-    db   = client[MONGO_TEST_DB]
+    db   = client[TEST_DB]
     db.collection('users').remove
   end
 
@@ -270,7 +270,7 @@ class DBTest < Test::Unit::TestCase
 
   context "database profiling" do
     setup do
-      @db  = @@client[MONGO_TEST_DB]
+      @db  = @@client[TEST_DB]
       @coll = @db['test']
       @coll.remove
       @r1 = @coll.insert('a' => 1) # collection not created until it's used
