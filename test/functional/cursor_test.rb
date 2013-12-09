@@ -99,7 +99,7 @@ class CursorTest < Test::Unit::TestCase
     cursor = @@coll.find({}, :batch_size => (n_docs-1), :compile_regex => false)
     cursor.expects(:send_get_more)
     cursor.to_a.each do |doc|
-      assert_kind_of BSON::MongoRegexp, doc['n']
+      assert_kind_of BSON::Regex, doc['n']
     end
   end
 

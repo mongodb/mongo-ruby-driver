@@ -528,7 +528,7 @@ module Mongo
     #   more details.
     # @option opts [String]  :comment (nil) a comment to include in profiling logs
     # @option opts [Boolean] :compile_regex (true) whether BSON regex objects should be compiled into Ruby regexes.
-    #   If false, a BSON::MongoRegexp wrapper object will be returned instead.
+    #   If false, a BSON::Regex object will be returned instead.
     #
     # @return [Hash]
     def command(selector, opts={})

@@ -339,8 +339,8 @@ module BSON
       compile = true if compile.nil?
       str = deserialize_cstr(buf)
       options_str = deserialize_cstr(buf)
-      mongo_regexp = BSON::MongoRegexp.new(str, options_str)
-      compile ? mongo_regexp.unsafe_compile : mongo_regexp
+      bson_regex = BSON::Regex.new(str, options_str)
+      compile ? bson_regex.try_compile : bson_regex
     end
 
     def deserialize_timestamp_data(buf)
@@ -493,18 +493,17 @@ module BSON
       # length (can't contain the NULL byte).
       self.class.serialize_key(buf, str)
 
-      if val.is_a?(BSON::MongoRegexp)
-        options = val.options
-        options_str = ''
-        options_str << 'i' if ((options & MongoRegexp::IGNORECASE) != 0)
-        options_str << 'l' if ((options & MongoRegexp::LOCALE_DEPENDENT) != 0)
-        options_str << 'm' if ((options & MongoRegexp::MULTILINE) != 0)
-        options_str << 's' if ((options & MongoRegexp::DOTALL) != 0)
-        options_str << 'u' if ((options & MongoRegexp::UNICODE) != 0)
-        options_str << 'x' if ((options & MongoRegexp::EXTENDED) != 0)
+      options = val.options
+      options_str = ''
+
+      if val.is_a?(BSON::Regex)
+        options_str << 'i' if ((options & BSON::Regex::IGNORECASE) != 0)
+        options_str << 'l' if ((options & BSON::Regex::LOCALE_DEPENDENT) != 0)
+        options_str << 'm' if ((options & BSON::Regex::MULTILINE) != 0)
+        options_str << 's' if ((options & BSON::Regex::DOTALL) != 0)
+        options_str << 'u' if ((options & BSON::Regex::UNICODE) != 0)
+        options_str << 'x' if ((options & BSON::Regex::EXTENDED) != 0)
       else
-        options = val.options
-        options_str = ''
         options_str << 'm' # Ruby regular expressions always use multiline mode
         options_str << 'i' if ((options & Regexp::IGNORECASE) != 0)
         # dotall on the server is multiline in Ruby
@@ -605,7 +604,7 @@ module BSON
         STRING
       when Array
         ARRAY
-      when Regexp, MongoRegexp
+      when Regexp, BSON::Regex
         REGEX
       when ObjectId
         OID

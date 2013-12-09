@@ -366,21 +366,21 @@ class BSONTest < Test::Unit::TestCase
     assert_doc_pass(doc)
   end
 
-  def test_mongo_regexp
+  def test_bson_regex
     # TODO: remove the following line when java ext changes are complete
     return if defined?(BSON::BSON_JAVA) && BSON::BSON_CODER == BSON::BSON_JAVA
-    doc = { 'doc' => BSON::MongoRegexp.new('foobar') }
+    doc = { 'doc' => BSON::Regex.new('foobar') }
     bson = @encoder.serialize(doc)
     assert_equal @encoder.serialize(doc).to_a, bson.to_a
     assert_equal doc, @encoder.deserialize(bson, :compile_regex => false)
   end
 
-  def test_mongo_regexp_with_nonruby_flags
+  def test_bson_regex_with_nonruby_flags
     # TODO: remove the following line when java ext changes are complete
     return if defined?(BSON::BSON_JAVA) && BSON::BSON_CODER == BSON::BSON_JAVA
-    # create a regexp wrapper with more flags than can be represented in Ruby
-    mongo_regexp = BSON::MongoRegexp.new('foobar', 'i', 'l', 'm', 's', 'u', 'x')
-    doc = { 'regexp' => mongo_regexp }
+    # create a bson regex with more flags than can be represented in Ruby
+    bson_regex = BSON::Regex.new('foobar', 'i', 'l', 'm', 's', 'u', 'x')
+    doc = { 'regexp' => bson_regex }
     bson = @encoder.serialize(doc)
     assert_equal @encoder.serialize(doc).to_a, bson.to_a
     regexp = @encoder.deserialize(bson, :compile_regex => false)['regexp']
@@ -389,26 +389,26 @@ class BSONTest < Test::Unit::TestCase
     assert_equal Regexp::IGNORECASE, Regexp::IGNORECASE & regexp.options
   end
 
-  def test_mongo_regex_to_ruby_regexp
+  def test_bson_regex_to_ruby_regexp
     # TODO: remove the following line when java ext changes are complete
     return if defined?(BSON::BSON_JAVA) && BSON::BSON_CODER == BSON::BSON_JAVA
-    mongo_regexp = BSON::MongoRegexp.new('foobar', 'i', 'l', 'm', 's', 'u', 'x')
-    doc = { 'doc' => mongo_regexp }
+    bson_regex = BSON::Regex.new('foobar', 'i', 'l', 'm', 's', 'u', 'x')
+    doc = { 'doc' => bson_regex }
     bson = @encoder.serialize(doc)
     assert_equal 7, @encoder.deserialize(bson, :compile_regex => true)['doc'].options
   end
 
-  def test_ruby_regexp_to_mongo_regexp
+  def test_ruby_regexp_to_bson_regex
     # TODO: remove the following line when java ext changes are complete
     return if defined?(BSON::BSON_JAVA) && BSON::BSON_CODER == BSON::BSON_JAVA
     regexp = Regexp.new(/foobar/imx)
     doc = { 'doc' => regexp }
     bson = @encoder.serialize(doc)
-    mongo_regexp = @encoder.deserialize(bson, :compile_regex => false)['doc']
-    assert_equal MongoRegexp::MULTILINE,  MongoRegexp::MULTILINE  & mongo_regexp.options
-    assert_equal MongoRegexp::EXTENDED,   MongoRegexp::EXTENDED   & mongo_regexp.options
-    assert_equal MongoRegexp::IGNORECASE, MongoRegexp::IGNORECASE & mongo_regexp.options
-    assert_equal MongoRegexp::DOTALL,     MongoRegexp::DOTALL     & mongo_regexp.options
+    bson_regx = @encoder.deserialize(bson, :compile_regex => false)['doc']
+    assert_equal BSON::Regex::MULTILINE,  BSON::Regex::MULTILINE  & bson_regx.options
+    assert_equal BSON::Regex::EXTENDED,   BSON::Regex::EXTENDED   & bson_regx.options
+    assert_equal BSON::Regex::IGNORECASE, BSON::Regex::IGNORECASE & bson_regx.options
+    assert_equal BSON::Regex::DOTALL,     BSON::Regex::DOTALL     & bson_regx.options
   end
 
   def test_boolean

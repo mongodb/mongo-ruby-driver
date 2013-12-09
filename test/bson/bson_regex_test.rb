@@ -14,19 +14,19 @@
 
 require 'test_helper'
 
-class MongoRegexpTest < Test::Unit::TestCase
+class BSONRegexTest < Test::Unit::TestCase
 
-  def test_convert_regexp_to_mongo_regexp
-    BSON::MongoRegexp.expects(:warn)
+  def test_convert_regexp_to_bson_regex
+    BSON::Regex.expects(:warn)
     regexp = Regexp.new(/.*/imx)
-    mongo_regexp = BSON::MongoRegexp.from_native(regexp)
-    assert_equal regexp.source, mongo_regexp.source
+    bson_regex = BSON::Regex.from_native(regexp)
+    assert_equal regexp.source, bson_regex.source
   end
 
-  def test_compile_mongo_regexp
-    BSON::MongoRegexp.any_instance.expects(:warn)
-    mongo_regexp = BSON::MongoRegexp.new(".*", 'imx')
-    regexp = mongo_regexp.unsafe_compile
+  def test_compile_bson_regex
+    BSON::Regex.any_instance.expects(:warn)
+    bson_regex = BSON::Regex.new(".*", 'imx')
+    regexp = bson_regex.try_compile
     assert_equal 3, regexp.options
   end
 end

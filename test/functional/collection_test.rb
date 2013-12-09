@@ -841,7 +841,7 @@ class CollectionTest < Test::Unit::TestCase
     @@test.insert('r' => /.*/)
     assert_kind_of Regexp, @@test.find_one({})['r']
     assert_kind_of Regexp, @@test.find_one({}, :compile_regex => true)['r']
-    assert_equal BSON::MongoRegexp, @@test.find_one({}, :compile_regex => false)['r'].class
+    assert_equal BSON::Regex, @@test.find_one({}, :compile_regex => false)['r'].class
   end
 
   def test_insert_adds_id
@@ -1018,11 +1018,11 @@ class CollectionTest < Test::Unit::TestCase
       assert_kind_of Regexp, result1.first['r']
 
       result2 = @@test.aggregate([], :compile_regex => false)
-      assert_kind_of BSON::MongoRegexp, result2.first['r']
+      assert_kind_of BSON::Regex, result2.first['r']
 
       return unless @@version >= '2.5.1'
       result = @@test.aggregate([], :compile_regex => false, :cursor => {})
-      assert_kind_of BSON::MongoRegexp, result.first['r']
+      assert_kind_of BSON::Regex, result.first['r']
     end
   end
 
