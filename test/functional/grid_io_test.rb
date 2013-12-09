@@ -18,7 +18,7 @@ class GridIOTest < Test::Unit::TestCase
 
   context "GridIO" do
     setup do
-      @db = standard_connection.db(MONGO_TEST_DB)
+      @db = standard_connection.db(TEST_DB)
       @files  = @db.collection('fs.files')
       @chunks = @db.collection('fs.chunks')
       @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]])

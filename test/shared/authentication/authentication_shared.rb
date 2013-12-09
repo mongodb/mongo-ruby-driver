@@ -152,15 +152,15 @@ module AuthenticationTests
   def test_socket_auths
     silently do
       # setup
-      db_a = @client['test_a']
+      db_a = @client[TEST_DB + '_a']
       db_a.add_user('user_a', 'password')
       assert db_a.authenticate('user_a', 'password')
 
-      db_b = @client['test_b']
+      db_b = @client[TEST_DB + '_b']
       db_b.add_user('user_b', 'password')
       assert db_b.authenticate('user_b', 'password')
 
-      db_c = @client['test_c']
+      db_c = @client[TEST_DB + '_c']
       db_c.add_user('user_c', 'password')
       assert db_c.authenticate('user_c', 'password')
 
@@ -190,11 +190,11 @@ module AuthenticationTests
 
     silently do
       # create user in source database
-      accounts = @client['accounts']
+      accounts = @client[TEST_DB + '_accounts']
       accounts.add_user('debbie', 'delegate')
 
       # add user to test database
-      @db.add_user('debbie', nil, nil, :roles => ['read'], :userSource => 'accounts')
+      @db.add_user('debbie', nil, nil, :roles => ['read'], :userSource => accounts.name)
       @admin.logout
 
       # auth must occur on the source database
@@ -211,7 +211,7 @@ module AuthenticationTests
       end
 
       # validate auth using source database
-      @db.authenticate('debbie', 'delegate', true, 'accounts')
+      @db.authenticate('debbie', 'delegate', true, accounts.name)
       assert @db.collection_names
       accounts.logout
       assert_raise Mongo::OperationFailure do

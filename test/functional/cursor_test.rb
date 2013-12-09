@@ -20,14 +20,14 @@ class CursorTest < Test::Unit::TestCase
   include Mongo::Constants
 
   @@connection = standard_connection
-  @@db   = @@connection.db(MONGO_TEST_DB)
+  @@db   = @@connection.db(TEST_DB)
   @@coll = @@db.collection('test')
   @@version = @@connection.server_version
 
   def setup
     @@coll.remove
     @@coll.insert('a' => 1)     # collection not created until it's used
-    @@coll_full_name = "#{MONGO_TEST_DB}.test"
+    @@coll_full_name = "#{TEST_DB}.test"
   end
 
   def test_alive

@@ -12,12 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'test_helper'
-include Mongo
-
-class PoolTest < Test::Unit::TestCase
-  context "Initialization: " do
-    should "do" do
-    end
+# Redirects output while yielding a given block of code.
+#
+# @return [Object] The result of the block.
+def silently
+  warn_level = $VERBOSE
+  $VERBOSE = nil
+  begin
+    result = yield
+  ensure
+    $VERBOSE = warn_level
   end
+  result
 end

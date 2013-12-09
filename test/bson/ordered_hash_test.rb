@@ -188,13 +188,13 @@ class OrderedHashTest < Test::Unit::TestCase
   end
 
   def test_equality_with_hash
-    o = BSON::OrderedHash.new
-    o[:a] = 1
-    o[:b] = 2
-    o[:c] = 3
+    oh = BSON::OrderedHash.new
+    oh[:a] = 1
+    oh[:b] = 2
+    oh[:c] = 3
     r = {:a => 1, :b => 2, :c => 3}
-    assert r == o
-    assert o == r
+    assert r == oh
+    assert oh == r
   end
 
   def test_update

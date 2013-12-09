@@ -14,7 +14,7 @@
 
 require 'test_helper'
 
-class ClientTest < Test::Unit::TestCase
+class ReplicaSetClientTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
@@ -77,8 +77,8 @@ class ClientTest < Test::Unit::TestCase
 
   def test_connect_with_primary_stepped_down
     @client = MongoReplicaSetClient.new @rs.repl_set_seeds
-    @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 3})
-    assert @client[MONGO_TEST_DB]['bar'].find_one
+    @client[TEST_DB]['bar'].save({:a => 1}, {:w => 3})
+    assert @client[TEST_DB]['bar'].find_one
 
     primary = Mongo::MongoClient.new(*@client.primary)
     assert_raise Mongo::ConnectionFailure do
@@ -87,25 +87,25 @@ class ClientTest < Test::Unit::TestCase
     assert @client.connected?
 
     rescue_connection_failure do
-      @client[MONGO_TEST_DB]['bar'].find_one
+      @client[TEST_DB]['bar'].find_one
     end
-    @client[MONGO_TEST_DB]['bar'].find_one
+    @client[TEST_DB]['bar'].find_one
   end
 
   def test_connect_with_primary_killed
     @client = MongoReplicaSetClient.new @rs.repl_set_seeds
     assert @client.connected?
-    @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 3})
-    assert @client[MONGO_TEST_DB]['bar'].find_one
+    @client[TEST_DB]['bar'].save({:a => 1}, {:w => 3})
+    assert @client[TEST_DB]['bar'].find_one
 
     @rs.primary.kill(Signal.list['KILL'])
 
     sleep(3)
 
     rescue_connection_failure do
-      @client[MONGO_TEST_DB]['bar'].find_one
+      @client[TEST_DB]['bar'].find_one
     end
-    @client[MONGO_TEST_DB]['bar'].find_one
+    @client[TEST_DB]['bar'].find_one
   end
 
   def test_save_with_primary_stepped_down
@@ -118,14 +118,14 @@ class ClientTest < Test::Unit::TestCase
     end
 
     rescue_connection_failure do
-      @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 2})
+      @client[TEST_DB]['bar'].save({:a => 1}, {:w => 2})
     end
-    @client[MONGO_TEST_DB]['bar'].find_one
+    @client[TEST_DB]['bar'].find_one
   end
 
   # def test_connect_with_first_node_removed
   #   @client = MongoReplicaSetClient.new @rs.repl_set_seeds
-  #   @client[MONGO_TEST_DB]['bar'].save({:a => 1}, {:w => 3})
+  #   @client[TEST_DB]['bar'].save({:a => 1}, {:w => 3})
 
   #   # Make sure everyone's views of optimes are caught up
   #   loop do
@@ -172,7 +172,7 @@ class ClientTest < Test::Unit::TestCase
 
   #   # Wait for the dust to settle
   #   rescue_connection_failure do
-  #     assert @client[MONGO_TEST_DB]['bar'].find_one
+  #     assert @client[TEST_DB]['bar'].find_one
   #   end
 
   #   begin
@@ -283,7 +283,7 @@ class ClientTest < Test::Unit::TestCase
 
   def test_find_and_modify_with_secondary_read_preference
     @client = MongoReplicaSetClient.new
-    collection = @client[MONGO_TEST_DB].collection('test', :read => :secondary)
+    collection = @client[TEST_DB].collection('test', :read => :secondary)
     collection << { :a => 1, :processed => false}
 
     collection.find_and_modify(

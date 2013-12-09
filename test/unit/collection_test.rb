@@ -21,7 +21,7 @@ module Mongo
   end
 end
 
-class CollectionTest < Test::Unit::TestCase
+class CollectionUnitTest < Test::Unit::TestCase
 
   context "Basic operations: " do
     setup do
@@ -32,8 +32,8 @@ class CollectionTest < Test::Unit::TestCase
 
     should "send update message" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
-      @db   = @client['testing']
-      @coll = @db.collection('books')
+      @db   = @client[TEST_DB]
+      @coll = @db.collection('collection-unit-test')
       @client.expects(:send_message_with_gle).with do |op, msg, log|
         op == 2001
       end
@@ -43,8 +43,8 @@ class CollectionTest < Test::Unit::TestCase
 
     should "send insert message" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
-      @db   = @client['testing']
-      @coll = @db.collection('books')
+      @db   = @client[TEST_DB]
+      @coll = @db.collection('collection-unit-test')
       @client.expects(:send_message_with_gle).with do |op, msg, log|
         op == 2002
       end
@@ -56,8 +56,8 @@ class CollectionTest < Test::Unit::TestCase
 
     should "send sort data" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
-      @db   = @client['testing']
-      @coll = @db.collection('books')
+      @db   = @client[TEST_DB]
+      @coll = @db.collection('collection-unit-test')
       @client.expects(:checkout_reader).returns(new_mock_socket)
       @client.expects(:receive_message).with do |op, msg, log, sock|
         op == 2004
@@ -68,8 +68,8 @@ class CollectionTest < Test::Unit::TestCase
 
     should "not log binary data" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
-      @db   = @client['testing']
-      @coll = @db.collection('books')
+      @db   = @client[TEST_DB]
+      @coll = @db.collection('collection-unit-test')
       data = BSON::Binary.new(("BINARY " * 1000).unpack("c*"))
       @client.expects(:send_message_with_gle).with do |op, msg, log|
         op == 2002
@@ -82,8 +82,8 @@ class CollectionTest < Test::Unit::TestCase
 
     should "send safe update message" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
-      @db   = @client['testing']
-      @coll = @db.collection('books')
+      @db   = @client[TEST_DB]
+      @coll = @db.collection('collection-unit-test')
       @client.expects(:send_message_with_gle).with do |op, msg, db_name, log|
         op == 2001
       end
@@ -95,8 +95,8 @@ class CollectionTest < Test::Unit::TestCase
 
     should "send safe update message with legacy" do
       @connection = Connection.new('localhost', 27017, :logger => @logger, :safe => true, :connect => false)
-      @db         = @connection['testing']
-      @coll       = @db.collection('books')
+      @db         = @connection[TEST_DB]
+      @coll       = @db.collection('collection-unit-test')
       @connection.expects(:send_message_with_gle).with do |op, msg, db_name, log|
         op == 2001
       end
@@ -108,8 +108,8 @@ class CollectionTest < Test::Unit::TestCase
 
     should "send safe insert message" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
-      @db   = @client['testing']
-      @coll = @db.collection('books')
+      @db   = @client[TEST_DB]
+      @coll = @db.collection('collection-unit-test')
       @client.expects(:send_message_with_gle).with do |op, msg, db_name, log|
         op == 2001
       end
@@ -119,8 +119,8 @@ class CollectionTest < Test::Unit::TestCase
 
     should "not call insert for each ensure_index call" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
-      @db   = @client['testing']
-      @coll = @db.collection('books')
+      @db   = @client[TEST_DB]
+      @coll = @db.collection('collection-unit-test')
       @coll.expects(:generate_indexes).once
 
       @coll.ensure_index [["x", Mongo::DESCENDING]]
@@ -129,8 +129,8 @@ class CollectionTest < Test::Unit::TestCase
 
     should "call generate_indexes for a new type on the same field for ensure_index" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
-      @db   = @client['testing']
-      @coll = @db.collection('books')
+      @db   = @client[TEST_DB]
+      @coll = @db.collection('collection-unit-test')
       @coll.expects(:generate_indexes).twice
 
       @coll.ensure_index [["x", Mongo::DESCENDING]]
@@ -140,9 +140,9 @@ class CollectionTest < Test::Unit::TestCase
 
     should "call generate_indexes twice because the cache time is 0 seconds" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
-      @db   = @client['testing']
+      @db   = @client[TEST_DB]
       @db.cache_time = 0
-      @coll = @db.collection('books')
+      @coll = @db.collection('collection-unit-test')
       @coll.expects(:generate_indexes).twice
 
       @coll.ensure_index [["x", Mongo::DESCENDING]]
@@ -151,9 +151,9 @@ class CollectionTest < Test::Unit::TestCase
 
     should "call generate_indexes for each key when calling ensure_indexes" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
-      @db   = @client['testing']
+      @db   = @client[TEST_DB]
       @db.cache_time = 300
-      @coll = @db.collection('books')
+      @coll = @db.collection('collection-unit-test')
       @coll.expects(:generate_indexes).once.with do |a, b, c|
         a == {"x"=>-1, "y"=>-1}
       end
@@ -163,9 +163,9 @@ class CollectionTest < Test::Unit::TestCase
 
     should "call generate_indexes for each key when calling ensure_indexes with a hash" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
-      @db   = @client['testing']
+      @db   = @client[TEST_DB]
       @db.cache_time = 300
-      @coll = @db.collection('books')
+      @coll = @db.collection('collection-unit-test')
       oh = BSON::OrderedHash.new
       oh['x'] = Mongo::DESCENDING
       oh['y'] = Mongo::DESCENDING
@@ -185,8 +185,8 @@ class CollectionTest < Test::Unit::TestCase
 
     should "use the connection's logger" do
       @client = MongoClient.new('localhost', 27017, :logger => @logger, :connect => false)
-      @db   = @client['testing']
-      @coll = @db.collection('books')
+      @db   = @client[TEST_DB]
+      @coll = @db.collection('collection-unit-test')
       @logger.expects(:warn).with do |msg|
         msg == "MONGODB [WARNING] test warning"
       end

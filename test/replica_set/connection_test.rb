@@ -14,7 +14,7 @@
 
 require 'test_helper'
 
-class ConnectionTest < Test::Unit::TestCase
+class ReplicaSetConnectionTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)

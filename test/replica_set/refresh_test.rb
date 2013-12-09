@@ -69,7 +69,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
 
     old_refresh_version = client.refresh_version
     # Trigger synchronous refresh
-    client['foo']['bar'].find_one
+    client[TEST_DB]['rs-refresh-test'].find_one
 
     assert client.connected?
     assert client.refresh_version > old_refresh_version
@@ -83,7 +83,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
 
     old_refresh_version = client.refresh_version
     # Trigger synchronous refresh
-    client['foo']['bar'].find_one
+    client[TEST_DB]['rs-refresh-test'].find_one
 
     assert client.connected?
     assert client.refresh_version > old_refresh_version,
@@ -103,7 +103,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
       threads << Thread.new do
         # force a connection failure every couple of threads that causes a refresh
         if i % factor == 0
-          cursor = client['foo']['bar'].find
+          cursor = client[TEST_DB]['rs-refresh-test'].find
           cursor.stubs(:checkout_socket_from_connection).raises(ConnectionFailure)
           begin
             cursor.next
@@ -113,7 +113,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
           end
         else
           # synchronous refreshes will happen every couple of find_ones
-          cursor = client['foo']['bar'].find_one
+          cursor = client[TEST_DB]['rs-refresh-test'].find_one
         end
       end
     end
@@ -135,7 +135,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     sleep(2)
 
     rescue_connection_failure do
-      client['foo']['bar'].find_one
+      client[TEST_DB]['rs-refresh-test'].find_one
     end
 
     assert client.refresh_version > old_refresh_version,
@@ -152,7 +152,7 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
 
     @rs.add_node
     sleep(4)
-    client['foo']['bar'].find_one
+    client[TEST_DB]['rs-refresh-test'].find_one
 
     @conn2 = MongoReplicaSetClient.new(build_seeds(3),
       :refresh_interval => 2, :refresh_mode => :sync)

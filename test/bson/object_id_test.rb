@@ -18,11 +18,11 @@ require 'json'
 class ObjectIdTest < Test::Unit::TestCase
 
   def setup
-    @o = ObjectId.new
+    @obj = ObjectId.new
   end
 
   def test_hashcode
-    assert_equal @o.instance_variable_get(:@data).hash, @o.hash
+    assert_equal @obj.instance_variable_get(:@data).hash, @obj.hash
   end
 
   def test_array_uniq_for_equilavent_ids
@@ -56,37 +56,37 @@ class ObjectIdTest < Test::Unit::TestCase
   end
 
   def test_eql?
-    o2 = ObjectId.new(@o.to_a)
-    assert_equal @o, o2
+    o2 = ObjectId.new(@obj.to_a)
+    assert_equal @obj, o2
   end
 
   def test_to_s
-    s = @o.to_s
+    s = @obj.to_s
     assert_equal 24, s.length
     s =~ /^([0-9a-f]+)$/
     assert_equal 24, $1.length
   end
 
   def test_to_s2
-    @o = ObjectId.new([76, 244, 52, 174, 44, 84, 121, 76, 88, 0, 0, 3])
+    @obj = ObjectId.new([76, 244, 52, 174, 44, 84, 121, 76, 88, 0, 0, 3])
     s = '4cf434ae2c54794c58000003'
-    assert_equal @o.to_s, s
+    assert_equal @obj.to_s, s
   end
 
   def test_method
-    assert_equal ObjectId.from_string(@o.to_s), BSON::ObjectId(@o.to_s)
+    assert_equal ObjectId.from_string(@obj.to_s), BSON::ObjectId(@obj.to_s)
   end
 
   def test_inspect
-    assert_equal "BSON::ObjectId('#{@o.to_s}')", @o.inspect
+    assert_equal "BSON::ObjectId('#{@obj.to_s}')", @obj.inspect
   end
 
   def test_from_string
-    hex_str = @o.to_s
+    hex_str = @obj.to_s
     o2 = ObjectId.from_string(hex_str)
     assert_equal hex_str, o2.to_s
-    assert_equal @o, o2
-    assert_equal @o.to_s, o2.to_s
+    assert_equal @obj, o2
+    assert_equal @obj.to_s, o2.to_s
   end
 
   def test_illegal_from_string
@@ -97,7 +97,7 @@ class ObjectIdTest < Test::Unit::TestCase
 
   def test_from_string_with_object_id
     assert_raise InvalidObjectId do
-      ObjectId.from_string(@o)
+      ObjectId.from_string(@obj)
     end
   end
 
@@ -119,8 +119,8 @@ class ObjectIdTest < Test::Unit::TestCase
 
   def test_byte_order
     hex_str = '000102030405060708090A0B'
-    o = ObjectId.from_string(hex_str)
-    assert_equal [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b], o.to_a
+    obj = ObjectId.from_string(hex_str)
+    assert_equal [0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b], obj.to_a
   end
 
   def test_generation_time

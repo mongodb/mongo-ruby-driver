@@ -14,7 +14,7 @@
 
 require 'test_helper'
 
-class WriteConcernTest < Test::Unit::TestCase
+class WriteConcernUnitTest < Test::Unit::TestCase
 
   context "Write-Concern modes on Mongo::MongoClient " do
     setup do
@@ -35,28 +35,28 @@ class WriteConcernTest < Test::Unit::TestCase
     end
 
     should "propogate to DB" do
-      db = @client['foo']
+      db = @client[TEST_DB]
       assert_equal @write_concern, db.write_concern
 
 
-      db = @client.db('foo')
+      db = @client.db(TEST_DB)
       assert_equal @write_concern, db.write_concern
 
-      db = DB.new('foo', @client)
+      db = DB.new(TEST_DB, @client)
       assert_equal @write_concern, db.write_concern
     end
 
     should "allow db override" do
-      db = DB.new('foo', @client, :w => 0)
+      db = DB.new(TEST_DB, @client, :w => 0)
       assert_equal 0, db.write_concern[:w]
 
-      db = @client.db('foo', :w => 0)
+      db = @client.db(TEST_DB, :w => 0)
       assert_equal 0, db.write_concern[:w]
     end
 
     context "on DB: " do
       setup do
-        @db = @client['foo']
+        @db = @client[TEST_DB]
       end
 
       should "propogate to collection" do
@@ -81,7 +81,7 @@ class WriteConcernTest < Test::Unit::TestCase
 
     context "on operations supporting 'gle' mode" do
       setup do
-        @collection = @client['foo']['bar']
+        @collection = @client[TEST_DB]['bar']
       end
 
       should "not send w = 1 to the server" do

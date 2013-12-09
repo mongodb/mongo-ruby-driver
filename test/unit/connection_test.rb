@@ -14,7 +14,7 @@
 
 require 'test_helper'
 
-class ConnectionTest < Test::Unit::TestCase
+class ConnectionUnitTest < Test::Unit::TestCase
   context "Mongo::MongoClient initialization " do
     context "given a single node" do
       setup do

@@ -23,8 +23,8 @@ class ReplicaSetAuthenticationTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
-    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :connect_timeout => 60)
-    @db = @client[MONGO_TEST_DB]
+    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds)
+    @db     = @client[TEST_DB]
     init_auth
   end
 
@@ -39,7 +39,7 @@ class ReplicaSetAuthenticationTest < Test::Unit::TestCase
 
       assert client
       assert_equal client.auths.size, 1
-      assert client[MONGO_TEST_DB]['auth_test'].count
+      assert client[TEST_DB]['auth_test'].count
 
       auth = client.auths.first
       assert_equal @db.name, auth[:db_name]

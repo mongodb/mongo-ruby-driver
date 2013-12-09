@@ -15,7 +15,7 @@
 require 'test_helper'
 include Mongo
 
-class ShardingPoolManagerTest < Test::Unit::TestCase
+class ShardingPoolManagerUnitTest < Test::Unit::TestCase
 
   context "Initialization: " do
 

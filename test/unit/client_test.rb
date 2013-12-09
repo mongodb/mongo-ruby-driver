@@ -15,7 +15,7 @@
 require 'test_helper'
 include Mongo
 
-class ClientTest < Test::Unit::TestCase
+class ClientUnitTest < Test::Unit::TestCase
   context "Mongo::MongoClient initialization " do
     context "given a single node" do
       setup do

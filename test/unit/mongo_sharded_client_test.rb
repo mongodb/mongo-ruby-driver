@@ -14,7 +14,7 @@
 
 require "test_helper"
 
-class MongoShardedClientTest < Test::Unit::TestCase
+class MongoShardedClientUnitTest < Test::Unit::TestCase
   include Mongo
 
   def setup

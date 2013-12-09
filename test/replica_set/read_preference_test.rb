@@ -22,7 +22,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
     # Insert data
     primary = @rs.primary
     conn = Connection.new(primary.host, primary.port)
-    db = conn.db(MONGO_TEST_DB)
+    db = conn.db(TEST_DB)
     coll = db.collection("test-sets")
     coll.save({:a => 20}, {:w => 2})
   end
@@ -103,7 +103,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
 
     # Test that reads are going to the right members
     assert_raise_error ConnectionFailure do
-      @primary[MONGO_TEST_DB]['test-sets'].find_one
+      @primary[TEST_DB]['test-sets'].find_one
     end
     assert_query_route(@primary_preferred, @secondary_direct)
     assert_query_route(@secondary, @secondary_direct)
@@ -142,7 +142,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
     assert_query_route(@primary, @primary_direct)
     assert_query_route(@primary_preferred, @primary_direct)
     assert_raise_error ConnectionFailure do
-      @secondary[MONGO_TEST_DB]['test-sets'].find_one
+      @secondary[TEST_DB]['test-sets'].find_one
     end
     assert_query_route(@secondary_preferred, @primary_direct)
 
@@ -166,7 +166,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
 
   def test_write_lots_of_data
     @conn = make_connection(:secondary_preferred)
-    @db = @conn[MONGO_TEST_DB]
+    @db = @conn[TEST_DB]
     @coll = @db.collection("test-sets", {:w => 2})
 
     6000.times do |n|
@@ -206,7 +206,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
     #puts "#{test_connection.read_pool.port} #{expected_target.read_pool.port}"
     queries_before = query_count(expected_target)
     assert_nothing_raised do
-      test_connection['MONGO_TEST_DB']['test-sets'].find_one
+      test_connection[TEST_DB]['test-sets'].find_one
     end
     queries_after = query_count(expected_target)
     assert_equal 1, queries_after - queries_before

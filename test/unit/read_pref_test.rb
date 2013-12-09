@@ -14,7 +14,8 @@
 
 require 'test_helper'
 
-class ReadPrefTest < Test::Unit::TestCase
+class ReadPreferenceUnitTest < Test::Unit::TestCase
+
   include ReadPreference
 
   def setup
@@ -68,7 +69,7 @@ class ReadPrefTest < Test::Unit::TestCase
     assert_equal true, ReadPreference::secondary_ok?(command)
   end
 
-  def test_sok_serverStatus_returns_false
+  def test_sok_server_status_returns_false
     command = BSON::OrderedHash['serverStatus', 1]
     assert_equal false, ReadPreference::secondary_ok?(command)
   end
@@ -80,7 +81,7 @@ class ReadPrefTest < Test::Unit::TestCase
     assert_equal :primary, ReadPreference::cmd_read_pref(:secondary, command)
   end
 
-  def test_findAndModify_reroute_with_secondary
+  def test_find_and_modify_reroute_with_secondary
     ReadPreference::expects(:warn).with(regexp_matches(/rerouted to primary/))
     command = BSON::OrderedHash['findAndModify', 'test-collection',
                                 'query', {}]
@@ -104,4 +105,5 @@ class ReadPrefTest < Test::Unit::TestCase
                                 'out', BSON::OrderedHash['inline', 'true']]
     assert_equal :primary, ReadPreference::cmd_read_pref(:primary, command)
   end
+
 end

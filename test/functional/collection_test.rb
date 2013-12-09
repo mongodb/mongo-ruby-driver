@@ -15,9 +15,9 @@
 require 'rbconfig'
 require 'test_helper'
 
-class TestCollection < Test::Unit::TestCase
+class CollectionTest < Test::Unit::TestCase
   @@client       ||= standard_connection(:op_timeout => 10)
-  @@db           = @@client.db(MONGO_TEST_DB)
+  @@db           = @@client.db(TEST_DB)
   @@test         = @@db.collection("test")
   @@version      = @@client.server_version
 
@@ -46,19 +46,19 @@ class TestCollection < Test::Unit::TestCase
   @@s_h = Mongo::CollectionWriter::SERIALIZE_HEADROOM
 
   MAX_SIZE_EXCEPTION_TEST = [
-      [@@wv0, @@client.max_bson_size, nil, /xyzzy/],
+    [@@wv0, @@client.max_bson_size, nil, /xyzzy/],
   ]
   MAX_SIZE_EXCEPTION_CRUBY_TEST = [
-      [@@wv0, @@client.max_bson_size + 1,     BSON::InvalidDocument,   /Document.* too large/]
+    [@@wv0, @@client.max_bson_size + 1,     BSON::InvalidDocument,   /Document.* too large/]
   ]
   MAX_SIZE_EXCEPTION_JRUBY_TEST = [
-      [@@wv0, @@client.max_bson_size + 1,     Mongo::OperationFailure, /object to insert too large/]
+    [@@wv0, @@client.max_bson_size + 1,     Mongo::OperationFailure, /object to insert too large/]
   ]
   MAX_SIZE_EXCEPTION_COMMANDS_TEST = [
-      [@@wv2, @@client.max_bson_size,         nil,                     /xyzzy/],
-      [@@wv2, @@client.max_bson_size + 1,     Mongo::OperationFailure, /object to insert too large/],
-      [@@wv2, @@client.max_bson_size + @@s_h, Mongo::OperationFailure, /object to insert too large/],
-      [@@wv2, @@client.max_bson_size + @@a_h, BSON::InvalidDocument,   /Document.* too large/]
+    [@@wv2, @@client.max_bson_size,         nil,                     /xyzzy/],
+    [@@wv2, @@client.max_bson_size + 1,     Mongo::OperationFailure, /object to insert too large/],
+    [@@wv2, @@client.max_bson_size + @@s_h, Mongo::OperationFailure, /object to insert too large/],
+    [@@wv2, @@client.max_bson_size + @@a_h, BSON::InvalidDocument,   /Document.* too large/]
   ]
 
   @@max_size_exception_test = MAX_SIZE_EXCEPTION_TEST
@@ -165,7 +165,7 @@ class TestCollection < Test::Unit::TestCase
 
     # Create a db with a pk_factory.
     @db = MongoClient.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                         ENV['MONGO_RUBY_DRIVER_PORT'] || MongoClient::DEFAULT_PORT).db(MONGO_TEST_DB, :pk => Object.new)
+                         ENV['MONGO_RUBY_DRIVER_PORT'] || MongoClient::DEFAULT_PORT).db(TEST_DB, :pk => Object.new)
     @coll = @db.collection('coll-with-pk')
     assert @coll.pk_factory.is_a?(Object)
 
@@ -173,20 +173,19 @@ class TestCollection < Test::Unit::TestCase
     assert @coll.pk_factory.is_a?(Object)
   end
 
-  class TestPK
+  class PKTest
     def self.create_pk
     end
   end
 
   def test_pk_factory_on_collection
     silently do
-      @coll = Collection.new('foo', @@db, TestPK)
-      assert_equal TestPK, @coll.pk_factory
+      @coll = Collection.new('foo', @@db, PKTest)
+      assert_equal PKTest, @coll.pk_factory
     end
 
-
-    @coll2 = Collection.new('foo', @@db, :pk => TestPK)
-    assert_equal TestPK, @coll2.pk_factory
+    @coll2 = Collection.new('foo', @@db, :pk => PKTest)
+    assert_equal PKTest, @coll2.pk_factory
   end
 
   def test_valid_names
@@ -414,7 +413,7 @@ class TestCollection < Test::Unit::TestCase
     })
     conn.expects(:[]).with('admin').returns(admin_db)
     conn.connect
-    return conn.db(MONGO_TEST_DB)["test"]
+    return conn.db(TEST_DB)["test"]
   end
 
   def test_non_operation_failure_halts_insertion_with_continue_on_error
@@ -695,7 +694,7 @@ class TestCollection < Test::Unit::TestCase
 
   def test_mocked_safe_remove
     @client = standard_connection
-    @db   = @client[MONGO_TEST_DB]
+    @db   = @client[TEST_DB]
     @test = @db['test-safe-remove']
     @test.save({:a => 20})
     @client.stubs(:receive).returns([[{'ok' => 0, 'err' => 'failed'}], 1, 0])
@@ -708,7 +707,7 @@ class TestCollection < Test::Unit::TestCase
 
   def test_safe_remove
     @client = standard_connection
-    @db   = @client[MONGO_TEST_DB]
+    @db   = @client[TEST_DB]
     @test = @db['test-safe-remove']
     @test.remove
     @test.save({:a => 50})
@@ -1137,7 +1136,7 @@ class TestCollection < Test::Unit::TestCase
         r = Code.new("function(k,vals) { return 1; }")
         oh = BSON::OrderedHash.new
         oh[:replace] = 'foo'
-        oh[:db] = MONGO_TEST_DB
+        oh[:db] = TEST_DB
         res = @@test.map_reduce(m, r, :out => (oh))
         assert res["result"]
         assert res["counts"]
@@ -1191,7 +1190,7 @@ class TestCollection < Test::Unit::TestCase
       @@test << {:n => 1}
       @@test.create_index("n")
 
-      assert_equal "#{MONGO_TEST_DB}.test", @@test.stats['ns']
+      assert_equal "#{TEST_DB}.test", @@test.stats['ns']
     end
   end
 
