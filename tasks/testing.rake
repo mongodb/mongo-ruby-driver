@@ -12,110 +12,121 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-desc "Run the default test suite (Ruby)"
-task :test => ENV.key?('TRAVIS_TEST') ? 'test:default' : 'test:ruby'
+TEST_SUITES = {
+  :bson => { :pattern => 'test/bson/**/*_test.rb' },
+  :unit => { :pattern => 'test/unit/**/*_test.rb' },
+  :functional => {
+    :pattern => 'test/functional/**/*_test.rb',
+    :exclude => ['test/functional/grid_io_test.rb',
+                 'test/functional/grid_test.rb',
+                 'test/functional/ssl_test.rb']
+  },
+  :threading => { :pattern => 'test/threading/**/*_test.rb' },
+  :replica_set => {
+    :pattern => 'test/replica_set/**/*_test.rb',
+    :exclude => ['test/replica_set/complex_connect_test.rb',
+                 'test/replica_set/count_test.rb',
+                 'test/replica_set/read_preference_test.rb',
+                 'test/replica_set/ssl_test.rb']
+  },
+  :sharded_cluster => { :pattern => 'test/sharded_cluster/**/*_test.rb' },
+  :tools => {
+    :pattern => 'test/tools/**/*_test.rb',
+    :exclude => ['test/tools/mongo_config_test.rb']
+  }
+}
 
-# generate distinct SimpleCov command names and pass them via ENV to test_helper
-module Rake
-  class Task
-    @@simplecov_command_name = nil
-    alias_method :orig_enhance, :enhance
-    def enhance(deps= nil, &block)
-      command_name_block = Proc.new do
-        old_command_name = @@simplecov_command_name
-        @@simplecov_command_name = [@@simplecov_command_name, name].compact.join(' ')
-        ENV['SIMPLECOV_COMMAND_NAME'] = @@simplecov_command_name
-        block.call
-        ENV.delete('SIMPLECOV_COMMAND_NAME')
-        @@simplecov_command_name = old_command_name
-      end
-      orig_enhance(deps, &command_name_block)
-    end
-  end
+if RUBY_VERSION > '1.9'
+  require 'coveralls/rake/task'
+  Coveralls::RakeTask.new
 end
 
-namespace :test do
-  DEFAULT_TESTS = ['functional', 'unit', 'bson', 'threading']
-  ENV['TEST_MODE'] = 'TRUE'
+task :test => 'test:ext'
+task :default => ['test:without_ext', 'test:ext']
 
-  desc "Run default test suites with BSON extensions enabled."
-  task :ext do
+namespace :test do
+
+  ENV['TEST_MODE'] = 'true'
+
+  desc 'Runs all test suites (excludes RS and SC tests under CI)'
+  Rake::TestTask.new(:default) do |t|
+    enabled_tests = [:bson, :unit, :functional, :threading]
+    unless ENV.key?('TRAVIS_CI') || ENV.key?('JENKINS_CI')
+      enabled_tests += [:replica_set, :sharded_cluster]
+    end
+
+    files = []
+    enabled_tests.each do |suite|
+      config = TEST_SUITES[suite]
+      files << FileList[config[:pattern]]
+      files.flatten!
+      files = files - config[:exclude] if config[:exclude]
+    end
+
+    t.test_files = files
+    t.libs << 'test'
+  end
+  task :commit => 'default'
+
+  desc 'Runs all test suites with extensions.'
+  task :ext => 'test:cleanup' do
+    puts '[INFO] Enabling BSON extension...'
     ENV.delete('BSON_EXT_DISABLED')
     Rake::Task['compile'].invoke unless RUBY_PLATFORM =~ /java/
-    Rake::Task['test:default'].execute
+    Rake::Task['test:default'].reenable
+    Rake::Task['test:default'].invoke
   end
 
-  desc "Runs default test suites in pure Ruby."
-  task :ruby do
-    ENV['BSON_EXT_DISABLED'] = 'TRUE'
-    Rake::Task['test:default'].execute
+  desc 'Runs all test suites without any extensions.'
+  task :without_ext => 'test:cleanup'  do
+    puts '[INFO] Disabling BSON extension...'
+    ENV['BSON_EXT_DISABLED'] = 'true'
+    Rake::Task['test:default'].reenable
+    Rake::Task['test:default'].invoke
     ENV.delete('BSON_EXT_DISABLED')
   end
+  task :ruby => 'test:without_ext'
 
-  desc "Runs default test suites"
-  task :default do
-    DEFAULT_TESTS.each { |t| Rake::Task["test:#{t}"].execute }
-    Rake::Task['test:cleanup'].execute
-  end
-
-  desc "Runs commit test suites"
-  task :commit do
-    COMMIT_TESTS = %w(ext ruby replica_set sharded_cluster)
-    COMMIT_TESTS.each do |task|
-      puts "[RUNNING] test:#{task}"
-      Rake::Task["test:#{task}"].execute
-    end
-    Rake::Task['test:cleanup'].execute
-  end
-
-  desc "Runs coverage test suites"
-  task :coverage do
-    ENV['COVERAGE'] = 'true'
-    Rake::Task['test:commit'].invoke
-  end
-
-  %w(sharded_cluster unit threading auxillary bson tools).each do |suite|
-    Rake::TestTask.new(suite.to_sym) do |t|
-      t.test_files = FileList["test/#{suite}/*_test.rb"]
+  # Generated tasks for individual test suites
+  TEST_SUITES.each do |suite, config|
+    files = FileList[config[:pattern]]
+    files = files - config[:exclude] if config[:exclude]
+    Rake::TestTask.new(suite) do |t|
+      t.test_files = files
       t.libs << 'test'
     end
   end
 
-  Rake::TestTask.new(:functional) do |t|
-    t.test_files = FileList['test/functional/*_test.rb'] - [
-      'test/functional/grid_io_test.rb',
-      'test/functional/grid_test.rb',
-      'test/functional/ssl_test.rb'
-    ]
-    t.libs << 'test'
-  end
-
-  Rake::TestTask.new(:replica_set) do |t|
-    disabled = [
-      'test/replica_set/complex_connect_test.rb',
-      'test/replica_set/count_test.rb',
-      'test/replica_set/read_preference_test.rb',
-      'test/replica_set/ssl_test.rb'
-    ]
-
-    t.test_files = FileList['test/replica_set/*_test.rb'] - disabled
-    t.libs << 'test'
-  end
-
-  desc "Runs test cleanup"
+  # Runs after all tests and automatically as a pre-requisite in some cases.
+  # There's no need to ever inoke this directly.
   task :cleanup do |t|
-    puts "[CLEAN-UP] Dropping test databases..."
-    $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-    require 'mongo'
-    client = Mongo::MongoClient.new(
-      ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-      ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::MongoClient::DEFAULT_PORT)
-    client.database_names.each {|name| client.drop_database(name) if name =~ /^ruby-test/ }
+    if ENV.key?('TRAVIS_CI')
+      begin
+        $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+        require 'mongo'
+        client = Mongo::MongoClient.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+                                        ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::MongoClient::DEFAULT_PORT)
+        client.database_names.each do |db_name|
+          if db_name =~ /^ruby_test*/
+            puts "[CLEAN-UP] Dropping '#{db_name}'..."
+            client.drop_database(db_name)
+          end
+        end
+      rescue Mongo::ConnectionFailure => e
+        # moving on anyway
+      end
 
-    if File.directory?('data')
-      puts "[CLEAN-UP] Removing replica set data files..."
-      FileUtils.rm_rf 'data'
+      %w(data tmp coverage).each do |dir|
+        if File.directory?(dir)
+          puts "[CLEAN-UP] Removing '#{dir}'..."
+          FileUtils.rm_rf(dir)
+        end
+      end
     end
+
+    t.reenable
   end
 
 end
+
+Rake.application.top_level_tasks << 'test:cleanup'
