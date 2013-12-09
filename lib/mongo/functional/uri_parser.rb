@@ -163,7 +163,7 @@ module Mongo
     # @note Don't confuse this with attribute getter method #connect.
     #
     # @return [MongoClient,MongoReplicaSetClient]
-    def connection(extra_opts, legacy = false, sharded = false)
+    def connection(extra_opts={}, legacy = false, sharded = false)
       opts = connection_options.merge!(extra_opts)
       if(legacy)
         if replicaset?
