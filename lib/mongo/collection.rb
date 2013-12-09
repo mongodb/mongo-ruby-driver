@@ -389,7 +389,7 @@ module Mongo
     def insert(doc_or_docs, opts={})
       if doc_or_docs.respond_to?(:collect!)
         doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
-        error_docs, responses, errors = batch_write_incremental(:insert, doc_or_docs, true, opts)
+        error_docs, errors, rest_ignored = batch_write_incremental(:insert, doc_or_docs, true, opts)
         raise errors.last if !opts[:collect_on_error] && !errors.empty?
         inserted_docs = doc_or_docs - error_docs
         inserted_ids = inserted_docs.collect {|o| o[:_id] || o['_id']}
