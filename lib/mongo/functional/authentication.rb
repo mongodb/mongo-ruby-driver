@@ -97,13 +97,14 @@ module Mongo
     #   (default: 'MONGODB-CR').
     #
     # @return [Hash] a hash representing the authentication just added.
-    def add_auth(db_name, username, password=nil, source=nil, mechanism=nil)
+    def add_auth(db_name, username, password=nil, source=nil, mechanism=nil, extra_opts={})
       auth = Authentication.validate_credentials({
-        :db_name   => db_name,
-        :username  => username,
-        :password  => password,
-        :source    => source,
-        :mechanism => mechanism
+        :db_name    => db_name,
+        :username   => username,
+        :password   => password,
+        :source     => source,
+        :mechanism  => mechanism,
+        :extra_opts => extra_opts
       })
 
       if @auths.any? {|a| a[:source] == auth[:source]}
@@ -269,8 +270,31 @@ module Mongo
     #
     # @private
     def issue_gssapi(auth, opts={})
-      raise NotImplementedError,
-        "The #{auth[:mechanism]} authentication mechanism is not yet supported."
+      # TODO: initialize security context here
+      context = Mongo::Kerberos.init_security_context()
+      payload = Mongo::Kerberos.client_response(context)
+
+      cmd = BSON::OrderedHash.new
+      cmd[:saslStart]     = 1
+      cmd[:mechanism]     = auth[:mechanism]
+      cmd[:payload]       = BSON::Binary.new(payload)
+      cmd[:autoAuthorize] = 1
+
+      response = database.command(cmd, :check_response => false,
+                                       :socket         => opts[:socket])
+
+      # TODO: handle protocol errors here
+
+      # TODO: more magic happens here, need fo wire this up
+      payload = Mongo::Kerberos.client_response(context)
+
+      cmd = BSON::OrderedHash.new
+      cmd[:saslContinue]   = 1
+      cmd[:conversationId] = response[:conversationId]
+      cmd[:payload]        = BSON::Binary.new(payload)
+
+      database.command(cmd, :check_response => false,
+                            :socket         => opts[:socket])
     end
 
     # Helper to fetch a nonce value from a given database instance.
