@@ -47,11 +47,12 @@ module Mongo
       raise Mongo::OperationFailure, "Request contains no documents" if documents.empty?
       write_concern = get_write_concern(opts, @collection)
       max_message_size, max_append_size, max_serialize_size = batch_write_max_sizes(write_concern)
-      continue_on_error = !!opts[:continue_on_error]
-      collect_on_error = !!opts[:collect_on_error]
+      ordered = opts[:ordered]
+      continue_on_error = !!opts[:continue_on_error] || ordered == false
+      collect_on_error = !!opts[:collect_on_error] || ordered == false
       error_docs = [] # docs with serialization errors
       errors = [] # for all db errors
-      responses = []
+      exchanges = []
       serialized_doc = nil
       message = BSON::ByteBuffer.new("", max_message_size)
       docs = documents.dup
@@ -63,9 +64,12 @@ module Mongo
             begin
               serialized_doc ||= BSON::BSON_CODER.serialize(docs.first, check_keys, true, max_serialize_size)
             rescue BSON::InvalidDocument, BSON::InvalidKeyName, BSON::InvalidStringEncoding => ex
-              errors << ex
+              bulk_message = "Bulk write error - #{ex.message} - examine result for complete information"
+              ex = BulkWriteError.new(bulk_message, Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_OCCURRED,
+                                      {:op => op, :serialize => docs.first, :error => ex}) unless ordered.nil?
               error_docs << docs.shift
-              throw (:error) unless collect_on_error
+              errors << ex
+              throw(:error) unless collect_on_error
               next
             end
             break if message.size + serialized_doc.size > max_append_size
@@ -74,14 +78,16 @@ module Mongo
             serialized_doc = nil
           end
           begin
-            responses << batch_message_send(message, op, batch_docs, write_concern, continue_on_error) if batch_docs.size > 0
+            response = batch_message_send(message, op, batch_docs, write_concern, continue_on_error) if batch_docs.size > 0
+            exchanges << {:op => op, :batch => batch_docs, :opts => opts, :response => response}
           rescue Mongo::OperationFailure => ex
             errors << ex
-            throw (:error) unless continue_on_error
+            exchanges << {:op => op, :batch => batch_docs, :opts => opts, :response => ex.result}
+            throw(:error) unless continue_on_error
           end
         end
       end
-      [error_docs, responses, errors]
+      [error_docs, errors, exchanges]
     end
 
   end
