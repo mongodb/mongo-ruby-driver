@@ -52,6 +52,7 @@ module Mongo
       }
       write_concern.merge!(parent.write_concern) if parent
       write_concern.merge!(opts.reject {|k,v| !write_concern.keys.include?(k)})
+      write_concern[:w] = write_concern[:w].to_s if write_concern[:w].is_a?(Symbol)
       write_concern
     end
 

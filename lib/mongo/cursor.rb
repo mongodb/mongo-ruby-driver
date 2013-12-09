@@ -627,10 +627,18 @@ module Mongo
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@collection.name}")
       message.put_int(@skip)
       @batch_size > 1 ? message.put_int(@batch_size) : message.put_int(@limit)
-      spec = query_contains_special_fields? ? construct_query_spec : @selector
-      spec.merge!(@opts)
-      query_message = BSON::BSON_CODER.serialize(spec, false, false, @connection.max_bson_size)
-      query_message.grow(@bson) if @bson
+      if query_contains_special_fields? && @bson # costs two serialize colls
+        query_message = BSON::BSON_CODER.serialize(@selector, false, false, @connection.max_bson_size)
+        query_message.grow(@bson)
+        query_spec = construct_query_spec
+        query_spec.delete('$query')
+        query_message.grow(BSON::BSON_CODER.serialize(query_spec, false, false, @connection.max_bson_size))
+      else # costs only one serialize call
+        spec = query_contains_special_fields? ? construct_query_spec : @selector
+        spec.merge!(@opts)
+        query_message = BSON::BSON_CODER.serialize(spec, false, false, @connection.max_bson_size)
+        query_message.grow(@bson) if @bson
+      end
       message.put_binary(query_message.to_s)
       message.put_binary(BSON::BSON_CODER.serialize(@fields, false, false, @connection.max_bson_size).to_s) if @fields
       message
