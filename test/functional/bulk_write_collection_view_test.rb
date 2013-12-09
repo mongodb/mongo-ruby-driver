@@ -111,6 +111,14 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     set_max_wire_version(old_max_wire_version)
   end
 
+  def generate_sized_doc(size)
+    doc = {"_id" => BSON::ObjectId.new, "x" => "y"}
+    serialize_doc = BSON::BSON_CODER.serialize(doc, false, false, size)
+    doc = {"_id" => BSON::ObjectId.new, "x" => "y" * (1 + size - serialize_doc.size)}
+    assert_equal size, BSON::BSON_CODER.serialize(doc, false, false, size).size
+    doc
+  end
+
   context "Bulk API Spec Collection" do
     setup do
       default_setup
@@ -206,6 +214,32 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       assert_equal @collection, @bulk.collection
       assert_equal false, @bulk.options[:ordered]
     end
+  end
+
+  def big_example(bulk)
+    bulk.insert({ :a => 1 })
+    bulk.insert({ :a => 2 })
+    bulk.insert({ :a => 3 })
+    bulk.insert({ :a => 4 })
+    bulk.insert({ :a => 5 })
+    # Update one document matching the selector
+    bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
+    # Update all documents matching the selector
+    bulk.find({:a => 2}).update({"$inc" => { :x => 2 }})
+    # Replace entire document (update with whole doc replace)
+    bulk.find({:a => 3}).replace_one({ :x => 3 })
+    # Update one document matching the selector or upsert
+    bulk.find({:a => 1}).upsert.update_one({"$inc" => { :x => 1 }})
+    # Update all documents matching the selector or upsert
+    bulk.find({:a => 2}).upsert.update({"$inc" => { :x => 2 }})
+    # Replaces a single document matching the selector or upsert
+    bulk.find({:a => 3}).upsert.replace_one({ :x => 3 })
+    # Remove a single document matching the selector
+    bulk.find({:a => 4}).remove_one()
+    # Remove all documents matching the selector
+    bulk.find({:a => 5}).remove()
+    # Insert a document
+    bulk.insert({ :x => 4 })
   end
 
   context "Bulk API Spec CollectionView" do
@@ -316,34 +350,21 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       assert_equal [], @bulk.ops
     end
 
-    should "run big example for #execute" do
-      @bulk.insert({ :a => 1 })
-      @bulk.insert({ :a => 2 })
-      @bulk.insert({ :a => 3 })
-      @bulk.insert({ :a => 4 })
-      @bulk.insert({ :a => 5 })
-      # Update one document matching the selector
-      @bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
-      # Update all documents matching the selector
-      @bulk.find({:a => 2}).update({"$inc" => { :x => 2 }})
-      # Replace entire document (update with whole doc replace)
-      @bulk.find({:a => 3}).replace_one({ :x => 3 })
-      # Update one document matching the selector or upsert
-      @bulk.find({:a => 1}).upsert.update_one({"$inc" => { :x => 1 }})
-      # Update all documents matching the selector or upsert
-      @bulk.find({:a => 2}).upsert.update({"$inc" => { :x => 2 }})
-      # Replaces a single document matching the selector or upsert
-      @bulk.find({:a => 3}).upsert.replace_one({ :x => 3 })
-      # Remove a single document matching the selector
-      @bulk.find({:a => 4}).remove_one()
-      # Remove all documents matching the selector
-      @bulk.find({:a => 5}).remove()
-      # Insert a document
-      @bulk.insert({ :x => 4 })
+    should "run ordered big example" do
+      big_example(@bulk)
       write_concern = {:w => 1, :j => 1}
       result = @bulk.execute(write_concern)
       #pp_with_caller result
       assert_equal [{"x" => 3}, {"a" => 1, "x" => 2}, {"a" => 2, "x" => 4}, {"x" => 3}, {"x" => 4}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }
+    end
+
+    should "run unordered big example" do
+      @bulk = @collection.initialize_unordered_bulk_op
+      big_example(@bulk)
+      write_concern = {:w => 1, :j => 1}
+      result = @bulk.execute(write_concern)
+      #pp_with_caller result
+      assert_false @collection.find.to_a.empty?
     end
 
     should "run old write operations with MIN_WIRE_VERSION" do
@@ -366,7 +387,20 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       end
     end
 
-    should "run ordered @bulk insert with duplicate id" do
+    should "run ordered bulk insert with serialization error" do
+      @bulk.insert({:_id => 1, :a => 1})
+      @bulk.insert({:_id => 1, :a => 2})
+      @bulk.insert(generate_sized_doc(@@client.max_message_size + 1))
+      @bulk.insert({:_id => 3, :a => 3})
+      ex = assert_raise BulkWriteError do
+        @bulk.execute
+      end
+      assert_equal Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_OCCURRED, ex.error_code
+      assert_match(/too large/, ex.result[:errors].first.message)
+      assert_equal [], @collection.find.to_a
+    end
+
+    should "run ordered bulk insert with duplicate key error" do
       @bulk.insert({:_id => 1, :a => 1})
       @bulk.insert({:_id => 1, :a => 2})
       @bulk.insert({:_id => 3, :a => 3})
@@ -374,25 +408,34 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         @bulk.execute
       end
       assert_equal Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_OCCURRED, ex.error_code
-      assert_match(/duplicate key error/, ex.result["errors"].first.message)
+      assert_match(/duplicate key error/, ex.result[:errors].first.message)
       assert_equal [{"_id" => 1, "a" => 1}], @collection.find.to_a
     end
 
-    should "run unordered bulk insert with duplicate id" do
-      bulk = @collection.initialize_unordered_bulk_op
-      bulk.insert({:_id => 1, :a => 1})
-      bulk.insert({:_id => 1, :a => 2})
-      bulk.insert({:_id => 3, :a => 3})
+    should "run unordered bulk insert with errors" do
+      @bulk = @collection.initialize_unordered_bulk_op
+      @bulk.insert({:_id => 1, :a => 1})
+      @bulk.insert({:_id => 1, :a => 2})
+      @bulk.insert(generate_sized_doc(@@client.max_message_size + 1))
+      @bulk.insert({:_id => 3, :a => 3})
       ex = assert_raise BulkWriteError do
-        bulk.execute
+        @bulk.execute
       end
+      #pp_with_caller ex
+      #pp_with_caller ex.result
       assert_equal Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_OCCURRED, ex.error_code
-      assert_match(/duplicate key error/, ex.result["errors"].first.message)
+      assert_equal 2, ex.result[:errors].size
+      assert_equal 1, ex.result[:exchanges].size
+      assert_match(/too large/, ex.result[:errors].first.message)
+      assert_match(/duplicate key error/, ex.result[:errors].last.message)
+      #pp_with_caller ex.result[:errors].first.result
+      assert_true ex.result[:errors].first.result.has_key?(:serialize)
+      #pp_with_caller ex.result[:errors].last.result
       assert_equal [{"_id" => 1, "a" => 1}, {"_id" => 3, "a" => 3}], @collection.find.to_a
     end
 
     should "run unordered bulk operations in one batch per write-type" do
-      @collection.expects(:batch_write_incremental).at_most(3).returns([[],[],[]])
+      @collection.expects(:batch_write_incremental).at_most(3).returns([[],[],[],[]])
       bulk = @collection.initialize_unordered_bulk_op
       bulk.insert({:_id => 1, :a => 1})
       bulk.find({:_id => 1, :a => 1}).update({"$inc" => {:x => 1}})
