@@ -20,6 +20,7 @@ class AuthenticationTest < Test::Unit::TestCase
   include Mongo
   include AuthenticationTests
   include SASLPlainTests
+  include GSSAPITests
 
   def setup
     @client = MongoClient.new(TEST_HOST, TEST_PORT)
