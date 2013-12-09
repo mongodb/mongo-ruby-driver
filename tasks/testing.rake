@@ -100,7 +100,7 @@ namespace :test do
   # Runs after all tests and automatically as a pre-requisite in some cases.
   # There's no need to ever inoke this directly.
   task :cleanup do |t|
-    if ENV.key?('TRAVIS_CI')
+    unless ENV.key?('TRAVIS_CI')
       begin
         $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
         require 'mongo'
