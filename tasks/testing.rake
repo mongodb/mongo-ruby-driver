@@ -68,6 +68,18 @@ namespace :test do
   end
   task :commit => 'default'
 
+  desc 'Outputs diagnostic information for troubleshooting test failures.'
+  task :diagnostic do
+    puts <<-MSG
+    [Diagnostic Info]
+    Ruby Version:    #{RUBY_VERSION}
+    Ruby Platform:   #{RUBY_PLATFORM}
+    Source HEAD:     #{`git rev-parse HEAD | tr -d '\n'`}
+    Source Branch:   #{`git rev-parse --abbrev-ref HEAD | tr -d '\n'`}
+    MongoDB Version: #{`mongod --version | egrep -o 'v[0-9]+\.[0-9]+\.[0-9]+([-_\.][a-zA-Z0-9]+)?' | tr -d '\n'`}
+    MSG
+  end
+
   desc 'Runs all test suites with extensions.'
   task :ext => 'test:cleanup' do
     puts '[INFO] Enabling BSON extension...'
@@ -116,7 +128,7 @@ namespace :test do
         # moving on anyway
       end
 
-      %w(data tmp coverage).each do |dir|
+      %w(data tmp coverage mongodb_server).each do |dir|
         if File.directory?(dir)
           puts "[CLEAN-UP] Removing '#{dir}'..."
           FileUtils.rm_rf(dir)

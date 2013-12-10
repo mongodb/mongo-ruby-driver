@@ -195,11 +195,8 @@ class Test::Unit::TestCase
 end
 
 # Before and after hooks for the entire test run
-# handles toggling GC for faster test runs and makes sure
-# to mop up after the cluster manager.
-Test::Unit.at_start { GC.disable unless RUBY_PLATFORM =~ /java/ }
+# handles mop up after the cluster manager is done.
 Test::Unit.at_exit do
-  GC.enable unless RUBY_PLATFORM =~ /java/
   TEST_BASE.class_eval { class_variables }.select { |v| v =~ /@@cluster_/ }.each do |cluster|
     TEST_BASE.class_eval { class_variable_get(cluster) }.stop
   end
