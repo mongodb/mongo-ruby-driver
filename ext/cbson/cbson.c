@@ -265,8 +265,8 @@ static void serialize_regex(bson_buffer_t buffer, VALUE key, VALUE pattern, long
         }
 
         if (flags & BSONRegex_DOTALL) {
-            char multiline = 's';
-            SAFE_WRITE(buffer, &multiline, 1);
+            char dotall = 's';
+            SAFE_WRITE(buffer, &dotall, 1);
         }
 
         if (flags & BSONRegex_UNICODE) {
