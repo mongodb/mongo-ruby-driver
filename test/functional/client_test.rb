@@ -397,19 +397,14 @@ class ClientTest < Test::Unit::TestCase
       @client = standard_connection
 
       @auth = {
-        :db_name   => 'test',
+        :db_name   => TEST_DB,
         :username  => 'bob',
         :password  => 'secret',
-        :source    => nil,
-        :mechanism => nil
+        :source    => TEST_DB,
+        :mechanism => 'MONGODB-CR'
       }
 
-      @client.add_auth(
-        @auth[:db_name],
-        @auth[:username],
-        @auth[:password],
-        @auth[:source],
-        @auth[:mechanism])
+      @client.auths << @auth
     end
 
     teardown do
@@ -417,13 +412,12 @@ class ClientTest < Test::Unit::TestCase
     end
 
     should "save and validate the authentication" do
-      assert_equal Authentication.validate_credentials(@auth),
-                   @client.auths.first
+      assert_equal Authentication.validate_credentials(@auth), @client.auths.first
     end
 
     should "not allow multiple authentications for the same db" do
       auth = {
-        :db_name   => 'test',
+        :db_name   => TEST_DB,
         :username  => 'mickey',
         :password  => 'm0u53',
         :source    => nil,
@@ -444,7 +438,7 @@ class ClientTest < Test::Unit::TestCase
       @client.remove_auth('non-existent database')
       assert_equal 1, @client.auths.length
 
-      @client.remove_auth('test')
+      @client.remove_auth(TEST_DB)
       assert_equal 0, @client.auths.length
     end
 
