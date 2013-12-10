@@ -13,38 +13,19 @@
 # limitations under the License.
 
 require 'test_helper'
-require 'shared/authentication/authentication_shared'
+require 'shared/authentication/basic_auth_shared'
 require 'shared/authentication/sasl_plain_shared'
 
 class ReplicaSetAuthenticationTest < Test::Unit::TestCase
   include Mongo
-  include AuthenticationTests
+  include BasicAuthTests
   include SASLPlainTests
 
   def setup
     ensure_cluster(:rs)
-    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds)
-    @db     = @client[TEST_DB]
+    @client    = MongoReplicaSetClient.new(@rs.repl_set_seeds)
+    @db        = @client[TEST_DB]
+    @host_info = @rs.repl_set_seeds.join(',')
     init_auth
-  end
-
-  def test_authenticate_with_connection_uri
-    silently do
-      @db.add_user('eunice', 'uritest')
-
-      client =
-        MongoReplicaSetClient.from_uri(
-          "mongodb://eunice:uritest@#{@rs.repl_set_seeds.join(',')}/#{@db.name}" +
-          "?replicaSet=#{@rs.repl_set_name}")
-
-      assert client
-      assert_equal client.auths.size, 1
-      assert client[TEST_DB]['auth_test'].count
-
-      auth = client.auths.first
-      assert_equal @db.name, auth[:db_name]
-      assert_equal 'eunice', auth[:username]
-      assert_equal 'uritest', auth[:password]
-    end
   end
 end
