@@ -136,34 +136,30 @@ module Mongo
     #   elsewhere.
     # @param mechanism [String] The authentication mechanism to be used.
     #
-    # @note The save_auth option must be true when using connection pooling or
-    #   providing a source for credentials.
+    # @note The ability to disable the save_auth option has been deprecated.
+    #   With save_auth=false specified, driver authentication behavior during
+    #   failovers and reconnections becomes unreliable. This option still
+    #   exists for API compatibility, but it no longer has any effect if
+    #   disabled and now always uses the default behavior (safe_auth=true).
     #
-    # @raise [AuthenticationError]
+    # @raise [AuthenticationError] Raised if authentication fails.
     # @return [Boolean] The result of the authentication operation.
-    def authenticate(username, password=nil, save_auth=true, source=nil, mechanism=nil)
-      if (@client.pool_size > 1 || source) && !save_auth
-        raise MongoArgumentError,
-          "If using connection pooling or delegated auth, " +
-          ":save_auth must be set to true."
-      end
+    def authenticate(username, password=nil, save_auth=nil, source=nil, mechanism=nil)
+      warn "[DEPRECATED] Disabling the 'save_auth' option no longer has " +
+           "any effect. Please see the API documentation for more details " +
+           "on this change." unless save_auth.nil?
 
-      auth = Authentication.validate_credentials({
-        :db_name   => self.name,
-        :username  => username,
-        :password  => password,
-        :source    => source,
-        :mechanism => mechanism
-      })
+      @client.add_auth(self.name, username, password, source, mechanism)
+      true
+    end
 
-      begin
-        socket = @client.checkout_reader(:mode => :primary_preferred)
-        @client.issue_authentication(auth, :socket    => socket,
-                                           :save_auth => save_auth)
-      ensure
-        socket.checkin if socket
-      end
-
+    # Deauthorizes use for this database for this client connection. Also removes
+    # the saved authentication in the MongoClient class associated with this
+    # database.
+    #
+    # @return [Boolean]
+    def logout(opts={})
+      @client.remove_auth(self.name)
       true
     end
 
@@ -246,17 +242,6 @@ module Mongo
         response = self[SYSTEM_USER_COLLECTION].remove({:user => username}, :w => 1)
         response.key?('n') && response['n'] > 0 ? response : false
       end
-    end
-
-    # Deauthorizes use for this database for this client connection. Also removes
-    # any saved authentication in the MongoClient class associated with this
-    # database.
-    #
-    # @raise [MongoDBError] if logging out fails.
-    #
-    # @return [Boolean]
-    def logout(opts={})
-      @client.issue_logout(self.name, opts) && @client.remove_auth(self.name)
     end
 
     # Get an array of collection names in this database.

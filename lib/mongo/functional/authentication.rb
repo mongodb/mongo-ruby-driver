@@ -96,6 +96,10 @@ module Mongo
     # @param mechanism [String] (nil) The authentication mechanism being used
     #   (default: 'MONGODB-CR').
     #
+    # @raise [MongoArgumentError] Raised if the database has already been used
+    #   for authentication. A log out is required before additional auths can
+    #   be issued against a given database.
+    # @raise [AuthenticationError] Raised if authentication fails.
     # @return [Hash] a hash representing the authentication just added.
     def add_auth(db_name, username, password=nil, source=nil, mechanism=nil)
       auth = Authentication.validate_credentials({
@@ -109,8 +113,15 @@ module Mongo
       if @auths.any? {|a| a[:source] == auth[:source]}
         raise MongoArgumentError,
           "Another user has already authenticated to the database " +
-          "'#{source}' and multiple authentications are not permitted. " +
-          "Please logout first."
+          "'#{auth[:source]}' and multiple authentications are not " +
+          "permitted. Please logout first."
+      end
+
+      begin
+        socket = self.checkout_reader(:mode => :primary_preferred)
+        self.issue_authentication(auth, :socket => socket)
+      ensure
+        socket.checkin if socket
       end
 
       @auths << auth
@@ -154,7 +165,7 @@ module Mongo
       true # somewhat pointless, but here to preserve the existing API
     end
 
-    # Method to handle and issue authenication commands.
+    # Method to handle and issue authentication commands.
     #
     # @note This method should not be called directly. Use DB#authenticate.
     #
@@ -162,8 +173,6 @@ module Mongo
     # @param opts [Hash] Hash of optional settings and configuration values.
     #
     # @option opts [Socket] socket (nil) Optional socket instance to use.
-    # @option opts [Boolean] save_auth (nil) Option to store credentials on
-    #   the client instance for re-use (requried in some situations).
     #
     # @raise [AuthenticationError] Raised if the authentication fails.
     # @return [Boolean] Result of the authentication operation.
@@ -179,14 +188,11 @@ module Mongo
           issue_gssapi(auth, opts)
       end
 
-      # raise on unsuccessful attempt to authenticate
-      raise AuthenticationError,
-        "Failed to authenticate user '#{auth[:username]}' " +
-        "on db '#{auth[:source]}'." unless Support.ok?(result)
-
-      # save authentication to the client (if specified)
-      add_auth(auth[:db_name], auth[:username], auth[:password],
-               auth[:source], auth[:mechanism]) if opts[:save_auth]
+      unless Support.ok?(result)
+        raise AuthenticationError,
+          "Failed to authenticate user '#{auth[:username]}' " +
+          "on db '#{auth[:source]}'."
+      end
 
       true
     end
