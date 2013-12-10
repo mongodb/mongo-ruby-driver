@@ -110,29 +110,27 @@ namespace :test do
   end
 
   # Runs after all tests and automatically as a pre-requisite in some cases.
-  # There's no need to ever inoke this directly.
+  # There's no need to ever invoke this directly.
   task :cleanup do |t|
-    unless ENV.key?('TRAVIS_CI')
-      begin
-        $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-        require 'mongo'
-        client = Mongo::MongoClient.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                                        ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::MongoClient::DEFAULT_PORT)
-        client.database_names.each do |db_name|
-          if db_name =~ /^ruby_test*/
-            puts "[CLEAN-UP] Dropping '#{db_name}'..."
-            client.drop_database(db_name)
-          end
+    begin
+      $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+      require 'mongo'
+      client = Mongo::MongoClient.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+                                      ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::MongoClient::DEFAULT_PORT)
+      client.database_names.each do |db_name|
+        if db_name =~ /^ruby_test*/
+          puts "[CLEAN-UP] Dropping '#{db_name}'..."
+          client.drop_database(db_name)
         end
-      rescue Mongo::ConnectionFailure => e
-        # moving on anyway
       end
+    rescue Mongo::ConnectionFailure => e
+      # moving on anyway
+    end
 
-      %w(data tmp coverage).each do |dir|
-        if File.directory?(dir)
-          puts "[CLEAN-UP] Removing '#{dir}'..."
-          FileUtils.rm_rf(dir)
-        end
+    %w(data tmp coverage mongodb_server).each do |dir|
+      if File.directory?(dir)
+        puts "[CLEAN-UP] Removing '#{dir}'..."
+        FileUtils.rm_rf(dir)
       end
     end
 
