@@ -128,7 +128,7 @@ namespace :test do
         # moving on anyway
       end
 
-      %w(data tmp coverage).each do |dir|
+      %w(data tmp coverage mongodb_server).each do |dir|
         if File.directory?(dir)
           puts "[CLEAN-UP] Removing '#{dir}'..."
           FileUtils.rm_rf(dir)
