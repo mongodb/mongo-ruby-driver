@@ -32,6 +32,7 @@ class DBUnitTest < Test::Unit::TestCase
         @client.stubs(:read).returns(:primary)
         @client.stubs(:tag_sets)
         @client.stubs(:acceptable_latency)
+        @client.stubs(:add_auth).returns({})
         @db = DB.new("testing", @client)
         @db.stubs(:safe)
         @db.stubs(:read)
@@ -92,15 +93,6 @@ class DBUnitTest < Test::Unit::TestCase
         end
       end
 
-      should "raise an error if logging out fails" do
-        client = MongoClient.new
-        DB.any_instance.stubs(:command).returns({"ok" => 0})
-        db = DB.new(TEST_DB, client)
-        assert_raise Mongo::MongoDBError do
-          db.logout
-        end
-      end
-
       should "raise an error if collection creation fails" do
         @db.expects(:command).returns({'ok' => 0})
         assert_raise Mongo::MongoDBError do
@@ -127,6 +119,11 @@ class DBUnitTest < Test::Unit::TestCase
         assert_raise Mongo::MongoDBError do
           @db.profiling_level = :slow_only
         end
+      end
+
+      should "warn when save_auth is not nil" do
+        assert @db.expects(:warn).with(regexp_matches(/\[DEPRECATED\] Disabling the 'save_auth' option/))
+        @db.authenticate('foo', 'bar', false)
       end
     end
   end
