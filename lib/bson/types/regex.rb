@@ -38,21 +38,6 @@ module BSON
       @options = opts.first.is_a?(Fixnum) ? opts.first : str_opts_to_int(opts.join)
     end
 
-    # Attempt to convert a native Ruby Regexp to a BSON::Regex.
-    #
-    # @param regexp [Regexp] The native Ruby regexp object to convert to BSON::Regex.
-    #
-    # @return [BSON::Regex]
-    def self.from_native(regexp)
-      warn 'Ruby Regexps use different syntax and set of flags than BSON regular expressions.'
-      pattern = regexp.source
-      opts = 0
-      opts |= IGNORECASE if (Regexp::IGNORECASE & regexp.options != 0)
-      opts |= DOTALL     if (Regexp::MULTILINE  & regexp.options != 0)
-      opts |= EXTENDED   if (Regexp::EXTENDED   & regexp.options != 0)
-      self.new(pattern, opts)
-    end
-
     # Check equality of this wrapped Regexp with another.
     #
     # @param [BSON::Regex] regexp
@@ -77,12 +62,34 @@ module BSON
       a_copy
     end
 
+    # Attempt to convert a native Ruby Regexp to a BSON::Regex.
+    #
+    # @note Warning: Ruby regular expressions use a different syntax and different
+    #   set of flags than BSON regular expressions. A regular expression matches different
+    #   strings when executed in Ruby than it matches when used in a MongoDB query,
+    #   if it can be used in a query at all.
+    #
+    # @param regexp [Regexp] The native Ruby regexp object to convert to BSON::Regex.
+    #
+    # @return [BSON::Regex]
+    def self.from_native(regexp)
+      pattern = regexp.source
+      opts = 0
+      opts |= IGNORECASE if (Regexp::IGNORECASE & regexp.options != 0)
+      opts |= DOTALL     if (Regexp::MULTILINE  & regexp.options != 0)
+      opts |= EXTENDED   if (Regexp::EXTENDED   & regexp.options != 0)
+      self.new(pattern, opts)
+    end
+
     # Compile the BSON::Regex.
+    #
+    # @note Warning: regular expressions retrieved from the server may include a pattern
+    #   that cannot be compiled into a Ruby regular expression, or which matches a
+    #   different set of strings in Ruby than it does when used in a MongoDB query,
+    #   or it may have flags that are not supported by Ruby regular expressions.
     #
     # @return [Regexp] A ruby core Regexp object.
     def try_compile
-      warn 'Regular expressions retreived from the server may contain a pattern or flags ' <<
-           'not supported by Ruby Regexp objects.'
       regexp_opts = 0
       regexp_opts |= Regexp::IGNORECASE if (options & IGNORECASE != 0)
       regexp_opts |= Regexp::MULTILINE  if (options & DOTALL != 0)

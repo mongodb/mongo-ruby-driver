@@ -17,14 +17,12 @@ require 'test_helper'
 class BSONRegexTest < Test::Unit::TestCase
 
   def test_convert_regexp_to_bson_regex
-    BSON::Regex.expects(:warn)
     regexp = Regexp.new(/.*/imx)
     bson_regex = BSON::Regex.from_native(regexp)
     assert_equal regexp.source, bson_regex.source
   end
 
   def test_compile_bson_regex
-    BSON::Regex.any_instance.expects(:warn)
     bson_regex = BSON::Regex.new(".*", 'imx')
     regexp = bson_regex.try_compile
     assert_equal 3, regexp.options
