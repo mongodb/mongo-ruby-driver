@@ -42,13 +42,34 @@ module Mongo
     # The unordered bulk operation will be executed and may take advantage of parallelism.
     # There are no guarantees for the order of execution of the operations on the server.
     # Execution will continue even if there are errors for an unordered bulk operation.
-    # While the API supports mixing of write operation types in a bulk operation,
-    # currently only contiguous commands of the same type are submitted as a batch and
-    # benefit from performance gains.
     #
+    # A bulk operation is programmed as a sequence of individual operations.
+    # An individual operation is composed of a method chain of modifiers or setters terminated by a write method.
     # A modify method sets a value on the current object.
     # A set methods returns a duplicate of the current object with a value set.
     # A terminator write method appends a write operation to the bulk batch collected in the view.
+    #
+    # The API supports mixing of write operation types in a bulk operation.
+    # However, server support affects the implementation and performance of bulk operations.
+    #
+    # MongoDB version 2.6 servers currently support only bulk commands of the same type.
+    # With an ordered bulk operation,
+    # contiguous individual ops of the same type can be batched into the same db request,
+    # and the next op of a different type must be sent separately in the next request.
+    # Performance will improve if you can arrange your ops to reduce the number of db requests.
+    # With an unordered bulk operation,
+    # individual ops can be grouped by type and sent in at most three requests,
+    # one each per insert, update, or delete.
+    #
+    # MongoDB pre-version 2.6 servers do not support bulk write commands.
+    # The bulk operation must be sent one request per individual op.
+    # This also applies to inserts in order to have accurate counts and error reporting.
+    #
+    #   Important note on pre-2.6 performance:
+    #     Performance is very poor compared to version 2.6.
+    #     We recommend bulk operation with pre-2.6 only for compatibility or
+    #     for development in preparation for version 2.6.
+    #     For better performance with pre-version 2.6, use bulk insertion with Collection#insert.
     #
     # @param [Collection] collection the parent collection object
     #
