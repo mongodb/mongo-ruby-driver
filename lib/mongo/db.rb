@@ -527,6 +527,8 @@ module Mongo
     # @option opts [:primary, :secondary] :read Read preference for this command. See Collection#find for
     #   more details.
     # @option opts [String]  :comment (nil) a comment to include in profiling logs
+    # @option opts [Boolean] :compile_regex (true) whether BSON regex objects should be compiled into Ruby regexes.
+    #   If false, a BSON::Regex object will be returned instead.
     #
     # @return [Hash]
     def command(selector, opts={})
@@ -539,6 +541,7 @@ module Mongo
       # build up the command hash
       command = opts.key?(:socket) ? { :socket => opts.delete(:socket) } : {}
       command.merge!(:comment => opts.delete(:comment)) if opts.key?(:comment)
+      command.merge!(:compile_regex => opts.delete(:compile_regex)) if opts.key?(:compile_regex)
       command[:limit] = -1
       command[:read] = Mongo::ReadPreference::cmd_read_pref(opts.delete(:read), selector) if opts.key?(:read)
 

@@ -91,6 +91,18 @@ class CursorTest < Test::Unit::TestCase
     end
   end
 
+  def test_compile_regex_get_more
+    return unless defined?(BSON::BSON_RUBY) && BSON::BSON_CODER == BSON::BSON_RUBY
+    @@coll.remove
+    n_docs = 3
+    n_docs.times { |n| @@coll.insert({ 'n' => /.*/ }) }
+    cursor = @@coll.find({}, :batch_size => (n_docs-1), :compile_regex => false)
+    cursor.expects(:send_get_more)
+    cursor.to_a.each do |doc|
+      assert_kind_of BSON::Regex, doc['n']
+    end
+  end
+
   def test_server_op_timeout_error
     cursor = @@coll.find
     cursor.stubs(:send_initial_query).returns(true)

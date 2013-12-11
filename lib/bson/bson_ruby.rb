@@ -233,13 +233,13 @@ module BSON
           doc[key] = deserialize_oid_data(@buf)
         when ARRAY
           key = deserialize_cstr(@buf)
-          doc[key] = deserialize_array_data(@buf)
+          doc[key] = deserialize_array_data(@buf, opts)
         when REGEX
           key = deserialize_cstr(@buf)
           doc[key] = deserialize_regex_data(@buf, opts)
         when OBJECT
           key = deserialize_cstr(@buf)
-          doc[key] = deserialize_object_data(@buf)
+          doc[key] = deserialize_object_data(@buf, opts)
         when BOOLEAN
           key = deserialize_cstr(@buf)
           doc[key] = deserialize_boolean_data(@buf)
@@ -316,10 +316,10 @@ module BSON
       buf.get_long
     end
 
-    def deserialize_object_data(buf)
+    def deserialize_object_data(buf, opts={})
       size = buf.get_int
       buf.position -= 4
-      object = @encoder.new.deserialize(buf.get(size))
+      object = @encoder.new.deserialize(buf.get(size), opts)
       if object.has_key? "$ref"
         DBRef.new(object["$ref"], object["$id"])
       else
@@ -327,23 +327,20 @@ module BSON
       end
     end
 
-    def deserialize_array_data(buf)
-      h = deserialize_object_data(buf)
+    def deserialize_array_data(buf, opts={})
+      h = deserialize_object_data(buf, opts)
       a = []
       h.each { |k, v| a[k.to_i] = v }
       a
     end
 
     def deserialize_regex_data(buf, opts={})
-      # TODO: check opts to see if Regexp should be compiled
+      compile = opts.key?(:compile_regex) ? opts[:compile_regex] : true
+      compile = true if compile.nil?
       str = deserialize_cstr(buf)
       options_str = deserialize_cstr(buf)
-      opts = 0
-      opts |= Regexp::IGNORECASE if options_str.include?('i')
-      opts |= Regexp::MULTILINE if options_str.include?('m')
-      opts |= Regexp::MULTILINE if options_str.include?('s')
-      opts |= Regexp::EXTENDED if options_str.include?('x')
-      Regexp.new(str, opts)
+      bson_regex = BSON::Regex.new(str, options_str)
+      compile ? bson_regex.try_compile : bson_regex
     end
 
     def deserialize_timestamp_data(buf)
@@ -372,7 +369,7 @@ module BSON
       encoded_str(str)
     end
 
-    def deserialize_code_w_scope_data(buf)
+    def deserialize_code_w_scope_data(buf, opts={})
       buf.get_int
       len = buf.get_int
       code = buf.get(len)[0..-2]
@@ -382,7 +379,7 @@ module BSON
 
       scope_size = buf.get_int
       buf.position -= 4
-      scope = @encoder.new.deserialize(buf.get(scope_size))
+      scope = @encoder.new.deserialize(buf.get(scope_size), opts)
 
       Code.new(encoded_str(code), scope)
     end
@@ -498,12 +495,22 @@ module BSON
 
       options = val.options
       options_str = ''
-      options_str << 'i' if ((options & Regexp::IGNORECASE) != 0)
-      if ((options & Regexp::MULTILINE) != 0)
-        options_str << 'm'
-        options_str << 's'
+
+      if val.is_a?(BSON::Regex)
+        options_str << 'i' if ((options & BSON::Regex::IGNORECASE) != 0)
+        options_str << 'l' if ((options & BSON::Regex::LOCALE_DEPENDENT) != 0)
+        options_str << 'm' if ((options & BSON::Regex::MULTILINE) != 0)
+        options_str << 's' if ((options & BSON::Regex::DOTALL) != 0)
+        options_str << 'u' if ((options & BSON::Regex::UNICODE) != 0)
+        options_str << 'x' if ((options & BSON::Regex::EXTENDED) != 0)
+      else
+        options_str << 'm' # Ruby regular expressions always use multiline mode
+        options_str << 'i' if ((options & Regexp::IGNORECASE) != 0)
+        # dotall on the server is multiline in Ruby
+        options_str << 's' if ((options & Regexp::MULTILINE) != 0)
+        options_str << 'x' if ((options & Regexp::EXTENDED) != 0)
       end
-      options_str << 'x' if ((options & Regexp::EXTENDED) != 0)
+
       options_str << val.extra_options_str if val.respond_to?(:extra_options_str)
       # Must store option chars in alphabetical order
       self.class.serialize_cstr(buf, options_str.split(//).sort.uniq.join)
@@ -597,7 +604,7 @@ module BSON
         STRING
       when Array
         ARRAY
-      when Regexp
+      when Regexp, BSON::Regex
         REGEX
       when ObjectId
         OID

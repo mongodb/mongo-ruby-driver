@@ -590,7 +590,8 @@ module Mongo
 
       begin
         results, @n_received, @cursor_id = @connection.receive_message(
-          Mongo::Constants::OP_GET_MORE, message, nil, socket, @command, nil)
+          Mongo::Constants::OP_GET_MORE, message, nil, socket, @command,
+          nil, exhaust?, compile_regex?)
       ensure
         socket.checkin
       end

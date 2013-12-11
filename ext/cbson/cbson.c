@@ -89,6 +89,13 @@ static VALUE MinKey;
 static VALUE MaxKey;
 static VALUE Timestamp;
 static VALUE Regexp;
+static VALUE BSONRegex;
+static VALUE BSONRegex_IGNORECASE;
+static VALUE BSONRegex_EXTENDED;
+static VALUE BSONRegex_MULTILINE;
+static VALUE BSONRegex_DOTALL;
+static VALUE BSONRegex_LOCALE_DEPENDENT;
+static VALUE BSONRegex_UNICODE;
 static VALUE OrderedHash;
 static VALUE InvalidKeyName;
 static VALUE InvalidStringEncoding;
@@ -209,6 +216,79 @@ static void write_name_and_type(bson_buffer_t buffer, VALUE name, char type) {
     SAFE_WRITE(buffer, &type, 1);
     write_utf8(buffer, name, 0);
     SAFE_WRITE(buffer, &zero, 1);
+}
+
+static void serialize_regex(bson_buffer_t buffer, VALUE key, VALUE pattern, long flags, VALUE value, int native) {
+
+    VALUE has_extra;
+
+    write_name_and_type(buffer, key, 0x0B);
+
+    write_utf8(buffer, pattern, 0);
+    SAFE_WRITE(buffer, &zero, 1);
+
+    if (native == 1) {
+        // Ruby regular expressions always use multiline mode
+        char multiline = 'm';
+        SAFE_WRITE(buffer, &multiline, 1);
+
+        if (flags & IGNORECASE) {
+            char ignorecase = 'i';
+            SAFE_WRITE(buffer, &ignorecase, 1);
+        }
+
+        // dotall on the server is multiline in Ruby
+        if (flags & MULTILINE) {
+            char dotall = 's';
+            SAFE_WRITE(buffer, &dotall, 1);
+        }
+
+        if (flags & EXTENDED) {
+            char extended = 'x';
+            SAFE_WRITE(buffer, &extended, 1);
+        }
+    }
+    else {
+        if (flags & BSONRegex_IGNORECASE) {
+            char ignorecase = 'i';
+            SAFE_WRITE(buffer, &ignorecase, 1);
+        }
+
+        if (flags & BSONRegex_LOCALE_DEPENDENT) {
+            char locale_dependent = 'l';
+            SAFE_WRITE(buffer, &locale_dependent, 1);
+        }
+
+        if (flags & BSONRegex_MULTILINE) {
+            char multiline = 'm';
+            SAFE_WRITE(buffer, &multiline, 1);
+        }
+
+        if (flags & BSONRegex_DOTALL) {
+            char dotall = 's';
+            SAFE_WRITE(buffer, &dotall, 1);
+        }
+
+        if (flags & BSONRegex_UNICODE) {
+            char unicode = 'u';
+            SAFE_WRITE(buffer, &unicode, 1);
+        }
+
+        if (flags & BSONRegex_EXTENDED) {
+            char extended = 'x';
+            SAFE_WRITE(buffer, &extended, 1);
+        }
+    }
+
+    has_extra = rb_funcall(value, rb_intern("respond_to?"), 1, rb_str_new2("extra_options_str"));
+    if (TYPE(has_extra) == T_TRUE) {
+         VALUE extra = rb_funcall(value, rb_intern("extra_options_str"), 0);
+         bson_buffer_position old_position = bson_buffer_get_position(buffer);
+         SAFE_WRITE(buffer, RSTRING_PTR(extra), RSTRING_LENINT(extra));
+         qsort(bson_buffer_get_buffer(buffer) + old_position, RSTRING_LEN(extra), sizeof(char), cmp_char);
+    }
+    SAFE_WRITE(buffer, &zero, 1);
+
 }
 
 static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
@@ -472,6 +552,11 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 SAFE_WRITE(buffer, &zero, 1);
                 break;
             }
+            if (strcmp(cls, "BSON::Regex") == 0) {
+                serialize_regex(buffer, key, rb_funcall(value, rb_intern("pattern"), 0),
+                    FIX2INT(rb_funcall(value, rb_intern("options"), 0)), value, 0);
+                break;
+            }
             bson_buffer_free(buffer);
             rb_raise(InvalidDocument, "Cannot serialize an object of class %s into BSON.", cls);
             break;
@@ -505,37 +590,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         {
             VALUE pattern = RREGEXP_SRC(value);
             long flags = RREGEXP_OPTIONS(value);
-            VALUE has_extra;
-
-            write_name_and_type(buffer, key, 0x0B);
-
-            write_utf8(buffer, pattern, 0);
-            SAFE_WRITE(buffer, &zero, 1);
-
-            if (flags & IGNORECASE) {
-                char ignorecase = 'i';
-                SAFE_WRITE(buffer, &ignorecase, 1);
-            }
-            if (flags & MULTILINE) {
-                char multiline = 'm';
-                char dotall = 's';
-                SAFE_WRITE(buffer, &multiline, 1);
-                SAFE_WRITE(buffer, &dotall, 1);
-            }
-            if (flags & EXTENDED) {
-                char extended = 'x';
-                SAFE_WRITE(buffer, &extended, 1);
-            }
-
-            has_extra = rb_funcall(value, rb_intern("respond_to?"), 1, rb_str_new2("extra_options_str"));
-            if (TYPE(has_extra) == T_TRUE) {
-                VALUE extra = rb_funcall(value, rb_intern("extra_options_str"), 0);
-                bson_buffer_position old_position = bson_buffer_get_position(buffer);
-                SAFE_WRITE(buffer, RSTRING_PTR(extra), RSTRING_LENINT(extra));
-                qsort(bson_buffer_get_buffer(buffer) + old_position, RSTRING_LEN(extra), sizeof(char), cmp_char);
-            }
-            SAFE_WRITE(buffer, &zero, 1);
-
+            serialize_regex(buffer, key, pattern, flags, value, 1);
             break;
         }
     default:
@@ -796,25 +851,14 @@ static VALUE get_value(const char* buffer, int* position,
             *position += pattern_length + 1;
 
             flags_length = (int)strlen(buffer + *position);
-            for (i = 0; i < flags_length; i++) {
-                char flag = buffer[*position + i];
-                if (flag == 'i') {
-                    flags |= IGNORECASE;
-                }
-                else if (flag == 'm') {
-                    flags |= MULTILINE;
-                }
-                else if (flag == 's') {
-                    flags |= MULTILINE;
-                }
-                else if (flag == 'x') {
-                    flags |= EXTENDED;
-                }
-            }
+            VALUE flags_str = STR_NEW(buffer + *position, flags_length);
             argv[0] = pattern;
-            argv[1] = INT2FIX(flags);
-            // TODO: check compile_regex to see if Regexp should be compiled
-            value = rb_class_new_instance(2, argv, Regexp);
+            argv[1] = flags_str;
+            value = rb_class_new_instance(2, argv, BSONRegex);
+
+            if (opts->compile_regex == 1) {
+                value = rb_funcall(value, rb_intern("try_compile"), 0);
+            }
             *position += flags_length + 1;
             break;
         }
@@ -925,7 +969,11 @@ static VALUE method_deserialize(VALUE self, VALUE bson, VALUE opts) {
     const char* buffer = RSTRING_PTR(bson);
     int remaining = RSTRING_LENINT(bson);
     struct deserialize_opts deserialize_opts;
-    deserialize_opts.compile_regex = RTEST(rb_hash_aref(opts, ID2SYM(rb_intern("compile_regex"))));
+    deserialize_opts.compile_regex = 1;
+    if (rb_funcall(opts, rb_intern("has_key?"), 1, ID2SYM(rb_intern("compile_regex"))) == Qtrue && 
+        rb_hash_aref(opts, ID2SYM(rb_intern("compile_regex"))) == Qfalse) {
+        deserialize_opts.compile_regex = 0;
+    }
 
     // NOTE we just swallow the size and end byte here
     buffer += 4;
@@ -1092,6 +1140,14 @@ void Init_cbson() {
     MaxKey = rb_const_get(bson, rb_intern("MaxKey"));
     rb_require("bson/types/timestamp");
     Timestamp = rb_const_get(bson, rb_intern("Timestamp"));
+    rb_require("bson/types/regex");
+    BSONRegex = rb_const_get(bson, rb_intern("Regex"));
+    BSONRegex_IGNORECASE = rb_const_get(BSONRegex, rb_intern("IGNORECASE"));
+    BSONRegex_EXTENDED = rb_const_get(BSONRegex, rb_intern("EXTENDED"));
+    BSONRegex_MULTILINE = rb_const_get(BSONRegex, rb_intern("MULTILINE"));
+    BSONRegex_DOTALL = rb_const_get(BSONRegex, rb_intern("DOTALL"));
+    BSONRegex_LOCALE_DEPENDENT = rb_const_get(BSONRegex, rb_intern("LOCALE_DEPENDENT"));
+    BSONRegex_UNICODE = rb_const_get(BSONRegex, rb_intern("UNICODE"));
     Regexp = rb_const_get(rb_cObject, rb_intern("Regexp"));
     rb_require("bson/exceptions");
     InvalidKeyName = rb_const_get(bson, rb_intern("InvalidKeyName"));
