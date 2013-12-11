@@ -382,7 +382,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       end
       assert_equal Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_OCCURRED, ex.error_code
       assert_match(/too large/, ex.result[:errors].first.message)
-      assert_equal [], @collection.find.to_a
+      assert_equal [{"_id"=>1, "a"=>1}], @collection.find.to_a
     end
 
     should "run ordered bulk insert with duplicate key error" do

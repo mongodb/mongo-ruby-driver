@@ -338,7 +338,7 @@ class CollectionTest < Test::Unit::TestCase
     assert_raise BSON::InvalidKeyName do
       @@test.insert(docs, :collect_on_error => false)
     end
-    assert_equal 0, @@test.count
+    assert_equal 2, @@test.count
 
     doc_ids, error_docs = @@test.insert(docs, :collect_on_error => true)
     assert_equal 2, @@test.count
@@ -359,7 +359,7 @@ class CollectionTest < Test::Unit::TestCase
     assert_raise BSON::InvalidStringEncoding do
       @@test.insert(docs, :collect_on_error => false)
     end
-    assert_equal 0, @@test.count
+    assert_equal 2, @@test.count
 
     doc_ids, error_docs = @@test.insert(docs, :collect_on_error => true)
     assert_equal 2, @@test.count
@@ -470,7 +470,7 @@ class CollectionTest < Test::Unit::TestCase
     assert_raise OperationFailure do
       limited_collection.insert(docs, :continue_on_error => true)
     end
-    assert_equal 9, limited_collection.count
+    assert limited_collection.count >= 7 # new write commands have overhead
   end
 
   def test_chunking_batch_insert_without_continue_on_error

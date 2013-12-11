@@ -51,13 +51,13 @@ module Mongo
       continue_on_error = !!opts[:continue_on_error] || ordered == false
       collect_on_error = !!opts[:collect_on_error] || ordered == false
       error_docs = [] # docs with serialization errors
-      errors = [] # for all db errors
+      errors = []
       exchanges = []
       serialized_doc = nil
       message = BSON::ByteBuffer.new("", max_message_size)
       docs = documents.dup
       catch(:error) do
-        until docs.empty? # process documents a batch at a time
+        until docs.empty? || (!errors.empty? && !collect_on_error) # process documents a batch at a time
           batch_docs = []
           batch_message_initialize(message, op, continue_on_error, write_concern)
           while !docs.empty? && batch_docs.size < @max_write_batch_size
@@ -69,8 +69,9 @@ module Mongo
                                       {:op => op, :serialize => docs.first, :error => ex}) unless ordered.nil?
               error_docs << docs.shift
               errors << ex
-              throw(:error) unless collect_on_error
-              next
+              next if collect_on_error
+              throw(:error) if batch_docs.empty?
+              break # defer exit and send batch
             end
             break if message.size + serialized_doc.size > max_append_size
             batch_docs << docs.shift
