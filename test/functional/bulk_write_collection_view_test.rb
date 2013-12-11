@@ -42,7 +42,7 @@ module Mongo
     public :batch_write_incremental
   end
   class BulkWriteCollectionView
-    public :update_doc?, :replace_doc?, :sort_by_first_sym, :ordered_group_by_first
+    public :update_doc?, :replace_doc?
 
     # for reference and future server direction
     def generate_batch_commands(groups, write_concern)
@@ -124,45 +124,6 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       assert_true @bulk.replace_doc?({})
       assert_false @bulk.replace_doc?({"$inc" => { :x => 1 }})
       assert_false @bulk.replace_doc?({ :a => 1, "$inc" => { :x => 1 }})
-    end
-
-    should "sort_by_first_sym for grouping unordered ops" do
-      pairs = [
-          [:insert, {:n => 0}],
-          [:update, {:n => 1}], [:update, {:n => 2}],
-          [:delete, {:n => 3}],
-          [:insert, {:n => 5}], [:insert, {:n => 6}], [:insert, {:n => 7}],
-          [:update, {:n => 8}],
-          [:delete, {:n => 9}], [:delete, {:n => 10}]
-      ]
-      result = @bulk.sort_by_first_sym(pairs)
-      expected = [
-          :delete, :delete, :delete,
-          :insert, :insert, :insert, :insert,
-          :update, :update, :update
-      ]
-      assert_equal expected, result.collect{|first, rest| first}
-    end
-
-    should "calculate ordered_group_by_first" do
-      pairs = [
-          [:insert, {:n => 0}],
-          [:update, {:n => 1}], [:update, {:n => 2}],
-          [:delete, {:n => 3}],
-          [:insert, {:n => 5}], [:insert, {:n => 6}], [:insert, {:n => 7}],
-          [:update, {:n => 8}],
-          [:delete, {:n => 9}], [:delete, {:n => 10}]
-      ]
-      result = @bulk.ordered_group_by_first(pairs)
-      expected = [
-          [:insert, [{:n => 0}]],
-          [:update, [{:n => 1}, {:n => 2}]],
-          [:delete, [{:n => 3}]],
-          [:insert, [{:n => 5}, {:n => 6}, {:n => 7}]],
-          [:update, [{:n => 8}]],
-          [:delete, [{:n => 9}, {:n => 10}]]
-      ]
-      assert_equal expected, result
     end
 
     should "generate_batch_commands" do
@@ -288,7 +249,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       document = {:a => 5}
       result = @bulk.insert(document)
       assert_is_bulk_write_collection_view(result)
-      assert_bulk_op_pushed [:insert, document], @bulk
+      assert_bulk_op_pushed [:insert, {:d => document}], @bulk
     end
 
     should "handle spec examples" do
