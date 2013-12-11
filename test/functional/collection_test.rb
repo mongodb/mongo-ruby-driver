@@ -25,21 +25,6 @@ class CollectionTest < Test::Unit::TestCase
     @@test.remove
   end
 
-  def get_max_wire_version
-    @@db.connection.instance_variable_get(:@max_wire_version)
-  end
-
-  def set_max_wire_version(n)
-    @@db.connection.instance_variable_set(:@max_wire_version, n)
-  end
-
-  def with_max_wire_version(n)
-    old_max_wire_version = get_max_wire_version
-    new_max_wire_version = set_max_wire_version(n)
-    yield
-    set_max_wire_version(old_max_wire_version)
-  end
-
   @@wv0 = Mongo::MongoClient::RELEASE_2_4_AND_BEFORE
   @@wv2 = Mongo::MongoClient::BATCH_COMMANDS
   @@a_h = Mongo::CollectionWriter::APPEND_HEADROOM
@@ -76,7 +61,7 @@ class CollectionTest < Test::Unit::TestCase
 
   def test_insert_batch_max_sizes
     @@max_size_exception_test.each do |wire_version, size, exc, regexp|
-      with_max_wire_version(wire_version) do
+      with_max_wire_version(@@client, wire_version) do
         doc = generate_sized_doc(size)
         begin
           @@test.insert([doc.dup])

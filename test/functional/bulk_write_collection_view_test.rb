@@ -96,21 +96,6 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     @r = {:b => 2}
   end
 
-  def get_max_wire_version
-    @db.connection.instance_variable_get(:@max_wire_version)
-  end
-
-  def set_max_wire_version(n)
-    @db.connection.instance_variable_set(:@max_wire_version, n)
-  end
-
-  def with_max_wire_version(n)
-    old_max_wire_version = get_max_wire_version
-    new_max_wire_version = set_max_wire_version(n)
-    yield
-    set_max_wire_version(old_max_wire_version)
-  end
-
   def generate_sized_doc(size)
     doc = {"_id" => BSON::ObjectId.new, "x" => "y"}
     serialize_doc = BSON::BSON_CODER.serialize(doc, false, false, size)
@@ -368,7 +353,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     end
 
     should "run old write operations with MIN_WIRE_VERSION" do
-      with_max_wire_version(Mongo::MongoClient::MIN_WIRE_VERSION) do
+      with_max_wire_version(@client, Mongo::MongoClient::MIN_WIRE_VERSION) do
         @bulk.insert({ :a => 1 })
         @bulk.insert({ :a => 2 })
         @bulk.insert({ :a => 3 })
