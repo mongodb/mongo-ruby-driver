@@ -18,12 +18,12 @@ module BSON
   # can represent flags not supported in Ruby's core Regexp class before compilation.
   class Regex
 
-    IGNORECASE       = 1
-    EXTENDED         = IGNORECASE<<1
-    MULTILINE        = EXTENDED<<1
-    DOTALL           = MULTILINE<<1
-    LOCALE_DEPENDENT = DOTALL<<1
-    UNICODE          = LOCALE_DEPENDENT<<1
+    IGNORECASE = 0x01
+    LOCALE_DEPENDENT = 0x02
+    MULTILINE = 0x04
+    DOTALL = 0x08
+    UNICODE = 0x10
+    EXTENDED = 0x20
 
     attr_accessor :pattern
     alias_method  :source, :pattern

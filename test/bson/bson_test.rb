@@ -395,7 +395,7 @@ class BSONTest < Test::Unit::TestCase
     bson_regex = BSON::Regex.new('foobar', 'i', 'l', 'm', 's', 'u', 'x')
     doc = { 'doc' => bson_regex }
     bson = @encoder.serialize(doc)
-    assert_equal 7, @encoder.deserialize(bson, :compile_regex => true)['doc'].options
+    assert_equal 0x7, @encoder.deserialize(bson, :compile_regex => true)['doc'].options
   end
 
   def test_ruby_regexp_to_bson_regex
