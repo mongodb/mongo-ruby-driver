@@ -16,7 +16,7 @@ require 'test_helper'
 
 module Mongo
   class Collection
-    public :batch_write_incremental
+    public :batch_write
   end
   class CollectionWriter
     public :sort_by_first_sym, :ordered_group_by_first

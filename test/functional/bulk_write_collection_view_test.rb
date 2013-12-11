@@ -40,7 +40,7 @@ end
 
 module Mongo
   class Collection
-    public :batch_write_incremental
+    public :batch_write
   end
   class BulkWriteCollectionView
     public :update_doc?, :replace_doc?
@@ -344,7 +344,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
 
     should "run unordered bulk operations in one batch per write-type" do
       with_write_commands(@db.connection) do
-        @collection.expects(:batch_write_incremental).at_most(3).returns([[],[],[],[]])
+        @collection.expects(:batch_write).at_most(3).returns([[],[],[],[]])
         bulk = @collection.initialize_unordered_bulk_op
         bulk.insert({:_id => 1, :a => 1})
         bulk.find({:_id => 1, :a => 1}).update({"$inc" => {:x => 1}})

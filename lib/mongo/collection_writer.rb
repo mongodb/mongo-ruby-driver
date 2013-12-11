@@ -43,7 +43,7 @@ module Mongo
     end
 
     # common implementation only for new batch write commands (insert, update, delete) and old batch insert
-    def batch_write_incremental(op, documents, check_keys=true, opts={})
+    def batch_write(op, documents, check_keys=true, opts={})
       raise Mongo::OperationFailure, "Request contains no documents" if documents.empty?
       write_concern = get_write_concern(opts, @collection)
       max_message_size, max_append_size, max_serialize_size = batch_write_max_sizes(write_concern)
@@ -246,7 +246,7 @@ module Mongo
         documents.collect! {|doc| {:d => @collection.pk_factory.create_pk(doc[:d]), :ord => doc[:ord]} } if op == :insert
         # TODO - local batch_write_partition
         error_docs, batch_errors, batch_exchanges =
-            @collection.batch_write_incremental(op, documents, check_keys = false, opts.merge(:ordered => options[:ordered]))
+            @collection.batch_write(op, documents, check_keys = false, opts.merge(:ordered => options[:ordered]))
         errors += batch_errors
         exchanges += batch_exchanges
         break if options[:ordered] && !batch_errors.empty?
