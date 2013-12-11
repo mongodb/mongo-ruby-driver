@@ -75,6 +75,7 @@ module BSON
     def self.from_native(regexp)
       pattern = regexp.source
       opts = 0
+      opts |= MULTILINE  # multiline mode is always on for Ruby regular expressions
       opts |= IGNORECASE if (Regexp::IGNORECASE & regexp.options != 0)
       opts |= DOTALL     if (Regexp::MULTILINE  & regexp.options != 0)
       opts |= EXTENDED   if (Regexp::EXTENDED   & regexp.options != 0)
