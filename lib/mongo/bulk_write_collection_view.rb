@@ -209,11 +209,67 @@ module Mongo
         errors, exchanges = @collection.operation_writer.bulk_execute(@ops, @options, opts)
       end
       @ops = []
-      raise BulkWriteError.new(MULTIPLE_ERRORS_OCCURRED_ERRMSG, MULTIPLE_ERRORS_OCCURRED, {:errors => errors, :exchanges => exchanges}) unless errors.empty?
-      [errors, exchanges]
+      result = merge_result(errors, exchanges)
+      raise BulkWriteError.new(MULTIPLE_ERRORS_OCCURRED_ERRMSG, MULTIPLE_ERRORS_OCCURRED, result) unless errors.empty?
+      result
     end
 
     private
+
+    def hash_except(hash, *keys)
+      keys.each { |key| hash.delete(key) }
+      hash
+    end
+
+    def top_err_details(exchange, response)
+      merge = {}
+      merge['index'] = exchange[:batch][response.fetch('index', 0)][:ord]
+      merge['errmsg'] = response['err'] if response['err'] # coerce err to errmsg
+      hash_except(response.merge(merge), 'ok', 'n', 'err', 'connectionId')
+    end
+
+    def merge_tally(result, response, key)
+      result[key] = result.fetch(key, 0) + response.fetch(key, 0).to_i
+    end
+
+    def merge_index(result, exchange, response, key)
+      details = response.fetch(key, [])
+      details = [{'_id' => details}] if details.class == BSON::ObjectId # single upsert
+      values = details.collect do |detail|
+        detail['index'] = exchange[:batch][detail.fetch('index', 0)][:ord]
+        detail
+      end
+      result[key] = result.fetch(key, []) + values
+    end
+
+    def merge_result(errors, exchanges)
+      result = {'ok' => 0, 'n' => 0}
+      result.merge!({'code' => MULTIPLE_ERRORS_OCCURRED, 'errmsg' => MULTIPLE_ERRORS_OCCURRED_ERRMSG}) unless errors.empty?
+      errors.each do |error|
+        next if error.class == Mongo::OperationFailure
+        errDetails = {'index' => error.result[:ord], 'errmsg' => error.result[:error].message}
+        result['errDetails'] = result.fetch('errDetails', []) << errDetails
+      end
+      exchanges.each do |exchange|
+        response = exchange[:response]
+        # fix legacy insert that reports 'n' 0 even with 'err' nil
+        response['n'] = exchange[:batch].size if exchange[:op] == :insert && response.has_key?('err') && response['err'].nil?
+        response['ok'] = 0 if response.has_key?('err') && !response['err'].nil? # fix legacy ok for non-nil err
+        ['ok', 'n'].each { |key| merge_tally(result, response, key) }
+        top_level = true
+        ['errDetails', 'upserted', 'errInfo'].each do |key|
+          if response.has_key?(key)
+            top_level = false
+            merge_index(result, exchange, response, key)
+          end
+        end
+        next if top_level == false
+        next if response.has_key?('err') && response['err'].nil?
+        next unless (response.has_key?('err') || response.has_key?('errmsg'))
+        result['errDetails'] = result.fetch('errDetails',[]) << top_err_details(exchange, response)
+      end
+      result
+    end
 
     def initialize_copy(other)
       other.instance_variable_set(:@options, other.options.dup)

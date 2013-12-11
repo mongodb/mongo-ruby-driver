@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require 'test_helper'
+require 'json'
 
 class Hash
   def stringify_keys
@@ -58,38 +59,45 @@ module Mongo
   end
 end
 
-def assert_doc_equal_without_id(q, r)
-  assert r, "result document should not be nil"
-  assert_equal q.stringify_keys, r.except('_id')
-end
-
-def assert_bulk_op_pushed(expected, view)
-  assert_equal expected, view.ops.last
-end
-
-def assert_is_bulk_write_collection_view(view)
-  assert_equal Mongo::BulkWriteCollectionView, view.class
-end
-
 class BulkWriteCollectionViewTest < Test::Unit::TestCase
   @@client       ||= standard_connection(:op_timeout => 10)
   @@db           = @@client.db(TEST_DB)
   @@test         = @@db.collection("test")
   @@version      = @@client.server_version
 
-  DATABASE_NAME   = TEST_DB
-  COLLECTION_NAME = 'bulk_write_collection_view_test'
+  DATABASE_NAME = 'bulk_write_collection_view_test'
+  COLLECTION_NAME = 'test'
 
-  def pp_with_caller(obj)
-    puts "#{caller(1,1).first[/(.*):in/, 1]}:"
-    pp obj
+  def assert_bulk_op_pushed(expected, view)
+    assert_equal expected, view.ops.last
+  end
+
+  def assert_is_bulk_write_collection_view(view)
+    assert_equal Mongo::BulkWriteCollectionView, view.class
+  end
+
+  def clone_out_object_id(doc, merge = {})
+    # note: Ruby 1.8.7 doesn't support \h
+    JSON.parse(doc.merge(merge).to_json.gsub(/\"\$oid\": *\"[a-f0-9]{24}\"/,"\"$oid\":\"123456789012345678901234\""))
+  end
+
+  def assert_equal_json(expected, actual, merge = {}, message = nil)
+    assert_equal(clone_out_object_id(expected, merge), clone_out_object_id(actual), message)
+  end
+
+  def assert_bulk_exception(result, merge = {}, message = nil)
+    ex = assert_raise BulkWriteError do
+      yield
+    end
+    assert_equal(Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_OCCURRED, ex.error_code, message)
+    assert_equal_json(result, ex.result, merge, message)
   end
 
   def default_setup
     @client = MongoClient.new
     @db = @client[DATABASE_NAME]
     @collection = @db[COLLECTION_NAME]
-    @collection.remove
+    @collection.drop
     @bulk = @collection.initialize_ordered_bulk_op
     @q = {:a => 1}
     @u = {"$inc" => { :x => 1 }}
@@ -119,7 +127,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       assert_nil @bulk.update_doc?({ :x => 1 })
     end
 
-    should "check no top-leve key is operation for #replace_doc?" do
+    should "check no top-level key is operation for #replace_doc?" do
       assert_true @bulk.replace_doc?({ :x => 1 })
       assert_true @bulk.replace_doc?({})
       assert_false @bulk.replace_doc?({"$inc" => { :x => 1 }})
@@ -282,118 +290,241 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       # Insert a document
       @bulk.insert({ :x => 4 })
 
-      # Execute the bulk operation, with an optional writeConcern overwritting the default w:1
+      # Execute the bulk operation, with an optional writeConcern overwriting the default w:1
       write_concern = {:w => 1, :j => 1}
       #@bulk.execute(write_concern)
     end
 
     should "execute, return result and reset @ops for #execute" do
-      @bulk.insert({ :x => 1 })
-      @bulk.insert({ :x => 2 })
-      write_concern = {:w => 1}
-      result = @bulk.execute(write_concern)
-      assert_equal 2, @collection.count
-      assert_equal [], @bulk.ops
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
+        @bulk.insert({ :x => 1 })
+        @bulk.insert({ :x => 2 })
+        write_concern = {:w => 1}
+        result = @bulk.execute(write_concern)
+        assert_equal([{"ok" => 2, "n" => 2}, {}, {"ok" => 1, "n" => 2}][wire_version], result, "wire_version:#{wire_version}")
+        assert_equal 2, @collection.count
+        assert_equal [], @bulk.ops
+      end
     end
 
     should "run ordered big example" do
-      big_example(@bulk)
-      write_concern = {:w => 1, :j => 1}
-      result = @bulk.execute(write_concern)
-      #pp_with_caller result
-      assert_equal [{"x" => 3}, {"a" => 1, "x" => 2}, {"a" => 2, "x" => 4}, {"x" => 3}, {"x" => 4}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
+        big_example(@bulk)
+        write_concern = {:w => 1, :j => 1}
+        result = @bulk.execute(write_concern)
+        assert_equal_json(
+            {
+                "ok" => 4,
+                "n" => 14,
+                "upserted" => [
+                    {
+                        "index" => 10,
+                        "_id" => BSON::ObjectId('52a1e4a4bb67fbc77e26a340')
+                    }
+                ]
+            }, result, [{"ok" => 14}, {}, {}][wire_version], "wire_version:#{wire_version}")
+        assert_false @collection.find.to_a.empty?
+        assert_equal [{"x" => 3}, {"a" => 1, "x" => 2}, {"a" => 2, "x" => 4}, {"x" => 3}, {"x" => 4}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }
+      end
     end
 
     should "run unordered big example" do
-      @bulk = @collection.initialize_unordered_bulk_op
-      big_example(@bulk)
-      write_concern = {:w => 1, :j => 1}
-      result = @bulk.execute(write_concern)
-      #pp_with_caller result
-      assert_false @collection.find.to_a.empty?
-    end
-
-    should "run old write operations with MIN_WIRE_VERSION" do
-      with_max_wire_version(@client, Mongo::MongoClient::MIN_WIRE_VERSION) do
-        @bulk.insert({ :a => 1 })
-        @bulk.insert({ :a => 2 })
-        @bulk.insert({ :a => 3 })
-        @bulk.insert({ :a => 4 })
-        @bulk.insert({ :a => 5 })
-        @bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
-        @bulk.find({:a => 2}).update({"$inc" => { :x => 2 }})
-        @bulk.find({:a => 4}).remove_one()
-        @bulk.find({:a => 5}).remove()
-        @bulk.insert({ :x => 3 })
-        @bulk.find({:a => 3}).replace_one({ :x => 3 })
-        @bulk.find({:x => 3}).remove()
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
+        @bulk = @collection.initialize_unordered_bulk_op
+        big_example(@bulk)
         write_concern = {:w => 1, :j => 1}
         result = @bulk.execute(write_concern)
-        assert_equal [{"a" => 1, "x" => 1}, {"a" => 2, "x" => 2}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }
+        # unordered varies, don't use assert_equal_json
+        assert_false @collection.find.to_a.empty?
       end
-    end
-
-    should "run ordered bulk insert with serialization error" do
-      @bulk.insert({:_id => 1, :a => 1})
-      @bulk.insert({:_id => 1, :a => 2})
-      @bulk.insert(generate_sized_doc(@@client.max_message_size + 1))
-      @bulk.insert({:_id => 3, :a => 3})
-      ex = assert_raise BulkWriteError do
-        @bulk.execute
-      end
-      assert_equal Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_OCCURRED, ex.error_code
-      assert_match(/too large/, ex.result[:errors].first.message)
-      assert_equal [{"_id"=>1, "a"=>1}], @collection.find.to_a
-    end
-
-    should "run ordered bulk insert with duplicate key error" do
-      @bulk.insert({:_id => 1, :a => 1})
-      @bulk.insert({:_id => 1, :a => 2})
-      @bulk.insert({:_id => 3, :a => 3})
-      ex = assert_raise BulkWriteError do
-        @bulk.execute
-      end
-      assert_equal Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_OCCURRED, ex.error_code
-      assert_match(/duplicate key error/, ex.result[:errors].first.message)
-      assert_equal [{"_id" => 1, "a" => 1}], @collection.find.to_a
-    end
-
-    should "run unordered bulk insert with errors" do
-      @bulk = @collection.initialize_unordered_bulk_op
-      @bulk.insert({:_id => 1, :a => 1})
-      @bulk.insert({:_id => 1, :a => 2})
-      @bulk.insert(generate_sized_doc(@@client.max_message_size + 1))
-      @bulk.insert({:_id => 3, :a => 3})
-      ex = assert_raise BulkWriteError do
-        @bulk.execute
-      end
-      #pp_with_caller ex
-      #pp_with_caller ex.result
-      assert_equal Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_OCCURRED, ex.error_code
-      assert_equal 2, ex.result[:errors].size
-      assert_equal 1, ex.result[:exchanges].size
-      assert_match(/too large/, ex.result[:errors].first.message)
-      assert_match(/duplicate key error/, ex.result[:errors].last.message)
-      #pp_with_caller ex.result[:errors].first.result
-      assert_true ex.result[:errors].first.result.has_key?(:serialize)
-      #pp_with_caller ex.result[:errors].last.result
-      assert_equal [{"_id" => 1, "a" => 1}, {"_id" => 3, "a" => 3}], @collection.find.to_a
     end
 
     should "run unordered bulk operations in one batch per write-type" do
-      @collection.expects(:batch_write_incremental).at_most(3).returns([[],[],[],[]])
-      bulk = @collection.initialize_unordered_bulk_op
-      bulk.insert({:_id => 1, :a => 1})
-      bulk.find({:_id => 1, :a => 1}).update({"$inc" => {:x => 1}})
-      bulk.find({:_id => 1, :a => 1}).remove
-      bulk.insert({:_id => 2, :a => 2})
-      bulk.find({:_id => 2, :a => 2}).update({"$inc" => {:x => 2}})
-      bulk.find({:_id => 2, :a => 2}).remove
-      bulk.insert({:_id => 3, :a => 3})
-      bulk.find({:_id => 3, :a => 3}).update({"$inc" => {:x => 3}})
-      bulk.find({:_id => 3, :a => 3}).remove
-      result = bulk.execute
+      with_write_commands(@db.connection) do
+        @collection.expects(:batch_write_incremental).at_most(3).returns([[],[],[],[]])
+        bulk = @collection.initialize_unordered_bulk_op
+        bulk.insert({:_id => 1, :a => 1})
+        bulk.find({:_id => 1, :a => 1}).update({"$inc" => {:x => 1}})
+        bulk.find({:_id => 1, :a => 1}).remove
+        bulk.insert({:_id => 2, :a => 2})
+        bulk.find({:_id => 2, :a => 2}).update({"$inc" => {:x => 2}})
+        bulk.find({:_id => 2, :a => 2}).remove
+        bulk.insert({:_id => 3, :a => 3})
+        bulk.find({:_id => 3, :a => 3}).update({"$inc" => {:x => 3}})
+        bulk.find({:_id => 3, :a => 3}).remove
+        result = bulk.execute
+      end
     end
+
+    should "handle error for duplicate key with offset" do
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
+        @bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
+        @bulk.insert({:_id => 1, :a => 1})
+        @bulk.insert({:_id => 1, :a => 2})
+        @bulk.insert({:_id => 3, :a => 3})
+        assert_bulk_exception(
+            {
+                "ok" => 1,
+                "n" => 1,
+                "code" => 65,
+                "errmsg" => "batch item errors occurred",
+                "errDetails" => [
+                    {
+                        "index" => 2,
+                        "code" => 11000,
+                        "errmsg" =>
+                            "E11000 duplicate key error index: bulk_write_collection_view_test.test.$_id_  dup key: { : 1 }"
+                    }
+                ]
+            }, [{'ok' => 2, 'n' => 1}, {}, {}][wire_version], "wire_version:#{wire_version}") { @bulk.execute }
+      end
+    end
+
+    should "handle error for serialization with offset" do
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
+        assert_equal 16777216, @@client.max_bson_size
+        @bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
+        @bulk.insert({:_id => 1, :a => 1})
+        @bulk.insert(generate_sized_doc(@@client.max_message_size + 1))
+        @bulk.insert({:_id => 3, :a => 3})
+        # errmsg varies, don't use assert_bulk_exception
+        ex = assert_raise BulkWriteError do
+          @bulk.execute
+        end
+        result = ex.result
+        assert_equal(2, result['ok'], "wire_version:#{wire_version}")
+        assert_equal(1, result['n'], "wire_version:#{wire_version}")
+        err_details = result['errDetails']
+        assert_equal(2, err_details.first['index'], "wire_version:#{wire_version}")
+        assert_match(/too large/, err_details.first['errmsg'], "wire_version:#{wire_version}")
+      end
+    end
+
+    should "handle errors for spec example 1 - handling errors" do # TODO - varies from spec
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
+        @collection.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
+        bulk = @collection.initialize_ordered_bulk_op
+        bulk.insert({:a => 1})
+        bulk.find({:a => 1}).upsert.update({'$set' => {:a => 2}})
+        bulk.insert({:a => 2})
+        assert_bulk_exception(
+            {
+                "ok" => 2,
+                "n" => 2,
+                "code" => 65,
+                "errmsg" => "batch item errors occurred",
+                "errDetails" => [
+                    {
+                        "index" => 2,
+                        "code" => 11000,
+                        "errmsg" => "E11000 duplicate key error index: bulk_write_collection_view_test.test.$a_1  dup key: { : 2 }"
+                    }
+                ]
+            }, [{'ok' => 2}, {}, {}][wire_version], "wire_version:#{wire_version}") { bulk.execute }
+      end
+    end
+
+    should "handle errors for spec example 2 - with deferred write concern error" do
+      # TODO - deferred write concern pending - requires replication
+    end
+
+    should "handle errors for spec example 3 - unordered tally of ok and n" do # TODO - varies from spec
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
+        @collection.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
+        bulk = @collection.initialize_unordered_bulk_op
+        bulk.insert({:a => 1})
+        bulk.find({:a => 1}).upsert.update({'$set' => {:a => 2}})
+        bulk.insert({:a => 2})
+        # unordered varies, don't use assert_bulk_exception
+        ex = assert_raise BulkWriteError do
+          bulk.execute
+        end
+        result = ex.result
+        assert_equal([2,nil,1][wire_version], result['ok'], "wire_version:#{wire_version}")
+        assert_equal(2, result['n'], "wire_version:#{wire_version}")
+        err_details = result['errDetails']
+        assert_equal([2,nil,1][wire_version], err_details.first['index'], "wire_version:#{wire_version}")
+        assert_match(/duplicate key error/, err_details.first['errmsg'], "wire_version:#{wire_version}")
+       end
+    end
+
+    should "handle errors for spec example 4 - with deferred write concern error" do
+      # TODO - deferred write concern pending - requires replication
+    end
+
+    should "handle errors for spec example 5 - rewrite index - missing update expression" do
+      # TODO - can't reproduce missing update expression error
+    end
+
+    should "handle errors for spec example 6 - handling single upsert" do # chose array always for upserted value
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
+        @collection.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
+        bulk = @collection.initialize_ordered_bulk_op
+        bulk.find({:a => 1}).upsert.update({'$set' => {:a => 2}})
+        result = bulk.execute
+        assert_equal_json(
+            {
+                "ok" => 1,
+                "n" => 1,
+                "upserted" => [
+                    {"_id" => BSON::ObjectId('52a16767bb67fbc77e26a310'), "index" => 0}
+                ]
+            }, result, {}, "wire_version:#{wire_version}")
+      end
+    end
+
+    should "handle errors for spec example 7 - handling multiple upserts" do
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
+        @collection.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
+        bulk = @collection.initialize_ordered_bulk_op
+        bulk.find({:a => 1}).upsert.update({'$set' => {:a => 2}})
+        bulk.find({:a => 3}).upsert.update({'$set' => {:a => 4}})
+        result = bulk.execute
+        assert_equal_json(
+            {
+                "ok" => 1,
+                "n" => 2,
+                "upserted" => [
+                    {"index" => 0, "_id" => BSON::ObjectId('52a1e37cbb67fbc77e26a338')},
+                    {"index" => 1, "_id" => BSON::ObjectId('52a1e37cbb67fbc77e26a339')}
+                ]
+            }, result, [{'ok' => 2}, {}, {}][wire_version], "wire_version:#{wire_version}")
+      end
+    end
+
+    should "handle multiple errors for unordered bulk write" do
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
+        @bulk = @collection.initialize_unordered_bulk_op
+        @bulk.insert({:_id => 1, :a => 1})
+        @bulk.insert({:_id => 1, :a => 2})
+        @bulk.insert(generate_sized_doc(@@client.max_message_size + 1))
+        @bulk.insert({:_id => 3, :a => 3})
+        @bulk.find({:a => 4}).upsert.replace_one({ :x => 3 })
+        # unordered varies, don't use assert_bulk_exception
+        ex = assert_raise BulkWriteError do
+          @bulk.execute
+        end
+        result = ex.result
+        #assert_equal([3,nil,1][wire_version], result['ok'], "wire_version:#{wire_version}")
+        assert_equal([3,nil,3][wire_version], result['n'], "wire_version:#{wire_version}")
+        err_details = result['errDetails']
+        # note: index is unavailable for the following with wire_version 0
+        assert_match(/duplicate key error/, err_details.find{|e|e['code']==11000}['errmsg'], "wire_version:#{wire_version}")
+        assert_match(/too large/, err_details.find{|e|e['index']==2}['errmsg'], "wire_version:#{wire_version}")
+        assert_not_nil result['upserted'].find{|e|e['index']==4}
+      end
+    end
+
   end
 
 end
