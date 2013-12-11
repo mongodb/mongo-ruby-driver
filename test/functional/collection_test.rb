@@ -1013,6 +1013,7 @@ class CollectionTest < Test::Unit::TestCase
       # TODO: remove the following line java ext changes are complete
       return if defined?(BSON::BSON_JAVA) && BSON::BSON_CODER == BSON::BSON_JAVA
       # see SERVER-6470
+      return unless @@version >= '2.3.2'
       @@test.insert({ 'r' => /.*/ })
       result1 = @@test.aggregate([])
       assert_kind_of Regexp, result1.first['r']
