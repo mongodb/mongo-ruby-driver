@@ -21,14 +21,20 @@ class CollectionTest < Test::Unit::TestCase
   @@test         = @@db.collection("test")
   @@version      = @@client.server_version
 
+  LIMITED_MAX_BSON_SIZE = 1024
+  LIMITED_MAX_MESSAGE_SIZE = 3 * LIMITED_MAX_BSON_SIZE
+  LIMITED_TEST_HEADROOM = 50
+  LIMITED_VALID_VALUE_SIZE = LIMITED_MAX_BSON_SIZE - LIMITED_TEST_HEADROOM
+  LIMITED_INVALID_VALUE_SIZE = LIMITED_MAX_BSON_SIZE + Mongo::MongoClient::COMMAND_HEADROOM + 1
+
   def setup
     @@test.remove
   end
 
   @@wv0 = Mongo::MongoClient::RELEASE_2_4_AND_BEFORE
   @@wv2 = Mongo::MongoClient::BATCH_COMMANDS
-  @@a_h = Mongo::CollectionWriter::APPEND_HEADROOM
-  @@s_h = Mongo::CollectionWriter::SERIALIZE_HEADROOM
+  @@a_h = Mongo::MongoClient::APPEND_HEADROOM
+  @@s_h = Mongo::MongoClient::SERIALIZE_HEADROOM
 
   MAX_SIZE_EXCEPTION_TEST = [
     [@@wv0, @@client.max_bson_size, nil, /xyzzy/],
@@ -393,8 +399,8 @@ class CollectionTest < Test::Unit::TestCase
     admin_db.expects(:command).returns({
       'ok' => 1,
       'ismaster' => 1,
-      'maxBsonObjectSize' => 1024,
-      'maxMessageSizeBytes' => 3 * 1024
+      'maxBsonObjectSize' => LIMITED_MAX_BSON_SIZE,
+      'maxMessageSizeBytes' => LIMITED_MAX_MESSAGE_SIZE
     })
     conn.expects(:[]).with('admin').returns(admin_db)
     conn.connect
@@ -406,7 +412,7 @@ class CollectionTest < Test::Unit::TestCase
     coll.db.connection.stubs(:send_message_with_gle).raises(OperationTimeout).times(1)
     docs = []
     10.times do
-      docs << {'foo' => 'a' * 950}
+      docs << {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
     end
     assert_raise OperationTimeout do
       coll.insert(docs, :continue_on_error => true)
@@ -416,7 +422,7 @@ class CollectionTest < Test::Unit::TestCase
   def test_chunking_batch_insert
      docs = []
      10.times do
-       docs << {'foo' => 'a' * 950}
+       docs << {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
      end
      limited_collection.insert(docs)
      assert_equal 10, limited_collection.count
@@ -425,13 +431,13 @@ class CollectionTest < Test::Unit::TestCase
   def test_chunking_batch_insert_without_collect_on_error
     docs = []
     4.times do
-      docs << {'foo' => 'a' * 950}
+      docs << {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
     end
     invalid_docs = []
     invalid_docs << {'$invalid-key' => 1} # non utf8 encoding
     docs += invalid_docs
     4.times do
-      docs << {'foo' => 'a' * 950}
+      docs << {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
     end
     assert_raise BSON::InvalidKeyName do
       limited_collection.insert(docs, :collect_on_error => false)
@@ -443,13 +449,13 @@ class CollectionTest < Test::Unit::TestCase
    if RUBY_PLATFORM == 'java' then return end
     docs = []
     4.times do
-      docs << {'foo' => 'a' * 950}
+      docs << {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
     end
     invalid_docs = []
     invalid_docs << {'$invalid-key' => 1} # non utf8 encoding
     docs += invalid_docs
     4.times do
-      docs << {'foo' => 'a' * 950}
+      docs << {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
     end
     doc_ids, error_docs = limited_collection.insert(docs, :collect_on_error => true)
     assert_equal 8, doc_ids.count
@@ -460,28 +466,28 @@ class CollectionTest < Test::Unit::TestCase
   def test_chunking_batch_insert_with_continue_on_error
     docs = []
     4.times do
-      docs << {'foo' => 'a' * 950}
+      docs << {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
     end
     docs << {'_id' => 'b', 'foo' => 'a'}
     docs << {'_id' => 'b', 'foo' => 'c'}
     4.times do
-      docs << {'foo' => 'a' * 950}
+      docs << {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
     end
     assert_raise OperationFailure do
       limited_collection.insert(docs, :continue_on_error => true)
     end
-    assert limited_collection.count >= 7 # new write commands have overhead
+    assert limited_collection.count >= 6, "write commands need headroom for doc wrapping overhead - count:#{limited_collection.count}"
   end
 
   def test_chunking_batch_insert_without_continue_on_error
     docs = []
     4.times do
-      docs << {'foo' => 'a' * 950}
+      docs << {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
     end
     docs << {'_id' => 'b', 'foo' => 'a'}
     docs << {'_id' => 'b', 'foo' => 'c'}
     4.times do
-      docs << {'foo' => 'a' * 950}
+      docs << {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
     end
     assert_raise OperationFailure do
       limited_collection.insert(docs, :continue_on_error => false)
@@ -492,74 +498,74 @@ class CollectionTest < Test::Unit::TestCase
   def test_maximum_insert_size
     docs = []
     3.times do
-      docs << {'foo' => 'a' * 950}
+      docs << {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
     end
     assert_equal limited_collection.insert(docs).length, 3
   end
 
   def test_maximum_document_size
     assert_raise InvalidDocument do
-      limited_collection.insert({'foo' => 'a' * 1024})
+      limited_collection.insert({'foo' => 'a' * LIMITED_MAX_BSON_SIZE})
     end
   end
 
   def test_maximum_save_size
-    assert limited_collection.save({'foo' => 'a' * 950})
+    assert limited_collection.save({'foo' => 'a' * LIMITED_VALID_VALUE_SIZE})
     assert_raise InvalidDocument do
-      limited_collection.save({'foo' => 'a' * 1024})
+      limited_collection.save({'foo' => 'a' * LIMITED_MAX_BSON_SIZE})
     end
   end
 
   def test_maximum_remove_size
-    assert limited_collection.remove({'foo' => 'a' * 950})
+    assert limited_collection.remove({'foo' => 'a' * LIMITED_VALID_VALUE_SIZE})
     assert_raise InvalidDocument do
-      limited_collection.remove({'foo' => 'a' * 1024})
+      limited_collection.remove({'foo' => 'a' * LIMITED_MAX_BSON_SIZE})
     end
   end
 
   def test_maximum_update_size
     assert_raise InvalidDocument do
       limited_collection.update(
-        {'foo' => 'a' * 1024},
-        {'foo' => 'a' * 950}
+        {'foo' => 'a' * LIMITED_MAX_BSON_SIZE},
+        {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
       )
     end
 
     assert_raise InvalidDocument do
       limited_collection.update(
-        {'foo' => 'a' * 950},
-        {'foo' => 'a' * 1024}
+        {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE},
+        {'foo' => 'a' * LIMITED_MAX_BSON_SIZE}
       )
     end
 
     assert_raise InvalidDocument do
       limited_collection.update(
-        {'foo' => 'a' * 1024},
-        {'foo' => 'a' * 1024}
+        {'foo' => 'a' * LIMITED_MAX_BSON_SIZE},
+        {'foo' => 'a' * LIMITED_MAX_BSON_SIZE}
       )
     end
 
     assert limited_collection.update(
-      {'foo' => 'a' * 950},
-      {'foo' => 'a' * 950}
+      {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE},
+      {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
     )
   end
 
   def test_maximum_query_size
-    assert limited_collection.find({'foo' => 'a' * 950}).to_a
+    assert limited_collection.find({'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}).to_a
     assert limited_collection.find(
-      {'foo' => 'a' * 950},
-      {:fields => {'foo' => 'a' * 950}}
+      {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE},
+      {:fields => {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}}
     ).to_a
 
     assert_raise InvalidDocument do
-      limited_collection.find({'foo' => 'a' * 1024}).to_a
+      limited_collection.find({'foo' => 'a' * LIMITED_INVALID_VALUE_SIZE}).to_a
     end
 
     assert_raise InvalidDocument do
       limited_collection.find(
-        {'foo' => 'a' * 950},
-        {:fields => {'foo' => 'a' * 1024}}
+        {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE},
+        {:fields => {'foo' => 'a' * LIMITED_MAX_BSON_SIZE}}
       ).to_a
     end
   end
@@ -1677,7 +1683,7 @@ end
   context "Capped collections" do
     setup do
       @@db.drop_collection('log')
-      @capped = @@db.create_collection('log', :capped => true, :size => 1024)
+      @capped = @@db.create_collection('log', :capped => true, :size => LIMITED_MAX_BSON_SIZE)
 
       10.times { |n| @capped.insert({:n => n}) }
     end

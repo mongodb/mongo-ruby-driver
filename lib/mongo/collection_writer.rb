@@ -28,9 +28,6 @@ module Mongo
       :update => :updates,
       :delete => :deletes
     }
-    COMMAND_HEADROOM   = 16_384
-    APPEND_HEADROOM    = COMMAND_HEADROOM / 2
-    SERIALIZE_HEADROOM = APPEND_HEADROOM / 2
     MAX_WRITE_BATCH_SIZE     = 10_000
 
     def initialize(collection)
@@ -278,7 +275,7 @@ module Mongo
     end
 
     def batch_write_max_sizes(write_concern)
-      [COMMAND_HEADROOM, APPEND_HEADROOM, SERIALIZE_HEADROOM].collect{|h| @connection.max_bson_size + h}
+      [MongoClient::COMMAND_HEADROOM, MongoClient::APPEND_HEADROOM, MongoClient::SERIALIZE_HEADROOM].collect{|h| @connection.max_bson_size + h}
     end
 
   end
