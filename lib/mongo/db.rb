@@ -141,7 +141,7 @@ module Mongo
     #
     # @raise [AuthenticationError]
     # @return [Boolean] The result of the authentication operation.
-    def authenticate(username, password=nil, save_auth=true, source=nil, mechanism=nil)
+    def authenticate(username, password=nil, save_auth=true, source=nil, mechanism=nil, extra_opts={})
       if (@client.pool_size > 1 || source) && !save_auth
         raise MongoArgumentError,
           "If using connection pooling or delegated auth, " +
@@ -149,11 +149,12 @@ module Mongo
       end
 
       auth = Authentication.validate_credentials({
-        :db_name   => self.name,
-        :username  => username,
-        :password  => password,
-        :source    => source,
-        :mechanism => mechanism
+        :db_name    => self.name,
+        :username   => username,
+        :password   => password,
+        :source     => source,
+        :mechanism  => mechanism,
+        :extra_opts => extra_opts
       })
 
       begin
