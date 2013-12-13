@@ -317,8 +317,6 @@ module Mongo
     #
     # @return [Socket] The authenticated socket instance.
     def check_auths(socket)
-      return socket if @client.auths.empty?
-
       # find and handle logouts
       (socket.auths - @client.auths).each do |auth|
         @client.issue_logout(auth[:source], :socket => socket)
