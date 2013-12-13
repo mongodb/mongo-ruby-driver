@@ -120,15 +120,15 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
           [:update, [{:n => 8}]],
           [:delete, [{:n => 9}, {:n => 10}]]
       ]
-      write_concern = {:w => 1, :j => 1}
+      write_concern = {:w => 1}
       result = @bulk.generate_batch_commands(groups, write_concern)
       expected = [
-          {:insert => COLLECTION_NAME, :documents => [{:n => 0}], :ordered => true, :writeConcern => {:j => 1, :w => 1}},
-          {:update => COLLECTION_NAME, :updates => [{:n => 1}, {:n => 2}], :ordered => true, :writeConcern => {:j => 1, :w => 1}},
-          {:delete => COLLECTION_NAME, :deletes => [{:n => 3}], :ordered => true, :writeConcern => {:j => 1, :w => 1}},
-          {:insert => COLLECTION_NAME, :documents => [{:n => 5}, {:n => 6}, {:n => 7}], :ordered => true, :writeConcern => {:j => 1, :w => 1}},
-          {:update => COLLECTION_NAME, :updates => [{:n => 8}], :ordered => true, :writeConcern => {:j => 1, :w => 1}},
-          {:delete => COLLECTION_NAME, :deletes => [{:n => 9}, {:n => 10}], :ordered => true, :writeConcern => {:j => 1, :w => 1}}
+          {:insert => COLLECTION_NAME, :documents => [{:n => 0}], :ordered => true, :writeConcern => {:w => 1}},
+          {:update => COLLECTION_NAME, :updates => [{:n => 1}, {:n => 2}], :ordered => true, :writeConcern => {:w => 1}},
+          {:delete => COLLECTION_NAME, :deletes => [{:n => 3}], :ordered => true, :writeConcern => {:w => 1}},
+          {:insert => COLLECTION_NAME, :documents => [{:n => 5}, {:n => 6}, {:n => 7}], :ordered => true, :writeConcern => {:w => 1}},
+          {:update => COLLECTION_NAME, :updates => [{:n => 8}], :ordered => true, :writeConcern => {:w => 1}},
+          {:delete => COLLECTION_NAME, :deletes => [{:n => 9}, {:n => 10}], :ordered => true, :writeConcern => {:w => 1}}
       ]
       assert_equal expected, result
     end
@@ -268,7 +268,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       @bulk.insert({ :x => 4 })
 
       # Execute the bulk operation, with an optional writeConcern overwriting the default w:1
-      write_concern = {:w => 1, :j => 1}
+      write_concern = {:w => 1} #{:w => 1. :j => 1} #nojournal for tests
       #@bulk.execute(write_concern)
     end
 
@@ -289,7 +289,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       with_write_commands_and_operations(@db.connection) do |wire_version|
         @collection.remove
         big_example(@bulk)
-        write_concern = {:w => 1, :j => 1}
+        write_concern = {:w => 1} #{:w => 1. :j => 1} #nojournal for tests
         result = @bulk.execute(write_concern)
         assert_equal_json(
             {
@@ -312,7 +312,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         @collection.remove
         @bulk = @collection.initialize_unordered_bulk_op
         big_example(@bulk)
-        write_concern = {:w => 1, :j => 1}
+        write_concern = {:w => 1} #{:w => 1. :j => 1} #nojournal for tests
         result = @bulk.execute(write_concern)
         # unordered varies, don't use assert_equal_json
         assert_false @collection.find.to_a.empty?
