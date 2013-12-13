@@ -133,7 +133,7 @@ class Test::Unit::TestCase
 
   def step_down_command
     step_down_command = BSON::OrderedHash.new
-    step_down_command[:replSetStepDown] = 3
+    step_down_command[:replSetStepDown] = 30
     step_down_command
   end
 
