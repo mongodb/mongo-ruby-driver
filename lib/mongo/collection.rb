@@ -1092,12 +1092,12 @@ module Mongo
       indexes.join("_")
     end
 
-    def batch_write(op, documents, check_keys=true, opts={})
+    def batch_write(op_type, documents, check_keys=true, opts={})
       write_concern = get_write_concern(opts, self)
       if use_write_command?(write_concern)
-        return @command_writer.batch_write(op, documents, check_keys, opts)
+        return @command_writer.batch_write(op_type, documents, check_keys, opts)
       else
-        return @operation_writer.batch_write(op, documents, check_keys, opts)
+        return @operation_writer.batch_write(op_type, documents, check_keys, opts)
       end
     end
 

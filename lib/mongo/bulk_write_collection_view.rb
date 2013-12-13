@@ -253,7 +253,7 @@ module Mongo
       exchanges.each do |exchange|
         response = exchange[:response]
         # fix legacy insert that reports 'n' 0 even with 'err' nil
-        response['n'] = exchange[:batch].size if exchange[:op] == :insert && response.has_key?('err') && response['err'].nil?
+        response['n'] = exchange[:batch].size if exchange[:op_type] == :insert && response.has_key?('err') && response['err'].nil?
         response['ok'] = 0 if response.has_key?('err') && !response['err'].nil? # fix legacy ok for non-nil err
         ['ok', 'n'].each { |key| merge_tally(result, response, key) }
         top_level = true

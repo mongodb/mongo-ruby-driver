@@ -40,7 +40,7 @@ module Mongo
     end
 
     # common implementation only for new batch write commands (insert, update, delete) and old batch insert
-    def batch_write_incremental(op, documents, check_keys=true, opts={})
+    def batch_write_incremental(op_type, documents, check_keys=true, opts={})
       raise Mongo::OperationFailure, "Request contains no documents" if documents.empty?
       write_concern = get_write_concern(opts, @collection)
       max_message_size, max_append_size, max_serialize_size = batch_write_max_sizes(write_concern)
@@ -56,16 +56,16 @@ module Mongo
       catch(:error) do
         until docs.empty? || (!errors.empty? && !collect_on_error) # process documents a batch at a time
           batch_docs = []
-          batch_message_initialize(message, op, continue_on_error, write_concern)
+          batch_message_initialize(message, op_type, continue_on_error, write_concern)
           while !docs.empty? && batch_docs.size < @max_write_batch_size
             begin
               doc = docs.first
-              doc = doc[:d] if op == :insert && !ordered.nil? #check_keys for :update outside of serialize
+              doc = doc[:d] if op_type == :insert && !ordered.nil? #check_keys for :update outside of serialize
               serialized_doc ||= BSON::BSON_CODER.serialize(doc, check_keys, true, max_serialize_size)
             rescue BSON::InvalidDocument, BSON::InvalidKeyName, BSON::InvalidStringEncoding => ex
               bulk_message = "Bulk write error - #{ex.message} - examine result for complete information"
               ex = BulkWriteError.new(bulk_message, Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_OCCURRED,
-                                      {:op => op, :serialize => doc, :ord => docs.first[:ord], :error => ex}) unless ordered.nil?
+                                      {:op_type => op_type, :serialize => doc, :ord => docs.first[:ord], :error => ex}) unless ordered.nil?
               error_docs << docs.shift
               errors << ex
               next if collect_on_error
@@ -78,11 +78,11 @@ module Mongo
             serialized_doc = nil
           end
           begin
-            response = batch_message_send(message, op, batch_docs, write_concern, continue_on_error) if batch_docs.size > 0
-            exchanges << {:op => op, :batch => batch_docs, :opts => opts, :response => response}
+            response = batch_message_send(message, op_type, batch_docs, write_concern, continue_on_error) if batch_docs.size > 0
+            exchanges << {:op_type => op_type, :batch => batch_docs, :opts => opts, :response => response}
           rescue Mongo::OperationFailure => ex
             errors << ex
-            exchanges << {:op => op, :batch => batch_docs, :opts => opts, :response => ex.result}
+            exchanges << {:op_type => op_type, :batch => batch_docs, :opts => opts, :response => ex.result}
             throw(:error) unless continue_on_error
           end
         end
@@ -90,7 +90,7 @@ module Mongo
       [error_docs, errors, exchanges]
     end
 
-    def batch_write_partition(op, documents, check_keys, opts)
+    def batch_write_partition(op_type, documents, check_keys, opts)
       raise Mongo::OperationFailure, "Request contains no documents" if documents.empty?
       write_concern = get_write_concern(opts, @collection)
       ordered = opts[:ordered]
@@ -105,13 +105,13 @@ module Mongo
         #puts "@write_batch_size:#{@write_batch_size}"
         batch = docs.take(@write_batch_size)
         begin
-          batch_to_send = batch #(op == :insert && !ordered.nil?) ? batch.collect{|doc|doc[:d]} : batch
+          batch_to_send = batch #(op_type == :insert && !ordered.nil?) ? batch.collect{|doc|doc[:d]} : batch
           if @collection.use_write_command?(write_concern) # TODO - polymorphic send_write including legacy insert
-            response = send_bulk_write_command(op, batch_to_send, check_keys, opts)
+            response = send_bulk_write_command(op_type, batch_to_send, check_keys, opts)
           else
-            response = send_write_operation(op, nil, batch_to_send, check_keys, opts, write_concern)
+            response = send_write_operation(op_type, nil, batch_to_send, check_keys, opts, write_concern)
           end
-          exchanges << {:op => op, :batch => batch, :opts => opts, :response => response}
+          exchanges << {:op_type => op_type, :batch => batch, :opts => opts, :response => response}
           docs = docs.drop(batch.size)
           @write_batch_size = [(@write_batch_size*1097) >> 10, @write_batch_size+1].max unless docs.empty? # 2**(1/10) multiplicative increase
           @write_batch_size = @max_write_batch_size if @write_batch_size > @max_write_batch_size
@@ -123,14 +123,14 @@ module Mongo
           # error on a single document
           bulk_message = "Bulk write error - #{ex.message} - examine result for complete information"
           ex = BulkWriteError.new(bulk_message, Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_OCCURRED,
-                                  {:op => op, :batch => batch, :ord => batch.first[:ord], :opts => opts, :error => ex}) unless ordered.nil?
+                                  {:op_type => op_type, :batch => batch, :ord => batch.first[:ord], :opts => opts, :error => ex}) unless ordered.nil?
           error_docs << docs.shift
           next if collect_on_error
           errors << ex
           break unless continue_on_error
         rescue Mongo::OperationFailure => ex
           errors << ex
-          exchanges << {:op => op, :batch => batch, :opts => opts, :response => ex.result}
+          exchanges << {:op_type => op_type, :batch => batch, :opts => opts, :response => ex.result}
           docs = docs.drop(batch.size)
           break if !continue_on_error && !collect_on_error
         end
@@ -143,8 +143,8 @@ module Mongo
 
     alias :batch_write :batch_write_incremental
 
-    def send_bulk_write_command(op, documents, check_keys, opts, collection_name=@name)
-      if op == :insert
+    def send_bulk_write_command(op_type, documents, check_keys, opts, collection_name=@name)
+      if op_type == :insert
         documents = documents.collect{|doc| doc[:d]} if opts.has_key?(:ordered)
         documents.each do |doc|
           # TODO - @pk_factory.create_pk(doc)
@@ -156,10 +156,13 @@ module Mongo
             end
           end
         end
-      #elsif op == :update # TODO - check keys
+      #elsif op_type == :update # TODO - check keys
+      #elsif op_type == :delete
+      #else
+      #  raise ArgumentError, "Write operation type must be :insert, :update or :delete"
       end
-      request = BSON::OrderedHash[op, collection_name].merge!(
-          Mongo::CollectionWriter::WRITE_COMMAND_ARG_KEY[op] => documents,
+      request = BSON::OrderedHash[op_type, collection_name].merge!(
+          Mongo::CollectionWriter::WRITE_COMMAND_ARG_KEY[op_type] => documents,
           :writeConcern => get_write_concern(opts, @collection),
           :ordered => opts[:ordered] || !opts[:continue_on_error]
       )
@@ -226,24 +229,24 @@ module Mongo
       write_concern = get_write_concern(opts, @collection)
       errors = []
       exchanges = []
-      ops.each do |op, doc|
-        doc = {:d => @collection.pk_factory.create_pk(doc[:d]), :ord => doc[:ord]} if op == :insert
+      ops.each do |op_type, doc|
+        doc = {:d => @collection.pk_factory.create_pk(doc[:d]), :ord => doc[:ord]} if op_type == :insert
         doc_opts = doc.merge(opts)
         d = doc_opts.delete(:d)
         q = doc_opts.delete(:q)
         u = doc_opts.delete(:u)
         begin  # use single and NOT batch inserts since there no index for an error
-          response = @collection.operation_writer.send_write_operation(op, q, d || u, check_keys = false, doc_opts, write_concern)
-          exchanges << {:op => op, :batch => [doc], :opts => opts, :response => response}
+          response = @collection.operation_writer.send_write_operation(op_type, q, d || u, check_keys = false, doc_opts, write_concern)
+          exchanges << {:op_type => op_type, :batch => [doc], :opts => opts, :response => response}
         rescue BSON::InvalidDocument, BSON::InvalidKeyName, BSON::InvalidStringEncoding => ex
           bulk_message = "Bulk write error - #{ex.message} - examine result for complete information"
           ex = BulkWriteError.new(bulk_message, Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_OCCURRED,
-                                  {:op => op, :serialize => doc, :ord => doc[:ord], :error => ex})
+                                  {:op_type => op_type, :serialize => doc, :ord => doc[:ord], :error => ex})
           errors << ex
           break if options[:ordered]
         rescue Mongo::OperationFailure => ex
           errors << ex
-          exchanges << {:op => op, :batch => [doc], :opts => opts, :response => ex.result}
+          exchanges << {:op_type => op_type, :batch => [doc], :opts => opts, :response => ex.result}
           break if options[:ordered]
         end
       end
@@ -252,7 +255,7 @@ module Mongo
 
     private
 
-    def batch_message_initialize(message, op, continue_on_error, write_concern)
+    def batch_message_initialize(message, op_type, continue_on_error, write_concern)
       message.clear!.clear
       message.put_int(continue_on_error ? 1 : 0)
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@name}")
@@ -262,7 +265,7 @@ module Mongo
       message.put_binary(serialized_doc.to_s)
     end
 
-    def batch_message_send(message, op, batch_docs, write_concern, continue_on_error)
+    def batch_message_send(message, op_type, batch_docs, write_concern, continue_on_error)
       instrument(:insert, :database => @db.name, :collection => @name, :documents => batch_docs) do
         if Mongo::WriteConcern.gle?(write_concern)
           @connection.send_message_with_gle(Mongo::Constants::OP_INSERT, message, @db.name, nil, write_concern)
@@ -306,10 +309,10 @@ module Mongo
       errors = []
       exchanges = []
       ops = (options[:ordered] == false) ? sort_by_first_sym(ops) : ops # sort by write-type
-      ordered_group_by_first(ops).each do |op, documents|
-        documents.collect! {|doc| {:d => @collection.pk_factory.create_pk(doc[:d]), :ord => doc[:ord]} } if op == :insert
+      ordered_group_by_first(ops).each do |op_type, documents|
+        documents.collect! {|doc| {:d => @collection.pk_factory.create_pk(doc[:d]), :ord => doc[:ord]} } if op_type == :insert
         error_docs, batch_errors, batch_exchanges =
-            batch_write(op, documents, check_keys = false, opts.merge(:ordered => options[:ordered]))
+            batch_write(op_type, documents, check_keys = false, opts.merge(:ordered => options[:ordered]))
         errors += batch_errors
         exchanges += batch_exchanges
         break if options[:ordered] && !batch_errors.empty?
@@ -319,20 +322,20 @@ module Mongo
 
     private
 
-    def batch_message_initialize(message, op, continue_on_error, write_concern)
+    def batch_message_initialize(message, op_type, continue_on_error, write_concern)
       message.clear!.clear
       @bson_empty ||= BSON::BSON_CODER.serialize({})
       message.put_binary(@bson_empty.to_s)
-      message.unfinish!.array!(WRITE_COMMAND_ARG_KEY[op])
+      message.unfinish!.array!(WRITE_COMMAND_ARG_KEY[op_type])
     end
 
     def batch_message_append(message, serialized_doc, write_concern)
       message.push_doc!(serialized_doc)
     end
 
-    def batch_message_send(message, op, batch_docs, write_concern, continue_on_error)
+    def batch_message_send(message, op_type, batch_docs, write_concern, continue_on_error)
       message.finish!
-      request = BSON::OrderedHash[op, @name, :bson, message]
+      request = BSON::OrderedHash[op_type, @name, :bson, message]
       request.merge!(:writeConcern => write_concern, :ordered => !continue_on_error)
       instrument(:insert, :database => @db.name, :collection => @name, :documents => batch_docs) do
         @db.command(request)

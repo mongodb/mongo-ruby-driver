@@ -24,10 +24,10 @@ module Mongo
 
     # for reference and future server direction
     def generate_batch_commands(groups, write_concern)
-      groups.collect do |op, documents|
+      groups.collect do |op_type, documents|
         {
-            op => @collection.name,
-            Mongo::CollectionWriter::WRITE_COMMAND_ARG_KEY[op] => documents,
+            op_type => @collection.name,
+            Mongo::CollectionWriter::WRITE_COMMAND_ARG_KEY[op_type] => documents,
             :ordered => @options[:ordered],
             :writeConcern => write_concern
         }
