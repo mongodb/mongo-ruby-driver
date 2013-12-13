@@ -383,10 +383,13 @@ class BSONTest < Test::Unit::TestCase
     doc = { 'regexp' => bson_regex }
     bson = @encoder.serialize(doc)
     assert_equal @encoder.serialize(doc).to_a, bson.to_a
-    regexp = @encoder.deserialize(bson, :compile_regex => false)['regexp']
-    assert_equal Regexp::MULTILINE,  Regexp::MULTILINE  & regexp.options
-    assert_equal Regexp::EXTENDED,   Regexp::EXTENDED   & regexp.options
-    assert_equal Regexp::IGNORECASE, Regexp::IGNORECASE & regexp.options
+    bson_regex = @encoder.deserialize(bson, :compile_regex => false)['regexp']
+    assert_equal BSON::Regex::IGNORECASE,       BSON::Regex::IGNORECASE       & bson_regex.options
+    assert_equal BSON::Regex::LOCALE_DEPENDENT, BSON::Regex::LOCALE_DEPENDENT & bson_regex.options
+    assert_equal BSON::Regex::MULTILINE,        BSON::Regex::MULTILINE        & bson_regex.options
+    assert_equal BSON::Regex::DOTALL,           BSON::Regex::DOTALL           & bson_regex.options
+    assert_equal BSON::Regex::UNICODE,          BSON::Regex::UNICODE          & bson_regex.options
+    assert_equal BSON::Regex::EXTENDED,         BSON::Regex::EXTENDED         & bson_regex.options
   end
 
   def test_bson_regex_to_ruby_regexp
