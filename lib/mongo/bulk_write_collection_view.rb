@@ -19,7 +19,8 @@ module Mongo
     include Mongo::WriteConcern
 
     DEFAULT_OP_ARGS = {:q => {}}
-    MULTIPLE_ERRORS_OCCURRED = 65 # MongoDB Core Server mongo/base/error_codes.err MultipleErrorsOccurred
+    MULTIPLE_ERRORS_CODE = 65 # MongoDB Core Server mongo/base/error_codes.err MultipleErrorsOccurred
+    MULTIPLE_ERRORS_MSG = "batch item errors occurred"
 
     attr_reader :collection, :options, :ops, :op_args
 
@@ -41,13 +42,34 @@ module Mongo
     # The unordered bulk operation will be executed and may take advantage of parallelism.
     # There are no guarantees for the order of execution of the operations on the server.
     # Execution will continue even if there are errors for an unordered bulk operation.
-    # While the API supports mixing of write operation types in a bulk operation,
-    # currently only contiguous commands of the same type are submitted as a batch and
-    # benefit from performance gains.
     #
+    # A bulk operation is programmed as a sequence of individual operations.
+    # An individual operation is composed of a method chain of modifiers or setters terminated by a write method.
     # A modify method sets a value on the current object.
     # A set methods returns a duplicate of the current object with a value set.
     # A terminator write method appends a write operation to the bulk batch collected in the view.
+    #
+    # The API supports mixing of write operation types in a bulk operation.
+    # However, server support affects the implementation and performance of bulk operations.
+    #
+    # MongoDB version 2.6 servers currently support only bulk commands of the same type.
+    # With an ordered bulk operation,
+    # contiguous individual ops of the same type can be batched into the same db request,
+    # and the next op of a different type must be sent separately in the next request.
+    # Performance will improve if you can arrange your ops to reduce the number of db requests.
+    # With an unordered bulk operation,
+    # individual ops can be grouped by type and sent in at most three requests,
+    # one each per insert, update, or delete.
+    #
+    # MongoDB pre-version 2.6 servers do not support bulk write commands.
+    # The bulk operation must be sent one request per individual op.
+    # This also applies to inserts in order to have accurate counts and error reporting.
+    #
+    #   Important note on pre-2.6 performance:
+    #     Performance is very poor compared to version 2.6.
+    #     We recommend bulk operation with pre-2.6 only for compatibility or
+    #     for development in preparation for version 2.6.
+    #     For better performance with pre-version 2.6, use bulk insertion with Collection#insert.
     #
     # @param [Collection] collection the parent collection object
     #
@@ -164,7 +186,8 @@ module Mongo
     #
     # @return [BulkWriteCollectionView]
     def insert(document)
-      op_push([:insert, document])
+      # TODO - check keys
+      op_push([:insert, {:d => document}])
     end
 
     # Execute the bulk operation, with an optional write concern overwriting the default w:1.
@@ -179,48 +202,74 @@ module Mongo
     # @return [BulkWriteCollectionView]
     def execute(opts = {})
       write_concern = get_write_concern(opts, @collection)
-      use_write_command = @collection.use_write_command?(write_concern)
-      errors = []
-      exchanges = []
-      @ops = sort_by_first_sym(@ops) if @options[:ordered] == false # sort by write-type
-      catch(:ordered) do
-        ordered_group_by_first(@ops).each do |op, documents|
-          check_keys = false
-          if op == :insert
-            documents.collect! { |doc| @collection.pk_factory.create_pk(doc) }
-            check_keys = true
-          elsif !use_write_command # emulate batch update and delete with old write operations
-            documents.each do |doc|
-              doc_opts = doc.merge(opts)
-              q = doc_opts.delete(:q)
-              u = doc_opts.delete(:u)
-              begin
-                response = @collection.operation_writer.send_write_operation(op, q, u, false, doc_opts, write_concern)
-                exchanges << {:op => op, :params => doc, :opts => opts, :response => response}
-              rescue Mongo::OperationFailure => ex
-                errors << ex
-                exchanges << {:op => op, :params => doc, :opts => opts, :response => ex.result}
-                throw(:ordered) if @options[:ordered]
-              end
-            end
-            next
-          end
-          error_docs, batch_errors, batch_exchanges =
-            @collection.batch_write_incremental(op, documents, check_keys, opts.merge(:ordered => @options[:ordered]))
-          errors += batch_errors
-          exchanges += batch_exchanges
-          throw(:ordered) if @options[:ordered] && !batch_errors.empty?
-        end
+      @ops.each_with_index{|op, index| op.last.merge!(:ord => index)} # infuse ordinal here to avoid issues with upsert
+      if @collection.use_write_command?(write_concern)
+        errors, exchanges = @collection.command_writer.bulk_execute(@ops, @options, opts)
+      else
+        errors, exchanges = @collection.operation_writer.bulk_execute(@ops, @options, opts)
       end
       @ops = []
-      unless errors.empty?
-        bulk_message = "Bulk write error - #{errors.last.message} - examine result for complete information"
-        raise BulkWriteError.new(bulk_message, MULTIPLE_ERRORS_OCCURRED, {:errors => errors, :exchanges => exchanges})
-      end
-      exchanges
+      result = merge_result(errors, exchanges)
+      raise BulkWriteError.new(MULTIPLE_ERRORS_MSG, MULTIPLE_ERRORS_CODE, result) unless errors.empty?
+      result
     end
 
     private
+
+    def hash_except(hash, *keys)
+      keys.each { |key| hash.delete(key) }
+      hash
+    end
+
+    def top_err_details(exchange, response)
+      merge = {}
+      merge['index'] = exchange[:batch][response.fetch('index', 0)][:ord]
+      merge['errmsg'] = response['err'] if response['err'] # coerce err to errmsg
+      hash_except(response.merge(merge), 'ok', 'n', 'err', 'connectionId')
+    end
+
+    def merge_tally(result, response, key)
+      result[key] = result.fetch(key, 0) + response.fetch(key, 0).to_i
+    end
+
+    def merge_index(result, exchange, response, key)
+      details = response.fetch(key, [])
+      details = [{'_id' => details}] if details.class == BSON::ObjectId # single upsert
+      values = details.collect do |detail|
+        detail['index'] = exchange[:batch][detail.fetch('index', 0)][:ord]
+        detail
+      end
+      result[key] = result.fetch(key, []) + values
+    end
+
+    def merge_result(errors, exchanges)
+      result = {'ok' => 0, 'n' => 0}
+      result.merge!({'code' => MULTIPLE_ERRORS_CODE, 'errmsg' => MULTIPLE_ERRORS_MSG}) unless errors.empty?
+      errors.each do |error|
+        next if error.class == Mongo::OperationFailure
+        errDetails = {'index' => error.result[:ord], 'errmsg' => error.result[:error].message}
+        result['errDetails'] = result.fetch('errDetails', []) << errDetails
+      end
+      exchanges.each do |exchange|
+        response = exchange[:response]
+        # fix legacy insert that reports 'n' 0 even with 'err' nil
+        response['n'] = exchange[:batch].size if exchange[:op_type] == :insert && response.has_key?('err') && response['err'].nil?
+        response['ok'] = 0 if response.has_key?('err') && !response['err'].nil? # fix legacy ok for non-nil err
+        ['ok', 'n'].each { |key| merge_tally(result, response, key) }
+        top_level = true
+        ['errDetails', 'upserted', 'errInfo'].each do |key|
+          if response.has_key?(key)
+            top_level = false
+            merge_index(result, exchange, response, key)
+          end
+        end
+        next if top_level == false
+        next if response.has_key?('err') && response['err'].nil?
+        next unless (response.has_key?('err') || response.has_key?('errmsg'))
+        result['errDetails'] = result.fetch('errDetails',[]) << top_err_details(exchange, response)
+      end
+      result
+    end
 
     def initialize_copy(other)
       other.instance_variable_set(:@options, other.options.dup)
@@ -242,22 +291,6 @@ module Mongo
 
     def replace_doc?(doc)
       doc.keys.all?{|key| key !~ /^\$/}
-    end
-
-    def sort_by_first_sym(pairs)
-      pairs = pairs.collect{|first, rest| [first.to_s, rest]} #stringify_first
-      pairs = pairs.sort{|x,y| x.first <=> y.first }
-      pairs.collect{|first, rest| [first.to_sym, rest]} #symbolize_first
-    end
-
-    def ordered_group_by_first(pairs)
-      pairs.inject([[], nil]) do |memo, pair|
-        result, previous_value = memo
-        current_value = pair.first
-        result << [current_value, []] if previous_value != current_value
-        result.last.last << pair.last
-        [result, current_value]
-      end.first
     end
 
   end
