@@ -56,6 +56,14 @@ public class RubyBSONEncoder extends BasicBSONEncoder {
     private RubySymbol _idAsSym;
     private RubyString _idAsString;
     private RubyString _tfAsString;
+    private RubyModule _rbclsBSONRegex;
+
+    private int _BSONRegexIgnorecase;
+    private int _BSONRegexLocaleDependent;
+    private int _BSONRegexMultiline;
+    private int _BSONRegexDotall;
+    private int _BSONRegexUnicode;
+    private int _BSONRegexExtended;
 
     private boolean _check_keys;
     private boolean _move_id;
@@ -79,6 +87,35 @@ public class RubyBSONEncoder extends BasicBSONEncoder {
         _rbclsRangeError      = runtime.getClassFromPath( "RangeError" );
         _idAsSym              = runtime.newSymbol( "_id" );
         _tfAsString           = runtime.newString( "_transientFields" );
+        _rbclsBSONRegex       = runtime.getClassFromPath( "BSON::Regex" );
+
+        _BSONRegexIgnorecase      = ((Long)JavaEmbedUtils.invokeMethod( _runtime, _rbclsBSONRegex,
+                                    "const_get", new Object[] {
+                                    (IRubyObject)RubySymbol.newSymbol(_runtime, "IGNORECASE")},
+                                    Object.class)).intValue();
+
+        _BSONRegexLocaleDependent = ((Long)JavaEmbedUtils.invokeMethod( _runtime, _rbclsBSONRegex,
+                                    "const_get", new Object[] {
+                                    (IRubyObject)RubySymbol.newSymbol(_runtime, "LOCALE_DEPENDENT")},
+                                    Object.class)).intValue();
+        _BSONRegexMultiline       = ((Long)JavaEmbedUtils.invokeMethod( _runtime, _rbclsBSONRegex,
+                                    "const_get", new Object[] {
+                                    (IRubyObject)RubySymbol.newSymbol(_runtime, "MULTILINE")},
+                                    Object.class)).intValue();
+
+        _BSONRegexDotall          = ((Long)JavaEmbedUtils.invokeMethod( _runtime, _rbclsBSONRegex,
+                                    "const_get", new Object[] {
+                                    (IRubyObject)RubySymbol.newSymbol(_runtime, "DOTALL")},
+                                    Object.class)).intValue();
+
+        _BSONRegexUnicode         = ((Long)JavaEmbedUtils.invokeMethod( _runtime, _rbclsBSONRegex,
+                                    "const_get", new Object[] {
+                                    (IRubyObject)RubySymbol.newSymbol(_runtime, "UNICODE")},
+                                    Object.class)).intValue();
+        _BSONRegexExtended        = ((Long)JavaEmbedUtils.invokeMethod( _runtime, _rbclsBSONRegex,
+                                    "const_get", new Object[] {
+                                    (IRubyObject)RubySymbol.newSymbol(_runtime, "EXTENDED")},
+                                    Object.class)).intValue();
 
         if(_idAsString == null) {
             _idAsString = _runtime.newString( "_id" );
@@ -647,22 +684,22 @@ public class RubyBSONEncoder extends BasicBSONEncoder {
                                     new Object[] {}, Object.class)).intValue();
         String options   = "";
 
-        if( (regexOptions & 0x01) != 0 )
+        if( (regexOptions & _BSONRegexIgnorecase ) != 0 )
             options = options.concat( "i" );
 
-        if( (regexOptions & 0x02) != 0 )
+        if( (regexOptions & _BSONRegexLocaleDependent) != 0 )
             options = options.concat( "l" );
 
-        if( (regexOptions & 0x04) != 0 )
+        if( (regexOptions & _BSONRegexMultiline) != 0 )
             options = options.concat( "m" );
 
-        if( (regexOptions & 0x08) != 0 )
+        if( (regexOptions & _BSONRegexDotall) != 0 )
             options = options.concat( "s" );
 
-        if( (regexOptions & 0x10) != 0 )
+        if( (regexOptions & _BSONRegexUnicode) != 0 )
             options = options.concat( "u" );
 
-        if( (regexOptions & 0x20) != 0 )
+        if( (regexOptions & _BSONRegexExtended) != 0 )
             options = options.concat( "x" );
 
         _put( options );
