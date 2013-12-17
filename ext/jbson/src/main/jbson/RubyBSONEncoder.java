@@ -350,8 +350,8 @@ public class RubyBSONEncoder extends BasicBSONEncoder {
                 if( klass.equals( "BSON::ObjectId" ) ) {
                     putRubyObjectId(name, (RubyObject)val );
                 }
-                else if( klass.equals( "BSON::ObjectID" ) ) {
-                    putRubyObjectId(name, (RubyObject)val );
+                else if( klass.equals( "BSON::Regex" ) ) {
+                    putRubyBSONRegex(name, (RubyObject)val );
                 }
                 else if( klass.equals( "Java::JavaUtil::ArrayList" ) ) {
                     putIterable(name, (Iterable)val );
@@ -629,6 +629,40 @@ public class RubyBSONEncoder extends BasicBSONEncoder {
         }
 
         if( (regexOptions & ReOptions.RE_OPTION_EXTENDED) != 0 )
+            options = options.concat( "x" );
+
+        _put( options );
+    }
+
+    private void putRubyBSONRegex( String name, RubyObject r ) {
+        String source = (String)JavaEmbedUtils.invokeMethod(_runtime, r,
+                                "source", new Object[] {}, Object.class);
+        testNull(source);
+
+        _put( REGEX , name );
+        _put( source);
+
+
+        int regexOptions = ((Long)JavaEmbedUtils.invokeMethod( _runtime, r, "options",
+                                    new Object[] {}, Object.class)).intValue();
+        String options   = "";
+
+        if( (regexOptions & 0x01) != 0 )
+            options = options.concat( "i" );
+
+        if( (regexOptions & 0x02) != 0 )
+            options = options.concat( "l" );
+
+        if( (regexOptions & 0x04) != 0 )
+            options = options.concat( "m" );
+
+        if( (regexOptions & 0x08) != 0 )
+            options = options.concat( "s" );
+
+        if( (regexOptions & 0x10) != 0 )
+            options = options.concat( "u" );
+
+        if( (regexOptions & 0x20) != 0 )
             options = options.concat( "x" );
 
         _put( options );

@@ -228,24 +228,22 @@ public class RubyBSONCallback implements BSONCallback {
     }
 
     public void gotRegex( String name , String pattern , String flags ){
-      int f = 0;
-      RegexpOptions opts = new RegexpOptions();
-      ByteList b = new ByteList(pattern.getBytes());
+      RubyObject[] args = new RubyObject[2];
+      args[0] = RubyString.newString(_runtime, pattern);
+      args[1] = RubyString.newString(_runtime, flags);
+      Object result = JavaEmbedUtils.invokeMethod(_runtime, _rbclsBSONRegex, "new", args, Object.class);
 
-      if(flags.contains("i")) {
-        opts.setIgnorecase(true);
-      }
-      if(flags.contains("m")) {
-        opts.setMultiline(true);
-      }
-      if(flags.contains("s")) {
-        opts.setMultiline(true);
-      }
-      if(flags.contains("x")) {
-        opts.setExtended(true);
+      RubySymbol rkey = RubySymbol.newSymbol(_runtime, "compile_regex");
+      boolean compile = true;
+      if (_opts.containsKey(rkey) && !(Boolean)_opts.get(rkey) ) {
+        compile = false;
       }
 
-      _put( name , RubyRegexp.newRegexp(_runtime, b, opts) );
+      if( compile == true ) {
+        result = JavaEmbedUtils.invokeMethod(_runtime, result, "try_compile", new Object[] {}, Object.class);
+      }
+
+      _put( name, (RubyObject)result );
     }
 
     public void gotString( String name , String v ){
