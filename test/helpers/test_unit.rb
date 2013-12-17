@@ -192,6 +192,29 @@ class Test::Unit::TestCase
     end
   end
 
+  def with_max_wire_version(client, wire_version)
+    if client.wire_version_feature?(wire_version)
+      old_max_wire_version = client.instance_variable_get(:@max_wire_version)
+      client.instance_variable_set(:@max_wire_version, wire_version)
+      yield wire_version
+      client.instance_variable_set(:@max_wire_version, old_max_wire_version)
+    end
+  end
+
+  def with_write_commands(client, &block)
+    with_max_wire_version(client, Mongo::MongoClient::BATCH_COMMANDS, &block)
+  end
+
+  def with_write_operations(client, &block)
+    with_max_wire_version(client, Mongo::MongoClient::RELEASE_2_4_AND_BEFORE, &block)
+  end
+
+  def with_write_commands_and_operations(client, &block)
+    [Mongo::MongoClient::BATCH_COMMANDS, Mongo::MongoClient::RELEASE_2_4_AND_BEFORE].each do |wire_version|
+      with_max_wire_version(client, wire_version, &block)
+    end
+  end
+
 end
 
 # Before and after hooks for the entire test run

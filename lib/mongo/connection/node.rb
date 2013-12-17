@@ -182,7 +182,7 @@ module Mongo
     end
 
     def max_wire_version
-       @max_wire_version || 0
+      @max_wire_version || 0
     end
 
     def min_wire_version

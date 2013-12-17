@@ -389,7 +389,7 @@ module Mongo
     def insert(doc_or_docs, opts={})
       if doc_or_docs.respond_to?(:collect!)
         doc_or_docs.collect! { |doc| @pk_factory.create_pk(doc) }
-        error_docs, errors, rest_ignored = batch_write_incremental(:insert, doc_or_docs, true, opts)
+        error_docs, errors, rest_ignored = batch_write(:insert, doc_or_docs, true, opts)
         raise errors.last if !opts[:collect_on_error] && !errors.empty?
         inserted_docs = doc_or_docs - error_docs
         inserted_ids = inserted_docs.collect {|o| o[:_id] || o['_id']}
@@ -1092,12 +1092,12 @@ module Mongo
       indexes.join("_")
     end
 
-    def batch_write_incremental(op, documents, check_keys=true, opts={})
+    def batch_write(op_type, documents, check_keys=true, opts={})
       write_concern = get_write_concern(opts, self)
       if use_write_command?(write_concern)
-        return @command_writer.batch_write_incremental(op, documents, check_keys, opts)
+        return @command_writer.batch_write(op_type, documents, check_keys, opts)
       else
-        return @operation_writer.batch_write_incremental(op, documents, check_keys, opts)
+        return @operation_writer.batch_write(op_type, documents, check_keys, opts)
       end
     end
 

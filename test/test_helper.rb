@@ -47,7 +47,7 @@ require 'tools/mongo_config'
 require 'helpers/general'
 require 'helpers/test_unit'
 
-# optional developemt and debug utilities
+# optional development and debug utilities
 begin
   require 'pry-rescue'
   require 'pry-nav'

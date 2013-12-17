@@ -28,6 +28,11 @@ module Mongo
     MAX_WIRE_VERSION       = BATCH_COMMANDS # supported by this client implementation
     MIN_WIRE_VERSION       = RELEASE_2_4_AND_BEFORE # supported by this client implementation
 
+    # Server command headroom
+    COMMAND_HEADROOM   = 16_384
+    APPEND_HEADROOM    = COMMAND_HEADROOM / 2
+    SERIALIZE_HEADROOM = APPEND_HEADROOM / 2
+
     Mutex              = ::Mutex
     ConditionVariable  = ::ConditionVariable
 
