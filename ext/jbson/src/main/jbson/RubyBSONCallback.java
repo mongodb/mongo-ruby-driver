@@ -42,11 +42,13 @@ public class RubyBSONCallback implements BSONCallback {
     private RubyModule _rbclsMaxKey;
     private RubyModule _rbclsTimestamp;
     private RubyModule _rbclsCode;
+    private RubyModule _rbclsBSONRegex;
+    private RubyHash _opts;
     private final LinkedList<RubyObject> _stack = new LinkedList<RubyObject>();
     private final LinkedList<String> _nameStack = new LinkedList<String>();
     private Ruby _runtime;
 
-    public RubyBSONCallback(Ruby runtime) {
+    public RubyBSONCallback(Ruby runtime, RubyHash opts) {
       _runtime          = runtime;
       _rbclsOrderedHash = runtime.getClassFromPath( "BSON::OrderedHash" );
       _rbclsBinary      = runtime.getClassFromPath( "BSON::Binary" );
@@ -55,10 +57,12 @@ public class RubyBSONCallback implements BSONCallback {
       _rbclsMaxKey      = runtime.getClassFromPath( "BSON::MaxKey" );
       _rbclsTimestamp   = runtime.getClassFromPath( "BSON::Timestamp" );
       _rbclsObjectId    = runtime.getClassFromPath( "BSON::ObjectId" );
+      _rbclsBSONRegex   = runtime.getClassFromPath( "BSON::Regex" );
+      _opts             = opts;
     }
 
     public BSONCallback createBSONCallback(){
-        return new RubyBSONCallback(_runtime);
+        return new RubyBSONCallback(_runtime, _opts);
     }
 
     public void reset(){
