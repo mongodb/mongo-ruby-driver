@@ -627,7 +627,7 @@ module Mongo
       BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@collection.name}")
       message.put_int(@skip)
       @batch_size > 1 ? message.put_int(@batch_size) : message.put_int(@limit)
-      if query_contains_special_fields? && @bson # costs two serialize colls
+      if query_contains_special_fields? && @bson # costs two serialize calls
         query_message = BSON::BSON_CODER.serialize(@selector, false, false, @connection.max_bson_size + MongoClient::APPEND_HEADROOM)
         query_message.grow(@bson)
         query_spec = construct_query_spec

@@ -66,7 +66,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     ex = assert_raise BulkWriteError do
       yield
     end
-    assert_equal(Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_OCCURRED, ex.error_code, message)
+    assert_equal(Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_CODE, ex.error_code, message)
     assert_equal_json(result, ex.result, merge, message)
   end
 

@@ -19,8 +19,8 @@ module Mongo
     include Mongo::WriteConcern
 
     DEFAULT_OP_ARGS = {:q => {}}
-    MULTIPLE_ERRORS_OCCURRED = 65 # MongoDB Core Server mongo/base/error_codes.err MultipleErrorsOccurred
-    MULTIPLE_ERRORS_OCCURRED_ERRMSG = "batch item errors occurred"
+    MULTIPLE_ERRORS_CODE = 65 # MongoDB Core Server mongo/base/error_codes.err MultipleErrorsOccurred
+    MULTIPLE_ERRORS_MSG = "batch item errors occurred"
 
     attr_reader :collection, :options, :ops, :op_args
 
@@ -210,7 +210,7 @@ module Mongo
       end
       @ops = []
       result = merge_result(errors, exchanges)
-      raise BulkWriteError.new(MULTIPLE_ERRORS_OCCURRED_ERRMSG, MULTIPLE_ERRORS_OCCURRED, result) unless errors.empty?
+      raise BulkWriteError.new(MULTIPLE_ERRORS_MSG, MULTIPLE_ERRORS_CODE, result) unless errors.empty?
       result
     end
 
@@ -244,7 +244,7 @@ module Mongo
 
     def merge_result(errors, exchanges)
       result = {'ok' => 0, 'n' => 0}
-      result.merge!({'code' => MULTIPLE_ERRORS_OCCURRED, 'errmsg' => MULTIPLE_ERRORS_OCCURRED_ERRMSG}) unless errors.empty?
+      result.merge!({'code' => MULTIPLE_ERRORS_CODE, 'errmsg' => MULTIPLE_ERRORS_MSG}) unless errors.empty?
       errors.each do |error|
         next if error.class == Mongo::OperationFailure
         errDetails = {'index' => error.result[:ord], 'errmsg' => error.result[:error].message}
