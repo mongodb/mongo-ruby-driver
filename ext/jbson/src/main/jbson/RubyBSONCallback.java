@@ -42,6 +42,8 @@ public class RubyBSONCallback implements BSONCallback {
     private RubyModule _rbclsMaxKey;
     private RubyModule _rbclsTimestamp;
     private RubyModule _rbclsCode;
+    private RubyModule _rbclsBSONRegex;
+    private RubyHash _opts;
     private final LinkedList<RubyObject> _stack = new LinkedList<RubyObject>();
     private final LinkedList<String> _nameStack = new LinkedList<String>();
     private Ruby _runtime;
@@ -55,10 +57,15 @@ public class RubyBSONCallback implements BSONCallback {
       _rbclsMaxKey      = runtime.getClassFromPath( "BSON::MaxKey" );
       _rbclsTimestamp   = runtime.getClassFromPath( "BSON::Timestamp" );
       _rbclsObjectId    = runtime.getClassFromPath( "BSON::ObjectId" );
+      _rbclsBSONRegex   = runtime.getClassFromPath( "BSON::Regex" );
     }
 
     public BSONCallback createBSONCallback(){
         return new RubyBSONCallback(_runtime);
+    }
+
+    public void set_opts(RubyHash opts){
+        _opts = opts;
     }
 
     public void reset(){
@@ -224,24 +231,17 @@ public class RubyBSONCallback implements BSONCallback {
     }
 
     public void gotRegex( String name , String pattern , String flags ){
-      int f = 0;
-      RegexpOptions opts = new RegexpOptions();
-      ByteList b = new ByteList(pattern.getBytes());
+      RubyObject[] args = new RubyObject[2];
+      args[0] = RubyString.newString(_runtime, pattern);
+      args[1] = RubyString.newString(_runtime, flags);
+      Object result = JavaEmbedUtils.invokeMethod(_runtime, _rbclsBSONRegex, "new", args, Object.class);
 
-      if(flags.contains("i")) {
-        opts.setIgnorecase(true);
-      }
-      if(flags.contains("m")) {
-        opts.setMultiline(true);
-      }
-      if(flags.contains("s")) {
-        opts.setMultiline(true);
-      }
-      if(flags.contains("x")) {
-        opts.setExtended(true);
+      RubySymbol rkey = RubySymbol.newSymbol(_runtime, "compile_regex");
+      if (!_opts.containsKey(rkey) || (Boolean)_opts.get(rkey)) {
+        result = JavaEmbedUtils.invokeMethod(_runtime, result, "try_compile", new Object[] {}, Object.class);
       }
 
-      _put( name , RubyRegexp.newRegexp(_runtime, b, opts) );
+      _put( name, (RubyObject)result );
     }
 
     public void gotString( String name , String v ){

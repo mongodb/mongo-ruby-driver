@@ -367,8 +367,6 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_bson_regex
-    # TODO: remove the following line when java ext changes are complete
-    return if defined?(BSON::BSON_JAVA) && BSON::BSON_CODER == BSON::BSON_JAVA
     doc = { 'doc' => BSON::Regex.new('foobar') }
     bson = @encoder.serialize(doc)
     assert_equal @encoder.serialize(doc).to_a, bson.to_a
@@ -376,8 +374,6 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_bson_regex_with_nonruby_flags
-    # TODO: remove the following line when java ext changes are complete
-    return if defined?(BSON::BSON_JAVA) && BSON::BSON_CODER == BSON::BSON_JAVA
     # create a bson regex with more flags than can be represented in Ruby
     bson_regex = BSON::Regex.new('foobar', 'i', 'l', 'm', 's', 'u', 'x')
     doc = { 'regexp' => bson_regex }
@@ -393,8 +389,6 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_bson_regex_to_ruby_regexp
-    # TODO: remove the following line when java ext changes are complete
-    return if defined?(BSON::BSON_JAVA) && BSON::BSON_CODER == BSON::BSON_JAVA
     bson_regex = BSON::Regex.new('foobar', 'i', 'l', 'm', 's', 'u', 'x')
     doc = { 'doc' => bson_regex }
     bson = @encoder.serialize(doc)
@@ -402,8 +396,6 @@ class BSONTest < Test::Unit::TestCase
   end
 
   def test_ruby_regexp_to_bson_regex
-    # TODO: remove the following line when java ext changes are complete
-    return if defined?(BSON::BSON_JAVA) && BSON::BSON_CODER == BSON::BSON_JAVA
     regexp = Regexp.new(/foobar/imx)
     doc = { 'doc' => regexp }
     bson = @encoder.serialize(doc)
