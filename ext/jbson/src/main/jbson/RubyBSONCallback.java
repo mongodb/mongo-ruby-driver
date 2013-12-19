@@ -237,12 +237,7 @@ public class RubyBSONCallback implements BSONCallback {
       Object result = JavaEmbedUtils.invokeMethod(_runtime, _rbclsBSONRegex, "new", args, Object.class);
 
       RubySymbol rkey = RubySymbol.newSymbol(_runtime, "compile_regex");
-      boolean compile = true;
-      if (_opts.containsKey(rkey) && !(Boolean)_opts.get(rkey) ) {
-        compile = false;
-      }
-
-      if( compile == true ) {
+      if (!_opts.containsKey(rkey) || (Boolean)_opts.get(rkey)) {
         result = JavaEmbedUtils.invokeMethod(_runtime, result, "try_compile", new Object[] {}, Object.class);
       }
 
