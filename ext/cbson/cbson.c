@@ -846,7 +846,7 @@ static VALUE get_value(const char* buffer, int* position,
         {
             int pattern_length = (int)strlen(buffer + *position);
             VALUE pattern = STR_NEW(buffer + *position, pattern_length);
-            int flags_length, flags = 0, i = 0;
+            int flags_length;
             VALUE argv[3];
             *position += pattern_length + 1;
 
