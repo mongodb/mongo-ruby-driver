@@ -19,6 +19,8 @@ module Mongo
     include Mongo::WriteConcern
 
     DEFAULT_OP_ARGS = {:q => {}}
+    UNKNOWN_ERROR = 8 # MongoDB Core Server mongo/base/error_codes.err UnknownError
+    WRITE_CONCERN_FAILED = 64
     MULTIPLE_ERRORS_CODE = 65 # MongoDB Core Server mongo/base/error_codes.err MultipleErrorsOccurred
     MULTIPLE_ERRORS_MSG = "batch item errors occurred"
 
@@ -216,59 +218,63 @@ module Mongo
 
     private
 
-    def hash_except(hash, *keys)
-      keys.each { |key| hash.delete(key) }
-      hash
+    def hash_except(h, *keys)
+      keys.each { |key| h.delete(key) }
+      h
     end
 
-    def top_err_details(exchange, response)
-      merge = {}
-      merge['index'] = exchange[:batch][response.fetch('index', 0)][:ord]
-      merge['errmsg'] = response['err'] if response['err'] # coerce err to errmsg
-      hash_except(response.merge(merge), 'ok', 'n', 'err', 'connectionId')
+    def tally(h, key, n)
+      h[key] = h.fetch(key, 0) + n
     end
 
-    def merge_tally(result, response, key)
-      result[key] = result.fetch(key, 0) + response.fetch(key, 0).to_i
+    def concat(h, key, a)
+      h[key] = h.fetch(key, []) + a
     end
 
-    def merge_index(result, exchange, response, key)
-      details = response.fetch(key, [])
-      details = [{'_id' => details}] if details.class == BSON::ObjectId # single upsert
-      values = details.collect do |detail|
-        detail['index'] = exchange[:batch][detail.fetch('index', 0)][:ord]
-        detail
-      end
-      result[key] = result.fetch(key, []) + values
+    def merge_indexes(a, exchange)
+      a.collect{|h| h.merge("index" => exchange[:batch][h.fetch("index", 0)][:ord]) }
     end
 
     def merge_result(errors, exchanges)
-      result = {'ok' => 0, 'n' => 0}
-      result.merge!({'code' => MULTIPLE_ERRORS_CODE, 'errmsg' => MULTIPLE_ERRORS_MSG}) unless errors.empty?
-      errors.each do |error|
-        next if error.class == Mongo::OperationFailure
-        errDetails = {'index' => error.result[:ord], 'errmsg' => error.result[:error].message}
-        result['errDetails'] = result.fetch('errDetails', []) << errDetails
+      ok = 0
+      result = {"ok" => 0, "n" => 0}
+      unless errors.empty?
+        concat(result, "errDetails",
+          errors.select{|error| error.class != Mongo::OperationFailure}.collect{|error|
+            {"index" => error.result[:ord], "errmsg" => error.result[:error].message}
+          })
+        result.merge!("code" => MULTIPLE_ERRORS_CODE, "errmsg" => MULTIPLE_ERRORS_MSG)
       end
       exchanges.each do |exchange|
         response = exchange[:response]
-        # fix legacy insert that reports 'n' 0 even with 'err' nil
-        response['n'] = exchange[:batch].size if exchange[:op_type] == :insert && response.has_key?('err') && response['err'].nil?
-        response['ok'] = 0 if response.has_key?('err') && !response['err'].nil? # fix legacy ok for non-nil err
-        ['ok', 'n'].each { |key| merge_tally(result, response, key) }
-        top_level = true
-        ['errDetails', 'upserted', 'errInfo'].each do |key|
-          if response.has_key?(key)
-            top_level = false
-            merge_index(result, exchange, response, key)
+        ok += response["ok"].to_i
+        n = response["n"]
+        op_type = exchange[:op_type]
+        if op_type == :insert
+          n = 1 if response.has_key?("err") && response["err"].nil? # OP_INSERT override n = 0 bug, n = exchange[:batch].size always 1
+          tally(result, "nInserted", n)
+        elsif op_type == :update
+          n_upserted = 0
+          if (upserted = response.fetch("upserted", nil)) # assignment
+            upserted = [{"_id" => upserted}] if upserted.class == BSON::ObjectId # OP_UPDATE non-array
+            n_upserted = upserted.size
+            concat(result, "upserted", merge_indexes(upserted, exchange))
           end
+          tally(result, "nUpserted", n_upserted) if n_upserted > 0
+          tally(result, "nUpdated", n - n_upserted)
+        elsif op_type == :delete
+          tally(result, "nDeleted", n)
         end
-        next if top_level == false
-        next if response.has_key?('err') && response['err'].nil?
-        next unless (response.has_key?('err') || response.has_key?('errmsg'))
-        result['errDetails'] = result.fetch('errDetails',[]) << top_err_details(exchange, response)
+        result["n"] += n
+        if (errDetails = response["errDetails"]) # assignment
+        elsif (errmsg = response["errmsg"] || response["err"]) # assignment - top level - OP_INSERT, OP_UPDATE have "err"
+          errDetails = [hash_except(response.merge("errmsg" => errmsg), "ok", "n", "err", "connectionId")]
+        else
+          next
+        end
+        concat(result, "errDetails", merge_indexes(errDetails, exchange))
       end
-      result
+      result.merge!("ok" => [ok + result["n"], 1].min)
     end
 
     def initialize_copy(other)
