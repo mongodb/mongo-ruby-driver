@@ -55,7 +55,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
   @@client       ||= standard_connection(:op_timeout => 10)
   @@db           = @@client.db(TEST_DB)
   @@test         = @@db.collection("test")
-  @@version      = @@client.server_version
+  @@version = @@client.server_version
 
   DATABASE_NAME = 'bulk_write_collection_view_test'
   COLLECTION_NAME = 'test'
@@ -70,7 +70,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
 
   def clone_out_object_id(doc, merge = {})
     # note: Ruby 1.8.7 doesn't support \h
-    JSON.parse(doc.merge(merge).to_json.gsub(/\"\$oid\": *\"[a-f0-9]{24}\"/,"\"$oid\":\"123456789012345678901234\""))
+    JSON.parse(doc.merge(merge).to_json.gsub(/\"\$oid\": *\"[a-f0-9]{24}\"/, "\"$oid\":\"123456789012345678901234\""))
   end
 
   def assert_equal_json(expected, actual, merge = {}, message = nil)
@@ -92,7 +92,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     @collection.drop
     @bulk = @collection.initialize_ordered_bulk_op
     @q = {:a => 1}
-    @u = {"$inc" => { :x => 1 }}
+    @u = {"$inc" => {:x => 1}}
     @r = {:b => 2}
   end
 
@@ -114,16 +114,16 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     end
 
     should "check first key is operation for #update_doc?" do
-      assert_not_nil @bulk.update_doc?({"$inc" => { :x => 1 }})
+      assert_not_nil @bulk.update_doc?({"$inc" => {:x => 1}})
       assert_false @bulk.update_doc?({})
-      assert_nil @bulk.update_doc?({ :x => 1 })
+      assert_nil @bulk.update_doc?({:x => 1})
     end
 
     should "check no top-level key is operation for #replace_doc?" do
-      assert_true @bulk.replace_doc?({ :x => 1 })
+      assert_true @bulk.replace_doc?({:x => 1})
       assert_true @bulk.replace_doc?({})
-      assert_false @bulk.replace_doc?({"$inc" => { :x => 1 }})
-      assert_false @bulk.replace_doc?({ :a => 1, "$inc" => { :x => 1 }})
+      assert_false @bulk.replace_doc?({"$inc" => {:x => 1}})
+      assert_false @bulk.replace_doc?({:a => 1, "$inc" => {:x => 1}})
     end
 
     should "generate_batch_commands" do
@@ -163,29 +163,29 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
   end
 
   def big_example(bulk)
-    bulk.insert({ :a => 1 })
-    bulk.insert({ :a => 2 })
-    bulk.insert({ :a => 3 })
-    bulk.insert({ :a => 4 })
-    bulk.insert({ :a => 5 })
+    bulk.insert({:a => 1})
+    bulk.insert({:a => 2})
+    bulk.insert({:a => 3})
+    bulk.insert({:a => 4})
+    bulk.insert({:a => 5})
     # Update one document matching the selector
-    bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
+    bulk.find({:a => 1}).update_one({"$inc" => {:x => 1}})
     # Update all documents matching the selector
-    bulk.find({:a => 2}).update({"$inc" => { :x => 2 }})
+    bulk.find({:a => 2}).update({"$inc" => {:x => 2}})
     # Replace entire document (update with whole doc replace)
-    bulk.find({:a => 3}).replace_one({ :x => 3 })
+    bulk.find({:a => 3}).replace_one({:x => 3})
     # Update one document matching the selector or upsert
-    bulk.find({:a => 1}).upsert.update_one({"$inc" => { :x => 1 }})
+    bulk.find({:a => 1}).upsert.update_one({"$inc" => {:x => 1}})
     # Update all documents matching the selector or upsert
-    bulk.find({:a => 2}).upsert.update({"$inc" => { :x => 2 }})
+    bulk.find({:a => 2}).upsert.update({"$inc" => {:x => 2}})
     # Replaces a single document matching the selector or upsert
-    bulk.find({:a => 3}).upsert.replace_one({ :x => 3 })
+    bulk.find({:a => 3}).upsert.replace_one({:x => 3})
     # Remove a single document matching the selector
     bulk.find({:a => 4}).remove_one()
     # Remove all documents matching the selector
     bulk.find({:a => 5}).remove()
     # Insert a document
-    bulk.insert({ :x => 4 })
+    bulk.insert({:x => 4})
   end
 
   context "Bulk API Spec CollectionView" do
@@ -256,22 +256,22 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       @bulk = @collection.initialize_ordered_bulk_op
 
       # Update one document matching the selector
-      @bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
+      @bulk.find({:a => 1}).update_one({"$inc" => {:x => 1}})
 
       # Update all documents matching the selector
-      @bulk.find({:a => 2}).update({"$inc" => { :x => 2 }})
+      @bulk.find({:a => 2}).update({"$inc" => {:x => 2}})
 
       # Replace entire document (update with whole doc replace)
-      @bulk.find({:a => 3}).replace_one({ :x => 3 })
+      @bulk.find({:a => 3}).replace_one({:x => 3})
 
       # Update one document matching the selector or upsert
-      @bulk.find({:a => 1}).upsert.update_one({"$inc" => { :x => 1 }})
+      @bulk.find({:a => 1}).upsert.update_one({"$inc" => {:x => 1}})
 
       # Update all documents matching the selector or upsert
-      @bulk.find({:a => 2}).upsert.update({"$inc" => { :x => 2 }})
+      @bulk.find({:a => 2}).upsert.update({"$inc" => {:x => 2}})
 
       # Replaces a single document matching the selector or upsert
-      @bulk.find({:a => 3}).upsert.replace_one({ :x => 3 })
+      @bulk.find({:a => 3}).upsert.replace_one({:x => 3})
 
       # Remove a single document matching the selector
       @bulk.find({:a => 4}).remove_one
@@ -280,7 +280,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       @bulk.find({:a => 5}).remove
 
       # Insert a document
-      @bulk.insert({ :x => 4 })
+      @bulk.insert({:x => 4})
 
       # Execute the bulk operation, with an optional writeConcern overwriting the default w:1
       write_concern = {:w => 1} #{:w => 1. :j => 1} #nojournal for tests
@@ -290,8 +290,8 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     should "execute, return result and reset @ops for #execute" do
       with_write_commands_and_operations(@db.connection) do |wire_version|
         @collection.remove
-        @bulk.insert({ :x => 1 })
-        @bulk.insert({ :x => 2 })
+        @bulk.insert({:x => 1})
+        @bulk.insert({:x => 2})
         write_concern = {:w => 1}
         result = @bulk.execute(write_concern)
         assert_equal({"ok" => 1, "n" => 2, "nInserted" => 2}, result, "wire_version:#{wire_version}")
@@ -300,7 +300,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       end
     end
 
-   should "run ordered big example" do
+    should "run ordered big example" do
       with_write_commands_and_operations(@db.connection) do |wire_version|
         @collection.remove
         big_example(@bulk)
@@ -310,10 +310,10 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
             {
                 "ok" => 1,
                 "n" => 14,
-                "nInserted"=>6,
-                "nUpdated"=>5,
-                "nUpserted"=>1,
-                "nDeleted"=>2,
+                "nInserted" => 6,
+                "nUpdated" => 5,
+                "nUpserted" => 1,
+                "nDeleted" => 2,
                 "upserted" => [
                     {
                         "index" => 10,
@@ -339,7 +339,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
 
     should "run unordered bulk operations in one batch per write-type" do
       with_write_commands(@db.connection) do
-        @collection.expects(:batch_write).at_most(3).returns([[],[],[],[]])
+        @collection.expects(:batch_write).at_most(3).returns([[], [], [], []])
         bulk = @collection.initialize_unordered_bulk_op
         bulk.insert({:_id => 1, :a => 1})
         bulk.find({:_id => 1, :a => 1}).update({"$inc" => {:x => 1}})
@@ -357,7 +357,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     should "handle error for duplicate key with offset" do
       with_write_commands_and_operations(@db.connection) do |wire_version|
         @collection.remove
-        @bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
+        @bulk.find({:a => 1}).update_one({"$inc" => {:x => 1}})
         @bulk.insert({:_id => 1, :a => 1})
         @bulk.insert({:_id => 1, :a => 2})
         @bulk.insert({:_id => 3, :a => 3})
@@ -365,8 +365,8 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
             {
                 "ok" => 1,
                 "n" => 1,
-                "nInserted"=>1,
-                "nUpdated"=>0,
+                "nInserted" => 1,
+                "nUpdated" => 0,
                 "code" => 65,
                 "errmsg" => "batch item errors occurred",
                 "errDetails" => [
@@ -402,7 +402,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       with_write_commands_and_operations(@db.connection) do |wire_version|
         @collection.remove
         assert_equal 16777216, @@client.max_bson_size
-        @bulk.find({:a => 1}).update_one({"$inc" => { :x => 1 }})
+        @bulk.find({:a => 1}).update_one({"$inc" => {:x => 1}})
         @bulk.insert({:_id => 1, :a => 1})
         @bulk.insert(generate_sized_doc(@@client.max_message_size + 1))
         @bulk.insert({:_id => 3, :a => 3})
@@ -426,8 +426,8 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
             {
                 "ok" => 1,
                 "n" => 2,
-                "nInserted"=>1,
-                "nUpdated"=>1,
+                "nInserted" => 1,
+                "nUpdated" => 1,
                 "code" => 65,
                 "errmsg" => "batch item errors occurred",
                 "errDetails" => [
@@ -460,9 +460,9 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         assert_equal(1, result['ok'], "wire_version:#{wire_version}")
         assert_equal(2, result['n'], "wire_version:#{wire_version}")
         err_details = result['errDetails']
-        assert_equal([2,nil,1][wire_version], err_details.first['index'], "wire_version:#{wire_version}")
+        assert_equal([2, nil, 1][wire_version], err_details.first['index'], "wire_version:#{wire_version}")
         assert_match(/duplicate key error/, err_details.first['errmsg'], "wire_version:#{wire_version}")
-       end
+      end
     end
 
     should "handle errors for spec example 4 - with deferred write concern error" do
@@ -484,8 +484,8 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
             {
                 "ok" => 1,
                 "n" => 1,
-                "nUpdated"=>0,
-                "nUpserted"=>1,
+                "nUpdated" => 0,
+                "nUpserted" => 1,
                 "upserted" => [
                     {"_id" => BSON::ObjectId('52a16767bb67fbc77e26a310'), "index" => 0}
                 ]
@@ -505,8 +505,8 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
             {
                 "ok" => 1,
                 "n" => 2,
-                "nUpdated"=>0,
-                "nUpserted"=>2,
+                "nUpdated" => 0,
+                "nUpserted" => 2,
                 "upserted" => [
                     {"index" => 0, "_id" => BSON::ObjectId('52a1e37cbb67fbc77e26a338')},
                     {"index" => 1, "_id" => BSON::ObjectId('52a1e37cbb67fbc77e26a339')}
@@ -523,7 +523,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         @bulk.insert({:_id => 1, :a => 2})
         @bulk.insert(generate_sized_doc(@@client.max_message_size + 1))
         @bulk.insert({:_id => 3, :a => 3})
-        @bulk.find({:a => 4}).upsert.replace_one({ :x => 3 })
+        @bulk.find({:a => 4}).upsert.replace_one({:x => 3})
         ex = assert_raise BulkWriteError do
           @bulk.execute
         end
@@ -531,9 +531,9 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         assert_equal(1, result['ok'], "wire_version:#{wire_version}")
         assert_equal(3, result['n'], "wire_version:#{wire_version}")
         err_details = result['errDetails']
-        assert_match(/duplicate key error/, err_details.find{|e|e['code']==11000}['errmsg'], "wire_version:#{wire_version}")
-        assert_match(/too large/, err_details.find{|e|e['index']==2}['errmsg'], "wire_version:#{wire_version}")
-        assert_not_nil(result['upserted'].find{|e|e['index']==4}, "wire_version:#{wire_version}")
+        assert_match(/duplicate key error/, err_details.find { |e| e['code']==11000 }['errmsg'], "wire_version:#{wire_version}")
+        assert_match(/too large/, err_details.find { |e| e['index']==2 }['errmsg'], "wire_version:#{wire_version}")
+        assert_not_nil(result['upserted'].find { |e| e['index']==4 }, "wire_version:#{wire_version}")
       end
     end
 
