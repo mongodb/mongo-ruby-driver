@@ -553,7 +553,7 @@ module Mongo
       raise OperationFailure,
         "Database command '#{selector.keys.first}' failed: returned null." unless result
 
-      if check_response && !ok?(result)
+      if check_response && (!ok?(result) || result['writeErrors'])
         message = "Database command '#{selector.keys.first}' failed: ("
         message << result.map do |key, value|
           "#{key}: '#{value}'"

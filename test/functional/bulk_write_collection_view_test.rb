@@ -73,13 +73,13 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     JSON.parse(doc.merge(merge).to_json.gsub(/\"\$oid\": *\"[a-f0-9]{24}\"/, "\"$oid\":\"123456789012345678901234\""))
   end
 
-  def assert_equal_json(expected, actual, merge = {}, message = nil)
+  def assert_equal_json(expected, actual, merge = {}, message = '')
     assert_equal(clone_out_object_id(expected, merge), clone_out_object_id(actual), message)
   end
 
-  def assert_bulk_exception(result, merge = {}, message = nil)
-    ex = assert_raise BulkWriteError do
-      yield
+  def assert_bulk_exception(result, merge = {}, message = '')
+    ex = assert_raise BulkWriteError, message do
+      pp yield
     end
     assert_equal(Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_CODE, ex.error_code, message)
     assert_equal_json(result, ex.result, merge, message)
@@ -369,7 +369,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "nUpdated" => 0,
                 "code" => 65,
                 "errmsg" => "batch item errors occurred",
-                "errDetails" => [
+                "writeErrors" => [
                     {
                         "index" => 2,
                         "code" => 11000,
@@ -394,7 +394,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
           @bulk.execute
         end
         result = ex.result # unordered varies, don't use assert_bulk_exception
-        assert_not_nil(result["errDetails"], "wire_version:#{wire_version}")
+        assert_not_nil(result["writeErrors"], "wire_version:#{wire_version}")
       end
     end
 
@@ -410,7 +410,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
           @bulk.execute
         end
         result = ex.result # errmsg varies, don't use assert_bulk_exception
-        assert_match(/too large/, result["errDetails"].first['errmsg'], "wire_version:#{wire_version}")
+        assert_match(/too large/, result["writeErrors"].first['errmsg'], "wire_version:#{wire_version}")
       end
     end
 
@@ -430,7 +430,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "nUpdated" => 1,
                 "code" => 65,
                 "errmsg" => "batch item errors occurred",
-                "errDetails" => [
+                "writeErrors" => [
                     {
                         "index" => 2,
                         "code" => 11000,
@@ -459,7 +459,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         result = ex.result # unordered varies, don't use assert_bulk_exception
         assert_equal(1, result['ok'], "wire_version:#{wire_version}")
         assert_equal(2, result['n'], "wire_version:#{wire_version}")
-        err_details = result['errDetails']
+        err_details = result['writeErrors']
         assert_equal([2, nil, 1][wire_version], err_details.first['index'], "wire_version:#{wire_version}")
         assert_match(/duplicate key error/, err_details.first['errmsg'], "wire_version:#{wire_version}")
       end
@@ -530,7 +530,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         result = ex.result # unordered varies, don't use assert_bulk_exception
         assert_equal(1, result['ok'], "wire_version:#{wire_version}")
         assert_equal(3, result['n'], "wire_version:#{wire_version}")
-        err_details = result['errDetails']
+        err_details = result['writeErrors']
         assert_match(/duplicate key error/, err_details.find { |e| e['code']==11000 }['errmsg'], "wire_version:#{wire_version}")
         assert_match(/too large/, err_details.find { |e| e['index']==2 }['errmsg'], "wire_version:#{wire_version}")
         assert_not_nil(result['upserted'].find { |e| e['index']==4 }, "wire_version:#{wire_version}")
