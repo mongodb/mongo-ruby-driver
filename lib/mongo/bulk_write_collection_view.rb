@@ -223,6 +223,10 @@ module Mongo
       h
     end
 
+    def hash_select(h, *keys)
+      Hash[*keys.zip(h.values_at(*keys)).flatten]
+    end
+
     def tally(h, key, n)
       h[key] = h.fetch(key, 0) + n
     end
@@ -276,9 +280,14 @@ module Mongo
         result["n"] += n
         if (writeErrors = response["writeErrors"] || response["errDetails"]) # assignment
           concat(result, "writeErrors", merge_indexes(writeErrors, exchange))
-        elsif (errmsg = response["errmsg"] || response["err"]) # assignment - top level - OP_INSERT, OP_UPDATE have "err"
-          writeError = hash_except(response.merge("errmsg" => errmsg), "ok", "n", "err", "connectionId")
+        elsif (errmsg = response["errmsg"] || response["err"]) && errmsg != "norepl" # assignment - top level - OP_INSERT, OP_UPDATE have "err"
+          writeError = {"code" => response["code"], "errmsg" => errmsg}
           append(result, "writeErrors", merge_index(writeError, exchange))
+        end
+        if (writeConcernError = response["writeConcernError"]) # assignment
+          append(result, "writeConcernError", merge_index(writeConcernError, exchange))
+        elsif (wnote = response["wnote"]) # assignment - OP_*
+          append(result, "writeConcernError", merge_index({"errmsg" => wnote}, exchange)) # OP_* does not have "code"
         end
       end
       result.merge!("ok" => [ok + result["n"], 1].min)

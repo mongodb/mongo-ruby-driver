@@ -243,7 +243,7 @@ module Mongo
         rescue Mongo::OperationFailure => ex
           errors << ex
           exchanges << {:op_type => op_type, :batch => [doc], :opts => opts, :response => ex.result}
-          break if options[:ordered]
+          break if options[:ordered] && ex.result["err"] != "norepl"
         end
       end
       [errors, exchanges]
