@@ -321,7 +321,19 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                     }
                 ]
             }, result, {}, "wire_version:#{wire_version}")
-        assert_false @collection.find.to_a.empty?
+        assert_false(@collection.find.to_a.empty?, "wire_version:#{wire_version}")
+        assert_equal [{"x" => 3}, {"a" => 1, "x" => 2}, {"a" => 2, "x" => 4}, {"x" => 3}, {"x" => 4}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }
+      end
+    end
+
+    should "run ordered big example with w 0" do
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
+        big_example(@bulk)
+        write_concern = {:w => 0}
+        result = @bulk.execute(write_concern)
+        assert_equal(true, result, "wire_version:#{wire_version}")
+        assert_false(@collection.find.to_a.empty?, "wire_version:#{wire_version}")
         assert_equal [{"x" => 3}, {"a" => 1, "x" => 2}, {"a" => 2, "x" => 4}, {"x" => 3}, {"x" => 4}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }
       end
     end
@@ -334,6 +346,19 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         write_concern = {:w => 1} #{:w => 1. :j => 1} #nojournal for tests
         result = @bulk.execute(write_concern) # unordered varies, don't use assert_equal_json
         assert_true(result["n"] > 0, "wire_version:#{wire_version}")
+        assert_false(@collection.find.to_a.empty?, "wire_version:#{wire_version}")
+      end
+    end
+
+    should "run unordered big example with w 0" do
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
+        @bulk = @collection.initialize_unordered_bulk_op
+        big_example(@bulk)
+        write_concern = {:w => 0}
+        result = @bulk.execute(write_concern) # unordered varies, don't use assert_equal_json
+        assert_equal(true, result, "wire_version:#{wire_version}")
+        assert_false(@collection.find.to_a.empty?, "wire_version:#{wire_version}")
       end
     end
 
@@ -449,40 +474,41 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         bulk.insert({:a => 1})
         bulk.find({:a => 2}).upsert.update({'$set' => {:a => 3}}) # spec has error
         bulk.insert({:a => 3})
-        assert_bulk_exception({
-                                  "ok" => 1,
-                                  "n" => 2,
-                                  "nInserted" => 1,
-                                  "nUpdated" => 0,
-                                  "nUpserted" => 1,
-                                  "code" => 65,
-                                  "errmsg" => "batch item errors occurred",
-                                  "upserted" => [
-                                      {
-                                          "index" => 1,
-                                          "_id" => BSON::ObjectId('52b74c0f9bd7d13822ecef04')
-                                      }
-                                  ],
-                                  "writeErrors" => [
-                                      {
-                                          "index" => 2, # spec has error
-                                          "code" => 11000,
-                                          "errmsg" => "E11000 duplicate key error index: bulk_write_collection_view_test.test.$a_1  dup key: { : 3 }"
-                                      }
-                                  ],
-                                  "writeConcernError" => [
-                                      {
-                                          "index" => 0,
-                                          "code" => 75, # spec has 64 WRITE_CONCERN_FAILED
-                                          "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)"
-                                      },
-                                      {
-                                          "index" => 1,
-                                          "code" => 75, # spec has 64 WRITE_CONCERN_FAILED
-                                          "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)"
-                                      }
-                                  ]
-                              }, {}, "wire_version:#{wire_version}") { bulk.execute({:w => 5, :wtimeout => 1}) }
+        assert_bulk_exception(
+            {
+                "ok" => 1,
+                "n" => 2,
+                "nInserted" => 1,
+                "nUpdated" => 0,
+                "nUpserted" => 1,
+                "code" => 65,
+                "errmsg" => "batch item errors occurred",
+                "upserted" => [
+                    {
+                        "index" => 1,
+                        "_id" => BSON::ObjectId('52b74c0f9bd7d13822ecef04')
+                    }
+                ],
+                "writeErrors" => [
+                    {
+                        "index" => 2, # spec has error
+                        "code" => 11000,
+                        "errmsg" => "E11000 duplicate key error index: bulk_write_collection_view_test.test.$a_1  dup key: { : 3 }"
+                    }
+                ],
+                "writeConcernError" => [
+                    {
+                        "index" => 0,
+                        "code" => 75, # spec has 64 WRITE_CONCERN_FAILED
+                        "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)"
+                    },
+                    {
+                        "index" => 1,
+                        "code" => 75, # spec has 64 WRITE_CONCERN_FAILED
+                        "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)"
+                    }
+                ]
+            }, {}, "wire_version:#{wire_version}") { bulk.execute({:w => 5, :wtimeout => 1}) }
         assert_equal 2, @collection.size
       end
       @collection.remove
@@ -493,45 +519,46 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         bulk.insert({:a => 1})
         bulk.find({:a => 2}).upsert.update({'$set' => {:a => 3}}) # spec has error
         bulk.insert({:a => 3})
-        assert_bulk_exception({
-                                  "ok" => 1,
-                                  "n" => 2,
-                                  "nInserted" => 1,
-                                  "nUpdated" => 0,
-                                  "nUpserted" => 1,
-                                  "code" => 65,
-                                  "errmsg" => "batch item errors occurred",
-                                  "upserted" => [
-                                      {
-                                          "index" => 1,
-                                          "_id" => BSON::ObjectId('52b74c0f9bd7d13822ecef04')
-                                      }
-                                  ],
-                                  "writeErrors" => [
-                                      {
-                                          "index" => 2, # spec has error
-                                          "code" => 11000,
-                                          "errmsg" => "E11000 duplicate key error index: bulk_write_collection_view_test.test.$a_1  dup key: { : 3 }"
-                                      }
-                                  ],
-                                  "writeConcernError" => [
-                                      {
-                                          "index" => 0,
-                                          # OP_* does not have "code"
-                                          "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)" # from "wnote"
-                                      },
-                                      {
-                                          "index" => 1,
-                                          # OP_* does not have "code"
-                                          "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)" # from "wnote"
-                                      },
-                                      {
-                                          "index" => 2,
-                                          # OP_* does not have "code"
-                                          "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)" # from "wnote"
-                                      },
-                                  ]
-                              }, {}, "wire_version:#{wire_version}") { bulk.execute({:w => 5, :wtimeout => 1}) }
+        assert_bulk_exception(
+            {
+                "ok" => 1,
+                "n" => 2,
+                "nInserted" => 1,
+                "nUpdated" => 0,
+                "nUpserted" => 1,
+                "code" => 65,
+                "errmsg" => "batch item errors occurred",
+                "upserted" => [
+                    {
+                        "index" => 1,
+                        "_id" => BSON::ObjectId('52b74c0f9bd7d13822ecef04')
+                    }
+                ],
+                "writeErrors" => [
+                    {
+                        "index" => 2, # spec has error
+                        "code" => 11000,
+                        "errmsg" => "E11000 duplicate key error index: bulk_write_collection_view_test.test.$a_1  dup key: { : 3 }"
+                    }
+                ],
+                "writeConcernError" => [
+                    {
+                        "index" => 0,
+                        # OP_* does not have "code"
+                        "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)" # from "wnote"
+                    },
+                    {
+                        "index" => 1,
+                        # OP_* does not have "code"
+                        "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)" # from "wnote"
+                    },
+                    {
+                        "index" => 2,
+                        # OP_* does not have "code"
+                        "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)" # from "wnote"
+                    },
+                ]
+            }, {}, "wire_version:#{wire_version}") { bulk.execute({:w => 5, :wtimeout => 1}) }
         assert_equal 2, @collection.size
       end
     end

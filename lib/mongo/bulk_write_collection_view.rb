@@ -248,6 +248,7 @@ module Mongo
     end
 
     def merge_result(errors, exchanges)
+      return true if exchanges.first[:response] == true
       ok = 0
       result = {"ok" => 0, "n" => 0}
       unless errors.empty?
