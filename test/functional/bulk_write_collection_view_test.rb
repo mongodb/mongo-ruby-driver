@@ -469,7 +469,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     should "handle errors for spec example 2 - with deferred write concern error" do
       with_write_commands(@db.connection) do |wire_version|
         @collection.remove
-        @collection.ensure_index({:a => Mongo::ASCENDING}, {:unique => true})
+        @collection.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
         bulk = @collection.initialize_ordered_bulk_op
         bulk.insert({:a => 1})
         bulk.find({:a => 2}).upsert.update({'$set' => {:a => 3}}) # spec has error
@@ -514,7 +514,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       @collection.remove
       with_write_operations(@db.connection) do |wire_version|
         @collection.remove
-        @collection.ensure_index({:a => Mongo::ASCENDING}, {:unique => true})
+        @collection.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
         bulk = @collection.initialize_ordered_bulk_op
         bulk.insert({:a => 1})
         bulk.find({:a => 2}).upsert.update({'$set' => {:a => 3}}) # spec has error
@@ -585,7 +585,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
 
     should "handle errors for spec example 4 - with deferred write concern error" do
       with_write_commands(@db.connection) do |wire_version|
-        @collection.ensure_index({:a => Mongo::ASCENDING}, {:unique => true})
+        @collection.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
         bulk = @collection.initialize_unordered_bulk_op
         bulk.insert({:a => 1})
         bulk.find({:a => 1}).upsert.update({'$set' => {:a => 2}})
@@ -619,7 +619,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       end
       @collection.remove
       with_write_operations(@db.connection) do |wire_version|
-        @collection.ensure_index({:a => Mongo::ASCENDING}, {:unique => true})
+        @collection.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
         bulk = @collection.initialize_unordered_bulk_op
         bulk.insert({:a => 1})
         bulk.find({:a => 1}).upsert.update({'$set' => {:a => 2}})
