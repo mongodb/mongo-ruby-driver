@@ -591,7 +591,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         bulk.find({:a => 1}).upsert.update({'$set' => {:a => 2}})
         bulk.insert({:a => 2})
         ex = assert_raise BulkWriteError do
-          bulk.execute({w: 5, wtimeout: 1})
+          bulk.execute({:w => 5, :wtimeout => 1})
         end
         result = {
             "ok" => 1,
@@ -625,7 +625,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         bulk.find({:a => 1}).upsert.update({'$set' => {:a => 2}})
         bulk.insert({:a => 2})
         ex = assert_raise BulkWriteError do
-          bulk.execute({w: 5, wtimeout: 1})
+          bulk.execute({:w => 5, :wtimeout => 1})
         end
         result = {
             "ok" => 1,
