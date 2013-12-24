@@ -467,14 +467,18 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     end
 
     should "handle errors for spec example 2 - with deferred write concern error" do
-      with_write_commands(@db.connection) do |wire_version|
+      with_write_commands_and_operations(@db.connection) do |wire_version|
         @collection.remove
         @collection.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
         bulk = @collection.initialize_ordered_bulk_op
         bulk.insert({:a => 1})
         bulk.find({:a => 2}).upsert.update({'$set' => {:a => 3}}) # spec has error
         bulk.insert({:a => 3})
-        assert_bulk_exception(
+        ex = assert_raise BulkWriteError do
+          bulk.execute({:w => 5, :wtimeout => 1})
+        end
+        result = ex.result # writeConcernError varies, don't use assert_bulk_exception
+        assert_equal_json(
             {
                 "ok" => 1,
                 "n" => 2,
@@ -495,71 +499,10 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                         "code" => 11000,
                         "errmsg" => "E11000 duplicate key error index: bulk_write_collection_view_test.test.$a_1  dup key: { : 3 }"
                     }
-                ],
-                "writeConcernError" => [
-                    {
-                        "index" => 0,
-                        "code" => 75, # spec has 64 WRITE_CONCERN_FAILED
-                        "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)"
-                    },
-                    {
-                        "index" => 1,
-                        "code" => 75, # spec has 64 WRITE_CONCERN_FAILED
-                        "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)"
-                    }
                 ]
-            }, {}, "wire_version:#{wire_version}") { bulk.execute({:w => 5, :wtimeout => 1}) }
-        assert_equal 2, @collection.size
-      end
-      @collection.remove
-      with_write_operations(@db.connection) do |wire_version|
-        @collection.remove
-        @collection.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
-        bulk = @collection.initialize_ordered_bulk_op
-        bulk.insert({:a => 1})
-        bulk.find({:a => 2}).upsert.update({'$set' => {:a => 3}}) # spec has error
-        bulk.insert({:a => 3})
-        assert_bulk_exception(
-            {
-                "ok" => 1,
-                "n" => 2,
-                "nInserted" => 1,
-                "nUpdated" => 0,
-                "nUpserted" => 1,
-                "code" => 65,
-                "errmsg" => "batch item errors occurred",
-                "upserted" => [
-                    {
-                        "index" => 1,
-                        "_id" => BSON::ObjectId('52b74c0f9bd7d13822ecef04')
-                    }
-                ],
-                "writeErrors" => [
-                    {
-                        "index" => 2, # spec has error
-                        "code" => 11000,
-                        "errmsg" => "E11000 duplicate key error index: bulk_write_collection_view_test.test.$a_1  dup key: { : 3 }"
-                    }
-                ],
-                "writeConcernError" => [
-                    {
-                        "index" => 0,
-                        # OP_* does not have "code"
-                        "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)" # from "wnote"
-                    },
-                    {
-                        "index" => 1,
-                        # OP_* does not have "code"
-                        "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)" # from "wnote"
-                    },
-                    {
-                        "index" => 2,
-                        # OP_* does not have "code"
-                        "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)" # from "wnote"
-                    },
-                ]
-            }, {}, "wire_version:#{wire_version}") { bulk.execute({:w => 5, :wtimeout => 1}) }
-        assert_equal 2, @collection.size
+            }, result.except("writeConcernError"), {}, "wire_version:#{wire_version}")
+        assert(result["writeConcernError"].size >= 2, "wire_version:#{wire_version}")
+        assert_equal(2, @collection.size, "wire_version:#{wire_version}")
       end
     end
 
@@ -584,7 +527,8 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     end
 
     should "handle errors for spec example 4 - with deferred write concern error" do
-      with_write_commands(@db.connection) do |wire_version|
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
         @collection.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
         bulk = @collection.initialize_unordered_bulk_op
         bulk.insert({:a => 1})
@@ -593,73 +537,15 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         ex = assert_raise BulkWriteError do
           bulk.execute({:w => 5, :wtimeout => 1})
         end
-        result = {
-            "ok" => 1,
-            "n" => 2,
-            "nInserted" => 2,
-            "nUpdated" => 0,
-            "code" => 65,
-            "errmsg" => "batch item errors occurred",
-            "writeErrors" => [
-                {
-                    "index" => 1,
-                    "code" => 11000,
-                    "errmsg" => "E11000 duplicate key error index: bulk_write_collection_view_test.test.$a_1  dup key: { : 2 }"
-                }
-            ],
-            "writeConcernError" => [
-                {
-                    "index" => 0,
-                    "code" => 75,
-                    "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)"
-                }
-            ],
-        }
-        assert_equal(result, ex.result, "wire_version:#{wire_version}")
-      end
-      @collection.remove
-      with_write_operations(@db.connection) do |wire_version|
-        @collection.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
-        bulk = @collection.initialize_unordered_bulk_op
-        bulk.insert({:a => 1})
-        bulk.find({:a => 1}).upsert.update({'$set' => {:a => 2}})
-        bulk.insert({:a => 2})
-        ex = assert_raise BulkWriteError do
-          bulk.execute({:w => 5, :wtimeout => 1})
-        end
-        result = {
-            "ok" => 1,
-            "n" => 2,
-            "nInserted" => 1,
-            "nUpdated" => 1,
-            "code" => 65,
-            "errmsg" => "batch item errors occurred",
-            "writeErrors" => [
-                {
-                    "index" => 2,
-                    "code" => 11000,
-                    "errmsg" => "E11000 duplicate key error index: bulk_write_collection_view_test.test.$a_1  dup key: { : 2 }"
-                }
-            ],
-            "writeConcernError" => [
-                {
-                    "index" => 0,
-                    # OP_* does not have "code"
-                    "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)" # from "wnote"
-                },
-                {
-                    "index" => 1,
-                    # OP_* does not have "code"
-                    "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)" # from "wnote"
-                },
-                {
-                    "index" => 2,
-                    # OP_* does not have "code"
-                    "errmsg" => "WriteConcernLegacyOK no replication and asked for w > 1 (5)" # from "wnote"
-                },
-            ],
-        }
-        assert_equal(result, ex.result, "wire_version:#{wire_version}")
+        result = ex.result # unordered and writeConcernError varies, don't use assert_bulk_exception
+        assert_equal(1, result["ok"], "wire_version:#{wire_version}")
+        assert_equal(2, result["n"], "wire_version:#{wire_version}")
+        assert(result["nInserted"] >= 1, "wire_version:#{wire_version}")
+        assert_equal(65, result["code"], "wire_version:#{wire_version}")
+        assert_equal("batch item errors occurred", result["errmsg"], "wire_version:#{wire_version}")
+        assert(result["writeErrors"].size >= 1,  "wire_version:#{wire_version}")
+        assert(result["writeConcernError"].size >= 1, "wire_version:#{wire_version}")
+        assert(@collection.size >= 1, "wire_version:#{wire_version}")
       end
     end
 
