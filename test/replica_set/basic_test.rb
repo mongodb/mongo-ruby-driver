@@ -98,20 +98,35 @@ class ReplicaSetBasicTest < Test::Unit::TestCase
       end
 
       should "close the connection on send_message for major exceptions" do
-        @client.expects(:checkout_writer).raises(SystemStackError)
-        @client.expects(:close)
-        begin
-          @coll.insert({:foo => "bar"})
-        rescue SystemStackError
+        with_write_operations(@client) do # explicit even if w 0 maps to write operations
+          @client.expects(:checkout_writer).raises(SystemStackError)
+          @client.expects(:close)
+          begin
+            @coll.insert({:foo => "bar"}, :w => 0)
+          rescue SystemStackError
+          end
+        end
+      end
+
+      should "close the connection on send_write_command for major exceptions" do
+        with_write_commands(@client) do
+          @client.expects(:checkout_reader).raises(SystemStackError)
+          @client.expects(:close)
+          begin
+            @coll.insert({:foo => "bar"})
+          rescue SystemStackError
+          end
         end
       end
 
       should "close the connection on send_message_with_gle for major exceptions" do
-        @client.expects(:checkout_writer).raises(SystemStackError)
-        @client.expects(:close)
-        begin
-          @coll.insert({:foo => "bar"})
-        rescue SystemStackError
+        with_write_operations(@client) do
+          @client.expects(:checkout_writer).raises(SystemStackError)
+          @client.expects(:close)
+          begin
+            @coll.insert({:foo => "bar"})
+          rescue SystemStackError
+          end
         end
       end
 
