@@ -43,13 +43,19 @@ matrix:
   exclude:
     - rvm: 1.8.7
       jdk: openjdk7
+      env: CI="travis"
     - rvm: 1.9.3
       jdk: openjdk7
+      env: CI="travis"
     - rvm: 2.0.0
       jdk: openjdk7
+      env: CI="travis"
     - rvm: 2.1.0
       jdk: openjdk7
+      env: CI="travis"
     - rvm: ruby-head
       jdk: openjdk7
+      env: CI="travis"
     - rvm: rbx
       jdk: openjdk7
+      env: CI="travis"
