@@ -138,8 +138,7 @@ module Mongo
       end
       doc = @cache.shift
 
-      if doc && doc['$err']
-        err = doc['$err']
+      if doc && (err = doc['errmsg'] || doc['$err']) # assignment
         code = doc['code']
 
         # If the server has stopped being the master (e.g., it's one of a
