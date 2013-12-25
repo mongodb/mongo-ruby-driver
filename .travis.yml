@@ -41,9 +41,16 @@ matrix:
   exclude:
     - rvm: 1.8.7
       jdk: openjdk7
+      env: TRAVIS_CI="true" JRUBY_OPTS="-J-Xmn1024m -J-Xms2048m -J-Xmx2048m"
     - rvm: 1.9.3
       jdk: openjdk7
+      env: TRAVIS_CI="true" JRUBY_OPTS="-J-Xmn1024m -J-Xms2048m -J-Xmx2048m"
     - rvm: 2.0.0
       jdk: openjdk7
+      env: TRAVIS_CI="true" JRUBY_OPTS="-J-Xmn1024m -J-Xms2048m -J-Xmx2048m"
+    - rvm: 2.1.0
+      jdk: openjdk7
+      env: TRAVIS_CI="true" JRUBY_OPTS="-J-Xmn1024m -J-Xms2048m -J-Xmx2048m"
     - rvm: ruby-head
       jdk: openjdk7
+      env: TRAVIS_CI="true" JRUBY_OPTS="-J-Xmn1024m -J-Xms2048m -J-Xmx2048m"
