@@ -155,6 +155,8 @@ module Mongo
         end
 
         raise OperationFailure.new(err, code, doc)
+      elsif doc && (writeConcernError = doc['writeConcernError']) && writeConcernError['errInfo'] == {"wtimeout" => true} # assignment
+        raise OperationFailure.new('timeout ' + writeConcernError['errmsg'], writeConcernError['code'], doc)
       end
 
       if @transformer.nil?
