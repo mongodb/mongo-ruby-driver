@@ -327,7 +327,7 @@ class DBAPITest < Test::Unit::TestCase
     begin
       coll = @@db.create_collection('foobar', :capped => true, :size => 1024)
       options = coll.options
-      #assert_equal 'foobar', options['create'] # 'create' not in 2.5.5-pre-2013-12-20
+      assert_equal 'foobar', options['create'] if @@client.server_version < '2.5.5'
       assert_equal true, options['capped']
       assert_equal 1024, options['size']
     rescue => ex
