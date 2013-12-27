@@ -177,6 +177,7 @@ class ClientTest < Test::Unit::TestCase
     old_name = TEST_DB + '_old'
     new_name = TEST_DB + '_new'
 
+    @client.drop_database(new_name)
     @client.db(old_name).collection('copy-test').insert('a' => 1)
     @client.copy_database(old_name, new_name, host_port)
 
