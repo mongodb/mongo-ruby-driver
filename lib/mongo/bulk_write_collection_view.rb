@@ -211,8 +211,9 @@ module Mongo
         errors, exchanges = @collection.operation_writer.bulk_execute(@ops, @options, opts)
       end
       @ops = []
+      return true if exchanges.first[:response] == true # w 0 without GLE
       result = merge_result(errors, exchanges)
-      raise BulkWriteError.new(MULTIPLE_ERRORS_MSG, MULTIPLE_ERRORS_CODE, result) unless errors.empty?
+      raise BulkWriteError.new(MULTIPLE_ERRORS_MSG, MULTIPLE_ERRORS_CODE, result) if !errors.empty? || result["writeConcernError"]
       result
     end
 
@@ -248,7 +249,6 @@ module Mongo
     end
 
     def merge_result(errors, exchanges)
-      return true if exchanges.first[:response] == true
       ok = 0
       result = {"ok" => 0, "n" => 0}
       unless errors.empty?

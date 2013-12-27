@@ -461,22 +461,19 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         @collection.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
         bulk = @collection.initialize_ordered_bulk_op
         bulk.insert({:a => 1})
-        bulk.find({:a => 2}).upsert.update({'$set' => {:a => 3}}) # spec has error
+        bulk.find({:a => 2}).upsert.update({'$set' => {:a => 2}})
         bulk.insert({:a => 3})
         ex = assert_raise BulkWriteError do
           bulk.execute({:w => 5, :wtimeout => 1})
         end
         result = ex.result # writeErrors errmsg varies, don't use assert_bulk_exception
         assert_equal(1, result['ok'], "wire_version:#{wire_version}")
-        assert_equal(2, result['n'], "wire_version:#{wire_version}")
-        assert_equal(1, result['nInserted'], "wire_version:#{wire_version}")
+        assert_equal(3, result['n'], "wire_version:#{wire_version}")
+        assert_equal(2, result['nInserted'], "wire_version:#{wire_version}")
         assert_equal(0, result['nUpdated'], "wire_version:#{wire_version}")
         assert_equal(1, result['nUpserted'], "wire_version:#{wire_version}")
-        writeErrors = result['writeErrors']
-        assert_equal(2, writeErrors.first['index'], "wire_version:#{wire_version}")
-        assert_equal(11000, writeErrors.first['code'], "wire_version:#{wire_version}")
         assert(result["writeConcernError"].size >= 2, "wire_version:#{wire_version}")
-        assert_equal(2, @collection.size, "wire_version:#{wire_version}")
+        assert_equal(3, @collection.size, "wire_version:#{wire_version}")
       end
     end
 
