@@ -141,7 +141,7 @@ module Mongo
 
     def send_bulk_write_command(op_type, documents, check_keys, opts, collection_name=@name)
       if op_type == :insert
-        documents = documents.collect{|doc| doc[:d]} if opts.has_key?(:ordered)
+        documents = documents.collect{|doc| doc[:d]} if opts.key?(:ordered)
         documents.each do |doc|
           # TODO - @pk_factory.create_pk(doc)
           if check_keys
@@ -243,7 +243,7 @@ module Mongo
         rescue Mongo::OperationFailure => ex
           errors << ex
           exchanges << {:op_type => op_type, :batch => [doc], :opts => opts, :response => ex.result}
-          break if options[:ordered]
+          break if options[:ordered] && ex.result["err"] != "norepl"
         end
       end
       [errors, exchanges]

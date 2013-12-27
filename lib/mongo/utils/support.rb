@@ -68,7 +68,8 @@ module Mongo
     #
     # @return [Boolean] true if the 'ok' key is either 1 or *true*.
     def ok?(doc)
-      doc['ok'] == 1.0 || doc['ok'] == true
+      ok = doc['ok']
+      ok == 1 || ok == 1.0 || ok == true
     end
   end
 end

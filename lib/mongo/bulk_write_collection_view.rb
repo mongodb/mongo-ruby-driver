@@ -223,23 +223,36 @@ module Mongo
       h
     end
 
+    def hash_select(h, *keys)
+      Hash[*keys.zip(h.values_at(*keys)).flatten]
+    end
+
     def tally(h, key, n)
       h[key] = h.fetch(key, 0) + n
+    end
+
+    def append(h, key, obj)
+      h[key] = h.fetch(key, []) << obj
     end
 
     def concat(h, key, a)
       h[key] = h.fetch(key, []) + a
     end
 
+    def merge_index(h, exchange)
+      h.merge("index" => exchange[:batch][h.fetch("index", 0)][:ord])
+    end
+
     def merge_indexes(a, exchange)
-      a.collect{|h| h.merge("index" => exchange[:batch][h.fetch("index", 0)][:ord]) }
+      a.collect{|h| merge_index(h, exchange)}
     end
 
     def merge_result(errors, exchanges)
+      return true if exchanges.first[:response] == true
       ok = 0
       result = {"ok" => 0, "n" => 0}
       unless errors.empty?
-        concat(result, "errDetails",
+        concat(result, "writeErrors",
           errors.select{|error| error.class != Mongo::OperationFailure}.collect{|error|
             {"index" => error.result[:ord], "errmsg" => error.result[:error].message}
           })
@@ -251,7 +264,7 @@ module Mongo
         n = response["n"]
         op_type = exchange[:op_type]
         if op_type == :insert
-          n = 1 if response.has_key?("err") && response["err"].nil? # OP_INSERT override n = 0 bug, n = exchange[:batch].size always 1
+          n = 1 if response.key?("err") && (response["err"].nil? || response["err"] == "norepl") # OP_INSERT override n = 0 bug, n = exchange[:batch].size always 1
           tally(result, "nInserted", n)
         elsif op_type == :update
           n_upserted = 0
@@ -261,18 +274,22 @@ module Mongo
             concat(result, "upserted", merge_indexes(upserted, exchange))
           end
           tally(result, "nUpserted", n_upserted) if n_upserted > 0
-          tally(result, "nUpdated", n - n_upserted)
+          tally(result, "nUpdated", n - n_upserted) # "nDocsModified"
         elsif op_type == :delete
           tally(result, "nDeleted", n)
         end
         result["n"] += n
-        if (errDetails = response["errDetails"]) # assignment
-        elsif (errmsg = response["errmsg"] || response["err"]) # assignment - top level - OP_INSERT, OP_UPDATE have "err"
-          errDetails = [hash_except(response.merge("errmsg" => errmsg), "ok", "n", "err", "connectionId")]
-        else
-          next
+        if (writeErrors = response["writeErrors"] || response["errDetails"]) # assignment
+          concat(result, "writeErrors", merge_indexes(writeErrors, exchange))
+        elsif (errmsg = response["errmsg"] || response["err"]) && errmsg != "norepl" # assignment - top level - OP_INSERT, OP_UPDATE have "err"
+          writeError = {"code" => response["code"], "errmsg" => errmsg}
+          append(result, "writeErrors", merge_index(writeError, exchange))
         end
-        concat(result, "errDetails", merge_indexes(errDetails, exchange))
+        if (writeConcernError = response["writeConcernError"]) # assignment
+          append(result, "writeConcernError", merge_index(writeConcernError, exchange))
+        elsif (wnote = response["wnote"]) # assignment - OP_*
+          append(result, "writeConcernError", merge_index({"errmsg" => wnote}, exchange)) # OP_* does not have "code"
+        end
       end
       result.merge!("ok" => [ok + result["n"], 1].min)
     end

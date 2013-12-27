@@ -547,13 +547,17 @@ module Mongo
       begin
         result = Cursor.new(system_command_collection, command).next_document
       rescue OperationFailure => ex
-        raise OperationFailure, "Database command '#{selector.keys.first}' failed: #{ex.message}"
+        if check_response
+          raise OperationFailure.new("Database command '#{selector.keys.first}' failed: #{ex.message}", ex.error_code, ex.result)
+        else
+          result = ex.result
+        end
       end
 
       raise OperationFailure,
         "Database command '#{selector.keys.first}' failed: returned null." unless result
 
-      if check_response && !ok?(result)
+      if check_response && (!ok?(result) || result['writeErrors'])
         message = "Database command '#{selector.keys.first}' failed: ("
         message << result.map do |key, value|
           "#{key}: '#{value}'"
