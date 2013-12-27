@@ -194,10 +194,16 @@ class Test::Unit::TestCase
 
   def with_max_wire_version(client, wire_version)
     if client.wire_version_feature?(wire_version)
-      old_max_wire_version = client.instance_variable_get(:@max_wire_version)
-      client.instance_variable_set(:@max_wire_version, wire_version)
+      client.class.class_eval(%Q{
+        alias :old_max_wire_version :max_wire_version
+        def max_wire_version
+          #{wire_version}
+        end
+      })
       yield wire_version
-      client.instance_variable_set(:@max_wire_version, old_max_wire_version)
+      client.class.class_eval(%Q{
+        alias :max_wire_version :old_max_wire_version
+      })
     end
   end
 

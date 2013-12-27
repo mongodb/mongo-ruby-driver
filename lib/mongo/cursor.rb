@@ -138,8 +138,7 @@ module Mongo
       end
       doc = @cache.shift
 
-      if doc && doc['$err']
-        err = doc['$err']
+      if doc && (err = doc['errmsg'] || doc['$err']) # assignment
         code = doc['code']
 
         # If the server has stopped being the master (e.g., it's one of a
@@ -156,6 +155,8 @@ module Mongo
         end
 
         raise OperationFailure.new(err, code, doc)
+      elsif doc && (writeConcernError = doc['writeConcernError']) && writeConcernError['errInfo'] == {"wtimeout" => true} # assignment
+        raise OperationFailure.new('timeout ' + writeConcernError['errmsg'], writeConcernError['code'], doc)
       end
 
       if @transformer.nil?
