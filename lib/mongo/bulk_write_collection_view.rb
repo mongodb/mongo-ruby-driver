@@ -19,9 +19,6 @@ module Mongo
     include Mongo::WriteConcern
 
     DEFAULT_OP_ARGS = {:q => {}}
-    UNKNOWN_ERROR = 8 # MongoDB Core Server mongo/base/error_codes.err UnknownError
-    WRITE_CONCERN_FAILED = 64
-    MULTIPLE_ERRORS_CODE = 65 # MongoDB Core Server mongo/base/error_codes.err MultipleErrorsOccurred
     MULTIPLE_ERRORS_MSG = "batch item errors occurred"
 
     attr_reader :collection, :options, :ops, :op_args
@@ -213,7 +210,7 @@ module Mongo
       @ops = []
       return true if exchanges.first[:response] == true # w 0 without GLE
       result = merge_result(errors, exchanges)
-      raise BulkWriteError.new(MULTIPLE_ERRORS_MSG, MULTIPLE_ERRORS_CODE, result) if !errors.empty? || result["writeConcernError"]
+      raise BulkWriteError.new(MULTIPLE_ERRORS_MSG, Mongo::ErrorCode::MULTIPLE_ERRORS_OCCURRED, result) if !errors.empty? || result["writeConcernError"]
       result
     end
 
@@ -256,7 +253,7 @@ module Mongo
           errors.select{|error| error.class != Mongo::OperationFailure}.collect{|error|
             {"index" => error.result[:ord], "errmsg" => error.result[:error].message}
           })
-        result.merge!("code" => MULTIPLE_ERRORS_CODE, "errmsg" => MULTIPLE_ERRORS_MSG)
+        result.merge!("code" => Mongo::ErrorCode::MULTIPLE_ERRORS_OCCURRED, "errmsg" => MULTIPLE_ERRORS_MSG)
       end
       exchanges.each do |exchange|
         response = exchange[:response]
