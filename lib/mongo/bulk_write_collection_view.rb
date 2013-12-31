@@ -251,7 +251,7 @@ module Mongo
       unless errors.empty?
         concat(result, "writeErrors",
           errors.select{|error| error.class != Mongo::OperationFailure}.collect{|error|
-            {"index" => error.result[:ord], "errmsg" => error.result[:error].message}
+            {"index" => error.result[:ord], "code" => error.error_code, "errmsg" => error.result[:error].message}
           })
         result.merge!("code" => Mongo::ErrorCode::MULTIPLE_ERRORS_OCCURRED, "errmsg" => MULTIPLE_ERRORS_MSG)
       end

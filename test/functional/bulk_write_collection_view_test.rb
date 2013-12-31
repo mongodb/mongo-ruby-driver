@@ -429,7 +429,10 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
           @bulk.execute
         end
         result = ex.result # errmsg varies, don't use assert_bulk_exception
-        assert_match(/too large/, result["writeErrors"].first['errmsg'], "wire_version:#{wire_version}")
+        write_error = result["writeErrors"].first
+        assert_equal(2, write_error["index"])
+        assert_equal(Mongo::ErrorCode::INVALID_BSON, write_error["code"])
+        assert_match(/too large/, write_error['errmsg'], "wire_version:#{wire_version}")
       end
     end
 
