@@ -1005,17 +1005,11 @@ module Mongo
       end
     end
 
-    public
-
-    def use_write_command?(write_concern)
-      write_concern[:w] != 0 && @db.connection.wire_version_feature?(Mongo::MongoClient::BATCH_COMMANDS)
-    end
-
     private
 
     def send_write(op_type, selector, doc_or_docs, check_keys, opts, collection_name=@name)
       write_concern = get_write_concern(opts, self)
-      if use_write_command?(write_concern)
+      if @db.connection.use_write_command?(write_concern)
         @command_writer.send_write_command(op_type, selector, doc_or_docs, check_keys, opts, write_concern, collection_name)
       else
         @operation_writer.send_write_operation(op_type, selector, doc_or_docs, check_keys, opts, write_concern, collection_name)
@@ -1094,7 +1088,7 @@ module Mongo
 
     def batch_write(op_type, documents, check_keys=true, opts={})
       write_concern = get_write_concern(opts, self)
-      if use_write_command?(write_concern)
+      if @db.connection.use_write_command?(write_concern)
         return @command_writer.batch_write(op_type, documents, check_keys, opts)
       else
         return @operation_writer.batch_write(op_type, documents, check_keys, opts)

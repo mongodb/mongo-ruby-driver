@@ -105,7 +105,7 @@ module Mongo
         batch = docs.take(@write_batch_size)
         begin
           batch_to_send = batch #(op_type == :insert && !ordered.nil?) ? batch.collect{|doc|doc[:d]} : batch
-          if @collection.use_write_command?(write_concern) # TODO - polymorphic send_write including legacy insert
+          if @collection.db.connection.use_write_command?(write_concern) # TODO - polymorphic send_write including legacy insert
             response = send_bulk_write_command(op_type, batch_to_send, check_keys, opts)
           else
             response = send_write_operation(op_type, nil, batch_to_send, check_keys, opts, write_concern)

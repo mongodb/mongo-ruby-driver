@@ -202,7 +202,7 @@ module Mongo
     def execute(opts = {})
       write_concern = get_write_concern(opts, @collection)
       @ops.each_with_index{|op, index| op.last.merge!(:ord => index)} # infuse ordinal here to avoid issues with upsert
-      if @collection.use_write_command?(write_concern)
+      if @collection.db.connection.use_write_command?(write_concern)
         errors, exchanges = @collection.command_writer.bulk_execute(@ops, @options, opts)
       else
         errors, exchanges = @collection.operation_writer.bulk_execute(@ops, @options, opts)

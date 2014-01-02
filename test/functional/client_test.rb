@@ -372,6 +372,12 @@ class ClientTest < Test::Unit::TestCase
     end
   end
 
+  def test_use_write_command
+    @client.stubs(:wire_version_feature?).returns(true)
+    assert_true @client.send(:use_write_command?, {:w => 1})
+    assert_false @client.send(:use_write_command?, {:w => 0})
+  end
+
   def test_connection_activity
     conn = standard_connection
     assert conn.active?

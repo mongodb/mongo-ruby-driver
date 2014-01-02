@@ -1422,12 +1422,6 @@ end
     end
   end
 
-  def test_use_write_command
-    @@db.connection.stubs(:wire_version_feature?).returns(true)
-    assert_true @@test.send(:use_write_command?, {:w => 1})
-    assert_false @@test.send(:use_write_command?, {:w => 0})
-  end
-
   context "Grouping" do
     setup do
       @@test.remove
