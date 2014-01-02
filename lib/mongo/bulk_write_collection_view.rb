@@ -19,9 +19,6 @@ module Mongo
     include Mongo::WriteConcern
 
     DEFAULT_OP_ARGS = {:q => {}}
-    UNKNOWN_ERROR = 8 # MongoDB Core Server mongo/base/error_codes.err UnknownError
-    WRITE_CONCERN_FAILED = 64
-    MULTIPLE_ERRORS_CODE = 65 # MongoDB Core Server mongo/base/error_codes.err MultipleErrorsOccurred
     MULTIPLE_ERRORS_MSG = "batch item errors occurred"
 
     attr_reader :collection, :options, :ops, :op_args
@@ -205,14 +202,15 @@ module Mongo
     def execute(opts = {})
       write_concern = get_write_concern(opts, @collection)
       @ops.each_with_index{|op, index| op.last.merge!(:ord => index)} # infuse ordinal here to avoid issues with upsert
-      if @collection.use_write_command?(write_concern)
+      if @collection.db.connection.use_write_command?(write_concern)
         errors, exchanges = @collection.command_writer.bulk_execute(@ops, @options, opts)
       else
         errors, exchanges = @collection.operation_writer.bulk_execute(@ops, @options, opts)
       end
       @ops = []
+      return true if exchanges.first[:response] == true # w 0 without GLE
       result = merge_result(errors, exchanges)
-      raise BulkWriteError.new(MULTIPLE_ERRORS_MSG, MULTIPLE_ERRORS_CODE, result) unless errors.empty?
+      raise BulkWriteError.new(MULTIPLE_ERRORS_MSG, Mongo::ErrorCode::MULTIPLE_ERRORS_OCCURRED, result) if !errors.empty? || result["writeConcernError"]
       result
     end
 
@@ -248,15 +246,14 @@ module Mongo
     end
 
     def merge_result(errors, exchanges)
-      return true if exchanges.first[:response] == true
       ok = 0
       result = {"ok" => 0, "n" => 0}
       unless errors.empty?
         concat(result, "writeErrors",
           errors.select{|error| error.class != Mongo::OperationFailure}.collect{|error|
-            {"index" => error.result[:ord], "errmsg" => error.result[:error].message}
+            {"index" => error.result[:ord], "code" => error.error_code, "errmsg" => error.result[:error].message}
           })
-        result.merge!("code" => MULTIPLE_ERRORS_CODE, "errmsg" => MULTIPLE_ERRORS_MSG)
+        result.merge!("code" => Mongo::ErrorCode::MULTIPLE_ERRORS_OCCURRED, "errmsg" => MULTIPLE_ERRORS_MSG)
       end
       exchanges.each do |exchange|
         response = exchange[:response]

@@ -177,6 +177,7 @@ class ClientTest < Test::Unit::TestCase
     old_name = TEST_DB + '_old'
     new_name = TEST_DB + '_new'
 
+    @client.drop_database(new_name)
     @client.db(old_name).collection('copy-test').insert('a' => 1)
     @client.copy_database(old_name, new_name, host_port)
 
@@ -369,6 +370,12 @@ class ClientTest < Test::Unit::TestCase
         conn.connect
       end
     end
+  end
+
+  def test_use_write_command
+    @client.stubs(:wire_version_feature?).returns(true)
+    assert_true @client.send(:use_write_command?, {:w => 1})
+    assert_false @client.send(:use_write_command?, {:w => 0})
   end
 
   def test_connection_activity

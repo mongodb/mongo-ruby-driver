@@ -88,6 +88,18 @@ class ReplicaSetBasicTest < Test::Unit::TestCase
     client.close
   end
 
+  def test_write_commands_and_operations
+    seeds = @rs.repl_set_seeds
+    args = {:name => @rs.repl_set_name}
+    @client = MongoReplicaSetClient.new(seeds, args)
+    @coll = @client[TEST_DB]['test-write-commands-and-operations']
+    with_write_commands_and_operations(@client) do
+      @coll.remove
+      @coll.insert({:foo => "bar"})
+      assert_equal(1, @coll.count)
+    end
+  end
+
   context "Socket pools" do
     context "checking out writers" do
       setup do

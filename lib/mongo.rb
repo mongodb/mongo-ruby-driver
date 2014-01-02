@@ -56,6 +56,13 @@ module Mongo
     REPLY_SHARD_CONFIG_STALE   = 2 ** 2
     REPLY_AWAIT_CAPABLE        = 2 ** 3
   end
+
+  module ErrorCode # MongoDB Core Server src/mongo/base/error_codes.err
+    UNKNOWN_ERROR = 8
+    INVALID_BSON = 22
+    WRITE_CONCERN_FAILED = 64
+    MULTIPLE_ERRORS_OCCURRED = 65
+  end
 end
 
 require 'bson'

@@ -65,6 +65,21 @@ class CollectionTest < Test::Unit::TestCase
     doc
   end
 
+  def with_max_wire_version(client, wire_version) # does not support replica sets
+    if client.wire_version_feature?(wire_version)
+      client.class.class_eval(%Q{
+        alias :old_max_wire_version :max_wire_version
+        def max_wire_version
+          #{wire_version}
+        end
+      })
+      yield wire_version
+      client.class.class_eval(%Q{
+        alias :max_wire_version :old_max_wire_version
+      })
+    end
+  end
+
   def test_insert_batch_max_sizes
     @@max_size_exception_test.each do |wire_version, size, exc, regexp|
       with_max_wire_version(@@client, wire_version) do
@@ -1420,12 +1435,6 @@ end
       assert !@@test.find({:a => 999}, :max_scan => 500).next
       @@test.remove
     end
-  end
-
-  def test_use_write_command
-    @@db.connection.stubs(:wire_version_feature?).returns(true)
-    assert_true @@test.send(:use_write_command?, {:w => 1})
-    assert_false @@test.send(:use_write_command?, {:w => 0})
   end
 
   context "Grouping" do

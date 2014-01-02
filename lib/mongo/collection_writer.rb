@@ -64,7 +64,7 @@ module Mongo
               serialized_doc ||= BSON::BSON_CODER.serialize(doc, check_keys, true, max_serialize_size)
             rescue BSON::InvalidDocument, BSON::InvalidKeyName, BSON::InvalidStringEncoding => ex
               bulk_message = "Bulk write error - #{ex.message} - examine result for complete information"
-              ex = BulkWriteError.new(bulk_message, Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_CODE,
+              ex = BulkWriteError.new(bulk_message, Mongo::ErrorCode::INVALID_BSON,
                                       {:op_type => op_type, :serialize => doc, :ord => docs.first[:ord], :error => ex}) unless ordered.nil?
               error_docs << docs.shift
               errors << ex
@@ -105,7 +105,7 @@ module Mongo
         batch = docs.take(@write_batch_size)
         begin
           batch_to_send = batch #(op_type == :insert && !ordered.nil?) ? batch.collect{|doc|doc[:d]} : batch
-          if @collection.use_write_command?(write_concern) # TODO - polymorphic send_write including legacy insert
+          if @collection.db.connection.use_write_command?(write_concern) # TODO - polymorphic send_write including legacy insert
             response = send_bulk_write_command(op_type, batch_to_send, check_keys, opts)
           else
             response = send_write_operation(op_type, nil, batch_to_send, check_keys, opts, write_concern)
@@ -121,7 +121,7 @@ module Mongo
           end
           # error on a single document
           bulk_message = "Bulk write error - #{ex.message} - examine result for complete information"
-          ex = BulkWriteError.new(bulk_message, Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_CODE,
+          ex = BulkWriteError.new(bulk_message, Mongo::ErrorCode::INVALID_BSON,
                                   {:op_type => op_type, :batch => batch, :ord => batch.first[:ord], :opts => opts, :error => ex}) unless ordered.nil?
           error_docs << docs.shift
           next if collect_on_error
@@ -236,7 +236,7 @@ module Mongo
           exchanges << {:op_type => op_type, :batch => [doc], :opts => opts, :response => response}
         rescue BSON::InvalidDocument, BSON::InvalidKeyName, BSON::InvalidStringEncoding => ex
           bulk_message = "Bulk write error - #{ex.message} - examine result for complete information"
-          ex = BulkWriteError.new(bulk_message, Mongo::BulkWriteCollectionView::MULTIPLE_ERRORS_CODE,
+          ex = BulkWriteError.new(bulk_message, Mongo::ErrorCode::INVALID_BSON,
                                   {:op_type => op_type, :serialize => doc, :ord => doc[:ord], :error => ex})
           errors << ex
           break if options[:ordered]
