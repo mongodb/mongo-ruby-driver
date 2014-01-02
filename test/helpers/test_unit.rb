@@ -192,33 +192,32 @@ class Test::Unit::TestCase
     end
   end
 
-  def with_max_wire_version(client, wire_version)
-    if client.wire_version_feature?(wire_version)
+  def with_write_commands(client, &block)
+    wire_version = Mongo::MongoClient::BATCH_COMMANDS
+    if client.primary_wire_version_feature?(wire_version)
+      yield wire_version
+    end
+  end
+
+  def with_write_operations(client, &block)
+    wire_version = Mongo::MongoClient::RELEASE_2_4_AND_BEFORE
+    if client.primary_wire_version_feature?(wire_version)
       client.class.class_eval(%Q{
-        alias :old_max_wire_version :max_wire_version
-        def max_wire_version
-          #{wire_version}
+        alias :old_use_write_command? :use_write_command?
+        def use_write_command?(write_concern)
+          false
         end
       })
       yield wire_version
       client.class.class_eval(%Q{
-        alias :max_wire_version :old_max_wire_version
+        alias :use_write_command? :old_use_write_command?
       })
     end
   end
 
-  def with_write_commands(client, &block)
-    with_max_wire_version(client, Mongo::MongoClient::BATCH_COMMANDS, &block)
-  end
-
-  def with_write_operations(client, &block)
-    with_max_wire_version(client, Mongo::MongoClient::RELEASE_2_4_AND_BEFORE, &block)
-  end
-
   def with_write_commands_and_operations(client, &block)
-    [Mongo::MongoClient::BATCH_COMMANDS, Mongo::MongoClient::RELEASE_2_4_AND_BEFORE].each do |wire_version|
-      with_max_wire_version(client, wire_version, &block)
-    end
+    with_write_commands(client, &block)
+    with_write_operations(client, &block)
   end
 
 end

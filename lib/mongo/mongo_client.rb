@@ -486,8 +486,12 @@ module Mongo
       min_wire_version <= feature && feature <= max_wire_version
     end
 
+    def primary_wire_version_feature?(feature)
+      min_wire_version <= feature && feature <= max_wire_version
+    end
+
     def use_write_command?(write_concern)
-      write_concern[:w] != 0 && wire_version_feature?(Mongo::MongoClient::BATCH_COMMANDS)
+      write_concern[:w] != 0 && primary_wire_version_feature?(Mongo::MongoClient::BATCH_COMMANDS)
     end
 
     # Checkout a socket for reading (i.e., a secondary node).

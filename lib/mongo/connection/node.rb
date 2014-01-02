@@ -189,6 +189,10 @@ module Mongo
       @min_wire_version || 0
     end
 
+    def wire_version_feature?(feature)
+      min_wire_version <= feature && feature <= max_wire_version
+    end
+
     protected
 
     # Ensure that this node is a healthy member of a replica set.

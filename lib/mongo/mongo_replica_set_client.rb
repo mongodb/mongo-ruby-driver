@@ -459,6 +459,10 @@ module Mongo
       0
     end
 
+    def primary_wire_version_feature?(feature)
+      local_manager && local_manager.primary_pool && local_manager.primary_pool.node.wire_version_feature?(feature)
+    end
+
     private
 
     # Parse option hash
