@@ -82,7 +82,7 @@ class ReplicaSetClientTest < Test::Unit::TestCase
 
     primary = Mongo::MongoClient.new(*@client.primary)
     assert_raise Mongo::ConnectionFailure do
-      primary['admin'].command(step_down_command)
+      perform_step_down(primary)
     end
     assert @client.connected?
 
@@ -114,7 +114,7 @@ class ReplicaSetClientTest < Test::Unit::TestCase
 
     primary = Mongo::MongoClient.new(*@client.primary)
     assert_raise Mongo::ConnectionFailure do
-      primary['admin'].command(step_down_command)
+      perform_step_down(primary)
     end
 
     rescue_connection_failure do
@@ -141,7 +141,7 @@ class ReplicaSetClientTest < Test::Unit::TestCase
   #   old_primary_conn = Mongo::MongoClient.new(*old_primary)
 
   #   assert_raise Mongo::ConnectionFailure do
-  #     old_primary_conn['admin'].command(step_down_command)
+  #     perform_step_down(old_primary_conn)
   #   end
 
   #   # Wait for new primary

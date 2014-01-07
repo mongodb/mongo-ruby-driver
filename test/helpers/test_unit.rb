@@ -131,10 +131,17 @@ class Test::Unit::TestCase
     $1
   end
 
-  def step_down_command
-    step_down_command = BSON::OrderedHash.new
-    step_down_command[:replSetStepDown] = 30
-    step_down_command
+  def perform_step_down(member)
+    start   = Time.now
+    timeout = 20 # seconds
+    begin
+      step_down_command = BSON::OrderedHash.new
+      step_down_command[:replSetStepDown] = 30
+      member['admin'].command(step_down_command)
+    rescue Mongo::OperationFailure => e
+      retry unless (Time.now - start) > timeout
+      raise e
+    end
   end
 
   def new_mock_socket(host='localhost', port=27017)
