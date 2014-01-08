@@ -283,7 +283,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       @bulk.insert({:x => 4})
 
       # Execute the bulk operation, with an optional writeConcern overwriting the default w:1
-      write_concern = {:w => 1} #{:w => 1. :j => 1} #nojournal for tests
+      write_concern = {:w => 1} #{:w => 1, :j => 1} #nojournal for tests
       #@bulk.execute(write_concern)
     end
 
@@ -304,7 +304,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       with_write_commands_and_operations(@db.connection) do |wire_version|
         @collection.remove
         big_example(@bulk)
-        write_concern = {:w => 1} #{:w => 1. :j => 1} #nojournal for tests
+        write_concern = {:w => 1} #{:w => 1, :j => 1} #nojournal for tests
         result = @bulk.execute(write_concern)
         assert_equal_json(
             {
@@ -343,7 +343,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         @collection.remove
         @bulk = @collection.initialize_unordered_bulk_op
         big_example(@bulk)
-        write_concern = {:w => 1} #{:w => 1. :j => 1} #nojournal for tests
+        write_concern = {:w => 1} #{:w => 1, :j => 1} #nojournal for tests
         result = @bulk.execute(write_concern) # unordered varies, don't use assert_equal_json
         assert_true(result["n"] > 0, "wire_version:#{wire_version}")
         assert_false(@collection.find.to_a.empty?, "wire_version:#{wire_version}")
