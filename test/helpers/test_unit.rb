@@ -176,7 +176,7 @@ class Test::Unit::TestCase
     end
   end
 
-  def with_forced_timeout(client)
+  def with_forced_timeout(client, &block)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['argv']
     if cmd_line_args.include?('enableTestCommands=1') && client.server_version >= "2.5.3"
       begin
@@ -185,7 +185,7 @@ class Test::Unit::TestCase
         fail_point_cmd[:configureFailPoint] = 'maxTimeAlwaysTimeOut'
         fail_point_cmd[:mode] = 'alwaysOn'
         client['admin'].command(fail_point_cmd)
-        yield if block_given?
+        yield
         fail_point_cmd[:mode] = 'off'
         client['admin'].command(fail_point_cmd)
       end
