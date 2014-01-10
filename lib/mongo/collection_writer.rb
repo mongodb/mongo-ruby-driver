@@ -28,7 +28,7 @@ module Mongo
       :update => :updates,
       :delete => :deletes
     }
-    MAX_WRITE_BATCH_SIZE     = 10_000
+    MAX_WRITE_BATCH_SIZE     = 1000
 
     def initialize(collection)
       @collection = collection
