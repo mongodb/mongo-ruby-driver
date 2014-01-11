@@ -528,7 +528,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         assert_equal(0, result['nUpdated'], "wire_version:#{wire_version}")
         writeErrors = result['writeErrors']
         assert_equal(2, writeErrors.first['index'], "wire_version:#{wire_version}")
-        assert_equal(11000, writeErrors.first['code'], "wire_version:#{wire_version}")
+        assert(11000 == writeErrors.first['code'] || 11001 == writeErrors.first['code'], "wire_version:#{wire_version}")
       end
     end
 
