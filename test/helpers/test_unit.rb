@@ -176,6 +176,37 @@ class Test::Unit::TestCase
     end
   end
 
+  def match_document(expected, actual) # special cases for Regexp match, BSON::ObjectId, Range
+    if expected.is_a?(Hash) && actual.is_a?(Hash)
+      expected_keys = expected.keys.sort
+      actual_keys = actual.keys.sort
+      raise "Hash keys expected:#{expected_keys.inspect} actual:#{actual_keys.inspect}" if expected_keys != actual_keys
+      expected_keys.each{|key| match_document(expected[key], actual[key])}
+    elsif expected.is_a?(Array) && actual.is_a?(Array)
+      raise "Array size expected:#{expected.size} actual:#{actual.size}" if expected.size != actual.size
+      (0...expected.size).each{|i| match_document(expected[i], actual[i])}
+    elsif expected.is_a?(Regexp) && actual.is_a?(String)
+      raise "Regexp expected:#{expected.inspect} actual:#{actual.inspect}" if expected !~ actual
+    elsif expected.is_a?(BSON::ObjectId) && actual.is_a?(BSON::ObjectId)
+      # match type but not value
+    elsif expected.is_a?(Range)
+      raise "Range expected:#{expected.inspect} actual:#{actual.inspect}" if !expected.include?(actual)
+    else
+      raise "expected:#{expected.inspect} actual:#{actual.inspect}" if expected != actual
+    end
+    true
+  end
+
+  def assert_match_document(expected, actual, message = '')
+    match = begin
+      match_document(expected, actual)
+    rescue => ex
+      message = ex.message + ' - ' + message
+      false
+    end
+    assert(match, message)
+  end
+
   def with_forced_timeout(client)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['argv']
     if cmd_line_args.include?('enableTestCommands=1') && client.server_version >= "2.5.3"

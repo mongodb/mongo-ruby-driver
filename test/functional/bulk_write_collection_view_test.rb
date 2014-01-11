@@ -389,14 +389,22 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         ex = assert_raise BulkWriteError do
           @bulk.execute
         end
-        result = ex.result # writeErrors errmsg varies, don't use assert_bulk_exception
-        assert_equal(1, result['ok'], "wire_version:#{wire_version}")
-        assert_equal(1, result['n'], "wire_version:#{wire_version}")
-        assert_equal(1, result['nInserted'], "wire_version:#{wire_version}")
-        assert_equal(0, result['nUpdated'], "wire_version:#{wire_version}")
-        writeErrors = result['writeErrors']
-        assert_equal(2, writeErrors.first['index'], "wire_version:#{wire_version}")
-        assert_equal(11000, writeErrors.first['code'], "wire_version:#{wire_version}")
+        result = ex.result
+        assert_match_document(
+            {
+                "ok" => 1,
+                "n" => 1,
+                "writeErrors" =>
+                    [{
+                      "index" => 2,
+                      "code" => 11000,
+                      "errmsg" => /duplicate key error/
+                    }],
+                "code" => 65,
+                "errmsg" => "batch item errors occurred",
+                "nInserted" => 1,
+                "nUpdated" => 0
+            }, result, "wire_version:#{wire_version}")
       end
     end
 
@@ -428,11 +436,22 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         ex = assert_raise BulkWriteError do
           @bulk.execute
         end
-        result = ex.result # errmsg varies, don't use assert_bulk_exception
-        write_error = result["writeErrors"].first
-        assert_equal(2, write_error["index"])
-        assert_equal(Mongo::ErrorCode::INVALID_BSON, write_error["code"])
-        assert_match(/too large/, write_error['errmsg'], "wire_version:#{wire_version}")
+        result = ex.result
+        assert_match_document(
+            {
+                "ok" => 1,
+                "n" => 1,
+                "writeErrors" =>
+                    [{
+                         "index" => 2,
+                         "code" => 22,
+                         "errmsg" => /too large/
+                     }],
+                "code" => 65,
+                "errmsg" => "batch item errors occurred",
+                "nInserted" => 1,
+                "nUpdated" => 0
+            }, result, "wire_version:#{wire_version}")
       end
     end
 
@@ -521,14 +540,22 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         ex = assert_raise BulkWriteError do
           bulk.execute
         end
-        result = ex.result # writeErrors errmsg varies, don't use assert_bulk_exception
-        assert_equal(1, result['ok'], "wire_version:#{wire_version}")
-        assert_equal(2, result['n'], "wire_version:#{wire_version}")
-        assert_equal(2, result['nInserted'], "wire_version:#{wire_version}")
-        assert_equal(0, result['nUpdated'], "wire_version:#{wire_version}")
-        writeErrors = result['writeErrors']
-        assert_equal(2, writeErrors.first['index'], "wire_version:#{wire_version}")
-        assert(11000 == writeErrors.first['code'] || 11001 == writeErrors.first['code'], "wire_version:#{wire_version}")
+        result = ex.result
+        assert_match_document(
+            {
+                "ok" => 1,
+                "n" => 2,
+                "writeErrors" =>
+                    [{
+                         "index" => 2,
+                         "code" => (11000..11001),
+                         "errmsg" => /duplicate key error/
+                     }],
+                "code" => 65,
+                "errmsg" => "batch item errors occurred",
+                "nInserted" => 2,
+                "nUpdated" => 0
+            }, result, "wire_version:#{wire_version}")
       end
     end
 
@@ -543,14 +570,79 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         ex = assert_raise BulkWriteError do
           bulk.execute({:w => 5, :wtimeout => 1})
         end
-        result = ex.result # writeErrors errmsg varies, don't use assert_bulk_exception
-        assert_equal(1, result['ok'], "wire_version:#{wire_version}")
-        assert_equal(2, result['n'], "wire_version:#{wire_version}")
-        assert_equal(1, result['nInserted'], "wire_version:#{wire_version}")
-        assert_equal(0, result['nUpdated'], "wire_version:#{wire_version}")
-        assert_equal(1, result['nUpserted'], "wire_version:#{wire_version}")
-        assert(result["writeConcernError"].size >= 2, "wire_version:#{wire_version}")
-        assert_equal(2, @collection.size, "wire_version:#{wire_version}")
+        result = ex.result
+        write_concern_error_size = (@@version >= '2.5.5') ? 3 : 2
+        assert_match_document(
+            [{
+                "ok" => 1,
+                "n" => 2,
+                "writeErrors" =>
+                    [{
+                         "index" => 2,
+                         "code" => 11000,
+                         "errmsg" => /duplicate key error/
+                     }],
+                "code" => 65,
+                "errmsg" => "batch item errors occurred",
+                "nInserted" => 1,
+                "writeConcernError" =>
+                    [{
+                         "errmsg" => /no replication/,
+                         "index" => 0
+                     },
+                     {
+                         "errmsg" => /no replication/,
+                         "index" => 1
+                     },
+                     {
+                         "errmsg" => /no replication/,
+                         "index" => 2
+                     }][0...write_concern_error_size],
+                "upserted" =>
+                    [{
+                         "index" => 1,
+                         "_id" => BSON::ObjectId('52d0ca4ad0045c85f70ecf6e')
+                     }],
+                "nUpserted" => 1,
+                "nUpdated" => 0
+            },
+            nil,
+            {
+                "ok" => 1,
+                "n" => 2,
+                "writeErrors" =>
+                    [{
+                         "index" => 2,
+                         "code" => 11000,
+                         "errmsg" => /duplicate key error/
+                     }],
+                "code" => 65,
+                "errmsg" => "batch item errors occurred",
+                "nInserted" => 1,
+                "writeConcernError" =>
+                    [{
+                         "code" => 75,
+                         "errmsg" => /no replication/,
+                         "index" => 0
+                     },
+                     {
+                         "code" => 75,
+                         "errmsg" => /no replication/,
+                         "index" => 1
+                     },
+                     {
+                         "code" => 75,
+                         "errmsg" => /no replication/,
+                         "index" => 2
+                     }][0...write_concern_error_size],
+                "upserted" =>
+                    [{
+                         "index" => 1,
+                         "_id" => BSON::ObjectId('52d0ca4ad0045c85f70ecf6e')
+                     }],
+                "nUpserted" => 1,
+                "nUpdated" => 0
+            }][wire_version], result, "wire_version:#{wire_version}")
       end
     end
 
@@ -569,7 +661,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         assert_equal(1, result['ok'], "wire_version:#{wire_version}")
         assert_equal(2, result['n'], "wire_version:#{wire_version}")
         err_details = result['writeErrors']
-        assert_equal([2, nil, 1][wire_version], err_details.first['index'], "wire_version:#{wire_version}")
+        assert_equal([2,nil,1][wire_version], err_details.first['index'], "wire_version:#{wire_version}")
         assert_match(/duplicate key error/, err_details.first['errmsg'], "wire_version:#{wire_version}")
       end
     end
@@ -585,7 +677,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         ex = assert_raise BulkWriteError do
           bulk.execute({:w => 5, :wtimeout => 1})
         end
-        result = ex.result # unordered and writeConcernError varies, don't use assert_bulk_exception
+        result = ex.result # unordered varies, don't use assert_bulk_exception
         assert_equal(1, result["ok"], "wire_version:#{wire_version}")
         assert_equal(2, result["n"], "wire_version:#{wire_version}")
         assert(result["nInserted"] >= 1, "wire_version:#{wire_version}")
@@ -609,8 +701,22 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         ex = assert_raise BulkWriteError do
           bulk.execute({:w => 1})
         end
-        result = ex.result # writeConcernError varies, don't use assert_bulk_exception
-        assert_equal(2, result["writeErrors"].first["index"],  "wire_version:#{wire_version}")
+        result = ex.result
+        assert_match_document(
+            {
+                "ok" => 1,
+                "n" => 2,
+                "writeErrors" =>
+                    [{
+                         "index" => 2,
+                         "code" => (11000..11001),
+                         "errmsg" => /duplicate key error/
+                     }],
+                "code" => 65,
+                "errmsg" => "batch item errors occurred",
+                "nInserted" => 2,
+                "nUpdated" => 0
+            }, result, "wire_version:#{wire_version}")
       end
     end
 
