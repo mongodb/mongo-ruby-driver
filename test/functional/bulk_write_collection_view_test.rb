@@ -313,7 +313,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "nInserted" => 6,
                 "nUpdated" => 5,
                 "nUpserted" => 1,
-                "nDeleted" => 2,
+                "nRemoved" => 2,
                 "upserted" => [
                     {
                         "index" => 10,
@@ -484,7 +484,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "n" => 6,
                 "nInserted" => 4,
                 "nUpdated" => 1,
-                "nDeleted" => 1
+                "nRemoved" => 1
             }, result, {}, "wire_version:#{wire_version}")
         # for write commands there will be in sequence insert, update, remove, insert
       end

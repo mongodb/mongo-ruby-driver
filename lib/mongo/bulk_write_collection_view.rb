@@ -273,7 +273,7 @@ module Mongo
           tally(result, "nUpserted", n_upserted) if n_upserted > 0
           tally(result, "nUpdated", n - n_upserted) # "nDocsModified"
         elsif op_type == :delete
-          tally(result, "nDeleted", n)
+          tally(result, "nRemoved", n)
         end
         result["n"] += n
         if (writeErrors = response["writeErrors"] || response["errDetails"]) # assignment
