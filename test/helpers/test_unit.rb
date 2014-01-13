@@ -191,6 +191,8 @@ class Test::Unit::TestCase
       # match type but not value
     elsif expected.is_a?(Range)
       raise "Range expected:#{expected.inspect} actual:#{actual.inspect}" if !expected.include?(actual)
+    elsif expected.is_a?(Set)
+      raise "Set expected:#{expected.inspect} actual:#{actual.inspect}" if !expected.include?(actual)
     else
       raise "expected:#{expected.inspect} actual:#{actual.inspect}" if expected != actual
     end

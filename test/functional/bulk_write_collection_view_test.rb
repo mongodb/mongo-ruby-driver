@@ -59,6 +59,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
 
   DATABASE_NAME = 'bulk_write_collection_view_test'
   COLLECTION_NAME = 'test'
+  DUPLICATE_KEY_ERROR_CODE_SET = [11000, 11001, 12582, 16460].to_set
 
   def assert_bulk_op_pushed(expected, view)
     assert_equal expected, view.ops.last
@@ -548,7 +549,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "writeErrors" =>
                     [{
                          "index" => 2,
-                         "code" => (11000..11001),
+                         "code" => DUPLICATE_KEY_ERROR_CODE_SET,
                          "errmsg" => /duplicate key error/
                      }],
                 "code" => 65,
@@ -709,7 +710,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "writeErrors" =>
                     [{
                          "index" => 2,
-                         "code" => (11000..11001),
+                         "code" => DUPLICATE_KEY_ERROR_CODE_SET,
                          "errmsg" => /duplicate key error/
                      }],
                 "code" => 65,
