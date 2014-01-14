@@ -289,6 +289,43 @@ class ReplicaSetClientTest < Test::Unit::TestCase
     end
   end
 
+  def test_ipv6
+    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds)
+    with_ipv6_enabled(@client) do
+      assert MongoReplicaSetClient.new(["[::1]:#{@rs.replicas[0].port}"])
+    end
+  end
+
+  def test_ipv6_with_uri
+    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds)
+    with_ipv6_enabled(@client) do
+      uri = "mongodb://[::1]:#{@rs.replicas[0].port},[::1]:#{@rs.replicas[1].port}"
+      with_preserved_env_uri(uri) do
+        assert MongoReplicaSetClient.new
+      end
+    end
+  end
+
+  def test_ipv6_with_uri_opts
+    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds)
+    with_ipv6_enabled(@client) do
+      uri = "mongodb://[::1]:#{@rs.replicas[0].port},[::1]:#{@rs.replicas[1].port}/?safe=true;"
+      with_preserved_env_uri(uri) do
+        assert MongoReplicaSetClient.new
+      end
+    end
+  end
+
+  def test_ipv6_with_different_formats
+    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds)
+    with_ipv6_enabled(@client) do
+      uri = "mongodb://[::1]:#{@rs.replicas[0].port},localhost:#{@rs.replicas[1].port}"
+      with_preserved_env_uri(uri) do
+        assert MongoReplicaSetClient.new
+      end
+    end
+  end
+
   def test_find_and_modify_with_secondary_read_preference
     @client = MongoReplicaSetClient.new @rs.repl_set_seeds
     collection = @client[TEST_DB].collection('test', :read => :secondary)

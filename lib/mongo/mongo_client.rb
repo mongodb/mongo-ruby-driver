@@ -651,6 +651,7 @@ module Mongo
         opts.merge!(parser.connection_options)
         [parser.host, parser.port]
       else
+        host = host[1...-1] if host && host[0,1] == '[' # ipv6 support
         [host || DEFAULT_HOST, port || DEFAULT_PORT]
       end
     end

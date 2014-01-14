@@ -48,8 +48,13 @@ module Mongo
       pairs = [ seeds ] if pairs.last.is_a?(Fixnum)
       pairs = pairs.collect do |hostport|
         if hostport.is_a?(String)
-          host, port = hostport.split(':')
-          [ host, port && port.to_i || MongoClient::DEFAULT_PORT ]
+          if hostport[0,1] == '['
+            host, port = hostport.split(']:') << MongoClient::DEFAULT_PORT
+            host = host.end_with?(']') ? host[1...-1] : host[1..-1]
+          else
+            host, port = hostport.split(':') << MongoClient::DEFAULT_PORT
+          end
+          [ host, port.to_i ]
         else
           hostport
         end

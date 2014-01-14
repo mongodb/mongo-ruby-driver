@@ -50,6 +50,30 @@ class ClientTest < Test::Unit::TestCase
     assert ping['ok']
   end
 
+  def test_ipv6
+    with_ipv6_enabled(@client) do
+      assert client = MongoClient.new('[::1]')
+    end
+  end
+
+  def test_ipv6_uri_no_opts
+    with_ipv6_enabled(@client) do
+      uri = 'mongodb://[::1]:27017'
+      with_preserved_env_uri(uri) do
+        assert MongoClient.new
+      end
+    end
+  end
+
+  def test_ipv6_uri_opts
+    with_ipv6_enabled(@client) do
+      uri = 'mongodb://[::1]:27017/?slaveOk=true'
+      with_preserved_env_uri(uri) do
+        assert MongoClient.new
+      end
+    end
+  end
+
   def test_connection_uri
     con = MongoClient.from_uri("mongodb://#{host_port}")
     assert_equal mongo_host, con.primary_pool.host

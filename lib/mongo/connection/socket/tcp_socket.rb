@@ -27,24 +27,36 @@ module Mongo
       @pid             = Process.pid
       @auths           = Set.new
 
-      # TODO: Prefer ipv6 if server is ipv6 enabled
-      @address = Socket.getaddrinfo(host, nil, Socket::AF_INET).first[3]
-      @port    = port
-
-      @socket_address = Socket.pack_sockaddr_in(@port, @address)
-      @socket = Socket.new(Socket::AF_INET, Socket::SOCK_STREAM, 0)
-      @socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
-
-      connect
+      @socket = handle_connect(host, port)
     end
 
-    def connect
+    def handle_connect(host, port)
+      error = nil
+      # Following python's lead (see PYTHON-356)
+      family = host == 'localhost' ? Socket::AF_INET : Socket::AF_UNSPEC
+      addr_info = Socket.getaddrinfo(host, nil, family, Socket::SOCK_STREAM)
+      addr_info.each do |info|
+        begin
+          sock = Socket.new(info[4], Socket::SOCK_STREAM, 0)
+          sock.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+          socket_address = Socket.pack_sockaddr_in(port, info[3])
+          connect(sock, socket_address)
+          return sock
+        rescue IOError, SystemCallError => e
+          error = e
+          sock.close if sock
+        end
+      end
+      raise error
+    end
+
+    def connect(socket, socket_address)
       if @connect_timeout
         Timeout::timeout(@connect_timeout, ConnectionTimeoutError) do
-          @socket.connect(@socket_address)
+          socket.connect(socket_address)
         end
       else
-        @socket.connect(@socket_address)
+        socket.connect(socket_address)
       end
     end
 

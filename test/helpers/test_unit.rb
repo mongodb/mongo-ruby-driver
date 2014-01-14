@@ -239,6 +239,13 @@ class Test::Unit::TestCase
     end
   end
 
+  def with_ipv6_enabled(client, &block)
+    cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
+    if cmd_line_args.include?('ipv6')
+      yield
+    end
+  end
+
   def with_write_commands(client, &block)
     wire_version = Mongo::MongoClient::BATCH_COMMANDS
     if client.primary_wire_version_feature?(wire_version)
