@@ -63,66 +63,48 @@ class ClientTest < Test::Unit::TestCase
   end
 
   def test_env_mongodb_uri
-    begin
-      old_mongodb_uri = ENV['MONGODB_URI']
-      ENV['MONGODB_URI'] = "mongodb://#{host_port}"
+    with_preserved_env_uri do
       con = MongoClient.new
       assert_equal mongo_host, con.primary_pool.host
       assert_equal mongo_port, con.primary_pool.port
-    ensure
-      ENV['MONGODB_URI'] = old_mongodb_uri
     end
   end
 
   def test_from_uri_implicit_mongodb_uri
-    begin
-      old_mongodb_uri = ENV['MONGODB_URI']
-      ENV['MONGODB_URI'] = "mongodb://#{host_port}"
+    uri = "mongodb://#{host_port}"
+    with_preserved_env_uri(uri) do
       con = MongoClient.from_uri
       assert_equal mongo_host, con.primary_pool.host
       assert_equal mongo_port, con.primary_pool.port
-    ensure
-      ENV['MONGODB_URI'] = old_mongodb_uri
     end
   end
 
   def test_db_from_uri_exists_no_options
-    begin
-      db_name = "_database"
-
-      old_mongodb_uri = ENV['MONGODB_URI']
-      ENV['MONGODB_URI'] = "mongodb://#{host_port}/#{db_name}"
+    db_name = "_database"
+    uri = "mongodb://#{host_port}/#{db_name}"
+    with_preserved_env_uri(uri) do
       con = MongoClient.from_uri
       db = con.db
       assert_equal db.name, db_name
-    ensure
-      ENV['MONGODB_URI'] = old_mongodb_uri
     end
   end
 
   def test_db_from_uri_exists_options
-    begin
-      db_name = "_database"
-
-      old_mongodb_uri = ENV['MONGODB_URI']
-      ENV['MONGODB_URI'] = "mongodb://#{host_port}/#{db_name}?"
+    db_name = "_database"
+    uri = "mongodb://#{host_port}/#{db_name}?"
+    with_preserved_env_uri(uri) do
       con = MongoClient.from_uri
       db = con.db
       assert_equal db.name, db_name
-    ensure
-      ENV['MONGODB_URI'] = old_mongodb_uri
     end
   end
 
   def test_db_from_uri_exists_no_db_name
-    begin
-      old_mongodb_uri = ENV['MONGODB_URI']
-      ENV['MONGODB_URI'] = "mongodb://#{host_port}/"
+    uri = "mongodb://#{host_port}/"
+    with_preserved_env_uri(uri) do
       con = MongoClient.from_uri
       db = con.db
       assert_equal db.name, MongoClient::DEFAULT_DB_NAME
-    ensure
-      ENV['MONGODB_URI'] = old_mongodb_uri
     end
   end
 
