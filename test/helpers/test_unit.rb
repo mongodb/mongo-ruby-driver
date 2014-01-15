@@ -180,7 +180,7 @@ class Test::Unit::TestCase
     if expected.is_a?(Hash) && actual.is_a?(Hash)
       expected_keys = expected.keys.sort
       actual_keys = actual.keys.sort
-      raise "Hash keys expected:#{expected_keys.inspect} actual:#{actual_keys.inspect}" if expected_keys != actual_keys
+      #raise "Hash keys expected:#{expected_keys.inspect} actual:#{actual_keys.inspect}" if expected_keys != actual_keys
       expected_keys.each{|key| match_document(expected[key], actual[key])}
     elsif expected.is_a?(Array) && actual.is_a?(Array)
       raise "Array size expected:#{expected.size} actual:#{actual.size}" if expected.size != actual.size

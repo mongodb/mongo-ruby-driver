@@ -69,21 +69,12 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     assert_equal Mongo::BulkWriteCollectionView, view.class
   end
 
-  def clone_out_object_id(doc, merge = {})
-    # note: Ruby 1.8.7 doesn't support \h
-    JSON.parse(doc.merge(merge).to_json.gsub(/\"\$oid\": *\"[a-f0-9]{24}\"/, "\"$oid\":\"123456789012345678901234\""))
-  end
-
-  def assert_equal_json(expected, actual, merge = {}, message = '')
-    assert_equal(clone_out_object_id(expected, merge), clone_out_object_id(actual), message)
-  end
-
-  def assert_bulk_exception(result, merge = {}, message = '')
+  def assert_bulk_exception(expected, message = '')
     ex = assert_raise BulkWriteError, message do
       pp yield
     end
     assert_equal(Mongo::ErrorCode::MULTIPLE_ERRORS_OCCURRED, ex.error_code, message)
-    assert_equal_json(result, ex.result, merge, message)
+    assert_match_document(expected, ex.result, message)
   end
 
   def default_setup
@@ -307,13 +298,14 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         big_example(@bulk)
         write_concern = {:w => 1} #{:w => 1. :j => 1} #nojournal for tests
         result = @bulk.execute(write_concern)
-        assert_equal_json(
+        assert_match_document(
             {
                 "ok" => 1,
                 "n" => 14,
                 "nInserted" => 6,
                 "nUpdated" => 5,
                 "nUpserted" => 1,
+                "nModified" => 5,
                 "nRemoved" => 2,
                 "upserted" => [
                     {
@@ -321,7 +313,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                         "_id" => BSON::ObjectId('52a1e4a4bb67fbc77e26a340')
                     }
                 ]
-            }, result, {}, "wire_version:#{wire_version}")
+            }, result, "wire_version:#{wire_version}")
         assert_false(@collection.find.to_a.empty?, "wire_version:#{wire_version}")
         assert_equal [{"x" => 3}, {"a" => 1, "x" => 2}, {"a" => 2, "x" => 4}, {"x" => 3}, {"x" => 4}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }
       end
@@ -345,7 +337,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         @bulk = @collection.initialize_unordered_bulk_op
         big_example(@bulk)
         write_concern = {:w => 1} #{:w => 1. :j => 1} #nojournal for tests
-        result = @bulk.execute(write_concern) # unordered varies, don't use assert_equal_json
+        result = @bulk.execute(write_concern) # unordered varies, don't use assert_match_document
         assert_true(result["n"] > 0, "wire_version:#{wire_version}")
         assert_false(@collection.find.to_a.empty?, "wire_version:#{wire_version}")
       end
@@ -357,7 +349,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         @bulk = @collection.initialize_unordered_bulk_op
         big_example(@bulk)
         write_concern = {:w => 0}
-        result = @bulk.execute(write_concern) # unordered varies, don't use assert_equal_json
+        result = @bulk.execute(write_concern) # unordered varies, don't use assert_match_document
         assert_equal(true, result, "wire_version:#{wire_version}")
         assert_false(@collection.find.to_a.empty?, "wire_version:#{wire_version}")
       end
@@ -376,7 +368,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         bulk.insert({:_id => 3, :a => 3})
         bulk.find({:_id => 3, :a => 3}).update({"$inc" => {:x => 3}})
         bulk.find({:_id => 3, :a => 3}).remove
-        result = bulk.execute # unordered varies, don't use assert_equal_json
+        result = bulk.execute # unordered varies, don't use assert_match_document
       end
     end
 
@@ -404,7 +396,8 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "code" => 65,
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 1,
-                "nUpdated" => 0
+                "nUpdated" => 0,
+                "nModified" => 0
             }, result, "wire_version:#{wire_version}")
       end
     end
@@ -451,7 +444,8 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "code" => 65,
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 1,
-                "nUpdated" => 0
+                "nUpdated" => 0,
+                "nModified" => 0
             }, result, "wire_version:#{wire_version}")
       end
     end
@@ -498,14 +492,15 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         @bulk.find({:a => 1}).remove_one
         @bulk.insert({:a => 5})
         result = @bulk.execute({:w => 1})
-        assert_equal_json(
+        assert_match_document(
             {
                 "ok" => 1,
                 "n" => 6,
                 "nInserted" => 4,
                 "nUpdated" => 1,
-                "nRemoved" => 1
-            }, result, {}, "wire_version:#{wire_version}")
+                "nModified" => 1,
+                "nRemoved" => 1,
+            }, result, "wire_version:#{wire_version}")
         # for write commands there will be in sequence insert, update, remove, insert
       end
     end
@@ -555,7 +550,8 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "code" => 65,
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 2,
-                "nUpdated" => 0
+                "nUpdated" => 0,
+                "nModified" => 0
             }, result, "wire_version:#{wire_version}")
       end
     end
@@ -642,7 +638,8 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                          "_id" => BSON::ObjectId('52d0ca4ad0045c85f70ecf6e')
                      }],
                 "nUpserted" => 1,
-                "nUpdated" => 0
+                "nUpdated" => 0,
+                "nModified" => 0
             }][wire_version], result, "wire_version:#{wire_version}")
       end
     end
@@ -716,7 +713,8 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "code" => 65,
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 2,
-                "nUpdated" => 0
+                "nUpdated" => 0,
+                "nModified" => 0
             }, result, "wire_version:#{wire_version}")
       end
     end
@@ -728,16 +726,17 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         bulk = @collection.initialize_ordered_bulk_op
         bulk.find({:a => 1}).upsert.update({'$set' => {:a => 2}})
         result = bulk.execute
-        assert_equal_json(
+        assert_match_document(
             {
                 "ok" => 1,
                 "n" => 1,
                 "nUpdated" => 0,
                 "nUpserted" => 1,
+                "nModified" => 0,
                 "upserted" => [
                     {"_id" => BSON::ObjectId('52a16767bb67fbc77e26a310'), "index" => 0}
                 ]
-            }, result, {}, "wire_version:#{wire_version}")
+            }, result, "wire_version:#{wire_version}")
       end
     end
 
@@ -749,17 +748,18 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         bulk.find({:a => 1}).upsert.update({'$set' => {:a => 2}})
         bulk.find({:a => 3}).upsert.update({'$set' => {:a => 4}})
         result = bulk.execute
-        assert_equal_json(
+        assert_match_document(
             {
                 "ok" => 1,
                 "n" => 2,
                 "nUpdated" => 0,
                 "nUpserted" => 2,
+                "nModified" => 0,
                 "upserted" => [
                     {"index" => 0, "_id" => BSON::ObjectId('52a1e37cbb67fbc77e26a338')},
                     {"index" => 1, "_id" => BSON::ObjectId('52a1e37cbb67fbc77e26a339')}
                 ]
-            }, result, {}, "wire_version:#{wire_version}")
+            }, result, "wire_version:#{wire_version}")
       end
     end
 
