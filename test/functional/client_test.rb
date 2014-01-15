@@ -63,7 +63,8 @@ class ClientTest < Test::Unit::TestCase
   end
 
   def test_env_mongodb_uri
-    with_preserved_env_uri do
+    uri = "mongodb://#{host_port}"
+    with_preserved_env_uri(uri) do
       con = MongoClient.new
       assert_equal mongo_host, con.primary_pool.host
       assert_equal mongo_port, con.primary_pool.port
