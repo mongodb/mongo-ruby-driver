@@ -131,10 +131,17 @@ class Test::Unit::TestCase
     $1
   end
 
-  def step_down_command
-    step_down_command = BSON::OrderedHash.new
-    step_down_command[:replSetStepDown] = 30
-    step_down_command
+  def perform_step_down(member)
+    start   = Time.now
+    timeout = 20 # seconds
+    begin
+      step_down_command = BSON::OrderedHash.new
+      step_down_command[:replSetStepDown] = 30
+      member['admin'].command(step_down_command)
+    rescue Mongo::OperationFailure => e
+      retry unless (Time.now - start) > timeout
+      raise e
+    end
   end
 
   def new_mock_socket(host='localhost', port=27017)
@@ -209,7 +216,7 @@ class Test::Unit::TestCase
     assert(match, message)
   end
 
-  def with_forced_timeout(client)
+  def with_forced_timeout(client, &block)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['argv']
     if cmd_line_args.include?('enableTestCommands=1') && client.server_version >= "2.5.3"
       begin
@@ -218,10 +225,17 @@ class Test::Unit::TestCase
         fail_point_cmd[:configureFailPoint] = 'maxTimeAlwaysTimeOut'
         fail_point_cmd[:mode] = 'alwaysOn'
         client['admin'].command(fail_point_cmd)
-        yield if block_given?
+        yield
         fail_point_cmd[:mode] = 'off'
         client['admin'].command(fail_point_cmd)
       end
+    end
+  end
+
+  def with_default_journaling(client, &block)
+    cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
+    unless client.server_version < "2.0" || cmd_line_args.include?('nojournal')
+      yield
     end
   end
 

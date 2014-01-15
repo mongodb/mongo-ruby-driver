@@ -601,8 +601,8 @@ class CollectionTest < Test::Unit::TestCase
   #  end
   #end
 
-  if @@version >= "2.0.0"
-    def test_safe_mode_with_journal_commit_option
+  def test_safe_mode_with_journal_commit_option
+    with_default_journaling(@@client) do
       @@test.insert({:foo => 1}, :j => true)
       @@test.update({:foo => 1}, {:foo => 2}, :j => true)
       @@test.remove({:foo => 2}, :j => true)
