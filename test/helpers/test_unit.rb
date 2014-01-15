@@ -213,6 +213,16 @@ class Test::Unit::TestCase
     end
   end
 
+  def with_preserved_env_uri(new_uri=nil, &block)
+    old_mongodb_uri = ENV['MONGODB_URI']
+    begin
+      ENV['MONGODB_URI'] = new_uri
+      yield
+    ensure
+      ENV['MONGODB_URI'] = old_mongodb_uri
+    end
+  end
+
   def with_write_operations(client, &block)
     wire_version = Mongo::MongoClient::RELEASE_2_4_AND_BEFORE
     if client.primary_wire_version_feature?(wire_version)

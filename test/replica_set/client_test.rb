@@ -217,29 +217,33 @@ class ReplicaSetClientTest < Test::Unit::TestCase
   end
 
   def test_connect_with_connection_string_in_env_var
-    ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}"
-    @client = MongoReplicaSetClient.new
-    assert !@client.nil?
-    assert_equal 2, @client.seeds.length
-    assert_equal @rs.replicas[0].host, @client.seeds[0][0]
-    assert_equal @rs.replicas[1].host, @client.seeds[1][0]
-    assert_equal @rs.replicas[0].port, @client.seeds[0][1]
-    assert_equal @rs.replicas[1].port, @client.seeds[1][1]
-    assert_equal @rs.repl_set_name, @client.replica_set_name
-    assert @client.connected?
+    uri = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}"
+    with_preserved_env_uri(uri) do
+      @client = MongoReplicaSetClient.new
+      assert !@client.nil?
+      assert_equal 2, @client.seeds.length
+      assert_equal @rs.replicas[0].host, @client.seeds[0][0]
+      assert_equal @rs.replicas[1].host, @client.seeds[1][0]
+      assert_equal @rs.replicas[0].port, @client.seeds[0][1]
+      assert_equal @rs.replicas[1].port, @client.seeds[1][1]
+      assert_equal @rs.repl_set_name, @client.replica_set_name
+      assert @client.connected?
+    end
   end
 
   def test_connect_with_connection_string_in_implicit_mongodb_uri
-    ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}"
-    @client = MongoClient.from_uri
-    assert !@client.nil?
-    assert_equal 2, @client.seeds.length
-    assert_equal @rs.replicas[0].host, @client.seeds[0][0]
-    assert_equal @rs.replicas[1].host, @client.seeds[1][0]
-    assert_equal @rs.replicas[0].port, @client.seeds[0][1]
-    assert_equal @rs.replicas[1].port, @client.seeds[1][1]
-    assert_equal @rs.repl_set_name, @client.replica_set_name
-    assert @client.connected?
+    uri = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}"
+    with_preserved_env_uri(uri) do
+      @client = MongoClient.from_uri
+      assert !@client.nil?
+      assert_equal 2, @client.seeds.length
+      assert_equal @rs.replicas[0].host, @client.seeds[0][0]
+      assert_equal @rs.replicas[1].host, @client.seeds[1][0]
+      assert_equal @rs.replicas[0].port, @client.seeds[0][1]
+      assert_equal @rs.replicas[1].port, @client.seeds[1][1]
+      assert_equal @rs.repl_set_name, @client.replica_set_name
+      assert @client.connected?
+    end
   end
 
   def test_connect_with_new_seed_format
@@ -264,25 +268,29 @@ class ReplicaSetClientTest < Test::Unit::TestCase
   end
 
   def test_connect_with_full_connection_string_in_env_var
-    ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name};w=2;fsync=true;slaveok=true"
-    @client = MongoReplicaSetClient.new
-    assert !@client.nil?
-    assert @client.connected?
-    assert_equal 2, @client.write_concern[:w]
-    assert @client.write_concern[:fsync]
-    assert @client.read_pool
+    uri = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name};w=2;fsync=true;slaveok=true"
+    with_preserved_env_uri(uri) do
+      @client = MongoReplicaSetClient.new
+      assert !@client.nil?
+      assert @client.connected?
+      assert_equal 2, @client.write_concern[:w]
+      assert @client.write_concern[:fsync]
+      assert @client.read_pool
+    end
   end
 
   def test_connect_options_override_env_var
-    ENV['MONGODB_URI'] = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name};w=2;fsync=true;slaveok=true"
-    @client = MongoReplicaSetClient.new({:w => 0})
-    assert !@client.nil?
-    assert @client.connected?
-    assert_equal 0, @client.write_concern[:w]
+    uri = "mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name};w=2;fsync=true;slaveok=true"
+    with_preserved_env_uri(uri) do
+      @client = MongoReplicaSetClient.new({:w => 0})
+      assert !@client.nil?
+      assert @client.connected?
+      assert_equal 0, @client.write_concern[:w]
+    end
   end
 
   def test_find_and_modify_with_secondary_read_preference
-    @client = MongoReplicaSetClient.new
+    @client = MongoReplicaSetClient.new @rs.repl_set_seeds
     collection = @client[TEST_DB].collection('test', :read => :secondary)
     collection << { :a => 1, :processed => false}
 
