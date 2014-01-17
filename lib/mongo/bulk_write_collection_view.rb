@@ -271,9 +271,10 @@ module Mongo
             concat(result, "upserted", merge_indexes(upserted, exchange))
           end
           tally(result, "nUpserted", n_upserted) if n_upserted > 0
-          tally(result, "nUpdated", n - n_upserted) # "nDocsModified"
+          tally(result, "nUpdated", n - n_upserted)
+          tally(result, "nModified", response["nDocsModified"] || n - n_upserted)
         elsif op_type == :delete
-          tally(result, "nDeleted", n)
+          tally(result, "nRemoved", n)
         end
         result["n"] += n
         if (writeErrors = response["writeErrors"] || response["errDetails"]) # assignment
