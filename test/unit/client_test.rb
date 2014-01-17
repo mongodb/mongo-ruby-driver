@@ -196,21 +196,24 @@ class ClientUnitTest < Test::Unit::TestCase
 
     context "initializing with ENV['MONGODB_URI']" do
       should "parse a simple uri" do
-        with_preserved_env_uri("mongodb://localhost?connect=false") do
+        uri = "mongodb://localhost?connect=false"
+        with_preserved_env_uri(uri) do
           @client = MongoClient.new
           assert_equal ['localhost', 27017], @client.host_port
         end
       end
 
       should "set auth source" do
-        with_preserved_env_uri("mongodb://user:pass@localhost?authSource=foo&connect=false") do
+        uri = "mongodb://user:pass@localhost?authSource=foo&connect=false"
+        with_preserved_env_uri(uri) do
           @client = MongoClient.new
           assert_equal 'foo', @client.auths.first[:source]
         end
       end
 
       should "set auth mechanism" do
-        with_preserved_env_uri("mongodb://user@localhost?authMechanism=MONGODB-X509&connect=false") do
+        uri = "mongodb://user@localhost?authMechanism=MONGODB-X509&connect=false"
+        with_preserved_env_uri(uri) do
           @client = MongoClient.new
           assert_equal 'MONGODB-X509', @client.auths.first[:mechanism]
 
@@ -223,7 +226,8 @@ class ClientUnitTest < Test::Unit::TestCase
 
       should "allow a complex host names" do
         host_name = "foo.bar-12345.org"
-        with_preserved_env_uri("mongodb://#{host_name}?connect=false") do
+        uri = "mongodb://#{host_name}?connect=false"
+        with_preserved_env_uri(uri) do
           @client = MongoClient.new
           assert_equal [host_name, 27017], @client.host_port
         end
@@ -231,7 +235,8 @@ class ClientUnitTest < Test::Unit::TestCase
 
       should "allow db without username and password" do
         host_name = "foo.bar-12345.org"
-        with_preserved_env_uri("mongodb://#{host_name}/foo?connect=false") do
+        uri = "mongodb://#{host_name}/foo?connect=false"
+        with_preserved_env_uri(uri) do
           @client = MongoClient.new
           assert_equal [host_name, 27017], @client.host_port
         end
@@ -240,7 +245,8 @@ class ClientUnitTest < Test::Unit::TestCase
       should "set write concern options on connection" do
         host_name = "localhost"
         opts = "w=2&wtimeoutMS=1000&fsync=true&journal=true&connect=false"
-        with_preserved_env_uri("mongodb://#{host_name}/foo?#{opts}") do
+        uri = "mongodb://#{host_name}/foo?#{opts}"
+        with_preserved_env_uri(uri) do
           @client = MongoClient.new
           assert_equal({:w => 2, :wtimeout => 1000, :fsync => true, :j => true}, @client.write_concern)
         end
@@ -249,7 +255,8 @@ class ClientUnitTest < Test::Unit::TestCase
       should "set timeout options on connection" do
         host_name = "localhost"
         opts = "connectTimeoutMS=1000&socketTimeoutMS=5000&connect=false"
-        with_preserved_env_uri("mongodb://#{host_name}/foo?#{opts}") do
+        uri = "mongodb://#{host_name}/foo?#{opts}"
+        with_preserved_env_uri(uri) do
           @client = MongoClient.new
           assert_equal 1, @client.connect_timeout
           assert_equal 5, @client.op_timeout
@@ -257,7 +264,8 @@ class ClientUnitTest < Test::Unit::TestCase
       end
 
       should "parse a uri with a hyphen & underscore in the username or password" do
-        with_preserved_env_uri("mongodb://hyphen-user_name:p-s_s@localhost:27017/db?connect=false") do
+        uri = "mongodb://hyphen-user_name:p-s_s@localhost:27017/db?connect=false"
+        with_preserved_env_uri(uri) do
           @client = MongoClient.new
           assert_equal ['localhost', 27017], @client.host_port
 
@@ -274,7 +282,8 @@ class ClientUnitTest < Test::Unit::TestCase
 
       should "attempt to connect" do
         TCPSocket.stubs(:new).returns(new_mock_socket)
-        with_preserved_env_uri("mongodb://localhost?connect=false") do
+        uri = "mongodb://localhost?connect=false"
+        with_preserved_env_uri(uri) do
           @client = MongoClient.new
 
           admin_db = new_mock_db
@@ -285,7 +294,8 @@ class ClientUnitTest < Test::Unit::TestCase
       end
 
       should "raise an error on invalid uris" do
-        with_preserved_env_uri("mongo://localhost") do
+        uri = "mongo://localhost"
+        with_preserved_env_uri(uri) do
           assert_raise MongoArgumentError do
             MongoClient.new
           end
@@ -298,7 +308,8 @@ class ClientUnitTest < Test::Unit::TestCase
       end
 
       should "require password if using legacy auth and username present" do
-        with_preserved_env_uri("mongodb://kyle:jones@localhost?connect=false") do
+        uri = "mongodb://kyle:jones@localhost?connect=false"
+        with_preserved_env_uri(uri) do
           assert MongoClient.new
 
           ENV['MONGODB_URI'] = "mongodb://kyle:@localhost?connect=false"
@@ -314,7 +325,8 @@ class ClientUnitTest < Test::Unit::TestCase
       end
 
       should "require password if using PLAIN auth and username present" do
-        with_preserved_env_uri("mongodb://kyle:jones@localhost?connect=false&authMechanism=PLAIN") do
+        uri = "mongodb://kyle:jones@localhost?connect=false&authMechanism=PLAIN"
+        with_preserved_env_uri(uri) do
           assert MongoClient.new
 
           ENV['MONGODB_URI'] = "mongodb://kyle:@localhost?connect=false&authMechanism=PLAIN"
