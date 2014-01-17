@@ -583,6 +583,18 @@ class BSONTest < Test::Unit::TestCase
     assert_equal '_id', roundtrip.keys.first
   end
 
+  def test_bad_id_keys
+    doc = { '_id' => { '$bad' => 123 } }
+    check_keys = true
+    assert_raise BSON::InvalidKeyName do
+      @encoder.serialize(doc, check_keys)
+    end
+    doc = { '_id' => { '$oid' => '52d0b971b3ba219fdeb4170e' } }
+    assert_raise BSON::InvalidKeyName do
+      @encoder.serialize(doc, check_keys)
+    end
+  end
+
   def test_nil_id
     doc = {"_id" => nil}
     assert_doc_pass(doc)
