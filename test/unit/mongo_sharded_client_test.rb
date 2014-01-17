@@ -17,20 +17,20 @@ require "test_helper"
 class MongoShardedClientUnitTest < Test::Unit::TestCase
   include Mongo
 
-  def setup
-    ENV["MONGODB_URI"] = nil
-  end
-
   def test_initialize_with_single_mongos_uri
-    ENV["MONGODB_URI"] = "mongodb://localhost:27017"
-    client = MongoShardedClient.new(:connect => false)
-    assert_equal [[ "localhost", 27017 ]], client.seeds
+    uri = "mongodb://localhost:27017"
+    with_preserved_env_uri(uri) do
+      client = MongoShardedClient.new(:connect => false)
+      assert_equal [[ "localhost", 27017 ]], client.seeds
+    end
   end
 
   def test_initialize_with_multiple_mongos_uris
-    ENV["MONGODB_URI"] = "mongodb://localhost:27017,localhost:27018"
-    client = MongoShardedClient.new(:connect => false)
-    assert_equal [[ "localhost", 27017 ], [ "localhost", 27018 ]], client.seeds
+    uri = "mongodb://localhost:27017,localhost:27018"
+    with_preserved_env_uri(uri) do
+      client = MongoShardedClient.new(:connect => false)
+      assert_equal [[ "localhost", 27017 ], [ "localhost", 27018 ]], client.seeds
+    end
   end
 
   def test_from_uri_with_string
@@ -39,8 +39,10 @@ class MongoShardedClientUnitTest < Test::Unit::TestCase
   end
 
   def test_from_uri_with_env_variable
-    ENV["MONGODB_URI"] = "mongodb://localhost:27017,localhost:27018"
-    client = MongoShardedClient.from_uri(nil, :connect => false)
-    assert_equal [[ "localhost", 27017 ], [ "localhost", 27018 ]], client.seeds
+    uri = "mongodb://localhost:27017,localhost:27018"
+    with_preserved_env_uri(uri) do
+      client = MongoShardedClient.from_uri(nil, :connect => false)
+      assert_equal [[ "localhost", 27017 ], [ "localhost", 27018 ]], client.seeds
+    end
   end
 end
