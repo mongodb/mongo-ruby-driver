@@ -50,7 +50,7 @@ module Mongo
     MONGODS_OPT_KEYS = [:mongods]
     CLUSTER_OPT_KEYS = SHARDING_OPT_KEYS + REPLICA_OPT_KEYS + MONGODS_OPT_KEYS
 
-    FLAGS = [:noprealloc, :smallfiles, :logappend, :configsvr, :shardsvr, :quiet, :fastsync, :auth]
+    FLAGS = [:noprealloc, :smallfiles, :logappend, :configsvr, :shardsvr, :quiet, :fastsync, :auth, :ipv6]
 
     DEFAULT_VERIFIES = 60
     BASE_PORT = 3000
@@ -64,6 +64,7 @@ module Mongo
       raise "missing required option" if [:host, :dbpath].any?{|k| !opts[k]}
 
       config = opts.reject {|k,v| CLUSTER_OPT_KEYS.include?(k)}
+
       kinds = CLUSTER_OPT_KEYS.select{|key| opts.has_key?(key)} # order is significant
 
       replica_count = 0
@@ -117,6 +118,7 @@ module Mongo
       quiet      = opts[:quiet]      || true
       fast_sync  = opts[:fastsync]   || false
       auth       = opts[:auth]       || true
+      ipv6       = opts[:ipv6].nil? ? true : opts[:ipv6]
 
       params.merge(:command    => mongod,
                    :dbpath     => path,
@@ -124,7 +126,8 @@ module Mongo
                    :noprealloc => noprealloc,
                    :quiet      => quiet,
                    :fastsync   => fast_sync,
-                   :auth       => auth)
+                   :auth       => auth,
+                   :ipv6       => ipv6)
     end
 
     def self.make_replica(opts, id)
