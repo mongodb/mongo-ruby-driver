@@ -57,7 +57,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
   @@test = @@db.collection("test")
   @@version = @@client.server_version
 
-  DATABASE_NAME = 'bulk_write_collection_view_test'
+  DATABASE_NAME = 'ruby_test_bulk_write_collection_view'
   COLLECTION_NAME = 'test'
   DUPLICATE_KEY_ERROR_CODE_SET = [11000, 11001, 12582, 16460].to_set
 

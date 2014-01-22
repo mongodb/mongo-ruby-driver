@@ -25,7 +25,7 @@ end
 
 class CollectionWriterTest < Test::Unit::TestCase
 
-  DATABASE_NAME = 'collection_writer_test'
+  DATABASE_NAME = 'ruby_test_collection_writer'
   COLLECTION_NAME = 'test'
 
   def default_setup
