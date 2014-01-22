@@ -20,7 +20,7 @@ module Mongo
 
     AUTH_REGEX = /((.+)@)?/
 
-    HOST_REGEX = /([-.\w]+)/
+    HOST_REGEX = /([-.\w]+)|(\[[^\]]+\])/
     PORT_REGEX = /(?::(\w+))?/
     NODE_REGEX = /((#{HOST_REGEX}#{PORT_REGEX},?)+)/
 
@@ -273,10 +273,15 @@ module Mongo
 
       user_info = matches[2].split(':') if matches[2]
       host_info = matches[3].split(',')
-      @db_name  = matches[7]
+      @db_name  = matches[8]
 
       host_info.each do |host|
-        host, port = host.split(':') << MongoClient::DEFAULT_PORT
+        if host[0,1] == '['
+          host, port = host.split(']:') << MongoClient::DEFAULT_PORT
+          host = host.end_with?(']') ? host[1...-1] : host[1..-1]
+        else
+          host, port = host.split(':') << MongoClient::DEFAULT_PORT
+        end
         unless port.to_s =~ /^\d+$/
           raise MongoArgumentError,
             "Invalid port #{port}; port must be specified as digits."
