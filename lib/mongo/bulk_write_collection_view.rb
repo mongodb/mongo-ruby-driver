@@ -261,7 +261,7 @@ module Mongo
         n = response["n"] || 0
         op_type = exchange[:op_type]
         if op_type == :insert
-          n = 1 if response.key?("err") && (response["err"].nil? || response["err"] == "norepl") # OP_INSERT override n = 0 bug, n = exchange[:batch].size always 1
+          n = 1 if response.key?("err") && (response["err"].nil? || response["err"] == "norepl" || response["err"] == "timeout") # OP_INSERT override n = 0 bug, n = exchange[:batch].size always 1
           tally(result, "nInserted", n)
         elsif op_type == :update
           n_upserted = 0

@@ -19,6 +19,7 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
   def setup
     ensure_cluster(:rs)
     @client = MongoReplicaSetClient.new @rs.repl_set_seeds
+    @version = @client.server_version
     @db = @client.db(TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets")
@@ -59,6 +60,124 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
     [20, 30, 40, 50, 60, 70, 80].each do |a|
       assert results.any? {|r| r['a'] == a}, "Could not find record for a => #{a} on second find"
     end
+  end
+
+  context "Bulk API CollectionView" do
+    setup do
+      setup
+    end
+
+    should "handle error with deferred write concern error - spec Merging Results" do
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @coll.remove
+        @coll.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
+        bulk = @coll.initialize_ordered_bulk_op
+        bulk.insert({:a => 1})
+        bulk.find({:a => 2}).upsert.update({'$set' => {:a => 2}})
+        bulk.insert({:a => 1})
+        ex = assert_raise BulkWriteError do
+          bulk.execute({:w => 5, :wtimeout => 1})
+        end
+        result = ex.result
+        write_concern_error_size = (@version >= '2.5.5') ? 3 : 2
+        assert_match_document(
+            [{
+                 "ok" => 1,
+                 "n" => 2,
+                 "writeErrors" =>
+                     [{
+                          "index" => 2,
+                          "code" => 11000,
+                          "errmsg" => /duplicate key error/
+                      }],
+                 "code" => 65,
+                 "errmsg" => "batch item errors occurred",
+                 "nInserted" => 1,
+                 "writeConcernError" =>
+                     [{
+                          "errmsg" => /no replication/,
+                          "index" => 0
+                      },
+                      {
+                          "errmsg" => /no replication/,
+                          "index" => 1
+                      },
+                      {
+                          "errmsg" => /no replication/,
+                          "index" => 2
+                      }][0...write_concern_error_size],
+                 "upserted" =>
+                     [{
+                          "index" => 1,
+                          "_id" => BSON::ObjectId('52d0ca4ad0045c85f70ecf6e')
+                      }],
+                 "nUpserted" => 1,
+                 "nUpdated" => 0
+             },
+             nil,
+             {
+                 "ok" => 1,
+                 "n" => 2,
+                 "writeErrors" =>
+                     [{
+                          "index" => 2,
+                          "code" => 11000,
+                          "errmsg" => /duplicate key error/
+                      }],
+                 "code" => 65,
+                 "errmsg" => "batch item errors occurred",
+                 "nInserted" => 1,
+                 "writeConcernError" =>
+                     [{
+                          "code" => 75,
+                          "errmsg" => /no replication/,
+                          "index" => 0
+                      },
+                      {
+                          "code" => 75,
+                          "errmsg" => /no replication/,
+                          "index" => 1
+                      },
+                      {
+                          "code" => 75,
+                          "errmsg" => /no replication/,
+                          "index" => 2
+                      }][0...write_concern_error_size],
+                 "upserted" =>
+                     [{
+                          "index" => 1,
+                          "_id" => BSON::ObjectId('52d0ca4ad0045c85f70ecf6e')
+                      }],
+                 "nUpserted" => 1,
+                 "nUpdated" => 0,
+                 "nModified" => 0
+             }][wire_version], result, "wire_version:#{wire_version}")
+      end
+    end
+
+    should "handle unordered errors with deferred write concern error - spec Merging Results" do # TODO - spec review
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @coll.remove
+        @coll.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
+        bulk = @coll.initialize_unordered_bulk_op
+        bulk.insert({:a => 1})
+        bulk.find({:a => 2}).upsert.update({'$set' => {:a => 1}})
+        bulk.insert({:a => 3})
+        ex = assert_raise BulkWriteError do
+          bulk.execute({:w => 5, :wtimeout => 1})
+        end
+        result = ex.result # unordered varies, don't use assert_bulk_exception
+        assert_equal(1, result["ok"], "wire_version:#{wire_version}")
+        assert_equal(2, result["n"], "wire_version:#{wire_version}")
+        assert(result["nInserted"] >= 1, "wire_version:#{wire_version}")
+        assert_equal(65, result["code"], "wire_version:#{wire_version}")
+        assert_equal("batch item errors occurred", result["errmsg"], "wire_version:#{wire_version}")
+        assert(result["writeErrors"].size >= 1,  "wire_version:#{wire_version}")
+        assert(result["writeConcernError"].size >= 1, "wire_version:#{wire_version}")
+        assert(@coll.size >= 1, "wire_version:#{wire_version}")
+      end
+    end
+
   end
 
 end
