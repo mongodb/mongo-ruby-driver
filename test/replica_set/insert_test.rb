@@ -173,7 +173,7 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
         assert_equal(65, result["code"], "wire_version:#{wire_version}")
         assert_equal("batch item errors occurred", result["errmsg"], "wire_version:#{wire_version}")
         assert(result["writeErrors"].size >= 1,  "wire_version:#{wire_version}")
-        assert(result["writeConcernError"].size >= 1, "wire_version:#{wire_version}")
+        assert(result["writeConcernError"].size >= 1, "wire_version:#{wire_version}") if wire_version >= 2
         assert(@coll.size >= 1, "wire_version:#{wire_version}")
       end
     end
