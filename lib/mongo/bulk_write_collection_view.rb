@@ -258,7 +258,7 @@ module Mongo
       exchanges.each do |exchange|
         response = exchange[:response]
         ok += response["ok"].to_i
-        n = response["n"]
+        n = response["n"] || 0
         op_type = exchange[:op_type]
         if op_type == :insert
           n = 1 if response.key?("err") && (response["err"].nil? || response["err"] == "norepl") # OP_INSERT override n = 0 bug, n = exchange[:batch].size always 1
