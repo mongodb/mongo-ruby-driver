@@ -43,6 +43,12 @@ module Mongo
   end
 end
 
+class Array
+  def sort_docs
+    self.sort{|a,b| [a.keys, a.values] <=> [b.keys, b.values]}
+  end
+end
+
 module BSON
   class InvalidDocument
     def inspect
@@ -315,7 +321,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 ]
             }, result, "wire_version:#{wire_version}")
         assert_false(@collection.find.to_a.empty?, "wire_version:#{wire_version}")
-        assert_equal [{"x" => 3}, {"a" => 1, "x" => 2}, {"a" => 2, "x" => 4}, {"x" => 3}, {"x" => 4}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }
+        assert_equal [{"a"=>1, "x"=>2}, {"a"=>2, "x"=>4}, {"x"=>3}, {"x"=>3}, {"x"=>4}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }.sort_docs
       end
     end
 
@@ -327,7 +333,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         result = @bulk.execute(write_concern)
         assert_equal(true, result, "wire_version:#{wire_version}")
         assert_false(@collection.find.to_a.empty?, "wire_version:#{wire_version}")
-        assert_equal [{"x" => 3}, {"a" => 1, "x" => 2}, {"a" => 2, "x" => 4}, {"x" => 3}, {"x" => 4}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }
+        assert_equal [{"a"=>1, "x"=>2}, {"a"=>2, "x"=>4}, {"x"=>3}, {"x"=>3}, {"x"=>4}], @collection.find.to_a.collect { |doc| doc.delete("_id"); doc }.sort_docs
       end
     end
 
