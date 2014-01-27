@@ -1446,7 +1446,6 @@ end
       assert_equal(5, @@test.find({:x => 2}, :max_scan => 50).to_a.size)
       @@test.ensure_index([[:x, 1]])
       assert_equal(10, @@test.find({:x => 2}, :max_scan => n).to_a.size)
-      assert_equal(0, @@test.find({:x => 2}, :max_scan => 1).to_a.size)
       @@test.drop
     end
   end
