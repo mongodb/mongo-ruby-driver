@@ -286,13 +286,17 @@ class CollectionTest < Test::Unit::TestCase
 
   def test_safe_insert
     @@test.create_index("hello", :unique => true)
-    a = {"hello" => "world"}
-    @@test.insert(a)
-    @@test.insert(a, :w => 0)
-    assert(@@db.get_last_error['err'].include?("11000"))
-
-    assert_raise OperationFailure do
+    begin
+      a = {"hello" => "world"}
       @@test.insert(a)
+      @@test.insert(a, :w => 0)
+      assert(@@db.get_last_error['err'].include?("11000"))
+
+      assert_raise OperationFailure do
+        @@test.insert(a)
+      end
+    ensure
+      @@test.drop_indexes
     end
   end
 
@@ -1221,6 +1225,7 @@ class CollectionTest < Test::Unit::TestCase
       @@test.create_index("n")
 
       assert_equal "#{TEST_DB}.test", @@test.stats['ns']
+      @@test.drop
     end
   end
 
@@ -1399,6 +1404,7 @@ end
     @@test.ensure_index([['a', 1]])
     assert @@test.index_information.keys.include?("a_1")
     @@test.drop_index("a_1")
+    @@test.drop_indexes
   end
 
   def test_ensure_index_timeout
@@ -1416,6 +1422,7 @@ end
     sleep(1)
     # This won't be, so generate_indexes will be called twice
     coll.ensure_index([['a', 1]])
+    coll.drop
   end
 
   if @@version > '2.0.0'
@@ -1428,12 +1435,18 @@ end
     end
 
     def test_max_scan
-      1000.times do |n|
-        @@test.save({:a => n})
+      @@test.drop
+      n = 100
+      n.times do |i|
+        @@test.save({:_id => i, :x => i % 10})
       end
-      assert @@test.find({:a => 999}).next
-      assert !@@test.find({:a => 999}, :max_scan => 500).next
-      @@test.remove
+      assert_equal(n, @@test.find.to_a.size)
+      assert_equal(50, @@test.find({}, :max_scan => 50).to_a.size)
+      assert_equal(10, @@test.find({:x => 2}).to_a.size)
+      assert_equal(5, @@test.find({:x => 2}, :max_scan => 50).to_a.size)
+      @@test.ensure_index([[:x, 1]])
+      assert_equal(10, @@test.find({:x => 2}, :max_scan => n).to_a.size)
+      @@test.drop
     end
   end
 
@@ -1615,6 +1628,7 @@ end
     should "create a geoHaystack index" do
       @geo.save({ "_id" => 100, "pos" => { "long" => 126.9, "lat" => 35.2 }, "type" => "restaurant"})
       @geo.create_index([['pos', Mongo::GEOHAYSTACK], ['type', Mongo::ASCENDING]], :bucket_size => 1)
+      assert @geo.index_information['pos_geoHaystack_type_1']
     end
 
     should "create a geo 2dsphere index" do
