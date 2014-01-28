@@ -1059,16 +1059,17 @@ module Mongo
     def generate_indexes(field_spec, name, opts)
       selector = {
         :name   => name,
-        :ns     => "#{@db.name}.#{@name}",
         :key    => field_spec
       }
       selector.merge!(opts)
 
       begin
-        send_write(:insert, nil, selector, false, {:w => 1}, Mongo::DB::SYSTEM_INDEX_COLLECTION)
-      rescue Mongo::OperationFailure => e
-        if selector[:dropDups] && e.message =~ /^11000/
-          # NOP. If the user is intentionally dropping dups, we can ignore duplicate key errors.
+        cmd = BSON::OrderedHash[:createIndexes, @name].merge!(selector)
+        @db.command(cmd)
+      rescue Mongo::OperationFailure => ex
+        if ex.error_code == 59 || ex.error_code.nil?
+          selector[:ns] = "#{@db.name}.#{@name}"
+          send_write(:insert, nil, selector, false, {:w => 1}, Mongo::DB::SYSTEM_INDEX_COLLECTION)
         else
           raise Mongo::OperationFailure, "Failed to create index #{selector.inspect} with the following error: " +
            "#{e.message}"
