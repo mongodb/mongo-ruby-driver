@@ -684,6 +684,99 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       end
     end
 
+    should "handle replication usage error" do
+      with_no_replication(@db.connection) do
+        with_write_commands_and_operations(@db.connection) do |wire_version|
+          @collection.remove
+          @bulk = @collection.initialize_ordered_bulk_op
+          @bulk.insert({:_id => 1, :a => 1})
+          write_concern = {:w => 5}
+          ex = assert_raise BulkWriteError do
+            @bulk.execute(write_concern)
+          end
+          result = ex.result
+          if @@version >= "2.5.5"
+            assert_match_document(
+                {
+                    "ok" => 0,
+                    "n" => 0,
+                    "code" => 65,
+                    "errmsg" => "batch item errors occurred",
+                    "writeErrors" => [
+                        {
+                            "errmsg" => "cannot use 'w' > 1 when a host is not replicated",
+                            "code" => 2,
+                            "index" => 0}
+                    ],
+                    "nInserted" => 0,
+                }, result, "wire_version:#{wire_version}")
+          else
+            assert_match_document(
+                {
+                    "ok" => 1,
+                    "n" => 1,
+                    "code" => 65,
+                    "errmsg" => "batch item errors occurred",
+                    "writeConcernError" => [
+                        {
+                            "errmsg" => /no replication has been enabled/,
+                            "code" => 64,
+                            "index" => 0
+                        }
+                    ],
+                    "nInserted" => 1,
+                }, result, "wire_version:#{wire_version}")
+          end
+        end
+      end
+    end
+
+    should "handle journaling error" do
+      with_no_journaling(@db.connection) do
+        with_write_commands_and_operations(@db.connection) do |wire_version|
+          @collection.remove
+          @bulk = @collection.initialize_ordered_bulk_op
+          @bulk.insert({:_id => 1, :a => 1})
+          write_concern = {:w => 1, :j => 1}
+          ex = assert_raise BulkWriteError do
+            @bulk.execute(write_concern)
+          end
+          result = ex.result
+          if @@version >= "2.5.5"
+            assert_match_document(
+                {
+                    "ok" => 0,
+                    "n" => 0,
+                    "writeErrors" => [
+                        {
+                            "code" => 2,
+                            "errmsg" => "cannot use 'j' option when a host does not have journaling enabled", "index" => 0
+                        }
+                    ],
+                    "code" => 65,
+                    "errmsg" => "batch item errors occurred",
+                    "nInserted" => 0
+                }, result, "wire_version:#{wire_version}")
+          else
+            assert_match_document(
+                {
+                    "ok" => 1,
+                    "n" => 1,
+                    "writeConcernError" => [
+                        {
+                            "code" => 2,
+                            "errmsg" => "journaling not enabled on this server",
+                            "index" => 0
+                        }
+                    ],
+                    "code" => 65,
+                    "errmsg" => "batch item errors occurred",
+                    "nInserted" => 1
+                }, result, "wire_version:#{wire_version}")
+          end
+        end
+      end
+    end
   end
 
 end

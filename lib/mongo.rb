@@ -58,6 +58,7 @@ module Mongo
   end
 
   module ErrorCode # MongoDB Core Server src/mongo/base/error_codes.err
+    BAD_VALUE = 2
     UNKNOWN_ERROR = 8
     INVALID_BSON = 22
     WRITE_CONCERN_FAILED = 64
