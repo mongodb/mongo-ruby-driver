@@ -100,9 +100,13 @@ module Mongo
           close
           raise ConnectionFailure.new(docs[0]['code'].to_s + ': ' + error, docs[0]['code'], docs[0])
         else
+          code = docs[0]['code'] || Mongo::ErrorCode::UNKNOWN_ERROR
           error = "wtimeout" if error == "timeout"
-          raise OperationFailure.new(docs[0]['code'].to_s + ': ' + error, docs[0]['code'], docs[0])
+          raise OperationFailure.new(code.to_s + ': ' + error, code, docs[0])
         end
+      elsif num_received == 1 && (jnote = docs[0]['jnote']) # assignment
+        code = Mongo::ErrorCode::BAD_VALUE # as of server version 2.5.5
+        raise OperationFailure.new(code.to_s + ': ' + jnote, code, docs[0])
       end
 
       docs[0]

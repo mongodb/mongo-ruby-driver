@@ -187,8 +187,9 @@ class Test::Unit::TestCase
     if expected.is_a?(Hash) && actual.is_a?(Hash)
       expected_keys = expected.keys.sort
       actual_keys = actual.keys.sort
+      #currently allow extra fields in actual as the following check for equality of keys is commented out
       #raise "field:#{key.inspect} - Hash keys expected:#{expected_keys.inspect} actual:#{actual_keys.inspect}" if expected_keys != actual_keys
-      expected_keys.each{|k| match_document(k, expected[key], actual[key])}
+      expected_keys.each{|k| match_document(k, expected[k], actual[k])}
     elsif expected.is_a?(Array) && actual.is_a?(Array)
       raise "field:#{key.inspect} - Array size expected:#{expected.size} actual:#{actual.size}" if expected.size != actual.size
       (0...expected.size).each{|i| match_document(i, expected[i], actual[i])}
@@ -235,6 +236,19 @@ class Test::Unit::TestCase
   def with_default_journaling(client, &block)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
     unless client.server_version < "2.0" || cmd_line_args.include?('nojournal')
+      yield
+    end
+  end
+
+  def with_no_replication(client, &block)
+    if client.class == MongoClient
+      yield
+    end
+  end
+
+  def with_no_journaling(client, &block)
+    cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
+    unless client.server_version < "2.0" || !cmd_line_args.include?('nojournal')
       yield
     end
   end

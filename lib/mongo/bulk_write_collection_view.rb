@@ -249,10 +249,12 @@ module Mongo
       ok = 0
       result = {"ok" => 0, "n" => 0}
       unless errors.empty?
-        concat(result, "writeErrors",
-          errors.select{|error| error.class != Mongo::OperationFailure}.collect{|error|
-            {"index" => error.result[:ord], "code" => error.error_code, "errmsg" => error.result[:error].message}
-          })
+        unless (writeErrors = errors.select { |error| error.class != Mongo::OperationFailure }).empty? # assignment
+          concat(result, "writeErrors",
+                 writeErrors.collect { |error|
+                   {"index" => error.result[:ord], "code" => error.error_code, "errmsg" => error.result[:error].message}
+                 })
+        end
         result.merge!("code" => Mongo::ErrorCode::MULTIPLE_ERRORS_OCCURRED, "errmsg" => MULTIPLE_ERRORS_MSG)
       end
       exchanges.each do |exchange|
@@ -277,17 +279,26 @@ module Mongo
           tally(result, "nRemoved", n)
         end
         result["n"] += n
+        writeConcernError = nil
+        errmsg = response["errmsg"] || response["err"] # top level
         if (writeErrors = response["writeErrors"] || response["errDetails"]) # assignment
           concat(result, "writeErrors", merge_indexes(writeErrors, exchange))
-        elsif (errmsg = response["errmsg"] || response["err"]) && errmsg != "norepl" # assignment - top level - OP_INSERT, OP_UPDATE have "err"
-          writeError = {"code" => response["code"], "errmsg" => errmsg}
-          append(result, "writeErrors", merge_index(writeError, exchange))
+        elsif response["err"] == "timeout" # errmsg == "timed out waiting for slaves" # OP_*
+          writeConcernError = {"errmsg" => errmsg, "code" => Mongo::ErrorCode::WRITE_CONCERN_FAILED,
+                               "errInfo" => {"wtimeout" => response["wtimeout"]}} # OP_* does not have "code"
+        elsif errmsg == "norepl" # OP_*
+          writeConcernError = {"errmsg" => errmsg, "code" => Mongo::ErrorCode::WRITE_CONCERN_FAILED} # OP_* does not have "code"
+        elsif errmsg # OP_INSERT, OP_UPDATE have "err"
+          append(result, "writeErrors", merge_index({"errmsg" => errmsg, "code" => response["code"]}, exchange))
         end
-        if (writeConcernError = response["writeConcernError"]) # assignment
-          append(result, "writeConcernError", merge_index(writeConcernError, exchange))
+        if response["writeConcernError"]
+          writeConcernError = response["writeConcernError"]
         elsif (wnote = response["wnote"]) # assignment - OP_*
-          append(result, "writeConcernError", merge_index({"errmsg" => wnote}, exchange)) # OP_* does not have "code"
+          writeConcernError = {"errmsg" => wnote, "code" => Mongo::ErrorCode::WRITE_CONCERN_FAILED} # OP_* does not have "code"
+        elsif (jnote = response["jnote"]) # assignment - OP_*
+          writeConcernError = {"errmsg" => jnote, "code" => Mongo::ErrorCode::BAD_VALUE} # OP_* does not have "code"
         end
+        append(result, "writeConcernError", merge_index(writeConcernError, exchange)) if writeConcernError
       end
       result.merge!("ok" => [ok + result["n"], 1].min)
     end
