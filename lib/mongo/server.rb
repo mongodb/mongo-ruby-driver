@@ -12,29 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/node/refresh'
+require 'mongo/server/refresh'
 
 module Mongo
 
-  # Represents a single node on the server side that can be standalone, part of
+  # Represents a single server on the server side that can be standalone, part of
   # a replica set, or a mongos.
   #
   # @since 2.0.0
-  class Node
+  class Server
 
-    # The default time for a node to refresh its status is 5 seconds.
+    # The default time for a server to refresh its status is 5 seconds.
     #
     # @since 2.0.0
     REFRESH_INTERVAL = 5.freeze
 
-    # The command used for determining node status.
+    # The command used for determining server status.
     #
     # @since 2.0.0
     STATUS = { :ismaster => 1 }.freeze
 
-    # @return [ String ] The configured address for the node.
+    # @return [ String ] The configured address for the server.
     attr_reader :address
-    # @return [ Mongo::Cluster ] The cluster the node belongs to.
+    # @return [ Mongo::Cluster ] The cluster the server belongs to.
     attr_reader :cluster
     # @return [ Mutex ] The refresh operation mutex.
     attr_reader :mutex
@@ -45,13 +45,13 @@ module Mongo
       address == other.address
     end
 
-    # Returns whether or not the node is alive - ie it is connected to and
+    # Returns whether or not the server is alive - ie it is connected to and
     # healthy.
     #
-    # @example Is the node alive?
-    #   node.alive?
+    # @example Is the server alive?
+    #   server.alive?
     #
-    # @return [ true, false ] If the node is alive and healthy.
+    # @return [ true, false ] If the server is alive and healthy.
     #
     # @since 2.0.0
     def alive?
@@ -72,7 +72,7 @@ module Mongo
       @refresh.run
     end
 
-    # @todo This should be synchronized. I envison this checks if the node is
+    # @todo This should be synchronized. I envison this checks if the server is
     # alive and a primary or secondary. (no arbiters)
     def operable?
       mutex.synchronize do
@@ -82,15 +82,15 @@ module Mongo
 
     def refresh
       mutex.synchronize do
-        p 'Refreshing node...'
+        p 'Refreshing server...'
       end
     end
 
-    # Get the refresh interval for the node. This will be defined via an option
+    # Get the refresh interval for the server. This will be defined via an option
     # or will default to 5.
     #
     # @example Get the refresh interval.
-    #   node.refresh_interval
+    #   server.refresh_interval
     #
     # @return [ Integer ] The refresh interval, in seconds.
     #

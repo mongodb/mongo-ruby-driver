@@ -25,7 +25,7 @@ describe Mongo::Cluster do
 
     context 'when the other is a cluster' do
 
-      context 'when the nodes are equal' do
+      context 'when the servers are equal' do
 
         let(:other) do
           described_class.new(client, addresses)
@@ -36,7 +36,7 @@ describe Mongo::Cluster do
         end
       end
 
-      context 'when the nodes are not equal' do
+      context 'when the servers are not equal' do
 
         let(:other) do
           described_class.new(client, ['127.0.0.1:27021'])
@@ -70,7 +70,7 @@ describe Mongo::Cluster do
       end
 
       it 'adds the node to the cluster' do
-        expect(cluster.nodes.size).to eq(3)
+        expect(cluster.servers.size).to eq(3)
       end
 
       it 'returns the newly added node' do
@@ -85,7 +85,7 @@ describe Mongo::Cluster do
       end
 
       it 'does not add the node to the cluster' do
-        expect(cluster.nodes.size).to eq(2)
+        expect(cluster.servers.size).to eq(2)
       end
 
       it 'returns nil' do
@@ -100,7 +100,7 @@ describe Mongo::Cluster do
       ['127.0.0.1:27017', '127.0.0.1:27019']
     end
 
-    let(:nodes) do
+    let(:servers) do
       addresses.map { |address| Mongo::Node.new(address) }
     end
 
@@ -117,7 +117,7 @@ describe Mongo::Cluster do
     end
   end
 
-  describe '#nodes' do
+  describe '#servers' do
 
     let(:addresses) do
       ['127.0.0.1:27017', '127.0.0.1:27019']
@@ -127,31 +127,31 @@ describe Mongo::Cluster do
       described_class.new(client, addresses)
     end
 
-    let(:nodes_internal) do
-      cluster.instance_variable_get(:@nodes)
+    let(:servers_internal) do
+      cluster.instance_variable_get(:@servers)
     end
 
-    context 'when all nodes are alive' do
+    context 'when all servers are alive' do
 
       before do
-        expect(nodes_internal.first).to receive(:operable?).and_return(true)
-        expect(nodes_internal.last).to receive(:operable?).and_return(true)
+        expect(servers_internal.first).to receive(:operable?).and_return(true)
+        expect(servers_internal.last).to receive(:operable?).and_return(true)
       end
 
-      it 'returns all nodes' do
-        expect(cluster.nodes.size).to eq(2)
+      it 'returns all servers' do
+        expect(cluster.servers.size).to eq(2)
       end
     end
 
-    context 'when some nodes are not alive' do
+    context 'when some servers are not alive' do
 
       before do
-        expect(nodes_internal.first).to receive(:operable?).and_return(true)
-        expect(nodes_internal.last).to receive(:operable?).and_return(false)
+        expect(servers_internal.first).to receive(:operable?).and_return(true)
+        expect(servers_internal.last).to receive(:operable?).and_return(false)
       end
 
-      it 'returns all alive nodes' do
-        expect(cluster.nodes.size).to eq(1)
+      it 'returns all alive servers' do
+        expect(cluster.servers.size).to eq(1)
       end
     end
   end

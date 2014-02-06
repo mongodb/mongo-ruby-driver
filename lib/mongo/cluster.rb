@@ -14,7 +14,7 @@
 
 module Mongo
 
-  # Represents a group of nodes on the server side, either as a single node, a
+  # Represents a group of servers on the server side, either as a single server, a
   # replica set, or a single or multiple mongos.
   #
   # @since 2.0.0
@@ -27,8 +27,8 @@ module Mongo
     # @return [ Hash ] The options hash.
     attr_reader :options
 
-    # Determine if this cluster of nodes is equal to another object. Checks the
-    # nodes currently in the cluster, not what was configured.
+    # Determine if this cluster of servers is equal to another object. Checks the
+    # servers currently in the cluster, not what was configured.
     #
     # @example Is the cluster equal to the object?
     #   cluster == other
@@ -43,24 +43,24 @@ module Mongo
       addresses == other.addresses
     end
 
-    # Add a node to the cluster with the provided address. Useful in
-    # auto-discovery of new nodes when an existing node executes an ismaster
-    # and potentially non-configured nodes were included.
+    # Add a server to the cluster with the provided address. Useful in
+    # auto-discovery of new servers when an existing server executes an ismaster
+    # and potentially non-configured servers were included.
     #
-    # @example Add the node for the address to the cluster.
+    # @example Add the server for the address to the cluster.
     #   cluster.add('127.0.0.1:27018')
     #
-    # @param [ String ] address The address of the node to add.
+    # @param [ String ] address The address of the server to add.
     #
-    # @return [ Node ] The newly added node, if not present already.
+    # @return [ Node ] The newly added server, if not present already.
     #
     # @since 2.0.0
     def add(address)
       unless addresses.include?(address)
-        node = Node.new(self, address, options)
+        server = Server.new(self, address, options)
         addresses.push(address)
-        @nodes.push(node)
-        node
+        @servers.push(server)
+        server
       end
     end
 
@@ -69,7 +69,7 @@ module Mongo
     # @example Instantiate the cluster.
     #   Mongo::Cluster.new(["127.0.0.1:27017"])
     #
-    # @param [ Array<String> ] addresses The addresses of the configured nodes.
+    # @param [ Array<String> ] addresses The addresses of the configured servers.
     # @param [ Hash ] options The options.
     #
     # @since 2.0.0
@@ -77,20 +77,20 @@ module Mongo
       @client = client
       @addresses = addresses
       @options = options
-      @nodes = addresses.map { |address| Node.new(self, address, options) }
+      @servers = addresses.map { |address| Server.new(self, address, options) }
     end
 
-    # Get a list of node candidates from the cluster that can have operations
+    # Get a list of server candidates from the cluster that can have operations
     # executed on them.
     #
-    # @example Get the node candidates for an operation.
-    #   cluster.nodes
+    # @example Get the server candidates for an operation.
+    #   cluster.servers
     #
-    # @return [ Array<Node> ] The candidate nodes.
+    # @return [ Array<Node> ] The candidate servers.
     #
     # @since 2.0.0
-    def nodes
-      @nodes.select { |node| node.operable? }
+    def servers
+      @servers.select { |server| server.operable? }
     end
   end
 end

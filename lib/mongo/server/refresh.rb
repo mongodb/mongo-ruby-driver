@@ -13,35 +13,35 @@
 # limitations under the License.
 
 module Mongo
-  class Node
+  class Server
 
-    # This object is responsible for keeping node status up to date, running in
+    # This object is responsible for keeping server status up to date, running in
     # a separate thread as to not disrupt other operations.
     #
     # @since 2.0.0
     class Refresh
 
-      # @return [ Mongo::Node ] The node the refresher refreshes.
-      attr_reader :node
+      # @return [ Mongo::Node ] The server the refresher refreshes.
+      attr_reader :server
       # @return [ Integer ] The interval the refresh happens on, in seconds.
       attr_reader :interval
 
-      # Create the new node refresher.
+      # Create the new server refresher.
       #
-      # @example Create the node refresher.
-      #   Mongo::Node::Refresher.new(node, 5)
+      # @example Create the server refresher.
+      #   Mongo::Node::Refresh.new(server, 5)
       #
-      # @param [ Mongo::Node ] node The node to refresh.
+      # @param [ Mongo::Node ] server The server to refresh.
       # @param [ Integer ] interval The refresh interval in seconds.
       #
       # @since 2.0.0
-      def initialize(node, interval)
-        @node = node
+      def initialize(server, interval)
+        @server = server
         @interval = interval
       end
 
-      # Runs the node refresher. Refreshing happens on a separate thread per
-      # node.
+      # Runs the server refresher. Refreshing happens on a separate thread per
+      # server.
       #
       # @example Run the refresher.
       #   refresher.run
@@ -50,7 +50,7 @@ module Mongo
       #
       # @since 2.0.0
       def run
-        Thread.new(interval, node) do |i, n|
+        Thread.new(interval, server) do |i, n|
           loop do
             n.refresh
             sleep(i)
