@@ -9,12 +9,12 @@ group :release do
   gem 'yard'
 end
 
-group :testing do
+group :development, :testing do
   gem 'json', :platforms => [ :ruby_18, :jruby ]
   gem 'rspec', '~> 2.14'
   gem 'mime-types', '~> 1.25'
 
-  platforms :ruby_19, :ruby_20, :jruby do
+  platforms :ruby_19, :ruby_20, :ruby_21, :jruby do
     gem 'coveralls', :require => false
     gem 'rubocop', '0.15.0' if RUBY_VERSION > '1.9'
   end
