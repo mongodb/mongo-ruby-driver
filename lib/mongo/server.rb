@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/server/description'
 require 'mongo/server/refresh'
 
 module Mongo
@@ -19,17 +20,17 @@ module Mongo
   # Represents a single server on the server side that can be standalone, part of
   # a replica set, or a mongos.
   #
-  # @since 2.0.0
+  # @since 3.0.0
   class Server
 
     # The default time for a server to refresh its status is 5 seconds.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     REFRESH_INTERVAL = 5.freeze
 
     # The command used for determining server status.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     STATUS = { :ismaster => 1 }.freeze
 
     # @return [ String ] The configured address for the server.
@@ -53,7 +54,7 @@ module Mongo
     #
     # @return [ true, false ] If the server is alive and healthy.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def alive?
       !!@alive
     end
@@ -94,20 +95,17 @@ module Mongo
     #
     # @return [ Integer ] The refresh interval, in seconds.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def refresh_interval
       @refresh_interval ||= options[:refresh_interval] || REFRESH_INTERVAL
     end
 
     private
 
-    # Gets the wire protocol query that will be used to send when refreshing.
-    #
-    # @api private
-    #
-    # @return [ Mongo::Protocol::Query ] The refresh command.
-    #
-    # @since 2.0.0
+    def pool
+      # @pool ||= Pool.get(self)
+    end
+
     def refresh_command
       Protocol::Query.new(
         Database::ADMIN,
