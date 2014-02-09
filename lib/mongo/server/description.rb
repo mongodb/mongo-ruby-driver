@@ -1,13 +1,13 @@
 # Copyright (C) 2009-2013 MongoDB, Inc.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
+# Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
+# distributed under the License is distributed on an 'AS IS' BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
@@ -24,52 +24,52 @@ module Mongo
       # Constant for reading arbiter info from config.
       #
       # @since 3.0.0
-      ARBITER = "arbiterOnly".freeze
+      ARBITER = 'arbiterOnly'.freeze
 
       # Constant for reading arbiters info from config.
       #
       # @since 3.0.0
-      ARBITERS = "arbiters".freeze
+      ARBITERS = 'arbiters'.freeze
 
       # Constant for reading hidden info from config.
       #
       # @since 3.0.0
-      HIDDEN = "hidden".freeze
+      HIDDEN = 'hidden'.freeze
 
       # Constant for reading hosts info from config.
       #
       # @since 3.0.0
-      HOSTS = "hosts".freeze
+      HOSTS = 'hosts'.freeze
 
       # Constant for reading max bson size info from config.
       #
       # @since 3.0.0
-      MAX_BSON_OBJECT_SIZE = "maxBsonObjectSize".freeze
+      MAX_BSON_OBJECT_SIZE = 'maxBsonObjectSize'.freeze
 
       # Constant for reading max message size info from config.
       #
       # @since 3.0.0
-      MAX_MESSAGE_BYTES = "maxMessageSizeBytes".freeze
+      MAX_MESSAGE_BYTES = 'maxMessageSizeBytes'.freeze
 
       # Constant for reading passive info from config.
       #
       # @since 3.0.0
-      PASSIVE = "passive".freeze
+      PASSIVE = 'passive'.freeze
 
       # Constant for reading primary info from config.
       #
       # @since 3.0.0
-      PRIMARY = "ismaster".freeze
+      PRIMARY = 'ismaster'.freeze
 
       # Constant for reading secondary info from config.
       #
       # @since 3.0.0
-      SECONDARY = "secondary".freeze
+      SECONDARY = 'secondary'.freeze
 
       # Constant for reading replica set name info from config.
       #
       # @since 3.0.0
-      SET_NAME = "setName".freeze
+      SET_NAME = 'setName'.freeze
 
       # @return [ Hash ] The actual result from the isnamster command.
       attr_reader :config
