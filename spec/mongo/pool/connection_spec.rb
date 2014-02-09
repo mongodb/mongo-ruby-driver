@@ -1,8 +1,5 @@
 require 'spec_helper'
 
-include Mongo::Pool
-include Mongo::Pool::Socket
-
 describe Mongo::Pool::Connection do
 
   let(:host) { 'localhost' }
@@ -12,10 +9,16 @@ describe Mongo::Pool::Connection do
   let(:connection) { described_class.new(host, port, nil, opts) }
 
   before do
-    allow_any_instance_of(Socket::TCP).to receive(:connect) { double(TCP) }
-    allow_any_instance_of(Socket::TCP).to receive(:close)
-    allow_any_instance_of(Socket::SSL).to receive(:connect) { double(SSL) }
-    allow_any_instance_of(Socket::Unix).to receive(:connect) { double(Unix) }
+    allow_any_instance_of(Mongo::Pool::Socket::TCP).to receive(:connect) do
+      double(Mongo::Pool::Socket::TCP)
+    end
+    allow_any_instance_of(Mongo::Pool::Socket::TCP).to receive(:close)
+    allow_any_instance_of(Mongo::Pool::Socket::SSL).to receive(:connect) do
+      double(Mongo::Pool::Socket::SSL)
+    end
+    allow_any_instance_of(Mongo::Pool::Socket::Unix).to receive(:connect) do
+      double(Mongo::Pool::Socket::Unix)
+    end
     allow_any_instance_of(
       described_class).to receive(:connect).and_call_original
   end
@@ -31,7 +34,7 @@ describe Mongo::Pool::Connection do
     end
 
     it 'sets the default timeout value' do
-      expect(connection.timeout).to eq(Connection::DEFAULT_TIMEOUT)
+      expect(connection.timeout).to eq(Mongo::Pool::Connection::DEFAULT_TIMEOUT)
     end
 
     it 'sets the last use to nil' do
@@ -168,8 +171,8 @@ describe Mongo::Pool::Connection do
     context 'when port is not set' do
 
       it 'creates a unix socket instance' do
-        allow(Socket::Unix).to receive(:new)
-        expect(Socket::Unix).to receive(:new)
+        allow(Mongo::Pool::Socket::Unix).to receive(:new)
+        expect(Mongo::Pool::Socket::Unix).to receive(:new)
         described_class.new(host, nil)
       end
 
@@ -180,16 +183,16 @@ describe Mongo::Pool::Connection do
       let(:opts) { { :ssl => true } }
 
       it 'creates a ssl socket instance' do
-        allow(Socket::SSL).to receive(:new)
-        expect(Socket::SSL).to receive(:new)
+        allow(Mongo::Pool::Socket::SSL).to receive(:new)
+        expect(Mongo::Pool::Socket::SSL).to receive(:new)
         described_class.new(host, port, nil, opts)
       end
 
     end
 
     it 'creates a tcp socket instance by default' do
-      allow(Socket::TCP).to receive(:new)
-      expect(Socket::TCP).to receive(:new)
+      allow(Mongo::Pool::Socket::TCP).to receive(:new)
+      expect(Mongo::Pool::Socket::TCP).to receive(:new)
       described_class.new(host, port)
     end
 
@@ -205,7 +208,7 @@ describe Mongo::Pool::Connection do
       let(:connection) { described_class.new(host, port, nil, opts) }
 
       it 'does not try to close the socket' do
-        expect(Socket::TCP).to_not receive(:close)
+        expect(Mongo::Pool::Socket::TCP).to_not receive(:close)
         connection.disconnect
       end
 

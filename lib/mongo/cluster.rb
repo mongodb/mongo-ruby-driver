@@ -17,8 +17,9 @@ module Mongo
   # Represents a group of servers on the server side, either as a single server, a
   # replica set, or a single or multiple mongos.
   #
-  # @since 2.0.0
+  # @since 3.0.0
   class Cluster
+    # include Subscriber
 
     # @return [ Mongo::Client ] The cluster's client.
     attr_reader :client
@@ -37,7 +38,7 @@ module Mongo
     #
     # @return [ true, false ] If the objects are equal.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def ==(other)
       return false unless other.is_a?(Cluster)
       addresses == other.addresses
@@ -54,10 +55,10 @@ module Mongo
     #
     # @return [ Node ] The newly added server, if not present already.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def add(address)
       unless addresses.include?(address)
-        server = Server.new(self, address, options)
+        server = Server.new(address, options)
         addresses.push(address)
         @servers.push(server)
         server
@@ -72,12 +73,17 @@ module Mongo
     # @param [ Array<String> ] addresses The addresses of the configured servers.
     # @param [ Hash ] options The options.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def initialize(client, addresses, options = {})
       @client = client
       @addresses = addresses
       @options = options
-      @servers = addresses.map { |address| Server.new(self, address, options) }
+      @servers = addresses.map do |address|
+        Server.new(address, options)
+        # subscribe_to(server, Event::SERVER_ADDED, ServerAddedListener.new(self))
+        # subscribe_to(server, Event::SERVER_REMOVED, ServerRemovedListener.new(self))
+        # server
+      end
     end
 
     # Get a list of server candidates from the cluster that can have operations
@@ -88,7 +94,7 @@ module Mongo
     #
     # @return [ Array<Node> ] The candidate servers.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def servers
       @servers.select { |server| server.operable? }
     end

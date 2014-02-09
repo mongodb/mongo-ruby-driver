@@ -4,16 +4,12 @@ describe Mongo::Server do
 
   describe '#alive?' do
 
-    let(:cluster) do
-      double('cluster')
-    end
-
     let(:address) do
       '127.0.0.1:27017'
     end
 
     let(:server) do
-      described_class.new(cluster, address)
+      described_class.new(address)
     end
 
     context 'when the server has been refreshed' do
@@ -51,24 +47,16 @@ describe Mongo::Server do
 
   describe '#initialize' do
 
-    let(:cluster) do
-      double('cluster')
-    end
-
     let(:address) do
       '127.0.0.1:27017'
     end
 
     let(:server) do
-      described_class.new(cluster, address, :refresh_interval => 5)
+      described_class.new(address, :refresh_interval => 5)
     end
 
     it 'sets the address' do
       expect(server.address).to eq(address)
-    end
-
-    it 'sets the cluster' do
-      expect(server.cluster).to eq(cluster)
     end
 
     it 'sets the options' do
@@ -78,10 +66,6 @@ describe Mongo::Server do
 
   describe '#refresh' do
 
-    let(:cluster) do
-      double('cluster')
-    end
-
     let(:address) do
       '127.0.0.1:27017'
     end
@@ -89,7 +73,7 @@ describe Mongo::Server do
     context 'when the server is a single server' do
 
       let(:server) do
-        described_class.new(cluster, address)
+        described_class.new(address)
       end
 
       context 'when the server is available' do
@@ -134,10 +118,6 @@ describe Mongo::Server do
 
   describe '#refresh_interval' do
 
-    let(:cluster) do
-      double('cluster')
-    end
-
     let(:address) do
       '127.0.0.1:27017'
     end
@@ -145,7 +125,7 @@ describe Mongo::Server do
     context 'when an option is provided' do
 
       let(:server) do
-        described_class.new(cluster, address, :refresh_interval => 10)
+        described_class.new(address, :refresh_interval => 10)
       end
 
       it 'returns the option' do
@@ -156,7 +136,7 @@ describe Mongo::Server do
     context 'when no option is provided' do
 
       let(:server) do
-        described_class.new(cluster, address)
+        described_class.new(address)
       end
 
       it 'defaults to 5' do

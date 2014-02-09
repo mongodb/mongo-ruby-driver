@@ -22,6 +22,7 @@ module Mongo
   #
   # @since 3.0.0
   class Server
+    include Event::Publisher
 
     # The default time for a server to refresh its status is 5 seconds.
     #
@@ -35,8 +36,8 @@ module Mongo
 
     # @return [ String ] The configured address for the server.
     attr_reader :address
-    # @return [ Mongo::Cluster ] The cluster the server belongs to.
-    attr_reader :cluster
+    # @return [ Server::Description ] The description of the server.
+    attr_reader :description
     # @return [ Mutex ] The refresh operation mutex.
     attr_reader :mutex
     # @return [ Hash ] The options hash.
@@ -64,8 +65,7 @@ module Mongo
 
     end
 
-    def initialize(cluster, address, options = {})
-      @cluster = cluster
+    def initialize(address, options = {})
       @address = address
       @options = options
       @mutex = Mutex.new
@@ -73,17 +73,17 @@ module Mongo
       @refresh.run
     end
 
-    # @todo This should be synchronized. I envison this checks if the server is
-    # alive and a primary or secondary. (no arbiters)
     def operable?
-      mutex.synchronize do
-        true
-      end
+      true
     end
 
     def refresh
       mutex.synchronize do
-        p 'Refreshing server...'
+        # Update the server description here. For changes in the description to
+        # the previous we need to fire events.
+        #
+        # publish(Event::SERVER_ADDED, address)
+        # publish(Event::SERVER_REMOVED, address)
       end
     end
 

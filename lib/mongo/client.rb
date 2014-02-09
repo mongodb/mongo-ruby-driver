@@ -21,7 +21,7 @@ module Mongo
   # The client is the entry point to the driver and is the main object that
   # will be interacted with.
   #
-  # @since 2.0.0
+  # @since 3.0.0
   class Client
 
     # @return [ Mongo::Cluster ] The cluster of nodes for the client.
@@ -38,7 +38,7 @@ module Mongo
     #
     # @return [ true, false ] If the objects are equal.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def ==(other)
       return false unless other.is_a?(Client)
       cluster == other.cluster && options == other.options
@@ -54,7 +54,7 @@ module Mongo
     #
     # @return [ Mongo::Collection ] The collection.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def [](collection_name)
       database[collection_name]
     end
@@ -66,7 +66,7 @@ module Mongo
     #
     # @return [ Integer ] The client hash value.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def hash
       [cluster, options].hash
     end
@@ -83,7 +83,7 @@ module Mongo
     #   form of host:port.
     # @param [ Hash ] options The options to be used by the client.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def initialize(addresses, options = {})
       @cluster = Cluster.new(self, addresses)
       @options = options
@@ -98,7 +98,7 @@ module Mongo
     #
     # @return [ String ] The inspection string.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def inspect
       "<Mongo::Client:0x#{object_id} cluster=#{cluster.addresses.join(', ')}>"
     end
@@ -113,7 +113,7 @@ module Mongo
     #
     # @return [ Mongo::Database ] The database now being used.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def use(database_name)
       @database = Database.new(self, database_name)
     end
@@ -129,7 +129,7 @@ module Mongo
     #
     # @return [ Mongo::Client ] A new client instance.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def with(new_options = {})
       Client.new(cluster.addresses.dup, options.merge(new_options))
     end
@@ -142,7 +142,7 @@ module Mongo
     #
     # @return [ Mongo::WriteConcern::Mode ] The write concern.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def write_concern
       @write_concern ||= WriteConcern::Mode.get(options[:write])
     end
@@ -150,12 +150,12 @@ module Mongo
     # Exception that is raised when trying to perform operations before ever
     # telling the client which database to execute ops on.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     class NoDatabase < DriverError
 
       # The message does not need to be dynamic, so is held in a constant.
       #
-      # @since 2.0.0
+      # @since 3.0.0
       MESSAGE = 'No database has been set to operate on in the client. ' +
         'Please do so via: client.use(:db_name).'
 
@@ -164,7 +164,7 @@ module Mongo
       # @example Instantiate the exception.
       #   NoDatabase.new
       #
-      # @since 2.0.0
+      # @since 3.0.0
       def initialize
         super(MESSAGE)
       end
@@ -181,7 +181,7 @@ module Mongo
       #
       # @see http://docs.mongodb.org/manual/reference/connection-string/
       #
-      # @since 2.0.0
+      # @since 3.0.0
       def connect(connection_string)
         uri = URI.new(connection_string)
         client = new(uri.nodes, uri.options)
@@ -204,7 +204,7 @@ module Mongo
     #
     # @return [ Mongo::Database ] The current database.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def database
       @database || raise(NoDatabase.new)
     end

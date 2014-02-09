@@ -18,12 +18,12 @@ module Mongo
     # Defines default behavior for write concerns and provides a factory
     # interface to get a proper object from options.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     class Mode
 
       # The default write concern is to acknowledge on a single node.
       #
-      # @since 2.0.0
+      # @since 3.0.0
       DEFAULT = { :w => 1 }.freeze
 
       # @return [ Hash ] The write concern options.
@@ -47,7 +47,7 @@ module Mongo
       # @option options :wtimeout [ Integer ] The number of milliseconds to
       #   wait for acknowledgement before raising an error.
       #
-      # @since 2.0.0
+      # @since 3.0.0
       def initialize(options)
         @options = options
       end
@@ -66,7 +66,7 @@ module Mongo
       #
       # @return [ Hash ] The hash with normalized values.
       #
-      # @since 2.0.0
+      # @since 3.0.0
       def normalize(options)
         options.reduce({}) do |opts, (key, value)|
           opts[key] = value.is_a?(Symbol) ? value.to_s : value
@@ -94,7 +94,7 @@ module Mongo
         #
         # @return [ Mongo::WriteConcern::Mode ] The appropriate node.
         #
-        # @since 2.0.0
+        # @since 3.0.0
         def get(options)
           if unacknowledged?(options)
             Unacknowledged.new(options)
@@ -113,7 +113,7 @@ module Mongo
         #
         # @return [ true, false ] If the options are unacknowledged.
         #
-        # @since 2.0.0
+        # @since 3.0.0
         def unacknowledged?(options)
           options && (options[:w] == 0 || options[:w] == -1)
         end

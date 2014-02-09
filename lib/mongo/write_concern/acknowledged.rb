@@ -18,7 +18,7 @@ module Mongo
     # An acknowledged write concern provides a get last error command with the
     # appropriate options on each write operation.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     class Acknowledged < Mode
 
       # Get the get last error command for the concern.
@@ -28,7 +28,7 @@ module Mongo
       #
       # @return [ Hash ] The gle command.
       #
-      # @since 2.0.0
+      # @since 3.0.0
       def get_last_error
         @get_last_error ||= { :getlasterror => 1 }.merge(normalize(options))
       end

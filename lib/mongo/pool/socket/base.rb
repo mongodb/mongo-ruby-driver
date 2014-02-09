@@ -17,7 +17,7 @@ require 'openssl'
 require 'timeout'
 
 module Mongo
-  module Pool
+  class Pool
     module Socket
 
       # Module for behavior common across all supported socket types.

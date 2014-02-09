@@ -17,7 +17,7 @@ module Mongo
   # Represents a collection in the database and operations that can directly be
   # applied to one.
   #
-  # @since 2.0.0
+  # @since 3.0.0
   class Collection
 
     # @return [ Mongo::Database ] The database the collection resides in.
@@ -35,7 +35,7 @@ module Mongo
     #
     # @return [ true, false ] If the objects are equal.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     def ==(other)
       return false unless other.is_a?(Collection)
       name == other.name && database == other.database
@@ -50,12 +50,12 @@ module Mongo
 
     # Exception that is raised when trying to create a collection with no name.
     #
-    # @since 2.0.0
+    # @since 3.0.0
     class InvalidName < DriverError
 
       # The message is constant.
       #
-      # @since 2.0.0
+      # @since 3.0.0
       MESSAGE = 'nil is an invalid collection name. ' +
         'Please provide a string or symbol.'
 
@@ -64,7 +64,7 @@ module Mongo
       # @example Instantiate the exception.
       #   Mongo::Collection::InvalidName.new
       #
-      # @since 2.0.0
+      # @since 3.0.0
       def initialize
         super(MESSAGE)
       end

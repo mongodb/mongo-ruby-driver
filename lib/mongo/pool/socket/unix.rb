@@ -13,7 +13,7 @@
 # limitations under the License.
 
 module Mongo
-  module Pool
+  class Pool
     module Socket
 
       # Wrapper for Unix sockets.

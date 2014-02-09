@@ -13,7 +13,7 @@
 # limitations under the License.
 
 module Mongo
-  module Pool
+  class Pool
 
     # This class models the database connections and their behavior.
     class Connection
@@ -146,8 +146,6 @@ module Mongo
       def write(message)
         @socket.write(message.serialize)
       end
-
     end
-
   end
 end
