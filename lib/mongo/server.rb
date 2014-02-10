@@ -67,7 +67,7 @@ module Mongo
     end
 
     def initialize(address, options = {})
-      @address = address
+      @address = Address.new(address)
       @options = options
       @mutex = Mutex.new
       @refresh = Refresh.new(self, refresh_interval)

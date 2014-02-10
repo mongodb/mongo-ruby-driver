@@ -55,8 +55,16 @@ describe Mongo::Server do
       described_class.new(address, :refresh_interval => 5)
     end
 
-    it 'sets the address' do
-      expect(server.address).to eq(address)
+    it 'sets the address host' do
+      expect(server.address.host).to eq('127.0.0.1')
+    end
+
+    it 'sets the address port' do
+      expect(server.address.port).to eq(27017)
+    end
+
+    it 'sets the address ip' do
+      expect(server.address.ip).to eq('127.0.0.1')
     end
 
     it 'sets the options' do

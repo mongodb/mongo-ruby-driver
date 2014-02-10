@@ -74,7 +74,8 @@ describe Mongo::Cluster do
       end
 
       it 'returns the newly added node' do
-        expect(added.address).to eq(address)
+        expect(added.address.host).to eq('127.0.0.1')
+        expect(added.address.port).to eq(27020)
       end
     end
 
