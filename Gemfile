@@ -9,6 +9,13 @@ group :release do
   gem 'yard'
 end
 
+platforms :rbx do
+  gem 'racc'
+  gem 'rubysl', '~> 2.0'
+  gem 'psych'
+  gem 'rubinius-coverage', github: 'rubinius/rubinius-coverage'
+end
+
 group :development, :testing do
   gem 'json', :platforms => [ :ruby_18, :jruby ]
   gem 'rspec', '~> 2.14'

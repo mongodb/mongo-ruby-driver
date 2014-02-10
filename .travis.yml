@@ -7,8 +7,8 @@ rvm:
   - ruby-head
   - jruby-19mode
   - jruby-head
-  - rbx-2.0.0
-  - rbx-2.1.1
+  - rbx-2.1.0
+  - rbx-2.2.0
 
 jdk:
   - oraclejdk7
@@ -37,8 +37,8 @@ matrix:
   allow_failures:
     - rvm: ruby-head
     - rvm: jruby-head
-    - rvm: rbx-2.0.0
     - rvm: rbx-2.1.0
+    - rvm: rbx-2.2.0
   exclude:
     - rvm: 1.9.3
       jdk: openjdk7
@@ -52,9 +52,9 @@ matrix:
     - rvm: ruby-head
       jdk: openjdk7
       env: CI="travis"
-    - rvm: rbx-2.0.0
+    - rvm: rbx-2.1.0
       jdk: openjdk7
       env: CI="travis"
-    - rvm: rbx-2.1.0
+    - rvm: rbx-2.2.0
       jdk: openjdk7
       env: CI="travis"
