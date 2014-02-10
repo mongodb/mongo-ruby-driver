@@ -14,3 +14,18 @@
 
 require 'mongo/event/publisher'
 require 'mongo/event/subscriber'
+
+module Mongo
+
+  module Event
+
+    ARBITER_ADDED     = "arbiter_added".freeze
+    ARBITER_REMOVED   = "arbiter_removed".freeze
+
+    SECONDARY_ADDED   = "server_added".freeze
+    SECONDARY_REMOVED = "server_removed".freeze
+
+    SERVER_PROMOTED   = "server_promoted".freeze
+    SERVER_DEMOTED    = "server_demoted".freeze
+  end
+end

@@ -1,5 +1,6 @@
 require 'mongo/pool/socket'
 require 'mongo/pool/connection'
+require 'mongo/pool/queue'
 
 module Mongo
 

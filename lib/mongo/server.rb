@@ -77,10 +77,12 @@ module Mongo
       true
     end
 
-    def refresh
+    def refresh!
       mutex.synchronize do
         # Update the server description here. For changes in the description to
         # the previous we need to fire events.
+        #
+        # refreshed = Description.new(read(refresh_command))
         #
         # publish(Event::SERVER_ADDED, address)
         # publish(Event::SERVER_REMOVED, address)
