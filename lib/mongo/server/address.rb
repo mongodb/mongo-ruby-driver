@@ -32,6 +32,21 @@ module Mongo
       # @return [ Integer ] port The port to the connect to.
       attr_reader :port
 
+      # Check equality of the address to another.
+      #
+      # @example Check address equality.
+      #   address == other
+      #
+      # @param [ Object ] other The other object.
+      #
+      # @return [ true, false ] If the objects are equal.
+      #
+      # @since 3.0.0
+      def ==(other)
+        return false unless other.is_a?(Address)
+        host == other.host && port == other.port
+      end
+
       # Initialize the address.
       #
       # @example Initialize the address with a DNS entry and port.

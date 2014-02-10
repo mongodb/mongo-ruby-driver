@@ -2,6 +2,80 @@ require 'spec_helper'
 
 describe Mongo::Server::Address do
 
+  describe '#==' do
+
+    context 'when the other host and port are the same' do
+
+      let(:address) do
+        described_class.new('127.0.0.1:27017')
+      end
+
+      let(:other) do
+        described_class.new('127.0.0.1:27017')
+      end
+
+      it 'returns true' do
+        expect(address).to eq(other)
+      end
+    end
+
+    context 'when the other port is different' do
+
+      let(:address) do
+        described_class.new('127.0.0.1:27017')
+      end
+
+      let(:other) do
+        described_class.new('127.0.0.1:27018')
+      end
+
+      it 'returns false' do
+        expect(address).to_not eq(other)
+      end
+    end
+
+    context 'when the other host is different' do
+
+      let(:address) do
+        described_class.new('127.0.0.1:27017')
+      end
+
+      let(:other) do
+        described_class.new('127.0.0.2:27017')
+      end
+
+      it 'returns false' do
+        expect(address).to_not eq(other)
+      end
+    end
+
+    context 'when the other object is not an address' do
+
+      let(:address) do
+        described_class.new('127.0.0.1:27017')
+      end
+
+      it 'returns false' do
+        expect(address).to_not eq('test')
+      end
+    end
+
+    context 'when the addresses are identical unix sockets' do
+
+      let(:address) do
+        described_class.new('/path/to/socket.sock')
+      end
+
+      let(:other) do
+        described_class.new('/path/to/socket.sock')
+      end
+
+      it 'returns true' do
+        expect(address).to eq(other)
+      end
+    end
+  end
+
   describe '#resolve' do
 
     context 'when providing an ipv4 host' do
