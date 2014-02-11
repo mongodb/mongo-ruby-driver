@@ -67,7 +67,7 @@ The MongoDB Ruby driver requires Ruby 1.8.7 or greater and is regularly tested a
 
 Ruby Platforms | Operating Systems | Architectures
 -------------- | ----------------- | -------------
-MRI 1.8.7, 1.9.3, 2.0.0<br>JRuby 1.7.x<br>Rubinius 2.x | Windows<br>Linux<br>OS X | x86<br>x64<br>ARM
+MRI 1.9.3, 2.0.0, 2.1.0<br>JRuby 1.7.x<br>Rubinius 2.x | Windows<br>Linux<br>OS X | x86<br>x64<br>ARM
 
 Support & Feedback
 -----
