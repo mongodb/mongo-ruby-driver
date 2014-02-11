@@ -34,7 +34,7 @@ describe Mongo::Pool::Connection do
     end
 
     it 'sets the default timeout value' do
-      expect(connection.timeout).to eq(Mongo::Pool::Connection::DEFAULT_TIMEOUT)
+      expect(connection.timeout).to eq(Mongo::Pool::Connection::TIMEOUT)
     end
 
     it 'sets the last use to nil' do

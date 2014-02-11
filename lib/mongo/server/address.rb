@@ -47,6 +47,18 @@ module Mongo
         host == other.host && port == other.port
       end
 
+      # Calculate the hash value for the address.
+      #
+      # @example Calculate the hash value.
+      #   address.hash
+      #
+      # @return [ Integer ] The hash value.
+      #
+      # @since 3.0.0
+      def hash
+        [ host, port ].hash
+      end
+
       # Initialize the address.
       #
       # @example Initialize the address with a DNS entry and port.

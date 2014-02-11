@@ -18,7 +18,7 @@ module Mongo
     # This class models the database connections and their behavior.
     class Connection
 
-      DEFAULT_TIMEOUT = 5
+      TIMEOUT = 5
 
       # @!attribute host
       #   @return [String] The hostname (or path for unix sockets).
@@ -47,7 +47,7 @@ module Mongo
       def initialize(host, port, timeout = nil, opts = {})
         @host     = host
         @port     = port
-        @timeout  = timeout || DEFAULT_TIMEOUT
+        @timeout  = timeout || TIMEOUT
         @last_use = nil
         @socket   = nil
         @ssl_opts = opts.reject { |k, v| !k.to_s.start_with?('ssl') }

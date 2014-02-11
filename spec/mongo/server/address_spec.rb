@@ -76,6 +76,17 @@ describe Mongo::Server::Address do
     end
   end
 
+  describe '#hash' do
+
+    let(:address) do
+      described_class.new('127.0.0.1:27017')
+    end
+
+    it 'hashes on the host and port' do
+      expect(address.hash).to eq([ '127.0.0.1', 27017 ].hash)
+    end
+  end
+
   describe '#resolve' do
 
     context 'when providing an ipv4 host' do
