@@ -77,6 +77,12 @@ module Mongo
       # @example Initialize the address with an IPV4 address and no port.
       #   Mongo::Server::Address.new("127.0.0.1")
       #
+      # @example Initialize the address with an IPV6 address and port.
+      #   Mongo::Server::Address.new("[::1]:27017")
+      #
+      # @example Initialize the address with an IPV6 address and no port.
+      #   Mongo::Server::Address.new("[::1]")
+      #
       # @example Initialize the address with a unix socket.
       #   Mongo::Server::Address.new("/path/to/socket.sock")
       #
