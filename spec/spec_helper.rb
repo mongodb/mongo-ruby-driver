@@ -1,4 +1,4 @@
-unless RUBY_VERSION < '1.9'
+if RUBY_VERSION > '1.9' && RUBY_VERSION < '2.2'
   require 'simplecov'
   require 'coveralls'
 
