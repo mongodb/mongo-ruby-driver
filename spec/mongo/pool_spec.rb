@@ -146,7 +146,7 @@ describe Mongo::Pool do
     context 'when a pool size option is provided' do
 
       let(:pool) do
-        described_class.new(pool_size: 3) { double('connection') }
+        described_class.new(:pool_size => 3) { double('connection') }
       end
 
       it 'returns the pool size' do
@@ -171,7 +171,7 @@ describe Mongo::Pool do
     context 'when a timeout option is provided' do
 
       let(:pool) do
-        described_class.new(timeout: 1) { double('connection') }
+        described_class.new(:timeout => 1) { double('connection') }
       end
 
       it 'returns the timeout' do
