@@ -37,10 +37,6 @@ describe Mongo::Pool::Connection do
       expect(connection.timeout).to eq(Mongo::Pool::Connection::TIMEOUT)
     end
 
-    it 'sets the last use to nil' do
-      expect(connection.last_use).to be nil
-    end
-
     it 'sets the socket to nil' do
       socket = connection.instance_variable_get(:@socket)
       expect(socket).to be nil
@@ -53,14 +49,12 @@ describe Mongo::Pool::Connection do
       it 'sets the timeout value' do
         expect(connection.timeout).to eq(timeout)
       end
-
     end
 
-    context 'when port is nil' do
+    pending 'when port is nil' do
 
       it 'creates unix socket' do
       end
-
     end
 
     context 'when options are provided' do
@@ -79,7 +73,6 @@ describe Mongo::Pool::Connection do
           socket = conn.instance_variable_get(:@socket)
           expect(socket).to be nil
         end
-
       end
 
       context 'when :connect => true' do
@@ -96,7 +89,6 @@ describe Mongo::Pool::Connection do
           socket = conn.instance_variable_get(:@socket)
           expect(socket).to_not be nil
         end
-
       end
 
       context 'when :connect is not specified' do
@@ -113,7 +105,6 @@ describe Mongo::Pool::Connection do
           socket = conn.instance_variable_get(:@socket)
           expect(socket).to_not be nil
         end
-
       end
 
       context 'when ssl options are specified' do
@@ -126,44 +117,8 @@ describe Mongo::Pool::Connection do
           expect(ssl_opts).to_not be nil
           expect(ssl_opts.keys).to include :ssl
         end
-
       end
-
     end
-
-  end
-
-  describe '#lease' do
-
-    it 'sets the lease time to now' do
-      connection.lease
-      expect(connection.last_use).to_not be nil
-    end
-
-  end
-
-  describe '#expire' do
-
-    it 'sets the lease time to nil' do
-      connection.lease
-      connection.expire
-      expect(connection.last_use).to be nil
-    end
-
-  end
-
-  describe '#expired?' do
-
-    it 'returns true when lease time is not set' do
-      connection.expire
-      expect(connection.expired?).to be true
-    end
-
-    it 'returns false when the lease time has been set' do
-      connection.lease
-      expect(connection.expired?).to be false
-    end
-
   end
 
   describe '#connect' do
@@ -175,7 +130,6 @@ describe Mongo::Pool::Connection do
         expect(Mongo::Pool::Socket::Unix).to receive(:new)
         described_class.new(host, nil)
       end
-
     end
 
     context 'when ssl_opts are present' do
@@ -187,7 +141,6 @@ describe Mongo::Pool::Connection do
         expect(Mongo::Pool::Socket::SSL).to receive(:new)
         described_class.new(host, port, nil, opts)
       end
-
     end
 
     it 'creates a tcp socket instance by default' do
@@ -195,7 +148,6 @@ describe Mongo::Pool::Connection do
       expect(Mongo::Pool::Socket::TCP).to receive(:new)
       described_class.new(host, port)
     end
-
   end
 
   describe '#disconnect' do
@@ -211,7 +163,6 @@ describe Mongo::Pool::Connection do
         expect(Mongo::Pool::Socket::TCP).to_not receive(:close)
         connection.disconnect
       end
-
     end
 
     context 'when the socket has been set' do
@@ -221,7 +172,6 @@ describe Mongo::Pool::Connection do
         expect(socket).to receive(:close)
         connection.disconnect
       end
-
     end
 
     it 'sets the socket to nil' do
@@ -229,17 +179,15 @@ describe Mongo::Pool::Connection do
       socket = connection.instance_variable_get(:@socket)
       expect(socket).to be nil
     end
-
   end
 
-  describe '#read' do
+  pending '#read' do
     # TODO: definite Operation and OperationResult so that we can figure out
     # what needs to happen here.
   end
 
-  describe '#write' do
+  pending '#write' do
     # TODO: definite Operation and OperationResult so that we can figure out
     # what needs to happen here.
   end
-
 end

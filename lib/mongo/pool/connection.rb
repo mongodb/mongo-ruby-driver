@@ -26,9 +26,7 @@ module Mongo
       #   @return [Integer] The port number (nil for unix sockets).
       # @!attribute timeout
       #   @return [Integer] The socket timeout value in seconds.
-      # @!attribute last_use
-      #   @return [Time.now] The most recent lease time for the connection.
-      attr_reader :host, :port, :timeout, :last_use
+      attr_reader :host, :port, :timeout
 
       # Initializes a new connected and ready-to-use Connection instance.
       #
@@ -48,43 +46,10 @@ module Mongo
         @host     = host
         @port     = port
         @timeout  = timeout || TIMEOUT
-        @last_use = nil
         @socket   = nil
         @ssl_opts = opts.reject { |k, v| !k.to_s.start_with?('ssl') }
         connect if opts.fetch(:connect, true)
         self
-      end
-
-      # Leases the connection and sets the last use time to now.
-      #
-      # @example
-      #   connection = Connection.new('::1', 27015)
-      #   connection.lease
-      #
-      def lease
-        @last_use = Time.now
-      end
-
-      # Expires the lease and sets last use to nil.
-      #
-      # @example
-      #   connection = Connection.new('::1', 27015)
-      #   connection.lease
-      #   connection.expire
-      #
-      def expire
-        @last_use = nil
-      end
-
-      # Indicates whether or not the lease has expired.
-      #
-      # @example
-      #   connection = Connection.new('::1', 27015)
-      #   connection.expired?
-      #
-      # @return [true, false] Boolean value indicating if the lease has
-      def expired?
-        @last_use.nil?
       end
 
       # Create a socket a connected socket instance.
