@@ -17,7 +17,6 @@ require 'mongo/server/address/ipv4'
 require 'mongo/server/address/ipv6'
 require 'mongo/server/address/sock'
 require 'forwardable'
-require 'resolv'
 
 module Mongo
   class Server
