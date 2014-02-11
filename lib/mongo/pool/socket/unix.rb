@@ -18,7 +18,6 @@ module Mongo
 
       # Wrapper for Unix sockets.
       class Unix
-
         include Socket::Base
 
         # Initializes a new Unix socket.
@@ -29,18 +28,14 @@ module Mongo
         #
         # @param path [String] The path to the unix socket.
         # @param timeout [Integer] The socket timeout value.
-        # @param opts [Hash] Optional settings and configuration values.
         #
         # @option opts [true, false] :connect (true) If true calls connect
         #   before returning the object instance.
         #
         # @return [Unix] The Unix socket instance.
-        def initialize(path, timeout, opts = {})
+        def initialize(path, timeout)
           @host    = path
           @timeout = timeout
-
-          connect if opts.fetch(:connect, true)
-          self
         end
 
         # Establishes a socket connection.
@@ -62,9 +57,7 @@ module Mongo
             end
           end
         end
-
       end
-
     end
   end
 end

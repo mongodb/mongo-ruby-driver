@@ -18,7 +18,6 @@ module Mongo
 
       # Wrapper for SSL sockets
       class SSL
-
         include Socket::Base
         include OpenSSL
 
@@ -73,9 +72,6 @@ module Mongo
             @context.ca_file     = opts[:ca_cert]
             @context.verify_mode = OpenSSL::SSL::VERIFY_PEER
           end
-
-          connect if opts.fetch(:connect, true)
-          self
         end
 
         # Establishes the socket connection and performs
@@ -106,9 +102,7 @@ module Mongo
             end
           end
         end
-
       end
-
     end
   end
 end

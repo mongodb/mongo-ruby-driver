@@ -18,7 +18,6 @@ module Mongo
 
       # Wrapper for TCP sockets.
       class TCP
-
         include Socket::Base
 
         # Initializes a new TCP socket.
@@ -41,9 +40,6 @@ module Mongo
           @host    = host
           @port    = port
           @timeout = timeout
-
-          connect if opts.fetch(:connect, true)
-          self
         end
 
         # Establishes a socket connection.
@@ -58,9 +54,7 @@ module Mongo
             @socket = handle_connect
           end
         end
-
       end
-
     end
   end
 end

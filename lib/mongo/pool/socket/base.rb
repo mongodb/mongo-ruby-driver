@@ -22,7 +22,6 @@ module Mongo
 
       # Module for behavior common across all supported socket types.
       module Base
-
         include ::Socket::Constants
 
         # Reads data from the socket instance.
@@ -125,9 +124,7 @@ module Mongo
                   'SSL handshake failed. MongoDB ' +
                   'may not be configured with SSL support.'
         end
-
       end
-
     end
   end
 end
