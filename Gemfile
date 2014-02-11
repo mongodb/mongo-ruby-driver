@@ -17,7 +17,7 @@ platforms :rbx do
 end
 
 group :development, :testing do
-  gem 'json', :platforms => [ :ruby_18, :jruby ]
+  gem 'json', :platforms => [ :jruby ]
   gem 'rspec', '~> 2.14'
   gem 'mime-types', '~> 1.25'
 
