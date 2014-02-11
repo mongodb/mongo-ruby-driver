@@ -1,0 +1,61 @@
+# Copyright (C) 2009-2014 MongoDB, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the 'License');
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an 'AS IS' BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+module Mongo
+  class Server
+    class Address
+
+      # Sets up DNS resolution with IPv4 support if the address is an ip
+      # address.
+      #
+      # @since 3.0.0
+      class IPv4
+        include Resolvable
+
+        # The regular expression to use to match an IPv4 ip address.
+        #
+        # @since 3.0.0
+        MATCH = Regexp.new('/\./').freeze
+
+        # Initialize the IPv4 resolver.
+        #
+        # @example Initialize the resolver.
+        #   IPv4.new("127.0.0.1:28011")
+        #
+        # @param [ String ] address The address to resolve.
+        #
+        # @since 3.0.0
+        def initialize(address)
+          parts = address.split(':')
+          @host = parts[0]
+          @port = (parts[1] || 27017).to_i
+          resolve!
+        end
+
+        # Get the pattern to use when the DNS is resolved to match an IPv4
+        # address.
+        #
+        # @example Get the IPv4 regex pattern.
+        #   ipv4.pattern
+        #
+        # @return [ Regexp ] The regexp.
+        #
+        # @since 3.0.0
+        def pattern
+          Resolv::IPv4::Regex
+        end
+      end
+    end
+  end
+end

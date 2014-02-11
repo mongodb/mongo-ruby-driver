@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/server/address/resolvable'
+require 'mongo/server/address/ipv4'
+require 'mongo/server/address/ipv6'
+require 'mongo/server/address/sock'
+require 'forwardable'
 require 'resolv'
 
 module Mongo
@@ -22,15 +27,15 @@ module Mongo
     #
     # @since 3.0.0
     class Address
+      extend Forwardable
 
-      # @return [ String ] host The original host provided.
-      attr_reader :host
-
-      # @return [ String ] ip The resolved ip address.
-      attr_reader :ip
+      # Delegate the ip, host, and port methods to the resolver.
+      #
+      # @since 3.0.0
+      def_delegators :@resolver, :ip, :host, :port
 
       # @return [ Integer ] port The port to the connect to.
-      attr_reader :port
+      attr_reader :resolver
 
       # Check equality of the address to another.
       #
@@ -81,28 +86,10 @@ module Mongo
       #
       # @since 3.0.0
       def initialize(address, options = {})
-        split = address.split(':')
-        @host = split[0]
-        unless @host =~ /\.sock/
-          @port = (split[1] || 27017).to_i
-          resolve!
-        end
-      end
-
-      # Resolve the DNS to an ip address. Will mutate this object if the DNS
-      # changed.
-      #
-      # @example Resolve the DNS for the address.
-      #   address.resolve!
-      #
-      # @return [ String ] The resolved ip address.
-      #
-      # @since 3.0.0
-      def resolve!
-        Resolv.each_address(host) do |address|
-          if address =~ Resolv::IPv4::Regex
-            return @ip = address
-          end
+        case address
+        when Sock::MATCH then @resolver = Sock.new(address)
+        when IPv6::MATCH then @resolver = IPv6.new(address)
+        else @resolver = IPv4.new(address)
         end
       end
     end

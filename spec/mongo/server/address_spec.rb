@@ -87,7 +87,7 @@ describe Mongo::Server::Address do
     end
   end
 
-  describe '#resolve' do
+  describe '#initialize' do
 
     context 'when providing an ipv4 host' do
 
@@ -126,6 +126,47 @@ describe Mongo::Server::Address do
 
         it 'sets the host' do
           expect(address.host).to eq('127.0.0.1')
+        end
+      end
+    end
+
+    context 'when providing an ipv6 host' do
+
+      context 'when a port is provided' do
+
+        let(:address) do
+          described_class.new('[::1]:27017')
+        end
+
+        it 'sets the host ip' do
+          expect(address.ip).to eq('::1')
+        end
+
+        it 'sets the port' do
+          expect(address.port).to eq(27017)
+        end
+
+        it 'sets the host' do
+          expect(address.host).to eq('::1')
+        end
+      end
+
+      context 'when no port is provided' do
+
+        let(:address) do
+          described_class.new('[::1]')
+        end
+
+        it 'sets the host ip' do
+          expect(address.ip).to eq('::1')
+        end
+
+        it 'sets the port to 27017' do
+          expect(address.port).to eq(27017)
+        end
+
+        it 'sets the host' do
+          expect(address.host).to eq('::1')
         end
       end
     end
@@ -191,4 +232,3 @@ describe Mongo::Server::Address do
     end
   end
 end
-
