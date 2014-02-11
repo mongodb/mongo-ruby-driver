@@ -99,7 +99,11 @@ module Mongo
       #
       # @since 3.0.0
       def resolve!
-        @ip = Resolv.getaddress(host)
+        Resolv.each_address(host) do |address|
+          if address =~ Resolv::IPv4::Regex
+            return @ip = address
+          end
+        end
       end
     end
   end
