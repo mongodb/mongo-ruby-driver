@@ -72,6 +72,14 @@ module Mongo
           handle_socket_error { @socket.read(length) }
         end
 
+        def gets(*args)
+          handle_socket_error { @socket.gets(*args) }
+        end
+
+        def readbyte
+          handle_socket_error { @socket.readbyte }
+        end
+
         # Writes data to the socket instance.
         #
         # @example Write to the socket.

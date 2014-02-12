@@ -126,6 +126,47 @@ describe Mongo::Pool::Connection do
     end
   end
 
+  describe '#read' do
+
+    let(:connection) do
+      described_class.new('127.0.0.1', 27017, 5)
+    end
+
+    let(:documents) do
+      [{ 'name' => 'testing' }]
+    end
+
+    let(:insert) do
+      Mongo::Protocol::Insert.new('mongo_test', 'users', documents)
+    end
+
+    let(:query) do
+      Mongo::Protocol::Query.new('mongo_test', 'users', {})
+    end
+
+    let(:delete) do
+      Mongo::Protocol::Delete.new('mongo_test', 'users', {})
+    end
+
+    before do
+      connection.write([ insert ])
+      connection.write([ query ])
+    end
+
+    # @todo: Can remove this once we have more implemented with global hooks.
+    after do
+      connection.write([ delete ])
+    end
+
+    let(:reply) do
+      connection.read
+    end
+
+    it 'returns the reply from the connection' do
+      expect(reply.documents.first['name']).to eq('testing')
+    end
+  end
+
   describe '#write' do
 
     let(:connection) do
@@ -136,28 +177,32 @@ describe Mongo::Pool::Connection do
       [{ 'name' => 'testing' }]
     end
 
-    let(:message) do
+    let(:insert) do
       Mongo::Protocol::Insert.new('mongo_test', 'users', documents)
     end
 
-    let(:socket) do
-      connection.send(:socket)
+    let(:query) do
+      Mongo::Protocol::Query.new('mongo_test', 'users', {})
+    end
+
+    let(:delete) do
+      Mongo::Protocol::Delete.new('mongo_test', 'users', {})
     end
 
     context 'when providing a single message' do
 
-      let!(:serialized) do
-        message.serialize('')
+      before do
+        connection.write([ insert ])
+        connection.write([ query ])
       end
 
-      before do
-        connection.connect!
-        Mongo::Protocol::Message.send(:reset_request_id)
-        expect(socket).to receive(:write).with(serialized)
+      # @todo: Can remove this once we have more implemented with global hooks.
+      after do
+        connection.write([ delete ])
       end
 
       it 'it writes the message to the socket' do
-        connection.write([ message ])
+        expect(connection.read.documents.first['name']).to eq('testing')
       end
     end
 
@@ -171,21 +216,17 @@ describe Mongo::Pool::Connection do
         Mongo::Protocol::Query.new('mongo_test', '$cmd', selector, :limit => -1)
       end
 
-      let(:buffer) { '' }
-
-      let!(:serialized) do
-        message.serialize(buffer)
-        command.serialize(buffer)
+      before do
+        connection.write([ insert, command ])
       end
 
-      before do
-        connection.connect!
-        2.times { Mongo::Protocol::Message.send(:reset_request_id) }
-        expect(socket).to receive(:write).with(serialized)
+      # @todo: Can remove this once we have more implemented with global hooks.
+      after do
+        connection.write([ delete ])
       end
 
       it 'it writes the message to the socket' do
-        connection.write([ message, command ])
+        expect(connection.read.documents.first['ok']).to eq(1.0)
       end
     end
   end

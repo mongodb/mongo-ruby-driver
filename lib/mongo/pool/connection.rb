@@ -88,7 +88,18 @@ module Mongo
         @socket   = nil
       end
 
+      # Read a reply from the connection.
+      #
+      # @example Read a reply from the connection.
+      #   connection.read
+      #
+      # @return [ Protocol::Reply ] The reply object.
+      #
+      # @since 3.0.0
       def read
+        ensure_connected do |socket|
+          Protocol::Reply.deserialize(socket)
+        end
       end
 
       # Write messages to the connection in a single network call.

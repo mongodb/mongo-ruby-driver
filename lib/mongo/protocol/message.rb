@@ -226,14 +226,6 @@ module Mongo
           field[:type].deserialize(io)
         )
       end
-
-
-      private
-
-      # @durran: temp for testing until read from connection is done.
-      def self.reset_request_id
-        @@request_id -= 1
-      end
     end
   end
 end
