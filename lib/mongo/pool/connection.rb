@@ -91,14 +91,33 @@ module Mongo
       def read
       end
 
-      def write(message)
+      # Write messages to the connection in a single network call.
+      #
+      # @example Write the messages to the connection.
+      #   connection.write([ insert ])
+      #
+      # @note All messages must be instances of Mongo::Protocol::Message.
+      #
+      # @param [ Array<Message> ] messages The messages to write.
+      # @param [ String ] buffer The buffer to write to.
+      #
+      # @return [ Integer ] The number of bytes written.
+      #
+      # @since 3.0.0
+      def write(messages, buffer = '')
+        messages.each do |message|
+          message.serialize(buffer)
+        end
+        ensure_connected do |socket|
+          socket.write(buffer)
+        end
       end
 
       private
 
       attr_reader :socket, :ssl_opts
 
-      def connected
+      def ensure_connected
         connect! if socket.nil? || !socket.alive?
         yield socket
       end

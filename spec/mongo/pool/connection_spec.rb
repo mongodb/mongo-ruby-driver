@@ -125,4 +125,68 @@ describe Mongo::Pool::Connection do
       end
     end
   end
+
+  describe '#write' do
+
+    let(:connection) do
+      described_class.new('127.0.0.1', 27017, 5)
+    end
+
+    let(:documents) do
+      [{ 'name' => 'testing' }]
+    end
+
+    let(:message) do
+      Mongo::Protocol::Insert.new('mongo_test', 'users', documents)
+    end
+
+    let(:socket) do
+      connection.send(:socket)
+    end
+
+    context 'when providing a single message' do
+
+      let!(:serialized) do
+        message.serialize('')
+      end
+
+      before do
+        connection.connect!
+        Mongo::Protocol::Message.send(:reset_request_id)
+        expect(socket).to receive(:write).with(serialized)
+      end
+
+      it 'it writes the message to the socket' do
+        connection.write([ message ])
+      end
+    end
+
+    context 'when providing multiple messages' do
+
+      let(:selector) do
+        { :getlasterror => 1 }
+      end
+
+      let(:command) do
+        Mongo::Protocol::Query.new('mongo_test', '$cmd', selector, :limit => -1)
+      end
+
+      let(:buffer) { '' }
+
+      let!(:serialized) do
+        message.serialize(buffer)
+        command.serialize(buffer)
+      end
+
+      before do
+        connection.connect!
+        2.times { Mongo::Protocol::Message.send(:reset_request_id) }
+        expect(socket).to receive(:write).with(serialized)
+      end
+
+      it 'it writes the message to the socket' do
+        connection.write([ message, command ])
+      end
+    end
+  end
 end
