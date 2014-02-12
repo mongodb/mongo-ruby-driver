@@ -2,73 +2,56 @@ require 'spec_helper'
 
 describe Mongo::Pool::Socket::Unix do
 
-  let(:path) { '/path/to/socket.sock' }
-  let(:timeout) { 30 }
+  describe '#connect!' do
 
-  before do
-    allow_any_instance_of(
-      described_class).to receive(:connect).and_call_original
-    allow_any_instance_of(::Socket).to receive(:connect) { 0 }
-    allow(File).to receive(:open) { double(File) }
+    let(:socket) do
+      described_class.new('/path/to/socket.sock', 10)
+    end
+
+    let(:sock) do
+      double('socket')
+    end
+
+    context 'when an error occurs when connecting' do
+
+      before do
+        expect(socket).to receive(:create_socket).with(Socket::Constants::AF_UNIX).and_return(sock)
+        expect(sock).to receive(:connect).with('/path/to/socket.sock').and_raise(IOError)
+        expect(sock).to receive(:close)
+      end
+
+      it 're-raises the exception' do
+        expect {
+          socket.connect!
+        }.to raise_error(IOError)
+      end
+    end
+
+    context 'when no error occurs connecting' do
+
+      before do
+        expect(socket).to receive(:create_socket).with(Socket::Constants::AF_UNIX).and_return(sock)
+        expect(sock).to receive(:connect)
+      end
+
+      it 'connects and returns the socket' do
+        expect(socket.connect!).to eq(socket)
+      end
+    end
   end
 
   describe '#initialize' do
-    it 'responds to invocation with host and timeout' do
-      expect(described_class).to receive(:new).with(path, timeout)
-      described_class.new(path, timeout)
+
+    let(:socket) do
+      described_class.new('/path/to/socket.sock', 10)
     end
 
-    it 'responds to invocation with path, timeout and opts' do
-      expect(described_class).to receive(:new).with(path, timeout, {})
-      described_class.new(path, timeout, {})
+    it 'sets the host' do
+      expect(socket.host).to eq('/path/to/socket.sock')
     end
 
-    it 'does not connect automatically by default' do
-      expect(described_class).to_not receive(:connect)
-      described_class.new(path, timeout)
+    it 'sets the timeout' do
+      expect(socket.timeout).to eq(10)
     end
-
-    context 'when options are provided' do
-      context 'when :connect => true' do
-        let(:opts) { { :connect => true } }
-
-        it 'invokes connect automatically' do
-          sock = described_class.new(path, timeout, opts)
-          expect(sock).to have_received(:connect)
-        end
-      end
-
-      context 'when :connect => false' do
-        let(:opts) { { :connect => false } }
-
-        it 'does not invoke connect automatically' do
-          expect(described_class).to_not receive(:connect)
-          described_class.new(path, timeout, opts)
-        end
-      end
-    end
-
   end
-
-  describe '#connect' do
-
-    let(:unix_socket) { described_class.new(path, 0.1) }
-
-    it 'raises a Mongo::SocketTimeoutError on timeout' do
-      allow(unix_socket).to receive(:create_socket) { sleep 0.2 }
-      expect { unix_socket.connect }.to raise_error(Mongo::SocketTimeoutError)
-    end
-
-    it 're-raises exception after unsuccessful connect attempt' do
-      allow_any_instance_of(::Socket).to receive(:connect) { raise IOError }
-      expect { unix_socket.connect }.to raise_error(IOError)
-    end
-
-  end
-
-  let(:socket) { double(::Socket) }
-  let(:object) { described_class.new(path, timeout) }
-
-  include_examples 'shared socket behavior'
-
 end

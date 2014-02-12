@@ -17,42 +17,47 @@ module Mongo
     module Socket
 
       # Wrapper for TCP sockets.
+      #
+      # @since 3.0.0
       class TCP
         include Socket::Base
 
-        # Initializes a new TCP socket.
-        #
-        # @example
-        #   TCP.new('::1', 27017, 30)
-        #   TCP.new('127.0.0.1', 27017, 30)
-        #   TCP.new('127.0.0.1', 27017, 30, :connect => false)
-        #
-        # @param host [String] The hostname or IP address.
-        # @param port [Integer] The port number.
-        # @param timeout [Integer] The socket timeout value.
-        # @param opts [Hash] Optional settings and configuration values.
-        #
-        # @option opts [true, false] :connect (true) If true calls connect
-        #   before returning the object instance.
-        #
-        # @return [TCP] The TCP socket instance.
-        def initialize(host, port, timeout, opts = {})
-          @host    = host
-          @port    = port
-          @timeout = timeout
-        end
+        # @return [ Integer ] port The port to connect to.
+        attr_reader :port
 
         # Establishes a socket connection.
         #
-        # @example
-        #   sock = TCP.new('::1', 27017, 30)
-        #   sock.connect
+        # @example Connect the socket.
+        #   sock.connect!
         #
-        # @return [Socket] The connected socket instance.
-        def connect
-          Timeout.timeout(@timeout, Mongo::SocketTimeoutError) do
+        # @note This method mutates the object by setting the socket
+        #   internally.
+        #
+        # @return [ TCP ] The connected socket instance.
+        #
+        # @since 3.0.0
+        def connect!
+          Timeout.timeout(timeout, Mongo::SocketTimeoutError) do
             @socket = handle_connect
+            self
           end
+        end
+
+        # Initializes a new TCP socket.
+        #
+        # @example Create the TCP socket.
+        #   TCP.new('::1', 27017, 30)
+        #   TCP.new('127.0.0.1', 27017, 30)
+        #
+        # @param host [ String ] The hostname or IP address.
+        # @param port [ Integer ] The port number.
+        # @param timeout [ Integer ] The socket timeout value.
+        #
+        # @since 3.0.0
+        def initialize(host, port, timeout)
+          @host    = host
+          @port    = port
+          @timeout = timeout
         end
       end
     end

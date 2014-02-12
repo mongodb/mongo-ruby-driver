@@ -17,45 +17,44 @@ module Mongo
     module Socket
 
       # Wrapper for Unix sockets.
+      #
+      # @since 3.0.0
       class Unix
         include Socket::Base
 
-        # Initializes a new Unix socket.
-        #
-        # @example
-        #   Unix.new('/path/to/socket.sock', 30)
-        #   Unix.new('/path/to/socket.sock', 30, :connect => false)
-        #
-        # @param path [String] The path to the unix socket.
-        # @param timeout [Integer] The socket timeout value.
-        #
-        # @option opts [true, false] :connect (true) If true calls connect
-        #   before returning the object instance.
-        #
-        # @return [Unix] The Unix socket instance.
-        def initialize(path, timeout)
-          @host    = path
-          @timeout = timeout
-        end
-
         # Establishes a socket connection.
         #
-        # @example
-        #   sock = Unix.new('/path/to/socket.sock', 30)
+        # @example Connect to the socket.
         #   sock.connect
         #
-        # @return [Socket] The connected socket instance.
-        def connect
-          Timeout.timeout(@timeout, Mongo::SocketTimeoutError) do
+        # @return [ Unix ] The connected socket instance.
+        #
+        # @since 3.0.0
+        def connect!
+          Timeout.timeout(timeout, Mongo::SocketTimeoutError) do
             begin
               @socket = create_socket(AF_UNIX)
-              @socket.connect(@host)
-              return @socket
+              @socket.connect(host)
+              self
             rescue IOError, SystemCallError => e
               @socket.close if @socket
               raise e
             end
           end
+        end
+
+        # Initializes a new Unix socket.
+        #
+        # @example Create the Unix socket.
+        #   Unix.new('/path/to/socket.sock', 30)
+        #
+        # @param path [ String ] The path to the unix socket.
+        # @param timeout [ Integer ] The socket timeout value.
+        #
+        # @since 3.0.0
+        def initialize(path, timeout)
+          @host    = path
+          @timeout = timeout
         end
       end
     end

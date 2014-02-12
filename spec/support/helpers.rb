@@ -34,4 +34,42 @@ module Helpers
     $stderr = original_stderr
   end
 
+  TEST_KEY_RSA1024 = OpenSSL::PKey::RSA.new <<-_end_of_pem_
+-----BEGIN RSA PRIVATE KEY-----
+MIICXgIBAAKBgQDLwsSw1ECnPtT+PkOgHhcGA71nwC2/nL85VBGnRqDxOqjVh7Cx
+aKPERYHsk4BPCkE3brtThPWc9kjHEQQ7uf9Y1rbCz0layNqHyywQEVLFmp1cpIt/
+Q3geLv8ZD9pihowKJDyMDiN6ArYUmZczvW4976MU3+l54E6lF/JfFEU5hwIDAQAB
+AoGBAKSl/MQarye1yOysqX6P8fDFQt68VvtXkNmlSiKOGuzyho0M+UVSFcs6k1L0
+maDE25AMZUiGzuWHyaU55d7RXDgeskDMakD1v6ZejYtxJkSXbETOTLDwUWTn618T
+gnb17tU1jktUtU67xK/08i/XodlgnQhs6VoHTuCh3Hu77O6RAkEA7+gxqBuZR572
+74/akiW/SuXm0SXPEviyO1MuSRwtI87B02D0qgV8D1UHRm4AhMnJ8MCs1809kMQE
+JiQUCrp9mQJBANlt2ngBO14us6NnhuAseFDTBzCHXwUUu1YKHpMMmxpnGqaldGgX
+sOZB3lgJsT9VlGf3YGYdkLTNVbogQKlKpB8CQQDiSwkb4vyQfDe8/NpU5Not0fII
+8jsDUCb+opWUTMmfbxWRR3FBNu8wnym/m19N4fFj8LqYzHX4KY0oVPu6qvJxAkEA
+wa5snNekFcqONLIE4G5cosrIrb74sqL8GbGb+KuTAprzj5z1K8Bm0UW9lTjVDjDi
+qRYgZfZSL+x1P/54+xTFSwJAY1FxA/N3QPCXCjPh5YqFxAMQs2VVYTfg+t0MEcJD
+dPMQD5JX6g5HKnHFg2mZtoXQrWmJSn7p8GJK8yNTopEErA==
+-----END RSA PRIVATE KEY-----
+  _end_of_pem_
+
+  def issue_cert(dn, key, serial, not_before, not_after, extensions, issuer, issuer_key, digest)
+    cert = OpenSSL::X509::Certificate.new
+    issuer = cert unless issuer
+    issuer_key = key unless issuer_key
+    cert.version = 2
+    cert.serial = serial
+    cert.subject = dn
+    cert.issuer = issuer.subject
+    cert.public_key = key.public_key
+    cert.not_before = not_before
+    cert.not_after = not_after
+    ef = OpenSSL::X509::ExtensionFactory.new
+    ef.subject_certificate = cert
+    ef.issuer_certificate = issuer
+    extensions.each do |oid, value, critical|
+      cert.add_extension(ef.create_extension(oid, value, critical))
+    end
+    cert.sign(issuer_key, digest)
+    cert
+  end
 end

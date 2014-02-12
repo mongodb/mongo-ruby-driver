@@ -2,192 +2,127 @@ require 'spec_helper'
 
 describe Mongo::Pool::Connection do
 
-  let(:host) { 'localhost' }
-  let(:port) { 12345 }
-  let(:timeout) { 2 }
-  let(:opts) { { :connect => false } }
-  let(:connection) { described_class.new(host, port, nil, opts) }
+  describe '#connect!' do
 
-  before do
-    allow_any_instance_of(Mongo::Pool::Socket::TCP).to receive(:connect) do
-      double(Mongo::Pool::Socket::TCP)
+    let(:connection) do
+      described_class.new('127.0.0.1', 27017)
     end
-    allow_any_instance_of(Mongo::Pool::Socket::TCP).to receive(:close)
-    allow_any_instance_of(Mongo::Pool::Socket::SSL).to receive(:connect) do
-      double(Mongo::Pool::Socket::SSL)
+
+    context 'when no socket exists' do
+
+      let!(:result) do
+        connection.connect!
+      end
+
+      let(:socket) do
+        connection.send(:socket)
+      end
+
+      it 'returns true' do
+        expect(result).to be_true
+      end
+
+      it 'creates a socket' do
+        expect(socket).to_not be_nil
+      end
+
+      it 'connects the socket' do
+        expect(socket).to be_alive
+      end
     end
-    allow_any_instance_of(Mongo::Pool::Socket::Unix).to receive(:connect) do
-      double(Mongo::Pool::Socket::Unix)
+
+    context 'when a socket exists' do
+
+      before do
+        connection.connect!
+        connection.connect!
+      end
+
+      let(:socket) do
+        connection.send(:socket)
+      end
+
+      it 'keeps the socket alive' do
+        expect(socket).to be_alive
+      end
     end
-    allow_any_instance_of(
-      described_class).to receive(:connect).and_call_original
+  end
+
+  describe '#disconnect!' do
+
+    context 'when a socket is not connected' do
+
+      let(:connection) do
+        described_class.new('127.0.0.1', 27017)
+      end
+
+      it 'does not raise an error' do
+        expect(connection.disconnect!).to be_true
+      end
+    end
+
+    context 'when a socket is connected' do
+
+      let(:connection) do
+        described_class.new('127.0.0.1', 27017)
+      end
+
+      before do
+        connection.connect!
+        connection.disconnect!
+      end
+
+      it 'disconnects the socket' do
+        expect(connection.send(:socket)).to be_nil
+      end
+    end
   end
 
   describe '#initialize' do
 
-    it 'sets the host value' do
-      expect(connection.host).to eq(host)
-    end
+    context 'when host and port are provided' do
 
-    it 'sets the port value' do
-      expect(connection.port).to eq(port)
-    end
+      let(:connection) do
+        described_class.new('127.0.0.1', 27017)
+      end
 
-    it 'sets the default timeout value' do
-      expect(connection.timeout).to eq(Mongo::Pool::Connection::TIMEOUT)
-    end
+      it 'sets the host' do
+        expect(connection.host).to eq('127.0.0.1')
+      end
 
-    it 'sets the socket to nil' do
-      socket = connection.instance_variable_get(:@socket)
-      expect(socket).to be nil
-    end
+      it 'sets the port' do
+        expect(connection.port).to eq(27017)
+      end
 
-    context 'when timeout is specified' do
+      it 'sets the socket to nil' do
+        expect(connection.send(:socket)).to be_nil
+      end
 
-      let(:connection) { described_class.new(host, port, timeout, opts) }
-
-      it 'sets the timeout value' do
-        expect(connection.timeout).to eq(timeout)
+      it 'sets the timeout to the default' do
+        expect(connection.timeout).to eq(5)
       end
     end
 
-    pending 'when port is nil' do
+    context 'when timeout options are provided' do
 
-      it 'creates unix socket' do
+      let(:connection) do
+        described_class.new('127.0.0.1', 27017, 10)
+      end
+
+      it 'sets the timeout' do
+        expect(connection.timeout).to eq(10)
       end
     end
 
-    context 'when options are provided' do
+    context 'when ssl options are provided' do
 
-      context 'when :connect => false' do
-
-        let(:opts) { { :connect => false } }
-
-        it 'does not invoke connect' do
-          conn = described_class.new(host, port, timeout, opts)
-          expect(conn).to_not receive(:connect)
-        end
-
-        it 'socket remains nil' do
-          conn = described_class.new(host, port, timeout, opts)
-          socket = conn.instance_variable_get(:@socket)
-          expect(socket).to be nil
-        end
+      let(:connection) do
+        described_class.new('127.0.0.1', 27017, nil, :ssl => true)
       end
 
-      context 'when :connect => true' do
-
-        let(:opts) { { :connect => true } }
-
-        it 'invokes connect' do
-          conn = described_class.new(host, port, timeout, opts)
-          expect(conn).to have_received(:connect)
-        end
-
-        it 'socket is not nil' do
-          conn = described_class.new(host, port, timeout, opts)
-          socket = conn.instance_variable_get(:@socket)
-          expect(socket).to_not be nil
-        end
-      end
-
-      context 'when :connect is not specified' do
-
-        let(:opts) { Hash.new }
-
-        it 'invokes connect' do
-          conn = described_class.new(host, port, timeout, opts)
-          expect(conn).to have_received(:connect)
-        end
-
-        it 'socket is not nil' do
-          conn = described_class.new(host, port, timeout, opts)
-          socket = conn.instance_variable_get(:@socket)
-          expect(socket).to_not be nil
-        end
-      end
-
-      context 'when ssl options are specified' do
-
-        let(:opts) { { :ssl => true, :connect => false } }
-
-        it 'sets the @ssl_opts value' do
-          conn = described_class.new(host, port, timeout, opts)
-          ssl_opts = conn.instance_variable_get(:@ssl_opts)
-          expect(ssl_opts).to_not be nil
-          expect(ssl_opts.keys).to include :ssl
-        end
+      it 'sets the ssl options' do
+        expect(connection.send(:ssl_opts)).to eq(:ssl => true)
       end
     end
-  end
-
-  describe '#connect' do
-
-    context 'when port is not set' do
-
-      it 'creates a unix socket instance' do
-        allow(Mongo::Pool::Socket::Unix).to receive(:new)
-        expect(Mongo::Pool::Socket::Unix).to receive(:new)
-        described_class.new(host, nil)
-      end
-    end
-
-    context 'when ssl_opts are present' do
-
-      let(:opts) { { :ssl => true } }
-
-      it 'creates a ssl socket instance' do
-        allow(Mongo::Pool::Socket::SSL).to receive(:new)
-        expect(Mongo::Pool::Socket::SSL).to receive(:new)
-        described_class.new(host, port, nil, opts)
-      end
-    end
-
-    it 'creates a tcp socket instance by default' do
-      allow(Mongo::Pool::Socket::TCP).to receive(:new)
-      expect(Mongo::Pool::Socket::TCP).to receive(:new)
-      described_class.new(host, port)
-    end
-  end
-
-  describe '#disconnect' do
-
-    let(:connection) { described_class.new(host, port) }
-
-    context 'when the socket has not been set' do
-
-      let(:opts) { { :connect => false } }
-      let(:connection) { described_class.new(host, port, nil, opts) }
-
-      it 'does not try to close the socket' do
-        expect(Mongo::Pool::Socket::TCP).to_not receive(:close)
-        connection.disconnect
-      end
-    end
-
-    context 'when the socket has been set' do
-
-      it 'will try to close the socket' do
-        socket = connection.instance_variable_get(:@socket)
-        expect(socket).to receive(:close)
-        connection.disconnect
-      end
-    end
-
-    it 'sets the socket to nil' do
-      connection.disconnect
-      socket = connection.instance_variable_get(:@socket)
-      expect(socket).to be nil
-    end
-  end
-
-  pending '#read' do
-    # TODO: definite Operation and OperationResult so that we can figure out
-    # what needs to happen here.
-  end
-
-  pending '#write' do
-    # TODO: definite Operation and OperationResult so that we can figure out
-    # what needs to happen here.
   end
 end

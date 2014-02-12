@@ -24,6 +24,40 @@ module Mongo
       module Base
         include ::Socket::Constants
 
+        # @return [ String ] host The host to connect to.
+        attr_reader :host
+
+        # @return [ Float ] timeout The connection timeout.
+        attr_reader :timeout
+
+        # Determine if the socket is alive.
+        #
+        # @example Is the socket alive?
+        #   socket.alive?
+        #
+        # @return [ true, false ] If the socket is alive.
+        #
+        # @since 3.0.0
+        def alive?
+          begin
+            Kernel::select([ @socket ], nil, [ @socket ], 0) ? !eof? : true
+          rescue
+            false
+          end
+        end
+
+        # Close the wrapped socket.
+        #
+        # @example Close the wrapped socket.
+        #   socket.close
+        #
+        # @return [ true ] True if the socket completed closing.
+        #
+        # @since 3.0.0
+        def close
+          @socket.close and true
+        end
+
         # Reads data from the socket instance.
         #
         # @example

@@ -15,51 +15,93 @@
 module Mongo
   class Pool
 
-    # This class models the database connections and their behavior.
+    # This class models the socket connections and their behavior.
+    #
+    # @since 3.0.0
     class Connection
 
+      # The default time in seconds to timeout a connection attempt.
+      #
+      # @since 3.0.0
       TIMEOUT = 5
 
-      attr_reader :host, :port, :timeout
+      # @return [ String ] host The host to connect to.
+      attr_reader :host
 
+      # @return [ Integer ] port The port to connect on.
+      attr_reader :port
+
+      # @return [ Float ] timeout The connection timeout.
+      attr_reader :timeout
+
+      # Tell the underlying socket to establish a connection to the host.
+      #
+      # @example Connect to the host.
+      #   connection.connect!
+      #
+      # @note This method mutates the connection class by setting a socket if
+      #   one previously did not exist.
+      #
+      # @return [ true ] If the connection succeeded.
+      #
+      # @since 3.0.0
+      def connect!
+        @socket = Socket.create(host, port, timeout, ssl_opts) unless socket
+        socket.connect! and true
+      end
+
+      # Disconnect the connection.
+      #
+      # @example Disconnect from the host.
+      #   connection.disconnect!
+      #
+      # @note This method mutates the connection by setting the socket to nil
+      #   if the closing succeeded.
+      #
+      # @return [ true ] If the disconnect succeeded.
+      #
+      # @since 3.0.0
+      def disconnect!
+        if socket
+          socket.close
+          @socket = nil
+        end
+        true
+      end
+
+      # Initialize a new socket connection from the client to the server.
+      #
+      # @example Create the connection.
+      #   Connection.new('127.0.0.1', 27017, 10)
+      #
+      # @param [ String ] host The host to connect to.
+      # @param [ Integer ] port The port to connect to.
+      # @param [ Float ] timeout The connection timeout.
+      # @param [ Hash ] options The connection options.
+      #
+      # @since 3.0.0
       def initialize(host, port, timeout = nil, options = {})
         @host     = host
         @port     = port
         @timeout  = timeout || TIMEOUT
-        @socket   = nil
         @ssl_opts = options.reject { |k, v| !k.to_s.start_with?('ssl') }
-      end
-
-      def connect
-        # if host && port.nil?
-          # @socket = Socket::Unix.new(host, timeout)
-        # else
-          # if ssl_opts && !ssl_opts.empty?
-            # socket = Socket::SSL.new(host, port, timeout, ssl_opts)
-          # else
-            # socket = Socket::TCP.new(host, port, timeout)
-          # end
-        # end
-      end
-
-      def disconnect
-        if @socket
-          @socket.close
-          @socket = nil
-        end
+        @socket   = nil
       end
 
       def read
-        # Protocol::Reply.deserialize(@socket).documents
       end
 
       def write(message)
-        # @socket.write(message.serialize)
       end
 
       private
 
       attr_reader :socket, :ssl_opts
+
+      def connected
+        connect! if socket.nil? || !socket.alive?
+        yield socket
+      end
     end
   end
 end
