@@ -4,12 +4,12 @@ require 'mongo/protocol/bit_vector'
 require 'mongo/protocol/message'
 
 # Client Requests
-require 'mongo/protocol/messages/delete'
-require 'mongo/protocol/messages/get_more'
-require 'mongo/protocol/messages/insert'
-require 'mongo/protocol/messages/kill_cursors'
-require 'mongo/protocol/messages/query'
-require 'mongo/protocol/messages/update'
+require 'mongo/protocol/delete'
+require 'mongo/protocol/get_more'
+require 'mongo/protocol/insert'
+require 'mongo/protocol/kill_cursors'
+require 'mongo/protocol/query'
+require 'mongo/protocol/update'
 
 # Server Responses
-require 'mongo/protocol/messages/reply'
+require 'mongo/protocol/reply'
