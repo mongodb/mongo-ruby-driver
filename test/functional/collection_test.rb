@@ -1180,6 +1180,23 @@ class CollectionTest < Test::Unit::TestCase
     end
   end
 
+  if @@version >= '2.5.5'
+    def test_parallel_scan
+      8000.times { |i| @@test.insert({ :_id => i }) }
+
+      n_docs = {}
+      threads = []
+      cursors = @@test.parallel_scan(3)
+      cursors.each_with_index do |cursor, i|
+        threads << Thread.new do
+          n_docs[i] = cursor.to_a.size
+        end
+      end
+      threads.each(&:join)
+      assert_equal @@test.count, n_docs.values.inject(0) { |sum, n| sum + n }
+    end
+  end
+
   if @@version > "1.3.0"
     def test_find_and_modify
       @@test << { :a => 1, :processed => false }
