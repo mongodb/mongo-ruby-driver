@@ -66,6 +66,18 @@ module Mongo
         @flags       = options[:flags] || []
       end
 
+      # Query messages require replies from the database.
+      #
+      # @example Does the message require a reply?
+      #   message.replyable?
+      #
+      # @return [ true ] Always true for queries.
+      #
+      # @since 3.0.0
+      def replyable?
+        true
+      end
+
       private
 
       # The operation code required to specify a Query message.

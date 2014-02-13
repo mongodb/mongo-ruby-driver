@@ -2,49 +2,6 @@ require 'spec_helper'
 
 describe Mongo::Server do
 
-  describe '#alive?' do
-
-    let(:address) do
-      '127.0.0.1:27017'
-    end
-
-    let(:server) do
-      described_class.new(address)
-    end
-
-    context 'when the server has been refreshed' do
-
-      context 'when the server is alive' do
-
-        before do
-          server.instance_variable_set(:@alive, true)
-        end
-
-        it 'returns true' do
-          expect(server).to be_alive
-        end
-      end
-
-      context 'when the server is not alive' do
-
-        before do
-          server.instance_variable_set(:@alive, false)
-        end
-
-        it 'returns false' do
-          expect(server).to_not be_alive
-        end
-      end
-    end
-
-    context 'when the server has not been refreshed' do
-
-      it 'returns false' do
-        expect(server).to_not be_alive
-      end
-    end
-  end
-
   describe '#initialize' do
 
     let(:address) do
@@ -72,7 +29,7 @@ describe Mongo::Server do
     end
   end
 
-  describe '#refresh' do
+  describe '#refresh!' do
 
     let(:address) do
       '127.0.0.1:27017'
@@ -149,6 +106,73 @@ describe Mongo::Server do
 
       it 'defaults to 5' do
         expect(server.refresh_interval).to eq(5)
+      end
+    end
+  end
+
+  describe '#dispatch' do
+
+    let(:server) do
+      described_class.new('127.0.0.1:27017')
+    end
+
+    let(:documents) do
+      [{ 'name' => 'testing' }]
+    end
+
+    let(:insert) do
+      Mongo::Protocol::Insert.new('mongo_test', 'users', documents)
+    end
+
+    let(:query) do
+      Mongo::Protocol::Query.new('mongo_test', 'users', {})
+    end
+
+    let(:delete) do
+      Mongo::Protocol::Delete.new('mongo_test', 'users', {})
+    end
+
+    context 'when providing a single message' do
+
+      before do
+        server.dispatch([ insert ])
+      end
+
+      let(:reply) do
+        server.dispatch([ query ])
+      end
+
+      # @todo: Can remove this once we have more implemented with global hooks.
+      after do
+        server.dispatch([ delete ])
+      end
+
+      it 'it dispatchs the message to the socket' do
+        expect(reply.documents.first['name']).to eq('testing')
+      end
+    end
+
+    context 'when providing multiple messages' do
+
+      let(:selector) do
+        { :getlasterror => 1 }
+      end
+
+      let(:command) do
+        Mongo::Protocol::Query.new('mongo_test', '$cmd', selector, :limit => -1)
+      end
+
+      let(:reply) do
+        server.dispatch([ insert, command ])
+      end
+
+      # @todo: Can remove this once we have more implemented with global hooks.
+      after do
+        server.dispatch([ delete ])
+      end
+
+      it 'it dispatchs the message to the socket' do
+        expect(reply.documents.first['ok']).to eq(1.0)
       end
     end
   end

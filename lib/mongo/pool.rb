@@ -114,6 +114,24 @@ module Mongo
       @timeout ||= options[:timeout] || TIMEOUT
     end
 
+    # Yield the block to a connection, while handling checkin/checkout logic.
+    #
+    # @example Execute with a connection.
+    #   pool.with_connection do |connection|
+    #     connection.read
+    #   end
+    #
+    # @return [ Object ] The result of the block.
+    #
+    # @since 3.0.0
+    def with_connection
+      begin
+        yield(checkout)
+      ensure
+        checkin
+      end
+    end
+
     private
 
     attr_reader :queue

@@ -48,24 +48,6 @@ module Mongo
       address == other.address
     end
 
-    # Returns whether or not the server is alive - ie it is connected to and
-    # healthy.
-    #
-    # @example Is the server alive?
-    #   server.alive?
-    #
-    # @return [ true, false ] If the server is alive and healthy.
-    #
-    # @since 3.0.0
-    def alive?
-      !!@alive
-    end
-
-    # @todo: Send the operation to the connection.
-    def execute(operation)
-
-    end
-
     def initialize(address, options = {})
       @address = Address.new(address)
       @options = options
@@ -90,6 +72,27 @@ module Mongo
       end
     end
 
+    # Dispatch the provided messages to the server. If the last message
+    # requires a response a reply will be returned.
+    #
+    # @example Dispatch the messages.
+    #   server.dispatch([ insert, command ])
+    #
+    # @note This method is named dispatch since 'send' is a core Ruby method on
+    #   all objects.
+    #
+    # @param [ Array<Message> ] messages The messages to dispatch.
+    #
+    # @return [ Protocol::Reply ] The reply if needed.
+    #
+    # @since 3.0.0
+    def dispatch(messages)
+      with_connection do |connection|
+        connection.write(messages)
+        connection.read if messages.last.replyable?
+      end
+    end
+
     # Get the refresh interval for the server. This will be defined via an option
     # or will default to 5.
     #
@@ -106,7 +109,7 @@ module Mongo
     private
 
     def pool
-      # @pool ||= Pool.get(self)
+      @pool ||= Pool.get(self)
     end
 
     def refresh_command
@@ -116,6 +119,10 @@ module Mongo
         STATUS,
         :limit => -1, :read => cluster.client.read_preference
       )
+    end
+
+    def with_connection
+      pool.with_connection { |conn| yield(conn) }
     end
   end
 end

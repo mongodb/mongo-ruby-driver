@@ -114,6 +114,13 @@ describe Mongo::Protocol::Update do
     end
   end
 
+  describe '#replyable?' do
+
+    it 'returns false' do
+      expect(message).to_not be_replyable
+    end
+  end
+
   describe '#serialize' do
     let(:bytes) { message.serialize }
 

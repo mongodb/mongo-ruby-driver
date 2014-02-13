@@ -42,6 +42,18 @@ module Mongo
         @cursor_id = cursor_id
       end
 
+      # Get more messages require replies from the database.
+      #
+      # @example Does the message require a reply?
+      #   message.replyable?
+      #
+      # @return [ true ] Always true for get more.
+      #
+      # @since 3.0.0
+      def replyable?
+        true
+      end
+
       private
 
       # The operation code required to specify a GetMore message.

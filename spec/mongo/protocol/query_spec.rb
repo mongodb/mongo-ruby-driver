@@ -133,6 +133,13 @@ describe Mongo::Protocol::Query do
     end
   end
 
+  describe '#replyable?' do
+
+    it 'returns true' do
+      expect(message).to be_replyable
+    end
+  end
+
   describe '#serialize' do
     let(:bytes) { message.serialize }
 

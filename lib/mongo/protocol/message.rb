@@ -47,6 +47,19 @@ module Mongo
       # @return [Fixnum] The request id for this message
       attr_reader :request_id
 
+      # The default for messages is not to require a reply after sending a
+      # message to the server.
+      #
+      # @example Does the message require a reply?
+      #   message.replyable?
+      #
+      # @return [ false ] The default is to not require a reply.
+      #
+      # @since 3.0.0
+      def replyable?
+        false
+      end
+
       # Serializes message into bytes that can be sent on the wire
       #
       # @param buffer [String] buffer where the message should be inserted
