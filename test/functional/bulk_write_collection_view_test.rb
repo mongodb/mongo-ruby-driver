@@ -307,7 +307,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "ok" => 1,
                 "n" => 14,
                 "nInserted" => 6,
-                "nUpdated" => 5,
+                "nMatched" => 5,
                 "nUpserted" => 1,
                 "nModified" => 5,
                 "nRemoved" => 2,
@@ -400,7 +400,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "code" => 65,
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 1,
-                "nUpdated" => 0,
+                "nMatched" => 0,
                 "nModified" => 0
             }, result, "wire_version:#{wire_version}")
       end
@@ -448,7 +448,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "code" => 65,
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 1,
-                "nUpdated" => 0,
+                "nMatched" => 0,
                 "nModified" => 0
             }, result, "wire_version:#{wire_version}")
       end
@@ -501,7 +501,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "ok" => 1,
                 "n" => 6,
                 "nInserted" => 4,
-                "nUpdated" => 1,
+                "nMatched" => 1,
                 "nModified" => 1,
                 "nRemoved" => 1,
             }, result, "wire_version:#{wire_version}")
@@ -554,7 +554,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "code" => 65,
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 2,
-                "nUpdated" => 0,
+                "nMatched" => 0,
                 "nModified" => 0
             }, result, "wire_version:#{wire_version}")
       end
@@ -612,7 +612,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "code" => 65,
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 2,
-                "nUpdated" => 0,
+                "nMatched" => 0,
                 "nModified" => 0
             }, result, "wire_version:#{wire_version}")
       end
@@ -629,7 +629,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
             {
                 "ok" => 1,
                 "n" => 1,
-                "nUpdated" => 0,
+                "nMatched" => 0,
                 "nUpserted" => 1,
                 "nModified" => 0,
                 "upserted" => [
@@ -651,7 +651,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
             {
                 "ok" => 1,
                 "n" => 2,
-                "nUpdated" => 0,
+                "nMatched" => 0,
                 "nUpserted" => 2,
                 "nModified" => 0,
                 "upserted" => [
