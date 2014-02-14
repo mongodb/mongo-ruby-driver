@@ -106,4 +106,10 @@ class ReadPreferenceUnitTest < Test::Unit::TestCase
     assert_equal :primary, ReadPreference::cmd_read_pref(:primary, command)
   end
 
+  def test_parallel_scan_secondary_ok
+    command = BSON::OrderedHash['parallelCollectionScan', 'test-collection',
+                                'numCursors', 3]
+    assert_equal true, ReadPreference::secondary_ok?(command)
+  end
+
 end

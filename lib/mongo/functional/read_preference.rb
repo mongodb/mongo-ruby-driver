@@ -45,6 +45,7 @@ module Mongo
       'mapreduce',
       'replsetgetstatus',
       'ismaster',
+      'parallelcollectionscan'
     ]
 
     def self.mongos(mode, tag_sets)
