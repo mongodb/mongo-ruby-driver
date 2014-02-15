@@ -60,7 +60,12 @@ coll.remove({ :count => 8 })
 coll.remove
 ```
 
+Wiki - Tutorials & Examples
+-----
 For many more usage examples and a full tutorial, please visit our [wiki](https://github.com/mongodb/mongo-ruby-driver/wiki).<br>
+
+API Reference Documentation
+-----
 For API reference documentation, please visit [here](http://api.mongodb.org/ruby).
 
 Compatibility
