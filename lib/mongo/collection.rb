@@ -824,6 +824,24 @@ module Mongo
       end
     end
 
+
+    def parallel_scan(num_cursors, opts={})
+      cmd                          = BSON::OrderedHash.new
+      cmd[:parallelCollectionScan] = self.name
+      cmd[:numCursors]             = num_cursors
+      result                       = @db.command(cmd, command_options(opts))
+
+      result['cursors'].collect do |cursor_info|
+        seed = {
+          :cursor_id   => cursor_info['cursor']['id'],
+          :first_batch => cursor_info['cursor']['firstBatch'],
+          :pool        => @connection.pinned_pool
+        }
+        Cursor.new(self, seed.merge!(opts))
+      end
+
+    end
+
     private
 
     def new_group(opts={})
