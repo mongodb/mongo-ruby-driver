@@ -824,7 +824,16 @@ module Mongo
       end
     end
 
-
+    # Scan this entire collection in parallel.
+    # Returns a list of up to num_cursors cursors that can be iterated concurrently. As long as the collection
+    # is not modified during scanning, each document appears once in one of the cursors' result sets.
+    #
+    # @note Requires server version >= 2.5.5
+    #
+    # @param [Integer] num_cursors the number of cursors to return.
+    # @param [Hash] opts
+    #
+    # @return [Array] An array of up to num_cursors cursors for iterating over the collection.
     def parallel_scan(num_cursors, opts={})
       cmd                          = BSON::OrderedHash.new
       cmd[:parallelCollectionScan] = self.name
