@@ -494,7 +494,10 @@ module Mongo
           {fields => 1}
         when Array
           return nil if fields.length.zero?
-          fields.inject({}) { |hash, field| hash[field] = 1; hash }
+          fields.inject({}) do |hash, field|
+            field.is_a?(Hash) ? hash.merge!(field) : hash[field] = 1
+            hash
+          end
         when Hash
           return fields
       end
