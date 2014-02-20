@@ -803,9 +803,19 @@ class CollectionTest < Test::Unit::TestCase
       @@test.save({ :t => 'spam'})
       @@test.save({ :t => 'egg sausage and bacon'})
 
-      @@test.ensure_index({ :t => 'text' })
+      @@test.ensure_index([[:t, 'text']])
       assert @@test.find_one({ :$text => { :$search => 'spam' }},
                              { :fields => [:t, { :score => { :$meta => 'textScore' } }] })
+    end
+
+    def test_sort_by_meta
+      @@test.save({ :t => 'spam eggs and spam'})
+      @@test.save({ :t => 'spam'})
+      @@test.save({ :t => 'egg sausage and bacon'})
+
+      @@test.ensure_index([[:t, 'text']])
+      assert @@test.find({ :$text => { :$search => 'spam' }}).sort([:score, { '$meta' => 'textScore' }])
+      assert @@test.find({ :$text => { :$search => 'spam' }}).sort(:score => { '$meta' =>'textScore' })
     end
   end
 
