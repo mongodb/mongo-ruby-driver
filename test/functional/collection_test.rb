@@ -134,13 +134,6 @@ class CollectionTest < Test::Unit::TestCase
   end
 
   if @@version >= '2.5.3'
-    def test_aggregation_allow_disk_usage
-      @@db.expects(:command).with do |selector, opts|
-        opts[:allowDiskUsage] == true
-      end.returns({ 'ok' => 1 })
-      @@test.aggregate([], :allowDiskUsage => true)
-    end
-
     def test_aggregation_supports_explain
       @@db.expects(:command).with do |selector, opts|
         opts[:explain] == true
@@ -1181,6 +1174,13 @@ class CollectionTest < Test::Unit::TestCase
   end
 
   if @@version >= '2.5.5'
+    def test_aggregation_allow_disk_use
+      @@db.expects(:command).with do |selector, opts|
+        opts[:allowDiskUse] == true
+      end.returns({ 'ok' => 1 })
+      @@test.aggregate([], :allowDiskUse => true)
+    end
+
     def test_parallel_scan
       8000.times { |i| @@test.insert({ :_id => i }) }
 
