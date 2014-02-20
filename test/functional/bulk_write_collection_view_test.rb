@@ -193,6 +193,16 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       result = @bulk.find(@q)
       assert_is_bulk_write_collection_view(result)
       assert_equal @q, @bulk.op_args[:q]
+      @bulk.find({})
+      assert_equal({}, @bulk.op_args[:q])
+      @bulk.find(:a => 1)
+      assert_equal({:a => 1}, @bulk.op_args[:q])
+    end
+
+    should "raise an exception for empty #find" do
+      assert_raise ArgumentError do
+        @bulk.find
+      end
     end
 
     should "set :upsert for #upsert" do
@@ -202,7 +212,10 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     end
 
     should "check arg for update, set :update, :u, :multi, terminate and return view for #update_one" do
-      assert_raise MongoArgumentError do
+      assert_raise_error(MongoArgumentError, "non-nil query must be set via find") do
+        @bulk.update_one(@u)
+      end
+      assert_raise_error(MongoArgumentError, "document must start with an operator") do
         @bulk.find(@q).update_one(@r)
       end
       result = @bulk.find(@q).update_one(@u)
@@ -211,8 +224,11 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     end
 
     should "check arg for update, set :update, :u, :multi, terminate and return view for #update" do
-      assert_raise MongoArgumentError do
-        @bulk.find(@q).replace_one(@u)
+      assert_raise_error(MongoArgumentError, "non-nil query must be set via find") do
+        @bulk.update(@u)
+      end
+      assert_raise_error(MongoArgumentError, "document must start with an operator") do
+        @bulk.find(@q).update(@r)
       end
       result = @bulk.find(@q).update(@u)
       assert_is_bulk_write_collection_view(result)
@@ -220,7 +236,10 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     end
 
     should "check arg for replacement, set :update, :u, :multi, terminate and return view for #replace_one" do
-      assert_raise MongoArgumentError do
+      assert_raise_error(MongoArgumentError, "non-nil query must be set via find") do
+        @bulk.replace_one(@r)
+      end
+      assert_raise_error(MongoArgumentError, "document must not contain any operators") do
         @bulk.find(@q).replace_one(@u)
       end
       result = @bulk.find(@q).replace_one(@r)
@@ -229,13 +248,18 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     end
 
     should "set :remove, :q, :limit, terminate and return view for #remove_one" do
+      assert_raise_error(MongoArgumentError, "non-nil query must be set via find") do
+        @bulk.remove_one
+      end
       result = @bulk.find(@q).remove_one
       assert_is_bulk_write_collection_view(result)
       assert_bulk_op_pushed [:delete, {:q => @q, :limit => 1}], @bulk
-
     end
 
     should "set :remove, :q, :limit, terminate and return view for #remove" do
+      assert_raise_error(MongoArgumentError, "non-nil query must be set via find") do
+        @bulk.remove
+      end
       result = @bulk.find(@q).remove
       assert_is_bulk_write_collection_view(result)
       assert_bulk_op_pushed [:delete, {:q => @q, :limit => 0}], @bulk
