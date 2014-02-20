@@ -18,7 +18,7 @@ module Mongo
   class BulkWriteCollectionView
     include Mongo::WriteConcern
 
-    DEFAULT_OP_ARGS = {:q => {}}
+    DEFAULT_OP_ARGS = {:q => nil}
     MULTIPLE_ERRORS_MSG = "batch item errors occurred"
 
     attr_reader :collection, :options, :ops, :op_args
@@ -313,6 +313,7 @@ module Mongo
     end
 
     def op_push(op)
+      raise MongoArgumentError, "non-nil query must be set via find" if op.first != :insert && !op.last[:q]
       @ops << op
       self
     end
