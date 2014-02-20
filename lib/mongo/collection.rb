@@ -39,10 +39,16 @@ module Mongo
     # @param [DB] db a MongoDB database instance.
     #
     # @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
-    #   should be acknowledged
-    # @option opts [Boolean] :j (false) Set journal acknowledgement
-    # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout
-    # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
+    #   should be acknowledged.
+    # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout.
+    # @option opts [Boolean] :j (false) If true, block until write operations have been committed
+    #   to the journal. Cannot be used in combination with 'fsync'. Prior to MongoDB 2.6 this option was
+    #   ignored if the server was running without journaling. Starting with MongoDB 2.6, write operations will
+    #   fail with an exception if this option is used when the server is running without journaling.
+    # @option opts [Boolean] :fsync (false) If true, and the server is running without journaling, blocks until
+    #   the server has synced all data files to disk. If the server is running with journaling, this acts the same as
+    #   the 'j' option, blocking until write operations have been committed to the journal.
+    #   Cannot be used in combination with 'j'.
     #
     #   Notes about write concern:
     #     These write concern options will be used for insert, update, and remove methods called on this
@@ -332,11 +338,18 @@ module Mongo
     #
     # @return [ObjectId] the _id of the saved document.
     #
-    # @option opts [Hash] :w, :j, :wtimeout, :fsync Set the write concern for this operation.
-    #   :w > 0 will run a +getlasterror+ command on the database to report any assertion.
-    #   :j will confirm a write has been committed to the journal,
-    #   :wtimeout specifies how long to wait for write confirmation,
-    #   :fsync will confirm that a write has been fsynced.
+    # @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
+    #   should be acknowledged.
+    # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout.
+    # @option opts [Boolean] :j (false) If true, block until write operations have been committed
+    #   to the journal. Cannot be used in combination with 'fsync'. Prior to MongoDB 2.6 this option was
+    #   ignored if the server was running without journaling. Starting with MongoDB 2.6, write operations will
+    #   fail with an exception if this option is used when the server is running without journaling.
+    # @option opts [Boolean] :fsync (false) If true, and the server is running without journaling, blocks until
+    #   the server has synced all data files to disk. If the server is running with journaling, this acts the same as
+    #   the 'j' option, blocking until write operations have been committed to the journal.
+    #   Cannot be used in combination with 'j'.
+    #
     #   Options provided here will override any write concern options set on this collection,
     #   its database object, or the current connection. See the options
     #   for DB#get_last_error.
@@ -365,10 +378,16 @@ module Mongo
     #   Return this result format only when :collect_on_error is true.
     #
     # @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
-    #   should be acknowledged
-    # @option opts [Boolean] :j (false) Set journal acknowledgement
-    # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout
-    # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
+    #   should be acknowledged.
+    # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout.
+    # @option opts [Boolean] :j (false) If true, block until write operations have been committed
+    #   to the journal. Cannot be used in combination with 'fsync'. Prior to MongoDB 2.6 this option was
+    #   ignored if the server was running without journaling. Starting with MongoDB 2.6, write operations will
+    #   fail with an exception if this option is used when the server is running without journaling.
+    # @option opts [Boolean] :fsync (false) If true, and the server is running without journaling, blocks until
+    #   the server has synced all data files to disk. If the server is running with journaling, this acts the same as
+    #   the 'j' option, blocking until write operations have been committed to the journal.
+    #   Cannot be used in combination with 'j'.
     #
     #   Notes on write concern:
     #     Options provided here will override any write concern options set on this collection,
@@ -408,10 +427,16 @@ module Mongo
     #   If specified, only matching documents will be removed.
     #
     # @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
-    #   should be acknowledged
-    # @option opts [Boolean] :j (false) Set journal acknowledgement
-    # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout
-    # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
+    #   should be acknowledged.
+    # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout.
+    # @option opts [Boolean] :j (false) If true, block until write operations have been committed
+    #   to the journal. Cannot be used in combination with 'fsync'. Prior to MongoDB 2.6 this option was
+    #   ignored if the server was running without journaling. Starting with MongoDB 2.6, write operations will
+    #   fail with an exception if this option is used when the server is running without journaling.
+    # @option opts [Boolean] :fsync (false) If true, and the server is running without journaling, blocks until
+    #   the server has synced all data files to disk. If the server is running with journaling, this acts the same as
+    #   the 'j' option, blocking until write operations have been committed to the journal.
+    #   Cannot be used in combination with 'j'.
     # @option opts [Integer] :limit (0) Set limit option, currently only 0 for all or 1 for just one.
     #
     #   Notes on write concern:
@@ -448,10 +473,16 @@ module Mongo
     # @option opts [Boolean] :multi (+false+) update all documents matching the selector, as opposed to
     #   just the first matching document. Note: only works in MongoDB 1.1.3 or later.
     # @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
-    #   should be acknowledged
-    # @option opts [Boolean] :j (false) Set journal acknowledgement
-    # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout
-    # @option opts [Boolean] :fsync (false) Set fsync acknowledgement.
+    #   should be acknowledged.
+    # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout.
+    # @option opts [Boolean] :j (false) If true, block until write operations have been committed
+    #   to the journal. Cannot be used in combination with 'fsync'. Prior to MongoDB 2.6 this option was
+    #   ignored if the server was running without journaling. Starting with MongoDB 2.6, write operations will
+    #   fail with an exception if this option is used when the server is running without journaling.
+    # @option opts [Boolean] :fsync (false) If true, and the server is running without journaling, blocks until
+    #   the server has synced all data files to disk. If the server is running with journaling, this acts the same as
+    #   the 'j' option, blocking until write operations have been committed to the journal.
+    #   Cannot be used in combination with 'j'.
     #
     #   Notes on write concern:
     #     Options provided here will override any write concern options set on this collection,
