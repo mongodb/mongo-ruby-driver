@@ -469,6 +469,10 @@ module Mongo
       local_manager && local_manager.primary_pool && local_manager.primary_pool.node.wire_version_feature?(feature)
     end
 
+    def max_write_batch_size
+      local_manager && local_manager.primary_pool && local_manager.primary_pool.node.max_write_batch_size
+    end
+
     private
 
     # Parse option hash

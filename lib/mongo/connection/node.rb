@@ -193,6 +193,10 @@ module Mongo
       min_wire_version <= feature && feature <= max_wire_version
     end
 
+    def max_write_batch_size
+      @max_write_batch_size || Mongo::MongoClient::DEFAULT_MAX_WRITE_BATCH_SIZE
+    end
+
     protected
 
     # Ensure that this node is a healthy member of a replica set.
@@ -229,6 +233,7 @@ module Mongo
       @max_message_size = config['maxMessageSizeBytes'] || @max_bson_size * MESSAGE_SIZE_FACTOR
       @max_wire_version = config['maxWireVersion'] || 0
       @min_wire_version = config['minWireVersion'] || 0
+      @max_write_batch_size = config['maxWriteBatchSize'] || Mongo::MongoClient::DEFAULT_MAX_WRITE_BATCH_SIZE
     end
   end
 end

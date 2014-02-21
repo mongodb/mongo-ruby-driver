@@ -334,12 +334,13 @@ class ClientTest < Test::Unit::TestCase
     conn = standard_connection(:connect => false)
 
     admin_db = Object.new
-    admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1, 'maxWireVersion' => 1, 'minWireVersion' => 1})
+    admin_db.expects(:command).returns({'ok' => 1, 'ismaster' => 1, 'maxWireVersion' => 1, 'minWireVersion' => 1, 'maxWriteBatchSize' => 999})
     conn.expects(:[]).with('admin').returns(admin_db)
     conn.connect
 
     assert_equal 1, conn.max_wire_version
     assert_equal 1, conn.min_wire_version
+    assert_equal 999, conn.max_write_batch_size
   end
 
   def test_max_wire_version_and_min_wire_version_values_with_no_reported_values
@@ -352,6 +353,7 @@ class ClientTest < Test::Unit::TestCase
 
     assert_equal 0, conn.max_wire_version
     assert_equal 0, conn.min_wire_version
+    assert_equal Mongo::MongoClient::DEFAULT_MAX_WRITE_BATCH_SIZE, conn.max_write_batch_size
   end
 
   def test_wire_version_feature

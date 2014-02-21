@@ -28,7 +28,6 @@ module Mongo
       :update => :updates,
       :delete => :deletes
     }
-    MAX_WRITE_BATCH_SIZE     = 1000
 
     def initialize(collection)
       @collection = collection
@@ -36,7 +35,7 @@ module Mongo
       @db = @collection.db
       @connection = @db.connection
       @logger     = @connection.logger
-      @max_write_batch_size = MAX_WRITE_BATCH_SIZE
+      @max_write_batch_size = Mongo::MongoClient::DEFAULT_MAX_WRITE_BATCH_SIZE
     end
 
     # common implementation only for new batch write commands (insert, update, delete) and old batch insert
@@ -302,6 +301,8 @@ module Mongo
     end
 
     def bulk_execute(ops, options, opts = {})
+      @max_write_batch_size = @collection.db.connection.max_write_batch_size
+puts "bulk_execute @max_write_batch_size:#{@max_write_batch_size.inspect}"
       errors = []
       exchanges = []
       ops = (options[:ordered] == false) ? sort_by_first_sym(ops) : ops # sort by write-type
