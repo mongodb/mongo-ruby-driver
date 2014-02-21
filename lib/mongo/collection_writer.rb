@@ -302,7 +302,6 @@ module Mongo
 
     def bulk_execute(ops, options, opts = {})
       @max_write_batch_size = @collection.db.connection.max_write_batch_size
-puts "bulk_execute @max_write_batch_size:#{@max_write_batch_size.inspect}"
       errors = []
       exchanges = []
       ops = (options[:ordered] == false) ? sort_by_first_sym(ops) : ops # sort by write-type
