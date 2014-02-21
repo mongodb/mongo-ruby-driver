@@ -20,7 +20,7 @@ module Mongo
       #
       # @since 3.0.0
       class TCP
-        include Socket::Base
+        include Socket::Connectable
 
         # @return [ Integer ] port The port to connect to.
         attr_reader :port

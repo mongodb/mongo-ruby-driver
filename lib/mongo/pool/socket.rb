@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/pool/socket/base'
+require 'mongo/pool/socket/connectable'
 require 'mongo/pool/socket/tcp'
 require 'mongo/pool/socket/ssl'
 require 'mongo/pool/socket/unix'

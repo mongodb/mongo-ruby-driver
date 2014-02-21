@@ -20,7 +20,7 @@ module Mongo
       #
       # @since 3.0.0
       class Unix
-        include Socket::Base
+        include Socket::Connectable
 
         # Establishes a socket connection.
         #

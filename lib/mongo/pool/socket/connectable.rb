@@ -21,7 +21,7 @@ module Mongo
     module Socket
 
       # Module for behavior common across all supported socket types.
-      module Base
+      module Connectable
         include ::Socket::Constants
 
         # @return [ String ] host The host to connect to.
@@ -58,24 +58,50 @@ module Mongo
           @socket.close and true
         end
 
-        # Reads data from the socket instance.
+        # Will read all data from the socket for the provided number of bytes.
+        # If less data is returned than requested, an exception will be raised.
         #
-        # @example Read from the socket.
+        # @example Read all the requested data from the socket.
         #   socket.read(4096)
         #
-        # @param [ Integer ] length The length of data to read.
+        # @param [ Integer ] length The number of bytes to read.
         #
-        # @return [ Object ] The data read from the socket.
+        # @raise [ Mongo::SocketError ] If not all data is returned.
+        #
+        # @return [ Object ] The data from the socket.
         #
         # @since 3.0.0
         def read(length)
-          handle_socket_error { @socket.read(length) }
+          data = handle_socket_error { @socket.read(length) }
+          unless data
+            raise SocketError, "Attempted to read #{length} bytes from the socket but got none."
+          end
+          data << read_all(length - data.length) if data.length < length
+          data
         end
 
+        # Delegates gets to the underlying socket.
+        #
+        # @example Get the next line.
+        #   socket.gets(10)
+        #
+        # @param [ Array<Object> ] args The arguments to pass through.
+        #
+        # @return [ Object ] The returned bytes.
+        #
+        # @since 3.0.0
         def gets(*args)
           handle_socket_error { @socket.gets(*args) }
         end
 
+        # Read a single byte from the socket.
+        #
+        # @example Read a single byte.
+        #   socket.readbyte
+        #
+        # @return [ Object ] The read byte.
+        #
+        # @since 3.0.0
         def readbyte
           handle_socket_error { @socket.readbyte }
         end

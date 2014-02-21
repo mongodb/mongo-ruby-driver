@@ -20,7 +20,7 @@ module Mongo
 
       # Wrapper for SSL sockets
       class SSL
-        include Socket::Base
+        include Socket::Connectable
         include OpenSSL
 
         # @return [ OpenSSL::SSL::SSLContext ] context The SSL context.
