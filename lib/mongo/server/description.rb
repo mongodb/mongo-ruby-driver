@@ -20,6 +20,7 @@ module Mongo
     #
     # @since 3.0.0
     class Description
+      include Event::Publisher
 
       # Constant for reading arbiter info from config.
       #
@@ -206,6 +207,41 @@ module Mongo
       # @since 3.0.0
       def set_name
         config[SET_NAME]
+      end
+
+      # Update this description with a new description. Will fire the
+      # necessary events depending on what has changed from the old description
+      # to the new one.
+      #
+      # @example Update the description with the new config.
+      #   description.update!({ "ismaster" => false })
+      #
+      # @note This modifies the state of the description.
+      #
+      # @param [ Hash ] new_config The new configuration.
+      #
+      # @return [ Description ] The updated description.
+      #
+      # @since 3.0.0
+      def update!(new_config)
+        find_new_servers(new_config)
+        find_removed_servers(new_config)
+        @config = new_config
+        self
+      end
+
+      private
+
+      def find_new_servers(new_config)
+        new_config[HOSTS].each do |host|
+          publish(Event::HOST_ADDED, host) unless hosts.include?(host)
+        end
+      end
+
+      def find_removed_servers(new_config)
+        hosts.each do |host|
+          publish(Event::HOST_REMOVED, host) unless new_config[HOSTS].include?(host)
+        end
       end
     end
   end
