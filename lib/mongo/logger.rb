@@ -27,12 +27,12 @@ module Mongo
       #   Logger.debug('mongo', 'message', '10ms')
       #
       # @param [ String ] prefix The category prefix.
-      # @param [ String ] payload The log message.
+      # @param [ String ] message The log message.
       # @param [ String ] runtime The time of the operation.
       #
       # @since 3.0.0
-      def debug(prefix, payload, runtime)
-        logger.debug("#{prefix} | #{payload} | runtime: #{runtime}")
+      def debug(prefix, message, runtime)
+        logger.debug("#{prefix} | #{message} | runtime: #{runtime}")
       end
 
       # Log a error level message.
@@ -41,12 +41,12 @@ module Mongo
       #   Logger.error('mongo', 'message', '10ms')
       #
       # @param [ String ] prefix The category prefix.
-      # @param [ String ] payload The log message.
+      # @param [ String ] message The log message.
       # @param [ String ] runtime The time of the operation.
       #
       # @since 3.0.0
-      def error(prefix, payload, runtime)
-        logger.error("#{prefix} | #{payload} | runtime: #{runtime}")
+      def error(prefix, message, runtime)
+        logger.error("#{prefix} | #{message} | runtime: #{runtime}")
       end
 
       # Log a fatal level message.
@@ -55,12 +55,12 @@ module Mongo
       #   Logger.fatal('mongo', 'message', '10ms')
       #
       # @param [ String ] prefix The category prefix.
-      # @param [ String ] payload The log message.
+      # @param [ String ] message The log message.
       # @param [ String ] runtime The time of the operation.
       #
       # @since 3.0.0
-      def fatal(prefix, payload, runtime)
-        logger.fatal("#{prefix} | #{payload} | runtime: #{runtime}")
+      def fatal(prefix, message, runtime)
+        logger.fatal("#{prefix} | #{message} | runtime: #{runtime}")
       end
 
       # Log a info level message.
@@ -69,12 +69,12 @@ module Mongo
       #   Logger.info('mongo', 'message', '10ms')
       #
       # @param [ String ] prefix The category prefix.
-      # @param [ String ] payload The log message.
+      # @param [ String ] message The log message.
       # @param [ String ] runtime The time of the operation.
       #
       # @since 3.0.0
-      def info(prefix, payload, runtime)
-        logger.info("#{prefix} | #{payload} | runtime: #{runtime}")
+      def info(prefix, message, runtime)
+        logger.info("#{prefix} | #{message} | runtime: #{runtime}")
       end
 
       # Log a warn level message.
@@ -83,12 +83,12 @@ module Mongo
       #   Logger.warn('mongo', 'message', '10ms')
       #
       # @param [ String ] prefix The category prefix.
-      # @param [ String ] payload The log message.
+      # @param [ String ] message The log message.
       # @param [ String ] runtime The time of the operation.
       #
       # @since 3.0.0
-      def warn(prefix, payload, runtime)
-        logger.warn("#{prefix} | #{payload} | runtime: #{runtime}")
+      def warn(prefix, message, runtime)
+        logger.warn("#{prefix} | #{message} | runtime: #{runtime}")
       end
 
       # Get the wrapped logger. If none was set will return a default debug
