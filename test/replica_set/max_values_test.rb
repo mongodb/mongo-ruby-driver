@@ -135,5 +135,11 @@ class MaxValuesTest < Test::Unit::TestCase
     assert_true @client.use_write_command?({:w => 1})
     assert_false @client.use_write_command?({:w => 0})
   end
+
+  def test_max_write_batch_size
+    assert_equal Mongo::MongoClient::DEFAULT_MAX_WRITE_BATCH_SIZE, @client.max_write_batch_size
+    @client.local_manager.primary_pool.node.stubs(:max_write_batch_size).returns(999)
+    assert_equal 999, @client.max_write_batch_size
+  end
 end
 

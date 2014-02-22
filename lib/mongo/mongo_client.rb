@@ -33,6 +33,8 @@ module Mongo
     APPEND_HEADROOM    = COMMAND_HEADROOM / 2
     SERIALIZE_HEADROOM = APPEND_HEADROOM / 2
 
+    DEFAULT_MAX_WRITE_BATCH_SIZE = 1000
+
     Mutex              = ::Mutex
     ConditionVariable  = ::ConditionVariable
 
@@ -66,7 +68,8 @@ module Mongo
                 :acceptable_latency,
                 :read,
                 :max_wire_version,
-                :min_wire_version
+                :min_wire_version,
+                :max_write_batch_size
 
     # Create a connection to single MongoDB instance.
     #
@@ -167,6 +170,7 @@ module Mongo
       @max_message_size = nil
       @max_wire_version = nil
       @min_wire_version = nil
+      @max_write_batch_size = nil
 
       check_opts(opts)
       setup(opts.dup)
@@ -408,6 +412,7 @@ module Mongo
         @max_message_size = config['maxMessageSizeBytes']
         @max_wire_version = config['maxWireVersion']
         @min_wire_version = config['minWireVersion']
+        @max_write_batch_size = config['maxWriteBatchSize']
         check_wire_version_in_range
         set_primary(host_port)
       end
@@ -485,6 +490,10 @@ module Mongo
 
     def min_wire_version
       @min_wire_version || 0
+    end
+
+    def max_write_batch_size
+      @max_write_batch_size || DEFAULT_MAX_WRITE_BATCH_SIZE
     end
 
     def wire_version_feature?(feature)

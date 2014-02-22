@@ -28,7 +28,6 @@ module Mongo
       :update => :updates,
       :delete => :deletes
     }
-    MAX_WRITE_BATCH_SIZE     = 1000
 
     def initialize(collection)
       @collection = collection
@@ -36,7 +35,7 @@ module Mongo
       @db = @collection.db
       @connection = @db.connection
       @logger     = @connection.logger
-      @max_write_batch_size = MAX_WRITE_BATCH_SIZE
+      @max_write_batch_size = Mongo::MongoClient::DEFAULT_MAX_WRITE_BATCH_SIZE
     end
 
     # common implementation only for new batch write commands (insert, update, delete) and old batch insert
@@ -52,6 +51,7 @@ module Mongo
       exchanges = []
       serialized_doc = nil
       message = BSON::ByteBuffer.new("", max_message_size)
+      @max_write_batch_size = @collection.db.connection.max_write_batch_size
       docs = documents.dup
       catch(:error) do
         until docs.empty? || (!errors.empty? && !collect_on_error) # process documents a batch at a time
@@ -99,6 +99,7 @@ module Mongo
       error_docs = [] # docs with serialization errors
       errors = []
       exchanges = []
+      @max_write_batch_size = @collection.db.connection.max_write_batch_size
       @write_batch_size = [documents.size, @max_write_batch_size].min
       docs = documents.dup
       until docs.empty?
