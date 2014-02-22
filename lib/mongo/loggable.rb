@@ -42,9 +42,15 @@ module Mongo
       ensure
         runtime = ("%.4fms" % (1000 * (Time.now.to_f - started.to_f)))
         operations.each do |operation|
-          Logger.send(level, prefix, operation.log_message, runtime)
+          Logger.send(level, prefix, log_inspect(operation), runtime)
         end
       end
+    end
+
+    private
+
+    def log_inspect(operation)
+      operation.respond_to?(:log_message) ? operation.log_message : operation
     end
   end
 end
