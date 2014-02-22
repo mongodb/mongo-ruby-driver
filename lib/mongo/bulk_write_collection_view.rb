@@ -20,6 +20,7 @@ module Mongo
 
     DEFAULT_OP_ARGS = {:q => nil}
     MULTIPLE_ERRORS_MSG = "batch item errors occurred"
+    EMPTY_BATCH_MSG = "batch is empty"
 
     attr_reader :collection, :options, :ops, :op_args
 
@@ -200,6 +201,7 @@ module Mongo
     #
     # @return [BulkWriteCollectionView]
     def execute(opts = {})
+      raise MongoArgumentError, EMPTY_BATCH_MSG if @ops.empty?
       write_concern = get_write_concern(opts, @collection)
       @ops.each_with_index{|op, index| op.last.merge!(:ord => index)} # infuse ordinal here to avoid issues with upsert
       if @collection.db.connection.use_write_command?(write_concern)
@@ -208,7 +210,7 @@ module Mongo
         errors, exchanges = @collection.operation_writer.bulk_execute(@ops, @options, opts)
       end
       @ops = []
-      return true if exchanges.first[:response] == true # w 0 without GLE
+      return true if exchanges.empty? || exchanges.first[:response] == true # w 0 without GLE
       result = merge_result(errors, exchanges)
       raise BulkWriteError.new(MULTIPLE_ERRORS_MSG, Mongo::ErrorCode::MULTIPLE_ERRORS_OCCURRED, result) if !errors.empty? || result["writeConcernError"]
       result

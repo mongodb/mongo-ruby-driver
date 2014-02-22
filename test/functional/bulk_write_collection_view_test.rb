@@ -400,6 +400,14 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       end
     end
 
+    should "handle empty bulk op" do
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        assert_raise_error(MongoArgumentError, Mongo::BulkWriteCollectionView::EMPTY_BATCH_MSG) do
+          @bulk.execute
+        end
+      end
+    end
+
     should "handle error for duplicate key with offset" do
       with_write_commands_and_operations(@db.connection) do |wire_version|
         @collection.remove
