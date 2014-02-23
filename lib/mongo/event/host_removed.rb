@@ -19,6 +19,7 @@ module Mongo
     #
     # @since 3.0.0
     class HostRemoved
+      include Loggable
 
       # @return [ Mongo::Server ] server The event publisher.
       attr_reader :server
@@ -35,8 +36,17 @@ module Mongo
         @server = server
       end
 
+      # This event publishes an event to remove the server and logs the
+      # configuration change.
+      #
+      # @example Handle the event.
+      #   host_removed.handle('127.0.0.1:27018')
+      #
+      # @param [ String ] address The removed host.
+      #
+      # @since 3.0.0
       def handle(address)
-        # @todo: Log the description change here.
+        log(:debug, 'MONGODB', [ "#{address} removed from replica set configuration." ])
         server.publish(Event::SERVER_REMOVED, address)
       end
     end
