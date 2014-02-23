@@ -8,14 +8,14 @@ describe Mongo::Server::Description do
       'ismaster' => true,
       'secondary' => false,
       'hosts' => [
-        '127.0.0.1:27118',
-        '127.0.0.1:27119'
+        '127.0.0.1:27018',
+        '127.0.0.1:27019'
       ],
       'arbiters' => [
         '127.0.0.1:27120'
       ],
-      'primary' => '127.0.0.1:27119',
-      'me' => '127.0.0.1:27119',
+      'primary' => '127.0.0.1:27019',
+      'me' => '127.0.0.1:27019',
       'maxBsonObjectSize' => 16777216,
       'maxMessageSizeBytes' => 48000000,
       'ok' => 1
@@ -104,7 +104,7 @@ describe Mongo::Server::Description do
     end
 
     it 'returns all the hosts in the replica set' do
-      expect(description.hosts).to eq([ '127.0.0.1:27118', '127.0.0.1:27119' ])
+      expect(description.hosts).to eq([ '127.0.0.1:27018', '127.0.0.1:27019' ])
     end
   end
 
@@ -226,6 +226,69 @@ describe Mongo::Server::Description do
 
       it 'returns nil' do
         expect(description.set_name).to be_nil
+      end
+    end
+  end
+
+  describe 'update!' do
+
+    let(:config) do
+      {
+        'ismaster' => true,
+        'secondary' => false,
+        'hosts' => [ '127.0.0.1:27018', '127.0.0.1:27019' ]
+      }
+    end
+
+    let(:listener) do
+      double('listener')
+    end
+
+    context 'when a server is added' do
+
+      let(:new) do
+        { 'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ] }
+      end
+
+      let(:description) do
+        described_class.new(config)
+      end
+
+      let(:updated) do
+        description.update!(new)
+      end
+
+      before do
+        description.add_listener(Mongo::Event::HOST_ADDED, listener)
+      end
+
+      it 'fires a server added event' do
+        expect(listener).to receive(:handle).with('127.0.0.1:27020')
+        expect(updated.hosts).to eq([ '127.0.0.1:27019', '127.0.0.1:27020' ])
+      end
+    end
+
+    context 'when a server is removed' do
+
+      let(:new) do
+        { 'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ] }
+      end
+
+      let(:description) do
+        described_class.new(config)
+      end
+
+      let(:updated) do
+        description.update!(new)
+      end
+
+      before do
+        description.add_listener(Mongo::Event::HOST_REMOVED, listener)
+      end
+
+      it 'fires a server added event' do
+        expect(listener).to receive(:handle).with('127.0.0.1:27018')
+        expect(updated.hosts).to eq([ '127.0.0.1:27019', '127.0.0.1:27020' ])
       end
     end
   end

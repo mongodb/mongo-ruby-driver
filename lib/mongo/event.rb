@@ -14,18 +14,31 @@
 
 require 'mongo/event/publisher'
 require 'mongo/event/subscriber'
+require 'mongo/event/host_added'
+require 'mongo/event/host_removed'
 
 module Mongo
 
   module Event
 
-    ARBITER_ADDED     = "arbiter_added".freeze
-    ARBITER_REMOVED   = "arbiter_removed".freeze
+    # When a server description has a new host added.
+    #
+    # @since 3.0.0
+    HOST_ADDED = "host_added".freeze
 
-    SECONDARY_ADDED   = "server_added".freeze
-    SECONDARY_REMOVED = "server_removed".freeze
+    # When a server description has a host removed.
+    #
+    # @since 3.0.0
+    HOST_REMOVED = "host_removed".freeze
 
-    SERVER_PROMOTED   = "server_promoted".freeze
-    SERVER_DEMOTED    = "server_demoted".freeze
+    # When a server is to be added to a cluster.
+    #
+    # @since 3.0.0
+    SERVER_ADDED = "server_added".freeze
+
+    # When a server is to be removed from a cluster.
+    #
+    # @since 3.0.0
+    SERVER_REMOVED = "server_removed".freeze
   end
 end

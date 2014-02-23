@@ -24,6 +24,7 @@ module Mongo
   # @since 3.0.0
   class Server
     include Event::Publisher
+    include Event::Subscriber
 
     # The default time for a server to refresh its status is 5 seconds.
     #
@@ -52,6 +53,7 @@ module Mongo
       @address = Address.new(address)
       @options = options
       @mutex = Mutex.new
+      initialize_description!
       @refresh = Refresh.new(self, refresh_interval)
       @refresh.run
     end
@@ -60,15 +62,22 @@ module Mongo
       true
     end
 
+    # Refresh the configuration for this server. Is thread-safe since the
+    # periodic refresh is invoked from another thread in order not to continue
+    # blocking operations on the current thread.
+    #
+    # @example Refresh the server.
+    #   server.refresh!
+    #
+    # @note Is mutable in that the underlying server description can get
+    #   mutated on this call.
+    #
+    # @return [ Server::Description ] The updated server description.
+    #
+    # @since 3.0.0
     def refresh!
       mutex.synchronize do
-        # Update the server description here. For changes in the description to
-        # the previous we need to fire events.
-        #
-        # refreshed = Description.new(read(refresh_command))
-        #
-        # publish(Event::SERVER_ADDED, address)
-        # publish(Event::SERVER_REMOVED, address)
+        description.update!(dispatch([ refresh_command ]))
       end
     end
 
@@ -108,16 +117,23 @@ module Mongo
 
     private
 
+    def initialize_description!
+      # @description = Description.new(dispatch([ refresh_command ]))
+      # subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
+      # subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
+    end
+
     def pool
       @pool ||= Pool.get(self)
     end
 
+    # @todo: Need to sort out read preference here.
     def refresh_command
       Protocol::Query.new(
         Database::ADMIN,
         Database::COMMAND,
         STATUS,
-        :limit => -1, :read => cluster.client.read_preference
+        :limit => -1
       )
     end
 

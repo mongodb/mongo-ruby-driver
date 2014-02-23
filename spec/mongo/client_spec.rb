@@ -194,15 +194,12 @@ describe Mongo::Client do
   describe '#inspect' do
 
     let(:client) do
-      described_class.new(
-        ['1.0.0.1:2', '1.0.0.1:1'],
-        :read => :primary
-      )
+      described_class.new(['127.0.0.1:27017'], :read => :primary)
     end
 
     it 'returns the cluster information' do
       expect(client.inspect).to eq(
-        "<Mongo::Client:0x#{client.object_id} cluster=1.0.0.1:2, 1.0.0.1:1>"
+        "<Mongo::Client:0x#{client.object_id} cluster=127.0.0.1:27017>"
       )
     end
   end
