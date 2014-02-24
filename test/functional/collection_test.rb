@@ -797,6 +797,28 @@ class CollectionTest < Test::Unit::TestCase
     end
   end
 
+  if @@version >= '2.5.5'
+    def test_meta_field_projection
+      @@test.save({ :t => 'spam eggs and spam'})
+      @@test.save({ :t => 'spam'})
+      @@test.save({ :t => 'egg sausage and bacon'})
+
+      @@test.ensure_index([[:t, 'text']])
+      assert @@test.find_one({ :$text => { :$search => 'spam' }},
+                             { :fields => [:t, { :score => { :$meta => 'textScore' } }] })
+    end
+
+    def test_sort_by_meta
+      @@test.save({ :t => 'spam eggs and spam'})
+      @@test.save({ :t => 'spam'})
+      @@test.save({ :t => 'egg sausage and bacon'})
+
+      @@test.ensure_index([[:t, 'text']])
+      assert @@test.find({ :$text => { :$search => 'spam' }}).sort([:score, { '$meta' => 'textScore' }])
+      assert @@test.find({ :$text => { :$search => 'spam' }}).sort(:score => { '$meta' =>'textScore' })
+    end
+  end
+
   if @@version >= "1.5.1"
     def test_fields_with_slice
       @@test.save({:foo => [1, 2, 3, 4, 5, 6], :test => 'slice'})

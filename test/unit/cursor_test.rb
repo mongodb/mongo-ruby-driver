@@ -55,6 +55,18 @@ class CursorUnitTest < Test::Unit::TestCase
       assert_equal({:name => 1, :date => 1}, @cursor.query_options_hash[:fields])
     end
 
+    should "allow $meta projection operator" do
+      assert_nil @cursor.fields
+
+      @cursor = Cursor.new(@collection, :fields => [{ :score => { :$meta => 'textScore' } }])
+      assert_equal({ :score  => { :$meta => 'textScore' } }, @cursor.fields)
+      assert_equal({ :score  => { :$meta => 'textScore' } }, @cursor.query_options_hash[:fields])
+
+      @cursor = Cursor.new(@collection, :fields => [:name, { :score => { :$meta => 'textScore' } }])
+      assert_equal({ :name => 1, :score => { :$meta => 'textScore' } }, @cursor.fields)
+      assert_equal({ :name => 1, :score => { :$meta => 'textScore' } }, @cursor.query_options_hash[:fields])
+    end
+
     should "set mix fields 0 and 1" do
       assert_nil @cursor.fields
 

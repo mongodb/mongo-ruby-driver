@@ -37,7 +37,7 @@ module Mongo #:nodoc:
         )
       else
         order_by = value.inject({}) do |memo, (key, direction)|
-          memo[key.to_s] = sort_value(direction.to_s.downcase)
+          memo[key.to_s] = sort_value(direction)
           memo
         end
       end
@@ -97,6 +97,7 @@ module Mongo #:nodoc:
     #
     # If the value is invalid then an error will be raised.
     def sort_value(value)
+      return value if value.is_a?(Hash)
       val = value.to_s.downcase
       return 1 if ASCENDING_CONVERSION.include?(val)
       return -1 if DESCENDING_CONVERSION.include?(val)
