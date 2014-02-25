@@ -15,15 +15,24 @@
 module SSLTests
   include Mongo
 
-  CERT_PATH   = "#{Dir.pwd}/test/fixtures/certificates/"
-  CLIENT_CERT = "#{CERT_PATH}client.pem"
-  CA_CERT     = "#{CERT_PATH}ca.pem"
+  MONGODB_X509_USERNAME = 'CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US'
+  CERT_PATH             = "#{Dir.pwd}/test/fixtures/certificates/"
+  CLIENT_CERT           = "#{CERT_PATH}client.pem"
+  CA_CERT               = "#{CERT_PATH}ca.pem"
 
   def create_client(*args)
     if @client_class == MongoClient
       @client_class.new(*args[0], args[1])
     else
       @client_class.new(args[0], args[1])
+    end
+  end
+
+  # Requires MongoDB not built with SSL
+  #
+  def test_ssl_not_configured
+    assert_raise Mongo::ConnectionTimeoutError do
+      create_client(['localhost', 27017], :connect_timeout => 2, :ssl => true)
     end
   end
 
@@ -134,40 +143,53 @@ module SSLTests
   # --sslCAFile /path/to/ca.pem \
   # --sslCRLFile /path/to/crl.pem
   #
-  if ENV.key?('MONGODB_X509_USER')
+  # Note that the cert requires username:
+  #   'CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US'
+  #
+  def test_x509_authentication
+    mechanism = 'MONGODB-X509'
 
-    def test_x509_authentication
-      mechanism = 'MONGODB-X509'
-      client    = create_client(@connect_info, :ssl => true,
-                                               :ssl_cert => CLIENT_CERT)
+    client    = create_client(@connect_info, :ssl => true,
+                                             :ssl_cert => CLIENT_CERT,
+                                             :ssl_key  => CLIENT_CERT)
 
-      return unless client.server_version > '2.5.2'
+    return unless client.server_version > '2.5.2'
 
-      user     = ENV['MONGODB_X509_USER']
-      db       = client.db('$external')
+    db       = client.db('$external')
 
-      # add user for test (enable auth)
-      roles    = [{:role => 'readWriteAnyDatabase', :db => 'admin'},
-                  {:role => 'userAdminAnyDatabase', :db => 'admin'}]
-      db.add_user(user, nil, false, :roles => roles)
+    # add user for test (enable auth)
+    roles    = [{:role => 'readWriteAnyDatabase', :db => 'admin'},
+                {:role => 'userAdminAnyDatabase', :db => 'admin'}]
+    db.add_user(MONGODB_X509_USERNAME, nil, false, :roles => roles)
 
-      assert db.authenticate(user, nil, nil, nil, mechanism)
-      assert db.collection_names
+    assert db.authenticate(MONGODB_X509_USERNAME, nil, nil, nil, mechanism)
+    assert db.collection_names
 
-      assert db.logout
-      assert_raise Mongo::AuthenticationError do
-        db.collection_names
-      end
-
-      assert MongoReplicaSetClient.from_uri(
-        "mongodb://#{user}@#{@uri_info}/admin?authMechanism=#{mechanism}")
-      assert db.collection_names
-
-      # clean up and remove all users
-      db.command(:dropAllUsersFromDatabase => 1)
-      db.logout
+    assert db.logout
+    assert_raise Mongo::OperationFailure do
+      db.collection_names
     end
 
+    # username and valid certificate don't match
+    assert_raise Mongo::AuthenticationError do
+      db.authenticate('test', nil, nil, nil, mechanism)
+    end
+
+    # username required
+    assert_raise Mongo::AuthenticationError do
+      db.authenticate(nil, nil, nil, nil, mechanism)
+    end
+
+    assert MongoClient.from_uri(
+      "mongodb://#{MONGODB_X509_USERNAME}@#{@uri_info}/$external?ssl=true;authMechanism=#{mechanism}",
+          :ssl_cert => CLIENT_CERT,
+          :ssl_key  => CLIENT_CERT)
+    assert db.authenticate(MONGODB_X509_USERNAME, nil, nil, nil, mechanism)
+    assert db.collection_names
+
+    # clean up and remove all users
+    db.command(:dropAllUsersFromDatabase => 1)
+    db.logout
   end
 
 end
