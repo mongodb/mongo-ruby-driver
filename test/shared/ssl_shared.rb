@@ -181,7 +181,7 @@ module SSLTests
     end
 
     assert MongoClient.from_uri(
-      "mongodb://#{MONGODB_X509_USERNAME}@#{@uri_info}/$external?ssl=true;authMechanism=#{mechanism}",
+      "mongodb://#{MONGODB_X509_USERNAME}@#{@uri_info}/?ssl=true;authMechanism=#{mechanism}",
           :ssl_cert => CLIENT_CERT,
           :ssl_key  => CLIENT_CERT)
     assert db.authenticate(MONGODB_X509_USERNAME, nil, nil, nil, mechanism)
