@@ -26,7 +26,7 @@ describe Mongo::Pool::Socket::SSL do
     context 'when verifying the certificate' do
 
       let(:socket) do
-        described_class.new('127.0.0.1', 27017, 5, :ssl_verify => true)
+        described_class.new('127.0.0.1', 27017, 5, Socket::PF_INET, :ssl_verify => true)
       end
 
       before do
@@ -42,7 +42,7 @@ describe Mongo::Pool::Socket::SSL do
     context 'when not verifying the certificate' do
 
       let(:socket) do
-        described_class.new('127.0.0.1', 27017, 5, :ssl => true)
+        described_class.new('127.0.0.1', 27017, 5, Socket::PF_INET, :ssl => true)
       end
 
       it 'connects the socket using ssl' do
@@ -54,7 +54,7 @@ describe Mongo::Pool::Socket::SSL do
   describe '#initialize' do
 
     let(:socket) do
-      described_class.new('127.0.0.1', 27017, 10)
+      described_class.new('127.0.0.1', 27017, 10, Socket::PF_INET)
     end
 
     it 'sets the host' do
@@ -79,7 +79,7 @@ describe Mongo::Pool::Socket::SSL do
     context 'when the verify mode is not nil' do
 
       let(:socket) do
-        described_class.new('127.0.0.1', 27017, 10, :ssl_verify => true)
+        described_class.new('127.0.0.1', 27017, 10, Socket::PF_INET, :ssl_verify => true)
       end
 
       it 'returns true' do
@@ -90,7 +90,7 @@ describe Mongo::Pool::Socket::SSL do
     context 'when the verify mode is nil' do
 
       let(:socket) do
-        described_class.new('127.0.0.1', 27017, 10)
+        described_class.new('127.0.0.1', 27017, 10, Socket::PF_INET)
       end
 
       it 'returns false' do

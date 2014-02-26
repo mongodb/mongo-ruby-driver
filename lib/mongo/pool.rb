@@ -165,12 +165,7 @@ module Mongo
           size: server.options[:pool_size],
           timeout: server.options[:pool_timeout]
         ) do
-          Connection.new(
-            server.address.ip,
-            server.address.port,
-            server.options[:timeout],
-            server.options
-          )
+          Connection.new(server.address, server.options[:timeout], server.options)
         end
       end
 

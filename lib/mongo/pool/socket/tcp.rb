@@ -54,10 +54,11 @@ module Mongo
         # @param timeout [ Integer ] The socket timeout value.
         #
         # @since 3.0.0
-        def initialize(host, port, timeout)
+        def initialize(host, port, timeout, family)
           @host    = host
           @port    = port
           @timeout = timeout
+          @family  = family
         end
       end
     end

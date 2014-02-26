@@ -31,7 +31,7 @@ module Mongo
       # Delegate the ip, host, and port methods to the resolver.
       #
       # @since 3.0.0
-      def_delegators :@resolver, :ip, :host, :port
+      def_delegators :@resolver, :ip, :host, :port, :socket
 
       # @return [ Integer ] port The port to the connect to.
       attr_reader :resolver

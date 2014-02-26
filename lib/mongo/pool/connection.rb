@@ -25,11 +25,8 @@ module Mongo
       # @since 3.0.0
       TIMEOUT = 5
 
-      # @return [ String ] host The host to connect to.
-      attr_reader :host
-
-      # @return [ Integer ] port The port to connect on.
-      attr_reader :port
+      # @return [ Mongo::Server::Address ] address The address to connect to.
+      attr_reader :address
 
       # @return [ Float ] timeout The connection timeout.
       attr_reader :timeout
@@ -46,7 +43,7 @@ module Mongo
       #
       # @since 3.0.0
       def connect!
-        @socket = Socket.create(host, port, timeout, ssl_opts) unless socket
+        @socket = address.socket(timeout, ssl_opts) unless socket
         socket.connect! and true
       end
 
@@ -72,17 +69,15 @@ module Mongo
       # Initialize a new socket connection from the client to the server.
       #
       # @example Create the connection.
-      #   Connection.new('127.0.0.1', 27017, 10)
+      #   Connection.new(address, 10)
       #
-      # @param [ String ] host The host to connect to.
-      # @param [ Integer ] port The port to connect to.
+      # @param [ Mongo::Server::Address ] address The address to connect to.
       # @param [ Float ] timeout The connection timeout.
       # @param [ Hash ] options The connection options.
       #
       # @since 3.0.0
-      def initialize(host, port, timeout = nil, options = {})
-        @host     = host
-        @port     = port
+      def initialize(address, timeout = nil, options = {})
+        @address  = address
         @timeout  = timeout || TIMEOUT
         @ssl_opts = options.reject { |k, v| !k.to_s.start_with?('ssl') }
         @socket   = nil

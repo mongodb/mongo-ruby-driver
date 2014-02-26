@@ -86,10 +86,11 @@ module Mongo
         #   from the other end of the socket connection. Implies :ssl_verify.
         #
         # @since 3.0.0
-        def initialize(host, port, timeout, opts = {})
+        def initialize(host, port, timeout, family, opts = {})
           @host    = host
           @port    = port
           @timeout = timeout
+          @family  = family
           @context = Context.create(opts)
         end
 

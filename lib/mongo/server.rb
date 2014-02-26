@@ -49,6 +49,16 @@ module Mongo
       address == other.address
     end
 
+    # Instantiate a new server object. Will start the background refresh and
+    # subscribe to the appropriate events.
+    #
+    # @example Initialize the server.
+    #   Mongo::Server.new('127.0.0.1:27017')
+    #
+    # @param [ String ] address The host:port address to connect to.
+    # @param [ Hash ] options The server options.
+    #
+    # @since 3.0.0
     def initialize(address, options = {})
       @address = Address.new(address)
       @options = options

@@ -20,4 +20,19 @@ describe Mongo::Server::Address::Sock do
       expect(resolver.host).to eq('/path/to/socket.sock')
     end
   end
+
+  describe '#socket' do
+
+    let(:resolver) do
+      described_class.new('/path/to/socket.sock')
+    end
+
+    let(:socket) do
+      resolver.socket(5)
+    end
+
+    it 'returns a unix socket' do
+      expect(socket).to be_a(Mongo::Pool::Socket::Unix)
+    end
+  end
 end

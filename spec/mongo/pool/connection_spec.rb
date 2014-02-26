@@ -2,10 +2,14 @@ require 'spec_helper'
 
 describe Mongo::Pool::Connection do
 
+  let(:address) do
+    Mongo::Server::Address.new('127.0.0.1:27017')
+  end
+
   describe '#connect!' do
 
     let(:connection) do
-      described_class.new('127.0.0.1', 27017)
+      described_class.new(address)
     end
 
     context 'when no socket exists' do
@@ -53,7 +57,7 @@ describe Mongo::Pool::Connection do
     context 'when a socket is not connected' do
 
       let(:connection) do
-        described_class.new('127.0.0.1', 27017)
+        described_class.new(address)
       end
 
       it 'does not raise an error' do
@@ -64,7 +68,7 @@ describe Mongo::Pool::Connection do
     context 'when a socket is connected' do
 
       let(:connection) do
-        described_class.new('127.0.0.1', 27017)
+        described_class.new(address)
       end
 
       before do
@@ -83,15 +87,11 @@ describe Mongo::Pool::Connection do
     context 'when host and port are provided' do
 
       let(:connection) do
-        described_class.new('127.0.0.1', 27017)
+        described_class.new(address)
       end
 
-      it 'sets the host' do
-        expect(connection.host).to eq('127.0.0.1')
-      end
-
-      it 'sets the port' do
-        expect(connection.port).to eq(27017)
+      it 'sets the address' do
+        expect(connection.address).to eq(address)
       end
 
       it 'sets the socket to nil' do
@@ -106,7 +106,7 @@ describe Mongo::Pool::Connection do
     context 'when timeout options are provided' do
 
       let(:connection) do
-        described_class.new('127.0.0.1', 27017, 10)
+        described_class.new(address, 10)
       end
 
       it 'sets the timeout' do
@@ -117,7 +117,7 @@ describe Mongo::Pool::Connection do
     context 'when ssl options are provided' do
 
       let(:connection) do
-        described_class.new('127.0.0.1', 27017, nil, :ssl => true)
+        described_class.new(address, nil, :ssl => true)
       end
 
       it 'sets the ssl options' do
@@ -129,7 +129,7 @@ describe Mongo::Pool::Connection do
   describe '#read' do
 
     let(:connection) do
-      described_class.new('127.0.0.1', 27017, 5)
+      described_class.new(address, 5)
     end
 
     let(:documents) do
@@ -170,7 +170,7 @@ describe Mongo::Pool::Connection do
   describe '#write' do
 
     let(:connection) do
-      described_class.new('127.0.0.1', 27017, 5)
+      described_class.new(address, 5)
     end
 
     let(:documents) do

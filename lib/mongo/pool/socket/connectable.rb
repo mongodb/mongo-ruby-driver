@@ -24,6 +24,8 @@ module Mongo
       module Connectable
         include ::Socket::Constants
 
+        attr_reader :family
+
         # @return [ String ] host The host to connect to.
         attr_reader :host
 
@@ -123,28 +125,19 @@ module Mongo
         private
 
         def handle_connect
-          error = nil
-          addr_info = ::Socket.getaddrinfo(host, nil, AF_UNSPEC, SOCK_STREAM)
-          addr_info.each do |info|
-            begin
-              sock        = create_socket(info[4])
-              socket_addr = ::Socket.pack_sockaddr_in(port, info[3])
-              sock.connect(socket_addr)
-              return sock
-            rescue IOError, SystemCallError => e
-              error = e
-            end
-          end
-          raise error
+          create_socket
         end
 
-        def create_socket(family)
+        def create_socket
           sock = ::Socket.new(family, SOCK_STREAM, 0)
+          timeout_value = [ timeout, 0 ].pack('l_2')
+
           sock.set_encoding('binary') if sock.respond_to?(:set_encoding)
           sock.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1) if family != AF_UNIX
-          timeout_value = [timeout, 0].pack('l_2')
           sock.setsockopt(SOL_SOCKET, SO_RCVTIMEO, timeout_value)
           sock.setsockopt(SOL_SOCKET, SO_SNDTIMEO, timeout_value)
+
+          sock.connect(::Socket.pack_sockaddr_in(port, host))
           sock
         end
 
