@@ -31,10 +31,7 @@ module Mongo
         #
         # @since 3.0.0
         def connect!
-          Timeout.timeout(timeout, Mongo::SocketTimeoutError) do
-            @socket = initialize_socket
-            self
-          end
+          initialize!
         end
 
         # Initializes a new Unix socket.

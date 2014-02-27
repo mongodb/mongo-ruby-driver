@@ -38,9 +38,7 @@ module Mongo
         #
         # @since 3.0.0
         def connect!
-          Timeout.timeout(timeout, Mongo::SocketTimeoutError) do
-            @socket = initialize_socket
-
+          initialize! do
             # Apply ssl wrapper and perform handshake.
             ssl_socket = OpenSSL::SSL::SSLSocket.new(@socket, context)
             ssl_socket.sync_close = true
@@ -52,7 +50,6 @@ module Mongo
                 raise Mongo::SocketError, 'SSL handshake failed due to a hostname mismatch.'
               end
             end
-            self
           end
         end
 

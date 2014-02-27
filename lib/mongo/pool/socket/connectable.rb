@@ -165,6 +165,14 @@ module Mongo
             raise Mongo::SocketError, SSL_ERROR
         end
 
+        def initialize!
+          Timeout.timeout(timeout, Mongo::SocketTimeoutError) do
+            @socket = initialize_socket
+            yield if block_given?
+            self
+          end
+        end
+
         def initialize_socket
           sock = default_socket
           sock.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
