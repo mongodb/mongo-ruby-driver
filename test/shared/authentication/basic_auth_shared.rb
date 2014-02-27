@@ -158,6 +158,23 @@ module BasicAuthTests
     remove_all_users(db_c, 'user_c', 'password')
   end
 
+  def test_default_roles_non_admin
+    return unless @client.server_version >= '2.5.3'
+
+    silently { @db.add_user('user', 'pass') }
+    silently { @db.authenticate('user', 'pass') }
+    info = @db.command(:usersInfo => 'user')['users'].first
+    assert_equal 'dbOwner', info['roles'].first['role']
+
+    # read-only
+    silently { @db.add_user('ro-user', 'pass', true) }
+    @db.logout
+    @db.authenticate('ro-user', 'pass')
+    info = @db.command(:usersInfo => 'ro-user')['users'].first
+    assert_equal 'read', info['roles'].first['role']
+    @db.logout
+  end
+
   def test_delegated_authentication
     return unless @client.server_version >= '2.4' && @client.server_version < '2.5'
 

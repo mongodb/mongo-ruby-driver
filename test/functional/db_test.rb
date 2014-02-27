@@ -260,6 +260,30 @@ class DBTest < Test::Unit::TestCase
     @@db.eval(function, 'hello', :nolock => true)
   end
 
+  if @@version >= '2.5.3'
+    def test_default_admin_roles
+      # admin user
+      db = Mongo::MongoClient.new()['admin']
+      db.logout
+      silently { db.add_user('admin', 'pass') }
+      db.authenticate('admin', 'pass')
+      info = db.command(:usersInfo => 'admin')['users'].first
+      assert_equal 'root', info['roles'].first['role']
+
+      # read-only admin user
+      silently { db.add_user('ro-admin', 'pass', true) }
+      db.logout
+      db.authenticate('ro-admin', 'pass')
+      info = db.command(:usersInfo => 'ro-admin')['users'].first
+      assert_equal 'readAnyDatabase', info['roles'].first['role']
+      db.logout
+
+      db.authenticate('admin', 'pass')
+      db.command(:dropAllUsersFromDatabase => 1)
+      db.logout
+    end
+  end
+
   if @@version >= "1.3.5"
     def test_db_stats
       stats = @@db.stats
