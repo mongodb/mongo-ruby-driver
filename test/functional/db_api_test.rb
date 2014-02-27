@@ -325,11 +325,11 @@ class DBAPITest < Test::Unit::TestCase
     @@db.strict = true
 
     begin
-      coll = @@db.create_collection('foobar', :capped => true, :size => 1024)
+      coll = @@db.create_collection('foobar', :capped => true, :size => 4096)
       options = coll.options
       assert_equal 'foobar', options['create'] if @@client.server_version < '2.5.5'
       assert_equal true, options['capped']
-      assert_equal 1024, options['size']
+      assert_equal 4096, options['size']
     rescue => ex
       @@db.drop_collection('foobar')
       fail "did not expect exception \"#{ex.inspect}\""
