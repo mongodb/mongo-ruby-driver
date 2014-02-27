@@ -5,7 +5,7 @@ describe Mongo::Pool::Socket::Unix do
   describe '#connect!' do
 
     let(:socket) do
-      described_class.new('/path/to/socket.sock', 10)
+      described_class.new('/path/to/socket.sock', 10, Socket::AF_UNIX)
     end
 
     let(:sock) do
@@ -15,9 +15,7 @@ describe Mongo::Pool::Socket::Unix do
     context 'when an error occurs when connecting' do
 
       before do
-        expect(socket).to receive(:create_socket).with(Socket::Constants::AF_UNIX).and_return(sock)
-        expect(sock).to receive(:connect).with('/path/to/socket.sock').and_raise(IOError)
-        expect(sock).to receive(:close)
+        expect(socket).to receive(:initialize_socket).and_raise(IOError)
       end
 
       it 're-raises the exception' do
@@ -30,8 +28,7 @@ describe Mongo::Pool::Socket::Unix do
     context 'when no error occurs connecting' do
 
       before do
-        expect(socket).to receive(:create_socket).with(Socket::Constants::AF_UNIX).and_return(sock)
-        expect(sock).to receive(:connect)
+        expect(socket).to receive(:initialize_socket).and_return(sock)
       end
 
       it 'connects and returns the socket' do
@@ -43,7 +40,7 @@ describe Mongo::Pool::Socket::Unix do
   describe '#initialize' do
 
     let(:socket) do
-      described_class.new('/path/to/socket.sock', 10)
+      described_class.new('/path/to/socket.sock', 10, Socket::AF_UNIX)
     end
 
     it 'sets the host' do

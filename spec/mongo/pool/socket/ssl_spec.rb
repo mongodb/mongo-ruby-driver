@@ -13,7 +13,7 @@ describe Mongo::Pool::Socket::SSL do
     end
 
     before do
-      expect(socket).to receive(:handle_connect).and_return(sock)
+      expect(socket).to receive(:initialize_socket).and_return(sock)
       expect(OpenSSL::SSL::SSLSocket).to receive(:new).with(sock, socket.context).and_return(wrapper)
       expect(wrapper).to receive(:sync_close=).with(true)
       expect(wrapper).to receive(:connect)

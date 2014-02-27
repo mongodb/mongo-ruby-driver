@@ -32,14 +32,8 @@ module Mongo
         # @since 3.0.0
         def connect!
           Timeout.timeout(timeout, Mongo::SocketTimeoutError) do
-            begin
-              @socket = create_socket(AF_UNIX)
-              @socket.connect(host)
-              self
-            rescue IOError, SystemCallError => e
-              @socket.close if @socket
-              raise e
-            end
+            @socket = initialize_socket
+            self
           end
         end
 
@@ -48,13 +42,23 @@ module Mongo
         # @example Create the Unix socket.
         #   Unix.new('/path/to/socket.sock', 30)
         #
-        # @param path [ String ] The path to the unix socket.
-        # @param timeout [ Integer ] The socket timeout value.
+        # @param [ String ] path The path to the unix socket.
+        # @param [ Float ] timeout The socket timeout value.
+        # @param [ Integer ] family The socket family.
         #
         # @since 3.0.0
-        def initialize(path, timeout)
+        def initialize(path, timeout, family)
           @host    = path
           @timeout = timeout
+          @family  = family
+        end
+
+        private
+
+        def initialize_socket
+          sock = default_socket
+          sock.connect(host)
+          sock
         end
       end
     end

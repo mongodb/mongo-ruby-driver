@@ -22,9 +22,6 @@ module Mongo
       class TCP
         include Socket::Connectable
 
-        # @return [ Integer ] port The port to connect to.
-        attr_reader :port
-
         # Establishes a socket connection.
         #
         # @example Connect the socket.
@@ -38,7 +35,7 @@ module Mongo
         # @since 3.0.0
         def connect!
           Timeout.timeout(timeout, Mongo::SocketTimeoutError) do
-            @socket = handle_connect
+            @socket = initialize_socket
             self
           end
         end
@@ -49,9 +46,10 @@ module Mongo
         #   TCP.new('::1', 27017, 30)
         #   TCP.new('127.0.0.1', 27017, 30)
         #
-        # @param host [ String ] The hostname or IP address.
-        # @param port [ Integer ] The port number.
-        # @param timeout [ Integer ] The socket timeout value.
+        # @param [ String ] host The hostname or IP address.
+        # @param [ Integer ] port The port number.
+        # @param [ Float ] timeout The socket timeout value.
+        # @param [ Integer ] family The socket family.
         #
         # @since 3.0.0
         def initialize(host, port, timeout, family)

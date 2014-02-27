@@ -24,10 +24,29 @@ module Mongo
       module Connectable
         include ::Socket::Constants
 
+        # Error message for timeouts on socket calls.
+        #
+        # @since 3.0.0
+        TIMEOUT_ERROR = 'Socket request timed out'.freeze
+
+        # The pack directive for timeouts.
+        #
+        # @since 3.0.0
+        TIMEOUT_PACK = 'l_2'.freeze
+
+        # Error message for SSL related exceptions.
+        #
+        # @since 3.0.0
+        SSL_ERROR = 'SSL handshake failed. MongoDB may not be configured with SSL support.'.freeze
+
+        # @return [ Integer ] family The socket family (IPv4, IPv6, Unix).
         attr_reader :family
 
         # @return [ String ] host The host to connect to.
         attr_reader :host
+
+        # @return [ Integer ] port The port to connect to.
+        attr_reader :port
 
         # @return [ Float ] timeout The connection timeout.
         attr_reader :timeout
@@ -74,7 +93,7 @@ module Mongo
         #
         # @since 3.0.0
         def read(length)
-          data = handle_socket_error { @socket.read(length) }
+          data = handle_errors { @socket.read(length) }
           unless data
             raise SocketError, "Attempted to read #{length} bytes from the socket but got none."
           end
@@ -93,7 +112,7 @@ module Mongo
         #
         # @since 3.0.0
         def gets(*args)
-          handle_socket_error { @socket.gets(*args) }
+          handle_errors { @socket.gets(*args) }
         end
 
         # Read a single byte from the socket.
@@ -105,7 +124,7 @@ module Mongo
         #
         # @since 3.0.0
         def readbyte
-          handle_socket_error { @socket.readbyte }
+          handle_errors { @socket.readbyte }
         end
 
         # Writes data to the socket instance.
@@ -119,36 +138,38 @@ module Mongo
         #
         # @since 3.0.0
         def write(*args)
-          handle_socket_error { @socket.write(*args) }
+          handle_errors { @socket.write(*args) }
         end
 
         private
 
-        def handle_connect
-          create_socket
-        end
-
-        def create_socket
+        def default_socket
           sock = ::Socket.new(family, SOCK_STREAM, 0)
-          timeout_value = [ timeout, 0 ].pack('l_2')
-
-          sock.set_encoding('binary') if sock.respond_to?(:set_encoding)
-          sock.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1) if family != AF_UNIX
-          sock.setsockopt(SOL_SOCKET, SO_RCVTIMEO, timeout_value)
-          sock.setsockopt(SOL_SOCKET, SO_SNDTIMEO, timeout_value)
-
-          sock.connect(::Socket.pack_sockaddr_in(port, host))
+          sock.set_encoding(BSON::BINARY)
+          sock.setsockopt(SOL_SOCKET, SO_RCVTIMEO, encoded_timeout)
+          sock.setsockopt(SOL_SOCKET, SO_SNDTIMEO, encoded_timeout)
           sock
         end
 
-        def handle_socket_error
+        def encoded_timeout
+          @encoded_timeout ||= [ timeout, 0 ].pack(TIMEOUT_PACK)
+        end
+
+        def handle_errors
           yield
           rescue Errno::ETIMEDOUT
-            raise Mongo::SocketTimeoutError, 'Socket request timed out.'
-          rescue IOError, SystemCallError
-            raise Mongo::SocketError, 'A socket error occurred.'
+            raise Mongo::SocketTimeoutError, TIMEOUT_ERROR
+          rescue IOError, SystemCallError => e
+            raise Mongo::SocketError, e.message
           rescue OpenSSL::SSL::SSLError
-            raise Mongo::SocketError, 'SSL handshake failed. MongoDB may not be configured with SSL support.'
+            raise Mongo::SocketError, SSL_ERROR
+        end
+
+        def initialize_socket
+          sock = default_socket
+          sock.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
+          sock.connect(::Socket.pack_sockaddr_in(port, host))
+          sock
         end
       end
     end
