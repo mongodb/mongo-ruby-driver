@@ -19,7 +19,7 @@ module Mongo
       # Sets up socket addresses.
       #
       # @since 3.0.0
-      class Sock
+      class Unix
         include Resolvable
 
         # The regular expression to use to match a socket path.

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Server::Address::Sock do
+describe Mongo::Server::Address::Unix do
 
   describe '#initialize' do
 
