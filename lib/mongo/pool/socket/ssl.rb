@@ -26,9 +26,6 @@ module Mongo
         # @return [ OpenSSL::SSL::SSLContext ] context The SSL context.
         attr_reader :context
 
-        # @return [ Integer ] port The port to connect to.
-        attr_reader :port
-
         # Establishes the socket connection and performs
         # optional SSL valiation.
         #
@@ -41,9 +38,7 @@ module Mongo
         #
         # @since 3.0.0
         def connect!
-          Timeout.timeout(timeout, Mongo::SocketTimeoutError) do
-            @socket = handle_connect
-
+          initialize! do
             # Apply ssl wrapper and perform handshake.
             ssl_socket = OpenSSL::SSL::SSLSocket.new(@socket, context)
             ssl_socket.sync_close = true
@@ -55,7 +50,6 @@ module Mongo
                 raise Mongo::SocketError, 'SSL handshake failed due to a hostname mismatch.'
               end
             end
-            self
           end
         end
 
@@ -66,10 +60,11 @@ module Mongo
         #   SSL.new('127.0.0.1', 30, 27017)
         #   SSL.new('127.0.0.1', 30, 27017)
         #
-        # @param host [ String ] The hostname or IP address.
-        # @param port [ Integer ] The port number.
-        # @param timeout [ Integer ] The socket timeout value.
-        # @param opts [ Hash ] Optional settings and configuration values.
+        # @param [ String ] host The hostname or IP address.
+        # @param [ Integer ] port The port number.
+        # @param [ Float ] timeout The socket timeout value.
+        # @param [ Integer ] family The socket family.
+        # @param [ Hash ] opts Optional settings and configuration values.
         #
         # @option opts [ true, false ] :connect (true) If true calls connect
         #   before returning the object instance.
@@ -86,10 +81,11 @@ module Mongo
         #   from the other end of the socket connection. Implies :ssl_verify.
         #
         # @since 3.0.0
-        def initialize(host, port, timeout, opts = {})
+        def initialize(host, port, timeout, family, opts = {})
           @host    = host
           @port    = port
           @timeout = timeout
+          @family  = family
           @context = Context.create(opts)
         end
 

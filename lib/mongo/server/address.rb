@@ -15,7 +15,7 @@
 require 'mongo/server/address/resolvable'
 require 'mongo/server/address/ipv4'
 require 'mongo/server/address/ipv6'
-require 'mongo/server/address/sock'
+require 'mongo/server/address/unix'
 require 'forwardable'
 
 module Mongo
@@ -31,7 +31,7 @@ module Mongo
       # Delegate the ip, host, and port methods to the resolver.
       #
       # @since 3.0.0
-      def_delegators :@resolver, :ip, :host, :port
+      def_delegators :@resolver, :ip, :host, :port, :socket
 
       # @return [ Integer ] port The port to the connect to.
       attr_reader :resolver
@@ -92,7 +92,7 @@ module Mongo
       # @since 3.0.0
       def initialize(address, options = {})
         case address
-        when Sock::MATCH then @resolver = Sock.new(address)
+        when Unix::MATCH then @resolver = Unix.new(address)
         when IPv6::MATCH then @resolver = IPv6.new(address)
         else @resolver = IPv4.new(address)
         end

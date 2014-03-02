@@ -19,7 +19,7 @@ module Mongo
       # Sets up socket addresses.
       #
       # @since 3.0.0
-      class Sock
+      class Unix
         include Resolvable
 
         # The regular expression to use to match a socket path.
@@ -37,6 +37,21 @@ module Mongo
         # @since 3.0.0
         def initialize(address)
           @host = address
+        end
+
+        # Get a socket for the provided address type, given the options.
+        #
+        # @example Get a Unix socket.
+        #   ipv4.socket(5)
+        #
+        # @param [ Float ] timeout The socket timeout.
+        # @param [ Hash ] ssl_opts SSL options - ignored.
+        #
+        # @return [ Pool::Socket::Unix ] The socket.
+        #
+        # @since 3.0.0
+        def socket(timeout, ssl_opts = {})
+          Pool::Socket::Unix.new(host, timeout, Socket::AF_UNIX)
         end
       end
     end

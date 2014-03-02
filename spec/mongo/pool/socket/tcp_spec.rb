@@ -5,7 +5,7 @@ describe Mongo::Pool::Socket::TCP do
   describe '#connect' do
 
     let(:socket) do
-      described_class.new('127.0.0.1', 27017, 10)
+      described_class.new('127.0.0.1', 27017, 10, Socket::PF_INET)
     end
 
     let(:connected) do
@@ -24,7 +24,7 @@ describe Mongo::Pool::Socket::TCP do
   describe '#initialize' do
 
     let(:socket) do
-      described_class.new('127.0.0.1', 27017, 10)
+      described_class.new('127.0.0.1', 27017, 10, Socket::PF_INET)
     end
 
     it 'sets the host' do

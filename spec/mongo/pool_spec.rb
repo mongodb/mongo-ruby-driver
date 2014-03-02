@@ -68,7 +68,7 @@ describe Mongo::Pool do
       end
 
       it 'returns a new connection' do
-        expect(connection.host).to eq(server.address.ip)
+        expect(connection.address).to eq(server.address)
       end
 
       it 'puts the new connection on the thread local stack' do
@@ -87,7 +87,7 @@ describe Mongo::Pool do
       end
 
       it 'returns the threads connection' do
-        expect(pool.checkout.host).to eq(server.address.ip)
+        expect(pool.checkout.address).to eq(server.address)
       end
 
       it 'keeps the connection on the thread local stack' do
@@ -106,7 +106,7 @@ describe Mongo::Pool do
       end
 
       it 'returns a new connection' do
-        expect(pool.checkout.host).to eq(server.address.ip)
+        expect(pool.checkout.address).to eq(server.address)
       end
 
       it 'does not return the same connection instance' do

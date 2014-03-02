@@ -55,6 +55,25 @@ module Mongo
         def pattern
           Resolv::IPv4::Regex
         end
+
+        # Get a socket for the provided address type, given the options.
+        #
+        # @example Get an IPv4 socket.
+        #   ipv4.socket(5, :ssl => true)
+        #
+        # @param [ Float ] timeout The socket timeout.
+        # @param [ Hash ] ssl_opts SSL options.
+        #
+        # @return [ Pool::Socket::SSL, Pool::Socket::TCP ] The socket.
+        #
+        # @since 3.0.0
+        def socket(timeout, ssl_opts = {})
+          unless ssl_opts.empty?
+            Pool::Socket::SSL.new(ip, port, timeout, Socket::PF_INET, ssl_opts)
+          else
+            Pool::Socket::TCP.new(ip, port, timeout, Socket::PF_INET)
+          end
+        end
       end
     end
   end
