@@ -31,39 +31,39 @@ class URITest < Test::Unit::TestCase
     assert_equal 27018, parser.nodes[0][1]
   end
 
-def test_ipv6_format
-  parser = Mongo::URIParser.new('mongodb://[::1]:27018')
-  assert_equal 1, parser.nodes.length
-  assert_equal '::1', parser.nodes[0][0]
-  assert_equal 27018, parser.nodes[0][1]
+  def test_ipv6_format
+    parser = Mongo::URIParser.new('mongodb://[::1]:27018')
+    assert_equal 1, parser.nodes.length
+    assert_equal '::1', parser.nodes[0][0]
+    assert_equal 27018, parser.nodes[0][1]
 
-  parser = Mongo::URIParser.new('mongodb://[::1]')
-  assert_equal 1, parser.nodes.length
-  assert_equal '::1', parser.nodes[0][0]
-end
+    parser = Mongo::URIParser.new('mongodb://[::1]')
+    assert_equal 1, parser.nodes.length
+    assert_equal '::1', parser.nodes[0][0]
+  end
 
-def test_ipv6_format_multi
-  parser = Mongo::URIParser.new('mongodb://[::1]:27017,[::1]:27018')
-  assert_equal 2, parser.nodes.length
-  assert_equal '::1', parser.nodes[0][0]
-  assert_equal 27017, parser.nodes[0][1]
-  assert_equal '::1', parser.nodes[1][0]
-  assert_equal 27018, parser.nodes[1][1]
+  def test_ipv6_format_multi
+    parser = Mongo::URIParser.new('mongodb://[::1]:27017,[::1]:27018')
+    assert_equal 2, parser.nodes.length
+    assert_equal '::1', parser.nodes[0][0]
+    assert_equal 27017, parser.nodes[0][1]
+    assert_equal '::1', parser.nodes[1][0]
+    assert_equal 27018, parser.nodes[1][1]
 
-  parser = Mongo::URIParser.new('mongodb://[::1]:27017,localhost:27018')
-  assert_equal 2, parser.nodes.length
-  assert_equal '::1', parser.nodes[0][0]
-  assert_equal 27017, parser.nodes[0][1]
-  assert_equal 'localhost', parser.nodes[1][0]
-  assert_equal 27018, parser.nodes[1][1]
+    parser = Mongo::URIParser.new('mongodb://[::1]:27017,localhost:27018')
+    assert_equal 2, parser.nodes.length
+    assert_equal '::1', parser.nodes[0][0]
+    assert_equal 27017, parser.nodes[0][1]
+    assert_equal 'localhost', parser.nodes[1][0]
+    assert_equal 27018, parser.nodes[1][1]
 
-  parser = Mongo::URIParser.new('mongodb://localhost:27017,[::1]:27018')
-  assert_equal 2, parser.nodes.length
-  assert_equal 'localhost', parser.nodes[0][0]
-  assert_equal 27017, parser.nodes[0][1]
-  assert_equal '::1', parser.nodes[1][0]
-  assert_equal 27018, parser.nodes[1][1]
-end
+    parser = Mongo::URIParser.new('mongodb://localhost:27017,[::1]:27018')
+    assert_equal 2, parser.nodes.length
+    assert_equal 'localhost', parser.nodes[0][0]
+    assert_equal 27017, parser.nodes[0][1]
+    assert_equal '::1', parser.nodes[1][0]
+    assert_equal 27018, parser.nodes[1][1]
+  end
 
   def test_multiple_uris
     parser = Mongo::URIParser.new('mongodb://a.example.com:27018,b.example.com')
@@ -310,4 +310,21 @@ end
       Mongo::URIParser.new("mongodb://user@localhost/some_db?authMechanism=PLAIN")
     end
   end
+
+  def test_gssapi
+    uri = "mongodb://foo%2Fbar%40example.net@localhost?authMechanism=GSSAPI;"
+    parser = Mongo::URIParser.new(uri)
+    assert_equal 'GSSAPI', parser.auths.first[:mechanism]
+    assert_equal 'foo/bar@example.net', parser.auths.first[:username]
+
+
+    uri = "mongodb://foo%2Fbar%40example.net@localhost?authMechanism=GSSAPI;" +
+            "gssapiServiceName=mongodb;canonicalizeHostName=true"
+    parser = Mongo::URIParser.new(uri)
+    assert_equal 'GSSAPI', parser.auths.first[:mechanism]
+    assert_equal 'foo/bar@example.net', parser.auths.first[:username]
+    assert_equal 'mongodb', parser.auths.first[:extra][:gssapi_service_name]
+    assert_equal true, parser.auths.first[:extra][:canonicalize_host_name]
+  end
+
 end

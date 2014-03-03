@@ -19,6 +19,7 @@ module Mongo
 
     DEFAULT_MECHANISM = 'MONGODB-CR'
     MECHANISMS        = ['GSSAPI', 'MONGODB-CR', 'MONGODB-X509', 'PLAIN']
+    EXTRA             = { 'GSSAPI' => [:gssapi_service_name, :canonicalize_host_name] }
 
     # authentication module methods
     class << self
@@ -59,6 +60,15 @@ module Mongo
             "When using the authentication mechanism #{auth[:mechanism]} " +
             "both username and password are required."
         end
+        # if extra opts exist, validate them
+        allowed_keys = EXTRA[auth[:mechanism]]
+        if auth[:extra] && !auth[:extra].empty?
+          invalid_opts = []
+          auth[:extra].keys.each { |k| invalid_opts << k unless allowed_keys.include?(k) }
+          raise MongoArgumentError,
+            "Invalid extra option(s): #{invalid_opts} found. Please check the extra options" +
+            " passed and try again." unless invalid_opts.empty?
+        end
         auth
       end
 
@@ -95,19 +105,22 @@ module Mongo
     #   (if different than the current database).
     # @param mechanism [String] (nil) The authentication mechanism being used
     #   (default: 'MONGODB-CR').
+    # @param extra [Hash] (nil) A optional hash of extra options to be stored with
+    #   the credential set.
     #
     # @raise [MongoArgumentError] Raised if the database has already been used
     #   for authentication. A log out is required before additional auths can
     #   be issued against a given database.
     # @raise [AuthenticationError] Raised if authentication fails.
     # @return [Hash] a hash representing the authentication just added.
-    def add_auth(db_name, username, password=nil, source=nil, mechanism=nil)
+    def add_auth(db_name, username, password=nil, source=nil, mechanism=nil, extra=nil)
       auth = Authentication.validate_credentials({
         :db_name   => db_name,
         :username  => username,
         :password  => password,
         :source    => source,
-        :mechanism => mechanism
+        :mechanism => mechanism,
+        :extra     => extra
       })
 
       if @auths.any? {|a| a[:source] == auth[:source]}
@@ -276,7 +289,9 @@ module Mongo
     # @private
     def issue_gssapi(auth, opts={})
       raise NotImplementedError,
-        "The #{auth[:mechanism]} authentication mechanism is not yet supported."
+         "The #{auth[:mechanism]} authentication mechanism is only supported " +
+         "for JRuby." unless RUBY_PLATFORM =~ /java/
+      Mongo::Sasl::GSSAPI.authenticate(auth[:username], self, opts[:socket], auth[:extra] || {})
     end
 
     # Helper to fetch a nonce value from a given database instance.
