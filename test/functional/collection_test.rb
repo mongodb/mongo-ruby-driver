@@ -119,6 +119,16 @@ class CollectionTest < Test::Unit::TestCase
       @@test.drop
     end
 
+    def test_aggregation_array
+      @@test.drop
+      100.times {|i| @@test.insert({ :_id => i }) }
+      agg = @@test.aggregate([{ :$project => {:_id => '$_id'}} ])
+
+      assert agg.kind_of?(Array)
+
+      @@test.drop
+    end
+
     def test_aggregation_cursor_invalid_ops
       cursor = @@test.aggregate([], :cursor => {})
       assert_raise(Mongo::InvalidOperation) { cursor.rewind! }
