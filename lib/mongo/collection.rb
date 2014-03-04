@@ -680,7 +680,8 @@ module Mongo
     #  on. If $out is specified and :read is not :primary, the aggregation will be rerouted to the primary with
     #  a warning. See Collection#find for more details.
     # @option opts [String]  :comment (nil) a comment to include in profiling logs
-    # @option opts [Hash] :cursor cursor options for aggregation
+    # @option opts [Hash] :cursor return a cursor object instead of an Array.  Takes an optional batchSize parameter
+    #  to specify the maximum size, in documents, of the first batch returned.
     #
     # @return [Array] An Array with the aggregate command's results.
     #
