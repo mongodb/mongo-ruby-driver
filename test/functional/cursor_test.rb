@@ -103,7 +103,7 @@ class CursorTest < Test::Unit::TestCase
     end
   end
 
-  def test_server_op_timeout_error
+  def test_max_time_ms_error
     cursor = @@coll.find
     cursor.stubs(:send_initial_query).returns(true)
 
@@ -117,10 +117,10 @@ class CursorTest < Test::Unit::TestCase
     end
   end
 
-  def test_server_op_timeout
+  def test_max_time_ms
     with_forced_timeout(@@connection) do
       assert_raise ExecutionTimeout do
-        cursor = @@coll.find.server_op_timeout(100)
+        cursor = @@coll.find.max_time_ms(100)
         cursor.to_a
       end
     end
