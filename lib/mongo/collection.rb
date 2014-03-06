@@ -657,6 +657,9 @@ module Mongo
     # @example Define the pipeline as an array of operator hashes:
     #   coll.aggregate([ {"$project" => {"last_name" => 1, "first_name" => 1 }}, {"$match" => {"last_name" => "Jones"}} ])
     #
+    # @example With server version 2.5.1 or newer, pass a cursor option to retrieve unlimited aggregation results:
+    #   coll.aggregate([ {"$group" => { :_id => "$_id", :count => { "$sum" => "$members" }}} ], :cursor => {} )
+    #
     # @param [Array] pipeline Should be a single array of pipeline operator hashes.
     #
     #   '$project' Reshapes a document stream by including fields, excluding fields, inserting computed fields,
@@ -680,7 +683,8 @@ module Mongo
     #  on. If $out is specified and :read is not :primary, the aggregation will be rerouted to the primary with
     #  a warning. See Collection#find for more details.
     # @option opts [String]  :comment (nil) a comment to include in profiling logs
-    # @option opts [Hash] :cursor cursor options for aggregation
+    # @option opts [Hash] :cursor return a cursor object instead of an Array.  Takes an optional batchSize parameter
+    #  to specify the maximum size, in documents, of the first batch returned.
     #
     # @return [Array] An Array with the aggregate command's results.
     #
