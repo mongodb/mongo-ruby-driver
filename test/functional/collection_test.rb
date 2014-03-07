@@ -1216,16 +1216,22 @@ class CollectionTest < Test::Unit::TestCase
     def test_parallel_scan
       8000.times { |i| @@test.insert({ :_id => i }) }
 
-      n_docs = {}
+      lock = Mutex.new
+      doc_ids = Set.new
       threads = []
       cursors = @@test.parallel_scan(3)
       cursors.each_with_index do |cursor, i|
         threads << Thread.new do
-          n_docs[i] = cursor.to_a.size
+          docs = cursor.to_a
+          lock.synchronize do
+            docs.each do |doc|
+              doc_ids << doc['_id']
+            end
+          end
         end
       end
       threads.each(&:join)
-      assert_equal @@test.count, n_docs.values.inject(0) { |sum, n| sum + n }
+      assert_equal 8000, doc_ids.count
     end
   end
 
