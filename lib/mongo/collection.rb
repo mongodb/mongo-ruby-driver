@@ -1134,7 +1134,7 @@ module Mongo
           send_write(:insert, nil, selector, false, {:w => 1}, Mongo::DB::SYSTEM_INDEX_COLLECTION)
         else
           raise Mongo::OperationFailure, "Failed to create index #{selector.inspect} with the following error: " +
-           "#{e.message}"
+           "#{ex.message}"
         end
       end
 

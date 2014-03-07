@@ -1750,14 +1750,17 @@ end
     end
 
     should "generate indexes in the proper order" do
-      @collection.expects(:send_write) do |type, selector, documents, check_keys, opts, collection_name|
-        assert_equal 'b_1_a_1', selector[:name]
+      key = BSON::OrderedHash['b', 1, 'a', 1]
+      if @@version < '2.5.5'
+        @collection.expects(:send_write) do |type, selector, documents, check_keys, opts, collection_name|
+          assert_equal key, selector[:key]
+        end
+      else
+        @collection.db.expects(:command) do |selector|
+          assert_equal key, selector[:indexes].first[:key]
+        end
       end
       @collection.create_index([['b', 1], ['a', 1]])
-    end
-
-    should "allow multiple calls to create_index" do
-
     end
 
     should "allow creation of multiple indexes" do
