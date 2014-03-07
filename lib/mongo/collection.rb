@@ -1126,7 +1126,7 @@ module Mongo
       selector.merge!(opts)
 
       begin
-        cmd = BSON::OrderedHash[:createIndexes, @name].merge!(selector)
+        cmd = BSON::OrderedHash[:createIndexes, @name, :indexes, [selector]]
         @db.command(cmd)
       rescue Mongo::OperationFailure => ex
         if ex.error_code == Mongo::ErrorCode::COMMAND_NOT_FOUND || ex.error_code.nil?
