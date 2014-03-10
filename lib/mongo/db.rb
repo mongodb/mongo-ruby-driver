@@ -228,9 +228,9 @@ module Mongo
       end
 
       if user_info.key?('users') && !user_info['users'].empty?
-        update_user(username, password, opts)
+        create_or_update_user(:updateUser, username, password, read_only, opts)
       else
-        create_user(username, password, read_only, opts)
+        create_or_update_user(:createUser, username, password, read_only, opts)
       end
     end
 
@@ -673,7 +673,7 @@ module Mongo
     # @param opts [Hash]
     #
     # @private
-    def create_user(username, password, read_only, opts)
+    def create_or_update_user(command, username, password, read_only, opts)
       if read_only || !opts.key?(:roles)
         warn "Creating a user with the read_only option or without roles is " +
              "deprecated in MongoDB >= 2.6"
@@ -688,47 +688,21 @@ module Mongo
 
       opts = opts.dup
       pwd = Mongo::Authentication.hash_password(username, password) if password
-      create_opts = pwd ? { :pwd => pwd } : {}
+      cmd_opts = pwd ? { :pwd => pwd } : {}
       # specify that the server shouldn't digest the password because the driver does
-      create_opts[:digestPassword] = false
+      cmd_opts[:digestPassword] = false
       unless opts.key?(:roles)
         if name == 'admin'
           roles = read_only ? ['readAnyDatabase'] : ['root']
         else
           roles = read_only ? ['read'] : ["dbOwner"]
         end
-        create_opts[:roles] = roles
+        cmd_opts[:roles] = roles
       end
-      create_opts[:writeConcern] =
+      cmd_opts[:writeConcern] =
         opts.key?(:writeConcern) ? opts.delete(:writeConcern) : { :w => 1 }
-      create_opts.merge!(opts)
-      command({ :createUser => username }, create_opts)
-    end
-
-    # Update a user.
-    #
-    # @param username [String] The username.
-    # @param password [String] The user's password.
-    # @param opts [Hash]
-    #
-    # @private
-    def update_user(username, password, opts)
-      # The password is always salted and hashed by the driver.
-      if opts.key?(:digestPassword)
-        raise MongoArgumentError,
-          "The digestPassword option is not available via DB#add_user. " +
-          "Use DB#command(:createUser => ...) instead for this option."
-      end
-
-      opts = opts.dup
-      pwd = Mongo::Authentication.hash_password(username, password) if password
-      update_opts = pwd ? { :pwd => pwd } : {}
-      # specify that the server shouldn't digest the password because the driver does
-      update_opts[:digestPassword] = false
-      update_opts[:writeConcern] =
-        opts.key?(:writeConcern) ? opts.delete(:writeConcern) : { :w => 1 }
-      update_opts.merge!(opts)
-      command({ :updateUser => username }, update_opts)
+      cmd_opts.merge!(opts)
+      command({ command => username }, cmd_opts)
     end
 
     # Create a user in MongoDB versions < 2.5.3.

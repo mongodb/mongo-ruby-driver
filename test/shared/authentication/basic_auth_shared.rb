@@ -229,4 +229,23 @@ module BasicAuthTests
     assert_equal 'dbOwner', users.first['roles'].first['role']
   end
 
+  def test_update_user_to_read_only
+    silently { @db.add_user('emily', 'password') }
+    @admin.logout
+    @db.authenticate('emily', 'password')
+    @db['test'].insert({})
+    @db.logout
+
+    @admin.authenticate('admin', 'password')
+    silently { @db.add_user('emily', 'password', true) }
+    @admin.logout
+
+    silently { @db.authenticate('emily', 'password') }
+    assert_raise Mongo::OperationFailure do
+      @db['test'].insert({})
+    end
+    @db.logout
+    @admin.authenticate('admin', 'password')
+  end
+
 end
