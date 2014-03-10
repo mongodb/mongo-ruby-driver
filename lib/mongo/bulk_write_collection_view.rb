@@ -276,7 +276,7 @@ module Mongo
           end
           tally(result, "nUpserted", n_upserted) if n_upserted > 0
           tally(result, "nMatched", n - n_upserted)
-          tally(result, "nModified", response["nModified"] || n - n_upserted)
+          tally(result, "nModified", response["nModified"]) if response["nModified"]
         elsif op_type == :delete
           tally(result, "nRemoved", n)
         end

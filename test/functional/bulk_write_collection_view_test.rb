@@ -333,7 +333,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "nInserted" => 6,
                 "nMatched" => 5,
                 "nUpserted" => 1,
-                "nModified" => 5,
+                "nModified" => batch_commands?(wire_version) ? 5 : nil,
                 "nRemoved" => 2,
                 "upserted" => [
                     {
@@ -433,7 +433,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 1,
                 "nMatched" => 0,
-                "nModified" => 0
+                "nModified" => batch_commands?(wire_version) ? 0 : nil
             }, result, "wire_version:#{wire_version}")
       end
     end
@@ -481,7 +481,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 1,
                 "nMatched" => 0,
-                "nModified" => 0
+                "nModified" => batch_commands?(wire_version) ? 0 : nil
             }, result, "wire_version:#{wire_version}")
       end
     end
@@ -534,7 +534,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "n" => 6,
                 "nInserted" => 4,
                 "nMatched" => 1,
-                "nModified" => 1,
+                "nModified" => batch_commands?(wire_version) ? 1 : nil,
                 "nRemoved" => 1,
             }, result, "wire_version:#{wire_version}")
         # for write commands there will be in sequence insert, update, remove, insert
@@ -587,7 +587,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 2,
                 "nMatched" => 0,
-                "nModified" => 0
+                "nModified" => batch_commands?(wire_version) ? 0 : nil
             }, result, "wire_version:#{wire_version}")
       end
     end
@@ -610,7 +610,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         assert_equal(1, result['ok'], "wire_version:#{wire_version}")
         assert_equal(2, result['n'], "wire_version:#{wire_version}")
         err_details = result['writeErrors']
-        assert_equal([2,nil,1][wire_version], err_details.first['index'], "wire_version:#{wire_version}")
+        assert_equal(batch_commands?(wire_version) ? 1 : 2, err_details.first['index'], "wire_version:#{wire_version}")
         assert_match(/duplicate key error/, err_details.first['errmsg'], "wire_version:#{wire_version}")
       end
     end
@@ -645,7 +645,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 2,
                 "nMatched" => 0,
-                "nModified" => 0
+                "nModified" => batch_commands?(wire_version) ? 0 : nil
             }, result, "wire_version:#{wire_version}")
       end
     end
@@ -663,7 +663,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "n" => 1,
                 "nMatched" => 0,
                 "nUpserted" => 1,
-                "nModified" => 0,
+                "nModified" => batch_commands?(wire_version) ? 0 : nil,
                 "upserted" => [
                     {"_id" => BSON::ObjectId('52a16767bb67fbc77e26a310'), "index" => 0}
                 ]
@@ -685,7 +685,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "n" => 2,
                 "nMatched" => 0,
                 "nUpserted" => 2,
-                "nModified" => 0,
+                "nModified" => batch_commands?(wire_version) ? 0 : nil,
                 "upserted" => [
                     {"index" => 0, "_id" => BSON::ObjectId('52a1e37cbb67fbc77e26a338')},
                     {"index" => 1, "_id" => BSON::ObjectId('52a1e37cbb67fbc77e26a339')}
