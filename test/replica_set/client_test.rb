@@ -329,12 +329,13 @@ class ReplicaSetClientTest < Test::Unit::TestCase
   def test_find_and_modify_with_secondary_read_preference
     @client = MongoReplicaSetClient.new @rs.repl_set_seeds
     collection = @client[TEST_DB].collection('test', :read => :secondary)
-    collection << { :a => 1, :processed => false}
+    id = BSON::ObjectId.new
+    collection << { :a => id, :processed => false }
 
     collection.find_and_modify(
-      :query => {},
-      :update => {"$set" => {:processed => true}}
+      :query => { 'a' => id },
+      :update => { "$set" => { :processed => true }}
     )
-    assert_equal collection.find_one({}, :fields => {:_id => 0}, :read => :primary), {'a' => 1, 'processed' => true}
+    assert_equal true, collection.find_one({ 'a' => id }, :read => :primary)['processed']
   end
 end
