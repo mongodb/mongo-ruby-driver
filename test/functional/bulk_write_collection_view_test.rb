@@ -21,7 +21,7 @@ module Mongo
   end
 
   class BulkWriteCollectionView
-    public :update_doc?, :replace_doc?, :merge_result
+    public :update_doc?, :replace_doc?, :nil_tally, :merge_result
 
     # for reference and future server direction
     def generate_batch_commands(groups, write_concern)
@@ -184,6 +184,14 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     bulk.insert({:x => 4})
   end
 
+  def nil_tally_responses(responses, key)
+    result = {}
+    responses.each do |response|
+      @bulk.nil_tally(result, key, response[key])
+    end
+    result
+  end
+
   context "Bulk API CollectionView" do
     setup do
       default_setup
@@ -307,6 +315,12 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       #@bulk.execute(write_concern)
     end
 
+    should "tally given all numbers or return nil for #nil_tally" do
+      assert_equal({"nM" => 6}, nil_tally_responses([{"nM" => 1}, {"nM" => 2}, {"nM" => 3}], "nM"))
+      assert_equal({"nM" => nil}, nil_tally_responses([{"nM" => 1}, { }, {"nM" => 3}], "nM"))
+      assert_equal({"nM" => nil}, nil_tally_responses([{"nM" => 1}, {"nM" => nil}, {"nM" => 3}], "nM"))
+    end
+
     should "execute, return result and reset @ops for #execute" do
       with_write_commands_and_operations(@db.connection) do |wire_version|
         @collection.remove
@@ -342,6 +356,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                     }
                 ]
             }, result, "wire_version:#{wire_version}")
+        assert_equal(batch_commands?(wire_version), result.has_key?("nModified"), "wire_version:#{wire_version}")
         assert_false(@collection.find.to_a.empty?, "wire_version:#{wire_version}")
         assert_equal [{"a"=>1, "x"=>2}, {"a"=>2, "x"=>4}, {"x"=>3}, {"x"=>3}, {"x"=>4}], sort_docs(@collection.find.to_a.collect { |doc| doc.delete("_id"); doc })
       end
@@ -367,6 +382,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         write_concern = {:w => 1} #{:w => 1. :j => 1} #nojournal for tests
         result = @bulk.execute(write_concern) # unordered varies, don't use assert_match_document
         assert_true(result["n"] > 0, "wire_version:#{wire_version}")
+        assert_equal(batch_commands?(wire_version), result.has_key?("nModified"), "wire_version:#{wire_version}")
         assert_false(@collection.find.to_a.empty?, "wire_version:#{wire_version}")
       end
     end

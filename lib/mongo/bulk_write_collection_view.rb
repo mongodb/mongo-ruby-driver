@@ -231,6 +231,14 @@ module Mongo
       h[key] = h.fetch(key, 0) + n
     end
 
+    def nil_tally(h, key, n)
+      if !h.has_key?(key)
+        h[key] = n
+      elsif h[key]
+        h[key] = n ? h[key] + n : n
+      end
+    end
+
     def append(h, key, obj)
       h[key] = h.fetch(key, []) << obj
     end
@@ -276,7 +284,7 @@ module Mongo
           end
           tally(result, "nUpserted", n_upserted) if n_upserted > 0
           tally(result, "nMatched", n - n_upserted)
-          tally(result, "nModified", response["nModified"]) if response["nModified"]
+          nil_tally(result, "nModified", response["nModified"])
         elsif op_type == :delete
           tally(result, "nRemoved", n)
         end
@@ -302,6 +310,7 @@ module Mongo
         end
         append(result, "writeConcernError", merge_index(writeConcernError, exchange)) if writeConcernError
       end
+      result.delete("nModified") if result.has_key?("nModified") && !result["nModified"]
       result.merge!("ok" => [ok + result["n"], 1].min)
     end
 
