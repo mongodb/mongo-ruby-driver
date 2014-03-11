@@ -21,7 +21,7 @@ module Mongo
   end
 
   class BulkWriteCollectionView
-    public :update_doc?, :replace_doc?, :merge_result
+    public :update_doc?, :replace_doc?, :nil_tally, :merge_result
 
     # for reference and future server direction
     def generate_batch_commands(groups, write_concern)
@@ -184,6 +184,14 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     bulk.insert({:x => 4})
   end
 
+  def nil_tally_responses(responses, key)
+    result = {}
+    responses.each do |response|
+      @bulk.nil_tally(result, key, response[key])
+    end
+    result
+  end
+
   context "Bulk API CollectionView" do
     setup do
       default_setup
@@ -307,6 +315,12 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       #@bulk.execute(write_concern)
     end
 
+    should "tally given all numbers or return nil for #nil_tally" do
+      assert_equal({"nM" => 6}, nil_tally_responses([{"nM" => 1}, {"nM" => 2}, {"nM" => 3}], "nM"))
+      assert_equal({"nM" => nil}, nil_tally_responses([{"nM" => 1}, { }, {"nM" => 3}], "nM"))
+      assert_equal({"nM" => nil}, nil_tally_responses([{"nM" => 1}, {"nM" => nil}, {"nM" => 3}], "nM"))
+    end
+
     should "execute, return result and reset @ops for #execute" do
       with_write_commands_and_operations(@db.connection) do |wire_version|
         @collection.remove
@@ -333,7 +347,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "nInserted" => 6,
                 "nMatched" => 5,
                 "nUpserted" => 1,
-                "nModified" => 5,
+                "nModified" => batch_commands?(wire_version) ? 5 : nil,
                 "nRemoved" => 2,
                 "upserted" => [
                     {
@@ -342,6 +356,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                     }
                 ]
             }, result, "wire_version:#{wire_version}")
+        assert_equal(batch_commands?(wire_version), result.has_key?("nModified"), "wire_version:#{wire_version}")
         assert_false(@collection.find.to_a.empty?, "wire_version:#{wire_version}")
         assert_equal [{"a"=>1, "x"=>2}, {"a"=>2, "x"=>4}, {"x"=>3}, {"x"=>3}, {"x"=>4}], sort_docs(@collection.find.to_a.collect { |doc| doc.delete("_id"); doc })
       end
@@ -367,6 +382,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         write_concern = {:w => 1} #{:w => 1. :j => 1} #nojournal for tests
         result = @bulk.execute(write_concern) # unordered varies, don't use assert_match_document
         assert_true(result["n"] > 0, "wire_version:#{wire_version}")
+        assert_equal(batch_commands?(wire_version), result.has_key?("nModified"), "wire_version:#{wire_version}")
         assert_false(@collection.find.to_a.empty?, "wire_version:#{wire_version}")
       end
     end
@@ -433,7 +449,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 1,
                 "nMatched" => 0,
-                "nModified" => 0
+                "nModified" => batch_commands?(wire_version) ? 0 : nil
             }, result, "wire_version:#{wire_version}")
       end
     end
@@ -481,7 +497,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 1,
                 "nMatched" => 0,
-                "nModified" => 0
+                "nModified" => batch_commands?(wire_version) ? 0 : nil
             }, result, "wire_version:#{wire_version}")
       end
     end
@@ -534,7 +550,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "n" => 6,
                 "nInserted" => 4,
                 "nMatched" => 1,
-                "nModified" => 1,
+                "nModified" => batch_commands?(wire_version) ? 1 : nil,
                 "nRemoved" => 1,
             }, result, "wire_version:#{wire_version}")
         # for write commands there will be in sequence insert, update, remove, insert
@@ -587,7 +603,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 2,
                 "nMatched" => 0,
-                "nModified" => 0
+                "nModified" => batch_commands?(wire_version) ? 0 : nil
             }, result, "wire_version:#{wire_version}")
       end
     end
@@ -610,7 +626,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         assert_equal(1, result['ok'], "wire_version:#{wire_version}")
         assert_equal(2, result['n'], "wire_version:#{wire_version}")
         err_details = result['writeErrors']
-        assert_equal([2,nil,1][wire_version], err_details.first['index'], "wire_version:#{wire_version}")
+        assert_equal(batch_commands?(wire_version) ? 1 : 2, err_details.first['index'], "wire_version:#{wire_version}")
         assert_match(/duplicate key error/, err_details.first['errmsg'], "wire_version:#{wire_version}")
       end
     end
@@ -645,7 +661,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "errmsg" => "batch item errors occurred",
                 "nInserted" => 2,
                 "nMatched" => 0,
-                "nModified" => 0
+                "nModified" => batch_commands?(wire_version) ? 0 : nil
             }, result, "wire_version:#{wire_version}")
       end
     end
@@ -663,7 +679,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "n" => 1,
                 "nMatched" => 0,
                 "nUpserted" => 1,
-                "nModified" => 0,
+                "nModified" => batch_commands?(wire_version) ? 0 : nil,
                 "upserted" => [
                     {"_id" => BSON::ObjectId('52a16767bb67fbc77e26a310'), "index" => 0}
                 ]
@@ -685,7 +701,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "n" => 2,
                 "nMatched" => 0,
                 "nUpserted" => 2,
-                "nModified" => 0,
+                "nModified" => batch_commands?(wire_version) ? 0 : nil,
                 "upserted" => [
                     {"index" => 0, "_id" => BSON::ObjectId('52a1e37cbb67fbc77e26a338')},
                     {"index" => 1, "_id" => BSON::ObjectId('52a1e37cbb67fbc77e26a339')}

@@ -298,6 +298,9 @@ class Test::Unit::TestCase
     with_write_operations(client, &block)
   end
 
+  def batch_commands?(wire_version)
+    wire_version >= Mongo::MongoClient::BATCH_COMMANDS
+  end
 end
 
 # Before and after hooks for the entire test run
