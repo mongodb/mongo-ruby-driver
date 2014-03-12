@@ -177,39 +177,40 @@ module BasicAuthTests
 
   def test_delegated_authentication
     return unless @client.server_version >= '2.4' && @client.server_version < '2.5'
+    with_auth(@client) do
+      # create user in test databases
+      accounts = @client[TEST_DB + '_accounts']
+      silently do
+        accounts.add_user('debbie', 'delegate')
+        @db.add_user('debbie', nil, nil, :roles => ['read'], :userSource => accounts.name)
+      end
+      @admin.logout
 
-    # create user in test databases
-    accounts = @client[TEST_DB + '_accounts']
-    silently do
-      accounts.add_user('debbie', 'delegate')
-      @db.add_user('debbie', nil, nil, :roles => ['read'], :userSource => accounts.name)
+      # validate that direct authentication is not allowed
+      assert_raise Mongo::AuthenticationError do
+        @db.authenticate('debbie', 'delegate')
+      end
+
+      # validate delegated authentication
+      assert accounts.authenticate('debbie', 'delegate')
+      assert @db.collection_names
+      accounts.logout
+      assert_raise Mongo::OperationFailure do
+        @db.collection_names
+      end
+
+      # validate auth using source database
+      @db.authenticate('debbie', 'delegate', nil, accounts.name)
+      assert @db.collection_names
+      accounts.logout
+      assert_raise Mongo::OperationFailure do
+        @db.collection_names
+      end
+
+      # clean-up
+      @admin.authenticate('admin', 'password')
+      remove_all_users(accounts, 'debbie', 'delegate')
     end
-    @admin.logout
-
-    # validate that direct authentication is not allowed
-    assert_raise Mongo::AuthenticationError do
-      @db.authenticate('debbie', 'delegate')
-    end
-
-    # validate delegated authentication
-    assert accounts.authenticate('debbie', 'delegate')
-    assert @db.collection_names
-    accounts.logout
-    assert_raise Mongo::OperationFailure do
-      @db.collection_names
-    end
-
-    # validate auth using source database
-    @db.authenticate('debbie', 'delegate', nil, accounts.name)
-    assert @db.collection_names
-    accounts.logout
-    assert_raise Mongo::OperationFailure do
-      @db.collection_names
-    end
-
-    # clean-up
-    @admin.authenticate('admin', 'password')
-    remove_all_users(accounts, 'debbie', 'delegate')
   end
 
   def test_non_admin_default_roles
@@ -230,22 +231,24 @@ module BasicAuthTests
   end
 
   def test_update_user_to_read_only
-    silently { @db.add_user('emily', 'password') }
-    @admin.logout
-    @db.authenticate('emily', 'password')
-    @db['test'].insert({})
-    @db.logout
-
-    @admin.authenticate('admin', 'password')
-    silently { @db.add_user('emily', 'password', true) }
-    @admin.logout
-
-    silently { @db.authenticate('emily', 'password') }
-    assert_raise Mongo::OperationFailure do
+    with_auth(@client) do
+      silently { @db.add_user('emily', 'password') }
+      @admin.logout
+      @db.authenticate('emily', 'password')
       @db['test'].insert({})
+      @db.logout
+
+      @admin.authenticate('admin', 'password')
+      silently { @db.add_user('emily', 'password', true) }
+      @admin.logout
+
+      silently { @db.authenticate('emily', 'password') }
+      assert_raise Mongo::OperationFailure do
+        @db['test'].insert({})
+      end
+      @db.logout
+      @admin.authenticate('admin', 'password')
     end
-    @db.logout
-    @admin.authenticate('admin', 'password')
   end
 
 end
