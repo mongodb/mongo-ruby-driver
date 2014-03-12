@@ -25,6 +25,5 @@ class AuthenticationTest < Test::Unit::TestCase
     @client    = MongoClient.new(TEST_HOST, TEST_PORT)
     @db        = @client[TEST_DB]
     @host_info = host_port
-    init_auth
   end
 end

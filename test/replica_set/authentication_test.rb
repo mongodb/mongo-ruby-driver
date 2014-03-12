@@ -26,6 +26,5 @@ class ReplicaSetAuthenticationTest < Test::Unit::TestCase
     @client    = MongoReplicaSetClient.new(@rs.repl_set_seeds)
     @db        = @client[TEST_DB]
     @host_info = @rs.repl_set_seeds.join(',')
-    init_auth
   end
 end
