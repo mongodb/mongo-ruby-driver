@@ -783,7 +783,7 @@ class CollectionTest < Test::Unit::TestCase
     end
   end
 
-  def test_defualt_timeout
+  def test_default_timeout
     cursor = @@test.find
     assert_equal true, cursor.timeout
   end
