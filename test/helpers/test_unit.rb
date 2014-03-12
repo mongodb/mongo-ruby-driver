@@ -233,6 +233,11 @@ class Test::Unit::TestCase
     end
   end
 
+  def with_auth(client, &block)
+    cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
+    yield if cmd_line_args.include?('auth')
+  end
+
   def with_default_journaling(client, &block)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
     unless client.server_version < "2.0" || cmd_line_args.include?('nojournal')
