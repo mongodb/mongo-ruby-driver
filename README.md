@@ -1,5 +1,8 @@
-MongoDB Ruby Driver [![Build Status][travis-img]][travis-url] [![Code Climate][codeclimate-img]][codeclimate-url] [![Coverage Status][coveralls-img]][coveralls-url] [![Gem Version][rubygems-img]][rubygems-url]
+MongoDB Ruby Driver
 -----
+
+[![Build Status][travis-img]][travis-url] [![Code Climate][codeclimate-img]][codeclimate-url] [![Coverage Status][coveralls-img]][coveralls-url] [![Gem Version][rubygems-img]][rubygems-url] [![Inline docs][inchpages-img]][inchpages-url]
+
 The officially supported Ruby driver for [MongoDB](http://www.mongodb.org).
 
 > **Note: You are viewing the 2.x version of the MongoDB Ruby driver which is currently unreleased and under heavy development. To view the current stable version of driver, please use the [1.x-stable](https://github.com/mongodb/mongo-ruby-driver/tree/1.x-stable) branch.**
@@ -136,3 +139,5 @@ License
 [codeclimate-url]: https://codeclimate.com/github/mongodb/mongo-ruby-driver?branch=master
 [coveralls-img]: https://coveralls.io/repos/mongodb/mongo-ruby-driver/badge.png?branch=master
 [coveralls-url]: https://coveralls.io/r/mongodb/mongo-ruby-driver?branch=master
+[inchpages-img]: http://inch-pages.github.io/github/mongodb/mongo-ruby-driver.png
+[inchpages-url]: http://inch-pages.github.io/github/mongodb/mongo-ruby-driver
