@@ -626,6 +626,14 @@ class CollectionTest < Test::Unit::TestCase
         assert_true result.has_key?("jnote")
       end
     end
+
+    def test_wnote_raises_exception
+      ex = assert_raise Mongo::OperationFailure do
+        @@test.insert({:foo => 1}, :w => 2)
+      end
+      result = ex.result
+      assert_true result.has_key?("wnote")
+    end
   end
 
   def test_update
