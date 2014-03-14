@@ -424,6 +424,19 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       end
     end
 
+    should "handle insert of overly large document" do
+      large_doc = {"a" => "y"*(2*@client.max_message_size)}
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        ex = assert_raise Mongo::BulkWriteError do
+          @collection.remove
+          bulk = @collection.initialize_unordered_bulk_op
+          bulk.insert(large_doc)
+          puts "bulk.execute:#{bulk.execute.inspect}"
+        end
+        assert_equal 22, ex.result["writeErrors"].first["code"]
+      end
+    end
+
     should "handle error for duplicate key with offset" do
       with_write_commands_and_operations(@db.connection) do |wire_version|
         @collection.remove

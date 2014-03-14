@@ -210,7 +210,7 @@ module Mongo
         errors, exchanges = @collection.operation_writer.bulk_execute(@ops, @options, opts)
       end
       @ops = []
-      return true if exchanges.empty? || exchanges.first[:response] == true # w 0 without GLE
+      return true if errors.empty? && (exchanges.empty? || exchanges.first[:response] == true) # w 0 without GLE
       result = merge_result(errors, exchanges)
       raise BulkWriteError.new(MULTIPLE_ERRORS_MSG, Mongo::ErrorCode::MULTIPLE_ERRORS_OCCURRED, result) if !errors.empty? || result["writeConcernError"]
       result
@@ -269,6 +269,7 @@ module Mongo
       end
       exchanges.each do |exchange|
         response = exchange[:response]
+        next unless response
         ok += response["ok"].to_i
         n = response["n"] || 0
         op_type = exchange[:op_type]
