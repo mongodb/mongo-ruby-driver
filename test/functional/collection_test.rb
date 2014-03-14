@@ -874,6 +874,26 @@ class CollectionTest < Test::Unit::TestCase
     end
   end
 
+  if @@version < "2.5.3"
+    def test_jnote_raises_exception
+      with_no_journaling(@@client) do
+        ex = assert_raise Mongo::OperationFailure do
+          @@test.insert({:foo => 1}, :j => true)
+        end
+        result = ex.result
+        assert_true result.has_key?("jnote")
+      end
+    end
+
+    def test_wnote_raises_exception
+      ex = assert_raise Mongo::OperationFailure do
+        @@test.insert({:foo => 1}, :w => 2)
+      end
+      result = ex.result
+      assert_true result.has_key?("wnote")
+    end
+  end
+
   def test_update
     id1 = @@test.save("x" => 5)
     @@test.update({}, {"$inc" => {"x" => 1}})
@@ -1041,7 +1061,7 @@ class CollectionTest < Test::Unit::TestCase
     end
   end
 
-  def test_defualt_timeout
+  def test_default_timeout
     cursor = @@test.find
     assert_equal true, cursor.timeout
   end
