@@ -616,6 +616,18 @@ class CollectionTest < Test::Unit::TestCase
     end
   end
 
+  if @@version < "2.5.3"
+    def test_jnote_raises_exception
+      with_no_journaling(@@client) do
+        ex = assert_raise Mongo::OperationFailure do
+          @@test.insert({:foo => 1}, :j => true)
+        end
+        result = ex.result
+        assert_true result.has_key?("jnote")
+      end
+    end
+  end
+
   def test_update
     id1 = @@test.save("x" => 5)
     @@test.update({}, {"$inc" => {"x" => 1}})
