@@ -104,9 +104,9 @@ module Mongo
           error = "wtimeout" if error == "timeout"
           raise OperationFailure.new(code.to_s + ': ' + error, code, docs[0])
         end
-      elsif num_received == 1 && (jnote = docs[0]['jnote']) # assignment
-        code = Mongo::ErrorCode::BAD_VALUE # as of server version 2.5.5
-        raise OperationFailure.new(code.to_s + ': ' + jnote, code, docs[0])
+      elsif num_received == 1 && (note = docs[0]['jnote'] || docs[0]['wnote']) # assignment
+        code = docs[0]['code'] || Mongo::ErrorCode::BAD_VALUE # as of server version 2.5.5
+        raise OperationFailure.new(code.to_s + ': ' + note, code, docs[0])
       end
 
       docs[0]
