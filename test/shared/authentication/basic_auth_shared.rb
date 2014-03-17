@@ -14,7 +14,7 @@
 
 module BasicAuthTests
 
-  def init_auth
+  def init_auth_basic
     # enable authentication by creating and logging in as admin user
     @admin = @client['admin']
     @admin.add_user('admin', 'password', nil, :roles => ['readAnyDatabase',
@@ -28,7 +28,7 @@ module BasicAuthTests
     @db.add_user('admin', 'cleanup', nil, :roles => [])
   end
 
-  def teardown
+  def teardown_basic
     remove_all_users(@db, 'admin', 'cleanup')
     remove_all_users(@admin, 'admin', 'password') if has_auth?(@admin.name)
   end
@@ -48,15 +48,21 @@ module BasicAuthTests
   end
 
   def test_add_remove_user
+    init_auth_basic
+
     # add user
     silently { @db.add_user('bob','user') }
     assert @db.authenticate('bob', 'user')
 
     # remove user
     assert @db.remove_user('bob')
+
+    teardown_basic
   end
 
   def test_update_user
+    init_auth_basic
+
     # add user
     silently { @db.add_user('bob', 'user') }
     assert @db.authenticate('bob', 'user')
@@ -68,9 +74,13 @@ module BasicAuthTests
       @db.authenticate('bob', 'user')
     end
     assert @db.authenticate('bob', 'updated')
+
+    teardown_basic
   end
 
   def test_remove_non_existent_user
+    init_auth_basic
+
     if @client.server_version < '2.5'
       assert_equal false, @db.remove_user('joe')
     else
@@ -78,37 +88,49 @@ module BasicAuthTests
         assert @db.remove_user('joe')
       end
     end
+    teardown_basic
   end
 
   def test_authenticate
+    init_auth_basic
     silently { @db.add_user('peggy', 'user') }
     assert @db.authenticate('peggy', 'user')
     @db.remove_user('peggy')
+    teardown_basic
   end
 
   def test_authenticate_non_existent_user
+    init_auth_basic
     assert_raise Mongo::AuthenticationError do
       @db.authenticate('frank', 'thetank')
     end
+    teardown_basic
   end
 
   def test_logout
+    init_auth_basic
     silently { @db.add_user('peggy', 'user') }
     assert @db.authenticate('peggy', 'user')
     assert @db.logout
+    teardown_basic
   end
 
   def test_authenticate_with_special_characters
+    init_auth_basic
     silently { assert @db.add_user('foo:bar','@foo') }
     assert @db.authenticate('foo:bar','@foo')
+    teardown_basic
   end
 
   def test_authenticate_read_only
+    init_auth_basic
     silently { @db.add_user('randy', 'readonly', true) }
     assert @db.authenticate('randy', 'readonly')
+    teardown_basic
   end
 
   def test_authenticate_with_connection_uri
+    init_auth_basic
     silently { @db.add_user('eunice', 'uritest') }
 
     uri    = "mongodb://eunice:uritest@#{@host_info}/#{@db.name}"
@@ -122,9 +144,11 @@ module BasicAuthTests
     assert_equal @db.name, auth[:db_name]
     assert_equal 'eunice', auth[:username]
     assert_equal 'uritest', auth[:password]
+    teardown_basic
   end
 
   def test_socket_auths
+    init_auth_basic
     # setup
     db_a = @client[TEST_DB + '_a']
     silently { db_a.add_user('user_a', 'password') }
@@ -156,11 +180,12 @@ module BasicAuthTests
     remove_all_users(db_a, 'user_a', 'password')
     remove_all_users(db_b, 'user_b', 'password')
     remove_all_users(db_c, 'user_c', 'password')
+    teardown_basic
   end
 
   def test_default_roles_non_admin
     return unless @client.server_version >= '2.5.3'
-
+    init_auth_basic
     silently { @db.add_user('user', 'pass') }
     silently { @db.authenticate('user', 'pass') }
     info = @db.command(:usersInfo => 'user')['users'].first
@@ -173,11 +198,13 @@ module BasicAuthTests
     info = @db.command(:usersInfo => 'ro-user')['users'].first
     assert_equal 'read', info['roles'].first['role']
     @db.logout
+    teardown_basic
   end
 
   def test_delegated_authentication
     return unless @client.server_version >= '2.4' && @client.server_version < '2.5'
     with_auth(@client) do
+      init_auth_basic
       # create user in test databases
       accounts = @client[TEST_DB + '_accounts']
       silently do
@@ -210,11 +237,13 @@ module BasicAuthTests
       # clean-up
       @admin.authenticate('admin', 'password')
       remove_all_users(accounts, 'debbie', 'delegate')
+      teardown_basic
     end
   end
 
   def test_non_admin_default_roles
     return if @client.server_version < '2.5'
+    init_auth_basic
 
     # add read-only user and verify that role is 'read'
     @db.add_user('randy', 'password', nil, :roles => ['read'])
@@ -228,10 +257,12 @@ module BasicAuthTests
     @db.authenticate('emily', 'password')
     users = @db.command(:usersInfo => 'emily')['users']
     assert_equal 'dbOwner', users.first['roles'].first['role']
+    teardown_basic
   end
 
   def test_update_user_to_read_only
     with_auth(@client) do
+      init_auth_basic
       silently { @db.add_user('emily', 'password') }
       @admin.logout
       @db.authenticate('emily', 'password')
@@ -248,6 +279,7 @@ module BasicAuthTests
       end
       @db.logout
       @admin.authenticate('admin', 'password')
+      teardown_basic
     end
   end
 

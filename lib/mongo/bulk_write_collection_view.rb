@@ -92,6 +92,21 @@ module Mongo
 
     # Modify the query selector for subsequent bulk write operations.
     # The default query selector on creation of the bulk write view is {}.
+    # For operations that require a query selector, find() must be set
+    # per operation, or set once for all operations on the bulk object.
+    # For example, these operations:
+    #
+    #   bulk.find({"a" => 2}).update({"$inc" => {"x" => 2}})
+    #   bulk.find({"a" => 2}).update({"$set" => {"b" => 3}})
+    #
+    # may be rewritten as:
+    #
+    #   bulk = find({"a" => 2})
+    #   bulk.update({"$inc" => {"x" => 2}})
+    #   bulk.update({"$set" => {"b" => 3}})
+    #
+    # Note that modifying the query selector in this way will not affect
+    # operations that do not use a query selector, like insert().
     #
     # @param [Hash] q the query selector
     #

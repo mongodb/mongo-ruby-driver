@@ -15,17 +15,19 @@
 require 'test_helper'
 require 'shared/authentication/basic_auth_shared'
 require 'shared/authentication/sasl_plain_shared'
+require 'shared/authentication/bulk_api_auth_shared'
 
 class ReplicaSetAuthenticationTest < Test::Unit::TestCase
   include Mongo
   include BasicAuthTests
   include SASLPlainTests
+  include BulkAPIAuthTests
 
   def setup
     ensure_cluster(:rs)
     @client    = MongoReplicaSetClient.new(@rs.repl_set_seeds)
+    @version   = @client.server_version
     @db        = @client[TEST_DB]
     @host_info = @rs.repl_set_seeds.join(',')
-    init_auth
   end
 end

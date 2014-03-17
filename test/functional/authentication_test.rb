@@ -15,16 +15,18 @@
 require 'test_helper'
 require 'shared/authentication/basic_auth_shared'
 require 'shared/authentication/sasl_plain_shared'
+require 'shared/authentication/bulk_api_auth_shared'
 
 class AuthenticationTest < Test::Unit::TestCase
   include Mongo
   include BasicAuthTests
   include SASLPlainTests
+  include BulkAPIAuthTests
 
   def setup
     @client    = MongoClient.new(TEST_HOST, TEST_PORT)
+    @version   = @client.server_version
     @db        = @client[TEST_DB]
     @host_info = host_port
-    init_auth
   end
 end
