@@ -125,6 +125,12 @@ class DBUnitTest < Test::Unit::TestCase
         assert @db.expects(:warn).with(regexp_matches(/\[DEPRECATED\] Disabling the 'save_auth' option/))
         @db.authenticate('foo', 'bar', false)
       end
+
+      should "allow extra authentication options" do
+        extra_opts = { :gssapiservicename => 'example', :canonicalizehostname => true }
+        assert @client.expects(:add_auth).with(@db.name, 'emily', nil, nil, 'GSSAPI', extra_opts)
+        @db.authenticate('emily', nil, nil, nil, 'GSSAPI', extra_opts)
+      end
     end
   end
 end

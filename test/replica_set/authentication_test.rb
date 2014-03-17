@@ -16,12 +16,14 @@ require 'test_helper'
 require 'shared/authentication/basic_auth_shared'
 require 'shared/authentication/sasl_plain_shared'
 require 'shared/authentication/bulk_api_auth_shared'
+require 'shared/authentication/gssapi_shared'
 
 class ReplicaSetAuthenticationTest < Test::Unit::TestCase
   include Mongo
   include BasicAuthTests
   include SASLPlainTests
   include BulkAPIAuthTests
+  include GSSAPITests
 
   def setup
     ensure_cluster(:rs)

@@ -141,6 +141,8 @@ module Mongo
     #   used to authenticate against a database when the credentials exist
     #   elsewhere.
     # @param mechanism [String] The authentication mechanism to be used.
+    # @param extra [Hash] A optional hash of extra options to be stored with
+    #   the credential set.
     #
     # @note The ability to disable the save_auth option has been deprecated.
     #   With save_auth=false specified, driver authentication behavior during
@@ -150,12 +152,12 @@ module Mongo
     #
     # @raise [AuthenticationError] Raised if authentication fails.
     # @return [Boolean] The result of the authentication operation.
-    def authenticate(username, password=nil, save_auth=nil, source=nil, mechanism=nil)
+    def authenticate(username, password=nil, save_auth=nil, source=nil, mechanism=nil, extra=nil)
       warn "[DEPRECATED] Disabling the 'save_auth' option no longer has " +
            "any effect. Please see the API documentation for more details " +
            "on this change." unless save_auth.nil?
 
-      @client.add_auth(self.name, username, password, source, mechanism)
+      @client.add_auth(self.name, username, password, source, mechanism, extra)
       true
     end
 

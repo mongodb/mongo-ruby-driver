@@ -21,6 +21,11 @@ if RUBY_PLATFORM =~ /java/
     ext.classpath = jars.map { |x| File.expand_path x }.join(':')
     Rake::Task['clean'].invoke
   end
+  Rake::JavaExtensionTask.new('jsasl') do |ext|
+    ext.lib_dir ='ext/jsasl/target'
+    ext.classpath = File.expand_path(JRubyJars.core_jar_path)
+    Rake::Task['clean'].invoke
+  end
 else
   Rake::ExtensionTask.new('cbson') do |ext|
     ext.lib_dir = "lib/bson_ext"
@@ -29,4 +34,4 @@ else
 end
 
 desc "Run the default compile task"
-task :compile => RUBY_PLATFORM =~ /java/ ? 'compile:jbson' : 'compile:cbson'
+task :compile => RUBY_PLATFORM =~ /java/ ? ['compile:jbson', 'compile:jsasl'] : 'compile:cbson'
