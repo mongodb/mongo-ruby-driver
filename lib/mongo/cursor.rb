@@ -155,8 +155,8 @@ module Mongo
         end
 
         raise OperationFailure.new(err, code, doc)
-      elsif doc && (writeConcernError = doc['writeConcernError']) # assignment
-        raise WriteConcernError.new(writeConcernError['errmsg'], writeConcernError['code'], doc)
+      elsif doc && (write_concern_error = doc['writeConcernError']) # assignment
+        raise WriteConcernError.new(write_concern_error['errmsg'], write_concern_error['code'], doc)
       end
 
       if @transformer.nil?
