@@ -36,17 +36,23 @@ class ReplicaSetAckTest < Test::Unit::TestCase
   end
 
   def test_safe_mode_with_w_failure
-    assert_raise_error OperationFailure, "timeout" do
+    assert_raise_error WriteConcernError, "time" do
       @col.insert({:foo => 1}, :w => 4, :wtimeout => 1, :fsync => true)
     end
-    assert_raise_error OperationFailure, "timeout" do
+    assert_raise_error WriteConcernError, "time" do
       @col.update({:foo => 1}, {:foo => 2}, :w => 4, :wtimeout => 1, :fsync => true)
     end
-    assert_raise_error OperationFailure, "timeout" do
+    assert_raise_error WriteConcernError, "time" do
       @col.remove({:foo => 2}, :w => 4, :wtimeout => 1, :fsync => true)
     end
-    assert_raise_error OperationFailure do
-      @col.insert({:foo => 3}, :w => "test-tag")
+    if @client.server_version >= '2.5.4'
+      assert_raise_error WriteConcernError do
+        @col.insert({:foo => 3}, :w => "test-tag")
+      end
+    else # indistinguishable "errmsg"=>"exception: unrecognized getLastError mode: test-tag"
+      assert_raise_error OperationFailure do
+        @col.insert({:foo => 3}, :w => "test-tag")
+      end
     end
   end
 

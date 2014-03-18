@@ -877,7 +877,7 @@ class CollectionTest < Test::Unit::TestCase
   if @@version < "2.5.3"
     def test_jnote_raises_exception
       with_no_journaling(@@client) do
-        ex = assert_raise Mongo::OperationFailure do
+        ex = assert_raise Mongo::WriteConcernError do
           @@test.insert({:foo => 1}, :j => true)
         end
         result = ex.result
@@ -886,7 +886,7 @@ class CollectionTest < Test::Unit::TestCase
     end
 
     def test_wnote_raises_exception
-      ex = assert_raise Mongo::OperationFailure do
+      ex = assert_raise Mongo::WriteConcernError do
         @@test.insert({:foo => 1}, :w => 2)
       end
       result = ex.result
