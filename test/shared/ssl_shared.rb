@@ -18,7 +18,9 @@ module SSLTests
   MONGODB_X509_USERNAME = 'CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US'
   CERT_PATH             = "#{Dir.pwd}/test/fixtures/certificates/"
   CLIENT_CERT           = "#{CERT_PATH}client.pem"
+  CLIENT_CERT_PASS      = "#{CERT_PATH}password_protected.pem"
   CA_CERT               = "#{CERT_PATH}ca.pem"
+  PASS_PHRASE           = ENV['SSL_KEY_PASS_PHRASE']
 
   def create_client(*args)
     if @client_class == MongoClient
@@ -59,9 +61,16 @@ module SSLTests
                                    :ssl_cert   => CLIENT_CERT,
                                    :ssl_verify => true)
     end
+
+    # raises when key passphrase is given without key file
+    assert_raise MongoArgumentError do
+      create_client(@connect_info, :connect             => false,
+                                   :ssl                 => true,
+                                   :ssl_key_pass_phrase => PASS_PHRASE)
+    end
   end
 
-  # Requires MongoDB built with SSL and the follow options:
+  # Requires MongoDB built with SSL and the following options:
   #
   # mongod --dbpath /path/to/data/directory --sslOnNormalPorts \
   # --sslPEMKeyFile /path/to/server.pem \
@@ -76,7 +85,7 @@ module SSLTests
     assert client.connect
   end
 
-  # Requires MongoDB built with SSL and the follow options:
+  # Requires MongoDB built with SSL and the following options:
   #
   # mongod --dbpath /path/to/data/directory --sslOnNormalPorts \
   # --sslPEMKeyFile /path/to/server.pem \
@@ -115,7 +124,38 @@ module SSLTests
     end
   end
 
-  # Requires mongod built with SSL and the follow options:
+  # Requires MongoDB built with SSL and the following options:
+  #
+  # mongod --dbpath /path/to/data/directory --sslOnNormalPorts \
+  # --sslPEMKeyFile /path/to/password_protected.pem \
+  # --sslCAFile /path/to/ca.pem \
+  # --sslCRLFile /path/to/crl.pem
+  #
+  # Make sure you have 'server' as an alias for localhost in /etc/hosts.
+  # If SSL_KEY_PASS_PHRASE is not set as an environment variable,
+  # you will be prompted to enter a passphrase at runtime.
+  #
+  def test_ssl_with_key_pass_phrase
+    client = create_client(@connect_info, :connect             => false,
+                                          :ssl                 => true,
+                                          :ssl_cert            => CLIENT_CERT_PASS,
+                                          :ssl_key             => CLIENT_CERT_PASS,
+                                          :ssl_key_pass_phrase => PASS_PHRASE)
+    assert client.connect
+  end
+
+  def test_ssl_with_key_pass_phrase_fail
+    client = create_client(@connect_info, :connect             => false,
+                                          :ssl                 => true,
+                                          :ssl_cert            => CLIENT_CERT_PASS,
+                                          :ssl_key             => CLIENT_CERT_PASS,
+                                          :ssl_key_pass_phrase => "secret")
+    assert_raise OpenSSL::PKey::RSAError do
+      client.connect
+    end
+  end
+
+  # Requires mongod built with SSL and the following options:
   #
   # mongod --dbpath /path/to/data/directory --sslOnNormalPorts \
   # --sslPEMKeyFile /path/to/server.pem \
@@ -136,7 +176,7 @@ module SSLTests
 
   # X509 Authentication Tests
   #
-  # Requires MongoDB built with SSL and the follow options:
+  # Requires MongoDB built with SSL and the following options:
   #
   # mongod --auth --dbpath /path/to/data/directory --sslOnNormalPorts \
   # --sslPEMKeyFile /path/to/server.pem \

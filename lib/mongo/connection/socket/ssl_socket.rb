@@ -38,7 +38,11 @@ module Mongo
       end
 
       if opts[:key]
-        @context.key = OpenSSL::PKey::RSA.new(File.open(opts[:key]))
+        if opts[:key_pass_phrase]
+          @context.key = OpenSSL::PKey::RSA.new(File.open(opts[:key]), opts[:key_pass_phrase])
+        else
+          @context.key = OpenSSL::PKey::RSA.new(File.open(opts[:key]))
+        end
       end
 
       if opts[:verify]

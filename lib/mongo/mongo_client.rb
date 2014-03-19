@@ -43,7 +43,7 @@ module Mongo
     DEFAULT_DB_NAME      = 'test'
     GENERIC_OPTS         = [:auths, :logger, :connect, :db_name]
     TIMEOUT_OPTS         = [:timeout, :op_timeout, :connect_timeout]
-    SSL_OPTS             = [:ssl, :ssl_key, :ssl_cert, :ssl_verify, :ssl_ca_cert]
+    SSL_OPTS             = [:ssl, :ssl_key, :ssl_cert, :ssl_verify, :ssl_ca_cert, :ssl_key_pass_phrase]
     POOL_OPTS            = [:pool_size, :pool_timeout]
     READ_PREFERENCE_OPTS = [:read, :tag_sets, :secondary_acceptable_latency_ms]
     WRITE_CONCERN_OPTS   = [:w, :j, :fsync, :wtimeout]
@@ -90,14 +90,14 @@ module Mongo
     #  @param [Integer] port specify a port number here if only one host is being specified.
     #  @param [Hash] opts hash of optional settings and configuration values.
     #
-    # @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
+    #  @option opts [String, Integer, Symbol] :w (1) Set default number of nodes to which a write
     #   should be acknowledged.
-    # @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout.
-    # @option opts [Boolean] :j (false) If true, block until write operations have been committed
+    #  @option opts [Integer] :wtimeout (nil) Set replica set acknowledgement timeout.
+    #  @option opts [Boolean] :j (false) If true, block until write operations have been committed
     #   to the journal. Cannot be used in combination with 'fsync'. Prior to MongoDB 2.6 this option was
     #   ignored if the server was running without journaling. Starting with MongoDB 2.6, write operations will
     #   fail with an exception if this option is used when the server is running without journaling.
-    # @option opts [Boolean] :fsync (false) If true, and the server is running without journaling, blocks until
+    #  @option opts [Boolean] :fsync (false) If true, and the server is running without journaling, blocks until
     #   the server has synced all data files to disk. If the server is running with journaling, this acts the same as
     #   the 'j' option, blocking until write operations have been committed to the journal.
     #   Cannot be used in combination with 'j'.
@@ -111,7 +111,7 @@ module Mongo
     #  @option opts [String] :ssl_cert (nil) The certificate file used to identify the local connection against MongoDB.
     #  @option opts [String] :ssl_key (nil) The private keyfile used to identify the local connection against MongoDB.
     #    Note that even if the key is stored in the same file as the certificate, both need to be explicitly specified.
-    #    Additionally, note that the driver does not currently support providing a passphrase for the private key.
+    #  @option opts [String] :ssl_key_pass_phrase (nil) A passphrase for the private key.
     #  @option opts [Boolean] :ssl_verify (nil) Specifies whether or not peer certification validation should occur.
     #  @option opts [String] :ssl_ca_cert (nil) The ca_certs file contains a set of concatenated "certification authority"
     #    certificates, which are used to validate certificates passed from the other end of the connection.
@@ -594,16 +594,24 @@ module Mongo
       @socket_opts = {}
       if @ssl
         # construct ssl socket opts
-        @socket_opts[:key]     = opts.delete(:ssl_key)
-        @socket_opts[:cert]    = opts.delete(:ssl_cert)
-        @socket_opts[:verify]  = opts.delete(:ssl_verify)
-        @socket_opts[:ca_cert] = opts.delete(:ssl_ca_cert)
+        @socket_opts[:key]             = opts.delete(:ssl_key)
+        @socket_opts[:cert]            = opts.delete(:ssl_cert)
+        @socket_opts[:verify]          = opts.delete(:ssl_verify)
+        @socket_opts[:ca_cert]         = opts.delete(:ssl_ca_cert)
+        @socket_opts[:key_pass_phrase] = opts.delete(:ssl_key_pass_phrase)
 
         # verify peer requires ca_cert, raise if only one is present
         if @socket_opts[:verify] && !@socket_opts[:ca_cert]
           raise MongoArgumentError,
             'If :ssl_verify_mode has been specified, then you must include ' +
             ':ssl_ca_cert in order to perform server validation.'
+        end
+
+        # if we have a keyfile passphrase but no key file, raise
+        if @socket_opts[:key_pass_phrase] && !@socket_opts[:key]
+          raise MongoArgumentError,
+            'If :ssl_key_pass_phrase has been specified, then you must include ' +
+            ':ssl_key, the passphrase-protected keyfile.'
         end
 
         @socket_class = Mongo::SSLSocket
