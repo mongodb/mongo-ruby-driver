@@ -95,18 +95,20 @@ module Mongo
         raise ex
       end
 
-      if num_received == 1 && (error = docs[0]['err'] || docs[0]['errmsg'])
-        if error.include?("not master")
+      if num_received == 1
+        error = docs[0]['err'] || docs[0]['errmsg']
+        if error && error.include?("not master")
           close
           raise ConnectionFailure.new(docs[0]['code'].to_s + ': ' + error, docs[0]['code'], docs[0])
-        else
+        elsif (note = docs[0]['jnote'] || docs[0]['wnote']) # assignment
+          code = docs[0]['code'] || Mongo::ErrorCode::BAD_VALUE # as of server version 2.5.5
+          raise WriteConcernError.new(code.to_s + ': ' + note, code, docs[0])
+        elsif error
           code = docs[0]['code'] || Mongo::ErrorCode::UNKNOWN_ERROR
           error = "wtimeout" if error == "timeout"
+          raise WriteConcernError.new(code.to_s + ': ' + error, code, docs[0]) if error == "wtimeout"
           raise OperationFailure.new(code.to_s + ': ' + error, code, docs[0])
         end
-      elsif num_received == 1 && (note = docs[0]['jnote'] || docs[0]['wnote']) # assignment
-        code = docs[0]['code'] || Mongo::ErrorCode::BAD_VALUE # as of server version 2.5.5
-        raise OperationFailure.new(code.to_s + ': ' + note, code, docs[0])
       end
 
       docs[0]

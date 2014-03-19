@@ -82,13 +82,26 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
         assert_match_document(
             {
                 "ok" => 1,
-                "n" => 1,
+                "n" => 2,
+                "writeErrors" => [
+                    {
+                        "index" => 2,
+                        "code" => 11000,
+                        "errmsg" => /duplicate key error/,
+                    }
+                ],
                 "writeConcernError" => [
                     {
                         "errmsg" => /waiting for replication timed out|timed out waiting for slaves|timeout/,
                         "code" => 64,
                         "errInfo" => {"wtimeout" => true},
                         "index" => 0
+                    },
+                    {
+                        "errmsg" => /waiting for replication timed out|timed out waiting for slaves|timeout/,
+                        "code" => 64,
+                        "errInfo" => {"wtimeout" => true},
+                        "index" => 1
                     }
                 ],
                 "code" => 65,
@@ -96,6 +109,7 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
                 "nInserted" => 1
             }, result, "wire_version:#{wire_version}")
       end
+      assert_equal 2, @coll.find.to_a.size
     end
 
     should "handle unordered errors with deferred write concern error - spec Merging Results" do # TODO - spec review

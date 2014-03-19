@@ -48,6 +48,7 @@ module Mongo
       collect_on_error = !!opts[:collect_on_error] || ordered == false
       error_docs = [] # docs with serialization errors
       errors = []
+      write_concern_errors = []
       exchanges = []
       serialized_doc = nil
       message = BSON::ByteBuffer.new("", max_message_size)
@@ -80,6 +81,9 @@ module Mongo
           begin
             response = batch_message_send(message, op_type, batch_docs, write_concern, continue_on_error) if batch_docs.size > 0
             exchanges << {:op_type => op_type, :batch => batch_docs, :opts => opts, :response => response}
+          rescue Mongo::WriteConcernError => ex
+            write_concern_errors << ex
+            exchanges << {:op_type => op_type, :batch => batch_docs, :opts => opts, :response => ex.result}
           rescue Mongo::OperationFailure => ex
             errors << ex
             exchanges << {:op_type => op_type, :batch => batch_docs, :opts => opts, :response => ex.result}
@@ -87,7 +91,7 @@ module Mongo
           end
         end
       end
-      [error_docs, errors, exchanges]
+      [error_docs, errors, write_concern_errors, exchanges]
     end
 
     def batch_write_partition(op_type, documents, check_keys, opts)
@@ -98,6 +102,7 @@ module Mongo
       collect_on_error = !!opts[:collect_on_error] # collect_on_error default false
       error_docs = [] # docs with serialization errors
       errors = []
+      write_concern_errors = []
       exchanges = []
       @max_write_batch_size = @collection.db.connection.max_write_batch_size
       @write_batch_size = [documents.size, @max_write_batch_size].min
@@ -128,6 +133,10 @@ module Mongo
           next if collect_on_error
           errors << ex
           break unless continue_on_error
+        rescue Mongo::WriteConcernError => ex
+          write_concern_errors << ex
+          exchanges << {:op_type => op_type, :batch => batch_docs, :opts => opts, :response => ex.result}
+          docs = docs.drop(batch.size)
         rescue Mongo::OperationFailure => ex
           errors << ex
           exchanges << {:op_type => op_type, :batch => batch, :opts => opts, :response => ex.result}
@@ -135,7 +144,7 @@ module Mongo
           break if !continue_on_error && !collect_on_error
         end
       end
-      [error_docs, errors, exchanges]
+      [error_docs, errors, write_concern_errors, exchanges]
     end
 
     alias :batch_write :batch_write_incremental
@@ -225,6 +234,7 @@ module Mongo
     def bulk_execute(ops, options, opts = {})
       write_concern = get_write_concern(opts, @collection)
       errors = []
+      write_concern_errors = []
       exchanges = []
       ops.each do |op_type, doc|
         doc = {:d => @collection.pk_factory.create_pk(doc[:d]), :ord => doc[:ord]} if op_type == :insert
@@ -241,13 +251,16 @@ module Mongo
                                   {:op_type => op_type, :serialize => doc, :ord => doc[:ord], :error => ex})
           errors << ex
           break if options[:ordered]
+        rescue Mongo::WriteConcernError => ex
+          write_concern_errors << ex
+          exchanges << {:op_type => op_type, :batch => [doc], :opts => opts, :response => ex.result}
         rescue Mongo::OperationFailure => ex
           errors << ex
           exchanges << {:op_type => op_type, :batch => [doc], :opts => opts, :response => ex.result}
           break if options[:ordered] && ex.result["err"] != "norepl"
         end
       end
-      [errors, exchanges]
+      [errors, write_concern_errors, exchanges]
     end
 
     private
@@ -304,17 +317,19 @@ module Mongo
 
     def bulk_execute(ops, options, opts = {})
       errors = []
+      write_concern_errors = []
       exchanges = []
       ops = (options[:ordered] == false) ? sort_by_first_sym(ops) : ops # sort by write-type
       ordered_group_by_first(ops).each do |op_type, documents|
         documents.collect! {|doc| {:d => @collection.pk_factory.create_pk(doc[:d]), :ord => doc[:ord]} } if op_type == :insert
-        error_docs, batch_errors, batch_exchanges =
+        error_docs, batch_errors, batch_write_concern_errors, batch_exchanges =
             batch_write(op_type, documents, check_keys = false, opts.merge(:ordered => options[:ordered]))
         errors += batch_errors
+        write_concern_errors += batch_write_concern_errors
         exchanges += batch_exchanges
         break if options[:ordered] && !batch_errors.empty?
       end
-      [errors, exchanges]
+      [errors, write_concern_errors, exchanges]
     end
 
     private

@@ -220,14 +220,14 @@ module Mongo
       write_concern = get_write_concern(opts, @collection)
       @ops.each_with_index{|op, index| op.last.merge!(:ord => index)} # infuse ordinal here to avoid issues with upsert
       if @collection.db.connection.use_write_command?(write_concern)
-        errors, exchanges = @collection.command_writer.bulk_execute(@ops, @options, opts)
+        errors, write_concern_errors, exchanges = @collection.command_writer.bulk_execute(@ops, @options, opts)
       else
-        errors, exchanges = @collection.operation_writer.bulk_execute(@ops, @options, opts)
+        errors, write_concern_errors, exchanges = @collection.operation_writer.bulk_execute(@ops, @options, opts)
       end
       @ops = []
       return true if errors.empty? && (exchanges.empty? || exchanges.first[:response] == true) # w 0 without GLE
-      result = merge_result(errors, exchanges)
-      raise BulkWriteError.new(MULTIPLE_ERRORS_MSG, Mongo::ErrorCode::MULTIPLE_ERRORS_OCCURRED, result) if !errors.empty? || result["writeConcernError"]
+      result = merge_result(errors + write_concern_errors, exchanges)
+      raise BulkWriteError.new(MULTIPLE_ERRORS_MSG, Mongo::ErrorCode::MULTIPLE_ERRORS_OCCURRED, result) if !errors.empty? || !write_concern_errors.empty?
       result
     end
 
@@ -274,7 +274,7 @@ module Mongo
       ok = 0
       result = {"ok" => 0, "n" => 0}
       unless errors.empty?
-        unless (writeErrors = errors.select { |error| error.class != Mongo::OperationFailure }).empty? # assignment
+        unless (writeErrors = errors.select { |error| error.class != Mongo::OperationFailure && error.class != WriteConcernError }).empty? # assignment
           concat(result, "writeErrors",
                  writeErrors.collect { |error|
                    {"index" => error.result[:ord], "code" => error.error_code, "errmsg" => error.result[:error].message}
@@ -305,26 +305,26 @@ module Mongo
           tally(result, "nRemoved", n)
         end
         result["n"] += n
-        writeConcernError = nil
+        write_concern_error = nil
         errmsg = response["errmsg"] || response["err"] # top level
         if (writeErrors = response["writeErrors"] || response["errDetails"]) # assignment
           concat(result, "writeErrors", merge_indexes(writeErrors, exchange))
         elsif response["err"] == "timeout" # errmsg == "timed out waiting for slaves" # OP_*
-          writeConcernError = {"errmsg" => errmsg, "code" => Mongo::ErrorCode::WRITE_CONCERN_FAILED,
+          write_concern_error = {"errmsg" => errmsg, "code" => Mongo::ErrorCode::WRITE_CONCERN_FAILED,
                                "errInfo" => {"wtimeout" => response["wtimeout"]}} # OP_* does not have "code"
         elsif errmsg == "norepl" # OP_*
-          writeConcernError = {"errmsg" => errmsg, "code" => Mongo::ErrorCode::WRITE_CONCERN_FAILED} # OP_* does not have "code"
+          write_concern_error = {"errmsg" => errmsg, "code" => Mongo::ErrorCode::WRITE_CONCERN_FAILED} # OP_* does not have "code"
         elsif errmsg # OP_INSERT, OP_UPDATE have "err"
           append(result, "writeErrors", merge_index({"errmsg" => errmsg, "code" => response["code"]}, exchange))
         end
         if response["writeConcernError"]
-          writeConcernError = response["writeConcernError"]
+          write_concern_error = response["writeConcernError"]
         elsif (wnote = response["wnote"]) # assignment - OP_*
-          writeConcernError = {"errmsg" => wnote, "code" => Mongo::ErrorCode::WRITE_CONCERN_FAILED} # OP_* does not have "code"
+          write_concern_error = {"errmsg" => wnote, "code" => Mongo::ErrorCode::WRITE_CONCERN_FAILED} # OP_* does not have "code"
         elsif (jnote = response["jnote"]) # assignment - OP_*
-          writeConcernError = {"errmsg" => jnote, "code" => Mongo::ErrorCode::BAD_VALUE} # OP_* does not have "code"
+          write_concern_error = {"errmsg" => jnote, "code" => Mongo::ErrorCode::BAD_VALUE} # OP_* does not have "code"
         end
-        append(result, "writeConcernError", merge_index(writeConcernError, exchange)) if writeConcernError
+        append(result, "writeConcernError", merge_index(write_concern_error, exchange)) if write_concern_error
       end
       result.delete("nModified") if result.has_key?("nModified") && !result["nModified"]
       result.merge!("ok" => [ok + result["n"], 1].min)
