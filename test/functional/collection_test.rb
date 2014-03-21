@@ -102,12 +102,10 @@ class CollectionTest < Test::Unit::TestCase
       @@test.drop
       @@test.insert([{ :a => 1 }, { :a => 1 }])
 
-      command = {
-        'delete' => @@test.name,
-        :deletes => [{ :q => { :a => 1 }, :limit => 1 }],
-        :writeConcern => { :w => 1 },
-        :ordered => false
-      }
+      command = BSON::OrderedHash['delete', @@test.name,
+                                  :deletes, [{ :q => { :a => 1 }, :limit => 1 }],
+                                  :writeConcern, { :w => 1 },
+                                  :ordered, false]
 
       result = @@db.command(command)
       assert_equal 1, result['n']
@@ -119,12 +117,10 @@ class CollectionTest < Test::Unit::TestCase
       @@test.drop
       @@test.insert([{ :a => 1 }, { :a => 1 }])
 
-      command = {
-        'delete' => @@test.name,
-        :deletes => [{ :q => { :a => 1 }, :limit => 0 }],
-        :writeConcern => { :w => 1 },
-        :ordered => true
-      }
+      command = BSON::OrderedHash['delete', @@test.name,
+                                  :deletes, [{ :q => { :a => 1 }, :limit => 0 }],
+                                  :writeConcern, { :w => 1 },
+                                  :ordered, true]
 
       result = @@db.command(command)
       assert_equal 2, result['n']
@@ -136,12 +132,10 @@ class CollectionTest < Test::Unit::TestCase
       @@test.drop
       @@test.insert([{ :a => 1 }, { :a => 1 }])
 
-      command = {
-        'delete' => @@test.name,
-        :deletes => [{ :q => { :a => 1 }, :limit => 0 }],
-        :writeConcern => { :w => 1 },
-        :ordered => false
-      }
+      command = BSON::OrderedHash['delete', @@test.name,
+                                  :deletes, [{ :q => { :a => 1 }, :limit => 0 }],
+                                  :writeConcern, { :w => 1 },
+                                  :ordered, false]
 
       result = @@db.command(command)
       assert_equal 2, result['n']
@@ -153,11 +147,9 @@ class CollectionTest < Test::Unit::TestCase
       @@test.drop
       @@test.insert([{ :a => 1 }, { :a => 1 }])
 
-      command = {
-        'delete' => @@test.name,
-        :deletes => [{ :q => { :a => 1 }, :limit => 0 }],
-        :ordered => false
-      }
+      command = BSON::OrderedHash['delete', @@test.name,
+                                  :deletes, [{ :q => { :a => 1 }, :limit => 0 }],
+                                  :ordered, false]
 
       result = @@db.command(command)
       assert_equal 2, result['n']
@@ -169,12 +161,10 @@ class CollectionTest < Test::Unit::TestCase
       @@test.drop
       @@test.insert([{ :a => 1 }, { :a => 1 }])
 
-      command = {
-        'delete' => @@test.name,
-        :deletes => [{ :q => { '$set' => { :a => 1 }}, :limit => 0 }],
-        :writeConcern => { :w => 1 },
-        :ordered => false
-      }
+      command = BSON::OrderedHash['delete', @@test.name,
+                                  :deletes, [{ :q => { '$set' => { :a => 1 }}, :limit => 0 }],
+                                  :writeConcern, { :w => 1 },
+                                  :ordered, false]
 
       assert_raise Mongo::OperationFailure do
         @@db.command(command)
@@ -184,12 +174,10 @@ class CollectionTest < Test::Unit::TestCase
     def test_single_insert_write_command
       @@test.drop
 
-      command = {
-        'insert' => @@test.name,
-        :documents => [{ :a => 1 }],
-        :writeConcern => { :w => 1 },
-        :ordered => false
-      }
+      command = BSON::OrderedHash['insert', @@test.name,
+                                  :documents, [{ :a => 1 }],
+                                  :writeConcern, { :w => 1 },
+                                  :ordered, false]
 
       result = @@db.command(command)
       assert_equal 1, result['ok']
@@ -199,12 +187,10 @@ class CollectionTest < Test::Unit::TestCase
     def test_multi_ordered_insert_write_command
       @@test.drop
 
-      command = {
-        'insert' => @@test.name,
-        :documents => [{ :a => 1 }, { :a => 2 }],
-        :writeConcern => { :w => 1 },
-        :ordered => true
-      }
+      command = BSON::OrderedHash['insert', @@test.name,
+                                  :documents, [{ :a => 1 }, { :a => 2 }],
+                                  :writeConcern, { :w => 1 },
+                                  :ordered, true]
 
       result = @@db.command(command)
       assert_equal 1, result['ok']
@@ -214,12 +200,10 @@ class CollectionTest < Test::Unit::TestCase
     def test_multi_unordered_insert_write_command
       @@test.drop
 
-      command = {
-        'insert' => @@test.name,
-        :documents => [{ :a => 1 }, { :a => 2 }],
-        :writeConcern => { :w => 1 },
-        :ordered => false
-      }
+      command = BSON::OrderedHash['insert', @@test.name,
+                                  :documents, [{ :a => 1 }, { :a => 2 }],
+                                  :writeConcern, { :w => 1 },
+                                  :ordered, false]
 
       result = @@db.command(command)
       assert_equal 1, result['ok']
@@ -229,11 +213,9 @@ class CollectionTest < Test::Unit::TestCase
     def test_insert_write_command_with_no_concern
       @@test.drop
 
-      command = {
-        'insert' => @@test.name,
-        :documents => [{ :a => 1 }, { :a => 2 }],
-        :ordered => false
-      }
+      command = BSON::OrderedHash['insert', @@test.name,
+                                  :documents, [{ :a => 1 }, { :a => 2 }],
+                                  :ordered, false]
 
       result = @@db.command(command)
       assert_equal 1, result['ok']
@@ -242,14 +224,12 @@ class CollectionTest < Test::Unit::TestCase
 
     def test_insert_write_command_with_error
       @@test.drop
-      @@test.ensure_index({ :a => 1 }, { :unique => true })
+      @@test.ensure_index([[:a, 1]], { :unique => true })
 
-      command = {
-        'insert' => @@test.name,
-        :documents => [{ :a => 1 }, { :a => 1 }],
-        :writeConcern => { :w => 1 },
-        :ordered => false
-      }
+      command = BSON::OrderedHash['insert', @@test.name,
+                                  :documents, [{ :a => 1 }, { :a => 1 }],
+                                  :writeConcern, { :w => 1 },
+                                  :ordered, false]
 
       assert_raise Mongo::OperationFailure do
         @@db.command(command)
@@ -260,11 +240,9 @@ class CollectionTest < Test::Unit::TestCase
       @@test.drop
       @@test.insert([{ :a => 1 }, { :a => 2 }])
 
-      command = {
-        'update' => @@test.name,
-        :updates => [{ :q => { :a => 1 }, :u => { '$set' => { :a => 2 }}}],
-        :writeConcern => { :w => 1 }
-      }
+      command = BSON::OrderedHash['update', @@test.name,
+                                  :updates, [{ :q => { :a => 1 }, :u => { '$set' => { :a => 2 }}}],
+                                  :writeConcern, { :w => 1 }]
 
       result = @@db.command(command)
       assert_equal 1, result['ok']
@@ -276,15 +254,13 @@ class CollectionTest < Test::Unit::TestCase
       @@test.drop
       @@test.insert([{ :a => 1 }, { :a => 3 }])
 
-      command = {
-        'update' => @@test.name,
-        :updates => [
-          { :q => { :a => 1 }, :u => { '$set' => { :a => 2 }}},
-          { :q => { :a => 3 }, :u => { '$set' => { :a => 4 }}}
-        ],
-        :writeConcern => { :w => 1 },
-        :ordered => true
-      }
+      command = BSON::OrderedHash['update', @@test.name,
+                                  :updates, [
+                                              { :q => { :a => 1 }, :u => { '$set' => { :a => 2 }}},
+                                              { :q => { :a => 3 }, :u => { '$set' => { :a => 4 }}}
+                                            ],
+                                  :writeConcern, { :w => 1 },
+                                  :ordered, true]
 
       result = @@db.command(command)
       assert_equal 1, result['ok']
@@ -297,15 +273,13 @@ class CollectionTest < Test::Unit::TestCase
       @@test.drop
       @@test.insert([{ :a => 1 }, { :a => 3 }])
 
-      command = {
-        'update' => @@test.name,
-        :updates => [
-          { :q => { :a => 1 }, :u => { '$set' => { :a => 2 }}},
-          { :q => { :a => 3 }, :u => { '$set' => { :a => 4 }}}
-        ],
-        :writeConcern => { :w => 1 },
-        :ordered => false
-      }
+      command = BSON::OrderedHash['update', @@test.name,
+                                  :updates, [
+                                             { :q => { :a => 1 }, :u => { '$set' => { :a => 2 }}},
+                                             { :q => { :a => 3 }, :u => { '$set' => { :a => 4 }}}
+                                            ],
+                                  :writeConcern, { :w => 1 },
+                                  :ordered, false]
 
       result = @@db.command(command)
       assert_equal 1, result['ok']
@@ -318,14 +292,12 @@ class CollectionTest < Test::Unit::TestCase
       @@test.drop
       @@test.insert([{ :a => 1 }, { :a => 3 }])
 
-      command = {
-        'update' => @@test.name,
-        :updates => [
-          { :q => { :a => 1 }, :u => { '$set' => { :a => 2 }}},
-          { :q => { :a => 3 }, :u => { '$set' => { :a => 4 }}}
-        ],
-        :ordered => false
-      }
+      command = BSON::OrderedHash['update', @@test.name,
+                                  :updates, [
+                                             { :q => { :a => 1 }, :u => { '$set' => { :a => 2 }}},
+                                             { :q => { :a => 3 }, :u => { '$set' => { :a => 4 }}}
+                                            ],
+                                  :ordered, false]
 
       result = @@db.command(command)
       assert_equal 1, result['ok']
@@ -336,16 +308,14 @@ class CollectionTest < Test::Unit::TestCase
 
     def test_update_write_command_with_error
       @@test.drop
-      @@test.ensure_index({ :a => 1 }, { :unique => true })
+      @@test.ensure_index([[:a, 1]], { :unique => true })
       @@test.insert([{ :a => 1 }, { :a => 2 }])
 
-      command = {
-        'update' => @@test.name,
-        :updates => [
-          { :q => { :a => 2 }, :u => { '$set' => { :a => 1 }}}
-        ],
-        :ordered => false
-      }
+      command = BSON::OrderedHash['update', @@test.name,
+                                  :updates, [
+                                             { :q => { :a => 2 }, :u => { '$set' => { :a => 1 }}}
+                                            ],
+                                  :ordered, false]
 
       assert_raise Mongo::OperationFailure do
         @@db.command(command)
