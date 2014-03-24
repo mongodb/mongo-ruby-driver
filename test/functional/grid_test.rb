@@ -262,7 +262,7 @@ class GridTest < Test::Unit::TestCase
       end
 
       should "put and get a large io object if reading less than the chunk size" do
-        read_and_write_stream('sample_data', 256 * 1024)
+        read_and_write_stream('sample_data', 255 * 1024)
       end
 
       should "put and get a large io object if reading more than the chunk size" do

@@ -21,7 +21,7 @@ module Mongo
   class GridIO
     include Mongo::WriteConcern
 
-    DEFAULT_CHUNK_SIZE   = 256 * 1024
+    DEFAULT_CHUNK_SIZE   = 255 * 1024
     DEFAULT_CONTENT_TYPE = 'binary/octet-stream'
     PROTECTED_ATTRS      = [:files_id, :file_length, :client_md5, :server_md5]
 
@@ -39,7 +39,7 @@ module Mongo
     # @option opts [Hash] :query a query selector used when opening the file in 'r' mode.
     # @option opts [Hash] :query_opts any query options to be used when opening the file in 'r' mode.
     # @option opts [String] :fs_name the file system prefix.
-    # @option opts [Integer] (262144) :chunk_size size of file chunks in bytes.
+    # @option opts [Integer] (261120) :chunk_size size of file chunks in bytes.
     # @option opts [Hash] :metadata ({}) any additional data to store with the file.
     # @option opts [ObjectId] :_id (ObjectId) a unique id for
     #   the file to be use in lieu of an automatically generated one.

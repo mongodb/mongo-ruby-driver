@@ -35,9 +35,9 @@ class GridIOTest < Test::Unit::TestCase
         @mode     = 'w'
       end
 
-      should "set default 256k chunk size" do
+      should "set default 255k chunk size" do
         file = GridIO.new(@files, @chunks, @filename, @mode)
-        assert_equal 256 * 1024, file.chunk_size
+        assert_equal 255 * 1024, file.chunk_size
       end
 
       should "set chunk size" do

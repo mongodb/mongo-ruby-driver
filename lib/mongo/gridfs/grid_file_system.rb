@@ -60,7 +60,7 @@ module Mongo
     # @option opts [String] :content_type ('binary/octet-stream') If no content type is specified,
     #   the content type will may be inferred from the filename extension if the mime-types gem can be
     #   loaded. Otherwise, the content type 'binary/octet-stream' will be used.
-    # @option opts [Integer] (262144) :chunk_size size of file chunks in bytes.
+    # @option opts [Integer] (261120) :chunk_size size of file chunks in bytes.
     # @option opts [Boolean] :delete_old (false) ensure that old versions of the file are deleted. This option
     #  only work in 'w' mode. Certain precautions must be taken when deleting GridFS files. See the notes under
     #  GridFileSystem#delete.
