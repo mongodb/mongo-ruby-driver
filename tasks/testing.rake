@@ -13,7 +13,7 @@
 # limitations under the License.
 
 TEST_SUITES = {
-  :bson => { :pattern => 'test/bson/**/*_test.rb' },
+  :bson => { :pattern => 'test/bson/*_test.rb' },
   :unit => { :pattern => 'test/unit/**/*_test.rb' },
   :functional => {
     :pattern => 'test/functional/**/*_test.rb',
