@@ -17,14 +17,9 @@ module Mongo
     include ThreadLocalVariableManager
 
     attr_reader :client,
-                :arbiters,
                 :primary,
-                :secondaries,
                 :primary_pool,
-                :secondary_pools,
-                :hosts,
                 :seeds,
-                :pools,
                 :max_bson_size,
                 :max_message_size,
                 :max_wire_version,
@@ -143,6 +138,47 @@ module Mongo
 
     def read
       read_pool.host_port
+    end
+
+    def hosts
+      @connect_mutex.synchronize do
+        @hosts.nil? ? nil : @hosts.clone
+      end
+    end
+
+    def pools
+      @connect_mutex.synchronize do
+        @pools.nil? ? nil : @pools.clone
+      end
+    end
+
+    def secondaries
+      @connect_mutex.synchronize do
+        @secondaries.nil? ? nil : @secondaries.clone
+      end
+    end
+
+    def secondary_pools
+      @connect_mutex.synchronize do
+        @secondary_pools.nil? ? nil : @secondary_pools.clone
+      end
+    end
+
+    def arbiters
+      @connect_mutex.synchronize do
+        @arbiters.nil? ? nil : @arbiters.clone
+      end
+    end
+
+    def state_snapshot
+      @connect_mutex.synchronize do
+        { :pools           => @pools.nil?           ? nil : @pools.clone,
+          :secondaries     => @secondaries.nil?     ? nil : @secondaries.clone,
+          :secondary_pools => @secondary_pools.nil? ? nil : @secondary_pools.clone,
+          :hosts           => @hosts.nil?           ? nil : @hosts.clone,
+          :arbiters        => @arbiters.nil?        ? nil : @arbiters.clone
+        }
+      end
     end
 
     private
