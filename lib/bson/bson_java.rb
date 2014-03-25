@@ -16,7 +16,7 @@ require 'jruby'
 
 include Java
 
-jar_dir = File.join(File.dirname(__FILE__), '../../ext/jbson')
+jar_dir = File.expand_path(File.join(File.dirname(__FILE__), '../../ext/jbson'))
 require File.join(jar_dir, 'lib/java-bson.jar')
 require File.join(jar_dir, 'target/jbson.jar')
 
