@@ -58,4 +58,27 @@ class HashWithIndifferentAccessTest < Test::Unit::TestCase
     bson = @encoder.serialize(person)
     assert_equal person, @encoder.deserialize(bson.to_s)
   end
+
+  def test_class_regression
+    doc = HashWithIndifferentAccess.new
+    doc['a'] = 1
+    doc['b'] = 2
+    doc['c'] = 3
+
+    doc2 = doc.reject { |k, v| v > 1 }
+    assert doc2.include?('a')
+    assert !doc2.include?('c')
+    assert_instance_of HashWithIndifferentAccess, doc2
+
+    doc3 = doc.select { |k, v| v == 2 }
+    assert doc3.include?('b')
+    assert !doc3.include?('c')
+    assert_instance_of HashWithIndifferentAccess, doc3
+
+    doc.select! { |k, v| v > 2 }
+    assert doc.include?('c')
+    assert !doc.include?('b')
+    assert_nil doc.select! { |k, v| v > 0 }
+  end
+
 end

@@ -234,14 +234,53 @@ class OrderedHashTest < Test::Unit::TestCase
     new = @oh.reject { |k, v| k == 'foo' }
     assert new.keys == @oh.keys
 
-    new = @oh.reject { |k, v| k == 'z' }
-    assert !new.keys.include?('z')
+    new2 = @oh.reject { |k, v| k == 'z' }
+    assert !new2.keys.include?('z')
+    assert_instance_of BSON::OrderedHash, new2
   end
 
   def test_reject_bang
-    @oh.reject! { |k, v| k == 'z' }
-    assert !@oh.keys.include?('z')
-    assert_nil @oh.reject! { |k, v| k == 'z' }
+    @oh.reject! { |k, v| v < 3 }
+    assert !@oh.keys.include?('c')
+    assert !@oh.keys.include?('a')
+    assert @oh.keys.include?('z')
+    assert_nil @oh.reject! { |k, v| v > 100 }
+  end
+
+  def test_reject_as_enum
+    run_reject = @oh.reject
+    new = run_reject.each { |k, v| v > 1 }
+    assert new.keys.include?('c')
+  end
+
+  def test_reject_bang_frozen
+    @oh.freeze
+    assert_raise_error RuntimeError, "can't modify frozen" do
+      @oh.reject! { |k, v| v > 0 }
+    end
+  end
+
+  def test_select
+    new = @oh.select { |k, v| k == 'foo' }
+    assert new.keys.empty?
+
+    new2 = @oh.select { |k, v| k == 'a' }
+    assert new2.keys.include?('a')
+    assert !new2.keys.include?('z')
+    assert_instance_of BSON::OrderedHash, new2
+  end
+
+  def test_select_as_enum
+    run_select = @oh.select
+    new = run_select.each { |k, v| v > 1 }
+    assert !new.keys.include?('c')
+  end
+
+  def test_select_bang
+    @oh.select! { |k, v| v > 1 }
+    assert @oh.keys.include?('a')
+    assert !@oh.keys.include?('c')
+    assert_nil @oh.select! { |k, v| v > 0 }
   end
 
   def test_clone
