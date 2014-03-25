@@ -16,7 +16,7 @@ require 'jruby'
 
 include Java
 
-jar_dir = File.join(File.dirname(__FILE__), '../../../ext/jsasl')
+jar_dir = File.expand_path(File.join(File.dirname(__FILE__), '../../../ext/jsasl'))
 require File.join(jar_dir, 'target/jsasl.jar')
 
 module Mongo
