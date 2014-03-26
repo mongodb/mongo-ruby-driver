@@ -50,6 +50,7 @@ module Mongo
     OP_QUERY_NO_CURSOR_TIMEOUT = 2 ** 4
     OP_QUERY_AWAIT_DATA        = 2 ** 5
     OP_QUERY_EXHAUST           = 2 ** 6
+    OP_QUERY_PARTIAL           = 2 ** 7
 
     REPLY_CURSOR_NOT_FOUND     = 2 ** 0
     REPLY_QUERY_FAILURE        = 2 ** 1
