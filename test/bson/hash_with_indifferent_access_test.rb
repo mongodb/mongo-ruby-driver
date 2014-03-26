@@ -74,11 +74,6 @@ class HashWithIndifferentAccessTest < Test::Unit::TestCase
     assert doc3.include?('b')
     assert !doc3.include?('c')
     assert_instance_of HashWithIndifferentAccess, doc3
-
-    doc.select! { |k, v| v > 2 }
-    assert doc.include?('c')
-    assert !doc.include?('b')
-    assert_nil doc.select! { |k, v| v > 0 }
   end
 
 end

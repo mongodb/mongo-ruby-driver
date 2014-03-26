@@ -276,13 +276,6 @@ class OrderedHashTest < Test::Unit::TestCase
     assert !new.keys.include?('c')
   end
 
-  def test_select_bang
-    @oh.select! { |k, v| v > 1 }
-    assert @oh.keys.include?('a')
-    assert !@oh.keys.include?('c')
-    assert_nil @oh.select! { |k, v| v > 0 }
-  end
-
   def test_clone
     copy = @oh.clone
     assert copy.keys == @oh.keys
