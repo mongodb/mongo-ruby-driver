@@ -144,6 +144,20 @@ class ClientTest < Test::Unit::TestCase
     assert_equal db.name, MongoClient::DEFAULT_DB_NAME
   end
 
+  def test_from_uri_write_concern
+    con = MongoClient.from_uri("mongodb://#{host_port}")
+    db = con.db
+    coll = db.collection('from-uri-test')
+    assert_equal BSON::ObjectId, coll.insert({'a' => 1}).class
+    [con, db, coll].each do |component|
+      component.write_concern.each do |key,value|
+        assert_not_nil(value, "component #{component.class.inspect} should not have write concern #{key.inspect} field with nil value")
+      end
+    end
+    assert_equal({:w => 1}, con.write_concern, "write concern should not have extra pairs that were not specified by the user")
+    assert_equal({:w => 1}, db.write_concern, "write concern should not have extra pairs that were not specified by the user")
+    assert_equal({:w => 1}, coll.write_concern, "write concern should not have extra pairs that were not specified by the user")
+  end
 
   def test_server_version
     assert_match(/\d\.\d+(\.\d+)?/, @client.server_version.to_s)

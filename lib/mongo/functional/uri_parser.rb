@@ -234,12 +234,12 @@ module Mongo
         warn "Using wtimeout in a URI is deprecated, please use wtimeoutMS. It will be removed in v2.0."
         opts[:wtimeout] = @wtimeout
       end
-      opts[:wtimeout] = @wtimeoutms
+      opts[:wtimeout] = @wtimeoutms if @wtimeoutms
 
       opts[:w]     = 1 if @safe
       opts[:w]     = @w if @w
-      opts[:j]     = @journal
-      opts[:fsync] = @fsync
+      opts[:j]     = @journal if @journal
+      opts[:fsync] = @fsync if @fsync
 
       opts[:connect_timeout] = @connecttimeoutms if @connecttimeoutms
       opts[:op_timeout]      = @sockettimeoutms if @sockettimeoutms
@@ -260,7 +260,7 @@ module Mongo
 
       opts[:db_name] = @db_name if @db_name
       opts[:auths]   = @auths if @auths
-      opts[:ssl]     = @ssl
+      opts[:ssl]     = @ssl if @ssl
       opts[:connect] = connect?
 
       opts
