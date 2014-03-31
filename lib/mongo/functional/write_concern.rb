@@ -14,6 +14,8 @@
 
 module Mongo
   module WriteConcern
+    VALID_KEYS = [:w, :j, :fsync, :wtimeout]
+    DEFAULT_WRITE_CONCERN = {:w => 1}
 
     attr_reader :legacy_write_concern
 
@@ -44,14 +46,9 @@ module Mongo
     # todo: throw exception for conflicting write concern options
     def get_write_concern(opts, parent=nil)
       write_concern_from_legacy(opts) if opts.key?(:safe) || legacy_write_concern
-      write_concern = {
-        :w        => 1,
-        :j        => false,
-        :fsync    => false,
-        :wtimeout => nil
-      }
+      write_concern = DEFAULT_WRITE_CONCERN.dup
       write_concern.merge!(parent.write_concern) if parent
-      write_concern.merge!(opts.reject {|k,v| !write_concern.keys.include?(k)})
+      write_concern.merge!(opts.reject {|k,v| !VALID_KEYS.include?(k)})
       write_concern[:w] = write_concern[:w].to_s if write_concern[:w].is_a?(Symbol)
       write_concern
     end
