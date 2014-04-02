@@ -49,6 +49,16 @@ module ActiveSupport
       end
     end
 
+    def reject
+      return to_enum(:reject) unless block_given?
+      dup.tap {|hash| hash.reject!{|k, v| yield k, v}}
+    end
+
+    def select
+      return to_enum(:select) unless block_given?
+      dup.tap {|hash| hash.reject!{|k, v| ! yield k, v}}
+    end
+    
     alias_method :regular_writer, :[]= unless method_defined?(:regular_writer)
     alias_method :regular_update, :update unless method_defined?(:regular_update)
 
