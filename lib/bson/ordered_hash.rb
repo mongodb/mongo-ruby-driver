@@ -41,14 +41,14 @@ module BSON
       instance_of?(BSON::OrderedHash)
     end
 
-    def reject(&block)
+    def reject
       return to_enum(:reject) unless block_given?
-      dup.tap {|hash| hash.reject!(&block)}
+      dup.tap {|hash| hash.reject!{|k, v| yield k, v}}
     end
 
-    def select(&block)
+    def select
       return to_enum(:select) unless block_given?
-      dup.tap {|hash| hash.reject!{|k, v| ! yield k,v}}
+      dup.tap {|hash| hash.reject!{|k, v| ! yield k, v}}
     end
 
     # We only need the body of this class if the RUBY_VERSION is before 1.9
@@ -152,7 +152,7 @@ module BSON
         self
       end
 
-      def reject!(&block)
+      def reject!
         return to_enum(:reject!) unless block_given?
         raise "can't modify frozen BSON::OrderedHash" if frozen?
         keys = @ordered_keys.dup

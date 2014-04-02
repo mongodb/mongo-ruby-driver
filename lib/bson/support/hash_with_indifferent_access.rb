@@ -49,12 +49,12 @@ module ActiveSupport
       end
     end
 
-    def reject(&block)
+    def reject
       return to_enum(:reject) unless block_given?
-      dup.tap {|hash| hash.reject!(&block)}
+      dup.tap {|hash| hash.reject!{|k, v| yield k, v}}
     end
 
-    def select(&block)
+    def select
       return to_enum(:select) unless block_given?
       dup.tap {|hash| hash.reject!{|k, v| ! yield k, v}}
     end
