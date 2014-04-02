@@ -189,7 +189,7 @@ module Mongo
 
     # Get the size of the result set for this query.
     #
-    # @param [Boolean] whether of not to take notice of skip and limit
+    # @param [Boolean] skip_and_limit whether or not to take skip or limit into account.
     #
     # @return [Integer] the number of objects in the result set for this query.
     #

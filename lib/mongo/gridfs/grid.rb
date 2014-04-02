@@ -81,7 +81,7 @@ module Mongo
 
     # Read a file from the file store.
     #
-    # @param [] id the file's unique id.
+    # @param id the file's unique id.
     #
     # @return [Mongo::GridIO]
     def get(id)
@@ -95,7 +95,7 @@ module Mongo
     # is attempting to read a file while it's being deleted. While the odds for this
     # kind of race condition are small, it's important to be aware of.
     #
-    # @param [] id
+    # @param id
     #
     # @return [Boolean]
     def delete(id)

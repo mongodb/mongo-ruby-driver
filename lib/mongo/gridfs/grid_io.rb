@@ -106,11 +106,9 @@ module Mongo
 
     # Write the given string (binary) data to the file.
     #
-    # @param [String] string
-    #   the data to write
+    # @param [String] io the data to write.
     #
-    # @return [Integer]
-    #   the number of bytes written.
+    # @return [Integer] the number of bytes written.
     def write(io)
       raise GridError, "file not opened for write" unless @mode[0] == ?w
       if io.is_a? String

@@ -148,10 +148,10 @@ module Mongo
     # @param uri [ String ]  string of the format:
     #   mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]
     #
-    # @param opts [ Hash ] Any of the options available for MongoShardedClient.new
+    # @param options [ Hash ] Any of the options available for MongoShardedClient.new
     #
     # @return [ Mongo::MongoShardedClient ] The sharded client.
-    def self.from_uri(uri, options = {})
+    def self.from_uri(uri, options={})
       uri ||= ENV['MONGODB_URI']
       URIParser.new(uri).connection(options, false, true)
     end

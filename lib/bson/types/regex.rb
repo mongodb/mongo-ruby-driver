@@ -32,7 +32,7 @@ module BSON
     # Create a new regexp.
     #
     # @param pattern [String]
-    # @param options [Array, String]
+    # @param opts [Array, String]
     def initialize(pattern, *opts)
       @pattern = pattern
       @options = opts.first.is_a?(Fixnum) ? opts.first : str_opts_to_int(opts.join)

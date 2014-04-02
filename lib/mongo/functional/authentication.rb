@@ -296,7 +296,7 @@ module Mongo
 
     # Helper to fetch a nonce value from a given database instance.
     #
-    # @param db [Mongo::DB] The DB instance to use for issue the nonce command.
+    # @param database [Mongo::DB] The DB instance to use for issue the nonce command.
     # @param opts [Hash] Hash of optional settings and configuration values.
     #
     # @option opts [Socket] socket (nil) Optional socket instance to use.

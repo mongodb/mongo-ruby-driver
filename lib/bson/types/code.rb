@@ -23,7 +23,7 @@ module BSON
     # Wrap code to be evaluated by MongoDB.
     #
     # @param [String] code the JavaScript code.
-    # @param [Hash] a document mapping identifiers to values, which
+    # @param [Hash] scope a document mapping identifiers to values, which
     #   represent the scope in which the code is to be executed.
     def initialize(code, scope={})
       @code  = code

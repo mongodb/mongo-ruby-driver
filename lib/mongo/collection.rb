@@ -159,7 +159,7 @@ module Mongo
     end
 
     # Set a hint field using a named index.
-    # @param [String] hinted index name
+    # @param [String] hint index name
     def named_hint=(hint=nil)
       @hint = hint
       self

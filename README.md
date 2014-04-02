@@ -7,13 +7,17 @@ Installation
 
 **Gem Installation**<br>
 The Ruby driver is released and distributed through RubyGems and it can be installed with the following command:
+
 ```bash
 gem install mongo
 ```
+
 For a significant performance boost, you'll want to install the C-extension:
+
 ```bash
 gem install bson_ext
 ```
+
 **Github Installation**<br>
 For development and test environments (not recommended for production) you can also install the Ruby driver directly from source:
 
@@ -36,6 +40,7 @@ rake install
 Usage
 -----
 Here is a quick example of basic usage for the Ruby driver:
+
 ```ruby
 require 'mongo'
 include Mongo

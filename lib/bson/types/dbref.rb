@@ -21,8 +21,8 @@ module BSON
 
     # Create a DBRef. Use this class in conjunction with DB#dereference.
     #
-    # @param [String] a collection name
-    # @param [ObjectId] an object id
+    # @param [String] namespace a collection name.
+    # @param [ObjectId] object_id an object id.
     def initialize(namespace, object_id)
       @namespace = namespace
       @object_id = object_id

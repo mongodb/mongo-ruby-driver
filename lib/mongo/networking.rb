@@ -67,8 +67,8 @@ module Mongo
     # @param [Integer] operation a MongoDB opcode.
     # @param [BSON::ByteBuffer] message a message to send to the database.
     # @param [String] db_name the name of the database. used on call to get_last_error.
-    # @param [Hash] last_error_params parameters to be sent to getLastError. See DB#error for
-    #   available options.
+    # @param [String] log_message this is currently a no-op and will be removed.
+    # @param [Hash] write_concern write concern.
     #
     # @see DB#get_last_error for valid last error params.
     #
@@ -122,8 +122,10 @@ module Mongo
     # @param [Socket] socket a socket to use in lieu of checking out a new one.
     # @param [Boolean] command (false) indicate whether this is a command. If this is a command,
     #   the message will be sent to the primary node.
-    # @param [Boolean] command (false) indicate whether the cursor should be exhausted. Set
+    # @param [Symbol] read the read preference.
+    # @param [Boolean] exhaust (false) indicate whether the cursor should be exhausted. Set
     #   this to true only when the OP_QUERY_EXHAUST flag is set.
+    # @param [Boolean] compile_regex whether BSON regex objects should be compiled into Ruby regexes.
     #
     # @return [Array]
     #   An array whose indexes include [0] documents returned, [1] number of document received,

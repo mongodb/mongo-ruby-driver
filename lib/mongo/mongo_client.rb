@@ -216,7 +216,7 @@ module Mongo
     # @param uri [String]
     #   A string of the format mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/database]
     #
-    # @param opts Any of the options available for MongoClient.new
+    # @param [Hash] extra_opts Any of the options available for MongoClient.new
     #
     # @return [Mongo::MongoClient, Mongo::MongoReplicaSetClient]
     def self.from_uri(uri = ENV['MONGODB_URI'], extra_opts={})
