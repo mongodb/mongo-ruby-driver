@@ -3,7 +3,7 @@ Gem::Specification.new do |s|
 
   s.version           = File.read(File.join(File.dirname(__FILE__), 'VERSION'))
   s.platform          = Gem::Platform::RUBY
-  s.authors           = ['Tyler Brock', 'Gary Murakami', 'Emily Stolfo', 'Brandon Black', 'Durran Jordan']
+  s.authors           = ['Emily Stolfo', 'Durran Jordan', 'Gary Murakami', 'Tyler Brock', 'Brandon Black']
   s.email             = 'mongodb-dev@googlegroups.com'
   s.homepage          = 'http://www.mongodb.org'
   s.summary           = 'C extensions for Ruby BSON.'

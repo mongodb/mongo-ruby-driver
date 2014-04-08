@@ -2,7 +2,7 @@ Gem::Specification.new do |s|
   s.name              = 'bson'
 
   s.version           = File.read(File.join(File.dirname(__FILE__), 'VERSION'))
-  s.authors           = ['Tyler Brock', 'Gary Murakami', 'Emily Stolfo', 'Brandon Black', 'Durran Jordan']
+  s.authors           = ['Emily Stolfo', 'Durran Jordan', 'Gary Murakami', 'Tyler Brock', 'Brandon Black']
   s.email             = 'mongodb-dev@googlegroups.com'
   s.homepage          = 'http://www.mongodb.org'
   s.summary           = 'Ruby implementation of BSON'
