@@ -12,24 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'bson'
-require 'mongo/loggable'
-require 'mongo/logger'
-require 'mongo/errors'
-require 'mongo/event'
-require 'mongo/client'
-require 'mongo/cluster'
-require 'mongo/collection'
-require 'mongo/connection'
-require 'mongo/database'
-require 'mongo/grid'
-require 'mongo/pool'
-require 'mongo/protocol'
-require 'mongo/collection_view'
-require 'mongo/server'
-require 'mongo/socket'
-require 'mongo/uri'
-require 'mongo/version'
-require 'mongo/cursor'
-require 'mongo/server_preference'
-require 'mongo/operation'
+require 'mongo/operation/write/delete'
+require 'mongo/operation/write/insert'
+require 'mongo/operation/write/update'
+
+require 'mongo/operation/write/write_command'
+
+module Mongo
+
+  module Operation
+
+    module Write
+
+      # The default write concern is acknowledged.
+      #
+      # @todo: update to use modeled write concern.
+      #
+      # @since 3.0.0
+      DEFAULT_WRITE_CONCERN = { 'w' => 1 }.freeze
+    end
+  end
+end
+

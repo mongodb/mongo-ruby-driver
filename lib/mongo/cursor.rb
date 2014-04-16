@@ -112,13 +112,12 @@ module Mongo
     def get_more_spec
       { :to_return => to_return,
         :cursor_id => @cursor_id,
-        :db_name   => db_name,
-        :coll_name => coll_name }
+        :db_name   => @collection.database.name,
+        :coll_name => @collection.name }
     end
 
     def get_more_op
-      # @todo: Uncomment this
-      #Mongo::Operation::Read::GetMore.new(get_more_spec, :server => @server)
+      Mongo::Operation::Read::GetMore.new(get_more_spec, :server => @server)
     end
 
     # Send a +GetMore+ message to a server to get another batch of results.
@@ -134,9 +133,8 @@ module Mongo
     #
     # @return [KillCursors] The +KillCursors+ message.
     def kill_cursors_op
-      # @todo: Uncomment this
-      #Mongo::Operation::KillCursors.new({ :cursor_ids => [@cursor_id] },
-      #                                  :server => @server)
+      Mongo::Operation::KillCursors.new({ :cursor_ids => [@cursor_id] },
+                                        :server => @server)
     end
 
     # Send a +KillCursors+ message to the server and set the cursor id to 0.
