@@ -12,21 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'bson'
-require 'mongo/errors'
-require 'mongo/client'
-require 'mongo/cluster'
-require 'mongo/collection'
-require 'mongo/database'
-require 'mongo/loggable'
-require 'mongo/logger'
-require 'mongo/event'
-require 'mongo/pool'
-require 'mongo/protocol'
-require 'mongo/scope'
-require 'mongo/server'
-require 'mongo/socket'
-require 'mongo/uri'
-require 'mongo/version'
-require 'mongo/cursor'
-require 'mongo/read_preference'
+module Mongo
+
+  module NodePreference
+
+    class PrimaryPreferred
+      include Selectable
+
+      def name
+        :primary_preferred
+      end
+
+      def slave_ok?
+        true
+      end
+
+      def tags_allowed?
+        true
+      end
+
+      def to_mongos
+        read_preference = { :mode => 'primaryPreferred' }
+        read_preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
+        read_preference
+      end
+
+      def select_nodes(candidates)
+        primary(candidates) + near_nodes(secondaries(candidates))
+      end
+    end
+
+  end
+
+end

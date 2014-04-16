@@ -12,21 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'bson'
-require 'mongo/errors'
-require 'mongo/client'
-require 'mongo/cluster'
-require 'mongo/collection'
-require 'mongo/database'
-require 'mongo/loggable'
-require 'mongo/logger'
-require 'mongo/event'
-require 'mongo/pool'
-require 'mongo/protocol'
-require 'mongo/scope'
-require 'mongo/server'
-require 'mongo/socket'
-require 'mongo/uri'
-require 'mongo/version'
-require 'mongo/cursor'
-require 'mongo/read_preference'
+module Mongo
+
+  module NodePreference
+
+    # Behavior for a primary read preference.
+    class Primary
+      include Selectable
+
+      def name
+        :primary
+      end
+
+      def slave_ok?
+        false
+      end
+
+      def tags_allowed?
+        false
+      end
+
+      def to_mongos
+        nil
+      end
+
+      def select_nodes(candidates)
+        primary(candidates)
+      end
+    end
+
+  end
+
+end
