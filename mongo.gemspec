@@ -22,6 +22,11 @@ Gem::Specification.new do |s|
   s.files             += ['README.md', 'Rakefile', 'bin/mongo_console']
   s.files             += ['lib/mongo.rb'] + Dir['lib/mongo/**/*.rb']
 
+  if RUBY_PLATFORM =~ /java/
+    s.platform = 'java'
+    s.files    << 'ext/jsasl/target/jsasl.jar'
+  end
+
   s.test_files        = Dir['test/**/*.rb'] - Dir['test/bson/*']
   s.executables       = ['mongo_console']
   s.require_paths     = ['lib']
