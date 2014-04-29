@@ -27,6 +27,18 @@ module Mongo
   module NodePreference
     extend self
 
+    # Hash lookup for the node preference classes based off the symbols
+    #   provided in configuration.
+    #
+    # @since 3.0.0
+    PREFERENCES = {
+        nearest: Nearest,
+        primary: Primary,
+        primary_preferred: PrimaryPreferred,
+        secondary: Secondary,
+        secondary_preferred: SecondaryPreferred
+    }.freeze
+
     # Create a node preference object.
     #
     # @example Get a node preference object for selecting a secondary with
@@ -41,9 +53,7 @@ module Mongo
     # @since 3.0.0
     # @todo: acceptable_latency should be grabbed from a global setting (client)
     def get(mode = :primary, tag_sets = [], acceptable_latency = 15)
-      class_name_str = mode.to_s.split('_').each { |s| s.capitalize!}.join
-      class_name = Object.const_get("Mongo::NodePreference::#{class_name_str}")
-      class_name.new(tag_sets, acceptable_latency)
+      PREFERENCES.fetch(mode.to_sym).new(tag_sets, acceptable_latency)
     end
   end
 end
