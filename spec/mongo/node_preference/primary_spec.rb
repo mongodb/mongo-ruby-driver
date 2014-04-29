@@ -2,9 +2,9 @@ require 'spec_helper'
 
 describe Mongo::NodePreference::Primary do
 
-  include_context 'read preference'
+  include_context 'node preference'
 
-  it_behaves_like 'a read preference mode' do
+  it_behaves_like 'a node preference mode' do
     let(:name) { :primary }
     let(:slave_ok) { false }
   end

@@ -1,21 +1,21 @@
 require 'spec_helper'
 
 describe Mongo::NodePreference::SecondaryPreferred do
-  include_context 'read preference'
+  include_context 'node preference'
 
-  it_behaves_like 'a read preference mode' do
+  it_behaves_like 'a node preference mode' do
     let(:name) { :secondary_preferred }
     let(:slave_ok) { true }
   end
 
-  it_behaves_like 'a read preference mode accepting tag sets'
+  it_behaves_like 'a node preference mode accepting tag sets'
 
   describe '#to_mongos' do
 
     context 'tag sets provided' do
       let(:tag_sets) { [tag_set] }
 
-      it 'returns a read preference formatted for mongos' do
+      it 'returns a node preference formatted for mongos' do
         expect(read_pref.to_mongos).to eq(
           { :mode => 'secondaryPreferred', :tags => tag_sets}
         )

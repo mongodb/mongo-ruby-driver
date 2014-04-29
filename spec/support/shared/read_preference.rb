@@ -1,4 +1,4 @@
-shared_context 'read preference' do
+shared_context 'node preference' do
   let(:read_pref) { described_class.new(tag_sets, acceptable_latency) }
   let(:tag_sets) { [] }
   let(:tag_set) { { 'test' => 'tag' } }
@@ -7,7 +7,7 @@ shared_context 'read preference' do
   let(:secondary) { node(:secondary) }
 end
 
-shared_examples 'a read preference mode' do
+shared_examples 'a node preference mode' do
 
   describe '#name' do
 
@@ -55,7 +55,7 @@ shared_examples 'a read preference mode' do
   end
 end
 
-shared_examples 'a read preference mode accepting tag sets' do
+shared_examples 'a node preference mode accepting tag sets' do
 
   describe '#tag_sets' do
 

@@ -32,9 +32,9 @@ module Mongo
       end
 
       def to_mongos
-        read_preference = { :mode => 'primaryPreferred' }
-        read_preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
-        read_preference
+        preference = { :mode => 'primaryPreferred' }
+        preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
+        preference
       end
 
       def select_nodes(candidates)

@@ -17,22 +17,53 @@ module Mongo
   module NodePreference
 
     # Provides common behavior for filtering a list of nodes by server mode or tag set.
-     module Selectable
+    #
+    # @since 3.0.0
+    module Selectable
 
+      # @return [ Array ] tag_sets The tag sets used to select nodes.
       attr_reader :tag_sets
+      # @return [ Integer ] acceptable_latency The max latency in milliseconds between
+      #   the closest secondary and other secondaries considered for selection.
       attr_reader :acceptable_latency
 
-      def initialize(tag_sets = [], acceptable_latency = 15)
-        raise Exception, "Read preference #{name} cannot be combined " +
-            " with tags" if !tag_sets.empty? && !tags_allowed?
-        @tag_sets = tag_sets
-        @acceptable_latency = acceptable_latency
-      end
-
+      # Check equality of two node preferences.
+      #
+      # @example Check node preference equality
+      #   pref == other
+      #
+      # @param [ Object ] other The other object.
+      #
+      # @return [ true, false ] Whether the objects are equal.
+      #
+      # @since 3.0.0
       def ==(other)
         name == other.name &&
             tag_sets == other.tag_sets &&
             acceptable_latency == other.acceptable_latency
+      end
+
+      # Initialize the node preference.
+      #
+      # @example Initialize the preference with tag sets.
+      #   Mongo::NodePreference::Secondary.new([{'tag' => 'set'}] todo)
+      #
+      # @example Initialize the preference with acceptable latency
+      #   Mongo::NodePreference::Secondary.new([], 20)
+      #
+      # @example Initialize the preference with no options.
+      #   Mongo::NodePreference::Secondary
+      #
+      # @param [ Array ] tag_sets The tag sets used to select nodes.
+      # @param [ Integer ] acceptable_latency The max latency in milliseconds between
+      #   the closest secondary and other secondaries considered for selection.
+      #
+      # @since 3.0.0
+      def initialize(tag_sets = [], acceptable_latency = 15)
+        raise Exception, "Node preference #{name} cannot be combined " +
+            " with tags" if !tag_sets.empty? && !tags_allowed?
+        @tag_sets = tag_sets
+        @acceptable_latency = acceptable_latency
       end
 
       private
@@ -65,5 +96,4 @@ module Mongo
       end
     end
   end
-
 end

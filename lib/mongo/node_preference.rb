@@ -17,7 +17,7 @@ module Mongo
   module NodePreference
     extend self
 
-    # Create a read preference object
+    # Create a node preference object
     #
     # Mongo::NodePreference.get(:secondary, [{'tag' => 'set'}], 20)
     # @todo: acceptable_latency should be grabbed from a global setting (client)
@@ -32,9 +32,9 @@ module Mongo
 
 end
 
-require 'mongo/read_preference/selectable'
-require 'mongo/read_preference/nearest'
-require 'mongo/read_preference/primary'
-require 'mongo/read_preference/primary_preferred'
-require 'mongo/read_preference/secondary'
-require 'mongo/read_preference/secondary_preferred'
+require 'mongo/node_preference/selectable'
+require 'mongo/node_preference/nearest'
+require 'mongo/node_preference/primary'
+require 'mongo/node_preference/primary_preferred'
+require 'mongo/node_preference/secondary'
+require 'mongo/node_preference/secondary_preferred'

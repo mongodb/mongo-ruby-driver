@@ -12,7 +12,7 @@ describe Mongo::NodePreference do
       context 'primary' do
         let(:name) { :primary }
 
-        it 'returns a read preference of class Primary' do
+        it 'returns a node preference of class Primary' do
           expect(read_pref).to be_a(Mongo::NodePreference::Primary)
         end
       end
@@ -20,7 +20,7 @@ describe Mongo::NodePreference do
       context 'primary_preferred' do
         let(:name) { :primary_preferred }
 
-        it 'returns a read preference of class PrimaryPreferred' do
+        it 'returns a node preference of class PrimaryPreferred' do
           expect(read_pref).to be_a(Mongo::NodePreference::PrimaryPreferred)
         end
       end
@@ -28,7 +28,7 @@ describe Mongo::NodePreference do
       context 'secondary' do
         let(:name) { :secondary }
 
-        it 'returns a read preference of class Secondary' do
+        it 'returns a node preference of class Secondary' do
           expect(read_pref).to be_a(Mongo::NodePreference::Secondary)
         end
       end
@@ -36,7 +36,7 @@ describe Mongo::NodePreference do
       context 'secondary_preferred' do
         let(:name) { :secondary_preferred }
 
-        it 'returns a read preference of class SecondaryPreferred' do
+        it 'returns a node preference of class SecondaryPreferred' do
           expect(read_pref).to be_a(Mongo::NodePreference::SecondaryPreferred)
         end
       end
@@ -44,7 +44,7 @@ describe Mongo::NodePreference do
       context 'nearest' do
         let(:name) { :nearest }
 
-        it 'returns a read preference of class Nearest' do
+        it 'returns a node preference of class Nearest' do
           expect(read_pref).to be_a(Mongo::NodePreference::Nearest)
         end
       end
@@ -53,7 +53,7 @@ describe Mongo::NodePreference do
     context 'name not provided' do
       let(:read_pref) { described_class.get }
 
-      it 'returns a read preference of class Primary' do
+      it 'returns a node preference of class Primary' do
         expect(read_pref).to be_a(Mongo::NodePreference::Primary)
       end
     end
@@ -61,7 +61,7 @@ describe Mongo::NodePreference do
     context 'tag sets provided' do
       let(:read_pref) { described_class.get(name, tag_sets) }
 
-      it 'sets tag sets on the read preference object' do
+      it 'sets tag sets on the node preference object' do
         expect(read_pref.tag_sets).to eq(tag_sets)
       end
 
@@ -71,7 +71,7 @@ describe Mongo::NodePreference do
       let(:acceptable_latency) { 100 }
       let(:read_pref) { described_class.get(name, tag_sets, acceptable_latency) }
 
-      it 'sets acceptable latency on the read preference object' do
+      it 'sets acceptable latency on the node preference object' do
         expect(read_pref.acceptable_latency).to eq(acceptable_latency)
       end
     end

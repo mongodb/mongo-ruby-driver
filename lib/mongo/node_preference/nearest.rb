@@ -16,11 +16,11 @@ module Mongo
 
   module NodePreference
 
-    class SecondaryPreferred
+    class Nearest
       include Selectable
 
       def name
-        :secondary_preferred
+        :nearest
       end
 
       def slave_ok?
@@ -32,15 +32,17 @@ module Mongo
       end
 
       def to_mongos
-        # don't send if there are no tags
-        return nil if tag_sets.empty?
-        read_preference = { :mode => 'secondaryPreferred' }
-        read_preference.merge!({ :tags => tag_sets })
-        read_preference
+        preference = { :mode => 'nearest' }
+        preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
+        preference
       end
 
       def select_nodes(candidates)
-        near_nodes(secondaries(candidates)) + primary(candidates)
+        if tag_sets.empty?
+          near_nodes(candidates)
+        else
+          near_nodes(match_tag_sets(candidates))
+        end
       end
     end
 

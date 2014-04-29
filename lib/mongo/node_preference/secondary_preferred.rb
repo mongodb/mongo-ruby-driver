@@ -16,28 +16,31 @@ module Mongo
 
   module NodePreference
 
-    # Behavior for a primary read preference.
-    class Primary
+    class SecondaryPreferred
       include Selectable
 
       def name
-        :primary
+        :secondary_preferred
       end
 
       def slave_ok?
-        false
+        true
       end
 
       def tags_allowed?
-        false
+        true
       end
 
       def to_mongos
-        nil
+        # don't send if there are no tags
+        return nil if tag_sets.empty?
+        preference = { :mode => 'secondaryPreferred' }
+        preference.merge!({ :tags => tag_sets })
+        preference
       end
 
       def select_nodes(candidates)
-        primary(candidates)
+        near_nodes(secondaries(candidates)) + primary(candidates)
       end
     end
 
