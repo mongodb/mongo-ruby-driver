@@ -191,7 +191,5 @@ describe Mongo::NodePreference::Secondary do
         end
       end
     end
-
   end
-
 end

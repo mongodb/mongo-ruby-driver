@@ -16,32 +16,74 @@ module Mongo
 
   module NodePreference
 
+    # Encapsulates specifications for selecting secondary nodes given a list
+    #   of candidates.
+    #
+    # @since 3.0.0
     class Secondary
       include Selectable
 
+      # Get the name of the server mode type.
+      #
+      # @example Get the name of the server mode for this preference.
+      #   preference.name
+      #
+      # @return [ Symbol ] :secondary
+      #
+      # @since 3.0.0
       def name
         :secondary
       end
 
+      # Whether the slaveOk bit should be set on wire protocol messages.
+      #   I.e. whether the operation can be performed on a secondary node.
+      #
+      # @return [ true ] true
+      #
+      # @since 3.0.0
       def slave_ok?
         true
       end
 
+      # Whether tag sets are allowed to be defined for this node preference.
+      #
+      # @return [ true ] true
+      #
+      # @since 3.0.0
       def tags_allowed?
         true
       end
 
+      # Convert this node preference definition into a format appropriate
+      #   for a mongos server.
+      #
+      # @example Convert this node preference definition into a format
+      #   for mongos.
+      #   preference = Mongo::ReadPreference::Secondary.new
+      #   preference.to_mongos
+      #
+      # @return [ Hash ] The node preference formatted for a mongos server.
+      #
+      # @since 3.0.0
       def to_mongos
         preference = { :mode => 'secondary' }
         preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
         preference
       end
 
+      # Select the secondary nodes taking into account any defined tag sets and
+      #   acceptable latency between the nearest secondary and other secondaries.
+      #
+      # @example Select secondary nodes given a list of candidates.
+      #   preference = Mongo::ReadPreference::Secondary.new
+      #   preference.select_nodes([candidate_1, candidate_2])
+      #
+      # @return [ Array ] The secondary nodes from the list of candidates.
+      #
+      # @since 3.0.0
       def select_nodes(candidates)
         near_nodes(secondaries(candidates))
       end
     end
-
   end
-
 end

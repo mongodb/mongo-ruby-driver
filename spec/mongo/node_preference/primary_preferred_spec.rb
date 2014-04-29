@@ -251,3 +251,4 @@ describe Mongo::NodePreference::PrimaryPreferred do
     end
   end
 end
+

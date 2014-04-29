@@ -16,31 +16,71 @@ module Mongo
 
   module NodePreference
 
-    # Behavior for a primary node preference.
+    # Encapsulates specifications for selecting the primary node given a list
+    #   of candidates.
+    #
+    # @since 3.0.0
     class Primary
       include Selectable
 
+      # Get the name of the server mode type.
+      #
+      # @example Get the name of the server mode for this preference.
+      #   preference.name
+      #
+      # @return [ Symbol ] :primary
+      #
+      # @since 3.0.0
       def name
         :primary
       end
 
+      # Whether the slaveOk bit should be set on wire protocol messages.
+      #   I.e. whether the operation can be performed on a secondary node.
+      #
+      # @return [ false ] false
+      #
+      # @since 3.0.0
       def slave_ok?
         false
       end
 
+      # Whether tag sets are allowed to be defined for this node preference.
+      #
+      # @return [ false ] false
+      #
+      # @since 3.0.0
       def tags_allowed?
         false
       end
 
+      # Convert this node preference definition into a format appropriate
+      #   for a mongos server.
+      #
+      # @example Convert this node preference definition into a format
+      #   for mongos.
+      #   preference = Mongo::ReadPreference::Primary.new
+      #   preference.to_mongos
+      #
+      # @return [ nil ] nil
+      #
+      # @since 3.0.0
       def to_mongos
         nil
       end
 
+      # Select the primary node from a list of candidates.
+      #
+      # @example Select the primary node given a list of candidates.
+      #   preference = Mongo::ReadPreference::Primary.new
+      #   preference.select_nodes([candidate_1, candidate_2])
+      #
+      # @return [ Array ] The primary node from the list of candidates.
+      #
+      # @since 3.0.0
       def select_nodes(candidates)
         primary(candidates)
       end
     end
-
   end
-
 end
