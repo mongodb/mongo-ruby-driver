@@ -206,7 +206,11 @@ class ReplicaSetClientTest < Test::Unit::TestCase
       assert ['localhost:29999'] != @client.primary
       assert !@client.secondaries.include?('localhost:29999')
     ensure
-      Process.kill("KILL", hung_node.pid) if hung_node
+      begin
+        Process.kill("KILL", hung_node.pid) if hung_node
+      rescue
+        # the process ended, was killed already, or the system doesn't support nc
+      end
     end
   end
 
