@@ -32,15 +32,12 @@ module Mongo
       # @example Remove all users named Tyler.
       #   Query.new('xgen', 'users', {:name => 'Tyler'})
       #
-      # @param database [String, Symbol] The database to query.
-      # @param collection [String, Symbol] The collection to query.
-      # @param selector [Hash] The query selector.
-      # @param options [Hash] The additional query options.
+      # @param database [String, Symbol] The database to remove from.
+      # @param collection [String, Symbol] The collection to remove from.
+      # @param selector [Hash] The query used to select doc(s) to remove.
+      # @param options [Hash] The additional delete options.
       #
-      # @option options :skip [Integer] The number of documents to skip.
-      # @option options :limit [Integer] The number of documents to return.
-      # @option options :fields [Hash] The fields to return.
-      # @option options :flags [Array] The flags for the query message.
+      # @option options :flags [Array] The flags for the delete message.
       #
       #   Supported flags: +:single_remove+
       def initialize(database, collection, selector, options = {})
