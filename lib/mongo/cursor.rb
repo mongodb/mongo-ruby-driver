@@ -139,7 +139,7 @@ module Mongo
       doc = @cache.shift
 
       if doc && (err = doc['errmsg'] || doc['$err']) # assignment
-        code = doc['code']
+        code = doc['code'] || doc['assertionCode']
 
         # If the server has stopped being the master (e.g., it's one of a
         # pair but it has died or something like that) then we close that
