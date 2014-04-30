@@ -100,6 +100,20 @@ class ReplicaSetBasicTest < Test::Unit::TestCase
     end
   end
 
+  def test_wnote_does_not_raise_exception_with_err_nil
+    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
+    if @client.server_version < '2.5.5'
+      @coll = @client[TEST_DB]['test-wnote']
+      begin
+        result = @coll.remove({:foo => 1}, :w => 2)
+      rescue => ex
+        assert(false, "should not raise an exception for a wnote response field from a remove that does not match any documents")
+      end
+      assert_nil result["err"]
+      assert_true result.has_key?("wnote")
+    end
+  end
+
   context "Socket pools" do
     context "checking out writers" do
       setup do

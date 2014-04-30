@@ -855,11 +855,12 @@ class CollectionTest < Test::Unit::TestCase
       end
     end
 
-    def test_wnote_raises_exception
+    def test_wnote_raises_exception_with_err_not_nil
       ex = assert_raise Mongo::WriteConcernError do
         @@test.insert({:foo => 1}, :w => 2)
       end
       result = ex.result
+      assert_not_nil result["err"]
       assert_true result.has_key?("wnote")
     end
   end

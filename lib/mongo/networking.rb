@@ -100,7 +100,7 @@ module Mongo
         if error && error.include?("not master")
           close
           raise ConnectionFailure.new(docs[0]['code'].to_s + ': ' + error, docs[0]['code'], docs[0])
-        elsif (note = docs[0]['jnote'] || docs[0]['wnote']) # assignment
+        elsif (!error.nil? && note = docs[0]['jnote'] || docs[0]['wnote']) # assignment
           code = docs[0]['code'] || Mongo::ErrorCode::BAD_VALUE # as of server version 2.5.5
           raise WriteConcernError.new(code.to_s + ': ' + note, code, docs[0])
         elsif error
