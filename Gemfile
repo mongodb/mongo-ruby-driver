@@ -21,7 +21,7 @@ group :testing do
   gem 'test-unit'
   gem 'mocha', ">=0.13.0", :require => 'mocha/setup'
   gem 'shoulda', ">=3.3.2"
-  gem 'shoulda-matchers', '~>1.0'
+  gem 'shoulda-matchers', '~>2.0'
 
   gem 'sfl'
   if RUBY_VERSION > '1.8.7' || RUBY_PLATFORM =~ /java/
