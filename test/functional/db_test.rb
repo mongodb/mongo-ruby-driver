@@ -189,7 +189,7 @@ class DBTest < Test::Unit::TestCase
       @@db.command(command)
     rescue => ex
       raised = true
-      assert ex.message.include?("forced error"),
+      assert ex.message.include?("forced error") || ex.result.has_key?("assertion") && ex.result["assertion"].include?("forced error"),
         "error message does not contain 'forced error'"
       assert_equal 10038, ex.error_code
 
