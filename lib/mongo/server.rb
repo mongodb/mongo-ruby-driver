@@ -63,7 +63,6 @@ module Mongo
       @address = Address.new(address)
       @options = options
       @mutex = Mutex.new
-      initialize_description!
       @refresh = Refresh.new(self, refresh_interval)
       @refresh.run
     end
@@ -87,7 +86,7 @@ module Mongo
     # @since 3.0.0
     def refresh!
       mutex.synchronize do
-        description.update!(dispatch([ refresh_command ]))
+        description.update!(send_messages([ refresh_command ]).documents[0])
       end
     end
 
@@ -106,10 +105,8 @@ module Mongo
     #
     # @since 3.0.0
     def dispatch(messages)
-      with_connection do |connection|
-        connection.write(messages)
-        connection.read if messages.last.replyable?
-      end
+      initialize_description! unless @description
+      send_messages(messages)
     end
 
     # Get the refresh interval for the server. This will be defined via an option
@@ -128,9 +125,9 @@ module Mongo
     private
 
     def initialize_description!
-      # @description = Description.new(dispatch([ refresh_command ]))
-      # subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
-      # subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
+      @description = Description.new(send_messages([ refresh_command ]).documents[0])
+      subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
+      subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
     end
 
     def pool
@@ -145,6 +142,13 @@ module Mongo
         STATUS,
         :limit => -1
       )
+    end
+
+    def send_messages(messages)
+      with_connection do |connection|
+        connection.write(messages)
+        connection.read if messages.last.replyable?
+      end
     end
 
     def with_connection

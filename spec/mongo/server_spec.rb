@@ -24,6 +24,17 @@ describe Mongo::Server do
       Mongo::Protocol::Delete.new(TEST_DB, TEST_COLL, {})
     end
 
+    context 'when the server description is not set' do
+
+      before do
+        server.dispatch([ insert ])
+      end
+
+      it 'sets the server description' do
+        expect(server.description).to be_primary
+      end
+    end
+
     context 'when providing a single message' do
 
       before do
