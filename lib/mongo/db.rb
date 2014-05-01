@@ -225,7 +225,7 @@ module Mongo
       # MongoDB 2.4.7 so we assume that a nil error code means the usersInfo
       # command doesn't exist and we should fall back to the legacy add user code.
       rescue OperationFailure => ex
-        raise ex unless ex.error_code == Mongo::ErrorCode::COMMAND_NOT_FOUND || ex.error_code.nil?
+        raise ex unless Mongo::ErrorCode::COMMAND_NOT_FOUND_CODES.include?(ex.error_code)
         return legacy_add_user(username, password, read_only, opts)
       end
 
@@ -246,7 +246,7 @@ module Mongo
       begin
         command(:dropUser => username)
       rescue OperationFailure => ex
-        raise ex unless ex.error_code == Mongo::ErrorCode::COMMAND_NOT_FOUND || ex.error_code.nil?
+        raise ex unless Mongo::ErrorCode::COMMAND_NOT_FOUND_CODES.include?(ex.error_code)
         response = self[SYSTEM_USER_COLLECTION].remove({:user => username}, :w => 1)
         response.key?('n') && response['n'] > 0 ? response : false
       end
