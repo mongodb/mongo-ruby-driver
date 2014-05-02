@@ -107,6 +107,81 @@ describe Mongo::Server do
     end
   end
 
+  describe '#operable?' do
+
+    let(:server) do
+      described_class.new('127.0.0.1:27017')
+    end
+
+    let(:description) do
+      double('description')
+    end
+
+    before do
+      server.instance_variable_set(:@description, description)
+    end
+
+    context 'when the server is a primary' do
+
+      before do
+        expect(description).to receive(:hidden?).and_return(false)
+        expect(description).to receive(:primary?).and_return(true)
+      end
+
+      it 'returns true' do
+        expect(server).to be_operable
+      end
+    end
+
+    context 'when the server is a secondary' do
+
+      before do
+        expect(description).to receive(:hidden?).and_return(false)
+        expect(description).to receive(:primary?).and_return(false)
+        expect(description).to receive(:secondary?).and_return(true)
+      end
+
+      it 'returns true' do
+        expect(server).to be_operable
+      end
+    end
+
+    context 'when the server is an arbiter' do
+
+      before do
+        expect(description).to receive(:hidden?).and_return(false)
+        expect(description).to receive(:primary?).and_return(false)
+        expect(description).to receive(:secondary?).and_return(false)
+      end
+
+      it 'returns false' do
+        expect(server).to_not be_operable
+      end
+    end
+
+    context 'when the server is hidden' do
+
+      before do
+        expect(description).to receive(:hidden?).and_return(true)
+      end
+
+      it 'returns false' do
+        expect(server).to_not be_operable
+      end
+    end
+
+    context 'when the server is not reachable' do
+
+      before do
+        server.instance_variable_set(:@unreachable_since, Time.now)
+      end
+
+      it 'returns false' do
+        expect(server).to_not be_operable
+      end
+    end
+  end
+
   describe '#refresh!' do
 
     let(:address) do

@@ -144,15 +144,12 @@ module Mongo
         private
 
         def default_socket
+          encoded_timeout = [ timeout, 0 ].pack(TIMEOUT_PACK)
           sock = ::Socket.new(family, SOCK_STREAM, 0)
           sock.set_encoding(BSON::BINARY)
           sock.setsockopt(SOL_SOCKET, SO_RCVTIMEO, encoded_timeout)
           sock.setsockopt(SOL_SOCKET, SO_SNDTIMEO, encoded_timeout)
           sock
-        end
-
-        def encoded_timeout
-          @encoded_timeout ||= [ timeout, 0 ].pack(TIMEOUT_PACK)
         end
 
         def handle_errors
@@ -166,18 +163,19 @@ module Mongo
         end
 
         def initialize!
-          Timeout.timeout(timeout, Mongo::SocketTimeoutError) do
-            @socket = initialize_socket
-            yield if block_given?
-            self
-          end
+          @socket = initialize_socket
+          yield if block_given?
+          self
         end
 
         def initialize_socket
-          sock = default_socket
-          sock.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
-          sock.connect(::Socket.pack_sockaddr_in(port, host))
-          sock
+          Timeout.timeout(timeout, Mongo::SocketTimeoutError) do
+            sock = default_socket
+            sock.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
+            # @todo: durran: This is where I deadlock at random.
+            sock.connect(::Socket.pack_sockaddr_in(port, host))
+            sock
+          end
         end
       end
     end

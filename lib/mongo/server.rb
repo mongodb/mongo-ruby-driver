@@ -63,12 +63,40 @@ module Mongo
       @address = Address.new(address)
       @options = options
       @mutex = Mutex.new
+      @down_ad = nil
       @refresh = Refresh.new(self, refresh_interval)
       @refresh.run
     end
 
+    # Is the server able to receive messages?
+    #
+    # @example Is the server operable?
+    #   server.operable?
+    #
+    # @note This is true only for a reachable server that is a secondary or
+    #   primary and not hidden.
+    #
+    # @return [ true, false ] If the server is operable.
+    #
+    # @since 3.0.0
     def operable?
-      true
+      initialize_description!
+      return false if !reachable? || description.hidden?
+      description.primary? || description.secondary?
+    end
+
+    # Is the server reachable?
+    #
+    # @example Is the server reachable via a connection?
+    #   server.reachable?
+    #
+    # @note This is true if the server is alive and can accept connections.
+    #
+    # @return [ true, false ] If the server is reachable.
+    #
+    # @since 3.0.0
+    def reachable?
+      !@unreachable_since
     end
 
     # Refresh the configuration for this server. Is thread-safe since the
@@ -105,7 +133,7 @@ module Mongo
     #
     # @since 3.0.0
     def dispatch(messages)
-      initialize_description! unless @description
+      initialize_description!
       send_messages(messages)
     end
 
@@ -125,9 +153,11 @@ module Mongo
     private
 
     def initialize_description!
-      @description = Description.new(send_messages([ refresh_command ]).documents[0])
-      subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
-      subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
+      unless @description
+        @description = Description.new(send_messages([ refresh_command ]).documents[0])
+        subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
+        subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
+      end
     end
 
     def pool
