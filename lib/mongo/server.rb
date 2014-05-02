@@ -65,7 +65,7 @@ module Mongo
       @mutex = Mutex.new
       @down_ad = nil
       @refresh = Refresh.new(self, refresh_interval)
-      @refresh.run
+      # @refresh.run
     end
 
     # Is the server able to receive messages?
@@ -113,9 +113,7 @@ module Mongo
     #
     # @since 3.0.0
     def refresh!
-      mutex.synchronize do
-        description.update!(send_messages([ refresh_command ]).documents[0])
-      end
+      description.update!(send_messages([ refresh_command ]).documents[0])
     end
 
     # Dispatch the provided messages to the server. If the last message
@@ -175,9 +173,11 @@ module Mongo
     end
 
     def send_messages(messages)
-      with_connection do |connection|
-        connection.write(messages)
-        connection.read if messages.last.replyable?
+      mutex.synchronize do
+        with_connection do |connection|
+          connection.write(messages)
+          connection.read if messages.last.replyable?
+        end
       end
     end
 
