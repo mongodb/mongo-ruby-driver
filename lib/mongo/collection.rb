@@ -1130,7 +1130,7 @@ module Mongo
         cmd = BSON::OrderedHash[:createIndexes, @name, :indexes, [selector]]
         @db.command(cmd)
       rescue Mongo::OperationFailure => ex
-        if ex.error_code == Mongo::ErrorCode::COMMAND_NOT_FOUND || ex.error_code.nil?
+        if Mongo::ErrorCode::COMMAND_NOT_FOUND_CODES.include?(ex.error_code)
           selector[:ns] = "#{@db.name}.#{@name}"
           send_write(:insert, nil, selector, false, {:w => 1}, Mongo::DB::SYSTEM_INDEX_COLLECTION)
         else

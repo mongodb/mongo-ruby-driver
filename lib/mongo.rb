@@ -62,9 +62,15 @@ module Mongo
     BAD_VALUE                = 2
     UNKNOWN_ERROR            = 8
     INVALID_BSON             = 22
-    COMMAND_NOT_FOUND        = 59
     WRITE_CONCERN_FAILED     = 64
     MULTIPLE_ERRORS_OCCURRED = 65
+
+    # mongod/s 2.6 and above return code 59 when a command doesn't exist.
+    # mongod versions previous to 2.6 and mongos 2.4.x return no error code
+    # when a command does exist.
+    # mongos versions previous to 2.4.0 return code 13390 when a command
+    # does not exist.
+    COMMAND_NOT_FOUND_CODES  = [nil, 59, 13390]
   end
 end
 
