@@ -6,7 +6,7 @@ shared_context 'shared client' do
   let(:db) { Mongo::Database.new(client, TEST_DB) }
 
   let(:read_obj)do
-    double('read_preference').tap do |read_obj|
+    double('node_preference').tap do |read_obj|
       allow(read_obj).to receive(:primary?).and_return(true)
       allow(read_obj).to receive(:secondary?).and_return(false)
       allow(read_obj).to receive(:secondary_preferred?).and_return(false)
