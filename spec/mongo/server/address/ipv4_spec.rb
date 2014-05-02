@@ -56,7 +56,7 @@ describe Mongo::Server::Address::IPv4 do
       end
 
       it 'returns an ssl socket' do
-        expect(socket).to be_a(Mongo::Pool::Socket::SSL)
+        expect(socket).to be_a(Mongo::Socket::SSL)
       end
 
       it 'sets the family as ipv4' do
@@ -71,7 +71,7 @@ describe Mongo::Server::Address::IPv4 do
       end
 
       it 'returns a tcp socket' do
-        expect(socket).to be_a(Mongo::Pool::Socket::TCP)
+        expect(socket).to be_a(Mongo::Socket::TCP)
       end
 
       it 'sets the family a ipv4' do

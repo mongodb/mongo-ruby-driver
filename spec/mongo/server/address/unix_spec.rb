@@ -32,7 +32,7 @@ describe Mongo::Server::Address::Unix do
     end
 
     it 'returns a unix socket' do
-      expect(socket).to be_a(Mongo::Pool::Socket::Unix)
+      expect(socket).to be_a(Mongo::Socket::Unix)
     end
   end
 end

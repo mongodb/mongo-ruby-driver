@@ -69,9 +69,9 @@ module Mongo
         # @since 3.0.0
         def socket(timeout, ssl_opts = {})
           unless ssl_opts.empty?
-            Pool::Socket::SSL.new(ip, port, timeout, Socket::PF_INET6, ssl_opts)
+            Socket::SSL.new(ip, port, timeout, Socket::PF_INET6, ssl_opts)
           else
-            Pool::Socket::TCP.new(ip, port, timeout, Socket::PF_INET6)
+            Socket::TCP.new(ip, port, timeout, Socket::PF_INET6)
           end
         end
       end

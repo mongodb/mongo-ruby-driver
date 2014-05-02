@@ -51,7 +51,7 @@ module Mongo
         #
         # @since 3.0.0
         def socket(timeout, ssl_opts = {})
-          Pool::Socket::Unix.new(host, timeout, Socket::AF_UNIX)
+          Socket::Unix.new(host, timeout, Socket::AF_UNIX)
         end
       end
     end
