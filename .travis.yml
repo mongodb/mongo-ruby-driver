@@ -14,7 +14,7 @@ jdk:
   - oraclejdk7
   - openjdk7
 
-bundler_args: --without deploy development
+install: ruby -S bundle install --without deploy development
 
 before_install: rm -f Gemfile.lock
 
