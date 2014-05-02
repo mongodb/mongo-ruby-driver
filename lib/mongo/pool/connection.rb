@@ -43,8 +43,11 @@ module Mongo
       #
       # @since 3.0.0
       def connect!
-        @socket = address.socket(timeout, ssl_opts) unless socket
-        socket.connect! and true
+        unless socket
+          @socket = address.socket(timeout, ssl_opts)
+          @socket.connect!
+        end
+        true
       end
 
       # Disconnect the connection.
