@@ -14,6 +14,12 @@ jdk:
   - oraclejdk7
   - openjdk7
 
+# uncomment this when these issues are resolved:
+# https://github.com/travis-ci/travis-ci/issues/2226
+# https://github.com/wayneeseguin/rvm/issues/2820
+#bundler_args: --without deploy development
+
+# delete this when the issue referenced above is resolved
 install: ruby -S bundle install --without deploy development
 
 before_install: rm -f Gemfile.lock
