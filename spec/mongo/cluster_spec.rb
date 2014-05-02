@@ -59,7 +59,11 @@ describe Mongo::Cluster do
       described_class.new(client, addresses)
     end
 
-    pending 'when a node with the address does not exist' do
+    before do
+      allow_any_instance_of(Mongo::Server).to receive(:operable?).and_return(true)
+    end
+
+    context 'when a node with the address does not exist' do
 
       let(:address) do
         '127.0.0.1:27020'
@@ -79,7 +83,7 @@ describe Mongo::Cluster do
       end
     end
 
-    pending 'when a node with the address exists' do
+    context 'when a node with the address exists' do
 
       let!(:added) do
         cluster.add('127.0.0.1:27017')
