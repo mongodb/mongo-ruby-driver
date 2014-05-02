@@ -4,6 +4,7 @@ rvm:
   - 1.9.3
   - 2.0.0
   - 2.1.0
+  - 2.1.1
   - ruby-head
   - jruby-19mode
   - jruby-head
@@ -44,6 +45,9 @@ matrix:
       jdk: openjdk7
       env: CI="travis"
     - rvm: 2.1.0
+      jdk: openjdk7
+      env: CI="travis"
+    - rvm: 2.1.1
       jdk: openjdk7
       env: CI="travis"
     - rvm: ruby-head
