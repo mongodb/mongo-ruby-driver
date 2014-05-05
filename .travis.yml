@@ -3,7 +3,6 @@ language: ruby
 rvm:
   - 1.9.3
   - 2.0.0
-  - 2.1.0
   - 2.1.1
   - ruby-head
   - jruby-19mode
@@ -42,9 +41,6 @@ matrix:
       jdk: openjdk7
       env: CI="travis"
     - rvm: 2.0.0
-      jdk: openjdk7
-      env: CI="travis"
-    - rvm: 2.1.0
       jdk: openjdk7
       env: CI="travis"
     - rvm: 2.1.1
