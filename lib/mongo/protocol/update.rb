@@ -50,7 +50,7 @@ module Mongo
       #
       # @option options :flags [Array] The flags for the update message.
       #
-      #   Supported flags: +:upsert+, +:multi+
+      #   Supported flags: +:upsert+, +:multi_update+
       def initialize(database, collection, selector, update, options = {})
         @namespace   = "#{database}.#{collection}"
         @selector    = selector
