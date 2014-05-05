@@ -14,7 +14,7 @@ jdk:
   - oraclejdk7
   - openjdk7
 
-bundler_args: --without release development
+install: ruby -S bundle install --without release development
 
 env: CI="travis"
 
