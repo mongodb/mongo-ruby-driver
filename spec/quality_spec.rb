@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe 'Code Quality', :quality do
 
-  unless RUBY_VERSION < '1.9'
+  if RUBY_VERSION > '1.9' && RUBY_VERSION < '2.2'
     pending 'has no style-guide violations', :style do
       require 'rubocop'
       result = silence { Rubocop::CLI.new.run }
