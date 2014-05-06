@@ -14,7 +14,7 @@
 
 require 'mongo/server/address'
 require 'mongo/server/description'
-require 'mongo/server/refresh'
+require 'mongo/server/monitor'
 
 module Mongo
 
@@ -150,8 +150,8 @@ module Mongo
     def initialize_description!
       unless @description
         @description = Description.new(send_messages([ refresh_command ]).documents[0])
-        @refresh = Refresh.new(self, refresh_interval)
-        @refresh.run
+        @monitor = Monitor.new(self, refresh_interval)
+        @monitor.run
         subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
         subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
       end

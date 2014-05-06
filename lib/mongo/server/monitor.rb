@@ -19,19 +19,19 @@ module Mongo
     # a separate thread as to not disrupt other operations.
     #
     # @since 3.0.0
-    class Refresh
+    class Monitor
 
-      # @return [ Mongo::Node ] The server the refresher refreshes.
+      # @return [ Mongo::Node ] The server the monitor refreshes.
       attr_reader :server
       # @return [ Integer ] The interval the refresh happens on, in seconds.
       attr_reader :interval
 
-      # Create the new server refresher.
+      # Create the new server monitor.
       #
-      # @example Create the server refresher.
-      #   Mongo::Node::Refresh.new(server, 5)
+      # @example Create the server monitor.
+      #   Mongo::Server::Monitor.new(server, 5)
       #
-      # @param [ Mongo::Node ] server The server to refresh.
+      # @param [ Mongo::Server ] server The server to refresh.
       # @param [ Integer ] interval The refresh interval in seconds.
       #
       # @since 3.0.0
@@ -40,13 +40,13 @@ module Mongo
         @interval = interval
       end
 
-      # Runs the server refresher. Refreshing happens on a separate thread per
+      # Runs the server monitor. Refreshing happens on a separate thread per
       # server.
       #
-      # @example Run the refresher.
-      #   refresher.run
+      # @example Run the monitor.
+      #   monito.run
       #
-      # @return [ Thread ] The thread the refresher runs on.
+      # @return [ Thread ] The thread the monitor runs on.
       #
       # @since 3.0.0
       def run
