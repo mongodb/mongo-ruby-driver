@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
+gemspec
 gem 'rake'
-gem 'bson', '~> 2.2'
 
 group :release do
   gem 'git'
