@@ -63,9 +63,6 @@ module Mongo
       @address = Address.new(address)
       @options = options
       @mutex = Mutex.new
-      @down_ad = nil
-      @refresh = Refresh.new(self, refresh_interval)
-      # @refresh.run
     end
 
     # Is the server able to receive messages?
@@ -153,6 +150,8 @@ module Mongo
     def initialize_description!
       unless @description
         @description = Description.new(send_messages([ refresh_command ]).documents[0])
+        @refresh = Refresh.new(self, refresh_interval)
+        @refresh.run
         subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
         subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
       end
