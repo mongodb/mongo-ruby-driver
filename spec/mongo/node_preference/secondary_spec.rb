@@ -13,7 +13,7 @@ describe Mongo::NodePreference::Secondary do
   describe '#to_mongos' do
 
     it 'returns node preference formatted for mongos' do
-      expect(read_pref.to_mongos).to eq(
+      expect(node_pref.to_mongos).to eq(
         { :mode => 'secondary' }
       )
     end
@@ -22,7 +22,7 @@ describe Mongo::NodePreference::Secondary do
       let(:tag_sets) { [tag_set] }
 
       it 'returns node preference formatted for mongos with tag sets' do
-        expect(read_pref.to_mongos).to eq(
+        expect(node_pref.to_mongos).to eq(
           { :mode => 'secondary', :tags => tag_sets}
         )
       end
@@ -35,7 +35,7 @@ describe Mongo::NodePreference::Secondary do
       let(:candidates) { [] }
 
       it 'returns an empty array' do
-        expect(read_pref.select_nodes(candidates)).to be_empty
+        expect(node_pref.select_nodes(candidates)).to be_empty
       end
     end
 
@@ -43,7 +43,7 @@ describe Mongo::NodePreference::Secondary do
       let(:candidates) { [primary] }
 
       it 'returns an empty array' do
-        expect(read_pref.select_nodes(candidates)).to be_empty
+        expect(node_pref.select_nodes(candidates)).to be_empty
       end
     end
 
@@ -51,7 +51,7 @@ describe Mongo::NodePreference::Secondary do
       let(:candidates) { [secondary] }
 
       it 'returns array with secondary' do
-        expect(read_pref.select_nodes(candidates)).to eq([secondary])
+        expect(node_pref.select_nodes(candidates)).to eq([secondary])
       end
     end
 
@@ -59,7 +59,7 @@ describe Mongo::NodePreference::Secondary do
       let(:candidates) { [primary, secondary] }
 
       it 'returns array with secondary' do
-        expect(read_pref.select_nodes(candidates)).to eq([secondary])
+        expect(node_pref.select_nodes(candidates)).to eq([secondary])
       end
     end
 
@@ -67,7 +67,7 @@ describe Mongo::NodePreference::Secondary do
       let(:candidates) { [secondary, secondary, primary] }
 
       it 'returns array with all secondaries' do
-        expect(read_pref.select_nodes(candidates)).to eq([secondary, secondary])
+        expect(node_pref.select_nodes(candidates)).to eq([secondary, secondary])
       end
     end
 
@@ -81,7 +81,7 @@ describe Mongo::NodePreference::Secondary do
           let(:candidates) { [primary] }
 
           it 'returns an empty array' do
-            expect(read_pref.select_nodes(candidates)).to be_empty
+            expect(node_pref.select_nodes(candidates)).to be_empty
           end
         end
 
@@ -89,7 +89,7 @@ describe Mongo::NodePreference::Secondary do
           let(:candidates) { [secondary] }
 
           it 'returns an empty array' do
-            expect(read_pref.select_nodes(candidates)).to be_empty
+            expect(node_pref.select_nodes(candidates)).to be_empty
           end
         end
 
@@ -97,7 +97,7 @@ describe Mongo::NodePreference::Secondary do
           let(:candidates) { [matching_secondary] }
 
           it 'returns an array with matching secondary' do
-            expect(read_pref.select_nodes(candidates)).to eq([matching_secondary])
+            expect(node_pref.select_nodes(candidates)).to eq([matching_secondary])
           end
         end
       end
@@ -108,7 +108,7 @@ describe Mongo::NodePreference::Secondary do
           let(:candidates) { [primary, secondary, secondary] }
 
           it 'returns an emtpy array' do
-            expect(read_pref.select_nodes(candidates)).to be_empty
+            expect(node_pref.select_nodes(candidates)).to be_empty
           end
         end
 
@@ -116,7 +116,7 @@ describe Mongo::NodePreference::Secondary do
           let(:candidates) { [secondary, matching_secondary]}
 
           it 'returns array with matching secondary' do
-            expect(read_pref.select_nodes(candidates)).to eq([matching_secondary])
+            expect(node_pref.select_nodes(candidates)).to eq([matching_secondary])
           end
         end
 
@@ -124,7 +124,7 @@ describe Mongo::NodePreference::Secondary do
           let(:candidates) { [matching_secondary, matching_secondary] }
 
           it 'returns an array with both matching secondaries' do
-            expect(read_pref.select_nodes(candidates)).to eq([matching_secondary, matching_secondary])
+            expect(node_pref.select_nodes(candidates)).to eq([matching_secondary, matching_secondary])
           end
         end
       end
@@ -140,7 +140,7 @@ describe Mongo::NodePreference::Secondary do
           let(:candidates) { [far_primary] }
 
           it 'returns an empty array' do
-            expect(read_pref.select_nodes(candidates)).to be_empty
+            expect(node_pref.select_nodes(candidates)).to be_empty
           end
         end
 
@@ -148,7 +148,7 @@ describe Mongo::NodePreference::Secondary do
           let(:candidates) { [far_secondary] }
 
           it 'returns an array with the secondary' do
-            expect(read_pref.select_nodes(candidates)).to eq([far_secondary])
+            expect(node_pref.select_nodes(candidates)).to eq([far_secondary])
           end
         end
       end
@@ -159,7 +159,7 @@ describe Mongo::NodePreference::Secondary do
           let(:candidates) { [primary, far_secondary] }
 
           it 'returns an array with the secondary' do
-            expect(read_pref.select_nodes(candidates)).to eq([far_secondary])
+            expect(node_pref.select_nodes(candidates)).to eq([far_secondary])
           end
         end
 
@@ -167,7 +167,7 @@ describe Mongo::NodePreference::Secondary do
           let(:candidates) { [far_primary, far_secondary] }
 
           it 'returns an array with the secondary' do
-            expect(read_pref.select_nodes(candidates)).to eq([far_secondary])
+            expect(node_pref.select_nodes(candidates)).to eq([far_secondary])
           end
         end
 
@@ -177,7 +177,7 @@ describe Mongo::NodePreference::Secondary do
             let(:candidates) { [primary, secondary, far_secondary] }
 
             it 'returns an array with near secondary' do
-              expect(read_pref.select_nodes(candidates)).to eq([secondary])
+              expect(node_pref.select_nodes(candidates)).to eq([secondary])
             end
           end
 
@@ -185,7 +185,7 @@ describe Mongo::NodePreference::Secondary do
             let(:candidates) { [far_primary, secondary, secondary] }
 
             it 'returns an array with two secondaries' do
-              expect(read_pref.select_nodes(candidates)).to eq([secondary, secondary])
+              expect(node_pref.select_nodes(candidates)).to eq([secondary, secondary])
             end
           end
         end
