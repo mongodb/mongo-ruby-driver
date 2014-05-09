@@ -471,7 +471,8 @@ module Mongo
     end
 
     def max_write_batch_size
-      local_manager && local_manager.primary_pool && local_manager.primary_pool.node.max_write_batch_size
+      local_manager && local_manager.primary_pool && local_manager.primary_pool.node.max_write_batch_size ||
+        DEFAULT_MAX_WRITE_BATCH_SIZE
     end
 
     private
