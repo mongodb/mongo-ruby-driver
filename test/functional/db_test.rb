@@ -319,17 +319,18 @@ class DBTest < Test::Unit::TestCase
     end
 
     should "return profiling info" do
-      return unless @@version >= "2.2"
-      @db.profiling_level = :all
-      @coll.find()
-      @db.profiling_level = :off
+      if @@version >= "2.2"
+        @db.profiling_level = :all
+        @coll.find()
+        @db.profiling_level = :off
 
-      info = @db.profiling_info
-      assert_kind_of Array, info
-      assert info.length >= 1
-      first = info.first
-      assert_kind_of Time, first['ts']
-      assert_kind_of Numeric, first['millis']
+        info = @db.profiling_info
+        assert_kind_of Array, info
+        assert info.length >= 1
+        first = info.first
+        assert_kind_of Time, first['ts']
+        assert_kind_of Numeric, first['millis']
+      end
     end
 
     should "validate collection" do
