@@ -24,7 +24,7 @@ module Mongo
   # @since 3.0.0
   class Client
 
-    # @return [ Mongo::Cluster ] The cluster of nodes for the client.
+    # @return [ Mongo::Cluster ] The cluster of servers for the client.
     attr_reader :cluster
     # @return [ Hash ] The configuration options.
     attr_reader :options
@@ -73,7 +73,7 @@ module Mongo
 
     # Instantiate a new driver client.
     #
-    # @example Instantiate a single node or mongos client.
+    # @example Instantiate a single server or mongos client.
     #   Mongo::Client.new([ '127.0.0.1:27017' ])
     #
     # @example Instantiate a client for a replica set.
@@ -184,7 +184,7 @@ module Mongo
       # @since 3.0.0
       def connect(connection_string)
         uri = URI.new(connection_string)
-        client = new(uri.nodes, uri.options)
+        client = new(uri.servers, uri.options)
         database = uri.database
         client.use(database) if database
         client

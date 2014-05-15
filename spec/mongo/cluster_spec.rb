@@ -63,7 +63,7 @@ describe Mongo::Cluster do
       allow_any_instance_of(Mongo::Server).to receive(:operable?).and_return(true)
     end
 
-    context 'when a node with the address does not exist' do
+    context 'when a server with the address does not exist' do
 
       let(:address) do
         '127.0.0.1:27020'
@@ -73,23 +73,23 @@ describe Mongo::Cluster do
         cluster.add(address)
       end
 
-      it 'adds the node to the cluster' do
+      it 'adds the server to the cluster' do
         expect(cluster.servers.size).to eq(3)
       end
 
-      it 'returns the newly added node' do
+      it 'returns the newly added server' do
         expect(added.address.host).to eq('127.0.0.1')
         expect(added.address.port).to eq(27020)
       end
     end
 
-    context 'when a node with the address exists' do
+    context 'when a server with the address exists' do
 
       let!(:added) do
         cluster.add('127.0.0.1:27017')
       end
 
-      it 'does not add the node to the cluster' do
+      it 'does not add the server to the cluster' do
         expect(cluster.servers.size).to eq(2)
       end
 
@@ -106,7 +106,7 @@ describe Mongo::Cluster do
     end
 
     let(:servers) do
-      addresses.map { |address| Mongo::Node.new(address) }
+      addresses.map { |address| Mongo::server.new(address) }
     end
 
     let(:cluster) do

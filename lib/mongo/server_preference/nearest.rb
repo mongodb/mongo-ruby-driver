@@ -14,9 +14,9 @@
 
 module Mongo
 
-  module NodePreference
+  module ServerPreference
 
-    # Encapsulates specifications for selecting near nodes given a list
+    # Encapsulates specifications for selecting near servers given a list
     #   of candidates.
     #
     # @since 3.0.0
@@ -36,7 +36,7 @@ module Mongo
       end
 
       # Whether the slaveOk bit should be set on wire protocol messages.
-      #   I.e. whether the operation can be performed on a secondary node.
+      #   I.e. whether the operation can be performed on a secondary server.
       #
       # @return [ true ] true
       #
@@ -45,7 +45,7 @@ module Mongo
         true
       end
 
-      # Whether tag sets are allowed to be defined for this node preference.
+      # Whether tag sets are allowed to be defined for this server preference.
       #
       # @return [ true ] true
       #
@@ -54,15 +54,15 @@ module Mongo
         true
       end
 
-      # Convert this node preference definition into a format appropriate
+      # Convert this server preference definition into a format appropriate
       #   for a mongos server.
       #
-      # @example Convert this node preference definition into a format
+      # @example Convert this server preference definition into a format
       #   for mongos.
-      #   preference = Mongo::ReadPreference::Nearest.new
+      #   preference = Mongo::ServerPreference::Nearest.new
       #   preference.to_mongos
       #
-      # @return [ Hash ] The node preference formatted for a mongos server.
+      # @return [ Hash ] The server preference formatted for a mongos server.
       #
       # @since 3.0.0
       def to_mongos
@@ -71,22 +71,22 @@ module Mongo
         preference
       end
 
-      # Select the near nodes taking into account any defined tag sets and
+      # Select the near servers taking into account any defined tag sets and
       #   acceptable latency between the nearest secondary and other secondaries.
       #
-      # @example Select nearest nodes given a list of candidates.
-      #   preference = Mongo::ReadPreference::Nearest.new
-      #   preference.select_nodes([candidate_1, candidate_2])
+      # @example Select nearest servers given a list of candidates.
+      #   preference = Mongo::Serverreference::Nearest.new
+      #   preference.select_servers([candidate_1, candidate_2])
       #
-      # @return [ Array ] The nearest nodes from the list of candidates.
+      # @return [ Array ] The nearest servers from the list of candidates.
       #
       # @since 3.0.0
-      def select_nodes(candidates)
+      def select_servers(candidates)
         if tag_sets.empty?
           # @todo: check to see if candidates should be secondaries only
-          near_nodes(candidates)
+          near_servers(candidates)
         else
-          near_nodes(match_tag_sets(candidates))
+          near_servers(match_tag_sets(candidates))
         end
       end
     end

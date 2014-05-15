@@ -1,25 +1,25 @@
-shared_context 'node preference' do
-  let(:node_pref) { described_class.new(tag_sets, acceptable_latency) }
+shared_context 'server preference' do
+  let(:server_pref) { described_class.new(tag_sets, acceptable_latency) }
   let(:tag_sets) { [] }
   let(:tag_set) { { 'test' => 'tag' } }
   let(:acceptable_latency) { 15 }
-  let(:primary) { node(:primary) }
-  let(:secondary) { node(:secondary) }
+  let(:primary) { server(:primary) }
+  let(:secondary) { server(:secondary) }
 end
 
-shared_examples 'a node preference mode' do
+shared_examples 'a server preference mode' do
 
   describe '#name' do
 
     it 'returns the name' do
-      expect(node_pref.name).to eq(name)
+      expect(server_pref.name).to eq(name)
     end
   end
 
   describe '#slave_ok?' do
 
     it 'returns whether the slave_ok bit should be set' do
-      expect(node_pref.slave_ok?).to eq(slave_ok)
+      expect(server_pref.slave_ok?).to eq(slave_ok)
     end
   end
 
@@ -29,14 +29,14 @@ shared_examples 'a node preference mode' do
 
       context 'tag sets and acceptable latency are the same' do
         it 'returns true' do
-          expect(node_pref).to eq(other)
+          expect(server_pref).to eq(other)
         end
       end
 
       context 'acceptable latency is different' do
         let(:acceptable_latency) { 20 }
         it 'returns false' do
-          expect(node_pref).not_to eq(other)
+          expect(server_pref).not_to eq(other)
         end
       end
     end
@@ -49,20 +49,20 @@ shared_examples 'a node preference mode' do
       end
 
       it 'returns false' do
-        expect(node_pref).not_to eq(other)
+        expect(server_pref).not_to eq(other)
       end
     end
   end
 end
 
-shared_examples 'a node preference mode accepting tag sets' do
+shared_examples 'a server preference mode accepting tag sets' do
 
   describe '#tag_sets' do
 
     context 'tags not provided' do
 
       it 'returns an empty array' do
-        expect(node_pref.tag_sets).to be_empty
+        expect(server_pref.tag_sets).to be_empty
       end
     end
 
@@ -70,7 +70,7 @@ shared_examples 'a node preference mode accepting tag sets' do
       let(:tag_sets) { [tag_set] }
 
       it 'returns the tag sets' do
-        expect(node_pref.tag_sets).to eq(tag_sets)
+        expect(server_pref.tag_sets).to eq(tag_sets)
       end
     end
   end
@@ -83,7 +83,7 @@ shared_examples 'a node preference mode accepting tag sets' do
         let(:tag_sets) { { 'other' => 'tag'  } }
 
         it 'returns false' do
-          expect(node_pref).not_to eq(other)
+          expect(server_pref).not_to eq(other)
         end
       end
     end

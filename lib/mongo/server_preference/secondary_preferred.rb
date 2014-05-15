@@ -14,9 +14,9 @@
 
 module Mongo
 
-  module NodePreference
+  module ServerPreference
 
-    # Encapsulates specifications for selecting nodes, with
+    # Encapsulates specifications for selecting servers, with
     #   secondaries preferred, given a list of candidates.
     #
     # @since 3.0.0
@@ -36,7 +36,7 @@ module Mongo
       end
 
       # Whether the slaveOk bit should be set on wire protocol messages.
-      #   I.e. whether the operation can be performed on a secondary node.
+      #   I.e. whether the operation can be performed on a secondary server.
       #
       # @return [ true ] true
       #
@@ -45,7 +45,7 @@ module Mongo
         true
       end
 
-      # Whether tag sets are allowed to be defined for this node preference.
+      # Whether tag sets are allowed to be defined for this server preference.
       #
       # @return [ true ] true
       #
@@ -54,15 +54,15 @@ module Mongo
         true
       end
 
-      # Convert this node preference definition into a format appropriate
+      # Convert this server preference definition into a format appropriate
       #   for a mongos server.
       #
-      # @example Convert this node preference definition into a format
+      # @example Convert this server preference definition into a format
       #   for mongos.
-      #   preference = Mongo::ReadPreference::SecondaryPreferred.new
+      #   preference = Mongo::ServerPreference::SecondaryPreferred.new
       #   preference.to_mongos
       #
-      # @return [ Hash ] The node preference formatted for a mongos server.
+      # @return [ Hash ] The server preference formatted for a mongos server.
       #
       # @since 3.0.0
       def to_mongos
@@ -73,20 +73,20 @@ module Mongo
         preference
       end
 
-      # Select nodes taking into account any defined tag sets and
+      # Select servers taking into account any defined tag sets and
       #   acceptable latency, with secondaries.
       #
-      # @example Select nodes given a list of candidates,
+      # @example Select servers given a list of candidates,
       #   with secondaries preferred.
-      #   preference = Mongo::ReadPreference::SecondaryPreferred.new
-      #   preference.select_nodes([candidate_1, candidate_2])
+      #   preference = Mongo::ServerPreference::SecondaryPreferred.new
+      #   preference.select_servers([candidate_1, candidate_2])
       #
-      # @return [ Array ] A list of nodes matching tag sets and acceptable
+      # @return [ Array ] A list of servers matching tag sets and acceptable
       #   latency with secondaries preferred.
       #
       # @since 3.0.0
-      def select_nodes(candidates)
-        near_nodes(secondaries(candidates)) + primary(candidates)
+      def select_servers(candidates)
+        near_servers(secondaries(candidates)) + primary(candidates)
       end
     end
   end

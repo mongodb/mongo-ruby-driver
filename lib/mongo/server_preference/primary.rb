@@ -14,9 +14,9 @@
 
 module Mongo
 
-  module NodePreference
+  module ServerPreference
 
-    # Encapsulates specifications for selecting the primary node given a list
+    # Encapsulates specifications for selecting the primary server given a list
     #   of candidates.
     #
     # @since 3.0.0
@@ -36,7 +36,7 @@ module Mongo
       end
 
       # Whether the slaveOk bit should be set on wire protocol messages.
-      #   I.e. whether the operation can be performed on a secondary node.
+      #   I.e. whether the operation can be performed on a secondary server.
       #
       # @return [ false ] false
       #
@@ -45,7 +45,7 @@ module Mongo
         false
       end
 
-      # Whether tag sets are allowed to be defined for this node preference.
+      # Whether tag sets are allowed to be defined for this server preference.
       #
       # @return [ false ] false
       #
@@ -54,12 +54,12 @@ module Mongo
         false
       end
 
-      # Convert this node preference definition into a format appropriate
+      # Convert this server preference definition into a format appropriate
       #   for a mongos server.
       #
-      # @example Convert this node preference definition into a format
+      # @example Convert this server preference definition into a format
       #   for mongos.
-      #   preference = Mongo::ReadPreference::Primary.new
+      #   preference = Mongo::ServerPreference::Primary.new
       #   preference.to_mongos
       #
       # @return [ nil ] nil
@@ -69,16 +69,16 @@ module Mongo
         nil
       end
 
-      # Select the primary node from a list of candidates.
+      # Select the primary server from a list of candidates.
       #
-      # @example Select the primary node given a list of candidates.
-      #   preference = Mongo::ReadPreference::Primary.new
-      #   preference.select_nodes([candidate_1, candidate_2])
+      # @example Select the primary server given a list of candidates.
+      #   preference = Mongo::ServerPreference::Primary.new
+      #   preference.select_servers([candidate_1, candidate_2])
       #
-      # @return [ Array ] The primary node from the list of candidates.
+      # @return [ Array ] The primary server from the list of candidates.
       #
       # @since 3.0.0
-      def select_nodes(candidates)
+      def select_servers(candidates)
         primary(candidates)
       end
     end

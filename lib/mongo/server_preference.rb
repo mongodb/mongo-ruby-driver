@@ -12,22 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/node_preference/selectable'
-require 'mongo/node_preference/nearest'
-require 'mongo/node_preference/primary'
-require 'mongo/node_preference/primary_preferred'
-require 'mongo/node_preference/secondary'
-require 'mongo/node_preference/secondary_preferred'
+require 'mongo/server_preference/selectable'
+require 'mongo/server_preference/nearest'
+require 'mongo/server_preference/primary'
+require 'mongo/server_preference/primary_preferred'
+require 'mongo/server_preference/secondary'
+require 'mongo/server_preference/secondary_preferred'
 
 module Mongo
 
-  # Functionality for getting an object representing a specific node preference.
+  # Functionality for getting an object representing a specific server preference.
   #
   # @since 3.0.0
-  module NodePreference
+  module ServerPreference
     extend self
 
-    # Hash lookup for the node preference classes based off the symbols
+    # Hash lookup for the server preference classes based off the symbols
     #   provided in configuration.
     #
     # @since 3.0.0
@@ -39,16 +39,16 @@ module Mongo
         secondary_preferred: SecondaryPreferred
     }.freeze
 
-    # Create a node preference object.
+    # Create a server preference object.
     #
-    # @example Get a node preference object for selecting a secondary with
+    # @example Get a server preference object for selecting a secondary with
     #   specific tag sets and acceptable latency.
-    #   Mongo::NodePreference.get(:secondary, [{'tag' => 'set'}], 20)
+    #   Mongo::ServerPreference.get(:secondary, [{'tag' => 'set'}], 20)
     #
-    #  @param [ Symbol ] mode The name of the node preference mode.
-    #  @param [ Array ] tag_sets The tag sets to be used when selecting nodes.
+    #  @param [ Symbol ] mode The name of the server preference mode.
+    #  @param [ Array ] tag_sets The tag sets to be used when selecting servers.
     #  @param [ Integer ] acceptable_latency (15) The acceptable latency in milliseconds
-    #    to be used when selecting nodes.
+    #    to be used when selecting servers.
     #
     # @since 3.0.0
     # @todo: acceptable_latency should be grabbed from a global setting (client)

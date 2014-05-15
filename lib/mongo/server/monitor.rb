@@ -21,7 +21,7 @@ module Mongo
     # @since 3.0.0
     class Monitor
 
-      # @return [ Mongo::Node ] The server the monitor refreshes.
+      # @return [ Mongo::Server ] The server the monitor refreshes.
       attr_reader :server
       # @return [ Integer ] The interval the refresh happens on, in seconds.
       attr_reader :interval

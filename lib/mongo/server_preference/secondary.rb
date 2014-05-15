@@ -14,13 +14,13 @@
 
 module Mongo
 
-  module NodePreference
+  module ServerPreference
 
-    # Encapsulates specifications for selecting nodes, with the
-    #   primary preferred, given a list of candidates.
+    # Encapsulates specifications for selecting secondary servers given a list
+    #   of candidates.
     #
     # @since 3.0.0
-    class PrimaryPreferred
+    class Secondary
       include Selectable
 
       # Get the name of the server mode type.
@@ -28,15 +28,15 @@ module Mongo
       # @example Get the name of the server mode for this preference.
       #   preference.name
       #
-      # @return [ Symbol ] :primary_preferred
+      # @return [ Symbol ] :secondary
       #
       # @since 3.0.0
       def name
-        :primary_preferred
+        :secondary
       end
 
       # Whether the slaveOk bit should be set on wire protocol messages.
-      #   I.e. whether the operation can be performed on a secondary node.
+      #   I.e. whether the operation can be performed on a secondary server.
       #
       # @return [ true ] true
       #
@@ -45,7 +45,7 @@ module Mongo
         true
       end
 
-      # Whether tag sets are allowed to be defined for this node preference.
+      # Whether tag sets are allowed to be defined for this server preference.
       #
       # @return [ true ] true
       #
@@ -54,37 +54,35 @@ module Mongo
         true
       end
 
-      # Convert this node preference definition into a format appropriate
+      # Convert this server preference definition into a format appropriate
       #   for a mongos server.
       #
-      # @example Convert this node preference definition into a format
+      # @example Convert this server preference definition into a format
       #   for mongos.
-      #   preference = Mongo::ReadPreference::PrimaryPreferred.new
+      #   preference = Mongo::ServerPreference::Secondary.new
       #   preference.to_mongos
       #
-      # @return [ Hash ] The node preference formatted for a mongos server.
+      # @return [ Hash ] The server preference formatted for a mongos server.
       #
       # @since 3.0.0
       def to_mongos
-        preference = { :mode => 'primaryPreferred' }
+        preference = { :mode => 'secondary' }
         preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
         preference
       end
 
-      # Select nodes taking into account any defined tag sets and
-      #   acceptable latency, with the primary preferred.
+      # Select the secondary servers taking into account any defined tag sets and
+      #   acceptable latency between the nearest secondary and other secondaries.
       #
-      # @example Select nodes given a list of candidates,
-      #   with the primary preferred.
-      #   preference = Mongo::ReadPreference::PrimaryPreferred.new
-      #   preference.select_nodes([candidate_1, candidate_2])
+      # @example Select secondary servers given a list of candidates.
+      #   preference = Mongo::ServerPreference::Secondary.new
+      #   preference.select_servers([candidate_1, candidate_2])
       #
-      # @return [ Array ] A list of nodes matching tag sets and acceptable
-      #   latency with the primary preferred.
+      # @return [ Array ] The secondary servers from the list of candidates.
       #
       # @since 3.0.0
-      def select_nodes(candidates)
-        primary(candidates) + near_nodes(secondaries(candidates))
+      def select_servers(candidates)
+        near_servers(secondaries(candidates))
       end
     end
   end
