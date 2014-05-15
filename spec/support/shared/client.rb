@@ -6,7 +6,7 @@ shared_context 'shared client' do
   let(:db) { Mongo::Database.new(client, TEST_DB) }
 
   let(:read_obj)do
-    double('node_preference').tap do |read_obj|
+    double('server_preference').tap do |read_obj|
       allow(read_obj).to receive(:primary?).and_return(true)
       allow(read_obj).to receive(:secondary?).and_return(false)
       allow(read_obj).to receive(:secondary_preferred?).and_return(false)
@@ -20,7 +20,7 @@ shared_context 'shared client' do
   let(:client) do
     double('client').tap do |client|
       allow(client).to receive(:mongos?).and_return(false)
-      allow(client).to receive(:with_node).and_yield(connection)
+      allow(client).to receive(:with_server).and_yield(connection)
     end
   end
 
@@ -40,9 +40,9 @@ shared_context 'shared client' do
     end
   end
 
-  let(:node) do
-    double('node').tap do |node|
-      allow(node).to receive(:with_connection).and_yield(connection)
+  let(:server) do
+    double('server').tap do |server|
+      allow(server).to receive(:with_connection).and_yield(connection)
     end
   end
 end

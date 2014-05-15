@@ -13,69 +13,69 @@ describe Mongo::URI do
     end
   end
 
-  describe '#nodes' do
-    let(:string) { "#{scheme}#{nodes}" }
+  describe '#servers' do
+    let(:string) { "#{scheme}#{servers}" }
 
-    context 'single node' do
-      let(:nodes) { 'localhost' }
+    context 'single server' do
+      let(:servers) { 'localhost' }
 
-      it 'returns an array with the parsed node' do
-        expect(uri.nodes).to eq([nodes])
+      it 'returns an array with the parsed server' do
+        expect(uri.servers).to eq([servers])
       end
     end
 
-    context 'single node with port' do
-      let(:nodes) { 'localhost:27017' }
+    context 'single server with port' do
+      let(:servers) { 'localhost:27017' }
 
-      it 'returns an array with the parsed node' do
-        expect(uri.nodes).to eq([nodes])
+      it 'returns an array with the parsed server' do
+        expect(uri.servers).to eq([servers])
       end
     end
 
-    context 'numerical ipv4 node' do
-      let(:nodes) { '127.0.0.1' }
+    context 'numerical ipv4 server' do
+      let(:servers) { '127.0.0.1' }
 
-      it 'returns an array with the parsed node' do
-        expect(uri.nodes).to eq([nodes])
+      it 'returns an array with the parsed server' do
+        expect(uri.servers).to eq([servers])
       end
     end
 
-    context 'numerical ipv6 node' do
-      let(:nodes) { '[::1]:27107' }
+    context 'numerical ipv6 server' do
+      let(:servers) { '[::1]:27107' }
 
-      it 'returns an array with the parsed node' do
-        expect(uri.nodes).to eq([nodes])
+      it 'returns an array with the parsed server' do
+        expect(uri.servers).to eq([servers])
       end
     end
 
-    context 'unix socket node' do
-      let(:nodes) { '/tmp/mongodb-27017.sock' }
+    context 'unix socket server' do
+      let(:servers) { '/tmp/mongodb-27017.sock' }
 
-      it 'returns an array with the parsed node' do
-        expect(uri.nodes).to eq([nodes])
+      it 'returns an array with the parsed server' do
+        expect(uri.servers).to eq([servers])
       end
     end
 
-    context 'multiple nodes' do
-      let(:nodes) { 'localhost,127.0.0.1' }
+    context 'multiple servers' do
+      let(:servers) { 'localhost,127.0.0.1' }
 
-      it 'returns an array with the parsed nodes' do
-        expect(uri.nodes).to eq(nodes.split(','))
+      it 'returns an array with the parsed servers' do
+        expect(uri.servers).to eq(servers.split(','))
       end
     end
 
-    context 'multiple nodes with ports' do
-      let(:nodes) { '127.0.0.1:27107,localhost:27018' }
+    context 'multiple servers with ports' do
+      let(:servers) { '127.0.0.1:27107,localhost:27018' }
 
-      it 'returns an array with the parsed nodes' do
-        expect(uri.nodes).to eq(nodes.split(','))
+      it 'returns an array with the parsed servers' do
+        expect(uri.servers).to eq(servers.split(','))
       end
     end
   end
 
   describe '#credentials' do
-    let(:nodes)    { 'localhost' }
-    let(:string)   { "#{scheme}#{credentials}@#{nodes}" }
+    let(:servers)    { 'localhost' }
+    let(:string)   { "#{scheme}#{credentials}@#{servers}" }
     let(:user)     { 'tyler' }
 
     context 'username provided' do
@@ -101,8 +101,8 @@ describe Mongo::URI do
   end
 
   describe '#database' do
-    let(:nodes)  { 'localhost' }
-    let(:string) { "#{scheme}#{nodes}/#{db}" }
+    let(:servers)  { 'localhost' }
+    let(:string) { "#{scheme}#{servers}/#{db}" }
     let(:db)     { TEST_DB }
 
     context 'database provided' do
@@ -113,11 +113,11 @@ describe Mongo::URI do
   end
 
   describe '#options' do
-    let(:nodes)  { 'localhost' }
-    let(:string) { "#{scheme}#{nodes}/?#{options}" }
+    let(:servers)  { 'localhost' }
+    let(:string) { "#{scheme}#{servers}/?#{options}" }
 
     context 'when no options were provided' do
-      let(:string) { "#{scheme}#{nodes}" }
+      let(:string) { "#{scheme}#{servers}" }
 
       it 'returns an empty hash' do
         expect(uri.options).to be_empty

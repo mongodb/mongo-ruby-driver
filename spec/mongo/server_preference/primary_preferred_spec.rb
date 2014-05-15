@@ -1,42 +1,42 @@
 require 'spec_helper'
 
-describe Mongo::NodePreference::PrimaryPreferred do
-  include_context 'node preference'
+describe Mongo::ServerPreference::PrimaryPreferred do
+  include_context 'server preference'
 
-  it_behaves_like 'a node preference mode' do
+  it_behaves_like 'a server preference mode' do
     let(:name) { :primary_preferred }
     let(:slave_ok) { true }
   end
 
-  it_behaves_like 'a node preference mode accepting tag sets'
+  it_behaves_like 'a server preference mode accepting tag sets'
 
   describe '#to_mongos' do
 
     context 'tag sets not provided' do
 
-      it 'returns a node preference formatted for mongos' do
-        expect(node_pref.to_mongos).to eq({ :mode => 'primaryPreferred' })
+      it 'returns a server preference formatted for mongos' do
+        expect(server_pref.to_mongos).to eq({ :mode => 'primaryPreferred' })
       end
     end
 
     context 'tag set provided' do
       let(:tag_sets) { [tag_set] }
 
-      it 'returns a node preference formatted for mongos' do
-        expect(node_pref.to_mongos).to eq(
+      it 'returns a server preference formatted for mongos' do
+        expect(server_pref.to_mongos).to eq(
           { :mode => 'primaryPreferred', :tags => tag_sets}
         )
       end
     end
   end
 
-  describe '#select_nodes' do
+  describe '#select_servers' do
 
     context 'no candidates' do
       let(:candidates) { [] }
 
       it 'returns an empty array' do
-        expect(node_pref.select_nodes(candidates)).to be_empty
+        expect(server_pref.select_servers(candidates)).to be_empty
       end
     end
 
@@ -44,7 +44,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
       let(:candidates) { [primary] }
 
       it 'returns an array with the primary' do
-        expect(node_pref.select_nodes(candidates)).to eq( [primary] )
+        expect(server_pref.select_servers(candidates)).to eq( [primary] )
       end
     end
 
@@ -52,7 +52,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
       let(:candidates) { [secondary] }
 
       it 'returns an array with the secondary' do
-        expect(node_pref.select_nodes(candidates)).to eq( [secondary] )
+        expect(server_pref.select_servers(candidates)).to eq( [secondary] )
       end
     end
 
@@ -61,7 +61,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
       let(:expected) { [primary, secondary] }
 
       it 'returns an array with the primary first, then secondary' do
-        expect(node_pref.select_nodes(candidates)).to eq(expected)
+        expect(server_pref.select_servers(candidates)).to eq(expected)
       end
     end
 
@@ -70,17 +70,17 @@ describe Mongo::NodePreference::PrimaryPreferred do
       let(:expected) { [primary, secondary] }
 
       it 'returns an array with the primary first, then secondary' do
-        expect(node_pref.select_nodes(candidates)).to eq(expected)
+        expect(server_pref.select_servers(candidates)).to eq(expected)
       end
     end
 
     context 'tag sets provided' do
       let(:tag_sets) { [tag_set] }
       let(:matching_primary) do
-        node(:primary, :tags => tag_sets)
+        server(:primary, :tags => tag_sets)
       end
       let(:matching_secondary) do
-        node(:secondary, :tags => tag_sets)
+        server(:secondary, :tags => tag_sets)
       end
 
       context 'single candidate' do
@@ -89,7 +89,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
           let(:candidates) { [primary] }
 
           it 'returns array with primary' do
-            expect(node_pref.select_nodes(candidates)).to eq([primary])
+            expect(server_pref.select_servers(candidates)).to eq([primary])
           end
         end
 
@@ -97,7 +97,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
           let(:candidates) { [matching_primary] }
 
           it 'returns array with matching primary' do
-            expect(node_pref.select_nodes(candidates)).to eq([matching_primary])
+            expect(server_pref.select_servers(candidates)).to eq([matching_primary])
           end
         end
 
@@ -105,7 +105,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
           let(:candidates) { [matching_secondary] }
 
           it 'returns array with matching secondary' do
-            expect(node_pref.select_nodes(candidates)).to eq([matching_secondary])
+            expect(server_pref.select_servers(candidates)).to eq([matching_secondary])
           end
         end
 
@@ -113,7 +113,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
           let(:candidates) { [secondary] }
 
           it 'returns an empty array' do
-            expect(node_pref.select_nodes(candidates)).to be_empty
+            expect(server_pref.select_servers(candidates)).to be_empty
           end
         end
       end
@@ -124,7 +124,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
           let(:candidates) { [primary, secondary, secondary] }
 
           it 'returns an array with the primary' do
-            expect(node_pref.select_nodes(candidates)).to eq([primary])
+            expect(server_pref.select_servers(candidates)).to eq([primary])
           end
         end
 
@@ -132,7 +132,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
           let(:candidates) { [matching_primary, secondary, secondary] }
 
           it 'returns an array of the matching secondary, then primary' do
-            expect(node_pref.select_nodes(candidates)).to eq([matching_primary])
+            expect(server_pref.select_servers(candidates)).to eq([matching_primary])
           end
         end
 
@@ -141,7 +141,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
           let(:expected) { [primary, matching_secondary] }
 
           it 'returns an array of the primary and matching secondary' do
-            expect(node_pref.select_nodes(candidates)).to eq(expected)
+            expect(server_pref.select_servers(candidates)).to eq(expected)
           end
         end
 
@@ -150,7 +150,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
           let(:expected) { [primary, matching_secondary, matching_secondary] }
 
           it 'returns an array of the primary and matching secondaries' do
-            expect(node_pref.select_nodes(candidates)).to eq(expected)
+            expect(server_pref.select_servers(candidates)).to eq(expected)
           end
         end
 
@@ -159,15 +159,15 @@ describe Mongo::NodePreference::PrimaryPreferred do
           let(:expected) { [primary, matching_secondary] }
 
           it 'returns an array of the primary and matching secondary' do
-            expect(node_pref.select_nodes(candidates)).to eq(expected)
+            expect(server_pref.select_servers(candidates)).to eq(expected)
           end
         end
       end
     end
 
-    context 'high latency nodes' do
-      let(:far_primary) { node(:primary, :ping => 100) }
-      let(:far_secondary) { node(:secondary, :ping => 113) }
+    context 'high latency servers' do
+      let(:far_primary) { server(:primary, :ping => 100) }
+      let(:far_secondary) { server(:secondary, :ping => 113) }
 
       context 'single candidate' do
 
@@ -175,7 +175,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
           let(:candidates) { [far_primary] }
 
           it 'returns array with far primary' do
-            expect(node_pref.select_nodes(candidates)).to eq([far_primary])
+            expect(server_pref.select_servers(candidates)).to eq([far_primary])
           end
         end
 
@@ -183,7 +183,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
           let(:candidates) { [far_secondary] }
 
           it 'returns array with far primary' do
-            expect(node_pref.select_nodes(candidates)).to eq([far_secondary])
+            expect(server_pref.select_servers(candidates)).to eq([far_secondary])
           end
 
         end
@@ -196,7 +196,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
           let(:expected) { [primary, secondary] }
 
           it 'returns an array of the primary and secondary' do
-            expect(node_pref.select_nodes(candidates)).to eq(expected)
+            expect(server_pref.select_servers(candidates)).to eq(expected)
           end
         end
 
@@ -205,7 +205,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
           let(:expected) { [primary, far_secondary] }
 
           it 'returns an array of the primary and far secondary' do
-            expect(node_pref.select_nodes(candidates)).to eq(expected)
+            expect(server_pref.select_servers(candidates)).to eq(expected)
           end
         end
 
@@ -214,7 +214,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
           let(:expected) { [far_primary, secondary] }
 
           it 'returns an array of the far primary and secondary' do
-            expect(node_pref.select_nodes(candidates)).to eq(expected)
+            expect(server_pref.select_servers(candidates)).to eq(expected)
           end
         end
 
@@ -223,18 +223,18 @@ describe Mongo::NodePreference::PrimaryPreferred do
           let(:expected) { [far_primary, far_secondary] }
 
           it 'returns an array of the far primary and far secondary' do
-            expect(node_pref.select_nodes(candidates)).to eq(expected)
+            expect(server_pref.select_servers(candidates)).to eq(expected)
           end
         end
 
-        context 'two local nodes, one far node' do
+        context 'two local servers, one far server' do
 
           context 'local primary, local secondary, far secondary' do
             let(:candidates) { [primary, secondary, far_secondary] }
             let(:expected) { [primary, secondary] }
 
             it 'returns an array of the primary and secondary' do
-              expect(node_pref.select_nodes(candidates)).to eq(expected)
+              expect(server_pref.select_servers(candidates)).to eq(expected)
             end
           end
 
@@ -243,7 +243,7 @@ describe Mongo::NodePreference::PrimaryPreferred do
             let(:expected) { [far_primary, secondary, secondary] }
 
             it 'returns an array with primary then two secondaries' do
-              expect(node_pref.select_nodes(candidates)).to eq(expected)
+              expect(server_pref.select_servers(candidates)).to eq(expected)
             end
           end
         end

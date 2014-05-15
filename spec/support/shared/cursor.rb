@@ -10,7 +10,7 @@ shared_context 'shared cursor' do
     [{ :cursor_id => cursor_id,
        :nreturned => nreturned,
        :docs => (0...nreturned).to_a },
-     node]
+     server]
   end
 
   let(:responses) do
