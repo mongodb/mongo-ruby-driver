@@ -73,27 +73,27 @@ dPMQD5JX6g5HKnHFg2mZtoXQrWmJSn7p8GJK8yNTopEErA==
     cert
   end
 
-  def node(mode, opts = {})
+  def server(mode, opts = {})
     tags = opts[:tags] || {}
     ping = opts[:ping] || 0
 
-    # @todo: take some of this out when node is finished
-    double(mode.to_s).tap do |node|
-      allow(node).to receive(:primary?) do
+    # @todo: take some of this out when server is finished
+    double(mode.to_s).tap do |server|
+      allow(server).to receive(:primary?) do
         mode == :primary ? true : false
       end
-      allow(node).to receive(:secondary?) do
+      allow(server).to receive(:secondary?) do
         mode == :secondary ? true :false
       end
-      allow(node).to receive(:tags) { tags }
-      allow(node).to receive(:matches_tags?) do |tag_set|
-        node.tags.any? do |tag|
+      allow(server).to receive(:tags) { tags }
+      allow(server).to receive(:matches_tags?) do |tag_set|
+        server.tags.any? do |tag|
           tag_set.each do |k,v|
             tag.keys.include?(k) && tag[k] == v
           end
         end
       end
-      allow(node).to receive(:ping_time) { ping }
+      allow(server).to receive(:ping_time) { ping }
     end
   end
 end

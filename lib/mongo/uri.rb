@@ -21,7 +21,7 @@ module Mongo
   #
   # @example Use the uri string to make a client connection.
   #   uri = URI.new('mongodb://localhost:27017')
-  #   client = Client.new(uri.nodes, uri.options)
+  #   client = Client.new(uri.server, uri.options)
   #   client.login(uri.credentials)
   #   client[uri.database]
   class URI
@@ -38,13 +38,13 @@ module Mongo
       raise BadURI.new(string) unless @match
     end
 
-    # Get the nodes provided in the URI.
+    # Get the servers provided in the URI.
     #
-    # @example Get the nodes.
-    #   uri.nodes
+    # @example Get the servers.
+    #   uri.servers
     #
-    # @return [Array<String>] The nodes.
-    def nodes
+    # @return [Array<String>] The servers.
+    def servers
       @match[3].split(',')
     end
 
@@ -148,14 +148,14 @@ module Mongo
     # Credentials Regex: non capturing, matches 'user:password@'
     CREDENTIALS = /(?:#{USER}:#{PASSWORD}?@)?/
 
-    # Host and port Node Regex: matches anything but a forward slash
+    # Host and port server Regex: matches anything but a forward slash
     HOSTPORT = /[^\/]+/
 
-    # Unix socket Node Regex: matches unix socket node
+    # Unix socket server Regex: matches unix socket server
     UNIX = /\/.+.sock?/
 
-    # Node Regex: capturing, matches host and port node or unix node
-    NODES = /((?:(?:#{HOSTPORT}|#{UNIX}),?)+)/
+    # server Regex: capturing, matches host and port server or unix server
+    serverS = /((?:(?:#{HOSTPORT}|#{UNIX}),?)+)/
 
     # Database Regex: matches anything but the characters that cannot
     # be part of any MongoDB database name.
@@ -166,7 +166,7 @@ module Mongo
     OPTIONS = /(?:\?(?:(.+=.+)&?)+)*/
 
     # Complete URI Regex: matches all of the combined components
-    URI = /#{SCHEME}#{CREDENTIALS}#{NODES}#{DATABASE}#{OPTIONS}/
+    URI = /#{SCHEME}#{CREDENTIALS}#{serverS}#{DATABASE}#{OPTIONS}/
 
     # Hash for storing map of URI option parameters to conversion strategies
     OPTION_MAP = {}

@@ -38,7 +38,7 @@ module Mongo
       @cursor_id  = nil
       @collection = @scope.collection
       @client     = @collection.client
-      @node       = nil
+      @server     = nil
       @cache      = []
       @returned   = 0
     end
@@ -96,10 +96,10 @@ module Mongo
 
     # Close the cursor on the server.
     #
-    # If there is neither a node set or if the cursor is already closed,
+    # If there is neither a server set or if the cursor is already closed,
     # return nil. Otherwise, send a kill cursor command.
     def close
-      return nil if @node.nil? || closed?
+      return nil if @server.nil? || closed?
       kill_cursors
     end
 
@@ -115,14 +115,14 @@ module Mongo
       close if exhausted?
     end
 
-    # Send a message to a node and collect the results.
+    # Send a message to a server and collect the results.
     #
     # @todo: Brandon: verify connecton interface
     def send_and_receive(connection, message)
-      results, @node = connection.send_and_receive(MAX_QUERY_TRIES, message)
-      @cursor_id     = results[:cursor_id]
-      @returned      += results[:nreturned]
-      @cache         += results[:docs]
+      results, @server = connection.send_and_receive(MAX_QUERY_TRIES, message)
+      @cursor_id       = results[:cursor_id]
+      @returned        += results[:nreturned]
+      @cache           += results[:docs]
     end
 
     # Build the query selector and initial +Query+ message.
@@ -133,11 +133,11 @@ module Mongo
       Mongo::Protocol::Query.new(db_name, coll_name, selector, query_opts)
     end
 
-    # Send the initial query message to a node.
+    # Send the initial query message to a server.
     #
     # @todo: Brandon: verify client interface
     def send_initial_query
-      @client.with_node(read) do |connection|
+      @client.with_server(read) do |connection|
         send_and_receive(connection, initial_query_message)
       end
     end
@@ -150,12 +150,12 @@ module Mongo
       Mongo::Protocol::GetMore.new(db_name, coll_name, to_return, @cursor_id)
     end
 
-    # Send a +GetMore+ message to a node to get another batch of results.
+    # Send a +GetMore+ message to a server to get another batch of results.
     #
     # @todo: define exceptions
     def send_get_more
-      raise Exception, 'No node set' unless @node
-      @node.with_connection do |connection|
+      raise Exception, 'No server set' unless @server
+      @server.with_connection do |connection|
         send_and_receive(connection, get_more_message)
       end
     end
@@ -169,9 +169,9 @@ module Mongo
 
     # Send a +KillCursors+ message to the server and set the cursor id to 0.
     #
-    # @todo: Brandon: verify node interface
+    # @todo: Brandon: verify server interface
     def kill_cursors
-      @node.with_connection do |connection|
+      @server.with_connection do |connection|
         connection.send_message(kill_cursors_message)
       end
       @cursor_id = 0
@@ -309,7 +309,7 @@ module Mongo
     # @return [true, false] Whether the query has already been sent to
     #   the server.
     def query_run?
-      !@node.nil?
+      !@server.nil?
     end
 
     # Whether all query results have been retrieved from the server.

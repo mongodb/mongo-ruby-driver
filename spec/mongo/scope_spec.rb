@@ -563,7 +563,7 @@ describe Mongo::Scope do
       }
     end
     before(:each) do
-      allow(connection).to receive(:send_and_receive) { [results, node] }
+      allow(connection).to receive(:send_and_receive) { [results, server] }
     end
 
     describe '#each' do
