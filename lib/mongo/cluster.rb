@@ -53,7 +53,7 @@ module Mongo
     #
     # @param [ String ] address The address of the server to add.
     #
-    # @return [ Node ] The newly added server, if not present already.
+    # @return [ Server ] The newly added server, if not present already.
     #
     # @since 3.0.0
     def add(address)
@@ -92,7 +92,7 @@ module Mongo
     # @example Get the server candidates for an operation.
     #   cluster.servers
     #
-    # @return [ Array<Node> ] The candidate servers.
+    # @return [ Array<Server> ] The candidate servers.
     #
     # @since 3.0.0
     def servers
