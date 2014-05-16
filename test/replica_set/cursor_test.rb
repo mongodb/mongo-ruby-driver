@@ -132,6 +132,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
   # batch from send_initial_query is 101 documents
   # check that you get n_docs back from the query, with the same port
   def cursor_get_more_test(read=:primary)
+    return if subject_to_server_4754?(@client)
     set_read_client_and_tag(read)
     10.times do
       # assert that the query went to the correct member
@@ -152,6 +153,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
 
   # batch from get_more can be huge, so close after send_initial_query
   def kill_cursor_test(read=:primary)
+    return if subject_to_server_4754?(@client)
     set_read_client_and_tag(read)
     10.times do
       # assert that the query went to the correct member
@@ -171,6 +173,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
   end
 
   def assert_cursors_on_members(read=:primary)
+    return if subject_to_server_4754?(@client)
     set_read_client_and_tag(read)
     # assert that the query went to the correct member
     route_query(read)
