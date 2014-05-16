@@ -306,6 +306,13 @@ class Test::Unit::TestCase
   def batch_commands?(wire_version)
     wire_version >= Mongo::MongoClient::BATCH_COMMANDS
   end
+
+  def subject_to_server_4754?(client)
+    # Until SERVER-4754 is resolved, profiling info is not collected
+    # when mongod is started with --auth in versions < 2.2
+    cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
+    client.server_version < '2.2' && cmd_line_args.include?('auth')
+  end
 end
 
 # Before and after hooks for the entire test run
