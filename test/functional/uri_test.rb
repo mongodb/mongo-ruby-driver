@@ -327,4 +327,16 @@ class URITest < Test::Unit::TestCase
     assert_equal true, parser.auths.first[:extra][:canonicalize_host_name]
   end
 
+  def test_opts_case_sensitivity
+    # options gssapiservicename, authsource, replicaset, w should be case sensitive
+    uri = "mongodb://localhost?gssapiServiceName=MongoDB;" +
+            "authSource=FooBar;" +
+            "replicaSet=Foo;" +
+            "w=Majority"
+    parser = Mongo::URIParser.new(uri)
+    assert_equal 'MongoDB', parser.gssapiservicename
+    assert_equal 'FooBar',  parser.authsource
+    assert_equal 'Foo',     parser.replicaset
+    assert_equal :Majority, parser.w
+  end
 end

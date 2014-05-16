@@ -125,6 +125,12 @@ module Mongo
       :wtimeoutms           => lambda { |arg| arg.to_i }
     }
 
+    OPT_CASE_SENSITIVE = [ :authsource,
+                           :gssapiservicename,
+                           :replicaset,
+                           :w
+                         ]
+
     attr_reader :auths,
                 :authmechanism,
                 :authsource,
@@ -348,7 +354,8 @@ module Mongo
 
       opts = CGI.parse(string_opts).inject({}) do |memo, (key, value)|
         value = value.first
-        memo[key.downcase.to_sym] = value.strip.downcase
+        key_sym = key.downcase.to_sym
+        memo[key_sym] = OPT_CASE_SENSITIVE.include?(key_sym) ? value.strip : value.strip.downcase
         memo
       end
 
