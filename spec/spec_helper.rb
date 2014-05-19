@@ -22,6 +22,7 @@ end
 require 'mongo'
 require 'support/helpers'
 require 'support/matchers'
+require 'support/cluster_simulator'
 require 'rspec/autorun'
 
 RSpec.configure do |config|
@@ -30,6 +31,8 @@ RSpec.configure do |config|
   config.formatter = 'documentation'
   config.treat_symbols_as_metadata_keys_with_true_values = true
   config.include Helpers
+  config.include ClusterSimulator::Helpers
+  ClusterSimulator.configure(config)
 
   # disables 'should' syntax
   config.expect_with :rspec do |c|

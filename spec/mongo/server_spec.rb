@@ -4,7 +4,7 @@ describe Mongo::Server do
 
   describe '#dispatch' do
 
-    let(:server) do
+    let!(:server) do
       described_class.new('127.0.0.1:27017')
     end
 
@@ -22,17 +22,6 @@ describe Mongo::Server do
 
     let(:delete) do
       Mongo::Protocol::Delete.new(TEST_DB, TEST_COLL, {})
-    end
-
-    context 'when the server description is not set' do
-
-      before do
-        server.dispatch([ insert ])
-      end
-
-      it 'sets the server description' do
-        expect(server.description).to be_primary
-      end
     end
 
     context 'when providing a single message' do
@@ -170,10 +159,10 @@ describe Mongo::Server do
       end
     end
 
-    context 'when the server is not reachable' do
+    pending 'when the server is not connected' do
 
       before do
-        server.instance_variable_set(:@unreachable_since, Time.now)
+        server.instance_variable_set(:@unconnected_since, Time.now)
       end
 
       it 'returns false' do

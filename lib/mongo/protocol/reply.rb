@@ -28,6 +28,12 @@ module Mongo
 
       private
 
+      # The operation code required to specify a Reply message.
+      # @return [Fixnum] the operation code.
+      def op_code
+        1
+      end
+
       # Available flags for a Reply message.
       FLAGS = [
         :cursor_not_found,

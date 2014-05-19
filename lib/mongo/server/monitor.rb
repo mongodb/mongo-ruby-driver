@@ -52,8 +52,8 @@ module Mongo
       def run
         Thread.new(interval, server) do |i, s|
           loop do
-            s.refresh!
             sleep(i)
+            s.refresh!
           end
         end
       end

@@ -7,11 +7,11 @@ rvm:
   - ruby-head
   - jruby-19mode
   - jruby-head
-  - rbx-2.2.5
 
 jdk:
   - oraclejdk7
   - openjdk7
+  - oraclejdk8
 
 install: ruby -S bundle install --without release development
 
@@ -36,6 +36,7 @@ matrix:
   allow_failures:
     - rvm: ruby-head
     - rvm: jruby-head
+    - rvm: rbx-2.2.5
   exclude:
     - rvm: 1.9.3
       jdk: openjdk7
@@ -51,4 +52,16 @@ matrix:
       env: CI="travis"
     - rvm: rbx-2.2.5
       jdk: openjdk7
+      env: CI="travis"
+    - rvm: 1.9.3
+      jdk: oraclejdk8
+      env: CI="travis"
+    - rvm: 2.0.0
+      jdk: oraclejdk8
+      env: CI="travis"
+    - rvm: 2.1.1
+      jdk: oraclejdk8
+      env: CI="travis"
+    - rvm: ruby-head
+      jdk: oraclejdk8
       env: CI="travis"

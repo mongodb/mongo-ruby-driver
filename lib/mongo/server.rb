@@ -36,6 +36,11 @@ module Mongo
     # @since 2.0.0
     STATUS = { :ismaster => 1 }.freeze
 
+    # Error message for Unconnected errors.
+    #
+    # @since 3.0.0
+    UNCONNECTED = 'Server is currently not connected.'.freeze
+
     # @return [ String ] The configured address for the server.
     attr_reader :address
     # @return [ Server::Description ] The description of the server.
@@ -47,6 +52,25 @@ module Mongo
 
     def ==(other)
       address == other.address
+    end
+
+    # Dispatch the provided messages to the server. If the last message
+    # requires a response a reply will be returned.
+    #
+    # @example Dispatch the messages.
+    #   server.dispatch([ insert, command ])
+    #
+    # @note This method is named dispatch since 'send' is a core Ruby method on
+    #   all objects.
+    #
+    # @param [ Array<Message> ] messages The messages to dispatch.
+    #
+    # @return [ Protocol::Reply ] The reply if needed.
+    #
+    # @since 3.0.0
+    def dispatch(messages)
+      raise Unconnected, UNCONNECTED unless description
+      send_messages(messages)
     end
 
     # Instantiate a new server object. Will start the background refresh and
@@ -63,6 +87,9 @@ module Mongo
       @address = Address.new(address)
       @options = options
       @mutex = Mutex.new
+      refresh!
+      @monitor = Monitor.new(self, refresh_interval)
+      # @monitor.run
     end
 
     # Is the server able to receive messages?
@@ -70,30 +97,29 @@ module Mongo
     # @example Is the server operable?
     #   server.operable?
     #
-    # @note This is true only for a reachable server that is a secondary or
+    # @note This is true only for a connected server that is a secondary or
     #   primary and not hidden.
     #
     # @return [ true, false ] If the server is operable.
     #
     # @since 2.0.0
     def operable?
-      initialize_description!
-      return false if !reachable? || description.hidden?
+      return false if !connected? || description.hidden?
       description.primary? || description.secondary?
     end
 
-    # Is the server reachable?
+    # Is the server connected?
     #
-    # @example Is the server reachable via a connection?
-    #   server.reachable?
+    # @example Is the server connected via a connection?
+    #   server.connected?
     #
     # @note This is true if the server is alive and can accept connections.
     #
-    # @return [ true, false ] If the server is reachable.
+    # @return [ true, false ] If the server is connected.
     #
-    # @since 2.0.0
-    def reachable?
-      !@unreachable_since
+    # @since 3.0.0
+    def connected?
+      !!description
     end
 
     # Refresh the configuration for this server. Is thread-safe since the
@@ -110,26 +136,11 @@ module Mongo
     #
     # @since 2.0.0
     def refresh!
-      description.update!(send_messages([ refresh_command ]).documents[0])
-    end
-
-    # Dispatch the provided messages to the server. If the last message
-    # requires a response a reply will be returned.
-    #
-    # @example Dispatch the messages.
-    #   server.dispatch([ insert, command ])
-    #
-    # @note This method is named dispatch since 'send' is a core Ruby method on
-    #   all objects.
-    #
-    # @param [ Array<Message> ] messages The messages to dispatch.
-    #
-    # @return [ Protocol::Reply ] The reply if needed.
-    #
-    # @since 2.0.0
-    def dispatch(messages)
-      initialize_description!
-      send_messages(messages)
+      if description
+        description.update!(send_messages([ refresh_command ]).documents[0])
+      else
+        initialize_description!
+      end
     end
 
     # Get the refresh interval for the server. This will be defined via an option
@@ -145,16 +156,18 @@ module Mongo
       @refresh_interval ||= options[:refresh_interval] || REFRESH_INTERVAL
     end
 
+    # Raised when trying to dispatch a message when the server is not
+    # connected.
+    #
+    # @since 3.0.0
+    class Unconnected < RuntimeError; end
+
     private
 
     def initialize_description!
-      unless @description
-        @description = Description.new(send_messages([ refresh_command ]).documents[0])
-        @monitor = Monitor.new(self, refresh_interval)
-        @monitor.run
-        subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
-        subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
-      end
+      @description = Description.new(send_messages([ refresh_command ]).documents[0])
+      subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
+      subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
     end
 
     def pool

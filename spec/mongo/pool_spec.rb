@@ -113,17 +113,6 @@ describe Mongo::Pool do
         expect(pool.checkout).to_not eql(connection)
       end
     end
-
-    context 'when checking out more than the pool size' do
-
-      it 'raises an exception' do
-        expect {
-          6.times do
-            Thread.new { pool.checkout }.value
-          end
-        }.to raise_error(Timeout::Error)
-      end
-    end
   end
 
   describe '.get' do

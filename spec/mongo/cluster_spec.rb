@@ -9,7 +9,7 @@ describe Mongo::Cluster do
   describe '#==' do
 
     let(:addresses) do
-      ['127.0.0.1:27017', '127.0.0.1:27019']
+      ['127.0.0.1:27017']
     end
 
     let(:cluster) do
@@ -36,10 +36,10 @@ describe Mongo::Cluster do
         end
       end
 
-      context 'when the servers are not equal' do
+      context 'when the servers are not equal', simulator: 'cluster' do
 
         let(:other) do
-          described_class.new(client, ['127.0.0.1:27021'])
+          described_class.new(client, ['127.0.0.1:27020'])
         end
 
         it 'returns false' do
@@ -49,7 +49,7 @@ describe Mongo::Cluster do
     end
   end
 
-  describe '#add' do
+  describe '#add', simulator: 'cluster' do
 
     let(:addresses) do
       ['127.0.0.1:27017', '127.0.0.1:27019']
@@ -99,7 +99,7 @@ describe Mongo::Cluster do
     end
   end
 
-  describe '#initialize' do
+  describe '#initialize', simulator: 'cluster' do
 
     let(:addresses) do
       ['127.0.0.1:27017', '127.0.0.1:27019']
@@ -122,7 +122,7 @@ describe Mongo::Cluster do
     end
   end
 
-  describe '#servers' do
+  describe '#servers', simulator: 'cluster' do
 
     let(:addresses) do
       ['127.0.0.1:27017', '127.0.0.1:27019']
