@@ -6,7 +6,7 @@ describe Mongo::Cursor do
   include_context 'shared cursor'
 
   let(:cursor) do
-    described_class.new(scope).tap do
+    described_class.new(view).tap do
       allow(connection).to receive(:send_and_receive).and_return(*responses)
     end
   end
@@ -17,17 +17,17 @@ describe Mongo::Cursor do
       expect(cursor.inspect).to be_a(String)
     end
 
-    it 'returns a string containing the scope inspect string' do
-      expect(cursor.inspect).to match(/.*#{scope.inspect}.*/)
+    it 'returns a string containing the collection view inspect string' do
+      expect(cursor.inspect).to match(/.*#{view.inspect}.*/)
     end
   end
 
   context 'when the query has special fields' do
-    let(:scope_opts) { { :comment => 'test' } }
+    let(:view_opts) { { :comment => 'test' } }
 
     it 'creates a special selector with $query' do
       expect(Mongo::Protocol::Query).to receive(:new) do |a, b, selector, c|
-        expect(selector[:$query]).to eq(scope.selector)
+        expect(selector[:$query]).to eq(view.selector)
       end
       cursor.each(&b)
     end
@@ -38,7 +38,7 @@ describe Mongo::Cursor do
     it 'creates a special selector with $query' do
       allow(client).to receive(:mongos?).and_return(true)
       expect(Mongo::Protocol::Query).to receive(:new) do |a, b, selector, c|
-        expect(selector[:$query]).to eq(scope.selector)
+        expect(selector[:$query]).to eq(view.selector)
       end
       cursor.each(&b)
     end
@@ -62,7 +62,7 @@ describe Mongo::Cursor do
 
     context 'when the query has a limit' do
       let(:limit) { 8 }
-      let(:scope_opts) { { :limit => limit } }
+      let(:view_opts) { { :limit => limit } }
 
       context 'when all docs are retreived in one request' do
         let(:responses) { results(0, limit) }
@@ -181,7 +181,7 @@ describe Mongo::Cursor do
 
     context 'when the query has a negative limit' do
       let(:limit) { -5 }
-      let(:scope_opts) { { :limit => limit } }
+      let(:view_opts) { { :limit => limit } }
 
       context 'when all results are retreived in one request' do
         let(:responses) { results(0, limit.abs)  }
@@ -224,7 +224,7 @@ describe Mongo::Cursor do
     context 'when the query has a batch size greater than limit' do
       let(:batch_size) { 6 }
       let(:limit) { 5 }
-      let(:scope_opts) { { :limit => limit, :batch_size => batch_size } }
+      let(:view_opts) { { :limit => limit, :batch_size => batch_size } }
 
       context 'when all docs are retreived in one request' do
         let(:responses) { results(0, limit) }
@@ -290,7 +290,7 @@ describe Mongo::Cursor do
     context 'when the query has a limit greater than batch size' do
       let(:limit) { 15 }
       let(:batch_size) { 5 }
-      let(:scope_opts) { { :limit => limit, :batch_size => batch_size } }
+      let(:view_opts) { { :limit => limit, :batch_size => batch_size } }
       let(:responses) { [results(nonzero, batch_size) * 3] }
 
       it 'requests the batch size in the first query message' do
@@ -324,7 +324,7 @@ describe Mongo::Cursor do
 
     context 'when the query has a batch size set but no limit' do
       let(:batch_size) { 6 }
-      let(:scope_opts) { { :batch_size => batch_size } }
+      let(:view_opts) { { :batch_size => batch_size } }
 
       context 'when all docs are retreived in one request' do
         let(:responses) { results(0, batch_size) }

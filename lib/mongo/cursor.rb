@@ -17,8 +17,8 @@ module Mongo
   # Client-side representation of an iterator over a query result set on
   # the server.
   #
-  # A +Cursor+ is not created directly by a user. Rather, +Scope+ creates a
-  # +Cursor+ in an Enumerable module method.
+  # A +Cursor+ is not created directly by a user. Rather, +CollectionView+
+  # creates a +Cursor+ in an Enumerable module method.
   #
   # @example Get an array of 5 users named Emily.
   #   users.find({:name => 'Emily'}).limit(5).to_a
@@ -32,11 +32,11 @@ module Mongo
 
     # Creates a +Cursor+ object.
     #
-    # @param scope [Scope] The +Scope+ defining the query.
-    def initialize(scope)
-      @scope      = scope
+    # @param view [ CollectionView ] The +CollectionView+ defining the query.
+    def initialize(view)
+      @view       = view
       @cursor_id  = nil
-      @collection = @scope.collection
+      @collection = @view.collection
       @client     = @collection.client
       @server     = nil
       @cache      = []
@@ -47,7 +47,7 @@ module Mongo
     #
     # @return [String] A string representation of a +Cursor+ instance.
     def inspect
-      "<Mongo::Cursor:0x#{object_id} @scope=#{@scope.inspect}>"
+      "<Mongo::Cursor:0x#{object_id} @view=#{@view.inspect}>"
     end
 
     # Iterate through documents returned from the query.
@@ -208,18 +208,18 @@ module Mongo
     # @return [Hash] The query options.
     def query_opts
       {
-        :fields => @scope.fields,
-        :skip => @scope.skip,
+        :fields => @view.fields,
+        :skip => @view.skip,
         :limit => to_return,
         :flags => flags,
       }
     end
 
-    # The query options set on the +Scope+.
+    # The query options set on the +CollectionView+.
     #
-    # @return [Hash] The query options set on the +Scope+.
+    # @return [Hash] The query options set on the +CollectionView+.
     def opts
-      @scope.query_opts.empty? ? nil : @scope.query_opts
+      @view.query_opts.empty? ? nil : @view.query_opts
     end
 
     # The flags set on this query.
@@ -252,7 +252,7 @@ module Mongo
     # @return [Integer] The number of documents to return in each batch from
     #   the server.
     def batch_size
-      @scope.batch_size && @scope.batch_size > 0 ? @scope.batch_size : limit
+      @view.batch_size && @view.batch_size > 0 ? @view.batch_size : limit
     end
 
     # Whether a limit should be specified.
@@ -287,7 +287,7 @@ module Mongo
     #
     # @return [Hash] The read preference to use for this query.
     def read
-      @scope.read
+      @view.read
     end
 
     # The name of the database.
@@ -338,57 +338,57 @@ module Mongo
     #
     # @return [Hash] The selector for the query.
     def selector
-      @scope.selector
+      @view.selector
     end
 
-    # The max scan option set on the +Scope+.
+    # The max scan option set on the +CollectionView+.
     #
-    # @return [Integer, nil] The max scan setting on the +Scope+ or nil.
+    # @return [Integer, nil] The max scan setting on the +CollectionView+ or nil.
     def max_scan
-      @scope.query_opts[:max_scan]
+      @view.query_opts[:max_scan]
     end
 
-    # The snapshot setting on the +Scope+.
+    # The snapshot setting on the +CollectionView+.
     #
-    # @return [true, false, nil] The snapshot setting on +Scope+ or nil.
+    # @return [true, false, nil] The snapshot setting on +CollectionView+ or nil.
     def snapshot
-      @scope.query_opts[:snapshot]
+      @view.query_opts[:snapshot]
     end
 
-    # The show disk location setting on the +Scope+.
+    # The show disk location setting on the +CollectionView+.
     #
     # @return [true, false, nil] Either the show disk location setting on
-    #   +Scope+ or nil.
+    #   +CollectionView+ or nil.
     def show_disk_loc
-      @scope.query_opts[:show_disk_loc]
+      @view.query_opts[:show_disk_loc]
     end
 
-    # The sort setting on the +Scope+.
+    # The sort setting on the +CollectionView+.
     #
-    # @return [Hash, nil] Either the sort setting on +Scope+ or nil.
+    # @return [Hash, nil] Either the sort setting on +CollectionView+ or nil.
     def sort
-      @scope.sort
+      @view.sort
     end
 
-    # The hint setting on the +Scope+.
+    # The hint setting on the +CollectionView+.
     #
-    # @return [Hash, nil] Either the hint setting on +Scope+ or nil.
+    # @return [Hash, nil] Either the hint setting on +CollectionView+ or nil.
     def hint
-      @scope.hint
+      @view.hint
     end
 
-    # The comment setting on the +Scope+.
+    # The comment setting on the +CollectionView+.
     #
-    # @return [String, nil] Either the comment setting on +Scope+ or nil.
+    # @return [String, nil] Either the comment setting on +CollectionView+ or nil.
     def comment
-      @scope.comment
+      @view.comment
     end
 
-    # The limit setting on the +Scope+.
+    # The limit setting on the +CollectionView+.
     #
-    # @return [Integer, nil] Either the limit setting on +Scope+ or nil.
+    # @return [Integer, nil] Either the limit setting on +CollectionView+ or nil.
     def limit
-      @scope.limit
+      @view.limit
     end
 
   end

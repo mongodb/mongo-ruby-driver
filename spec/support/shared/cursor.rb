@@ -1,7 +1,7 @@
 shared_context 'shared cursor' do
 
-  let(:scope_opts) { Hash.new }
-  let(:scope) { Mongo::Scope.new(collection, {}, scope_opts) }
+  let(:view_opts) { Hash.new }
+  let(:view) { Mongo::CollectionView.new(collection, {}, view_opts) }
 
   let(:nonzero) { 1 }
   let(:b) { proc { |d| d } }
