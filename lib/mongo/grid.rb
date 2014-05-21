@@ -12,22 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'bson'
-require 'mongo/errors'
-require 'mongo/client'
-require 'mongo/cluster'
-require 'mongo/collection'
-require 'mongo/database'
-require 'mongo/loggable'
-require 'mongo/logger'
-require 'mongo/event'
-require 'mongo/grid'
-require 'mongo/pool'
-require 'mongo/protocol'
-require 'mongo/collection_view'
-require 'mongo/server'
-require 'mongo/socket'
-require 'mongo/uri'
-require 'mongo/version'
-require 'mongo/cursor'
-require 'mongo/server_preference'
+require 'mongo/grid/storable'
+require 'mongo/grid/grid_file_store'
+require 'mongo/grid/grid_file_system'
+require 'mongo/grid/grid_io'
+
+module Mongo
+
+  class GridError < StandardError; end
+
+  module Grid
+
+    # Default prefix for the 'files' and 'chunks' collections
+    #
+    # @since 3.0.0
+    DEFAULT_FS_NAME = 'fs'
+
+    # Default size for chunks of data.
+    #
+    # @since 3.0.0
+    DEFAULT_CHUNK_SIZE = 255 * 1024
+
+    # Default content type for stored files.
+    #
+    # @since 3.0.0
+    DEFAULT_CONTENT_TYPE = 'binary/octet-stream'
+  end
+end

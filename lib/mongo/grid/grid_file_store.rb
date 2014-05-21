@@ -12,22 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'bson'
-require 'mongo/errors'
-require 'mongo/client'
-require 'mongo/cluster'
-require 'mongo/collection'
-require 'mongo/database'
-require 'mongo/loggable'
-require 'mongo/logger'
-require 'mongo/event'
-require 'mongo/grid'
-require 'mongo/pool'
-require 'mongo/protocol'
-require 'mongo/collection_view'
-require 'mongo/server'
-require 'mongo/socket'
-require 'mongo/uri'
-require 'mongo/version'
-require 'mongo/cursor'
-require 'mongo/server_preference'
+module Mongo
+  module Grid
+
+    # Implementation of basic MongoDB GridFS.
+    #
+    # @since 3.0.0
+    class GridFileStore
+      include Storable
+
+      # Create a new Grid object
+      #
+      # @param [ Mongo::Collection ] files A collection for metadata.
+      # @param [ Mongo::Collection ] chunks A collection for the files themselves.
+      #
+      # @since 3.0.0
+      def initialize(files, chunks)
+        @files = files
+        @chunks = chunks
+        # @todo db - create indexes on these collections.
+      end
+    end
+  end
+end
