@@ -12,23 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'bson'
-require 'mongo/errors'
-require 'mongo/client'
-require 'mongo/cluster'
-require 'mongo/collection'
-require 'mongo/database'
-require 'mongo/grid'
-require 'mongo/loggable'
-require 'mongo/logger'
-require 'mongo/event'
-require 'mongo/pool'
-require 'mongo/protocol'
-require 'mongo/collection_view'
-require 'mongo/response'
-require 'mongo/server'
-require 'mongo/socket'
-require 'mongo/uri'
-require 'mongo/version'
-require 'mongo/cursor'
-require 'mongo/server_preference'
+module Mongo
+
+  module Response
+
+    # A response object for update operations.  Corresponds to OP_UPDATE.
+    #
+    # @since 3.0.0
+    class UpdateResponse
+      include Responsive
+
+      # Parse the 'nModified' field out from a db response to a write command.
+      #
+      # @return [ Integer ] the number of documents modified by this operation.
+      #
+      # @since 3.0.0
+      def n_modified
+        @msg['nModified']
+      end
+    end
+  end
+end
