@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/fluent/queryable'
+require 'mongo/fluent/writable'
+require 'mongo/fluent/modifyable'
+require 'mongo/fluent/validatable'
+
 module Mongo
 
   # Representation of a query and options producing a result set of documents.
@@ -31,8 +36,12 @@ module Mongo
   # @api semipublic
   class CollectionView
     include Enumerable
+    include Queryable
+    include Modifyable
+    include Writable
+    include Validatable
 
-    # @return [ Collection ] The +Collection+ to query.
+    # @return [ Collection ] The +Collection+ to perform an operation on.
     attr_reader :collection
     # @return [ Hash ] The query selector.
     attr_reader :selector
@@ -75,8 +84,8 @@ module Mongo
     #   results.
     def initialize(collection, selector = {}, opts = {})
       @collection = collection
-      @selector = selector.dup
-      @opts = opts.dup
+      @selector   = selector.dup
+      @opts       = opts.dup
     end
 
     # Get a human-readable string representation of +CollectionView+.
@@ -84,34 +93,16 @@ module Mongo
     # @return [ String ] A string representation of a +CollectionView+ instance.
     def inspect
       "<Mongo::CollectionView:0x#{object_id} namespace='#{@collection.full_namespace}" +
-      " @selector=#{@selector.inspect} @opts=#{@opts.inspect}>"
+          " @selector=#{@selector.inspect} @opts=#{@opts.inspect}>"
     end
 
     # Get the size of the result set for the query.
     #
     # @return [ Integer ] The number of documents in the result set.
     def count
+      #Mongo::Operation::Command.new({ :selector => { :count => @collection.name,
+      #                                               :query => @selector } })
       @collection.count(CollectionView.new(@collection, @selector, @opts))
-    end
-
-    # Get the explain plan for the query.
-    #
-    # @return [ Hash ] A single document with the explain plan.
-    def explain
-      explain_limit = limit || 0
-      opts = @opts.merge(:limit => -explain_limit.abs, :explain => true)
-      @collection.explain(CollectionView.new(@collection, @selector, opts))
-    end
-
-    # Get the distinct values for a specified field across a single
-    # collection.
-    # Note that if a @selector is defined, it will be used in the anaylsis.
-    #
-    # @param key [ Symbol, String ] The field to collect distinct values from.
-    #
-    # @return [ Hash ] A doc with an array of the distinct values and query plan.
-    def distinct(key)
-      @collection.distinct(self, key)
     end
 
     # Associate a comment with the query.
@@ -278,6 +269,27 @@ module Mongo
       mutate(:sort, sort)
     end
 
+    # Set the upsert flag to true for all following operations.
+    #
+    # @param upsert [ true ] (false) Whether to set the upsert flag.
+    #
+    # @return [ true, false, CollectionView ] Either the upsert setting or a
+    # new +CollectionView+.
+    def upsert(upsert = nil)
+      return !!@opts[:upsert] if upsert.nil?
+      set_option(:upsert, upsert)
+    end
+
+    # Modify this +CollectionView+ to specify that the upsert flag should be truedefine the attributes by which the result set
+    # will be sorted.
+    #
+    # @param sort [ Hash ] The attributes and directions to sort by.
+    #
+    # @return [ CollectionView ] self.
+    def upsert!(upsert = nil)
+      mutate(:upsert, upsert)
+    end
+
     # Set options for the query.
     #
     # @param q_opts [ Hash ] Query options.
@@ -326,8 +338,8 @@ module Mongo
     #   +CollectionView+ match.
     def ==(other)
       @collection == other.collection &&
-        @selector == other.selector &&
-        @opts == other.opts
+          @selector == other.selector &&
+          @opts == other.opts
     end
     alias_method :eql?, :==
 
@@ -351,6 +363,8 @@ module Mongo
       end if block_given?
       enum
     end
+    alias_method :fetch, :each
+    # @todo: specs for fetch
 
     private
 
@@ -411,6 +425,5 @@ module Mongo
       @opts.merge!(field => value) unless value.nil?
       self
     end
-
   end
 end
