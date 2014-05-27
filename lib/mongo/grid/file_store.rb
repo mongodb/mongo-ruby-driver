@@ -33,7 +33,7 @@ module Mongo
       # Grid::File object. Supported modes are 'r' and 'w'.
       #
       # @param [ String, BSON::ObjectId ] id An identifier for this file. If a String
-      #  filename, will create the file if it does not already exist. If a 
+      #  filename, will create the file if it does not already exist. If a
       #  BSON::ObjectId, will raise an error if the file does not already exist.
       # @param [ String ] mode Either 'r' or 'w'.
       # @param [ Hash ] opts Options for this file.
