@@ -40,7 +40,7 @@ require 'mongo'
 
 # connecting to the database
 client = Mongo::Client.new # defaults to localhost:27017
-db     = client['example-db']
+db     = client.use(:example-db)
 coll   = db['example-collection']
 
 # inserting documents
