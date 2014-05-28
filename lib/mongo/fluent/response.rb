@@ -1,8 +1,8 @@
 # Responsive mix-in
-require 'mongo/response/responsive'
+require 'mongo/fluent/response/responsive'
 
 # Other standard response objects
-require 'mongo/response/insert_response'
-require 'mongo/response/remove_response'
-require 'mongo/response/replace_response'
-require 'mongo/response/update_response'
+require 'mongo/fluent/response/insert_response'
+require 'mongo/fluent/response/remove_response'
+require 'mongo/fluent/response/replace_response'
+require 'mongo/fluent/response/update_response'
