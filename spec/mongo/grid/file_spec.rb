@@ -36,6 +36,11 @@ describe Mongo::Grid::File do
     chunks.save(chunk)
   end
 
+  before :nofiles => true do
+    chunks.remove({})
+    files.remove({})
+  end
+
   describe '#open' do
 
     context 'mode is neither w nor r' do
@@ -47,12 +52,7 @@ describe Mongo::Grid::File do
 
     context 'when mode is r' do
 
-      context 'when file does not already exist' do
-
-        before do
-          chunks.remove({})
-          files.remove({})
-        end
+      context 'when file does not already exist', :nofiles do
 
         it 'creates' do
           expect{ described_class.new(filename, 'r', files, chunks) }.to raise_error
@@ -74,12 +74,7 @@ describe Mongo::Grid::File do
 
       context 'when id is a filename' do
 
-        context 'when file does not exist' do
-
-          before do
-            chunks.remove({})
-            files.remove({})
-          end
+        context 'when file does not exist', :nofiles do
 
           it 'creates a new file with this name' do
             f = described_class.new(filename, 'w', files, chunks)
@@ -104,12 +99,7 @@ describe Mongo::Grid::File do
 
       context 'when id is an ObjectId' do
 
-        context 'when file does not exist' do
-
-          before do
-            chunks.remove({})
-            files.remove({})
-          end
+        context 'when file does not exist', :nofiles do
 
           it 'raises an error' do
             expect{ f = described_class.new(id, 'w', files, chunks) }.to raise_error
@@ -125,7 +115,7 @@ describe Mongo::Grid::File do
         end
       end
 
-      context 'when options are passed' do
+      context 'when options are passed', :nofiles do
 
         let(:custom_metadata) { { :type => "test" } }
         let(:custom_aliases) { [ "newfile.txt" ] }
@@ -139,8 +129,6 @@ describe Mongo::Grid::File do
         let(:files_doc) { files.find_one({ :filename => filename }) }
 
         before do
-          files.remove({})
-          chunks.remove({})
           f_custom.write(msg)
         end
 
@@ -202,12 +190,7 @@ describe Mongo::Grid::File do
 
   describe '#write' do
 
-    context 'when file is opened in w mode' do
-
-      before do
-        chunks.remove({})
-        files.remove({})
-      end
+    context 'when file is opened in w mode', :nofiles do
 
       it 'writes data to the file' do
         f_w.write(msg)
