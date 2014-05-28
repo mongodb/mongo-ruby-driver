@@ -19,7 +19,7 @@ module Mongo
 
     # Wrapper for SSL sockets.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class SSL < Socket
       include OpenSSL
 
@@ -48,7 +48,7 @@ module Mongo
       #
       # @return [ SSL ] The connected socket instance.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def connect!
         Timeout.timeout(timeout, Mongo::SocketTimeoutError) do
           socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
@@ -72,7 +72,7 @@ module Mongo
       # @param [ Integer ] family The socket family.
       # @param [ Hash ] options The ssl options.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize(host, port, timeout, family, options = {})
         @host, @port, @timeout, @options = host, port, timeout, options
         @context = create_context(options)

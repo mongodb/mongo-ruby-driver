@@ -18,7 +18,7 @@ module Mongo
 
       # Wrapper for TCP sockets.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       class TCP
         include Socket::Connectable
 
@@ -32,7 +32,7 @@ module Mongo
         #
         # @return [ TCP ] The connected socket instance.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def connect!
           initialize!
         end
@@ -48,7 +48,7 @@ module Mongo
         # @param [ Float ] timeout The socket timeout value.
         # @param [ Integer ] family The socket family.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def initialize(host, port, timeout, family)
           @host    = host
           @port    = port

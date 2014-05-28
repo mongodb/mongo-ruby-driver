@@ -44,7 +44,7 @@ module Mongo
     # @example Checkin the thread's connection to the pool.
     #   pool.checkin
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def checkin
       connection = pinned_connections.pop
       if connection && pinned_connections.empty?
@@ -61,7 +61,7 @@ module Mongo
     #
     # @return [ Mongo::Pool::Connection ] The checked out connection.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def checkout
       if pinned_connections.empty?
         connection = queue.dequeue(timeout)
@@ -82,7 +82,7 @@ module Mongo
     #
     # @param [ Hash ] options The connection pool options.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def initialize(options = {}, &block)
       @options = options
       @queue = Queue.new(pool_size, &block)
@@ -96,7 +96,7 @@ module Mongo
     #
     # @return [ Integer ] The size of the pool.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def pool_size
       @pool_size ||= options[:pool_size] || POOL_SIZE
     end
@@ -108,7 +108,7 @@ module Mongo
     #
     # @return [ Float ] The pool timeout.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def timeout
       @timeout ||= options[:timeout] || TIMEOUT
     end
@@ -122,7 +122,7 @@ module Mongo
     #
     # @return [ Object ] The result of the block.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def with_connection
       begin
         yield(checkout)
@@ -150,7 +150,7 @@ module Mongo
       #
       # @return [ Mongo::Pool ] The connection pool.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def get(server)
         MUTEX.synchronize do
           pools[server.address] ||= create_pool(server)

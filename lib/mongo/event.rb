@@ -23,22 +23,22 @@ module Mongo
 
     # When a server description has a new host added.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     HOST_ADDED = "host_added".freeze
 
     # When a server description has a host removed.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     HOST_REMOVED = "host_removed".freeze
 
     # When a server is to be added to a cluster.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     SERVER_ADDED = "server_added".freeze
 
     # When a server is to be removed from a cluster.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     SERVER_REMOVED = "server_removed".freeze
   end
 end

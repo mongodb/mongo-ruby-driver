@@ -17,7 +17,7 @@ module Mongo
 
     # This module is included for objects that need to publish events.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     module Publisher
 
       # Add an event listener for the provided event.
@@ -30,7 +30,7 @@ module Mongo
       #
       # @return [ Array<Object> ] The listeners for the event.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def add_listener(event, listener)
         listeners_for(event).push(listener)
       end
@@ -43,7 +43,7 @@ module Mongo
       # @param [ String ] event The event to publish.
       # @param [ Array<Object> ] args The objects to pass to the listeners.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def publish(event, *args)
         listeners_for(event).each { |listener| listener.handle(*args) }
       end
@@ -55,7 +55,7 @@ module Mongo
       #
       # @return [ Hash<String, Array> ] The listeners.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def listeners
         @listeners ||= {}
       end
@@ -69,7 +69,7 @@ module Mongo
       #
       # @return [ Array<Object> ] The listeners.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def listeners_for(event)
         listeners[event] ||= []
       end

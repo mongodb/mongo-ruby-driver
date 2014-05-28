@@ -18,7 +18,7 @@ module Mongo
 
   # Provides ability to log messages.
   #
-  # @since 3.0.0
+  # @since 2.0.0
   class Logger
 
     class << self
@@ -32,7 +32,7 @@ module Mongo
       # @param [ String ] message The log message.
       # @param [ String ] runtime The time of the operation.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def debug(prefix, message, runtime)
         logger.debug("#{prefix} | #{message} | runtime: #{runtime}")
       end
@@ -46,7 +46,7 @@ module Mongo
       # @param [ String ] message The log message.
       # @param [ String ] runtime The time of the operation.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def error(prefix, message, runtime)
         logger.error("#{prefix} | #{message} | runtime: #{runtime}")
       end
@@ -60,7 +60,7 @@ module Mongo
       # @param [ String ] message The log message.
       # @param [ String ] runtime The time of the operation.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def fatal(prefix, message, runtime)
         logger.fatal("#{prefix} | #{message} | runtime: #{runtime}")
       end
@@ -74,7 +74,7 @@ module Mongo
       # @param [ String ] message The log message.
       # @param [ String ] runtime The time of the operation.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def info(prefix, message, runtime)
         logger.info("#{prefix} | #{message} | runtime: #{runtime}")
       end
@@ -88,7 +88,7 @@ module Mongo
       # @param [ String ] message The log message.
       # @param [ String ] runtime The time of the operation.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def warn(prefix, message, runtime)
         logger.warn("#{prefix} | #{message} | runtime: #{runtime}")
       end
@@ -101,7 +101,7 @@ module Mongo
       #
       # @return [ ::Logger ] The wrapped logger.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def logger
         @logger ||= default_logger
       end
@@ -115,7 +115,7 @@ module Mongo
       #
       # @return [ ::Logger ] The wrapped logger.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def logger=(other)
         @logger = other
       end

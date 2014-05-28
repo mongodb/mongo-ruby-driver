@@ -19,7 +19,7 @@ module Mongo
     # Encapsulates specifications for selecting secondary servers given a list
     #   of candidates.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class Secondary
       include Selectable
 
@@ -30,7 +30,7 @@ module Mongo
       #
       # @return [ Symbol ] :secondary
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def name
         :secondary
       end
@@ -40,7 +40,7 @@ module Mongo
       #
       # @return [ true ] true
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def slave_ok?
         true
       end
@@ -49,7 +49,7 @@ module Mongo
       #
       # @return [ true ] true
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def tags_allowed?
         true
       end
@@ -64,7 +64,7 @@ module Mongo
       #
       # @return [ Hash ] The server preference formatted for a mongos server.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def to_mongos
         preference = { :mode => 'secondary' }
         preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
@@ -80,7 +80,7 @@ module Mongo
       #
       # @return [ Array ] The secondary servers from the list of candidates.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def select_servers(candidates)
         near_servers(secondaries(candidates))
       end

@@ -17,7 +17,7 @@ module Mongo
 
     # Wrapper for Unix sockets.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class Unix < Socket
 
       # @return [ String ] path The path to connect to.
@@ -36,7 +36,7 @@ module Mongo
       #
       # @return [ Unix ] The connected socket instance.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def connect!
         Timeout.timeout(timeout, Mongo::SocketTimeoutError) do
           socket.connect(path)
@@ -55,7 +55,7 @@ module Mongo
       # @param [ Float ] timeout The socket timeout value.
       # @param [ Integer ] family The socket family.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize(path, timeout, family)
         @path, @timeout = path, timeout
         super(family)

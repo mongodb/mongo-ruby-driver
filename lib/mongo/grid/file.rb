@@ -19,7 +19,7 @@ module Mongo
     #
     # @note Users should not need to instantiate this class directly.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class File
 
       # @return [ BSON::ObjectId ] Unique identifier for this file.
@@ -40,7 +40,7 @@ module Mongo
       # @options opts [ BSON::ObjectId ] :_id A custom files_id for this file.
       # @options opts [ Hash ] :metadata Any additional metadata for this file.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize(id, mode, files, chunks, opts={})
         @files         = files
         @chunks        = chunks
@@ -63,7 +63,7 @@ module Mongo
       #
       # @return [ Integer ] length of the file.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def size
         files_doc[:length]
       end
@@ -76,7 +76,7 @@ module Mongo
       #
       # @return [ String ] file data.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def read(length=nil)
         # @todo add a seek option
         ensure_mode('r') do
@@ -92,7 +92,7 @@ module Mongo
       #
       # @return [ Integer ] The number of bytes written.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def write(io)
         bytes_written = 0
         ensure_mode('w') do
@@ -113,7 +113,7 @@ module Mongo
       #
       # @return [ true, false ] Are the objects equal?
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def ==(other)
         return false unless other.is_a?(Grid::File)
         other.files_id == @files_id && other.mode == @mode
@@ -125,7 +125,7 @@ module Mongo
       #
       # @param [ BSON::ObjectId, String ] id An identifier for this file.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def init_read(id)
         metadata = files_doc(id)
         raise GridError, "File #{id} not found, could not open" unless metadata
@@ -136,7 +136,7 @@ module Mongo
       #
       # @param [ BSON::ObjectId, String ] id An identifier for this file.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def init_write(id, opts={})
         metadata = files_doc(id)
         if !metadata
@@ -155,7 +155,7 @@ module Mongo
       #
       # @param [ String ] filename The name of the file.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def init_new_file(filename, opts={})
         # @todo options for chunkSize, alias, contentType, metadata
         @files_id = opts[:_id] || BSON::ObjectId.new
@@ -176,7 +176,7 @@ module Mongo
       #
       # @return [ String ] file data.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def read_string(length)
         metadata   = files_doc
         remaining  = metadata[:length] - @file_position
@@ -203,7 +203,7 @@ module Mongo
       #
       # @return [ Integer ] number of characters written.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def write_string(data)
         bytes_written = 0
         metadata = files_doc
@@ -266,7 +266,7 @@ module Mongo
       #
       # @param [ Hash ] chunk
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def save_chunk(chunk)
         @chunks.save(chunk)
       end
@@ -274,7 +274,7 @@ module Mongo
       # Update this file's metadata.
       # @note this can only be used while in 'w' mode
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def update_metadata
         # @todo db - refactor to use an update
         metadata = files_doc
@@ -285,7 +285,7 @@ module Mongo
 
       # Raise an error if this file is not in the correct mode.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def ensure_mode(mode)
         raise GridError, "Mode must be #{mode}" unless @mode == mode
         yield
@@ -297,7 +297,7 @@ module Mongo
       #
       # @param [ BSON::ObjectId ] files_id
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def truncate(id)
         # @todo db - refactor to use an update
         metadata = files_doc
@@ -312,7 +312,7 @@ module Mongo
       #
       # @return [ Hash ] metadata document.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def files_doc(id=@files_id)
         if id.is_a?(BSON::ObjectId)
           @files.find_one({ :_id => id })

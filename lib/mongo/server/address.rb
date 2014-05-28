@@ -24,13 +24,13 @@ module Mongo
     # Represents an address to a server, either with an IP address or socket
     # path.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class Address
       extend Forwardable
 
       # Delegate the ip, host, and port methods to the resolver.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def_delegators :@resolver, :ip, :host, :port, :socket
 
       # @return [ Integer ] port The port to the connect to.
@@ -45,7 +45,7 @@ module Mongo
       #
       # @return [ true, false ] If the objects are equal.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def ==(other)
         return false unless other.is_a?(Address)
         host == other.host && port == other.port
@@ -58,7 +58,7 @@ module Mongo
       #
       # @return [ Integer ] The hash value.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def hash
         [ host, port ].hash
       end
@@ -89,7 +89,7 @@ module Mongo
       # @param [ String ] address The provided address, ip or DNS entry.
       # @param [ Hash ] options The address options.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize(address, options = {})
         case address
         when Unix::MATCH then @resolver = Unix.new(address)

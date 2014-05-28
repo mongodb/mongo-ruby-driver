@@ -17,7 +17,7 @@ module Mongo
 
     # Wrapper for TCP sockets.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class TCP < Socket
 
       # @return [ String ] host The host to connect to.
@@ -39,7 +39,7 @@ module Mongo
       #
       # @return [ TCP ] The connected socket instance.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def connect!
         Timeout.timeout(timeout, Mongo::SocketTimeoutError) do
           socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
@@ -59,7 +59,7 @@ module Mongo
       # @param [ Float ] timeout The socket timeout value.
       # @param [ Integer ] family The socket family.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize(host, port, timeout, family)
         @host, @port, @timeout = host, port, timeout
         super(family)

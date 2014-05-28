@@ -36,7 +36,7 @@ module Mongo
         #
         # @return [ SSL ] The connected socket instance.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def connect!
           initialize! do
             # Apply ssl wrapper and perform handshake.
@@ -80,7 +80,7 @@ module Mongo
         #   certificates, which are used to validate the certificates returned
         #   from the other end of the socket connection. Implies :ssl_verify.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def initialize(host, port, timeout, family, opts = {})
           @host    = host
           @port    = port
@@ -96,7 +96,7 @@ module Mongo
         #
         # @return [ true, false ] If the certificate is verified.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def verifying_certificate?
           context.verify_mode == OpenSSL::SSL::VERIFY_PEER
         end

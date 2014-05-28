@@ -22,23 +22,23 @@ module Mongo
 
   # Provides additional data around sockets for the driver's use.
   #
-  # @since 3.0.0
+  # @since 2.0.0
   class Socket
     include ::Socket::Constants
 
     # Error message for SSL related exceptions.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     SSL_ERROR = 'SSL handshake failed. MongoDB may not be configured with SSL support.'.freeze
 
     # Error message for timeouts on socket calls.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     TIMEOUT_ERROR = 'Socket request timed out'.freeze
 
     # The pack directive for timeouts.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     TIMEOUT_PACK = 'l_2'.freeze
 
     # @return [ Integer ] family The type of host family.
@@ -54,7 +54,7 @@ module Mongo
     #
     # @return [ true, false ] If the socket is alive.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def alive?
       if Kernel::select([ socket ], nil, [ socket ], 0)
         !eof? rescue false
@@ -72,7 +72,7 @@ module Mongo
     #
     # @return [ true ] Always true.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def close
       socket.close and true
     end
@@ -86,7 +86,7 @@ module Mongo
     #
     # @return [ Object ] The returned bytes.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def gets(*args)
       handle_errors { socket.gets(*args) }
     end
@@ -98,7 +98,7 @@ module Mongo
     #
     # @param [ Integer ] family The socket domain.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def initialize(family)
       @family = family
       @socket = ::Socket.new(family, SOCK_STREAM, 0)
@@ -120,7 +120,7 @@ module Mongo
     #
     # @return [ Object ] The data from the socket.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def read(length)
       data = handle_errors { socket.read(length) }
       raise Mongo::SocketError, "Asked to read #{length} bytes but got none." unless data
@@ -137,7 +137,7 @@ module Mongo
     #
     # @return [ Object ] The read byte.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def readbyte
       handle_errors { socket.readbyte }
     end
@@ -151,7 +151,7 @@ module Mongo
     #
     # @return [ Integer ] The length of bytes written to the socket.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def write(*args)
       handle_errors { socket.write(*args) }
     end

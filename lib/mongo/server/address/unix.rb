@@ -18,13 +18,13 @@ module Mongo
 
       # Sets up socket addresses.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       class Unix
         include Resolvable
 
         # The regular expression to use to match a socket path.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         MATCH = Regexp.new('\.sock').freeze
 
         # Initialize the socket resolver.
@@ -34,7 +34,7 @@ module Mongo
         #
         # @param [ String ] address The socket path.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def initialize(address)
           @host = address
         end
@@ -49,7 +49,7 @@ module Mongo
         #
         # @return [ Pool::Socket::Unix ] The socket.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def socket(timeout, ssl_opts = {})
           Socket::Unix.new(host, timeout, Socket::AF_UNIX)
         end

@@ -17,7 +17,7 @@ module Mongo
 
     # Adds convenience methods for adding listeners to event publishers.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     module Subscriber
 
       # Subscribe to the provided publisher's event.
@@ -29,7 +29,7 @@ module Mongo
       # @param [ String ] event The event.
       # @param [ Object ] listener The event listener.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def subscribe_to(publisher, event, listener)
         publisher.add_listener(event, listener)
       end

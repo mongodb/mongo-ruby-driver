@@ -23,14 +23,14 @@ module Mongo
 
   # Functionality for getting an object representing a specific server preference.
   #
-  # @since 3.0.0
+  # @since 2.0.0
   module ServerPreference
     extend self
 
     # Hash lookup for the server preference classes based off the symbols
     #   provided in configuration.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     PREFERENCES = {
         nearest: Nearest,
         primary: Primary,
@@ -50,7 +50,7 @@ module Mongo
     #  @param [ Integer ] acceptable_latency (15) The acceptable latency in milliseconds
     #    to be used when selecting servers.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     # @todo: acceptable_latency should be grabbed from a global setting (client)
     def get(mode = :primary, tag_sets = [], acceptable_latency = 15)
       PREFERENCES.fetch(mode.to_sym).new(tag_sets, acceptable_latency)

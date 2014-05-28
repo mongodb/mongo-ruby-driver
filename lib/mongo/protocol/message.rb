@@ -55,7 +55,7 @@ module Mongo
       #
       # @return [ false ] The default is to not require a reply.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def replyable?
         false
       end

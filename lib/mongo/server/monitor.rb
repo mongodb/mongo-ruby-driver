@@ -18,7 +18,7 @@ module Mongo
     # This object is responsible for keeping server status up to date, running in
     # a separate thread as to not disrupt other operations.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class Monitor
 
       # @return [ Mongo::Server ] The server the monitor refreshes.
@@ -34,7 +34,7 @@ module Mongo
       # @param [ Mongo::Server ] server The server to refresh.
       # @param [ Integer ] interval The refresh interval in seconds.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize(server, interval)
         @server = server
         @interval = interval
@@ -48,7 +48,7 @@ module Mongo
       #
       # @return [ Thread ] The thread the monitor runs on.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def run
         Thread.new(interval, server) do |i, s|
           loop do

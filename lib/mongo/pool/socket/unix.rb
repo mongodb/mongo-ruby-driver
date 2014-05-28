@@ -18,7 +18,7 @@ module Mongo
 
       # Wrapper for Unix sockets.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       class Unix
         include Socket::Connectable
 
@@ -29,7 +29,7 @@ module Mongo
         #
         # @return [ Unix ] The connected socket instance.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def connect!
           initialize!
         end
@@ -43,7 +43,7 @@ module Mongo
         # @param [ Float ] timeout The socket timeout value.
         # @param [ Integer ] family The socket family.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def initialize(path, timeout, family)
           @host    = path
           @timeout = timeout

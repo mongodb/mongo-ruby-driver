@@ -21,19 +21,19 @@ module Mongo
   # Represents a single server on the server side that can be standalone, part of
   # a replica set, or a mongos.
   #
-  # @since 3.0.0
+  # @since 2.0.0
   class Server
     include Event::Publisher
     include Event::Subscriber
 
     # The default time for a server to refresh its status is 5 seconds.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     REFRESH_INTERVAL = 5.freeze
 
     # The command used for determining server status.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     STATUS = { :ismaster => 1 }.freeze
 
     # @return [ String ] The configured address for the server.
@@ -58,7 +58,7 @@ module Mongo
     # @param [ String ] address The host:port address to connect to.
     # @param [ Hash ] options The server options.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def initialize(address, options = {})
       @address = Address.new(address)
       @options = options
@@ -75,7 +75,7 @@ module Mongo
     #
     # @return [ true, false ] If the server is operable.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def operable?
       initialize_description!
       return false if !reachable? || description.hidden?
@@ -91,7 +91,7 @@ module Mongo
     #
     # @return [ true, false ] If the server is reachable.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def reachable?
       !@unreachable_since
     end
@@ -108,7 +108,7 @@ module Mongo
     #
     # @return [ Server::Description ] The updated server description.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def refresh!
       description.update!(send_messages([ refresh_command ]).documents[0])
     end
@@ -126,7 +126,7 @@ module Mongo
     #
     # @return [ Protocol::Reply ] The reply if needed.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def dispatch(messages)
       initialize_description!
       send_messages(messages)
@@ -140,7 +140,7 @@ module Mongo
     #
     # @return [ Integer ] The refresh interval, in seconds.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def refresh_interval
       @refresh_interval ||= options[:refresh_interval] || REFRESH_INTERVAL
     end

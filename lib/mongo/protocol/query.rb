@@ -73,7 +73,7 @@ module Mongo
       #
       # @return [ true ] Always true for queries.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def replyable?
         true
       end

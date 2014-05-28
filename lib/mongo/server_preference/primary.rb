@@ -19,7 +19,7 @@ module Mongo
     # Encapsulates specifications for selecting the primary server given a list
     #   of candidates.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class Primary
       include Selectable
 
@@ -30,7 +30,7 @@ module Mongo
       #
       # @return [ Symbol ] :primary
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def name
         :primary
       end
@@ -40,7 +40,7 @@ module Mongo
       #
       # @return [ false ] false
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def slave_ok?
         false
       end
@@ -49,7 +49,7 @@ module Mongo
       #
       # @return [ false ] false
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def tags_allowed?
         false
       end
@@ -64,7 +64,7 @@ module Mongo
       #
       # @return [ nil ] nil
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def to_mongos
         nil
       end
@@ -77,7 +77,7 @@ module Mongo
       #
       # @return [ Array ] The primary server from the list of candidates.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def select_servers(candidates)
         primary(candidates)
       end

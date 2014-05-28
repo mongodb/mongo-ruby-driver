@@ -17,12 +17,12 @@ module Mongo
 
     # This class models the socket connections and their behavior.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class Connection
 
       # The default time in seconds to timeout a connection attempt.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       TIMEOUT = 5
 
       # @return [ Mongo::Server::Address ] address The address to connect to.
@@ -41,7 +41,7 @@ module Mongo
       #
       # @return [ true ] If the connection succeeded.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def connect!
         unless socket
           @socket = address.socket(timeout, ssl_opts)
@@ -60,7 +60,7 @@ module Mongo
       #
       # @return [ true ] If the disconnect succeeded.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def disconnect!
         if socket
           socket.close
@@ -78,7 +78,7 @@ module Mongo
       # @param [ Float ] timeout The connection timeout.
       # @param [ Hash ] options The connection options.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize(address, timeout = nil, options = {})
         @address  = address
         @timeout  = timeout || TIMEOUT
@@ -93,7 +93,7 @@ module Mongo
       #
       # @return [ Protocol::Reply ] The reply object.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def read
         ensure_connected do |socket|
           Protocol::Reply.deserialize(socket)
@@ -112,7 +112,7 @@ module Mongo
       #
       # @return [ Integer ] The number of bytes written.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def write(messages, buffer = '')
         messages.each do |message|
           message.serialize(buffer)

@@ -21,7 +21,7 @@ module Mongo
       # Provides common behaviour between IPv4, IPv6, and socket address
       # resolution.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       module Resolvable
 
         # @return [ String ] host The original host name.
@@ -41,7 +41,7 @@ module Mongo
         #
         # @return [ String ] The ip address.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def resolve!
           Resolv.each_address(host) do |address|
             return @ip = address if address =~ pattern

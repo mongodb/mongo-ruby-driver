@@ -17,7 +17,7 @@ module Mongo
 
     # This handles host added events for server descriptions.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class HostAdded
       include Loggable
 
@@ -31,7 +31,7 @@ module Mongo
       #
       # @param [ Mongo::Server ] server The server to publish from.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize(server)
         @server = server
       end
@@ -44,7 +44,7 @@ module Mongo
       #
       # @param [ String ] address The added host.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def handle(address)
         log(:debug, 'MONGODB', [ "#{address} added to replica set configuration." ])
         server.publish(Event::SERVER_ADDED, address)

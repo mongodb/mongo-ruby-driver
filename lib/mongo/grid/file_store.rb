@@ -22,7 +22,7 @@ module Mongo
       # @param [ Mongo::Collection ] files A collection for metadata.
       # @param [ Mongo::Collection ] chunks A collection for file data.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize(files, chunks)
         @files = files
         @chunks = chunks
@@ -46,7 +46,7 @@ module Mongo
       #
       # @return [ Grid::File ] file.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def open(id, mode, opts={})
         Grid::File.new(id, mode, @files, @chunks, opts)
       end
@@ -59,7 +59,7 @@ module Mongo
       #
       # @return [ Integer ] the number of files deleted.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def delete(id)
         if id.is_a?(BSON::ObjectId)
           delete_file(id)
@@ -77,7 +77,7 @@ module Mongo
       #
       # @return [ true, false ] does this file exist?
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def exists?(id)
         if id.is_a?(BSON::ObjectId)
           @files.count({ :_id => id }) > 0
@@ -91,7 +91,7 @@ module Mongo
       #
       # @return [ Integer ] size of FS.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def size
         @files.count
       end
@@ -102,7 +102,7 @@ module Mongo
       #
       # @return [ Array ] an array of Grid::File objects.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def find(query={})
         @files.find(query).collect do |doc|
           open(doc[:_id], 'r')
@@ -115,7 +115,7 @@ module Mongo
       #
       # @param [ BSON::ObjectId ] id A files_id for this file.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def delete_file(id)
         @chunks.remove({ :files_id => id })
         @files.remove({ :_id => id })

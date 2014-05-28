@@ -18,7 +18,7 @@ module Mongo
 
     # Provides common behavior for filtering a list of servers by server mode or tag set.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     module Selectable
 
       # @return [ Array ] tag_sets The tag sets used to select servers.
@@ -36,7 +36,7 @@ module Mongo
       #
       # @return [ true, false ] Whether the objects are equal.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def ==(other)
         name == other.name &&
             tag_sets == other.tag_sets &&
@@ -61,7 +61,7 @@ module Mongo
       # @todo: document specific error
       # @raise [ Exception ] If tag sets are specified but not allowed.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize(tag_sets = [], acceptable_latency = 15)
         # @todo: raise specific Exception
         raise Exception, "server preference #{name} cannot be combined " +
@@ -79,7 +79,7 @@ module Mongo
       #
       # @return [ Array ] The primary.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def primary(candidates)
         candidates.select(&:primary?)
       end
@@ -91,7 +91,7 @@ module Mongo
       #
       # @return [ Array ] The secondary servers.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def secondaries(candidates)
         matching_servers = candidates.select(&:secondary?)
         matching_servers = match_tag_sets(matching_servers) unless tag_sets.empty?
@@ -106,7 +106,7 @@ module Mongo
       #
       # @return [ Array ] The near servers.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def near_servers(candidates = [])
         return candidates if candidates.empty?
         nearest_server = candidates.min_by(&:ping_time)
@@ -122,7 +122,7 @@ module Mongo
       #
       # @return [ Array ] The servers matching the defined tag sets.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def match_tag_sets(candidates)
         matches = []
         tag_sets.find do |tag_set|

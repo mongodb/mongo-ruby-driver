@@ -17,22 +17,22 @@ module Mongo
   # Represents a database on the db server and operations that can execute on
   # it at this level.
   #
-  # @since 3.0.0
+  # @since 2.0.0
   class Database
 
     # The admin database name.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     ADMIN = 'admin'.freeze
 
     # The "collection" that database commands operate against.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     COMMAND = '$cmd'.freeze
 
     # The name of the collection that holds all the collection names.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     NAMESPACES = 'system.namespaces'.freeze
 
     # @return [ Mongo::Client ] The database client.
@@ -50,7 +50,7 @@ module Mongo
     #
     # @return [ true, false ] If the objects are equal.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def ==(other)
       return false unless other.is_a?(Database)
       name == other.name
@@ -65,7 +65,7 @@ module Mongo
     #
     # @return [ Mongo::Collection ] The collection object.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def [](collection_name)
       Collection.new(self, collection_name)
     end
@@ -78,7 +78,7 @@ module Mongo
     #
     # @return [ Array<String> ] The names of all non-system collections.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def collection_names
       namespaces = collection(NAMESPACES).find(
         :name => { '$not' => /#{name}\.system\,|\$/ }
@@ -96,7 +96,7 @@ module Mongo
     #
     # @return [ Array<Mongo::Collection> ] All the collections.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def collections
       collection_names.map { |name| collection(name) }
     end
@@ -129,7 +129,7 @@ module Mongo
     #
     # @raise [ Mongo::Database::InvalidName ] If the name is nil.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def initialize(client, name)
       raise InvalidName.new unless name
       @client = client
@@ -138,12 +138,12 @@ module Mongo
 
     # Exception that is raised when trying to create a database with no name.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class InvalidName < DriverError
 
       # The message is constant.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       MESSAGE = 'nil is an invalid database name. ' +
         'Please provide a string or symbol.'
 
@@ -152,7 +152,7 @@ module Mongo
       # @example Instantiate the exception.
       #   Mongo::Database::InvalidName.new
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize
         super(MESSAGE)
       end
@@ -169,7 +169,7 @@ module Mongo
     #
     # @return [ Mongo::Cluster ] The cluster.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def cluster
       client.cluster
     end

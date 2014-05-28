@@ -19,7 +19,7 @@ module Mongo
 
         # Factory module for creating SSL context objects.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         module Context
 
           class << self
@@ -33,7 +33,7 @@ module Mongo
             #
             # @return [ OpenSSL::SSL::SSLContext ] The created context.
             #
-            # @since 3.0.0
+            # @since 2.0.0
             def create(opts = {})
               context = OpenSSL::SSL::SSLContext.new
 

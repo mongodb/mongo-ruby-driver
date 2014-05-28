@@ -26,7 +26,7 @@ module Mongo
 
         # The pack directive for timeouts.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         TIMEOUT_PACK = 'l_2'.freeze
 
         # @return [ Integer ] family The socket family (IPv4, IPv6, Unix).

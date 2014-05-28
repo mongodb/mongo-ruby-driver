@@ -19,7 +19,7 @@ module Mongo
     # based on mperham's connection pool, implemented with a queue instead of a
     # stack.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class Queue
 
       # @return [ Array ] queue The underlying array of connections.
@@ -41,7 +41,7 @@ module Mongo
       #
       # @return [ Mongo::Pool::Connection ] The next connection.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def dequeue(timeout = 0.5)
         mutex.synchronize do
           dequeue_connection(timeout)
@@ -55,7 +55,7 @@ module Mongo
       #
       # @param [ Mongo::Pool::Connection ] connection The connection.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def enqueue(connection)
         mutex.synchronize do
           queue.push(connection)
@@ -71,7 +71,7 @@ module Mongo
       #
       # @param [ Integer ] size The initial size of the queue.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize(size = 0)
         @queue = Array.new(size) { yield }
         @mutex = Mutex.new

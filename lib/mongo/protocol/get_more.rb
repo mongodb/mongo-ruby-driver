@@ -49,7 +49,7 @@ module Mongo
       #
       # @return [ true ] Always true for get more.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def replyable?
         true
       end

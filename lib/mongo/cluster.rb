@@ -17,7 +17,7 @@ module Mongo
   # Represents a group of servers on the server side, either as a single server, a
   # replica set, or a single or multiple mongos.
   #
-  # @since 3.0.0
+  # @since 2.0.0
   class Cluster
     # include Subscriber
 
@@ -38,7 +38,7 @@ module Mongo
     #
     # @return [ true, false ] If the objects are equal.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def ==(other)
       return false unless other.is_a?(Cluster)
       addresses == other.addresses
@@ -55,7 +55,7 @@ module Mongo
     #
     # @return [ Server ] The newly added server, if not present already.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def add(address)
       unless addresses.include?(address)
         server = Server.new(address, options)
@@ -73,7 +73,7 @@ module Mongo
     # @param [ Array<String> ] addresses The addresses of the configured servers.
     # @param [ Hash ] options The options.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def initialize(client, addresses, options = {})
       @client = client
       @addresses = addresses
@@ -94,7 +94,7 @@ module Mongo
     #
     # @return [ Array<Server> ] The candidate servers.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def servers
       @servers.select { |server| server.operable? }
     end

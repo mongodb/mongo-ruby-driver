@@ -19,7 +19,7 @@ module Mongo
     # Encapsulates specifications for selecting servers, with the
     #   primary preferred, given a list of candidates.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class PrimaryPreferred
       include Selectable
 
@@ -30,7 +30,7 @@ module Mongo
       #
       # @return [ Symbol ] :primary_preferred
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def name
         :primary_preferred
       end
@@ -40,7 +40,7 @@ module Mongo
       #
       # @return [ true ] true
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def slave_ok?
         true
       end
@@ -49,7 +49,7 @@ module Mongo
       #
       # @return [ true ] true
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def tags_allowed?
         true
       end
@@ -64,7 +64,7 @@ module Mongo
       #
       # @return [ Hash ] The server preference formatted for a mongos server.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def to_mongos
         preference = { :mode => 'primaryPreferred' }
         preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
@@ -82,7 +82,7 @@ module Mongo
       # @return [ Array ] A list of servers matching tag sets and acceptable
       #   latency with the primary preferred.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def select_servers(candidates)
         primary(candidates) + near_servers(secondaries(candidates))
       end

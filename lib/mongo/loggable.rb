@@ -16,7 +16,7 @@ module Mongo
 
   # Allows objects to easily log operations.
   #
-  # @since 3.0.0
+  # @since 2.0.0
   module Loggable
 
     # Log the operations. If a block is provided it will be yielded to,
@@ -32,7 +32,7 @@ module Mongo
     #
     # @return [ Object ] The result of the block or nil if no block given.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def log(level, prefix, operations)
       started = Time.new
       begin

@@ -18,58 +18,58 @@ module Mongo
     # Represents a description of the server, populated by the result of the
     # ismaster command.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class Description
       include Event::Publisher
 
       # Constant for reading arbiter info from config.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       ARBITER = 'arbiterOnly'.freeze
 
       # Constant for reading arbiters info from config.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       ARBITERS = 'arbiters'.freeze
 
       # Constant for reading hidden info from config.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       HIDDEN = 'hidden'.freeze
 
       # Constant for reading hosts info from config.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       HOSTS = 'hosts'.freeze
 
       # Constant for reading max bson size info from config.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       MAX_BSON_OBJECT_SIZE = 'maxBsonObjectSize'.freeze
 
       # Constant for reading max message size info from config.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       MAX_MESSAGE_BYTES = 'maxMessageSizeBytes'.freeze
 
       # Constant for reading passive info from config.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       PASSIVE = 'passive'.freeze
 
       # Constant for reading primary info from config.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       PRIMARY = 'ismaster'.freeze
 
       # Constant for reading secondary info from config.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       SECONDARY = 'secondary'.freeze
 
       # Constant for reading replica set name info from config.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       SET_NAME = 'setName'.freeze
 
       # @return [ Hash ] The actual result from the isnamster command.
@@ -82,7 +82,7 @@ module Mongo
       #
       # @return [ true, false ] If the server is an arbiter.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def arbiter?
         !!config[ARBITER]
       end
@@ -94,7 +94,7 @@ module Mongo
       #
       # @return [ Array<String> ] The arbiters in the set.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def arbiters
         config[ARBITERS] || []
       end
@@ -106,7 +106,7 @@ module Mongo
       #
       # @return [ true, false ] If the server is hidden.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def hidden?
         !!config[HIDDEN]
       end
@@ -118,7 +118,7 @@ module Mongo
       #
       # @return [ Array<String> ] The servers in the set.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def hosts
         config[HOSTS]
       end
@@ -131,7 +131,7 @@ module Mongo
       #
       # @param [ Hash ] config The result of the ismaster command.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize(config = {})
         @config = config
       end
@@ -143,7 +143,7 @@ module Mongo
       #
       # @return [ Integer ] The maximum object size in bytes.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def max_bson_object_size
         config[MAX_BSON_OBJECT_SIZE]
       end
@@ -155,7 +155,7 @@ module Mongo
       #
       # @return [ Integer ] The maximum message size in bytes.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def max_message_size
         config[MAX_MESSAGE_BYTES]
       end
@@ -167,7 +167,7 @@ module Mongo
       #
       # @return [ true, false ] If the server is passive.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def passive?
         !!config[PASSIVE]
       end
@@ -179,7 +179,7 @@ module Mongo
       #
       # @return [ true, false ] If the server is a primary.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def primary?
         !!config[PRIMARY]
       end
@@ -191,7 +191,7 @@ module Mongo
       #
       # @return [ true, false ] If the server is a secondary.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def secondary?
         !!config[SECONDARY]
       end
@@ -204,7 +204,7 @@ module Mongo
       #
       # @return [ String, nil ] The name of the replica set.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def set_name
         config[SET_NAME]
       end
@@ -222,7 +222,7 @@ module Mongo
       #
       # @return [ Description ] The updated description.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def update!(new_config)
         find_new_servers(new_config)
         find_removed_servers(new_config)
