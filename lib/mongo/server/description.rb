@@ -52,6 +52,21 @@ module Mongo
       # @since 2.0.0
       MAX_MESSAGE_BYTES = 'maxMessageSizeBytes'.freeze
 
+      # Constant for the max wire version.
+      #
+      # @since 2.0.0
+      MAX_WIRE_VERSION = 'maxWireVersion'.freeze
+
+      # Constant for min wire version.
+      #
+      # @since 2.0.0
+      MIN_WIRE_VERSION = 'minWireVersion'.freeze
+
+      # Constant for reading max write batch size.
+      #
+      # @since 2.0.0
+      MAX_WRITE_BATCH_SIZE = 'maxWriteBatchSize'.freeze
+
       # Constant for reading passive info from config.
       #
       # @since 2.0.0
@@ -160,6 +175,42 @@ module Mongo
         config[MAX_MESSAGE_BYTES]
       end
 
+      # Get the maximum batch size for writes.
+      #
+      # @example Get the max batch size.
+      #   config.max_write_batch_size
+      #
+      # @return [ Integer ] The max batch size.
+      #
+      # @since 2.0.0
+      def max_write_batch_size
+        config[MAX_WRITE_BATCH_SIZE]
+      end
+
+      # Get the maximum wire version.
+      #
+      # @example Get the max wire version.
+      #   config.max_wire_version
+      #
+      # @return [ Integer ] The max wire version supported.
+      #
+      # @since 2.0.0
+      def max_wire_version
+        config[MAX_WIRE_VERSION]
+      end
+
+      # Get the minimum wire version.
+      #
+      # @example Get the min wire version.
+      #   config.min_wire_version
+      #
+      # @return [ Integer ] The min wire version supported.
+      #
+      # @since 2.0.0
+      def min_wire_version
+        config[MIN_WIRE_VERSION]
+      end
+
       # Will return true if the server is passive.
       #
       # @example Is the server passive?
@@ -200,12 +251,12 @@ module Mongo
       # none.
       #
       # @example Get the replica set name.
-      #   description.set_name
+      #   description.replica_set_name
       #
       # @return [ String, nil ] The name of the replica set.
       #
       # @since 2.0.0
-      def set_name
+      def replica_set_name
         config[SET_NAME]
       end
 

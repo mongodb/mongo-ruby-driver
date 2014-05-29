@@ -18,6 +18,9 @@ describe Mongo::Server::Description do
       'me' => '127.0.0.1:27019',
       'maxBsonObjectSize' => 16777216,
       'maxMessageSizeBytes' => 48000000,
+      'maxWriteBatchSize' => 1000,
+      'maxWireVersion' => 2,
+      'minWireVersion' => 0,
       'ok' => 1
     }
   end
@@ -130,6 +133,39 @@ describe Mongo::Server::Description do
     end
   end
 
+  describe '#max_write_batch_size' do
+
+    let(:description) do
+      described_class.new(replica)
+    end
+
+    it 'returns the value' do
+      expect(description.max_write_batch_size).to eq(1000)
+    end
+  end
+
+  describe '#max_wire_version' do
+
+    let(:description) do
+      described_class.new(replica)
+    end
+
+    it 'returns the value' do
+      expect(description.max_wire_version).to eq(2)
+    end
+  end
+
+  describe '#min_wire_version' do
+
+    let(:description) do
+      described_class.new(replica)
+    end
+
+    it 'returns the value' do
+      expect(description.min_wire_version).to eq(0)
+    end
+  end
+
   describe '#passive?' do
 
     context 'when the server is passive' do
@@ -205,7 +241,7 @@ describe Mongo::Server::Description do
     end
   end
 
-  describe '#set_name' do
+  describe '#replica_set_name' do
 
     context 'when the server is in a replica set' do
 
@@ -214,7 +250,7 @@ describe Mongo::Server::Description do
       end
 
       it 'returns the replica set name' do
-        expect(description.set_name).to eq('mongodb_set')
+        expect(description.replica_set_name).to eq('mongodb_set')
       end
     end
 
@@ -225,7 +261,7 @@ describe Mongo::Server::Description do
       end
 
       it 'returns nil' do
-        expect(description.set_name).to be_nil
+        expect(description.replica_set_name).to be_nil
       end
     end
   end
