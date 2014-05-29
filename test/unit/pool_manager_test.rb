@@ -106,37 +106,6 @@ class PoolManagerUnitTest < Test::Unit::TestCase
       assert_equal [['localhost', 27020]], manager.arbiters
     end
 
-    should "return clones of pool lists" do
-
-      @db.stubs(:command).returns(
-        # First call to get a socket.
-        @ismaster.merge({'ismaster' => true}),
-
-        # Subsequent calls to configure pools.
-        @ismaster.merge({'ismaster' => true}),
-        @ismaster.merge({'secondary' => true, 'maxBsonObjectSize' => 500}),
-        @ismaster.merge({'secondary' => true, 'maxMessageSizeBytes' => 700}),
-        @ismaster.merge({'arbiterOnly' => true})
-      )
-
-      seeds = [['localhost', 27017], ['localhost', 27018]]
-      manager = Mongo::PoolManager.new(@client, seeds)
-      @client.stubs(:local_manager).returns(manager)
-      manager.connect
-
-      assert_not_equal manager.instance_variable_get(:@arbiters).object_id, manager.arbiters.object_id
-      assert_not_equal manager.instance_variable_get(:@secondaries).object_id, manager.secondaries.object_id
-      assert_not_equal manager.instance_variable_get(:@secondary_pools).object_id, manager.secondary_pools.object_id
-      assert_not_equal manager.instance_variable_get(:@hosts).object_id, manager.hosts.object_id
-      assert_not_equal manager.instance_variable_get(:@pools).object_id, manager.pools.object_id
-
-      assert_not_equal manager.instance_variable_get(:@arbiters).object_id, manager.state_snapshot[:arbiters].object_id
-      assert_not_equal manager.instance_variable_get(:@secondaries).object_id, manager.state_snapshot[:secondaries].object_id
-      assert_not_equal manager.instance_variable_get(:@secondary_pools).object_id, manager.state_snapshot[:secondary_pools].object_id
-      assert_not_equal manager.instance_variable_get(:@hosts).object_id, manager.state_snapshot[:hosts].object_id
-      assert_not_equal manager.instance_variable_get(:@pools).object_id, manager.state_snapshot[:pools].object_id
-    end
-
   end
 
 end

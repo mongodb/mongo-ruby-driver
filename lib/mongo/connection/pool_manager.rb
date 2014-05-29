@@ -17,6 +17,11 @@ module Mongo
     include ThreadLocalVariableManager
 
     attr_reader :client,
+                :hosts,
+                :pools,
+                :secondaries,
+                :secondary_pools,
+                :arbiters,
                 :primary,
                 :primary_pool,
                 :seeds,
@@ -36,12 +41,12 @@ module Mongo
       @client                                   = client
       @seeds                                    = seeds
 
+      initialize_immutable_state
+      initialize_mutable_state
+
       @pools                                    = Set.new
       @primary                                  = nil
       @primary_pool                             = nil
-      @secondaries                              = Set.new
-      @secondary_pools                          = []
-      @hosts                                    = Set.new
       @members                                  = Set.new
       @refresh_required                         = false
       @max_bson_size                            = DEFAULT_MAX_BSON_SIZE
@@ -70,6 +75,7 @@ module Mongo
           thread_local[:locks][:connecting_manager] = false
         end
       end
+      clone_state
     end
 
     def refresh!(additional_seeds)
@@ -140,47 +146,6 @@ module Mongo
       read_pool.host_port
     end
 
-    def hosts
-      @connect_mutex.synchronize do
-        @hosts.nil? ? nil : @hosts.clone
-      end
-    end
-
-    def pools
-      @connect_mutex.synchronize do
-        @pools.nil? ? nil : @pools.clone
-      end
-    end
-
-    def secondaries
-      @connect_mutex.synchronize do
-        @secondaries.nil? ? nil : @secondaries.clone
-      end
-    end
-
-    def secondary_pools
-      @connect_mutex.synchronize do
-        @secondary_pools.nil? ? nil : @secondary_pools.clone
-      end
-    end
-
-    def arbiters
-      @connect_mutex.synchronize do
-        @arbiters.nil? ? nil : @arbiters.clone
-      end
-    end
-
-    def state_snapshot
-      @connect_mutex.synchronize do
-        { :pools           => @pools.nil?           ? nil : @pools.clone,
-          :secondaries     => @secondaries.nil?     ? nil : @secondaries.clone,
-          :secondary_pools => @secondary_pools.nil? ? nil : @secondary_pools.clone,
-          :hosts           => @hosts.nil?           ? nil : @hosts.clone,
-          :arbiters        => @arbiters.nil?        ? nil : @arbiters.clone
-        }
-      end
-    end
-
     private
 
     def update_max_sizes
@@ -203,7 +168,7 @@ module Mongo
 
     # For any existing members, close and remove any that are unhealthy or already closed.
     def disconnect_old_members
-      @pools.reject!   {|pool| !pool.healthy? }
+      @pools_mutable.reject!   {|pool| !pool.healthy? }
       @members.reject! {|node| !node.healthy? }
     end
 
@@ -243,13 +208,13 @@ module Mongo
     def initialize_pools(members)
       @primary_pool = nil
       @primary = nil
-      @secondaries.clear
-      @secondary_pools.clear
-      @hosts.clear
+      @secondaries_mutable.clear
+      @secondary_pools_mutable.clear
+      @hosts_mutable.clear
 
       members.each do |member|
         member.last_state = nil
-        @hosts << member.host_string
+        @hosts_mutable << member.host_string
         if member.primary?
           assign_primary(member)
         elsif member.secondary?
@@ -258,13 +223,13 @@ module Mongo
         end
       end
 
-      @arbiters = members.first.arbiters
+      @arbiters_mutable = members.first.arbiters
     end
 
     def assign_primary(member)
       member.last_state = :primary
       @primary = member.host_port
-      if existing = @pools.detect {|pool| pool.node == member }
+      if existing = @pools_mutable.detect {|pool| pool.node == member }
         @primary_pool = existing
       else
         @primary_pool = Pool.new(self.client, member.host, member.port,
@@ -272,23 +237,23 @@ module Mongo
           :timeout => self.client.pool_timeout,
           :node => member
         )
-        @pools << @primary_pool
+        @pools_mutable << @primary_pool
       end
     end
 
     def assign_secondary(member)
       member.last_state = :secondary
-      @secondaries << member.host_port
-      if existing = @pools.detect {|pool| pool.node == member }
-        @secondary_pools << existing
+      @secondaries_mutable << member.host_port
+      if existing = @pools_mutable.detect {|pool| pool.node == member }
+        @secondary_pools_mutable << existing
       else
         pool = Pool.new(self.client, member.host, member.port,
           :size => self.client.pool_size,
           :timeout => self.client.pool_timeout,
           :node => member
         )
-        @secondary_pools << pool
-        @pools << pool
+        @secondary_pools_mutable << pool
+        @pools_mutable << pool
       end
     end
 
@@ -320,6 +285,36 @@ module Mongo
          end
        end
        members
+    end
+
+    def initialize_immutable_state
+      @hosts           = Set.new.freeze
+      @pools           = Set.new.freeze
+      @secondaries     = Set.new.freeze
+      @secondary_pools = [].freeze
+      @arbiters        = [].freeze
+    end
+
+    def initialize_mutable_state
+      @hosts_mutable           = Set.new
+      @pools_mutable           = Set.new
+      @secondaries_mutable     = Set.new
+      @secondary_pools_mutable = []
+      @arbiters_mutable        = []
+    end
+
+    def clone_state
+      @hosts           = @hosts_mutable.clone
+      @pools           = @pools_mutable.clone
+      @secondaries     = @secondaries_mutable.clone
+      @secondary_pools = @secondary_pools_mutable.clone
+      @arbiters        = @arbiters_mutable.clone
+
+      @hosts.freeze
+      @pools.freeze
+      @secondaries.freeze
+      @secondary_pools.freeze
+      @arbiters.freeze
     end
   end
 end
