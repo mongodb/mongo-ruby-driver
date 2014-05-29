@@ -233,14 +233,14 @@ module Mongo
       private
 
       def find_new_servers(new_config)
-        new_config[HOSTS].each do |host|
+        (new_config[HOSTS] || []).each do |host|
           publish(Event::HOST_ADDED, host) unless hosts.include?(host)
         end
       end
 
       def find_removed_servers(new_config)
-        hosts.each do |host|
-          publish(Event::HOST_REMOVED, host) unless new_config[HOSTS].include?(host)
+        (hosts || []).each do |host|
+          publish(Event::HOST_REMOVED, host) unless (new_config[HOSTS] || []).include?(host)
         end
       end
     end
