@@ -36,7 +36,7 @@ module Mongo
                  :coll_name     => collection.name,
                  :write_concern => write_concern,
         }
-        Operation::Write::Delete.new(spec).execute(collection.client)
+        #Mongo::Operation::Write::Delete.new(spec).execute(collection.client)
       end
 
       # Removes a single document matching the query spec.
@@ -55,7 +55,7 @@ module Mongo
                  :coll_name     => collection.name,
                  :write_concern => write_concern,
         }
-        Operation::Write::Delete.new(spec).execute(collection.client)
+        #Mongo::Operation::Write::Delete.new(spec).execute(collection.client)
       end
 
       # Replaces a single document matching the query spec with the
@@ -78,7 +78,7 @@ module Mongo
                  :coll_name     => collection.name,
                  :write_concern => write_concern,
         }
-        Mongo::Operation::Write::Update.new(spec).execute(collection.client)
+        #Mongo::Operation::Write::Update.new(spec).execute(collection.client)
       end
 
       # Updates all the documents matching the query spec by applying
@@ -102,7 +102,7 @@ module Mongo
                  :coll_name     => collection.name,
                  :write_concern => write_concern,
         }
-        Mongo::Operation::Write::Update.new(spec).execute(collection.client)
+        #Mongo::Operation::Write::Update.new(spec).execute(collection.client)
       end
 
       # Updates a single document matching the query spec by applying the
@@ -125,7 +125,7 @@ module Mongo
                  :coll_name     => collection.name,
                  :write_concern => write_concern,
         }
-        Mongo::Operation::Write::Update.new(spec).execute(collection.client)
+        #Mongo::Operation::Write::Update.new(spec).execute(collection.client)
       end
 
       private

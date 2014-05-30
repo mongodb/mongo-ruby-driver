@@ -38,7 +38,7 @@ module Mongo
                  :new           => false
         }
 
-        Mongo::Operation::Command.new(spec).execute(collection.client)
+        #Mongo::Operation::Command.new(spec).execute(collection.client)
       end
 
       # Replace the document matching the query spec with the provided replacement.
@@ -61,7 +61,7 @@ module Mongo
                  :new           => false
         }
 
-        Mongo::Operation::Command.new(spec).execute(collection.client)
+        #Mongo::Operation::Command.new(spec).execute(collection.client)
       end
 
       # Update the document matching the query spec by applying the specified update.
@@ -84,7 +84,7 @@ module Mongo
                  :new           => false
         }
 
-        Mongo::Operation::Command.new(spec).execute(collection.client)
+        #Mongo::Operation::Command.new(spec).execute(collection.client)
       end
 
       # Replaces the document matching the query spec with the provided replacement.
@@ -107,7 +107,7 @@ module Mongo
                  :new           => true
         }
 
-        Mongo::Operation::Command.new(spec).execute(collection.client)
+        #Mongo::Operation::Command.new(spec).execute(collection.client)
       end
 
       # Updates the document matching the query spec with the provided update.
@@ -130,7 +130,7 @@ module Mongo
                  :new           => true
         }
 
-        Mongo::Operation::Command.new(spec).execute(collection.client)
+        #Mongo::Operation::Command.new(spec).execute(collection.client)
       end
 
       private
