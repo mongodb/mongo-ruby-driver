@@ -14,30 +14,33 @@
 
 module Mongo
 
-  # Methods for validating update and replacement documents.
-  module Validatable
+  module Fluent
 
-    # Ensure that the document represents a replacement.
-    #
-    # @todo: document specific error
-    # @raise [ Exception ] If the document has keys beginning with '$'.
-    #
-    # @since 3.0.0
-    def validate_replacement!(doc)
-      # @todo: update with real error
-      raise Exception, "document must not contain any operators" unless doc.keys.all?{|key| key !~ /^\$/}
-    end
+    # Methods for validating update and replacement documents.
+    module Validatable
 
-    # Ensure that the document represents an update.
-    #
-    # @todo: document specific error
-    # @raise [ Exception ] If the first key in the document doesn't begin with '$'.
-    #
-    # @since 3.0.0
-    def validate_update!(doc)
-      # @todo: update with real error
-      raise Exception, "document must start with an operator" unless !doc.empty? &&
-          doc.keys.first.to_s =~ /^\$/
+      # Ensure that the document represents a replacement.
+      #
+      # @todo: document specific error
+      # @raise [ Exception ] If the document has keys beginning with '$'.
+      #
+      # @since 3.0.0
+      def validate_replacement!(doc)
+        # @todo: update with real error
+        raise Exception, "document must not contain any operators" unless doc.keys.all?{|key| key !~ /^\$/}
+      end
+
+      # Ensure that the document represents an update.
+      #
+      # @todo: document specific error
+      # @raise [ Exception ] If the first key in the document doesn't begin with '$'.
+      #
+      # @since 3.0.0
+      def validate_update!(doc)
+        # @todo: update with real error
+        raise Exception, "document must start with an operator" unless !doc.empty? &&
+            doc.keys.first.to_s =~ /^\$/
+      end
     end
   end
 end

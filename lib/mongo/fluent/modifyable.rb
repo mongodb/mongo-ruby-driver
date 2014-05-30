@@ -14,133 +14,136 @@
 
 module Mongo
 
-  # These methods uses the FindAndModify command.
-  # Each method returns a document, either the original or the modified one.
-  module Modifyable
+  module Fluent
 
-    # Removes a document matching the query spec.
-    # The removed document will then be returned.
-    #
-    # @return [ Hash ] The document that was removed.
-    #
-    # @raise [ Exception ] If skip has been specified earlier in the chain.
-    #
-    # @since 3.0.0
-    def fetch_one_then_remove
-      validate_modify!
+    # These methods uses the FindAndModify command.
+    # Each method returns a document, either the original or the modified one.
+    module Modifyable
 
-      spec = { :findAndModify => collection.name,
-               :query         => selector,
-               :sort          => sort,
-               :remove        => true,
-               :new           => false
-      }
+      # Removes a document matching the query spec.
+      # The removed document will then be returned.
+      #
+      # @return [ Hash ] The document that was removed.
+      #
+      # @raise [ Exception ] If skip has been specified earlier in the chain.
+      #
+      # @since 3.0.0
+      def fetch_one_then_remove
+        validate_modify!
 
-      Mongo::Operation::Command.new(spec).execute(collection.client)
-    end
+        spec = { :findAndModify => collection.name,
+                 :query         => selector,
+                 :sort          => sort,
+                 :remove        => true,
+                 :new           => false
+        }
 
-    # Replace the document matching the query spec with the provided replacement.
-    # The original document will then be returned.
-    #
-    # @return [ Hash ] The document that has been replaced.
-    #
-    # @raise [ Exception ] If skip has been specified earlier in the chain.
-    # @raise [ Exception ] If the document has keys beginning with '$'.
-    #
-    # @since 3.0.0
-    def fetch_one_then_replace(replacement)
-      validate_modify!
-      validate_replacement!(replacement)
+        Mongo::Operation::Command.new(spec).execute(collection.client)
+      end
 
-      spec = { :findAndModify => collection.name,
-               :query         => selector,
-               :sort          => sort,
-               :update        => replacement,
-               :new           => false
-      }
+      # Replace the document matching the query spec with the provided replacement.
+      # The original document will then be returned.
+      #
+      # @return [ Hash ] The document that has been replaced.
+      #
+      # @raise [ Exception ] If skip has been specified earlier in the chain.
+      # @raise [ Exception ] If the document has keys beginning with '$'.
+      #
+      # @since 3.0.0
+      def fetch_one_then_replace(replacement)
+        validate_modify!
+        validate_replacement!(replacement)
 
-      Mongo::Operation::Command.new(spec).execute(collection.client)
-    end
+        spec = { :findAndModify => collection.name,
+                 :query         => selector,
+                 :sort          => sort,
+                 :update        => replacement,
+                 :new           => false
+        }
 
-    # Update the document matching the query spec by applying the specified update.
-    # The original document will then be returned.
-    #
-    # @return [ Hash ] The original document that has been updated.
-    #
-    # @raise [ Exception ] If skip has been specified earlier in the chain.
-    # @raise [ Exception ] If the first key in the document doesn't begin with '$'.
-    #
-    # @since 3.0.0
-    def fetch_one_then_update(update)
-      validate_modify!
-      validate_update!(update)
+        Mongo::Operation::Command.new(spec).execute(collection.client)
+      end
 
-      spec = { :findAndModify => collection.name,
-               :query         => selector,
-               :sort          => sort,
-               :update        => update,
-               :new           => false
-      }
+      # Update the document matching the query spec by applying the specified update.
+      # The original document will then be returned.
+      #
+      # @return [ Hash ] The original document that has been updated.
+      #
+      # @raise [ Exception ] If skip has been specified earlier in the chain.
+      # @raise [ Exception ] If the first key in the document doesn't begin with '$'.
+      #
+      # @since 3.0.0
+      def fetch_one_then_update(update)
+        validate_modify!
+        validate_update!(update)
 
-      Mongo::Operation::Command.new(spec).execute(collection.client)
-    end
+        spec = { :findAndModify => collection.name,
+                 :query         => selector,
+                 :sort          => sort,
+                 :update        => update,
+                 :new           => false
+        }
 
-    # Replaces the document matching the query spec with the provided replacement.
-    # The replaced document is then returned.
-    #
-    # @return [ Hash ] The replaced document.
-    #
-    # @raise [ Exception ] If skip has been specified earlier in the chain.
-    # @raise [ Exception ] If the document has keys beginning with '$'.
-    #
-    # @since 3.0.0
-    def replace_one_then_fetch(replacement)
-      validate_modify!
-      validate_replacement!(replacement)
+        Mongo::Operation::Command.new(spec).execute(collection.client)
+      end
 
-      spec = { :findAndModify => collection.name,
-               :query         => selector,
-               :sort          => sort,
-               :update        => replacement,
-               :new           => true
-      }
+      # Replaces the document matching the query spec with the provided replacement.
+      # The replaced document is then returned.
+      #
+      # @return [ Hash ] The replaced document.
+      #
+      # @raise [ Exception ] If skip has been specified earlier in the chain.
+      # @raise [ Exception ] If the document has keys beginning with '$'.
+      #
+      # @since 3.0.0
+      def replace_one_then_fetch(replacement)
+        validate_modify!
+        validate_replacement!(replacement)
 
-      Mongo::Operation::Command.new(spec).execute(collection.client)
-    end
+        spec = { :findAndModify => collection.name,
+                 :query         => selector,
+                 :sort          => sort,
+                 :update        => replacement,
+                 :new           => true
+        }
 
-    # Updates the document matching the query spec with the provided update.
-    # The updated document is then returned.
-    #
-    # @return [ Hash ] The updated document.
-    #
-    # @raise [ Exception ] If skip has been specified earlier in the chain.
-    # @raise [ Exception ] If the first key in the document doesn't begin with '$'.
-    #
-    # @since 3.0.0
-    def update_one_then_fetch(update)
-      validate_modify!
-      validate_update!(update)
+        Mongo::Operation::Command.new(spec).execute(collection.client)
+      end
 
-      spec = { :findAndModify => collection.name,
-               :query         => selector,
-               :sort          => sort,
-               :update        => update,
-               :new           => true
-      }
+      # Updates the document matching the query spec with the provided update.
+      # The updated document is then returned.
+      #
+      # @return [ Hash ] The updated document.
+      #
+      # @raise [ Exception ] If skip has been specified earlier in the chain.
+      # @raise [ Exception ] If the first key in the document doesn't begin with '$'.
+      #
+      # @since 3.0.0
+      def update_one_then_fetch(update)
+        validate_modify!
+        validate_update!(update)
 
-      Mongo::Operation::Command.new(spec).execute(collection.client)
-    end
+        spec = { :findAndModify => collection.name,
+                 :query         => selector,
+                 :sort          => sort,
+                 :update        => update,
+                 :new           => true
+        }
 
-    private
+        Mongo::Operation::Command.new(spec).execute(collection.client)
+      end
 
-    # Verifies that skip has not been specified as it's invalid with these methods.
-    #
-    # @raise [ Exception ] If skip has been specified earlier in the chain.
-    #
-    # @since 3.0.0
-    def validate_modify!
-      # @todo: update with real error
-      raise Exception, 'Skip cannot be combined with this method' if skip
+      private
+
+      # Verifies that skip has not been specified as it's invalid with these methods.
+      #
+      # @raise [ Exception ] If skip has been specified earlier in the chain.
+      #
+      # @since 3.0.0
+      def validate_modify!
+        # @todo: update with real error
+        raise Exception, 'Skip cannot be combined with this method' if skip
+      end
     end
   end
 end

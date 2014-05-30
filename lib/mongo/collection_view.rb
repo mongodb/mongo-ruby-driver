@@ -36,10 +36,10 @@ module Mongo
   # @api semipublic
   class CollectionView
     include Enumerable
-    include Queryable
-    include Modifyable
-    include Writable
-    include Validatable
+    include Fluent::Queryable
+    include Fluent::Modifyable
+    include Fluent::Writable
+    include Fluent::Validatable
 
     # @return [ Collection ] The +Collection+ to perform an operation on.
     attr_reader :collection
