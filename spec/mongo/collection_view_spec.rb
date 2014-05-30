@@ -333,6 +333,43 @@ describe Mongo::CollectionView do
     end
   end
 
+  describe '#write_concern' do
+    let(:opts) { { :write_concern => Mongo::WriteConcern::Acknowledged } }
+    let(:new_write_concern) { Mongo::WriteConcern::Unacknowledged }
+
+    context 'when a write concern is specified' do
+
+      it 'sets the write concern value' do
+        new_view = view.write_concern(new_write_concern)
+        expect(new_view.write_concern).to eq(new_write_concern)
+      end
+
+      it 'returns a new CollectionView' do
+        expect(view.write_concern(new_write_concern)).not_to be(view)
+      end
+    end
+
+    context 'when a write concern is not specified' do
+
+      it 'returns the write concern value' do
+        expect(view.write_concern).to eq(opts[:write_concern])
+      end
+    end
+  end
+
+  describe '#write_concern!' do
+    let(:opts) { { :write_concern => Mongo::WriteConcern::Acknowledged } }
+    let(:new_write_concern) { Mongo::WriteConcern::Unacknowledged }
+
+    context 'when a write concern is specified' do
+
+      it 'sets the write concern value on the same CollectionView' do
+        view.write_concern!(new_write_concern)
+        expect(view.write_concern).to eq(new_write_concern)
+      end
+    end
+  end
+
   describe '#sort' do
 
     context 'when a sort is specified' do

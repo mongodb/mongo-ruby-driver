@@ -229,6 +229,25 @@ module Mongo
       mutate(:read, read)
     end
 
+    # The write concern to use for the write.
+    #
+    # @param write_concern [ Object ] The write concern to use.
+    #
+    # @return [ Object, CollectionView ] Either the write concern or a
+    #   new +CollectionView+.
+    def write_concern(write_concern = nil)
+      set_option(:write_concern, write_concern)
+    end
+
+    # Modify this +CollectionView+ to define the write concern to use.
+    #
+    # @param write_concern [ Object ] The write concern to use.
+    #
+    # @return [ CollectionView ] self.
+    def write_concern!(write_concern = nil)
+      mutate(:write_concern, write_concern)
+    end
+
     # The number of docs to skip before returning results.
     #
     # @param skip [ Integer ] Number of docs to skip.
