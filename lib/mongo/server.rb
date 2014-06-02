@@ -50,7 +50,18 @@ module Mongo
     # @return [ Hash ] The options hash.
     attr_reader :options
 
+    # Is this server equal to another?
+    #
+    # @example Is the server equal to the other?
+    #   server == other
+    #
+    # @param [ Object ] other The object to compare to.
+    #
+    # @return [ true, false ] If the servers are equal.
+    #
+    # @since 2.0.0
     def ==(other)
+      return false unless other.is_a?(Server)
       address == other.address
     end
 

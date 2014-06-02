@@ -2,6 +2,49 @@ require 'spec_helper'
 
 describe Mongo::Server do
 
+  describe '#==' do
+
+    let(:server) do
+      described_class.new('127.0.0.1:27017')
+    end
+
+    context 'when the other is not a server' do
+
+      let(:other) do
+        false
+      end
+
+      it 'returns false' do
+        expect(server).to_not eq(other)
+      end
+    end
+
+    context 'when the other is a server' do
+
+      context 'when the addresses match' do
+
+        let(:other) do
+          described_class.new('127.0.0.1:27017')
+        end
+
+        it 'returns true' do
+          expect(server).to eq(other)
+        end
+      end
+
+      context 'when the addresses dont match', simulator: 'cluster' do
+
+        let(:other) do
+          described_class.new('127.0.0.1:27018')
+        end
+
+        it 'returns false' do
+          expect(server).to_not eq(other)
+        end
+      end
+    end
+  end
+
   describe '#dispatch' do
 
     let!(:server) do
