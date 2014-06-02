@@ -171,58 +171,6 @@ describe Mongo::Server do
     end
   end
 
-  describe '#refresh!' do
-
-    let(:address) do
-      '127.0.0.1:27017'
-    end
-
-    context 'when the server is a single server' do
-
-      let(:server) do
-        described_class.new(address)
-      end
-
-      context 'when the server is available' do
-
-        it 'flags the server as master' do
-
-        end
-
-        it 'flags the mode as operable' do
-
-        end
-
-        it 'sets the server latency' do
-
-        end
-      end
-
-      context 'when the server is down' do
-
-        it 'flags the server as down' do
-
-        end
-
-        it 'does not flag the server as operable' do
-
-        end
-
-        it 'removes the server latency' do
-
-        end
-      end
-    end
-
-    context 'when the server is a replica set' do
-
-    end
-
-    context 'when the server is mongos' do
-
-    end
-  end
-
   describe '#heartbeat_frequency' do
 
     let(:address) do

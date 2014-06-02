@@ -138,7 +138,7 @@ module Mongo
       #
       # @since 2.0.0
       def hosts
-        config[HOSTS]
+        config[HOSTS] || []
       end
 
       # Instantiate the new server description from the result of the ismaster
@@ -295,7 +295,7 @@ module Mongo
       end
 
       def find_removed_servers(new_config)
-        (hosts || []).each do |host|
+        hosts.each do |host|
           publish(Event::HOST_REMOVED, host) unless (new_config[HOSTS] || []).include?(host)
         end
       end

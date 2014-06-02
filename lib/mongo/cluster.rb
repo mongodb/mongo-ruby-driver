@@ -19,7 +19,7 @@ module Mongo
   #
   # @since 2.0.0
   class Cluster
-    # include Subscriber
+    include Event::Subscriber
 
     # @return [ Mongo::Client ] The cluster's client.
     attr_reader :client
@@ -79,11 +79,12 @@ module Mongo
       @addresses = addresses
       @options = options
       @servers = addresses.map do |address|
-        Server.new(address, options)
-        # subscribe_to(server, Event::SERVER_ADDED, ServerAddedListener.new(self))
-        # subscribe_to(server, Event::SERVER_REMOVED, ServerRemovedListener.new(self))
-        # server
+        server = Server.new(address, options)
+        subscribe_to(server, Event::SERVER_ADDED, Event::ServerAdded.new(self))
+        # subscribe_to(server, Event::SERVER_REMOVED, ServerRemoved.new(self))
+        server
       end
+      @servers.each{ |server| server.refresh! }
     end
 
     # Get a list of server candidates from the cluster that can have operations

@@ -66,7 +66,7 @@ describe Mongo::Cluster do
     context 'when a server with the address does not exist' do
 
       let(:address) do
-        '127.0.0.1:27020'
+        '127.0.0.1:27021'
       end
 
       let!(:added) do
@@ -74,12 +74,12 @@ describe Mongo::Cluster do
       end
 
       it 'adds the server to the cluster' do
-        expect(cluster.servers.size).to eq(3)
+        expect(cluster.servers.size).to eq(5)
       end
 
       it 'returns the newly added server' do
         expect(added.address.host).to eq('127.0.0.1')
-        expect(added.address.port).to eq(27020)
+        expect(added.address.port).to eq(27021)
       end
     end
 
@@ -90,7 +90,7 @@ describe Mongo::Cluster do
       end
 
       it 'does not add the server to the cluster' do
-        expect(cluster.servers.size).to eq(2)
+        expect(cluster.servers.size).to eq(4)
       end
 
       it 'returns nil' do
@@ -120,6 +120,24 @@ describe Mongo::Cluster do
     it 'sets the client' do
       expect(cluster.client).to eq(client)
     end
+
+    context 'when the cluster is a replica set' do
+
+      context 'when servers are discovered' do
+
+        let(:cluster) do
+          described_class.new(client, addresses)
+        end
+
+        it 'automatically adds the members to the cluster' do
+          expect(cluster.servers.size).to eq(4)
+        end
+      end
+
+      context 'when servers are removed' do
+
+      end
+    end
   end
 
   describe '#servers', simulator: 'cluster' do
@@ -144,7 +162,7 @@ describe Mongo::Cluster do
       end
 
       it 'returns all servers' do
-        expect(cluster.servers.size).to eq(2)
+        expect(cluster.servers.size).to eq(4)
       end
     end
 
@@ -156,7 +174,7 @@ describe Mongo::Cluster do
       end
 
       it 'returns all alive servers' do
-        expect(cluster.servers.size).to eq(1)
+        expect(cluster.servers.size).to eq(3)
       end
     end
   end

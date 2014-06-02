@@ -87,8 +87,10 @@ module Mongo
       @address = Address.new(address)
       @options = options
       @mutex = Mutex.new
-      refresh!
       @monitor = Monitor.new(self, heartbeat_frequency)
+      @description = Description.new
+      subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
+      subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
       # @monitor.run
     end
 
@@ -136,11 +138,7 @@ module Mongo
     #
     # @since 2.0.0
     def refresh!
-      if description
-        description.update!(*ismaster)
-      else
-        initialize_description!
-      end
+      description.update!(*ismaster)
     end
 
     # Get the refresh interval for the server. This will be defined via an option
@@ -164,12 +162,6 @@ module Mongo
 
     private
 
-    def initialize_description!
-      @description = Description.new(*ismaster)
-      subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
-      subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
-    end
-
     def ismaster
       start = Time.now
       ismaster = send_messages([ refresh_command ]).documents[0]
@@ -181,7 +173,6 @@ module Mongo
       @pool ||= Pool.get(self)
     end
 
-    # @todo: Need to sort out read preference here.
     def refresh_command
       Protocol::Query.new(
         Database::ADMIN,
