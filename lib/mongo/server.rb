@@ -137,7 +137,7 @@ module Mongo
     # @since 2.0.0
     def refresh!
       if description
-        description.update!(send_messages([ refresh_command ]).documents[0])
+        description.update!(*ismaster)
       else
         initialize_description!
       end
@@ -165,9 +165,16 @@ module Mongo
     private
 
     def initialize_description!
-      @description = Description.new(send_messages([ refresh_command ]).documents[0])
+      @description = Description.new(*ismaster)
       subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
       subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
+    end
+
+    def ismaster
+      start = Time.now
+      ismaster = send_messages([ refresh_command ]).documents[0]
+      round_trip_time = Time.now - start
+      return ismaster, round_trip_time
     end
 
     def pool

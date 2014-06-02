@@ -278,10 +278,11 @@ module Mongo
       # @return [ Description ] The updated description.
       #
       # @since 2.0.0
-      def update!(new_config)
+      def update!(new_config, round_trip_time)
         find_new_servers(new_config)
         find_removed_servers(new_config)
         @config = new_config
+        @round_trip_time = round_trip_time
         self
       end
 

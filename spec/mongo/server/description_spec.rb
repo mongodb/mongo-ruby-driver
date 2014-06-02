@@ -306,7 +306,7 @@ describe Mongo::Server::Description do
       end
 
       let(:updated) do
-        description.update!(new)
+        description.update!(new, 2.0)
       end
 
       before do
@@ -330,7 +330,7 @@ describe Mongo::Server::Description do
       end
 
       let(:updated) do
-        description.update!(new)
+        description.update!(new, 2.0)
       end
 
       before do
