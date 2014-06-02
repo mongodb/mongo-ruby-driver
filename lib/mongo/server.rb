@@ -26,16 +26,6 @@ module Mongo
     include Event::Publisher
     include Event::Subscriber
 
-    # The default time for a server to refresh its status is 5 seconds.
-    #
-    # @since 2.0.0
-    HEARTBEAT_FREQUENCY = 5.freeze
-
-    # The command used for determining server status.
-    #
-    # @since 2.0.0
-    STATUS = { :ismaster => 1 }.freeze
-
     # Error message for Unconnected errors.
     #
     # @since 3.0.0
@@ -63,6 +53,18 @@ module Mongo
     def ==(other)
       return false unless other.is_a?(Server)
       address == other.address
+    end
+
+    # Tells the monitor to immediately check the server status.
+    #
+    # @example Check the server status.
+    #   server.check!
+    #
+    # @return [ Server::Description ] The updated server description.
+    #
+    # @since 2.0.0
+    def check!
+      @monitor.check!
     end
 
     # Dispatch the provided messages to the server. If the last message
@@ -98,7 +100,7 @@ module Mongo
       @address = Address.new(address)
       @options = options
       @mutex = Mutex.new
-      @monitor = Monitor.new(self, heartbeat_frequency)
+      @monitor = Monitor.new(self, options)
       @description = Description.new
       subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
       subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
@@ -135,36 +137,6 @@ module Mongo
       !!description
     end
 
-    # Refresh the configuration for this server. Is thread-safe since the
-    # periodic refresh is invoked from another thread in order not to continue
-    # blocking operations on the current thread.
-    #
-    # @example Refresh the server.
-    #   server.refresh!
-    #
-    # @note Is mutable in that the underlying server description can get
-    #   mutated on this call.
-    #
-    # @return [ Server::Description ] The updated server description.
-    #
-    # @since 2.0.0
-    def refresh!
-      description.update!(*ismaster)
-    end
-
-    # Get the refresh interval for the server. This will be defined via an option
-    # or will default to 5.
-    #
-    # @example Get the refresh interval.
-    #   server.heartbeat_frequency
-    #
-    # @return [ Integer ] The heartbeat frequency, in seconds.
-    #
-    # @since 2.0.0
-    def heartbeat_frequency
-      @heartbeat_frequency ||= options[:heartbeat_frequency] || HEARTBEAT_FREQUENCY
-    end
-
     # Raised when trying to dispatch a message when the server is not
     # connected.
     #
@@ -173,37 +145,17 @@ module Mongo
 
     private
 
-    def ismaster
-      start = Time.now
-      ismaster = send_messages([ refresh_command ]).documents[0]
-      round_trip_time = Time.now - start
-      return ismaster, round_trip_time
-    end
-
     def pool
       @pool ||= Pool.get(self)
     end
 
-    def refresh_command
-      Protocol::Query.new(
-        Database::ADMIN,
-        Database::COMMAND,
-        STATUS,
-        :limit => -1
-      )
-    end
-
     def send_messages(messages)
       mutex.synchronize do
-        with_connection do |connection|
+        pool.with_connection do |connection|
           connection.write(messages)
           connection.read if messages.last.replyable?
         end
       end
-    end
-
-    def with_connection
-      pool.with_connection { |conn| yield(conn) }
     end
   end
 end

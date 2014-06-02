@@ -21,10 +21,49 @@ module Mongo
     # @since 2.0.0
     class Monitor
 
+      # The default time for a server to refresh its status is 5 seconds.
+      #
+      # @since 2.0.0
+      HEARTBEAT_FREQUENCY = 5.freeze
+
+      # The command used for determining server status.
+      #
+      # @since 2.0.0
+      STATUS = { :ismaster => 1 }.freeze
+
+      # @return [ Mutex ] The refresh operation mutex.
+      attr_reader :mutex
       # @return [ Mongo::Server ] The server the monitor refreshes.
       attr_reader :server
-      # @return [ Integer ] The interval the refresh happens on, in seconds.
-      attr_reader :interval
+      # @return [ Hash ] options The server options.
+      attr_reader :options
+      # @return [ Mongo::Connection ] connection The connection to use.
+      attr_reader :connection
+
+      # Check the server status immediately.
+      #
+      # @example Check the server status.
+      #   monitor.check!
+      #
+      # @return [ Server::Description ] The updated server description.
+      #
+      # @since 2.0.0
+      def check!
+        server.description.update!(*ismaster)
+      end
+
+      # Get the refresh interval for the server. This will be defined via an option
+      # or will default to 5.
+      #
+      # @example Get the refresh interval.
+      #   server.heartbeat_frequency
+      #
+      # @return [ Integer ] The heartbeat frequency, in seconds.
+      #
+      # @since 2.0.0
+      def heartbeat_frequency
+        @heartbeat_frequency ||= options[:heartbeat_frequency] || HEARTBEAT_FREQUENCY
+      end
 
       # Create the new server monitor.
       #
@@ -35,9 +74,11 @@ module Mongo
       # @param [ Integer ] interval The refresh interval in seconds.
       #
       # @since 2.0.0
-      def initialize(server, interval)
+      def initialize(server, options = {})
         @server = server
-        @interval = interval
+        @options = options
+        @mutex = Mutex.new
+        @connection = Mongo::Pool::Connection.new(server.address, options[:timeout], options)
       end
 
       # Runs the server monitor. Refreshing happens on a separate thread per
@@ -50,12 +91,28 @@ module Mongo
       #
       # @since 2.0.0
       def run
-        Thread.new(interval, server) do |i, s|
+        Thread.new(heartbeat_frequency, server) do |i, s|
           loop do
             sleep(i)
-            s.refresh!
+            check!
           end
         end
+      end
+
+      private
+
+      def ismaster
+        mutex.synchronize do
+          start = Time.now
+          connection.write([ ismaster_command ])
+          result = connection.read.documents[0]
+          round_trip_time = Time.now - start
+          return result, round_trip_time
+        end
+      end
+
+      def ismaster_command
+        Protocol::Query.new(Database::ADMIN, Database::COMMAND, STATUS, :limit => -1)
       end
     end
   end

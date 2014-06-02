@@ -84,7 +84,7 @@ module Mongo
         # subscribe_to(server, Event::SERVER_REMOVED, ServerRemoved.new(self))
         server
       end
-      @servers.each{ |server| server.refresh! }
+      @servers.each{ |server| server.check! }
     end
 
     # Get a list of server candidates from the cluster that can have operations

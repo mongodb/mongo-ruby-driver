@@ -213,33 +213,4 @@ describe Mongo::Server do
       end
     end
   end
-
-  describe '#heartbeat_frequency' do
-
-    let(:address) do
-      '127.0.0.1:27017'
-    end
-
-    context 'when an option is provided' do
-
-      let(:server) do
-        described_class.new(address, :heartbeat_frequency => 10)
-      end
-
-      it 'returns the option' do
-        expect(server.heartbeat_frequency).to eq(10)
-      end
-    end
-
-    context 'when no option is provided' do
-
-      let(:server) do
-        described_class.new(address)
-      end
-
-      it 'defaults to 5' do
-        expect(server.heartbeat_frequency).to eq(5)
-      end
-    end
-  end
 end

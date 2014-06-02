@@ -2,6 +2,37 @@ require 'spec_helper'
 
 describe Mongo::Server::Monitor do
 
+  pending '#check!'
+
+  describe '#heartbeat_frequency' do
+
+    let(:server) do
+      Mongo::Server.new('127.0.0.1:27017')
+    end
+
+    context 'when an option is provided' do
+
+      let(:monitor) do
+        described_class.new(server, :heartbeat_frequency => 10)
+      end
+
+      it 'returns the option' do
+        expect(monitor.heartbeat_frequency).to eq(10)
+      end
+    end
+
+    context 'when no option is provided' do
+
+      let(:monitor) do
+        described_class.new(server)
+      end
+
+      it 'defaults to 5' do
+        expect(monitor.heartbeat_frequency).to eq(5)
+      end
+    end
+  end
+
   describe '#run' do
 
     let(:server) do
@@ -9,7 +40,7 @@ describe Mongo::Server::Monitor do
     end
 
     let(:monitor) do
-      described_class.new(server, 1)
+      described_class.new(server, :heartbeat_frequency => 1)
     end
 
     before do
