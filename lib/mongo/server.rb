@@ -29,7 +29,7 @@ module Mongo
     # The default time for a server to refresh its status is 5 seconds.
     #
     # @since 2.0.0
-    REFRESH_INTERVAL = 5.freeze
+    HEARTBEAT_FREQUENCY = 5.freeze
 
     # The command used for determining server status.
     #
@@ -88,7 +88,7 @@ module Mongo
       @options = options
       @mutex = Mutex.new
       refresh!
-      @monitor = Monitor.new(self, refresh_interval)
+      @monitor = Monitor.new(self, heartbeat_frequency)
       # @monitor.run
     end
 
@@ -147,13 +147,13 @@ module Mongo
     # or will default to 5.
     #
     # @example Get the refresh interval.
-    #   server.refresh_interval
+    #   server.heartbeat_frequency
     #
-    # @return [ Integer ] The refresh interval, in seconds.
+    # @return [ Integer ] The heartbeat frequency, in seconds.
     #
     # @since 2.0.0
-    def refresh_interval
-      @refresh_interval ||= options[:refresh_interval] || REFRESH_INTERVAL
+    def heartbeat_frequency
+      @heartbeat_frequency ||= options[:heartbeat_frequency] || HEARTBEAT_FREQUENCY
     end
 
     # Raised when trying to dispatch a message when the server is not

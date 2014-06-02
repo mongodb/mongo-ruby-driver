@@ -76,7 +76,7 @@ describe Mongo::Server do
     end
 
     let(:server) do
-      described_class.new(address, :refresh_interval => 5)
+      described_class.new(address, :heartbeat_frequency => 5)
     end
 
     it 'sets the address host' do
@@ -92,7 +92,7 @@ describe Mongo::Server do
     end
 
     it 'sets the options' do
-      expect(server.options).to eq(:refresh_interval => 5)
+      expect(server.options).to eq(:heartbeat_frequency => 5)
     end
   end
 
@@ -223,7 +223,7 @@ describe Mongo::Server do
     end
   end
 
-  describe '#refresh_interval' do
+  describe '#heartbeat_frequency' do
 
     let(:address) do
       '127.0.0.1:27017'
@@ -232,11 +232,11 @@ describe Mongo::Server do
     context 'when an option is provided' do
 
       let(:server) do
-        described_class.new(address, :refresh_interval => 10)
+        described_class.new(address, :heartbeat_frequency => 10)
       end
 
       it 'returns the option' do
-        expect(server.refresh_interval).to eq(10)
+        expect(server.heartbeat_frequency).to eq(10)
       end
     end
 
@@ -247,7 +247,7 @@ describe Mongo::Server do
       end
 
       it 'defaults to 5' do
-        expect(server.refresh_interval).to eq(5)
+        expect(server.heartbeat_frequency).to eq(5)
       end
     end
   end
