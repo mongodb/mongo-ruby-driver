@@ -2,7 +2,24 @@ require 'spec_helper'
 
 describe Mongo::Server::Monitor do
 
-  pending '#check!'
+  describe '#check!' do
+
+    let(:server) do
+      Mongo::Server.new('127.0.0.1:27017')
+    end
+
+    let(:monitor) do
+      described_class.new(server)
+    end
+
+    before do
+      monitor.check!
+    end
+
+    it 'updates the server description' do
+      expect(server.description).to be_primary
+    end
+  end
 
   describe '#heartbeat_frequency' do
 
