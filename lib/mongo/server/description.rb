@@ -90,6 +90,9 @@ module Mongo
       # @return [ Hash ] The actual result from the isnamster command.
       attr_reader :config
 
+      # @return [ Float ] The time the ismaster call took to complete.
+      attr_reader :round_trip_time
+
       # Will return true if the server is an arbiter.
       #
       # @example Is the server an arbiter?
@@ -147,8 +150,9 @@ module Mongo
       # @param [ Hash ] config The result of the ismaster command.
       #
       # @since 2.0.0
-      def initialize(config = {})
+      def initialize(config = {}, round_trip_time = 0)
         @config = config
+        @round_trip_time = round_trip_time
       end
 
       # Get the max BSON object size for this server version.

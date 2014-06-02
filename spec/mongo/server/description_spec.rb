@@ -216,6 +216,21 @@ describe Mongo::Server::Description do
     end
   end
 
+  describe '#round_trip_time' do
+
+    let(:description) do
+      described_class.new({ 'secondary' => false }, 4.5)
+    end
+
+    it 'defaults to 0' do
+      expect(described_class.new.round_trip_time).to eq(0)
+    end
+
+    it 'can be set via the constructor' do
+      expect(description.round_trip_time).to eq(4.5)
+    end
+  end
+
   describe '#secondary?' do
 
     context 'when the server is not a secondary' do
