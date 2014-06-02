@@ -16,7 +16,7 @@ module Mongo
 
   module Fluent
 
-    module Queryable
+    module Query
 
       # Get the distinct values for a specified field across a single
       # collection.

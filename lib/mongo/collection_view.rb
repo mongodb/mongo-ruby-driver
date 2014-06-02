@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/fluent/queryable'
-require 'mongo/fluent/writable'
-require 'mongo/fluent/modifyable'
+require 'mongo/fluent/query'
+require 'mongo/fluent/write'
+require 'mongo/fluent/find_and_modify'
 require 'mongo/fluent/validatable'
 
 module Mongo
@@ -36,9 +36,9 @@ module Mongo
   # @api semipublic
   class CollectionView
     include Enumerable
-    include Fluent::Queryable
-    include Fluent::Modifyable
-    include Fluent::Writable
+    include Fluent::Query
+    include Fluent::FindAndModify
+    include Fluent::Write
     include Fluent::Validatable
 
     # @return [ Collection ] The +Collection+ to perform an operation on.

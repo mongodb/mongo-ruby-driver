@@ -17,7 +17,7 @@ module Mongo
   module Fluent
 
     # These methods are writes.
-    module Writable
+    module Write
 
       # Removes all the documents matching the query spec.
       # If a limit other than 1 has been specified, an error is raised.

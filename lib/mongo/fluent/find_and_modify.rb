@@ -18,7 +18,7 @@ module Mongo
 
     # These methods uses the FindAndModify command.
     # Each method returns a document, either the original or the modified one.
-    module Modifyable
+    module FindAndModify
 
       # Removes a document matching the query spec.
       # The removed document will then be returned.
@@ -29,7 +29,7 @@ module Mongo
       #
       # @since 3.0.0
       def fetch_one_then_remove
-        validate_modify!
+        validate_find_and_modify!
 
         spec = { :findAndModify => collection.name,
                  :query         => selector,
@@ -51,7 +51,7 @@ module Mongo
       #
       # @since 3.0.0
       def fetch_one_then_replace(replacement)
-        validate_modify!
+        validate_find_and_modify!
         validate_replacement!(replacement)
 
         spec = { :findAndModify => collection.name,
@@ -74,7 +74,7 @@ module Mongo
       #
       # @since 3.0.0
       def fetch_one_then_update(update)
-        validate_modify!
+        validate_find_and_modify!
         validate_update!(update)
 
         spec = { :findAndModify => collection.name,
@@ -97,7 +97,7 @@ module Mongo
       #
       # @since 3.0.0
       def replace_one_then_fetch(replacement)
-        validate_modify!
+        validate_find_and_modify!
         validate_replacement!(replacement)
 
         spec = { :findAndModify => collection.name,
@@ -120,7 +120,7 @@ module Mongo
       #
       # @since 3.0.0
       def update_one_then_fetch(update)
-        validate_modify!
+        validate_find_and_modify!
         validate_update!(update)
 
         spec = { :findAndModify => collection.name,
@@ -140,7 +140,7 @@ module Mongo
       # @raise [ Exception ] If skip has been specified earlier in the chain.
       #
       # @since 3.0.0
-      def validate_modify!
+      def validate_find_and_modify!
         # @todo: update with real error
         raise Exception, 'Skip cannot be combined with this method' if skip
       end
