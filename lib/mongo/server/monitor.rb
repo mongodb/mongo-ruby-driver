@@ -101,17 +101,19 @@ module Mongo
 
       private
 
+      def calculate_round_trip_time(start)
+        Time.now - start
+      end
+
       def ismaster
         mutex.synchronize do
           start = Time.now
           begin
             connection.write([ ismaster_command ])
             result = connection.read.documents[0]
-            round_trip_time = Time.now - start
-            return result, round_trip_time
+            return result, calculate_round_trip_time(start)
           rescue SystemCallError, IOError
-            round_trip_time = Time.now - start
-            return {}, round_trip_time
+            return {}, calculate_round_trip_time(start)
           end
         end
       end
