@@ -83,6 +83,7 @@ describe Mongo::Server do
       end
 
       it 'it dispatchs the message to the socket' do
+        p reply.documents
         expect(reply.documents.first['name']).to eq('testing')
       end
     end
@@ -107,6 +108,7 @@ describe Mongo::Server do
       end
 
       it 'it dispatchs the message to the socket' do
+        p reply.documents
         expect(reply.documents.first['ok']).to eq(1.0)
       end
     end
