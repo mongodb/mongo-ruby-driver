@@ -9,7 +9,7 @@ describe Mongo::Cluster do
   describe '#==' do
 
     let(:addresses) do
-      ['127.0.0.1:27017']
+      ['127.0.0.1:27018']
     end
 
     let(:cluster) do
@@ -106,7 +106,7 @@ describe Mongo::Cluster do
   describe '#initialize', simulator: 'cluster' do
 
     let(:addresses) do
-      ['127.0.0.1:27017', '127.0.0.1:27019']
+      ['127.0.0.1:27018', '127.0.0.1:27019']
     end
 
     let(:servers) do
@@ -138,7 +138,7 @@ describe Mongo::Cluster do
         end
 
         it 'automatically adds the members to the cluster' do
-          expect(cluster.servers.size).to eq(4)
+          expect(cluster.servers.size).to eq(3)
         end
       end
     end
@@ -147,7 +147,7 @@ describe Mongo::Cluster do
   describe '#servers', simulator: 'cluster' do
 
     let(:addresses) do
-      ['127.0.0.1:27017', '127.0.0.1:27019']
+      ['127.0.0.1:27018', '127.0.0.1:27019']
     end
 
     let(:cluster) do
@@ -165,7 +165,7 @@ describe Mongo::Cluster do
       end
 
       it 'returns all servers' do
-        expect(cluster.servers.size).to eq(4)
+        expect(cluster.servers.size).to eq(3)
       end
     end
 
