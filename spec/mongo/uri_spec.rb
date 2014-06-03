@@ -340,7 +340,7 @@ describe Mongo::URI do
         let(:ssl) { true }
 
         it 'sets the ssl option to true' do
-          expect(uri.options[:ssl]).to be_true
+          expect(uri.options[:ssl]).to be true
         end
       end
 
@@ -348,7 +348,7 @@ describe Mongo::URI do
         let(:ssl) { false }
 
         it 'sets the ssl option to false' do
-          expect(uri.options[:ssl]).to be_false
+          expect(uri.options[:ssl]).to be false
         end
       end
     end

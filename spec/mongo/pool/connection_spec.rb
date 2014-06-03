@@ -23,7 +23,7 @@ describe Mongo::Pool::Connection do
       end
 
       it 'returns true' do
-        expect(result).to be_true
+        expect(result).to be true
       end
 
       it 'creates a socket' do
@@ -61,7 +61,7 @@ describe Mongo::Pool::Connection do
       end
 
       it 'does not raise an error' do
-        expect(connection.disconnect!).to be_true
+        expect(connection.disconnect!).to be true
       end
     end
 
