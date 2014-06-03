@@ -94,7 +94,7 @@ describe Mongo::Cluster do
       end
 
       it 'does not add the server to the cluster' do
-        expect(cluster.servers.size).to eq(3)
+        expect(cluster.servers.size).to eq(2)
       end
 
       it 'returns nil' do

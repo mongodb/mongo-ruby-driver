@@ -104,10 +104,15 @@ module Mongo
       def ismaster
         mutex.synchronize do
           start = Time.now
-          connection.write([ ismaster_command ])
-          result = connection.read.documents[0]
-          round_trip_time = Time.now - start
-          return result, round_trip_time
+          begin
+            connection.write([ ismaster_command ])
+            result = connection.read.documents[0]
+            round_trip_time = Time.now - start
+            return result, round_trip_time
+          rescue SystemCallError, IOError
+            round_trip_time = Time.now - start
+            return {}, round_trip_time
+          end
         end
       end
 
