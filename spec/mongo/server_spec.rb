@@ -156,6 +156,7 @@ describe Mongo::Server do
     context 'when the server is a primary' do
 
       before do
+        expect(description).to receive(:unknown?).and_return(false)
         expect(description).to receive(:hidden?).and_return(false)
         expect(description).to receive(:primary?).and_return(true)
       end
@@ -168,6 +169,7 @@ describe Mongo::Server do
     context 'when the server is a secondary' do
 
       before do
+        expect(description).to receive(:unknown?).and_return(false)
         expect(description).to receive(:hidden?).and_return(false)
         expect(description).to receive(:primary?).and_return(false)
         expect(description).to receive(:secondary?).and_return(true)
@@ -181,6 +183,7 @@ describe Mongo::Server do
     context 'when the server is an arbiter' do
 
       before do
+        expect(description).to receive(:unknown?).and_return(false)
         expect(description).to receive(:hidden?).and_return(false)
         expect(description).to receive(:primary?).and_return(false)
         expect(description).to receive(:secondary?).and_return(false)
@@ -194,18 +197,8 @@ describe Mongo::Server do
     context 'when the server is hidden' do
 
       before do
+        expect(description).to receive(:unknown?).and_return(false)
         expect(description).to receive(:hidden?).and_return(true)
-      end
-
-      it 'returns false' do
-        expect(server).to_not be_operable
-      end
-    end
-
-    pending 'when the server is not connected' do
-
-      before do
-        server.instance_variable_set(:@unconnected_since, Time.now)
       end
 
       it 'returns false' do

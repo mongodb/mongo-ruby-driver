@@ -17,6 +17,7 @@ require 'mongo/event/subscriber'
 require 'mongo/event/host_added'
 require 'mongo/event/host_removed'
 require 'mongo/event/server_added'
+require 'mongo/event/server_removed'
 
 module Mongo
 

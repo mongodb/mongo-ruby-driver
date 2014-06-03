@@ -14,7 +14,7 @@
 
 # Simulates cluster behaviour on the server side.
 #
-# @since 3.0.0
+# @since 2.0.0
 class ClusterSimulator
 
   # @return [ Array<Server> ] servers The servers in the cluster.
@@ -29,6 +29,21 @@ class ClusterSimulator
   # @return [ Manager ] manager The server manager.
   attr_reader :manager
 
+  # Add another server to the replica set simulator.
+  #
+  # @example Add a server.
+  #   simulator.add('127.0.0.1:27021')
+  #
+  # @param [ String ] seed The address to add.
+  #
+  # @since 2.0.0
+  def add(seed)
+    server = Server.new(self, seed)
+    server.demote!
+    server.start
+    servers.push(server)
+  end
+
   # Initialize the cluster simulator.
   #
   # @example Initialize the cluster simulator.
@@ -36,11 +51,27 @@ class ClusterSimulator
   #
   # @param [ Array<String> ] seeds The cluster seeds.
   #
-  # @since 3.0.0
+  # @since 2.0.0
   def initialize(seeds)
     @proxied_mongod = TCPSocket.new('127.0.0.1', 27017)
     @servers = seeds.map{ |seed| Server.new(self, seed) }
     @manager = Manager.new(servers)
+  end
+
+  # Removes the server from the cluster simulator.
+  #
+  # @example Remove the server.
+  #   simulator.remove('127.0.0.1:27019')
+  #
+  # @param [ String ] seed The server seed address.
+  #
+  # @since 2.0.0
+  def remove(seed)
+    server = servers.delete_if{ |server| server.seed == seed }.first
+    if server
+      server.stop
+      manager.remove(server)
+    end
   end
 
   # Start the cluster simulator.
@@ -48,7 +79,7 @@ class ClusterSimulator
   # @example Start the simulator.
   #   simulator.start
   #
-  # @since 3.0.0
+  # @since 2.0.0
   def start
     primary, *secondaries = servers.shuffle
     primary.promote!
@@ -75,7 +106,7 @@ class ClusterSimulator
   # @example Stop the cluster simulator
   #   simulator.stop
   #
-  # @since 3.0.0
+  # @since 2.0.0
   def stop
     manager.shutdown
     servers.each(&:stop)
@@ -83,7 +114,7 @@ class ClusterSimulator
 
   # Represents a server instance in the cluster simulator.
   #
-  # @since 3.0.0
+  # @since 2.0.0
   class Server
 
     # Query op code.
@@ -116,7 +147,7 @@ class ClusterSimulator
     # @example Close the clients.
     #   server.close_clients!
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def close_clients!
       simulator.manager.close_clients!(self)
     end
@@ -128,7 +159,7 @@ class ClusterSimulator
     #
     # @return [ true, false ] If the server is closed.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def closed?
       !server || server.closed?
     end
@@ -138,7 +169,7 @@ class ClusterSimulator
     # @example Demote the server to secondary.
     #   server.demote!
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def demote!
       @primary, @secondary = false, true
       close_clients!
@@ -152,7 +183,7 @@ class ClusterSimulator
     # @param [ ClusterSimulator ] simulator The simulator.
     # @param [ String ] seed The server seed address.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def initialize(simulator, seed)
       @simulator, @seed, @primary, @secondary = simulator, seed, false, false
       host, port = seed.split(':')
@@ -167,7 +198,7 @@ class ClusterSimulator
     #
     # @return [ Mongo::Protocol::Reply ] The result of the ismaster command.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def ismaster
       reply = Mongo::Protocol::Reply.new
       reply.instance_variable_set(:@flags, [])
@@ -193,7 +224,7 @@ class ClusterSimulator
     #
     # @return [ true, false ] If the server is primary.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def primary?
       @primary
     end
@@ -203,7 +234,7 @@ class ClusterSimulator
     # @example Promote the server to primary.
     #   server.promote!
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def promote!
       @primary, @secomdary = true, false
       close_clients!
@@ -217,7 +248,7 @@ class ClusterSimulator
     # @param [ TCPSocket ] client The client connection.
     # @param [ TCPSocket ] mongod The underlying mongod connection.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def proxy(client, mongod)
       message = client.read(16)
       length, op_code = message.unpack('l<x8l<')
@@ -243,7 +274,7 @@ class ClusterSimulator
     #
     # @return [ true, false ] If the server is secondary.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def secondary?
       @secondary
     end
@@ -253,7 +284,7 @@ class ClusterSimulator
     # @example Restart the server.
     #   server.restart
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def restart
       stop
       start
@@ -266,7 +297,7 @@ class ClusterSimulator
     #
     # @return [ TCPServer ] The underlying TCPServer.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def start
       @server = TCPServer.new(port)
     end
@@ -276,7 +307,7 @@ class ClusterSimulator
     # @example Stop the server.
     #   server.stop
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def stop
       if server
         close_clients!
@@ -302,7 +333,7 @@ class ClusterSimulator
 
   # Manages all the servers in the cluster.
   #
-  # @since 3.0.0
+  # @since 2.0.0
   class Manager
 
     # @return [ Array<TCPSocket> ] clients The clients.
@@ -314,6 +345,18 @@ class ClusterSimulator
     # @return [ Float ] timeout The retry timeout.
     attr_reader :timeout
 
+    # Add a server for the manager to manage.
+    #
+    # @example Add a server.
+    #   manager.add(server)
+    #
+    # @param [ Server ] server The server to add.
+    #
+    # @since 2.0.0
+    def add(server)
+      servers.push(server)
+    end
+
     # Closes all clients connected to the specific server.
     #
     # @example Close all the server's clients.
@@ -323,7 +366,7 @@ class ClusterSimulator
     #
     # @return [ true, false ] If clients were closed or not.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def close_clients!(server)
       clients.reject! do |client|
         port = client.addr(false)[1]
@@ -345,7 +388,7 @@ class ClusterSimulator
     #
     # @param [ Array<Server> ] servers The servers to manage.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def initialize(servers)
       @clients = []
       @servers = servers
@@ -361,7 +404,7 @@ class ClusterSimulator
     # @return [ Array<Server, TCPSocket> ] The next server and associated
     #   client.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def next_pair
       throw :shutdown if @shutdown
 
@@ -408,6 +451,19 @@ class ClusterSimulator
       end
     end
 
+    # Remove the server from the manager.
+    #
+    # @example Remove the server from the manager.
+    #   manager.remove(server)
+    #
+    # @param [ Server ] server The server to remove.
+    #
+    # @since 2.0.0
+    def remove(server)
+      close_clients!(server)
+      servers.delete_if{ |s| s.seed == server.seed }
+    end
+
     # Shutdown the manager.
     #
     # @example Shutdown the manager.
@@ -415,7 +471,7 @@ class ClusterSimulator
     #
     # @return [ true ] Always true.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def shutdown
       clients.each do |client|
         begin
@@ -438,14 +494,14 @@ class ClusterSimulator
 
   # Adds let context helpers to specs.
   #
-  # @since 3.0.0
+  # @since 2.0.0
   module Helpers
 
     # Define the lets when included.
     #
     # @param [ Class ] context The RSpec context.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def self.included(context)
       context.let(:simulator_seeds) { @simulator_seeds }
       context.let(:simulator) { @simulator }
@@ -462,7 +518,7 @@ class ClusterSimulator
     #
     # @param [ RSpec::Configuration ] config The RSpec config.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def configure(config)
       config.before(:all, simulator: 'cluster') do |example|
         @simulator_seeds = [ '127.0.0.1:27018', '127.0.0.1:27019', '127.0.0.1:27020']

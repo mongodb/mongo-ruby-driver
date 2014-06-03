@@ -264,6 +264,18 @@ module Mongo
         config[SET_NAME]
       end
 
+      # Is the server description currently unknown?
+      #
+      # @example Is the server description unknown?
+      #   description.unknown?
+      #
+      # @return [ true, false ] If the server description is unknown.
+      #
+      # @since 2.0.0
+      def unknown?
+        config.empty?
+      end
+
       # Update this description with a new description. Will fire the
       # necessary events depending on what has changed from the old description
       # to the new one.

@@ -65,6 +65,18 @@ module Mongo
       end
     end
 
+    # Force a check of all servers in the cluster.
+    #
+    # @example Check the cluster.
+    #   cluster.check!
+    #
+    # @return [ true ] Always true if no error.
+    #
+    # @since 2.0.0
+    def check!
+      @servers.each{ |server| server.check! } and true
+    end
+
     # Instantiate the new cluster.
     #
     # @example Instantiate the cluster.
@@ -79,12 +91,15 @@ module Mongo
       @addresses = addresses
       @options = options
       @servers = addresses.map do |address|
-        server = Server.new(address, options)
-        subscribe_to(server, Event::SERVER_ADDED, Event::ServerAdded.new(self))
-        # subscribe_to(server, Event::SERVER_REMOVED, ServerRemoved.new(self))
-        server
+        Server.new(address, options).tap do |server|
+          subscribe_to(server, Event::SERVER_ADDED, Event::ServerAdded.new(self))
+          subscribe_to(server, Event::SERVER_REMOVED, Event::ServerRemoved.new(self))
+        end
       end
-      @servers.each{ |server| server.check! }
+    end
+
+    def remove(address)
+
     end
 
     # Get a list of server candidates from the cluster that can have operations

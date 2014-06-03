@@ -104,7 +104,19 @@ module Mongo
       @description = Description.new
       subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
       subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
-      # @monitor.run
+      @monitor.run
+    end
+
+    # Get a pretty printed server inspection.
+    #
+    # @example Get the server inspection.
+    #   server.inspec
+    #
+    # @return [ String ] The nice inspection string.
+    #
+    # @since 2.0.0
+    def inspect
+      "#<Mongo::Server:0x#{object_id} address=#{address.host}:#{address.port}"
     end
 
     # Is the server able to receive messages?
@@ -119,22 +131,8 @@ module Mongo
     #
     # @since 2.0.0
     def operable?
-      return false if !connected? || description.hidden?
+      return false if description.unknown? || description.hidden?
       description.primary? || description.secondary?
-    end
-
-    # Is the server connected?
-    #
-    # @example Is the server connected via a connection?
-    #   server.connected?
-    #
-    # @note This is true if the server is alive and can accept connections.
-    #
-    # @return [ true, false ] If the server is connected.
-    #
-    # @since 3.0.0
-    def connected?
-      !!description
     end
 
     # Raised when trying to dispatch a message when the server is not

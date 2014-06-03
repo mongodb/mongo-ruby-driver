@@ -52,15 +52,11 @@ describe Mongo::Cluster do
   describe '#add', simulator: 'cluster' do
 
     let(:addresses) do
-      ['127.0.0.1:27017', '127.0.0.1:27019']
+      ['127.0.0.1:27018', '127.0.0.1:27019']
     end
 
     let(:cluster) do
       described_class.new(client, addresses)
-    end
-
-    before do
-      allow_any_instance_of(Mongo::Server).to receive(:operable?).and_return(true)
     end
 
     context 'when a server with the address does not exist' do
@@ -73,24 +69,32 @@ describe Mongo::Cluster do
         cluster.add(address)
       end
 
-      it 'adds the server to the cluster' do
-        expect(cluster.servers.size).to eq(5)
+      before do
+        simulator.add('127.0.0.1:27021')
+        cluster.check!
       end
 
-      it 'returns the newly added server' do
-        expect(added.address.host).to eq('127.0.0.1')
-        expect(added.address.port).to eq(27021)
+      after do
+        simulator.remove('127.0.0.1:27021')
+      end
+
+      it 'adds the server to the cluster' do
+        expect(cluster.servers.size).to eq(4)
       end
     end
 
     context 'when a server with the address exists' do
 
       let!(:added) do
-        cluster.add('127.0.0.1:27017')
+        cluster.add('127.0.0.1:27018')
+      end
+
+      before do
+        cluster.check!
       end
 
       it 'does not add the server to the cluster' do
-        expect(cluster.servers.size).to eq(4)
+        expect(cluster.servers.size).to eq(3)
       end
 
       it 'returns nil' do
@@ -129,13 +133,13 @@ describe Mongo::Cluster do
           described_class.new(client, addresses)
         end
 
+        before do
+          cluster.check!
+        end
+
         it 'automatically adds the members to the cluster' do
           expect(cluster.servers.size).to eq(4)
         end
-      end
-
-      context 'when servers are removed' do
-
       end
     end
   end
@@ -157,8 +161,7 @@ describe Mongo::Cluster do
     context 'when all servers are alive' do
 
       before do
-        expect(servers_internal.first).to receive(:operable?).and_return(true)
-        expect(servers_internal.last).to receive(:operable?).and_return(true)
+        cluster.check!
       end
 
       it 'returns all servers' do
@@ -174,7 +177,7 @@ describe Mongo::Cluster do
       end
 
       it 'returns all alive servers' do
-        expect(cluster.servers.size).to eq(3)
+        expect(cluster.servers.size).to eq(1)
       end
     end
   end
