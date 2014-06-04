@@ -109,7 +109,7 @@ module Mongo
     # @param [ Array<Message> ] messages The messages to write.
     # @param [ String ] buffer The buffer to write to.
     #
-    # @return [ Integer ] The number of bytes written.
+    # @return [ Connection ] The connection itself.
     #
     # @since 2.0.0
     def write(messages, buffer = '')
@@ -119,6 +119,7 @@ module Mongo
       ensure_connected do |socket|
         socket.write(buffer)
       end
+      self
     end
 
     private
