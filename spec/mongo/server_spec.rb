@@ -69,12 +69,8 @@ describe Mongo::Server do
 
     context 'when providing a single message' do
 
-      before do
-        server.dispatch([ insert ])
-      end
-
       let(:reply) do
-        server.dispatch([ query ])
+        server.dispatch([ insert, query ])
       end
 
       # @todo: Can remove this once we have more implemented with global hooks.
@@ -83,7 +79,6 @@ describe Mongo::Server do
       end
 
       it 'it dispatchs the message to the socket' do
-        p reply.documents
         expect(reply.documents.first['name']).to eq('testing')
       end
     end
