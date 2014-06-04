@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require 'bson'
+require 'mongo/auth'
 require 'mongo/errors'
 require 'mongo/client'
 require 'mongo/cluster'
