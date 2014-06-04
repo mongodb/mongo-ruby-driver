@@ -83,7 +83,7 @@ module Mongo
         @server = server
         @options = options
         @mutex = Mutex.new
-        @connection = Mongo::Pool::Connection.new(server.address, options[:timeout], options)
+        @connection = Mongo::Connection.new(server.address, options[:timeout], options)
       end
 
       # Runs the server monitor. Refreshing happens on a separate thread per
