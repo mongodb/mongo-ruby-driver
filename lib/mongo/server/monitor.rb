@@ -31,6 +31,11 @@ module Mongo
       # @since 2.0.0
       STATUS = { :ismaster => 1 }.freeze
 
+      # The constant for the ismaster command.
+      #
+      # @since 2.0.0
+      ISMASTER = Protocol::Query.new(Database::ADMIN, Database::COMMAND, STATUS, :limit => -1)
+
       # @return [ Mutex ] The refresh operation mutex.
       attr_reader :mutex
       # @return [ Mongo::Server ] The server the monitor refreshes.
@@ -109,17 +114,13 @@ module Mongo
         mutex.synchronize do
           start = Time.now
           begin
-            connection.write([ ismaster_command ])
+            connection.write([ ISMASTER ])
             result = connection.read.documents[0]
             return result, calculate_round_trip_time(start)
           rescue SystemCallError, IOError
             return {}, calculate_round_trip_time(start)
           end
         end
-      end
-
-      def ismaster_command
-        Protocol::Query.new(Database::ADMIN, Database::COMMAND, STATUS, :limit => -1)
       end
 
       class << self
