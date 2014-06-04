@@ -32,7 +32,7 @@ RSpec.configure do |config|
   config.include ClusterSimulator::Helpers
   ClusterSimulator.configure(config)
 
-  config.after(:suite) do
+  config.after do
     Mongo::Server::Monitor.threads.each do |thread|
       thread.kill
     end
