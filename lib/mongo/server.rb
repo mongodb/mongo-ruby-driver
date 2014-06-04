@@ -104,7 +104,7 @@ module Mongo
       @description = Description.new
       subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
       subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
-      # @monitor.run
+      @monitor.run
     end
 
     # Get a pretty printed server inspection.

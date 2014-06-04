@@ -32,13 +32,10 @@ RSpec.configure do |config|
   config.include ClusterSimulator::Helpers
   ClusterSimulator.configure(config)
 
-  # disables 'should' syntax
-  config.expect_with :rspec do |c|
-    c.syntax = :expect
-  end
-
-  config.mock_with :rspec do |c|
-    c.syntax = :expect
+  config.after(:suite) do
+    Mongo::Server::Monitor.threads.each do |thread|
+      thread.kill
+    end
   end
 end
 

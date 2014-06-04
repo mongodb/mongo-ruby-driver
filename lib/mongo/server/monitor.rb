@@ -91,7 +91,7 @@ module Mongo
       #
       # @since 2.0.0
       def run
-        Thread.new(heartbeat_frequency, server) do |i, s|
+        Monitor.threads << Thread.new(heartbeat_frequency, server) do |i, s|
           loop do
             sleep(i)
             check!
@@ -120,6 +120,23 @@ module Mongo
 
       def ismaster_command
         Protocol::Query.new(Database::ADMIN, Database::COMMAND, STATUS, :limit => -1)
+      end
+
+      class << self
+
+        # For the purposes of cleanup, we store all monitor threads in a global
+        # array to be able to shut them down on spec cleanup or GC when server
+        # is garbage collected.
+        #
+        # @example Get all the monitor threads.
+        #   Monitor.threads
+        #
+        # @return [ Array<Thread> ] The monitor threads.
+        #
+        # @since 2.0.0
+        def threads
+          @threads ||= []
+        end
       end
     end
   end
