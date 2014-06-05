@@ -40,6 +40,7 @@ module Mongo
           parts = address.match(/\[(.+)\]:?(.+)?/)
           @host = parts[1]
           @port = (parts[2] || 27017).to_i
+          @seed = address
           resolve!
         end
 

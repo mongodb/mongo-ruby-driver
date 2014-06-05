@@ -144,6 +144,49 @@ describe Mongo::Cluster do
     end
   end
 
+  describe '#remove', simulator: 'cluster' do
+
+    let(:addresses) do
+      ['127.0.0.1:27018', '127.0.0.1:27019', '127.0.0.1:27020']
+    end
+
+    let(:cluster) do
+      described_class.new(client, addresses)
+    end
+
+    context 'when the address exists' do
+
+      before do
+        cluster.check!
+        cluster.remove('127.0.0.1:27020')
+      end
+
+      after do
+        cluster.add('127.0.0.1:27020')
+      end
+
+      it 'removes the server from the cluster' do
+        expect(cluster.servers.size).to eq(2)
+      end
+
+      it 'removes the address from the cluster' do
+        expect(cluster.addresses.size).to eq(2)
+      end
+    end
+
+    context 'when the address does not exist' do
+
+      before do
+        cluster.check!
+        cluster.remove('127.0.0.1:27021')
+      end
+
+      it 'does not remove anything' do
+        expect(cluster.servers.size).to eq(3)
+      end
+    end
+  end
+
   describe '#servers', simulator: 'cluster' do
 
     let(:addresses) do
