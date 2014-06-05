@@ -67,6 +67,20 @@ module Mongo
       @monitor.check!
     end
 
+    # Disconnect the server from the connection.
+    #
+    # @example Disconnect the server.
+    #   server.disconnect!
+    #
+    # @return [ true ] Always tru with no exception.
+    #
+    # @since 2.0.0
+    def disconnect!
+      pool.with_connection do |connection|
+        connection.disconnect!
+      end and true
+    end
+
     # Dispatch the provided messages to the server. If the last message
     # requires a response a reply will be returned.
     #

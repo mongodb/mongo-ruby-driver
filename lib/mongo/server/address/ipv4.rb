@@ -40,6 +40,7 @@ module Mongo
           parts = address.split(':')
           @host = parts[0]
           @port = (parts[1] || 27017).to_i
+          @seed = address
           resolve!
         end
 

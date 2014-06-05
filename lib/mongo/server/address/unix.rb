@@ -37,6 +37,7 @@ module Mongo
         # @since 2.0.0
         def initialize(address)
           @host = address
+          @seed = address
         end
 
         # Get a socket for the provided address type, given the options.

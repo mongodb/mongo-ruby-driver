@@ -98,8 +98,19 @@ module Mongo
       end
     end
 
+    # Removed the server from the cluster for the provided address, if it
+    # exists.
+    #
+    # @example Remove the server from the cluster.
+    #   server.remove('127.0.0.1:27017')
+    #
+    # @param [ String ] address The host/port or socket address.
+    #
+    # @since 2.0.0
     def remove(address)
-
+      removed_servers = @servers.reject!{ |server| server.address.seed == address }
+      removed_servers.each{ |server| server.disconnect! } if removed_servers
+      addresses.reject!{ |addr| addr == address }
     end
 
     # Get a list of server candidates from the cluster that can have operations

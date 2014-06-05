@@ -33,6 +33,9 @@ module Mongo
         # @return [ Integer ] port The port.
         attr_reader :port
 
+        # @return [ String ] seed The seed address.
+        attr_reader :seed
+
         # Resolve the ip address. Will ensure that the resolved ip matches the
         # appropriate ip type.
         #
