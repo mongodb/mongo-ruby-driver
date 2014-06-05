@@ -96,7 +96,6 @@ module Mongo
     #
     # @since 3.0.0
     def dispatch(messages)
-      raise Unconnected, UNCONNECTED unless description
       send_messages(messages)
     end
 
@@ -148,12 +147,6 @@ module Mongo
       return false if description.unknown? || description.hidden?
       description.primary? || description.secondary?
     end
-
-    # Raised when trying to dispatch a message when the server is not
-    # connected.
-    #
-    # @since 3.0.0
-    class Unconnected < RuntimeError; end
 
     private
 
