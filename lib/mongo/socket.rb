@@ -122,8 +122,7 @@ module Mongo
     #
     # @since 2.0.0
     def read(length)
-      data = handle_errors { socket.read(length) }
-      raise Mongo::SocketError, "Asked to read #{length} bytes but got none." unless data
+      data = handle_errors { socket.read(length) } || String.new
       if data.length < length
         data << read(length - data.length)
       end

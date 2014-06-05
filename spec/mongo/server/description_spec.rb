@@ -281,7 +281,36 @@ describe Mongo::Server::Description do
     end
   end
 
-  describe 'update!' do
+  describe '#unknown?' do
+
+    context 'when the description has no configuration' do
+
+      let(:description) do
+        described_class.new
+      end
+
+      it 'returns true' do
+        expect(description).to be_unknown
+      end
+    end
+
+    context 'when the description has a configuration' do
+
+      let(:config) do
+        { 'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ] }
+      end
+
+      let(:description) do
+        described_class.new(config)
+      end
+
+      it 'returns false' do
+        expect(description).to_not be_unknown
+      end
+    end
+  end
+
+  describe '#update!' do
 
     let(:config) do
       {
@@ -306,7 +335,7 @@ describe Mongo::Server::Description do
       end
 
       let(:updated) do
-        description.update!(new)
+        description.update!(new, 2.0)
       end
 
       before do
@@ -330,7 +359,7 @@ describe Mongo::Server::Description do
       end
 
       let(:updated) do
-        description.update!(new)
+        description.update!(new, 2.0)
       end
 
       before do

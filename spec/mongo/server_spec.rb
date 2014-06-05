@@ -2,6 +2,49 @@ require 'spec_helper'
 
 describe Mongo::Server do
 
+  describe '#==' do
+
+    let(:server) do
+      described_class.new('127.0.0.1:27017')
+    end
+
+    context 'when the other is not a server' do
+
+      let(:other) do
+        false
+      end
+
+      it 'returns false' do
+        expect(server).to_not eq(other)
+      end
+    end
+
+    context 'when the other is a server' do
+
+      context 'when the addresses match' do
+
+        let(:other) do
+          described_class.new('127.0.0.1:27017')
+        end
+
+        it 'returns true' do
+          expect(server).to eq(other)
+        end
+      end
+
+      context 'when the addresses dont match', simulator: 'cluster' do
+
+        let(:other) do
+          described_class.new('127.0.0.1:27018')
+        end
+
+        it 'returns false' do
+          expect(server).to_not eq(other)
+        end
+      end
+    end
+  end
+
   describe '#dispatch' do
 
     let!(:server) do
@@ -26,12 +69,8 @@ describe Mongo::Server do
 
     context 'when providing a single message' do
 
-      before do
-        server.dispatch([ insert ])
-      end
-
       let(:reply) do
-        server.dispatch([ query ])
+        server.dispatch([ insert, query ])
       end
 
       # @todo: Can remove this once we have more implemented with global hooks.
@@ -76,7 +115,7 @@ describe Mongo::Server do
     end
 
     let(:server) do
-      described_class.new(address, :refresh_interval => 5)
+      described_class.new(address, :heartbeat_frequency => 5)
     end
 
     it 'sets the address host' do
@@ -92,7 +131,7 @@ describe Mongo::Server do
     end
 
     it 'sets the options' do
-      expect(server.options).to eq(:refresh_interval => 5)
+      expect(server.options).to eq(:heartbeat_frequency => 5)
     end
   end
 
@@ -113,6 +152,7 @@ describe Mongo::Server do
     context 'when the server is a primary' do
 
       before do
+        expect(description).to receive(:unknown?).and_return(false)
         expect(description).to receive(:hidden?).and_return(false)
         expect(description).to receive(:primary?).and_return(true)
       end
@@ -125,6 +165,7 @@ describe Mongo::Server do
     context 'when the server is a secondary' do
 
       before do
+        expect(description).to receive(:unknown?).and_return(false)
         expect(description).to receive(:hidden?).and_return(false)
         expect(description).to receive(:primary?).and_return(false)
         expect(description).to receive(:secondary?).and_return(true)
@@ -138,6 +179,7 @@ describe Mongo::Server do
     context 'when the server is an arbiter' do
 
       before do
+        expect(description).to receive(:unknown?).and_return(false)
         expect(description).to receive(:hidden?).and_return(false)
         expect(description).to receive(:primary?).and_return(false)
         expect(description).to receive(:secondary?).and_return(false)
@@ -151,103 +193,12 @@ describe Mongo::Server do
     context 'when the server is hidden' do
 
       before do
+        expect(description).to receive(:unknown?).and_return(false)
         expect(description).to receive(:hidden?).and_return(true)
       end
 
       it 'returns false' do
         expect(server).to_not be_operable
-      end
-    end
-
-    pending 'when the server is not connected' do
-
-      before do
-        server.instance_variable_set(:@unconnected_since, Time.now)
-      end
-
-      it 'returns false' do
-        expect(server).to_not be_operable
-      end
-    end
-  end
-
-  describe '#refresh!' do
-
-    let(:address) do
-      '127.0.0.1:27017'
-    end
-
-    context 'when the server is a single server' do
-
-      let(:server) do
-        described_class.new(address)
-      end
-
-      context 'when the server is available' do
-
-        it 'flags the server as master' do
-
-        end
-
-        it 'flags the mode as operable' do
-
-        end
-
-        it 'sets the server latency' do
-
-        end
-      end
-
-      context 'when the server is down' do
-
-        it 'flags the server as down' do
-
-        end
-
-        it 'does not flag the server as operable' do
-
-        end
-
-        it 'removes the server latency' do
-
-        end
-      end
-    end
-
-    context 'when the server is a replica set' do
-
-    end
-
-    context 'when the server is mongos' do
-
-    end
-  end
-
-  describe '#refresh_interval' do
-
-    let(:address) do
-      '127.0.0.1:27017'
-    end
-
-    context 'when an option is provided' do
-
-      let(:server) do
-        described_class.new(address, :refresh_interval => 10)
-      end
-
-      it 'returns the option' do
-        expect(server.refresh_interval).to eq(10)
-      end
-    end
-
-    context 'when no option is provided' do
-
-      let(:server) do
-        described_class.new(address)
-      end
-
-      it 'defaults to 5' do
-        expect(server.refresh_interval).to eq(5)
       end
     end
   end

@@ -9,7 +9,7 @@ describe Mongo::Cluster do
   describe '#==' do
 
     let(:addresses) do
-      ['127.0.0.1:27017']
+      ['127.0.0.1:27018']
     end
 
     let(:cluster) do
@@ -52,41 +52,45 @@ describe Mongo::Cluster do
   describe '#add', simulator: 'cluster' do
 
     let(:addresses) do
-      ['127.0.0.1:27017', '127.0.0.1:27019']
+      ['127.0.0.1:27018', '127.0.0.1:27019']
     end
 
     let(:cluster) do
       described_class.new(client, addresses)
     end
 
-    before do
-      allow_any_instance_of(Mongo::Server).to receive(:operable?).and_return(true)
-    end
-
     context 'when a server with the address does not exist' do
 
       let(:address) do
-        '127.0.0.1:27020'
+        '127.0.0.1:27021'
       end
 
       let!(:added) do
         cluster.add(address)
       end
 
-      it 'adds the server to the cluster' do
-        expect(cluster.servers.size).to eq(3)
+      before do
+        simulator.add('127.0.0.1:27021')
+        cluster.check!
       end
 
-      it 'returns the newly added server' do
-        expect(added.address.host).to eq('127.0.0.1')
-        expect(added.address.port).to eq(27020)
+      after do
+        simulator.remove('127.0.0.1:27021')
+      end
+
+      it 'adds the server to the cluster' do
+        expect(cluster.servers.size).to eq(4)
       end
     end
 
     context 'when a server with the address exists' do
 
       let!(:added) do
-        cluster.add('127.0.0.1:27017')
+        cluster.add('127.0.0.1:27018')
+      end
+
+      before do
+        cluster.check!
       end
 
       it 'does not add the server to the cluster' do
@@ -102,7 +106,7 @@ describe Mongo::Cluster do
   describe '#initialize', simulator: 'cluster' do
 
     let(:addresses) do
-      ['127.0.0.1:27017', '127.0.0.1:27019']
+      ['127.0.0.1:27018', '127.0.0.1:27019']
     end
 
     let(:servers) do
@@ -120,12 +124,30 @@ describe Mongo::Cluster do
     it 'sets the client' do
       expect(cluster.client).to eq(client)
     end
+
+    context 'when the cluster is a replica set' do
+
+      context 'when servers are discovered' do
+
+        let(:cluster) do
+          described_class.new(client, addresses)
+        end
+
+        before do
+          cluster.check!
+        end
+
+        it 'automatically adds the members to the cluster' do
+          expect(cluster.servers.size).to eq(3)
+        end
+      end
+    end
   end
 
   describe '#servers', simulator: 'cluster' do
 
     let(:addresses) do
-      ['127.0.0.1:27017', '127.0.0.1:27019']
+      ['127.0.0.1:27018', '127.0.0.1:27019']
     end
 
     let(:cluster) do
@@ -139,12 +161,11 @@ describe Mongo::Cluster do
     context 'when all servers are alive' do
 
       before do
-        expect(servers_internal.first).to receive(:operable?).and_return(true)
-        expect(servers_internal.last).to receive(:operable?).and_return(true)
+        cluster.check!
       end
 
       it 'returns all servers' do
-        expect(cluster.servers.size).to eq(2)
+        expect(cluster.servers.size).to eq(3)
       end
     end
 

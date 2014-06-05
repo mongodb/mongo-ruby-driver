@@ -26,16 +26,6 @@ module Mongo
     include Event::Publisher
     include Event::Subscriber
 
-    # The default time for a server to refresh its status is 5 seconds.
-    #
-    # @since 2.0.0
-    REFRESH_INTERVAL = 5.freeze
-
-    # The command used for determining server status.
-    #
-    # @since 2.0.0
-    STATUS = { :ismaster => 1 }.freeze
-
     # Error message for Unconnected errors.
     #
     # @since 3.0.0
@@ -50,8 +40,31 @@ module Mongo
     # @return [ Hash ] The options hash.
     attr_reader :options
 
+    # Is this server equal to another?
+    #
+    # @example Is the server equal to the other?
+    #   server == other
+    #
+    # @param [ Object ] other The object to compare to.
+    #
+    # @return [ true, false ] If the servers are equal.
+    #
+    # @since 2.0.0
     def ==(other)
+      return false unless other.is_a?(Server)
       address == other.address
+    end
+
+    # Tells the monitor to immediately check the server status.
+    #
+    # @example Check the server status.
+    #   server.check!
+    #
+    # @return [ Server::Description ] The updated server description.
+    #
+    # @since 2.0.0
+    def check!
+      @monitor.check!
     end
 
     # Dispatch the provided messages to the server. If the last message
@@ -87,9 +100,23 @@ module Mongo
       @address = Address.new(address)
       @options = options
       @mutex = Mutex.new
-      refresh!
-      @monitor = Monitor.new(self, refresh_interval)
-      # @monitor.run
+      @monitor = Monitor.new(self, options)
+      @description = Description.new
+      subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
+      subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
+      @monitor.run
+    end
+
+    # Get a pretty printed server inspection.
+    #
+    # @example Get the server inspection.
+    #   server.inspec
+    #
+    # @return [ String ] The nice inspection string.
+    #
+    # @since 2.0.0
+    def inspect
+      "#<Mongo::Server:0x#{object_id} address=#{address.host}:#{address.port}"
     end
 
     # Is the server able to receive messages?
@@ -104,56 +131,8 @@ module Mongo
     #
     # @since 2.0.0
     def operable?
-      return false if !connected? || description.hidden?
+      return false if description.unknown? || description.hidden?
       description.primary? || description.secondary?
-    end
-
-    # Is the server connected?
-    #
-    # @example Is the server connected via a connection?
-    #   server.connected?
-    #
-    # @note This is true if the server is alive and can accept connections.
-    #
-    # @return [ true, false ] If the server is connected.
-    #
-    # @since 3.0.0
-    def connected?
-      !!description
-    end
-
-    # Refresh the configuration for this server. Is thread-safe since the
-    # periodic refresh is invoked from another thread in order not to continue
-    # blocking operations on the current thread.
-    #
-    # @example Refresh the server.
-    #   server.refresh!
-    #
-    # @note Is mutable in that the underlying server description can get
-    #   mutated on this call.
-    #
-    # @return [ Server::Description ] The updated server description.
-    #
-    # @since 2.0.0
-    def refresh!
-      if description
-        description.update!(send_messages([ refresh_command ]).documents[0])
-      else
-        initialize_description!
-      end
-    end
-
-    # Get the refresh interval for the server. This will be defined via an option
-    # or will default to 5.
-    #
-    # @example Get the refresh interval.
-    #   server.refresh_interval
-    #
-    # @return [ Integer ] The refresh interval, in seconds.
-    #
-    # @since 2.0.0
-    def refresh_interval
-      @refresh_interval ||= options[:refresh_interval] || REFRESH_INTERVAL
     end
 
     # Raised when trying to dispatch a message when the server is not
@@ -164,37 +143,17 @@ module Mongo
 
     private
 
-    def initialize_description!
-      @description = Description.new(send_messages([ refresh_command ]).documents[0])
-      subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
-      subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
-    end
-
     def pool
       @pool ||= Pool.get(self)
     end
 
-    # @todo: Need to sort out read preference here.
-    def refresh_command
-      Protocol::Query.new(
-        Database::ADMIN,
-        Database::COMMAND,
-        STATUS,
-        :limit => -1
-      )
-    end
-
     def send_messages(messages)
       mutex.synchronize do
-        with_connection do |connection|
+        pool.with_connection do |connection|
           connection.write(messages)
           connection.read if messages.last.replyable?
         end
       end
-    end
-
-    def with_connection
-      pool.with_connection { |conn| yield(conn) }
     end
   end
 end

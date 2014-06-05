@@ -138,7 +138,7 @@ module Mongo
       #
       # @since 2.0.0
       def hosts
-        config[HOSTS]
+        config[HOSTS] || []
       end
 
       # Instantiate the new server description from the result of the ismaster
@@ -264,6 +264,18 @@ module Mongo
         config[SET_NAME]
       end
 
+      # Is the server description currently unknown?
+      #
+      # @example Is the server description unknown?
+      #   description.unknown?
+      #
+      # @return [ true, false ] If the server description is unknown.
+      #
+      # @since 2.0.0
+      def unknown?
+        config.empty?
+      end
+
       # Update this description with a new description. Will fire the
       # necessary events depending on what has changed from the old description
       # to the new one.
@@ -278,10 +290,11 @@ module Mongo
       # @return [ Description ] The updated description.
       #
       # @since 2.0.0
-      def update!(new_config)
+      def update!(new_config, round_trip_time)
         find_new_servers(new_config)
         find_removed_servers(new_config)
         @config = new_config
+        @round_trip_time = round_trip_time
         self
       end
 
@@ -294,7 +307,7 @@ module Mongo
       end
 
       def find_removed_servers(new_config)
-        (hosts || []).each do |host|
+        hosts.each do |host|
           publish(Event::HOST_REMOVED, host) unless (new_config[HOSTS] || []).include?(host)
         end
       end
