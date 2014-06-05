@@ -34,7 +34,7 @@ module Mongo
       # The constant for the ismaster command.
       #
       # @since 2.0.0
-      ISMASTER = Protocol::Query.new(Database::ADMIN, Database::COMMAND, STATUS, :limit => -1).freeze
+      ISMASTER = Protocol::Query.new(Database::ADMIN, Database::COMMAND, STATUS, :limit => -1)
 
       # @return [ Mutex ] The refresh operation mutex.
       attr_reader :mutex

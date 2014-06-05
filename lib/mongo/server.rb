@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require 'mongo/server/address'
+require 'mongo/server/context'
 require 'mongo/server/description'
 require 'mongo/server/monitor'
 
@@ -35,8 +36,6 @@ module Mongo
     attr_reader :address
     # @return [ Server::Description ] The description of the server.
     attr_reader :description
-    # @return [ Mutex ] The refresh operation mutex.
-    attr_reader :mutex
     # @return [ Hash ] The options hash.
     attr_reader :options
 
@@ -67,6 +66,18 @@ module Mongo
       @monitor.check!
     end
 
+    # Get a new context for this server in which to send messages.
+    #
+    # @example Get the server context.
+    #   server.context
+    #
+    # @return [ Mongo::Server::Context ] The server context.
+    #
+    # @since 2.0.0
+    def context
+      Context.new(self)
+    end
+
     # Disconnect the server from the connection.
     #
     # @example Disconnect the server.
@@ -76,27 +87,9 @@ module Mongo
     #
     # @since 2.0.0
     def disconnect!
-      pool.with_connection do |connection|
+      context.with_connection do |connection|
         connection.disconnect!
       end and true
-    end
-
-    # Dispatch the provided messages to the server. If the last message
-    # requires a response a reply will be returned.
-    #
-    # @example Dispatch the messages.
-    #   server.dispatch([ insert, command ])
-    #
-    # @note This method is named dispatch since 'send' is a core Ruby method on
-    #   all objects.
-    #
-    # @param [ Array<Message> ] messages The messages to dispatch.
-    #
-    # @return [ Protocol::Reply ] The reply if needed.
-    #
-    # @since 3.0.0
-    def dispatch(messages)
-      send_messages(messages)
     end
 
     # Instantiate a new server object. Will start the background refresh and
@@ -148,18 +141,16 @@ module Mongo
       description.primary? || description.secondary?
     end
 
-    private
-
+    # Get the connection pool for this server.
+    #
+    # @example Get the connection pool for the server.
+    #   server.pool
+    #
+    # @return [ Mongo::Pool ] The connection pool.
+    #
+    # @since 2.0.0
     def pool
       @pool ||= Pool.get(self)
-    end
-
-    def send_messages(messages)
-      mutex.synchronize do
-        pool.with_connection do |connection|
-          connection.dispatch(messages)
-        end
-      end
     end
   end
 end

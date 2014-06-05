@@ -31,9 +31,6 @@ module Mongo
     # The default timeout for getting connections from the queue.
     TIMEOUT = 0.5
 
-    # @return [ String ] identifier The thread local stack id.
-    attr_reader :identifier
-
     # @return [ Hash ] options The pool options.
     attr_reader :options
 
@@ -44,11 +41,8 @@ module Mongo
     #   pool.checkin
     #
     # @since 2.0.0
-    def checkin
-      connection = pinned_connections.pop
-      if connection && pinned_connections.empty?
-        queue.enqueue(connection)
-      end and nil
+    def checkin(connection)
+      queue.enqueue(connection)
     end
 
     # Check a connection out from the pool. If a connection exists on the same
@@ -62,12 +56,7 @@ module Mongo
     #
     # @since 2.0.0
     def checkout
-      if pinned_connections.empty?
-        connection = queue.dequeue(timeout)
-      else
-        connection = pinned_connections.pop
-      end
-      pinned_connections.push(connection) and connection
+      queue.dequeue(timeout)
     end
 
     # Create the new connection pool.
@@ -85,7 +74,6 @@ module Mongo
     def initialize(options = {}, &block)
       @options = options
       @queue = Queue.new(pool_size, &block)
-      @identifier = :"mongodb-pool-#{queue.object_id}"
     end
 
     # Get the default size of the connection pool.
@@ -124,19 +112,16 @@ module Mongo
     # @since 2.0.0
     def with_connection
       begin
-        yield(checkout)
+        connection = checkout
+        yield(connection)
       ensure
-        checkin
+        checkin(connection)
       end
     end
 
     private
 
     attr_reader :queue
-
-    def pinned_connections
-      ::Thread.current[identifier] ||= []
-    end
 
     class << self
 

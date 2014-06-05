@@ -82,6 +82,69 @@ describe Mongo::Connection do
     end
   end
 
+  describe '#dispatch' do
+
+    let!(:connection) do
+      described_class.new(address)
+    end
+
+    let(:documents) do
+      [{ 'name' => 'testing' }]
+    end
+
+    let(:insert) do
+      Mongo::Protocol::Insert.new(TEST_DB, TEST_COLL, documents)
+    end
+
+    let(:query) do
+      Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, {})
+    end
+
+    let(:delete) do
+      Mongo::Protocol::Delete.new(TEST_DB, TEST_COLL, {})
+    end
+
+    context 'when providing a single message' do
+
+      let(:reply) do
+        connection.dispatch([ insert, query ])
+      end
+
+      # @todo: Can remove this once we have more implemented with global hooks.
+      after do
+        connection.dispatch([ delete ])
+      end
+
+      it 'it dispatchs the message to the socket' do
+        expect(reply.documents.first['name']).to eq('testing')
+      end
+    end
+
+    context 'when providing multiple messages' do
+
+      let(:selector) do
+        { :getlasterror => 1 }
+      end
+
+      let(:command) do
+        Mongo::Protocol::Query.new(TEST_DB, '$cmd', selector, :limit => -1)
+      end
+
+      let(:reply) do
+        connection.dispatch([ insert, command ])
+      end
+
+      # @todo: Can remove this once we have more implemented with global hooks.
+      after do
+        connection.dispatch([ delete ])
+      end
+
+      it 'it dispatchs the message to the socket' do
+        expect(reply.documents.first['ok']).to eq(1.0)
+      end
+    end
+  end
+
   describe '#initialize' do
 
     context 'when host and port are provided' do

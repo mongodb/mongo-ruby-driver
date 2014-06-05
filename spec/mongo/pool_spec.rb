@@ -12,13 +12,6 @@ describe Mongo::Pool do
       described_class.get(server)
     end
 
-    context 'when no connection is checked out' do
-
-      it 'does nothing' do
-        expect(pool.checkin).to be_nil
-      end
-    end
-
     context 'when a connection is checked out on the thread' do
 
       let!(:connection) do
@@ -26,23 +19,15 @@ describe Mongo::Pool do
       end
 
       before do
-        pool.checkin
+        pool.checkin(connection)
       end
 
       let(:queue) do
         pool.send(:queue).queue
       end
 
-      let(:stack) do
-        Thread.current[pool.identifier]
-      end
-
       it 'returns the connection to the queue' do
         expect(queue.size).to eq(5)
-      end
-
-      it 'pops the connection off the thread local stack' do
-        expect(stack).to be_empty
       end
     end
   end
@@ -63,24 +48,12 @@ describe Mongo::Pool do
         pool.checkout
       end
 
-      let(:stack) do
-        Thread.current[pool.identifier]
-      end
-
       it 'returns a new connection' do
         expect(connection.address).to eq(server.address)
-      end
-
-      it 'puts the new connection on the thread local stack' do
-        expect(stack.first).to eq(connection)
       end
     end
 
     context 'when a connection is checked out on the same thread' do
-
-      let(:stack) do
-        Thread.current[pool.identifier]
-      end
 
       before do
         pool.checkout
@@ -89,17 +62,9 @@ describe Mongo::Pool do
       it 'returns the threads connection' do
         expect(pool.checkout.address).to eq(server.address)
       end
-
-      it 'keeps the connection on the thread local stack' do
-        expect(stack.first).to eq(pool.checkout)
-      end
     end
 
     context 'when a connection is checked out on a different thread' do
-
-      let(:stack) do
-        Thread.current[pool.identifier]
-      end
 
       let!(:connection) do
         Thread.new { pool.checkout }.value
