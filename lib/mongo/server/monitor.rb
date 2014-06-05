@@ -114,7 +114,7 @@ module Mongo
         mutex.synchronize do
           start = Time.now
           begin
-            result = connection.write([ ISMASTER ]).read.documents[0]
+            result = connection.dispatch([ ISMASTER ]).documents[0]
             return result, calculate_round_trip_time(start)
           rescue SystemCallError, IOError
             return {}, calculate_round_trip_time(start)

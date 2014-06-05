@@ -164,8 +164,7 @@ module Mongo
     def send_messages(messages)
       mutex.synchronize do
         pool.with_connection do |connection|
-          connection.write(messages)
-          connection.read if messages.last.replyable?
+          connection.dispatch(messages)
         end
       end
     end
