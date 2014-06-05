@@ -27,11 +27,6 @@ module Mongo
     include Event::Publisher
     include Event::Subscriber
 
-    # Error message for Unconnected errors.
-    #
-    # @since 3.0.0
-    UNCONNECTED = 'Server is currently not connected.'.freeze
-
     # @return [ String ] The configured address for the server.
     attr_reader :address
     # @return [ Server::Description ] The description of the server.
