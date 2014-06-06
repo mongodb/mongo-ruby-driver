@@ -71,7 +71,7 @@ describe Mongo::Cluster do
 
       before do
         simulator.add('127.0.0.1:27021')
-        cluster.check!
+        cluster.scan!
       end
 
       after do
@@ -90,7 +90,7 @@ describe Mongo::Cluster do
       end
 
       before do
-        cluster.check!
+        cluster.scan!
       end
 
       it 'does not add the server to the cluster' do
@@ -134,7 +134,7 @@ describe Mongo::Cluster do
         end
 
         before do
-          cluster.check!
+          cluster.scan!
         end
 
         it 'automatically adds the members to the cluster' do
@@ -157,7 +157,7 @@ describe Mongo::Cluster do
     context 'when the address exists' do
 
       before do
-        cluster.check!
+        cluster.scan!
         cluster.remove('127.0.0.1:27020')
       end
 
@@ -177,7 +177,7 @@ describe Mongo::Cluster do
     context 'when the address does not exist' do
 
       before do
-        cluster.check!
+        cluster.scan!
         cluster.remove('127.0.0.1:27021')
       end
 
@@ -204,7 +204,7 @@ describe Mongo::Cluster do
     context 'when all servers are alive' do
 
       before do
-        cluster.check!
+        cluster.scan!
       end
 
       it 'returns all servers' do
@@ -223,5 +223,9 @@ describe Mongo::Cluster do
         expect(cluster.servers.size).to eq(1)
       end
     end
+  end
+
+  context 'when monitoring a replica set', simulator: 'cluster' do
+
   end
 end

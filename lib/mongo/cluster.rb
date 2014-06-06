@@ -65,15 +65,15 @@ module Mongo
       end
     end
 
-    # Force a check of all servers in the cluster.
+    # Force a scan of all servers in the cluster.
     #
-    # @example Check the cluster.
-    #   cluster.check!
+    # @example Scan the cluster.
+    #   cluster.scan!
     #
     # @return [ true ] Always true if no error.
     #
     # @since 2.0.0
-    def check!
+    def scan!
       @servers.each{ |server| server.check! } and true
     end
 
