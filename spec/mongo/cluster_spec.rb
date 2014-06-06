@@ -187,6 +187,39 @@ describe Mongo::Cluster do
     end
   end
 
+  describe '#replica_set_name' do
+
+    context 'when the cluster is configured with a name' do
+
+      let(:addresses) do
+        ['127.0.0.1:27018', '127.0.0.1:27019']
+      end
+
+      let(:cluster) do
+        described_class.new(client, addresses, replica_set_name: 'test')
+      end
+
+      it 'returns the name' do
+        expect(cluster.replica_set_name).to eq('test')
+      end
+    end
+
+    context 'when the cluster is configured with no name' do
+
+      let(:addresses) do
+        ['127.0.0.1:27018', '127.0.0.1:27019']
+      end
+
+      let(:cluster) do
+        described_class.new(client, addresses)
+      end
+
+      it 'returns nil' do
+        expect(cluster.replica_set_name).to be_nil
+      end
+    end
+  end
+
   describe '#servers', simulator: 'cluster' do
 
     let(:addresses) do
