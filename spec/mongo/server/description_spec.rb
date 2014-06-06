@@ -281,6 +281,31 @@ describe Mongo::Server::Description do
     end
   end
 
+  describe '#standalone?' do
+
+    context 'when the server is standalone' do
+
+      let(:description) do
+        described_class.new({ 'ismaster' => true })
+      end
+
+      it 'returns true' do
+        expect(description).to be_standalone
+      end
+    end
+
+    context 'when the server is part of a replica set' do
+
+      let(:description) do
+        described_class.new(replica)
+      end
+
+      it 'returns false' do
+        expect(description).to_not be_standalone
+      end
+    end
+  end
+
   describe '#unknown?' do
 
     context 'when the description has no configuration' do

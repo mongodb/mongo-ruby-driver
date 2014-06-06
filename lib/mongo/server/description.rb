@@ -251,6 +251,19 @@ module Mongo
         !!config[PRIMARY]
       end
 
+      # Get the name of the replica set the server belongs to, returns nil if
+      # none.
+      #
+      # @example Get the replica set name.
+      #   description.replica_set_name
+      #
+      # @return [ String, nil ] The name of the replica set.
+      #
+      # @since 2.0.0
+      def replica_set_name
+        config[SET_NAME]
+      end
+
       # Will return true if the server is a secondary.
       #
       # @example Is the server a secondary?
@@ -263,17 +276,16 @@ module Mongo
         !!config[SECONDARY]
       end
 
-      # Get the name of the replica set the server belongs to, returns nil if
-      # none.
+      # Is this server a standalone server?
       #
-      # @example Get the replica set name.
-      #   description.replica_set_name
+      # @example Is the server standalone?
+      #   description.standalone?
       #
-      # @return [ String, nil ] The name of the replica set.
+      # @return [ true, false ] If the server is standalone.
       #
       # @since 2.0.0
-      def replica_set_name
-        config[SET_NAME]
+      def standalone?
+        primary? && !config.has_key?(SECONDARY)
       end
 
       # Is the server description currently unknown?
