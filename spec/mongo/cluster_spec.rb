@@ -94,7 +94,7 @@ describe Mongo::Cluster do
       end
 
       it 'does not add the server to the cluster' do
-        expect(cluster.servers.size).to eq(2)
+        expect(cluster.servers.size).to eq(3)
       end
 
       it 'returns nil' do
@@ -248,8 +248,8 @@ describe Mongo::Cluster do
     context 'when some servers are not alive' do
 
       before do
-        expect(servers_internal.first).to receive(:operable?).and_return(true)
-        expect(servers_internal.last).to receive(:operable?).and_return(false)
+        expect(servers_internal.first).to receive(:queryable?).and_return(true)
+        expect(servers_internal.last).to receive(:queryable?).and_return(false)
       end
 
       it 'returns all alive servers' do

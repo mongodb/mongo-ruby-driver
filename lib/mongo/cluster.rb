@@ -140,7 +140,7 @@ module Mongo
     #
     # @since 2.0.0
     def servers
-      @servers.select { |server| server.operable? }
+      @servers.select { |server| server.queryable? }
     end
   end
 end
