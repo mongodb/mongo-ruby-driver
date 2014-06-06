@@ -120,6 +120,7 @@ describe Mongo::Server do
         expect(description).to receive(:hidden?).and_return(false)
         expect(description).to receive(:primary?).and_return(false)
         expect(description).to receive(:secondary?).and_return(false)
+        expect(description).to receive(:standalone?).and_return(false)
       end
 
       it 'returns false' do

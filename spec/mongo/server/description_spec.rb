@@ -30,7 +30,7 @@ describe Mongo::Server::Description do
     context 'when the server is an arbiter' do
 
       let(:description) do
-        described_class.new({ 'arbiterOnly' => true })
+        described_class.new({ 'arbiterOnly' => true, 'setName' => 'test' })
       end
 
       it 'returns true' do
@@ -71,6 +71,35 @@ describe Mongo::Server::Description do
 
       it 'returns an empty array' do
         expect(description.arbiters).to be_empty
+      end
+    end
+  end
+
+  describe '#ghost?' do
+
+    context 'when the server is a ghost' do
+
+      let(:config) do
+        { 'isreplicaset' => true }
+      end
+
+      let(:description) do
+        described_class.new(config)
+      end
+
+      it 'returns true' do
+        expect(description).to be_ghost
+      end
+    end
+
+    context 'when the server is not a ghost' do
+
+      let(:description) do
+        described_class.new(replica)
+      end
+
+      it 'returns false' do
+        expect(description).to_not be_ghost
       end
     end
   end
@@ -301,7 +330,7 @@ describe Mongo::Server::Description do
     context 'when the server is a secondary' do
 
       let(:description) do
-        described_class.new({ 'secondary' => true })
+        described_class.new({ 'secondary' => true, 'setName' => 'test' })
       end
 
       it 'returns false' do
@@ -407,7 +436,11 @@ describe Mongo::Server::Description do
       context 'when the server is a primary' do
 
         let(:new) do
-          { 'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ], 'ismaster' => true }
+          {
+            'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ],
+            'ismaster' => true,
+            'setName' => 'test'
+          }
         end
 
         let(:description) do
@@ -431,7 +464,11 @@ describe Mongo::Server::Description do
       context 'when the server is not a primary' do
 
         let(:new) do
-          { 'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ], 'secondary' => true }
+          {
+            'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ],
+            'secondary' => true,
+            'setName' => 'test'
+          }
         end
 
         let(:description) do

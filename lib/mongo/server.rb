@@ -133,7 +133,7 @@ module Mongo
     # @since 2.0.0
     def operable?
       return false if description.unknown? || description.hidden?
-      description.primary? || description.secondary?
+      description.primary? || description.secondary? || description.standalone?
     end
 
     # Get the connection pool for this server.

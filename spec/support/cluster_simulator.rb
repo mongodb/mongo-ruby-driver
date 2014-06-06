@@ -243,6 +243,7 @@ class ClusterSimulator
           "secondary" => secondary?,
           "hosts" => simulator.servers.map(&:seed),
           "me" => seed,
+          "setName" => "simulator",
           "ok" => 1.0
         }
       ])

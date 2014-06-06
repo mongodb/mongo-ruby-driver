@@ -54,6 +54,11 @@ module Mongo
       # @since 2.0.0
       MONGOS_MESSAGE = 'isdbgrid'.freeze
 
+      # Constant for determining ghost servers.
+      #
+      # @since 2.0.0
+      REPLICA_SET = 'isreplicaset'.freeze
+
       # Static list of inspections that are performed on the result of an
       # ismaster command in order to generate the appropriate events for the
       # changes.
@@ -124,7 +129,7 @@ module Mongo
       #
       # @since 2.0.0
       def arbiter?
-        !!config[ARBITER]
+        !!config[ARBITER] && !replica_set_name.nil?
       end
 
       # Get a list of all arbiters in the replica set.
@@ -137,6 +142,18 @@ module Mongo
       # @since 2.0.0
       def arbiters
         config[ARBITERS] || []
+      end
+
+      # Is the server a ghost in a replica set?
+      #
+      # @example Is the server a ghost?
+      #   description.ghost?
+      #
+      # @return [ true, false ] If the server is a ghost.
+      #
+      # @since 2.0.0
+      def ghost?
+        !!config[REPLICA_SET]
       end
 
       # Will return true if the server is hidden.
@@ -270,7 +287,7 @@ module Mongo
       #
       # @since 2.0.0
       def primary?
-        !!config[PRIMARY]
+        !!config[PRIMARY] && !replica_set_name.nil?
       end
 
       # Get the name of the replica set the server belongs to, returns nil if
@@ -295,7 +312,7 @@ module Mongo
       #
       # @since 2.0.0
       def secondary?
-        !!config[SECONDARY]
+        !!config[SECONDARY] && !replica_set_name.nil?
       end
 
       # Is this server a standalone server?
@@ -307,7 +324,7 @@ module Mongo
       #
       # @since 2.0.0
       def standalone?
-        primary? && !config.has_key?(SECONDARY)
+        replica_set_name.nil? && !mongos? && !ghost?
       end
 
       # Is the server description currently unknown?

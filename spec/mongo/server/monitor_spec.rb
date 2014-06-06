@@ -17,7 +17,7 @@ describe Mongo::Server::Monitor do
     end
 
     it 'updates the server description' do
-      expect(server.description).to be_primary
+      expect(server.description).to be_standalone
     end
   end
 
