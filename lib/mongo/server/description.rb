@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/server/description/inspection'
+
 module Mongo
   class Server
 
@@ -41,6 +43,16 @@ module Mongo
       #
       # @since 2.0.0
       HOSTS = 'hosts'.freeze
+
+      # Static list of inspections that are performed on the result of an
+      # ismaster command in order to generate the appropriate events for the
+      # changes.
+      #
+      # @since 2.0.0
+      INSPECTIONS = [
+        Inspection::ServerAdded,
+        Inspection::ServerRemoved
+      ].freeze
 
       # Constant for reading max bson size info from config.
       #
@@ -291,25 +303,12 @@ module Mongo
       #
       # @since 2.0.0
       def update!(new_config, round_trip_time)
-        find_new_servers(new_config)
-        find_removed_servers(new_config)
+        INSPECTIONS.each do |inspection|
+          inspection.run(self, new_config)
+        end
         @config = new_config
         @round_trip_time = round_trip_time
         self
-      end
-
-      private
-
-      def find_new_servers(new_config)
-        (new_config[HOSTS] || []).each do |host|
-          publish(Event::HOST_ADDED, host) unless hosts.include?(host)
-        end
-      end
-
-      def find_removed_servers(new_config)
-        hosts.each do |host|
-          publish(Event::HOST_REMOVED, host) unless (new_config[HOSTS] || []).include?(host)
-        end
       end
     end
   end
