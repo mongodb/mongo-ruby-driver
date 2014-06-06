@@ -42,6 +42,22 @@ class ClusterSimulator
     server.demote!
     server.start
     servers.push(server)
+    self
+  end
+
+  # Demote a server to a secondary.
+  #
+  # @example Demote a server to a secondary.
+  #   simulator.demote('127.0.0.1:27018')
+  #
+  # @param [ String ] seed The address of the server.
+  #
+  # @since 2.0.0
+  def demote(seed)
+    servers.each do |server|
+      server.demote! if server.seed = seed
+    end
+    self
   end
 
   # Initialize the cluster simulator.
@@ -58,6 +74,21 @@ class ClusterSimulator
     @manager = Manager.new(servers)
   end
 
+  # Promote a server to primary.
+  #
+  # @example Promote a server to primary.
+  #   simulator.promote('127.0.0.1:27018')
+  #
+  # @param [ String ] seed The address of the server.
+  #
+  # @since 2.0.0
+  def promote(seed)
+    servers.each do |server|
+      server.seed = seed ? server.promote! : server.demote!
+    end
+    self
+  end
+
   # Removes the server from the cluster simulator.
   #
   # @example Remove the server.
@@ -72,6 +103,7 @@ class ClusterSimulator
       server.stop
       manager.remove(server)
     end
+    self
   end
 
   # Start the cluster simulator.
