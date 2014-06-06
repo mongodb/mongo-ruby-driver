@@ -166,6 +166,35 @@ describe Mongo::Server::Description do
     end
   end
 
+  describe '#mongos?' do
+
+    context 'when the server is a mongos' do
+
+      let(:config) do
+        { 'msg' => 'isdbgrid', 'ismaster' => true }
+      end
+
+      let(:description) do
+        described_class.new(config)
+      end
+
+      it 'returns true' do
+        expect(description).to be_mongos
+      end
+    end
+
+    context 'when the server is not a mongos' do
+
+      let(:description) do
+        described_class.new(replica)
+      end
+
+      it 'returns false' do
+        expect(description).to_not be_mongos
+      end
+    end
+  end
+
   describe '#passive?' do
 
     context 'when the server is passive' do
@@ -231,31 +260,6 @@ describe Mongo::Server::Description do
     end
   end
 
-  describe '#secondary?' do
-
-    context 'when the server is not a secondary' do
-
-      let(:description) do
-        described_class.new({ 'secondary' => false })
-      end
-
-      it 'returns true' do
-        expect(description).to_not be_secondary
-      end
-    end
-
-    context 'when the server is a secondary' do
-
-      let(:description) do
-        described_class.new({ 'secondary' => true })
-      end
-
-      it 'returns false' do
-        expect(description).to be_secondary
-      end
-    end
-  end
-
   describe '#replica_set_name' do
 
     context 'when the server is in a replica set' do
@@ -277,6 +281,31 @@ describe Mongo::Server::Description do
 
       it 'returns nil' do
         expect(description.replica_set_name).to be_nil
+      end
+    end
+  end
+
+  describe '#secondary?' do
+
+    context 'when the server is not a secondary' do
+
+      let(:description) do
+        described_class.new({ 'secondary' => false })
+      end
+
+      it 'returns true' do
+        expect(description).to_not be_secondary
+      end
+    end
+
+    context 'when the server is a secondary' do
+
+      let(:description) do
+        described_class.new({ 'secondary' => true })
+      end
+
+      it 'returns false' do
+        expect(description).to be_secondary
       end
     end
   end

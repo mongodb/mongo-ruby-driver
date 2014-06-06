@@ -44,6 +44,16 @@ module Mongo
       # @since 2.0.0
       HOSTS = 'hosts'.freeze
 
+      # Constant for the key for the message value.
+      #
+      # @since 2.0.0
+      MESSAGE = 'msg'.freeze
+
+      # Constant for the message that indicates a sharded cluster.
+      #
+      # @since 2.0.0
+      MONGOS_MESSAGE = 'isdbgrid'.freeze
+
       # Static list of inspections that are performed on the result of an
       # ismaster command in order to generate the appropriate events for the
       # changes.
@@ -227,6 +237,18 @@ module Mongo
         config[MIN_WIRE_VERSION]
       end
 
+      # Is the server a mongos?
+      #
+      # @example Is the server a mongos?
+      #   description.mongos?
+      #
+      # @return [ true, false ] If the server is a mongos.
+      #
+      # @since 2.0.0
+      def mongos?
+        config[MESSAGE] == MONGOS_MESSAGE
+      end
+
       # Will return true if the server is passive.
       #
       # @example Is the server passive?
@@ -315,9 +337,7 @@ module Mongo
       #
       # @since 2.0.0
       def update!(new_config, round_trip_time)
-        INSPECTIONS.each do |inspection|
-          inspection.run(self, new_config)
-        end
+        INSPECTIONS.each{ |inspection| inspection.run(self, new_config) }
         @config = new_config
         @round_trip_time = round_trip_time
         self
