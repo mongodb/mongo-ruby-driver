@@ -71,7 +71,7 @@ describe Mongo::Cluster do
 
       before do
         simulator.add('127.0.0.1:27021')
-        cluster.check!
+        cluster.scan!
       end
 
       after do
@@ -90,11 +90,11 @@ describe Mongo::Cluster do
       end
 
       before do
-        cluster.check!
+        cluster.scan!
       end
 
       it 'does not add the server to the cluster' do
-        expect(cluster.servers.size).to eq(2)
+        expect(cluster.servers.size).to eq(3)
       end
 
       it 'returns nil' do
@@ -134,7 +134,7 @@ describe Mongo::Cluster do
         end
 
         before do
-          cluster.check!
+          cluster.scan!
         end
 
         it 'automatically adds the members to the cluster' do
@@ -157,7 +157,7 @@ describe Mongo::Cluster do
     context 'when the address exists' do
 
       before do
-        cluster.check!
+        cluster.scan!
         cluster.remove('127.0.0.1:27020')
       end
 
@@ -177,12 +177,45 @@ describe Mongo::Cluster do
     context 'when the address does not exist' do
 
       before do
-        cluster.check!
+        cluster.scan!
         cluster.remove('127.0.0.1:27021')
       end
 
       it 'does not remove anything' do
         expect(cluster.servers.size).to eq(3)
+      end
+    end
+  end
+
+  describe '#replica_set_name' do
+
+    context 'when the cluster is configured with a name' do
+
+      let(:addresses) do
+        ['127.0.0.1:27018', '127.0.0.1:27019']
+      end
+
+      let(:cluster) do
+        described_class.new(client, addresses, replica_set_name: 'test')
+      end
+
+      it 'returns the name' do
+        expect(cluster.replica_set_name).to eq('test')
+      end
+    end
+
+    context 'when the cluster is configured with no name' do
+
+      let(:addresses) do
+        ['127.0.0.1:27018', '127.0.0.1:27019']
+      end
+
+      let(:cluster) do
+        described_class.new(client, addresses)
+      end
+
+      it 'returns nil' do
+        expect(cluster.replica_set_name).to be_nil
       end
     end
   end
@@ -204,7 +237,7 @@ describe Mongo::Cluster do
     context 'when all servers are alive' do
 
       before do
-        cluster.check!
+        cluster.scan!
       end
 
       it 'returns all servers' do
@@ -215,13 +248,17 @@ describe Mongo::Cluster do
     context 'when some servers are not alive' do
 
       before do
-        expect(servers_internal.first).to receive(:operable?).and_return(true)
-        expect(servers_internal.last).to receive(:operable?).and_return(false)
+        expect(servers_internal.first).to receive(:queryable?).and_return(true)
+        expect(servers_internal.last).to receive(:queryable?).and_return(false)
       end
 
       it 'returns all alive servers' do
         expect(cluster.servers.size).to eq(1)
       end
     end
+  end
+
+  context 'when monitoring a replica set', simulator: 'cluster' do
+
   end
 end

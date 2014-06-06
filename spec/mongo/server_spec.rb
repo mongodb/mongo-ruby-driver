@@ -72,7 +72,7 @@ describe Mongo::Server do
     end
   end
 
-  describe '#operable?' do
+  describe '#queryable?' do
 
     let(:server) do
       described_class.new('127.0.0.1:27017')
@@ -84,59 +84,11 @@ describe Mongo::Server do
 
     before do
       server.instance_variable_set(:@description, description)
+      expect(description).to receive(:queryable?).and_return(true)
     end
 
-    context 'when the server is a primary' do
-
-      before do
-        expect(description).to receive(:unknown?).and_return(false)
-        expect(description).to receive(:hidden?).and_return(false)
-        expect(description).to receive(:primary?).and_return(true)
-      end
-
-      it 'returns true' do
-        expect(server).to be_operable
-      end
-    end
-
-    context 'when the server is a secondary' do
-
-      before do
-        expect(description).to receive(:unknown?).and_return(false)
-        expect(description).to receive(:hidden?).and_return(false)
-        expect(description).to receive(:primary?).and_return(false)
-        expect(description).to receive(:secondary?).and_return(true)
-      end
-
-      it 'returns true' do
-        expect(server).to be_operable
-      end
-    end
-
-    context 'when the server is an arbiter' do
-
-      before do
-        expect(description).to receive(:unknown?).and_return(false)
-        expect(description).to receive(:hidden?).and_return(false)
-        expect(description).to receive(:primary?).and_return(false)
-        expect(description).to receive(:secondary?).and_return(false)
-      end
-
-      it 'returns false' do
-        expect(server).to_not be_operable
-      end
-    end
-
-    context 'when the server is hidden' do
-
-      before do
-        expect(description).to receive(:unknown?).and_return(false)
-        expect(description).to receive(:hidden?).and_return(true)
-      end
-
-      it 'returns false' do
-        expect(server).to_not be_operable
-      end
+    it 'delegates to the description' do
+      expect(server).to be_queryable
     end
   end
 end

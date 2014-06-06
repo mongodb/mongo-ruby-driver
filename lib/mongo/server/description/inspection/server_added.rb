@@ -29,11 +29,11 @@ module Mongo
           #   ServerAdded.run(description, {})
           #
           # @param [ Description ] description The server description.
-          # @param [ Hash ] config The result of the ismaster command.
+          # @param [ Description ] updated The updated description.
           #
           # @since 2.0.0
-          def self.run(description, config)
-            (config[Description::HOSTS] || []).each do |host|
+          def self.run(description, updated)
+            updated.hosts.each do |host|
               unless description.hosts.include?(host)
                 description.publish(Event::HOST_ADDED, host)
               end

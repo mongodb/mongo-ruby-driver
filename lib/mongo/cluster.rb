@@ -21,6 +21,11 @@ module Mongo
   class Cluster
     include Event::Subscriber
 
+    # Constant for the replica set name configuration option.
+    #
+    # @since 2.0.0
+    REPLICA_SET_NAME = :replica_set_name.freeze
+
     # @return [ Mongo::Client ] The cluster's client.
     attr_reader :client
     # @return [ Array<String> ] The provided seed addresses.
@@ -65,15 +70,15 @@ module Mongo
       end
     end
 
-    # Force a check of all servers in the cluster.
+    # Force a scan of all servers in the cluster.
     #
-    # @example Check the cluster.
-    #   cluster.check!
+    # @example Scan the cluster.
+    #   cluster.scan!
     #
     # @return [ true ] Always true if no error.
     #
     # @since 2.0.0
-    def check!
+    def scan!
       @servers.each{ |server| server.check! } and true
     end
 
@@ -113,6 +118,18 @@ module Mongo
       addresses.reject!{ |addr| addr == address }
     end
 
+    # Get the replica set name configured for this cluster.
+    #
+    # @example Get the replica set name.
+    #   cluster.replica_set_name
+    #
+    # @return [ String ] The name of the configured replica set.
+    #
+    # @since 2.0.0
+    def replica_set_name
+      options[REPLICA_SET_NAME]
+    end
+
     # Get a list of server candidates from the cluster that can have operations
     # executed on them.
     #
@@ -123,7 +140,7 @@ module Mongo
     #
     # @since 2.0.0
     def servers
-      @servers.select { |server| server.operable? }
+      @servers.select { |server| server.queryable? }
     end
   end
 end

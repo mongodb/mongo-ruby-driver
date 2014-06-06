@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'forwardable'
 require 'mongo/server/address'
 require 'mongo/server/context'
 require 'mongo/server/description'
@@ -26,6 +27,7 @@ module Mongo
   class Server
     include Event::Publisher
     include Event::Subscriber
+    extend Forwardable
 
     # @return [ String ] The configured address for the server.
     attr_reader :address
@@ -33,6 +35,8 @@ module Mongo
     attr_reader :description
     # @return [ Hash ] The options hash.
     attr_reader :options
+
+    def_delegators :@description, :queryable?
 
     # Is this server equal to another?
     #
@@ -118,22 +122,6 @@ module Mongo
     # @since 2.0.0
     def inspect
       "#<Mongo::Server:0x#{object_id} address=#{address.host}:#{address.port}"
-    end
-
-    # Is the server able to receive messages?
-    #
-    # @example Is the server operable?
-    #   server.operable?
-    #
-    # @note This is true only for a connected server that is a secondary or
-    #   primary and not hidden.
-    #
-    # @return [ true, false ] If the server is operable.
-    #
-    # @since 2.0.0
-    def operable?
-      return false if description.unknown? || description.hidden?
-      description.primary? || description.secondary?
     end
 
     # Get the connection pool for this server.

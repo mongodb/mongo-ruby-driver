@@ -44,6 +44,21 @@ module Mongo
       # @since 2.0.0
       HOSTS = 'hosts'.freeze
 
+      # Constant for the key for the message value.
+      #
+      # @since 2.0.0
+      MESSAGE = 'msg'.freeze
+
+      # Constant for the message that indicates a sharded cluster.
+      #
+      # @since 2.0.0
+      MONGOS_MESSAGE = 'isdbgrid'.freeze
+
+      # Constant for determining ghost servers.
+      #
+      # @since 2.0.0
+      REPLICA_SET = 'isreplicaset'.freeze
+
       # Static list of inspections that are performed on the result of an
       # ismaster command in order to generate the appropriate events for the
       # changes.
@@ -114,7 +129,7 @@ module Mongo
       #
       # @since 2.0.0
       def arbiter?
-        !!config[ARBITER]
+        !!config[ARBITER] && !replica_set_name.nil?
       end
 
       # Get a list of all arbiters in the replica set.
@@ -127,6 +142,18 @@ module Mongo
       # @since 2.0.0
       def arbiters
         config[ARBITERS] || []
+      end
+
+      # Is the server a ghost in a replica set?
+      #
+      # @example Is the server a ghost?
+      #   description.ghost?
+      #
+      # @return [ true, false ] If the server is a ghost.
+      #
+      # @since 2.0.0
+      def ghost?
+        !!config[REPLICA_SET]
       end
 
       # Will return true if the server is hidden.
@@ -227,6 +254,18 @@ module Mongo
         config[MIN_WIRE_VERSION]
       end
 
+      # Is the server a mongos?
+      #
+      # @example Is the server a mongos?
+      #   description.mongos?
+      #
+      # @return [ true, false ] If the server is a mongos.
+      #
+      # @since 2.0.0
+      def mongos?
+        config[MESSAGE] == MONGOS_MESSAGE
+      end
+
       # Will return true if the server is passive.
       #
       # @example Is the server passive?
@@ -248,19 +287,20 @@ module Mongo
       #
       # @since 2.0.0
       def primary?
-        !!config[PRIMARY]
+        !!config[PRIMARY] && !replica_set_name.nil?
       end
 
-      # Will return true if the server is a secondary.
+      # Is the server queryable? This is only primaries, secondaries, and
+      # standalone servers.
       #
-      # @example Is the server a secondary?
-      #   description.secondary?
+      # @example Is the server queryable?
+      #   description.queryable?
       #
-      # @return [ true, false ] If the server is a secondary.
+      # @return [ true, false ] If the server is queryable.
       #
       # @since 2.0.0
-      def secondary?
-        !!config[SECONDARY]
+      def queryable?
+        primary? || secondary? || standalone?
       end
 
       # Get the name of the replica set the server belongs to, returns nil if
@@ -274,6 +314,30 @@ module Mongo
       # @since 2.0.0
       def replica_set_name
         config[SET_NAME]
+      end
+
+      # Will return true if the server is a secondary.
+      #
+      # @example Is the server a secondary?
+      #   description.secondary?
+      #
+      # @return [ true, false ] If the server is a secondary.
+      #
+      # @since 2.0.0
+      def secondary?
+        !!config[SECONDARY] && !replica_set_name.nil?
+      end
+
+      # Is this server a standalone server?
+      #
+      # @example Is the server standalone?
+      #   description.standalone?
+      #
+      # @return [ true, false ] If the server is standalone.
+      #
+      # @since 2.0.0
+      def standalone?
+        replica_set_name.nil? && !mongos? && !ghost?
       end
 
       # Is the server description currently unknown?
@@ -304,7 +368,7 @@ module Mongo
       # @since 2.0.0
       def update!(new_config, round_trip_time)
         INSPECTIONS.each do |inspection|
-          inspection.run(self, new_config)
+          inspection.run(self, Description.new(new_config))
         end
         @config = new_config
         @round_trip_time = round_trip_time

@@ -30,7 +30,7 @@ describe Mongo::Server::Description do
     context 'when the server is an arbiter' do
 
       let(:description) do
-        described_class.new({ 'arbiterOnly' => true })
+        described_class.new({ 'arbiterOnly' => true, 'setName' => 'test' })
       end
 
       it 'returns true' do
@@ -71,6 +71,35 @@ describe Mongo::Server::Description do
 
       it 'returns an empty array' do
         expect(description.arbiters).to be_empty
+      end
+    end
+  end
+
+  describe '#ghost?' do
+
+    context 'when the server is a ghost' do
+
+      let(:config) do
+        { 'isreplicaset' => true }
+      end
+
+      let(:description) do
+        described_class.new(config)
+      end
+
+      it 'returns true' do
+        expect(description).to be_ghost
+      end
+    end
+
+    context 'when the server is not a ghost' do
+
+      let(:description) do
+        described_class.new(replica)
+      end
+
+      it 'returns false' do
+        expect(description).to_not be_ghost
       end
     end
   end
@@ -166,6 +195,35 @@ describe Mongo::Server::Description do
     end
   end
 
+  describe '#mongos?' do
+
+    context 'when the server is a mongos' do
+
+      let(:config) do
+        { 'msg' => 'isdbgrid', 'ismaster' => true }
+      end
+
+      let(:description) do
+        described_class.new(config)
+      end
+
+      it 'returns true' do
+        expect(description).to be_mongos
+      end
+    end
+
+    context 'when the server is not a mongos' do
+
+      let(:description) do
+        described_class.new(replica)
+      end
+
+      it 'returns false' do
+        expect(description).to_not be_mongos
+      end
+    end
+  end
+
   describe '#passive?' do
 
     context 'when the server is passive' do
@@ -231,31 +289,6 @@ describe Mongo::Server::Description do
     end
   end
 
-  describe '#secondary?' do
-
-    context 'when the server is not a secondary' do
-
-      let(:description) do
-        described_class.new({ 'secondary' => false })
-      end
-
-      it 'returns true' do
-        expect(description).to_not be_secondary
-      end
-    end
-
-    context 'when the server is a secondary' do
-
-      let(:description) do
-        described_class.new({ 'secondary' => true })
-      end
-
-      it 'returns false' do
-        expect(description).to be_secondary
-      end
-    end
-  end
-
   describe '#replica_set_name' do
 
     context 'when the server is in a replica set' do
@@ -277,6 +310,56 @@ describe Mongo::Server::Description do
 
       it 'returns nil' do
         expect(description.replica_set_name).to be_nil
+      end
+    end
+  end
+
+  describe '#secondary?' do
+
+    context 'when the server is not a secondary' do
+
+      let(:description) do
+        described_class.new({ 'secondary' => false })
+      end
+
+      it 'returns true' do
+        expect(description).to_not be_secondary
+      end
+    end
+
+    context 'when the server is a secondary' do
+
+      let(:description) do
+        described_class.new({ 'secondary' => true, 'setName' => 'test' })
+      end
+
+      it 'returns false' do
+        expect(description).to be_secondary
+      end
+    end
+  end
+
+  describe '#standalone?' do
+
+    context 'when the server is standalone' do
+
+      let(:description) do
+        described_class.new({ 'ismaster' => true })
+      end
+
+      it 'returns true' do
+        expect(description).to be_standalone
+      end
+    end
+
+    context 'when the server is part of a replica set' do
+
+      let(:description) do
+        described_class.new(replica)
+      end
+
+      it 'returns false' do
+        expect(description).to_not be_standalone
       end
     end
   end
@@ -350,25 +433,60 @@ describe Mongo::Server::Description do
 
     context 'when a server is removed' do
 
-      let(:new) do
-        { 'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ] }
+      context 'when the server is a primary' do
+
+        let(:new) do
+          {
+            'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ],
+            'ismaster' => true,
+            'setName' => 'test'
+          }
+        end
+
+        let(:description) do
+          described_class.new(config)
+        end
+
+        let(:updated) do
+          description.update!(new, 2.0)
+        end
+
+        before do
+          description.add_listener(Mongo::Event::HOST_REMOVED, listener)
+        end
+
+        it 'fires a server removed event' do
+          expect(listener).to receive(:handle).with('127.0.0.1:27018')
+          expect(updated.hosts).to eq([ '127.0.0.1:27019', '127.0.0.1:27020' ])
+        end
       end
 
-      let(:description) do
-        described_class.new(config)
-      end
+      context 'when the server is not a primary' do
 
-      let(:updated) do
-        description.update!(new, 2.0)
-      end
+        let(:new) do
+          {
+            'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ],
+            'secondary' => true,
+            'setName' => 'test'
+          }
+        end
 
-      before do
-        description.add_listener(Mongo::Event::HOST_REMOVED, listener)
-      end
+        let(:description) do
+          described_class.new(config)
+        end
 
-      it 'fires a server added event' do
-        expect(listener).to receive(:handle).with('127.0.0.1:27018')
-        expect(updated.hosts).to eq([ '127.0.0.1:27019', '127.0.0.1:27020' ])
+        let(:updated) do
+          description.update!(new, 2.0)
+        end
+
+        before do
+          description.add_listener(Mongo::Event::HOST_REMOVED, listener)
+        end
+
+        it 'does not fire a server removed event' do
+          expect(listener).to_not receive(:handle).with('127.0.0.1:27018')
+          expect(updated.hosts).to eq([ '127.0.0.1:27019', '127.0.0.1:27020' ])
+        end
       end
     end
   end
