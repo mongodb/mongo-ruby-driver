@@ -337,7 +337,9 @@ module Mongo
       #
       # @since 2.0.0
       def update!(new_config, round_trip_time)
-        INSPECTIONS.each{ |inspection| inspection.run(self, new_config) }
+        INSPECTIONS.each do |inspection|
+          inspection.run(self, Description.new(new_config))
+        end
         @config = new_config
         @round_trip_time = round_trip_time
         self
