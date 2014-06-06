@@ -33,7 +33,8 @@ module Mongo
           #
           # @since 2.0.0
           def self.run(description, config)
-            (config[Description::HOSTS] || []).each do |host|
+            updated = Description.new(config)
+            updated.hosts.each do |host|
               unless description.hosts.include?(host)
                 description.publish(Event::HOST_ADDED, host)
               end

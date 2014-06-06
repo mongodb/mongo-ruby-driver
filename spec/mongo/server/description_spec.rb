@@ -404,25 +404,52 @@ describe Mongo::Server::Description do
 
     context 'when a server is removed' do
 
-      let(:new) do
-        { 'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ] }
+      context 'when the server is a primary' do
+
+        let(:new) do
+          { 'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ], 'ismaster' => true }
+        end
+
+        let(:description) do
+          described_class.new(config)
+        end
+
+        let(:updated) do
+          description.update!(new, 2.0)
+        end
+
+        before do
+          description.add_listener(Mongo::Event::HOST_REMOVED, listener)
+        end
+
+        it 'fires a server removed event' do
+          expect(listener).to receive(:handle).with('127.0.0.1:27018')
+          expect(updated.hosts).to eq([ '127.0.0.1:27019', '127.0.0.1:27020' ])
+        end
       end
 
-      let(:description) do
-        described_class.new(config)
-      end
+      context 'when the server is not a primary' do
 
-      let(:updated) do
-        description.update!(new, 2.0)
-      end
+        let(:new) do
+          { 'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ], 'secondary' => true }
+        end
 
-      before do
-        description.add_listener(Mongo::Event::HOST_REMOVED, listener)
-      end
+        let(:description) do
+          described_class.new(config)
+        end
 
-      it 'fires a server added event' do
-        expect(listener).to receive(:handle).with('127.0.0.1:27018')
-        expect(updated.hosts).to eq([ '127.0.0.1:27019', '127.0.0.1:27020' ])
+        let(:updated) do
+          description.update!(new, 2.0)
+        end
+
+        before do
+          description.add_listener(Mongo::Event::HOST_REMOVED, listener)
+        end
+
+        it 'does not fire a server removed event' do
+          expect(listener).to_not receive(:handle).with('127.0.0.1:27018')
+          expect(updated.hosts).to eq([ '127.0.0.1:27019', '127.0.0.1:27020' ])
+        end
       end
     end
   end
