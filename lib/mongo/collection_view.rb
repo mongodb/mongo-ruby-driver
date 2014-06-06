@@ -36,8 +36,6 @@ module Mongo
     attr_reader :collection
     # @return [ Hash ] The query selector.
     attr_reader :selector
-    # @return [ Hash ] The additional query options.
-    attr_reader :opts
 
     # Creates a new +CollectionView+.
     #
@@ -84,7 +82,26 @@ module Mongo
     # @return [ String ] A string representation of a +CollectionView+ instance.
     def inspect
       "<Mongo::CollectionView:0x#{object_id} namespace='#{@collection.full_namespace}" +
-      " @selector=#{@selector.inspect} @opts=#{@opts.inspect}>"
+          " @selector=#{@selector.inspect} @opts=#{@opts.inspect}>"
+    end
+
+    # Compare two +CollectionView+ objects.
+    #
+    # @return [ true, false ] Equal if collection, selector, and opts of two
+    #   +CollectionView+ match.
+    def ==(other)
+      @collection == other.collection &&
+          @selector == other.selector &&
+          @opts == other.opts
+    end
+    alias_method :eql?, :==
+
+    # A hash value for the +CollectionView+ composed of the collection namespace,
+    # hash of the options and hash of the selector.
+    #
+    # @return [ Integer ] A hash value of the +CollectionView+ object.
+    def hash
+      [@collection.full_namespace, @opts.hash, @selector.hash].hash
     end
 
     # Get the size of the result set for the query.
@@ -105,7 +122,7 @@ module Mongo
 
     # Get the distinct values for a specified field across a single
     # collection.
-    # Note that if a @selector is defined, it will be used in the anaylsis.
+    # Note that if a @selector is defined, it will be used in the analysis.
     #
     # @param key [ Symbol, String ] The field to collect distinct values from.
     #
@@ -121,7 +138,7 @@ module Mongo
     # @param comment [ String ] The comment to be associated with the query.
     #
     # @return [ String, CollectionView ] Either the comment or a
-    # new +CollectionView+.
+    #   new +CollectionView+.
     def comment(comment = nil)
       set_option(:comment, comment)
     end
@@ -280,63 +297,44 @@ module Mongo
 
     # Set options for the query.
     #
-    # @param q_opts [ Hash ] Query options.
+    # @param s_opts [ Hash ] Special query options.
     #
-    # @option q_opts :snapshot [ true, false ] Prevents returning docs more
+    # @option s_opts :snapshot [ true, false ] Prevents returning docs more
     #   than once.
-    # @option q_opts :max_scan [ Integer ] Constrain the query to only scan the
+    # @option s_opts :max_scan [ Integer ] Constrain the query to only scan the
     #   specified number of docs.
-    # @option q_opts :show_disk_loc [ true, false ] Return disk location info
+    # @option s_opts :show_disk_loc [ true, false ] Return disk location info
     #   as a field in each doc.
     #
-    # @return [ Hash, CollectionView ] Either the query options or a
+    # @return [ Hash, CollectionView ] Either the special query options or a
     # new +CollectionView+.
-    def query_opts(q_opts = nil)
-      return query_opts_hash if q_opts.nil?
+    def special_opts(s_opts = nil)
+      return special_opts_hash if s_opts.nil?
       opts = @opts.dup
       [:snapshot, :max_scan, :show_disk_loc].each do |k|
-        q_opts[k].nil? ? opts.delete(k) : opts.merge!(k => q_opts[k])
+        s_opts[k].nil? ? opts.delete(k) : opts.merge!(k => s_opts[k])
       end
       CollectionView.new(collection, selector, opts)
     end
 
     # Modify this +CollectionView+ to set options for the query.
     #
-    # @param q_opts [ Hash ] Query options.
+    # @param s_opts [ Hash ] Query options.
     #
-    # @option q_opts :snapshot [ true, false ] Prevents returning docs more
+    # @option s_opts :snapshot [ true, false ] Prevents returning docs more
     #   than once.
-    # @option q_opts :max_scan [ Integer ] Constrain the query to only scan the
+    # @option s_opts :max_scan [ Integer ] Constrain the query to only scan the
     #   specified number of docs.
-    # @option q_opts :show_disk_loc [ true, false ] Return disk location info
+    # @option s_opts :show_disk_loc [ true, false ] Return disk location info
     #   as a field in each doc.
     #
     # @return [ CollectionView ] self
-    def query_opts!(q_opts = nil)
-      return self if q_opts.nil?
+    def special_opts!(s_opts = nil)
+      return self if s_opts.nil?
       [:snapshot, :max_scan, :show_disk_loc].each do |k|
-        q_opts[k].nil? ? @opts.delete(k) : @opts.merge!(k => q_opts[k])
+        s_opts[k].nil? ? @opts.delete(k) : @opts.merge!(k => s_opts[k])
       end
       self
-    end
-
-    # Compare two +CollectionView+ objects.
-    #
-    # @return [ true, false ] Equal if collection, selector, and opts of two
-    #   +CollectionView+ match.
-    def ==(other)
-      @collection == other.collection &&
-        @selector == other.selector &&
-        @opts == other.opts
-    end
-    alias_method :eql?, :==
-
-    # A hash value for the +CollectionView+ composed of the collection namespace,
-    # hash of the options and hash of the selector.
-    #
-    # @return [ Integer ] A hash value of the +CollectionView+ object.
-    def hash
-      [@collection.full_namespace, @opts.hash, @selector.hash].hash
     end
 
     # Iterate through documents returned by a query with this +CollectionView+.
@@ -345,20 +343,83 @@ module Mongo
     #
     # @yieldparam doc [ Hash ] Each matching document.
     def each
-      enum = cursor.to_enum
-      enum.each do |doc|
+      cursor = Cursor.new(self, send_initial_query).to_enum
+      cursor.each do |doc|
         yield doc
       end if block_given?
-      enum
+      cursor
     end
 
     private
 
-    # Create a +Cursor+ using this +CollectionView+.
+    SPECIAL_FIELDS = [
+        [:$query,          :selector],
+        [:$readPreference, :read_pref],
+        [:$orderby,        :sort],
+        [:$hint,           :hint],
+        [:$comment,        :comment],
+        [:$snapshot,       :snapshot],
+        [:$maxScan,        :max_scan],
+        [:$showDiskLoc,    :show_disk_loc]
+    ]
+
+    def initial_query_op
+      Mongo::Operation::Read::Query.new(query_spec)
+    end
+
+    def send_initial_query
+      @client.execute(initial_query_op, :read => read_pref)
+    end
+
+    # Get the read preference for this query.
     #
-    # @return [ Cursor ] The new +Cursor+ with this +CollectionView+.
-    def cursor
-      Cursor.new(self)
+    # @return [Hash, nil] The read preference or nil.
+    def read_pref
+      @client.mongos? ? read.to_mongos : read
+    end
+
+    # Build a special query selector.
+    #
+    # @return [Hash] The special query selector.
+    def special_selector
+      SPECIAL_FIELDS.reduce({}) do |hash, pair|
+        key, method = pair
+        value = send(method)
+        hash[key] = value if value
+        hash
+      end
+    end
+
+    # Get a hash of the query options.
+    #
+    # @return [Hash] The query options.
+    def query_opts
+      { :fields => fields,
+        :skip   => skip,
+        :limit  => to_return,
+        :flags  => flags }
+    end
+
+    # The query options set on the +CollectionView+.
+    #
+    # @return [Hash] The query options set on the +CollectionView+.
+    def opts
+      special_opts.empty? ? nil : special_opts
+    end
+
+    # The flags set on this query.
+    #
+    # @return [Array] List of flags to be set on the query message.
+    # @todo: add no_cursor_timeout option
+    def flags
+      flags << :slave_ok if need_slave_ok?
+    end
+
+    # Determine whether this query has special fields.
+    #
+    # @return [true, false] Whether the query has special fields.
+    def has_special_fields?
+      !!(opts || sort || hint || comment || @client.mongos?)
     end
 
     # Clone or dup the current +CollectionView+.
@@ -385,13 +446,47 @@ module Mongo
     # Extract query opts from @opts and return them in a separate hash.
     #
     # @return [ Hash ] The query options in their own hash.
-    def query_opts_hash
-      q_opts = @opts[:snapshot].nil? ? {} : { :snapshot => @opts[:snapshot] }
-      q_opts[:max_scan] = @opts[:max_scan] unless @opts[:max_scan].nil?
-      unless @opts[:show_disk_loc].nil?
-        q_opts[:show_disk_loc] = @opts[:show_disk_loc]
+    def special_opts_hash
+      s_opts = @opts[:snapshot].nil? ? {} : { :snapshot => @opts[:snapshot] }
+      unless @opts[:max_scan].nil?
+        s_opts[:max_scan] = @opts[:max_scan]
       end
-      q_opts
+      unless @opts[:show_disk_loc].nil?
+        s_opts[:show_disk_loc] = @opts[:show_disk_loc]
+      end
+      s_opts
+    end
+
+    # Build the query selector and initial +Query+ message.
+    #
+    # @return [Hash] The +Query+ operation spec.
+    def query_spec
+      selector = has_special_fields? ? special_selector : selector
+      { :selector  => selector,
+        :opts      => query_opts,
+        :db_name   => db_name,
+        :coll_name => coll_name }
+    end
+
+    # Whether the read preference mode is primary.
+    #
+    # @return [true, false] Whether the read preference mode is primary.
+    def primary?
+      read.name == :primary
+    end
+
+    # Whether the slave ok bit needs to be set on the wire protocol message.
+    #
+    # @return [true, false] Whether the slave ok bit needs to be set.
+    def need_slave_ok?
+      !primary?
+    end
+
+    # The number of documents to return in the next batch.
+    #
+    # @return [Integer] The number of documents to return in the next batch.
+    def to_return
+      [limit, batch_size].min
     end
 
     # Either return the option value or create a new +CollectionView+ with
@@ -411,6 +506,5 @@ module Mongo
       @opts.merge!(field => value) unless value.nil?
       self
     end
-
   end
 end

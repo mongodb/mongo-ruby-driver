@@ -33,14 +33,11 @@ module Mongo
     # Creates a +Cursor+ object.
     #
     # @param view [ CollectionView ] The +CollectionView+ defining the query.
-    def initialize(view)
+    def initialize(view, response)
       @view       = view
-      @cursor_id  = nil
       @collection = @view.collection
       @client     = @collection.client
-      @server     = nil
-      @cache      = []
-      @returned   = 0
+      process_response(response)
     end
 
     # Get a human-readable string representation of +Cursor+.
@@ -59,18 +56,11 @@ module Mongo
 
     private
 
-    MAX_QUERY_TRIES = 3
-
-    SPECIAL_FIELDS = [
-      [:$query,          :selector],
-      [:$readPreference, :read_pref],
-      [:$orderby,        :sort],
-      [:$hint,           :hint],
-      [:$comment,        :comment],
-      [:$snapshot,       :snapshot],
-      [:$maxScan,        :max_scan],
-      [:$showDiskLoc,    :show_disk_loc]
-    ]
+    def process_response(response)
+      @server   = response.server
+      @cache    = (@cache || []) << response.docs
+      @returned = (@returned || 0) + @cache.length
+    end
 
     # Whether we have iterated through all documents in the cache and retrieved
     # all results from the server.
@@ -107,47 +97,24 @@ module Mongo
     #
     # Close the cursor on the server if all docs have been retreived.
     def request_docs
-      if !query_run?
-        send_initial_query
-      else
-        send_get_more
-      end
+      send_get_more
       close if exhausted?
-    end
-
-    # Send a message to a server and collect the results.
-    #
-    # @todo: Brandon: verify connecton interface
-    def send_and_receive(connection, message)
-      results, @server = connection.send_and_receive(MAX_QUERY_TRIES, message)
-      @cursor_id       = results[:cursor_id]
-      @returned        += results[:nreturned]
-      @cache           += results[:docs]
-    end
-
-    # Build the query selector and initial +Query+ message.
-    #
-    # @return [Query] The +Query+ message.
-    def initial_query_message
-      selector = has_special_fields? ? special_selector : selector
-      Mongo::Protocol::Query.new(db_name, coll_name, selector, query_opts)
-    end
-
-    # Send the initial query message to a server.
-    #
-    # @todo: Brandon: verify client interface
-    def send_initial_query
-      @client.with_server(read) do |connection|
-        send_and_receive(connection, initial_query_message)
-      end
     end
 
     # Build the +GetMore+ message using the cursor id and number of documents
     # to return.
     #
-    # @return [GetMore] The +GetMore+ message
-    def get_more_message
-      Mongo::Protocol::GetMore.new(db_name, coll_name, to_return, @cursor_id)
+    # @return [Hash] The +GetMore+ operation spec.
+    def get_more_spec
+      { :to_return   => to_return,
+        :cursor_id => @cursor_id,
+        :db_name    => db_name,
+        :coll_name  => coll_name }
+    end
+
+    def get_more_op
+      # @todo: Uncomment this
+      #Mongo::Operation::Read::GetMore.new(get_more_spec, :server => @server)
     end
 
     # Send a +GetMore+ message to a server to get another batch of results.
@@ -155,79 +122,25 @@ module Mongo
     # @todo: define exceptions
     def send_get_more
       raise Exception, 'No server set' unless @server
-      @server.with_connection do |connection|
-        send_and_receive(connection, get_more_message)
-      end
+      response = @client.execute(get_more_op, :server => @server)
+      process_response(response)
     end
 
     # Build a +KillCursors+ message using this cursor's id.
     #
     # @return [KillCursors] The +KillCursors+ message.
-    def kill_cursors_message
-      Mongo::Protocol::KillCursors.new([@cursor_id])
+    def kill_cursors_op
+      # @todo: Uncomment this
+      #Mongo::Operation::KillCursors.new({ :cursor_ids => [@cursor_id] },
+      #                                  :server => @server)
     end
 
     # Send a +KillCursors+ message to the server and set the cursor id to 0.
     #
     # @todo: Brandon: verify server interface
     def kill_cursors
-      @server.with_connection do |connection|
-        connection.send_message(kill_cursors_message)
-      end
+      @client.execute(kill_cursors_op, :server => @server)
       @cursor_id = 0
-    end
-
-    # Determine whether this query has special fields.
-    #
-    # @return [true, false] Whether the query has special fields.
-    def has_special_fields?
-      !!(opts || sort || hint || comment || read_pref)
-    end
-
-    # Get the read preference for this query.
-    #
-    # @return [Hash, nil] The read preference or nil.
-    def read_pref
-      @client.mongos? ? read.mongos : read
-    end
-
-    # Build a special query selector.
-    #
-    # @return [Hash] The special query selector.
-    def special_selector
-      SPECIAL_FIELDS.reduce({}) do |hash, pair|
-        key, method = pair
-        value = send(method)
-        hash[key] = value if value
-        hash
-      end
-    end
-
-    # Get a hash of the query options.
-    #
-    # @return [Hash] The query options.
-    def query_opts
-      {
-        :fields => @view.fields,
-        :skip => @view.skip,
-        :limit => to_return,
-        :flags => flags,
-      }
-    end
-
-    # The query options set on the +CollectionView+.
-    #
-    # @return [Hash] The query options set on the +CollectionView+.
-    def opts
-      @view.query_opts.empty? ? nil : @view.query_opts
-    end
-
-    # The flags set on this query.
-    #
-    # @return [Array] List of flags to be set on the query message.
-    # @todo: add no_cursor_timeout option
-    def flags
-      flags << :slave_ok if need_slave_ok?
     end
 
     # Check whether the document returned is an error document.
@@ -283,35 +196,6 @@ module Mongo
       @cursor_id == 0
     end
 
-    # The read preference to use for this query.
-    #
-    # @return [Hash] The read preference to use for this query.
-    def read
-      @view.read
-    end
-
-    # The name of the database.
-    #
-    # @return [String] The name of the database.
-    def db_name
-      @collection.database.name
-    end
-
-    # The name of the collection.
-    #
-    # @return [String] The name of the collection.
-    def coll_name
-      @collection.name
-    end
-
-    # Whether the initial query message has already been sent.
-    #
-    # @return [true, false] Whether the query has already been sent to
-    #   the server.
-    def query_run?
-      !@server.nil?
-    end
-
     # Whether all query results have been retrieved from the server.
     #
     # @return [true, false] Whether all results have been retrieved from
@@ -320,76 +204,12 @@ module Mongo
       limited? ? (@returned >= limit) : closed?
     end
 
-    # Whether the slave ok bit needs to be set on the wire protocol message.
-    #
-    # @return [true, false] Whether the slave ok bit needs to be set.
-    def need_slave_ok?
-      !primary?
-    end
-
-    # Whether the read preference mode is primary.
-    #
-    # @return [true, false] Whether the read preference mode is primary.
-    def primary?
-      read.primary?
-    end
-
-    # The selector used for the query.
-    #
-    # @return [Hash] The selector for the query.
-    def selector
-      @view.selector
-    end
-
-    # The max scan option set on the +CollectionView+.
-    #
-    # @return [Integer, nil] The max scan setting on the +CollectionView+ or nil.
-    def max_scan
-      @view.query_opts[:max_scan]
-    end
-
-    # The snapshot setting on the +CollectionView+.
-    #
-    # @return [true, false, nil] The snapshot setting on +CollectionView+ or nil.
-    def snapshot
-      @view.query_opts[:snapshot]
-    end
-
-    # The show disk location setting on the +CollectionView+.
-    #
-    # @return [true, false, nil] Either the show disk location setting on
-    #   +CollectionView+ or nil.
-    def show_disk_loc
-      @view.query_opts[:show_disk_loc]
-    end
-
-    # The sort setting on the +CollectionView+.
-    #
-    # @return [Hash, nil] Either the sort setting on +CollectionView+ or nil.
-    def sort
-      @view.sort
-    end
-
-    # The hint setting on the +CollectionView+.
-    #
-    # @return [Hash, nil] Either the hint setting on +CollectionView+ or nil.
-    def hint
-      @view.hint
-    end
-
-    # The comment setting on the +CollectionView+.
-    #
-    # @return [String, nil] Either the comment setting on +CollectionView+ or nil.
-    def comment
-      @view.comment
-    end
-
     # The limit setting on the +CollectionView+.
     #
     # @return [Integer, nil] Either the limit setting on +CollectionView+ or nil.
     def limit
       @view.limit
     end
-
   end
 end
+
