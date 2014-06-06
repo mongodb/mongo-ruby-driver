@@ -16,12 +16,12 @@
 require 'mongo/operation/executable'
 require 'mongo/operation/read'
 require 'mongo/operation/write'
-require 'mongo/operation/kill_cursors'
 
-# special logic - sometimes read, sometimes write
+# special logic - sometimes read, sometimes write, neither
 require 'mongo/operation/aggregate'
 require 'mongo/operation/map_reduce'
 require 'mongo/operation/command'
+require 'mongo/operation/kill_cursors'
 
 module Mongo
 

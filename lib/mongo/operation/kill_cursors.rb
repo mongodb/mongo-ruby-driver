@@ -16,7 +16,7 @@ module Mongo
 
   module Operation
 
-    # A MongoDB query operation with context describing
+    # A MongoDB kill cursors operation with context describing
     # what server or socket it should be sent to.
     #
     # @since 3.0.0
@@ -61,9 +61,11 @@ module Mongo
 
       private
 
-      # Get the list of cursor ids to kill.
+      # The ids of the cursors to kill.
       #
-      # @return [Array] List of cursor ids to kill.
+      # @return [ Array ] The cursor ids.
+      #
+      # @since 3.0.0
       def cursor_ids
         @spec[:cursor_ids]
       end
