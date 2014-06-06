@@ -57,9 +57,10 @@ module Mongo
     private
 
     def process_response(response)
-      @server   = response.server
-      @cache    = (@cache || []) << response.docs
-      @returned = (@returned || 0) + @cache.length
+      @server    = response.server
+      @cache     = (@cache || []) + response.docs
+      @returned  = (@returned || 0) + @cache.length
+      @cursor_id = response.cursor_id
     end
 
     # Whether we have iterated through all documents in the cache and retrieved

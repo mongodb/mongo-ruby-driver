@@ -2,14 +2,9 @@ require 'spec_helper'
 
 describe Mongo::Cursor do
 
-  include_context 'shared client'
   include_context 'shared cursor'
 
-  let(:cursor) do
-    described_class.new(view).tap do
-      allow(connection).to receive(:send_and_receive).and_return(*responses)
-    end
-  end
+  let(:cursor) { described_class.new(view, response) }
 
   describe '#inspect' do
 
@@ -22,33 +17,11 @@ describe Mongo::Cursor do
     end
   end
 
-  context 'when the query has special fields' do
-    let(:view_opts) { { :comment => 'test' } }
-
-    it 'creates a special selector with $query' do
-      expect(Mongo::Protocol::Query).to receive(:new) do |a, b, selector, c|
-        expect(selector[:$query]).to eq(view.selector)
-      end
-      cursor.each(&b)
-    end
-  end
-
-  context 'mongos' do
-
-    it 'creates a special selector with $query' do
-      allow(client).to receive(:mongos?).and_return(true)
-      expect(Mongo::Protocol::Query).to receive(:new) do |a, b, selector, c|
-        expect(selector[:$query]).to eq(view.selector)
-      end
-      cursor.each(&b)
-    end
-  end
-
   describe '#each' do
 
     context 'when a block is provided' do
       let(:n_docs) { 10 }
-      let(:responses) { results(0, n_docs) }
+      let(:response) { make_response(0, n_docs) }
 
       it 'yields each doc to the block' do
         expect do |b|
@@ -64,58 +37,44 @@ describe Mongo::Cursor do
       let(:limit) { 8 }
       let(:view_opts) { { :limit => limit } }
 
-      context 'when all docs are retreived in one request' do
-        let(:responses) { results(0, limit) }
+      context 'when all docs are retrieved in one request' do
+        let(:response) { make_response(0, limit) }
 
-        it 'requests that number of docs in first query message' do
-          expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-            expect(opts[:limit]).to eq(limit)
-          end
-          cursor.each(&b)
-        end
-
-        it 'returns exactly that number of documents' do
+        it 'yields with exactly that number of documents' do
           expect do |b|
             cursor.each(&b)
           end.to yield_control.exactly(limit).times
         end
 
         it 'does not send a kill cursors message' do
-          allow(connection).to receive(:send_and_receive).and_return(results)
-          expect(Mongo::Protocol::KillCursors).not_to receive(:new)
+          # @todo: uncomment
+          #expect(Mongo::Operation::KillCursors).not_to receive(:new)
           cursor.each(&b)
         end
       end
 
       context 'when multiple requests are needed' do
         let(:delta) { 2 }
-        let(:responses) do
-          [results(nonzero, limit - delta),
-           results(nonzero, delta)]
-        end
-
-        it 'requests that number of docs in first query message' do
-          expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-            expect(opts[:limit]).to eq(limit)
-          end
-          cursor.each(&b)
-        end
+        let(:response) { make_response(nonzero, limit - delta) }
+        let(:get_mores) { [ make_response(0, delta) ] }
 
         it 'requests the remaining docs in a get more message' do
-          expect(Mongo::Protocol::GetMore).to receive(:new) do |a, b, num, c|
-            expect(num).to eq(delta)
-          end
+          # @todo: uncomment
+          #expect(Mongo::Operation::Read::GetMore).to receive(:new) do |spec, cxt|
+          #  expect(spec[:to_return]).to eq(delta)
+          #end
           cursor.each(&b)
         end
 
-        it 'returns exactly that number of documents' do
+        it 'yields with exactly that number of documents' do
           expect do |b|
             cursor.each(&b)
           end.to yield_control.exactly(limit).times
         end
 
         it 'sends a kill cursors message' do
-          expect(Mongo::Protocol::KillCursors).to receive(:new)
+          # @todo: uncomment
+          #expect(Mongo::Operation::KillCursors).to receive(:new)
           cursor.each(&b)
         end
       end
@@ -125,44 +84,30 @@ describe Mongo::Cursor do
       let(:total_docs) { 20 }
       let(:delta) { 5 }
 
-      context 'when all docs are retreived in one request' do
-        let(:responses) { results(0, total_docs)  }
+      context 'when all docs are retrieved in one request' do
+        let(:response) { make_response(0, total_docs)  }
 
-        it 'does not limit the first query message' do
-          expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-            expect(opts[:limit]).to eq(nil)
-          end
-          cursor.each(&b)
-        end
-
-        it 'returns all documents matching query' do
+        it 'returns yields all documents matching query' do
           expect do |b|
             cursor.each(&b)
           end.to yield_control.exactly(total_docs).times
         end
 
         it 'does not send a kill cursors message' do
-          expect(Mongo::Protocol::KillCursors).not_to receive(:new)
+          # @todo: uncomment
+          #expect(Mongo::Operation::KillCursors).not_to receive(:new)
           cursor.each(&b)
         end
-      end
+       end
 
       context 'when multiple requests are needed' do
-        let(:responses) do
-          [results(nonzero, total_docs - delta), results(0, delta)]
-        end
-
-        it 'does not limit the first query message' do
-          expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-            expect(opts[:limit]).to eq(nil)
-          end
-          cursor.each(&b)
-        end
+        let(:response) { make_response(nonzero, total_docs - delta)  }
+        let(:get_mores) { [ make_response(0, delta) ] }
 
         it 'does not limit the get more message' do
-          expect(Mongo::Protocol::GetMore).to receive(:new) do |a, b, num, c|
-            expect(num).to eq(nil)
-          end
+          #expect(Mongo::Operation::Read::GetMore).to receive(:new) do |spec, cxt|
+          #  expect(spec[:to_return]).to eq(nil)
+          #end
           cursor.each(&b)
         end
 
@@ -173,7 +118,8 @@ describe Mongo::Cursor do
         end
 
         it 'does not send a kill cursors message' do
-          expect(Mongo::Protocol::KillCursors).not_to receive(:new)
+          # @todo: uncomment
+          #expect(Mongo::Operation::KillCursors).not_to receive(:new)
           cursor.each(&b)
         end
       end
@@ -183,39 +129,35 @@ describe Mongo::Cursor do
       let(:limit) { -5 }
       let(:view_opts) { { :limit => limit } }
 
-      context 'when all results are retreived in one request' do
-        let(:responses) { results(0, limit.abs)  }
+      context 'when all results are retrieved in one request' do
+        let(:response) { make_response(0, limit.abs)  }
 
-        it 'requests that number of docs in the first query message' do
-          expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-            expect(opts[:limit]).to eq(limit)
-          end
-          cursor.each(&b)
-        end
+         it 'yields exactly that limit number of documents' do
+           expect do |b|
+             cursor.each(&b)
+           end.to yield_control.exactly(limit.abs).times
+         end
 
-        it 'returns exactly that limit number of documents' do
-          expect do |b|
-            cursor.each(&b)
-          end.to yield_control.exactly(limit.abs).times
-        end
+         it 'does not send a get more message' do
+           # @todo: uncomment
+           #expect(Mongo::Operation::Read::GetMore).not_to receive(:new)
+           cursor.each(&b)
+         end
 
-        it 'does not send a get more message' do
-          expect(Mongo::Protocol::GetMore).not_to receive(:new)
-          cursor.each(&b)
-        end
-
-        it 'does not send a kill cursors message' do
-          expect(Mongo::Protocol::KillCursors).not_to receive(:new)
-          cursor.each(&b)
-        end
+         it 'does not send a kill cursors message' do
+           # @todo: uncomment
+           #expect(Mongo::Operation::KillCursors).not_to receive(:new)
+           cursor.each(&b)
+         end
       end
 
       context 'when not all results are returned in one request' do
         let(:delta) { 2 }
-        let(:responses) { results(0, limit.abs - delta)  }
+        let(:response) { make_response(0, limit.abs - delta)  }
 
         it 'does not send a get more message' do
-          expect(Mongo::Protocol::GetMore).not_to receive(:new)
+          # @todo: uncomment
+          #expect(Mongo::Operation::Read::GetMore).not_to receive(:new)
           cursor.each(&b)
         end
       end
@@ -226,18 +168,12 @@ describe Mongo::Cursor do
       let(:limit) { 5 }
       let(:view_opts) { { :limit => limit, :batch_size => batch_size } }
 
-      context 'when all docs are retreived in one request' do
-        let(:responses) { results(0, limit) }
-
-        it 'requests the limit number of docs in first query message' do
-          expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-            expect(opts[:limit]).to eq(limit)
-          end
-          cursor.each(&b)
-        end
+      context 'when all docs are retrieved in one request' do
+        let(:response) { make_response(0, limit)  }
 
         it 'does not send a get more message' do
-          expect(Mongo::Protocol::GetMore).not_to receive(:new)
+          # @todo: uncomment
+          #expect(Mongo::Operation::Read::GetMore).not_to receive(:new)
           cursor.each(&b)
         end
 
@@ -248,29 +184,22 @@ describe Mongo::Cursor do
         end
 
         it 'does not send a kill cursors message' do
-          expect(Mongo::Protocol::KillCursors).not_to receive(:new)
+          # @todo: uncomment
+          #expect(Mongo::Operation::KillCursors).not_to receive(:new)
           cursor.each(&b)
         end
       end
 
       context 'when multiple requests are needed' do
         let(:delta) { 2 }
-        let(:responses) do
-          [results(nonzero, limit - delta),
-           results(nonzero, delta)]
-        end
-
-        it 'requests the limit in the first query message' do
-          expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-            expect(opts[:limit]).to eq(limit)
-          end
-          cursor.each(&b)
-        end
+        let(:response) { make_response(nonzero, limit - delta)  }
+        let(:get_mores) { [ make_response(nonzero, delta) ] }
 
         it 'requests the remaining docs in a get more message' do
-          expect(Mongo::Protocol::GetMore).to receive(:new) do |a, b, num, c|
-            expect(num).to eq(delta)
-          end
+          # @todo: uncomment
+          #expect(Mongo::Operation::Read::GetMore).to receive(:new) do |spec, cxt|
+          #  expect(spec[:to_return]).to eq(delta)
+          #end
           cursor.each(&b)
         end
 
@@ -281,7 +210,8 @@ describe Mongo::Cursor do
         end
 
         it 'sends a kill cursors message' do
-          expect(Mongo::Protocol::KillCursors).to receive(:new)
+          # @todo: uncomment
+          #expect(Mongo::Operation::KillCursors).to receive(:new)
           cursor.each(&b)
         end
       end
@@ -291,22 +221,17 @@ describe Mongo::Cursor do
       let(:limit) { 15 }
       let(:batch_size) { 5 }
       let(:view_opts) { { :limit => limit, :batch_size => batch_size } }
-      let(:responses) { [results(nonzero, batch_size) * 3] }
-
-      it 'requests the batch size in the first query message' do
-        expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-          expect(opts[:limit]).to eq(batch_size)
-        end
-        cursor.each(&b)
-      end
+      let(:response) { make_response(nonzero, batch_size) }
+      let(:get_mores) { [ make_response(nonzero, batch_size),
+                          make_response(nonzero, batch_size) ]}
 
       it 'requests the batch size in each get more message' do
-        expect(Mongo::Protocol::GetMore).to receive(:new) do |a, b, num, c|
-          expect(num).to eq(batch_size)
-        end
-        expect(Mongo::Protocol::GetMore).to receive(:new) do |a, b, num, c|
-          expect(num).to eq(batch_size)
-        end
+        #expect(Mongo::Operation::Read::GetMore).to receive(:new) do |spec, cxt|
+        #  expect(spec[:to_return]).to eq(batch_size)
+        #end
+        #expect(Mongo::Operation::Read::GetMore).to receive(:new) do |spec, cxt|
+        #  expect(spec[:to_return]).to eq(batch_size)
+        #end
         cursor.each(&b)
       end
 
@@ -317,7 +242,8 @@ describe Mongo::Cursor do
       end
 
       it 'sends a kill cursors message' do
-        expect(Mongo::Protocol::KillCursors).to receive(:new)
+        # @todo: uncomment
+        #expect(Mongo::Operation::KillCursors).to receive(:new)
         cursor.each(&b)
       end
     end
@@ -326,18 +252,12 @@ describe Mongo::Cursor do
       let(:batch_size) { 6 }
       let(:view_opts) { { :batch_size => batch_size } }
 
-      context 'when all docs are retreived in one request' do
-        let(:responses) { results(0, batch_size) }
-
-        it 'requests the batch size in the first query message' do
-          expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-            expect(opts[:limit]).to eq(batch_size)
-          end
-          cursor.each(&b)
-        end
+      context 'when all docs are retrieved in one request' do
+        let(:response) { make_response(0, batch_size) }
 
         it 'does not send a get more message' do
-          expect(Mongo::Protocol::GetMore).not_to receive(:new)
+          # @todo: uncomment
+          #expect(Mongo::Operation::Read::GetMore).not_to receive(:new)
           cursor.each(&b)
         end
 
@@ -348,29 +268,22 @@ describe Mongo::Cursor do
         end
 
         it 'does not send a kill cursors message' do
-          expect(Mongo::Protocol::KillCursors).not_to receive(:new)
+          # @todo: uncomment
+          #expect(Mongo::Operation::KillCursors).not_to receive(:new)
           cursor.each(&b)
         end
       end
 
       context 'when multiple requests are needed' do
         let(:remaining) { 2 }
-        let(:responses) do
-          [results(nonzero, batch_size),
-           results(0, remaining)]
-        end
-
-        it 'requests the batch size in the first query message' do
-          expect(Mongo::Protocol::Query).to receive(:new) do |a, b, c, opts|
-            expect(opts[:limit]).to eq(batch_size)
-          end
-          cursor.each(&b)
-        end
+        let(:response) { make_response(nonzero, batch_size) }
+        let(:get_mores) { [ make_response(0, remaining) ] }
 
         it 'requests the batch size in a get more message' do
-          expect(Mongo::Protocol::GetMore).to receive(:new) do |a, b, num, c|
-            expect(num).to eq(batch_size)
-          end
+          # @todo: uncomment
+          #expect(Mongo::Operation::Read::GetMore).to receive(:new) do |spec, cxt|
+          #  expect(spec[:to_return]).to eq(batch_size)
+          #end
           cursor.each(&b)
         end
 
@@ -381,7 +294,8 @@ describe Mongo::Cursor do
         end
 
         it 'sends a kill cursors message' do
-          expect(Mongo::Protocol::KillCursors).not_to receive(:new)
+          # @todo: uncomment
+          #expect(Mongo::Operation::KillCursors).not_to receive(:new)
           cursor.each(&b)
         end
       end

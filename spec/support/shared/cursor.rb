@@ -1,19 +1,39 @@
 shared_context 'shared cursor' do
 
-  let(:view_opts) { Hash.new }
+  let(:client) do
+    double('client').tap do |client|
+      allow(client).to receive(:mongos?).and_return(false)
+      allow(client).to receive(:execute).and_return(*get_mores)
+    end
+  end
+
+  let(:db) { Mongo::Database.new(client, TEST_DB) }
+  let(:collection) do
+    db[TEST_COLL].tap do |collection|
+      allow(collection).to receive(:full_namespace) do
+        "#{db.name}.#{collection.name}"
+      end
+      allow(collection).to receive(:client) { client }
+    end
+  end
+
+  let(:view_opts) { {} }
   let(:view) { Mongo::CollectionView.new(collection, {}, view_opts) }
 
   let(:nonzero) { 1 }
   let(:b) { proc { |d| d } }
 
-  def results(cursor_id = 0, nreturned = 5)
-    [{ :cursor_id => cursor_id,
-       :nreturned => nreturned,
-       :docs => (0...nreturned).to_a },
-     server]
+  let(:response) { make_response(1, 3) }
+
+  def make_response(cursor_id = 0, nreturned = 5)
+    double('response').tap do |response|
+      allow(response).to receive(:server) { double('server') }
+      allow(response).to receive(:docs) { (0...nreturned).to_a }
+      allow(response).to receive(:cursor_id) { cursor_id }
+    end
   end
 
-  let(:responses) do
-    results
+  def get_mores
+    [ make_response ]
   end
 end
