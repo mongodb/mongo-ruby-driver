@@ -365,11 +365,15 @@ module Mongo
         [:$showDiskLoc,    :show_disk_loc]
     ]
 
+    # The initial query operation to send to the server.
+    #
     def initial_query_op
       # @todo: uncomment
       #Mongo::Operation::Read::Query.new(query_spec)
     end
 
+    # Send the initial query operation to the server.
+    #
     def send_initial_query
       # @todo: if mongos, don't send read pref because it's
       # in the special selector

@@ -56,6 +56,9 @@ module Mongo
 
     private
 
+    # Process the response returned from the server either from
+    # the initial query or from the get more operation.
+    #
     def process_response(response)
       @server    = response.server
       @cache     = (@cache || []) + response.docs
@@ -107,10 +110,10 @@ module Mongo
     #
     # @return [Hash] The +GetMore+ operation spec.
     def get_more_spec
-      { :to_return   => to_return,
+      { :to_return => to_return,
         :cursor_id => @cursor_id,
-        :db_name    => db_name,
-        :coll_name  => coll_name }
+        :db_name   => db_name,
+        :coll_name => coll_name }
     end
 
     def get_more_op
@@ -138,7 +141,7 @@ module Mongo
 
     # Send a +KillCursors+ message to the server and set the cursor id to 0.
     #
-    # @todo: Brandon: verify server interface
+    # @todo: verify server interface
     def kill_cursors
       @client.execute(kill_cursors_op, :server => @server)
       @cursor_id = 0
@@ -147,7 +150,7 @@ module Mongo
     # Check whether the document returned is an error document.
     #
     # @return [true, false] Whether the document is an error document.
-    # @todo: Emily: do this.
+    # @todo: method on response?
     def error?(doc)
       false
     end
