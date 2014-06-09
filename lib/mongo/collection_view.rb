@@ -36,6 +36,8 @@ module Mongo
     attr_reader :collection
     # @return [ Hash ] The query selector.
     attr_reader :selector
+    # @return [ Hash ] The additional query options.
+    attr_reader :opts
 
     # Creates a new +CollectionView+.
     #
@@ -364,18 +366,21 @@ module Mongo
     ]
 
     def initial_query_op
-      Mongo::Operation::Read::Query.new(query_spec)
+      # @todo: uncomment
+      #Mongo::Operation::Read::Query.new(query_spec)
     end
 
     def send_initial_query
-      @client.execute(initial_query_op, :read => read_pref)
+      # @todo: if mongos, don't send read pref because it's
+      # in the special selector
+      @collection.client.execute(initial_query_op, :read => read_pref)
     end
 
     # Get the read preference for this query.
     #
     # @return [Hash, nil] The read preference or nil.
     def read_pref
-      @client.mongos? ? read.to_mongos : read
+      @collection.client.mongos? ? read.to_mongos : read
     end
 
     # Build a special query selector.
@@ -393,18 +398,13 @@ module Mongo
     # Get a hash of the query options.
     #
     # @return [Hash] The query options.
+    # @todo: refactor this, it knows too much about the query wire protocol
+    # message interface
     def query_opts
-      { :fields => fields,
+      { :project => fields,
         :skip   => skip,
         :limit  => to_return,
         :flags  => flags }
-    end
-
-    # The query options set on the +CollectionView+.
-    #
-    # @return [Hash] The query options set on the +CollectionView+.
-    def opts
-      special_opts.empty? ? nil : special_opts
     end
 
     # The flags set on this query.
@@ -419,7 +419,8 @@ module Mongo
     #
     # @return [true, false] Whether the query has special fields.
     def has_special_fields?
-      !!(opts || sort || hint || comment || @client.mongos?)
+      (!special_opts.empty? || sort || hint ||
+          comment || @collection.client.mongos?)
     end
 
     # Clone or dup the current +CollectionView+.
