@@ -31,6 +31,10 @@ describe Mongo::CollectionView do
     it 'dups the options' do
       expect(view.opts).not_to be(opts)
     end
+
+    it 'defaults upsert setting to false' do
+      expect(view.upsert).to be(false)
+    end
   end
 
   describe '#inspect' do
@@ -329,6 +333,43 @@ describe Mongo::CollectionView do
     end
   end
 
+  describe '#write_concern' do
+    let(:opts) { { :write_concern => Mongo::WriteConcern::Acknowledged } }
+    let(:new_write_concern) { Mongo::WriteConcern::Unacknowledged }
+
+    context 'when a write concern is specified' do
+
+      it 'sets the write concern value' do
+        new_view = view.write_concern(new_write_concern)
+        expect(new_view.write_concern).to eq(new_write_concern)
+      end
+
+      it 'returns a new CollectionView' do
+        expect(view.write_concern(new_write_concern)).not_to be(view)
+      end
+    end
+
+    context 'when a write concern is not specified' do
+
+      it 'returns the write concern value' do
+        expect(view.write_concern).to eq(opts[:write_concern])
+      end
+    end
+  end
+
+  describe '#write_concern!' do
+    let(:opts) { { :write_concern => Mongo::WriteConcern::Acknowledged } }
+    let(:new_write_concern) { Mongo::WriteConcern::Unacknowledged }
+
+    context 'when a write concern is specified' do
+
+      it 'sets the write concern value on the same CollectionView' do
+        view.write_concern!(new_write_concern)
+        expect(view.write_concern).to eq(new_write_concern)
+      end
+    end
+  end
+
   describe '#sort' do
 
     context 'when a sort is specified' do
@@ -363,6 +404,44 @@ describe Mongo::CollectionView do
       it 'sets the sort option on the same CollectionView' do
         view.sort!(new_sort)
         expect(view.sort).to eq(new_sort)
+      end
+    end
+  end
+
+  describe '#upsert' do
+
+    context 'when upsert is set' do
+      let(:opts) { { :upsert => false } }
+      let(:new_upsert) { true }
+
+      it 'sets the upsert option' do
+        new_view = view.upsert(new_upsert)
+        expect(new_view.upsert).to eq(new_upsert)
+      end
+
+      it 'returns a new CollectionView' do
+        expect(view.upsert(new_upsert)).not_to be(view)
+      end
+    end
+
+    context 'when a upsert value is not specified' do
+      let(:opts) { { :upsert => true } }
+
+      it 'returns the upsert setting' do
+        expect(view.upsert).to eq(opts[:upsert])
+      end
+    end
+  end
+
+  describe '#upsert!' do
+
+    context 'when an upsert setting is specified' do
+      let(:opts) { { :upsert => false } }
+      let(:new_upsert) { true }
+
+      it 'sets the upsert option on the same CollectionView' do
+        view.upsert!(new_upsert)
+        expect(view.upsert).to eq(new_upsert)
       end
     end
   end
