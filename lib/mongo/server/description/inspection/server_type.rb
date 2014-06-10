@@ -35,10 +35,11 @@ module Mongo
           def self.run(description, updated)
             updated.server_type = Server::Type.determine(updated)
             if description.server_type != updated.server_type
+              description.server_type = updated.server_type
               description.server.publish(
                 Event::SERVER_TYPE_CHANGED,
-                description.server_type,
-                updated.server_type
+                description.server.address.to_s,
+                description.server_type
               )
             end
           end

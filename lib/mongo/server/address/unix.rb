@@ -54,6 +54,16 @@ module Mongo
         def socket(timeout, ssl_opts = {})
           Socket::Unix.new(host, timeout, Socket::AF_UNIX)
         end
+
+        # Get the address as a string.
+        #
+        # @example Get the address as a string.
+        #   ipv4.to_s
+        #
+        # @return [ String ] The nice string.
+        #
+        # @since 2.0.0
+        alias :to_s :host
       end
     end
   end

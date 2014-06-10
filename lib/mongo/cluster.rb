@@ -70,18 +70,6 @@ module Mongo
       end
     end
 
-    # Force a scan of all servers in the cluster.
-    #
-    # @example Scan the cluster.
-    #   cluster.scan!
-    #
-    # @return [ true ] Always true if no error.
-    #
-    # @since 2.0.0
-    def scan!
-      @servers.each{ |server| server.check! } and true
-    end
-
     # Instantiate the new cluster.
     #
     # @example Instantiate the cluster.
@@ -131,6 +119,18 @@ module Mongo
       options[REPLICA_SET_NAME]
     end
 
+    # Force a scan of all servers in the cluster.
+    #
+    # @example Scan the cluster.
+    #   cluster.scan!
+    #
+    # @return [ true ] Always true if no error.
+    #
+    # @since 2.0.0
+    def scan!
+      @servers.each{ |server| server.check! } and true
+    end
+
     # Get a list of server candidates from the cluster that can have operations
     # executed on them.
     #
@@ -142,6 +142,20 @@ module Mongo
     # @since 2.0.0
     def servers
       @servers.select { |server| server.queryable? }
+    end
+
+    # Verify if the server with the address and the type can belong to this
+    # cluster. Will take action depending on the type.
+    #
+    # @example Verify the address and type.
+    #   cluster.verify!('127.0.0.1:27018', :unknown)
+    #
+    # @param [ String ] address The server address
+    # @param [ Symbol ] server_type The server type.
+    #
+    # @since 2.0.0
+    def verify!(address, server_type)
+
     end
   end
 end

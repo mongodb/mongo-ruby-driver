@@ -43,12 +43,13 @@ module Mongo
       # @example Handle the event.
       #   server_type_changed.handle(new_type)
       #
-      # @param [ Symbol ] old_type The old server type.
+      # @param [ String ] address The server's address.
       # @param [ Symbol ] new_type The new server type.
       #
       # @since 2.0.0
-      def handle(old_type, new_type)
-        log(:debug, 'MONGODB', [ "Server changed from #{old_type} to #{new_type}." ])
+      def handle(address, new_type)
+        log(:debug, 'MONGODB', [ "Server #{address} changed type to #{new_type}." ])
+        cluster.verify!(address, new_type)
       end
     end
   end

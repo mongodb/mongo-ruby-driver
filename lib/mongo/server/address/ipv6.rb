@@ -75,6 +75,18 @@ module Mongo
             Socket::TCP.new(ip, port, timeout, Socket::PF_INET6)
           end
         end
+
+        # Get the address as a string.
+        #
+        # @example Get the address as a string.
+        #   ipv4.to_s
+        #
+        # @return [ String ] The nice string.
+        #
+        # @since 2.0.0
+        def to_s
+          "#{host}:#{port}"
+        end
       end
     end
   end
