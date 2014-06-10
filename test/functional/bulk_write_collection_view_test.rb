@@ -339,6 +339,16 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       end
     end
 
+   # ----- REPLACE -----
+
+    should "raise an error when we attempt to use replace" do
+      assert_raise NoMethodError do
+        bulk = @collection.initialize_ordered_bulk_op
+        bulk.find({:a => 2}).replace({:a => 1})
+        bulk.execute
+      end
+    end
+
     # ----- REPLACE_ONE -----
 
     should "check arg for replacement, set :update, :u, :multi, terminate and return view for #replace_one" do
