@@ -77,17 +77,16 @@ module Mongo
         # @return [ Array ] The operation results and server used.
         #
         # @since 3.0.0
-        def execute(client)
-          # if context contains a server, client yields with that server.
-          client.with_context(context) do |server|
-            # @todo: change wire version to a constant
-            if server.wire_version >= 2
-              op = WriteCommand::Update.new(spec, :server => server)
-              op.execute(client)
-            else
-              updates.each do |d|
+        def execute(context)
+          # @todo: change wire version to constant
+          if context.wire_version >= 2
+            op = WriteCommand::Delete.new(spec)
+            op.execute(context)
+          else
+            updates.each do |d|
+              context.with_connection do |connection|
                 gle = write_concern.get_last_error
-                server.dispath([message(d), gle])
+                connection.dispatch([message(d), gle])
               end
             end
           end

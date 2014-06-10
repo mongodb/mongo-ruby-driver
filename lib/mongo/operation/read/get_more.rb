@@ -18,62 +18,39 @@ module Mongo
 
     module Read
 
-      # A MongoDB get more operation with context describing
-      # what server or socket it should be sent to.
+      # A MongoDB get more operation.
       #
       # @since 3.0.0
       class GetMore
         include Executable
 
         # Initialize a get more operation.
-        # Note that a server must always be specified, because by definition,
-        # a get more operation requests more results from an existing cursor.
         #
         # @example
         #   include Mongo
         #   include Operation
-        #   Read::GetMore.new({ :selector => { :to_return => 50,
-        #                                      :cursor_id => 1,
-        #                                      :db_name   => 'test_db',
-        #                                      :coll_name => 'test_coll' } },
-        #                       :server => server )
+        #   Read::GetMore.new({ :to_return => 50,
+        #                       :cursor_id => 1,
+        #                       :db_name   => 'test_db',
+        #                       :coll_name => 'test_coll' })
         #
         # @param [ Hash ] spec The specifications for the operation.
-        # @param [ Hash ] context The context for executing this operation.
         #
-        # @option spec :selector [ Hash ] The get more selector.
+        # @option spec :to_return [ Integer ] The number of results to return.
+        # @option spec :cursor_id [ Integer ] The id of the cursor.
         # @option spec :db_name [ String ] The name of the database on which
         #   the operation should be executed.
         # @option spec :coll_name [ String ] The name of the collection on which
         #   the operation should be executed.
-        # @option spec :opts [ Hash ] Options for the map reduce command.
-        #
-        # @option context :server [ Mongo::Server ] The server to use for the operation.
-        # @option context :connection [ Mongo::Socket ] The socket that the operation
-        #   message should be sent on.
         #
         # @since 3.0.0
-        def initialize(spec, context={})
-          # @todo: Replace with appropriate error
-          # @todo: can you specify a connection?
-          raise Exception, 'You must specify a server' unless @server = context[:server]
-          @spec       = spec
-          @connection = context[:connection]
-        end
-
-        # The context to be used for executing the operation.
-        #
-        # @return [ Hash ] The context.
-        #
-        # @since 3.0.0
-        def context
-          { :server     => @server,
-            :connection => @connection }
+        def initialize(spec)
+          @spec = spec
         end
 
         private
 
-        # The number of documents requested from the server.
+        # The number of documents to request from the server.
         #
         # @return [ Integer ] The number of documents to return.
         #

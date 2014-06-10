@@ -1,112 +1,50 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Read::Query do
-  include_context 'operation'
 
-  let(:server_pref) { Mongo::ServerPreference.get(:primary) }
-
-  # selector
   let(:selector) { {} }
+  let(:query_opts) { {} }
+  let(:db_name) { 'TEST_DB' }
+  let(:coll_name) { 'test-coll' }
   let(:spec) do
     { :selector  => selector,
-      :opts      => {},
-      :db_name   => :test,
-      :coll_name => :test_coll
+      :opts      => query_opts,
+      :db_name   => db_name,
+      :coll_name => coll_name
     }
   end
-  let(:context) { {} }
-  let(:op) { described_class.new(spec, context) }
+  let(:op) { described_class.new(spec) }
+  let(:context) do
+    double('context').tap do |cxt|
+     allow(cxt).to receive(:with_connection).and_yield(connection)
+    end
+  end
+  let(:connection) do
+    double('connection').tap do |conn|
+      allow(conn).to receive(:dispatch) { [] }
+    end
+  end
 
   describe '#initialize' do
-
-    context 'server' do
-
-      context 'when a server is provided' do
-        let(:context) { { :server => server } }
-        it 'sets the server' do
-          expect(op.context[:server]).to eq(server)
-        end
-      end
-
-      context 'when a server is not provided' do
-        let(:context) { { } }
-
-        it 'does not set a server' do
-          expect(op.context[:server]).to be_nil
-        end
-      end
-    end
 
     context 'query spec' do
       it 'sets the query spec' do
         expect(op.spec).to be(spec)
       end
     end
-
-    context 'read' do
-
-      context 'read preference is specified' do
-        let(:context) { { :server_preference => server_pref } }
-
-        it 'sets the read pref' do
-          expect(op.context[:server_preference]).to be(server_pref)
-        end
-      end
-
-      context 'read preference is not specified' do
-        let(:context) { { } }
-
-        it 'uses the default read preference' do
-          expect(op.context[:server_preference]).to eq(Mongo::Operation::DEFAULT_SERVER_PREFERENCE)
-        end
-      end
-    end
   end
 
   describe '#==' do
 
-    context 'when two ops have the same context' do
-      let(:other) { described_class.new(spec, context) }
-
-      it 'returns true' do
-        expect(op).to eq(other)
-      end
-    end
-
-    context 'when two ops have a different context' do
-
-      context 'different read pref' do
-        let(:context) { { :server_preference => server_pref, :server => server } }
-        let(:other_server_pref) { Mongo::ServerPreference.get(:secondary) }
-        let(:other_context) { { :server_preference => other_server_pref, :server => server } }
-        let(:other) { described_class.new(spec, other_context) }
-
-        it 'returns false' do
-          expect(op).not_to eq(other)
-        end
-      end
-
-      context 'different servers' do
-        let(:context) { { :server_preference => server_pref, :server => server } }
-        let(:other_server) { double('server') }
-        let(:other_context) { { :server_preference => server_pref, :server => other_server } }
-        let(:other) { described_class.new(spec, other_context) }
-
-        it 'returns false' do
-          expect(op).not_to eq(other)
-        end
-      end
-    end
-
-    context ' when two ops have different specs' do
+    context 'when two ops have different specs' do
       let(:other_spec) do
         { :selector  => { :a => 1 },
-          :context   => {},
-          :db_name   => :test,
-          :coll_name => :test_coll
+          :opts      => query_opts,
+          :db_name   => db_name,
+          :coll_name => coll_name
         }
       end
-      let(:other) { described_class.new(other_spec, context) }
+      let(:other) { described_class.new(other_spec) }
 
       it 'returns false' do
         expect(op).not_to eq(other)
@@ -114,27 +52,28 @@ describe Mongo::Operation::Read::Query do
     end
   end
 
-  describe '#context' do
-
-    context 'when a read preference is provided' do
-      let(:context) { { :server_preference => server_pref } }
-
-      it 'includes the read preference' do
-        expect(op.context[:server_preference]).to eq (server_pref)
-      end
-    end
-
-    context 'when a server is provided' do
-      let(:context) { { :server => server } }
-
-      it 'includes the server' do
-        expect(op.context[:server]).to eq(server)
-      end
-    end
-  end
-
   describe '#execute' do
-    # @todo: what will the connection#send_and_receive API be like?
+
+    context 'message' do
+
+      it 'creates a query wire protocol message with correct specs' do
+        expect(Mongo::Protocol::Query).to receive(:new) do |db, coll, sel, opts|
+          expect(db).to eq(db_name)
+          expect(coll).to eq(coll_name)
+          expect(sel).to eq(selector)
+          expect(opts).to eq(query_opts)
+        end
+        op.execute(context)
+      end
+    end
+
+    context 'connection' do
+
+      it 'dispatches the message on the connection' do
+        expect(connection).to receive(:dispatch)
+        op.execute(context)
+      end
+    end
   end
 end
 

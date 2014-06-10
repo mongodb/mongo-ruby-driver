@@ -16,8 +16,7 @@ module Mongo
 
   module Operation
 
-    # A MongoDB map reduce operation with context describing
-    # what server or socket it should be sent to.
+    # A MongoDB map reduce operation.
     # Note that a map reduce operation can behave like a read and
     # return a result set, or can behave like a write operation and
     # output results to a user-specified collection.
@@ -37,44 +36,57 @@ module Mongo
       #
       # @since 3.0.0
       def ==(other)
-        spec[:selector] == other.spec[:selector] &&
-            context == other.context
+        # @todo: check db name and map, reduce explicitly
+        spec[:selector] == other.spec[:selector]
       end
       alias_method :eql?, :==
 
       # Initialize a map reduce operation.
       #
-      # @example Initialize a map reduce operation.
+      # @example
       #   include Mongo
       #   include Operation
-      #   primary_pref = Mongo::ServerPreference.get(:primary)
       #   MapReduce.new({ :selector => { :mapreduce => 'test_coll',
       #                                  :map => '',
       #                                  :reduce => '' },
-      #                   :db_name  => 'test_db' },
-      #                   :server_preference => primary_pref)
+      #                   :db_name  => 'test_db' })
       #
       # @param [ Hash ] spec The specifications for the operation.
-      # @param [ Hash ] context The context for executing this operation.
       #
       # @option spec :selector [ Hash ] The map reduce selector.
       # @option spec :db_name [ String ] The name of the database on which
       #   the operation should be executed.
       # @option spec :opts [ Hash ] Options for the map reduce command.
       #
-      # @option context :server_preference [ Object ] The server preference for where
-      #   the operation should be sent.
-      # @option context :server [ Mongo::Server ] The server to use for the operation.
-      # @option context :connection [ Mongo::Socket ] The socket that the operation
-      #   message should be sent on.
+      # @since 3.0.0
+      def initialize(spec)
+        @spec = spec
+      end
+
+      # Execute the operation.
+      # The context gets a connection on which the operation
+      # is sent in the block.
+      # If the map reduce will be written to an output collection and the
+      # server is not primary, the operation will be rerouted to the primary
+      # with a warning.
+      #
+      # @params [ Mongo::Server::Context ] The context for this operation.
+      #
+      # @return [ Mongo::Response ] The operation response, if there is one.
       #
       # @since 3.0.0
-      def initialize(spec, context={})
-        @spec   = spec
-
-        @server_preference = context[:server_preference]
-        @server            = context[:server]
-        @connection        = context[:connection]
+      def execute(context)
+        if context.server.secondary? && !secondary_ok?
+          warn "Database command '#{selector.keys.first}' rerouted to primary server"
+          primary_context = Mongo::ServerPreference.get(:primary).server.context
+          primary_context.with_connection do |connection|
+            connection.dispatch([message])
+          end
+        else
+          context.with_connection do |connection|
+            connection.dispatch([message])
+          end
+        end
       end
 
       private
@@ -90,28 +102,11 @@ module Mongo
 
       # Any options for this map reduce command operation.
       #
-      # @return [ Hash ] The query options.
+      # @return [ Hash ] The command options.
       #
       # @since 3.0.0
-      def query_opts
-        @spec[:query_opts] || {}
-      end
-
-      # The server preference for the operation.
-      # Note that if the user has specified a server preference that is not primary
-      # and has also specified an output collection to which the results will be written,
-      # the operation will be rerouted to the primary with a warning.
-      #
-      # @return [ Object ] The server preference. 
-      #
-      # @since 3.0.0
-      def server_preference
-        return @server_preference = Mongo::ServerPreference.get(:primary) unless @server_preference
-        if @server_preference.name != :primary && !secondary_ok?
-          warn "Database command '#{selector.keys.first}' rerouted to primary server"
-          @server_preference = Mongo::ServerPreference.get(:primary)
-        end
-        @server_preference
+      def opts
+        @spec[:opts] || {}
       end
 
       # Whether this operation can be executed on a replica set secondary server.
@@ -122,20 +117,18 @@ module Mongo
       #
       # @since 3.0.0
       def secondary_ok?
-        selector.find do |k, v|
-          (k == :out || k == 'out') &&
-              v == 'inline'
-        end
+        out = selector[:out] || selector['out']
+        out.nil? || out == 'inline'
       end
 
-      # The wire protocol message for this write operation.
+      # The wire protocol message for this operation.
       #
       # @return [ Mongo::Protocol::Query ] Wire protocol message. 
       #
       # @since 3.0.0
       def message
         Mongo::Protocol::Query.new(db_name, Mongo::Operation::COMMAND_COLLECTION_NAME,
-                                   selector, query_opts)
+                                   selector, opts)
       end
     end
   end

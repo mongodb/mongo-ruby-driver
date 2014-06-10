@@ -368,16 +368,17 @@ module Mongo
     # The initial query operation to send to the server.
     #
     def initial_query_op
-      # @todo: uncomment
-      #Mongo::Operation::Read::Query.new(query_spec)
+      Mongo::Operation::Read::Query.new(query_spec)
     end
 
     # Send the initial query operation to the server.
     #
+    # @return [ Mongo::Response ] The initial query response.
     def send_initial_query
       # @todo: if mongos, don't send read pref because it's
       # in the special selector
-      @collection.client.execute(initial_query_op, :read => read_pref)
+      context = read_pref.server.context
+      initial_query_op.execute(context)
     end
 
     # Get the read preference for this query.

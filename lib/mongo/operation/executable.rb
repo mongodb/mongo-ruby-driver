@@ -17,7 +17,7 @@ module Mongo
   module Operation
 
     # This module contains common functionality for defining an operation
-    # and the context in which it should be executed in a cluster.
+    # and executing it, given a certain context.
     #
     # @since 3.0.0
     module Executable
@@ -40,39 +40,22 @@ module Mongo
       #
       # @since 3.0.0
       def ==(other)
-        spec == other.spec &&
-            context == other.context
+        spec == other.spec
       end
       alias_method :eql?, :==
 
-      # The context to be used for executing the operation.
-      #
-      # @return [ Hash ] The context.
-      #
-      # @since 3.0.0
-      def context
-        { :server_preference => server_preference ||
-            Mongo::Operation::DEFAULT_SERVER_PREFERENCE }.tap do |cxt|
-          cxt.merge!(:server => @server)     if @server
-        end
-      end
-
       # Execute the operation.
-      # The client uses the context to get a server to which the operation
+      # The context gets a connection on which the operation
       # is sent in the block.
-      # The context contains criteria for which server type to use or which
-      # specific server to use.
       #
-      # @params [ Mongo::Client ] The client to use to get a server.
+      # @params [ Mongo::Server::Context ] The context for this operation.
       #
-      # @todo: Make sure this is indeed the client#with_context API
-      # @return [ Array ] The operation results and server used.
+      # @return [ Mongo::Response ] The operation response, if there is one.
       #
       # @since 3.0.0
-      def execute(client)
-        client.with_context(context) do |server|
-          # @todo: check if exhaust and send+receive differently
-          server.send_and_receive(message)
+      def execute(context)
+        context.with_connection do |connection|
+          connection.dispatch([message])
         end
       end
 
