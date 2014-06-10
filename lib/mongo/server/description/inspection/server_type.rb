@@ -17,26 +17,29 @@ module Mongo
     class Description
       module Inspection
 
-        # Handles inspecting the result of an ismaster command for servers
-        # that were removed from the cluster.
+        # Handles inspecting the result of an ismaster command to determine the
+        # server type and fire an event if changed.
         #
         # @since 2.0.0
-        class ServerRemoved
+        class ServerType
 
-          # Run the server added inspection.
+          # Run the server type inspection.
           #
           # @example Run the inspection.
-          #   ServerAdded.run(description, {})
+          #   ServerType.run(description, {})
           #
           # @param [ Description ] description The server description.
           # @param [ Description ] updated The updated description.
           #
           # @since 2.0.0
           def self.run(description, updated)
-            description.hosts.each do |host|
-              if updated.primary? && !updated.hosts.include?(host)
-                description.server.publish(Event::SERVER_REMOVED, host)
-              end
+            updated.server_type = Server::Type.determine(updated)
+            if description.server_type != updated.server_type
+              description.server.publish(
+                Event::SERVER_TYPE_CHANGED,
+                description.server_type,
+                updated.server_type
+              )
             end
           end
         end

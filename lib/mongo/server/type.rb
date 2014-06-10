@@ -78,23 +78,20 @@ module Mongo
         ->(description){ description.unknown?   ? UNKNOWN   : false }
       ]
 
-      class << self
-
-        # Determine the server type given the description.
-        #
-        # @example Determine the server type.
-        #   Type.determine(description)
-        #
-        # @param [ Description ] description The server description.
-        #
-        # @return [ Symbol ] The server type.
-        #
-        # @since 2.0.0
-        def determine(description)
-          RULES.each do |rule|
-            type = rule.call(description)
-            return type if type
-          end
+      # Determine the server type given the description.
+      #
+      # @example Determine the server type.
+      #   Type.determine(description)
+      #
+      # @param [ Description ] description The server description.
+      #
+      # @return [ Symbol ] The server type.
+      #
+      # @since 2.0.0
+      def self.determine(description)
+        RULES.each do |rule|
+          type = rule.call(description)
+          return type if type
         end
       end
     end

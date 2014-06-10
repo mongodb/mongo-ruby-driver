@@ -27,7 +27,6 @@ module Mongo
   # @since 2.0.0
   class Server
     include Event::Publisher
-    include Event::Subscriber
     extend Forwardable
 
     # @return [ String ] The configured address for the server.
@@ -107,9 +106,7 @@ module Mongo
       @options = options
       @mutex = Mutex.new
       @monitor = Monitor.new(self, options)
-      @description = Description.new
-      subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
-      subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
+      @description = Description.new(self)
       @monitor.run
     end
 

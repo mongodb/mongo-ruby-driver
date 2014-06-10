@@ -99,6 +99,7 @@ module Mongo
         Server.new(address, options).tap do |server|
           subscribe_to(server, Event::SERVER_ADDED, Event::ServerAdded.new(self))
           subscribe_to(server, Event::SERVER_REMOVED, Event::ServerRemoved.new(self))
+          subscribe_to(server, Event::SERVER_TYPE_CHANGED, Event::ServerTypeChanged.new(self))
         end
       end
     end

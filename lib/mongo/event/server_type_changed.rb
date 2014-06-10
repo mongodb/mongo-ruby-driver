@@ -1,3 +1,4 @@
+
 # Copyright (C) 2009-2014 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,39 +16,39 @@
 module Mongo
   module Event
 
-    # This handles host added events for server descriptions.
+    # This handles server type changed events.
     #
     # @since 2.0.0
-    class HostAdded
+    class ServerTypeChanged
       include Loggable
 
-      # @return [ Mongo::Server ] server The event publisher.
-      attr_reader :server
+      # @return [ Mongo::Cluster ] The listening cluster.
+      attr_reader :cluster
 
-      # Initialize the new host added event handler.
+      # Initialize the new server changed event handler.
       #
       # @example Create the new handler.
-      #   HostAdded.new(server)
+      #   ServerTypeChanged.new(cluster)
       #
-      # @param [ Mongo::Server ] server The server to publish from.
+      # @param [ Mongo::Cluster ] cluster The cluster to publish from.
       #
       # @since 2.0.0
-      def initialize(server)
-        @server = server
+      def initialize(cluster)
+        @cluster = cluster
       end
 
-      # This event publishes an event to add the server and logs the
-      # configuration change.
+      # This event publishes an event to the cluster and the cluster will
+      # decide based on rules what to do.
       #
       # @example Handle the event.
-      #   host_added.handle('127.0.0.1:27018')
+      #   server_type_changed.handle(new_type)
       #
-      # @param [ String ] address The added host.
+      # @param [ Symbol ] old_type The old server type.
+      # @param [ Symbol ] new_type The new server type.
       #
       # @since 2.0.0
-      def handle(address)
-        log(:debug, 'MONGODB', [ "#{address} added to replica set configuration." ])
-        server.publish(Event::SERVER_ADDED, address)
+      def handle(old_type, new_type)
+        log(:debug, 'MONGODB', [ "Server changed from #{old_type} to #{new_type}." ])
       end
     end
   end

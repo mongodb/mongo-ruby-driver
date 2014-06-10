@@ -2,20 +2,24 @@ require 'spec_helper'
 
 describe Mongo::Server::Type do
 
+  let(:server) do
+    Mongo::Server.new('127.0.0.1:27017')
+  end
+
   describe '.determine' do
 
     let(:server_type) do
       described_class.determine(description)
     end
 
+    let(:description) do
+      Mongo::Server::Description.new(server, ismaster)
+    end
+
     context 'when the description indicates an arbiter' do
 
       let(:ismaster) do
         { 'arbiterOnly' => true, 'setName' => 'test' }
-      end
-
-      let(:description) do
-        Mongo::Server::Description.new(ismaster)
       end
 
       it 'returns arbiter' do
@@ -29,10 +33,6 @@ describe Mongo::Server::Type do
         { 'isreplicaset' => true }
       end
 
-      let(:description) do
-        Mongo::Server::Description.new(ismaster)
-      end
-
       it 'returns ghost' do
         expect(server_type).to eq(Mongo::Server::Type::GHOST)
       end
@@ -42,10 +42,6 @@ describe Mongo::Server::Type do
 
       let(:ismaster) do
         { 'msg' => 'isdbgrid', 'ismaster' => true }
-      end
-
-      let(:description) do
-        Mongo::Server::Description.new(ismaster)
       end
 
       it 'returns mongos' do
@@ -59,10 +55,6 @@ describe Mongo::Server::Type do
         { 'setName' => 'test', 'ismaster' => true }
       end
 
-      let(:description) do
-        Mongo::Server::Description.new(ismaster)
-      end
-
       it 'returns primary' do
         expect(server_type).to eq(Mongo::Server::Type::PRIMARY)
       end
@@ -74,10 +66,6 @@ describe Mongo::Server::Type do
         { 'setName' => 'test', 'secondary' => true }
       end
 
-      let(:description) do
-        Mongo::Server::Description.new(ismaster)
-      end
-
       it 'returns secondary' do
         expect(server_type).to eq(Mongo::Server::Type::SECONDARY)
       end
@@ -86,7 +74,7 @@ describe Mongo::Server::Type do
     context 'when the description indicates an unknown' do
 
       let(:description) do
-        Mongo::Server::Description.new({})
+        Mongo::Server::Description.new(server, {})
       end
 
       it 'returns unknown' do

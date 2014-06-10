@@ -25,12 +25,16 @@ describe Mongo::Server::Description do
     }
   end
 
+  let(:server) do
+    Mongo::Server.new('127.0.0.1:27019')
+  end
+
   describe '#arbiter?' do
 
     context 'when the server is an arbiter' do
 
       let(:description) do
-        described_class.new({ 'arbiterOnly' => true, 'setName' => 'test' })
+        described_class.new(server, { 'arbiterOnly' => true, 'setName' => 'test' })
       end
 
       it 'returns true' do
@@ -41,7 +45,7 @@ describe Mongo::Server::Description do
     context 'when the server is not an arbiter' do
 
       let(:description) do
-        described_class.new(replica)
+        described_class.new(server, replica)
       end
 
       it 'returns false' do
@@ -55,7 +59,7 @@ describe Mongo::Server::Description do
     context 'when the replica set has arbiters' do
 
       let(:description) do
-        described_class.new(replica)
+        described_class.new(server, replica)
       end
 
       it 'returns the arbiters' do
@@ -66,7 +70,7 @@ describe Mongo::Server::Description do
     context 'when the replica set has no arbiters' do
 
       let(:description) do
-        described_class.new({})
+        described_class.new(server, {})
       end
 
       it 'returns an empty array' do
@@ -84,7 +88,7 @@ describe Mongo::Server::Description do
       end
 
       let(:description) do
-        described_class.new(config)
+        described_class.new(server, config)
       end
 
       it 'returns true' do
@@ -95,7 +99,7 @@ describe Mongo::Server::Description do
     context 'when the server is not a ghost' do
 
       let(:description) do
-        described_class.new(replica)
+        described_class.new(server, replica)
       end
 
       it 'returns false' do
@@ -109,7 +113,7 @@ describe Mongo::Server::Description do
     context 'when the server is hidden' do
 
       let(:description) do
-        described_class.new({ 'hidden' => true })
+        described_class.new(server, { 'hidden' => true })
       end
 
       it 'returns true' do
@@ -120,7 +124,7 @@ describe Mongo::Server::Description do
     context 'when the server is not hidden' do
 
       let(:description) do
-        described_class.new(replica)
+        described_class.new(server, replica)
       end
 
       it 'returns false' do
@@ -132,7 +136,7 @@ describe Mongo::Server::Description do
   describe '#hosts' do
 
     let(:description) do
-      described_class.new(replica)
+      described_class.new(server, replica)
     end
 
     it 'returns all the hosts in the replica set' do
@@ -143,7 +147,7 @@ describe Mongo::Server::Description do
   describe '#max_bson_object_size' do
 
     let(:description) do
-      described_class.new(replica)
+      described_class.new(server, replica)
     end
 
     it 'returns the value' do
@@ -154,7 +158,7 @@ describe Mongo::Server::Description do
   describe '#max_message_size' do
 
     let(:description) do
-      described_class.new(replica)
+      described_class.new(server, replica)
     end
 
     it 'returns the value' do
@@ -165,7 +169,7 @@ describe Mongo::Server::Description do
   describe '#max_write_batch_size' do
 
     let(:description) do
-      described_class.new(replica)
+      described_class.new(server, replica)
     end
 
     it 'returns the value' do
@@ -176,7 +180,7 @@ describe Mongo::Server::Description do
   describe '#max_wire_version' do
 
     let(:description) do
-      described_class.new(replica)
+      described_class.new(server, replica)
     end
 
     it 'returns the value' do
@@ -187,7 +191,7 @@ describe Mongo::Server::Description do
   describe '#min_wire_version' do
 
     let(:description) do
-      described_class.new(replica)
+      described_class.new(server, replica)
     end
 
     it 'returns the value' do
@@ -204,7 +208,7 @@ describe Mongo::Server::Description do
       end
 
       let(:description) do
-        described_class.new(config)
+        described_class.new(server, config)
       end
 
       it 'returns true' do
@@ -215,7 +219,7 @@ describe Mongo::Server::Description do
     context 'when the server is not a mongos' do
 
       let(:description) do
-        described_class.new(replica)
+        described_class.new(server, replica)
       end
 
       it 'returns false' do
@@ -229,7 +233,7 @@ describe Mongo::Server::Description do
     context 'when the server is passive' do
 
       let(:description) do
-        described_class.new({ 'passive' => true })
+        described_class.new(server, { 'passive' => true })
       end
 
       it 'returns true' do
@@ -240,7 +244,7 @@ describe Mongo::Server::Description do
     context 'when the server is not passive' do
 
       let(:description) do
-        described_class.new(replica)
+        described_class.new(server, replica)
       end
 
       it 'returns false' do
@@ -254,7 +258,7 @@ describe Mongo::Server::Description do
     context 'when the server is not a primary' do
 
       let(:description) do
-        described_class.new({ 'ismaster' => false })
+        described_class.new(server, { 'ismaster' => false })
       end
 
       it 'returns true' do
@@ -265,7 +269,7 @@ describe Mongo::Server::Description do
     context 'when the server is a primary' do
 
       let(:description) do
-        described_class.new(replica)
+        described_class.new(server, replica)
       end
 
       it 'returns false' do
@@ -277,11 +281,11 @@ describe Mongo::Server::Description do
   describe '#round_trip_time' do
 
     let(:description) do
-      described_class.new({ 'secondary' => false }, 4.5)
+      described_class.new(server, { 'secondary' => false }, 4.5)
     end
 
     it 'defaults to 0' do
-      expect(described_class.new.round_trip_time).to eq(0)
+      expect(described_class.new(server).round_trip_time).to eq(0)
     end
 
     it 'can be set via the constructor' do
@@ -294,7 +298,7 @@ describe Mongo::Server::Description do
     context 'when the server is in a replica set' do
 
       let(:description) do
-        described_class.new(replica)
+        described_class.new(server, replica)
       end
 
       it 'returns the replica set name' do
@@ -305,7 +309,7 @@ describe Mongo::Server::Description do
     context 'when the server is not in a replica set' do
 
       let(:description) do
-        described_class.new({})
+        described_class.new(server, {})
       end
 
       it 'returns nil' do
@@ -319,7 +323,7 @@ describe Mongo::Server::Description do
     context 'when the server is not a secondary' do
 
       let(:description) do
-        described_class.new({ 'secondary' => false })
+        described_class.new(server, { 'secondary' => false })
       end
 
       it 'returns true' do
@@ -330,7 +334,7 @@ describe Mongo::Server::Description do
     context 'when the server is a secondary' do
 
       let(:description) do
-        described_class.new({ 'secondary' => true, 'setName' => 'test' })
+        described_class.new(server, { 'secondary' => true, 'setName' => 'test' })
       end
 
       it 'returns false' do
@@ -344,7 +348,7 @@ describe Mongo::Server::Description do
     context 'when the server is standalone' do
 
       let(:description) do
-        described_class.new({ 'ismaster' => true })
+        described_class.new(server, { 'ismaster' => true })
       end
 
       it 'returns true' do
@@ -355,7 +359,7 @@ describe Mongo::Server::Description do
     context 'when the server is part of a replica set' do
 
       let(:description) do
-        described_class.new(replica)
+        described_class.new(server, replica)
       end
 
       it 'returns false' do
@@ -369,7 +373,7 @@ describe Mongo::Server::Description do
     context 'when the description has no configuration' do
 
       let(:description) do
-        described_class.new
+        described_class.new(server)
       end
 
       it 'returns true' do
@@ -384,7 +388,7 @@ describe Mongo::Server::Description do
       end
 
       let(:description) do
-        described_class.new(config)
+        described_class.new(server, config)
       end
 
       it 'returns false' do
@@ -393,101 +397,5 @@ describe Mongo::Server::Description do
     end
   end
 
-  describe '#update!' do
-
-    let(:config) do
-      {
-        'ismaster' => true,
-        'secondary' => false,
-        'hosts' => [ '127.0.0.1:27018', '127.0.0.1:27019' ]
-      }
-    end
-
-    let(:listener) do
-      double('listener')
-    end
-
-    context 'when a server is added' do
-
-      let(:new) do
-        { 'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ] }
-      end
-
-      let(:description) do
-        described_class.new(config)
-      end
-
-      let(:updated) do
-        description.update!(new, 2.0)
-      end
-
-      before do
-        description.add_listener(Mongo::Event::HOST_ADDED, listener)
-      end
-
-      it 'fires a server added event' do
-        expect(listener).to receive(:handle).with('127.0.0.1:27020')
-        expect(updated.hosts).to eq([ '127.0.0.1:27019', '127.0.0.1:27020' ])
-      end
-    end
-
-    context 'when a server is removed' do
-
-      context 'when the server is a primary' do
-
-        let(:new) do
-          {
-            'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ],
-            'ismaster' => true,
-            'setName' => 'test'
-          }
-        end
-
-        let(:description) do
-          described_class.new(config)
-        end
-
-        let(:updated) do
-          description.update!(new, 2.0)
-        end
-
-        before do
-          description.add_listener(Mongo::Event::HOST_REMOVED, listener)
-        end
-
-        it 'fires a server removed event' do
-          expect(listener).to receive(:handle).with('127.0.0.1:27018')
-          expect(updated.hosts).to eq([ '127.0.0.1:27019', '127.0.0.1:27020' ])
-        end
-      end
-
-      context 'when the server is not a primary' do
-
-        let(:new) do
-          {
-            'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ],
-            'secondary' => true,
-            'setName' => 'test'
-          }
-        end
-
-        let(:description) do
-          described_class.new(config)
-        end
-
-        let(:updated) do
-          description.update!(new, 2.0)
-        end
-
-        before do
-          description.add_listener(Mongo::Event::HOST_REMOVED, listener)
-        end
-
-        it 'does not fire a server removed event' do
-          expect(listener).to_not receive(:handle).with('127.0.0.1:27018')
-          expect(updated.hosts).to eq([ '127.0.0.1:27019', '127.0.0.1:27020' ])
-        end
-      end
-    end
-  end
+  pending '#update!'
 end
