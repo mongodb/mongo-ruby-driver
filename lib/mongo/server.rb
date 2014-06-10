@@ -17,6 +17,7 @@ require 'mongo/server/address'
 require 'mongo/server/context'
 require 'mongo/server/description'
 require 'mongo/server/monitor'
+require 'mongo/server/type'
 
 module Mongo
 
