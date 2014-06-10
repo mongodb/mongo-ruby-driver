@@ -294,7 +294,7 @@ module Mongo
         elsif op_type == :update
           n_upserted = 0
           if (upserted = response.fetch("upserted", nil)) # assignment
-            upserted = [{"_id" => upserted}] if upserted.class == BSON::ObjectId # OP_UPDATE non-array
+            upserted = [{"_id" => upserted}] if upserted.class != Array # OP_UPDATE non-array
             n_upserted = upserted.size
             concat(result, "upserted", merge_indexes(upserted, exchange))
           end
