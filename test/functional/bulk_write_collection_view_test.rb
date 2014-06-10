@@ -501,6 +501,27 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       end
     end
 
+    should "count nUpserted correctly when _id is not an ObjectId (upsert-update)" do
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
+
+        bulk = @collection.initialize_unordered_bulk_op
+        bulk.find({:_id => 3}).upsert.update({"$set" => {:b => 3}})
+        result = bulk.execute
+        assert_match_document(
+            {
+                "ok" => 1,
+                "n" => 1,
+                "nMatched" => 0,
+                "nUpserted" => 1,
+                "nModified" => batch_commands?(wire_version) ? 0 : nil,
+                "upserted" => [
+                    { "_id" => 3, "index" => 0 }
+                ]
+            }, result, "wire_version:#{wire_version}")
+      end
+    end
+
     # ----- UPSERT-UPDATE_ONE -----
 
     should "#upsert a document without affecting non-upsert update_ones" do
@@ -540,6 +561,27 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
                 "n" => 1,
                 "nMatched" => 1,
                 "nModified" => batch_commands?(wire_version) ? 1 : nil,
+            }, result, "wire_version:#{wire_version}")
+      end
+    end
+
+
+    should "count nUpserted correctly when _id is not an ObjectId (upsert-update_one)" do
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
+        bulk = @collection.initialize_ordered_bulk_op
+        bulk.find({:_id => 2}).upsert.update_one({"$set" => {:x => 2}})
+        result = bulk.execute
+        assert_match_document(
+            {
+                "ok" => 1,
+                "n" => 1,
+                "nMatched" => 0,
+                "nUpserted" => 1,
+                "nModified" => batch_commands?(wire_version) ? 0 : nil,
+                "upserted" => [
+                    {"_id" => 2, "index" => 0 }
+                ]
             }, result, "wire_version:#{wire_version}")
       end
     end
@@ -596,6 +638,28 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       assert_equal({"nM" => 6}, nil_tally_responses([{"nM" => 1}, {"nM" => 2}, {"nM" => 3}], "nM"))
       assert_equal({"nM" => nil}, nil_tally_responses([{"nM" => 1}, { }, {"nM" => 3}], "nM"))
       assert_equal({"nM" => nil}, nil_tally_responses([{"nM" => 1}, {"nM" => nil}, {"nM" => 3}], "nM"))
+    end
+
+
+    should "count nUpserted correctly when _id is not an ObjectId (upsert-replace_one)" do
+      with_write_commands_and_operations(@db.connection) do |wire_version|
+        @collection.remove
+        bulk = @collection.initialize_unordered_bulk_op
+        bulk.find({:a => 1}).upsert.replace_one({:_id => 2})
+        result = bulk.execute
+        assert_match_document(
+            {
+                "ok" => 1,
+                "n" => 1,
+                "nMatched" => 0,
+                "nUpserted" => 1,
+                "nModified" => batch_commands?(wire_version) ? 0 : nil,
+                "upserted" => [
+                                { "_id" => 2, "index" => 0 }
+                ]
+            }, result, "wire_version:#{wire_version}")
+        assert_equal 1, @collection.count
+      end
     end
 
     # ----- MIXED OPS, ORDERED -----
