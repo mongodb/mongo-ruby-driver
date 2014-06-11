@@ -29,7 +29,7 @@ module Mongo
         #   Write::WriteCommand::Insert.new({ :documents     => [{ :foo => 1 }],
         #                                     :db_name       => 'test',
         #                                     :coll_name     => 'test_coll',
-        #                                     :write_concern => { 'w' => 2 },
+        #                                     :write_concern => write_concern,
         #                                     :ordered       => true
         #                                   })
         # @since 3.0.0
@@ -49,7 +49,7 @@ module Mongo
           #
           # @since 3.0.0
           def selector
-            { :insert        => @spec[:coll_name],
+            { :insert        => coll_name,
               :documents     => @spec[:documents],
               :write_concern => write_concern,
               :ordered       => ordered?

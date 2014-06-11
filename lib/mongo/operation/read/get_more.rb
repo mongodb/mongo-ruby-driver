@@ -70,7 +70,7 @@ module Mongo
 
         # The wire protocol message for this get more operation.
         #
-        # @return [ Mongo::Protocol::Query ] Wire protocol message.
+        # @return [ Mongo::Protocol::GetMore ] Wire protocol message.
         #
         # @since 3.0.0
         def message

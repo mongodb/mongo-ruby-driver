@@ -64,7 +64,7 @@ module Mongo
         # @return [ Hash ] The query options.
         #
         # @since 3.0.0
-        def query_opts
+        def opts
           @spec[:opts] || {}
         end
 
@@ -74,7 +74,7 @@ module Mongo
         #
         # @since 3.0.0
         def message
-          Mongo::Protocol::Query.new(db_name, coll_name, selector, query_opts)
+          Mongo::Protocol::Query.new(db_name, coll_name, selector, opts)
         end
       end
     end

@@ -78,14 +78,10 @@ module Mongo
       def execute(context)
         if context.server.secondary? && !secondary_ok?
           warn "Database command '#{selector.keys.first}' rerouted to primary server"
-          primary_context = Mongo::ServerPreference.get(:primary).server.context
-          primary_context.with_connection do |connection|
-            connection.dispatch([message])
-          end
-        else
-          context.with_connection do |connection|
-            connection.dispatch([message])
-          end
+          context = Mongo::ServerPreference.get(:primary).server.context
+        end
+        context.with_connection do |connection|
+          connection.dispatch([message])
         end
       end
 

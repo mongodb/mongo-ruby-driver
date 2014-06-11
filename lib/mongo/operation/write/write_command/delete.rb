@@ -30,7 +30,7 @@ module Mongo
         #                                                          :limit => 1 }],
         #                                     :db_name       => 'test',
         #                                     :coll_name     => 'test_coll',
-        #                                     :write_concern => { 'w' => 2 },
+        #                                     :write_concern => write_concern,
         #                                     :ordered       => true
         #                                   })
         #

@@ -25,14 +25,16 @@ module Mongo
       # The ids of the cursors to kill.
       #
       # @return [Array] Ids of the cursors to kill.
+      #
+      # @since 3.0.0
       attr_reader :cursor_ids
 
       # Initialize the kill cursors operation.
       #
-      # @example Initialize a kill cursors operation.
-      #   Mongo::Operation::KillCursor.new([1, 2])
+      # @example
+      #   Mongo::Operation::KillCursor.new({ :cursor_ids => [1, 2] })
       #
-      # @param [ Hash ] spec The specifications for the delete.
+      # @param [ Hash ] spec The specifications for the operation.
       #
       # @option spec :cursor_ids [ Array ] The ids of cursors to kill.
       #

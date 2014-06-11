@@ -46,7 +46,8 @@ module Mongo
         #   the delete should be executed.
         # @option spec :coll_name [ String ] The name of the collection on which
         #   the delete should be executed.
-        # @option spec :write_concern [ Object ] The write concern for this operation.
+        # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern
+        #   for this operation.
         # @option spec :ordered [ true, false ] Whether the operations should be
         #   executed in order.
         # @option spec :opts [Hash] Options for the command, if it ends up being a
@@ -87,7 +88,7 @@ module Mongo
 
         # The write concern to use for this operation.
         #
-        # @return [ Hash ] The write concern.
+        # @return [ Mongo::WriteConcern::Mode ] The write concern.
         #
         # @since 3.0.0
         def write_concern
@@ -108,7 +109,7 @@ module Mongo
         # @return [ Mongo::Protocol::Delete ] Wire protocol message.
         #
         # @since 3.0.0
-        def message(delete_spec = {})
+        def message(delete_spec)
           selector    = delete_spec[:q]
           delete_opts = delete_spec[:limit] == 0 ? { } : { :flags => [:single_remove] }
           Mongo::Protocol::Delete.new(db_name, coll_name, selector, delete_opts)
