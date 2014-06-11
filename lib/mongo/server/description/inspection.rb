@@ -14,4 +14,3 @@
 
 require 'mongo/server/description/inspection/server_added'
 require 'mongo/server/description/inspection/server_removed'
-require 'mongo/server/description/inspection/server_type'
