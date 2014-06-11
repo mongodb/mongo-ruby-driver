@@ -20,6 +20,7 @@ module Mongo
     #
     # @since 2.0.0
     class Monitor
+      include Loggable
 
       # The default time for a server to refresh its status is 5 seconds.
       #
@@ -116,7 +117,8 @@ module Mongo
           begin
             result = connection.dispatch([ ISMASTER ]).documents[0]
             return result, calculate_round_trip_time(start)
-          rescue SystemCallError, IOError
+          rescue SystemCallError, IOError => e
+            log(:debug, 'MONGODB', [ e.message ])
             return {}, calculate_round_trip_time(start)
           end
         end

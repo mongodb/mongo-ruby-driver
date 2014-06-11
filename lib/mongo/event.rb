@@ -16,7 +16,6 @@ require 'mongo/event/publisher'
 require 'mongo/event/subscriber'
 require 'mongo/event/server_added'
 require 'mongo/event/server_removed'
-require 'mongo/event/server_type_changed'
 
 module Mongo
 
@@ -31,10 +30,5 @@ module Mongo
     #
     # @since 2.0.0
     SERVER_REMOVED = 'server_removed'.freeze
-
-    # When a server's type changes.
-    #
-    # @since 2.0.0
-    SERVER_TYPE_CHANGED = 'server_type_changed'.freeze
   end
 end

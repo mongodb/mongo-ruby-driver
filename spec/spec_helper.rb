@@ -24,7 +24,8 @@ require 'support/helpers'
 require 'support/matchers'
 require 'support/cluster_simulator'
 
-Mongo::Logger.logger = Logger.new(StringIO.new, Logger::DEBUG)
+Mongo::Logger.logger = Logger.new($stdout, Logger::DEBUG)
+# Mongo::Logger.logger = Logger.new(StringIO.new, Logger::DEBUG)
 
 RSpec.configure do |config|
   config.color     = true

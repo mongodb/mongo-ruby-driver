@@ -71,24 +71,4 @@ describe Mongo::Server do
       expect(server.options).to eq(:heartbeat_frequency => 5)
     end
   end
-
-  describe '#queryable?' do
-
-    let(:server) do
-      described_class.new('127.0.0.1:27017')
-    end
-
-    let(:description) do
-      double('description')
-    end
-
-    before do
-      server.instance_variable_set(:@description, description)
-      expect(description).to receive(:queryable?).and_return(true)
-    end
-
-    it 'delegates to the description' do
-      expect(server).to be_queryable
-    end
-  end
 end

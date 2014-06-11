@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/cluster/mode'
+
 module Mongo
 
   # Represents a group of servers on the server side, either as a single server, a
@@ -20,6 +22,7 @@ module Mongo
   # @since 2.0.0
   class Cluster
     include Event::Subscriber
+    include Loggable
 
     # Constant for the replica set name configuration option.
     #
@@ -32,6 +35,8 @@ module Mongo
     attr_reader :addresses
     # @return [ Hash ] The options hash.
     attr_reader :options
+    # @return [ Object ] The cluster mode.
+    attr_reader :mode
 
     # Determine if this cluster of servers is equal to another object. Checks the
     # servers currently in the cluster, not what was configured.
@@ -63,6 +68,7 @@ module Mongo
     # @since 2.0.0
     def add(address)
       unless addresses.include?(address)
+        log(:debug, 'MONGODB', [ "Adding #{address} to the cluster." ])
         server = Server.new(address, options)
         addresses.push(address)
         @servers.push(server)
@@ -83,11 +89,11 @@ module Mongo
       @client = client
       @addresses = addresses
       @options = options
+      @mode = Mode.get(options)
       @servers = addresses.map do |address|
         Server.new(address, options).tap do |server|
           subscribe_to(server, Event::SERVER_ADDED, Event::ServerAdded.new(self))
           subscribe_to(server, Event::SERVER_REMOVED, Event::ServerRemoved.new(self))
-          subscribe_to(server, Event::SERVER_TYPE_CHANGED, Event::ServerTypeChanged.new(self))
         end
       end
     end
@@ -141,21 +147,7 @@ module Mongo
     #
     # @since 2.0.0
     def servers
-      @servers.select { |server| server.queryable? }
-    end
-
-    # Verify if the server with the address and the type can belong to this
-    # cluster. Will take action depending on the type.
-    #
-    # @example Verify the address and type.
-    #   cluster.verify!('127.0.0.1:27018', :unknown)
-    #
-    # @param [ String ] address The server address
-    # @param [ Symbol ] server_type The server type.
-    #
-    # @since 2.0.0
-    def verify!(address, server_type)
-
+      mode.select(@servers, replica_set_name)
     end
   end
 end

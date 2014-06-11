@@ -296,19 +296,6 @@ module Mongo
         !!config[PRIMARY] && !replica_set_name.nil?
       end
 
-      # Is the server queryable? This is only primaries, secondaries, and
-      # standalone servers.
-      #
-      # @example Is the server queryable?
-      #   description.queryable?
-      #
-      # @return [ true, false ] If the server is queryable.
-      #
-      # @since 2.0.0
-      def queryable?
-        primary? || secondary? || standalone?
-      end
-
       # Get the name of the replica set the server belongs to, returns nil if
       # none.
       #

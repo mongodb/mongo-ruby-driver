@@ -35,7 +35,7 @@ module Mongo
     # @return [ Hash ] The options hash.
     attr_reader :options
 
-    def_delegators :@description, :queryable?
+    def_delegators :@description, :replica_set_name, :mongos?, :primary?, :secondary?, :standalone?
 
     # Is this server equal to another?
     #
