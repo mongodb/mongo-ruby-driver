@@ -145,8 +145,7 @@ module Mongo
     attr_reader :socket, :ssl_opts
 
     def ensure_connected
-      connect! if socket.nil?
-      socket.connect! if !socket.alive?
+      connect! if socket.nil? || !socket.alive?
       yield socket
     end
   end
