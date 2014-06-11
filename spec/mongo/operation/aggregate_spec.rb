@@ -1,14 +1,13 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Aggregate do
+  include_context 'operation'
 
-  let(:opts) { {} }
   let(:selector) do
-    { :aggregate => 'test_coll',
+    { :aggregate => coll_name,
       :pipeline => [],
     }
   end
-  let(:db_name) { 'TEST_DB' }
   let(:spec) do
     { :selector => selector,
       :opts => {},
@@ -17,36 +16,6 @@ describe Mongo::Operation::Aggregate do
   end
   let(:op) { described_class.new(spec) }
 
-  let(:secondary_server) do
-    double('secondary_server').tap do |s|
-      allow(s).to receive(:secondary?) { true }
-    end
-  end
-  let(:primary_server) do
-    double('primary_server').tap do |s|
-      allow(s).to receive(:secondary?) { false }
-      allow(s).to receive(:context) { primary_context }
-    end
-  end
-  let(:primary_context) do
-    double('primary_context').tap do |cxt|
-      allow(cxt).to receive(:with_connection).and_yield(connection)
-      allow(cxt).to receive(:server) { primary_server }
-    end
-  end
-  let(:secondary_context) do
-    double('secondary_context').tap do |cxt|
-      allow(cxt).to receive(:with_connection).and_yield(connection)
-      allow(cxt).to receive(:server) do
-        secondary_server
-      end
-    end
-  end
-  let(:connection) do
-    double('connection').tap do |conn|
-      allow(conn).to receive(:dispatch) { [] }
-    end
-  end
 
   describe '#initialize' do
 
@@ -100,11 +69,6 @@ describe Mongo::Operation::Aggregate do
     end
 
     context 'connection' do
-      let(:selector) do
-        { :aggregate => 'test_coll',
-          :pipeline => [],
-        }
-      end
 
       it 'dispatches the message on the connection' do
         allow_any_instance_of(Mongo::ServerPreference::Primary).to receive(:server) do

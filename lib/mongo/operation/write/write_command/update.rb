@@ -20,11 +20,10 @@ module Mongo
 
       module WriteCommand
 
-        # A MongoDB update write command operation with context describing
-        # what server or socket it should be sent to.
+        # A MongoDB update write command operation.
         # Supported in server versions >= 2.5.5
         #
-        # @example Initialize an update write command.
+        # @example
         #   include Mongo
         #   include Operation
         #   Write::WriteCommand::Update.new({ :updates => [{ :q => { :foo => 1 },
@@ -36,8 +35,7 @@ module Mongo
         #                                     :coll_name     => 'test_coll',
         #                                     :write_concern => { 'w' => 2 },
         #                                     :ordered       => true
-        #                                   },
-        #                                   :server => server)
+        #                                   })
         #
         # @since 3.0.0
         class Update
@@ -45,6 +43,10 @@ module Mongo
           include Writable
 
           private
+
+          def secondary_ok?
+            false
+          end
 
           # The query selector for this update command operation.
           #
@@ -55,7 +57,7 @@ module Mongo
             { :update        => @spec[:coll_name],
               :updates       => @spec[:updates],
               :write_concern => write_concern,
-              :ordered       => ordered
+              :ordered       => ordered?
             }
           end
         end

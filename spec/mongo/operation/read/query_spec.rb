@@ -1,11 +1,10 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Read::Query do
+  include_context 'operation'
 
   let(:selector) { {} }
   let(:query_opts) { {} }
-  let(:db_name) { 'TEST_DB' }
-  let(:coll_name) { 'test-coll' }
   let(:spec) do
     { :selector  => selector,
       :opts      => query_opts,
@@ -14,16 +13,6 @@ describe Mongo::Operation::Read::Query do
     }
   end
   let(:op) { described_class.new(spec) }
-  let(:context) do
-    double('context').tap do |cxt|
-     allow(cxt).to receive(:with_connection).and_yield(connection)
-    end
-  end
-  let(:connection) do
-    double('connection').tap do |conn|
-      allow(conn).to receive(:dispatch) { [] }
-    end
-  end
 
   describe '#initialize' do
 
@@ -63,7 +52,7 @@ describe Mongo::Operation::Read::Query do
           expect(sel).to eq(selector)
           expect(opts).to eq(query_opts)
         end
-        op.execute(context)
+        op.execute(primary_context)
       end
     end
 
@@ -71,7 +60,7 @@ describe Mongo::Operation::Read::Query do
 
       it 'dispatches the message on the connection' do
         expect(connection).to receive(:dispatch)
-        op.execute(context)
+        op.execute(primary_context)
       end
     end
   end

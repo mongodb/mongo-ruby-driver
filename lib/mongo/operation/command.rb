@@ -45,28 +45,45 @@ module Mongo
 
       # Initialize the command operation.
       #
-      # @example Initialize a command operation.
-      #   Mongo::Operation::Command.new({ :selector => { :isMaster => 1 } }, { :server => server })
+      # @example
+      #   Mongo::Operation::Command.new({ :selector => { :isMaster => 1 } })
       #
       # @param [ Hash ] spec The specifications for the command.
-      # @param [ Hash ] context The context for executing this operation.
       #
       # @option spec :selector [ Hash ] The command selector.
       # @option spec :db_name [ String ] The name of the database on which
       #   the command should be executed.
       # @option spec :opts [ Hash ] Options for the command.
       #
-      # @option context :server_preference [ Mongo::ServerPreference ] The server
-      #   preference for where the operation should be sent.
-      # @option context :server [ Mongo::Server ] The server that the operation
-      #   message should be sent to.
+      # @since 3.0.0
+      def initialize(spec)
+        @spec = spec
+      end
+
+      # Execute the operation.
+      # The context gets a connection on which the operation
+      # is sent in the block.
+      # If the aggregation will be written to an output collection and the
+      # server is not primary, the operation will be rerouted to the primary
+      # with a warning.
+      #
+      # @params [ Mongo::Server::Context ] The context for this operation.
+      #
+      # @return [ Mongo::Response ] The operation response, if there is one.
       #
       # @since 3.0.0
-      def initialize(spec, context = {})
-        @spec              = spec
-
-        @server_preference = context[:server_preference]
-        @server            = context[:server]
+      def execute(context)
+        if context.server.secondary? && !secondary_ok?
+          warn "Database command '#{selector.keys.first}' rerouted to primary server"
+          primary_context = Mongo::ServerPreference.get(:primary).server.context
+          primary_context.with_connection do |connection|
+            connection.dispatch([message])
+          end
+        else
+          context.with_connection do |connection|
+            connection.dispatch([message])
+          end
+        end
       end
 
       private
@@ -88,24 +105,6 @@ module Mongo
       # @since 3.0.0
       def opts
         @spec[:opts]
-      end
-
-      # The server preference for this operation.
-      # A command must always be sent to the primary server unless it's one of the
-      # exceptions that can be sent to a secondary.
-      # Refer to the SECONDARY_OK_COMMANDS list for commands allowed on secondaries.
-      #
-      # @return [ Object ] A server preference.
-      #
-      # @since 3.0.0
-      def server_preference
-        return @server_preference = 
-          Mongo::ServerPreference.get(:primary) unless @server_preference
-        if @server_preference.name != :primary && !secondary_ok?
-          warn "Database command '#{selector.keys.first}' rerouted to primary server"
-          @server_preference = Mongo::ServerPreference.get(:primary)
-        end
-        @server_preference
       end
 
       # Whether it is ok for this command to be executed on a secondary.

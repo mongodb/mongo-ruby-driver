@@ -35,14 +35,9 @@ module Mongo
           #   executed in order.
           # @option spec :opts [Hash] Options for the command.
           #
-          # @option context :server [ Mongo::Server ] The server that the operation
-          #   should be executed on.
-          #
           # @since 3.0.0
-          def initialize(spec, context = {})
-            @spec          = spec
-            @ordered       = !!spec[:ordered]
-            @server        = context[:server]
+          def initialize(spec)
+            @spec    = spec
           end
 
           private
@@ -66,7 +61,7 @@ module Mongo
           # @return [ true, false ] Whether batch items are applied sequentially. 
           #
           # @since 3.0.0
-          def ordered
+          def ordered?
             @spec[:ordered] ? !!@spec[:ordered] : true
           end
 
@@ -77,15 +72,6 @@ module Mongo
           # @since 3.0.0
           def opts
             @spec[:opts]
-          end
-
-          # The server preference for the operation.
-          #
-          # @return [ Mongo::ServerPreference::Primary ] A primary server preference.
-          #
-          # @since 3.0.0
-          def server_preference
-            Mongo::ServerPreference.get(:primary)
           end
 
           # The wire protocol message for this write operation.

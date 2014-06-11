@@ -54,6 +54,7 @@ module Mongo
       #
       # @since 3.0.0
       def execute(context)
+        raise Exception, "Must use primary server" unless context.primary? || secondary_ok?
         context.with_connection do |connection|
           connection.dispatch([message])
         end

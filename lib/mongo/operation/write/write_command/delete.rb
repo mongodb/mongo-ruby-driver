@@ -20,8 +20,7 @@ module Mongo
 
       module WriteCommand
 
-        # A MongoDB delete write command operation with context describing
-        # what server or socket it should be sent to.
+        # A MongoDB delete write command operation.
         # Supported in server versions >= 2.5.5
         #
         # @example Initialize a delete write command.
@@ -33,8 +32,7 @@ module Mongo
         #                                     :coll_name     => 'test_coll',
         #                                     :write_concern => { 'w' => 2 },
         #                                     :ordered       => true
-        #                                   },
-        #                                   :server => server)
+        #                                   })
         #
         # @since 3.0.0
         class Delete
@@ -43,16 +41,20 @@ module Mongo
 
           private
 
+          def secondary_ok?
+            false
+          end
+
           # The query selector for this delete command operation.
           #
           # @return [ Hash ] The selector describing this delete operation.
           #
           # @since 3.0.0
           def selector
-            { :delete        => @spec[:coll_name],
+            { :delete        => coll_name,
               :deletes       => @spec[:deletes],
               :write_concern => write_concern,
-              :ordered       => ordered
+              :ordered       => ordered?
             }
           end
         end

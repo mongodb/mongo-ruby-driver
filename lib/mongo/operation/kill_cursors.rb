@@ -16,8 +16,7 @@ module Mongo
 
   module Operation
 
-    # A MongoDB kill cursors operation with context describing
-    # what server or socket it should be sent to.
+    # A MongoDB kill cursors operation.
     #
     # @since 3.0.0
     class KillCursors
@@ -31,32 +30,15 @@ module Mongo
       # Initialize the kill cursors operation.
       #
       # @example Initialize a kill cursors operation.
-      #   Mongo::Operation::KillCursor.new([1, 2], { :server => server })
+      #   Mongo::Operation::KillCursor.new([1, 2])
       #
-      # @param [ Hash ] cursor_ids Ids of the cursors to kill.
-      # @param [ Hash ] context The context for executing this operation.
+      # @param [ Hash ] spec The specifications for the delete.
       #
-      # @option context :server [ Mongo::Server ] The server to use for the operation.
-      # @option context :connection [ Mongo::Socket ] The socket that the operation
-      #   message should be sent on.
+      # @option spec :cursor_ids [ Array ] The ids of cursors to kill.
       #
       # @since 3.0.0
-      def initialize(spec, context={})
-        # @todo: Replace with appropriate error
-        # @todo: can you specify a connection?
-        raise Exception, 'You must specify a server' unless @server = context[:server]
-        @spec       = spec
-        @connection = context[:connection]
-      end
-
-      # The context to be used for executing the operation.
-      #
-      # @return [ Hash ] The context.
-      #
-      # @since 3.0.0
-      def context
-        { :server     => @server,
-          :connection => @connection }
+      def initialize(spec)
+        @spec = spec
       end
 
       private

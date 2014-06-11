@@ -1,12 +1,10 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Read::GetMore do
+  include_context 'operation'
 
   let(:to_return) { 50 }
   let(:cursor_id) { 1 }
-
-  let(:db_name) { 'TEST_DB' }
-  let(:coll_name) { 'test-coll' }
 
   let(:spec) do
     { :db_name   => db_name,
@@ -16,16 +14,6 @@ describe Mongo::Operation::Read::GetMore do
   end
 
   let(:op) { described_class.new(spec) }
-  let(:context) do
-    double('context').tap do |cxt|
-      allow(cxt).to receive(:with_connection).and_yield(connection)
-    end
-  end
-  let(:connection) do
-    double('connection').tap do |conn|
-      allow(conn).to receive(:dispatch) { [] }
-    end
-  end
 
   describe '#initialize' do
 
@@ -62,7 +50,7 @@ describe Mongo::Operation::Read::GetMore do
           expect(to_ret).to eq(to_return)
           expect(id).to eq(cursor_id)
         end
-        op.execute(context)
+        op.execute(primary_context)
       end
     end
 
@@ -70,7 +58,7 @@ describe Mongo::Operation::Read::GetMore do
 
       it 'dispatches the message on the connection' do
         expect(connection).to receive(:dispatch)
-        op.execute(context)
+        op.execute(primary_context)
       end
     end
   end

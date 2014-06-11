@@ -29,7 +29,7 @@ module Mongo
 
         # Initialize the update operation.
         #
-        # @example Initialize an update operation.
+        # @example
         #   include Mongo
         #   include Operation
         #   Write::Update.new({ :updates => [{ :q => { :foo => 1 },
@@ -43,7 +43,6 @@ module Mongo
         #                     })
         #
         # @param [ Hash ] spec The specifications for the update.
-        # @param [ Hash ] context The context for executing this operation.
         #
         # @option spec :updates [ Array ] The update documents.
         # @option spec :db_name [ String ] The name of the database on which
@@ -56,37 +55,32 @@ module Mongo
         # @option spec :opts [Hash] Options for the command, if it ends up being a
         #   write command.
         #
-        # @option context :server [ Mongo::Server ] The server that the operation
-        #   should be sent to.
-        #
         # @since 3.0.0
-        def initialize(spec, context = {})
+        def initialize(spec)
           @spec       = spec
-          @server     = context[:server]
         end
 
         # Execute the operation.
-        # The client uses the context to select a server. If the server has version < 2.5.5,
-        # an update wire protocol operation is sent.
+        # If the server has version < 2.5.5, an update operation is sent.
         # If the server version is >= 2.5.5, an update write command operation is created
         # and sent instead.
         #
-        # @params [ Mongo::Client ] The client to use to select a server.
+        # @params [ Mongo::Server::Context ] The context for this operation.
         #
-        # @todo: Make sure this is indeed the client#with_context API
-        # @return [ Array ] The operation results and server used.
+        # @return [ Mongo::Response ] The operation response, if there is one.
         #
         # @since 3.0.0
         def execute(context)
+          raise Exception, "Must use primary server" unless context.primary?
           # @todo: change wire version to constant
           if context.wire_version >= 2
-            op = WriteCommand::Delete.new(spec)
+            op = WriteCommand::Update.new(spec)
             op.execute(context)
           else
             updates.each do |d|
               context.with_connection do |connection|
                 gle = write_concern.get_last_error
-                connection.dispatch([message(d), gle])
+                connection.dispatch([message(d), gle].compact)
               end
             end
           end
@@ -110,15 +104,6 @@ module Mongo
         # @since 3.0.0
         def updates
           @spec[:updates]
-        end
-
-        # The primary server preference for the operation.
-        #
-        # @return [ Mongo::ServerPreference::Primary ] A primary server preference.
-        #
-        # @since 3.0.0
-        def server_preference
-          Mongo::ServerPreference.get(:primary)
         end
 
         # The wire protocol message for this update operation.

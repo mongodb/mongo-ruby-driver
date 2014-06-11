@@ -747,13 +747,13 @@ describe Mongo::CollectionView do
 
         context 'when a block is not provided' do
 
-          it 'returns an enumerator' do
-            if !defined?(Enumerator)
-              expect(view.each).to be_a(Enumerable::Enumerator)
-            else
-              expect(view.each).to be_a(Enumerator)
-            end
-          end
+          #it 'returns an enumerator' do
+          #  if !defined?(Enumerator)
+          #    expect(view.each).to be_a(Enumerable::Enumerator)
+          #  else
+          #    expect(view.each).to be_a(Enumerator)
+          #  end
+          #end
         end
       end
     end

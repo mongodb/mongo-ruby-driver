@@ -20,11 +20,10 @@ module Mongo
 
       module WriteCommand
 
-        # A MongoDB insert write command operation with context describing
-        # what server or socket it should be sent to.
+        # A MongoDB insert write command operation.
         # Supported in server versions >= 2.5.5
         #
-        # @example Initialize an insert write command.
+        # @example
         #   include Mongo
         #   include Operation
         #   Write::WriteCommand::Insert.new({ :documents     => [{ :foo => 1 }],
@@ -32,14 +31,17 @@ module Mongo
         #                                     :coll_name     => 'test_coll',
         #                                     :write_concern => { 'w' => 2 },
         #                                     :ordered       => true
-        #                                   },
-        #                                   :server => server)
+        #                                   })
         # @since 3.0.0
         class Insert
           include Executable
           include Writable
 
           private
+
+          def secondary_ok?
+            false
+          end
 
           # The query selector for this insert command operation.
           #
@@ -50,7 +52,7 @@ module Mongo
             { :insert        => @spec[:coll_name],
               :documents     => @spec[:documents],
               :write_concern => write_concern,
-              :ordered       => ordered
+              :ordered       => ordered?
             }
           end
         end

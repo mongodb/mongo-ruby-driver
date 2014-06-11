@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Operation::MapReduce do
+  include_context 'operation'
 
   let(:opts) { {} }
   let(:selector) do
@@ -9,8 +10,6 @@ describe Mongo::Operation::MapReduce do
       :reduce    => '',
     }
   end
-  let(:db_name) { 'TEST_DB' }
-
   let(:spec) do
     { :selector => selector,
       :opts     => opts,
@@ -18,37 +17,6 @@ describe Mongo::Operation::MapReduce do
     }
   end
   let(:op) { described_class.new(spec) }
-
-  let(:secondary_server) do
-    double('secondary_server').tap do |s|
-      allow(s).to receive(:secondary?) { true }
-    end
-  end
-  let(:primary_server) do
-    double('primary_server').tap do |s|
-      allow(s).to receive(:secondary?) { false }
-      allow(s).to receive(:context) { primary_context }
-    end
-  end
-  let(:primary_context) do
-    double('primary_context').tap do |cxt|
-      allow(cxt).to receive(:with_connection).and_yield(connection)
-      allow(cxt).to receive(:server) { primary_server }
-    end
-  end
-  let(:secondary_context) do
-    double('secondary_context').tap do |cxt|
-      allow(cxt).to receive(:with_connection).and_yield(connection)
-      allow(cxt).to receive(:server) do
-        secondary_server
-      end
-    end
-  end
-  let(:connection) do
-    double('connection').tap do |conn|
-      allow(conn).to receive(:dispatch) { [] }
-    end
-  end
 
   describe '#initialize' do
 
