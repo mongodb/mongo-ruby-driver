@@ -25,8 +25,8 @@ module Mongo
 
       # Creates a new KillCursors message
       #
-      # @example Get more results using the database default limit.
-      #   KillCursors.new([])
+      # @example Kill the cursor on the server with id 1.
+      #   KillCursors.new([1])
       #
       # @param cursor_ids [Array<Fixnum>] The cursor ids to kill.
       # @param options [Hash] The additional kill cursors options.
@@ -37,7 +37,7 @@ module Mongo
 
       private
 
-      # The operation code required to specify KillCursors message.
+      # The operation code required to specify +KillCursors+ message.
       # @return [Fixnum] the operation code.
       def op_code
         2007
@@ -47,7 +47,7 @@ module Mongo
       field :zero, Zero
 
       # @!attribute
-      # @return [Fixnum] Count of the nubmer of cursor ids.
+      # @return [Fixnum] Count of the number of cursor ids.
       field :id_count, Int32
 
       # @!attribute

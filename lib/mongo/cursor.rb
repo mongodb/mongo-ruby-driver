@@ -112,13 +112,12 @@ module Mongo
     def get_more_spec
       { :to_return => to_return,
         :cursor_id => @cursor_id,
-        :db_name   => db_name,
-        :coll_name => coll_name }
+        :db_name   => @collection.database.name,
+        :coll_name => @collection.name }
     end
 
     def get_more_op
-      # @todo: Uncomment this
-      #Mongo::Operation::Read::GetMore.new(get_more_spec, :server => @server)
+      Mongo::Operation::Read::GetMore.new(get_more_spec)
     end
 
     # Send a +GetMore+ message to a server to get another batch of results.
@@ -126,7 +125,8 @@ module Mongo
     # @todo: define exceptions
     def send_get_more
       raise Exception, 'No server set' unless @server
-      response = @client.execute(get_more_op, :server => @server)
+      context = @server.context
+      response = Mongo::Response.new(get_more_op.execute(context))
       process_response(response)
     end
 
@@ -134,16 +134,14 @@ module Mongo
     #
     # @return [KillCursors] The +KillCursors+ message.
     def kill_cursors_op
-      # @todo: Uncomment this
-      #Mongo::Operation::KillCursors.new({ :cursor_ids => [@cursor_id] },
-      #                                  :server => @server)
+      Mongo::Operation::KillCursors.new({ :cursor_ids => [@cursor_id] },
+                                        :server => @server)
     end
 
     # Send a +KillCursors+ message to the server and set the cursor id to 0.
-    #
-    # @todo: verify server interface
     def kill_cursors
-      @client.execute(kill_cursors_op, :server => @server)
+      context = @server.context
+      kill_cursors_op.execute(context)
       @cursor_id = 0
     end
 
