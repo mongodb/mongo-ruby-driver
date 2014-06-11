@@ -19,8 +19,8 @@ module Mongo
     module Write
 
       # A MongoDB update operation.
-      # If a server with version >= 2.5.5 is selected by the
-      # client, a write command operation will be created and sent instead.
+      # If the server version is >= 2.5.5, a write command operation will be created
+      # and sent instead.
       # See Mongo::Operation::Write::WriteCommand::Update
       #
       # @since 3.0.0
@@ -39,7 +39,7 @@ module Mongo
         #                                      :upsert => false }],
         #                       :db_name       => 'test',
         #                       :coll_name     => 'test_coll',
-        #                       :write_concern => { 'w' => 2 }
+        #                       :write_concern => write_concern
         #                     })
         #
         # @param [ Hash ] spec The specifications for the update.
@@ -49,21 +49,21 @@ module Mongo
         #   the query should be run.
         # @option spec :coll_name [ String ] The name of the collection on which
         #   the query should be run.
-        # @option spec :write_concern [ Hash ] The write concern for this operation.
+        # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
         # @option spec :ordered [ true, false ] Whether the operations should be
         #   executed in order.
-        # @option spec :opts [Hash] Options for the command, if it ends up being a
+        # @option spec :opts [ Hash ] Options for the command, if it ends up being a
         #   write command.
         #
         # @since 3.0.0
         def initialize(spec)
-          @spec       = spec
+          @spec = spec
         end
 
         # Execute the operation.
-        # If the server has version < 2.5.5, an update operation is sent.
-        # If the server version is >= 2.5.5, an update write command operation is created
-        # and sent instead.
+        # If the server version is < 2.5.5, an update operation is sent.
+        # If the server version is >= 2.5.5, an update write command operation is
+        # created and sent instead.
         #
         # @params [ Mongo::Server::Context ] The context for this operation.
         #
@@ -90,7 +90,7 @@ module Mongo
 
         # The write concern to use for this operation.
         #
-        # @return [ Hash ] The write concern.
+        # @return [ Mongo::WriteConcern::Mode ] The write concern.
         #
         # @since 3.0.0
         def write_concern

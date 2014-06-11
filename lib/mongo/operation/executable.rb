@@ -31,7 +31,7 @@ module Mongo
 
       # Check equality of two executable operations.
       #
-      # @example Check operation equality.
+      # @example
       #   operation == other
       #
       # @param [ Object ] other The other operation.
@@ -61,6 +61,15 @@ module Mongo
       end
 
       private
+
+      # If it's ok that this operation be sent to a secondary server.
+      #
+      # @return [ true, false ] Whether it's ok for this op to go to a secondary.
+      #
+      # @since 3.0.0
+      def secondary_ok?
+        true
+      end
 
       # The name of the database to which the operation should be sent.
       #

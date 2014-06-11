@@ -35,20 +35,18 @@ module Mongo
         #   Write::Insert.new({ :documents     => [{ :foo => 1 }],
         #                       :db_name       => 'test',
         #                       :coll_name     => 'test_coll',
-        #                       :write_concern => { 'w' => 2 }
+        #                       :write_concern => write_concern
         #                     })
         #
         # @param [ Hash ] spec The specifications for the insert.
         #
         # @option spec :documents [ Array ] The documents to insert.
-        # @option spec :db_name [ String ] The name of the database on which
-        #   the query should be run.
-        # @option spec :coll_name [ String ] The name of the collection on which
-        #   the query should be run.
-        # @option spec :write_concern [ Hash ] The write concern for this operation.
+        # @option spec :db_name [ String ] The name of the database.
+        # @option spec :coll_name [ String ] The name of the collection.
+        # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
         # @option spec :ordered [ true, false ] Whether the operations should be
         #   executed in order.
-        # @option spec :opts [Hash] Options for the command, if it ends up being a
+        # @option spec :opts [ Hash ] Options for the command, if it ends up being a
         #   write command.
         #
         # @since 3.0.0
@@ -86,7 +84,7 @@ module Mongo
 
         # The write concern to use for this operation.
         #
-        # @return [ Mongo::Mode ] The write concern.
+        # @return [ Mongo::WriteConcern::Mode ] The write concern.
         #
         # @since 3.0.0
         def write_concern
@@ -107,7 +105,7 @@ module Mongo
         # @return [ Mongo::Protocol::Insert ] Wire protocol message.
         #
         # @since 3.0.0
-        def message(insert_spec = {})
+        def message(insert_spec)
           document = [insert_spec[:document]]
           insert_spec = insert_spec[:continue_on_error] == 0 ? { } : { :flags => [:continue_on_error] }
           Mongo::Protocol::Insert.new(db_name, coll_name, document, insert_spec)

@@ -33,7 +33,7 @@ module Mongo
         #                                                    :upsert => false }],
         #                                     :db_name       => 'test',
         #                                     :coll_name     => 'test_coll',
-        #                                     :write_concern => { 'w' => 2 },
+        #                                     :write_concern => write_concern,
         #                                     :ordered       => true
         #                                   })
         #
@@ -54,7 +54,7 @@ module Mongo
           #
           # @since 3.0.0
           def selector
-            { :update        => @spec[:coll_name],
+            { :update        => coll_name,
               :updates       => @spec[:updates],
               :write_concern => write_concern,
               :ordered       => ordered?
