@@ -22,10 +22,10 @@ module Mongo
     class Monitor
       include Loggable
 
-      # The default time for a server to refresh its status is 5 seconds.
+      # The default time for a server to refresh its status is 10 seconds.
       #
       # @since 2.0.0
-      HEARTBEAT_FREQUENCY = 5.freeze
+      HEARTBEAT_FREQUENCY = 10.freeze
 
       # The command used for determining server status.
       #
