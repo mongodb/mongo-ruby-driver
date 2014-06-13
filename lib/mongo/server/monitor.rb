@@ -97,7 +97,7 @@ module Mongo
       #
       # @since 2.0.0
       def run
-        Monitor.threads << Thread.new(heartbeat_frequency, server) do |i, s|
+        Monitor.threads[object_id] = Thread.new(heartbeat_frequency, server) do |i, s|
           loop do
             sleep(i)
             check!
@@ -133,11 +133,11 @@ module Mongo
         # @example Get all the monitor threads.
         #   Monitor.threads
         #
-        # @return [ Array<Thread> ] The monitor threads.
+        # @return [ Hash<Integer, Thread> ] The monitor threads.
         #
         # @since 2.0.0
         def threads
-          @threads ||= []
+          @threads ||= {}
         end
       end
     end
