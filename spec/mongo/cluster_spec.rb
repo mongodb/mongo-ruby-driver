@@ -82,25 +82,6 @@ describe Mongo::Cluster do
         expect(cluster.servers.size).to eq(4)
       end
     end
-
-    context 'when a server with the address exists' do
-
-      let!(:added) do
-        cluster.add('127.0.0.1:27018')
-      end
-
-      before do
-        cluster.scan!
-      end
-
-      it 'does not add the server to the cluster' do
-        expect(cluster.servers.size).to eq(3)
-      end
-
-      it 'returns nil' do
-        expect(added).to be_nil
-      end
-    end
   end
 
   describe '#initialize', simulator: 'cluster' do
@@ -248,8 +229,9 @@ describe Mongo::Cluster do
     context 'when some servers are not alive' do
 
       before do
-        expect(servers_internal.first).to receive(:queryable?).and_return(true)
-        expect(servers_internal.last).to receive(:queryable?).and_return(false)
+        expect(servers_internal.first).to receive(:primary?).and_return(true)
+        expect(servers_internal.last).to receive(:primary?).and_return(false)
+        expect(servers_internal.last).to receive(:secondary?).and_return(false)
       end
 
       it 'returns all alive servers' do

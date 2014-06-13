@@ -35,7 +35,7 @@ module Mongo
           def self.run(description, updated)
             description.hosts.each do |host|
               if updated.primary? && !updated.hosts.include?(host)
-                description.publish(Event::HOST_REMOVED, host)
+                description.server.publish(Event::SERVER_REMOVED, host)
               end
             end
           end

@@ -20,11 +20,12 @@ module Mongo
     #
     # @since 2.0.0
     class Monitor
+      include Loggable
 
-      # The default time for a server to refresh its status is 5 seconds.
+      # The default time for a server to refresh its status is 10 seconds.
       #
       # @since 2.0.0
-      HEARTBEAT_FREQUENCY = 5.freeze
+      HEARTBEAT_FREQUENCY = 10.freeze
 
       # The command used for determining server status.
       #
@@ -96,7 +97,7 @@ module Mongo
       #
       # @since 2.0.0
       def run
-        Monitor.threads << Thread.new(heartbeat_frequency, server) do |i, s|
+        Monitor.threads[object_id] = Thread.new(heartbeat_frequency, server) do |i, s|
           loop do
             sleep(i)
             check!
@@ -116,7 +117,8 @@ module Mongo
           begin
             result = connection.dispatch([ ISMASTER ]).documents[0]
             return result, calculate_round_trip_time(start)
-          rescue SystemCallError, IOError
+          rescue SystemCallError, IOError => e
+            log(:debug, 'MONGODB', [ e.message ])
             return {}, calculate_round_trip_time(start)
           end
         end
@@ -131,11 +133,11 @@ module Mongo
         # @example Get all the monitor threads.
         #   Monitor.threads
         #
-        # @return [ Array<Thread> ] The monitor threads.
+        # @return [ Hash<Integer, Thread> ] The monitor threads.
         #
         # @since 2.0.0
         def threads
-          @threads ||= []
+          @threads ||= {}
         end
       end
     end

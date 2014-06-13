@@ -17,7 +17,6 @@ require 'mongo/server/address'
 require 'mongo/server/context'
 require 'mongo/server/description'
 require 'mongo/server/monitor'
-require 'mongo/server/type'
 
 module Mongo
 
@@ -27,7 +26,6 @@ module Mongo
   # @since 2.0.0
   class Server
     include Event::Publisher
-    include Event::Subscriber
     extend Forwardable
 
     # @return [ String ] The configured address for the server.
@@ -37,7 +35,12 @@ module Mongo
     # @return [ Hash ] The options hash.
     attr_reader :options
 
-    def_delegators :@description, :queryable?
+    def_delegators :@description,
+                   :replica_set_name,
+                   :mongos?,
+                   :primary?,
+                   :secondary?,
+                   :standalone?
 
     # Is this server equal to another?
     #
@@ -107,9 +110,7 @@ module Mongo
       @options = options
       @mutex = Mutex.new
       @monitor = Monitor.new(self, options)
-      @description = Description.new
-      subscribe_to(description, Event::HOST_ADDED, Event::HostAdded.new(self))
-      subscribe_to(description, Event::HOST_REMOVED, Event::HostRemoved.new(self))
+      @description = Description.new(self)
       @monitor.run
     end
 
@@ -135,6 +136,18 @@ module Mongo
     # @since 2.0.0
     def pool
       @pool ||= Pool.get(self)
+    end
+
+    # Is this server able to handle write commands?
+    #
+    # @example Can the server handle write commands?
+    #   server.write_command_ready?
+    #
+    # @return [ true, false ] If the server can handle write commands.
+    #
+    # @since 2.0.0
+    def write_command_ready?
+      description.max_wire_version >= 2
     end
   end
 end

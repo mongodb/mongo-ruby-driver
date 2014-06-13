@@ -22,7 +22,6 @@ module Mongo
     #
     # @since 2.0.0
     class Description
-      include Event::Publisher
 
       # Constant for reading arbiter info from config.
       #
@@ -120,6 +119,12 @@ module Mongo
       # @return [ Float ] The time the ismaster call took to complete.
       attr_reader :round_trip_time
 
+      # @return [ Mongo::Server ] server Needed to fire events.
+      attr_reader :server
+
+      # @return [ Symbol ] The type of server this description represents.
+      attr_accessor :server_type
+
       # Will return true if the server is an arbiter.
       #
       # @example Is the server an arbiter?
@@ -189,7 +194,8 @@ module Mongo
       # @param [ Hash ] config The result of the ismaster command.
       #
       # @since 2.0.0
-      def initialize(config = {}, round_trip_time = 0)
+      def initialize(server, config = {}, round_trip_time = 0)
+        @server = server
         @config = config
         @round_trip_time = round_trip_time
       end
@@ -290,19 +296,6 @@ module Mongo
         !!config[PRIMARY] && !replica_set_name.nil?
       end
 
-      # Is the server queryable? This is only primaries, secondaries, and
-      # standalone servers.
-      #
-      # @example Is the server queryable?
-      #   description.queryable?
-      #
-      # @return [ true, false ] If the server is queryable.
-      #
-      # @since 2.0.0
-      def queryable?
-        primary? || secondary? || standalone?
-      end
-
       # Get the name of the replica set the server belongs to, returns nil if
       # none.
       #
@@ -368,7 +361,7 @@ module Mongo
       # @since 2.0.0
       def update!(new_config, round_trip_time)
         INSPECTIONS.each do |inspection|
-          inspection.run(self, Description.new(new_config))
+          inspection.run(self, Description.new(server, new_config))
         end
         @config = new_config
         @round_trip_time = round_trip_time

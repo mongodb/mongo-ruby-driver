@@ -20,7 +20,6 @@ module Mongo
     #
     # @since 2.0.0
     class ServerAdded
-      include Loggable
 
       # @return [ Mongo::Cluster ] cluster The event publisher.
       attr_reader :cluster
@@ -47,7 +46,6 @@ module Mongo
       #
       # @since 2.0.0
       def handle(address)
-        log(:debug, 'MONGODB', [ "Adding #{address} to the cluster." ])
         cluster.add(address)
       end
     end

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/cluster/mode'
+
 module Mongo
 
   # Represents a group of servers on the server side, either as a single server, a
@@ -20,6 +22,7 @@ module Mongo
   # @since 2.0.0
   class Cluster
     include Event::Subscriber
+    include Loggable
 
     # Constant for the replica set name configuration option.
     #
@@ -32,6 +35,8 @@ module Mongo
     attr_reader :addresses
     # @return [ Hash ] The options hash.
     attr_reader :options
+    # @return [ Object ] The cluster mode.
+    attr_reader :mode
 
     # Determine if this cluster of servers is equal to another object. Checks the
     # servers currently in the cluster, not what was configured.
@@ -63,23 +68,12 @@ module Mongo
     # @since 2.0.0
     def add(address)
       unless addresses.include?(address)
+        log(:debug, 'MONGODB', [ "Adding #{address} to the cluster." ])
         server = Server.new(address, options)
         addresses.push(address)
         @servers.push(server)
         server
       end
-    end
-
-    # Force a scan of all servers in the cluster.
-    #
-    # @example Scan the cluster.
-    #   cluster.scan!
-    #
-    # @return [ true ] Always true if no error.
-    #
-    # @since 2.0.0
-    def scan!
-      @servers.each{ |server| server.check! } and true
     end
 
     # Instantiate the new cluster.
@@ -95,6 +89,7 @@ module Mongo
       @client = client
       @addresses = addresses
       @options = options
+      @mode = Mode.get(options)
       @servers = addresses.map do |address|
         Server.new(address, options).tap do |server|
           subscribe_to(server, Event::SERVER_ADDED, Event::ServerAdded.new(self))
@@ -130,6 +125,18 @@ module Mongo
       options[REPLICA_SET_NAME]
     end
 
+    # Force a scan of all servers in the cluster.
+    #
+    # @example Scan the cluster.
+    #   cluster.scan!
+    #
+    # @return [ true ] Always true if no error.
+    #
+    # @since 2.0.0
+    def scan!
+      @servers.each{ |server| server.check! } and true
+    end
+
     # Get a list of server candidates from the cluster that can have operations
     # executed on them.
     #
@@ -140,7 +147,7 @@ module Mongo
     #
     # @since 2.0.0
     def servers
-      @servers.select { |server| server.queryable? }
+      mode.select(@servers, replica_set_name)
     end
   end
 end

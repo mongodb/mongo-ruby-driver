@@ -30,11 +30,11 @@ describe Mongo::Server::Monitor do
     context 'when an option is provided' do
 
       let(:monitor) do
-        described_class.new(server, :heartbeat_frequency => 10)
+        described_class.new(server, :heartbeat_frequency => 5)
       end
 
       it 'returns the option' do
-        expect(monitor.heartbeat_frequency).to eq(10)
+        expect(monitor.heartbeat_frequency).to eq(5)
       end
     end
 
@@ -45,7 +45,7 @@ describe Mongo::Server::Monitor do
       end
 
       it 'defaults to 5' do
-        expect(monitor.heartbeat_frequency).to eq(5)
+        expect(monitor.heartbeat_frequency).to eq(10)
       end
     end
   end
