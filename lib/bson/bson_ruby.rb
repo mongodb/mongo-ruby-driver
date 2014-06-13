@@ -52,16 +52,15 @@ module BSON
     end
 
     if RUBY_VERSION >= '1.9'
-      UTF8_ENCODING   = Encoding.find('utf-8')
-      BINARY_ENCODING = Encoding.find('binary')
 
       def self.to_utf8_binary(str)
         begin
-          str.unpack("U*")
-        rescue
-          raise InvalidStringEncoding, "String not valid utf-8: #{str.inspect}"
+          data = str.dup.force_encoding('utf-8')
+          data.encode!('binary', 'utf-8')
+        rescue EncodingError
+          raise InvalidStringEncoding, "String not valid utf-8: #{str.inspect}" unless data.valid_encoding?
+          data.force_encoding('binary')
         end
-        str.dup.force_encoding(BINARY_ENCODING)
       end
     else
       def self.to_utf8_binary(str)
