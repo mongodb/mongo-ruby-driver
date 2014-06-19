@@ -568,3 +568,45 @@ class ClusterSimulator
     end
   end
 end
+
+module Mongo
+  class Cluster
+
+    # Force a scan of all servers in the cluster.
+    #
+    # @api test
+    #
+    # @example Scan the cluster.
+    #   cluster.scan!
+    #
+    # @note This is for testing purposes only.
+    #
+    # @return [ true ] Always true if no error.
+    #
+    # @since 2.0.0
+    def scan!
+      @servers.each{ |server| server.check! } and true
+    end
+  end
+end
+
+module Mongo
+  class Server
+
+    # Tells the monitor to immediately check the server status.
+    #
+    # @api test
+    #
+    # @example Check the server status.
+    #   server.check!
+    #
+    # @note Used for testing purposes.
+    #
+    # @return [ Server::Description ] The updated server description.
+    #
+    # @since 2.0.0
+    def check!
+      @monitor.check!
+    end
+  end
+end

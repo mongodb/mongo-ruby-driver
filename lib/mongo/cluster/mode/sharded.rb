@@ -24,14 +24,14 @@ module Mongo
         # Select appropriate servers for this mode.
         #
         # @example Select the servers.
-        #   Sharded.select(servers, 'test')
+        #   Sharded.servers(servers, 'test')
         #
         # @param [ Array<Server> ] servers The known servers.
         #
         # @return [ Array<Server> ] The mongos servers.
         #
         # @since 2.0.0
-        def self.select(servers, name = nil)
+        def self.servers(servers, name = nil)
           servers.select{ |server| server.mongos? }
         end
       end

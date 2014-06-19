@@ -38,13 +38,17 @@ module Mongo
       # @example Get the cluster mode.
       #   Mode.get(mode: :replica_set)
       #
+      # @note If a mode is not specified, we will return a replica set mode if
+      #   a set_name option is provided, otherwise a standalone.
+      #
       # @param [ Hash ] options The cluster options.
       #
       # @return [ ReplicaSet, Sharded, Standalone ] The mode.
       #
       # @since 2.0.0
       def self.get(options)
-        OPTIONS.fetch(options[:mode]) { ReplicaSet }
+        return OPTIONS.fetch(options[:mode]) if options.has_key?(:mode)
+        options.has_key?(:set_name) ? ReplicaSet : Standalone
       end
     end
   end

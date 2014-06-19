@@ -56,7 +56,7 @@ describe Mongo::Cluster do
     end
 
     let(:cluster) do
-      described_class.new(client, addresses)
+      described_class.new(client, addresses, set_name: 'testing')
     end
 
     context 'when a server with the address does not exist' do
@@ -111,7 +111,7 @@ describe Mongo::Cluster do
       context 'when servers are discovered' do
 
         let(:cluster) do
-          described_class.new(client, addresses)
+          described_class.new(client, addresses, set_name: 'testing')
         end
 
         before do
@@ -132,7 +132,7 @@ describe Mongo::Cluster do
     end
 
     let(:cluster) do
-      described_class.new(client, addresses)
+      described_class.new(client, addresses, set_name: 'testing')
     end
 
     context 'when the address exists' do
@@ -208,7 +208,7 @@ describe Mongo::Cluster do
     end
 
     let(:cluster) do
-      described_class.new(client, addresses)
+      described_class.new(client, addresses, set_name: 'testing')
     end
 
     let(:servers_internal) do

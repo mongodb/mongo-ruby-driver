@@ -125,18 +125,6 @@ module Mongo
       options[REPLICA_SET_NAME]
     end
 
-    # Force a scan of all servers in the cluster.
-    #
-    # @example Scan the cluster.
-    #   cluster.scan!
-    #
-    # @return [ true ] Always true if no error.
-    #
-    # @since 2.0.0
-    def scan!
-      @servers.each{ |server| server.check! } and true
-    end
-
     # Get a list of server candidates from the cluster that can have operations
     # executed on them.
     #
@@ -147,7 +135,7 @@ module Mongo
     #
     # @since 2.0.0
     def servers
-      mode.select(@servers, replica_set_name)
+      mode.servers(@servers, replica_set_name)
     end
   end
 end

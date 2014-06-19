@@ -57,18 +57,6 @@ module Mongo
       address == other.address
     end
 
-    # Tells the monitor to immediately check the server status.
-    #
-    # @example Check the server status.
-    #   server.check!
-    #
-    # @return [ Server::Description ] The updated server description.
-    #
-    # @since 2.0.0
-    def check!
-      @monitor.check!
-    end
-
     # Get a new context for this server in which to send messages.
     #
     # @example Get the server context.

@@ -24,7 +24,7 @@ module Mongo
         # Select appropriate servers for this mode.
         #
         # @example Select the servers.
-        #   ReplicaSet.select(servers, 'test')
+        #   ReplicaSet.servers(servers, 'test')
         #
         # @param [ Array<Server> ] servers The known servers.
         # @param [ String ] replica_set_name The name of the replica set.
@@ -32,9 +32,10 @@ module Mongo
         # @return [ Array<Server> ] The servers in the replica set.
         #
         # @since 2.0.0
-        def self.select(servers, replica_set_name = nil)
+        def self.servers(servers, replica_set_name = nil)
           servers.select do |server|
-            server.primary? || server.secondary?
+            (replica_set_name.nil? || server.replica_set_name == replica_set_name) &&
+              server.primary? || server.secondary?
           end
         end
       end
