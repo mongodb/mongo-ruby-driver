@@ -117,12 +117,20 @@ namespace :test do
       require 'mongo'
       client = Mongo::MongoClient.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
                                       ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::MongoClient::DEFAULT_PORT)
+      admin = client.db('admin')
+      cmd = BSON::OrderedHash.new
+      cmd[:createUser] = 'TheBoss'
+      cmd[:pwd] = 'bossy'
+      cmd[:roles] = [ 'userAdminAnyDatabase', 'dbAdminAnyDatabase' ]
+      admin.authenticate("TheBoss", "bossy")
       client.database_names.each do |db_name|
         if db_name =~ /^ruby_test*/
           puts "[CLEAN-UP] Dropping '#{db_name}'..."
           client.drop_database(db_name)
         end
       end
+      admin.command({ :dropAllUsersFromDatabase => 1 })
+      admin.logout
     rescue Mongo::ConnectionFailure => e
       # moving on anyway
     end

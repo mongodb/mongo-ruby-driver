@@ -234,7 +234,15 @@ class Test::Unit::TestCase
   end
 
   def with_auth(client, &block)
-    cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
+    cmd_line_args = []
+    begin
+      cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
+    rescue OperationFailure
+      # With --auth and under the localhost exception or not logged in
+      yield block
+      return
+    end
+    # When there is --auth, and we are logged in.
     yield if cmd_line_args.include?('auth')
   end
 

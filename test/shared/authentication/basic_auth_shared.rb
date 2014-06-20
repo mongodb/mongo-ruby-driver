@@ -17,30 +17,48 @@ module BasicAuthTests
   def init_auth_basic
     # enable authentication by creating and logging in as admin user
     @admin = @client['admin']
-    @admin.add_user('admin', 'password', nil, :roles => ['readAnyDatabase',
-                                                         'readWriteAnyDatabase',
-                                                         'userAdminAnyDatabase',
-                                                         'dbAdminAnyDatabase',
-                                                         'clusterAdmin'])
+    cmd = BSON::OrderedHash.new
+    cmd[:createUser] = 'admin'
+    cmd[:pwd] = 'password'
+    cmd[:roles] = ['readAnyDatabase',
+                   'readWriteAnyDatabase',
+                   'userAdminAnyDatabase',
+                   'dbAdminAnyDatabase',
+                   'clusterAdmin']
+    @admin.command(cmd)
     @admin.authenticate('admin', 'password')
 
     # db user for cleanup (for pre-2.4)
-    @db.add_user('admin', 'cleanup', nil, :roles => [])
+    if @client.server_version < '2.4'
+      @db.add_user('admin', 'cleanup', nil, :roles => [])
+    end
+  end
+
+  def run_test_with_auth(&block)
+    with_auth(@client) do
+      init_auth_basic
+      yield
+      teardown_basic
+    end
   end
 
   def teardown_basic
-    remove_all_users(@db, 'admin', 'cleanup')
-    remove_all_users(@admin, 'admin', 'password') if has_auth?(@admin.name)
+    if @client.server_version < '2.4'
+      remove_all_users(@db, @db, 'admin', 'cleanup')
+    else
+      remove_all_users(@db, @admin, 'admin', 'password')
+      remove_all_users(@admin, @admin, 'admin', 'password')
+    end
   end
 
-  def remove_all_users(database, username, password)
-    database.authenticate(username, password) unless has_auth?(database.name)
+  def remove_all_users(target_db, auth_db, username, password)
+    auth_db.authenticate(username, password) unless has_auth?(auth_db.name)
     if @client.server_version < '2.5'
-      database['system.users'].remove
+      target_db['system.users'].remove
     else
-      database.command(:dropAllUsersFromDatabase => 1)
+      target_db.command(:dropAllUsersFromDatabase => 1)
     end
-    database.logout
+    auth_db.logout
   end
 
   def has_auth?(db_name)
@@ -48,163 +66,158 @@ module BasicAuthTests
   end
 
   def test_add_remove_user
-    init_auth_basic
+    run_test_with_auth do
+      # add user
+      silently { @db.add_user('bob','user') }
+      assert @db.authenticate('bob', 'user')
 
-    # add user
-    silently { @db.add_user('bob','user') }
-    assert @db.authenticate('bob', 'user')
-
-    # remove user
-    assert @db.remove_user('bob')
-
-    teardown_basic
+      # remove user
+      assert @db.remove_user('bob')
+    end
   end
 
   def test_update_user
-    init_auth_basic
+    run_test_with_auth do
 
-    # add user
-    silently { @db.add_user('bob', 'user') }
-    assert @db.authenticate('bob', 'user')
-    @db.logout
+      # add user
+      silently { @db.add_user('bob', 'user') }
+      assert @db.authenticate('bob', 'user')
+      @db.logout
 
-    # update user
-    silently { @db.add_user('bob', 'updated') }
-    assert_raise Mongo::AuthenticationError do
-      @db.authenticate('bob', 'user')
+      # update user
+      silently { @db.add_user('bob', 'updated') }
+      assert_raise Mongo::AuthenticationError do
+        @db.authenticate('bob', 'user')
+      end
+      assert @db.authenticate('bob', 'updated')
     end
-    assert @db.authenticate('bob', 'updated')
-
-    teardown_basic
   end
 
   def test_remove_non_existent_user
-    init_auth_basic
-
-    if @client.server_version < '2.5'
-      assert_equal false, @db.remove_user('joe')
-    else
-      assert_raise Mongo::OperationFailure do
-        assert @db.remove_user('joe')
+    run_test_with_auth do
+      if @client.server_version < '2.5'
+        assert_equal false, @db.remove_user('joe')
+      else
+        assert_raise Mongo::OperationFailure do
+          assert @db.remove_user('joe')
+        end
       end
     end
-    teardown_basic
   end
 
   def test_authenticate
-    init_auth_basic
-    silently { @db.add_user('peggy', 'user') }
-    assert @db.authenticate('peggy', 'user')
-    @db.remove_user('peggy')
-    teardown_basic
+    run_test_with_auth do
+      silently { @db.add_user('peggy', 'user') }
+      assert @db.authenticate('peggy', 'user')
+      @db.remove_user('peggy')
+    end
   end
 
   def test_authenticate_non_existent_user
-    init_auth_basic
-    assert_raise Mongo::AuthenticationError do
-      @db.authenticate('frank', 'thetank')
+    run_test_with_auth do
+      assert_raise Mongo::AuthenticationError do
+        @db.authenticate('frank', 'thetank')
+      end
     end
-    teardown_basic
   end
 
   def test_logout
-    init_auth_basic
-    silently { @db.add_user('peggy', 'user') }
-    assert @db.authenticate('peggy', 'user')
-    assert @db.logout
-    teardown_basic
+    run_test_with_auth do
+      silently { @db.add_user('peggy', 'user') }
+      assert @db.authenticate('peggy', 'user')
+      assert @db.logout
+    end
   end
 
   def test_authenticate_with_special_characters
-    init_auth_basic
-    silently { assert @db.add_user('foo:bar','@foo') }
-    assert @db.authenticate('foo:bar','@foo')
-    teardown_basic
+    run_test_with_auth do
+      silently { assert @db.add_user('foo:bar','@foo') }
+      assert @db.authenticate('foo:bar','@foo')
+    end
   end
 
   def test_authenticate_read_only
-    init_auth_basic
-    silently { @db.add_user('randy', 'readonly', true) }
-    assert @db.authenticate('randy', 'readonly')
-    teardown_basic
+    run_test_with_auth do
+      silently { @db.add_user('randy', 'readonly', true) }
+      assert @db.authenticate('randy', 'readonly')
+    end
   end
 
   def test_authenticate_with_connection_uri
-    init_auth_basic
-    silently { @db.add_user('eunice', 'uritest') }
+    run_test_with_auth do
+      silently { @db.add_user('eunice', 'uritest') }
 
-    uri    = "mongodb://eunice:uritest@#{@host_info}/#{@db.name}"
-    client = Mongo::URIParser.new(uri).connection
+      uri    = "mongodb://eunice:uritest@#{@host_info}/#{@db.name}"
+      client = Mongo::URIParser.new(uri).connection
 
-    assert client
-    assert_equal client.auths.size, 1
-    assert client[TEST_DB]['auth_test'].count
+      assert client
+      assert_equal client.auths.size, 1
+      assert client[TEST_DB]['auth_test'].count
 
-    auth = client.auths.first
-    assert_equal @db.name, auth[:db_name]
-    assert_equal 'eunice', auth[:username]
-    assert_equal 'uritest', auth[:password]
-    teardown_basic
+      auth = client.auths.first
+      assert_equal @db.name, auth[:db_name]
+      assert_equal 'eunice', auth[:username]
+      assert_equal 'uritest', auth[:password]
+    end
   end
 
   def test_socket_auths
-    init_auth_basic
-    # setup
-    db_a = @client[TEST_DB + '_a']
-    silently { db_a.add_user('user_a', 'password') }
-    assert db_a.authenticate('user_a', 'password')
+    run_test_with_auth do
+      # setup
+      db_a = @client[TEST_DB + '_a']
+      silently { db_a.add_user('user_a', 'password') }
+      assert db_a.authenticate('user_a', 'password')
 
-    db_b = @client[TEST_DB + '_b']
-    silently { db_b.add_user('user_b', 'password') }
-    assert db_b.authenticate('user_b', 'password')
+      db_b = @client[TEST_DB + '_b']
+      silently { db_b.add_user('user_b', 'password') }
+      assert db_b.authenticate('user_b', 'password')
 
-    db_c = @client[TEST_DB + '_c']
-    silently { db_c.add_user('user_c', 'password') }
-    assert db_c.authenticate('user_c', 'password')
+      db_c = @client[TEST_DB + '_c']
+      silently { db_c.add_user('user_c', 'password') }
+      assert db_c.authenticate('user_c', 'password')
 
-    # client auths should be applied to socket on checkout
-    socket = @client.checkout_reader(:mode => :primary)
-    assert_equal 4, socket.auths.size
-    assert_equal @client.auths, socket.auths
-    @client.checkin(socket)
+      # client auths should be applied to socket on checkout
+      socket = @client.checkout_reader(:mode => :primary)
+      assert_equal 4, socket.auths.size
+      assert_equal @client.auths, socket.auths
+      @client.checkin(socket)
 
-    # logout should remove saved auth on socket and client
-    assert db_b.logout
-    socket = @client.checkout_reader(:mode => :primary)
-    assert_equal 3, socket.auths.size
-    assert_equal @client.auths, socket.auths
-    @client.checkin(socket)
+      # logout should remove saved auth on socket and client
+      assert db_b.logout
+      socket = @client.checkout_reader(:mode => :primary)
+      assert_equal 3, socket.auths.size
+      assert_equal @client.auths, socket.auths
+      @client.checkin(socket)
 
-    # clean-up
-    db_b.authenticate('user_b', 'password')
-    remove_all_users(db_a, 'user_a', 'password')
-    remove_all_users(db_b, 'user_b', 'password')
-    remove_all_users(db_c, 'user_c', 'password')
-    teardown_basic
+      # clean-up
+      db_b.authenticate('user_b', 'password')
+      remove_all_users(db_a, db_a, 'user_a', 'password')
+      remove_all_users(db_b, db_b, 'user_b', 'password')
+      remove_all_users(db_c, db_c, 'user_c', 'password')
+    end
   end
 
   def test_default_roles_non_admin
     return unless @client.server_version >= '2.5.3'
-    init_auth_basic
-    silently { @db.add_user('user', 'pass') }
-    silently { @db.authenticate('user', 'pass') }
-    info = @db.command(:usersInfo => 'user')['users'].first
-    assert_equal 'dbOwner', info['roles'].first['role']
+    run_test_with_auth do
+      silently { @db.add_user('user', 'pass') }
+      silently { @db.authenticate('user', 'pass') }
+      info = @db.command(:usersInfo => 'user')['users'].first
+      assert_equal 'dbOwner', info['roles'].first['role']
 
-    # read-only
-    silently { @db.add_user('ro-user', 'pass', true) }
-    @db.logout
-    @db.authenticate('ro-user', 'pass')
-    info = @db.command(:usersInfo => 'ro-user')['users'].first
-    assert_equal 'read', info['roles'].first['role']
-    @db.logout
-    teardown_basic
+      # read-only
+      silently { @db.add_user('ro-user', 'pass', true) }
+      @db.logout
+      @db.authenticate('ro-user', 'pass')
+      info = @db.command(:usersInfo => 'ro-user')['users'].first
+      assert_equal 'read', info['roles'].first['role']
+      @db.logout
+    end
   end
 
   def test_delegated_authentication
     return unless @client.server_version >= '2.4' && @client.server_version < '2.5'
-    with_auth(@client) do
-      init_auth_basic
+    run_test_with_auth do
       # create user in test databases
       accounts = @client[TEST_DB + '_accounts']
       silently do
@@ -236,33 +249,30 @@ module BasicAuthTests
 
       # clean-up
       @admin.authenticate('admin', 'password')
-      remove_all_users(accounts, 'debbie', 'delegate')
-      teardown_basic
+      remove_all_users(accounts, accounts, 'debbie', 'delegate')
     end
   end
 
   def test_non_admin_default_roles
     return if @client.server_version < '2.5'
-    init_auth_basic
+    run_test_with_auth do
+      # add read-only user and verify that role is 'read'
+      @db.add_user('randy', 'password', nil, :roles => ['read'])
+      @db.authenticate('randy', 'password')
+      users = @db.command(:usersInfo => 'randy')['users']
+      assert_equal 'read', users.first['roles'].first['role']
+      @db.logout
 
-    # add read-only user and verify that role is 'read'
-    @db.add_user('randy', 'password', nil, :roles => ['read'])
-    @db.authenticate('randy', 'password')
-    users = @db.command(:usersInfo => 'randy')['users']
-    assert_equal 'read', users.first['roles'].first['role']
-    @db.logout
-
-    # add dbOwner (default) user and verify role
-    silently { @db.add_user('emily', 'password') }
-    @db.authenticate('emily', 'password')
-    users = @db.command(:usersInfo => 'emily')['users']
-    assert_equal 'dbOwner', users.first['roles'].first['role']
-    teardown_basic
+      # add dbOwner (default) user and verify role
+      silently { @db.add_user('emily', 'password') }
+      @db.authenticate('emily', 'password')
+      users = @db.command(:usersInfo => 'emily')['users']
+      assert_equal 'dbOwner', users.first['roles'].first['role']
+    end
   end
 
   def test_update_user_to_read_only
-    with_auth(@client) do
-      init_auth_basic
+    run_test_with_auth do
       silently { @db.add_user('emily', 'password') }
       @admin.logout
       @db.authenticate('emily', 'password')
@@ -279,8 +289,6 @@ module BasicAuthTests
       end
       @db.logout
       @admin.authenticate('admin', 'password')
-      teardown_basic
     end
   end
-
 end
