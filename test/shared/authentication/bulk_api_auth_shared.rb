@@ -19,9 +19,11 @@ module BulkAPIAuthTests
   def init_auth_bulk
     # enable authentication
     @admin = @client["admin"]
-    @admin.add_user('admin', 'password', nil, :roles => ['readWriteAnyDatabase',
-                                                         'userAdminAnyDatabase',
-                                                         'dbAdminAnyDatabase'])
+    cmd = BSON::OrderedHash.new
+    cmd[:createUser] = 'admin'
+    cmd[:pwd] = 'password'
+    cmd[:roles] = ['readWriteAnyDatabase', 'userAdminAnyDatabase', 'dbAdminAnyDatabase']
+    @admin.command(cmd)
     @admin.authenticate('admin', 'password')
 
     # Set up the test db
