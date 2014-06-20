@@ -330,7 +330,7 @@ module Mongo
       #
       # @since 2.0.0
       def standalone?
-        replica_set_name.nil? && !mongos? && !ghost?
+        replica_set_name.nil? && !mongos? && !ghost? && !unknown?
       end
 
       # Is the server description currently unknown?

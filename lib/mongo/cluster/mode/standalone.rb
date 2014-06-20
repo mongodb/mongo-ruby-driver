@@ -24,15 +24,15 @@ module Mongo
         # Select appropriate servers for this mode.
         #
         # @example Select the servers.
-        #   Standalone.select(servers, 'test')
+        #   Standalone.servers(servers, 'test')
         #
         # @param [ Array<Server> ] servers The known servers.
         #
         # @return [ Array<Server> ] The standalone servers.
         #
         # @since 2.0.0
-        def self.select(servers, name = nil)
-          servers.select{ |server| server.standalone? }
+        def self.servers(servers, name = nil)
+          [ servers.detect{ |server| server.standalone? } ]
         end
       end
     end
