@@ -356,7 +356,7 @@ module Mongo
 
     SPECIAL_FIELDS = [
         [:$query,          :selector],
-        [:$readPreference, :read_pref],
+        [:$readPreference, :read_pref_formatted],
         [:$orderby,        :sort],
         [:$hint,           :hint],
         [:$comment,        :comment],
@@ -364,6 +364,27 @@ module Mongo
         [:$maxScan,        :max_scan],
         [:$showDiskLoc,    :show_disk_loc]
     ]
+
+    # The snapshot special operator.
+    #
+    # @return [true, false, nil]
+    def snapshot
+      special_opts[:snapshot]
+    end
+
+    # The max_scan special operator.
+    #
+    # @return [Integer, nil]
+    def max_scan
+      special_opts[:max_scan]
+    end
+
+    # The show_disk_loc special operator.
+    #
+    # @return [true, false, nil]
+    def show_disk_loc
+      special_opts[:show_disk_loc]
+    end
 
     # The initial query operation to send to the server.
     #
@@ -377,15 +398,15 @@ module Mongo
     def send_initial_query
       # @todo: if mongos, don't send read pref because it's
       # in the special selector
-      context = read_pref.server.context
+      context = read.server.context
       initial_query_op.execute(context)
     end
 
     # Get the read preference for this query.
     #
     # @return [Hash, nil] The read preference or nil.
-    def read_pref
-      @collection.client.mongos? ? read.to_mongos : read
+    def read_pref_formatted
+      read.to_mongos
     end
 
     # Build a special query selector.
@@ -467,11 +488,11 @@ module Mongo
     #
     # @return [Hash] The +Query+ operation spec.
     def query_spec
-      selector = has_special_fields? ? special_selector : selector
-      { :selector  => selector,
+      sel = has_special_fields? ? special_selector : selector
+      { :selector  => sel,
         :opts      => query_opts,
         :db_name   => db_name,
-        :coll_name => coll_name }
+        :coll_name => @collection.name }
     end
 
     # Whether the read preference mode is primary.
@@ -492,7 +513,14 @@ module Mongo
     #
     # @return [Integer] The number of documents to return in the next batch.
     def to_return
-      [limit, batch_size].min
+      [limit || batch_size, batch_size || limit].min
+    end
+
+    # The name of the database containing the queried collection.
+    #
+    # @return [String] The database name.
+    def db_name
+      @collection.database.name
     end
 
     # Either return the option value or create a new +CollectionView+ with

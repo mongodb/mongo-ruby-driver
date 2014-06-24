@@ -13,7 +13,18 @@ describe Mongo::CollectionView do
   let(:client) do
     double('client').tap do |client|
       allow(client).to receive(:mongos?) { mongos }
-      allow(client).to receive(:execute) { response }
+    end
+  end
+
+  let(:server) do
+    double('server').tap do |server|
+      allow(server).to receive(:context) { double('context') }
+    end
+  end
+
+  let(:initial_query_op) do
+    double('query_op').tap do |op|
+      allow(op).to receive(:execute) { response }
     end
   end
 
@@ -24,7 +35,9 @@ describe Mongo::CollectionView do
       end
       allow(collection).to receive(:client) { client }
       allow(collection).to receive(:read) do
-        Mongo::ServerPreference.get(:primary)
+        Mongo::ServerPreference.get(:primary).tap do |pref|
+          allow(pref).to receive(:server) { server }
+        end
       end
     end
   end
@@ -424,7 +437,7 @@ describe Mongo::CollectionView do
       context 'show_disk_loc' do
         let(:opts) { { :show_disk_loc => true } }
 
-        it 'returns show_disk_loc in the special options' do
+      it 'returns show_disk_loc in the special options' do
           expect(view.special_opts).to eq(opts)
         end
       end
@@ -598,12 +611,18 @@ describe Mongo::CollectionView do
         context 'when limit is specified' do
           let(:opts) { { :limit => 5 } }
 
+
           it 'requests that number of docs in the first message' do
-            # @todo: uncomment
-            #expect(Mongo::Operation::Read::Query.new).to receive(:new) do |spec|
-            #  expect(spec[:opts][:limit]).to eq(opts[:limit])
-            #end
-            #view.each(&b)
+
+            expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
+              expect(spec[:opts][:limit]).to eq(opts[:limit])
+            end.and_return(initial_query_op)
+
+            # break after retrieving the first doc so no get more msgs are sent
+            view.each_with_index do |doc, i|
+              doc unless i > 0
+              break
+            end
           end
         end
 
@@ -611,22 +630,30 @@ describe Mongo::CollectionView do
           let(:opts) { { :batch_size => 5 } }
 
           it 'requests that number of docs in the first message' do
-            # @todo: uncomment
-            #expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            #  expect(spec[:opts][:limit]).to eq(opts[:limit])
-            #end
-            #view.each(&b)
+
+            expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
+              expect(spec[:opts][:limit]).to eq(opts[:batch_size])
+            end.and_return(initial_query_op)
+
+            view.each_with_index do |doc, i|
+              doc unless i > 0
+              break
+            end
           end
         end
 
         context 'when no limit is specified' do
 
           it 'does not request a certain number of docs' do
-            # @todo: uncomment
-            #expect(Mongo::Operation::Read::Query.new).to receive(:new) do |spec|
-            #  expect(spec[:opts][:limit]).to eq(nil)
-            #end
-            #view.each(&b)
+
+            expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
+              expect(spec[:opts][:limit]).to eq(nil)
+            end.and_return(initial_query_op)
+
+            view.each_with_index do |doc, i|
+              doc unless i > 0
+              break
+            end
           end
         end
 
@@ -634,11 +661,15 @@ describe Mongo::CollectionView do
           let(:opts) { { :batch_size => 5, :limit => 3 } }
 
           it 'requests the limit number of docs' do
-            # @todo: uncomment
-            #expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            #  expect(spec[:opts][:limit]).to eq(opts[:limit])
-            #end
-            #view.each(&b)
+
+            expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
+              expect(spec[:opts][:limit]).to eq(opts[:limit])
+            end.and_return(initial_query_op)
+
+            view.each_with_index do |doc, i|
+              doc unless i > 0
+              break
+            end
           end
         end
 
@@ -646,11 +677,15 @@ describe Mongo::CollectionView do
           let(:opts) { { :limit => 5, :batch_size => 3 } }
 
           it 'requests the batch size in the first query message' do
-            # @todo: uncomment
-            #expect(Mongo::Operation::Read::Query.new).to receive(:new) do |spec|
-            #  expect(spec[:opts][:limit]).to eq(opts[:batch_size])
-            #end
-            #view.each(&b)
+
+            expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
+              expect(spec[:opts][:limit]).to eq(opts[:batch_size])
+            end.and_return(initial_query_op)
+
+            view.each_with_index do |doc, i|
+              doc unless i > 0
+              break
+            end
           end
         end
 
@@ -659,46 +694,101 @@ describe Mongo::CollectionView do
           context 'special fields' do
 
             context 'special options' do
-              let(:opts) { { :snapshot => true } }
 
-              it 'creates a special query selector' do
-                #expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-                #  expect(spec[:selector]).to eq(opts[:batch_size])
-                #end
-                #view.each(&b)
+              context 'snapshot' do
+                let(:opts) { { :snapshot => true } }
+
+                it 'creates a special query selector' do
+
+                  expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
+                    expect(spec[:selector][:$query]).to eq(selector)
+                  end.and_return(initial_query_op)
+
+                  view.each_with_index do |doc, i|
+                    doc unless i > 0
+                    break
+                  end
+                end
+              end
+
+              context 'max_scan' do
+                let(:opts) { { :max_scan => 100 } }
+
+                it 'creates a special query selector' do
+
+                  expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
+                    expect(spec[:selector][:$query]).to eq(selector)
+                  end.and_return(initial_query_op)
+
+                  view.each_with_index do |doc, i|
+                    doc unless i > 0
+                    break
+                  end
+                end
+              end
+
+              context 'show_disk_loc' do
+                let(:opts) { { :show_disk_loc => true } }
+
+                it 'creates a special query selector' do
+
+                  expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
+                    expect(spec[:selector][:$query]).to eq(selector)
+                  end.and_return(initial_query_op)
+
+                  view.each_with_index do |doc, i|
+                    doc unless i > 0
+                    break
+                  end
+                end
               end
             end
 
             context 'sort' do
-              let(:opts) { { 'x' => ascending } }
+              let(:opts) { { :sort => {'x' => ascending } } }
 
               it 'creates a special query selector' do
-                #expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-                #  expect(spec[:selector][:$query]).to eq(selector)
-                #end
-                #view.each(&b)
+
+                expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
+                  expect(spec[:selector][:$query]).to eq(selector)
+                end.and_return(initial_query_op)
+
+                view.each_with_index do |doc, i|
+                  doc unless i > 0
+                  break
+                end
               end
             end
 
             context 'hint' do
               let(:opts) { { :hint => { 'x' => ascending } } }
 
-              it 'creates a special query selector' do
-                #expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-                #  expect(spec[:selector][:$query]).to eq(selector)
-                #end
-                #view.each(&b)
+              it'creates a special query selector' do
+
+                expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
+                  expect(spec[:selector][:$query]).to eq(selector)
+                end.and_return(initial_query_op)
+
+                view.each_with_index do |doc, i|
+                  doc unless i > 0
+                  break
+                end
               end
             end
 
             context 'comment' do
-              let(:opts) { { :comment => 'test1' } }
+              let(:opts) { { :comment => 'query1' } }
 
               it 'creates a special query selector' do
-                #expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-                #  expect(spec[:selector][:$query]).to eq(selector)
-                #end
-                #view.each(&b)
+
+                expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
+                  expect(spec[:selector][:$query]).to eq(selector)
+                end.and_return(initial_query_op)
+
+                view.each_with_index do |doc, i|
+                  doc unless i > 0
+                  break
+                end
               end
             end
 
@@ -706,10 +796,15 @@ describe Mongo::CollectionView do
               let(:mongos) { true }
 
               it 'creates a special query selector' do
-                #expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-                #  expect(spec[:selector][:$query]).to eq(selector)
-                #end
-                #view.each(&b)
+
+                expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
+                  expect(spec[:selector][:$query]).to eq(selector)
+                end.and_return(initial_query_op)
+
+                view.each_with_index do |doc, i|
+                  doc unless i > 0
+                  break
+                end
               end
             end
           end
@@ -717,75 +812,58 @@ describe Mongo::CollectionView do
           context 'no special fields' do
 
             it 'creates a normal query spec' do
-              #expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-              #  expect(spec[:selector]).to eq(selector)
-              #end
-              #view.each(&b)
+
+              expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
+                expect(spec[:selector]).to eq(selector)
+              end.and_return(initial_query_op)
+
+              view.each_with_index do |doc, i|
+                doc unless i > 0
+                break
+              end
             end
           end
         end
-
       end
 
       context 'cursor' do
 
         it 'creates a cursor with the initial query message results' do
-          #expect(Mongo::Cursor).to receive(:new) do |view, result|
-          #  expect(result).to eq(response)
-          #end
-          #view.each(&b)
+          allow(Mongo::Operation::Read::Query).to receive(:new).and_return(
+            initial_query_op)
+
+          expect(Mongo::Cursor).to receive(:new) do |view, result|
+            expect(result).to eq(response)
+          end
+
+          view.each
         end
       end
 
       context 'when a block is provided' do
+        let(:opts) { { :limit => response.docs.size } }
 
         it 'yields each doc to the block' do
-          #expect { |b| view.each(&b) }.to do
-          #  yield_control.exactly(response.docs.size).times
-          #end
+          allow(Mongo::Operation::Read::Query).to receive(:new).and_return(
+            initial_query_op)
+
+          expect(view).to receive(:each).and_yield(
+            response.docs[0]).and_yield(
+            response.docs[1]).and_yield(
+            response.docs[2])
+
+          view.each(&b)
         end
 
         context 'when a block is not provided' do
 
-          #it 'returns an enumerator' do
-          #  if !defined?(Enumerator)
-          #    expect(view.each).to be_a(Enumerable::Enumerator)
-          #  else
-          #    expect(view.each).to be_a(Enumerator)
-          #  end
-          #end
+          it 'returns an enumerator' do
+            allow(Mongo::Operation::Read::Query).to receive(:new).and_return(
+              initial_query_op)
+            expect(view.each).to be_a(Enumerator)
+          end
         end
       end
     end
   end
-
-  #describe 'chaining' do
-#
-  #  context 'when helper methods are chained' do
-#
-  #    it 'alters the view' do
-  #      new_view = view.limit(5).skip(10)
-  #      expect(new_view.limit).to eq(5)
-  #      expect(new_view.skip).to eq(10)
-  #    end
-  #  end
-#
-  #  context 'when a view is chained with a terminator' do
-  #    include_context 'shared cursor'
-#
-  #    describe '#count' do
-  #      it 'terminates the chaining and returns a value' do
-  #        allow(collection).to receive(:count).and_return(10)
-  #        expect(view.limit(5).skip(10).count).to eq(10)
-  #      end
-  #    end
-#
-  #    describe '#to_a' do
-  #      it 'terminates chaining by returning an array of results' do
-  #        allow(connection).to receive(:send_and_receive).and_return(responses)
-  #        expect(view.limit(5).skip(10).to_a).to eq(results.first[:docs])
-  #      end
-  #    end
-  #  end
-  #end
 end
