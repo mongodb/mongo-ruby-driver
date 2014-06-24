@@ -22,6 +22,7 @@ end
 require 'mongo'
 require 'support/helpers'
 require 'support/matchers'
+require 'support/monitoring'
 require 'support/cluster_simulator'
 
 Mongo::Logger.logger = Logger.new($stdout, Logger::DEBUG)

@@ -37,26 +37,12 @@ module Mongo
       # @since 2.0.0
       ISMASTER = Protocol::Query.new(Database::ADMIN, Database::COMMAND, STATUS, :limit => -1)
 
-      # @return [ Mutex ] The refresh operation mutex.
-      attr_reader :mutex
       # @return [ Mongo::Server ] The server the monitor refreshes.
       attr_reader :server
       # @return [ Hash ] options The server options.
       attr_reader :options
       # @return [ Mongo::Connection ] connection The connection to use.
       attr_reader :connection
-
-      # Check the server status immediately.
-      #
-      # @example Check the server status.
-      #   monitor.check!
-      #
-      # @return [ Server::Description ] The updated server description.
-      #
-      # @since 2.0.0
-      def check!
-        server.description.update!(*ismaster)
-      end
 
       # Get the refresh interval for the server. This will be defined via an option
       # or will default to 5.
@@ -83,7 +69,6 @@ module Mongo
       def initialize(server, options = {})
         @server = server
         @options = options
-        @mutex = Mutex.new
         @connection = Mongo::Connection.new(server.address, options[:timeout], options)
       end
 
@@ -100,7 +85,7 @@ module Mongo
         Monitor.threads[object_id] = Thread.new(heartbeat_frequency, server) do |i, s|
           loop do
             sleep(i)
-            check!
+            server.description.update!(*ismaster)
           end
         end
       end
@@ -112,15 +97,13 @@ module Mongo
       end
 
       def ismaster
-        mutex.synchronize do
-          start = Time.now
-          begin
-            result = connection.dispatch([ ISMASTER ]).documents[0]
-            return result, calculate_round_trip_time(start)
-          rescue SystemCallError, IOError => e
-            log(:debug, 'MONGODB', [ e.message ])
-            return {}, calculate_round_trip_time(start)
-          end
+        start = Time.now
+        begin
+          result = connection.dispatch([ ISMASTER ]).documents[0]
+          return result, calculate_round_trip_time(start)
+        rescue SystemCallError, IOError => e
+          log(:debug, 'MONGODB', [ e.message ])
+          return {}, calculate_round_trip_time(start)
         end
       end
 
