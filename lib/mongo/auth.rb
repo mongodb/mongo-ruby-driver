@@ -12,4 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/auth/cr'
 require 'mongo/auth/user'
+
+module Mongo
+
+  # This namespace contains all authentication related behaviour.
+  #
+  # @since 2.0.0
+  module Auth
+
+    # Constant for the nonce command.
+    #
+    # @since 2.0.0
+    GET_NONCE = { getnonce: 1 }.freeze
+
+    # Constant for the logout command.
+    #
+    # @since 2.0.0
+    LOGOUT = { logout: 1 }.freeze
+
+    # Constant for the nonce field.
+    #
+    # @since 2.0.0
+    NONCE = 'nonce'.freeze
+  end
+end
