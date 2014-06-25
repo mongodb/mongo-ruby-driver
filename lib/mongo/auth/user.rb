@@ -26,8 +26,32 @@ module Mongo
       # @return [ String ] The username.
       attr_reader :name
 
-      # @return [ String ] The user's password.
-      attr_reader :password
+      # Get an authentication key for the user based on a nonce from the
+      # server.
+      #
+      # @example Get the authentication key.
+      #   user.auth_key(nonce)
+      #
+      # @param [ String ] nonce The response from the server.
+      #
+      # @return [ String ] The authentication key.
+      #
+      # @since 2.0.0
+      def auth_key(nonce)
+        Digest::MD5.hexdigest("#{nonce}#{name}#{password}")
+      end
+
+      # Get the user's password.
+      #
+      # @example Get the user's password.
+      #   user.password
+      #
+      # @return [ String ] The password.
+      #
+      # @since 2.0.0
+      def password
+        Digest::MD5.hexdigest("#{name}:mongo:#{@password}")
+      end
 
       # Create the new user.
       #
