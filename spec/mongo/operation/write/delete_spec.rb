@@ -73,7 +73,7 @@ describe Mongo::Operation::Write::Delete do
         let(:other) { described_class.new(other_collection, spec) }
 
         it 'returns false' do
-          expect(op).to eq(other)
+          expect(op).not_to eq(other)
         end
       end
     end
@@ -94,7 +94,7 @@ describe Mongo::Operation::Write::Delete do
 
         it 'creates a write command delete operation' do
           expect(Mongo::Operation::Write::WriteCommand::Delete).to receive(:new) do |coll, sp|
-            expect(sp).to be(spec)
+            expect(sp).to eq(spec.merge(:delete => collection.name))
             expect(coll).to be(collection)
           end.and_return(delete_write_cmd)
        

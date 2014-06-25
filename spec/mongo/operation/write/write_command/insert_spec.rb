@@ -73,7 +73,7 @@ describe Mongo::Operation::Write::WriteCommand::Insert do
         let(:other) { described_class.new(other_collection, spec) }
 
         it 'returns false' do
-          expect(op).to eq(other)
+          expect(op).not_to eq(other)
         end
       end
     end

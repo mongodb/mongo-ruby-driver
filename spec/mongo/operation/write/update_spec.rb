@@ -81,7 +81,7 @@ describe Mongo::Operation::Write::Update do
         let(:other) { described_class.new(other_collection, spec) }
 
         it 'returns false' do
-          expect(op).to eq(other)
+          expect(op).not_to eq(other)
         end
       end
     end
@@ -102,7 +102,7 @@ describe Mongo::Operation::Write::Update do
 
         it 'creates a write command update operation' do
           expect(Mongo::Operation::Write::WriteCommand::Update).to receive(:new) do |coll, sp|
-            expect(sp).to be(spec)
+            expect(sp).to eq(spec.merge(:update => collection.name))
             expect(coll).to be(collection)
           end.and_return(update_write_cmd)
 
