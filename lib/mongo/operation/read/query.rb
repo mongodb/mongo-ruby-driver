@@ -29,23 +29,21 @@ module Mongo
         # @example
         #   include Mongo
         #   include Operation
-        #   Read::Query.new({ :selector => { :foo => 1 },
-        #                     :db_name => 'TEST_DB',
-        #                     :coll_name => 'test-coll',
-        #                     :opts => { :limit => 2 } })
+        #   Read::Query.new(collection,
+        #                   :selector => { :foo => 1 },
+        #                   :opts => { :limit => 2 })
         #
+        # @param [ Collection ] collection The collection on which the query
+        #   should be run.
         # @param [ Hash ] spec The specifications for the query.
         #
         # @option spec :selector [ Hash ] The query selector.
-        # @option spec :db_name [ String ] The name of the database on which
-        #   the query should be run.
-        # @option spec :coll_name [ String ] The name of the collection on which
-        #   the query should be run.
         # @option spec :opts [ Hash ] Options for the query.
         #
         # @since 3.0.0
-        def initialize(spec)
-          @spec = spec
+        def initialize(collection, spec)
+          @collection = collection
+          @spec       = spec
         end
 
         private
