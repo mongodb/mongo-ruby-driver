@@ -36,9 +36,9 @@ module Mongo
         #                     :documents     => [{ :foo => 1 }],
         #                     :write_concern => write_concern)
         #
-        # @param [ Hash ] spec The specifications for the insert.
         # @param [ Collection ] collection The collection into which the documents
         #   will be inserted.
+        # @param [ Hash ] spec The specifications for the insert.
         #
         # @option spec :documents [ Array ] The documents to insert.
         # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.

@@ -40,9 +40,9 @@ module Mongo
         #                                    :upsert => false }],
         #                     :write_concern => write_concern)
         #
-        # @param [ Hash ] spec The specifications for the update.
         # @param [ Collection ] collection The collection in which the update will be
         #   executed.
+        # @param [ Hash ] spec The specifications for the update.
         #
         # @option spec :updates [ Array ] The update documents.
         # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.

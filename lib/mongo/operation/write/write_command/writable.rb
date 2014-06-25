@@ -27,9 +27,9 @@ module Mongo
 
           # Initialize the write command.
           #
-          # @param [ Hash ] spec The specifications for the write command.
           # @param [ Collection ] collection The collection on which the write command
           #   will be executed.
+          # @param [ Hash ] spec The specifications for the write command.
           #
           # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
           # @option spec :opts [ Hash ] Options for the command.

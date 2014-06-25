@@ -37,9 +37,9 @@ module Mongo
         #                                            :limit => 1 }],
         #                       :write_concern => write_concern)
         #
-        # @param [ Hash ] spec The specifications for the delete.
         # @param [ Collection ] collection The collection on which the delete will be
         #   executed.
+        # @param [ Hash ] spec The specifications for the delete.
         #
         # @option spec :deletes [ Array ] The delete documents.
         # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern
