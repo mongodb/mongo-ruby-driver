@@ -46,7 +46,8 @@ module Mongo
       # Initialize the command operation.
       #
       # @example
-      #   Mongo::Operation::Command.new({ :selector => { :isMaster => 1 } })
+      #   Mongo::Operation::Command.new({ :selector => { :isMaster => 1 },
+      #                                   :db_name => 'admin' })
       #
       # @param [ Hash ] spec The specifications for the command.
       #
@@ -83,6 +84,15 @@ module Mongo
       end
 
       private
+
+      # The database name on which the command will be executed..
+      #
+      # @return [ String ] The database name. 
+      #
+      # @since 3.0.0
+      def db_name
+        @spec[:db_name]
+      end
 
       # The selector for the command.
       # Note that a command is actually a query on the virtual '$cmd' collection.

@@ -3,6 +3,7 @@ require 'spec_helper'
 describe Mongo::Operation::Command do
   include_context 'operation'
 
+  let(:db_name) { 'admin' }
   let(:selector) { { :ismaster => 1 } }
   let(:spec) do
     { :selector => selector,

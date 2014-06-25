@@ -29,6 +29,11 @@ module Mongo
       # @since 3.0.0
       attr_reader :spec
 
+      # The collection on which the operation will be executed.
+      #
+      # @return [ Collection ] The collection.
+      #
+      # @since 3.0.0
       attr_reader :collection
 
       # Check equality of two executable operations.
