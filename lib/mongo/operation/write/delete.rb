@@ -23,7 +23,7 @@ module Mongo
       # will be created and sent instead.
       # See Mongo::Operation::Write::WriteCommand::Delete
       #
-      # @since 3.0.0
+      # @since 2.0.0
       class Delete
         include Executable
 
@@ -32,30 +32,25 @@ module Mongo
         # @example
         #   include Mongo
         #   include Operation
-        #   Write::Delete.new({ :deletes       => [{ :q => { :foo => 1 },
+        #   Write::Delete.new(collection,
+        #                     :deletes       => [{ :q => { :foo => 1 },
         #                                            :limit => 1 }],
-        #                       :db_name       => 'test',
-        #                       :coll_name     => 'test_coll',
-        #                       :write_concern => write_concern
-        #                     })
+        #                       :write_concern => write_concern)
         #
         # @param [ Hash ] spec The specifications for the delete.
+        # @param [ Collection ] collection The collection on which the delete will be
+        #   executed.
         #
         # @option spec :deletes [ Array ] The delete documents.
-        # @option spec :db_name [ String ] The name of the database on which
-        #   the delete should be executed.
-        # @option spec :coll_name [ String ] The name of the collection on which
-        #   the delete should be executed.
         # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern
         #   for this operation.
-        # @option spec :ordered [ true, false ] Whether the operations should be
-        #   executed in order.
         # @option spec :opts [Hash] Options for the command, if it ends up being a
         #   write command.
         #
-        # @since 3.0.0
-        def initialize(spec)
-          @spec = spec
+        # @since 2.0.0
+        def initialize(collection, spec)
+          @collection = collection
+          @spec       = spec
         end
 
         # Execute the operation.
@@ -67,12 +62,12 @@ module Mongo
         #
         # @return [ Mongo::Response ] The operation response, if there is one.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def execute(context)
           raise Exception, "Must use primary server" unless context.primary?
           # @todo: change wire version to constant
           if context.wire_version >= 2
-            op = WriteCommand::Delete.new(spec)
+            op = WriteCommand::Delete.new(collection, spec.merge(:delete => coll_name))
             op.execute(context)
           else
             deletes.each do |d|
@@ -90,7 +85,7 @@ module Mongo
         #
         # @return [ Mongo::WriteConcern::Mode ] The write concern.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def write_concern
           @spec[:write_concern]
         end
@@ -99,7 +94,7 @@ module Mongo
         #
         # @return [ Array ] The delete documents.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def deletes
           @spec[:deletes]
         end
@@ -108,7 +103,7 @@ module Mongo
         #
         # @return [ Mongo::Protocol::Delete ] Wire protocol message.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def message(delete_spec)
           selector    = delete_spec[:q]
           delete_opts = delete_spec[:limit] == 0 ? { } : { :flags => [:single_remove] }

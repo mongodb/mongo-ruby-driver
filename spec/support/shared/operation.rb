@@ -1,9 +1,18 @@
 shared_context 'operation' do
 
-  let(:db_name) { 'TEST_DB' }
-  let(:coll_name) { 'test_coll' }
   let(:write_concern) { Mongo::WriteConcern::Mode.get(:w => 1) }
   let(:opts) { {} }
+
+  let(:collection) do
+    double('collection').tap do |coll|
+      allow(coll).to receive(:name) { 'test-coll' }
+      allow(coll).to receive(:database) do
+        double('database').tap do |db|
+          allow(db).to receive(:name) { 'TEST_DB'}
+        end
+      end
+    end
+  end
 
   # Server doubles
   let(:secondary_server) do

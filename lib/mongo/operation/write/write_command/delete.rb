@@ -26,13 +26,10 @@ module Mongo
         # @example Initialize a delete write command.
         #   include Mongo
         #   include Operation
-        #   Write::WriteCommand::Delete.new({ :deletes       => [{ :q => { :foo => 1 },
-        #                                                          :limit => 1 }],
-        #                                     :db_name       => 'test',
-        #                                     :coll_name     => 'test_coll',
-        #                                     :write_concern => write_concern,
-        #                                     :ordered       => true
-        #                                   })
+        #   Write::WriteCommand::Delete.new(collection,
+        #                                   :deletes       => [{ :q => { :foo => 1 },
+        #                                                        :limit => 1 }],
+        #                                   :write_concern => write_concern)
         #
         # @since 3.0.0
         class Delete
