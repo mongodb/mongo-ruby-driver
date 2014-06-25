@@ -123,7 +123,7 @@ module Mongo
       #
       # @since 2.0.0
       def message
-        Mongo::Protocol::Query.new(db_name, Mongo::Database::COMMAND, selector, opts)
+        Protocol::Query.new(db_name, Database::COMMAND, selector, opts)
       end
     end
   end

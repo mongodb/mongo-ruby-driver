@@ -115,7 +115,7 @@ module Mongo
           selector    = update_spec[:q]
           update      = update_spec[:u]
           update_opts = update_spec[:multi] ? { :flags => [:multi_update] } : { }
-          Mongo::Protocol::Update.new(db_name, coll_name, selector, update, update_opts)
+          Protocol::Update.new(db_name, coll_name, selector, update, update_opts)
         end
       end
     end
