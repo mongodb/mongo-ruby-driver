@@ -126,7 +126,7 @@ module Mongo
     def send_get_more
       raise Exception, 'No server set' unless @server
       context = @server.context
-      response = Mongo::Response.new(get_more_op.execute(context))
+      response = get_more_op.execute(context)
       process_response(response)
     end
 
@@ -203,7 +203,8 @@ module Mongo
     # @return [true, false] Whether all results have been retrieved from
     #   the server.
     def exhausted?
-      limited? ? (@returned >= limit) : closed?
+      return true if closed?
+      limited? && (@returned >= limit)
     end
 
     # The limit setting on the +CollectionView+.

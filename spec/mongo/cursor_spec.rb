@@ -4,6 +4,8 @@ describe Mongo::Cursor do
 
   include_context 'shared cursor'
 
+  let(:server) { double('server') }
+
   let(:cursor) { described_class.new(view, response) }
 
   describe '#inspect' do
