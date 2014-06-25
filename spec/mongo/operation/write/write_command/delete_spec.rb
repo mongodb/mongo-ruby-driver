@@ -83,7 +83,7 @@ describe Mongo::Operation::Write::WriteCommand::Delete do
 
           expect(Mongo::Protocol::Query).to receive(:new) do |db, coll, sel, options|
             expect(db).to eq(db_name)
-            expect(coll).to eq(Mongo::Operation::COMMAND_COLLECTION_NAME)
+            expect(coll).to eq(Mongo::Database::COMMAND)
             expect(sel).to eq(expected_selector)
           end
           op.execute(primary_context)

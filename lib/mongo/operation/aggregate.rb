@@ -122,8 +122,7 @@ module Mongo
       #
       # @since 2.0.0
       def message
-        Mongo::Protocol::Query.new(db_name, Mongo::Operation::COMMAND_COLLECTION_NAME,
-                                   selector, opts)
+        Mongo::Protocol::Query.new(db_name, Mongo::Database::COMMAND, selector, opts)
       end
     end
   end
