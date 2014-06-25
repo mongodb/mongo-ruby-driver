@@ -5,18 +5,16 @@ describe Mongo::Operation::MapReduce do
 
   let(:opts) { {} }
   let(:selector) do
-    { :mapreduce => 'test_coll',
-      :map       => '',
+    { :map       => '',
       :reduce    => '',
     }
   end
   let(:spec) do
     { :selector => selector,
-      :opts     => opts,
-      :db_name  => db_name
+      :opts     => opts
     }
   end
-  let(:op) { described_class.new(spec) }
+  let(:op) { described_class.new(collection, spec) }
 
   describe '#initialize' do
 
@@ -26,24 +24,46 @@ describe Mongo::Operation::MapReduce do
         expect(op.spec).to be(spec)
       end
     end
+
+    context 'collection' do
+
+      it 'sets the collection' do
+        expect(op.collection).to be(collection)
+      end
+    end
   end
 
   describe '#==' do
 
     context ' when two ops have different specs' do
       let(:other_selector) do
-        { :mapreduce => 'other_test_coll',
-          :map => '',
+        { :map => 'function() {}',
           :reduce => '',
         }
       end
       let(:other_spec) do
         { :selector => other_selector,
-          :opts => {},
-          :db_name => db_name,
+          :opts => {}
         }
       end
-      let(:other) { described_class.new(other_spec) }
+      let(:other) { described_class.new(collection, other_spec) }
+
+      it 'returns false' do
+        expect(op).not_to eq(other)
+      end
+    end
+
+    context 'when two ops have the same collection' do
+      let(:other) { described_class.new(collection, spec) }
+
+      it 'returns true' do
+        expect(op).to eq(other)
+      end
+    end
+
+    context 'when two ops have different collections' do
+      let(:other_collection) { double('collection') }
+      let(:other) { described_class.new(other_collection, spec) }
 
       it 'returns false' do
         expect(op).not_to eq(other)
@@ -61,9 +81,9 @@ describe Mongo::Operation::MapReduce do
         end
 
         expect(Mongo::Protocol::Query).to receive(:new) do |db, coll, sel, options|
-          expect(db).to eq(db_name)
+          expect(db).to eq(collection.database.name)
           expect(coll).to eq(Mongo::Operation::COMMAND_COLLECTION_NAME)
-          expect(sel).to eq(selector)
+          expect(sel).to eq(selector.merge('mapreduce' => collection.name))
           expect(options).to eq(opts)
         end
         op.execute(primary_context)
@@ -71,12 +91,6 @@ describe Mongo::Operation::MapReduce do
     end
 
     context 'connection' do
-      let(:selector) do
-        { :mapreduce => 'test_coll',
-          :map       => '',
-          :reduce    => ''
-        }
-      end
 
       it 'dispatches the message on the connection' do
         allow_any_instance_of(Mongo::ServerPreference::Primary).to receive(:server) do
@@ -92,8 +106,7 @@ describe Mongo::Operation::MapReduce do
 
       context 'when out is inline and server is a secondary' do
         let(:selector) do
-          { :mapreduce => 'test_coll',
-            :map       => '',
+          { :map       => '',
             :reduce    => '',
             :out       => 'inline'
           }
@@ -110,8 +123,7 @@ describe Mongo::Operation::MapReduce do
 
       context 'when out is a collection and server is a secondary' do
         let(:selector) do
-          { :mapreduce => 'test_coll',
-            :map       => '',
+          { :map       => '',
             :reduce    => '',
             :out       => 'other_coll'
           }

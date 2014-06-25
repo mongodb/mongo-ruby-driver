@@ -29,23 +29,21 @@ module Mongo
         # @example
         #   include Mongo
         #   include Operation
-        #   Read::GetMore.new({ :to_return => 50,
-        #                       :cursor_id => 1,
-        #                       :db_name   => 'test_db',
-        #                       :coll_name => 'test_coll' })
+        #   Read::GetMore.new(collection, 
+        #                     :to_return => 50,
+        #                     :cursor_id => 1)
         #
+        # @param [ Collection ] collection The collection on which the
+        #   get more will be executed.
         # @param [ Hash ] spec The specifications for the operation.
         #
         # @option spec :to_return [ Integer ] The number of results to return.
         # @option spec :cursor_id [ Integer ] The id of the cursor.
-        # @option spec :db_name [ String ] The name of the database on which
-        #   the operation should be executed.
-        # @option spec :coll_name [ String ] The name of the collection on which
-        #   the operation should be executed.
         #
         # @since 3.0.0
-        def initialize(spec)
-          @spec = spec
+        def initialize(collection, spec)
+          @collection = collection
+          @spec       = spec
         end
 
         private

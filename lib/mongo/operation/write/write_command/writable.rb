@@ -27,17 +27,17 @@ module Mongo
 
           # Initialize the write command.
           #
+          # @param [ Collection ] collection The collection on which the write command
+          #   will be executed.
           # @param [ Hash ] spec The specifications for the write command.
-          # @param [ Hash ] context The context for executing this operation.
           #
           # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
-          # @option spec :ordered [ true, false ] Whether execution should halt after
-          #   the first error encountered on the server.
           # @option spec :opts [ Hash ] Options for the command.
           #
           # @since 3.0.0
-          def initialize(spec)
-            @spec = spec
+          def initialize(collection, spec)
+            @collection = collection
+            @spec       = spec
           end
 
           private

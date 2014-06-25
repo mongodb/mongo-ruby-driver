@@ -37,7 +37,8 @@ module Mongo
       # @since 3.0.0
       def ==(other)
         # @todo: check db name and map, reduce explicitly
-        spec[:selector] == other.spec[:selector]
+        collection == other.collection &&
+          spec[:selector] == other.spec[:selector]
       end
       alias_method :eql?, :==
 
@@ -46,21 +47,21 @@ module Mongo
       # @example
       #   include Mongo
       #   include Operation
-      #   MapReduce.new({ :selector => { :mapreduce => 'test_coll',
-      #                                  :map => '',
-      #                                  :reduce => '' },
-      #                   :db_name  => 'test_db' })
+      #   MapReduce.new(collection,
+      #                 :selector => { :map => '',
+      #                                :reduce => '' })
       #
+      # @param [ Collection ] collection The collection on which the map
+      #   reduce will be executed.
       # @param [ Hash ] spec The specifications for the operation.
       #
       # @option spec :selector [ Hash ] The map reduce selector.
-      # @option spec :db_name [ String ] The name of the database on which
-      #   the operation should be executed.
       # @option spec :opts [ Hash ] Options for the map reduce command.
       #
       # @since 3.0.0
-      def initialize(spec)
-        @spec = spec
+      def initialize(collection, spec)
+        @collection = collection
+        @spec       = spec
       end
 
       # Execute the operation.
@@ -93,7 +94,7 @@ module Mongo
       #
       # @since 3.0.0
       def selector
-        @spec[:selector]
+        @spec[:selector].merge('mapreduce' => coll_name)
       end
 
       # Any options for this map reduce command operation.

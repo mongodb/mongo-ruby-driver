@@ -36,8 +36,8 @@ module Mongo
       #
       # @since 3.0.0
       def ==(other)
-        spec[:selector][:aggregate] == other.spec[:selector][:aggregate] &&
-            spec[:selector][:pipeline] == other.spec[:selector][:pipeline]
+        collection == other.collection &&
+          spec[:selector][:pipeline] == other.spec[:selector][:pipeline]
       end
       alias_method :eql?, :==
 
@@ -46,20 +46,20 @@ module Mongo
       # @example
       #   include Mongo
       #   include Operation
-      #   Aggregate.new({ :selector => { :aggregate => 'test_coll',
-      #                                  :pipeline => [{ '$out' => 'test-out' }] },
-      #                   :db_name  => 'test_db' })
+      #   Aggregate.new(collection,
+      #                 :selector => { :pipeline => [{ '$out' => 'test-out' }] })
       #
+      # @param [ Collection ] collection The collection on which the aggregation will
+      #   be executed.
       # @param [ Hash ] spec The specifications for the operation.
       #
       # @option spec :selector [ Hash ] The aggregate selector.
-      # @option spec :db_name [ String ] The name of the database on which
-      #   the operation should be executed.
       # @option spec :opts [ Hash ] Options for the aggregate command.
       #
       # @since 3.0.0
-      def initialize(spec)
-        @spec = spec
+      def initialize(collection, spec)
+        @collection = collection
+        @spec       = spec
       end
 
       # Execute the operation.
@@ -92,7 +92,7 @@ module Mongo
       #
       # @since 3.0.0
       def selector
-        @spec[:selector]
+        @spec[:selector].merge('aggregate' => collection.name)
       end
 
       # Any options for this aggregate command operation.

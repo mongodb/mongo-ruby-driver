@@ -6,14 +6,12 @@ describe Mongo::Operation::Write::WriteCommand::Delete do
   let(:deletes) { [{:q => { :foo => 1 }, :limit => 1}] }
   let(:spec) do
     { :deletes       => deletes,
-      :db_name       => db_name,
-      :coll_name     => coll_name,
       :write_concern => write_concern,
       :ordered       => true
     }
   end
 
-  let(:op) { described_class.new(spec) }
+  let(:op) { described_class.new(collection, spec) }
 
   describe '#initialize' do
 
@@ -23,6 +21,13 @@ describe Mongo::Operation::Write::WriteCommand::Delete do
         expect(op.spec).to eq(spec)
       end
     end
+
+    context 'collection' do
+
+      it 'sets the collection' do
+        expect(op.collection).to be(collection)
+      end
+    end
   end
 
   describe '#==' do
@@ -30,7 +35,7 @@ describe Mongo::Operation::Write::WriteCommand::Delete do
     context 'spec' do
 
       context 'when two ops have the same specs' do
-        let(:other) { described_class.new(spec) }
+        let(:other) { described_class.new(collection, spec) }
 
         it 'returns true' do
           expect(op).to eq(other)
@@ -41,13 +46,31 @@ describe Mongo::Operation::Write::WriteCommand::Delete do
         let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
         let(:other_spec) do
           { :deletes       => other_deletes,
-            :db_name       => db_name,
-            :coll_name     => coll_name,
             :write_concern => write_concern,
             :ordered       => true
           }
         end
-        let(:other) { described_class.new(other_spec) }
+        let(:other) { described_class.new(collection, other_spec) }
+
+        it 'returns false' do
+          expect(op).not_to eq(other)
+        end
+      end
+    end
+
+    context 'collection' do
+
+      context 'when two ops have the same collection' do
+        let(:other) { described_class.new(collection, spec) }
+
+        it 'returns true' do
+          expect(op).to eq(other)
+        end
+      end
+
+      context 'when two ops have different collections' do
+        let(:other_collection) { double('collection') }
+        let(:other) { described_class.new(other_collection, spec) }
 
         it 'returns false' do
           expect(op).not_to eq(other)
@@ -70,7 +93,7 @@ describe Mongo::Operation::Write::WriteCommand::Delete do
       context 'message' do
         let(:expected_selector) do
           { :deletes       => deletes,
-            :delete        => coll_name,
+            :delete        => collection.name,
             :write_concern => write_concern,
             :ordered       => true
           }
@@ -82,7 +105,7 @@ describe Mongo::Operation::Write::WriteCommand::Delete do
           end
 
           expect(Mongo::Protocol::Query).to receive(:new) do |db, coll, sel, options|
-            expect(db).to eq(db_name)
+            expect(db).to eq(collection.database.name)
             expect(coll).to eq(Mongo::Operation::COMMAND_COLLECTION_NAME)
             expect(sel).to eq(expected_selector)
           end

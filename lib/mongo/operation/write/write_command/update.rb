@@ -26,16 +26,13 @@ module Mongo
         # @example
         #   include Mongo
         #   include Operation
-        #   Write::WriteCommand::Update.new({ :updates => [{ :q => { :foo => 1 },
-        #                                                    :u => { :$set =>
-        #                                                            { :bar => 1 }},
-        #                                                    :multi  => true,
-        #                                                    :upsert => false }],
-        #                                     :db_name       => 'test',
-        #                                     :coll_name     => 'test_coll',
-        #                                     :write_concern => write_concern,
-        #                                     :ordered       => true
-        #                                   })
+        #   Write::WriteCommand::Update.new(collection,
+        #                                   :updates => [{ :q => { :foo => 1 },
+        #                                                  :u => { :$set =>
+        #                                                          { :bar => 1 }},
+        #                                                  :multi  => true,
+        #                                                  :upsert => false }],
+        #                                     :write_concern => write_concern)
         #
         # @since 3.0.0
         class Update

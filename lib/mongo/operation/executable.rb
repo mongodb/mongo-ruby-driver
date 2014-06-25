@@ -29,6 +29,13 @@ module Mongo
       # @since 3.0.0
       attr_reader :spec
 
+      # The collection on which the operation will be executed.
+      #
+      # @return [ Collection ] The collection.
+      #
+      # @since 3.0.0
+      attr_reader :collection
+
       # Check equality of two executable operations.
       #
       # @example
@@ -40,7 +47,8 @@ module Mongo
       #
       # @since 3.0.0
       def ==(other)
-        spec == other.spec
+        collection == other.collection &&
+          spec == other.spec
       end
       alias_method :eql?, :==
 
@@ -77,7 +85,7 @@ module Mongo
       #
       # @since 3.0.0
       def db_name
-        @spec[:db_name]
+        @collection.database.name
       end
 
       # The name of the collection to which the operation should be sent.
@@ -86,7 +94,7 @@ module Mongo
       #
       # @since 3.0.0
       def coll_name
-        @spec[:coll_name]
+        @collection.name
       end
     end
   end

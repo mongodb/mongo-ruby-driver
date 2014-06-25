@@ -6,15 +6,17 @@ describe Mongo::Operation::Write::Insert do
   let(:documents) { [{ :foo => 1 }] }
   let(:spec) do
     { :documents     => documents,
-      :db_name       => 'test',
-      :coll_name     => 'test_coll',
-      :write_concern => write_concern,
-      :ordered       => true
+      :write_concern => write_concern
     }
+  end
+  let(:insert_write_cmd) do
+    double('insert_write_cmd').tap do |i|
+      allow(i).to receive(:execute) { [] }
+    end
   end
 
   let(:context) { {} }
-  let(:op) { described_class.new(spec) }
+  let(:op) { described_class.new(collection, spec) }
 
   describe '#initialize' do
 
@@ -24,6 +26,13 @@ describe Mongo::Operation::Write::Insert do
         expect(op.spec).to eq(spec)
       end
     end
+
+    context 'collection' do
+
+      it 'sets the collection' do
+        expect(op.collection).to be(collection)
+      end
+    end
   end
 
   describe '#==' do
@@ -31,7 +40,7 @@ describe Mongo::Operation::Write::Insert do
     context 'spec' do
 
       context 'when two ops have the same specs' do
-        let(:other) { described_class.new(spec) }
+        let(:other) { described_class.new(collection, spec) }
 
         it 'returns true' do
           expect(op).to eq(other)
@@ -42,13 +51,27 @@ describe Mongo::Operation::Write::Insert do
         let(:other_docs) { [{ :bar => 1 }] }
         let(:other_spec) do
           { :documents     => other_docs,
-            :db_name       => 'test',
-            :coll_name     => 'test_coll',
-            :write_concern => { 'w' => 1 },
-            :ordered       => true
+            :write_concern => write_concern,
           }
         end
-        let(:other) { described_class.new(other_spec) }
+        let(:other) { described_class.new(collection, other_spec) }
+
+        it 'returns false' do
+          expect(op).not_to eq(other)
+        end
+      end
+
+      context 'when two ops have the same collection' do
+        let(:other) { described_class.new(collection, spec) }
+
+        it 'returns true' do
+          expect(op).to eq(other)
+        end
+      end
+
+      context 'when two ops have different collections' do
+        let(:other_collection) { double('collection') }
+        let(:other) { described_class.new(other_collection, spec) }
 
         it 'returns false' do
           expect(op).not_to eq(other)
@@ -59,7 +82,7 @@ describe Mongo::Operation::Write::Insert do
 
   describe '#execute' do
 
-    context 'server' do
+    context 'server version' do
 
       context 'when the type is secondary' do
 
@@ -70,18 +93,21 @@ describe Mongo::Operation::Write::Insert do
 
       context 'server has wire version >= 2' do
 
-        #it 'creates a write command insert operation' do
-        #  allow_any_instance_of(Mongo::Operation::Write::WriteCommand::Insert).to receive(:new) do
-        #    double('insert_write_command').tap do |i|
-        #      allow(i).to receive(:execute) { [] }
-        #    end
-        #  end
-        #
-        #  op.execute(primary_context)
-        #end
+        it 'creates a write command insert operation' do
+          expect(Mongo::Operation::Write::WriteCommand::Insert).to receive(:new) do |coll, sp|
+            expect(sp).to eq(spec.merge(:insert => collection.name))
+            expect(coll).to be(collection)
+          end.and_return(insert_write_cmd)
+       
+          op.execute(primary_context)
+        end
 
-        it 'calls execute on the write command insert operation' do
-
+        it 'executes the write command insert operation' do
+          allow(Mongo::Operation::Write::WriteCommand::Insert).to receive(:new) do
+            insert_write_cmd
+          end
+          expect(insert_write_cmd).to receive(:execute) { [] }
+          op.execute(primary_context)
         end
       end
 
@@ -118,10 +144,11 @@ describe Mongo::Operation::Write::Insert do
           end
 
           it 'sends each insert message separately' do
-            #expect(connection).to receive(:dispatch) do |messages|
-            #  expect(documents).to include(messages.first)
-            #end.exactly(documents.length).times
-            #op.execute(primary_context)
+            allow(Mongo::Operation::Write::WriteCommand::Insert).to receive(:new) do
+              insert_write_cmd
+            end
+            expect(connection).to receive(:dispatch).exactly(documents.length)
+            op.execute(primary_context_2_4_version)
           end
         end
       end

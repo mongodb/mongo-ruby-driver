@@ -32,26 +32,23 @@ module Mongo
         # @example
         #   include Mongo
         #   include Operation
-        #   Write::Insert.new({ :documents     => [{ :foo => 1 }],
-        #                       :db_name       => 'test',
-        #                       :coll_name     => 'test_coll',
-        #                       :write_concern => write_concern
-        #                     })
+        #   Write::Insert.new(collection,
+        #                     :documents     => [{ :foo => 1 }],
+        #                     :write_concern => write_concern)
         #
+        # @param [ Collection ] collection The collection into which the documents
+        #   will be inserted.
         # @param [ Hash ] spec The specifications for the insert.
         #
         # @option spec :documents [ Array ] The documents to insert.
-        # @option spec :db_name [ String ] The name of the database.
-        # @option spec :coll_name [ String ] The name of the collection.
         # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
-        # @option spec :ordered [ true, false ] Whether the operations should be
-        #   executed in order.
         # @option spec :opts [ Hash ] Options for the command, if it ends up being a
         #   write command.
         #
         # @since 3.0.0
-        def initialize(spec)
-          @spec = spec
+        def initialize(collection, spec)
+          @collection = collection
+          @spec       = spec
         end
 
         # Execute the operation.
@@ -68,7 +65,7 @@ module Mongo
           raise Exception, "Must use primary server" unless context.primary?
           # @todo: change wire version to constant
           if context.wire_version >= 2
-            op = WriteCommand::Insert.new(spec)
+            op = WriteCommand::Insert.new(collection, spec.merge(:insert => coll_name))
             op.execute(context)
           else
             documents.each do |d|

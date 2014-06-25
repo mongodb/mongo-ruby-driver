@@ -26,12 +26,9 @@ module Mongo
         # @example
         #   include Mongo
         #   include Operation
-        #   Write::WriteCommand::Insert.new({ :documents     => [{ :foo => 1 }],
-        #                                     :db_name       => 'test',
-        #                                     :coll_name     => 'test_coll',
-        #                                     :write_concern => write_concern,
-        #                                     :ordered       => true
-        #                                   })
+        #   Write::WriteCommand::Insert.new(collection,
+        #                                   :documents     => [{ :foo => 1 }],
+        #                                   :write_concern => write_concern)
         # @since 3.0.0
         class Insert
           include Executable

@@ -32,32 +32,27 @@ module Mongo
         # @example
         #   include Mongo
         #   include Operation
-        #   Write::Update.new({ :updates => [{ :q => { :foo => 1 },
-        #                                      :u => { :$set =>
-        #                                              { :bar => 1 }},
-        #                                      :multi  => true,
-        #                                      :upsert => false }],
-        #                       :db_name       => 'test',
-        #                       :coll_name     => 'test_coll',
-        #                       :write_concern => write_concern
-        #                     })
+        #   Write::Update.new(collection,
+        #                     :updates => [{ :q => { :foo => 1 },
+        #                                    :u => { :$set =>
+        #                                            { :bar => 1 }},
+        #                                    :multi  => true,
+        #                                    :upsert => false }],
+        #                     :write_concern => write_concern)
         #
+        # @param [ Collection ] collection The collection in which the update will be
+        #   executed.
         # @param [ Hash ] spec The specifications for the update.
         #
         # @option spec :updates [ Array ] The update documents.
-        # @option spec :db_name [ String ] The name of the database on which
-        #   the query should be run.
-        # @option spec :coll_name [ String ] The name of the collection on which
-        #   the query should be run.
         # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
-        # @option spec :ordered [ true, false ] Whether the operations should be
-        #   executed in order.
         # @option spec :opts [ Hash ] Options for the command, if it ends up being a
         #   write command.
         #
         # @since 3.0.0
-        def initialize(spec)
-          @spec = spec
+        def initialize(collection, spec)
+          @collection = collection
+          @spec       = spec
         end
 
         # Execute the operation.
@@ -74,7 +69,7 @@ module Mongo
           raise Exception, "Must use primary server" unless context.primary?
           # @todo: change wire version to constant
           if context.wire_version >= 2
-            op = WriteCommand::Update.new(spec)
+            op = WriteCommand::Update.new(collection, spec.merge(:update => coll_name))
             op.execute(context)
           else
             updates.each do |d|

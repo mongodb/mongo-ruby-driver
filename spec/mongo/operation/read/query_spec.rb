@@ -7,12 +7,10 @@ describe Mongo::Operation::Read::Query do
   let(:query_opts) { {} }
   let(:spec) do
     { :selector  => selector,
-      :opts      => query_opts,
-      :db_name   => db_name,
-      :coll_name => coll_name
+      :opts      => query_opts
     }
   end
-  let(:op) { described_class.new(spec) }
+  let(:op) { described_class.new(collection, spec) }
 
   describe '#initialize' do
 
@@ -25,18 +23,45 @@ describe Mongo::Operation::Read::Query do
 
   describe '#==' do
 
-    context 'when two ops have different specs' do
-      let(:other_spec) do
-        { :selector  => { :a => 1 },
-          :opts      => query_opts,
-          :db_name   => db_name,
-          :coll_name => coll_name
-        }
-      end
-      let(:other) { described_class.new(other_spec) }
+    context 'spec' do
 
-      it 'returns false' do
-        expect(op).not_to eq(other)
+      context 'when two ops have the same specs' do
+        let(:other) { described_class.new(collection, spec) }
+
+        it 'returns true' do
+          expect(op).to eq(other)
+        end
+      end
+
+      context ' when two ops have different specs' do
+        let(:other_spec) do
+          { :to_return => 50,
+            :cursor_id => 2 }
+        end
+        let(:other) { described_class.new(collection, other_spec) }
+  
+        it 'returns false' do
+          expect(op).not_to eq(other)
+        end
+      end
+    end
+
+    context 'collection' do
+      context 'when two ops have the same collection' do
+        let(:other) { described_class.new(collection, spec) }
+
+        it 'returns true' do
+          expect(op).to eq(other)
+        end
+      end
+
+      context 'when two ops have different collections' do
+        let(:other_collection) { double('collection') }
+        let(:other) { described_class.new(other_collection, spec) }
+
+        it 'returns false' do
+          expect(op).not_to eq(other)
+        end
       end
     end
   end
@@ -47,8 +72,8 @@ describe Mongo::Operation::Read::Query do
 
       it 'creates a query wire protocol message with correct specs' do
         expect(Mongo::Protocol::Query).to receive(:new) do |db, coll, sel, opts|
-          expect(db).to eq(db_name)
-          expect(coll).to eq(coll_name)
+          expect(db).to eq(collection.database.name)
+          expect(coll).to eq(collection.name)
           expect(sel).to eq(selector)
           expect(opts).to eq(query_opts)
         end
