@@ -58,11 +58,11 @@ module Mongo
       #
       # @param [ Mongo::Connection ] connection The connection to logout.
       #
-      # @return [ true ] If logout succeeded.
+      # @return [ Protocol::Reply ] The authentication response.
       #
       # @since 2.0.0
       def logout(connection)
-        connection.dispatch(logout_message(user))
+        connection.dispatch([ logout_message(user) ])
       end
 
       private
@@ -81,7 +81,7 @@ module Mongo
       end
 
       def logout_message(user)
-        Protocol::Query.new(user.database, Database::COMMAND, Auth::LOGOUT)
+        Protocol::Query.new(user.database, Database::COMMAND, Auth::LOGOUT, limit: -1)
       end
     end
   end

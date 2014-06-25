@@ -32,4 +32,22 @@ describe Mongo::Auth::CR do
       end
     end
   end
+
+  describe '#logout' do
+
+    context 'when no user is logged in' do
+
+      let(:cr) do
+        described_class.new(user)
+      end
+
+      let(:login) do
+        cr.logout(connection).documents[0]
+      end
+
+      it 'returns ok' do
+        expect(login["ok"]).to eq(1)
+      end
+    end
+  end
 end
