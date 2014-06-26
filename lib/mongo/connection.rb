@@ -81,7 +81,7 @@ module Mongo
     #
     # @return [ Protocol::Reply ] The reply if needed.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     def dispatch(messages)
       write(messages)
       messages.last.replyable? ? read : self

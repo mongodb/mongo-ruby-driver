@@ -23,7 +23,7 @@ module Mongo
       # and sent instead.
       # See Mongo::Operation::Write::WriteCommand::Update
       #
-      # @since 3.0.0
+      # @since 2.0.0
       class Update
         include Executable
 
@@ -55,7 +55,7 @@ module Mongo
         # @option spec :opts [ Hash ] Options for the command, if it ends up being a
         #   write command.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def initialize(spec)
           @spec = spec
         end
@@ -69,7 +69,7 @@ module Mongo
         #
         # @return [ Mongo::Response ] The operation response, if there is one.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def execute(context)
           raise Exception, "Must use primary server" unless context.primary?
           # @todo: change wire version to constant
@@ -92,7 +92,7 @@ module Mongo
         #
         # @return [ Mongo::WriteConcern::Mode ] The write concern.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def write_concern
           @spec[:write_concern]
         end
@@ -101,7 +101,7 @@ module Mongo
         #
         # @return [ Array ] The update documents.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def updates
           @spec[:updates]
         end
@@ -110,7 +110,7 @@ module Mongo
         #
         # @return [ Mongo::Protocol::Update ] Wire protocol message.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def message(update_spec = {})
           selector    = update_spec[:q]
           update      = update_spec[:u]

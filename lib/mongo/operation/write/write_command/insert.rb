@@ -32,7 +32,7 @@ module Mongo
         #                                     :write_concern => write_concern,
         #                                     :ordered       => true
         #                                   })
-        # @since 3.0.0
+        # @since 2.0.0
         class Insert
           include Executable
           include Writable
@@ -47,7 +47,7 @@ module Mongo
           #
           # @return [ Hash ] The selector describing this insert operation.
           #
-          # @since 3.0.0
+          # @since 2.0.0
           def selector
             { :insert        => coll_name,
               :documents     => @spec[:documents],

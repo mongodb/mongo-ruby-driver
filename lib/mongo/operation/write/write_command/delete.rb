@@ -34,7 +34,7 @@ module Mongo
         #                                     :ordered       => true
         #                                   })
         #
-        # @since 3.0.0
+        # @since 2.0.0
         class Delete
           include Executable
           include Writable
@@ -49,7 +49,7 @@ module Mongo
           #
           # @return [ Hash ] The selector describing this delete operation.
           #
-          # @since 3.0.0
+          # @since 2.0.0
           def selector
             { :delete        => coll_name,
               :deletes       => @spec[:deletes],

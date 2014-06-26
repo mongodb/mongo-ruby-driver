@@ -22,7 +22,7 @@ module Mongo
 
         # Provides common behavior for all write commands.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         module Writable
 
           # Initialize the write command.
@@ -35,7 +35,7 @@ module Mongo
           #   the first error encountered on the server.
           # @option spec :opts [ Hash ] Options for the command.
           #
-          # @since 3.0.0
+          # @since 2.0.0
           def initialize(spec)
             @spec = spec
           end
@@ -46,7 +46,7 @@ module Mongo
           #
           # @return [ Mongo::WriteConcern::Mode ] The write concern.
           #
-          # @since 3.0.0
+          # @since 2.0.0
           def write_concern
             @spec[:write_concern] || DEFAULT_WRITE_CONCERN
           end
@@ -60,7 +60,7 @@ module Mongo
           #
           # @return [ true, false ] Whether batch items are applied sequentially. 
           #
-          # @since 3.0.0
+          # @since 2.0.0
           def ordered?
             @spec[:ordered] ? !!@spec[:ordered] : true
           end
@@ -69,7 +69,7 @@ module Mongo
           #
           # @return [ Hash ] Command options. 
           #
-          # @since 3.0.0
+          # @since 2.0.0
           def opts
             @spec[:opts]
           end
@@ -78,7 +78,7 @@ module Mongo
           #
           # @return [ Mongo::Protocol::Query ] Wire protocol message. 
           #
-          # @since 3.0.0
+          # @since 2.0.0
           def message
             Mongo::Protocol::Query.new(db_name, Mongo::Operation::COMMAND_COLLECTION_NAME,
                                        selector, opts)

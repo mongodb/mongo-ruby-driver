@@ -28,7 +28,7 @@ module Mongo
       #
       # @todo: update to use modeled write concern.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       DEFAULT_WRITE_CONCERN = { 'w' => 1 }.freeze
     end
   end

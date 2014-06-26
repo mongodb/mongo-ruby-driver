@@ -37,7 +37,7 @@ module Mongo
         #                                     :ordered       => true
         #                                   })
         #
-        # @since 3.0.0
+        # @since 2.0.0
         class Update
           include Executable
           include Writable
@@ -52,7 +52,7 @@ module Mongo
           #
           # @return [ Hash ] The selector describing this update operation.
           #
-          # @since 3.0.0
+          # @since 2.0.0
           def selector
             { :update        => coll_name,
               :updates       => @spec[:updates],

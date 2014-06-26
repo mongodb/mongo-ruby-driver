@@ -19,14 +19,14 @@ module Mongo
     # This module contains common functionality for defining an operation
     # and executing it, given a certain context.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     module Executable
 
       # The specifications describing this operation.
       #
       # @return [ Hash ] The specs for the operation.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       attr_reader :spec
 
       # Check equality of two executable operations.
@@ -38,7 +38,7 @@ module Mongo
       #
       # @return [ true, false ] Whether the objects are equal.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def ==(other)
         spec == other.spec
       end
@@ -52,7 +52,7 @@ module Mongo
       #
       # @return [ Mongo::Response ] The operation response, if there is one.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def execute(context)
         raise Exception, "Must use primary server" unless context.primary? || secondary_ok?
         context.with_connection do |connection|
@@ -66,7 +66,7 @@ module Mongo
       #
       # @return [ true, false ] Whether it's ok for this op to go to a secondary.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def secondary_ok?
         true
       end
@@ -75,7 +75,7 @@ module Mongo
       #
       # @return [ String ] Database name.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def db_name
         @spec[:db_name]
       end
@@ -84,7 +84,7 @@ module Mongo
       #
       # @return [ String ] Collection name.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def coll_name
         @spec[:coll_name]
       end

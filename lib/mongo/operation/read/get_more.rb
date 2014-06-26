@@ -20,7 +20,7 @@ module Mongo
 
       # A MongoDB get more operation.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       class GetMore
         include Executable
 
@@ -43,7 +43,7 @@ module Mongo
         # @option spec :coll_name [ String ] The name of the collection on which
         #   the operation should be executed.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def initialize(spec)
           @spec = spec
         end
@@ -54,7 +54,7 @@ module Mongo
         #
         # @return [ Integer ] The number of documents to return.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def to_return
           @spec[:to_return]
         end
@@ -63,7 +63,7 @@ module Mongo
         #
         # @return [ Integer ] The cursor id.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def cursor_id
           @spec[:cursor_id]
         end
@@ -72,7 +72,7 @@ module Mongo
         #
         # @return [ Mongo::Protocol::GetMore ] Wire protocol message.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def message
           Mongo::Protocol::GetMore.new(db_name, coll_name, to_return, cursor_id)
         end

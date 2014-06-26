@@ -18,7 +18,7 @@ module Mongo
 
     # A MongoDB kill cursors operation.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class KillCursors
       include Executable
 
@@ -26,7 +26,7 @@ module Mongo
       #
       # @return [Array] Ids of the cursors to kill.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       attr_reader :cursor_ids
 
       # Initialize the kill cursors operation.
@@ -38,7 +38,7 @@ module Mongo
       #
       # @option spec :cursor_ids [ Array ] The ids of cursors to kill.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize(spec)
         @spec = spec
       end
@@ -49,7 +49,7 @@ module Mongo
       #
       # @return [ Array ] The cursor ids.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def cursor_ids
         @spec[:cursor_ids]
       end
@@ -58,7 +58,7 @@ module Mongo
       #
       # @return [ Mongo::Protocol::KillCursors ] Wire protocol message.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def message
         Mongo::Protocol::KillCursors.new(cursor_ids)
       end

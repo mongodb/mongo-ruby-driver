@@ -32,14 +32,14 @@ module Mongo
     #
     # @return [ String ] The command collection.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     COMMAND_COLLECTION_NAME = '$cmd'
 
     # The default server preference for an operation.
     #
     # @return [ Mongo::ServerPreference::Primary ] A primary server preference.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     DEFAULT_SERVER_PREFERENCE = Mongo::ServerPreference.get(:primary)
   end
 end

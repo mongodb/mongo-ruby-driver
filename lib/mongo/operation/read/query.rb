@@ -20,7 +20,7 @@ module Mongo
 
       # A MongoDB query operation.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       class Query
         include Executable
 
@@ -43,7 +43,7 @@ module Mongo
         #   the query should be run.
         # @option spec :opts [ Hash ] Options for the query.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def initialize(spec)
           @spec = spec
         end
@@ -54,7 +54,7 @@ module Mongo
         #
         # @return [ Hash ] The query selector. 
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def selector
           @spec[:selector]
         end
@@ -63,7 +63,7 @@ module Mongo
         #
         # @return [ Hash ] The query options.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def opts
           @spec[:opts] || {}
         end
@@ -72,7 +72,7 @@ module Mongo
         #
         # @return [ Mongo::Protocol::Query ] Wire protocol message.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def message
           Mongo::Protocol::Query.new(db_name, coll_name, selector, opts)
         end

@@ -19,7 +19,7 @@ module Mongo
     # A MongoDB command operation.
     # Note that a command is actually a query on the virtual '$cmd' collection.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class Command
       include Executable
 
@@ -55,7 +55,7 @@ module Mongo
       #   the command should be executed.
       # @option spec :opts [ Hash ] Options for the command.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize(spec)
         @spec = spec
       end
@@ -71,7 +71,7 @@ module Mongo
       #
       # @return [ Mongo::Response ] The operation response, if there is one.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def execute(context)
         if context.server.secondary? && !secondary_ok?
           warn "Database command '#{selector.keys.first}' rerouted to primary server"
@@ -89,7 +89,7 @@ module Mongo
       #
       # @return [ Hash ] The command selector. 
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def selector
         @spec[:selector]
       end
@@ -98,7 +98,7 @@ module Mongo
       #
       # @return [ Hash ] Command options.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def opts
         @spec[:opts]
       end
@@ -107,7 +107,7 @@ module Mongo
       #
       # @return [ true, false ] If this command can be executed on a secondary.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def secondary_ok?
         command = selector.keys.first.to_s.downcase
         SECONDARY_OK_COMMANDS.include?(command)
@@ -117,7 +117,7 @@ module Mongo
       #
       # @return [ Mongo::Protocol::Query ] Wire protocol message. 
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def message
         Mongo::Protocol::Query.new(db_name, Mongo::Operation::COMMAND_COLLECTION_NAME,
                                    selector, opts)

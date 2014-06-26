@@ -21,7 +21,7 @@ module Mongo
     # return a result set, or can behave like a write operation and
     # output results to a user-specified collection.
     #
-    # @since 3.0.0
+    # @since 2.0.0
     class MapReduce
       include Executable
 
@@ -34,7 +34,7 @@ module Mongo
       #
       # @return [ true, false ] Whether the objects are equal.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def ==(other)
         # @todo: check db name and map, reduce explicitly
         spec[:selector] == other.spec[:selector]
@@ -58,7 +58,7 @@ module Mongo
       #   the operation should be executed.
       # @option spec :opts [ Hash ] Options for the map reduce command.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def initialize(spec)
         @spec = spec
       end
@@ -74,7 +74,7 @@ module Mongo
       #
       # @return [ Mongo::Response ] The operation response, if there is one.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def execute(context)
         if context.server.secondary? && !secondary_ok?
           warn "Database command '#{selector.keys.first}' rerouted to primary server"
@@ -91,7 +91,7 @@ module Mongo
       #
       # @return [ Hash ] The selector describing this map reduce operation.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def selector
         @spec[:selector]
       end
@@ -100,7 +100,7 @@ module Mongo
       #
       # @return [ Hash ] The command options.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def opts
         @spec[:opts] || {}
       end
@@ -111,7 +111,7 @@ module Mongo
       #
       # @return [ true, false ] Whether the operation can be executed on a secondary.
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def secondary_ok?
         out = selector[:out] || selector['out']
         out.nil? || out == 'inline'
@@ -121,7 +121,7 @@ module Mongo
       #
       # @return [ Mongo::Protocol::Query ] Wire protocol message. 
       #
-      # @since 3.0.0
+      # @since 2.0.0
       def message
         Mongo::Protocol::Query.new(db_name, Mongo::Operation::COMMAND_COLLECTION_NAME,
                                    selector, opts)

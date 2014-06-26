@@ -23,7 +23,7 @@ module Mongo
       # will be created and sent instead.
       # See Mongo::Operation::Write::WriteCommand::Insert
       #
-      # @since 3.0.0
+      # @since 2.0.0
       class Insert
         include Executable
 
@@ -49,7 +49,7 @@ module Mongo
         # @option spec :opts [ Hash ] Options for the command, if it ends up being a
         #   write command.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def initialize(spec)
           @spec = spec
         end
@@ -63,7 +63,7 @@ module Mongo
         #
         # @return [ Mongo::Response ] The operation response, if there is one.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def execute(context)
           raise Exception, "Must use primary server" unless context.primary?
           # @todo: change wire version to constant
@@ -86,7 +86,7 @@ module Mongo
         #
         # @return [ Mongo::WriteConcern::Mode ] The write concern.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def write_concern
           @spec[:write_concern]
         end
@@ -95,7 +95,7 @@ module Mongo
         #
         # @return [ Array ] The documents.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def documents
           @spec[:documents]
         end
@@ -104,7 +104,7 @@ module Mongo
         #
         # @return [ Mongo::Protocol::Insert ] Wire protocol message.
         #
-        # @since 3.0.0
+        # @since 2.0.0
         def message(insert_spec)
           document = [insert_spec[:document]]
           insert_spec = insert_spec[:continue_on_error] == 0 ? { } : { :flags => [:continue_on_error] }
