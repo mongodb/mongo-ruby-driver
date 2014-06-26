@@ -28,25 +28,7 @@ describe Mongo::Auth::CR do
 
       # @todo Should probably raise an exception.
       it 'logs the user into the connection' do
-        expect(login["errmsg"]).to eq("auth failed")
-      end
-    end
-  end
-
-  describe '#logout' do
-
-    context 'when no user is logged in' do
-
-      let(:cr) do
-        described_class.new(user)
-      end
-
-      let(:login) do
-        cr.logout(connection).documents[0]
-      end
-
-      it 'returns ok' do
-        expect(login["ok"]).to eq(1)
+        expect(login["errmsg"]).to_not be_nil
       end
     end
   end

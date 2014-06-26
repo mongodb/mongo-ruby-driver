@@ -51,20 +51,6 @@ module Mongo
         connection.dispatch([ login_message(user, nonce[Auth::NONCE]) ])
       end
 
-      # Log the user out of the connection.
-      #
-      # @example Log the user out.
-      #   user.logout(connection)
-      #
-      # @param [ Mongo::Connection ] connection The connection to logout.
-      #
-      # @return [ Protocol::Reply ] The authentication response.
-      #
-      # @since 2.0.0
-      def logout(connection)
-        connection.dispatch([ logout_message(user) ])
-      end
-
       private
 
       def nonce_message(user)
@@ -78,10 +64,6 @@ module Mongo
           { authenticate: 1, user: user.name, nonce: nonce, key: user.auth_key(nonce) },
           limit: -1
         )
-      end
-
-      def logout_message(user)
-        Protocol::Query.new(user.database, Database::COMMAND, Auth::LOGOUT, limit: -1)
       end
     end
   end
