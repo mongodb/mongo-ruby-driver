@@ -13,6 +13,12 @@ describe Mongo::Operation::Write::Delete do
     }
   end
 
+  let(:delete_write_cmd) do
+    double('delete_write_cmd').tap do |d|
+      allow(d).to receive(:execute) { [] }
+    end
+  end
+
   let(:op) { described_class.new(spec) }
 
   describe '#initialize' do
@@ -69,18 +75,20 @@ describe Mongo::Operation::Write::Delete do
 
       context 'server has wire version >= 2' do
 
-        #it 'creates a write command delete operation' do
-        #  allow_any_instance_of(Mongo::Operation::Write::WriteCommand::Delete).to receive(:new) do
-        #    double('delete_write_command').tap do |i|
-        #      allow(i).to receive(:execute) { [] }
-        #    end
-        #  end
-        #
-        #  op.execute(primary_context)
-        #end
+        it 'creates a write command delete operation' do
+          expect(Mongo::Operation::Write::WriteCommand::Delete).to receive(:new) do |sp|
+            expect(sp).to eq(spec)
+          end.and_return(delete_write_cmd)
 
-        it 'calls execute on the write command delete operation' do
+          op.execute(primary_context)
+        end
 
+        it 'executes the write command delete operation' do
+          allow(Mongo::Operation::Write::WriteCommand::Delete).to receive(:new) do
+            delete_write_cmd
+          end
+          expect(delete_write_cmd).to receive(:execute) { [] }
+          op.execute(primary_context)
         end
       end
 
@@ -116,11 +124,12 @@ describe Mongo::Operation::Write::Delete do
              {:q => { :bar => 1 }, :limit => 1}]
           end
 
-          it 'sends each delete message separately' do
-            #expect(connection).to receive(:dispatch) do |messages|
-            #  expect(deletes).to include(messages.first)
-            #end.exactly(deletes.length).times
-            #op.execute(primary_context)
+          it 'sends each insert message separately' do
+            allow(Mongo::Operation::Write::WriteCommand::Delete).to receive(:new) do
+              delete_write_cmd
+            end
+            expect(connection).to receive(:dispatch).exactly(deletes.length)
+            op.execute(primary_context_2_4_version)
           end
         end
       end

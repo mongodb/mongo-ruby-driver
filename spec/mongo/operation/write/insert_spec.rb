@@ -13,6 +13,12 @@ describe Mongo::Operation::Write::Insert do
     }
   end
 
+  let(:insert_write_cmd) do
+    double('insert_write_cmd').tap do |i|
+      allow(i).to receive(:execute) { [] }
+    end
+  end
+
   let(:context) { {} }
   let(:op) { described_class.new(spec) }
 
@@ -70,18 +76,20 @@ describe Mongo::Operation::Write::Insert do
 
       context 'server has wire version >= 2' do
 
-        #it 'creates a write command insert operation' do
-        #  allow_any_instance_of(Mongo::Operation::Write::WriteCommand::Insert).to receive(:new) do
-        #    double('insert_write_command').tap do |i|
-        #      allow(i).to receive(:execute) { [] }
-        #    end
-        #  end
-        #
-        #  op.execute(primary_context)
-        #end
+        it 'creates a write command insert operation' do
+          expect(Mongo::Operation::Write::WriteCommand::Insert).to receive(:new) do |sp|
+            expect(sp).to eq(spec)
+          end.and_return(insert_write_cmd)
 
-        it 'calls execute on the write command insert operation' do
+          op.execute(primary_context)
+        end
 
+        it 'executes the write command insert operation' do
+          allow(Mongo::Operation::Write::WriteCommand::Insert).to receive(:new) do
+            insert_write_cmd
+          end
+          expect(insert_write_cmd).to receive(:execute) { [] }
+          op.execute(primary_context)
         end
       end
 
@@ -118,10 +126,11 @@ describe Mongo::Operation::Write::Insert do
           end
 
           it 'sends each insert message separately' do
-            #expect(connection).to receive(:dispatch) do |messages|
-            #  expect(documents).to include(messages.first)
-            #end.exactly(documents.length).times
-            #op.execute(primary_context)
+            allow(Mongo::Operation::Write::WriteCommand::Insert).to receive(:new) do
+              insert_write_cmd
+            end
+            expect(connection).to receive(:dispatch).exactly(documents.length)
+            op.execute(primary_context_2_4_version)
           end
         end
       end
