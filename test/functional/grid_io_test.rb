@@ -18,7 +18,9 @@ class GridIOTest < Test::Unit::TestCase
 
   context "GridIO" do
     setup do
-      @db = standard_connection.db(TEST_DB)
+      @client = standard_connection
+      add_admin_user(@client)
+      @db = @client.db(TEST_DB)
       @files  = @db.collection('fs.files')
       @chunks = @db.collection('fs.chunks')
       @chunks.create_index([['files_id', Mongo::ASCENDING], ['n', Mongo::ASCENDING]])
@@ -27,6 +29,7 @@ class GridIOTest < Test::Unit::TestCase
     teardown do
       @files.remove
       @chunks.remove
+      clear_admin_user(@client)
     end
 
     context "Options" do

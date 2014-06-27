@@ -79,6 +79,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
 
   def default_setup
     @client = MongoClient.new
+    add_admin_user(@client)
     @db = @client[DATABASE_NAME]
     @collection = @db[COLLECTION_NAME]
     @collection.drop
@@ -103,6 +104,10 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
   context "Bulk API Collection" do
     setup do
       default_setup
+    end
+
+    teardown do
+      clear_admin_user(@client)
     end
 
     should "inspect" do
@@ -195,6 +200,10 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
   context "Bulk API CollectionView" do
     setup do
       default_setup
+    end
+
+    teardown do
+      clear_admin_user(@client)
     end
 
     # ----- INSERT -----

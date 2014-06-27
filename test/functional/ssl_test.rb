@@ -25,5 +25,4 @@ class SSLTest < Test::Unit::TestCase
     @connect_info     = ['server', 27017]
     @bad_connect_info = ['localhost', 27017]
   end
-
 end

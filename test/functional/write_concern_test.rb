@@ -19,10 +19,15 @@ class WriteConcernTest < Test::Unit::TestCase
   context "Write concern propogation: " do
     setup do
       @con = standard_connection
+      add_admin_user(@con)
       @db  = @con[TEST_DB]
       @col = @db['test-safe']
       @col.create_index([[:a, 1]], :unique => true)
       @col.remove
+    end
+
+    teardown do
+      clear_admin_user(@con)
     end
 
     #TODO: add write concern tests for remove
@@ -59,12 +64,17 @@ class WriteConcernTest < Test::Unit::TestCase
   context "Write concern error objects" do
     setup do
       @con = standard_connection
+      add_admin_user(@con)
       @db  = @con[TEST_DB]
       @col = @db['test']
       @col.remove
       @col.insert({:a => 1})
       @col.insert({:a => 1})
       @col.insert({:a => 1})
+    end
+
+    teardown do
+      clear_admin_user(@con)
     end
 
     should "return object on update" do
@@ -83,13 +93,16 @@ class WriteConcernTest < Test::Unit::TestCase
 
   context "Write concern in gridfs" do
     setup do
-      @db = standard_connection.db(TEST_DB)
+      @con = standard_connection
+      add_admin_user(@con)
+      @db = @con.db(TEST_DB)
       @grid = Mongo::GridFileSystem.new(@db)
       @filename = 'sample'
     end
 
     teardown do
       @grid.delete(@filename)
+      clear_admin_user(@con)
     end
 
     should "should acknowledge writes by default using md5" do

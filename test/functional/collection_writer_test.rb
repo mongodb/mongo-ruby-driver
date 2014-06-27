@@ -29,7 +29,8 @@ class CollectionWriterTest < Test::Unit::TestCase
   COLLECTION_NAME = 'test'
 
   def default_setup
-    @client = MongoClient.new
+    @client = standard_connection
+    add_admin_user(@client)
     @db = @client[DATABASE_NAME]
     @collection = @db[COLLECTION_NAME]
     @collection.drop
@@ -38,6 +39,10 @@ class CollectionWriterTest < Test::Unit::TestCase
   context "Bulk API Execute" do
     setup do
       default_setup
+    end
+
+    teardown do
+      clear_admin_user(@client)
     end
 
     should "sort_by_first_sym for grouping unordered ops" do
