@@ -20,6 +20,7 @@ class ThreadingTest < Test::Unit::TestCase
 
   def setup
     @client = standard_connection(:pool_size => 10, :pool_timeout => 30)
+    add_admin_user(@client)
     @db = @client.db(TEST_DB)
     @coll = @db.collection('thread-test-collection')
     @coll.drop
@@ -35,6 +36,10 @@ class ThreadingTest < Test::Unit::TestCase
     end
 
     @unique.create_index("test", :unique => true)
+  end
+
+  def teardown
+    clear_admin_user(@client)
   end
 
   def test_safe_update
