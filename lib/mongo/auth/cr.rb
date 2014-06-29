@@ -48,7 +48,9 @@ module Mongo
       # @since 2.0.0
       def login(connection)
         nonce = connection.dispatch([ nonce_message(user) ]).documents[0]
-        connection.dispatch([ login_message(user, nonce[Auth::NONCE]) ])
+        reply = connection.dispatch([ login_message(user, nonce[Auth::NONCE]) ])
+        raise Unauthorized.new(user) if reply.documents[0]['ok'] == 0
+        reply
       end
 
       private

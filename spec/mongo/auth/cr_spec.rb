@@ -26,9 +26,10 @@ describe Mongo::Auth::CR do
         cr.login(connection).documents[0]
       end
 
-      # @todo Should probably raise an exception.
       it 'logs the user into the connection' do
-        expect(login["errmsg"]).to_not be_nil
+        expect {
+          cr.login(connection)
+        }.to raise_error(Mongo::Auth::Unauthorized)
       end
     end
   end

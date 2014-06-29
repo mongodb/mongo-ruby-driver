@@ -36,5 +36,23 @@ module Mongo
     #
     # @since 2.0.0
     NONCE = 'nonce'.freeze
+
+    class Unauthorized < RuntimeError
+
+      # @return [ Mongo::Auth::User ] The user that was unauthorized.
+      attr_reader :user
+
+      # Instantiate the new error.
+      #
+      # @example Instantiate the error.
+      #   Mongo::Auth::Unauthorized.new(user)
+      #
+      # @param [ Mongo::Auth::User ] user The unauthorized user.
+      #
+      # @since 2.0.0
+      def initialize(user)
+        super("User #{user.name} is not authorized to access #{user.database}.")
+      end
+    end
   end
 end
