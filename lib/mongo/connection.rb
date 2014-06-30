@@ -40,6 +40,19 @@ module Mongo
     # @return [ Mongo::Auth::User ] user The user to login.
     attr_reader :user
 
+    # Is this connection authenticated. Will return true if authorization
+    # details were provided and authentication passed.
+    #
+    # @example Is the connection authenticated?
+    #   connection.authenticated?
+    #
+    # @return [ true, false ] If the connection is authenticated.
+    #
+    # @since 2.0.0
+    def authenticated?
+      !!@authenticated
+    end
+
     # Tell the underlying socket to establish a connection to the host.
     #
     # @example Connect to the host.
@@ -55,6 +68,10 @@ module Mongo
       unless socket
         @socket = address.socket(timeout, ssl_opts)
         @socket.connect!
+        if authenticator
+          authenticator.login(self)
+          @authenticated = true
+        end
       end
       true
     end
@@ -74,6 +91,7 @@ module Mongo
       if socket
         socket.close
         @socket = nil
+        @authenticated = false
       end
       true
     end
@@ -116,42 +134,6 @@ module Mongo
       setup_authentication!
     end
 
-    # Read a reply from the connection.
-    #
-    # @example Read a reply from the connection.
-    #   connection.read
-    #
-    # @return [ Protocol::Reply ] The reply object.
-    #
-    # @since 2.0.0
-    def read
-      ensure_connected do |socket|
-        Protocol::Reply.deserialize(socket)
-      end
-    end
-
-    # Write messages to the connection in a single network call.
-    #
-    # @example Write the messages to the connection.
-    #   connection.write([ insert ])
-    #
-    # @note All messages must be instances of Mongo::Protocol::Message.
-    #
-    # @param [ Array<Message> ] messages The messages to write.
-    # @param [ String ] buffer The buffer to write to.
-    #
-    # @return [ Connection ] The connection itself.
-    #
-    # @since 2.0.0
-    def write(messages, buffer = '')
-      messages.each do |message|
-        message.serialize(buffer)
-      end
-      ensure_connected do |socket|
-        socket.write(buffer)
-      end
-    end
-
     private
 
     attr_reader :socket, :ssl_opts
@@ -161,13 +143,24 @@ module Mongo
       yield socket
     end
 
+    def read
+      ensure_connected{ |socket| Protocol::Reply.deserialize(socket) }
+    end
+
     def setup_authentication!
-      @user = Auth::User.new(
-        options[:auth_source] || options[:database],
-        options[:username],
-        options[:password]
-      )
-      @authenticator = Auth.get(options[:auth_mech]).new(user)
+      if options[:username]
+        @user = Auth::User.new(
+          options[:auth_source] || options[:database],
+          options[:username],
+          options[:password]
+        )
+        @authenticator = Auth.get(options[:auth_mech]).new(user)
+      end
+    end
+
+    def write(messages, buffer = '')
+      messages.each{ |message| message.serialize(buffer) }
+      ensure_connected{ |socket| socket.write(buffer) }
     end
   end
 end
