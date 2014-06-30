@@ -28,7 +28,7 @@ module Mongo
         self
       end
 
-      def write_concern(write_concern)
+      def write_concern(write_concern = nil)
         @bulk_write.write_concern(write_concern)
         self
       end
@@ -76,8 +76,8 @@ module Mongo
                                      :upsert => upsert }],
                  :db_name       => @bulk_write.db_name,
                  :coll_name     => @bulk_write.coll_name,
-                 :write_concern => write_concern,
-                 :ordered       => bulk_write.ordered? }
+                 :write_concern => @bulk_write.get_write_concern,
+                 :ordered       => @bulk_write.ordered? }
 
         op = Mongo::Operation::Write::Update.new(spec)
         @bulk_write.tap do |b|

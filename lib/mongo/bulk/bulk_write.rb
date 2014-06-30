@@ -22,14 +22,15 @@ module Mongo
     #  - Processing responses and behavior for backwards compatibility
     class BulkWrite
 
-      def initialize(collection, ordered = true)
+      def initialize(collection, opts = {})
         @collection = collection
-        @ordered = ordered
+        @ordered = !!opts[:ordered]
         @ops = []
         @write_concern = collection.write_concern
       end
 
       def insert(doc)
+        raise Exception unless valid_doc?(doc)
         spec = { :documents => doc,
                  :db_name => db_name,
                  :coll_name => coll_name,
@@ -45,6 +46,10 @@ module Mongo
       def write_concern(write_concern)
         @write_concern = write_concern
         self
+      end
+
+      def get_write_concern
+        @write_concern
       end
 
       def execute(opts = {})
@@ -78,6 +83,10 @@ module Mongo
 
       # merge ops into appropriately-sized operation messages
       def merge_ops
+      end
+
+      def valid_doc?(doc)
+        doc.is_a?(Hash)
       end
     end
   end
