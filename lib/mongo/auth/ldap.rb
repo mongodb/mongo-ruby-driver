@@ -47,7 +47,7 @@ module Mongo
 
       def login_message(user)
         Protocol::Query.new(
-          user.database,
+          Auth::EXTERNAL,
           Database::COMMAND,
           {
             authenticate: 1,

@@ -25,6 +25,11 @@ module Mongo
   # @since 2.0.0
   module Auth
 
+    # The external database name.
+    #
+    # @since 2.0.0
+    EXTERNAL = '$external'.freeze
+
     # Constant for the nonce command.
     #
     # @since 2.0.0
