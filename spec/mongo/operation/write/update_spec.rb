@@ -18,9 +18,14 @@ describe Mongo::Operation::Write::Update do
       :ordered       => true
     }
   end
+
+  let(:update_write_cmd) do
+    double('update_write_cmd').tap do |u|
+      allow(u).to receive(:execute) { [] }
+    end
+  end
+
   let(:op) { described_class.new(spec) }
-
-
 
   describe '#initialize' do
 
@@ -53,7 +58,7 @@ describe Mongo::Operation::Write::Update do
           { :updates       => other_updates,
             :db_name       => db_name,
             :coll_name     => coll_name,
-            :write_concern => { 'w' => 1 },
+            :write_concern => write_concern,
             :ordered       => true
           }
         end
@@ -79,18 +84,20 @@ describe Mongo::Operation::Write::Update do
 
       context 'server has wire version >= 2' do
 
-        #it 'creates a write command update operation' do
-        #  allow_any_instance_of(Mongo::Operation::Write::WriteCommand::Update).to receive(:new) do
-        #    double('update_write_command').tap do |u|
-        #      allow(u)).to receive(:execute) { [] }
-        #    end
-        #  end
-#
-        #  op.execute(primary_context)
-        #end
+        it 'creates a write command update operation' do
+          expect(Mongo::Operation::Write::WriteCommand::Update).to receive(:new) do |sp|
+            expect(sp).to eq(spec)
+          end.and_return(update_write_cmd)
 
-        it 'calls execute on the write command update operation' do
+          op.execute(primary_context)
+        end
 
+        it 'executes the write command update operation' do
+          allow(Mongo::Operation::Write::WriteCommand::Update).to receive(:new) do
+            update_write_cmd
+          end
+          expect(update_write_cmd).to receive(:execute) { [] }
+          op.execute(primary_context)
         end
       end
 
@@ -133,10 +140,11 @@ describe Mongo::Operation::Write::Update do
           end
 
           it 'sends each update message separately' do
-            #expect(connection).to receive(:dispatch) do |messages|
-            #  expect(updates).to include(messages.first)
-            #end.exactly(updates.length).times
-            #op.execute(primary_context)
+            allow(Mongo::Operation::Write::WriteCommand::Update).to receive(:new) do
+              update_write_cmd
+            end
+            expect(connection).to receive(:dispatch).exactly(updates.length)
+            op.execute(primary_context_2_4_version)
           end
         end
       end

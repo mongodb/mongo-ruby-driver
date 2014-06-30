@@ -36,6 +36,7 @@ module Mongo
       #
       # @since 2.0.0
       def ==(other)
+        # @todo: compare db name as well?
         spec[:selector][:aggregate] == other.spec[:selector][:aggregate] &&
             spec[:selector][:pipeline] == other.spec[:selector][:pipeline]
       end
