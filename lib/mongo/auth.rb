@@ -36,11 +36,6 @@ module Mongo
     # @since 2.0.0
     GET_NONCE = { getnonce: 1 }.freeze
 
-    # Constant for the logout command.
-    #
-    # @since 2.0.0
-    LOGOUT = { logout: 1 }.freeze
-
     # Constant for the nonce field.
     #
     # @since 2.0.0
