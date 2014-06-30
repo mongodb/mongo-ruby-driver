@@ -15,10 +15,10 @@
 module Mongo
   module Auth
 
-    # Defines behaviour for MongoDB-CR authentication.
+    # Defines behaviour for x.509 authentication.
     #
     # @since 2.0.0
-    class CR
+    class X509
       include Executable
 
       # Log the user in on the given connection.
@@ -33,23 +33,18 @@ module Mongo
       #
       # @since 2.0.0
       def login(connection)
-        nonce = connection.dispatch([ nonce_message(user) ]).documents[0]
-        reply = connection.dispatch([ login_message(user, nonce[Auth::NONCE]) ])
+        reply = connection.dispatch([ login_message(user) ])
         raise Unauthorized.new(user) if reply.documents[0]['ok'] == 0
         reply
       end
 
       private
 
-      def nonce_message(user)
-        Protocol::Query.new(user.database, Database::COMMAND, Auth::GET_NONCE, limit: -1)
-      end
-
-      def login_message(user, nonce)
+      def login_message(user)
         Protocol::Query.new(
           user.database,
           Database::COMMAND,
-          { authenticate: 1, user: user.name, nonce: nonce, key: user.auth_key(nonce) },
+          { authenticate: 1, user: user.name, mechanism: 'MONGODB-X509' },
           limit: -1
         )
       end

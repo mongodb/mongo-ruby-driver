@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/auth/executable'
 require 'mongo/auth/cr'
 require 'mongo/auth/user'
+require 'mongo/auth/x509'
 
 module Mongo
 
