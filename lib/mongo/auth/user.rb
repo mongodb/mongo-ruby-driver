@@ -26,6 +26,21 @@ module Mongo
       # @return [ String ] The username.
       attr_reader :name
 
+      # Determine if this user is equal to another.
+      #
+      # @example Check user equality.
+      #   user == other
+      #
+      # @param [ Object ] other The object to compare against.
+      #
+      # @return [ true, false ] If the objects are equal.
+      #
+      # @since 2.0.0
+      def ==(other)
+        return false unless other.is_a?(User)
+        name == other.name && database == other.database && password == other.password
+      end
+
       # Get an authentication key for the user based on a nonce from the
       # server.
       #
@@ -39,6 +54,18 @@ module Mongo
       # @since 2.0.0
       def auth_key(nonce)
         Digest::MD5.hexdigest("#{nonce}#{name}#{password}")
+      end
+
+      # Get the hash key for the user.
+      #
+      # @example Get the hash key.
+      #   user.hash
+      #
+      # @return [ String ] The user hash key.
+      #
+      # @since 2.0.0
+      def hash
+        [ name, database, password ].hash
       end
 
       # Get the user's password.

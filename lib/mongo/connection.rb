@@ -24,8 +24,15 @@ module Mongo
     # @since 2.0.0
     TIMEOUT = 5
 
+    # @return [ Mongo::Auth::CR, Mongo::Auth::X509, Mongo::Auth:LDAP ]
+    #   authenticator The authentication strategy.
+    attr_reader :authenticator
+
     # @return [ Mongo::Server::Address ] address The address to connect to.
     attr_reader :address
+
+    # @return [ Hash ] options The passed in options.
+    attr_reader :options
 
     # @return [ Float ] timeout The connection timeout.
     attr_reader :timeout
@@ -103,11 +110,10 @@ module Mongo
     def initialize(address, timeout = nil, options = {})
       @address  = address
       @timeout  = timeout || TIMEOUT
+      @options  = options
       @ssl_opts = options.reject { |k, v| !k.to_s.start_with?('ssl') }
-      if options[:username]
-
-      end
       @socket   = nil
+      setup_authentication!
     end
 
     # Read a reply from the connection.
@@ -153,6 +159,15 @@ module Mongo
     def ensure_connected
       connect! if socket.nil? || !socket.alive?
       yield socket
+    end
+
+    def setup_authentication!
+      @user = Auth::User.new(
+        options[:auth_source] || options[:database],
+        options[:username],
+        options[:password]
+      )
+      @authenticator = Auth.get(options[:auth_mech]).new(user)
     end
   end
 end

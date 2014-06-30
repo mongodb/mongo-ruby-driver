@@ -198,6 +198,32 @@ describe Mongo::Connection do
         expect(connection.send(:ssl_opts)).to eq(:ssl => true)
       end
     end
+
+    context 'when authentication options are provided' do
+
+      let(:connection) do
+        described_class.new(
+          address,
+          nil,
+          :username => 'test-user',
+          :password => 'password',
+          :database => TEST_DB,
+          :auth_mech => :mongodb_cr
+        )
+      end
+
+      let(:user) do
+        Mongo::Auth::User.new(TEST_DB, 'test-user', 'password')
+      end
+
+      it 'sets the user for the connection' do
+        expect(connection.user).to eq(user)
+      end
+
+      it 'sets the authentication strategy for the connection' do
+        expect(connection.authenticator.user).to eq(user)
+      end
+    end
   end
 
   describe '#read' do
