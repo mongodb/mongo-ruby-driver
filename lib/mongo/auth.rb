@@ -24,6 +24,7 @@ module Mongo
   #
   # @since 2.0.0
   module Auth
+    extend self
 
     # The external database name.
     #
@@ -45,10 +46,53 @@ module Mongo
     # @since 2.0.0
     NONCE = 'nonce'.freeze
 
-    class Unauthorized < RuntimeError
+    # Map the symbols parsed from the URI connection string to strategies.
+    #
+    # @since 2.0.0
+    SOURCES = {
+      # gssapi: Kerberos,
+      mongodb_cr: CR,
+      mongodb_x509: X509,
+      plain: LDAP,
+    }.freeze
 
-      # @return [ Mongo::Auth::User ] The user that was unauthorized.
-      attr_reader :user
+    # Get the authorization strategy for the provided auth mechanism.
+    #
+    # @example Get the strategy.
+    #   Auth.get(:mongodb_cr)
+    #
+    # @param [ Symbol ] mechanism The authorization mechanism.
+    #
+    # @return [ CR, X509, LDAP, Kerberos ] The auth strategy.
+    #
+    # @since 2.0.0
+    def get(mechanism = nil)
+      raise InvalidMechanism.new(mechanism) if mechanism && !SOURCES.has_key?(mechanism)
+      SOURCES[mechanism || :mongodb_cr]
+    end
+
+    # Raised when trying to get an invalid authorization mechanism.
+    #
+    # @since 2.0.0
+    class InvalidMechanism < RuntimeError
+
+      # Instantiate the new error.
+      #
+      # @example Instantiate the error.
+      #   Mongo::Auth::InvalidMechanism.new(:test)
+      #
+      # @param [ Symbol ] mechanism The provided mechanism.
+      #
+      # @since 2.0.0
+      def initialize(mechanism)
+        super("#{mechanism.inspect} is invalid, please use mongodb_cr, mongodb_x509, gssapi or plain.")
+      end
+    end
+
+    # Raised when a user is not authorized on a database.
+    #
+    # @since 2.0.0
+    class Unauthorized < RuntimeError
 
       # Instantiate the new error.
       #
