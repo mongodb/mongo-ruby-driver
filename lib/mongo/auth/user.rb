@@ -26,6 +26,9 @@ module Mongo
       # @return [ String ] The username.
       attr_reader :name
 
+      # @return [ String ] The cleartext password.
+      attr_reader :password
+
       # Determine if this user is equal to another.
       #
       # @example Check user equality.
@@ -53,7 +56,7 @@ module Mongo
       #
       # @since 2.0.0
       def auth_key(nonce)
-        Digest::MD5.hexdigest("#{nonce}#{name}#{password}")
+        Digest::MD5.hexdigest("#{nonce}#{name}#{hashed_password}")
       end
 
       # Get the hash key for the user.
@@ -68,16 +71,16 @@ module Mongo
         [ name, database, password ].hash
       end
 
-      # Get the user's password.
+      # Get the user's hashed password.
       #
-      # @example Get the user's password.
-      #   user.password
+      # @example Get the user's hashed password.
+      #   user.hashed_password
       #
-      # @return [ String ] The password.
+      # @return [ String ] The hashed password.
       #
       # @since 2.0.0
-      def password
-        Digest::MD5.hexdigest("#{name}:mongo:#{@password}")
+      def hashed_password
+        @hashed_password ||= Digest::MD5.hexdigest("#{name}:mongo:#{password}")
       end
 
       # Create the new user.

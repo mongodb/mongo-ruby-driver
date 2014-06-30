@@ -13,7 +13,7 @@ describe Mongo::Auth::User do
     end
 
     let(:expected) do
-      Digest::MD5.hexdigest("#{nonce}#{user.name}#{user.password}")
+      Digest::MD5.hexdigest("#{nonce}#{user.name}#{user.hashed_password}")
     end
 
     it 'returns the users authentication key' do
@@ -30,16 +30,20 @@ describe Mongo::Auth::User do
     it 'sets the name' do
       expect(user.name).to eq('user')
     end
+
+    it 'sets the password' do
+      expect(user.password).to eq('pass')
+    end
   end
 
-  describe '#password' do
+  describe '#hashed_password' do
 
     let(:expected) do
       Digest::MD5.hexdigest("user:mongo:pass")
     end
 
     it 'returns the hashed password' do
-      expect(user.password).to eq(expected)
+      expect(user.hashed_password).to eq(expected)
     end
   end
 end
