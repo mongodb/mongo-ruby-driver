@@ -15,16 +15,16 @@
 module Mongo
   module Auth
 
-    # Defines behaviour for x.509 authentication.
+    # Defines behaviour for LDAP Proxy authentication.
     #
     # @since 2.0.0
-    class X509
+    class LDAP
       include Executable
 
       # The authentication mechinism string.
       #
       # @since 2.0.0
-      MECHANISM = 'MONGODB-X509'.freeze
+      MECHANISM = 'PLAIN'.freeze
 
       # Log the user in on the given connection.
       #
@@ -49,7 +49,13 @@ module Mongo
         Protocol::Query.new(
           user.database,
           Database::COMMAND,
-          { authenticate: 1, user: user.name, mechanism: MECHANISM },
+          {
+            authenticate: 1,
+            user: user.name,
+            password: user.password,
+            digestPassword: false,
+            mechanism: MECHANISM
+          },
           limit: -1
         )
       end

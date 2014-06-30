@@ -14,6 +14,7 @@
 
 require 'mongo/auth/executable'
 require 'mongo/auth/cr'
+require 'mongo/auth/ldap'
 require 'mongo/auth/user'
 require 'mongo/auth/x509'
 
