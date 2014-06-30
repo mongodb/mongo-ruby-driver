@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Mongo::Grid::FS do
 
-  let(:client)   { Mongo::Client.new(['localhost:27017']) }
+  let(:client)   { Mongo::Client.new(['localhost:27017'], :database => TEST_DB) }
   let(:database) { Mongo::Database.new(client, :test) }
   let(:files)    { collection(:fs_files, database) }
   let(:chunks)   { collection(:fs_chunks, database) }

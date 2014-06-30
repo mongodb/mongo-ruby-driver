@@ -8,11 +8,11 @@ describe Mongo::Connection do
 
   describe '#connect!' do
 
-    let(:connection) do
-      described_class.new(address)
-    end
-
     context 'when no socket exists' do
+
+      let(:connection) do
+        described_class.new(address)
+      end
 
       let!(:result) do
         connection.connect!
@@ -37,6 +37,10 @@ describe Mongo::Connection do
 
     context 'when a socket exists' do
 
+      let(:connection) do
+        described_class.new(address)
+      end
+
       before do
         connection.connect!
         connection.connect!
@@ -48,6 +52,13 @@ describe Mongo::Connection do
 
       it 'keeps the socket alive' do
         expect(socket).to be_alive
+      end
+    end
+
+    context 'when user credentials exist' do
+
+      let(:connection) do
+        described_class.new(address, 5)
       end
     end
   end

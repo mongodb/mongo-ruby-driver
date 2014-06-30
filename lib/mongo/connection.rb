@@ -30,6 +30,9 @@ module Mongo
     # @return [ Float ] timeout The connection timeout.
     attr_reader :timeout
 
+    # @return [ Mongo::Auth::User ] user The user to login.
+    attr_reader :user
+
     # Tell the underlying socket to establish a connection to the host.
     #
     # @example Connect to the host.
@@ -101,6 +104,9 @@ module Mongo
       @address  = address
       @timeout  = timeout || TIMEOUT
       @ssl_opts = options.reject { |k, v| !k.to_s.start_with?('ssl') }
+      if options[:username]
+
+      end
       @socket   = nil
     end
 

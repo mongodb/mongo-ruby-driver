@@ -4,7 +4,7 @@ describe Mongo::Collection do
 
   describe '#==' do
 
-    let(:client) { Mongo::Client.new(['127.0.0.1:27017']) }
+    let(:client) { Mongo::Client.new(['127.0.0.1:27017'], :database => TEST_DB) }
     let(:database) { Mongo::Database.new(client, :test) }
     let(:collection) { described_class.new(database, :users) }
 
