@@ -13,15 +13,14 @@ describe Mongo::Bulk::BulkWrite do
   let(:unordered_batch) { described_class.new(collection, :ordered => false) }
 
   context '#insert' do
-    #before(:each) { collection.drop }
 
     context 'hash argument' do
 
       #context 'when there are $-prefixed keys' do
-
+#
       #  it 'raises an exception' do
-      #    expect{ ordered_batch.insert({ '$in' => 'valid' }) }.to raise_exception
-      #    expect{ unordered_batch.insert({ '$in' => 'valid' }) }.to raise_exception
+      #    expect{ ordered_batch.insert('$in' => 'valid') }.to raise_exception
+      #    expect{ unordered_batch.insert('$in' => 'valid') }.to raise_exception
       #  end
       #end
 
@@ -53,41 +52,54 @@ describe Mongo::Bulk::BulkWrite do
     context 'when a document is inserted' do
       let(:doc) { { '_id' => 1 } }
 
-      before(:all) do
+      before do
+        #collection.drop
         #ordered_batch.insert(doc)
+        #result = ordered_batch.execute
+      end
+
+      after do
+        #collection.drop
       end
 
       it 'returns nInserted of 1' do
-        #expect(ordered_batch.execute['nInserted']).to eq(1)
+        #expect(result['nInserted']).to eq(1)
       end
 
       it 'only inserts that document' do
-        #expect(collection.find_one).to eq(doc)
+        #expect(collection.find.to_a).to eq([ doc ])
       end
     end
 
     context '_id not in doc' do
       let(:doc) { {} }
 
-      before(:all) do
+      before do
+        #collection.drop
         #ordered_batch.insert(doc)
+        #result = ordered_batch.execute
+      end
+
+      after do
+        #collection.drop
       end
 
       it 'inserts the doc into the database' do
-        #expect(batch.execute['nInserted']).to eq(1)
+        #expect(result['nInserted']).to eq(1)
       end
 
       it 'generates the _id client-side' do
         #doc = collection.find_one
         #pid = bytes 7 and 8 (counting from zero) of _id, as big-endian unsigned short
-       # expect(pid).to eq(my pid)
+        #expect(pid).to eq(my pid)
       end
     end
   end
 
-  context 'find' do
+  context '#find' do
 
     context 'arguments' do
+
       it 'raises an exception if no args are provided' do
         expect{ ordered_batch.find() }.to raise_exception
       end
@@ -95,7 +107,6 @@ describe Mongo::Bulk::BulkWrite do
   end
 
   context '#update' do
-    #before(:each) { collection.drop }
     let(:update_doc) { { :$set => { 'a' => 1 } } }
 
     context 'when find is not first specified' do
@@ -108,6 +119,7 @@ describe Mongo::Bulk::BulkWrite do
     context 'arguments' do
 
       context 'when a valid update doc is provided' do
+
         it 'does not raise an exception' do
           expect do
             ordered_batch.find({}).update(update_doc)
@@ -115,7 +127,8 @@ describe Mongo::Bulk::BulkWrite do
         end
       end
 
-      context 'when an non-hash argument is passed in' do
+      context 'when a non-hash argument is passed in' do
+
         it 'raises an exception' do
           expect do
             ordered_batch.find({}).update([])
@@ -125,6 +138,7 @@ describe Mongo::Bulk::BulkWrite do
 
       context 'when not all top-level keys are $-operators' do
         let(:update_doc) { { :a => 1 } }
+
         it 'raises an exception' do
           expect do
             ordered_batch.find({}).update(update_doc)
@@ -134,7 +148,7 @@ describe Mongo::Bulk::BulkWrite do
     end
 
     context 'multi updates' do
-      let(:docs) { [{ 'a' => 1 }, { 'a' => 1 }] }
+      let(:docs) { [{ :a => 1 }, { :a => 1 }] }
       let(:expected) do
         docs.each do |doc|
           doc['x'] = 1
@@ -142,13 +156,18 @@ describe Mongo::Bulk::BulkWrite do
       end
 
       before do
+        #collection.drop
         #collection.insert(docs)
-        #ordered_batch.find({}).update({ :$set => { 'x' => 1 } })
+        #ordered_batch.find({}).update(:$set => { :x => 1 })
         #result = ordered_batch.execute
       end
 
+      after do
+        #collection.drop
+      end
+
       it 'applies the update to all matching documents' do
-        #expect(collection.find({ 'x' => 1 }).count).to eq(2)
+        #expect(collection.find(:x => 1).count).to eq(2)
       end
 
       it 'reports nMatched correctly' do
@@ -162,7 +181,6 @@ describe Mongo::Bulk::BulkWrite do
   end
 
   context '#update_one' do
-    #before(:each) { collection.drop }
     let(:update_doc) { { :$set => { 'a' => 1 } } }
 
     context 'when find is not first specified' do
@@ -175,6 +193,7 @@ describe Mongo::Bulk::BulkWrite do
     context 'arguments' do
 
       context 'when a valid update doc is provided' do
+
         it 'does not raise an exception' do
           expect do
             ordered_batch.find({}).update_one(update_doc)
@@ -183,6 +202,7 @@ describe Mongo::Bulk::BulkWrite do
       end
 
       context 'when an non-hash argument is passed in' do
+
         it 'raises an exception' do
           expect do
             ordered_batch.find({}).update_one([])
@@ -192,6 +212,7 @@ describe Mongo::Bulk::BulkWrite do
 
       context 'when not all top-level keys are $-operators' do
         let(:update_doc) { { :a => 1 } }
+
         it 'raises an exception' do
           expect do
             ordered_batch.find({}).update_one(update_doc)
@@ -203,19 +224,24 @@ describe Mongo::Bulk::BulkWrite do
     context 'single update' do
       let(:docs) { [{ 'a' => 1 }, { 'a' => 1 }] }
       let(:expected) do
-        docs.tap do |docs|
-          doc[0] = doc[0].merge('x' => 1)
+        docs.tap do |d|
+          d[0] = d[0].merge('x' => 1)
         end
       end
 
       before do
+        #collection.drop
         #collection.insert(docs)
-        #ordered_batch.find({}).update_one({ :$set => { 'x' => 1 } })
+        #ordered_batch.find({}).update_one(:$set => { :x => 1 })
         #result = ordered_batch.execute
       end
 
+      after do
+        #collection.drop
+      end
+
       it 'applies the update to only one matching document' do
-        #expect(collection.find({ 'x' => 1 }).count).to eq(1)
+        #expect(collection.find(:x => 1).count).to eq(1)
       end
 
       it 'reports nMatched correctly' do
@@ -229,14 +255,14 @@ describe Mongo::Bulk::BulkWrite do
   end
 
   context '#replace' do
-    #before(:each) { collection.drop }
+
     it 'does not exist' do
-      expect{ ordered_batch.find({}).replace({ 'x' => 1 })}.to raise_exception
+      expect{ ordered_batch.find({}).replace(:x => 1)}.to raise_exception
     end
   end
 
   context '#replace_one' do
-    let(:replacement) { { 'a' => 3 } }
+    let(:replacement) { { :a => 3 } }
 
     context 'when find is not first specified' do
 
@@ -248,6 +274,7 @@ describe Mongo::Bulk::BulkWrite do
     context 'arguments' do
 
       context 'when a valid replacement doc is provided' do
+
         it 'does not raise an exception' do
           expect do
             ordered_batch.find({}).replace_one(replacement)
@@ -256,6 +283,7 @@ describe Mongo::Bulk::BulkWrite do
       end
 
       context 'when an non-hash argument is passed in' do
+
         it 'raises an exception' do
           expect do
             ordered_batch.find({}).replace_one([])
@@ -264,7 +292,7 @@ describe Mongo::Bulk::BulkWrite do
       end
 
       context 'when there are some $-operator top-level keys' do
-        let(:replacement) { { :$set => { 'a' => 3 } } }
+        let(:replacement) { { :$set => { :a => 3 } } }
 
         it 'raises an exception' do
 
@@ -276,20 +304,27 @@ describe Mongo::Bulk::BulkWrite do
     end
 
     context 'single replace' do
-      let(:docs) { [{ 'a' => 1 }, { 'a' => 1 }] }
+      let(:replacement) { { :a => 3 } }
+      let(:docs) { [{ :a => 1 }, { :a => 1 }] }
       let(:expected) do
-        docs[0] = { 'a' => 3 }
-        docs
+        docs.tap do |d|
+          d[0] = { 'a' => 3 }
+        end
       end
 
       before do
+        #collection.drop
         #collection.insert(docs)
-        #ordered_batch.find({}).replace_one({ 'a' => 3 })
+        ordered_batch.find({}).replace_one(replacement)
         #result = ordered_batch.execute
       end
 
+      after do
+        #collection.drop
+      end
+
       it 'applies the replacement to only one matching document' do
-        #expect(collection.find({ 'a' => 3 }).count).to eq(1)
+        #expect(collection.find(replacement).count).to eq(1)
       end
 
       it 'reports nMatched correctly' do
@@ -314,25 +349,29 @@ describe Mongo::Bulk::BulkWrite do
     end
 
     context '#upsert.update' do
-      #before(:each) { collection.drop }
       let(:expected) do
         { 'a' => 2, 'x' => 2 }
       end
 
-      context 'when upsert.update is chained with other updates' do
+      context 'when #upsert.update is chained with other updates' do
         before do
-          #ordered_batch.find({ 'a' => 1 }).update({ '$set' => { 'x' => 1 } })
-          #ordered_batch.find({ 'a' => 2 }).upsert.update({ '$set' => { 'x' => 2 } })
+          #collection.drop
+          ordered_batch.find(:a => 1).update(:$set => { :x => 1 })
+          ordered_batch.find(:a => 2).upsert.update(:$set => { :x => 2 })
           #result = ordered_batch.execute
         end
 
+        after do
+          #collection.drop
+        end
+
         it 'reports nModified correctly' do
-          # @todo: nModified is NULL or omitted if legacy server
-          # expect(result['nModified']).to eq(0)
+          #@todo: nModified is NULL or omitted if legacy server
+          #expect(result['nModified']).to eq(0)
         end
 
         it 'reports nUpserted correctly' do
-          # expect(result['nUpserted']).to eq(1)
+          #expect(result['nUpserted']).to eq(1)
         end
 
         it 'only results in one single upserted doc' do
@@ -342,9 +381,14 @@ describe Mongo::Bulk::BulkWrite do
         context 'when the bulk ops are repeated' do
 
           before do
-            #ordered_batch.find('a' => 1).update({ '$set' => { 'x' => 1 } })
-            #ordered_batch.find('a' => 2).upsert.update({ '$set' => { 'x' => 2 } })
+            #collection.drop
+            ordered_batch.find(:a => 1).update(:$set => { :x => 1 })
+            ordered_batch.find(:a => 2).upsert.update(:$set => { 'x' => 2 })
             #result = ordered_batch.execute
+          end
+
+          after do
+            #collection.drop
           end
 
           it 'reports nMatched correctly' do
@@ -358,16 +402,22 @@ describe Mongo::Bulk::BulkWrite do
       end
 
       context 'when the selector matches multiple documents' do
-        let(:docs) { [{ 'a' => 1 }, { 'a' => 1 }] }
+        let(:docs) { [{ :a => 1 }, { :a => 1 }] }
         let(:expected) do
           docs.each do |d|
             d.merge!('x' => 1)
           end
         end
+
         before do
+          #collection.drop
           #collection.insert(docs)
-          #ordered_batch.find('a' => 1).upsert.update({ '$set' => { 'x' => 1 } })
+          #ordered_batch.find(:a => 1).upsert.update(:$set => { 'x' => 1 })
           #result = ordered_batch.execute
+        end
+
+        after do
+          #collection.drop
         end
 
         it 'reports nModified correctly' do
@@ -384,19 +434,17 @@ describe Mongo::Bulk::BulkWrite do
       end
 
       context 'when the document to upsert is 16MB' do
-        #before(:each) { collection.drop }
         let(:max_bson_size) { 4 * 1024 * 1024 } # @todo: minus 30 bytes
         let(:big_string) { 'a' * max_bson_size }
 
         it 'succesfully upserts the doc' do
-          #ordered_batch.find(:a => 1).upsert.update({ '$set' => { :x => big_string } })
+          #ordered_batch.find(:a => 1).upsert.update(:$set => { :x => big_string })
           #expect{ ordered_batch.execute }.not_to raise_error
         end
       end
     end
 
     context '#upsert.update_one' do
-      #before(:each) { collection.drop }
       let(:expected) do
         { 'a' => 2, 'x' => 2 }
       end
@@ -404,9 +452,14 @@ describe Mongo::Bulk::BulkWrite do
       context 'when upsert.update_one is chained with other update_one ops' do
 
         before do
-          ordered_batch.find('a' => 1).update_one('$set' => { 'x' => 1 })
-          ordered_batch.find('a' => 2).upsert.update_one('$set' => { 'x' => 2 })
+          #collection.drop
+          ordered_batch.find(:a => 1).update_one(:$set => { :x => 1 })
+          ordered_batch.find(:a => 2).upsert.update_one(:$set => { :x => 2 })
           #result = ordered_batch.execute
+        end
+
+        after do
+          #collection.drop
         end
 
         it 'reports nModified correctly' do
@@ -436,9 +489,13 @@ describe Mongo::Bulk::BulkWrite do
         end
         before do
           #collection.drop
-          ordered_batch.find('a' => 1).replace_one('x' => 1)
-          ordered_batch.find('a' => 2).upsert.replace_one('x' => 2)
+          ordered_batch.find(:a => 1).replace_one(:x => 1)
+          ordered_batch.find(:a => 2).upsert.replace_one(:x => 2)
           #result = ordered_batch.execute
+        end
+
+        after do
+          #collection.drop
         end
 
         it 'reports nModified correctly' do
@@ -463,11 +520,16 @@ describe Mongo::Bulk::BulkWrite do
         let(:expected) do
           { 'a' => 1, 'x' => 1 }
         end
+
         before do
           #collection.drop
           #collection.insert([{ :a => 1 }, { :a => 2 }])
           ordered_batch.find(:a => 1).upsert.replace_one(:x => 1)
           #result = ordered_batch.execute
+        end
+
+        after do
+          #collection.drop
         end
 
         it 'reports nUpserted correctly' do
@@ -506,6 +568,10 @@ describe Mongo::Bulk::BulkWrite do
         #result = ordered_batch.execute
       end
 
+      after do
+        #collection.drop
+      end
+
       it 'reports nRemoved correctly' do
         #expect(result['nRemoved']).to eq(2)
       end
@@ -521,6 +587,10 @@ describe Mongo::Bulk::BulkWrite do
         #collection.insert([ { :a => 1 }, { :a => 2 }])
         ordered_batch.find(:a => 1).remove
         #result = ordered_batch.execute
+      end
+
+      after do
+        #collection.drop
       end
 
       it 'reports nRemoved correctly' do
@@ -550,6 +620,10 @@ describe Mongo::Bulk::BulkWrite do
         #result = ordered_batch.execute
       end
 
+      after do
+        #collection.drop
+      end
+
       it 'reports nRemoved correctly' do
         #expect(result['nRemoved']).to eq(1)
       end
@@ -558,5 +632,66 @@ describe Mongo::Bulk::BulkWrite do
         #expect(collection.count).to eq(1)
       end
     end
+  end
+
+  context 'mixed operations, unordered' do
+
+  end
+
+  context 'mixed operations, ordered' do
+
+  end
+
+  context 'mixed operations, auth' do
+
+  end
+
+  context 'errors' do
+
+    context 'unordered' do
+
+    end
+
+    context 'ordered' do
+
+    end
+  end
+
+  context 'batch splitting' do
+    context 'max BSON object size' do
+
+    end
+
+    context 'max write batch size' do
+
+    end
+  end
+
+  context 're-running a batch' do
+
+  end
+
+  context 'empty batch' do
+
+  end
+
+  context 'no journal' do
+
+  end
+
+  context 'w > 1 against standalone' do
+
+  end
+
+  context 'wtimeout and duplicate key error' do
+
+  end
+
+  context 'w = 0' do
+
+  end
+
+  context 'failover with mixed versions' do
+
   end
 end
