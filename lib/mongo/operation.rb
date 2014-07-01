@@ -27,14 +27,6 @@ module Mongo
 
   module Operation
 
-    # The name of the virtual collection to which the command 'query' is
-    # sent.
-    #
-    # @return [ String ] The command collection.
-    #
-    # @since 2.0.0
-    COMMAND_COLLECTION_NAME = '$cmd'
-
     # The default server preference for an operation.
     #
     # @return [ Mongo::ServerPreference::Primary ] A primary server preference.

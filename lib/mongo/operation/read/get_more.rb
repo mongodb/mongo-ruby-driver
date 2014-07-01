@@ -74,7 +74,7 @@ module Mongo
         #
         # @since 2.0.0
         def message
-          Mongo::Protocol::GetMore.new(db_name, coll_name, to_return, cursor_id)
+          Protocol::GetMore.new(db_name, coll_name, to_return, cursor_id)
         end
       end
     end

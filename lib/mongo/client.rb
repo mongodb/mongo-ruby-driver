@@ -87,8 +87,7 @@ module Mongo
     def initialize(addresses, options = {})
       @cluster = Cluster.new(self, addresses)
       @options = options
-      db = options[:database]
-      use(db) if db
+      @database = Database.new(self, options[:database])
     end
 
     # Get an inspection of the client as a string.
@@ -109,13 +108,13 @@ module Mongo
     # @example Use the provided database.
     #   client.use(:users)
     #
-    # @param [ String, Symbol ] database_name The name of the database to use.
+    # @param [ String, Symbol ] name The name of the database to use.
     #
-    # @return [ Mongo::Database ] The database now being used.
+    # @return [ Mongo::Client ] The new client with new database.
     #
     # @since 2.0.0
-    def use(database_name)
-      @database = Database.new(self, database_name)
+    def use(name)
+      with(database: name)
     end
 
     # Provides a new client with the passed options merged over the existing
@@ -184,9 +183,7 @@ module Mongo
       # @since 2.0.0
       def connect(connection_string)
         uri = URI.new(connection_string)
-        client = new(uri.servers, uri.options)
-        database = uri.database
-        client.use(database) if database
+        client = new(uri.servers, uri.options.merge(database: uri.database))
         client
       end
     end

@@ -108,7 +108,7 @@ module Mongo
         def message(insert_spec)
           document = [insert_spec[:document]]
           insert_spec = insert_spec[:continue_on_error] == 0 ? { } : { :flags => [:continue_on_error] }
-          Mongo::Protocol::Insert.new(db_name, coll_name, document, insert_spec)
+          Protocol::Insert.new(db_name, coll_name, document, insert_spec)
         end
       end
     end

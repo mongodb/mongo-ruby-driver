@@ -60,7 +60,7 @@ module Mongo
       #
       # @since 2.0.0
       def message
-        Mongo::Protocol::KillCursors.new(cursor_ids)
+        Protocol::KillCursors.new(cursor_ids)
       end
     end
   end

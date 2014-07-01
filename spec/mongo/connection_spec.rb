@@ -8,11 +8,11 @@ describe Mongo::Connection do
 
   describe '#connect!' do
 
-    let(:connection) do
-      described_class.new(address)
-    end
-
     context 'when no socket exists' do
+
+      let(:connection) do
+        described_class.new(address)
+      end
 
       let!(:result) do
         connection.connect!
@@ -37,6 +37,10 @@ describe Mongo::Connection do
 
     context 'when a socket exists' do
 
+      let(:connection) do
+        described_class.new(address)
+      end
+
       before do
         connection.connect!
         connection.connect!
@@ -48,6 +52,29 @@ describe Mongo::Connection do
 
       it 'keeps the socket alive' do
         expect(socket).to be_alive
+      end
+    end
+
+    context 'when user credentials exist' do
+
+      let(:connection) do
+        described_class.new(
+          address,
+          5,
+          :username => 'test-user',
+          :password => 'password',
+          :database => TEST_DB,
+          :auth_mech => :mongodb_cr
+        )
+      end
+
+      context 'when the user is not authorized' do
+
+        it 'raises an error' do
+          expect {
+            connection.connect!
+          }.to raise_error(Mongo::Auth::Unauthorized)
+        end
       end
     end
   end
@@ -187,109 +214,30 @@ describe Mongo::Connection do
         expect(connection.send(:ssl_opts)).to eq(:ssl => true)
       end
     end
-  end
 
-  describe '#read' do
+    context 'when authentication options are provided' do
 
-    let(:connection) do
-      described_class.new(address, 5)
-    end
-
-    let(:documents) do
-      [{ 'name' => 'testing' }]
-    end
-
-    let(:insert) do
-      Mongo::Protocol::Insert.new('mongo_test', 'users', documents)
-    end
-
-    let(:query) do
-      Mongo::Protocol::Query.new('mongo_test', 'users', {})
-    end
-
-    let(:delete) do
-      Mongo::Protocol::Delete.new('mongo_test', 'users', {})
-    end
-
-    before do
-      connection.write([ insert ])
-      connection.write([ query ])
-    end
-
-    # @todo: Can remove this once we have more implemented with global hooks.
-    after do
-      connection.write([ delete ])
-    end
-
-    let(:reply) do
-      connection.read
-    end
-
-    it 'returns the reply from the connection' do
-      expect(reply.documents.first['name']).to eq('testing')
-    end
-  end
-
-  describe '#write' do
-
-    let(:connection) do
-      described_class.new(address, 5)
-    end
-
-    let(:documents) do
-      [{ 'name' => 'testing' }]
-    end
-
-    let(:insert) do
-      Mongo::Protocol::Insert.new('mongo_test', 'users', documents)
-    end
-
-    let(:query) do
-      Mongo::Protocol::Query.new('mongo_test', 'users', {})
-    end
-
-    let(:delete) do
-      Mongo::Protocol::Delete.new('mongo_test', 'users', {})
-    end
-
-    context 'when providing a single message' do
-
-      before do
-        connection.write([ insert ])
-        connection.write([ query ])
+      let(:connection) do
+        described_class.new(
+          address,
+          nil,
+          :username => 'test-user',
+          :password => 'password',
+          :database => TEST_DB,
+          :auth_mech => :mongodb_cr
+        )
       end
 
-      # @todo: Can remove this once we have more implemented with global hooks.
-      after do
-        connection.write([ delete ])
+      let(:user) do
+        Mongo::Auth::User.new(TEST_DB, 'test-user', 'password')
       end
 
-      it 'it writes the message to the socket' do
-        expect(connection.read.documents.first['name']).to eq('testing')
-      end
-    end
-
-    context 'when providing multiple messages' do
-
-      let(:selector) do
-        { :getlasterror => 1 }
+      it 'sets the user for the connection' do
+        expect(connection.user).to eq(user)
       end
 
-      let(:command) do
-        Mongo::Protocol::Query.new('mongo_test', '$cmd', selector, :limit => -1)
-      end
-
-      before do
-        connection.write([ insert, command ])
-      end
-
-      # @todo: Can remove this once we have more implemented with global hooks.
-      after do
-        connection.write([ delete ])
-      end
-
-      it 'it writes the message to the socket' do
-        expect(connection.read.documents.first['ok']).to eq(1.0)
+      it 'sets the authentication strategy for the connection' do
+        expect(connection.authenticator.user).to eq(user)
       end
     end
   end
