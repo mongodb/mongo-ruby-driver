@@ -93,7 +93,7 @@ module Mongo
                  :db_name       => @bulk_write.db_name,
                  :coll_name     => @bulk_write.coll_name,
                  :write_concern => write_concern,
-                 :ordered       => bulk_write.ordered? }
+                 :ordered       => @bulk_write.ordered? }
 
         op = Mongo::Operation::Write::Delete.new(spec)
         @bulk_write.tap do |b|

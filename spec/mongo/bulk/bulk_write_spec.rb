@@ -101,7 +101,7 @@ describe Mongo::Bulk::BulkWrite do
     context 'when find is not first specified' do
 
       it 'raises an exception' do
-        expect{ ordered_batch.update(update)}.to raise_exception
+        expect{ ordered_batch.update(update) }.to raise_exception
       end
     end
 
@@ -156,7 +156,7 @@ describe Mongo::Bulk::BulkWrite do
       end
 
       it 'only applies the update to the matching documents' do
-        #expect(collection.find().to_a).to eq(expected)
+        #expect(collection.find.to_a).to eq(expected)
       end
     end
   end
@@ -168,7 +168,7 @@ describe Mongo::Bulk::BulkWrite do
     context 'when find is not first specified' do
 
       it 'raises an exception' do
-        expect{ ordered_batch.update(update)}.to raise_exception
+        expect{ ordered_batch.update(update) }.to raise_exception
       end
     end
 
@@ -214,7 +214,7 @@ describe Mongo::Bulk::BulkWrite do
         #result = ordered_batch.execute
       end
 
-      it 'applies the update to all matching documents' do
+      it 'applies the update to only one matching document' do
         #expect(collection.find({ 'x' => 1 }).count).to eq(1)
       end
 
@@ -222,8 +222,340 @@ describe Mongo::Bulk::BulkWrite do
         #expect(result['nMatched']).to eq(1)
       end
 
-      it 'only applies the update to the matching documents' do
-        #expect(collection.find().to_a).to eq(expected)
+      it 'only applies the update to one matching document' do
+        #expect(collection.find.to_a).to eq(expected)
+      end
+    end
+  end
+
+  context '#replace' do
+    #before(:each) { collection.drop }
+    it 'does not exist' do
+      expect{ ordered_batch.find({}).replace({ 'x' => 1 })}.to raise_exception
+    end
+  end
+
+  context '#replace_one' do
+    let(:replacement) { { 'a' => 3 } }
+
+    context 'when find is not first specified' do
+
+      it 'raises an exception' do
+        expect{ ordered_batch.replace_one(replacement) }.to raise_exception
+      end
+    end
+
+    context 'arguments' do
+
+      context 'when a valid replacement doc is provided' do
+        it 'does not raise an exception' do
+          expect do
+            ordered_batch.find({}).replace_one(replacement)
+          end.not_to raise_exception
+        end
+      end
+
+      context 'when an non-hash argument is passed in' do
+        it 'raises an exception' do
+          expect do
+            ordered_batch.find({}).replace_one([])
+          end.to raise_exception
+        end
+      end
+
+      context 'when there are some $-operator top-level keys' do
+        let(:replacement) { { :$set => { 'a' => 3 } } }
+
+        it 'raises an exception' do
+
+          expect do
+            ordered_batch.find({}).replace_one(replacement)
+          end.to raise_exception
+        end
+      end
+    end
+
+    context 'single replace' do
+      let(:docs) { [{ 'a' => 1 }, { 'a' => 1 }] }
+      let(:expected) do
+        docs[0] = { 'a' => 3 }
+        docs
+      end
+
+      before do
+        #collection.insert(docs)
+        #ordered_batch.find({}).replace_one({ 'a' => 3 })
+        #result = ordered_batch.execute
+      end
+
+      it 'applies the replacement to only one matching document' do
+        #expect(collection.find({ 'a' => 3 }).count).to eq(1)
+      end
+
+      it 'reports nMatched correctly' do
+        # @todo: nModified is NULL or omitted if legacy server
+        #expect(result['nMatched']).to eq(1)
+      end
+
+      it 'only applies the replacement to one matching document' do
+        #expect(collection.find.to_a).to eq(expected)
+        # @todo: or do collection.distinct('a') == [1,3]
+      end
+    end
+  end
+
+  context '#upsert' do
+
+    context 'when find is not first specified' do
+
+      it 'raises an exception' do
+        expect{ ordered_batch.upsert }.to raise_exception
+      end
+    end
+
+    context '#upsert.update' do
+      #before(:each) { collection.drop }
+      let(:expected) do
+        { 'a' => 2, 'x' => 2 }
+      end
+
+      context 'when upsert.update is chained with other updates' do
+        before do
+          #ordered_batch.find({ 'a' => 1 }).update({ '$set' => { 'x' => 1 } })
+          #ordered_batch.find({ 'a' => 2 }).upsert.update({ '$set' => { 'x' => 2 } })
+          #result = ordered_batch.execute
+        end
+
+        it 'reports nModified correctly' do
+          # @todo: nModified is NULL or omitted if legacy server
+          # expect(result['nModified']).to eq(0)
+        end
+
+        it 'reports nUpserted correctly' do
+          # expect(result['nUpserted']).to eq(1)
+        end
+
+        it 'only results in one single upserted doc' do
+          #expect(collection.find.to_a).to eq(expected)
+        end
+
+        context 'when the bulk ops are repeated' do
+
+          before do
+            #ordered_batch.find('a' => 1).update({ '$set' => { 'x' => 1 } })
+            #ordered_batch.find('a' => 2).upsert.update({ '$set' => { 'x' => 2 } })
+            #result = ordered_batch.execute
+          end
+
+          it 'reports nMatched correctly' do
+            #expect(result['nMatched']).to eq(1)
+          end
+
+          it 'reports nUpserted correctly' do
+            #expect(result['nUpserted']).to eq(0)
+          end
+        end
+      end
+
+      context 'when the selector matches multiple documents' do
+        let(:docs) { [{ 'a' => 1 }, { 'a' => 1 }] }
+        let(:expected) do
+          docs.each do |d|
+            d.merge!('x' => 1)
+          end
+        end
+        before do
+          #collection.insert(docs)
+          #ordered_batch.find('a' => 1).upsert.update({ '$set' => { 'x' => 1 } })
+          #result = ordered_batch.execute
+        end
+
+        it 'reports nModified correctly' do
+          #expect(result['nModified']).to eq(2)
+        end
+
+        it 'reports nMatched correctly' do
+          #expect(result['nMatched']).to eq(2)
+        end
+
+        it 'applies the update to all matching documents' do
+          #expect(collection.find.to_a).to eq(expected)
+        end
+      end
+
+      context 'when the document to upsert is 16MB' do
+        #before(:each) { collection.drop }
+        let(:max_bson_size) { 4 * 1024 * 1024 } # @todo: minus 30 bytes
+        let(:big_string) { 'a' * max_bson_size }
+
+        it 'succesfully upserts the doc' do
+          #ordered_batch.find(:a => 1).upsert.update({ '$set' => { :x => big_string } })
+          #expect{ ordered_batch.execute }.not_to raise_error
+        end
+      end
+    end
+
+    context '#upsert.update_one' do
+      #before(:each) { collection.drop }
+      let(:expected) do
+        { 'a' => 2, 'x' => 2 }
+      end
+
+      context 'when upsert.update_one is chained with other update_one ops' do
+
+        before do
+          ordered_batch.find('a' => 1).update_one('$set' => { 'x' => 1 })
+          ordered_batch.find('a' => 2).upsert.update_one('$set' => { 'x' => 2 })
+          #result = ordered_batch.execute
+        end
+
+        it 'reports nModified correctly' do
+          # @todo: nModified is NULL or omitted if legacy server
+          #expect(result['nModified']).to eq(0)
+        end
+
+        it 'reports nUpserted correctly' do
+          #expect(result['nUpserted']).to eq(1)
+        end
+
+        it 'reports nMatched correctly' do
+          #expect(result['nMatched']).to eq(0)
+        end
+
+        it 'applies the correct writes' do
+          #expect(collection.find.to_a).to eq(expected)
+        end
+      end
+    end
+
+    context '#upsert.replace_one' do
+
+      context 'when upsert.replace_one is chained with other replace_one ops' do
+        let(:expected) do
+          { 'x' => 2 }
+        end
+        before do
+          #collection.drop
+          ordered_batch.find('a' => 1).replace_one('x' => 1)
+          ordered_batch.find('a' => 2).upsert.replace_one('x' => 2)
+          #result = ordered_batch.execute
+        end
+
+        it 'reports nModified correctly' do
+          # @todo: nModified is NULL or omitted if legacy server
+          #expect(result['nModified']).to eq(0)
+        end
+
+        it 'reports nUpserted correctly' do
+          #expect(result['nUpserted']).to eq(1)
+        end
+
+        it 'reports nMatched correctly' do
+          #expect(result['nMatched']).to eq(0)
+        end
+
+        it 'applies the correct writes' do
+          #expect(collection.find.to_a).to eq(expected)
+        end
+      end
+
+      context 'one single document replacement' do
+        let(:expected) do
+          { 'a' => 1, 'x' => 1 }
+        end
+        before do
+          #collection.drop
+          #collection.insert([{ :a => 1 }, { :a => 2 }])
+          ordered_batch.find(:a => 1).upsert.replace_one(:x => 1)
+          #result = ordered_batch.execute
+        end
+
+        it 'reports nUpserted correctly' do
+          #expect(result['nUpserted']).to eq(0)
+        end
+
+        it 'reports nMatched correctly' do
+          #expect(result['nMatched']).to eq(1)
+        end
+
+        it 'reports nModified correctly' do
+          #expect(result['nMatched']).to eq(1)
+        end
+
+        it 'applies the correct writes' do
+          #expect(collection.find.to_a).to eq(expected)
+        end
+      end
+    end
+  end
+
+  context '#remove' do
+
+    context 'when find is not first specified' do
+
+      it 'raises an exception' do
+        expect{ ordered_batch.remove }.to raise_exception
+      end
+    end
+
+    context 'empty query selector' do
+      before do
+        #collection.drop
+        #collection.insert([ { :a => 1 }, { :a => 1 }])
+        ordered_batch.find({}).remove
+        #result = ordered_batch.execute
+      end
+
+      it 'reports nRemoved correctly' do
+        #expect(result['nRemoved']).to eq(2)
+      end
+
+      it 'removes all documents' do
+        #expect(collection.find.to_a).to eq([])
+      end
+    end
+
+    context 'non-empty query selector' do
+      before do
+        #collection.drop
+        #collection.insert([ { :a => 1 }, { :a => 2 }])
+        ordered_batch.find(:a => 1).remove
+        #result = ordered_batch.execute
+      end
+
+      it 'reports nRemoved correctly' do
+        #expect(result['nRemoved']).to eq(1)
+      end
+
+      it 'removes only matching documents' do
+        #expect(collection.find.to_a).to eq({ :a => 2 })
+      end
+    end
+  end
+
+  context '#remove_one' do
+
+    context 'when find is not first specified' do
+
+      it 'raises an exception' do
+        expect{ ordered_batch.remove_one }.to raise_exception
+      end
+    end
+
+    context 'multiple matching documents' do
+      before do
+        #collection.drop
+        #collection.insert([ { :a => 1 }, { :a => 1 }])
+        ordered_batch.find(:a => 1).remove_one
+        #result = ordered_batch.execute
+      end
+
+      it 'reports nRemoved correctly' do
+        #expect(result['nRemoved']).to eq(1)
+      end
+
+      it 'removes only matching documents' do
+        #expect(collection.count).to eq(1)
       end
     end
   end
