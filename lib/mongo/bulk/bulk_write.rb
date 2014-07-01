@@ -25,46 +25,28 @@ module Mongo
       def initialize(collection, opts = {})
         @collection = collection
         @ordered = !!opts[:ordered]
-        @ops = []
-        @write_concern = collection.write_concern
+        @batches = [ Batch.new ]
       end
 
       def insert(doc)
         raise Exception unless valid_doc?(doc)
+
         spec = { :documents => doc,
                  :db_name => db_name,
-                 :coll_name => coll_name,
-                 :write_concern => @write_concern }
+                 :coll_name => coll_name }
+
         op = Mongo::Operation::Write::Insert.new(spec)
-        push_op(op)
+        current_batch << op
       end
 
       def find(q)
         BulkCollectionView.new(self, q)
       end
 
-      def write_concern(write_concern)
-        @write_concern = write_concern
-        self
-      end
-
-      def get_write_concern
-        @write_concern
-      end
-
-      def execute(opts = {})
-        merge_ops unless ordered?
-        wc = opts[:write_concern] ? opts[:write_concern] : @write_concern
-        merge_ops if @ordered
-        @ops.each do |op|
-          response = op.execute(wc)
-          # stuff for bookkeeping
-        end
-      end
-
-      def push_op(op)
-        @ops << op
-        self
+      def execute(write_concern = nil)
+        current_batch.execute(ordered?,
+                            write_concern || @collection.write_concern)
+        @batches << Batch.new
       end
 
       def db_name
@@ -79,14 +61,76 @@ module Mongo
         @ordered
       end
 
+      def push_op(op)
+        current_batch << op
+      end
+      alias_method :<<, :push_op
+
       private
 
-      # merge ops into appropriately-sized operation messages
-      def merge_ops
+      def current_batch
+        @batches.last
       end
 
       def valid_doc?(doc)
         doc.is_a?(Hash)
+      end
+    end
+
+    class Batch
+
+      def initialize
+        @ops = []
+        @executed = false
+      end
+
+      def push_op(op)
+        @ops << op
+      end
+      alias_method :<<, :push_op
+
+      def execute(ordered, write_concern)
+        raise Exception if @ops.empty?
+        raise Exception if @executed
+
+        @executed = true
+        prepare_ops(ordered)
+        @ops.each do |op|
+          response = op.execute(wc)
+          # stuff for bookkeeping
+        end
+      end
+
+      private
+
+      # merge ops into appropriately-sized operation messages
+      def prepare_ops(ordered)
+        if ordered
+          ordered_merge
+        else
+          unordered_merge
+        end
+      end
+
+      def ordered_merge
+        @ops.inject([]) do |memo, op|
+          previous_op = memo.last
+          if previous_op.class == op.class && !previous_op.at_max_size?
+            memo << previous_op.merge(op)
+          else
+            memo << op
+          end
+        end
+      end
+
+      def unordered_merge
+        @ops.inject({}) do |memo, op|
+          if memo[op.class]
+            memo[op.class] << op
+          else
+            memo[op.class] = [ op ]
+          end
+        end
       end
     end
   end
