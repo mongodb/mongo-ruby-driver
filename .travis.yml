@@ -20,7 +20,7 @@ env: CI="travis"
 script: bundle exec rake spec:ci
 
 before_script:
-  - mongo ruby-driver spec/support/users.js
+  - mongo ruby-driver spec/support/users_24.js
 
 notifications:
   email: false

@@ -35,10 +35,6 @@ RSpec.configure do |config|
   config.include ClusterSimulator::Helpers
   ClusterSimulator.configure(config)
 
-  config.before(:suite) do
-    `mongo ruby-driver ./spec/support/users.js`
-  end
-
   config.after do
     Mongo::Server::Monitor.threads.each do |object_id, thread|
       thread.kill
