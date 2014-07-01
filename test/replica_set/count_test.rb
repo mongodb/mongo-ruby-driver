@@ -20,7 +20,9 @@ class ReplicaSetCountTest < Test::Unit::TestCase
     ensure_cluster(:rs)
     @client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :read => :primary_preferred)
     assert @client.primary_pool
+    ensure_admin_user(@client)
     @primary = MongoClient.new(@client.primary_pool.host, @client.primary_pool.port)
+    ensure_admin_user(@primary)
     @db = @client.db(TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets")

@@ -92,12 +92,14 @@ class ReplicaSetBasicTest < Test::Unit::TestCase
     seeds = @rs.repl_set_seeds
     args = {:name => @rs.repl_set_name}
     @client = MongoReplicaSetClient.new(seeds, args)
+    ensure_admin_user(@client)
     @coll = @client[TEST_DB]['test-write-commands-and-operations']
     with_write_commands_and_operations(@client) do
       @coll.remove
       @coll.insert({:foo => "bar"})
       assert_equal(1, @coll.count)
     end
+    clear_admin_user(@client)
   end
 
   def test_wnote_does_not_raise_exception_with_err_nil
