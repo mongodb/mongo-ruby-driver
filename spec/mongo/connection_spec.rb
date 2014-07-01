@@ -57,23 +57,45 @@ describe Mongo::Connection do
 
     context 'when user credentials exist' do
 
-      let(:connection) do
-        described_class.new(
-          address,
-          5,
-          :username => 'notauser',
-          :password => 'password',
-          :database => TEST_DB,
-          :auth_mech => :mongodb_cr
-        )
-      end
-
       context 'when the user is not authorized' do
+
+        let(:connection) do
+          described_class.new(
+            address,
+            5,
+            :username => 'notauser',
+            :password => 'password',
+            :database => TEST_DB,
+            :auth_mech => :mongodb_cr
+          )
+        end
 
         it 'raises an error' do
           expect {
             connection.connect!
           }.to raise_error(Mongo::Auth::Unauthorized)
+        end
+      end
+
+      context 'when the user is authorized' do
+
+        let(:connection) do
+          described_class.new(
+            address,
+            5,
+            :username => 'test-user',
+            :password => 'password',
+            :database => TEST_DB,
+            :auth_mech => :mongodb_cr
+          )
+        end
+
+        before do
+          connection.connect!
+        end
+
+        it 'sets the connection as authenticated' do
+          expect(connection).to be_authenticated
         end
       end
     end

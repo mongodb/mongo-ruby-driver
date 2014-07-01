@@ -10,13 +10,35 @@ describe Mongo::Auth::CR do
     Mongo::Connection.new(address, 5)
   end
 
-  let(:user) do
-    Mongo::Auth::User.new(TEST_DB, 'driver', 'password')
-  end
-
   describe '#login' do
 
     context 'when the user is not authorized for the database' do
+
+      let(:user) do
+        Mongo::Auth::User.new(TEST_DB, 'driver', 'password')
+      end
+
+      let(:cr) do
+        described_class.new(user)
+      end
+
+      let(:login) do
+        cr.login(connection).documents[0]
+      end
+
+      it 'raises an exception' do
+        expect {
+          cr.login(connection)
+        }.to raise_error(Mongo::Auth::Unauthorized)
+      end
+    end
+  end
+
+  context 'when the user is authorized for the database' do
+
+      let(:user) do
+        Mongo::Auth::User.new(TEST_DB, 'test-user', 'password')
+      end
 
       let(:cr) do
         described_class.new(user)
@@ -27,10 +49,7 @@ describe Mongo::Auth::CR do
       end
 
       it 'logs the user into the connection' do
-        expect {
-          cr.login(connection)
-        }.to raise_error(Mongo::Auth::Unauthorized)
+        expect(cr.login(connection).documents[0]['ok']).to eq(1)
       end
-    end
   end
 end

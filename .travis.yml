@@ -19,6 +19,9 @@ env: CI="travis"
 
 script: bundle exec rake spec:ci
 
+before_script:
+  - mongo ruby-driver spec/support/users.js
+
 notifications:
   email: false
   flowdock: 1da4416b8ff98d1880986472428b1b1b
