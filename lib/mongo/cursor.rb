@@ -134,8 +134,7 @@ module Mongo
     #
     # @return [KillCursors] The +KillCursors+ message.
     def kill_cursors_op
-      Mongo::Operation::KillCursors.new({ :cursor_ids => [@cursor_id] },
-                                        :server => @server)
+      Mongo::Operation::KillCursors.new({ :cursor_ids => [@cursor_id] })
     end
 
     # Send a +KillCursors+ message to the server and set the cursor id to 0.
