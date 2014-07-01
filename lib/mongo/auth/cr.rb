@@ -27,7 +27,6 @@ module Mongo
       #   user.login(connection)
       #
       # @param [ Mongo::Connection ] connection The connection to log into.
-      #   on.
       #
       # @return [ Protocol::Reply ] The authentication response.
       #
