@@ -6,8 +6,8 @@ describe Mongo::Operation::Write::Insert do
   let(:documents) { [{ :foo => 1 }] }
   let(:spec) do
     { :documents     => documents,
-      :db_name       => 'test',
-      :coll_name     => 'test_coll',
+      :db_name       => db_name,
+      :coll_name     => coll_name,
       :write_concern => write_concern,
       :ordered       => true
     }
@@ -59,6 +59,175 @@ describe Mongo::Operation::Write::Insert do
         it 'returns false' do
           expect(op).not_to eq(other)
         end
+      end
+    end
+  end
+
+  describe '#dup' do
+
+    context 'deep copy' do
+
+      it 'copies the list of updates' do
+        copy = op.dup
+        expect(copy.spec[:documents]).not_to be(op.spec[:documents])
+      end
+    end
+  end
+
+  describe '#merge' do
+
+    context 'same collection and database' do
+      let(:other_docs) { [{ :bar => 1 }] }
+      let(:other_spec) do
+        { :documents     => other_docs,
+          :db_name       => db_name,
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'merges the two ops' do
+        expect{ op.merge(other) }.not_to raise_exception
+      end
+    end
+
+    context 'different database' do
+      let(:other_docs) { [{ :bar => 1 }] }
+      let(:other_spec) do
+        { :documents     => other_docs,
+          :db_name       => 'different',
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'raises an exception' do
+        expect{ op.merge(other) }.to raise_exception
+      end
+    end
+
+    context 'different collection' do
+      let(:other_docs) { [{ :bar => 1 }] }
+      let(:other_spec) do
+        { :documents     => other_docs,
+          :db_name       => db_name,
+          :coll_name     => 'different'
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'raises an exception' do
+        expect{ op.merge(other) }.to raise_exception
+      end
+    end
+
+    context 'merged list of documents' do
+      let(:other_docs) { [{ :bar => 1 }] }
+      let(:other_spec) do
+        { :documents     => other_docs,
+          :db_name       => db_name,
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+      let(:expected) { documents << other_docs }
+
+      it 'merges the list of documents' do
+        expect(op.merge(other).spec[:documents]).to eq(expected)
+      end
+    end
+
+    context 'mutability' do
+      let(:other_docs) { [{ :bar => 1 }] }
+      let(:other_spec) do
+        { :documents     => other_docs,
+          :db_name       => db_name,
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'returns a new object' do
+        expect(op.merge(other)).not_to be(op)
+      end
+    end
+  end
+
+  describe '#merge!' do
+
+    context 'same collection and database' do
+      let(:other_docs) { [{ :bar => 1 }] }
+      let(:other_spec) do
+        { :documents     => other_docs,
+          :db_name       => db_name,
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'merges the two ops' do
+        expect{ op.merge!(other) }.not_to raise_exception
+      end
+    end
+
+    context 'different database' do
+      let(:other_docs) { [{ :bar => 1 }] }
+      let(:other_spec) do
+        { :documents     => other_docs,
+          :db_name       => 'different',
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'raises an exception' do
+        expect{ op.merge!(other) }.to raise_exception
+      end
+    end
+
+    context 'different collection' do
+      let(:other_docs) { [{ :bar => 1 }] }
+      let(:other_spec) do
+        { :documents     => other_docs,
+          :db_name       => db_name,
+          :coll_name     => 'different'
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'raises an exception' do
+        expect{ op.merge!(other) }.to raise_exception
+      end
+    end
+
+    context 'merged list of documents' do
+      let(:other_docs) { [{ :bar => 1 }] }
+      let(:other_spec) do
+        { :documents     => other_docs,
+          :db_name       => db_name,
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+      let(:expected) { documents << other_docs }
+
+      it 'merges the list of documents' do
+        expect(op.merge!(other).spec[:documents]).to eq(expected)
+      end
+    end
+
+    context 'mutability' do
+      let(:other_docs) { [{ :bar => 1 }] }
+      let(:other_spec) do
+        { :documents     => other_docs,
+          :db_name       => db_name,
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'mutates the object itself' do
+        expect(op.merge!(other)).to be(op)
       end
     end
   end
