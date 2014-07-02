@@ -84,7 +84,28 @@ module Mongo
           end
         end
 
+        # Merge another delete operation with this one.
+        # Requires that the collection and database of the two ops are the same.
+        #
+        # @params[ Mongo::Operation::Write::Delete ] The other delete operation.
+        #
+        # @return [ self ] This object with the list of deletes merged.
+        #
+        # @since 2.0.0
+        def merge!(other)
+          # @todo: use specific exception
+          raise Exception, "Cannot merge" unless coll_name == other.coll_name &&
+              db_name == other.db_name
+          @spec[:deletes] << other.spec[:deletes]
+          self
+        end
+
         private
+
+        # Dup the list of deletes in the spec if this operation is copied/duped.
+        def initialize_copy(original)
+          @spec[:deletes] = original.spec[:deletes].clone
+        end
 
         # The write concern to use for this operation.
         #
