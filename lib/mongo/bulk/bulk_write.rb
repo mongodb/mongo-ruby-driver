@@ -77,6 +77,7 @@ module Mongo
       end
     end
 
+    # Handles all logic for a chain of ops between executions.
     class Batch
 
       def initialize
@@ -94,43 +95,53 @@ module Mongo
         raise Exception if @executed
 
         @executed = true
-        prepare_ops(ordered)
-        @ops.each do |op|
-          response = op.execute(wc)
-          # stuff for bookkeeping
+        merge_ops(ordered).each do |op|
+          response = op.execute(write_concern)
+          # parse error
+          # indexes and stuff
         end
       end
 
       private
 
       # merge ops into appropriately-sized operation messages
-      def prepare_ops(ordered)
+      def merge_ops(ordered)
         if ordered
-          ordered_merge
+          merge_consecutive_ops(@ops)
         else
-          unordered_merge
+          merge_ops_by_type(@ops)
         end
       end
 
-      def ordered_merge
-        @ops.inject([]) do |memo, op|
+      def merge_consecutive_ops(operations)
+        operations.inject([]) do |memo, op|
           previous_op = memo.last
-          if previous_op.class == op.class && !previous_op.at_max_size?
-            memo << previous_op.merge(op)
+          if previous_op.class == op.class && previous_op.has_space?
+            memo.tap do |m|
+              m[m.size - 1] = previous_op.merge(op)
+            end
           else
             memo << op
           end
         end
       end
 
-      def unordered_merge
-        @ops.inject({}) do |memo, op|
+      def merge_ops_by_type(operations)
+        ops_by_type = operations.inject({}) do |memo, op|
           if memo[op.class]
-            memo[op.class] << op
+            memo.tap do |m|
+              m[op.class] << op
+            end
           else
-            memo[op.class] = [ op ]
+            memo.tap do |m|
+              m[op.class] = [ op ]
+            end
           end
         end
+
+        ops_by_type.keys.inject([]) do |memo, type|
+          memo << merge_consecutive_ops(hash[type])
+        end.flatten
       end
     end
   end

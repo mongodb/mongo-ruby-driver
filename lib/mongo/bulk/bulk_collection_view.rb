@@ -16,19 +16,18 @@ module Mongo
   module Bulk
     class BulkCollectionView
 
-      def initialize(bulk_write, query)
+      def initialize(bulk_write, selector)
         @bulk_write = bulk_write
-        @query      = query
+        @selector   = selector
         @upsert     = false
       end
 
-      # set flags
       def upsert
         @upsert = true
         self
       end
 
-      # terminators
+      # op creators
       def update_one(update_doc)
         raise Exception unless update_doc?(update_doc)
         multi_or_single_update(false, update_doc)
@@ -63,9 +62,9 @@ module Mongo
       end
 
       def multi_or_single_update(multi = false, update_doc)
-        raise Exception unless @query
+        raise Exception unless @selector
 
-        spec = { :updates      => [ {:q => @query,
+        spec = { :updates      => [ {:q => @selector,
                                      :u => update_doc,
                                      :multi => multi,
                                      :upsert => upsert }],
@@ -80,9 +79,9 @@ module Mongo
       end
 
       def multi_or_single_remove(multi = false)
-        raise Exception unless @query
+        raise Exception unless @selector
         
-        spec = { :deletes       => [ {:q => @query,
+        spec = { :deletes       => [ {:q => @selector,
                                       :limit => multi ? nil : 1}],
                  :db_name       => @bulk_write.db_name,
                  :coll_name     => @bulk_write.coll_name,
