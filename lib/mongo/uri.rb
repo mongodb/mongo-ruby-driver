@@ -155,7 +155,7 @@ module Mongo
     UNIX = /\/.+.sock?/
 
     # server Regex: capturing, matches host and port server or unix server
-    serverS = /((?:(?:#{HOSTPORT}|#{UNIX}),?)+)/
+    SERVERS = /((?:(?:#{HOSTPORT}|#{UNIX}),?)+)/
 
     # Database Regex: matches anything but the characters that cannot
     # be part of any MongoDB database name.
@@ -166,7 +166,7 @@ module Mongo
     OPTIONS = /(?:\?(?:(.+=.+)&?)+)*/
 
     # Complete URI Regex: matches all of the combined components
-    URI = /#{SCHEME}#{CREDENTIALS}#{serverS}#{DATABASE}#{OPTIONS}/
+    URI = /#{SCHEME}#{CREDENTIALS}#{SERVERS}#{DATABASE}#{OPTIONS}/
 
     # Hash for storing map of URI option parameters to conversion strategies
     OPTION_MAP = {}
