@@ -86,7 +86,28 @@ module Mongo
           end
         end
 
+        # Merge another update operation with this one.
+        # Requires that the collection and database of the two ops are the same.
+        #
+        # @params[ Mongo::Operation::Write::Update ] The other update operation.
+        #
+        # @return [ self ] This object with the list of updates merged.
+        #
+        # @since 2.0.0
+        def merge!(other)
+          # @todo: use specific exception
+          raise Exception, "Cannot merge" unless coll_name == other.coll_name &&
+              db_name == other.db_name
+          @spec[:updates] << other.spec[:updates]
+          self
+        end
+
         private
+
+        # Dup the list of updates in the spec if this operation is copied/duped.
+        def initialize_copy(original)
+          @spec[:updates] = original.spec[:updates].dup
+        end
 
         # The write concern to use for this operation.
         #
