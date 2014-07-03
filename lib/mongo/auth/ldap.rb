@@ -38,14 +38,14 @@ module Mongo
       #
       # @since 2.0.0
       def login(connection)
-        reply = connection.dispatch([ login_message(user) ])
+        reply = connection.dispatch([ login_message ])
         raise Unauthorized.new(user) if reply.documents[0]['ok'] == 0
         reply
       end
 
       private
 
-      def login_message(user)
+      def login_message
         Protocol::Query.new(
           Auth::EXTERNAL,
           Database::COMMAND,
