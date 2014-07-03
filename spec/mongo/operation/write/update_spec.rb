@@ -138,6 +138,14 @@ describe Mongo::Operation::Write::Update do
       end
     end
 
+    context 'different operation type' do
+      let(:other) { Mongo::Write::Insert.new(spec) }
+
+      it 'raises an exception' do
+        expect{ op.merge(other) }.to raise_exception
+      end
+    end
+
     context 'merged updates' do
       let(:other_updates) { [{:q => { :foo => 1 },
                               :u => { :$set => { :bar => 1 } },
@@ -226,6 +234,14 @@ describe Mongo::Operation::Write::Update do
         }
       end
       let(:other) { described_class.new(other_spec) }
+
+      it 'raises an exception' do
+        expect{ op.merge!(other) }.to raise_exception
+      end
+    end
+
+    context 'different operation type' do
+      let(:other) { Mongo::Write::Insert.new(spec) }
 
       it 'raises an exception' do
         expect{ op.merge!(other) }.to raise_exception

@@ -94,7 +94,8 @@ module Mongo
         # @since 2.0.0
         def merge!(other)
           # @todo: use specific exception
-          raise Exception, "Cannot merge" unless coll_name == other.coll_name &&
+          raise Exception, "Cannot merge" unless self.class == other.class &&
+              coll_name == other.coll_name &&
               db_name == other.db_name
           @spec[:deletes] << other.spec[:deletes]
           self

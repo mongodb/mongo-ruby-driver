@@ -74,6 +74,7 @@ describe Mongo::Operation::Write::Delete do
   end
 
   describe '#merge' do
+
     context 'same collection and database' do
       let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
       let(:other_spec) do
@@ -113,6 +114,14 @@ describe Mongo::Operation::Write::Delete do
         }
       end
       let(:other) { described_class.new(other_spec) }
+
+      it 'raises an exception' do
+        expect{ op.merge(other) }.to raise_exception
+      end
+    end
+
+    context 'different operation type' do
+      let(:other) { Mongo::Write::Update.new(spec) }
 
       it 'raises an exception' do
         expect{ op.merge(other) }.to raise_exception
@@ -191,6 +200,14 @@ describe Mongo::Operation::Write::Delete do
         }
       end
       let(:other) { described_class.new(other_spec) }
+
+      it 'raises an exception' do
+        expect{ op.merge!(other) }.to raise_exception
+      end
+    end
+
+    context 'different operation type' do
+      let(:other) { Mongo::Write::Update.new(spec) }
 
       it 'raises an exception' do
         expect{ op.merge!(other) }.to raise_exception
