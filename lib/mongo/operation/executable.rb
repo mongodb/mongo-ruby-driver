@@ -88,9 +88,22 @@ module Mongo
       # @since 2.0.0
       def merge(other)
         # @todo: use specific exception
-        raise Exception, "Cannot merge" unless coll_name == other.coll_name &&
+        raise Exception, "Cannot merge" unless self.class == other.class &&
+            coll_name == other.coll_name &&
             db_name == other.db_name
         dup.merge!(other)
+      end
+
+      # If an operation including this module doesn't define #merge!, neither
+      # #merge nor #merge! will be allowed.
+      #
+      # @params[ Object ] The other operation.
+      #
+      # @raise [ Exception ] Merging is not supported for this operation.
+      #
+      # @since 2.0.0
+      def merge!(other)
+        raise Exception, "Merging not allowed for this operation type"
       end
 
       private

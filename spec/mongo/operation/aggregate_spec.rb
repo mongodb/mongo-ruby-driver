@@ -49,6 +49,22 @@ describe Mongo::Operation::Aggregate do
     end
   end
 
+  context '#merge' do
+    let(:other_op) { described_class.new(spec) }
+
+    it 'is not allowed' do
+      expect{ op.merge(other_op) }.to raise_exception
+    end
+  end
+
+  context '#merge!' do
+    let(:other_op) { described_class.new(spec) }
+
+    it 'is not allowed' do
+      expect{ op.merge!(other_op) }.to raise_exception
+    end
+  end
+
   describe '#execute' do
 
     context 'message' do
