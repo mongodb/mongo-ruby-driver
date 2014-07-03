@@ -62,6 +62,190 @@ describe Mongo::Operation::Write::Delete do
     end
   end
 
+  describe '#dup' do
+
+    context 'deep copy' do
+
+      it 'copies the list of updates' do
+        copy = op.dup
+        expect(copy.spec[:deletes]).not_to be(op.spec[:deletes])
+      end
+    end
+  end
+
+  describe '#merge' do
+
+    context 'same collection and database' do
+      let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
+      let(:other_spec) do
+        { :deletes       => other_deletes,
+          :db_name       => db_name,
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'merges the two ops' do
+        expect{ op.merge(other) }.not_to raise_exception
+      end
+    end
+
+    context 'different database' do
+      let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
+      let(:other_spec) do
+        { :deletes       => other_deletes,
+          :db_name       => 'different',
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'raises an exception' do
+        expect{ op.merge(other) }.to raise_exception
+      end
+    end
+
+    context 'different collection' do
+      let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
+      let(:other_spec) do
+        { :deletes       => other_deletes,
+          :db_name       => db_name,
+          :coll_name     => 'different'
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'raises an exception' do
+        expect{ op.merge(other) }.to raise_exception
+      end
+    end
+
+    context 'different operation type' do
+      let(:other) { Mongo::Write::Update.new(spec) }
+
+      it 'raises an exception' do
+        expect{ op.merge(other) }.to raise_exception
+      end
+    end
+
+    context 'merged deletes' do
+      let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
+      let(:other_spec) do
+        { :deletes       => other_deletes,
+          :db_name       => db_name,
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+      let(:expected) { deletes << other_deletes }
+
+      it 'merges the list of deletes' do
+        expect(op.merge(other).spec[:deletes]).to eq(expected)
+      end
+    end
+
+    context 'mutability' do
+      let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
+      let(:other_spec) do
+        { :deletes       => other_deletes,
+          :db_name       => db_name,
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'returns a new object' do
+        expect(op.merge(other)).not_to be(op)
+      end
+    end
+  end
+
+  describe '#merge!' do
+    context 'same collection and database' do
+      let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
+      let(:other_spec) do
+        { :deletes       => other_deletes,
+          :db_name       => db_name,
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'merges the two ops' do
+        expect{ op.merge!(other) }.not_to raise_exception
+      end
+    end
+
+    context 'different database' do
+      let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
+      let(:other_spec) do
+        { :deletes       => other_deletes,
+          :db_name       => 'different',
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'raises an exception' do
+        expect{ op.merge!(other) }.to raise_exception
+      end
+    end
+
+    context 'different collection' do
+      let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
+      let(:other_spec) do
+        { :deletes       => other_deletes,
+          :db_name       => db_name,
+          :coll_name     => 'different'
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'raises an exception' do
+        expect{ op.merge!(other) }.to raise_exception
+      end
+    end
+
+    context 'different operation type' do
+      let(:other) { Mongo::Write::Update.new(spec) }
+
+      it 'raises an exception' do
+        expect{ op.merge!(other) }.to raise_exception
+      end
+    end
+
+    context 'merged deletes' do
+      let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
+      let(:other_spec) do
+        { :deletes       => other_deletes,
+          :db_name       => db_name,
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+      let(:expected) { deletes << other_deletes }
+
+      it 'merges the list of deletes' do
+        expect(op.merge!(other).spec[:deletes]).to eq(expected)
+      end
+    end
+
+    context 'mutability' do
+      let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
+      let(:other_spec) do
+        { :deletes       => other_deletes,
+          :db_name       => db_name,
+          :coll_name     => coll_name
+        }
+      end
+      let(:other) { described_class.new(other_spec) }
+
+      it 'mutates the object itself' do
+        expect(op.merge!(other)).to be(op)
+      end
+    end
+  end
+
   describe '#execute' do
 
     context 'server' do

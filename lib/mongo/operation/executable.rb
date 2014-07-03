@@ -60,17 +60,6 @@ module Mongo
         end
       end
 
-      private
-
-      # If it's ok that this operation be sent to a secondary server.
-      #
-      # @return [ true, false ] Whether it's ok for this op to go to a secondary.
-      #
-      # @since 2.0.0
-      def secondary_ok?
-        true
-      end
-
       # The name of the database to which the operation should be sent.
       #
       # @return [ String ] Database name.
@@ -87,6 +76,45 @@ module Mongo
       # @since 2.0.0
       def coll_name
         @spec[:coll_name]
+      end
+
+      # Merge this operation with another operation, returning a new one.
+      # Requires that the collection and database of the two ops are the same.
+      #
+      # @params[ Object ] The other operation.
+      #
+      # @return [ Object ] A new operation merging this one and another.
+      #
+      # @since 2.0.0
+      def merge(other)
+        # @todo: use specific exception
+        raise Exception, "Cannot merge" unless self.class == other.class &&
+            coll_name == other.coll_name &&
+            db_name == other.db_name
+        dup.merge!(other)
+      end
+
+      # If an operation including this module doesn't define #merge!, neither
+      # #merge nor #merge! will be allowed.
+      #
+      # @params[ Object ] The other operation.
+      #
+      # @raise [ Exception ] Merging is not supported for this operation.
+      #
+      # @since 2.0.0
+      def merge!(other)
+        raise Exception, "Merging not allowed for this operation type"
+      end
+
+      private
+
+      # If it's ok that this operation be sent to a secondary server.
+      #
+      # @return [ true, false ] Whether it's ok for this op to go to a secondary.
+      #
+      # @since 2.0.0
+      def secondary_ok?
+        true
       end
     end
   end
