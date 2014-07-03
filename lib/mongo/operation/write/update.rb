@@ -106,6 +106,7 @@ module Mongo
 
         # Dup the list of updates in the spec if this operation is copied/duped.
         def initialize_copy(original)
+          @spec = original.spec.dup
           @spec[:updates] = original.spec[:updates].dup
         end
 

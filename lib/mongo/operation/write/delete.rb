@@ -104,6 +104,7 @@ module Mongo
 
         # Dup the list of deletes in the spec if this operation is copied/duped.
         def initialize_copy(original)
+          @spec = original.spec.dup
           @spec[:deletes] = original.spec[:deletes].clone
         end
 
