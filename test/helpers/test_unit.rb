@@ -17,6 +17,9 @@ TEST_HOST = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost' unless defined? TEST_HO
 TEST_DATA = File.join(File.dirname(__FILE__), '../fixtures/data')
 TEST_BASE = Test::Unit::TestCase
 
+# The error code for authentication-related failures
+AUTH_ERROR = 13
+
 unless defined? TEST_PORT
   TEST_PORT = if ENV['MONGO_RUBY_DRIVER_PORT']
     ENV['MONGO_RUBY_DRIVER_PORT'].to_i
@@ -267,7 +270,7 @@ class Test::Unit::TestCase
         admin.authenticate('admin', 'password')
       rescue OperationFailure => ex
         # if we missed a cleanup somewhere, just attempt to login.
-        admin.authenticate('admin', 'password') if ex.error_code == 13
+        admin.authenticate('admin', 'password') if ex.error_code == AUTH_ERROR
       end
     end
   end
@@ -300,7 +303,7 @@ class Test::Unit::TestCase
       end
     rescue OperationFailure => ex
       # under narrowed localhost exception, getCmdLineOpts is not allowed.
-      return true if client.server_version >= "2.7.1" && ex.error_code == 13
+      return true if client.server_version >= "2.7.1" && ex.error_code == AUTH_ERROR
     end
     false
   end

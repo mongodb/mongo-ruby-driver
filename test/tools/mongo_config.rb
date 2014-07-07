@@ -50,6 +50,9 @@ module Mongo
     MONGODS_OPT_KEYS = [:mongods]
     CLUSTER_OPT_KEYS = SHARDING_OPT_KEYS + REPLICA_OPT_KEYS + MONGODS_OPT_KEYS
 
+    # The error code for authentication-related failure
+    AUTH_ERROR = 13
+
     FLAGS = [:noprealloc, :smallfiles, :logappend, :configsvr, :shardsvr, :quiet, :fastsync, :auth, :ipv6]
 
     DEFAULT_VERIFIES = 60
@@ -400,7 +403,7 @@ module Mongo
           ensure_auth(client) do
             cmd.each do |c|
               response = client[db_name].command(c, opts)
-              if response["ok"] != 1 && response["code"] == 13
+              if response["ok"] != 1 && response["code"] == AUTH_ERROR
                 # if we have an authentcation error, ensure_auth will handle.
                 raise Mongo::AuthenticationError
               elsif response["ok"] != 1 && opts.fetch(:check_response, true)
