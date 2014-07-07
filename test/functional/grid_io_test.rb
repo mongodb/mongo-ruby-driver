@@ -19,7 +19,7 @@ class GridIOTest < Test::Unit::TestCase
   context "GridIO" do
     setup do
       @client = standard_connection
-      add_admin_user(@client)
+      ensure_admin_user(@client)
       @db = @client.db(TEST_DB)
       @files  = @db.collection('fs.files')
       @chunks = @db.collection('fs.chunks')

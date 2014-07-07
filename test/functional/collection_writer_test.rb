@@ -30,7 +30,7 @@ class CollectionWriterTest < Test::Unit::TestCase
 
   def default_setup
     @client = standard_connection
-    add_admin_user(@client)
+    ensure_admin_user(@client)
     @db = @client[DATABASE_NAME]
     @collection = @db[COLLECTION_NAME]
     @collection.drop

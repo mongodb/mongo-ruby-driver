@@ -18,7 +18,7 @@ class GridFileSystemTest < Test::Unit::TestCase
   context "GridFileSystem:" do
     setup do
       @client = standard_connection
-      add_admin_user(@client)
+      ensure_admin_user(@client)
       @db = @client.db(TEST_DB)
     end
 

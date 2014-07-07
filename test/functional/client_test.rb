@@ -22,7 +22,7 @@ class ClientTest < Test::Unit::TestCase
 
   def setup
     @client = standard_connection
-    add_admin_user(@client)
+    ensure_admin_user(@client)
   end
 
   def teardown

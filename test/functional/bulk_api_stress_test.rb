@@ -24,7 +24,7 @@ class BulkApiStressTest < Test::Unit::TestCase
 
   def setup
     @client = standard_connection
-    add_admin_user(@client)
+    ensure_admin_user(@client)
     @db = @client[TEST_DB]
     @coll = @db["bulk-api-stress-tests"]
     @coll.remove

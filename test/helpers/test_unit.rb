@@ -258,7 +258,7 @@ class Test::Unit::TestCase
 
   # For use on version >= 2.7.1, to deal with narrowed localhost exception.
   # Calling this method multiple times in a row should not do anything bad.
-  def add_admin_user(client)
+  def ensure_admin_user(client)
     if auth_enabled?(client) && client.server_version >= "2.7.1"
       begin
         admin = client.db('admin')
@@ -323,7 +323,7 @@ class Test::Unit::TestCase
   end
 
   def with_no_journaling(client, &block)
-    add_admin_user(client)
+    ensure_admin_user(client)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
     unless client.server_version < "2.0" || !cmd_line_args.include?('nojournal')
       yield

@@ -20,7 +20,7 @@ class ThreadingTest < Test::Unit::TestCase
 
   def setup
     @client = standard_connection(:pool_size => 10, :pool_timeout => 30)
-    add_admin_user(@client)
+    ensure_admin_user(@client)
     @db = @client.db(TEST_DB)
     @coll = @db.collection('thread-test-collection')
     @coll.drop

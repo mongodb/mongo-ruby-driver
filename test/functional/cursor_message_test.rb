@@ -19,7 +19,7 @@ class CursorMessageTest < Test::Unit::TestCase
 
   def setup
     @client = standard_connection
-    add_admin_user(@client)
+    ensure_admin_user(@client)
     @db = @client.db(TEST_DB)
     @coll = @db.collection('test')
     @coll.insert('a' => 1)     # collection not created until it's used

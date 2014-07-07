@@ -79,7 +79,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
 
   def default_setup
     @client = MongoClient.new
-    add_admin_user(@client)
+    ensure_admin_user(@client)
     @db = @client[DATABASE_NAME]
     @collection = @db[COLLECTION_NAME]
     @collection.drop

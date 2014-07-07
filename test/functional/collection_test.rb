@@ -25,7 +25,7 @@ class CollectionTest < Test::Unit::TestCase
 
   def standard_setup
     @client = standard_connection(:op_timeout => 10)
-    add_admin_user(@client)
+    ensure_admin_user(@client)
 
     @db      = @client.db(TEST_DB)
     @test    = @db.collection("test")
@@ -55,7 +55,7 @@ class CollectionTest < Test::Unit::TestCase
 
   def limited_collection
     conn = standard_connection
-    add_admin_user(conn) # regular teardown will clean this up properly.
+    ensure_admin_user(conn) # regular teardown will clean this up properly.
     admin_db = Object.new
     admin_db.expects(:command).returns({
                                          'ok' => 1,
@@ -990,7 +990,7 @@ class CollectionTest < Test::Unit::TestCase
 
   def test_mocked_safe_remove
     mock_client = standard_connection
-    add_admin_user(mock_client)
+    ensure_admin_user(mock_client)
 
     mock_test = mock_client.db(TEST_DB)['test-safe-remove']
     mock_test.save({:a => 20})

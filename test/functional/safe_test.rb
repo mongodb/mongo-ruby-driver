@@ -19,7 +19,7 @@ class SafeTest < Test::Unit::TestCase
   context "Safe mode propogation: " do
     setup do
       @connection = standard_connection({:safe => true}, true) # Legacy
-      add_admin_user(@connection)
+      ensure_admin_user(@connection)
       @db         = @connection[TEST_DB]
       @collection = @db['test-safe']
       @collection.create_index([[:a, 1]], :unique => true)
@@ -78,7 +78,7 @@ class SafeTest < Test::Unit::TestCase
   context "Safe error objects" do
     setup do
       @connection = standard_connection({:safe => true}, true) # Legacy
-      add_admin_user(@connection)
+      ensure_admin_user(@connection)
       @db         = @connection[TEST_DB]
       @collection = @db['test']
       @collection.remove

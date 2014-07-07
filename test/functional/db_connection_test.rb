@@ -20,7 +20,7 @@ class DBConnectionTest < Test::Unit::TestCase
     host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
     port = ENV['MONGO_RUBY_DRIVER_PORT'] || MongoClient::DEFAULT_PORT
     @client = MongoClient.new(host, port)
-    add_admin_user(@client)
+    ensure_admin_user(@client)
 
     db = @client.db(TEST_DB)
     coll = db.collection('test')

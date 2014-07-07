@@ -28,7 +28,7 @@ class DBTest < Test::Unit::TestCase
 
   def setup
     @client = standard_connection
-    add_admin_user(@client)
+    ensure_admin_user(@client)
     @db = @client.db(TEST_DB)
     @version = @client.server_version
   end

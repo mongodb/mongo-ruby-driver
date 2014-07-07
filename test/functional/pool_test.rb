@@ -19,7 +19,7 @@ class PoolTest < Test::Unit::TestCase
 
   def setup
     @client    ||= standard_connection({:pool_size => 15, :pool_timeout => 5})
-    add_admin_user(@client)
+    ensure_admin_user(@client)
     @db         = @client.db(TEST_DB)
     @collection = @db.collection("pool_test")
   end

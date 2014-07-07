@@ -18,7 +18,7 @@ class TimeoutTest < Test::Unit::TestCase
 
   def setup
     @client = standard_connection(:op_timeout => 0.5)
-    add_admin_user(@client)
+    ensure_admin_user(@client)
     grant_admin_user_eval_role(@client)
     @admin = @client.db('admin')
   end
@@ -27,7 +27,7 @@ class TimeoutTest < Test::Unit::TestCase
     # clear the client first so we don't get timed out
     @client.close
     @client = standard_connection
-    add_admin_user(@client)
+    ensure_admin_user(@client)
     clear_admin_user(@client)
     @client.close
   end
@@ -46,7 +46,7 @@ class TimeoutTest < Test::Unit::TestCase
 
   def test_external_timeout_does_not_leave_socket_in_bad_state
     @client = standard_connection
-    add_admin_user(@client)
+    ensure_admin_user(@client)
     db      = @client[TEST_DB]
     coll    = db['timeout-tests']
 
