@@ -251,11 +251,7 @@ describe Mongo::Connection do
       end
 
       let(:user) do
-        Mongo::Auth::User.new(TEST_DB, 'test-user', 'password')
-      end
-
-      it 'sets the user for the connection' do
-        expect(connection.user).to eq(user)
+        Mongo::Auth::User.new(database: TEST_DB, username: 'test-user', password: 'password')
       end
 
       it 'sets the authentication strategy for the connection' do

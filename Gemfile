@@ -3,11 +3,11 @@ source 'https://rubygems.org'
 gemspec
 gem 'rake'
 
-group :release do
-  gem 'git'
-  gem 'kramdown'
-  gem 'yard'
-end
+# group :release do
+  # gem 'git'
+  # gem 'kramdown'
+  # gem 'yard'
+# end
 
 platforms :rbx do
   gem 'racc'

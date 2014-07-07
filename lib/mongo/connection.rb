@@ -37,9 +37,6 @@ module Mongo
     # @return [ Float ] timeout The connection timeout.
     attr_reader :timeout
 
-    # @return [ Mongo::Auth::User ] user The user to login.
-    attr_reader :user
-
     # Is this connection authenticated. Will return true if authorization
     # details were provided and authentication passed.
     #
@@ -148,14 +145,7 @@ module Mongo
     end
 
     def setup_authentication!
-      if options[:username]
-        @user = Auth::User.new(
-          options[:auth_source] || options[:database],
-          options[:username],
-          options[:password]
-        )
-        @authenticator = Auth.get(options[:auth_mech]).new(user)
-      end
+      @authenticator = Auth.get(Auth::User.new(options)) if options[:username]
     end
 
     def write(messages, buffer = '')

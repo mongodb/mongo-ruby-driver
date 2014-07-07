@@ -15,7 +15,7 @@
 require 'mongo/auth/executable'
 require 'mongo/auth/cr'
 require 'mongo/auth/ldap'
-# require 'mongo/auth/kerberos' if BSON::Environment.jruby?
+require 'mongo/auth/kerberos' if BSON::Environment.jruby?
 require 'mongo/auth/user'
 require 'mongo/auth/x509'
 
@@ -46,11 +46,19 @@ module Mongo
     #
     # @since 2.0.0
     SOURCES = {
-      # gssapi: Kerberos,
       mongodb_cr: CR,
       mongodb_x509: X509,
       plain: LDAP,
-    }.freeze
+    }
+
+    # We support Kerberos authentication in JRuby only.
+    #
+    # @since 2.0.0
+    if BSON::Environment.jruby?
+      SOURCES[:gssapi] = Kerberos
+    end
+
+    SOURCES.freeze
 
     # Get the authorization strategy for the provided auth mechanism.
     #
@@ -62,9 +70,10 @@ module Mongo
     # @return [ CR, X509, LDAP, Kerberos ] The auth strategy.
     #
     # @since 2.0.0
-    def get(mechanism = nil)
-      raise InvalidMechanism.new(mechanism) if mechanism && !SOURCES.has_key?(mechanism)
-      SOURCES[mechanism || :mongodb_cr]
+    def get(user)
+      mechanism = user.mechanism
+      raise InvalidMechanism.new(mechanism) if !SOURCES.has_key?(mechanism)
+      SOURCES[mechanism].new(user)
     end
 
     # Raised when trying to get an invalid authorization mechanism.
