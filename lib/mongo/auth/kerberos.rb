@@ -59,7 +59,7 @@ module Mongo
           JRuby.runtime,
           user.name,
           host,
-          user.gssapi_service_name
+          user.gssapi_service_name,
           user.canonicalize_host_name
         )
       end
