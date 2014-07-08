@@ -266,11 +266,11 @@ class Test::Unit::TestCase
       begin
         admin = client.db('admin')
         admin.logout
-        admin.add_user('admin', 'password', nil, :roles => [ 'root' ])
+        admin.add_user('admin', 'password', nil, :roles => [ 'root', 'clusterAdmin', 'readWriteAnyDatabase' ])
         admin.authenticate('admin', 'password')
       rescue OperationFailure => ex
-        # if we missed a cleanup somewhere, just attempt to login.
-        admin.authenticate('admin', 'password') if ex.error_code == AUTH_ERROR
+        # Admin user may already exist, just attempt to login.
+        admin.authenticate('admin', 'password')
       end
     end
   end
@@ -297,7 +297,7 @@ class Test::Unit::TestCase
   def auth_enabled?(client)
     begin
       cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
-      return true if cmd_line_args.include?('auth')
+      return true if cmd_line_args.include?('auth') || cmd_line_args.include?('keyFile')
       if security = cmd_line_args["security"]
         return true if security["authorization"] == "enabled"
       end

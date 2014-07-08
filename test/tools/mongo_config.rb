@@ -86,6 +86,8 @@ module Mongo
                 make_config(opts)
               when :routers
                 make_router(config, opts)
+              when :shards
+                make_standalone_shard(kind, opts)
               else
                 make_mongod(kind, opts)
             end
@@ -133,25 +135,37 @@ module Mongo
                    :ipv6       => ipv6)
     end
 
+    def self.key_file(opts)
+      keyFile = opts[:key_file] || '/test/fixtures/auth/keyfile'
+      keyFile = Dir.pwd << keyFile
+      system "chmod 600 #{keyFile}"
+      keyFile
+    end
+
+    # A regular mongod minus --auth and plus --keyFile.
+    def self.make_standalone_shard(kind, opts)
+      params = make_mongod(kind, opts)
+      params.delete(:auth)
+      params.merge(:keyFile => key_file(opts))
+    end
+
     def self.make_replica(opts, id)
       params     = make_mongod('replicas', opts)
 
       replSet    = opts[:replSet]    || 'ruby-driver-test'
       oplogSize  = opts[:oplog_size] || 5
-      keyFile    = opts[:key_file]   || '/test/fixtures/auth/keyfile'
-
-      keyFile    = Dir.pwd << keyFile
-      system "chmod 600 #{keyFile}"
 
       params.merge(:_id       => id,
                    :replSet   => replSet,
                    :oplogSize => oplogSize,
-                   :keyFile   => keyFile)
+                   :keyFile   => key_file(opts))
     end
 
     def self.make_config(opts)
       params = make_mongod('configs', opts)
-      params.merge(:configsvr => nil)
+      params.delete(:auth)
+      params.merge(:configsvr => nil,
+                   :keyFile => key_file(opts))
     end
 
     def self.make_router(config, opts)
@@ -159,8 +173,9 @@ module Mongo
       mongos = ENV['MONGOS'] || 'mongos'
 
       params.merge(
-        :command => mongos,
-        :configdb => self.configdb(config)
+        :command  => mongos,
+        :configdb => self.configdb(config),
+        :keyFile  => key_file(opts)
       )
     end
 
@@ -352,25 +367,32 @@ module Mongo
       #
       # @param [ MongoClient ] client The client on which to authenticate, if needed.
       def ensure_auth(client, &block)
-        if client.server_version >= '2.7.1' && !@localhost_exception
-          # if @localhost_exception is wrongly set (for example if start() is called
-          # multiple times in a row before stop()) then set and yield without auth.
-          begin
-            client.db('admin').authenticate(@root_user, @root_pwd)
-            yield
-            client.db('admin').logout
-          rescue Mongo::AuthenticationError => ex
-            yield
-          end
+        if client.server_version < '2.7.1'
+          # no narrowed localhost exception, simply yield.
+          yield
         else
-          begin
-            yield
-          rescue Mongo::AuthenticationError => ex
-            # In case the @localhost_exception variable is falsely set, handle.
-            client.db('admin').authenticate(@root_user, @root_pwd)
-            yield
-            client.db('admin').logout
-            @localhost_exception = false
+          if !@localhost_exception
+            puts "ensuring auth against this client: #{client.inspect}"
+            # if @localhost_exception is wrongly set (for example if start() is called
+            # multiple times in a row before stop()) then set and yield without auth.
+            begin
+              client.db('admin').authenticate(@root_user, @root_pwd)
+              yield
+              client.db('admin').logout
+            rescue Mongo::AuthenticationError => ex
+              yield
+            end
+          else
+            begin
+              # attempt to run command without authenticating.
+              yield
+            rescue Mongo::AuthenticationError, Mongo::OperationFailure => ex
+              # In case the @localhost_exception variable is falsely set, handle.
+              client.db('admin').authenticate(@root_user, @root_pwd)
+              yield
+              client.db('admin').logout
+              @localhost_exception = false
+            end
           end
         end
       end
@@ -617,7 +639,16 @@ module Mongo
       end
 
       def addshards(shards = @config[:shards])
-        command( @config[:routers].first, 'admin', Array(shards).collect{|s| { :addshard => "#{s[:host]}:#{s[:port]}" } } )
+        begin
+          command( @config[:routers].first, 'admin', Array(shards).collect{|s| { :addshard => "#{s[:host]}:#{s[:port]}" } } )
+        rescue Mongo::OperationFailure => ex
+          # Because we cannot run the listshards command under the localhost
+          # exception, we run the risk of attempting to add the same shard twice.
+          # Our tests may add a local db to a shard, if the cluster is still up,
+          # then we can ignore this.
+          raise ex unless (ex.message.include?("host already used") ||
+                           ex.message.include?("local database 'ruby_test'"))
+        end
       end
 
       def listshards
@@ -654,23 +685,33 @@ module Mongo
       # Return a connection to the primary of the replica set.
       # This is done in a way that is safe under the narrowed localhost exception.
       def primary_client
-        name = primary_host_port
-        raise Mongo::ConnectionFailure, "no primary found" unless name
-        Mongo::MongoClient.new(name[0], name[1])
+        # we need either the mongos or the primary
+        if @config[:routers]
+          mongos = @config[:routers].first
+          Mongo::MongoClient.new(mongos[:host], mongos[:port])
+        else
+          name = primary_host_port
+          raise Mongo::ConnectionFailure, "no primary found" unless name
+          Mongo::MongoClient.new(name[0], name[1])
+        end
       end
 
       # For narrowed localhost exception, create an admin user.
+      # This method can be called multiple times.
       def enable_authentication
         client = primary_client
-
         if client.server_version >= '2.7.1' && @localhost_exception
-          cmd = BSON::OrderedHash.new
-          cmd[:createUser] = @root_user
-          cmd[:pwd] = @root_pwd
-          cmd[:roles] = [ 'root' ]
-
-          client.db('admin').command(cmd)
-          client.close
+          # First, attempt to login.
+          begin
+            client.db('admin').logout
+            client.db('admin').authenticate(@root_user, @root_pwd)
+          rescue Mongo::AuthenticationError => ex
+            cmd = BSON::OrderedHash.new
+            cmd[:createUser] = @root_user
+            cmd[:pwd] = @root_pwd
+            cmd[:roles] = [ 'root' ]
+            client.db('admin').command(cmd)
+          end
           @localhost_exception = false
         end
         client.close
@@ -708,11 +749,11 @@ module Mongo
         if @config[:replicas]
           repl_set_initiate if repl_set_get_status.first['startupStatus'] == 3
           repl_set_startup
-          enable_authentication
         end
         if @config[:routers]
-          addshards if listshards['shards'].size == 0
+          addshards
         end
+        enable_authentication
         self
       end
       alias :restart :start
