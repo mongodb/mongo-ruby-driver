@@ -286,6 +286,103 @@ describe Mongo::Operation::Write::Update do
     end
   end
 
+  describe '#split' do
+
+    context 'number of updates is evenly divisble by divisor' do
+      let(:updates) do
+        [{ :q => { :a => 1 },
+           :u => { :$set => { :a => 2 } },
+           :multi => true,
+           :upsert => false },
+         { :q => { :b => 1 },
+           :u => { :$set => { :b => 2 } },
+           :multi => true,
+           :upsert => false },
+         { :q => { :c => 1 },
+           :u => { :$set => { :c => 2 } },
+           :multi => true,
+           :upsert => false },
+         { :q => { :d => 1 },
+           :u => { :$set => { :d => 2 } },
+           :multi => true,
+           :upsert => false },
+         { :q => { :e => 1 },
+           :u => { :$set => { :e => 2 } },
+           :multi => true,
+           :upsert => false },
+         { :q => { :f => 1 },
+           :u => { :$set => { :f => 2 } },
+           :multi => true,
+           :upsert => false }
+        ]
+      end
+      let(:divisor) { 3 }
+
+      it 'splits the op into the divisor number of children ops' do
+        expect(op.split(divisor).size).to eq(divisor)
+      end
+
+      it 'divides the updates evenly between children ops' do
+        ops = op.split(divisor)
+        batch_size = updates.size / divisor
+
+        divisor.times do |i|
+          start_index = i * batch_size
+          expect(ops[i].spec[:updates]).to eq(updates[start_index, batch_size])
+        end
+      end
+    end
+
+    context 'number of updates is not evenly divisble by divisor' do
+      let(:updates) do
+        [{ :q => { :a => 1 },
+           :u => { :$set => { :a => 2 } },
+           :multi => true,
+           :upsert => false },
+         { :q => { :b => 1 },
+           :u => { :$set => { :b => 2 } },
+           :multi => true,
+           :upsert => false },
+         { :q => { :c => 1 },
+           :u => { :$set => { :c => 2 } },
+           :multi => true,
+           :upsert => false },
+         { :q => { :d => 1 },
+           :u => { :$set => { :d => 2 } },
+           :multi => true,
+           :upsert => false },
+         { :q => { :e => 1 },
+           :u => { :$set => { :e => 2 } },
+           :multi => true,
+           :upsert => false },
+         { :q => { :f => 1 },
+           :u => { :$set => { :f => 2 } },
+           :multi => true,
+           :upsert => false }
+        ]
+      end
+      let(:divisor) { 4 }
+
+      it 'splits the op into the divisor number of children ops' do
+        expect(op.split(divisor).size).to eq(divisor)
+      end
+
+      it 'divides the updates evenly between children ops' do
+        ops = op.split(divisor)
+        batch_size = updates.size / divisor
+
+        divisor.times do |i|
+          start_index = i * batch_size
+          if i == divisor - 1
+            expect(ops[i].spec[:updates]).to eq(updates[start_index..-1])
+          else
+            expect(ops[i].spec[:updates]).to eq(updates[start_index, batch_size])
+          end
+        end
+      end
+    end
+  end
+
   describe '#execute' do
 
     context 'server' do
