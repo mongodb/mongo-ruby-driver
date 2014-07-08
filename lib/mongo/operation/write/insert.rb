@@ -97,6 +97,31 @@ module Mongo
           self
         end
 
+        # Split this operation into the specified number of children operations.
+        #
+        # @params [ Integer ] divisor The number of children operations to split
+        #   this one into.
+        #
+        # @return [ Array ] An array of children operations.
+        #
+        # @since 2.0.0
+        def split(divisor)
+          docs     = @spec[:documents]
+          quotient = docs.size / divisor
+
+          [].tap do |children|
+            divisor.times do |i|
+              new_spec = @spec.dup
+              new_spec[:documents] = docs.take(quotient)
+              docs = docs.drop(quotient)
+              # put remainder on the last op if not evenly divisible
+              new_spec[:documents] += docs if !docs.empty? &&
+                  i == divisor - 1
+              children << self.class.new(new_spec)
+            end
+          end
+        end
+
         private
 
         # Dup the list of documents in the spec if this operation is copied/duped.

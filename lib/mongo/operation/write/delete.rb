@@ -101,6 +101,31 @@ module Mongo
           self
         end
 
+        # Split this operation into the specified number of children operations.
+        #
+        # @params [ Integer ] divisor The number of children operations to split
+        #   this one into.
+        #
+        # @return [ Array ] An array of children operations.
+        #
+        # @since 2.0.0
+        def split(divisor)
+          dels     = @spec[:deletes]
+          quotient = dels.size / divisor
+
+          [].tap do |children|
+            divisor.times do |i|
+              new_spec = @spec.dup
+              new_spec[:deletes] = dels.take(quotient)
+              dels = dels.drop(quotient)
+              # put remainder on the last op if not evenly divisible
+              new_spec[:deletes] += dels if !dels.empty? &&
+                  i == divisor - 1
+              children << self.class.new(new_spec)
+            end
+          end
+        end
+
         private
 
         # Dup the list of deletes in the spec if this operation is copied/duped.
