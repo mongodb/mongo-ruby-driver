@@ -26,6 +26,7 @@ module Mongo
       # @since 2.0.0
       class Insert
         include Executable
+        include Slicable
 
         # Initialize the insert operation.
         #
@@ -98,6 +99,14 @@ module Mongo
         end
 
         private
+
+        # The spec array element to split up when slicing this operation.
+        # This is used by the Slicable module.
+        #
+        # @return [ Symbol ] :documents
+        def slicable_key
+          :documents
+        end
 
         # Dup the list of documents in the spec if this operation is copied/duped.
         def initialize_copy(original)

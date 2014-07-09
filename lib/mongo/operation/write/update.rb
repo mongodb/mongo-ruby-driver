@@ -26,6 +26,7 @@ module Mongo
       # @since 2.0.0
       class Update
         include Executable
+        include Slicable
 
         # Initialize the update operation.
         #
@@ -104,6 +105,14 @@ module Mongo
         end
 
         private
+
+        # The spec array element to split up when slicing this operation.
+        # This is used by the Slicable module.
+        #
+        # @return [ Symbol ] :updates
+        def slicable_key
+          :updates
+        end
 
         # Dup the list of updates in the spec if this operation is copied/duped.
         def initialize_copy(original)

@@ -248,6 +248,65 @@ describe Mongo::Operation::Write::Insert do
     end
   end
 
+  describe '#slice' do
+
+    context 'number of inserts is evenly divisible by divisor' do
+      let(:documents) do
+        [ { :a => 1 },
+          { :b => 1 },
+          { :c => 1 },
+          { :d => 1 },
+          { :e => 1 },
+          { :f => 1 } ]
+      end
+      let(:divisor) { 3 }
+
+      it 'slices the op into the divisor number of children ops' do
+        expect(op.slice(divisor).size).to eq(divisor)
+      end
+
+      it 'divides the inserts evenly between children ops' do
+        ops = op.slice(divisor)
+        slice_size = documents.size / divisor
+
+        divisor.times do |i|
+          start_index = i * slice_size
+          expect(ops[i].spec[:documents]).to eq(documents[start_index, slice_size])
+        end
+      end
+    end
+
+    context 'number of inserts is not evenly divisible by divisor' do
+      let(:documents) do
+        [ { :a => 1 },
+          { :b => 1 },
+          { :c => 1 },
+          { :d => 1 },
+          { :e => 1 },
+          { :f => 1 } ]
+      end
+      let(:divisor) { 4 }
+
+      it 'slices the op into the divisor number of children ops' do
+        expect(op.slice(divisor).size).to eq(divisor)
+      end
+
+      it 'divides the inserts evenly between children ops' do
+        ops = op.slice(divisor)
+        slice_size = documents.size / divisor
+
+        divisor.times do |i|
+          start_index = i * slice_size
+          if i == divisor - 1
+            expect(ops[i].spec[:documents]).to eq(documents[start_index..-1])
+          else
+            expect(ops[i].spec[:documents]).to eq(documents[start_index, slice_size])
+          end
+        end
+      end
+    end
+  end
+
   describe '#execute' do
 
     context 'server' do

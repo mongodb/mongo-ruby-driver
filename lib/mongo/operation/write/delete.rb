@@ -26,6 +26,7 @@ module Mongo
       # @since 2.0.0
       class Delete
         include Executable
+        include Slicable
 
         # Initialize the delete operation.
         #
@@ -102,6 +103,14 @@ module Mongo
         end
 
         private
+
+        # The spec array element to split up when slicing this operation.
+        # This is used by the Slicable module.
+        #
+        # @return [ Symbol ] :deletes
+        def slicable_key
+          :deletes
+        end
 
         # Dup the list of deletes in the spec if this operation is copied/duped.
         def initialize_copy(original)
