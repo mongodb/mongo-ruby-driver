@@ -10,7 +10,6 @@ if RUBY_VERSION > '1.9' && RUBY_VERSION < '2.2'
   SimpleCov.start do
     # report groups
     add_group 'Wire Protocol', 'lib/mongo/protocol'
-    add_group 'Connection Pool', 'lib/mongo/pool'
 
     # filters
     add_filter 'tasks'
@@ -30,7 +29,7 @@ Mongo::Logger.logger = Logger.new($stdout, Logger::DEBUG)
 
 RSpec.configure do |config|
   config.color     = true
-  config.fail_fast = true unless ENV['CI']
+  config.fail_fast = true unless ENV['CI'] || ENV['JENKINS_HOME']
   config.formatter = 'documentation'
   config.include Helpers
   config.include ClusterSimulator::Helpers
