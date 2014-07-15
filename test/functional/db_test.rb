@@ -163,17 +163,19 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_error
+    bad_command = {:forceerror => 1 }
+
     @db.reset_error_history
     assert_nil @db.get_last_error['err']
     assert !@db.error?
     assert_nil @db.previous_error
 
-    @db.command({:forceerror => 1}, :check_response => false)
+    @db.command(bad_command, :check_response => false)
     assert @db.error?
     assert_not_nil @db.get_last_error['err']
     assert_not_nil @db.previous_error
 
-    @db.command({:forceerror => 1}, :check_response => false)
+    @db.command(bad_command, :check_response => false)
     assert @db.error?
     assert @db.get_last_error['err']
     prev_error = @db.previous_error
@@ -193,23 +195,25 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_check_command_response
-    command = {:forceerror => 1}
-    raised = false
-    begin
-      @db.command(command)
-    rescue => ex
-      raised = true
-      assert ex.message.include?("forced error") || ex.result.has_key?("assertion") && ex.result["assertion"].include?("forced error"),
-        "error message does not contain 'forced error'"
-      assert_equal 10038, ex.error_code
-
-      if @version >= "2.1.0"
-        assert_equal 10038, ex.result['code']
-      else
-        assert_equal 10038, ex.result['assertionCode']
+    if @version >= "2.1.0"
+      command = {:create => "$$$$"}
+      expected_codes = [10356, 2]
+      expected_msg = "invalid"
+      raised = false
+      begin
+        @db.command(command)
+      rescue => ex
+        raised = true
+        puts "got message #{ex.inspect}"
+        assert ex.message.include?(expected_msg) ||
+          (ex.result.has_key?("assertion") &&
+           ex.result["assertion"].include?(expected_msg)),
+        "error message does not contain '#{expected_msg}'"
+        assert expected_codes.include?(ex.error_code)
+        assert (expected_codes.include?(ex.result['code']))
+      ensure
+        assert raised, "No assertion raised!"
       end
-    ensure
-      assert raised, "No assertion raised!"
     end
   end
 
@@ -274,10 +278,11 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_default_admin_roles
+    return unless auth_enabled?(@client)
     with_min_version('2.5.3') do
       admin = @client['admin']
 
-      # admin user (if version is >= 2.7.1 we already have this)
+      # admin user for auth (if version is >= 2.7.1 we already have this)
       if @client.server_version < '2.7.1'
         admin.add_user('admin', 'password')
         admin.authenticate('admin', 'password')
