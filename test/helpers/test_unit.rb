@@ -237,8 +237,8 @@ class Test::Unit::TestCase
   # special permissions to run the db_eval command.
   def grant_admin_user_eval_role(client)
     if auth_enabled?(client) && client.server_version >= "2.7.1"
-      # we need to have anyAction on anyResource to run db-eval()
-      admin = client.db('admin')
+      # we need to have anyAction on anyResource to run db_eval()
+      admin = client['admin']
       any_priv = BSON::OrderedHash.new
       any_priv[:resource] = {:anyResource => true}
       any_priv[:actions] = ['anyAction']
@@ -261,7 +261,7 @@ class Test::Unit::TestCase
   def ensure_admin_user(client)
     if auth_enabled?(client) && client.server_version >= "2.7.1"
       begin
-        admin = client.db('admin')
+        admin = client['admin']
         admin.logout
         admin.add_user('admin', 'password', nil, :roles => [ 'root', 'clusterAdmin', 'readWriteAnyDatabase' ])
         admin.authenticate('admin', 'password')
@@ -277,7 +277,7 @@ class Test::Unit::TestCase
   def clear_admin_user(client)
     if auth_enabled?(client) && client.server_version >= "2.7.1"
       # in case users have already been cleared, handle exception
-      admin = client.db('admin')
+      admin = client['admin']
       admin.logout
       begin
         admin.authenticate('admin', 'password')
@@ -303,7 +303,6 @@ class Test::Unit::TestCase
       return true if (client.server_version >= "2.7.1" &&
         ex.error_code == Mongo::ErrorCode::UNAUTHORIZED)
     end
-    false
   end
 
   def with_auth(client, &block)

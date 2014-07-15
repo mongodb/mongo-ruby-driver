@@ -275,7 +275,7 @@ class DBTest < Test::Unit::TestCase
 
   def test_default_admin_roles
     with_min_version('2.5.3') do
-      admin = @client.db('admin')
+      admin = @client['admin']
 
       # admin user (if version is >= 2.7.1 we already have this)
       if @client.server_version < '2.7.1'

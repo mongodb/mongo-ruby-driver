@@ -119,7 +119,7 @@ namespace :test do
                                       ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::MongoClient::DEFAULT_PORT)
 
       if client.server_version >= '2.7.1'
-        admin = client.db('admin')
+        admin = client['admin']
         admin.add_user('admin', 'password', nil, :roles => [ 'dbAdminAnyDatabase',
                                                              'userAdminAnyDatabase',
                                                              'readWriteAnyDatabase' ])

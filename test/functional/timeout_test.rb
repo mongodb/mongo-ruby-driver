@@ -20,7 +20,7 @@ class TimeoutTest < Test::Unit::TestCase
     @client = standard_connection(:op_timeout => 0.5)
     ensure_admin_user(@client)
     grant_admin_user_eval_role(@client)
-    @admin = @client.db('admin')
+    @admin = @client['admin']
   end
 
   def teardown

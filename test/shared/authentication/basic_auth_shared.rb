@@ -23,7 +23,7 @@ module BasicAuthTests
       @admin.logout
       @admin.authenticate('admin', 'password')
     rescue Mongo::AuthenticationError => ex
-      # pre-2.6 systems do not support the 'root' role.
+      # pre-2.6 servers do not support the 'root' role.
       @admin.add_user('admin', 'password', nil, :roles => ['root',
                                                            'userAdminAnyDatabase'])
       @admin.authenticate('admin', 'password')

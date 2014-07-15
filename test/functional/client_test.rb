@@ -27,7 +27,7 @@ class ClientTest < Test::Unit::TestCase
 
   def teardown
     clear_admin_user(@client)
-#    @client.close
+    @client.close
   end
 
   def test_connection_failure
@@ -201,19 +201,33 @@ class ClientTest < Test::Unit::TestCase
   end
 
 # This needs more work...
-#  def test_copy_database
-#    old_name = TEST_DB + '_old'
-#    new_name = TEST_DB + '_new'
-#
-#    puts "#{@client.auths}"
-#    @client.drop_database(new_name)
-#    @client.db(old_name).collection('copy-test').insert('a' => 1)
-#    @client.copy_database(old_name, new_name, host_port, 'admin', 'password')
-#
-#    old_object = @client.db(old_name).collection('copy-test').find.next_document
-#    new_object = @client.db(new_name).collection('copy-test').find.next_document
-#    assert_equal old_object, new_object
-#  end
+  def test_copy_database
+    old_name = TEST_DB + '_old'
+    new_name = TEST_DB + '_new'
+
+    admin = @client['admin']
+
+    # In 2.7 servers and above, we'll have an admin user, but for earlier servers,
+    # we'll have to add one here to work around the localhost exception.
+    if @client.server_version < "2.7.1"
+      admin.add_user('admin', 'password', nil, :roles => [ 'dbAdminAnyDatabase',
+                                                           'userAdminAnyDatabase',
+                                                           'readWriteAnyDatabase' ])
+      admin.authenticate('admin', 'password')
+    end
+
+    @client.db(old_name).collection('copy-test').insert('a' => 1)
+    @client[old_name].add_user('from', 'pwd', nil, :roles => ['readWrite', 'dbAdmin'])
+    @client.drop_database(new_name)
+    @client.copy_database(old_name, new_name, host_port, 'from', 'pwd')
+
+    old_object = @client.db(old_name).collection('copy-test').find.next_document
+    new_object = @client.db(new_name).collection('copy-test').find.next_document
+    assert_equal old_object, new_object
+
+    @client[old_name].command({ :dropAllUsersFromDatabase => 1 })
+    admin.command({ :dropAllUsersFromDatabase => 1 })
+  end
 
   def test_database_names
     @client.drop_database(TEST_DB)

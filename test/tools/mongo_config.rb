@@ -369,13 +369,12 @@ module Mongo
           yield
         else
           if !@localhost_exception
-            puts "ensuring auth against this client: #{client.inspect}"
             # if @localhost_exception is wrongly set (for example if start() is called
             # multiple times in a row before stop()) then set and yield without auth.
             begin
-              client.db('admin').authenticate(@root_user, @root_pwd)
+              client['admin'].authenticate(@root_user, @root_pwd)
               yield
-              client.db('admin').logout
+              client['admin'].logout
             rescue Mongo::AuthenticationError => ex
               yield
             end
@@ -385,9 +384,9 @@ module Mongo
               yield
             rescue Mongo::AuthenticationError, Mongo::OperationFailure => ex
               # In case the @localhost_exception variable is falsely set, handle.
-              client.db('admin').authenticate(@root_user, @root_pwd)
+              client['admin'].authenticate(@root_user, @root_pwd)
               yield
-              client.db('admin').logout
+              client['admin'].logout
               @localhost_exception = false
             end
           end
@@ -698,17 +697,18 @@ module Mongo
       # This method can be called multiple times.
       def enable_authentication
         client = primary_client
+        admin = client['admin']
         if client.server_version >= '2.7.1' && @localhost_exception
           # First, attempt to login.
           begin
-            client.db('admin').logout
-            client.db('admin').authenticate(@root_user, @root_pwd)
+            admin.logout
+            admin.authenticate(@root_user, @root_pwd)
           rescue Mongo::AuthenticationError => ex
             cmd = BSON::OrderedHash.new
             cmd[:createUser] = @root_user
             cmd[:pwd] = @root_pwd
             cmd[:roles] = [ 'root' ]
-            client.db('admin').command(cmd)
+            admin.command(cmd)
           end
           @localhost_exception = false
         end
@@ -721,9 +721,10 @@ module Mongo
         begin
           client = primary_client
           if client.server_version >= '2.7.1' && !@localhost_exception
-            client.db('admin').authenticate('admin', 'password')
-            client.db('admin').command({ :dropAllRolesFromDatabase => 1 })
-            client.db('admin').command({ :dropAllUsersFromDatabase => 1 })
+            admin = client['admin']
+            admin.authenticate('admin', 'password')
+            admin.command({ :dropAllRolesFromDatabase => 1 })
+            admin.command({ :dropAllUsersFromDatabase => 1 })
             @localhost_exception = true
           end
           client.close
