@@ -88,13 +88,17 @@ module Mongo
     # @deprecated This method is no longer in use and never needs to be called
     #   directly. Support will be removed after v2.0
     def authenticate_pools
-      @primary_pool.authenticate_existing
+      # This method should be a no-op because authentication of sockets is handled
+      # upon checkout and checkin.
+      #@primary_pool.authenticate_existing
     end
 
     # @deprecated This method is no longer in use and never needs to be called
     #   directly. Support will be removed after v2.0
     def logout_pools(database)
-      @primary_pool.logout_existing(database)
+      # This method should be a no-op because authentication of sockets is handled
+      # upon checkout and checkin.
+      #@primary_pool.logout_existing(database)
     end
 
     # @deprecated This method is no longer in use and never needs to be called
