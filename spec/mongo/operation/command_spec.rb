@@ -4,6 +4,7 @@ describe Mongo::Operation::Command do
   include_context 'operation'
 
   let(:selector) { { :ismaster => 1 } }
+  let(:opts) { { :limit => -1 } }
   let(:spec) do
     { :selector => selector,
       :opts     => opts,
@@ -72,6 +73,18 @@ describe Mongo::Operation::Command do
           expect(options).to eq(opts)
         end
         op.execute(primary_context)
+      end
+
+      it 'sets the limit to -1' do
+        allow_any_instance_of(Mongo::ServerPreference::Primary).to receive(:server) do
+          primary_server
+        end
+
+        expect(Mongo::Protocol::Query).to receive(:new) do |db, coll, sel, options|
+          expect(options[:limit]).to eq(-1)
+        end
+        op.execute(primary_context)
+
       end
     end
 

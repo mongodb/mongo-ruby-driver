@@ -100,6 +100,9 @@ module Mongo
       #
       # @since 2.0.0
       def opts
+        unless @spec[:opts][:limit] && @spec[:opts][:limit] == -1
+          return @spec[:opts].merge(:limit => -1)
+        end
         @spec[:opts]
       end
 
