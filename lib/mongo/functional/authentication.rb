@@ -171,7 +171,7 @@ module Mongo
     # @raise [MongoDBError] Raised if the logout operation fails.
     # @return [Boolean] The result of the logout operation.
     def issue_logout(db_name, opts={})
-      doc = db(db_name).command({:logout => 1}, :socket => opts[:socket])
+      doc = auth_command({:logout => 1}, opts[:socket], db_name).first
       unless Support.ok?(doc)
         raise MongoDBError, "Error logging out on DB #{db_name}."
       end
@@ -322,6 +322,7 @@ module Mongo
         receive(socket, request_id).shift
       rescue ConnectionFailure
         socket.close
+        raise ex
       end
     end
   end

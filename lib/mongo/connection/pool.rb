@@ -182,10 +182,6 @@ module Mongo
         raise ConnectionFailure, "Failed to connect to host #{@host} and port #{@port}: #{ex}"
       end
 
-      # If any saved authentications exist, we want to apply those
-      # when creating new sockets and process logouts.
-      check_auths(socket)
-
       @sockets << socket
       @checked_out << socket
       @thread_ids_to_sockets[Thread.current.object_id] = socket
@@ -295,16 +291,20 @@ module Mongo
           end
 
           if socket
-            check_auths(socket)
-
-            if socket.closed?
-              @checked_out.delete(socket)
-              @sockets.delete(socket)
-              @thread_ids_to_sockets.delete(Thread.current.object_id)
-              socket = checkout_new_socket
+            if !socket.closed?
+              begin
+                check_auths(socket)
+                return socket
+              rescue ConnectionFailure
+                # Socket failed authentication and will be cleaned up below
+              end
             end
 
-            return socket
+            # Socket was closed from earlier network error, or just now from
+            # a network error when authenticating.
+            @checked_out.delete(socket)
+            @sockets.delete(socket)
+            @thread_ids_to_sockets.delete(Thread.current.object_id)
           else
             # Otherwise, wait
             @queue.wait(@connection_mutex)
