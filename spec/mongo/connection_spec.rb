@@ -143,6 +143,8 @@ describe Mongo::Connection do
       end
 
       it 'it dispatchs the message to the socket' do
+        p reply
+        p reply.documents.first
         expect(reply.documents.first['name']).to eq('testing')
       end
     end
