@@ -87,15 +87,17 @@ module Mongo
     # @example Instantiate a client for a replica set.
     #   Mongo::Client.new([ '127.0.0.1:27017', '127.0.0.1:27021' ])
     #
-    # @param [ Array<String> ] addresses The array of server addresses in the
-    #   form of host:port.
+    # @param [ Array<String>, String ] addresses_or_uri The array of server addresses in the
+    #   form of host:port or a MongoDB URI connection string.
     # @param [ Hash ] options The options to be used by the client.
     #
     # @since 2.0.0
-    def initialize(addresses, options = {})
-      @cluster = Cluster.new(self, addresses)
-      @options = options
-      @database = Database.new(self, options[:database])
+    def initialize(addresses_or_uri, options = {})
+      if addresses_or_uri.is_a?(::String)
+        create_from_uri(addresses_or_uri)
+      else
+        create_from_addresses(addresses_or_uri, options)
+      end
     end
 
     # Get an inspection of the client as a string.
@@ -190,23 +192,19 @@ module Mongo
       end
     end
 
-    class << self
+    private
 
-      # Gets a new client given the provided uri connection string.
-      #
-      # @example Get a client from the connection string.
-      #   Mongo::Client.connect("mongodb://127.0.0.1:27017/testdb?w=3")
-      #
-      # @param [ String ] connection_string The connection string.
-      #
-      # @see http://docs.mongodb.org/manual/reference/connection-string/
-      #
-      # @since 2.0.0
-      def connect(connection_string)
-        uri = URI.new(connection_string)
-        client = new(uri.servers, uri.options.merge(database: uri.database))
-        client
-      end
+    def create_from_addresses(addresses, options = {})
+      @cluster = Cluster.new(self, addresses)
+      @options = options
+      @database = Database.new(self, options[:database])
+    end
+
+    def create_from_uri(connection_string)
+      uri = URI.new(connection_string)
+      @cluster = Cluster.new(self, uri.servers)
+      @options = uri.options.merge(database: uri.database)
+      @database = Database.new(self, options[:database])
     end
   end
 end

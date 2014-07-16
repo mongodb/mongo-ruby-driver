@@ -77,54 +77,6 @@ describe Mongo::Client do
     end
   end
 
-  describe '.connect' do
-
-    context 'when a database is provided' do
-
-      let!(:uri) do
-        'mongodb://127.0.0.1:27017/testdb'
-      end
-
-      let(:client) do
-        described_class.connect(uri)
-      end
-
-      it 'sets the database' do
-        expect { client[:users] }.to_not raise_error
-      end
-    end
-
-    context 'when a database is not provided' do
-
-      let!(:uri) do
-        'mongodb://127.0.0.1:27017'
-      end
-
-      let(:client) do
-        described_class.connect(uri)
-      end
-
-      it 'raises an error' do
-        expect { client }.to raise_error(Mongo::Database::InvalidName)
-      end
-    end
-
-    context 'when options are provided' do
-
-      let!(:uri) do
-        'mongodb://127.0.0.1:27017/testdb?w=3'
-      end
-
-      let(:client) do
-        described_class.connect(uri)
-      end
-
-      it 'sets the options' do
-        expect(client.options).to eq(:write => { :w => 3 }, :database => 'testdb')
-      end
-    end
-  end
-
   describe '#eql' do
 
     let(:client) do
@@ -219,6 +171,54 @@ describe Mongo::Client do
 
         it 'sets the current database' do
           expect(client[:users].name).to eq('users')
+        end
+      end
+    end
+
+    context 'when providing a connection string' do
+
+      context 'when a database is provided' do
+
+        let!(:uri) do
+          'mongodb://127.0.0.1:27017/testdb'
+        end
+
+        let(:client) do
+          described_class.new(uri)
+        end
+
+        it 'sets the database' do
+          expect { client[:users] }.to_not raise_error
+        end
+      end
+
+      context 'when a database is not provided' do
+
+        let!(:uri) do
+          'mongodb://127.0.0.1:27017'
+        end
+
+        let(:client) do
+          described_class.new(uri)
+        end
+
+        it 'raises an error' do
+          expect { client }.to raise_error(Mongo::Database::InvalidName)
+        end
+      end
+
+      context 'when options are provided' do
+
+        let!(:uri) do
+          'mongodb://127.0.0.1:27017/testdb?w=3'
+        end
+
+        let(:client) do
+          described_class.new(uri)
+        end
+
+        it 'sets the options' do
+          expect(client.options).to eq(:write => { :w => 3 }, :database => 'testdb')
         end
       end
     end
