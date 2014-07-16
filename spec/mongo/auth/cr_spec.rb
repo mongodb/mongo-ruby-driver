@@ -15,7 +15,7 @@ describe Mongo::Auth::CR do
     context 'when the user is not authorized for the database' do
 
       let(:user) do
-        Mongo::Auth::User.new(database: 'driver', username: 'test-user', password: 'password')
+        Mongo::Auth::User.new(database: 'driver', user: 'test-user', password: 'password')
       end
 
       let(:cr) do
@@ -37,7 +37,7 @@ describe Mongo::Auth::CR do
   context 'when the user is authorized for the database' do
 
       let(:user) do
-        Mongo::Auth::User.new(database: TEST_DB, username: 'test-user', password: 'password')
+        Mongo::Auth::User.new(database: TEST_DB, user: 'test-user', password: 'password')
       end
 
       let(:cr) do

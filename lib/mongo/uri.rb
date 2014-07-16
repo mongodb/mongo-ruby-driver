@@ -48,6 +48,21 @@ module Mongo
       @match[3].split(',')
     end
 
+    # Gets the options hash that needs to be passed to a Mongo::Client on
+    # instantiation, so we don't have to merge the credentials and database in
+    # at that point - we only have a single point here.
+    #
+    # @example Get the client options.
+    #   uri.client_options
+    #
+    # @return [ Hash ] The options passed to the Mongo::Client
+    #
+    # @since 2.0.0
+    def client_options
+      opts = options.merge(:database => database)
+      user ? opts.merge(credentials) : opts
+    end
+
     # Get the credentials provided in the URI.
     #
     # @example Get the credentials.

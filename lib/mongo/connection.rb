@@ -145,7 +145,7 @@ module Mongo
     end
 
     def setup_authentication!
-      @authenticator = Auth.get(Auth::User.new(options)) if options[:username]
+      @authenticator = Auth.get(Auth::User.new(options)) if options[:user]
     end
 
     def write(messages, buffer = '')

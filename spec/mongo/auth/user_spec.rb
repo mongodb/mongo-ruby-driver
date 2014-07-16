@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Auth::User do
 
   let(:options) do
-    { database: 'testing', username: 'user', password: 'pass' }
+    { database: 'testing', user: 'user', password: 'pass' }
   end
 
   let(:user) do
@@ -56,7 +56,7 @@ describe Mongo::Auth::User do
     context 'when the option is provided' do
 
       let(:options) do
-        { database: 'testing', username: 'user', password: 'pass', auth_mech: :plain }
+        { database: 'testing', user: 'user', password: 'pass', auth_mech: :plain }
       end
 
       let(:user) do
@@ -85,7 +85,7 @@ describe Mongo::Auth::User do
     context 'when the option is provided' do
 
       let(:options) do
-        { database: 'testing', username: 'user', password: 'pass', gssapi_service_name: 'test' }
+        { database: 'testing', user: 'user', password: 'pass', gssapi_service_name: 'test' }
       end
 
       let(:user) do
@@ -114,7 +114,7 @@ describe Mongo::Auth::User do
     context 'when the option is provided' do
 
       let(:options) do
-        { database: 'testing', username: 'user', password: 'pass', canonicalize_host_name: true }
+        { database: 'testing', user: 'user', password: 'pass', canonicalize_host_name: true }
       end
 
       let(:user) do

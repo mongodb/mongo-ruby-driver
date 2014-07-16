@@ -103,7 +103,7 @@ module Mongo
       # @since 2.0.0
       def initialize(options)
         @database = options[:auth_source] || options[:database]
-        @name = options[:username]
+        @name = options[:user]
         @password = options[:password]
         @mechanism = options[:auth_mech] || :mongodb_cr
         @gssapi_service_name = options[:gssapi_service_name] || 'mongodb'

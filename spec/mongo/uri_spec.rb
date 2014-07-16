@@ -73,6 +73,32 @@ describe Mongo::URI do
     end
   end
 
+  describe '#client_options' do
+
+    let(:db)          { TEST_DB }
+    let(:servers)     { 'localhost' }
+    let(:string)      { "#{scheme}#{credentials}@#{servers}/#{db}" }
+    let(:user)        { 'tyler' }
+    let(:password)    { 's3kr4t' }
+    let(:credentials) { "#{user}:#{password}" }
+
+    let(:options) do
+      uri.client_options
+    end
+
+    it 'includes the database in the options' do
+      expect(options[:database]).to eq(TEST_DB)
+    end
+
+    it 'includes the credentials in the options' do
+      expect(options[:user]).to eq(user)
+    end
+
+    it 'includes the options in the options' do
+      expect(options[:password]).to eq(password)
+    end
+  end
+
   describe '#credentials' do
     let(:servers)    { 'localhost' }
     let(:string)   { "#{scheme}#{credentials}@#{servers}" }

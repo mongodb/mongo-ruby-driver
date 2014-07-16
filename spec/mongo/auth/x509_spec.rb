@@ -11,7 +11,7 @@ describe Mongo::Auth::X509 do
   end
 
   let(:user) do
-    Mongo::Auth::User.new(database: TEST_DB, username: 'driver', password: 'password')
+    Mongo::Auth::User.new(database: TEST_DB, user: 'driver', password: 'password')
   end
 
   describe '#login' do

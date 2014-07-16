@@ -83,7 +83,7 @@ describe Mongo::Connection do
           described_class.new(
             address,
             5,
-            :username => 'test-user',
+            :user => 'test-user',
             :password => 'password',
             :database => TEST_DB,
             :auth_mech => :mongodb_cr
@@ -243,7 +243,7 @@ describe Mongo::Connection do
         described_class.new(
           address,
           nil,
-          :username => 'test-user',
+          :user => 'test-user',
           :password => 'password',
           :database => TEST_DB,
           :auth_mech => :mongodb_cr
@@ -251,7 +251,7 @@ describe Mongo::Connection do
       end
 
       let(:user) do
-        Mongo::Auth::User.new(database: TEST_DB, username: 'test-user', password: 'password')
+        Mongo::Auth::User.new(database: TEST_DB, user: 'test-user', password: 'password')
       end
 
       it 'sets the authentication strategy for the connection' do
