@@ -300,8 +300,9 @@ class Test::Unit::TestCase
       end
     rescue OperationFailure => ex
       # under narrowed localhost exception, getCmdLineOpts is not allowed.
-      return true if (client.server_version >= "2.7.1" &&
-        ex.error_code == Mongo::ErrorCode::UNAUTHORIZED)
+      return true if ex.message.include?("authorized") ||
+        (client.server_version >= "2.7.1" &&
+         ex.error_code == Mongo::ErrorCode::UNAUTHORIZED)
     end
   end
 

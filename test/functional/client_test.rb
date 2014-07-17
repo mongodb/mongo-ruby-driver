@@ -30,6 +30,16 @@ class ClientTest < Test::Unit::TestCase
     @client.close
   end
 
+  def with_old_style_user_admin(client, &block)
+    # This is used for test_copy_database
+    admin = client['admin']
+    admin.add_user('admin', 'password', false)
+    admin.authenticate('admin', 'password')
+    yield
+    admin.remove_user('admin')
+    admin.logout
+  end
+
   def test_connection_failure
     assert_raise Mongo::ConnectionFailure do
       MongoClient.new('localhost', 27347)
@@ -200,33 +210,34 @@ class ClientTest < Test::Unit::TestCase
     @client.drop_database(TEST_DB)
   end
 
-# This needs more work...
   def test_copy_database
     old_name = TEST_DB + '_old'
     new_name = TEST_DB + '_new'
-
+    coll = 'copy-test'
+    old_db = @client[old_name]
+    new_db = @client[new_name]
     admin = @client['admin']
 
-    # In 2.7 servers and above, we'll have an admin user, but for earlier servers,
-    # we'll have to add one here to work around the localhost exception.
-    if @client.server_version < "2.7.1"
-      admin.add_user('admin', 'password', nil, :roles => [ 'dbAdminAnyDatabase',
-                                                           'userAdminAnyDatabase',
-                                                           'readWriteAnyDatabase' ])
-      admin.authenticate('admin', 'password')
-    end
-
-    @client.db(old_name).collection('copy-test').insert('a' => 1)
-    @client[old_name].add_user('from', 'pwd', nil, :roles => ['readWrite', 'dbAdmin'])
+    old_db[coll].insert('a' => 1)
     @client.drop_database(new_name)
-    @client.copy_database(old_name, new_name, host_port, 'from', 'pwd')
 
-    old_object = @client.db(old_name).collection('copy-test').find.next_document
-    new_object = @client.db(new_name).collection('copy-test').find.next_document
-    assert_equal old_object, new_object
-
-    @client[old_name].command({ :dropAllUsersFromDatabase => 1 })
-    admin.command({ :dropAllUsersFromDatabase => 1 })
+    if @client.server_version >= "2.7.1"
+      # On > 2.7 servers, copydb must be run with an admin user, and
+      # we can pass in a user with the credentials of a dbOwner.
+      # (Need 'find' on the old_db and 'insert' and 'createIndexes' on the new_db)
+      old_db.add_user('chevy', 'chase', nil, :roles => ["dbOwner"])
+      @client.copy_database(old_name, new_name, host_port, 'chevy', 'chase')
+      old_db.remove_user('chevy')
+      assert_equal old_db[coll].find_one, new_db[coll].find_one
+    else
+      # Pre-2.7, we need 2.2-style users to run copydb.
+      with_old_style_user_admin(@client) do
+        old_db.add_user('chevy', 'chase', false)
+        @client.copy_database(old_name, new_name, host_port, 'chevy', 'chase')
+        old_db.remove_user('chevy')
+        assert_equal old_db[coll].find_one, new_db[coll].find_one
+      end
+    end
   end
 
   def test_database_names
