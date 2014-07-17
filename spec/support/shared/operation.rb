@@ -25,6 +25,7 @@ shared_context 'operation' do
       allow(cxt).to receive(:server) { primary_server }
       allow(cxt).to receive(:write_command_enabled?) { true }
       allow(cxt).to receive(:primary?) { true }
+      allow(cxt).to receive(:max_message_size) { 48000000 }
     end
   end
   let(:secondary_context) do

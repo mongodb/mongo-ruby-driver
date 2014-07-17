@@ -658,12 +658,30 @@ describe Mongo::Bulk::BulkWrite do
   end
 
   context 'batch splitting' do
-    context 'max BSON object size' do
+    let(:large_doc) do
+      { 'a' => "y"*(2*Mongo::Server::Description::MAX_MESSAGE_BYTES) }
+    end
+    let(:doc) do
+      { 'a' => "y"*(Mongo::Server::Description::MAX_MESSAGE_BYTES) }
+    end
+    context 'doc exceeds max BSON object size' do
 
+      it 'raises an exception' do
+        #expect{ ordered_batch.insert(large_doc) }.to raise_exception
+      end
     end
 
-    context 'max write batch size' do
+    context 'operation exceeds max message size' do
+      before do
+        #collection.drop
+        3.times do
+          ordered_batch.insert(doc)
+        end
+      end
 
+      it 'splits the operations into multiple message' do
+        #expect{ ordered_batch.insert(large_doc) }.not_to raise_exception
+      end
     end
   end
 

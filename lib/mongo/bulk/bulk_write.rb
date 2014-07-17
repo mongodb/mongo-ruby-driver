@@ -45,7 +45,7 @@ module Mongo
 
       def execute(write_concern = nil)
         current_batch.execute(ordered?,
-                            write_concern || @collection.write_concern)
+                              write_concern || @collection.write_concern)
         @batches << Batch.new
       end
 
@@ -92,13 +92,22 @@ module Mongo
 
       def execute(ordered, write_concern)
         raise Exception if @ops.empty?
-        raise Exception if @executed
+        raise Exception if executed?
 
+        # Record user-ordering of ops in this batch
+        @ops.each_with_index { |op, index| op.set_order(index) }
+
+        # @todo set this before or after the execute?
         @executed = true
-        merge_ops(ordered).each do |op|
-          response = op.execute(write_concern)
-          # parse error
-          # indexes and stuff
+        ops = merge_ops(ordered)
+
+        until ops.empty?
+          op = ops.shift
+          begin
+            op.execute(write_concern)
+          rescue Exception #BSON::InvalidDocument # message too large
+            ops = op.slice(2) + ops
+          end
         end
       end
 
@@ -116,7 +125,7 @@ module Mongo
       def merge_consecutive_ops(operations)
         operations.inject([]) do |memo, op|
           previous_op = memo.last
-          if previous_op.class == op.class && previous_op.has_space?
+          if previous_op.class == op.class
             memo.tap do |m|
               m[m.size - 1] = previous_op.merge(op)
             end
@@ -142,6 +151,10 @@ module Mongo
         ops_by_type.keys.inject([]) do |memo, type|
           memo << merge_consecutive_ops(hash[type])
         end.flatten
+      end
+
+      def executed?
+        @executed
       end
     end
   end
