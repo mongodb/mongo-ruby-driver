@@ -51,6 +51,15 @@ module Mongo
           children << self.class.new(spec_copy)
         end
       end
+
+      # Set a field :ord in the spec that keeps track of a higher-level ordering.
+      #
+      # @param [ Integer ] order The higher-level ordering of this op.
+      #
+      # @since 2.0.0
+      def set_order(order)
+        spec[slicable_key].each { |doc| doc[:ord] = order }
+      end
     end
   end
 end

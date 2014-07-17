@@ -383,6 +383,49 @@ describe Mongo::Operation::Write::Update do
     end
   end
 
+  describe '#set_order' do
+
+    context 'when an order has been set' do
+      let(:order) { 5 }
+      let(:updates) do
+        [{ :q => { :a => 1 },
+           :u => { :$set => { :a => 2 } },
+           :multi => true,
+           :upsert => false },
+         { :q => { :b => 1 },
+           :u => { :$set => { :b => 2 } },
+           :multi => true,
+           :upsert => false },
+         { :q => { :c => 1 },
+           :u => { :$set => { :c => 2 } },
+           :multi => true,
+           :upsert => false } ]
+      end
+      let(:expected) do
+        [{ :q => { :a => 1 },
+           :u => { :$set => { :a => 2 } },
+           :multi => true,
+           :upsert => false,
+           :ord => order },
+         { :q => { :b => 1 },
+           :u => { :$set => { :b => 2 } },
+           :multi => true,
+           :upsert => false,
+           :ord => order },
+         { :q => { :c => 1 },
+           :u => { :$set => { :c => 2 } },
+           :multi => true,
+           :upsert => false,
+           :ord => order } ]
+      end
+
+      it 'sets the order on each op spec document' do
+        op.set_order(order)
+        expect(op.spec[:updates]).to eq(expected)
+      end
+    end
+  end
+
   describe '#execute' do
 
     context 'server' do

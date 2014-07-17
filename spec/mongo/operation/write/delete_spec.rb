@@ -305,6 +305,28 @@ describe Mongo::Operation::Write::Delete do
     end
   end
 
+  describe '#set_order' do
+
+    context 'when an order has been set' do
+      let(:order) { 5 }
+      let(:deletes) do
+        [ {:q => { :a => 1 } },
+          {:q => { :b => 1 } },
+          {:q => { :c => 1 } } ]
+      end
+      let(:expected) do
+        [ {:q => { :a => 1 }, :ord => order },
+          {:q => { :b => 1 }, :ord => order },
+          {:q => { :c => 1 }, :ord => order } ]
+      end
+
+      it 'sets the order on each op spec document' do
+        op.set_order(order)
+        expect(op.spec[:deletes]).to eq(expected)
+      end
+    end
+  end
+
   describe '#execute' do
 
     context 'server' do

@@ -307,6 +307,28 @@ describe Mongo::Operation::Write::Insert do
     end
   end
 
+  describe '#set_order' do
+
+    context 'when an order has been set' do
+      let(:order) { 5 }
+      let(:documents) do
+        [ { :a => 1 },
+          { :b => 1 },
+          { :c => 1 } ]
+      end
+      let(:expected) do
+        [ { :a => 1, :ord => order },
+          { :b => 1, :ord => order },
+          { :c => 1, :ord => order } ]
+      end
+
+      it 'sets the order on each op spec document' do
+        op.set_order(order)
+        expect(op.spec[:documents]).to eq(expected)
+      end
+    end
+  end
+
   describe '#execute' do
 
     context 'server' do
