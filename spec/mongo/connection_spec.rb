@@ -112,7 +112,7 @@ describe Mongo::Connection do
   describe '#dispatch' do
 
     let!(:connection) do
-      described_class.new(address, username: 'driver', password: 'password')
+      described_class.new(address)
     end
 
     let(:documents) do
@@ -137,11 +137,14 @@ describe Mongo::Connection do
         connection.dispatch([ insert, query ])
       end
 
+      # @todo: Can remove this once we have more implemented with global hooks.
       after do
         connection.dispatch([ delete ])
       end
 
       it 'it dispatchs the message to the socket' do
+        p reply
+        p reply.documents.first
         expect(reply.documents.first['name']).to eq('testing')
       end
     end
