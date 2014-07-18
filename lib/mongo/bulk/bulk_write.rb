@@ -14,24 +14,24 @@
 
 module Mongo
   module Bulk
-    # This class keeps track of the operations as they are pushed onto itself.
+    # This class keeps track of operations as they are chained on a bulk object.
     # It handles:
     #  - Merging operations before execution if the bulk write is unordered.
     #  - Execution of the operations after possibly merging them.
-    #  - Bookkeeping for counts and such
-    #  - Processing responses and behavior for backwards compatibility
+    #  - Bookkeeping for mapping errors to the ops as chained by the user
+    #  - Processing responses for backwards compatibility
     class BulkWrite
 
       def initialize(collection, opts = {})
         @collection = collection
-        @ordered = !!opts[:ordered]
-        @batches = [ Batch.new ]
+        @ordered    = !!opts[:ordered]
+        @batches    = [ Batch.new(@ordered) ]
       end
 
       def insert(doc)
         raise Exception unless valid_doc?(doc)
 
-        spec = { :documents => doc,
+        spec = { :documents => [ doc ],
                  :db_name => db_name,
                  :coll_name => coll_name }
 
@@ -44,9 +44,9 @@ module Mongo
       end
 
       def execute(write_concern = nil)
-        current_batch.execute(ordered?,
-                              write_concern || @collection.write_concern)
-        @batches << Batch.new
+        current_batch.execute(write_concern ||
+                              @collection.write_concern)
+        @batches << Batch.new(ordered?)
       end
 
       def db_name
@@ -80,9 +80,10 @@ module Mongo
     # Handles all logic for a chain of ops between executions.
     class Batch
 
-      def initialize
+      def initialize(ordered)
         @ops = []
         @executed = false
+        @ordered = ordered
       end
 
       def push_op(op)
@@ -90,7 +91,7 @@ module Mongo
       end
       alias_method :<<, :push_op
 
-      def execute(ordered, write_concern)
+      def execute(write_concern)
         raise Exception if @ops.empty?
         raise Exception if executed?
 
@@ -99,14 +100,17 @@ module Mongo
 
         # @todo set this before or after the execute?
         @executed = true
-        ops = merge_ops(ordered)
+        @ops = merge_ops
+        # @todo: figure out how context works
+        #context =
+        ops = @ops.dup
 
         until ops.empty?
           op = ops.shift
           begin
             op.execute(write_concern)
-          rescue Exception #BSON::InvalidDocument # message too large
-            ops = op.slice(2) + ops
+          #rescue Exception #BSON::InvalidDocument # message too large
+          #  ops = op.slice(2) + ops
           end
         end
       end
@@ -114,8 +118,8 @@ module Mongo
       private
 
       # merge ops into appropriately-sized operation messages
-      def merge_ops(ordered)
-        if ordered
+      def merge_ops
+        if @ordered
           merge_consecutive_ops(@ops)
         else
           merge_ops_by_type(@ops)
