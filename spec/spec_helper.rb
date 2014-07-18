@@ -40,6 +40,11 @@ RSpec.configure do |config|
       thread.kill
     end
   end
+
+  config.before(:suite) do
+    `mongo ruby-driver ./spec/support/users_24.js`
+    `mongo ruby-driver ./spec/support/users_26.js`
+  end
 end
 
 TEST_DB      = 'ruby-driver'
