@@ -61,7 +61,7 @@ describe Mongo::Connection do
         described_class.new(
           address,
           5,
-          :username => 'test-user',
+          :username => 'notauser',
           :password => 'password',
           :database => TEST_DB,
           :auth_mech => :mongodb_cr
