@@ -112,7 +112,14 @@ describe Mongo::Connection do
   describe '#dispatch' do
 
     let!(:connection) do
-      described_class.new(address)
+      described_class.new(
+        address,
+        5,
+        :username => 'test-user',
+        :password => 'password',
+        :database => TEST_DB,
+        :auth_mech => :mongodb_cr
+      )
     end
 
     let(:documents) do
@@ -143,8 +150,6 @@ describe Mongo::Connection do
       end
 
       it 'it dispatchs the message to the socket' do
-        p reply
-        p reply.documents.first
         expect(reply.documents.first['name']).to eq('testing')
       end
     end
