@@ -41,9 +41,11 @@ RSpec.configure do |config|
     end
   end
 
+  directory = File.expand_path(File.dirname(__FILE__))
+
   config.before(:suite) do
-    p `mongo ruby-driver ./spec/support/users_24.js`
-    p `mongo ruby-driver ./spec/support/users_26.js`
+    `mongo ruby-driver #{directory}/support/users_24.js`
+    `mongo ruby-driver #{directory}/support/users_26.js`
   end
 end
 
