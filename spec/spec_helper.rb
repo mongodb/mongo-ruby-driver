@@ -42,8 +42,8 @@ RSpec.configure do |config|
   end
 
   config.before(:suite) do
-    `mongo ruby-driver ./spec/support/users_24.js`
-    `mongo ruby-driver ./spec/support/users_26.js`
+    p `mongo ruby-driver ./spec/support/users_24.js`
+    p `mongo ruby-driver ./spec/support/users_26.js`
   end
 end
 
