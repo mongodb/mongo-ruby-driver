@@ -50,9 +50,9 @@ module Mongo
     # @example Find all users named Emily using a specific read preference.
     #   CollectionView.new(collection, {:name => 'Emily'}, :read => :secondary_preferred)
     #
-    # @param collection [ Collection ] The +Collection+ to query.
-    # @param selector [ Hash ] The query selector.
-    # @param opts [ Hash ] The additional query options.
+    # @param [ Collection ] collection The +Collection+ to query.
+    # @param [ Hash ] selector The query selector.
+    # @param [ Hash ] opts The additional query options.
     #
     # @option opts :comment [ String ] Associate a comment with the query.
     # @option opts :batch_size [ Integer ] The number of docs to return in
@@ -126,7 +126,7 @@ module Mongo
     # collection.
     # Note that if a @selector is defined, it will be used in the analysis.
     #
-    # @param key [ Symbol, String ] The field to collect distinct values from.
+    # @param [ Symbol, String ] key The field to collect distinct values from.
     #
     # @return [ Hash ] A doc with an array of the distinct values and query plan.
     def distinct(key)
@@ -137,7 +137,7 @@ module Mongo
     # Set profilingLevel to 2 and the comment will be logged in the profile
     # collection along with the query.
     #
-    # @param comment [ String ] The comment to be associated with the query.
+    # @param [ String ] comment The comment to be associated with the query.
     #
     # @return [ String, CollectionView ] Either the comment or a
     #   new +CollectionView+.
@@ -147,7 +147,7 @@ module Mongo
 
     # Modify this +CollectionView+ to associate a comment with the query.
     #
-    # @param comment [ String ] The comment to be associated with the query.
+    # @param [ String ] comment The comment to be associated with the query.
     #
     # @return [ CollectionView ] self.
     def comment!(comment = nil)
@@ -157,7 +157,7 @@ module Mongo
     # The number of documents returned in each batch of results from MongoDB.
     # Specifying 1 or a negative number is analogous to setting a limit.
     #
-    # @param batch_size [ Integer ] The size of each batch of results.
+    # @param [ Integer ] batch_size The size of each batch of results.
     #
     # @return [ Integer, CollectionView ] Either the batch_size value or a
     # new +CollectionView+.
@@ -168,7 +168,7 @@ module Mongo
     # Modify this +CollectionView+ to define the number of documents returned in each
     # batch of results from MongoDB.
     #
-    # @param batch_size [ Integer ] The size of each batch of results.
+    # @param [ Integer ] batch_size The size of each batch of results.
     #
     # @return [ CollectionView ] self.
     def batch_size!(batch_size = nil)
@@ -180,7 +180,7 @@ module Mongo
     # Values must all be 0 or all be 1, with the exception of the _id value.
     # The _id field is included by default. It must be excluded explicitly.
     #
-    # @param fields [ Hash ] The field and 1 or 0, to include or exclude it.
+    # @param [ Hash ] fields The field and 1 or 0, to include or exclude it.
     #
     # @return [ CollectionView ] Either the fields or a new +CollectionView+.
     def fields(fields = nil)
@@ -190,7 +190,7 @@ module Mongo
     # Modify this +CollectionView+ to define the fields to include or exclude from each
     # doc in the result set.
     #
-    # @param fields [ Hash ] The field and 1 or 0, to include or exclude it.
+    # @param [ Hash ] fields The field and 1 or 0, to include or exclude it.
     #
     # @return [ CollectionView ] self.
     def fields!(fields = nil)
@@ -199,7 +199,7 @@ module Mongo
 
     # The index that MongoDB will be forced to use for the query.
     #
-    # @param hint [ Hash ] The index to use for the query.
+    # @param [ Hash ] hint The index to use for the query.
     #
     # @return [ Hash, CollectionView ] Either the hint or a new +CollectionView+.
     def hint(hint = nil)
@@ -209,7 +209,7 @@ module Mongo
     # Modify this +CollectionView+ to define the index that MongoDB will be forced
     # to use for the query.
     #
-    # @param hint [ Hash ] The index to use for the query.
+    # @param [ Hash ] hint The index to use for the query.
     #
     # @return [ CollectionView ] self.
     def hint!(hint = nil)
@@ -218,7 +218,7 @@ module Mongo
 
     # The max number of docs to return from the query.
     #
-    # @param limit [ Integer ] The number of docs to return.
+    # @param [ Integer ] limit The number of docs to return.
     #
     # @return [ Integer, CollectionView ] Either the limit or a new +CollectionView+.
     def limit(limit = nil)
@@ -228,7 +228,7 @@ module Mongo
     # Modify this +CollectionView+ to define the max number of docs to return from
     # the query.
     #
-    # @param limit [ Integer ] The number of docs to return.
+    # @param [ Integer ] limit The number of docs to return.
     #
     # @return [ CollectionView ] self.
     def limit!(limit = nil)
@@ -239,7 +239,7 @@ module Mongo
     # If none is specified for the query, the read preference of the
     # collection will be used.
     #
-    # @param read [ Symbol ] The read preference to use for the query.
+    # @param [ Symbol ] read The read preference to use for the query.
     #
     # @return [ Symbol, CollectionView ] Either the read preference or a
     # new +CollectionView+.
@@ -250,7 +250,7 @@ module Mongo
 
     # Modify this +CollectionView+ to define the read preference to use for the query.
     #
-    # @param read [ Symbol ] The read preference to use for the query.
+    # @param [ Symbol ] read The read preference to use for the query.
     #
     # @return [ CollectionView ] self.
     def read!(read = nil)
@@ -259,7 +259,7 @@ module Mongo
 
     # The number of docs to skip before returning results.
     #
-    # @param skip [ Integer ] Number of docs to skip.
+    # @param [ Integer ] skip Number of docs to skip.
     #
     # @return [ Integer, CollectionView ] Either the skip value or a
     # new +CollectionView+.
@@ -270,7 +270,7 @@ module Mongo
     # Modify this +CollectionView+ to define the number of docs to skip
     # before returning results.
     #
-    # @param skip [ Integer ] Number of docs to skip.
+    # @param [ Integer ] skip Number of docs to skip.
     #
     # @return [ CollectionView ] self.
     def skip!(skip = nil)
@@ -279,7 +279,7 @@ module Mongo
 
     # The key and direction pairs by which the result set will be sorted.
     #
-    # @param sort [ Hash ] The attributes and directions to sort by.
+    # @param [ Hash ] sort The attributes and directions to sort by.
     #
     # @return [ Hash, CollectionView ] Either the sort setting or a
     # new +CollectionView+.
@@ -290,7 +290,7 @@ module Mongo
     # Modify this +CollectionView+ to define the attributes by which the result set
     # will be sorted.
     #
-    # @param sort [ Hash ] The attributes and directions to sort by.
+    # @param [ Hash ] sort The attributes and directions to sort by.
     #
     # @return [ CollectionView ] self.
     def sort!(sort = nil)
@@ -343,7 +343,7 @@ module Mongo
     #
     # @return [ Enumerator ] The enumerator.
     #
-    # @yieldparam doc [ Hash ] Each matching document.
+    # @yieldparam [ Hash ] Each matching document.
     def each
       cursor = Cursor.new(self, send_initial_query).to_enum
       cursor.each do |doc|
@@ -424,7 +424,7 @@ module Mongo
     # Get a hash of the query options.
     #
     # @return [Hash] The query options.
-    # @todo: refactor this, it knows too much about the query wire protocol
+    # @todo: refactor this? it knows too much about the query wire protocol
     # message interface
     def query_opts
       { :project => fields,
@@ -454,7 +454,7 @@ module Mongo
     # The @opt and @selector instance variables are duped and the
     # +Collection+ reference remains intact.
     #
-    # @param other [ CollectionView ] The +CollectionView+ to be cloned.
+    # @param [ CollectionView ] other The +CollectionView+ to be cloned.
     #
     # @return [ CollectionView ] The new +CollectionView+.
     def initialize_copy(other)

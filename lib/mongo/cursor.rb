@@ -49,7 +49,7 @@ module Mongo
 
     # Iterate through documents returned from the query.
     #
-    # @yieldparam doc [Hash] Each matching document.
+    # @yieldparam [Hash] Each matching document.
     def each
       yield fetch_doc until done?
     end
@@ -59,6 +59,7 @@ module Mongo
     # Process the response returned from the server either from
     # the initial query or from the get more operation.
     #
+    # @params [ Object ] The response from the operation.
     def process_response(response)
       @server    = response.server
       @cache     = (@cache || []) + response.docs
@@ -149,6 +150,7 @@ module Mongo
     # @return [true, false] Whether the document is an error document.
     # @todo: method on response?
     def error?(doc)
+      # @todo implement this
       false
     end
 
