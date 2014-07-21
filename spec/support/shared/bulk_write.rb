@@ -662,27 +662,98 @@ shared_examples 'a bulk write object' do
   end
 
   context 're-running a batch' do
+    before do
+      #collection.drop
+      #bulk.insert(:a => 1)
+      #bulk.execute
+    end
+    after do
+      #collection.drop
+    end
 
+    it 'raises an exception' do
+      #expect{ bulk.execute }.to raise_exception
+    end
   end
 
   context 'empty batch' do
 
+    it 'raises an exception' do
+      expect{ bulk.execute }.to raise_exception
+    end
   end
 
-  context 'no journal' do
+  context 'j write concern used with no journal' do
+    let(:write_concern) do
+      { :w => 1, :j => 1 }
+    end
+    allow(bulk).to receive(:execute) { response }
 
+    before do
+      bulk.insert(:a => 1)
+    end
+
+    context 'version < 2.4' do
+      let(response) do
+        # @todo: mock a response object using the doc below
+        {
+            "ok" => 1,
+            "n" => 1,
+            "writeConcernError" => [
+                {
+                    "code" => 2,
+                    "errmsg" => "journaling not enabled on this server",
+                    "index" => 0
+                }
+            ],
+            "code" => 65,
+            "errmsg" => "batch item errors occurred",
+            "nInserted" => 1
+        }
+      end
+
+      it 'raises an error' do
+        expect{ bulk.execute(write_concern) }.to raise_exception
+      end
+    end
+
+    context 'version >= 2.6' do
+      let(response) do
+        # @todo: mock a response object using the doc below
+        {
+            "ok" => 0,
+            "n" => 0,
+            "writeErrors" => [
+                {
+                    "code" => 2,
+                    "errmsg" => "cannot use 'j' option when a host does not have journaling enabled", "index" => 0
+                }
+            ],
+            "code" => 65,
+            "errmsg" => "batch item errors occurred",
+            "nInserted" => 0
+        }
+      end
+
+      allow(bulk).to receive(:execute) { response }
+
+      it 'raises an error' do
+        expect{ bulk.execute(write_concern) }.to raise_exception
+      end
+    end
   end
 
   context 'w > 1 against standalone' do
+    let(:write_concern) do
+      { :w => 2 }
+    end
+    before do
+      bulk.insert(:a => 1)
+    end
 
-  end
-
-  context 'wtimeout and duplicate key error' do
-
-  end
-
-  context 'w = 0' do
-
+    it 'raises an error' do
+      expect{ bulk.execute(write_concern) }.to raise_exception
+    end
   end
 
   context 'failover with mixed versions' do
