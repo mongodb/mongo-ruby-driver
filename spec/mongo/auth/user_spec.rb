@@ -137,4 +137,8 @@ describe Mongo::Auth::User do
       end
     end
   end
+
+  describe '#roles' do
+
+  end
 end

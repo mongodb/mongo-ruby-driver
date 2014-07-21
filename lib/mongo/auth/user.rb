@@ -39,6 +39,9 @@ module Mongo
       # @return [ String ] The cleartext password.
       attr_reader :password
 
+      # @return [ Array<String> ] roles The user roles.
+      attr_reader :roles
+
       # Determine if this user is equal to another.
       #
       # @example Check user equality.
@@ -108,6 +111,7 @@ module Mongo
         @mechanism = options[:auth_mech] || :mongodb_cr
         @gssapi_service_name = options[:gssapi_service_name] || 'mongodb'
         @canonicalize_host_name = options[:canonicalize_host_name] || false
+        @roles = options[:roles] || []
       end
     end
   end

@@ -18,6 +18,7 @@ require 'mongo/auth/ldap'
 require 'mongo/auth/kerberos' if BSON::Environment.jruby?
 require 'mongo/auth/user'
 require 'mongo/auth/x509'
+require 'mongo/auth/roles'
 
 module Mongo
 
