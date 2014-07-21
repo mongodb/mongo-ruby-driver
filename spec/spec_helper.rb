@@ -44,20 +44,8 @@ RSpec.configure do |config|
   directory = File.expand_path(File.dirname(__FILE__))
 
   config.before(:suite) do
-    user    = Mongo::Auth::User.new(TEST_DB, TEST_USER, TEST_PASSWORD)
-    options = {
-      pwd: user.hashed_password,
-      roles: [ 'dbAdminAnyDatabase', 'userAdminAnyDatabase', 'readWriteAnyDatabase' ]
-    }
-    command_24 = { addUser: user.name }.merge(options)
-    command_26 = { createUser: user.name }.merge(options)
-    query_24 = Mongo::Protocol::Query.new('admin', '$cmd', command_24, :limit => -1)
-    query_26 = Mongo::Protocol::Query.new('admin', '$cmd', command_26, :limit => -1)
-    address = Mongo::Server::Address.new('127.0.0.1:27017')
-    connection = Mongo::Connection.new(address)
-
-    p connection.dispatch([ query_24 ])
-    p connection.dispatch([ query_26 ])
+    `mongo ruby-driver #{directory}/support/users_24.js`
+    `mongo ruby-driver #{directory}/support/users_26.js`
   end
 end
 
