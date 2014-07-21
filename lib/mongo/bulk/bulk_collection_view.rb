@@ -133,7 +133,7 @@ module Mongo
       def multi_or_single_update(multi = false, update_doc)
         raise Exception unless @selector
 
-        spec = { :updates      => [ {:q => @selector,
+        spec = { :updates      => [{ :q => @selector,
                                      :u => update_doc,
                                      :multi => multi,
                                      :upsert => upsert }],
@@ -158,8 +158,8 @@ module Mongo
       def multi_or_single_remove(multi = false)
         raise Exception unless @selector
         
-        spec = { :deletes       => [ {:q => @selector,
-                                      :limit => multi ? nil : 1}],
+        spec = { :deletes       => [{ :q => @selector,
+                                      :limit => multi ? nil : 1 }],
                  :db_name       => @bulk_write.db_name,
                  :coll_name     => @bulk_write.coll_name,
                  :ordered       => @bulk_write.ordered? }

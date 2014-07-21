@@ -14,20 +14,46 @@
 
 module Mongo
   module Bulk
-    # This class keeps track of operations as they are chained on a bulk object.
-    # It handles:
-    #  - Merging operations before execution if the bulk write is unordered.
-    #  - Execution of the operations after possibly merging them.
-    #  - Bookkeeping for mapping errors to the ops as chained by the user
-    #  - Processing responses for backwards compatibility
+
+    # This semipublic class keeps track of operations as they are chained
+    # onto a bulk object. It is created by a collection using either the
+    # #initialize_unordered_bulk_op or #initialize_ordered_bulk_op methods.
+    #
+    # Its responsibilities include:
+    #  - Keeping track of ops defined between batch executions.
+    #  - Merging operations before execution.
+    #  - Execution of the operations.
+    #  - Bookkeeping for mapping errors to their source operations.
+    #  - Processing responses for backwards compatibility.
+    #
+    # @note The +BulkWrite+ API is semipublic.
+    # @api semipublic
     class BulkWrite
 
+      # Initialize the Bulk object.
+      #
+      # @example Create an ordered bulk object.
+      #   BulkWrite.new(collection, :ordered => true)
+      #
+      # @example Create an unordered bulk object.
+      #   BulkWrite.new(collection, :ordered => false)
+      #
+      # @params [ Collection ] collection The collection on which the batch
+      #   operations will be executed.
       def initialize(collection, opts = {})
         @collection = collection
         @ordered    = !!opts[:ordered]
         @batches    = [ Batch.new(@ordered) ]
       end
 
+      # Insert a document into the collection.
+      #
+      # @params [ Hash ] doc The document to insert.
+      #
+      # @todo: change this Exception class
+      # @raise [ Exception ] The document must be a Hash.
+      #
+      # @return [ Batch ] The current batch object.
       def insert(doc)
         raise Exception unless valid_doc?(doc)
 
@@ -39,58 +65,116 @@ module Mongo
         current_batch << op
       end
 
+      # Define a query selector.
+      #
+      # @params [ Hash ] q The selector.
+      #
+      # @return [ BulkCollectionView ] A new BulkCollectionView object
+      #   representing an operation requiring a selector.
       def find(q)
         BulkCollectionView.new(self, q)
       end
 
-      def execute(write_concern = nil)
-        current_batch.execute(write_concern ||
-                              @collection.write_concern)
-        @batches << Batch.new(ordered?)
-      end
-
-      def db_name
-        @collection.database.name
-      end
-
-      def coll_name
-        @collection.name
-      end
-
-      def ordered?
-        @ordered
-      end
-
+      # Push a new operation onto this bulk object's current batch.
+      #
+      # @params [ Operation ] op The operation to push onto this bulk object.
+      #
+      # @return [ Batch ] The current batch object.
       def push_op(op)
         current_batch << op
       end
       alias_method :<<, :push_op
 
+      # Execute the current batch of operations.
+      #
+      # @params [ WriteConcern::Mode ] write_concern The write concern to use
+      #   for this batch execution.
+      #
+      # @return [ Hash ] A document response from the server.
+      def execute(write_concern = nil)
+        response = current_batch.execute(write_concern ||
+                              @collection.write_concern)
+        @batches << Batch.new(ordered?)
+        response
+      end
+
+      # The name of the database containing the collection.
+      #
+      # @return [ String ] The name of the database.
+      def db_name
+        @collection.database.name
+      end
+
+      # The name of the collection on which these operations will be executed.
+      #
+      # @return [ String ] The collection name.
+      def coll_name
+        @collection.name
+      end
+
+      # Whether this bulk object will execute the operations in the order in which
+      # they are chained.
+      #
+      # @return [ true, false ] Whether the operations will be executed in order.
+      def ordered?
+        @ordered
+      end
+
       private
 
+      # The current batch of operations.
+      #
+      # @return [ Batch ] The current batch.
       def current_batch
         @batches.last
       end
 
+      # Whether the object is a valid document.
+      # Must be a Hash.
+      #
+      # @return [ true, false ] Whether the object is a valid document.
       def valid_doc?(doc)
         doc.is_a?(Hash)
       end
     end
 
-    # Handles all logic for a chain of ops between executions.
+    # Encapsulates all logic for a chain of operations between executions.
+    #
+    # @note The +Batch+ API is semipublic and should only be used by a
+    # BulkWrite object.
+    #
+    # @api semipublic
     class Batch
 
+      # Initialize a Batch object.
+      #
+      # @params [ true, false ] Whether the operations should be executed in the
+      #   order in which they were chained.
       def initialize(ordered)
         @ops = []
         @executed = false
         @ordered = ordered
       end
 
+      # Push a new operation onto this batch object.
+      #
+      # @params [ Operation ] op The operation to push onto this batch object.
+      #
+      # @return [ Batch ] The current batch object.
       def push_op(op)
         @ops << op
       end
       alias_method :<<, :push_op
 
+      # Execute this batch of operations.
+      #
+      # @params [ WriteConcern::Mode ] write_concern The write concern to use for
+      #   this execution of operations.
+      #
+      # @raise [ BSON::InvalidDocument ] The document must not exceed the max message
+      #   size.
+      #
+      # @return [ Hash ] A document response from the server.
       def execute(write_concern)
         raise Exception if @ops.empty?
         raise Exception if executed?
@@ -108,16 +192,27 @@ module Mongo
         until ops.empty?
           op = ops.shift
           begin
-            op.execute(write_concern)
-          #rescue Exception #BSON::InvalidDocument # message too large
-          #  ops = op.slice(2) + ops
+            # @todo: uncomment this when collection is finished.
+            process_response(op.execute(write_concern))
+          rescue Exception #BSON::InvalidDocument # message too large
+            ops = op.slice(2) + ops
           end
         end
       end
 
       private
 
-      # merge ops into appropriately-sized operation messages
+      # Whether this batch has already been executed.
+      #
+      # @return [ true, false ] Whether this batch has been executed.
+      def executed?
+        @executed
+      end
+
+      # If an ordered bulk object, merge adjacent same-type operations.
+      # If an unordered bulk object, merge same-type operations.
+      #
+      # @return [ Array ] List of merged operations.
       def merge_ops
         if @ordered
           merge_consecutive_ops(@ops)
@@ -126,6 +221,9 @@ module Mongo
         end
       end
 
+      # Merge consecutive operations of the same type.
+      #
+      # @return [ Array ] List of merged operations.
       def merge_consecutive_ops(operations)
         operations.inject([]) do |memo, op|
           previous_op = memo.last
@@ -139,6 +237,10 @@ module Mongo
         end
       end
 
+      # Merge all operations of the same type. Original order is not
+      # guaranteed.
+      #
+      # @return [ Array ] List of merged operations by type.
       def merge_ops_by_type(operations)
         ops_by_type = operations.inject({}) do |memo, op|
           if memo[op.class]
@@ -157,8 +259,10 @@ module Mongo
         end.flatten
       end
 
-      def executed?
-        @executed
+      # Process the response from the server after the bulk execution.
+      #
+      # @return [ Hash ] The response from the server.
+      def process_response(response)
       end
     end
   end
