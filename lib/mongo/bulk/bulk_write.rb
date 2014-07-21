@@ -153,7 +153,7 @@ module Mongo
         end
 
         ops_by_type.keys.inject([]) do |memo, type|
-          memo << merge_consecutive_ops(hash[type])
+          memo << merge_consecutive_ops(ops_by_type[type])
         end.flatten
       end
 
