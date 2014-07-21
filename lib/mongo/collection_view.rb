@@ -145,15 +145,6 @@ module Mongo
       set_option(:comment, comment)
     end
 
-    # Modify this +CollectionView+ to associate a comment with the query.
-    #
-    # @param [ String ] comment The comment to be associated with the query.
-    #
-    # @return [ CollectionView ] self.
-    def comment!(comment = nil)
-      mutate(:comment, comment)
-    end
-
     # The number of documents returned in each batch of results from MongoDB.
     # Specifying 1 or a negative number is analogous to setting a limit.
     #
@@ -163,16 +154,6 @@ module Mongo
     # new +CollectionView+.
     def batch_size(batch_size = nil)
       set_option(:batch_size, batch_size)
-    end
-
-    # Modify this +CollectionView+ to define the number of documents returned in each
-    # batch of results from MongoDB.
-    #
-    # @param [ Integer ] batch_size The size of each batch of results.
-    #
-    # @return [ CollectionView ] self.
-    def batch_size!(batch_size = nil)
-      mutate(:batch_size, batch_size)
     end
 
     # The fields to include or exclude from each doc in the result set.
@@ -187,16 +168,6 @@ module Mongo
       set_option(:fields, fields)
     end
 
-    # Modify this +CollectionView+ to define the fields to include or exclude from each
-    # doc in the result set.
-    #
-    # @param [ Hash ] fields The field and 1 or 0, to include or exclude it.
-    #
-    # @return [ CollectionView ] self.
-    def fields!(fields = nil)
-      mutate(:fields, fields)
-    end
-
     # The index that MongoDB will be forced to use for the query.
     #
     # @param [ Hash ] hint The index to use for the query.
@@ -206,16 +177,6 @@ module Mongo
       set_option(:hint, hint)
     end
 
-    # Modify this +CollectionView+ to define the index that MongoDB will be forced
-    # to use for the query.
-    #
-    # @param [ Hash ] hint The index to use for the query.
-    #
-    # @return [ CollectionView ] self.
-    def hint!(hint = nil)
-      mutate(:hint, hint)
-    end
-
     # The max number of docs to return from the query.
     #
     # @param [ Integer ] limit The number of docs to return.
@@ -223,16 +184,6 @@ module Mongo
     # @return [ Integer, CollectionView ] Either the limit or a new +CollectionView+.
     def limit(limit = nil)
       set_option(:limit, limit)
-    end
-
-    # Modify this +CollectionView+ to define the max number of docs to return from
-    # the query.
-    #
-    # @param [ Integer ] limit The number of docs to return.
-    #
-    # @return [ CollectionView ] self.
-    def limit!(limit = nil)
-      mutate(:limit, limit)
     end
 
     # The read preference to use for the query.
@@ -248,15 +199,6 @@ module Mongo
       set_option(:read, read)
     end
 
-    # Modify this +CollectionView+ to define the read preference to use for the query.
-    #
-    # @param [ Symbol ] read The read preference to use for the query.
-    #
-    # @return [ CollectionView ] self.
-    def read!(read = nil)
-      mutate(:read, read)
-    end
-
     # The number of docs to skip before returning results.
     #
     # @param [ Integer ] skip Number of docs to skip.
@@ -267,16 +209,6 @@ module Mongo
       set_option(:skip, skip)
     end
 
-    # Modify this +CollectionView+ to define the number of docs to skip
-    # before returning results.
-    #
-    # @param [ Integer ] skip Number of docs to skip.
-    #
-    # @return [ CollectionView ] self.
-    def skip!(skip = nil)
-      mutate(:skip, skip)
-    end
-
     # The key and direction pairs by which the result set will be sorted.
     #
     # @param [ Hash ] sort The attributes and directions to sort by.
@@ -285,16 +217,6 @@ module Mongo
     # new +CollectionView+.
     def sort(sort = nil)
       set_option(:sort, sort)
-    end
-
-    # Modify this +CollectionView+ to define the attributes by which the result set
-    # will be sorted.
-    #
-    # @param [ Hash ] sort The attributes and directions to sort by.
-    #
-    # @return [ CollectionView ] self.
-    def sort!(sort = nil)
-      mutate(:sort, sort)
     end
 
     # Set options for the query.
@@ -317,26 +239,6 @@ module Mongo
         s_opts[k].nil? ? opts.delete(k) : opts.merge!(k => s_opts[k])
       end
       CollectionView.new(collection, selector, opts)
-    end
-
-    # Modify this +CollectionView+ to set options for the query.
-    #
-    # @param s_opts [ Hash ] Query options.
-    #
-    # @option s_opts :snapshot [ true, false ] Prevents returning docs more
-    #   than once.
-    # @option s_opts :max_scan [ Integer ] Constrain the query to only scan the
-    #   specified number of docs.
-    # @option s_opts :show_disk_loc [ true, false ] Return disk location info
-    #   as a field in each doc.
-    #
-    # @return [ CollectionView ] self
-    def special_opts!(s_opts = nil)
-      return self if s_opts.nil?
-      [:snapshot, :max_scan, :show_disk_loc].each do |k|
-        s_opts[k].nil? ? @opts.delete(k) : @opts.merge!(k => s_opts[k])
-      end
-      self
     end
 
     # Iterate through documents returned by a query with this +CollectionView+.

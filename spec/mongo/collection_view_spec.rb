@@ -119,19 +119,6 @@ describe Mongo::CollectionView do
     end
   end
 
-  describe '#comment!' do
-
-    context 'when a comment is specified' do
-      let(:opts) { { :comment => 'test1' } }
-      let(:new_comment) { 'test2' }
-
-      it 'sets the comment on the same CollectionView' do
-        view.comment!(new_comment)
-        expect(view.comment).to eq(new_comment)
-      end
-    end
-  end
-
   describe '#batch_size' do
     let(:opts) { { :batch_size => 13 } }
 
@@ -152,19 +139,6 @@ describe Mongo::CollectionView do
 
       it 'returns the batch_size' do
         expect(view.batch_size).to eq(opts[:batch_size])
-      end
-    end
-  end
-
-  describe '#batch_size!' do
-
-    context 'when a batch size is specified' do
-      let(:opts) { { :batch_size => 13 } }
-      let(:new_batch_size) { 15 }
-
-      it 'sets the batch size on the same CollectionView' do
-        view.batch_size!(new_batch_size)
-        expect(view.batch_size).to eq(new_batch_size)
       end
     end
   end
@@ -194,19 +168,6 @@ describe Mongo::CollectionView do
     end
   end
 
-  describe '#fields!' do
-
-    context 'when fields are specified' do
-      let(:opts) { { :fields => { 'x' => 1 } } }
-      let(:new_fields) { { 'y' => 1 } }
-
-      it 'sets the fields on the same CollectionView' do
-        view.fields!(new_fields)
-        expect(view.fields).to eq(new_fields)
-      end
-    end
-  end
-
   describe '#hint' do
 
     context 'when a hint is specified' do
@@ -228,19 +189,6 @@ describe Mongo::CollectionView do
 
       it 'returns the hint' do
         expect(view.hint).to eq(opts[:hint])
-      end
-    end
-  end
-
-  describe '#hint!' do
-
-    context 'when a hint is specified' do
-      let(:opts) { { :hint => { 'x' => ascending } } }
-      let(:new_hint) { { 'x' => descending } }
-
-      it 'sets the hint on the same CollectionView' do
-        view.hint!(new_hint)
-        expect(view.hint).to eq(new_hint)
       end
     end
   end
@@ -270,19 +218,6 @@ describe Mongo::CollectionView do
     end
   end
 
-  describe '#limit!' do
-
-    context 'when a limit is specified' do
-      let(:opts) { { :limit => 5 } }
-      let(:new_limit) { 10 }
-
-      it 'sets the limit on the same CollectionView' do
-        view.limit!(new_limit)
-        expect(view.limit).to eq(new_limit)
-      end
-    end
-  end
-
   describe '#skip' do
 
     context 'when a skip is specified' do
@@ -304,19 +239,6 @@ describe Mongo::CollectionView do
 
       it 'returns the skip value' do
         expect(view.skip).to eq(opts[:skip])
-      end
-    end
-  end
-
-  describe '#skip!' do
-
-    context 'when a skip is specified' do
-      let(:opts) { { :skip => 5 } }
-      let(:new_skip) { 10 }
-
-      it 'sets the skip value on the same CollectionView' do
-        view.skip!(new_skip)
-        expect(view.skip).to eq(new_skip)
       end
     end
   end
@@ -360,23 +282,6 @@ describe Mongo::CollectionView do
     end
   end
 
-  describe '#read!' do
-
-    context 'when a read pref is specified' do
-      let(:opts) do
-        { :read =>  Mongo::ServerPreference.get(:secondary) }
-      end
-      let(:new_read) do
-        Mongo::ServerPreference.get(:secondary_preferred)
-      end
-
-      it 'sets the read preference on the same CollectionView' do
-        view.read!(new_read)
-        expect(view.read).to eq(new_read)
-      end
-    end
-  end
-
   describe '#sort' do
 
     context 'when a sort is specified' do
@@ -398,19 +303,6 @@ describe Mongo::CollectionView do
 
       it 'returns the sort' do
         expect(view.sort).to eq(opts[:sort])
-      end
-    end
-  end
-
-  describe '#sort!' do
-
-    context 'when a sort is specified' do
-      let(:opts) { { :sort => { 'x' => ascending } } }
-      let(:new_sort) { { 'x' => descending }  }
-
-      it 'sets the sort option on the same CollectionView' do
-        view.sort!(new_sort)
-        expect(view.sort).to eq(new_sort)
       end
     end
   end
@@ -466,19 +358,6 @@ describe Mongo::CollectionView do
 
       it 'returns the special opts' do
         expect(view.special_opts).to eq(opts)
-      end
-    end
-  end
-
-  describe '#special_opts!' do
-
-    context 'when special_opts are specified' do
-      let(:opts) { { :snapshot => true } }
-      let(:new_special_opts) { { :max_scan => 100, :snapshot => false } }
-
-      it 'sets the special options on the same CollectionView' do
-        view.special_opts!(new_special_opts)
-        expect(view.special_opts).to eq(new_special_opts)
       end
     end
   end
