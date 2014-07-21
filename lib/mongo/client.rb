@@ -67,6 +67,21 @@ module Mongo
       database[collection_name]
     end
 
+    # Execute a command on the database this client is assigned to send
+    # messages on.
+    #
+    # @example Execute a command.
+    #   client.command(ismaster: 1)
+    #
+    # @param [ Hash ] operation The command to execute.
+    #
+    # @return [ Hash ] The result of the command.
+    #
+    # @since 2.0.0
+    def command(operation)
+      database.command(operation)
+    end
+
     # Get the hash value of the client.
     #
     # @example Get the client hash value.
