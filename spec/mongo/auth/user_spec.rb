@@ -140,5 +140,30 @@ describe Mongo::Auth::User do
 
   describe '#roles' do
 
+    context 'when roles are provided' do
+
+      let(:roles) do
+        [ Mongo::Auth::Roles::ROOT ]
+      end
+
+      let(:user) do
+        described_class.new(roles: roles)
+      end
+
+      it 'returns the roles' do
+        expect(user.roles).to eq(roles)
+      end
+    end
+
+    context 'when no roles are provided' do
+
+      let(:user) do
+        described_class.new({})
+      end
+
+      it 'returns an empty array' do
+        expect(user.roles).to be_empty
+      end
+    end
   end
 end
