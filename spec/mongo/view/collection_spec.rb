@@ -309,6 +309,23 @@ describe Mongo::View::Collection do
     end
   end
 
+  describe '#read!' do
+
+    context 'when a read pref is specified' do
+      let(:opts) do
+        { :read =>  Mongo::ServerPreference.get(:mode => :secondary) }
+      end
+      let(:new_read) do
+        Mongo::ServerPreference.get(:mode => :secondary_preferred)
+      end
+
+      it 'sets the read preference on the same CollectionView' do
+        view.read!(new_read)
+        expect(view.read).to eq(new_read)
+      end
+    end
+  end
+
   describe '#sort' do
 
     context 'when a sort is specified' do

@@ -145,7 +145,7 @@ module Mongo
     # without altering the original client.
     #
     # @example Get a client with changed options.
-    #   client.with(:read => :primary_preferred)
+    #   client.with(:read => { :mode => :primary_preferred })
     #
     # @param [ Hash ] new_options The new options to use.
     #
