@@ -79,7 +79,7 @@ module Mongo
     # Instantiate a new collection.
     #
     # @example Instantiate a new collection.
-    # Mongo::Collection.new(database, 'test')
+    #   Mongo::Collection.new(database, 'test')
     #
     # @param [ Mongo::Database ] database The collection's database.
     # @param [ String, Symbol ] name The collection name.
@@ -94,7 +94,7 @@ module Mongo
     # Insert the provided documents into the collection.
     #
     # @example Insert documents into the collection.
-    # collection.insert([{ name: 'test' }])
+    #   collection.insert([{ name: 'test' }])
     #
     # @param [ Array<Hash> ] documents The documents to insert.
     # @param [ Hash ] options The insert options.
