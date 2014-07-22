@@ -95,6 +95,7 @@ module Mongo
       end
 
       # Options for this command.
+      # A command should have limit -1.
       #
       # @return [ Hash ] Command options.
       #

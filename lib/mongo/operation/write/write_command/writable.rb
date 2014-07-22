@@ -65,13 +65,17 @@ module Mongo
             @spec[:ordered] ? !!@spec[:ordered] : true
           end
 
-          # Any options for the command.
+          # Options for the write command.
+          # A command should have limit -1.
           #
-          # @return [ Hash ] Command options. 
+          # @return [ Hash ] Command options.
           #
           # @since 2.0.0
           def opts
-            @spec[:opts]
+            return { :limit => -1 } unless @spec[:opts]
+            unless @spec[:opts][:limit] && @spec[:opts][:limit] == -1
+              @spec[:opts].merge(:limit => -1)
+            end
           end
 
           # The wire protocol message for this write operation.
