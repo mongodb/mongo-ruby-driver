@@ -39,10 +39,6 @@ module Mongo
 
           private
 
-          def secondary_ok?
-            false
-          end
-
           # The query selector for this insert command operation.
           #
           # @return [ Hash ] The selector describing this insert operation.

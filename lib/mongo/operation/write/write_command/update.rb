@@ -44,15 +44,9 @@ module Mongo
 
           private
 
-          def secondary_ok?
-            false
-          end
-
           # The query selector for this update command operation.
           #
           # @return [ Hash ] The selector describing this update operation.
-          #
-          # @since 2.0.0
           def selector
             { :update        => coll_name,
               :updates       => @spec[:updates],

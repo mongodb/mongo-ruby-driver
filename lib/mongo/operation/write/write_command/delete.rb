@@ -41,10 +41,6 @@ module Mongo
 
           private
 
-          def secondary_ok?
-            false
-          end
-
           # The query selector for this delete command operation.
           #
           # @return [ Hash ] The selector describing this delete operation.

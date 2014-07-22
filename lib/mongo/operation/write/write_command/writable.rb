@@ -42,6 +42,13 @@ module Mongo
 
           private
 
+          # Whether this operation may be executed on a secondary server.
+          #
+          # @return [ false ] A write command may not be executed on a secondary.
+          def secondary_ok?
+            false
+          end
+
           # The write concern to use for this operation.
           #
           # @return [ Mongo::WriteConcern::Mode ] The write concern.
