@@ -19,6 +19,7 @@ module Mongo
   #
   # @since 2.0.0
   class Database
+    extend Forwardable
 
     # The admin database name.
     #
@@ -37,8 +38,12 @@ module Mongo
 
     # @return [ Mongo::Client ] The database client.
     attr_reader :client
+
     # @return [ String ] The name of the collection.
     attr_reader :name
+
+    # Get cluser and server preference from client.
+    def_delegators :@client, :cluster, :server_preference, :write_concern
 
     # Check equality of the database object against another. Will simply check
     # if the names are the same.
@@ -156,22 +161,6 @@ module Mongo
       def initialize
         super(MESSAGE)
       end
-    end
-
-    private
-
-    # Get the cluster from the client to execute operations on.
-    #
-    # @api private
-    #
-    # @example Get the cluster.
-    #   database.cluster
-    #
-    # @return [ Mongo::Cluster ] The cluster.
-    #
-    # @since 2.0.0
-    def cluster
-      client.cluster
     end
   end
 end
