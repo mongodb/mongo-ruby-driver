@@ -97,15 +97,6 @@ module Mongo
         @spec[:selector]
       end
 
-      # Any options for this aggregate command operation.
-      #
-      # @return [ Hash ] The query options.
-      #
-      # @since 2.0.0
-      def opts
-        @spec[:opts] || {}
-      end
-
       # Whether this operation can be executed on a replica set secondary server.
       # The aggregate operation may not be executed on a secondary if the user has specified
       # an output collection to which the results will be written.

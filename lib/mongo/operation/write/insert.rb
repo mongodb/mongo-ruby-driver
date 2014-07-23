@@ -13,9 +13,7 @@
 # limitations under the License.
 
 module Mongo
-
   module Operation
-
     module Write
 
       # A MongoDB insert operation.
@@ -76,7 +74,6 @@ module Mongo
           else
             documents.each do |d|
               context.with_connection do |connection|
-                gle = write_concern.get_last_error
                 connection.dispatch([ message(d), gle ].compact)
               end
             end

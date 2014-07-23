@@ -59,15 +59,6 @@ module Mongo
           @spec[:selector]
         end
 
-        # The options for the query.
-        #
-        # @return [ Hash ] The query options.
-        #
-        # @since 2.0.0
-        def opts
-          @spec[:opts] || {}
-        end
-
         # The wire protocol message for this query operation.
         #
         # @return [ Mongo::Protocol::Query ] Wire protocol message.

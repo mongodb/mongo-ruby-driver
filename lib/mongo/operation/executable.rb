@@ -13,7 +13,6 @@
 # limitations under the License.
 
 module Mongo
-
   module Operation
 
     # This module contains common functionality for defining an operation
@@ -108,6 +107,15 @@ module Mongo
         raise Exception, "Merging not allowed for this operation type"
       end
 
+      # The options for the executable.
+      #
+      # @return [ Hash ] The executable options.
+      #
+      # @since 2.0.0
+      def opts
+        @spec[:opts] || {}
+      end
+
       private
 
       # If it's ok that this operation be sent to a secondary server.
@@ -117,6 +125,20 @@ module Mongo
       # @since 2.0.0
       def secondary_ok?
         true
+      end
+
+      # Gets the legacy get last error command as a wire protocol query.
+      #
+      # @since 2.0.0
+      def gle
+        if gle_message = write_concern.get_last_error
+          Protocol::Query.new(
+            db_name,
+            Database::COMMAND,
+            gle_message,
+            opts.merge(limit: -1)
+          )
+        end
       end
     end
   end
