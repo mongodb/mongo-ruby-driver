@@ -74,7 +74,7 @@ module Mongo
         def execute(context)
           raise Exception, "Must use primary server" unless context.primary?
           # @todo: change wire version to constant
-          if context.wire_version >= 2
+          if context.max_wire_version >= 2
             op = WriteCommand::Update.new(spec)
             op.execute(context)
           else
