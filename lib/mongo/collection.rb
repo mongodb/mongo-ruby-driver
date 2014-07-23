@@ -19,11 +19,16 @@ module Mongo
   #
   # @since 2.0.0
   class Collection
+    extend Forwardable
 
     # @return [ Mongo::Database ] The database the collection resides in.
     attr_reader :database
+
     # @return [ String ] The name of the collection.
     attr_reader :name
+
+    # Get client, cluser and server preference from client.
+    def_delegators :@database, :client, :cluster, :server_preference, :write_concern
 
     # Check if a collection is equal to another object. Will check the name and
     # the database for equality.
@@ -41,7 +46,15 @@ module Mongo
       name == other.name && database == other.database
     end
 
-    # @todo: durran: implement.
+    # Instantiate a new collection.
+    #
+    # @example Instantiate a new collection.
+    # Mongo::Collection.new(database, 'test')
+    #
+    # @param [ Mongo::Database ] database The collection's database.
+    # @param [ String, Symbol ] name The collection name.
+    #
+    # @since 2.0.0
     def initialize(database, name)
       raise InvalidName.new unless name
       @database = database
