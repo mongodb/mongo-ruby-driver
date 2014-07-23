@@ -224,7 +224,82 @@ describe Mongo::Client do
     end
   end
 
-  pending '#server_preference'
+  describe '#server_preference' do
+
+    let(:client) do
+      described_class.new(['127.0.0.1:27017'], :database => TEST_DB, :read => mode)
+    end
+
+    let(:preference) do
+      client.server_preference
+    end
+
+    context 'when mode is primary' do
+
+      let(:mode) do
+        { :mode => :primary }
+      end
+
+      it 'returns a primary server preference' do
+        expect(preference).to be_a(Mongo::ServerPreference::Primary)
+      end
+    end
+
+    context 'when mode is primary_preferred' do
+
+      let(:mode) do
+        { :mode => :primary_preferred }
+      end
+
+      it 'returns a primary preferred server preference' do
+        expect(preference).to be_a(Mongo::ServerPreference::PrimaryPreferred)
+      end
+    end
+
+    context 'when mode is secondary' do
+
+      let(:mode) do
+        { :mode => :secondary }
+      end
+
+      it 'returns a secondary server preference' do
+        expect(preference).to be_a(Mongo::ServerPreference::Secondary)
+      end
+    end
+
+    context 'when mode is secondary preferred' do
+
+      let(:mode) do
+        { :mode => :secondary_preferred }
+      end
+
+      it 'returns a secondary preferred server preference' do
+        expect(preference).to be_a(Mongo::ServerPreference::SecondaryPreferred)
+      end
+    end
+
+    context 'when mode is nearest' do
+
+      let(:mode) do
+        { :mode => :nearest }
+      end
+
+      it 'returns a nearest server preference' do
+        expect(preference).to be_a(Mongo::ServerPreference::Nearest)
+      end
+    end
+
+    context 'when no mode provided' do
+
+      let(:mode) do
+        {}
+      end
+
+      it 'returns a primary server preference' do
+        expect(preference).to be_a(Mongo::ServerPreference::Primary)
+      end
+    end
+  end
 
   describe '#use' do
 
