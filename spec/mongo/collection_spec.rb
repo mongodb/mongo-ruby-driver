@@ -46,4 +46,49 @@ describe Mongo::Collection do
       end
     end
   end
+
+  describe '#insert' do
+
+    let(:client) do
+      Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
+    end
+
+    let(:collection) do
+      client[:users]
+    end
+
+    before do
+      client.cluster.scan!
+    end
+
+    context 'when providing a single document' do
+
+      let(:result) do
+        collection.insert({ name: 'testing' })
+      end
+
+      it 'does not error' do
+        expect(result['ok']).to eq(1)
+      end
+
+      it 'inserts the document into the collection' do
+        expect(result['n']).to eq(1)
+      end
+    end
+
+    context 'when providing multiple documents' do
+
+      let(:result) do
+        collection.insert([{ name: 'test1' }, { name: 'test2' }])
+      end
+
+      it 'does not error' do
+        expect(result['ok']).to eq(1)
+      end
+
+      it 'inserts the documents into the collection' do
+        expect(result['n']).to eq(2)
+      end
+    end
+  end
 end

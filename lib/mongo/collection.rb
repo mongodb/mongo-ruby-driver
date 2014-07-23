@@ -61,6 +61,28 @@ module Mongo
       @name = name.to_s
     end
 
+    # Insert the provided documents into the collection.
+    #
+    # @example Insert documents into the collection.
+    # collection.insert([{ name: 'test' }])
+    #
+    # @param [ Array<Hash> ] documents The documents to insert.
+    # @param [ Hash ] options The insert options.
+    #
+    # @return [ Hash ] The result of the insert command.
+    #
+    # @since 2.0.0
+    def insert(documents, options = {})
+      server = server_preference.primary(cluster.servers).first
+      Operation::Write::Insert.new(
+        :documents => documents.is_a?(Array) ? documents : [ documents ],
+        :db_name => database.name,
+        :coll_name => name,
+        :write_concern => write_concern,
+        :opts => options
+      ).execute(server.context).documents[0]
+    end
+
     # Exception that is raised when trying to create a collection with no name.
     #
     # @since 2.0.0

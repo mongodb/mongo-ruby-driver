@@ -70,8 +70,6 @@ module Mongo
         @acceptable_latency = acceptable_latency
       end
 
-      private
-
       # Select the primary from a list of provided candidates.
       #
       # @param [ Array ] candidates List of candidate servers to select the
@@ -83,6 +81,8 @@ module Mongo
       def primary(candidates)
         candidates.select{ |server| server.primary? || server.standalone? }
       end
+
+      private
 
       # Select the secondaries from a list of provided candidates.
       #
