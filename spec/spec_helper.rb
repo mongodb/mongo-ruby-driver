@@ -44,8 +44,19 @@ RSpec.configure do |config|
   directory = File.expand_path(File.dirname(__FILE__))
 
   config.before(:suite) do
-    `mongo ruby-driver #{directory}/support/users_24.js`
-    `mongo ruby-driver #{directory}/support/users_26.js`
+    admin_client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'admin')
+    # @todo: Need to replace with condition value.
+    admin_client.cluster.scan!
+
+    # Create the admin user for the tests on 2.7 and higher.
+    p admin_client.command(
+      :createUser => ROOT_USER.name,
+      :pwd => ROOT_USER.hashed_password,
+      :roles => [ 'root' ]
+    )
+
+    users = admin_client['system.users']
+    p users.insert({ user: ROOT_USER.name, pwd: ROOT_USER.hashed_password })
   end
 end
 
@@ -55,6 +66,8 @@ TEST_SET      = 'ruby-driver-rs'
 TEST_USER     = 'test-user'
 TEST_PASSWORD = 'password'
 COVERAGE_MIN  = 90
+
+ROOT_USER = Mongo::Auth::User.new('admin', 'root-user', 'password')
 
 # require all shared examples
 Dir['./spec/support/shared/*.rb'].sort.each { |file| require file }
