@@ -179,23 +179,51 @@ describe Mongo::Server::Description do
 
   describe '#max_wire_version' do
 
-    let(:description) do
-      described_class.new(server, replica)
+    context 'when the max wire version is provided' do
+
+      let(:description) do
+        described_class.new(server, replica)
+      end
+
+      it 'returns the value' do
+        expect(description.max_wire_version).to eq(2)
+      end
     end
 
-    it 'returns the value' do
-      expect(description.max_wire_version).to eq(2)
+    context 'when the max wire version is not provided' do
+
+      let(:description) do
+        described_class.new(server, {})
+      end
+
+      it 'returns the default' do
+        expect(description.max_wire_version).to eq(0)
+      end
     end
   end
 
   describe '#min_wire_version' do
 
-    let(:description) do
-      described_class.new(server, replica)
+    context 'when the min wire version is provided' do
+
+      let(:description) do
+        described_class.new(server, replica)
+      end
+
+      it 'returns the value' do
+        expect(description.min_wire_version).to eq(0)
+      end
     end
 
-    it 'returns the value' do
-      expect(description.min_wire_version).to eq(0)
+    context 'when the min wire version is not provided' do
+
+      let(:description) do
+        described_class.new(server, {})
+      end
+
+      it 'returns the default' do
+        expect(description.min_wire_version).to eq(0)
+      end
     end
   end
 

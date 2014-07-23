@@ -93,6 +93,11 @@ module Mongo
       # @since 2.0.0
       MAX_WRITE_BATCH_SIZE = 'maxWriteBatchSize'.freeze
 
+      # The legacy wire protocol version.
+      #
+      # @since 2.0.0
+      LEGACY_WIRE_VERSION = 0.freeze
+
       # Constant for reading passive info from config.
       #
       # @since 2.0.0
@@ -245,7 +250,7 @@ module Mongo
       #
       # @since 2.0.0
       def max_wire_version
-        config[MAX_WIRE_VERSION]
+        config[MAX_WIRE_VERSION] || LEGACY_WIRE_VERSION
       end
 
       # Get the minimum wire version.
@@ -257,7 +262,7 @@ module Mongo
       #
       # @since 2.0.0
       def min_wire_version
-        config[MIN_WIRE_VERSION]
+        config[MIN_WIRE_VERSION] || LEGACY_WIRE_VERSION
       end
 
       # Is the server a mongos?
