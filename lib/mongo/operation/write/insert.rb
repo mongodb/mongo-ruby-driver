@@ -77,6 +77,8 @@ module Mongo
                 connection.dispatch([ message(d), gle ].compact)
               end
             end
+            # @todo: Durran: Need to return the response of the dispatch here,
+            # not the documents that were passed in.
           end
         end
 
