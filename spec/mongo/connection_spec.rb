@@ -63,7 +63,7 @@ describe Mongo::Connection do
           described_class.new(
             address,
             5,
-            :username => 'notauser',
+            :user => 'notauser',
             :password => 'password',
             :database => TEST_DB,
             :auth_mech => :mongodb_cr
@@ -134,7 +134,14 @@ describe Mongo::Connection do
   describe '#dispatch' do
 
     let!(:connection) do
-      described_class.new(address, 5, :database => TEST_DB)
+      described_class.new(
+        address,
+        5,
+        :user => 'test-user',
+        :password => 'password',
+        :database => TEST_DB,
+        :auth_mech => :mongodb_cr
+      )
     end
 
     let(:documents) do
