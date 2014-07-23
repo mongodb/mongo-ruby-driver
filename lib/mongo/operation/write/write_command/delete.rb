@@ -49,7 +49,7 @@ module Mongo
           def selector
             { :delete        => coll_name,
               :deletes       => @spec[:deletes],
-              :write_concern => write_concern,
+              :write_concern => write_concern.options,
               :ordered       => ordered?
             }
           end

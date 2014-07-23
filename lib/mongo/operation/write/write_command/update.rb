@@ -50,7 +50,7 @@ module Mongo
           def selector
             { :update        => coll_name,
               :updates       => @spec[:updates],
-              :write_concern => write_concern,
+              :write_concern => write_concern.options,
               :ordered       => ordered?
             }
           end

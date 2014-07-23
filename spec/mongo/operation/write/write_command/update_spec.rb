@@ -49,7 +49,7 @@ describe Mongo::Operation::Write::WriteCommand::Update do
           { :updates       => other_updates,
             :db_name       => db_name,
             :coll_name     => coll_name,
-            :write_concern => write_concern,
+            :write_concern => write_concern.options,
             :ordered       => true
           }
         end
@@ -93,7 +93,7 @@ describe Mongo::Operation::Write::WriteCommand::Update do
         let(:expected_selector) do
           { :updates       => updates,
             :update        => coll_name,
-            :write_concern => write_concern,
+            :write_concern => write_concern.options,
             :ordered       => true
           }
         end
@@ -116,16 +116,12 @@ describe Mongo::Operation::Write::WriteCommand::Update do
 
         context 'w == 0' do
 
-          it 'no response is returned' do
-
-          end
+          pending 'no response is returned'
         end
 
         context 'w > 0' do
 
-          it 'returns a response' do
-
-          end
+          pending 'returns a response'
         end
       end
     end

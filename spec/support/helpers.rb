@@ -85,6 +85,7 @@ dPMQD5JX6g5HKnHFg2mZtoXQrWmJSn7p8GJK8yNTopEErA==
       allow(server).to receive(:secondary?) do
         mode == :secondary ? true :false
       end
+      allow(server).to receive(:standalone?).and_return(false)
       allow(server).to receive(:tags) { tags }
       allow(server).to receive(:matches_tags?) do |tag_set|
         server.tags.any? do |tag|

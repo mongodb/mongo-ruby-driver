@@ -43,7 +43,7 @@ describe Mongo::Operation::Write::WriteCommand::Delete do
           { :deletes       => other_deletes,
             :db_name       => db_name,
             :coll_name     => coll_name,
-            :write_concern => write_concern,
+            :write_concern => write_concern.options,
             :ordered       => true
           }
         end
@@ -87,7 +87,7 @@ describe Mongo::Operation::Write::WriteCommand::Delete do
         let(:expected_selector) do
           { :deletes       => deletes,
             :delete        => coll_name,
-            :write_concern => write_concern,
+            :write_concern => write_concern.options,
             :ordered       => true
           }
         end
@@ -110,19 +110,14 @@ describe Mongo::Operation::Write::WriteCommand::Delete do
 
         context 'w == 0' do
 
-          it 'no response is returned' do
-
-          end
+          pending 'no response is returned'
         end
 
         context 'w > 0' do
 
-          it 'returns a response' do
-
-          end
+          pending 'returns a response'
         end
       end
     end
   end
 end
-

@@ -35,9 +35,10 @@ module Mongo
     attr_reader :options
 
     def_delegators :@description,
-                   :replica_set_name,
+                   :max_wire_version,
                    :mongos?,
                    :primary?,
+                   :replica_set_name,
                    :secondary?,
                    :standalone?
 

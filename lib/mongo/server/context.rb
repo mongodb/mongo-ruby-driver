@@ -20,9 +20,18 @@ module Mongo
     #
     # @since 2.0.0
     class Context
+      extend Forwardable
 
       # @return [ Mongo::Server ] server The server the context is for.
       attr_reader :server
+
+      # Delegate state checks to the server.
+      def_delegators :@server,
+                     :max_wire_version,
+                     :mongos?,
+                     :primary?,
+                     :secondary?,
+                     :standalone?
 
       # Instantiate a server context.
       #

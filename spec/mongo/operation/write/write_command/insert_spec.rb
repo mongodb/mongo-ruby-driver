@@ -43,7 +43,7 @@ describe Mongo::Operation::Write::WriteCommand::Insert do
           { :documents     => other_documents,
             :db_name       => db_name,
             :insert        => coll_name,
-            :write_concern => write_concern,
+            :write_concern => write_concern.options,
             :ordered       => true
           }
         end
@@ -87,7 +87,7 @@ describe Mongo::Operation::Write::WriteCommand::Insert do
         let(:expected_selector) do
           { :documents     => documents,
             :insert        => coll_name,
-            :write_concern => write_concern,
+            :write_concern => write_concern.options,
             :ordered       => true
           }
         end
@@ -110,16 +110,12 @@ describe Mongo::Operation::Write::WriteCommand::Insert do
 
         context 'w == 0' do
 
-          it 'no response is returned' do
-
-          end
+          pending 'no response is returned'
         end
 
         context 'w > 0' do
 
-          it 'returns a response' do
-
-          end
+          pending 'returns a response'
         end
       end
     end

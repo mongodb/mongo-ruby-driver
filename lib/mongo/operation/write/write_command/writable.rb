@@ -55,7 +55,7 @@ module Mongo
           #
           # @since 2.0.0
           def write_concern
-            @spec[:write_concern] || DEFAULT_WRITE_CONCERN
+            @spec[:write_concern] || WriteConcern::Mode::DEFAULT
           end
 
           # Whether the batch writes should be applied in the same order the
