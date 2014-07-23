@@ -43,18 +43,21 @@ module Mongo
     #
     # @example Get a server preference object for selecting a secondary with
     #   specific tag sets and acceptable latency.
-    #   Mongo::ServerPreference.get(:secondary, [{'tag' => 'set'}], 20)
+    #   Mongo::ServerPreference.get(:mode => :secondary, :tags => [{'tag' => 'set'}])
     #
-    #  @param [ Symbol ] mode The name of the server preference mode.
-    #  @param [ Array ] tag_sets The tag sets to be used when selecting servers.
-    #  @param [ Integer ] acceptable_latency (15) The acceptable latency in milliseconds
-    #    to be used when selecting servers.
+    # @param [ Hash ] options The read preference options.
+    #
+    # @option options :mode [ Symbol ] The read preference mode.
+    # @option options :tags [ Array<String ] The tag sets.
     #
     # @since 2.0.0
+    #
     # @todo: acceptable_latency should be grabbed from a global setting (client)
-    def get(mode = :primary, tag_sets = [], acceptable_latency = 15)
-      PREFERENCES.fetch(mode.to_sym).new(tag_sets, acceptable_latency)
+    def get(options = {})
+      PREFERENCES.fetch(options[:mode] || :primary).new(
+        options[:tags] || [],
+        options[:acceptable_latency] || 15
+      )
     end
   end
 end
-

@@ -99,27 +99,21 @@ describe Mongo::Database do
 
   describe '#command' do
 
-    let(:query) do
-      Mongo::Protocol::Query.new(
-        'test',
-        '$cmd',
-        { :ismaster => 1 },
-        :limit => -1,
-        :read => :secondary
-      )
+    let(:client) do
+      Mongo::Client.new([ '127.0.0.1:27017' ], database: :test)
     end
 
-    let(:cluster) { double('cluster') }
-    let(:database) { described_class.new(client, :test) }
+    let(:database) do
+      described_class.new(client, :test)
+    end
 
     before do
-      expect(client).to receive(:cluster).and_return(cluster)
-      expect(client).to receive(:read_preference).and_return(:secondary)
-      expect(cluster).to receive(:execute).with(query).and_return(:ok => 1)
+      # @todo: Add condition variable.
+      client.cluster.scan!
     end
 
     it 'sends the query command to the cluster' do
-      expect(database.command(:ismaster => 1)).to eq(:ok => 1)
+      expect(database.command(:ismaster => 1)['ok']).to eq(1)
     end
   end
 

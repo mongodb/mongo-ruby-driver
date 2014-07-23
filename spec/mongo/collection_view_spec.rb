@@ -35,7 +35,7 @@ describe Mongo::CollectionView do
       end
       allow(collection).to receive(:client) { client }
       allow(collection).to receive(:read) do
-        Mongo::ServerPreference.get(:primary).tap do |pref|
+        Mongo::ServerPreference.get(:mode => :primary).tap do |pref|
           allow(pref).to receive(:server) { server }
         end
       end
@@ -247,10 +247,10 @@ describe Mongo::CollectionView do
 
     context 'when a read pref is specified' do
       let(:opts) do
-        { :read =>  Mongo::ServerPreference.get(:secondary) }
+        { :read =>  Mongo::ServerPreference.get(:mode => :secondary) }
       end
       let(:new_read) do
-        Mongo::ServerPreference.get(:secondary_preferred)
+        Mongo::ServerPreference.get(:mode => :secondary_preferred)
       end
 
       it 'sets the read preference' do
@@ -265,7 +265,7 @@ describe Mongo::CollectionView do
 
     context 'when a read pref is not specified' do
       let(:opts) do
-        { :read =>  Mongo::ServerPreference.get(:secondary) }
+        { :read =>  Mongo::ServerPreference.get(:mode => :secondary) }
       end
 
       it 'returns the read preference' do

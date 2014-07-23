@@ -224,6 +224,8 @@ describe Mongo::Client do
     end
   end
 
+  pending '#server_preference'
+
   describe '#use' do
 
     let(:client) do

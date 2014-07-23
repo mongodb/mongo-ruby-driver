@@ -115,13 +115,12 @@ module Mongo
     #
     # @return [ Hash ] The result of the command execution.
     def command(operation)
-      cmd = Protocol::Query.new(
-        name,
-        COMMAND,
-        operation,
-        :limit => -1, :read => client.read_preference
-      )
-      cluster.execute(cmd)
+      server = client.server_preference.select_servers(cluster.servers).first
+      Operation::Command.new({
+        :selector => operation,
+        :db_name => name,
+        :opts => { :limit => -1 }
+      }).execute(server.context).documents[0]
     end
 
     # Instantiate a new database object.

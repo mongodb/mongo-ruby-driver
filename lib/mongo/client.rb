@@ -23,11 +23,19 @@ module Mongo
   #
   # @since 2.0.0
   class Client
+    extend Forwardable
 
     # @return [ Mongo::Cluster ] The cluster of servers for the client.
     attr_reader :cluster
+
+    # @return [ Mongo::Database ] The database the client is operating on.
+    attr_reader :database
+
     # @return [ Hash ] The configuration options.
     attr_reader :options
+
+    # Delegate command execution to the current database.
+    def_delegators :@database, :command
 
     # Determine if this client is equivalent to another object.
     #
@@ -100,6 +108,19 @@ module Mongo
     # @since 2.0.0
     def inspect
       "<Mongo::Client:0x#{object_id} cluster=#{cluster.addresses.join(', ')}>"
+    end
+
+    # Get the server (read) preference from the options passed to the client.
+    #
+    # @example Get the server (read) preference.
+    #   client.server_preference
+    #
+    # @return [ Object ] The appropriate server preference or primary if none
+    #   was provided to the client.
+    #
+    # @since 2.0.0
+    def server_preference
+      @server_preference ||= ServerPreference.get(options[:read] || {})
     end
 
     # Use the database with the provided name. This will switch the current
@@ -186,24 +207,6 @@ module Mongo
         client = new(uri.servers, uri.options.merge(database: uri.database))
         client
       end
-    end
-
-    private
-
-    # Get the current database that the client is operating on.
-    #
-    # @api private
-    #
-    # @example Get the current database.
-    #   client.database
-    #
-    # @raise [ Mongo::NoDatabase ] If no database has been set.
-    #
-    # @return [ Mongo::Database ] The current database.
-    #
-    # @since 2.0.0
-    def database
-      @database || raise(NoDatabase.new)
     end
   end
 end

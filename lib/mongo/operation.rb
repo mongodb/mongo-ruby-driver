@@ -25,18 +25,3 @@ require 'mongo/operation/aggregate'
 require 'mongo/operation/map_reduce'
 require 'mongo/operation/command'
 require 'mongo/operation/kill_cursors'
-
-module Mongo
-
-  module Operation
-
-    # The default server preference for an operation.
-    #
-    # @return [ Mongo::ServerPreference::Primary ] A primary server preference.
-    #
-    # @since 2.0.0
-    DEFAULT_SERVER_PREFERENCE = Mongo::ServerPreference.get(:primary)
-  end
-end
-
-

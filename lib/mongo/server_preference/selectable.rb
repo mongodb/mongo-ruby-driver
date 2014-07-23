@@ -81,7 +81,7 @@ module Mongo
       #
       # @since 2.0.0
       def primary(candidates)
-        candidates.select(&:primary?)
+        candidates.select{ |server| server.primary? || server.standalone? }
       end
 
       # Select the secondaries from a list of provided candidates.

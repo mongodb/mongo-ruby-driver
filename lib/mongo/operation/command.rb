@@ -75,7 +75,8 @@ module Mongo
       def execute(context)
         if context.server.secondary? && !secondary_ok?
           warn "Database command '#{selector.keys.first}' rerouted to primary server"
-          context = Mongo::ServerPreference.get(:primary).server.context
+          # @todo: Should we respect tag sets and options here?
+          context = Mongo::ServerPreference.get(:mode => :primary).server.context
         end
         context.with_connection do |connection|
           connection.dispatch([message])
