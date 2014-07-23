@@ -15,22 +15,4 @@
 require 'mongo/operation/write/delete'
 require 'mongo/operation/write/insert'
 require 'mongo/operation/write/update'
-
 require 'mongo/operation/write/write_command'
-
-module Mongo
-
-  module Operation
-
-    module Write
-
-      # The default write concern is acknowledged.
-      #
-      # @todo: update to use modeled write concern.
-      #
-      # @since 2.0.0
-      DEFAULT_WRITE_CONCERN = { 'w' => 1 }.freeze
-    end
-  end
-end
-
