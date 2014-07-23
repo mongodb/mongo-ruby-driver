@@ -66,7 +66,9 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
-          raise Exception, "Must use primary server" unless context.primary?
+          unless context.primary? || context.standalone?
+            raise Exception, "Must use primary server"
+          end
           # @todo: change wire version to constant
           if context.max_wire_version >= 2
             op = WriteCommand::Insert.new(spec)
@@ -75,7 +77,7 @@ module Mongo
             documents.each do |d|
               context.with_connection do |connection|
                 gle = write_concern.get_last_error
-                connection.dispatch([message(d), gle].compact)
+                connection.dispatch([ message(d), gle ].compact)
               end
             end
           end
@@ -138,8 +140,8 @@ module Mongo
         #
         # @since 2.0.0
         def message(insert_spec)
-          document = [insert_spec[:document]]
-          insert_spec = insert_spec[:continue_on_error] == 0 ? { } : { :flags => [:continue_on_error] }
+          document = [ insert_spec[:document] ]
+          insert_spec = insert_spec[:continue_on_error] == 0 ? {} : { :flags => [:continue_on_error] }
           Protocol::Insert.new(db_name, coll_name, document, insert_spec)
         end
       end
