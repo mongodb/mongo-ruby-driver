@@ -67,18 +67,16 @@ module Mongo
           unless context.primary? || context.standalone?
             raise Exception, "Must use primary server"
           end
-          # @todo: change wire version to constant
-          if context.max_wire_version >= 2
+          if context.write_command_enabled?
             op = WriteCommand::Insert.new(spec)
-            op.execute(context)
+            Response.new(op.execute(context))
           else
             documents.each do |d|
               context.with_connection do |connection|
-                connection.dispatch([ message(d), gle ].compact)
+                Response.new(connection.dispatch([ message(d), gle ].compact))
               end
             end
-            # @todo: Durran: Need to return the response of the dispatch here,
-            # not the documents that were passed in.
+            Response.new(documents.count)
           end
         end
 

@@ -23,7 +23,7 @@ shared_context 'operation' do
     double('primary_context').tap do |cxt|
       allow(cxt).to receive(:with_connection).and_yield(connection)
       allow(cxt).to receive(:server) { primary_server }
-      allow(cxt).to receive(:max_wire_version) { 2 }
+      allow(cxt).to receive(:write_command_enabled?) { true }
       allow(cxt).to receive(:primary?) { true }
     end
   end
@@ -39,7 +39,7 @@ shared_context 'operation' do
     double('primary_context').tap do |cxt|
       allow(cxt).to receive(:with_connection).and_yield(connection)
       allow(cxt).to receive(:server) { primary_server }
-      allow(cxt).to receive(:max_wire_version) { 1 }
+      allow(cxt).to receive(:write_command_enabled?) { false }
       allow(cxt).to receive(:primary?) { true }
     end
   end

@@ -118,6 +118,11 @@ module Mongo
       # @since 2.0.0
       SET_NAME = 'setName'.freeze
 
+      # The minimum version of the wire protocol to support write commands.
+      #
+      # @since 2.0.0
+      WRITE_COMMAND_WIRE_VERSION = 2.freeze
+
       # @return [ Hash ] The actual result from the isnamster command.
       attr_reader :config
 
@@ -371,6 +376,18 @@ module Mongo
         @config = new_config
         @round_trip_time = round_trip_time
         self
+      end
+
+      # Is the server able to perform write commands.
+      #
+      # @example Is the server write command enabled?
+      #   description.write_command_enabled?
+      #
+      # @return [ true, false ] If the server is write command enabled.
+      #
+      # @since 2.0.0
+      def write_command_enabled?
+        max_wire_version >= WRITE_COMMAND_WIRE_VERSION
       end
     end
   end

@@ -1,33 +1,30 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Write::Insert do
-  include_context 'operation'
 
-  let(:documents) { [{ :foo => 1 }] }
+  let(:documents) do
+    [{ :foo => 1 }]
+  end
+
   let(:spec) do
     { :documents     => documents,
-      :db_name       => db_name,
-      :coll_name     => coll_name,
-      :write_concern => write_concern,
+      :db_name       => TEST_DB,
+      :coll_name     => TEST_COLL,
+      :write_concern => Mongo::WriteConcern::Mode.get(:w => 1),
       :ordered       => true
     }
   end
 
-  let(:insert_write_cmd) do
-    double('insert_write_cmd').tap do |i|
-      allow(i).to receive(:execute) { [] }
-    end
+  let(:insert) do
+    described_class.new(spec)
   end
-
-  let(:context) { {} }
-  let(:op) { described_class.new(spec) }
 
   describe '#initialize' do
 
     context 'spec' do
 
       it 'sets the spec' do
-        expect(op.spec).to eq(spec)
+        expect(insert.spec).to eq(spec)
       end
     end
   end
@@ -36,16 +33,23 @@ describe Mongo::Operation::Write::Insert do
 
     context 'spec' do
 
-      context 'when two ops have the same specs' do
-        let(:other) { described_class.new(spec) }
+      context 'when two inserts have the same specs' do
+
+        let(:other) do
+          described_class.new(spec)
+        end
 
         it 'returns true' do
-          expect(op).to eq(other)
+          expect(insert).to eq(other)
         end
       end
 
-      context 'when two ops have different specs' do
-        let(:other_docs) { [{ :bar => 1 }] }
+      context 'when two inserts have different specs' do
+
+        let(:other_docs) do
+          [{ :bar => 1 }]
+        end
+
         let(:other_spec) do
           { :documents     => other_docs,
             :db_name       => 'test',
@@ -54,10 +58,13 @@ describe Mongo::Operation::Write::Insert do
             :ordered       => true
           }
         end
-        let(:other) { described_class.new(other_spec) }
+
+        let(:other) do
+          described_class.new(other_spec)
+        end
 
         it 'returns false' do
-          expect(op).not_to eq(other)
+          expect(insert).not_to eq(other)
         end
       end
     end
@@ -68,182 +75,228 @@ describe Mongo::Operation::Write::Insert do
     context 'deep copy' do
 
       it 'copies the list of updates' do
-        copy = op.dup
-        expect(copy.spec[:documents]).not_to be(op.spec[:documents])
+        cinserty = insert.dup
+        expect(cinserty.spec[:documents]).to_not be(insert.spec[:documents])
       end
     end
   end
 
   describe '#merge' do
 
-    context 'same collection and database' do
-      let(:other_docs) { [{ :bar => 1 }] }
+    context 'when the collection and database are the same' do
+
+      let(:other_docs) do
+        [{ :bar => 1 }]
+      end
+
       let(:other_spec) do
         { :documents     => other_docs,
-          :db_name       => db_name,
-          :coll_name     => coll_name
+          :db_name       => TEST_DB,
+          :coll_name     => TEST_COLL
         }
       end
-      let(:other) { described_class.new(other_spec) }
 
-      it 'merges the two ops' do
-        expect{ op.merge(other) }.not_to raise_exception
+      let(:other) do
+        described_class.new(other_spec)
+      end
+
+      it 'merges the two inserts' do
+        expect{ insert.merge(other) }.not_to raise_exception
       end
     end
 
-    context 'different database' do
-      let(:other_docs) { [{ :bar => 1 }] }
+    context 'when the databases differ' do
+
+      let(:other_docs) do
+        [{ :bar => 1 }]
+      end
+
       let(:other_spec) do
         { :documents     => other_docs,
           :db_name       => 'different',
-          :coll_name     => coll_name
+          :coll_name     => TEST_COLL
         }
       end
-      let(:other) { described_class.new(other_spec) }
+
+      let(:other) do
+        described_class.new(other_spec)
+      end
 
       it 'raises an exception' do
-        expect{ op.merge(other) }.to raise_exception
+        expect{ insert.merge(other) }.to raise_exception
       end
     end
 
-    context 'different collection' do
-      let(:other_docs) { [{ :bar => 1 }] }
+    context 'when the collections differ' do
+
+      let(:other_docs) do
+        [{ :bar => 1 }]
+      end
+
       let(:other_spec) do
         { :documents     => other_docs,
-          :db_name       => db_name,
+          :db_name       => TEST_DB,
           :coll_name     => 'different'
         }
       end
-      let(:other) { described_class.new(other_spec) }
+
+      let(:other) do
+        described_class.new(other_spec)
+      end
 
       it 'raises an exception' do
-        expect{ op.merge(other) }.to raise_exception
+        expect{ insert.merge(other) }.to raise_exception
       end
     end
 
-    context 'different operation type' do
-      let(:other) { Mongo::Write::Update.new(spec) }
+    context 'when the command types differ' do
+
+      let(:other) do
+        Mongo::Write::Update.new(spec)
+      end
 
       it 'raises an exception' do
-        expect{ op.merge(other) }.to raise_exception
+        expect{ insert.merge(other) }.to raise_exception
       end
     end
 
-    context 'merged list of documents' do
-      let(:other_docs) { [{ :bar => 1 }] }
+    context 'when the merge is valid' do
+
+      let(:other_docs) do
+        [{ :bar => 1 }]
+      end
+
       let(:other_spec) do
         { :documents     => other_docs,
-          :db_name       => db_name,
-          :coll_name     => coll_name
+          :db_name       => TEST_DB,
+          :coll_name     => TEST_COLL
         }
       end
-      let(:other) { described_class.new(other_spec) }
-      let(:expected) { documents << other_docs }
+
+      let(:other) do
+        described_class.new(other_spec)
+      end
+
+      let(:expected) do
+        documents << other_docs
+      end
 
       it 'merges the list of documents' do
-        expect(op.merge(other).spec[:documents]).to eq(expected)
+        expect(insert.merge(other).spec[:documents]).to eq(expected)
       end
-    end
 
-    context 'mutability' do
-      let(:other_docs) { [{ :bar => 1 }] }
-      let(:other_spec) do
-        { :documents     => other_docs,
-          :db_name       => db_name,
-          :coll_name     => coll_name
-        }
-      end
-      let(:other) { described_class.new(other_spec) }
-
-      it 'returns a new object' do
-        expect(op.merge(other)).not_to be(op)
+      it 'keeps the original spec immutable'do
+        expect(insert.merge(other)).not_to be(insert)
       end
     end
   end
 
   describe '#merge!' do
 
-    context 'same collection and database' do
-      let(:other_docs) { [{ :bar => 1 }] }
+    context 'when collection and database are the same' do
+
+      let(:other_docs) do
+        [{ :bar => 1 }]
+      end
+
       let(:other_spec) do
         { :documents     => other_docs,
-          :db_name       => db_name,
-          :coll_name     => coll_name
+          :db_name       => TEST_DB,
+          :coll_name     => TEST_COLL
         }
       end
-      let(:other) { described_class.new(other_spec) }
 
-      it 'merges the two ops' do
-        expect{ op.merge!(other) }.not_to raise_exception
+      let(:other) do
+        described_class.new(other_spec)
+      end
+
+      it 'merges the two inserts' do
+        expect{ insert.merge!(other) }.not_to raise_exception
       end
     end
 
-    context 'different database' do
-      let(:other_docs) { [{ :bar => 1 }] }
+    context 'when the database differs' do
+
+      let(:other_docs) do
+        [{ :bar => 1 }]
+      end
+
       let(:other_spec) do
         { :documents     => other_docs,
           :db_name       => 'different',
-          :coll_name     => coll_name
+          :coll_name     => TEST_COLL
         }
       end
-      let(:other) { described_class.new(other_spec) }
+
+      let(:other) do
+        described_class.new(other_spec)
+      end
 
       it 'raises an exception' do
-        expect{ op.merge!(other) }.to raise_exception
+        expect{ insert.merge!(other) }.to raise_exception
       end
     end
 
-    context 'different collection' do
-      let(:other_docs) { [{ :bar => 1 }] }
+    context 'when the collection differs' do
+
+      let(:other_docs) do
+        [{ :bar => 1 }]
+      end
+
       let(:other_spec) do
         { :documents     => other_docs,
-          :db_name       => db_name,
+          :db_name       => TEST_DB,
           :coll_name     => 'different'
         }
       end
-      let(:other) { described_class.new(other_spec) }
+
+      let(:other) do
+        described_class.new(other_spec)
+      end
 
       it 'raises an exception' do
-        expect{ op.merge!(other) }.to raise_exception
+        expect{ insert.merge!(other) }.to raise_exception
       end
     end
 
-    context 'different operation type' do
-      let(:other) { Mongo::Write::Update.new(spec) }
+    context 'when the command type differs' do
+
+      let(:other) do
+        Mongo::Write::Update.new(spec)
+      end
 
       it 'raises an exception' do
-        expect{ op.merge!(other) }.to raise_exception
+        expect{ insert.merge!(other) }.to raise_exception
       end
     end
 
-    context 'merged list of documents' do
-      let(:other_docs) { [{ :bar => 1 }] }
+    context 'when the commands can be merged' do
+
+      let(:other_docs) do
+        [{ :bar => 1 }]
+      end
+
       let(:other_spec) do
         { :documents     => other_docs,
-          :db_name       => db_name,
-          :coll_name     => coll_name
+          :db_name       => TEST_DB,
+          :coll_name     => TEST_COLL
         }
       end
-      let(:other) { described_class.new(other_spec) }
-      let(:expected) { documents << other_docs }
+
+      let(:other) do
+        described_class.new(other_spec)
+      end
+
+      let(:expected) do
+        documents << other_docs
+      end
 
       it 'merges the list of documents' do
-        expect(op.merge!(other).spec[:documents]).to eq(expected)
+        expect(insert.merge!(other).spec[:documents]).to eq(expected)
       end
-    end
 
-    context 'mutability' do
-      let(:other_docs) { [{ :bar => 1 }] }
-      let(:other_spec) do
-        { :documents     => other_docs,
-          :db_name       => db_name,
-          :coll_name     => coll_name
-        }
-      end
-      let(:other) { described_class.new(other_spec) }
-
-      it 'mutates the object itself' do
-        expect(op.merge!(other)).to be(op)
+      it 'mutates the original spec' do
+        expect(insert.merge!(other)).to be(insert)
       end
     end
   end
@@ -261,17 +314,17 @@ describe Mongo::Operation::Write::Insert do
       end
       let(:divisor) { 3 }
 
-      it 'slices the op into the divisor number of children ops' do
-        expect(op.slice(divisor).size).to eq(divisor)
+      it 'slices the insert into the divisor number of children inserts' do
+        expect(insert.slice(divisor).size).to eq(divisor)
       end
 
-      it 'divides the inserts evenly between children ops' do
-        ops = op.slice(divisor)
+      it 'divides the inserts evenly between children inserts' do
+        inserts = insert.slice(divisor)
         slice_size = documents.size / divisor
 
         divisor.times do |i|
           start_index = i * slice_size
-          expect(ops[i].spec[:documents]).to eq(documents[start_index, slice_size])
+          expect(inserts[i].spec[:documents]).to eq(documents[start_index, slice_size])
         end
       end
     end
@@ -287,20 +340,20 @@ describe Mongo::Operation::Write::Insert do
       end
       let(:divisor) { 4 }
 
-      it 'slices the op into the divisor number of children ops' do
-        expect(op.slice(divisor).size).to eq(divisor)
+      it 'slices the insert into the divisor number of children inserts' do
+        expect(insert.slice(divisor).size).to eq(divisor)
       end
 
-      it 'divides the inserts evenly between children ops' do
-        ops = op.slice(divisor)
+      it 'divides the inserts evenly between children inserts' do
+        inserts = insert.slice(divisor)
         slice_size = documents.size / divisor
 
         divisor.times do |i|
           start_index = i * slice_size
           if i == divisor - 1
-            expect(ops[i].spec[:documents]).to eq(documents[start_index..-1])
+            expect(inserts[i].spec[:documents]).to eq(documents[start_index..-1])
           else
-            expect(ops[i].spec[:documents]).to eq(documents[start_index, slice_size])
+            expect(inserts[i].spec[:documents]).to eq(documents[start_index, slice_size])
           end
         end
       end
@@ -322,84 +375,116 @@ describe Mongo::Operation::Write::Insert do
           { :c => 1, :ord => order } ]
       end
 
-      it 'sets the order on each op spec document' do
-        op.set_order(order)
-        expect(op.spec[:documents]).to eq(expected)
+      it 'sets the order on each insert spec document' do
+        insert.set_order(order)
+        expect(insert.spec[:documents]).to eq(expected)
       end
     end
   end
 
   describe '#execute' do
 
-    context 'server' do
+    let(:client) do
+      Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
+    end
 
-      context 'when the type is secondary' do
+    let(:server) do
+      client.cluster.servers.first
+    end
 
-        it 'throws an error' do
-          expect{ op.execute(secondary_context) }.to raise_exception
-        end
-      end
+    before do
+      # @todo: Replace with condition variable
+      client.cluster.scan!
+    end
 
-      context 'server has wire version >= 2' do
+    context 'when the server is a primary' do
 
-        it 'creates a write command insert operation' do
-          expect(Mongo::Operation::Write::WriteCommand::Insert).to receive(:new) do |sp|
-            expect(sp).to eq(spec)
-          end.and_return(insert_write_cmd)
+      context 'when inserting a single document' do
 
-          op.execute(primary_context)
-        end
+        context 'when the insert succeeds' do
 
-        it 'executes the write command insert operation' do
-          allow(Mongo::Operation::Write::WriteCommand::Insert).to receive(:new) do
-            insert_write_cmd
-          end
-          expect(insert_write_cmd).to receive(:execute) { [] }
-          op.execute(primary_context)
-        end
-      end
-
-      context 'server has wire version < 2' do
-
-        context 'write concern' do
-
-          context 'w > 0' do
-
-            it 'calls get last error after each message' do
-              expect(connection).to receive(:dispatch) do |messages|
-                expect(messages.length).to eq(2)
-              end
-              op.execute(primary_context_2_4_version)
-            end
+          let(:response) do
+            insert.execute(server.context)
           end
 
-          context 'w == 0' do
-            let(:write_concern) { Mongo::WriteConcern::Mode.get(:w => 0) }
-
-            it 'does not call get last error after each message' do
-              expect(connection).to receive(:dispatch) do |messages|
-                expect(messages.length).to eq(1)
-              end
-              op.execute(primary_context_2_4_version)
-            end
+          it 'inserts the documents into the database' do
+            expect(response.n).to eq(1)
           end
         end
 
-        context 'insert messages' do
+        context 'when the insert fails' do
+
           let(:documents) do
-            [{ :foo => 1 },
-             { :bar => 1 }]
+            [{ user: ROOT_USER.name, pwd: ROOT_USER.hashed_password }]
           end
 
-          it 'sends each insert message separately' do
-            allow(Mongo::Operation::Write::WriteCommand::Insert).to receive(:new) do
-              insert_write_cmd
-            end
-            expect(connection).to receive(:dispatch).exactly(documents.length)
-            op.execute(primary_context_2_4_version)
+          let(:spec) do
+            { :documents     => documents,
+              :db_name       => 'admin',
+              :coll_name     => 'system.users',
+              :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
+            }
+          end
+
+          let(:failing_insert) do
+            described_class.new(spec)
+          end
+
+          it 'raises an error' do
+            expect {
+              failing_insert.execute(server.context)
+            }.to raise_error(Mongo::Operation::Write::Failure)
+          end
+        end
+      end
+
+      context 'when inserting multiple documents' do
+
+        context 'when the insert succeeds' do
+
+          let(:documents) do
+            [{ one: 'test' }, { two: 'test' }]
+          end
+
+          let(:response) do
+            insert.execute(server.context)
+          end
+
+          it 'inserts the documents into the database' do
+            expect(response.n).to eq(2)
+          end
+        end
+
+        context 'when the insert fails' do
+
+          let(:documents) do
+            [
+              { user: ROOT_USER.name, pwd: ROOT_USER.hashed_password },
+              { user: ROOT_USER.name, pwd: ROOT_USER.hashed_password }
+            ]
+          end
+
+          let(:spec) do
+            { :documents     => documents,
+              :db_name       => 'admin',
+              :coll_name     => 'system.users',
+              :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
+            }
+          end
+
+          let(:failing_insert) do
+            described_class.new(spec)
+          end
+
+          it 'raises an error' do
+            expect {
+              failing_insert.execute(server.context)
+            }.to raise_error(Mongo::Operation::Write::Failure)
           end
         end
       end
     end
+
+    pending 'when the server is a secondary'
   end
 end

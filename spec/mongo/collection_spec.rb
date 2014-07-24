@@ -67,12 +67,8 @@ describe Mongo::Collection do
         collection.insert({ name: 'testing' })
       end
 
-      it 'does not error' do
-        expect(result['ok']).to eq(1)
-      end
-
       it 'inserts the document into the collection' do
-        expect(result['n']).to eq(1)
+        expect(result.n).to eq(1)
       end
     end
 
@@ -82,12 +78,8 @@ describe Mongo::Collection do
         collection.insert([{ name: 'test1' }, { name: 'test2' }])
       end
 
-      it 'does not error' do
-        expect(result['ok']).to eq(1)
-      end
-
       it 'inserts the documents into the collection' do
-        expect(result['n']).to eq(2)
+        expect(result.n).to eq(2)
       end
     end
   end

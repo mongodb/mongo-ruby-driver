@@ -69,7 +69,7 @@ module Mongo
     # @param [ Array<Hash> ] documents The documents to insert.
     # @param [ Hash ] options The insert options.
     #
-    # @return [ Hash ] The result of the insert command.
+    # @return [ Mongo::Operation::Response ] The database response wrapper.
     #
     # @since 2.0.0
     def insert(documents, options = {})
@@ -80,7 +80,7 @@ module Mongo
         :coll_name => name,
         :write_concern => write_concern,
         :opts => options
-      ).execute(server.context).documents[0]
+      ).execute(server.context)
     end
 
     # Exception that is raised when trying to create a collection with no name.

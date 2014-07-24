@@ -31,7 +31,8 @@ module Mongo
                      :mongos?,
                      :primary?,
                      :secondary?,
-                     :standalone?
+                     :standalone?,
+                     :write_command_enabled?
 
       # Instantiate a server context.
       #

@@ -40,7 +40,8 @@ module Mongo
                    :primary?,
                    :replica_set_name,
                    :secondary?,
-                   :standalone?
+                   :standalone?,
+                   :write_command_enabled?
 
     # Is this server equal to another?
     #

@@ -13,9 +13,7 @@
 # limitations under the License.
 
 module Mongo
-
   module Operation
-
     module Write
 
       # A MongoDB delete operation.
@@ -71,15 +69,13 @@ module Mongo
         # @since 2.0.0
         def execute(context)
           raise Exception, "Must use primary server" unless context.primary?
-          # @todo: change wire version to constant
-          if context.max_wire_version >= 2
+          if context.write_command_enabled?
             op = WriteCommand::Delete.new(spec)
             op.execute(context)
           else
             deletes.each do |d|
               context.with_connection do |connection|
-                gle = write_concern.get_last_error
-                connection.dispatch([message(d), gle].compact)
+                connection.dispatch([ message(d), gle ].compact)
               end
             end
           end

@@ -12,16 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Common functionality
 require 'mongo/operation/executable'
 require 'mongo/operation/slicable'
-
-# Base Operations
 require 'mongo/operation/read'
 require 'mongo/operation/write'
-
-# special logic - sometimes read, sometimes write, neither
 require 'mongo/operation/aggregate'
-require 'mongo/operation/map_reduce'
 require 'mongo/operation/command'
 require 'mongo/operation/kill_cursors'
+require 'mongo/operation/map_reduce'
+require 'mongo/operation/write/response'

@@ -52,17 +52,15 @@ RSpec.configure do |config|
 
     begin
       # Create the admin user for the tests on 2.7 and higher.
-      p admin_client.command(
+      admin_client.command(
         :createUser => ROOT_USER.name,
         :pwd => ROOT_USER.hashed_password,
         :roles => [ 'root' ]
       )
-    rescue; end
-
-    begin
+    rescue Mongo::Operation::Write::Failure => e
       # If 2.7 nd higher failed, use the legacy user creation.
-      p users.insert({ user: ROOT_USER.name, pwd: ROOT_USER.hashed_password })
-    rescue; end
+      users.insert({ user: ROOT_USER.name, pwd: ROOT_USER.hashed_password })
+    end
   end
 end
 
