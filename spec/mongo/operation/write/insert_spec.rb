@@ -432,7 +432,7 @@ describe Mongo::Operation::Write::Insert do
 
           it 'raises an error' do
             expect {
-              p failing_insert.execute(server.context)
+              failing_insert.execute(server.context)
             }.to raise_error(Mongo::Operation::Write::Failure)
           end
         end

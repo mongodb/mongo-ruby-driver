@@ -71,13 +71,9 @@ module Mongo
             op = WriteCommand::Insert.new(spec)
             Response.new(op.execute(context))
           else
-            documents.each do |d|
-              context.with_connection do |connection|
-                p gle
-                p Response.new(connection.dispatch([ message(d), gle ].compact))
-              end
+            context.with_connection do |connection|
+              Response.new(connection.dispatch([ message, gle ].compact), documents.size)
             end
-            Response.new(documents.count)
           end
         end
 
@@ -137,10 +133,9 @@ module Mongo
         # @return [ Mongo::Protocol::Insert ] Wire protocol message.
         #
         # @since 2.0.0
-        def message(insert_spec)
-          document = [ insert_spec[:document] ]
-          insert_spec = insert_spec[:continue_on_error] == 0 ? {} : { :flags => [:continue_on_error] }
-          Protocol::Insert.new(db_name, coll_name, document, insert_spec)
+        def message
+          insert_spec = opts[:continue_on_error] == 0 ? {} : { :flags => [:continue_on_error] }
+          Protocol::Insert.new(db_name, coll_name, documents, insert_spec)
         end
       end
     end

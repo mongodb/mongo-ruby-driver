@@ -21,10 +21,15 @@ module Mongo
   module Operation
     module Write
 
+      # Legacy error message field.
+      #
+      # @since 2.0.0
+      ERROR = 'err'.freeze
+
       # The write errors field in the response, 2.6 and higher.
       #
       # @since 2.0.0
-      ERRORS = 'writeErrors'.freeze
+      WRITE_ERRORS = 'writeErrors'.freeze
 
       # Constant for the error code field.
       #
@@ -39,7 +44,7 @@ module Mongo
       # The write concern error field in the response. 2.4 and lower.
       #
       # @since 2.0.0
-      CONCERN_ERROR = 'writeConcernError'.freeze
+      WRITE_CONCERN_ERROR = 'writeConcernError'.freeze
 
       # Raised when a write failes for some reason.
       #
@@ -63,9 +68,32 @@ module Mongo
 
         private
 
+        def errors
+          error_message(ERROR) { "#{document[ERROR_CODE]}: #{document[ERROR]}" }
+        end
+
         def generate_message
-          errors = document[ERRORS] || document[CONCERN_ERROR]
-          errors.map{ |e| "Error Code: #{e[ERROR_CODE]} | #{e[ERROR_MESSAGE]}" }.join(', ')
+          errors + write_errors + write_concern_errors
+        end
+
+        def error_message(key)
+          document.has_key?(key) ? yield : ''
+        end
+
+        def write_errors
+          error_message(WRITE_ERRORS) do
+            document[WRITE_ERRORS].map do |e|
+              "#{e[ERROR_CODE]}: #{e[ERROR_MESSAGE]}"
+            end.join(', ')
+          end
+        end
+
+        def write_concern_errors
+          error_message(WRITE_CONCERN_ERROR) do
+            document[WRITE_CONCERN_ERROR].map do |e|
+              "#{e[ERROR_CODE]}: #{e[ERROR_MESSAGE]}"
+            end.join(', ')
+          end
         end
       end
     end

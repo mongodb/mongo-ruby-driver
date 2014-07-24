@@ -59,17 +59,15 @@ module Mongo
         # @note Once support for MongoDB < 2.6 is removed we can refactor this
         #   to only take a reply and no nils or counts.
         #
-        # @param [ Protocol::Reply, nil, Integer ] reply_or_count The reply from
-        #   the database or count of successfule documents written.
+        # @param [ Protocol::Reply, nil ] reply The reply from the database
+        # @param [ Integer ] count The optional number of legacy documents
+        #   inserted.
         #
         # @since 2.0.0
-        def initialize(reply_or_count)
-          if reply_or_count.is_a?(Integer)
-            @n = reply_or_count
-          else
-            @reply = reply_or_count
-            verify!
-          end
+        def initialize(reply, count = nil)
+          @reply = reply
+          @n = count
+          verify!
         end
 
         # Get the pretty formatted inspection of the response.
@@ -105,7 +103,11 @@ module Mongo
         end
 
         def command_failure?
-          first[OK] != 1 || write_errors?
+          first[OK] != 1 || write_errors? || write_concern_errors? || errors?
+        end
+
+        def errors?
+          first[ERROR] && first[ERROR_CODE]
         end
 
         def verify!
@@ -113,7 +115,7 @@ module Mongo
         end
 
         def write_concern_errors
-          first[CONCERN_ERROR] || []
+          first[WRITE_CONCERN_ERROR] || []
         end
 
         def write_concern_errors?
@@ -121,7 +123,7 @@ module Mongo
         end
 
         def write_errors
-          first[ERRORS] || []
+          first[WRITE_ERRORS] || []
         end
 
         def write_errors?

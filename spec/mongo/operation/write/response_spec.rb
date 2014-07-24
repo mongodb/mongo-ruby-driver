@@ -63,16 +63,22 @@ describe Mongo::Operation::Write::Response do
       end
     end
 
-    context 'when the reply is an integer' do
+    context 'when providing a count' do
 
-      let(:reply) { 5 }
+      let(:reply) do
+        Mongo::Protocol::Reply.new
+      end
+
+      let(:response) do
+        described_class.new(reply, 5)
+      end
+
+      before do
+        reply.instance_variable_set(:@documents, [{ 'ok' => 1 }])
+      end
 
       it 'sets the document count' do
         expect(response.n).to eq(5)
-      end
-
-      it 'does not set any documents' do
-        expect(response.documents).to be_empty
       end
     end
   end
