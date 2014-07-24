@@ -31,6 +31,11 @@ else
     ext.lib_dir = "lib/bson_ext"
     Rake::Task['clean'].invoke
   end
+  Rake::ExtensionsTask.new('csasl') do |ext|
+    ext.name = "csasl"
+    ext.ext_dir = "ext/csasl"
+    ext.lib_dir = "lib"
+  end
 end
 
 desc "Run the default compile task"

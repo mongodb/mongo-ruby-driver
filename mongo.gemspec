@@ -25,6 +25,10 @@ Gem::Specification.new do |s|
   if RUBY_PLATFORM =~ /java/
     s.platform = 'java'
     s.files    << 'ext/jsasl/target/jsasl.jar'
+  else
+    s.platform   = Gem::Platform::RUBY
+    s.files      += Dir.glob('ext/**/*.{c,h,rb}')
+    s.extensions = ['ext/csasl/extconf.rb']
   end
 
   s.test_files        = Dir['test/**/*.rb'] - Dir['test/bson/*']

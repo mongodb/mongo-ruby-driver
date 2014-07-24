@@ -284,9 +284,6 @@ module Mongo
     #
     # @private
     def issue_gssapi(auth, opts={})
-      raise NotImplementedError,
-         "The #{auth[:mechanism]} authentication mechanism is only supported " +
-         "for JRuby." unless RUBY_PLATFORM =~ /java/
       Mongo::Sasl::GSSAPI.authenticate(auth[:username], self, opts[:socket], auth[:extra] || {})
     end
 
