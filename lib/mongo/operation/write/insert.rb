@@ -73,7 +73,8 @@ module Mongo
           else
             documents.each do |d|
               context.with_connection do |connection|
-                Response.new(connection.dispatch([ message(d), gle ].compact))
+                p gle
+                p Response.new(connection.dispatch([ message(d), gle ].compact))
               end
             end
             Response.new(documents.count)
