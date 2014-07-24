@@ -75,8 +75,8 @@ describe Mongo::Operation::Write::Insert do
     context 'deep copy' do
 
       it 'copies the list of updates' do
-        cinserty = insert.dup
-        expect(cinserty.spec[:documents]).to_not be(insert.spec[:documents])
+        copy = insert.dup
+        expect(copy.spec[:documents]).to_not be(insert.spec[:documents])
       end
     end
   end
@@ -432,7 +432,7 @@ describe Mongo::Operation::Write::Insert do
 
           it 'raises an error' do
             expect {
-              failing_insert.execute(server.context)
+              p failing_insert.execute(server.context)
             }.to raise_error(Mongo::Operation::Write::Failure)
           end
         end
