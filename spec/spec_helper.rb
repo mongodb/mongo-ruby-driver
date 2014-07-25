@@ -45,7 +45,8 @@ RSpec.configure do |config|
 
   config.before(:suite) do
     admin_client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'admin')
-    users = admin_client['system.users']
+    users_client = Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
+    users = users_client['system.users']
 
     # @todo: Need to replace with condition value.
     admin_client.cluster.scan!
