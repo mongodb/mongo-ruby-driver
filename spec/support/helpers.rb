@@ -98,6 +98,27 @@ dPMQD5JX6g5HKnHFg2mZtoXQrWmJSn7p8GJK8yNTopEErA==
     end
   end
 
+  # A simple pk_factory.
+  #
+  # @param [ String ] name A name for this pk_factory.
+  # @param [ Hash ] opts Options.
+  #
+  # @option opts [ true, false ] :dups (false) If true, will generate the same _id
+  #  number over and over again to force a duplicate key error.
+  #
+  # @since 2.0.0
+  def pk_factory(name, opts={})
+    index = 0
+    dups = opts[:dups]
+    double(name.to_s).tap do |factory|
+
+      allow(factory).to receive(:create_pk) do |doc|
+        index += 1 unless dups
+        doc.merge({ :_id => index })
+      end
+    end
+  end
+
   def collection(name, db)
     documents = []
     double(name.to_s).tap do |coll|

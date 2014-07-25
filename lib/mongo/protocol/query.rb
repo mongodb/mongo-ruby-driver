@@ -57,7 +57,7 @@ module Mongo
       #
       #   Supported flags: +:tailable_cursor+, +:slave_ok+, +:oplog_replay+,
       #   +:no_cursor_timeout+, +:await_data+, +:exhaust+, +:partial+
-      def initialize(database, collection, selector, options = {})
+      def initialize(database, collection, selector, options={})
         @namespace   = "#{database}.#{collection}"
         @selector    = selector
         @project     = options[:project]

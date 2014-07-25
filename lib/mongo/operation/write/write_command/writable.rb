@@ -83,11 +83,12 @@ module Mongo
             unless @spec[:opts][:limit] && @spec[:opts][:limit] == -1
               @spec[:opts].merge(:limit => -1)
             end
+            @spec[:opts]
           end
 
           # The wire protocol message for this write operation.
           #
-          # @return [ Mongo::Protocol::Query ] Wire protocol message. 
+          # @return [ Mongo::Protocol::Query ] Wire protocol message.
           #
           # @since 2.0.0
           def message

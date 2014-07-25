@@ -27,11 +27,9 @@ module Mongo
 
     # @return [ String ] The name of the collection.
     attr_reader :name
-    # @return [ Symbol ] The read preference on this collection.
-    attr_reader :read
 
     # Get client, cluser and server preference from client.
-    def_delegators :@database, :client, :cluster, :server_preference, :write_concern
+    def_delegators :@database, :client, :cluster
 
     # Check if a collection is equal to another object. Will check the name and
     # the database for equality.
@@ -49,6 +47,18 @@ module Mongo
       name == other.name && database == other.database
     end
 
+    # Get the server (read) preference from the options passed to this collection.
+    #
+    # @param [ Hash ] opts Options from a query
+    #
+    # @todo fix this to work with db server_preference
+    #
+    # @since 2.0.0
+    def server_preference(opts={})
+      return ServerPreference.get(opts[:read]) if opts[:read]
+      @server_preference || database.server_preference
+    end
+
     # Instantiate a new collection object.
     #
     # @param [ Mongo::Database ] database The database this collection belongs to.
@@ -63,7 +73,7 @@ module Mongo
     #  allocated for the initial extent of the collection.
     # @option opts [ Integer ] :max (Nil) If :capped is true, indicates the maximum
     #  number of records in the capped collection.
-    # @option opts [ :primary, :secondary ] :read A read preference for the collection.
+    # @option opts [ Symbol ] :read A read preference for the collection.
     #
     # @since 2.0.0
     def initialize(database, name, opts={})
@@ -71,9 +81,9 @@ module Mongo
       @database = database
       @name = name.to_s
 
-      @capped     = opts[:capped]
-      @read       = opts[:read]
-      @pk_factory = opts[:pk] || BSON::ObjectId
+      @capped            = opts[:capped]
+      @server_preference = ServerPreference.get(opts[:read]) if opts[:read]
+      @pk_factory        = opts[:pk] if opts[:pk]
     end
 
     # Perform an aggregation using the aggregation framework on the current collection.
@@ -101,14 +111,28 @@ module Mongo
     #
     #   '$out' The name of a collection to which the result set will be saved.
     #
-    # @todo - add options.
+    # @option opts [ Symbol ] :read The read preference for this operation.
+    # @option opts [ String ] :comment A comment to include in profiling logs.
+    # @option opts [ Hash ] :cursor Return a cursor object instead of an Array.  Takes
+    #  an optional batchSize parameter to specify the maximum size, in documents, of
+    #  the first batch returned.
     #
-    # @return [ Array ] the results of this aggregation query.
-    #
-    # @todo - cursor?
+    # @return [ Array, Cursor ] the results of this aggregation query.
     #
     # @since 2.0.0
     def aggregate(pipeline = nil, opts = {})
+      unless pipeline.is_a?(Array)
+        raise MongoArgumentError, "pipeline must be an array of operators"
+      end
+      unless pipeline.all? { |op| op.is_a?(Hash) }
+        raise MongoArgumentError, "pipeline operators must be hashes"
+      end
+
+      result = db.command({ :aggregate => name,
+                            :pipeline  => pipeline },
+                          opts)
+      # @todo - check for operation failure here and raise error
+      # @todo - finish coding this!
     end
 
     # Is this a capped collection?
@@ -151,15 +175,18 @@ module Mongo
     #  count distinct values.
     # @param [ Hash ] opts Options for this operation.
     #
-    # @todo - read preference option
-    # @options opts [ String ] :comment (nil) A comment to include for profiling.
+    # @option opts [ Symbol ] :read Read preference for this query.
+    # @option opts [ String ] :comment (nil) A comment to include for profiling.
     #
     # @return [ Array ] an array of distinct values.
     #
     # @since 2.0.0
     def distinct(key, query=nil, opts={})
-      database.command({:distinct => name, :key => key.to_s, :query => query},
-                       command_opts(opts))["values"]
+      result = database.command({ :distinct => name,
+                                  :key      => key.to_s,
+                                  :query    => query },
+                                opts)
+      result["values"]
     end
 
     # Drops the entire collection.  USE WITH CAUTION, THIS CANNOT BE UNDONE.
@@ -295,23 +322,29 @@ module Mongo
     #  of ids returned will include values for all documents it attempted to insert,
     #  even if some of those were rejected on error.  When acknowledging writes, any
     #  error will raise an OperationFailure exception.  MongoDB 2.0+.
-    # @option opts [ true, false ] :collect_on_error (false) If true, then collects
-    #  invalid documents as an array.  This option changes the result format.
     #
     # @return [ BSON::ObjectId, Array ] the _id or _ids of the inserted document(s).
     #
     # @since 2.0.0
     def insert(docs, opts={})
-      docs = docs.responds_to?(:collect!) ? docs : [ docs ]
-      docs.collect! { |doc| @pk_factory.create_pk(doc) }
-      write_concern = opts[:w] ? Mongo::WriteConcern::Mode.new(opts[:w]) :
-        Mongo::WriteConcern::Mode::DEFAULT
-      op = Mongo::Write::Insert.new({ :documents => docs,
-                                      :db_name   => database.name,
-                                      :coll_name => name,
-                                      :write_concern => write_concern })
-      response = op.execute(@read.server.context)
-      # @todo - finish processing once InsertResponse is done
+      validate_opts(opts)
+
+      docs = docs.is_a?(Array) ? docs : [ docs ]
+      docs.collect! { |doc| add_pk!(doc) }
+
+      op = Operation::Write::Insert.new({ :documents => docs,
+                                          :db_name   => database.name,
+                                          :coll_name => name,
+                                          :write_concern => write_concern(opts),
+                                          :opts => opts.merge(:limit => -1) })
+
+      context = server_preference.primary(cluster.servers).first.context
+      res = op.execute(context)
+
+      docs.collect! { |doc| doc[:_id] } if res.documents[0]["ok"]
+      res = docs.length == 1 ? docs[0] : docs
+      # @todo - the CRUD api suggests an InsertResponse type that would
+      # include a field 'document' and a field 'insertedId'.  Not final.
     end
     alias :<< :insert
 
@@ -328,20 +361,12 @@ module Mongo
     end
     alias :mapreduce :map_reduce
 
-    # Return a hash containing options that apply to this collection.  For all
-    #   possible keys and values, see DB#create_collection.
-    #
-    # @return [ Hash ] options on this collection.
-    # @todo - in collectionView or here??
-    #
-    # @since 2.0.0
-    def options
-    end
-
     # Scan this entire collection in parallel.  Returns a list of up to num_cursors
     #  cursors that can be iterated concurrently.  As long as the collection is not
     #  modified during scanning, each document appears once in one of the cursors'
     #  result sets.
+    #
+    # @note - this requires MongoDB version >= 2.5.5
     #
     # @param [ Integer ] num_cursors The max number of cursors to return.
     # @param [ Hash ] opts Options for this operation.
@@ -350,6 +375,10 @@ module Mongo
     #
     # @since 2.0.0
     def parallel_scan(num_cursors, opts={})
+      result = db.command({ :parallelCollectionScan => name,
+                            :numCursors             => num_cursors })
+      # @todo - make this into cursors
+      # @todo - finish...
     end
 
     # Removes all matching documents from the collection.
@@ -358,19 +387,76 @@ module Mongo
     #  to remove all documents from the collection.
     #
     # @param [ Hash ] selector Only matching documents will be removed.
+    # @param [ Hash ] opts Options for this query
+    #
+    # @option opts [ String, Integer, Symbol ] :w (1) Set default number of nodes to
+    #  which a write must be acknowledged.
+    # @option opts [ Integer ] :wtimeout (nil) Set replica set acknowledgement timeout.
+    # @option opts [ true, false ] :j (false) If true, block until write operations
+    #  have been committed to the journal.  Cannot be used in combination with 'fsync.'
+    #  Prior to MongoDB 2.6 this option was ignored if the server was running without
+    #  journaling.  Starting with MongoDB 2.6, write operations will raise an exception
+    #  if this opton is used when the server is running without journaling.
+    # @option opts [ true, false ] :fsync (false) If true, and the server is running
+    #  without jornaling, blocks until the server has synced all data files to disk.
+    #  If the server is running with journaling, this acts the same as the 'j' option,
+    #  blocking until write operations have been committed to the journal.  Cannot be
+    #  used in combination with the 'j' option.
+    # @option opts [ Integer ] :limit (0) Set limit option, currently only 0 for all or
+    #  1 for just one.
+    #
+    # @example remove all expired documents:
+    #  users.remove({ :expire => { "lte" => Time.now }})
+    #
+    # @return [ Hash, true ] Returns a Hash containing the last error object if
+    #  acknowledging writes, otherwise return true.
     #
     # @since 2.0.0
-    def remove(selector)
-      # todo - check if selector is empty
+    def remove(selector={}, opts={})
+      # @todo - should this error if selector is empty?
+      return if selector.empty?
+      if opts[:limit] && (opts[:limit] != 0 && opts[:limit] != 1)
+        raise Mongo::ArgumentError, "The limit for a remove operation must be 0 or 1"
+      end
+
+      op = Write::Delete.new({ :deletes       => [ selector ],
+                               :db_name       => database.name,
+                               :coll_name     => name,
+                               :write_concern => write_concern(opts) })
+      response = op.execute(@read.server.context)
+      # @todo - revisit once remove response / server preference is done.
     end
 
     # Removes all documents from the collection.  USE WITH CAUTION.
     #
-    # @todo - are we still using this?  Or using find({}).remove
+    # @param [ Hash ] opts Options for this query
+    #
+    # @option opts [ String, Integer, Symbol ] :w (1) Set default number of nodes to
+    #  which a write must be acknowledged.
+    # @option opts [ Integer ] :wtimeout (nil) Set replica set acknowledgement timeout.
+    # @option opts [ true, false ] :j (false) If true, block until write operations
+    #  have been committed to the journal.  Cannot be used in combination with 'fsync.'
+    #  Prior to MongoDB 2.6 this option was ignored if the server was running without
+    #  journaling.  Starting with MongoDB 2.6, write operations will raise an exception
+    #  if this opton is used when the server is running without journaling.
+    # @optoin opts [ true, false ] :fsync (false) If true, and the server is running
+    #  without jornaling, blocks until the server has synced all data files to disk.
+    #  If the server is running with journaling, this acts the same as the 'j' option,
+    #  blocking until write operations have been committed to the journal.  Cannot be
+    #  used in combination with the 'j' option.
+    #
+    # @return [ Hash, true ] Returns a Hash containing the last error object if
+    #  acknowledging writes, otherwise return true.
     #
     # @since 2.0.0
-    def remove_all
-      # send a write
+    def remove_all(opts={})
+      op = Write::Delete.new({ :deletes       => [{}],
+                               :db_name       => database.name,
+                               :coll_name     => name,
+                               :write_concern => write_concern(opts) })
+      response = op.execute(@read.server.context)
+      # @todo - continue parsing
+      # @todo - revisit once remove response / server preference is done.
     end
 
     # Rename this collection.
@@ -416,8 +502,8 @@ module Mongo
                                               :scale => 1024 },
                                             :db_name => database })
       { 'ns' => "#{database.name}.#{name}" }
-# @todo db
-#      database.command(cmd)
+      # @todo db
+      # database.command(cmd)
     end
 
     # Raise an error if this string is not a valid collection name.
@@ -437,28 +523,6 @@ module Mongo
       if s.match(/^\./) or s.match(/\.$/)
         raise InvalidName.new("Collection name must not start or end with '.'")
       end
-    end
-
-    # Insert the provided documents into the collection.
-    #
-    # @example Insert documents into the collection.
-    # collection.insert([{ name: 'test' }])
-    #
-    # @param [ Array<Hash> ] documents The documents to insert.
-    # @param [ Hash ] options The insert options.
-    #
-    # @return [ Hash ] The result of the insert command.
-    #
-    # @since 2.0.0
-    def insert(documents, options = {})
-      server = server_preference.primary(cluster.servers).first
-      Operation::Write::Insert.new(
-        :documents => documents.is_a?(Array) ? documents : [ documents ],
-        :db_name => database.name,
-        :coll_name => name,
-        :write_concern => write_concern,
-        :opts => options
-      ).execute(server.context).documents[0]
     end
 
     # Exception that is raised when trying to create a collection with no name.
@@ -485,16 +549,39 @@ module Mongo
 
     private
 
-    # Format options necessary to run a command.
+    # Add a primary key to a document, using either a custom primary key factory or
+    # BSON::ObjectId.new
+    #
+    # @param [ Hash ] doc A document.
+    #
+    # @return [ Hash ] the altered document.
+    #
+    # @since 2.0.0
+    def add_pk!(doc)
+      if @pk_factory
+        @pk_factory.create_pk(doc)
+      else
+        doc.merge({ :_id => BSON::ObjectId.new })
+      end
+    end
+
+    # Run certain validations on options passed in by a user and raise
+    # exceptions when appropriate.
     #
     # @param [ Hash ] opts Options.
     #
-    # @return [ Hash ] formatted command options.
+    # @since 2.0.0
+    def validate_opts(opts={})
+    end
+
+    # Return the proper write concern for this operation.
+    #
+    # @param [ Hash ] opts Options.
     #
     # @since 2.0.0
-    def command_opts(opts={})
-      # @todo - how does server preference work here?
-      opts[:read] ? opts : opts.merge(:read => @read)
+    def write_concern(opts={})
+      write_concern = opts[:w] ? WriteConcern::Mode.get(opts[:w]) :
+        database.write_concern
     end
   end
 end

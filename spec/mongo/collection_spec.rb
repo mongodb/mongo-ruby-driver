@@ -3,8 +3,8 @@ require 'spec_helper'
 describe Mongo::Collection do
   include_context 'indexed'
 
-  let(:client)      { Mongo::Client.new(['127.0.0.1:27017']) }
   let(:db_name)     { 'test' }
+  let(:client)      { Mongo::Client.new(['127.0.0.1:27017'], :database => db_name) }
   let(:coll_name)   { 'test-collection' }
   let(:db)          { Mongo::Database.new(client, db_name) }
   let(:c)           { described_class.new(db, coll_name) }
@@ -53,6 +53,37 @@ describe Mongo::Collection do
     end
   end
 
+  describe '#aggregate' do
+
+    let(:group) { { "$group" => { :_id => "$age", :count => { $sum => 1 }}} }
+    let(:match) { { "$match" => { :count => { "$gt" => 10 }}} }
+
+    context 'pipeline is not an array' do
+
+      it 'raises an error' do
+        expect{c.aggregate(group)}.to raise_error
+      end
+    end
+
+    context 'pipeline operators are not all hashes' do
+
+      it 'raises an error' do
+        expect{c.aggregate([ group, ["a"] ])}.to raise_error
+      end
+    end
+
+    it 'returns an array' do
+      # expect(c.aggregate([ group, match ])).to be_a(Array)
+    end
+
+    context 'the cursor option is passed' do
+
+      it 'returns a cursor' do
+        # expect(c.aggregate([ group, match ], {:cursor => {}})).to be_a(Mongo::Cursor)
+      end
+    end
+  end
+
   describe '#capped?' do
 
     let(:capped_name) { 'cc' }
@@ -95,7 +126,7 @@ describe Mongo::Collection do
 
       context 'when collection already existed in database' do
 
-        #before { c.insert({ :a => 1 }) }
+#        before { c.insert({ :a => 1 }) }
 
         context 'when options include capped' do
 
@@ -128,21 +159,60 @@ describe Mongo::Collection do
 
   describe '#count' do
 
+    let(:num_docs) { 10 }
+
+    before do
+      num_docs.times do |i|
+        # c.insert({ :a => 1 })
+      end
+    end
+
     context 'when no options are given' do
 
       it 'returns the number of documents in the collection' do
+        # expect(c.count).to eq(num_docs)
       end
     end
 
     context 'when options are given' do
 
       it 'returns the number of documents matching the query' do
+        # expect(c.count({ :a => { "$gt" => 4 }})).to eq(num_docs - 5)
       end
 
       it 'returns no more than the specified limit' do
+        # expect(c.count({}, {:limit => 3})).to eq(3)
       end
 
       it 'returns the number of matching documents minus the number to skip' do
+        # expect(c.count({}, {:skip => 2})).to eq(num_docs - 2)
+      end
+    end
+  end
+
+  describe '#distinct' do
+
+    let(:num_docs) { 10 }
+
+    before do
+      num_docs.times do |i|
+        # c.insert({ :a => i, :b => 0 })
+        # c.insert({ :a => i, :b => 1 })
+      end
+    end
+
+    it 'returns an array' do
+      # expect(c.distinct(:a)).to be_a(Array)
+    end
+
+    it 'returns an array the length of the number of distinct values' do
+      # expect(c.distinct(:a).length).to eq(num_docs)
+    end
+
+    it 'returns an array of the distinct values' do
+      # values = c.distinct(:a)
+      num_docs.times do |i|
+        # expect(values.include?(i)).to be(true)
       end
     end
   end
@@ -177,6 +247,11 @@ describe Mongo::Collection do
       { :read => :secondary,
         :sort => [[ :name, Mongo::ASCENDING ]],
         :limit => 1 }
+    end
+
+    before do
+      client.cluster.scan!
+      c.insert({ :a => 1 })
     end
 
     it 'returns a CollectionView' do
@@ -264,18 +339,27 @@ describe Mongo::Collection do
 
   describe '#find_one' do
 
+    let(:doc) { { 'name' => 'Sam' } }
+
+    before do
+      client.cluster.scan!
+      c.insert(doc)
+    end
+
     context 'when a hash selector is given' do
 
       it 'returns a single document' do
         # @todo - test once insert is implemented
+        expect(c.find_one).to be_a(Hash)
       end
 
       it 'returns a single document that matches the query' do
+        expect(c.find_one(doc)['name']).to eq('Sam')
       end
 
       it 'returns nil when there are no matching documents' do
         # @todo - server preference on collection view
-        # expect(c.find_one({ :name => 'Leo' })).to eq(nil)
+        expect(c.find_one({ :name => 'Leo' })).to eq(nil)
       end
     end
 
@@ -296,49 +380,74 @@ describe Mongo::Collection do
 
   describe '#insert' do
 
+    before do
+      client.cluster.scan!
+    end
+
     context 'one document is given' do
 
       it 'returns a single id' do
-        # expect(c.insert({ :name => 'Phil' })).to be_a(BSON::ObjectId)
+        expect(c.insert({ :name => 'Phil' })).to be_a(BSON::ObjectId)
       end
 
       context 'a pk_factory is specified' do
 
+        let(:pk)      { pk_factory(:plain) }
+        let(:pk_coll) { described_class.new(db, "pkcoll", { :pk => pk }) }
+
         it 'inserts documents using custom primary keys' do
+          expect(pk_coll.insert({ :name => 'Dave' })).to be_a(Integer)
         end
       end
     end
 
     context 'multiple documents are given' do
 
+      let(:docs) { [{:name => 'Kyle'}, {:name => 'Amalia'}, {:name => 'Luke'}] }
+
       it 'inserts all of the documents' do
+        # @todo find
       end
 
       it 'returns an array of ids' do
+        res = c.insert(docs)
+        expect(res).to be_a(Array)
+        expect(res.length).to eq(docs.length)
       end
 
       context ':continue_on_error is true' do
 
-        it 'attempts to insert all the documents' do
+        context 'writes are not acknowledged' do
+
+          let(:dup_pk)  { pk_factory(:duplicate, { :dups => true }) }
+          let(:pk_coll) { described_class.new(db, "pkcoll",
+                                              { :pk => dup_pk,
+                                                :continue_on_error => true,
+                                                :w => 0 }) }
+
+          it 'attempts to insert all the documents' do
+            res = pk_coll.insert(docs)
+            expect(res).to be_a(Array)
+            expect(res.length).to eq(docs.length)
+          end
         end
 
         context 'writes are acknowledged' do
 
-          it 'returns a list of all ids that we attempted to insert' do
-          end
-        end
-
-        context 'writes are not acknowledged' do
+          let(:coll_pk_w) { described_class.new(db, "pkwithw",
+                                                { :pk => dup_pk,
+                                                  :continue_on_error => true,
+                                                  :w => 1 }) }
 
           it 'raises an error on failure' do
+            expect{coll_pk_w.insert(docs)}.to raise_error
           end
         end
       end
 
-      context ':collect_on_error is true' do
+      context ':continue_on_error is false' do
 
-        it 'returns a hash' do
-        end
+        # @todo, what exactly is the intended behaviour here?
       end
     end
   end
@@ -431,13 +540,113 @@ describe Mongo::Collection do
     end
   end
 
+  describe '#remove' do
+
+    let(:num_docs) { 10 }
+
+    before do
+      client.cluster.scan!
+      num_docs.times do |i|
+        c.insert({ :a => i })
+      end
+    end
+
+    context 'no selector is given' do
+
+      it 'does nothing' do
+        # c.remove({})
+        # expect(c.count({})).to eq(num_docs)
+      end
+    end
+
+    context 'a selector is given' do
+
+      it 'removes all matching documents from the collection' do
+        # c.remove({ :a => { "$gt" => 4 }})
+        # expect(c.count({})).to eq(num_docs - 5)
+      end
+
+      context 'options are given' do
+
+        context 'limit is 1' do
+
+          it 'removes just one matching document' do
+            # c.remove({ :a => { "$gt" => 4 }}, { :limit => 1 })
+            # expect(c.count({})).to eq(num_docs - 1)
+          end
+        end
+
+        context 'limit is 0' do
+
+          it 'removes all matching documents' do
+            # c.remove({ :a => { "$gt" => 4 }}, { :limit => 0 })
+            # expect(c.count({})).to eq(num_docs - 5)
+          end
+        end
+
+        context 'limit is > 1' do
+
+          it 'raises an error' do
+            expect{c.remove({ :a => 1 }, { :limit => 4 })}.to raise_error
+          end
+        end
+
+        it 'runs with the proper write concern' do
+        end
+
+        context 'both fsync and j are set' do
+
+          it 'raises an error' do
+            expect{c.remove({:a => 1}, {:j => true, :fsync => true})}.to raise_error
+          end
+        end
+      end
+    end
+  end
+
+  describe '#remove_all' do
+
+    let(:num_docs) { 10 }
+
+    before do
+      num_docs.times do |i|
+        # c.insert({ :a => i })
+      end
+    end
+
+    it 'removes all documents in the collection' do
+      # c.remove_all
+      # expect(c.count({})).to eq(0)
+    end
+
+    context 'when options are set' do
+
+      it 'runs with the proper write concern' do
+      end
+
+      context 'both fsync and j are set' do
+
+        it 'raises an error' do
+          expect{c.remove_all({:a => 1}, {:j => true, :fsync => true})}.to raise_error
+        end
+      end
+    end
+  end
+
   describe '#save' do
 
     context 'document has an _id field' do
 
       context 'document with that _id already exists' do
 
+        before do
+          # c.insert({ :_id => 1, :name => "red fish" })
+        end
+
         it 'replaces the existing document' do
+          # c.save({ :_id => 1, :name => "blue fish" })
+          # expect(c.count({ :name => "blue fish" })).to eq(1)
+          # expect(c.count({ :name => "red fish" })).to eq(0)
         end
       end
 
@@ -465,51 +674,6 @@ describe Mongo::Collection do
     it 'returns stats on this collection' do
       # @todo
       expect(stats['ns']).to eq("#{db_name}.#{coll_name}")
-    end
-  end
-
-  describe '#insert' do
-
-    let(:client) do
-      Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
-    end
-
-    let(:collection) do
-      client[:users]
-    end
-
-    before do
-      client.cluster.scan!
-    end
-
-    context 'when providing a single document' do
-
-      let(:result) do
-        collection.insert({ name: 'testing' })
-      end
-
-      it 'does not error' do
-        expect(result['ok']).to eq(1)
-      end
-
-      it 'inserts the document into the collection' do
-        expect(result['n']).to eq(1)
-      end
-    end
-
-    context 'when providing multiple documents' do
-
-      let(:result) do
-        collection.insert([{ name: 'test1' }, { name: 'test2' }])
-      end
-
-      it 'does not error' do
-        expect(result['ok']).to eq(1)
-      end
-
-      it 'inserts the documents into the collection' do
-        expect(result['n']).to eq(2)
-      end
     end
   end
 end
