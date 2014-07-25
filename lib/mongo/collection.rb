@@ -132,7 +132,7 @@ module Mongo
                             :pipeline  => pipeline },
                           opts)
       # @todo - check for operation failure here and raise error
-      # @todo - finish coding this!
+      # @todo - finish coding
     end
 
     # Is this a capped collection?
@@ -148,22 +148,25 @@ module Mongo
     #
     # @param [ Hash ] opts Options for this operation.
     #
-    # @option opts [ Hash ] :query ({}) A query selector for filtering the
-    #  documents in this collection.
+    # @option opts [ Hash ] :query ({}) A selector for filtering the documents in this
+    #  collection.
     # @option opts [ Integer ] :skip (nil) The number of documents to skip.
     # @option opts [ Integer ] :limit (nil) The number of documents to limit.
     # @option opts [ Symbol ] :read The read preference for this operation.
+    # @option opts [ Hash, String ] :hint (nil) The index name or spec to use.
     # @option opts [ String ] :comment (nil) A comment to include in profiling logs.
     #
     # @return [ Integer ] the number of documents.
     #
     # @since 2.0.0
     def count(opts={})
-      find(opts[:query],
-           { :skip    => opts[:skip],
-             :limit   => opts[:limit],
-             :read    => opts[:read],
-             :comment => opts[:comment] }).count(true)
+      cmd = { :count => name, :query => opts[:query] || {} }
+      cmd[:skip]  = opts[:skip]  if opts[:skip]
+      cmd[:limit] = opts[:limit] if opts[:limit]
+      cmd[:hint]  = opts[:hint]  if opts[:hint]
+      r = database.command(cmd)
+      puts r
+      r["n"]
     end
     alias :size :count
 
@@ -182,11 +185,10 @@ module Mongo
     #
     # @since 2.0.0
     def distinct(key, query=nil, opts={})
-      result = database.command({ :distinct => name,
-                                  :key      => key.to_s,
-                                  :query    => query },
-                                opts)
-      result["values"]
+      database.command({ :distinct => name,
+                         :key      => key.to_s,
+                         :query    => query },
+                       opts )["values"]
     end
 
     # Drops the entire collection.  USE WITH CAUTION, THIS CANNOT BE UNDONE.
@@ -278,10 +280,6 @@ module Mongo
       end
     end
 
-    # @todo this?? fluent?
-    def findAndModify
-    end
-
     # Return a single document from the database.
     #
     # @param [ Hash ] selector A query selector to filter documents.
@@ -293,10 +291,6 @@ module Mongo
     def find_one(selector={}, opts={})
       opts[:limit] = 1
       find(selector, opts).first
-    end
-
-    # @todo, learn about this.
-    def group
     end
 
     # Insert one or more documents into the collection.
@@ -338,9 +332,7 @@ module Mongo
                                           :write_concern => write_concern(opts),
                                           :opts => opts.merge(:limit => -1) })
 
-      context = server_preference.primary(cluster.servers).first.context
-      res = op.execute(context)
-
+      res = op.execute(get_context({}, true))
       docs.collect! { |doc| doc[:_id] } if res.documents[0]["ok"]
       res = docs.length == 1 ? docs[0] : docs
       # @todo - the CRUD api suggests an InsertResponse type that would
@@ -358,6 +350,7 @@ module Mongo
     #
     # @since 2.0.0
     def map_reduce(map, reduce, opts={})
+      # @todo
     end
     alias :mapreduce :map_reduce
 
@@ -415,15 +408,18 @@ module Mongo
     def remove(selector={}, opts={})
       # @todo - should this error if selector is empty?
       return if selector.empty?
+
+      validate_opts(opts)
       if opts[:limit] && (opts[:limit] != 0 && opts[:limit] != 1)
         raise Mongo::ArgumentError, "The limit for a remove operation must be 0 or 1"
       end
 
-      op = Write::Delete.new({ :deletes       => [ selector ],
-                               :db_name       => database.name,
-                               :coll_name     => name,
-                               :write_concern => write_concern(opts) })
-      response = op.execute(@read.server.context)
+      query = [ { :q => selector, :limit => opts[:limit] || 0 } ]
+      op = Operation::Write::Delete.new({ :deletes       => query,
+                                          :db_name       => database.name,
+                                          :coll_name     => name,
+                                          :write_concern => write_concern(opts) })
+      response = op.execute(get_context(opts, true))
       # @todo - revisit once remove response / server preference is done.
     end
 
@@ -450,6 +446,7 @@ module Mongo
     #
     # @since 2.0.0
     def remove_all(opts={})
+      validate_opts(opts)
       op = Write::Delete.new({ :deletes       => [{}],
                                :db_name       => database.name,
                                :coll_name     => name,
@@ -465,10 +462,14 @@ module Mongo
     #  perform this operation.
     #
     # @param [ String ] new_name The new collection name.
+    # @param [ true, false ] drop (true) drop If true and there is already a collection
+    #  in this database with the name 'new_name', drop the target collection before
+    #  replacing it with this collection.  If false and such a collection exists, this
+    #  operation will raise an error.
     #
     # @since 2.0.0
-    def rename(new_name)
-      db.rename_collection(name, new_name)
+    def rename(new_name, drop=true)
+      database.rename_collection(name, new_name, drop)
       @name = new_name
     end
 
@@ -497,13 +498,7 @@ module Mongo
     #
     # @since 2.0.0
     def stats
-      cmd = Mongo::Operation::Command.new({ :selector => {
-                                              :collstats => name,
-                                              :scale => 1024 },
-                                            :db_name => database })
-      { 'ns' => "#{database.name}.#{name}" }
-      # @todo db
-      # database.command(cmd)
+      database.command({ :collstats => name, :scale => 1024 })
     end
 
     # Raise an error if this string is not a valid collection name.
@@ -572,6 +567,25 @@ module Mongo
     #
     # @since 2.0.0
     def validate_opts(opts={})
+      if opts[:fsync] && opts[:j]
+        raise Mongo::ArgumentError, "cannot use fsync in combination with j option"
+      end
+    end
+
+    # Get a server context for this operation.
+    #
+    # @param [ Hash ] opts Options from the query.
+    # @param [ true, false ] primary Does this operation need to use a primary?
+    #
+    # @return [ Context ] a context object.
+    #
+    # @since 2.0.0
+    def get_context(opts, primary=false)
+      if primary
+        server_preference(opts).primary(cluster.servers).first.context
+      else
+        server_preference(opts).select_servers(cluster.servers).first.context
+      end
     end
 
     # Return the proper write concern for this operation.

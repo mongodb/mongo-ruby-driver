@@ -118,7 +118,7 @@ module Mongo
     #
     # @since 2.0.0
     def create_index(spec, opts={})
-      apply_index(parse_index_spec(spec))
+      apply_index(parse_index_spec(spec), opts)
     end
 
     # Drop a specified index by name.
@@ -166,7 +166,7 @@ module Mongo
     # @since 2.0.0
     def ensure_index(spec, opts={})
       @index_cache ||= {}
-      apply_index(spex)
+      apply_index(spec, opts)
       @index_cache[name] = time
     end
 
@@ -175,9 +175,10 @@ module Mongo
     # Apply this index to this collection.
     #
     # @param [ Hash ] spec The index spec.
+    # @param [ Hash ] opts Options for this index.
     #
     # @since 2.0.0
-    def apply_index(spec)
+    def apply_index(spec, opts={})
       index = index_name(spec)
       selector = { :name => index, :key => spec }
       selector.merge!(opts)

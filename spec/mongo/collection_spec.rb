@@ -10,6 +10,12 @@ describe Mongo::Collection do
   let(:c)           { described_class.new(db, coll_name) }
   let(:c_read)      { described_class.new(db, coll_name, {:read => :secondary}) }
 
+  before do
+    client.cluster.scan!
+    c.insert({ :a => 1 })
+    c.drop
+  end
+
   it_behaves_like 'an indexed collection'
 
   describe '#==' do
@@ -126,7 +132,9 @@ describe Mongo::Collection do
 
       context 'when collection already existed in database' do
 
-#        before { c.insert({ :a => 1 }) }
+        before do
+          c.insert({ :a => 1 })
+        end
 
         context 'when options include capped' do
 
@@ -163,29 +171,29 @@ describe Mongo::Collection do
 
     before do
       num_docs.times do |i|
-        # c.insert({ :a => 1 })
+        c.insert({ :a => i })
       end
     end
 
     context 'when no options are given' do
 
       it 'returns the number of documents in the collection' do
-        # expect(c.count).to eq(num_docs)
+        expect(c.count).to eq(num_docs)
       end
     end
 
     context 'when options are given' do
 
       it 'returns the number of documents matching the query' do
-        # expect(c.count({ :a => { "$gt" => 4 }})).to eq(num_docs - 5)
+        expect(c.count({:query => { :a => { "$gt" => 4 }}})).to eq(num_docs - 5)
       end
 
       it 'returns no more than the specified limit' do
-        # expect(c.count({}, {:limit => 3})).to eq(3)
+        expect(c.count({:limit => 3})).to eq(3)
       end
 
       it 'returns the number of matching documents minus the number to skip' do
-        # expect(c.count({}, {:skip => 2})).to eq(num_docs - 2)
+        expect(c.count({:skip => 2})).to eq(num_docs - 2)
       end
     end
   end
@@ -196,23 +204,23 @@ describe Mongo::Collection do
 
     before do
       num_docs.times do |i|
-        # c.insert({ :a => i, :b => 0 })
-        # c.insert({ :a => i, :b => 1 })
+        c.insert({ :a => i, :b => 0 })
+        c.insert({ :a => i, :b => 1 })
       end
     end
 
     it 'returns an array' do
-      # expect(c.distinct(:a)).to be_a(Array)
+      expect(c.distinct(:a)).to be_a(Array)
     end
 
     it 'returns an array the length of the number of distinct values' do
-      # expect(c.distinct(:a).length).to eq(num_docs)
+      expect(c.distinct(:a).length).to eq(num_docs)
     end
 
     it 'returns an array of the distinct values' do
-      # values = c.distinct(:a)
+      values = c.distinct(:a)
       num_docs.times do |i|
-        # expect(values.include?(i)).to be(true)
+        expect(values.include?(i)).to be(true)
       end
     end
   end
@@ -220,24 +228,21 @@ describe Mongo::Collection do
   describe '#drop' do
 
     before do
-      # c.insert({ :name => 'Patrick' })
-      # c.createIndex({ :name => 1 })
-      # c.drop
+      c.insert({ :name => 'Patrick' })
+      c.create_index({ :name => 1 })
+      c.drop
     end
 
     it 'removes all documents from this collection' do
-      # @todo - db.drop_collection
-      # expect(c.count).to eq(0)
+      expect(c.count).to eq(0)
     end
 
     it 'removes all indexes from this collection' do
-      # @todo - db.drop_collection
-      # expect(c.stats["nindexes"]).to eq(0)
+      expect(c.stats["nindexes"]).to eq(nil)
     end
 
     it 'removes the collection from this database' do
-      # @todo - db.drop_collection
-      # expect(db.collection_names.length).to eq(0)
+      expect(db.collection_names.include?(coll_name)).to eq(false)
     end
   end
 
@@ -250,7 +255,6 @@ describe Mongo::Collection do
     end
 
     before do
-      client.cluster.scan!
       c.insert({ :a => 1 })
     end
 
@@ -342,7 +346,6 @@ describe Mongo::Collection do
     let(:doc) { { 'name' => 'Sam' } }
 
     before do
-      client.cluster.scan!
       c.insert(doc)
     end
 
@@ -379,10 +382,6 @@ describe Mongo::Collection do
   end
 
   describe '#insert' do
-
-    before do
-      client.cluster.scan!
-    end
 
     context 'one document is given' do
 
@@ -458,21 +457,23 @@ describe Mongo::Collection do
 
       let(:newname) { '$$aaah.'}
 
+      before do
+        c.insert({ :a => 1 })
+      end
+
       it 'raises an error' do
-        # @todo - db.rename_collection
-        #expect{c.rename(newname)}.to raise_error
+        expect{c.rename(newname)}.to raise_error
       end
 
       it 'does not change the collection name attribute' do
-        # @todo - db.rename_collection
-        #expect{c.rename(newname)}.to raise_error
+        expect{c.rename(newname)}.to raise_error
         expect(c.name).to eq(coll_name)
       end
 
       it 'does not change the collection name in the db' do
-        # @todo - db.rename_collection
-        #expect{c.rename(newname)}.to raise_error
-        # @todo - another check here, for the db
+        expect{c.rename(newname)}.to raise_error
+        expect(db.collection_names.include?(coll_name)).to eq(true)
+        expect(db.collection_names.include?(newname)).to eq(false)
       end
     end
 
@@ -481,16 +482,18 @@ describe Mongo::Collection do
       let(:newname) { 'sally' }
 
       before do
-        #c.rename(newname)
+        c.insert({ :a => 1 })
+        c.rename(newname)
       end
 
       it 'changes the collection name attribute' do
-        # @todo - db.rename_collection
-        #expect(c.name).to eq(newname)
+        expect(c.name).to eq(newname)
       end
 
       it 'changes the collection name in the db' do
-        # @todo - db.rename_collection
+        puts "names: #{db.collection_names}"
+        expect(db.collection_names.include?(coll_name)).to eq(false)
+        expect(db.collection_names.include?(newname)).to eq(true)
       end
     end
   end
@@ -545,7 +548,6 @@ describe Mongo::Collection do
     let(:num_docs) { 10 }
 
     before do
-      client.cluster.scan!
       num_docs.times do |i|
         c.insert({ :a => i })
       end
@@ -553,34 +555,46 @@ describe Mongo::Collection do
 
     context 'no selector is given' do
 
+      before do
+        c.remove
+      end
+
       it 'does nothing' do
-        # c.remove({})
-        # expect(c.count({})).to eq(num_docs)
+        expect(c.count).to eq(num_docs)
       end
     end
 
     context 'a selector is given' do
 
-      it 'removes all matching documents from the collection' do
-        # c.remove({ :a => { "$gt" => 4 }})
-        # expect(c.count({})).to eq(num_docs - 5)
+      context 'no options are given' do
+
+        before do
+          c.remove({ :a => { "$gt" => 4 }})
+        end
+
+        it 'removes all matching documents from the collection' do
+          expect(c.count({})).to eq(num_docs - 5)
+        end
       end
 
       context 'options are given' do
 
         context 'limit is 1' do
 
+          before do
+            c.remove({ :a => { "$gt" => 4 }}, { :limit => 1 })
+          end
+
           it 'removes just one matching document' do
-            # c.remove({ :a => { "$gt" => 4 }}, { :limit => 1 })
-            # expect(c.count({})).to eq(num_docs - 1)
+            expect(c.count({})).to eq(num_docs - 1)
           end
         end
 
         context 'limit is 0' do
 
           it 'removes all matching documents' do
-            # c.remove({ :a => { "$gt" => 4 }}, { :limit => 0 })
-            # expect(c.count({})).to eq(num_docs - 5)
+            c.remove({ :a => { "$gt" => 4 }}, { :limit => 0 })
+            expect(c.count({})).to eq(num_docs - 5)
           end
         end
 
@@ -591,8 +605,8 @@ describe Mongo::Collection do
           end
         end
 
-        it 'runs with the proper write concern' do
-        end
+#        it 'runs with the proper write concern' do
+#        end
 
         context 'both fsync and j are set' do
 
@@ -610,24 +624,25 @@ describe Mongo::Collection do
 
     before do
       num_docs.times do |i|
-        # c.insert({ :a => i })
+        c.insert({ :a => i })
       end
     end
 
     it 'removes all documents in the collection' do
-      # c.remove_all
-      # expect(c.count({})).to eq(0)
+      c.remove_all
+      expect(c.count({})).to eq(0)
     end
 
     context 'when options are set' do
 
-      it 'runs with the proper write concern' do
-      end
+#      it 'runs with the proper write concern' do
+      # @todo
+#      end
 
       context 'both fsync and j are set' do
 
         it 'raises an error' do
-          expect{c.remove_all({:a => 1}, {:j => true, :fsync => true})}.to raise_error
+          expect{c.remove_all({:j => true, :fsync => true})}.to raise_error
         end
       end
     end
@@ -640,13 +655,13 @@ describe Mongo::Collection do
       context 'document with that _id already exists' do
 
         before do
-          # c.insert({ :_id => 1, :name => "red fish" })
+          c.insert({ :_id => 1, :name => "red fish" })
         end
 
         it 'replaces the existing document' do
-          # c.save({ :_id => 1, :name => "blue fish" })
-          # expect(c.count({ :name => "blue fish" })).to eq(1)
-          # expect(c.count({ :name => "red fish" })).to eq(0)
+          c.save({ :_id => 1, :name => "blue fish" })
+          expect(c.count({ :name => "blue fish" })).to eq(1)
+          expect(c.count({ :name => "red fish" })).to eq(0)
         end
       end
 

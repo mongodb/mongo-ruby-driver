@@ -110,7 +110,12 @@ module Mongo
     #
     # @return [ Integer ] The number of documents in the result set.
     def count
-      @collection.count(CollectionView.new(@collection, @selector, @opts))
+      cmd = { :count => @collection.name,
+        :query => @selector,
+        :limit => limit,
+        :skip  => skip,
+        :hint  => hint }
+      @collection.database.command(cmd)
     end
 
     # Get the explain plan for the query.
