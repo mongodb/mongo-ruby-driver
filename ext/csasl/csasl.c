@@ -3,6 +3,7 @@
 #include <sasl/sasl.h>
 #include <sasl/saslutil.h>
 
+static sasl_conn_t *conn;
 
 
 static VALUE a_init(VALUE self, VALUE username, VALUE hostname, VALUE servicename, VALUE canonicalizehostname)
@@ -30,7 +31,7 @@ int is_sasl_failure(int result, char **error_message)
 char *rb_mongo_saslstart(sasl_conn_t *conn, char **out_payload, int *out_payload_len, int32_t *conversation_id, char **error_message)
 {
 	const char *raw_payload;
-	char encoded_payload[4096];
+	static char encoded_payload[4096];
 	unsigned int raw_payload_len, encoded_payload_len;
 	int result;
 	char *mechanism_list = "GSSAPI";
@@ -63,7 +64,6 @@ static VALUE initialize_challenge(VALUE self) {
 	char *initpayload;
 	int initpayload_len;
 	char **error_message;
-	sasl_conn_t *conn;
 	int32_t conversation_id;
 	//sasl_callback_t client_interact=NULL;
 	char *payload;
@@ -84,8 +84,6 @@ static VALUE initialize_challenge(VALUE self) {
     	return 0;
     }
 
-    rb_iv_set(self, "@context", conn);
-
     return rb_str_new2(payload);
 }
 
@@ -94,7 +92,8 @@ static VALUE evaluate_challenge(VALUE self, VALUE rb_payload) {
 
     sasl_interact_t *client_interact=NULL;
 
-	char step_payload[4096], base_payload[4096], payload[4096];
+    char *step_payload;
+	char base_payload[4096], payload[4096];
 	unsigned int step_payload_len, base_payload_len, payload_len;
 	const char *out;
 	unsigned int outlen;
@@ -110,8 +109,6 @@ static VALUE evaluate_challenge(VALUE self, VALUE rb_payload) {
 	if (is_sasl_failure(result, error_message)) {
 		return 0;
 	}
-
-    sasl_conn_t *conn = rb_iv_get(self, "@context");
 
 	result = sasl_client_step(conn, (const char *)base_payload, base_payload_len, &client_interact, &out, &outlen);
 	if (is_sasl_failure(result, error_message)) {
