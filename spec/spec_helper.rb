@@ -59,7 +59,11 @@ RSpec.configure do |config|
       )
     rescue Mongo::Operation::Write::Failure => e
       # If 2.7 nd higher failed, use the legacy user creation.
-      users.insert({ user: ROOT_USER.name, pwd: ROOT_USER.hashed_password })
+      users.insert({
+        user: ROOT_USER.name,
+        pwd: ROOT_USER.hashed_password,
+        roles: [ 'userAdminAnyDatabase' ]
+      })
     end
   end
 end
