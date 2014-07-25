@@ -45,8 +45,7 @@ RSpec.configure do |config|
 
   config.before(:suite) do
     admin_client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'admin')
-    users_client = Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
-    users = users_client['system.users']
+    users = admin_client['system.users']
 
     # @todo: Need to replace with condition value.
     admin_client.cluster.scan!
@@ -63,7 +62,7 @@ RSpec.configure do |config|
       users.insert({
         user: ROOT_USER.name,
         pwd: ROOT_USER.hashed_password,
-        roles: [ 'userAdminAnyDatabase' ]
+        roles: [ 'root' ]
       })
     end
   end
