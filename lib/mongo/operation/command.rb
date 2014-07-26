@@ -79,7 +79,40 @@ module Mongo
           context = Mongo::ServerPreference.get(:mode => :primary).server.context
         end
         context.with_connection do |connection|
-          connection.dispatch([message])
+          Response.new(connection.dispatch([ message ])).verify!
+        end
+      end
+
+      # Response wrapper for command operations.
+      #
+      # @since 2.0.0
+      class Response
+        include Verifiable
+
+        # Get the pretty formatted inspection of the response.
+        #
+        # @example Inspect the response.
+        #   response.inspect
+        #
+        # @return [ String ] The inspection.
+        #
+        # @since 2.0.0
+        def inspect
+          "#<Mongo::Operation::Write::Command::Response:#{object_id} written=#{n} documents=#{documents}>"
+        end
+
+        # Verify the response by checking for any errors.
+        #
+        # @example Verify the response.
+        #   response.verify!
+        #
+        # @raise [ Write::Failure ] If an error is in the response.
+        #
+        # @return [ Response ] The response if verification passed.
+        #
+        # @since 2.0.0
+        def verify!
+          command_failure? ? raise(Write::Failure.new(first)) : self
         end
       end
 

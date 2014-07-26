@@ -14,10 +14,30 @@
 
 require 'mongo/operation/executable'
 require 'mongo/operation/slicable'
+require 'mongo/operation/verifiable'
 require 'mongo/operation/read'
 require 'mongo/operation/write'
 require 'mongo/operation/aggregate'
 require 'mongo/operation/command'
 require 'mongo/operation/kill_cursors'
 require 'mongo/operation/map_reduce'
-require 'mongo/operation/write/response'
+
+module Mongo
+  module Operation
+
+    # Legacy error message field.
+    #
+    # @since 2.0.0
+    ERROR = 'err'.freeze
+
+    # The write errors field in the response, 2.6 and higher.
+    #
+    # @since 2.0.0
+    WRITE_ERRORS = 'writeErrors'.freeze
+
+    # Constant for the error code field.
+    #
+    # @since 2.0.0
+    ERROR_CODE = 'code'.freeze
+  end
+end

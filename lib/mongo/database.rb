@@ -120,7 +120,7 @@ module Mongo
         :selector => operation,
         :db_name => name,
         :opts => { :limit => -1 }
-      }).execute(server.context).documents[0]
+      }).execute(server.context)
     end
 
     # Instantiate a new database object.

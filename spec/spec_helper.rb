@@ -45,25 +45,29 @@ RSpec.configure do |config|
 
   config.before(:suite) do
     admin_client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'admin')
-    users = admin_client['system.users']
 
     # @todo: Need to replace with condition value.
     admin_client.cluster.scan!
 
     begin
-      # Create the admin user for the tests on 2.7 and higher.
+      # Create the admin user for the tests on 2.6 and higher.
       admin_client.command(
         :createUser => ROOT_USER.name,
         :pwd => ROOT_USER.hashed_password,
         :roles => [ 'root' ]
       )
     rescue Mongo::Operation::Write::Failure => e
-      # If 2.7 nd higher failed, use the legacy user creation.
-      users.insert({
-        user: ROOT_USER.name,
-        pwd: ROOT_USER.hashed_password,
-        roles: [ 'root' ]
-      })
+      # If 2.6 and higher failed, use the legacy user creation.
+      users_client = admin_client.use(TEST_DB)
+      users_client.cluster.scan!
+      users = users_client['system.users']
+      begin
+        users.insert({
+          user: ROOT_USER.name,
+          pwd: ROOT_USER.hashed_password,
+          roles: [ 'userAdminAnyDatabase' ]
+        })
+      rescue; end
     end
   end
 end

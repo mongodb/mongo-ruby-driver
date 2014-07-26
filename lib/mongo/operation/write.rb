@@ -21,20 +21,10 @@ module Mongo
   module Operation
     module Write
 
-      # Legacy error message field.
-      #
-      # @since 2.0.0
-      ERROR = 'err'.freeze
-
       # The write errors field in the response, 2.6 and higher.
       #
       # @since 2.0.0
       WRITE_ERRORS = 'writeErrors'.freeze
-
-      # Constant for the error code field.
-      #
-      # @since 2.0.0
-      ERROR_CODE = 'code'.freeze
 
       # Constant for the errmsg field.
       #
@@ -69,7 +59,9 @@ module Mongo
         private
 
         def errors
-          error_message(ERROR) { "#{document[ERROR_CODE]}: #{document[ERROR]}" }
+          error_message(Operation::ERROR) do
+            "#{document[Operation::ERROR_CODE]}: #{document[Operation::ERROR]}"
+          end
         end
 
         def generate_message
@@ -83,7 +75,7 @@ module Mongo
         def write_errors
           error_message(WRITE_ERRORS) do
             document[WRITE_ERRORS].map do |e|
-              "#{e[ERROR_CODE]}: #{e[ERROR_MESSAGE]}"
+              "#{e[Operation::ERROR_CODE]}: #{e[ERROR_MESSAGE]}"
             end.join(', ')
           end
         end
@@ -91,7 +83,7 @@ module Mongo
         def write_concern_errors
           error_message(WRITE_CONCERN_ERROR) do
             document[WRITE_CONCERN_ERROR].map do |e|
-              "#{e[ERROR_CODE]}: #{e[ERROR_MESSAGE]}"
+              "#{e[Operation::ERROR_CODE]}: #{e[ERROR_MESSAGE]}"
             end.join(', ')
           end
         end

@@ -69,10 +69,10 @@ module Mongo
           end
           if context.write_command_enabled?
             op = WriteCommand::Insert.new(spec)
-            Response.new(op.execute(context))
+            Response.new(op.execute(context)).verify!
           else
             context.with_connection do |connection|
-              Response.new(connection.dispatch([ message, gle ].compact), documents.size)
+              Response.new(connection.dispatch([ message, gle ].compact), documents.size).verify!
             end
           end
         end
@@ -92,6 +92,39 @@ module Mongo
               db_name == other.db_name
           @spec[:documents] << other.spec[:documents]
           self
+        end
+
+        # Response wrapper for insert operations.
+        #
+        # @since 2.0.0
+        class Response
+          include Verifiable
+
+          # Get the pretty formatted inspection of the response.
+          #
+          # @example Inspect the response.
+          #   response.inspect
+          #
+          # @return [ String ] The inspection.
+          #
+          # @since 2.0.0
+          def inspect
+            "#<Mongo::Operation::Write::Insert::Response:#{object_id} written=#{n} documents=#{documents}>"
+          end
+
+          # Verify the response by checking for any errors.
+          #
+          # @example Verify the response.
+          #   response.verify!
+          #
+          # @raise [ Write::Failure ] If an error is in the response.
+          #
+          # @return [ Response ] The response if verification passed.
+          #
+          # @since 2.0.0
+          def verify!
+            write_failure? ? raise(Write::Failure.new(first)) : self
+          end
         end
 
         private
