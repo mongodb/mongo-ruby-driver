@@ -61,6 +61,19 @@ module Mongo
       end
       alias :n :count
 
+      # If the response was a command then determine if it was considered a
+      # success.
+      #
+      # @example Was the command ok?
+      #   verifiable.ok?
+      #
+      # @return [ true, false ] If the command was ok.
+      #
+      # @since 2.0.0
+      def ok?
+        first[OK] == 1
+      end
+
       private
 
       def command_failure?
@@ -77,10 +90,6 @@ module Mongo
 
       def first
         @first ||= documents[0] || {}
-      end
-
-      def ok?
-        first[OK] == 1
       end
 
       def write_concern_errors

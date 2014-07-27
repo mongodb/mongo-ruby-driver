@@ -385,7 +385,12 @@ describe Mongo::Operation::Write::Insert do
   describe '#execute' do
 
     let(:client) do
-      Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
+      Mongo::Client.new(
+        [ '127.0.0.1:27017' ],
+        database: TEST_DB,
+        username: 'root-user',
+        password: 'password'
+      )
     end
 
     let(:server) do

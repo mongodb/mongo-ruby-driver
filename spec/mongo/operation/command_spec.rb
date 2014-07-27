@@ -58,76 +58,55 @@ describe Mongo::Operation::Command do
 
   describe '#execute' do
 
+    let(:client) do
+      Mongo::Client.new(
+        [ '127.0.0.1:27017' ],
+        database: TEST_DB,
+        username: 'root-user',
+        password: 'password'
+      )
+    end
+
+
+    let(:server) do
+      client.cluster.servers.first
+    end
+
+    before do
+      # @todo: Replace with condition variable
+      client.cluster.scan!
+    end
+
+    context 'when the command succeeds' do
+
+      let(:response) do
+        op.execute(server.context)
+      end
+
+      it 'returns the reponse' do
+        expect(response).to be_ok
+      end
+    end
+
+    context 'when the command fails' do
+
+      let(:selector) do
+        { notacommand: 1 }
+      end
+
+      it 'raises an exception' do
+        expect {
+          op.execute(server.context)
+        }.to raise_error(Mongo::Operation::Write::Failure)
+      end
+    end
+
+    context 'when the command cannot run on a secondary' do
+
+      context 'when the server is a secondary' do
+
+        pending 'it re-routes to the primary'
+      end
+    end
   end
-
-  # describe '#execute' do
-
-    # context 'message' do
-
-      # it 'creates a query wire protocol message with correct specs' do
-        # allow_any_instance_of(Mongo::ServerPreference::Primary).to receive(:server) do
-          # primary_server
-        # end
-
-        # expect(Mongo::Protocol::Query).to receive(:new) do |db, coll, sel, options|
-          # expect(db).to eq(TEST_DB)
-          # expect(coll).to eq(Mongo::Database::COMMAND)
-          # expect(sel).to eq(selector)
-          # expect(options).to eq(opts)
-        # end
-        # op.execute(primary_context)
-      # end
-
-      # it 'sets the limit to -1' do
-        # allow_any_instance_of(Mongo::ServerPreference::Primary).to receive(:server) do
-          # primary_server
-        # end
-
-        # expect(Mongo::Protocol::Query).to receive(:new) do |db, coll, sel, options|
-          # expect(options[:limit]).to eq(-1)
-        # end
-        # op.execute(primary_context)
-
-      # end
-    # end
-
-    # context 'connection' do
-
-      # it 'dispatches the message on the connection' do
-        # allow_any_instance_of(Mongo::ServerPreference::Primary).to receive(:server) do
-          # primary_server
-        # end
-
-        # expect(connection).to receive(:dispatch)
-        # op.execute(primary_context)
-      # end
-    # end
-
-    # context 'rerouting' do
-
-      # context 'when the command is not allowed on a secondary and server is secondary' do
-        # let(:selector) { { :replSetFreeze => 1 } }
-
-        # it 'reroutes the operation to the primary' do
-          # allow_any_instance_of(Mongo::ServerPreference::Primary).to receive(:server) do
-            # primary_server
-          # end
-          # expect(primary_context).to receive(:with_connection)
-          # op.execute(secondary_context)
-        # end
-      # end
-
-      # context 'when the server is primary' do
-        # let(:selector) { { :ismaster => 1 } }
-
-        # it 'sends the operation to the primary' do
-          # allow_any_instance_of(Mongo::ServerPreference::Primary).to receive(:server) do
-            # primary_server
-          # end
-          # expect(primary_context).to receive(:with_connection)
-          # op.execute(primary_context)
-        # end
-      # end
-    # end
-  # end
 end
