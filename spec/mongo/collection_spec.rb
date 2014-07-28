@@ -501,6 +501,125 @@ describe Mongo::Collection do
     end
   end
 
+  describe '#update' do
+
+    before do
+      c.insert({ :name => 'Faith', :age => 23 })
+      c.insert({ :name => 'Sam', :age => 23 })
+    end
+
+    context 'no options are passed' do
+
+      context 'matching documents exist' do
+
+        before do
+          c.update({ :age => 23 }, { "$set" => { :age => 24 }})
+        end
+
+        it 'updates a single matching document' do
+          expect(c.count({ :query => { :age => 23 }})).to eq(1)
+          expect(c.count({ :query => { :age => 24 }})).to eq(1)
+        end
+      end
+
+      context 'no matching documents exist' do
+
+        before do
+          c.update({ :age => 25 }, { "$set" => { :age => 26 }})
+        end
+
+        it 'has no effect' do
+          expect(c.count({ :query => { :age => 26 }})).to eq(0)
+        end
+      end
+    end
+
+    context 'multi is true' do
+
+      context 'matching documents exist' do
+
+        before do
+          c.update({ :age => 23 }, { "$set" => { :age => 24 }}, { :multi => true })
+        end
+
+        it 'updates all matching documents' do
+          expect(c.count({ :query => { :age => 23 }})).to eq(0)
+          expect(c.count({ :query => { :age => 24 }})).to eq(2)
+        end
+      end
+
+      context 'no matching documents exist' do
+
+        before do
+          c.update({ :age => 25 }, { "$set" => { :age => 26 }}, { :multi => true })
+        end
+
+        it 'has no effect' do
+          expect(c.count({ :query => { :age => 26 }})).to eq(0)
+        end
+      end
+    end
+
+    context 'upsert is true' do
+
+      context 'matching documents exist' do
+
+        before do
+          c.update({ :age => 23 }, { "$set" => { :age => 24 }}, { :upsert => true })
+        end
+
+        it 'updates a single matching document' do
+          expect(c.count({ :query => { :age => 23 }})).to eq(1)
+          expect(c.count({ :query => { :age => 24 }})).to eq(1)
+        end
+      end
+
+      context 'no matching documents exist' do
+
+        before do
+          c.update({ :age => 25 }, { "$set" => { :age => 26 }}, { :upsert => true })
+        end
+
+        it 'inserts a new document' do
+          expect(c.count({ :query => { :age => 26 }})).to eq(1)
+        end
+      end
+    end
+
+    context 'multi and upsert are both true' do
+
+      context 'matching documents exist' do
+
+        before do
+          c.update({ :age => 23 },
+                   { "$set" => { :age => 24 }},
+                   { :upsert => true,
+                     :multi => true })
+        end
+
+        it 'updates all matching documents' do
+          expect(c.count({ :query => { :age => 23 }})).to eq(0)
+          expect(c.count({ :query => { :age => 24 }})).to eq(2)
+        end
+      end
+
+      context 'no matching documents exist' do
+
+        before do
+          c.update({ :age => 25 },
+                   { "$set" => { :age => 26 }},
+                   { :upsert => true,
+                     :multi => true })
+        end
+
+        it 'inserts a single new document' do
+          expect(c.count({ :query => { :age => 23 }})).to eq(2)
+          expect(c.count({ :query => { :age => 26 }})).to eq(1)
+        end
+      end
+    end
+  end
+
   describe '.validate_name' do
 
     context 'name is empty' do

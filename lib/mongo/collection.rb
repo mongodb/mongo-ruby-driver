@@ -477,7 +477,50 @@ module Mongo
       database.command({ :collstats => name, :scale => 1024 })
     end
 
-    def update
+    # Update one or more documents in this collection.
+    #
+    # @param [ Hash ] selector A hash specifying elements that must be present for
+    #  a document to be updated.  Note: the update command by default only updates the
+    #  first document found matching the selector.  To update all matching documents,
+    #  specify :multi => true as an option.
+    # @param [ Hash ] update A hash specifying the fields to be changed in the matching
+    #  document(s) or, in the case of an upsert, the document to be inserted.
+    # @param [ Hash ] opts Options for this update.
+    #
+    # @option opts [ true, false ] :upsert (false) If true, performs an upsert (update
+    #  or insert).
+    # @option opts [ true, false ] :multi (false) If true, updates all matching docs,
+    #  otherwise only updates the first matching document.
+    # @option opts [ Integer, String, Symbol ] :w (1) Set the write concern.
+    # @option opts [ Integer ] :wtimeout (nil) Set replica set acknowledgement timeout.
+    # @option opts [ true, false ] :j (false) If true, block until write operations
+    #  have been committed to the journal.  Cannot be used in combination with 'fsync.'
+    #  Prior to MongoDB 2.6 this option was ignored if the server was running without
+    #  journaling.  Starting with MongoDB 2.6, write operations will raise an exception
+    #  if this opton is used when the server is running without journaling.
+    # @option opts [ true, false ] :fsync (false) If true, and the server is running
+    #  without jornaling, blocks until the server has synced all data files to disk.
+    #  If the server is running with journaling, this acts the same as the 'j' option,
+    #  blocking until write operations have been committed to the journal.  Cannot be
+    #  used in combination with the 'j' option.
+    #
+    # @return [ Hash, true ] Returns a Hash containing the last error object if
+    #  acknowledging writes, otherwise returns true.
+    #
+    # @since 2.0.0
+    def update(selector, update, opts={})
+      validate_opts(opts)
+      op = Operation::Write::Update.new({ :updates => [{
+                                            :q      => selector,
+                                            :u      => update,
+                                            :multi  => opts[:multi] || false,
+                                            :upsert => opts[:upsert] || false
+                                            }],
+                                          :db_name       => database.name,
+                                          :coll_name     => name,
+                                          :write_concern => write_concern(opts) })
+      response = op.execute(get_context(opts, true))
+      # @todo - finish parsing response, GLE.
     end
 
     # Raise an error if this string is not a valid collection name.
