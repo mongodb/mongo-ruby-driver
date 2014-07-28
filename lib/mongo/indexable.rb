@@ -72,6 +72,11 @@ module Mongo
       'HASHED'      => HASHED
     }
 
+    # Time indexes are kept in client cache until they are considered expired.
+    #
+    # @since 2.0.0
+    TIME_TO_EXPIRE = 300.freeze #5 minutes.
+
     # Create a new index on this collection.
     #
     # @param [ String, Array ] spec A single field name or an array of
@@ -170,9 +175,11 @@ module Mongo
     #
     # @since 2.0.0
     def ensure_index(spec, opts={})
-      @index_cache ||= {}
-      apply_index(spec, opts)
-      @index_cache[name] = time
+      spec = parse_index_spec(spec)
+      index = index_name(spec)
+
+      apply_index(spec, opts) if expired?(index)
+      client.index_cache({ index => Time.now.utc.to_i + TIME_TO_EXPIRE }, ns)
     end
 
     # Returns information about the indexes on this collection by name.
@@ -211,6 +218,20 @@ module Mongo
             "with the following error: #{ex.message}"
         end
       end
+    end
+
+    # Return true if this index has expired, or was never created (on this client).
+    #   For use with ensure_index.
+    #
+    # @param [ String ] index The index name.
+    #
+    # @return [ true, false ] whether the index has gone stale.
+    #
+    # @since 2.0.0
+    def expired?(index)
+      time = client.index_cache(index, ns)
+      return true unless time
+      time < Time.now.utc.to_i
     end
 
     # Return a new Collection representing system.indexes on this collection's

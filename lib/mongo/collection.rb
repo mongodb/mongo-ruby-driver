@@ -354,6 +354,15 @@ module Mongo
     end
     alias :mapreduce :map_reduce
 
+    # Return the full namespace for this collection.
+    #
+    # @return [ String ] collection namespace.
+    #
+    # @since 2.0.0
+    def ns
+      "#{database.name}.#{name}"
+    end
+
     # Scan this entire collection in parallel.  Returns a list of up to num_cursors
     #  cursors that can be iterated concurrently.  As long as the collection is not
     #  modified during scanning, each document appears once in one of the cursors'
@@ -513,15 +522,6 @@ module Mongo
     end
 
     private
-
-    # Return the full namespace for this collection.
-    #
-    # @return [ String ] collection namespace.
-    #
-    # @since 2.0.0
-    def ns
-      "#{database.name}.#{name}"
-    end
 
     # Add a primary key to a document, using either a custom primary key factory or
     # BSON::ObjectId.new

@@ -102,24 +102,59 @@ shared_examples 'an indexed collection' do
     context 'the index is a new index' do
 
       it 'creates the index on the collection' do
+        db.stub(:command)
+        c.ensure_index(spec)
+        expect(db).to have_received(:command)
       end
     end
 
     context 'the index has been applied recently' do
 
-      it 'does not create the index on the collection' do
+      let(:expiration) { Time.now.utc.to_i + 500 }
+      let(:index)      { { spec_name => expiration } }
+
+      before do
+        c.client.index_cache(index, c.ns)
+      end
+
+      it 'does not re-create the index on the collection' do
+        db.stub(:command)
+        c.ensure_index(spec)
+        expect(db).to_not have_received(:command)
       end
     end
 
-    context 'the index was applied, but not recently' do
+    context 'the index was applied on this client, but not recently' do
+
+      let(:expiration) { Time.now.utc.to_i - 9000 }
+      let(:index)      { { spec_name => expiration } }
+
+      before do
+        c.client.index_cache(index, c.ns)
+      end
 
       it 'creates the index on the collection' do
+        db.stub(:command)
+        c.ensure_index(spec)
+        expect(db).to have_received(:command)
       end
     end
 
-    context 'the index is new to us but exists in the collection' do
+    context 'the index is new to this client but exists in the collection' do
+
+      let(:new_client) { Mongo::Client.new(['127.0.0.1:27017'], :database => db_name) }
+      let(:new_db)     { Mongo::Database.new(new_client, db_name) }
+      let(:new_c)      { described_class.new(new_db, coll_name) }
+
+      before do
+        new_client.cluster.scan!
+        new_c.ensure_index(spec)
+      end
 
       it 'creates the index on the collection' do
+        db.stub(:command)
+        c.ensure_index(spec)
+        expect(db).to have_received(:command)
       end
     end
   end
