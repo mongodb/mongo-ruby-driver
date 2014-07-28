@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/operation/write/insert/response'
+
 module Mongo
   module Operation
     module Write
@@ -92,39 +94,6 @@ module Mongo
               db_name == other.db_name
           @spec[:documents] << other.spec[:documents]
           self
-        end
-
-        # Response wrapper for insert operations.
-        #
-        # @since 2.0.0
-        class Response
-          include Verifiable
-
-          # Get the pretty formatted inspection of the response.
-          #
-          # @example Inspect the response.
-          #   response.inspect
-          #
-          # @return [ String ] The inspection.
-          #
-          # @since 2.0.0
-          def inspect
-            "#<Mongo::Operation::Write::Insert::Response:#{object_id} written=#{n} documents=#{documents}>"
-          end
-
-          # Verify the response by checking for any errors.
-          #
-          # @example Verify the response.
-          #   response.verify!
-          #
-          # @raise [ Write::Failure ] If an error is in the response.
-          #
-          # @return [ Response ] The response if verification passed.
-          #
-          # @since 2.0.0
-          def verify!
-            write_failure? ? raise(Write::Failure.new(first)) : self
-          end
         end
 
         private

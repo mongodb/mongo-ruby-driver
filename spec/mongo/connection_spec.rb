@@ -131,7 +131,7 @@ describe Mongo::Connection do
     end
 
     let(:query) do
-      Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, {})
+      Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'testing' })
     end
 
     let(:delete) do
