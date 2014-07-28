@@ -13,7 +13,7 @@ describe Mongo::Collection do
   before do
     client.cluster.scan!
     c.insert({ :a => 1 })
-    c.drop
+    c.remove
   end
 
   it_behaves_like 'an indexed collection'
@@ -343,7 +343,9 @@ describe Mongo::Collection do
 
   describe '#find_one' do
 
-    let(:doc) { { 'name' => 'Sam' } }
+    let(:id)       { BSON::ObjectId.new }
+    let(:doc)      { { '_id' => id, 'name' => 'Sam' } }
+    let(:selector) { { 'name' => 'Sam' } }
 
     before do
       c.insert(doc)
@@ -352,12 +354,11 @@ describe Mongo::Collection do
     context 'when a hash selector is given' do
 
       it 'returns a single document' do
-        # @todo - test once insert is implemented
-        expect(c.find_one).to be_a(Hash)
+        expect(c.find_one(selector)).to be_a(Hash)
       end
 
       it 'returns a single document that matches the query' do
-        expect(c.find_one(doc)['name']).to eq('Sam')
+        expect(c.find_one(selector)['name']).to eq('Sam')
       end
 
       it 'returns nil when there are no matching documents' do
@@ -369,14 +370,15 @@ describe Mongo::Collection do
     context 'when a BSON::ObjectId is given' do
 
       it 'returns a single document' do
+        expect(c.find_one(id)).to be_a(Hash)
       end
 
       it 'returns a single document that matches the query' do
+        expect(c.find_one(id)['name']).to be_a('Sam')
       end
 
       it 'returns nil when there are no matching documents' do
-        # @todo - server preference on collection view
-        # expect(c.find_one(BSON::ObjectId.new)).to eq(nil)
+        expect(c.find_one(BSON::ObjectId.new)).to eq(nil)
       end
     end
   end
@@ -491,7 +493,6 @@ describe Mongo::Collection do
       end
 
       it 'changes the collection name in the db' do
-        puts "names: #{db.collection_names}"
         expect(db.collection_names.include?(coll_name)).to eq(false)
         expect(db.collection_names.include?(newname)).to eq(true)
       end
@@ -559,8 +560,8 @@ describe Mongo::Collection do
         c.remove
       end
 
-      it 'does nothing' do
-        expect(c.count).to eq(num_docs)
+      it 'does removes all documents in the collection' do
+        expect(c.count).to eq(0)
       end
     end
 
@@ -618,36 +619,6 @@ describe Mongo::Collection do
     end
   end
 
-  describe '#remove_all' do
-
-    let(:num_docs) { 10 }
-
-    before do
-      num_docs.times do |i|
-        c.insert({ :a => i })
-      end
-    end
-
-    it 'removes all documents in the collection' do
-      c.remove_all
-      expect(c.count({})).to eq(0)
-    end
-
-    context 'when options are set' do
-
-#      it 'runs with the proper write concern' do
-      # @todo
-#      end
-
-      context 'both fsync and j are set' do
-
-        it 'raises an error' do
-          expect{c.remove_all({:j => true, :fsync => true})}.to raise_error
-        end
-      end
-    end
-  end
-
   describe '#save' do
 
     context 'document has an _id field' do
@@ -668,27 +639,33 @@ describe Mongo::Collection do
       context 'there is no existing document with that _id' do
 
         it 'inserts the new document' do
+          c.save({ :_id => 1, :name => "two fish" })
+          expect(c.count({ :name => "two fish" })).to eq(1)
         end
       end
     end
 
     context 'document has no _id field' do
 
+      before do
+        c.insert({ :name => "one fish" })
+        c.save({ :name => "one fish" })
+      end
+
       it 'inserts the new document' do
+        expect(c.count({ :name => "one fish" })).to eq(2)
       end
     end
   end
 
   describe '#stats' do
-    let(:stats) { c.stats }
 
     it 'returns a hash' do
-      expect(stats).to be_a(Hash)
+      expect(c.stats).to be_a(Hash)
     end
 
     it 'returns stats on this collection' do
-      # @todo
-      expect(stats['ns']).to eq("#{db_name}.#{coll_name}")
+      expect(c.stats['ns']).to eq("#{db_name}.#{coll_name}")
     end
   end
 end

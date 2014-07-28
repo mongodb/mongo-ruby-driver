@@ -164,9 +164,7 @@ module Mongo
       cmd[:skip]  = opts[:skip]  if opts[:skip]
       cmd[:limit] = opts[:limit] if opts[:limit]
       cmd[:hint]  = opts[:hint]  if opts[:hint]
-      r = database.command(cmd)
-      puts r
-      r["n"]
+      database.command(cmd)["n"]
     end
     alias :size :count
 
@@ -376,9 +374,6 @@ module Mongo
 
     # Removes all matching documents from the collection.
     #
-    # @note - {} as a selector here will have no effect, use remove_all
-    #  to remove all documents from the collection.
-    #
     # @param [ Hash ] selector Only matching documents will be removed.
     # @param [ Hash ] opts Options for this query
     #
@@ -401,14 +396,17 @@ module Mongo
     # @example remove all expired documents:
     #  users.remove({ :expire => { "lte" => Time.now }})
     #
+    # @example remove any single document from the collection:
+    #  users.remove({}, { :limit => 1 })
+    #
+    # @example remove all documents in the collection:
+    #  users.remove({}, { :limit => 0 })
+    #
     # @return [ Hash, true ] Returns a Hash containing the last error object if
     #  acknowledging writes, otherwise return true.
     #
     # @since 2.0.0
     def remove(selector={}, opts={})
-      # @todo - should this error if selector is empty?
-      return if selector.empty?
-
       validate_opts(opts)
       if opts[:limit] && (opts[:limit] != 0 && opts[:limit] != 1)
         raise Mongo::ArgumentError, "The limit for a remove operation must be 0 or 1"
@@ -420,39 +418,6 @@ module Mongo
                                           :coll_name     => name,
                                           :write_concern => write_concern(opts) })
       response = op.execute(get_context(opts, true))
-      # @todo - revisit once remove response / server preference is done.
-    end
-
-    # Removes all documents from the collection.  USE WITH CAUTION.
-    #
-    # @param [ Hash ] opts Options for this query
-    #
-    # @option opts [ String, Integer, Symbol ] :w (1) Set default number of nodes to
-    #  which a write must be acknowledged.
-    # @option opts [ Integer ] :wtimeout (nil) Set replica set acknowledgement timeout.
-    # @option opts [ true, false ] :j (false) If true, block until write operations
-    #  have been committed to the journal.  Cannot be used in combination with 'fsync.'
-    #  Prior to MongoDB 2.6 this option was ignored if the server was running without
-    #  journaling.  Starting with MongoDB 2.6, write operations will raise an exception
-    #  if this opton is used when the server is running without journaling.
-    # @optoin opts [ true, false ] :fsync (false) If true, and the server is running
-    #  without jornaling, blocks until the server has synced all data files to disk.
-    #  If the server is running with journaling, this acts the same as the 'j' option,
-    #  blocking until write operations have been committed to the journal.  Cannot be
-    #  used in combination with the 'j' option.
-    #
-    # @return [ Hash, true ] Returns a Hash containing the last error object if
-    #  acknowledging writes, otherwise return true.
-    #
-    # @since 2.0.0
-    def remove_all(opts={})
-      validate_opts(opts)
-      op = Write::Delete.new({ :deletes       => [{}],
-                               :db_name       => database.name,
-                               :coll_name     => name,
-                               :write_concern => write_concern(opts) })
-      response = op.execute(@read.server.context)
-      # @todo - continue parsing
       # @todo - revisit once remove response / server preference is done.
     end
 
@@ -499,6 +464,9 @@ module Mongo
     # @since 2.0.0
     def stats
       database.command({ :collstats => name, :scale => 1024 })
+    end
+
+    def update
     end
 
     # Raise an error if this string is not a valid collection name.
