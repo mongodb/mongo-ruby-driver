@@ -24,6 +24,11 @@ module Mongo
   # @since 2.0.0
   DESCENDING = -1
 
+  # The system name for the collection containing information about indexes.
+  #
+  # @since 2.0.0
+  SYSTEM_INDEXES = 'system.indexes'.freeze
+
   # A class representing a MongoDB Index.
   #
   # @since 2.0.0
@@ -170,6 +175,20 @@ module Mongo
       @index_cache[name] = time
     end
 
+    # Returns information about the indexes on this collection by name.
+    #
+    # @return [ Hash ] information about the collection's indexes, with index names
+    #  as keys.
+    #
+    # @since 2.0.0
+    def index_information
+      info = {}
+      system_indexes.find({ :ns => ns }).each do |index|
+        info[index['name']] = index
+      end
+      info
+    end
+
     private
 
     # Apply this index to this collection.
@@ -183,7 +202,7 @@ module Mongo
       selector = { :name => index, :key => spec }
       selector.merge!(opts)
       begin
-        database.command({ :createIndexes => index, :indexes => selector })
+        database.command({ :createIndexes => name, :indexes => [selector] })
       rescue OperationError => ex
         if Mongo::ErrorCode::COMMAND_NOT_FOUND.include?(ex.error_code)
           # @todo legacy index creation?
@@ -192,6 +211,16 @@ module Mongo
             "with the following error: #{ex.message}"
         end
       end
+    end
+
+    # Return a new Collection representing system.indexes on this collection's
+    # database.
+    #
+    # @retun [ Collection ]
+    #
+    # @since 2.0.0
+    def system_indexes
+      Collection.new(database, SYSTEM_INDEXES)
     end
 
     # Drop an index from the given collection by name.
