@@ -344,8 +344,8 @@ describe Mongo::Collection do
   describe '#find_one' do
 
     let(:id)       { BSON::ObjectId.new }
-    let(:doc)      { { '_id' => id, 'name' => 'Sam' } }
-    let(:selector) { { 'name' => 'Sam' } }
+    let(:doc)      { { :_id => id, :name => 'Sam' } }
+    let(:selector) { { :name => 'Sam' } }
 
     before do
       c.insert(doc)
@@ -370,11 +370,13 @@ describe Mongo::Collection do
     context 'when a BSON::ObjectId is given' do
 
       it 'returns a single document' do
+        c.remove
+        c.insert(doc)
         expect(c.find_one(id)).to be_a(Hash)
       end
 
       it 'returns a single document that matches the query' do
-        expect(c.find_one(id)['name']).to be_a('Sam')
+        expect(c.find_one(id)['name']).to eq('Sam')
       end
 
       it 'returns nil when there are no matching documents' do

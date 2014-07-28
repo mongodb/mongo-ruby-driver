@@ -280,7 +280,8 @@ module Mongo
 
     # Return a single document from the database.
     #
-    # @param [ Hash ] selector A query selector to filter documents.
+    # @param [ BSON::ObjectId, Hash ] selector A query selector or _id value to
+    #  filter documents.
     # @param [ Hash ] opts Options for this query.
     #
     # @todo - will there be options for this?
@@ -288,6 +289,7 @@ module Mongo
     # @return [ Hash ] the matched document.
     def find_one(selector={}, opts={})
       opts[:limit] = 1
+      selector = selector.is_a?(BSON::ObjectId) ? { :_id => selector } : selector
       find(selector, opts).first
     end
 
@@ -512,6 +514,15 @@ module Mongo
 
     private
 
+    # Return the full namespace for this collection.
+    #
+    # @return [ String ] collection namespace.
+    #
+    # @since 2.0.0
+    def ns
+      "#{database.name}.#{name}"
+    end
+
     # Add a primary key to a document, using either a custom primary key factory or
     # BSON::ObjectId.new
     #
@@ -524,7 +535,7 @@ module Mongo
       if @pk_factory
         @pk_factory.create_pk(doc)
       else
-        doc.merge({ :_id => BSON::ObjectId.new })
+        doc.has_key?(:_id) || doc.has_key?('_id') ? doc : doc.merge!(:_id => BSON::ObjectId.new)
       end
     end
 
