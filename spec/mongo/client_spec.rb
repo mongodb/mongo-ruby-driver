@@ -465,4 +465,85 @@ describe Mongo::Client do
       end
     end
   end
+
+  describe '#index_cache' do
+
+    let(:client) { described_class.new(['127.0.0.1:27017'], :database => TEST_DB) }
+    let(:index)  { 'name_1' }
+    let(:time)   { Time.now.utc.to_i }
+    let(:ns)     { 'test.collection' }
+
+    context 'we pass a String as a parameter' do
+
+      context 'index does not exist in the cache' do
+
+        it 'returns nil' do
+          expect(client.index_cache(index, ns)).to be(nil)
+        end
+      end
+
+      context 'index exists in the cache' do
+
+        before do
+          client.index_cache({ index => time }, ns)
+        end
+
+        it 'returns an Integer' do
+          expect(client.index_cache(index, ns)).to be_a(Integer)
+        end
+
+        it 'returns its expiration time' do
+          expect(client.index_cache(index, ns)).to eq(time)
+        end
+      end
+
+      context 'same index name exists under a different ns' do
+
+        before do
+          client.index_cache({ index => time }, 'something.else')
+        end
+
+        it 'returns nil' do
+          expect(client.index_cache(index, ns)).to be(nil)
+        end
+      end
+
+      context 'there exists a different index under the same ns' do
+
+        before do
+          client.index_cache({ "something_else_1" => time }, ns)
+        end
+
+        it 'returns nil' do
+          expect(client.index_cache(index, ns)).to be(nil)
+        end
+      end
+    end
+
+    context 'we pass a Hash as a parameter' do
+
+      context 'index does not exist in the cache' do
+
+        before do
+          client.index_cache({ index => time }, ns)
+        end
+
+        it 'adds the index to the cache' do
+          expect(client.index_cache(index, ns)).to eq(time)
+        end
+      end
+
+      context 'index exists in the cache' do
+
+        before do
+          client.index_cache({ index => time }, ns)
+          client.index_cache({ index => (time + 300) }, ns)
+        end
+
+        it 'writes over the previous entry for that index' do
+          expect(client.index_cache(index, ns)).to eq(time + 300)
+        end
+      end
+    end
+  end
 end

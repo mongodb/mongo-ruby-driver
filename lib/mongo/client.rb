@@ -167,14 +167,15 @@ module Mongo
       @write_concern ||= WriteConcern::Mode.get(options[:write])
     end
 
-    # When given an index, caches that index and its expiration time.  When given an
-    #  index name, returns the entry for that index, if there is one.
+    # When given an index, caches that index and its expiration time. When given an
+    #  index name, returns the entry for that index, if there is one. For use by
+    #  Collection#ensure_index.
     #
     # @param [ Hash, String ] index Either an { index_name : expiration_time } pair
     #  or an index name.
     # @param [ String ] ns The namespace this index belongs to.
     #
-    # @return [ Integer ] the expiration time for this index.
+    # @return [ Integer ] the expiration time for this index, or true.
     #
     # @since 2.0.0
     def index_cache(index, ns)
@@ -182,6 +183,7 @@ module Mongo
       @index_cache[ns] ||= {}
       return @index_cache[ns][index] if index.is_a?(String)
       @index_cache[ns].merge!(index)
+      true
     end
 
     # Exception that is raised when trying to perform operations before ever
