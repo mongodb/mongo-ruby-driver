@@ -71,7 +71,7 @@ module Mongo
     #
     # @since 2.0.0
     def server_preference(opts={})
-      return ServerPreference.get(opts[:read]) if opts[:read]
+      return ServerPreference.get(:mode => opts[:read]) if opts[:read]
       @server_preference || client.server_preference
     end
 
@@ -151,7 +151,7 @@ module Mongo
       command({ :drop => name })
     end
 
-    # Rename collection.
+    # Rename a collection.
     #
     # @note If operating in auth mode, the client must be authorized as an admin to
     #  perform this operation.
@@ -165,10 +165,14 @@ module Mongo
     # @since 2.0.0
     def rename_collection(oldname, newname, drop=true)
       Collection.validate_name(newname)
-      command({ :renameCollection => "#{name}.#{oldname}",
-                :to               => "#{name}.#{newname}",
-                :dropTarget       => drop },
-              { :db_name => ADMIN })
+      res = command({ :renameCollection => "#{name}.#{oldname}",
+                      :to               => "#{name}.#{newname}",
+                      :dropTarget       => drop },
+                    { :db_name => ADMIN })
+      # @todo - process differently once command response objects are done.
+      if res['ok'] != 1
+        raise Mongo::OperationError, "Error naming collection: #{res.inspect}"
+      end
     end
 
     # Instantiate a new database object.
@@ -189,7 +193,7 @@ module Mongo
       raise InvalidName.new unless name
       @client = client
       @name = name.to_s
-      @server_preference = ServerPreference.get(opts[:read]) if opts[:read]
+      @server_preference = ServerPreference.get(:mode => opts[:read]) if opts[:read]
     end
 
     # Exception that is raised when trying to create a database with no name.

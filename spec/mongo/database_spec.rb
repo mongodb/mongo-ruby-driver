@@ -117,6 +117,23 @@ describe Mongo::Database do
     end
   end
 
+  describe '#drop_collection' do
+
+    let(:client)   { Mongo::Client.new([ '127.0.0.1:27017' ], database: :test) }
+    let(:database) { described_class.new(client, :test) }
+    let(:coll)     { 'somecollection' }
+
+    before do
+      client.cluster.scan!
+      database[coll].insert({ :name => 'Sally' })
+      database.drop_collection(coll)
+    end
+
+    it 'drops the collection' do
+      expect(database.collection_names.include?(coll)).to eq(false)
+    end
+  end
+
   describe '#initialize' do
 
     context 'when provided a valid name' do
@@ -140,6 +157,113 @@ describe Mongo::Database do
         expect do
           described_class.new(client, nil)
         end.to raise_error(Mongo::Database::InvalidName)
+      end
+    end
+  end
+
+  describe '#rename_collection' do
+
+    let(:client)   { Mongo::Client.new([ '127.0.0.1:27017' ], database: :test) }
+    let(:database) { described_class.new(client, :test) }
+
+    context 'when new name is invalid' do
+
+      it 'raises an error' do
+        expect{database.rename_collection('oldname', '$$$..$$$')}.to raise_error
+      end
+    end
+
+    context 'when new name is valid' do
+
+      let(:old) { 'oldname' }
+      let(:new) { 'newname' }
+
+      before do
+        client.cluster.scan!
+        database.drop_collection(old)
+        database.drop_collection(new)
+      end
+
+      context 'when drop is false' do
+
+        context 'when collection with new name already exists' do
+
+          before do
+            database[old].insert({ :a => 1 })
+            database[new].insert({ :b => 1 })
+          end
+
+          it 'raises an error' do
+            expect{database.rename_collection(old, new, false)}.to raise_error
+          end
+        end
+
+        context 'no collection with new name exists' do
+
+          before do
+            database[old].insert({ :a => 1 })
+            database.rename_collection(old, new, false)
+          end
+
+          it 'renames the collection' do
+            expect(database[new].find_one['a']).to eq(1)
+          end
+        end
+      end
+
+      context 'when drop is true' do
+
+        context 'when collection with same name already exists' do
+
+          before do
+            database[old].insert({ :a => 1 })
+            database[new].insert({ :b => 1 })
+            database.rename_collection(old, new, true)
+          end
+
+          it 'replaces that collection with this one' do
+            expect(database[new].find_one['a']).to eq(1)
+          end
+        end
+      end
+    end
+  end
+
+  describe '#server_preference' do
+
+    context 'the passed-in options have a server preference' do
+
+      let(:database)    { described_class.new(client, :test) }
+      let(:read)        { :secondary_preferred }
+
+      it 'returns the operation-level server preference' do
+        expect(database.server_preference({ :read => read }).name).to be(read)
+      end
+    end
+
+    context 'the passed-in options have no server preference' do
+
+      context 'the database has a global server preference' do
+
+        let(:db_read)  { :nearest }
+        let(:database) { described_class.new(client, :test, { :read => db_read }) }
+
+        it 'returns db-level server preference' do
+          expect(database.server_preference.name).to eq(db_read)
+        end
+      end
+
+      context 'there is no global db-level server preference' do
+
+        let(:database)    { described_class.new(client, :test) }
+        let(:client_read) { :secondary_preferred }
+        let(:client_pref) { Mongo::ServerPreference.get(:mode => client_read) }
+
+        it 'returns the client-level server preference' do
+          client.stub(:server_preference).and_return(client_pref)
+          expect(database.server_preference.name).to eq(client_read)
+          expect(client).to have_received(:server_preference)
+        end
       end
     end
   end
