@@ -39,4 +39,4 @@ else
 end
 
 desc "Run the default compile task"
-task :compile => RUBY_PLATFORM =~ /java/ ? ['compile:jbson', 'compile:jsasl'] : 'compile:cbson'
+task :compile => RUBY_PLATFORM =~ /java/ ? ['compile:jbson', 'compile:jsasl'] : ['compile:cbson', 'compile:csasl']
