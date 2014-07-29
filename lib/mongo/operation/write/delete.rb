@@ -68,7 +68,9 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
-          raise Exception, "Must use primary server" unless context.primary?
+          unless context.primary? || context.standalone?
+            raise Exception, "Must use primary server"
+          end
           if context.write_command_enabled?
             op = WriteCommand::Delete.new(spec)
             op.execute(context)

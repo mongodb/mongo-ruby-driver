@@ -58,14 +58,11 @@ RSpec.configure do |config|
       )
     rescue Mongo::Operation::Write::Failure => e
       # If 2.6 and higher failed, use the legacy user creation.
-      users_client = admin_client.use(TEST_DB)
-      users_client.cluster.scan!
-      users = users_client['system.users']
       begin
-        users.insert({
+        admin_client['system.users'].insert({
           user: ROOT_USER.name,
           pwd: ROOT_USER.hashed_password,
-          roles: [ 'userAdminAnyDatabase' ]
+          roles: [ 'root', 'userAdminAnyDatabase' ]
         })
       rescue; end
     end

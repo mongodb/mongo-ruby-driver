@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Operation::Write::Insert do
 
   let(:documents) do
-    [{ :foo => 1 }]
+    [{ :name => 'test' }]
   end
 
   let(:spec) do
@@ -400,6 +400,21 @@ describe Mongo::Operation::Write::Insert do
     before do
       # @todo: Replace with condition variable
       client.cluster.scan!
+      client.command({
+        'createIndexes' => TEST_COLL,
+        'indexes' => [
+          { name: "#{TEST_COLL}_name", key: { 'name' => 1 }, unique: true }
+        ]
+      })
+    end
+
+    after do
+      Mongo::Operation::Write::Delete.new({
+        deletes: [{ q: {}}],
+        db_name: TEST_DB,
+        coll_name: TEST_COLL,
+        write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+      }).execute(server.context)
     end
 
     context 'when the server is a primary' do
@@ -420,13 +435,13 @@ describe Mongo::Operation::Write::Insert do
         context 'when the insert fails' do
 
           let(:documents) do
-            [{ user: ROOT_USER.name, pwd: ROOT_USER.hashed_password }]
+            [{ name: 'test' }]
           end
 
           let(:spec) do
             { :documents     => documents,
-              :db_name       => 'admin',
-              :coll_name     => 'system.users',
+              :db_name       => TEST_DB,
+              :coll_name     => TEST_COLL,
               :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
             }
           end
@@ -448,7 +463,7 @@ describe Mongo::Operation::Write::Insert do
         context 'when the insert succeeds' do
 
           let(:documents) do
-            [{ one: 'test' }, { two: 'test' }]
+            [{ name: 'test1' }, { name: 'test2' }]
           end
 
           let(:response) do
@@ -460,19 +475,41 @@ describe Mongo::Operation::Write::Insert do
           end
         end
 
-        context 'when the insert fails' do
+        context 'when the insert fails on the last document' do
 
           let(:documents) do
-            [
-              { user: ROOT_USER.name, pwd: ROOT_USER.hashed_password },
-              { user: ROOT_USER.name, pwd: ROOT_USER.hashed_password }
-            ]
+            [{ name: 'test3' }, { name: 'test' }]
           end
 
           let(:spec) do
             { :documents     => documents,
-              :db_name       => 'admin',
-              :coll_name     => 'system.users',
+              :db_name       => TEST_DB,
+              :coll_name     => TEST_COLL,
+              :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
+            }
+          end
+
+          let(:failing_insert) do
+            described_class.new(spec)
+          end
+
+          it 'raises an error' do
+            expect {
+              failing_insert.execute(server.context)
+            }.to raise_error(Mongo::Operation::Write::Failure)
+          end
+        end
+
+        context 'when the insert fails on the first document' do
+
+          let(:documents) do
+            [{ name: 'test' }, { name: 'test4' }]
+          end
+
+          let(:spec) do
+            { :documents     => documents,
+              :db_name       => TEST_DB,
+              :coll_name     => TEST_COLL,
               :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
             }
           end
