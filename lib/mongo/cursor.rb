@@ -33,7 +33,8 @@ module Mongo
     # Creates a +Cursor+ object.
     #
     # @param view [ CollectionView ] The +CollectionView+ defining the query.
-    def initialize(view, response)
+    def initialize(view, response, context)
+      @server     = context.server
       @view       = view
       @collection = @view.collection
       @client     = @collection.client
@@ -61,10 +62,10 @@ module Mongo
     #
     # @params [ Object ] The response from the operation.
     def process_response(response)
-      @server    = response.server
-      @cache     = (@cache || []) + response.docs
+      # @todo - this will change with response objects
+      @cache     = (@cache || []) + (response['documents'] || response['firstBatch'])
       @returned  = (@returned || 0) + @cache.length
-      @cursor_id = response.cursor_id
+      @cursor_id = response['cursor_id'] || response['id']
     end
 
     # Whether we have iterated through all documents in the cache and retrieved

@@ -43,7 +43,7 @@ module Mongo
     attr_reader :name
 
     # Get cluser and server preference from client.
-    def_delegators :@client, :cluster, :server_preference, :write_concern
+    def_delegators :@client, :cluster, :write_concern
 
     # Check equality of the database object against another. Will simply check
     # if the names are the same.
@@ -59,6 +59,20 @@ module Mongo
     def ==(other)
       return false unless other.is_a?(Database)
       name == other.name
+    end
+
+    # Get the server (read) preference from the options passed to this database
+    #
+    # @param [ Hash ] opts Options passed to an operation.
+    #
+    # @option opts [ Symbol ] :read Read preference.
+    #
+    # @return [ ServerPreference ] the server preference for this db or operation.
+    #
+    # @since 2.0.0
+    def server_preference(opts={})
+      return ServerPreference.get(:mode => opts[:read]) if opts[:read]
+      @server_preference || client.server_preference
     end
 
     # Get a collection in this database by the provided name.
@@ -112,15 +126,54 @@ module Mongo
     #   database.command(:ismaster => 1)
     #
     # @param [ Hash ] operation The command to execute.
+    # @param [ Hash ] opts Options for this command.
+    #
+    # @option opts [ Symbol ] :read Read preference for this operation.
+    # @option opts [ String ] :db_name (this db) The database against which to run
+    # @option opts [ Context ] :context A context with which to execute the command.
+    #  the command.
     #
     # @return [ Hash ] The result of the command execution.
-    def command(operation)
-      server = client.server_preference.select_servers(cluster.servers).first
+    def command(operation, opts={})
       Operation::Command.new({
         :selector => operation,
-        :db_name => name,
+        :db_name => opts[:db_name] || name,
         :opts => { :limit => -1 }
-      }).execute(server.context).documents[0]
+      }).execute(get_context(opts)).documents[0]
+    end
+
+    # Drops the entire collection from the database.
+    # USE WITH CAUTION, THIS CANNOT BE UNDONE.
+    #
+    # @param [ String ] collection The collection name.
+    #
+    # @since 2.0.0
+    def drop_collection(name)
+      command({ :drop => name })
+    end
+
+    # Rename a collection.
+    #
+    # @note If operating in auth mode, the client must be authorized as an admin to
+    #  perform this operation.
+    #
+    # @param [ String ] oldname The current name of the collection.
+    # @param [ String ] newname The new desired collection name.
+    # @param [ true, false ] drop (true) If true, and there is already a collection
+    #  with the name 'newname', drop that collection first.  If drop is false and such
+    #  a collection exists, an error will be raised.
+    #
+    # @since 2.0.0
+    def rename_collection(oldname, newname, drop=true)
+      Collection.validate_name(newname)
+      res = command({ :renameCollection => "#{name}.#{oldname}",
+                      :to               => "#{name}.#{newname}",
+                      :dropTarget       => drop },
+                    { :db_name => ADMIN })
+      # @todo - process differently once command response objects are done.
+      if res['ok'] != 1
+        raise Mongo::OperationError, "Error naming collection: #{res.inspect}"
+      end
     end
 
     # Instantiate a new database object.
@@ -130,14 +183,18 @@ module Mongo
     #
     # @param [ Mongo::Client ] client The driver client.
     # @param [ String, Symbol ] name The name of the database.
+    # @param [ Hash ] opts Options for this database.
+    #
+    # @option opts [ Symbol ] :read Read preference.
     #
     # @raise [ Mongo::Database::InvalidName ] If the name is nil.
     #
     # @since 2.0.0
-    def initialize(client, name)
+    def initialize(client, name, opts={})
       raise InvalidName.new unless name
       @client = client
       @name = name.to_s
+      @server_preference = ServerPreference.get(:mode => opts[:read]) if opts[:read]
     end
 
     # Exception that is raised when trying to create a database with no name.
@@ -160,6 +217,20 @@ module Mongo
       def initialize
         super(MESSAGE)
       end
+    end
+
+    private
+
+    # Get a server context for this operation.
+    #
+    # @param [ Hash ] opts Options from the query.
+    #
+    # @return [ Context ] a context object.
+    #
+    # @since 2.0.0
+    def get_context(opts)
+      return opts[:context] if opts[:context]
+      server_preference(opts).select_servers(cluster.servers).first.context
     end
   end
 end

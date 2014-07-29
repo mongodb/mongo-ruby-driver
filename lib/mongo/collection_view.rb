@@ -110,7 +110,12 @@ module Mongo
     #
     # @return [ Integer ] The number of documents in the result set.
     def count
-      @collection.count(CollectionView.new(@collection, @selector, @opts))
+      cmd = { :count => @collection.name,
+        :query => @selector,
+        :limit => limit,
+        :skip  => skip,
+        :hint  => hint }
+      @collection.database.command(cmd)
     end
 
     # Get the explain plan for the query.
@@ -192,7 +197,7 @@ module Mongo
     #
     # @param [ Symbol ] read The read preference to use for the query.
     #
-    # @return [ Symbol, CollectionView ] Either the read preference or a
+    # @return [ ServerPreference, CollectionView ] Either the read preference or a
     # new +CollectionView+.
     def read(read = nil)
       return default_read if read.nil?
@@ -247,7 +252,7 @@ module Mongo
     #
     # @yieldparam [ Hash ] Each matching document.
     def each
-      cursor = Cursor.new(self, send_initial_query).to_enum
+      cursor = Cursor.new(self, send_initial_query, @context).to_enum
       cursor.each do |doc|
         yield doc
       end if block_given?
@@ -300,8 +305,9 @@ module Mongo
     def send_initial_query
       # @todo: if mongos, don't send read pref because it's
       # in the special selector
-      context = read.server.context
-      initial_query_op.execute(context)
+      # @todo - use read.server, when implemented, not just primary.
+      @context = read.primary(@collection.cluster.servers).first.context
+      initial_query_op.execute(@context)
     end
 
     # Get the read preference for this query.
@@ -347,8 +353,8 @@ module Mongo
     #
     # @return [true, false] Whether the query has special fields.
     def has_special_fields?
-      (!special_opts.empty? || sort || hint ||
-          comment || @collection.client.mongos?)
+      (!special_opts.empty? || sort || hint || comment )
+      # @todo - we used to check @collection.client.mongos? here?
     end
 
     # Clone or dup the current +CollectionView+.
@@ -367,9 +373,13 @@ module Mongo
 
     # The read preference for this operation.
     #
-    # @return [ Symbol ] This operation's read preference.
+    # @return [ ServerPreference ] This operation's server preference.
     def default_read(read = nil)
-      @opts[:read] || @collection.read
+      if @opts[:read]
+        ServerPreference.get(@opts[:read])
+      else
+        @collection.server_preference
+      end
     end
 
     # Extract query opts from @opts and return them in a separate hash.
