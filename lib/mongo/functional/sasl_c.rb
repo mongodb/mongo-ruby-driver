@@ -25,15 +25,16 @@ module Mongo
         db            = client.db('$external')
         hostname      = socket.pool.host
         servicename   = opts[:gssapi_service_name] || 'mongodb'
-        #canonicalize  = opts[:canonicalize_host_name] ? opts[:canonicalize_host_name] : false
+        canonicalize  = opts[:canonicalize_host_name] ? opts[:canonicalize_host_name] : false
 
         authenticator = Mongo::Sasl::GSSAPIAuthenticator.new(username, hostname, servicename, canonicalize)
-        token         = BSON::Binary.new(authenticator.initialize_challenge)
+        token         = authenticator.initialize_challenge
         cmd           = BSON::OrderedHash['saslStart', 1, 'mechanism', 'GSSAPI', 'payload', token, 'autoAuthorize', 1]
         response      = db.command(cmd, :check_response => false, :socket => socket)
 
+        # if authentication failed, raise error
         until response['done'] do
-          token    = BSON::Binary.new(authenticator.evaluate_challenge(response['payload'].to_s))
+          token    = authenticator.evaluate_challenge(response['payload'])
           cmd      = BSON::OrderedHash['saslContinue', 1, 'conversationId', response['conversationId'], 'payload', token]
           response = db.command(cmd, :check_response => false, :socket => socket)
         end

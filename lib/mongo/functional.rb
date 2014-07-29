@@ -18,4 +18,8 @@ require 'mongo/functional/read_preference'
 require 'mongo/functional/write_concern'
 require 'mongo/functional/uri_parser'
 
-require 'mongo/functional/sasl_java' if RUBY_PLATFORM =~ /java/
+if RUBY_PLATFORM =~ /java/
+  require 'mongo/functional/sasl_java'
+else
+  require 'mongo/functional/sasl_c'
+end

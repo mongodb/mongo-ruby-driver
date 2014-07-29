@@ -34,7 +34,7 @@ else
   Rake::ExtensionTask.new('csasl') do |ext|
     ext.name = "csasl"
     ext.ext_dir = "ext/csasl"
-    ext.lib_dir = "lib/csasl"
+    ext.lib_dir = "lib"
   end
 end
 
