@@ -113,6 +113,11 @@ module Mongo
     #
     # @option opts [ Symbol ] :read The read preference for this operation.
     # @option opts [ String ] :comment A comment to include in profiling logs.
+    # @option opts [ true, false ] :explain In MongoDB 2.6 and up, if true, return
+    #  explain information on the processing of the pipeline.
+    # @option opts [ true, false ] :allowDiskUse In MongoDB 2.6 and up, if true,
+    #  enable writing to temporary files.  When true, aggregation stages can write to
+    #  the _tmp subdirectory of the dpPath directory.
     # @option opts [ Hash ] :cursor Return a cursor object instead of an Array.  Takes
     #  an optional batchSize parameter to specify the maximum size, in documents, of
     #  the first batch returned.
@@ -128,11 +133,23 @@ module Mongo
         raise MongoArgumentError, "pipeline operators must be hashes"
       end
 
-      result = db.command({ :aggregate => name,
-                            :pipeline  => pipeline },
-                          opts)
+      command = { :aggregate => name, :pipeline => pipeline }
+      command.merge!({ :explain => opts[:explain] }) if opts[:explain]
+      command.merge!({ :allowDiskUse => opts[:allowDiskUse] }) if opts[:allowDiskUse]
+      command.merge!({ :cursor => opts[:cursor] }) if opts[:cursor]
+      context = get_context(opts)
+      result = database.command(command, { :context => context })
+
+      # @todo - change processing once response objects are done.
       # @todo - check for operation failure here and raise error
-      # @todo - finish coding
+
+      if opts[:cursor]
+        Cursor.new(CollectionView.new(self, {}),
+                   result['result'] || result['cursor'],
+                   context)
+      else
+        result['result']
+      end
     end
 
     # Is this a capped collection?
@@ -243,6 +260,8 @@ module Mongo
     # @option opts [ Block ] :transformer (nil) A block for transforming returned
     #  documents.  This is normally used by object mappers to convert documents to an
     #  instance of a class.
+    # @option opts [ true, false ] :explain (false) When true, explain the processing
+    #  for this query.
     # @option opts [ String ] :comment (nil) A comment to include in profiling logs.
     # @option opts [ true, false ] :compile_regex (true) Whether BSON regex objects
     #  should be compiled into Ruby regexes.  If false, a BSON::Regex object will be
@@ -377,10 +396,15 @@ module Mongo
     #
     # @since 2.0.0
     def parallel_scan(num_cursors, opts={})
-      result = db.command({ :parallelCollectionScan => name,
-                            :numCursors             => num_cursors })
-      # @todo - make this into cursors
-      # @todo - finish...
+      context = get_context(opts)
+      result = database.command({ :parallelCollectionScan => name,
+                                  :numCursors             => num_cursors },
+                                { :context => context })
+      result['cursors'].collect do |cursor_info|
+        Cursor.new(CollectionView.new(self, {}), cursor_info['cursor'], context)
+      end
+      # @todo - change processing once response objects are done, that will make
+      # the logic in Cursor more clean.
     end
 
     # Removes all matching documents from the collection.

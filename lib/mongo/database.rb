@@ -130,6 +130,7 @@ module Mongo
     #
     # @option opts [ Symbol ] :read Read preference for this operation.
     # @option opts [ String ] :db_name (this db) The database against which to run
+    # @option opts [ Context ] :context A context with which to execute the command.
     #  the command.
     #
     # @return [ Hash ] The result of the command execution.
@@ -228,6 +229,7 @@ module Mongo
     #
     # @since 2.0.0
     def get_context(opts)
+      return opts[:context] if opts[:context]
       server_preference(opts).select_servers(cluster.servers).first.context
     end
   end

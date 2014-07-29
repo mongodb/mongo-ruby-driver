@@ -61,7 +61,13 @@ describe Mongo::Collection do
 
   describe '#aggregate' do
 
-    let(:group) { { "$group" => { :_id => "$age", :count => { $sum => 1 }}} }
+    before do
+      12.times do
+        c.insert({ :name => 'Sam', :age => 23 })
+      end
+    end
+
+    let(:group) { { "$group" => { :_id => "$age", :count => { "$sum" => 1 }}} }
     let(:match) { { "$match" => { :count => { "$gt" => 10 }}} }
 
     context 'pipeline is not an array' do
@@ -79,13 +85,13 @@ describe Mongo::Collection do
     end
 
     it 'returns an array' do
-      # expect(c.aggregate([ group, match ])).to be_a(Array)
+      expect(c.aggregate([ group, match ])).to be_a(Array)
     end
 
     context 'the cursor option is passed' do
 
       it 'returns a cursor' do
-        # expect(c.aggregate([ group, match ], {:cursor => {}})).to be_a(Mongo::Cursor)
+        expect(c.aggregate([ group, match ], {:cursor => {}})).to be_a(Mongo::Cursor)
       end
     end
   end
@@ -362,7 +368,6 @@ describe Mongo::Collection do
       end
 
       it 'returns nil when there are no matching documents' do
-        # @todo - server preference on collection view
         expect(c.find_one({ :name => 'Leo' })).to eq(nil)
       end
     end
@@ -409,7 +414,8 @@ describe Mongo::Collection do
       let(:docs) { [{:name => 'Kyle'}, {:name => 'Amalia'}, {:name => 'Luke'}] }
 
       it 'inserts all of the documents' do
-        # @todo find
+        c.insert(docs)
+        expect(c.count).to eq(3)
       end
 
       it 'returns an array of ids' do
@@ -452,6 +458,30 @@ describe Mongo::Collection do
 
         # @todo, what exactly is the intended behaviour here?
       end
+    end
+  end
+
+  describe '#parallel_scan' do
+
+    before do
+      1000.times do |i|
+        c.insert({ :a => i })
+      end
+    end
+
+    it 'returns an array of cursors' do
+      expect(c.parallel_scan(3)).to be_a(Array)
+      expect(c.parallel_scan(3).length).to eq(3)
+      expect(c.parallel_scan(3).first).to be_a(Mongo::Cursor)
+    end
+
+    it 'returns cursors that cover all documents in the collection' do
+      docs = 0
+      c.parallel_scan(3).each do |cursor|
+        # @todo - is a Cursor enumerable?
+        # docs += cursor.count
+      end
+      # expect(docs).to eq(1000)
     end
   end
 
