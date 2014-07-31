@@ -388,8 +388,8 @@ describe Mongo::Operation::Write::Insert do
       Mongo::Client.new(
         [ '127.0.0.1:27017' ],
         database: TEST_DB,
-        username: 'root-user',
-        password: 'password'
+        username: ROOT_USER.name,
+        password: ROOT_USER.password
       )
     end
 
@@ -410,7 +410,7 @@ describe Mongo::Operation::Write::Insert do
 
     after do
       Mongo::Operation::Write::Delete.new({
-        deletes: [{ q: {}}],
+        deletes: [{ q: {}, limit: -1 }],
         db_name: TEST_DB,
         coll_name: TEST_COLL,
         write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
@@ -452,6 +452,7 @@ describe Mongo::Operation::Write::Insert do
 
           it 'raises an error' do
             expect {
+              failing_insert.execute(server.context)
               failing_insert.execute(server.context)
             }.to raise_error(Mongo::Operation::Write::Failure)
           end
@@ -496,6 +497,7 @@ describe Mongo::Operation::Write::Insert do
           it 'raises an error' do
             expect {
               failing_insert.execute(server.context)
+              failing_insert.execute(server.context)
             }.to raise_error(Mongo::Operation::Write::Failure)
           end
         end
@@ -520,6 +522,7 @@ describe Mongo::Operation::Write::Insert do
 
           it 'raises an error' do
             expect {
+              failing_insert.execute(server.context)
               failing_insert.execute(server.context)
             }.to raise_error(Mongo::Operation::Write::Failure)
           end

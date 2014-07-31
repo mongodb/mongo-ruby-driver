@@ -45,7 +45,6 @@ module Mongo
         #
         # @since 2.0.0
         def verify!
-          p documents
           command_failure? ? raise(Write::Failure.new(first)) : self
         end
       end

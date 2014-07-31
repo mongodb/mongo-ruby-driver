@@ -54,7 +54,7 @@ RSpec.configure do |config|
       admin_client.command(
         :createUser => ROOT_USER.name,
         :pwd => ROOT_USER.hashed_password,
-        :roles => [ 'root' ]
+        :roles => [ 'root', 'userAdminAnyDatabase' ]
       )
     rescue Mongo::Operation::Write::Failure => e
       # If 2.6 and higher failed, use the legacy user creation.

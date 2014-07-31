@@ -112,14 +112,7 @@ describe Mongo::Connection do
   describe '#dispatch' do
 
     let!(:connection) do
-      described_class.new(
-        address,
-        5,
-        :username => 'root-user',
-        :password => 'password',
-        :database => TEST_DB,
-        :auth_mech => :mongodb_cr
-      )
+      described_class.new(address, 5, :database => TEST_DB)
     end
 
     let(:documents) do

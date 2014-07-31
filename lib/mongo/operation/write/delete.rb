@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/operation/write/delete/response'
+
 module Mongo
   module Operation
     module Write
@@ -73,7 +75,7 @@ module Mongo
           end
           if context.write_command_enabled?
             op = WriteCommand::Delete.new(spec)
-            op.execute(context)
+            Response.new(op.execute(context)).verify!
           else
             deletes.each do |d|
               context.with_connection do |connection|

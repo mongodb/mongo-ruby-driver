@@ -329,75 +329,87 @@ describe Mongo::Operation::Write::Delete do
 
   describe '#execute' do
 
-    context 'server' do
+    let(:client) do
+      Mongo::Client.new(
+        [ '127.0.0.1:27017' ],
+        database: TEST_DB,
+        username: ROOT_USER.name,
+        password: ROOT_USER.password
+      )
+    end
 
-      context 'when the type is secondary' do
+    let(:server) do
+      client.cluster.servers.first
+    end
 
-        it 'throws an error' do
-          expect{ op.execute(secondary_context) }.to raise_exception
+    before do
+      client.cluster.scan!
+      Mongo::Operation::Write::Insert.new({
+        :documents     => [{ name: 'test' }],
+        :db_name       => TEST_DB,
+        :coll_name     => TEST_COLL,
+        :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
+      }).execute(server.context)
+    end
+
+    after do
+      Mongo::Operation::Write::Delete.new({
+        deletes: [{ q: {}, limit: -1 }],
+        db_name: TEST_DB,
+        coll_name: TEST_COLL,
+        write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+      }).execute(server.context)
+    end
+
+    context 'when deleting a single document' do
+
+      let(:delete) do
+        described_class.new({
+          deletes: documents,
+          db_name: TEST_DB,
+          coll_name: TEST_COLL,
+          write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+        })
+      end
+
+      context 'when the delete succeeds' do
+
+        let(:documents) do
+          [{ q: { name: 'test' }, limit: -1 }]
+        end
+
+        let(:result) do
+          delete.execute(server.context)
+        end
+
+        it 'deletes the documents from the database' do
+          expect(result.n).to eq(1)
         end
       end
 
-      context 'server has wire version >= 2' do
+      context 'when the delete fails' do
 
-        it 'creates a write command delete operation' do
-          expect(Mongo::Operation::Write::WriteCommand::Delete).to receive(:new) do |sp|
-            expect(sp).to eq(spec)
-          end.and_return(delete_write_cmd)
+      end
+    end
 
-          op.execute(primary_context)
-        end
+    context 'when deleting multiple documents' do
 
-        it 'executes the write command delete operation' do
-          allow(Mongo::Operation::Write::WriteCommand::Delete).to receive(:new) do
-            delete_write_cmd
-          end
-          expect(delete_write_cmd).to receive(:execute) { [] }
-          op.execute(primary_context)
-        end
+      context 'when the deletes succeed' do
+
       end
 
-      context 'server has wire version < 2' do
+      context 'when the first delete fails' do
 
-        context 'write concern' do
-
-          context 'w > 0' do
-
-            it 'calls get last error after each message' do
-              expect(connection).to receive(:dispatch) do |messages|
-                expect(messages.length).to eq(2)
-              end
-              op.execute(primary_context_2_4_version)
-            end
-          end
-
-          context 'w == 0' do
-            let(:write_concern) { Mongo::WriteConcern::Mode.get(:w => 0) }
-
-            it 'does not call get last error after each message' do
-              expect(connection).to receive(:dispatch) do |messages|
-                expect(messages.length).to eq(1)
-              end
-              op.execute(primary_context_2_4_version)
-            end
-          end
-        end
-
-        context 'delete messages' do
-          let(:deletes) do
-            [{:q => { :foo => 1 }, :limit => 1},
-             {:q => { :bar => 1 }, :limit => 1}]
-          end
-
-          it 'sends each insert message separately' do
-            allow(Mongo::Operation::Write::WriteCommand::Delete).to receive(:new) do
-              delete_write_cmd
-            end
-            expect(connection).to receive(:dispatch).exactly(deletes.length)
-            op.execute(primary_context_2_4_version)
-          end
-        end
       end
+
+      context 'when the last delete fails' do
+
+      end
+    end
+
+    context 'when the server is a secondary' do
+
+      pending 'it raises an exception'
     end
   end
 end

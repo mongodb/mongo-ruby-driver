@@ -45,7 +45,6 @@ module Mongo
       def initialize(reply, count = nil)
         @reply = reply
         @count = count
-        verify!
       end
 
       # Get the number of documents affected.
