@@ -50,15 +50,29 @@ describe Mongo::Collection do
   describe '#insert' do
 
     let(:client) do
-      Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
+      Mongo::Client.new(
+        [ '127.0.0.1:27017' ],
+        database: TEST_DB,
+        username: ROOT_USER.name,
+        password: ROOT_USER.password
+      )
     end
 
     let(:collection) do
-      client[:users]
+      client[TEST_COLL]
     end
 
     before do
       client.cluster.scan!
+    end
+
+    after do
+      Mongo::Operation::Write::Delete.new({
+        deletes: [{ q: {}, limit: -1 }],
+        db_name: TEST_DB,
+        coll_name: TEST_COLL,
+        write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+      }).execute(client.cluster.servers.first.context)
     end
 
     context 'when providing a single document' do
