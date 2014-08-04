@@ -79,9 +79,10 @@ module Mongo
           else
             deletes.each do |d|
               context.with_connection do |connection|
-                connection.dispatch([ message(d), gle ].compact)
+                Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
               end
             end
+            Response.new(nil, deletes.size)
           end
         end
 

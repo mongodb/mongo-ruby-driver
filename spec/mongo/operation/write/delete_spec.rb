@@ -353,7 +353,7 @@ describe Mongo::Operation::Write::Delete do
     end
 
     after do
-      Mongo::Operation::Write::Delete.new({
+      described_class.new({
         deletes: [{ q: {}, limit: -1 }],
         db_name: TEST_DB,
         coll_name: TEST_COLL,

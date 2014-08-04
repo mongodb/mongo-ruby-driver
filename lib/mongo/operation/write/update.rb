@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/operation/write/update/response'
+
 module Mongo
-
   module Operation
-
     module Write
 
       # A MongoDB update operation.
@@ -72,16 +72,19 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
-          raise Exception, "Must use primary server" unless context.primary?
+          unless context.primary? || context.standalone?
+            raise Exception, "Must use primary server"
+          end
           if context.write_command_enabled?
             op = WriteCommand::Update.new(spec)
-            op.execute(context)
+            Response.new(op.execute(context)).verify!
           else
             updates.each do |d|
               context.with_connection do |connection|
-                connection.dispatch([ message(d), gle ].compact)
+                Response.new(connection.dispatch([ message(d), gle ].compact)).verify
               end
             end
+            Response.new(nil, updates.size)
           end
         end
 

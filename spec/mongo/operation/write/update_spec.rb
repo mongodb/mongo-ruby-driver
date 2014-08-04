@@ -429,81 +429,124 @@ describe Mongo::Operation::Write::Update do
 
   describe '#execute' do
 
-    # context 'server' do
+    let(:client) do
+      Mongo::Client.new(
+        [ '127.0.0.1:27017' ],
+        database: TEST_DB,
+        username: ROOT_USER.name,
+        password: ROOT_USER.password
+      )
+    end
 
-      # context 'when the type is secondary' do
+    let(:server) do
+      client.cluster.servers.first
+    end
 
-        # it 'throws an error' do
-          # expect{ op.execute(secondary_context) }.to raise_exception
-        # end
-      # end
+    before do
+      client.cluster.scan!
+      Mongo::Operation::Write::Insert.new({
+        :documents     => [
+          { name: 'test', field: 'test', other: 'test' },
+          { name: 'testing', field: 'test', other: 'test' }
+        ],
+        :db_name       => TEST_DB,
+        :coll_name     => TEST_COLL,
+        :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
+      }).execute(server.context)
+    end
 
-      # context 'server has wire version >= 2' do
+    after do
+      Mongo::Operation::Write::Delete.new({
+        deletes: [{ q: {}, limit: -1 }],
+        db_name: TEST_DB,
+        coll_name: TEST_COLL,
+        write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+      }).execute(server.context)
+    end
 
-        # it 'creates a write command update operation' do
-          # expect(Mongo::Operation::Write::WriteCommand::Update).to receive(:new) do |sp|
-            # expect(sp).to eq(spec)
-          # end.and_return(update_write_cmd)
+    context 'when updating a single document' do
 
-          # op.execute(primary_context)
-        # end
+      let(:update) do
+        described_class.new({
+          updates: documents,
+          db_name: TEST_DB,
+          coll_name: TEST_COLL,
+          write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+        })
+      end
 
-        # it 'executes the write command update operation' do
-          # allow(Mongo::Operation::Write::WriteCommand::Update).to receive(:new) do
-            # update_write_cmd
-          # end
-          # expect(update_write_cmd).to receive(:execute) { [] }
-          # op.execute(primary_context)
-        # end
-      # end
+      context 'when the update passes' do
 
-      # context 'server has wire version < 2' do
+        let(:documents) do
+          [{ q: { name: 'test' }, u: { '$set' => { field: 'blah' }}, limit: 1 }]
+        end
 
-        # context 'write concern' do
+        let(:result) do
+          update.execute(server.context)
+        end
 
-          # context 'w > 0' do
+        it 'updates the document' do
+          expect(result.n).to eq(1)
+        end
+      end
 
-            # it 'calls get last error after each message' do
-              # expect(connection).to receive(:dispatch) do |messages|
-                # expect(messages.length).to eq(2)
-              # end
-              # op.execute(primary_context_2_4_version)
-            # end
-          # end
+      context 'when the update fails' do
 
-          # context 'w == 0' do
-            # let(:write_concern) { Mongo::WriteConcern::Mode.get(:w => 0) }
+        let(:documents) do
+          [{ q: { name: 'test' }, u: { '$st' => { field: 'blah' }}}]
+        end
 
-            # it 'does not call get last error after each message' do
-              # expect(connection).to receive(:dispatch) do |messages|
-                # expect(messages.length).to eq(1)
-              # end
-              # op.execute(primary_context_2_4_version)
-            # end
-          # end
-        # end
+        it 'raises an exception' do
+          expect {
+            update.execute(server.context)
+          }.to raise_error(Mongo::Operation::Write::Failure)
+        end
+      end
+    end
 
-        # context 'update messages' do
-          # let(:updates) do
-            # [{ :q => { :foo => 1 },
-               # :u => { :$set => { :bar => 1 } },
-               # :multi => true,
-               # :upsert => false },
-             # { :q => { :foo => 2 },
-               # :u => { :$set => { :bar => 2 } },
-               # :multi => true,
-               # :upsert => false }]
-          # end
+    context 'when updating multiple documents' do
 
-          # it 'sends each update message separately' do
-            # allow(Mongo::Operation::Write::WriteCommand::Update).to receive(:new) do
-              # update_write_cmd
-            # end
-            # expect(connection).to receive(:dispatch).exactly(updates.length)
-            # op.execute(primary_context_2_4_version)
-          # end
-        # end
-      # end
-    # end
+      let(:update) do
+        described_class.new({
+          updates: documents,
+          db_name: TEST_DB,
+          coll_name: TEST_COLL,
+          write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+        })
+      end
+
+      context 'when the updates succeed' do
+
+        let(:documents) do
+          [{ q: { field: 'test' }, u: { '$set' => { other: 'blah' }}, multi: true }]
+        end
+
+        let(:result) do
+          update.execute(server.context)
+        end
+
+        it 'updates the documents' do
+          expect(result.n).to eq(2)
+        end
+      end
+
+      context 'when an update fails' do
+
+        let(:documents) do
+          [{ q: { name: 'test' }, u: { '$st' => { field: 'blah' }}, multi: true}]
+        end
+
+        it 'raises an exception' do
+          expect {
+            update.execute(server.context)
+          }.to raise_error(Mongo::Operation::Write::Failure)
+        end
+      end
+    end
+
+    context 'when the server is a secondary' do
+
+      pending 'it raises an exception'
+    end
   end
 end
