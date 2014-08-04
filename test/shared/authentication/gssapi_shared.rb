@@ -38,6 +38,7 @@ module GSSAPITests
   MONGODB_GSSAPI_REALM   = ENV['MONGODB_GSSAPI_REALM']
   MONGODB_GSSAPI_KDC     = ENV['MONGODB_GSSAPI_KDC']
   MONGODB_GSSAPI_PORT    = ENV['MONGODB_GSSAPI_PORT'] || '27017'
+  MONGODB_GSSAPI_DB      = ENV['MONGODB_GSSAPI_DB'] || TEST_DB
   JAAS_LOGIN_CONFIG_FILE = ENV['JAAS_LOGIN_CONFIG_FILE'] # only JRuby
 
   if ENV.key?('MONGODB_GSSAPI_HOST') && ENV.key?('MONGODB_GSSAPI_USER') &&
@@ -49,7 +50,7 @@ module GSSAPITests
       end
 
       set_system_properties
-      db = client['kerberos']
+      db = client[MONGODB_GSSAPI_DB]
       db.authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI')
       assert db.command(:dbstats => 1)
 
@@ -69,7 +70,7 @@ module GSSAPITests
       uri = "mongodb://#{username}@#{ENV['MONGODB_GSSAPI_HOST']}:#{ENV['MONGODB_GSSAPI_PORT']}/?" +
          "authMechanism=GSSAPI"
       client = @client.class.from_uri(uri)
-      assert client['kerberos'].command(:dbstats => 1)
+      assert client[MONGODB_GSSAPI_DB].command(:dbstats => 1)
     end
 
     def test_wrong_service_name_fails
@@ -82,11 +83,11 @@ module GSSAPITests
       set_system_properties
       if RUBY_PLATFORM =~ /java/
         assert_raise_error Java::OrgMongodbSasl::MongoSecurityException do
-          client['kerberos'].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
+          client[MONGODB_GSSAPI_DB].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
         end
       else
         assert_raise_error Mongo::AuthenticationError do
-          client['kerberos'].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
+          client[MONGODB_GSSAPI_DB].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
         end
       end
     end
@@ -101,11 +102,11 @@ module GSSAPITests
       client = @client.class.from_uri(uri)
       if RUBY_PLATFORM =~ /java/
         assert_raise_error Java::OrgMongodbSasl::MongoSecurityException do
-          client['kerberos'].command(:dbstats => 1)
+          client[MONGODB_GSSAPI_DB].command(:dbstats => 1)
         end
       else
         assert_raise_error Mongo::AuthenticationError do
-          client['kerberos'].command(:dbstats => 1)
+          client[MONGODB_GSSAPI_DB].command(:dbstats => 1)
         end
       end
     end
@@ -119,7 +120,7 @@ module GSSAPITests
         opts[:gssapi_service_name] == extra_opts[:gssapi_service_name]
         opts[:canonicalize_host_name] == extra_opts[:canonicalize_host_name]
       end.returns('ok' => true )
-      client['kerberos'].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
+      client[MONGODB_GSSAPI_DB].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
     end
 
     def test_extra_opts_uri
@@ -137,7 +138,7 @@ module GSSAPITests
          "authMechanism=GSSAPI&gssapiServiceName=example&canonicalizeHostName=true"
       client = @client.class.from_uri(uri)
       client.expects(:receive_message).returns([[{ 'ok' => 1 }], 1, 1])
-      client['kerberos'].command(:dbstats => 1)
+      client[MONGODB_GSSAPI_DB].command(:dbstats => 1)
     end
 
     # In order to run this test, you must set the following environment variable:
@@ -150,7 +151,7 @@ module GSSAPITests
         set_system_properties
         client = Mongo::MongoClient.new(ENV['MONGODB_GSSAPI_HOST_IP'], MONGODB_GSSAPI_PORT)
 
-        db = client['kerberos']
+        db = client[MONGODB_GSSAPI_DB]
         db.authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
         assert db.command(:dbstats => 1)
       end
@@ -161,7 +162,7 @@ module GSSAPITests
       client = Mongo::MongoClient.new(MONGODB_GSSAPI_HOST)
 
       assert_raise Mongo::MongoArgumentError do
-        client['kerberos'].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
+        client[MONGODB_GSSAPI_DB].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
       end
     end
 
