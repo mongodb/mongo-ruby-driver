@@ -36,6 +36,7 @@ module Mongo
         response      = db.command(cmd, :check_response => false, :socket => socket)
 
         until response['done'] do
+          break unless Support.ok?(response)
           token    = BSON::Binary.new(authenticator.evaluate_challenge(response['payload'].to_s))
           cmd      = BSON::OrderedHash['saslContinue', 1, 'conversationId', response['conversationId'], 'payload', token]
           response = db.command(cmd, :check_response => false, :socket => socket)
