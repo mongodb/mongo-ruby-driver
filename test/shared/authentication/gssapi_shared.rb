@@ -81,14 +81,8 @@ module GSSAPITests
       end
 
       set_system_properties
-      if RUBY_PLATFORM =~ /java/
-        assert_raise_error Java::OrgMongodbSasl::MongoSecurityException do
-          client[MONGODB_GSSAPI_DB].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
-        end
-      else
-        assert_raise_error Mongo::AuthenticationError do
-          client[MONGODB_GSSAPI_DB].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
-        end
+      assert_raise_error Mongo::AuthenticationError do
+        client[MONGODB_GSSAPI_DB].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
       end
     end
 
@@ -100,14 +94,8 @@ module GSSAPITests
       uri = "mongodb://#{username}@#{ENV['MONGODB_GSSAPI_HOST']}:#{ENV['MONGODB_GSSAPI_PORT']}/?" +
          "authMechanism=GSSAPI&gssapiServiceName=example"
       client = @client.class.from_uri(uri)
-      if RUBY_PLATFORM =~ /java/
-        assert_raise_error Java::OrgMongodbSasl::MongoSecurityException do
-          client[MONGODB_GSSAPI_DB].command(:dbstats => 1)
-        end
-      else
-        assert_raise_error Mongo::AuthenticationError do
-          client[MONGODB_GSSAPI_DB].command(:dbstats => 1)
-        end
+      assert_raise_error Mongo::AuthenticationError do
+        client[MONGODB_GSSAPI_DB].command(:dbstats => 1)
       end
     end
 

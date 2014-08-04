@@ -30,18 +30,22 @@ module Mongo
         servicename   = opts[:gssapi_service_name] || 'mongodb'
         canonicalize  = opts[:canonicalize_host_name] ? opts[:canonicalize_host_name] : false
 
-        authenticator = org.mongodb.sasl.GSSAPIAuthenticator.new(JRuby.runtime, username, hostname, servicename, canonicalize)
-        token         = BSON::Binary.new(authenticator.initialize_challenge)
-        cmd           = BSON::OrderedHash['saslStart', 1, 'mechanism', 'GSSAPI', 'payload', token, 'autoAuthorize', 1]
-        response      = db.command(cmd, :check_response => false, :socket => socket)
+        begin
+          authenticator = org.mongodb.sasl.GSSAPIAuthenticator.new(JRuby.runtime, username, hostname, servicename, canonicalize)
+          token         = BSON::Binary.new(authenticator.initialize_challenge)
+          cmd           = BSON::OrderedHash['saslStart', 1, 'mechanism', 'GSSAPI', 'payload', token, 'autoAuthorize', 1]
+          response      = db.command(cmd, :check_response => false, :socket => socket)
 
-        until response['done'] do
-          break unless Support.ok?(response)
-          token    = BSON::Binary.new(authenticator.evaluate_challenge(response['payload'].to_s))
-          cmd      = BSON::OrderedHash['saslContinue', 1, 'conversationId', response['conversationId'], 'payload', token]
-          response = db.command(cmd, :check_response => false, :socket => socket)
+          until response['done'] do
+            break unless Support.ok?(response)
+            token    = BSON::Binary.new(authenticator.evaluate_challenge(response['payload'].to_s))
+            cmd      = BSON::OrderedHash['saslContinue', 1, 'conversationId', response['conversationId'], 'payload', token]
+            response = db.command(cmd, :check_response => false, :socket => socket)
+          end
+          response
+        rescue Java::OrgMongodbSasl::MongoSecurityException
+          return {}
         end
-        response
       end
     end
 
