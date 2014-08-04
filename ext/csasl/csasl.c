@@ -1,5 +1,4 @@
 #include <ruby.h>
-
 #include <sasl/sasl.h>
 #include <sasl/saslutil.h>
 
@@ -19,30 +18,29 @@ static VALUE a_init(VALUE self, VALUE user_name, VALUE host_name, VALUE service_
 {
   if (sasl_client_init(NULL) != SASL_OK) {
     rb_iv_set(self, "@valid", Qfalse);
-    return 0;
   }
   else {
     rb_iv_set(self, "@valid", Qtrue);
     rb_iv_set(self, "@user_name", user_name);
     rb_iv_set(self, "@host_name", host_name);
     rb_iv_set(self, "@service_name", service_name);
-    //rb_iv_set(self, "@canonicalize_host_name", canonicalize_host_name);
+    rb_iv_set(self, "@canonicalize_host_name", canonicalize_host_name);
   }
 
   return self;
 }
 
 static VALUE valid(VALUE self) {
-    return rb_iv_get(self, "@valid");
+  return rb_iv_get(self, "@valid");
 }
 
-int is_sasl_failure(int result, char **error_message)
+int is_sasl_failure(int result)
 {
-	if (result < 0) {
-		return 1;
-	}
+  if (result < 0) {
+    return 1;
+  }
 
-	return 0;
+  return 0;
 }
 
 static int sasl_interact(VALUE self, int id, const char **result, unsigned *len) {
@@ -64,84 +62,74 @@ static int sasl_interact(VALUE self, int id, const char **result, unsigned *len)
 
 static VALUE initialize_challenge(VALUE self) {
   int result;
-	char **error_message;
   char encoded_payload[4096];
-	const char *raw_payload;
-	unsigned int raw_payload_len, encoded_payload_len;
-	char *mechanism_list = "GSSAPI";
-	const char *mechanism_selected = "GSSAPI";
-	sasl_callback_t client_interact [] = {
+  const char *raw_payload;
+  unsigned int raw_payload_len, encoded_payload_len;
+  char *mechanism_list = "GSSAPI";
+  const char *mechanism_selected = "GSSAPI";
+  sasl_conn_t *conn;
+  sasl_callback_t client_interact [] = {
     { SASL_CB_AUTHNAME, sasl_interact, (void*)self },
     { SASL_CB_USER, sasl_interact, (void*)self },
-    //{ SASL_CB_PASS, sasl_interact, self },
     { SASL_CB_LIST_END, NULL, NULL }
   };
-  sasl_conn_t *conn;
 
-	const char *servicename = RSTRING_PTR(rb_iv_get(self, "@service_name"));
-	const char *hostname = RSTRING_PTR(rb_iv_get(self, "@host_name"));
+  const char *servicename = RSTRING_PTR(rb_iv_get(self, "@service_name"));
+  const char *hostname = RSTRING_PTR(rb_iv_get(self, "@host_name"));
 
-	result = sasl_client_new(servicename, hostname, NULL, NULL, client_interact, 0, &conn);
+  result = sasl_client_new(servicename, hostname, NULL, NULL, client_interact, 0, &conn);
 
-	if (result != SASL_OK) {
-    	sasl_dispose(&conn);
-    //	*error_message = strdup("Could not initialize a client exchange (SASL) to MongoDB");
-        return Qfalse;
-    }
+  if (result != SASL_OK) {
+    sasl_dispose(&conn);
+    return Qfalse;
+  }
 
   VALUE context = Data_Wrap_Struct(rb_cObject, NULL, mongo_sasl_conn_free, conn);
   rb_iv_set(self, "@context", context);
-  
 
   result = sasl_client_start(conn, mechanism_list, NULL, &raw_payload, &raw_payload_len, &mechanism_selected);
-	if (is_sasl_failure(result, error_message)) {
-	//	*error_message = strdup("Could not start sasl client");
-		return Qfalse;
-	}
+  if (is_sasl_failure(result)) {
+    return Qfalse;
+  }
 
-	if (result != SASL_CONTINUE) {
-	//	*error_message = strdup("Could not negotiate SASL mechanism");
-		return Qfalse;
-	}
+  if (result != SASL_CONTINUE) {
+    return Qfalse;
+  }
 
   result = sasl_encode64(raw_payload, raw_payload_len, encoded_payload, sizeof(encoded_payload), &encoded_payload_len);
-
   encoded_payload[encoded_payload_len] = 0;
   return rb_str_new(encoded_payload, encoded_payload_len);
 }
 
 static VALUE evaluate_challenge(VALUE self, VALUE rb_payload) {
+  char base_payload[4096], payload[4096];
+  const char *step_payload, *out;
+  unsigned int step_payload_len, payload_len, base_payload_len, outlen;
+  int result;
+  sasl_conn_t *conn = mongo_sasl_context(self);
 
-    char base_payload[4096], payload[4096];
-    const char *step_payload, *out;
-    unsigned int step_payload_len, payload_len, base_payload_len, outlen;
-    char **error_message;
-    int result;
-    sasl_conn_t *conn = mongo_sasl_context(self);
+  StringValue(rb_payload);
+  step_payload = RSTRING_PTR(rb_payload);
+  step_payload_len = RSTRING_LEN(rb_payload);
 
-    StringValue(rb_payload);
-    step_payload = RSTRING_PTR(rb_payload);
-    step_payload_len = RSTRING_LEN(rb_payload);
+  result = sasl_decode64(step_payload, step_payload_len, base_payload, sizeof(base_payload), &base_payload_len);
+  if (is_sasl_failure(result)) {
+    return Qfalse;
+  }
 
-    result = sasl_decode64(step_payload, step_payload_len, base_payload, sizeof(base_payload), &base_payload_len);
-    if (is_sasl_failure(result, error_message)) {
-      return Qfalse;
-    }
+  result = sasl_client_step(conn, base_payload, base_payload_len, NULL, &out, &outlen);
+  if (is_sasl_failure(result)) {
+  	return Qfalse;
+  }
 
-    result = sasl_client_step(conn, base_payload, base_payload_len, NULL, &out, &outlen);
-    if (is_sasl_failure(result, error_message)) {
-    	return Qfalse;
-    }
+  result = sasl_encode64(out, outlen, payload, sizeof(payload), &payload_len);
+  if (is_sasl_failure(result)) {
+    return Qfalse;
+  }
 
-    result = sasl_encode64(out, outlen, payload, sizeof(payload), &payload_len);
-    if (is_sasl_failure(result, error_message)) {
-      return Qfalse;
-    }
-
-    return rb_str_new(payload, payload_len);
+  return rb_str_new(payload, payload_len);
 }
 
-// define the class
 VALUE c_GSSAPI_authenticator;
 
 void Init_csasl() {
