@@ -18,7 +18,7 @@ group :deploy do
 end
 
 group :testing do
-  gem 'test-unit'
+  gem 'test-unit', '~>2.0'
   gem 'mocha', ">=0.13.0", :require => 'mocha/setup'
   gem 'shoulda', ">=3.3.2"
   if RUBY_VERSION >= '1.9.2'
@@ -33,8 +33,9 @@ group :testing do
 end
 
 group :development do
-  gem 'pry-rescue'
-  gem 'pry-nav'
+  gem 'pry', '~>0.9.0'
+  gem 'pry-rescue', '~>1.4.0'
+  gem 'pry-nav', '~>0.2.0'
 end
 
 platforms :jruby do
