@@ -427,12 +427,19 @@ describe Mongo::Operation::Write::Delete do
         end
       end
 
-      context 'when the first delete fails' do
+      context 'when a delete fails' do
 
-      end
+        let(:documents) do
+          [{ q: { field: 'tester' }, limit: -1 }]
+        end
 
-      context 'when the last delete fails' do
+        let(:result) do
+          delete.execute(server.context)
+        end
 
+        it 'does not delete any documents' do
+          expect(result.n).to eq(0)
+        end
       end
     end
 
