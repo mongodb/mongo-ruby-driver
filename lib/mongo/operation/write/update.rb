@@ -81,7 +81,7 @@ module Mongo
           else
             updates.each do |d|
               context.with_connection do |connection|
-                Response.new(connection.dispatch([ message(d), gle ].compact)).verify
+                Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
               end
             end
             Response.new(nil, updates.size)
