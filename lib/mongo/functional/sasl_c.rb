@@ -22,15 +22,17 @@ module Mongo
               "The Sasl GSSAPI authentication mechanism cannot be used because " +
                   "its extension did not load properly" unless defined?(Mongo::Sasl::GSSAPIAuthenticator)
 
-        db            = client.db('$external')
-        hostname      = socket.pool.host
-        servicename   = opts[:gssapi_service_name] || 'mongodb'
-        canonicalize  = opts[:canonicalize_host_name] ? opts[:canonicalize_host_name] : false
-
+        db           = client.db('$external')
+        hostname     = socket.pool.host
+        servicename  = opts[:gssapi_service_name] || 'mongodb'
+        canonicalize = opts[:canonicalize_host_name] ? opts[:canonicalize_host_name] : false
         authenticator = Mongo::Sasl::GSSAPIAuthenticator.new(username, hostname, servicename, canonicalize)
-        token         = authenticator.initialize_challenge
-        cmd           = BSON::OrderedHash['saslStart', 1, 'mechanism', 'GSSAPI', 'payload', token, 'autoAuthorize', 1]
-        response      = db.command(cmd, :check_response => false, :socket => socket)
+
+        return {} unless authenticator.valid?
+
+        token    = authenticator.initialize_challenge
+        cmd      = BSON::OrderedHash['saslStart', 1, 'mechanism', 'GSSAPI', 'payload', token, 'autoAuthorize', 1]
+        response = db.command(cmd, :check_response => false, :socket => socket)
 
         until response['done'] do
           break unless Support.ok?(response)
