@@ -345,7 +345,7 @@ describe Mongo::Operation::Write::Delete do
     before do
       client.cluster.scan!
       Mongo::Operation::Write::Insert.new({
-        :documents     => [{ name: 'test' }],
+        :documents     => [{ name: 'test', field: 'test' }, { name: 'testing', field: 'test' }],
         :db_name       => TEST_DB,
         :coll_name     => TEST_COLL,
         :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
@@ -375,7 +375,7 @@ describe Mongo::Operation::Write::Delete do
       context 'when the delete succeeds' do
 
         let(:documents) do
-          [{ q: { name: 'test' }, limit: -1 }]
+          [{ q: { field: 'test' }, limit: 1 }]
         end
 
         let(:result) do
@@ -389,13 +389,42 @@ describe Mongo::Operation::Write::Delete do
 
       context 'when the delete fails' do
 
+        let(:documents) do
+          [{ q: { field: 'test' }}]
+        end
+
+        it 'raises an exception' do
+          expect {
+            delete.execute(server.context)
+          }.to raise_error(Mongo::Operation::Write::Failure)
+        end
       end
     end
 
     context 'when deleting multiple documents' do
 
+      let(:delete) do
+        described_class.new({
+          deletes: documents,
+          db_name: TEST_DB,
+          coll_name: TEST_COLL,
+          write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+        })
+      end
+
       context 'when the deletes succeed' do
 
+        let(:documents) do
+          [{ q: { field: 'test' }, limit: -1 }]
+        end
+
+        let(:result) do
+          delete.execute(server.context)
+        end
+
+        it 'deletes the documents from the database' do
+          expect(result.n).to eq(2)
+        end
       end
 
       context 'when the first delete fails' do
