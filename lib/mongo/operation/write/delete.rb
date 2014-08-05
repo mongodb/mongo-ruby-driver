@@ -74,8 +74,11 @@ module Mongo
             raise Exception, "Must use primary server"
           end
           if context.write_command_enabled?
-            op = Command::Delete.new(spec)
-            Response.new(op.execute(context)).verify!
+            batches = spec[slicable_key].each_slice(context.max_write_batch_size).to_a
+            batches.each do |dels|
+              op = Command::Delete.new(spec.merge(:deletes => dels))
+              Response.new(op.execute(context)).verify!
+            end
           else
             Response.new(nil, deletes.reduce(0) do |count, d|
               context.with_connection do |connection|
