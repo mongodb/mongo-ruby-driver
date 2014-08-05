@@ -22,4 +22,11 @@ if RUBY_PLATFORM =~ /java/
   require 'mongo/functional/sasl_java'
 else
   require 'mongo/functional/sasl_c'
+  begin
+    require "csasl/csasl"
+    Mongo::HAS_SASL = true
+  rescue LoadError
+    Mongo::HAS_SASL = false
+  end
 end
+

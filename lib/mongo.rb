@@ -95,12 +95,3 @@ require 'mongo/mongo_client'
 require 'mongo/mongo_replica_set_client'
 require 'mongo/mongo_sharded_client'
 require 'mongo/legacy'
-
-# Load the Sasl c extension if not on JRuby
-unless RUBY_PLATFORM =~ /java/
-  begin
-    require "csasl"
-  rescue LoadError
-    $stderr.puts("Sasl GSSAPI authentication is not available.")
-  end
-end
