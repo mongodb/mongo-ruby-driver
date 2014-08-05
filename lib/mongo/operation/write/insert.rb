@@ -65,12 +65,29 @@ module Mongo
         # @return [ Mongo::Response ] The operation response, if there is one.
         #
         # @since 2.0.0
+
         def execute(context)
+          unless context.primary? || context.standalone?
+            raise Exception, "Must use primary server"
+          end
           if context.write_command_enabled?
-            op = Command::Insert.new(spec)
-            Response.new(op.execute(context)).verify!
+            batches(context).collect do |batch|
+              op = Command::Insert.new(spec.merge(:documents => batch))
+              Response.new(op.execute(context)).verify!
+            end
           else
-            documents.each do |d|
+            # Old server, bulk, GLE.
+            # Each doc needs to be sent separately.
+            if bulk? && write_concern.get_last_error
+              documents.each do |d|
+                context.with_connection do |connection|
+                  # @todo: return list of responses
+                  Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
+                end
+              end
+              # Old server, not bulk
+              # docs can be sent together
+            else
               context.with_connection do |connection|
                 Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
               end
@@ -97,6 +114,15 @@ module Mongo
         end
 
         private
+
+        # Whether this is a bulk operation.
+        #
+        # @return [ true, false ] Whether this is a bulk operation.
+        #
+        # @since 2.0.0
+        def bulk?
+          !!opts[:bulk]
+        end
 
         # The spec array element to split up when slicing this operation.
         # This is used by the Slicable module.
@@ -126,9 +152,10 @@ module Mongo
         # @return [ Mongo::Protocol::Insert ] Wire protocol message.
         #
         # @since 2.0.0
-        def message(document)
-          insert_spec = options[:continue_on_error] == 0 ? {} : { :flags => [:continue_on_error] }
-          Protocol::Insert.new(db_name, coll_name, [ document ], insert_spec)
+        def message(insert_spec = nil)
+          doc_or_docs = insert_spec ? [ insert_spec[:document] ] : documents
+          insert_spec = insert_spec[:continue_on_error] == 0 ? {} : { :flags => [:continue_on_error] }
+          Protocol::Insert.new(db_name, coll_name, doc_or_docs, insert_spec)
         end
       end
     end

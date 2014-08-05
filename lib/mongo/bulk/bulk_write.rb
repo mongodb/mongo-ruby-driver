@@ -59,7 +59,9 @@ module Mongo
 
         spec = { :documents => [ doc ],
                  :db_name => db_name,
-                 :coll_name => coll_name }
+                 :coll_name => coll_name,
+                 :opts => { :bulk => true }
+               }
 
         op = Mongo::Operation::Write::Insert.new(spec)
         current_batch << op
