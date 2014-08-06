@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2013 MongoDB, Inc.
+# Copyright (C) 2009-2014 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ module Mongo
           end
           response
         rescue Java::OrgMongodbSasl::MongoSecurityException
-          return {}
+          return { }
         end
       end
     end

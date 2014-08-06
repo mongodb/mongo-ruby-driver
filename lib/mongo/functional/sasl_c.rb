@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2013 MongoDB, Inc.
+# Copyright (C) 2009-2014 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ module Mongo
         canonicalize = opts[:canonicalize_host_name] ? opts[:canonicalize_host_name] : false
         authenticator = Mongo::Sasl::GSSAPIAuthenticator.new(username, hostname, servicename, canonicalize)
 
-        return {} unless authenticator.valid?
+        return { } unless authenticator.valid?
 
         token    = authenticator.initialize_challenge
         cmd      = BSON::OrderedHash['saslStart', 1, 'mechanism', 'GSSAPI', 'payload', token, 'autoAuthorize', 1]

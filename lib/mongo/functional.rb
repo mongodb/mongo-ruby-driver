@@ -18,15 +18,14 @@ require 'mongo/functional/read_preference'
 require 'mongo/functional/write_concern'
 require 'mongo/functional/uri_parser'
 
-if RUBY_PLATFORM =~ /java/
-  require 'mongo/functional/sasl_java'
-else
-  require 'mongo/functional/sasl_c'
-  begin
+begin
+  if RUBY_PLATFORM =~ /java/
+    require 'mongo/functional/sasl_java'
+  else
+    require 'mongo/functional/sasl_c'
     require "csasl/csasl"
-    Mongo::HAS_SASL = true
-  rescue LoadError
-    Mongo::HAS_SASL = false
   end
+  Mongo::HAS_SASL = true
+rescue LoadError
+  Mongo::HAS_SASL = false
 end
-
