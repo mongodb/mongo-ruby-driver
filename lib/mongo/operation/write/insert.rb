@@ -37,6 +37,7 @@ module Mongo
         #                       :db_name       => 'test',
         #                       :coll_name     => 'test_coll',
         #                       :write_concern => write_concern
+        #                       :opts          => { :bulk => true }
         #                     })
         #
         # @param [ Hash ] spec The specifications for the insert.
@@ -79,10 +80,9 @@ module Mongo
             # Old server, bulk, GLE.
             # Each doc needs to be sent separately.
             if bulk? && write_concern.get_last_error
-              documents.each do |d|
+              documents.collect do |d|
                 context.with_connection do |connection|
-                  # @todo: return list of responses
-                  Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
+                  Response.new(connection.dispatch([ message(d), gle ].compact))
                 end
               end
               # Old server, not bulk
@@ -92,7 +92,7 @@ module Mongo
                 Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
               end
             end
-            Response.new(nil, documents.size)
+            [ Response.new(nil, documents.size) ]
           end
         end
 

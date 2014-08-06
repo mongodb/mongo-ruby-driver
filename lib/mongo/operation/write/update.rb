@@ -76,15 +76,20 @@ module Mongo
             raise Exception, "Must use primary server"
           end
           if context.write_command_enabled?
-            op = Command::Update.new(spec)
-            Response.new(op.execute(context)).verify!
+            batches(context).collect do |batch|
+              op = Command::Update.new(spec.merge(:updates => batch))
+              Response.new(op.execute(context)).verify!
+            end
           else
-            Response.new(nil, updates.reduce(0) do |count, d|
-              context.with_connection do |connection|
-                response = Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
-                count + response.n
-              end
-            end)
+            updates.collect do |d|
+              Response.new(nil, updates.reduce(0) do |count, d|
+                context.with_connection do |connection|
+                  response = Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
+                  count + response.n
+                end
+              end)
+            end
+            [ Response.new(nil, updates.size) ]
           end
         end
 

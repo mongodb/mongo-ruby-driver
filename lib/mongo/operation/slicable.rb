@@ -60,6 +60,20 @@ module Mongo
       def set_order(order)
         spec[slicable_key].each { |doc| doc[:ord] = order }
       end
+
+      private
+
+      # Split up the list of operations at slicable_key into max_write_batch_size
+      # batches.
+      # maxWriteBatchSize is a value defined by the server that limits the number of
+      # writes in a write command.
+      #
+      # @param [ Mongo::Server::Context ] context The context for these ops.
+      #
+      # @since 2.0.0
+      def batches(context)
+        spec[slicable_key].each_slice(context.max_write_batch_size).to_a
+      end
     end
   end
 end

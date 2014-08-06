@@ -80,12 +80,15 @@ module Mongo
               Response.new(op.execute(context)).verify!
             end
           else
-            Response.new(nil, deletes.reduce(0) do |count, d|
-              context.with_connection do |connection|
-                response = Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
-                count + response.n
-              end
-            end)
+            deletes.collect do |d|
+              Response.new(nil, deletes.reduce(0) do |count, d|
+                context.with_connection do |connection|
+                  response = Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
+                  count + response.n
+                end
+              end)
+            end
+            [ Response.new(nil, deletes.size) ]
           end
         end
 
