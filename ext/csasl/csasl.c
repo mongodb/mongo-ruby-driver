@@ -1,3 +1,17 @@
+// Copyright (C) 2009-2014 MongoDB, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//   http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #include <ruby.h>
 #include <sasl/sasl.h>
 #include <sasl/saslutil.h>
@@ -16,15 +30,16 @@ static sasl_conn_t* mongo_sasl_context(VALUE self) {
 
 static VALUE a_init(VALUE self, VALUE user_name, VALUE host_name, VALUE service_name, VALUE canonicalize_host_name)
 {
-  if (sasl_client_init(NULL) != SASL_OK) {
-    rb_iv_set(self, "@valid", Qfalse);
-  }
-  else {
+  if (sasl_client_init(NULL) == SASL_OK) {
     rb_iv_set(self, "@valid", Qtrue);
     rb_iv_set(self, "@user_name", user_name);
     rb_iv_set(self, "@host_name", host_name);
     rb_iv_set(self, "@service_name", service_name);
     rb_iv_set(self, "@canonicalize_host_name", canonicalize_host_name);
+  }
+
+  else {
+    rb_iv_set(self, "@valid", Qfalse);
   }
 
   return self;
@@ -69,8 +84,8 @@ static VALUE initialize_challenge(VALUE self) {
   const char *mechanism_selected = "GSSAPI";
   sasl_conn_t *conn;
   sasl_callback_t client_interact [] = {
-    { SASL_CB_AUTHNAME, sasl_interact, (void*)self },
-    { SASL_CB_USER, sasl_interact, (void*)self },
+    { SASL_CB_AUTHNAME, (int (*)(void))sasl_interact, (void*)self },
+    { SASL_CB_USER, (int (*)(void))sasl_interact, (void*)self },
     { SASL_CB_LIST_END, NULL, NULL }
   };
 
@@ -97,6 +112,10 @@ static VALUE initialize_challenge(VALUE self) {
   }
 
   result = sasl_encode64(raw_payload, raw_payload_len, encoded_payload, sizeof(encoded_payload), &encoded_payload_len);
+  if (is_sasl_failure(result)) {
+    return Qfalse;
+  }
+
   encoded_payload[encoded_payload_len] = 0;
   return rb_str_new(encoded_payload, encoded_payload_len);
 }
