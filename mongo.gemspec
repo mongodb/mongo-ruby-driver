@@ -26,7 +26,6 @@ Gem::Specification.new do |s|
     s.platform = 'java'
     s.files    << 'ext/jsasl/target/jsasl.jar'
   else
-    s.platform   = Gem::Platform::RUBY
     s.files      += Dir.glob('ext/**/*.{c,h,rb}')
     s.extensions = ['ext/csasl/extconf.rb']
   end
