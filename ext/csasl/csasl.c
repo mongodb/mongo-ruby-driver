@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2014 MongoDB, Inc.
+// Copyright (C) 2014 MongoDB, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 static void mongo_sasl_conn_free(void* data) {
   sasl_conn_t *conn = (sasl_conn_t*) data;
-  if(conn) sasl_dispose(&conn);
+  if(conn) sasl_done();
 }
 
 static sasl_conn_t* mongo_sasl_context(VALUE self) {
