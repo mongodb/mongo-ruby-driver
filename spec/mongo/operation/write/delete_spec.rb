@@ -390,7 +390,7 @@ describe Mongo::Operation::Write::Delete do
       context 'when the delete fails' do
 
         let(:documents) do
-          [{ q: { field: 'test' }}]
+          [{ que: { field: 'test' }}]
         end
 
         it 'raises an exception' do

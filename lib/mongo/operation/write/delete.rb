@@ -144,7 +144,7 @@ module Mongo
         # @since 2.0.0
         def message(delete_spec)
           selector    = delete_spec[:q]
-          delete_opts = delete_spec[:limit] == 0 ? { } : { :flags => [:single_remove] }
+          delete_opts = (delete_spec[:limit] || 0) <= 0 ? {} : { :flags => [:single_remove] }
           Protocol::Delete.new(db_name, coll_name, selector, delete_opts)
         end
       end
