@@ -70,7 +70,7 @@ module Mongo
       #
       # @since 2.0.0
       def ok?
-        first[OK] == 1
+        first[OK] == 1 || reply.nil?
       end
 
       private
