@@ -79,12 +79,12 @@ module Mongo
             op = WriteCommand::Update.new(spec)
             Response.new(op.execute(context)).verify!
           else
-            updates.each do |d|
+            Response.new(nil, updates.reduce(0) do |count, d|
               context.with_connection do |connection|
-                Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
+                response = Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
+                count + response.n
               end
-            end
-            Response.new(nil, updates.size)
+            end)
           end
         end
 

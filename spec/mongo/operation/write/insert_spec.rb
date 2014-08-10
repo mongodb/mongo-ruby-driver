@@ -397,15 +397,21 @@ describe Mongo::Operation::Write::Insert do
       client.cluster.servers.first
     end
 
+    let(:index) do
+      { name: "#{TEST_COLL}_name", key: { 'name' => 1 }, unique: true }
+    end
+
     before do
       # @todo: Replace with condition variable
       client.cluster.scan!
-      client.command({
-        'createIndexes' => TEST_COLL,
-        'indexes' => [
-          { name: "#{TEST_COLL}_name", key: { 'name' => 1 }, unique: true }
-        ]
-      })
+      # @todo: Replace when indexes module in.
+      begin
+        client.command({ 'createIndexes' => TEST_COLL, 'indexes' => [ index ] })
+      rescue
+        begin
+          client['system.indexes'].insert([ index.merge(ns: "#{TEST_DB}.#{TEST_COLL}") ])
+        rescue; end
+      end
     end
 
     after do
