@@ -62,7 +62,10 @@ RSpec.configure do |config|
       p admin_client['system.users'].insert({
         user: ROOT_USER.name,
         pwd: ROOT_USER.hashed_password,
-        roles: [ 'root', 'userAdminAnyDatabase', 'readWriteAnyDatabase' ]
+        roles: [ 'root', 'userAdminAnyDatabase', 'readWriteAnyDatabase' ],
+        otherDBRoles: {
+          'ruby-driver' => [ 'readWrite', 'userAdmin' ]
+        }
       })
     rescue; end
   end
