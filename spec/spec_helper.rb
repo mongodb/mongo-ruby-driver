@@ -49,6 +49,8 @@ RSpec.configure do |config|
     # @todo: Need to replace with condition value.
     admin_client.cluster.scan!
 
+    p admin_client.command(buildinfo: 1)
+
     begin
       # Create the admin user for the tests on 2.6 and higher.
       admin_client.command(
