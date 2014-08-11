@@ -52,6 +52,7 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(document)
+          p document
           @document = document
           super(generate_message)
         end
