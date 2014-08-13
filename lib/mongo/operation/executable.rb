@@ -79,6 +79,24 @@ module Mongo
         @spec[:coll_name]
       end
 
+      # Get the index from the specification.
+      #
+      # @return [ Hash ] The index specification.
+      #
+      # @since 2.0.0
+      def index
+        @spec[:index]
+      end
+
+      # Get the index name from the spec.
+      #
+      # @return [ String ] The index name.
+      #
+      # @since 2.0.0
+      def index_name
+        @spec[:index_name]
+      end
+
       # Merge this operation with another operation, returning a new one.
       # Requires that the collection and database of the two ops are the same.
       #
@@ -93,6 +111,18 @@ module Mongo
             coll_name == other.coll_name &&
             db_name == other.db_name
         dup.merge!(other)
+      end
+
+      # Get the full namespace that this operates on.
+      #
+      # @example Get the namespace.
+      #   executable.namespace
+      #
+      # @return [ String ] The namespace.
+      #
+      # @since 2.0.0
+      def namespace
+        "#{coll_name}.#{db_name}"
       end
 
       # If an operation including this module doesn't define #merge!, neither

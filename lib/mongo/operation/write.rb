@@ -15,6 +15,7 @@
 require 'mongo/operation/write/delete'
 require 'mongo/operation/write/insert'
 require 'mongo/operation/write/update'
+require 'mongo/operation/write/ensure_index'
 require 'mongo/operation/write/write_command'
 
 module Mongo
@@ -65,12 +66,18 @@ module Mongo
           end
         end
 
-        def generate_message
-          errors + write_errors + write_concern_errors
+        def error_messages
+          error_message(ERROR_MESSAGE) do
+            document[ERROR_MESSAGE]
+          end
         end
 
         def error_message(key)
           document.has_key?(key) ? yield : ''
+        end
+
+        def generate_message
+          errors + error_messages + write_errors + write_concern_errors
         end
 
         def write_errors
