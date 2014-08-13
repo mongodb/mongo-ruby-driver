@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/indexable'
+
 module Mongo
 
   # Represents a collection in the database and operations that can directly be
@@ -20,6 +22,7 @@ module Mongo
   # @since 2.0.0
   class Collection
     extend Forwardable
+    include Indexable
 
     # @return [ Mongo::Database ] The database the collection resides in.
     attr_reader :database
