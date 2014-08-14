@@ -22,14 +22,14 @@ TEST_SUITES = {
                  'test/functional/ssl_test.rb']
   },
   :threading => { :pattern => 'test/threading/**/*_test.rb' },
-  :replica_set => {
-    :pattern => 'test/replica_set/**/*_test.rb',
-    :exclude => ['test/replica_set/complex_connect_test.rb',
-                 'test/replica_set/count_test.rb',
-                 'test/replica_set/read_preference_test.rb',
-                 'test/replica_set/ssl_test.rb']
-  },
-  :sharded_cluster => { :pattern => 'test/sharded_cluster/**/*_test.rb' },
+  #:replica_set => {
+  #  :pattern => 'test/replica_set/**/*_test.rb',
+  #  :exclude => ['test/replica_set/complex_connect_test.rb',
+  #               'test/replica_set/count_test.rb',
+  #               'test/replica_set/read_preference_test.rb',
+  #               'test/replica_set/ssl_test.rb']
+  #},
+  #:sharded_cluster => { :pattern => 'test/sharded_cluster/**/*_test.rb' },
   :tools => {
     :pattern => 'test/tools/**/*_test.rb',
     :exclude => ['test/tools/mongo_config_test.rb']
@@ -57,7 +57,7 @@ namespace :test do
   Rake::TestTask.new(:default) do |t|
     enabled_tests = [:bson, :unit, :functional, :threading]
     unless ENV.key?('TRAVIS_CI') || ENV.key?('JENKINS_CI')
-      enabled_tests += [:replica_set, :sharded_cluster]
+      #enabled_tests += [:replica_set, :sharded_cluster]
     end
 
     files = []
