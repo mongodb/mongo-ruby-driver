@@ -17,12 +17,15 @@ module BulkAPIAuthTests
   include Mongo
 
   def init_auth_bulk
-    # enable authentication
+    # attempt to login before enabling authentication.
     @admin = @client["admin"]
-    @admin.add_user('admin', 'password', nil, :roles => ['readWriteAnyDatabase',
-                                                         'userAdminAnyDatabase',
-                                                         'dbAdminAnyDatabase'])
-    @admin.authenticate('admin', 'password')
+    begin
+      @admin.logout
+      @admin.authenticate('admin', 'password')
+    rescue Mongo::AuthenticationError => ex
+      @admin.add_user('admin', 'password', nil, :roles => ['root'])
+      @admin.authenticate('admin', 'password')
+    end
 
     # Set up the test db
     @collection = @db["bulk-api-auth-tests"]
@@ -60,6 +63,7 @@ module BulkAPIAuthTests
   end
 
   def clear_collection(collection)
+    @admin.logout
     @admin.authenticate('admin', 'password')
     collection.remove
     @admin.logout

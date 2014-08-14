@@ -225,8 +225,16 @@ module Mongo
       # MongoDB 2.4.7 so we assume that a nil error code means the usersInfo
       # command doesn't exist and we should fall back to the legacy add user code.
       rescue OperationFailure => ex
-        raise ex unless Mongo::ErrorCode::COMMAND_NOT_FOUND_CODES.include?(ex.error_code)
-        return legacy_add_user(username, password, read_only, opts)
+        if (ex.error_code == Mongo::ErrorCode::UNAUTHORIZED &&
+            @client.server_version >= '2.7.1')
+          # In MongoDB > 2.7 the localhost exception was narrowed, and the usersInfo
+          # command is no longer allowed.  In this case, add the first user.
+          create_or_update_user(:createUser, username, password, read_only, opts)
+          return
+        else
+          raise ex unless Mongo::ErrorCode::COMMAND_NOT_FOUND_CODES.include?(ex.error_code)
+          return legacy_add_user(username, password, read_only, opts)
+        end
       end
 
       if user_info.key?('users') && !user_info['users'].empty?

@@ -19,10 +19,15 @@ class SafeTest < Test::Unit::TestCase
   context "Safe mode propogation: " do
     setup do
       @connection = standard_connection({:safe => true}, true) # Legacy
+      ensure_admin_user(@connection)
       @db         = @connection[TEST_DB]
       @collection = @db['test-safe']
       @collection.create_index([[:a, 1]], :unique => true)
       @collection.remove
+    end
+
+    teardown do
+      clear_admin_user(@connection)
     end
 
     should "propogate safe option on insert" do
@@ -73,12 +78,17 @@ class SafeTest < Test::Unit::TestCase
   context "Safe error objects" do
     setup do
       @connection = standard_connection({:safe => true}, true) # Legacy
+      ensure_admin_user(@connection)
       @db         = @connection[TEST_DB]
       @collection = @db['test']
       @collection.remove
       @collection.insert({:a => 1})
       @collection.insert({:a => 1})
       @collection.insert({:a => 1})
+    end
+
+    teardown do
+      clear_admin_user(@connection)
     end
 
     should "return object on update" do

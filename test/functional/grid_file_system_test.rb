@@ -17,13 +17,15 @@ require 'test_helper'
 class GridFileSystemTest < Test::Unit::TestCase
   context "GridFileSystem:" do
     setup do
-      @con = standard_connection
-      @db  = @con.db(TEST_DB)
+      @client = standard_connection
+      ensure_admin_user(@client)
+      @db = @client.db(TEST_DB)
     end
 
     teardown do
       @db.drop_collection('fs.files')
       @db.drop_collection('fs.chunks')
+      clear_admin_user(@client)
     end
 
     context "Initialization" do

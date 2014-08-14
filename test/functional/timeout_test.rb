@@ -16,26 +16,39 @@ require 'test_helper'
 
 class TimeoutTest < Test::Unit::TestCase
 
+  def setup
+    @client = standard_connection(:op_timeout => 0.5)
+    ensure_admin_user(@client)
+    grant_admin_user_eval_role(@client)
+    @admin = @client['admin']
+  end
+
+  def teardown
+    # clear the client first so we don't get timed out
+    @client.close
+    @client = standard_connection
+    ensure_admin_user(@client)
+    clear_admin_user(@client)
+    @client.close
+  end
+
   def test_op_timeout
-    connection = standard_connection(:op_timeout => 0.5)
-
-    admin = connection.db('admin')
-
     command = {:eval => "sleep(100)"}
     # Should not timeout
-    assert admin.command(command)
+    assert @admin.command(command)
 
     # Should timeout
     command = {:eval => "sleep(1000)"}
     assert_raise Mongo::OperationTimeout do
-      admin.command(command)
+      @admin.command(command)
     end
   end
 
   def test_external_timeout_does_not_leave_socket_in_bad_state
-    client = standard_connection
-    db     = client[TEST_DB]
-    coll   = db['timeout-tests']
+    @client = standard_connection
+    ensure_admin_user(@client)
+    db      = @client[TEST_DB]
+    coll    = db['timeout-tests']
 
     # prepare the database
     coll.drop
@@ -54,5 +67,4 @@ class TimeoutTest < Test::Unit::TestCase
       coll.find_one
     end
   end
-
 end

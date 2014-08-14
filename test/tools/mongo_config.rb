@@ -83,6 +83,8 @@ module Mongo
                 make_config(opts)
               when :routers
                 make_router(config, opts)
+              when :shards
+                make_standalone_shard(kind, opts)
               else
                 make_mongod(kind, opts)
             end
@@ -130,25 +132,37 @@ module Mongo
                    :ipv6       => ipv6)
     end
 
+    def self.key_file(opts)
+      keyFile = opts[:key_file] || '/test/fixtures/auth/keyfile'
+      keyFile = Dir.pwd << keyFile
+      system "chmod 600 #{keyFile}"
+      keyFile
+    end
+
+    # A regular mongod minus --auth and plus --keyFile.
+    def self.make_standalone_shard(kind, opts)
+      params = make_mongod(kind, opts)
+      params.delete(:auth)
+      params.merge(:keyFile => key_file(opts))
+    end
+
     def self.make_replica(opts, id)
       params     = make_mongod('replicas', opts)
 
       replSet    = opts[:replSet]    || 'ruby-driver-test'
       oplogSize  = opts[:oplog_size] || 5
-      keyFile    = opts[:key_file]   || '/test/fixtures/auth/keyfile'
-
-      keyFile    = Dir.pwd << keyFile
-      system "chmod 600 #{keyFile}"
 
       params.merge(:_id       => id,
                    :replSet   => replSet,
                    :oplogSize => oplogSize,
-                   :keyFile   => keyFile)
+                   :keyFile   => key_file(opts))
     end
 
     def self.make_config(opts)
       params = make_mongod('configs', opts)
-      params.merge(:configsvr => nil)
+      params.delete(:auth)
+      params.merge(:configsvr => nil,
+                   :keyFile => key_file(opts))
     end
 
     def self.make_router(config, opts)
@@ -156,8 +170,9 @@ module Mongo
       mongos = ENV['MONGOS'] || 'mongos'
 
       params.merge(
-        :command => mongos,
-        :configdb => self.configdb(config)
+        :command  => mongos,
+        :configdb => self.configdb(config),
+        :keyFile  => key_file(opts)
       )
     end
 
@@ -328,6 +343,10 @@ module Mongo
     class ClusterManager
       attr_reader :config
       def initialize(config)
+        # only for authenticate under narrowed localhost exception
+        @root_user = 'admin'
+        @root_pwd = 'password'
+
         @config = config
         @servers = {}
         Mongo::Config::CLUSTER_OPT_KEYS.each do |key|
@@ -339,30 +358,93 @@ module Mongo
         @servers.collect{|k,v| (!key || key == k) ? v : nil}.flatten.compact
       end
 
-      def command( cmd_servers, db_name, cmd, opts = {} )
-        ret = []
-        cmd = cmd.class == Array ? cmd : [ cmd ]
-        debug 3, "ClusterManager.command cmd:#{cmd.inspect}"
-        cmd_servers = cmd_servers.class == Array ? cmd_servers : [cmd_servers]
-        cmd_servers.each do |cmd_server|
-          debug 3, cmd_server.inspect
-          cmd_server = cmd_server.config if cmd_server.is_a?(DbServer)
-          client = Mongo::MongoClient.new(cmd_server[:host], cmd_server[:port])
-          cmd.each do |c|
-            debug 3,  "ClusterManager.command c:#{c.inspect}"
-            response = client[db_name].command( c, opts )
-            debug 3,  "ClusterManager.command response:#{response.inspect}"
-            raise Mongo::OperationFailure, "c:#{c.inspect} opts:#{opts.inspect} failed" unless response["ok"] == 1.0 || opts.fetch(:check_response, true) == false
-            ret << response
+      # Run the command with authentication against the admin user, if needed.
+      # Note: this will only add auth for MongoDB versions >= 2.7.1.
+      # For earlier versions, commands with auth run under the localhost exception.
+      #
+      # @param [ MongoClient ] client The client on which to authenticate, if needed.
+      def ensure_auth(client, &block)
+        if client.server_version < '2.7.1'
+          # no narrowed localhost exception, simply yield.
+          yield
+        else
+          if !@localhost_exception
+            # if @localhost_exception is wrongly set (for example if start() is called
+            # multiple times in a row before stop()) then set and yield without auth.
+            begin
+              client['admin'].authenticate(@root_user, @root_pwd)
+              yield
+              client['admin'].logout
+            rescue Mongo::AuthenticationError => ex
+              yield
+            end
+          else
+            begin
+              # attempt to run command without authenticating.
+              yield
+            rescue Mongo::AuthenticationError, Mongo::OperationFailure => ex
+              # In case the @localhost_exception variable is falsely set, handle.
+              client['admin'].authenticate(@root_user, @root_pwd)
+              yield
+              client['admin'].logout
+              @localhost_exception = false
+            end
           end
-          client.close
         end
-        debug 3, "command ret:#{ret.inspect}"
-        ret.size == 1 ? ret.first : ret
       end
 
+      # Run a command or commands against the given servers with the given options.
+      # Return the responses from running the command against each server
+      # as an array.
+      #
+      # @param [ Array, DbServer, Hash ] servers Servers to use. This can be an array
+      #  of DbServers, an array of configurations from @config, or a single DbServer
+      #  or configuration hash.
+      # @param [ String ] db_name Name of database against which to run command.
+      # @param [ Hash, Array ] cmd The command or commands to run.
+      # @param [ Hash ] opts Options for this command.
+      #
+      # @return [ Array, Hash ] array of responses, or a single response as a hash.
+      def command(servers, db_name, cmd, opts={})
+
+        # if we got a singleton make it an array
+        servers = servers.is_a?(Array) ? servers : [ servers ]
+        cmd = cmd.is_a?(Array) ? cmd : [ cmd ]
+
+        responses = []
+
+        servers.each do |server|
+          s = server.is_a?(DbServer) ? server.config : server
+          client = Mongo::MongoClient.new(s[:host], s[:port])
+
+          # ensure this gets authenticated if we need authentication.
+          ensure_auth(client) do
+            cmd.each do |c|
+              response = client[db_name].command(c, opts)
+              if (response["ok"] != 1 &&
+                  response["code"] == Mongo::ErrorCode::UNAUTHORIZED)
+                # if we have an authentcation error, ensure_auth will handle.
+                raise Mongo::AuthenticationError
+              elsif response["ok"] != 1 && opts.fetch(:check_response, true)
+                # do we need to raise an error over other failures?
+                raise Mongo::OperationFailure,
+                "c#{c.inspect} opts:#{opts.inspect} failed"
+              end
+              responses << response
+            end
+          end
+        end
+        responses.size == 1 ? responses.first : responses
+      end
+
+      # Run the replSetGetStatus command.
+      #
+      # @return [ Array ] responses to the replSetGetStatus command from all members.
       def repl_set_get_status
-        command( @config[:replicas], 'admin', { :replSetGetStatus => 1 }, {:check_response => false } )
+        command(@config[:replicas],
+                'admin',
+                { :replSetGetStatus => 1 },
+                {:check_response => false })
       end
 
       def repl_set_get_config
@@ -393,6 +475,7 @@ module Mongo
           # enter the thunderdome...
           states  = repl_set_get_status.zip(repl_set_is_master)
           healthy = states.all? do |status, is_master|
+
             # check replica set status for member list
             next unless status['ok'] == 1.0 && (members = status['members'])
 
@@ -553,7 +636,16 @@ module Mongo
       end
 
       def addshards(shards = @config[:shards])
-        command( @config[:routers].first, 'admin', Array(shards).collect{|s| { :addshard => "#{s[:host]}:#{s[:port]}" } } )
+        begin
+          command( @config[:routers].first, 'admin', Array(shards).collect{|s| { :addshard => "#{s[:host]}:#{s[:port]}" } } )
+        rescue Mongo::OperationFailure => ex
+          # Because we cannot run the listshards command under the localhost
+          # exception, we run the risk of attempting to add the same shard twice.
+          # Our tests may add a local db to a shard, if the cluster is still up,
+          # then we can ignore this.
+          raise ex unless (ex.message.include?("host already used") ||
+                           ex.message.include?("local database 'ruby_test'"))
+        end
       end
 
       def listshards
@@ -577,7 +669,78 @@ module Mongo
         end
       end
 
+      # Returns an array with the host and port of the current primary.
+      #
+      # @return [ Array ] [ host, port ]
+      def primary_host_port
+        members = repl_set_get_status[0]['members']
+        primary = members.find { |m| m['state'] == 1 }
+        return nil unless primary
+        primary['name'].split(':')
+      end
+
+      # Return a connection to the primary of the replica set.
+      # This is done in a way that is safe under the narrowed localhost exception.
+      def primary_client
+        # we need either the mongos or the primary
+        if @config[:routers]
+          mongos = @config[:routers].first
+          Mongo::MongoClient.new(mongos[:host], mongos[:port])
+        else
+          name = primary_host_port
+          raise Mongo::ConnectionFailure, "no primary found" unless name
+          Mongo::MongoClient.new(name[0], name[1])
+        end
+      end
+
+      # For narrowed localhost exception, create an admin user.
+      # This method can be called multiple times.
+      def enable_authentication
+        client = primary_client
+        admin = client['admin']
+        if client.server_version >= '2.7.1' && @localhost_exception
+          # First, attempt to login.
+          begin
+            admin.logout
+            admin.authenticate(@root_user, @root_pwd)
+          rescue Mongo::AuthenticationError => ex
+            cmd = BSON::OrderedHash.new
+            cmd[:createUser] = @root_user
+            cmd[:pwd] = @root_pwd
+            cmd[:roles] = [ 'root' ]
+            admin.command(cmd)
+          end
+          @localhost_exception = false
+        end
+        client.close
+      end
+
+      # For narrowed localhost exception, remove the admin user and reset to
+      # localhost exception.
+      def remove_authentication
+        begin
+          client = primary_client
+          if client.server_version >= '2.7.1' && !@localhost_exception
+            admin = client['admin']
+            admin.authenticate('admin', 'password')
+            admin.command({ :dropAllRolesFromDatabase => 1 })
+            admin.command({ :dropAllUsersFromDatabase => 1 })
+            @localhost_exception = true
+          end
+          client.close
+        rescue Mongo::AuthenticationError => ex
+          # a test may have already removed the authentication.
+          @localhost_exception = true
+        rescue Mongo::ConnectionFailure => ex
+          # during cleanup, the primary may have been killed before this is called.
+          # Catch, and allow stop() to finish cleanup.
+          @localhost_exception = true
+        end
+      end
+
+      # Start up all servers and, if needed, enable authentication.
       def start
+        @localhost_exception = true
         # Must start configs before mongos -- hash order not guaranteed on 1.8.X
         servers(:configs).each{|server| server.start}
         servers.each{|server| server.start}
@@ -587,13 +750,17 @@ module Mongo
           repl_set_startup
         end
         if @config[:routers]
-          addshards if listshards['shards'].size == 0
+          addshards
         end
+        enable_authentication
         self
       end
       alias :restart :start
 
+      # Stop all servers and, if needed, remove authentication to reset to
+      # localhost exception.
       def stop
+        remove_authentication
         servers.each{|server| server.stop}
         self
       end

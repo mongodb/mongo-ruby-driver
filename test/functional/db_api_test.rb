@@ -18,42 +18,43 @@ class DBAPITest < Test::Unit::TestCase
   include Mongo
   include BSON
 
-  @@client = standard_connection
-  @@db   = @@client.db(TEST_DB)
-  @@coll = @@db.collection('test')
-  @@version = @@client.server_version
-
   def setup
-    @@coll.remove
+    @client = standard_connection
+    ensure_admin_user(@client)
+    @db   = @client.db(TEST_DB)
+    @coll = @db.collection('test')
+    @version = @client.server_version
+
     @r1 = {'a' => 1}
-    @@coll.insert(@r1) # collection not created until it's used
-    @@coll_full_name = "#{TEST_DB}.test"
+    @coll.insert(@r1) # collection not created until it's used
+    @coll_full_name = "#{TEST_DB}.test"
   end
 
   def teardown
-    @@coll.remove
-    @@db.get_last_error
+    @coll.remove
+    @db.get_last_error
+    clear_admin_user(@client)
   end
 
   def test_clear
-    assert_equal 1, @@coll.count
-    @@coll.remove
-    assert_equal 0, @@coll.count
+    assert_equal 1, @coll.count
+    @coll.remove
+    assert_equal 0, @coll.count
   end
 
   def test_insert
-    assert_kind_of BSON::ObjectId, @@coll.insert('a' => 2)
-    assert_kind_of BSON::ObjectId, @@coll.insert('b' => 3)
+    assert_kind_of BSON::ObjectId, @coll.insert('a' => 2)
+    assert_kind_of BSON::ObjectId, @coll.insert('b' => 3)
 
-    assert_equal 3, @@coll.count
-    docs = @@coll.find().to_a
+    assert_equal 3, @coll.count
+    docs = @coll.find().to_a
     assert_equal 3, docs.length
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
     assert docs.detect { |row| row['b'] == 3 }
 
-    @@coll << {'b' => 4}
-    docs = @@coll.find().to_a
+    @coll << {'b' => 4}
+    docs = @coll.find().to_a
     assert_equal 4, docs.length
     assert docs.detect { |row| row['b'] == 4 }
   end
@@ -63,23 +64,23 @@ class DBAPITest < Test::Unit::TestCase
     oh['a'] = -1
     oh['b'] = 'foo'
 
-    oid = @@coll.save(oh)
-    assert_equal 'foo', @@coll.find_one(oid)['b']
+    oid = @coll.save(oh)
+    assert_equal 'foo', @coll.find_one(oid)['b']
 
     oh = BSON::OrderedHash['a' => 1, 'b' => 'foo']
-    oid = @@coll.save(oh)
-    assert_equal 'foo', @@coll.find_one(oid)['b']
+    oid = @coll.save(oh)
+    assert_equal 'foo', @coll.find_one(oid)['b']
   end
 
   def test_insert_multiple
-    ids = @@coll.insert([{'a' => 2}, {'b' => 3}])
+    ids = @coll.insert([{'a' => 2}, {'b' => 3}])
 
     ids.each do |i|
       assert_kind_of BSON::ObjectId, i
     end
 
-    assert_equal 3, @@coll.count
-    docs = @@coll.find().to_a
+    assert_equal 3, @coll.count
+    docs = @coll.find().to_a
     assert_equal 3, docs.length
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
@@ -87,20 +88,20 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_count_on_nonexisting
-    @@db.drop_collection('foo')
-    assert_equal 0, @@db.collection('foo').count()
+    @db.drop_collection('foo')
+    assert_equal 0, @db.collection('foo').count()
   end
 
   def test_find_simple
-    @r2 = @@coll.insert('a' => 2)
-    @r3 = @@coll.insert('b' => 3)
+    @r2 = @coll.insert('a' => 2)
+    @r3 = @coll.insert('b' => 3)
     # Check sizes
-    docs = @@coll.find().to_a
+    docs = @coll.find().to_a
     assert_equal 3, docs.size
-    assert_equal 3, @@coll.count
+    assert_equal 3, @coll.count
 
     # Find by other value
-    docs = @@coll.find('a' => @r1['a']).to_a
+    docs = @coll.find('a' => @r1['a']).to_a
     assert_equal 1, docs.size
     doc = docs.first
     # Can't compare _id values because at insert, an _id was added to @r1 by
@@ -111,52 +112,52 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_find_advanced
-    @@coll.insert('a' => 2)
-    @@coll.insert('b' => 3)
+    @coll.insert('a' => 2)
+    @coll.insert('b' => 3)
 
     # Find by advanced query (less than)
-    docs = @@coll.find('a' => { '$lt' => 10 }).to_a
+    docs = @coll.find('a' => { '$lt' => 10 }).to_a
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
 
     # Find by advanced query (greater than)
-    docs = @@coll.find('a' => { '$gt' => 1 }).to_a
+    docs = @coll.find('a' => { '$gt' => 1 }).to_a
     assert_equal 1, docs.size
     assert docs.detect { |row| row['a'] == 2 }
 
     # Find by advanced query (less than or equal to)
-    docs = @@coll.find('a' => { '$lte' => 1 }).to_a
+    docs = @coll.find('a' => { '$lte' => 1 }).to_a
     assert_equal 1, docs.size
     assert docs.detect { |row| row['a'] == 1 }
 
     # Find by advanced query (greater than or equal to)
-    docs = @@coll.find('a' => { '$gte' => 1 }).to_a
+    docs = @coll.find('a' => { '$gte' => 1 }).to_a
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
 
     # Find by advanced query (between)
-    docs = @@coll.find('a' => { '$gt' => 1, '$lt' => 3 }).to_a
+    docs = @coll.find('a' => { '$gt' => 1, '$lt' => 3 }).to_a
     assert_equal 1, docs.size
     assert docs.detect { |row| row['a'] == 2 }
 
     # Find by advanced query (in clause)
-    docs = @@coll.find('a' => {'$in' => [1,2]}).to_a
+    docs = @coll.find('a' => {'$in' => [1,2]}).to_a
     assert_equal 2, docs.size
     assert docs.detect { |row| row['a'] == 1 }
     assert docs.detect { |row| row['a'] == 2 }
   end
 
   def test_find_sorting
-    @@coll.remove
-    @@coll.insert('a' => 1, 'b' => 2)
-    @@coll.insert('a' => 2, 'b' => 1)
-    @@coll.insert('a' => 3, 'b' => 2)
-    @@coll.insert('a' => 4, 'b' => 1)
+    @coll.remove
+    @coll.insert('a' => 1, 'b' => 2)
+    @coll.insert('a' => 2, 'b' => 1)
+    @coll.insert('a' => 3, 'b' => 2)
+    @coll.insert('a' => 4, 'b' => 1)
 
     # Sorting (ascending)
-    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => [['a', 1]]).to_a
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [['a', 1]]).to_a
     assert_equal 4, docs.size
     assert_equal 1, docs[0]['a']
     assert_equal 2, docs[1]['a']
@@ -164,7 +165,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 4, docs[3]['a']
 
     # Sorting (descending)
-    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => [['a', -1]]).to_a
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [['a', -1]]).to_a
     assert_equal 4, docs.size
     assert_equal 4, docs[0]['a']
     assert_equal 3, docs[1]['a']
@@ -172,7 +173,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 1, docs[3]['a']
 
     # Sorting using array of names; assumes ascending order.
-    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => 'a').to_a
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => 'a').to_a
     assert_equal 4, docs.size
     assert_equal 1, docs[0]['a']
     assert_equal 2, docs[1]['a']
@@ -180,14 +181,14 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 4, docs[3]['a']
 
     # Sorting using single name; assumes ascending order.
-    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => 'a').to_a
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => 'a').to_a
     assert_equal 4, docs.size
     assert_equal 1, docs[0]['a']
     assert_equal 2, docs[1]['a']
     assert_equal 3, docs[2]['a']
     assert_equal 4, docs[3]['a']
 
-    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => [['b', 'asc'], ['a', 'asc']]).to_a
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => [['b', 'asc'], ['a', 'asc']]).to_a
     assert_equal 4, docs.size
     assert_equal 2, docs[0]['a']
     assert_equal 4, docs[1]['a']
@@ -195,7 +196,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 3, docs[3]['a']
 
     # Sorting using empty array; no order guarantee should not blow up.
-    docs = @@coll.find({'a' => { '$lt' => 10 }}, :sort => []).to_a
+    docs = @coll.find({'a' => { '$lt' => 10 }}, :sort => []).to_a
     assert_equal 4, docs.size
   end
 
@@ -203,17 +204,17 @@ class DBAPITest < Test::Unit::TestCase
     # Sorting using ordered hash. You can use an unordered one, but then the
     # order of the keys won't be guaranteed thus your sort won't make sense.
 
-    @@coll.remove
-    @@coll.insert('a' => 1, 'b' => 2)
-    @@coll.insert('a' => 2, 'b' => 1)
-    @@coll.insert('a' => 3, 'b' => 2)
-    @@coll.insert('a' => 4, 'b' => 1)
+    @coll.remove
+    @coll.insert('a' => 1, 'b' => 2)
+    @coll.insert('a' => 2, 'b' => 1)
+    @coll.insert('a' => 3, 'b' => 2)
+    @coll.insert('a' => 4, 'b' => 1)
 
     oh = BSON::OrderedHash.new
     oh['a'] = -1
 
     # Sort as a method
-    docs = @@coll.find.sort(oh).to_a
+    docs = @coll.find.sort(oh).to_a
     assert_equal 4, docs.size
     assert_equal 4, docs[0]['a']
     assert_equal 3, docs[1]['a']
@@ -221,7 +222,7 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 1, docs[3]['a']
 
     # Sort as an option
-    docs = @@coll.find({}, :sort => oh).to_a
+    docs = @coll.find({}, :sort => oh).to_a
     assert_equal 4, docs.size
     assert_equal 4, docs[0]['a']
     assert_equal 3, docs[1]['a']
@@ -229,21 +230,21 @@ class DBAPITest < Test::Unit::TestCase
     assert_equal 1, docs[3]['a']
 
     if RUBY_VERSION > '1.9'
-      docs = @@coll.find({}, :sort => {:a => -1}).to_a
+      docs = @coll.find({}, :sort => {:a => -1}).to_a
       assert_equal 4, docs.size
       assert_equal 4, docs[0]['a']
       assert_equal 3, docs[1]['a']
       assert_equal 2, docs[2]['a']
       assert_equal 1, docs[3]['a']
 
-      docs = @@coll.find.sort(:a => -1).to_a
+      docs = @coll.find.sort(:a => -1).to_a
       assert_equal 4, docs.size
       assert_equal 4, docs[0]['a']
       assert_equal 3, docs[1]['a']
       assert_equal 2, docs[2]['a']
       assert_equal 1, docs[3]['a']
 
-      docs = @@coll.find.sort(:b => -1, :a => 1).to_a
+      docs = @coll.find.sort(:b => -1, :a => 1).to_a
       assert_equal 4, docs.size
       assert_equal 1, docs[0]['a']
       assert_equal 3, docs[1]['a']
@@ -252,168 +253,168 @@ class DBAPITest < Test::Unit::TestCase
     else
       # Sort as an option
       assert_raise InvalidSortValueError do
-        @@coll.find({}, :sort => {:a => -1}).to_a
+        @coll.find({}, :sort => {:a => -1}).to_a
       end
       # Sort as a method
       assert_raise InvalidSortValueError do
-        @@coll.find.sort(:a => -1).to_a
+        @coll.find.sort(:a => -1).to_a
       end
     end
   end
 
   def test_find_limits
-    @@coll.insert('b' => 2)
-    @@coll.insert('c' => 3)
-    @@coll.insert('d' => 4)
+    @coll.insert('b' => 2)
+    @coll.insert('c' => 3)
+    @coll.insert('d' => 4)
 
-    docs = @@coll.find({}, :limit => 1).to_a
+    docs = @coll.find({}, :limit => 1).to_a
     assert_equal 1, docs.size
-    docs = @@coll.find({}, :limit => 2).to_a
+    docs = @coll.find({}, :limit => 2).to_a
     assert_equal 2, docs.size
-    docs = @@coll.find({}, :limit => 3).to_a
+    docs = @coll.find({}, :limit => 3).to_a
     assert_equal 3, docs.size
-    docs = @@coll.find({}, :limit => 4).to_a
+    docs = @coll.find({}, :limit => 4).to_a
     assert_equal 4, docs.size
-    docs = @@coll.find({}).to_a
+    docs = @coll.find({}).to_a
     assert_equal 4, docs.size
-    docs = @@coll.find({}, :limit => 99).to_a
+    docs = @coll.find({}, :limit => 99).to_a
     assert_equal 4, docs.size
   end
 
   def test_find_one_no_records
-    @@coll.remove
-    x = @@coll.find_one('a' => 1)
+    @coll.remove
+    x = @coll.find_one('a' => 1)
     assert_nil x
   end
 
   def test_drop_collection
-    assert @@db.drop_collection(@@coll.name), "drop of collection #{@@coll.name} failed"
-    assert !@@db.collection_names.include?(@@coll.name)
+    assert @db.drop_collection(@coll.name), "drop of collection #{@coll.name} failed"
+    assert !@db.collection_names.include?(@coll.name)
   end
 
   def test_other_drop
-    assert @@db.collection_names.include?(@@coll.name)
-    @@coll.drop
-    assert !@@db.collection_names.include?(@@coll.name)
+    assert @db.collection_names.include?(@coll.name)
+    @coll.drop
+    assert !@db.collection_names.include?(@coll.name)
   end
 
   def test_collection_names
-    names = @@db.collection_names
+    names = @db.collection_names
     assert names.length >= 1
-    assert names.include?(@@coll.name)
+    assert names.include?(@coll.name)
 
-    coll2 = @@db.collection('test2')
+    coll2 = @db.collection('test2')
     coll2.insert('a' => 1)      # collection not created until it's used
-    names = @@db.collection_names
+    names = @db.collection_names
     assert names.length >= 2
-    assert names.include?(@@coll.name)
+    assert names.include?(@coll.name)
     assert names.include?('test2')
   ensure
-    @@db.drop_collection('test2')
+    @db.drop_collection('test2')
   end
 
   def test_collections_info
-    cursor = @@db.collections_info
+    cursor = @db.collections_info
     rows = cursor.to_a
     assert rows.length >= 1
-    row = rows.detect { |r| r['name'] == @@coll_full_name }
+    row = rows.detect { |r| r['name'] == @coll_full_name }
     assert_not_nil row
   end
 
   def test_collection_options
-    @@db.drop_collection('foobar')
-    @@db.strict = true
+    @db.drop_collection('foobar')
+    @db.strict = true
 
     begin
-      coll = @@db.create_collection('foobar', :capped => true, :size => 4096)
+      coll = @db.create_collection('foobar', :capped => true, :size => 4096)
       options = coll.options
-      assert_equal 'foobar', options['create'] if @@client.server_version < '2.5.5'
+      assert_equal 'foobar', options['create'] if @client.server_version < '2.5.5'
       assert_equal true, options['capped']
       assert_equal 4096, options['size']
     rescue => ex
-      @@db.drop_collection('foobar')
+      @db.drop_collection('foobar')
       fail "did not expect exception \"#{ex.inspect}\""
     ensure
-      @@db.strict = false
+      @db.strict = false
     end
   end
 
   def test_collection_options_are_passed_to_the_existing_ones
-    @@db.drop_collection('foobar')
+    @db.drop_collection('foobar')
 
-    @@db.create_collection('foobar')
+    @db.create_collection('foobar')
 
-    coll = @@db.create_collection('foobar')
+    coll = @db.create_collection('foobar')
     assert_equal true, Mongo::WriteConcern.gle?(coll.write_concern)
   end
 
 
   def test_index_information
-    assert_equal @@coll.index_information.length, 1
+    assert_equal @coll.index_information.length, 1
 
-    name = @@coll.create_index('a')
-    info = @@db.index_information(@@coll.name)
+    name = @coll.create_index('a')
+    info = @db.index_information(@coll.name)
     assert_equal name, "a_1"
-    assert_equal @@coll.index_information, info
+    assert_equal @coll.index_information, info
     assert_equal 2, info.length
 
     assert info.has_key?(name)
     assert_equal info[name]["key"], {"a" => 1}
   ensure
-    @@db.drop_index(@@coll.name, name)
+    @db.drop_index(@coll.name, name)
   end
 
   def test_index_create_with_symbol
-    assert_equal @@coll.index_information.length, 1
+    assert_equal @coll.index_information.length, 1
 
-    name = @@coll.create_index([['a', 1]])
-    info = @@db.index_information(@@coll.name)
+    name = @coll.create_index([['a', 1]])
+    info = @db.index_information(@coll.name)
     assert_equal name, "a_1"
-    assert_equal @@coll.index_information, info
+    assert_equal @coll.index_information, info
     assert_equal 2, info.length
 
     assert info.has_key?(name)
     assert_equal info[name]['key'], {"a" => 1}
   ensure
-    @@db.drop_index(@@coll.name, name)
+    @db.drop_index(@coll.name, name)
   end
 
   def test_multiple_index_cols
-    name = @@coll.create_index([['a', DESCENDING], ['b', ASCENDING], ['c', DESCENDING]])
-    info = @@db.index_information(@@coll.name)
+    name = @coll.create_index([['a', DESCENDING], ['b', ASCENDING], ['c', DESCENDING]])
+    info = @db.index_information(@coll.name)
     assert_equal 2, info.length
 
     assert_equal name, 'a_-1_b_1_c_-1'
     assert info.has_key?(name)
     assert_equal info[name]['key'], {"a" => -1, "b" => 1, "c" => -1}
   ensure
-    @@db.drop_index(@@coll.name, name)
+    @db.drop_index(@coll.name, name)
   end
 
   def test_multiple_index_cols_with_symbols
-    name = @@coll.create_index([[:a, DESCENDING], [:b, ASCENDING], [:c, DESCENDING]])
-    info = @@db.index_information(@@coll.name)
+    name = @coll.create_index([[:a, DESCENDING], [:b, ASCENDING], [:c, DESCENDING]])
+    info = @db.index_information(@coll.name)
     assert_equal 2, info.length
 
     assert_equal name, 'a_-1_b_1_c_-1'
     assert info.has_key?(name)
     assert_equal info[name]['key'], {"a" => -1, "b" => 1, "c" => -1}
   ensure
-    @@db.drop_index(@@coll.name, name)
+    @db.drop_index(@coll.name, name)
   end
 
   def test_unique_index
-    @@db.drop_collection("blah")
-    test = @@db.collection("blah")
+    @db.drop_collection("blah")
+    test = @db.collection("blah")
     test.create_index("hello")
 
     test.insert("hello" => "world")
     test.insert("hello" => "mike")
     test.insert("hello" => "world")
-    assert !@@db.error?
+    assert !@db.error?
 
-    @@db.drop_collection("blah")
-    test = @@db.collection("blah")
+    @db.drop_collection("blah")
+    test = @db.collection("blah")
     test.create_index("hello", :unique => true)
 
     test.insert("hello" => "world")
@@ -424,16 +425,16 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_index_on_subfield
-    @@db.drop_collection("blah")
-    test = @@db.collection("blah")
+    @db.drop_collection("blah")
+    test = @db.collection("blah")
 
     test.insert("hello" => {"a" => 4, "b" => 5})
     test.insert("hello" => {"a" => 7, "b" => 2})
     test.insert("hello" => {"a" => 4, "b" => 10})
-    assert !@@db.error?
+    assert !@db.error?
 
-    @@db.drop_collection("blah")
-    test = @@db.collection("blah")
+    @db.drop_collection("blah")
+    test = @db.collection("blah")
     test.create_index("hello.a", :unique => true)
 
     test.insert("hello" => {"a" => 4, "b" => 5})
@@ -444,19 +445,19 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_array
-    @@coll.remove({'$atomic' => true})
-    @@coll.insert({'b' => [1, 2, 3]})
-    @@coll.insert({'b' => [1, 2, 3]})
-    rows = @@coll.find({}, {:fields => ['b']}).to_a
+    @coll.remove({'$atomic' => true})
+    @coll.insert({'b' => [1, 2, 3]})
+    @coll.insert({'b' => [1, 2, 3]})
+    rows = @coll.find({}, {:fields => ['b']}).to_a
     assert_equal 2, rows.length
     assert_equal [1, 2, 3], rows[1]['b']
   end
 
   def test_regex
     regex = /foobar/i
-    @@coll << {'b' => regex}
-    rows = @@coll.find({}, {:fields => ['b']}).to_a
-    if @@version < "1.1.3"
+    @coll << {'b' => regex}
+    rows = @coll.find({}, {:fields => ['b']}).to_a
+    if @version < "1.1.3"
       assert_equal 1, rows.length
       assert_equal regex, rows[0]['b']
     else
@@ -466,14 +467,14 @@ class DBAPITest < Test::Unit::TestCase
   end
 
   def test_regex_multi_line
-    if @@version >= "1.9.1"
+    if @version >= "1.9.1"
 doc = <<HERE
   the lazy brown
   fox
 HERE
-      @@coll.save({:doc => doc})
-      assert @@coll.find_one({:doc => /n.*x/m})
-      @@coll.remove
+      @coll.save({:doc => doc})
+      assert @coll.find_one({:doc => /n.*x/m})
+      @coll.remove
     end
   end
 
@@ -481,135 +482,137 @@ HERE
     # Note: can't use Time.new because that will include fractional seconds,
     # which Mongo does not store.
     t = Time.at(1234567890)
-    @@coll << {'_id' => t}
-    rows = @@coll.find({'_id' => t}).to_a
+    @coll << {'_id' => t}
+    rows = @coll.find({'_id' => t}).to_a
     assert_equal 1, rows.length
     assert_equal t, rows[0]['_id']
   end
 
   def test_strict
-    assert !@@db.strict?
-    @@db.strict = true
-    assert @@db.strict?
+    assert !@db.strict?
+    @db.strict = true
+    assert @db.strict?
   ensure
-    @@db.strict = false
+    @db.strict = false
   end
 
   def test_strict_access_collection
-    @@db.strict = true
+    @db.strict = true
     begin
-      @@db.collection('does-not-exist')
+      @db.collection('does-not-exist')
       fail "expected exception"
     rescue => ex
       assert_equal Mongo::MongoDBError, ex.class
       assert_equal "Collection 'does-not-exist' doesn't exist. (strict=true)", ex.to_s
     ensure
-      @@db.strict = false
-      @@db.drop_collection('does-not-exist')
+      @db.strict = false
+      @db.drop_collection('does-not-exist')
     end
   end
 
   def test_strict_create_collection
-    @@db.drop_collection('foobar')
-    @@db.strict = true
+    @db.drop_collection('foobar')
+    @db.strict = true
 
     begin
-      assert @@db.create_collection('foobar')
+      assert @db.create_collection('foobar')
     rescue => ex
       fail "did not expect exception \"#{ex}\""
     end
 
     # Now the collection exists. This time we should see an exception.
     assert_raise Mongo::MongoDBError do
-      @@db.create_collection('foobar')
+      @db.create_collection('foobar')
     end
-    @@db.strict = false
-    @@db.drop_collection('foobar')
+    @db.strict = false
+    @db.drop_collection('foobar')
 
     # Now we're not in strict mode - should succeed
-    @@db.create_collection('foobar')
-    @@db.create_collection('foobar')
-    @@db.drop_collection('foobar')
+    @db.create_collection('foobar')
+    @db.create_collection('foobar')
+    @db.drop_collection('foobar')
   end
 
   def test_where
-    @@coll.insert('a' => 2)
-    @@coll.insert('a' => 3)
+    @coll.insert('a' => 2)
+    @coll.insert('a' => 3)
 
-    assert_equal 3, @@coll.count
-    assert_equal 1, @@coll.find('$where' => BSON::Code.new('this.a > 2')).count()
-    assert_equal 2, @@coll.find('$where' => BSON::Code.new('this.a > i', {'i' => 1})).count()
+    assert_equal 3, @coll.count
+    assert_equal 1, @coll.find('$where' => BSON::Code.new('this.a > 2')).count()
+    assert_equal 2, @coll.find('$where' => BSON::Code.new('this.a > i', {'i' => 1})).count()
   end
 
   def test_eval
-    assert_equal 3, @@db.eval('function (x) {return x;}', 3)
+    grant_admin_user_eval_role(@client)
 
-    assert_equal nil, @@db.eval("function (x) {db.test_eval.save({y:x});}", 5)
-    assert_equal 5, @@db.collection('test_eval').find_one['y']
+    assert_equal 3, @db.eval('function (x) {return x;}', 3)
 
-    assert_equal 5, @@db.eval("function (x, y) {return x + y;}", 2, 3)
-    assert_equal 5, @@db.eval("function () {return 5;}")
-    assert_equal 5, @@db.eval("2 + 3;")
+    assert_equal nil, @db.eval("function (x) {db.test_eval.save({y:x});}", 5)
+    assert_equal 5, @db.collection('test_eval').find_one['y']
 
-    assert_equal 5, @@db.eval(Code.new("2 + 3;"))
-    assert_equal 2, @@db.eval(Code.new("return i;", {"i" => 2}))
-    assert_equal 5, @@db.eval(Code.new("i + 3;", {"i" => 2}))
+    assert_equal 5, @db.eval("function (x, y) {return x + y;}", 2, 3)
+    assert_equal 5, @db.eval("function () {return 5;}")
+    assert_equal 5, @db.eval("2 + 3;")
+
+    assert_equal 5, @db.eval(Code.new("2 + 3;"))
+    assert_equal 2, @db.eval(Code.new("return i;", {"i" => 2}))
+    assert_equal 5, @db.eval(Code.new("i + 3;", {"i" => 2}))
 
     assert_raise OperationFailure do
-      @@db.eval("5 ++ 5;")
+      @db.eval("5 ++ 5;")
     end
   end
 
   def test_hint
-    name = @@coll.create_index('a')
+    name = @coll.create_index('a')
     begin
-      assert_nil @@coll.hint
-      assert_equal 1, @@coll.find({'a' => 1}, :hint => 'a').to_a.size
-      assert_equal 1, @@coll.find({'a' => 1}, :hint => ['a']).to_a.size
-      assert_equal 1, @@coll.find({'a' => 1}, :hint => {'a' => 1}).to_a.size
+      assert_nil @coll.hint
+      assert_equal 1, @coll.find({'a' => 1}, :hint => 'a').to_a.size
+      assert_equal 1, @coll.find({'a' => 1}, :hint => ['a']).to_a.size
+      assert_equal 1, @coll.find({'a' => 1}, :hint => {'a' => 1}).to_a.size
 
-      @@coll.hint = 'a'
-      assert_equal({'a' => 1}, @@coll.hint)
-      assert_equal 1, @@coll.find('a' => 1).to_a.size
+      @coll.hint = 'a'
+      assert_equal({'a' => 1}, @coll.hint)
+      assert_equal 1, @coll.find('a' => 1).to_a.size
 
-      @@coll.hint = ['a']
-      assert_equal({'a' => 1}, @@coll.hint)
-      assert_equal 1, @@coll.find('a' => 1).to_a.size
+      @coll.hint = ['a']
+      assert_equal({'a' => 1}, @coll.hint)
+      assert_equal 1, @coll.find('a' => 1).to_a.size
 
-      @@coll.hint = {'a' => 1}
-      assert_equal({'a' => 1}, @@coll.hint)
-      assert_equal 1, @@coll.find('a' => 1).to_a.size
+      @coll.hint = {'a' => 1}
+      assert_equal({'a' => 1}, @coll.hint)
+      assert_equal 1, @coll.find('a' => 1).to_a.size
 
-      @@coll.hint = nil
-      assert_nil @@coll.hint
-      assert_equal 1, @@coll.find('a' => 1).to_a.size
+      @coll.hint = nil
+      assert_nil @coll.hint
+      assert_equal 1, @coll.find('a' => 1).to_a.size
     ensure
-      @@coll.drop_index(name)
+      @coll.drop_index(name)
     end
   end
 
   def test_named_hint
-    name = @@coll.create_index('a', :name => 'named_index')
+    name = @coll.create_index('a', :name => 'named_index')
     begin
-      assert_nil @@coll.hint
-      assert_equal 1, @@coll.find({'a' => 1}, :named_hint => 'named_index').to_a.size
-      assert_equal 1, @@coll.find({'a' => 1}, :hint => 'a', :named_hint => "bad_hint").to_a.size
+      assert_nil @coll.hint
+      assert_equal 1, @coll.find({'a' => 1}, :named_hint => 'named_index').to_a.size
+      assert_equal 1, @coll.find({'a' => 1}, :hint => 'a', :named_hint => "bad_hint").to_a.size
     ensure
-      @@coll.drop_index('named_index')
+      @coll.drop_index('named_index')
     end
   end
 
   def test_hash_default_value_id
     val = Hash.new(0)
     val["x"] = 5
-    @@coll.insert val
-    id = @@coll.find_one("x" => 5)["_id"]
+    @coll.insert val
+    id = @coll.find_one("x" => 5)["_id"]
     assert id != 0
   end
 
   def test_group
-    @@db.drop_collection("test")
-    test = @@db.collection("test")
+    @db.drop_collection("test")
+    test = @db.collection("test")
 
     assert_equal [], test.group(:initial => {"count" => 0}, :reduce => "function (obj, prev) { prev.count++; }")
     assert_equal [], test.group(:initial => {"count" => 0}, :reduce => "function (obj, prev) { prev.count++; }")
@@ -646,109 +649,109 @@ HERE
   end
 
   def test_deref
-    @@coll.remove
+    @coll.remove
 
-    assert_equal nil, @@db.dereference(DBRef.new("test", ObjectId.new))
-    @@coll.insert({"x" => "hello"})
-    key = @@coll.find_one()["_id"]
-    assert_equal "hello", @@db.dereference(DBRef.new("test", key))["x"]
+    assert_equal nil, @db.dereference(DBRef.new("test", ObjectId.new))
+    @coll.insert({"x" => "hello"})
+    key = @coll.find_one()["_id"]
+    assert_equal "hello", @db.dereference(DBRef.new("test", key))["x"]
 
-    assert_equal nil, @@db.dereference(DBRef.new("test", 4))
+    assert_equal nil, @db.dereference(DBRef.new("test", 4))
     obj = {"_id" => 4}
-    @@coll.insert(obj)
-    assert_equal obj, @@db.dereference(DBRef.new("test", 4))
+    @coll.insert(obj)
+    assert_equal obj, @db.dereference(DBRef.new("test", 4))
 
-    @@coll.remove
-    @@coll.insert({"x" => "hello"})
-    assert_equal nil, @@db.dereference(DBRef.new("test", nil))
+    @coll.remove
+    @coll.insert({"x" => "hello"})
+    assert_equal nil, @db.dereference(DBRef.new("test", nil))
   end
 
   def test_save
-    @@coll.remove
+    @coll.remove
 
     a = {"hello" => "world"}
 
-    id = @@coll.save(a)
+    id = @coll.save(a)
     assert_kind_of ObjectId, id
-    assert_equal 1, @@coll.count
+    assert_equal 1, @coll.count
 
-    assert_equal id, @@coll.save(a)
-    assert_equal 1, @@coll.count
+    assert_equal id, @coll.save(a)
+    assert_equal 1, @coll.count
 
-    assert_equal "world", @@coll.find_one()["hello"]
+    assert_equal "world", @coll.find_one()["hello"]
 
     a["hello"] = "mike"
-    @@coll.save(a)
-    assert_equal 1, @@coll.count
+    @coll.save(a)
+    assert_equal 1, @coll.count
 
-    assert_equal "mike", @@coll.find_one()["hello"]
+    assert_equal "mike", @coll.find_one()["hello"]
 
-    @@coll.save({"hello" => "world"})
-    assert_equal 2, @@coll.count
+    @coll.save({"hello" => "world"})
+    assert_equal 2, @coll.count
   end
 
   def test_save_long
-    @@coll.remove
-    @@coll.insert("x" => 9223372036854775807)
-    assert_equal 9223372036854775807, @@coll.find_one()["x"]
+    @coll.remove
+    @coll.insert("x" => 9223372036854775807)
+    assert_equal 9223372036854775807, @coll.find_one()["x"]
   end
 
   def test_find_by_oid
-    @@coll.remove
+    @coll.remove
 
-    @@coll.save("hello" => "mike")
-    id = @@coll.save("hello" => "world")
+    @coll.save("hello" => "mike")
+    id = @coll.save("hello" => "world")
     assert_kind_of ObjectId, id
 
-    assert_equal "world", @@coll.find_one(:_id => id)["hello"]
-    @@coll.find(:_id => id).to_a.each do |doc|
+    assert_equal "world", @coll.find_one(:_id => id)["hello"]
+    @coll.find(:_id => id).to_a.each do |doc|
       assert_equal "world", doc["hello"]
     end
 
     id = ObjectId.from_string(id.to_s)
-    assert_equal "world", @@coll.find_one(:_id => id)["hello"]
+    assert_equal "world", @coll.find_one(:_id => id)["hello"]
   end
 
   def test_save_with_object_that_has_id_but_does_not_actually_exist_in_collection
-    @@coll.remove
+    @coll.remove
 
     a = {'_id' => '1', 'hello' => 'world'}
-    @@coll.save(a)
-    assert_equal(1, @@coll.count)
-    assert_equal("world", @@coll.find_one()["hello"])
+    @coll.save(a)
+    assert_equal(1, @coll.count)
+    assert_equal("world", @coll.find_one()["hello"])
 
     a["hello"] = "mike"
-    @@coll.save(a)
-    assert_equal(1, @@coll.count)
-    assert_equal("mike", @@coll.find_one()["hello"])
+    @coll.save(a)
+    assert_equal(1, @coll.count)
+    assert_equal("mike", @coll.find_one()["hello"])
   end
 
   def test_collection_names_errors
     assert_raise TypeError do
-      @@db.collection(5)
+      @db.collection(5)
     end
     assert_raise Mongo::InvalidNSName do
-      @@db.collection("")
+      @db.collection("")
     end
     assert_raise Mongo::InvalidNSName do
-      @@db.collection("te$t")
+      @db.collection("te$t")
     end
     assert_raise Mongo::InvalidNSName do
-      @@db.collection(".test")
+      @db.collection(".test")
     end
     assert_raise Mongo::InvalidNSName do
-      @@db.collection("test.")
+      @db.collection("test.")
     end
     assert_raise Mongo::InvalidNSName do
-      @@db.collection("tes..t")
+      @db.collection("tes..t")
     end
   end
 
   def test_rename_collection
-    @@db.drop_collection("foo")
-    @@db.drop_collection("bar")
-    a = @@db.collection("foo")
-    b = @@db.collection("bar")
+    @db.drop_collection("foo")
+    @db.drop_collection("bar")
+    a = @db.collection("foo")
+    b = @db.collection("bar")
 
     assert_raise TypeError do
       a.rename(5)
@@ -784,9 +787,9 @@ HERE
 
   # doesn't really test functionality, just that the option is set correctly
   def test_snapshot
-    @@db.collection("test").find({}, :snapshot => true).to_a
+    @db.collection("test").find({}, :snapshot => true).to_a
     assert_raise OperationFailure do
-      @@db.collection("test").find({}, :snapshot => true, :sort => 'a').to_a
+      @db.collection("test").find({}, :snapshot => true, :sort => 'a').to_a
     end
   end
 
@@ -807,9 +810,9 @@ HERE
       assert_equal "UTF-8", utf8.encoding.name
       assert_equal "ISO-8859-1", iso8859.encoding.name
 
-      @@coll.remove
-      @@coll.save("default" => default, "utf8" => utf8, "iso8859" => iso8859)
-      doc = @@coll.find_one()
+      @coll.remove
+      @coll.save("default" => default, "utf8" => utf8, "iso8859" => iso8859)
+      doc = @coll.find_one()
 
       assert_equal "UTF-8", doc["default"].encoding.name
       assert_equal "UTF-8", doc["utf8"].encoding.name

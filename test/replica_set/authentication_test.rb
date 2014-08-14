@@ -28,8 +28,13 @@ class ReplicaSetAuthenticationTest < Test::Unit::TestCase
   def setup
     ensure_cluster(:rs)
     @client    = MongoReplicaSetClient.new(@rs.repl_set_seeds)
+    ensure_admin_user(@client)
     @version   = @client.server_version
     @db        = @client[TEST_DB]
     @host_info = @rs.repl_set_seeds.join(',')
+  end
+
+  def teardown
+    clear_admin_user(@client)
   end
 end

@@ -35,7 +35,9 @@ end
 class GridTest < Test::Unit::TestCase
   context "Tests:" do
     setup do
-      @db = standard_connection.db(TEST_DB)
+      @client = standard_connection
+      ensure_admin_user(@client)
+      @db = @client.db(TEST_DB)
       @files  = @db.collection('test-fs.files')
       @chunks = @db.collection('test-fs.chunks')
     end
@@ -43,6 +45,7 @@ class GridTest < Test::Unit::TestCase
     teardown do
       @files.remove
       @chunks.remove
+      clear_admin_user(@client)
     end
 
     context "A one-chunk grid-stored file" do

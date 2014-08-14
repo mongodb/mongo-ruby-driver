@@ -22,10 +22,22 @@ class ClientTest < Test::Unit::TestCase
 
   def setup
     @client = standard_connection
+    ensure_admin_user(@client)
   end
 
   def teardown
+    clear_admin_user(@client)
     @client.close
+  end
+
+  def with_old_style_user_admin(client, &block)
+    # This is used for test_copy_database
+    admin = client['admin']
+    admin.add_user('admin', 'password', false)
+    admin.authenticate('admin', 'password')
+    yield
+    admin.remove_user('admin')
+    admin.logout
   end
 
   def test_connection_failure
@@ -145,7 +157,11 @@ class ClientTest < Test::Unit::TestCase
   end
 
   def test_from_uri_write_concern
-    con = MongoClient.from_uri("mongodb://#{host_port}")
+    if auth_enabled?(@client) && @client.server_version >= '2.7.1'
+      con = MongoClient.from_uri("mongodb://admin:password@#{host_port}/admin")
+    else
+      con = MongoClient.from_uri("mongodb://#{host_port}")
+    end
     db = con.db
     coll = db.collection('from-uri-test')
     assert_equal BSON::ObjectId, coll.insert({'a' => 1}).class
@@ -197,14 +213,31 @@ class ClientTest < Test::Unit::TestCase
   def test_copy_database
     old_name = TEST_DB + '_old'
     new_name = TEST_DB + '_new'
+    coll = 'copy-test'
+    old_db = @client[old_name]
+    new_db = @client[new_name]
+    admin = @client['admin']
 
+    old_db[coll].insert('a' => 1)
     @client.drop_database(new_name)
-    @client.db(old_name).collection('copy-test').insert('a' => 1)
-    @client.copy_database(old_name, new_name, host_port)
 
-    old_object = @client.db(old_name).collection('copy-test').find.next_document
-    new_object = @client.db(new_name).collection('copy-test').find.next_document
-    assert_equal old_object, new_object
+    if @client.server_version >= "2.7.1"
+      # On > 2.7 servers, copydb must be run with an admin user, and
+      # we can pass in a user with the credentials of a dbOwner.
+      # (Need 'find' on the old_db and 'insert' and 'createIndexes' on the new_db)
+      old_db.add_user('chevy', 'chase', nil, :roles => ["dbOwner"])
+      @client.copy_database(old_name, new_name, host_port, 'chevy', 'chase')
+      old_db.remove_user('chevy')
+      assert_equal old_db[coll].find_one, new_db[coll].find_one
+    else
+      # Pre-2.7, we need 2.2-style users to run copydb.
+      with_old_style_user_admin(@client) do
+        old_db.add_user('chevy', 'chase', false)
+        @client.copy_database(old_name, new_name, host_port, 'chevy', 'chase')
+        old_db.remove_user('chevy')
+        assert_equal old_db[coll].find_one, new_db[coll].find_one
+      end
+    end
   end
 
   def test_database_names
@@ -266,6 +299,7 @@ class ClientTest < Test::Unit::TestCase
     assert_equal 2, seeds.length
     assert_equal ['foo', 27017], seeds[0]
     assert_equal ['bar', 27018], seeds[1]
+    @client = standard_connection
   end
 
   def test_fsync_lock

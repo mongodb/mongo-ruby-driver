@@ -19,9 +19,14 @@ class DBConnectionTest < Test::Unit::TestCase
   def test_no_exceptions
     host = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost'
     port = ENV['MONGO_RUBY_DRIVER_PORT'] || MongoClient::DEFAULT_PORT
-    db = MongoClient.new(host, port).db(TEST_DB)
+    @client = MongoClient.new(host, port)
+    ensure_admin_user(@client)
+
+    db = @client.db(TEST_DB)
     coll = db.collection('test')
     coll.remove
     db.get_last_error
+
+    clear_admin_user(@client)
   end
 end

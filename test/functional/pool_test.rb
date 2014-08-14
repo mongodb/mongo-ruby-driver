@@ -19,8 +19,13 @@ class PoolTest < Test::Unit::TestCase
 
   def setup
     @client    ||= standard_connection({:pool_size => 15, :pool_timeout => 5})
+    ensure_admin_user(@client)
     @db         = @client.db(TEST_DB)
     @collection = @db.collection("pool_test")
+  end
+
+  def teardown
+    clear_admin_user(@client)
   end
 
   def test_pool_affinity

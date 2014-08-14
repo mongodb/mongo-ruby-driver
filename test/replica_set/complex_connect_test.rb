@@ -27,17 +27,19 @@ class ComplexConnectTest < Test::Unit::TestCase
   def test_complex_connect
     host = @rs.servers.first.host
     primary = MongoClient.new(host, @rs.primary.port)
+    ensure_admin_user(primary)
 
     @client = MongoReplicaSetClient.new([
       @rs.servers[2].host_port,
       @rs.servers[1].host_port,
       @rs.servers[0].host_port
     ])
+    ensure_admin_user(@client)
 
     version = @client.server_version
 
-    @client[TEST_DB]['complext-connect-test'].insert({:a => 1})
-    assert @client[TEST_DB]['complext-connect-test'].find_one
+    @client[TEST_DB]['complex-connect-test'].insert({:a => 1})
+    assert @client[TEST_DB]['complex-connect-test'].find_one
 
     config = primary['local']['system.replset'].find_one
     old_config = config.dup
@@ -63,14 +65,16 @@ class ComplexConnectTest < Test::Unit::TestCase
     puts version
     if version < "2.1"
       rescue_connection_failure do
-        assert @client[TEST_DB]['complext-connect-test'].find_one
+        assert @client[TEST_DB]['complex-connect-test'].find_one
       end
 
-      assert @client[TEST_DB]['complext-connect-test'].find_one
+      assert @client[TEST_DB]['complex-connect-test'].find_one
     end
 
-    primary = MongoClient.new(host, @rs.primary.port)
     assert_raise ConnectionFailure do
+      primary = @rs.primary_client
+      puts "primary: #{primary.inspect}"
+      ensure_admin_user(primary)
       primary['admin'].command({:replSetReconfig => old_config})
     end
   end

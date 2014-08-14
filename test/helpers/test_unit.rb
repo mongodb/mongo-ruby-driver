@@ -14,7 +14,7 @@
 
 TEST_DB   = 'ruby_test' unless defined? TEST_DB
 TEST_HOST = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost' unless defined? TEST_HOST
-TEST_DATA = File.join(File.dirname(__FILE__), 'fixtures/data')
+TEST_DATA = File.join(File.dirname(__FILE__), '../fixtures/data')
 TEST_BASE = Test::Unit::TestCase
 
 unless defined? TEST_PORT
@@ -233,9 +233,81 @@ class Test::Unit::TestCase
     end
   end
 
+  # When testing under narrowed localhost exception, the admin user must have
+  # special permissions to run the db_eval command.
+  def grant_admin_user_eval_role(client)
+    if auth_enabled?(client) && client.server_version >= "2.7.1"
+      # we need to have anyAction on anyResource to run db_eval()
+      admin = client['admin']
+      any_priv = BSON::OrderedHash.new
+      any_priv[:resource] = {:anyResource => true}
+      any_priv[:actions] = ['anyAction']
+
+      create_role = BSON::OrderedHash.new
+      create_role[:createRole] = 'db_eval'
+      create_role[:privileges] = [any_priv]
+      create_role[:roles] = []
+      admin.command(create_role)
+
+      grant_role = BSON::OrderedHash.new
+      grant_role[:grantRolesToUser] = 'admin'
+      grant_role[:roles] = [ 'db_eval' ]
+      admin.command(grant_role)
+    end
+  end
+
+  # For use on version >= 2.7.1, to deal with narrowed localhost exception.
+  # Calling this method multiple times in a row should not do anything bad.
+  def ensure_admin_user(client)
+    if auth_enabled?(client) && client.server_version >= "2.7.1"
+      begin
+        admin = client['admin']
+        admin.logout
+        admin.add_user('admin', 'password', nil, :roles => [ 'root', 'clusterAdmin', 'readWriteAnyDatabase' ])
+        admin.authenticate('admin', 'password')
+      rescue OperationFailure => ex
+        # Admin user may already exist, just attempt to login.
+        admin.authenticate('admin', 'password')
+      end
+    end
+  end
+
+  # For use on version >= 2.7.1, to deal with narrowed localhost exception.
+  # Calling this method multiple times in a row should not do anything bad.
+  def clear_admin_user(client)
+    if auth_enabled?(client) && client.server_version >= "2.7.1"
+      # in case users have already been cleared, handle exception
+      admin = client['admin']
+      admin.logout
+      begin
+        admin.authenticate('admin', 'password')
+        admin.command({ :dropAllRolesFromDatabase => 1 })
+        admin.command({ :dropAllUsersFromDatabase => 1 })
+        admin.logout
+      rescue Mongo::AuthenticationError => ex
+        admin.logout
+      end
+    end
+  end
+
+  # Return true if auth is enabled, false otherwise.
+  def auth_enabled?(client)
+    begin
+      cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
+      return true if cmd_line_args.include?('auth') || cmd_line_args.include?('keyFile')
+      if security = cmd_line_args["security"]
+        return true if security["authorization"] == "enabled"
+      end
+    rescue OperationFailure => ex
+      # under narrowed localhost exception, getCmdLineOpts is not allowed.
+      return true if ex.message.include?("authorized") ||
+        (client.server_version >= "2.7.1" &&
+         ex.error_code == Mongo::ErrorCode::UNAUTHORIZED)
+    end
+  end
+
   def with_auth(client, &block)
-    cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
-    yield if cmd_line_args.include?('auth')
+    yield if auth_enabled?(client)
   end
 
   def with_default_journaling(client, &block)
@@ -252,6 +324,7 @@ class Test::Unit::TestCase
   end
 
   def with_no_journaling(client, &block)
+    ensure_admin_user(client)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
     unless client.server_version < "2.0" || !cmd_line_args.include?('nojournal')
       yield

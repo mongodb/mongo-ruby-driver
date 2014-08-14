@@ -17,21 +17,23 @@ require 'logger'
 
 class CursorFailTest < Test::Unit::TestCase
 
-  include Mongo
-
-  @@connection = standard_connection
-  @@db   = @@connection.db(TEST_DB)
-  @@coll = @@db.collection('test')
-  @@version = @@connection.server_version
-
   def setup
-    @@coll.remove({})
-    @@coll.insert({'a' => 1})     # collection not created until it's used
-    @@coll_full_name = "#{TEST_DB}.test"
+    @client = standard_connection
+    ensure_admin_user(@client)
+    @db   = @client.db(TEST_DB)
+    @coll = @db.collection('test')
+    @version = @client.server_version
+    @coll.remove({})
+    @coll.insert({'a' => 1})     # collection not created until it's used
+    @coll_full_name = "#{TEST_DB}.test"
+  end
+
+  def teardown
+    clear_admin_user(@client)
   end
 
   def test_refill_via_get_more_alt_coll
-    coll = @@db.collection('test-alt-coll')
+    coll = @db.collection('test-alt-coll')
     coll.remove
     coll.insert('a' => 1)     # collection not created until it's used
     assert_equal 1, coll.count

@@ -26,37 +26,47 @@ end
 
 class DBTest < Test::Unit::TestCase
 
-  include Mongo
+  def setup
+    @client = standard_connection
+    ensure_admin_user(@client)
+    @db = @client.db(TEST_DB)
+    @version = @client.server_version
+  end
 
-  @@client  = standard_connection
-  @@db    = @@client.db(TEST_DB)
-  @@version = @@client.server_version
+  def teardown
+    clear_admin_user(@client)
+  end
+
+  # Only execute this test when version is appropriate.
+  def with_min_version(version, &block)
+    yield if @client.server_version >= version
+  end
 
   def test_close
-    @@client.close
-    assert !@@client.connected?
+    @client.close
+    assert !@client.connected?
     begin
-      @@db.collection('test').insert('a' => 1)
+      @db.collection('test').insert('a' => 1)
       fail "expected 'NilClass' exception"
     rescue => ex
       assert_match(/NilClass/, ex.to_s)
     ensure
-      @@db = standard_connection.db(TEST_DB)
+      @db = standard_connection.db(TEST_DB)
     end
   end
 
   def test_create_collection
-    col = @@db.create_collection('foo')
-    assert_equal @@db['foo'].name, col.name
+    col = @db.create_collection('foo')
+    assert_equal @db['foo'].name, col.name
 
-    col = @@db.create_collection(:foo)
-    assert_equal @@db['foo'].name, col.name
+    col = @db.create_collection(:foo)
+    assert_equal @db['foo'].name, col.name
 
-    @@db.drop_collection('foo')
+    @db.drop_collection('foo')
   end
 
   def test_get_and_drop_collection
-    db = @@client.db(TEST_DB, :strict => true)
+    db = @client.db(TEST_DB, :strict => true)
     db.create_collection('foo')
     assert db.collection('foo')
     assert db.drop_collection('foo')
@@ -78,15 +88,15 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_full_coll_name
-    coll = @@db.collection('test')
-    assert_equal "#{TEST_DB}.test", @@db.full_collection_name(coll.name)
+    coll = @db.collection('test')
+    assert_equal "#{TEST_DB}.test", @db.full_collection_name(coll.name)
   end
 
   def test_collection_names
-    @@db.collection("test").insert("foo" => 5)
-    @@db.collection("test.mike").insert("bar" => 0)
+    @db.collection("test").insert("foo" => 5)
+    @db.collection("test.mike").insert("bar" => 0)
 
-    colls = @@db.collection_names()
+    colls = @db.collection_names()
     assert colls.include?("test")
     assert colls.include?("test.mike")
     colls.each { |name|
@@ -95,10 +105,10 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_collections
-    @@db.collection("test.durran").insert("foo" => 5)
-    @@db.collection("test.les").insert("bar" => 0)
+    @db.collection("test.durran").insert("foo" => 5)
+    @db.collection("test.les").insert("bar" => 0)
 
-    colls = @@db.collections()
+    colls = @db.collections()
     assert_not_nil colls.select { |coll| coll.name == "test.durran" }
     assert_not_nil colls.select { |coll| coll.name == "test.les" }
     assert_equal [], colls.select { |coll| coll.name == "does_not_exist" }
@@ -107,7 +117,7 @@ class DBTest < Test::Unit::TestCase
   end
 
   def test_pk_factory
-    db = standard_connection.db(TEST_DB, :pk => TestPKFactory.new)
+    db = @client.db(TEST_DB, :pk => TestPKFactory.new)
     coll = db.collection('test')
     coll.remove
 
@@ -145,156 +155,164 @@ class DBTest < Test::Unit::TestCase
 
   def test_command
     assert_raise OperationFailure do
-      @@db.command({:non_command => 1}, :check_response => true)
+      @db.command({:non_command => 1}, :check_response => true)
     end
 
-    result = @@db.command({:non_command => 1}, :check_response => false)
+    result = @db.command({:non_command => 1}, :check_response => false)
     assert !Mongo::Support.ok?(result)
   end
 
   def test_error
-    @@db.reset_error_history
-    assert_nil @@db.get_last_error['err']
-    assert !@@db.error?
-    assert_nil @@db.previous_error
+    bad_command = {:forceerror => 1 }
 
-    @@db.command({:forceerror => 1}, :check_response => false)
-    assert @@db.error?
-    assert_not_nil @@db.get_last_error['err']
-    assert_not_nil @@db.previous_error
+    @db.reset_error_history
+    assert_nil @db.get_last_error['err']
+    assert !@db.error?
+    assert_nil @db.previous_error
 
-    @@db.command({:forceerror => 1}, :check_response => false)
-    assert @@db.error?
-    assert @@db.get_last_error['err']
-    prev_error = @@db.previous_error
+    @db.command(bad_command, :check_response => false)
+    assert @db.error?
+    assert_not_nil @db.get_last_error['err']
+    assert_not_nil @db.previous_error
+
+    @db.command(bad_command, :check_response => false)
+    assert @db.error?
+    assert @db.get_last_error['err']
+    prev_error = @db.previous_error
     assert_equal 1, prev_error['nPrev']
-    assert_equal prev_error["err"], @@db.get_last_error['err']
+    assert_equal prev_error["err"], @db.get_last_error['err']
 
-    @@db.collection('test').find_one
-    assert_nil @@db.get_last_error['err']
-    assert !@@db.error?
-    assert @@db.previous_error
-    assert_equal 2, @@db.previous_error['nPrev']
+    @db.collection('test').find_one
+    assert_nil @db.get_last_error['err']
+    assert !@db.error?
+    assert @db.previous_error
+    assert_equal 2, @db.previous_error['nPrev']
 
-    @@db.reset_error_history
-    assert_nil @@db.get_last_error['err']
-    assert !@@db.error?
-    assert_nil @@db.previous_error
+    @db.reset_error_history
+    assert_nil @db.get_last_error['err']
+    assert !@db.error?
+    assert_nil @db.previous_error
   end
 
   def test_check_command_response
-    command = {:forceerror => 1}
-    raised = false
-    begin
-      @@db.command(command)
-    rescue => ex
-      raised = true
-      assert ex.message.include?("forced error") || ex.result.has_key?("assertion") && ex.result["assertion"].include?("forced error"),
-        "error message does not contain 'forced error'"
-      assert_equal 10038, ex.error_code
-
-      if @@version >= "2.1.0"
-        assert_equal 10038, ex.result['code']
-      else
-        assert_equal 10038, ex.result['assertionCode']
+    if @version >= "2.1.0"
+      command = {:create => "$$$$"}
+      expected_codes = [10356, 2]
+      expected_msg = "invalid"
+      raised = false
+      begin
+        @db.command(command)
+      rescue => ex
+        raised = true
+        puts "got message #{ex.inspect}"
+        assert ex.message.include?(expected_msg) ||
+          (ex.result.has_key?("assertion") &&
+           ex.result["assertion"].include?(expected_msg)),
+        "error message does not contain '#{expected_msg}'"
+        assert expected_codes.include?(ex.error_code)
+        assert (expected_codes.include?(ex.result['code']))
+      ensure
+        assert raised, "No assertion raised!"
       end
-    ensure
-      assert raised, "No assertion raised!"
     end
   end
 
   def test_arbitrary_command_opts
-    with_forced_timeout(@@client) do
+    with_forced_timeout(@client) do
       assert_raise ExecutionTimeout do
         cmd = OrderedHash.new
         cmd[:ping] = 1
         cmd[:maxTimeMS] = 100
-        @@db.command(cmd)
+        @db.command(cmd)
       end
     end
   end
 
   def test_command_with_bson
-    normal_response = @@db.command({:buildInfo => 1})
+    normal_response = @db.command({:buildInfo => 1})
     bson = BSON::BSON_CODER.serialize({:buildInfo => 1}, false, false)
-    bson_response = @@db.command({:bson => bson})
+    bson_response = @db.command({:bson => bson})
     assert_equal normal_response, bson_response
   end
 
   def test_last_status
-    @@db['test'].remove
-    @@db['test'].save("i" => 1)
+    @db['test'].remove
+    @db['test'].save("i" => 1)
 
-    @@db['test'].update({"i" => 1}, {"$set" => {"i" => 2}})
-    assert @@db.get_last_error()["updatedExisting"]
+    @db['test'].update({"i" => 1}, {"$set" => {"i" => 2}})
+    assert @db.get_last_error()["updatedExisting"]
 
-    @@db['test'].update({"i" => 1}, {"$set" => {"i" => 500}})
-    assert !@@db.get_last_error()["updatedExisting"]
+    @db['test'].update({"i" => 1}, {"$set" => {"i" => 500}})
+    assert !@db.get_last_error()["updatedExisting"]
   end
 
   def test_text_port_number_raises_no_errors
-    client = standard_connection
-    db   = client[TEST_DB]
+    db = @client[TEST_DB]
     db.collection('users').remove
   end
 
   def test_stored_function_management
-    @@db.add_stored_function("sum", "function (x, y) { return x + y; }")
-    assert_equal @@db.eval("return sum(2,3);"), 5
-    assert @@db.remove_stored_function("sum")
+    grant_admin_user_eval_role(@client)
+    @db.add_stored_function("sum", "function (x, y) { return x + y; }")
+    assert_equal @db.eval("return sum(2,3);"), 5
+    assert @db.remove_stored_function("sum")
     assert_raise OperationFailure do
-      @@db.eval("return sum(2,3);")
+      @db.eval("return sum(2,3);")
     end
   end
 
   def test_eval
-    @@db.eval("db.system.save({_id:'hello', value: function() { print('hello'); } })")
-    assert_equal 'hello', @@db['system'].find_one['_id']
+    grant_admin_user_eval_role(@client)
+    @db.eval("db.system.save({_id:'hello', value: function() { print('hello'); } })")
+    assert_equal 'hello', @db['system'].find_one['_id']
   end
 
   def test_eval_nolock
+    grant_admin_user_eval_role(@client)
+
     function = "db.system.save({_id:'hello', value: function(string) { print(string); } })"
-    @@db.expects(:command).with do |selector, opts|
+    @db.expects(:command).with do |selector, opts|
         selector[:nolock] == true
     end.returns({ 'ok' => 1, 'retval' => 1 })
-    @@db.eval(function, 'hello', :nolock => true)
+    @db.eval(function, 'hello', :nolock => true)
   end
 
-  if @@version >= '2.5.3'
-    def test_default_admin_roles
-      # admin user
-      db = Mongo::MongoClient.new()['admin']
-      db.logout
-      silently { db.add_user('admin', 'pass') }
-      db.authenticate('admin', 'pass')
-      info = db.command(:usersInfo => 'admin')['users'].first
-      assert_equal 'root', info['roles'].first['role']
+  def test_default_admin_roles
+    return unless auth_enabled?(@client)
+    with_min_version('2.5.3') do
+      admin = @client['admin']
+
+      # admin user for auth (if version is >= 2.7.1 we already have this)
+      if @client.server_version < '2.7.1'
+        admin.add_user('admin', 'password')
+        admin.authenticate('admin', 'password')
+        info = admin.command(:usersInfo => 'admin')['users'].first
+        assert_equal 'root', info['roles'].first['role']
+      end
 
       # read-only admin user
-      silently { db.add_user('ro-admin', 'pass', true) }
-      db.logout
-      db.authenticate('ro-admin', 'pass')
-      info = db.command(:usersInfo => 'ro-admin')['users'].first
+      silently { admin.add_user('ro-admin', 'pass', true) }
+      admin.logout
+      admin.authenticate('ro-admin', 'pass')
+      info = admin.command(:usersInfo => 'ro-admin')['users'].first
       assert_equal 'readAnyDatabase', info['roles'].first['role']
-      db.logout
+      admin.logout
 
-      db.authenticate('admin', 'pass')
-      db.command(:dropAllUsersFromDatabase => 1)
-      db.logout
+      admin.authenticate('admin', 'password')
+      admin.command(:dropAllUsersFromDatabase => 1) if @client.server_version < '2.7.1'
+      admin.logout
     end
   end
 
-  if @@version >= "1.3.5"
-    def test_db_stats
-      stats = @@db.stats
-      assert stats.has_key?('collections')
-      assert stats.has_key?('dataSize')
-    end
+  def test_db_stats
+    stats = @db.stats
+    assert stats.has_key?('collections')
+    assert stats.has_key?('dataSize')
   end
 
   context "database profiling" do
     setup do
-      @db  = @@client[TEST_DB]
+      @db  = @client[TEST_DB]
       @coll = @db['test']
       @coll.remove
       @r1 = @coll.insert('a' => 1) # collection not created until it's used
@@ -319,7 +337,7 @@ class DBTest < Test::Unit::TestCase
     end
 
     should "return profiling info" do
-      if @@version >= "2.2"
+      with_min_version('2.2') do
         @db.profiling_level = :all
         @coll.find()
         @db.profiling_level = :off
@@ -335,7 +353,7 @@ class DBTest < Test::Unit::TestCase
 
     should "validate collection" do
       doc = @db.validate_collection(@coll.name)
-      if @@version >= "1.9.1"
+      if @version >= "1.9.1"
         assert doc['valid']
       else
         assert doc['result']

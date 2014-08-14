@@ -19,11 +19,11 @@ class ReplicaSetAckTest < Test::Unit::TestCase
   def setup
     ensure_cluster(:rs)
     @client = MongoReplicaSetClient.new(@rs.repl_set_seeds)
+    ensure_admin_user(@client)
 
     @slave1 = MongoClient.new(
       @client.secondary_pools.first.host,
       @client.secondary_pools.first.port, :slave_ok => true)
-
     assert !@slave1.read_primary?
 
     @db = @client.db(TEST_DB)
@@ -32,6 +32,7 @@ class ReplicaSetAckTest < Test::Unit::TestCase
   end
 
   def teardown
+    clear_admin_user(@client)
     @client.close if @conn
   end
 
@@ -57,6 +58,10 @@ class ReplicaSetAckTest < Test::Unit::TestCase
   end
 
   def test_safe_mode_replication_ack
+    if @slave1.server_version >= '2.7.1'
+      @slave1['admin'].authenticate('admin', 'password')
+    end
+
     @col.insert({:baz => "bar"}, :w => 3, :wtimeout => 5000)
 
     assert @col.insert({:foo => "0" * 5000}, :w => 3, :wtimeout => 5000)

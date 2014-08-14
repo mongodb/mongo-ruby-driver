@@ -15,14 +15,19 @@
 module BasicAuthTests
 
   def init_auth_basic
-    # enable authentication by creating and logging in as admin user
+    # attempt to login as an admin user before creating one.
+    # note: ensure_admin_user only adds an admin user for systems > 2.7.1 with auth.
+    # To test authentication, we always need to have one here.
     @admin = @client['admin']
-    @admin.add_user('admin', 'password', nil, :roles => ['readAnyDatabase',
-                                                         'readWriteAnyDatabase',
-                                                         'userAdminAnyDatabase',
-                                                         'dbAdminAnyDatabase',
-                                                         'clusterAdmin'])
-    @admin.authenticate('admin', 'password')
+    begin
+      @admin.logout
+      @admin.authenticate('admin', 'password')
+    rescue Mongo::AuthenticationError => ex
+      # pre-2.6 servers do not support the 'root' role.
+      @admin.add_user('admin', 'password', nil, :roles => ['root',
+                                                           'userAdminAnyDatabase'])
+      @admin.authenticate('admin', 'password')
+    end
 
     # db user for cleanup (for pre-2.4)
     @db.add_user('admin', 'cleanup', nil, :roles => [])
@@ -34,10 +39,12 @@ module BasicAuthTests
   end
 
   def remove_all_users(database, username, password)
-    database.authenticate(username, password) unless has_auth?(database.name)
+    database.logout
+    database.authenticate(username, password)
     if @client.server_version < '2.5'
       database['system.users'].remove
     else
+      @admin.authenticate('admin', 'password') unless has_auth?(@admin.name)
       database.command(:dropAllUsersFromDatabase => 1)
     end
     database.logout
@@ -45,6 +52,22 @@ module BasicAuthTests
 
   def has_auth?(db_name)
     @client.auths.any? { |a| a[:source] == db_name }
+  end
+
+  def test_add_user_without_localhost_exception
+    # try to use the add_user command while logged out,
+    # and after the first user has been created.
+    # assure that this is NOT allowed.
+    init_auth_basic
+    @admin.logout
+
+    assert_raise Mongo::OperationFailure do
+      @db.add_user('Lionel', 'rawr', nil, :roles => ['read'])
+    end
+
+    @admin.authenticate('admin', 'password')
+
+    teardown_basic
   end
 
   def test_add_remove_user
