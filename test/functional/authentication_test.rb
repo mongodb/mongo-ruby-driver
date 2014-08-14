@@ -27,9 +27,10 @@ class AuthenticationTest < Test::Unit::TestCase
   include GSSAPITests
 
   def setup
-    @client    = MongoClient.new(TEST_HOST, TEST_PORT)
+    @client    = standard_connection
+    @admin     = @client['admin']
     @version   = @client.server_version
-    @db        = @client[TEST_DB]
+    @db        = @client['ruby-test']
     @host_info = host_port
   end
 end
