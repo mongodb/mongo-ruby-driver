@@ -467,7 +467,7 @@ class DBAPITest < Test::Unit::TestCase
 
   def test_regex_multi_line
     if @@version >= "1.9.1"
-doc = <<HERE
+      doc = <<HERE
   the lazy brown
   fox
 HERE
@@ -542,6 +542,8 @@ HERE
   end
 
   def test_eval
+    grant_admin_user_eval_role(@@client)
+
     assert_equal 3, @@db.eval('function (x) {return x;}', 3)
 
     assert_equal nil, @@db.eval("function (x) {db.test_eval.save({y:x});}", 5)
@@ -619,26 +621,26 @@ HERE
     test.insert("a" => 1)
 
     assert_equal 3, test.group(:initial => {"count" => 0},
-                      :reduce => "function (obj, prev) { prev.count++; }")[0]["count"]
+                               :reduce => "function (obj, prev) { prev.count++; }")[0]["count"]
     assert_equal 3, test.group(:initial => {"count" => 0},
-                      :reduce => "function (obj, prev) { prev.count++; }")[0]["count"]
+                               :reduce => "function (obj, prev) { prev.count++; }")[0]["count"]
     assert_equal 1, test.group(:cond => {"a" => {"$gt" => 1}},
-                      :initial => {"count" => 0}, :reduce => "function (obj, prev) { prev.count++; }")[0]["count"]
+                               :initial => {"count" => 0}, :reduce => "function (obj, prev) { prev.count++; }")[0]["count"]
     assert_equal 1, test.group(:cond => {"a" => {"$gt" => 1}},
-                      :initial => {"count" => 0}, :reduce => "function (obj, prev) { prev.count++; }")[0]["count"]
+                               :initial => {"count" => 0}, :reduce => "function (obj, prev) { prev.count++; }")[0]["count"]
 
     finalize = "function (obj) { obj.f = obj.count - 1; }"
     assert_equal 2, test.group(:initial => {"count" => 0},
-                      :reduce => "function (obj, prev) { prev.count++; }", :finalize => finalize)[0]["f"]
+                               :reduce => "function (obj, prev) { prev.count++; }", :finalize => finalize)[0]["f"]
 
     test.insert("a" => 2, "b" => 3)
     expected = [{"a" => 2, "count" => 2},
                 {"a" => nil, "count" => 1},
                 {"a" => 1, "count" => 1}]
     assert_equal expected, test.group(:key => ["a"], :initial => {"count" => 0},
-                             :reduce => "function (obj, prev) { prev.count++; }")
+                                      :reduce => "function (obj, prev) { prev.count++; }")
     assert_equal expected, test.group(:key => :a, :initial => {"count" => 0},
-                             :reduce => "function (obj, prev) { prev.count++; }")
+                                      :reduce => "function (obj, prev) { prev.count++; }")
 
     assert_raise OperationFailure do
       test.group(:initial => {}, :reduce => "5 ++ 5")

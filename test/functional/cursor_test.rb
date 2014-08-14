@@ -158,7 +158,7 @@ class CursorTest < Test::Unit::TestCase
     selector = {:a => 1}
     cursor = @@coll.find(selector)
     assert_equal "<Mongo::Cursor:0x#{cursor.object_id.to_s(16)} namespace='#{@@db.name}.#{@@coll.name}' " +
-        "@selector=#{selector.inspect} @cursor_id=#{cursor.cursor_id}>", cursor.inspect
+                     "@selector=#{selector.inspect} @cursor_id=#{cursor.cursor_id}>", cursor.inspect
   end
 
   def test_explain
@@ -324,7 +324,7 @@ class CursorTest < Test::Unit::TestCase
 
     opts = Cursor.new(@@coll, :timeout => false).options
     assert_equal Mongo::Constants::OP_QUERY_NO_CURSOR_TIMEOUT,
-      opts & Mongo::Constants::OP_QUERY_NO_CURSOR_TIMEOUT
+                 opts & Mongo::Constants::OP_QUERY_NO_CURSOR_TIMEOUT
   end
 
   def test_limit_exceptions

@@ -29,7 +29,7 @@ class CollectionWriterTest < Test::Unit::TestCase
   COLLECTION_NAME = 'test'
 
   def default_setup
-    @client = MongoClient.new
+    @client = MongoClient.from_uri(TEST_URI)
     @db = @client[DATABASE_NAME]
     @collection = @db[COLLECTION_NAME]
     @collection.drop
