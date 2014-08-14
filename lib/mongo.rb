@@ -64,6 +64,7 @@ module Mongo
     INVALID_BSON             = 22
     WRITE_CONCERN_FAILED     = 64
     MULTIPLE_ERRORS_OCCURRED = 65
+    UNAUTHORIZED             = 13
 
     # mongod/s 2.6 and above return code 59 when a command doesn't exist.
     # mongod versions previous to 2.6 and mongos 2.4.x return no error code
