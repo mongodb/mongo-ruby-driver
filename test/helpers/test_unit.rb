@@ -12,10 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-TEST_DB   = 'ruby_test' unless defined? TEST_DB
-TEST_HOST = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost' unless defined? TEST_HOST
-TEST_DATA = File.join(File.dirname(__FILE__), 'fixtures/data')
-TEST_BASE = Test::Unit::TestCase
+# TEST_DB       = ENV['TEST_DB']       || 'admin'
+# TEST_USER     = ENV['TEST_USER']     || 'admin_user'
+# TEST_USER_PWD = ENV['TEST_USER_PWD'] || 'password'
+# TEST_URI      = ENV['TEST_URI'] ||
+#                   "mongodb://#{TEST_USER}:#{TEST_USER_PWD}@localhost:27017/#{TEST_DB}"
+TEST_HOST     = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost' unless defined? TEST_HOST
+TEST_DATA     = File.join(File.dirname(__FILE__), 'fixtures/data')
+TEST_BASE     = Test::Unit::TestCase
 
 unless defined? TEST_PORT
   TEST_PORT = if ENV['MONGO_RUBY_DRIVER_PORT']
@@ -59,6 +63,7 @@ class Test::Unit::TestCase
 
     cluster_instance.start
     instance_variable_set("@#{kind}", cluster_instance)
+    @@replica_set   = true
   end
 
   # Generic helper to rescue and retry from a connection failure.
@@ -86,9 +91,16 @@ class Test::Unit::TestCase
   # @return [MongoClient] The client instance.
   def self.standard_connection(options={}, legacy=false)
     if legacy
-      Connection.new(TEST_HOST, TEST_PORT, options)
+      silently do
+        # We have to create the Connection object directly here instead of using TEST_URI
+        # because Connection#from_uri ends up creating a MongoClient object.
+        conn = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
+                              ENV['MONGO_RUBY_DRIVER_PORT'] || MongoClient::DEFAULT_PORT, options)
+        conn[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD)
+        conn
+      end
     else
-      MongoClient.new(TEST_HOST, TEST_PORT, options)
+      MongoClient.from_uri(TEST_URI, options)
     end
   end
 
@@ -233,11 +245,6 @@ class Test::Unit::TestCase
     end
   end
 
-  def with_auth(client, &block)
-    cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
-    yield if cmd_line_args.include?('auth')
-  end
-
   def with_default_journaling(client, &block)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
     unless client.server_version < "2.0" || cmd_line_args.include?('nojournal')
@@ -313,11 +320,128 @@ class Test::Unit::TestCase
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
     client.server_version < '2.2' && cmd_line_args.include?('auth')
   end
+
+  # When testing under narrowed localhost exception, the admin user must have
+  # special permissions to run the db_eval command.
+  def grant_admin_user_eval_role(client)
+    if auth_enabled?(client) && client.server_version >= "2.6"
+      # we need to have anyAction on anyResource to run db_eval()
+      admin = client['admin']
+      any_priv = BSON::OrderedHash.new
+      any_priv[:resource] = { :anyResource => true }
+      any_priv[:actions] = ['anyAction']
+
+      create_role = BSON::OrderedHash.new
+      create_role[:createRole] = 'db_eval'
+      create_role[:privileges] = [any_priv]
+      create_role[:roles] = []
+
+      begin
+        admin.command(create_role)
+      rescue Mongo::OperationFailure => ex
+        # role already exists
+      end
+
+      grant_role = BSON::OrderedHash.new
+      grant_role[:grantRolesToUser] = TEST_USER
+      grant_role[:roles] = ['db_eval']
+      admin.command(grant_role)
+    end
+  end
+
+  # Return true if auth is enabled, false otherwise.
+  def auth_enabled?(client)
+    begin
+      cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
+      return true if cmd_line_args.include?('auth') || cmd_line_args.include?('keyFile')
+      if security = cmd_line_args["security"]
+        return true if security["authorization"] == "enabled"
+      end
+    rescue OperationFailure => ex
+      # under narrowed localhost exception, getCmdLineOpts is not allowed.
+      return true if ex.message.include?("authorized") ||
+                      (client.server_version >= "2.7.1" &&
+                      ex.error_code == Mongo::ErrorCode::UNAUTHORIZED)
+    end
+  end
+
+  def with_auth(client, &block)
+    yield if auth_enabled?(client)
+  end
+
+  def self.ensure_admin_user
+    5.times do
+      begin
+        client = Mongo::MongoClient.new(TEST_HOST, TEST_PORT)
+        db = client[TEST_DB]
+        begin
+          db.authenticate(TEST_USER, TEST_USER_PWD)
+          TEST_BASE.class_eval { class_variable_set("@@connected_single_mongod", true) }
+          break
+        rescue Mongo::AuthenticationError => ex
+          roles = [ 'dbAdminAnyDatabase',
+                    'userAdminAnyDatabase',
+                    'readWriteAnyDatabase',
+                    'clusterAdmin' ]
+          db.add_user(TEST_USER, TEST_USER_PWD, nil, :roles => roles)
+          TEST_BASE.class_eval { class_variable_set("@@connected_single_mongod", true) }
+          break
+        end
+      rescue Mongo::ConnectionFailure
+        # mongod not available yet
+        puts "Mongod not available for auth user setup, trying again."
+        sleep(1)
+      end
+    end
+  end
+
+  def self.cleanup_admin_user
+    client = Mongo::MongoClient.from_uri(TEST_URI) if @@connected_single_mongod
+    db = client[TEST_DB]
+    begin
+      begin
+        db.authenticate(TEST_USER, TEST_USER_PWD)
+
+      rescue Mongo::ConnectionFailure, Mongo::MongoArgumentError
+      rescue Mongo::AuthenticationError
+        Test::Unit::TestCase.ensure_admin_user
+        db.authenticate(TEST_USER, TEST_USER_PWD)
+      end
+
+      client.database_names.each do |db_name|
+        if db_name =~ /^ruby_test*/
+          puts "[CLEAN-UP] Dropping '#{db_name}'..."
+          client.drop_database(db_name)
+        end
+      end
+
+      if client.server_version < '2.5'
+        db['system.users'].remove
+      else
+        db.command(:dropAllUsersFromDatabase => 1)
+      end
+
+    rescue Mongo::ConnectionFailure
+      # Nothing we can do about the mongod not being available
+    end
+  end
+end
+
+
+Test::Unit.at_start do
+  TEST_DB       = ENV['TEST_DB']       || 'admin'
+  TEST_USER     = ENV['TEST_USER']     || 'admin_user'
+  TEST_USER_PWD = ENV['TEST_USER_PWD'] || 'password'
+  TEST_URI      = ENV['TEST_URI']      ||
+      "mongodb://#{TEST_USER}:#{TEST_USER_PWD}@#{TEST_HOST}:#{TEST_PORT}/#{TEST_DB}"
+  TEST_BASE.class_eval { class_variable_set("@@connected_single_mongod", false) }
+  Test::Unit::TestCase.ensure_admin_user
 end
 
 # Before and after hooks for the entire test run
 # handles mop up after the cluster manager is done.
 Test::Unit.at_exit do
+  Test::Unit::TestCase.cleanup_admin_user
   TEST_BASE.class_eval { class_variables }.select { |v| v =~ /@@cluster_/ }.each do |cluster|
     TEST_BASE.class_eval { class_variable_get(cluster) }.stop
   end
