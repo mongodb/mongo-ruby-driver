@@ -17,19 +17,12 @@ module BulkAPIAuthTests
   include Mongo
 
   def init_auth_bulk
-    # enable authentication
-    @admin = @client["admin"]
-    @admin.add_user('admin', 'password', nil, :roles => ['readWriteAnyDatabase',
-                                                         'userAdminAnyDatabase',
-                                                         'dbAdminAnyDatabase'])
-    @admin.authenticate('admin', 'password')
-
     # Set up the test db
     @collection = @db["bulk-api-auth-tests"]
 
     # db user can insert but not remove
     res = BSON::OrderedHash.new
-    res[:db] = TEST_DB
+    res[:db] = @db.name
     res[:collection] = ""
 
     cmd = BSON::OrderedHash.new
@@ -47,31 +40,28 @@ module BulkAPIAuthTests
     @db.command(cmd)
     @db.add_user('insertAndRemove', 'password', nil, :roles => ['insertAndRemove'])
 
-    # for 2.4 cleanup etc.
-    @db.add_user('admin', 'password', nil, :roles => ['readWrite',
-                                                      'userAdmin',
-                                                      'dbAdmin'])
     @admin.logout
   end
 
-  def teardown_bulk
-    remove_all_users_and_roles(@db, 'admin', 'password')
-    remove_all_users_and_roles(@admin, 'admin', 'password')
-  end
-
   def clear_collection(collection)
-    @admin.authenticate('admin', 'password')
+    @admin.authenticate(TEST_USER, TEST_USER_PWD)
     collection.remove
     @admin.logout
   end
 
-  def remove_all_users_and_roles(database, username, password)
-    @admin.authenticate('admin', 'password')
+  def teardown_bulk
+    remove_all_users_and_roles(@db)
+    remove_all_users_and_roles(@admin)
+  end
+
+  def remove_all_users_and_roles(database)
+    @admin.authenticate(TEST_USER, TEST_USER_PWD)
     if @version < '2.5.3'
       database['system.users'].remove
     else
       database.command({:dropAllRolesFromDatabase => 1})
-      database.command({:dropAllUsersFromDatabase => 1})
+      # Don't delete the TEST_USER from the TEST_DB, it is needed for future tests
+      database.command({:dropAllUsersFromDatabase => 1}) unless database.name == TEST_DB
     end
     @admin.logout
   end
