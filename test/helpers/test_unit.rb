@@ -370,22 +370,27 @@ class Test::Unit::TestCase
   end
 
   def self.ensure_admin_user
-    begin
-      client = Mongo::MongoClient.new(TEST_HOST, TEST_PORT)
-      db = client[TEST_DB]
+    10.times do
       begin
-        db.authenticate(TEST_USER, TEST_USER_PWD)
-        TEST_BASE.class_eval { class_variable_set("@@connected_single_mongod", true) }
-      rescue Mongo::AuthenticationError => ex
-        roles = [ 'dbAdminAnyDatabase',
-                  'userAdminAnyDatabase',
-                  'readWriteAnyDatabase',
-                  'clusterAdmin' ]
-        db.add_user(TEST_USER, TEST_USER_PWD, nil, :roles => roles)
-        TEST_BASE.class_eval { class_variable_set("@@connected_single_mongod", true) }
+        client = Mongo::MongoClient.new(TEST_HOST, TEST_PORT)
+        db = client[TEST_DB]
+        begin
+          db.authenticate(TEST_USER, TEST_USER_PWD)
+          TEST_BASE.class_eval { class_variable_set("@@connected_single_mongod", true) }
+          break
+        rescue Mongo::AuthenticationError => ex
+          roles = [ 'dbAdminAnyDatabase',
+                    'userAdminAnyDatabase',
+                    'readWriteAnyDatabase',
+                    'clusterAdmin' ]
+          db.add_user(TEST_USER, TEST_USER_PWD, nil, :roles => roles)
+          TEST_BASE.class_eval { class_variable_set("@@connected_single_mongod", true) }
+          break
+        end
+      rescue Mongo::ConnectionFailure
+        # mongod not available yet, wait a second and try again
+        sleep(1)
       end
-    rescue Mongo::ConnectionFailure
-      # mongod not available yet
     end
   end
 
