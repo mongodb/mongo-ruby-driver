@@ -45,12 +45,6 @@ task :test => 'test:ext'
 task :default => ['test:without_ext', 'test:ext']
 
 namespace :test do
-
-  ENV['TEST_USER']     = 'admin_user'
-  ENV['TEST_USER_PWD'] = 'password'
-  ENV['TEST_DB']       = 'admin'
-  ENV['TEST_URI']      = "mongodb://#{ENV['TEST_USER']}:#{ENV['TEST_USER_PWD']}@localhost:27017/#{ENV['TEST_DB']}"
-
   ENV['TEST_MODE'] = 'true'
 
   desc 'Runs all test suites (excludes RS and SC tests under CI)'
@@ -71,8 +65,6 @@ namespace :test do
     t.test_files = files
     t.libs << 'test'
   end
-  task :default    => :ensure_admin_user
-  task :functional => :ensure_admin_user
   task :commit     => :default
 
   desc 'Outputs diagnostic information for troubleshooting test failures.'
@@ -115,83 +107,4 @@ namespace :test do
       t.libs << 'test'
     end
   end
-
-  task :ensure_admin_user do |t|
-    $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-    require 'mongo'
-
-    connected = false
-
-    until connected do
-      begin
-        client = Mongo::MongoClient.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                                        ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::MongoClient::DEFAULT_PORT)
-        connected = true
-        begin
-          client[ENV['TEST_DB']].authenticate(ENV['TEST_USER'], ENV['TEST_USER_PWD'])
-        rescue Mongo::AuthenticationError
-          roles = [ 'dbAdminAnyDatabase',
-                    'userAdminAnyDatabase',
-                    'readWriteAnyDatabase',
-                    'clusterAdmin' ]
-          client[ENV['TEST_DB']].add_user(ENV['TEST_USER'],
-                                          ENV['TEST_USER_PWD'],
-                                          nil,
-                                          :roles => roles)
-        end
-      rescue Mongo::ConnectionFailure
-        puts "Mongod not available for auth user setup, trying again."
-        sleep(1)
-      end
-    end
-    t.reenable
-  end
-
-  # Runs after all tests and automatically as a pre-requisite in some cases.
-  # There's no need to ever invoke this directly.
-  task :cleanup do |t|
-    begin
-      $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-      require 'mongo'
-
-      client = Mongo::MongoClient.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                                      ENV['MONGO_RUBY_DRIVER_PORT'] || Mongo::MongoClient::DEFAULT_PORT)
-
-      begin
-        client[ENV['TEST_DB']].authenticate(ENV['TEST_USER'], ENV['TEST_USER_PWD'])
-
-      rescue Mongo::ConnectionFailure
-      rescue Mongo::AuthenticationError
-        Rake::Task['test:ensure_admin_user'].invoke
-        client[ENV['TEST_DB']].authenticate(ENV['TEST_USER'], ENV['TEST_USER_PWD'])
-      end
-
-      client.database_names.each do |db_name|
-        if db_name =~ /^ruby_test*/
-          puts "[CLEAN-UP] Dropping '#{db_name}'..."
-          client.drop_database(db_name)
-        end
-      end
-
-      if client.server_version < '2.5'
-        client[ENV['TEST_DB']]['system.users'].remove
-      else
-        client[ENV['TEST_DB']].command(:dropAllUsersFromDatabase => 1)
-      end
-
-    rescue Mongo::ConnectionFailure => e
-      # moving on anyway
-    end
-
-    %w(data tmp coverage lib/bson_ext).each do |dir|
-      if File.directory?(dir)
-        puts "[CLEAN-UP] Removing '#{dir}'..."
-        FileUtils.rm_rf(dir)
-      end
-    end
-
-    t.reenable
-  end
 end
-
-Rake.application.top_level_tasks << 'test:cleanup'
