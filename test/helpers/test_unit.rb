@@ -392,7 +392,7 @@ class Test::Unit::TestCase
   def self.cleanup_admin_user
     not_cluster = TEST_BASE.class_eval { class_variables }.none? { |v| v =~ /@@cluster_/ }
 
-    if @@connected_single_mongod || not_cluster
+    if @@connected_single_mongod && not_cluster
       client = Mongo::MongoClient.from_uri(TEST_URI)
       db = client[TEST_DB]
       begin
