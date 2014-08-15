@@ -156,7 +156,6 @@ module Mongo
       warn "[DEPRECATED] Disabling the 'save_auth' option no longer has " +
            "any effect. Please see the API documentation for more details " +
            "on this change." unless save_auth.nil?
-
       @client.add_auth(self.name, username, password, source, mechanism, extra)
       true
     end
@@ -220,19 +219,25 @@ module Mongo
     def add_user(username, password=nil, read_only=false, opts={})
       begin
         user_info = command(:usersInfo => username)
-      # MongoDB >= 2.5.3 requires the use of commands to manage users.
-      # "Command not found" error didn't return an error code (59) before
-      # MongoDB 2.4.7 so we assume that a nil error code means the usersInfo
-      # command doesn't exist and we should fall back to the legacy add user code.
+        if user_info.key?('users') && !user_info['users'].empty?
+          create_or_update_user(:updateUser, username, password, read_only, opts)
+        else
+          create_or_update_user(:createUser, username, password, read_only, opts)
+        end
+          # MongoDB >= 2.5.3 requires the use of commands to manage users.
+          # "Command not found" error didn't return an error code (59) before
+          # MongoDB 2.4.7 so we assume that a nil error code means the usersInfo
+          # command doesn't exist and we should fall back to the legacy add user code.
       rescue OperationFailure => ex
-        raise ex unless Mongo::ErrorCode::COMMAND_NOT_FOUND_CODES.include?(ex.error_code)
-        return legacy_add_user(username, password, read_only, opts)
-      end
-
-      if user_info.key?('users') && !user_info['users'].empty?
-        create_or_update_user(:updateUser, username, password, read_only, opts)
-      else
-        create_or_update_user(:createUser, username, password, read_only, opts)
+        if Mongo::ErrorCode::COMMAND_NOT_FOUND_CODES.include?(ex.error_code)
+          legacy_add_user(username, password, read_only, opts)
+        elsif ex.error_code == Mongo::ErrorCode::UNAUTHORIZED
+          # In MongoDB > 2.7 the localhost exception was narrowed, and the usersInfo
+          # command is no longer allowed.  In this case, add the first user.
+          create_or_update_user(:createUser, username, password, read_only, opts)
+        else
+          raise ex
+        end
       end
     end
 
