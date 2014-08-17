@@ -115,15 +115,6 @@ module Mongo
           @spec[:documents] = original.spec[:documents].dup
         end
 
-        # The write concern to use for this operation.
-        #
-        # @return [ Mongo::WriteConcern::Mode ] The write concern.
-        #
-        # @since 2.0.0
-        def write_concern
-          @spec[:write_concern]
-        end
-
         # The documents to insert.
         #
         # @return [ Array ] The documents.
@@ -139,7 +130,7 @@ module Mongo
         #
         # @since 2.0.0
         def message(document)
-          insert_spec = opts[:continue_on_error] == 0 ? {} : { :flags => [:continue_on_error] }
+          insert_spec = options[:continue_on_error] == 0 ? {} : { :flags => [:continue_on_error] }
           Protocol::Insert.new(db_name, coll_name, [ document ], insert_spec)
         end
       end

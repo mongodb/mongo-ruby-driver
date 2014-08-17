@@ -28,7 +28,6 @@ module Mongo
         #     :index_name => 'foo_1'
         #     :opts       => { :unique => true }
         #   })
-
         # @since 2.0.0
         class EnsureIndex
           include Executable
@@ -44,7 +43,7 @@ module Mongo
           def selector
             {
               :createIndexes => coll_name,
-              :indexes => [ opts.merge(key: index, name: index_name) ],
+              :indexes => [ options.merge(key: index, name: index_name) ],
             }
           end
         end

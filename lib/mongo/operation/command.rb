@@ -102,7 +102,7 @@ module Mongo
       # @return [ Hash ] Command options.
       #
       # @since 2.0.0
-      def opts
+      def options
         unless @spec[:opts][:limit] && @spec[:opts][:limit] == -1
           return @spec[:opts].merge(:limit => -1)
         end
@@ -125,7 +125,7 @@ module Mongo
       #
       # @since 2.0.0
       def message
-        Protocol::Query.new(db_name, Database::COMMAND, selector, opts)
+        Protocol::Query.new(db_name, Database::COMMAND, selector, options)
       end
     end
   end

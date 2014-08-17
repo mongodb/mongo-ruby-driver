@@ -115,7 +115,7 @@ module Mongo
       #
       # @since 2.0.0
       def message
-        Protocol::Query.new(db_name, Database::COMMAND, selector, opts)
+        Protocol::Query.new(db_name, Database::COMMAND, selector, options)
       end
     end
   end

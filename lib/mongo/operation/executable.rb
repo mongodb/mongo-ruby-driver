@@ -142,8 +142,17 @@ module Mongo
       # @return [ Hash ] The executable options.
       #
       # @since 2.0.0
-      def opts
+      def options
         @spec[:opts] || {}
+      end
+
+      # The write concern to use for this operation.
+      #
+      # @return [ Mongo::WriteConcern::Mode ] The write concern.
+      #
+      # @since 2.0.0
+      def write_concern
+        @spec[:write_concern]
       end
 
       private
@@ -166,7 +175,7 @@ module Mongo
             db_name,
             Database::COMMAND,
             gle_message,
-            opts.merge(limit: -1)
+            options.merge(limit: -1)
           )
         end
       end
