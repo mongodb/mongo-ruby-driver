@@ -62,20 +62,7 @@ module Mongo
           unless context.primary? || context.standalone?
             raise Exception, "Must use primary server to drop an index."
           end
-          Response.new(
-            if context.write_command_enabled?
-              WriteCommand::DropIndex.new(spec).execute(context)
-            else
-              connection.dispatch([ message(index), gle ].compact)
-            end
-          ).verify!
-        end
-
-        private
-
-        def message(index)
-          index_spec = options.merge(ns: namespace, key: index, name: index_name)
-          Protocol::Insert.new(Indexable::SYSTEM, Indexable::INDEXES, [ index_spec ])
+          Response.new(WriteCommand::DropIndex.new(spec).execute(context)).verify!
         end
       end
     end
