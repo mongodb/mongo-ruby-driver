@@ -15,6 +15,7 @@
 require 'mongo/operation/write/delete'
 require 'mongo/operation/write/insert'
 require 'mongo/operation/write/update'
+require 'mongo/operation/write/drop_index'
 require 'mongo/operation/write/ensure_index'
 require 'mongo/operation/write/write_command'
 

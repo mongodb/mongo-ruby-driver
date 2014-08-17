@@ -15,20 +15,46 @@ describe Mongo::Indexable do
     client.cluster.scan!
   end
 
-  describe '#ensure_index' do
+  let(:indexable) do
+    client[TEST_COLL]
+  end
 
-    let(:indexable) do
-      client[TEST_COLL]
+  describe '#drop_index' do
+
+    let(:spec) do
+      { another: -1 }
     end
+
+    before do
+      indexable.ensure_index(spec, unique: true)
+    end
+
+    context 'when the index exists' do
+
+      let(:result) do
+        indexable.drop_index(spec)
+      end
+
+      it 'drops the index' do
+        expect(result).to be_ok
+      end
+    end
+  end
+
+  describe '#ensure_index' do
 
     context 'when the index is created' do
 
       let(:spec) do
-        { randomfield: 1 }
+        { random: 1 }
       end
 
       let(:result) do
         indexable.ensure_index(spec, unique: true)
+      end
+
+      after do
+        indexable.drop_index(spec)
       end
 
       it 'returns ok' do
@@ -45,6 +71,7 @@ describe Mongo::Indexable do
       it 'raises an exception' do
         expect {
           indexable.ensure_index(spec, unique: true)
+          indexable.ensure_index(spec, unique: false)
         }.to raise_error(Mongo::Operation::Write::Failure)
       end
     end
