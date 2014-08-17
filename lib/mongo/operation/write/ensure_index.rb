@@ -69,7 +69,9 @@ module Mongo
             if context.write_command_enabled?
               WriteCommand::EnsureIndex.new(spec).execute(context)
             else
-              connection.dispatch([ message(index), gle ].compact)
+              context.with_connection do |connection|
+                connection.dispatch([ message(index), gle ].compact)
+              end
             end
           ).verify!
         end
