@@ -13,11 +13,8 @@
 # limitations under the License.
 
 module Mongo
-
   module Operation
-
     module Write
-
       module WriteCommand
 
         # Provides common behavior for all write commands.
@@ -78,7 +75,7 @@ module Mongo
           # @return [ Hash ] Command options.
           #
           # @since 2.0.0
-          def opts
+          def options
             return { :limit => -1 } unless @spec[:opts]
             unless @spec[:opts][:limit] && @spec[:opts][:limit] == -1
               @spec[:opts].merge(:limit => -1)
@@ -87,11 +84,11 @@ module Mongo
 
           # The wire protocol message for this write operation.
           #
-          # @return [ Mongo::Protocol::Query ] Wire protocol message. 
+          # @return [ Mongo::Protocol::Query ] Wire protocol message.
           #
           # @since 2.0.0
           def message
-            Protocol::Query.new(db_name, Database::COMMAND, selector, opts)
+            Protocol::Query.new(db_name, Database::COMMAND, selector, options)
           end
         end
       end

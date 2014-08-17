@@ -121,15 +121,6 @@ module Mongo
           @spec[:updates] = original.spec[:updates].dup
         end
 
-        # The write concern to use for this operation.
-        #
-        # @return [ Mongo::WriteConcern::Mode ] The write concern.
-        #
-        # @since 2.0.0
-        def write_concern
-          @spec[:write_concern]
-        end
-
         # The update documents.
         #
         # @return [ Array ] The update documents.

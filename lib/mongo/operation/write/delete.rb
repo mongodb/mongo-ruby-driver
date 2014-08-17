@@ -119,15 +119,6 @@ module Mongo
           @spec[:deletes] = original.spec[:deletes].clone
         end
 
-        # The write concern to use for this operation.
-        #
-        # @return [ Mongo::WriteConcern::Mode ] The write concern.
-        #
-        # @since 2.0.0
-        def write_concern
-          @spec[:write_concern]
-        end
-
         # The delete documents.
         #
         # @return [ Array ] The delete documents.
