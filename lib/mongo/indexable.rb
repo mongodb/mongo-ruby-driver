@@ -82,75 +82,23 @@ module Mongo
     # @since 2.0.0
     TIME_TO_EXPIRE = 300.freeze #5 minutes.
 
-    # Create a new index on this collection.
+    # Drop an index by its specification.
     #
-    # @param [ String, Array ] spec A single field name or an array of
-    #   [field_name, type] pairs.
-    # @param [ Hash ] opts Options for this index.
+    # @example Drop the index by spec.
+    #   indexable.drop_index(name: 1)
     #
-    # @option opts [ true, false ] :unique (false) If true, this index will enforce
-    #   a uniqueness constraint on that field.
-    # @option opts [ true, false ] :background (false) If true, the index will be built
-    #   in the background (only available for server versions >= 1.3.2 )
-    # @option opts [ true, false ] :drop_dups (false) If creating a unique index on
-    #   this collection, this option will keep the first document the database indexes
-    #   and drop all subsequent documents with duplicate values on this field.
-    # @option opts [ Integer ] :bucket_size (nil) For use with geoHaystack indexes.
-    #   Number of documents to group together within a certain proximity to a given
-    #   longitude and latitude.
-    # @option opts [ Integer ] :max (nil) Specify the max latitude and longitude for
-    #   a geo index.
-    # @option opts [ Integer ] :min (nil) Specify the min latitude and longitude for
-    #   a geo index.
-    #
-    # @note if your code calls create_index frequently, you can use
-    #  Collection#ensure_index instead to avoid redundant index creation.
-    #
-    # @example Creating a compound index using a hash: (Ruby 1.9+ Syntax)
-    #   @posts.create_index({'subject' => Mongo::ASCENDING,
-    #                        'created_at' => Mongo::DESCENDING})
-    #
-    # @example Creating a compound index:
-    #   @posts.create_index([['subject', Mongo::ASCENDING],
-    #                        ['created_at', Mongo::DESCENDING]])
-    #
-    # @example Creating a geospatial index using a hash: (Ruby 1.9+ Syntax)
-    #   @restaurants.create_index(:location => Mongo::GEO2D)
-    #
-    # @example Creating a geospatial index:
-    #   @restaurants.create_index([['location' => Mongo::GEO2D]]))
-    #
-    #   # Note that this will work only if 'location' represents x,y coordinates:
-    #   {'location': [0, 50]}
-    #   {'location': {'x' => 0, 'y' => 50}}
-    #   {'location': {'latitude' => 0, 'longitude' => 50}}
-    #
-    # @example A geospatial index with alternate longitude and latitude:
-    #   @restaurants.create_index([['location', Mongo::GEO2D]],
-    #                             :min => 500, :max => 500)
-    #
-    # @return [ String ] the name of the index created.
+    # @param [ Hash ] spec The index to drop.
     #
     # @since 2.0.0
-    # def create_index(spec, opts={})
-      # apply_index(parse_index_spec(spec), opts)
-    # end
-
-    # Drop a specified index by name.
-    #
-    # @param [ String ] name The index to drop.
-    #
-    # @since 2.0.0
-    # def drop_index(name)
-      # drop_index_by_name(name)
-    # end
-
-    # Drop all indexes on this collection.
-    #
-    # @since 2.0.0
-    # def drop_indexes
-      # drop_index_by_name('*')
-    # end
+    def drop_index(spec)
+      server = server_preference.primary(cluster.servers).first
+      Operation::Write::DropIndex.new(
+        index: spec,
+        db_name: database.name,
+        coll_name: name,
+        index_name: index_name(spec)
+      ).execute(server.context)
+    end
 
     # Calls create_index and sets a flag not to do so again for another X minutes.
     #  This time can be specified as an option when initializing a Mongo::DB object
@@ -175,7 +123,7 @@ module Mongo
     # @option options [ Integer ] :min (nil) Specify the min latitude and longitude for
     #   a geo index.
     #
-    # @return [ String ] the name of the index.
+    # @return [ EnsureIndex::Response ] The response.
     #
     # @since 2.0.0
     def ensure_index(spec, options = {})
