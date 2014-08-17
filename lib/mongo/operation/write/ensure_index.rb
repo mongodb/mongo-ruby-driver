@@ -79,7 +79,7 @@ module Mongo
         private
 
         def message(index)
-          index_spec = options.merge(ns: namespace, key: index, name: index_name)
+          index_spec = opts.merge(ns: namespace, key: index, name: index_name)
           Protocol::Insert.new(Indexable::SYSTEM, Indexable::INDEXES, [ index_spec ])
         end
       end
