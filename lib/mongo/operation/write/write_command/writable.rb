@@ -46,15 +46,6 @@ module Mongo
             false
           end
 
-          # The write concern to use for this operation.
-          #
-          # @return [ Mongo::WriteConcern::Mode ] The write concern.
-          #
-          # @since 2.0.0
-          def write_concern
-            @spec[:write_concern] || WriteConcern::Mode::DEFAULT
-          end
-
           # Whether the batch writes should be applied in the same order the
           # items appear, ie. sequentially. 
           # If ordered is false, the server applies the batch items in no particular
