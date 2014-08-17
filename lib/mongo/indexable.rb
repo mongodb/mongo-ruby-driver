@@ -89,14 +89,32 @@ module Mongo
     #
     # @param [ Hash ] spec The index to drop.
     #
+    # @return [ Operation::Write::DropIndex::Response ] The response.
+    #
     # @since 2.0.0
     def drop_index(spec)
       server = server_preference.primary(cluster.servers).first
       Operation::Write::DropIndex.new(
-        index: spec,
         db_name: database.name,
         coll_name: name,
         index_name: index_name(spec)
+      ).execute(server.context)
+    end
+
+    # Drop all indexes on the collection.
+    #
+    # @example Drop all indexes on the collection.
+    #   indexable.drop_indexes
+    #
+    # @return [ Operation::Write::DropIndex::Response ] The response.
+    #
+    # @since 2.0.0
+    def drop_indexes
+      server = server_preference.primary(cluster.servers).first
+      Operation::Write::DropIndex.new(
+        db_name: database.name,
+        coll_name: name,
+        index_name: '*'
       ).execute(server.context)
     end
 

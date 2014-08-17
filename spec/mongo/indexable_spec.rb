@@ -41,6 +41,28 @@ describe Mongo::Indexable do
     end
   end
 
+  describe '#drop_indexes' do
+
+    let(:spec) do
+      { another: -1 }
+    end
+
+    before do
+      indexable.ensure_index(spec, unique: true)
+    end
+
+    context 'when indexes exists' do
+
+      let(:result) do
+        indexable.drop_indexes
+      end
+
+      it 'drops the index' do
+        expect(result).to be_ok
+      end
+    end
+  end
+
   describe '#ensure_index' do
 
     context 'when the index is created' do
