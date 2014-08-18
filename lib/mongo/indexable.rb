@@ -82,7 +82,10 @@ module Mongo
     # @example Drop the index by spec.
     #   indexable.drop_index(name: 1)
     #
-    # @param [ Hash ] spec The index to drop.
+    # @example Drop an index by its name.
+    #   indexable.drop_index('name_1')
+    #
+    # @param [ Hash, String ] spec The index spec or name to drop.
     #
     # @return [ Operation::Write::DropIndex::Response ] The response.
     #
@@ -92,7 +95,7 @@ module Mongo
       Operation::Write::DropIndex.new(
         db_name: database.name,
         coll_name: name,
-        index_name: index_name(spec)
+        index_name: spec.is_a?(String) ? spec : index_name(spec)
       ).execute(server.context)
     end
 

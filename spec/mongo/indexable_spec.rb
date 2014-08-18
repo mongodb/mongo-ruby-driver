@@ -29,14 +29,31 @@ describe Mongo::Indexable do
       indexable.ensure_index(spec, unique: true)
     end
 
-    context 'when the index exists' do
+    context 'when providing an index spec' do
 
-      let(:result) do
-        indexable.drop_index(spec)
+      context 'when the index exists' do
+
+        let(:result) do
+          indexable.drop_index(spec)
+        end
+
+        it 'drops the index' do
+          expect(result).to be_ok
+        end
       end
+    end
 
-      it 'drops the index' do
-        expect(result).to be_ok
+    context 'when providing an index name' do
+
+      context 'when the index exists' do
+
+        let(:result) do
+          indexable.drop_index('another_-1')
+        end
+
+        it 'drops the index' do
+          expect(result).to be_ok
+        end
       end
     end
   end
