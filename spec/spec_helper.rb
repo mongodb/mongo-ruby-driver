@@ -70,14 +70,25 @@ RSpec.configure do |config|
   end
 end
 
-TEST_DB       = 'ruby-driver'
-TEST_COLL     = 'test'
-TEST_SET      = 'ruby-driver-rs'
-TEST_USER     = 'test-user'
-TEST_PASSWORD = 'password'
-COVERAGE_MIN  = 90
+TEST_DB         = 'ruby-driver'
+TEST_COLL       = 'test'
+TEST_SET        = 'ruby-driver-rs'
+TEST_USER       = 'test-user'
+TEST_PASSWORD   = 'password'
+COVERAGE_MIN    = 90
 
 ROOT_USER = Mongo::Auth::User.new('admin', 'root-user', 'password')
+
+def write_command_enabled?
+  @client ||= initialize_scanned_client!
+  @write_command_enabled = @client.cluster.servers.first.write_command_enabled?
+end
+
+def initialize_scanned_client!
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
+  client.cluster.scan!
+  client
+end
 
 # require all shared examples
 Dir['./spec/support/shared/*.rb'].sort.each { |file| require file }

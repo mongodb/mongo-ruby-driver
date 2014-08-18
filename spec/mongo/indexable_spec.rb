@@ -90,11 +90,18 @@ describe Mongo::Indexable do
         { name: 1 }
       end
 
-      it 'raises an exception' do
+      before do
+        indexable.ensure_index(spec, unique: true)
+      end
+
+      it 'raises an exception', if: write_command_enabled? do
         expect {
-          indexable.ensure_index(spec, unique: true)
           indexable.ensure_index(spec, unique: false)
         }.to raise_error(Mongo::Operation::Write::Failure)
+      end
+
+      it 'does not raise an exception', unless: write_command_enabled? do
+        expect(indexable.ensure_index(spec, unique: false)).to be_ok
       end
     end
   end

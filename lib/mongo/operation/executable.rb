@@ -122,7 +122,7 @@ module Mongo
       #
       # @since 2.0.0
       def namespace
-        "#{coll_name}.#{db_name}"
+        "#{db_name}.#{coll_name}"
       end
 
       # If an operation including this module doesn't define #merge!, neither

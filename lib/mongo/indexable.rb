@@ -54,15 +54,10 @@ module Mongo
     # @since 2.0.0
     HASHED = 'hashed'.freeze
 
-    # Constant for the system database.
-    #
-    # @since 2.0.0
-    SYSTEM = 'system'.freeze
-
     # Constant for the indexes collection.
     #
     # @since 2.0.0
-    INDEXES = 'indexes'.freeze
+    SYSTEM_INDEXES = 'system.indexes'.freeze
 
     # An array of allowable index values.
     #
