@@ -152,7 +152,7 @@ module Mongo
       #
       # @since 2.0.0
       def write_concern
-        @spec[:write_concern] || WriteConcern::Mode::DEFAULT
+        @spec[:write_concern] || WriteConcern::Mode.get(WriteConcern::Mode::DEFAULT)
       end
 
       private
