@@ -30,7 +30,6 @@ module Mongo
         #
         # @example
         #   Write::DropIndex.new({
-        #     :index         => { :name => 1, :age => -1 },
         #     :db_name       => 'test',
         #     :coll_name     => 'test_coll',
         #     :index_name    => 'name_1_age_-1'

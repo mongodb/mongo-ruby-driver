@@ -2,21 +2,8 @@ require 'spec_helper'
 
 describe Mongo::Indexable do
 
-  let(:client) do
-    Mongo::Client.new(
-      [ '127.0.0.1:27017' ],
-      database: TEST_DB,
-      username: ROOT_USER.name,
-      password: ROOT_USER.password
-    )
-  end
-
-  before do
-    client.cluster.scan!
-  end
-
   let(:indexable) do
-    client[TEST_COLL]
+    authorized_client[TEST_COLL]
   end
 
   describe '#drop_index' do
