@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/write_command/writable'
-require 'mongo/operation/write/write_command/delete'
-require 'mongo/operation/write/write_command/insert'
-require 'mongo/operation/write/write_command/update'
-require 'mongo/operation/write/write_command/drop_index'
-require 'mongo/operation/write/write_command/ensure_index'
+require 'mongo/operation/write/command/writable'
+require 'mongo/operation/write/command/delete'
+require 'mongo/operation/write/command/insert'
+require 'mongo/operation/write/command/update'
+require 'mongo/operation/write/command/drop_index'
+require 'mongo/operation/write/command/ensure_index'

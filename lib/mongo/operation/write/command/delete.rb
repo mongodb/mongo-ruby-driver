@@ -18,7 +18,7 @@ module Mongo
 
     module Write
 
-      module WriteCommand
+      module Command
 
         # A MongoDB delete write command operation.
         # Supported in server versions >= 2.5.5
@@ -26,7 +26,7 @@ module Mongo
         # @example Initialize a delete write command.
         #   include Mongo
         #   include Operation
-        #   Write::WriteCommand::Delete.new({ :deletes       => [{ :q => { :foo => 1 },
+        #   Write::Command::Delete.new({ :deletes       => [{ :q => { :foo => 1 },
         #                                                          :limit => 1 }],
         #                                     :db_name       => 'test',
         #                                     :coll_name     => 'test_coll',

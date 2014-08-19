@@ -15,7 +15,7 @@
 module Mongo
   module Operation
     module Write
-      module WriteCommand
+      module Command
 
         # A MongoDB insert write command operation.
         # Supported in server versions >= 2.5.5
@@ -23,7 +23,7 @@ module Mongo
         # @example
         #   include Mongo
         #   include Operation
-        #   Write::WriteCommand::Insert.new({ :documents     => [{ :foo => 1 }],
+        #   Write::Command::Insert.new({ :documents     => [{ :foo => 1 }],
         #                                     :db_name       => 'test',
         #                                     :coll_name     => 'test_coll',
         #                                     :write_concern => write_concern,

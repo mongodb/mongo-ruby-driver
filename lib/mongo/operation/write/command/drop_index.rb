@@ -15,35 +15,35 @@
 module Mongo
   module Operation
     module Write
-      module WriteCommand
+      module Command
 
-        # A MongoDB ensure index write command operation.
+        # A MongoDB drop index write command operation.
         # Supported in server versions >= 2.5.5
         #
         # @example
-        #   Write::WriteCommand::EnsureIndex.new({
+        #   Write::Command::DropIndex.new({
         #     :index      => { :foo => 1 },
         #     :db_name    => 'test',
         #     :coll_name  => 'test_coll',
         #     :index_name => 'foo_1'
-        #     :opts       => { :unique => true }
         #   })
+
         # @since 2.0.0
-        class EnsureIndex
+        class DropIndex
           include Executable
           include Writable
 
           private
 
-          # The query selector for this ensure index command operation.
+          # The query selector for this drop index command operation.
           #
           # @return [ Hash ] The selector describing this insert operation.
           #
           # @since 2.0.0
           def selector
             {
-              :createIndexes => coll_name,
-              :indexes => [ options.merge(key: index, name: index_name) ],
+              :deleteIndexes => coll_name,
+              :index => index_name
             }
           end
         end

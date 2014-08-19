@@ -21,7 +21,7 @@ module Mongo
       # A MongoDB insert operation.
       # If a server with version >= 2.5.5 is being used, a write command operation
       # will be created and sent instead.
-      # See Mongo::Operation::Write::WriteCommand::Insert
+      # See Mongo::Operation::Write::Command::Insert
       #
       # @since 2.0.0
       class Insert
@@ -70,7 +70,7 @@ module Mongo
             raise Exception, "Must use primary server"
           end
           if context.write_command_enabled?
-            op = WriteCommand::Insert.new(spec)
+            op = Command::Insert.new(spec)
             Response.new(op.execute(context)).verify!
           else
             documents.each do |d|

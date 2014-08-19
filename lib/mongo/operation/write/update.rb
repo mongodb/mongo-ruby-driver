@@ -21,7 +21,7 @@ module Mongo
       # A MongoDB update operation.
       # If the server version is >= 2.5.5, a write command operation will be created
       # and sent instead.
-      # See Mongo::Operation::Write::WriteCommand::Update
+      # See Mongo::Operation::Write::Command::Update
       #
       # @since 2.0.0
       class Update
@@ -76,7 +76,7 @@ module Mongo
             raise Exception, "Must use primary server"
           end
           if context.write_command_enabled?
-            op = WriteCommand::Update.new(spec)
+            op = Command::Update.new(spec)
             Response.new(op.execute(context)).verify!
           else
             Response.new(nil, updates.reduce(0) do |count, d|

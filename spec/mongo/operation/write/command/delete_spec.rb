@@ -1,11 +1,11 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Write::WriteCommand::Insert do
+describe Mongo::Operation::Write::Command::Delete do
   include_context 'operation'
 
-  let(:documents) { [{ :foo => 1 }] }
+  let(:deletes) { [{:q => { :foo => 1 }, :limit => 1}] }
   let(:spec) do
-    { :documents     => documents,
+    { :deletes       => deletes,
       :db_name       => db_name,
       :coll_name     => coll_name,
       :write_concern => write_concern,
@@ -38,11 +38,11 @@ describe Mongo::Operation::Write::WriteCommand::Insert do
       end
 
       context 'when two ops have different specs' do
-        let(:other_documents) { [{ :bar => 1 }] }
+        let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
         let(:other_spec) do
-          { :documents     => other_documents,
+          { :deletes       => other_deletes,
             :db_name       => db_name,
-            :insert        => coll_name,
+            :coll_name     => coll_name,
             :write_concern => write_concern.options,
             :ordered       => true
           }
@@ -85,8 +85,8 @@ describe Mongo::Operation::Write::WriteCommand::Insert do
 
       context 'message' do
         let(:expected_selector) do
-          { :documents     => documents,
-            :insert        => coll_name,
+          { :deletes       => deletes,
+            :delete        => coll_name,
             :write_concern => write_concern.options,
             :ordered       => true
           }
@@ -121,4 +121,3 @@ describe Mongo::Operation::Write::WriteCommand::Insert do
     end
   end
 end
-

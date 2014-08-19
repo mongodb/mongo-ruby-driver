@@ -61,7 +61,7 @@ module Mongo
           unless context.primary? || context.standalone?
             raise Exception, "Must use primary server to drop an index."
           end
-          Response.new(WriteCommand::DropIndex.new(spec).execute(context)).verify!
+          Response.new(Command::DropIndex.new(spec).execute(context)).verify!
         end
       end
     end

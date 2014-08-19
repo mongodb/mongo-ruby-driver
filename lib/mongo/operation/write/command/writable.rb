@@ -15,7 +15,7 @@
 module Mongo
   module Operation
     module Write
-      module WriteCommand
+      module Command
 
         # Provides common behavior for all write commands.
         #

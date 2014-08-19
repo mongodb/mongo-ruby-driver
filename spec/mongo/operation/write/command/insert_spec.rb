@@ -1,14 +1,11 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Write::WriteCommand::Update do
+describe Mongo::Operation::Write::Command::Insert do
   include_context 'operation'
 
-  let(:updates) { [{:q => { :foo => 1 },
-                    :u => { :$set => { :bar => 1 } },
-                    :multi => true,
-                    :upsert => false }] }
+  let(:documents) { [{ :foo => 1 }] }
   let(:spec) do
-    { :updates       => updates,
+    { :documents     => documents,
       :db_name       => db_name,
       :coll_name     => coll_name,
       :write_concern => write_concern,
@@ -41,14 +38,11 @@ describe Mongo::Operation::Write::WriteCommand::Update do
       end
 
       context 'when two ops have different specs' do
-        let(:other_updates) { [{:q => { :bar => 1 },
-                          :u => { :$set => { :bar => 2 } },
-                          :multi => true,
-                          :upsert => false }] }
+        let(:other_documents) { [{ :bar => 1 }] }
         let(:other_spec) do
-          { :updates       => other_updates,
+          { :documents     => other_documents,
             :db_name       => db_name,
-            :coll_name     => coll_name,
+            :insert        => coll_name,
             :write_concern => write_concern.options,
             :ordered       => true
           }
@@ -91,8 +85,8 @@ describe Mongo::Operation::Write::WriteCommand::Update do
 
       context 'message' do
         let(:expected_selector) do
-          { :updates       => updates,
-            :update        => coll_name,
+          { :documents     => documents,
+            :insert        => coll_name,
             :write_concern => write_concern.options,
             :ordered       => true
           }

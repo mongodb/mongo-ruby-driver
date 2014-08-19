@@ -1,11 +1,14 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Write::WriteCommand::Delete do
+describe Mongo::Operation::Write::Command::Update do
   include_context 'operation'
 
-  let(:deletes) { [{:q => { :foo => 1 }, :limit => 1}] }
+  let(:updates) { [{:q => { :foo => 1 },
+                    :u => { :$set => { :bar => 1 } },
+                    :multi => true,
+                    :upsert => false }] }
   let(:spec) do
-    { :deletes       => deletes,
+    { :updates       => updates,
       :db_name       => db_name,
       :coll_name     => coll_name,
       :write_concern => write_concern,
@@ -38,9 +41,12 @@ describe Mongo::Operation::Write::WriteCommand::Delete do
       end
 
       context 'when two ops have different specs' do
-        let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
+        let(:other_updates) { [{:q => { :bar => 1 },
+                          :u => { :$set => { :bar => 2 } },
+                          :multi => true,
+                          :upsert => false }] }
         let(:other_spec) do
-          { :deletes       => other_deletes,
+          { :updates       => other_updates,
             :db_name       => db_name,
             :coll_name     => coll_name,
             :write_concern => write_concern.options,
@@ -85,8 +91,8 @@ describe Mongo::Operation::Write::WriteCommand::Delete do
 
       context 'message' do
         let(:expected_selector) do
-          { :deletes       => deletes,
-            :delete        => coll_name,
+          { :updates       => updates,
+            :update        => coll_name,
             :write_concern => write_concern.options,
             :ordered       => true
           }
@@ -121,3 +127,4 @@ describe Mongo::Operation::Write::WriteCommand::Delete do
     end
   end
 end
+

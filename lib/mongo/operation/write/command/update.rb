@@ -18,7 +18,7 @@ module Mongo
 
     module Write
 
-      module WriteCommand
+      module Command
 
         # A MongoDB update write command operation.
         # Supported in server versions >= 2.5.5
@@ -26,7 +26,7 @@ module Mongo
         # @example
         #   include Mongo
         #   include Operation
-        #   Write::WriteCommand::Update.new({ :updates => [{ :q => { :foo => 1 },
+        #   Write::Command::Update.new({ :updates => [{ :q => { :foo => 1 },
         #                                                    :u => { :$set =>
         #                                                            { :bar => 1 }},
         #                                                    :multi  => true,

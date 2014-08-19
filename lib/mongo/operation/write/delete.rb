@@ -21,7 +21,7 @@ module Mongo
       # A MongoDB delete operation.
       # If a server with version >= 2.5.5 is selected, a write command operation
       # will be created and sent instead.
-      # See Mongo::Operation::Write::WriteCommand::Delete
+      # See Mongo::Operation::Write::Command::Delete
       #
       # @since 2.0.0
       class Delete
@@ -74,7 +74,7 @@ module Mongo
             raise Exception, "Must use primary server"
           end
           if context.write_command_enabled?
-            op = WriteCommand::Delete.new(spec)
+            op = Command::Delete.new(spec)
             Response.new(op.execute(context)).verify!
           else
             Response.new(nil, deletes.reduce(0) do |count, d|
