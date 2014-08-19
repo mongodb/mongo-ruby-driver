@@ -150,8 +150,6 @@ static void write_utf8(bson_buffer_t buffer, VALUE string, int allow_null) {
 #define EXTENDED RE_OPTION_EXTENDED
 #endif
 
-/* TODO we ought to check that the malloc or asprintf was successful
- * and raise an exception if not. */
 /* TODO maybe we can use something more portable like vsnprintf instead
  * of this hack. And share it with the Python extension ;) */
 /* If we don't have ASPRINTF, there are two possibilities:
@@ -163,6 +161,9 @@ static void write_utf8(bson_buffer_t buffer, VALUE string, int allow_null) {
     {                                           \
         int vslength = _scprintf("%d", i) + 1;  \
         *buffer = malloc(vslength);             \
+        if (buffer == NULL) {                   \
+            rb_raise(rb_eNoMemError, "failed to allocate memory in INT2STRING");  \
+        }                                       \
         _snprintf(*buffer, vslength, "%d", i);  \
     }
 #define FREE_INTSTRING(buffer) free(buffer)
@@ -171,12 +172,21 @@ static void write_utf8(bson_buffer_t buffer, VALUE string, int allow_null) {
     {                                           \
         int vslength = snprintf(NULL, 0, "%d", i) + 1;  \
         *buffer = malloc(vslength);             \
+        if (buffer == NULL) {                   \
+            rb_raise(rb_eNoMemError, "failed to allocate memory in INT2STRING");  \
+        }                                       \
         snprintf(*buffer, vslength, "%d", i);   \
     }
 #define FREE_INTSTRING(buffer) free(buffer)
 #endif
 #else
-#define INT2STRING(buffer, i) asprintf(buffer, "%d", i);
+#define INT2STRING(buffer, i)                   \
+    {                                           \
+        int length = asprintf(buffer, "%d", i); \
+        if (length == -1) {                     \
+            rb_raise(rb_eNoMemError, "failed to allocate memory in INT2STRING");  \
+        }                                       \
+    }
 #ifdef USING_SYSTEM_ALLOCATOR_LIBRARY /* Ruby Enterprise Edition with tcmalloc */
 #define FREE_INTSTRING(buffer) system_free(buffer)
 #else
