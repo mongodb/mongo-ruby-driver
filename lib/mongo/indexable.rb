@@ -153,6 +153,22 @@ module Mongo
       ).execute(server.context)
     end
 
+    # Get all the indexes for the collection.
+    #
+    # @example Get all the indexes.
+    #   indexable.indexes
+    #
+    # @return [ Array<Hash> ] All the collection's indexes.
+    #
+    # @since 2.0.0
+    def indexes
+      server = server_preference.select_servers(cluster.servers).first
+      Operation::Read::Indexes.new(
+        db_name: database.name,
+        coll_name: name
+      ).execute(server.context)
+    end
+
     private
 
     def index_name(spec)

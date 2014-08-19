@@ -13,9 +13,7 @@
 # limitations under the License.
 
 module Mongo
-
   module Operation
-
     module Read
 
       # A MongoDB query operation.

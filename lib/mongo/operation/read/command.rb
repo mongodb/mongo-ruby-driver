@@ -11,8 +11,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-require 'mongo/operation/read/query'
-require 'mongo/operation/read/get_more'
-require 'mongo/operation/read/indexes'
-require 'mongo/operation/read/command'

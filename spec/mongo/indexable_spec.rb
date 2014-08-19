@@ -109,4 +109,27 @@ describe Mongo::Indexable do
       end
     end
   end
+
+  describe '#indexes' do
+
+    let(:spec) do
+      { name: 1 }
+    end
+
+    before do
+      indexable.ensure_index(spec, unique: true)
+    end
+
+    after do
+      indexable.drop_index(spec)
+    end
+
+    let(:indexes) do
+      indexable.indexes
+    end
+
+    it 'returns all the indexes for the database' do
+      expect(indexes.documents.size).to eq(2)
+    end
+  end
 end
