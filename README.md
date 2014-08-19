@@ -1,4 +1,4 @@
-MongoDB Ruby Driver [![Build Status](http://jenkins.bci.10gen.cc:8080/buildStatus/icon?job=mongo-ruby-driver)](http://jenkins.bci.10gen.cc:8080/job/mongo-ruby-driver/) [![Code Climate][codeclimate-img]][codeclimate-url] [![Coverage Status][coveralls-img]][coveralls-url] [![Gem Version][rubygems-img]][rubygems-url]
+MongoDB Ruby Driver [![Build Status][travis-img]][travis-url] [![Code Climate][codeclimate-img]][codeclimate-url] [![Coverage Status][coveralls-img]][coveralls-url] [![Gem Version][rubygems-img]][rubygems-url]
 -----
 The officially supported Ruby driver for [MongoDB](http://www.mongodb.org).
 
