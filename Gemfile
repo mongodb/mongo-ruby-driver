@@ -29,7 +29,7 @@ group :testing do
   gem 'sfl'
   if RUBY_VERSION > '1.8.7' || RUBY_PLATFORM =~ /java/
     if RUBY_VERSION < "1.9.0"
-      gem 'rest-client', '> 1.6.2', '< 1.7'
+      gem 'rest-client', '> 1.6.2', '< 1.7', :require => false
     end
     gem 'coveralls', :require => false
   end
