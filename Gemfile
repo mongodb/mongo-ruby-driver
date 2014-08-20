@@ -27,7 +27,9 @@ group :testing do
     gem 'shoulda-matchers', '~>1.0'
   end
   gem 'sfl'
-  gem 'coveralls', :require => false
+  if RUBY_VERSION >= '1.9.0' || RUBY_PLATFORM =~ /java/
+    gem 'coveralls', :require => false
+  end
 end
 
 group :development do
