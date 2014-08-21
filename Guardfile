@@ -6,7 +6,7 @@ guard 'bundler' do
   watch(/^.+\.gemspec/)
 end
 
-guard 'rspec', :all_after_pass => false, :cli => '-t ~style' do
+guard 'rspec', :all_after_pass => false, :cmd => 'bundle exec rspec -t ~style' do
   watch(%r{^spec/.+_spec\.rb$})
   watch(%r{^lib/(.+)\.rb$}) { |match| 'spec/#{match[1]}_spec.rb' }
   watch('spec/spec_helper.rb')  { 'spec' }

@@ -434,13 +434,5 @@ module Mongo
       return @opts[field] if value.nil?
       CollectionView.new(collection, selector, @opts.merge(field => value))
     end
-
-    # Set the option value on this +CollectionView+.
-    #
-    # @return [ CollectionView ] self.
-    def mutate(field, value)
-      @opts.merge!(field => value) unless value.nil?
-      self
-    end
   end
 end
