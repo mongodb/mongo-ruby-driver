@@ -93,12 +93,7 @@ module Mongo
     #
     # @since 2.0.0
     def drop_indexes
-      server = server_preference.primary(cluster.servers).first
-      Operation::Write::DropIndex.new(
-        db_name: database.name,
-        coll_name: name,
-        index_name: '*'
-      ).execute(server.context)
+      drop_index('*')
     end
 
     # Calls create_index and sets a flag not to do so again for another X minutes.
