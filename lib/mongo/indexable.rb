@@ -59,6 +59,9 @@ module Mongo
     # @since 2.0.0
     SYSTEM_INDEXES = 'system.indexes'.freeze
 
+    INDEX_KEY = 'key'.freeze
+    INDEX_NAME = 'name'.freeze
+
     # Drop an index by its specification.
     #
     # @example Drop the index by spec.
@@ -130,9 +133,29 @@ module Mongo
         index: spec,
         db_name: database.name,
         coll_name: name,
-        index_name: index_name(spec),
+        index_name: options[:name] || index_name(spec),
         opts: options
       ).execute(server.context)
+    end
+
+    # Convenience method for getting index information by a specific name or
+    # spec.
+    #
+    # @example Get index information by name.
+    #   indexable.find_index('name_1')
+    #
+    # @example Get index information by spec.
+    #   indexable.find_index(name: 1)
+    #
+    # @param [ Hash, String ] spec The index name or spec.
+    #
+    # @return [ Hash ] The index information.
+    #
+    # @since 2.0.0
+    def find_index(spec)
+      indexes.documents.find do |index|
+        (index[INDEX_NAME] == spec) || (index[INDEX_KEY] == normalize_keys(spec))
+      end
     end
 
     # Get all the indexes for the collection.
@@ -155,6 +178,14 @@ module Mongo
 
     def index_name(spec)
       spec.to_a.join('_')
+    end
+
+    def normalize_keys(spec)
+      return false if spec.is_a?(String)
+      spec.reduce({}) do |normalized, (key, value)|
+        normalized[key.to_s] = value
+        normalized
+      end
     end
   end
 end

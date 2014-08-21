@@ -108,6 +108,73 @@ describe Mongo::Indexable do
         expect(indexable.ensure_index(spec, unique: false)).to be_ok
       end
     end
+
+    context 'when providing an index name' do
+
+      let(:spec) do
+        { random: 1 }
+      end
+
+      let!(:result) do
+        indexable.ensure_index(spec, unique: true, name: 'random_name')
+      end
+
+      after do
+        indexable.drop_index('random_name')
+      end
+
+      it 'returns ok' do
+        expect(result).to be_ok
+      end
+
+      it 'defines the index with the provided name' do
+        expect(indexable.find_index('random_name')).to_not be_nil
+      end
+    end
+  end
+
+  describe '#find_index' do
+
+    let(:spec) do
+      { random: 1 }
+    end
+
+    let!(:result) do
+      indexable.ensure_index(spec, unique: true, name: 'random_name')
+    end
+
+    after do
+      indexable.drop_index('random_name')
+    end
+
+    context 'when providing a name' do
+
+      let(:index) do
+        indexable.find_index('random_name')
+      end
+
+      it 'returns the index' do
+        expect(index['name']).to eq('random_name')
+      end
+    end
+
+    context 'when providing a spec' do
+
+      let(:index) do
+        indexable.find_index(random: 1)
+      end
+
+      it 'returns the index' do
+        expect(index['name']).to eq('random_name')
+      end
+    end
+
+    context 'when the index does not exist' do
+
+      it 'returns nil' do
+        expect(indexable.find_index(other: 1)).to be_nil
+      end
+    end
   end
 
   describe '#indexes' do
