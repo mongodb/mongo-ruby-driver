@@ -207,7 +207,6 @@ module Mongo
       def initialize(server, config = {}, round_trip_time = 0)
         @server = server
         @config = config
-        p config
         @round_trip_time = round_trip_time
       end
 

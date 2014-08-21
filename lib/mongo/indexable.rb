@@ -59,24 +59,6 @@ module Mongo
     # @since 2.0.0
     SYSTEM_INDEXES = 'system.indexes'.freeze
 
-    # An array of allowable index values.
-    #
-    # @since 2.0.0
-    INDEX_TYPES = {
-      'ASCENDING'   => ASCENDING,
-      'DESCENDING'  => DESCENDING,
-      'GEO2D'       => GEO2D,
-      'GEO2DSPHERE' => GEO2DSPHERE,
-      'GEOHAYSTACK' => GEOHAYSTACK,
-      'TEXT'        => TEXT,
-      'HASHED'      => HASHED
-    }.freeze
-
-    # Time indexes are kept in client cache until they are considered expired.
-    #
-    # @since 2.0.0
-    TIME_TO_EXPIRE = 300.freeze #5 minutes.
-
     # Drop an index by its specification.
     #
     # @example Drop the index by spec.
