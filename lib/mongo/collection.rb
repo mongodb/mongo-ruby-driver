@@ -49,6 +49,23 @@ module Mongo
       name == other.name && database == other.database
     end
 
+    # Find documents in the collection.
+    #
+    # @example Find documents in the collection by a selector.
+    #   collection.find(name: 1)
+    #
+    # @example Get all documents in a collection.
+    #   collection.find
+    #
+    # @param [ Hash ] selector The selector to use in the find.
+    #
+    # @return [ CollectionView ] The collection view.
+    #
+    # @since 2.0.0
+    def find(selector = nil)
+      CollectionView.new(self, selector || {})
+    end
+
     # Instantiate a new collection.
     #
     # @example Instantiate a new collection.
