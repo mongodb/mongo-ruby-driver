@@ -33,10 +33,11 @@ module Mongo
     # Creates a +Cursor+ object.
     #
     # @param view [ CollectionView ] The +CollectionView+ defining the query.
-    def initialize(view, response)
+    def initialize(view, response, server)
       @view       = view
       @collection = @view.collection
       @client     = @collection.client
+      @server     = server
       process_response(response)
     end
 
@@ -61,8 +62,7 @@ module Mongo
     #
     # @params [ Object ] The response from the operation.
     def process_response(response)
-      @server    = response.server
-      @cache     = (@cache || []) + response.docs
+      @cache     = (@cache || []) + response.documents
       @returned  = (@returned || 0) + @cache.length
       @cursor_id = response.cursor_id
     end
@@ -126,8 +126,7 @@ module Mongo
     # @todo: define exceptions
     def send_get_more
       raise Exception, 'No server set' unless @server
-      context = @server.context
-      response = get_more_op.execute(context)
+      response = get_more_op.execute(@server.context)
       process_response(response)
     end
 
@@ -140,8 +139,7 @@ module Mongo
 
     # Send a +KillCursors+ message to the server and set the cursor id to 0.
     def kill_cursors
-      context = @server.context
-      kill_cursors_op.execute(context)
+      kill_cursors_op.execute(@server.context)
       @cursor_id = 0
     end
 

@@ -27,8 +27,7 @@ shared_context 'shared cursor' do
 
   def make_response(cursor_id = 0, nreturned = 5)
     double('response').tap do |response|
-      allow(response).to receive(:server) { server }
-      allow(response).to receive(:docs) { (0...nreturned).to_a }
+      allow(response).to receive(:documents) { (0...nreturned).to_a }
       allow(response).to receive(:cursor_id) { cursor_id }
     end
   end

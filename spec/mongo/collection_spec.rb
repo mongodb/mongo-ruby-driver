@@ -73,6 +73,27 @@ describe Mongo::Collection do
         expect(view.selector).to be_empty
       end
     end
+
+    context 'when iterating the collection view' do
+
+      before do
+        collection.insert([{ field: 'test1' }, { field: 'test2' }])
+      end
+
+      after do
+        collection.find.remove
+      end
+
+      let(:view) do
+        collection.find
+      end
+
+      it 'iterates over the documents' do
+        view.each do |document|
+          expect(document).to_not be_nil
+        end
+      end
+    end
   end
 
   describe '#insert' do

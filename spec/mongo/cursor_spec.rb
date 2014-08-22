@@ -22,7 +22,9 @@ describe Mongo::Cursor do
     end
   end
 
-  let(:cursor) { described_class.new(view, response) }
+  let(:cursor) do
+    described_class.new(view, response, server)
+  end
 
   describe '#inspect' do
 

@@ -78,7 +78,7 @@ module Mongo
     def initialize(database, name)
       raise InvalidName.new unless name
       @database = database
-      @name = name.to_s
+      @name = name.to_s.freeze
     end
 
     # Insert the provided documents into the collection.
@@ -101,6 +101,18 @@ module Mongo
         :write_concern => write_concern,
         :opts => options
       ).execute(server.context)
+    end
+
+    # Get the fully qualified namespace of the collection.
+    #
+    # @example Get the fully qualified namespace.
+    #   collection.namespace
+    #
+    # @return [ String ] The collection namespace.
+    #
+    # @since 2.0.0
+    def namespace
+      "#{name}.#{database.name}"
     end
 
     # Exception that is raised when trying to create a collection with no name.

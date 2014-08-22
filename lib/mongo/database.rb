@@ -137,7 +137,7 @@ module Mongo
     def initialize(client, name)
       raise InvalidName.new unless name
       @client = client
-      @name = name.to_s
+      @name = name.to_s.freeze
     end
 
     # Exception that is raised when trying to create a database with no name.
