@@ -613,10 +613,17 @@ describe Mongo::CollectionView do
           end.and_call_original
         end
 
-        it 'requests that number of docs in the first message' do
-          view.each do |doc|
+        let(:returned) do
+          view.to_a
+        end
+
+        it 'returns limited documents' do
+          expect(returned.count).to eq(5)
+        end
+
+        it 'allows iteration of the documents' do
+          returned.each do |doc|
             expect(doc).to have_key('field')
-            break
           end
         end
       end
@@ -633,10 +640,17 @@ describe Mongo::CollectionView do
           end.and_call_original
         end
 
-        it 'requests that number of docs in the first message' do
-          view.each do |doc|
+        let(:returned) do
+          view.to_a
+        end
+
+        it 'returns all the documents' do
+          expect(returned.count).to eq(10)
+        end
+
+        it 'allows iteration of all documents' do
+          returned.each do |doc|
             expect(doc).to have_key('field')
-            break
           end
         end
       end
@@ -649,10 +663,17 @@ describe Mongo::CollectionView do
           end.and_call_original
         end
 
-        it 'does not request a certain number of docs' do
-          view.each do |doc|
+        let(:returned) do
+          view.to_a
+        end
+
+        it 'returns all the documents' do
+          expect(returned.count).to eq(10)
+        end
+
+        it 'allows iteration of all documents' do
+          returned.each do |doc|
             expect(doc).to have_key('field')
-            break
           end
         end
       end
@@ -669,10 +690,17 @@ describe Mongo::CollectionView do
           end.and_call_original
         end
 
-        it 'requests the limit number of docs' do
-          view.each do |doc|
+        let(:returned) do
+          view.to_a
+        end
+
+        it 'returns the limit of documents' do
+          expect(returned.count).to eq(3)
+        end
+
+        it 'allows iteration of the documents' do
+          returned.each do |doc|
             expect(doc).to have_key('field')
-            break
           end
         end
       end
@@ -689,10 +717,17 @@ describe Mongo::CollectionView do
           end.and_call_original
         end
 
-        it 'requests the batch size in the first query message' do
-          view.each do |doc|
+        let(:returned) do
+          view.to_a
+        end
+
+        it 'returns the limit of documents' do
+          expect(returned.count).to eq(5)
+        end
+
+        it 'allows iteration of the documents' do
+          returned.each do |doc|
             expect(doc).to have_key('field')
-            break
           end
         end
       end
@@ -714,7 +749,6 @@ describe Mongo::CollectionView do
           it 'creates a special query selector' do
             view.each do |doc|
               expect(doc).to have_key('field')
-              break
             end
           end
         end
@@ -734,7 +768,6 @@ describe Mongo::CollectionView do
           it 'creates a special query selector' do
             view.each do |doc|
               expect(doc).to have_key('field')
-              break
             end
           end
         end
@@ -775,7 +808,6 @@ describe Mongo::CollectionView do
         it 'creates a special query selector' do
           view.each do |doc|
             expect(doc).to have_key('field')
-            break
           end
         end
       end
@@ -795,7 +827,6 @@ describe Mongo::CollectionView do
         it'creates a special query selector' do
           view.each do |doc|
             expect(doc).to have_key('$err')
-            break
           end
         end
       end
@@ -815,7 +846,6 @@ describe Mongo::CollectionView do
         it 'creates a special query selector' do
           view.each do |doc|
             expect(doc).to have_key('field')
-            break
           end
         end
       end
@@ -831,7 +861,6 @@ describe Mongo::CollectionView do
         it 'creates a special query selector' do
           view.each do |doc|
             expect(doc).to have_key('field')
-            break
           end
         end
       end
@@ -848,7 +877,6 @@ describe Mongo::CollectionView do
       it 'creates a normal query spec' do
         view.each do |doc|
           expect(doc).to have_key('field')
-          break
         end
       end
     end

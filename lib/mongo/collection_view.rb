@@ -298,7 +298,7 @@ module Mongo
     # The initial query operation to send to the server.
     #
     def initial_query_op
-      Mongo::Operation::Read::Query.new(query_spec)
+      Operation::Read::Query.new(query_spec)
     end
 
     # Send the initial query operation to the server.
