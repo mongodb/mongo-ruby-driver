@@ -24,25 +24,52 @@ class ShardedClusterTest < Test::Unit::TestCase
 
   def setup
     @cluster = @@mo.configure({:orchestration => 'sh', :request_content => {:id => 'sharded_cluster_1', :preset => 'basic.json'} })
-    @cluster.start
     @seed = 'mongodb://' + @cluster.object['uri']
-    @client = Mongo::MongoClient.from_uri(@seed)
-    #@client.drop_database(TEST_DB)
+    @client = Mongo::MongoShardedClient.from_uri(@seed)
+    @client.drop_database(TEST_DB)
     @db = @client[TEST_DB]
     @coll = @db[TEST_COLL]
+    @retries = 60
   end
 
   def teardown
     @coll.remove({})
-    #@client.drop_database(TEST_DB)
+    @client.drop_database(TEST_DB)
+    @cluster.delete
+  end
+
+  def reattempt(n = @retries)
+    n.times do |i|
+      begin
+        yield
+        break
+      rescue Mongo::ConnectionFailure => ex
+        assert_equal("Operation failed with the following exception: Connection reset by peer", ex.message)
+        print "#{i}?"
+        sleep(1)
+      end
+    end
+    puts
+  end
+
+  def pgrep_mongo
+    %x{pgrep -fl mongo}
   end
 
   test 'Sharded cluster mongos failover' do
     @coll.insert({'a' => 1})
     assert_equal([1], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
-    # pending
-    @coll.insert({'a' => 3})
-    assert_equal([1, 3], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
+
+    #puts "mongo processes: {\n#{pgrep_mongo}}"
+    routers = @cluster.routers
+    routers.first.stop
+    #puts "mongo processes: {\n#{pgrep_mongo}}"
+
+    reattempt do
+      @coll.insert({'a' => 2})
+    end
+
+    assert_equal([1, 2], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
   end
 end
 

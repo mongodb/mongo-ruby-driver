@@ -24,9 +24,8 @@ class StandaloneTest < Test::Unit::TestCase
 
   def setup
     @cluster = @@mo.configure({:orchestration => 'hosts', :request_content => {:id => 'standalone', :preset => 'basic.json'} })
-    @cluster.start
+    #@cluster.start # adding this results in an extra process - TODO - debug
     @seed = 'mongodb://' + @cluster.object['uri']
-    puts "seed: #{@seed.inspect}"
     @client = Mongo::MongoClient.from_uri(@seed)
     @client.drop_database(TEST_DB)
     @db = @client[TEST_DB]
@@ -40,14 +39,14 @@ class StandaloneTest < Test::Unit::TestCase
   end
 
   def pgrep_mongo
-    system("pgrep -fl mongo")
+    %x{pgrep -fl mongo}
   end
 
   test 'Standalone up, down, up' do
     @coll.insert({'a' => 1})
     assert_equal([1], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
     @cluster.stop
-    pgrep_mongo
+    #puts "mongo processes: {\n#{pgrep_mongo}}"
     assert_raise Mongo::ConnectionFailure do
       @coll.insert({'a' => 2})
     end

@@ -95,7 +95,7 @@ module Mongo
         get
       end
 
-      def get
+      def get(path = nil, options = {})
         super
         @object = @response.parsed_response if ok
         self

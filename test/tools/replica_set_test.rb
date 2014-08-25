@@ -24,9 +24,8 @@ class RelicaSetTest < Test::Unit::TestCase
 
   def setup
     @cluster = @@mo.configure({:orchestration => 'rs', :request_content => {:id => 'replica_set_1', :preset => 'basic.json'} })
-    assert_true(@cluster.ok)
     @seed = 'mongodb://' + @cluster.object['uri']
-    @client = Mongo::MongoClient.from_uri(@seed)
+    @client = Mongo::MongoReplicaSetClient.from_uri(@seed)
     @client.drop_database(TEST_DB)
     @db = @client[TEST_DB]
     @coll = @db[TEST_COLL]
@@ -41,17 +40,17 @@ class RelicaSetTest < Test::Unit::TestCase
   end
 
   def reattempt(n = @retries)
-    n.times do
+    n.times do |i|
       begin
         yield
         break
       rescue Mongo::ConnectionFailure => ex
         assert_equal("Could not checkout a socket.", ex.message)
-        print '?'
+        print "#{i}?"
         sleep(1)
       end
-      puts
     end
+    puts
   end
 
   test 'Replica set primary stepdown via driver' do

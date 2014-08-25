@@ -1,4 +1,16 @@
-
+# Copyright (C) 2009-2014 MongoDB, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 # run rspec test via - rspec --format documentation --color -Itest/tools test/tools/mongo_orchestration_spec.rb
 
@@ -25,13 +37,23 @@ describe Mongo::Orchestration::Base, :orchestration => true do
   end
 
   it 'provides get method and checks ok' do
-    base.http_request(:get)
+    base.get
     expect(base.response.code).to eq(200)
     expect(base.response.parsed_response['service']).to eq('mongo-orchestration')
     expect(base.response.response.class.name).to eq("Net::HTTPOK")
     expect(base.humanized_http_response_class_name).to eq("OK")
     expect(base.message_summary).to match(/^GET .* OK,.* JSON:/)
     expect(base.ok).to be true
+  end
+end
+
+describe Mongo::Orchestration::Resource, :orchestration => true do
+  let(:resource) { described_class.new }
+
+  it 'provides get method that sets object' do
+    resource.get
+    expect(resource.ok).to be true
+    expect(resource.object).to be
   end
 end
 
