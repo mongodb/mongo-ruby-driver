@@ -94,8 +94,8 @@ describe Mongo::Orchestration::Cluster, :orchestration => true do
     cluster.status # status for inited
     expect(cluster.message_summary).to match(%r{^GET /hosts/standalone, options: {}, 200 OK, response JSON:})
 
-    uri = cluster.object['uri']
-    expect(cluster.object['uri']).to match(%r{:})
+    mongodb_uri = cluster.object['mongodb_uri']
+    expect(cluster.object['mongodb_uri']).to match(%r{:})
 
     # add client connection when Ruby is ready for prime time
 
@@ -135,13 +135,13 @@ describe Mongo::Orchestration::Server, :orchestration => true do
     expect(cluster).to be_kind_of(Mongo::Orchestration::Cluster)
     expect(cluster).to be_instance_of(Mongo::Orchestration::Server)
     expect(cluster.object['orchestration']).to eq('hosts')
-    expect(cluster.object['uri']).to match(%r{:})
+    expect(cluster.object['mongodb_uri']).to match(%r{:})
     expect(cluster.object['procInfo']).to be
   end
 
   it 'configures the same cluster/host and does not configure a duplicate' do
     same_server = @service.configure(standalone_config)
-    expect(same_server.object['uri']).to eq(cluster.object['uri'])
+    expect(same_server.object['mongodb_uri']).to eq(cluster.object['mongodb_uri'])
     same_server.destroy
   end
 end
@@ -205,10 +205,10 @@ describe Mongo::Orchestration::ReplicaSet, :orchestration => true do
 
   it 'provides primary' do
     server = @cluster.primary
-    expect(server).to be_instance_of(Mongo::Orchestration::Server) # check object uri
+    expect(server).to be_instance_of(Mongo::Orchestration::Server) # check object mongodb_uri
     expect(server.base_path).to match(%r{/hosts/})
     expect(server.object['orchestration']).to eq('hosts')
-    expect(server.object['uri']).to match(%r{:})
+    expect(server.object['mongodb_uri']).to match(%r{:})
     expect(server.object['procInfo']).to be
   end
 
@@ -225,7 +225,7 @@ describe Mongo::Orchestration::ReplicaSet, :orchestration => true do
         expect(server).to be_instance_of(Mongo::Orchestration::Server)
         expect(server.base_path).to match(base_path)
         expect(server.object['orchestration']).to eq('hosts')
-        expect(server.object['uri']).to match(%r{:})
+        expect(server.object['mongodb_uri']).to match(%r{:})
         expect(server.object['procInfo']).to be
       end
     end
@@ -284,7 +284,7 @@ describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
       expect(shard).to be_instance_of(Mongo::Orchestration::Server)
       expect(shard.base_path).to match(%r{/hosts/})
       expect(shard.object['orchestration']).to eq('hosts')
-      expect(shard.object['uri']).to match(%r{:})
+      expect(shard.object['mongodb_uri']).to match(%r{:})
       expect(shard.object['procInfo']).to be
     end
   end
@@ -309,7 +309,7 @@ describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
         expect(server).to be_instance_of(Mongo::Orchestration::Server)
         expect(server.base_path).to match(%r{/hosts/})
         expect(server.object['orchestration']).to eq('hosts')
-        expect(server.object['uri']).to match(%r{:})
+        expect(server.object['mongodb_uri']).to match(%r{:})
         expect(server.object['procInfo']).to be
       end
     end
@@ -367,7 +367,7 @@ describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
       expect(shard).to be_instance_of(Mongo::Orchestration::ReplicaSet)
       expect(shard.base_path).to match(%r{/rs/})
       expect(shard.object['orchestration']).to eq('rs')
-      expect(shard.object['uri']).to match(%r{:})
+      expect(shard.object['mongodb_uri']).to match(%r{:})
       expect(shard.object['members']).to be
     end
   end

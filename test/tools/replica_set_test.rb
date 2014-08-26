@@ -24,8 +24,7 @@ class RelicaSetTest < Test::Unit::TestCase
 
   def setup
     @cluster = @@mo.configure({:orchestration => 'rs', :request_content => {:id => 'replica_set_1', :preset => 'basic.json'} })
-    @seed = 'mongodb://' + @cluster.object['uri']
-    @client = Mongo::MongoReplicaSetClient.from_uri(@seed)
+    @client = Mongo::MongoClient.from_uri(@cluster.object['mongodb_uri'])
     @client.drop_database(TEST_DB)
     @db = @client[TEST_DB]
     @coll = @db[TEST_COLL]

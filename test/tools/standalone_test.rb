@@ -25,8 +25,7 @@ class StandaloneTest < Test::Unit::TestCase
   def setup
     @cluster = @@mo.configure({:orchestration => 'hosts', :request_content => {:id => 'standalone', :preset => 'basic.json'} })
     #@cluster.start # adding this results in an extra process - TODO - debug
-    @seed = 'mongodb://' + @cluster.object['uri']
-    @client = Mongo::MongoClient.from_uri(@seed)
+    @client = Mongo::MongoClient.from_uri(@cluster.object['mongodb_uri'])
     @client.drop_database(TEST_DB)
     @db = @client[TEST_DB]
     @coll = @db[TEST_COLL]
