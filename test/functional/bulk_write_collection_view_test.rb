@@ -52,12 +52,6 @@ module BSON
 end
 
 class BulkWriteCollectionViewTest < Test::Unit::TestCase
-  @@client ||= standard_connection(:op_timeout => 10)
-  @@db = @@client.db(TEST_DB)
-  @@test = @@db.collection("test")
-  @@version = @@client.server_version
-
-  DATABASE_NAME = 'ruby_test_bulk_write_collection_view'
   COLLECTION_NAME = 'test'
   DUPLICATE_KEY_ERROR_CODE_SET = [11000, 11001, 12582, 16460].to_set
 
@@ -78,8 +72,9 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
   end
 
   def default_setup
-    @client = MongoClient.new
-    @db = @client[DATABASE_NAME]
+    @client = standard_connection
+    @version = @client.server_version
+    @db = @client[TEST_DB]
     @collection = @db[COLLECTION_NAME]
     @collection.drop
     @bulk = @collection.initialize_ordered_bulk_op
@@ -339,7 +334,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
       end
     end
 
-   # ----- REPLACE -----
+    # ----- REPLACE -----
 
     should "raise an error when we attempt to use replace" do
       assert_raise NoMethodError do
@@ -858,10 +853,10 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
     should "handle error for serialization with offset" do
       with_write_commands_and_operations(@db.connection) do |wire_version|
         @collection.remove
-        assert_equal 16777216, @@client.max_bson_size
+        assert_equal 16777216, @client.max_bson_size
         @bulk.find({:a => 1}).update_one({"$inc" => {:x => 1}})
         @bulk.insert({:_id => 1, :a => 1})
-        @bulk.insert(generate_sized_doc(@@client.max_message_size + 1))
+        @bulk.insert(generate_sized_doc(@client.max_message_size + 1))
         @bulk.insert({:_id => 3, :a => 3})
         ex = assert_raise BulkWriteError do
           @bulk.execute
@@ -999,7 +994,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
             @bulk.execute(write_concern)
           end
           result = ex.result
-          if @@version >= "2.5.5"
+          if @version >= "2.5.5"
             assert_match_document(
                 {
                     "ok" => 0,
@@ -1098,7 +1093,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
         @bulk = @collection.initialize_unordered_bulk_op
         @bulk.insert({:_id => 1, :a => 1})
         @bulk.insert({:_id => 1, :a => 2})
-        @bulk.insert(generate_sized_doc(@@client.max_message_size + 1))
+        @bulk.insert(generate_sized_doc(@client.max_message_size + 1))
         @bulk.insert({:_id => 3, :a => 3})
         @bulk.find({:a => 4}).upsert.replace_one({:x => 3})
         ex = assert_raise BulkWriteError do
@@ -1127,7 +1122,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
             @bulk.execute(write_concern)
           end
           result = ex.result
-          if @@version >= "2.5.5"
+          if @version >= "2.5.5"
             assert_match_document(
                 {
                     "ok" => 0,
