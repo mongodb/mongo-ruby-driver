@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TEST_DB       = ENV['TEST_DB']       || 'admin'
-# TEST_USER     = ENV['TEST_USER']     || 'admin_user'
-# TEST_USER_PWD = ENV['TEST_USER_PWD'] || 'password'
-# TEST_URI      = ENV['TEST_URI'] ||
-#                   "mongodb://#{TEST_USER}:#{TEST_USER_PWD}@localhost:27017/#{TEST_DB}"
 TEST_HOST     = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost' unless defined? TEST_HOST
 TEST_DATA     = File.join(File.dirname(__FILE__), 'fixtures/data')
 TEST_BASE     = Test::Unit::TestCase
@@ -63,7 +58,6 @@ class Test::Unit::TestCase
 
     cluster_instance.start
     instance_variable_set("@#{kind}", cluster_instance)
-    @@replica_set   = true
   end
 
   # Generic helper to rescue and retry from a connection failure.
@@ -94,8 +88,8 @@ class Test::Unit::TestCase
       silently do
         # We have to create the Connection object directly here instead of using TEST_URI
         # because Connection#from_uri ends up creating a MongoClient object.
-        conn = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost',
-                              ENV['MONGO_RUBY_DRIVER_PORT'] || MongoClient::DEFAULT_PORT, options)
+        conn = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || TEST_HOST,
+                              ENV['MONGO_RUBY_DRIVER_PORT'] || TEST_PORT, options)
         conn[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD)
         conn
       end
@@ -376,17 +370,15 @@ class Test::Unit::TestCase
         db = client[TEST_DB]
         begin
           db.authenticate(TEST_USER, TEST_USER_PWD)
-          TEST_BASE.class_eval { class_variable_set("@@connected_single_mongod", true) }
-          break
         rescue Mongo::AuthenticationError => ex
           roles = [ 'dbAdminAnyDatabase',
                     'userAdminAnyDatabase',
                     'readWriteAnyDatabase',
                     'clusterAdmin' ]
           db.add_user(TEST_USER, TEST_USER_PWD, nil, :roles => roles)
-          TEST_BASE.class_eval { class_variable_set("@@connected_single_mongod", true) }
-          break
         end
+        TEST_BASE.class_eval { class_variable_set("@@connected_single_mongod", true) }
+        break
       rescue Mongo::ConnectionFailure
         # mongod not available yet, wait a second and try again
         sleep(1)

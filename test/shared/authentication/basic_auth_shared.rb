@@ -85,7 +85,6 @@ module BasicAuthTests
     init_auth_basic
     silently { @db.add_user(@test_user, @test_user_pwd) }
     assert @db.authenticate(@test_user, @test_user_pwd)
-    #@db.remove_user(@test_user)
   end
 
   def test_authenticate_non_existent_user

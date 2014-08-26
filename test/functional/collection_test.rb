@@ -932,7 +932,7 @@ class CollectionTest < Test::Unit::TestCase
     assert_equal 2, @test.find_one()["count"]
   end
 
-  def test_safe_update_
+  def test_safe_update
     @test.create_index("x", :unique => true)
     @test.insert("x" => 5)
     @test.insert("x" => 10)

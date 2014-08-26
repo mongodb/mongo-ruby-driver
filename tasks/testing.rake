@@ -65,7 +65,7 @@ namespace :test do
     t.test_files = files
     t.libs << 'test'
   end
-  task :commit     => :default
+  task :commit => :default
 
   desc 'Outputs diagnostic information for troubleshooting test failures.'
   task :diagnostic do

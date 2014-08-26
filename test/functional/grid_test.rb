@@ -243,31 +243,31 @@ class GridTest < Test::Unit::TestCase
     end
 
     context "Streaming: " do || {}
-    setup do
-      @grid = Grid.new(@db, 'test-fs')
-    end
-
-    should "put and get a small io object with a small chunk size" do
-      read_and_write_stream('small_data.txt', 1, :chunk_size => 2)
-    end
-
-    should "put and get an empty io object" do
-      silently do
-        read_and_write_stream('empty_data', 1)
+      setup do
+        @grid = Grid.new(@db, 'test-fs')
       end
-    end
 
-    should "put and get a small io object" do
-      read_and_write_stream('small_data.txt', 1)
-    end
+      should "put and get a small io object with a small chunk size" do
+        read_and_write_stream('small_data.txt', 1, :chunk_size => 2)
+      end
 
-    should "put and get a large io object if reading less than the chunk size" do
-      read_and_write_stream('sample_data', 255 * 1024)
-    end
+      should "put and get an empty io object" do
+        silently do
+          read_and_write_stream('empty_data', 1)
+        end
+      end
 
-    should "put and get a large io object if reading more than the chunk size" do
-      read_and_write_stream('sample_data', 300 * 1024)
-    end
+      should "put and get a small io object" do
+        read_and_write_stream('small_data.txt', 1)
+      end
+
+      should "put and get a large io object if reading less than the chunk size" do
+        read_and_write_stream('sample_data', 255 * 1024)
+      end
+
+      should "put and get a large io object if reading more than the chunk size" do
+        read_and_write_stream('sample_data', 300 * 1024)
+      end
     end
   end
 end

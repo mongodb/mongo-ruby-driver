@@ -182,16 +182,17 @@ class ClientTest < Test::Unit::TestCase
   end
 
   def test_database_info
-    @client.drop_database('ruby_test')
-    @client.db('ruby_test').collection('info-test').insert('a' => 1)
+    db_name = 'ruby_test'
+    @client.drop_database(db_name)
+    @client.db(db_name).collection('info-test').insert('a' => 1)
 
     info = @client.database_info
     assert_not_nil info
     assert_kind_of Hash, info
-    assert_not_nil info['ruby_test']
-    assert info['ruby_test'] > 0
+    assert_not_nil info[db_name]
+    assert info[db_name] > 0
 
-    @client.drop_database('ruby_test')
+    @client.drop_database(db_name)
   end
 
   # @todo: localhost changes

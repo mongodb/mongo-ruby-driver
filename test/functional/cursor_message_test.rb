@@ -21,9 +21,9 @@ class CursorMessageTest < Test::Unit::TestCase
 
   def setup
     @connection = standard_connection
-    @db   = @connection.db(TEST_DB)
-    @coll = @db.collection('test')
-    @version = @connection.server_version
+    @db         = @connection.db(TEST_DB)
+    @coll       = @db.collection('test')
+    @version    = @connection.server_version
     @coll.remove
     @coll.insert('a' => 1)     # collection not created until it's used
     @coll_full_name = "#{TEST_DB}.test"
