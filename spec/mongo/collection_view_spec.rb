@@ -11,7 +11,44 @@ describe Mongo::CollectionView do
   end
 
   let(:view) do
-    described_class.new(authorized_client[TEST_COLL], selector, opts)
+    described_class.new(authorized_collection, selector, opts)
+  end
+
+  describe '#count' do
+
+    let(:documents) do
+      (1..10).map{ |i| { field: "test#{i}" }}
+    end
+
+    before do
+      authorized_collection.insert(documents)
+    end
+
+    after do
+      authorized_collection.find.remove
+    end
+
+    context 'when a selector is provided' do
+
+      let(:count) do
+        authorized_collection.find(field: 'test1').count
+      end
+
+      it 'returns the count of matching documents' do
+        expect(count).to eq(1)
+      end
+    end
+
+    context 'when no selector is provided' do
+
+      let(:count) do
+        authorized_collection.find.count
+      end
+
+      it 'returns the count of matching documents' do
+        expect(count).to eq(10)
+      end
+    end
   end
 
   describe '#initialize' do
@@ -21,7 +58,7 @@ describe Mongo::CollectionView do
     end
 
     it 'sets the collection' do
-      expect(view.collection).to eq(authorized_client[TEST_COLL])
+      expect(view.collection).to eq(authorized_collection)
     end
 
     it 'sets the selector' do
@@ -58,7 +95,7 @@ describe Mongo::CollectionView do
       end
 
       it 'returns a string containing the collection namespace' do
-        expect(view.inspect).to match(/.*#{authorized_client[TEST_COLL].namespace}.*/)
+        expect(view.inspect).to match(/.*#{authorized_collection.namespace}.*/)
       end
 
       it 'returns a string containing the selector' do
@@ -303,7 +340,7 @@ describe Mongo::CollectionView do
         end
 
         it 'returns the collection read preference' do
-          expect(view.read).to eq(authorized_client[TEST_COLL].server_preference)
+          expect(view.read).to eq(authorized_collection.server_preference)
         end
       end
     end
@@ -413,14 +450,6 @@ describe Mongo::CollectionView do
     end
   end
 
-  #describe '#count' do
-#
-  #  it 'calls count on collection' do
-  #    allow(collection).to receive(:count).and_return(10)
-  #    expect(view.count).to eq(10)
-  #  end
-  #end
-#
   #describe '#explain' do
 #
   #  it 'calls explain on collection' do
@@ -445,7 +474,7 @@ describe Mongo::CollectionView do
     context 'when the views have the same collection, selector, and opts' do
 
       let(:other) do
-        described_class.new(authorized_client[TEST_COLL], selector, opts)
+        described_class.new(authorized_collection, selector, opts)
       end
 
       it 'returns true' do
@@ -475,7 +504,7 @@ describe Mongo::CollectionView do
       end
 
       let(:other) do
-        described_class.new(authorized_client[TEST_COLL], other_selector, opts)
+        described_class.new(authorized_collection, other_selector, opts)
       end
 
       it 'returns false' do
@@ -490,7 +519,7 @@ describe Mongo::CollectionView do
       end
 
       let(:other) do
-        described_class.new(authorized_client[TEST_COLL], selector, other_opts)
+        described_class.new(authorized_collection, selector, other_opts)
       end
 
       it 'returns false' do
@@ -502,7 +531,7 @@ describe Mongo::CollectionView do
   describe '#hash' do
 
     let(:other) do
-      described_class.new(authorized_client[TEST_COLL], selector, opts)
+      described_class.new(authorized_collection, selector, opts)
     end
 
     it 'returns a unique value based on collection, selector, opts' do
@@ -531,7 +560,7 @@ describe Mongo::CollectionView do
       end
 
       let(:other) do
-        described_class.new(authorized_client[TEST_COLL], other_selector, opts)
+        described_class.new(authorized_collection, other_selector, opts)
       end
 
       it 'returns different hash values' do
@@ -546,7 +575,7 @@ describe Mongo::CollectionView do
       end
 
       let(:other) do
-        described_class.new(authorized_client[TEST_COLL], selector, other_opts)
+        described_class.new(authorized_collection, selector, other_opts)
       end
 
       it 'returns different hash values' do
@@ -581,11 +610,11 @@ describe Mongo::CollectionView do
     end
 
     before do
-      authorized_client[TEST_COLL].insert(documents)
+      authorized_collection.insert(documents)
     end
 
     after do
-      authorized_client[TEST_COLL].find.remove
+      authorized_collection.find.remove
     end
 
     context 'when sending the initial query' do

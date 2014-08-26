@@ -16,6 +16,7 @@
 module Helpers
 
   def self.included(context)
+
     context.let!(:authorized_client) do
       Mongo::Client.new(
         [ '127.0.0.1:27017' ],
@@ -25,6 +26,10 @@ module Helpers
       ).tap do |client|
         client.cluster.scan!
       end
+    end
+
+    context.let(:authorized_collection) do
+      authorized_client[TEST_COLL]
     end
 
     context.let(:authorized_primary) do

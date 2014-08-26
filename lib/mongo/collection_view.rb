@@ -43,7 +43,26 @@ module Mongo
     # @return [ Hash ] The additional query options.
     attr_reader :opts
 
-    def_delegators :@collection, :client, :cluster, :server_preference, :write_concern
+    def_delegators :@collection, :client, :cluster, :database, :server_preference, :write_concern
+
+    # Get a count of matching documents in the collection.
+    #
+    # @example Get the number of documents in the collection.
+    #   collection.find.count
+    #
+    # @example Get the number of matching documents.
+    #   collection.find(name: 'test').count
+    #
+    # @return [ Integer ] The document count.
+    #
+    # @since 2.0.0
+    def count
+      cmd = { :count => collection.name, :query => selector }
+      cmd[:skip]  = opts[:skip]  if opts[:skip]
+      cmd[:hint]  = opts[:hint]  if opts[:hint]
+      cmd[:limit] = opts[:limit] if opts[:limit]
+      database.command(cmd).n
+    end
 
     # Creates a new +CollectionView+.
     #
@@ -110,13 +129,6 @@ module Mongo
     # @return [ Integer ] A hash value of the +CollectionView+ object.
     def hash
       [@collection.namespace, @opts.hash, @selector.hash].hash
-    end
-
-    # Get the size of the result set for the query.
-    #
-    # @return [ Integer ] The number of documents in the result set.
-    def count
-      @collection.count(CollectionView.new(@collection, @selector, @opts))
     end
 
     # Get the explain plan for the query.
