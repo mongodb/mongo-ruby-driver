@@ -16,7 +16,7 @@
 module Helpers
 
   def self.included(context)
-    context.let(:authorized_client) do
+    context.let!(:authorized_client) do
       Mongo::Client.new(
         [ '127.0.0.1:27017' ],
         database: TEST_DB,

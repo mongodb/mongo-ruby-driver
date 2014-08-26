@@ -36,6 +36,32 @@ module Mongo
           :write_concern => collection.write_concern
         ).execute(server.context)
       end
+
+      # Update documents in the collection.
+      #
+      # @example Update multiple documents in the collection.
+      #   collection_view.update('$set' => { name: 'test' })
+      #
+      # @example Update a single document in the collection.
+      #   collection_view.limit(1).update('$set' => { name: 'test' })
+      #
+      # @return [ Response ] The response from the database.
+      #
+      # @since 2.0.0
+      def update(spec)
+        server = read.select_servers(cluster.servers).first
+        Operation::Write::Update.new(
+          :updates => [{
+            q: selector,
+            u: spec,
+            multi: (opts[:limit] || 0) == 1 ? false : true,
+            upsert: false
+          }],
+          :db_name => collection.database.name,
+          :coll_name => collection.name,
+          :write_concern => collection.write_concern
+        ).execute(server.context)
+      end
     end
   end
 end
