@@ -129,11 +129,6 @@ module Mongo
       reply.documents
     end
 
-    def request_documents!
-      kill_cursors! if exhausted?
-      get_more!
-    end
-
     def to_return
       use_limit? ? @remaining : (batch_size || 0)
     end
