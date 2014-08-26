@@ -574,15 +574,16 @@ module Mongo
     #
     # @return [String] the name of the index.
     def ensure_index(spec, opts={})
-      now               = Time.now.utc.to_i
-      opts[:dropDups]   = opts[:drop_dups] if opts[:drop_dups]
-      opts[:bucketSize] = opts[:bucket_size] if opts[:bucket_size]
-      field_spec        = parse_index_spec(spec)
-      name              = opts[:name] || generate_index_name(field_spec)
-      name              = name.to_s if name
+      now                  = Time.now.utc.to_i
+      options              = opts.dup
+      options[:dropDups]   = options.delete(:drop_dups) if options[:drop_dups]
+      options[:bucketSize] = options.delete(:bucket_size) if options[:bucket_size]
+      field_spec           = parse_index_spec(spec)
+      name                 = options.delete(:name) || generate_index_name(field_spec)
+      name                 = name.to_s if name
 
       if !@cache[name] || @cache[name] <= now
-        generate_indexes(field_spec, name, opts)
+        generate_indexes(field_spec, name, options)
       end
 
       # Reset the cache here in case there are any errors inserting. Best to be safe.
