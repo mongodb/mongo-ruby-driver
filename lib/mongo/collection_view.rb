@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/collection_view/modifiable'
+require 'mongo/collection_view/executable'
 
 module Mongo
 
@@ -34,7 +34,7 @@ module Mongo
   class CollectionView
     extend Forwardable
     include Enumerable
-    include Modifiable
+    include Executable
 
     # @return [ Collection ] The +Collection+ to query.
     attr_reader :collection
@@ -43,7 +43,7 @@ module Mongo
     # @return [ Hash ] The additional query options.
     attr_reader :opts
 
-    def_delegators :@collection, :client, :cluster, :server_preference, :write_concern
+    def_delegators :@collection, :client, :cluster, :database, :server_preference, :write_concern
 
     # Creates a new +CollectionView+.
     #
@@ -112,13 +112,6 @@ module Mongo
       [@collection.namespace, @opts.hash, @selector.hash].hash
     end
 
-    # Get the size of the result set for the query.
-    #
-    # @return [ Integer ] The number of documents in the result set.
-    def count
-      @collection.count(CollectionView.new(@collection, @selector, @opts))
-    end
-
     # Get the explain plan for the query.
     #
     # @return [ Hash ] A single document with the explain plan.
@@ -126,17 +119,6 @@ module Mongo
       explain_limit = limit || 0
       opts = @opts.merge(:limit => -explain_limit.abs, :explain => true)
       @collection.explain(CollectionView.new(@collection, @selector, opts))
-    end
-
-    # Get the distinct values for a specified field across a single
-    # collection.
-    # Note that if a @selector is defined, it will be used in the analysis.
-    #
-    # @param [ Symbol, String ] key The field to collect distinct values from.
-    #
-    # @return [ Hash ] A doc with an array of the distinct values and query plan.
-    def distinct(key)
-      @collection.distinct(self, key)
     end
 
     # Associate a comment with the query.
