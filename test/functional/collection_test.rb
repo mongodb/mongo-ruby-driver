@@ -1947,27 +1947,33 @@ end
     end
 
     should "drop duplicates" do
-      @collection.insert({:a => 1})
-      @collection.insert({:a => 1})
-      assert_equal 2, @collection.find({:a => 1}).count
-      @collection.create_index([['a', Mongo::ASCENDING]], :unique => true, :dropDups => true)
-      assert_equal 1, @collection.find({:a => 1}).count
+      if @@version < '2.7'
+        @collection.insert({:a => 1})
+        @collection.insert({:a => 1})
+        assert_equal 2, @collection.find({:a => 1}).count
+        @collection.create_index([['a', Mongo::ASCENDING]], :unique => true, :dropDups => true)
+        assert_equal 1, @collection.find({:a => 1}).count
+      end
     end
 
     should "drop duplicates with ruby-like drop_dups key" do
-      @collection.insert({:a => 1})
-      @collection.insert({:a => 1})
-      assert_equal 2, @collection.find({:a => 1}).count
-      @collection.create_index([['a', Mongo::ASCENDING]], :unique => true, :drop_dups => true)
-      assert_equal 1, @collection.find({:a => 1}).count
+      if @@version < '2.7'
+        @collection.insert({:a => 1})
+        @collection.insert({:a => 1})
+        assert_equal 2, @collection.find({:a => 1}).count
+        @collection.create_index([['a', Mongo::ASCENDING]], :unique => true, :drop_dups => true)
+        assert_equal 1, @collection.find({:a => 1}).count
+      end
     end
 
     should "drop duplicates with ensure_index and drop_dups key" do
-      @collection.insert({:a => 1})
-      @collection.insert({:a => 1})
-      assert_equal 2, @collection.find({:a => 1}).count
-      @collection.ensure_index([['a', Mongo::ASCENDING]], :unique => true, :drop_dups => true)
-      assert_equal 1, @collection.find({:a => 1}).count
+      if @@version < '2.7'
+        @collection.insert({:a => 1})
+        @collection.insert({:a => 1})
+        assert_equal 2, @collection.find({:a => 1}).count
+        @collection.ensure_index([['a', Mongo::ASCENDING]], :unique => true, :drop_dups => true)
+        assert_equal 1, @collection.find({:a => 1}).count
+      end
     end
 
     should "create an index in the background" do
