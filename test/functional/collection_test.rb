@@ -1964,7 +1964,7 @@ class CollectionTest < Test::Unit::TestCase
     end
 
     should "drop duplicates" do
-      if @@version < '2.7'
+      if @version < '2.7'
         @collection.insert({:a => 1})
         @collection.insert({:a => 1})
         assert_equal 2, @collection.find({:a => 1}).count
@@ -1974,7 +1974,7 @@ class CollectionTest < Test::Unit::TestCase
     end
 
     should "drop duplicates with ruby-like drop_dups key" do
-      if @@version < '2.7'
+      if @version < '2.7'
         @collection.insert({:a => 1})
         @collection.insert({:a => 1})
         assert_equal 2, @collection.find({:a => 1}).count
@@ -1984,7 +1984,7 @@ class CollectionTest < Test::Unit::TestCase
     end
 
     should "drop duplicates with ensure_index and drop_dups key" do
-      if @@version < '2.7'
+      if @version < '2.7'
         @collection.insert({:a => 1})
         @collection.insert({:a => 1})
         assert_equal 2, @collection.find({:a => 1}).count
