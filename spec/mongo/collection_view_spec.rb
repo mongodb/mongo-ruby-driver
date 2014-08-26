@@ -577,18 +577,7 @@ describe Mongo::CollectionView do
   describe '#each' do
 
     let(:documents) do
-      [
-        { field: 'test1' },
-        { field: 'test2' },
-        { field: 'test3' },
-        { field: 'test4' },
-        { field: 'test5' },
-        { field: 'test6' },
-        { field: 'test7' },
-        { field: 'test8' },
-        { field: 'test9' },
-        { field: 'test10' }
-      ]
+      (1..10).map{ |i| { field: "test#{i}" }}
     end
 
     before do

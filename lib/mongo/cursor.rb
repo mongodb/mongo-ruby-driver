@@ -77,10 +77,10 @@ module Mongo
     #
     # @since 2.0.0
     def each
-      process(@initial_reply).each{ |doc| yield doc }
+      process(@initial_reply).each { |doc| yield doc }
       while more?
         return kill_cursors if exhausted?
-        get_more.each{ |doc| yield doc }
+        get_more.each { |doc| yield doc }
       end
     end
 
@@ -135,7 +135,7 @@ module Mongo
     end
 
     def to_return
-      use_limit? ? @remaining : batch_size
+      use_limit? ? @remaining : (batch_size || 0)
     end
 
     def use_limit?
