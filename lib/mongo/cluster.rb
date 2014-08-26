@@ -137,5 +137,17 @@ module Mongo
     def servers
       mode.servers(@servers, replica_set_name)
     end
+
+    # Is this cluster part of a sharded (mongos) cluster?
+    #
+    # @example Is the cluster a sharded cluster?
+    #   cluster.sharded?
+    #
+    # @return [ true, false ] If the cluster is sharded.
+    #
+    # @since 2.0.0
+    def sharded?
+      mode == Mode::Sharded
+    end
   end
 end

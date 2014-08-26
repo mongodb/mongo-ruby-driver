@@ -4,8 +4,7 @@ describe Mongo::Collection do
 
   describe '#==' do
 
-    let(:client) { Mongo::Client.new(['127.0.0.1:27017'], :database => TEST_DB) }
-    let(:database) { Mongo::Database.new(client, :test) }
+    let(:database) { Mongo::Database.new(authorized_client, :test) }
     let(:collection) { described_class.new(database, :users) }
 
     context 'when the names are the same' do
@@ -21,7 +20,7 @@ describe Mongo::Collection do
 
       context 'when the databases are not the same' do
 
-        let(:other_db) { Mongo::Database.new(client, :testing) }
+        let(:other_db) { Mongo::Database.new(authorized_client, :testing) }
         let(:other) { described_class.new(other_db, :users) }
 
         it 'returns false' do
@@ -47,23 +46,60 @@ describe Mongo::Collection do
     end
   end
 
-  describe '#insert' do
-
-    let(:client) do
-      Mongo::Client.new(
-        [ '127.0.0.1:27017' ],
-        database: TEST_DB,
-        username: ROOT_USER.name,
-        password: ROOT_USER.password
-      )
-    end
+  describe '#find' do
 
     let(:collection) do
-      client[TEST_COLL]
+      authorized_client[TEST_COLL]
     end
 
-    before do
-      client.cluster.scan!
+    context 'when provided a selector' do
+
+      let(:view) do
+        collection.find(name: 1)
+      end
+
+      it 'returns a collection view for the selector' do
+        expect(view.selector).to eq(name: 1)
+      end
+    end
+
+    context 'when provided no selector' do
+
+      let(:view) do
+        collection.find
+      end
+
+      it 'returns a collection view with an empty selector' do
+        expect(view.selector).to be_empty
+      end
+    end
+
+    context 'when iterating the collection view' do
+
+      before do
+        collection.insert([{ field: 'test1' }, { field: 'test2' }])
+      end
+
+      after do
+        collection.find.remove
+      end
+
+      let(:view) do
+        collection.find
+      end
+
+      it 'iterates over the documents' do
+        view.each do |document|
+          expect(document).to_not be_nil
+        end
+      end
+    end
+  end
+
+  describe '#insert' do
+
+    let(:collection) do
+      authorized_client[TEST_COLL]
     end
 
     after do
@@ -72,7 +108,7 @@ describe Mongo::Collection do
         db_name: TEST_DB,
         coll_name: TEST_COLL,
         write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
-      }).execute(client.cluster.servers.first.context)
+      }).execute(authorized_primary.context)
     end
 
     context 'when providing a single document' do

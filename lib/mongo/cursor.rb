@@ -29,191 +29,117 @@ module Mongo
   # @note The +Cursor+ API is semipublic.
   # @api semipublic
   class Cursor
+    extend Forwardable
+    include Enumerable
+
+    def_delegators :@view, :collection, :limit
+    def_delegators :collection, :client, :database
 
     # Creates a +Cursor+ object.
     #
-    # @param view [ CollectionView ] The +CollectionView+ defining the query.
-    def initialize(view, response)
-      @view       = view
-      @collection = @view.collection
-      @client     = @collection.client
-      process_response(response)
+    # @example Instantiate the cursor.
+    #   Mongo::Cursor.new(view, response, server)
+    #
+    # @param [ CollectionView ] view The +CollectionView+ defining the query.
+    # @param [ Protocol::Reply ] response The response from the server.
+    # @param [ Server ] server The server this cursor is locked to.
+    #
+    # @since 2.0.0
+    def initialize(view, reply, server)
+      @view = view
+      @server = server
+      @initial_reply = reply
+      @remaining = limit if limited?
     end
 
     # Get a human-readable string representation of +Cursor+.
     #
-    # @return [String] A string representation of a +Cursor+ instance.
+    # @example Inspect the cursor.
+    #   cursor.inspect
+    #
+    # @return [ String ] A string representation of a +Cursor+ instance.
+    #
+    # @since 2.0.0
     def inspect
-      "<Mongo::Cursor:0x#{object_id} @view=#{@view.inspect}>"
+      "#<Mongo::Cursor:0x#{object_id} @view=#{@view.inspect}>"
     end
 
     # Iterate through documents returned from the query.
     #
-    # @yieldparam [Hash] Each matching document.
+    # @example Iterate over the documents in the cursor.
+    #   cursor.each do |doc|
+    #     ...
+    #   end
+    #
+    # @yield param [Hash] Each matching document.
+    #
+    # @return [ Enumerator ] The enumerator.
+    #
+    # @since 2.0.0
     def each
-      yield fetch_doc until done?
+      process(@initial_reply).each { |doc| yield doc }
+      while more?
+        return kill_cursors if exhausted?
+        get_more.each { |doc| yield doc }
+      end
     end
 
     private
 
-    # Process the response returned from the server either from
-    # the initial query or from the get more operation.
-    #
-    # @params [ Object ] The response from the operation.
-    def process_response(response)
-      @server    = response.server
-      @cache     = (@cache || []) + response.docs
-      @returned  = (@returned || 0) + @cache.length
-      @cursor_id = response.cursor_id
-    end
-
-    # Whether we have iterated through all documents in the cache and retrieved
-    # all results from the server.
-    #
-    # @return [true, false] If there are neither docs left in the cache
-    #   or on the server for this query.
-    def done?
-      @cache.empty? && exhausted?
-    end
-
-    # Get the next doc in the result set.
-    #
-    # If the cache is empty, request more docs from the server.
-    #
-    # Check if the doc is an error doc before returning.
-    #
-    # @return [Hash] The next doc in the result set.
-    def fetch_doc
-      request_docs if @cache.empty?
-      doc = @cache.shift
-      doc unless error?(doc)
-    end
-
-    # Close the cursor on the server.
-    #
-    # If there is neither a server set or if the cursor is already closed,
-    # return nil. Otherwise, send a kill cursor command.
-    def close
-      return nil if @server.nil? || closed?
-      kill_cursors
-    end
-
-    # Request documents from the server.
-    #
-    # Close the cursor on the server if all docs have been retreived.
-    def request_docs
-      send_get_more
-      close if exhausted?
-    end
-
-    # Build the +GetMore+ message using the cursor id and number of documents
-    # to return.
-    #
-    # @return [Hash] The +GetMore+ operation spec.
-    def get_more_spec
-      { :to_return => to_return,
-        :cursor_id => @cursor_id,
-        :db_name   => @collection.database.name,
-        :coll_name => @collection.name }
-    end
-
-    def get_more_op
-      Mongo::Operation::Read::GetMore.new(get_more_spec)
-    end
-
-    # Send a +GetMore+ message to a server to get another batch of results.
-    #
-    # @todo: define exceptions
-    def send_get_more
-      raise Exception, 'No server set' unless @server
-      context = @server.context
-      response = get_more_op.execute(context)
-      process_response(response)
-    end
-
-    # Build a +KillCursors+ message using this cursor's id.
-    #
-    # @return [KillCursors] The +KillCursors+ message.
-    def kill_cursors_op
-      Mongo::Operation::KillCursors.new({ :cursor_ids => [@cursor_id] })
-    end
-
-    # Send a +KillCursors+ message to the server and set the cursor id to 0.
-    def kill_cursors
-      context = @server.context
-      kill_cursors_op.execute(context)
-      @cursor_id = 0
-    end
-
-    # Check whether the document returned is an error document.
-    #
-    # @return [true, false] Whether the document is an error document.
-    # @todo: method on response?
-    def error?(doc)
-      # @todo implement this
-      false
-    end
-
-    # Delta between the number of documents retrieved and the documents
-    # requested.
-    #
-    # @return [Integer] Delta between the number of documents retrieved
-    #   and the documents requested.
-    def remaining_limit
-      limit - @returned
-    end
-
-    # The number of documents to return in each batch from the server.
-    #
-    # @return [Integer] The number of documents to return in each batch from
-    #   the server.
     def batch_size
       @view.batch_size && @view.batch_size > 0 ? @view.batch_size : limit
     end
 
-    # Whether a limit should be specified.
-    #
-    # @return [true, false] Whether a limit should be specified.
-    def use_limit?
-      limited? && batch_size >= remaining_limit
-    end
-
-    # The number of documents to return in the next batch.
-    #
-    # @return [Integer] The number of documents to return in the next batch.
-    def to_return
-      use_limit? ? remaining_limit : batch_size
-    end
-
-    # Whether this query has a limit.
-    #
-    # @return [true, false] Whether this query has a limit.
-    def limited?
-      limit > 0 if limit
-    end
-
-    # Whether the cursor has been closed on the server.
-    #
-    # @return [true, false] Whether the cursor has been closed on the server.
-    def closed?
-      @cursor_id == 0
-    end
-
-    # Whether all query results have been retrieved from the server.
-    #
-    # @return [true, false] Whether all results have been retrieved from
-    #   the server.
     def exhausted?
-      return true if closed?
-      limited? && (@returned >= limit)
+      limited? ? @remaining <= 0 : false
     end
 
-    # The limit setting on the +CollectionView+.
-    #
-    # @return [Integer, nil] Either the limit setting on +CollectionView+ or nil.
-    def limit
-      @view.limit
+    def get_more
+      process(get_more_operation.execute(@server.context))
+    end
+
+    def get_more_operation
+      Operation::Read::GetMore.new({
+        :to_return => to_return,
+        :cursor_id => @cursor_id,
+        :db_name   => database.name,
+        :coll_name => collection.name
+      })
+    end
+
+    def kill_cursors
+      kill_cursors_operation.execute(@server.context)
+    end
+
+    def kill_cursors_operation
+      Operation::KillCursors.new({ :cursor_ids => [ @cursor_id ]})
+    end
+
+    def limited?
+      limit ? limit > 0 : false
+    end
+
+    def more?
+      @cursor_id != 0
+    end
+
+    def process(reply)
+      @remaining -= reply.number_returned if limited?
+      @cursor_id = reply.cursor_id
+      reply.documents
+    end
+
+    def request_documents!
+      kill_cursors! if exhausted?
+      get_more!
+    end
+
+    def to_return
+      use_limit? ? @remaining : (batch_size || 0)
+    end
+
+    def use_limit?
+      limited? && batch_size >= @remaining
     end
   end
 end
-

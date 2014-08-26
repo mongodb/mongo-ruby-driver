@@ -49,6 +49,23 @@ module Mongo
       name == other.name && database == other.database
     end
 
+    # Find documents in the collection.
+    #
+    # @example Find documents in the collection by a selector.
+    #   collection.find(name: 1)
+    #
+    # @example Get all documents in a collection.
+    #   collection.find
+    #
+    # @param [ Hash ] selector The selector to use in the find.
+    #
+    # @return [ CollectionView ] The collection view.
+    #
+    # @since 2.0.0
+    def find(selector = nil)
+      CollectionView.new(self, selector || {})
+    end
+
     # Instantiate a new collection.
     #
     # @example Instantiate a new collection.
@@ -61,7 +78,7 @@ module Mongo
     def initialize(database, name)
       raise InvalidName.new unless name
       @database = database
-      @name = name.to_s
+      @name = name.to_s.freeze
     end
 
     # Insert the provided documents into the collection.
@@ -84,6 +101,18 @@ module Mongo
         :write_concern => write_concern,
         :opts => options
       ).execute(server.context)
+    end
+
+    # Get the fully qualified namespace of the collection.
+    #
+    # @example Get the fully qualified namespace.
+    #   collection.namespace
+    #
+    # @return [ String ] The collection namespace.
+    #
+    # @since 2.0.0
+    def namespace
+      "#{name}.#{database.name}"
     end
 
     # Exception that is raised when trying to create a collection with no name.

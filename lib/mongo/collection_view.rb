@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/collection_view/modifiable'
+
 module Mongo
 
   # Representation of a query and options producing a result set of documents.
@@ -30,7 +32,9 @@ module Mongo
   # @note The +CollectionView+ API is semipublic.
   # @api semipublic
   class CollectionView
+    extend Forwardable
     include Enumerable
+    include Modifiable
 
     # @return [ Collection ] The +Collection+ to query.
     attr_reader :collection
@@ -38,6 +42,8 @@ module Mongo
     attr_reader :selector
     # @return [ Hash ] The additional query options.
     attr_reader :opts
+
+    def_delegators :@collection, :client, :cluster, :server_preference, :write_concern
 
     # Creates a new +CollectionView+.
     #
@@ -83,7 +89,7 @@ module Mongo
     #
     # @return [ String ] A string representation of a +CollectionView+ instance.
     def inspect
-      "<Mongo::CollectionView:0x#{object_id} namespace='#{@collection.full_namespace}" +
+      "<Mongo::CollectionView:0x#{object_id} namespace='#{@collection.namespace}" +
           " @selector=#{@selector.inspect} @opts=#{@opts.inspect}>"
     end
 
@@ -103,7 +109,7 @@ module Mongo
     #
     # @return [ Integer ] A hash value of the +CollectionView+ object.
     def hash
-      [@collection.full_namespace, @opts.hash, @selector.hash].hash
+      [@collection.namespace, @opts.hash, @selector.hash].hash
     end
 
     # Get the size of the result set for the query.
@@ -190,7 +196,7 @@ module Mongo
     # If none is specified for the query, the read preference of the
     # collection will be used.
     #
-    # @param [ Symbol ] read The read preference to use for the query.
+    # @param [ Hash ] read The read preference mode to use for the query.
     #
     # @return [ Symbol, CollectionView ] Either the read preference or a
     # new +CollectionView+.
@@ -247,7 +253,8 @@ module Mongo
     #
     # @yieldparam [ Hash ] Each matching document.
     def each
-      cursor = Cursor.new(self, send_initial_query).to_enum
+      server = read.select_servers(cluster.servers).first
+      cursor = Cursor.new(self, send_initial_query(server), server).to_enum
       cursor.each do |doc|
         yield doc
       end if block_given?
@@ -291,17 +298,16 @@ module Mongo
     # The initial query operation to send to the server.
     #
     def initial_query_op
-      Mongo::Operation::Read::Query.new(query_spec)
+      Operation::Read::Query.new(query_spec)
     end
 
     # Send the initial query operation to the server.
     #
     # @return [ Mongo::Response ] The initial query response.
-    def send_initial_query
+    def send_initial_query(server)
       # @todo: if mongos, don't send read pref because it's
       # in the special selector
-      context = read.server.context
-      initial_query_op.execute(context)
+      initial_query_op.execute(server.context)
     end
 
     # Get the read preference for this query.
@@ -347,8 +353,7 @@ module Mongo
     #
     # @return [true, false] Whether the query has special fields.
     def has_special_fields?
-      (!special_opts.empty? || sort || hint ||
-          comment || @collection.client.mongos?)
+      !special_opts.empty? || sort || hint || comment || cluster.sharded?
     end
 
     # Clone or dup the current +CollectionView+.
@@ -369,7 +374,7 @@ module Mongo
     #
     # @return [ Symbol ] This operation's read preference.
     def default_read(read = nil)
-      @opts[:read] || @collection.read
+      @opts[:read] || server_preference
     end
 
     # Extract query opts from @opts and return them in a separate hash.
@@ -433,14 +438,6 @@ module Mongo
     def set_option(field, value)
       return @opts[field] if value.nil?
       CollectionView.new(collection, selector, @opts.merge(field => value))
-    end
-
-    # Set the option value on this +CollectionView+.
-    #
-    # @return [ CollectionView ] self.
-    def mutate(field, value)
-      @opts.merge!(field => value) unless value.nil?
-      self
     end
   end
 end
