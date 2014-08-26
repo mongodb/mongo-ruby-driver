@@ -159,7 +159,7 @@ module Mongo
         # @param io [IO] IO stream containing the BSON encoded document.
         # @return [Hash] The decoded BSON document.
         def self.deserialize(io)
-          Hash.from_bson(io)
+          BSON::Document.from_bson(io)
         end
       end
     end
