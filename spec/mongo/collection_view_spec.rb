@@ -14,43 +14,6 @@ describe Mongo::CollectionView do
     described_class.new(authorized_collection, selector, opts)
   end
 
-  describe '#count' do
-
-    let(:documents) do
-      (1..10).map{ |i| { field: "test#{i}" }}
-    end
-
-    before do
-      authorized_collection.insert(documents)
-    end
-
-    after do
-      authorized_collection.find.remove
-    end
-
-    context 'when a selector is provided' do
-
-      let(:count) do
-        authorized_collection.find(field: 'test1').count
-      end
-
-      it 'returns the count of matching documents' do
-        expect(count).to eq(1)
-      end
-    end
-
-    context 'when no selector is provided' do
-
-      let(:count) do
-        authorized_collection.find.count
-      end
-
-      it 'returns the count of matching documents' do
-        expect(count).to eq(10)
-      end
-    end
-  end
-
   describe '#initialize' do
 
     let(:opts) do

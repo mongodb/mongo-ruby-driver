@@ -1,13 +1,46 @@
 require 'spec_helper'
 
-describe Mongo::CollectionView::Modifiable do
-
-  let(:collection) do
-    authorized_client[TEST_COLL]
-  end
+describe Mongo::CollectionView::Executable do
 
   after do
-    collection.find.remove
+    authorized_collection.find.remove
+  end
+
+  describe '#count' do
+
+    let(:documents) do
+      (1..10).map{ |i| { field: "test#{i}" }}
+    end
+
+    before do
+      authorized_collection.insert(documents)
+    end
+
+    after do
+      authorized_collection.find.remove
+    end
+
+    context 'when a selector is provided' do
+
+      let(:count) do
+        authorized_collection.find(field: 'test1').count
+      end
+
+      it 'returns the count of matching documents' do
+        expect(count).to eq(1)
+      end
+    end
+
+    context 'when no selector is provided' do
+
+      let(:count) do
+        authorized_collection.find.count
+      end
+
+      it 'returns the count of matching documents' do
+        expect(count).to eq(10)
+      end
+    end
   end
 
   describe '#remove' do
@@ -15,11 +48,11 @@ describe Mongo::CollectionView::Modifiable do
     context 'when a selector was provided' do
 
       before do
-        collection.insert([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert([{ field: 'test1' }, { field: 'test2' }])
       end
 
       let(:response) do
-        collection.find(field: 'test1').remove
+        authorized_collection.find(field: 'test1').remove
       end
 
       it 'deletes the matching documents in the collection' do
@@ -30,11 +63,11 @@ describe Mongo::CollectionView::Modifiable do
     context 'when no selector was provided' do
 
       before do
-        collection.insert([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert([{ field: 'test1' }, { field: 'test2' }])
       end
 
       let(:response) do
-        collection.find.remove
+        authorized_collection.find.remove
       end
 
       it 'deletes all the documents in the collection' do
@@ -47,11 +80,11 @@ describe Mongo::CollectionView::Modifiable do
       context 'when a selector was provided' do
 
         before do
-          collection.insert([{ field: 'test1' }, { field: 'test1' }])
+          authorized_collection.insert([{ field: 'test1' }, { field: 'test1' }])
         end
 
         let(:response) do
-          collection.find(field: 'test1').limit(1).remove
+          authorized_collection.find(field: 'test1').limit(1).remove
         end
 
         it 'deletes the first matching document in the collection' do
@@ -62,11 +95,11 @@ describe Mongo::CollectionView::Modifiable do
       context 'when no selector was provided' do
 
         before do
-          collection.insert([{ field: 'test1' }, { field: 'test2' }])
+          authorized_collection.insert([{ field: 'test1' }, { field: 'test2' }])
         end
 
         let(:response) do
-          collection.find.limit(1).remove
+          authorized_collection.find.limit(1).remove
         end
 
         it 'deletes the first document in the collection' do
@@ -78,22 +111,18 @@ describe Mongo::CollectionView::Modifiable do
 
   describe '#update' do
 
-    let(:collection) do
-      authorized_client[TEST_COLL]
-    end
-
     context 'when a selector was provided' do
 
       before do
-        collection.insert([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert([{ field: 'test1' }, { field: 'test2' }])
       end
 
       let!(:response) do
-        collection.find(field: 'test1').update('$set'=> { field: 'testing' })
+        authorized_collection.find(field: 'test1').update('$set'=> { field: 'testing' })
       end
 
       let(:updated) do
-        collection.find(field: 'testing').first
+        authorized_collection.find(field: 'testing').first
       end
 
       it 'returns the number updated' do
@@ -108,15 +137,15 @@ describe Mongo::CollectionView::Modifiable do
     context 'when no selector was provided' do
 
       before do
-        collection.insert([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert([{ field: 'test1' }, { field: 'test2' }])
       end
 
       let!(:response) do
-        collection.find.update('$set'=> { field: 'testing' })
+        authorized_collection.find.update('$set'=> { field: 'testing' })
       end
 
       let(:updated) do
-        collection.find
+        authorized_collection.find
       end
 
       it 'returns the number updated' do
@@ -135,15 +164,15 @@ describe Mongo::CollectionView::Modifiable do
       context 'when a selector was provided' do
 
         before do
-          collection.insert([{ field: 'test1' }, { field: 'test1' }])
+          authorized_collection.insert([{ field: 'test1' }, { field: 'test1' }])
         end
 
         let!(:response) do
-          collection.find(field: 'test1').limit(1).update('$set'=> { field: 'testing' })
+          authorized_collection.find(field: 'test1').limit(1).update('$set'=> { field: 'testing' })
         end
 
         let(:updated) do
-          collection.find(field: 'testing').first
+          authorized_collection.find(field: 'testing').first
         end
 
         it 'updates the first matching document in the collection' do
@@ -158,15 +187,15 @@ describe Mongo::CollectionView::Modifiable do
       context 'when no selector was provided' do
 
         before do
-          collection.insert([{ field: 'test1' }, { field: 'test2' }])
+          authorized_collection.insert([{ field: 'test1' }, { field: 'test2' }])
         end
 
         let!(:response) do
-          collection.find.limit(1).update('$set'=> { field: 'testing' })
+          authorized_collection.find.limit(1).update('$set'=> { field: 'testing' })
         end
 
         let(:updated) do
-          collection.find(field: 'testing').first
+          authorized_collection.find(field: 'testing').first
         end
 
         it 'updates the first document in the collection' do

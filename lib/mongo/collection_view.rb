@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/collection_view/modifiable'
+require 'mongo/collection_view/executable'
 
 module Mongo
 
@@ -34,7 +34,7 @@ module Mongo
   class CollectionView
     extend Forwardable
     include Enumerable
-    include Modifiable
+    include Executable
 
     # @return [ Collection ] The +Collection+ to query.
     attr_reader :collection
@@ -44,25 +44,6 @@ module Mongo
     attr_reader :opts
 
     def_delegators :@collection, :client, :cluster, :database, :server_preference, :write_concern
-
-    # Get a count of matching documents in the collection.
-    #
-    # @example Get the number of documents in the collection.
-    #   collection.find.count
-    #
-    # @example Get the number of matching documents.
-    #   collection.find(name: 'test').count
-    #
-    # @return [ Integer ] The document count.
-    #
-    # @since 2.0.0
-    def count
-      cmd = { :count => collection.name, :query => selector }
-      cmd[:skip]  = opts[:skip]  if opts[:skip]
-      cmd[:hint]  = opts[:hint]  if opts[:hint]
-      cmd[:limit] = opts[:limit] if opts[:limit]
-      database.command(cmd).n
-    end
 
     # Creates a new +CollectionView+.
     #

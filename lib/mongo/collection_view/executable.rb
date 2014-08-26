@@ -14,7 +14,26 @@
 
 module Mongo
   class CollectionView
-    module Modifiable
+    module Executable
+
+      # Get a count of matching documents in the collection.
+      #
+      # @example Get the number of documents in the collection.
+      #   collection.find.count
+      #
+      # @example Get the number of matching documents.
+      #   collection.find(name: 'test').count
+      #
+      # @return [ Integer ] The document count.
+      #
+      # @since 2.0.0
+      def count
+        cmd = { :count => collection.name, :query => selector }
+        cmd[:skip]  = opts[:skip]  if opts[:skip]
+        cmd[:hint]  = opts[:hint]  if opts[:hint]
+        cmd[:limit] = opts[:limit] if opts[:limit]
+        database.command(cmd).n
+      end
 
       # Remove documents from the collection.
       #
