@@ -121,17 +121,6 @@ module Mongo
       @collection.explain(CollectionView.new(@collection, @selector, opts))
     end
 
-    # Get the distinct values for a specified field across a single
-    # collection.
-    # Note that if a @selector is defined, it will be used in the analysis.
-    #
-    # @param [ Symbol, String ] key The field to collect distinct values from.
-    #
-    # @return [ Hash ] A doc with an array of the distinct values and query plan.
-    def distinct(key)
-      @collection.distinct(self, key)
-    end
-
     # Associate a comment with the query.
     # Set profilingLevel to 2 and the comment will be logged in the profile
     # collection along with the query.

@@ -19,10 +19,7 @@ module Mongo
       # Get a count of matching documents in the collection.
       #
       # @example Get the number of documents in the collection.
-      #   collection.find.count
-      #
-      # @example Get the number of matching documents.
-      #   collection.find(name: 'test').count
+      #   collection_view.count
       #
       # @return [ Integer ] The document count.
       #
@@ -33,6 +30,24 @@ module Mongo
         cmd[:hint]  = opts[:hint]  if opts[:hint]
         cmd[:limit] = opts[:limit] if opts[:limit]
         database.command(cmd).n
+      end
+
+      # Get a list of distinct values for a specific field.
+      #
+      # @example Get the distinct values.
+      #   collection_view.distinct('name')
+      #
+      # @param [ String, Symbol ] field The name of the field.
+      #
+      # @return [ Array<Object> ] The list of distinct values.
+      #
+      # @since 2.0.0
+      def distinct(field)
+        database.command(
+          :distinct => collection.name,
+          :key => field.to_s,
+          :query => selector
+        ).documents.first['values']
       end
 
       # Remove documents from the collection.

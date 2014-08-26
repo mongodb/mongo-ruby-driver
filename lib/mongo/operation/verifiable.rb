@@ -60,6 +60,18 @@ module Mongo
       end
       alias :n :count
 
+      # Get the documents in the response.
+      #
+      # @example Get the documents.
+      #   verifiable.documents
+      #
+      # @return [ Array<BSON::Document> ] The documents.
+      #
+      # @since 2.0.0
+      def documents
+        reply ? reply.documents : []
+      end
+
       # If the response was a command then determine if it was considered a
       # success.
       #
@@ -77,10 +89,6 @@ module Mongo
 
       def command_failure?
         reply && (!ok? || errors?)
-      end
-
-      def documents
-        reply ? reply.documents : []
       end
 
       def errors?

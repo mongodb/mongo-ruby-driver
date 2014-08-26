@@ -43,6 +43,105 @@ describe Mongo::CollectionView::Executable do
     end
   end
 
+  describe '#distinct' do
+
+    context 'when a selector is provided' do
+
+      let(:documents) do
+        (1..3).map{ |i| { field: "test" }}
+      end
+
+      before do
+        authorized_collection.insert(documents)
+      end
+
+      after do
+        authorized_collection.find.remove
+      end
+
+      context 'when the field is a symbol' do
+
+        let(:distinct) do
+          authorized_collection.find(field: 'test').distinct(:field)
+        end
+
+        it 'returns the distinct values' do
+          expect(distinct).to eq([ 'test' ])
+        end
+      end
+
+      context 'when the field is a string' do
+
+        let(:distinct) do
+          authorized_collection.find(field: 'test').distinct('field')
+        end
+
+        it 'returns the distinct values' do
+          expect(distinct).to eq([ 'test' ])
+        end
+      end
+
+      context 'when the field is nil' do
+
+        let(:distinct) do
+          authorized_collection.find(field: 'test').distinct(nil)
+        end
+
+        it 'returns an empty array' do
+          expect(distinct).to be_empty
+        end
+      end
+    end
+
+    context 'when no selector is provided' do
+
+      let(:documents) do
+        (1..3).map{ |i| { field: "test#{i}" }}
+      end
+
+      before do
+        authorized_collection.insert(documents)
+      end
+
+      after do
+        authorized_collection.find.remove
+      end
+
+      context 'when the field is a symbol' do
+
+        let(:distinct) do
+          authorized_collection.find.distinct(:field)
+        end
+
+        it 'returns the distinct values' do
+          expect(distinct).to eq([ 'test1', 'test2', 'test3' ])
+        end
+      end
+
+      context 'when the field is a string' do
+
+        let(:distinct) do
+          authorized_collection.find.distinct('field')
+        end
+
+        it 'returns the distinct values' do
+          expect(distinct).to eq([ 'test1', 'test2', 'test3' ])
+        end
+      end
+
+      context 'when the field is nil' do
+
+        let(:distinct) do
+          authorized_collection.find.distinct(nil)
+        end
+
+        it 'returns an empty array' do
+          expect(distinct).to be_empty
+        end
+      end
+    end
+  end
+
   describe '#remove' do
 
     context 'when a selector was provided' do
