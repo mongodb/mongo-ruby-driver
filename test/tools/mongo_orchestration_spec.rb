@@ -21,11 +21,10 @@ RSpec.configure do |c|
   begin
     mo = Mongo::Orchestration::Service.new
   rescue => ex
+    raise "Mongo Orchestration service is not available, skipping all test that require orchestration"
     c.filter_run_excluding :orchestration => true
   end
 end
-
-mo = Mongo::Orchestration::Service.new
 
 describe Mongo::Orchestration::Base, :orchestration => true do
   let(:base) { described_class.new }
@@ -206,17 +205,17 @@ describe Mongo::Orchestration::ReplicaSet, :orchestration => true do
     @cluster.destroy
   end
 
-  it 'provides members' do
-    members = @cluster.members
-    expect(members.size).to eq(3)
-    members.each do |member|
-      expect(member).to be_instance_of(Mongo::Orchestration::Resource)
-      expect(member.base_path).to match(%r{/replica_sets/repl0/members/})
+  it 'provides member resources' do
+    member_resources = cluster.member_resources
+    expect(member_resources.size).to eq(3)
+    member_resources.each do |member_resource|
+      expect(member_resource).to be_instance_of(Mongo::Orchestration::Resource)
+      expect(member_resource.base_path).to match(%r{/replica_sets/repl0/members/})
     end
   end
 
   it 'provides primary' do
-    server = @cluster.primary
+    server = cluster.primary
     expect(server).to be_instance_of(Mongo::Orchestration::Server) # check object mongodb_uri
     expect(server.base_path).to match(%r{/servers/})
     expect(server.object['orchestration']).to eq('servers')
@@ -224,13 +223,14 @@ describe Mongo::Orchestration::ReplicaSet, :orchestration => true do
     expect(server.object['procInfo']).to be
   end
 
-  it 'provides secondaries, arbiters and hidden member methods' do
+  it 'provides members, secondaries, arbiters and hidden member methods' do
     [
+        [:members,     3],
         [:secondaries, 2],
         [:arbiters,    0],
         [:hidden,      0]
     ].each do |method, size|
-      servers = @cluster.send(method)
+      servers = cluster.send(method)
       expect(servers.size).to eq(size)
       servers.each do |server|
         expect(server).to be_instance_of(Mongo::Orchestration::Server)
@@ -288,18 +288,17 @@ describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
     @cluster.destroy
   end
 
-  it 'provides members' do
-    members = @cluster.members
-    expect(members.size).to eq(2)
-    members.each do |member|
-      #pp member
+  it 'provides shard resources' do
+    shard_resources = cluster.shard_resources
+    expect(shard_resources.size).to eq(2)
+    shard_resources.each do |member|
       expect(member).to be_instance_of(Mongo::Orchestration::Resource)
       expect(member.object['isServer']).to be true
     end
   end
 
   it 'provides single-server shards' do
-    shards = @cluster.shards
+    shards = cluster.shards
     expect(shards.size).to eq(2)
     shards.each do |shard|
       expect(shard).to be_instance_of(Mongo::Orchestration::Server)
@@ -315,7 +314,7 @@ describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
         [:configservers, 1, %r{/servers/}],
         [:routers,       2, %r{/servers/}]
     ].each do |method, size, base_path|
-      servers = @cluster.send(method)
+      servers = cluster.send(method)
       expect(servers.size).to eq(size)
       servers.each do |server|
         expect(server).to be_instance_of(Mongo::Orchestration::Server)
@@ -373,7 +372,7 @@ describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
   end
 
   it 'provides replica_sets shards' do
-    shards = @cluster.shards
+    shards = cluster.shards
     expect(shards.size).to eq(2)
     shards.each do |shard|
       expect(shard).to be_instance_of(Mongo::Orchestration::ReplicaSet)

@@ -187,12 +187,16 @@ module Mongo
     end
 
     class ReplicaSet < Cluster
-      def members
-        components(__method__, Resource, 'members', 'member_id')
+      def member_resources
+        components('members', Resource, 'members', 'member_id')
       end
 
       def primary
         servers(__method__).first
+      end
+
+      def members
+        servers(__method__)
       end
 
       def secondaries
@@ -209,7 +213,7 @@ module Mongo
     end
 
     class ShardedCluster < Cluster
-      def members
+      def shard_resources
         components('shards', Resource, 'shards', 'shard_id')
       end
 
