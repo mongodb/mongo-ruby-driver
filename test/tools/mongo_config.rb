@@ -339,6 +339,27 @@ module Mongo
         @servers.collect{|k,v| (!key || key == k) ? v : nil}.flatten.compact
       end
 
+      def ensure_authenticated(client)
+        begin
+          client['admin'].authenticate(TEST_USER, TEST_USER_PWD)
+        rescue Mongo::AuthenticationError => ex
+          roles = [ 'dbAdminAnyDatabase',
+                    'userAdminAnyDatabase',
+                    'readWriteAnyDatabase',
+                    'clusterAdmin' ]
+          begin
+            client[TEST_DB].add_user(TEST_USER, TEST_USER_PWD, nil, :roles => roles)
+            client['admin'].authenticate(TEST_USER, TEST_USER_PWD)
+          rescue Mongo::ConnectionFailure => ex
+            if ex =~ /not master/
+              client['admin'].authenticate(TEST_USER, TEST_USER_PWD)
+            end
+          rescue Mongo::MongoArgumentError => ex
+            raise ex unless ex.message =~ /already authenticated/
+          end
+        end
+      end
+
       def command( cmd_servers, db_name, cmd, opts = {} )
         ret = []
         cmd = cmd.class == Array ? cmd : [ cmd ]
@@ -348,6 +369,7 @@ module Mongo
           debug 3, cmd_server.inspect
           cmd_server = cmd_server.config if cmd_server.is_a?(DbServer)
           client = Mongo::MongoClient.new(cmd_server[:host], cmd_server[:port])
+          ensure_authenticated(client)
           cmd.each do |c|
             debug 3,  "ClusterManager.command c:#{c.inspect}"
             response = client[db_name].command( c, opts )
@@ -368,6 +390,7 @@ module Mongo
       def repl_set_get_config
         host, port = primary_name.split(":")
         client = Mongo::MongoClient.new(host, port)
+        ensure_authenticated(client)
         client['local']['system.replset'].find_one
       end
 
