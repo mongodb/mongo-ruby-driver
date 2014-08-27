@@ -211,6 +211,7 @@ describe Mongo::Orchestration::ReplicaSet, :orchestration => true do
     member_resources.each do |member_resource|
       expect(member_resource).to be_instance_of(Mongo::Orchestration::Resource)
       expect(member_resource.base_path).to match(%r{/replica_sets/repl0/members/})
+      expect(member_resource.object['uri']).to match(%r{^/}) # uri abs_path is not completed
     end
   end
 
@@ -291,9 +292,9 @@ describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
   it 'provides shard resources' do
     shard_resources = cluster.shard_resources
     expect(shard_resources.size).to eq(2)
-    shard_resources.each do |member|
-      expect(member).to be_instance_of(Mongo::Orchestration::Resource)
-      expect(member.object['isServer']).to be true
+    shard_resources.each do |shard_resource|
+      expect(shard_resource).to be_instance_of(Mongo::Orchestration::Resource)
+      expect(shard_resource.object['uri']).to match(%r{^/}) # uri abs_path is not completed
     end
   end
 
