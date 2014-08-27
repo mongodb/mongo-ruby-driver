@@ -41,43 +41,54 @@ RSpec.configure do |config|
     end
   end
 
-  directory = File.expand_path(File.dirname(__FILE__))
-
   config.before(:suite) do
-    admin_client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'admin')
-    test_client = Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
 
-    # @todo: Need to replace with condition value.
-    admin_client.cluster.scan!
-    test_client.cluster.scan!
+    admin_client = Mongo::Client.new([ '127.0.0.1:27017' ], database: Mongo::Database::ADMIN).tap do |client|
+      client.cluster.scan!
+    end
+
+    test_client = Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB).tap do |client|
+      client.cluster.scan!
+    end
 
     begin
       # Create the admin user for the tests on 2.6 and higher.
       admin_client.command(
         :createUser => ROOT_USER.name,
         :pwd => ROOT_USER.hashed_password,
-        :roles => [ 'root', 'userAdminAnyDatabase' ]
+        :roles => ROOT_USER.roles
       )
-    rescue; end
+    rescue Exception => e
+      p e
+    end
     begin
       # If 2.6 and higher failed, use the legacy user creation.
-      test_client['system.users'].insert({
+      p test_client['system.users'].insert({
         user: ROOT_USER.name,
         pwd: ROOT_USER.hashed_password,
-        roles: [ 'readWrite' ]
+        roles: ROOT_USER.roles
       })
-    rescue; end
+    rescue Exception => e
+      p e
+    end
   end
 end
 
 TEST_DB         = 'ruby-driver'
 TEST_COLL       = 'test'
 TEST_SET        = 'ruby-driver-rs'
-TEST_USER       = 'test-user'
-TEST_PASSWORD   = 'password'
 COVERAGE_MIN    = 90
 
-ROOT_USER = Mongo::Auth::User.new('admin', 'root-user', 'password')
+ROOT_USER = Mongo::Auth::User.new(
+  database: 'admin',
+  user: 'root-user',
+  password: 'password',
+  roles: [
+    Mongo::Auth::Roles::ROOT,
+    Mongo::Auth::Roles::USER_ADMIN_ANY_DATABASE,
+    Mongo::Auth::Roles::READ_WRITE
+  ]
+)
 
 def write_command_enabled?
   @client ||= initialize_scanned_client!
@@ -89,13 +100,6 @@ def initialize_scanned_client!
   client.cluster.scan!
   client
 end
-
-ROOT_USER = Mongo::Auth::User.new(
-  database: 'admin',
-  user: 'root-user',
-  password: 'password',
-  roles: [ Mongo::Auth::Roles::ROOT ]
-)
 
 # require all shared examples
 Dir['./spec/support/shared/*.rb'].sort.each { |file| require file }

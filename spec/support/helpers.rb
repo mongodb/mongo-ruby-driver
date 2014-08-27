@@ -17,11 +17,17 @@ module Helpers
 
   def self.included(context)
 
+    context.let!(:unauthorized_client) do
+      Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB).tap do |client|
+        client.cluster.scan!
+      end
+    end
+
     context.let!(:authorized_client) do
       Mongo::Client.new(
         [ '127.0.0.1:27017' ],
         database: TEST_DB,
-        username: ROOT_USER.name,
+        user: ROOT_USER.name,
         password: ROOT_USER.password
       ).tap do |client|
         client.cluster.scan!
@@ -32,7 +38,15 @@ module Helpers
       authorized_client[TEST_COLL]
     end
 
+    context.let(:unauthorized_collection) do
+      unauthorized_client[TEST_COLL]
+    end
+
     context.let(:authorized_primary) do
+      authorized_client.cluster.servers.first
+    end
+
+    context.let(:unauthorized_primary) do
       authorized_client.cluster.servers.first
     end
   end
