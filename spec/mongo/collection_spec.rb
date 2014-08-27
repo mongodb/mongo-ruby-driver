@@ -48,10 +48,6 @@ describe Mongo::Collection do
 
   describe '#find' do
 
-    before do
-      authorized_collection.drop_indexes
-    end
-
     context 'when provided a selector' do
 
       let(:view) do
