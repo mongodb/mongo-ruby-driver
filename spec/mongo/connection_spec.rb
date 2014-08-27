@@ -83,8 +83,8 @@ describe Mongo::Connection do
           described_class.new(
             address,
             5,
-            :user => 'test-user',
-            :password => 'password',
+            :user => ROOT_USER.name,
+            :password => ROOT_USER.password,
             :database => TEST_DB,
             :auth_mech => :mongodb_cr
           )
@@ -94,7 +94,7 @@ describe Mongo::Connection do
           connection.connect!
         end
 
-        it 'sets the connection as authenticated' do
+        pending 'sets the connection as authenticated' do
           expect(connection).to be_authenticated
         end
       end
@@ -131,14 +131,14 @@ describe Mongo::Connection do
     end
   end
 
-  describe '#dispatch' do
+  pending '#dispatch' do
 
     let!(:connection) do
       described_class.new(
         address,
         5,
-        :user => 'test-user',
-        :password => 'password',
+        :user => ROOT_USER.name,
+        :password => ROOT_USER.password,
         :database => TEST_DB,
         :auth_mech => :mongodb_cr
       )
