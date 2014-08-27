@@ -20,7 +20,7 @@ class MaxValuesTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
-    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
+    @client = MongoReplicaSetClient.from_uri(@uri)
     @db = new_mock_db
     @client.stubs(:[]).returns(@db)
     @ismaster = {
