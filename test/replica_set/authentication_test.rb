@@ -20,6 +20,7 @@ require 'shared/authentication/gssapi_shared'
 
 class ReplicaSetAuthenticationTest < Test::Unit::TestCase
   include Mongo
+
   include BasicAuthTests
   include SASLPlainTests
   include BulkAPIAuthTests
@@ -27,9 +28,10 @@ class ReplicaSetAuthenticationTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
-    @client    = MongoReplicaSetClient.new(@rs.repl_set_seeds)
+    @client    = MongoReplicaSetClient.from_uri(@uri)
+    @admin     = @client['admin']
     @version   = @client.server_version
-    @db        = @client[TEST_DB]
+    @db        = @client['ruby-test']
     @host_info = @rs.repl_set_seeds.join(',')
   end
 end
