@@ -83,9 +83,11 @@ module Mongo
                 make_config(opts)
               when :routers
                 make_router(config, opts)
+              when :shards
+                make_standalone_shard(kind, opts)
               else
                 make_mongod(kind, opts)
-            end
+              end
 
             replica_count += 1 if [:replicas, :arbiters].member?(kind)
             node
@@ -130,25 +132,37 @@ module Mongo
                    :ipv6       => ipv6)
     end
 
+    def self.key_file(opts)
+      keyFile = opts[:key_file] || '/test/fixtures/auth/keyfile'
+      keyFile = Dir.pwd << keyFile
+      system "chmod 600 #{keyFile}"
+      keyFile
+    end
+
+    # A regular mongod minus --auth and plus --keyFile.
+    def self.make_standalone_shard(kind, opts)
+      params = make_mongod(kind, opts)
+      params.delete(:auth)
+      params.merge(:keyFile => key_file(opts))
+    end
+
     def self.make_replica(opts, id)
       params     = make_mongod('replicas', opts)
 
       replSet    = opts[:replSet]    || 'ruby-driver-test'
       oplogSize  = opts[:oplog_size] || 5
-      keyFile    = opts[:key_file]   || '/test/fixtures/auth/keyfile'
-
-      keyFile    = Dir.pwd << keyFile
-      system "chmod 600 #{keyFile}"
 
       params.merge(:_id       => id,
                    :replSet   => replSet,
                    :oplogSize => oplogSize,
-                   :keyFile   => keyFile)
+                   :keyFile   => key_file(opts))
     end
 
     def self.make_config(opts)
       params = make_mongod('configs', opts)
-      params.merge(:configsvr => nil)
+      params.delete(:auth)
+      params.merge(:configsvr => true,
+                   :keyFile => key_file(opts))
     end
 
     def self.make_router(config, opts)
@@ -156,8 +170,9 @@ module Mongo
       mongos = ENV['MONGOS'] || 'mongos'
 
       params.merge(
-        :command => mongos,
-        :configdb => self.configdb(config)
+        :command  => mongos,
+        :configdb => self.configdb(config),
+        :keyFile  => key_file(opts)
       )
     end
 
@@ -342,6 +357,8 @@ module Mongo
       def ensure_authenticated(client)
         begin
           client['admin'].authenticate(TEST_USER, TEST_USER_PWD)
+        rescue Mongo::MongoArgumentError => ex
+          raise ex unless ex.message =~ /already authenticated/
         rescue Mongo::AuthenticationError => ex
           roles = [ 'dbAdminAnyDatabase',
                     'userAdminAnyDatabase',
@@ -354,8 +371,6 @@ module Mongo
             if ex =~ /not master/
               client['admin'].authenticate(TEST_USER, TEST_USER_PWD)
             end
-          rescue Mongo::MongoArgumentError => ex
-            raise ex unless ex.message =~ /already authenticated/
           end
         end
       end
@@ -369,8 +384,8 @@ module Mongo
           debug 3, cmd_server.inspect
           cmd_server = cmd_server.config if cmd_server.is_a?(DbServer)
           client = Mongo::MongoClient.new(cmd_server[:host], cmd_server[:port])
-          ensure_authenticated(client)
           cmd.each do |c|
+            ensure_authenticated(client)
             debug 3,  "ClusterManager.command c:#{c.inspect}"
             response = client[db_name].command( c, opts )
             debug 3,  "ClusterManager.command response:#{response.inspect}"
@@ -381,6 +396,10 @@ module Mongo
         end
         debug 3, "command ret:#{ret.inspect}"
         ret.size == 1 ? ret.first : ret
+      end
+
+      def replica_set?
+        !!config[:replicas]
       end
 
       def repl_set_get_status
@@ -463,6 +482,11 @@ module Mongo
 
       def repl_set_seeds_uri
         repl_set_seeds.join(',')
+      end
+
+      def members_uri
+        members = @config[:replicas] || @config[:routers]
+        members.collect{|node| "#{node[:host]}:#{node[:port]}"}.join(',')
       end
 
       def repl_set_name
@@ -576,7 +600,15 @@ module Mongo
       end
 
       def addshards(shards = @config[:shards])
-        command( @config[:routers].first, 'admin', Array(shards).collect{|s| { :addshard => "#{s[:host]}:#{s[:port]}" } } )
+        begin
+          command( @config[:routers].first, 'admin', Array(shards).collect{|s| { :addshard => "#{s[:host]}:#{s[:port]}" } } )
+        rescue Mongo::OperationFailure => ex
+          # Because we cannot run the listshards command under the localhost
+          # exception in > 2.7.1, we run the risk of attempting to add the same shard twice.
+          # Our tests may add a local db to a shard, if the cluster is still up,
+          # then we can ignore this.
+          raise ex unless ex.message =~ /host already used/ || ex.message =~ /local database 'ruby_test'/
+        end
       end
 
       def listshards

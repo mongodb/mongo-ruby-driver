@@ -58,8 +58,10 @@ class Test::Unit::TestCase
 
     cluster_instance.start
     instance_variable_set("@#{kind}", cluster_instance)
-    uri = "mongodb://#{TEST_USER}:#{TEST_USER_PWD}@#{@rs.replicas[0].host_port}," +
-            "#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}"
+
+    uri = "mongodb://#{TEST_USER}:#{TEST_USER_PWD}@" +
+            "#{cluster_instance.members_uri}"
+    uri += "?replicaset=#{@rs.repl_set_name}" if cluster_instance.replica_set?
     instance_variable_set("@uri", uri)
   end
 
@@ -373,11 +375,7 @@ class Test::Unit::TestCase
   end
 
   def authenticate_client(client)
-    begin
-      client[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD)
-    rescue Mongo::MongoArgumentError => ex
-      raise ex unless ex.message =~ /already authenticated/
-    end
+    client[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD) unless client.auths.any? {|a| a[:source] == TEST_DB}
     client
   end
 
