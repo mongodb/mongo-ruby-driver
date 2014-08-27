@@ -251,7 +251,7 @@ sharded_configuration = {
             {
             }
         ],
-        members: [
+        shards: [
             {
                 id: "sh1",
                 shardParams: {
@@ -336,7 +336,7 @@ sharded_rs_configuration = {
             {
             }
         ],
-        members: [
+        shards: [
             {
                 id: "sh1",
                 shardParams: {
@@ -371,7 +371,7 @@ describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
     @cluster.destroy
   end
 
-  it 'provides replica_sets shards' do
+  it 'provides replica-set shards' do
     shards = cluster.shards
     expect(shards.size).to eq(2)
     shards.each do |shard|
