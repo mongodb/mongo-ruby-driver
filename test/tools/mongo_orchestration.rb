@@ -248,7 +248,7 @@ module Mongo
         id = request_content[:id]
         unless id
           http_request = Base.new.post(orchestration, {:body => request_content})
-          id = http_request.response.parsed_response.id
+          id = http_request.response.parsed_response['id']
         end
         base_path = [@base_path, orchestration, id].join('/')
         cluster = klass.new(base_path, request_content)
