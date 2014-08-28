@@ -15,3 +15,4 @@
 require 'mongo/view/executable'
 require 'mongo/view/collection'
 require 'mongo/view/index'
+require 'mongo/view/user'

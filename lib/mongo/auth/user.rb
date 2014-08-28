@@ -107,7 +107,7 @@ module Mongo
       def initialize(options)
         @database = options[:auth_source] || options[:database]
         @name = options[:user]
-        @password = options[:password]
+        @password = options[:password] || options[:pwd]
         @mechanism = options[:auth_mech] || :mongodb_cr
         @gssapi_service_name = options[:gssapi_service_name] || 'mongodb'
         @canonicalize_host_name = options[:canonicalize_host_name] || false
