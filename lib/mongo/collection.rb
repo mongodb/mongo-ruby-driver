@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/indexable'
-
 module Mongo
 
   # Represents a collection in the database and operations that can directly be
@@ -22,7 +20,6 @@ module Mongo
   # @since 2.0.0
   class Collection
     extend Forwardable
-    include Indexable
 
     # @return [ Mongo::Database ] The database the collection resides in.
     attr_reader :database
@@ -63,7 +60,20 @@ module Mongo
     #
     # @since 2.0.0
     def find(selector = nil)
-      CollectionView.new(self, selector || {})
+      View::Collection.new(self, selector || {})
+    end
+
+    # Get a view of all indexes for this collection. Can be iterated or has
+    # more operations.
+    #
+    # @example Get the index view.
+    #   collection.indexes
+    #
+    # @return [ View::Index ] The index view.
+    #
+    # @since 2.0.0
+    def indexes
+      View::Index.new(self)
     end
 
     # Instantiate a new collection.

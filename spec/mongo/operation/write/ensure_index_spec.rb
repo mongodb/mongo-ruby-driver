@@ -27,7 +27,7 @@ describe Mongo::Operation::Write::EnsureIndex do
         end
 
         after do
-          authorized_client[TEST_COLL].drop_index(spec)
+          authorized_client[TEST_COLL].indexes.drop(spec)
         end
 
         it 'returns ok' do
@@ -38,7 +38,7 @@ describe Mongo::Operation::Write::EnsureIndex do
       context 'when index creation fails' do
 
         let(:spec) do
-          { name: 1 }
+          { random: 1 }
         end
 
         let(:operation) do
@@ -66,7 +66,7 @@ describe Mongo::Operation::Write::EnsureIndex do
         end
 
         after do
-          authorized_client[TEST_COLL].drop_index(spec)
+          authorized_client[TEST_COLL].indexes.drop(spec)
         end
 
         it 'raises an exception', if: write_command_enabled? do

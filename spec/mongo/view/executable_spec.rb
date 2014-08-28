@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::CollectionView::Executable do
+describe Mongo::View::Executable do
 
   after do
     authorized_collection.find.remove

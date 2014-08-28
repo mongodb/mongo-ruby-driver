@@ -40,7 +40,7 @@ module Mongo
         private
 
         def message
-          Protocol::Query.new(db_name, Indexable::SYSTEM_INDEXES, { ns: namespace }, options)
+          Protocol::Query.new(db_name, View::Index::COLLECTION, { ns: namespace }, options)
         end
       end
     end

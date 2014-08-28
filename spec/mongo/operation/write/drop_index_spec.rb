@@ -13,7 +13,7 @@ describe Mongo::Operation::Write::DropIndex do
         end
 
         before do
-          authorized_client[TEST_COLL].ensure_index(spec, unique: true)
+          authorized_client[TEST_COLL].indexes.ensure(spec, unique: true)
         end
 
         let(:operation) do
