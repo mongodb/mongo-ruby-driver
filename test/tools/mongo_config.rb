@@ -83,9 +83,11 @@ module Mongo
                 make_config(opts)
               when :routers
                 make_router(config, opts)
+              when :shards
+                make_standalone_shard(kind, opts)
               else
                 make_mongod(kind, opts)
-            end
+              end
 
             replica_count += 1 if [:replicas, :arbiters].member?(kind)
             node
@@ -130,25 +132,37 @@ module Mongo
                    :ipv6       => ipv6)
     end
 
+    def self.key_file(opts)
+      keyFile = opts[:key_file] || '/test/fixtures/auth/keyfile'
+      keyFile = Dir.pwd << keyFile
+      system "chmod 600 #{keyFile}"
+      keyFile
+    end
+
+    # A regular mongod minus --auth and plus --keyFile.
+    def self.make_standalone_shard(kind, opts)
+      params = make_mongod(kind, opts)
+      params.delete(:auth)
+      params.merge(:keyFile => key_file(opts))
+    end
+
     def self.make_replica(opts, id)
       params     = make_mongod('replicas', opts)
 
       replSet    = opts[:replSet]    || 'ruby-driver-test'
       oplogSize  = opts[:oplog_size] || 5
-      keyFile    = opts[:key_file]   || '/test/fixtures/auth/keyfile'
-
-      keyFile    = Dir.pwd << keyFile
-      system "chmod 600 #{keyFile}"
 
       params.merge(:_id       => id,
                    :replSet   => replSet,
                    :oplogSize => oplogSize,
-                   :keyFile   => keyFile)
+                   :keyFile   => key_file(opts))
     end
 
     def self.make_config(opts)
       params = make_mongod('configs', opts)
-      params.merge(:configsvr => nil)
+      params.delete(:auth)
+      params.merge(:configsvr => true,
+                   :keyFile => key_file(opts))
     end
 
     def self.make_router(config, opts)
@@ -156,8 +170,9 @@ module Mongo
       mongos = ENV['MONGOS'] || 'mongos'
 
       params.merge(
-        :command => mongos,
-        :configdb => self.configdb(config)
+        :command  => mongos,
+        :configdb => self.configdb(config),
+        :keyFile  => key_file(opts)
       )
     end
 
@@ -339,6 +354,35 @@ module Mongo
         @servers.collect{|k,v| (!key || key == k) ? v : nil}.flatten.compact
       end
 
+      def ensure_authenticated(client)
+        begin
+          client[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD)
+        rescue Mongo::MongoArgumentError => ex
+          # client is already authenticated
+          raise ex unless ex.message =~ /already authenticated/
+        rescue Mongo::AuthenticationError => ex
+          # 1) The creds are wrong
+          # 2) Or the user doesn't exist
+          roles = [ 'dbAdminAnyDatabase',
+                    'userAdminAnyDatabase',
+                    'readWriteAnyDatabase',
+                    'clusterAdmin' ]
+          begin
+            # Try to add the user for case (2)
+            client[TEST_DB].add_user(TEST_USER, TEST_USER_PWD, nil, :roles => roles)
+            client[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD)
+          rescue Mongo::ConnectionFailure, Mongo::OperationFailure => ex
+            # Maybe not master, so try to authenticate
+            # 2.2 throws an OperationFailure if add_user fails
+            begin
+              client[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD)
+            rescue => ex
+              # Maybe creds are wrong, nothing we can do
+            end
+          end
+        end
+      end
+
       def command( cmd_servers, db_name, cmd, opts = {} )
         ret = []
         cmd = cmd.class == Array ? cmd : [ cmd ]
@@ -348,6 +392,7 @@ module Mongo
           debug 3, cmd_server.inspect
           cmd_server = cmd_server.config if cmd_server.is_a?(DbServer)
           client = Mongo::MongoClient.new(cmd_server[:host], cmd_server[:port])
+          ensure_authenticated(client)
           cmd.each do |c|
             debug 3,  "ClusterManager.command c:#{c.inspect}"
             response = client[db_name].command( c, opts )
@@ -361,6 +406,10 @@ module Mongo
         ret.size == 1 ? ret.first : ret
       end
 
+      def replica_set?
+        !!config[:replicas]
+      end
+
       def repl_set_get_status
         command( @config[:replicas], 'admin', { :replSetGetStatus => 1 }, {:check_response => false } )
       end
@@ -368,6 +417,7 @@ module Mongo
       def repl_set_get_config
         host, port = primary_name.split(":")
         client = Mongo::MongoClient.new(host, port)
+        ensure_authenticated(client)
         client['local']['system.replset'].find_one
       end
 
@@ -440,6 +490,11 @@ module Mongo
 
       def repl_set_seeds_uri
         repl_set_seeds.join(',')
+      end
+
+      def members_uri
+        members = @config[:replicas] || @config[:routers]
+        members.collect{|node| "#{node[:host]}:#{node[:port]}"}.join(',')
       end
 
       def repl_set_name
@@ -553,7 +608,15 @@ module Mongo
       end
 
       def addshards(shards = @config[:shards])
-        command( @config[:routers].first, 'admin', Array(shards).collect{|s| { :addshard => "#{s[:host]}:#{s[:port]}" } } )
+        begin
+          command( @config[:routers].first, 'admin', Array(shards).collect{|s| { :addshard => "#{s[:host]}:#{s[:port]}" } } )
+        rescue Mongo::OperationFailure => ex
+          # Because we cannot run the listshards command under the localhost
+          # exception in > 2.7.1, we run the risk of attempting to add the same shard twice.
+          # Our tests may add a local db to a shard, if the cluster is still up,
+          # then we can ignore this.
+          raise ex unless ex.message =~ /host already used/
+        end
       end
 
       def listshards
@@ -593,7 +656,25 @@ module Mongo
       end
       alias :restart :start
 
+      def delete_users
+        cmd_server = replica_set? ? primary : routers.first
+
+        if cmd_server
+          client = Mongo::MongoClient.new(cmd_server.config[:host],
+                                          cmd_server.config[:port])
+          ensure_authenticated(client)
+          db = client[TEST_DB]
+
+          if client.server_version < '2.5'
+            db['system.users'].remove
+          else
+            db.command(:dropAllUsersFromDatabase => 1)
+          end
+        end
+      end
+
       def stop
+        delete_users
         servers.each{|server| server.stop}
         self
       end

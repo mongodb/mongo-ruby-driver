@@ -29,7 +29,7 @@ class ShardedClusterBasicTest < Test::Unit::TestCase
 
   # TODO member.primary? ==> true
   def test_connect
-    @client = MongoShardedClient.new(@seeds)
+    @client = sharded_connection
     assert @client.connected?
     assert_equal(@seeds.size, @client.seeds.size)
     probe(@seeds.size)
@@ -54,57 +54,58 @@ class ShardedClusterBasicTest < Test::Unit::TestCase
   end
 
   def test_find_one_with_read_secondary
-    @client = MongoShardedClient.new(@seeds, { :read => :secondary })
+    @client = sharded_connection(:read => :secondary)
     @client[TEST_DB]["users"].insert([ @document ])
     assert_equal @client[TEST_DB]['users'].find_one["name"], "test_user"
   end
 
   def test_find_one_with_read_secondary_preferred
-    @client = MongoShardedClient.new(@seeds, { :read => :secondary_preferred })
+    @client = sharded_connection(:read => :secondary_preferred)
     @client[TEST_DB]["users"].insert([ @document ])
     assert_equal @client[TEST_DB]['users'].find_one["name"], "test_user"
   end
 
   def test_find_one_with_read_primary
-    @client = MongoShardedClient.new(@seeds, { :read => :primary })
+    @client = sharded_connection(:read => :primary)
     @client[TEST_DB]["users"].insert([ @document ])
     assert_equal @client[TEST_DB]['users'].find_one["name"], "test_user"
   end
 
   def test_find_one_with_read_primary_preferred
-    @client = MongoShardedClient.new(@seeds, { :read => :primary_preferred })
+    @client = sharded_connection(:read => :primary_preferred)
     @client[TEST_DB]["users"].insert([ @document ])
     assert_equal @client[TEST_DB]['users'].find_one["name"], "test_user"
   end
 
   def test_read_from_sharded_client
     tags = [{:dc => "mongolia"}]
-    @client = MongoShardedClient.new(@seeds, {:read => :secondary, :tag_sets => tags})
+    @client = sharded_connection(:read => :secondary, :tag_sets => tags)
     assert @client.connected?
     cursor = Cursor.new(@client[TEST_DB]['whatever'], {})
     assert_equal cursor.construct_query_spec['$readPreference'], {:mode => 'secondary', :tags => tags}
   end
 
   def test_hard_refresh
-    @client = MongoShardedClient.new(@seeds)
+    @client = sharded_connection
     assert @client.connected?
     @client.hard_refresh!
     assert @client.connected?
     @client.close
   end
 
-  def test_reconnect
-    @client = MongoShardedClient.new(@seeds)
-    assert @client.connected?
-    router = @sc.servers(:routers).first
-    router.stop
-    probe(@seeds.size)
-    assert @client.connected?
-    @client.close
-  end
+  # @todo uncomment when RUBY-788 is merged
+  #def test_reconnect
+  #  @client = sharded_connection
+  #  assert @client.connected?
+  #  router = @sc.servers(:routers).first
+  #  router.stop
+  #  probe(@seeds.size)
+  #  assert @client.connected?
+  #  @client.close
+  #end
 
   def test_mongos_failover
-    @client = MongoShardedClient.new(@seeds, :refresh_interval => 5, :refresh_mode => :sync)
+    @client = sharded_connection(:refresh_interval => 5, :refresh_mode => :sync)
     assert @client.connected?
     # do a find to pin a pool
     @client[TEST_DB]['test'].find_one
@@ -121,19 +122,20 @@ class ShardedClusterBasicTest < Test::Unit::TestCase
     @client.close
   end
 
-  def test_all_down
-    @client = MongoShardedClient.new(@seeds)
-    assert @client.connected?
-    @sc.servers(:routers).each{|router| router.stop}
-    assert_raises Mongo::ConnectionFailure do
-      probe(@seeds.size)
-    end
-    assert_false @client.connected?
-    @client.close
-  end
+  # @todo: uncomment when RUBY-788 is merged
+  #def test_all_down
+  #  @client = sharded_connection
+  #  assert @client.connected?
+  #  @sc.servers(:routers).each{|router| router.stop}
+  #  assert_raises Mongo::ConnectionFailure do
+  #    probe(@seeds.size)
+  #  end
+  #  assert_false @client.connected?
+  #  @client.close
+  #end
 
   def test_cycle
-    @client = MongoShardedClient.new(@seeds)
+    @client = sharded_connection
     assert @client.connected?
     routers = @sc.servers(:routers)
     while routers.size > 0 do
@@ -191,7 +193,13 @@ class ShardedClusterBasicTest < Test::Unit::TestCase
 
   private
 
+  def sharded_connection(opts={})
+    client = MongoShardedClient.new(@seeds, opts)
+    authenticate_client(client)
+  end
+
   def probe(size)
+    authenticate_client(@client)
     assert_equal(size, @client['config']['mongos'].find.to_a.size)
   end
 end

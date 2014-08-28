@@ -18,11 +18,12 @@ class ReplicaSetAckTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
-    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds)
+    @client = MongoReplicaSetClient.from_uri(@uri)
 
     @slave1 = MongoClient.new(
       @client.secondary_pools.first.host,
       @client.secondary_pools.first.port, :slave_ok => true)
+    authenticate_client(@slave1)
 
     assert !@slave1.read_primary?
 

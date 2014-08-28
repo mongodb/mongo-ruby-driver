@@ -58,6 +58,11 @@ class Test::Unit::TestCase
 
     cluster_instance.start
     instance_variable_set("@#{kind}", cluster_instance)
+
+    uri = "mongodb://#{TEST_USER}:#{TEST_USER_PWD}@" +
+            "#{cluster_instance.members_uri}"
+    uri += "?replicaset=#{@rs.repl_set_name}" if cluster_instance.replica_set?
+    instance_variable_set("@uri", uri)
   end
 
   # Generic helper to rescue and retry from a connection failure.
@@ -224,6 +229,7 @@ class Test::Unit::TestCase
   end
 
   def with_forced_timeout(client, &block)
+    authenticate_client(client)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['argv']
     if cmd_line_args.include?('enableTestCommands=1') && client.server_version >= "2.5.3"
       begin
@@ -240,6 +246,7 @@ class Test::Unit::TestCase
   end
 
   def with_default_journaling(client, &block)
+    authenticate_client(client)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
     unless client.server_version < "2.0" || cmd_line_args.include?('nojournal')
       yield
@@ -253,6 +260,7 @@ class Test::Unit::TestCase
   end
 
   def with_no_journaling(client, &block)
+    authenticate_client(client)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
     unless client.server_version < "2.0" || !cmd_line_args.include?('nojournal')
       yield
@@ -260,6 +268,7 @@ class Test::Unit::TestCase
   end
 
   def with_ipv6_enabled(client, &block)
+    authenticate_client(client)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
     if cmd_line_args.include?('ipv6')
       yield
@@ -311,6 +320,7 @@ class Test::Unit::TestCase
   def subject_to_server_4754?(client)
     # Until SERVER-4754 is resolved, profiling info is not collected
     # when mongod is started with --auth in versions < 2.2
+    authenticate_client(client)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
     client.server_version < '2.2' && cmd_line_args.include?('auth')
   end
@@ -352,7 +362,8 @@ class Test::Unit::TestCase
         return true if security["authorization"] == "enabled"
       end
     rescue OperationFailure => ex
-      # under narrowed localhost exception, getCmdLineOpts is not allowed.
+      # under narrowed localhost exception in > 2.7.1, getCmdLineOpts is not allowed
+      # unless you're authenticated.
       return true if ex.message.include?("authorized") ||
                       (client.server_version >= "2.7.1" &&
                       ex.error_code == Mongo::ErrorCode::UNAUTHORIZED)
@@ -361,6 +372,11 @@ class Test::Unit::TestCase
 
   def with_auth(client, &block)
     yield if auth_enabled?(client)
+  end
+
+  def authenticate_client(client)
+    client[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD) unless client.auths.any? {|a| a[:source] == TEST_DB}
+    client
   end
 
   def self.ensure_admin_user

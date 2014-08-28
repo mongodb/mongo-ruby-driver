@@ -66,6 +66,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     route_read ||= read
     # Setup ReplicaSet Connection
     @client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :read => read)
+    authenticate_client(@client)
 
     @db = @client.db(TEST_DB)
     @db.drop_collection("cursor_tests")
@@ -74,6 +75,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
 
     # Setup Direct Connections
     @primary = Mongo::MongoClient.new(*@client.manager.primary)
+    authenticate_client(@primary)
   end
 
   def insert_docs
@@ -93,6 +95,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
         pool = cursor.instance_variable_get(:@pool)
         cursor.close
         @read = Mongo::MongoClient.new(pool.host, pool.port, :slave_ok => true)
+        authenticate_client(@read)
         tag
       rescue Mongo::ConnectionFailure
         false
@@ -110,6 +113,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     @client.db(TEST_DB).profiling_level = :all
     @client.secondaries.each do |node|
       node = Mongo::MongoClient.new(node[0], node[1], :slave_ok => true)
+      authenticate_client(node)
       node.db(TEST_DB).profiling_level = :all
     end
 
@@ -120,6 +124,7 @@ class ReplicaSetCursorTest < Test::Unit::TestCase
     @client.db(TEST_DB).profiling_level = :off
     @client.secondaries.each do |node|
       node = Mongo::MongoClient.new(node[0], node[1], :slave_ok => true)
+      authenticate_client(node)
       node.db(TEST_DB).profiling_level = :off
     end
     # do a query on system.profile of the reader to see if it was used for the query
