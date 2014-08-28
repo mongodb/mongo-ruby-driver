@@ -195,19 +195,20 @@ class ClientTest < Test::Unit::TestCase
     @client.drop_database(db_name)
   end
 
-  # @todo: localhost changes
-  # def test_copy_database
-  #   old_db = @client['ruby-test-old']
-  #   new_db = @client['ruby-test-new']
-  #   coll = 'copy-test'
-  #
-  #   old_db[coll].insert('a' => 1)
-  #   @client.drop_database(new_db.name)
-  #   silently { old_db.add_user('chevy', 'chase') }
-  #   @client.copy_database(old_db.name, new_db.name, host_port, 'chevy', 'chase')
-  #   old_db.remove_user('chevy')
-  #   assert_equal old_db[coll].find_one, new_db[coll].find_one
-  # end
+  def test_copy_database
+    return unless @client.server_version >= '2.5' ||
+                  @client.server_version < '2.4'
+    old_db = @client['ruby-test-old']
+    new_db = @client['ruby-test-new']
+    coll = 'copy-test'
+
+    old_db[coll].insert('a' => 1)
+    @client.drop_database(new_db.name)
+    silently { old_db.add_user('chevy', 'chase') }
+    @client.copy_database(old_db.name, new_db.name, host_port, 'chevy', 'chase')
+    old_db.remove_user('chevy')
+    assert_equal old_db[coll].find_one, new_db[coll].find_one
+  end
 
   def test_database_names
     @client.db(TEST_DB).collection('info-test').remove({})
