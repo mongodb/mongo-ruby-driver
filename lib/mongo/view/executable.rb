@@ -13,7 +13,7 @@
 # limitations under the License.
 
 module Mongo
-  class CollectionView
+  module View
     module Executable
 
       # Get a count of matching documents in the collection.

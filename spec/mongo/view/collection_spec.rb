@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::CollectionView do
+describe Mongo::View::Collection do
 
   let(:selector) do
     {}
@@ -88,7 +88,7 @@ describe Mongo::CollectionView do
         expect(new_view.comment).to eq(new_comment)
       end
 
-      it 'returns a new CollectionView' do
+      it 'returns a new Collection' do
         expect(view.comment(new_comment)).not_to be(view)
       end
     end
@@ -118,7 +118,7 @@ describe Mongo::CollectionView do
         expect(new_view.batch_size).to eq(new_batch_size)
       end
 
-      it 'returns a new CollectionView' do
+      it 'returns a new Collection' do
         expect(view.batch_size(new_batch_size)).not_to be(view)
       end
     end
@@ -148,7 +148,7 @@ describe Mongo::CollectionView do
         expect(new_view.fields).to eq(new_fields)
       end
 
-      it 'returns a new CollectionView' do
+      it 'returns a new Collection' do
         expect(view.fields(new_fields)).not_to be(view)
       end
     end
@@ -167,11 +167,11 @@ describe Mongo::CollectionView do
     context 'when a hint is specified' do
 
       let(:opts) do
-        { :hint => { 'x' => Mongo::IndexView::ASCENDING } }
+        { :hint => { 'x' => Mongo::View::Index::ASCENDING } }
       end
 
       let(:new_hint) do
-        { 'x' => Mongo::IndexView::DESCENDING }
+        { 'x' => Mongo::View::Index::DESCENDING }
       end
 
       it 'sets the hint' do
@@ -179,7 +179,7 @@ describe Mongo::CollectionView do
         expect(new_view.hint).to eq(new_hint)
       end
 
-      it 'returns a new CollectionView' do
+      it 'returns a new Collection' do
         expect(view.hint(new_hint)).not_to be(view)
       end
     end
@@ -213,7 +213,7 @@ describe Mongo::CollectionView do
         expect(new_view.limit).to eq(new_limit)
       end
 
-      it 'returns a new CollectionView' do
+      it 'returns a new Collection' do
         expect(view.limit(new_limit)).not_to be(view)
       end
     end
@@ -247,7 +247,7 @@ describe Mongo::CollectionView do
         expect(new_view.skip).to eq(new_skip)
       end
 
-      it 'returns a new CollectionView' do
+      it 'returns a new Collection' do
         expect(view.skip(new_skip)).not_to be(view)
       end
     end
@@ -281,7 +281,7 @@ describe Mongo::CollectionView do
         expect(new_view.read).to eq(new_read)
       end
 
-      it 'returns a new CollectionView' do
+      it 'returns a new Collection' do
         expect(view.read(new_read)).not_to be(view)
       end
     end
@@ -314,11 +314,11 @@ describe Mongo::CollectionView do
     context 'when a sort is specified' do
 
       let(:opts) do
-        { :sort => { 'x' => Mongo::IndexView::ASCENDING }}
+        { :sort => { 'x' => Mongo::View::Index::ASCENDING }}
       end
 
       let(:new_sort) do
-        { 'x' => Mongo::IndexView::DESCENDING }
+        { 'x' => Mongo::View::Index::DESCENDING }
       end
 
       it 'sets the sort option' do
@@ -326,7 +326,7 @@ describe Mongo::CollectionView do
         expect(new_view.sort).to eq(new_sort)
       end
 
-      it 'returns a new CollectionView' do
+      it 'returns a new Collection' do
         expect(view.sort(new_sort)).not_to be(view)
       end
     end
@@ -334,7 +334,7 @@ describe Mongo::CollectionView do
     context 'when a sort is not specified' do
 
       let(:opts) do
-        { :sort => { 'x' => Mongo::IndexView::ASCENDING }}
+        { :sort => { 'x' => Mongo::View::Index::ASCENDING }}
       end
 
       it 'returns the sort' do
@@ -395,7 +395,7 @@ describe Mongo::CollectionView do
           expect(new_view.special_opts).to eq(new_special_opts)
         end
 
-        it 'returns a new CollectionView' do
+        it 'returns a new Collection' do
           expect(view.special_opts(new_special_opts)).not_to be(view)
         end
       end
@@ -777,7 +777,7 @@ describe Mongo::CollectionView do
       context 'when sorting' do
 
         let(:opts) do
-          { :sort => {'x' => Mongo::IndexView::ASCENDING }}
+          { :sort => {'x' => Mongo::View::Index::ASCENDING }}
         end
 
         before do
@@ -796,7 +796,7 @@ describe Mongo::CollectionView do
       context 'when providing a hint' do
 
         let(:opts) do
-          { :hint => { 'x' => Mongo::IndexView::ASCENDING }}
+          { :hint => { 'x' => Mongo::View::Index::ASCENDING }}
         end
 
         before do

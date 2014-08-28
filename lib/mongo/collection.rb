@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/index_view'
-
 module Mongo
 
   # Represents a collection in the database and operations that can directly be
@@ -62,7 +60,7 @@ module Mongo
     #
     # @since 2.0.0
     def find(selector = nil)
-      CollectionView.new(self, selector || {})
+      View::Collection.new(self, selector || {})
     end
 
     # Get a view of all indexes for this collection. Can be iterated or has
@@ -71,11 +69,11 @@ module Mongo
     # @example Get the index view.
     #   collection.indexes
     #
-    # @return [ IndexView ] The index view.
+    # @return [ View::Index ] The index view.
     #
     # @since 2.0.0
     def indexes
-      IndexView.new(self)
+      View::Index.new(self)
     end
 
     # Instantiate a new collection.

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::IndexView do
+describe Mongo::View::Index do
 
   let(:view) do
     described_class.new(authorized_client[TEST_COLL])
