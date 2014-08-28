@@ -146,6 +146,15 @@ module Mongo
         @spec[:opts] || {}
       end
 
+      # The user for user related operations.
+      #
+      # @return [ Auth::User ] The user.
+      #
+      # @since 2.0.0
+      def user
+        @spec[:user]
+      end
+
       # The write concern to use for this operation.
       #
       # @return [ Mongo::WriteConcern::Mode ] The write concern.

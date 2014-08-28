@@ -29,6 +29,8 @@ module Mongo
       # @return [ Database ] database The view's database.
       attr_reader :database
 
+      def_delegators :database, :cluster, :server_preference
+
       # Create a new user in the database.
       #
       # @example Create a new read/write user.
@@ -43,7 +45,11 @@ module Mongo
       # @since 2.0.0
       def create(name, password, options = {})
         user = Auth::User.new({ user: name, password: password }.merge(options))
-        database.command(createUser: user.name, pwd: user.hashed_password, roles: user.roles)
+        server = server_preference.primary(cluster.servers).first
+        Operation::Write::CreateUser.new(
+          user: user,
+          db_name: database.name
+        ).execute(server.context)
       end
 
       # Initialize the new user view.

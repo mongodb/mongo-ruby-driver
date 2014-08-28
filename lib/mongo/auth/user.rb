@@ -113,6 +113,18 @@ module Mongo
         @canonicalize_host_name = options[:canonicalize_host_name] || false
         @roles = options[:roles] || []
       end
+
+      # Get the specification for the user, used in creation.
+      #
+      # @example Get the user's specification.
+      #   user.spec
+      #
+      # @return [ Hash ] The user spec.
+      #
+      # @since 2.0.0
+      def spec
+        { pwd: hashed_password, roles: roles }
+      end
     end
   end
 end

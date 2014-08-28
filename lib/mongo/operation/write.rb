@@ -17,6 +17,7 @@ require 'mongo/operation/write/insert'
 require 'mongo/operation/write/update'
 require 'mongo/operation/write/drop_index'
 require 'mongo/operation/write/ensure_index'
+require 'mongo/operation/write/create_user'
 require 'mongo/operation/write/command'
 
 module Mongo
