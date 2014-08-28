@@ -356,20 +356,28 @@ module Mongo
 
       def ensure_authenticated(client)
         begin
-          client['admin'].authenticate(TEST_USER, TEST_USER_PWD)
+          client[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD)
         rescue Mongo::MongoArgumentError => ex
+          # client is already authenticated
           raise ex unless ex.message =~ /already authenticated/
         rescue Mongo::AuthenticationError => ex
+          # 1) The creds are wrong
+          # 2) Or the user doesn't exist
           roles = [ 'dbAdminAnyDatabase',
                     'userAdminAnyDatabase',
                     'readWriteAnyDatabase',
                     'clusterAdmin' ]
           begin
+            # Try to add the user for case (2)
             client[TEST_DB].add_user(TEST_USER, TEST_USER_PWD, nil, :roles => roles)
-            client['admin'].authenticate(TEST_USER, TEST_USER_PWD)
-          rescue Mongo::ConnectionFailure => ex
-            if ex =~ /not master/
-              client['admin'].authenticate(TEST_USER, TEST_USER_PWD)
+            client[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD)
+          rescue Mongo::ConnectionFailure, Mongo::OperationFailure => ex
+            # Maybe not master, so try to authenticate
+            # 2.2 throws an OperationFailure if add_user fails
+            begin
+              client[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD)
+            rescue => ex
+              # Maybe creds are wrong, nothing we can do
             end
           end
         end
@@ -384,8 +392,8 @@ module Mongo
           debug 3, cmd_server.inspect
           cmd_server = cmd_server.config if cmd_server.is_a?(DbServer)
           client = Mongo::MongoClient.new(cmd_server[:host], cmd_server[:port])
+          ensure_authenticated(client)
           cmd.each do |c|
-            ensure_authenticated(client)
             debug 3,  "ClusterManager.command c:#{c.inspect}"
             response = client[db_name].command( c, opts )
             debug 3,  "ClusterManager.command response:#{response.inspect}"
@@ -607,7 +615,7 @@ module Mongo
           # exception in > 2.7.1, we run the risk of attempting to add the same shard twice.
           # Our tests may add a local db to a shard, if the cluster is still up,
           # then we can ignore this.
-          raise ex unless ex.message =~ /host already used/ || ex.message =~ /local database 'ruby_test'/
+          raise ex unless ex.message =~ /host already used/
         end
       end
 
@@ -648,7 +656,25 @@ module Mongo
       end
       alias :restart :start
 
+      def delete_users
+        cmd_server = replica_set? ? primary : routers.first
+
+        if cmd_server
+          client = Mongo::MongoClient.new(cmd_server.config[:host],
+                                          cmd_server.config[:port])
+          ensure_authenticated(client)
+          db = client[TEST_DB]
+
+          if client.server_version < '2.5'
+            db['system.users'].remove
+          else
+            db.command(:dropAllUsersFromDatabase => 1)
+          end
+        end
+      end
+
       def stop
+        delete_users
         servers.each{|server| server.stop}
         self
       end
