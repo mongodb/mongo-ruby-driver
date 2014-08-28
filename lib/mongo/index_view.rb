@@ -17,7 +17,14 @@ module Mongo
   # A class representing a MongoDB Index.
   #
   # @since 2.0.0
-  module Indexable
+  class IndexView
+    extend Forwardable
+    include Enumerable
+
+    # @return [ Collection ] collection The indexes collection.
+    attr_reader :collection
+
+    def_delegators :@collection, :cluster, :database, :server_preference
 
     # Specify ascending order for an index.
     #
@@ -57,29 +64,36 @@ module Mongo
     # Constant for the indexes collection.
     #
     # @since 2.0.0
-    SYSTEM_INDEXES = 'system.indexes'.freeze
+    COLLECTION = 'system.indexes'.freeze
 
-    INDEX_KEY = 'key'.freeze
-    INDEX_NAME = 'name'.freeze
+    # The index key field.
+    #
+    # @since 2.0.0
+    KEY = 'key'.freeze
+
+    # The index name field.
+    #
+    # @since 2.0.0
+    NAME = 'name'.freeze
 
     # Drop an index by its specification.
     #
     # @example Drop the index by spec.
-    #   indexable.drop_index(name: 1)
+    #   view.drop(name: 1)
     #
     # @example Drop an index by its name.
-    #   indexable.drop_index('name_1')
+    #   view.drop('name_1')
     #
     # @param [ Hash, String ] spec The index spec or name to drop.
     #
     # @return [ Operation::Write::DropIndex::Response ] The response.
     #
     # @since 2.0.0
-    def drop_index(spec)
+    def drop(spec)
       server = server_preference.primary(cluster.servers).first
       Operation::Write::DropIndex.new(
         db_name: database.name,
-        coll_name: name,
+        coll_name: collection.name,
         index_name: spec.is_a?(String) ? spec : index_name(spec)
       ).execute(server.context)
     end
@@ -87,13 +101,13 @@ module Mongo
     # Drop all indexes on the collection.
     #
     # @example Drop all indexes on the collection.
-    #   indexable.drop_indexes
+    #   view.drop_all
     #
     # @return [ Operation::Write::DropIndex::Response ] The response.
     #
     # @since 2.0.0
-    def drop_indexes
-      drop_index('*')
+    def drop_all
+      drop('*')
     end
 
     # Calls create_index and sets a flag not to do so again for another X minutes.
@@ -122,12 +136,12 @@ module Mongo
     # @return [ EnsureIndex::Response ] The response.
     #
     # @since 2.0.0
-    def ensure_index(spec, options = {})
+    def ensure(spec, options = {})
       server = server_preference.primary(cluster.servers).first
       Operation::Write::EnsureIndex.new(
         index: spec,
         db_name: database.name,
-        coll_name: name,
+        coll_name: collection.name,
         index_name: options[:name] || index_name(spec),
         opts: options
       ).execute(server.context)
@@ -137,36 +151,48 @@ module Mongo
     # spec.
     #
     # @example Get index information by name.
-    #   indexable.find_index('name_1')
+    #   view.get('name_1')
     #
     # @example Get index information by spec.
-    #   indexable.find_index(name: 1)
+    #   view.get(name: 1)
     #
     # @param [ Hash, String ] spec The index name or spec.
     #
     # @return [ Hash ] The index information.
     #
     # @since 2.0.0
-    def find_index(spec)
-      indexes.documents.find do |index|
-        (index[INDEX_NAME] == spec) || (index[INDEX_KEY] == normalize_keys(spec))
+    def get(spec)
+      find do |index|
+        (index[NAME] == spec) || (index[KEY] == normalize_keys(spec))
       end
     end
 
-    # Get all the indexes for the collection.
+    # Iterate over all indexes for the collection.
     #
     # @example Get all the indexes.
-    #   indexable.indexes
-    #
-    # @return [ Array<Hash> ] All the collection's indexes.
+    #   view.each do |index|
+    #     ...
+    #   end
     #
     # @since 2.0.0
-    def indexes
+    def each(&block)
       server = server_preference.select_servers(cluster.servers).first
       Operation::Read::Indexes.new(
         db_name: database.name,
-        coll_name: name
-      ).execute(server.context)
+        coll_name: collection.name
+      ).execute(server.context).documents.each(&block)
+    end
+
+    # Create the new index view.
+    #
+    # @example Create the new index view.
+    #   IndexView.new(collection)
+    #
+    # @param [ Collection ] collection The collection.
+    #
+    # @since 2.0.0
+    def initialize(collection)
+      @collection = collection
     end
 
     private

@@ -1,19 +1,19 @@
 require 'spec_helper'
 
-describe Mongo::Indexable do
+describe Mongo::IndexView do
 
-  let(:indexable) do
-    authorized_client[TEST_COLL]
+  let(:view) do
+    described_class.new(authorized_client[TEST_COLL])
   end
 
-  describe '#drop_index' do
+  describe '#drop' do
 
     let(:spec) do
       { another: -1 }
     end
 
     before do
-      indexable.ensure_index(spec, unique: true)
+      view.ensure(spec, unique: true)
     end
 
     context 'when providing an index spec' do
@@ -21,7 +21,7 @@ describe Mongo::Indexable do
       context 'when the index exists' do
 
         let(:result) do
-          indexable.drop_index(spec)
+          view.drop(spec)
         end
 
         it 'drops the index' do
@@ -35,7 +35,7 @@ describe Mongo::Indexable do
       context 'when the index exists' do
 
         let(:result) do
-          indexable.drop_index('another_-1')
+          view.drop('another_-1')
         end
 
         it 'drops the index' do
@@ -45,20 +45,20 @@ describe Mongo::Indexable do
     end
   end
 
-  describe '#drop_indexes' do
+  describe '#drop_all' do
 
     let(:spec) do
       { another: -1 }
     end
 
     before do
-      indexable.ensure_index(spec, unique: true)
+      view.ensure(spec, unique: true)
     end
 
     context 'when indexes exists' do
 
       let(:result) do
-        indexable.drop_indexes
+        view.drop_all
       end
 
       it 'drops the index' do
@@ -67,7 +67,7 @@ describe Mongo::Indexable do
     end
   end
 
-  describe '#ensure_index' do
+  describe '#ensure' do
 
     context 'when the index is created' do
 
@@ -76,11 +76,11 @@ describe Mongo::Indexable do
       end
 
       let(:result) do
-        indexable.ensure_index(spec, unique: true)
+        view.ensure(spec, unique: true)
       end
 
       after do
-        indexable.drop_index(spec)
+        view.drop(spec)
       end
 
       it 'returns ok' do
@@ -95,17 +95,17 @@ describe Mongo::Indexable do
       end
 
       before do
-        indexable.ensure_index(spec, unique: true)
+        view.ensure(spec, unique: true)
       end
 
       it 'raises an exception', if: write_command_enabled? do
         expect {
-          indexable.ensure_index(spec, unique: false)
+          view.ensure(spec, unique: false)
         }.to raise_error(Mongo::Operation::Write::Failure)
       end
 
       it 'does not raise an exception', unless: write_command_enabled? do
-        expect(indexable.ensure_index(spec, unique: false)).to be_ok
+        expect(view.ensure(spec, unique: false)).to be_ok
       end
     end
 
@@ -116,11 +116,11 @@ describe Mongo::Indexable do
       end
 
       let!(:result) do
-        indexable.ensure_index(spec, unique: true, name: 'random_name')
+        view.ensure(spec, unique: true, name: 'random_name')
       end
 
       after do
-        indexable.drop_index('random_name')
+        view.drop('random_name')
       end
 
       it 'returns ok' do
@@ -128,29 +128,29 @@ describe Mongo::Indexable do
       end
 
       it 'defines the index with the provided name' do
-        expect(indexable.find_index('random_name')).to_not be_nil
+        expect(view.get('random_name')).to_not be_nil
       end
     end
   end
 
-  describe '#find_index' do
+  describe '#get' do
 
     let(:spec) do
       { random: 1 }
     end
 
     let!(:result) do
-      indexable.ensure_index(spec, unique: true, name: 'random_name')
+      view.ensure(spec, unique: true, name: 'random_name')
     end
 
     after do
-      indexable.drop_index('random_name')
+      view.drop('random_name')
     end
 
     context 'when providing a name' do
 
       let(:index) do
-        indexable.find_index('random_name')
+        view.get('random_name')
       end
 
       it 'returns the index' do
@@ -161,7 +161,7 @@ describe Mongo::Indexable do
     context 'when providing a spec' do
 
       let(:index) do
-        indexable.find_index(random: 1)
+        view.get(random: 1)
       end
 
       it 'returns the index' do
@@ -172,31 +172,31 @@ describe Mongo::Indexable do
     context 'when the index does not exist' do
 
       it 'returns nil' do
-        expect(indexable.find_index(other: 1)).to be_nil
+        expect(view.get(other: 1)).to be_nil
       end
     end
   end
 
-  describe '#indexes' do
+  describe '#each' do
 
     let(:spec) do
       { name: 1 }
     end
 
     before do
-      indexable.ensure_index(spec, unique: true)
+      view.ensure(spec, unique: true)
     end
 
     after do
-      indexable.drop_index(spec)
+      view.drop(spec)
     end
 
     let(:indexes) do
-      indexable.indexes
+      view.each
     end
 
     it 'returns all the indexes for the database' do
-      expect(indexes.documents.size).to eq(2)
+      expect(indexes.each.size).to eq(2)
     end
   end
 end

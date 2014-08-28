@@ -9,7 +9,11 @@ describe Mongo::Operation::Read::Indexes do
     end
 
     before do
-      authorized_client[TEST_COLL].ensure_index(spec, unique: true)
+      authorized_client[TEST_COLL].indexes.ensure(spec, unique: true)
+    end
+
+    after do
+      authorized_client[TEST_COLL].indexes.drop(spec)
     end
 
     let(:operation) do

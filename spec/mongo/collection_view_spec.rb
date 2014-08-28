@@ -167,11 +167,11 @@ describe Mongo::CollectionView do
     context 'when a hint is specified' do
 
       let(:opts) do
-        { :hint => { 'x' => Mongo::Indexable::ASCENDING } }
+        { :hint => { 'x' => Mongo::IndexView::ASCENDING } }
       end
 
       let(:new_hint) do
-        { 'x' => Mongo::Indexable::DESCENDING }
+        { 'x' => Mongo::IndexView::DESCENDING }
       end
 
       it 'sets the hint' do
@@ -314,11 +314,11 @@ describe Mongo::CollectionView do
     context 'when a sort is specified' do
 
       let(:opts) do
-        { :sort => { 'x' => Mongo::Indexable::ASCENDING }}
+        { :sort => { 'x' => Mongo::IndexView::ASCENDING }}
       end
 
       let(:new_sort) do
-        { 'x' => Mongo::Indexable::DESCENDING }
+        { 'x' => Mongo::IndexView::DESCENDING }
       end
 
       it 'sets the sort option' do
@@ -334,7 +334,7 @@ describe Mongo::CollectionView do
     context 'when a sort is not specified' do
 
       let(:opts) do
-        { :sort => { 'x' => Mongo::Indexable::ASCENDING }}
+        { :sort => { 'x' => Mongo::IndexView::ASCENDING }}
       end
 
       it 'returns the sort' do
@@ -777,7 +777,7 @@ describe Mongo::CollectionView do
       context 'when sorting' do
 
         let(:opts) do
-          { :sort => {'x' => Mongo::Indexable::ASCENDING }}
+          { :sort => {'x' => Mongo::IndexView::ASCENDING }}
         end
 
         before do
@@ -796,7 +796,7 @@ describe Mongo::CollectionView do
       context 'when providing a hint' do
 
         let(:opts) do
-          { :hint => { 'x' => Mongo::Indexable::ASCENDING }}
+          { :hint => { 'x' => Mongo::IndexView::ASCENDING }}
         end
 
         before do

@@ -400,7 +400,7 @@ describe Mongo::Operation::Write::Insert do
     before do
       # @todo: Replace with condition variable
       client.cluster.scan!
-      client[TEST_COLL].ensure_index({ name: 1 }, { unique: true })
+      client[TEST_COLL].indexes.ensure({ name: 1 }, { unique: true })
     end
 
     after do
@@ -410,7 +410,7 @@ describe Mongo::Operation::Write::Insert do
         coll_name: TEST_COLL,
         write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
       }).execute(server.context)
-      client[TEST_COLL].drop_index({ name: 1 })
+      client[TEST_COLL].indexes.drop({ name: 1 })
     end
 
     context 'when the server is a primary' do
