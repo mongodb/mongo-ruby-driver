@@ -196,7 +196,7 @@ describe Mongo::IndexView do
     end
 
     it 'returns all the indexes for the database' do
-      expect(indexes.each.size).to eq(2)
+      expect(indexes.to_a.size).to eq(2)
     end
   end
 end
