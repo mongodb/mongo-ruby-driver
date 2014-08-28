@@ -274,7 +274,7 @@ module Mongo
       cmd[:payload]       = BSON::Binary.new(payload)
       cmd[:autoAuthorize] = 1
 
-      auth_command(cmd, opts[:socket], ).first
+      auth_command(cmd, opts[:socket], db_name).first
     end
 
     # Handles issuing authentication commands for the GSSAPI auth mechanism.
@@ -314,13 +314,16 @@ module Mongo
 
     def auth_command(selector, socket, db_name)
       begin
-        message    = build_command_message(db_name, selector)
-        request_id = add_message_headers(message, Mongo::Constants::OP_QUERY)
-
+        message        = build_command_message(db_name, selector)
+        request_id     = add_message_headers(message, Mongo::Constants::OP_QUERY)
         packed_message = message.to_s
+
         send_message_on_socket(packed_message, socket)
         receive(socket, request_id).shift
-      rescue ConnectionFailure
+      rescue OperationFailure => ex
+        socket.close
+        return ex.result
+      rescue ConnectionFailure, OperationTimeout => ex
         socket.close
         raise ex
       end
