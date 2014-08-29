@@ -43,18 +43,15 @@ RSpec.configure do |config|
 
   config.before(:suite) do
 
-    admin_client = Mongo::Client.new([ '127.0.0.1:27017' ], database: Mongo::Database::ADMIN).tap do |client|
-      client.cluster.scan!
-    end
-    test_client = Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB).tap do |client|
-      client.cluster.scan!
-    end
-
     begin
-      admin_client.database.users.create(ROOT_USER.name, ROOT_USER.password, roles: ROOT_USER.roles)
+      admin_client.database.users.create(
+        ROOT_USER.name, ROOT_USER.password, roles: ROOT_USER.roles
+      )
     rescue Exception; end
     begin
-      test_client.database.users.create(ROOT_USER.name, ROOT_USER.password, roles: ROOT_USER.roles)
+      unauthorized_client.database.users.create(
+        ROOT_USER.name, ROOT_USER.password, roles: ROOT_USER.roles
+      )
     rescue Exception; end
   end
 end
