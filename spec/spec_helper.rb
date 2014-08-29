@@ -46,31 +46,16 @@ RSpec.configure do |config|
     admin_client = Mongo::Client.new([ '127.0.0.1:27017' ], database: Mongo::Database::ADMIN).tap do |client|
       client.cluster.scan!
     end
-
     test_client = Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB).tap do |client|
       client.cluster.scan!
     end
 
     begin
-      # Create the admin user for the tests on 2.6 and higher.
-      admin_client.command(
-        :createUser => ROOT_USER.name,
-        :pwd => ROOT_USER.hashed_password,
-        :roles => ROOT_USER.roles
-      )
-    rescue Exception => e
-      p e
-    end
+      admin_client.database.users.create(ROOT_USER.name, ROOT_USER.password, roles: ROOT_USER.roles)
+    rescue Exception; end
     begin
-      # If 2.6 and higher failed, use the legacy user creation.
-      p test_client['system.users'].insert({
-        user: ROOT_USER.name,
-        pwd: ROOT_USER.hashed_password,
-        roles: ROOT_USER.roles
-      })
-    rescue Exception => e
-      p e
-    end
+      test_client.database.users.create(ROOT_USER.name, ROOT_USER.password, roles: ROOT_USER.roles)
+    rescue Exception; end
   end
 end
 
@@ -92,7 +77,7 @@ ROOT_USER = Mongo::Auth::User.new(
 
 def write_command_enabled?
   @client ||= initialize_scanned_client!
-  @write_command_enabled = @client.cluster.servers.first.write_command_enabled?
+  @write_command_enabled ||= @client.cluster.servers.first.write_command_enabled?
 end
 
 def initialize_scanned_client!

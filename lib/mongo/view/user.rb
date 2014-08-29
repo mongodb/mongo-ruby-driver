@@ -76,8 +76,8 @@ module Mongo
       # @since 2.0.0
       def remove(name)
         server = server_preference.primary(cluster.servers).first
-        Operation::Write::DropUser.new(
-          user: name,
+        Operation::Write::RemoveUser.new(
+          name: name,
           db_name: database.name
         ).execute(server.context)
       end
