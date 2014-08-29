@@ -93,16 +93,15 @@ class ShardedClusterBasicTest < Test::Unit::TestCase
     @client.close
   end
 
-  # @todo uncomment when RUBY-788 is merged
-  #def test_reconnect
-  #  @client = sharded_connection
-  #  assert @client.connected?
-  #  router = @sc.servers(:routers).first
-  #  router.stop
-  #  probe(@seeds.size)
-  #  assert @client.connected?
-  #  @client.close
-  #end
+  def test_reconnect
+    @client = sharded_connection
+    assert @client.connected?
+    router = @sc.servers(:routers).first
+    router.stop
+    probe(@seeds.size)
+    assert @client.connected?
+    @client.close
+  end
 
   def test_mongos_failover
     @client = sharded_connection(:refresh_interval => 5, :refresh_mode => :sync)
@@ -122,17 +121,16 @@ class ShardedClusterBasicTest < Test::Unit::TestCase
     @client.close
   end
 
-  # @todo: uncomment when RUBY-788 is merged
-  #def test_all_down
-  #  @client = sharded_connection
-  #  assert @client.connected?
-  #  @sc.servers(:routers).each{|router| router.stop}
-  #  assert_raises Mongo::ConnectionFailure do
-  #    probe(@seeds.size)
-  #  end
-  #  assert_false @client.connected?
-  #  @client.close
-  #end
+  def test_all_down
+    @client = sharded_connection
+    assert @client.connected?
+    @sc.servers(:routers).each{|router| router.stop}
+    assert_raises Mongo::ConnectionFailure do
+      probe(@seeds.size)
+    end
+    assert_false @client.connected?
+    @client.close
+  end
 
   def test_cycle
     @client = sharded_connection
