@@ -126,17 +126,5 @@ module Mongo
     def pool
       @pool ||= Pool.get(self)
     end
-
-    # Is this server able to handle write commands?
-    #
-    # @example Can the server handle write commands?
-    #   server.write_command_ready?
-    #
-    # @return [ true, false ] If the server can handle write commands.
-    #
-    # @since 2.0.0
-    def write_command_ready?
-      description.max_wire_version >= 2
-    end
   end
 end

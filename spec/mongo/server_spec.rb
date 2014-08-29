@@ -101,41 +101,4 @@ describe Mongo::Server do
       expect(pool.pool_size).to eq(5)
     end
   end
-
-  describe '#write_command_ready?' do
-
-    let(:server) do
-      described_class.new('127.0.0.1:27017')
-    end
-
-    context 'when the max wire version is 2' do
-
-      let(:description) do
-        Mongo::Server::Description.new(server, { 'maxWireVersion' => 2 })
-      end
-
-      before do
-        server.instance_variable_set(:@description, description)
-      end
-
-      it 'returns true' do
-        expect(server).to be_write_command_ready
-      end
-    end
-
-    context 'when the max wire version is less than 2' do
-
-      let(:description) do
-        Mongo::Server::Description.new(server, { 'maxWireVersion' => 1 })
-      end
-
-      before do
-        server.instance_variable_set(:@description, description)
-      end
-
-      it 'returns false' do
-        expect(server).to_not be_write_command_ready
-      end
-    end
-  end
 end
