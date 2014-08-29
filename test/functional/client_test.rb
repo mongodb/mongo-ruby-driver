@@ -520,46 +520,45 @@ class ClientTest < Test::Unit::TestCase
     end
   end
 
-  # @todo: uncomment when RUBY-788 is merged in
-  #context "Connection exceptions" do
-  #  setup do
-  #    @con = standard_connection(:pool_size => 10, :pool_timeout => 10)
-  #    @coll = @con[TEST_DB]['test-connection-exceptions']
-  #  end
-#
-  #  should "release connection if an exception is raised on send_message" do
-  #    @con.stubs(:send_message_on_socket).raises(ConnectionFailure)
-  #    assert_equal 0, @con.primary_pool.checked_out.size
-  #    assert_raise ConnectionFailure do
-  #      @coll.insert({:test => "insert"})
-  #    end
-  #    assert_equal 0, @con.primary_pool.checked_out.size
-  #  end
-#
-  #  should "release connection if an exception is raised on write concern :w => 1" do
-  #    @con.stubs(:receive).raises(ConnectionFailure)
-  #    assert_equal 0, @con.primary_pool.checked_out.size
-  #    assert_raise ConnectionFailure do
-  #      @coll.insert({:test => "insert"}, :w => 1)
-  #    end
-  #    assert_equal 0, @con.primary_pool.checked_out.size
-  #  end
-#
-  #  should "release connection if an exception is raised on receive_message" do
-  #    @con.stubs(:receive).raises(ConnectionFailure)
-  #    assert_equal 0, @con.read_pool.checked_out.size
-  #    assert_raise ConnectionFailure do
-  #      @coll.find.to_a
-  #    end
-  #    assert_equal 0, @con.read_pool.checked_out.size
-  #  end
-#
-  #  should "show a proper exception message if an IOError is raised while closing a socket" do
-  #    TCPSocket.any_instance.stubs(:close).raises(IOError.new)
-#
-  #    @con.primary_pool.checkout_new_socket
-  #    @con.primary_pool.expects(:warn)
-  #    assert @con.primary_pool.close
-  #  end
-  #end
+  context "Connection exceptions" do
+    setup do
+      @con = MongoClient.new(TEST_HOST, TEST_PORT, :pool_size => 10, :pool_timeout => 10)
+      @coll = @con[TEST_DB]['test-connection-exceptions']
+    end
+
+    should "release connection if an exception is raised on send_message" do
+      @con.stubs(:send_message_on_socket).raises(ConnectionFailure)
+      assert_equal 0, @con.primary_pool.checked_out.size
+      assert_raise ConnectionFailure do
+        @coll.insert({:test => "insert"})
+      end
+      assert_equal 0, @con.primary_pool.checked_out.size
+    end
+
+    should "release connection if an exception is raised on write concern :w => 1" do
+      @con.stubs(:receive).raises(ConnectionFailure)
+      assert_equal 0, @con.primary_pool.checked_out.size
+      assert_raise ConnectionFailure do
+        @coll.insert({:test => "insert"}, :w => 1)
+      end
+      assert_equal 0, @con.primary_pool.checked_out.size
+    end
+
+    should "release connection if an exception is raised on receive_message" do
+      @con.stubs(:receive).raises(ConnectionFailure)
+      assert_equal 0, @con.read_pool.checked_out.size
+      assert_raise ConnectionFailure do
+        @coll.find.to_a
+      end
+      assert_equal 0, @con.read_pool.checked_out.size
+    end
+
+    should "show a proper exception message if an IOError is raised while closing a socket" do
+      TCPSocket.any_instance.stubs(:close).raises(IOError.new)
+
+      @con.primary_pool.checkout_new_socket
+      @con.primary_pool.expects(:warn)
+      assert @con.primary_pool.close
+    end
+  end
 end
