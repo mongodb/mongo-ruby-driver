@@ -99,7 +99,7 @@ describe Mongo::View::Index do
       end
 
       after do
-        indexable.drop_index(spec)
+        view.drop(spec)
       end
 
       it 'raises an exception', if: write_command_enabled? do
