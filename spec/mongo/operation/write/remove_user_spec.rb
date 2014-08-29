@@ -15,23 +15,31 @@ describe Mongo::Operation::Write::RemoveUser do
       described_class.new(name: 'durran', db_name: TEST_DB)
     end
 
-    let!(:response) do
-      operation.execute(authorized_primary.context)
-    end
-
     context 'when user removal was successful' do
 
-      it 'saves the user in the database' do
+      let!(:response) do
+        operation.execute(authorized_primary.context)
+      end
+
+      it 'removes the user from the database' do
         expect(response).to be_ok
       end
     end
 
     context 'when removal was not successful' do
 
-      it 'raises an exception' do
+      before do
+        operation.execute(authorized_primary.context)
+      end
+
+      it 'raises an exception', if: write_command_enabled? do
         expect {
           operation.execute(authorized_primary.context)
         }.to raise_error(Mongo::Operation::Write::Failure)
+      end
+
+      it 'does not raise an exception', unless: write_command_enabled? do
+        expect(operation.execute(authorized_primary.context).n).to eq(0)
       end
     end
   end

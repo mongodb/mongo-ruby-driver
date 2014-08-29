@@ -16,15 +16,15 @@ describe Mongo::Operation::Write::CreateUser do
       described_class.new(user: user, db_name: TEST_DB)
     end
 
-    let!(:response) do
-      operation.execute(authorized_primary.context)
-    end
-
     after do
       authorized_client.database.users.remove('durran')
     end
 
     context 'when user creation was successful' do
+
+      let!(:response) do
+        operation.execute(authorized_primary.context)
+      end
 
       it 'saves the user in the database' do
         expect(response).to be_ok
@@ -35,6 +35,7 @@ describe Mongo::Operation::Write::CreateUser do
 
       it 'raises an exception' do
         expect {
+          operation.execute(authorized_primary.context)
           operation.execute(authorized_primary.context)
         }.to raise_error(Mongo::Operation::Write::Failure)
       end

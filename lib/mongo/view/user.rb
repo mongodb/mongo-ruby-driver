@@ -34,7 +34,7 @@ module Mongo
       # Create a new user in the database.
       #
       # @example Create a new read/write user.
-      #   view.create('user', 'password', roles: [ 'readWrite' ])
+      #   view.create('user', password: 'password', roles: [ 'readWrite' ])
       #
       # @param [ Auth::User, String ] user_or_name The user object or user name.
       # @param [ Hash ] options The user options.
@@ -81,7 +81,17 @@ module Mongo
         ).execute(server.context)
       end
 
+      # Update a user in the database.
+      #
+      # @example Update a user.
+      #   view.update('name', password: 'testpwd')
+      #
       # @param [ Auth::User, String ] user_or_name The user object or user name.
+      # @param [ Hash ] options The user options.
+      #
+      # @return [ Response ] The response.
+      #
+      # @since 2.0.0
       def update(user_or_name, options = {})
 
       end
