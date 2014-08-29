@@ -26,6 +26,7 @@ module Mongo
       attr_reader :collection
 
       def_delegators :@collection, :cluster, :database, :server_preference
+      def_delegators :cluster, :next_primary
 
       # Specify ascending order for an index.
       #
@@ -91,12 +92,11 @@ module Mongo
       #
       # @since 2.0.0
       def drop(spec)
-        server = server_preference.primary(cluster.servers).first
         Operation::Write::DropIndex.new(
           db_name: database.name,
           coll_name: collection.name,
           index_name: spec.is_a?(String) ? spec : index_name(spec)
-        ).execute(server.context)
+        ).execute(next_primary.context)
       end
 
       # Drop all indexes on the collection.
@@ -138,14 +138,13 @@ module Mongo
       #
       # @since 2.0.0
       def ensure(spec, options = {})
-        server = server_preference.primary(cluster.servers).first
         Operation::Write::EnsureIndex.new(
           index: spec,
           db_name: database.name,
           coll_name: collection.name,
           index_name: options[:name] || index_name(spec),
           opts: options
-        ).execute(server.context)
+        ).execute(next_primary.context)
       end
 
       # Convenience method for getting index information by a specific name or

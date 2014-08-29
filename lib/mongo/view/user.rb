@@ -30,6 +30,7 @@ module Mongo
       attr_reader :database
 
       def_delegators :database, :cluster, :server_preference
+      def_delegators :cluster, :next_primary
 
       # Create a new user in the database.
       #
@@ -44,11 +45,10 @@ module Mongo
       # @since 2.0.0
       def create(user_or_name, options = {})
         user = generate(user_or_name, options)
-        server = server_preference.primary(cluster.servers).first
         Operation::Write::CreateUser.new(
           user: user,
           db_name: database.name
-        ).execute(server.context)
+        ).execute(next_primary.context)
       end
 
       # Initialize the new user view.
@@ -74,11 +74,10 @@ module Mongo
       #
       # @since 2.0.0
       def remove(name)
-        server = server_preference.primary(cluster.servers).first
         Operation::Write::RemoveUser.new(
           name: name,
           db_name: database.name
-        ).execute(server.context)
+        ).execute(next_primary.context)
       end
 
       # Update a user in the database.

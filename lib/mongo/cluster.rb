@@ -98,6 +98,18 @@ module Mongo
       end
     end
 
+    # Get the next primary server we can send an operation to.
+    #
+    # @example Get the next primary server.
+    #   cluster.next_primary
+    #
+    # @return [ Mongo::Server ] A primary server.
+    #
+    # @since 2.0.0
+    def next_primary
+      client.server_preference.primary(servers).first
+    end
+
     # Removed the server from the cluster for the provided address, if it
     # exists.
     #
