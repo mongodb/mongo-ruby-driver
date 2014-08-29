@@ -62,9 +62,6 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
-          unless context.primary? || context.standalone?
-            raise Exception, "Must use primary server to create an index."
-          end
           Response.new(
             if context.write_command_enabled?
               Command::EnsureIndex.new(spec).execute(context)

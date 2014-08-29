@@ -58,9 +58,6 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
-          unless context.primary? || context.standalone?
-            raise Exception, "Must use primary server to drop an index."
-          end
           Response.new(Command::DropIndex.new(spec).execute(context)).verify!
         end
       end
