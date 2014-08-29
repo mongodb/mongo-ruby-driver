@@ -36,15 +36,14 @@ module Mongo
       # @example Create a new read/write user.
       #   view.create('user', 'password', roles: [ 'readWrite' ])
       #
-      # @param [ String ] name The user name.
-      # @param [ String ] password The user password.
+      # @param [ Auth::User, String ] user_or_name The user object or user name.
       # @param [ Hash ] options The user options.
       #
       # @return [ Response ] The command response.
       #
       # @since 2.0.0
-      def create(name, password, options = {})
-        user = Auth::User.new({ user: name, password: password }.merge(options))
+      def create(user_or_name, options = {})
+        user = generate(user_or_name, options)
         server = server_preference.primary(cluster.servers).first
         Operation::Write::CreateUser.new(
           user: user,
@@ -80,6 +79,17 @@ module Mongo
           name: name,
           db_name: database.name
         ).execute(server.context)
+      end
+
+      # @param [ Auth::User, String ] user_or_name The user object or user name.
+      def update(user_or_name, options = {})
+
+      end
+
+      private
+
+      def generate(user, options)
+        user.is_a?(String) ? Auth::User.new({ user: user }.merge(options)) : user
       end
     end
   end

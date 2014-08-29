@@ -7,8 +7,7 @@ describe Mongo::Operation::Write::RemoveUser do
     before do
       authorized_client.database.users.create(
         'durran',
-        'password',
-        roles: [ Mongo::Auth::Roles::READ_WRITE ]
+        password: 'password', roles: [ Mongo::Auth::Roles::READ_WRITE ]
       )
     end
 

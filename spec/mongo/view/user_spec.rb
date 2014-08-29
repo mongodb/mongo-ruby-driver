@@ -11,8 +11,7 @@ describe Mongo::View::User do
     let!(:response) do
       view.create(
         'durran',
-        'password',
-        roles: [ Mongo::Auth::Roles::READ_WRITE ]
+        password: 'password', roles: [ Mongo::Auth::Roles::READ_WRITE ]
       )
     end
 
@@ -31,7 +30,7 @@ describe Mongo::View::User do
 
       it 'raises an exception' do
         expect {
-          view.create('durran', 'password')
+          view.create('durran', password: 'password')
         }.to raise_error(Mongo::Operation::Write::Failure)
       end
     end
@@ -44,8 +43,7 @@ describe Mongo::View::User do
       before do
         view.create(
           'durran',
-          'password',
-          roles: [ Mongo::Auth::Roles::READ_WRITE ]
+          password: 'password', roles: [ Mongo::Auth::Roles::READ_WRITE ]
         )
       end
 
@@ -66,5 +64,9 @@ describe Mongo::View::User do
         }.to raise_error(Mongo::Operation::Write::Failure)
       end
     end
+  end
+
+  describe '#update' do
+
   end
 end

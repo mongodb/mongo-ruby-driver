@@ -44,14 +44,10 @@ RSpec.configure do |config|
   config.before(:suite) do
 
     begin
-      admin_client.database.users.create(
-        ROOT_USER.name, ROOT_USER.password, roles: ROOT_USER.roles
-      )
+      admin_client.database.users.create(ROOT_USER)
     rescue Exception; end
     begin
-      unauthorized_client.database.users.create(
-        ROOT_USER.name, ROOT_USER.password, roles: ROOT_USER.roles
-      )
+      unauthorized_client.database.users.create(ROOT_USER)
     rescue Exception; end
   end
 end
