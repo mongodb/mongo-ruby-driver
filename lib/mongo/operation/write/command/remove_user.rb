@@ -12,11 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/command/writable'
-require 'mongo/operation/write/command/delete'
-require 'mongo/operation/write/command/insert'
-require 'mongo/operation/write/command/update'
-require 'mongo/operation/write/command/drop_index'
-require 'mongo/operation/write/command/ensure_index'
-require 'mongo/operation/write/command/create_user'
-require 'mongo/operation/write/command/remove_user'
+module Mongo
+  module Operation
+    module Write
+      module Command
+
+        # Remove user commands on non-legacy servers.
+        #
+        # @since 2.0.0
+        class RemoveUser
+          include Executable
+          include Writable
+
+          private
+
+          # The query selector for this drop user command operation.
+          #
+          # @return [ Hash ] The selector describing this drop user operation.
+          #
+          # @since 2.0.0
+          def selector
+            { :dropUser => @spec[:name] }
+          end
+        end
+      end
+    end
+  end
+end
