@@ -58,10 +58,14 @@ describe Mongo::View::User do
 
     context 'when removal was not successful' do
 
-      it 'raises an exception' do
+      it 'raises an exception', if: write_command_enabled? do
         expect {
           view.remove('notauser')
         }.to raise_error(Mongo::Operation::Write::Failure)
+      end
+
+      it 'does not raise an exception', unless: write_command_enabled? do
+        expect(view.remove('notauser').n).to eq(0)
       end
     end
   end
