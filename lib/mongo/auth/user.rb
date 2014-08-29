@@ -20,14 +20,27 @@ module Mongo
     # @since 2.0.0
     class User
 
+      # @return [ true, false ] For kerberos only, are we canolicalizing the
+      #   host name.
+      attr_reader :canonicalize_host_name
+
       # @return [ String ] The database the user is created in.
       attr_reader :database
+
+      # @return [ String ] The Kerberos service name.
+      attr_reader :gssapi_service_name
+
+      # @return [ Symbol ] The authorization mechanism.
+      attr_reader :mechanism
 
       # @return [ String ] The username.
       attr_reader :name
 
       # @return [ String ] The cleartext password.
       attr_reader :password
+
+      # @return [ Array<String> ] roles The user roles.
+      attr_reader :roles
 
       # Determine if this user is equal to another.
       #
@@ -86,17 +99,31 @@ module Mongo
       # Create the new user.
       #
       # @example Create a new user.
-      #   Mongo::Auth::User.new('testing', 'user', 'password')
+      #   Mongo::Auth::User.new(options)
       #
-      # @param [ String ] database The database to create the user on.
-      # @param [ String ] name The username.
-      # @param [ String ] password The password.
+      # @param [ Hash ] options The options to create the user from.
       #
       # @since 2.0.0
-      def initialize(database, name, password)
-        @database = database
-        @name = name
-        @password = password
+      def initialize(options)
+        @database = options[:auth_source] || options[:database]
+        @name = options[:user]
+        @password = options[:password] || options[:pwd]
+        @mechanism = options[:auth_mech] || :mongodb_cr
+        @gssapi_service_name = options[:gssapi_service_name] || 'mongodb'
+        @canonicalize_host_name = options[:canonicalize_host_name] || false
+        @roles = options[:roles] || []
+      end
+
+      # Get the specification for the user, used in creation.
+      #
+      # @example Get the user's specification.
+      #   user.spec
+      #
+      # @return [ Hash ] The user spec.
+      #
+      # @since 2.0.0
+      def spec
+        { pwd: hashed_password, roles: roles }
       end
     end
   end

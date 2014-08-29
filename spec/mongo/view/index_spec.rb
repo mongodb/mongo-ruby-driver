@@ -98,6 +98,10 @@ describe Mongo::View::Index do
         view.ensure(spec, unique: true)
       end
 
+      after do
+        view.drop(spec)
+      end
+
       it 'raises an exception', if: write_command_enabled? do
         expect {
           view.ensure(spec, unique: false)

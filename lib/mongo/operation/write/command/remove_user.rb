@@ -12,7 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/view/executable'
-require 'mongo/view/collection'
-require 'mongo/view/index'
-require 'mongo/view/user'
+module Mongo
+  module Operation
+    module Write
+      module Command
+
+        # Remove user commands on non-legacy servers.
+        #
+        # @since 2.0.0
+        class RemoveUser
+          include Executable
+          include Writable
+
+          private
+
+          # The query selector for this drop user command operation.
+          #
+          # @return [ Hash ] The selector describing this drop user operation.
+          #
+          # @since 2.0.0
+          def selector
+            { :dropUser => @spec[:name] }
+          end
+        end
+      end
+    end
+  end
+end

@@ -48,17 +48,13 @@ describe Mongo::Collection do
 
   describe '#find' do
 
-    let(:collection) do
-      authorized_client[TEST_COLL]
-    end
-
     context 'when provided a selector' do
 
       let(:view) do
-        collection.find(name: 1)
+        authorized_collection.find(name: 1)
       end
 
-      it 'returns a collection view for the selector' do
+      it 'returns a authorized_collection view for the selector' do
         expect(view.selector).to eq(name: 1)
       end
     end
@@ -66,26 +62,26 @@ describe Mongo::Collection do
     context 'when provided no selector' do
 
       let(:view) do
-        collection.find
+        authorized_collection.find
       end
 
-      it 'returns a collection view with an empty selector' do
+      it 'returns a authorized_collection view with an empty selector' do
         expect(view.selector).to be_empty
       end
     end
 
-    context 'when iterating the collection view' do
+    context 'when iterating the authorized_collection view' do
 
       before do
-        collection.insert([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert([{ field: 'test1' }, { field: 'test2' }])
       end
 
       after do
-        collection.find.remove
+        authorized_collection.find.remove
       end
 
       let(:view) do
-        collection.find
+        authorized_collection.find
       end
 
       it 'iterates over the documents' do

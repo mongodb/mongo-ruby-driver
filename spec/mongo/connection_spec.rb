@@ -57,23 +57,45 @@ describe Mongo::Connection do
 
     context 'when user credentials exist' do
 
-      let(:connection) do
-        described_class.new(
-          address,
-          5,
-          :username => 'notauser',
-          :password => 'password',
-          :database => TEST_DB,
-          :auth_mech => :mongodb_cr
-        )
-      end
-
       context 'when the user is not authorized' do
+
+        let(:connection) do
+          described_class.new(
+            address,
+            5,
+            :user => 'notauser',
+            :password => 'password',
+            :database => TEST_DB,
+            :auth_mech => :mongodb_cr
+          )
+        end
 
         it 'raises an error' do
           expect {
             connection.connect!
           }.to raise_error(Mongo::Auth::Unauthorized)
+        end
+      end
+
+      context 'when the user is authorized' do
+
+        let(:connection) do
+          described_class.new(
+            address,
+            5,
+            :user => ROOT_USER.name,
+            :password => ROOT_USER.password,
+            :database => TEST_DB,
+            :auth_mech => :mongodb_cr
+          )
+        end
+
+        before do
+          connection.connect!
+        end
+
+        pending 'sets the connection as authenticated' do
+          expect(connection).to be_authenticated
         end
       end
     end
@@ -109,10 +131,17 @@ describe Mongo::Connection do
     end
   end
 
-  describe '#dispatch' do
+  pending '#dispatch' do
 
     let!(:connection) do
-      described_class.new(address, 5, :database => TEST_DB)
+      described_class.new(
+        address,
+        5,
+        :user => ROOT_USER.name,
+        :password => ROOT_USER.password,
+        :database => TEST_DB,
+        :auth_mech => :mongodb_cr
+      )
     end
 
     let(:documents) do
@@ -221,7 +250,7 @@ describe Mongo::Connection do
         described_class.new(
           address,
           nil,
-          :username => 'test-user',
+          :user => 'test-user',
           :password => 'password',
           :database => TEST_DB,
           :auth_mech => :mongodb_cr
@@ -229,11 +258,7 @@ describe Mongo::Connection do
       end
 
       let(:user) do
-        Mongo::Auth::User.new(TEST_DB, 'test-user', 'password')
-      end
-
-      it 'sets the user for the connection' do
-        expect(connection.user).to eq(user)
+        Mongo::Auth::User.new(database: TEST_DB, user: 'test-user', password: 'password')
       end
 
       it 'sets the authentication strategy for the connection' do

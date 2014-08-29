@@ -4,56 +4,48 @@ describe Mongo::Operation::Write::DropIndex do
 
   describe '#execute' do
 
-    context 'when the server is a primary' do
+    context 'when the index exists' do
 
-      context 'when the index exists' do
-
-        let(:spec) do
-          { another: -1 }
-        end
-
-        before do
-          authorized_client[TEST_COLL].indexes.ensure(spec, unique: true)
-        end
-
-        let(:operation) do
-          described_class.new(
-            db_name: TEST_DB,
-            coll_name: TEST_COLL,
-            index_name: 'another_-1'
-          )
-        end
-
-        let(:response) do
-          operation.execute(authorized_primary.context)
-        end
-
-        it 'removes the index' do
-          expect(response).to be_ok
-        end
+      let(:spec) do
+        { another: -1 }
       end
 
-      context 'when the index does not exist' do
+      before do
+        authorized_client[TEST_COLL].indexes.ensure(spec, unique: true)
+      end
 
-        let(:operation) do
-          described_class.new(
-            db_name: TEST_DB,
-            coll_name: TEST_COLL,
-            index_name: 'another_blah'
-          )
-        end
+      let(:operation) do
+        described_class.new(
+          db_name: TEST_DB,
+          coll_name: TEST_COLL,
+          index_name: 'another_-1'
+        )
+      end
 
-        it 'raises an exception' do
-          expect {
-            operation.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Operation::Write::Failure)
-        end
+      let(:response) do
+        operation.execute(authorized_primary.context)
+      end
+
+      it 'removes the index' do
+        expect(response).to be_ok
       end
     end
 
-    context 'when the server is a secondary' do
+    context 'when the index does not exist' do
 
-      pending 'raises an exception'
+      let(:operation) do
+        described_class.new(
+          db_name: TEST_DB,
+          coll_name: TEST_COLL,
+          index_name: 'another_blah'
+        )
+      end
+
+      it 'raises an exception' do
+        expect {
+          operation.execute(authorized_primary.context)
+        }.to raise_error(Mongo::Operation::Write::Failure)
+      end
     end
   end
 end

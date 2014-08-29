@@ -66,9 +66,6 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
-          unless context.primary? || context.standalone?
-            raise Exception, "Must use primary server"
-          end
           if context.write_command_enabled?
             op = Command::Insert.new(spec)
             Response.new(op.execute(context)).verify!

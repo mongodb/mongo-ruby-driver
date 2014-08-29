@@ -413,119 +413,114 @@ describe Mongo::Operation::Write::Insert do
       client[TEST_COLL].indexes.drop({ name: 1 })
     end
 
-    context 'when the server is a primary' do
+    context 'when inserting a single document' do
 
-      context 'when inserting a single document' do
+      context 'when the insert succeeds' do
 
-        context 'when the insert succeeds' do
-
-          let(:response) do
-            insert.execute(server.context)
-          end
-
-          it 'inserts the documents into the database' do
-            expect(response.n).to eq(1)
-          end
+        let(:response) do
+          insert.execute(server.context)
         end
 
-        context 'when the insert fails' do
-
-          let(:documents) do
-            [{ name: 'test' }]
-          end
-
-          let(:spec) do
-            { :documents     => documents,
-              :db_name       => TEST_DB,
-              :coll_name     => TEST_COLL,
-              :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
-            }
-          end
-
-          let(:failing_insert) do
-            described_class.new(spec)
-          end
-
-          it 'raises an error' do
-            expect {
-              failing_insert.execute(server.context)
-              failing_insert.execute(server.context)
-            }.to raise_error(Mongo::Operation::Write::Failure)
-          end
+        it 'inserts the documents into the database' do
+          expect(response.n).to eq(1)
         end
       end
 
-      context 'when inserting multiple documents' do
+      context 'when the insert fails' do
 
-        context 'when the insert succeeds' do
-
-          let(:documents) do
-            [{ name: 'test1' }, { name: 'test2' }]
-          end
-
-          let(:response) do
-            insert.execute(server.context)
-          end
-
-          it 'inserts the documents into the database' do
-            expect(response.n).to eq(2)
-          end
+        let(:documents) do
+          [{ name: 'test' }]
         end
 
-        context 'when the insert fails on the last document' do
-
-          let(:documents) do
-            [{ name: 'test3' }, { name: 'test' }]
-          end
-
-          let(:spec) do
-            { :documents     => documents,
-              :db_name       => TEST_DB,
-              :coll_name     => TEST_COLL,
-              :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
-            }
-          end
-
-          let(:failing_insert) do
-            described_class.new(spec)
-          end
-
-          it 'raises an error' do
-            expect {
-              failing_insert.execute(server.context)
-              failing_insert.execute(server.context)
-            }.to raise_error(Mongo::Operation::Write::Failure)
-          end
+        let(:spec) do
+          { :documents     => documents,
+            :db_name       => TEST_DB,
+            :coll_name     => TEST_COLL,
+            :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
+          }
         end
 
-        context 'when the insert fails on the first document' do
+        let(:failing_insert) do
+          described_class.new(spec)
+        end
 
-          let(:documents) do
-            [{ name: 'test' }, { name: 'test4' }]
-          end
-
-          let(:spec) do
-            { :documents     => documents,
-              :db_name       => TEST_DB,
-              :coll_name     => TEST_COLL,
-              :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
-            }
-          end
-
-          let(:failing_insert) do
-            described_class.new(spec)
-          end
-
-          it 'raises an error' do
-            expect {
-              failing_insert.execute(server.context)
-              failing_insert.execute(server.context)
-            }.to raise_error(Mongo::Operation::Write::Failure)
-          end
+        it 'raises an error' do
+          expect {
+            failing_insert.execute(server.context)
+            failing_insert.execute(server.context)
+          }.to raise_error(Mongo::Operation::Write::Failure)
         end
       end
     end
 
-    pending 'when the server is a secondary'
+    context 'when inserting multiple documents' do
+
+      context 'when the insert succeeds' do
+
+        let(:documents) do
+          [{ name: 'test1' }, { name: 'test2' }]
+        end
+
+        let(:response) do
+          insert.execute(server.context)
+        end
+
+        it 'inserts the documents into the database' do
+          expect(response.n).to eq(2)
+        end
+      end
+
+      context 'when the insert fails on the last document' do
+
+        let(:documents) do
+          [{ name: 'test3' }, { name: 'test' }]
+        end
+
+        let(:spec) do
+          { :documents     => documents,
+            :db_name       => TEST_DB,
+            :coll_name     => TEST_COLL,
+            :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
+          }
+        end
+
+        let(:failing_insert) do
+          described_class.new(spec)
+        end
+
+        it 'raises an error' do
+          expect {
+            failing_insert.execute(server.context)
+            failing_insert.execute(server.context)
+          }.to raise_error(Mongo::Operation::Write::Failure)
+        end
+      end
+
+      context 'when the insert fails on the first document' do
+
+        let(:documents) do
+          [{ name: 'test' }, { name: 'test4' }]
+        end
+
+        let(:spec) do
+          { :documents     => documents,
+            :db_name       => TEST_DB,
+            :coll_name     => TEST_COLL,
+            :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
+          }
+        end
+
+        let(:failing_insert) do
+          described_class.new(spec)
+        end
+
+        it 'raises an error' do
+          expect {
+            failing_insert.execute(server.context)
+            failing_insert.execute(server.context)
+          }.to raise_error(Mongo::Operation::Write::Failure)
+        end
+      end
+    end
   end
 end

@@ -57,7 +57,7 @@ module Mongo
           raise Exception, "Must use primary server"
         end
         context.with_connection do |connection|
-          connection.dispatch([message])
+          connection.dispatch([ message ])
         end
       end
 
@@ -144,6 +144,15 @@ module Mongo
       # @since 2.0.0
       def options
         @spec[:opts] || {}
+      end
+
+      # The user for user related operations.
+      #
+      # @return [ Auth::User ] The user.
+      #
+      # @since 2.0.0
+      def user
+        @spec[:user]
       end
 
       # The write concern to use for this operation.

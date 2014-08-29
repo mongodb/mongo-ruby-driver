@@ -12,19 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'jruby'
+include Java
+require 'jsasl.jar'
+
 module Mongo
   module Auth
 
-    # Defines behaviour for LDAP Proxy authentication.
+    # Defines behaviour for Kerberos authentication.
     #
     # @since 2.0.0
-    class LDAP
+    class Kerberos
       include Executable
 
       # The authentication mechinism string.
       #
       # @since 2.0.0
-      MECHANISM = 'PLAIN'.freeze
+      MECHANISM = 'GSSAPI'.freeze
 
       # Log the user in on the given connection.
       #
@@ -38,24 +42,42 @@ module Mongo
       #
       # @since 2.0.0
       def login(connection)
-        reply = connection.dispatch([ login_message ])
-        raise Unauthorized.new(user) if reply.documents[0]['ok'] == 0
+        host = connection.address.host
+        token = BSON::Binary.new(authenticator(host).initialize_challenge)
+        reply = connection.dispatch([ login_message(token) ]).documents[0]
+        until reply.documents[0]['done']
+          token = BSON::Binary.new(authenticator(host).evaluate_challenge(response['payload'].to_s))
+          reply = connection.dispatch([ continue_message(response, token) ])
+        end
         reply
       end
 
       private
 
-      def login_message
+      def authenticator(host)
+        @authenticator ||= org.mongodb.sasl.GSSAPIAuthenticator.new(
+          JRuby.runtime,
+          user.name,
+          host,
+          user.gssapi_service_name,
+          user.canonicalize_host_name
+        )
+      end
+
+      def login_message(token)
         Protocol::Query.new(
           Auth::EXTERNAL,
           Database::COMMAND,
-          {
-            authenticate: 1,
-            user: user.name,
-            password: user.password,
-            digestPassword: false,
-            mechanism: MECHANISM
-          },
+          { saslStart: 1, payload: token, mechanism: MECHANISM, authAuthorize: 1 },
+          limit: -1
+        )
+      end
+
+      def continue_message(response, token)
+        Protocol::Query.new(
+          Auth::EXTERNAL,
+          Database::COMMAND,
+          { saslContinue: 1, payload: token, conversationId: response['conversationId'] },
           limit: -1
         )
       end

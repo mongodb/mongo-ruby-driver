@@ -32,19 +32,19 @@ module Mongo
       #
       # @since 2.0.0
       def login(connection)
-        nonce = connection.dispatch([ nonce_message(user) ]).documents[0]
-        reply = connection.dispatch([ login_message(user, nonce[Auth::NONCE]) ])
+        nonce = connection.dispatch([ nonce_message ]).documents[0]
+        reply = connection.dispatch([ login_message(nonce[Auth::NONCE]) ])
         raise Unauthorized.new(user) if reply.documents[0]['ok'] == 0
         reply
       end
 
       private
 
-      def nonce_message(user)
+      def nonce_message
         Protocol::Query.new(user.database, Database::COMMAND, Auth::GET_NONCE, limit: -1)
       end
 
-      def login_message(user, nonce)
+      def login_message(nonce)
         Protocol::Query.new(
           user.database,
           Database::COMMAND,

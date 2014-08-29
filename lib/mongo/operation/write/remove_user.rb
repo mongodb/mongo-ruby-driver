@@ -1,4 +1,3 @@
-
 # Copyright (C) 2009-2014 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,38 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/ensure_index/response'
+require 'mongo/operation/write/remove_user/response'
 
 module Mongo
   module Operation
     module Write
 
-      # A MongoDB ensure index operation.
-      # If a server with version >= 2.5.5 is being used, a write command operation
-      # will be created and sent instead.
+      # A MongoDB remove user operation.
       #
       # @since 2.0.0
-      class EnsureIndex
+      class RemoveUser
         include Executable
 
-        # Initialize the ensure index operation.
+        # Initialize the remove user operation.
         #
-        # @example
-        #   Write::EnsureIndex.new({
-        #     :index         => { :name => 1, :age => -1 },
-        #     :db_name       => 'test',
-        #     :coll_name     => 'test_coll',
-        #     :index_name    => 'name_1_age_-1'
-        #   })
+        # @example Initialize the operation.
+        #   Write::RemoveUser.new(:db_name => 'test', :name => name)
         #
-        # @param [ Hash ] spec The specifications for the insert.
+        # @param [ Hash ] spec The specifications for the remove.
         #
-        # @option spec :index [ Hash ] The index spec to create.
+        # @option spec :name [ String ] The user name.
         # @option spec :db_name [ String ] The name of the database.
-        # @option spec :coll_name [ String ] The name of the collection.
-        # @option spec :index_name [ String ] The name of the index.
-        # @option spec :opts [ Hash ] Options for the command, if it ends up being a
-        #   write command.
         #
         # @since 2.0.0
         def initialize(spec)
@@ -64,10 +52,10 @@ module Mongo
         def execute(context)
           Response.new(
             if context.write_command_enabled?
-              Command::EnsureIndex.new(spec).execute(context)
+              Command::RemoveUser.new(spec).execute(context)
             else
               context.with_connection do |connection|
-                connection.dispatch([ message(index), gle ].compact)
+                connection.dispatch([ message, gle ].compact)
               end
             end
           ).verify!
@@ -75,9 +63,8 @@ module Mongo
 
         private
 
-        def message(index)
-          index_spec = options.merge(ns: namespace, key: index, name: index_name)
-          Protocol::Insert.new(db_name, View::Index::COLLECTION, [ index_spec ])
+        def message
+          Protocol::Delete.new(db_name, View::User::COLLECTION, { user: @spec[:name] })
         end
       end
     end

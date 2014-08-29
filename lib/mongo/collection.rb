@@ -29,6 +29,7 @@ module Mongo
 
     # Get client, cluser and server preference from client.
     def_delegators :@database, :client, :cluster, :server_preference, :write_concern
+    def_delegators :cluster, :next_primary
 
     # Check if a collection is equal to another object. Will check the name and
     # the database for equality.
@@ -79,7 +80,7 @@ module Mongo
     # Instantiate a new collection.
     #
     # @example Instantiate a new collection.
-    # Mongo::Collection.new(database, 'test')
+    #   Mongo::Collection.new(database, 'test')
     #
     # @param [ Mongo::Database ] database The collection's database.
     # @param [ String, Symbol ] name The collection name.
@@ -94,7 +95,7 @@ module Mongo
     # Insert the provided documents into the collection.
     #
     # @example Insert documents into the collection.
-    # collection.insert([{ name: 'test' }])
+    #   collection.insert([{ name: 'test' }])
     #
     # @param [ Array<Hash> ] documents The documents to insert.
     # @param [ Hash ] options The insert options.
@@ -103,14 +104,13 @@ module Mongo
     #
     # @since 2.0.0
     def insert(documents, options = {})
-      server = server_preference.primary(cluster.servers).first
       Operation::Write::Insert.new(
         :documents => documents.is_a?(Array) ? documents : [ documents ],
         :db_name => database.name,
         :coll_name => name,
         :write_concern => write_concern,
         :opts => options
-      ).execute(server.context)
+      ).execute(next_primary.context)
     end
 
     # Get the fully qualified namespace of the collection.

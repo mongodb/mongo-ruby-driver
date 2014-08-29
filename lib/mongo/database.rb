@@ -140,6 +140,18 @@ module Mongo
       @name = name.to_s.freeze
     end
 
+    # Get the user view for this database.
+    #
+    # @example Get the user view.
+    #   database.users
+    #
+    # @return [ View::User ] The user view.
+    #
+    # @since 2.0.0
+    def users
+      View::User.new(self)
+    end
+
     # Exception that is raised when trying to create a database with no name.
     #
     # @since 2.0.0
