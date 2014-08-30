@@ -86,7 +86,7 @@ module Mongo
     # @since 2.0.0
     def collection_names
       namespaces = collection(NAMESPACES).find(
-        :name => { '$not' => /#{name}\.system\,|\$/ }
+        :name => { '$not' => /system\.|\$/ }
       )
       namespaces.map do |document|
         collection = document['name']
