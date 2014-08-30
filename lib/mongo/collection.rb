@@ -47,7 +47,7 @@ module Mongo
     # @since 2.0.0
     def ==(other)
       return false unless other.is_a?(Collection)
-      name == other.name && database == other.database
+      name == other.name && database == other.database && options == other.options
     end
 
     # Is the collection capped?

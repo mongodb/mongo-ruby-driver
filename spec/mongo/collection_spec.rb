@@ -4,14 +4,21 @@ describe Mongo::Collection do
 
   describe '#==' do
 
-    let(:database) { Mongo::Database.new(authorized_client, :test) }
-    let(:collection) { described_class.new(database, :users) }
+    let(:database) do
+      Mongo::Database.new(authorized_client, :test)
+    end
+
+    let(:collection) do
+      described_class.new(database, :users)
+    end
 
     context 'when the names are the same' do
 
       context 'when the databases are the same' do
 
-        let(:other) { described_class.new(database, :users) }
+        let(:other) do
+          described_class.new(database, :users)
+        end
 
         it 'returns true' do
           expect(collection).to eq(other)
@@ -20,8 +27,35 @@ describe Mongo::Collection do
 
       context 'when the databases are not the same' do
 
-        let(:other_db) { Mongo::Database.new(authorized_client, :testing) }
-        let(:other) { described_class.new(other_db, :users) }
+        let(:other_db) do
+          Mongo::Database.new(authorized_client, :testing)
+        end
+
+        let(:other) do
+          described_class.new(other_db, :users)
+        end
+
+        it 'returns false' do
+          expect(collection).to_not eq(other)
+        end
+      end
+
+      context 'when the options are the same' do
+
+        let(:other) do
+          described_class.new(database, :users)
+        end
+
+        it 'returns true' do
+          expect(collection).to eq(other)
+        end
+      end
+
+      context 'when the options are not the same' do
+
+        let(:other) do
+          described_class.new(database, :users, :capped => true)
+        end
 
         it 'returns false' do
           expect(collection).to_not eq(other)
@@ -31,7 +65,9 @@ describe Mongo::Collection do
 
     context 'when the names are not the same' do
 
-      let(:other) { described_class.new(database, :sounds) }
+      let(:other) do
+        described_class.new(database, :sounds)
+      end
 
       it 'returns false' do
         expect(collection).to_not eq(other)
