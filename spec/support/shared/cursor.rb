@@ -17,8 +17,8 @@ shared_context 'shared cursor' do
     end
   end
 
-  let(:view_opts) { {} }
-  let(:view) { Mongo::View::Collection.new(collection, {}, view_opts) }
+  let(:view_options) { {} }
+  let(:view) { Mongo::View::Collection.new(collection, {}, view_options) }
 
   let(:nonzero) { 1 }
   let(:b) { proc { |d| d } }

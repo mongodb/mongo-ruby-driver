@@ -8,10 +8,10 @@ describe Mongo::Protocol::Update do
   let(:ns)       { "#{db}.#{coll}" }
   let(:selector) { { :name => 'Tyler' } }
   let(:update_doc) { { :name => 'Bob' } }
-  let(:opts)       { Hash.new }
+  let(:options)       { Hash.new }
 
   let(:message) do
-    described_class.new(db, coll, selector, update_doc, opts)
+    described_class.new(db, coll, selector, update_doc, options)
   end
 
   describe '#initialize' do
@@ -35,7 +35,7 @@ describe Mongo::Protocol::Update do
 
       context 'when the fields are equal' do
         let(:other) do
-          described_class.new(db, coll, selector, update_doc, opts)
+          described_class.new(db, coll, selector, update_doc, options)
         end
 
         it 'returns true' do
@@ -45,7 +45,7 @@ describe Mongo::Protocol::Update do
 
       context 'when the database is not equal' do
         let(:other) do
-          described_class.new('tyler', coll, selector, update_doc, opts)
+          described_class.new('tyler', coll, selector, update_doc, options)
         end
 
         it 'returns false' do
@@ -55,7 +55,7 @@ describe Mongo::Protocol::Update do
 
       context 'when the collection is not equal' do
         let(:other) do
-          described_class.new(db, 'tyler', selector, update_doc, opts)
+          described_class.new(db, 'tyler', selector, update_doc, options)
         end
 
         it 'returns false' do
@@ -65,7 +65,7 @@ describe Mongo::Protocol::Update do
 
       context 'when the selector is not equal' do
         let(:other) do
-          described_class.new(db, coll, { :a => 1 }, update_doc, opts)
+          described_class.new(db, coll, { :a => 1 }, update_doc, options)
         end
 
         it 'returns false' do
@@ -75,7 +75,7 @@ describe Mongo::Protocol::Update do
 
       context 'when the update document is not equal' do
         let(:other) do
-          described_class.new(db, coll, selector, { :a => 1 }, opts)
+          described_class.new(db, coll, selector, { :a => 1 }, options)
         end
 
         it 'returns false' do
@@ -151,7 +151,7 @@ describe Mongo::Protocol::Update do
       end
 
       context 'when flags are provided' do
-        let(:opts) { { :flags => flags } }
+        let(:options) { { :flags => flags } }
 
         context 'upsert flag' do
           let(:flags) { [:upsert] }

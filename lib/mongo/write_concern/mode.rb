@@ -68,9 +68,9 @@ module Mongo
       #
       # @since 2.0.0
       def normalize(options)
-        options.reduce({}) do |opts, (key, value)|
-          opts[key] = value.is_a?(Symbol) ? value.to_s : value
-          opts
+        options.reduce({}) do |options, (key, value)|
+          options[key] = value.is_a?(Symbol) ? value.to_s : value
+          options
         end
       end
 

@@ -63,7 +63,7 @@ module Mongo
     # @since 2.0.0
     def connect!
       unless socket
-        @socket = address.socket(timeout, ssl_opts)
+        @socket = address.socket(timeout, ssl_options)
         @socket.connect!
         if authenticator
           authenticator.login(self)
@@ -126,14 +126,14 @@ module Mongo
       @address  = address
       @timeout  = timeout || TIMEOUT
       @options  = options
-      @ssl_opts = options.reject { |k, v| !k.to_s.start_with?('ssl') }
+      @ssl_options = options.reject { |k, v| !k.to_s.start_with?('ssl') }
       @socket   = nil
       setup_authentication!
     end
 
     private
 
-    attr_reader :socket, :ssl_opts
+    attr_reader :socket, :ssl_options
 
     def ensure_connected
       connect! if socket.nil? || !socket.alive?

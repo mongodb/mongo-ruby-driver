@@ -109,7 +109,7 @@ module Mongo
         :db_name => database.name,
         :coll_name => name,
         :write_concern => write_concern,
-        :opts => options
+        :options => options
       ).execute(next_primary.context)
     end
 

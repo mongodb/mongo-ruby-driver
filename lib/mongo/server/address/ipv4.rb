@@ -63,14 +63,14 @@ module Mongo
         #   ipv4.socket(5, :ssl => true)
         #
         # @param [ Float ] timeout The socket timeout.
-        # @param [ Hash ] ssl_opts SSL options.
+        # @param [ Hash ] ssl_options SSL options.
         #
         # @return [ Pool::Socket::SSL, Pool::Socket::TCP ] The socket.
         #
         # @since 2.0.0
-        def socket(timeout, ssl_opts = {})
-          unless ssl_opts.empty?
-            Socket::SSL.new(ip, port, timeout, Socket::PF_INET, ssl_opts)
+        def socket(timeout, ssl_options = {})
+          unless ssl_options.empty?
+            Socket::SSL.new(ip, port, timeout, Socket::PF_INET, ssl_options)
           else
             Socket::TCP.new(ip, port, timeout, Socket::PF_INET)
           end

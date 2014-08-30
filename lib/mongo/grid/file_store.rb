@@ -36,19 +36,19 @@ module Mongo
       #  filename, will create the file if it does not already exist. If a
       #  BSON::ObjectId, will raise an error if the file does not already exist.
       # @param [ String ] mode Either 'r' or 'w'.
-      # @param [ Hash ] opts Options for this file.
+      # @param [ Hash ] options Options for this file.
       #
-      # @options opts [ Integer ] (261120) :chunk_size Custom chunk size, in bytes.
-      # @options opts [ Array ] :aliases Array of alias strings for this filename.
-      # @options opts [ String ] :content_type A valid MIME type for this document.
-      # @options opts [ BSON::ObjectId ] :_id A custom files_id for this file.
-      # @options opts [ Hash ] :metadata Any additional metadata for this file.
+      # @options options [ Integer ] (261120) :chunk_size Custom chunk size, in bytes.
+      # @options options [ Array ] :aliases Array of alias strings for this filename.
+      # @options options [ String ] :content_type A valid MIME type for this document.
+      # @options options [ BSON::ObjectId ] :_id A custom files_id for this file.
+      # @options options [ Hash ] :metadata Any additional metadata for this file.
       #
       # @return [ Grid::File ] file.
       #
       # @since 2.0.0
-      def open(id, mode, opts={})
-        Grid::File.new(id, mode, @files, @chunks, opts)
+      def open(id, mode, options={})
+        Grid::File.new(id, mode, @files, @chunks, options)
       end
 
       # Delete the file identified by id from the Grid::FS.

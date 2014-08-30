@@ -64,29 +64,29 @@ module Mongo
         # @param [ Integer ] port The port number.
         # @param [ Float ] timeout The socket timeout value.
         # @param [ Integer ] family The socket family.
-        # @param [ Hash ] opts Optional settings and configuration values.
+        # @param [ Hash ] options Optional settings and configuration values.
         #
-        # @option opts [ true, false ] :connect (true) If true calls connect
+        # @option options [ true, false ] :connect (true) If true calls connect
         #   before returning the object instance.
-        # @option opts [ String ] :ssl_cert (nil) Path to the certificate file
+        # @option options [ String ] :ssl_cert (nil) Path to the certificate file
         #   used to identify the local connection against MongoDB.
-        # @option opts [ String ] :ssl_key (nil) Path to the private key file
+        # @option options [ String ] :ssl_key (nil) Path to the private key file
         #   used to identify the local connection against MongoDB. If included
         #   in the ssl certificate file then only :ssl_cert is needed.
-        # @option opts [ true, false ] :ssl_verify (nil) Specifies whether or
+        # @option options [ true, false ] :ssl_verify (nil) Specifies whether or
         #   not peer certificate validation should occur.
-        # @option opts [ String ] :ssl_ca_cert (nil) Path to the :ca_certs file
+        # @option options [ String ] :ssl_ca_cert (nil) Path to the :ca_certs file
         #   containing a set of concatenated "certification authority"
         #   certificates, which are used to validate the certificates returned
         #   from the other end of the socket connection. Implies :ssl_verify.
         #
         # @since 2.0.0
-        def initialize(host, port, timeout, family, opts = {})
+        def initialize(host, port, timeout, family, options = {})
           @host    = host
           @port    = port
           @timeout = timeout
           @family  = family
-          @context = Context.create(opts)
+          @context = Context.create(options)
         end
 
         # Does this socket verify it's certificate on connection?

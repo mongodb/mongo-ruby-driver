@@ -119,7 +119,7 @@ module Mongo
       Operation::Command.new({
         :selector => operation,
         :db_name => name,
-        :opts => { :limit => -1 }
+        :options => { :limit => -1 }
       }).execute(server.context)
     end
 

@@ -34,22 +34,22 @@ module Mongo
             # @return [ OpenSSL::SSL::SSLContext ] The created context.
             #
             # @since 2.0.0
-            def create(opts = {})
+            def create(options = {})
               context = OpenSSL::SSL::SSLContext.new
 
               # Client SSL certificate.
-              if opts[:ssl_cert]
-                context.cert = OpenSSL::X509::Certificate.new(File.open(opts[:ssl_cert]))
+              if options[:ssl_cert]
+                context.cert = OpenSSL::X509::Certificate.new(File.open(options[:ssl_cert]))
               end
 
               # Client private key file (optional if included in cert).
-              if opts[:ssl_key]
-                context.key = OpenSSL::PKey::RSA.new(File.open(opts[:ssl_key]))
+              if options[:ssl_key]
+                context.key = OpenSSL::PKey::RSA.new(File.open(options[:ssl_key]))
               end
 
               # Peer certificate validation.
-              if opts[:ssl_verify] || opts[:ssl_ca_cert]
-                context.ca_file     = opts[:ssl_ca_cert]
+              if options[:ssl_verify] || options[:ssl_ca_cert]
+                context.ca_file     = options[:ssl_ca_cert]
                 context.verify_mode = OpenSSL::SSL::VERIFY_PEER
               end
 

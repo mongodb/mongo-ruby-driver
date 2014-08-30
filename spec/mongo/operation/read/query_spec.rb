@@ -4,10 +4,10 @@ describe Mongo::Operation::Read::Query do
   include_context 'operation'
 
   let(:selector) { {} }
-  let(:query_opts) { {} }
+  let(:query_options) { {} }
   let(:spec) do
     { :selector  => selector,
-      :opts      => query_opts,
+      :options      => query_options,
       :db_name   => db_name,
       :coll_name => coll_name
     }
@@ -28,7 +28,7 @@ describe Mongo::Operation::Read::Query do
     context 'when two ops have different specs' do
       let(:other_spec) do
         { :selector  => { :a => 1 },
-          :opts      => query_opts,
+          :options      => query_options,
           :db_name   => db_name,
           :coll_name => coll_name
         }
@@ -62,11 +62,11 @@ describe Mongo::Operation::Read::Query do
     context 'message' do
 
       it 'creates a query wire protocol message with correct specs' do
-        expect(Mongo::Protocol::Query).to receive(:new) do |db, coll, sel, opts|
+        expect(Mongo::Protocol::Query).to receive(:new) do |db, coll, sel, options|
           expect(db).to eq(db_name)
           expect(coll).to eq(coll_name)
           expect(sel).to eq(selector)
-          expect(opts).to eq(query_opts)
+          expect(options).to eq(query_options)
         end
         op.execute(primary_context)
       end

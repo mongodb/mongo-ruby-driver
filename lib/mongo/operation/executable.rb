@@ -143,7 +143,7 @@ module Mongo
       #
       # @since 2.0.0
       def options
-        @spec[:opts] || {}
+        @spec[:options] || {}
       end
 
       # The user for user related operations.

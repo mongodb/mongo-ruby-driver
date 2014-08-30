@@ -51,7 +51,7 @@ module Mongo
         #   for this operation.
         # @option spec :ordered [ true, false ] Whether the operations should be
         #   executed in order.
-        # @option spec :opts [Hash] Options for the command, if it ends up being a
+        # @option spec :options [Hash] Options for the command, if it ends up being a
         #   write command.
         #
         # @since 2.0.0
@@ -135,8 +135,8 @@ module Mongo
         # @since 2.0.0
         def message(delete_spec)
           selector    = delete_spec[:q]
-          delete_opts = (delete_spec[:limit] || 0) <= 0 ? {} : { :flags => [:single_remove] }
-          Protocol::Delete.new(db_name, coll_name, selector, delete_opts)
+          delete_options = (delete_spec[:limit] || 0) <= 0 ? {} : { :flags => [:single_remove] }
+          Protocol::Delete.new(db_name, coll_name, selector, delete_options)
         end
       end
     end

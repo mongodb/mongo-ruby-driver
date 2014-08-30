@@ -30,7 +30,7 @@ module Mongo
           # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
           # @option spec :ordered [ true, false ] Whether execution should halt after
           #   the first error encountered on the server.
-          # @option spec :opts [ Hash ] Options for the command.
+          # @option spec :options [ Hash ] Options for the command.
           #
           # @since 2.0.0
           def initialize(spec)
@@ -67,9 +67,9 @@ module Mongo
           #
           # @since 2.0.0
           def options
-            return { :limit => -1 } unless @spec[:opts]
-            unless @spec[:opts][:limit] && @spec[:opts][:limit] == -1
-              @spec[:opts].merge(:limit => -1)
+            return { :limit => -1 } unless @spec[:options]
+            unless @spec[:options][:limit] && @spec[:options][:limit] == -1
+              @spec[:options].merge(:limit => -1)
             end
           end
 

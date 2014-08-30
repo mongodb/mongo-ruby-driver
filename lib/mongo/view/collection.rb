@@ -40,7 +40,7 @@ module Mongo
       # @return [ Hash ] The query selector.
       attr_reader :selector
       # @return [ Hash ] The additional query options.
-      attr_reader :opts
+      attr_reader :options
 
       def_delegators :@collection, :client, :cluster, :database, :server_preference, :write_concern
 
@@ -57,31 +57,31 @@ module Mongo
       #
       # @param [ Collection ] collection The +Collection+ to query.
       # @param [ Hash ] selector The query selector.
-      # @param [ Hash ] opts The additional query options.
+      # @param [ Hash ] options The additional query options.
       #
-      # @option opts :comment [ String ] Associate a comment with the query.
-      # @option opts :batch_size [ Integer ] The number of docs to return in
+      # @option options :comment [ String ] Associate a comment with the query.
+      # @option options :batch_size [ Integer ] The number of docs to return in
       #   each response from MongoDB.
-      # @option opts :fields [ Hash ] The fields to include or exclude in
+      # @option options :fields [ Hash ] The fields to include or exclude in
       #   returned docs.
-      # @option opts :hint [ Hash ] Override default index selection and force
+      # @option options :hint [ Hash ] Override default index selection and force
       #   MongoDB to use a specific index for the query.
-      # @option opts :limit [ Integer ] Max number of docs to return.
-      # @option opts :max_scan [ Integer ] Constrain the query to only scan the
+      # @option options :limit [ Integer ] Max number of docs to return.
+      # @option options :max_scan [ Integer ] Constrain the query to only scan the
       #   specified number of docs. Use to prevent queries from running too long.
-      # @option opts :read [ Symbol ] The read preference to use for the query.
+      # @option options :read [ Symbol ] The read preference to use for the query.
       #   If none is provided, the collection's default read preference is used.
-      # @option opts :show_disk_loc [ true, false ] Return disk location info as
+      # @option options :show_disk_loc [ true, false ] Return disk location info as
       #   a field in each doc.
-      # @option opts :skip [ Integer ] The number of documents to skip.
-      # @option opts :snapshot [ true, false ] Prevents returning a doc more than
+      # @option options :skip [ Integer ] The number of documents to skip.
+      # @option options :snapshot [ true, false ] Prevents returning a doc more than
       #   once.
-      # @option opts :sort [ Hash ] The key and direction pairs used to sort the
+      # @option options :sort [ Hash ] The key and direction pairs used to sort the
       #   results.
-      def initialize(collection, selector = {}, opts = {})
+      def initialize(collection, selector = {}, options = {})
         @collection = collection
         @selector = selector.dup
-        @opts = opts.dup
+        @options = options.dup
       end
 
       # Get a human-readable string representation of +Collection+.
@@ -89,17 +89,17 @@ module Mongo
       # @return [ String ] A string representation of a +Collection+ instance.
       def inspect
         "<Mongo::Collection:0x#{object_id} namespace='#{@collection.namespace}" +
-            " @selector=#{@selector.inspect} @opts=#{@opts.inspect}>"
+            " @selector=#{@selector.inspect} @options=#{@options.inspect}>"
       end
 
       # Compare two +Collection+ objects.
       #
-      # @return [ true, false ] Equal if collection, selector, and opts of two
+      # @return [ true, false ] Equal if collection, selector, and options of two
       #   +Collection+ match.
       def ==(other)
         @collection == other.collection &&
             @selector == other.selector &&
-            @opts == other.opts
+            @options == other.options
       end
       alias_method :eql?, :==
 
@@ -108,7 +108,7 @@ module Mongo
       #
       # @return [ Integer ] A hash value of the +Collection+ object.
       def hash
-        [@collection.namespace, @opts.hash, @selector.hash].hash
+        [@collection.namespace, @options.hash, @selector.hash].hash
       end
 
       # Get the explain plan for the query.
@@ -116,8 +116,8 @@ module Mongo
       # @return [ Hash ] A single document with the explain plan.
       def explain
         explain_limit = limit || 0
-        opts = @opts.merge(:limit => -explain_limit.abs, :explain => true)
-        @collection.explain(Collection.new(@collection, @selector, opts))
+        options = @options.merge(:limit => -explain_limit.abs, :explain => true)
+        @collection.explain(Collection.new(@collection, @selector, options))
       end
 
       # Associate a comment with the query.
@@ -208,24 +208,24 @@ module Mongo
 
       # Set options for the query.
       #
-      # @param s_opts [ Hash ] Special query options.
+      # @param s_options [ Hash ] Special query options.
       #
-      # @option s_opts :snapshot [ true, false ] Prevents returning docs more
+      # @option s_options :snapshot [ true, false ] Prevents returning docs more
       #   than once.
-      # @option s_opts :max_scan [ Integer ] Constrain the query to only scan the
+      # @option s_options :max_scan [ Integer ] Constrain the query to only scan the
       #   specified number of docs.
-      # @option s_opts :show_disk_loc [ true, false ] Return disk location info
+      # @option s_options :show_disk_loc [ true, false ] Return disk location info
       #   as a field in each doc.
       #
       # @return [ Hash, Collection ] Either the special query options or a
       # new +Collection+.
-      def special_opts(s_opts = nil)
-        return special_opts_hash if s_opts.nil?
-        opts = @opts.dup
+      def special_options(s_options = nil)
+        return special_options_hash if s_options.nil?
+        options = @options.dup
         [:snapshot, :max_scan, :show_disk_loc].each do |k|
-          s_opts[k].nil? ? opts.delete(k) : opts.merge!(k => s_opts[k])
+          s_options[k].nil? ? options.delete(k) : options.merge!(k => s_options[k])
         end
-        Collection.new(collection, selector, opts)
+        Collection.new(collection, selector, options)
       end
 
       # Iterate through documents returned by a query with this +Collection+.
@@ -259,21 +259,21 @@ module Mongo
       #
       # @return [true, false, nil]
       def snapshot
-        special_opts[:snapshot]
+        special_options[:snapshot]
       end
 
       # The max_scan special operator.
       #
       # @return [Integer, nil]
       def max_scan
-        special_opts[:max_scan]
+        special_options[:max_scan]
       end
 
       # The show_disk_loc special operator.
       #
       # @return [true, false, nil]
       def show_disk_loc
-        special_opts[:show_disk_loc]
+        special_options[:show_disk_loc]
       end
 
       # The initial query operation to send to the server.
@@ -315,7 +315,7 @@ module Mongo
       # @return [Hash] The query options.
       # @todo: refactor this? it knows too much about the query wire protocol
       # message interface
-      def query_opts
+      def query_options
         { :project => fields,
           :skip   => skip,
           :limit  => to_return,
@@ -334,7 +334,7 @@ module Mongo
       #
       # @return [true, false] Whether the query has special fields.
       def has_special_fields?
-        !special_opts.empty? || sort || hint || comment || cluster.sharded?
+        !special_options.empty? || sort || hint || comment || cluster.sharded?
       end
 
       # Clone or dup the current +Collection+.
@@ -347,7 +347,7 @@ module Mongo
       # @return [ Collection ] The new +Collection+.
       def initialize_copy(other)
         @collection = other.collection
-        @opts = other.opts.dup
+        @options = other.options.dup
         @selector = other.selector.dup
       end
 
@@ -355,21 +355,21 @@ module Mongo
       #
       # @return [ Symbol ] This operation's read preference.
       def default_read(read = nil)
-        @opts[:read] || server_preference
+        @options[:read] || server_preference
       end
 
-      # Extract query opts from @opts and return them in a separate hash.
+      # Extract query options from @options and return them in a separate hash.
       #
       # @return [ Hash ] The query options in their own hash.
-      def special_opts_hash
-        s_opts = @opts[:snapshot].nil? ? {} : { :snapshot => @opts[:snapshot] }
-        unless @opts[:max_scan].nil?
-          s_opts[:max_scan] = @opts[:max_scan]
+      def special_options_hash
+        s_options = @options[:snapshot].nil? ? {} : { :snapshot => @options[:snapshot] }
+        unless @options[:max_scan].nil?
+          s_options[:max_scan] = @options[:max_scan]
         end
-        unless @opts[:show_disk_loc].nil?
-          s_opts[:show_disk_loc] = @opts[:show_disk_loc]
+        unless @options[:show_disk_loc].nil?
+          s_options[:show_disk_loc] = @options[:show_disk_loc]
         end
-        s_opts
+        s_options
       end
 
       # Build the query selector and initial +Query+ message.
@@ -378,7 +378,7 @@ module Mongo
       def query_spec
         sel = has_special_fields? ? special_selector : selector
         { :selector  => sel,
-          :opts      => query_opts,
+          :options      => query_options,
           :db_name   => db_name,
           :coll_name => @collection.name }
       end
@@ -417,8 +417,8 @@ module Mongo
       # @return [ Object, Collection ] Either the option value or a
       # new +Collection+.
       def set_option(field, value)
-        return @opts[field] if value.nil?
-        Collection.new(collection, selector, @opts.merge(field => value))
+        return @options[field] if value.nil?
+        Collection.new(collection, selector, @options.merge(field => value))
       end
     end
   end

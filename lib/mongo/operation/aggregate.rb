@@ -56,7 +56,7 @@ module Mongo
       # @option spec :selector [ Hash ] The aggregate selector.
       # @option spec :db_name [ String ] The name of the database on which
       #   the operation should be executed.
-      # @option spec :opts [ Hash ] Options for the aggregate command.
+      # @option spec :options [ Hash ] Options for the aggregate command.
       #
       # @since 2.0.0
       def initialize(spec)

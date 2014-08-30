@@ -38,7 +38,7 @@ describe Mongo::Auth::CR do
     end
   end
 
-  context 'when the user is authorized for the database' do
+  pending 'when the user is authorized for the database' do
 
     let(:user) do
       Mongo::Auth::User.new(
@@ -56,7 +56,7 @@ describe Mongo::Auth::CR do
       cr.login(connection).documents[0]
     end
 
-    pending 'logs the user into the connection' do
+    it 'logs the user into the connection' do
       expect(cr.login(connection).documents[0]['ok']).to eq(1)
     end
   end

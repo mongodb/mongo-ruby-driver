@@ -9,10 +9,10 @@ describe Mongo::Protocol::Insert do
   let(:doc1)   { { :name => 'Tyler' } }
   let(:doc2)   { { :name => 'Brandon' } }
   let(:docs)   { [doc1, doc2] }
-  let(:opts)   { Hash.new }
+  let(:options)   { Hash.new }
 
   let(:message) do
-    described_class.new(db, coll, docs, opts)
+    described_class.new(db, coll, docs, options)
   end
 
   describe '#initialize' do
@@ -28,10 +28,10 @@ describe Mongo::Protocol::Insert do
     context 'when options are provided' do
 
       context 'when flags are provided' do
-        let(:opts) { { :flags => [:continue_on_error] } }
+        let(:options) { { :flags => [:continue_on_error] } }
 
         it 'sets the flags' do
-          expect(message.flags).to eq(opts[:flags])
+          expect(message.flags).to eq(options[:flags])
         end
       end
     end
@@ -43,7 +43,7 @@ describe Mongo::Protocol::Insert do
 
       context 'when the fields are equal' do
         let(:other) do
-          described_class.new(db, coll, docs, opts)
+          described_class.new(db, coll, docs, options)
         end
 
         it 'returns true' do
@@ -53,7 +53,7 @@ describe Mongo::Protocol::Insert do
 
       context 'when the database is not equal' do
         let(:other) do
-          described_class.new('tyler', coll, docs, opts)
+          described_class.new('tyler', coll, docs, options)
         end
 
         it 'returns false' do
@@ -63,7 +63,7 @@ describe Mongo::Protocol::Insert do
 
       context 'when the collection is not equal' do
         let(:other) do
-          described_class.new(db, 'tyler', docs, opts)
+          described_class.new(db, 'tyler', docs, options)
         end
 
         it 'returns false' do
@@ -73,7 +73,7 @@ describe Mongo::Protocol::Insert do
 
       context 'when the documents are not equal' do
         let(:other) do
-          described_class.new(db, coll, docs[1..1], opts)
+          described_class.new(db, coll, docs[1..1], options)
         end
 
         it 'returns false' do
@@ -81,7 +81,7 @@ describe Mongo::Protocol::Insert do
         end
       end
 
-      context 'when the opts are not equal' do
+      context 'when the options are not equal' do
         let(:other) do
           described_class.new(db, coll, docs, :flags => [:continue_on_error])
         end
@@ -133,7 +133,7 @@ describe Mongo::Protocol::Insert do
       end
 
       context 'when flags are provided' do
-        let(:opts) { { :flags => flags } }
+        let(:options) { { :flags => flags } }
 
         context 'continue on error flag' do
           let(:flags) { [:continue_on_error] }

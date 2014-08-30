@@ -54,7 +54,7 @@ module Mongo
       # @option spec :selector [ Hash ] The command selector.
       # @option spec :db_name [ String ] The name of the database on which
       #   the command should be executed.
-      # @option spec :opts [ Hash ] Options for the command.
+      # @option spec :options [ Hash ] Options for the command.
       #
       # @since 2.0.0
       def initialize(spec)
@@ -103,10 +103,10 @@ module Mongo
       #
       # @since 2.0.0
       def options
-        unless @spec[:opts][:limit] && @spec[:opts][:limit] == -1
-          return @spec[:opts].merge(:limit => -1)
+        unless @spec[:options][:limit] && @spec[:options][:limit] == -1
+          return @spec[:options].merge(:limit => -1)
         end
-        @spec[:opts]
+        @spec[:options]
       end
 
       # Whether it is ok for this command to be executed on a secondary.

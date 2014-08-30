@@ -43,7 +43,7 @@ module Mongo
         # @option spec :db_name [ String ] The name of the database.
         # @option spec :coll_name [ String ] The name of the collection.
         # @option spec :index_name [ String ] The name of the index.
-        # @option spec :opts [ Hash ] Options for the command, if it ends up being a
+        # @option spec :options [ Hash ] Options for the command, if it ends up being a
         #   write command.
         #
         # @since 2.0.0

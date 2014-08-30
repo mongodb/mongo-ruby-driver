@@ -117,7 +117,7 @@ module Mongo
       #  cache time (e.g., a change of index direction).
       #
       # @param [ Hash ] spec A hash of field name/direction pairs.
-      # @param [ Hash ] opts Options for this index.
+      # @param [ Hash ] options Options for this index.
       #
       # @option options [ true, false ] :unique (false) If true, this index will enforce
       #   a uniqueness constraint on that field.
@@ -143,7 +143,7 @@ module Mongo
           db_name: database.name,
           coll_name: collection.name,
           index_name: options[:name] || index_name(spec),
-          opts: options
+          options: options
         ).execute(next_primary.context)
       end
 

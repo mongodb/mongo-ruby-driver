@@ -53,7 +53,7 @@ module Mongo
         # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
         # @option spec :ordered [ true, false ] Whether the operations should be
         #   executed in order.
-        # @option spec :opts [ Hash ] Options for the command, if it ends up being a
+        # @option spec :options [ Hash ] Options for the command, if it ends up being a
         #   write command.
         #
         # @since 2.0.0
@@ -138,8 +138,8 @@ module Mongo
         def message(update_spec = {})
           selector    = update_spec[:q]
           update      = update_spec[:u]
-          update_opts = update_spec[:multi] ? { :flags => [:multi_update] } : { }
-          Protocol::Update.new(db_name, coll_name, selector, update, update_opts)
+          update_options = update_spec[:multi] ? { :flags => [:multi_update] } : { }
+          Protocol::Update.new(db_name, coll_name, selector, update, update_options)
         end
       end
     end

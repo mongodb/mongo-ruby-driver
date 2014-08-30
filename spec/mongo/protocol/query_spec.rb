@@ -7,10 +7,10 @@ describe Mongo::Protocol::Query do
   let(:coll)     { TEST_COLL }
   let(:ns)       { "#{db}.#{coll}" }
   let(:selector) { { :name => 'Tyler' } }
-  let(:opts)     { Hash.new }
+  let(:options)     { Hash.new }
 
   let(:message) do
-    described_class.new(db, coll, selector, opts)
+    described_class.new(db, coll, selector, options)
   end
 
   describe '#initialize' do
@@ -26,34 +26,34 @@ describe Mongo::Protocol::Query do
     context 'when options are provided' do
 
       context 'when flags are provided' do
-        let(:opts) { { :flags => [:slave_ok] } }
+        let(:options) { { :flags => [:slave_ok] } }
 
         it 'sets the flags' do
-          expect(message.flags).to eq(opts[:flags])
+          expect(message.flags).to eq(options[:flags])
         end
       end
 
       context 'when a limit is provided' do
-        let(:opts) { { :limit => 5 } }
+        let(:options) { { :limit => 5 } }
 
         it 'sets the limit' do
-          expect(message.limit).to eq(opts[:limit])
+          expect(message.limit).to eq(options[:limit])
         end
       end
 
       context 'when a skip is provided' do
-        let(:opts) { { :skip => 13 } }
+        let(:options) { { :skip => 13 } }
 
         it 'sets the flags' do
-          expect(message.skip).to eq(opts[:skip])
+          expect(message.skip).to eq(options[:skip])
         end
       end
 
       context 'when a projection is provided' do
-        let(:opts) { { :project => { :_id => 0 } } }
+        let(:options) { { :project => { :_id => 0 } } }
 
         it 'sets the projection' do
-          expect(message.project).to eq(opts[:project])
+          expect(message.project).to eq(options[:project])
         end
       end
     end
@@ -65,7 +65,7 @@ describe Mongo::Protocol::Query do
 
       context 'when the fields are equal' do
         let(:other) do
-          described_class.new(db, coll, selector, opts)
+          described_class.new(db, coll, selector, options)
         end
 
         it 'returns true' do
@@ -75,7 +75,7 @@ describe Mongo::Protocol::Query do
 
       context 'when the database is not equal' do
         let(:other) do
-          described_class.new('tyler', coll, selector, opts)
+          described_class.new('tyler', coll, selector, options)
         end
 
         it 'returns false' do
@@ -85,7 +85,7 @@ describe Mongo::Protocol::Query do
 
       context 'when the collection is not equal' do
         let(:other) do
-          described_class.new(db, 'tyler', selector, opts)
+          described_class.new(db, 'tyler', selector, options)
         end
 
         it 'returns false' do
@@ -95,7 +95,7 @@ describe Mongo::Protocol::Query do
 
       context 'when the selector is not equal' do
         let(:other) do
-          described_class.new(db, coll, { :a => 1 }, opts)
+          described_class.new(db, coll, { :a => 1 }, options)
         end
 
         it 'returns false' do
@@ -155,7 +155,7 @@ describe Mongo::Protocol::Query do
       end
 
       context 'when flags are provided' do
-        let(:opts) { { :flags => flags } }
+        let(:options) { { :flags => flags } }
 
         context 'tailable cursor flag' do
           let(:flags) { [:tailable_cursor] }
@@ -232,10 +232,10 @@ describe Mongo::Protocol::Query do
       end
 
       context 'when skip is provided' do
-        let(:opts) { { :skip => 5 } }
+        let(:options) { { :skip => 5 } }
 
         it 'serializes the skip' do
-          expect(field).to be_int32(opts[:skip])
+          expect(field).to be_int32(options[:skip])
         end
       end
     end
@@ -250,9 +250,9 @@ describe Mongo::Protocol::Query do
       end
 
       context 'when limit is provided' do
-        let(:opts) { { :limit => 123 } }
+        let(:options) { { :limit => 123 } }
         it 'serializes the limit' do
-          expect(field).to be_int32(opts[:limit])
+          expect(field).to be_int32(options[:limit])
         end
       end
     end
@@ -273,7 +273,7 @@ describe Mongo::Protocol::Query do
       end
 
       context 'when projection is provided' do
-        let(:opts) { { :project => projection } }
+        let(:options) { { :project => projection } }
         let(:projection) { { :_id => 0 } }
 
         it 'serializes the projection' do

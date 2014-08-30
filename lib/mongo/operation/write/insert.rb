@@ -47,7 +47,7 @@ module Mongo
         # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
         # @option spec :ordered [ true, false ] Whether the operations should be
         #   executed in order.
-        # @option spec :opts [ Hash ] Options for the command, if it ends up being a
+        # @option spec :options [ Hash ] Options for the command, if it ends up being a
         #   write command.
         #
         # @since 2.0.0

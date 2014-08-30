@@ -110,11 +110,11 @@ module Mongo
     def options
       parsed_options = @match[5]
       return {} unless parsed_options
-      parsed_options.split('&').reduce({}) do |opts, option|
+      parsed_options.split('&').reduce({}) do |options, option|
         key, value = option.split('=')
         strategy = OPTION_MAP[key]
-        add_option(strategy, value, opts)
-        opts
+        add_option(strategy, value, options)
+        options
       end
     end
 

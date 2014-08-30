@@ -10,7 +10,7 @@ describe Mongo::Operation::Aggregate do
   end
   let(:spec) do
     { :selector => selector,
-      :opts => {},
+      :options => {},
       :db_name => db_name
     }
   end
@@ -37,7 +37,7 @@ describe Mongo::Operation::Aggregate do
       end
       let(:other_spec) do
         { :selector => other_selector,
-          :opts => opts,
+          :options => options,
           :db_name => db_name,
         }
       end
@@ -78,7 +78,7 @@ describe Mongo::Operation::Aggregate do
           expect(db).to eq(db_name)
           expect(coll).to eq(Mongo::Database::COMMAND)
           expect(sel).to eq(selector)
-          expect(options).to eq(opts)
+          expect(options).to eq(options)
         end
         op.execute(primary_context)
       end

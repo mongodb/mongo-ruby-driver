@@ -3,10 +3,10 @@ require 'spec_helper'
 describe Mongo::Operation::Command do
 
   let(:selector) { { :ismaster => 1 } }
-  let(:opts) { { :limit => -1 } }
+  let(:options) { { :limit => -1 } }
   let(:spec) do
     { :selector => selector,
-      :opts     => opts,
+      :options     => options,
       :db_name  => TEST_DB
     }
   end
@@ -26,7 +26,7 @@ describe Mongo::Operation::Command do
       let(:other_selector) { { :ping => 1 } }
       let(:other_spec) do
         { :selector => other_selector,
-          :opts => {},
+          :options => {},
           :db_name => 'test',
         }
       end

@@ -122,7 +122,7 @@ module Mongo
     #
     # @since 2.0.0
     def read(length)
-      data = handle_errors { socket.read(length) } || String.new
+      data = handle_errors{ socket.read(length) } || String.new
       if data.length < length
         data << read(length - data.length)
       end
@@ -158,13 +158,15 @@ module Mongo
     private
 
     def handle_errors
-      yield
-    rescue Errno::ETIMEDOUT
-      raise Mongo::SocketTimeoutError, TIMEOUT_ERROR
-    rescue IOError, SystemCallError => e
-      raise Mongo::SocketError, e.message
-    rescue OpenSSL::SSL::SSLError
-      raise Mongo::SocketError, SSL_ERROR
+      begin
+        yield
+      rescue Errno::ETIMEDOUT
+        raise Mongo::SocketTimeoutError, TIMEOUT_ERROR
+      rescue IOError, SystemCallError => e
+        raise Mongo::SocketError, e.message
+      rescue OpenSSL::SSL::SSLError
+        raise Mongo::SocketError, SSL_ERROR
+      end
     end
   end
 end

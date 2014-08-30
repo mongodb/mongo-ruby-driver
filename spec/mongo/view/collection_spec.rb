@@ -6,17 +6,17 @@ describe Mongo::View::Collection do
     {}
   end
 
-  let(:opts) do
+  let(:options) do
     {}
   end
 
   let(:view) do
-    described_class.new(authorized_collection, selector, opts)
+    described_class.new(authorized_collection, selector, options)
   end
 
   describe '#initialize' do
 
-    let(:opts) do
+    let(:options) do
       { :limit => 5 }
     end
 
@@ -33,19 +33,19 @@ describe Mongo::View::Collection do
     end
 
     it 'sets the options' do
-      expect(view.opts).to eq(opts)
+      expect(view.options).to eq(options)
     end
 
     it 'dups the options' do
-      expect(view.opts).not_to be(opts)
+      expect(view.options).not_to be(options)
     end
   end
 
   describe '#inspect' do
 
-    context 'when there is a namespace, selector, and opts' do
+    context 'when there is a namespace, selector, and options' do
 
-      let(:opts) do
+      let(:options) do
         { :limit => 5 }
       end
 
@@ -65,15 +65,15 @@ describe Mongo::View::Collection do
         expect(view.inspect).to match(/.*#{selector.inspect}.*/)
       end
 
-      it 'returns a string containing the opts' do
-        expect(view.inspect).to match(/.*#{opts.inspect}.*/)
+      it 'returns a string containing the options' do
+        expect(view.inspect).to match(/.*#{options.inspect}.*/)
       end
     end
   end
 
   describe '#comment' do
 
-    let(:opts) do
+    let(:options) do
       { :comment => 'test1' }
     end
 
@@ -96,14 +96,14 @@ describe Mongo::View::Collection do
     context 'when a comment is not specified' do
 
       it 'returns the comment' do
-        expect(view.comment).to eq(opts[:comment])
+        expect(view.comment).to eq(options[:comment])
       end
     end
   end
 
   describe '#batch_size' do
 
-    let(:opts) do
+    let(:options) do
       { :batch_size => 13 }
     end
 
@@ -126,7 +126,7 @@ describe Mongo::View::Collection do
     context 'when a batch size is not specified' do
 
       it 'returns the batch_size' do
-        expect(view.batch_size).to eq(opts[:batch_size])
+        expect(view.batch_size).to eq(options[:batch_size])
       end
     end
   end
@@ -135,7 +135,7 @@ describe Mongo::View::Collection do
 
     context 'when fields are specified' do
 
-      let(:opts) do
+      let(:options) do
         { :fields => { 'x' => 1 } }
       end
 
@@ -154,10 +154,10 @@ describe Mongo::View::Collection do
     end
 
     context 'when fields are not specified' do
-      let(:opts) { { :fields => { 'x' => 1 } } }
+      let(:options) { { :fields => { 'x' => 1 } } }
 
       it 'returns the fields' do
-        expect(view.fields).to eq(opts[:fields])
+        expect(view.fields).to eq(options[:fields])
       end
     end
   end
@@ -166,7 +166,7 @@ describe Mongo::View::Collection do
 
     context 'when a hint is specified' do
 
-      let(:opts) do
+      let(:options) do
         { :hint => { 'x' => Mongo::View::Index::ASCENDING } }
       end
 
@@ -186,12 +186,12 @@ describe Mongo::View::Collection do
 
     context 'when a hint is not specified' do
 
-      let(:opts) do
+      let(:options) do
         { :hint => 'x' }
       end
 
       it 'returns the hint' do
-        expect(view.hint).to eq(opts[:hint])
+        expect(view.hint).to eq(options[:hint])
       end
     end
   end
@@ -200,7 +200,7 @@ describe Mongo::View::Collection do
 
     context 'when a limit is specified' do
 
-      let(:opts) do
+      let(:options) do
         { :limit => 5 }
       end
 
@@ -220,12 +220,12 @@ describe Mongo::View::Collection do
 
     context 'when a limit is not specified' do
 
-      let(:opts) do
+      let(:options) do
         { :limit => 5 }
       end
 
       it 'returns the limit' do
-        expect(view.limit).to eq(opts[:limit])
+        expect(view.limit).to eq(options[:limit])
       end
     end
   end
@@ -234,7 +234,7 @@ describe Mongo::View::Collection do
 
     context 'when a skip is specified' do
 
-      let(:opts) do
+      let(:options) do
         { :skip => 5 }
       end
 
@@ -254,12 +254,12 @@ describe Mongo::View::Collection do
 
     context 'when a skip is not specified' do
 
-      let(:opts) do
+      let(:options) do
         { :skip => 5 }
       end
 
       it 'returns the skip value' do
-        expect(view.skip).to eq(opts[:skip])
+        expect(view.skip).to eq(options[:skip])
       end
     end
   end
@@ -268,7 +268,7 @@ describe Mongo::View::Collection do
 
     context 'when a read pref is specified' do
 
-      let(:opts) do
+      let(:options) do
         { :read => Mongo::ServerPreference.get(:mode => :secondary) }
       end
 
@@ -288,17 +288,17 @@ describe Mongo::View::Collection do
 
     context 'when a read pref is not specified' do
 
-      let(:opts) do
+      let(:options) do
         { :read =>  Mongo::ServerPreference.get(:mode => :secondary) }
       end
 
       it 'returns the read preference' do
-        expect(view.read).to eq(opts[:read])
+        expect(view.read).to eq(options[:read])
       end
 
       context 'when no read pref is set on initialization' do
 
-        let(:opts) do
+        let(:options) do
           {}
         end
 
@@ -313,7 +313,7 @@ describe Mongo::View::Collection do
 
     context 'when a sort is specified' do
 
-      let(:opts) do
+      let(:options) do
         { :sort => { 'x' => Mongo::View::Index::ASCENDING }}
       end
 
@@ -333,82 +333,82 @@ describe Mongo::View::Collection do
 
     context 'when a sort is not specified' do
 
-      let(:opts) do
+      let(:options) do
         { :sort => { 'x' => Mongo::View::Index::ASCENDING }}
       end
 
       it 'returns the sort' do
-        expect(view.sort).to eq(opts[:sort])
+        expect(view.sort).to eq(options[:sort])
       end
     end
   end
 
-  describe '#special_opts' do
+  describe '#special_options' do
 
-    context 'when special_opts are specified' do
+    context 'when special_options are specified' do
 
       context 'when snapshot options exist' do
 
-        let(:opts) do
+        let(:options) do
           { :snapshot => true }
         end
 
         it 'returns snapshot in the special options' do
-          expect(view.special_opts).to eq(opts)
+          expect(view.special_options).to eq(options)
         end
       end
 
       context 'when max_scan options exist' do
 
-        let(:opts) do
+        let(:options) do
           { :max_scan => true }
         end
 
         it 'returns max_scan in the special options' do
-          expect(view.special_opts).to eq(opts)
+          expect(view.special_options).to eq(options)
         end
       end
 
       context 'when show_disk_loc options exist' do
 
-        let(:opts) do
+        let(:options) do
           { :show_disk_loc => true }
         end
 
         it 'returns show_disk_loc in the special options' do
-          expect(view.special_opts).to eq(opts)
+          expect(view.special_options).to eq(options)
         end
       end
 
       describe 'when replacing options' do
 
-        let(:opts) do
+        let(:options) do
           { :snapshot => true }
         end
 
-        let(:new_special_opts) do
+        let(:new_special_options) do
           { :max_scan => 100 }
         end
 
-        it 'replaces the old special opts' do
-          new_view = view.special_opts(new_special_opts)
-          expect(new_view.special_opts).to eq(new_special_opts)
+        it 'replaces the old special options' do
+          new_view = view.special_options(new_special_options)
+          expect(new_view.special_options).to eq(new_special_options)
         end
 
         it 'returns a new Collection' do
-          expect(view.special_opts(new_special_opts)).not_to be(view)
+          expect(view.special_options(new_special_options)).not_to be(view)
         end
       end
     end
 
-    context 'when special_opts are not specified' do
+    context 'when special_options are not specified' do
 
-      let(:opts) do
+      let(:options) do
         { :snapshot => true }
       end
 
-      it 'returns the special opts' do
-        expect(view.special_opts).to eq(opts)
+      it 'returns the special options' do
+        expect(view.special_options).to eq(options)
       end
     end
   end
@@ -434,10 +434,10 @@ describe Mongo::View::Collection do
 #
   describe '#==' do
 
-    context 'when the views have the same collection, selector, and opts' do
+    context 'when the views have the same collection, selector, and options' do
 
       let(:other) do
-        described_class.new(authorized_collection, selector, opts)
+        described_class.new(authorized_collection, selector, options)
       end
 
       it 'returns true' do
@@ -452,7 +452,7 @@ describe Mongo::View::Collection do
       end
 
       let(:other) do
-        described_class.new(other_collection, selector, opts)
+        described_class.new(other_collection, selector, options)
       end
 
       it 'returns false' do
@@ -467,7 +467,7 @@ describe Mongo::View::Collection do
       end
 
       let(:other) do
-        described_class.new(authorized_collection, other_selector, opts)
+        described_class.new(authorized_collection, other_selector, options)
       end
 
       it 'returns false' do
@@ -475,14 +475,14 @@ describe Mongo::View::Collection do
       end
     end
 
-    context 'when two views have different opts' do
+    context 'when two views have different options' do
 
-      let(:other_opts) do
+      let(:other_options) do
         { 'limit' => 20 }
       end
 
       let(:other) do
-        described_class.new(authorized_collection, selector, other_opts)
+        described_class.new(authorized_collection, selector, other_options)
       end
 
       it 'returns false' do
@@ -494,10 +494,10 @@ describe Mongo::View::Collection do
   describe '#hash' do
 
     let(:other) do
-      described_class.new(authorized_collection, selector, opts)
+      described_class.new(authorized_collection, selector, options)
     end
 
-    it 'returns a unique value based on collection, selector, opts' do
+    it 'returns a unique value based on collection, selector, options' do
       expect(view.hash).to eq(other.hash)
     end
 
@@ -508,7 +508,7 @@ describe Mongo::View::Collection do
       end
 
       let(:other) do
-        described_class.new(other_collection, selector, opts)
+        described_class.new(other_collection, selector, options)
       end
 
       it 'returns different hash values' do
@@ -523,7 +523,7 @@ describe Mongo::View::Collection do
       end
 
       let(:other) do
-        described_class.new(authorized_collection, other_selector, opts)
+        described_class.new(authorized_collection, other_selector, options)
       end
 
       it 'returns different hash values' do
@@ -531,14 +531,14 @@ describe Mongo::View::Collection do
       end
     end
 
-    context 'when two views only have different opts' do
+    context 'when two views only have different options' do
 
-      let(:other_opts) do
+      let(:other_options) do
         { 'limit' => 20 }
       end
 
       let(:other) do
-        described_class.new(authorized_collection, selector, other_opts)
+        described_class.new(authorized_collection, selector, other_options)
       end
 
       it 'returns different hash values' do
@@ -554,7 +554,7 @@ describe Mongo::View::Collection do
     end
 
     it 'dups the options' do
-      expect(view.opts).not_to be(view_clone.opts)
+      expect(view.options).not_to be(view_clone.options)
     end
 
     it 'dups the selector' do
@@ -584,13 +584,13 @@ describe Mongo::View::Collection do
 
       context 'when limit is specified' do
 
-        let(:opts) do
+        let(:options) do
           { :limit => 5 }
         end
 
         before do
           expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            expect(spec[:opts][:limit]).to eq(opts[:limit])
+            expect(spec[:options][:limit]).to eq(options[:limit])
           end.and_call_original
         end
 
@@ -611,13 +611,13 @@ describe Mongo::View::Collection do
 
       context 'when batch size is specified' do
 
-        let(:opts) do
+        let(:options) do
           { :batch_size => 5 }
         end
 
         before do
           expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            expect(spec[:opts][:limit]).to eq(opts[:batch_size])
+            expect(spec[:options][:limit]).to eq(options[:batch_size])
           end.and_call_original
         end
 
@@ -640,7 +640,7 @@ describe Mongo::View::Collection do
 
         before do
           expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            expect(spec[:opts][:limit]).to eq(nil)
+            expect(spec[:options][:limit]).to eq(nil)
           end.and_call_original
         end
 
@@ -661,13 +661,13 @@ describe Mongo::View::Collection do
 
       context 'when batch size is greater than limit' do
 
-        let(:opts) do
+        let(:options) do
           { :batch_size => 5, :limit => 3 }
         end
 
         before do
           expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            expect(spec[:opts][:limit]).to eq(opts[:limit])
+            expect(spec[:options][:limit]).to eq(options[:limit])
           end.and_call_original
         end
 
@@ -688,13 +688,13 @@ describe Mongo::View::Collection do
 
       context 'when limit is greater than batch size' do
 
-        let(:opts) do
+        let(:options) do
           { :limit => 5, :batch_size => 3 }
         end
 
         before do
           expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            expect(spec[:opts][:limit]).to eq(opts[:batch_size])
+            expect(spec[:options][:limit]).to eq(options[:batch_size])
           end.and_call_original
         end
 
@@ -717,7 +717,7 @@ describe Mongo::View::Collection do
 
         context 'when a snapshot option is provided' do
 
-          let(:opts) do
+          let(:options) do
             { :snapshot => true }
           end
 
@@ -736,7 +736,7 @@ describe Mongo::View::Collection do
 
         context 'when a max_scan option is provided' do
 
-          let(:opts) do
+          let(:options) do
             { :max_scan => 100 }
           end
 
@@ -755,7 +755,7 @@ describe Mongo::View::Collection do
 
         context 'when a show_disk_loc option is provided' do
 
-          let(:opts) do
+          let(:options) do
             { :show_disk_loc => true }
           end
 
@@ -776,7 +776,7 @@ describe Mongo::View::Collection do
 
       context 'when sorting' do
 
-        let(:opts) do
+        let(:options) do
           { :sort => {'x' => Mongo::View::Index::ASCENDING }}
         end
 
@@ -795,7 +795,7 @@ describe Mongo::View::Collection do
 
       context 'when providing a hint' do
 
-        let(:opts) do
+        let(:options) do
           { :hint => { 'x' => Mongo::View::Index::ASCENDING }}
         end
 
@@ -814,7 +814,7 @@ describe Mongo::View::Collection do
 
       context 'when providing a comment' do
 
-        let(:opts) do
+        let(:options) do
           { :comment => 'query1' }
         end
 

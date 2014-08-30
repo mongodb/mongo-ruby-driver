@@ -19,7 +19,7 @@ describe Mongo::Cursor do
       end
 
       let(:query_spec) do
-        { :selector => {}, :opts => {}, :db_name => TEST_DB, :coll_name => TEST_COLL }
+        { :selector => {}, :options => {}, :db_name => TEST_DB, :coll_name => TEST_COLL }
       end
 
       context 'when the initial query retieves all documents' do
@@ -100,7 +100,7 @@ describe Mongo::Cursor do
             let(:query_spec) do
               {
                 :selector => {},
-                :opts => { :limit => 2 },
+                :options => { :limit => 2 },
                 :db_name => TEST_DB,
                 :coll_name => TEST_COLL
               }
@@ -126,7 +126,7 @@ describe Mongo::Cursor do
             let(:query_spec) do
               {
                 :selector => {},
-                :opts => { :limit => -2 },
+                :options => { :limit => -2 },
                 :db_name => TEST_DB,
                 :coll_name => TEST_COLL
               }
@@ -152,7 +152,7 @@ describe Mongo::Cursor do
             let(:query_spec) do
               {
                 :selector => {},
-                :opts => { :limit => 0 },
+                :options => { :limit => 0 },
                 :db_name => TEST_DB,
                 :coll_name => TEST_COLL
               }
@@ -185,7 +185,7 @@ describe Mongo::Cursor do
             let(:query_spec) do
               {
                 :selector => {},
-                :opts => { :limit => 5, :batch_size => 3 },
+                :options => { :limit => 5, :batch_size => 3 },
                 :db_name => TEST_DB,
                 :coll_name => TEST_COLL
               }
@@ -215,7 +215,7 @@ describe Mongo::Cursor do
             let(:query_spec) do
               {
                 :selector => {},
-                :opts => { :limit => 5, :batch_size => 7 },
+                :options => { :limit => 5, :batch_size => 7 },
                 :db_name => TEST_DB,
                 :coll_name => TEST_COLL
               }
@@ -245,7 +245,7 @@ describe Mongo::Cursor do
             let(:query_spec) do
               {
                 :selector => {},
-                :opts => { :limit => 5, :batch_size => 5 },
+                :options => { :limit => 5, :batch_size => 5 },
                 :db_name => TEST_DB,
                 :coll_name => TEST_COLL
               }
@@ -273,7 +273,7 @@ describe Mongo::Cursor do
     end
 
     let(:query_spec) do
-      { :selector => {}, :opts => {}, :db_name => TEST_DB, :coll_name => TEST_COLL }
+      { :selector => {}, :options => {}, :db_name => TEST_DB, :coll_name => TEST_COLL }
     end
 
     let(:reply) do

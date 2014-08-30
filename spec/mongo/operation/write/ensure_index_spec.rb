@@ -16,7 +16,7 @@ describe Mongo::Operation::Write::EnsureIndex do
           db_name: TEST_DB,
           coll_name: TEST_COLL,
           index_name: 'random_1',
-          opts: { unique: true }
+          options: { unique: true }
         )
       end
 
@@ -45,7 +45,7 @@ describe Mongo::Operation::Write::EnsureIndex do
           db_name: TEST_DB,
           coll_name: TEST_COLL,
           index_name: 'random_1',
-          opts: { unique: true }
+          options: { unique: true }
         )
       end
 
@@ -55,7 +55,7 @@ describe Mongo::Operation::Write::EnsureIndex do
           db_name: TEST_DB,
           coll_name: TEST_COLL,
           index_name: 'random_1',
-          opts: { unique: false }
+          options: { unique: false }
         )
       end
 

@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Operation::MapReduce do
   include_context 'operation'
 
-  let(:opts) { {} }
+  let(:options) { {} }
   let(:selector) do
     { :mapreduce => 'test_coll',
       :map       => '',
@@ -12,7 +12,7 @@ describe Mongo::Operation::MapReduce do
   end
   let(:spec) do
     { :selector => selector,
-      :opts     => opts,
+      :options     => options,
       :db_name  => db_name
     }
   end
@@ -39,7 +39,7 @@ describe Mongo::Operation::MapReduce do
       end
       let(:other_spec) do
         { :selector => other_selector,
-          :opts => {},
+          :options => {},
           :db_name => db_name,
         }
       end
@@ -80,7 +80,7 @@ describe Mongo::Operation::MapReduce do
           expect(db).to eq(db_name)
           expect(coll).to eq(Mongo::Database::COMMAND)
           expect(sel).to eq(selector)
-          expect(options).to eq(opts)
+          expect(options).to eq(options)
         end
         op.execute(primary_context)
       end

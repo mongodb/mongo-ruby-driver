@@ -7,10 +7,10 @@ describe Mongo::Protocol::Delete do
   let(:coll)     { TEST_COLL }
   let(:ns)       { "#{db}.#{coll}" }
   let(:selector) { { :name => 'Tyler' } }
-  let(:opts)     { Hash.new }
+  let(:options)     { Hash.new }
 
   let(:message) do
-    described_class.new(db, coll, selector, opts)
+    described_class.new(db, coll, selector, options)
   end
 
   describe '#initialize' do
@@ -26,10 +26,10 @@ describe Mongo::Protocol::Delete do
     context 'when options are provided' do
 
       context 'when flags are provided' do
-        let(:opts) { { :flags => [:single_remove] } }
+        let(:options) { { :flags => [:single_remove] } }
 
         it 'sets the flags' do
-          expect(message.flags).to eq(opts[:flags])
+          expect(message.flags).to eq(options[:flags])
         end
       end
     end
@@ -41,7 +41,7 @@ describe Mongo::Protocol::Delete do
 
       context 'when the fields are equal' do
         let(:other) do
-          described_class.new(db, coll, selector, opts)
+          described_class.new(db, coll, selector, options)
         end
 
         it 'returns true' do
@@ -51,7 +51,7 @@ describe Mongo::Protocol::Delete do
 
       context 'when the database is not equal' do
         let(:other) do
-          described_class.new('tyler', coll, selector, opts)
+          described_class.new('tyler', coll, selector, options)
         end
 
         it 'returns false' do
@@ -61,7 +61,7 @@ describe Mongo::Protocol::Delete do
 
       context 'when the collection is not equal' do
         let(:other) do
-          described_class.new(db, 'tyler', selector, opts)
+          described_class.new(db, 'tyler', selector, options)
         end
 
         it 'returns false' do
@@ -71,7 +71,7 @@ describe Mongo::Protocol::Delete do
 
       context 'when the selector is not equal' do
         let(:other) do
-          described_class.new(db, coll, { :a => 1 }, opts)
+          described_class.new(db, coll, { :a => 1 }, options)
         end
 
         it 'returns false' do
@@ -146,7 +146,7 @@ describe Mongo::Protocol::Delete do
       end
 
       context 'when flags are provided' do
-        let(:opts) { { :flags => flags } }
+        let(:options) { { :flags => flags } }
 
         context 'single remove flag' do
           let(:flags) { [:single_remove] }

@@ -30,7 +30,7 @@ module Mongo
         #   Read::Query.new({ :selector => { :foo => 1 },
         #                     :db_name => 'TEST_DB',
         #                     :coll_name => 'test-coll',
-        #                     :opts => { :limit => 2 } })
+        #                     :options => { :limit => 2 } })
         #
         # @param [ Hash ] spec The specifications for the query.
         #
@@ -39,7 +39,7 @@ module Mongo
         #   the query should be run.
         # @option spec :coll_name [ String ] The name of the collection on which
         #   the query should be run.
-        # @option spec :opts [ Hash ] Options for the query.
+        # @option spec :options [ Hash ] Options for the query.
         #
         # @since 2.0.0
         def initialize(spec)

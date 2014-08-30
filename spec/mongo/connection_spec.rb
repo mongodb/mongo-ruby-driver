@@ -77,7 +77,7 @@ describe Mongo::Connection do
         end
       end
 
-      context 'when the user is authorized' do
+      pending 'when the user is authorized' do
 
         let(:connection) do
           described_class.new(
@@ -94,7 +94,7 @@ describe Mongo::Connection do
           connection.connect!
         end
 
-        pending 'sets the connection as authenticated' do
+        it 'sets the connection as authenticated' do
           expect(connection).to be_authenticated
         end
       end
@@ -240,7 +240,7 @@ describe Mongo::Connection do
       end
 
       it 'sets the ssl options' do
-        expect(connection.send(:ssl_opts)).to eq(:ssl => true)
+        expect(connection.send(:ssl_options)).to eq(:ssl => true)
       end
     end
 

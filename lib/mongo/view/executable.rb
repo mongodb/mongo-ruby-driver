@@ -26,9 +26,9 @@ module Mongo
       # @since 2.0.0
       def count
         cmd = { :count => collection.name, :query => selector }
-        cmd[:skip]  = opts[:skip]  if opts[:skip]
-        cmd[:hint]  = opts[:hint]  if opts[:hint]
-        cmd[:limit] = opts[:limit] if opts[:limit]
+        cmd[:skip]  = options[:skip]  if options[:skip]
+        cmd[:hint]  = options[:hint]  if options[:hint]
+        cmd[:limit] = options[:limit] if options[:limit]
         database.command(cmd).n
       end
 
@@ -64,7 +64,7 @@ module Mongo
       def remove
         server = read.select_servers(cluster.servers).first
         Operation::Write::Delete.new(
-          :deletes => [{ q: selector, limit: opts[:limit] || 0 }],
+          :deletes => [{ q: selector, limit: options[:limit] || 0 }],
           :db_name => collection.database.name,
           :coll_name => collection.name,
           :write_concern => collection.write_concern
@@ -88,7 +88,7 @@ module Mongo
           :updates => [{
             q: selector,
             u: spec,
-            multi: (opts[:limit] || 0) == 1 ? false : true,
+            multi: (options[:limit] || 0) == 1 ? false : true,
             upsert: false
           }],
           :db_name => collection.database.name,

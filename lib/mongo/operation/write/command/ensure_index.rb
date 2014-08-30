@@ -26,7 +26,7 @@ module Mongo
         #     :db_name    => 'test',
         #     :coll_name  => 'test_coll',
         #     :index_name => 'foo_1'
-        #     :opts       => { :unique => true }
+        #     :options       => { :unique => true }
         #   })
         # @since 2.0.0
         class EnsureIndex

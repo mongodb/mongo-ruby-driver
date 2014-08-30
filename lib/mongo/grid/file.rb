@@ -32,16 +32,16 @@ module Mongo
       # @param [ String, BSON::ObjectId ] id
       # @param [ Mongo::Collection ] files A collection for metadata.
       # @param [ Mongo::Collection ] chunks A collection for file data.
-      # @param [ Hash ] opts Options for this file.
+      # @param [ Hash ] options Options for this file.
       #
-      # @options opts [ Integer ] (261120) :chunk_size Custom chunk size, in bytes.
-      # @options opts [ Array ] :aliases Array of alias strings for this filename.
-      # @options opts [ String ] :content_type A valid MIME type for this document.
-      # @options opts [ BSON::ObjectId ] :_id A custom files_id for this file.
-      # @options opts [ Hash ] :metadata Any additional metadata for this file.
+      # @options options [ Integer ] (261120) :chunk_size Custom chunk size, in bytes.
+      # @options options [ Array ] :aliases Array of alias strings for this filename.
+      # @options options [ String ] :content_type A valid MIME type for this document.
+      # @options options [ BSON::ObjectId ] :_id A custom files_id for this file.
+      # @options options [ Hash ] :metadata Any additional metadata for this file.
       #
       # @since 2.0.0
-      def initialize(id, mode, files, chunks, opts={})
+      def initialize(id, mode, files, chunks, options={})
         @files         = files
         @chunks        = chunks
         @mode          = mode
@@ -50,7 +50,7 @@ module Mongo
         if mode == 'r'
           init_read(id)
         elsif mode == 'w'
-          init_write(id, opts)
+          init_write(id, options)
         else
           raise "invalid mode #{mode}"
         end
@@ -137,13 +137,13 @@ module Mongo
       # @param [ BSON::ObjectId, String ] id An identifier for this file.
       #
       # @since 2.0.0
-      def init_write(id, opts={})
+      def init_write(id, options={})
         metadata = files_doc(id)
         if !metadata
           if id.is_a?(BSON::ObjectId)
             raise GridError, "File #{id} not found, could not open"
           else
-            init_new_file(id, opts)
+            init_new_file(id, options)
           end
         else
           @files_id = metadata[:_id]
@@ -156,18 +156,18 @@ module Mongo
       # @param [ String ] filename The name of the file.
       #
       # @since 2.0.0
-      def init_new_file(filename, opts={})
+      def init_new_file(filename, options={})
         # @todo options for chunkSize, alias, contentType, metadata
-        @files_id = opts[:_id] || BSON::ObjectId.new
+        @files_id = options[:_id] || BSON::ObjectId.new
         @files.save({ :_id         => @files_id,
-                      :chunkSize   => opts[:chunk_size] || DEFAULT_CHUNK_SIZE,
+                      :chunkSize   => options[:chunk_size] || DEFAULT_CHUNK_SIZE,
                       :filename    => filename,
                       :md5         => Digest::MD5.new,
                       :length      => 0,
                       :uploadDate  => Time.now.utc,
-                      :contentType => opts[:content_type] || DEFAULT_CONTENT_TYPE,
-                      :aliases     => opts[:aliases]      || [],
-                      :metadata    => opts[:metadata]     || {} })
+                      :contentType => options[:content_type] || DEFAULT_CONTENT_TYPE,
+                      :aliases     => options[:aliases]      || [],
+                      :metadata    => options[:metadata]     || {} })
       end
 
       # Read a string of data from the file's chunks

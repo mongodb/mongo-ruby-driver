@@ -118,9 +118,9 @@ dPMQD5JX6g5HKnHFg2mZtoXQrWmJSn7p8GJK8yNTopEErA==
     cert
   end
 
-  def server(mode, opts = {})
-    tags = opts[:tags] || {}
-    ping = opts[:ping] || 0
+  def server(mode, options = {})
+    tags = options[:tags] || {}
+    ping = options[:ping] || 0
 
     # @todo: take some of this out when server is finished
     double(mode.to_s).tap do |server|
