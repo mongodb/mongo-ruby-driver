@@ -123,6 +123,18 @@ module Mongo
       }).execute(server.context)
     end
 
+    # Drop the database and all its associated information.
+    #
+    # @example Drop the database.
+    #   database.drop
+    #
+    # @return [ Response ] The result of the command.
+    #
+    # @since 2.0.0
+    def drop
+      command(:dropDatabase => 1)
+    end
+
     # Instantiate a new database object.
     #
     # @example Instantiate the database.

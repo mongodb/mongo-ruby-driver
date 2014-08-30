@@ -124,6 +124,21 @@ describe Mongo::Database do
     end
   end
 
+  describe '#drop' do
+
+    let(:client) do
+      Mongo::Client.new([ '127.0.0.1:27017' ], database: :test)
+    end
+
+    let(:database) do
+      described_class.new(authorized_client, :test)
+    end
+
+    it 'drops the database' do
+      expect(database.drop).to be_ok
+    end
+  end
+
   describe '#initialize' do
 
     context 'when provided a valid name' do

@@ -67,6 +67,8 @@ module Mongo
     # @example Force the collection to be created.
     #   collection.create
     #
+    # @return [ Response ] The result of the command.
+    #
     # @since 2.0.0
     def create
       database.command({ :create => name }.merge(options))
@@ -77,6 +79,8 @@ module Mongo
     #
     # @example Drop the collection.
     #   collection.drop
+    #
+    # @return [ Response ] The result of the command.
     #
     # @since 2.0.0
     def drop
