@@ -46,6 +46,138 @@ describe Mongo::Collection do
     end
   end
 
+  describe '#capped?' do
+
+    let(:database) do
+      authorized_client.database
+    end
+
+    context 'when the collection is capped' do
+
+      let(:collection) do
+        described_class.new(database, :specs, :capped => true, :size => 1024)
+      end
+
+      before do
+        collection.create
+      end
+
+      after do
+        collection.drop
+      end
+
+      it 'returns true' do
+        expect(collection).to be_capped
+      end
+    end
+
+    context 'when the collection is not capped' do
+
+      let(:collection) do
+        described_class.new(database, :specs)
+      end
+
+      before do
+        collection.create
+      end
+
+      after do
+        collection.drop
+      end
+
+      it 'returns false' do
+        expect(collection).to_not be_capped
+      end
+    end
+  end
+
+  describe '#create' do
+
+    let(:database) do
+      authorized_client.database
+    end
+
+    context 'when the collection has no options' do
+
+      let(:collection) do
+        described_class.new(database, :specs)
+      end
+
+      let!(:response) do
+        collection.create
+      end
+
+      after do
+        collection.drop
+      end
+
+      it 'executes the command' do
+        expect(response).to be_ok
+      end
+
+      it 'creates the collection in the database' do
+        expect(database.collection_names).to include('specs')
+      end
+    end
+
+    context 'when the collection has options' do
+
+      context 'when the collection is capped' do
+
+        let(:collection) do
+          described_class.new(database, :specs, :capped => true, :size => 1024)
+        end
+
+        let!(:response) do
+          collection.create
+        end
+
+        after do
+          collection.drop
+        end
+
+        it 'executes the command' do
+          expect(response).to be_ok
+        end
+
+        it 'sets the collection as capped' do
+          expect(collection).to be_capped
+        end
+
+        it 'creates the collection in the database' do
+          expect(database.collection_names).to include('specs')
+        end
+      end
+    end
+  end
+
+  describe '#drop' do
+
+    let(:database) do
+      authorized_client.database
+    end
+
+    let(:collection) do
+      described_class.new(database, :specs)
+    end
+
+    before do
+      collection.create
+    end
+
+    let!(:response) do
+      collection.drop
+    end
+
+    it 'executes the command' do
+      expect(response).to be_ok
+    end
+
+    it 'drops the collection from the database' do
+      expect(database.collection_names).to_not include('specs')
+    end
+  end
+
   describe '#find' do
 
     context 'when provided a selector' do

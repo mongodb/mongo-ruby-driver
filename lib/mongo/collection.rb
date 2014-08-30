@@ -27,6 +27,9 @@ module Mongo
     # @return [ String ] The name of the collection.
     attr_reader :name
 
+    # @return [ Hash ] The collection options.
+    attr_reader :options
+
     # Get client, cluser and server preference from client.
     def_delegators :@database, :client, :cluster, :server_preference, :write_concern
     def_delegators :cluster, :next_primary
@@ -45,6 +48,39 @@ module Mongo
     def ==(other)
       return false unless other.is_a?(Collection)
       name == other.name && database == other.database
+    end
+
+    # Is the collection capped?
+    #
+    # @example Is the collection capped?
+    #   collection.capped?
+    #
+    # @return [ true, false ] If the collection is capped.
+    #
+    # @since 2.0.0
+    def capped?
+      database.command(:collstats => name).documents[0]['capped']
+    end
+
+    # Force the collection to be created in the database.
+    #
+    # @example Force the collection to be created.
+    #   collection.create
+    #
+    # @since 2.0.0
+    def create
+      database.command({ :create => name }.merge(options))
+    end
+
+    # Drop the collection. Will also drop all indexes associated with the
+    # collection.
+    #
+    # @example Drop the collection.
+    #   collection.drop
+    #
+    # @since 2.0.0
+    def drop
+      database.command(:drop => name)
     end
 
     # Find documents in the collection.
@@ -84,12 +120,14 @@ module Mongo
     #
     # @param [ Mongo::Database ] database The collection's database.
     # @param [ String, Symbol ] name The collection name.
+    # @param [ Hash ] options The collection options.
     #
     # @since 2.0.0
-    def initialize(database, name)
+    def initialize(database, name, options = {})
       raise InvalidName.new unless name
       @database = database
       @name = name.to_s.freeze
+      @options = options
     end
 
     # Insert the provided documents into the collection.
