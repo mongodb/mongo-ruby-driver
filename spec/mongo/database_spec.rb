@@ -2,15 +2,17 @@ require 'spec_helper'
 
 describe Mongo::Database do
 
-  let(:client) { double('client') }
-
   describe '#==' do
 
-    let(:database) { described_class.new(client, :test) }
+    let(:database) do
+      described_class.new(authorized_client, :test)
+    end
 
     context 'when the names are the same' do
 
-      let(:other) { described_class.new(client, :test) }
+      let(:other) do
+        described_class.new(authorized_client, :test)
+      end
 
       it 'returns true' do
         expect(database).to eq(other)
@@ -19,7 +21,9 @@ describe Mongo::Database do
 
     context 'when the names are not the same' do
 
-      let(:other) { described_class.new(client, :testing) }
+      let(:other) do
+        described_class.new(authorized_client, :testing)
+      end
 
       it 'returns false' do
         expect(database).to_not eq(other)
@@ -37,7 +41,7 @@ describe Mongo::Database do
   describe '#[]' do
 
     let(:database) do
-      described_class.new(client, :test)
+      described_class.new(authorized_client, :test)
     end
 
     context 'when providing a valid name' do
@@ -63,19 +67,18 @@ describe Mongo::Database do
 
   describe '#collection_names' do
 
-    let(:names) do
-      [{ 'name' => 'test.users' }, { 'name' => 'test.sounds' }]
+    let(:database) do
+      described_class.new(authorized_client, :test)
     end
 
-    let(:collection) { double('collection') }
-    let(:database) { described_class.new(client, :test) }
-
     before do
-      expect(database).to receive(:collection).with(
-        'system.namespaces').and_return(collection)
+      database[:users].create
+      database[:sounds].create
+    end
 
-      expect(collection).to receive(:find).with(
-        :name => { '$not' => /test\.system\,|\$/ }).and_return(names)
+    after do
+      database[:users].drop
+      database[:sounds].drop
     end
 
     it 'returns the stripped names of the collections' do
@@ -85,15 +88,24 @@ describe Mongo::Database do
 
   describe '#collections' do
 
-    let(:database) { described_class.new(client, :test) }
-    let(:collection) { Mongo::Collection.new(database, 'users') }
+    let(:database) do
+      described_class.new(authorized_client, :test)
+    end
+
+    let(:collection) do
+      Mongo::Collection.new(database, 'users')
+    end
 
     before do
-      expect(database).to receive(:collection_names).and_return(['users'])
+      database[:users].create
+    end
+
+    after do
+      database[:users].drop
     end
 
     it 'returns collection objects for each name' do
-      expect(database.collections).to eq([collection])
+      expect(database.collections).to eq([ collection ])
     end
   end
 
@@ -104,16 +116,26 @@ describe Mongo::Database do
     end
 
     let(:database) do
-      described_class.new(client, :test)
-    end
-
-    before do
-      # @todo: Add condition variable.
-      client.cluster.scan!
+      described_class.new(authorized_client, :test)
     end
 
     it 'sends the query command to the cluster' do
       expect(database.command(:ismaster => 1).n).to be_nil
+    end
+  end
+
+  describe '#drop' do
+
+    let(:client) do
+      Mongo::Client.new([ '127.0.0.1:27017' ], database: :test)
+    end
+
+    let(:database) do
+      described_class.new(authorized_client, :test)
+    end
+
+    it 'drops the database' do
+      expect(database.drop).to be_ok
     end
   end
 
@@ -122,7 +144,7 @@ describe Mongo::Database do
     context 'when provided a valid name' do
 
       let(:database) do
-        described_class.new(client, :test)
+        described_class.new(authorized_client, :test)
       end
 
       it 'sets the name as a string' do
@@ -130,7 +152,7 @@ describe Mongo::Database do
       end
 
       it 'sets the client' do
-        expect(database.client).to eq(client)
+        expect(database.client).to eq(authorized_client)
       end
     end
 
@@ -138,7 +160,7 @@ describe Mongo::Database do
 
       it 'raises an error' do
         expect do
-          described_class.new(client, nil)
+          described_class.new(authorized_client, nil)
         end.to raise_error(Mongo::Database::InvalidName)
       end
     end

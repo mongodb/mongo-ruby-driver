@@ -86,7 +86,7 @@ module Mongo
     # @since 2.0.0
     def collection_names
       namespaces = collection(NAMESPACES).find(
-        :name => { '$not' => /#{name}\.system\,|\$/ }
+        :name => { '$not' => /system\.|\$/ }
       )
       namespaces.map do |document|
         collection = document['name']
@@ -121,6 +121,18 @@ module Mongo
         :db_name => name,
         :options => { :limit => -1 }
       }).execute(server.context)
+    end
+
+    # Drop the database and all its associated information.
+    #
+    # @example Drop the database.
+    #   database.drop
+    #
+    # @return [ Response ] The result of the command.
+    #
+    # @since 2.0.0
+    def drop
+      command(:dropDatabase => 1)
     end
 
     # Instantiate a new database object.
