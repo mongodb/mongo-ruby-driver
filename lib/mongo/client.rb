@@ -59,12 +59,13 @@ module Mongo
     #   client[:users]
     #
     # @param [ String, Symbol ] collection_name The name of the collection.
+    # @param [ Hash ] options The options to the collection.
     #
     # @return [ Mongo::Collection ] The collection.
     #
     # @since 2.0.0
-    def [](collection_name)
-      database[collection_name]
+    def [](collection_name, options = {})
+      database[collection_name, options]
     end
 
     # Get the hash value of the client.

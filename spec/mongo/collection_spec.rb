@@ -160,28 +160,45 @@ describe Mongo::Collection do
 
       context 'when the collection is capped' do
 
-        let(:collection) do
-          described_class.new(database, :specs, :capped => true, :size => 1024)
+        shared_examples 'a capped collection command' do
+
+          let!(:response) do
+            collection.create
+          end
+
+          after do
+            collection.drop
+          end
+
+          it 'executes the command' do
+            expect(response).to be_ok
+          end
+
+          it 'sets the collection as capped' do
+            expect(collection).to be_capped
+          end
+
+          it 'creates the collection in the database' do
+            expect(database.collection_names).to include('specs')
+          end
         end
 
-        let!(:response) do
-          collection.create
+        context 'when instantiating a collection directly' do
+
+          let(:collection) do
+            described_class.new(database, :specs, :capped => true, :size => 1024)
+          end
+
+          it_behaves_like 'a capped collection command'
         end
 
-        after do
-          collection.drop
-        end
+        context 'when instantiating a collection through the database' do
 
-        it 'executes the command' do
-          expect(response).to be_ok
-        end
+          let(:collection) do
+            authorized_client[:specs, :capped => true, :size => 1024]
+          end
 
-        it 'sets the collection as capped' do
-          expect(collection).to be_capped
-        end
-
-        it 'creates the collection in the database' do
-          expect(database.collection_names).to include('specs')
+          it_behaves_like 'a capped collection command'
         end
       end
     end

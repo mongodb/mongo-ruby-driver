@@ -67,12 +67,13 @@ module Mongo
     #   database[:users]
     #
     # @param [ String, Symbol ] collection_name The name of the collection.
+    # @param [ Hash ] options The options to the collection.
     #
     # @return [ Mongo::Collection ] The collection object.
     #
     # @since 2.0.0
-    def [](collection_name)
-      Collection.new(self, collection_name)
+    def [](collection_name, options = {})
+      Collection.new(self, collection_name, options)
     end
     alias_method :collection, :[]
 
