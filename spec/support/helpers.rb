@@ -35,15 +35,6 @@ module Helpers
       end
     end
 
-    context.let(:admin_client) do
-      Mongo::Client.new(
-        [ '127.0.0.1:27017' ],
-        database: Mongo::Database::ADMIN
-      ).tap do |client|
-        client.cluster.scan!
-      end
-    end
-
     context.let(:authorized_collection) do
       authorized_client[TEST_COLL]
     end

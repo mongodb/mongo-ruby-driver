@@ -69,7 +69,14 @@ module Mongo
       def initialize(server, options = {})
         @server = server
         @options = options
-        @connection = Mongo::Connection.new(server.address, options[:socket_timeout], options)
+
+        # @note We reject the user option here as the ismaster command should
+        # be able to run without being authorized.
+        @connection = Mongo::Connection.new(
+          server.address,
+          options[:socket_timeout],
+          options.reject{ |key, value| key == :user }
+        )
       end
 
       # Runs the server monitor. Refreshing happens on a separate thread per

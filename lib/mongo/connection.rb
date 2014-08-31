@@ -65,7 +65,7 @@ module Mongo
       unless socket
         @socket = address.socket(timeout, ssl_options)
         @socket.connect!
-        if authenticator
+        if authenticator # @todo: durran: and auth enabled?
           authenticator.login(self)
           @authenticated = true
         end

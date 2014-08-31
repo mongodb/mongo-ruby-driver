@@ -35,27 +35,36 @@ RSpec.configure do |config|
   config.include ClusterSimulator::Helpers
   ClusterSimulator.configure(config)
 
-  config.after do
-    Mongo::Server::Monitor.threads.each do |object_id, thread|
-      thread.kill
-    end
-  end
-
   config.before(:suite) do
+    admin_client =
+      Mongo::Client.new(
+        [ '127.0.0.1:27017' ],
+        database: Mongo::Database::ADMIN
+      ).tap do |client|
+        client.cluster.scan!
+      end
+
+    test_client =
+      Mongo::Client.new(
+        [ '127.0.0.1:27017' ],
+        database: TEST_DB
+      ).tap do |client|
+        client.cluster.scan!
+      end
 
     begin
       admin_client.database.users.create(ROOT_USER)
     rescue Exception; end
     begin
-      unauthorized_client.database.users.create(ROOT_USER)
+      test_client.database.users.create(ROOT_USER)
     rescue Exception; end
   end
 end
 
-TEST_DB         = 'ruby-driver'
-TEST_COLL       = 'test'
-TEST_SET        = 'ruby-driver-rs'
-COVERAGE_MIN    = 90
+TEST_DB      = 'ruby-driver'
+TEST_COLL    = 'test'
+TEST_SET     = 'ruby-driver-rs'
+COVERAGE_MIN = 90
 
 ROOT_USER = Mongo::Auth::User.new(
   database: 'admin',
