@@ -69,7 +69,7 @@ module Mongo
       def initialize(server, options = {})
         @server = server
         @options = options
-        @connection = Mongo::Connection.new(server.address, options[:timeout], options)
+        @connection = Mongo::Connection.new(server.address, options[:socket_timeout], options)
       end
 
       # Runs the server monitor. Refreshing happens on a separate thread per

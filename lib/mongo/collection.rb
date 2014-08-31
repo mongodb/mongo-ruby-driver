@@ -32,6 +32,8 @@ module Mongo
 
     # Get client, cluser and server preference from client.
     def_delegators :@database, :client, :cluster, :server_preference, :write_concern
+
+    # Delegate to the cluster for the next primary.
     def_delegators :cluster, :next_primary
 
     # Check if a collection is equal to another object. Will check the name and

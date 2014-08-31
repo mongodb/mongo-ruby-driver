@@ -92,6 +92,24 @@ module Mongo
     #   form of host:port or a MongoDB URI connection string.
     # @param [ Hash ] options The options to be used by the client.
     #
+    # @option options [ Symbol ] :auth_mech
+    # @option options [ String ] :auth_source
+    # @option options [ true, false ] :canonicalize_host_name
+    # @option options [ String ] :database
+    # @option options [ String ] :gssapi_service_name
+    # @option options [ Float ] :heartbeat_frequency
+    # @option options [ Symbol ] :mode
+    # @option options [ String ] :password
+    # @option options [ Integer ] :pool_size
+    # @option options [ Float ] :connect_timeout
+    # @option options [ Hash ] :read
+    # @option options [ Array<Hash, String> ] :roles
+    # @option options [ Symbol ] :replica_set_name
+    # @option options [ true, false ] :ssl
+    # @option options [ Float ] :socket_timeout
+    # @option options [ String ] :user
+    # @option options [ Symbol ] :write
+    #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = {})
       if addresses_or_uri.is_a?(::String)

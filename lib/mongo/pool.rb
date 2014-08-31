@@ -97,7 +97,7 @@ module Mongo
     #
     # @since 2.0.0
     def timeout
-      @timeout ||= options[:timeout] || TIMEOUT
+      @timeout ||= options[:connect_timeout] || TIMEOUT
     end
 
     # Yield the block to a connection, while handling checkin/checkout logic.
@@ -146,9 +146,9 @@ module Mongo
       def create_pool(server)
         Pool.new(
           pool_size: server.options[:pool_size],
-          timeout: server.options[:pool_timeout]
+          timeout: server.options[:connect_timeout]
         ) do
-          Connection.new(server.address, server.options[:timeout], server.options)
+          Connection.new(server.address, server.options[:socket_timeout], server.options)
         end
       end
 
