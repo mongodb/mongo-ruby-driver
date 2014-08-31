@@ -195,7 +195,7 @@ module Mongo
     private
 
     def create_from_addresses(addresses, options = {})
-      @cluster = Cluster.new(self, addresses)
+      @cluster = Cluster.new(self, addresses, options)
       @options = options
       @database = Database.new(self, options[:database])
     end

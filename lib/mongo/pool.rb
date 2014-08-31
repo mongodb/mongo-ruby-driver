@@ -145,7 +145,7 @@ module Mongo
 
       def create_pool(server)
         Pool.new(
-          size: server.options[:pool_size],
+          pool_size: server.options[:pool_size],
           timeout: server.options[:pool_timeout]
         ) do
           Connection.new(server.address, server.options[:timeout], server.options)

@@ -28,7 +28,8 @@ module Helpers
         [ '127.0.0.1:27017' ],
         database: TEST_DB,
         user: ROOT_USER.name,
-        password: ROOT_USER.password
+        password: ROOT_USER.password,
+        pool_size: 1
       ).tap do |client|
         client.cluster.scan!
       end
