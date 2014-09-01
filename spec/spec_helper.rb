@@ -10,7 +10,6 @@ if RUBY_VERSION > '1.9' && RUBY_VERSION < '2.2'
   SimpleCov.start do
     # report groups
     add_group 'Wire Protocol', 'lib/mongo/protocol'
-
     # filters
     add_filter 'tasks'
     add_filter 'spec'
@@ -19,6 +18,8 @@ if RUBY_VERSION > '1.9' && RUBY_VERSION < '2.2'
 end
 
 require 'mongo'
+
+require 'support/authorization'
 require 'support/helpers'
 require 'support/matchers'
 require 'support/monitoring'
@@ -31,51 +32,18 @@ RSpec.configure do |config|
   config.color     = true
   config.fail_fast = true unless ENV['CI'] || ENV['JENKINS_HOME']
   config.formatter = 'documentation'
-  config.include Helpers
-  config.include ClusterSimulator::Helpers
+  config.include(Authorization)
+  config.include(Helpers)
+  config.include(ClusterSimulator::Helpers)
   ClusterSimulator.configure(config)
-
-  config.before(:suite) do
-    admin_client =
-      Mongo::Client.new(
-        [ '127.0.0.1:27017' ],
-        database: Mongo::Database::ADMIN
-      ).tap do |client|
-        client.cluster.scan!
-      end
-
-    test_client =
-      Mongo::Client.new(
-        [ '127.0.0.1:27017' ],
-        database: TEST_DB
-      ).tap do |client|
-        client.cluster.scan!
-      end
-
-    begin
-      admin_client.database.users.create(ROOT_USER)
-    rescue Exception; end
-    begin
-      test_client.database.users.create(ROOT_USER)
-    rescue Exception; end
-  end
 end
 
-TEST_DB      = 'ruby-driver'
-TEST_COLL    = 'test'
-TEST_SET     = 'ruby-driver-rs'
-COVERAGE_MIN = 90
-
-ROOT_USER = Mongo::Auth::User.new(
-  database: 'admin',
-  user: 'root-user',
-  password: 'password',
-  roles: [
-    Mongo::Auth::Roles::ROOT,
-    Mongo::Auth::Roles::USER_ADMIN_ANY_DATABASE,
-    Mongo::Auth::Roles::READ_WRITE
-  ]
-)
+TEST_DB        = 'ruby-driver'
+TEST_CREATE_DB = 'test-create-db'
+TEST_DROP_DB   = 'test-drop-db'
+TEST_COLL      = 'test'
+TEST_SET       = 'ruby-driver-rs'
+COVERAGE_MIN   = 90
 
 def write_command_enabled?
   @client ||= initialize_scanned_client!

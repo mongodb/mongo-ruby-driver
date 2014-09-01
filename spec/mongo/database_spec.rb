@@ -5,13 +5,13 @@ describe Mongo::Database do
   describe '#==' do
 
     let(:database) do
-      described_class.new(authorized_client, :test)
+      described_class.new(authorized_client, TEST_DB)
     end
 
     context 'when the names are the same' do
 
       let(:other) do
-        described_class.new(authorized_client, :test)
+        described_class.new(authorized_client, TEST_DB)
       end
 
       it 'returns true' do
@@ -22,7 +22,7 @@ describe Mongo::Database do
     context 'when the names are not the same' do
 
       let(:other) do
-        described_class.new(authorized_client, :testing)
+        described_class.new(authorized_client, TEST_CREATE_DB)
       end
 
       it 'returns false' do
@@ -41,7 +41,7 @@ describe Mongo::Database do
   describe '#[]' do
 
     let(:database) do
-      described_class.new(authorized_client, :test)
+      described_class.new(authorized_client, TEST_DB)
     end
 
     context 'when providing a valid name' do
@@ -68,7 +68,7 @@ describe Mongo::Database do
   describe '#collection_names' do
 
     let(:database) do
-      described_class.new(authorized_client, :test)
+      described_class.new(authorized_client, TEST_CREATE_DB)
     end
 
     before do
@@ -89,7 +89,7 @@ describe Mongo::Database do
   describe '#collections' do
 
     let(:database) do
-      described_class.new(authorized_client, :test)
+      described_class.new(authorized_client, TEST_CREATE_DB)
     end
 
     let(:collection) do
@@ -112,11 +112,11 @@ describe Mongo::Database do
   describe '#command' do
 
     let(:client) do
-      Mongo::Client.new([ '127.0.0.1:27017' ], database: :test)
+      Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
     end
 
     let(:database) do
-      described_class.new(authorized_client, :test)
+      described_class.new(authorized_client, TEST_DB)
     end
 
     it 'sends the query command to the cluster' do
@@ -126,12 +126,8 @@ describe Mongo::Database do
 
   describe '#drop' do
 
-    let(:client) do
-      Mongo::Client.new([ '127.0.0.1:27017' ], database: :test)
-    end
-
     let(:database) do
-      described_class.new(authorized_client, :test)
+      described_class.new(authorized_client, TEST_DROP_DB)
     end
 
     it 'drops the database' do
@@ -144,11 +140,11 @@ describe Mongo::Database do
     context 'when provided a valid name' do
 
       let(:database) do
-        described_class.new(authorized_client, :test)
+        described_class.new(authorized_client, TEST_DB)
       end
 
       it 'sets the name as a string' do
-        expect(database.name).to eq('test')
+        expect(database.name).to eq(TEST_DB)
       end
 
       it 'sets the client' do

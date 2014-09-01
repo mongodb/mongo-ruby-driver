@@ -329,27 +329,13 @@ describe Mongo::Operation::Write::Delete do
 
   describe '#execute' do
 
-    let(:client) do
-      Mongo::Client.new(
-        [ '127.0.0.1:27017' ],
-        database: TEST_DB,
-        username: ROOT_USER.name,
-        password: ROOT_USER.password
-      )
-    end
-
-    let(:server) do
-      client.cluster.servers.first
-    end
-
     before do
-      client.cluster.scan!
       Mongo::Operation::Write::Insert.new({
         :documents     => [{ name: 'test', field: 'test' }, { name: 'testing', field: 'test' }],
         :db_name       => TEST_DB,
         :coll_name     => TEST_COLL,
         :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
-      }).execute(server.context)
+      }).execute(authorized_primary.context)
     end
 
     after do
@@ -358,7 +344,7 @@ describe Mongo::Operation::Write::Delete do
         db_name: TEST_DB,
         coll_name: TEST_COLL,
         write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
-      }).execute(server.context)
+      }).execute(authorized_primary.context)
     end
 
     context 'when deleting a single document' do
@@ -379,7 +365,7 @@ describe Mongo::Operation::Write::Delete do
         end
 
         let(:result) do
-          delete.execute(server.context)
+          delete.execute(authorized_primary.context)
         end
 
         it 'deletes the documents from the database' do
@@ -395,7 +381,7 @@ describe Mongo::Operation::Write::Delete do
 
         it 'raises an exception' do
           expect {
-            delete.execute(server.context)
+            delete.execute(authorized_primary.context)
           }.to raise_error(Mongo::Operation::Write::Failure)
         end
       end
@@ -419,7 +405,7 @@ describe Mongo::Operation::Write::Delete do
         end
 
         let(:result) do
-          delete.execute(server.context)
+          delete.execute(authorized_primary.context)
         end
 
         it 'deletes the documents from the database' do
@@ -434,7 +420,7 @@ describe Mongo::Operation::Write::Delete do
         end
 
         let(:result) do
-          delete.execute(server.context)
+          delete.execute(authorized_primary.context)
         end
 
         it 'does not delete any documents' do

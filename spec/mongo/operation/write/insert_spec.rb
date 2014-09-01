@@ -384,23 +384,8 @@ describe Mongo::Operation::Write::Insert do
 
   describe '#execute' do
 
-    let(:client) do
-      Mongo::Client.new(
-        [ '127.0.0.1:27017' ],
-        database: TEST_DB,
-        username: ROOT_USER.name,
-        password: ROOT_USER.password
-      )
-    end
-
-    let(:server) do
-      client.cluster.servers.first
-    end
-
     before do
-      # @todo: Replace with condition variable
-      client.cluster.scan!
-      client[TEST_COLL].indexes.ensure({ name: 1 }, { unique: true })
+      authorized_client[TEST_COLL].indexes.ensure({ name: 1 }, { unique: true })
     end
 
     after do
@@ -409,8 +394,8 @@ describe Mongo::Operation::Write::Insert do
         db_name: TEST_DB,
         coll_name: TEST_COLL,
         write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
-      }).execute(server.context)
-      client[TEST_COLL].indexes.drop({ name: 1 })
+      }).execute(authorized_primary.context)
+      authorized_client[TEST_COLL].indexes.drop({ name: 1 })
     end
 
     context 'when inserting a single document' do
@@ -418,7 +403,7 @@ describe Mongo::Operation::Write::Insert do
       context 'when the insert succeeds' do
 
         let(:response) do
-          insert.execute(server.context)
+          insert.execute(authorized_primary.context)
         end
 
         it 'inserts the documents into the database' do
@@ -446,8 +431,8 @@ describe Mongo::Operation::Write::Insert do
 
         it 'raises an error' do
           expect {
-            failing_insert.execute(server.context)
-            failing_insert.execute(server.context)
+            failing_insert.execute(authorized_primary.context)
+            failing_insert.execute(authorized_primary.context)
           }.to raise_error(Mongo::Operation::Write::Failure)
         end
       end
@@ -462,7 +447,7 @@ describe Mongo::Operation::Write::Insert do
         end
 
         let(:response) do
-          insert.execute(server.context)
+          insert.execute(authorized_primary.context)
         end
 
         it 'inserts the documents into the database' do
@@ -490,8 +475,8 @@ describe Mongo::Operation::Write::Insert do
 
         it 'raises an error' do
           expect {
-            failing_insert.execute(server.context)
-            failing_insert.execute(server.context)
+            failing_insert.execute(authorized_primary.context)
+            failing_insert.execute(authorized_primary.context)
           }.to raise_error(Mongo::Operation::Write::Failure)
         end
       end
@@ -516,8 +501,8 @@ describe Mongo::Operation::Write::Insert do
 
         it 'raises an error' do
           expect {
-            failing_insert.execute(server.context)
-            failing_insert.execute(server.context)
+            failing_insert.execute(authorized_primary.context)
+            failing_insert.execute(authorized_primary.context)
           }.to raise_error(Mongo::Operation::Write::Failure)
         end
       end

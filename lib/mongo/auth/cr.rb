@@ -41,12 +41,12 @@ module Mongo
       private
 
       def nonce_message
-        Protocol::Query.new(user.database, Database::COMMAND, Auth::GET_NONCE, limit: -1)
+        Protocol::Query.new(Database::ADMIN, Database::COMMAND, Auth::GET_NONCE, limit: -1)
       end
 
       def login_message(nonce)
         Protocol::Query.new(
-          user.database,
+          Database::ADMIN,
           Database::COMMAND,
           { authenticate: 1, user: user.name, nonce: nonce, key: user.auth_key(nonce) },
           limit: -1

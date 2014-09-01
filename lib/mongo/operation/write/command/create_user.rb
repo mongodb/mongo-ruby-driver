@@ -33,7 +33,7 @@ module Mongo
           #
           # @since 2.0.0
           def selector
-            { :createUser => user.name }.merge(user.spec)
+            { :createUser => user.name, :digestPassword => false }.merge(user.spec)
           end
         end
       end

@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::View::User do
 
   let(:view) do
-    described_class.new(authorized_client.database)
+    described_class.new(root_authorized_client.database)
   end
 
   describe '#create' do

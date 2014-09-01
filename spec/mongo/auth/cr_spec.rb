@@ -12,12 +12,12 @@ describe Mongo::Auth::CR do
 
   describe '#login' do
 
-    context 'when the user is not authorized for the database' do
+    context 'when the user is not authorized' do
 
       let(:user) do
         Mongo::Auth::User.new(
           database: 'driver',
-          user: 'test-user',
+          user: 'notauser',
           password: 'password'
         )
       end
@@ -38,18 +38,10 @@ describe Mongo::Auth::CR do
     end
   end
 
-  pending 'when the user is authorized for the database' do
-
-    let(:user) do
-      Mongo::Auth::User.new(
-        database: TEST_DB,
-        user: ROOT_USER.name,
-        password: ROOT_USER.password
-      )
-    end
+  context 'when the user is authorized for the database' do
 
     let(:cr) do
-      described_class.new(user)
+      described_class.new(root_user)
     end
 
     let(:login) do
