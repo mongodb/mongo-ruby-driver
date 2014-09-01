@@ -52,8 +52,6 @@ class ComplexConnectTest < Test::Unit::TestCase
       member['host'].include?(port_to_delete)
     end
 
-    # @todo: RUBY-798
-=begin
     assert_raise ConnectionFailure do
       primary['admin'].command({:replSetReconfig => config})
     end
@@ -78,6 +76,5 @@ class ComplexConnectTest < Test::Unit::TestCase
     assert_raise ConnectionFailure do
       primary['admin'].command({:replSetReconfig => old_config})
     end
-=end
   end
 end

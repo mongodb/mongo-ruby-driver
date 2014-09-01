@@ -120,12 +120,11 @@ class ReadPreferenceTest < Test::Unit::TestCase
       @primary.read_pool.port
     )
 
-    # @todo: RUBY-798
-    ## Test that reads are going to the right members
-    #assert_query_route(@primary, @primary_direct)
-    #assert_query_route(@primary_preferred, @primary_direct)
-    #assert_query_route(@secondary, @secondary_direct)
-    #assert_query_route(@secondary_preferred, @secondary_direct)
+    # Test that reads are going to the right members
+    assert_query_route(@primary, @primary_direct)
+    assert_query_route(@primary_preferred, @primary_direct)
+    assert_query_route(@secondary, @secondary_direct)
+    assert_query_route(@secondary_preferred, @secondary_direct)
   end
 
   def test_read_routing_with_secondary_down
@@ -159,12 +158,11 @@ class ReadPreferenceTest < Test::Unit::TestCase
       :slave_ok => true
     )
 
-    # @todo: RUBY-798
-    ## Test that reads are going to the right members
-    #assert_query_route(@primary, @primary_direct)
-    #assert_query_route(@primary_preferred, @primary_direct)
-    #assert_query_route(@secondary, @secondary_direct)
-    #assert_query_route(@secondary_preferred, @secondary_direct)
+    # Test that reads are going to the right members
+    assert_query_route(@primary, @primary_direct)
+    assert_query_route(@primary_preferred, @primary_direct)
+    assert_query_route(@secondary, @secondary_direct)
+    assert_query_route(@secondary_preferred, @secondary_direct)
   end
 
   def test_write_lots_of_data
