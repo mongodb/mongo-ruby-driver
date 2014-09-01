@@ -12,6 +12,102 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+TEST_DB        = 'ruby-driver'
+TEST_CREATE_DB = 'test-create-db'
+TEST_DROP_DB   = 'test-drop-db'
+TEST_COLL      = 'test'
+
+# Gets the root system administrator user.
+#
+# @since 2.0.0
+ROOT_USER = Mongo::Auth::User.new(
+    database: Mongo::Database::ADMIN,
+    user: 'root-user',
+    password: 'password',
+    roles: [
+      Mongo::Auth::Roles::USER_ADMIN_ANY_DATABASE,
+      Mongo::Auth::Roles::DATABASE_ADMIN_ANY_DATABASE,
+      Mongo::Auth::Roles::READ_WRITE_ANY_DATABASE
+    ]
+  )
+
+# Get the default test user for the suite.
+#
+# @since 2.0.0
+TEST_USER = Mongo::Auth::User.new(
+    database: TEST_DB,
+    user: 'test-user',
+    password: 'password',
+    roles: [
+      { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_DB },
+      { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_CREATE_DB },
+      { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_DROP_DB },
+      { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_DROP_DB }
+    ]
+  )
+
+# Provides an authorized mongo client on the default test database for the
+# default test user.
+#
+# @since 2.0.0
+AUTHORIZED_CLIENT = Mongo::Client.new(
+    [ '127.0.0.1:27017' ],
+    database: TEST_DB,
+    user: TEST_USER.name,
+    password: TEST_USER.password,
+    pool_size: 1
+  ).tap do |client|
+    client.cluster.scan!
+  end
+
+# Provides an authorized mongo client on the default test database for the
+# default root system administrator.
+#
+# @since 2.0.0
+ROOT_AUTHORIZED_CLIENT = Mongo::Client.new(
+    [ '127.0.0.1:27017' ],
+    database: TEST_DB,
+    user: ROOT_USER.name,
+    password: ROOT_USER.password,
+    pool_size: 1
+  ).tap do |client|
+    client.cluster.scan!
+  end
+
+# Provides an unauthorized mongo client on the default test database.
+#
+# @since 2.0.0
+UNAUTHORIZED_CLIENT = Mongo::Client.new(
+    [ '127.0.0.1:27017' ],
+    database: TEST_DB,
+    pool_size: 1
+  ).tap do |client|
+    client.cluster.scan!
+  end
+
+# Provides an unauthorized mongo client on the admin database, for use in
+# setting up the first admin root user.
+#
+# @since 2.0.0
+ADMIN_UNAUTHORIZED_CLIENT = Mongo::Client.new(
+    [ '127.0.0.1:27017' ],
+    database: Mongo::Database::ADMIN,
+    pool_size: 1
+  ).tap do |client|
+    client.cluster.scan!
+  end
+
+# Get an authorized client on the admin database logged in as the admin
+# root user.
+#
+# @since 2.0.0
+ADMIN_AUTHORIZED_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
+    user: ROOT_USER.name,
+    password: ROOT_USER.password
+  ).tap do |client|
+    client.cluster.scan!
+  end
+
 module Authorization
 
   # On inclusion provides helpers for use with testing with and without
@@ -24,96 +120,41 @@ module Authorization
     # Gets the root system administrator user.
     #
     # @since 2.0.0
-    context.let!(:root_user) do
-      Mongo::Auth::User.new(
-        database: Mongo::Database::ADMIN,
-        user: 'root-user',
-        password: 'password',
-        roles: [
-          Mongo::Auth::Roles::USER_ADMIN_ANY_DATABASE,
-          Mongo::Auth::Roles::DATABASE_ADMIN_ANY_DATABASE,
-          Mongo::Auth::Roles::READ_WRITE_ANY_DATABASE
-        ]
-      )
-    end
+    context.let(:root_user) { ROOT_USER }
 
     # Get the default test user for the suite.
     #
     # @since 2.0.0
-    context.let!(:test_user) do
-      Mongo::Auth::User.new(
-        database: TEST_DB,
-        user: 'test-user',
-        password: 'password',
-        roles: [
-          { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_DB },
-          { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_CREATE_DB },
-          { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_DROP_DB },
-          { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_DROP_DB }
-        ]
-      )
-    end
+    context.let(:test_user) { TEST_USER }
 
     # Provides an authorized mongo client on the default test database for the
     # default test user.
     #
     # @since 2.0.0
-    context.let!(:authorized_client) do
-      Mongo::Client.new(
-        [ '127.0.0.1:27017' ],
-        database: TEST_DB,
-        user: test_user.name,
-        password: test_user.password,
-        pool_size: 1
-      ).tap do |client|
-        client.cluster.scan!
-      end
-    end
+    context.let(:authorized_client) { AUTHORIZED_CLIENT }
 
     # Provides an authorized mongo client on the default test database for the
     # default root system administrator.
     #
     # @since 2.0.0
-    context.let!(:root_authorized_client) do
-      Mongo::Client.new(
-        [ '127.0.0.1:27017' ],
-        database: TEST_DB,
-        user: root_user.name,
-        password: root_user.password,
-        pool_size: 1
-      ).tap do |client|
-        client.cluster.scan!
-      end
-    end
+    context.let(:root_authorized_client) { ROOT_AUTHORIZED_CLIENT }
 
     # Provides an unauthorized mongo client on the default test database.
     #
     # @since 2.0.0
-    context.let!(:unauthorized_client) do
-      Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB).tap do |client|
-        client.cluster.scan!
-      end
-    end
+    context.let!(:unauthorized_client) { UNAUTHORIZED_CLIENT }
 
     # Provides an unauthorized mongo client on the admin database, for use in
     # setting up the first admin root user.
     #
     # @since 2.0.0
-    context.let!(:admin_unauthorized_client) do
-      Mongo::Client.new([ '127.0.0.1:27017' ], database: Mongo::Database::ADMIN).tap do |client|
-        client.cluster.scan!
-      end
-    end
+    context.let!(:admin_unauthorized_client) { ADMIN_UNAUTHORIZED_CLIENT }
 
     # Get an authorized client on the admin database logged in as the admin
     # root user.
     #
     # @since 2.0.0
-    context.let!(:admin_authorized_client) do
-      admin_unauthorized_client.with(user: root_user.name, password: root_user.password).tap do |client|
-        client.cluster.scan!
-      end
-    end
+    context.let!(:admin_authorized_client) { ADMIN_AUTHORIZED_CLIENT }
 
     # Gets the default test collection from the authorized client.
     #
@@ -149,23 +190,6 @@ module Authorization
     # @since 2.0.0
     context.let(:unauthorized_primary) do
       authorized_client.cluster.servers.first
-    end
-
-    # Before the suite runs, we create the root admin user and a test user that
-    # can read/write/admin our test databases.
-    #
-    # @since 2.0.0
-    context.before(:suite) do
-      begin
-        admin_unauthorized_client.database.users.create(root_user)
-      rescue Exception => e
-        p e
-      end
-      begin
-        p admin_authorized_client.database.users.create(test_user)
-      rescue Exception => e
-        p e
-      end
     end
   end
 end
