@@ -39,13 +39,26 @@ RSpec.configure do |config|
       # Create the root user administrator as the first user to be added to the
       # database. This user will need to be authenticated in order to add any
       # more users to any other databases.
-      admin_unauthorized_client.database.users.create(root_user)
-    rescue; end
+      p ADMIN_UNAUTHORIZED_CLIENT.database.users.create(ROOT_USER)
+    rescue Exception => e
+      p e
+    end
     begin
       # Adds the test user to the test database with permissions on all
       # databases that will be used in the test suite.
-      admin_authorized_client.database.users.create(test_user)
-    rescue; end
+      p ADMIN_AUTHORIZED_CLIENT.database.users.create(TEST_USER)
+    rescue Exception => e
+      p e
+      unless write_command_enabled?
+        # If we are on versions less than 2.6, we need to create a user for
+        # each database, since the users are not stored in the admin database
+        # but in the system.users collection on the datbases themselves. Also,
+        # roles in versions lower than 2.6 can only be strings, not hashes.
+        begin p ROOT_AUTHORIZED_CLIENT.database.users.create(TEST_READ_WRITE_USER); rescue; end
+        begin p ROOT_AUTHORIZED_CREATE_CLIENT.database.users.create(TEST_CREATE_USER); rescue; end
+        begin p ROOT_AUTHORIZED_DROP_CLIENT.database.users.create(TEST_DROP_USER); rescue; end
+      end
+    end
   end
 end
 

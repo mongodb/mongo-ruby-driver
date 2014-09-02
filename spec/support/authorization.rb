@@ -36,92 +36,154 @@ TEST_COLL = 'test'.freeze
 #
 # @since 2.0.0
 ROOT_USER = Mongo::Auth::User.new(
-    database: Mongo::Database::ADMIN,
-    user: 'root-user',
-    password: 'password',
-    roles: [
-      Mongo::Auth::Roles::USER_ADMIN_ANY_DATABASE,
-      Mongo::Auth::Roles::DATABASE_ADMIN_ANY_DATABASE,
-      Mongo::Auth::Roles::READ_WRITE_ANY_DATABASE
-    ]
-  )
+  database: Mongo::Database::ADMIN,
+  user: 'root-user',
+  password: 'password',
+  roles: [
+    Mongo::Auth::Roles::USER_ADMIN_ANY_DATABASE,
+    Mongo::Auth::Roles::DATABASE_ADMIN_ANY_DATABASE,
+    Mongo::Auth::Roles::READ_WRITE_ANY_DATABASE
+  ]
+)
 
-# Get the default test user for the suite.
+# Get the default test user for the suite on versions 2.6 and higher.
 #
 # @since 2.0.0
 TEST_USER = Mongo::Auth::User.new(
-    database: TEST_DB,
-    user: 'test-user',
-    password: 'password',
-    roles: [
-      { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_DB },
-      { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_CREATE_DB },
-      { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_DROP_DB },
-      { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_DROP_DB }
-    ]
-  )
+  database: Mongo::Database::ADMIN,
+  user: 'test-user',
+  password: 'password',
+  roles: [
+    { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_DB },
+    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_DB },
+    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_CREATE_DB },
+    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_DROP_DB }
+  ]
+)
+
+# MongoDB 2.4 and lower does not allow hashes as roles, so we need to create a
+# user on those versions for each database permission in order to ensure the
+# legacy roles work with users. The following users are those.
+
+# Gets the default test user for the suite on 2.4 and lower.
+#
+# @since 2.0.
+TEST_READ_WRITE_USER = Mongo::Auth::User.new(
+  database: TEST_DB,
+  user: 'test-user',
+  password: 'password',
+  roles: [ Mongo::Auth::Roles::DATABASE_ADMIN ]
+)
+
+# Gets the default test create database user for the suite on 2.4 and lower.
+#
+# @since 2.0.
+TEST_CREATE_USER = Mongo::Auth::User.new(
+  database: TEST_CREATE_DB,
+  user: 'test-user',
+  password: 'password',
+  roles: [ Mongo::Auth::Roles::DATABASE_ADMIN ]
+)
+
+# Gets the default drop database user for the suite on 2.4 and lower.
+#
+# @since 2.0.
+TEST_DROP_USER = Mongo::Auth::User.new(
+  database: TEST_DROP_DB,
+  user: 'test-user',
+  password: 'password',
+  roles: [ Mongo::Auth::Roles::DATABASE_ADMIN ]
+)
 
 # Provides an authorized mongo client on the default test database for the
 # default test user.
 #
 # @since 2.0.0
 AUTHORIZED_CLIENT = Mongo::Client.new(
-    [ '127.0.0.1:27017' ],
-    database: TEST_DB,
-    user: TEST_USER.name,
-    password: TEST_USER.password,
-    pool_size: 1
-  ).tap do |client|
-    client.cluster.scan!
-  end
+  [ '127.0.0.1:27017' ],
+  database: TEST_DB,
+  user: TEST_USER.name,
+  password: TEST_USER.password,
+  pool_size: 1
+).tap do |client|
+  client.cluster.scan!
+end
 
 # Provides an authorized mongo client on the default test database for the
 # default root system administrator.
 #
 # @since 2.0.0
 ROOT_AUTHORIZED_CLIENT = Mongo::Client.new(
-    [ '127.0.0.1:27017' ],
-    database: TEST_DB,
-    user: ROOT_USER.name,
-    password: ROOT_USER.password,
-    pool_size: 1
-  ).tap do |client|
-    client.cluster.scan!
-  end
+  [ '127.0.0.1:27017' ],
+  database: TEST_DB,
+  user: ROOT_USER.name,
+  password: ROOT_USER.password,
+  pool_size: 1
+).tap do |client|
+  client.cluster.scan!
+end
 
 # Provides an unauthorized mongo client on the default test database.
 #
 # @since 2.0.0
 UNAUTHORIZED_CLIENT = Mongo::Client.new(
-    [ '127.0.0.1:27017' ],
-    database: TEST_DB,
-    pool_size: 1
-  ).tap do |client|
-    client.cluster.scan!
-  end
+  [ '127.0.0.1:27017' ],
+  database: TEST_DB,
+  pool_size: 1
+).tap do |client|
+  client.cluster.scan!
+end
 
 # Provides an unauthorized mongo client on the admin database, for use in
 # setting up the first admin root user.
 #
 # @since 2.0.0
 ADMIN_UNAUTHORIZED_CLIENT = Mongo::Client.new(
-    [ '127.0.0.1:27017' ],
-    database: Mongo::Database::ADMIN,
-    pool_size: 1
-  ).tap do |client|
-    client.cluster.scan!
-  end
+  [ '127.0.0.1:27017' ],
+  database: Mongo::Database::ADMIN,
+  pool_size: 1
+).tap do |client|
+  client.cluster.scan!
+end
 
 # Get an authorized client on the admin database logged in as the admin
 # root user.
 #
 # @since 2.0.0
 ADMIN_AUTHORIZED_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
-    user: ROOT_USER.name,
-    password: ROOT_USER.password
-  ).tap do |client|
-    client.cluster.scan!
-  end
+  user: ROOT_USER.name,
+  password: ROOT_USER.password
+).tap do |client|
+  client.cluster.scan!
+end
+
+# Provides an authorized mongo client on the default test create database for the
+# default root system administrator. Used only with 2.4 testing.
+#
+# @since 2.0.0
+ROOT_AUTHORIZED_CREATE_CLIENT = Mongo::Client.new(
+  [ '127.0.0.1:27017' ],
+  database: TEST_CREATE_DB,
+  user: ROOT_USER.name,
+  password: ROOT_USER.password,
+  pool_size: 1
+).tap do |client|
+  client.cluster.scan!
+end
+
+# Provides an authorized mongo client on the default test drop database for the
+# default root system administrator. Used only with 2.4 testing.
+#
+# @since 2.0.0
+ROOT_AUTHORIZED_DROP_CLIENT = Mongo::Client.new(
+  [ '127.0.0.1:27017' ],
+  database: TEST_DROP_DB,
+  user: ROOT_USER.name,
+  password: ROOT_USER.password,
+  pool_size: 1
+).tap do |client|
+  client.cluster.scan!
+end
 
 module Authorization
 

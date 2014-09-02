@@ -40,12 +40,14 @@ module Mongo
           @spec = spec
         end
 
-        # Execute the operation.
-        # If the server has version < 2.5.5, an insert operation is sent.
-        # If the server version is >= 2.5.5, an insert write command operation is created
-        # and sent instead.
+        # Execute the operation. Creating users behaves different on 2.7+,
+        # 2.6.x, and 2.4- so we need to break this out into separate
+        # operations.
         #
-        # @params [ Mongo::Server::Context ] The context for this operation.
+        # @example Execute the operation.
+        #   operation.execute(context)
+        #
+        # @param [ Mongo::Server::Context ] The context for this operation.
         #
         # @return [ Mongo::Response ] The operation response, if there is one.
         #
