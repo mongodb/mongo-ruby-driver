@@ -195,14 +195,8 @@ module Mongo
     #
     # @deprecated This method has been replaced by Pool#check_auths (private)
     # and it isn't necessary to ever invoke this method directly.
+    # Authentication of sockets is handled upon checkout and checkin.
     def authenticate_existing
-      # This method should be a no-op because authentication of sockets is handled
-      # upon checkout and checkin.
-      #@connection_mutex.synchronize do
-      #  @sockets.each do |socket|
-      #    check_auths(socket)
-      #  end
-      #end
     end
 
     # Store the logout op for each existing socket to be applied before
@@ -210,14 +204,8 @@ module Mongo
     #
     # @deprecated This method has been replaced by Pool#check_auths (private)
     # and it isn't necessary to ever invoke this method directly.
+    # Authentication of sockets is handled upon checkout and checkin.
     def logout_existing(database)
-      # This method should be a no-op because authentication of sockets is handled
-      # upon checkout and checkin.
-      #@connection_mutex.synchronize do
-      #  @sockets.each do |socket|
-      #    check_auths(socket)
-      #  end
-      #end
     end
 
     # Checks out the first available socket from the pool.
