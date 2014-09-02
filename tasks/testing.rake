@@ -51,7 +51,7 @@ namespace :test do
   Rake::TestTask.new(:default) do |t|
     enabled_tests = [:bson, :unit, :functional, :threading]
     unless ENV.key?('TRAVIS_CI') || ENV.key?('JENKINS_CI')
-      #enabled_tests += [:replica_set, :sharded_cluster]
+      enabled_tests += [:replica_set, :sharded_cluster]
     end
 
     files = []
