@@ -72,7 +72,7 @@ TEST_READ_WRITE_USER = Mongo::Auth::User.new(
   database: TEST_DB,
   user: 'test-user',
   password: 'password',
-  roles: [ Mongo::Auth::Roles::DATABASE_ADMIN ]
+  roles: [ Mongo::Auth::Roles::READ_WRITE, Mongo::Auth::Roles::DATABASE_ADMIN ]
 )
 
 # Gets the default test create database user for the suite on 2.4 and lower.
