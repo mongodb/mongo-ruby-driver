@@ -159,15 +159,18 @@ module Mongo
       def init_new_file(filename, options={})
         # @todo options for chunkSize, alias, contentType, metadata
         @files_id = options[:_id] || BSON::ObjectId.new
-        @files.save({ :_id         => @files_id,
-                      :chunkSize   => options[:chunk_size] || DEFAULT_CHUNK_SIZE,
-                      :filename    => filename,
-                      :md5         => Digest::MD5.new,
-                      :length      => 0,
-                      :uploadDate  => Time.now.utc,
-                      :contentType => options[:content_type] || DEFAULT_CONTENT_TYPE,
-                      :aliases     => options[:aliases]      || [],
-                      :metadata    => options[:metadata]     || {} })
+        @files.insert([
+          { :_id         => @files_id,
+            :chunkSize   => options[:chunk_size] || DEFAULT_CHUNK_SIZE,
+            :filename    => filename,
+            :md5         => Digest::MD5.new.to_s,
+            :length      => 0,
+            :uploadDate  => Time.now.utc,
+            :contentType => options[:content_type] || DEFAULT_CONTENT_TYPE,
+            :aliases     => options[:aliases]      || [],
+            :metadata    => options[:metadata]     || {}
+          }
+        ])
       end
 
       # Read a string of data from the file's chunks
@@ -228,7 +231,7 @@ module Mongo
       #
       # @return [ Hash ] the nth chunk.
       def get_chunk(n)
-        chunk = @chunks.find_one({ :files_id => @files_id, :n => n })
+        chunk = @chunks.find({ :files_id => @files_id, :n => n }).first
         if mode == 'w'
           return chunk || new_chunk(n)
         else
@@ -246,7 +249,7 @@ module Mongo
                   :files_id => @files_id,
                   :n        => n,
                   :data     => '' }
-        @chunks.save(chunk)
+        @chunks.insert([ chunk ])
         chunk
       end
 
@@ -268,7 +271,7 @@ module Mongo
       #
       # @since 2.0.0
       def save_chunk(chunk)
-        @chunks.save(chunk)
+        @chunks.insert([ chunk ])
       end
 
       # Update this file's metadata.
@@ -302,7 +305,7 @@ module Mongo
         # @todo db - refactor to use an update
         metadata = files_doc
         metadata[:length] = 0
-        @files.save(metadata)
+        @files.insert([ metadata ])
         @chunks.remove({ :files_id => id })
       end
 
@@ -313,11 +316,11 @@ module Mongo
       # @return [ Hash ] metadata document.
       #
       # @since 2.0.0
-      def files_doc(id=@files_id)
+      def files_doc(id = @files_id)
         if id.is_a?(BSON::ObjectId)
-          @files.find_one({ :_id => id })
+          @files.find({ :_id => id }).first
         else
-          @files.find_one({ :filename => id })
+          @files.find({ :filename => id }).first
         end
       end
     end

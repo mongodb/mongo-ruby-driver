@@ -12,10 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-TEST_DB        = 'ruby-driver'
-TEST_CREATE_DB = 'test-create-db'
-TEST_DROP_DB   = 'test-drop-db'
-TEST_COLL      = 'test'
+# The default test database for all specs.
+#
+# @since 2.0.0
+TEST_DB = 'ruby-driver'.freeze
+
+# The default test database for creating a database.
+#
+# @since 2.0.0
+TEST_CREATE_DB = 'test-create-db'.freeze
+
+# The default database for testing database drops.
+#
+# @since 2.0.0
+TEST_DROP_DB = 'test-drop-db'.freeze
+
+# The default test collection.
+#
+# @since 2.0.0
+TEST_COLL = 'test'.freeze
 
 # Gets the root system administrator user.
 #
