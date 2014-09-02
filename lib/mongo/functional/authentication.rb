@@ -321,7 +321,6 @@ module Mongo
         send_message_on_socket(packed_message, socket)
         receive(socket, request_id).shift
       rescue OperationFailure => ex
-        socket.close
         return ex.result
       rescue ConnectionFailure, OperationTimeout => ex
         socket.close
