@@ -40,10 +40,16 @@ module Mongo
 
       private
 
+      # On 2.6 and higher, nonce messages must always go to the admin database,
+      # where on 2.4 and lower they go to the database the user is authorized
+      # for.
       def nonce_message
         Protocol::Query.new(Database::ADMIN, Database::COMMAND, Auth::GET_NONCE, limit: -1)
       end
 
+      # On 2.6 and higher, login messages must always go to the admin database,
+      # where on 2.4 and lower they go to the database the user is authorized
+      # for.
       def login_message(nonce)
         Protocol::Query.new(
           Database::ADMIN,
