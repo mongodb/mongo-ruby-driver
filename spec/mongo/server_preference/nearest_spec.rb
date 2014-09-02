@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::ServerPreference::Nearest do
+
   include_context 'server preference'
 
   it_behaves_like 'a server preference mode' do
