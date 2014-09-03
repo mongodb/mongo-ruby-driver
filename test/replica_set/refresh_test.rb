@@ -126,25 +126,22 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     end
   end
 
+  def test_manager_recursive_locking
+  # See RUBY-775
+  # This tests that there isn't recursive locking when a pool manager reconnects
+  # to all replica set members. The bug in RUBY-775 occurred because the same lock
+  # acquired in order to connect the pool manager was used to read the pool manager's
+  # state.
+    client = MongoReplicaSetClient.from_uri(@uri)
 
-  # @todo: uncomment when RUBY-788 is resolved
-  #def test_manager_recursive_locking
-  #  # See RUBY-775
-  #  # This tests that there isn't recursive locking when a pool manager reconnects
-  #  # to all replica set members. The bug in RUBY-775 occurred because the same lock
-  #  # acquired in order to connect the pool manager was used to read the pool manager's
-  #  # state.
-  #  client = MongoReplicaSetClient.new(@rs.repl_set_seeds)
-  #  authenticate_client(client)
-#
-  #  cursor = client[TEST_DB]['rs-refresh-test'].find
-  #  client.stubs(:receive_message).raises(ConnectionFailure)
-  #  client.manager.stubs(:refresh_required?).returns(true)
-  #  client.manager.stubs(:check_connection_health).returns(true)
-  #  assert_raise ConnectionFailure do
-  #    cursor.next
-  #  end
-  #end
+    cursor = client[TEST_DB]['rs-refresh-test'].find
+    client.stubs(:receive_message).raises(ConnectionFailure)
+    client.manager.stubs(:refresh_required?).returns(true)
+    client.manager.stubs(:check_connection_health).returns(true)
+    assert_raise ConnectionFailure do
+       cursor.next
+    end
+  end
 
 =begin
   def test_automated_refresh_with_removed_node

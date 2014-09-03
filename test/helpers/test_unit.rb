@@ -93,8 +93,7 @@ class Test::Unit::TestCase
       silently do
         # We have to create the Connection object directly here instead of using TEST_URI
         # because Connection#from_uri ends up creating a MongoClient object.
-        conn = Connection.new(ENV['MONGO_RUBY_DRIVER_HOST'] || TEST_HOST,
-                              ENV['MONGO_RUBY_DRIVER_PORT'] || TEST_PORT, options)
+        conn = Connection.new(TEST_HOST, TEST_PORT, options)
         conn[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD)
         conn
       end
@@ -399,6 +398,7 @@ class Test::Unit::TestCase
         # mongod not available yet, wait a second and try again
         sleep(1)
       end
+      #puts "Not connected to a MongoD" unless client.connected?
     end
   end
 

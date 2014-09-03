@@ -166,12 +166,12 @@ module Mongo
     # @param db_name [String] The database name.
     # @param opts [Hash] Hash of optional settings and configuration values.
     #
-    # @option opts [Socket] socket (nil) Optional socket instance to use.
+    # @option opts [Socket] socket Socket instance to use.
     #
     # @raise [MongoDBError] Raised if the logout operation fails.
     # @return [Boolean] The result of the logout operation.
     def issue_logout(db_name, opts={})
-      doc = db(db_name).command({:logout => 1}, :socket => opts[:socket])
+      doc = auth_command({:logout => 1}, opts[:socket], db_name).first
       unless Support.ok?(doc)
         raise MongoDBError, "Error logging out on DB #{db_name}."
       end
@@ -185,7 +185,7 @@ module Mongo
     # @param auth [Hash] The authentication credentials to be used.
     # @param opts [Hash] Hash of optional settings and configuration values.
     #
-    # @option opts [Socket] socket (nil) Optional socket instance to use.
+    # @option opts [Socket] socket Socket instance to use.
     #
     # @raise [AuthenticationError] Raised if the authentication fails.
     # @return [Boolean] Result of the authentication operation.
@@ -217,14 +217,14 @@ module Mongo
     # @param auth [Hash] The authentication credentials to be used.
     # @param opts [Hash] Hash of optional settings and configuration values.
     #
-    # @option opts [Socket] socket (nil) Optional socket instance to use.
+    # @option opts [Socket] socket Socket instance to use.
     #
     # @return [Boolean] Result of the authentication operation.
     #
     # @private
     def issue_cr(auth, opts={})
-      database = db(auth[:source])
-      nonce    = get_nonce(database, opts)
+      db_name = auth[:source]
+      nonce   = get_nonce(auth[:source], opts)
 
       # build auth command document
       cmd = BSON::OrderedHash.new
@@ -234,9 +234,7 @@ module Mongo
       cmd['key'] = Authentication.auth_key(auth[:username],
                                            auth[:password],
                                            nonce)
-
-      database.command(cmd, :check_response => false,
-                            :socket         => opts[:socket])
+      auth_command(cmd, opts[:socket], db_name).first
     end
 
     # Handles issuing authentication commands for the MONGODB-X509 auth mechanism.
@@ -246,15 +244,14 @@ module Mongo
     #
     # @private
     def issue_x509(auth, opts={})
-      database = db('$external')
+      db_name = '$external'
 
       cmd = BSON::OrderedHash.new
       cmd[:authenticate] = 1
       cmd[:mechanism]    = auth[:mechanism]
       cmd[:user]         = auth[:username]
 
-      database.command(cmd, :check_response => false,
-                            :socket         => opts[:socket])
+      auth_command(cmd, opts[:socket], db_name).first
     end
 
     # Handles issuing authentication commands for the PLAIN auth mechanism.
@@ -262,14 +259,14 @@ module Mongo
     # @param auth [Hash] The authentication credentials to be used.
     # @param opts [Hash] Hash of optional settings and configuration values.
     #
-    # @option opts [Socket] socket (nil) Optional socket instance to use.
+    # @option opts [Socket] socket Socket instance to use.
     #
     # @return [Boolean] Result of the authentication operation.
     #
     # @private
     def issue_plain(auth, opts={})
-      database = db(auth[:source])
-      payload  = "\x00#{auth[:username]}\x00#{auth[:password]}"
+      db_name = auth[:source]
+      payload = "\x00#{auth[:username]}\x00#{auth[:password]}"
 
       cmd = BSON::OrderedHash.new
       cmd[:saslStart]     = 1
@@ -277,8 +274,7 @@ module Mongo
       cmd[:payload]       = BSON::Binary.new(payload)
       cmd[:autoAuthorize] = 1
 
-      database.command(cmd, :check_response => false,
-                            :socket         => opts[:socket])
+      auth_command(cmd, opts[:socket], db_name).first
     end
 
     # Handles issuing authentication commands for the GSSAPI auth mechanism.
@@ -299,20 +295,37 @@ module Mongo
     # @param database [Mongo::DB] The DB instance to use for issue the nonce command.
     # @param opts [Hash] Hash of optional settings and configuration values.
     #
-    # @option opts [Socket] socket (nil) Optional socket instance to use.
+    # @option opts [Socket] socket Socket instance to use.
     #
     # @raise [MongoDBError] Raised if there is an error executing the command.
     # @return [String] Returns the nonce value.
     #
     # @private
-    def get_nonce(database, opts={})
-      doc = database.command({:getnonce => 1}, :check_response => false,
-                                               :socket         => opts[:socket])
+    def get_nonce(db_name, opts={})
+      cmd = BSON::OrderedHash.new
+      cmd[:getnonce] = 1
+      doc = auth_command(cmd, opts[:socket], db_name).first
+
       unless Support.ok?(doc)
         raise MongoDBError, "Error retrieving nonce: #{doc}"
       end
       doc['nonce']
     end
 
+    def auth_command(selector, socket, db_name)
+      begin
+        message        = build_command_message(db_name, selector)
+        request_id     = add_message_headers(message, Mongo::Constants::OP_QUERY)
+        packed_message = message.to_s
+
+        send_message_on_socket(packed_message, socket)
+        receive(socket, request_id).shift
+      rescue OperationFailure => ex
+        return ex.result
+      rescue ConnectionFailure, OperationTimeout => ex
+        socket.close
+        raise ex
+      end
+    end
   end
 end

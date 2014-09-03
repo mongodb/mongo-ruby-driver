@@ -657,18 +657,22 @@ module Mongo
       alias :restart :start
 
       def delete_users
-        cmd_server = replica_set? ? primary : routers.first
+        cmd_servers = replica_set? ? [ primary ] : routers
 
-        if cmd_server
-          client = Mongo::MongoClient.new(cmd_server.config[:host],
-                                          cmd_server.config[:port])
-          ensure_authenticated(client)
-          db = client[TEST_DB]
+        cmd_servers.each do |cmd_server|
+          begin
+            client = Mongo::MongoClient.new(cmd_server.config[:host],
+                                            cmd_server.config[:port])
+            ensure_authenticated(client)
+            db = client[TEST_DB]
 
-          if client.server_version < '2.5'
-            db['system.users'].remove
-          else
-            db.command(:dropAllUsersFromDatabase => 1)
+            if client.server_version < '2.5'
+              db['system.users'].remove
+            else
+              db.command(:dropAllUsersFromDatabase => 1)
+            end
+            break
+          rescue Mongo::ConnectionFailure
           end
         end
       end
