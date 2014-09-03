@@ -18,6 +18,7 @@
 
 static void mongo_sasl_conn_free(void* data) {
   sasl_conn_t *conn = (sasl_conn_t*) data;
+  // Ideally we would use sasl_client_done() but that's only available as of cyrus sasl 2.1.25
   if(conn) sasl_done();
 }
 
