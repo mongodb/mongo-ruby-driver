@@ -402,7 +402,7 @@ class Test::Unit::TestCase
     end
   end
 
-  def self.cleanup_admin_user
+  def self.cleanup_users_and_dbs
     not_cluster = TEST_BASE.class_eval { class_variables }.none? { |v| v =~ /@@cluster_/ }
 
     if @@connected_single_mongod && not_cluster
@@ -452,7 +452,7 @@ end
 # Before and after hooks for the entire test run
 # handles mop up after the cluster manager is done.
 Test::Unit.at_exit do
-  Test::Unit::TestCase.cleanup_admin_user
+  Test::Unit::TestCase.cleanup_users_and_dbs
   TEST_BASE.class_eval { class_variables }.select { |v| v =~ /@@cluster_/ }.each do |cluster|
     TEST_BASE.class_eval { class_variable_get(cluster) }.stop
   end
