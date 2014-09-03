@@ -107,4 +107,15 @@ namespace :test do
       t.libs << 'test'
     end
   end
+
+  task :cleanup do |t|
+    %w(data tmp coverage lib/bson_ext lib/mongo/csasl).each do |dir|
+      if File.directory?(dir)
+        puts "[CLEAN-UP] Removing '#{dir}'..."
+        FileUtils.rm_rf(dir)
+      end
+    end
+    t.reenable
+  end
+  Rake.application.top_level_tasks << 'test:cleanup'
 end
