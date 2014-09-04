@@ -49,8 +49,7 @@ end
 describe Mongo::Orchestration::Resource, :orchestration => true do
   let(:resource) { described_class.new }
 
-  it 'provides get method that sets object' do
-    resource.get
+  it 'provides initialize that sets object' do
     expect(resource.ok).to be true
     expect(resource.object).to be
   end
@@ -61,6 +60,7 @@ describe Mongo::Orchestration::Service, :orchestration => true do
 
   it 'initializes and checks service' do
     expect(service.response.parsed_response['service']).to eq('mongo-orchestration')
+    expect(service.response.parsed_response['version']).to eq('0.9')
   end
 end
 
@@ -93,9 +93,8 @@ describe Mongo::Orchestration::Cluster, :orchestration => true do
     cluster.status # status for init'ed
     expect(cluster.message_summary).to match(%r{^GET /servers/standalone, options: {}, 200 OK, response JSON:})
 
-    mongodb_uri = cluster.object['mongodb_uri']
     expect(cluster.object['mongodb_uri']).to match(%r{:})
-
+    mongodb_uri = cluster.object['mongodb_uri']
     # add client connection when Ruby is ready for prime time
 
     cluster.stop
@@ -294,6 +293,8 @@ describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
     expect(shard_resources.size).to eq(2)
     shard_resources.each do |shard_resource|
       expect(shard_resource).to be_instance_of(Mongo::Orchestration::Resource)
+      expect(shard_resource.base_path).to match(%r{^/sharded_clusters/shard_cluster_1/shards/})
+      expect(shard_resource.object['isServer']).to be
       expect(shard_resource.object['uri']).to match(%r{^/}) # uri abs_path is not completed
     end
   end
@@ -372,6 +373,17 @@ describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
     @cluster.destroy
   end
 
+  it 'provides shard resources' do
+    shard_resources = cluster.shard_resources
+    expect(shard_resources.size).to eq(2)
+    shard_resources.each do |shard_resource|
+      expect(shard_resource).to be_instance_of(Mongo::Orchestration::Resource)
+      expect(shard_resource.base_path).to match(%r{^/sharded_clusters/shard_cluster_2/shards/})
+      expect(shard_resource.object['isReplicaSet']).to be
+      expect(shard_resource.object['uri']).to match(%r{^/}) # uri abs_path is not completed
+    end
+  end
+
   it 'provides replica-set shards' do
     shards = cluster.shards
     expect(shards.size).to eq(2)
@@ -384,3 +396,55 @@ describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
     end
   end
 end
+
+hosts_preset_config = {
+    orchestration: 'servers',
+    request_content: {
+        id: 'host_preset_1',
+        preset: 'basic.json'
+    }
+}
+
+rs_preset_config = {
+    orchestration: 'replica_sets',
+    request_content: {
+        id: 'rs_preset_1',
+        preset: 'basic.json'
+    }
+}
+
+sh_preset_config = {
+    orchestration: 'sharded_clusters',
+    request_content: {
+        id: 'sh_preset_1',
+        preset: 'basic.json'
+    }
+}
+
+describe 'Service configure preset Cluster', :orchestration => true do
+  let(:service) { @service }
+  let(:preset_configs) { [ hosts_preset_config, rs_preset_config, sh_preset_config ] }
+
+  before(:all) do
+    @service = Mongo::Orchestration::Service.new
+  end
+
+  it 'configures presets with id' do
+    preset_configs.each do |preset_config|
+      cluster = service.configure(preset_config)
+      expect(cluster.object['orchestration']).to eq(preset_config[:orchestration])
+      expect(cluster.object['id']).to eq(preset_config[:request_content][:id])
+      cluster.destroy
+    end
+  end
+
+  it 'configures presets with id deleted' do
+    preset_configs.each do |preset_config|
+      preset_config[:request_content].delete(:id)
+      cluster = service.configure(preset_config)
+      expect(cluster.object['orchestration']).to eq(preset_config[:orchestration])
+      cluster.destroy
+    end
+  end
+end
+
