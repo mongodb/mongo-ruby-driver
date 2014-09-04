@@ -162,11 +162,16 @@ class CursorTest < Test::Unit::TestCase
 
   def test_explain
     cursor = @coll.find('a' => 1)
-    explaination = cursor.explain
-    assert_not_nil explaination['cursor']
-    assert_kind_of Numeric, explaination['n']
-    assert_kind_of Numeric, explaination['millis']
-    assert_kind_of Numeric, explaination['nscanned']
+    explanation = cursor.explain
+    if @version < '2.7'
+      assert_not_nil explanation['cursor']
+      assert_kind_of Numeric, explanation['n']
+      assert_kind_of Numeric, explanation['millis']
+      assert_kind_of Numeric, explanation['nscanned']
+    else
+      cursor = @coll.find('a' => 1)
+      assert_not_nil explanation
+    end
   end
 
   def test_each_with_no_block
