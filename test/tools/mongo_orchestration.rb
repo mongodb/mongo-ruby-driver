@@ -222,7 +222,7 @@ module Mongo
         resource.ok ? resource.object.collect{|member| shard(member)} : []
       end
 
-      def configservers # JSON configuration response uses configsvrs # TODO - unify configservers / configsvrs
+      def configsvrs
         servers(__method__)
       end
 

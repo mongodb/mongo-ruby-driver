@@ -310,10 +310,10 @@ describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
     end
   end
 
-  it 'provides configservers and routers' do
+  it 'provides configsvrs and routers' do
     [
-        [:configservers, 1, %r{/servers/}],
-        [:routers,       2, %r{/servers/}]
+        [:configsvrs, 1, %r{/servers/}],
+        [:routers,    2, %r{/servers/}]
     ].each do |method, size, base_path|
       servers = cluster.send(method)
       expect(servers.size).to eq(size)
