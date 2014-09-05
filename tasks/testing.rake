@@ -67,6 +67,12 @@ namespace :test do
   end
   task :commit => :default
 
+  # Both the functional and replica_set tests will use the kerberos C ext
+  # when testing GSSAPI. So we must compile when on MRI.
+  task :default     => 'compile:csasl' unless RUBY_PLATFORM =~ /java/
+  task :functional  => 'compile:csasl' unless RUBY_PLATFORM =~ /java/
+  task :replica_set => 'compile:csasl' unless RUBY_PLATFORM =~ /java/
+
   desc 'Outputs diagnostic information for troubleshooting test failures.'
   task :diagnostic do
     puts <<-MSG
