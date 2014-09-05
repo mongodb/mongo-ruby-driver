@@ -67,6 +67,12 @@ namespace :test do
   end
   task :commit => :default
 
+  # Both the functional and replica_set tests will use the kerberos C ext
+  # when testing GSSAPI. So we must compile when on MRI.
+  task :default     => 'compile:csasl' unless RUBY_PLATFORM =~ /java/
+  task :functional  => 'compile:csasl' unless RUBY_PLATFORM =~ /java/
+  task :replica_set => 'compile:csasl' unless RUBY_PLATFORM =~ /java/
+
   desc 'Outputs diagnostic information for troubleshooting test failures.'
   task :diagnostic do
     puts <<-MSG
@@ -107,4 +113,15 @@ namespace :test do
       t.libs << 'test'
     end
   end
+
+  task :cleanup do |t|
+    %w(data tmp coverage lib/bson_ext lib/csasl).each do |dir|
+      if File.directory?(dir)
+        puts "[CLEAN-UP] Removing '#{dir}'..."
+        FileUtils.rm_rf(dir)
+      end
+    end
+    t.reenable
+  end
+  Rake.application.top_level_tasks << 'test:cleanup'
 end

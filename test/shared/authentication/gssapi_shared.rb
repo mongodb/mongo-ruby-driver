@@ -28,7 +28,8 @@ module GSSAPITests
   #   export MONGODB_GSSAPI_REALM='applicationuser@example.com'
   #   export MONGODB_GSSAPI_KDC='SERVER.DOMAIN.COM'
   #
-  # You must either use kinit or provide a config file that references a keytab file:
+  # You must use kinit when on MRI.
+  # You have the option of providing a config file that references a keytab file on JRuby:
   #
   #   export JAAS_LOGIN_CONFIG_FILE='file:///path/to/config/file'
   #
@@ -37,10 +38,12 @@ module GSSAPITests
   MONGODB_GSSAPI_REALM   = ENV['MONGODB_GSSAPI_REALM']
   MONGODB_GSSAPI_KDC     = ENV['MONGODB_GSSAPI_KDC']
   MONGODB_GSSAPI_PORT    = ENV['MONGODB_GSSAPI_PORT'] || '27017'
-  JAAS_LOGIN_CONFIG_FILE = ENV['JAAS_LOGIN_CONFIG_FILE']
+  MONGODB_GSSAPI_DB      = ENV['MONGODB_GSSAPI_DB']
+  JAAS_LOGIN_CONFIG_FILE = ENV['JAAS_LOGIN_CONFIG_FILE'] # only JRuby
 
   if ENV.key?('MONGODB_GSSAPI_HOST') && ENV.key?('MONGODB_GSSAPI_USER') &&
-     ENV.key?('MONGODB_GSSAPI_REALM') && ENV.key?('MONGODB_GSSAPI_KDC') && RUBY_PLATFORM =~ /java/
+     ENV.key?('MONGODB_GSSAPI_REALM') && ENV.key?('MONGODB_GSSAPI_KDC') &&
+     ENV.key?('MONGODB_GSSAPI_DB')
     def test_gssapi_authenticate
       client = Mongo::MongoClient.new(MONGODB_GSSAPI_HOST, MONGODB_GSSAPI_PORT)
       if client['admin'].command(:isMaster => 1)['setName']
@@ -48,7 +51,7 @@ module GSSAPITests
       end
 
       set_system_properties
-      db = client['kerberos']
+      db = client[MONGODB_GSSAPI_DB]
       db.authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI')
       assert db.command(:dbstats => 1)
 
@@ -68,7 +71,7 @@ module GSSAPITests
       uri = "mongodb://#{username}@#{ENV['MONGODB_GSSAPI_HOST']}:#{ENV['MONGODB_GSSAPI_PORT']}/?" +
          "authMechanism=GSSAPI"
       client = @client.class.from_uri(uri)
-      assert client['kerberos'].command(:dbstats => 1)
+      assert client[MONGODB_GSSAPI_DB].command(:dbstats => 1)
     end
 
     def test_wrong_service_name_fails
@@ -79,8 +82,8 @@ module GSSAPITests
       end
 
       set_system_properties
-      assert_raise_error Java::OrgMongodbSasl::MongoSecurityException do
-        client['kerberos'].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
+      assert_raise_error Mongo::AuthenticationError do
+        client[MONGODB_GSSAPI_DB].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
       end
     end
 
@@ -92,8 +95,8 @@ module GSSAPITests
       uri = "mongodb://#{username}@#{ENV['MONGODB_GSSAPI_HOST']}:#{ENV['MONGODB_GSSAPI_PORT']}/?" +
          "authMechanism=GSSAPI&gssapiServiceName=example"
       client = @client.class.from_uri(uri)
-      assert_raise_error Java::OrgMongodbSasl::MongoSecurityException do
-        client['kerberos'].command(:dbstats => 1)
+      assert_raise_error Mongo::AuthenticationError do
+        client[MONGODB_GSSAPI_DB].command(:dbstats => 1)
       end
     end
 
@@ -103,10 +106,11 @@ module GSSAPITests
       set_system_properties
 
       Mongo::Sasl::GSSAPI.expects(:authenticate).with do |username, client, socket, opts|
-        opts[:gssapi_service_name] == extra_opts[:gssapi_service_name]
-        opts[:canonicalize_host_name] == extra_opts[:canonicalize_host_name]
+        assert_equal opts[:gssapi_service_name], extra_opts[:gssapi_service_name]
+        assert_equal opts[:canonicalize_host_name], extra_opts[:canonicalize_host_name]
+        [ username, client, socket, opts ]
       end.returns('ok' => true )
-      client['kerberos'].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
+      client[MONGODB_GSSAPI_DB].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
     end
 
     def test_extra_opts_uri
@@ -114,8 +118,9 @@ module GSSAPITests
       set_system_properties
 
       Mongo::Sasl::GSSAPI.expects(:authenticate).with do |username, client, socket, opts|
-        opts[:gssapi_service_name] == extra_opts[:gssapi_service_name]
-        opts[:canonicalize_host_name] == extra_opts[:canonicalize_host_name]
+        assert_equal opts[:gssapi_service_name], extra_opts[:gssapi_service_name]
+        assert_equal opts[:canonicalize_host_name], extra_opts[:canonicalize_host_name]
+        [ username, client, socket, opts ]
       end.returns('ok' => true)
 
       require 'cgi'
@@ -124,7 +129,7 @@ module GSSAPITests
          "authMechanism=GSSAPI&gssapiServiceName=example&canonicalizeHostName=true"
       client = @client.class.from_uri(uri)
       client.expects(:receive_message).returns([[{ 'ok' => 1 }], 1, 1])
-      client['kerberos'].command(:dbstats => 1)
+      client[MONGODB_GSSAPI_DB].command(:dbstats => 1)
     end
 
     # In order to run this test, you must set the following environment variable:
@@ -137,7 +142,7 @@ module GSSAPITests
         set_system_properties
         client = Mongo::MongoClient.new(ENV['MONGODB_GSSAPI_HOST_IP'], MONGODB_GSSAPI_PORT)
 
-        db = client['kerberos']
+        db = client[MONGODB_GSSAPI_DB]
         db.authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
         assert db.command(:dbstats => 1)
       end
@@ -148,16 +153,18 @@ module GSSAPITests
       client = Mongo::MongoClient.new(MONGODB_GSSAPI_HOST)
 
       assert_raise Mongo::MongoArgumentError do
-        client['kerberos'].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
+        client[MONGODB_GSSAPI_DB].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
       end
     end
 
     private
     def set_system_properties
-      java.lang.System.set_property 'javax.security.auth.useSubjectCredsOnly', 'false'
-      java.lang.System.set_property "java.security.krb5.realm", MONGODB_GSSAPI_REALM
-      java.lang.System.set_property "java.security.krb5.kdc", MONGODB_GSSAPI_KDC
-      java.lang.System.set_property "java.security.auth.login.config", JAAS_LOGIN_CONFIG_FILE if JAAS_LOGIN_CONFIG_FILE
+      if RUBY_PLATFORM =~ /java/
+        java.lang.System.set_property 'javax.security.auth.useSubjectCredsOnly', 'false'
+        java.lang.System.set_property "java.security.krb5.realm", MONGODB_GSSAPI_REALM
+        java.lang.System.set_property "java.security.krb5.kdc", MONGODB_GSSAPI_KDC
+        java.lang.System.set_property "java.security.auth.login.config", JAAS_LOGIN_CONFIG_FILE if JAAS_LOGIN_CONFIG_FILE
+      end
     end
   end
 
