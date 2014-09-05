@@ -82,7 +82,7 @@ TEST_CREATE_USER = Mongo::Auth::User.new(
   database: TEST_CREATE_DB,
   user: 'test-user',
   password: 'password',
-  roles: [ Mongo::Auth::Roles::DATABASE_ADMIN ]
+  roles: [ Mongo::Auth::Roles::READ_WRITE, Mongo::Auth::Roles::DATABASE_ADMIN ]
 )
 
 # Gets the default drop database user for the suite on 2.4 and lower.
@@ -92,7 +92,7 @@ TEST_DROP_USER = Mongo::Auth::User.new(
   database: TEST_DROP_DB,
   user: 'test-user',
   password: 'password',
-  roles: [ Mongo::Auth::Roles::DATABASE_ADMIN ]
+  roles: [ Mongo::Auth::Roles::READ_WRITE, Mongo::Auth::Roles::DATABASE_ADMIN ]
 )
 
 # Provides an authorized mongo client on the default test database for the
