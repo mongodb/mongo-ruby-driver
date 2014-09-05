@@ -115,6 +115,7 @@ end
 # @since 2.0.0
 ROOT_AUTHORIZED_CLIENT = Mongo::Client.new(
   [ '127.0.0.1:27017' ],
+  auth_source: Mongo::Database::ADMIN,
   database: TEST_DB,
   user: ROOT_USER.name,
   password: ROOT_USER.password,
@@ -163,6 +164,7 @@ end
 # @since 2.0.0
 ROOT_AUTHORIZED_CREATE_CLIENT = Mongo::Client.new(
   [ '127.0.0.1:27017' ],
+  auth_source: Mongo::Database::ADMIN,
   database: TEST_CREATE_DB,
   user: ROOT_USER.name,
   password: ROOT_USER.password,
@@ -177,6 +179,7 @@ end
 # @since 2.0.0
 ROOT_AUTHORIZED_DROP_CLIENT = Mongo::Client.new(
   [ '127.0.0.1:27017' ],
+  auth_source: Mongo::Database::ADMIN,
   database: TEST_DROP_DB,
   user: ROOT_USER.name,
   password: ROOT_USER.password,

@@ -65,7 +65,7 @@ describe Mongo::Database do
     end
   end
 
-  describe '#collection_names' do
+  pending '#collection_names' do
 
     let(:database) do
       described_class.new(authorized_client, TEST_CREATE_DB)
@@ -86,7 +86,7 @@ describe Mongo::Database do
     end
   end
 
-  describe '#collections' do
+  pending '#collections' do
 
     let(:database) do
       described_class.new(authorized_client, TEST_CREATE_DB)
@@ -124,7 +124,7 @@ describe Mongo::Database do
     end
   end
 
-  describe '#drop' do
+  pending '#drop' do
 
     let(:database) do
       described_class.new(authorized_client, TEST_DROP_DB)
