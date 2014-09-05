@@ -2,8 +2,8 @@ require 'spec_helper'
 
 describe Mongo::Connection do
 
-  let(:address) do
-    Mongo::Server::Address.new('127.0.0.1:27017')
+  let(:server) do
+    Mongo::Server.new('127.0.0.1:27017')
   end
 
   describe '#connect!' do
@@ -11,7 +11,7 @@ describe Mongo::Connection do
     context 'when no socket exists' do
 
       let(:connection) do
-        described_class.new(address)
+        described_class.new(server)
       end
 
       let!(:result) do
@@ -38,7 +38,7 @@ describe Mongo::Connection do
     context 'when a socket exists' do
 
       let(:connection) do
-        described_class.new(address)
+        described_class.new(server)
       end
 
       before do
@@ -61,7 +61,7 @@ describe Mongo::Connection do
 
         let(:connection) do
           described_class.new(
-            address,
+            server,
             :user => 'notauser',
             :password => 'password',
             :database => TEST_DB,
@@ -80,7 +80,7 @@ describe Mongo::Connection do
 
         let(:connection) do
           described_class.new(
-            address,
+            server,
             :user => TEST_USER.name,
             :password => TEST_USER.password,
             :database => TEST_DB,
@@ -104,7 +104,7 @@ describe Mongo::Connection do
     context 'when a socket is not connected' do
 
       let(:connection) do
-        described_class.new(address)
+        described_class.new(server)
       end
 
       it 'does not raise an error' do
@@ -115,7 +115,7 @@ describe Mongo::Connection do
     context 'when a socket is connected' do
 
       let(:connection) do
-        described_class.new(address)
+        described_class.new(server)
       end
 
       before do
@@ -133,7 +133,7 @@ describe Mongo::Connection do
 
     let!(:connection) do
       described_class.new(
-        address,
+        server,
         :user => TEST_USER.name,
         :password => TEST_USER.password,
         :database => TEST_DB,
@@ -203,11 +203,11 @@ describe Mongo::Connection do
     context 'when host and port are provided' do
 
       let(:connection) do
-        described_class.new(address)
+        described_class.new(server)
       end
 
       it 'sets the address' do
-        expect(connection.address).to eq(address)
+        expect(connection.address).to eq(server.address)
       end
 
       it 'sets the socket to nil' do
@@ -222,7 +222,7 @@ describe Mongo::Connection do
     context 'when timeout options are provided' do
 
       let(:connection) do
-        described_class.new(address, socket_timeout: 10)
+        described_class.new(server, socket_timeout: 10)
       end
 
       it 'sets the timeout' do
@@ -233,7 +233,7 @@ describe Mongo::Connection do
     context 'when ssl options are provided' do
 
       let(:connection) do
-        described_class.new(address, :ssl => true)
+        described_class.new(server, :ssl => true)
       end
 
       it 'sets the ssl options' do
@@ -245,7 +245,7 @@ describe Mongo::Connection do
 
       let(:connection) do
         described_class.new(
-          address,
+          server,
           :user => TEST_USER.name,
           :password => TEST_USER.password,
           :database => TEST_DB,

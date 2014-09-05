@@ -18,6 +18,7 @@ module Mongo
   #
   # @since 2.0.0
   class Connection
+    extend Forwardable
 
     # The default time in seconds to timeout a connection attempt.
     #
@@ -33,6 +34,8 @@ module Mongo
 
     # @return [ Hash ] options The passed in options.
     attr_reader :options
+
+    def_delegators :@server, :write_command_enabled?
 
     # Is this connection authenticated. Will return true if authorization
     # details were provided and authentication passed.
@@ -112,17 +115,18 @@ module Mongo
     # Initialize a new socket connection from the client to the server.
     #
     # @example Create the connection.
-    #   Connection.new(address, 10)
+    #   Connection.new(server)
     #
-    # @param [ Mongo::Server::Address ] address The address to connect to.
+    # @param [ Mongo::Server ] server The server the connection is for.
     # @param [ Hash ] options The connection options.
     #
     # @since 2.0.0
-    def initialize(address, options = {})
-      @address  = address
-      @options  = options
+    def initialize(server, options = {})
+      @address = server.address
+      @options = options
+      @server = server
       @ssl_options = options.reject { |k, v| !k.to_s.start_with?('ssl') }
-      @socket   = nil
+      @socket = nil
       setup_authentication!
     end
 

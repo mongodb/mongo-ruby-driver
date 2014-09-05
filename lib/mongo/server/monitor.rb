@@ -73,7 +73,7 @@ module Mongo
         # @note We reject the user option here as the ismaster command should
         # be able to run without being authorized.
         @connection = Mongo::Connection.new(
-          server.address,
+          server,
           options.reject{ |key, value| key == :user }
         )
       end
