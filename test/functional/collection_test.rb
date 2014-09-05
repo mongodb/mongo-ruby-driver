@@ -1008,6 +1008,61 @@ class CollectionTest < Test::Unit::TestCase
     assert_equal 0, @test.count(:skip => 2)
   end
 
+  def test_count_with_hint
+    @test.drop
+    @test.save(:i => 1)
+    @test.save(:i => 2)
+    assert_equal 2, @test.count
+
+    @test.ensure_index(BSON::OrderedHash[:i, Mongo::ASCENDING])
+
+    # Check that a named_hint can be specified
+    assert_equal 1, @test.count(:query => { :i => 1 }, :named_hint => '_id_')
+    assert_equal 2, @test.count(:query => { }, :named_hint => '_id_')
+
+    # Verify that the hint is being sent to the server by providing a bad hint
+    if @version > '2.6'
+      assert_raise Mongo::OperationFailure do
+        @test.count(:query => { :i => 1 }, :hint => 'bad_hint')
+      end
+    else
+      assert_equal 1, @test.count(:query => { :i => 1 }, :hint => 'bad_hint')
+    end
+
+    # Verify that the named_hint is being sent to the server by providing a bad hint
+    if @version > '2.6'
+      assert_raise Mongo::OperationFailure do
+        @test.count(:query => { :i => 1 }, :named_hint => 'bad_hint')
+      end
+    else
+      assert_equal 1, @test.count(:query => { :i => 1 }, :named_hint => 'bad_hint')
+    end
+
+    @test.ensure_index(BSON::OrderedHash[:x, Mongo::ASCENDING], :sparse => true)
+
+    # The sparse index won't have any entries.
+    # Check that count returns 0 when using the hint.
+    expected = @version > '2.6' ? 0 : 1
+    assert_equal expected, @test.count(:query => { :i => 1 }, :hint => { 'x' => 1 })
+    assert_equal expected, @test.count(:query => { :i => 1 }, :hint => 'x')
+    assert_equal expected, @test.count(:query => { :i => 1 }, :named_hint => 'x_1')
+
+    # Verify that the hint / named hint set on the collection is used.
+    @test.hint = { 'x' => 1 }
+    assert_equal expected, @test.count(:query => { :i => 1 })
+
+    @test.hint = 'x'
+    assert_equal expected, @test.count(:query => { :i => 1 })
+
+    # The driver should allow x_1, but the code sets named_hint to @hint without
+    # normalizing.
+    @test.named_hint = 'x'
+    assert_equal expected, @test.count(:query => { :i => 1 })
+
+    assert_equal 2, @test.count(:query => { }, :hint => 'x')
+    assert_equal 2, @test.count(:query => { }, :named_hint => 'x_1')
+  end
+
   # Note: #size is just an alias for #count.
   def test_size
     @test.drop

@@ -203,7 +203,12 @@ module Mongo
         command.merge!(BSON::OrderedHash["skip", @skip]) if @skip != 0
       end
 
+      if @hint
+        hint = @hint.is_a?(String) ? @hint : generate_index_name(@hint)
+      end
+
       command.merge!(BSON::OrderedHash["fields", @fields])
+      command.merge!(BSON::OrderedHash["hint", hint]) if hint
 
       response = @db.command(command, :read => @read, :comment => @comment)
       return response['n'].to_i if Mongo::Support.ok?(response)
@@ -714,6 +719,14 @@ module Mongo
 
     def compile_regex?
       @compile_regex
+    end
+
+    def generate_index_name(spec)
+      indexes = []
+      spec.each_pair do |field, type|
+        indexes.push("#{field}_#{type}")
+      end
+      indexes.join("_")
     end
   end
 end

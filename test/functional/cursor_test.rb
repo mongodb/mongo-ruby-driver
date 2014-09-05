@@ -535,6 +535,59 @@ class CursorTest < Test::Unit::TestCase
     end
   end
 
+  def test_count_with_hint
+    @coll.drop
+    @coll.save(:i => 1)
+    @coll.save(:i => 2)
+    assert_equal 2, @coll.find.count
+
+    @coll.ensure_index(BSON::OrderedHash[:i, Mongo::ASCENDING])
+
+    # Check that a named_hint can be specified
+    assert_equal 1, @coll.find({ :i => 1 }, :named_hint => '_id_').count
+    assert_equal 2, @coll.find({ }, :named_hint => '_id_').count
+
+    # Verify that the hint is being sent to the server by providing a bad hint
+    if @version > '2.6'
+      assert_raise Mongo::OperationFailure do
+        @coll.find({ :i => 1 }, :hint => 'bad_hint').count
+      end
+    else
+      assert_equal 1, @coll.find({ :i => 1 }, :hint => 'bad_hint').count
+    end
+
+    # Verify that the named_hint is being sent to the server by providing a bad hint
+    if @version > '2.6'
+      assert_raise Mongo::OperationFailure do
+        @coll.find({ :i => 1 }, :named_hint => 'bad_hint').count
+      end
+    else
+      assert_equal 1, @coll.find({ :i => 1 }, :named_hint => 'bad_hint').count
+    end
+
+    @coll.ensure_index(BSON::OrderedHash[:x, Mongo::ASCENDING], :sparse => true)
+
+    # The sparse index won't have any entries.
+    # Check that count returns 0 when using the hint.
+    expected = @version > '2.6' ? 0 : 1
+    assert_equal expected, @coll.find({ :i => 1 }, :hint => { 'x' => 1 }).count
+    assert_equal expected, @coll.find({ :i => 1 }, :hint => 'x').count
+    assert_equal expected, @coll.find({ :i => 1 }, :named_hint => 'x_1').count
+
+    # Verify that the hint / named hint set on the collection is used.
+    @coll.hint = { 'x' => 1 }
+    assert_equal expected, @coll.find(:i => 1).count
+
+    @coll.hint = 'x'
+    assert_equal expected, @coll.find(:i => 1).count
+
+    @coll.named_hint = 'x_1'
+    assert_equal expected, @coll.find(:i => 1).count
+
+    assert_equal 2, @coll.find({ }, :hint => 'x').count
+    assert_equal 2, @coll.find({ }, :named_hint => 'x_1').count
+  end
+
   def test_has_next
     @coll.remove
     200.times do |n|

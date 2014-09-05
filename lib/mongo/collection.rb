@@ -1039,6 +1039,10 @@ module Mongo
     # @option opts [Hash] :query ({}) A query selector for filtering the documents counted.
     # @option opts [Integer] :skip (nil) The number of documents to skip.
     # @option opts [Integer] :limit (nil) The number of documents to limit.
+    # @option opts [String, Array, OrderedHash] :hint hint for query optimizer, usually not necessary if
+    #   using MongoDB > 1.1. This option is only supported with #count in server version > 2.6.
+    # @option opts [String] :named_hint for specifying a named index as a hint, will be overridden by :hint
+    #   if :hint is also provided. This option is only supported with #count in server version > 2.6.
     # @option opts [:primary, :secondary] :read Read preference for this command. See Collection#find for
     #  more details.
     # @option opts [String]  :comment (nil) a comment to include in profiling logs
@@ -1046,12 +1050,13 @@ module Mongo
     # @return [Integer]
     def count(opts={})
       find(opts[:query],
-           :skip  => opts[:skip],
-           :limit => opts[:limit],
-           :read  => opts[:read],
-           :comment => opts[:comment]).count(true)
+           :skip       => opts[:skip],
+           :limit      => opts[:limit],
+           :named_hint => opts[:named_hint] || @hint,
+           :hint       => opts[:hint] || @hint,
+           :read       => opts[:read],
+           :comment    => opts[:comment]).count(true)
     end
-
     alias :size :count
 
     protected
