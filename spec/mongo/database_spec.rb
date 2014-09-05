@@ -22,7 +22,7 @@ describe Mongo::Database do
     context 'when the names are not the same' do
 
       let(:other) do
-        described_class.new(authorized_client, TEST_CREATE_DB)
+        described_class.new(authorized_client, :other)
       end
 
       it 'returns false' do
@@ -65,31 +65,33 @@ describe Mongo::Database do
     end
   end
 
-  pending '#collection_names' do
+  describe '#collection_names' do
 
     let(:database) do
-      described_class.new(authorized_client, TEST_CREATE_DB)
+      described_class.new(authorized_client, TEST_DB)
     end
 
     before do
       database[:users].create
-      database[:sounds].create
     end
 
     after do
       database[:users].drop
-      database[:sounds].drop
     end
 
     it 'returns the stripped names of the collections' do
-      expect(database.collection_names).to eq(%w[users sounds])
+      expect(database.collection_names).to include('users')
+    end
+
+    it 'does not include system collections' do
+      expect(database.collection_names).to_not include('system.indexes')
     end
   end
 
-  pending '#collections' do
+  describe '#collections' do
 
     let(:database) do
-      described_class.new(authorized_client, TEST_CREATE_DB)
+      described_class.new(authorized_client, TEST_DB)
     end
 
     let(:collection) do
@@ -105,7 +107,7 @@ describe Mongo::Database do
     end
 
     it 'returns collection objects for each name' do
-      expect(database.collections).to eq([ collection ])
+      expect(database.collections).to include(collection)
     end
   end
 
@@ -124,14 +126,20 @@ describe Mongo::Database do
     end
   end
 
-  pending '#drop' do
+  describe '#drop' do
 
     let(:database) do
-      described_class.new(authorized_client, TEST_DROP_DB)
+      described_class.new(authorized_client, TEST_DB)
     end
 
-    it 'drops the database' do
+    it 'drops the database', if: write_command_enabled? do
       expect(database.drop).to be_ok
+    end
+
+    it 'raises an exception', unless: write_command_enabled? do
+      expect {
+        database.drop
+      }.to raise_error(Mongo::Operation::Write::Failure)
     end
   end
 

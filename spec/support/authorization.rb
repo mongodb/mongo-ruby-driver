@@ -17,16 +17,6 @@
 # @since 2.0.0
 TEST_DB = 'ruby-driver'.freeze
 
-# The default test database for creating a database.
-#
-# @since 2.0.0
-TEST_CREATE_DB = 'test-create-db'.freeze
-
-# The default database for testing database drops.
-#
-# @since 2.0.0
-TEST_DROP_DB = 'test-drop-db'.freeze
-
 # The default test collection.
 #
 # @since 2.0.0
@@ -55,9 +45,7 @@ TEST_USER = Mongo::Auth::User.new(
   password: 'password',
   roles: [
     { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_DB },
-    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_DB },
-    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_CREATE_DB },
-    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_DROP_DB }
+    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_DB }
   ]
 )
 
@@ -70,26 +58,6 @@ TEST_USER = Mongo::Auth::User.new(
 # @since 2.0.
 TEST_READ_WRITE_USER = Mongo::Auth::User.new(
   database: TEST_DB,
-  user: 'test-user',
-  password: 'password',
-  roles: [ Mongo::Auth::Roles::READ_WRITE, Mongo::Auth::Roles::DATABASE_ADMIN ]
-)
-
-# Gets the default test create database user for the suite on 2.4 and lower.
-#
-# @since 2.0.
-TEST_CREATE_USER = Mongo::Auth::User.new(
-  database: TEST_CREATE_DB,
-  user: 'test-user',
-  password: 'password',
-  roles: [ Mongo::Auth::Roles::READ_WRITE, Mongo::Auth::Roles::DATABASE_ADMIN ]
-)
-
-# Gets the default drop database user for the suite on 2.4 and lower.
-#
-# @since 2.0.
-TEST_DROP_USER = Mongo::Auth::User.new(
-  database: TEST_DROP_DB,
   user: 'test-user',
   password: 'password',
   roles: [ Mongo::Auth::Roles::READ_WRITE, Mongo::Auth::Roles::DATABASE_ADMIN ]
@@ -154,36 +122,6 @@ end
 ADMIN_AUTHORIZED_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
   user: ROOT_USER.name,
   password: ROOT_USER.password
-).tap do |client|
-  client.cluster.scan!
-end
-
-# Provides an authorized mongo client on the default test create database for the
-# default root system administrator. Used only with 2.4 testing.
-#
-# @since 2.0.0
-ROOT_AUTHORIZED_CREATE_CLIENT = Mongo::Client.new(
-  [ '127.0.0.1:27017' ],
-  auth_source: Mongo::Database::ADMIN,
-  database: TEST_CREATE_DB,
-  user: ROOT_USER.name,
-  password: ROOT_USER.password,
-  pool_size: 1
-).tap do |client|
-  client.cluster.scan!
-end
-
-# Provides an authorized mongo client on the default test drop database for the
-# default root system administrator. Used only with 2.4 testing.
-#
-# @since 2.0.0
-ROOT_AUTHORIZED_DROP_CLIENT = Mongo::Client.new(
-  [ '127.0.0.1:27017' ],
-  auth_source: Mongo::Database::ADMIN,
-  database: TEST_DROP_DB,
-  user: ROOT_USER.name,
-  password: ROOT_USER.password,
-  pool_size: 1
 ).tap do |client|
   client.cluster.scan!
 end

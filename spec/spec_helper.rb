@@ -55,8 +55,6 @@ RSpec.configure do |config|
         # but in the system.users collection on the datbases themselves. Also,
         # roles in versions lower than 2.6 can only be strings, not hashes.
         begin p ROOT_AUTHORIZED_CLIENT.database.users.create(TEST_READ_WRITE_USER); rescue; end
-        begin p ROOT_AUTHORIZED_CREATE_CLIENT.database.users.create(TEST_CREATE_USER); rescue; end
-        begin p ROOT_AUTHORIZED_DROP_CLIENT.database.users.create(TEST_DROP_USER); rescue; end
       end
     end
   end
