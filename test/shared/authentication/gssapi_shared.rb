@@ -106,8 +106,9 @@ module GSSAPITests
       set_system_properties
 
       Mongo::Sasl::GSSAPI.expects(:authenticate).with do |username, client, socket, opts|
-        opts[:gssapi_service_name] == extra_opts[:gssapi_service_name]
-        opts[:canonicalize_host_name] == extra_opts[:canonicalize_host_name]
+        assert_equal opts[:gssapi_service_name], extra_opts[:gssapi_service_name]
+        assert_equal opts[:canonicalize_host_name], extra_opts[:canonicalize_host_name]
+        [ username, client, socket, opts ]
       end.returns('ok' => true )
       client[MONGODB_GSSAPI_DB].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
     end
@@ -117,8 +118,9 @@ module GSSAPITests
       set_system_properties
 
       Mongo::Sasl::GSSAPI.expects(:authenticate).with do |username, client, socket, opts|
-        opts[:gssapi_service_name] == extra_opts[:gssapi_service_name]
-        opts[:canonicalize_host_name] == extra_opts[:canonicalize_host_name]
+        assert_equal opts[:gssapi_service_name], extra_opts[:gssapi_service_name]
+        assert_equal opts[:canonicalize_host_name], extra_opts[:canonicalize_host_name]
+        [ username, client, socket, opts ]
       end.returns('ok' => true)
 
       require 'cgi'
