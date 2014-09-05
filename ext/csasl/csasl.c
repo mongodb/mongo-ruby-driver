@@ -24,7 +24,8 @@ static void mongo_sasl_conn_free(void* data) {
 
 static sasl_conn_t* mongo_sasl_context(VALUE self) {
   sasl_conn_t* conn;
-  VALUE context = rb_iv_get(self, "@context");
+  VALUE context;
+  context = rb_iv_get(self, "@context");
   Data_Get_Struct(context, sasl_conn_t, conn);
   return conn;
 }
@@ -64,7 +65,8 @@ static int sasl_interact(VALUE self, int id, const char **result, unsigned *len)
     case SASL_CB_AUTHNAME:
     case SASL_CB_USER:
     {
-      VALUE user_name = rb_iv_get(self, "@user_name");
+      VALUE user_name;
+      user_name = rb_iv_get(self, "@user_name");
       *result = RSTRING_PTR(user_name);
       if (len) {
         *len = RSTRING_LEN(user_name);
@@ -81,8 +83,9 @@ static VALUE initialize_challenge(VALUE self) {
   char encoded_payload[4096];
   const char *raw_payload;
   unsigned int raw_payload_len, encoded_payload_len;
-  char *mechanism_list = "GSSAPI";
+  const char *mechanism_list = "GSSAPI";
   const char *mechanism_selected = "GSSAPI";
+  VALUE context;
   sasl_conn_t *conn;
   sasl_callback_t client_interact [] = {
     { SASL_CB_AUTHNAME, (int (*)(void))sasl_interact, (void*)self },
@@ -100,7 +103,7 @@ static VALUE initialize_challenge(VALUE self) {
     return Qfalse;
   }
 
-  VALUE context = Data_Wrap_Struct(rb_cObject, NULL, mongo_sasl_conn_free, conn);
+  context = Data_Wrap_Struct(rb_cObject, NULL, mongo_sasl_conn_free, conn);
   rb_iv_set(self, "@context", context);
 
   result = sasl_client_start(conn, mechanism_list, NULL, &raw_payload, &raw_payload_len, &mechanism_selected);
@@ -153,8 +156,9 @@ static VALUE evaluate_challenge(VALUE self, VALUE rb_payload) {
 VALUE c_GSSAPI_authenticator;
 
 void Init_csasl() {
-  VALUE mongo = rb_const_get(rb_cObject, rb_intern("Mongo"));
-  VALUE sasl = rb_const_get(mongo, rb_intern("Sasl"));
+  VALUE mongo, sasl;
+  mongo = rb_const_get(rb_cObject, rb_intern("Mongo"));
+  sasl = rb_const_get(mongo, rb_intern("Sasl"));
   c_GSSAPI_authenticator = rb_define_class_under(sasl, "GSSAPIAuthenticator", rb_cObject);
   rb_define_method(c_GSSAPI_authenticator, "initialize", a_init, 4);
   rb_define_method(c_GSSAPI_authenticator, "initialize_challenge", initialize_challenge, 0);
