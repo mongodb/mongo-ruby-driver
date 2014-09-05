@@ -115,11 +115,10 @@ module Mongo
     #   Connection.new(address, 10)
     #
     # @param [ Mongo::Server::Address ] address The address to connect to.
-    # @param [ Float ] timeout The connection timeout.
     # @param [ Hash ] options The connection options.
     #
     # @since 2.0.0
-    def initialize(address, timeout = nil, options = {})
+    def initialize(address, options = {})
       @address  = address
       @options  = options
       @ssl_options = options.reject { |k, v| !k.to_s.start_with?('ssl') }

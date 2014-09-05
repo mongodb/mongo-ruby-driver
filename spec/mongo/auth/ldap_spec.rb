@@ -7,7 +7,7 @@ describe Mongo::Auth::LDAP do
   end
 
   let(:connection) do
-    Mongo::Connection.new(address, 5)
+    Mongo::Connection.new(address)
   end
 
   let(:user) do

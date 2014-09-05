@@ -62,7 +62,6 @@ describe Mongo::Connection do
         let(:connection) do
           described_class.new(
             address,
-            5,
             :user => 'notauser',
             :password => 'password',
             :database => TEST_DB,
@@ -77,14 +76,13 @@ describe Mongo::Connection do
         end
       end
 
-      pending 'when the user is authorized' do
+      describe 'when the user is authorized' do
 
         let(:connection) do
           described_class.new(
             address,
-            5,
-            :user => ROOT_USER.name,
-            :password => ROOT_USER.password,
+            :user => TEST_USER.name,
+            :password => TEST_USER.password,
             :database => TEST_DB,
             :auth_mech => :mongodb_cr
           )
@@ -131,14 +129,13 @@ describe Mongo::Connection do
     end
   end
 
-  pending '#dispatch' do
+  describe '#dispatch' do
 
     let!(:connection) do
       described_class.new(
         address,
-        5,
-        :user => ROOT_USER.name,
-        :password => ROOT_USER.password,
+        :user => TEST_USER.name,
+        :password => TEST_USER.password,
         :database => TEST_DB,
         :auth_mech => :mongodb_cr
       )
@@ -225,7 +222,7 @@ describe Mongo::Connection do
     context 'when timeout options are provided' do
 
       let(:connection) do
-        described_class.new(address, nil, socket_timeout: 10)
+        described_class.new(address, socket_timeout: 10)
       end
 
       it 'sets the timeout' do
@@ -236,7 +233,7 @@ describe Mongo::Connection do
     context 'when ssl options are provided' do
 
       let(:connection) do
-        described_class.new(address, nil, :ssl => true)
+        described_class.new(address, :ssl => true)
       end
 
       it 'sets the ssl options' do
@@ -249,16 +246,19 @@ describe Mongo::Connection do
       let(:connection) do
         described_class.new(
           address,
-          nil,
-          :user => 'test-user',
-          :password => 'password',
+          :user => TEST_USER.name,
+          :password => TEST_USER.password,
           :database => TEST_DB,
           :auth_mech => :mongodb_cr
         )
       end
 
       let(:user) do
-        Mongo::Auth::User.new(database: TEST_DB, user: 'test-user', password: 'password')
+        Mongo::Auth::User.new(
+          database: TEST_DB,
+          user: TEST_USER.name,
+          password: TEST_USER.password
+        )
       end
 
       it 'sets the authentication strategy for the connection' do

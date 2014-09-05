@@ -74,7 +74,6 @@ module Mongo
         # be able to run without being authorized.
         @connection = Mongo::Connection.new(
           server.address,
-          options[:socket_timeout],
           options.reject{ |key, value| key == :user }
         )
       end
