@@ -171,6 +171,7 @@ class CursorTest < Test::Unit::TestCase
     else
       cursor = @coll.find('a' => 1)
       assert_not_nil explanation
+      assert explanation.keys.include?('executionStats')
     end
   end
 
