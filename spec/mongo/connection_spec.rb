@@ -225,7 +225,7 @@ describe Mongo::Connection do
     context 'when timeout options are provided' do
 
       let(:connection) do
-        described_class.new(address, 10)
+        described_class.new(address, nil, socket_timeout: 10)
       end
 
       it 'sets the timeout' do

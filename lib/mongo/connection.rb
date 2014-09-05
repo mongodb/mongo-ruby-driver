@@ -34,9 +34,6 @@ module Mongo
     # @return [ Hash ] options The passed in options.
     attr_reader :options
 
-    # @return [ Float ] timeout The connection timeout.
-    attr_reader :timeout
-
     # Is this connection authenticated. Will return true if authorization
     # details were provided and authentication passed.
     #
@@ -124,11 +121,22 @@ module Mongo
     # @since 2.0.0
     def initialize(address, timeout = nil, options = {})
       @address  = address
-      @timeout  = timeout || TIMEOUT
       @options  = options
       @ssl_options = options.reject { |k, v| !k.to_s.start_with?('ssl') }
       @socket   = nil
       setup_authentication!
+    end
+
+    # Get the connection timeout.
+    #
+    # @example Get the connection timeout.
+    #   connection.timeout
+    #
+    # @return [ Float ] The connection timeout in seconds.
+    #
+    # @since 2.0.0
+    def timeout
+      @timeout ||= options[:socket_timeout] || TIMEOUT
     end
 
     private
