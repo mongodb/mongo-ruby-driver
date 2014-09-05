@@ -32,8 +32,8 @@ module Mongo
       #
       # @since 2.0.0
       def login(connection)
-        nonce = connection.dispatch([ nonce_message ]).documents[0]
-        reply = connection.dispatch([ login_message(nonce[Auth::NONCE]) ])
+        nonce = connection.dispatch([ nonce_message(connection) ]).documents[0]
+        reply = connection.dispatch([ login_message(connection, nonce[Auth::NONCE]) ])
         raise Unauthorized.new(user) if reply.documents[0]['ok'] == 0
         reply
       end
@@ -43,16 +43,21 @@ module Mongo
       # On 2.6 and higher, nonce messages must always go to the admin database,
       # where on 2.4 and lower they go to the database the user is authorized
       # for.
-      def nonce_message
-        Protocol::Query.new(Database::ADMIN, Database::COMMAND, Auth::GET_NONCE, limit: -1)
+      def nonce_message(connection)
+        Protocol::Query.new(
+          auth_database(connection),
+          Database::COMMAND,
+          Auth::GET_NONCE,
+          limit: -1
+        )
       end
 
       # On 2.6 and higher, login messages must always go to the admin database,
       # where on 2.4 and lower they go to the database the user is authorized
       # for.
-      def login_message(nonce)
+      def login_message(connection, nonce)
         Protocol::Query.new(
-          Database::ADMIN,
+          auth_database(connection),
           Database::COMMAND,
           { authenticate: 1, user: user.name, nonce: nonce, key: user.auth_key(nonce) },
           limit: -1

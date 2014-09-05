@@ -34,6 +34,20 @@ module Mongo
       def initialize(user)
         @user = user
       end
+
+      private
+
+      # If we are on MongoDB 2.6 and higher, we *always* authorize against the
+      # admin database. Otherwise for 2.4 and lower we authorize against the
+      # database provided, or the optional auth_source option. The logic for
+      # that is encapsulated in the User class.
+      def auth_database(connection)
+        if connection.write_command_enabled?
+          Database::ADMIN
+        else
+          user.database
+        end
+      end
     end
   end
 end
