@@ -17,40 +17,66 @@ require 'pp'
 include Mongo
 
 class StandaloneTest < Test::Unit::TestCase
-  TEST_DB = 'cluster_standalone_test'
-  TEST_COLL = 'cluster_standalone_test'
+  TEST_DB = name.underscore
+  TEST_COLL = name.underscore
 
   @@mo = Mongo::Orchestration::Service.new
 
   def setup
-    @cluster = @@mo.configure({:orchestration => 'hosts', :request_content => {:id => 'standalone', :preset => 'basic.json'} })
-    #@cluster.start # adding this results in an extra process - TODO - debug
-    @client = Mongo::MongoClient.from_uri(@cluster.object['mongodb_uri'])
+    @server = @@mo.configure({:orchestration => 'servers', :request_content => {:id => 'standalone', :preset => 'basic.json'} })
+    @client = Mongo::MongoClient.from_uri(@server.object['mongodb_uri'])
     @client.drop_database(TEST_DB)
     @db = @client[TEST_DB]
     @coll = @db[TEST_COLL]
   end
 
   def teardown
-    @coll.remove({})
     @client.drop_database(TEST_DB)
-    @cluster.delete
+    @server.delete
   end
 
   def pgrep_mongo
     %x{pgrep -fl mongo}
   end
 
-  test 'Standalone up, down, up' do
+  # Scenario: Server Failure and Recovery
+  test 'Server Failure and Recovery' do
+    # Given a standalone server A
+    # And a client configured with seed A
+    # When I insert a document
     @coll.insert({'a' => 1})
+    # Then the insert succeeds
     assert_equal([1], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
-    @cluster.stop
-    #puts "mongo processes: {\n#{pgrep_mongo}}"
+    # When I stop the server
+    @server.stop
+    # And I insert a document
+    # Then the insert fails
     assert_raise Mongo::ConnectionFailure do
       @coll.insert({'a' => 2})
     end
-    @cluster.start
+    # When I start the server
+    @server.start
+    # And I insert a document
     @coll.insert({'a' => 3})
+    # Then the insert succeeds
+    assert_equal([1, 3], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
+  end
+
+  # Scenario: Server Restart
+  test 'Server Restart' do
+    # Given a standalone server A
+    # And a client configured with seed A
+    # When I insert a document
+    @coll.insert({'a' => 1})
+    # Then the insert succeeds
+    assert_equal([1], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
+    # When I restart the server
+    @server.restart
+    # And I insert a document with retries
+    rescue_connection_failure do
+      @coll.insert({'a' => 3})
+    end
+    # Then the insert succeeds (eventually)
     assert_equal([1, 3], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
   end
 end
