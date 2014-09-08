@@ -58,3 +58,7 @@ class String
         downcase
   end
 end
+
+def pgrep_mongo
+  %x{pgrep -fl mongo}
+end

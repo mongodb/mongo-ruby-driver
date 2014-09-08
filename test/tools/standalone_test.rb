@@ -35,10 +35,6 @@ class StandaloneTest < Test::Unit::TestCase
     @server.delete
   end
 
-  def pgrep_mongo
-    %x{pgrep -fl mongo}
-  end
-
   # Scenario: Server Failure and Recovery
   test 'Server Failure and Recovery' do
     # Given a standalone server A
@@ -46,7 +42,7 @@ class StandaloneTest < Test::Unit::TestCase
     # When I insert a document
     @coll.insert({'a' => 1})
     # Then the insert succeeds
-    assert_equal([1], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
+    assert(@coll.find_one({'a' => 1}))
     # When I stop the server
     @server.stop
     # And I insert a document
@@ -59,7 +55,7 @@ class StandaloneTest < Test::Unit::TestCase
     # And I insert a document
     @coll.insert({'a' => 3})
     # Then the insert succeeds
-    assert_equal([1, 3], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
+    assert(@coll.find_one({'a' => 3}))
   end
 
   # Scenario: Server Restart
@@ -69,14 +65,14 @@ class StandaloneTest < Test::Unit::TestCase
     # When I insert a document
     @coll.insert({'a' => 1})
     # Then the insert succeeds
-    assert_equal([1], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
+    assert(@coll.find_one({'a' => 1}))
     # When I restart the server
     @server.restart
     # And I insert a document with retries
     rescue_connection_failure do
-      @coll.insert({'a' => 3})
+      @coll.insert({'a' => 2})
     end
     # Then the insert succeeds (eventually)
-    assert_equal([1, 3], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
+    assert(@coll.find_one({'a' => 2}))
   end
 end

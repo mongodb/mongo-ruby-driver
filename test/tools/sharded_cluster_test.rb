@@ -17,59 +17,94 @@ require 'pp'
 include Mongo
 
 class ShardedClusterTest < Test::Unit::TestCase
-  TEST_DB = 'sharded_cluster_test'
-  TEST_COLL = 'sharded_cluster_test'
+  TEST_DB = name.underscore
+  TEST_COLL = name.underscore
 
   @@mo = Mongo::Orchestration::Service.new
 
   def setup
-    @cluster = @@mo.configure({:orchestration => 'sh', :request_content => {:id => 'sharded_cluster_1', :preset => 'basic.json'} })
+    @cluster = @@mo.configure({:orchestration => 'sharded_clusters', :request_content => {:id => 'sharded_cluster_1', :preset => 'basic.json'} })
     @client = Mongo::MongoShardedClient.from_uri(@cluster.object['mongodb_uri'])
     @client.drop_database(TEST_DB)
     @db = @client[TEST_DB]
     @coll = @db[TEST_COLL]
-    @retries = 60
+    @routers = @cluster.routers
   end
 
   def teardown
-    @coll.remove({})
     @client.drop_database(TEST_DB)
     @cluster.delete
   end
 
-  def reattempt(n = @retries)
-    n.times do |i|
-      begin
-        yield
-        break
-      rescue Mongo::ConnectionFailure => ex
-        #assert_equal("Operation failed with the following exception: Connection reset by peer", ex.message)
-        #assert_equal("Operation failed with the following exception: end of file reached", ex.message)
-        print "#{i}?"
-        sleep(1)
-      end
-    end
-    puts
-  end
-
-  def pgrep_mongo
-    %x{pgrep -fl mongo}
-  end
-
-  test 'Sharded cluster mongos failover' do
+  # Scenario: mongos Router Failover - Failure and Recovery
+  test 'mongos Router Failover - Failure and Recovery' do
+    # Given a sharded cluster with two routers A and B
+    # And a client configured with seeds A and B
+    # When I insert a document
     @coll.insert({'a' => 1})
-    assert_equal([1], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
-
-    #puts "mongo processes: {\n#{pgrep_mongo}}"
-    routers = @cluster.routers
-    routers.first.stop
-    #puts "mongo processes: {\n#{pgrep_mongo}}"
-
-    reattempt do
+    # Then the insert succeeds
+    assert(@coll.find_one({'a' => 1}))
+    # When I stop router A
+    @routers.first.stop
+    # And I insert a document with retries
+    rescue_connection_failure do
       @coll.insert({'a' => 2})
     end
+    # Then the insert succeeds (eventually)
+    assert(@coll.find_one({'a' => 2}))
+    # When I stop router B
+    @routers.last.stop
+    # And I insert a document
+    # Then the insert fails
+    assert_raise Mongo::ConnectionFailure do
+      @coll.insert({'a' => 3})
+    end
+    # When I start router B
+    @routers.last.start
+    # And I insert a document
+    @coll.insert({'a' => 4})
+    # Then the insert succeeds
+    assert(@coll.find_one({'a' => 4}))
+    # When I start router A
+    @routers.first.start
+    # And I insert a document
+    @coll.insert({'a' => 5})
+    # Then the insert succeeds
+    assert(@coll.find_one({'a' => 5}))
+    # When I stop router B
+    @routers.last.stop
+    # And I insert a document with retires
+    rescue_connection_failure do
+      @coll.insert({'a' => 6})
+    end
+    # Then the insert succeeds (eventually)
+    assert(@coll.find_one({'a' => 6}))
+  end
 
-    assert_equal([1, 2], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
+  # Scenario: mongos Router Restart
+  test "mongos Router Restart" do
+    # Given a sharded cluster with two routers A and B
+    # And a client configured with seeds A and B
+    # When I insert a document
+    @coll.insert({'a' => 1})
+    # Then the insert succeeds
+    assert(@coll.find_one({'a' => 1}))
+    # When I restart router A
+    @routers.first.restart
+    # And I insert a document with retries
+    rescue_connection_failure do
+      @coll.insert({'a' => 2})
+    end
+    # Then the insert succeeds (eventually)
+    assert(@coll.find_one({'a' => 2}))
+    # When I restart router B
+    @routers.last.restart
+    # And I insert a document with retries
+    rescue_connection_failure do
+      @coll.insert({'a' => 3})
+    end
+    # Then the insert succeeds (eventually)
+    assert(@coll.find_one({'a' => 3}))
   end
 end
 
