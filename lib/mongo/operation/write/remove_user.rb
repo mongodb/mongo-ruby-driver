@@ -64,7 +64,7 @@ module Mongo
         private
 
         def message
-          Protocol::Delete.new(db_name, View::User::COLLECTION, { user: @spec[:name] })
+          Protocol::Delete.new(db_name, Auth::User::COLLECTION, { user: @spec[:name] })
         end
       end
     end

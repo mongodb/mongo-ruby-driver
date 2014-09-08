@@ -22,11 +22,6 @@ module Mongo
       class View
         extend Forwardable
 
-        # The users collection for the database.
-        #
-        # @since 2.0.0
-        COLLECTION = 'system.users'.freeze
-
         # @return [ Database ] database The view's database.
         attr_reader :database
 

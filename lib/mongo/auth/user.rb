@@ -22,6 +22,11 @@ module Mongo
     # @since 2.0.0
     class User
 
+      # The users collection for the database.
+      #
+      # @since 2.0.0
+      COLLECTION = 'system.users'.freeze
+
       # @return [ true, false ] For kerberos only, are we canolicalizing the
       #   host name.
       attr_reader :canonicalize_host_name
