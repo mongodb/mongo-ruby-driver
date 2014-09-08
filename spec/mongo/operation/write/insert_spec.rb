@@ -389,12 +389,7 @@ describe Mongo::Operation::Write::Insert do
     end
 
     after do
-      Mongo::Operation::Write::Delete.new({
-        deletes: [{ q: {}, limit: -1 }],
-        db_name: TEST_DB,
-        coll_name: TEST_COLL,
-        write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
-      }).execute(authorized_primary.context)
+      authorized_collection.find.remove
       authorized_collection.indexes.drop({ name: 1 })
     end
 
