@@ -68,7 +68,7 @@ module Mongo
 
         def message
           user_spec = { user: user.name }.merge(user.spec)
-          Protocol::Insert.new(db_name, View::User::COLLECTION, [ user_spec ])
+          Protocol::Insert.new(db_name, Auth::User::COLLECTION, [ user_spec ])
         end
       end
     end
