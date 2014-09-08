@@ -22,6 +22,7 @@
 
 #include "ruby.h"
 #include "version.h"
+#include <arpa/inet.h>
 
 /* Ensure compatibility with early releases of Ruby 1.8.5 */
 #ifndef RSTRING_PTR
@@ -115,7 +116,7 @@ struct deserialize_opts {
 #define STR_NEW(p,n)                                                    \
     ({                                                                  \
         VALUE _str = rb_enc_str_new((p), (n), rb_utf8_encoding());      \
-        rb_encoding* internal_encoding = rb_default_internal_encoding(); \
+        rb_encoding* internal_encoding = rb_default_internal_encoding();\
         if (internal_encoding) {                                        \
             _str = rb_str_export_to_enc(_str, internal_encoding);       \
         }                                                               \
@@ -167,11 +168,11 @@ static void write_utf8(bson_buffer_t buffer, VALUE string, int allow_null) {
     }
 #define FREE_INTSTRING(buffer) free(buffer)
 #else
-#define INT2STRING(buffer, i)                   \
-    {                                           \
+#define INT2STRING(buffer, i)                           \
+    {                                                   \
         int vslength = snprintf(NULL, 0, "%d", i) + 1;  \
-        *buffer = malloc(vslength);             \
-        snprintf(*buffer, vslength, "%d", i);   \
+        *buffer = malloc(vslength);                     \
+        snprintf(*buffer, vslength, "%d", i);           \
     }
 #define FREE_INTSTRING(buffer) free(buffer)
 #endif
@@ -435,10 +436,10 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             const char* cls = rb_obj_classname(value);
             if (strcmp(cls, "BSON::Binary") == 0 ||
                 strcmp(cls, "ByteBuffer") == 0) {
-                const char subtype = strcmp(cls, "ByteBuffer") ?
-                    (const char)FIX2INT(rb_funcall(value, rb_intern("subtype"), 0)) : 2;
                 VALUE string_data = rb_funcall(value, rb_intern("to_s"), 0);
                 int length = RSTRING_LENINT(string_data);
+                const char subtype = strcmp(cls, "ByteBuffer") ?
+                    (const char)FIX2INT(rb_funcall(value, rb_intern("subtype"), 0)) : 2;
                 write_name_and_type(buffer, key, 0x05);
                 if (subtype == 2) {
                     const int other_length = length + 4;
@@ -453,8 +454,8 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 break;
             }
             if (strcmp(cls, "BSON::ObjectId") == 0) {
-                VALUE as_array = rb_funcall(value, rb_intern("to_a"), 0);
                 int i;
+                VALUE as_array = rb_funcall(value, rb_intern("to_a"), 0);
                 write_name_and_type(buffer, key, 0x07);
                 for (i = 0; i < 12; i++) {
                     char byte = (char)FIX2INT(rb_ary_entry(as_array, i));
@@ -658,9 +659,10 @@ static void write_doc(bson_buffer_t buffer, VALUE hash, VALUE check_keys, VALUE 
 
     // we have to check for an OrderedHash and handle that specially
     if (strcmp(rb_obj_classname(hash), "BSON::OrderedHash") == 0) {
-        VALUE keys = rb_funcall(hash, rb_intern("keys"), 0);
         int i;
-                for(i = 0; i < RARRAY_LEN(keys); i++) {
+        VALUE keys = rb_funcall(hash, rb_intern("keys"), 0);
+
+        for(i = 0; i < RARRAY_LEN(keys); i++) {
             VALUE key = rb_ary_entry(keys, i);
             VALUE value = rb_hash_aref(hash, key);
 
@@ -739,10 +741,11 @@ static VALUE get_value(const char* buffer, int* position,
             int size;
             memcpy(&size, buffer + *position, 4);
             if (strcmp(buffer + *position + 5, "$ref") == 0) { // DBRef
-                int offset = *position + 10;
                 VALUE argv[2];
-                int collection_length = *(int*)(buffer + offset) - 1;
                 unsigned char id_type;
+                int offset = *position + 10;
+                int collection_length = *(int*)(buffer + offset) - 1;
+
                 offset += 4;
 
                 argv[0] = STR_NEW(buffer + offset, collection_length);
@@ -766,9 +769,9 @@ static VALUE get_value(const char* buffer, int* position,
 
             value = rb_ary_new();
             while (*position < end) {
+                VALUE to_append;
                 unsigned char type = (unsigned char)buffer[(*position)++];
                 int key_size = (int)strlen(buffer + *position);
-                VALUE to_append;
 
                 *position += key_size + 1; // just skip the key, they're in order.
                 to_append = get_value(buffer, position, type, opts);
@@ -847,11 +850,11 @@ static VALUE get_value(const char* buffer, int* position,
             int pattern_length = (int)strlen(buffer + *position);
             VALUE pattern = STR_NEW(buffer + *position, pattern_length);
             int flags_length;
-            VALUE argv[3];
+            VALUE argv[3], flags_str;
             *position += pattern_length + 1;
 
             flags_length = (int)strlen(buffer + *position);
-            VALUE flags_str = STR_NEW(buffer + *position, flags_length);
+            flags_str = STR_NEW(buffer + *position, flags_length);
             argv[0] = pattern;
             argv[1] = flags_str;
             value = rb_class_new_instance(2, argv, BSONRegex);
@@ -951,13 +954,13 @@ static VALUE get_value(const char* buffer, int* position,
 }
 
 static VALUE elements_to_hash(const char* buffer, int max, struct deserialize_opts * opts) {
-    VALUE hash = rb_class_new_instance(0, NULL, OrderedHash);
     int position = 0;
+    VALUE hash = rb_class_new_instance(0, NULL, OrderedHash);
     while (position < max) {
+        VALUE value;
         unsigned char type = (unsigned char)buffer[position++];
         int name_length = (int)strlen(buffer + position);
         VALUE name = STR_NEW(buffer + position, name_length);
-        VALUE value;
         position += name_length + 1;
         value = get_value(buffer, &position, type, opts);
         rb_funcall(hash, element_assignment_method, 2, name, value);
@@ -969,6 +972,7 @@ static VALUE method_deserialize(VALUE self, VALUE bson, VALUE opts) {
     const char* buffer = RSTRING_PTR(bson);
     int remaining = RSTRING_LENINT(bson);
     struct deserialize_opts deserialize_opts;
+
     deserialize_opts.compile_regex = 1;
     if (rb_funcall(opts, rb_intern("has_key?"), 1, ID2SYM(rb_intern("compile_regex"))) == Qtrue && 
         rb_hash_aref(opts, ID2SYM(rb_intern("compile_regex"))) == Qfalse) {
