@@ -35,6 +35,21 @@ module Mongo
       include Enumerable
       include Executable
 
+      # Special fields and their getters for the query selector.
+      #
+      # @since 2.0.0
+      SPECIAL_FIELDS = {
+        :$query => :selector,
+        :$readPreference => :read_pref_formatted,
+        :$orderby => :sort,
+        :$hint => :hint,
+        :$comment => :comment,
+        :$snapshot => :snapshot,
+        :$maxScan => :max_scan,
+        :$showDiskLoc => :show_disk_loc,
+        :$explain => :explained?
+      }
+
       # @return [ Collection ] The +Collection+ to query.
       attr_reader :collection
       # @return [ Hash ] The query selector.
@@ -42,6 +57,7 @@ module Mongo
       # @return [ Hash ] The additional query options.
       attr_reader :options
 
+      # Delegate necessary operations to the collection.
       def_delegators :@collection, :client, :cluster, :database, :server_preference, :write_concern
 
       # Compare two +Collection+ objects.
@@ -60,6 +76,93 @@ module Mongo
             options == other.options
       end
       alias_method :eql?, :==
+
+      # The number of documents returned in each batch of results from MongoDB.
+      #
+      # @example Set the batch size.
+      #   view.batch_size(5)
+      #
+      # @note Specifying 1 or a negative number is analogous to setting a limit.
+      #
+      # @param [ Integer ] batch_size The size of each batch of results.
+      #
+      # @return [ Integer, Collection ] Either the batch_size value or a
+      # new +Collection+.
+      #
+      # @since 2.0.0
+      def batch_size(batch_size = nil)
+        set_option(:batch_size, batch_size)
+      end
+
+      # Associate a comment with the query.
+      #
+      # @example Add a comment.
+      #   view.comment('slow query')
+      #
+      # @note Set profilingLevel to 2 and the comment will be logged in the profile
+      #   collection along with the query.
+      #
+      # @param [ String ] comment The comment to be associated with the query.
+      #
+      # @return [ String, Collection ] Either the comment or a
+      #   new +Collection+.
+      #
+      # @since 2.0.0
+      def comment(comment = nil)
+        set_option(:comment, comment)
+      end
+
+      # Iterate through documents returned by a query with this +Collection+.
+      #
+      # @example Iterate through the result of the view.
+      #   view.each do |document|
+      #     p document
+      #   end
+      #
+      # @return [ Enumerator ] The enumerator.
+      #
+      # @since 2.0.0
+      #
+      # @yieldparam [ Hash ] Each matching document.
+      def each
+        server = read.select_servers(cluster.servers).first
+        cursor = Cursor.new(self, send_initial_query(server), server).to_enum
+        cursor.each do |doc|
+          yield doc
+        end if block_given?
+        cursor
+      end
+
+      # The fields to include or exclude from each doc in the result set.
+      #
+      # @example Set the fields to include or exclude.
+      #   view.fields(name: 1)
+      #
+      # @note A value of 0 excludes a field from the doc. A value of 1 includes it.
+      #   Values must all be 0 or all be 1, with the exception of the _id value.
+      #   The _id field is included by default. It must be excluded explicitly.
+      #
+      # @param [ Hash ] fields The field and 1 or 0, to include or exclude it.
+      #
+      # @return [ Hash, Collection ] Either the fields or a new +Collection+.
+      #
+      # @since 2.0.0
+      def fields(fields = nil)
+        set_option(:fields, fields)
+      end
+
+      # A hash value for the +Collection+ composed of the collection namespace,
+      # hash of the options and hash of the selector.
+      #
+      # @example Get the hash value.
+      #   view.hash
+      #
+      # @return [ Integer ] A hash value of the +Collection+ object.
+      #
+      # @since 2.0.0
+      def hash
+        [ collection.namespace, options.hash, selector.hash ].hash
+      end
 
       # Creates a new +Collection+.
       #
@@ -116,182 +219,128 @@ module Mongo
             " @selector=#{selector.inspect} @options=#{options.inspect}>"
       end
 
-      # A hash value for the +Collection+ composed of the collection namespace,
-      # hash of the options and hash of the selector.
-      #
-      # @example Get the hash value.
-      #   view.hash
-      #
-      # @return [ Integer ] A hash value of the +Collection+ object.
-      #
-      # @since 2.0.0
-      def hash
-        [ collection.namespace, options.hash, selector.hash ].hash
-      end
-
-      # Associate a comment with the query.
-      #
-      # @example Add a comment.
-      #   view.comment('slow query')
-      #
-      # @note Set profilingLevel to 2 and the comment will be logged in the profile
-      #   collection along with the query.
-      #
-      # @param [ String ] comment The comment to be associated with the query.
-      #
-      # @return [ String, Collection ] Either the comment or a
-      #   new +Collection+.
-      #
-      # @since 2.0.0
-      def comment(comment = nil)
-        set_option(:comment, comment)
-      end
-
-      # The number of documents returned in each batch of results from MongoDB.
-      # Specifying 1 or a negative number is analogous to setting a limit.
-      #
-      # @param [ Integer ] batch_size The size of each batch of results.
-      #
-      # @return [ Integer, Collection ] Either the batch_size value or a
-      # new +Collection+.
-      def batch_size(batch_size = nil)
-        set_option(:batch_size, batch_size)
-      end
-
-      # The fields to include or exclude from each doc in the result set.
-      # A value of 0 excludes a field from the doc. A value of 1 includes it.
-      # Values must all be 0 or all be 1, with the exception of the _id value.
-      # The _id field is included by default. It must be excluded explicitly.
-      #
-      # @param [ Hash ] fields The field and 1 or 0, to include or exclude it.
-      #
-      # @return [ Collection ] Either the fields or a new +Collection+.
-      def fields(fields = nil)
-        set_option(:fields, fields)
-      end
-
       # The index that MongoDB will be forced to use for the query.
+      #
+      # @example Set the index hint.
+      #   view.hint(name: 1)
       #
       # @param [ Hash ] hint The index to use for the query.
       #
       # @return [ Hash, Collection ] Either the hint or a new +Collection+.
+      #
+      # @since 2.0.0
       def hint(hint = nil)
         set_option(:hint, hint)
       end
 
       # The max number of docs to return from the query.
       #
+      # @example Set the limit.
+      #   view.limit(5)
+      #
       # @param [ Integer ] limit The number of docs to return.
       #
       # @return [ Integer, Collection ] Either the limit or a new +Collection+.
+      #
+      # @since 2.0.0
       def limit(limit = nil)
         set_option(:limit, limit)
       end
 
-      # The read preference to use for the query.
-      # If none is specified for the query, the read preference of the
-      # collection will be used.
+      # Set the max number of documents to scan.
       #
-      # @param [ Hash ] read The read preference mode to use for the query.
+      # @example Set the max scan value.
+      #   view.max_scan(1000)
+      #
+      # @param [ Integer ] value The max number to scan.
+      #
+      # @return [ Integer, Collection ] The value or a new +Collection+.
+      #
+      # @since 2.0.0
+      def max_scan(value = nil)
+        set_option(:max_scan, value)
+      end
+
+      # The read preference to use for the query.
+      #
+      # @note If none is specified for the query, the read preference of the
+      #   collection will be used.
+      #
+      # @param [ Hash ] value The read preference mode to use for the query.
       #
       # @return [ Symbol, Collection ] Either the read preference or a
-      # new +Collection+.
-      def read(read = nil)
-        return default_read if read.nil?
-        set_option(:read, read)
+      #   new +Collection+.
+      #
+      # @since 2.0.0
+      def read(value = nil)
+        return default_read if value.nil?
+        set_option(:read, value)
+      end
+
+      # Set whether the disk location should be shown for each document.
+      #
+      # @example Set show disk location option.
+      #   view.show_disk_loc(true)
+      #
+      # @param [ true, false ] value The value for the field.
+      #
+      # @return [ true, false, Collection ] Either the value or a new
+      #   +Collection+.
+      #
+      # @since 2.0.0
+      def show_disk_loc(value = nil)
+        set_option(:show_disk_loc, value)
       end
 
       # The number of docs to skip before returning results.
       #
+      # @example Set the number to skip.
+      #   view.skip(10)
+      #
       # @param [ Integer ] skip Number of docs to skip.
       #
       # @return [ Integer, Collection ] Either the skip value or a
-      # new +Collection+.
-      def skip(skip = nil)
-        set_option(:skip, skip)
+      #   new +Collection+.
+      #
+      # @since 2.0.0
+      def skip(number = nil)
+        set_option(:skip, number)
+      end
+
+      # Set the snapshot value for the view.
+      #
+      # @note When set to true, prevents documents from returning more than
+      #   once.
+      #
+      # @example Set the snapshot value.
+      #   view.snapshot(true)
+      #
+      # @param [ true, false ] value The snapshot value.
+      #
+      # @since 2.0.0
+      def snapshot(value = nil)
+        set_option(:snapshot, value)
       end
 
       # The key and direction pairs by which the result set will be sorted.
       #
-      # @param [ Hash ] sort The attributes and directions to sort by.
+      # @example Set the sort criteria
+      #   view.sort(name: -1)
+      #
+      # @param [ Hash ] spec The attributes and directions to sort by.
       #
       # @return [ Hash, Collection ] Either the sort setting or a
-      # new +Collection+.
-      def sort(sort = nil)
-        set_option(:sort, sort)
-      end
-
-      # Set options for the query.
-      #
-      # @param s_options [ Hash ] Special query options.
-      #
-      # @option s_options :snapshot [ true, false ] Prevents returning docs more
-      #   than once.
-      # @option s_options :max_scan [ Integer ] Constrain the query to only scan the
-      #   specified number of docs.
-      # @option s_options :show_disk_loc [ true, false ] Return disk location info
-      #   as a field in each doc.
-      #
-      # @return [ Hash, Collection ] Either the special query options or a
-      # new +Collection+.
-      def special_options(s_options = nil)
-        return special_options_hash if s_options.nil?
-        opts = options.dup
-        [:snapshot, :max_scan, :show_disk_loc, :explain].each do |k|
-          s_options[k].nil? ? opts.delete(k) : opts.merge!(k => s_options[k])
-        end
-        Collection.new(collection, selector, opts)
-      end
-
-      # Iterate through documents returned by a query with this +Collection+.
-      #
-      # @example Iterate through the result of the view.
-      #   view.each do |document|
-      #     p document
-      #   end
-      #
-      # @return [ Enumerator ] The enumerator.
+      #   new +Collection+.
       #
       # @since 2.0.0
-      #
-      # @yieldparam [ Hash ] Each matching document.
-      def each
-        server = read.select_servers(cluster.servers).first
-        cursor = Cursor.new(self, send_initial_query(server), server).to_enum
-        cursor.each do |doc|
-          yield doc
-        end if block_given?
-        cursor
+      def sort(spec = nil)
+        set_option(:sort, spec)
       end
 
       private
 
-      SPECIAL_FIELDS = [
-          [:$query,          :selector],
-          [:$readPreference, :read_pref_formatted],
-          [:$orderby,        :sort],
-          [:$hint,           :hint],
-          [:$comment,        :comment],
-          [:$snapshot,       :snapshot],
-          [:$maxScan,        :max_scan],
-          [:$showDiskLoc,    :show_disk_loc],
-          [:$explain,        :explain_value]
-      ]
-
-      def explain_value
-        special_options[:explain]
-      end
-
-      def snapshot
-        special_options[:snapshot]
-      end
-
-      def max_scan
-        special_options[:max_scan]
-      end
-
-      def show_disk_loc
-        special_options[:show_disk_loc]
+      def explained?
+        !!options[:explain]
       end
 
       def initial_query_op
@@ -338,7 +387,7 @@ module Mongo
       end
 
       def has_special_fields?
-        !special_options.empty? || sort || hint || comment || cluster.sharded?
+        sort || hint || comment || max_scan || show_disk_loc || snapshot || explained? || cluster.sharded?
       end
 
       def initialize_copy(other)
@@ -351,26 +400,12 @@ module Mongo
         options[:read] || server_preference
       end
 
-      def special_options_hash
-        s_options = options[:snapshot].nil? ? {} : { :snapshot => options[:snapshot] }
-        unless options[:max_scan].nil?
-          s_options[:max_scan] = options[:max_scan]
-        end
-        unless options[:show_disk_loc].nil?
-          s_options[:show_disk_loc] = @options[:show_disk_loc]
-        end
-        unless options[:explain].nil?
-          s_options[:explain] = options[:explain]
-        end
-        s_options
-      end
-
       def query_spec
         sel = has_special_fields? ? special_selector : selector
         { :selector  => sel,
-          :options      => query_options,
-          :db_name   => db_name,
-          :coll_name => @collection.name }
+          :options   => query_options,
+          :db_name   => database.name,
+          :coll_name => collection.name }
       end
 
       def primary?
@@ -383,10 +418,6 @@ module Mongo
 
       def to_return
         [ limit || batch_size, batch_size || limit ].min
-      end
-
-      def db_name
-        collection.database.name
       end
 
       def set_option(field, value)

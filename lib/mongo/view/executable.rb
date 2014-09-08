@@ -64,7 +64,8 @@ module Mongo
       # @since 2.0.0
       def explain
         explain_limit = limit || 0
-        set_option(:limit, -explain_limit.abs).special_options(:explain => true).first
+        opts = options.merge(:limit => -explain_limit.abs, :explain => true)
+        Collection.new(collection, selector, opts).first
       end
 
       # Remove documents from the collection.

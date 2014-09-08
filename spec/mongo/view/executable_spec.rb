@@ -6,6 +6,10 @@ describe Mongo::View::Executable do
     authorized_collection.find.remove
   end
 
+  pending '#aggregate'
+  pending '#map_reduce'
+  pending '#parallel_scan'
+
   describe '#count' do
 
     let(:documents) do

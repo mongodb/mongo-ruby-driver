@@ -298,6 +298,17 @@ describe Mongo::View::Collection do
     end
   end
 
+  describe '#max_scan' do
+
+    let(:new_view) do
+      view.max_scan(10)
+    end
+
+    it 'sets the value in the options' do
+      expect(new_view.max_scan).to eq(10)
+    end
+  end
+
   describe '#skip' do
 
     context 'when a skip is specified' do
@@ -377,6 +388,28 @@ describe Mongo::View::Collection do
     end
   end
 
+  describe '#show_disk_loc' do
+
+    let(:new_view) do
+      view.show_disk_loc(true)
+    end
+
+    it 'sets the value in the options' do
+      expect(new_view.show_disk_loc).to be true
+    end
+  end
+
+  describe '#snapshot' do
+
+    let(:new_view) do
+      view.snapshot(true)
+    end
+
+    it 'sets the value in the options' do
+      expect(new_view.snapshot).to be true
+    end
+  end
+
   describe '#sort' do
 
     context 'when a sort is specified' do
@@ -407,76 +440,6 @@ describe Mongo::View::Collection do
 
       it 'returns the sort' do
         expect(view.sort).to eq(options[:sort])
-      end
-    end
-  end
-
-  describe '#special_options' do
-
-    context 'when special_options are specified' do
-
-      context 'when snapshot options exist' do
-
-        let(:options) do
-          { :snapshot => true }
-        end
-
-        it 'returns snapshot in the special options' do
-          expect(view.special_options).to eq(options)
-        end
-      end
-
-      context 'when max_scan options exist' do
-
-        let(:options) do
-          { :max_scan => true }
-        end
-
-        it 'returns max_scan in the special options' do
-          expect(view.special_options).to eq(options)
-        end
-      end
-
-      context 'when show_disk_loc options exist' do
-
-        let(:options) do
-          { :show_disk_loc => true }
-        end
-
-        it 'returns show_disk_loc in the special options' do
-          expect(view.special_options).to eq(options)
-        end
-      end
-
-      describe 'when replacing options' do
-
-        let(:options) do
-          { :snapshot => true }
-        end
-
-        let(:new_special_options) do
-          { :max_scan => 100 }
-        end
-
-        it 'replaces the old special options' do
-          new_view = view.special_options(new_special_options)
-          expect(new_view.special_options).to eq(new_special_options)
-        end
-
-        it 'returns a new Collection' do
-          expect(view.special_options(new_special_options)).not_to be(view)
-        end
-      end
-    end
-
-    context 'when special_options are not specified' do
-
-      let(:options) do
-        { :snapshot => true }
-      end
-
-      it 'returns the special options' do
-        expect(view.special_options).to eq(options)
       end
     end
   end
