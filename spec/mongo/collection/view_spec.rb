@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::View::Collection do
+describe Mongo::Collection::View do
 
   let(:selector) do
     {}
@@ -12,6 +12,282 @@ describe Mongo::View::Collection do
 
   let(:view) do
     described_class.new(authorized_collection, selector, options)
+  end
+
+  after do
+    authorized_collection.find.remove_many
+  end
+
+  pending '#aggregate'
+  pending '#map_reduce'
+  pending '#parallel_scan'
+  pending '#await_data'
+  pending '#exhaust'
+  pending '#no_cursor_timeout'
+  pending '#partial'
+  pending '#tailable'
+
+  describe '#==' do
+
+    context 'when the other object is not a collection view' do
+
+      let(:other) { 'test' }
+
+      it 'returns false' do
+        expect(view).to_not eq(other)
+      end
+    end
+
+    context 'when the views have the same collection, selector, and options' do
+
+      let(:other) do
+        described_class.new(authorized_collection, selector, options)
+      end
+
+      it 'returns true' do
+        expect(view).to eq(other)
+      end
+    end
+
+    context 'when two views have a different collection' do
+
+      let(:other_collection) do
+        authorized_client[:other]
+      end
+
+      let(:other) do
+        described_class.new(other_collection, selector, options)
+      end
+
+      it 'returns false' do
+        expect(view).not_to eq(other)
+      end
+    end
+
+    context 'when two views have a different selector' do
+
+      let(:other_selector) do
+        { 'name' => 'Emily' }
+      end
+
+      let(:other) do
+        described_class.new(authorized_collection, other_selector, options)
+      end
+
+      it 'returns false' do
+        expect(view).not_to eq(other)
+      end
+    end
+
+    context 'when two views have different options' do
+
+      let(:other_options) do
+        { 'limit' => 20 }
+      end
+
+      let(:other) do
+        described_class.new(authorized_collection, selector, other_options)
+      end
+
+      it 'returns false' do
+        expect(view).not_to eq(other)
+      end
+    end
+  end
+
+  describe '#count' do
+
+    let(:documents) do
+      (1..10).map{ |i| { field: "test#{i}" }}
+    end
+
+    before do
+      authorized_collection.insert_many(documents)
+    end
+
+    after do
+      authorized_collection.find.remove_many
+    end
+
+    context 'when a selector is provided' do
+
+      let(:selector) do
+        { field: 'test1' }
+      end
+
+      it 'returns the count of matching documents' do
+        expect(view.count).to eq(1)
+      end
+    end
+
+    context 'when no selector is provided' do
+
+      it 'returns the count of matching documents' do
+        expect(view.count).to eq(10)
+      end
+    end
+  end
+
+  describe '#distinct' do
+
+    context 'when a selector is provided' do
+
+      let(:selector) do
+        { field: 'test' }
+      end
+
+      let(:documents) do
+        (1..3).map{ |i| { field: "test" }}
+      end
+
+      before do
+        authorized_collection.insert_many(documents)
+      end
+
+      context 'when the field is a symbol' do
+
+        let(:distinct) do
+          view.distinct(:field)
+        end
+
+        it 'returns the distinct values' do
+          expect(distinct).to eq([ 'test' ])
+        end
+      end
+
+      context 'when the field is a string' do
+
+        let(:distinct) do
+          view.distinct('field')
+        end
+
+        it 'returns the distinct values' do
+          expect(distinct).to eq([ 'test' ])
+        end
+      end
+
+      context 'when the field is nil' do
+
+        let(:distinct) do
+          view.distinct(nil)
+        end
+
+        it 'returns an empty array' do
+          expect(distinct).to be_empty
+        end
+      end
+    end
+
+    context 'when no selector is provided' do
+
+      let(:documents) do
+        (1..3).map{ |i| { field: "test#{i}" }}
+      end
+
+      before do
+        authorized_collection.insert_many(documents)
+      end
+
+      context 'when the field is a symbol' do
+
+        let(:distinct) do
+          view.distinct(:field)
+        end
+
+        it 'returns the distinct values' do
+          expect(distinct).to eq([ 'test1', 'test2', 'test3' ])
+        end
+      end
+
+      context 'when the field is a string' do
+
+        let(:distinct) do
+          view.distinct('field')
+        end
+
+        it 'returns the distinct values' do
+          expect(distinct).to eq([ 'test1', 'test2', 'test3' ])
+        end
+      end
+
+      context 'when the field is nil' do
+
+        let(:distinct) do
+          view.distinct(nil)
+        end
+
+        it 'returns an empty array' do
+          expect(distinct).to be_empty
+        end
+      end
+    end
+  end
+
+  describe '#explain' do
+
+    let(:explain) do
+      view.explain
+    end
+
+    it 'executes an explain' do
+      expect(explain[:cursor]).to eq('BasicCursor')
+    end
+  end
+
+  describe '#hash' do
+
+    let(:other) do
+      described_class.new(authorized_collection, selector, options)
+    end
+
+    it 'returns a unique value based on collection, selector, options' do
+      expect(view.hash).to eq(other.hash)
+    end
+
+    context 'when two views only have different collections' do
+
+      let(:other_collection) do
+        authorized_client[:other]
+      end
+
+      let(:other) do
+        described_class.new(other_collection, selector, options)
+      end
+
+      it 'returns different hash values' do
+        expect(view.hash).not_to eq(other.hash)
+      end
+    end
+
+    context 'when two views only have different selectors' do
+
+      let(:other_selector) do
+        { 'name' => 'Emily' }
+      end
+
+      let(:other) do
+        described_class.new(authorized_collection, other_selector, options)
+      end
+
+      it 'returns different hash values' do
+        expect(view.hash).not_to eq(other.hash)
+      end
+    end
+
+    context 'when two views only have different options' do
+
+      let(:other_options) do
+        { 'limit' => 20 }
+      end
+
+      let(:other) do
+        described_class.new(authorized_collection, selector, other_options)
+      end
+
+      it 'returns different hash values' do
+        expect(view.hash).not_to eq(other.hash)
+      end
+    end
   end
 
   describe '#initialize' do
@@ -131,33 +407,34 @@ describe Mongo::View::Collection do
     end
   end
 
-  describe '#fields' do
+  describe '#projection' do
 
-    context 'when fields are specified' do
+    context 'when projection are specified' do
 
       let(:options) do
-        { :fields => { 'x' => 1 } }
+        { :projection => { 'x' => 1 } }
       end
 
-      let(:new_fields) do
+      let(:new_projection) do
         { 'y' => 1 }
       end
 
-      it 'sets the fields' do
-        new_view = view.fields(new_fields)
-        expect(new_view.fields).to eq(new_fields)
+      it 'sets the projection' do
+        new_view = view.projection(new_projection)
+        expect(new_view.projection).to eq(new_projection)
       end
 
       it 'returns a new Collection' do
-        expect(view.fields(new_fields)).not_to be(view)
+        expect(view.projection(new_projection)).not_to be(view)
       end
     end
 
-    context 'when fields are not specified' do
-      let(:options) { { :fields => { 'x' => 1 } } }
+    context 'when projection are not specified' do
 
-      it 'returns the fields' do
-        expect(view.fields).to eq(options[:fields])
+      let(:options) { { :projection => { 'x' => 1 } } }
+
+      it 'returns the projection' do
+        expect(view.projection).to eq(options[:projection])
       end
     end
   end
@@ -167,11 +444,11 @@ describe Mongo::View::Collection do
     context 'when a hint is specified' do
 
       let(:options) do
-        { :hint => { 'x' => Mongo::View::Index::ASCENDING } }
+        { :hint => { 'x' => Mongo::Index::ASCENDING } }
       end
 
       let(:new_hint) do
-        { 'x' => Mongo::View::Index::DESCENDING }
+        { 'x' => Mongo::Index::DESCENDING }
       end
 
       it 'sets the hint' do
@@ -226,6 +503,95 @@ describe Mongo::View::Collection do
 
       it 'returns the limit' do
         expect(view.limit).to eq(options[:limit])
+      end
+    end
+  end
+
+  describe '#max_scan' do
+
+    let(:new_view) do
+      view.max_scan(10)
+    end
+
+    it 'sets the value in the options' do
+      expect(new_view.max_scan).to eq(10)
+    end
+  end
+
+  describe '#remove_many' do
+
+    context 'when a selector was provided' do
+
+      let(:selector) do
+        { field: 'test1' }
+      end
+
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+      end
+
+      let(:response) do
+        view.remove_many
+      end
+
+      it 'deletes the matching documents in the collection' do
+        expect(response.n).to eq(1)
+      end
+    end
+
+    context 'when no selector was provided' do
+
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+      end
+
+      let(:response) do
+        view.remove_many
+      end
+
+      it 'deletes all the documents in the collection' do
+        expect(response.n).to eq(2)
+      end
+    end
+  end
+
+  describe '#remove_one' do
+
+    context 'when a selector was provided' do
+
+      let(:selector) do
+        { field: 'test1' }
+      end
+
+      before do
+        authorized_collection.insert_many([
+          { field: 'test1' },
+          { field: 'test1' },
+          { field: 'test1' }
+        ])
+      end
+
+      let(:response) do
+        view.remove_one
+      end
+
+      it 'deletes the first matching document in the collection' do
+        expect(response.n).to eq(1)
+      end
+    end
+
+    context 'when no selector was provided' do
+
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+      end
+
+      let(:response) do
+        view.remove_one
+      end
+
+      it 'deletes the first document in the collection' do
+        expect(response.n).to eq(1)
       end
     end
   end
@@ -309,16 +675,91 @@ describe Mongo::View::Collection do
     end
   end
 
+  describe '#replace_one' do
+
+    context 'when a selector was provided' do
+
+      let(:selector) do
+        { field: 'test1' }
+      end
+
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
+      end
+
+      let!(:response) do
+        view.replace_one({ field: 'testing' })
+      end
+
+      let(:updated) do
+        authorized_collection.find(field: 'testing').first
+      end
+
+      it 'updates the first matching document in the collection' do
+        expect(response.n).to eq(1)
+      end
+
+      it 'updates the documents in the collection' do
+        expect(updated[:field]).to eq('testing')
+      end
+    end
+
+    context 'when no selector was provided' do
+
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+      end
+
+      let!(:response) do
+        view.replace_one({ field: 'testing' })
+      end
+
+      let(:updated) do
+        authorized_collection.find(field: 'testing').first
+      end
+
+      it 'updates the first document in the collection' do
+        expect(response.n).to eq(1)
+      end
+
+      it 'updates the documents in the collection' do
+        expect(updated[:field]).to eq('testing')
+      end
+    end
+  end
+
+  describe '#show_disk_loc' do
+
+    let(:new_view) do
+      view.show_disk_loc(true)
+    end
+
+    it 'sets the value in the options' do
+      expect(new_view.show_disk_loc).to be true
+    end
+  end
+
+  describe '#snapshot' do
+
+    let(:new_view) do
+      view.snapshot(true)
+    end
+
+    it 'sets the value in the options' do
+      expect(new_view.snapshot).to be true
+    end
+  end
+
   describe '#sort' do
 
     context 'when a sort is specified' do
 
       let(:options) do
-        { :sort => { 'x' => Mongo::View::Index::ASCENDING }}
+        { :sort => { 'x' => Mongo::Index::ASCENDING }}
       end
 
       let(:new_sort) do
-        { 'x' => Mongo::View::Index::DESCENDING }
+        { 'x' => Mongo::Index::DESCENDING }
       end
 
       it 'sets the sort option' do
@@ -334,7 +775,7 @@ describe Mongo::View::Collection do
     context 'when a sort is not specified' do
 
       let(:options) do
-        { :sort => { 'x' => Mongo::View::Index::ASCENDING }}
+        { :sort => { 'x' => Mongo::Index::ASCENDING }}
       end
 
       it 'returns the sort' do
@@ -343,206 +784,110 @@ describe Mongo::View::Collection do
     end
   end
 
-  describe '#special_options' do
+  describe '#update_many' do
 
-    context 'when special_options are specified' do
+    context 'when a selector was provided' do
 
-      context 'when snapshot options exist' do
-
-        let(:options) do
-          { :snapshot => true }
-        end
-
-        it 'returns snapshot in the special options' do
-          expect(view.special_options).to eq(options)
-        end
+      let(:selector) do
+        { field: 'test1' }
       end
 
-      context 'when max_scan options exist' do
-
-        let(:options) do
-          { :max_scan => true }
-        end
-
-        it 'returns max_scan in the special options' do
-          expect(view.special_options).to eq(options)
-        end
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
       end
 
-      context 'when show_disk_loc options exist' do
-
-        let(:options) do
-          { :show_disk_loc => true }
-        end
-
-        it 'returns show_disk_loc in the special options' do
-          expect(view.special_options).to eq(options)
-        end
+      let!(:response) do
+        view.update_many('$set'=> { field: 'testing' })
       end
 
-      describe 'when replacing options' do
+      let(:updated) do
+        authorized_collection.find(field: 'testing').first
+      end
 
-        let(:options) do
-          { :snapshot => true }
-        end
+      it 'returns the number updated' do
+        expect(response.n).to eq(1)
+      end
 
-        let(:new_special_options) do
-          { :max_scan => 100 }
-        end
-
-        it 'replaces the old special options' do
-          new_view = view.special_options(new_special_options)
-          expect(new_view.special_options).to eq(new_special_options)
-        end
-
-        it 'returns a new Collection' do
-          expect(view.special_options(new_special_options)).not_to be(view)
-        end
+      it 'updates the documents in the collection' do
+        expect(updated[:field]).to eq('testing')
       end
     end
 
-    context 'when special_options are not specified' do
+    context 'when no selector was provided' do
 
-      let(:options) do
-        { :snapshot => true }
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
       end
 
-      it 'returns the special options' do
-        expect(view.special_options).to eq(options)
+      let!(:response) do
+        view.update_many('$set'=> { field: 'testing' })
+      end
+
+      let(:updated) do
+        authorized_collection.find
+      end
+
+      it 'returns the number updated' do
+        expect(response.n).to eq(2)
+      end
+
+      it 'updates all the documents in the collection' do
+        updated.each do |doc|
+          expect(doc[:field]).to eq('testing')
+        end
       end
     end
   end
 
-  #describe '#explain' do
-#
-  #  it 'calls explain on collection' do
-  #    allow(collection).to receive(:explain) do
-  #      { 'n' => 10, 'nscanned' => 11 }
-  #    end
-  #    expect(view.explain).to eq('n' => 10, 'nscanned' => 11)
-  #  end
-  #end
-#
-  #describe '#distinct' do
-  #  let(:distinct_stats) { { 'values' => [1], 'stats' => { 'n' => 3 } } }
-#
-  #  it 'calls distinct on collection' do
-  #    allow(collection).to receive(:distinct).and_return(distinct_stats)
-  #    expect(view.distinct('name')).to eq(distinct_stats)
-  #  end
-  #end
-#
-  describe '#==' do
+  describe '#update_one' do
 
-    context 'when the views have the same collection, selector, and options' do
+    context 'when a selector was provided' do
 
-      let(:other) do
-        described_class.new(authorized_collection, selector, options)
+      let(:selector) do
+        { field: 'test1' }
       end
 
-      it 'returns true' do
-        expect(view).to eq(other)
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
+      end
+
+      let!(:response) do
+        view.update_one('$set'=> { field: 'testing' })
+      end
+
+      let(:updated) do
+        authorized_collection.find(field: 'testing').first
+      end
+
+      it 'updates the first matching document in the collection' do
+        expect(response.n).to eq(1)
+      end
+
+      it 'updates the documents in the collection' do
+        expect(updated[:field]).to eq('testing')
       end
     end
 
-    context 'when two views have a different collection' do
+    context 'when no selector was provided' do
 
-      let(:other_collection) do
-        authorized_client[:other]
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
       end
 
-      let(:other) do
-        described_class.new(other_collection, selector, options)
+      let!(:response) do
+        view.update_one('$set'=> { field: 'testing' })
       end
 
-      it 'returns false' do
-        expect(view).not_to eq(other)
-      end
-    end
-
-    context 'when two views have a different selector' do
-
-      let(:other_selector) do
-        { 'name' => 'Emily' }
+      let(:updated) do
+        authorized_collection.find(field: 'testing').first
       end
 
-      let(:other) do
-        described_class.new(authorized_collection, other_selector, options)
+      it 'updates the first document in the collection' do
+        expect(response.n).to eq(1)
       end
 
-      it 'returns false' do
-        expect(view).not_to eq(other)
-      end
-    end
-
-    context 'when two views have different options' do
-
-      let(:other_options) do
-        { 'limit' => 20 }
-      end
-
-      let(:other) do
-        described_class.new(authorized_collection, selector, other_options)
-      end
-
-      it 'returns false' do
-        expect(view).not_to eq(other)
-      end
-    end
-  end
-
-  describe '#hash' do
-
-    let(:other) do
-      described_class.new(authorized_collection, selector, options)
-    end
-
-    it 'returns a unique value based on collection, selector, options' do
-      expect(view.hash).to eq(other.hash)
-    end
-
-    context 'when two views only have different collections' do
-
-      let(:other_collection) do
-        authorized_client[:other]
-      end
-
-      let(:other) do
-        described_class.new(other_collection, selector, options)
-      end
-
-      it 'returns different hash values' do
-        expect(view.hash).not_to eq(other.hash)
-      end
-    end
-
-    context 'when two views only have different selectors' do
-
-      let(:other_selector) do
-        { 'name' => 'Emily' }
-      end
-
-      let(:other) do
-        described_class.new(authorized_collection, other_selector, options)
-      end
-
-      it 'returns different hash values' do
-        expect(view.hash).not_to eq(other.hash)
-      end
-    end
-
-    context 'when two views only have different options' do
-
-      let(:other_options) do
-        { 'limit' => 20 }
-      end
-
-      let(:other) do
-        described_class.new(authorized_collection, selector, other_options)
-      end
-
-      it 'returns different hash values' do
-        expect(view.hash).not_to eq(other.hash)
+      it 'updates the documents in the collection' do
+        expect(updated[:field]).to eq('testing')
       end
     end
   end
@@ -573,11 +918,11 @@ describe Mongo::View::Collection do
     end
 
     before do
-      authorized_collection.insert(documents)
+      authorized_collection.insert_many(documents)
     end
 
     after do
-      authorized_collection.find.remove
+      authorized_collection.find.remove_many
     end
 
     context 'when sending the initial query' do
@@ -777,7 +1122,7 @@ describe Mongo::View::Collection do
       context 'when sorting' do
 
         let(:options) do
-          { :sort => {'x' => Mongo::View::Index::ASCENDING }}
+          { :sort => {'x' => Mongo::Index::ASCENDING }}
         end
 
         before do
@@ -796,7 +1141,7 @@ describe Mongo::View::Collection do
       context 'when providing a hint' do
 
         let(:options) do
-          { :hint => { 'x' => Mongo::View::Index::ASCENDING }}
+          { :hint => { 'x' => Mongo::Index::ASCENDING }}
         end
 
         before do

@@ -330,21 +330,14 @@ describe Mongo::Operation::Write::Delete do
   describe '#execute' do
 
     before do
-      Mongo::Operation::Write::Insert.new({
-        :documents     => [{ name: 'test', field: 'test' }, { name: 'testing', field: 'test' }],
-        :db_name       => TEST_DB,
-        :coll_name     => TEST_COLL,
-        :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
-      }).execute(authorized_primary.context)
+      authorized_collection.insert_many([
+        { name: 'test', field: 'test' },
+        { name: 'testing', field: 'test' }
+      ])
     end
 
     after do
-      described_class.new({
-        deletes: [{ q: {}, limit: -1 }],
-        db_name: TEST_DB,
-        coll_name: TEST_COLL,
-        write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
-      }).execute(authorized_primary.context)
+      authorized_collection.find.remove_many
     end
 
     context 'when deleting a single document' do

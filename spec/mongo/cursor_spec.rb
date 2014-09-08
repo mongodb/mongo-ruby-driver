@@ -15,7 +15,7 @@ describe Mongo::Cursor do
     context 'when no options are provided to the view' do
 
       let(:view) do
-        Mongo::View::Collection.new(authorized_client[TEST_COLL])
+        Mongo::Collection::View.new(authorized_collection)
       end
 
       let(:query_spec) do
@@ -29,11 +29,11 @@ describe Mongo::Cursor do
         end
 
         before do
-          authorized_client[TEST_COLL].insert(documents)
+          authorized_collection.insert_many(documents)
         end
 
         after do
-          authorized_client[TEST_COLL].find.remove
+          authorized_collection.find.remove_many
         end
 
         it 'returns the correct amount' do
@@ -54,11 +54,11 @@ describe Mongo::Cursor do
         end
 
         before do
-          authorized_client[TEST_COLL].insert(documents)
+          authorized_collection.insert_many(documents)
         end
 
         after do
-          authorized_client[TEST_COLL].find.remove
+          authorized_collection.find.remove_many
         end
 
         it 'returns the correct amount' do
@@ -80,11 +80,11 @@ describe Mongo::Cursor do
       end
 
       before do
-        authorized_client[TEST_COLL].insert(documents)
+        authorized_collection.insert_many(documents)
       end
 
       after do
-        authorized_client[TEST_COLL].find.remove
+        authorized_collection.find.remove_many
       end
 
       context 'when a limit is provided' do
@@ -94,7 +94,7 @@ describe Mongo::Cursor do
           context 'when the limit is positive' do
 
             let(:view) do
-              Mongo::View::Collection.new(authorized_client[TEST_COLL], {}, :limit => 2)
+              Mongo::Collection::View.new(authorized_collection, {}, :limit => 2)
             end
 
             let(:query_spec) do
@@ -120,7 +120,7 @@ describe Mongo::Cursor do
           context 'when the limit is negative' do
 
             let(:view) do
-              Mongo::View::Collection.new(authorized_client[TEST_COLL], {}, :limit => -2)
+              Mongo::Collection::View.new(authorized_collection, {}, :limit => -2)
             end
 
             let(:query_spec) do
@@ -146,7 +146,7 @@ describe Mongo::Cursor do
           context 'when the limit is zero' do
 
             let(:view) do
-              Mongo::View::Collection.new(authorized_client[TEST_COLL], {}, :limit => 0)
+              Mongo::Collection::View.new(authorized_collection, {}, :limit => 0)
             end
 
             let(:query_spec) do
@@ -175,8 +175,8 @@ describe Mongo::Cursor do
           context 'when the batch size is less than the limit' do
 
             let(:view) do
-              Mongo::View::Collection.new(
-                authorized_client[TEST_COLL],
+              Mongo::Collection::View.new(
+                authorized_collection,
                 {},
                 :limit => 5, :batch_size => 3
               )
@@ -205,8 +205,8 @@ describe Mongo::Cursor do
           context 'when the batch size is more than the limit' do
 
             let(:view) do
-              Mongo::View::Collection.new(
-                authorized_client[TEST_COLL],
+              Mongo::Collection::View.new(
+                authorized_collection,
                 {},
                 :limit => 5, :batch_size => 7
               )
@@ -235,8 +235,8 @@ describe Mongo::Cursor do
           context 'when the batch size is the same as the limit' do
 
             let(:view) do
-              Mongo::View::Collection.new(
-                authorized_client[TEST_COLL],
+              Mongo::Collection::View.new(
+                authorized_collection,
                 {},
                 :limit => 5, :batch_size => 5
               )
@@ -269,7 +269,7 @@ describe Mongo::Cursor do
   describe '#inspect' do
 
     let(:view) do
-      Mongo::View::Collection.new(authorized_client[TEST_COLL])
+      Mongo::Collection::View.new(authorized_collection)
     end
 
     let(:query_spec) do

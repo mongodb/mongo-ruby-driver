@@ -30,8 +30,8 @@ describe Mongo::Grid::File do
   end
 
   after do
-    chunks.find.remove
-    files.find.remove
+    chunks.find.remove_many
+    files.find.remove_many
   end
 
   describe '#open' do
@@ -59,8 +59,8 @@ describe Mongo::Grid::File do
       context 'when file does exist' do
 
         before do
-          files.insert([ meta ])
-          chunks.insert([ chunk ])
+          files.insert_one(meta)
+          chunks.insert_one(chunk)
         end
 
         context 'when id is a filename' do

@@ -11,7 +11,7 @@ describe Mongo::Operation::Write::DropIndex do
       end
 
       before do
-        authorized_client[TEST_COLL].indexes.ensure(spec, unique: true)
+        authorized_collection.indexes.ensure(spec, unique: true)
       end
 
       let(:operation) do

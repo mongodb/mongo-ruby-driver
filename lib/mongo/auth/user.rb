@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/auth/user/view'
+
 module Mongo
   module Auth
 
@@ -19,6 +21,11 @@ module Mongo
     #
     # @since 2.0.0
     class User
+
+      # The users collection for the database.
+      #
+      # @since 2.0.0
+      COLLECTION = 'system.users'.freeze
 
       # @return [ true, false ] For kerberos only, are we canolicalizing the
       #   host name.

@@ -430,24 +430,14 @@ describe Mongo::Operation::Write::Update do
   describe '#execute' do
 
     before do
-      Mongo::Operation::Write::Insert.new({
-        :documents     => [
-          { name: 'test', field: 'test', other: 'test' },
-          { name: 'testing', field: 'test', other: 'test' }
-        ],
-        :db_name       => TEST_DB,
-        :coll_name     => TEST_COLL,
-        :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
-      }).execute(authorized_primary.context)
+      authorized_collection.insert_many([
+        { name: 'test', field: 'test', other: 'test' },
+        { name: 'testing', field: 'test', other: 'test' }
+      ])
     end
 
     after do
-      Mongo::Operation::Write::Delete.new({
-        deletes: [{ q: {}, limit: -1 }],
-        db_name: TEST_DB,
-        coll_name: TEST_COLL,
-        write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
-      }).execute(authorized_primary.context)
+      authorized_collection.find.remove_many
     end
 
     context 'when updating a single document' do

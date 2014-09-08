@@ -385,17 +385,12 @@ describe Mongo::Operation::Write::Insert do
   describe '#execute' do
 
     before do
-      authorized_client[TEST_COLL].indexes.ensure({ name: 1 }, { unique: true })
+      authorized_collection.indexes.ensure({ name: 1 }, { unique: true })
     end
 
     after do
-      Mongo::Operation::Write::Delete.new({
-        deletes: [{ q: {}, limit: -1 }],
-        db_name: TEST_DB,
-        coll_name: TEST_COLL,
-        write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
-      }).execute(authorized_primary.context)
-      authorized_client[TEST_COLL].indexes.drop({ name: 1 })
+      authorized_collection.find.remove_many
+      authorized_collection.indexes.drop({ name: 1 })
     end
 
     context 'when inserting a single document' do

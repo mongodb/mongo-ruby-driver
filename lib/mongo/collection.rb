@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/collection/view'
+
 module Mongo
 
   # Represents a collection in the database and operations that can directly be
@@ -103,7 +105,7 @@ module Mongo
     #
     # @since 2.0.0
     def find(selector = nil)
-      View::Collection.new(self, selector || {})
+      View.new(self, selector || {})
     end
 
     # Get a view of all indexes for this collection. Can be iterated or has
@@ -116,7 +118,7 @@ module Mongo
     #
     # @since 2.0.0
     def indexes
-      View::Index.new(self)
+      Index::View.new(self)
     end
 
     # Instantiate a new collection.
@@ -136,20 +138,35 @@ module Mongo
       @options = options
     end
 
+    # Insert a single document into the collection.
+    #
+    # @example Insert a document into the collection.
+    #   collection.insert_one({ name: 'test' })
+    #
+    # @param [ Hash ] document The document to insert.
+    # @param [ Hash ] options The insert options.
+    #
+    # @return [ Response ] The database response wrapper.
+    #
+    # @since 2.0.0
+    def insert_one(document, options = {})
+      insert_many([ document ], options)
+    end
+
     # Insert the provided documents into the collection.
     #
     # @example Insert documents into the collection.
-    #   collection.insert([{ name: 'test' }])
+    #   collection.insert_many([{ name: 'test' }])
     #
     # @param [ Array<Hash> ] documents The documents to insert.
     # @param [ Hash ] options The insert options.
     #
-    # @return [ Mongo::Operation::Response ] The database response wrapper.
+    # @return [ Response ] The database response wrapper.
     #
     # @since 2.0.0
-    def insert(documents, options = {})
+    def insert_many(documents, options = {})
       Operation::Write::Insert.new(
-        :documents => documents.is_a?(Array) ? documents : [ documents ],
+        :documents => documents,
         :db_name => database.name,
         :coll_name => name,
         :write_concern => write_concern,

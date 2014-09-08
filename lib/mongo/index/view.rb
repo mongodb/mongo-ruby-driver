@@ -13,12 +13,12 @@
 # limitations under the License.
 
 module Mongo
-  module View
+  module Index
 
-    # A class representing a MongoDB Index.
+    # A class representing a view of indexes.
     #
     # @since 2.0.0
-    class Index
+    class View
       extend Forwardable
       include Enumerable
 
@@ -27,46 +27,6 @@ module Mongo
 
       def_delegators :@collection, :cluster, :database, :server_preference
       def_delegators :cluster, :next_primary
-
-      # Specify ascending order for an index.
-      #
-      # @since 2.0.0
-      ASCENDING = 1
-
-      # Specify descending order for an index.
-      #
-      # @since 2.0.0
-      DESCENDING = -1
-
-      # Specify a 2d Geo index.
-      #
-      # @since 2.0.0
-      GEO2D = '2d'.freeze
-
-      # Specify a 2d sphere Geo index.
-      #
-      # @since 2.0.0
-      GEO2DSPHERE = '2dsphere'.freeze
-
-      # Specify a geoHaystack index.
-      #
-      # @since 2.0.0
-      GEOHAYSTACK = 'geoHaystack'.freeze
-
-      # Encodes a text index.
-      #
-      # @since 2.0.0
-      TEXT = 'text'.freeze
-
-      # Specify a hashed index.
-      #
-      # @since 2.0.0
-      HASHED = 'hashed'.freeze
-
-      # Constant for the indexes collection.
-      #
-      # @since 2.0.0
-      COLLECTION = 'system.indexes'.freeze
 
       # The index key field.
       #
