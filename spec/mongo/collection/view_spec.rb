@@ -21,6 +21,11 @@ describe Mongo::Collection::View do
   pending '#aggregate'
   pending '#map_reduce'
   pending '#parallel_scan'
+  pending '#await_data'
+  pending '#exhaust'
+  pending '#no_cursor_timeout'
+  pending '#partial'
+  pending '#tailable'
 
   describe '#==' do
 
@@ -402,33 +407,34 @@ describe Mongo::Collection::View do
     end
   end
 
-  describe '#fields' do
+  describe '#projection' do
 
-    context 'when fields are specified' do
+    context 'when projection are specified' do
 
       let(:options) do
-        { :fields => { 'x' => 1 } }
+        { :projection => { 'x' => 1 } }
       end
 
-      let(:new_fields) do
+      let(:new_projection) do
         { 'y' => 1 }
       end
 
-      it 'sets the fields' do
-        new_view = view.fields(new_fields)
-        expect(new_view.fields).to eq(new_fields)
+      it 'sets the projection' do
+        new_view = view.projection(new_projection)
+        expect(new_view.projection).to eq(new_projection)
       end
 
       it 'returns a new Collection' do
-        expect(view.fields(new_fields)).not_to be(view)
+        expect(view.projection(new_projection)).not_to be(view)
       end
     end
 
-    context 'when fields are not specified' do
-      let(:options) { { :fields => { 'x' => 1 } } }
+    context 'when projection are not specified' do
 
-      it 'returns the fields' do
-        expect(view.fields).to eq(options[:fields])
+      let(:options) { { :projection => { 'x' => 1 } } }
+
+      it 'returns the projection' do
+        expect(view.projection).to eq(options[:projection])
       end
     end
   end

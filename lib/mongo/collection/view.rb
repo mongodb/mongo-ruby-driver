@@ -186,7 +186,7 @@ module Mongo
       # The fields to include or exclude from each doc in the result set.
       #
       # @example Set the fields to include or exclude.
-      #   view.fields(name: 1)
+      #   view.projection(name: 1)
       #
       # @note A value of 0 excludes a field from the doc. A value of 1 includes it.
       #   Values must all be 0 or all be 1, with the exception of the _id value.
@@ -197,8 +197,8 @@ module Mongo
       # @return [ Hash, View ] Either the fields or a new +View+.
       #
       # @since 2.0.0
-      def fields(fields = nil)
-        set_option(:fields, fields)
+      def projection(spec = nil)
+        set_option(:projection, spec)
       end
 
       # A hash value for the +View+ composed of the collection namespace,
@@ -467,7 +467,7 @@ module Mongo
       # @todo: refactor this? it knows too much about the query wire protocol
       # message interface
       def query_options
-        { :project => fields,
+        { :project => projection,
           :skip   => skip,
           :limit  => to_return,
           :flags  => flags }
