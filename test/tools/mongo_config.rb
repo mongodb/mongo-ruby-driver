@@ -439,7 +439,7 @@ module Mongo
         states     = nil
         healthy    = false
 
-        60.times do
+        80.times do
           # enter the thunderdome...
           states  = repl_set_get_status.zip(repl_set_is_master)
           healthy = states.all? do |status, is_master|
