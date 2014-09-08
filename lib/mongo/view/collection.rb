@@ -113,11 +113,15 @@ module Mongo
 
       # Get the explain plan for the query.
       #
+      # @example Get the explain plan for the query.
+      #   view.explain
+      #
       # @return [ Hash ] A single document with the explain plan.
+      #
+      # @since 2.0.0
       def explain
         explain_limit = limit || 0
-        options = @options.merge(:limit => -explain_limit.abs, :explain => true)
-        @collection.explain(Collection.new(@collection, @selector, options))
+        set_option(:limit, -explain_limit.abs).special_options(:explain => true).first
       end
 
       # Associate a comment with the query.
@@ -222,7 +226,7 @@ module Mongo
       def special_options(s_options = nil)
         return special_options_hash if s_options.nil?
         options = @options.dup
-        [:snapshot, :max_scan, :show_disk_loc].each do |k|
+        [:snapshot, :max_scan, :show_disk_loc, :explain].each do |k|
           s_options[k].nil? ? options.delete(k) : options.merge!(k => s_options[k])
         end
         Collection.new(collection, selector, options)
@@ -252,8 +256,13 @@ module Mongo
           [:$comment,        :comment],
           [:$snapshot,       :snapshot],
           [:$maxScan,        :max_scan],
-          [:$showDiskLoc,    :show_disk_loc]
+          [:$showDiskLoc,    :show_disk_loc],
+          [:$explain,        :explain_value]
       ]
+
+      def explain_value
+        special_options[:explain]
+      end
 
       # The snapshot special operator.
       #
@@ -368,6 +377,9 @@ module Mongo
         end
         unless @options[:show_disk_loc].nil?
           s_options[:show_disk_loc] = @options[:show_disk_loc]
+        end
+        unless @options[:explain].nil?
+          s_options[:explain] = @options[:explain]
         end
         s_options
       end

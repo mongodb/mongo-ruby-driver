@@ -131,6 +131,17 @@ describe Mongo::View::Collection do
     end
   end
 
+  describe '#explain' do
+
+    let(:explain) do
+      view.explain
+    end
+
+    it 'executes an explain' do
+      expect(explain[:cursor]).to eq('BasicCursor')
+    end
+  end
+
   describe '#fields' do
 
     context 'when fields are specified' do
@@ -413,16 +424,6 @@ describe Mongo::View::Collection do
     end
   end
 
-  #describe '#explain' do
-#
-  #  it 'calls explain on collection' do
-  #    allow(collection).to receive(:explain) do
-  #      { 'n' => 10, 'nscanned' => 11 }
-  #    end
-  #    expect(view.explain).to eq('n' => 10, 'nscanned' => 11)
-  #  end
-  #end
-#
   #describe '#distinct' do
   #  let(:distinct_stats) { { 'values' => [1], 'stats' => { 'n' => 3 } } }
 #
