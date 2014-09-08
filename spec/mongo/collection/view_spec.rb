@@ -675,6 +675,59 @@ describe Mongo::Collection::View do
     end
   end
 
+  describe '#replace_one' do
+
+    context 'when a selector was provided' do
+
+      let(:selector) do
+        { field: 'test1' }
+      end
+
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
+      end
+
+      let!(:response) do
+        view.replace_one({ field: 'testing' })
+      end
+
+      let(:updated) do
+        authorized_collection.find(field: 'testing').first
+      end
+
+      it 'updates the first matching document in the collection' do
+        expect(response.n).to eq(1)
+      end
+
+      it 'updates the documents in the collection' do
+        expect(updated[:field]).to eq('testing')
+      end
+    end
+
+    context 'when no selector was provided' do
+
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+      end
+
+      let!(:response) do
+        view.replace_one({ field: 'testing' })
+      end
+
+      let(:updated) do
+        authorized_collection.find(field: 'testing').first
+      end
+
+      it 'updates the first document in the collection' do
+        expect(response.n).to eq(1)
+      end
+
+      it 'updates the documents in the collection' do
+        expect(updated[:field]).to eq('testing')
+      end
+    end
+  end
+
   describe '#show_disk_loc' do
 
     let(:new_view) do

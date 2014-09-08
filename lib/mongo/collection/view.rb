@@ -351,6 +351,20 @@ module Mongo
         remove(1)
       end
 
+      # Replaces a single document in the database with the new document.
+      #
+      # @example Replace a single document.
+      #   collection_view.replace_one({ name: 'test' })
+      #
+      # @param [ Hash ] document The document to replace.
+      #
+      # @return [ Response ] The response from the database.
+      #
+      # @since 2.0.0
+      def replace_one(document)
+        update(document, false)
+      end
+
       # Set whether the disk location should be shown for each document.
       #
       # @example Set show disk location option.
@@ -414,10 +428,7 @@ module Mongo
       # Update documents in the collection.
       #
       # @example Update multiple documents in the collection.
-      #   collection_view.update('$set' => { name: 'test' })
-      #
-      # @example Update a single document in the collection.
-      #   collection_view.limit(1).update('$set' => { name: 'test' })
+      #   collection_view.update_many('$set' => { name: 'test' })
       #
       # @return [ Response ] The response from the database.
       #
@@ -426,6 +437,14 @@ module Mongo
         update(spec, true)
       end
 
+      # Update a single document in the collection.
+      #
+      # @example Update a single document in the collection.
+      #   collection_view.update_one('$set' => { name: 'test' })
+      #
+      # @return [ Response ] The response from the database.
+      #
+      # @since 2.0.0
       def update_one(spec)
         update(spec, false)
       end
