@@ -93,6 +93,11 @@ module Mongo
       # @since 2.0.0
       MAX_WRITE_BATCH_SIZE = 'maxWriteBatchSize'.freeze
 
+      # Default max write batch size.
+      #
+      # @since 2.0.0
+      DEFAULT_MAX_WRITE_BATCH_SIZE = 1000.freeze
+
       # The legacy wire protocol version.
       #
       # @since 2.0.0
@@ -243,7 +248,7 @@ module Mongo
       #
       # @since 2.0.0
       def max_write_batch_size
-        config[MAX_WRITE_BATCH_SIZE]
+        config[MAX_WRITE_BATCH_SIZE] || DEFAULT_MAX_WRITE_BATCH_SIZE
       end
 
       # Get the maximum wire version.
