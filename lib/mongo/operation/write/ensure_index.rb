@@ -77,7 +77,7 @@ module Mongo
 
         def message(index)
           index_spec = options.merge(ns: namespace, key: index, name: index_name)
-          Protocol::Insert.new(db_name, View::Index::COLLECTION, [ index_spec ])
+          Protocol::Insert.new(db_name, Index::COLLECTION, [ index_spec ])
         end
       end
     end
