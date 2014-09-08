@@ -114,8 +114,8 @@ struct deserialize_opts {
 #if HAVE_RUBY_ENCODING_H
 #include "ruby/encoding.h"
 #define STR_NEW(p,n)                                                    \
-    ({  VALUE _str;                                                     \
-        _str = rb_enc_str_new((p), (n), rb_utf8_encoding());            \
+    ({                                                                  \
+        VALUE _str = rb_enc_str_new((p), (n), rb_utf8_encoding());      \
         rb_encoding* internal_encoding = rb_default_internal_encoding();\
         if (internal_encoding) {                                        \
             _str = rb_str_export_to_enc(_str, internal_encoding);       \
@@ -127,8 +127,7 @@ struct deserialize_opts {
 #endif
 
 static void write_utf8(bson_buffer_t buffer, VALUE string, int allow_null) {
-    result_t status;
-    status = validate_utf8_encoding(
+    result_t status = validate_utf8_encoding(
         (const char*)RSTRING_PTR(string), RSTRING_LEN(string), allow_null);
 
     if (status == HAS_NULL) {
@@ -163,19 +162,17 @@ static void write_utf8(bson_buffer_t buffer, VALUE string, int allow_null) {
 #ifdef _WIN32 || _MSC_VER
 #define INT2STRING(buffer, i)                   \
     {                                           \
-        int vslength;                           \
-        vslength = _scprintf("%d", i) + 1;  \
+        int vslength = _scprintf("%d", i) + 1;  \
         *buffer = malloc(vslength);             \
         _snprintf(*buffer, vslength, "%d", i);  \
     }
 #define FREE_INTSTRING(buffer) free(buffer)
 #else
-#define INT2STRING(buffer, i)                   \
-    {                                           \
-        int vslength;                           \
-        vslength = snprintf(NULL, 0, "%d", i) + 1;  \
-        *buffer = malloc(vslength);             \
-        snprintf(*buffer, vslength, "%d", i);   \
+#define INT2STRING(buffer, i)                           \
+    {                                                   \
+        int vslength = snprintf(NULL, 0, "%d", i) + 1;  \
+        *buffer = malloc(vslength);                     \
+        snprintf(*buffer, vslength, "%d", i);           \
     }
 #define FREE_INTSTRING(buffer) free(buffer)
 #endif
@@ -286,10 +283,8 @@ static void serialize_regex(bson_buffer_t buffer, VALUE key, VALUE pattern, long
 
     has_extra = rb_funcall(value, rb_intern("respond_to?"), 1, rb_str_new2("extra_options_str"));
     if (TYPE(has_extra) == T_TRUE) {
-         VALUE extra;
-         bson_buffer_position old_position;
-         extra = rb_funcall(value, rb_intern("extra_options_str"), 0);
-         old_position = bson_buffer_get_position(buffer);
+         VALUE extra = rb_funcall(value, rb_intern("extra_options_str"), 0);
+         bson_buffer_position old_position = bson_buffer_get_position(buffer);
          SAFE_WRITE(buffer, RSTRING_PTR(extra), RSTRING_LENINT(extra));
          qsort(bson_buffer_get_buffer(buffer) + old_position, RSTRING_LEN(extra), sizeof(char), cmp_char);
     }
@@ -298,10 +293,8 @@ static void serialize_regex(bson_buffer_t buffer, VALUE key, VALUE pattern, long
 }
 
 static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
-    VALUE check_keys;
-    bson_buffer_t buffer;
-    buffer = (bson_buffer_t)NUM2LL(rb_ary_entry(extra, 0));
-    check_keys = rb_ary_entry(extra, 1);
+    bson_buffer_t buffer = (bson_buffer_t)NUM2LL(rb_ary_entry(extra, 0));
+    VALUE check_keys = rb_ary_entry(extra, 1);
 
     if (TYPE(key) == T_SYMBOL) {
         // TODO better way to do this... ?
@@ -372,8 +365,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         }
     case T_FLOAT:
         {
-            double d;
-            d = NUM2DBL(value);
+            double d = NUM2DBL(value);
             write_name_and_type(buffer, key, 0x01);
             SAFE_WRITE(buffer, (char*)&d, 8);
             break;
@@ -431,10 +423,8 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         }
     case T_SYMBOL:
         {
-            const char* str_value;
-            int length;
-            str_value = rb_id2name(SYM2ID(value));
-            length = (int)strlen(str_value) + 1;
+            const char* str_value = rb_id2name(SYM2ID(value));
+            int length = (int)strlen(str_value) + 1;
             write_name_and_type(buffer, key, 0x0E);
             SAFE_WRITE(buffer, (char*)&length, 4);
             SAFE_WRITE(buffer, str_value, length);
@@ -446,12 +436,10 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             const char* cls = rb_obj_classname(value);
             if (strcmp(cls, "BSON::Binary") == 0 ||
                 strcmp(cls, "ByteBuffer") == 0) {
-                VALUE string_data;
-                int length;
+                VALUE string_data = rb_funcall(value, rb_intern("to_s"), 0);
+                int length = RSTRING_LENINT(string_data);
                 const char subtype = strcmp(cls, "ByteBuffer") ?
                     (const char)FIX2INT(rb_funcall(value, rb_intern("subtype"), 0)) : 2;
-                string_data = rb_funcall(value, rb_intern("to_s"), 0);
-                length = RSTRING_LENINT(string_data);
                 write_name_and_type(buffer, key, 0x05);
                 if (subtype == 2) {
                     const int other_length = length + 4;
@@ -466,13 +454,11 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
                 break;
             }
             if (strcmp(cls, "BSON::ObjectId") == 0) {
-                VALUE as_array;
-                as_array = rb_funcall(value, rb_intern("to_a"), 0);
                 int i;
+                VALUE as_array = rb_funcall(value, rb_intern("to_a"), 0);
                 write_name_and_type(buffer, key, 0x07);
                 for (i = 0; i < 12; i++) {
-                    char byte;
-                    byte = (char)FIX2INT(rb_ary_entry(as_array, i));
+                    char byte = (char)FIX2INT(rb_ary_entry(as_array, i));
                     SAFE_WRITE(buffer, &byte, 1);
                 }
                 break;
@@ -559,8 +545,7 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
             }
             if (strcmp(cls, "ActiveSupport::Multibyte::Chars") == 0) {
                 int length;
-                VALUE str;
-                str = StringValue(value);
+                VALUE str = StringValue(value);
                 write_name_and_type(buffer, key, 0x02);
                 length = RSTRING_LENINT(str) + 1;
                 SAFE_WRITE(buffer, (char*)&length, 4);
@@ -579,13 +564,10 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         }
     case T_DATA:
         {
-            const char* cls;
-            cls = rb_obj_classname(value);
+            const char* cls = rb_obj_classname(value);
             if (strcmp(cls, "Time") == 0) {
-                double t;
-                long long time_since_epoch;
-                t = NUM2DBL(rb_funcall(value, rb_intern("to_f"), 0));
-                time_since_epoch = (long long)round(t * 1000);
+                double t = NUM2DBL(rb_funcall(value, rb_intern("to_f"), 0));
+                long long time_since_epoch = (long long)round(t * 1000);
                 write_name_and_type(buffer, key, 0x09);
                 SAFE_WRITE(buffer, (const char*)&time_since_epoch, 8);
                 break;
@@ -607,17 +589,14 @@ static int write_element(VALUE key, VALUE value, VALUE extra, int allow_id) {
         }
     case T_REGEXP:
         {
-            VALUE pattern;
-            long flags;
-            pattern = RREGEXP_SRC(value);
-            flags = RREGEXP_OPTIONS(value);
+            VALUE pattern = RREGEXP_SRC(value);
+            long flags = RREGEXP_OPTIONS(value);
             serialize_regex(buffer, key, pattern, flags, value, 1);
             break;
         }
     default:
         {
-            const char* cls;
-            cls = rb_obj_classname(value);
+            const char* cls = rb_obj_classname(value);
             bson_buffer_free(buffer);
             rb_raise(InvalidDocument, "Cannot serialize an object of class %s (type %d) into BSON.", cls, TYPE(value));
             break;
@@ -635,17 +614,14 @@ static int write_element_with_id(VALUE key, VALUE value, VALUE extra) {
 }
 
 static void write_doc(bson_buffer_t buffer, VALUE hash, VALUE check_keys, VALUE move_id) {
-    bson_buffer_position start_position, length_location;
+    bson_buffer_position start_position = bson_buffer_get_position(buffer);
+    bson_buffer_position length_location = bson_buffer_save_space(buffer, 4);
     bson_buffer_position length;
     int allow_id;
     int max_size;
     int (*write_function)(VALUE, VALUE, VALUE) = NULL;
-    VALUE id_str, id_sym;
-
-    start_position = bson_buffer_get_position(buffer);
-    length_location = bson_buffer_save_space(buffer, 4);
-    id_str = rb_str_new2("_id");
-    id_sym = ID2SYM(rb_intern("_id"));
+    VALUE id_str = rb_str_new2("_id");
+    VALUE id_sym = ID2SYM(rb_intern("_id"));
 
     if (length_location == -1) {
         rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
@@ -655,12 +631,10 @@ static void write_doc(bson_buffer_t buffer, VALUE hash, VALUE check_keys, VALUE 
     if(move_id == Qtrue) {
         allow_id = 0;
         if (rb_funcall(hash, rb_intern("has_key?"), 1, id_str) == Qtrue) {
-            VALUE id;
-            id = rb_hash_aref(hash, id_str);
+            VALUE id = rb_hash_aref(hash, id_str);
             write_element_with_id(id_str, id, pack_extra(buffer, check_keys));
         } else if (rb_funcall(hash, rb_intern("has_key?"), 1, id_sym) == Qtrue) {
-            VALUE id;
-            id = rb_hash_aref(hash, id_sym);
+            VALUE id = rb_hash_aref(hash, id_sym);
             write_element_with_id(id_sym, id, pack_extra(buffer, check_keys));
         }
     }
@@ -670,8 +644,7 @@ static void write_doc(bson_buffer_t buffer, VALUE hash, VALUE check_keys, VALUE 
         if ((rb_obj_classname(hash), "Hash") == 0) {
             if ((rb_funcall(hash, rb_intern("has_key?"), 1, id_str) == Qtrue) &&
                    (rb_funcall(hash, rb_intern("has_key?"), 1, id_sym) == Qtrue)) {
-                      VALUE oid_sym;
-                      oid_sym = rb_hash_delete(hash, id_sym);
+                      VALUE oid_sym = rb_hash_delete(hash, id_sym);
                       rb_funcall(hash, rb_intern("[]="), 2, id_str, oid_sym);
             }
         }
@@ -686,13 +659,12 @@ static void write_doc(bson_buffer_t buffer, VALUE hash, VALUE check_keys, VALUE 
 
     // we have to check for an OrderedHash and handle that specially
     if (strcmp(rb_obj_classname(hash), "BSON::OrderedHash") == 0) {
-        VALUE keys;
-        keys = rb_funcall(hash, rb_intern("keys"), 0);
         int i;
-        VALUE key, value;
-          for(i = 0; i < RARRAY_LEN(keys); i++) {
-            key = rb_ary_entry(keys, i);
-            value = rb_hash_aref(hash, key);
+        VALUE keys = rb_funcall(hash, rb_intern("keys"), 0);
+
+        for(i = 0; i < RARRAY_LEN(keys); i++) {
+            VALUE key = rb_ary_entry(keys, i);
+            VALUE value = rb_hash_aref(hash, key);
 
             write_function(key, value, pack_extra(buffer, check_keys));
         }
@@ -722,8 +694,7 @@ static VALUE method_serialize(VALUE self, VALUE doc, VALUE check_keys,
     VALUE move_id, VALUE max_size) {
 
     VALUE result;
-    bson_buffer_t buffer;
-    buffer = bson_buffer_new();
+    bson_buffer_t buffer = bson_buffer_new();
     if (buffer == NULL) {
         rb_raise(rb_eNoMemError, "failed to allocate memory in buffer.c");
     }
@@ -770,11 +741,11 @@ static VALUE get_value(const char* buffer, int* position,
             int size;
             memcpy(&size, buffer + *position, 4);
             if (strcmp(buffer + *position + 5, "$ref") == 0) { // DBRef
-                int offset, collection_length;
-                offset = *position + 10;
                 VALUE argv[2];
-                collection_length = *(int*)(buffer + offset) - 1;
                 unsigned char id_type;
+                int offset = *position + 10;
+                int collection_length = *(int*)(buffer + offset) - 1;
+
                 offset += 4;
 
                 argv[0] = STR_NEW(buffer + offset, collection_length);
@@ -798,11 +769,9 @@ static VALUE get_value(const char* buffer, int* position,
 
             value = rb_ary_new();
             while (*position < end) {
-                unsigned char type;
-                type = (unsigned char)buffer[(*position)++];
-                int key_size;
-                key_size = (int)strlen(buffer + *position);
                 VALUE to_append;
+                unsigned char type = (unsigned char)buffer[(*position)++];
+                int key_size = (int)strlen(buffer + *position);
 
                 *position += key_size + 1; // just skip the key, they're in order.
                 to_append = get_value(buffer, position, type, opts);
@@ -837,9 +806,8 @@ static VALUE get_value(const char* buffer, int* position,
         }
     case 7:
         {
-            VALUE str, oid;
-            str = rb_str_new(buffer + *position, 12);
-            oid = rb_funcall(str, unpack_method, 1, rb_str_new2("C*"));
+            VALUE str = rb_str_new(buffer + *position, 12);
+            VALUE oid = rb_funcall(str, unpack_method, 1, rb_str_new2("C*"));
             value = rb_class_new_instance(1, &oid, ObjectId);
             *position += 12;
             break;
@@ -879,11 +847,10 @@ static VALUE get_value(const char* buffer, int* position,
         }
     case 11:
         {
-            int pattern_length;
-            VALUE pattern, argv[3], flags_str;
+            int pattern_length = (int)strlen(buffer + *position);
+            VALUE pattern = STR_NEW(buffer + *position, pattern_length);
             int flags_length;
-            pattern_length = (int)strlen(buffer + *position);
-            pattern = STR_NEW(buffer + *position, pattern_length);
+            VALUE argv[3], flags_str;
             *position += pattern_length + 1;
 
             flags_length = (int)strlen(buffer + *position);
@@ -987,16 +954,13 @@ static VALUE get_value(const char* buffer, int* position,
 }
 
 static VALUE elements_to_hash(const char* buffer, int max, struct deserialize_opts * opts) {
-    VALUE hash;
-    hash = rb_class_new_instance(0, NULL, OrderedHash);
     int position = 0;
+    VALUE hash = rb_class_new_instance(0, NULL, OrderedHash);
     while (position < max) {
-        unsigned char type;
-        int name_length;
-        VALUE name, value;
-        type = (unsigned char)buffer[position++];
-        name_length = (int)strlen(buffer + position);
-        name = STR_NEW(buffer + position, name_length);
+        VALUE value;
+        unsigned char type = (unsigned char)buffer[position++];
+        int name_length = (int)strlen(buffer + position);
+        VALUE name = STR_NEW(buffer + position, name_length);
         position += name_length + 1;
         value = get_value(buffer, &position, type, opts);
         rb_funcall(hash, element_assignment_method, 2, name, value);
@@ -1005,11 +969,10 @@ static VALUE elements_to_hash(const char* buffer, int max, struct deserialize_op
 }
 
 static VALUE method_deserialize(VALUE self, VALUE bson, VALUE opts) {
-    const char* buffer;
-    int remaining;
-    buffer = RSTRING_PTR(bson);
-    remaining = RSTRING_LENINT(bson);
+    const char* buffer = RSTRING_PTR(bson);
+    int remaining = RSTRING_LENINT(bson);
     struct deserialize_opts deserialize_opts;
+
     deserialize_opts.compile_regex = 1;
     if (rb_funcall(opts, rb_intern("has_key?"), 1, ID2SYM(rb_intern("compile_regex"))) == Qtrue && 
         rb_hash_aref(opts, ID2SYM(rb_intern("compile_regex"))) == Qfalse) {
