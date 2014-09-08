@@ -280,7 +280,7 @@ describe Mongo::Collection do
   describe '#insert_many' do
 
     let(:collection) do
-      authorized_client[TEST_COLL]
+      authorized_collection
     end
 
     after do
@@ -299,7 +299,7 @@ describe Mongo::Collection do
   describe '#insert_one' do
 
     let(:collection) do
-      authorized_client[TEST_COLL]
+      authorized_collection
     end
 
     after do

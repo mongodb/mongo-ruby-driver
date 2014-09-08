@@ -385,7 +385,7 @@ describe Mongo::Operation::Write::Insert do
   describe '#execute' do
 
     before do
-      authorized_client[TEST_COLL].indexes.ensure({ name: 1 }, { unique: true })
+      authorized_collection.indexes.ensure({ name: 1 }, { unique: true })
     end
 
     after do
@@ -395,7 +395,7 @@ describe Mongo::Operation::Write::Insert do
         coll_name: TEST_COLL,
         write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
       }).execute(authorized_primary.context)
-      authorized_client[TEST_COLL].indexes.drop({ name: 1 })
+      authorized_collection.indexes.drop({ name: 1 })
     end
 
     context 'when inserting a single document' do
