@@ -102,7 +102,7 @@ describe Mongo::Collection::View do
     end
 
     before do
-      authorized_collection.insert(documents)
+      authorized_collection.insert_many(documents)
     end
 
     after do
@@ -141,7 +141,7 @@ describe Mongo::Collection::View do
       end
 
       before do
-        authorized_collection.insert(documents)
+        authorized_collection.insert_many(documents)
       end
 
       context 'when the field is a symbol' do
@@ -185,7 +185,7 @@ describe Mongo::Collection::View do
       end
 
       before do
-        authorized_collection.insert(documents)
+        authorized_collection.insert_many(documents)
       end
 
       context 'when the field is a symbol' do
@@ -527,7 +527,7 @@ describe Mongo::Collection::View do
       end
 
       before do
-        authorized_collection.insert([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
       end
 
       let(:response) do
@@ -542,7 +542,7 @@ describe Mongo::Collection::View do
     context 'when no selector was provided' do
 
       before do
-        authorized_collection.insert([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
       end
 
       let(:response) do
@@ -563,7 +563,7 @@ describe Mongo::Collection::View do
         end
 
         before do
-          authorized_collection.insert([{ field: 'test1' }, { field: 'test1' }])
+          authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
         end
 
         let(:response) do
@@ -578,7 +578,7 @@ describe Mongo::Collection::View do
       context 'when no selector was provided' do
 
         before do
-          authorized_collection.insert([{ field: 'test1' }, { field: 'test2' }])
+          authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
         end
 
         let(:response) do
@@ -736,7 +736,7 @@ describe Mongo::Collection::View do
       end
 
       before do
-        authorized_collection.insert([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
       end
 
       let!(:response) do
@@ -759,7 +759,7 @@ describe Mongo::Collection::View do
     context 'when no selector was provided' do
 
       before do
-        authorized_collection.insert([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
       end
 
       let!(:response) do
@@ -790,7 +790,7 @@ describe Mongo::Collection::View do
         end
 
         before do
-          authorized_collection.insert([{ field: 'test1' }, { field: 'test1' }])
+          authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
         end
 
         let!(:response) do
@@ -813,7 +813,7 @@ describe Mongo::Collection::View do
       context 'when no selector was provided' do
 
         before do
-          authorized_collection.insert([{ field: 'test1' }, { field: 'test2' }])
+          authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
         end
 
         let!(:response) do
@@ -861,7 +861,7 @@ describe Mongo::Collection::View do
     end
 
     before do
-      authorized_collection.insert(documents)
+      authorized_collection.insert_many(documents)
     end
 
     after do

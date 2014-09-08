@@ -258,7 +258,7 @@ describe Mongo::Collection do
     context 'when iterating the authorized_collection view' do
 
       before do
-        authorized_collection.insert([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
       end
 
       after do
@@ -277,41 +277,41 @@ describe Mongo::Collection do
     end
   end
 
-  describe '#insert' do
+  describe '#insert_many' do
 
     let(:collection) do
       authorized_client[TEST_COLL]
     end
 
     after do
-      Mongo::Operation::Write::Delete.new({
-        deletes: [{ q: {}, limit: -1 }],
-        db_name: TEST_DB,
-        coll_name: TEST_COLL,
-        write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
-      }).execute(authorized_primary.context)
+      authorized_collection.find.remove
     end
 
-    context 'when providing a single document' do
-
-      let(:result) do
-        collection.insert({ name: 'testing' })
-      end
-
-      it 'inserts the document into the collection' do
-        expect(result.n).to eq(1)
-      end
+    let(:result) do
+      collection.insert_many([{ name: 'test1' }, { name: 'test2' }])
     end
 
-    context 'when providing multiple documents' do
+    it 'inserts the documents into the collection' do
+      expect(result.n).to eq(2)
+    end
+  end
 
-      let(:result) do
-        collection.insert([{ name: 'test1' }, { name: 'test2' }])
-      end
+  describe '#insert_one' do
 
-      it 'inserts the documents into the collection' do
-        expect(result.n).to eq(2)
-      end
+    let(:collection) do
+      authorized_client[TEST_COLL]
+    end
+
+    after do
+      authorized_collection.find.remove
+    end
+
+    let(:result) do
+      collection.insert_one({ name: 'testing' })
+    end
+
+    it 'inserts the document into the collection' do
+      expect(result.n).to eq(1)
     end
   end
 end

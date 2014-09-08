@@ -29,7 +29,7 @@ describe Mongo::Cursor do
         end
 
         before do
-          authorized_client[TEST_COLL].insert(documents)
+          authorized_client[TEST_COLL].insert_many(documents)
         end
 
         after do
@@ -54,7 +54,7 @@ describe Mongo::Cursor do
         end
 
         before do
-          authorized_client[TEST_COLL].insert(documents)
+          authorized_client[TEST_COLL].insert_many(documents)
         end
 
         after do
@@ -80,7 +80,7 @@ describe Mongo::Cursor do
       end
 
       before do
-        authorized_client[TEST_COLL].insert(documents)
+        authorized_client[TEST_COLL].insert_many(documents)
       end
 
       after do
