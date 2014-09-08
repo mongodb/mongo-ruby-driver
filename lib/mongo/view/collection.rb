@@ -44,6 +44,27 @@ module Mongo
 
       def_delegators :@collection, :client, :cluster, :database, :server_preference, :write_concern
 
+      # Compare two +Collection+ objects.
+      #
+      # @example Compare the view with another object.
+      #   view == other
+      #
+      # @return [ true, false ] Equal if collection, selector, and options of two
+      #   +Collection+ match.
+      #
+      # @since 2.0.0
+      def ==(other)
+        return false unless other.is_a?(Collection)
+        @collection == other.collection &&
+            @selector == other.selector &&
+            @options == other.options
+      end
+      alias_method :eql?, :==
+
+      def distinct(field)
+
+      end
+
       # Creates a new +Collection+.
       #
       # @example Find all users named Emily.
@@ -91,17 +112,6 @@ module Mongo
         "<Mongo::Collection:0x#{object_id} namespace='#{@collection.namespace}" +
             " @selector=#{@selector.inspect} @options=#{@options.inspect}>"
       end
-
-      # Compare two +Collection+ objects.
-      #
-      # @return [ true, false ] Equal if collection, selector, and options of two
-      #   +Collection+ match.
-      def ==(other)
-        @collection == other.collection &&
-            @selector == other.selector &&
-            @options == other.options
-      end
-      alias_method :eql?, :==
 
       # A hash value for the +Collection+ composed of the collection namespace,
       # hash of the options and hash of the selector.
@@ -234,7 +244,14 @@ module Mongo
 
       # Iterate through documents returned by a query with this +Collection+.
       #
+      # @example Iterate through the result of the view.
+      #   view.each do |document|
+      #     p document
+      #   end
+      #
       # @return [ Enumerator ] The enumerator.
+      #
+      # @since 2.0.0
       #
       # @yieldparam [ Hash ] Each matching document.
       def each
@@ -264,52 +281,32 @@ module Mongo
         special_options[:explain]
       end
 
-      # The snapshot special operator.
-      #
-      # @return [true, false, nil]
       def snapshot
         special_options[:snapshot]
       end
 
-      # The max_scan special operator.
-      #
-      # @return [Integer, nil]
       def max_scan
         special_options[:max_scan]
       end
 
-      # The show_disk_loc special operator.
-      #
-      # @return [true, false, nil]
       def show_disk_loc
         special_options[:show_disk_loc]
       end
 
-      # The initial query operation to send to the server.
-      #
       def initial_query_op
         Operation::Read::Query.new(query_spec)
       end
 
-      # Send the initial query operation to the server.
-      #
-      # @return [ Mongo::Response ] The initial query response.
       def send_initial_query(server)
         # @todo: if mongos, don't send read pref because it's
         # in the special selector
         initial_query_op.execute(server.context)
       end
 
-      # Get the read preference for this query.
-      #
-      # @return [Hash, nil] The read preference or nil.
       def read_pref_formatted
         read.to_mongos
       end
 
-      # Build a special query selector.
-      #
-      # @return [Hash] The special query selector.
       def special_selector
         SPECIAL_FIELDS.reduce({}) do |hash, pair|
           key, method = pair
@@ -339,37 +336,20 @@ module Mongo
         flags << :slave_ok if need_slave_ok?
       end
 
-      # Determine whether this query has special fields.
-      #
-      # @return [true, false] Whether the query has special fields.
       def has_special_fields?
         !special_options.empty? || sort || hint || comment || cluster.sharded?
       end
 
-      # Clone or dup the current +Collection+.
-      #
-      # The @opt and @selector instance variables are duped and the
-      # +Collection+ reference remains intact.
-      #
-      # @param [ Collection ] other The +Collection+ to be cloned.
-      #
-      # @return [ Collection ] The new +Collection+.
       def initialize_copy(other)
         @collection = other.collection
         @options = other.options.dup
         @selector = other.selector.dup
       end
 
-      # The read preference for this operation.
-      #
-      # @return [ Symbol ] This operation's read preference.
       def default_read(read = nil)
         @options[:read] || server_preference
       end
 
-      # Extract query options from @options and return them in a separate hash.
-      #
-      # @return [ Hash ] The query options in their own hash.
       def special_options_hash
         s_options = @options[:snapshot].nil? ? {} : { :snapshot => @options[:snapshot] }
         unless @options[:max_scan].nil?
@@ -384,9 +364,6 @@ module Mongo
         s_options
       end
 
-      # Build the query selector and initial +Query+ message.
-      #
-      # @return [Hash] The +Query+ operation spec.
       def query_spec
         sel = has_special_fields? ? special_selector : selector
         { :selector  => sel,
@@ -395,39 +372,22 @@ module Mongo
           :coll_name => @collection.name }
       end
 
-      # Whether the read preference mode is primary.
-      #
-      # @return [true, false] Whether the read preference mode is primary.
       def primary?
         read.name == :primary
       end
 
-      # Whether the slave ok bit needs to be set on the wire protocol message.
-      #
-      # @return [true, false] Whether the slave ok bit needs to be set.
       def need_slave_ok?
         !primary?
       end
 
-      # The number of documents to return in the next batch.
-      #
-      # @return [Integer] The number of documents to return in the next batch.
       def to_return
         [limit || batch_size, batch_size || limit].min
       end
 
-      # The name of the database containing the queried collection.
-      #
-      # @return [String] The database name.
       def db_name
         @collection.database.name
       end
 
-      # Either return the option value or create a new +Collection+ with
-      # the option value set.
-      #
-      # @return [ Object, Collection ] Either the option value or a
-      # new +Collection+.
       def set_option(field, value)
         return @options[field] if value.nil?
         Collection.new(collection, selector, @options.merge(field => value))

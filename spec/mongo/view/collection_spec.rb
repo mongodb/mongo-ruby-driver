@@ -14,6 +14,74 @@ describe Mongo::View::Collection do
     described_class.new(authorized_collection, selector, options)
   end
 
+  describe '#==' do
+
+    context 'when the other object is not a collection view' do
+
+      let(:other) { 'test' }
+
+      it 'returns false' do
+        expect(view).to_not eq(other)
+      end
+    end
+
+    context 'when the views have the same collection, selector, and options' do
+
+      let(:other) do
+        described_class.new(authorized_collection, selector, options)
+      end
+
+      it 'returns true' do
+        expect(view).to eq(other)
+      end
+    end
+
+    context 'when two views have a different collection' do
+
+      let(:other_collection) do
+        authorized_client[:other]
+      end
+
+      let(:other) do
+        described_class.new(other_collection, selector, options)
+      end
+
+      it 'returns false' do
+        expect(view).not_to eq(other)
+      end
+    end
+
+    context 'when two views have a different selector' do
+
+      let(:other_selector) do
+        { 'name' => 'Emily' }
+      end
+
+      let(:other) do
+        described_class.new(authorized_collection, other_selector, options)
+      end
+
+      it 'returns false' do
+        expect(view).not_to eq(other)
+      end
+    end
+
+    context 'when two views have different options' do
+
+      let(:other_options) do
+        { 'limit' => 20 }
+      end
+
+      let(:other) do
+        described_class.new(authorized_collection, selector, other_options)
+      end
+
+      it 'returns false' do
+        expect(view).not_to eq(other)
+      end
+    end
+  end
+
   describe '#initialize' do
 
     let(:options) do
@@ -420,74 +488,6 @@ describe Mongo::View::Collection do
 
       it 'returns the special options' do
         expect(view.special_options).to eq(options)
-      end
-    end
-  end
-
-  #describe '#distinct' do
-  #  let(:distinct_stats) { { 'values' => [1], 'stats' => { 'n' => 3 } } }
-#
-  #  it 'calls distinct on collection' do
-  #    allow(collection).to receive(:distinct).and_return(distinct_stats)
-  #    expect(view.distinct('name')).to eq(distinct_stats)
-  #  end
-  #end
-#
-  describe '#==' do
-
-    context 'when the views have the same collection, selector, and options' do
-
-      let(:other) do
-        described_class.new(authorized_collection, selector, options)
-      end
-
-      it 'returns true' do
-        expect(view).to eq(other)
-      end
-    end
-
-    context 'when two views have a different collection' do
-
-      let(:other_collection) do
-        authorized_client[:other]
-      end
-
-      let(:other) do
-        described_class.new(other_collection, selector, options)
-      end
-
-      it 'returns false' do
-        expect(view).not_to eq(other)
-      end
-    end
-
-    context 'when two views have a different selector' do
-
-      let(:other_selector) do
-        { 'name' => 'Emily' }
-      end
-
-      let(:other) do
-        described_class.new(authorized_collection, other_selector, options)
-      end
-
-      it 'returns false' do
-        expect(view).not_to eq(other)
-      end
-    end
-
-    context 'when two views have different options' do
-
-      let(:other_options) do
-        { 'limit' => 20 }
-      end
-
-      let(:other) do
-        described_class.new(authorized_collection, selector, other_options)
-      end
-
-      it 'returns false' do
-        expect(view).not_to eq(other)
       end
     end
   end
