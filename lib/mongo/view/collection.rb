@@ -55,15 +55,11 @@ module Mongo
       # @since 2.0.0
       def ==(other)
         return false unless other.is_a?(Collection)
-        @collection == other.collection &&
-            @selector == other.selector &&
-            @options == other.options
+        collection == other.collection &&
+            selector == other.selector &&
+            options == other.options
       end
       alias_method :eql?, :==
-
-      def distinct(field)
-
-      end
 
       # Creates a new +Collection+.
       #
@@ -99,6 +95,8 @@ module Mongo
       #   once.
       # @option options :sort [ Hash ] The key and direction pairs used to sort the
       #   results.
+      #
+      # @since 2.0.0
       def initialize(collection, selector = {}, options = {})
         @collection = collection
         @selector = selector.dup
@@ -107,41 +105,44 @@ module Mongo
 
       # Get a human-readable string representation of +Collection+.
       #
+      # @example Get the inspection.
+      #   view.inspect
+      #
       # @return [ String ] A string representation of a +Collection+ instance.
+      #
+      # @since 2.0.0
       def inspect
-        "<Mongo::Collection:0x#{object_id} namespace='#{@collection.namespace}" +
-            " @selector=#{@selector.inspect} @options=#{@options.inspect}>"
+        "<Mongo::View::Collection:0x#{object_id} namespace='#{collection.namespace}" +
+            " @selector=#{selector.inspect} @options=#{options.inspect}>"
       end
 
       # A hash value for the +Collection+ composed of the collection namespace,
       # hash of the options and hash of the selector.
       #
+      # @example Get the hash value.
+      #   view.hash
+      #
       # @return [ Integer ] A hash value of the +Collection+ object.
-      def hash
-        [@collection.namespace, @options.hash, @selector.hash].hash
-      end
-
-      # Get the explain plan for the query.
-      #
-      # @example Get the explain plan for the query.
-      #   view.explain
-      #
-      # @return [ Hash ] A single document with the explain plan.
       #
       # @since 2.0.0
-      def explain
-        explain_limit = limit || 0
-        set_option(:limit, -explain_limit.abs).special_options(:explain => true).first
+      def hash
+        [ collection.namespace, options.hash, selector.hash ].hash
       end
 
       # Associate a comment with the query.
-      # Set profilingLevel to 2 and the comment will be logged in the profile
-      # collection along with the query.
+      #
+      # @example Add a comment.
+      #   view.comment('slow query')
+      #
+      # @note Set profilingLevel to 2 and the comment will be logged in the profile
+      #   collection along with the query.
       #
       # @param [ String ] comment The comment to be associated with the query.
       #
       # @return [ String, Collection ] Either the comment or a
       #   new +Collection+.
+      #
+      # @since 2.0.0
       def comment(comment = nil)
         set_option(:comment, comment)
       end
@@ -235,11 +236,11 @@ module Mongo
       # new +Collection+.
       def special_options(s_options = nil)
         return special_options_hash if s_options.nil?
-        options = @options.dup
+        opts = options.dup
         [:snapshot, :max_scan, :show_disk_loc, :explain].each do |k|
-          s_options[k].nil? ? options.delete(k) : options.merge!(k => s_options[k])
+          s_options[k].nil? ? opts.delete(k) : opts.merge!(k => s_options[k])
         end
-        Collection.new(collection, selector, options)
+        Collection.new(collection, selector, opts)
       end
 
       # Iterate through documents returned by a query with this +Collection+.
@@ -347,19 +348,19 @@ module Mongo
       end
 
       def default_read(read = nil)
-        @options[:read] || server_preference
+        options[:read] || server_preference
       end
 
       def special_options_hash
-        s_options = @options[:snapshot].nil? ? {} : { :snapshot => @options[:snapshot] }
-        unless @options[:max_scan].nil?
-          s_options[:max_scan] = @options[:max_scan]
+        s_options = options[:snapshot].nil? ? {} : { :snapshot => options[:snapshot] }
+        unless options[:max_scan].nil?
+          s_options[:max_scan] = options[:max_scan]
         end
-        unless @options[:show_disk_loc].nil?
+        unless options[:show_disk_loc].nil?
           s_options[:show_disk_loc] = @options[:show_disk_loc]
         end
-        unless @options[:explain].nil?
-          s_options[:explain] = @options[:explain]
+        unless options[:explain].nil?
+          s_options[:explain] = options[:explain]
         end
         s_options
       end
@@ -381,16 +382,16 @@ module Mongo
       end
 
       def to_return
-        [limit || batch_size, batch_size || limit].min
+        [ limit || batch_size, batch_size || limit ].min
       end
 
       def db_name
-        @collection.database.name
+        collection.database.name
       end
 
       def set_option(field, value)
-        return @options[field] if value.nil?
-        Collection.new(collection, selector, @options.merge(field => value))
+        return options[field] if value.nil?
+        Collection.new(collection, selector, options.merge(field => value))
       end
     end
   end

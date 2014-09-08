@@ -142,6 +142,17 @@ describe Mongo::View::Executable do
     end
   end
 
+  describe '#explain' do
+
+    let(:explain) do
+      authorized_collection.find.explain
+    end
+
+    it 'executes an explain' do
+      expect(explain[:cursor]).to eq('BasicCursor')
+    end
+  end
+
   describe '#remove' do
 
     context 'when a selector was provided' do

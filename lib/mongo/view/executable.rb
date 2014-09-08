@@ -14,6 +14,10 @@
 
 module Mongo
   module View
+
+    # Has behaviour for the collection view that triggers server messages.
+    #
+    # @since 2.0.0
     module Executable
 
       # Get a count of matching documents in the collection.
@@ -26,8 +30,8 @@ module Mongo
       # @since 2.0.0
       def count
         cmd = { :count => collection.name, :query => selector }
-        cmd[:skip]  = options[:skip]  if options[:skip]
-        cmd[:hint]  = options[:hint]  if options[:hint]
+        cmd[:skip] = options[:skip] if options[:skip]
+        cmd[:hint] = options[:hint] if options[:hint]
         cmd[:limit] = options[:limit] if options[:limit]
         database.command(cmd).n
       end
@@ -48,6 +52,19 @@ module Mongo
           :key => field.to_s,
           :query => selector
         ).documents.first['values']
+      end
+
+      # Get the explain plan for the query.
+      #
+      # @example Get the explain plan for the query.
+      #   view.explain
+      #
+      # @return [ Hash ] A single document with the explain plan.
+      #
+      # @since 2.0.0
+      def explain
+        explain_limit = limit || 0
+        set_option(:limit, -explain_limit.abs).special_options(:explain => true).first
       end
 
       # Remove documents from the collection.

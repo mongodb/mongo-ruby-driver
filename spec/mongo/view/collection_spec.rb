@@ -199,17 +199,6 @@ describe Mongo::View::Collection do
     end
   end
 
-  describe '#explain' do
-
-    let(:explain) do
-      view.explain
-    end
-
-    it 'executes an explain' do
-      expect(explain[:cursor]).to eq('BasicCursor')
-    end
-  end
-
   describe '#fields' do
 
     context 'when fields are specified' do
