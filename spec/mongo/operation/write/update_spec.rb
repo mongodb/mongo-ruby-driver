@@ -437,7 +437,7 @@ describe Mongo::Operation::Write::Update do
     end
 
     after do
-      authorized_collection.find.remove
+      authorized_collection.find.remove_many
     end
 
     context 'when updating a single document' do

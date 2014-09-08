@@ -330,21 +330,25 @@ module Mongo
       # Remove documents from the collection.
       #
       # @example Remove multiple documents from the collection.
-      #   collection_view.remove
-      #
-      # @example Remove a single document from the collection.
-      #   collection_view.limit(1).remove
+      #   collection_view.remove_many
       #
       # @return [ Response ] The response from the database.
       #
       # @since 2.0.0
-      def remove
-        Operation::Write::Delete.new(
-          :deletes => [{ q: selector, limit: options[:limit] || 0 }],
-          :db_name => collection.database.name,
-          :coll_name => collection.name,
-          :write_concern => collection.write_concern
-        ).execute(next_primary.context)
+      def remove_many
+        remove(0)
+      end
+
+      # Remove a document from the collection.
+      #
+      # @example Remove a single document from the collection.
+      #   collection_view.remove_one
+      #
+      # @return [ Response ] The response from the database.
+      #
+      # @since 2.0.0
+      def remove_one
+        remove(1)
       end
 
       # Set whether the disk location should be shown for each document.
@@ -450,6 +454,15 @@ module Mongo
 
       def read_pref_formatted
         read.to_mongos
+      end
+
+      def remove(value)
+        Operation::Write::Delete.new(
+          :deletes => [{ q: selector, limit: value }],
+          :db_name => collection.database.name,
+          :coll_name => collection.name,
+          :write_concern => collection.write_concern
+        ).execute(next_primary.context)
       end
 
       def special_selector

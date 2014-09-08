@@ -15,7 +15,7 @@ describe Mongo::Collection::View do
   end
 
   after do
-    authorized_collection.find.remove
+    authorized_collection.find.remove_many
   end
 
   pending '#aggregate'
@@ -106,7 +106,7 @@ describe Mongo::Collection::View do
     end
 
     after do
-      authorized_collection.find.remove
+      authorized_collection.find.remove_many
     end
 
     context 'when a selector is provided' do
@@ -518,7 +518,7 @@ describe Mongo::Collection::View do
     end
   end
 
-  describe '#remove' do
+  describe '#remove_many' do
 
     context 'when a selector was provided' do
 
@@ -531,7 +531,7 @@ describe Mongo::Collection::View do
       end
 
       let(:response) do
-        view.remove
+        view.remove_many
       end
 
       it 'deletes the matching documents in the collection' do
@@ -546,48 +546,52 @@ describe Mongo::Collection::View do
       end
 
       let(:response) do
-        view.remove
+        view.remove_many
       end
 
       it 'deletes all the documents in the collection' do
         expect(response.n).to eq(2)
       end
     end
+  end
 
-    context 'when limiting the number removed' do
+  describe '#remove_one' do
 
-      context 'when a selector was provided' do
+    context 'when a selector was provided' do
 
-        let(:selector) do
-          { field: 'test1' }
-        end
-
-        before do
-          authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
-        end
-
-        let(:response) do
-          view.limit(1).remove
-        end
-
-        it 'deletes the first matching document in the collection' do
-          expect(response.n).to eq(1)
-        end
+      let(:selector) do
+        { field: 'test1' }
       end
 
-      context 'when no selector was provided' do
+      before do
+        authorized_collection.insert_many([
+          { field: 'test1' },
+          { field: 'test1' },
+          { field: 'test1' }
+        ])
+      end
 
-        before do
-          authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
-        end
+      let(:response) do
+        view.remove_one
+      end
 
-        let(:response) do
-          view.limit(1).remove
-        end
+      it 'deletes the first matching document in the collection' do
+        expect(response.n).to eq(1)
+      end
+    end
 
-        it 'deletes the first document in the collection' do
-          expect(response.n).to eq(1)
-        end
+    context 'when no selector was provided' do
+
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+      end
+
+      let(:response) do
+        view.remove_one
+      end
+
+      it 'deletes the first document in the collection' do
+        expect(response.n).to eq(1)
       end
     end
   end
@@ -865,7 +869,7 @@ describe Mongo::Collection::View do
     end
 
     after do
-      authorized_collection.find.remove
+      authorized_collection.find.remove_many
     end
 
     context 'when sending the initial query' do

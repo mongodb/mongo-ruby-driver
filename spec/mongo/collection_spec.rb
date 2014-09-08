@@ -262,7 +262,7 @@ describe Mongo::Collection do
       end
 
       after do
-        authorized_collection.find.remove
+        authorized_collection.find.remove_many
       end
 
       let(:view) do
@@ -284,7 +284,7 @@ describe Mongo::Collection do
     end
 
     after do
-      authorized_collection.find.remove
+      authorized_collection.find.remove_many
     end
 
     let(:result) do
@@ -303,7 +303,7 @@ describe Mongo::Collection do
     end
 
     after do
-      authorized_collection.find.remove
+      authorized_collection.find.remove_many
     end
 
     let(:result) do

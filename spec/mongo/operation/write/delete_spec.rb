@@ -337,7 +337,7 @@ describe Mongo::Operation::Write::Delete do
     end
 
     after do
-      authorized_collection.find.remove
+      authorized_collection.find.remove_many
     end
 
     context 'when deleting a single document' do
