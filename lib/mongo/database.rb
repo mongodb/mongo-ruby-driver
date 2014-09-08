@@ -162,7 +162,7 @@ module Mongo
     #
     # @since 2.0.0
     def users
-      View::User.new(self)
+      Auth::User::View.new(self)
     end
 
     # Exception that is raised when trying to create a database with no name.

@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/auth/user/view'
+
 module Mongo
   module Auth
 

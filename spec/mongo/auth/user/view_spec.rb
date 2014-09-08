@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::View::User do
+describe Mongo::Auth::User::View do
 
   let(:view) do
     described_class.new(root_authorized_client.database)

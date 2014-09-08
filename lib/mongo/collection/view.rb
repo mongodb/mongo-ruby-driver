@@ -13,27 +13,26 @@
 # limitations under the License.
 
 module Mongo
-  module View
+  class Collection
 
     # Representation of a query and options producing a result set of documents.
     #
-    # A +Collection+ can be modified using helpers.  Helpers can be chained,
-    # as each one returns a +Collection+ if arguments are provided.
+    # A +View+ can be modified using helpers. Helpers can be chained,
+    # as each one returns a +View+ if arguments are provided.
     #
     # The query message is sent to the server when a "terminator" is called.
-    # For example, when #each is called on a +Collection+, a Cursor object is
+    # For example, when #each is called on a +View+, a Cursor object is
     # created, which then sends the query to the server.
     #
-    # A +Collection+ is not created directly by a user. Rather, +Collection+
-    # creates a +Collection+ when a CRUD operation is called and returns it to
+    # A +View+ is not created directly by a user. Rather, +View+
+    # creates a +View+ when a CRUD operation is called and returns it to
     # the user to interact with.
     #
-    # @note The +Collection+ API is semipublic.
+    # @note The +View+ API is semipublic.
     # @api semipublic
-    class Collection
+    class View
       extend Forwardable
       include Enumerable
-      include Executable
 
       # Special fields and their getters for the query selector.
       #
@@ -50,7 +49,7 @@ module Mongo
         :$explain => :explained?
       }
 
-      # @return [ Collection ] The +Collection+ to query.
+      # @return [ View ] The +View+ to query.
       attr_reader :collection
       # @return [ Hash ] The query selector.
       attr_reader :selector
@@ -58,19 +57,22 @@ module Mongo
       attr_reader :options
 
       # Delegate necessary operations to the collection.
-      def_delegators :@collection, :client, :cluster, :database, :server_preference, :write_concern
+      def_delegators :collection, :client, :cluster, :database, :server_preference, :write_concern
 
-      # Compare two +Collection+ objects.
+      # Delegate to the cluster for the next primary.
+      def_delegators :cluster, :next_primary
+
+      # Compare two +View+ objects.
       #
       # @example Compare the view with another object.
       #   view == other
       #
       # @return [ true, false ] Equal if collection, selector, and options of two
-      #   +Collection+ match.
+      #   +View+ match.
       #
       # @since 2.0.0
       def ==(other)
-        return false unless other.is_a?(Collection)
+        return false unless other.is_a?(View)
         collection == other.collection &&
             selector == other.selector &&
             options == other.options
@@ -86,8 +88,8 @@ module Mongo
       #
       # @param [ Integer ] batch_size The size of each batch of results.
       #
-      # @return [ Integer, Collection ] Either the batch_size value or a
-      # new +Collection+.
+      # @return [ Integer, View ] Either the batch_size value or a
+      # new +View+.
       #
       # @since 2.0.0
       def batch_size(batch_size = nil)
@@ -104,15 +106,49 @@ module Mongo
       #
       # @param [ String ] comment The comment to be associated with the query.
       #
-      # @return [ String, Collection ] Either the comment or a
-      #   new +Collection+.
+      # @return [ String, View ] Either the comment or a
+      #   new +View+.
       #
       # @since 2.0.0
       def comment(comment = nil)
         set_option(:comment, comment)
       end
 
-      # Iterate through documents returned by a query with this +Collection+.
+      # Get a count of matching documents in the collection.
+      #
+      # @example Get the number of documents in the collection.
+      #   collection_view.count
+      #
+      # @return [ Integer ] The document count.
+      #
+      # @since 2.0.0
+      def count
+        cmd = { :count => collection.name, :query => selector }
+        cmd[:skip] = options[:skip] if options[:skip]
+        cmd[:hint] = options[:hint] if options[:hint]
+        cmd[:limit] = options[:limit] if options[:limit]
+        database.command(cmd).n
+      end
+
+      # Get a list of distinct values for a specific field.
+      #
+      # @example Get the distinct values.
+      #   collection_view.distinct('name')
+      #
+      # @param [ String, Symbol ] field The name of the field.
+      #
+      # @return [ Array<Object> ] The list of distinct values.
+      #
+      # @since 2.0.0
+      def distinct(field)
+        database.command(
+          :distinct => collection.name,
+          :key => field.to_s,
+          :query => selector
+        ).documents.first['values']
+      end
+
+      # Iterate through documents returned by a query with this +View+.
       #
       # @example Iterate through the result of the view.
       #   view.each do |document|
@@ -133,6 +169,20 @@ module Mongo
         cursor
       end
 
+      # Get the explain plan for the query.
+      #
+      # @example Get the explain plan for the query.
+      #   view.explain
+      #
+      # @return [ Hash ] A single document with the explain plan.
+      #
+      # @since 2.0.0
+      def explain
+        explain_limit = limit || 0
+        opts = options.merge(:limit => -explain_limit.abs, :explain => true)
+        View.new(collection, selector, opts).first
+      end
+
       # The fields to include or exclude from each doc in the result set.
       #
       # @example Set the fields to include or exclude.
@@ -144,38 +194,38 @@ module Mongo
       #
       # @param [ Hash ] fields The field and 1 or 0, to include or exclude it.
       #
-      # @return [ Hash, Collection ] Either the fields or a new +Collection+.
+      # @return [ Hash, View ] Either the fields or a new +View+.
       #
       # @since 2.0.0
       def fields(fields = nil)
         set_option(:fields, fields)
       end
 
-      # A hash value for the +Collection+ composed of the collection namespace,
+      # A hash value for the +View+ composed of the collection namespace,
       # hash of the options and hash of the selector.
       #
       # @example Get the hash value.
       #   view.hash
       #
-      # @return [ Integer ] A hash value of the +Collection+ object.
+      # @return [ Integer ] A hash value of the +View+ object.
       #
       # @since 2.0.0
       def hash
         [ collection.namespace, options.hash, selector.hash ].hash
       end
 
-      # Creates a new +Collection+.
+      # Creates a new +View+.
       #
       # @example Find all users named Emily.
-      #   Collection.new(collection, {:name => 'Emily'})
+      #   View.new(collection, {:name => 'Emily'})
       #
       # @example Find all users named Emily skipping 5 and returning 10.
-      #   Collection.new(collection, {:name => 'Emily'}, :skip => 5, :limit => 10)
+      #   View.new(collection, {:name => 'Emily'}, :skip => 5, :limit => 10)
       #
       # @example Find all users named Emily using a specific read preference.
-      #   Collection.new(collection, {:name => 'Emily'}, :read => :secondary_preferred)
+      #   View.new(collection, {:name => 'Emily'}, :read => :secondary_preferred)
       #
-      # @param [ Collection ] collection The +Collection+ to query.
+      # @param [ View ] collection The +View+ to query.
       # @param [ Hash ] selector The query selector.
       # @param [ Hash ] options The additional query options.
       #
@@ -206,16 +256,16 @@ module Mongo
         @options = options.dup
       end
 
-      # Get a human-readable string representation of +Collection+.
+      # Get a human-readable string representation of +View+.
       #
       # @example Get the inspection.
       #   view.inspect
       #
-      # @return [ String ] A string representation of a +Collection+ instance.
+      # @return [ String ] A string representation of a +View+ instance.
       #
       # @since 2.0.0
       def inspect
-        "<Mongo::View::Collection:0x#{object_id} namespace='#{collection.namespace}" +
+        "<Mongo::Collection::View:0x#{object_id} namespace='#{collection.namespace}" +
             " @selector=#{selector.inspect} @options=#{options.inspect}>"
       end
 
@@ -226,7 +276,7 @@ module Mongo
       #
       # @param [ Hash ] hint The index to use for the query.
       #
-      # @return [ Hash, Collection ] Either the hint or a new +Collection+.
+      # @return [ Hash, View ] Either the hint or a new +View+.
       #
       # @since 2.0.0
       def hint(hint = nil)
@@ -240,7 +290,7 @@ module Mongo
       #
       # @param [ Integer ] limit The number of docs to return.
       #
-      # @return [ Integer, Collection ] Either the limit or a new +Collection+.
+      # @return [ Integer, View ] Either the limit or a new +View+.
       #
       # @since 2.0.0
       def limit(limit = nil)
@@ -254,7 +304,7 @@ module Mongo
       #
       # @param [ Integer ] value The max number to scan.
       #
-      # @return [ Integer, Collection ] The value or a new +Collection+.
+      # @return [ Integer, View ] The value or a new +View+.
       #
       # @since 2.0.0
       def max_scan(value = nil)
@@ -268,13 +318,33 @@ module Mongo
       #
       # @param [ Hash ] value The read preference mode to use for the query.
       #
-      # @return [ Symbol, Collection ] Either the read preference or a
-      #   new +Collection+.
+      # @return [ Symbol, View ] Either the read preference or a
+      #   new +View+.
       #
       # @since 2.0.0
       def read(value = nil)
         return default_read if value.nil?
         set_option(:read, value)
+      end
+
+      # Remove documents from the collection.
+      #
+      # @example Remove multiple documents from the collection.
+      #   collection_view.remove
+      #
+      # @example Remove a single document from the collection.
+      #   collection_view.limit(1).remove
+      #
+      # @return [ Response ] The response from the database.
+      #
+      # @since 2.0.0
+      def remove
+        Operation::Write::Delete.new(
+          :deletes => [{ q: selector, limit: options[:limit] || 0 }],
+          :db_name => collection.database.name,
+          :coll_name => collection.name,
+          :write_concern => collection.write_concern
+        ).execute(next_primary.context)
       end
 
       # Set whether the disk location should be shown for each document.
@@ -284,8 +354,8 @@ module Mongo
       #
       # @param [ true, false ] value The value for the field.
       #
-      # @return [ true, false, Collection ] Either the value or a new
-      #   +Collection+.
+      # @return [ true, false, View ] Either the value or a new
+      #   +View+.
       #
       # @since 2.0.0
       def show_disk_loc(value = nil)
@@ -299,8 +369,8 @@ module Mongo
       #
       # @param [ Integer ] skip Number of docs to skip.
       #
-      # @return [ Integer, Collection ] Either the skip value or a
-      #   new +Collection+.
+      # @return [ Integer, View ] Either the skip value or a
+      #   new +View+.
       #
       # @since 2.0.0
       def skip(number = nil)
@@ -329,12 +399,37 @@ module Mongo
       #
       # @param [ Hash ] spec The attributes and directions to sort by.
       #
-      # @return [ Hash, Collection ] Either the sort setting or a
-      #   new +Collection+.
+      # @return [ Hash, View ] Either the sort setting or a
+      #   new +View+.
       #
       # @since 2.0.0
       def sort(spec = nil)
         set_option(:sort, spec)
+      end
+
+      # Update documents in the collection.
+      #
+      # @example Update multiple documents in the collection.
+      #   collection_view.update('$set' => { name: 'test' })
+      #
+      # @example Update a single document in the collection.
+      #   collection_view.limit(1).update('$set' => { name: 'test' })
+      #
+      # @return [ Response ] The response from the database.
+      #
+      # @since 2.0.0
+      def update(spec)
+        Operation::Write::Update.new(
+          :updates => [{
+            q: selector,
+            u: spec,
+            multi: (options[:limit] || 0) == 1 ? false : true,
+            upsert: false
+          }],
+          :db_name => collection.database.name,
+          :coll_name => collection.name,
+          :write_concern => collection.write_concern
+        ).execute(next_primary.context)
       end
 
       private
@@ -422,7 +517,7 @@ module Mongo
 
       def set_option(field, value)
         return options[field] if value.nil?
-        Collection.new(collection, selector, options.merge(field => value))
+        View.new(collection, selector, options.merge(field => value))
       end
     end
   end

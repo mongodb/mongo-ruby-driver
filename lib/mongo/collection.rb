@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/collection/view'
+
 module Mongo
 
   # Represents a collection in the database and operations that can directly be
@@ -103,7 +105,7 @@ module Mongo
     #
     # @since 2.0.0
     def find(selector = nil)
-      View::Collection.new(self, selector || {})
+      View.new(self, selector || {})
     end
 
     # Get a view of all indexes for this collection. Can be iterated or has
@@ -116,7 +118,7 @@ module Mongo
     #
     # @since 2.0.0
     def indexes
-      View::Index.new(self)
+      Index::View.new(self)
     end
 
     # Instantiate a new collection.
