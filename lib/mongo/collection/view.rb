@@ -422,34 +422,40 @@ module Mongo
       # @return [ Response ] The response from the database.
       #
       # @since 2.0.0
-      def update(spec)
-        Operation::Write::Update.new(
-          :updates => [{
-            q: selector,
-            u: spec,
-            multi: (options[:limit] || 0) == 1 ? false : true,
-            upsert: false
-          }],
-          :db_name => collection.database.name,
-          :coll_name => collection.name,
-          :write_concern => collection.write_concern
-        ).execute(next_primary.context)
+      def update_many(spec)
+        update(spec, true)
+      end
+
+      def update_one(spec)
+        update(spec, false)
       end
 
       private
+
+      def default_read(read = nil)
+        options[:read] || server_preference
+      end
 
       def explained?
         !!options[:explain]
       end
 
-      def initial_query_op
-        Operation::Read::Query.new(query_spec)
+      def flags
+        flags << :slave_ok if need_slave_ok?
       end
 
-      def send_initial_query(server)
-        # @todo: if mongos, don't send read pref because it's
-        # in the special selector
-        initial_query_op.execute(server.context)
+      def has_special_fields?
+        sort || hint || comment || max_scan || show_disk_loc || snapshot || explained? || cluster.sharded?
+      end
+
+      def initialize_copy(other)
+        @collection = other.collection
+        @options = other.options.dup
+        @selector = other.selector.dup
+      end
+
+      def initial_query_op
+        Operation::Read::Query.new(query_spec)
       end
 
       def read_pref_formatted
@@ -465,6 +471,10 @@ module Mongo
         ).execute(next_primary.context)
       end
 
+      def send_initial_query(server)
+        initial_query_op.execute(server.context)
+      end
+
       def special_selector
         SPECIAL_FIELDS.reduce({}) do |hash, pair|
           key, method = pair
@@ -472,6 +482,15 @@ module Mongo
           hash[key] = value if value
           hash
         end
+      end
+
+      def update(spec, multi)
+        Operation::Write::Update.new(
+          :updates => [{ q: selector, u: spec, multi: multi, upsert: false }],
+          :db_name => collection.database.name,
+          :coll_name => collection.name,
+          :write_concern => collection.write_concern
+        ).execute(next_primary.context)
       end
 
       # Get a hash of the query options.
@@ -484,28 +503,6 @@ module Mongo
           :skip   => skip,
           :limit  => to_return,
           :flags  => flags }
-      end
-
-      # The flags set on this query.
-      #
-      # @return [Array] List of flags to be set on the query message.
-      # @todo: add no_cursor_timeout option
-      def flags
-        flags << :slave_ok if need_slave_ok?
-      end
-
-      def has_special_fields?
-        sort || hint || comment || max_scan || show_disk_loc || snapshot || explained? || cluster.sharded?
-      end
-
-      def initialize_copy(other)
-        @collection = other.collection
-        @options = other.options.dup
-        @selector = other.selector.dup
-      end
-
-      def default_read(read = nil)
-        options[:read] || server_preference
       end
 
       def query_spec

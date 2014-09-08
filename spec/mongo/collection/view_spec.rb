@@ -731,7 +731,7 @@ describe Mongo::Collection::View do
     end
   end
 
-  describe '#update' do
+  describe '#update_many' do
 
     context 'when a selector was provided' do
 
@@ -744,7 +744,7 @@ describe Mongo::Collection::View do
       end
 
       let!(:response) do
-        view.update('$set'=> { field: 'testing' })
+        view.update_many('$set'=> { field: 'testing' })
       end
 
       let(:updated) do
@@ -767,7 +767,7 @@ describe Mongo::Collection::View do
       end
 
       let!(:response) do
-        view.update('$set'=> { field: 'testing' })
+        view.update_many('$set'=> { field: 'testing' })
       end
 
       let(:updated) do
@@ -784,57 +784,57 @@ describe Mongo::Collection::View do
         end
       end
     end
+  end
 
-    context 'when limiting the number updated' do
+  describe '#update_one' do
 
-      context 'when a selector was provided' do
+    context 'when a selector was provided' do
 
-        let(:selector) do
-          { field: 'test1' }
-        end
-
-        before do
-          authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
-        end
-
-        let!(:response) do
-          view.limit(1).update('$set'=> { field: 'testing' })
-        end
-
-        let(:updated) do
-          authorized_collection.find(field: 'testing').first
-        end
-
-        it 'updates the first matching document in the collection' do
-          expect(response.n).to eq(1)
-        end
-
-        it 'updates the documents in the collection' do
-          expect(updated[:field]).to eq('testing')
-        end
+      let(:selector) do
+        { field: 'test1' }
       end
 
-      context 'when no selector was provided' do
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
+      end
 
-        before do
-          authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
-        end
+      let!(:response) do
+        view.update_one('$set'=> { field: 'testing' })
+      end
 
-        let!(:response) do
-          view.limit(1).update('$set'=> { field: 'testing' })
-        end
+      let(:updated) do
+        authorized_collection.find(field: 'testing').first
+      end
 
-        let(:updated) do
-          authorized_collection.find(field: 'testing').first
-        end
+      it 'updates the first matching document in the collection' do
+        expect(response.n).to eq(1)
+      end
 
-        it 'updates the first document in the collection' do
-          expect(response.n).to eq(1)
-        end
+      it 'updates the documents in the collection' do
+        expect(updated[:field]).to eq('testing')
+      end
+    end
 
-        it 'updates the documents in the collection' do
-          expect(updated[:field]).to eq('testing')
-        end
+    context 'when no selector was provided' do
+
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+      end
+
+      let!(:response) do
+        view.update_one('$set'=> { field: 'testing' })
+      end
+
+      let(:updated) do
+        authorized_collection.find(field: 'testing').first
+      end
+
+      it 'updates the first document in the collection' do
+        expect(response.n).to eq(1)
+      end
+
+      it 'updates the documents in the collection' do
+        expect(updated[:field]).to eq('testing')
       end
     end
   end
