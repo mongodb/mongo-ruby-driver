@@ -26,7 +26,6 @@ module Mongo
       # @since 2.0.0
       class Insert
         include Executable
-        include Batchable
 
         # Initialize the insert operation.
         #
@@ -72,27 +71,12 @@ module Mongo
             raise Exception, "Must use primary server"
           end
           if context.write_command_enabled?
-            batches(context).collect do |batch|
-              op = Command::Insert.new(spec.merge(:documents => batch))
-              Response.new(op.execute(context)).verify!
-            end
+            op = Command::Insert.new(spec.merge(:documents => documents))
+            Response.new(op.execute(context)).verify!
           else
-            # Old server, bulk, GLE.
-            # Each doc needs to be sent separately.
-            if bulk? && write_concern.get_last_error
-              documents.collect do |d|
-                context.with_connection do |connection|
-                  Response.new(connection.dispatch([ message(d), gle ].compact))
-                end
-              end
-              # Old server, not bulk
-              # docs can be sent together
-            else
-              context.with_connection do |connection|
-                Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
-              end
+            context.with_connection do |connection|
+              Response.new(connection.dispatch([ message, gle ].compact)).verify!
             end
-            [ Response.new(nil, documents.size) ]
           end
         end
 
@@ -115,36 +99,19 @@ module Mongo
 
         private
 
-        # Whether this is a bulk operation.
-        #
-        # @return [ true, false ] Whether this is a bulk operation.
-        #
-        # @since 2.0.0
-        def bulk?
-          !!options[:bulk]
-        end
-
-        # The spec array element to split up when slicing this operation.
-        # This is used by the Batchable module.
-        #
-        # @return [ Symbol ] :documents
-        def batchable_key
-          :documents
-        end
-
         # Dup the list of documents in the spec if this operation is copied/duped.
         def initialize_copy(original)
           @spec = original.spec.dup
           @spec[:documents] = original.spec[:documents].dup
         end
 
-        # The documents to insert.
+        # The document(s) to insert.
         #
         # @return [ Array ] The documents.
         #
         # @since 2.0.0
         def documents
-          @spec[:documents]
+          @spec[:documents] || []
         end
 
         # The wire protocol message for this insert operation.
@@ -153,9 +120,8 @@ module Mongo
         #
         # @since 2.0.0
         def message(insert_spec = nil)
-          doc_or_docs = insert_spec ? [ insert_spec[:document] ] : documents
           insert_spec = insert_spec[:continue_on_error] == 0 ? {} : { :flags => [:continue_on_error] }
-          Protocol::Insert.new(db_name, coll_name, doc_or_docs, insert_spec)
+          Protocol::Insert.new(db_name, coll_name, documents, insert_spec)
         end
       end
     end
