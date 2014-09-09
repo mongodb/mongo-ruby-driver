@@ -17,78 +17,57 @@ require 'pp'
 include Mongo
 
 class ServerRelicaSetTest < Test::Unit::TestCase
-  TEST_DB = 'replica_set_test'
-  TEST_COLL = 'replica_set_test'
+  TEST_DB = name.underscore
+  TEST_COLL = name.underscore
 
   @@mo = Mongo::Orchestration::Service.new
 
   def setup
-    @cluster = @@mo.configure({:orchestration => 'rs', :request_content => {:id => 'replica_set_1', :preset => 'basic.json'} })
+    @cluster = @@mo.configure({:orchestration => 'replica_sets', :request_content => {:id => 'replica_set_1', :preset => 'basic.json'} })
     @client = Mongo::MongoClient.from_uri(@cluster.object['mongodb_uri'])
     @client.drop_database(TEST_DB)
     @db = @client[TEST_DB]
     @coll = @db[TEST_COLL]
+    await_replication(@coll)
+    @primary = @cluster.primary
     @admin = @client['admin']
-    @retries = 60
   end
 
   def teardown
-    @coll.remove({})
     @client.drop_database(TEST_DB)
     @cluster.delete
   end
 
-  def reattempt(n = @retries)
-    n.times do |i|
-      begin
-        yield
-        break
-      rescue Mongo::ConnectionFailure => ex
-        assert_equal("Could not checkout a socket.", ex.message)
-        print "#{i}?"
-        sleep(1)
+  def await_replication(coll)
+    coll.insert({'a' => 0}, :w => 3)
+  end
+
+  def primary_stepdown
+    if true
+      assert(@primary.stepdown.ok)
+    else
+      ex = assert_raise Mongo::ConnectionFailure do
+        @admin.command({'replSetStepDown' => 60, 'force' => true})
       end
+      assert_equal("Operation failed with the following exception: end of file reached", ex.message)
     end
-    puts
   end
 
-  test 'Replica set primary stepdown via driver' do
+  # Scenario: Primary Step Down
+  test 'Primary Step Down' do
+    # Given a basic replica set
+    # And a client connected to it
+    # When I insert a document
     @coll.insert({'a' => 1})
-    assert_equal([1], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
-
-    ex = assert_raise Mongo::OperationFailure do
-      @admin.command({'replSetStepDown' => 60})
-    end
-    assert_equal("Database command 'replSetStepDown' failed: no secondaries within 10 seconds of my optime", ex.message)
-
-    ex = assert_raise Mongo::ConnectionFailure do
-      @admin.command({'replSetStepDown' => 60, 'force' => true})
-    end
-    assert_equal("Operation failed with the following exception: end of file reached", ex.message)
-
-    reattempt do
+    # Then the insert succeeds
+    assert(@coll.find_one({'a' => 1}))
+    # When I command the primary to step down
+    primary_stepdown
+    # And I insert a document with retries
+    rescue_connection_failure do
       @coll.insert({'a' => 2})
     end
-    assert_equal([1, 2], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
+    # Then the insert succeeds (eventually)
+    assert(@coll.find_one({'a' => 2}))
   end
-
-=begin
-  test 'Replica set primary stepdown via mongo orchestration' do
-    @coll.insert({'a' => 1})
-    assert_equal([1], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
-
-    @primary_0 = @cluster.primary
-    @primary_0_resource = @cluster.sub_resource(Mongo::Orchestration::Resource, 'primary')
-    @primary_0_resource.put('stepdown')
-    pp @primary_0_resource.message_summary unless @primary_0_resource.ok
-    assert_true(@primary_0_resource.ok, 'expected primary stepdown')
-    @primary_1 = @cluster.primary
-    assert_not_equal(@primary_0.object['uri'], @primary_0.object['uri'], 'primary did not change')
-
-    reattempt do
-      @coll.insert({'a' => 2})
-    end
-    assert_equal([1, 2], @coll.find({}, :sort => [['a', Mongo::ASCENDING]]).to_a.map{|doc| doc['a']})
-  end
-=end
 end

@@ -184,6 +184,17 @@ module Mongo
       def restart
         post(nil, {body: {action: __method__}})
       end
+
+      def freeze
+        post(nil, {body: {action: __method__}})
+      end
+
+      def stepdown # TODO - mongo orchestration {replSetStepDown: 60, force: true}, then simplify this
+        begin
+          post(nil, {body: {action: __method__}})
+        end until ok
+        self
+      end
     end
 
     class ReplicaSet < Cluster
