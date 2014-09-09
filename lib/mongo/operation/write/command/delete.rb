@@ -27,12 +27,12 @@ module Mongo
         #   include Mongo
         #   include Operation
         #   Write::Command::Delete.new({ :deletes       => [{ :q => { :foo => 1 },
-        #                                                          :limit => 1 }],
-        #                                     :db_name       => 'test',
-        #                                     :coll_name     => 'test_coll',
-        #                                     :write_concern => write_concern,
-        #                                     :ordered       => true
-        #                                   })
+        #                                                     :limit => 1 }],
+        #                                :db_name       => 'test',
+        #                                :coll_name     => 'test_coll',
+        #                                :write_concern => write_concern,
+        #                                :ordered       => true
+        #                             })
         #
         # @since 2.0.0
         class Delete

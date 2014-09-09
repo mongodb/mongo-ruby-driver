@@ -33,8 +33,8 @@ module Mongo
         # @example
         #   include Mongo
         #   include Operation
-        #   Write::Delete.new({ :deletes       => [{ :q => { :foo => 1 },
-        #                                            :limit => 1 }],
+        #   Write::Delete.new({ :delete        => { :q => { :foo => 1 },
+        #                                           :limit => 1 },
         #                       :db_name       => 'test',
         #                       :coll_name     => 'test_coll',
         #                       :write_concern => write_concern
@@ -42,15 +42,13 @@ module Mongo
         #
         # @param [ Hash ] spec The specifications for the delete.
         #
-        # @option spec :deletes [ Array ] The delete documents.
+        # @option spec :delete [ Array ] The delete document.
         # @option spec :db_name [ String ] The name of the database on which
         #   the delete should be executed.
         # @option spec :coll_name [ String ] The name of the collection on which
         #   the delete should be executed.
         # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern
         #   for this operation.
-        # @option spec :ordered [ true, false ] Whether the operations should be
-        #   executed in order.
         # @option spec :options [Hash] Options for the command, if it ends up being a
         #   write command.
         #
@@ -74,64 +72,24 @@ module Mongo
             raise Exception, "Must use primary server"
           end
           if context.write_command_enabled?
-            batches = spec[slicable_key].each_slice(context.max_write_batch_size).to_a
-            batches.each do |dels|
-              op = Command::Delete.new(spec.merge(:deletes => dels))
-              Response.new(op.execute(context)).verify!
-            end
+            op = Command::Delete.new(spec.merge(:deletes => [ delete ]))
+            Response.new(op.execute(context)).verify!
           else
-            deletes.collect do |d|
-              Response.new(nil, deletes.reduce(0) do |count, d|
-                context.with_connection do |connection|
-                  response = Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
-                  count + response.n
-                end
-              end)
+            context.with_connection do |connection|
+              Response.new(connection.dispatch([ message, gle ].compact)).verify!
             end
-            [ Response.new(nil, deletes.size) ]
           end
-        end
-
-        # Merge another delete operation with this one.
-        # Requires that the collection and database of the two ops are the same.
-        #
-        # @params[ Mongo::Operation::Write::Delete ] The other delete operation.
-        #
-        # @return [ self ] This object with the list of deletes merged.
-        #
-        # @since 2.0.0
-        def merge!(other)
-          # @todo: use specific exception
-          raise Exception, "Cannot merge" unless self.class == other.class &&
-              coll_name == other.coll_name &&
-              db_name == other.db_name
-          @spec[:deletes] << other.spec[:deletes]
-          self
         end
 
         private
 
-        # The spec array element to split up when slicing this operation.
-        # This is used by the Slicable module.
+        # The delete document.
         #
-        # @return [ Symbol ] :deletes
-        def slicable_key
-          :deletes
-        end
-
-        # Dup the list of deletes in the spec if this operation is copied/duped.
-        def initialize_copy(original)
-          @spec = original.spec.dup
-          @spec[:deletes] = original.spec[:deletes].clone
-        end
-
-        # The delete documents.
-        #
-        # @return [ Array ] The delete documents.
+        # @return [ Array ] The delete document.
         #
         # @since 2.0.0
-        def deletes
-          @spec[:deletes]
+        def delete
+          @spec[:delete]
         end
 
         # The wire protocol message for this delete operation.
@@ -139,9 +97,9 @@ module Mongo
         # @return [ Mongo::Protocol::Delete ] Wire protocol message.
         #
         # @since 2.0.0
-        def message(delete_spec)
-          selector    = delete_spec[:q]
-          delete_options = (delete_spec[:limit] || 0) <= 0 ? {} : { :flags => [:single_remove] }
+        def message
+          selector = delete[:q]
+          delete_options = (delete[:limit] || 0) <= 0 ? {} : { :flags => [:single_remove] }
           Protocol::Delete.new(db_name, coll_name, selector, delete_options)
         end
       end
