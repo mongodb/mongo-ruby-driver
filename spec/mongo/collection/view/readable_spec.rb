@@ -20,8 +20,45 @@ describe Mongo::Collection::View::Readable do
 
   describe '#aggregate' do
 
-    context 'when explaining the aggregation' do
+     let(:documents) do
+      [
+        { city: "Berlin", pop: 18913, neighborhood: "Kreuzberg" },
+        { city: "Berlin", pop: 84143, neighborhood: "Mitte" },
+        { city: "New York", pop: 40270, neighborhood: "Brooklyn" }
+      ]
+    end
 
+    let(:pipeline) do
+      [{
+        "$group" => {
+          "_id" => "$city",
+          "totalpop" => { "$sum" => "$pop" }
+        }
+      }]
+    end
+
+    before do
+      authorized_collection.insert_many(documents)
+    end
+
+    let(:aggregation) do
+      view.aggregate(pipeline)
+    end
+
+    context 'when not iterating the aggregation' do
+
+      it 'returns the aggregation object' do
+        expect(aggregation).to be_a(Mongo::Collection::View::Aggregation)
+      end
+    end
+
+    context 'when iterating the aggregation' do
+
+      it 'yields to each document' do
+        aggregation.each do |doc|
+          expect(doc[:totalpop]).to_not be_nil
+        end
+      end
     end
   end
 

@@ -36,6 +36,23 @@ module Mongo
           :$explain => :explained?
         }.freeze
 
+        # Execute an aggregation on the collection view.
+        #
+        # @example Aggregate documents.
+        #   view.aggregate([
+        #     { "$group" => { "_id" => "$city", "tpop" => { "$sum" => "$pop" }}}
+        #   ])
+        #
+        # @param [ Array<Hash> ] pipeline The aggregation pipeline.
+        # @param [ Hash ] options The aggregation options.
+        #
+        # @return [ Aggregation ] The aggregation object.
+        #
+        # @since 2.0.0
+        def aggregate(pipeline, options = {})
+          Aggregation.new(self, pipeline, options)
+        end
+
         # The number of documents returned in each batch of results from MongoDB.
         #
         # @example Set the batch size.
