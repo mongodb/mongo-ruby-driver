@@ -45,10 +45,8 @@ class WriteConcernTest < Test::Unit::TestCase
   # Scenario: Replicated insert, update and delete timeout with W failure
   test 'Primary Step Down' do
     # Given a basic replica set
-    # When I insert a document with the write concern { “w”: <nodes + 1>, “timeout”: 1}
-    # Then the insert throws an exception
-    p @cluster
-    @coll.insert({'a' => 1}, :w => n_plus_1)
+    # When I insert a document
+    @coll.insert({'a' => 1})
     # Then the insert succeeds
     assert(@coll.find_one({'a' => 1}))
     # When I command the primary to step down
@@ -60,10 +58,4 @@ class WriteConcernTest < Test::Unit::TestCase
     # Then the insert succeeds (eventually)
     assert(@coll.find_one({'a' => 2}))
   end
-
-  # When I update a document with the write concern { “w”: <nodes + 1>, “timeout”: 1}
-  # Then the update throws an exception
-  # When I delete a document with the write concern { “w”: <nodes + 1>, “timeout”: 1}
-  # Then the delete throws an exception
-
 end
