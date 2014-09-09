@@ -8,8 +8,7 @@ describe Mongo::Operation::Write::Delete do
     { :delete        => delete,
       :db_name       => db_name,
       :coll_name     => coll_name,
-      :write_concern => write_concern,
-      :ordered       => true
+      :write_concern => write_concern
     }
   end
 
