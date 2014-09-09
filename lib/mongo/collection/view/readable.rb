@@ -255,10 +255,6 @@ module Mongo
           sort || hint || comment || max_scan || show_disk_loc || snapshot || explained? || cluster.sharded?
         end
 
-        def immutable(opts)
-          View.new(collection, selector, opts)
-        end
-
         def primary?
           read.name == :primary
         end

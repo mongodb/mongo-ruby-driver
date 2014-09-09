@@ -79,8 +79,8 @@ module Mongo
 
         private
 
-        def immutable(opts)
-          Aggregation.new(view, pipeline, opts)
+        def new(options)
+          Aggregation.new(view, pipeline, options)
         end
 
         def explain_options

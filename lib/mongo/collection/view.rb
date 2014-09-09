@@ -173,6 +173,10 @@ module Mongo
         Operation::Read::Query.new(query_spec)
       end
 
+      def new(options)
+        View.new(collection, selector, options)
+      end
+
       def send_initial_query(server)
         initial_query_op.execute(server.context)
       end

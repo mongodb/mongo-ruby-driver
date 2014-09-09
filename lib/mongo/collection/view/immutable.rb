@@ -29,7 +29,7 @@ module Mongo
         #   be instantiated.
         def configure(field, value)
           return options[field] if value.nil?
-          immutable(options.merge(field => value))
+          new(options.merge(field => value))
         end
       end
     end
