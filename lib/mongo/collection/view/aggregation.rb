@@ -20,6 +20,7 @@ module Mongo
       #
       # @since 2.0.0
       class Aggregation
+        extend Forwardable
         include Enumerable
         include Immutable
         include Explainable
@@ -28,6 +29,12 @@ module Mongo
         attr_reader :view
         # @return [ Array<Hash> ] pipeline The aggregation pipeline.
         attr_reader :pipeline
+
+        # Delegate necessary operations to the view.
+        def_delegators :view, :collection
+
+        # Delegate necessary operations to the collection.
+        def_delegators :collection, :database
 
         # Set to true if disk usage is allowed during the aggregation.
         #
@@ -59,8 +66,24 @@ module Mongo
           configure(:cursor, value)
         end
 
+        # Iterator over the results of the aggregation.
+        #
+        # @example Iterate over the results.
+        #   aggregation.each do |doc|
+        #     p doc
+        #   end
+        #
+        # @yieldparam [ BSON::Document ] Each returned document.
+        #
+        # @return [ Enumerator ] The enumerator.
+        #
+        # @since 2.0.0
         def each
-
+          enumerator = send_initial_query.documents.first['result'].to_enum
+          if block_given?
+            enumerator.each{ |document| yield document }
+          end
+          enumerator
         end
 
         # Initialize the aggregation for the provided collection view, pipeline
@@ -79,12 +102,20 @@ module Mongo
 
         private
 
-        def new(options)
-          Aggregation.new(view, pipeline, options)
+        def aggregate_spec
+          { :aggregate => collection.name, :pipeline => pipeline }.merge!(options)
         end
 
         def explain_options
           { :explain => true }
+        end
+
+        def new(options)
+          Aggregation.new(view, pipeline, options)
+        end
+
+        def send_initial_query
+          database.command(aggregate_spec)
         end
       end
     end

@@ -48,6 +48,56 @@ describe Mongo::Collection::View::Aggregation do
     end
   end
 
+  describe '#each' do
+
+     let(:documents) do
+      [
+        { city: "Berlin", pop: 18913, neighborhood: "Kreuzberg" },
+        { city: "Berlin", pop: 84143, neighborhood: "Mitte" },
+        { city: "New York", pop: 40270, neighborhood: "Brooklyn" }
+      ]
+    end
+
+    let(:pipeline) do
+      [{
+        "$group" => {
+          "_id" => "$city",
+          "totalpop" => { "$sum" => "$pop" }
+        }
+      }]
+    end
+
+    before do
+      authorized_collection.insert_many(documents)
+    end
+
+    after do
+      authorized_collection.find.remove_many
+    end
+
+    context 'when a block is provided' do
+
+      context 'when no cursor option is set' do
+
+        it 'yields to each document' do
+          aggregation.each do |doc|
+            expect(doc[:totalpop]).to_not be_nil
+          end
+        end
+      end
+    end
+
+    context 'when no block is provided' do
+
+      context 'when no cursor option is set' do
+
+        it 'returns an enumerator' do
+          expect(aggregation.each).to be_a(Enumerator)
+        end
+      end
+    end
+  end
+
   describe '#initialize' do
 
     let(:options) do
