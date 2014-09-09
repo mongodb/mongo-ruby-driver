@@ -13,7 +13,7 @@
 # limitations under the License.
 
 require 'mongo/operation/executable'
-require 'mongo/operation/slicable'
+require 'mongo/operation/batchable'
 require 'mongo/operation/verifiable'
 require 'mongo/operation/read'
 require 'mongo/operation/write'
