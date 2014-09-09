@@ -16,7 +16,7 @@ require 'test_helper'
 require 'pp'
 include Mongo
 
-class ShardedClusterTest < Test::Unit::TestCase
+class ServerShardedClusterTest < Test::Unit::TestCase
   TEST_DB = name.underscore
   TEST_COLL = name.underscore
 
@@ -38,8 +38,8 @@ class ShardedClusterTest < Test::Unit::TestCase
 
   # Scenario: mongos Router Failover - Failure and Recovery
   test 'mongos Router Failover - Failure and Recovery' do
-    # Given a sharded cluster with two routers A and B
-    # And a client configured with seeds A and B
+    # Given a basic sharded cluster
+    # And a client connected to it
     # When I insert a document
     @coll.insert({'a' => 1})
     # Then the insert succeeds
@@ -83,8 +83,8 @@ class ShardedClusterTest < Test::Unit::TestCase
 
   # Scenario: mongos Router Restart
   test "mongos Router Restart" do
-    # Given a sharded cluster with two routers A and B
-    # And a client configured with seeds A and B
+    # Given a basic sharded cluster
+    # And a client connected to it
     # When I insert a document
     @coll.insert({'a' => 1})
     # Then the insert succeeds

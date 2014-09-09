@@ -16,7 +16,7 @@ require 'test_helper'
 require 'pp'
 include Mongo
 
-class RelicaSetTest < Test::Unit::TestCase
+class ServerRelicaSetTest < Test::Unit::TestCase
   TEST_DB = 'replica_set_test'
   TEST_COLL = 'replica_set_test'
 

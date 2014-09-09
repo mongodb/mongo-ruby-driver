@@ -16,7 +16,7 @@ require 'test_helper'
 require 'pp'
 include Mongo
 
-class StandaloneTest < Test::Unit::TestCase
+class ServerStandaloneTest < Test::Unit::TestCase
   TEST_DB = name.underscore
   TEST_COLL = name.underscore
 
@@ -37,8 +37,8 @@ class StandaloneTest < Test::Unit::TestCase
 
   # Scenario: Server Failure and Recovery
   test 'Server Failure and Recovery' do
-    # Given a standalone server A
-    # And a client configured with seed A
+    # Given a basic standalone server
+    # And a client connected to it
     # When I insert a document
     @coll.insert({'a' => 1})
     # Then the insert succeeds
@@ -60,8 +60,8 @@ class StandaloneTest < Test::Unit::TestCase
 
   # Scenario: Server Restart
   test 'Server Restart' do
-    # Given a standalone server A
-    # And a client configured with seed A
+    # Given a basic standalone server
+    # And a client connected to it
     # When I insert a document
     @coll.insert({'a' => 1})
     # Then the insert succeeds
