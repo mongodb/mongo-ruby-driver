@@ -43,13 +43,16 @@ module Mongo
     # @param [ CollectionView ] view The +CollectionView+ defining the query.
     # @param [ Protocol::Reply ] response The response from the server.
     # @param [ Server ] server The server this cursor is locked to.
+    # @param [ true, false ] command_reply If the documents to be iterated are in a
+    #   'results' field on the first document.
     #
     # @since 2.0.0
-    def initialize(view, reply, server)
+    def initialize(view, reply, server, command_reply = false)
       @view = view
       @server = server
       @initial_reply = reply
       @remaining = limit if limited?
+      @command_reply = command_reply
     end
 
     # Get a human-readable string representation of +Cursor+.
@@ -126,7 +129,11 @@ module Mongo
     def process(reply)
       @remaining -= reply.number_returned if limited?
       @cursor_id = reply.cursor_id
-      reply.documents
+      command_reply? ? reply.documents.first['result'] : reply.documents
+    end
+
+    def command_reply?
+      !!@command_reply
     end
 
     def to_return

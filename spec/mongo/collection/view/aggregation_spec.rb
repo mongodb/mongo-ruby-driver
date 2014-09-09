@@ -37,17 +37,6 @@ describe Mongo::Collection::View::Aggregation do
     end
   end
 
-  describe '#cursor' do
-
-    let(:new_agg) do
-      aggregation.cursor(true)
-    end
-
-    it 'sets the value in the options' do
-      expect(new_agg.cursor).to be true
-    end
-  end
-
   describe '#each' do
 
      let(:documents) do
@@ -77,23 +66,17 @@ describe Mongo::Collection::View::Aggregation do
 
     context 'when a block is provided' do
 
-      context 'when no cursor option is set' do
-
-        it 'yields to each document' do
-          aggregation.each do |doc|
-            expect(doc[:totalpop]).to_not be_nil
-          end
+      it 'yields to each document' do
+        aggregation.each do |doc|
+          expect(doc[:totalpop]).to_not be_nil
         end
       end
     end
 
     context 'when no block is provided' do
 
-      context 'when no cursor option is set' do
-
-        it 'returns an enumerator' do
-          expect(aggregation.each).to be_a(Enumerator)
-        end
+      it 'returns an enumerated cursor' do
+        expect(aggregation.each).to be_a(Enumerator)
       end
     end
   end

@@ -31,7 +31,7 @@ module Mongo
         #
         # @since 2.0.0
         def inspect
-          "#<Mongo::Operation::Write::Command::Response:#{object_id} written=#{n} documents=#{documents}>"
+          "#<Mongo::Operation::Command::Response:#{object_id} written=#{n} documents=#{documents}>"
         end
 
         # Verify the response by checking for any errors.

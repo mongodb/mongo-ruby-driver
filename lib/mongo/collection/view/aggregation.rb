@@ -31,7 +31,7 @@ module Mongo
         attr_reader :pipeline
 
         # Delegate necessary operations to the view.
-        def_delegators :view, :collection
+        def_delegators :view, :collection, :read, :cluster
 
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database
@@ -51,21 +51,6 @@ module Mongo
           configure(:allowDiskUse, value)
         end
 
-        # Set to true if a cursor should be used during iteration.
-        #
-        # @example Set the cursor flag.
-        #   aggregation.cursor(true)
-        #
-        # @param [ true, false ] value The flag value.
-        #
-        # @return [ true, false, Aggregation ] The aggregation if a value was
-        #   set or the value if used as a getter.
-        #
-        # @since 2.0.0
-        def cursor(value = nil)
-          configure(:cursor, value)
-        end
-
         # Iterator over the results of the aggregation.
         #
         # @example Iterate over the results.
@@ -79,11 +64,12 @@ module Mongo
         #
         # @since 2.0.0
         def each
-          enumerator = send_initial_query.documents.first['result'].to_enum
+          server = read.select_servers(cluster.servers).first
+          cursor = Cursor.new(view, send_initial_query(server), server, true).to_enum
           if block_given?
-            enumerator.each{ |document| yield document }
+            cursor.each{ |document| yield document }
           end
-          enumerator
+          cursor
         end
 
         # Initialize the aggregation for the provided collection view, pipeline
@@ -103,7 +89,12 @@ module Mongo
         private
 
         def aggregate_spec
-          { :aggregate => collection.name, :pipeline => pipeline }.merge!(options)
+          {
+            :selector =>
+              { :aggregate => collection.name, :pipeline => pipeline }.merge!(options),
+            :db_name => database.name,
+            :options => view.options
+          }
         end
 
         def explain_options
@@ -114,8 +105,12 @@ module Mongo
           Aggregation.new(view, pipeline, options)
         end
 
-        def send_initial_query
-          database.command(aggregate_spec)
+        def initial_query_op
+          Operation::Command.new(aggregate_spec)
+        end
+
+        def send_initial_query(server)
+          initial_query_op.execute(server.context).reply
         end
       end
     end
