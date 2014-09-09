@@ -26,7 +26,7 @@ module Mongo
       # @since 2.0.0
       class Update
         include Executable
-        include Slicable
+        include Batchable
 
         # Initialize the update operation.
         #
@@ -113,10 +113,10 @@ module Mongo
         private
 
         # The spec array element to split up when slicing this operation.
-        # This is used by the Slicable module.
+        # This is used by the Batchable module.
         #
         # @return [ Symbol ] :updates
-        def slicable_key
+        def batchable_key
           :updates
         end
 

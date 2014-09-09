@@ -26,7 +26,7 @@ module Mongo
       # @since 2.0.0
       class Insert
         include Executable
-        include Slicable
+        include Batchable
 
         # Initialize the insert operation.
         #
@@ -121,14 +121,14 @@ module Mongo
         #
         # @since 2.0.0
         def bulk?
-          !!opts[:bulk]
+          !!options[:bulk]
         end
 
         # The spec array element to split up when slicing this operation.
-        # This is used by the Slicable module.
+        # This is used by the Batchable module.
         #
         # @return [ Symbol ] :documents
-        def slicable_key
+        def batchable_key
           :documents
         end
 
