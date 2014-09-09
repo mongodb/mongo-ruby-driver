@@ -15,7 +15,7 @@
 module Mongo
   module Operation
     module Write
-      class BatchDelete
+      class BulkDelete
 
         # Response wrapper for batch delete operations.
         #

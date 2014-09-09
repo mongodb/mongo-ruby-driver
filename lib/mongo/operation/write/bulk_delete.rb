@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/batch_delete/response'
+require 'mongo/operation/write/bulk_delete/response'
 
 module Mongo
   module Operation
@@ -24,16 +24,16 @@ module Mongo
       # See Mongo::Operation::Write::Command::Delete
       #
       # @since 2.0.0
-      class BatchDelete
+      class BulkDelete
         include Executable
         include Batchable
 
-        # Initialize the batch delete operation.
+        # Initialize the bulk delete operation.
         #
         # @example
         #   include Mongo
         #   include Operation
-        #   Write::BatchDelete.new({ :deletes       => [{ :q => { :foo => 1 },
+        #   Write::BulkDelete.new({ :deletes        => [{ :q => { :foo => 1 },
         #                                                 :limit => 1 }],
         #                            :db_name       => 'test',
         #                            :coll_name     => 'test_coll',

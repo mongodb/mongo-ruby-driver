@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Write::BatchDelete do
+describe Mongo::Operation::Write::BulkDelete do
   include_context 'operation'
 
   let(:deletes) { [{:q => { :foo => 1 }, :limit => 1}] }
