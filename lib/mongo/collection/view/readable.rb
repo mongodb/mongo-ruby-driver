@@ -34,7 +34,7 @@ module Mongo
           :$maxScan => :max_scan,
           :$showDiskLoc => :show_disk_loc,
           :$explain => :explained?
-        }
+        }.freeze
 
         # The number of documents returned in each batch of results from MongoDB.
         #
@@ -50,7 +50,7 @@ module Mongo
         #
         # @since 2.0.0
         def batch_size(batch_size = nil)
-          set_option(:batch_size, batch_size)
+          configure(:batch_size, batch_size)
         end
 
         # Associate a comment with the query.
@@ -68,7 +68,7 @@ module Mongo
         #
         # @since 2.0.0
         def comment(comment = nil)
-          set_option(:comment, comment)
+          configure(:comment, comment)
         end
 
         # Get a count of matching documents in the collection.
@@ -120,7 +120,7 @@ module Mongo
         #
         # @since 2.0.0
         def projection(spec = nil)
-          set_option(:projection, spec)
+          configure(:projection, spec)
         end
 
         # The index that MongoDB will be forced to use for the query.
@@ -134,7 +134,7 @@ module Mongo
         #
         # @since 2.0.0
         def hint(hint = nil)
-          set_option(:hint, hint)
+          configure(:hint, hint)
         end
 
         # The max number of docs to return from the query.
@@ -148,7 +148,7 @@ module Mongo
         #
         # @since 2.0.0
         def limit(limit = nil)
-          set_option(:limit, limit)
+          configure(:limit, limit)
         end
 
         # Set the max number of documents to scan.
@@ -162,7 +162,7 @@ module Mongo
         #
         # @since 2.0.0
         def max_scan(value = nil)
-          set_option(:max_scan, value)
+          configure(:max_scan, value)
         end
 
         # The read preference to use for the query.
@@ -178,7 +178,7 @@ module Mongo
         # @since 2.0.0
         def read(value = nil)
           return default_read if value.nil?
-          set_option(:read, value)
+          configure(:read, value)
         end
 
         # Set whether the disk location should be shown for each document.
@@ -193,7 +193,7 @@ module Mongo
         #
         # @since 2.0.0
         def show_disk_loc(value = nil)
-          set_option(:show_disk_loc, value)
+          configure(:show_disk_loc, value)
         end
 
         # The number of docs to skip before returning results.
@@ -208,7 +208,7 @@ module Mongo
         #
         # @since 2.0.0
         def skip(number = nil)
-          set_option(:skip, number)
+          configure(:skip, number)
         end
 
         # Set the snapshot value for the view.
@@ -223,7 +223,7 @@ module Mongo
         #
         # @since 2.0.0
         def snapshot(value = nil)
-          set_option(:snapshot, value)
+          configure(:snapshot, value)
         end
 
         # The key and direction pairs by which the result set will be sorted.
@@ -238,7 +238,7 @@ module Mongo
         #
         # @since 2.0.0
         def sort(spec = nil)
-          set_option(:sort, spec)
+          configure(:sort, spec)
         end
 
         private
@@ -253,6 +253,10 @@ module Mongo
 
         def has_special_fields?
           sort || hint || comment || max_scan || show_disk_loc || snapshot || explained? || cluster.sharded?
+        end
+
+        def immutable(opts)
+          View.new(collection, selector, opts)
         end
 
         def primary?
@@ -273,11 +277,6 @@ module Mongo
 
         def read_pref_formatted
           read.to_mongos
-        end
-
-        def set_option(field, value)
-          return options[field] if value.nil?
-          View.new(collection, selector, options.merge(field => value))
         end
 
         def special_selector

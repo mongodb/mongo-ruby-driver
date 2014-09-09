@@ -18,7 +18,13 @@ describe Mongo::Collection::View::Readable do
     authorized_collection.find.remove_many
   end
 
-  pending '#aggregate'
+  describe '#aggregate' do
+
+    context 'when explaining the aggregation' do
+
+    end
+  end
+
   pending '#map_reduce'
 
   describe '#batch_size' do

@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/collection/view/immutable'
 require 'mongo/collection/view/explainable'
+require 'mongo/collection/view/aggregation'
 require 'mongo/collection/view/readable'
 require 'mongo/collection/view/writable'
 
@@ -37,6 +39,7 @@ module Mongo
     class View
       extend Forwardable
       include Enumerable
+      include Immutable
       include Readable
       include Explainable
       include Writable
@@ -45,8 +48,6 @@ module Mongo
       attr_reader :collection
       # @return [ Hash ] The query selector.
       attr_reader :selector
-      # @return [ Hash ] The additional query options.
-      attr_reader :options
 
       # Delegate necessary operations to the collection.
       def_delegators :collection, :client, :cluster, :database, :server_preference, :write_concern
@@ -116,7 +117,7 @@ module Mongo
       # @example Find all users named Emily using a specific read preference.
       #   View.new(collection, {:name => 'Emily'}, :read => :secondary_preferred)
       #
-      # @param [ View ] collection The +View+ to query.
+      # @param [ Collection ] collection The +Collection+ to query.
       # @param [ Hash ] selector The query selector.
       # @param [ Hash ] options The additional query options.
       #
