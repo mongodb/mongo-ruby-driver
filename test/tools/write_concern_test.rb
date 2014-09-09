@@ -43,27 +43,23 @@ class WriteConcernTest < Test::Unit::TestCase
   end
 
   # Scenario: Replicated insert, update and delete timeout with W failure
-  test 'Primary Step Down' do
+  test 'Replicated insert, update and delete timeout with W failure' do
     # Given a basic replica set
     # When I insert a document with the write concern { “w”: <nodes + 1>, “timeout”: 1}
-    # Then the insert throws an exception
-    p @cluster
-    @coll.insert({'a' => 1}, :w => n_plus_1)
-    # Then the insert succeeds
-    assert(@coll.find_one({'a' => 1}))
-    # When I command the primary to step down
-    assert(@primary.stepdown.ok)
-    # And I insert a document with retries
-    rescue_connection_failure do
-      @coll.insert({'a' => 2})
+    # Then the insert fails write concern
+    assert_raise Mongo::WriteConcernError do
+      @coll.insert({'a' => 1}, :w => @n + 1, :wtimeout => 1)
     end
-    # Then the insert succeeds (eventually)
-    assert(@coll.find_one({'a' => 2}))
+    # When I update a document with the write concern { “w”: <nodes + 1>, “timeout”: 1}
+    # Then the update fails write concern
+    assert_raise Mongo::WriteConcernError do
+      @coll.update({'a' => 2}, {}, :w => @n + 1, :wtimeout => 1, :upsert => true)
+    end
+    # When I delete a document with the write concern { “w”: <nodes + 1>, “timeout”: 1}
+    # Then the delete fails write concern
+    @coll.insert({'a' => 3}, :w => @n)
+    assert_raise Mongo::WriteConcernError do
+      @coll.remove({'a' => 3}, :w => @n + 1, :wtimeout => 1)
+    end
   end
-
-  # When I update a document with the write concern { “w”: <nodes + 1>, “timeout”: 1}
-  # Then the update throws an exception
-  # When I delete a document with the write concern { “w”: <nodes + 1>, “timeout”: 1}
-  # Then the delete throws an exception
-
 end

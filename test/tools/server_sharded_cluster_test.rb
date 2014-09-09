@@ -39,7 +39,6 @@ class ServerShardedClusterTest < Test::Unit::TestCase
   # Scenario: mongos Router Failover - Failure and Recovery
   test 'mongos Router Failover - Failure and Recovery' do
     # Given a basic sharded cluster
-    # And a client connected to it
     # When I insert a document
     @coll.insert({'a' => 1})
     # Then the insert succeeds
@@ -84,7 +83,6 @@ class ServerShardedClusterTest < Test::Unit::TestCase
   # Scenario: mongos Router Restart
   test "mongos Router Restart" do
     # Given a basic sharded cluster
-    # And a client connected to it
     # When I insert a document
     @coll.insert({'a' => 1})
     # Then the insert succeeds

@@ -38,7 +38,6 @@ class ServerStandaloneTest < Test::Unit::TestCase
   # Scenario: Server Failure and Recovery
   test 'Server Failure and Recovery' do
     # Given a basic standalone server
-    # And a client connected to it
     # When I insert a document
     @coll.insert({'a' => 1})
     # Then the insert succeeds
@@ -61,7 +60,6 @@ class ServerStandaloneTest < Test::Unit::TestCase
   # Scenario: Server Restart
   test 'Server Restart' do
     # Given a basic standalone server
-    # And a client connected to it
     # When I insert a document
     @coll.insert({'a' => 1})
     # Then the insert succeeds
