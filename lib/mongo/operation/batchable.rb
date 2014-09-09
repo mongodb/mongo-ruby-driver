@@ -84,7 +84,10 @@ module Mongo
       #
       # @since 2.0.0
       def batches(context)
-        spec[batchable_key].each_slice(context.max_write_batch_size).to_a
+        if spec[batchable_key].size < context.max_write_batch_size
+          spec[batchable_key]
+        end
+        #spec[batchable_key].each_slice(context.max_write_batch_size).to_a
       end
     end
   end
