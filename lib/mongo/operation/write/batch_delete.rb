@@ -74,10 +74,10 @@ module Mongo
             raise Exception, "Must use primary server"
           end
           if context.write_command_enabled?
-            puts "batches is #{batches(context)}"
             Response.new(nil, batches(context).reduce(0) do |count, d|
               context.with_connection do |connection|
-                response = Response.new(connection.dispatch([ message(d), gle ].compact))
+                op = Command::Delete.new(spec.merge(:deletes => deletes))
+                response = Response.new(op.execute)
                 response.verify! if ordered?
                 count + response.n
               end
