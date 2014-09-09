@@ -26,7 +26,6 @@ module Mongo
       # @since 2.0.0
       class Delete
         include Executable
-        include Slicable
 
         # Initialize the delete operation.
         #
