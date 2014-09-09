@@ -97,7 +97,7 @@ module Mongo
     # @since 2.0.0
     def initialize(address, options = {})
       @address = Address.new(address)
-      @options = options
+      @options = options.freeze
       @mutex = Mutex.new
       @monitor = Monitor.new(self, options)
       @description = Description.new(self)

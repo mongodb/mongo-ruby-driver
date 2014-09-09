@@ -135,7 +135,7 @@ module Mongo
       raise InvalidName.new unless name
       @database = database
       @name = name.to_s.freeze
-      @options = options
+      @options = options.freeze
     end
 
     # Insert a single document into the collection.

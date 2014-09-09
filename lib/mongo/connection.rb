@@ -123,7 +123,7 @@ module Mongo
     # @since 2.0.0
     def initialize(server, options = {})
       @address = server.address
-      @options = options
+      @options = options.freeze
       @server = server
       @ssl_options = options.reject { |k, v| !k.to_s.start_with?('ssl') }
       @socket = nil

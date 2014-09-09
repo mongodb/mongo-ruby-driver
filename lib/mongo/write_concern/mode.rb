@@ -49,7 +49,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(options)
-        @options = options
+        @options = options.freeze
       end
 
       private

@@ -68,7 +68,7 @@ module Mongo
       # @since 2.0.0
       def initialize(server, options = {})
         @server = server
-        @options = options
+        @options = options.freeze
 
         # @note We reject the user option here as the ismaster command should
         # be able to run without being authorized.

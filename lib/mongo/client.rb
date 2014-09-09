@@ -215,14 +215,14 @@ module Mongo
 
     def create_from_addresses(addresses, options = {})
       @cluster = Cluster.new(self, addresses, options)
-      @options = options
+      @options = options.freeze
       @database = Database.new(self, options[:database])
     end
 
     def create_from_uri(connection_string)
       uri = URI.new(connection_string)
       @cluster = Cluster.new(self, uri.servers)
-      @options = uri.client_options
+      @options = uri.client_options.freeze
       @database = Database.new(self, options[:database])
     end
   end

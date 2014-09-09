@@ -88,7 +88,7 @@ module Mongo
     def initialize(client, addresses, options = {})
       @client = client
       @addresses = addresses
-      @options = options
+      @options = options.freeze
       @mode = Mode.get(options)
       @servers = addresses.map do |address|
         Server.new(address, options).tap do |server|

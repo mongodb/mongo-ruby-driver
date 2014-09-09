@@ -72,7 +72,7 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(options = {}, &block)
-      @options = options
+      @options = options.freeze
       @queue = Queue.new(pool_size, &block)
     end
 
