@@ -1,0 +1,457 @@
+require 'spec_helper'
+
+describe Mongo::Collection::View::Readable do
+
+  let(:selector) do
+    {}
+  end
+
+  let(:options) do
+    {}
+  end
+
+  let(:view) do
+    Mongo::Collection::View.new(authorized_collection, selector, options)
+  end
+
+  after do
+    authorized_collection.find.remove_many
+  end
+
+  pending '#aggregate'
+  pending '#map_reduce'
+
+  describe '#batch_size' do
+
+    let(:options) do
+      { :batch_size => 13 }
+    end
+
+    context 'when a batch size is specified' do
+
+      let(:new_batch_size) do
+        15
+      end
+
+      it 'sets the batch size' do
+        new_view = view.batch_size(new_batch_size)
+        expect(new_view.batch_size).to eq(new_batch_size)
+      end
+
+      it 'returns a new Collection' do
+        expect(view.batch_size(new_batch_size)).not_to be(view)
+      end
+    end
+
+    context 'when a batch size is not specified' do
+
+      it 'returns the batch_size' do
+        expect(view.batch_size).to eq(options[:batch_size])
+      end
+    end
+  end
+
+  describe '#comment' do
+
+    let(:options) do
+      { :comment => 'test1' }
+    end
+
+    context 'when a comment is specified' do
+
+      let(:new_comment) do
+        'test2'
+      end
+
+      it 'sets the comment' do
+        new_view = view.comment(new_comment)
+        expect(new_view.comment).to eq(new_comment)
+      end
+
+      it 'returns a new Collection' do
+        expect(view.comment(new_comment)).not_to be(view)
+      end
+    end
+
+    context 'when a comment is not specified' do
+
+      it 'returns the comment' do
+        expect(view.comment).to eq(options[:comment])
+      end
+    end
+  end
+
+  describe '#count' do
+
+    let(:documents) do
+      (1..10).map{ |i| { field: "test#{i}" }}
+    end
+
+    before do
+      authorized_collection.insert_many(documents)
+    end
+
+    after do
+      authorized_collection.find.remove_many
+    end
+
+    context 'when a selector is provided' do
+
+      let(:selector) do
+        { field: 'test1' }
+      end
+
+      it 'returns the count of matching documents' do
+        expect(view.count).to eq(1)
+      end
+    end
+
+    context 'when no selector is provided' do
+
+      it 'returns the count of matching documents' do
+        expect(view.count).to eq(10)
+      end
+    end
+  end
+
+  describe '#distinct' do
+
+    context 'when a selector is provided' do
+
+      let(:selector) do
+        { field: 'test' }
+      end
+
+      let(:documents) do
+        (1..3).map{ |i| { field: "test" }}
+      end
+
+      before do
+        authorized_collection.insert_many(documents)
+      end
+
+      context 'when the field is a symbol' do
+
+        let(:distinct) do
+          view.distinct(:field)
+        end
+
+        it 'returns the distinct values' do
+          expect(distinct).to eq([ 'test' ])
+        end
+      end
+
+      context 'when the field is a string' do
+
+        let(:distinct) do
+          view.distinct('field')
+        end
+
+        it 'returns the distinct values' do
+          expect(distinct).to eq([ 'test' ])
+        end
+      end
+
+      context 'when the field is nil' do
+
+        let(:distinct) do
+          view.distinct(nil)
+        end
+
+        it 'returns an empty array' do
+          expect(distinct).to be_empty
+        end
+      end
+    end
+
+    context 'when no selector is provided' do
+
+      let(:documents) do
+        (1..3).map{ |i| { field: "test#{i}" }}
+      end
+
+      before do
+        authorized_collection.insert_many(documents)
+      end
+
+      context 'when the field is a symbol' do
+
+        let(:distinct) do
+          view.distinct(:field)
+        end
+
+        it 'returns the distinct values' do
+          expect(distinct).to eq([ 'test1', 'test2', 'test3' ])
+        end
+      end
+
+      context 'when the field is a string' do
+
+        let(:distinct) do
+          view.distinct('field')
+        end
+
+        it 'returns the distinct values' do
+          expect(distinct).to eq([ 'test1', 'test2', 'test3' ])
+        end
+      end
+
+      context 'when the field is nil' do
+
+        let(:distinct) do
+          view.distinct(nil)
+        end
+
+        it 'returns an empty array' do
+          expect(distinct).to be_empty
+        end
+      end
+    end
+  end
+
+  describe '#hint' do
+
+    context 'when a hint is specified' do
+
+      let(:options) do
+        { :hint => { 'x' => Mongo::Index::ASCENDING } }
+      end
+
+      let(:new_hint) do
+        { 'x' => Mongo::Index::DESCENDING }
+      end
+
+      it 'sets the hint' do
+        new_view = view.hint(new_hint)
+        expect(new_view.hint).to eq(new_hint)
+      end
+
+      it 'returns a new Collection' do
+        expect(view.hint(new_hint)).not_to be(view)
+      end
+    end
+
+    context 'when a hint is not specified' do
+
+      let(:options) do
+        { :hint => 'x' }
+      end
+
+      it 'returns the hint' do
+        expect(view.hint).to eq(options[:hint])
+      end
+    end
+  end
+
+  describe '#limit' do
+
+    context 'when a limit is specified' do
+
+      let(:options) do
+        { :limit => 5 }
+      end
+
+      let(:new_limit) do
+        10
+      end
+
+      it 'sets the limit' do
+        new_view = view.limit(new_limit)
+        expect(new_view.limit).to eq(new_limit)
+      end
+
+      it 'returns a new Collection' do
+        expect(view.limit(new_limit)).not_to be(view)
+      end
+    end
+
+    context 'when a limit is not specified' do
+
+      let(:options) do
+        { :limit => 5 }
+      end
+
+      it 'returns the limit' do
+        expect(view.limit).to eq(options[:limit])
+      end
+    end
+  end
+
+  describe '#max_scan' do
+
+    let(:new_view) do
+      view.max_scan(10)
+    end
+
+    it 'sets the value in the options' do
+      expect(new_view.max_scan).to eq(10)
+    end
+  end
+
+  describe '#projection' do
+
+    context 'when projection are specified' do
+
+      let(:options) do
+        { :projection => { 'x' => 1 } }
+      end
+
+      let(:new_projection) do
+        { 'y' => 1 }
+      end
+
+      it 'sets the projection' do
+        new_view = view.projection(new_projection)
+        expect(new_view.projection).to eq(new_projection)
+      end
+
+      it 'returns a new Collection' do
+        expect(view.projection(new_projection)).not_to be(view)
+      end
+    end
+
+    context 'when projection are not specified' do
+
+      let(:options) { { :projection => { 'x' => 1 } } }
+
+      it 'returns the projection' do
+        expect(view.projection).to eq(options[:projection])
+      end
+    end
+  end
+
+  describe '#read' do
+
+    context 'when a read pref is specified' do
+
+      let(:options) do
+        { :read => Mongo::ServerPreference.get(:mode => :secondary) }
+      end
+
+      let(:new_read) do
+        Mongo::ServerPreference.get(:mode => :secondary_preferred)
+      end
+
+      it 'sets the read preference' do
+        new_view = view.read(new_read)
+        expect(new_view.read).to eq(new_read)
+      end
+
+      it 'returns a new Collection' do
+        expect(view.read(new_read)).not_to be(view)
+      end
+    end
+
+    context 'when a read pref is not specified' do
+
+      let(:options) do
+        { :read =>  Mongo::ServerPreference.get(:mode => :secondary) }
+      end
+
+      it 'returns the read preference' do
+        expect(view.read).to eq(options[:read])
+      end
+
+      context 'when no read pref is set on initialization' do
+
+        let(:options) do
+          {}
+        end
+
+        it 'returns the collection read preference' do
+          expect(view.read).to eq(authorized_collection.server_preference)
+        end
+      end
+    end
+  end
+
+  describe '#show_disk_loc' do
+
+    let(:new_view) do
+      view.show_disk_loc(true)
+    end
+
+    it 'sets the value in the options' do
+      expect(new_view.show_disk_loc).to be true
+    end
+  end
+
+  describe '#skip' do
+
+    context 'when a skip is specified' do
+
+      let(:options) do
+        { :skip => 5 }
+      end
+
+      let(:new_skip) do
+        10
+      end
+
+      it 'sets the skip value' do
+        new_view = view.skip(new_skip)
+        expect(new_view.skip).to eq(new_skip)
+      end
+
+      it 'returns a new Collection' do
+        expect(view.skip(new_skip)).not_to be(view)
+      end
+    end
+
+    context 'when a skip is not specified' do
+
+      let(:options) do
+        { :skip => 5 }
+      end
+
+      it 'returns the skip value' do
+        expect(view.skip).to eq(options[:skip])
+      end
+    end
+  end
+
+  describe '#snapshot' do
+
+    let(:new_view) do
+      view.snapshot(true)
+    end
+
+    it 'sets the value in the options' do
+      expect(new_view.snapshot).to be true
+    end
+  end
+
+  describe '#sort' do
+
+    context 'when a sort is specified' do
+
+      let(:options) do
+        { :sort => { 'x' => Mongo::Index::ASCENDING }}
+      end
+
+      let(:new_sort) do
+        { 'x' => Mongo::Index::DESCENDING }
+      end
+
+      it 'sets the sort option' do
+        new_view = view.sort(new_sort)
+        expect(new_view.sort).to eq(new_sort)
+      end
+
+      it 'returns a new Collection' do
+        expect(view.sort(new_sort)).not_to be(view)
+      end
+    end
+
+    context 'when a sort is not specified' do
+
+      let(:options) do
+        { :sort => { 'x' => Mongo::Index::ASCENDING }}
+      end
+
+      it 'returns the sort' do
+        expect(view.sort).to eq(options[:sort])
+      end
+    end
+  end
+end
