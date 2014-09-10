@@ -89,7 +89,11 @@ module Mongo
         private
 
         def aggregate_spec
-          { :selector => { :aggregate => collection.name, :pipeline => pipeline }.merge!(options),
+          { :selector => {
+              :aggregate => collection.name,
+              :pipeline => pipeline,
+              :cursor => view.batch_size ? { :batchSize => view.batch_size } : {}
+            }.merge!(options),
             :db_name => database.name,
             :options => view.options }
         end

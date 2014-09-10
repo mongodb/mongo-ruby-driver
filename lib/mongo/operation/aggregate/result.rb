@@ -21,10 +21,42 @@ module Mongo
       # @since 2.0.0
       class Result < Operation::Result
 
+        # The field name for the cursor document in an aggregation.
+        #
+        # @since 2.0.0
+        CURSOR = 'cursor'.freeze
+
+        # The cursor id field in the cursor document.
+        #
+        # @since 2.0.0
+        CURSOR_ID = 'id'.freeze
+
+        # The field name for the first batch of a cursor.
+        #
+        # @since 2.0.0
+        FIRST_BATCH = 'firstBatch'.freeze
+
         # The field name for a result without a cursor.
         #
         # @since 2.0.0
         RESULT = 'result'.freeze
+
+        # Get the cursor id for the result.
+        #
+        # @example Get the cursor id.
+        #   result.cursor_id
+        #
+        # @note Even though the wire protocol has a cursor_id field for all
+        #   messages of type reply, it is always zero when using the
+        #   aggregation framework and must be retrieved from the cursor
+        #   document itself. Wahnsinn!
+        #
+        # @return [ Integer ] The cursor id.
+        #
+        # @since 2.0.0
+        def cursor_id
+          cursor_document ? cursor_document[CURSOR_ID] : super
+        end
 
         # Get the documents for the aggregation result. This is either the
         # first documents' 'result' field, or if a cursor option was selected
@@ -38,7 +70,13 @@ module Mongo
         #
         # @since 2.0.0
         def documents
-          reply.documents[0][RESULT]
+          reply.documents[0][RESULT] || cursor_document[FIRST_BATCH]
+        end
+
+        private
+
+        def cursor_document
+          @cursor_document ||= reply.documents[0][CURSOR]
         end
       end
     end

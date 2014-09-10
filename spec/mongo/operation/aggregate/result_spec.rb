@@ -21,19 +21,55 @@ describe Mongo::Operation::Aggregate::Result do
     end
   end
 
+  let(:aggregate) do
+    [
+      { '_id' => 'New York', 'totalpop' => 40270 },
+      { '_id' => 'Berlin', 'totalpop' => 103056 }
+    ]
+  end
+
+  describe '#cursor_id' do
+
+    context 'when the result is not using a cursor' do
+
+      let(:documents) do
+        [{ 'result' => aggregate, 'ok' => 1.0 }]
+      end
+
+      it 'returns zero' do
+        expect(result.cursor_id).to eq(0)
+      end
+    end
+
+    context 'when the result is using a cursor' do
+
+      let(:documents) do
+        [{ 'cursor' => { 'id' => 15, 'ns' => 'test', 'firstBatch' => aggregate }, 'ok' => 1.0 }]
+      end
+
+      it 'returns the cursor id' do
+        expect(result.cursor_id).to eq(15)
+      end
+    end
+  end
+
   describe '#documents' do
 
     context 'when the result is not using a cursor' do
 
-      let(:aggregate) do
-        [
-          { "_id" => "New York", "totalpop" => 40270 },
-          { "_id" => "Berlin", "totalpop" => 103056 }
-        ]
+      let(:documents) do
+        [{ 'result' => aggregate, 'ok' => 1.0 }]
       end
 
+      it 'returns the documents' do
+        expect(result.documents).to eq(aggregate)
+      end
+    end
+
+    context 'when the result is using a cursor' do
+
       let(:documents) do
-        [{ "result" => aggregate, "ok" => 1.0 }]
+        [{ 'cursor' => { 'id' => 15, 'ns' => 'test', 'firstBatch' => aggregate }, 'ok' => 1.0 }]
       end
 
       it 'returns the documents' do

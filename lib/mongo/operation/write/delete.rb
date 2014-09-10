@@ -77,7 +77,7 @@ module Mongo
           else
             replies = deletes.map do |d|
               context.with_connection do |connection|
-                Result.new(connection.dispatch([ message(d), gle ].compact)).validate!.replies.first
+                Result.new(connection.dispatch([ message(d), gle ].compact)).validate!.reply
               end
             end
             Result.new(replies)

@@ -66,9 +66,38 @@ describe Mongo::Collection::View::Aggregation do
 
     context 'when a block is provided' do
 
-      it 'yields to each document' do
-        aggregation.each do |doc|
-          expect(doc[:totalpop]).to_not be_nil
+      context 'when no batch size is provided' do
+
+        it 'yields to each document' do
+          aggregation.each do |doc|
+            expect(doc[:totalpop]).to_not be_nil
+          end
+        end
+      end
+
+      context 'when a batch size of 0 is provided' do
+
+        let(:aggregation) do
+          described_class.new(view.batch_size(0), pipeline, options)
+        end
+
+        it 'yields to each document' do
+          aggregation.each do |doc|
+            expect(doc[:totalpop]).to_not be_nil
+          end
+        end
+      end
+
+      context 'when a batch size of greater than zero is provided' do
+
+        let(:aggregation) do
+          described_class.new(view.batch_size(5), pipeline, options)
+        end
+
+        it 'yields to each document' do
+          aggregation.each do |doc|
+            expect(doc[:totalpop]).to_not be_nil
+          end
         end
       end
     end
