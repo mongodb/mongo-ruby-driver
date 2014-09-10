@@ -210,6 +210,7 @@ module Mongo
           0
         end
       end
+      alias :n :written_count
 
       private
 
