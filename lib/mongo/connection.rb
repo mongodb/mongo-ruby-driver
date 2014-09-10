@@ -109,7 +109,7 @@ module Mongo
     # @since 2.0.0
     def dispatch(messages)
       write(messages)
-      messages.last.replyable? ? read : self
+      messages.last.replyable? ? read : nil
     end
 
     # Initialize a new socket connection from the client to the server.
