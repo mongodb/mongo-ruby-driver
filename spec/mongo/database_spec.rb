@@ -133,7 +133,7 @@ describe Mongo::Database do
     end
 
     it 'drops the database', if: write_command_enabled? do
-      expect(database.drop).to be_ok
+      expect(database.drop).to be_successful
     end
 
     it 'raises an exception', unless: write_command_enabled? do

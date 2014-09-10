@@ -36,7 +36,7 @@ module Mongo
         # @param [ Auth::User, String ] user_or_name The user object or user name.
         # @param [ Hash ] options The user options.
         #
-        # @return [ Response ] The command response.
+        # @return [ Result ] The command response.
         #
         # @since 2.0.0
         def create(user_or_name, options = {})
@@ -66,7 +66,7 @@ module Mongo
         #
         # @param [ String ] name The user name.
         #
-        # @return [ Response ] The command response.
+        # @return [ Result ] The command response.
         #
         # @since 2.0.0
         def remove(name)
@@ -84,7 +84,7 @@ module Mongo
         # @param [ Auth::User, String ] user_or_name The user object or user name.
         # @param [ Hash ] options The user options.
         #
-        # @return [ Response ] The response.
+        # @return [ Result ] The response.
         #
         # @since 2.0.0
         def update(user_or_name, options = {})

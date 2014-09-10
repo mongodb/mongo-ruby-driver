@@ -72,7 +72,7 @@ module Mongo
       #
       # @params [ Mongo::Server::Context ] The context for this operation.
       #
-      # @return [ Mongo::Response ] The operation response, if there is one.
+      # @return [ Result ] The operation response, if there is one.
       #
       # @since 2.0.0
       def execute(context)

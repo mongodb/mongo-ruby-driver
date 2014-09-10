@@ -75,7 +75,7 @@ module Mongo
           end
           if context.write_command_enabled?
             op = Command::Update.new(spec)
-            Response.new(op.execute(context)).verify!
+            Result.new(op.execute(context)).validate!
           else
             replies = updates.map do |u|
               context.with_connection do |connection|

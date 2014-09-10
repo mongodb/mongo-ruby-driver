@@ -48,7 +48,7 @@ module Mongo
       #
       # @param [ Hash, String ] spec The index spec or name to drop.
       #
-      # @return [ Operation::Write::DropIndex::Response ] The response.
+      # @return [ Result ] The response.
       #
       # @since 2.0.0
       def drop(spec)
@@ -64,7 +64,7 @@ module Mongo
       # @example Drop all indexes on the collection.
       #   view.drop_all
       #
-      # @return [ Operation::Write::DropIndex::Response ] The response.
+      # @return [ Result ] The response.
       #
       # @since 2.0.0
       def drop_all
@@ -94,7 +94,7 @@ module Mongo
       # @option options [ Integer ] :min (nil) Specify the min latitude and longitude for
       #   a geo index.
       #
-      # @return [ EnsureIndex::Response ] The response.
+      # @return [ Result ] The response.
       #
       # @since 2.0.0
       def ensure(spec, options = {})

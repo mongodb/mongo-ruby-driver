@@ -66,7 +66,7 @@ module Mongo
         def execute(context)
           if context.write_command_enabled?
             op = Command::Insert.new(spec)
-            Response.new(op.execute(context)).verify!
+            Result.new(op.execute(context)).validate!
           else
             replies = documents.map do |d|
               context.with_connection do |connection|
