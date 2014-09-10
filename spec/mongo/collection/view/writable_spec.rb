@@ -35,7 +35,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       it 'deletes the matching documents in the collection' do
-        expect(response.n).to eq(1)
+        expect(response.written_count).to eq(1)
       end
     end
 
@@ -50,7 +50,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       it 'deletes all the documents in the collection' do
-        expect(response.n).to eq(2)
+        expect(response.written_count).to eq(2)
       end
     end
   end
@@ -76,7 +76,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       it 'deletes the first matching document in the collection' do
-        expect(response.n).to eq(1)
+        expect(response.written_count).to eq(1)
       end
     end
 
@@ -91,7 +91,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       it 'deletes the first document in the collection' do
-        expect(response.n).to eq(1)
+        expect(response.written_count).to eq(1)
       end
     end
   end

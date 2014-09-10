@@ -130,8 +130,8 @@ describe Mongo::Operation::Result do
 
   describe '#initialize' do
 
-    it 'sets the reply' do
-      expect(result.reply).to eq(reply)
+    it 'sets the replies' do
+      expect(result.replies).to eq([ reply ])
     end
   end
 

@@ -32,22 +32,35 @@ module Mongo
       # @since 2.0.0
       OK = 'ok'.freeze
 
-      # @return [ Protocol::Reply ] reply The wrapped wire protocol reply.
-      attr_reader :reply
+      # @return [ Array<Protocol::Reply> ] replies The wrapped wire protocol replies.
+      attr_reader :replies
 
       # Is the result acknowledged?
       #
       # @note On MongoDB 2.6 and higher all writes are acknowledged since the
       #   driver uses write commands for all write operations. On 2.4 and
       #   lower, the result is acknowledged if the GLE has been executed after
-      #   the command. If not, no reply will be specified. Reads will always
-      #   return true here since a reply is always provided.
+      #   the command. If not, no replies will be specified. Reads will always
+      #   return true here since a replies is always provided.
       #
       # @return [ true, false ] If the result is acknowledged.
       #
       # @since 2.0.0
       def acknowledged?
-        !!@reply
+        !!@replies
+      end
+
+      # Determine if this result is a collection of multiple replies from the
+      # server.
+      #
+      # @example Is the result for multiple replies?
+      #   result.multiple?
+      #
+      # @return [ true, false ] If the result is for multiple replies.
+      #
+      # @since 2.0.0
+      def multiple?
+        replies.size > 1
       end
 
       # Get the cursor id if the response is acknowledged.
@@ -61,7 +74,7 @@ module Mongo
       #
       # @since 2.0.0
       def cursor_id
-        acknowledged? ? reply.cursor_id : 0
+        acknowledged? ? replies.last.cursor_id : 0
       end
 
       # Get the documents in the result.
@@ -73,10 +86,14 @@ module Mongo
       #
       # @since 2.0.0
       def documents
-        acknowledged? ? reply.documents : []
+        if acknowledged?
+          replies.flat_map{ |reply| reply.documents }
+        else
+          []
+        end
       end
 
-      # Iterate over the documents in the reply.
+      # Iterate over the documents in the replies.
       #
       # @example Iterate over the documents.
       #   result.each do |doc|
@@ -95,13 +112,13 @@ module Mongo
       # Initialize a new result result.
       #
       # @example Instantiate the result.
-      #   Result.new(reply)
+      #   Result.new(replies)
       #
-      # @param [ Protocol::Reply ] reply The wire protocol reply.
+      # @param [ Protocol::Reply ] replies The wire protocol replies.
       #
       # @since 2.0.0
-      def initialize(reply)
-        @reply = reply
+      def initialize(replies)
+        @replies = replies.is_a?(Protocol::Reply) ? [ replies ] : replies
       end
 
       # Get the pretty formatted inspection of the result.
@@ -114,6 +131,34 @@ module Mongo
       # @since 2.0.0
       def inspect
         "#<Mongo::Operation::Result:#{object_id} documents=#{documents}>"
+      end
+
+      # Get the first reply from the result.
+      #
+      # @example Get the first reply.
+      #   result.reply
+      #
+      # @return [ Protocol::Reply ] The first reply.
+      #
+      # @since 2.0.0
+      def reply
+        replies.first
+      end
+
+      # Get the count of documents returned by the server.
+      #
+      # @example Get the number returned.
+      #   result.returned_count
+      #
+      # @return [ Integer ] The number of documents returned.
+      #
+      # @since 2.0.0
+      def returned_count
+        if acknowledged?
+          multiple? ? aggregate_returned_count : reply.number_returned
+        else
+          0
+        end
       end
 
       # If the result was a command then determine if it was considered a
@@ -130,18 +175,6 @@ module Mongo
       # @since 2.0.0
       def successful?
         acknowledged? ? first[OK] == 1 : true
-      end
-
-      # Get the count of documents returned by the server.
-      #
-      # @example Get the number returned.
-      #   result.returned_count
-      #
-      # @return [ Integer ] The number of documents returned.
-      #
-      # @since 2.0.0
-      def returned_count
-        acknowledged? ? reply.number_returned : 0
       end
 
       # Validate the result by checking for any errors.
@@ -171,13 +204,31 @@ module Mongo
       #
       # @since 2.0.0
       def written_count
-        acknowledged? ? (first[N] || 0) : 0
+        if acknowledged?
+          multiple? ? aggregate_written_count : (first[N] || 0)
+        else
+          0
+        end
       end
 
       private
 
+      def aggregate_returned_count
+        replies.reduce(0) do |n, reply|
+          n += reply.number_returned
+          n
+        end
+      end
+
+      def aggregate_written_count
+        documents.reduce(0) do |n, document|
+          n += (document[N] || 0)
+          n
+        end
+      end
+
       def command_failure?
-        reply && (!successful? || errors?)
+        acknowledged? && (!successful? || errors?)
       end
 
       def errors?
@@ -205,7 +256,7 @@ module Mongo
       end
 
       def write_failure?
-        reply && (command_failure? || write_errors? || write_concern_errors?)
+        acknowledged? && (command_failure? || write_errors? || write_concern_errors?)
       end
     end
   end
