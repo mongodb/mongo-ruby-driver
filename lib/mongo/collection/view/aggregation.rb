@@ -65,7 +65,7 @@ module Mongo
         # @since 2.0.0
         def each
           server = read.select_servers(cluster.servers).first
-          cursor = Cursor.new(view, send_initial_query(server), server, true).to_enum
+          cursor = Cursor.new(view, send_initial_query(server), server).to_enum
           if block_given?
             cursor.each{ |document| yield document }
           end
@@ -89,11 +89,9 @@ module Mongo
         private
 
         def aggregate_spec
-          {
-            :selector => { :aggregate => collection.name, :pipeline => pipeline }.merge!(options),
+          { :selector => { :aggregate => collection.name, :pipeline => pipeline }.merge!(options),
             :db_name => database.name,
-            :options => {}
-          }
+            :options => view.options }
         end
 
         def explain_options

@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module Mongo
+require 'mongo/operation/aggregate/result'
 
+module Mongo
   module Operation
 
     # A MongoDB aggregate operation.
