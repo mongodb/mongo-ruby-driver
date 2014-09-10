@@ -29,7 +29,7 @@ describe Mongo::Operation::Write::EnsureIndex do
       end
 
       it 'returns ok' do
-        expect(response).to be_ok
+        expect(response).to be_successful
       end
     end
 
@@ -74,7 +74,7 @@ describe Mongo::Operation::Write::EnsureIndex do
       end
 
       it 'does not raise an exception', unless: write_command_enabled? do
-        expect(second_operation.execute(authorized_primary.context)).to be_ok
+        expect(second_operation.execute(authorized_primary.context)).to be_successful
       end
     end
   end

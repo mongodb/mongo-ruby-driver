@@ -25,7 +25,7 @@ describe Mongo::Index::View do
         end
 
         it 'drops the index' do
-          expect(result).to be_ok
+          expect(result).to be_successful
         end
       end
     end
@@ -39,7 +39,7 @@ describe Mongo::Index::View do
         end
 
         it 'drops the index' do
-          expect(result).to be_ok
+          expect(result).to be_successful
         end
       end
     end
@@ -62,7 +62,7 @@ describe Mongo::Index::View do
       end
 
       it 'drops the index' do
-        expect(result).to be_ok
+        expect(result).to be_successful
       end
     end
   end
@@ -84,7 +84,7 @@ describe Mongo::Index::View do
       end
 
       it 'returns ok' do
-        expect(result).to be_ok
+        expect(result).to be_successful
       end
     end
 
@@ -109,7 +109,7 @@ describe Mongo::Index::View do
       end
 
       it 'does not raise an exception', unless: write_command_enabled? do
-        expect(view.ensure(spec, unique: false)).to be_ok
+        expect(view.ensure(spec, unique: false)).to be_successful
       end
     end
 
@@ -128,7 +128,7 @@ describe Mongo::Index::View do
       end
 
       it 'returns ok' do
-        expect(result).to be_ok
+        expect(result).to be_successful
       end
 
       it 'defines the index with the provided name' do
