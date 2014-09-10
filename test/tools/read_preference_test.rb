@@ -28,13 +28,15 @@ class ReadPreferenceTest < Test::Unit::TestCase
 
   def setup
     @cluster = @@mo.configure({:orchestration => 'replica_sets', :request_content => {:id => 'replica_set_arbiter_1', :preset => 'arbiter.json'} })
-    @client = Mongo::MongoClient.from_uri(@cluster.object['mongodb_uri'])
+    @mongodb_uri = @cluster.object['mongodb_uri']
+    @client = Mongo::MongoClient.from_uri(@mongodb_uri)
     @client.drop_database(TEST_DB)
     @db = @client[TEST_DB]
     @coll = @db[TEST_COLL]
     await_replication(@coll)
     @primary = @cluster.primary
     @n = @cluster.object['members'].count - 1
+    @coll.insert({'a' => 1}, :w => @n)
   end
 
   def teardown
@@ -48,11 +50,10 @@ class ReadPreferenceTest < Test::Unit::TestCase
   # Scenario: Read Primary
   test 'Read Primary' do
     # Given an arbiter replica set
-    # And a document written to all members
-    @coll.insert({'a' => 1}, :w => @n)
+    # And a document written to all data-bearing members
     # When I read with read-preference PRIMARY
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :primary)
     # Then the read occurs on the primary
-    reader = Mongo::MongoClient.from_uri(@cluster.object['mongodb_uri'], :read => :primary)
     assert_equal(@primary.object['uri'], reader.read_pool.address)
     assert_query_route(reader) do
       reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
@@ -71,11 +72,10 @@ class ReadPreferenceTest < Test::Unit::TestCase
   # Scenario: Read Primary Preferred
   test 'Read Primary Preferred' do
     # Given an arbiter replica set
-    # And a document written to all members
-    @coll.insert({'a' => 1}, :w => @n)
+    # And a document written to all data-bearing members
     # When I read with read-preference PRIMARY_PREFERRED
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :primary_preferred)
     # Then the read occurs on the primary
-    reader = Mongo::MongoClient.from_uri(@cluster.object['mongodb_uri'], :read => :primary_preferred)
     assert_equal(@primary.object['uri'], reader.read_pool.address)
     assert_query_route(reader) do
       reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
@@ -91,11 +91,10 @@ class ReadPreferenceTest < Test::Unit::TestCase
   # Scenario: Read Secondary
   test 'Read Secondary' do
     # Given an arbiter replica set
-    # And a document written to all members
-    @coll.insert({'a' => 1}, :w => @n)
+    # And a document written to all data-bearing members
     # When I read with read-preference SECONDARY
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :secondary)
     # Then the read occurs on the secondary
-    reader = Mongo::MongoClient.from_uri(@cluster.object['mongodb_uri'], :read => :secondary)
     assert_not_equal(@primary.object['uri'], reader.read_pool.address)
     assert_query_route(reader) do
       reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
@@ -113,11 +112,10 @@ class ReadPreferenceTest < Test::Unit::TestCase
   # Scenario: Read Secondary Preferred
   test 'Read Secondary Preferred' do
     # Given an arbiter replica set
-    # And a document written to all members
-    @coll.insert({'a' => 1}, :w => @n)
+    # And a document written to all data-bearing members
     # When I read with read-preference SECONDARY_PREFERRED
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :secondary_preferred)
     # Then the read occurs on the secondary
-    reader = Mongo::MongoClient.from_uri(@cluster.object['mongodb_uri'], :read => :secondary_preferred)
     assert_not_equal(@primary.object['uri'], reader.read_pool.address)
     assert_query_route(reader) do
       reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
@@ -127,6 +125,141 @@ class ReadPreferenceTest < Test::Unit::TestCase
     # And I read with read-preference SECONDARY_PREFERRED
     # Then the read succeeds
     assert(reader[TEST_DB][TEST_COLL].find_one({'a' => 1}))
+  end
+
+  # Scenario: Read With Nearest
+  test 'Read Nearest' do
+    # Given an arbiter replica set
+    # And a document written to all data-bearing members
+    # When I read with read-preference NEAREST
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :nearest)
+    # Then the read succeeds
+    assert(reader[TEST_DB][TEST_COLL].find_one({'a' => 1}))
+  end
+
+  # Scenario: Read Primary With Tag Sets
+  test 'Read Primary With Tag Sets' do
+    # Given an arbiter replica set
+    # And a document written to all data-bearing members
+    # When I read with read-preference PRIMARY and a tag set
+    tag_sets = [{'ordinal' => 'one'}, {'dc' => 'ny'}]
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :primary, :tag_sets => tag_sets)
+    # Then the read fails with error "PRIMARY cannot be combined with tags"
+    ex = assert_raise Mongo::MongoArgumentError do
+      reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
+    end
+    assert_match(/Read preference :primary cannot be combined with tags/, ex.message)
+  end
+
+  # Scenario: Read Primary Preferred With Tag Sets
+  test 'Read Primary Preferred With Tag Sets' do
+    # Given an arbiter replica set
+    # And a document written to all data-bearing members
+    # When I read with read-preference PRIMARY_PREFERRED and a tag set
+    tag_sets = [{'ordinal' => 'two'}, {'dc' => 'pa'}]
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :primary_preferred, :tag_sets => tag_sets)
+    # Then the read occurs on the primary
+    assert_equal(@primary.object['uri'], reader.read_pool.address)
+    assert_query_route(reader) do
+      reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
+    end
+    # When there is no primary
+    @cluster.arbiters.first.stop
+    @cluster.primary.stop
+    # And I read with read-preference PRIMARY_PREFERRED and a matching tag set
+    tag_sets = [{'ordinal' => 'two'}]
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :primary_preferred, :tag_sets => tag_sets)
+    # Then the read occurs on a matching secondary
+    assert_not_equal(@primary.object['uri'], reader.read_pool.address)
+    assert_query_route(reader) do
+      reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
+    end
+    # When I read with read-preference PRIMARY_PREFERRED and a non-matching tag set
+    tag_sets = [{'ordinal' => 'three'}, {'dc' => 'na'}]
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :primary_preferred, :tag_sets => tag_sets)
+    # Then the read fails with error "No replica set member available for query with ReadPreference PRIMARY_PREFERRED and tags <tags>"
+    ex = assert_raise Mongo::ConnectionFailure do
+      reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
+    end
+    assert_match(/No replica set member available for query with read preference matching mode primary_preferred and tags matching/, ex.message)
+  end
+
+  # Scenario: Read Secondary With Tag Sets
+  test 'Read Secondary With Tag Sets' do
+    # Given an arbiter replica set
+    # And a document written to all data-bearing members
+    # When I read with read-preference SECONDARY and a secondary-matching tag set
+    tag_sets = [{'ordinal' => 'two'}]
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :secondary, :tag_sets => tag_sets)
+    # Then the read occurs on a matching secondary
+    assert_not_equal(@primary.object['uri'], reader.read_pool.address)
+    assert_query_route(reader) do
+      reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
+    end
+    # When I read with read-preference SECONDARY and a non-secondary-matching tag set
+    tag_sets = [{'ordinal' => 'one'}]
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :secondary, :tag_sets => tag_sets)
+    # Then the read fails with error "No replica set member available for query with ReadPreference SECONDARY and tags <tags>"
+    ex = assert_raise Mongo::ConnectionFailure do
+      reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
+    end
+    assert_match(/No replica set member available for query with read preference matching mode secondary and tags matching/, ex.message)
+  end
+
+  # Scenario: Read Secondary Preferred With Tag Sets
+  test 'Read Secondary Preferred With Tag Sets' do
+    # Given an arbiter replica set
+    # And a document written to all data-bearing members
+    # When I read with read-preference SECONDARY_PREFERRED and a secondary-matching tag set
+    tag_sets = [{'ordinal' => 'two'}]
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :secondary_preferred, :tag_sets => tag_sets)
+    # Then the read occurs on a matching secondary
+    assert_not_equal(@primary.object['uri'], reader.read_pool.address)
+    assert_query_route(reader) do
+      reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
+    end
+    # When I read with read-preference SECONDARY_PREFERRED and a non-secondary-matching tag set
+    tag_sets = [{'ordinal' => 'three'}]
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :secondary_preferred, :tag_sets => tag_sets)
+    # Then the read occurs on the primary
+    assert_equal(@primary.object['uri'], reader.read_pool.address)
+    assert_query_route(reader) do
+      reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
+    end
+  end
+
+  # Scenario: Read Nearest With Tag Sets
+  test 'Read Nearest With Tag Sets' do
+    # TODO - driver bug - mode NEAREST appears to ignore tags
+    # Given an arbiter replica set
+    # And a document written to all data-bearing members
+    # When I read with read-preference NEAREST and a primary-matching tag set
+    tag_sets = [{'ordinal' => 'one'}]
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :nearest, :tag_sets => tag_sets)
+    # Then the read occurs on the primary
+    # TODO - driver bug - unexpectedly does not always route to matching (primary) member
+    assert_equal(@primary.object['uri'], reader.read_pool.address)
+    assert_query_route(reader) do
+      reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
+    end
+    # When I read with read-preference NEAREST and a secondary-matching tag set
+    tag_sets = [{'ordinal' => 'two'}]
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :nearest, :tag_sets => tag_sets)
+    # Then the read occurs on a matching secondary
+    # TODO - driver bug - unexpectedly does not always route to matching (secondary) member
+    # assert_not_equal(@primary.object['uri'], reader.read_pool.address)
+    # assert_query_route(reader) do
+    #   reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
+    # end
+    # When I read with read-preference NEAREST and a non-matching tag set
+    tag_sets = [{'ordinal' => 'three'}]
+    reader = Mongo::MongoClient.from_uri(@mongodb_uri, :read => :nearest, :tag_sets => tag_sets)
+    # Then the read fails with error "No replica set member available for query with ReadPreference NEAREST and tags <tags>"
+    # TODO - driver bug - does not fail as expected
+    # ex = assert_raise Mongo::ConnectionFailure do
+    #   reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
+    # end
+    # assert_match(/No replica set member available for query with read preference matching mode nearest and tags matching/, ex.message)
   end
 
   private
