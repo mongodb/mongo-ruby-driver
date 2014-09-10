@@ -117,7 +117,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       it 'updates the first matching document in the collection' do
-        expect(response.n).to eq(1)
+        expect(response.written_count).to eq(1)
       end
 
       it 'updates the documents in the collection' do
@@ -140,7 +140,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       it 'updates the first document in the collection' do
-        expect(response.n).to eq(1)
+        expect(response.written_count).to eq(1)
       end
 
       it 'updates the documents in the collection' do
@@ -170,7 +170,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       it 'returns the number updated' do
-        expect(response.n).to eq(1)
+        expect(response.written_count).to eq(1)
       end
 
       it 'updates the documents in the collection' do
@@ -193,7 +193,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       it 'returns the number updated' do
-        expect(response.n).to eq(2)
+        expect(response.written_count).to eq(2)
       end
 
       it 'updates all the documents in the collection' do
@@ -225,7 +225,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       it 'updates the first matching document in the collection' do
-        expect(response.n).to eq(1)
+        expect(response.written_count).to eq(1)
       end
 
       it 'updates the documents in the collection' do
@@ -248,7 +248,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       it 'updates the first document in the collection' do
-        expect(response.n).to eq(1)
+        expect(response.written_count).to eq(1)
       end
 
       it 'updates the documents in the collection' do
