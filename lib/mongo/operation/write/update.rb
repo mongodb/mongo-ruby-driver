@@ -26,18 +26,17 @@ module Mongo
       # @since 2.0.0
       class Update
         include Executable
-        include Batchable
 
         # Initialize the update operation.
         #
         # @example
         #   include Mongo
         #   include Operation
-        #   Write::Update.new({ :updates => [{ :q => { :foo => 1 },
-        #                                      :u => { :$set =>
-        #                                              { :bar => 1 }},
-        #                                      :multi  => true,
-        #                                      :upsert => false }],
+        #   Write::Update.new({ :update => { :q => { :foo => 1 },
+        #                                    :u => { :$set =>
+        #                                            { :bar => 1 }},
+        #                                    :multi  => true,
+        #                                    :upsert => false },
         #                       :db_name       => 'test',
         #                       :coll_name     => 'test_coll',
         #                       :write_concern => write_concern
@@ -45,14 +44,12 @@ module Mongo
         #
         # @param [ Hash ] spec The specifications for the update.
         #
-        # @option spec :updates [ Array ] The update documents.
+        # @option spec :update [ hash ] The update document.
         # @option spec :db_name [ String ] The name of the database on which
-        #   the query should be run.
+        #   the operation should be executed.
         # @option spec :coll_name [ String ] The name of the collection on which
-        #   the query should be run.
+        #   the operation should be executed.
         # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
-        # @option spec :ordered [ true, false ] Whether the operations should be
-        #   executed in order.
         # @option spec :options [ Hash ] Options for the command, if it ends up being a
         #   write command.
         #
@@ -76,63 +73,24 @@ module Mongo
             raise Exception, "Must use primary server"
           end
           if context.write_command_enabled?
-            batches(context).collect do |batch|
-              op = Command::Update.new(spec.merge(:updates => batch))
-              Response.new(op.execute(context)).verify!
-            end
+            op = Command::Update.new(spec.merge(:updates => [ update ] ))
+            Response.new(op.execute(context)).verify!
           else
-            updates.collect do |d|
-              Response.new(nil, updates.reduce(0) do |count, d|
-                context.with_connection do |connection|
-                  response = Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
-                  count + response.n
-                end
-              end)
+            context.with_connection do |connection|
+              Response.new(connection.dispatch([ message, gle ].compact)).verify!
             end
-            [ Response.new(nil, updates.size) ]
           end
-        end
-
-        # Merge another update operation with this one.
-        # Requires that the collection and database of the two ops are the same.
-        #
-        # @params[ Mongo::Operation::Write::Update ] The other update operation.
-        #
-        # @return [ self ] This object with the list of updates merged.
-        #
-        # @since 2.0.0
-        def merge!(other)
-          # @todo: use specific exception
-          raise Exception, "Cannot merge" unless self.class == other.class &&
-              coll_name == other.coll_name &&
-              db_name == other.db_name
-          @spec[:updates] << other.spec[:updates]
-          self
         end
 
         private
 
-        # The spec array element to split up when slicing this operation.
-        # This is used by the Batchable module.
+        # The update document.
         #
-        # @return [ Symbol ] :updates
-        def batchable_key
-          :updates
-        end
-
-        # Dup the list of updates in the spec if this operation is copied/duped.
-        def initialize_copy(original)
-          @spec = original.spec.dup
-          @spec[:updates] = original.spec[:updates].dup
-        end
-
-        # The update documents.
-        #
-        # @return [ Array ] The update documents.
+        # @return [ Array ] The update document.
         #
         # @since 2.0.0
-        def updates
-          @spec[:updates]
+        def update
+          @spec[:update]
         end
 
         # The wire protocol message for this update operation.
@@ -140,11 +98,11 @@ module Mongo
         # @return [ Mongo::Protocol::Update ] Wire protocol message.
         #
         # @since 2.0.0
-        def message(update_spec = {})
-          selector    = update_spec[:q]
-          update      = update_spec[:u]
-          update_options = update_spec[:multi] ? { :flags => [:multi_update] } : { }
-          Protocol::Update.new(db_name, coll_name, selector, update, update_options)
+        def message
+          update_options = update[:multi] ? { :flags => [:multi_update] } : { :flags => [ ] }
+          update_options[:flags] << :upsert if update[:upsert]
+          puts "update_options: #{update_options}"
+          Protocol::Update.new(db_name, coll_name, update[:q], update[:u], update_options)
         end
       end
     end
