@@ -84,7 +84,7 @@ module Mongo
         end
         context.with_connection do |connection|
           # @todo: Return an aggregation result here.
-          Result.new(connection.dispatch([ message ]))
+          Result.new(connection.dispatch([ message(context) ]))
         end
       end
 
@@ -117,13 +117,18 @@ module Mongo
         @spec[:options]
       end
 
+      def filter(context)
+        return selector if context.write_command_enabled?
+        selector.reject{ |option, value| option.to_s == 'cursor' }
+      end
+
       # The wire protocol message for this operation.
       #
       # @return [ Mongo::Protocol::Query ] Wire protocol message.
       #
       # @since 2.0.0
-      def message
-        Protocol::Query.new(db_name, Database::COMMAND, selector, options)
+      def message(context)
+        Protocol::Query.new(db_name, Database::COMMAND, filter(context), options)
       end
     end
   end

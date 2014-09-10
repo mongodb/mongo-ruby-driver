@@ -92,7 +92,7 @@ module Mongo
           { :selector => {
               :aggregate => collection.name,
               :pipeline => pipeline,
-              :cursor => view.batch_size ? { :batchSize => view.batch_size } : {}
+              :cursor => view.batch_size ? { :batch_size => view.batch_size } : {}
             }.merge!(options),
             :db_name => database.name,
             :options => view.options }
