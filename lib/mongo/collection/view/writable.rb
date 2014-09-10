@@ -87,7 +87,7 @@ module Mongo
 
         def remove(value)
           Operation::Write::Delete.new(
-            :deletes => [{ q: selector, limit: value }],
+            :delete => { q: selector, limit: value },
             :db_name => collection.database.name,
             :coll_name => collection.name,
             :write_concern => collection.write_concern

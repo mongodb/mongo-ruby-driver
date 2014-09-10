@@ -13,8 +13,11 @@
 # limitations under the License.
 
 require 'mongo/operation/write/delete'
+require 'mongo/operation/write/bulk_delete'
 require 'mongo/operation/write/insert'
+require 'mongo/operation/write/bulk_insert'
 require 'mongo/operation/write/update'
+require 'mongo/operation/write/bulk_update'
 require 'mongo/operation/write/drop_index'
 require 'mongo/operation/write/ensure_index'
 require 'mongo/operation/write/create_user'

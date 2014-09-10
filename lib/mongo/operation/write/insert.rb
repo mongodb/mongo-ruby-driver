@@ -26,7 +26,6 @@ module Mongo
       # @since 2.0.0
       class Insert
         include Executable
-        include Slicable
 
         # Initialize the insert operation.
         #
@@ -37,6 +36,7 @@ module Mongo
         #                       :db_name       => 'test',
         #                       :coll_name     => 'test_coll',
         #                       :write_concern => write_concern
+        #                       :opts          => { :bulk => true }
         #                     })
         #
         # @param [ Hash ] spec The specifications for the insert.
@@ -65,17 +65,18 @@ module Mongo
         # @return [ Mongo::Response ] The operation response, if there is one.
         #
         # @since 2.0.0
+
         def execute(context)
+          unless context.primary? || context.standalone?
+            raise Exception, "Must use primary server"
+          end
           if context.write_command_enabled?
-            op = Command::Insert.new(spec)
+            op = Command::Insert.new(spec.merge(:documents => documents))
             Response.new(op.execute(context)).verify!
           else
-            documents.each do |d|
-              context.with_connection do |connection|
-                Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
-              end
+            context.with_connection do |connection|
+              Response.new(connection.dispatch([ message, gle ].compact)).verify!
             end
-            Response.new(nil, documents.size)
           end
         end
 
@@ -98,27 +99,19 @@ module Mongo
 
         private
 
-        # The spec array element to split up when slicing this operation.
-        # This is used by the Slicable module.
-        #
-        # @return [ Symbol ] :documents
-        def slicable_key
-          :documents
-        end
-
         # Dup the list of documents in the spec if this operation is copied/duped.
         def initialize_copy(original)
           @spec = original.spec.dup
           @spec[:documents] = original.spec[:documents].dup
         end
 
-        # The documents to insert.
+        # The document(s) to insert.
         #
         # @return [ Array ] The documents.
         #
         # @since 2.0.0
         def documents
-          @spec[:documents]
+          @spec[:documents] || []
         end
 
         # The wire protocol message for this insert operation.
@@ -126,9 +119,9 @@ module Mongo
         # @return [ Mongo::Protocol::Insert ] Wire protocol message.
         #
         # @since 2.0.0
-        def message(document)
-          insert_spec = options[:continue_on_error] == 0 ? {} : { :flags => [:continue_on_error] }
-          Protocol::Insert.new(db_name, coll_name, [ document ], insert_spec)
+        def message(insert_spec = nil)
+          insert_spec = insert_spec[:continue_on_error] == 0 ? {} : { :flags => [:continue_on_error] }
+          Protocol::Insert.new(db_name, coll_name, documents, insert_spec)
         end
       end
     end
