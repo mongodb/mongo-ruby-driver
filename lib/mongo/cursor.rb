@@ -41,16 +41,16 @@ module Mongo
     #   Mongo::Cursor.new(view, response, server)
     #
     # @param [ CollectionView ] view The +CollectionView+ defining the query.
-    # @param [ Protocol::Reply ] response The response from the server.
+    # @param [ Operation::Result ] result The result of the first execution.
     # @param [ Server ] server The server this cursor is locked to.
     # @param [ true, false ] command_reply If the documents to be iterated are in a
     #   'results' field on the first document.
     #
     # @since 2.0.0
-    def initialize(view, reply, server, command_reply = false)
+    def initialize(view, result, server, command_reply = false)
       @view = view
       @server = server
-      @initial_reply = reply
+      @initial_result = result
       @remaining = limit if limited?
       @command_reply = command_reply
     end
@@ -80,7 +80,7 @@ module Mongo
     #
     # @since 2.0.0
     def each
-      process(@initial_reply).each { |doc| yield doc }
+      process(@initial_result).each { |doc| yield doc }
       while more?
         return kill_cursors if exhausted?
         get_more.each { |doc| yield doc }
@@ -126,10 +126,10 @@ module Mongo
       @cursor_id != 0
     end
 
-    def process(reply)
-      @remaining -= reply.number_returned if limited?
-      @cursor_id = reply.cursor_id
-      command_reply? ? reply.documents.first['result'] : reply.documents
+    def process(result)
+      @remaining -= result.returned_count if limited?
+      @cursor_id = result.cursor_id
+      command_reply? ? result.documents.first['result'] : result.documents
     end
 
     def command_reply?
