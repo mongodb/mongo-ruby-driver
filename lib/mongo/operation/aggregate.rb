@@ -82,7 +82,8 @@ module Mongo
           context = Mongo::ServerPreference.get(:mode => :primary).server.context
         end
         context.with_connection do |connection|
-          connection.dispatch([message])
+          # @todo: Return an aggregation result here.
+          Result.new(connection.dispatch([ message ]))
         end
       end
 
@@ -106,6 +107,13 @@ module Mongo
       # @since 2.0.0
       def secondary_ok?
         selector[:pipeline].none? { |op| op.key?('$out') || op.key?(:$out) }
+      end
+
+      def options
+        unless @spec[:options][:limit] && @spec[:options][:limit] == -1
+          return @spec[:options].merge(:limit => -1)
+        end
+        @spec[:options]
       end
 
       # The wire protocol message for this operation.

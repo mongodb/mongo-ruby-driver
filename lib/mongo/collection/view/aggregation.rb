@@ -90,10 +90,9 @@ module Mongo
 
         def aggregate_spec
           {
-            :selector =>
-              { :aggregate => collection.name, :pipeline => pipeline }.merge!(options),
+            :selector => { :aggregate => collection.name, :pipeline => pipeline }.merge!(options),
             :db_name => database.name,
-            :options => view.options
+            :options => {}
           }
         end
 
@@ -106,11 +105,11 @@ module Mongo
         end
 
         def initial_query_op
-          Operation::Command.new(aggregate_spec)
+          Operation::Aggregate.new(aggregate_spec)
         end
 
         def send_initial_query(server)
-          initial_query_op.execute(server.context).reply
+          initial_query_op.execute(server.context)
         end
       end
     end
