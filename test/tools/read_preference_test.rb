@@ -27,14 +27,14 @@ class ReadPreferenceTest < Test::Unit::TestCase
   end
 
   def setup
-    @cluster = @@mo.configure({:orchestration => 'replica_sets', :request_content => {:id => 'replica_set_1', :preset => 'basic.json'} })
+    @cluster = @@mo.configure({:orchestration => 'replica_sets', :request_content => {:id => 'replica_set_arbiter_1', :preset => 'arbiter.json'} })
     @client = Mongo::MongoClient.from_uri(@cluster.object['mongodb_uri'])
     @client.drop_database(TEST_DB)
     @db = @client[TEST_DB]
     @coll = @db[TEST_COLL]
     await_replication(@coll)
     @primary = @cluster.primary
-    @n = @cluster.object['members'].count
+    @n = @cluster.object['members'].count - 1
   end
 
   def teardown
@@ -47,7 +47,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
 
   # Scenario: Read Primary
   test 'Read Primary' do
-    # Given a basic replica set
+    # Given an arbiter replica set
     # And a document written to all members
     @coll.insert({'a' => 1}, :w => @n)
     # When I read with read-preference PRIMARY
@@ -58,7 +58,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
       reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
     end
     # When there is no primary
-    @cluster.secondaries.first.stop
+    @cluster.arbiters.first.stop
     @cluster.primary.stop
     # And I read with read-preference PRIMARY
     # Then the read fails
@@ -70,7 +70,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
 
   # Scenario: Read Primary Preferred
   test 'Read Primary Preferred' do
-    # Given a basic replica set
+    # Given an arbiter replica set
     # And a document written to all members
     @coll.insert({'a' => 1}, :w => @n)
     # When I read with read-preference PRIMARY_PREFERRED
@@ -81,7 +81,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
       reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
     end
     # When there is no primary
-    @cluster.secondaries.first.stop
+    @cluster.arbiters.first.stop
     @cluster.primary.stop
     # And I read with read-preference PRIMARY_PREFERRED
     # Then the read succeeds
@@ -90,7 +90,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
 
   # Scenario: Read Secondary
   test 'Read Secondary' do
-    # Given a basic replica set
+    # Given an arbiter replica set
     # And a document written to all members
     @coll.insert({'a' => 1}, :w => @n)
     # When I read with read-preference SECONDARY
@@ -100,15 +100,19 @@ class ReadPreferenceTest < Test::Unit::TestCase
     assert_query_route(reader) do
       reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
     end
-    # Note: With a basic replica set, it is not possible to test the following, which would be possible with a replica set composed of two data members plus an arbiter.                                                                                                                                                                  When there are no secondaries
     # When there are no secondaries
+    @cluster.secondaries.first.stop
     # And I read with read-preference SECONDARY
     # Then the read fails
+    ex = assert_raise Mongo::ConnectionFailure do
+      reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
+    end
+    assert_match(/No replica set member available for query with read preference matching/, ex.message)
   end
 
   # Scenario: Read Secondary Preferred
   test 'Read Secondary Preferred' do
-    # Given a basic replica set
+    # Given an arbiter replica set
     # And a document written to all members
     @coll.insert({'a' => 1}, :w => @n)
     # When I read with read-preference SECONDARY_PREFERRED
@@ -118,10 +122,11 @@ class ReadPreferenceTest < Test::Unit::TestCase
     assert_query_route(reader) do
       reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
     end
-    # Note: With a basic replica set, it is not possible to test the following, which would be possible with a replica set composed of two data members plus an arbiter.                                                                                                                                                                  When there are no secondaries
     # When there are no secondaries
-    # And I read with read-preference SECONDARY
+    @cluster.secondaries.first.stop
+    # And I read with read-preference SECONDARY_PREFERRED
     # Then the read succeeds
+    assert(reader[TEST_DB][TEST_COLL].find_one({'a' => 1}))
   end
 
   private
