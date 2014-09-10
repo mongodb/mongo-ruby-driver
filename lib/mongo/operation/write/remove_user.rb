@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/remove_user/response'
-
 module Mongo
   module Operation
     module Write
@@ -46,11 +44,11 @@ module Mongo
         #
         # @params [ Mongo::Server::Context ] The context for this operation.
         #
-        # @return [ Mongo::Response ] The operation response, if there is one.
+        # @return [ Result ] The operation result.
         #
         # @since 2.0.0
         def execute(context)
-          Response.new(
+          Result.new(
             if context.write_command_enabled?
               Command::RemoveUser.new(spec).execute(context)
             else
@@ -58,7 +56,7 @@ module Mongo
                 connection.dispatch([ message, gle ].compact)
               end
             end
-          ).verify!
+          ).validate!
         end
 
         private

@@ -22,7 +22,7 @@ describe Mongo::Operation::Write::RemoveUser do
       end
 
       it 'removes the user from the database' do
-        expect(response).to be_ok
+        expect(response).to be_successful
       end
     end
 
@@ -39,7 +39,7 @@ describe Mongo::Operation::Write::RemoveUser do
       end
 
       it 'does not raise an exception', unless: write_command_enabled? do
-        expect(operation.execute(root_authorized_primary.context).n).to eq(0)
+        expect(operation.execute(root_authorized_primary.context).written_count).to eq(0)
       end
     end
   end

@@ -27,7 +27,7 @@ describe Mongo::Operation::Write::CreateUser do
       end
 
       it 'saves the user in the database' do
-        expect(response).to be_ok
+        expect(response).to be_successful
       end
     end
 
