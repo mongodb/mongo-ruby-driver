@@ -462,7 +462,7 @@ describe Mongo::Operation::Write::Update do
         end
 
         it 'updates the document' do
-          expect(result.n).to eq(1)
+          expect(result.written_count).to eq(1)
         end
       end
 
@@ -502,7 +502,7 @@ describe Mongo::Operation::Write::Update do
         end
 
         it 'updates the documents' do
-          expect(result.n).to eq(2)
+          expect(result.written_count).to eq(2)
         end
       end
 

@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/insert/response'
-
 module Mongo
   module Operation
     module Write
@@ -62,20 +60,20 @@ module Mongo
         #
         # @params [ Mongo::Server::Context ] The context for this operation.
         #
-        # @return [ Mongo::Response ] The operation response, if there is one.
+        # @return [ Result ] The operation result.
         #
         # @since 2.0.0
         def execute(context)
           if context.write_command_enabled?
             op = Command::Insert.new(spec)
-            Response.new(op.execute(context)).verify!
+            Result.new(op.execute(context)).validate!
           else
-            documents.each do |d|
+            replies = documents.map do |d|
               context.with_connection do |connection|
-                Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
+                Result.new(connection.dispatch([ message(d), gle ].compact)).validate!.reply
               end
             end
-            Response.new(nil, documents.size)
+            Result.new(replies)
           end
         end
 

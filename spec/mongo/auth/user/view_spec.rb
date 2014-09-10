@@ -22,7 +22,7 @@ describe Mongo::Auth::User::View do
     context 'when user creation was successful' do
 
       it 'saves the user in the database' do
-        expect(response).to be_ok
+        expect(response).to be_successful
       end
     end
 
@@ -52,7 +52,7 @@ describe Mongo::Auth::User::View do
       end
 
       it 'saves the user in the database' do
-        expect(response).to be_ok
+        expect(response).to be_successful
       end
     end
 
@@ -65,7 +65,7 @@ describe Mongo::Auth::User::View do
       end
 
       it 'does not raise an exception', unless: write_command_enabled? do
-        expect(view.remove('notauser').n).to eq(0)
+        expect(view.remove('notauser').written_count).to eq(0)
       end
     end
   end

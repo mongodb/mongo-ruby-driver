@@ -26,7 +26,7 @@ module Mongo
         # @example Remove multiple documents from the collection.
         #   collection_view.remove_many
         #
-        # @return [ Response ] The response from the database.
+        # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
         def remove_many
@@ -38,7 +38,7 @@ module Mongo
         # @example Remove a single document from the collection.
         #   collection_view.remove_one
         #
-        # @return [ Response ] The response from the database.
+        # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
         def remove_one
@@ -52,7 +52,7 @@ module Mongo
         #
         # @param [ Hash ] document The document to replace.
         #
-        # @return [ Response ] The response from the database.
+        # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
         def replace_one(document)
@@ -64,7 +64,7 @@ module Mongo
         # @example Update multiple documents in the collection.
         #   collection_view.update_many('$set' => { name: 'test' })
         #
-        # @return [ Response ] The response from the database.
+        # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
         def update_many(spec)
@@ -76,7 +76,7 @@ module Mongo
         # @example Update a single document in the collection.
         #   collection_view.update_one('$set' => { name: 'test' })
         #
-        # @return [ Response ] The response from the database.
+        # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
         def update_one(spec)

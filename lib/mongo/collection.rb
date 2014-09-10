@@ -71,7 +71,7 @@ module Mongo
     # @example Force the collection to be created.
     #   collection.create
     #
-    # @return [ Response ] The result of the command.
+    # @return [ Result ] The result of the command.
     #
     # @since 2.0.0
     def create
@@ -84,7 +84,7 @@ module Mongo
     # @example Drop the collection.
     #   collection.drop
     #
-    # @return [ Response ] The result of the command.
+    # @return [ Result ] The result of the command.
     #
     # @since 2.0.0
     def drop
@@ -146,7 +146,7 @@ module Mongo
     # @param [ Hash ] document The document to insert.
     # @param [ Hash ] options The insert options.
     #
-    # @return [ Response ] The database response wrapper.
+    # @return [ Result ] The database response wrapper.
     #
     # @since 2.0.0
     def insert_one(document, options = {})
@@ -161,7 +161,7 @@ module Mongo
     # @param [ Array<Hash> ] documents The documents to insert.
     # @param [ Hash ] options The insert options.
     #
-    # @return [ Response ] The database response wrapper.
+    # @return [ Result ] The database response wrapper.
     #
     # @since 2.0.0
     def insert_many(documents, options = {})

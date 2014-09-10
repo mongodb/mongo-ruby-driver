@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/delete/response'
-
 module Mongo
   module Operation
     module Write
@@ -66,7 +64,7 @@ module Mongo
         #
         # @params [ Mongo::Server::Context ] The context for this operation.
         #
-        # @return [ Mongo::Response ] The operation response, if there is one.
+        # @return [ Result ] The result.
         #
         # @since 2.0.0
         def execute(context)
@@ -75,14 +73,14 @@ module Mongo
           end
           if context.write_command_enabled?
             op = Command::Delete.new(spec)
-            Response.new(op.execute(context)).verify!
+            Result.new(op.execute(context)).validate!
           else
-            Response.new(nil, deletes.reduce(0) do |count, d|
+            replies = deletes.map do |d|
               context.with_connection do |connection|
-                response = Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
-                count + response.n
+                Result.new(connection.dispatch([ message(d), gle ].compact)).validate!.reply
               end
-            end)
+            end
+            Result.new(replies)
           end
         end
 

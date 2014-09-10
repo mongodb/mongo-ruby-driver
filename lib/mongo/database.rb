@@ -129,7 +129,7 @@ module Mongo
     # @example Drop the database.
     #   database.drop
     #
-    # @return [ Response ] The result of the command.
+    # @return [ Result ] The result of the command.
     #
     # @since 2.0.0
     def drop

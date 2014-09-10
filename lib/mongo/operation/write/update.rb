@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/update/response'
-
 module Mongo
   module Operation
     module Write
@@ -68,7 +66,7 @@ module Mongo
         #
         # @params [ Mongo::Server::Context ] The context for this operation.
         #
-        # @return [ Mongo::Response ] The operation response, if there is one.
+        # @return [ Result ] The operation result.
         #
         # @since 2.0.0
         def execute(context)
@@ -77,14 +75,14 @@ module Mongo
           end
           if context.write_command_enabled?
             op = Command::Update.new(spec)
-            Response.new(op.execute(context)).verify!
+            Result.new(op.execute(context)).validate!
           else
-            Response.new(nil, updates.reduce(0) do |count, d|
+            replies = updates.map do |u|
               context.with_connection do |connection|
-                response = Response.new(connection.dispatch([ message(d), gle ].compact)).verify!
-                count + response.n
+                Result.new(connection.dispatch([ message(u), gle ].compact)).validate!.reply
               end
-            end)
+            end
+            Result.new(replies)
           end
         end
 

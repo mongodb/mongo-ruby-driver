@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/operation/result'
 require 'mongo/operation/executable'
 require 'mongo/operation/slicable'
-require 'mongo/operation/verifiable'
 require 'mongo/operation/read'
 require 'mongo/operation/write'
 require 'mongo/operation/aggregate'

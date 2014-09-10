@@ -27,7 +27,7 @@ describe Mongo::Operation::Write::DropIndex do
       end
 
       it 'removes the index' do
-        expect(response).to be_ok
+        expect(response).to be_successful
       end
     end
 

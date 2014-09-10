@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/drop_index/response'
-
 module Mongo
   module Operation
     module Write
@@ -54,11 +52,11 @@ module Mongo
         #
         # @params [ Mongo::Server::Context ] The context for this operation.
         #
-        # @return [ Mongo::Response ] The operation response, if there is one.
+        # @return [ Result ] The result of the operation.
         #
         # @since 2.0.0
         def execute(context)
-          Response.new(Command::DropIndex.new(spec).execute(context)).verify!
+          Result.new(Command::DropIndex.new(spec).execute(context)).validate!
         end
       end
     end

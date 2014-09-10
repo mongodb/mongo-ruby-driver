@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module Mongo
+require 'mongo/operation/aggregate/result'
 
+module Mongo
   module Operation
 
     # A MongoDB aggregate operation.
@@ -72,7 +73,7 @@ module Mongo
       #
       # @params [ Mongo::Server::Context ] The context for this operation.
       #
-      # @return [ Mongo::Response ] The operation response, if there is one.
+      # @return [ Result ] The operation response, if there is one.
       #
       # @since 2.0.0
       def execute(context)
@@ -82,7 +83,8 @@ module Mongo
           context = Mongo::ServerPreference.get(:mode => :primary).server.context
         end
         context.with_connection do |connection|
-          connection.dispatch([message])
+          # @todo: Return an aggregation result here.
+          Result.new(connection.dispatch([ message(context) ]))
         end
       end
 
@@ -108,13 +110,25 @@ module Mongo
         selector[:pipeline].none? { |op| op.key?('$out') || op.key?(:$out) }
       end
 
+      def options
+        unless @spec[:options][:limit] && @spec[:options][:limit] == -1
+          return @spec[:options].merge(:limit => -1)
+        end
+        @spec[:options]
+      end
+
+      def filter(context)
+        return selector if context.write_command_enabled?
+        selector.reject{ |option, value| option.to_s == 'cursor' }
+      end
+
       # The wire protocol message for this operation.
       #
       # @return [ Mongo::Protocol::Query ] Wire protocol message.
       #
       # @since 2.0.0
-      def message
-        Protocol::Query.new(db_name, Database::COMMAND, selector, options)
+      def message(context)
+        Protocol::Query.new(db_name, Database::COMMAND, filter(context), options)
       end
     end
   end

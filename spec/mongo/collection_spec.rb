@@ -148,7 +148,7 @@ describe Mongo::Collection do
       end
 
       it 'executes the command' do
-        expect(response).to be_ok
+        expect(response).to be_successful
       end
 
       it 'creates the collection in the database' do
@@ -171,7 +171,7 @@ describe Mongo::Collection do
           end
 
           it 'executes the command' do
-            expect(response).to be_ok
+            expect(response).to be_successful
           end
 
           it 'sets the collection as capped' do
@@ -223,7 +223,7 @@ describe Mongo::Collection do
     end
 
     it 'executes the command' do
-      expect(response).to be_ok
+      expect(response).to be_successful
     end
 
     it 'drops the collection from the database' do
@@ -291,8 +291,12 @@ describe Mongo::Collection do
       collection.insert_many([{ name: 'test1' }, { name: 'test2' }])
     end
 
-    it 'inserts the documents into the collection' do
-      expect(result.n).to eq(2)
+    it 'inserts the documents into the collection', if: write_command_enabled? do
+      expect(result.written_count).to eq(2)
+    end
+
+    it 'inserts the documents into the collection', unless: write_command_enabled? do
+      expect(result.written_count).to eq(0)
     end
   end
 
@@ -310,8 +314,12 @@ describe Mongo::Collection do
       collection.insert_one({ name: 'testing' })
     end
 
-    it 'inserts the document into the collection' do
-      expect(result.n).to eq(1)
+    it 'inserts the document into the collection', if: write_command_enabled? do
+      expect(result.written_count).to eq(1)
+    end
+
+    it 'inserts the document into the collection', unless: write_command_enabled? do
+      expect(result.written_count).to eq(0)
     end
   end
 end

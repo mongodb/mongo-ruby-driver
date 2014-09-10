@@ -401,8 +401,12 @@ describe Mongo::Operation::Write::Insert do
           insert.execute(authorized_primary.context)
         end
 
-        it 'inserts the documents into the database' do
-          expect(response.n).to eq(1)
+        it 'inserts the documents into the database', if: write_command_enabled? do
+          expect(response.written_count).to eq(1)
+        end
+
+        it 'inserts the documents into the database', unless: write_command_enabled? do
+          expect(response.written_count).to eq(0)
         end
       end
 
@@ -445,8 +449,12 @@ describe Mongo::Operation::Write::Insert do
           insert.execute(authorized_primary.context)
         end
 
-        it 'inserts the documents into the database' do
-          expect(response.n).to eq(2)
+        it 'inserts the documents into the database', if: write_command_enabled? do
+          expect(response.written_count).to eq(2)
+        end
+
+        it 'inserts the documents into the database', unless: write_command_enabled? do
+          expect(response.written_count).to eq(0)
         end
       end
 

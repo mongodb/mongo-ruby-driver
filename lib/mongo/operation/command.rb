@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/command/response'
-
 module Mongo
   module Operation
 
@@ -70,7 +68,7 @@ module Mongo
       #
       # @params [ Mongo::Server::Context ] The context for this operation.
       #
-      # @return [ Mongo::Response ] The operation response, if there is one.
+      # @return [ Result ] The operation result.
       #
       # @since 2.0.0
       def execute(context)
@@ -80,7 +78,7 @@ module Mongo
           context = Mongo::ServerPreference.get(:mode => :primary).server.context
         end
         context.with_connection do |connection|
-          Response.new(connection.dispatch([ message ])).verify!
+          Result.new(connection.dispatch([ message ])).validate!
         end
       end
 

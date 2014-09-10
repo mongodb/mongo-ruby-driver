@@ -15,33 +15,21 @@
 module Mongo
   class Collection
     class View
+      module Immutable
 
-      # Defines explain related behaviour for collection view.
-      #
-      # @since 2.0.0
-      module Explainable
-
-        # Get the explain plan for the query.
-        #
-        # @example Get the explain plan for the query.
-        #   view.explain
-        #
-        # @return [ Hash ] A single document with the explain plan.
-        #
-        # @since 2.0.0
-        def explain
-          self.class.new(collection, selector, options.merge(explain_options)).first
-        end
+        # @return [ Hash ] options The additional query options.
+        attr_reader :options
 
         private
 
-        def explained?
-          !!options[:explain]
-        end
-
-        def explain_options
-          explain_limit = limit || 0
-          { :limit => -explain_limit.abs, :explain => true }
+        # @api private
+        #
+        # @note In the including class, the method #immutable needs to be
+        #   implemented in order to define how a new class of that type needs to
+        #   be instantiated.
+        def configure(field, value)
+          return options[field] if value.nil?
+          new(options.merge(field => value))
         end
       end
     end

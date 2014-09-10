@@ -362,7 +362,7 @@ describe Mongo::Operation::Write::Delete do
         end
 
         it 'deletes the documents from the database' do
-          expect(result.n).to eq(1)
+          expect(result.written_count).to eq(1)
         end
       end
 
@@ -402,7 +402,7 @@ describe Mongo::Operation::Write::Delete do
         end
 
         it 'deletes the documents from the database' do
-          expect(result.n).to eq(2)
+          expect(result.written_count).to eq(2)
         end
       end
 
@@ -417,7 +417,7 @@ describe Mongo::Operation::Write::Delete do
         end
 
         it 'does not delete any documents' do
-          expect(result.n).to eq(0)
+          expect(result.written_count).to eq(0)
         end
       end
     end
