@@ -50,16 +50,17 @@ class ReadPreferenceTest < Test::Unit::TestCase
     # Given a basic replica set
     # And a document written to all members
     @coll.insert({'a' => 1}, :w => @n)
-    # When I read with read-preference ‘primary’
+    # When I read with read-preference PRIMARY
     # Then the read occurs on the primary
     reader = Mongo::MongoClient.from_uri(@cluster.object['mongodb_uri'], :read => :primary)
-    assert_query_route(direct_client(@primary.object['uri'])) do
+    assert_equal(@primary.object['uri'], reader.read_pool.address)
+    assert_query_route(reader) do
       reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
     end
     # When there is no primary
     @cluster.secondaries.first.stop
     @cluster.primary.stop
-    # And I read with read-preference ‘primary’
+    # And I read with read-preference PRIMARY
     # Then the read fails
     ex = assert_raise Mongo::ConnectionFailure do
       reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
@@ -72,16 +73,17 @@ class ReadPreferenceTest < Test::Unit::TestCase
     # Given a basic replica set
     # And a document written to all members
     @coll.insert({'a' => 1}, :w => @n)
-    # When I read with read-preference ‘primaryPreferred’
+    # When I read with read-preference PRIMARY_PREFERRED
     # Then the read occurs on the primary
     reader = Mongo::MongoClient.from_uri(@cluster.object['mongodb_uri'], :read => :primary_preferred)
-    assert_query_route(direct_client(@primary.object['uri'])) do
+    assert_equal(@primary.object['uri'], reader.read_pool.address)
+    assert_query_route(reader) do
       reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
     end
     # When there is no primary
     @cluster.secondaries.first.stop
     @cluster.primary.stop
-    # And I read with read-preference ‘primaryPreferred’
+    # And I read with read-preference PRIMARY_PREFERRED
     # Then the read succeeds
     assert(reader[TEST_DB][TEST_COLL].find_one({'a' => 1}))
   end
@@ -91,8 +93,17 @@ class ReadPreferenceTest < Test::Unit::TestCase
     # Given a basic replica set
     # And a document written to all members
     @coll.insert({'a' => 1}, :w => @n)
-    # When I read with read-preference ‘secondary’
+    # When I read with read-preference SECONDARY
     # Then the read occurs on the secondary
+    reader = Mongo::MongoClient.from_uri(@cluster.object['mongodb_uri'], :read => :secondary)
+    assert_not_equal(@primary.object['uri'], reader.read_pool.address)
+    assert_query_route(reader) do
+      reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
+    end
+    # Note: With a basic replica set, it is not possible to test the following, which would be possible with a replica set composed of two data members plus an arbiter.                                                                                                                                                                  When there are no secondaries
+    # When there are no secondaries
+    # And I read with read-preference SECONDARY
+    # Then the read fails
   end
 
   # Scenario: Read Secondary Preferred
@@ -100,28 +111,32 @@ class ReadPreferenceTest < Test::Unit::TestCase
     # Given a basic replica set
     # And a document written to all members
     @coll.insert({'a' => 1}, :w => @n)
-    # When I read with read-preference ‘secondaryPreferred’
+    # When I read with read-preference SECONDARY_PREFERRED
     # Then the read occurs on the secondary
+    reader = Mongo::MongoClient.from_uri(@cluster.object['mongodb_uri'], :read => :secondary_preferred)
+    assert_not_equal(@primary.object['uri'], reader.read_pool.address)
+    assert_query_route(reader) do
+      reader[TEST_DB][TEST_COLL].find_one({'a' => 1})
+    end
+    # Note: With a basic replica set, it is not possible to test the following, which would be possible with a replica set composed of two data members plus an arbiter.                                                                                                                                                                  When there are no secondaries
+    # When there are no secondaries
+    # And I read with read-preference SECONDARY
+    # Then the read succeeds
   end
 
   private
-
-  def direct_client(host_port)
-    host, port = host_port.split(':', -1)
-    Mongo::MongoClient.new(host, port.to_i)
-  end
 
   def query_count(connection)
     connection['admin'].command({:serverStatus => 1})['opcounters']['query']
   end
 
-  def assert_query_route(expected_target)
-    #puts "#{test_connection.read_pool.port} #{expected_target.read_pool.port}"
-    queries_before = query_count(expected_target)
+  def assert_query_route(reader)
+    direct_client = Mongo::MongoClient.new(reader.read_pool.host, reader.read_pool.port)
+    queries_before = query_count(direct_client)
     assert_nothing_raised do
       yield
     end
-    queries_after = query_count(expected_target)
-    assert_equal 1, queries_after - queries_before
+    queries_after = query_count(direct_client)
+    assert_equal(1, queries_after - queries_before, 'expect query count to increment by one')
   end
 end
