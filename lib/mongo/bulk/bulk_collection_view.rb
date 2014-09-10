@@ -141,7 +141,7 @@ module Mongo
                  :coll_name     => @bulk_write.coll_name,
                  :ordered       => @bulk_write.ordered? }
 
-        op = Mongo::Operation::Write::Update.new(spec)
+        op = Mongo::Operation::Write::BatchUpdate.new(spec)
         @bulk_write.tap do |b|
           b << op
         end
@@ -164,7 +164,7 @@ module Mongo
                  :coll_name     => @bulk_write.coll_name,
                  :ordered       => @bulk_write.ordered? }
 
-        op = Mongo::Operation::Write::Delete.new(spec)
+        op = Mongo::Operation::Write::BatchDelete.new(spec)
         @bulk_write.tap do |b|
           b << op
         end

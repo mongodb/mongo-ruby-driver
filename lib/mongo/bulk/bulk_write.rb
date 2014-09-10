@@ -63,7 +63,7 @@ module Mongo
                  :opts => { :bulk => true }
                }
 
-        op = Mongo::Operation::Write::Insert.new(spec)
+        op = Mongo::Operation::Write::BatchInsert.new(spec)
         current_batch << op
       end
 
