@@ -101,7 +101,7 @@ module Mongo
           cmd[:skip] = options[:skip] if options[:skip]
           cmd[:hint] = options[:hint] if options[:hint]
           cmd[:limit] = options[:limit] if options[:limit]
-          database.command(cmd).n
+          database.command(cmd).written_count
         end
 
         # Get a list of distinct values for a specific field.

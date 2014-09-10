@@ -177,7 +177,7 @@ module Mongo
       private
 
       def command_failure?
-        reply && (!ok? || errors?)
+        reply && (!successful? || errors?)
       end
 
       def errors?

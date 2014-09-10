@@ -58,33 +58,14 @@ describe Mongo::Operation::Command do
 
   describe '#execute' do
 
-    let(:client) do
-      Mongo::Client.new(
-        [ '127.0.0.1:27017' ],
-        database: TEST_DB,
-        username: 'root-user',
-        password: 'password'
-      )
-    end
-
-
-    let(:server) do
-      client.cluster.servers.first
-    end
-
-    before do
-      # @todo: Replace with condition variable
-      client.cluster.scan!
-    end
-
     context 'when the command succeeds' do
 
       let(:response) do
-        op.execute(server.context)
+        op.execute(authorized_primary.context)
       end
 
       it 'returns the reponse' do
-        expect(response).to be_ok
+        expect(response).to be_successful
       end
     end
 
@@ -96,7 +77,7 @@ describe Mongo::Operation::Command do
 
       it 'raises an exception' do
         expect {
-          op.execute(server.context)
+          op.execute(authorized_primary.context)
         }.to raise_error(Mongo::Operation::Write::Failure)
       end
     end

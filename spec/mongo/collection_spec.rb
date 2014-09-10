@@ -148,7 +148,7 @@ describe Mongo::Collection do
       end
 
       it 'executes the command' do
-        expect(response).to be_ok
+        expect(response).to be_successful
       end
 
       it 'creates the collection in the database' do
@@ -171,7 +171,7 @@ describe Mongo::Collection do
           end
 
           it 'executes the command' do
-            expect(response).to be_ok
+            expect(response).to be_successful
           end
 
           it 'sets the collection as capped' do
@@ -223,7 +223,7 @@ describe Mongo::Collection do
     end
 
     it 'executes the command' do
-      expect(response).to be_ok
+      expect(response).to be_successful
     end
 
     it 'drops the collection from the database' do

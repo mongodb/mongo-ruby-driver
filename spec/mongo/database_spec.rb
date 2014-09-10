@@ -122,7 +122,7 @@ describe Mongo::Database do
     end
 
     it 'sends the query command to the cluster' do
-      expect(database.command(:ismaster => 1).n).to be_nil
+      expect(database.command(:ismaster => 1).written_count).to eq(0)
     end
   end
 
