@@ -18,41 +18,36 @@ module Mongo
     module Write
 
       # A MongoDB ensure index operation.
-      # If a server with version >= 2.5.5 is being used, a write command operation
-      # will be created and sent instead.
+      #
+      # @note If a server with version >= 2.5.5 is being used, a write command
+      #   operation will be created and sent instead.
+      #
+      # @example Create the ensure index operation.
+      #   Write::EnsureIndex.new({
+      #     :index => { :name => 1, :age => -1 },
+      #     :db_name => 'test',
+      #     :coll_name => 'test_coll',
+      #     :index_name => 'name_1_age_-1'
+      #   })
+      #
+      # @param [ Hash ] spec The specifications for the insert.
+      #
+      # @option spec :index [ Hash ] The index spec to create.
+      # @option spec :db_name [ String ] The name of the database.
+      # @option spec :coll_name [ String ] The name of the collection.
+      # @option spec :index_name [ String ] The name of the index.
+      # @option spec :options [ Hash ] Options for the command, if it ends up being a
+      #   write command.
       #
       # @since 2.0.0
       class EnsureIndex
         include Executable
-
-        # Initialize the ensure index operation.
-        #
-        # @example
-        #   Write::EnsureIndex.new({
-        #     :index         => { :name => 1, :age => -1 },
-        #     :db_name       => 'test',
-        #     :coll_name     => 'test_coll',
-        #     :index_name    => 'name_1_age_-1'
-        #   })
-        #
-        # @param [ Hash ] spec The specifications for the insert.
-        #
-        # @option spec :index [ Hash ] The index spec to create.
-        # @option spec :db_name [ String ] The name of the database.
-        # @option spec :coll_name [ String ] The name of the collection.
-        # @option spec :index_name [ String ] The name of the index.
-        # @option spec :options [ Hash ] Options for the command, if it ends up being a
-        #   write command.
-        #
-        # @since 2.0.0
-        def initialize(spec)
-          @spec = spec
-        end
+        include Specifiable
 
         # Execute the operation.
-        # If the server has version < 2.5.5, an insert operation is sent.
-        # If the server version is >= 2.5.5, an insert write command operation is created
-        # and sent instead.
+        #
+        # @example Execute the operation.
+        #   operation.execute(context)
         #
         # @params [ Mongo::Server::Context ] The context for this operation.
         #
@@ -60,22 +55,28 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
-          Result.new(
-            if context.write_command_enabled?
-              Command::EnsureIndex.new(spec).execute(context)
-            else
-              context.with_connection do |connection|
-                connection.dispatch([ message(index), gle ].compact)
-              end
-            end
-          ).validate!
+          if context.write_command_enabled?
+            execute_write_command(context)
+          else
+            execute_message(context)
+          end
         end
 
         private
 
-        def message(index)
-          index_spec = options.merge(ns: namespace, key: index, name: index_name)
-          Protocol::Insert.new(db_name, Index::COLLECTION, [ index_spec ])
+        def execute_write_command(context)
+          Result.new(Command::EnsureIndex.new(spec).execute(context)).validate!
+        end
+
+        def execute_message(context)
+          context.with_connection do |connection|
+            Result.new(connection.dispatch([ message, gle ].compact)).validate!
+          end
+        end
+
+        def message
+          document = options.merge(ns: namespace, key: index, name: index_name)
+          Protocol::Insert.new(db_name, Index::COLLECTION, [ document ])
         end
       end
     end

@@ -21,6 +21,81 @@ module Mongo
     # @since 2.0.0
     module Specifiable
 
+      # The field for database name.
+      #
+      # @since 2.0.0
+      DB_NAME = :db_name.freeze
+
+      # The field for deletes.
+      #
+      # @since 2.0.0
+      DELETES = :deletes.freeze
+
+      # The field for documents.
+      #
+      # @since 2.0.0
+      DOCUMENTS = :documents.freeze
+
+      # The field for collection name.
+      #
+      # @since 2.0.0
+      COLL_NAME = :coll_name.freeze
+
+      # The field for cursor id.
+      #
+      # @since 2.0.0
+      CURSOR_ID = :cursor_id.freeze
+
+      # The field for cursor ids.
+      #
+      # @since 2.0.0
+      CURSOR_IDS = :cursor_ids.freeze
+
+      # The field for indexes.
+      #
+      # @since 2.0.0
+      INDEX = :index.freeze
+
+      # The field for index names.
+      #
+      # @since 2.0.0
+      INDEX_NAME = :index_name.freeze
+
+      # The field for options.
+      #
+      # @since 2.0.0
+      OPTIONS = :options.freeze
+
+      # The field for a selector.
+      #
+      # @since 2.0.0
+      SELECTOR = :selector.freeze
+
+      # The field for number to return.
+      #
+      # @since 2.0.0
+      TO_RETURN = :to_return.freeze
+
+      # The field for updates.
+      #
+      # @since 2.0.0
+      UPDATES = :updates.freeze
+
+      # The field name for a user.
+      #
+      # @since 2.0.0
+      USER = :user.freeze
+
+      # The field name for user name.
+      #
+      # @since 2.0.0
+      USER_NAME = :user_name.freeze
+
+      # The field name for a write concern.
+      #
+      # @since 2.0.0
+      WRITE_CONCERN = :write_concern.freeze
+
       # @return [ Hash ] spec The specification for the operation.
       attr_reader :spec
 
@@ -40,6 +115,102 @@ module Mongo
       end
       alias_method :eql?, :==
 
+      # The name of the database to which the operation should be sent.
+      #
+      # @example Get the database name.
+      #   specifiable.db_name
+      #
+      # @return [ String ] Database name.
+      #
+      # @since 2.0.0
+      def db_name
+        spec[DB_NAME]
+      end
+
+      # Get the deletes from the specification.
+      #
+      # @example Get the deletes.
+      #   specifiable.deletes
+      #
+      # @return [ Array<BSON::Document> ] The deletes.
+      #
+      # @since 2.0.0
+      def deletes
+        spec[DELETES]
+      end
+
+      # The documents to in the specification.
+      #
+      # @example Get the documents.
+      #   specifiable.documents
+      #
+      # @return [ Array<BSON::Document> ] The documents.
+      #
+      # @since 2.0.0
+      def documents
+        spec[DOCUMENTS]
+      end
+
+      # The name of the collection to which the operation should be sent.
+      #
+      # @example Get the collection name.
+      #   specifiable.coll_name
+      #
+      # @return [ String ] Collection name.
+      #
+      # @since 2.0.0
+      def coll_name
+        spec[COLL_NAME]
+      end
+
+      # The id of the cursor created on the server.
+      #
+      # @example Get the cursor id.
+      #   specifiable.cursor_id
+      #
+      # @return [ Integer ] The cursor id.
+      #
+      # @since 2.0.0
+      def cursor_id
+        spec[CURSOR_ID]
+      end
+
+      # The ids of the cursors to kill from the spec.
+      #
+      # @example Get the cursor ids from the spec.
+      #   specifiable.cursor_ids
+      #
+      # @return [ Array<Integer> ] The cursor ids.
+      #
+      # @since 2.0.0
+      def cursor_ids
+        spec[CURSOR_IDS]
+      end
+
+      # Get the index from the specification.
+      #
+      # @example Get the index specification.
+      #   specifiable.index
+      #
+      # @return [ Hash ] The index specification.
+      #
+      # @since 2.0.0
+      def index
+        spec[INDEX]
+      end
+
+      # Get the index name from the spec.
+      #
+      # @example Get the index name.
+      #   specifiable.index_name
+      #
+      # @return [ String ] The index name.
+      #
+      # @since 2.0.0
+      def index_name
+        spec[INDEX_NAME]
+      end
+
       # Create the new specifiable operation.
       #
       # @example Create the new specifiable operation.
@@ -53,6 +224,89 @@ module Mongo
       # @since 2.0.0
       def initialize(spec)
         @spec = spec
+      end
+
+      # The options from the specification.
+      #
+      # @example Get the options.
+      #   specificable.options
+      #
+      # @return [ Hash ] The executable options.
+      #
+      # @since 2.0.0
+      def options
+        spec[OPTIONS] || {}
+      end
+
+      # The selector for from the specification.
+      #
+      # @example Get a selector specification.
+      #   specifiable.selector.
+      #
+      # @return [ Hash ] The selector spec.
+      #
+      # @since 2.0.0
+      def selector
+        spec[SELECTOR]
+      end
+
+      # The number of documents to request from the server.
+      #
+      # @example Get the to return value from the spec.
+      #   specifiable.to_return
+      #
+      # @return [ Integer ] The number of documents to return.
+      #
+      # @since 2.0.0
+      def to_return
+        spec[TO_RETURN]
+      end
+
+      # The update documents from the spec.
+      #
+      # @example Get the update documents.
+      #
+      # @return [ Array<BSON::Document> ] The update documents.
+      #
+      # @since 2.0.0
+      def updates
+        spec[UPDATES]
+      end
+
+      # The user for user related operations.
+      #
+      # @example Get the user.
+      #   specifiable.user
+      #
+      # @return [ Auth::User ] The user.
+      #
+      # @since 2.0.0
+      def user
+        spec[USER]
+      end
+
+      # The user name from the specification.
+      #
+      # @example Get the user name.
+      #   specifiable.user_name
+      #
+      # @return [ String ] The user name.
+      #
+      # @since 2.0.
+      def user_name
+        spec[USER_NAME]
+      end
+
+      # The write concern to use for this operation.
+      #
+      # @example Get the write concern.
+      #   specifiable.write_concern
+      #
+      # @return [ Mongo::WriteConcern::Mode ] The write concern.
+      #
+      # @since 2.0.0
+      def write_concern
+        @spec[WRITE_CONCERN] || WriteConcern::Mode.get(WriteConcern::Mode::DEFAULT)
       end
     end
   end
