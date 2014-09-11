@@ -17,50 +17,42 @@ module Mongo
     module Write
 
       # A MongoDB delete operation.
-      # If a server with version >= 2.5.5 is selected, a write command operation
-      # will be created and sent instead.
-      # See Mongo::Operation::Write::Command::Delete
+      #
+      # @note If a server with version >= 2.5.5 is selected, a write command
+      #   operation will be created and sent instead.
+      #
+      # @example Create the delete operation.
+      #   Write::Delete.new({
+      #     :deletes => [{ :q => { :foo => 1 }, :limit => 1 }],
+      #     :db_name => 'test',
+      #     :coll_name => 'test_coll',
+      #     :write_concern => write_concern
+      #   })
+      #
+      # @param [ Hash ] spec The specifications for the delete.
+      #
+      # @option spec :deletes [ Array ] The delete documents.
+      # @option spec :db_name [ String ] The name of the database on which
+      #   the delete should be executed.
+      # @option spec :coll_name [ String ] The name of the collection on which
+      #   the delete should be executed.
+      # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern
+      #   for this operation.
+      # @option spec :ordered [ true, false ] Whether the operations should be
+      #   executed in order.
+      # @option spec :options [Hash] Options for the command, if it ends up being a
+      #   write command.
       #
       # @since 2.0.0
       class Delete
         include Executable
         include Slicable
+        include Specifiable
 
-        # Initialize the delete operation.
+        # Execute the delete operation.
         #
-        # @example
-        #   include Mongo
-        #   include Operation
-        #   Write::Delete.new({ :deletes       => [{ :q => { :foo => 1 },
-        #                                            :limit => 1 }],
-        #                       :db_name       => 'test',
-        #                       :coll_name     => 'test_coll',
-        #                       :write_concern => write_concern
-        #                     })
-        #
-        # @param [ Hash ] spec The specifications for the delete.
-        #
-        # @option spec :deletes [ Array ] The delete documents.
-        # @option spec :db_name [ String ] The name of the database on which
-        #   the delete should be executed.
-        # @option spec :coll_name [ String ] The name of the collection on which
-        #   the delete should be executed.
-        # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern
-        #   for this operation.
-        # @option spec :ordered [ true, false ] Whether the operations should be
-        #   executed in order.
-        # @option spec :options [Hash] Options for the command, if it ends up being a
-        #   write command.
-        #
-        # @since 2.0.0
-        def initialize(spec)
-          @spec = spec
-        end
-
-        # Execute the operation.
-        # If the server has version < 2.5.5, a delete operation is sent.
-        # If the server version is >= 2.5.5, a delete write command operation is created
-        # and sent instead.
+        # @example Execute the operation.
+        #   operation.execute(context)
         #
         # @params [ Mongo::Server::Context ] The context for this operation.
         #
@@ -68,19 +60,10 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
-          unless context.primary? || context.standalone?
-            raise Exception, "Must use primary server"
-          end
           if context.write_command_enabled?
-            op = Command::Delete.new(spec)
-            Result.new(op.execute(context)).validate!
+            execute_write_command(context)
           else
-            replies = deletes.map do |d|
-              context.with_connection do |connection|
-                Result.new(connection.dispatch([ message(d), gle ].compact)).validate!.reply
-              end
-            end
-            Result.new(replies)
+            execute_message(context)
           end
         end
 
@@ -103,34 +86,32 @@ module Mongo
 
         private
 
-        # The spec array element to split up when slicing this operation.
-        # This is used by the Slicable module.
-        #
-        # @return [ Symbol ] :deletes
+        def execute_write_command(context)
+          Result.new(Command::Delete.new(spec).execute(context)).validate!
+        end
+
+        def execute_message(context)
+          replies = deletes.map do |d|
+            context.with_connection do |connection|
+              Result.new(connection.dispatch([ message(d), gle ].compact)).validate!.reply
+            end
+          end
+          Result.new(replies)
+        end
+
         def slicable_key
           :deletes
         end
 
-        # Dup the list of deletes in the spec if this operation is copied/duped.
         def initialize_copy(original)
           @spec = original.spec.dup
           @spec[:deletes] = original.spec[:deletes].clone
         end
 
-        # The delete documents.
-        #
-        # @return [ Array ] The delete documents.
-        #
-        # @since 2.0.0
         def deletes
           @spec[:deletes]
         end
 
-        # The wire protocol message for this delete operation.
-        #
-        # @return [ Mongo::Protocol::Delete ] Wire protocol message.
-        #
-        # @since 2.0.0
         def message(delete_spec)
           selector    = delete_spec[:q]
           delete_options = (delete_spec[:limit] || 0) <= 0 ? {} : { :flags => [:single_remove] }
