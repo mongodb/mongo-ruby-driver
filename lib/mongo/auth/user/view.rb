@@ -71,7 +71,7 @@ module Mongo
         # @since 2.0.0
         def remove(name)
           Operation::Write::RemoveUser.new(
-            name: name,
+            user_name: name,
             db_name: database.name
           ).execute(next_primary.context)
         end
