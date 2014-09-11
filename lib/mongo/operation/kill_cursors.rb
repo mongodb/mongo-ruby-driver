@@ -13,52 +13,24 @@
 # limitations under the License.
 
 module Mongo
-
   module Operation
 
     # A MongoDB kill cursors operation.
     #
+    # @example Create the kill cursors operation.
+    #   Mongo::Operation::KillCursor.new({ :cursor_ids => [1, 2] })
+    #
+    # @param [ Hash ] spec The specifications for the operation.
+    #
+    # @option spec :cursor_ids [ Array ] The ids of cursors to kill.
+    #
     # @since 2.0.0
     class KillCursors
       include Executable
-
-      # The ids of the cursors to kill.
-      #
-      # @return [Array] Ids of the cursors to kill.
-      #
-      # @since 2.0.0
-      attr_reader :cursor_ids
-
-      # Initialize the kill cursors operation.
-      #
-      # @example
-      #   Mongo::Operation::KillCursor.new({ :cursor_ids => [1, 2] })
-      #
-      # @param [ Hash ] spec The specifications for the operation.
-      #
-      # @option spec :cursor_ids [ Array ] The ids of cursors to kill.
-      #
-      # @since 2.0.0
-      def initialize(spec)
-        @spec = spec
-      end
+      include Specifiable
 
       private
 
-      # The ids of the cursors to kill.
-      #
-      # @return [ Array ] The cursor ids.
-      #
-      # @since 2.0.0
-      def cursor_ids
-        @spec[:cursor_ids]
-      end
-
-      # The wire protocol message for this kill cursors operation.
-      #
-      # @return [ Mongo::Protocol::KillCursors ] Wire protocol message.
-      #
-      # @since 2.0.0
       def message
         Protocol::KillCursors.new(cursor_ids)
       end
