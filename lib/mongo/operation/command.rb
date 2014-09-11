@@ -16,55 +16,49 @@ module Mongo
   module Operation
 
     # A MongoDB command operation.
-    # Note that a command is actually a query on the virtual '$cmd' collection.
+    #
+    # @example Create the command operation.
+    #   Mongo::Operation::Command.new({ :selector => { :isMaster => 1 } })
+    #
+    # @note A command is actually a query on the virtual '$cmd' collection.
+    #
+    # @param [ Hash ] spec The specifications for the command.
+    #
+    # @option spec :selector [ Hash ] The command selector.
+    # @option spec :db_name [ String ] The name of the database on which
+    #   the command should be executed.
+    # @option spec :options [ Hash ] Options for the command.
     #
     # @since 2.0.0
     class Command
       include Executable
+      include Specifiable
 
       # In general, commands must always be sent to a primary server.
       # There are some exceptions; the following commands may be sent
       # to secondaries.
       #
+      # @since 2.0.0
       SECONDARY_OK_COMMANDS = [
-          'group',
-          'aggregate',
-          'collstats',
-          'dbstats',
-          'count',
-          'distinct',
-          'geonear',
-          'geosearch',
-          'geowalk',
-          'mapreduce',
-          'replsetgetstatus',
-          'ismaster',
-          'parallelcollectionscan'
+        'group',
+        'aggregate',
+        'collstats',
+        'dbstats',
+        'count',
+        'distinct',
+        'geonear',
+        'geosearch',
+        'geowalk',
+        'mapreduce',
+        'replsetgetstatus',
+        'ismaster',
+        'parallelcollectionscan'
       ].freeze
 
-      # Initialize the command operation.
+      # Execute the command operation.
       #
-      # @example
-      #   Mongo::Operation::Command.new({ :selector => { :isMaster => 1 } })
-      #
-      # @param [ Hash ] spec The specifications for the command.
-      #
-      # @option spec :selector [ Hash ] The command selector.
-      # @option spec :db_name [ String ] The name of the database on which
-      #   the command should be executed.
-      # @option spec :options [ Hash ] Options for the command.
-      #
-      # @since 2.0.0
-      def initialize(spec)
-        @spec = spec
-      end
-
-      # Execute the operation.
-      # The context gets a connection on which the operation
-      # is sent in the block.
-      # If the aggregation will be written to an output collection and the
-      # server is not primary, the operation will be rerouted to the primary
-      # with a warning.
+      # @example Execute the operation.
+      #   operation.execute(context)
       #
       # @params [ Mongo::Server::Context ] The context for this operation.
       #
@@ -72,34 +66,22 @@ module Mongo
       #
       # @since 2.0.0
       def execute(context)
+        # @todo: Should we respect tag sets and options here?
         if context.server.secondary? && !secondary_ok?
           warn "Database command '#{selector.keys.first}' rerouted to primary server"
-          # @todo: Should we respect tag sets and options here?
           context = Mongo::ServerPreference.get(:mode => :primary).server.context
         end
+        execute_message(context)
+      end
+
+      private
+
+      def execute_message(context)
         context.with_connection do |connection|
           Result.new(connection.dispatch([ message ])).validate!
         end
       end
 
-      private
-
-      # The selector for the command.
-      # Note that a command is actually a query on the virtual '$cmd' collection.
-      #
-      # @return [ Hash ] The command selector. 
-      #
-      # @since 2.0.0
-      def selector
-        @spec[:selector]
-      end
-
-      # Options for this command.
-      # A command should have limit -1.
-      #
-      # @return [ Hash ] Command options.
-      #
-      # @since 2.0.0
       def options
         unless @spec[:options][:limit] && @spec[:options][:limit] == -1
           return @spec[:options].merge(:limit => -1)
@@ -107,21 +89,11 @@ module Mongo
         @spec[:options]
       end
 
-      # Whether it is ok for this command to be executed on a secondary.
-      #
-      # @return [ true, false ] If this command can be executed on a secondary.
-      #
-      # @since 2.0.0
       def secondary_ok?
         command = selector.keys.first.to_s.downcase
         SECONDARY_OK_COMMANDS.include?(command)
       end
 
-      # The wire protocol message for this operation.
-      #
-      # @return [ Mongo::Protocol::Query ] Wire protocol message. 
-      #
-      # @since 2.0.0
       def message
         Protocol::Query.new(db_name, Database::COMMAND, selector, options)
       end
