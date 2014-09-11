@@ -108,10 +108,6 @@ module Mongo
           @spec[:deletes] = original.spec[:deletes].clone
         end
 
-        def deletes
-          @spec[:deletes]
-        end
-
         def message(delete_spec)
           selector    = delete_spec[:q]
           delete_options = (delete_spec[:limit] || 0) <= 0 ? {} : { :flags => [:single_remove] }
