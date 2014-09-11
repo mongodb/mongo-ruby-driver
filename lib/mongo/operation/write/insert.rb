@@ -17,46 +17,39 @@ module Mongo
     module Write
 
       # A MongoDB insert operation.
-      # If a server with version >= 2.5.5 is being used, a write command operation
-      # will be created and sent instead.
-      # See Mongo::Operation::Write::Command::Insert
+      #
+      # @note If a server with version >= 2.5.5 is being used, a write command
+      #   operation will be created and sent instead.
+      #
+      # @example Create the new insert operation.
+      #   Write::Insert.new({
+      #     :documents => [{ :foo => 1 }],
+      #     :db_name => 'test',
+      #     :coll_name => 'test_coll',
+      #     :write_concern => write_concern
+      #   })
+      #
+      # @param [ Hash ] spec The specifications for the insert.
+      #
+      # @option spec :documents [ Array ] The documents to insert.
+      # @option spec :db_name [ String ] The name of the database.
+      # @option spec :coll_name [ String ] The name of the collection.
+      # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
+      # @option spec :ordered [ true, false ] Whether the operations should be
+      #   executed in order.
+      # @option spec :options [ Hash ] Options for the command, if it ends up being a
+      #   write command.
       #
       # @since 2.0.0
       class Insert
         include Executable
         include Slicable
+        include Specifiable
 
-        # Initialize the insert operation.
+        # Execute the insert operation.
         #
-        # @example
-        #   include Mongo
-        #   include Operation
-        #   Write::Insert.new({ :documents     => [{ :foo => 1 }],
-        #                       :db_name       => 'test',
-        #                       :coll_name     => 'test_coll',
-        #                       :write_concern => write_concern
-        #                     })
-        #
-        # @param [ Hash ] spec The specifications for the insert.
-        #
-        # @option spec :documents [ Array ] The documents to insert.
-        # @option spec :db_name [ String ] The name of the database.
-        # @option spec :coll_name [ String ] The name of the collection.
-        # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
-        # @option spec :ordered [ true, false ] Whether the operations should be
-        #   executed in order.
-        # @option spec :options [ Hash ] Options for the command, if it ends up being a
-        #   write command.
-        #
-        # @since 2.0.0
-        def initialize(spec)
-          @spec = spec
-        end
-
-        # Execute the operation.
-        # If the server has version < 2.5.5, an insert operation is sent.
-        # If the server version is >= 2.5.5, an insert write command operation is created
-        # and sent instead.
+        # @example Execute the operation.
+        #   operation.execute(context)
         #
         # @params [ Mongo::Server::Context ] The context for this operation.
         #
@@ -65,15 +58,9 @@ module Mongo
         # @since 2.0.0
         def execute(context)
           if context.write_command_enabled?
-            op = Command::Insert.new(spec)
-            Result.new(op.execute(context)).validate!
+            execute_write_command(context)
           else
-            replies = documents.map do |d|
-              context.with_connection do |connection|
-                Result.new(connection.dispatch([ message(d), gle ].compact)).validate!.reply
-              end
-            end
-            Result.new(replies)
+            execute_message(context)
           end
         end
 
@@ -96,34 +83,32 @@ module Mongo
 
         private
 
-        # The spec array element to split up when slicing this operation.
-        # This is used by the Slicable module.
-        #
-        # @return [ Symbol ] :documents
+        def execute_write_command(context)
+          Result.new(Command::Insert.new(spec).execute(context)).validate!
+        end
+
+        def execute_message(context)
+          replies = documents.map do |d|
+            context.with_connection do |connection|
+              Result.new(connection.dispatch([ message(d), gle ].compact)).validate!.reply
+            end
+          end
+          Result.new(replies)
+        end
+
         def slicable_key
           :documents
         end
 
-        # Dup the list of documents in the spec if this operation is copied/duped.
         def initialize_copy(original)
           @spec = original.spec.dup
           @spec[:documents] = original.spec[:documents].dup
         end
 
-        # The documents to insert.
-        #
-        # @return [ Array ] The documents.
-        #
-        # @since 2.0.0
         def documents
           @spec[:documents]
         end
 
-        # The wire protocol message for this insert operation.
-        #
-        # @return [ Mongo::Protocol::Insert ] Wire protocol message.
-        #
-        # @since 2.0.0
         def message(document)
           insert_spec = options[:continue_on_error] == 0 ? {} : { :flags => [:continue_on_error] }
           Protocol::Insert.new(db_name, coll_name, [ document ], insert_spec)
