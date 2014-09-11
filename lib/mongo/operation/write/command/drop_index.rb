@@ -18,20 +18,20 @@ module Mongo
       module Command
 
         # A MongoDB drop index write command operation.
-        # Supported in server versions >= 2.5.5
         #
-        # @example
+        # @example Create the drop index operation.
         #   Write::Command::DropIndex.new({
         #     :index      => { :foo => 1 },
         #     :db_name    => 'test',
         #     :coll_name  => 'test_coll',
         #     :index_name => 'foo_1'
         #   })
-
+        #
         # @since 2.0.0
         class DropIndex
           include Executable
           include Writable
+          include Specifiable
 
           private
 
@@ -41,10 +41,7 @@ module Mongo
           #
           # @since 2.0.0
           def selector
-            {
-              :deleteIndexes => coll_name,
-              :index => index_name
-            }
+            { :deleteIndexes => coll_name, :index => index_name }
           end
         end
       end

@@ -226,18 +226,6 @@ module Mongo
         @spec = spec
       end
 
-      # The options from the specification.
-      #
-      # @example Get the options.
-      #   specificable.options
-      #
-      # @return [ Hash ] The executable options.
-      #
-      # @since 2.0.0
-      def options
-        spec[OPTIONS] || {}
-      end
-
       # The selector for from the specification.
       #
       # @example Get a selector specification.
