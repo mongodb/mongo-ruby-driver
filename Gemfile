@@ -42,5 +42,5 @@ end
 
 platforms :jruby do
   gem 'jruby-launcher'
-  gem 'jruby-jars'
+  gem 'jruby-jars', '1.7.13'
 end

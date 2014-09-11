@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2013 MongoDB, Inc.
+# Copyright (C) 2009-2014 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,22 +25,30 @@ module Mongo
     module GSSAPI
 
       def self.authenticate(username, client, socket, opts={})
+        raise LoadError,
+              "The Sasl GSSAPI authentication mechanism cannot be used because " +
+                  "its extension did not load properly" unless Mongo::HAS_SASL
         db            = client.db('$external')
         hostname      = socket.pool.host
         servicename   = opts[:gssapi_service_name] || 'mongodb'
         canonicalize  = opts[:canonicalize_host_name] ? opts[:canonicalize_host_name] : false
 
-        authenticator = org.mongodb.sasl.GSSAPIAuthenticator.new(JRuby.runtime, username, hostname, servicename, canonicalize)
-        token         = BSON::Binary.new(authenticator.initialize_challenge)
-        cmd           = BSON::OrderedHash['saslStart', 1, 'mechanism', 'GSSAPI', 'payload', token, 'autoAuthorize', 1]
-        response      = db.command(cmd, :check_response => false, :socket => socket)
+        begin
+          authenticator = org.mongodb.sasl.GSSAPIAuthenticator.new(JRuby.runtime, username, hostname, servicename, canonicalize)
+          token         = BSON::Binary.new(authenticator.initialize_challenge)
+          cmd           = BSON::OrderedHash['saslStart', 1, 'mechanism', 'GSSAPI', 'payload', token, 'autoAuthorize', 1]
+          response      = db.command(cmd, :check_response => false, :socket => socket)
 
-        until response['done'] do
-          token    = BSON::Binary.new(authenticator.evaluate_challenge(response['payload'].to_s))
-          cmd      = BSON::OrderedHash['saslContinue', 1, 'conversationId', response['conversationId'], 'payload', token]
-          response = db.command(cmd, :check_response => false, :socket => socket)
+          until response['done'] do
+            break unless Support.ok?(response)
+            token    = BSON::Binary.new(authenticator.evaluate_challenge(response['payload'].to_s))
+            cmd      = BSON::OrderedHash['saslContinue', 1, 'conversationId', response['conversationId'], 'payload', token]
+            response = db.command(cmd, :check_response => false, :socket => socket)
+          end
+          response
+        rescue Java::OrgMongodbSasl::MongoSecurityException
+          return { }
         end
-        response
       end
     end
 

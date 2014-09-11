@@ -518,8 +518,9 @@ module Mongo
     # @option opts [Boolean] :unique (false) if true, this index will enforce a uniqueness constraint.
     # @option opts [Boolean] :background (false) indicate that the index should be built in the background. This
     #   feature is only available in MongoDB >= 1.3.2.
-    # @option opts [Boolean] :drop_dups (nil) If creating a unique index on a collection with pre-existing records,
-    #   this option will keep the first document the database indexes and drop all subsequent with duplicate values.
+    # @option opts [Boolean] :drop_dups (nil) (DEPRECATED) If creating a unique index on a collection with
+    #   pre-existing records, this option will keep the first document the database indexes and drop all subsequent
+    #   with duplicate values.
     # @option opts [Integer] :bucket_size (nil) For use with geoHaystack indexes. Number of documents to group
     #   together within a certain proximity to a given longitude and latitude.
     # @option opts [Integer] :min (nil) specify the minimum longitude and latitude for a geo index.
@@ -544,6 +545,10 @@ module Mongo
     #
     # @example A geospatial index with alternate longitude and latitude:
     #   @restaurants.create_index([['location', Mongo::GEO2D]], :min => 500, :max => 500)
+    #
+    # @note The :drop_dups option is no longer supported by MongoDB starting with server version 2.7.5.
+    #   The option is silently ignored by the server and unique index builds using the option will
+    #   fail if a duplicate value is detected.
     #
     # @return [String] the name of the index created.
     def create_index(spec, opts={})
@@ -571,6 +576,10 @@ module Mongo
     #     and sets 5 minute cache
     #   Time t+10min : @posts.ensure_index(:subject => Mongo::ASCENDING) -- calls create_index and
     #     resets the 5 minute counter
+    #
+    # @note The :drop_dups option is no longer supported by MongoDB starting with server version 2.7.5.
+    #   The option is silently ignored by the server and unique index builds using the option will
+    #   fail if a duplicate value is detected.
     #
     # @return [String] the name of the index.
     def ensure_index(spec, opts={})
@@ -1030,6 +1039,10 @@ module Mongo
     # @option opts [Hash] :query ({}) A query selector for filtering the documents counted.
     # @option opts [Integer] :skip (nil) The number of documents to skip.
     # @option opts [Integer] :limit (nil) The number of documents to limit.
+    # @option opts [String, Array, OrderedHash] :hint hint for query optimizer, usually not necessary if
+    #   using MongoDB > 1.1. This option is only supported with #count in server version > 2.6.
+    # @option opts [String] :named_hint for specifying a named index as a hint, will be overridden by :hint
+    #   if :hint is also provided. This option is only supported with #count in server version > 2.6.
     # @option opts [:primary, :secondary] :read Read preference for this command. See Collection#find for
     #  more details.
     # @option opts [String]  :comment (nil) a comment to include in profiling logs
@@ -1037,12 +1050,13 @@ module Mongo
     # @return [Integer]
     def count(opts={})
       find(opts[:query],
-           :skip  => opts[:skip],
-           :limit => opts[:limit],
-           :read  => opts[:read],
-           :comment => opts[:comment]).count(true)
+           :skip       => opts[:skip],
+           :limit      => opts[:limit],
+           :named_hint => opts[:named_hint] || @hint,
+           :hint       => opts[:hint] || @hint,
+           :read       => opts[:read],
+           :comment    => opts[:comment]).count(true)
     end
-
     alias :size :count
 
     protected

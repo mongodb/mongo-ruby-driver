@@ -26,7 +26,7 @@ class ReplicaSetClientTest < Test::Unit::TestCase
   end
 
   def test_reconnection
-    @client = MongoReplicaSetClient.new @rs.repl_set_seeds
+    @client = MongoReplicaSetClient.from_uri(@uri)
     assert @client.connected?
 
     manager = @client.local_manager
@@ -76,11 +76,12 @@ class ReplicaSetClientTest < Test::Unit::TestCase
   end
 
   def test_connect_with_primary_stepped_down
-    @client = MongoReplicaSetClient.new @rs.repl_set_seeds
+    @client = MongoReplicaSetClient.from_uri(@uri)
     @client[TEST_DB]['bar'].save({:a => 1}, {:w => 3})
     assert @client[TEST_DB]['bar'].find_one
 
     primary = Mongo::MongoClient.new(*@client.primary)
+    authenticate_client(primary)
     assert_raise Mongo::ConnectionFailure do
       perform_step_down(primary)
     end
@@ -93,7 +94,7 @@ class ReplicaSetClientTest < Test::Unit::TestCase
   end
 
   def test_connect_with_primary_killed
-    @client = MongoReplicaSetClient.new @rs.repl_set_seeds
+    @client = MongoReplicaSetClient.from_uri(@uri)
     assert @client.connected?
     @client[TEST_DB]['bar'].save({:a => 1}, {:w => 3})
     assert @client[TEST_DB]['bar'].find_one
@@ -109,10 +110,11 @@ class ReplicaSetClientTest < Test::Unit::TestCase
   end
 
   def test_save_with_primary_stepped_down
-    @client = MongoReplicaSetClient.new @rs.repl_set_seeds
+    @client = MongoReplicaSetClient.from_uri(@uri)
     assert @client.connected?
 
     primary = Mongo::MongoClient.new(*@client.primary)
+    authenticate_client(primary)
     assert_raise Mongo::ConnectionFailure do
       perform_step_down(primary)
     end
@@ -124,7 +126,7 @@ class ReplicaSetClientTest < Test::Unit::TestCase
   end
 
   # def test_connect_with_first_node_removed
-  #   @client = MongoReplicaSetClient.new @rs.repl_set_seeds
+  #   @client = MongoReplicaSetClient.from_uri(@uri)
   #   @client[TEST_DB]['bar'].save({:a => 1}, {:w => 3})
 
   #   # Make sure everyone's views of optimes are caught up
@@ -331,7 +333,7 @@ class ReplicaSetClientTest < Test::Unit::TestCase
   end
 
   def test_find_and_modify_with_secondary_read_preference
-    @client = MongoReplicaSetClient.new @rs.repl_set_seeds
+    @client = MongoReplicaSetClient.from_uri(@uri)
     collection = @client[TEST_DB].collection('test', :read => :secondary)
     id = BSON::ObjectId.new
     collection << { :a => id, :processed => false }

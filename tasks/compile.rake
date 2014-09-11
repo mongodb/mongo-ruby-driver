@@ -31,7 +31,12 @@ else
     ext.lib_dir = "lib/bson_ext"
     Rake::Task['clean'].invoke
   end
+  Rake::ExtensionTask.new('csasl') do |ext|
+    ext.name = "csasl"
+    ext.ext_dir = "ext/csasl"
+    ext.lib_dir = "lib/csasl"
+  end
 end
 
 desc "Run the default compile task"
-task :compile => RUBY_PLATFORM =~ /java/ ? ['compile:jbson', 'compile:jsasl'] : 'compile:cbson'
+task :compile => RUBY_PLATFORM =~ /java/ ? ['compile:jbson', 'compile:jsasl'] : ['compile:cbson', 'compile:csasl']

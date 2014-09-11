@@ -22,14 +22,14 @@ TEST_SUITES = {
                  'test/functional/ssl_test.rb']
   },
   :threading => { :pattern => 'test/threading/**/*_test.rb' },
-  #:replica_set => {
-  #  :pattern => 'test/replica_set/**/*_test.rb',
-  #  :exclude => ['test/replica_set/complex_connect_test.rb',
-  #               'test/replica_set/count_test.rb',
-  #               'test/replica_set/read_preference_test.rb',
-  #               'test/replica_set/ssl_test.rb']
-  #},
-  #:sharded_cluster => { :pattern => 'test/sharded_cluster/**/*_test.rb' },
+  :replica_set => {
+    :pattern => 'test/replica_set/**/*_test.rb',
+    :exclude => ['test/replica_set/complex_connect_test.rb',
+                 'test/replica_set/count_test.rb',
+                 'test/replica_set/read_preference_test.rb',
+                 'test/replica_set/ssl_test.rb']
+  },
+  :sharded_cluster => { :pattern => 'test/sharded_cluster/**/*_test.rb' },
   :tools => {
     :pattern => 'test/tools/**/*_test.rb',
     :exclude => ['test/tools/mongo_config_test.rb']
@@ -55,7 +55,7 @@ namespace :test do
   Rake::TestTask.new(:default) do |t|
     enabled_tests = [:bson, :unit, :functional, :threading]
     unless ENV.key?('TRAVIS_CI') || ENV.key?('JENKINS_CI')
-      #enabled_tests += [:replica_set, :sharded_cluster]
+      enabled_tests += [:replica_set, :sharded_cluster]
     end
 
     files = []
@@ -70,6 +70,12 @@ namespace :test do
     t.libs << 'test'
   end
   task :commit => :default
+
+  # Both the functional and replica_set tests will use the kerberos C ext
+  # when testing GSSAPI. So we must compile when on MRI.
+  task :default     => 'compile:csasl' unless RUBY_PLATFORM =~ /java/
+  task :functional  => 'compile:csasl' unless RUBY_PLATFORM =~ /java/
+  task :replica_set => 'compile:csasl' unless RUBY_PLATFORM =~ /java/
 
   desc 'Outputs diagnostic information for troubleshooting test failures.'
   task :diagnostic do
@@ -111,4 +117,15 @@ namespace :test do
       t.libs << 'test'
     end
   end
+
+  task :cleanup do |t|
+    %w(data tmp coverage lib/bson_ext lib/csasl).each do |dir|
+      if File.directory?(dir)
+        puts "[CLEAN-UP] Removing '#{dir}'..."
+        FileUtils.rm_rf(dir)
+      end
+    end
+    t.reenable
+  end
+  Rake.application.top_level_tasks << 'test:cleanup'
 end

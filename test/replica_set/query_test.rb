@@ -18,7 +18,7 @@ class ReplicaSetQueryTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
-    @client = MongoReplicaSetClient.new @rs.repl_set_seeds
+    @client = MongoReplicaSetClient.from_uri(@uri)
     @db = @client.db(TEST_DB)
     @db.drop_collection("test-sets")
     @coll = @db.collection("test-sets")

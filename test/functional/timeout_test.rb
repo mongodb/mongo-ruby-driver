@@ -17,8 +17,8 @@ require 'test_helper'
 class TimeoutTest < Test::Unit::TestCase
 
   def test_op_timeout
+    grant_admin_user_eval_role(standard_connection)
     connection = standard_connection(:op_timeout => 0.5)
-    grant_admin_user_eval_role(connection)
 
     admin = connection.db('admin')
 

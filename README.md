@@ -84,10 +84,10 @@ MRI 1.8.7, 1.9.3, 2.0.0<br>JRuby 1.7.x | Windows<br>Linux<br>OS X | x86<br>x64<b
 Support & Feedback
 -----
 
-For issues, questions or feedback related to the Ruby driver, please look into
-our [support channels](http://www.mongodb.org/about/support). Please
-do not email any of the Ruby developers directly with issues or
-questions - you're more likely to get an answer quickly on the [mongodb-user list](http://groups.google.com/group/mongodb-user) on Google Groups.
+**Support Channels**
+
+For issues, questions or feedback related to the Ruby driver, please look into our [support channels](http://www.mongodb.org/about/support).
+Please do not email any of the Ruby developers directly with issues or questions. You'll get a quicker answer on the [mongodb-user list](http://groups.google.com/group/mongodb-user) Google Group.
 
 Bugs & Feature Requests
 -----
@@ -100,17 +100,40 @@ Do you have a bug to report or a feature request to make?
 
 When reporting an issue, please keep in mind that all information in JIRA for all driver projects (ex. RUBY, CSHARP, JAVA) and the Core Server (ex. SERVER) project is **PUBLICLY** visible.
 
-**PLEASE DO**
+**HOW TO ASK FOR HELP**
 
-* Provide as much information as possible about the issue.
-* Provide detailed steps for reproducing the issue.
-* Provide any applicable code snippets, stack traces and log data.
-* Specify version information for the driver and MongoDB.
+Providing enough information so we can reproduce the issue immediately will reduce roundtrip communications and get you a useful response as quickly as possible.
+That said, please provide the following information when logging an issue:
+
+1. Environment
+2. Ruby version, including patch-level
+3. MongoDB version
+4. A test case or code snippets
+5. Stack traces and log data, keeping in mind that this info is public
 
 **PLEASE DO NOT**
 
 * Provide any sensitive data or server logs.
 * Report potential security issues publicly (see 'Security Issues').
+
+**EXAMPLE BUG REPORT**
+
+Example taken from [RUBY-775](https://jira.mongodb.org/browse/RUBY-775)
+
+```
+There appears to be a recursive locking condition in the replica set connection pooling.
+
+Environment: AWS Linux 3.10.37-47.135.amzn1.x86_64 / jruby-1.7.12 / JDK java-1.7.0-openjdk-1.7.0.55-2.4.7.1.40.amzn1.x86_64
+
+Component: Connection Pooling / Replica set
+
+Here is a stack trace:
+https://gist.githubusercontent.com/cheald/5ed01172c5b2c9943c87/raw/63075158dac4c78c1775cac8bf84ba3b6537bc1e/gistfile1.txt
+
+The original lock occurs [here](https://github.com/mongodb/mongo-ruby-driver/blob/1.x-stable/lib/mongo/connection/pool_manager.rb#L60)
+
+and then the process of reconnecting ends up attempting to resynchronize the same lock [here](https://github.com/mongodb/mongo-ruby-driver/blob/1.x-stable/lib/mongo/connection/pool_manager.rb#L150)
+```
 
 Security Issues
 -----

@@ -87,14 +87,14 @@ module Mongo
   class MongoClient
     # @deprecated This method is no longer in use and never needs to be called
     #   directly. Support will be removed after v2.0
+    # Authentication of sockets is handled upon checkout and checkin.
     def authenticate_pools
-      @primary_pool.authenticate_existing
     end
 
     # @deprecated This method is no longer in use and never needs to be called
     #   directly. Support will be removed after v2.0
+    # Authentication of sockets is handled upon checkout and checkin.
     def logout_pools(database)
-      @primary_pool.logout_existing(database)
     end
 
     # @deprecated This method is no longer in use and never needs to be called
@@ -107,14 +107,14 @@ module Mongo
   class MongoReplicaSetClient
     # @deprecated This method is no longer in use and never needs to be called
     #   directly. Support will be removed after v2.0
+    # Authentication of sockets is handled upon checkout and checkin.
     def authenticate_pools
-      @manager.pools.each { |pool| pool.authenticate_existing }
     end
 
     # @deprecated This method is no longer in use and never needs to be called
     #   directly. Support will be removed after v2.0
+    # Authentication of sockets is handled upon checkout and checkin.
     def logout_pools(database)
-      @manager.pools.each { |pool| pool.logout_existing(database) }
     end
   end
 

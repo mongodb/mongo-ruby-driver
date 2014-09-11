@@ -195,19 +195,20 @@ class ClientTest < Test::Unit::TestCase
     @client.drop_database(db_name)
   end
 
-  # @todo: localhost changes
-  # def test_copy_database
-  #   old_db = @client['ruby-test-old']
-  #   new_db = @client['ruby-test-new']
-  #   coll = 'copy-test'
-  #
-  #   old_db[coll].insert('a' => 1)
-  #   @client.drop_database(new_db.name)
-  #   silently { old_db.add_user('chevy', 'chase') }
-  #   @client.copy_database(old_db.name, new_db.name, host_port, 'chevy', 'chase')
-  #   old_db.remove_user('chevy')
-  #   assert_equal old_db[coll].find_one, new_db[coll].find_one
-  # end
+  def test_copy_database
+    return unless @client.server_version >= '2.5' ||
+                  @client.server_version < '2.4'
+    old_db = @client['ruby-test-old']
+    new_db = @client['ruby-test-new']
+    coll = 'copy-test'
+
+    old_db[coll].insert('a' => 1)
+    @client.drop_database(new_db.name)
+    silently { old_db.add_user('chevy', 'chase') }
+    @client.copy_database(old_db.name, new_db.name, host_port, 'chevy', 'chase')
+    old_db.remove_user('chevy')
+    assert_equal old_db[coll].find_one, new_db[coll].find_one
+  end
 
   def test_database_names
     @client.db(TEST_DB).collection('info-test').remove({})
@@ -519,46 +520,45 @@ class ClientTest < Test::Unit::TestCase
     end
   end
 
-  # @todo: uncomment when RUBY-788 is merged in
-  #context "Connection exceptions" do
-  #  setup do
-  #    @con = standard_connection(:pool_size => 10, :pool_timeout => 10)
-  #    @coll = @con[TEST_DB]['test-connection-exceptions']
-  #  end
-#
-  #  should "release connection if an exception is raised on send_message" do
-  #    @con.stubs(:send_message_on_socket).raises(ConnectionFailure)
-  #    assert_equal 0, @con.primary_pool.checked_out.size
-  #    assert_raise ConnectionFailure do
-  #      @coll.insert({:test => "insert"})
-  #    end
-  #    assert_equal 0, @con.primary_pool.checked_out.size
-  #  end
-#
-  #  should "release connection if an exception is raised on write concern :w => 1" do
-  #    @con.stubs(:receive).raises(ConnectionFailure)
-  #    assert_equal 0, @con.primary_pool.checked_out.size
-  #    assert_raise ConnectionFailure do
-  #      @coll.insert({:test => "insert"}, :w => 1)
-  #    end
-  #    assert_equal 0, @con.primary_pool.checked_out.size
-  #  end
-#
-  #  should "release connection if an exception is raised on receive_message" do
-  #    @con.stubs(:receive).raises(ConnectionFailure)
-  #    assert_equal 0, @con.read_pool.checked_out.size
-  #    assert_raise ConnectionFailure do
-  #      @coll.find.to_a
-  #    end
-  #    assert_equal 0, @con.read_pool.checked_out.size
-  #  end
-#
-  #  should "show a proper exception message if an IOError is raised while closing a socket" do
-  #    TCPSocket.any_instance.stubs(:close).raises(IOError.new)
-#
-  #    @con.primary_pool.checkout_new_socket
-  #    @con.primary_pool.expects(:warn)
-  #    assert @con.primary_pool.close
-  #  end
-  #end
+  context "Connection exceptions" do
+    setup do
+      @con = MongoClient.new(TEST_HOST, TEST_PORT, :pool_size => 10, :pool_timeout => 10)
+      @coll = @con[TEST_DB]['test-connection-exceptions']
+    end
+
+    should "release connection if an exception is raised on send_message" do
+      @con.stubs(:send_message_on_socket).raises(ConnectionFailure)
+      assert_equal 0, @con.primary_pool.checked_out.size
+      assert_raise ConnectionFailure do
+        @coll.insert({:test => "insert"})
+      end
+      assert_equal 0, @con.primary_pool.checked_out.size
+    end
+
+    should "release connection if an exception is raised on write concern :w => 1" do
+      @con.stubs(:receive).raises(ConnectionFailure)
+      assert_equal 0, @con.primary_pool.checked_out.size
+      assert_raise ConnectionFailure do
+        @coll.insert({:test => "insert"}, :w => 1)
+      end
+      assert_equal 0, @con.primary_pool.checked_out.size
+    end
+
+    should "release connection if an exception is raised on receive_message" do
+      @con.stubs(:receive).raises(ConnectionFailure)
+      assert_equal 0, @con.read_pool.checked_out.size
+      assert_raise ConnectionFailure do
+        @coll.find.to_a
+      end
+      assert_equal 0, @con.read_pool.checked_out.size
+    end
+
+    should "show a proper exception message if an IOError is raised while closing a socket" do
+      TCPSocket.any_instance.stubs(:close).raises(IOError.new)
+
+      @con.primary_pool.checkout_new_socket
+      @con.primary_pool.expects(:warn)
+      assert @con.primary_pool.close
+    end
+  end
 end
