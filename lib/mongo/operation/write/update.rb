@@ -86,7 +86,7 @@ module Mongo
           raise Exception, "Cannot merge" unless self.class == other.class &&
               coll_name == other.coll_name &&
               db_name == other.db_name
-          @spec[:updates] << other.spec[:updates]
+          updates << other.spec[:updates]
           self
         end
 
@@ -112,10 +112,6 @@ module Mongo
         def initialize_copy(original)
           @spec = original.spec.dup
           @spec[:updates] = original.spec[:updates].dup
-        end
-
-        def updates
-          @spec[:updates]
         end
 
         def message(update_spec = {})
