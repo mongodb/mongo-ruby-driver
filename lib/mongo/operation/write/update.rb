@@ -17,52 +17,48 @@ module Mongo
     module Write
 
       # A MongoDB update operation.
-      # If the server version is >= 2.5.5, a write command operation will be created
-      # and sent instead.
-      # See Mongo::Operation::Write::Command::Update
+      #
+      # @note If the server version is >= 2.5.5, a write command operation
+      #   will be created and sent instead.
+      #
+      # @example Create the update operation.
+      #   Write::Update.new({
+      #     :updates => [
+      #       {
+      #         :q => { :foo => 1 },
+      #         :u => { :$set => { :bar => 1 }},
+      #         :multi  => true,
+      #         :upsert => false
+      #       }
+      #     ],
+      #     :db_name => 'test',
+      #     :coll_name => 'test_coll',
+      #     :write_concern => write_concern
+      #   })
+      #
+      # @param [ Hash ] spec The specifications for the update.
+      #
+      # @option spec :updates [ Array ] The update documents.
+      # @option spec :db_name [ String ] The name of the database on which
+      #   the query should be run.
+      # @option spec :coll_name [ String ] The name of the collection on which
+      #   the query should be run.
+      # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
+      # @option spec :ordered [ true, false ] Whether the operations should be
+      #   executed in order.
+      # @option spec :options [ Hash ] Options for the command, if it ends up being a
+      #   write command.
       #
       # @since 2.0.0
       class Update
         include Executable
         include Slicable
+        include Specifiable
 
-        # Initialize the update operation.
+        # Execute the update operation.
         #
-        # @example
-        #   include Mongo
-        #   include Operation
-        #   Write::Update.new({ :updates => [{ :q => { :foo => 1 },
-        #                                      :u => { :$set =>
-        #                                              { :bar => 1 }},
-        #                                      :multi  => true,
-        #                                      :upsert => false }],
-        #                       :db_name       => 'test',
-        #                       :coll_name     => 'test_coll',
-        #                       :write_concern => write_concern
-        #                     })
-        #
-        # @param [ Hash ] spec The specifications for the update.
-        #
-        # @option spec :updates [ Array ] The update documents.
-        # @option spec :db_name [ String ] The name of the database on which
-        #   the query should be run.
-        # @option spec :coll_name [ String ] The name of the collection on which
-        #   the query should be run.
-        # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
-        # @option spec :ordered [ true, false ] Whether the operations should be
-        #   executed in order.
-        # @option spec :options [ Hash ] Options for the command, if it ends up being a
-        #   write command.
-        #
-        # @since 2.0.0
-        def initialize(spec)
-          @spec = spec
-        end
-
-        # Execute the operation.
-        # If the server version is < 2.5.5, an update operation is sent.
-        # If the server version is >= 2.5.5, an update write command operation is
-        # created and sent instead.
+        # @example Execute the operation.
+        #   operation.execute(context)
         #
         # @params [ Mongo::Server::Context ] The context for this operation.
         #
@@ -70,19 +66,10 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
-          unless context.primary? || context.standalone?
-            raise Exception, "Must use primary server"
-          end
           if context.write_command_enabled?
-            op = Command::Update.new(spec)
-            Result.new(op.execute(context)).validate!
+            execute_write_command(context)
           else
-            replies = updates.map do |u|
-              context.with_connection do |connection|
-                Result.new(connection.dispatch([ message(u), gle ].compact)).validate!.reply
-              end
-            end
-            Result.new(replies)
+            execute_message(context)
           end
         end
 
@@ -105,38 +92,36 @@ module Mongo
 
         private
 
-        # The spec array element to split up when slicing this operation.
-        # This is used by the Slicable module.
-        #
-        # @return [ Symbol ] :updates
+        def execute_write_command(context)
+          Result.new(Command::Update.new(spec).execute(context)).validate!
+        end
+
+        def execute_message(context)
+          replies = updates.map do |u|
+            context.with_connection do |connection|
+              Result.new(connection.dispatch([ message(u), gle ].compact)).validate!.reply
+            end
+          end
+          Result.new(replies)
+        end
+
         def slicable_key
           :updates
         end
 
-        # Dup the list of updates in the spec if this operation is copied/duped.
         def initialize_copy(original)
           @spec = original.spec.dup
           @spec[:updates] = original.spec[:updates].dup
         end
 
-        # The update documents.
-        #
-        # @return [ Array ] The update documents.
-        #
-        # @since 2.0.0
         def updates
           @spec[:updates]
         end
 
-        # The wire protocol message for this update operation.
-        #
-        # @return [ Mongo::Protocol::Update ] Wire protocol message.
-        #
-        # @since 2.0.0
         def message(update_spec = {})
           selector    = update_spec[:q]
           update      = update_spec[:u]
-          update_options = update_spec[:multi] ? { :flags => [:multi_update] } : { }
+          update_options = update_spec[:multi] ? { :flags => [:multi_update] } : {}
           Protocol::Update.new(db_name, coll_name, selector, update, update_options)
         end
       end
