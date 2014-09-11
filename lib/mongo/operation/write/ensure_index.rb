@@ -44,7 +44,7 @@ module Mongo
         include Executable
         include Specifiable
 
-        # Execute the operation.
+        # Execute the ensure index operation.
         #
         # @example Execute the operation.
         #   operation.execute(context)

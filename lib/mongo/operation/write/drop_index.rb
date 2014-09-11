@@ -17,38 +17,30 @@ module Mongo
     module Write
 
       # A MongoDB drop index operation.
-      # If a server with version >= 2.5.5 is being used, a write command operation
-      # will be created and sent instead.
+      #
+      # @example Create the drop index operation.
+      #   Write::DropIndex.new({
+      #     :db_name => 'test',
+      #     :coll_name => 'test_coll',
+      #     :index_name => 'name_1_age_-1'
+      #   })
+      #
+      # @param [ Hash ] spec The specifications for the drop.
+      #
+      # @option spec :index [ Hash ] The index spec to create.
+      # @option spec :db_name [ String ] The name of the database.
+      # @option spec :coll_name [ String ] The name of the collection.
+      # @option spec :index_name [ String ] The name of the index.
       #
       # @since 2.0.0
       class DropIndex
         include Executable
+        include Specifiable
 
-        # Initialize the drop index operation.
+        # Execute the drop index operation.
         #
-        # @example
-        #   Write::DropIndex.new({
-        #     :db_name       => 'test',
-        #     :coll_name     => 'test_coll',
-        #     :index_name    => 'name_1_age_-1'
-        #   })
-        #
-        # @param [ Hash ] spec The specifications for the drop.
-        #
-        # @option spec :index [ Hash ] The index spec to create.
-        # @option spec :db_name [ String ] The name of the database.
-        # @option spec :coll_name [ String ] The name of the collection.
-        # @option spec :index_name [ String ] The name of the index.
-        #
-        # @since 2.0.0
-        def initialize(spec)
-          @spec = spec
-        end
-
-        # Execute the operation.
-        # If the server has version < 2.5.5, an insert operation is sent.
-        # If the server version is >= 2.5.5, an insert write command operation is created
-        # and sent instead.
+        # @example Execute the operation.
+        #   operation.execute(context)
         #
         # @params [ Mongo::Server::Context ] The context for this operation.
         #
@@ -56,6 +48,12 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
+          execute_write_command(context)
+        end
+
+        private
+
+        def execute_write_command(context)
           Result.new(Command::DropIndex.new(spec).execute(context)).validate!
         end
       end
