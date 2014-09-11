@@ -147,11 +147,8 @@ module Mongo
       end
 
       def destroy
-        if status.ok
-          delete
-          raise "#{self.class.name}##{__method__} #{message_summary}" unless @response.code == 204
-          #@object = nil
-        end
+        delete
+        raise "#{self.class.name}##{__method__} #{message_summary}" unless [204, 404].include?(@response.code)
         self
       end
 

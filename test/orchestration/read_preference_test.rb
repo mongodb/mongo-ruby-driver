@@ -40,11 +40,7 @@ class ReadPreferenceTest < Test::Unit::TestCase
   end
 
   def teardown
-    begin
-      @client.drop_database(TEST_DB)
-    rescue Mongo::ConnectionFailure => ex
-    end
-    @cluster.delete
+    @cluster.destroy
   end
 
   # Scenario: Read Primary

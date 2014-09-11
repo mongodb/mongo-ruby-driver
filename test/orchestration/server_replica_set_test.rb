@@ -16,7 +16,7 @@ require 'test_helper'
 require 'pp'
 include Mongo
 
-class WriteConcernTest < Test::Unit::TestCase
+class ServerReplicaSetTest < Test::Unit::TestCase
   TEST_DB = name.underscore
   TEST_COLL = name.underscore
 
@@ -38,8 +38,7 @@ class WriteConcernTest < Test::Unit::TestCase
   end
 
   def teardown
-    @client.drop_database(TEST_DB)
-    @cluster.delete
+    @cluster.destroy
   end
 
   # Scenario: Replicated insert, update and delete timeout with W failure

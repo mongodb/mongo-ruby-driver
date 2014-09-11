@@ -33,6 +33,10 @@ TEST_SUITES = {
   :tools => {
     :pattern => 'test/tools/**/*_test.rb',
     :exclude => ['test/tools/mongo_config_test.rb']
+  },
+  :orchestration => {
+    :pattern => 'test/orchestration/*_test.rb',
+    :exclude => []
   }
 }
 

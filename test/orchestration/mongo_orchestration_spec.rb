@@ -113,7 +113,7 @@ describe Mongo::Orchestration::Cluster, :orchestration => true do
     expect(cluster.message_summary).to match(%r{^DELETE /servers/standalone, options: {}, 204 No Content})
 
     cluster.destroy # destroy for already destroyed
-    expect(cluster.message_summary).to match(%r{GET /servers/standalone, options: {}, 404 Not Found})
+    expect(cluster.message_summary).to match(%r{DELETE /servers/standalone, options: {}, 404 Not Found})
 
     cluster.status # status for destroyed
     expect(cluster.message_summary).to match(%r{GET /servers/standalone, options: {}, 404 Not Found})

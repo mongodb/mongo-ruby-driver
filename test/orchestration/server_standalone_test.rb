@@ -31,7 +31,6 @@ class ServerStandaloneTest < Test::Unit::TestCase
   end
 
   def teardown
-    @client.drop_database(TEST_DB)
     @server.delete
   end
 

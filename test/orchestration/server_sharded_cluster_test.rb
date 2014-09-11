@@ -32,8 +32,7 @@ class ServerShardedClusterTest < Test::Unit::TestCase
   end
 
   def teardown
-    @client.drop_database(TEST_DB)
-    @cluster.delete
+    @cluster.destroy
   end
 
   # Scenario: mongos Router Failover - Failure and Recovery

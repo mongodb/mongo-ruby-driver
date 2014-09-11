@@ -42,7 +42,7 @@ require 'mocha/setup'
 
 # cluster manager
 require 'tools/mongo_config'
-require 'tools/mongo_orchestration'
+require 'orchestration/mongo_orchestration'
 
 # test helpers
 require 'helpers/general'
