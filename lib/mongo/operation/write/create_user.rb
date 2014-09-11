@@ -19,28 +19,23 @@ module Mongo
 
       # A MongoDB create user operation.
       #
+      # @example Initialize the operation.
+      #   Write::CreateUser.new(:db_name => 'test', :user => user)
+      #
+      # @param [ Hash ] spec The specifications for the create.
+      #
+      # @option spec :user [ Auth::User ] The user to create.
+      # @option spec :db_name [ String ] The name of the database.
+      #
       # @since 2.0.0
       class CreateUser
         include Executable
+        include Specifiable
 
-        # Initialize the create user operation.
+        # Execute the operation.
         #
-        # @example Initialize the operation.
-        #   Write::CreateUser.new(:db_name => 'test', :user => user)
-        #
-        # @param [ Hash ] spec The specifications for the create.
-        #
-        # @option spec :user [ Auth::User ] The user to create.
-        # @option spec :db_name [ String ] The name of the database.
-        #
-        # @since 2.0.0
-        def initialize(spec)
-          @spec = spec
-        end
-
-        # Execute the operation. Creating users behaves different on 2.7+,
-        # 2.6.x, and 2.4- so we need to break this out into separate
-        # operations.
+        # @note Creating users behaves different on 2.7+, 2.6.x, and
+        #   2.4- so we need to break this out into separate operations.
         #
         # @example Execute the operation.
         #   operation.execute(context)
@@ -51,18 +46,24 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
-          Result.new(
-            if context.write_command_enabled?
-              Command::CreateUser.new(spec).execute(context)
-            else
-              context.with_connection do |connection|
-                connection.dispatch([ message, gle ].compact)
-              end
-            end
-          ).validate!
+          if context.write_command_enabled?
+            execute_write_command(context)
+          else
+            execute_message(context)
+          end
         end
 
         private
+
+        def execute_write_command(context)
+          Result.new(Command::CreateUser.new(spec).execute(context)).validate!
+        end
+
+        def execute_message(context)
+          context.with_connection do |connection|
+            Result.new(connection.dispatch([ message, gle ].compact)).validate!
+          end
+        end
 
         def message
           user_spec = { user: user.name }.merge(user.spec)
