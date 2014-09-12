@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo'
+
 begin
   if RUBY_PLATFORM =~ /java/
     require 'mongo_kerberos/sasl_java'

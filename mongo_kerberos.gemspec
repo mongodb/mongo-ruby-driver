@@ -1,5 +1,5 @@
 Gem::Specification.new do |s|
-  s.name = 'mongo-kerberos'
+  s.name = 'mongo_kerberos'
   s.version = File.read(File.join(File.dirname(__FILE__), 'VERSION'))
   s.platform = Gem::Platform::RUBY
   s.authors = [ 'Emily Stolfo', 'Durran Jordan' ]
@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
     warn 'Warning: No private key present, creating unsigned gem.'
   end
 
-  s.files = [ 'mongo-kerberos.gemspec', 'LICENSE', 'VERSION' ]
+  s.files = [ 'mongo_kerberos.gemspec', 'LICENSE', 'VERSION' ]
   s.files += [ 'lib/mongo_kerberos.rb' ]
   s.files += Dir[ 'lib/mongo_kerberos/**/*.rb' ]
 
@@ -29,6 +29,7 @@ Gem::Specification.new do |s|
     s.extensions = [ 'ext/csasl/extconf.rb' ]
   end
 
+  s.add_dependency('mongo', "#{s.version}")
   s.require_paths = ['lib']
   s.has_rdoc = 'yard'
 end
