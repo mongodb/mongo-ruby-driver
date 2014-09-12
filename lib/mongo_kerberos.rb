@@ -32,7 +32,7 @@ module Mongo
     # @param opts [Hash] Hash of optional settings and configuration values.
     #
     # @private
-    def self.issue_gssapi(auth, opts={})
+    def issue_gssapi(auth, opts={})
       Mongo::Sasl::GSSAPI.authenticate(auth[:username], self, opts[:socket], auth[:extra] || {})
     end
   end
