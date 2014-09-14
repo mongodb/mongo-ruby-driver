@@ -29,6 +29,7 @@ group :testing do
   gem 'sfl'
   gem 'httparty'
   gem 'rest-client', '1.6.8'
+  gem 'cucumber'
   if RUBY_VERSION > '1.8.7' || RUBY_PLATFORM =~ /java/
     gem 'coveralls', :require => false
   end
