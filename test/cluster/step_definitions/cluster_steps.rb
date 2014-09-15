@@ -3,9 +3,7 @@ $LOAD_PATH.unshift($ORCH_DIR)
 $LIB_DIR = File.absolute_path(File.join(File.dirname(__FILE__), '..', '..', '..', 'lib'))
 $LOAD_PATH.unshift($LIB_DIR)
 
-ENV.delete('BSON_EXT_DISABLED')
 require 'bson'
-#require 'bson_ext'
 require 'mongo'
 require 'mongo_orchestration'
 
@@ -61,16 +59,18 @@ def opcounter_count(client, field = 'query')
   queries_after - queries_before
 end
 
-def result_count_opcounter(client, field = 'query')
+def result_opcount_response(client, field = 'query')
+  response = nil
   count = nil
   result = begin
     count = opcounter_count(client, field) do
-      yield
+      response = yield
     end
+    response
   rescue => ex
     ex
   end
-  [result, count]
+  [result, count, response]
 end
 
 Before do |scenario|
@@ -248,7 +248,7 @@ Given(/^a client with read\-preference (\w+) and tag sets (.*)$/) do |read_prefe
 end
 
 When(/^I read with opcounter tracking$/) do
-  @result, @count = result_count_opcounter(@client) do
+  @result, @count, @response = result_opcount_response(@client) do
     @client[TEST_DB][TEST_COLL].find_one({'a' => @ordinal})
   end
 end
@@ -285,6 +285,26 @@ Then(/^the read fails$/) do
 end
 
 Then(/^the read fails with error "(.*?)"$/) do |message|
-  assert(@result.is_a?(Mongo::ConnectionFailure))
-  assert_equal(message.gsub(/<tags sets>/, @tag_sets.inspect), @result.message)
+  assert(@result.is_a?(Exception))
+  pattern = message.downcase.gsub(/<tags sets>/, @tag_sets.inspect)
+  assert_match(pattern, @result.message.downcase)
+end
+
+When(/^I run with opcounter tracking a (\w+) command with example (.*)$/) do |name, example|
+  command = JSON.parse(example)
+  command[name] = TEST_COLL if ["aggregate", "collStats", "count", "mapReduce", "parallelCollectionScan"].include?(name)
+  if name == "group"
+    command["group"]["ns"] = TEST_COLL
+    command["group"]["$reduce"] = BSON::Code.new(command["group"]["$reduce"])
+  elsif name == "mapReduce"
+    command["map"] = BSON::Code.new(command["map"])
+    command["reduce"] = BSON::Code.new(command["reduce"])
+  end
+  @result, @count, @response = result_opcount_response(@client, 'command') do
+    @client[TEST_DB].command(command)
+  end
+end
+
+Then(/^the command occurs on a secondary$/) do
+  assert_equal(OPCOUNTER_COMMAND, @count)
 end
