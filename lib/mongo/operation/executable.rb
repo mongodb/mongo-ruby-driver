@@ -21,28 +21,6 @@ module Mongo
     # @since 2.0.0
     module Executable
 
-      # The specifications describing this operation.
-      #
-      # @return [ Hash ] The specs for the operation.
-      #
-      # @since 2.0.0
-      attr_reader :spec
-
-      # Check equality of two executable operations.
-      #
-      # @example
-      #   operation == other
-      #
-      # @param [ Object ] other The other operation.
-      #
-      # @return [ true, false ] Whether the objects are equal.
-      #
-      # @since 2.0.0
-      def ==(other)
-        spec == other.spec
-      end
-      alias_method :eql?, :==
-
       # Execute the operation.
       # The context gets a connection on which the operation
       # is sent in the block.
@@ -59,42 +37,6 @@ module Mongo
         context.with_connection do |connection|
           connection.dispatch([ message ])
         end
-      end
-
-      # The name of the database to which the operation should be sent.
-      #
-      # @return [ String ] Database name.
-      #
-      # @since 2.0.0
-      def db_name
-        @spec[:db_name]
-      end
-
-      # The name of the collection to which the operation should be sent.
-      #
-      # @return [ String ] Collection name.
-      #
-      # @since 2.0.0
-      def coll_name
-        @spec[:coll_name]
-      end
-
-      # Get the index from the specification.
-      #
-      # @return [ Hash ] The index specification.
-      #
-      # @since 2.0.0
-      def index
-        @spec[:index]
-      end
-
-      # Get the index name from the spec.
-      #
-      # @return [ String ] The index name.
-      #
-      # @since 2.0.0
-      def index_name
-        @spec[:index_name]
       end
 
       # Merge this operation with another operation, returning a new one.
@@ -144,24 +86,6 @@ module Mongo
       # @since 2.0.0
       def options
         @spec[:options] || {}
-      end
-
-      # The user for user related operations.
-      #
-      # @return [ Auth::User ] The user.
-      #
-      # @since 2.0.0
-      def user
-        @spec[:user]
-      end
-
-      # The write concern to use for this operation.
-      #
-      # @return [ Mongo::WriteConcern::Mode ] The write concern.
-      #
-      # @since 2.0.0
-      def write_concern
-        @spec[:write_concern] || WriteConcern::Mode.get(WriteConcern::Mode::DEFAULT)
       end
 
       private
