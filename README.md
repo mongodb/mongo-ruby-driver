@@ -37,6 +37,17 @@ bundle install
 rake install
 ```
 
+To be able to use the driver with Kerberos authentication enabled, install the
+`mongo_kerberos` gem and add it instead of mongo to your application:
+
+```bash
+gem install mongo_kerberos
+```
+
+```ruby
+require 'mongo_kerberos'
+```
+
 Usage
 -----
 Here is a quick example of basic usage for the Ruby driver:
