@@ -22,21 +22,6 @@ module Mongo
         # @since 2.0.0
         module Writable
 
-          # Initialize the write command.
-          #
-          # @param [ Hash ] spec The specifications for the write command.
-          # @param [ Hash ] context The context for executing this operation.
-          #
-          # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
-          # @option spec :ordered [ true, false ] Whether execution should halt after
-          #   the first error encountered on the server.
-          # @option spec :options [ Hash ] Options for the command.
-          #
-          # @since 2.0.0
-          def initialize(spec)
-            @spec = spec
-          end
-
           private
 
           # Whether this operation may be executed on a secondary server.

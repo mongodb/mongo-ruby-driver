@@ -13,34 +13,32 @@
 # limitations under the License.
 
 module Mongo
-
   module Operation
-
     module Write
-
       module Command
 
         # A MongoDB update write command operation.
-        # Supported in server versions >= 2.5.5
         #
-        # @example
-        #   include Mongo
-        #   include Operation
-        #   Write::Command::Update.new({ :updates => [{ :q => { :foo => 1 },
-        #                                                    :u => { :$set =>
-        #                                                            { :bar => 1 }},
-        #                                                    :multi  => true,
-        #                                                    :upsert => false }],
-        #                                     :db_name       => 'test',
-        #                                     :coll_name     => 'test_coll',
-        #                                     :write_concern => write_concern,
-        #                                     :ordered       => true
-        #                                   })
+        # @example Create an update write command operation.
+        #   Write::Command::Update.new({
+        #     :updates => [{
+        #       :q => { :foo => 1 },
+        #       :u => { :$set =>
+        #       :bar => 1 }},
+        #       :multi  => true,
+        #       :upsert => false
+        #     }],
+        #     :db_name => 'test',
+        #     :coll_name => 'test_coll',
+        #     :write_concern => write_concern,
+        #     :ordered => true
+        #   })
         #
         # @since 2.0.0
         class Update
           include Executable
           include Writable
+          include Specifiable
 
           private
 
@@ -49,7 +47,7 @@ module Mongo
           # @return [ Hash ] The selector describing this update operation.
           def selector
             { :update        => coll_name,
-              :updates       => @spec[:updates],
+              :updates       => updates,
               :write_concern => write_concern.options,
               :ordered       => ordered?
             }

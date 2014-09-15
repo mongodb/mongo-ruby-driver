@@ -13,31 +13,26 @@
 # limitations under the License.
 
 module Mongo
-
   module Operation
-
     module Write
-
       module Command
 
         # A MongoDB delete write command operation.
-        # Supported in server versions >= 2.5.5
         #
         # @example Initialize a delete write command.
-        #   include Mongo
-        #   include Operation
-        #   Write::Command::Delete.new({ :deletes       => [{ :q => { :foo => 1 },
-        #                                                          :limit => 1 }],
-        #                                     :db_name       => 'test',
-        #                                     :coll_name     => 'test_coll',
-        #                                     :write_concern => write_concern,
-        #                                     :ordered       => true
-        #                                   })
+        #   Write::Command::Delete.new({
+        #     :deletes => [{ :q => { :foo => 1 }, :limit => 1 }],
+        #     :db_name => 'test',
+        #     :coll_name => 'test_coll',
+        #     :write_concern => write_concern,
+        #     :ordered => true
+        #   })
         #
         # @since 2.0.0
         class Delete
           include Executable
           include Writable
+          include Specifiable
 
           private
 
@@ -48,7 +43,7 @@ module Mongo
           # @since 2.0.0
           def selector
             { :delete        => coll_name,
-              :deletes       => @spec[:deletes],
+              :deletes       => deletes,
               :write_concern => write_concern.options,
               :ordered       => ordered?
             }
