@@ -43,8 +43,36 @@ module Mongo
       # @since 2.0.0
       class Insert
         include Executable
-        include Slicable
         include Specifiable
+
+
+        # A MongoDB insert operation.
+        #
+        # @note If a server with version >= 2.5.5 is being used, a write command
+        #   operation will be created and sent instead.
+        #
+        # @example Create the new insert operation.
+        #   Write::Insert.new({
+        #     :documents => [{ :foo => 1 }],
+        #     :db_name => 'test',
+        #     :coll_name => 'test_coll',
+        #     :write_concern => write_concern,
+        #     :opts => { :continue_on_error => true }
+        #   })
+        #
+        # @param [ Hash ] spec The specifications for the insert.
+        #
+        # @option spec :documents [ Array ] The documents to insert.
+        # @option spec :db_name [ String ] The name of the database.
+        # @option spec :coll_name [ String ] The name of the collection.
+        # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
+        # @option spec :opts [ Hash ] Options for the command, if it ends up being a
+        #   write command.
+        #
+        # @since 2.0.0
+        def initialize(spec)
+          @spec = spec
+        end
 
         # Execute the insert operation.
         #
@@ -64,23 +92,6 @@ module Mongo
           end
         end
 
-        # Merge another insert operation with this one.
-        # Requires that the collection and database of the two ops are the same.
-        #
-        # @params[ Mongo::Operation::Write::Insert ] The other insert operation.
-        #
-        # @return [ self ] This object with the list of documents merged.
-        #
-        # @since 2.0.0
-        def merge!(other)
-          # @todo: use specific exception
-          raise Exception, "Cannot merge" unless self.class == other.class &&
-              coll_name == other.coll_name &&
-              db_name == other.db_name
-          documents << other.spec[:documents]
-          self
-        end
-
         private
 
         def execute_write_command(context)
@@ -96,18 +107,14 @@ module Mongo
           Result.new(replies)
         end
 
-        def slicable_key
-          :documents
-        end
-
         def initialize_copy(original)
           @spec = original.spec.dup
           @spec[:documents] = original.spec[:documents].dup
         end
 
-        def message(document)
-          insert_spec = options[:continue_on_error] == 0 ? {} : { :flags => [:continue_on_error] }
-          Protocol::Insert.new(db_name, coll_name, [ document ], insert_spec)
+        def message
+          opts = !!options[:continue_on_error] ? { :flags => [:continue_on_error] } : {}
+          Protocol::Insert.new(db_name, coll_name, documents, opts)
         end
       end
     end

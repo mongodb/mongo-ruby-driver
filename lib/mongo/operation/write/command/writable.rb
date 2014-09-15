@@ -42,7 +42,7 @@ module Mongo
           #
           # @since 2.0.0
           def ordered?
-            @spec[:ordered] ? !!@spec[:ordered] : true
+            @spec.fetch(:ordered, true)
           end
 
           # Options for the write command.
