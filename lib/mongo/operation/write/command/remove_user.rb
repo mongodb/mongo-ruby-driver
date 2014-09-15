@@ -23,6 +23,7 @@ module Mongo
         class RemoveUser
           include Executable
           include Writable
+          include Specifiable
 
           private
 
@@ -32,7 +33,7 @@ module Mongo
           #
           # @since 2.0.0
           def selector
-            { :dropUser => @spec[:name] }
+            { :dropUser => user_name }
           end
         end
       end
