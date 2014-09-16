@@ -35,8 +35,6 @@ module Mongo
       # @option spec :db_name [ String ] The name of the database.
       # @option spec :coll_name [ String ] The name of the collection.
       # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
-      # @option spec :ordered [ true, false ] Whether the operations should be
-      #   executed in order.
       # @option spec :options [ Hash ] Options for the command, if it ends up being a
       #   write command.
       #
@@ -44,35 +42,6 @@ module Mongo
       class Insert
         include Executable
         include Specifiable
-
-
-        # A MongoDB insert operation.
-        #
-        # @note If a server with version >= 2.5.5 is being used, a write command
-        #   operation will be created and sent instead.
-        #
-        # @example Create the new insert operation.
-        #   Write::Insert.new({
-        #     :documents => [{ :foo => 1 }],
-        #     :db_name => 'test',
-        #     :coll_name => 'test_coll',
-        #     :write_concern => write_concern,
-        #     :opts => { :continue_on_error => true }
-        #   })
-        #
-        # @param [ Hash ] spec The specifications for the insert.
-        #
-        # @option spec :documents [ Array ] The documents to insert.
-        # @option spec :db_name [ String ] The name of the database.
-        # @option spec :coll_name [ String ] The name of the collection.
-        # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
-        # @option spec :opts [ Hash ] Options for the command, if it ends up being a
-        #   write command.
-        #
-        # @since 2.0.0
-        def initialize(spec)
-          @spec = spec
-        end
 
         # Execute the insert operation.
         #
@@ -99,12 +68,9 @@ module Mongo
         end
 
         def execute_message(context)
-          replies = documents.map do |d|
-            context.with_connection do |connection|
-              Result.new(connection.dispatch([ message(d), gle ].compact)).validate!.reply
-            end
+          context.with_connection do |connection|
+            Result.new(connection.dispatch([ message, gle ].compact)).validate!
           end
-          Result.new(replies)
         end
 
         def initialize_copy(original)

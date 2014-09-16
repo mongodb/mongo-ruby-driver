@@ -19,42 +19,38 @@ module Mongo
       # A MongoDB bulk insert operation.
       # This class should only be used by the Bulk API.
       #
+      # @note If a server with version >= 2.5.5 is being used, a write command
+      #   operation will be created and sent instead.
+      #
+      # @example Create the new insert operation.
+      #   Write::BulkInsert.new({
+      #     :documents => [{ :foo => 1 }],
+      #     :db_name => 'test',
+      #     :coll_name => 'test_coll',
+      #     :write_concern => write_concern,
+      #     :ordered => false
+      #   })
+      #
+      # @param [ Hash ] spec The specifications for the insert.
+      #
+      # @option spec :documents [ Array ] The documents to insert.
+      # @option spec :db_name [ String ] The name of the database.
+      # @option spec :coll_name [ String ] The name of the collection.
+      # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
+      # @option spec :ordered [ true, false ] Whether the operations should be
+      #   executed in order.
+      # @option spec :options [ Hash ] Options for the command, if it ends up being a
+      #   write command.
+      #
       # @since 2.0.0
       class BulkInsert
         include Executable
+        include Specifiable
 
-        # Initialize the insert operation.
+        # Execute the bulk insert operation.
         #
-        # @example
-        #   include Mongo
-        #   include Operation
-        #   Write::BulkInsert.new({ :documents     => [{ :foo => 1 }],
-        #                           :db_name       => 'test',
-        #                           :coll_name     => 'test_coll',
-        #                           :write_concern => write_concern
-        #                           :ordered       => true
-        #                         })
-        #
-        # @param [ Hash ] spec The specifications for the insert.
-        #
-        # @option spec :documents [ Array ] The documents to insert.
-        # @option spec :db_name [ String ] The name of the database.
-        # @option spec :coll_name [ String ] The name of the collection.
-        # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
-        # @option spec :ordered [ true, false ] Whether the operations should be
-        #   executed in order and whether the server should abort after the first error.
-        # @option spec :opts [ Hash ] Options for the command, if it ends up being a
-        #   write command.
-        #
-        # @since 2.0.0
-        def initialize(spec)
-          @spec = spec
-        end
-
-        # Execute the operation.
-        # If the server has version < 2.5.5, an insert operation is sent.
-        # If the server version is >= 2.5.5, an insert write command operation is created
-        # and sent instead.
+        # @example Execute the operation.
+        #   operation.execute(context)
         #
         # @params [ Mongo::Server::Context ] The context for this operation.
         #
@@ -63,62 +59,50 @@ module Mongo
         # @since 2.0.0
         def execute(context)
           if context.write_command_enabled?
-            op = Command::Insert.new(spec)
-            Result.new(op.execute(context)).validate!
+            execute_write_command(context)
           else
-            replies = messages(context).map do |message|
-              context.with_connection do |connection|
-                # @todo: only validate if it's ordered
-                Result.new(connection.dispatch([ message, gle ])).validate!.reply
-              end
-            end
-            Result.new(replies)
+            execute_message(context)
           end
         end
 
         private
 
-        # The get last error command as a wire protocol query.
-        # Always use GLE if the bulk operations are ordered.
-        #
-        # @return [ Protocol::Query ] The GLE command.
-        #
-        # @since 2.0.0
-        def write_concern
-          return Mongo::WriteConcern::Mode.get(:w => 1) if ordered?
-          @spec[:write_concern]
+        def execute_write_command(context)
+          Result.new(Command::Insert.new(spec).execute(context)).validate!
         end
 
-        # Copy the list of documents in the spec if this operation is copied/duped.
-        #
-        #@since 2.0.0
+        def execute_message(context)
+          replies = messages(context).map do |message|
+            context.with_connection do |connection|
+              # @todo: only validate if it's ordered
+              Result.new(connection.dispatch([ message, gle ])).validate!.reply
+            end
+          end
+          Result.new(replies)
+        end
+
+        def ordered?
+          @spec.fetch(:ordered, true)
+        end
+
+        def gle
+          gle_message = ordered? ? Mongo::WriteConcern::Mode.get(:w => 1).get_last_error :
+                        write_concern.get_last_error
+          if gle_message
+            Protocol::Query.new(
+              db_name,
+              Database::COMMAND,
+              gle_message,
+              options.merge(limit: -1)
+            )
+          end
+        end
+
         def initialize_copy(original)
           @spec = original.spec.dup
           @spec[:documents] = original.spec[:documents].dup
         end
 
-        # The documents to insert.
-        #
-        # @return [ Array ] The documents.
-        #
-        # @since 2.0.0
-        def documents
-          @spec[:documents]
-        end
-
-        def ordered?
-          !!@spec[:ordered]
-        end
-
-        # The wire protocol messages for this insert operation.
-        # The message will be broken up into multiple messages according to the
-        # max message size accepted by the server.
-        #
-        # @params [ Mongo::Server::Context ] The context to use for this operation.
-        #
-        # @return [ Array ] Wire protocol message(s).
-        #
-        # @since 2.0.0
         def messages(context)
           # @todo: break up into multiple messages depending on max_message_size
           if ordered?
