@@ -226,6 +226,18 @@ module Mongo
         @spec = spec
       end
 
+      # Get the options for the operation.
+      #
+      # @example Get the options.
+      #   specifiable.options
+      #
+      # @return [ Hash ] The options.
+      #
+      # @since 2.0.0
+      def options
+        spec[OPTIONS] || {}
+      end
+
       # The selector for from the specification.
       #
       # @example Get a selector specification.

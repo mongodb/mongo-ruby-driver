@@ -30,9 +30,9 @@ module Mongo
         #
         # @since 2.0.0
         class Delete
+          include Specifiable
           include Executable
           include Writable
-          include Specifiable
 
           private
 

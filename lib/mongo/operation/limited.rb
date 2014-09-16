@@ -14,28 +14,23 @@
 
 module Mongo
   module Operation
-    module Write
-      module Command
 
-        # Remove user commands on non-legacy servers.
-        #
-        # @since 2.0.0
-        class RemoveUser
-          include Specifiable
-          include Executable
-          include Writable
+    # Adds behaviour for commands so ensure the limit option is always -1.
+    #
+    # @since 2.0.0
+    module Limited
 
-          private
-
-          # The query selector for this drop user command operation.
-          #
-          # @return [ Hash ] The selector describing this drop user operation.
-          #
-          # @since 2.0.0
-          def selector
-            { :dropUser => user_name }
-          end
-        end
+      # Limited operations are commands that always require a limit of -1. In
+      # these cases we always overwrite the limit value.
+      #
+      # @example Get the options.
+      #   limited.options
+      #
+      # @return [ Hash ] The options with a -1 limit.
+      #
+      # @since 2.0.0
+      def options
+        super.merge(:limit => -1)
       end
     end
   end

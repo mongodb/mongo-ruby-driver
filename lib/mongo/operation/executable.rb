@@ -79,15 +79,6 @@ module Mongo
         raise Exception, "Merging not allowed for this operation type"
       end
 
-      # The options for the executable.
-      #
-      # @return [ Hash ] The executable options.
-      #
-      # @since 2.0.0
-      def options
-        @spec[:options] || {}
-      end
-
       private
 
       # If it's ok that this operation be sent to a secondary server.

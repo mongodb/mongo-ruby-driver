@@ -33,6 +33,7 @@ module Mongo
     class Command
       include Executable
       include Specifiable
+      include Limited
 
       # In general, commands must always be sent to a primary server.
       # There are some exceptions; the following commands may be sent
@@ -80,13 +81,6 @@ module Mongo
         context.with_connection do |connection|
           Result.new(connection.dispatch([ message ])).validate!
         end
-      end
-
-      def options
-        unless @spec[:options][:limit] && @spec[:options][:limit] == -1
-          return @spec[:options].merge(:limit => -1)
-        end
-        @spec[:options]
       end
 
       def secondary_ok?

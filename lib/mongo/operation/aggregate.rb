@@ -42,6 +42,7 @@ module Mongo
     class Aggregate
       include Executable
       include Specifiable
+      include Limited
 
       # Execute the operation.
       # The context gets a connection on which the operation
@@ -81,13 +82,6 @@ module Mongo
       # @since 2.0.0
       def secondary_ok?
         selector[:pipeline].none? { |op| op.key?('$out') || op.key?(:$out) }
-      end
-
-      def options
-        unless @spec[:options][:limit] && @spec[:options][:limit] == -1
-          return @spec[:options].merge(:limit => -1)
-        end
-        @spec[:options]
       end
 
       def filter(context)

@@ -21,6 +21,7 @@ module Mongo
         #
         # @since 2.0.0
         module Writable
+          include Limited
 
           private
 
@@ -43,19 +44,6 @@ module Mongo
           # @since 2.0.0
           def ordered?
             @spec[:ordered] ? !!@spec[:ordered] : true
-          end
-
-          # Options for the write command.
-          # A command should have limit -1.
-          #
-          # @return [ Hash ] Command options.
-          #
-          # @since 2.0.0
-          def options
-            return { :limit => -1 } unless @spec[:options]
-            unless @spec[:options][:limit] && @spec[:options][:limit] == -1
-              @spec[:options].merge(:limit => -1)
-            end
           end
 
           # The wire protocol message for this write operation.
