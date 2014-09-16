@@ -82,7 +82,7 @@ After do |scenario|
 end
 
 Given(/^a cluster in the standalone server configuration$/) do
-  @cluster = @mo.configure({orchestration: "servers", request_content: {id: "standalone", preset: "basic.json"} })
+  @cluster = @mo.configure({orchestration: "servers", request_content: {id: "standalone_basic", preset: "basic.json"} })
   @mongodb_uri = @cluster.object['mongodb_uri']
   @client = Mongo::MongoClient.from_uri(@mongodb_uri)
   setup_db_coll
@@ -111,7 +111,7 @@ Given(/^an arbiter replica set$/) do
 end
 
 Given(/^a basic sharded cluster with routers A and B$/) do
-  @cluster = @mo.configure({orchestration: "sharded_clusters", request_content: {id: "sharded_cluster_1", preset: "basic.json"} })
+  @cluster = @mo.configure({orchestration: "sharded_clusters", request_content: {id: "sharded_cluster_basic", preset: "basic.json"} })
   @mongodb_uri = @cluster.object['mongodb_uri']
   @client = Mongo::MongoShardedClient.from_uri(@mongodb_uri)
   setup_db_coll
@@ -192,20 +192,11 @@ When(/^I insert a document with the write concern \{ “w”: <nodes \+ (\d+)>, 
   end
 end
 
-Then(/^the insert fails write concern$/) do
-  assert(@result.is_a?(Mongo::WriteConcernError))
-  @ordinal += 1
-end
-
 When(/^I update a document with the write concern \{ “w”: <nodes \+ (\d+)>, “timeout”: (\d+)\}$/) do |arg1, arg2|
+  @coll.insert({a: @ordinal}, w: @n)
   @result = with_rescue do
     @coll.update({a: @ordinal}, {}, w: @n + 1, wtimeout: 1, upsert: true)
   end
-end
-
-Then(/^the update fails write concern$/) do
-  assert(@result.is_a?(Mongo::WriteConcernError))
-  @ordinal += 1
 end
 
 When(/^I delete a document with the write concern \{ “w”: <nodes \+ (\d+)>, “timeout”: (\d+)\}$/) do |arg1, arg2|
@@ -215,7 +206,7 @@ When(/^I delete a document with the write concern \{ “w”: <nodes \+ (\d+)>, 
   end
 end
 
-Then(/^the delete fails write concern$/) do
+Then(/^the write operation fails write concern$/) do
   assert(@result.is_a?(Mongo::WriteConcernError))
   @ordinal += 1
 end
