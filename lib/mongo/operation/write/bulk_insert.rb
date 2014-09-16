@@ -58,7 +58,7 @@ module Mongo
         #
         # @params [ Mongo::Server::Context ] The context for this operation.
         #
-        # @return [ Mongo::Response ] The operation response, if there is one.
+        # @return [ Result ] The operation result.
         #
         # @since 2.0.0
         def execute(context)
@@ -85,11 +85,13 @@ module Mongo
         #
         # @since 2.0.0
         def write_concern
-          return WriteConcern::Mode.get(WriteConcern::Mode::DEFAULT) if ordered?
+          return Mongo::WriteConcern::Mode.get(:w => 1) if ordered?
           @spec[:write_concern]
         end
 
-        # Dup the list of documents in the spec if this operation is copied/duped.
+        # Copy the list of documents in the spec if this operation is copied/duped.
+        #
+        #@since 2.0.0
         def initialize_copy(original)
           @spec = original.spec.dup
           @spec[:documents] = original.spec[:documents].dup
@@ -108,7 +110,9 @@ module Mongo
           !!@spec[:ordered]
         end
 
-        # The wire protocol message for this insert operation.
+        # The wire protocol messages for this insert operation.
+        # The message will be broken up into multiple messages according to the
+        # max message size accepted by the server.
         #
         # @params [ Mongo::Server::Context ] The context to use for this operation.
         #
@@ -116,9 +120,10 @@ module Mongo
         #
         # @since 2.0.0
         def messages(context)
+          # @todo: break up into multiple messages depending on max_message_size
           if ordered?
             documents.collect do |doc|
-              Protocol::Insert.new(db_name, coll_name, doc)
+              Protocol::Insert.new(db_name, coll_name, doc, options)
             end
           else
             [ Protocol::Insert.new(db_name, coll_name, documents, { :flags => [:continue_on_error] }) ]

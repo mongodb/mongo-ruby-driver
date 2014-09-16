@@ -227,14 +227,14 @@ describe Mongo::Operation::Write::BulkInsert do
           described_class.new(spec)
         end
   
-        it 'raises an error' do
+        it 'aborts after first error' do
           expect {
             failing_insert.execute(authorized_primary.context)
           }.to raise_error(Mongo::Operation::Write::Failure)
           expect(authorized_collection.find.count).to eq(1)
         end
       end
-      
+
       context 'when the inserts are unordered' do
 
         let(:documents) do
@@ -254,7 +254,7 @@ describe Mongo::Operation::Write::BulkInsert do
           described_class.new(spec)
         end
 
-        it 'raises an error' do
+        it 'continues executing operations after errors' do
           expect {
             failing_insert.execute(authorized_primary.context)
           }.to raise_error(Mongo::Operation::Write::Failure)
