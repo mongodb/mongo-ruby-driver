@@ -18,37 +18,32 @@ module Mongo
 
       # A MongoDB get more operation.
       #
+      # @example Create a get more operation.
+      #   Read::GetMore.new({
+      #     :to_return => 50,
+      #     :cursor_id => 1,
+      #     :db_name   => 'test_db',
+      #     :coll_name => 'test_coll'
+      #   })
+      #
+      # @param [ Hash ] spec The specifications for the operation.
+      #
+      # @option spec :to_return [ Integer ] The number of results to return.
+      # @option spec :cursor_id [ Integer ] The id of the cursor.
+      # @option spec :db_name [ String ] The name of the database on which
+      #   the operation should be executed.
+      # @option spec :coll_name [ String ] The name of the collection on which
+      #   the operation should be executed.
+      #
       # @since 2.0.0
       class GetMore
         include Executable
+        include Specifiable
 
-        # Initialize a get more operation.
+        # Execute the get more operation.
         #
-        # @example
-        #   include Mongo
-        #   include Operation
-        #   Read::GetMore.new({ :to_return => 50,
-        #                       :cursor_id => 1,
-        #                       :db_name   => 'test_db',
-        #                       :coll_name => 'test_coll' })
-        #
-        # @param [ Hash ] spec The specifications for the operation.
-        #
-        # @option spec :to_return [ Integer ] The number of results to return.
-        # @option spec :cursor_id [ Integer ] The id of the cursor.
-        # @option spec :db_name [ String ] The name of the database on which
-        #   the operation should be executed.
-        # @option spec :coll_name [ String ] The name of the collection on which
-        #   the operation should be executed.
-        #
-        # @since 2.0.0
-        def initialize(spec)
-          @spec = spec
-        end
-
-        # Execute the operation.
-        # The context gets a connection on which the operation
-        # is sent in the block.
+        # @example Execute the operation.
+        #   operation.execute(context)
         #
         # @params [ Mongo::Server::Context ] The context for this operation.
         #
@@ -56,39 +51,17 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
-          unless context.primary? || context.standalone? || secondary_ok?
-            raise Exception, "Must use primary server"
-          end
+          execute_message(context)
+        end
+
+        private
+
+        def execute_message(context)
           context.with_connection do |connection|
             Result.new(connection.dispatch([ message ]))
           end
         end
 
-        private
-
-        # The number of documents to request from the server.
-        #
-        # @return [ Integer ] The number of documents to return.
-        #
-        # @since 2.0.0
-        def to_return
-          @spec[:to_return]
-        end
-
-        # The id of the cursor created on the server.
-        #
-        # @return [ Integer ] The cursor id.
-        #
-        # @since 2.0.0
-        def cursor_id
-          @spec[:cursor_id]
-        end
-
-        # The wire protocol message for this get more operation.
-        #
-        # @return [ Mongo::Protocol::GetMore ] Wire protocol message.
-        #
-        # @since 2.0.0
         def message
           Protocol::GetMore.new(db_name, coll_name, to_return, cursor_id)
         end

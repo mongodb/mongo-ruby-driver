@@ -14,6 +14,7 @@
 
 require 'mongo/operation/result'
 require 'mongo/operation/executable'
+require 'mongo/operation/specifiable'
 require 'mongo/operation/slicable'
 require 'mongo/operation/read'
 require 'mongo/operation/write'

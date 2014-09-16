@@ -13,62 +13,40 @@
 # limitations under the License.
 
 module Mongo
-
   module Operation
 
     # A MongoDB map reduce operation.
-    # Note that a map reduce operation can behave like a read and
-    # return a result set, or can behave like a write operation and
-    # output results to a user-specified collection.
+    #
+    # @note A map/reduce operation can behave like a read and
+    #   return a result set, or can behave like a write operation and
+    #   output results to a user-specified collection.
+    #
+    # @example Create the map/reduce operation.
+    #   MapReduce.new({
+    #     :selector => {
+    #       :mapreduce => 'test_coll',
+    #       :map => '',
+    #       :reduce => ''
+    #     },
+    #     :db_name  => 'test_db'
+    #   })
+    #
+    # @param [ Hash ] spec The specifications for the operation.
+    #
+    # @option spec :selector [ Hash ] The map reduce selector.
+    # @option spec :db_name [ String ] The name of the database on which
+    #   the operation should be executed.
+    # @option spec :options [ Hash ] Options for the map reduce command.
     #
     # @since 2.0.0
     class MapReduce
       include Executable
+      include Specifiable
 
-      # Check equality of two map reduce operations.
+      # Execute the map/reduce operation.
       #
-      # @example Check operation equality.
-      #   operation == other
-      #
-      # @param [ Object ] other The other operation.
-      #
-      # @return [ true, false ] Whether the objects are equal.
-      #
-      # @since 2.0.0
-      def ==(other)
-        # @todo: check db name and map, reduce explicitly
-        spec[:selector] == other.spec[:selector]
-      end
-      alias_method :eql?, :==
-
-      # Initialize a map reduce operation.
-      #
-      # @example
-      #   include Mongo
-      #   include Operation
-      #   MapReduce.new({ :selector => { :mapreduce => 'test_coll',
-      #                                  :map => '',
-      #                                  :reduce => '' },
-      #                   :db_name  => 'test_db' })
-      #
-      # @param [ Hash ] spec The specifications for the operation.
-      #
-      # @option spec :selector [ Hash ] The map reduce selector.
-      # @option spec :db_name [ String ] The name of the database on which
-      #   the operation should be executed.
-      # @option spec :options [ Hash ] Options for the map reduce command.
-      #
-      # @since 2.0.0
-      def initialize(spec)
-        @spec = spec
-      end
-
-      # Execute the operation.
-      # The context gets a connection on which the operation
-      # is sent in the block.
-      # If the map reduce will be written to an output collection and the
-      # server is not primary, the operation will be rerouted to the primary
-      # with a warning.
+      # @example Execute the operation.
+      #   operation.execute(context)
       #
       # @params [ Mongo::Server::Context ] The context for this operation.
       #
@@ -76,25 +54,20 @@ module Mongo
       #
       # @since 2.0.0
       def execute(context)
+        # @todo: Should we respect tag sets and options here?
         if context.server.secondary? && !secondary_ok?
           warn "Database command '#{selector.keys.first}' rerouted to primary server"
-          # @todo: Should we respect tag sets and options here?
           context = Mongo::ServerPreference.get(:mode => :primary).server.context
         end
-        context.with_connection do |connection|
-          connection.dispatch([message])
-        end
+        execute_message(context)
       end
 
       private
 
-      # The selector for this map reduce command operation.
-      #
-      # @return [ Hash ] The selector describing this map reduce operation.
-      #
-      # @since 2.0.0
-      def selector
-        @spec[:selector]
+      def execute_message(context)
+        context.with_connection do |connection|
+          connection.dispatch([ message ])
+        end
       end
 
       # Whether this operation can be executed on a replica set secondary server.
@@ -109,11 +82,6 @@ module Mongo
         out.nil? || out == 'inline'
       end
 
-      # The wire protocol message for this operation.
-      #
-      # @return [ Mongo::Protocol::Query ] Wire protocol message. 
-      #
-      # @since 2.0.0
       def message
         Protocol::Query.new(db_name, Database::COMMAND, selector, options)
       end

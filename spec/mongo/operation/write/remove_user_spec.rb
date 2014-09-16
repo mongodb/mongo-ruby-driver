@@ -12,7 +12,7 @@ describe Mongo::Operation::Write::RemoveUser do
     end
 
     let(:operation) do
-      described_class.new(name: 'durran', db_name: TEST_DB)
+      described_class.new(user_name: 'durran', db_name: TEST_DB)
     end
 
     context 'when user removal was successful' do

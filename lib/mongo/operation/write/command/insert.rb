@@ -18,21 +18,20 @@ module Mongo
       module Command
 
         # A MongoDB insert write command operation.
-        # Supported in server versions >= 2.5.5
         #
-        # @example
-        #   include Mongo
-        #   include Operation
-        #   Write::Command::Insert.new({ :documents     => [{ :foo => 1 }],
-        #                                     :db_name       => 'test',
-        #                                     :coll_name     => 'test_coll',
-        #                                     :write_concern => write_concern,
-        #                                     :ordered       => true
-        #                                   })
+        # @example Create an insert write command operation.
+        #   Write::Command::Insert.new({
+        #     :documents => [{ :foo => 1 }],
+        #     :db_name => 'test',
+        #     :coll_name => 'test_coll',
+        #     :write_concern => write_concern,
+        #     :ordered => true
+        #   })
         # @since 2.0.0
         class Insert
           include Executable
           include Writable
+          include Specifiable
 
           private
 
@@ -43,7 +42,7 @@ module Mongo
           # @since 2.0.0
           def selector
             { :insert        => coll_name,
-              :documents     => @spec[:documents],
+              :documents     => documents,
               :write_concern => write_concern.options,
               :ordered       => ordered?
             }

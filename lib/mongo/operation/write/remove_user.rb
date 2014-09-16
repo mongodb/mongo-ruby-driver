@@ -18,29 +18,23 @@ module Mongo
 
       # A MongoDB remove user operation.
       #
+      # @example Create the remove user operation.
+      #   Write::RemoveUser.new(:db_name => 'test', :name => name)
+      #
+      # @param [ Hash ] spec The specifications for the remove.
+      #
+      # @option spec :name [ String ] The user name.
+      # @option spec :db_name [ String ] The name of the database.
+      #
       # @since 2.0.0
       class RemoveUser
         include Executable
+        include Specifiable
 
-        # Initialize the remove user operation.
+        # Execute the remove user operation.
         #
-        # @example Initialize the operation.
-        #   Write::RemoveUser.new(:db_name => 'test', :name => name)
-        #
-        # @param [ Hash ] spec The specifications for the remove.
-        #
-        # @option spec :name [ String ] The user name.
-        # @option spec :db_name [ String ] The name of the database.
-        #
-        # @since 2.0.0
-        def initialize(spec)
-          @spec = spec
-        end
-
-        # Execute the operation.
-        # If the server has version < 2.5.5, an insert operation is sent.
-        # If the server version is >= 2.5.5, an insert write command operation is created
-        # and sent instead.
+        # @example Execute the operation.
+        #   operation.execute(context)
         #
         # @params [ Mongo::Server::Context ] The context for this operation.
         #
@@ -48,21 +42,27 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
-          Result.new(
-            if context.write_command_enabled?
-              Command::RemoveUser.new(spec).execute(context)
-            else
-              context.with_connection do |connection|
-                connection.dispatch([ message, gle ].compact)
-              end
-            end
-          ).validate!
+          if context.write_command_enabled?
+            execute_write_command(context)
+          else
+            execute_message(context)
+          end
         end
 
         private
 
+        def execute_write_command(context)
+          Result.new(Command::RemoveUser.new(spec).execute(context)).validate!
+        end
+
+        def execute_message(context)
+          context.with_connection do |connection|
+            Result.new(connection.dispatch([ message, gle ].compact)).validate!
+          end
+        end
+
         def message
-          Protocol::Delete.new(db_name, Auth::User::COLLECTION, { user: @spec[:name] })
+          Protocol::Delete.new(db_name, Auth::User::COLLECTION, { user: user_name })
         end
       end
     end

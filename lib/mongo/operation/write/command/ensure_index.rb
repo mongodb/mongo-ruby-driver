@@ -18,20 +18,21 @@ module Mongo
       module Command
 
         # A MongoDB ensure index write command operation.
-        # Supported in server versions >= 2.5.5
         #
-        # @example
+        # @example Create an ensure index command operation.
         #   Write::Command::EnsureIndex.new({
-        #     :index      => { :foo => 1 },
-        #     :db_name    => 'test',
-        #     :coll_name  => 'test_coll',
+        #     :index => { :foo => 1 },
+        #     :db_name => 'test',
+        #     :coll_name => 'test_coll',
         #     :index_name => 'foo_1'
-        #     :options       => { :unique => true }
+        #     :options => { :unique => true }
         #   })
+        #
         # @since 2.0.0
         class EnsureIndex
           include Executable
           include Writable
+          include Specifiable
 
           private
 

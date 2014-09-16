@@ -24,6 +24,7 @@ module Mongo
         class CreateUser
           include Executable
           include Writable
+          include Specifiable
 
           private
 
