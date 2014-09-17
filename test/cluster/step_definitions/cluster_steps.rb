@@ -54,6 +54,10 @@ def setup_db_coll
   @ordinal = 1
 end
 
+def await_replication(coll)
+  coll.insert({a: 0}, w: @n)
+end
+
 def rescue_connection_failure_and_retry(max_retries=30)
   retries = 0
   begin
@@ -66,15 +70,29 @@ def rescue_connection_failure_and_retry(max_retries=30)
   end
 end
 
-def await_replication(coll)
-  coll.insert({a: 0}, w: @n)
-end
-
 def with_rescue(exception_class = Exception)
   begin
     yield
   rescue exception_class => ex
     ex
+  end
+end
+
+def result_response
+  response = nil
+  result = begin
+    response = yield
+  rescue => ex
+    #pp ex.backtrace
+    ex
+  end
+  [result, response]
+end
+
+def result_response_command_with_read_preference(command, read_preference)
+  read_preference_sym = read_preference.downcase.to_sym
+  @result, @response = result_response do
+    @client[TEST_DB].command(command, read: read_preference_sym)
   end
 end
 
@@ -117,24 +135,6 @@ def occurs_on(member_type, op_type = 'query')
   opnodes = @opcounters_delta.each_pair.select{|key, value| (value[:opcounters][op_type] > threshold)}
   assert_equal(1, opnodes.count)
   assert_equal(member_type, opnodes.first.last[:member_type])
-end
-
-def result_response
-  response = nil
-  result = begin
-    response = yield
-  rescue => ex
-    #pp ex.backtrace
-    ex
-  end
-  [result, response]
-end
-
-def result_response_command_with_read_preference(command, read_preference)
-  read_preference_sym = read_preference.downcase.to_sym
-  @result, @response = result_response do
-    @client[TEST_DB].command(command, read: read_preference_sym)
-  end
 end
 
 Before do |scenario|
@@ -183,31 +183,31 @@ Given(/^a basic sharded cluster with routers A and B$/) do
   @n = 1
 end
 
-When(/^I insert a document$/) do
+Given(/^a document written to all data\-bearing members$/) do
   @result = with_rescue do
-    @coll.insert({a: @ordinal})
+    @coll.insert({a: @ordinal}, w: @n)
   end
 end
 
-When(/^I insert a document with retries$/) do
-  rescue_connection_failure_and_retry do
-    @coll.insert({a: @ordinal})
-  end
+Given(/^some documents written to all data\-bearing members$/) do
+  @coll.insert(TEST_DOCS, :w => @n)
 end
 
-Then(/^the insert succeeds$/) do
-  assert(@result.is_a?(BSON::ObjectId))
-  assert(@coll.find_one({"a" => @ordinal}))
-  @ordinal += 1
+Given(/^some geo documents written to all data\-bearing members$/) do
+  @coll.insert(TEST_DOCS, :w => @n)
 end
 
-Then(/^the insert succeeds \(eventually\)$/) do
-  step "the insert succeeds"
+Given(/^a geo (\w+) index$/) do |geo_index_type|
+  @coll.create_index([['coordinates', geo_index_type]]);
 end
 
-Then(/^the insert fails$/) do
-  assert(@result.is_a?(Exception))
-  @ordinal += 1
+When(/^there is no primary$/) do
+  @cluster.arbiters.first.stop
+  @cluster.primary.stop
+end
+
+When(/^there are no secondaries$/) do
+  @cluster.secondaries.first.stop
 end
 
 When(/^I stop the server$/) do
@@ -250,6 +250,23 @@ When(/^I restart router B$/) do
   @routers.last.restart
 end
 
+When(/^I track opcounters$/) do
+  @data_members = data_members
+  @opcounters_before = get_opcounters
+end
+
+When(/^I insert a document$/) do
+  @result = with_rescue do
+    @coll.insert({a: @ordinal})
+  end
+end
+
+When(/^I insert a document with retries$/) do
+  rescue_connection_failure_and_retry do
+    @coll.insert({a: @ordinal})
+  end
+end
+
 When(/^I insert a document with the write concern \{ “w”: <nodes \+ (\d+)>, “timeout”: (\d+)\}$/) do |arg1, arg2|
   @result = with_rescue do
     @coll.insert({a: @ordinal}, w: @n + 1, wtimeout: 1)
@@ -268,22 +285,6 @@ When(/^I delete a document with the write concern \{ “w”: <nodes \+ (\d+)>, 
   @result = with_rescue do
     @coll.remove({a: @ordinal}, w: @n + 1, wtimeout: 1)
   end
-end
-
-Then(/^the write operation fails write concern$/) do
-  assert(@result.is_a?(Mongo::WriteConcernError))
-  @ordinal += 1
-end
-
-Given(/^a document written to all data\-bearing members$/) do
-  @result = with_rescue do
-    @coll.insert({a: @ordinal}, w: @n)
-  end
-end
-
-When(/^I track opcounters$/) do
-  @data_members = data_members
-  @opcounters_before = get_opcounters
 end
 
 When(/^I read$/) do
@@ -307,37 +308,6 @@ When(/^I read with read\-preference (\w+) and tag sets (.*)$/) do |read_preferen
   end
 end
 
-Then(/^the read occurs on the primary$/) do
-  occurs_on(:primary, 'query')
-end
-
-Then(/^the read occurs on a secondary$/) do
-  occurs_on(:secondary, 'query')
-end
-
-When(/^there is no primary$/) do
-  @cluster.arbiters.first.stop
-  @cluster.primary.stop
-end
-
-When(/^there are no secondaries$/) do
-  @cluster.secondaries.first.stop
-end
-
-Then(/^the read succeeds$/) do
-  assert(!@result.is_a?(Exception) && @result.is_a?(Hash))
-end
-
-Then(/^the read fails$/) do
-  assert(@result.is_a?(Mongo::ConnectionFailure))
-end
-
-Then(/^the read fails with error "(.*?)"$/) do |message|
-  assert(@result.is_a?(Exception))
-  pattern = message.downcase.gsub(/<tags sets>/, @tag_sets.inspect)
-  assert_match(pattern, @result.message.downcase)
-end
-
 When(/^I run a (\w+) command with read\-preference (\w+) and with example (.*)$/) do |name, read_preference, example|
   command = JSON.parse(example)
   command[name] = TEST_COLL if ["aggregate", "collStats", "count", "mapReduce", "parallelCollectionScan"].include?(name)
@@ -348,29 +318,9 @@ When(/^I run a (\w+) command with read\-preference (\w+) and with example (.*)$/
   result_response_command_with_read_preference(command, read_preference)
 end
 
-Then(/^the command occurs on a secondary$/) do
-  occurs_on(:secondary, 'command')
-end
-
-Then(/^the command occurs on the primary$/) do
-  occurs_on(:primary, 'command')
-end
-
-Given(/^some geo documents written to all data\-bearing members$/) do
-  @coll.insert(TEST_DOCS, :w => @n)
-end
-
-Given(/^a geo (\w+) index$/) do |geo_index_type|
-  @coll.create_index([['coordinates', geo_index_type]]);
-end
-
 When(/^I run a geonear command with read\-preference (\w+)$/) do |read_preference|
   command = {geoNear: TEST_COLL, near: [-73.9667,40.78], maxDistance: 1000}
   result_response_command_with_read_preference(command, read_preference)
-end
-
-Given(/^some documents written to all data\-bearing members$/) do
-  @coll.insert(TEST_DOCS, :w => @n)
 end
 
 When(/^I run a map\-reduce with field out value inline true and with read\-preference (\w+)$/) do |read_preference|
@@ -399,4 +349,54 @@ When(/^I run an aggregate without \$out and with read\-preference (\w+)$/) do |r
   command = {aggregate: TEST_COLL,
              'pipeline' => [{'$group' => {'_id' => '$state', 'count' => {'$sum' => 1}}}]} # RUBY-804
   result_response_command_with_read_preference(command, read_preference)
+end
+
+Then(/^the insert succeeds$/) do
+  assert(@result.is_a?(BSON::ObjectId))
+  assert(@coll.find_one({"a" => @ordinal}))
+  @ordinal += 1
+end
+
+Then(/^the insert succeeds \(eventually\)$/) do
+  step "the insert succeeds"
+end
+
+Then(/^the insert fails$/) do
+  assert(@result.is_a?(Exception))
+  @ordinal += 1
+end
+
+Then(/^the write operation fails write concern$/) do
+  assert(@result.is_a?(Mongo::WriteConcernError))
+  @ordinal += 1
+end
+
+Then(/^the read succeeds$/) do
+  assert(!@result.is_a?(Exception) && @result.is_a?(Hash))
+end
+
+Then(/^the read fails$/) do
+  assert(@result.is_a?(Mongo::ConnectionFailure))
+end
+
+Then(/^the read fails with error "(.*?)"$/) do |message|
+  assert(@result.is_a?(Exception))
+  pattern = message.downcase.gsub(/<tags sets>/, @tag_sets.inspect)
+  assert_match(pattern, @result.message.downcase)
+end
+
+Then(/^the read occurs on the primary$/) do
+  occurs_on(:primary, 'query')
+end
+
+Then(/^the command occurs on the primary$/) do
+  occurs_on(:primary, 'command')
+end
+
+Then(/^the read occurs on a secondary$/) do
+  occurs_on(:secondary, 'query')
+end
+
+Then(/^the command occurs on a secondary$/) do
+  occurs_on(:secondary, 'command')
 end
