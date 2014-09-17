@@ -225,12 +225,7 @@ describe Mongo::Operation::Write::BulkDelete do
         described_class.new(spec)
       end
   
-      it 'continues executing operations after errors' do
-        expect {
-          failing_delete.execute(authorized_primary.context)
-        }.to raise_error(Mongo::Operation::Write::Failure)
-        expect(authorized_collection.find.count).to eq(1)
-      end
+      pending 'it continues executing operations after errors'
     end
 
     context 'when the server is a secondary' do
