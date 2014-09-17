@@ -4,7 +4,7 @@ describe Mongo::Operation::Write::BulkDelete do
   include_context 'operation'
 
   let(:documents) do
-    [ { :q => { :foo => 1 }, :limit => 1 } ]
+    [ { q: { foo: 1 }, limit: 1 } ]
   end
 
   let(:spec) do
@@ -48,7 +48,7 @@ describe Mongo::Operation::Write::BulkDelete do
 
       context 'when two ops have different specs' do
         let(:other_docs) do
-          [ { :q => { :bar => 1 }, :limit => 1 } ]
+          [ { q: { bar: 1 }, limit: 1 } ]
         end
 
         let(:other_spec) do
@@ -99,7 +99,7 @@ describe Mongo::Operation::Write::BulkDelete do
           deletes: documents,
           db_name: TEST_DB,
           coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+          write_concern: Mongo::WriteConcern::Mode.get(w: 1)
         })
       end
 
@@ -139,7 +139,7 @@ describe Mongo::Operation::Write::BulkDelete do
           deletes: documents,
           db_name: TEST_DB,
           coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+          write_concern: Mongo::WriteConcern::Mode.get(w: 1)
         })
       end
 
@@ -177,8 +177,8 @@ describe Mongo::Operation::Write::BulkDelete do
     context 'when the deletes are ordered' do
 
       let(:documents) do
-        [ { que: { field: 'test' }},
-          { :q => { field: 'test' }, :limit => 1 }
+        [ { q: { field: 'test' }},
+          { q: { field: 'test' }, limit: 1 }
         ]
       end
 
@@ -186,7 +186,7 @@ describe Mongo::Operation::Write::BulkDelete do
         { :deletes       => documents,
           :db_name       => TEST_DB,
           :coll_name     => TEST_COLL,
-          :write_concern => Mongo::WriteConcern::Mode.get(:w => 1),
+          :write_concern => Mongo::WriteConcern::Mode.get(w: 1),
           :ordered       => true
         }
       end
@@ -206,8 +206,9 @@ describe Mongo::Operation::Write::BulkDelete do
     context 'when the deletes are unordered' do
 
       let(:documents) do
-        [ { que: { field: 'test' }},
-          { :q => { field: 'test' }, :limit => 1 }
+        [
+          { q: { field: 'test' } },
+          { q: { field: 'test' }, limit: 1 }
         ]
       end
 
@@ -215,7 +216,7 @@ describe Mongo::Operation::Write::BulkDelete do
         { :deletes       => documents,
           :db_name       => TEST_DB,
           :coll_name     => TEST_COLL,
-          :write_concern => Mongo::WriteConcern::Mode.get(:w => 1),
+          :write_concern => Mongo::WriteConcern::Mode.get(w: 1),
           :ordered       => false
         }
       end
