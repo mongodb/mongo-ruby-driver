@@ -210,44 +210,17 @@ When(/^there are no secondaries$/) do
   @cluster.secondaries.first.stop
 end
 
-When(/^I stop the server$/) do
-  @server.stop
-end
-
-When(/^I start the server$/) do
-  @server.start
-end
-
-When(/^I restart the server$/) do
-  @server.restart
+When(/^I (stop|start|restart) the server$/) do |operation|
+  @server.send(operation)
 end
 
 When(/^I command the primary to step down$/) do
   assert(@primary.stepdown.ok)
 end
 
-When(/^I stop router A$/) do
-  @routers.first.stop
-end
-
-When(/^I start router A$/) do
-  @routers.first.start
-end
-
-When(/^I restart router A$/) do
-  @routers.first.restart
-end
-
-When(/^I stop router B$/) do
-  @routers.last.stop
-end
-
-When(/^I start router B$/) do
-  @routers.last.start
-end
-
-When(/^I restart router B$/) do
-  @routers.last.restart
+When(/^I (stop|start|restart) router (A|B)$/) do |operation, router|
+  router_pos = {'A' => :first, 'B' => :last}[router]
+  @routers.send(router_pos).send(operation)
 end
 
 When(/^I track opcounters$/) do
