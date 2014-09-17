@@ -23,7 +23,7 @@ module Mongo
       #
       # @example Create the delete operation.
       #   Write::Delete.new({
-      #     :deletes => [{ :q => { :foo => 1 }, :limit => 1 }],
+      #     :delete => { :q => { :foo => 1 }, :limit => 1 },
       #     :db_name => 'test',
       #     :coll_name => 'test_coll',
       #     :write_concern => write_concern
@@ -31,7 +31,7 @@ module Mongo
       #
       # @param [ Hash ] spec The specifications for the delete.
       #
-      # @option spec :deletes [ Array ] The delete documents.
+      # @option spec :delete [ Hash ] The delete document.
       # @option spec :db_name [ String ] The name of the database on which
       #   the delete should be executed.
       # @option spec :coll_name [ String ] The name of the collection on which
@@ -46,7 +46,6 @@ module Mongo
       # @since 2.0.0
       class Delete
         include Executable
-        include Slicable
         include Specifiable
 
         # Execute the delete operation.
@@ -67,51 +66,22 @@ module Mongo
           end
         end
 
-        # Merge another delete operation with this one.
-        # Requires that the collection and database of the two ops are the same.
-        #
-        # @params[ Mongo::Operation::Write::Delete ] The other delete operation.
-        #
-        # @return [ self ] This object with the list of deletes merged.
-        #
-        # @since 2.0.0
-        def merge!(other)
-          # @todo: use specific exception
-          raise Exception, "Cannot merge" unless self.class == other.class &&
-              coll_name == other.coll_name &&
-              db_name == other.db_name
-          @spec[:deletes] << other.spec[:deletes]
-          self
-        end
-
         private
 
         def execute_write_command(context)
-          Result.new(Command::Delete.new(spec).execute(context)).validate!
+          Result.new(Command::Delete.new(spec.merge(:deletes => [ delete ])).execute(context)).validate!
         end
 
         def execute_message(context)
-          replies = deletes.map do |d|
-            context.with_connection do |connection|
-              Result.new(connection.dispatch([ message(d), gle ].compact)).validate!.reply
-            end
+          context.with_connection do |connection|
+            Result.new(connection.dispatch([ message, gle ].compact)).validate!
           end
-          Result.new(replies)
         end
 
-        def slicable_key
-          :deletes
-        end
-
-        def initialize_copy(original)
-          @spec = original.spec.dup
-          @spec[:deletes] = original.spec[:deletes].clone
-        end
-
-        def message(delete_spec)
-          selector    = delete_spec[:q]
-          delete_options = (delete_spec[:limit] || 0) <= 0 ? {} : { :flags => [:single_remove] }
-          Protocol::Delete.new(db_name, coll_name, selector, delete_options)
+        def message
+          selector = delete[:q]
+          opts     = ( delete[:limit] || 0 ) <= 0 ? {} : { :flags => [ :single_remove ] }
+          Protocol::Delete.new(db_name, coll_name, selector, opts)
         end
       end
     end
