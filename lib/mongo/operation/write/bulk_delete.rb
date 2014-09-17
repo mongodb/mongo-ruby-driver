@@ -22,7 +22,7 @@ module Mongo
       #   operation will be created and sent instead.
       #
       # @example Create the delete operation.
-      #   Write::Delete.new({
+      #   Write::BulkDelete.new({
       #     :deletes => [{ :q => { :foo => 1 }, :limit => 1 }],
       #     :db_name => 'test',
       #     :coll_name => 'test_coll',
@@ -73,9 +73,9 @@ module Mongo
         end
 
         def execute_message(context)
-          replies = messages(context).map do |d|
+          replies = messages(context).map do |m|
             context.with_connection do |connection|
-              result = Result.new(connection.dispatch([ d, gle ]))
+              result = Result.new(connection.dispatch([ m, gle ]))
               result.validate! if ordered?
               result.reply
             end
