@@ -53,8 +53,7 @@ describe Mongo::Operation::Write::Insert do
           { :documents     => other_docs,
             :db_name       => 'test',
             :coll_name     => 'test_coll',
-            :write_concern => { 'w' => 1 },
-            :ordered       => true
+            :write_concern => { 'w' => 1 }
           }
         end
 
