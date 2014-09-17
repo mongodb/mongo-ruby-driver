@@ -287,20 +287,20 @@ When(/^I delete a document with the write concern \{ “w”: <nodes \+ (\d+)>, 
   end
 end
 
-When(/^I read$/) do
+When(/^I query$/) do
   @result = with_rescue do
     @client[TEST_DB][TEST_COLL].find_one({"a" => @ordinal})
   end
 end
 
-When(/^I read with read\-preference (\w+)$/) do  |read_preference|
+When(/^I query with read\-preference (\w+)$/) do  |read_preference|
   read_preference_sym = read_preference.downcase.to_sym
   @result = with_rescue do
     @client[TEST_DB][TEST_COLL].find_one({"a" => @ordinal}, read: read_preference_sym)
   end
 end
 
-When(/^I read with read\-preference (\w+) and tag sets (.*)$/) do |read_preference, tag_sets|
+When(/^I query with read\-preference (\w+) and tag sets (.*)$/) do |read_preference, tag_sets|
   @tag_sets = JSON.parse(tag_sets)
   read_preference_sym = read_preference.downcase.to_sym
   @result = with_rescue do
@@ -357,10 +357,6 @@ Then(/^the insert succeeds$/) do
   @ordinal += 1
 end
 
-Then(/^the insert succeeds \(eventually\)$/) do
-  step "the insert succeeds"
-end
-
 Then(/^the insert fails$/) do
   assert(@result.is_a?(Exception))
   @ordinal += 1
@@ -371,32 +367,26 @@ Then(/^the write operation fails write concern$/) do
   @ordinal += 1
 end
 
-Then(/^the read succeeds$/) do
+Then(/^the query succeeds$/) do
   assert(!@result.is_a?(Exception) && @result.is_a?(Hash))
 end
 
-Then(/^the read fails$/) do
+Then(/^the query fails$/) do
   assert(@result.is_a?(Mongo::ConnectionFailure))
 end
 
-Then(/^the read fails with error "(.*?)"$/) do |message|
+Then(/^the query fails with error "(.*?)"$/) do |message|
   assert(@result.is_a?(Exception))
   pattern = message.downcase.gsub(/<tags sets>/, @tag_sets.inspect)
   assert_match(pattern, @result.message.downcase)
 end
 
-Then(/^the read occurs on the primary$/) do
-  occurs_on(:primary, 'query')
+Then(/^the (\w+) occurs on the primary$/) do |operation|
+  assert(['query','command'].include?(operation))
+  occurs_on(:primary, operation)
 end
 
-Then(/^the command occurs on the primary$/) do
-  occurs_on(:primary, 'command')
-end
-
-Then(/^the read occurs on a secondary$/) do
-  occurs_on(:secondary, 'query')
-end
-
-Then(/^the command occurs on a secondary$/) do
-  occurs_on(:secondary, 'command')
+Then(/^the (\w+) occurs on a secondary$/) do |operation|
+  assert(['query','command'].include?(operation))
+  occurs_on(:secondary, operation)
 end
