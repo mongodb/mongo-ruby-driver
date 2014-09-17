@@ -87,8 +87,9 @@ module Mongo
         end
 
         def gle
-          gle_message = ordered? ? Mongo::WriteConcern::Mode.get(:w => 1).get_last_error :
-                        write_concern.get_last_error
+          gle_message = ( ordered? && write_concern.get_last_error.nil? ) ?
+                           Mongo::WriteConcern::Mode.get(:w => 1).get_last_error :
+                           write_concern.get_last_error
           if gle_message
             Protocol::Query.new(
               db_name,
