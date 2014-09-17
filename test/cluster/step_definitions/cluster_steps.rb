@@ -94,7 +94,6 @@ def hash_delta(a, b)
 end
 
 def get_opcounters
-  @data_members = data_members
   data_members_with_opcounters = @data_members.each_pair.collect{|key, value|
     opcounters = value[:client]['admin'].command({serverStatus: 1})['opcounters']
     #pp [value[:client].host_port, opcounters]
@@ -283,6 +282,7 @@ Given(/^a document written to all data\-bearing members$/) do
 end
 
 When(/^I track opcounters$/) do
+  @data_members = data_members
   @opcounters_before = get_opcounters
 end
 
