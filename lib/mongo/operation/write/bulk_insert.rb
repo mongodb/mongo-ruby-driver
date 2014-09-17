@@ -16,17 +16,19 @@ module Mongo
   module Operation
     module Write
 
-      # A MongoDB insert operation.
+      # A MongoDB bulk insert operation.
+      # This class should only be used by the Bulk API.
       #
       # @note If a server with version >= 2.5.5 is being used, a write command
       #   operation will be created and sent instead.
       #
       # @example Create the new insert operation.
-      #   Write::Insert.new({
+      #   Write::BulkInsert.new({
       #     :documents => [{ :foo => 1 }],
       #     :db_name => 'test',
       #     :coll_name => 'test_coll',
-      #     :write_concern => write_concern
+      #     :write_concern => write_concern,
+      #     :ordered => false
       #   })
       #
       # @param [ Hash ] spec The specifications for the insert.
@@ -35,15 +37,17 @@ module Mongo
       # @option spec :db_name [ String ] The name of the database.
       # @option spec :coll_name [ String ] The name of the collection.
       # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
+      # @option spec :ordered [ true, false ] Whether the operations should be
+      #   executed in order.
       # @option spec :options [ Hash ] Options for the command, if it ends up being a
       #   write command.
       #
       # @since 2.0.0
-      class Insert
+      class BulkInsert
         include Executable
         include Specifiable
 
-        # Execute the insert operation.
+        # Execute the bulk insert operation.
         #
         # @example Execute the operation.
         #   operation.execute(context)
@@ -68,8 +72,31 @@ module Mongo
         end
 
         def execute_message(context)
-          context.with_connection do |connection|
-            Result.new(connection.dispatch([ message, gle ].compact)).validate!
+          replies = messages(context).map do |m|
+            context.with_connection do |connection|
+              result = Result.new(connection.dispatch([ m, gle ]))
+              result.validate! if ordered?
+              result.reply
+            end
+          end
+          Result.new(replies).validate!
+        end
+
+        def ordered?
+          @spec.fetch(:ordered, true)
+        end
+
+        def gle
+          gle_message = ( ordered? && write_concern.get_last_error.nil? ) ?
+                           Mongo::WriteConcern::Mode.get(:w => 1).get_last_error :
+                           write_concern.get_last_error
+          if gle_message
+            Protocol::Query.new(
+              db_name,
+              Database::COMMAND,
+              gle_message,
+              options.merge(limit: -1)
+            )
           end
         end
 
@@ -78,9 +105,15 @@ module Mongo
           @spec[:documents] = original.spec[:documents].dup
         end
 
-        def message
-          opts = !!options[:continue_on_error] ? { :flags => [:continue_on_error] } : {}
-          Protocol::Insert.new(db_name, coll_name, documents, opts)
+        def messages(context)
+          if ordered?
+            documents.collect do |doc|
+              Protocol::Insert.new(db_name, coll_name, [ doc ], options)
+            end
+          else
+            # @todo: break up into multiple messages depending on max_message_size
+            [ Protocol::Insert.new(db_name, coll_name, documents, { :flags => [:continue_on_error] }) ]
+          end
         end
       end
     end

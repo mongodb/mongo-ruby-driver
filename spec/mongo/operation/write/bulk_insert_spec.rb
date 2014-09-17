@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Write::Insert do
+describe Mongo::Operation::Write::BulkInsert do
 
   let(:documents) do
     [{ :name => 'test' }]
@@ -53,7 +53,8 @@ describe Mongo::Operation::Write::Insert do
           { :documents     => other_docs,
             :db_name       => 'test',
             :coll_name     => 'test_coll',
-            :write_concern => { 'w' => 1 }
+            :write_concern => { 'w' => 1 },
+            :ordered       => true
           }
         end
 
@@ -204,6 +205,60 @@ describe Mongo::Operation::Write::Insert do
             failing_insert.execute(authorized_primary.context)
             failing_insert.execute(authorized_primary.context)
           }.to raise_error(Mongo::Operation::Write::Failure)
+        end
+      end
+
+      context 'when the inserts are ordered' do
+
+        let(:documents) do
+          [{ name: 'test' }, { name: 'test' }, { name: 'test1' }]
+        end
+
+        let(:spec) do
+          { :documents     => documents,
+            :db_name       => TEST_DB,
+            :coll_name     => TEST_COLL,
+            :write_concern => Mongo::WriteConcern::Mode.get(:w => 1),
+            :ordered       => true
+          }
+        end
+
+        let(:failing_insert) do
+          described_class.new(spec)
+        end
+  
+        it 'aborts after first error' do
+          expect {
+            failing_insert.execute(authorized_primary.context)
+          }.to raise_error(Mongo::Operation::Write::Failure)
+          expect(authorized_collection.find.count).to eq(1)
+        end
+      end
+
+      context 'when the inserts are unordered' do
+
+        let(:documents) do
+          [{ name: 'test' }, { name: 'test' }, { name: 'test1' }]
+        end
+
+        let(:spec) do
+          { :documents     => documents,
+            :db_name       => TEST_DB,
+            :coll_name     => TEST_COLL,
+            :write_concern => Mongo::WriteConcern::Mode.get(:w => 1),
+            :ordered       => false
+          }
+        end
+
+        let(:failing_insert) do
+          described_class.new(spec)
+        end
+
+        it 'continues executing operations after errors' do
+          expect {
+            failing_insert.execute(authorized_primary.context)
+          }.to raise_error(Mongo::Operation::Write::Failure)
+          expect(authorized_collection.find.count).to eq(2)
         end
       end
     end
