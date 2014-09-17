@@ -107,6 +107,7 @@ module Mongo
         end
 
         def messages(context)
+          # @todo: break up into multiple messages depending on max_message_size
           deletes.collect do |del|
             opts = ( del[:limit] || 0 ) <= 0 ? {} : { :flags => [ :single_remove ] }
             Protocol::Delete.new(db_name, coll_name, del[:q], opts)
