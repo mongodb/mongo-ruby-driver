@@ -1,3 +1,17 @@
+# Copyright (C) 2009-2014 MongoDB, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 $ORCH_DIR = File.absolute_path(File.join(File.dirname(__FILE__), '..', '..', 'orchestration'))
 $LOAD_PATH.unshift($ORCH_DIR)
 $LIB_DIR = File.absolute_path(File.join(File.dirname(__FILE__), '..', '..', '..', 'lib'))
@@ -7,6 +21,7 @@ require 'bson'
 require 'mongo'
 require 'mongo_orchestration'
 
+# eliminate ping commands from opcounters
 module Mongo
   class Pool
     def refresh_ping_time
@@ -18,8 +33,8 @@ end
 TEST_DB = 'test'
 TEST_COLL = 'test'
 TEST_COLL_OUT = 'test_out'
-OPCOUNTER_QUERY = 1
-OPCOUNTER_COMMAND = 2
+OPCOUNTER_QUERY_THRESHOLD = 0
+OPCOUNTER_COMMAND_THRESHOLD = 1
 
 TEST_DOCS = [
     {coordinates: [-74.044491, 40.689522],  name: 'The Statue of Liberty National Monument', city: 'New York', state: 'NY'},
@@ -47,18 +62,7 @@ TEST_DOCS = [
 
 public
 
-def setup_db_coll
-  @client.drop_database(TEST_DB)
-  @db = @client[TEST_DB]
-  @coll = @db[TEST_COLL]
-  @ordinal = 1
-end
-
-def await_replication(coll)
-  coll.insert({a: 0}, w: @n)
-end
-
-def rescue_connection_failure_and_retry(max_retries=30)
+def rescue_connection_failure_and_retry(max_retries = 30)
   retries = 0
   begin
     yield
@@ -92,16 +96,15 @@ end
 def result_response_command_with_read_preference(command, read_preference)
   read_preference_sym = read_preference.downcase.to_sym
   @result, @response = result_response do
-    @client[TEST_DB].command(command, read: read_preference_sym)
+    @db.command(command, read: read_preference_sym)
   end
 end
 
 def data_members
   cluster_members = @cluster.secondaries.collect{|secondary| [secondary, :secondary]} << [@cluster.primary, :primary]
   client_members = cluster_members.collect do |resource, member_type|
-    object = resource.object
-    client = Mongo::MongoClient.from_uri(object['mongodb_uri'])
-    [object['uri'], {client: client, resource: resource, member_type: member_type}]
+    client = Mongo::MongoClient.from_uri(resource.object['mongodb_uri'])
+    [resource.object['uri'], {client: client, resource: resource, member_type: member_type}]
   end
   Hash[*client_members.flatten(1)]
 end
@@ -131,10 +134,35 @@ end
 def occurs_on(member_type, op_type = 'query')
   delta_opcounters
   #@opcounters_delta.each_pair{|key, value| pp [key, value[:opcounters], value[:member_type]]}
-  threshold = (op_type == 'command') ? 1 : 0
+  threshold = (op_type == 'command') ? OPCOUNTER_COMMAND_THRESHOLD : OPCOUNTER_QUERY_THRESHOLD
   opnodes = @opcounters_delta.each_pair.select{|key, value| (value[:opcounters][op_type] > threshold)}
   assert_equal(1, opnodes.count)
   assert_equal(member_type, opnodes.first.last[:member_type])
+end
+
+def await_replication(coll)
+  coll.insert({a: 0}, w: @n)
+end
+
+def setup_cluster_and_client(orchestration, preset, id = nil)
+  configuration = {orchestration: orchestration, request_content: {preset: preset}}
+  configuration[:request_content][:id] = id if id
+  @cluster = @mo.configure(configuration)
+  @mongodb_uri = @cluster.object['mongodb_uri']
+  case orchestration
+    when 'servers' then @client = Mongo::MongoClient.from_uri(@mongodb_uri)
+    when 'replica_sets' then @client = Mongo::MongoReplicaSetClient.from_uri(@mongodb_uri)
+    when 'sharded_clusters' then @client = Mongo::MongoShardedClient.from_uri(@mongodb_uri)
+  end
+  @client.drop_database(TEST_DB)
+  @db = @client[TEST_DB]
+  @coll = @db[TEST_COLL]
+  @ordinal = 1
+  @n = 1
+  if orchestration == 'replica_sets'
+    await_replication(@coll)
+    @primary = @cluster.primary
+  end
 end
 
 Before do |scenario|
@@ -146,41 +174,23 @@ After do |scenario|
 end
 
 Given(/^a cluster in the standalone server configuration$/) do
-  @cluster = @mo.configure({orchestration: "servers", request_content: {id: "standalone_basic", preset: "basic.json"} })
-  @mongodb_uri = @cluster.object['mongodb_uri']
-  @client = Mongo::MongoClient.from_uri(@mongodb_uri)
-  setup_db_coll
-  @n = 1
+  setup_cluster_and_client('servers', 'basic.json', 'standalone_basic')
   @server = @cluster
 end
 
 Given(/^a basic replica set$/) do
-  @cluster = @mo.configure({orchestration: "replica_sets", request_content: {id: "replica_set_basic", preset: "basic.json"} })
-  @mongodb_uri = @cluster.object['mongodb_uri']
-  @client = Mongo::MongoReplicaSetClient.from_uri(@mongodb_uri)
-  setup_db_coll
-  await_replication(@coll)
-  @primary = @cluster.primary
+  setup_cluster_and_client('replica_sets', 'basic.json', 'replica_set_basic')
   @n = @cluster.object['members'].count
 end
 
 Given(/^an arbiter replica set$/) do
-  @cluster = @mo.configure({orchestration: "replica_sets", request_content: {id: "replica_set_arbiter", preset: "arbiter.json"} })
-  @mongodb_uri = @cluster.object['mongodb_uri']
-  @client = Mongo::MongoReplicaSetClient.from_uri(@mongodb_uri)
-  setup_db_coll
-  await_replication(@coll)
-  @primary = @cluster.primary
+  setup_cluster_and_client('replica_sets', 'arbiter.json', 'replica_set_arbiter')
   @n = @cluster.object['members'].count - 1
 end
 
 Given(/^a basic sharded cluster with routers A and B$/) do
-  @cluster = @mo.configure({orchestration: "sharded_clusters", request_content: {id: "sharded_cluster_basic", preset: "basic.json"} })
-  @mongodb_uri = @cluster.object['mongodb_uri']
-  @client = Mongo::MongoShardedClient.from_uri(@mongodb_uri)
-  setup_db_coll
+  setup_cluster_and_client('sharded_clusters', 'basic.json', 'sharded_cluster_basic')
   @routers = @cluster.routers
-  @n = 1
 end
 
 Given(/^a document written to all data\-bearing members$/) do
@@ -262,14 +272,14 @@ end
 
 When(/^I query$/) do
   @result = with_rescue do
-    @client[TEST_DB][TEST_COLL].find_one({"a" => @ordinal})
+    @coll.find_one({"a" => @ordinal})
   end
 end
 
 When(/^I query with read\-preference (\w+)$/) do  |read_preference|
   read_preference_sym = read_preference.downcase.to_sym
   @result = with_rescue do
-    @client[TEST_DB][TEST_COLL].find_one({"a" => @ordinal}, read: read_preference_sym)
+    @coll.find_one({"a" => @ordinal}, read: read_preference_sym)
   end
 end
 
@@ -277,7 +287,7 @@ When(/^I query with read\-preference (\w+) and tag sets (.*)$/) do |read_prefere
   @tag_sets = JSON.parse(tag_sets)
   read_preference_sym = read_preference.downcase.to_sym
   @result = with_rescue do
-    @client[TEST_DB][TEST_COLL].find_one({"a" => @ordinal}, read: read_preference_sym, tag_sets: @tag_sets)
+    @coll.find_one({"a" => @ordinal}, read: read_preference_sym, tag_sets: @tag_sets)
   end
 end
 
