@@ -7,10 +7,43 @@ require 'bson'
 require 'mongo'
 require 'mongo_orchestration'
 
+module Mongo
+  class Pool
+    def refresh_ping_time
+      rand
+    end
+  end
+end
+
 TEST_DB = 'test'
 TEST_COLL = 'test'
+TEST_COLL_OUT = 'test_out'
 OPCOUNTER_QUERY = 1
 OPCOUNTER_COMMAND = 2
+
+TEST_DOCS = [
+    {coordinates: [-74.044491, 40.689522],  name: 'The Statue of Liberty National Monument', city: 'New York', state: 'NY'},
+    {coordinates: [-71.056454, 42.360059],  name: 'Freedom Trail', city: 'Boston', state: 'MA'},
+    {coordinates: [-75.149877, 39.949030],  name: 'Independence Hall', city: 'Philadelphia', state: 'PA'},
+    {coordinates: [-79.874562, 32.754481],  name: 'Fort Sumter National Monument', city: 'Charleston', state: 'SC'},
+    {coordinates: [-77.022959, 38.890101],  name: 'The National Mall', city: 'Washington', state: 'DC'},
+    {coordinates: [-103.459066, 43.879317], name: 'Mt Rushmore National Memorial', city: 'Keystone', state: 'SD'},
+    {coordinates: [-98.486094, 29.426215],  name: 'The Alamo', city: 'San Antonio', state: 'TX'},
+    {coordinates: [-90.184726, 38.624889],  name: 'The Gateway Arch', city: 'St Louis', state: 'MO'},
+    {coordinates: [-114.737727, 36.016287], name: 'Hoover Dam', location: 'Clark County, NV / Mohave County, AZ'},
+    {coordinates: [-77.222400, 39.811603],  name: 'Gettysburg National Military Park', city: 'Gettysburg', state: 'PA'},
+    {coordinates: [-77.050177, 38.889491],  name: 'Lincoln Memorial', city: 'Washington', state: 'DC'},
+    {coordinates: [-122.422960, 37.830588], name: 'Alcatraz Island', city: 'San Franciso', state: 'CA'},
+    {coordinates: [-157.949973, 21.364897], name: 'USS Arizona Memorial', city: 'Honolulu', state: 'HI'},
+    {coordinates: [-87.623277, 41.882917],  name: 'Cloud Gate', city: 'Chicago', state: 'IL'},
+    {coordinates: [-77.047613, 38.891261],  name: 'Vietnam Veterans Memorial', city: 'Washington', state: 'DC'},
+    {coordinates: [-73.982237, 40.753406],  name: 'New York Public Library', city: 'New York', state: 'NY'},
+    {coordinates: [-81.091239, 32.073624],  name: 'The Cathedral of Saint John the Baptist', city: 'Savannah', state: 'GA'},
+    {coordinates: [-77.047762, 38.888071],  name: 'Korean War Veterans Memorial', city: 'Washington', state: 'DC'},
+    {coordinates: [-73.986209, 40.756819],  name: 'Times Square', city: 'New York', state: 'NY'},
+    {coordinates: [-74.013462, 40.713183],  name: 'One World Trade Center', city: 'New York', state: 'NY'},
+    {coordinates: [-77.009054, 38.890042],  name: 'United States Capitol', city: 'Washington', state: 'DC'}
+]
 
 public
 
@@ -45,32 +78,64 @@ def with_rescue(exception_class = Exception)
   end
 end
 
-def opcounters(client, field = 'query')
-  client['admin'].command({serverStatus: 1})['opcounters'][field]
+def data_members
+  cluster_members = @cluster.secondaries.collect{|secondary| [secondary, :secondary]} << [@cluster.primary, :primary]
+  client_members = cluster_members.collect do |resource, member_type|
+    object = resource.object
+    client = Mongo::MongoClient.from_uri(object['mongodb_uri'])
+    [object['uri'], {client: client, resource: resource, member_type: member_type}]
+  end
+  Hash[*client_members.flatten(1)]
 end
 
-def opcounter_count(client, field = 'query')
-  direct_client = Mongo::MongoClient.new(client.read_pool.host, client.read_pool.port)
-  queries_before = opcounters(direct_client, field)
-  #assert_nothing_raised do
-    yield
-  #end
-  queries_after = opcounters(direct_client, field)
-  queries_after - queries_before
+def hash_delta(a, b)
+  ary = b.each_pair.collect{|key, value| [key, value - a[key]]}
+  Hash[*ary.flatten(1)]
 end
 
-def result_opcount_response(client, field = 'query')
+def get_opcounters
+  @data_members = data_members
+  data_members_with_opcounters = @data_members.each_pair.collect{|key, value|
+    opcounters = value[:client]['admin'].command({serverStatus: 1})['opcounters']
+    #pp [value[:client].host_port, opcounters]
+    [key, value.dup.merge(opcounters: opcounters)]
+  }
+  Hash[*data_members_with_opcounters.flatten(1)]
+end
+
+def delta_opcounters
+  @opcounters_after = get_opcounters
+  @opcounters_delta = @opcounters_after.each_pair.collect do |key, value|
+    [key, value.merge(opcounters: hash_delta(@opcounters_before[key][:opcounters], value[:opcounters]))]
+  end
+  @opcounters_delta = Hash[*@opcounters_delta.flatten(1)]
+end
+
+def occurs_on(member_type, op_type = 'query')
+  delta_opcounters
+  #@opcounters_delta.each_pair{|key, value| pp [key, value[:opcounters], value[:member_type]]}
+  threshold = (op_type == 'command') ? 1 : 0
+  opnodes = @opcounters_delta.each_pair.select{|key, value| (value[:opcounters][op_type] > threshold)}
+  assert_equal(1, opnodes.count)
+  assert_equal(member_type, opnodes.first.last[:member_type])
+end
+
+def result_response
   response = nil
-  count = nil
   result = begin
-    count = opcounter_count(client, field) do
-      response = yield
-    end
-    response
+    response = yield
   rescue => ex
+    #pp ex.backtrace
     ex
   end
-  [result, count, response]
+  [result, response]
+end
+
+def result_response_command_with_read_preference(command, read_preference)
+  read_preference_sym = read_preference.downcase.to_sym
+  @result, @response = result_response do
+    @client[TEST_DB].command(command, read: read_preference_sym)
+  end
 end
 
 Before do |scenario|
@@ -217,31 +282,8 @@ Given(/^a document written to all data\-bearing members$/) do
   end
 end
 
-Given(/^a client with read\-preference (\w+)$/) do |read_preference|
-  read_preference_sym = read_preference.downcase.to_sym
-  @client = Mongo::MongoClient.from_uri(@mongodb_uri, read: read_preference_sym)
-  # if read_preference =~ /PRIMARY/
-  #   assert_equal(@primary.object['uri'], @client.read_pool.address)
-  # else
-  #   assert(@primary.object['uri'] != @client.read_pool.address)
-  # end
-end
-
-Given(/^a client with read\-preference (\w+) and tag sets (.*)$/) do |read_preference, tag_sets|
-  @tag_sets = JSON.parse(tag_sets)
-  read_preference_sym = read_preference.downcase.to_sym
-  @client = Mongo::MongoClient.from_uri(@mongodb_uri, read: read_preference_sym, tag_sets: @tag_sets)
-  # if read_preference =~ /PRIMARY/
-  #   assert_equal(@primary.object['uri'], @client.read_pool.address)
-  # else
-  #   assert(@primary.object['uri'] != @client.read_pool.address)
-  # end
-end
-
-When(/^I read with opcounter tracking$/) do
-  @result, @count, @response = result_opcount_response(@client) do
-    @client[TEST_DB][TEST_COLL].find_one({"a" => @ordinal})
-  end
+When(/^I track opcounters$/) do
+  @opcounters_before = get_opcounters
 end
 
 When(/^I read$/) do
@@ -250,12 +292,27 @@ When(/^I read$/) do
   end
 end
 
+When(/^I read with read\-preference (\w+)$/) do  |read_preference|
+  read_preference_sym = read_preference.downcase.to_sym
+  @result = with_rescue do
+    @client[TEST_DB][TEST_COLL].find_one({"a" => @ordinal}, read: read_preference_sym)
+  end
+end
+
+When(/^I read with read\-preference (\w+) and tag sets (.*)$/) do |read_preference, tag_sets|
+  @tag_sets = JSON.parse(tag_sets)
+  read_preference_sym = read_preference.downcase.to_sym
+  @result = with_rescue do
+    @client[TEST_DB][TEST_COLL].find_one({"a" => @ordinal}, read: read_preference_sym, tag_sets: @tag_sets)
+  end
+end
+
 Then(/^the read occurs on the primary$/) do
-  assert(OPCOUNTER_QUERY == @count)
+  occurs_on(:primary, 'query')
 end
 
 Then(/^the read occurs on a secondary$/) do
-  assert_equal(OPCOUNTER_QUERY, @count)
+  occurs_on(:secondary, 'query')
 end
 
 When(/^there is no primary$/) do
@@ -281,21 +338,65 @@ Then(/^the read fails with error "(.*?)"$/) do |message|
   assert_match(pattern, @result.message.downcase)
 end
 
-When(/^I run with opcounter tracking a (\w+) command with example (.*)$/) do |name, example|
+When(/^I run a (\w+) command with read\-preference (\w+) and with example (.*)$/) do |name, read_preference, example|
   command = JSON.parse(example)
   command[name] = TEST_COLL if ["aggregate", "collStats", "count", "mapReduce", "parallelCollectionScan"].include?(name)
   if name == "group"
     command["group"]["ns"] = TEST_COLL
     command["group"]["$reduce"] = BSON::Code.new(command["group"]["$reduce"])
-  elsif name == "mapReduce"
-    command["map"] = BSON::Code.new(command["map"])
-    command["reduce"] = BSON::Code.new(command["reduce"])
   end
-  @result, @count, @response = result_opcount_response(@client, 'command') do
-    @client[TEST_DB].command(command)
-  end
+  result_response_command_with_read_preference(command, read_preference)
 end
 
 Then(/^the command occurs on a secondary$/) do
-  assert_equal(OPCOUNTER_COMMAND, @count)
+  occurs_on(:secondary, 'command')
+end
+
+Then(/^the command occurs on the primary$/) do
+  occurs_on(:primary, 'command')
+end
+
+Given(/^some geo documents written to all data\-bearing members$/) do
+  @coll.insert(TEST_DOCS, :w => @n)
+end
+
+Given(/^a geo (\w+) index$/) do |geo_index_type|
+  @coll.create_index([['coordinates', geo_index_type]]);
+end
+
+When(/^I run a geonear command with read\-preference (\w+)$/) do |read_preference|
+  command = {geoNear: TEST_COLL, near: [-73.9667,40.78], maxDistance: 1000}
+  result_response_command_with_read_preference(command, read_preference)
+end
+
+Given(/^some documents written to all data\-bearing members$/) do
+  @coll.insert(TEST_DOCS, :w => @n)
+end
+
+When(/^I run a map\-reduce with field out value inline true and with read\-preference (\w+)$/) do |read_preference|
+  command = {mapReduce: TEST_COLL,
+             map: BSON::Code.new("function(){emit('a',this.a)}"),
+             reduce: BSON::Code.new("function(key,values){return Array.sum(values)}"),
+             out: {inline: true}}
+  result_response_command_with_read_preference(command, read_preference)
+end
+
+When(/^I run a map\-reduce with field out value other than inline and with read\-preference (\w+)$/) do |read_preference|
+  command = {mapReduce: TEST_COLL,
+             map: BSON::Code.new("function(){emit('a',this.a)}"),
+             reduce: BSON::Code.new("function(key,values){return Array.sum(values)}"),
+             out: TEST_COLL_OUT}
+  result_response_command_with_read_preference(command, read_preference)
+end
+
+When(/^I run an aggregate with \$out and with read\-preference (\w+)$/) do |read_preference|
+  command = {aggregate: TEST_COLL,
+             'pipeline' => [{'$group' => {'_id' => '$state', 'count' => {'$sum' => 1}}}, {'$out' => TEST_COLL_OUT}]} # RUBY-804
+  result_response_command_with_read_preference(command, read_preference)
+end
+
+When(/^I run an aggregate without \$out and with read\-preference (\w+)$/) do |read_preference|
+  command = {aggregate: TEST_COLL,
+             'pipeline' => [{'$group' => {'_id' => '$state', 'count' => {'$sum' => 1}}}]} # RUBY-804
+  result_response_command_with_read_preference(command, read_preference)
 end
