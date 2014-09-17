@@ -262,5 +262,10 @@ describe Mongo::Operation::Write::BulkInsert do
         end
       end
     end
+
+    context 'when the server is a secondary' do
+
+      pending 'it raises an exception'
+    end
   end
 end
