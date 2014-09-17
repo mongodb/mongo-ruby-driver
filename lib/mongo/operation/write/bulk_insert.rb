@@ -72,10 +72,10 @@ module Mongo
         end
 
         def execute_message(context)
-          replies = messages(context).map do |message|
+          replies = messages(context).map do |m|
             context.with_connection do |connection|
               # @todo: only validate if it's ordered
-              Result.new(connection.dispatch([ message, gle ])).validate!.reply
+              Result.new(connection.dispatch([ m, gle ])).validate!.reply
             end
           end
           Result.new(replies)
@@ -107,7 +107,7 @@ module Mongo
           # @todo: break up into multiple messages depending on max_message_size
           if ordered?
             documents.collect do |doc|
-              Protocol::Insert.new(db_name, coll_name, doc, options)
+              Protocol::Insert.new(db_name, coll_name, [ doc ], options)
             end
           else
             [ Protocol::Insert.new(db_name, coll_name, documents, { :flags => [:continue_on_error] }) ]
