@@ -86,6 +86,11 @@ module Mongo
       # @since 2.0.0
       UPDATES = :updates.freeze
 
+      # The field for update.
+      #
+      # @since 2.0.0
+      UPDATE = :update.freeze
+
       # The field name for a user.
       #
       # @since 2.0.0
@@ -288,6 +293,17 @@ module Mongo
       # @since 2.0.0
       def updates
         spec[UPDATES]
+      end
+
+      # The update document from the spec.
+      #
+      # @example Get the update document.
+      #
+      # @return [ Hash ] The update document.
+      #
+      # @since 2.0.0
+      def update
+        spec[UPDATE]
       end
 
       # The user for user related operations.

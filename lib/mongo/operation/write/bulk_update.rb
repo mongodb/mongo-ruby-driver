@@ -16,38 +16,42 @@ module Mongo
   module Operation
     module Write
 
-      # A MongoDB update operation.
+      # A MongoDB bulk update operation.
       #
       # @note If the server version is >= 2.5.5, a write command operation
       #   will be created and sent instead.
       #
       # @example Create the update operation.
-      #   Write::Update.new({
-      #     :update =>
+      #   Write::BulkUpdate.new({
+      #     :updates => [
       #       {
       #         :q => { :foo => 1 },
       #         :u => { :$set => { :bar => 1 }},
       #         :multi  => true,
       #         :upsert => false
-      #       },
+      #       }
+      #     ],
       #     :db_name => 'test',
       #     :coll_name => 'test_coll',
-      #     :write_concern => write_concern
+      #     :write_concern => write_concern,
+      #     :ordered => false
       #   })
       #
       # @param [ Hash ] spec The specifications for the update.
       #
-      # @option spec :update [ Hash ] The update document.
+      # @option spec :updates [ Array ] The update documents.
       # @option spec :db_name [ String ] The name of the database on which
       #   the query should be run.
       # @option spec :coll_name [ String ] The name of the collection on which
       #   the query should be run.
       # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
+      # @option spec :ordered [ true, false ] Whether the operations should be
+      #   executed in order.
       # @option spec :options [ Hash ] Options for the command, if it ends up being a
       #   write command.
       #
       # @since 2.0.0
-      class Update
+      class BulkUpdate
         include Executable
         include Specifiable
 
@@ -72,12 +76,36 @@ module Mongo
         private
 
         def execute_write_command(context)
-          Result.new(Command::Update.new(spec.merge(:updates => [ update ])).execute(context)).validate!
+          Result.new(Command::Update.new(spec).execute(context)).validate!
         end
 
         def execute_message(context)
-          context.with_connection do |connection|
-            Result.new(connection.dispatch([ message, gle ].compact)).validate!
+          replies = messages(context).map do |m|
+            context.with_connection do |connection|
+              result = Result.new(connection.dispatch([ m, gle ]))
+              result.validate! if ordered?
+              result.reply
+            end
+          end
+          Result.new(replies).validate!
+        end
+
+        # @todo put this somewhere else
+        def ordered?
+          @spec.fetch(:ordered, true)
+        end
+
+        def gle
+          gle_message = ( ordered? && write_concern.get_last_error.nil? ) ?
+                           Mongo::WriteConcern::Mode.get(:w => 1).get_last_error :
+                           write_concern.get_last_error
+          if gle_message
+            Protocol::Query.new(
+              db_name,
+              Database::COMMAND,
+              gle_message,
+              options.merge(limit: -1)
+            )
           end
         end
 
@@ -86,9 +114,12 @@ module Mongo
           @spec[:updates] = original.spec[:updates].dup
         end
 
-        def message(update_spec = {})
-          opts = update[:multi] ? { :flags => [:multi_update] } : {}
-          Protocol::Update.new(db_name, coll_name, update[:q], update[:u], opts)
+        def messages(context)
+          # @todo: break up into multiple messages depending on max_message_size
+          updates.collect do |u|
+            opts = u[:multi] ? { :flags => [:multi_update] } : {}
+            Protocol::Update.new(db_name, coll_name, u[:q], u[:u], opts)
+          end
         end
       end
     end
