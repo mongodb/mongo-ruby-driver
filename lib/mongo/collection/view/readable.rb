@@ -169,6 +169,17 @@ module Mongo
         end
 
         # Execute a map/reduce operation on the collection view.
+        #
+        # @example Execute a map/reduce.
+        #   view.map_reduce(map, reduce)
+        #
+        # @param [ String ] map The map js function.
+        # @param [ String ] reduce The reduce js function.
+        # @param [ Hash ] options The map/reduce options.
+        #
+        # @return [ MapReduce ] The map reduce wrapper.
+        #
+        # @since 2.0.0
         def map_reduce(map, reduce, options = {})
           MapReduce.new(self, map, reduce, options)
         end

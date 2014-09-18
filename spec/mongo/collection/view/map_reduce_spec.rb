@@ -81,28 +81,87 @@ describe Mongo::Collection::View::MapReduce do
 
     context 'when out is a collection' do
 
+      after do
+        authorized_client['output_collection'].find.remove_many
+      end
+
       context 'when the option is to replace' do
 
+        let(:new_map_reduce) do
+          map_reduce.out(replace: 'output_collection')
+        end
+
+        it 'iterates over the documents in the result' do
+          new_map_reduce.each do |document|
+            expect(document[:value]).to_not be_nil
+          end
+        end
+
+        it 'fetches the results from the collection' do
+          expect(new_map_reduce.count).to eq(2)
+        end
       end
 
       context 'when the option is to merge' do
 
+        let(:new_map_reduce) do
+          map_reduce.out(merge: 'output_collection')
+        end
+
+        it 'iterates over the documents in the result' do
+          new_map_reduce.each do |document|
+            expect(document[:value]).to_not be_nil
+          end
+        end
+
+        it 'fetches the results from the collection' do
+          expect(new_map_reduce.count).to eq(2)
+        end
       end
 
       context 'when the option is to reduce' do
 
+        let(:new_map_reduce) do
+          map_reduce.out(reduce: 'output_collection')
+        end
+
+        it 'iterates over the documents in the result' do
+          new_map_reduce.each do |document|
+            expect(document[:value]).to_not be_nil
+          end
+        end
+
+        it 'fetches the results from the collection' do
+          expect(new_map_reduce.count).to eq(2)
+        end
       end
     end
 
     context 'when the view has a selector' do
 
-      let(:selector) do
-        { name: 'Berlin' }
+      context 'when the selector is basic' do
+
+        let(:selector) do
+          { name: 'Berlin' }
+        end
+
+        it 'applies the selector to the map/reduce' do
+          map_reduce.each do |document|
+            expect(document[:_id]).to eq('Berlin')
+          end
+        end
       end
 
-      it 'applies the selector to the map/reduce' do
-        map_reduce.each do |document|
-          expect(document[:_id]).to eq('Berlin')
+      context 'when the selector is advanced' do
+
+        let(:selector) do
+          { :$query => { name: 'Berlin' }}
+        end
+
+        it 'applies the selector to the map/reduce' do
+          map_reduce.each do |document|
+            expect(document[:_id]).to eq('Berlin')
+          end
         end
       end
     end

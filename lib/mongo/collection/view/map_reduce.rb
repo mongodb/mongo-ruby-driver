@@ -150,6 +150,10 @@ module Mongo
 
         private
 
+        def inline?
+          out.nil? || out == { inline: 1 }
+        end
+
         def map_reduce_spec
           {
             :db_name => database.name,
@@ -157,7 +161,7 @@ module Mongo
               :mapreduce => collection.name,
               :map => map,
               :reduce => reduce,
-              :query => view.selector,
+              :query => view.selector[:$query] || view.selector,
               :out => { inline: 1 }
             }.merge(options).merge(view.options)
           }
@@ -172,9 +176,27 @@ module Mongo
         end
 
         def send_initial_query(server)
-          # Send the initial map/reduce
-          initial_query_op.execute(server.context)
-          # If an output collection was specified, then execute the query.
+          result = initial_query_op.execute(server.context)
+          if inline?
+            result
+          else
+            send_fetch_query(server)
+          end
+        end
+
+        def fetch_query_spec
+          { :selector  => {},
+            :options   => {},
+            :db_name   => database.name,
+            :coll_name => out.values.first }
+        end
+
+        def fetch_query_op
+          Operation::Read::Query.new(fetch_query_spec)
+        end
+
+        def send_fetch_query(server)
+          fetch_query_op.execute(server.context)
         end
       end
     end
