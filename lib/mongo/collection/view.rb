@@ -15,6 +15,7 @@
 require 'mongo/collection/view/immutable'
 require 'mongo/collection/view/explainable'
 require 'mongo/collection/view/aggregation'
+require 'mongo/collection/view/map_reduce'
 require 'mongo/collection/view/readable'
 require 'mongo/collection/view/writable'
 

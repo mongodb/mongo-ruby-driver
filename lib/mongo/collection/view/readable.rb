@@ -168,6 +168,11 @@ module Mongo
           configure(:limit, limit)
         end
 
+        # Execute a map/reduce operation on the collection view.
+        def map_reduce(map, reduce, options = {})
+          MapReduce.new(self, map, reduce, options)
+        end
+
         # Set the max number of documents to scan.
         #
         # @example Set the max scan value.

@@ -16,19 +16,23 @@ module Mongo
   class Collection
     class View
 
-      # Provides behaviour around an aggregation pipeline on a collection view.
+      # Provides behaviour around a map/reduce operation on the collection
+      # view.
       #
       # @since 2.0.0
-      class Aggregation
+      class MapReduce
         extend Forwardable
         include Enumerable
         include Immutable
-        include Explainable
 
         # @return [ View ] view The collection view.
         attr_reader :view
-        # @return [ Array<Hash> ] pipeline The aggregation pipeline.
-        attr_reader :pipeline
+
+        # @return [ String ] map The map function.
+        attr_reader :map
+
+        # @return [ String ] reduce The reduce function.
+        attr_reader :reduce
 
         # Delegate necessary operations to the view.
         def_delegators :view, :collection, :read, :cluster
@@ -36,19 +40,20 @@ module Mongo
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database
 
-        # Set to true if disk usage is allowed during the aggregation.
-        #
-        # @example Set disk usage flag.
-        #   aggregation.allow_disk_use(true)
-        #
-        # @param [ true, false ] value The flag value.
-        #
-        # @return [ true, false, Aggregation ] The aggregation if a value was
-        #   set or the value if used as a getter.
-        #
-        # @since 2.0.0
-        def allow_disk_use(value = nil)
-          configure(:allowDiskUse, value)
+        def finalize(function = nil)
+          configure(:finalize, function)
+        end
+
+        def js_mode(value = nil)
+          configure(:jsMode, value)
+        end
+
+        def out(location = nil)
+          configure(:out, location)
+        end
+
+        def scope(object = nil)
+          configure(:scope, object)
         end
 
         # Iterator over the results of the aggregation.
@@ -72,49 +77,51 @@ module Mongo
           cursor
         end
 
-        # Initialize the aggregation for the provided collection view, pipeline
+        # Initialize the map/reduce for the provided collection view, functions
         # and options.
         #
-        # @example Create the new aggregation view.
-        #   Aggregation.view.new(view, pipeline)
+        # @example Create the new map/reduce view.
         #
         # @param [ Collection::View ] view The collection view.
-        # @param [ Array<Hash> ] pipeline The pipeline of operations.
-        # @param [ Hash ] options The aggregation options.
+        # @param [ String ] map The map function.
+        # @param [ String ] reduce The reduce function.
+        # @param [ Hash ] options The map/reduce options.
         #
         # @since 2.0.0
-        def initialize(view, pipeline, options = {})
+        def initialize(view, map, reduce, options = {})
           @view = view
-          @pipeline = pipeline.dup
+          @map = map.freeze
+          @reduce = reduce.freeze
           @options = options.dup
         end
 
         private
 
-        def aggregate_spec
-          { :selector => {
-              :aggregate => collection.name,
-              :pipeline => pipeline,
-              :cursor => view.batch_size ? { :batchSize => view.batch_size } : {}
-            }.merge!(options),
+        def map_reduce_spec
+          {
             :db_name => database.name,
-            :options => view.options }
-        end
-
-        def explain_options
-          { :explain => true }
+            :selector => {
+              :mapreduce => collection.name,
+              :map => map,
+              :reduce => reduce,
+              :query => view.selector,
+              :out => { inline: 1 }
+            }
+          }.merge(options)
         end
 
         def new(options)
-          Aggregation.new(view, pipeline, options)
+          MapReduce.new(view, map, reduce, options)
         end
 
         def initial_query_op
-          Operation::Aggregate.new(aggregate_spec)
+          Operation::MapReduce.new(map_reduce_spec)
         end
 
         def send_initial_query(server)
+          # Send the initial map/reduce
           initial_query_op.execute(server.context)
+          # If an output collection was specified, then execute the query.
         end
       end
     end
