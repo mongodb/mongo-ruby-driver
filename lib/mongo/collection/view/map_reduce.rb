@@ -159,8 +159,8 @@ module Mongo
               :reduce => reduce,
               :query => view.selector,
               :out => { inline: 1 }
-            }
-          }.merge(options)
+            }.merge(options).merge(view.options)
+          }
         end
 
         def new(options)

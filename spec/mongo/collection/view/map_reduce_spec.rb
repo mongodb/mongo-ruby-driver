@@ -68,6 +68,15 @@ describe Mongo::Collection::View::MapReduce do
 
     context 'when out is inline' do
 
+      let(:new_map_reduce) do
+        map_reduce.out(inline: 1)
+      end
+
+      it 'iterates over the documents in the result' do
+        new_map_reduce.each do |document|
+          expect(document[:value]).to_not be_nil
+        end
+      end
     end
 
     context 'when out is a collection' do
@@ -87,14 +96,28 @@ describe Mongo::Collection::View::MapReduce do
 
     context 'when the view has a selector' do
 
+      let(:selector) do
+        { name: 'Berlin' }
+      end
+
+      it 'applies the selector to the map/reduce' do
+        map_reduce.each do |document|
+          expect(document[:_id]).to eq('Berlin')
+        end
+      end
     end
 
     context 'when the view has a limit' do
 
-    end
+      let(:view_options) do
+        { limit: 1 }
+      end
 
-    context 'when the view has a sort' do
-
+      it 'applies the limit to the map/reduce' do
+        map_reduce.each do |document|
+          expect(document[:_id]).to eq('Berlin')
+        end
+      end
     end
   end
 
