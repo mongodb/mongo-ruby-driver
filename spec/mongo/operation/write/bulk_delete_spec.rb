@@ -225,6 +225,7 @@ describe Mongo::Operation::Write::BulkDelete do
         described_class.new(spec)
       end
   
+      # @todo: find a way to make a delete functionally fail
       pending 'it continues executing operations after errors'
     end
 
