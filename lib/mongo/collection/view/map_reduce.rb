@@ -55,6 +55,17 @@ module Mongo
           configure(:finalize, function)
         end
 
+        # Set or get the jsMode flag for the operation.
+        #
+        # @example Set js mode for the operation.
+        #   map_reduce.js_mode(true)
+        #
+        # @param [ true, false ] value The jsMode value.
+        #
+        # @return [ MapReduce, true, false ] The new MapReduce operation or the
+        #   value of the jsMode flag.
+        #
+        # @since 2.0.0
         def js_mode(value = nil)
           configure(:jsMode, value)
         end

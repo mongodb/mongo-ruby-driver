@@ -117,7 +117,17 @@ describe Mongo::Collection::View::MapReduce do
     end
   end
 
-  pending '#js_mode'
+  describe '#js_mode' do
+
+    let(:new_map_reduce) do
+      map_reduce.js_mode(true)
+    end
+
+    it 'sets the js mode value' do
+      expect(new_map_reduce.js_mode).to be true
+    end
+  end
+
   pending '#out'
   pending '#scope'
 end
