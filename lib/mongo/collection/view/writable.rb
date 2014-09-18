@@ -96,7 +96,7 @@ module Mongo
 
         def update(spec, multi)
           Operation::Write::Update.new(
-            :updates => [{ q: selector, u: spec, multi: multi, upsert: false }],
+            :update => { q: selector, u: spec, multi: multi, upsert: false },
             :db_name => collection.database.name,
             :coll_name => collection.name,
             :write_concern => collection.write_concern

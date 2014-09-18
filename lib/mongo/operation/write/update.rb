@@ -23,14 +23,13 @@ module Mongo
       #
       # @example Create the update operation.
       #   Write::Update.new({
-      #     :updates => [
+      #     :update =>
       #       {
       #         :q => { :foo => 1 },
       #         :u => { :$set => { :bar => 1 }},
       #         :multi  => true,
       #         :upsert => false
-      #       }
-      #     ],
+      #       },
       #     :db_name => 'test',
       #     :coll_name => 'test_coll',
       #     :write_concern => write_concern
@@ -38,7 +37,7 @@ module Mongo
       #
       # @param [ Hash ] spec The specifications for the update.
       #
-      # @option spec :updates [ Array ] The update documents.
+      # @option spec :update [ Hash ] The update document.
       # @option spec :db_name [ String ] The name of the database on which
       #   the query should be run.
       # @option spec :coll_name [ String ] The name of the collection on which
@@ -50,7 +49,6 @@ module Mongo
       # @since 2.0.0
       class Update
         include Executable
-        include Slicable
         include Specifiable
 
         # Execute the update operation.
@@ -71,40 +69,16 @@ module Mongo
           end
         end
 
-        # Merge another update operation with this one.
-        # Requires that the collection and database of the two ops are the same.
-        #
-        # @params[ Mongo::Operation::Write::Update ] The other update operation.
-        #
-        # @return [ self ] This object with the list of updates merged.
-        #
-        # @since 2.0.0
-        def merge!(other)
-          # @todo: use specific exception
-          raise Exception, "Cannot merge" unless self.class == other.class &&
-              coll_name == other.coll_name &&
-              db_name == other.db_name
-          updates << other.spec[:updates]
-          self
-        end
-
         private
 
         def execute_write_command(context)
-          Result.new(Command::Update.new(spec).execute(context)).validate!
+          Result.new(Command::Update.new(spec.merge(:updates => [ update ])).execute(context)).validate!
         end
 
         def execute_message(context)
-          replies = updates.map do |u|
-            context.with_connection do |connection|
-              Result.new(connection.dispatch([ message(u), gle ].compact)).validate!.reply
-            end
+          context.with_connection do |connection|
+            Result.new(connection.dispatch([ message, gle ].compact)).validate!
           end
-          Result.new(replies)
-        end
-
-        def slicable_key
-          :updates
         end
 
         def initialize_copy(original)
@@ -113,10 +87,8 @@ module Mongo
         end
 
         def message(update_spec = {})
-          selector    = update_spec[:q]
-          update      = update_spec[:u]
-          update_options = update_spec[:multi] ? { :flags => [:multi_update] } : {}
-          Protocol::Update.new(db_name, coll_name, selector, update, update_options)
+          opts = update[:multi] ? { :flags => [:multi_update] } : {}
+          Protocol::Update.new(db_name, coll_name, update[:q], update[:u], opts)
         end
       end
     end
