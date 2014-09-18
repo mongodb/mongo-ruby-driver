@@ -150,19 +150,24 @@ def setup_cluster_and_client(orchestration, preset, id = nil)
   @cluster = @mo.configure(configuration)
   @mongodb_uri = @cluster.object['mongodb_uri']
   case orchestration
-    when 'servers' then @client = Mongo::MongoClient.from_uri(@mongodb_uri)
-    when 'replica_sets' then @client = Mongo::MongoReplicaSetClient.from_uri(@mongodb_uri)
-    when 'sharded_clusters' then @client = Mongo::MongoShardedClient.from_uri(@mongodb_uri)
+    when 'servers'
+      @client = Mongo::MongoClient.from_uri(@mongodb_uri)
+      @n = 1
+    when 'replica_sets'
+      @client = Mongo::MongoReplicaSetClient.from_uri(@mongodb_uri)
+      @primary = @cluster.primary
+      @secondaries = @cluster.secondaries
+      @n = 1 + @secondaries.count
+    when 'sharded_clusters'
+      @client = Mongo::MongoShardedClient.from_uri(@mongodb_uri)
+      @routers = @cluster.routers
+      @n = 1
   end
   @client.drop_database(TEST_DB)
   @db = @client[TEST_DB]
   @coll = @db[TEST_COLL]
   @ordinal = 1
-  @n = 1
-  if orchestration == 'replica_sets'
-    await_replication(@coll)
-    @primary = @cluster.primary
-  end
+  await_replication(@coll) if orchestration == 'replica_sets'
 end
 
 Before do |scenario|
@@ -173,24 +178,13 @@ After do |scenario|
   @cluster.destroy if @cluster
 end
 
-Given(/^a cluster in the standalone server configuration$/) do
-  setup_cluster_and_client('servers', 'basic.json', 'standalone_basic')
+Given(/^a (standalone server|replica set|sharded cluster) with preset (\w+)$/) do |cluster_type, preset|
+  cluster_resource = {"standalone server" => "servers",
+                      "replica set" => "replica_sets",
+                      "sharded cluster" => "sharded_clusters"}
+  resource_type = cluster_resource[cluster_type]
+  setup_cluster_and_client(resource_type, preset + '.json', "#{resource_type}_#{preset}")
   @server = @cluster
-end
-
-Given(/^a basic replica set$/) do
-  setup_cluster_and_client('replica_sets', 'basic.json', 'replica_set_basic')
-  @n = @cluster.object['members'].count
-end
-
-Given(/^an arbiter replica set$/) do
-  setup_cluster_and_client('replica_sets', 'arbiter.json', 'replica_set_arbiter')
-  @n = @cluster.object['members'].count - 1
-end
-
-Given(/^a basic sharded cluster with routers A and B$/) do
-  setup_cluster_and_client('sharded_clusters', 'basic.json', 'sharded_cluster_basic')
-  @routers = @cluster.routers
 end
 
 Given(/^a document written to all data\-bearing members$/) do
@@ -200,11 +194,11 @@ Given(/^a document written to all data\-bearing members$/) do
 end
 
 Given(/^some documents written to all data\-bearing members$/) do
-  @coll.insert(TEST_DOCS, :w => @n)
+  @coll.insert(TEST_DOCS, w: @n)
 end
 
 Given(/^some geo documents written to all data\-bearing members$/) do
-  @coll.insert(TEST_DOCS, :w => @n)
+  step "some documents written to all data-bearing members"
 end
 
 Given(/^a geo (\w+) index$/) do |geo_index_type|
