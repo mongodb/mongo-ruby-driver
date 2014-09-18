@@ -13,8 +13,10 @@
 # limitations under the License.
 
 require 'mongo/collection/view/immutable'
+require 'mongo/collection/view/iterable'
 require 'mongo/collection/view/explainable'
 require 'mongo/collection/view/aggregation'
+require 'mongo/collection/view/map_reduce'
 require 'mongo/collection/view/readable'
 require 'mongo/collection/view/writable'
 
@@ -40,6 +42,7 @@ module Mongo
       extend Forwardable
       include Enumerable
       include Immutable
+      include Iterable
       include Readable
       include Explainable
       include Writable
@@ -71,27 +74,6 @@ module Mongo
             options == other.options
       end
       alias_method :eql?, :==
-
-      # Iterate through documents returned by a query with this +View+.
-      #
-      # @example Iterate through the result of the view.
-      #   view.each do |document|
-      #     p document
-      #   end
-      #
-      # @return [ Enumerator ] The enumerator.
-      #
-      # @since 2.0.0
-      #
-      # @yieldparam [ Hash ] Each matching document.
-      def each
-        server = read.select_servers(cluster.servers).first
-        cursor = Cursor.new(self, send_initial_query(server), server).to_enum
-        cursor.each do |doc|
-          yield doc
-        end if block_given?
-        cursor
-      end
 
       # A hash value for the +View+ composed of the collection namespace,
       # hash of the options and hash of the selector.
@@ -180,6 +162,8 @@ module Mongo
       def send_initial_query(server)
         initial_query_op.execute(server.context)
       end
+
+      def view; self; end
     end
   end
 end

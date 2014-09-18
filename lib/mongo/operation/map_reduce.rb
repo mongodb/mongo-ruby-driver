@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/operation/map_reduce/result'
+
 module Mongo
   module Operation
 
@@ -42,6 +44,7 @@ module Mongo
     class MapReduce
       include Executable
       include Specifiable
+      include Limited
 
       # Execute the map/reduce operation.
       #
@@ -55,7 +58,7 @@ module Mongo
       # @since 2.0.0
       def execute(context)
         # @todo: Should we respect tag sets and options here?
-        if context.server.secondary? && !secondary_ok?
+        if context.secondary? && !secondary_ok?
           warn "Database command '#{selector.keys.first}' rerouted to primary server"
           context = Mongo::ServerPreference.get(:mode => :primary).server.context
         end
@@ -66,7 +69,7 @@ module Mongo
 
       def execute_message(context)
         context.with_connection do |connection|
-          connection.dispatch([ message ])
+          Result.new(connection.dispatch([ message ])).validate!
         end
       end
 
@@ -78,8 +81,7 @@ module Mongo
       #
       # @since 2.0.0
       def secondary_ok?
-        out = selector[:out] || selector['out']
-        out.nil? || out == 'inline'
+        selector[:out] == 'inline'
       end
 
       def message
