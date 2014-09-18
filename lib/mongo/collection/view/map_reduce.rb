@@ -40,6 +40,17 @@ module Mongo
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database
 
+        # Set or get the finalize function for the operation.
+        #
+        # @example Set the finalize function.
+        #   map_reduce.finalize(function)
+        #
+        # @param [ String ] function The finalize js function.
+        #
+        # @return [ MapReduce, String ] The new MapReduce operation or the
+        #   value of the function.
+        #
+        # @since 2.0.0
         def finalize(function = nil)
           configure(:finalize, function)
         end

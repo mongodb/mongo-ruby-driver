@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Mongo::Collection::View::MapReduce do
 
- let(:map) do
+  let(:map) do
   %Q{
   function() {
     emit(this.name, { population: this.population });
@@ -39,6 +39,10 @@ describe Mongo::Collection::View::MapReduce do
     Mongo::Collection::View.new(authorized_collection, selector, view_options)
   end
 
+  let(:options) do
+    {}
+  end
+
   before do
     authorized_collection.insert_many(documents)
   end
@@ -47,11 +51,11 @@ describe Mongo::Collection::View::MapReduce do
     authorized_collection.find.remove_many
   end
 
-  describe '#each' do
+  let(:map_reduce) do
+    described_class.new(view, map, reduce, options)
+  end
 
-    let(:map_reduce) do
-      described_class.new(view, map, reduce)
-    end
+  describe '#each' do
 
     context 'when no options are provided' do
 
@@ -94,7 +98,25 @@ describe Mongo::Collection::View::MapReduce do
     end
   end
 
-  pending '#finalize'
+  describe '#finalize' do
+
+    let(:finalize) do
+    %Q{
+    function(key, value) {
+      value.testing = test;
+      return value;
+    }}
+    end
+
+    let(:new_map_reduce) do
+      map_reduce.finalize(finalize)
+    end
+
+    it 'sets the finalize function' do
+      expect(new_map_reduce.finalize).to eq(finalize)
+    end
+  end
+
   pending '#js_mode'
   pending '#out'
   pending '#scope'
