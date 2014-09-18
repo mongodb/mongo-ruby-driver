@@ -24,6 +24,7 @@ module Mongo
         extend Forwardable
         include Enumerable
         include Immutable
+        include Iterable
 
         # @return [ View ] view The collection view.
         attr_reader :view
@@ -39,27 +40,6 @@ module Mongo
 
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database
-
-        # Iterator over the results of the aggregation.
-        #
-        # @example Iterate over the results.
-        #   aggregation.each do |doc|
-        #     p doc
-        #   end
-        #
-        # @yieldparam [ BSON::Document ] Each returned document.
-        #
-        # @return [ Enumerator ] The enumerator.
-        #
-        # @since 2.0.0
-        def each
-          server = read.select_servers(cluster.servers).first
-          cursor = Cursor.new(view, send_initial_query(server), server).to_enum
-          if block_given?
-            cursor.each{ |document| yield document }
-          end
-          cursor
-        end
 
         # Set or get the finalize function for the operation.
         #

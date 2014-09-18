@@ -51,7 +51,8 @@ describe Mongo::Operation::MapReduce do
     end
   end
 
-  context '#merge' do
+  describe '#merge' do
+
     let(:other_op) { described_class.new(spec) }
 
     it 'is not allowed' do
@@ -59,7 +60,8 @@ describe Mongo::Operation::MapReduce do
     end
   end
 
-  context '#merge!' do
+  describe '#merge!' do
+
     let(:other_op) { described_class.new(spec) }
 
     it 'is not allowed' do
@@ -69,78 +71,5 @@ describe Mongo::Operation::MapReduce do
 
   describe '#execute' do
 
-    context 'message' do
-
-      it 'creates a query wire protocol message with correct specs' do
-        allow_any_instance_of(Mongo::ServerPreference::Primary).to receive(:server) do
-          primary_server
-        end
-
-        expect(Mongo::Protocol::Query).to receive(:new) do |db, coll, sel, options|
-          expect(db).to eq(db_name)
-          expect(coll).to eq(Mongo::Database::COMMAND)
-          expect(sel).to eq(selector)
-          expect(options).to eq(options)
-        end
-        op.execute(primary_context)
-      end
-    end
-
-    context 'connection' do
-      let(:selector) do
-        { :mapreduce => 'test_coll',
-          :map       => '',
-          :reduce    => ''
-        }
-      end
-
-      it 'dispatches the message on the connection' do
-        allow_any_instance_of(Mongo::ServerPreference::Primary).to receive(:server) do
-          primary_server
-        end
-
-        expect(connection).to receive(:dispatch)
-        op.execute(primary_context)
-      end
-    end
-
-    context 'rerouting' do
-
-      context 'when out is inline and server is a secondary' do
-        let(:selector) do
-          { :mapreduce => 'test_coll',
-            :map       => '',
-            :reduce    => '',
-            :out       => 'inline'
-          }
-        end
-
-        it 'sends the operation to the secondary' do
-          allow_any_instance_of(Mongo::ServerPreference::Primary).to receive(:server) do
-            primary_server
-          end
-          expect(secondary_context).to receive(:with_connection)
-          op.execute(secondary_context)
-        end
-      end
-
-      context 'when out is a collection and server is a secondary' do
-        let(:selector) do
-          { :mapreduce => 'test_coll',
-            :map       => '',
-            :reduce    => '',
-            :out       => 'other_coll'
-          }
-        end
-
-        it 'reroutes the operation to the primary' do
-          allow_any_instance_of(Mongo::ServerPreference::Primary).to receive(:server) do
-            primary_server
-          end
-          expect(primary_context).to receive(:with_connection)
-          op.execute(secondary_context)
-        end
-      end
-    end
   end
 end

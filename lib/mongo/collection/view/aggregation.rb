@@ -23,6 +23,7 @@ module Mongo
         extend Forwardable
         include Enumerable
         include Immutable
+        include Iterable
         include Explainable
 
         # @return [ View ] view The collection view.
@@ -49,27 +50,6 @@ module Mongo
         # @since 2.0.0
         def allow_disk_use(value = nil)
           configure(:allowDiskUse, value)
-        end
-
-        # Iterator over the results of the aggregation.
-        #
-        # @example Iterate over the results.
-        #   aggregation.each do |doc|
-        #     p doc
-        #   end
-        #
-        # @yieldparam [ BSON::Document ] Each returned document.
-        #
-        # @return [ Enumerator ] The enumerator.
-        #
-        # @since 2.0.0
-        def each
-          server = read.select_servers(cluster.servers).first
-          cursor = Cursor.new(view, send_initial_query(server), server).to_enum
-          if block_given?
-            cursor.each{ |document| yield document }
-          end
-          cursor
         end
 
         # Initialize the aggregation for the provided collection view, pipeline
