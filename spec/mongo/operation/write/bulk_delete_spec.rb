@@ -177,7 +177,7 @@ describe Mongo::Operation::Write::BulkDelete do
     context 'when the deletes are ordered' do
 
       let(:documents) do
-        [ { q: { field: 'test' }},
+        [ { que: { field: 'test' }},
           { q: { field: 'test' }, limit: 1 }
         ]
       end
