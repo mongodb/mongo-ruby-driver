@@ -26,6 +26,11 @@ module Mongo
         # @since 2.0.0
         COUNTS = 'counts'.freeze
 
+        # The result field for when output is a collection.
+        #
+        # @since 2.0.0
+        RESULT = 'result'.freeze
+
         # The field name for a result without a cursor.
         #
         # @since 2.0.0
@@ -57,7 +62,23 @@ module Mongo
         #
         # @since 2.0.0
         def documents
-          reply.documents[0][RESULTS]
+          reply.documents[0][RESULTS] || reply.documents[0][RESULT]
+        end
+
+        # If the result was a command then determine if it was considered a
+        # success.
+        #
+        # @note If the write was unacknowledged, then this will always return
+        #   true.
+        #
+        # @example Was the command successful?
+        #   result.successful?
+        #
+        # @return [ true, false ] If the command was successful.
+        #
+        # @since 2.0.0
+        def successful?
+          !documents.nil?
         end
 
         # Get the execution time of the map/reduce.
@@ -70,6 +91,24 @@ module Mongo
         # @since 2.0.0
         def time
           reply.documents[0][TIME]
+        end
+
+        # Validate the result by checking for any errors.
+        #
+        # @note This only checks for errors with writes since authentication is
+        #   handled at the connection level and any authentication errors would
+        #   be raised there, before a Result is ever created.
+        #
+        # @example Validate the result.
+        #   result.validate!
+        #
+        # @raise [ Write::Failure ] If an error is in the result.
+        #
+        # @return [ Result ] The result if verification passed.
+        #
+        # @since 2.0.0
+        def validate!
+          documents.nil? ? raise(Write::Failure.new(reply.documents[0])) : self
         end
       end
     end
