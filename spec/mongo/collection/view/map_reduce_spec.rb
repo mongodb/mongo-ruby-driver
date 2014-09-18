@@ -143,5 +143,18 @@ describe Mongo::Collection::View::MapReduce do
     end
   end
 
-  pending '#scope'
+  describe '#scope' do
+
+    let(:object) do
+      { value: 'testing' }
+    end
+
+    let(:new_map_reduce) do
+      map_reduce.scope(object)
+    end
+
+    it 'sets the scope object' do
+      expect(new_map_reduce.scope).to eq(object)
+    end
+  end
 end

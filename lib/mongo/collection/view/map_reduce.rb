@@ -40,6 +40,27 @@ module Mongo
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database
 
+        # Iterator over the results of the aggregation.
+        #
+        # @example Iterate over the results.
+        #   aggregation.each do |doc|
+        #     p doc
+        #   end
+        #
+        # @yieldparam [ BSON::Document ] Each returned document.
+        #
+        # @return [ Enumerator ] The enumerator.
+        #
+        # @since 2.0.0
+        def each
+          server = read.select_servers(cluster.servers).first
+          cursor = Cursor.new(view, send_initial_query(server), server).to_enum
+          if block_given?
+            cursor.each{ |document| yield document }
+          end
+          cursor
+        end
+
         # Set or get the finalize function for the operation.
         #
         # @example Set the finalize function.
@@ -53,6 +74,24 @@ module Mongo
         # @since 2.0.0
         def finalize(function = nil)
           configure(:finalize, function)
+        end
+
+        # Initialize the map/reduce for the provided collection view, functions
+        # and options.
+        #
+        # @example Create the new map/reduce view.
+        #
+        # @param [ Collection::View ] view The collection view.
+        # @param [ String ] map The map function.
+        # @param [ String ] reduce The reduce function.
+        # @param [ Hash ] options The map/reduce options.
+        #
+        # @since 2.0.0
+        def initialize(view, map, reduce, options = {})
+          @view = view
+          @map = map.freeze
+          @reduce = reduce.freeze
+          @options = options.dup
         end
 
         # Set or get the jsMode flag for the operation.
@@ -94,47 +133,19 @@ module Mongo
           configure(:out, location)
         end
 
+        # Set or get a scope on the operation.
+        #
+        # @example Set the scope value.
+        #   map_reduce.scope(value: 'test')
+        #
+        # @param [ Hash ] object The scope object.
+        #
+        # @return [ MapReduce, Hash ] The new MapReduce operation or thevalue
+        #   of the scope.
+        #
+        # @since 2.0.0
         def scope(object = nil)
           configure(:scope, object)
-        end
-
-        # Iterator over the results of the aggregation.
-        #
-        # @example Iterate over the results.
-        #   aggregation.each do |doc|
-        #     p doc
-        #   end
-        #
-        # @yieldparam [ BSON::Document ] Each returned document.
-        #
-        # @return [ Enumerator ] The enumerator.
-        #
-        # @since 2.0.0
-        def each
-          server = read.select_servers(cluster.servers).first
-          cursor = Cursor.new(view, send_initial_query(server), server).to_enum
-          if block_given?
-            cursor.each{ |document| yield document }
-          end
-          cursor
-        end
-
-        # Initialize the map/reduce for the provided collection view, functions
-        # and options.
-        #
-        # @example Create the new map/reduce view.
-        #
-        # @param [ Collection::View ] view The collection view.
-        # @param [ String ] map The map function.
-        # @param [ String ] reduce The reduce function.
-        # @param [ Hash ] options The map/reduce options.
-        #
-        # @since 2.0.0
-        def initialize(view, map, reduce, options = {})
-          @view = view
-          @map = map.freeze
-          @reduce = reduce.freeze
-          @options = options.dup
         end
 
         private
