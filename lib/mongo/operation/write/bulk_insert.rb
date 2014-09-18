@@ -82,6 +82,7 @@ module Mongo
           Result.new(replies).validate!
         end
 
+        # @todo put this somewhere else
         def ordered?
           @spec.fetch(:ordered, true)
         end
