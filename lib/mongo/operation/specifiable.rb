@@ -149,7 +149,7 @@ module Mongo
       # @example Get the delete document.
       #   specifiable.delete
       #
-      # @return [ Array<BSON::Document> ] The delete document.
+      # @return [ Hash ] The delete document.
       #
       # @since 2.0.0
       def delete
