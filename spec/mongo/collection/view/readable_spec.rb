@@ -62,7 +62,57 @@ describe Mongo::Collection::View::Readable do
     end
   end
 
-  pending '#map_reduce'
+  describe '#map_reduce' do
+
+    let(:map) do
+    %Q{
+    function() {
+      emit(this.name, { population: this.population });
+    }}
+    end
+
+    let(:reduce) do
+      %Q{
+      function(key, values) {
+        var result = { population: 0 };
+        values.forEach(function(value) {
+          result.population += value.population;
+        });
+        return result;
+      }}
+    end
+
+    let(:documents) do
+      [
+        { name: 'Berlin', population: 3000000 },
+        { name: 'London', population: 9000000 }
+      ]
+    end
+
+    before do
+      authorized_collection.insert_many(documents)
+    end
+
+    let(:map_reduce) do
+      view.map_reduce(map, reduce)
+    end
+
+    context 'when not iterating the map/reduce' do
+
+      it 'returns the map/reduce object' do
+        expect(map_reduce).to be_a(Mongo::Collection::View::MapReduce)
+      end
+    end
+
+    context 'when iterating the map/reduce' do
+
+      it 'yields to each document' do
+        map_reduce.each do |doc|
+          expect(doc[:_id]).to_not be_nil
+        end
+      end
+    end
+  end
 
   describe '#batch_size' do
 
