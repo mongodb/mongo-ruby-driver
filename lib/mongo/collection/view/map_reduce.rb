@@ -70,6 +70,26 @@ module Mongo
           configure(:jsMode, value)
         end
 
+        # Set or get the output location for the operation.
+        #
+        # @example Set the output to inline.
+        #   map_reduce.out(inline: 1)
+        #
+        # @example Set the output collection to merge.
+        #   map_reduce.out(merge: 'users')
+        #
+        # @example Set the output collection to replace.
+        #   map_reduce.out(replace: 'users')
+        #
+        # @example Set the output collection to reduce.
+        #   map_reduce.out(reduce: 'users')
+        #
+        # @param [ Hash ] location The output location details.
+        #
+        # @return [ MapReduce, Hash ] The new MapReduce operation or the value
+        #   of the output location.
+        #
+        # @since 2.0.0
         def out(location = nil)
           configure(:out, location)
         end

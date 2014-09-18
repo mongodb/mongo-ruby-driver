@@ -128,6 +128,20 @@ describe Mongo::Collection::View::MapReduce do
     end
   end
 
-  pending '#out'
+  describe '#out' do
+
+    let(:location) do
+      { replace: 'testing' }
+    end
+
+    let(:new_map_reduce) do
+      map_reduce.out(location)
+    end
+
+    it 'sets the out value' do
+      expect(new_map_reduce.out).to eq(location)
+    end
+  end
+
   pending '#scope'
 end
