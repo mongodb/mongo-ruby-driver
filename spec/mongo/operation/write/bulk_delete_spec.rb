@@ -1,11 +1,14 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Write::Delete do
+describe Mongo::Operation::Write::BulkDelete do
   include_context 'operation'
 
-  let(:document) { { :q => { :foo => 1 }, :limit => 1 } }
+  let(:documents) do
+    [ { q: { foo: 1 }, limit: 1 } ]
+  end
+
   let(:spec) do
-    { :delete        => document,
+    { :deletes       => documents,
       :db_name       => db_name,
       :coll_name     => coll_name,
       :write_concern => write_concern,
@@ -44,9 +47,12 @@ describe Mongo::Operation::Write::Delete do
       end
 
       context 'when two ops have different specs' do
-        let(:other_doc) { { :q => { :bar => 1 }, :limit => 1 } }
+        let(:other_docs) do
+          [ { q: { bar: 1 }, limit: 1 } ]
+        end
+
         let(:other_spec) do
-          { :delete        => other_doc,
+          { :deletes       => other_docs,
             :db_name       => db_name,
             :coll_name     => coll_name,
             :write_concern => write_concern,
@@ -58,6 +64,17 @@ describe Mongo::Operation::Write::Delete do
         it 'returns false' do
           expect(op).not_to eq(other)
         end
+      end
+    end
+  end
+
+  describe '#dup' do
+
+    context 'deep copy' do
+
+      it 'copies the list of deletes' do
+        copy = op.dup
+        expect(copy.spec[:deletes]).not_to be(op.spec[:deletes])
       end
     end
   end
@@ -79,17 +96,17 @@ describe Mongo::Operation::Write::Delete do
 
       let(:delete) do
         described_class.new({
-          delete: document,
+          deletes: documents,
           db_name: TEST_DB,
           coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+          write_concern: Mongo::WriteConcern::Mode.get(w: 1)
         })
       end
 
       context 'when the delete succeeds' do
 
-        let(:document) do
-          { q: { field: 'test' }, limit: 1 }
+        let(:documents) do
+          [{ q: { field: 'test' }, limit: 1 }]
         end
 
         let(:result) do
@@ -97,14 +114,14 @@ describe Mongo::Operation::Write::Delete do
         end
 
         it 'deletes the documents from the database' do
-          expect(result.written_count).to eq(1)
+          expect(result.n).to eq(1)
         end
       end
 
       context 'when the delete fails' do
 
-        let(:document) do
-          { que: { field: 'test' } }
+        let(:documents) do
+          [{ que: { field: 'test' }}]
         end
 
         it 'raises an exception' do
@@ -119,17 +136,17 @@ describe Mongo::Operation::Write::Delete do
 
       let(:delete) do
         described_class.new({
-          delete: document,
+          deletes: documents,
           db_name: TEST_DB,
           coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+          write_concern: Mongo::WriteConcern::Mode.get(w: 1)
         })
       end
 
       context 'when the deletes succeed' do
 
-        let(:document) do
-          { q: { field: 'test' }, limit: -1 }
+        let(:documents) do
+          [{ q: { field: 'test' }, limit: -1 }]
         end
 
         let(:result) do
@@ -137,14 +154,14 @@ describe Mongo::Operation::Write::Delete do
         end
 
         it 'deletes the documents from the database' do
-          expect(result.written_count).to eq(2)
+          expect(result.n).to eq(2)
         end
       end
 
       context 'when a delete fails' do
 
-        let(:document) do
-          { q: { field: 'tester' }, limit: -1 }
+        let(:documents) do
+          [{ q: { field: 'tester' }, limit: -1 }]
         end
 
         let(:result) do
@@ -152,9 +169,64 @@ describe Mongo::Operation::Write::Delete do
         end
 
         it 'does not delete any documents' do
-          expect(result.written_count).to eq(0)
+          expect(result.n).to eq(0)
         end
       end
+    end
+
+    context 'when the deletes are ordered' do
+
+      let(:documents) do
+        [ { que: { field: 'test' }},
+          { q: { field: 'test' }, limit: 1 }
+        ]
+      end
+
+      let(:spec) do
+        { :deletes       => documents,
+          :db_name       => TEST_DB,
+          :coll_name     => TEST_COLL,
+          :write_concern => Mongo::WriteConcern::Mode.get(w: 1),
+          :ordered       => true
+        }
+      end
+
+      let(:failing_delete) do
+        described_class.new(spec)
+      end
+  
+      it 'aborts after first error' do
+        expect {
+          failing_delete.execute(authorized_primary.context)
+        }.to raise_error(Mongo::Operation::Write::Failure)
+        expect(authorized_collection.find.count).to eq(2)
+      end
+    end
+
+    context 'when the deletes are unordered' do
+
+      let(:documents) do
+        [
+          { q: { field: 'test' } },
+          { q: { field: 'test' }, limit: 1 }
+        ]
+      end
+
+      let(:spec) do
+        { :deletes       => documents,
+          :db_name       => TEST_DB,
+          :coll_name     => TEST_COLL,
+          :write_concern => Mongo::WriteConcern::Mode.get(w: 1),
+          :ordered       => false
+        }
+      end
+
+      let(:failing_delete) do
+        described_class.new(spec)
+      end
+  
+      # @todo: find a way to make a delete functionally fail
+      pending 'it continues executing operations after errors'
     end
 
     context 'when the server is a secondary' do

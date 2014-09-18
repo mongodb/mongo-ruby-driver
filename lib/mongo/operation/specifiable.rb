@@ -31,6 +31,11 @@ module Mongo
       # @since 2.0.0
       DELETES = :deletes.freeze
 
+      # The field for delete.
+      #
+      # @since 2.0.0
+      DELETE = :delete.freeze
+
       # The field for documents.
       #
       # @since 2.0.0
@@ -137,6 +142,18 @@ module Mongo
       # @since 2.0.0
       def deletes
         spec[DELETES]
+      end
+
+      # Get the delete document from the specification.
+      #
+      # @example Get the delete document.
+      #   specifiable.delete
+      #
+      # @return [ Array<BSON::Document> ] The delete document.
+      #
+      # @since 2.0.0
+      def delete
+        spec[DELETE]
       end
 
       # The documents to in the specification.

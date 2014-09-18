@@ -16,14 +16,14 @@ module Mongo
   module Operation
     module Write
 
-      # A MongoDB delete operation.
+      # A MongoDB bulk delete operation.
       #
       # @note If a server with version >= 2.5.5 is selected, a write command
       #   operation will be created and sent instead.
       #
       # @example Create the delete operation.
-      #   Write::Delete.new({
-      #     :delete => { :q => { :foo => 1 }, :limit => 1 },
+      #   Write::BulkDelete.new({
+      #     :deletes => [{ :q => { :foo => 1 }, :limit => 1 }],
       #     :db_name => 'test',
       #     :coll_name => 'test_coll',
       #     :write_concern => write_concern
@@ -31,7 +31,7 @@ module Mongo
       #
       # @param [ Hash ] spec The specifications for the delete.
       #
-      # @option spec :delete [ Hash ] The delete document.
+      # @option spec :deletes [ Array ] The delete documents.
       # @option spec :db_name [ String ] The name of the database on which
       #   the delete should be executed.
       # @option spec :coll_name [ String ] The name of the collection on which
@@ -44,7 +44,7 @@ module Mongo
       #   write command.
       #
       # @since 2.0.0
-      class Delete
+      class BulkDelete
         include Executable
         include Specifiable
 
@@ -69,19 +69,49 @@ module Mongo
         private
 
         def execute_write_command(context)
-          Result.new(Command::Delete.new(spec.merge(:deletes => [ delete ])).execute(context)).validate!
+          Result.new(Command::Delete.new(spec).execute(context)).validate!
         end
 
         def execute_message(context)
-          context.with_connection do |connection|
-            Result.new(connection.dispatch([ message, gle ].compact)).validate!
+          replies = messages(context).map do |m|
+            context.with_connection do |connection|
+              result = Result.new(connection.dispatch([ m, gle ]))
+              result.validate! if ordered?
+              result.reply
+            end
+          end
+          Result.new(replies).validate!
+        end
+
+        def ordered?
+          @spec.fetch(:ordered, true)
+        end
+
+        def gle
+          gle_message = ( ordered? && write_concern.get_last_error.nil? ) ?
+                           Mongo::WriteConcern::Mode.get(:w => 1).get_last_error :
+                           write_concern.get_last_error
+          if gle_message
+            Protocol::Query.new(
+              db_name,
+              Database::COMMAND,
+              gle_message,
+              options.merge(limit: -1)
+            )
           end
         end
 
-        def message
-          selector = delete[:q]
-          opts     = ( delete[:limit] || 0 ) <= 0 ? {} : { :flags => [ :single_remove ] }
-          Protocol::Delete.new(db_name, coll_name, selector, opts)
+        def initialize_copy(original)
+          @spec = original.spec.dup
+          @spec[:deletes] = original.spec[:deletes].clone
+        end
+
+        def messages(context)
+          # @todo: break up into multiple messages depending on max_message_size
+          deletes.collect do |del|
+            opts = ( del[:limit] || 0 ) <= 0 ? {} : { :flags => [ :single_remove ] }
+            Protocol::Delete.new(db_name, coll_name, del[:q], opts)
+          end
         end
       end
     end
