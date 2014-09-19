@@ -19,46 +19,40 @@ module Mongo
     # This module contains common functionality for splitting an operation
     # into the specified number of children operations.
     # An operation including this module must provide a method called
-    # #slicable_key. It specifies the key of the spec array element to split.
+    # #batch_key. It specifies the key of the spec array element to split.
     #
     # @since 2.0.0
-    module Slicable
+    module Batchable
 
       # Slices this operation into the specified number of children operations.
       #
-      # @params [ Integer ] n_slices The number of children operations to split
+      # @params [ Integer ] n_batches The number of children operations to split
       #   this one into.
       #
       # @return [ Array ] An array of children operations.
       #
       # @since 2.0.0
-      def slice(n_slices)
-        items      = spec[slicable_key]
-        group_size = items.size / n_slices
-        divisions  = items.each_slice(group_size).to_a
+      def batch(n_batches)
+        items = spec[batch_key]
 
-        # #each_slice makes groups containing exactly group_size number of items.
-        # You could therefore end up with more groups than n_slices, so put the
+        raise Exception, "Cannot batch" unless items.size > n_batches
+
+        items_per_batch = items.size / n_batches
+        batches  = items.each_slice(items_per_batch).to_a
+
+        # #each_slice makes groups containing exactly items_per_batch number of items.
+        # You could therefore end up with more groups than n_batches, so put the
         # remaining items in the last group.
-        if divisions.size > n_slices
-          divisions[n_slices - 1] << divisions.pop(divisions.size - n_slices)
-          divisions[-1].flatten!
+        if batches.size > n_batches
+          batches[n_batches - 1] << batches.pop(batches.size - n_batches)
+          batches[-1].flatten!
         end
 
-        divisions.inject([]) do |children, division|
+        batches.inject([]) do |children, batch|
           spec_copy = spec.dup
-          spec_copy[slicable_key] = division
+          spec_copy[batch_key] = batch
           children << self.class.new(spec_copy)
         end
-      end
-
-      # Set a field :ord in the spec that keeps track of a higher-level ordering.
-      #
-      # @param [ Integer ] order The higher-level ordering of this op.
-      #
-      # @since 2.0.0
-      def set_order(order)
-        spec[slicable_key].each { |doc| doc[:ord] = order }
       end
     end
   end
