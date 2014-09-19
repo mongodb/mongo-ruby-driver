@@ -72,7 +72,7 @@ describe Mongo::Operation::Write::Insert do
 
     context 'deep copy' do
 
-      it 'copies the list of updates' do
+      it 'copies the list of documents' do
         copy = insert.dup
         expect(copy.spec[:documents]).to_not be(insert.spec[:documents])
       end
