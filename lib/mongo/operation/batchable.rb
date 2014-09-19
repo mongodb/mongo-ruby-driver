@@ -35,7 +35,7 @@ module Mongo
       def batch(n_batches)
         items = spec[batch_key]
 
-        raise Exception, "Cannot batch" unless items.size > n_batches
+        raise Exception, "Cannot batch" unless items.size >= n_batches
 
         items_per_batch = items.size / n_batches
         batches  = items.each_slice(items_per_batch).to_a
