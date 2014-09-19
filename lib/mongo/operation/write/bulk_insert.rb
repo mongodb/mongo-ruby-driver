@@ -46,6 +46,7 @@ module Mongo
       class BulkInsert
         include Executable
         include Specifiable
+        include Batchable
 
         # Execute the bulk insert operation.
         #
@@ -101,6 +102,10 @@ module Mongo
           end
         end
 
+        def batch_key
+          DOCUMENTS
+        end
+
         def initialize_copy(original)
           @spec = original.spec.dup
           @spec[:documents] = original.spec[:documents].dup
@@ -110,6 +115,7 @@ module Mongo
           if ordered?
             documents.collect do |doc|
               Protocol::Insert.new(db_name, coll_name, [ doc ], options)
+              # @todo raise exception if message size exceeds context.max_message_size 
             end
           else
             # @todo: break up into multiple messages depending on max_message_size
