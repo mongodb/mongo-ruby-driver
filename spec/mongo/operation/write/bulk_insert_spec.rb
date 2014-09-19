@@ -1,20 +1,21 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Write::BulkInsert do
+  include_context 'operation'
 
   let(:documents) do
     [{ :name => 'test' }]
   end
 
   let(:spec) do
-    { :documents     => documents,
-      :db_name       => TEST_DB,
-      :coll_name     => TEST_COLL,
-      :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
+    { documents: documents,
+      db_name: db_name,
+      coll_name: coll_name,
+      write_concern: write_concern
     }
   end
 
-  let(:insert) do
+  let(:op) do
     described_class.new(spec)
   end
 
@@ -23,7 +24,7 @@ describe Mongo::Operation::Write::BulkInsert do
     context 'spec' do
 
       it 'sets the spec' do
-        expect(insert.spec).to eq(spec)
+        expect(op.spec).to eq(spec)
       end
     end
   end
@@ -39,7 +40,7 @@ describe Mongo::Operation::Write::BulkInsert do
         end
 
         it 'returns true' do
-          expect(insert).to eq(other)
+          expect(op).to eq(other)
         end
       end
 
@@ -52,7 +53,7 @@ describe Mongo::Operation::Write::BulkInsert do
         let(:other_spec) do
           { :documents     => other_docs,
             :db_name       => 'test',
-            :coll_name     => 'test_coll',
+            :coll_name     => 'coll_name',
             :write_concern => { 'w' => 1 },
             :ordered       => true
           }
@@ -63,7 +64,7 @@ describe Mongo::Operation::Write::BulkInsert do
         end
 
         it 'returns false' do
-          expect(insert).not_to eq(other)
+          expect(op).not_to eq(other)
         end
       end
     end
@@ -73,9 +74,199 @@ describe Mongo::Operation::Write::BulkInsert do
 
     context 'deep copy' do
 
-      it 'copies the list of updates' do
-        copy = insert.dup
-        expect(copy.spec[:documents]).to_not be(insert.spec[:documents])
+      it 'copies the list of documents' do
+        copy = op.dup
+        expect(copy.spec[:documents]).to_not be(op.spec[:documents])
+      end
+    end
+  end
+
+  describe '#batch' do
+
+    context 'when number of inserts is evenly divisible by number of batches' do
+      let(:documents) do
+        [ { a: 1 },
+          { b: 1 },
+          { c: 1 },
+          { d: 1 },
+          { e: 1 },
+          { f: 1 } ]
+      end
+      let(:n_batches) { 3 }
+
+      it 'batches the insert into the n_batches number of children inserts' do
+        expect(op.batch(n_batches).size).to eq(n_batches)
+      end
+
+      it 'divides the inserts evenly between children inserts' do
+        inserts = op.batch(n_batches)
+        batch_size = documents.size / n_batches
+    
+        n_batches.times do |i|
+          start_index = i * batch_size
+          expect(inserts[i].spec[:documents]).to eq(documents[start_index, batch_size])
+        end
+      end
+    end
+
+    context 'when number of documents is less than number of batches' do
+      let(:documents) do
+        [ { a: 1 } ]
+      end
+      let(:n_batches) { 3 }
+
+      it 'raises an exception' do
+        expect {
+            op.batch(n_batches)
+          }.to raise_error(Exception)
+      end
+    end
+
+    context 'when number of inserts is not evenly divisible by number of batches' do
+      let(:documents) do
+        [ { a: 1 },
+          { b: 1 },
+          { c: 1 },
+          { d: 1 },
+          { e: 1 },
+          { f: 1 } ]
+      end
+      let(:n_batches) { 4 }
+
+      it 'batches the insert into the n_batches number of children inserts' do
+        expect(op.batch(n_batches).size).to eq(n_batches)
+      end
+
+      it 'batches the inserts evenly between children inserts' do
+        inserts = op.batch(n_batches)
+        batch_size = documents.size / n_batches
+    
+        n_batches.times do |i|
+          start_index = i * batch_size
+          if i == n_batches - 1
+            expect(inserts[i].spec[:documents]).to eq(documents[start_index..-1])
+          else
+            expect(inserts[i].spec[:documents]).to eq(documents[start_index, batch_size])
+          end
+        end
+      end
+    end
+  end
+
+  describe '#merge!' do
+
+    context 'when collection and database are the same' do
+
+      let(:other_docs) do
+        [ { bar: 1 } ]
+      end
+
+      let(:other_spec) do
+        { :documents     => other_docs,
+          :db_name       => db_name,
+          :coll_name     => coll_name
+        }
+      end
+
+      let(:other) do
+        described_class.new(other_spec)
+      end
+
+      it 'merges the two inserts' do
+        expect do
+          op.merge!(other)
+        end.not_to raise_exception
+      end
+    end
+
+    context 'when the database differs' do
+
+      let(:other_docs) do
+        [ { bar: 1 } ]
+      end
+
+      let(:other_spec) do
+        { :documents     => other_docs,
+          :db_name       => 'different',
+          :coll_name     => coll_name
+        }
+      end
+
+      let(:other) do
+        described_class.new(other_spec)
+      end
+
+      it 'raises an exception' do
+        expect do
+          op.merge!(other)
+        end.to raise_exception
+      end
+    end
+
+    context 'when the collection differs' do
+
+      let(:other_docs) do
+        [ { bar: 1 } ]
+      end
+
+      let(:other_spec) do
+        { :documents     => other_docs,
+          :db_name       => db_name,
+          :coll_name     => 'different'
+        }
+      end
+
+      let(:other) do
+        described_class.new(other_spec)
+      end
+
+      it 'raises an exception' do
+        expect do
+          op.merge!(other)
+        end.to raise_exception
+      end
+    end
+
+    context 'when the command type differs' do
+
+      let(:other) do
+        Mongo::Write::Update.new(spec)
+      end
+
+      it 'raises an exception' do
+        expect do
+          op.merge!(other)
+        end.to raise_exception
+      end
+    end
+
+    context 'when the commands can be merged' do
+
+      let(:other_docs) do
+        [ { bar: 1 } ]
+      end
+
+      let(:other_spec) do
+        { :documents     => other_docs,
+          :db_name       => db_name,
+          :coll_name     => coll_name
+        }
+      end
+
+      let(:other) do
+        described_class.new(other_spec)
+      end
+
+      let(:expected) do
+        documents << other_docs
+      end
+
+      it 'merges the list of documents' do
+        expect(op.merge!(other).spec[:documents]).to eq(expected)
+      end
+
+      it 'mutates the original spec' do
+        expect(op.merge!(other)).to be(op)
       end
     end
   end
@@ -96,7 +287,7 @@ describe Mongo::Operation::Write::BulkInsert do
       context 'when the insert succeeds' do
 
         let(:response) do
-          insert.execute(authorized_primary.context)
+          op.execute(authorized_primary.context)
         end
 
         it 'inserts the documents into the database', if: write_command_enabled? do
@@ -115,10 +306,10 @@ describe Mongo::Operation::Write::BulkInsert do
         end
 
         let(:spec) do
-          { :documents     => documents,
-            :db_name       => TEST_DB,
-            :coll_name     => TEST_COLL,
-            :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
+          { documents: documents,
+            db_name: db_name,
+            coll_name: coll_name,
+            write_concern: write_concern
           }
         end
 
@@ -144,7 +335,7 @@ describe Mongo::Operation::Write::BulkInsert do
         end
 
         let(:response) do
-          insert.execute(authorized_primary.context)
+          op.execute(authorized_primary.context)
         end
 
         it 'inserts the documents into the database', if: write_command_enabled? do
@@ -163,10 +354,10 @@ describe Mongo::Operation::Write::BulkInsert do
         end
 
         let(:spec) do
-          { :documents     => documents,
-            :db_name       => TEST_DB,
-            :coll_name     => TEST_COLL,
-            :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
+          { documents: documents,
+            db_name: db_name,
+            coll_name: coll_name,
+            write_concern: write_concern
           }
         end
 
@@ -189,10 +380,10 @@ describe Mongo::Operation::Write::BulkInsert do
         end
 
         let(:spec) do
-          { :documents     => documents,
-            :db_name       => TEST_DB,
-            :coll_name     => TEST_COLL,
-            :write_concern => Mongo::WriteConcern::Mode.get(:w => 1)
+          { documents: documents,
+            db_name: db_name,
+            coll_name: coll_name,
+            write_concern: write_concern
           }
         end
 
@@ -215,11 +406,11 @@ describe Mongo::Operation::Write::BulkInsert do
         end
 
         let(:spec) do
-          { :documents     => documents,
-            :db_name       => TEST_DB,
-            :coll_name     => TEST_COLL,
-            :write_concern => Mongo::WriteConcern::Mode.get(:w => 1),
-            :ordered       => true
+          { documents: documents,
+            db_name: db_name,
+            coll_name: coll_name,
+            write_concern: write_concern,
+            ordered: true
           }
         end
 
@@ -242,11 +433,11 @@ describe Mongo::Operation::Write::BulkInsert do
         end
 
         let(:spec) do
-          { :documents     => documents,
-            :db_name       => TEST_DB,
-            :coll_name     => TEST_COLL,
-            :write_concern => Mongo::WriteConcern::Mode.get(:w => 1),
-            :ordered       => false
+          { documents: documents,
+            db_name: db_name,
+            coll_name: coll_name,
+            write_concern: write_concern,
+            ordered: false
           }
         end
 

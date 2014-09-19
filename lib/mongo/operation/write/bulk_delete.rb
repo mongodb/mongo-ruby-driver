@@ -47,6 +47,7 @@ module Mongo
       class BulkDelete
         include Executable
         include Specifiable
+        include Batchable
 
         # Execute the delete operation.
         #
@@ -102,16 +103,20 @@ module Mongo
           end
         end
 
+        def batch_key
+          DELETES
+        end
+
         def initialize_copy(original)
           @spec = original.spec.dup
-          @spec[:deletes] = original.spec[:deletes].clone
+          @spec[DELETES] = original.spec[DELETES].clone
         end
 
         def messages(context)
-          # @todo: break up into multiple messages depending on max_message_size
           deletes.collect do |del|
             opts = ( del[:limit] || 0 ) <= 0 ? {} : { :flags => [ :single_remove ] }
             Protocol::Delete.new(db_name, coll_name, del[:q], opts)
+            # @todo raise exception if message size exceeds context.max_message_size 
           end
         end
       end

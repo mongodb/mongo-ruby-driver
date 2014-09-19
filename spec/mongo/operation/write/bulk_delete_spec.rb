@@ -79,6 +79,195 @@ describe Mongo::Operation::Write::BulkDelete do
     end
   end
 
+  describe '#batch' do
+
+    context 'when number of deletes is evenly divisible by n_batches' do
+      let(:documents) do
+        [ { q: { a: 1 } },
+          { q: { b: 1 } },
+          { q: { c: 1 } },
+          { q: { d: 1 } },
+          { q: { e: 1 } },
+          { q: { f: 1 } } ]
+      end
+      let(:n_batches) { 3 }
+
+      it 'batches the op into the divisor number of children ops' do
+        expect(op.batch(n_batches).size).to eq(n_batches)
+      end
+
+      it 'divides the deletes evenly between children ops' do
+        ops = op.batch(n_batches)
+        batch_size = documents.size / n_batches
+
+        n_batches.times do |i|
+          start_index = i * batch_size
+          expect(ops[i].spec[:deletes]).to eq(documents[start_index, batch_size])
+        end
+      end
+    end
+
+    context 'when number of deletes is less than batch size' do
+      let(:documents) do
+        [ { q: { a: 1 } } ]
+      end
+      let(:n_batches) { 3 }
+
+      it 'raises an exception' do
+        expect {
+            op.batch(n_batches)
+          }.to raise_error(Exception)
+      end
+    end
+
+    context 'when number of deletes is not evenly divisible by n_batches' do
+      let(:documents) do
+        [ { q: { a: 1 } },
+          { q: { b: 1 } },
+          { q: { c: 1 } },
+          { q: { d: 1 } },
+          { q: { e: 1 } },
+          { q: { f: 1 } } ]
+      end
+      let(:n_batches) { 4 }
+
+      it 'batches the op into the n_batches number of children ops' do
+        expect(op.batch(n_batches).size).to eq(n_batches)
+      end
+
+      it 'divides the deletes evenly between children ops' do
+        ops = op.batch(n_batches)
+        batch_size = documents.size / n_batches
+
+        n_batches.times do |i|
+          start_index = i * batch_size
+          if i == n_batches - 1
+            expect(ops[i].spec[:deletes]).to eq(documents[start_index..-1])
+          else
+            expect(ops[i].spec[:deletes]).to eq(documents[start_index, batch_size])
+          end
+        end
+      end
+    end
+  end
+
+  describe '#merge!' do
+
+    context 'same collection and database' do
+
+      let(:other_docs) do
+        [ { q: { bar: 1 }, limit: 1 } ]
+      end
+
+      let(:other_spec) do
+        { deletes: other_docs,
+          db_name: db_name,
+          coll_name: coll_name
+        }
+      end
+
+      let(:other) { described_class.new(other_spec) }
+
+      it 'merges the two ops' do
+        expect{ op.merge!(other) }.not_to raise_exception
+      end
+    end
+
+    context 'different database' do
+
+      let(:other_docs) do
+        [ { q: { bar: 1 }, limit: 1 } ]
+      end
+
+      let(:other_spec) do
+        { deletes: other_docs,
+          db_name: 'different',
+          coll_name: coll_name
+        }
+      end
+
+      let(:other) { described_class.new(other_spec) }
+
+      it 'raises an exception' do
+        expect do
+          op.merge!(other)
+        end.to raise_exception
+      end
+    end
+
+    context 'different collection' do
+
+      let(:other_docs) do
+        [ { q: { bar: 1 }, limit: 1 } ]
+      end
+
+      let(:other_spec) do
+        { deletes: other_docs,
+          db_name: db_name,
+          coll_name: 'different'
+        }
+      end
+
+      let(:other) { described_class.new(other_spec) }
+
+      it 'raises an exception' do
+        expect do
+          op.merge!(other)
+        end.to raise_exception
+      end
+    end
+
+    context 'different operation type' do
+      let(:other) { Mongo::Write::Update.new(spec) }
+
+      it 'raises an exception' do
+        expect do
+          op.merge!(other)
+        end.to raise_exception
+      end
+    end
+
+    context 'merged deletes' do
+
+      let(:other_docs) do
+        [ { q: { bar: 1 }, limit: 1 } ]
+      end
+
+      let(:other_spec) do
+        { deletes: other_docs,
+          db_name: db_name,
+          coll_name: coll_name
+        }
+      end
+
+      let(:other) { described_class.new(other_spec) }
+      let(:expected) { documents << other_docs }
+
+      it 'merges the list of deletes' do
+        expect(op.merge!(other).spec[:deletes]).to eq(expected)
+      end
+    end
+
+    context 'mutability' do
+      let(:other_docs) do
+        [ { q: { bar: 1 }, limit: 1 } ]
+      end
+
+      let(:other_spec) do
+        { deletes: other_docs,
+          db_name: db_name,
+          coll_name: coll_name
+        }
+      end
+
+      let(:other) { described_class.new(other_spec) }
+
+      it 'returns a new object' do
+        expect(op.merge!(other)).to be(op)
+      end
+    end
+  end
+
   describe '#execute' do
 
     before do
