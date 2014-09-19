@@ -54,6 +54,23 @@ module Mongo
           children << self.class.new(spec_copy)
         end
       end
+
+      # Merge another operation with this one.
+      # Requires that the collection and database of the two ops are the same.
+      #
+      # @params[ Mongo::Operation ] The other operation.
+      #
+      # @return [ self ] This operation merged with the other one.
+      #
+      # @since 2.0.0
+      def merge!(other)
+        # @todo: use specific exception
+        raise Exception, "Cannot merge" unless self.class == other.class &&
+            coll_name == other.coll_name &&
+            db_name == other.db_name
+        @spec[batch_key] << other.spec[batch_key]
+        self
+      end
     end
   end
 end
