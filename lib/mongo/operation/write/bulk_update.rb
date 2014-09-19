@@ -111,12 +111,12 @@ module Mongo
         end
 
         def batch_key
-          :updates
+          UPDATES
         end
 
         def initialize_copy(original)
           @spec = original.spec.dup
-          @spec[:updates] = original.spec[:updates].dup
+          @spec[UPDATES] = original.spec[UPDATES].dup
         end
 
         def messages(context)

@@ -104,12 +104,12 @@ module Mongo
         end
 
         def batch_key
-          :deletes
+          DELETES
         end
 
         def initialize_copy(original)
           @spec = original.spec.dup
-          @spec[:deletes] = original.spec[:deletes].clone
+          @spec[DELETES] = original.spec[DELETES].clone
         end
 
         def messages(context)

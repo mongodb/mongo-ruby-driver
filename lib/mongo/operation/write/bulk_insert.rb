@@ -108,7 +108,7 @@ module Mongo
 
         def initialize_copy(original)
           @spec = original.spec.dup
-          @spec[:documents] = original.spec[:documents].dup
+          @spec[DOCUMENTS] = original.spec[DOCUMENTS].dup
         end
 
         def messages(context)
