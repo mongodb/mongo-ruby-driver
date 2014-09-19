@@ -35,6 +35,18 @@ TEST_COLL = 'test'
 TEST_COLL_OUT = 'test_out'
 OPCOUNTER_QUERY_THRESHOLD = 0
 OPCOUNTER_COMMAND_THRESHOLD = 1
+COLL_COMMANDS = %w[
+    aggregate
+    collStats
+    count
+    delete
+    findAndModify
+    insert
+    mapReduce
+    parallelCollectionScan
+    reIndex
+    update
+]
 
 TEST_DOCS = [
     {coordinates: [-74.044491, 40.689522],  name: 'The Statue of Liberty National Monument', city: 'New York', state: 'NY'},
@@ -83,20 +95,23 @@ def with_rescue(exception_class = Exception)
 end
 
 def result_response
-  response = nil
-  result = begin
-    response = yield
+  @response = nil
+  @result = begin
+    @response = yield
   rescue => ex
     #pp ex.backtrace
     ex
   end
-  [result, response]
 end
 
-def result_response_command_with_read_preference(command, read_preference)
+def result_response_command_with_read_preference(type, command, read_preference)
   read_preference_sym = read_preference.downcase.to_sym
-  @result, @response = result_response do
-    @db.command(command, read: read_preference_sym)
+  result_response do
+    if type == 'admin'
+      @admin.command(command, read: read_preference_sym)
+    else
+      @db.command(command, read: read_preference_sym)
+    end
   end
 end
 
@@ -164,6 +179,7 @@ def setup_cluster_and_client(orchestration, preset, id = nil)
       @n = 1
   end
   @client.drop_database(TEST_DB)
+  @admin = @client['admin']
   @db = @client[TEST_DB]
   @coll = @db[TEST_COLL]
   @ordinal = 1
@@ -285,19 +301,22 @@ When(/^I query with read\-preference (\w+) and tag sets (.*)$/) do |read_prefere
   end
 end
 
-When(/^I run a (\w+) command with read\-preference (\w+) and with example (.*)$/) do |name, read_preference, example|
+When(/^I run a (\w+) (\w+) command with read\-preference (\w+) and with example (.*)$/) do |type, name, read_preference, example|
   command = JSON.parse(example)
-  command[name] = TEST_COLL if ["aggregate", "collStats", "count", "mapReduce", "parallelCollectionScan"].include?(name)
-  if name == "group"
-    command["group"]["ns"] = TEST_COLL
-    command["group"]["$reduce"] = BSON::Code.new(command["group"]["$reduce"])
+  command[name] = TEST_COLL if COLL_COMMANDS.include?(name)
+  case name
+    when"group"
+      command["group"]["ns"] = TEST_COLL
+      command["group"]["$reduce"] = BSON::Code.new(command["group"]["$reduce"])
+    when "eval"
+      command["eval"] = BSON::Code.new(command["eval"])
   end
-  result_response_command_with_read_preference(command, read_preference)
+  result_response_command_with_read_preference(type, command, read_preference)
 end
 
 When(/^I run a geonear command with read\-preference (\w+)$/) do |read_preference|
   command = {geoNear: TEST_COLL, near: [-73.9667,40.78], maxDistance: 1000}
-  result_response_command_with_read_preference(command, read_preference)
+  result_response_command_with_read_preference('normal', command, read_preference)
 end
 
 When(/^I run a map\-reduce with field out value inline true and with read\-preference (\w+)$/) do |read_preference|
@@ -305,7 +324,7 @@ When(/^I run a map\-reduce with field out value inline true and with read\-prefe
              map: BSON::Code.new("function(){emit('a',this.a)}"),
              reduce: BSON::Code.new("function(key,values){return Array.sum(values)}"),
              out: {inline: true}}
-  result_response_command_with_read_preference(command, read_preference)
+  result_response_command_with_read_preference('normal', command, read_preference)
 end
 
 When(/^I run a map\-reduce with field out value other than inline and with read\-preference (\w+)$/) do |read_preference|
@@ -313,19 +332,19 @@ When(/^I run a map\-reduce with field out value other than inline and with read\
              map: BSON::Code.new("function(){emit('a',this.a)}"),
              reduce: BSON::Code.new("function(key,values){return Array.sum(values)}"),
              out: TEST_COLL_OUT}
-  result_response_command_with_read_preference(command, read_preference)
+  result_response_command_with_read_preference('normal', command, read_preference)
 end
 
 When(/^I run an aggregate with \$out and with read\-preference (\w+)$/) do |read_preference|
   command = {aggregate: TEST_COLL,
              'pipeline' => [{'$group' => {'_id' => '$state', 'count' => {'$sum' => 1}}}, {'$out' => TEST_COLL_OUT}]} # RUBY-804
-  result_response_command_with_read_preference(command, read_preference)
+  result_response_command_with_read_preference('normal', command, read_preference)
 end
 
 When(/^I run an aggregate without \$out and with read\-preference (\w+)$/) do |read_preference|
   command = {aggregate: TEST_COLL,
              'pipeline' => [{'$group' => {'_id' => '$state', 'count' => {'$sum' => 1}}}]} # RUBY-804
-  result_response_command_with_read_preference(command, read_preference)
+  result_response_command_with_read_preference('normal', command, read_preference)
 end
 
 Then(/^the insert succeeds$/) do
@@ -358,12 +377,14 @@ Then(/^the query fails with error "(.*?)"$/) do |message|
   assert_match(pattern, @result.message.downcase)
 end
 
-Then(/^the (\w+) occurs on the primary$/) do |operation|
+Then(/^the (\w+) occurs on (a|the) (primary|secondary)$/) do |operation, article, member_type|
   assert(['query','command'].include?(operation))
-  occurs_on(:primary, operation)
+  occurs_on(member_type.to_sym, operation)
 end
 
-Then(/^the (\w+) occurs on a secondary$/) do |operation|
-  assert(['query','command'].include?(operation))
-  occurs_on(:secondary, operation)
+Then(/^dump$/) do
+  pp @result
+  pp @response
+  pp @coll.find.to_a
 end
+
