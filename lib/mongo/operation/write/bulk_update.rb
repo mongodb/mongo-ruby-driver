@@ -54,6 +54,7 @@ module Mongo
       class BulkUpdate
         include Executable
         include Specifiable
+        include Batchable
 
         # Execute the update operation.
         #
@@ -109,6 +110,10 @@ module Mongo
           end
         end
 
+        def batch_key
+          :updates
+        end
+
         def initialize_copy(original)
           @spec = original.spec.dup
           @spec[:updates] = original.spec[:updates].dup
@@ -119,6 +124,7 @@ module Mongo
           updates.collect do |u|
             opts = u[:multi] ? { :flags => [:multi_update] } : {}
             Protocol::Update.new(db_name, coll_name, u[:q], u[:u], opts)
+            # @todo raise exception if message size exceeds context.max_message_size
           end
         end
       end

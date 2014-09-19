@@ -82,6 +82,117 @@ describe Mongo::Operation::Write::BulkUpdate do
     end
   end
 
+  describe '#batch' do
+
+     context 'when number of updates is evenly divisible by number of batches' do
+       let(:documents) do
+         [{ q: { a: 1 },
+            u: { :$set => { a: 2 } },
+            multi: true,
+            upsert: false },
+          { q: { b: 1 },
+            u: { :$set => { b: 2 } },
+            multi: true,
+            upsert: false },
+          { q: { c: 1 },
+            u: { :$set => { c: 2 } },
+            multi:  true,
+            upsert: false },
+          { q: { d: 1 },
+            u: { :$set => { d: 2 } },
+            multi: true,
+            upsert: false },
+          { q: { e: 1 },
+            u: { :$set => { e: 2 } },
+            multi: true,
+            upsert: false },
+          { q: { f: 1 },
+            u: { :$set => { f: 2 } },
+            multi:  true,
+            upsert: false }
+         ]
+       end
+       let(:n_batches) { 3 }
+
+       it 'splits the op into the n_batches number of children ops' do
+         expect(op.batch(n_batches).size).to eq(n_batches)
+       end
+
+       it 'divides the updates evenly between children ops' do
+         ops = op.batch(n_batches)
+         batch_size = documents.size / n_batches
+
+         n_batches.times do |i|
+           start_index = i * batch_size
+           expect(ops[i].spec[:updates]).to eq(documents[start_index, batch_size])
+         end
+       end
+     end
+
+    context 'when number of updates is less than number of batches' do
+      let(:documents) do
+        [ { q: { a: 1 },
+            u: { :$set => { a: 2 } } } ]
+      end
+      let(:n_batches) { 3 }
+
+      it 'raises an exception' do
+        expect {
+            op.batch(n_batches)
+          }.to raise_error(Exception)
+      end
+    end
+
+     context 'when number of updates is not evenly divisible by number of batches' do
+       let(:documents) do
+         [{ q: { a: 1 },
+            u: { :$set => { a: 2 } },
+            multi: true,
+            upsert: false },
+          { q: { b: 1 },
+            u: { :$set => { b: 2 } },
+            multi: true,
+            upsert: false },
+          { q: { c: 1 },
+            u: { :$set => { c: 2 } },
+            multi:  true,
+            upsert: false },
+          { q: { d: 1 },
+            u: { :$set => { d: 2 } },
+            multi: true,
+            upsert: false },
+          { q: { e: 1 },
+            u: { :$set => { e: 2 } },
+            multi: true,
+            upsert: false },
+          { q: { f: 1 },
+            u: { :$set => { f: 2 } },
+            multi:  true,
+            upsert: false }
+         ]
+       end
+       let(:n_batches) { 4 }
+
+       it 'splits the op into the n_batches number of children ops' do
+         expect(op.batch(n_batches).size).to eq(n_batches)
+       end
+
+       it 'divides the updates evenly between children ops' do
+         ops = op.batch(n_batches)
+         batch_size = documents.size / n_batches
+
+         n_batches.times do |i|
+           start_index = i * batch_size
+           if i == n_batches - 1
+             expect(ops[i].spec[:updates]).to eq(documents[start_index..-1])
+           else
+             expect(ops[i].spec[:updates]).to eq(documents[start_index, batch_size])
+           end
+         end
+       end
+     end
+   end
+
   describe '#execute' do
 
     before do
