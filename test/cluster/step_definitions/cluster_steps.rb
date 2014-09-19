@@ -116,7 +116,7 @@ def result_response_command_with_read_preference(type, command, read_preference)
 end
 
 def data_members
-  cluster_members = @cluster.secondaries.collect{|secondary| [secondary, :secondary]} << [@cluster.primary, :primary]
+  cluster_members = @secondaries.collect{|secondary| [secondary, :secondary]} << [@primary, :primary]
   client_members = cluster_members.collect do |resource, member_type|
     client = Mongo::MongoClient.from_uri(resource.object['mongodb_uri'])
     [resource.object['uri'], {client: client, resource: resource, member_type: member_type}]
@@ -172,6 +172,7 @@ def setup_cluster_and_client(orchestration, preset, id = nil)
       @client = Mongo::MongoReplicaSetClient.from_uri(@mongodb_uri)
       @primary = @cluster.primary
       @secondaries = @cluster.secondaries
+      @arbiters = @cluster.arbiters
       @n = 1 + @secondaries.count
     when 'sharded_clusters'
       @client = Mongo::MongoShardedClient.from_uri(@mongodb_uri)
@@ -191,7 +192,11 @@ Before do |scenario|
 end
 
 After do |scenario|
-  @cluster.destroy if @cluster
+  @cluster.destroy if @cluster && !('1' == ENV['CLUSTER_DESTROY'])
+end
+
+Transform /^(-?\d+)$/ do |number|
+  number.to_i
 end
 
 Given(/^a (standalone server|replica set|sharded cluster) with preset (\w+)$/) do |cluster_type, preset|
@@ -217,17 +222,21 @@ Given(/^some geo documents written to all data\-bearing members$/) do
   step "some documents written to all data-bearing members"
 end
 
-Given(/^a geo (\w+) index$/) do |geo_index_type|
+Given(/^a geo (2d) index$/) do |geo_index_type|
   @coll.create_index([['coordinates', geo_index_type]]);
 end
 
+Given(/^a geo (geoHaystack) index$/) do |geo_index_type|
+  @coll.create_index({ coordinates: geo_index_type, state: 1 }, { bucketSize: 1 });
+end
+
 When(/^there is no primary$/) do
-  @cluster.arbiters.first.stop
-  @cluster.primary.stop
+  @arbiters.first.stop
+  @primary.stop
 end
 
 When(/^there are no secondaries$/) do
-  @cluster.secondaries.first.stop
+  @secondaries.first.stop
 end
 
 When(/^I (stop|start|restart) the server$/) do |operation|
@@ -236,6 +245,12 @@ end
 
 When(/^I command the primary to step down$/) do
   assert(@primary.stepdown.ok)
+end
+
+When(/^I (stop) the arbiter and the primary$/) do |operation|
+  @arbiters.first.stop
+  @primary.send(operation)
+  @client.refresh #review
 end
 
 When(/^I (stop|start|restart) router (A|B)$/) do |operation, router|
@@ -280,13 +295,13 @@ When(/^I delete a document with the write concern \{ “w”: <nodes \+ (\d+)>, 
   end
 end
 
-When(/^I query$/) do
+When(/^I query( with default read preference)?$/) do |arg1|
   @result = with_rescue do
     @coll.find_one({"a" => @ordinal})
   end
 end
 
-When(/^I query with read\-preference (\w+)$/) do  |read_preference|
+When(/^I query with read\-preference (\w+)$/) do |read_preference|
   read_preference_sym = read_preference.downcase.to_sym
   @result = with_rescue do
     @coll.find_one({"a" => @ordinal}, read: read_preference_sym)
@@ -298,6 +313,26 @@ When(/^I query with read\-preference (\w+) and tag sets (.*)$/) do |read_prefere
   read_preference_sym = read_preference.downcase.to_sym
   @result = with_rescue do
     @coll.find_one({"a" => @ordinal}, read: read_preference_sym, tag_sets: @tag_sets)
+  end
+end
+
+When(/^I query with read\-preference (\w+) and batch size (\d+)$/) do  |read_preference, batch_size|
+  read_preference_sym = read_preference.downcase.to_sym
+  @cursor = @coll.find({}, read: read_preference_sym, batch_size: batch_size)
+end
+
+When(/^I get (\d+) docs$/) do |count|
+  #@secondary ||= Mongo::MongoClient.from_uri(@secondaries.first.object['mongodb_uri'])
+  #pp @secondary[TEST_DB].command({serverStatus: 1})['opcounters']
+  @result = with_rescue do
+    @docs = count.times.collect{@cursor.next}
+  end
+  #pp @secondary[TEST_DB].command({serverStatus: 1})['opcounters']
+end
+
+When(/^I close the cursor$/) do
+  @result = with_rescue do
+    @cursor.close
   end
 end
 
@@ -316,6 +351,11 @@ end
 
 When(/^I run a geonear command with read\-preference (\w+)$/) do |read_preference|
   command = {geoNear: TEST_COLL, near: [-73.9667,40.78], maxDistance: 1000}
+  result_response_command_with_read_preference('normal', command, read_preference)
+end
+
+When(/^I run a geosearch command with read\-preference (\w+)$/) do |read_preference|
+  command = {geoSearch: TEST_COLL, near: [-73.9667,40.78], maxDistance: 1}
   result_response_command_with_read_preference('normal', command, read_preference)
 end
 
@@ -380,6 +420,15 @@ end
 Then(/^the (\w+) occurs on (a|the) (primary|secondary)$/) do |operation, article, member_type|
   assert(['query','command'].include?(operation))
   occurs_on(member_type.to_sym, operation)
+end
+
+Then(/^the get succeeds$/) do
+  #pp @result
+  assert(!@result.is_a?(Exception) && @result.is_a?(Array))
+end
+
+Then(/^the close succeeds$/) do
+  assert(!@result.is_a?(Exception))
 end
 
 Then(/^dump$/) do
