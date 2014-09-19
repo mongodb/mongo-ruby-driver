@@ -151,6 +151,123 @@ describe Mongo::Operation::Write::BulkDelete do
     end
   end
 
+  describe '#merge!' do
+
+    context 'same collection and database' do
+
+      let(:other_docs) do
+        [ { q: { bar: 1 }, limit: 1 } ]
+      end
+
+      let(:other_spec) do
+        { deletes: other_docs,
+          db_name: db_name,
+          coll_name: coll_name
+        }
+      end
+
+      let(:other) { described_class.new(other_spec) }
+
+      it 'merges the two ops' do
+        expect{ op.merge!(other) }.not_to raise_exception
+      end
+    end
+
+    context 'different database' do
+
+      let(:other_docs) do
+        [ { q: { bar: 1 }, limit: 1 } ]
+      end
+
+      let(:other_spec) do
+        { deletes: other_docs,
+          db_name: 'different',
+          coll_name: coll_name
+        }
+      end
+
+      let(:other) { described_class.new(other_spec) }
+
+      it 'raises an exception' do
+        expect do
+          op.merge!(other)
+        end.to raise_exception
+      end
+    end
+
+    context 'different collection' do
+
+      let(:other_docs) do
+        [ { q: { bar: 1 }, limit: 1 } ]
+      end
+
+      let(:other_spec) do
+        { deletes: other_docs,
+          db_name: db_name,
+          coll_name: 'different'
+        }
+      end
+
+      let(:other) { described_class.new(other_spec) }
+
+      it 'raises an exception' do
+        expect do
+          op.merge!(other)
+        end.to raise_exception
+      end
+    end
+
+    context 'different operation type' do
+      let(:other) { Mongo::Write::Update.new(spec) }
+
+      it 'raises an exception' do
+        expect do
+          op.merge!(other)
+        end.to raise_exception
+      end
+    end
+
+    context 'merged deletes' do
+
+      let(:other_docs) do
+        [ { q: { bar: 1 }, limit: 1 } ]
+      end
+
+      let(:other_spec) do
+        { deletes: other_docs,
+          db_name: db_name,
+          coll_name: coll_name
+        }
+      end
+
+      let(:other) { described_class.new(other_spec) }
+      let(:expected) { documents << other_docs }
+
+      it 'merges the list of deletes' do
+        expect(op.merge!(other).spec[:deletes]).to eq(expected)
+      end
+    end
+
+    context 'mutability' do
+      let(:other_docs) do
+        [ { q: { bar: 1 }, limit: 1 } ]
+      end
+
+      let(:other_spec) do
+        { deletes: other_docs,
+          db_name: db_name,
+          coll_name: coll_name
+        }
+      end
+
+      let(:other) { described_class.new(other_spec) }
+
+      it 'returns a new object' do
+        expect(op.merge!(other)).to be(op)
+      end
+    end
+  end
+
   describe '#execute' do
 
     before do
