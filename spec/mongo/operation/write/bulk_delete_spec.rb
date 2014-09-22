@@ -16,12 +16,6 @@ describe Mongo::Operation::Write::BulkDelete do
     }
   end
 
-  let(:delete_write_cmd) do
-    double('delete_write_cmd').tap do |d|
-      allow(d).to receive(:execute) { [] }
-    end
-  end
-
   let(:op) { described_class.new(spec) }
 
   describe '#initialize' do
@@ -75,6 +69,21 @@ describe Mongo::Operation::Write::BulkDelete do
       it 'copies the list of deletes' do
         copy = op.dup
         expect(copy.spec[:deletes]).not_to be(op.spec[:deletes])
+      end
+    end
+  end
+
+  describe '#write_concern=' do
+
+    let(:other_write_concern) do
+      Mongo::WriteConcern::Mode.get(:w => 2)
+    end
+
+    context 'when the write concern is set' do
+
+      it 'sets the write concern' do
+        op.write_concern = other_write_concern
+        expect(op.write_concern).to eq(other_write_concern)
       end
     end
   end
@@ -283,7 +292,7 @@ describe Mongo::Operation::Write::BulkDelete do
 
     context 'when deleting a single document' do
 
-      let(:delete) do
+      let(:op) do
         described_class.new({
           deletes: documents,
           db_name: TEST_DB,
@@ -299,7 +308,7 @@ describe Mongo::Operation::Write::BulkDelete do
         end
 
         let(:result) do
-          delete.execute(authorized_primary.context)
+          op.execute(authorized_primary.context)
         end
 
         it 'deletes the documents from the database' do
@@ -315,7 +324,7 @@ describe Mongo::Operation::Write::BulkDelete do
 
         it 'raises an exception' do
           expect {
-            delete.execute(authorized_primary.context)
+            op.execute(authorized_primary.context)
           }.to raise_error(Mongo::Operation::Write::Failure)
         end
       end
@@ -323,7 +332,7 @@ describe Mongo::Operation::Write::BulkDelete do
 
     context 'when deleting multiple documents' do
 
-      let(:delete) do
+      let(:op) do
         described_class.new({
           deletes: documents,
           db_name: TEST_DB,
@@ -339,7 +348,7 @@ describe Mongo::Operation::Write::BulkDelete do
         end
 
         let(:result) do
-          delete.execute(authorized_primary.context)
+          op.execute(authorized_primary.context)
         end
 
         it 'deletes the documents from the database' do
@@ -354,7 +363,7 @@ describe Mongo::Operation::Write::BulkDelete do
         end
 
         let(:result) do
-          delete.execute(authorized_primary.context)
+          op.execute(authorized_primary.context)
         end
 
         it 'does not delete any documents' do
@@ -416,6 +425,30 @@ describe Mongo::Operation::Write::BulkDelete do
   
       # @todo: find a way to make a delete functionally fail
       pending 'it continues executing operations after errors'
+    end
+
+    context 'when a write concern override is specified' do
+
+      let(:op) do
+        described_class.new({
+          deletes: documents,
+          db_name: TEST_DB,
+          coll_name: TEST_COLL,
+          write_concern: Mongo::WriteConcern::Mode.get(w: 0),
+          ordered: false
+        })
+      end
+
+      let(:documents) do
+        [{ que: { field: 'test' }}]
+      end
+
+      it 'uses that write concern' do
+        op.write_concern = Mongo::WriteConcern::Mode.get(w: 1)
+        expect {
+          op.execute(authorized_primary.context)
+        }.to raise_error(Mongo::Operation::Write::Failure)
+      end
     end
 
     context 'when the server is a secondary' do
