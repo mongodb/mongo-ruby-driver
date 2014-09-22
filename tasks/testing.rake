@@ -120,11 +120,11 @@ namespace :test do
 
   task :features do |t|
     sh "mkdir -p features"
-    sh "cd features && svn checkout https://github.com/mongodb/mongo-meta-driver/trunk/features/cluster"
+    sh "cd features && svn checkout https://github.com/mongodb/mongo-meta-driver/trunk/features/topology"
   end
 
   task :cucumber do |t|
-    sh "cucumber -r test/cluster features/cluster --tag ~@pending"
+    sh "cucumber -r test/topology features/topology --tag ~@pending"
   end
 
   task :cleanup do |t|

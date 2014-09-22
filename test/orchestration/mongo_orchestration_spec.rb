@@ -76,7 +76,7 @@ standalone_config = {
     }
 }
 
-describe Mongo::Orchestration::Cluster, :orchestration => true do
+describe Mongo::Orchestration::Topology, :orchestration => true do
   let(:service) { Mongo::Orchestration::Service.new }
   let(:cluster) { service.configure(standalone_config) }
 
@@ -134,7 +134,7 @@ describe Mongo::Orchestration::Server, :orchestration => true do
   end
 
   it 'configures a cluster/server' do
-    expect(cluster).to be_kind_of(Mongo::Orchestration::Cluster)
+    expect(cluster).to be_kind_of(Mongo::Orchestration::Topology)
     expect(cluster).to be_instance_of(Mongo::Orchestration::Server)
     expect(cluster.object['orchestration']).to eq('servers')
     expect(cluster.object['mongodb_uri']).to match(%r{:})
@@ -298,20 +298,20 @@ sharded_configuration = {
 }
 
 describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
-  let(:cluster) { @cluster }
+  let(:topology) { @topology }
 
   before(:all) do
     @service = Mongo::Orchestration::Service.new
-    @cluster = @service.configure(sharded_configuration)
+    @topology = @service.configure(sharded_configuration)
   end
 
   after(:all) do
-    @cluster.destroy
+    @topology.destroy
   end
 
   describe 'not yet implemented', :broken => true do
     it 'provides shard resources' do
-      shard_resources = cluster.shard_resources
+      shard_resources = topology.shard_resources
       expect(shard_resources.size).to eq(2)
       shard_resources.each do |shard_resource|
         expect(shard_resource).to be_instance_of(Mongo::Orchestration::Resource)
@@ -323,7 +323,7 @@ describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
   end
 
   it 'provides single-server shards' do
-    shards = cluster.shards
+    shards = topology.shards
     expect(shards.size).to eq(2)
     shards.each do |shard|
       expect(shard).to be_instance_of(Mongo::Orchestration::Server)
@@ -339,7 +339,7 @@ describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
         [:configsvrs, 1, %r{/servers/}],
         [:routers,    2, %r{/servers/}]
     ].each do |method, size, base_path|
-      servers = cluster.send(method)
+      servers = topology.send(method)
       expect(servers.size).to eq(size)
       servers.each do |server|
         expect(server).to be_instance_of(Mongo::Orchestration::Server)
@@ -385,20 +385,20 @@ sharded_rs_configuration = {
 }
 
 describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
-  let(:cluster) { @cluster }
+  let(:topology) { @topology }
 
   before(:all) do
     @service = Mongo::Orchestration::Service.new
-    @cluster = @service.configure(sharded_rs_configuration)
+    @topology = @service.configure(sharded_rs_configuration)
   end
 
   after(:all) do
-    @cluster.destroy
+    @topology.destroy
   end
 
   describe 'not yet implemented', :broken => true do
     it 'provides shard resources' do
-      shard_resources = cluster.shard_resources
+      shard_resources = topology.shard_resources
       expect(shard_resources.size).to eq(2)
       shard_resources.each do |shard_resource|
         expect(shard_resource).to be_instance_of(Mongo::Orchestration::Resource)
@@ -410,7 +410,7 @@ describe Mongo::Orchestration::ShardedCluster, :orchestration => true do
   end
 
   it 'provides replica-set shards' do
-    shards = cluster.shards
+    shards = topology.shards
     expect(shards.size).to eq(2)
     shards.each do |shard|
       expect(shard).to be_instance_of(Mongo::Orchestration::ReplicaSet)
@@ -446,7 +446,7 @@ sh_preset_config = {
     }
 }
 
-describe 'Service configure preset Cluster', :orchestration => true do
+describe 'Service configure preset Topology', :orchestration => true do
   let(:service) { @service }
   let(:preset_configs) { [ hosts_preset_config, rs_preset_config, sh_preset_config ] }
 
@@ -456,19 +456,19 @@ describe 'Service configure preset Cluster', :orchestration => true do
 
   it 'configures presets with id' do
     preset_configs.each do |preset_config|
-      cluster = service.configure(preset_config)
-      expect(cluster.object['orchestration']).to eq(preset_config[:orchestration])
-      expect(cluster.object['id']).to eq(preset_config[:request_content][:id])
-      cluster.destroy
+      topology = service.configure(preset_config)
+      expect(topology.object['orchestration']).to eq(preset_config[:orchestration])
+      expect(topology.object['id']).to eq(preset_config[:request_content][:id])
+      topology.destroy
     end
   end
 
   it 'configures presets with id deleted' do
     preset_configs.each do |preset_config|
       preset_config[:request_content].delete(:id)
-      cluster = service.configure(preset_config)
-      expect(cluster.object['orchestration']).to eq(preset_config[:orchestration])
-      cluster.destroy
+      topology = service.configure(preset_config)
+      expect(topology.object['orchestration']).to eq(preset_config[:orchestration])
+      topology.destroy
     end
   end
 end

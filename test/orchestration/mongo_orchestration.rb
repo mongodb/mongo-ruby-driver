@@ -126,7 +126,7 @@ module Mongo
       end
     end
 
-    class Cluster < Resource
+    class Topology < Resource
       def status
         get
       end
@@ -169,7 +169,7 @@ module Mongo
       end
     end
 
-    class Server < Cluster
+    class Server < Topology
       def start
         post(nil, {body: {action: __method__}})
       end
@@ -194,7 +194,7 @@ module Mongo
       end
     end
 
-    class ReplicaSet < Cluster
+    class ReplicaSet < Topology
       def member_resources
         components('members', Resource, 'members', 'member_id')
       end
@@ -220,7 +220,7 @@ module Mongo
       end
     end
 
-    class ShardedCluster < Cluster
+    class ShardedCluster < Topology
       def shard_resources
         components('shards', Resource, 'shards', 'shard_id')
       end
@@ -259,8 +259,8 @@ module Mongo
           id = http_request.response.parsed_response['id']
         end
         base_path = [@base_path, orchestration, id].join('/')
-        cluster = klass.new(base_path, request_content)
-        cluster.init
+        topology = klass.new(base_path, request_content)
+        topology.init
       end
     end
   end

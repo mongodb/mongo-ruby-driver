@@ -122,10 +122,10 @@ def result_response_command_with_read_preference(type, command, read_preference)
 end
 
 def data_members(which = [:primary, :secondaries])
-  cluster_members = []
-  cluster_members = @secondaries.collect{|secondary| [secondary, :secondary]} if which.include?(:secondaries)
-  cluster_members << [@primary, :primary] if which.include?(:primary)
-  client_members = cluster_members.collect do |resource, member_type|
+  topology_members = []
+  topology_members = @secondaries.collect{|secondary| [secondary, :secondary]} if which.include?(:secondaries)
+  topology_members << [@primary, :primary] if which.include?(:primary)
+  client_members = topology_members.collect do |resource, member_type|
     client = Mongo::MongoClient.from_uri(resource.object['mongodb_uri'])
     [resource.object['uri'], {client: client, resource: resource, member_type: member_type}]
   end
@@ -166,24 +166,24 @@ def await_replication(coll)
   coll.insert({a: 0}, w: @n)
 end
 
-def setup_cluster_and_client(orchestration, preset, id = nil)
+def setup_topology_and_client(orchestration, preset, id = nil)
   configuration = {orchestration: orchestration, request_content: {preset: preset}}
   configuration[:request_content][:id] = id if id
-  @cluster = @mo.configure(configuration)
-  @mongodb_uri = @cluster.object['mongodb_uri']
+  @topology = @mo.configure(configuration)
+  @mongodb_uri = @topology.object['mongodb_uri']
   case orchestration
     when 'servers'
       @client = Mongo::MongoClient.from_uri(@mongodb_uri)
       @n = 1
     when 'replica_sets'
       @client = Mongo::MongoReplicaSetClient.from_uri(@mongodb_uri)
-      @primary = @cluster.primary
-      @secondaries = @cluster.secondaries
-      @arbiters = @cluster.arbiters
+      @primary = @topology.primary
+      @secondaries = @topology.secondaries
+      @arbiters = @topology.arbiters
       @n = 1 + @secondaries.count
     when 'sharded_clusters'
       @client = Mongo::MongoShardedClient.from_uri(@mongodb_uri)
-      @routers = @cluster.routers
+      @routers = @topology.routers
       @n = 1
   end
   @client.drop_database(TEST_DB)
@@ -199,20 +199,20 @@ Before do |scenario|
 end
 
 After do |scenario|
-  @cluster.destroy if @cluster && !('1' == ENV['CLUSTER_DESTROY'])
+  @topology.destroy if @topology && !('1' == ENV['TOPOLOGY_DESTROY'])
 end
 
 Transform /^(-?\d+)$/ do |number|
   number.to_i
 end
 
-Given(/^a (standalone server|replica set|sharded cluster) with preset (\w+)$/) do |cluster_type, preset|
-  cluster_resource = {"standalone server" => "servers",
+Given(/^a (standalone server|replica set|sharded cluster) with preset (\w+)$/) do |topology_type, preset|
+  topology_resource = {"standalone server" => "servers",
                       "replica set" => "replica_sets",
                       "sharded cluster" => "sharded_clusters"}
-  resource_type = cluster_resource[cluster_type]
-  setup_cluster_and_client(resource_type, preset + '.json', "#{resource_type}_#{preset}")
-  @server = @cluster
+  resource_type = topology_resource[topology_type]
+  setup_topology_and_client(resource_type, preset + '.json', "#{resource_type}_#{preset}")
+  @server = @topology
 end
 
 Given(/^a document written to all data\-bearing members$/) do
