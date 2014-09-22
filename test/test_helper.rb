@@ -44,6 +44,11 @@ require 'mocha/setup'
 require 'tools/mongo_config'
 require 'orchestration/mongo_orchestration'
 
+# For kerberos testing.
+begin
+  require 'mongo_kerberos'
+rescue LoadError; end
+
 # test helpers
 require 'helpers/general'
 require 'helpers/test_unit'

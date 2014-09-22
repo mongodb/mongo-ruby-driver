@@ -14,14 +14,9 @@
 
 module Mongo
   module Sasl
-
     module GSSAPI
 
       def self.authenticate(username, client, socket, opts={})
-        raise LoadError,
-              "The Sasl GSSAPI authentication mechanism cannot be used because " +
-                  "its extension did not load properly" unless Mongo::HAS_SASL
-
         db           = client.db('$external')
         hostname     = socket.pool.host
         servicename  = opts[:gssapi_service_name] || 'mongodb'

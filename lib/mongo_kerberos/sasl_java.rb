@@ -16,18 +16,14 @@ require 'jruby'
 
 include Java
 
-jar_dir = File.expand_path(File.join(File.dirname(__FILE__), '../../../ext/jsasl'))
+jar_dir = File.expand_path(File.join(File.dirname(__FILE__), '../../ext/jsasl'))
 require File.join(jar_dir, 'target/jsasl.jar')
 
 module Mongo
   module Sasl
-
     module GSSAPI
 
       def self.authenticate(username, client, socket, opts={})
-        raise LoadError,
-              "The Sasl GSSAPI authentication mechanism cannot be used because " +
-                  "its extension did not load properly" unless Mongo::HAS_SASL
         db            = client.db('$external')
         hostname      = socket.pool.host
         servicename   = opts[:gssapi_service_name] || 'mongodb'
@@ -51,6 +47,5 @@ module Mongo
         end
       end
     end
-
   end
 end

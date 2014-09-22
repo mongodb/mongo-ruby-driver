@@ -284,7 +284,7 @@ module Mongo
     #
     # @private
     def issue_gssapi(auth, opts={})
-      Mongo::Sasl::GSSAPI.authenticate(auth[:username], self, opts[:socket], auth[:extra] || {})
+      raise "In order to use Kerberos, please add the mongo-kerberos gem to your dependencies"
     end
 
     # Helper to fetch a nonce value from a given database instance.
