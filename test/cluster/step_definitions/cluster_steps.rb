@@ -254,10 +254,17 @@ When(/^I command the primary to step down$/) do
   assert(@primary.stepdown.ok)
 end
 
-When(/^I (stop) the arbiter and the primary$/) do |operation|
-  @arbiters.first.stop
+
+When(/^I (stop|start|restart) the primary$/) do |operation|
   @primary.send(operation)
-  @client.refresh #review
+end
+
+When(/^I (stop) (a|the) secondary/) do |operation, article|
+  @arbiters.first.send(operation)
+end
+
+When(/^I (stop) (a|the) arbiter$/) do |operation, article|
+  @arbiters.first.send(operation)
 end
 
 When(/^I (stop|start|restart) router (A|B)$/) do |operation, router|
@@ -307,6 +314,12 @@ end
 
 When(/^I query( with default read preference)?$/) do |arg1|
   @result = with_rescue do
+    @coll.find_one({"a" => @ordinal})
+  end
+end
+
+When(/^I query with retries$/) do
+  rescue_connection_failure_and_retry do
     @coll.find_one({"a" => @ordinal})
   end
 end
