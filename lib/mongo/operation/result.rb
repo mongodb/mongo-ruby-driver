@@ -142,7 +142,11 @@ module Mongo
       #
       # @since 2.0.0
       def reply
-        replies.first
+        if acknowledged?
+          replies.first
+        else
+          nil
+        end
       end
 
       # Get the count of documents returned by the server.
