@@ -408,6 +408,23 @@ When(/^I run an aggregate without \$out and with read\-preference (\w+)$/) do |r
   result_response_command_with_read_preference('normal', command, read_preference)
 end
 
+When(/^I execute an (ordered|unordered) bulk write operation ?(with a duplicate key and)? with the write concern \{ “w”: <nodes \+ (\d+)>, “timeout”: (\d+)\}$/) do |order, duplicate, plus_nodes, timeout|
+  @coll.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
+  bulk = (order == 'ordered') ? @coll.initialize_ordered_bulk_op : @coll.initialize_unordered_bulk_op
+  bulk.insert({:a => 1})
+  bulk.find({:a => 2}).upsert.update({'$set' => {:a => 2}})
+  bulk.insert({:a => 1}) if duplicate
+  @result = begin
+    @response = bulk.execute({:w => @n + plus_nodes, :wtimeout => timeout})
+  rescue Mongo::BulkWriteError => ex
+    ex
+  end
+end
+
+When(/^I remove all documents from the collection$/) do
+  @coll.remove
+end
+
 Then(/^the insert succeeds$/) do
   assert(@result.is_a?(BSON::ObjectId))
   assert(@coll.find_one({"a" => @ordinal}))
@@ -422,6 +439,16 @@ end
 Then(/^the write operation fails write concern$/) do
   assert(@result.is_a?(Mongo::WriteConcernError))
   @ordinal += 1
+end
+
+Then(/^the bulk write operation fails$/) do
+  assert(@result.is_a?(Mongo::BulkWriteError))
+  @ordinal += 1
+end
+
+Then(/^the result includes a (write|write concern) error$/) do |write_error_type|
+  assert(@result.result['writeErrors']) if write_error_type == 'write'
+  assert(@result.result['writeConcernError']) if write_error_type == 'write concern'
 end
 
 Then(/^the query succeeds$/) do
