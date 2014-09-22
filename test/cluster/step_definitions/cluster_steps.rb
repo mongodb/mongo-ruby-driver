@@ -33,8 +33,14 @@ end
 TEST_DB = 'test'
 TEST_COLL = 'test'
 TEST_COLL_OUT = 'test_out'
-OPCOUNTER_QUERY_THRESHOLD = 0
-OPCOUNTER_COMMAND_THRESHOLD = 1
+STATUS_THRESHOLD = {
+    'opcounters' => {
+        'query' => 0,
+        'getmore' => 0,
+        'command' => 1},
+    'cursors' => {
+        'totalOpen' => 0}
+}
 COLL_COMMANDS = %w[
     aggregate
     collStats
@@ -115,8 +121,10 @@ def result_response_command_with_read_preference(type, command, read_preference)
   end
 end
 
-def data_members
-  cluster_members = @secondaries.collect{|secondary| [secondary, :secondary]} << [@primary, :primary]
+def data_members(which = [:primary, :secondaries])
+  cluster_members = []
+  cluster_members = @secondaries.collect{|secondary| [secondary, :secondary]} if which.include?(:secondaries)
+  cluster_members << [@primary, :primary] if which.include?(:primary)
   client_members = cluster_members.collect do |resource, member_type|
     client = Mongo::MongoClient.from_uri(resource.object['mongodb_uri'])
     [resource.object['uri'], {client: client, resource: resource, member_type: member_type}]
@@ -125,34 +133,33 @@ def data_members
 end
 
 def hash_delta(a, b)
-  ary = b.each_pair.collect{|key, value| [key, value - a[key]]}
+  ary = b.each_pair.collect{|key, value| [key, (value.to_i - a[key].to_i).abs]}
   Hash[*ary.flatten(1)]
 end
 
-def get_opcounters
-  data_members_with_opcounters = @data_members.each_pair.collect{|key, value|
-    opcounters = value[:client]['admin'].command({serverStatus: 1})['opcounters']
-    #pp [value[:client].host_port, opcounters]
-    [key, value.dup.merge(opcounters: opcounters)]
+def get_server_status
+  data_members_with_status = @data_members.each_pair.collect{|key, value|
+    server_status = value[:client]['admin'].command({serverStatus: 1})
+    #pp [value[:client].host_port, server_status]
+    [key, value.dup.merge(server_status: server_status)]
   }
-  Hash[*data_members_with_opcounters.flatten(1)]
+  Hash[*data_members_with_status.flatten(1)]
 end
 
-def delta_opcounters
-  @opcounters_after = get_opcounters
-  @opcounters_delta = @opcounters_after.each_pair.collect do |key, value|
-    [key, value.merge(opcounters: hash_delta(@opcounters_before[key][:opcounters], value[:opcounters]))]
+def server_status_delta(status_type = 'opcounters')
+  @server_status_after = get_server_status
+  status_type_delta = @server_status_after.each_pair.collect do |key, value|
+    [key, value.merge(status_type => hash_delta(@server_status_before[key][:server_status][status_type], value[:server_status][status_type]))]
   end
-  @opcounters_delta = Hash[*@opcounters_delta.flatten(1)]
+  Hash[*status_type_delta.flatten(1)]
 end
 
-def occurs_on(member_type, op_type = 'query')
-  delta_opcounters
-  #@opcounters_delta.each_pair{|key, value| pp [key, value[:opcounters], value[:member_type]]}
-  threshold = (op_type == 'command') ? OPCOUNTER_COMMAND_THRESHOLD : OPCOUNTER_QUERY_THRESHOLD
-  opnodes = @opcounters_delta.each_pair.select{|key, value| (value[:opcounters][op_type] > threshold)}
-  assert_equal(1, opnodes.count)
-  assert_equal(member_type, opnodes.first.last[:member_type])
+def occurs_on(member_type, status_type = 'opcounters', op_type = 'query')
+  delta = server_status_delta(status_type)
+  threshold = STATUS_THRESHOLD[status_type][op_type]
+  nodes = delta.each_pair.select{|key, value| (value[status_type][op_type] > threshold)}
+  assert_equal(1, nodes.count)
+  assert_equal(member_type, nodes.first.last[:member_type])
 end
 
 def await_replication(coll)
@@ -258,9 +265,12 @@ When(/^I (stop|start|restart) router (A|B)$/) do |operation, router|
   @routers.send(router_pos).send(operation)
 end
 
-When(/^I track opcounters$/) do
-  @data_members = data_members
-  @opcounters_before = get_opcounters
+When(/^I track server status on (all data members|the primary|secondaries)$/) do |which_text|
+  which_map = {'all data members' => [:primary, :secondaries],
+               'the primary' => [:primary],
+               'secondaries' => [:secondaries]}
+  @data_members = data_members(which_map[which_text])
+  @server_status_before = get_server_status
 end
 
 When(/^I insert a document$/) do
@@ -322,15 +332,13 @@ When(/^I query with read\-preference (\w+) and batch size (\d+)$/) do  |read_pre
 end
 
 When(/^I get (\d+) docs$/) do |count|
-  #@secondary ||= Mongo::MongoClient.from_uri(@secondaries.first.object['mongodb_uri'])
-  #pp @secondary[TEST_DB].command({serverStatus: 1})['opcounters']
   @result = with_rescue do
     @docs = count.times.collect{@cursor.next}
   end
-  #pp @secondary[TEST_DB].command({serverStatus: 1})['opcounters']
 end
 
 When(/^I close the cursor$/) do
+  secondary = Mongo::MongoClient.from_uri(@secondaries.first.object['mongodb_uri'])
   @result = with_rescue do
     @cursor.close
   end
@@ -417,13 +425,15 @@ Then(/^the query fails with error "(.*?)"$/) do |message|
   assert_match(pattern, @result.message.downcase)
 end
 
-Then(/^the (\w+) occurs on (a|the) (primary|secondary)$/) do |operation, article, member_type|
-  assert(['query','command'].include?(operation))
-  occurs_on(member_type.to_sym, operation)
+Then(/^the (query|getmore|command) occurs on (a|the) (primary|secondary)$/) do |operation, article, member_type|
+  occurs_on(member_type.to_sym, 'opcounters', operation)
+end
+
+Then(/^the (kill cursors) occurs on (a|the) (primary|secondary)$/) do |operation, article, member_type|
+  occurs_on(member_type.to_sym, 'cursors', 'totalOpen')
 end
 
 Then(/^the get succeeds$/) do
-  #pp @result
   assert(!@result.is_a?(Exception) && @result.is_a?(Array))
 end
 
