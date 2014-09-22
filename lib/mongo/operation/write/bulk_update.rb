@@ -83,7 +83,7 @@ module Mongo
         def execute_message(context)
           replies = messages(context).map do |m|
             context.with_connection do |connection|
-              result = Result.new(connection.dispatch([ m, gle ]))
+              result = Result.new(connection.dispatch([ m, gle ].compact))
               result.validate! if ordered?
               result.reply
             end
