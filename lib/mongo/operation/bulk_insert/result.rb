@@ -17,8 +17,7 @@ module Mongo
     module Write
       class BulkInsert
   
-        # Defines custom behaviour of results when inserting to a server
-        #   with version < 2.5.5.
+        # Defines custom behaviour of results when inserting.
         #
         # @since 2.0.0
         class Result < Operation::Result
@@ -37,12 +36,10 @@ module Mongo
         end
 
         # Defines custom behaviour of results when inserting.
+        # For server versions < 2.5.5 (that don't use write commands).
         #
         # @since 2.0.0
         class LegacyResult < Operation::Result
-
-          # ordered: n documents -> n replies
-          # unordered: n documents -> documents.count
 
           # Gets the number of documents inserted.
           #

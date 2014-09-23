@@ -189,9 +189,7 @@ module Mongo
 
         # @todo set this before or after the execute?
         @executed = true
-
-        @ops = merge_ops
-        ops = @ops.dup
+        ops = merge_ops
 
         replies = []
         until ops.empty?
