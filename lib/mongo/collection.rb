@@ -38,6 +38,9 @@ module Mongo
     # Delegate to the cluster for the next primary.
     def_delegators :cluster, :next_primary
 
+    # Convenience delegators to find.
+    def_delegators :find, :parallel_scan
+
     # Check if a collection is equal to another object. Will check the name and
     # the database for equality.
     #

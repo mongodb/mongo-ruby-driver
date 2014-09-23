@@ -314,4 +314,36 @@ describe Mongo::Collection do
       expect(result.written_count).to eq(0)
     end
   end
+
+  describe '#parallel_scan' do
+
+    let(:documents) do
+      (1..100).map do |i|
+        { name: "testing-scan-#{i}" }
+      end
+    end
+
+    before do
+      authorized_collection.insert_many(documents)
+    end
+
+    after do
+      authorized_collection.find.remove_many
+    end
+
+    let(:result) do
+      authorized_collection.parallel_scan(2)
+    end
+
+    it 'returns a multi-cursor for all documents' do
+      result.each do |doc|
+        expect(doc[:name]).to_not be_nil
+      end
+    end
+
+    it 'returns the correct number of documents' do
+      expect(result.count).to eq(100)
+    end
+  end
+
 end
