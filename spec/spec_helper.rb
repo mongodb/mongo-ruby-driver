@@ -72,6 +72,15 @@ def write_command_enabled?
   @write_command_enabled ||= @client.cluster.servers.first.write_command_enabled?
 end
 
+# Depending on whether write commands are enabled, there are different documents that
+# are guaranteed to cause a delete failure.
+#
+# @since 2.0.0
+def failing_delete_doc
+  write_command_enabled? ? { q: { '$set' => { a: 1 } }, limit: 0 } :
+                           { que: { field: 'test' } }
+end
+
 # Inititializes a basic scanned client to do an ismaster check.
 #
 # @since 2.0.0
