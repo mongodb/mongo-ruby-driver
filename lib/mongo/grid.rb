@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/grid/file_store'
-require 'mongo/grid/file'
-
 module Mongo
 
-  class GridError < StandardError; end
-
+  # Provides behaviour around GridFS related operations.
+  #
+  # @since 2.0.0
   module Grid
 
     # Default prefix for the 'files' and 'chunks' collections
