@@ -17,8 +17,14 @@ module Mongo
   module Grid
     class FS
 
+      # @return [ Collection ] chunks The chunks collection.
+      attr_reader :chunks
+
       # @return [ Database ] database The GridFS database.
       attr_reader :database
+
+      # @return [ Collection ] files The files collection.
+      attr_reader :files
 
       # Create the GridFS.
       #
@@ -30,6 +36,8 @@ module Mongo
       # @since 2.0.0
       def initialize(database)
         @database = database
+        @chunks = database[Grid::CHUNKS]
+        @files = database[Grid::FILES]
       end
     end
   end

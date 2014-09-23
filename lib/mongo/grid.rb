@@ -22,10 +22,10 @@ module Mongo
   # @since 2.0.0
   module Grid
 
-    # Default prefix for the 'files' and 'chunks' collections
+    # Name of the chunks collection.
     #
     # @since 2.0.0
-    DEFAULT_FS_NAME = 'fs'.freeze
+    CHUNKS = 'fs_chunks'.freeze
 
     # Default size for chunks of data.
     #
@@ -36,5 +36,10 @@ module Mongo
     #
     # @since 2.0.0
     DEFAULT_CONTENT_TYPE = 'binary/octet-stream'.freeze
+
+    # Name of the files collection.
+    #
+    # @since 2.0.0
+    FILES = 'fs_files'.freeze
   end
 end
