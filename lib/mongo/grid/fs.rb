@@ -15,6 +15,10 @@
 
 module Mongo
   module Grid
+
+    # Represents a view of the GridFS in the database.
+    #
+    # @since 2.0.0
     class FS
 
       # @return [ Collection ] chunks The chunks collection.
@@ -25,6 +29,46 @@ module Mongo
 
       # @return [ Collection ] files The files collection.
       attr_reader :files
+
+      # Find a file in the GridFS.
+      #
+      # @example Find a file by it's id.
+      #   fs.find(_id: id)
+      #
+      # @example Find a file by it's filename.
+      #   fs.find(filename: 'test.txt')
+      #
+      # @param [ Hash ] selector The selector.
+      #
+      # @return [ Grid::File ] The file.
+      #
+      # @since 2.0.0
+      def find(selector = nil)
+        file = files.find(selector).first
+        chunks = chunks.find(:files_id => file[:_id]).sort(:n => 1)
+
+        # @note We call +to_a+ on chunks to force the cursor to flush all the
+        #   documents out into an array for us.
+        Grid::File.open(file[:filename], Grid::File::READ) do |f|
+          f.chunks = chunks.to_a
+          f.document = file
+        end
+      end
+
+      # Insert a single file into the GridFS.
+      #
+      # @example Insert a single file.
+      #   fs.insert_one(file)
+      #
+      # @param [ Grid::File ] file The file to insert.
+      #
+      # @return [ Result ] The result of the insert.
+      #
+      # @since 2.0.0
+      def insert_one(file)
+        files.insert_one(file.document)
+        chunks.insert_many(file.chunks)
+      end
 
       # Create the GridFS.
       #

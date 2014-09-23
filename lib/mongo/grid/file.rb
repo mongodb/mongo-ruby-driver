@@ -16,6 +16,16 @@ module Mongo
   module Grid
     class File
 
+      # The constant for opening files for read.
+      #
+      # @since 2.0.0
+      READ = 'r'.freeze
+
+      # The constant for opening files for write.
+      #
+      # @since 2.0.0
+      WRITE = 'w'.freeze
+
       def initialize
 
       end
