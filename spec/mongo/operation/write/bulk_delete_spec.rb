@@ -250,7 +250,10 @@ describe Mongo::Operation::Write::BulkDelete do
       end
 
       let(:other) { described_class.new(other_spec) }
-      let(:expected) { documents << other_docs }
+
+      let(:expected) do
+        documents + other_docs
+      end
 
       it 'merges the list of deletes' do
         expect(op.merge!(other).spec[:deletes]).to eq(expected)

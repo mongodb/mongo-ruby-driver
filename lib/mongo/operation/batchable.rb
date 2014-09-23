@@ -34,7 +34,6 @@ module Mongo
       # @since 2.0.0
       def batch(n_batches)
         items = spec[batch_key]
-
         raise Exception, "Cannot batch" unless items.size >= n_batches
 
         items_per_batch = items.size / n_batches
@@ -68,7 +67,7 @@ module Mongo
         raise Exception, "Cannot merge" unless self.class == other.class &&
             coll_name == other.coll_name &&
             db_name == other.db_name
-        @spec[batch_key] << other.spec[batch_key]
+        @spec[batch_key] += other.spec[batch_key]
         self
       end
     end

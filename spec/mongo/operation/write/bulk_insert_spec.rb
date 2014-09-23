@@ -273,7 +273,7 @@ describe Mongo::Operation::Write::BulkInsert do
       end
 
       let(:expected) do
-        documents << other_docs
+        documents + other_docs
       end
 
       it 'merges the list of documents' do
