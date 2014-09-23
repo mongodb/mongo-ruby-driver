@@ -98,7 +98,8 @@ module Mongo
             end
           end
           replies = nil if replies.compact.empty?
-          Result.new(replies).validate! if write_concern.get_last_error
+          write_concern.get_last_error ? Result.new(replies).validate! :
+                                         Result.new(replies)
         end
 
         # @todo put this somewhere else
