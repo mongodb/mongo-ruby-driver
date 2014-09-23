@@ -279,16 +279,12 @@ describe Mongo::Collection do
 
   describe '#insert_many' do
 
-    let(:collection) do
-      authorized_collection
-    end
-
     after do
       authorized_collection.find.remove_many
     end
 
     let(:result) do
-      collection.insert_many([{ name: 'test1' }, { name: 'test2' }])
+      authorized_collection.insert_many([{ name: 'test1' }, { name: 'test2' }])
     end
 
     it 'inserts the documents into the collection', if: write_command_enabled? do
@@ -302,16 +298,12 @@ describe Mongo::Collection do
 
   describe '#insert_one' do
 
-    let(:collection) do
-      authorized_collection
-    end
-
     after do
       authorized_collection.find.remove_many
     end
 
     let(:result) do
-      collection.insert_one({ name: 'testing' })
+      authorized_collection.insert_one({ name: 'testing' })
     end
 
     it 'inserts the document into the collection', if: write_command_enabled? do
