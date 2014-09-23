@@ -152,6 +152,10 @@ module Mongo
         self
       end
 
+      def reset
+        post(nil, {body: {action: __method__}})
+      end
+
       private
       def servers(get_resource)
         sub_rsrc = sub_resource(Resource, get_resource)
