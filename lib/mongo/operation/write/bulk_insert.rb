@@ -69,13 +69,17 @@ module Mongo
         # Set the write concern on this operation.
         #
         # @example Set a write concern.
-        #   operation.write_concern = Mongo::WriteConcern::Mode.get(:w => 2)
+        #   new_op = operation.write_concern(Mongo::WriteConcern::Mode.get(:w => 2))
         #
         # @params [ Mongo::WriteConcern::Mode ] The write concern.
         #
         # @since 2.0.0
-        def write_concern=(wc)
-          @spec[WRITE_CONCERN] = wc
+        def write_concern(wc = nil)
+          if wc
+            self.class.new(spec.merge(write_concern: wc))
+          else
+            spec[WRITE_CONCERN]
+          end
         end
 
         private

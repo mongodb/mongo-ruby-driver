@@ -92,8 +92,8 @@ describe Mongo::Operation::Write::BulkUpdate do
     context 'when the write concern is set' do
 
       it 'sets the write concern' do
-        op.write_concern = other_write_concern
-        expect(op.write_concern).to eq(other_write_concern)
+        new_op = op.write_concern(other_write_concern)
+        expect(new_op.write_concern).to eq(other_write_concern)
       end
     end
   end
@@ -505,9 +505,9 @@ describe Mongo::Operation::Write::BulkUpdate do
       end
 
       it 'uses that write concern' do
-        op.write_concern = Mongo::WriteConcern::Mode.get(w: 1)
+        new_op = op.write_concern(Mongo::WriteConcern::Mode.get(w: 1))
         expect {
-          op.execute(authorized_primary.context)
+          new_op.execute(authorized_primary.context)
         }.to raise_error(Mongo::Operation::Write::Failure)
       end
     end
