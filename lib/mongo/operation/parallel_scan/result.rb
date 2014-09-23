@@ -60,6 +60,12 @@ module Mongo
         def documents
           reply.documents[0][CURSORS]
         end
+
+        private
+
+        def first
+          @first ||= reply.documents[0] || {}
+        end
       end
     end
   end

@@ -34,8 +34,14 @@ describe Mongo::Operation::ParallelScan do
       op.execute(authorized_primary.context)
     end
 
-    it 'returns the parallel scan result' do
+    it 'returns the parallel scan result', if: write_command_enabled? do
       expect(result.cursor_ids).to_not be_empty
+    end
+
+    it 'raises an error', unless: write_command_enabled? do
+      expect {
+        result.cursor_ids
+      }.to raise_error(Mongo::Operation::Write::Failure)
     end
   end
 end
