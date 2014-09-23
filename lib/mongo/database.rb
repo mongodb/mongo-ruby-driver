@@ -153,6 +153,18 @@ module Mongo
       @name = name.to_s.freeze
     end
 
+    # Get the Grid "filesystem" for this database.
+    #
+    # @example Get the GridFS.
+    #   database.fs
+    #
+    # @return [ Grid::FS ] The GridFS for the database.
+    #
+    # @since 2.0.0
+    def fs
+      Grid::FS.new(self)
+    end
+
     # Get the user view for this database.
     #
     # @example Get the user view.

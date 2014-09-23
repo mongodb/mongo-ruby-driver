@@ -169,4 +169,15 @@ describe Mongo::Database do
       end
     end
   end
+
+  describe '#fs' do
+
+    let(:database) do
+      described_class.new(authorized_client, TEST_DB)
+    end
+
+    it 'returns a Grid::FS for the db' do
+      expect(database.fs).to be_a(Mongo::Grid::FS)
+    end
+  end
 end

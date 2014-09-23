@@ -1,3 +1,4 @@
+
 # Copyright (C) 2009-2014 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,29 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/grid/file'
-require 'mongo/grid/fs'
-
 module Mongo
-
-  # Provides behaviour around GridFS related operations.
-  #
-  # @since 2.0.0
   module Grid
+    class FS
 
-    # Default prefix for the 'files' and 'chunks' collections
-    #
-    # @since 2.0.0
-    DEFAULT_FS_NAME = 'fs'.freeze
+      # @return [ Database ] database The GridFS database.
+      attr_reader :database
 
-    # Default size for chunks of data.
-    #
-    # @since 2.0.0
-    DEFAULT_CHUNK_SIZE = (255 * 1024).freeze
-
-    # Default content type for stored files.
-    #
-    # @since 2.0.0
-    DEFAULT_CONTENT_TYPE = 'binary/octet-stream'.freeze
+      # Create the GridFS.
+      #
+      # @example Create the GridFS.
+      #   Grid::FS.new(database)
+      #
+      # @param [ Database ] database The database the files reside in.
+      #
+      # @since 2.0.0
+      def initialize(database)
+        @database = database
+      end
+    end
   end
 end
