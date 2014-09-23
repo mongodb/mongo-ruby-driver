@@ -443,10 +443,13 @@ describe Mongo::Operation::Write::BulkDelete do
         [{ que: { field: 'test' }}]
       end
 
+      let(:acknoweldged) do
+        Mongo::WriteConcern::Mode.get(w: 1)
+      end
+
       it 'uses that write concern' do
-        new_op = op.write_concern(Mongo::WriteConcern::Mode.get(w: 1))
         expect {
-          new_op.execute(authorized_primary.context)
+          op.write_concern(acknoweldged).execute(authorized_primary.context)
         }.to raise_error(Mongo::Operation::Write::Failure)
       end
     end
