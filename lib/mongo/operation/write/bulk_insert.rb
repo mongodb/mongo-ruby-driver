@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/operation/bulk_insert/result'
+
 module Mongo
   module Operation
     module Write
@@ -91,12 +93,12 @@ module Mongo
         def execute_message(context)
           replies = messages(context).map do |m|
             context.with_connection do |connection|
-              result = Result.new(connection.dispatch([ m, gle ].compact))
+              result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
               result.validate! if ordered?
               result.reply
             end
           end
-          Result.new(replies.compact.empty? ? nil : replies).validate!
+          LegacyResult.new(replies.compact.empty? ? nil : replies).validate!
         end
 
         # @todo put this somewhere else
