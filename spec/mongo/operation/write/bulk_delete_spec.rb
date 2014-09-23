@@ -319,7 +319,7 @@ describe Mongo::Operation::Write::BulkDelete do
       context 'when the delete fails' do
 
         let(:documents) do
-          [{ que: { field: 'test' }}]
+          [ failing_delete_doc ]
         end
 
         it 'raises an exception' do
@@ -375,7 +375,7 @@ describe Mongo::Operation::Write::BulkDelete do
     context 'when the deletes are ordered' do
 
       let(:documents) do
-        [ { que: { field: 'test' }},
+        [ failing_delete_doc,
           { q: { field: 'test' }, limit: 1 }
         ]
       end
@@ -405,8 +405,8 @@ describe Mongo::Operation::Write::BulkDelete do
 
       let(:documents) do
         [
-          { _id: { '$invalidOp' => 1 } },
-          { q: { field: 'test' }, limit: 1 }
+          failing_delete_doc,
+          { q: { field: 'test' }, limit: 0 }
         ]
       end
 
@@ -423,16 +423,22 @@ describe Mongo::Operation::Write::BulkDelete do
         described_class.new(spec)
       end
 
-      # @todo: find a way to make a delete functionally fail
       it 'continues executing operations after errors' do
         expect {
           failing_delete.execute(authorized_primary.context)
         }.to raise_error(Mongo::Operation::Write::Failure)
-        #expect(authorized_collection.find.count).to eq(1)
+        expect(authorized_collection.find.count).to eq(0)
       end
     end
 
     context 'when a write concern override is specified' do
+
+      let(:documents) do
+        [
+          failing_delete_doc,
+          { q: { field: 'test' }, limit: 0 }
+        ]
+      end
 
       let(:op) do
         described_class.new({
@@ -444,17 +450,13 @@ describe Mongo::Operation::Write::BulkDelete do
         })
       end
 
-      let(:documents) do
-        [{ que: { field: 'test' }}]
-      end
-
-      let(:acknoweldged) do
+      let(:acknowledged) do
         Mongo::WriteConcern::Mode.get(w: 1)
       end
 
       it 'uses that write concern' do
         expect {
-          op.write_concern(acknoweldged).execute(authorized_primary.context)
+          op.write_concern(acknowledged).execute(authorized_primary.context)
         }.to raise_error(Mongo::Operation::Write::Failure)
       end
     end
