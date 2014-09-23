@@ -83,6 +83,21 @@ describe Mongo::Operation::Write::BulkUpdate do
     end
   end
 
+  describe '#write_concern=' do
+
+    let(:other_write_concern) do
+      Mongo::WriteConcern::Mode.get(:w => 2)
+    end
+
+    context 'when the write concern is set' do
+
+      it 'sets the write concern' do
+        new_op = op.write_concern(other_write_concern)
+        expect(new_op.write_concern).to eq(other_write_concern)
+      end
+    end
+  end
+
   describe '#batch' do
 
      context 'when number of updates is evenly divisible by number of batches' do
@@ -470,6 +485,33 @@ describe Mongo::Operation::Write::BulkUpdate do
           failing_update.execute(authorized_primary.context)
         }.to raise_error(Mongo::Operation::Write::Failure)
         expect(authorized_collection.find(other: 'blah').count).to eq(2)
+      end
+    end
+
+    context 'when a write concern override is specified' do
+
+      let(:op) do
+        described_class.new({
+          updates: documents,
+          db_name: db_name,
+          coll_name: coll_name,
+          write_concern: Mongo::WriteConcern::Mode.get(w: 0),
+          ordered: false
+        })
+      end
+
+      let(:documents) do
+        [ { q: { name: 'test' }, u: { '$st' => { field: 'blah' }}, multi: true} ]
+      end
+
+      let(:acknoweldged) do
+        Mongo::WriteConcern::Mode.get(w: 1)
+      end
+
+      it 'uses that write concern' do
+        expect {
+          op.write_concern(acknoweldged).execute(authorized_primary.context)
+        }.to raise_error(Mongo::Operation::Write::Failure)
       end
     end
 
