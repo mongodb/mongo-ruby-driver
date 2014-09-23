@@ -345,5 +345,4 @@ describe Mongo::Collection do
       expect(result.count).to eq(100)
     end
   end
-
 end
