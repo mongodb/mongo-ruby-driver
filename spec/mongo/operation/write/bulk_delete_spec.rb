@@ -405,7 +405,7 @@ describe Mongo::Operation::Write::BulkDelete do
 
       let(:documents) do
         [
-          { q: { field: 'test' } },
+          { _id: { '$invalidOp' => 1 } },
           { q: { field: 'test' }, limit: 1 }
         ]
       end
@@ -422,9 +422,14 @@ describe Mongo::Operation::Write::BulkDelete do
       let(:failing_delete) do
         described_class.new(spec)
       end
-  
+
       # @todo: find a way to make a delete functionally fail
-      pending 'it continues executing operations after errors'
+      it 'continues executing operations after errors' do
+        expect {
+          failing_delete.execute(authorized_primary.context)
+        }.to raise_error(Mongo::Operation::Write::Failure)
+        #expect(authorized_collection.find.count).to eq(1)
+      end
     end
 
     context 'when a write concern override is specified' do
