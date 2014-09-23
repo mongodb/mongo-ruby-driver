@@ -279,16 +279,12 @@ describe Mongo::Collection do
 
   describe '#insert_many' do
 
-    let(:collection) do
-      authorized_collection
-    end
-
     after do
       authorized_collection.find.remove_many
     end
 
     let(:result) do
-      collection.insert_many([{ name: 'test1' }, { name: 'test2' }])
+      authorized_collection.insert_many([{ name: 'test1' }, { name: 'test2' }])
     end
 
     it 'inserts the documents into the collection', if: write_command_enabled? do
@@ -302,16 +298,12 @@ describe Mongo::Collection do
 
   describe '#insert_one' do
 
-    let(:collection) do
-      authorized_collection
-    end
-
     after do
       authorized_collection.find.remove_many
     end
 
     let(:result) do
-      collection.insert_one({ name: 'testing' })
+      authorized_collection.insert_one({ name: 'testing' })
     end
 
     it 'inserts the document into the collection', if: write_command_enabled? do
@@ -320,6 +312,43 @@ describe Mongo::Collection do
 
     it 'inserts the document into the collection', unless: write_command_enabled? do
       expect(result.written_count).to eq(0)
+    end
+  end
+
+  describe '#parallel_scan' do
+
+    let(:documents) do
+      (1..100).map do |i|
+        { name: "testing-scan-#{i}" }
+      end
+    end
+
+    before do
+      authorized_collection.insert_many(documents)
+    end
+
+    after do
+      authorized_collection.find.remove_many
+    end
+
+    let(:result) do
+      authorized_collection.parallel_scan(2)
+    end
+
+    it 'returns a multi-cursor for all documents', if: write_command_enabled? do
+      result.each do |doc|
+        expect(doc[:name]).to_not be_nil
+      end
+    end
+
+    it 'returns the correct number of documents', if: write_command_enabled? do
+      expect(result.count).to eq(100)
+    end
+
+    it 'raises an error', unless: write_command_enabled? do
+      expect {
+        result
+      }.to raise_error(Mongo::Operation::Write::Failure)
     end
   end
 end

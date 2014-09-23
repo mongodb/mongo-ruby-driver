@@ -46,6 +46,11 @@ module Mongo
       # @since 2.0.0
       COLL_NAME = :coll_name.freeze
 
+      # The field for cursor count.
+      #
+      # @since 2.0.0
+      CURSOR_COUNT = :cursor_count.freeze
+
       # The field for cursor id.
       #
       # @since 2.0.0
@@ -124,6 +129,18 @@ module Mongo
         spec == other.spec
       end
       alias_method :eql?, :==
+
+      # Get the cursor count from the spec.
+      #
+      # @example Get the cursor count.
+      #   specifiable.cursor_count
+      #
+      # @return [ Integer ] The cursor count.
+      #
+      # @since 2.0.0
+      def cursor_count
+        spec[CURSOR_COUNT]
+      end
 
       # The name of the database to which the operation should be sent.
       #

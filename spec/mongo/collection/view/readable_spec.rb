@@ -381,6 +381,39 @@ describe Mongo::Collection::View::Readable do
     end
   end
 
+  describe '#parallel_scan' do
+
+    let(:documents) do
+      (1..100).map do |i|
+        { name: "testing-scan-#{i}" }
+      end
+    end
+
+    before do
+      authorized_collection.insert_many(documents)
+    end
+
+    let(:result) do
+      view.parallel_scan(2)
+    end
+
+    it 'returns a multi-cursor for all documents', if: write_command_enabled? do
+      result.each do |doc|
+        expect(doc[:name]).to_not be_nil
+      end
+    end
+
+    it 'returns the correct number of documents', if: write_command_enabled? do
+      expect(result.count).to eq(100)
+    end
+
+    it 'raises an error', unless: write_command_enabled? do
+      expect {
+        result
+      }.to raise_error(Mongo::Operation::Write::Failure)
+    end
+  end
+
   describe '#projection' do
 
     context 'when projection are specified' do

@@ -23,6 +23,7 @@ require 'mongo/operation/aggregate'
 require 'mongo/operation/command'
 require 'mongo/operation/kill_cursors'
 require 'mongo/operation/map_reduce'
+require 'mongo/operation/parallel_scan'
 
 module Mongo
   module Operation
