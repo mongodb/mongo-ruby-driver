@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/operation/bulk_update/result'
+
 module Mongo
   module Operation
     module Write
@@ -99,12 +101,12 @@ module Mongo
         def execute_message(context)
           replies = messages(context).map do |m|
             context.with_connection do |connection|
-              result = Result.new(connection.dispatch([ m, gle ].compact))
+              result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
               result.validate! if ordered?
               result.reply
             end
           end
-          Result.new(replies.compact.empty? ? nil : replies).validate!
+          LegacyResult.new(replies.compact.empty? ? nil : replies).validate!
         end
 
         # @todo put this somewhere else
@@ -138,7 +140,8 @@ module Mongo
         def messages(context)
           # @todo: break up into multiple messages depending on max_message_size
           updates.collect do |u|
-            opts = u[:multi] ? { :flags => [:multi_update] } : {}
+            opts = !!u[:multi] ? { :flags => [:multi_update] } : { :flags => [] }
+            opts[:flags] << :upsert if !!u[:upsert]
             Protocol::Update.new(db_name, coll_name, u[:q], u[:u], opts)
             # @todo raise exception if message size exceeds context.max_message_size
           end
