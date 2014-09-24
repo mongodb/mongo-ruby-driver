@@ -27,11 +27,11 @@ module Mongo
           # @example Get the count.
           #   result.counts
           #
-          # @return [ Hash ] A hash of the result counts.
+          # @return [ Integer ] The number of documents inserted.
           #
           # @since 2.0.0
           def n_inserted
-            written_count      
+            written_count
           end
         end
 

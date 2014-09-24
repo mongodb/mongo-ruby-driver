@@ -274,9 +274,13 @@ module Mongo
       #
       # @return [ Hash ] The response from the server.
       def make_response(results)
-        { 'nInserted' => 0 }.tap do |response|
+        { 'nInserted' => nil,
+          'nUpserted' => nil,
+          'nMatched'  => nil, # is equivalent to the "n" field in the getLastError response after a legacy update
+          'nModified' => nil, # nModified is incremented only when an update operation actually changes a document, nil for legacy
+          'nRemoved'  => nil }.tap do |response|
           results.map do |result|
-            response['nInserted'] += result.n_inserted
+            response['nInserted'] = ( response['nInserted'] || 0 ) + result.n_inserted
           end
         end
       end
