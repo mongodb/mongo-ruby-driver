@@ -494,6 +494,10 @@ Then(/^the get succeeds$/) do
   assert(!@result.is_a?(Exception) && @result.is_a?(Array))
 end
 
+Then(/^the get fails$/) do
+  assert(@result.is_a?(Exception))
+end
+
 Then(/^the close succeeds$/) do
   assert(!@result.is_a?(Exception))
 end

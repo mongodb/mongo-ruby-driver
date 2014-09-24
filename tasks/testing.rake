@@ -119,12 +119,13 @@ namespace :test do
   end
 
   task :features do |t|
-    sh "mkdir -p features"
+    mkdir_p('features')
     sh "cd features && svn checkout https://github.com/mongodb/mongo-meta-driver/trunk/features/topology"
   end
 
+  #task :cucumber => :features do |t|
   task :cucumber do |t|
-    sh "cucumber -b -r test/topology features/topology --tag ~@pending"
+    sh "cucumber -b -r test/topology features/topology --tag ~@pending --tag ~@ruby_1_x_broken"
   end
 
   task :cleanup do |t|
