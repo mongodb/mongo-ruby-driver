@@ -24,8 +24,8 @@ module Mongo
 
           # Gets the number of documents inserted.
           #
-          # @example Get the count.
-          #   result.counts
+          # @example Get the number of documents inserted.
+          #   result.n_inserted
           #
           # @return [ Integer ] The number of documents inserted.
           #
@@ -43,10 +43,10 @@ module Mongo
 
           # Gets the number of documents inserted.
           #
-          # @example Get the counts.
-          #   result.counts
+          # @example Get the number of documents inserted.
+          #   result.n_inserted
           #
-          # @return [ Hash ] A hash of the result counts.
+          # @return [ Integer ] The number of documents inserted.
           #
           # @since 2.0.0
           def n_inserted
