@@ -140,7 +140,8 @@ module Mongo
         def messages(context)
           # @todo: break up into multiple messages depending on max_message_size
           updates.collect do |u|
-            opts = !!u[:multi] ? { :flags => [:multi_update] } : { :flags => [] }
+            opts = { :flags => [] }
+            opts[:flags] << :multi_update if !!u[:multi]
             opts[:flags] << :upsert if !!u[:upsert]
             Protocol::Update.new(db_name, coll_name, u[:q], u[:u], opts)
             # @todo raise exception if message size exceeds context.max_message_size

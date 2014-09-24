@@ -32,7 +32,11 @@ module Mongo
           # @since 2.0.0
           def n_upserted
             @replies.reduce(0) do |n, reply|
-              n += reply.documents.first['upserted'] ? reply.documents.first['upserted'].size : 0
+              if reply.documents.first['upserted']
+                n += reply.documents.first['upserted'].size
+              else
+                n += 0
+              end
             end
           end
 
@@ -47,7 +51,7 @@ module Mongo
           def n_matched
             @replies.reduce(0) do |n, reply|
               if upsert?(reply)
-                0
+                n += 0
               else
                 n += reply.documents.first['n']
               end
@@ -65,7 +69,6 @@ module Mongo
           def n_modified
             @replies.reduce(0) do |n, reply|
               n += reply.documents.first['nModified'] || 0
-              n
             end
           end
 
@@ -92,8 +95,11 @@ module Mongo
           # @since 2.0.0
           def n_upserted
             @replies.reduce(0) do |n, reply|
-              n += !reply.documents.first['updatedExisting'] ? 
-                     reply.documents.first[N] : 0
+              unless reply.documents.first['updatedExisting']
+                n += reply.documents.first[N]
+              else
+                n += 0
+              end
             end
           end
 
@@ -108,7 +114,7 @@ module Mongo
           def n_matched
             @replies.reduce(0) do |n, reply|
               if upsert?(reply)
-                0
+                n += 0
               else
                 n += reply.documents.first['n']
               end
