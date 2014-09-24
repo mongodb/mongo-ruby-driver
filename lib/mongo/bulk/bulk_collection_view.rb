@@ -136,7 +136,7 @@ module Mongo
         spec = { updates:   [{ q: @selector,
                                u: update_doc,
                                multi: multi,
-                               upsert: upsert }],
+                               upsert: @upsert }],
                  db_name:   @bulk_write.db_name,
                  coll_name: @bulk_write.coll_name,
                  ordered:   @bulk_write.ordered? }
