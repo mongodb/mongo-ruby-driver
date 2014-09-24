@@ -78,6 +78,12 @@ TEST_DOCS = [
     {coordinates: [-77.009054, 38.890042],  name: 'United States Capitol', city: 'Washington', state: 'DC'}
 ]
 
+$topologies ||= Hash.new
+
+at_exit do
+  $topologies.values.each {|topology| topology.delete } unless ENV['TOPOLOGY_NO_DESTROY']
+end
+
 public
 
 def rescue_connection_failure_and_retry(max_retries = 30)
@@ -170,6 +176,8 @@ def setup_topology_and_client(orchestration, preset, id = nil)
   configuration = {orchestration: orchestration, request_content: {preset: preset}}
   configuration[:request_content][:id] = id if id
   @topology = @mo.configure(configuration)
+  @topology.reset
+  $topologies[@topology.object['id']] = @topology
   @mongodb_uri = @topology.object['mongodb_uri']
   case orchestration
     when 'servers'
@@ -199,7 +207,7 @@ Before do |scenario|
 end
 
 After do |scenario|
-  @topology.destroy if @topology && !('1' == ENV['TOPOLOGY_DESTROY'])
+  @topology.destroy if @topology && !ENV['TOPOLOGY_NO_DESTROY']
 end
 
 Transform /^(-?\d+)$/ do |number|
@@ -259,11 +267,11 @@ When(/^I (stop|start|restart) the primary$/) do |operation|
   @primary.send(operation)
 end
 
-When(/^I (stop) (a|the) secondary/) do |operation, article|
+When(/^I (stop) (?:a|the) secondary/) do |operation|
   @arbiters.first.send(operation)
 end
 
-When(/^I (stop) (a|the) arbiter$/) do |operation, article|
+When(/^I (stop) (?:a|the) arbiter$/) do |operation|
   @arbiters.first.send(operation)
 end
 
@@ -292,23 +300,19 @@ When(/^I insert a document with retries$/) do
   end
 end
 
-When(/^I insert a document with the write concern \{ “w”: <nodes \+ (\d+)>, “timeout”: (\d+)\}$/) do |arg1, arg2|
+When(/^I (insert|update|delete) a document with the write concern \{ ?“w”: <nodes(?: \+ )?(\d+)?>(?:, “timeout”: )?(\d+)?\}$/) do |operation, plus_nodes, timeout|
   @result = with_rescue do
-    @coll.insert({a: @ordinal}, w: @n + 1, wtimeout: 1)
-  end
-end
-
-When(/^I update a document with the write concern \{ “w”: <nodes \+ (\d+)>, “timeout”: (\d+)\}$/) do |arg1, arg2|
-  @coll.insert({a: @ordinal}, w: @n)
-  @result = with_rescue do
-    @coll.update({a: @ordinal}, {}, w: @n + 1, wtimeout: 1, upsert: true)
-  end
-end
-
-When(/^I delete a document with the write concern \{ “w”: <nodes \+ (\d+)>, “timeout”: (\d+)\}$/) do |arg1, arg2|
-  @coll.insert({a: @ordinal}, w: @n)
-  @result = with_rescue do
-    @coll.remove({a: @ordinal}, w: @n + 1, wtimeout: 1)
+    options = {:w => @n + (plus_nodes || 0)}
+    options.merge!(:wtimeout => timeout) if timeout
+    @coll.insert({a: @ordinal}, w: @n) unless operation == 'insert'
+    case operation
+      when 'insert'
+        @coll.insert({a: @ordinal}, options)
+      when 'update'
+        @coll.update({a: @ordinal}, {}, options.merge(upsert: true))
+      when 'delete'
+        @coll.remove({a: @ordinal}, options)
+    end
   end
 end
 
@@ -408,14 +412,17 @@ When(/^I run an aggregate without \$out and with read\-preference (\w+)$/) do |r
   result_response_command_with_read_preference('normal', command, read_preference)
 end
 
-When(/^I execute an (ordered|unordered) bulk write operation ?(with a duplicate key and)? with the write concern \{ “w”: <nodes \+ (\d+)>, “timeout”: (\d+)\}$/) do |order, duplicate, plus_nodes, timeout|
+When(/^I execute an (ordered|unordered) bulk write operation ?(with a duplicate key and)? with the write concern \{“w”: <nodes(?: \+ )?(\d+)?>(?:, “timeout”: )?(\d+)?\}$/) do |order, duplicate, plus_nodes, timeout|
+  write_concern = {:w => @n + (plus_nodes || 0)}
+  write_concern.merge!(:wtimeout => timeout) if timeout
   @coll.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
   bulk = (order == 'ordered') ? @coll.initialize_ordered_bulk_op : @coll.initialize_unordered_bulk_op
   bulk.insert({:a => 1})
   bulk.find({:a => 2}).upsert.update({'$set' => {:a => 2}})
   bulk.insert({:a => 1}) if duplicate
+  bulk.find({:a => 1}).remove_one
   @result = begin
-    @response = bulk.execute({:w => @n + plus_nodes, :wtimeout => timeout})
+    @response = bulk.execute(write_concern)
   rescue Mongo::BulkWriteError => ex
     ex
   end
@@ -436,6 +443,11 @@ Then(/^the insert fails$/) do
   @ordinal += 1
 end
 
+Then(/^the write operation suceeeds$/) do
+  assert(!@result.is_a?(Exception))
+  @ordinal += 1
+end
+
 Then(/^the write operation fails write concern$/) do
   assert(@result.is_a?(Mongo::WriteConcernError))
   @ordinal += 1
@@ -443,6 +455,11 @@ end
 
 Then(/^the bulk write operation fails$/) do
   assert(@result.is_a?(Mongo::BulkWriteError))
+  @ordinal += 1
+end
+
+Then(/^the bulk write operation succeeds$/) do
+  assert(!@result.is_a?(Mongo::BulkWriteError))
   @ordinal += 1
 end
 

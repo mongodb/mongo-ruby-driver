@@ -124,7 +124,7 @@ namespace :test do
   end
 
   task :cucumber do |t|
-    sh "cucumber -r test/topology features/topology --tag ~@pending"
+    sh "cucumber -b -r test/topology features/topology --tag ~@pending"
   end
 
   task :cleanup do |t|
