@@ -229,6 +229,11 @@ Given(/^a document written to all data\-bearing members$/) do
   end
 end
 
+Given(/^a replica-set client with a seed from (?:a|the) (primary)$/) do |member_type|
+  mongodb_uri = "mongodb://#{@primary.object['uri']}/?replicaSet=#{@topology.object['id']}"
+  @client = Mongo::MongoReplicaSetClient.from_uri(@mongodb_uri)
+end
+
 Given(/^some documents written to all data\-bearing members$/) do
   @coll.insert(TEST_DOCS, w: @n)
 end
@@ -267,7 +272,7 @@ When(/^I (stop|start|restart) the primary$/) do |operation|
   @primary.send(operation)
 end
 
-When(/^I (stop) (?:a|the) secondary/) do |operation|
+When(/^I (stop|start) (?:a|the) secondary/) do |operation|
   @arbiters.first.send(operation)
 end
 
@@ -295,7 +300,7 @@ When(/^I insert a document$/) do
 end
 
 When(/^I insert a document with retries$/) do
-  rescue_connection_failure_and_retry do
+  @result = rescue_connection_failure_and_retry do
     @coll.insert({a: @ordinal})
   end
 end
@@ -323,7 +328,7 @@ When(/^I query( with default read preference)?$/) do |arg1|
 end
 
 When(/^I query with retries$/) do
-  rescue_connection_failure_and_retry do
+  @result = rescue_connection_failure_and_retry do
     @coll.find_one({"a" => @ordinal})
   end
 end
@@ -331,6 +336,13 @@ end
 When(/^I query with read\-preference (\w+)$/) do |read_preference|
   read_preference_sym = read_preference.downcase.to_sym
   @result = with_rescue do
+    @coll.find_one({"a" => @ordinal}, read: read_preference_sym)
+  end
+end
+
+When(/^I query with retries and read\-preference (\w+)$/) do |read_preference|
+  read_preference_sym = read_preference.downcase.to_sym
+  @result = rescue_connection_failure_and_retry do
     @coll.find_one({"a" => @ordinal}, read: read_preference_sym)
   end
 end
