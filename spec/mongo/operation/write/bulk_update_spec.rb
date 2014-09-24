@@ -306,7 +306,9 @@ describe Mongo::Operation::Write::BulkUpdate do
 
       let(:other) { described_class.new(other_spec) }
 
-      let(:expected) { documents << other_docs }
+      let(:expected) do
+        documents + other_docs
+      end
 
       it 'merges the list of updates' do
         expect(op.merge!(other).spec[:updates]).to eq(expected)
