@@ -132,7 +132,10 @@ shared_examples 'a bulk write object' do
   end
 
   context '#update' do
-    let(:update_doc) { { :$set => { 'a' => 1 } } }
+
+    let(:update_doc) do
+      { :$set => { 'a' => 1 } }
+    end
 
     context 'when find is not first specified' do
 
@@ -179,9 +182,8 @@ shared_examples 'a bulk write object' do
       end
 
       let(:expected) do
-        docs.each do |doc|
-          doc['x'] = 1
-        end
+        [ { 'a' => 1, 'x' => 1 },
+          { 'a' => 1, 'x' => 1  } ]
       end
 
       before do
@@ -204,8 +206,7 @@ shared_examples 'a bulk write object' do
 
       it 'only applies the update to the matching documents' do
         bulk.execute
-        docs = authorized_collection.find.projection(_id: 0).to_a
-        expect(docs).to eq(expected)
+        expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
       end
     end
   end
@@ -244,7 +245,10 @@ shared_examples 'a bulk write object' do
       end
 
       context 'when not all top-level keys are $-operators' do
-        let(:update_doc) { { :a => 1 } }
+
+        let(:update_doc) do
+          { :a => 1 }
+        end
 
         it 'raises an exception' do
           expect do
@@ -302,7 +306,7 @@ shared_examples 'a bulk write object' do
   context '#replace_one' do
 
     let(:replacement) do
-      { :a => 3 }
+      { a: 3 }
     end
 
     context 'when find is not first specified' do
@@ -382,7 +386,6 @@ shared_examples 'a bulk write object' do
       it 'only applies the replacement to one matching document' do
         bulk.execute
         expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
-        # @todo: or do collection.distinct('a') == [1,3]
       end
     end
   end
@@ -415,7 +418,7 @@ shared_examples 'a bulk write object' do
           authorized_collection.find.remove_many
         end
 
-        it 'reports nModified as 0', if: write_command_enabled?  do
+        it 'reports nModified correctly', if: write_command_enabled?  do
           expect(bulk.execute['nModified']).to eq(0)
         end
 
@@ -452,7 +455,7 @@ shared_examples 'a bulk write object' do
           authorized_collection.find.remove_many
         end
 
-        it 'reports nModified as 2', if: write_command_enabled?  do
+        it 'reports nModified as multiple', if: write_command_enabled?  do
           expect(bulk.execute['nModified']).to eq(2)
         end
 
@@ -460,7 +463,7 @@ shared_examples 'a bulk write object' do
           expect(bulk.execute['nModified']).to eq(nil)
         end
 
-        it 'reports nMatched correctly' do
+        it 'reports nMatched as multiple' do
           expect(bulk.execute['nMatched']).to eq(2)
         end
 
@@ -475,6 +478,7 @@ shared_examples 'a bulk write object' do
         let(:big_string) { 'a' * max_bson_size }
 
         it 'succesfully upserts the doc' do
+          # @todo
           #bulk.find(:a => 1).upsert.update(:$set => { :x => big_string })
           #expect{ bulk.execute }.not_to raise_error
         end
@@ -498,7 +502,7 @@ shared_examples 'a bulk write object' do
           authorized_collection.find.remove_many
         end
 
-        it 'reports nModified as 0', if: write_command_enabled?  do
+        it 'reports nModified correctly', if: write_command_enabled?  do
           expect(bulk.execute['nModified']).to eq(0)
         end
 

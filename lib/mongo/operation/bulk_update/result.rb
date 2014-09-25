@@ -17,7 +17,7 @@ module Mongo
     module Write
       class BulkUpdate
   
-        # Defines custom behaviour of results when inserting.
+        # Defines custom behaviour of results when updating.
         #
         # @since 2.0.0
         class Result < Operation::Result
@@ -32,8 +32,8 @@ module Mongo
           # @since 2.0.0
           def n_upserted
             @replies.reduce(0) do |n, reply|
-              if reply.documents.first['upserted']
-                n += reply.documents.first['upserted'].size
+              if upsert?(reply)
+                n += 1
               else
                 n += 0
               end
@@ -53,7 +53,7 @@ module Mongo
               if upsert?(reply)
                 n += 0
               else
-                n += reply.documents.first['n']
+                n += reply.documents.first[N]
               end
             end
           end
@@ -79,7 +79,7 @@ module Mongo
           end
         end
 
-        # Defines custom behaviour of results when inserting.
+        # Defines custom behaviour of results when updating.
         # For server versions < 2.5.5 (that don't use write commands).
         #
         # @since 2.0.0
@@ -95,10 +95,10 @@ module Mongo
           # @since 2.0.0
           def n_upserted
             @replies.reduce(0) do |n, reply|
-              unless reply.documents.first['updatedExisting']
+              if upsert?(reply)
                 n += reply.documents.first[N]
               else
-                n += 0
+                n
               end
             end
           end
@@ -114,9 +114,9 @@ module Mongo
           def n_matched
             @replies.reduce(0) do |n, reply|
               if upsert?(reply)
-                n += 0
+                n
               else
-                n += reply.documents.first['n']
+                n += reply.documents.first[N]
               end
             end
           end
