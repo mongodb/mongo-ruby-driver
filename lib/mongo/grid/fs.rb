@@ -74,8 +74,8 @@ module Mongo
       # @since 2.0.0
       def initialize(database)
         @database = database
-        @chunks_collection = database[Grid::CHUNKS]
-        @files_collection = database[Grid::FILES]
+        @chunks_collection = database[Grid::File::Chunk::COLLECTION]
+        @files_collection = database[Grid::File::Metadata::COLLECTION]
         # @todo Create index here?
       end
     end

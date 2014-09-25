@@ -124,7 +124,7 @@ module Mongo
           #
           # @since 2.0.0
           def assemble(chunks)
-            chunks.reduce(''){ |data, chunk| data << chunk.document[:data].data }
+            chunks.reduce(''){ |data, chunk| data << chunk.data.data }
           end
 
           # Split the provided data into multiple chunks.

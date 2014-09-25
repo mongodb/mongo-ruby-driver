@@ -13,11 +13,11 @@ describe Mongo::Grid::FS do
     end
 
     it 'sets the files collection' do
-      expect(fs.files.name).to eq('fs_files')
+      expect(fs.files_collection.name).to eq('fs_files')
     end
 
     it 'sets the chunks collection' do
-      expect(fs.chunks.name).to eq('fs_chunks')
+      expect(fs.chunks_collection.name).to eq('fs_chunks')
     end
   end
 end
