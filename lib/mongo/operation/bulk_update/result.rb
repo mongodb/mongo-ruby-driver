@@ -22,6 +22,16 @@ module Mongo
         # @since 2.0.0
         class Result < Operation::Result
 
+          # The number of modified docs field in the result.
+          #
+          # @since 2.0.0
+          MODIFIED = 'nModified'.freeze
+
+          # The upserted docs field in the result.
+          #
+          # @since 2.0.0
+          UPSERTED = 'upserted'.freeze
+
           # Gets the number of documents upserted.
           #
           # @example Get the upserted count.
@@ -68,14 +78,14 @@ module Mongo
           # @since 2.0.0
           def n_modified
             @replies.reduce(0) do |n, reply|
-              n += reply.documents.first['nModified'] || 0
+              n += reply.documents.first[MODIFIED] || 0
             end
           end
 
           private
 
           def upsert?(reply)
-            reply.documents.first['upserted']
+            reply.documents.first[UPSERTED]
           end
         end
 
@@ -84,6 +94,11 @@ module Mongo
         #
         # @since 2.0.0
         class LegacyResult < Operation::Result
+
+          # The updated existing field in the result.
+          #
+          # @since 2.0.0
+          UPDATED_EXISTING = 'updatedExisting'.freeze
 
           # Gets the number of documents upserted.
           #
@@ -124,7 +139,7 @@ module Mongo
           private
 
           def upsert?(reply)
-            !reply.documents.first['updatedExisting']
+            !reply.documents.first[UPDATED_EXISTING]
           end
         end
       end
