@@ -30,6 +30,7 @@ group :testing do
   gem 'httparty'
   gem 'rest-client', '1.6.8'
   gem 'cucumber'
+  gem 'github-markup'
   if RUBY_VERSION > '1.8.7' || RUBY_PLATFORM =~ /java/
     gem 'coveralls', :require => false
   end
