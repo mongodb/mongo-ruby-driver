@@ -234,7 +234,7 @@ Given(/^a (standalone server|replica set|sharded cluster) with preset (\w+)$/) d
   @server = @topology
 end
 
-Given(/^a document written to all data\-bearing members$/) do
+Given(/^a document written to (?:the server|all data\-bearing members|the cluster)$/) do
   @result = with_rescue do
     @coll.insert({a: @ordinal}, w: @n)
   end
