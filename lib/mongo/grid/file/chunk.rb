@@ -31,9 +31,32 @@ module Mongo
         # @since 2.0.0
         DEFAULT_SIZE = (255 * 1024).freeze
 
-        # @return [ BSON::Document ] document The document stored in the chunks
-        #   collection in the database.
-        attr_reader :document
+        # @return [ BSON::Binary ] data The binary chunk data.
+        attr_reader :data
+
+        # @return [ BSON::ObjectId ] file_id The file's id.
+        attr_reader :file_id
+
+        # @return [ Integer ] position The chunk's position.
+        attr_reader :position
+
+        # Get the document for the chunk that would be inserted into the chunks
+        # collection.
+        #
+        # @example Get the chunk document.
+        #   chunk.document
+        #
+        # @return [ BSON::Document ] The chunk as a document.
+        #
+        # @since 2.0.0
+        def document
+          @document ||= BSON::Document.new(
+            :_id => BSON::ObjectId.new,
+            :files_id => file_id,
+            :n => position,
+            :data => data
+          )
+        end
 
         # Create the new chunk.
         #
@@ -42,16 +65,13 @@ module Mongo
         #
         # @param [ BSON::Binary ] data The binary chunk data.
         # @param [ BSON::ObjectId ] file_id The id of the file document.
-        # @param [ Integer ] sequence The placement of the chunk.
+        # @param [ Integer ] position The placement of the chunk.
         #
         # @since 2.0.0
-        def initialize(data, file_id, sequence)
-          @document = BSON::Document.new(
-            :_id => BSON::ObjectId.new,
-            :files_id => file_id,
-            :n => sequence,
-            :data => data
-          )
+        def initialize(data, file_id, position)
+          @data = data
+          @file_id = file_id
+          @position = position
         end
 
         # Conver the chunk to BSON for storage.
@@ -86,12 +106,12 @@ module Mongo
           #
           # @since 2.0.0
           def split(data, file_id)
-            chunks, index, sequence = [], 0, 0
+            chunks, index, position = [], 0, 0
             while index < data.length
               chunk = data.slice(index, DEFAULT_SIZE)
-              chunks.push(Chunk.new(BSON::Binary.new(chunk), file_id, sequence))
+              chunks.push(Chunk.new(BSON::Binary.new(chunk), file_id, position))
               index += chunk.length
-              sequence += 1
+              position += 1
             end
             chunks
           end
