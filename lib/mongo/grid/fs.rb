@@ -21,6 +21,11 @@ module Mongo
     # @since 2.0.0
     class FS
 
+      # The specification for the chunks index.
+      #
+      # @since 2.0.0
+      INDEX_SPEC = { :files_id => 1, :n => 1 }.freeze
+
       # @return [ Collection ] chunks_collection The chunks collection.
       attr_reader :chunks_collection
 
@@ -76,7 +81,7 @@ module Mongo
         @database = database
         @chunks_collection = database[Grid::File::Chunk::COLLECTION]
         @files_collection = database[Grid::File::Metadata::COLLECTION]
-        # @todo Create index here?
+        chunks_collection.indexes.ensure(INDEX_SPEC, :unique => true)
       end
     end
   end
