@@ -35,6 +35,54 @@ module Mongo
         #   chunk.
         attr_reader :document
 
+        # Get the chunk data.
+        #
+        # @example Get the chunk data.
+        #   chunk.data
+        #
+        # @return [ BSON::Binary ] The chunk data.
+        #
+        # @since 2.0.0
+        def data
+          document[:data]
+        end
+
+        # Get the chunk id.
+        #
+        # @example Get the chunk id.
+        #   chunk.id
+        #
+        # @return [ BSON::ObjectId ] The chunk id.
+        #
+        # @since 2.0.0
+        def id
+          document[:_id]
+        end
+
+        # Get the files id.
+        #
+        # @example Get the files id.
+        #   chunk.files_id
+        #
+        # @return [ BSON::ObjectId ] The files id.
+        #
+        # @since 2.0.0
+        def files_id
+          document[:files_id]
+        end
+
+        # Get the chunk position.
+        #
+        # @example Get the chunk position.
+        #   chunk.n
+        #
+        # @return [ Integer ] The chunk position.
+        #
+        # @since 2.0.0
+        def n
+          document[:n]
+        end
+
         # Create the new chunk.
         #
         # @example Create the chunk.

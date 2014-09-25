@@ -82,11 +82,11 @@ describe Mongo::Grid::File::Chunk do
     end
 
     it 'sets the document' do
-      expect(chunk.document[:data]).to eq(data)
+      expect(chunk.data).to eq(data)
     end
 
     it 'sets a default id' do
-      expect(chunk.document[:_id]).to be_a(BSON::ObjectId)
+      expect(chunk.id).to be_a(BSON::ObjectId)
     end
   end
 
@@ -130,11 +130,11 @@ describe Mongo::Grid::File::Chunk do
       end
 
       it 'sets the correct chunk position' do
-        expect(chunk.document[:n]).to eq(0)
+        expect(chunk.n).to eq(0)
       end
 
       it 'sets the correct chunk data' do
-        expect(chunk.document[:data]).to eq(data)
+        expect(chunk.data).to eq(data)
       end
     end
 
@@ -155,7 +155,7 @@ describe Mongo::Grid::File::Chunk do
       let(:assembled) do
         full_data = ''
         chunks.each do |chunk|
-          full_data << chunk.document[:data].data
+          full_data << chunk.data.data
         end
         full_data
       end
@@ -173,10 +173,10 @@ describe Mongo::Grid::File::Chunk do
       end
 
       it 'sets the correct chunk positions' do
-        expect(chunks[0].document[:n]).to eq(0)
-        expect(chunks[1].document[:n]).to eq(1)
-        expect(chunks[2].document[:n]).to eq(2)
-        expect(chunks[3].document[:n]).to eq(3)
+        expect(chunks[0].n).to eq(0)
+        expect(chunks[1].n).to eq(1)
+        expect(chunks[2].n).to eq(2)
+        expect(chunks[3].n).to eq(3)
       end
 
       it 'does to miss any bytes' do

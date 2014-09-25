@@ -12,35 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/grid/file/chunk'
-require 'mongo/grid/file/metadata'
-
 module Mongo
   module Grid
-
-    # A representation of a file in the database.
-    #
-    # @since 2.0.0
     class File
 
-      # @return [ Array<Chunk> ] chunks The file chunks.
-      attr_reader :chunks
-
-      # @return [ Metadata ] metadats The file metadata.
-      attr_reader :metadata
-
-      # Initialize the file.
-      #
-      # @example Create the file.
-      #   Grid::File.new(file, :filename => 'test.txt')
-      #
-      # @param [ IO ] file The file or IO object.
-      # @param [ BSON::Document ] The metadata document.
+      # Encapsulates behaviour around GridFS file metadata.
       #
       # @since 2.0.0
-      def initialize(file, document)
-        @chunks = Chunk.split(file)
-        @metadata = Metadata.new(document)
+      class Metadata
+
+        def initialize(document)
+
+        end
       end
     end
   end
