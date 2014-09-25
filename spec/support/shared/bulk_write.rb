@@ -120,4 +120,486 @@ shared_examples 'a bulk write object' do
     #   end
      end
   end
+
+  context '#find' do
+
+    context 'arguments' do
+
+      it 'raises an exception if no args are provided' do
+        expect{ bulk.find() }.to raise_exception
+      end
+    end
+  end
+
+  context '#update' do
+
+    let(:update_doc) do
+      { :$set => { 'a' => 1 } }
+    end
+
+    context 'when find is not first specified' do
+
+      it 'raises an exception' do
+        expect{ bulk.update(update) }.to raise_exception
+      end
+    end
+
+    context 'arguments' do
+
+      context 'when a valid update doc is provided' do
+
+        it 'does not raise an exception' do
+          expect do
+            bulk.find({}).update(update_doc)
+          end.not_to raise_exception
+        end
+      end
+
+      context 'when a non-hash argument is passed in' do
+
+        it 'raises an exception' do
+          expect do
+            bulk.find({}).update([])
+          end.to raise_exception
+        end
+      end
+
+      context 'when not all top-level keys are $-operators' do
+        let(:update_doc) { { :a => 1 } }
+
+        it 'raises an exception' do
+          expect do
+            bulk.find({}).update(update_doc)
+          end.to raise_exception
+        end
+      end
+    end
+
+    context 'multi updates' do
+
+      let(:docs) do
+        [ { 'a' => 1 }, { 'a' => 1 } ]
+      end
+
+      let(:expected) do
+        [ { 'a' => 1, 'x' => 1 },
+          { 'a' => 1, 'x' => 1  } ]
+      end
+
+      before do
+        authorized_collection.insert_many(docs)
+        bulk.find({}).update(:$set => { x: 1 })
+      end
+
+      after do
+        authorized_collection.find.remove_many
+      end
+
+      it 'applies the update to all matching documents' do
+        bulk.execute
+        expect(authorized_collection.find(x: 1).count).to eq(2)
+      end
+
+      it 'reports nMatched correctly' do
+        expect(bulk.execute['nMatched']).to eq(2)
+      end
+
+      it 'only applies the update to the matching documents' do
+        bulk.execute
+        expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+      end
+    end
+  end
+
+  context '#update_one' do
+
+    let(:update_doc) do
+      { :$set => { 'a' => 1 } }
+    end
+
+    context 'when find is not first specified' do
+
+      it 'raises an exception' do
+        expect{ bulk.update(update) }.to raise_exception
+      end
+    end
+
+    context 'arguments' do
+
+      context 'when a valid update doc is provided' do
+
+        it 'does not raise an exception' do
+          expect do
+            bulk.find({}).update_one(update_doc)
+          end.not_to raise_exception
+        end
+      end
+
+      context 'when an non-hash argument is passed in' do
+
+        it 'raises an exception' do
+          expect do
+            bulk.find({}).update_one([])
+          end.to raise_exception
+        end
+      end
+
+      context 'when not all top-level keys are $-operators' do
+
+        let(:update_doc) do
+          { :a => 1 }
+        end
+
+        it 'raises an exception' do
+          expect do
+            bulk.find({}).update_one(update_doc)
+          end.to raise_exception
+        end
+      end
+    end
+
+    context 'single update' do
+
+      let(:docs) do
+        [ { 'a' => 1 }, { 'a' => 2 } ]
+      end
+
+      let(:expected) do
+        [ { 'a' => 1, 'x' => 1 } ]
+      end
+
+      before do
+        authorized_collection.insert_many(docs)
+        bulk.find(a: 1).update(:$set => { x: 1 })
+      end
+
+      after do
+        authorized_collection.find.remove_many
+      end
+
+      it 'applies the update to only one matching document' do
+        bulk.execute
+        expect(authorized_collection.find(x: 1).count).to eq(1)
+      end
+
+      it 'reports nMatched correctly' do
+        expect(bulk.execute['nMatched']).to eq(1)
+      end
+
+      it 'only applies the update to one matching document' do
+        bulk.execute
+        docs = authorized_collection.find(x: 1).projection(_id: 0).to_a
+        expect(docs).to eq(expected)
+      end
+    end
+  end
+
+  context '#replace' do
+
+    it 'does not exist' do
+      expect do
+        bulk.find({}).replace(:x => 1)
+      end.to raise_exception
+    end
+  end
+
+  context '#replace_one' do
+
+    let(:replacement) do
+      { a: 3 }
+    end
+
+    context 'when find is not first specified' do
+
+      it 'raises an exception' do
+        expect{ bulk.replace_one(replacement) }.to raise_exception
+      end
+    end
+
+    context 'arguments' do
+
+      context 'when a valid replacement doc is provided' do
+
+        it 'does not raise an exception' do
+          expect do
+            bulk.find({}).replace_one(replacement)
+          end.not_to raise_exception
+        end
+      end
+
+      context 'when an non-hash argument is passed in' do
+
+        it 'raises an exception' do
+          expect do
+            bulk.find({}).replace_one([])
+          end.to raise_exception
+        end
+      end
+
+      context 'when there are $-operator top-level keys' do
+
+        let(:replacement) do
+          { :$set => { a: 3 } }
+        end
+
+        it 'raises an exception' do
+
+          expect do
+            bulk.find({}).replace_one(replacement)
+          end.to raise_exception
+        end
+      end
+    end
+
+    context 'single replace' do
+
+      let(:replacement) do
+        { :a => 3 }
+      end
+
+      let(:docs) do
+        [ { a: 1 }, { a: 1 } ]
+      end
+
+      let(:expected) do
+        [ { 'a' => 3 }, { 'a' => 1 } ]
+      end
+
+      before do
+        authorized_collection.insert_many(docs)
+        bulk.find(a: 1).replace_one(replacement)
+      end
+
+      after do
+        authorized_collection.find.remove_many
+      end
+
+      it 'applies the replacement to only one matching document' do
+        bulk.execute
+        expect(authorized_collection.find(replacement).count).to eq(1)
+      end
+
+      it 'reports nMatched correctly' do
+        expect(bulk.execute['nMatched']).to eq(1)
+      end
+
+      it 'only applies the replacement to one matching document' do
+        bulk.execute
+        expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+      end
+    end
+  end
+
+  context '#upsert' do
+
+    context 'when find is not first specified' do
+
+      it 'raises an exception' do
+        expect do
+          bulk.upsert
+        end.to raise_exception
+      end
+    end
+
+    context '#upsert.update' do
+
+      let(:expected) do
+        [ { 'a' => 2, 'x' => 2 } ]
+      end
+
+      context 'when #upsert.update is chained with other updates' do
+
+        before do
+          bulk.find(a: 1).update(:$set => { x: 1 })
+          bulk.find(a: 2).upsert.update(:$set => { x: 2 })
+        end
+
+        after do
+          authorized_collection.find.remove_many
+        end
+
+        it 'reports nModified correctly', if: write_command_enabled?  do
+          expect(bulk.execute['nModified']).to eq(0)
+        end
+
+        it 'reports nModified as nil', unless: write_command_enabled?  do
+          expect(bulk.execute['nModified']).to eq(nil)
+        end
+
+        it 'reports nUpserted correctly' do
+          expect(bulk.execute['nUpserted']).to eq(1)
+        end
+
+        it 'only results in one single upserted doc' do
+          bulk.execute
+          expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+        end
+      end
+
+      context 'when the selector matches multiple documents' do
+
+        let(:docs) do
+          [ { a: 1 }, { a: 1 } ]
+        end
+
+        let(:expected) do
+          [ { 'a' => 1, 'x' => 1}, { 'a' => 1, 'x' => 1} ]
+        end
+
+        before do
+          authorized_collection.insert_many(docs)
+          bulk.find(a: 1).upsert.update(:$set => { x: 1 })
+        end
+
+        after do
+          authorized_collection.find.remove_many
+        end
+
+        it 'reports nModified as multiple', if: write_command_enabled?  do
+          expect(bulk.execute['nModified']).to eq(2)
+        end
+
+        it 'reports nModified as nil', unless: write_command_enabled?  do
+          expect(bulk.execute['nModified']).to eq(nil)
+        end
+
+        it 'reports nMatched as multiple' do
+          expect(bulk.execute['nMatched']).to eq(2)
+        end
+
+        it 'applies the update to all matching documents' do
+          bulk.execute
+          expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+        end
+      end
+
+      context 'when the document to upsert is 16MB' do
+        let(:max_bson_size) { 4 * 1024 * 1024 } # @todo: minus 30 bytes
+        let(:big_string) { 'a' * max_bson_size }
+
+        it 'succesfully upserts the doc' do
+          # @todo
+          #bulk.find(:a => 1).upsert.update(:$set => { :x => big_string })
+          #expect{ bulk.execute }.not_to raise_error
+        end
+      end
+    end
+
+    context '#upsert.update_one' do
+
+      let(:expected) do
+        [ { 'a' => 2, 'x' => 2 } ]
+      end
+
+      context 'when upsert.update_one is chained with other update_one ops' do
+
+        before do
+          bulk.find(:a => 1).update_one(:$set => { :x => 1 })
+          bulk.find(:a => 2).upsert.update_one(:$set => { :x => 2 })
+        end
+
+        after do
+          authorized_collection.find.remove_many
+        end
+
+        it 'reports nModified correctly', if: write_command_enabled?  do
+          expect(bulk.execute['nModified']).to eq(0)
+        end
+
+        it 'reports nModified as nil', unless: write_command_enabled?  do
+          expect(bulk.execute['nModified']).to eq(nil)
+        end
+
+        it 'reports nUpserted correctly' do
+          expect(bulk.execute['nUpserted']).to eq(1)
+        end
+
+        it 'reports nMatched correctly' do
+          expect(bulk.execute['nMatched']).to eq(0)
+        end
+
+        it 'applies the correct writes' do
+          bulk.execute
+          expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+        end
+      end
+    end
+
+    context '#upsert.replace_one' do
+
+      context 'when upsert.replace_one is chained with other replace_one ops' do
+
+        let(:expected) do
+          [ { 'x' => 2 } ]
+        end
+
+        before do
+          bulk.find(:a => 1).replace_one(:x => 1)
+          bulk.find(:a => 2).upsert.replace_one(:x => 2)
+        end
+
+        after do
+          authorized_collection.find.remove_many
+        end
+
+        it 'reports nModified as 0', if: write_command_enabled?  do
+          expect(bulk.execute['nModified']).to eq(0)
+        end
+
+        it 'reports nModified as nil', unless: write_command_enabled?  do
+          expect(bulk.execute['nModified']).to eq(nil)
+        end
+
+        it 'reports nUpserted correctly' do
+          expect(bulk.execute['nUpserted']).to eq(1)
+        end
+
+        it 'reports nMatched correctly' do
+          expect(bulk.execute['nMatched']).to eq(0)
+        end
+
+        it 'applies the correct writes' do
+          bulk.execute
+          expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+        end
+      end
+
+      context 'one single document replacement' do
+
+        let(:docs) do
+          [ { 'a' => 1 }, { 'a' => 2 } ]
+        end
+
+        let(:expected) do
+          [ { 'x' => 1 }, {'a' => 2 } ]
+        end
+
+        before do
+          authorized_collection.insert_many(docs)
+          bulk.find(:a => 1).upsert.replace_one(:x => 1)
+        end
+
+        after do
+          authorized_collection.find.remove_many
+        end
+
+        it 'reports nUpserted correctly' do
+          expect(bulk.execute['nUpserted']).to eq(0)
+        end
+
+        it 'reports nMatched correctly' do
+          expect(bulk.execute['nMatched']).to eq(1)
+        end
+
+        it 'reports nModified correctly' do
+          expect(bulk.execute['nMatched']).to eq(1)
+        end
+
+        it 'applies the correct writes' do
+          bulk.execute
+          expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+        end
+      end
+    end
+  end
 end
