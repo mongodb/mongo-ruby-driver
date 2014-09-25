@@ -168,6 +168,17 @@ def occurs_on(member_type, status_type = 'opcounters', op_type = 'query')
   assert_equal(member_type, nodes.first.last[:member_type])
 end
 
+def members_by_type(member_type)
+  case member_type
+    when 'primary'
+      return [@primary]
+    when 'secondary'
+      return @secondaries
+    when 'arbiter'
+      return @arbiters
+  end
+end
+
 def await_replication(coll)
   coll.insert({a: 0}, w: @n)
 end
@@ -229,9 +240,10 @@ Given(/^a document written to all data\-bearing members$/) do
   end
 end
 
-Given(/^a replica-set client with a seed from (?:a|the) (primary)$/) do |member_type|
-  mongodb_uri = "mongodb://#{@primary.object['uri']}/?replicaSet=#{@topology.object['id']}"
-  @client = Mongo::MongoReplicaSetClient.from_uri(@mongodb_uri)
+Given(/^a replica-set client with a seed from (?:a|the) (primary|secondary|arbiter)$/) do |member_type|
+  seed = members_by_type(member_type).first.object['uri']
+  mongodb_uri = "mongodb://#{seed}/?replicaSet=#{@topology.object['id']}"
+  @client = Mongo::MongoReplicaSetClient.from_uri(mongodb_uri)
 end
 
 Given(/^some documents written to all data\-bearing members$/) do
@@ -250,13 +262,13 @@ Given(/^a geo (geoHaystack) index$/) do |geo_index_type|
   @coll.create_index({ coordinates: geo_index_type, state: 1 }, { bucketSize: 1 });
 end
 
-When(/^there is no primary$/) do
-  @arbiters.first.stop
+When(/^there is no primary$/) do # review - configuration specific
+  @arbiters.each{|server| server.stop}
   @primary.stop
 end
 
 When(/^there are no secondaries$/) do
-  @secondaries.first.stop
+  @secondaries.each{|server| server.stop}
 end
 
 When(/^I (stop|start|restart) the server$/) do |operation|
@@ -267,17 +279,8 @@ When(/^I command the primary to step down$/) do
   assert(@primary.stepdown.ok)
 end
 
-
-When(/^I (stop|start|restart) the primary$/) do |operation|
-  @primary.send(operation)
-end
-
-When(/^I (stop|start) (?:a|the) secondary/) do |operation|
-  @arbiters.first.send(operation)
-end
-
-When(/^I (stop) (?:a|the) arbiter$/) do |operation|
-  @arbiters.first.send(operation)
+When(/^I (stop|start|restart) (?:a|the) (primary|secondary|arbiter)$/) do |operation, member_type| # review - configuration specific
+  members_by_type(member_type).first.send(operation)
 end
 
 When(/^I (stop|start|restart) router (A|B)$/) do |operation, router|
@@ -367,7 +370,6 @@ When(/^I get (\d+) docs$/) do |count|
 end
 
 When(/^I close the cursor$/) do
-  secondary = Mongo::MongoClient.from_uri(@secondaries.first.object['mongodb_uri'])
   @result = with_rescue do
     @cursor.close
   end
@@ -452,7 +454,6 @@ end
 
 Then(/^the insert fails$/) do
   assert(@result.is_a?(Exception))
-  @ordinal += 1
 end
 
 Then(/^the write operation suceeeds$/) do
@@ -467,7 +468,6 @@ end
 
 Then(/^the bulk write operation fails$/) do
   assert(@result.is_a?(Mongo::BulkWriteError))
-  @ordinal += 1
 end
 
 Then(/^the bulk write operation succeeds$/) do
