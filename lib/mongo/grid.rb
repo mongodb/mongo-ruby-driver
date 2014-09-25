@@ -22,16 +22,6 @@ module Mongo
   # @since 2.0.0
   module Grid
 
-    # Name of the chunks collection.
-    #
-    # @since 2.0.0
-    CHUNKS = 'fs_chunks'.freeze
-
-    # Default size for chunks of data.
-    #
-    # @since 2.0.0
-    DEFAULT_CHUNK_SIZE = (255 * 1024).freeze
-
     # Default content type for stored files.
     #
     # @since 2.0.0

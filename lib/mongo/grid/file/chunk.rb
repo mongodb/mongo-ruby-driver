@@ -21,6 +21,16 @@ module Mongo
       # @since 2.0.0
       class Chunk
 
+        # Name of the chunks collection.
+        #
+        # @since 2.0.0
+        COLLECTION = 'fs_chunks'.freeze
+
+        # Default size for chunks of data.
+        #
+        # @since 2.0.0
+        DEFAULT_SIZE = (255 * 1024).freeze
+
         # @return [ BSON::Document ] document The document stored in the chunks
         #   collection in the database.
         attr_reader :document
@@ -69,13 +79,21 @@ module Mongo
           # @example Split the data into chunks.
           #   Chunks.split(data)
           #
-          # @param [ String ] data The raw data.
+          # @param [ String ] data The raw bytes.
+          # @param [ BSON::ObjectId ] file_id The file id.
           #
           # @return [ Array<Chunk> ] The chunks of the data.
           #
           # @since 2.0.0
-          def split(data)
-
+          def split(data, file_id)
+            chunks, index, sequence = [], 0, 0
+            while index < data.length
+              chunk = data.slice(index, DEFAULT_SIZE)
+              chunks.push(Chunk.new(BSON::Binary.new(chunk), file_id, sequence))
+              index += chunk.length
+              sequence += 1
+            end
+            chunks
           end
         end
       end
