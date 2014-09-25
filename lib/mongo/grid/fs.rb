@@ -46,12 +46,9 @@ module Mongo
       def find(selector = nil)
         file = files.find(selector).first
         chunks = chunks.find(:files_id => file[:_id]).sort(:n => 1)
-
-        # @note We call +to_a+ on chunks to force the cursor to flush all the
-        #   documents out into an array for us.
-        Grid::File.open(file[:filename], Grid::File::READ) do |f|
+        Grid::File.new(file[:filename]) do |f|
+          f.metadata = file
           f.chunks = chunks.to_a
-          f.document = file
         end
       end
 
@@ -66,7 +63,7 @@ module Mongo
       #
       # @since 2.0.0
       def insert_one(file)
-        files.insert_one(file.document)
+        files.insert_one(file.metadata)
         chunks.insert_many(file.chunks)
       end
 
@@ -82,6 +79,7 @@ module Mongo
         @database = database
         @chunks = database[Grid::CHUNKS]
         @files = database[Grid::FILES]
+        # @todo Create index here?
       end
     end
   end

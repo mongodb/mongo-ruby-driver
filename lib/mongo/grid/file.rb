@@ -12,22 +12,61 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/grid/file/chunk'
+
 module Mongo
   module Grid
+
+    # A representation of a file in the database.
+    #
+    # @since 2.0.0
     class File
 
-      # The constant for opening files for read.
+      # @return [ String ] data The file data.
+      attr_reader :data
+
+      # @return [ String ] filename The name of the file.
+      attr_reader :filename
+
+      # @return [ BSON::Document ] metadat The file metadata.
+      attr_accessor :metadata
+
+      # Initialize the file.
+      #
+      # @example Create the file.
+      #   Grid::File.new('test.txt')
+      #
+      # @param [ String ] filename The name of the file.
       #
       # @since 2.0.0
-      READ = 'r'.freeze
+      def initialize(filename)
+        @filename = filename
+        yield(self) if block_given?
+      end
 
-      # The constant for opening files for write.
-      #
-      # @since 2.0.0
-      WRITE = 'w'.freeze
+      def chunks=(chunks)
+        @chunks = chunks
+        assemble!
+      end
 
-      def initialize
+      def data=(data)
+        @data = data
+        split!
+      end
 
+      private
+
+      def assemble!
+        # Put the chunks together and set the data.
+      end
+
+      def describe!
+        # Generate the file metadata document.
+      end
+
+      def split!
+        # Split the data and set the chunks.
+        describe!
       end
     end
   end
