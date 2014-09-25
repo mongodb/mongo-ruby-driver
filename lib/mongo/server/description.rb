@@ -224,7 +224,7 @@ module Mongo
       #
       # @since 2.0.0
       def max_bson_object_size
-        config[MAX_BSON_OBJECT_SIZE]
+        config[MAX_BSON_OBJECT_SIZE].to_int if config[MAX_BSON_OBJECT_SIZE]
       end
 
       # Get the max message size for this server version.
@@ -236,7 +236,7 @@ module Mongo
       #
       # @since 2.0.0
       def max_message_size
-        config[MAX_MESSAGE_BYTES]
+        config[MAX_MESSAGE_BYTES].to_int if config[MAX_MESSAGE_BYTES]
       end
 
       # Get the maximum batch size for writes.
@@ -248,7 +248,8 @@ module Mongo
       #
       # @since 2.0.0
       def max_write_batch_size
-        config[MAX_WRITE_BATCH_SIZE] || DEFAULT_MAX_WRITE_BATCH_SIZE
+        config[MAX_WRITE_BATCH_SIZE] ? config[MAX_WRITE_BATCH_SIZE].to_int :
+                                       DEFAULT_MAX_WRITE_BATCH_SIZE
       end
 
       # Get the maximum wire version.
@@ -260,7 +261,8 @@ module Mongo
       #
       # @since 2.0.0
       def max_wire_version
-        config[MAX_WIRE_VERSION] || LEGACY_WIRE_VERSION
+        config[MAX_WIRE_VERSION] ? config[MAX_WIRE_VERSION].to_int :
+                                   LEGACY_WIRE_VERSION
       end
 
       # Get the minimum wire version.
@@ -272,7 +274,8 @@ module Mongo
       #
       # @since 2.0.0
       def min_wire_version
-        config[MIN_WIRE_VERSION] || LEGACY_WIRE_VERSION
+        config[MIN_WIRE_VERSION] ? config[MIN_WIRE_VERSION].to_int :
+                                   LEGACY_WIRE_VERSION
       end
 
       # Is the server a mongos?
