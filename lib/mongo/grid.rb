@@ -14,22 +14,3 @@
 
 require 'mongo/grid/file'
 require 'mongo/grid/fs'
-
-module Mongo
-
-  # Provides behaviour around GridFS related operations.
-  #
-  # @since 2.0.0
-  module Grid
-
-    # Default content type for stored files.
-    #
-    # @since 2.0.0
-    DEFAULT_CONTENT_TYPE = 'binary/octet-stream'.freeze
-
-    # Name of the files collection.
-    #
-    # @since 2.0.0
-    FILES = 'fs_files'.freeze
-  end
-end

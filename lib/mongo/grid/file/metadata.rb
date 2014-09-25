@@ -21,8 +21,100 @@ module Mongo
       # @since 2.0.0
       class Metadata
 
-        def initialize(document)
+        # Name of the files collection.
+        #
+        # @since 2.0.0
+        COLLECTION = 'fs_files'.freeze
 
+        # Default content type for stored files.
+        #
+        # @since 2.0.0
+        DEFAULT_CONTENT_TYPE = 'binary/octet-stream'.freeze
+
+        # @return [ BSON::Document ] document The file metadata document.
+        attr_reader :document
+
+        # Get the metadata chunk size.
+        #
+        # @example Get the chunk size.
+        #   metadata.chunk_size
+        #
+        # @return [ Integer ] The chunksize in bytes.
+        #
+        # @since 2.0.0
+        def chunk_size
+          document[:chunkSize]
+        end
+
+        # Get the metadata content type.
+        #
+        # @example Get the content type.
+        #   metadata.content_type
+        #
+        # @return [ String ] The content type.
+        #
+        # @since 2.0.0
+        def content_type
+          document[:contentType]
+        end
+
+        # Get the metadata id.
+        #
+        # @example Get the metadata id.
+        #   metadata.id
+        #
+        # @return [ BSON::ObjectId ] The metadata id.
+        #
+        # @since 2.0.0
+        def id
+          document[:_id]
+        end
+
+        # Create the new metadata document.
+        #
+        # @example Create the new metadata document.
+        #   Metadata.new(:filename => 'test.txt')
+        #
+        # @param [ BSON::Document ] document The document to create from.
+        #
+        # @since 2.0.0
+        def initialize(document)
+          @document = default_document.merge(document)
+        end
+
+        # Get the md5 hash.
+        #
+        # @example Get the md5 hash.
+        #   metadata.md5
+        #
+        # @return [ String ] The md5 hash as a string.
+        #
+        # @since 2.0.0
+        def md5
+          document[:md5]
+        end
+
+        # Get the upload date.
+        #
+        # @example Get the upload date.
+        #   metadata.upload_date
+        #
+        # @return [ Time ] The upload date.
+        #
+        # @since 2.0.0
+        def upload_date
+          document[:uploadDate]
+        end
+
+        private
+
+        def default_document
+          BSON::Document.new(
+            :_id => BSON::ObjectId.new,
+            :chunkSize => Chunk::DEFAULT_SIZE,
+            :uploadDate => Time.now.utc,
+            :contentType => DEFAULT_CONTENT_TYPE
+          )
         end
       end
     end

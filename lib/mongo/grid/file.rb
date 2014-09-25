@@ -26,21 +26,33 @@ module Mongo
       # @return [ Array<Chunk> ] chunks The file chunks.
       attr_reader :chunks
 
-      # @return [ Metadata ] metadats The file metadata.
+      # @return [ Metadata ] metadata The file metadata.
       attr_reader :metadata
 
       # Initialize the file.
       #
       # @example Create the file.
-      #   Grid::File.new(file, :filename => 'test.txt')
+      #   Grid::File.new(data, :filename => 'test.txt')
       #
-      # @param [ IO ] file The file or IO object.
+      # @param [ IO, Array<Chunk> ] data The file or IO object.
       # @param [ BSON::Document ] The metadata document.
       #
       # @since 2.0.0
-      def initialize(file, document)
-        @chunks = Chunk.split(file)
-        @metadata = Metadata.new(document)
+      def initialize(data, document)
+        @metadata = Metadata.new({ :length => data.length }.merge(document))
+        initialize_chunks(data)
+      end
+
+      private
+
+      def initialize_chunks(data)
+        if data.is_a?(Array)
+          @chunks = data
+          @data = Chunk.assemble(data)
+        else
+          @chunks = Chunk.split(data, metadata.id)
+          @data = data
+        end
       end
     end
   end
