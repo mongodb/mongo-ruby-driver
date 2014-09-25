@@ -196,7 +196,7 @@ describe Mongo::Database do
       end
 
       let(:from_db) do
-        database.fs.find(:filename => 'test.txt')
+        database.fs.find_one(:filename => 'test.txt')
       end
 
       it 'returns the assembled file from the db' do

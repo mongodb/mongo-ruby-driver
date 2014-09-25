@@ -1,4 +1,3 @@
-
 # Copyright (C) 2009-2014 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -38,17 +37,17 @@ module Mongo
       # Find a file in the GridFS.
       #
       # @example Find a file by it's id.
-      #   fs.find(_id: id)
+      #   fs.find_one(_id: id)
       #
       # @example Find a file by it's filename.
-      #   fs.find(filename: 'test.txt')
+      #   fs.find_one(filename: 'test.txt')
       #
       # @param [ Hash ] selector The selector.
       #
       # @return [ Grid::File ] The file.
       #
       # @since 2.0.0
-      def find(selector = nil)
+      def find_one(selector = nil)
         metadata = files_collection.find(selector).first
         chunks = chunks_collection.find(:files_id => metadata[:_id]).sort(:n => 1)
         Grid::File.new(chunks.to_a, metadata)

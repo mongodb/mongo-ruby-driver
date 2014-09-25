@@ -29,7 +29,7 @@ describe Mongo::Grid::FS do
     end
   end
 
-  describe '#find' do
+  describe '#find_one' do
 
     let(:fs) do
       described_class.new(authorized_client.database)
@@ -49,7 +49,7 @@ describe Mongo::Grid::FS do
     end
 
     let(:from_db) do
-      fs.find(:filename => 'test.txt')
+      fs.find_one(:filename => 'test.txt')
     end
 
     it 'returns the assembled file from the db' do
@@ -79,7 +79,7 @@ describe Mongo::Grid::FS do
       end
 
       let(:from_db) do
-        fs.find(:filename => 'test.txt')
+        fs.find_one(:filename => 'test.txt')
       end
 
       it 'inserts the file into the database' do
