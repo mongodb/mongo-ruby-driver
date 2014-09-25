@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/operation/bulk_delete/result'
+
 module Mongo
   module Operation
     module Write
@@ -92,13 +94,13 @@ module Mongo
         def execute_message(context)
           replies = messages(context).map do |m|
             context.with_connection do |connection|
-              result = Result.new(connection.dispatch([ m, gle ].compact))
+              result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
               result.validate! if ordered?
               result.reply
             end
           end
           replies = nil if replies.compact.empty?
-          write_concern.get_last_error ? Result.new(replies).validate! :
+          write_concern.get_last_error ? LegacyResult.new(replies).validate! :
                                          Result.new(replies)
         end
 

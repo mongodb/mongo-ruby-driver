@@ -601,5 +601,112 @@ shared_examples 'a bulk write object' do
         end
       end
     end
+
+    context '#remove' do
+
+      context 'when find is not first specified' do
+
+        it 'raises an exception' do
+          expect do
+            bulk.remove
+          end.to raise_exception
+        end
+      end
+
+      context 'empty query selector' do
+
+        let(:docs) do
+          [ { a: 1 }, { a: 2 } ]
+        end
+
+        before do
+          authorized_collection.insert_many(docs)
+          bulk.find({}).remove
+        end
+
+        after do
+          authorized_collection.find.remove_many
+        end
+
+        it 'reports nRemoved correctly' do
+          expect(bulk.execute['nRemoved']).to eq(2)
+        end
+
+        it 'removes all documents' do
+          bulk.execute
+          expect(authorized_collection.find.to_a).to be_empty
+        end
+      end
+
+      context 'non-empty query selector' do
+
+        let(:docs) do
+          [ { a: 1 }, { a: 2 } ]
+        end
+
+        let(:expected) do
+          [ { 'a' => 2 } ]
+        end
+
+        before do
+          authorized_collection.insert_many(docs)
+          bulk.find(:a => 1).remove
+        end
+
+        after do
+          authorized_collection.find.remove_many
+        end
+
+        it 'reports nRemoved correctly' do
+          expect(bulk.execute['nRemoved']).to eq(1)
+        end
+
+        it 'removes only matching documents' do
+          bulk.execute
+          expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+        end
+      end
+    end
+
+    context '#remove_one' do
+
+      context 'when find is not first specified' do
+
+        it 'raises an exception' do
+          expect do
+            bulk.remove_one
+          end.to raise_exception
+        end
+      end
+
+      context 'multiple matching documents' do
+
+        let(:docs) do
+          [ { a: 1 }, { a: 1 } ]
+        end
+
+         let(:expected) do
+          [ { 'a' => 1 } ]
+        end
+
+        before do
+          authorized_collection.insert_many(docs)
+          bulk.find(:a => 1).remove_one
+        end
+
+        after do
+          authorized_collection.find.remove_many
+        end
+
+        it 'reports nRemoved correctly' do
+          expect(bulk.execute['nRemoved']).to eq(1)
+        end
+
+        it 'removes only matching documents' do
+          bulk.execute
+          expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+        end
+      end
+    end
   end
 end
