@@ -34,6 +34,11 @@ module Mongo
         # @return [ BSON::Document ] document The file metadata document.
         attr_reader :document
 
+        def ==(other)
+          return false unless other.is_a?(Metadata)
+          document == other.document
+        end
+
         # Get the metadata chunk size.
         #
         # @example Get the chunk size.
@@ -56,6 +61,16 @@ module Mongo
         # @since 2.0.0
         def content_type
           document[:contentType]
+        end
+
+        # Get the metadata filename.
+        #
+        # @example Get the filename.
+        #   metadata.filename
+        #
+        # @return [ String ] The filename.
+        def filename
+          document[:filename]
         end
 
         # Get the metadata id.
@@ -92,6 +107,20 @@ module Mongo
         # @since 2.0.0
         def md5
           document[:md5]
+        end
+
+        # Conver the metadata to BSON for storage.
+        #
+        # @example Convert the metadata to BSON.
+        #   metadata.to_bson
+        #
+        # @param [ String ] encoded The encoded data to append to.
+        #
+        # @return [ String ] The raw BSON data.
+        #
+        # @since 2.0.0
+        def to_bson(encoded = ''.force_encoding(BSON::BINARY))
+          document.to_bson(encoded)
         end
 
         # Get the upload date.

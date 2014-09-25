@@ -35,6 +35,11 @@ module Mongo
         #   chunk.
         attr_reader :document
 
+        def ==(other)
+          return false unless other.is_a?(Chunk)
+          document == other.document
+        end
+
         # Get the chunk data.
         #
         # @example Get the chunk data.

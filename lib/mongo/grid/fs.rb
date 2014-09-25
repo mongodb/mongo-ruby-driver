@@ -45,7 +45,7 @@ module Mongo
       # @since 2.0.0
       def find(selector = nil)
         metadata = files_collection.find(selector).first
-        chunks = chunks_collection.find(:files_id => file[:_id]).sort(:n => 1)
+        chunks = chunks_collection.find(:files_id => metadata[:_id]).sort(:n => 1)
         Grid::File.new(chunks.to_a, metadata)
       end
 

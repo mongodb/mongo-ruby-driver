@@ -22,6 +22,10 @@ module Mongo
     #
     # @since 2.0.0
     class File
+      extend Forwardable
+
+      # Delegate to metadata for convenience.
+      def_delegators :metadata, :chunk_size, :content_type, :filename, :id, :md5, :upload_date
 
       # @return [ Array<Chunk> ] chunks The file chunks.
       attr_reader :chunks
@@ -31,6 +35,11 @@ module Mongo
 
       # @return [ Metadata ] metadata The file metadata.
       attr_reader :metadata
+
+      def ==(other)
+        return false unless other.is_a?(File)
+        chunks == other.chunks && data == other.data && metadata == other.metadata
+      end
 
       # Initialize the file.
       #
