@@ -44,7 +44,7 @@ describe Mongo::Grid::File::Chunk do
   describe '#document' do
 
     let(:chunk) do
-      described_class.new(data, :files_id => file_id, :n => 5)
+      described_class.new(:data => data, :files_id => file_id, :n => 5)
     end
 
     let(:document) do
@@ -77,31 +77,23 @@ describe Mongo::Grid::File::Chunk do
 
   describe '#initialize' do
 
-    let(:options) do
-      { :files_id => file_id, :n => 5 }
-    end
-
     let(:chunk) do
-      described_class.new(data, options)
+      described_class.new(:data => data, :files_id => file_id, :n => 5)
     end
 
-    it 'sets the data' do
-      expect(chunk.data).to eq(data)
+    it 'sets the document' do
+      expect(chunk.document[:data]).to eq(data)
     end
 
-    it 'sets the options' do
-      expect(chunk.options).to eq(options)
+    it 'sets a default id' do
+      expect(chunk.document[:_id]).to be_a(BSON::ObjectId)
     end
   end
 
   describe '#to_bson' do
 
-    let(:options) do
-      { :files_id => file_id, :n => 5 }
-    end
-
     let(:chunk) do
-      described_class.new(data, options)
+      described_class.new(:data => data, :files_id => file_id, :n => 5)
     end
 
     let(:document) do
@@ -138,11 +130,11 @@ describe Mongo::Grid::File::Chunk do
       end
 
       it 'sets the correct chunk position' do
-        expect(chunk.options[:n]).to eq(0)
+        expect(chunk.document[:n]).to eq(0)
       end
 
       it 'sets the correct chunk data' do
-        expect(chunk.data).to eq(data)
+        expect(chunk.document[:data]).to eq(data)
       end
     end
 
@@ -163,7 +155,7 @@ describe Mongo::Grid::File::Chunk do
       let(:assembled) do
         full_data = ''
         chunks.each do |chunk|
-          full_data << chunk.data.data
+          full_data << chunk.document[:data].data
         end
         full_data
       end
@@ -181,10 +173,10 @@ describe Mongo::Grid::File::Chunk do
       end
 
       it 'sets the correct chunk positions' do
-        expect(chunks[0].options[:n]).to eq(0)
-        expect(chunks[1].options[:n]).to eq(1)
-        expect(chunks[2].options[:n]).to eq(2)
-        expect(chunks[3].options[:n]).to eq(3)
+        expect(chunks[0].document[:n]).to eq(0)
+        expect(chunks[1].document[:n]).to eq(1)
+        expect(chunks[2].document[:n]).to eq(2)
+        expect(chunks[3].document[:n]).to eq(3)
       end
 
       it 'does to miss any bytes' do

@@ -31,45 +31,21 @@ module Mongo
         # @since 2.0.0
         DEFAULT_SIZE = (255 * 1024).freeze
 
-        # @return [ BSON::Binary ] data The binary chunk data.
-        attr_reader :data
-
-        # @return [ Hash ] options The chunk options.
-        attr_reader :options
-
-        # Get the document for the chunk that would be inserted into the chunks
-        # collection.
-        #
-        # @example Get the chunk document.
-        #   chunk.document
-        #
-        # @return [ BSON::Document ] The chunk as a document.
-        #
-        # @since 2.0.0
-        def document
-          @document ||= BSON::Document.new(
-            :_id => options[:_id] || BSON::ObjectId.new,
-            :files_id => options[:files_id],
-            :n => options[:n],
-            :data => data
-          )
-        end
+        # @return [ BSON::Document ] document The document to store for the
+        #   chunk.
+        attr_reader :document
 
         # Create the new chunk.
         #
         # @example Create the chunk.
-        #   Chunk.new('testing', :n => 1)
+        #   Chunk.new(document)
         #
-        # @param [ BSON::Binary ] data The binary chunk data.
-        # @param [ Hash ] options The chunk options.
-        #
-        # @options options [ BSON::ObjectId ] :file_id The id of the file document.
-        # @options options [ Integer ] :position The placement of the chunk.
+        # @param [ BSON::Document ] document The document to create the chunk
+        #   from.
         #
         # @since 2.0.0
-        def initialize(data, options = {})
-          @data = data
-          @options = options
+        def initialize(document)
+          @document = BSON::Document.new(:_id => BSON::ObjectId.new).merge(document)
         end
 
         # Conver the chunk to BSON for storage.
@@ -100,7 +76,7 @@ module Mongo
           #
           # @since 2.0.0
           def assemble(chunks)
-            chunks.reduce(''){ |data, chunk| data << chunk.data.data }
+            chunks.reduce(''){ |data, chunk| data << chunk.document[:data].data }
           end
 
           # Split the provided data into multiple chunks.
@@ -109,18 +85,19 @@ module Mongo
           #   Chunks.split(data)
           #
           # @param [ String ] data The raw bytes.
-          # @param [ BSON::ObjectId ] file_id The file id.
+          # @param [ BSON::ObjectId ] files_id The file id.
           #
           # @return [ Array<Chunk> ] The chunks of the data.
           #
           # @since 2.0.0
-          def split(data, file_id)
-            chunks, index, position = [], 0, 0
+          def split(data, files_id)
+            chunks, index, n = [], 0, 0
             while index < data.length
-              chunk = data.slice(index, DEFAULT_SIZE)
-              chunks.push(Chunk.new(BSON::Binary.new(chunk), :files_id => file_id, :n => position))
-              index += chunk.length
-              position += 1
+              bytes = data.slice(index, DEFAULT_SIZE)
+              chunk = Chunk.new(:data => BSON::Binary.new(bytes), :files_id => files_id, :n => n)
+              chunks.push(chunk)
+              index += bytes.length
+              n += 1
             end
             chunks
           end
