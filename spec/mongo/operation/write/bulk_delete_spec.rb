@@ -347,7 +347,7 @@ describe Mongo::Operation::Write::BulkDelete do
       context 'when the deletes succeed' do
 
         let(:documents) do
-          [{ q: { field: 'test' }, limit: -1 }]
+          [{ q: { field: 'test' }, limit: 0 }]
         end
 
         let(:result) do
@@ -362,15 +362,16 @@ describe Mongo::Operation::Write::BulkDelete do
       context 'when a delete fails' do
 
         let(:documents) do
-          [{ q: { field: 'tester' }, limit: -1 }]
-        end
-
-        let(:result) do
-          op.execute(authorized_primary.context)
+          [ failing_delete_doc ]
         end
 
         it 'does not delete any documents' do
-          expect(result.n).to eq(0)
+
+          expect {
+            op.execute(authorized_primary.context)
+          }.to raise_error(Mongo::Operation::Write::Failure)
+
+          expect(authorized_collection.find.count).to eq(2)
         end
       end
     end
@@ -397,9 +398,11 @@ describe Mongo::Operation::Write::BulkDelete do
       end
   
       it 'aborts after first error' do
+
         expect {
           failing_delete.execute(authorized_primary.context)
         }.to raise_error(Mongo::Operation::Write::Failure)
+
         expect(authorized_collection.find.count).to eq(2)
       end
     end

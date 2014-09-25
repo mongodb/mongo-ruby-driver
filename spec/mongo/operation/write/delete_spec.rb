@@ -129,7 +129,7 @@ describe Mongo::Operation::Write::Delete do
       context 'when the deletes succeed' do
 
         let(:document) do
-          { q: { field: 'test' }, limit: -1 }
+          { q: { field: 'test' }, limit: 0 }
         end
 
         let(:result) do
@@ -144,7 +144,7 @@ describe Mongo::Operation::Write::Delete do
       context 'when a delete fails' do
 
         let(:document) do
-          { q: { field: 'tester' }, limit: -1 }
+          failing_delete_doc
         end
 
         let(:result) do
@@ -152,7 +152,12 @@ describe Mongo::Operation::Write::Delete do
         end
 
         it 'does not delete any documents' do
-          expect(result.written_count).to eq(0)
+
+          expect {
+            op.execute(authorized_primary.context)
+          }.to raise_error(Mongo::Operation::Write::Failure)
+
+          expect(authorized_collection.find.count).to eq(2)
         end
       end
     end
