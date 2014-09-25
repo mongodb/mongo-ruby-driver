@@ -54,7 +54,7 @@ module Mongo
         # @return [ String ] The raw BSON data.
         #
         # @since 2.0.0
-        def to_bson(encoded = ''.force_encoding(BINARY))
+        def to_bson(encoded = ''.force_encoding(BSON::BINARY))
           document.to_bson(encoded)
         end
 
