@@ -44,7 +44,7 @@ describe Mongo::Grid::File::Chunk do
   describe '#document' do
 
     let(:chunk) do
-      described_class.new(data, file_id, 5)
+      described_class.new(data, :files_id => file_id, :n => 5)
     end
 
     let(:document) do
@@ -77,27 +77,31 @@ describe Mongo::Grid::File::Chunk do
 
   describe '#initialize' do
 
+    let(:options) do
+      { :files_id => file_id, :n => 5 }
+    end
+
     let(:chunk) do
-      described_class.new(data, file_id, 5)
+      described_class.new(data, options)
     end
 
     it 'sets the data' do
       expect(chunk.data).to eq(data)
     end
 
-    it 'sets the file_id' do
-      expect(chunk.file_id).to eq(file_id)
-    end
-
-    it 'sets the position' do
-      expect(chunk.position).to eq(5)
+    it 'sets the options' do
+      expect(chunk.options).to eq(options)
     end
   end
 
   describe '#to_bson' do
 
+    let(:options) do
+      { :files_id => file_id, :n => 5 }
+    end
+
     let(:chunk) do
-      described_class.new(data, file_id, 5)
+      described_class.new(data, options)
     end
 
     let(:document) do
@@ -134,7 +138,7 @@ describe Mongo::Grid::File::Chunk do
       end
 
       it 'sets the correct chunk position' do
-        expect(chunk.position).to eq(0)
+        expect(chunk.options[:n]).to eq(0)
       end
 
       it 'sets the correct chunk data' do
@@ -177,10 +181,10 @@ describe Mongo::Grid::File::Chunk do
       end
 
       it 'sets the correct chunk positions' do
-        expect(chunks[0].position).to eq(0)
-        expect(chunks[1].position).to eq(1)
-        expect(chunks[2].position).to eq(2)
-        expect(chunks[3].position).to eq(3)
+        expect(chunks[0].options[:n]).to eq(0)
+        expect(chunks[1].options[:n]).to eq(1)
+        expect(chunks[2].options[:n]).to eq(2)
+        expect(chunks[3].options[:n]).to eq(3)
       end
 
       it 'does to miss any bytes' do

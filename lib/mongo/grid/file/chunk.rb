@@ -34,11 +34,8 @@ module Mongo
         # @return [ BSON::Binary ] data The binary chunk data.
         attr_reader :data
 
-        # @return [ BSON::ObjectId ] file_id The file's id.
-        attr_reader :file_id
-
-        # @return [ Integer ] position The chunk's position.
-        attr_reader :position
+        # @return [ Hash ] options The chunk options.
+        attr_reader :options
 
         # Get the document for the chunk that would be inserted into the chunks
         # collection.
@@ -51,9 +48,9 @@ module Mongo
         # @since 2.0.0
         def document
           @document ||= BSON::Document.new(
-            :_id => BSON::ObjectId.new,
-            :files_id => file_id,
-            :n => position,
+            :_id => options[:_id] || BSON::ObjectId.new,
+            :files_id => options[:files_id],
+            :n => options[:n],
             :data => data
           )
         end
@@ -61,17 +58,18 @@ module Mongo
         # Create the new chunk.
         #
         # @example Create the chunk.
-        #   Chunk.new('testing', file_id, 1)
+        #   Chunk.new('testing', :n => 1)
         #
         # @param [ BSON::Binary ] data The binary chunk data.
-        # @param [ BSON::ObjectId ] file_id The id of the file document.
-        # @param [ Integer ] position The placement of the chunk.
+        # @param [ Hash ] options The chunk options.
+        #
+        # @options options [ BSON::ObjectId ] :file_id The id of the file document.
+        # @options options [ Integer ] :position The placement of the chunk.
         #
         # @since 2.0.0
-        def initialize(data, file_id, position)
+        def initialize(data, options = {})
           @data = data
-          @file_id = file_id
-          @position = position
+          @options = options
         end
 
         # Conver the chunk to BSON for storage.
@@ -120,7 +118,7 @@ module Mongo
             chunks, index, position = [], 0, 0
             while index < data.length
               chunk = data.slice(index, DEFAULT_SIZE)
-              chunks.push(Chunk.new(BSON::Binary.new(chunk), file_id, position))
+              chunks.push(Chunk.new(BSON::Binary.new(chunk), :files_id => file_id, :n => position))
               index += chunk.length
               position += 1
             end
