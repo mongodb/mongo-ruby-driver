@@ -26,6 +26,9 @@ module Mongo
       # @return [ Array<Chunk> ] chunks The file chunks.
       attr_reader :chunks
 
+      # @return [ IO ] data The raw datafor the file.
+      attr_reader :data
+
       # @return [ Metadata ] metadata The file metadata.
       attr_reader :metadata
 
@@ -34,24 +37,30 @@ module Mongo
       # @example Create the file.
       #   Grid::File.new(data, :filename => 'test.txt')
       #
-      # @param [ IO, Array<Chunk> ] data The file or IO object.
+      # @param [ IO, Array<BSON::Document> ] data The file or IO object.
       # @param [ BSON::Document ] The metadata document.
       #
       # @since 2.0.0
       def initialize(data, document)
         @metadata = Metadata.new({ :length => data.length }.merge(document))
-        initialize_chunks(data)
+        initialize_chunks!(data)
       end
 
       private
 
-      def initialize_chunks(data)
-        if data.is_a?(Array)
-          @chunks = data
-          @data = Chunk.assemble(data)
+      # @note If we have provided an array of BSON::Documents to initialize
+      #   with, we have an array of chunk documents and need to create the
+      #   chunk objects and assemble the data. If we have an IO object, then
+      #   it's the original file data and we must split it into chunks and set
+      #   the original data itself.
+      def initialize_chunks!(value)
+        if value.is_a?(Array)
+          chks = value.map{ |doc| Chunk.new(doc) }
+          @chunks = chks
+          @data = Chunk.assemble(chks)
         else
-          @chunks = Chunk.split(data, metadata.id)
-          @data = data
+          @chunks = Chunk.split(value, metadata.id)
+          @data = value
         end
       end
     end

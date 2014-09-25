@@ -21,14 +21,14 @@ module Mongo
     # @since 2.0.0
     class FS
 
-      # @return [ Collection ] chunks The chunks collection.
-      attr_reader :chunks
+      # @return [ Collection ] chunks_collection The chunks collection.
+      attr_reader :chunks_collection
 
       # @return [ Database ] database The GridFS database.
       attr_reader :database
 
-      # @return [ Collection ] files The files collection.
-      attr_reader :files
+      # @return [ Collection ] files_collection The files collection.
+      attr_reader :files_collection
 
       # Find a file in the GridFS.
       #
@@ -44,12 +44,9 @@ module Mongo
       #
       # @since 2.0.0
       def find(selector = nil)
-        file = files.find(selector).first
-        chunks = chunks.find(:files_id => file[:_id]).sort(:n => 1)
-        Grid::File.new(file[:filename]) do |f|
-          f.metadata = file
-          f.chunks = chunks.to_a
-        end
+        metadata = files_collection.find(selector).first
+        chunks = chunks_collection.find(:files_id => file[:_id]).sort(:n => 1)
+        Grid::File.new(chunks.to_a, metadata)
       end
 
       # Insert a single file into the GridFS.
@@ -63,8 +60,8 @@ module Mongo
       #
       # @since 2.0.0
       def insert_one(file)
-        files.insert_one(file.metadata)
-        chunks.insert_many(file.chunks)
+        files_collection.insert_one(file.metadata)
+        chunks_collection.insert_many(file.chunks)
       end
 
       # Create the GridFS.
@@ -77,8 +74,8 @@ module Mongo
       # @since 2.0.0
       def initialize(database)
         @database = database
-        @chunks = database[Grid::CHUNKS]
-        @files = database[Grid::FILES]
+        @chunks_collection = database[Grid::CHUNKS]
+        @files_collection = database[Grid::FILES]
         # @todo Create index here?
       end
     end
