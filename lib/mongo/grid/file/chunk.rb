@@ -90,8 +90,19 @@ module Mongo
 
         class << self
 
+          # Takes an array of chunks and assembles them back into the full
+          # piece of raw data.
+          #
+          # @example Assemble the chunks.
+          #   Chunk.assemble(chunks)
+          #
+          # @param [ Array<Chunk> ] chunks The chunks.
+          #
+          # @return [ String ] The assembled data.
+          #
+          # @since 2.0.0
           def assemble(chunks)
-
+            chunks.reduce(''){ |data, chunk| data << chunk.data.data }
           end
 
           # Split the provided data into multiple chunks.

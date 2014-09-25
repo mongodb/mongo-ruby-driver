@@ -12,6 +12,33 @@ describe Mongo::Grid::File::Chunk do
 
   describe '.assemble' do
 
+    let(:data_size) do
+      Mongo::Grid::File::Chunk::DEFAULT_SIZE * 3
+    end
+
+    let(:raw_data) do
+      'testing'
+    end
+
+    let(:data) do
+      BSON::Binary.new(raw_data)
+    end
+
+    let(:assembled) do
+      described_class.assemble(chunks)
+    end
+
+    before do
+      (1..data_size).each{ |i| raw_data << '1' }
+    end
+
+    let(:chunks) do
+      described_class.split(raw_data, file_id)
+    end
+
+    it 'returns the chunks assembled into the raw data' do
+      expect(assembled).to eq(raw_data)
+    end
   end
 
   describe '#document' do
