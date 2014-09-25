@@ -12,10 +12,6 @@ describe Mongo::Grid::FS do
       fs.chunks_collection.indexes.get(:files_id => 1, :n => 1)
     end
 
-    it 'sets the database' do
-      expect(fs.database).to eq(authorized_client.database)
-    end
-
     it 'sets the files collection' do
       expect(fs.files_collection.name).to eq('fs_files')
     end

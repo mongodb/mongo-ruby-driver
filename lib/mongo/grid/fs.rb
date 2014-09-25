@@ -28,9 +28,6 @@ module Mongo
       # @return [ Collection ] chunks_collection The chunks collection.
       attr_reader :chunks_collection
 
-      # @return [ Database ] database The GridFS database.
-      attr_reader :database
-
       # @return [ Collection ] files_collection The files collection.
       attr_reader :files_collection
 
@@ -77,7 +74,6 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(database)
-        @database = database
         @chunks_collection = database[Grid::File::Chunk::COLLECTION]
         @files_collection = database[Grid::File::Metadata::COLLECTION]
         chunks_collection.indexes.ensure(INDEX_SPEC, :unique => true)
