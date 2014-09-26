@@ -130,6 +130,7 @@ module Mongo
         # @since 2.0.0
         def initialize(document)
           @document = default_document.merge(normalize(document))
+          @client_md5 = Digest::MD5.new
         end
 
         # Get the length of the document in bytes.
@@ -166,10 +167,13 @@ module Mongo
         #
         # @since 2.0.0
         def md5
-          document[:md5]
+          document[:md5] || @client_md5
         end
 
         # Conver the metadata to BSON for storage.
+        #
+        # @note If no md5 exists in the metadata (it was loaded from the server
+        #   and is not a new file) then we digest the md5 and set it.
         #
         # @example Convert the metadata to BSON.
         #   metadata.to_bson
@@ -180,6 +184,7 @@ module Mongo
         #
         # @since 2.0.0
         def to_bson(encoded = ''.force_encoding(BSON::BINARY))
+          document[:md5] ||= @client_md5.hexdigest
           document.to_bson(encoded)
         end
 

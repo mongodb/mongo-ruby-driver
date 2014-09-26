@@ -85,7 +85,7 @@ module Mongo
           @chunks = chks
           @data = Chunk.assemble(chks)
         else
-          @chunks = Chunk.split(value, metadata.id)
+          @chunks = Chunk.split(value, metadata)
           @data = value
         end
       end

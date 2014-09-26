@@ -10,6 +10,10 @@ describe Mongo::Grid::File::Chunk do
     BSON::ObjectId.new
   end
 
+  let(:metadata) do
+    Mongo::Grid::File::Metadata.new(:files_id => file_id)
+  end
+
   describe '#==' do
 
     let(:chunk) do
@@ -68,7 +72,7 @@ describe Mongo::Grid::File::Chunk do
     end
 
     let(:chunks) do
-      described_class.split(raw_data, file_id)
+      described_class.split(raw_data, metadata)
     end
 
     it 'returns the chunks assembled into the raw data' do
@@ -153,7 +157,7 @@ describe Mongo::Grid::File::Chunk do
       end
 
       let(:chunks) do
-        described_class.split(raw_data, file_id)
+        described_class.split(raw_data, metadata)
       end
 
       let(:chunk) do
@@ -200,7 +204,7 @@ describe Mongo::Grid::File::Chunk do
       end
 
       let(:chunks) do
-        described_class.split(raw_data, file_id)
+        described_class.split(raw_data, metadata)
       end
 
       it 'returns the correct number of chunks' do

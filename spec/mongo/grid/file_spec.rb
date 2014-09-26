@@ -113,7 +113,9 @@ describe Mongo::Grid::File do
       end
 
       let(:chunks) do
-        Mongo::Grid::File::Chunk.split(data, file_id).map{ |chunk| chunk.document }
+        Mongo::Grid::File::Chunk.split(
+          data, Mongo::Grid::File::Metadata.new(metadata)
+        ).map{ |chunk| chunk.document }
       end
 
       let(:file) do
@@ -129,7 +131,7 @@ describe Mongo::Grid::File do
       end
 
       it 'sets the metadata' do
-        expect(file.metadata.document).to eq(metadata)
+        expect(file.metadata.id).to eq(metadata[:_id])
       end
     end
   end

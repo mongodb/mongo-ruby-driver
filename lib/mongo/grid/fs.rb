@@ -62,6 +62,7 @@ module Mongo
       #
       # @since 2.0.0
       def insert_one(file)
+        # @todo: Validate the MD5 here?
         files_collection.insert_one(file.metadata)
         chunks_collection.insert_many(file.chunks)
       end
