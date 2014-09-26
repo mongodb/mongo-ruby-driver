@@ -34,11 +34,29 @@ module Mongo
         # @return [ BSON::Document ] document The file metadata document.
         attr_reader :document
 
+        # Is this metadata equal to another?
+        #
+        # @example Check metadata equality.
+        #   metadata == other
+        #
+        # @param [ Object ] other The object to check against.
+        #
+        # @return [ true, false ] If the objects are equal.
+        #
+        # @since 2.0.0
         def ==(other)
           return false unless other.is_a?(Metadata)
           document == other.document
         end
 
+        # Get the BSON type for a metadata document.
+        #
+        # @example Get the BSON type.
+        #   metadata.bson_type
+        #
+        # @return [ Integer ] The BSON type.
+        #
+        # @since 2.0.0
         def bson_type
           BSON::Hash::BSON_TYPE
         end

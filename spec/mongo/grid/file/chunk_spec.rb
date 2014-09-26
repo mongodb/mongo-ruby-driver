@@ -10,6 +10,24 @@ describe Mongo::Grid::File::Chunk do
     BSON::ObjectId.new
   end
 
+  describe '#==' do
+
+    context 'when the other is not a chunk' do
+
+    end
+
+    context 'when the other object is a chunk' do
+
+      context 'when the documents are equal' do
+
+      end
+
+      context 'when the documents are not equal' do
+
+      end
+    end
+  end
+
   describe '.assemble' do
 
     let(:data_size) do

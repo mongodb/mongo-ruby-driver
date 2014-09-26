@@ -40,6 +40,14 @@ module Mongo
           document == other.document
         end
 
+        # Get the BSON type for a chunk document.
+        #
+        # @example Get the BSON type.
+        #   chunk.bson_type
+        #
+        # @return [ Integer ] The BSON type.
+        #
+        # @since 2.0.0
         def bson_type
           BSON::Hash::BSON_TYPE
         end

@@ -2,6 +2,45 @@ require 'spec_helper'
 
 describe Mongo::Grid::File::Metadata do
 
+  describe '#==' do
+
+    let(:upload_date) do
+      Time.now.utc
+    end
+
+    let(:metadata) do
+      described_class.new(:filename => 'test.txt', :length => 7, :uploadDate => upload_date)
+    end
+
+    context 'when the other is not metadata' do
+
+      it 'returns false' do
+        expect(metadata).to_not eq('test')
+      end
+    end
+
+    context 'when the other object is metadata' do
+
+      context 'when the documents are equal' do
+
+        it 'returns true' do
+          expect(metadata).to eq(metadata)
+        end
+      end
+
+      context 'when the documents are not equal' do
+
+        let(:other) do
+          described_class.new(:filename => 'testing.txt')
+        end
+
+        it 'returns false' do
+          expect(metadata).to_not eq(other)
+        end
+      end
+    end
+  end
+
   describe '#initialize' do
 
     context 'when provided only a filename and length' do
