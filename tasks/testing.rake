@@ -33,10 +33,6 @@ TEST_SUITES = {
   :tools => {
     :pattern => 'test/tools/**/*_test.rb',
     :exclude => ['test/tools/mongo_config_test.rb']
-  },
-  :orchestration => {
-    :pattern => 'test/orchestration/*_test.rb',
-    :exclude => []
   }
 }
 
@@ -118,13 +114,19 @@ namespace :test do
     end
   end
 
+  desc 'Test mongo-orchestration wrapper.'
+  task :orchestration do |t|
+    sh "rspec --format documentation --color -Itest/orchestration test/orchestration/mongo_orchestration_spec.rb"
+  end
+
+  desc 'Checkout Common Topology Test Suite feature descriptions.'
   task :features do |t|
     mkdir_p('features')
     sh "cd features && svn checkout https://github.com/mongodb/mongo-meta-driver/trunk/features/topology"
   end
 
-  #task :cucumber => :features do |t|
-  task :cucumber do |t|
+  desc 'Run Common Topology Test Suite.'
+  task :cucumber => :features do |t|
     sh "cucumber -b -r test/topology features/topology --tag ~@pending --tag ~@ruby_1_x_broken"
   end
 

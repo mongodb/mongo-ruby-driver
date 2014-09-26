@@ -275,20 +275,6 @@ describe Mongo::Orchestration::ReplicaSet, :orchestration => true do
       end
     end
   end
-
-  it 'gracefully handles requests when there is no primary' do
-    primary = cluster.primary
-    secondaries = cluster.secondaries
-    arbiters = cluster.arbiters
-    arbiters.first.stop
-    primary.stop
-    server = Mongo::MongoClient.from_uri(secondaries.first.object['mongodb_uri'])
-    #p server['test'].command({isMaster: 1})
-  end
-
-  # it 'gracefully handles requests when there are no secondaries' do
-  #   cluster.secondaries.first.stop
-  # end
 end
 
 sharded_configuration = {
