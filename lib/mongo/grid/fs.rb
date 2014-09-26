@@ -31,6 +31,24 @@ module Mongo
       # @return [ Collection ] files_collection The files collection.
       attr_reader :files_collection
 
+      # Find files in the GridFS
+      #
+      # @example Find files by content type.
+      #   fs.find(contentType: 'text/plain')
+      #
+      # @param [ Hash ] selector The selector.
+      #
+      # @return [ Array<Grid::File ] The matching files.
+      #
+      # @since 2.0.0.
+      def find(selector = nil)
+        metadatas = files_collection.find(selector || {})
+        metadatas.map do |metadata|
+          chunks = chunks_collection.find(:files_id => metadata[:_id]).sort(:n => 1)
+          Grid::File.new(chunks.to_a, metadata)
+        end
+      end
+
       # Find a file in the GridFS.
       #
       # @example Find a file by it's id.
@@ -45,9 +63,7 @@ module Mongo
       #
       # @since 2.0.0
       def find_one(selector = nil)
-        metadata = files_collection.find(selector).first
-        chunks = chunks_collection.find(:files_id => metadata[:_id]).sort(:n => 1)
-        Grid::File.new(chunks.to_a, metadata)
+        find(selector).first
       end
 
       # Insert a single file into the GridFS.
