@@ -79,7 +79,12 @@ module Mongo
         msg += ", #{@response.code} #{humanized_http_response_class_name}"
         return msg if @response.headers['content-length'] == "0" # not Fixnum 0
         if @response.headers['content-type'].include?('application/json')
-          msg += ", response JSON:\n#{JSON.pretty_generate(@response)}"
+          begin
+            msg += ", response JSON:\n#{JSON.pretty_generate(@response)}"
+          rescue Exception => ex
+            #puts "msg:#{msg.inspect} @response.body: #{@response.body.inspect}"
+            msg += ", response Ruby:\n#{@response.inspect}"
+          end
         else
           msg += ", response: #{@response.inspect}"
         end
@@ -157,7 +162,7 @@ module Mongo
       end
 
       private
-      def servers(get_resource)
+      def sub_resource_servers(get_resource)
         sub_rsrc = sub_resource(Resource, get_resource)
         [sub_rsrc.object].flatten(1).collect{|object| Server.new(object['uri'])}
       end
@@ -174,20 +179,10 @@ module Mongo
     end
 
     class Server < Topology
-      def start
-        post(nil, {body: {action: __method__}})
-      end
-
-      def stop
-        post(nil, {body: {action: __method__}})
-      end
-
-      def restart
-        post(nil, {body: {action: __method__}})
-      end
-
-      def freeze
-        post(nil, {body: {action: __method__}})
+      %w[start stop restart freeze].each do |name|
+        define_method(name) do
+          post(nil, {body: {action: name}})
+        end
       end
 
       def stepdown # TODO - mongo orchestration {replSetStepDown: 60, force: true}, then simplify this
@@ -204,23 +199,13 @@ module Mongo
       end
 
       def primary
-        servers(__method__).first
+        sub_resource_servers(__method__).first
       end
 
-      def members
-        servers(__method__)
-      end
-
-      def secondaries
-        servers(__method__)
-      end
-
-      def arbiters
-        servers(__method__)
-      end
-
-      def hidden
-        servers(__method__)
+      %w[members servers secondaries arbiters hidden].each do |name|
+        define_method(name) do
+          sub_resource_servers(name)
+        end
       end
     end
 
@@ -234,12 +219,10 @@ module Mongo
         resource.ok ? resource.object.collect{|member| shard(member)} : []
       end
 
-      def configsvrs
-        servers(__method__)
-      end
-
-      def routers
-        servers(__method__)
+      %w[configsvrs routers].each do |name|
+        define_method(name) do
+          sub_resource_servers(name)
+        end
       end
 
       private

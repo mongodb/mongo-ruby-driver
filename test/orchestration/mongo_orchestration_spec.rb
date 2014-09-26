@@ -189,6 +189,33 @@ replicaset_config = {
                     smallfiles: true
                 },
                 rsParams: {
+                    priority: 0.9
+                }
+            },
+            {
+                procParams: {
+                    nohttpinterface: true,
+                    journal: true,
+                    noprealloc: true,
+                    nssize: 1,
+                    oplogSize: 150,
+                    smallfiles: true
+                },
+                rsParams: {
+                    priority: 0.0,
+                    hidden: true
+                }
+            },
+            {
+                procParams: {
+                    nohttpinterface: true,
+                    journal: true,
+                    noprealloc: true,
+                    nssize: 1,
+                    oplogSize: 150,
+                    smallfiles: true
+                },
+                rsParams: {
                     arbiterOnly: true
                 }
             }
@@ -231,10 +258,11 @@ describe Mongo::Orchestration::ReplicaSet, :orchestration => true do
 
   it 'provides members, secondaries, arbiters and hidden member methods' do
     [
-        [:members,     3],
-        [:secondaries, 1],
+        [:members,     5],
+        [:servers,     3],
+        [:secondaries, 3],
         [:arbiters,    1],
-        [:hidden,      0]
+        [:hidden,      1]
     ].each do |method, size|
       servers = cluster.send(method)
       expect(servers.size).to eq(size)
@@ -255,8 +283,7 @@ describe Mongo::Orchestration::ReplicaSet, :orchestration => true do
     arbiters.first.stop
     primary.stop
     server = Mongo::MongoClient.from_uri(secondaries.first.object['mongodb_uri'])
-    db = server['test']
-    p db.command({isMaster: 1})
+    #p server['test'].command({isMaster: 1})
   end
 
   # it 'gracefully handles requests when there are no secondaries' do
