@@ -169,4 +169,39 @@ describe Mongo::Database do
       end
     end
   end
+
+  describe '#fs' do
+
+    let(:database) do
+      described_class.new(authorized_client, TEST_DB)
+    end
+
+    it 'returns a Grid::FS for the db' do
+      expect(database.fs).to be_a(Mongo::Grid::FS)
+    end
+
+    context 'when operating on the fs' do
+
+      let(:file) do
+        Mongo::Grid::File.new('Hello!', :filename => 'test.txt')
+      end
+
+      before do
+        database.fs.insert_one(file)
+      end
+
+      after do
+        database.fs.files_collection.find.remove_many
+        database.fs.chunks_collection.find.remove_many
+      end
+
+      let(:from_db) do
+        database.fs.find_one(:filename => 'test.txt')
+      end
+
+      it 'returns the assembled file from the db' do
+        expect(from_db.filename).to eq(file.metadata.filename)
+      end
+    end
+  end
 end

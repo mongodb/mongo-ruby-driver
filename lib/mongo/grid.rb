@@ -12,28 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/grid/file_store'
 require 'mongo/grid/file'
-
-module Mongo
-
-  class GridError < StandardError; end
-
-  module Grid
-
-    # Default prefix for the 'files' and 'chunks' collections
-    #
-    # @since 2.0.0
-    DEFAULT_FS_NAME = 'fs'.freeze
-
-    # Default size for chunks of data.
-    #
-    # @since 2.0.0
-    DEFAULT_CHUNK_SIZE = (255 * 1024).freeze
-
-    # Default content type for stored files.
-    #
-    # @since 2.0.0
-    DEFAULT_CONTENT_TYPE = 'binary/octet-stream'.freeze
-  end
-end
+require 'mongo/grid/fs'

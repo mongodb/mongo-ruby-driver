@@ -12,315 +12,81 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/grid/file/chunk'
+require 'mongo/grid/file/metadata'
+
 module Mongo
   module Grid
 
-    # Grid::File supports operations on files stored within a Grid::FS.
-    #
-    # @note Users should not need to instantiate this class directly.
+    # A representation of a file in the database.
     #
     # @since 2.0.0
     class File
+      extend Forwardable
 
-      # @return [ BSON::ObjectId ] Unique identifier for this file.
-      attr_reader :files_id
-      # @return [ String ] The mode of this file.
-      attr_reader :mode
+      # Delegate to metadata for convenience.
+      def_delegators :metadata, :chunk_size, :content_type, :filename, :id, :md5, :upload_date
 
-      # Opens the file identified by id according to the given mode.
-      #
-      # @param [ String, BSON::ObjectId ] id
-      # @param [ Mongo::Collection ] files A collection for metadata.
-      # @param [ Mongo::Collection ] chunks A collection for file data.
-      # @param [ Hash ] options Options for this file.
-      #
-      # @options options [ Integer ] (261120) :chunk_size Custom chunk size, in bytes.
-      # @options options [ Array ] :aliases Array of alias strings for this filename.
-      # @options options [ String ] :content_type A valid MIME type for this document.
-      # @options options [ BSON::ObjectId ] :_id A custom files_id for this file.
-      # @options options [ Hash ] :metadata Any additional metadata for this file.
-      #
-      # @since 2.0.0
-      def initialize(id, mode, files, chunks, options={})
-        @files         = files
-        @chunks        = chunks
-        @mode          = mode
-        @file_position = 0
+      # @return [ Array<Chunk> ] chunks The file chunks.
+      attr_reader :chunks
 
-        if mode == 'r'
-          init_read(id)
-        elsif mode == 'w'
-          init_write(id, options)
-        else
-          raise "invalid mode #{mode}"
-        end
-        @current_chunk = get_chunk(0)
-        @local_md5     = files_doc[:md5]
-      end
-      alias :open :initialize
+      # @return [ IO ] data The raw datafor the file.
+      attr_reader :data
 
-      # Return the length of this file, in characters.
-      #
-      # @return [ Integer ] length of the file.
-      #
-      # @since 2.0.0
-      def size
-        files_doc[:length]
-      end
+      # @return [ Metadata ] metadata The file metadata.
+      attr_reader :metadata
 
-      # Read from the file. If length is specified, read length characters starting
-      # from the current file position. Otherwise, read from the current file position
-      # until eof.
+      # Check equality of files.
       #
-      # @param [ Integer ] length Number of characters to read.
+      # @example Check the equality of files.
+      #   file == other
       #
-      # @return [ String ] file data.
+      # @param [ Object ] other The object to check against.
       #
-      # @since 2.0.0
-      def read(length=nil)
-        # @todo add a seek option
-        ensure_mode('r') do
-          length ||= files_doc[:length] - @file_position
-          return read_string(length)
-        end
-      end
-      alias :data :read
-
-      # Write data to the file, beginning at the current eof.
-      #
-      # @param [ String, BSON::ObjectId ] io Data to write.
-      #
-      # @return [ Integer ] The number of bytes written.
-      #
-      # @since 2.0.0
-      def write(io)
-        bytes_written = 0
-        ensure_mode('w') do
-         if io.is_a?(String)
-            bytes_written = write_string(io)
-          else
-            while msg = io.read(files_doc[:chunkSize])
-              bytes_written += write_string(msg)
-            end
-          end
-        end
-        bytes_written
-      end
-
-      # Check equality of two Grid::File objects.
-      #
-      # @param [ Grid::File ] other The other Grid::File object.
-      #
-      # @return [ true, false ] Are the objects equal?
+      # @return [ true, false ] If the objects are equal.
       #
       # @since 2.0.0
       def ==(other)
-        return false unless other.is_a?(Grid::File)
-        other.files_id == @files_id && other.mode == @mode
+        return false unless other.is_a?(File)
+        chunks == other.chunks && data == other.data && metadata == other.metadata
+      end
+
+      # Initialize the file.
+      #
+      # @example Create the file.
+      #   Grid::File.new(data, :filename => 'test.txt')
+      #
+      # @param [ IO, Array<BSON::Document> ] data The file or IO object or
+      #   chunks.
+      # @param [ BSON::Document, Hash ] options The metadata options.
+      #
+      # @option options [ String ] :filename Required name of the file.
+      # @option options [ String ] :content_type The content type of the file.
+      # @option options [ String ] :metadata Optional file metadata.
+      # @option options [ Integer ] :chunk_size Override the default chunk
+      #   size.
+      #
+      # @since 2.0.0
+      def initialize(data, options = {})
+        @metadata = Metadata.new({ :length => data.length }.merge(options))
+        initialize_chunks!(data)
       end
 
       private
 
-      # Initialize a file opened in 'r' mode.
-      #
-      # @param [ BSON::ObjectId, String ] id An identifier for this file.
-      #
-      # @since 2.0.0
-      def init_read(id)
-        metadata = files_doc(id)
-        raise GridError, "File #{id} not found, could not open" unless metadata
-        @files_id = metadata[:_id]
-      end
-
-      # Initialize a file opened in 'w' mode.
-      #
-      # @param [ BSON::ObjectId, String ] id An identifier for this file.
-      #
-      # @since 2.0.0
-      def init_write(id, options={})
-        metadata = files_doc(id)
-        if !metadata
-          if id.is_a?(BSON::ObjectId)
-            raise GridError, "File #{id} not found, could not open"
-          else
-            init_new_file(id, options)
-          end
+      # @note If we have provided an array of BSON::Documents to initialize
+      #   with, we have an array of chunk documents and need to create the
+      #   chunk objects and assemble the data. If we have an IO object, then
+      #   it's the original file data and we must split it into chunks and set
+      #   the original data itself.
+      def initialize_chunks!(value)
+        if value.is_a?(Array)
+          chks = value.map{ |doc| Chunk.new(doc) }
+          @chunks = chks
+          @data = Chunk.assemble(chks)
         else
-          @files_id = metadata[:_id]
-          truncate(@files_id)
-        end
-      end
-
-      # Create and save a files collection entry for a new file.
-      #
-      # @param [ String ] filename The name of the file.
-      #
-      # @since 2.0.0
-      def init_new_file(filename, options={})
-        # @todo options for chunkSize, alias, contentType, metadata
-        @files_id = options[:_id] || BSON::ObjectId.new
-        @files.insert([
-          { :_id         => @files_id,
-            :chunkSize   => options[:chunk_size] || DEFAULT_CHUNK_SIZE,
-            :filename    => filename,
-            :md5         => Digest::MD5.new.to_s,
-            :length      => 0,
-            :uploadDate  => Time.now.utc,
-            :contentType => options[:content_type] || DEFAULT_CONTENT_TYPE,
-            :aliases     => options[:aliases]      || [],
-            :metadata    => options[:metadata]     || {}
-          }
-        ])
-      end
-
-      # Read a string of data from the file's chunks
-      #
-      # @param [ Integer ] length Number of characters to read.
-      #
-      # @return [ String ] file data.
-      #
-      # @since 2.0.0
-      def read_string(length)
-        metadata   = files_doc
-        remaining  = metadata[:length] - @file_position
-        length     = remaining if length > remaining
-        bytes_read = 0
-        buf        = ''
-
-        while bytes_read < length
-          break unless chunk = next_chunk
-
-          chunk_offset = @file_position % metadata[:chunkSize]
-          to_read = metadata[:chunkSize] - chunk_offset
-          to_read = length - bytes_read if to_read > length - bytes_read
-          buf << chunk[:data][chunk_offset, to_read]
-          bytes_read += to_read
-          @file_position += to_read
-        end
-        buf.empty? ? nil : buf
-      end
-
-      # Write 'data' to the file.
-      #
-      # @param [ String ] msg Data to write.
-      #
-      # @return [ Integer ] number of characters written.
-      #
-      # @since 2.0.0
-      def write_string(data)
-        bytes_written = 0
-        metadata = files_doc
-        while bytes_written < data.length
-          chunk = next_chunk
-          free_space = metadata[:chunkSize]
-          bytes_left = data.length - bytes_written
-          to_write = bytes_left <= free_space ? bytes_left : free_space
-
-          chunk[:data] << data[bytes_written, to_write]
-          bytes_written += to_write
-          @file_position += to_write
-          save_chunk(chunk)
-        end
-        @local_md5.update(data)
-        bytes_written
-      end
-
-      # Return the nth chunk of this file.
-      #
-      # @param [ Integer ] n The nth chunk.
-      #
-      # @return [ Hash ] the nth chunk.
-      def get_chunk(n)
-        chunk = @chunks.find({ :files_id => @files_id, :n => n }).first
-        if mode == 'w'
-          return chunk || new_chunk(n)
-        else
-          return chunk
-        end
-      end
-
-      # Create a new, empty chunk at index 'n', save to db.
-      #
-      # @param [ Integer ] n Index of this chunk.
-      #
-      # @return [ Hash ] the nth chunk.
-      def new_chunk(n)
-        chunk = { :_id      => BSON::ObjectId.new,
-                  :files_id => @files_id,
-                  :n        => n,
-                  :data     => '' }
-        @chunks.insert([ chunk ])
-        chunk
-      end
-
-      # Return the next chunk from the database, or from our cache.
-      #
-      # @return [ Hash ] the next chunk.
-      def next_chunk
-        n = (@file_position / files_doc[:chunkSize]).floor
-        if @current_chunk && @current_chunk[:n] == n
-          @current_chunk
-        else
-          @current_chunk = get_chunk(n)
-        end
-      end
-
-      # Save this chunk to the database.
-      #
-      # @param [ Hash ] chunk
-      #
-      # @since 2.0.0
-      def save_chunk(chunk)
-        @chunks.insert([ chunk ])
-      end
-
-      # Update this file's metadata.
-      # @note this can only be used while in 'w' mode
-      #
-      # @since 2.0.0
-      def update_metadata
-        # @todo db - refactor to use an update
-        metadata = files_doc
-        metadata[:length] = @file_position
-        metadata[:md5] = @local_md5
-        @files.save(metadata)
-      end
-
-      # Raise an error if this file is not in the correct mode.
-      #
-      # @since 2.0.0
-      def ensure_mode(mode)
-        raise GridError, "Mode must be #{mode}" unless @mode == mode
-        yield
-        update_metadata if mode == 'w'
-        # @todo validate_write if @write_concern
-      end
-
-      # Truncate existing file.
-      #
-      # @param [ BSON::ObjectId ] files_id
-      #
-      # @since 2.0.0
-      def truncate(id)
-        # @todo db - refactor to use an update
-        metadata = files_doc
-        metadata[:length] = 0
-        @files.insert([ metadata ])
-        @chunks.remove({ :files_id => id })
-      end
-
-      # Given an identifier for this file, return its metadata document.
-      #
-      # @param [ BSON::ObjectId, String ] id An Identifier for this file.
-      #
-      # @return [ Hash ] metadata document.
-      #
-      # @since 2.0.0
-      def files_doc(id = @files_id)
-        if id.is_a?(BSON::ObjectId)
-          @files.find({ :_id => id }).first
-        else
-          @files.find({ :filename => id }).first
+          @chunks = Chunk.split(value, metadata)
+          @data = value
         end
       end
     end
