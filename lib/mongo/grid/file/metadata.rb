@@ -26,6 +26,19 @@ module Mongo
         # @since 2.0.0
         COLLECTION = 'fs_files'.freeze
 
+        # Mappings of user supplied fields to db specification.
+        #
+        # @since 2.0.0
+        MAPPINGS = {
+          :chunk_size => :chunkSize,
+          :content_type => :contentType,
+          :filename => :filename,
+          :_id => :_id,
+          :md5 => :md5,
+          :metadata => :metadata,
+          :upload_date => :uploadDate
+        }.freeze
+
         # Default content type for stored files.
         #
         # @since 2.0.0
@@ -116,7 +129,32 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(document)
-          @document = default_document.merge(document)
+          @document = default_document.merge(normalize(document))
+        end
+
+        # Get the length of the document in bytes.
+        #
+        # @example Get the length
+        #   metadata.length
+        #
+        # @return [ Integer ] The length.
+        #
+        # @since 2.0.0
+        def length
+          document[:length]
+        end
+        alias :size :length
+
+        # Get the additional metadata.
+        #
+        # @example Get additional metadata.
+        #   metadata.metadata
+        #
+        # @return [ String ] The additional metadata.
+        #
+        # @since 2.0.0
+        def metadata
+          document[:metadata]
         end
 
         # Get the md5 hash.
@@ -158,6 +196,13 @@ module Mongo
         end
 
         private
+
+        def normalize(document)
+          document.reduce(BSON::Document.new) do |doc, (key, value)|
+            doc[MAPPINGS[key] || key] = value
+            doc
+          end
+        end
 
         def default_document
           BSON::Document.new(

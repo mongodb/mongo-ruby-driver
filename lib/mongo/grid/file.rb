@@ -36,6 +36,16 @@ module Mongo
       # @return [ Metadata ] metadata The file metadata.
       attr_reader :metadata
 
+      # Check equality of files.
+      #
+      # @example Check the equality of files.
+      #   file == other
+      #
+      # @param [ Object ] other The object to check against.
+      #
+      # @return [ true, false ] If the objects are equal.
+      #
+      # @since 2.0.0
       def ==(other)
         return false unless other.is_a?(File)
         chunks == other.chunks && data == other.data && metadata == other.metadata
@@ -46,12 +56,19 @@ module Mongo
       # @example Create the file.
       #   Grid::File.new(data, :filename => 'test.txt')
       #
-      # @param [ IO, Array<BSON::Document> ] data The file or IO object.
-      # @param [ BSON::Document ] The metadata document.
+      # @param [ IO, Array<BSON::Document> ] data The file or IO object or
+      #   chunks.
+      # @param [ BSON::Document, Hash ] options The metadata options.
+      #
+      # @option options [ String ] :filename Required name of the file.
+      # @option options [ String ] :content_type The content type of the file.
+      # @option options [ String ] :metadata Optional file metadata.
+      # @option options [ Integer ] :chunk_size Override the default chunk
+      #   size.
       #
       # @since 2.0.0
-      def initialize(data, document)
-        @metadata = Metadata.new({ :length => data.length }.merge(document))
+      def initialize(data, options = {})
+        @metadata = Metadata.new({ :length => data.length }.merge(options))
         initialize_chunks!(data)
       end
 
