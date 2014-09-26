@@ -146,7 +146,7 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(client_md5, server_md5)
-          super("File MD5 on client side is #{file_md5} but the server reported #{server_md5}.")
+          super("File MD5 on client side is #{client_md5} but the server reported #{server_md5}.")
         end
       end
 
@@ -161,7 +161,7 @@ module Mongo
       end
 
       def validate_md5!(file)
-        md5 = database.command(:filemd5 => file.id, :root => 'fs').documents[0][:md5]
+        md5 = database.command(:filemd5 => file.id, :root => prefix).documents[0][:md5]
         raise InvalidFile.new(file.md5, md5) unless file.md5 == md5
       end
     end

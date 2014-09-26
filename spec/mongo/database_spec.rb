@@ -176,32 +176,57 @@ describe Mongo::Database do
       described_class.new(authorized_client, TEST_DB)
     end
 
-    it 'returns a Grid::FS for the db' do
-      expect(database.fs).to be_a(Mongo::Grid::FS)
+    shared_context 'a GridFS database' do
+
+      it 'returns a Grid::FS for the db' do
+        expect(fs).to be_a(Mongo::Grid::FS)
+      end
+
+      context 'when operating on the fs' do
+
+        let(:file) do
+          Mongo::Grid::File.new('Hello!', :filename => 'test.txt')
+        end
+
+        before do
+          fs.insert_one(file)
+        end
+
+        after do
+          fs.files_collection.find.remove_many
+          fs.chunks_collection.find.remove_many
+        end
+
+        let(:from_db) do
+          fs.find_one(:filename => 'test.txt')
+        end
+
+        it 'returns the assembled file from the db' do
+          expect(from_db.filename).to eq(file.metadata.filename)
+        end
+      end
     end
 
-    context 'when operating on the fs' do
+    context  'when no options are provided' do
 
-      let(:file) do
-        Mongo::Grid::File.new('Hello!', :filename => 'test.txt')
+      let(:fs) do
+        database.fs
       end
 
-      before do
-        database.fs.insert_one(file)
+      it_behaves_like 'a GridFS database'
+    end
+
+    context 'when a custom prefix is provided' do
+
+      let(:fs) do
+        database.fs(:fs_name => 'grid')
       end
 
-      after do
-        database.fs.files_collection.find.remove_many
-        database.fs.chunks_collection.find.remove_many
+      it 'sets the custom prefix' do
+        expect(fs.prefix).to eq('grid')
       end
 
-      let(:from_db) do
-        database.fs.find_one(:filename => 'test.txt')
-      end
-
-      it 'returns the assembled file from the db' do
-        expect(from_db.filename).to eq(file.metadata.filename)
-      end
+      it_behaves_like 'a GridFS database'
     end
   end
 end

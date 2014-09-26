@@ -161,8 +161,8 @@ module Mongo
     # @return [ Grid::FS ] The GridFS for the database.
     #
     # @since 2.0.0
-    def fs
-      Grid::FS.new(self)
+    def fs(options = {})
+      Grid::FS.new(self, options)
     end
 
     # Get the user view for this database.
