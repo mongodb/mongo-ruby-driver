@@ -4,6 +4,7 @@ require 'rubygems'
 
 begin
   require 'bundler'
+  require 'bundler/gem_tasks'
 rescue LoadError
   raise '[FAIL] Bundler not found! Install it with ' +
         '`gem install bundler; bundle install`.'
