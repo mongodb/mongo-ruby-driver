@@ -81,7 +81,6 @@ module Mongo
         else
           result
         end
-
       end
 
       # Create the GridFS.
