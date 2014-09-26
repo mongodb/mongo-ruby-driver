@@ -196,9 +196,9 @@ def setup_topology_and_client(orchestration, preset, id = nil)
       @n = 1
     when 'replica_sets'
       @client = Mongo::MongoReplicaSetClient.from_uri(@mongodb_uri)
-      @primary = @topology.primary
-      @secondaries = @topology.secondaries
-      @arbiters = @topology.arbiters
+      %w[servers primary secondaries arbiters hidden].each do |name|
+        instance_variable_set("@#{name}", @topology.send(name))
+      end
       @n = 1 + @secondaries.count
     when 'sharded_clusters'
       @client = Mongo::MongoShardedClient.from_uri(@mongodb_uri)
