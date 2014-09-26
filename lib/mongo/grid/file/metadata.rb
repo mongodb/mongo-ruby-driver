@@ -39,6 +39,10 @@ module Mongo
           document == other.document
         end
 
+        def bson_type
+          BSON::Hash::BSON_TYPE
+        end
+
         # Get the metadata chunk size.
         #
         # @example Get the chunk size.

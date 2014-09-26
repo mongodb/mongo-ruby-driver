@@ -40,6 +40,10 @@ module Mongo
           document == other.document
         end
 
+        def bson_type
+          BSON::Hash::BSON_TYPE
+        end
+
         # Get the chunk data.
         #
         # @example Get the chunk data.
