@@ -19,6 +19,12 @@ module Mongo
     #
     # @since 2.0.0
     class FS
+      extend Forwardable
+
+      # The default root prefix.
+      #
+      # @since 2.0.0
+      DEFAULT_ROOT = 'fs'.freeze
 
       # The specification for the chunks index.
       #
@@ -28,8 +34,14 @@ module Mongo
       # @return [ Collection ] chunks_collection The chunks collection.
       attr_reader :chunks_collection
 
+      # @return [ Database ] database The database.
+      attr_reader :database
+
       # @return [ Collection ] files_collection The files collection.
       attr_reader :files_collection
+
+      # Get write concern from database.
+      def_delegators :database, :write_concern
 
       # Find a file in the GridFS.
       #
@@ -62,9 +74,14 @@ module Mongo
       #
       # @since 2.0.0
       def insert_one(file)
-        # @todo: Validate the MD5 here?
         files_collection.insert_one(file.metadata)
-        chunks_collection.insert_many(file.chunks)
+        result = chunks_collection.insert_many(file.chunks)
+        if write_concern.get_last_error
+          validate_md5!(file)
+        else
+          result
+        end
+
       end
 
       # Create the GridFS.
@@ -73,12 +90,30 @@ module Mongo
       #   Grid::FS.new(database)
       #
       # @param [ Database ] database The database the files reside in.
+      # @param [ Hash ] options The GridFS options.
+      #
+      # @option options [ String ] :fs_name The prefix for the files and chunks
+      #   collections.
       #
       # @since 2.0.0
-      def initialize(database)
-        @chunks_collection = database[Grid::File::Chunk::COLLECTION]
-        @files_collection = database[Grid::File::Metadata::COLLECTION]
+      def initialize(database, options = {})
+        @database = database
+        @options = options
+        @chunks_collection = database[chunks_name]
+        @files_collection = database[files_name]
         chunks_collection.indexes.ensure(INDEX_SPEC, :unique => true)
+      end
+
+      # Get the prefix for the GridFS
+      #
+      # @example Get the prefix.
+      #   fs.prefix
+      #
+      # @return [ String ] The GridFS prefix.
+      #
+      # @since 2.0.0
+      def prefix
+        @options[:fs_name] || DEFAULT_ROOT
       end
 
       # Remove a single file from the GridFS.
@@ -94,6 +129,41 @@ module Mongo
       def remove_one(file)
         files_collection.find(:_id => file.id).remove_one
         chunks_collection.find(:files_id => file.id).remove_many
+      end
+
+      # Raised if the file md5 and server md5 do not match when acknowledging
+      # GridFS writes.
+      #
+      # @since 2.0.0
+      class InvalidFile < DriverError
+
+        # Create the nex exception.
+        #
+        # @example Create the mew exception.
+        #   InvalidFile.new(file_md5, server_md5)
+        #
+        # @param [ String ] client_md5 The client side file md5.
+        # @param [ String ] server_md5 The server side file md5.
+        #
+        # @since 2.0.0
+        def initialize(client_md5, server_md5)
+          super("File MD5 on client side is #{file_md5} but the server reported #{server_md5}.")
+        end
+      end
+
+      private
+
+      def chunks_name
+        "#{prefix}.#{Grid::File::Chunk::COLLECTION}"
+      end
+
+      def files_name
+        "#{prefix}.#{Grid::File::Metadata::COLLECTION}"
+      end
+
+      def validate_md5!(file)
+        md5 = database.command(:filemd5 => file.id, :root => 'fs').documents[0][:md5]
+        raise InvalidFile.new(file.md5, md5) unless file.md5 == md5
       end
     end
   end

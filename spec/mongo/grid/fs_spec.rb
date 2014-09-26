@@ -13,11 +13,11 @@ describe Mongo::Grid::FS do
     end
 
     it 'sets the files collection' do
-      expect(fs.files_collection.name).to eq('fs_files')
+      expect(fs.files_collection.name).to eq('fs.files')
     end
 
     it 'sets the chunks collection' do
-      expect(fs.chunks_collection.name).to eq('fs_chunks')
+      expect(fs.chunks_collection.name).to eq('fs.chunks')
     end
 
     it 'creates the index on the chunks collection' do
@@ -32,7 +32,7 @@ describe Mongo::Grid::FS do
     end
 
     let(:file) do
-      Mongo::Grid::File.new('Hello!', :filename => 'test.txt')
+      Mongo::Grid::File.new('hello world!', :filename => 'test.txt')
     end
 
     before do

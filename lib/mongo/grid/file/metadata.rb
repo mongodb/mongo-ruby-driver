@@ -24,7 +24,7 @@ module Mongo
         # Name of the files collection.
         #
         # @since 2.0.0
-        COLLECTION = 'fs_files'.freeze
+        COLLECTION = 'files'.freeze
 
         # Mappings of user supplied fields to db specification.
         #

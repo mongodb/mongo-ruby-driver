@@ -24,7 +24,7 @@ module Mongo
         # Name of the chunks collection.
         #
         # @since 2.0.0
-        COLLECTION = 'fs_chunks'.freeze
+        COLLECTION = 'chunks'.freeze
 
         # Default size for chunks of data.
         #
