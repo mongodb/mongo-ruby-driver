@@ -31,24 +31,6 @@ module Mongo
       # @return [ Collection ] files_collection The files collection.
       attr_reader :files_collection
 
-      # Find files in the GridFS
-      #
-      # @example Find files by content type.
-      #   fs.find(contentType: 'text/plain')
-      #
-      # @param [ Hash ] selector The selector.
-      #
-      # @return [ Array<Grid::File ] The matching files.
-      #
-      # @since 2.0.0.
-      def find(selector = nil)
-        metadatas = files_collection.find(selector || {})
-        metadatas.map do |metadata|
-          chunks = chunks_collection.find(:files_id => metadata[:_id]).sort(:n => 1)
-          Grid::File.new(chunks.to_a, metadata)
-        end
-      end
-
       # Find a file in the GridFS.
       #
       # @example Find a file by it's id.
@@ -63,7 +45,10 @@ module Mongo
       #
       # @since 2.0.0
       def find_one(selector = nil)
-        find(selector).first
+        metadata = files_collection.find(selector).first
+        return nil unless metadata
+        chunks = chunks_collection.find(:files_id => metadata[:_id]).sort(:n => 1)
+        Grid::File.new(chunks.to_a, metadata)
       end
 
       # Insert a single file into the GridFS.
@@ -93,6 +78,21 @@ module Mongo
         @chunks_collection = database[Grid::File::Chunk::COLLECTION]
         @files_collection = database[Grid::File::Metadata::COLLECTION]
         chunks_collection.indexes.ensure(INDEX_SPEC, :unique => true)
+      end
+
+      # Remove a single file from the GridFS.
+      #
+      # @example Remove a file from the GridFS.
+      #   fs.remove_one(file)
+      #
+      # @param [ Grid::File ] file The file to remove.
+      #
+      # @return [ Result ] The result of the remove.
+      #
+      # @since 2.0.0
+      def remove_one(file)
+        files_collection.find(:_id => file.id).remove_one
+        chunks_collection.find(:files_id => file.id).remove_many
       end
     end
   end

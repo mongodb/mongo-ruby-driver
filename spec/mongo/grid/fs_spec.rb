@@ -25,34 +25,6 @@ describe Mongo::Grid::FS do
     end
   end
 
-  describe '#find' do
-
-    let(:fs) do
-      described_class.new(authorized_client.database)
-    end
-
-    let(:file) do
-      Mongo::Grid::File.new('Hello!', :filename => 'test.txt')
-    end
-
-    before do
-      fs.insert_one(file)
-    end
-
-    after do
-      fs.files_collection.find.remove_many
-      fs.chunks_collection.find.remove_many
-    end
-
-    let(:from_db) do
-      fs.find(:filename => 'test.txt')
-    end
-
-    it 'returns the assembled file from the db' do
-      expect(from_db.first.filename).to eq(file.metadata.filename)
-    end
-  end
-
   describe '#find_one' do
 
     let(:fs) do
@@ -128,6 +100,30 @@ describe Mongo::Grid::FS do
           fs.insert_one(file)
         }.to raise_error(Mongo::Operation::Write::Failure)
       end
+    end
+  end
+
+  describe '#remove_one' do
+
+    let(:fs) do
+      described_class.new(authorized_client.database)
+    end
+
+    let(:file) do
+      Mongo::Grid::File.new('Hello!', :filename => 'test.txt')
+    end
+
+    before do
+      fs.insert_one(file)
+      fs.remove_one(file)
+    end
+
+    let(:from_db) do
+      fs.find_one(:filename => 'test.txt')
+    end
+
+    it 'returns the assembled file from the db' do
+      expect(from_db).to be_nil
     end
   end
 end
