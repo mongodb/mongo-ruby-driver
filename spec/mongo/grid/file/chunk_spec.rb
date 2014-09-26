@@ -12,18 +12,35 @@ describe Mongo::Grid::File::Chunk do
 
   describe '#==' do
 
+    let(:chunk) do
+      described_class.new(:data => data, :files_id => file_id, :n => 5)
+    end
+
     context 'when the other is not a chunk' do
 
+      it 'returns false' do
+        expect(chunk).to_not eq('test')
+      end
     end
 
     context 'when the other object is a chunk' do
 
       context 'when the documents are equal' do
 
+        it 'returns true' do
+          expect(chunk).to eq(chunk)
+        end
       end
 
       context 'when the documents are not equal' do
 
+        let(:other) do
+          described_class.new(:data => data, :files_id => file_id, :n => 6)
+        end
+
+        it 'returns false' do
+          expect(chunk).to_not eq(other)
+        end
       end
     end
   end

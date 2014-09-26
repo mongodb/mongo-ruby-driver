@@ -35,6 +35,16 @@ module Mongo
         #   chunk.
         attr_reader :document
 
+        # Check chunk equality.
+        #
+        # @example Check chunk equality.
+        #   chunk == other
+        #
+        # @param [ Object ] other The object ot compare to.
+        #
+        # @return [ true, false ] If the objects are equal.
+        #
+        # @since 2.0.0
         def ==(other)
           return false unless other.is_a?(Chunk)
           document == other.document
