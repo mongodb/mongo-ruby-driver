@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-$ORCH_DIR = File.absolute_path(File.join(File.dirname(__FILE__), '..', '..', 'orchestration'))
+$ORCH_DIR = File.absolute_path(File.join(File.dirname(__FILE__), '..', '..', 'test', 'orchestration'))
 $LOAD_PATH.unshift($ORCH_DIR)
-$LIB_DIR = File.absolute_path(File.join(File.dirname(__FILE__), '..', '..', '..', 'lib'))
+$LIB_DIR = File.absolute_path(File.join(File.dirname(__FILE__), '..', '..', 'lib'))
 $LOAD_PATH.unshift($LIB_DIR)
 
 require 'bson'
 require 'mongo'
 require 'mongo_orchestration'
+require 'rspec'
 
 # eliminate ping commands from opcounters
 module Mongo
@@ -85,6 +86,10 @@ at_exit do
 end
 
 public
+
+def find_one_ordinal(opts = {})
+  @coll.find_one({"a" => @ordinal}, opts)
+end
 
 def rescue_connection_failure_and_retry(max_retries = 30)
   retries = 0
@@ -164,8 +169,8 @@ def occurs_on(member_type, status_type = 'opcounters', op_type = 'query')
   delta = server_status_delta(status_type)
   threshold = STATUS_THRESHOLD[status_type][op_type]
   nodes = delta.each_pair.select{|key, value| (value[status_type][op_type] > threshold)}
-  assert_equal(1, nodes.count)
-  assert_equal(member_type, nodes.first.last[:member_type])
+  expect(nodes.count).to eq(1)
+  expect(nodes.first.last[:member_type]).to eq(member_type)
 end
 
 def members_by_type(member_type)
@@ -276,7 +281,7 @@ When(/^I (stop|start|restart) the server$/) do |operation|
 end
 
 When(/^I command the primary to step down$/) do
-  assert(@primary.stepdown.ok)
+  expect(@primary.stepdown.ok).to be true
 end
 
 When(/^I (stop|start|restart) (?:a|the) (primary|secondary|arbiter)$/) do |operation, member_type| # review - configuration specific
@@ -326,27 +331,27 @@ end
 
 When(/^I query( with default read preference)?$/) do |arg1|
   @result = with_rescue do
-    @coll.find_one({"a" => @ordinal})
+    find_one_ordinal
   end
 end
 
 When(/^I query with retries$/) do
   @result = rescue_connection_failure_and_retry do
-    @coll.find_one({"a" => @ordinal})
+    find_one_ordinal
   end
 end
 
 When(/^I query with read\-preference (\w+)$/) do |read_preference|
   read_preference_sym = read_preference.downcase.to_sym
   @result = with_rescue do
-    @coll.find_one({"a" => @ordinal}, read: read_preference_sym)
+    find_one_ordinal(read: read_preference_sym)
   end
 end
 
 When(/^I query with retries and read\-preference (\w+)$/) do |read_preference|
   read_preference_sym = read_preference.downcase.to_sym
   @result = rescue_connection_failure_and_retry do
-    @coll.find_one({"a" => @ordinal}, read: read_preference_sym)
+    find_one_ordinal(read: read_preference_sym)
   end
 end
 
@@ -354,7 +359,7 @@ When(/^I query with read\-preference (\w+) and tag sets (.*)$/) do |read_prefere
   @tag_sets = JSON.parse(tag_sets)
   read_preference_sym = read_preference.downcase.to_sym
   @result = with_rescue do
-    @coll.find_one({"a" => @ordinal}, read: read_preference_sym, tag_sets: @tag_sets)
+    find_one_ordinal(read: read_preference_sym, tag_sets: @tag_sets)
   end
 end
 
@@ -447,51 +452,52 @@ When(/^I remove all documents from the collection$/) do
 end
 
 Then(/^the insert succeeds$/) do
-  assert(@result.is_a?(BSON::ObjectId))
-  assert(@coll.find_one({"a" => @ordinal}))
+  expect(@result).to be_instance_of(BSON::ObjectId)
+  expect(find_one_ordinal).not_to be_nil
   @ordinal += 1
 end
 
 Then(/^the insert fails$/) do
-  assert(@result.is_a?(Exception))
+  expect(@result).to be_kind_of(Exception)
 end
 
 Then(/^the write operation suceeeds$/) do
-  assert(!@result.is_a?(Exception))
+  expect(@result).not_to be_kind_of(Exception)
   @ordinal += 1
 end
 
 Then(/^the write operation fails write concern$/) do
-  assert(@result.is_a?(Mongo::WriteConcernError))
+  expect(@result).to be_instance_of(Mongo::WriteConcernError)
   @ordinal += 1
 end
 
 Then(/^the bulk write operation fails$/) do
-  assert(@result.is_a?(Mongo::BulkWriteError))
+  expect(@result).to be_instance_of(Mongo::BulkWriteError)
 end
 
 Then(/^the bulk write operation succeeds$/) do
-  assert(!@result.is_a?(Mongo::BulkWriteError))
+  expect(@result).not_to be_instance_of(Mongo::BulkWriteError)
   @ordinal += 1
 end
 
 Then(/^the result includes a (write|write concern) error$/) do |write_error_type|
-  assert(@result.result['writeErrors']) if write_error_type == 'write'
-  assert(@result.result['writeConcernError']) if write_error_type == 'write concern'
+  expect(@result.result['writeErrors']).to be_truthy if write_error_type == 'write'
+  expect(@result.result['writeConcernError']).to be_truthy if write_error_type == 'write concern'
 end
 
 Then(/^the query succeeds$/) do
-  assert(!@result.is_a?(Exception) && @result.is_a?(Hash))
+  expect(@result).not_to be_kind_of(Exception)
+  expect(@result).to be_instance_of(BSON::OrderedHash)
 end
 
 Then(/^the query fails$/) do
-  assert(@result.is_a?(Mongo::ConnectionFailure))
+  expect(@result).to be_kind_of(Exception)
 end
 
 Then(/^the query fails with error "(.*?)"$/) do |message|
-  assert(@result.is_a?(Exception))
+  expect(@result).to be_kind_of(Exception)
   pattern = message.downcase.gsub(/<tags sets>/, @tag_sets.inspect)
-  assert_match(pattern, @result.message.downcase)
+  expect(@result.message.downcase).to match(pattern)
 end
 
 Then(/^the (query|getmore|command) occurs on (a|the) (primary|secondary)$/) do |operation, article, member_type|
@@ -503,15 +509,16 @@ Then(/^the (kill cursors) occurs on (a|the) (primary|secondary)$/) do |operation
 end
 
 Then(/^the get succeeds$/) do
-  assert(!@result.is_a?(Exception) && @result.is_a?(Array))
+  expect(@result).not_to be_kind_of(Exception)
+  expect(@result).to be_instance_of(Array)
 end
 
 Then(/^the get fails$/) do
-  assert(@result.is_a?(Exception))
+  expect(@result).to be_kind_of(Exception)
 end
 
 Then(/^the close succeeds$/) do
-  assert(!@result.is_a?(Exception))
+  expect(@result).not_to be_kind_of(Exception)
 end
 
 Then(/^dump$/) do
