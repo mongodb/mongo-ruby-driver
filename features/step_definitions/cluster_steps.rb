@@ -31,6 +31,12 @@ module Mongo
   end
 end
 
+module Mongo
+  class Collection
+    alias :insert_one :insert
+  end
+end
+
 TEST_DB = 'test'
 TEST_COLL = 'test'
 TEST_COLL_OUT = 'test_out'
@@ -185,7 +191,7 @@ def members_by_type(member_type)
 end
 
 def await_replication(coll)
-  coll.insert({a: 0}, w: @n)
+  coll.insert_one({a: 0}, w: @n)
 end
 
 def setup_topology_and_client(orchestration, preset, id = nil)
@@ -241,7 +247,7 @@ end
 
 Given(/^a document written to (?:the server|all data\-bearing members|the cluster)$/) do
   @result = with_rescue do
-    @coll.insert({a: @ordinal}, w: @n)
+    @coll.insert_one({a: @ordinal}, w: @n)
   end
 end
 
@@ -252,7 +258,7 @@ Given(/^a replica-set client with a seed from (?:a|the) (primary|secondary|arbit
 end
 
 Given(/^some documents written to all data\-bearing members$/) do
-  @coll.insert(TEST_DOCS, w: @n)
+  @coll.insert_one(TEST_DOCS, w: @n)
 end
 
 Given(/^some geo documents written to all data\-bearing members$/) do
@@ -303,13 +309,13 @@ end
 
 When(/^I insert a document$/) do
   @result = with_rescue do
-    @coll.insert({a: @ordinal})
+    @coll.insert_one({a: @ordinal})
   end
 end
 
 When(/^I insert a document with retries$/) do
   @result = rescue_connection_failure_and_retry do
-    @coll.insert({a: @ordinal})
+    @coll.insert_one({a: @ordinal})
   end
 end
 
@@ -317,10 +323,10 @@ When(/^I (insert|update|delete) a document with the write concern \{ ?“w”: <
   @result = with_rescue do
     options = {:w => @n + (plus_nodes || 0)}
     options.merge!(:wtimeout => timeout) if timeout
-    @coll.insert({a: @ordinal}, w: @n) unless operation == 'insert'
+    @coll.insert_one({a: @ordinal}, w: @n) unless operation == 'insert'
     case operation
       when 'insert'
-        @coll.insert({a: @ordinal}, options)
+        @coll.insert_one({a: @ordinal}, options)
       when 'update'
         @coll.update({a: @ordinal}, {}, options.merge(upsert: true))
       when 'delete'
@@ -486,7 +492,6 @@ Then(/^the result includes a (write|write concern) error$/) do |write_error_type
 end
 
 Then(/^the query succeeds$/) do
-  expect(@result).not_to be_kind_of(Exception)
   expect(@result).to be_instance_of(BSON::OrderedHash)
 end
 
@@ -509,7 +514,6 @@ Then(/^the (kill cursors) occurs on (a|the) (primary|secondary)$/) do |operation
 end
 
 Then(/^the get succeeds$/) do
-  expect(@result).not_to be_kind_of(Exception)
   expect(@result).to be_instance_of(Array)
 end
 
