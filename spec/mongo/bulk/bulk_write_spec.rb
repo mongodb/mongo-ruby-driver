@@ -8,7 +8,7 @@ describe Mongo::Bulk::BulkWrite do
       described_class.new(authorized_collection, ordered: true)
     end
 
-    it_behaves_like 'a bulk write object'
+    #it_behaves_like 'a bulk write object'
   end
 
   context 'unordered' do
@@ -17,6 +17,6 @@ describe Mongo::Bulk::BulkWrite do
       described_class.new(authorized_collection, ordered: false)
     end
 
-    it_behaves_like 'a bulk write object'
+    #it_behaves_like 'a bulk write object'
   end
 end
