@@ -90,7 +90,7 @@ module Mongo
           Result.new(Command::Insert.new(spec).execute(context))
         end
 
-        def execute_message(context)         
+        def execute_message(context)
           replies = messages(context).map do |m|
             context.with_connection do |connection|
               result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
@@ -134,7 +134,7 @@ module Mongo
 
         def messages(context)
           if ordered?
-            messages = documents.collect do |doc|
+            documents.collect do |doc|
               Protocol::Insert.new(db_name, coll_name, [ doc ], options)
             end
           else
