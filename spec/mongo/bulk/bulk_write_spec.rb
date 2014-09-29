@@ -9,6 +9,35 @@ describe Mongo::Bulk::BulkWrite do
     end
 
     #it_behaves_like 'a bulk write object'
+
+    context 'insert batch splitting' do
+
+      after do
+        authorized_collection.find.remove_many
+      end
+
+      context 'operations exceed max batch size' do
+
+        before do
+          5000.times do |i|
+            bulk.insert(_id: i)
+          end
+          bulk.insert(_id: 0)
+          bulk.insert(_id: 5001)
+        end
+
+        pending 'raises an exception'
+        #  expect do
+        #    bulk.execute
+        #  end.to raise_exception
+        #end
+
+        it 'halts execution after first error' do
+          bulk.execute
+          expect(authorized_collection.find.count).to eq(5000)
+        end
+      end
+    end
   end
 
   context 'unordered' do
@@ -18,5 +47,31 @@ describe Mongo::Bulk::BulkWrite do
     end
 
     #it_behaves_like 'a bulk write object'
+
+    context 'insert batch splitting' do
+
+      after do
+        authorized_collection.find.remove_many
+      end
+
+      context 'operations exceed max batch size' do
+
+        before do
+          5000.times do |i|
+            bulk.insert(_id: i)
+          end
+          bulk.insert(_id: 0)
+          bulk.insert(_id: 5001)
+        end
+
+        it 'does not halt execution after first error' do
+          expect do
+            bulk.execute
+          end.not_to raise_exception
+
+          expect(authorized_collection.find.count).to eq(5001)
+        end
+      end
+    end
   end
 end
