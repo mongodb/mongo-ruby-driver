@@ -87,10 +87,12 @@ module Mongo
         private
 
         def execute_write_command(context)
-          Result.new(Command::Insert.new(spec).execute(context)).validate!
+          result = Result.new(Command::Insert.new(spec).execute(context))
+          result.validate! if ordered?
+          result
         end
 
-        def execute_message(context)
+        def execute_message(context)         
           replies = messages(context).map do |m|
             context.with_connection do |connection|
               result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
@@ -98,7 +100,7 @@ module Mongo
               result.reply
             end
           end
-          LegacyResult.new(replies.compact.empty? ? nil : replies).validate!
+          LegacyResult.new(replies.compact.empty? ? nil : replies)
         end
 
         # @todo put this somewhere else
@@ -131,12 +133,10 @@ module Mongo
 
         def messages(context)
           if ordered?
-            documents.collect do |doc|
+            messages = documents.collect do |doc|
               Protocol::Insert.new(db_name, coll_name, [ doc ], options)
-              # @todo raise exception if message size exceeds context.max_message_size 
             end
           else
-            # @todo: break up into multiple messages depending on max_message_size
             [ Protocol::Insert.new(db_name, coll_name, documents, { :flags => [:continue_on_error] }) ]
           end
         end
