@@ -100,50 +100,51 @@ describe Mongo::Operation::Write::BulkUpdate do
 
   describe '#batch' do
 
-     context 'when number of updates is evenly divisible by number of batches' do
-       let(:documents) do
-         [{ q: { a: 1 },
-            u: { :$set => { a: 2 } },
-            multi: true,
-            upsert: false },
-          { q: { b: 1 },
-            u: { :$set => { b: 2 } },
-            multi: true,
-            upsert: false },
-          { q: { c: 1 },
-            u: { :$set => { c: 2 } },
-            multi:  true,
-            upsert: false },
-          { q: { d: 1 },
-            u: { :$set => { d: 2 } },
-            multi: true,
-            upsert: false },
-          { q: { e: 1 },
-            u: { :$set => { e: 2 } },
-            multi: true,
-            upsert: false },
-          { q: { f: 1 },
-            u: { :$set => { f: 2 } },
-            multi:  true,
-            upsert: false }
-         ]
-       end
-       let(:n_batches) { 3 }
+    context 'when number of updates is evenly divisible by number of batches' do
+      let(:documents) do
+        [{ q: { a: 1 },
+           u: { :$set => { a: 2 } },
+           multi: true,
+           upsert: false },
+         { q: { b: 1 },
+           u: { :$set => { b: 2 } },
+           multi: true,
+           upsert: false },
+         { q: { c: 1 },
+           u: { :$set => { c: 2 } },
+           multi:  true,
+           upsert: false },
+         { q: { d: 1 },
+           u: { :$set => { d: 2 } },
+           multi: true,
+           upsert: false },
+         { q: { e: 1 },
+           u: { :$set => { e: 2 } },
+           multi: true,
+           upsert: false },
+         { q: { f: 1 },
+           u: { :$set => { f: 2 } },
+           multi:  true,
+           upsert: false }
+        ]
+      end
 
-       it 'splits the op into the n_batches number of children ops' do
-         expect(op.batch(n_batches).size).to eq(n_batches)
-       end
+      let(:n_batches) { 3 }
 
-       it 'divides the updates evenly between children ops' do
-         ops = op.batch(n_batches)
-         batch_size = documents.size / n_batches
+      it 'splits the op into the n_batches number of children ops' do
+        expect(op.batch(n_batches).size).to eq(n_batches)
+      end
 
-         n_batches.times do |i|
-           start_index = i * batch_size
-           expect(ops[i].spec[:updates]).to eq(documents[start_index, batch_size])
-         end
-       end
-     end
+      it 'divides the updates evenly between children ops' do
+        ops = op.batch(n_batches)
+        batch_size = documents.size / n_batches
+
+        n_batches.times do |i|
+          start_index = i * batch_size
+          expect(ops[i].spec[:updates]).to eq(documents[start_index, batch_size])
+        end
+      end
+    end
 
     context 'when number of updates is less than number of batches' do
       let(:documents) do
@@ -159,55 +160,55 @@ describe Mongo::Operation::Write::BulkUpdate do
       end
     end
 
-     context 'when number of updates is not evenly divisible by number of batches' do
-       let(:documents) do
-         [{ q: { a: 1 },
-            u: { :$set => { a: 2 } },
-            multi: true,
-            upsert: false },
-          { q: { b: 1 },
-            u: { :$set => { b: 2 } },
-            multi: true,
-            upsert: false },
-          { q: { c: 1 },
-            u: { :$set => { c: 2 } },
-            multi:  true,
-            upsert: false },
-          { q: { d: 1 },
-            u: { :$set => { d: 2 } },
-            multi: true,
-            upsert: false },
-          { q: { e: 1 },
-            u: { :$set => { e: 2 } },
-            multi: true,
-            upsert: false },
-          { q: { f: 1 },
-            u: { :$set => { f: 2 } },
-            multi:  true,
-            upsert: false }
-         ]
-       end
-       let(:n_batches) { 4 }
+    context 'when number of updates is not evenly divisible by number of batches' do
+      let(:documents) do
+        [{ q: { a: 1 },
+           u: { :$set => { a: 2 } },
+           multi: true,
+           upsert: false },
+         { q: { b: 1 },
+           u: { :$set => { b: 2 } },
+           multi: true,
+           upsert: false },
+         { q: { c: 1 },
+           u: { :$set => { c: 2 } },
+           multi:  true,
+           upsert: false },
+         { q: { d: 1 },
+           u: { :$set => { d: 2 } },
+           multi: true,
+           upsert: false },
+         { q: { e: 1 },
+           u: { :$set => { e: 2 } },
+           multi: true,
+           upsert: false },
+         { q: { f: 1 },
+           u: { :$set => { f: 2 } },
+           multi:  true,
+           upsert: false }
+        ]
+      end
+      let(:n_batches) { 4 }
 
-       it 'splits the op into the n_batches number of children ops' do
-         expect(op.batch(n_batches).size).to eq(n_batches)
-       end
+      it 'splits the op into the n_batches number of children ops' do
+        expect(op.batch(n_batches).size).to eq(n_batches)
+      end
 
-       it 'divides the updates evenly between children ops' do
-         ops = op.batch(n_batches)
-         batch_size = documents.size / n_batches
+      it 'divides the updates evenly between children ops' do
+        ops = op.batch(n_batches)
+        batch_size = documents.size / n_batches
 
-         n_batches.times do |i|
-           start_index = i * batch_size
-           if i == n_batches - 1
-             expect(ops[i].spec[:updates]).to eq(documents[start_index..-1])
-           else
-             expect(ops[i].spec[:updates]).to eq(documents[start_index, batch_size])
-           end
-         end
-       end
-     end
-   end
+        n_batches.times do |i|
+          start_index = i * batch_size
+          if i == n_batches - 1
+            expect(ops[i].spec[:updates]).to eq(documents[start_index..-1])
+          else
+            expect(ops[i].spec[:updates]).to eq(documents[start_index, batch_size])
+          end
+        end
+      end
+    end
+  end
 
   describe '#merge!' do
 
@@ -354,40 +355,15 @@ describe Mongo::Operation::Write::BulkUpdate do
 
     context 'when updating a single document' do
 
-      let(:update) do
-        described_class.new({
-          updates: documents,
-          db_name: db_name,
-          coll_name: coll_name,
-          write_concern: write_concern
-        })
-      end
-
       context 'when the update passes' do
 
         let(:documents) do
-          [{ q: { name: 'test' }, u: { '$set' => { field: 'blah' }}, limit: 1 }]
-        end
-
-        let(:result) do
-          op.execute(authorized_primary.context)
+          [{ q: { other: 'test' }, u: { '$set' => { field: 'blah' }}, multi: false }]
         end
 
         it 'updates the document' do
-          expect(result.written_count).to eq(1)
-        end
-      end
-
-      context 'when the update fails' do
-
-        let(:documents) do
-          [{ q: { name: 'test' }, u: { '$st' => { field: 'blah' }}}]
-        end
-
-        it 'raises an exception' do
-          expect {
-            op.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Operation::Write::Failure)
+          op.execute(authorized_primary.context)
+          expect(authorized_collection.find(field: 'blah').count).to eq(1)
         end
       end
     end
@@ -406,28 +382,12 @@ describe Mongo::Operation::Write::BulkUpdate do
       context 'when the updates succeed' do
 
         let(:documents) do
-          [{ q: { field: 'test' }, u: { '$set' => { other: 'blah' }}, multi: true }]
-        end
-
-        let(:result) do
-          op.execute(authorized_primary.context)
+          [{ q: { other: 'test' }, u: { '$set' => { field: 'blah' }}, multi: true }]
         end
 
         it 'updates the documents' do
-          expect(result.written_count).to eq(2)
-        end
-      end
-
-      context 'when an update fails' do
-
-        let(:documents) do
-          [{ q: { name: 'test' }, u: { '$st' => { field: 'blah' }}, multi: true}]
-        end
-
-        it 'raises an exception' do
-          expect {
-            op.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Operation::Write::Failure)
+          op.execute(authorized_primary.context)
+          expect(authorized_collection.find(field: 'blah').count).to eq(2)
         end
       end
     end
@@ -452,12 +412,32 @@ describe Mongo::Operation::Write::BulkUpdate do
       let(:failing_update) do
         described_class.new(spec)
       end
-  
-      it 'aborts after first error' do
-        expect {
-          failing_update.execute(authorized_primary.context)
-        }.to raise_error(Mongo::Operation::Write::Failure)
-        expect(authorized_collection.find(other: 'blah').count).to eq(0)
+
+      context 'when the update fails' do
+
+        context 'when write concern is acknowledged' do
+
+          let(:write_concern) do
+            Mongo::WriteConcern::Mode.get(w: 1)
+          end
+
+          it 'aborts after first error' do
+            failing_update.execute(authorized_primary.context)
+            expect(authorized_collection.find(other: 'blah').count).to eq(0)
+          end
+        end
+
+        context 'when write concern is unacknowledged' do
+
+          let(:write_concern) do
+            Mongo::WriteConcern::Mode.get(w: 0)
+          end
+
+          it 'aborts after first error' do
+            failing_update.execute(authorized_primary.context)
+            expect(authorized_collection.find(other: 'blah').count).to eq(0)
+          end
+        end
       end
     end
 
@@ -465,7 +445,7 @@ describe Mongo::Operation::Write::BulkUpdate do
 
       let(:documents) do
         [ { q: { name: 'test' }, u: { '$st' => { field: 'blah' }}, multi: true},
-          { q: { field: 'test' }, u: { '$set' => { other: 'blah' }}, multi: true }
+          { q: { field: 'test' }, u: { '$set' => { other: 'blah' }}, multi: false }
         ]
       end
 
@@ -482,11 +462,31 @@ describe Mongo::Operation::Write::BulkUpdate do
         described_class.new(spec)
       end
 
-      it 'it continues executing operations after errors' do
-        expect {
-          failing_update.execute(authorized_primary.context)
-        }.to raise_error(Mongo::Operation::Write::Failure)
-        expect(authorized_collection.find(other: 'blah').count).to eq(2)
+      context 'when the update fails' do
+
+        context 'when write concern is acknowledged' do
+
+          let(:write_concern) do
+            Mongo::WriteConcern::Mode.get(w: 1)
+          end
+
+          it 'does not abort after first error' do
+            failing_update.execute(authorized_primary.context)
+            expect(authorized_collection.find(other: 'blah').count).to eq(1)
+          end
+        end
+
+        context 'when write concern is unacknowledged' do
+
+          let(:write_concern) do
+            Mongo::WriteConcern::Mode.get(w: 0)
+          end
+
+          it 'does not abort after first error' do
+            failing_update.execute(authorized_primary.context)
+            expect(authorized_collection.find(other: 'blah').count).to eq(1)
+          end
+        end
       end
     end
 
@@ -497,7 +497,7 @@ describe Mongo::Operation::Write::BulkUpdate do
           updates: documents,
           db_name: db_name,
           coll_name: coll_name,
-          write_concern: Mongo::WriteConcern::Mode.get(w: 0),
+          write_concern: Mongo::WriteConcern::Mode.get(w: 1),
           ordered: false
         })
       end
@@ -506,14 +506,18 @@ describe Mongo::Operation::Write::BulkUpdate do
         [ { q: { name: 'test' }, u: { '$st' => { field: 'blah' }}, multi: true} ]
       end
 
-      let(:acknoweldged) do
-        Mongo::WriteConcern::Mode.get(w: 1)
+      let(:unacknowledged) do
+        Mongo::WriteConcern::Mode.get(w: 0)
       end
 
-      it 'uses that write concern' do
-        expect {
-          op.write_concern(acknoweldged).execute(authorized_primary.context)
-        }.to raise_error(Mongo::Operation::Write::Failure)
+      it 'uses that write concern', if: write_command_enabled? do
+        result = op.write_concern(unacknowledged).execute(authorized_primary.context)
+        expect(result.replies.size).to eq(1)
+      end
+
+      it 'uses that write concern', unless: write_command_enabled? do
+        result = op.write_concern(unacknowledged).execute(authorized_primary.context)
+        expect(result.replies).to be(nil)
       end
     end
 
