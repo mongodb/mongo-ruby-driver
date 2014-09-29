@@ -88,20 +88,21 @@ module Mongo
         private
 
         def execute_write_command(context)
-          Result.new(Command::Delete.new(spec).execute(context)).validate!
+          Result.new(Command::Delete.new(spec).execute(context))
         end
 
         def execute_message(context)
           replies = messages(context).map do |m|
             context.with_connection do |connection|
               result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
-              result.validate! if ordered?
-              result.reply
+              if ordered?
+                return result if result.write_failure?
+              else
+                result.reply
+              end
             end
           end
-          replies = nil if replies.compact.empty?
-          write_concern.get_last_error ? LegacyResult.new(replies).validate! :
-                                         Result.new(replies)
+          LegacyResult.new(replies.compact.empty? ? nil : replies)
         end
 
         # @todo put this somewhere else

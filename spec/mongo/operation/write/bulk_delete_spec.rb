@@ -310,25 +310,9 @@ describe Mongo::Operation::Write::BulkDelete do
           [{ q: { field: 'test' }, limit: 1 }]
         end
 
-        let(:result) do
+        it 'deletes the document from the database' do
           op.execute(authorized_primary.context)
-        end
-
-        it 'deletes the documents from the database' do
-          expect(result.n).to eq(1)
-        end
-      end
-
-      context 'when the delete fails' do
-
-        let(:documents) do
-          [ failing_delete_doc ]
-        end
-
-        it 'raises an exception' do
-          expect {
-            op.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Operation::Write::Failure)
+          expect(authorized_collection.find.count).to eq(1)
         end
       end
     end
@@ -350,28 +334,9 @@ describe Mongo::Operation::Write::BulkDelete do
           [{ q: { field: 'test' }, limit: 0 }]
         end
 
-        let(:result) do
-          op.execute(authorized_primary.context)
-        end
-
         it 'deletes the documents from the database' do
-          expect(result.n).to eq(2)
-        end
-      end
-
-      context 'when a delete fails' do
-
-        let(:documents) do
-          [ failing_delete_doc ]
-        end
-
-        it 'does not delete any documents' do
-
-          expect {
-            op.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Operation::Write::Failure)
-
-          expect(authorized_collection.find.count).to eq(2)
+          op.execute(authorized_primary.context)
+          expect(authorized_collection.find.count).to eq(0)
         end
       end
     end
@@ -383,87 +348,125 @@ describe Mongo::Operation::Write::BulkDelete do
           { q: { field: 'test' }, limit: 1 }
         ]
       end
-
+  
       let(:spec) do
         { :deletes       => documents,
           :db_name       => TEST_DB,
           :coll_name     => TEST_COLL,
-          :write_concern => Mongo::WriteConcern::Mode.get(w: 1),
+          :write_concern => write_concern,
           :ordered       => true
         }
       end
-
+  
       let(:failing_delete) do
         described_class.new(spec)
       end
-  
-      it 'aborts after first error' do
 
-        expect {
-          failing_delete.execute(authorized_primary.context)
-        }.to raise_error(Mongo::Operation::Write::Failure)
+      context 'when the delete fails' do
 
-        expect(authorized_collection.find.count).to eq(2)
+        context 'when write concern is acknowledged' do
+
+          let(:write_concern) do
+            Mongo::WriteConcern::Mode.get(w: 1)
+          end
+        
+          it 'aborts after first error' do
+            failing_delete.execute(authorized_primary.context)
+            expect(authorized_collection.find.count).to eq(2)
+          end
+        end
+
+        context 'when write concern is unacknowledged' do
+          
+          let(:write_concern) do
+            Mongo::WriteConcern::Mode.get(w: 0)
+          end
+      
+          it 'aborts after first error' do
+            failing_delete.execute(authorized_primary.context)
+            expect(authorized_collection.find.count).to eq(2)
+          end
+        end
       end
     end
 
     context 'when the deletes are unordered' do
 
       let(:documents) do
-        [
-          failing_delete_doc,
-          { q: { field: 'test' }, limit: 0 }
+        [ failing_delete_doc,
+          { q: { field: 'test' }, limit: 1 }
         ]
       end
-
+  
       let(:spec) do
         { :deletes       => documents,
           :db_name       => TEST_DB,
           :coll_name     => TEST_COLL,
-          :write_concern => Mongo::WriteConcern::Mode.get(w: 1),
+          :write_concern => write_concern,
           :ordered       => false
         }
       end
-
+  
       let(:failing_delete) do
         described_class.new(spec)
       end
 
-      it 'continues executing operations after errors' do
-        expect {
-          failing_delete.execute(authorized_primary.context)
-        }.to raise_error(Mongo::Operation::Write::Failure)
-        expect(authorized_collection.find.count).to eq(0)
+      context 'when the delete fails' do
+
+        context 'when write concern is acknowledged' do
+
+          let(:write_concern) do
+            Mongo::WriteConcern::Mode.get(w: 1)
+          end
+        
+          it 'does not abort after first error' do
+            failing_delete.execute(authorized_primary.context)
+            expect(authorized_collection.find.count).to eq(1)
+          end
+        end
+
+        context 'when write concern is unacknowledged' do
+          
+          let(:write_concern) do
+            Mongo::WriteConcern::Mode.get(w: 0)
+          end
+      
+          it 'does not abort after first error' do
+            failing_delete.execute(authorized_primary.context)
+            expect(authorized_collection.find.count).to eq(1)
+          end
+        end
       end
     end
 
     context 'when a write concern override is specified' do
 
       let(:documents) do
-        [
-          failing_delete_doc,
-          { q: { field: 'test' }, limit: 0 }
-        ]
+        [ { q: { field: 'test' }, limit: 1 } ]
       end
 
       let(:op) do
         described_class.new({
-          deletes: documents,
-          db_name: TEST_DB,
-          coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern::Mode.get(w: 0),
-          ordered: false
-        })
+            deletes: documents,
+            db_name: db_name,
+            coll_name: coll_name,
+            write_concern: Mongo::WriteConcern::Mode.get(w: 1),
+            ordered: false
+          })
       end
 
-      let(:acknowledged) do
-        Mongo::WriteConcern::Mode.get(w: 1)
+      let(:unacknowledged) do
+        Mongo::WriteConcern::Mode.get(w: 0)
       end
 
-      it 'uses that write concern' do
-        expect {
-          op.write_concern(acknowledged).execute(authorized_primary.context)
-        }.to raise_error(Mongo::Operation::Write::Failure)
+      it 'uses that write concern', if: write_command_enabled? do
+        result = op.write_concern(unacknowledged).execute(authorized_primary.context)
+        expect(result.replies.size).to eq(1)
+      end
+
+      it 'uses that write concern', unless: write_command_enabled? do
+        result = op.write_concern(unacknowledged).execute(authorized_primary.context)
+        expect(result.replies).to be(nil)
       end
     end
 
