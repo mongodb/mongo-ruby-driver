@@ -361,9 +361,7 @@ describe Mongo::Operation::Write::BulkInsert do
           end
     
           it 'aborts after first error' do
-            expect {
-              failing_insert.execute(authorized_primary.context)
-            }.to raise_error(Mongo::Operation::Write::Failure)
+            failing_insert.execute(authorized_primary.context)
             expect(authorized_collection.find.count).to eq(1)
           end
         end
@@ -381,7 +379,7 @@ describe Mongo::Operation::Write::BulkInsert do
             { documents: documents,
               db_name: db_name,
               coll_name: coll_name,
-              write_concern: write_concern,
+              write_concern: Mongo::WriteConcern::Mode.get(w: 0),
               ordered: true
             }
           end
@@ -391,9 +389,7 @@ describe Mongo::Operation::Write::BulkInsert do
           end
 
           it 'aborts after first error' do
-            expect {
-              failing_insert.execute(authorized_primary.context)
-            }.to raise_error(Mongo::Operation::Write::Failure)
+            failing_insert.execute(authorized_primary.context)
             expect(authorized_collection.find.count).to eq(1)
           end
         end
@@ -442,7 +438,7 @@ describe Mongo::Operation::Write::BulkInsert do
             { documents: documents,
               db_name: db_name,
               coll_name: coll_name,
-              write_concern: write_concern,
+              write_concern: Mongo::WriteConcern::Mode.get(w: 0),
               ordered: false
             }
           end
