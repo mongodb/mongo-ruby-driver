@@ -72,7 +72,9 @@ module Mongo
         private
 
         def execute_write_command(context)
-          Result.new(Command::Update.new(spec.merge(:updates => [ update ])).execute(context)).validate!
+          s = spec.merge(:updates => [ update ])
+          s.delete(:update)
+          Result.new(Command::Update.new(s).execute(context)).validate!
         end
 
         def execute_message(context)

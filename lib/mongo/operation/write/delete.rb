@@ -69,7 +69,9 @@ module Mongo
         private
 
         def execute_write_command(context)
-          Result.new(Command::Delete.new(spec.merge(:deletes => [ delete ])).execute(context)).validate!
+          s = spec.merge(:deletes => [ delete ])
+          s.delete(:delete)
+          Result.new(Command::Delete.new(s).execute(context)).validate!
         end
 
         def execute_message(context)
