@@ -216,6 +216,18 @@ module Mongo
       end
       alias :n :written_count
 
+      # Whether there was a write failure.
+      #
+      # @example Determine if there was a write failure.
+      #   result.write_failure?
+      #
+      # @return [ true, false ] If there was a write failure.
+      #
+      # @since 2.0.0
+      def write_failure?
+        acknowledged? && (command_failure? || write_errors? || write_concern_errors?)
+      end
+
       private
 
       def aggregate_returned_count
@@ -258,10 +270,6 @@ module Mongo
 
       def write_errors?
         !write_errors.empty?
-      end
-
-      def write_failure?
-        acknowledged? && (command_failure? || write_errors? || write_concern_errors?)
       end
     end
   end
