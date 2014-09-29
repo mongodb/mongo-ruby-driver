@@ -59,8 +59,6 @@ module Mongo
       SOURCES[:gssapi] = Kerberos
     end
 
-    SOURCES.freeze
-
     # Get the authorization strategy for the provided auth mechanism.
     #
     # @example Get the strategy.

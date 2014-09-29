@@ -116,7 +116,7 @@ module Mongo
     #
     # @return [ Hash ] The result of the command execution.
     def command(operation)
-      server = client.server_preference.select_servers(cluster.servers).first
+      server = server_preference.select_servers(cluster.servers).first
       Operation::Command.new({
         :selector => operation,
         :db_name => name,
