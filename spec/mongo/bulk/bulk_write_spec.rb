@@ -8,7 +8,7 @@ describe Mongo::Bulk::BulkWrite do
       described_class.new(authorized_collection, ordered: true)
     end
 
-    #it_behaves_like 'a bulk write object'
+    it_behaves_like 'a bulk write object'
 
     context 'insert batch splitting' do
 
@@ -26,11 +26,7 @@ describe Mongo::Bulk::BulkWrite do
           bulk.insert(_id: 5001)
         end
 
-        pending 'raises an exception'
-        #  expect do
-        #    bulk.execute
-        #  end.to raise_exception
-        #end
+        # @todo should raise exception
 
         it 'halts execution after first error' do
           bulk.execute
@@ -46,7 +42,7 @@ describe Mongo::Bulk::BulkWrite do
       described_class.new(authorized_collection, ordered: false)
     end
 
-    #it_behaves_like 'a bulk write object'
+    it_behaves_like 'a bulk write object'
 
     context 'insert batch splitting' do
 
@@ -64,11 +60,10 @@ describe Mongo::Bulk::BulkWrite do
           bulk.insert(_id: 5001)
         end
 
-        it 'does not halt execution after first error' do
-          expect do
-            bulk.execute
-          end.not_to raise_exception
+        # @todo should raise exception
 
+        it 'does not halt execution after first error' do
+          bulk.execute
           expect(authorized_collection.find.count).to eq(5001)
         end
       end
