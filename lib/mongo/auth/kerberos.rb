@@ -14,7 +14,7 @@
 
 require 'jruby'
 include Java
-require 'jsasl.jar'
+#require 'jsasl.jar'
 
 module Mongo
   module Auth
