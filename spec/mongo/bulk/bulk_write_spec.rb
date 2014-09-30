@@ -19,18 +19,18 @@ describe Mongo::Bulk::BulkWrite do
       context 'operations exceed max batch size' do
 
         before do
-          5000.times do |i|
+          3000.times do |i|
             bulk.insert(_id: i)
           end
           bulk.insert(_id: 0)
-          bulk.insert(_id: 5001)
+          bulk.insert(_id: 3001)
         end
 
         # @todo should raise exception
 
         it 'halts execution after first error' do
           bulk.execute
-          expect(authorized_collection.find.count).to eq(5000)
+          expect(authorized_collection.find.count).to eq(3000)
         end
       end
     end
@@ -53,18 +53,18 @@ describe Mongo::Bulk::BulkWrite do
       context 'operations exceed max batch size' do
 
         before do
-          5000.times do |i|
+          3000.times do |i|
             bulk.insert(_id: i)
           end
           bulk.insert(_id: 0)
-          bulk.insert(_id: 5001)
+          bulk.insert(_id: 3001)
         end
 
         # @todo should raise exception
 
         it 'does not halt execution after first error' do
           bulk.execute
-          expect(authorized_collection.find.count).to eq(5001)
+          expect(authorized_collection.find.count).to eq(3001)
         end
       end
     end

@@ -742,7 +742,7 @@ shared_examples 'a bulk write object' do
     context 'delete batch splitting' do
 
       before do
-        5000.times do |i|
+        3000.times do |i|
           authorized_collection.insert_one(_id: i)
         end
       end
@@ -754,7 +754,7 @@ shared_examples 'a bulk write object' do
       context 'operations exceed max batch size' do
 
         before do
-          5000.times do |i|
+          3000.times do |i|
             bulk.find(_id: i).remove_one
           end
         end
@@ -769,7 +769,7 @@ shared_examples 'a bulk write object' do
     context 'update batch splitting' do
 
       before do
-        5000.times do |i|
+        3000.times do |i|
           authorized_collection.insert_one(x: i)
         end
       end
@@ -781,14 +781,14 @@ shared_examples 'a bulk write object' do
       context 'operations exceed max batch size' do
 
         before do
-          5000.times do |i|
-            bulk.find(x: i).update_one('$set' => { x: 10000-i })
+          3000.times do |i|
+            bulk.find(x: i).update_one('$set' => { x: 6000-i })
           end
         end
 
         it 'completes all operations' do
           bulk.execute
-          expect(authorized_collection.find(x: { '$gte' => 5000 }).count).to eq(5000)
+          expect(authorized_collection.find(x: { '$gte' => 3000 }).count).to eq(3000)
         end
       end
     end
