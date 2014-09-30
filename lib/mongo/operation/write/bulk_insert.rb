@@ -94,8 +94,8 @@ module Mongo
           replies = messages(context).map do |m|
             context.with_connection do |connection|
               result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
-              if ordered?
-                return result if result.write_failure?
+              if ordered? && result.write_failure?
+                return result
               else
                 result.reply
               end
