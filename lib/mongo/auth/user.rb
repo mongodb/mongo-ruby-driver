@@ -27,6 +27,14 @@ module Mongo
       # @since 2.0.0
       COLLECTION = 'system.users'.freeze
 
+      # @return [ String ] The authorization source, either a database or
+      #   external name.
+      attr_reader :auth_source
+
+      # @return [ true, false ] For kerberos only, are we canolicalizing the
+      #   host name.
+      attr_reader :canonicalize_host_name
+
       # @return [ String ] The database the user is created in.
       attr_reader :database
 
@@ -75,6 +83,19 @@ module Mongo
         Digest::MD5.hexdigest("#{nonce}#{name}#{hashed_password}")
       end
 
+      # Get the UTF-8 encoded name with escaped special characters for use with
+      # SCRAM authorization.
+      #
+      # @example Get the encoded name.
+      #   user.encoded_name
+      #
+      # @return [ String ] The encoded user name.
+      #
+      # @since 2.0.0
+      def encoded_name
+        name.encode(BSON::UTF8).gsub('=','=3D').gsub(',','=2C')
+      end
+
       # Get the hash key for the user.
       #
       # @example Get the hash key.
@@ -106,9 +127,23 @@ module Mongo
       #
       # @param [ Hash ] options The options to create the user from.
       #
+      # @option options [ String ] :auth_source The authorization database or
+      #   external source.
+      # @option options [ String ] :database The database the user is
+      #   authorized for.
+      # @option options [ String ] :user The user name.
+      # @option options [ String ] :password The user's password.
+      # @option options [ Symbol ] :auth_mech The authorization mechanism.
+      # @option options [ String ] :gssapi_service_name The GSSAPI service
+      #   name. (For Kerberos auth only.)
+      # @option options [ true, false ] :canonicalize_host_name Whether to
+      #   canonicalize the host name. (For kerberos auth only)
+      # @option options [ Array<String>, Array<Hash> ] roles The user roles.
+      #
       # @since 2.0.0
       def initialize(options)
-        @database = options[:auth_source] || options[:database]
+        @auth_source = options[:auth_source] || options[:database]
+        @database = options[:database]
         @name = options[:user]
         @password = options[:password] || options[:pwd]
         @mechanism = options[:auth_mech] || :mongodb_cr
