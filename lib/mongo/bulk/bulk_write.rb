@@ -194,17 +194,25 @@ module Mongo
         replies = []
         until ops.empty?
           op = ops.shift
-          begin
-            op = op.write_concern(write_concern) if write_concern
-            replies << op.execute(bulk_write.collection.next_primary.context )
-          rescue Exception # @todo BSON::InvalidDocument # message too large
+
+          until op.valid_batch_size?(bulk_write.collection.
+                                      next_primary.context.max_write_batch_size)
             ops = op.batch(2) + ops
+            op = ops.shift
           end
+
+          op = op.write_concern(write_concern) if write_concern
+          replies << op.execute(bulk_write.collection.next_primary.context)
+          return make_response(replies) if stop_executing?(replies.last)
         end
-        make_response(replies)
+        make_response(replies)# if write_concern.gle
       end
 
       private
+
+      def stop_executing?(reply)
+        ordered? && reply.write_failure?
+      end
 
       # Whether this batch has already been executed.
       #

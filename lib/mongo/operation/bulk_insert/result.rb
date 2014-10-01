@@ -50,6 +50,7 @@ module Mongo
           #
           # @since 2.0.0
           def n_inserted
+            return 0 unless acknowledged?
             @replies.reduce(0) do |n, reply|
               n += 1 if reply.documents.first[OK] == 1
               n

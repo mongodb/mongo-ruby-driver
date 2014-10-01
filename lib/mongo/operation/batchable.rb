@@ -70,6 +70,17 @@ module Mongo
         @spec[batch_key] += other.spec[batch_key]
         self
       end
+
+      # Determine if the batch size exceeds a given maximum.
+      #
+      # @params[ Integer ] The max batch size.
+      #
+      # @return [ true, false ] If this operation exceeds the given batch size.
+      #
+      # @since 2.0.0
+      def valid_batch_size?(max)
+        spec[batch_key].size < max
+      end
     end
   end
 end

@@ -36,6 +36,7 @@ module Mongo
           #
           # @since 2.0.0
           def n_removed
+            return 0 unless acknowledged?
             @replies.reduce(0) do |n, reply|
               n += reply.documents.first[N]
             end
@@ -57,6 +58,7 @@ module Mongo
           #
           # @since 2.0.0
           def n_removed
+            return 0 unless acknowledged?
             @replies.reduce(0) do |n, reply|
               n += reply.documents.first[N]
             end

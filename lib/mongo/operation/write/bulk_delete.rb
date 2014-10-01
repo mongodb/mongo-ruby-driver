@@ -95,14 +95,18 @@ module Mongo
           replies = messages(context).map do |m|
             context.with_connection do |connection|
               result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
-              if ordered?
-                return result if result.write_failure?
+              if stop_sending?(result)
+                return result
               else
                 result.reply
               end
             end
           end
           LegacyResult.new(replies.compact.empty? ? nil : replies)
+        end
+
+        def stop_sending?(result)
+          ordered? && result.write_failure?
         end
 
         # @todo put this somewhere else
