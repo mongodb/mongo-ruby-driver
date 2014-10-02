@@ -160,6 +160,19 @@ describe Mongo::Operation::Write::Delete do
           expect(authorized_collection.find.count).to eq(2)
         end
       end
+
+      context 'when a document exceeds max bson size' do
+
+        let(:document) do
+          { q: { field: 't'*17000000 }, limit: 0 }
+        end
+
+        it 'raises an error' do
+          expect {
+            op.execute(authorized_primary.context)
+          }.to raise_error(Mongo::Protocol::Serializers::Document::InvalidBSONSize)
+        end
+      end
     end
 
     context 'when the server is a secondary' do

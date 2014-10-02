@@ -150,8 +150,12 @@ module Mongo
         # @param buffer [String] Buffer to receive the BSON encoded document.
         # @param value [Hash] Document to serialize as BSON.
         # @return [String] Buffer with serialized value.
-        def self.serialize(buffer, value)
+        def self.serialize(buffer, value, max_bson_size = nil)
+          start_size = buffer.size
           value.to_bson(buffer)
+          if max_bson_size && buffer.size - start_size > max_bson_size
+            raise InvalidBSONSize.new(max_bson_size)
+          end
         end
 
         # Deserializes a document from the IO stream
@@ -160,6 +164,38 @@ module Mongo
         # @return [Hash] The decoded BSON document.
         def self.deserialize(io)
           BSON::Document.from_bson(io)
+        end
+
+        # Whether there can be a size limit on this type after serialization.
+        #
+        # @return [ true ] Documents can be size limited upon serialization.
+        #
+        # @since 2.0.0
+        def self.size_limited?
+          true
+        end
+
+        # Exception that is raised when trying to serialize a document that
+        # exceeds max BSON object size.
+        #
+        # @since 2.0.0
+        class InvalidBSONSize < DriverError
+
+          # The message is constant.
+          #
+          # @since 2.0.0
+          MESSAGE = "Document exceeds allowed max BSON size."
+
+          # Instantiate the new exception.
+          #
+          # @example Instantiate the exception.
+          #   Mongo::Connection::InvalidBSONSize.new(max)
+          #
+          # @since 2.0.0
+          def initialize(max_size = nil)
+            super(max_size ?
+                    MESSAGE + " The max is #{max_size}." : MESSAGE)
+          end
         end
       end
     end

@@ -37,6 +37,8 @@ module Mongo
     def_delegators :@description,
                    :max_wire_version,
                    :max_write_batch_size,
+                   :max_bson_object_size,
+                   :max_message_size,
                    :mongos?,
                    :primary?,
                    :replica_set_name,

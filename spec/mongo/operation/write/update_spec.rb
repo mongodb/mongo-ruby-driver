@@ -159,6 +159,19 @@ describe Mongo::Operation::Write::Update do
           }.to raise_error(Mongo::Operation::Write::Failure)
         end
       end
+
+      context 'when a document exceeds max bson size' do
+
+        let(:document) do
+          { q: { name: 't'*17000000}, u: { '$set' => { field: 'blah' } } }
+        end
+
+        it 'raises an error' do
+          expect {
+            update.execute(authorized_primary.context)
+          }.to raise_error(Mongo::Protocol::Serializers::Document::InvalidBSONSize)
+        end
+      end
     end
 
     context 'when the server is a secondary' do
