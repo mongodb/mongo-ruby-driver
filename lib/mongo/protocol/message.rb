@@ -64,10 +64,10 @@ module Mongo
       #
       # @param buffer [String] buffer where the message should be inserted
       # @return [String] buffer containing the serialized message
-      def serialize(buffer = ''.force_encoding('BINARY'))
+      def serialize(buffer = ''.force_encoding('BINARY'), max_bson_size = nil)
         start = buffer.bytesize
         serialize_header(buffer)
-        serialize_fields(buffer)
+        serialize_fields(buffer, max_bson_size)
         length = buffer.bytesize - start
         buffer[start, 4] = Int32.serialize('', length)
         buffer
@@ -137,15 +137,23 @@ module Mongo
       #
       # @param buffer [String] buffer to receive the field
       # @return [String] buffer with serialized field
-      def serialize_fields(buffer)
+      def serialize_fields(buffer, max_bson_size = nil)
         fields.each do |field|
           value = instance_variable_get(field[:name])
           if field[:multi]
             value.each do |item|
-              field[:type].serialize(buffer, item)
+              if field[:type].respond_to?(:size_limited?)
+                field[:type].serialize(buffer, item, max_bson_size)
+              else
+                field[:type].serialize(buffer, item)
+              end
             end
           else
-            field[:type].serialize(buffer, value)
+            if field[:type].respond_to?(:size_limited?)
+              field[:type].serialize(buffer, value, max_bson_size)
+            else
+              field[:type].serialize(buffer, value)
+            end
           end
         end
       end

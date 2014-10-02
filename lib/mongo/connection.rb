@@ -35,7 +35,10 @@ module Mongo
     # @return [ Hash ] options The passed in options.
     attr_reader :options
 
-    def_delegators :@server, :write_command_enabled?
+    def_delegators :@server,
+                   :write_command_enabled?,
+                   :max_bson_object_size,
+                   :max_message_size
 
     # Is this connection authenticated. Will return true if authorization
     # details were provided and authentication passed.
@@ -160,8 +163,39 @@ module Mongo
     end
 
     def write(messages, buffer = '')
-      messages.each{ |message| message.serialize(buffer) }
+      start_size = 0
+      messages.each do |message|
+        message.serialize(buffer, max_bson_object_size)
+        if max_message_size &&
+          (buffer.size - start_size) > max_message_size
+          raise InvalidMessageSize.new(max_message_size)
+          start_size = buffer.size
+        end
+      end
       ensure_connected{ |socket| socket.write(buffer) }
+    end
+
+    # Exception that is raised when trying to send a message that exceeds max
+    # message size.
+    #
+    # @since 2.0.0
+    class InvalidMessageSize < DriverError
+
+      # The message is constant.
+      #
+      # @since 2.0.0
+      MESSAGE = "Message exceeds allowed max message size."
+
+      # Instantiate the new exception.
+      #
+      # @example Instantiate the exception.
+      #   Mongo::Connection::InvalidMessageSize.new(max)
+      #
+      # @since 2.0.0
+      def initialize(max_size = nil)
+        super(max_size ?
+                MESSAGE + " The max is #{max_size}." : MESSAGE)
+      end
     end
   end
 end
