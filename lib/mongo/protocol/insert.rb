@@ -75,7 +75,7 @@ module Mongo
 
       # @!attribute
       # @return [Array<Hash>] The documents to insert.
-      field :documents, Document, :multi => true
+      field :documents, Document, true
     end
   end
 end

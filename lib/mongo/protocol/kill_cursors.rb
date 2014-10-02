@@ -52,7 +52,7 @@ module Mongo
 
       # @!attribute
       # @return [Array<Fixnum>] Cursors to kill.
-      field :cursor_ids, Int64, :multi => true
+      field :cursor_ids, Int64, true
     end
   end
 end

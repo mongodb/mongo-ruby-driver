@@ -34,7 +34,7 @@ module Mongo
     #     field :flags, BitVector.new(FLAGS)
     #     field :namespace, CString
     #     field :document, Document
-    #     field :documents, Document, :multi => true
+    #     field :documents, Document, true
     #   end
     #
     # @abstract
