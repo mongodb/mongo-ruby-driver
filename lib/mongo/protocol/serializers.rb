@@ -171,7 +171,7 @@ module Mongo
         # @return [ true ] Documents can be size limited upon serialization.
         #
         # @since 2.0.0
-        def size_limted?
+        def self.size_limited?
           true
         end
 
