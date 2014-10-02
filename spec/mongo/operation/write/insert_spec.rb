@@ -206,6 +206,26 @@ describe Mongo::Operation::Write::Insert do
           }.to raise_error(Mongo::Operation::Write::Failure)
         end
       end
+
+      context 'when a document exceeds max bson size' do
+
+        let(:documents) do
+          [{ :x => 'y'* 17000000 }]
+        end
+
+        it 'raises an error' do
+          expect {
+            insert.execute(authorized_primary.context)
+          }.to raise_error(Mongo::Protocol::Serializers::Document::InvalidBSONSize)
+        end
+
+        it 'does not insert the document' do
+          expect {
+            insert.execute(authorized_primary.context)
+          }.to raise_error(Mongo::Protocol::Serializers::Document::InvalidBSONSize)
+          expect(authorized_collection.find.count).to eq(0)
+        end
+      end
     end
 
     context 'when the server is a secondary' do
