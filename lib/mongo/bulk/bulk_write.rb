@@ -187,7 +187,6 @@ module Mongo
         # @todo: Record user-ordering of ops in this batch
         #@ops.each_with_index { |op, index| op.set_order(index) }
 
-        # @todo set this before or after the execute?
         @executed = true
         ops = merge_ops
 
@@ -202,16 +201,27 @@ module Mongo
           end
 
           op = op.write_concern(write_concern) if write_concern
-          replies << op.execute(bulk_write.collection.next_primary.context)
+
+          begin
+            replies << op.execute(bulk_write.collection.next_primary.context)
+          rescue Protocol::Serializers::Document::InvalidBSONSize,
+                 Mongo::Connection::InvalidMessageSize => ex
+            raise ex unless op.batchable?
+            ops = op.batch(2) + ops
+          end
           return make_response(replies) if stop_executing?(replies.last)
         end
-        make_response(replies)# if write_concern.gle
+        make_response(replies) if write_concern.get_last_error
       end
 
       private
 
+      # Whether the execution of operations should be halted based on the
+      # last response and if the bulk operations are ordered.
+      #
+      # @return [ true, false ] If the execution of operations should be halted.
       def stop_executing?(reply)
-        ordered? && reply.write_failure?
+        reply && ordered? && reply.write_failure?
       end
 
       # Whether this batch has already been executed.
