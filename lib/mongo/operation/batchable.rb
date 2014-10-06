@@ -46,6 +46,9 @@ module Mongo
         if batches.size > n_batches
           batches[n_batches - 1] << batches.pop(batches.size - n_batches)
           batches[-1].flatten!
+        end
+
+        if index_batches.size > n_batches
           index_batches[n_batches - 1] << index_batches.pop(index_batches.size - n_batches)
           index_batches[-1].flatten!
         end
