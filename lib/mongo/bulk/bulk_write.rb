@@ -59,11 +59,9 @@ module Mongo
                  db_name: db_name,
                  coll_name: coll_name,
                  ordered: ordered?,
-                 write_concern: @collection.write_concern 
-               }
+                 write_concern: @collection.write_concern }
 
-        op = Mongo::Operation::Write::BulkInsert.new(spec)
-        self << op
+        push_op(Mongo::Operation::Write::BulkInsert, spec)
       end
 
       # Define a query selector.
@@ -78,14 +76,14 @@ module Mongo
 
       # Push a new operation onto this bulk object's current batch.
       #
-      # @params [ Operation ] op The operation to push onto this bulk object.
+      # @params [ Class ] op_class The class of the operation to push onto this
+      #   batch object.
       #
       # @return [ Batch ] The current batch object.
-      def push_op(op)
-        current_batch << op
+      def push_op(op_class, spec)
+        current_batch.push_op(op_class, spec)
         self
       end
-      alias_method :<<, :push_op
 
       # Execute the current batch of operations.
       #
@@ -158,18 +156,20 @@ module Mongo
         @ops = []
         @executed = false
         @ordered = ordered
+        @index = -1
       end
 
       # Push a new operation onto this batch object.
       #
-      # @params [ Operation ] op The operation to push onto this batch object.
+      # @params [ Class ] op_class The class of the operation to push onto this
+      #   batch object.
       #
       # @return [ Batch ] The current batch object.
-      def push_op(op)
-        @ops << op
+      def push_op(op_class, spec)
+        spec.merge!(indexes: [ increment_index ])
+        @ops << op_class.send(:new, spec)
         self
       end
-      alias_method :<<, :push_op
 
       # Execute this batch of operations.
       #
@@ -215,6 +215,10 @@ module Mongo
       end
 
       private
+
+      def increment_index
+        @index += 1
+      end
 
       # Whether the execution of operations should be halted based on the
       # last response and if the bulk operations are ordered.
@@ -306,6 +310,7 @@ module Mongo
             response['nModified'] = ( response['nModified'] || 0 ) + result.n_modified if result.respond_to?(:n_modified) && result.n_modified
             response['nUpserted'] = ( response['nUpserted'] || 0 ) + result.n_upserted if result.respond_to?(:n_upserted)
             response['nRemoved'] = ( response['nRemoved'] || 0 ) + result.n_removed if result.respond_to?(:n_removed)
+            response['writeErrors'] << "error at index #{result.index}" if result.write_failure?
           end
         end
       end

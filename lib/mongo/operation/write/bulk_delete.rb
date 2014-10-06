@@ -85,6 +85,15 @@ module Mongo
           end
         end
 
+        # The index of each delete as it was added onto the bulk object.
+        #
+        # @params [ Integer ] The index of each delete.
+        #
+        # @since 2.0.0
+        def indexes
+          @spec[:indexes] || []
+        end
+
         private
 
         def execute_write_command(context)

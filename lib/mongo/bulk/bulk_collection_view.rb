@@ -142,7 +142,7 @@ module Mongo
                  ordered:   @bulk_write.ordered? }
 
         @bulk_write.tap do |b|
-          b << Mongo::Operation::Write::BulkUpdate.new(spec)
+          b.push_op(Mongo::Operation::Write::BulkUpdate, spec)
         end
       end
 
@@ -164,7 +164,7 @@ module Mongo
                  ordered:   @bulk_write.ordered? }
 
         @bulk_write.tap do |b|
-          b << Mongo::Operation::Write::BulkDelete.new(spec)
+          b.push_op(Mongo::Operation::Write::BulkDelete, spec)
         end
       end
     end

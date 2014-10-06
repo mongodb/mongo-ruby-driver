@@ -68,6 +68,7 @@ module Mongo
             coll_name == other.coll_name &&
             db_name == other.db_name
         @spec[batch_key] += other.spec[batch_key]
+        @spec[:indexes] = indexes + other.indexes
         self
       end
 

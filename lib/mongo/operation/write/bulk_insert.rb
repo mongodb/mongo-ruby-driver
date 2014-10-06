@@ -84,6 +84,15 @@ module Mongo
           end
         end
 
+        # The index of each document as it was added onto the bulk object.
+        #
+        # @params [ Integer ] The index of each document.
+        #
+        # @since 2.0.0
+        def indexes
+          @spec[:indexes] || []
+        end
+
         private
 
         def execute_write_command(context)
