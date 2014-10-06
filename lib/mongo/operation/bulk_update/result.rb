@@ -92,6 +92,17 @@ module Mongo
             self
           end
 
+          def aggregate_write_errors
+            errors = []
+            @replies.each_with_index do |reply, i|
+              errors <<  { 'errmsg' => reply.documents[0]['err'],
+                           'index' => indexes[i],
+                           'code' => reply.documents[0]['code']
+                          } if reply.documents[0]['err']
+            end
+            errors
+          end
+
           private
 
           def upsert?(reply)
@@ -153,6 +164,17 @@ module Mongo
           def set_indexes(indexes)
             @indexes = indexes
             self
+          end
+
+          def aggregate_write_errors
+            errors = []
+            @replies.each_with_index do |reply, i|
+              errors <<  { 'errmsg' => reply.documents[0]['err'],
+                           'index' => indexes[i],
+                           'code' => reply.documents[0]['code']
+                          } if reply.documents[0]['err']
+            end
+            errors
           end
 
           private

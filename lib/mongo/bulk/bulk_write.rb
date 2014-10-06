@@ -305,11 +305,14 @@ module Mongo
           'nRemoved'  => nil,
           'upserted'  => [] }.tap do |response|
           results.map do |result|
+            write_errors = result.aggregate_write_errors
+
             response['nInserted'] = ( response['nInserted'] || 0 ) + result.n_inserted if result.respond_to?(:n_inserted)
             response['nMatched'] = ( response['nMatched'] || 0 ) + result.n_matched if result.respond_to?(:n_matched)
             response['nModified'] = ( response['nModified'] || 0 ) + result.n_modified if result.respond_to?(:n_modified) && result.n_modified
             response['nUpserted'] = ( response['nUpserted'] || 0 ) + result.n_upserted if result.respond_to?(:n_upserted)
             response['nRemoved'] = ( response['nRemoved'] || 0 ) + result.n_removed if result.respond_to?(:n_removed)
+            response['writeErrors'] << write_errors if write_errors
           end
         end
       end

@@ -40,6 +40,17 @@ module Mongo
             @indexes = indexes
             self
           end
+
+          def aggregate_write_errors
+            errors = []
+            @replies.each_with_index do |reply, i|
+              errors <<  { 'errmsg' => reply.inspect,
+                           'index' => indexes[i],
+                           'code' => reply.documents[0]['code']
+                          } if command_failure?
+            end
+            errors
+          end
         end
 
         # Defines custom behaviour of results when inserting.
@@ -69,6 +80,15 @@ module Mongo
           def set_indexes(indexes)
             @indexes = indexes
             self
+          end
+
+          def aggregate_write_errors
+            @replies.each_with_index.reduce([]) do |errors, (reply, i)|
+              errors <<  { 'errmsg' => reply.documents[0]['err'],
+                           'index' => indexes[i],
+                           'code' => reply.documents[0]['code']
+                          } if acknowledged? && (command_failure? || write_errors?)
+            end
           end
         end
       end

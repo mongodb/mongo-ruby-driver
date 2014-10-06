@@ -100,13 +100,13 @@ module Mongo
         end
 
         def execute_message(context)
-          replies = messages(context).map do |m|
+          replies = []
+          messages(context).map do |m|
             context.with_connection do |connection|
               result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
+              replies << result.reply
               if stop_sending?(result)
-                return result.set_indexes(indexes)
-              else
-                result.reply
+                return LegacyResult.new(replies).set_indexes(indexes)
               end
             end
           end
