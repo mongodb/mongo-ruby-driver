@@ -38,6 +38,7 @@ module Mongo
 
         items_per_batch = items.size / n_batches
         batches  = items.each_slice(items_per_batch).to_a
+        index_batches = indexes.each_slice(items_per_batch).to_a
 
         # #each_slice makes groups containing exactly items_per_batch number of items.
         # You could therefore end up with more groups than n_batches, so put the
@@ -45,10 +46,13 @@ module Mongo
         if batches.size > n_batches
           batches[n_batches - 1] << batches.pop(batches.size - n_batches)
           batches[-1].flatten!
+          index_batches[n_batches - 1] << index_batches.pop(index_batches.size - n_batches)
+          index_batches[-1].flatten!
         end
 
-        batches.inject([]) do |children, batch|
+        batches.each_with_index.inject([]) do |children, (batch, i)|
           spec_copy = spec.dup
+          spec_copy[:indexes] = index_batches[i]
           spec_copy[batch_key] = batch
           children << self.class.new(spec_copy)
         end
