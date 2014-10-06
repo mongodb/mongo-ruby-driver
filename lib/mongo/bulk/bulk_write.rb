@@ -310,7 +310,6 @@ module Mongo
             response['nModified'] = ( response['nModified'] || 0 ) + result.n_modified if result.respond_to?(:n_modified) && result.n_modified
             response['nUpserted'] = ( response['nUpserted'] || 0 ) + result.n_upserted if result.respond_to?(:n_upserted)
             response['nRemoved'] = ( response['nRemoved'] || 0 ) + result.n_removed if result.respond_to?(:n_removed)
-            response['writeErrors'] << "error at index #{result.index}" if result.write_failure?
           end
         end
       end

@@ -22,6 +22,8 @@ module Mongo
         # @since 2.0.0
         class Result < Operation::Result
 
+          attr_reader :indexes
+
           # The aggregate number of deleted docs reported in the replies.
           #
           # @since 2.0.0
@@ -41,6 +43,11 @@ module Mongo
               n += reply.documents.first[N]
             end
           end
+
+          def set_indexes(indexes)
+            @indexes = indexes
+            self
+          end
         end
 
         # Defines custom behaviour of results when deleting.
@@ -48,6 +55,8 @@ module Mongo
         #
         # @since 2.0.0
         class LegacyResult < Operation::Result
+
+          attr_reader :indexes
 
           # Gets the number of documents deleted.
           #
@@ -62,6 +71,11 @@ module Mongo
             @replies.reduce(0) do |n, reply|
               n += reply.documents.first[N]
             end
+          end
+
+          def set_indexes(indexes)
+            @indexes = indexes
+            self
           end
         end
       end

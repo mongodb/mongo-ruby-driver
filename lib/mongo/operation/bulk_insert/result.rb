@@ -22,6 +22,8 @@ module Mongo
         # @since 2.0.0
         class Result < Operation::Result
 
+          attr_reader :indexes
+
           # Gets the number of documents inserted.
           #
           # @example Get the number of documents inserted.
@@ -33,6 +35,11 @@ module Mongo
           def n_inserted
             written_count
           end
+
+          def set_indexes(indexes)
+            @indexes = indexes
+            self
+          end
         end
 
         # Defines custom behaviour of results when inserting.
@@ -40,6 +47,8 @@ module Mongo
         #
         # @since 2.0.0
         class LegacyResult < Operation::Result
+
+          attr_reader :indexes
 
           # Gets the number of documents inserted.
           #
@@ -55,6 +64,11 @@ module Mongo
               n += 1 if reply.documents.first[OK] == 1
               n
             end
+          end
+
+          def set_indexes(indexes)
+            @indexes = indexes
+            self
           end
         end
       end

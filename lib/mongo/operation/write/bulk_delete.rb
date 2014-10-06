@@ -97,7 +97,7 @@ module Mongo
         private
 
         def execute_write_command(context)
-          Result.new(Command::Delete.new(spec).execute(context))
+          Result.new(Command::Delete.new(spec).execute(context)).set_indexes(indexes)
         end
 
         def execute_message(context)
@@ -105,13 +105,13 @@ module Mongo
             context.with_connection do |connection|
               result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
               if stop_sending?(result)
-                return result
+                return result.set_indexes(indexes)
               else
                 result.reply
               end
             end
           end
-          LegacyResult.new(replies.compact.empty? ? nil : replies)
+          LegacyResult.new(replies.compact.empty? ? nil : replies).set_indexes(indexes)
         end
 
         def stop_sending?(result)

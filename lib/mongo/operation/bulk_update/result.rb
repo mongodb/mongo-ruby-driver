@@ -22,6 +22,8 @@ module Mongo
         # @since 2.0.0
         class Result < Operation::Result
 
+          attr_reader :indexes
+
           # The number of modified docs field in the result.
           #
           # @since 2.0.0
@@ -85,6 +87,11 @@ module Mongo
             end
           end
 
+          def set_indexes(indexes)
+            @indexes = indexes
+            self
+          end
+
           private
 
           def upsert?(reply)
@@ -97,6 +104,8 @@ module Mongo
         #
         # @since 2.0.0
         class LegacyResult < Operation::Result
+
+          attr_reader :indexes
 
           # The updated existing field in the result.
           #
@@ -139,6 +148,11 @@ module Mongo
                 n += reply.documents.first[N]
               end
             end
+          end
+
+          def set_indexes(indexes)
+            @indexes = indexes
+            self
           end
 
           private
