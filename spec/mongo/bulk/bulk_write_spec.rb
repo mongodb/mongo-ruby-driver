@@ -54,7 +54,7 @@ describe Mongo::Bulk::BulkWrite do
 
         # @todo should raise exception
 
-        it 'splits messages in multiple message' do
+        it 'splits messages into multiple messages' do
           bulk.execute
           expect(authorized_collection.find.count).to eq(6)
         end
@@ -115,7 +115,7 @@ describe Mongo::Bulk::BulkWrite do
 
       # @todo should raise exception
 
-      it 'splits messages in multiple message' do
+      it 'splits messages into multiple messages' do
         bulk.execute
         expect(authorized_collection.find.count).to eq(16)
       end
