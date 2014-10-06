@@ -41,15 +41,19 @@ module Mongo
             self
           end
 
+          def reply_write_errors?(reply)
+            reply.documents[0][Operation::ERROR] &&
+              reply.documents[0][Operation::ERROR_CODE]
+          end
+
           def aggregate_write_errors
             errors = []
-            @replies.each_with_index do |reply, i|
-              errors <<  { 'errmsg' => reply.inspect,
-                           'index' => indexes[i],
-                           'code' => reply.documents[0]['code']
-                          } if command_failure?
+            @replies.map do |reply|
+              if write_errors = reply.documents.first['writeErrors']
+                errors << write_errors.first.merge('index' => indexes[write_errors.first['index']])
+              end
             end
-            errors
+            errors.empty? ? nil : errors
           end
         end
 
@@ -82,13 +86,20 @@ module Mongo
             self
           end
 
+          def reply_write_errors?(reply)
+            reply.documents.first[Operation::ERROR] &&
+              reply.documents.first[Operation::ERROR_CODE]
+          end
+
           def aggregate_write_errors
-            @replies.each_with_index.reduce([]) do |errors, (reply, i)|
-              errors <<  { 'errmsg' => reply.documents[0]['err'],
+            errors = []
+            @replies.each_with_index do |reply, i|
+              errors <<  { 'errmsg' => reply.documents[0][Operation::ERROR],
                            'index' => indexes[i],
-                           'code' => reply.documents[0]['code']
-                          } if acknowledged? && (command_failure? || write_errors?)
+                           'code' => reply.documents[0][Operation::ERROR_CODE]
+                          } if reply_write_errors?(reply)
             end
+            errors.empty? ? nil : errors
           end
         end
       end
