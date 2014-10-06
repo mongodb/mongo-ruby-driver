@@ -81,6 +81,15 @@ module Mongo
       def valid_batch_size?(max)
         spec[batch_key].size < max
       end
+
+      # Whether this operation can be split into batches.
+      #
+      # @return [ true, false ] If this operation can be split into batches.
+      #
+      # @since 2.0.0
+      def batchable?
+        spec[batch_key].size > 1
+      end
     end
   end
 end
