@@ -39,7 +39,7 @@ Here is a quick example of basic usage for the Ruby driver:
 require 'mongo'
 
 # connecting to the database
-client = Mongo::Client.new # defaults to localhost:27017
+client = Mongo::Connection.new # defaults to localhost:27017
 db     = client['example-db']
 coll   = db['example-collection']
 
