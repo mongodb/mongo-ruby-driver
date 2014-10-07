@@ -87,20 +87,36 @@ module Mongo
             end
           end
 
+          # Set a list of indexes of the operations creating this result.
+          #
+          # @example Set the list of indexes.
+          #   result.set_indexes([1,2,3])
+          #
+          # @return [ self ] The result.
+          #
+          # @since 2.0.0
           def set_indexes(indexes)
             @indexes = indexes
             self
           end
 
+          # Aggregate the write errors returned from this result.
+          #
+          # @example Aggregate the write errors.
+          #   result.aggregate_write_errors
+          #
+          # @return [ Array ] The aggregate write errors.
+          #
+          # @since 2.0.0
           def aggregate_write_errors
-            errors = []
-            @replies.each_with_index do |reply, i|
-              errors <<  { 'errmsg' => reply.documents[0]['err'],
-                           'index' => indexes[i],
-                           'code' => reply.documents[0]['code']
-                          } if reply.documents[0]['err']
+            @replies.reduce([]) do |all_write_errors, reply|
+              if write_errors = reply.documents.first['writeErrors']
+                write_errors.each do |write_error|
+                  all_write_errors << write_error.merge('index' => indexes[write_error['index']])
+                end
+                all_write_errors
+              end
             end
-            errors
           end
 
           private
@@ -161,23 +177,44 @@ module Mongo
             end
           end
 
+          # Set a list of indexes of the operations creating this result.
+          #
+          # @example Set the list of indexes.
+          #   result.set_indexes([1,2,3])
+          #
+          # @return [ self ] The result.
+          #
+          # @since 2.0.0
           def set_indexes(indexes)
             @indexes = indexes
             self
           end
 
+          # Aggregate the write errors returned from this result.
+          #
+          # @example Aggregate the write errors.
+          #   result.aggregate_write_errors
+          #
+          # @return [ Array ] The aggregate write errors.
+          #
+          # @since 2.0.0
           def aggregate_write_errors
-            errors = []
-            @replies.each_with_index do |reply, i|
-              errors <<  { 'errmsg' => reply.documents[0]['err'],
-                           'index' => indexes[i],
-                           'code' => reply.documents[0]['code']
-                          } if reply.documents[0]['err']
+            @replies.each_with_index.reduce([]) do |errors, (reply, i)|
+              errors.tap do |e|
+                e << { 'errmsg' => reply.documents.first[Operation::ERROR],
+                       'index' => indexes[i],
+                       'code' => reply.documents.first[Operation::ERROR_CODE]
+                     } if reply_write_errors?(reply)
+              end
             end
-            errors
           end
 
           private
+
+          def reply_write_errors?(reply)
+            reply.documents.first[Operation::ERROR] &&
+              reply.documents.first[Operation::ERROR_CODE]
+          end
 
           def upsert?(reply)
             !reply.documents.first[UPDATED_EXISTING]
