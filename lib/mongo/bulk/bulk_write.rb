@@ -296,14 +296,14 @@ module Mongo
       #
       # @return [ Hash ] The response from the server.
       def make_response(results)
-        { 'writeErrors' => [],
-          'writeConcernErrors' => [],
+        { 'writeErrors' => nil,
+          'writeConcernErrors' => nil,
           'nInserted' => nil,
           'nUpserted' => nil,
           'nMatched'  => nil, # is equivalent to the "n" field in the getLastError response after a legacy update
           'nModified' => nil, # nModified is incremented only when an update operation actually changes a document, nil for legacy
           'nRemoved'  => nil,
-          'upserted'  => [] }.tap do |response|
+          'upserted'  => nil }.tap do |response|
           results.map do |result|
             write_errors = result.aggregate_write_errors
 
@@ -312,7 +312,15 @@ module Mongo
             response['nModified'] = ( response['nModified'] || 0 ) + result.n_modified if result.respond_to?(:n_modified) && result.n_modified
             response['nUpserted'] = ( response['nUpserted'] || 0 ) + result.n_upserted if result.respond_to?(:n_upserted)
             response['nRemoved'] = ( response['nRemoved'] || 0 ) + result.n_removed if result.respond_to?(:n_removed)
-            response['writeErrors'] << write_errors if write_errors
+            response['writeErrors'] = ( response['writeErrors'] || [] ) + write_errors if write_errors
+          end
+
+          response.keys.each do |k|
+            response.delete(k) if response[k].nil?
+          end
+
+          if response['writeErrors']
+            response.merge!('errmsg' => 'batch item errors occurred')
           end
         end
       end
