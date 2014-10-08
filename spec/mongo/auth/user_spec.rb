@@ -187,4 +187,20 @@ describe Mongo::Auth::User do
       end
     end
   end
+
+  describe '#nonce' do
+
+    let(:user) do
+      described_class.new(options)
+    end
+
+    it 'returns a string with the username' do
+      expect(user.nonce).to include('n=user')
+    end
+
+    it 'returns a string with a secure random string' do
+      expect(user.nonce).to include('r=')
+      expect(user.nonce.length).to eq(33)
+    end
+  end
 end

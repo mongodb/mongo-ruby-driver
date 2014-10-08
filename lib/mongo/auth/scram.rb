@@ -39,7 +39,7 @@ module Mongo
       # @since 2.0.0
       def login(connection)
         # host = connection.address.host
-        # token = #BSON::Binary.new(authenticator(host).initialize_challenge)
+        token = user.nonce
         # reply = connection.dispatch([ login_message(token) ]).documents[0]
         # until reply.documents[0]['done']
           # token = BSON::Binary.new(authenticator(host).evaluate_challenge(response['payload'].to_s))

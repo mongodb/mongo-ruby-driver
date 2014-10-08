@@ -151,6 +151,18 @@ module Mongo
         @roles = options[:roles] || []
       end
 
+      # Returns a SCRAM-SHA-1 safe nonce for use with authentication.
+      #
+      # @example Get the user nonce.
+      #   user.nonce
+      #
+      # @return [ String ] The user nonce string.
+      #
+      # @since 2.0.0
+      def nonce
+        "n=#{name},r=#{SecureRandom.base64}"
+      end
+
       # Get the specification for the user, used in creation.
       #
       # @example Get the user's specification.
