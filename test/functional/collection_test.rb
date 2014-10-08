@@ -1323,6 +1323,11 @@ class CollectionTest < Test::Unit::TestCase
     assert_equal desired_results, results
   end
 
+  def test_aggregate_command_using_sym
+    cmd = BSON::OrderedHash[:aggregate, @test.name, :pipeline, [{'$match' => {:_id => true}}]]
+    assert @db.command(cmd)
+  end
+
   def test_aggregate_pipeline_multiple_operators
     return unless @version > '2.1.1'
     setup_aggregate_data
