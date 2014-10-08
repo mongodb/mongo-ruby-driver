@@ -32,9 +32,10 @@ describe Mongo::Bulk::BulkWrite do
 
         # @todo should raise exception
 
-        it 'halts execution after first error' do
-          bulk.execute
+        it 'halts execution after first error and reports correct index' do
+          result = bulk.execute
           expect(authorized_collection.find.count).to eq(3000)
+          expect(result['writeErrors'].first['index']).to eq(3000)
         end
       end
 

@@ -84,24 +84,33 @@ module Mongo
           end
         end
 
+        # The index of each document as it was added onto the bulk object.
+        #
+        # @params [ Integer ] The index of each document.
+        #
+        # @since 2.0.0
+        def indexes
+          @spec[:indexes] || []
+        end
+
         private
 
         def execute_write_command(context)
-          Result.new(Command::Insert.new(spec).execute(context))
+          Result.new(Command::Insert.new(spec).execute(context)).set_indexes(indexes)
         end
 
         def execute_message(context)
-          replies = messages(context).map do |m|
+          replies = []
+          messages(context).map do |m|
             context.with_connection do |connection|
               result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
+              replies << result.reply
               if stop_sending?(result)
-                return result
-              else
-                result.reply
+                return LegacyResult.new(replies).set_indexes(indexes)
               end
             end
           end
-          LegacyResult.new(replies.compact.empty? ? nil : replies)
+          LegacyResult.new(replies.compact.empty? ? nil : replies).set_indexes(indexes)
         end
 
         def stop_sending?(result)

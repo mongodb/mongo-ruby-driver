@@ -22,6 +22,8 @@ module Mongo
         # @since 2.0.0
         class Result < Operation::Result
 
+          attr_reader :indexes
+
           # The aggregate number of deleted docs reported in the replies.
           #
           # @since 2.0.0
@@ -41,6 +43,38 @@ module Mongo
               n += reply.documents.first[N]
             end
           end
+
+          # Set a list of indexes of the operations creating this result.
+          #
+          # @example Set the list of indexes.
+          #   result.set_indexes([1,2,3])
+          #
+          # @return [ self ] The result.
+          #
+          # @since 2.0.0
+          def set_indexes(indexes)
+            @indexes = indexes
+            self
+          end
+
+          # Aggregate the write errors returned from this result.
+          #
+          # @example Aggregate the write errors.
+          #   result.aggregate_write_errors
+          #
+          # @return [ Array ] The aggregate write errors.
+          #
+          # @since 2.0.0
+          def aggregate_write_errors
+            @replies.reduce([]) do |all_write_errors, reply|
+              if write_errors = reply.documents.first['writeErrors']
+                write_errors.each do |write_error|
+                  all_write_errors << write_error.merge('index' => indexes[write_error['index']])
+                end
+                all_write_errors
+              end
+            end
+          end
         end
 
         # Defines custom behaviour of results when deleting.
@@ -48,6 +82,8 @@ module Mongo
         #
         # @since 2.0.0
         class LegacyResult < Operation::Result
+
+          attr_reader :indexes
 
           # Gets the number of documents deleted.
           #
@@ -62,6 +98,45 @@ module Mongo
             @replies.reduce(0) do |n, reply|
               n += reply.documents.first[N]
             end
+          end
+
+          # Set a list of indexes of the operations creating this result.
+          #
+          # @example Set the list of indexes.
+          #   result.set_indexes([1,2,3])
+          #
+          # @return [ self ] The result.
+          #
+          # @since 2.0.0
+          def set_indexes(indexes)
+            @indexes = indexes
+            self
+          end
+
+          # Aggregate the write errors returned from this result.
+          #
+          # @example Aggregate the write errors.
+          #   result.aggregate_write_errors
+          #
+          # @return [ Array ] The aggregate write errors.
+          #
+          # @since 2.0.0
+          def aggregate_write_errors
+            @replies.each_with_index.reduce([]) do |errors, (reply, i)|
+              errors.tap do |e|
+                e << { 'errmsg' => reply.documents.first[Operation::ERROR],
+                       'index' => indexes[i],
+                       'code' => reply.documents.first[Operation::ERROR_CODE]
+                     } if reply_write_errors?(reply)
+              end
+            end
+          end
+
+          private
+
+          def reply_write_errors?(reply)
+            reply.documents.first[Operation::ERROR] &&
+              reply.documents.first[Operation::ERROR_CODE]
           end
         end
       end
