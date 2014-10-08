@@ -717,11 +717,13 @@ module Mongo
 
       if result.key?('cursor')
         cursor_info = result['cursor']
+        pinned_pool = @connection.pinned_pool
+        pinned_pool = pinned_pool[:pool] if pinned_pool.respond_to?(:keys)
 
         seed = {
           :cursor_id => cursor_info['id'],
           :first_batch => cursor_info['firstBatch'],
-          :pool => @connection.pinned_pool
+          :pool => pinned_pool
         }
 
         return Cursor.new(self, seed.merge!(opts))
@@ -887,10 +889,13 @@ module Mongo
       result                       = @db.command(cmd, command_options(opts))
 
       result['cursors'].collect do |cursor_info|
+        pinned_pool = @connection.pinned_pool
+        pinned_pool = pinned_pool[:pool] if pinned_pool.respond_to?(:keys)
+
         seed = {
           :cursor_id   => cursor_info['cursor']['id'],
           :first_batch => cursor_info['cursor']['firstBatch'],
-          :pool        => @connection.pinned_pool
+          :pool        => pinned_pool
         }
         Cursor.new(self, seed.merge!(opts))
       end

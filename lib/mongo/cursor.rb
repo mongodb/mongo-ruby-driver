@@ -564,9 +564,11 @@ module Mongo
         ensure
           socket.checkin unless @socket || socket.nil?
         end
-        if !@socket && !@command
+
+        if pin_pool?(results.first)
           @connection.pin_pool(socket.pool, read_preference)
         end
+
         @returned += @n_received
         @cache += results
         @query_run = true
@@ -727,6 +729,11 @@ module Mongo
         indexes.push("#{field}_#{type}")
       end
       indexes.join("_")
+    end
+
+    def pin_pool?(response)
+      ( response && (response['cursor'] || response['cursors']) ) ||
+        ( !@socket && !@command )
     end
   end
 end
