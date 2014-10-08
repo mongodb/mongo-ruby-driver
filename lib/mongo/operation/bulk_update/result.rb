@@ -177,6 +177,18 @@ module Mongo
             end
           end
 
+          # Gets the number of documents modified.
+          #
+          # @example Get the modified count.
+          #   result.n_modified
+          #
+          # @return [ nil ] nil for legacy.
+          #
+          # @since 2.0.0
+          def n_modified
+            nil
+          end
+
           # Set a list of indexes of the operations creating this result.
           #
           # @example Set the list of indexes.
