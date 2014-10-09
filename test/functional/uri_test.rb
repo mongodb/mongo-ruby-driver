@@ -339,6 +339,22 @@ class URITest < Test::Unit::TestCase
     end
   end
 
+  def test_auth_mechanism_properties
+    uri = "mongodb://user@localhost?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME" +
+            ":mongodb,CANONICALIZE_HOST_NAME:true"
+    parser = Mongo::URIParser.new(uri)
+    properties = {:service_name => "mongodb", :canonicalize_host_name => true}
+    assert_equal properties, parser.authmechanismproperties
+    assert_equal 'GSSAPI', parser.authmechanism
+
+    uri = "mongodb://user@localhost?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME" +
+            ":MongoDB,CANONICALIZE_HOST_NAME:false,SERVICE_REALM:test"
+    parser = Mongo::URIParser.new(uri)
+    properties = {:service_name => "MongoDB", :canonicalize_host_name => false, :service_realm => "test"}
+    assert_equal properties, parser.authmechanismproperties
+    assert_equal 'GSSAPI', parser.authmechanism
+  end
+
   def test_sasl_plain
     parser = Mongo::URIParser.new("mongodb://user:pass@localhost?authMechanism=PLAIN")
     assert_equal 'PLAIN', parser.auths.first[:mechanism]

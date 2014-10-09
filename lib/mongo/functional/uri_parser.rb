@@ -42,6 +42,7 @@ module Mongo
 
     OPT_ATTRS  = [
       :authmechanism,
+      :authmechanismproperties,
       :authsource,
       :canonicalizehostname,
       :connect,
@@ -62,71 +63,75 @@ module Mongo
     ]
 
     OPT_VALID = {
-      :authmechanism        => lambda { |arg| Mongo::Authentication.validate_mechanism(arg) },
-      :authsource           => lambda { |arg| arg.length > 0 },
-      :canonicalizehostname => lambda { |arg| ['true', 'false'].include?(arg) },
-      :connect              => lambda { |arg| [ 'direct', 'replicaset', 'true', 'false', true, false ].include?(arg) },
-      :connecttimeoutms     => lambda { |arg| arg =~ /^\d+$/ },
-      :fsync                => lambda { |arg| ['true', 'false'].include?(arg) },
-      :gssapiservicename    => lambda { |arg| arg.length > 0 },
-      :journal              => lambda { |arg| ['true', 'false'].include?(arg) },
-      :pool_size            => lambda { |arg| arg.to_i > 0 },
-      :readpreference       => lambda { |arg| READ_PREFERENCES.keys.include?(arg) },
-      :replicaset           => lambda { |arg| arg.length > 0 },
-      :safe                 => lambda { |arg| ['true', 'false'].include?(arg) },
-      :slaveok              => lambda { |arg| ['true', 'false'].include?(arg) },
-      :sockettimeoutms      => lambda { |arg| arg =~ /^\d+$/ },
-      :ssl                  => lambda { |arg| ['true', 'false'].include?(arg) },
-      :w                    => lambda { |arg| arg =~ /^\w+$/ },
-      :wtimeout             => lambda { |arg| arg =~ /^\d+$/ },
-      :wtimeoutms           => lambda { |arg| arg =~ /^\d+$/ }
+      :authmechanism           => lambda { |arg| Mongo::Authentication.validate_mechanism(arg) },
+      :authmechanismproperties => lambda { |arg| arg.length > 0 },
+      :authsource              => lambda { |arg| arg.length > 0 },
+      :canonicalizehostname    => lambda { |arg| ['true', 'false'].include?(arg) },
+      :connect                 => lambda { |arg| [ 'direct', 'replicaset', 'true', 'false', true, false ].include?(arg) },
+      :connecttimeoutms        => lambda { |arg| arg =~ /^\d+$/ },
+      :fsync                   => lambda { |arg| ['true', 'false'].include?(arg) },
+      :gssapiservicename       => lambda { |arg| arg.length > 0 },
+      :journal                 => lambda { |arg| ['true', 'false'].include?(arg) },
+      :pool_size               => lambda { |arg| arg.to_i > 0 },
+      :readpreference          => lambda { |arg| READ_PREFERENCES.keys.include?(arg) },
+      :replicaset              => lambda { |arg| arg.length > 0 },
+      :safe                    => lambda { |arg| ['true', 'false'].include?(arg) },
+      :slaveok                 => lambda { |arg| ['true', 'false'].include?(arg) },
+      :sockettimeoutms         => lambda { |arg| arg =~ /^\d+$/ },
+      :ssl                     => lambda { |arg| ['true', 'false'].include?(arg) },
+      :w                       => lambda { |arg| arg =~ /^\w+$/ },
+      :wtimeout                => lambda { |arg| arg =~ /^\d+$/ },
+      :wtimeoutms              => lambda { |arg| arg =~ /^\d+$/ }
      }
 
     OPT_ERR = {
-      :authmechanism        => "must be one of #{Mongo::Authentication::MECHANISMS.join(', ')}",
-      :authsource           => "must be a string containing the name of the database being used for authentication",
-      :canonicalizehostname => "must be 'true' or 'false'",
-      :connect              => "must be 'direct', 'replicaset', 'true', or 'false'",
-      :connecttimeoutms     => "must be an integer specifying milliseconds",
-      :fsync                => "must be 'true' or 'false'",
-      :gssapiservicename    => "must be a string containing the name of the GSSAPI service",
-      :journal              => "must be 'true' or 'false'",
-      :pool_size            => "must be an integer greater than zero",
-      :readpreference       => "must be on of #{READ_PREFERENCES.keys.map(&:inspect).join(",")}",
-      :replicaset           => "must be a string containing the name of the replica set to connect to",
-      :safe                 => "must be 'true' or 'false'",
-      :slaveok              => "must be 'true' or 'false'",
-      :settimeoutms         => "must be an integer specifying milliseconds",
-      :ssl                  => "must be 'true' or 'false'",
-      :w                    => "must be an integer indicating number of nodes to replicate to or a string " +
-                               "specifying that replication is required to the majority or nodes with a " +
-                               "particilar getLastErrorMode.",
-      :wtimeout             => "must be an integer specifying milliseconds",
-      :wtimeoutms           => "must be an integer specifying milliseconds"
+      :authmechanism           => "must be one of #{Mongo::Authentication::MECHANISMS.join(', ')}",
+      :authmechanismproperties => "must meet the format requirements of the authentication mechanism's properties",
+      :authsource              => "must be a string containing the name of the database being used for authentication",
+      :canonicalizehostname    => "must be 'true' or 'false'",
+      :connect                 => "must be 'direct', 'replicaset', 'true', or 'false'",
+      :connecttimeoutms        => "must be an integer specifying milliseconds",
+      :fsync                   => "must be 'true' or 'false'",
+      :gssapiservicename       => "must be a string containing the name of the GSSAPI service",
+      :journal                 => "must be 'true' or 'false'",
+      :pool_size               => "must be an integer greater than zero",
+      :readpreference          => "must be one of #{READ_PREFERENCES.keys.map(&:inspect).join(",")}",
+      :replicaset              => "must be a string containing the name of the replica set to connect to",
+      :safe                    => "must be 'true' or 'false'",
+      :slaveok                 => "must be 'true' or 'false'",
+      :settimeoutms            => "must be an integer specifying milliseconds",
+      :ssl                     => "must be 'true' or 'false'",
+      :w                       => "must be an integer indicating number of nodes to replicate to or a string " +
+                                  "specifying that replication is required to the majority or nodes with a " +
+                                  "particilar getLastErrorMode.",
+      :wtimeout                => "must be an integer specifying milliseconds",
+      :wtimeoutms              => "must be an integer specifying milliseconds"
     }
 
     OPT_CONV = {
-      :authmechanism        => lambda { |arg| arg.upcase },
-      :authsource           => lambda { |arg| arg },
-      :canonicalizehostname => lambda { |arg| arg == 'true' ? true : false },
-      :connect              => lambda { |arg| arg == 'false' ? false : arg }, # convert 'false' to FalseClass
-      :connecttimeoutms     => lambda { |arg| arg.to_f / 1000 }, # stored as seconds
-      :fsync                => lambda { |arg| arg == 'true' ? true : false },
-      :gssapiservicename    => lambda { |arg| arg },
-      :journal              => lambda { |arg| arg == 'true' ? true : false },
-      :pool_size            => lambda { |arg| arg.to_i },
-      :readpreference       => lambda { |arg| READ_PREFERENCES[arg] },
-      :replicaset           => lambda { |arg| arg },
-      :safe                 => lambda { |arg| arg == 'true' ? true : false },
-      :slaveok              => lambda { |arg| arg == 'true' ? true : false },
-      :sockettimeoutms      => lambda { |arg| arg.to_f / 1000 }, # stored as seconds
-      :ssl                  => lambda { |arg| arg == 'true' ? true : false },
-      :w                    => lambda { |arg| Mongo::Support.is_i?(arg) ? arg.to_i : arg.to_sym },
-      :wtimeout             => lambda { |arg| arg.to_i },
-      :wtimeoutms           => lambda { |arg| arg.to_i }
+      :authmechanism           => lambda { |arg| arg.upcase },
+      :authmechanismproperties => lambda { |arg| arg },
+      :authsource              => lambda { |arg| arg },
+      :canonicalizehostname    => lambda { |arg| arg == 'true' ? true : false },
+      :connect                 => lambda { |arg| arg == 'false' ? false : arg }, # convert 'false' to FalseClass
+      :connecttimeoutms        => lambda { |arg| arg.to_f / 1000 }, # stored as seconds
+      :fsync                   => lambda { |arg| arg == 'true' ? true : false },
+      :gssapiservicename       => lambda { |arg| arg },
+      :journal                 => lambda { |arg| arg == 'true' ? true : false },
+      :pool_size               => lambda { |arg| arg.to_i },
+      :readpreference          => lambda { |arg| READ_PREFERENCES[arg] },
+      :replicaset              => lambda { |arg| arg },
+      :safe                    => lambda { |arg| arg == 'true' ? true : false },
+      :slaveok                 => lambda { |arg| arg == 'true' ? true : false },
+      :sockettimeoutms         => lambda { |arg| arg.to_f / 1000 }, # stored as seconds
+      :ssl                     => lambda { |arg| arg == 'true' ? true : false },
+      :w                       => lambda { |arg| Mongo::Support.is_i?(arg) ? arg.to_i : arg.to_sym },
+      :wtimeout                => lambda { |arg| arg.to_i },
+      :wtimeoutms              => lambda { |arg| arg.to_i }
     }
 
     OPT_CASE_SENSITIVE = [ :authsource,
+                           :authmechanismproperties,
                            :gssapiservicename,
                            :replicaset,
                            :w
@@ -134,6 +139,7 @@ module Mongo
 
     attr_reader :auths,
                 :authmechanism,
+                :authmechanismproperties,
                 :authsource,
                 :canonicalizehostname,
                 :connect,
@@ -337,8 +343,11 @@ module Mongo
           :source    => @authsource,
           :mechanism => @authmechanism
         })
-        auth[:extra] = @canonicalizehostname ? { :canonicalize_host_name => @canonicalizehostname } : {}
-        auth[:extra].merge!(:gssapi_service_name => @gssapiservicename) if @gssapiservicename
+
+        extra = @authmechanismproperties || {}
+        extra.merge!(:canonicalize_host_name => @canonicalizehostname) if @canonicalizehostname
+        extra.merge!(:gssapi_service_name => @gssapiservicename) if @gssapiservicename
+        auth[:extra] = extra unless extra.empty?
         @auths << auth
       end
     end
@@ -372,6 +381,17 @@ module Mongo
           instance_variable_set("@#{key}", OPT_CONV[key].call(value))
         else
           raise MongoArgumentError, "Invalid value #{value.inspect} for #{key}: #{OPT_ERR[key]}"
+        end
+      end
+
+      if @authmechanismproperties
+        @authmechanismproperties = @authmechanismproperties.split(',').reduce({}) do |prop, pair|
+          key, value = pair.split(':')
+          if ["true", "false"].include?(value.downcase)
+            value = value.downcase == "true"
+          end
+          prop[key.downcase.to_sym] = value
+          prop
         end
       end
     end
