@@ -19,7 +19,8 @@ module Mongo
 
     DEFAULT_MECHANISM = 'MONGODB-CR'
     MECHANISMS        = ['GSSAPI', 'MONGODB-CR', 'MONGODB-X509', 'PLAIN']
-    EXTRA             = { 'GSSAPI' => [:gssapi_service_name, :canonicalize_host_name] }
+    EXTRA             = { 'GSSAPI' => [:gssapi_service_name, :canonicalize_host_name,
+                                       :service_name, :service_realm] }
 
     # authentication module methods
     class << self
