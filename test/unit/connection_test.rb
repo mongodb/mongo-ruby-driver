@@ -70,7 +70,17 @@ class ConnectionUnitTest < Test::Unit::TestCase
 
     context "initializing with a unix socket" do
       setup do
-          @connection = Mongo::Connection.new('/tmp/mongod.sock', :safe => true, :connect => false)
+        @connection = Mongo::Connection.new('/tmp/mongod.sock', :safe => true, :connect => false)
+        UNIXSocket.stubs(:new).returns(new_mock_unix_socket)
+      end
+      should "parse a unix socket" do
+        assert_equal "/tmp/mongod.sock", @connection.host_port.first
+      end
+    end
+
+    context "initializing with a unix socket in uri" do
+      setup do
+          @connection = Mongo::Connection.from_uri("mongodb:///tmp/mongod.sock", :connect => false)
           UNIXSocket.stubs(:new).returns(new_mock_unix_socket)
       end
       should "parse a unix socket" do
