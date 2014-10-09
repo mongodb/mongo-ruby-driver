@@ -166,8 +166,7 @@ class ClientUnitTest < Test::Unit::TestCase
           :username  => 'hyphen-user_name',
           :password  => 'p-s_s',
           :source    => 'db',
-          :mechanism => Authentication::DEFAULT_MECHANISM,
-          :extra     => {}
+          :mechanism => Authentication::DEFAULT_MECHANISM
         }
         assert_equal auth_hash, @client.auths.first
       end
@@ -285,8 +284,7 @@ class ClientUnitTest < Test::Unit::TestCase
             :username  => 'hyphen-user_name',
             :password  => 'p-s_s',
             :source    => 'db',
-            :mechanism => Authentication::DEFAULT_MECHANISM,
-            :extra     => {}
+            :mechanism => Authentication::DEFAULT_MECHANISM
           }
           assert_equal auth_hash, @client.auths.first
         end
