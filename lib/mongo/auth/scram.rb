@@ -21,10 +21,16 @@ module Mongo
     class SCRAM
       include Executable
 
+      CONVERSATION_ID = 'conversationId'.freeze
+
+      DONE = 'done'.freeze
+
       # The authentication mechinism string.
       #
       # @since 2.0.0
       MECHANISM = 'SCRAM-SHA-1'.freeze
+
+      PAYLOAD = 'payload'.freeze
 
       # Log the user in on the given connection.
       #
@@ -38,14 +44,11 @@ module Mongo
       #
       # @since 2.0.0
       def login(connection)
-        # host = connection.address.host
         token = user.nonce
-        # reply = connection.dispatch([ login_message(token) ]).documents[0]
-        # until reply.documents[0]['done']
-          # token = BSON::Binary.new(authenticator(host).evaluate_challenge(response['payload'].to_s))
-          # reply = connection.dispatch([ continue_message(response, token) ])
-        # end
-        # reply
+        reply = connection.dispatch([ login_message(token) ]).documents[0]
+        reply = connection.dispatch([ continue_message(reply, token) ]).documents[0]
+        reply = connection.dispatch([ final_message(response) ]) until reply[DONE]
+        reply
       end
 
       private
@@ -59,13 +62,36 @@ module Mongo
         )
       end
 
-      def continue_message(response, token)
+      def continue_message(reply, token)
+        payload = continue_token(reply, response_nonce(reply, token))
         Protocol::Query.new(
           Auth::EXTERNAL,
           Database::COMMAND,
-          { saslContinue: 1, payload: token, conversationId: response['conversationId'] },
+          { saslContinue: 1, payload: payload, conversationId: response[CONVERSATION_ID] },
           limit: -1
         )
+      end
+
+      def continue_token(reply, token)
+        salt = reply[PAYLOAD]['s']
+        iterations = reply[PAYLOAD]['i']
+        # OpenSSL::PKCS5.pbkdf2_hmac(pass, salt, iterations, len, digest)
+        response_token = "c=biws,r=#{nonce},p=#{user.salted_password(salt, iterations)}"
+      end
+
+      def final_message(response)
+        Protocol::Query.new(
+          Auth::EXTERNAL,
+          Database::COMMAND,
+          { saslContinue: 1, payload: "", conversationId: response[CONVERSATION_ID] },
+          limit: -1
+        )
+      end
+
+      def response_nonce(reply, token)
+        nonce = reply[PAYLOAD]['r']
+        raise Exeption, '' unless nonce.starts_with(token)
+        nonce
       end
     end
   end

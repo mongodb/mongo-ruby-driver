@@ -27,6 +27,11 @@ module Mongo
       # @since 2.0.0
       COLLECTION = 'system.users'.freeze
 
+      # The digest to use for encryption.
+      #
+      # @since 2.0.0
+      DIGEST = OpenSSL::Digest.new('sha1').freeze
+
       # @return [ String ] The authorization source, either a database or
       #   external name.
       attr_reader :auth_source
@@ -163,6 +168,21 @@ module Mongo
         "n=#{name},r=#{SecureRandom.base64}"
       end
 
+      # Get the user's salted password.
+      #
+      # @example Get the salted password.
+      #   user.salted_password(salt, 1000)
+      #
+      # @param [ String ] salt The salt.
+      # @param [ Integer ] iterations The numberof iterations.
+      #
+      # @return [ String ] The salted password.
+      #
+      # @since 2.0.0
+      def client_key(salt, iterations)
+        hmac(hi(hashed_password, salt, iterations), 'Client Key')
+      end
+
       # Get the specification for the user, used in creation.
       #
       # @example Get the user's specification.
@@ -173,6 +193,16 @@ module Mongo
       # @since 2.0.0
       def spec
         { pwd: hashed_password, roles: roles }
+      end
+
+      private
+
+      def hi(password, salt, iterations)
+        OpenSSL::PKCS5.pbkdf2_hmac(password, salt, iterations, DIGEST.size, DIGEST)
+      end
+
+      def hmac(salted_password, key)
+        OpenSSL::HMAC.digest(DIGEST, salted_password, key)
       end
     end
   end

@@ -25,6 +25,23 @@ describe Mongo::Auth::User do
     end
   end
 
+  describe '#client_key' do
+
+    let(:options) do
+      { database: 'testing', user: 'user', password: 'pencil' }
+    end
+
+    let(:client_key) do
+      user.client_key('QSXCR+Q6sek8bf92', 4096)
+    end
+
+    let(:expected) do
+      'v0X8v3Bz2T0CJGbJQyF0X+HI4Ts='
+    end
+
+    pending 'returns the encrypted client key'
+  end
+
   describe '#encoded_name' do
 
     context 'when the user name contains an =' do
