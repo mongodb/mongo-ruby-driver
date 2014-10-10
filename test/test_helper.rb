@@ -42,6 +42,7 @@ require 'mocha/setup'
 
 # cluster manager
 require 'tools/mongo_config'
+require 'orchestration/mongo_orchestration'
 
 # For kerberos testing.
 begin
