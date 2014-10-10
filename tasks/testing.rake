@@ -127,7 +127,7 @@ namespace :test do
 
   desc 'Run Common Topology Test Suite.'
   task :topology => :features do |t|
-    sh "cucumber -b -r features/support -r features/step_definitions features/topology --tag ~@pending --tag ~@ruby_1_x_broken"
+    sh "cucumber -b -r features/support -r features/step_definitions features/topology --tag ~@pending --tag ~@red_ruby_1_x"
   end
 
   task :cleanup do |t|
