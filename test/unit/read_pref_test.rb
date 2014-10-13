@@ -117,4 +117,153 @@ class ReadPreferenceUnitTest < Test::Unit::TestCase
     assert_equal true, ReadPreference::secondary_ok?(command)
   end
 
+  def test_secondary_pref
+    primary_pool = mock('pool')
+
+    secondary_nyc = mock_pool({'dc' => 'nyc'}, 5)
+    secondary_chi = mock_pool({'dc' => 'chicago'}, 5)
+    secondary_pools = [secondary_nyc, secondary_chi]
+
+    client = MongoReplicaSetClient.new(["localhost:27017"], :connect => false)
+    client.stubs(:primary_pool).returns(primary_pool)
+    client.stubs(:secondary_pools).returns(secondary_pools)
+
+    read_pref = client.read_preference.merge(:mode => :secondary)
+    assert client.select_pool(read_pref)
+  end
+
+  def test_secondary_tags_pref
+    secondary_nyc = mock_pool({'dc' => 'nyc'}, 5)
+    secondary_chi = mock_pool({'dc' => 'chicago'}, 5)
+    secondary_pools = [secondary_nyc, secondary_chi]
+
+    client = MongoReplicaSetClient.new(["localhost:27017"], :connect => false)
+    client.stubs(:primary_pool).returns(mock_pool)
+    client.stubs(:secondary_pools).returns(secondary_pools)
+
+    read_pref_tags = {'dc' => 'nyc'}
+    read_pref = client.read_preference.merge(:mode => :secondary,
+                                             :tags => [read_pref_tags])
+    assert_equal read_pref_tags, client.select_pool(read_pref).tags
+  end
+
+  def test_secondary_latency_pref
+    secondary_nyc = mock_pool({'dc' => 'nyc'}, 5)
+    secondary_chi = mock_pool({'dc' => 'chicago'}, 10)
+    secondary_pools = [secondary_nyc, secondary_chi]
+
+    client = MongoReplicaSetClient.new(["localhost:27017"], :connect => false)
+    client.stubs(:primary_pool).returns(mock_pool)
+    client.stubs(:secondary_pools).returns(secondary_pools)
+
+    read_pref_tags = {'dc' => 'nyc'}
+    read_pref = client.read_preference.merge(:mode    => :secondary,
+                                             :tags    => [read_pref_tags],
+                                             :latency => 3)
+    assert_equal read_pref_tags, client.select_pool(read_pref).tags
+  end
+
+  def test_secondary_no_matches
+    secondary_nyc = mock_pool({'dc' => 'nyc'}, 5)
+    secondary_chi = mock_pool({'dc' => 'chicago'}, 10)
+    secondary_pools = [secondary_nyc, secondary_chi]
+
+    client = MongoReplicaSetClient.new(["localhost:27017"], :connect => false)
+    client.stubs(:primary_pool).returns(mock_pool)
+    client.stubs(:secondary_pools).returns(secondary_pools)
+
+    read_pref_tags = {'dc' => 'nyc'}
+    read_pref = client.read_preference.merge(:mode    => :secondary,
+                                             :tags    => [read_pref_tags],
+                                             :latency => 6)
+    assert_equal read_pref_tags, client.select_pool(read_pref).tags
+  end
+
+  def test_primary_with_tags_raises_error
+    client = MongoReplicaSetClient.new(["localhost:27017"], :connect => false)
+    client.stubs(:primary_pool).returns(mock_pool)
+    read_pref_tags = {'dc' => 'nyc'}
+    read_pref = client.read_preference.merge(:mode    => :primary,
+                                             :tags    => [read_pref_tags],
+                                             :latency => 6)
+    assert_raise Mongo::MongoArgumentError do
+      client.select_pool(read_pref)
+    end
+  end
+
+  def test_primary_preferred_primary_not_available
+    secondary_nyc = mock_pool({'dc' => 'nyc'}, 5)
+    secondary_chi = mock_pool({'dc' => 'chicago'}, 10)
+    secondary_pools = [secondary_nyc, secondary_chi]
+
+    client = MongoReplicaSetClient.new(["localhost:27017"], :connect => false)
+    client.stubs(:secondary_pools).returns(secondary_pools)
+
+    read_pref_tags = {'dc' => 'chicago'}
+    read_pref = client.read_preference.merge(:mode    => :primary_preferred,
+                                             :tags    => [read_pref_tags],
+                                             :latency => 6)
+    assert_equal read_pref_tags, client.select_pool(read_pref).tags
+  end
+
+  def test_secondary_preferred_with_tags
+    secondary_nyc = mock_pool({'dc' => 'nyc'}, 5)
+    secondary_chi = mock_pool({'dc' => 'chicago'}, 10)
+    secondary_pools = [secondary_nyc, secondary_chi]
+
+    client = MongoReplicaSetClient.new(["localhost:27017"], :connect => false)
+    client.stubs(:secondary_pools).returns(secondary_pools)
+
+    read_pref_tags = {'dc' => 'chicago'}
+    read_pref = client.read_preference.merge(:mode    => :secondary_preferred,
+                                             :tags    => [read_pref_tags],
+                                             :latency => 6)
+    assert_equal read_pref_tags, client.select_pool(read_pref).tags
+  end
+
+  def test_secondary_preferred_with_no_matching_tags
+    secondary_nyc = mock_pool({'dc' => 'nyc'}, 5)
+    secondary_chi = mock_pool({'dc' => 'chicago'}, 10)
+    secondary_pools = [secondary_nyc, secondary_chi]
+
+    client = MongoReplicaSetClient.new(["localhost:27017"], :connect => false)
+    client.stubs(:secondary_pools).returns(secondary_pools)
+    client.stubs(:primary_pool).returns(mock_pool)
+
+    read_pref_tags = {'dc' => 'other_city'}
+    read_pref = client.read_preference.merge(:mode    => :secondary_preferred,
+                                             :tags    => [read_pref_tags],
+                                             :latency => 6)
+    assert_equal Hash.new, client.select_pool(read_pref).tags
+  end
+
+  def test_nearest_with_tags
+    secondary_nyc = mock_pool({'dc' => 'nyc'}, 5)
+    secondary_chi = mock_pool({'dc' => 'chicago'}, 10)
+    primary_pool = mock_pool
+    pools = [secondary_nyc, secondary_chi, primary_pool]
+
+    client = MongoReplicaSetClient.new(["localhost:27017"], :connect => false)
+    client.stubs(:pools).returns(pools)
+
+    read_pref_tags = {'dc' => 'nyc'}
+    read_pref = client.read_preference.merge(:mode    => :nearest,
+                                             :tags    => [read_pref_tags],
+                                             :latency => 3)
+    assert_equal read_pref_tags, client.select_pool(read_pref).tags
+  end
+
+  def test_nearest
+    secondary_nyc = mock_pool({'dc' => 'nyc'}, 5)
+    secondary_chi = mock_pool({'dc' => 'chicago'}, 10)
+    primary_pool = mock_pool({}, 1)
+    pools = [secondary_nyc, secondary_chi, primary_pool]
+
+    client = MongoReplicaSetClient.new(["localhost:27017"], :connect => false)
+    client.stubs(:pools).returns(pools)
+
+    read_pref = client.read_preference.merge(:mode    => :nearest,
+                                             :latency => 3)
+    assert_equal Hash.new, client.select_pool(read_pref).tags
+  end
 end

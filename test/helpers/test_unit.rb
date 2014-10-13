@@ -176,6 +176,13 @@ class Test::Unit::TestCase
     Object.new
   end
 
+  def mock_pool(tags={}, ping_time=15)
+    mock('pool').tap do |pool|
+      pool.stubs(:tags).returns(tags)
+      pool.stubs(:ping_time).returns(ping_time)
+    end
+  end
+
   def assert_raise_error(klass, message=nil)
     begin
       yield
