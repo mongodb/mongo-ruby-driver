@@ -27,7 +27,7 @@ group :testing do
     gem 'shoulda-matchers', '~>1.0'
   end
   gem 'sfl'
-  gem 'httparty'
+  gem 'httparty', '0.11.0'
   gem 'rest-client', '1.6.8'
   gem 'rspec'
   gem 'cucumber'
