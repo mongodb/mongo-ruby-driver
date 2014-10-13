@@ -75,7 +75,8 @@ module Mongo
         # the server only looks at the first key in the out object
         return out.respond_to?(:keys) && out.keys.first.to_s.downcase == 'inline'
       elsif command == 'aggregate'
-        return selector['pipeline'].none? { |op| op.key?('$out') || op.key?(:$out) }
+        pipeline = selector['pipeline'] || selector[:pipeline]
+        return pipeline.none? { |op| op.key?('$out') || op.key?(:$out) }
       end
       SECONDARY_OK_COMMANDS.member?(command)
     end
