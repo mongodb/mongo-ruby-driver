@@ -52,4 +52,54 @@ class ReplicaSetPinningTest < Test::Unit::TestCase
     end
     threads.each(&:join)
   end
+
+  def test_aggregation_cursor_pinning
+    return unless @client.server_version >= '2.5.1'
+    @coll.drop
+
+    [10, 1000].each do |size|
+      @coll.drop
+      size.times {|i| @coll.insert({ :_id => i }) }
+      expected_sum = size.times.reduce(:+)
+
+      cursor = @coll.aggregate(
+          [{ :$project => {:_id => '$_id'}} ],
+          :cursor => { :batchSize => 1 }
+      )
+
+      assert_equal Mongo::Cursor, cursor.class
+
+      cursor_sum = cursor.reduce(0) do |sum, doc|
+        sum += doc['_id']
+      end
+
+      assert_equal expected_sum, cursor_sum
+    end
+    @coll.drop
+  end
+
+  def test_parallel_scan_pinning
+    return unless @client.server_version >= '2.5.5'
+    @coll.drop
+
+    8000.times { |i| @coll.insert({ :_id => i }) }
+
+    lock = Mutex.new
+    doc_ids = Set.new
+    threads = []
+    cursors = @coll.parallel_scan(3)
+    cursors.each_with_index do |cursor, i|
+      threads << Thread.new do
+        docs = cursor.to_a
+        lock.synchronize do
+          docs.each do |doc|
+            doc_ids << doc['_id']
+          end
+        end
+      end
+    end
+    threads.each(&:join)
+    assert_equal 8000, doc_ids.count
+    @coll.drop
+  end
 end
