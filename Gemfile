@@ -27,10 +27,7 @@ group :testing do
     gem 'shoulda-matchers', '~>1.0'
   end
   gem 'sfl'
-  gem 'httparty'
   gem 'rest-client', '1.6.8'
-  gem 'rspec'
-  gem 'cucumber'
   if RUBY_VERSION > '1.8.7' || RUBY_PLATFORM =~ /java/
     gem 'coveralls', :require => false
   end

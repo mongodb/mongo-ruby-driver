@@ -114,22 +114,6 @@ namespace :test do
     end
   end
 
-  desc 'Test mongo-orchestration wrapper.'
-  task :orchestration do |t|
-    sh "rspec --format documentation --color -Itest/orchestration test/orchestration/mongo_orchestration_spec.rb"
-  end
-
-  desc 'Checkout Common Topology Test Suite feature descriptions.'
-  task :features do |t|
-    mkdir_p('features')
-    sh "cd features && svn checkout https://github.com/mongodb/mongo-meta-driver/trunk/features/topology"
-  end
-
-  desc 'Run Common Topology Test Suite.'
-  task :topology => :features do |t|
-    sh "cucumber -b -r features/support -r features/step_definitions features/topology --tag ~@pending --tag ~@red_ruby_1_x"
-  end
-
   task :cleanup do |t|
     %w(data tmp coverage lib/bson_ext lib/csasl).each do |dir|
       if File.directory?(dir)
