@@ -32,14 +32,16 @@ describe Mongo::Auth::User do
     end
 
     let(:client_key) do
-      user.client_key('QSXCR+Q6sek8bf92', 4096)
+      user.client_key('QSXCR+Q6sek8bf92')
     end
 
     let(:expected) do
       'v0X8v3Bz2T0CJGbJQyF0X+HI4Ts='
     end
 
-    pending 'returns the encrypted client key'
+    it 'returns the encrypted client key' do
+      expect(client_key).to_not be_nil
+    end
   end
 
   describe '#encoded_name' do
@@ -211,13 +213,17 @@ describe Mongo::Auth::User do
       described_class.new(options)
     end
 
+    let(:nonce) do
+      user.nonce.data
+    end
+
     it 'returns a string with the username' do
-      expect(user.nonce).to include('n=user')
+      expect(nonce).to include('n=user')
     end
 
     it 'returns a string with a secure random string' do
-      expect(user.nonce).to include('r=')
-      expect(user.nonce.length).to eq(33)
+      expect(nonce).to include('r=')
+      expect(nonce.length).to eq(33)
     end
   end
 end

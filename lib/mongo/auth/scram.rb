@@ -45,15 +45,16 @@ module Mongo
       # @since 2.0.0
       def login(connection)
         token = user.nonce
-        reply = connection.dispatch([ login_message(token) ]).documents[0]
-        reply = connection.dispatch([ continue_message(reply, token) ]).documents[0]
-        reply = connection.dispatch([ final_message(response) ]) until reply[DONE]
+        reply = connection.dispatch([ without_proof_message(token) ]).documents[0]
+        reply = connection.dispatch([ client_final_message(nonce, reply, token) ]).documents[0]
+        # Need to verify the server key.
+        reply = connection.dispatch([ empty_message(response) ]) until reply[DONE]
         reply
       end
 
       private
 
-      def login_message(token)
+      def without_proof_message(token)
         Protocol::Query.new(
           Auth::EXTERNAL,
           Database::COMMAND,
@@ -62,8 +63,8 @@ module Mongo
         )
       end
 
-      def continue_message(reply, token)
-        payload = continue_token(reply, response_nonce(reply, token))
+      def client_final_message(nonce, reply, token)
+        payload = continue_token(nonce, reply, response_nonce(reply, token))
         Protocol::Query.new(
           Auth::EXTERNAL,
           Database::COMMAND,
@@ -72,18 +73,17 @@ module Mongo
         )
       end
 
-      def continue_token(reply, token)
+      def continue_token(nonce, reply, token)
         salt = reply[PAYLOAD]['s']
         iterations = reply[PAYLOAD]['i']
-        # OpenSSL::PKCS5.pbkdf2_hmac(pass, salt, iterations, len, digest)
-        response_token = "c=biws,r=#{nonce},p=#{user.salted_password(salt, iterations)}"
+        response_token = user.client_token(nonce, salt, iterations)
       end
 
-      def final_message(response)
+      def empty_message(response)
         Protocol::Query.new(
           Auth::EXTERNAL,
           Database::COMMAND,
-          { saslContinue: 1, payload: "", conversationId: response[CONVERSATION_ID] },
+          { saslContinue: 1, payload: BSON::Binary.new(''), conversationId: response[CONVERSATION_ID] },
           limit: -1
         )
       end

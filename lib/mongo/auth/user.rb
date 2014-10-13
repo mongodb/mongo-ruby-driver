@@ -164,23 +164,8 @@ module Mongo
       # @return [ String ] The user nonce string.
       #
       # @since 2.0.0
-      def nonce
-        "n=#{name},r=#{SecureRandom.base64}"
-      end
-
-      # Get the user's salted password.
-      #
-      # @example Get the salted password.
-      #   user.salted_password(salt, 1000)
-      #
-      # @param [ String ] salt The salt.
-      # @param [ Integer ] iterations The numberof iterations.
-      #
-      # @return [ String ] The salted password.
-      #
-      # @since 2.0.0
-      def client_key(salt, iterations)
-        hmac(hi(hashed_password, salt, iterations), 'Client Key')
+      def nonce(random = SecureRandom.base64)
+        BSON::Binary.new("n=#{name},r=#{random}")
       end
 
       # Get the specification for the user, used in creation.
@@ -195,7 +180,40 @@ module Mongo
         { pwd: hashed_password, roles: roles }
       end
 
+      def salted_password(salt, iterations)
+        hi(hashed_password, salt, iterations)
+      end
+
+      def client_key(password)
+        hmac(password, 'Client Key')
+      end
+
+      def stored_key(key)
+        h(key)
+      end
+
+      def client_signature(key, message)
+        hmac(key, message)
+      end
+
+      def client_proof(key, signature)
+        key ^ signature
+      end
+
+      def client_message(salt, iterations)
+        key = client_key(salted_password(salt, iterations))
+        client_proof(key, client_signature(stored_key(key), auth_message))
+      end
+
+      def client_token(nonce, salt, iterations)
+        BSON::Binary.new("c=biws,r=#{nonce},p=#{client_message(salt, iterations)}")
+      end
+
       private
+
+      def h(string)
+        DIGEST.digest(string)
+      end
 
       def hi(password, salt, iterations)
         OpenSSL::PKCS5.pbkdf2_hmac(password, salt, iterations, DIGEST.size, DIGEST)
