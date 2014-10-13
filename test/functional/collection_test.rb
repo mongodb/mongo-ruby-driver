@@ -1324,6 +1324,7 @@ class CollectionTest < Test::Unit::TestCase
   end
 
   def test_aggregate_command_using_sym
+    return unless @version > '2.1.1'
     cmd = BSON::OrderedHash[:aggregate, @test.name, :pipeline, [{'$match' => {:_id => true}}]]
     assert @db.command(cmd)
   end
