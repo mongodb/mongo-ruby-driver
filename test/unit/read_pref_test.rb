@@ -74,6 +74,11 @@ class ReadPreferenceUnitTest < Test::Unit::TestCase
     assert_equal false, ReadPreference::secondary_ok?(command)
   end
 
+  def test_sok_text_returns_true
+    command = BSON::OrderedHash['text', BSON::OrderedHash['search', 'coffee']]
+    assert_equal true, ReadPreference::secondary_ok?(command)
+  end
+
   def test_cmd_reroute_with_secondary
     ReadPreference::expects(:warn).with(regexp_matches(/rerouted to primary/))
     command = BSON::OrderedHash['mapreduce', 'test-collection',
