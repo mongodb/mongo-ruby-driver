@@ -74,6 +74,17 @@ class ClientTest < Test::Unit::TestCase
     end
   end
 
+  def test_initialize_with_auths
+    auth = { :username  => TEST_USER,
+             :password  => TEST_USER_PWD,
+             :db_name   => TEST_DB,
+             :source    => TEST_DB,
+             :mechanism => 'MONGODB-CR'}
+
+    client = MongoClient.new(:auths => Set.new([auth]))
+    assert client['test']['test'].find.to_a
+  end
+
   def test_connection_uri
     con = MongoClient.from_uri("mongodb://#{host_port}")
     assert_equal mongo_host, con.primary_pool.host
