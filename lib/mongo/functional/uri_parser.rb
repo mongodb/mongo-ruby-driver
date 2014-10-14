@@ -44,11 +44,9 @@ module Mongo
       :authmechanism,
       :authmechanismproperties,
       :authsource,
-      :canonicalizehostname,
       :connect,
       :connecttimeoutms,
       :fsync,
-      :gssapiservicename,
       :journal,
       :pool_size,
       :readpreference,
@@ -66,11 +64,9 @@ module Mongo
       :authmechanism           => lambda { |arg| Mongo::Authentication.validate_mechanism(arg) },
       :authmechanismproperties => lambda { |arg| arg.length > 0 },
       :authsource              => lambda { |arg| arg.length > 0 },
-      :canonicalizehostname    => lambda { |arg| ['true', 'false'].include?(arg) },
       :connect                 => lambda { |arg| [ 'direct', 'replicaset', 'true', 'false', true, false ].include?(arg) },
       :connecttimeoutms        => lambda { |arg| arg =~ /^\d+$/ },
       :fsync                   => lambda { |arg| ['true', 'false'].include?(arg) },
-      :gssapiservicename       => lambda { |arg| arg.length > 0 },
       :journal                 => lambda { |arg| ['true', 'false'].include?(arg) },
       :pool_size               => lambda { |arg| arg.to_i > 0 },
       :readpreference          => lambda { |arg| READ_PREFERENCES.keys.include?(arg) },
@@ -88,11 +84,9 @@ module Mongo
       :authmechanism           => "must be one of #{Mongo::Authentication::MECHANISMS.join(', ')}",
       :authmechanismproperties => "must meet the format requirements of the authentication mechanism's properties",
       :authsource              => "must be a string containing the name of the database being used for authentication",
-      :canonicalizehostname    => "must be 'true' or 'false'",
       :connect                 => "must be 'direct', 'replicaset', 'true', or 'false'",
       :connecttimeoutms        => "must be an integer specifying milliseconds",
       :fsync                   => "must be 'true' or 'false'",
-      :gssapiservicename       => "must be a string containing the name of the GSSAPI service",
       :journal                 => "must be 'true' or 'false'",
       :pool_size               => "must be an integer greater than zero",
       :readpreference          => "must be one of #{READ_PREFERENCES.keys.map(&:inspect).join(",")}",
@@ -112,11 +106,9 @@ module Mongo
       :authmechanism           => lambda { |arg| arg.upcase },
       :authmechanismproperties => lambda { |arg| arg },
       :authsource              => lambda { |arg| arg },
-      :canonicalizehostname    => lambda { |arg| arg == 'true' ? true : false },
       :connect                 => lambda { |arg| arg == 'false' ? false : arg }, # convert 'false' to FalseClass
       :connecttimeoutms        => lambda { |arg| arg.to_f / 1000 }, # stored as seconds
       :fsync                   => lambda { |arg| arg == 'true' ? true : false },
-      :gssapiservicename       => lambda { |arg| arg },
       :journal                 => lambda { |arg| arg == 'true' ? true : false },
       :pool_size               => lambda { |arg| arg.to_i },
       :readpreference          => lambda { |arg| READ_PREFERENCES[arg] },
@@ -132,7 +124,6 @@ module Mongo
 
     OPT_CASE_SENSITIVE = [ :authsource,
                            :authmechanismproperties,
-                           :gssapiservicename,
                            :replicaset,
                            :w
                          ]
@@ -141,12 +132,10 @@ module Mongo
                 :authmechanism,
                 :authmechanismproperties,
                 :authsource,
-                :canonicalizehostname,
                 :connect,
                 :connecttimeoutms,
                 :db_name,
                 :fsync,
-                :gssapiservicename,
                 :journal,
                 :nodes,
                 :pool_size,
@@ -345,8 +334,6 @@ module Mongo
         })
 
         extra = @authmechanismproperties || {}
-        extra.merge!(:canonicalize_host_name => @canonicalizehostname) if @canonicalizehostname
-        extra.merge!(:gssapi_service_name => @gssapiservicename) if @gssapiservicename
         auth[:extra] = extra unless extra.empty?
         @auths << auth
       end

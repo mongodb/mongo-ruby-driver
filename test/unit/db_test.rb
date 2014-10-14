@@ -127,7 +127,7 @@ class DBUnitTest < Test::Unit::TestCase
       end
 
       should "allow extra authentication options" do
-        extra_opts = { :gssapiservicename => 'example', :canonicalizehostname => true }
+        extra_opts = { :service_name => 'example', :canonicalize_host_name => true }
         assert @client.expects(:add_auth).with(@db.name, 'emily', nil, nil, 'GSSAPI', extra_opts)
         @db.authenticate('emily', nil, nil, nil, 'GSSAPI', extra_opts)
       end

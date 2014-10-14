@@ -75,7 +75,7 @@ module GSSAPITests
     end
 
     def test_wrong_service_name_fails
-      extra_opts = { :gssapi_service_name => 'example' }
+      extra_opts = { :service_name => 'example' }
       client = Mongo::MongoClient.new(MONGODB_GSSAPI_HOST, MONGODB_GSSAPI_PORT)
       if client['admin'].command(:isMaster => 1)['setName']
         client = Mongo::MongoReplicaSetClient.new(["#{MONGODB_GSSAPI_HOST}:#{MONGODB_GSSAPI_PORT}"])
@@ -93,7 +93,7 @@ module GSSAPITests
       require 'cgi'
       username = CGI::escape(ENV['MONGODB_GSSAPI_USER'])
       uri = "mongodb://#{username}@#{ENV['MONGODB_GSSAPI_HOST']}:#{ENV['MONGODB_GSSAPI_PORT']}/?" +
-         "authMechanism=GSSAPI&gssapiServiceName=example"
+         "authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:example"
       client = @client.class.from_uri(uri)
       assert_raise_error Mongo::AuthenticationError do
         client[MONGODB_GSSAPI_DB].command(:dbstats => 1)
@@ -101,12 +101,12 @@ module GSSAPITests
     end
 
     def test_extra_opts
-      extra_opts = { :gssapi_service_name => 'example', :canonicalize_host_name => true }
+      extra_opts = { :service_name => 'example', :canonicalize_host_name => true }
       client = Mongo::MongoClient.new(MONGODB_GSSAPI_HOST, MONGODB_GSSAPI_PORT)
       set_system_properties
 
       Mongo::Sasl::GSSAPI.expects(:authenticate).with do |username, client, socket, opts|
-        assert_equal opts[:gssapi_service_name], extra_opts[:gssapi_service_name]
+        assert_equal opts[:service_name], extra_opts[:service_name]
         assert_equal opts[:canonicalize_host_name], extra_opts[:canonicalize_host_name]
         [ username, client, socket, opts ]
       end.returns('ok' => true )
@@ -114,11 +114,11 @@ module GSSAPITests
     end
 
     def test_extra_opts_uri
-      extra_opts = { :gssapi_service_name => 'example', :canonicalize_host_name => true }
+      extra_opts = { :service_name => 'example', :canonicalize_host_name => true }
       set_system_properties
 
       Mongo::Sasl::GSSAPI.expects(:authenticate).with do |username, client, socket, opts|
-        assert_equal opts[:gssapi_service_name], extra_opts[:gssapi_service_name]
+        assert_equal opts[:service_name], extra_opts[:service_name]
         assert_equal opts[:canonicalize_host_name], extra_opts[:canonicalize_host_name]
         [ username, client, socket, opts ]
       end.returns('ok' => true)
@@ -126,7 +126,7 @@ module GSSAPITests
       require 'cgi'
       username = CGI::escape(ENV['MONGODB_GSSAPI_USER'])
       uri = "mongodb://#{username}@#{ENV['MONGODB_GSSAPI_HOST']}:#{ENV['MONGODB_GSSAPI_PORT']}/?" +
-         "authMechanism=GSSAPI&gssapiServiceName=example&canonicalizeHostName=true"
+         "authMechanism=GSSAPI&authmechanismproperties=SERVICE_NAME:example,CANONICALIZE_HOST_NAME:true"
       client = @client.class.from_uri(uri)
       client.expects(:receive_message).returns([[{ 'ok' => 1 }], 1, 1])
       client[MONGODB_GSSAPI_DB].command(:dbstats => 1)
