@@ -446,7 +446,7 @@ module Mongo
       ping
       true
 
-      rescue ConnectionFailure
+      rescue ConnectionFailure, OperationTimeout
       false
     end
 

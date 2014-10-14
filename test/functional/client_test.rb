@@ -441,6 +441,17 @@ class ClientTest < Test::Unit::TestCase
     assert !conn.active?
   end
 
+  def test_operation_timeout_with_accessible
+    conn = standard_connection(:op_timeout => 3)
+    assert conn.active?
+
+    pool = conn.primary_pool
+    socket = pool.instance_variable_get(:@thread_ids_to_sockets)[Thread.current.object_id]
+
+    socket.stubs(:read).raises(Mongo::OperationTimeout)
+    assert_equal false, conn.active?
+  end
+
   context "Saved authentications" do
     setup do
       @client = Mongo::MongoClient.new
