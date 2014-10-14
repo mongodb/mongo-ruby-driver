@@ -28,6 +28,7 @@ class AuthenticationTest < Test::Unit::TestCase
 
   def setup
     @client    = standard_connection
+    omit("auth not enabled on mongod") unless auth_enabled?(@client)
     @admin     = @client['admin']
     @version   = @client.server_version
     @db        = @client['ruby-test']
