@@ -41,6 +41,7 @@ module Mongo
     DEFAULT_HOST         = 'localhost'
     DEFAULT_PORT         = 27017
     DEFAULT_DB_NAME      = 'test'
+    DEFAULT_OP_TIMEOUT   = 20
     GENERIC_OPTS         = [:auths, :logger, :connect, :db_name]
     TIMEOUT_OPTS         = [:timeout, :op_timeout, :connect_timeout]
     SSL_OPTS             = [:ssl, :ssl_key, :ssl_cert, :ssl_verify, :ssl_ca_cert, :ssl_key_pass_phrase]
@@ -634,7 +635,7 @@ module Mongo
       @pool_timeout = opts.delete(:pool_timeout) || opts.delete(:timeout) || 5.0
 
       # Timeout on socket read operation.
-      @op_timeout = opts.delete(:op_timeout)
+      @op_timeout = opts.delete(:op_timeout) || DEFAULT_OP_TIMEOUT
 
       # Timeout on socket connect.
       @connect_timeout = opts.delete(:connect_timeout) || 30

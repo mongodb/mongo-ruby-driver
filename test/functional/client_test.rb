@@ -441,9 +441,10 @@ class ClientTest < Test::Unit::TestCase
     assert !conn.active?
   end
 
-  def test_operation_timeout_with_accessible
-    conn = standard_connection(:op_timeout => 3)
+  def test_operation_timeout_with_active
+    conn = standard_connection
     assert conn.active?
+    assert_equal Mongo::MongoClient::DEFAULT_OP_TIMEOUT, conn.op_timeout
 
     pool = conn.primary_pool
     socket = pool.instance_variable_get(:@thread_ids_to_sockets)[Thread.current.object_id]
