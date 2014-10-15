@@ -23,6 +23,7 @@ module BasicAuthTests
   end
 
   def teardown
+    return unless @client && @db
     @client[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD) unless has_auth?(TEST_DB, TEST_USER)
 
     if @client.server_version < '2.5'
