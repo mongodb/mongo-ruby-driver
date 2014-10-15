@@ -44,7 +44,7 @@ class PoolTest < Test::Unit::TestCase
 
   def test_pool_affinity_max_size
     client = standard_connection({:pool_size => 15, :pool_timeout => 5,
-                                  :op_timeout => 120})
+                                  :op_timeout => nil})
     coll = client[TEST_DB]['pool_test']
     docs = []
     8000.times {|x| docs << {:value => x}}

@@ -41,6 +41,10 @@ class ClientUnitTest < Test::Unit::TestCase
         assert_equal 1, @client.primary_pool.size
       end
 
+      should "set op timeout to default" do
+        assert_equal Mongo::MongoClient::DEFAULT_OP_TIMEOUT, @client.op_timeout
+      end
+
       should "default slave_ok to false" do
         assert !@client.slave_ok?
       end
@@ -65,6 +69,26 @@ class ClientUnitTest < Test::Unit::TestCase
 
         args = ['localhost', 27017, opts]
         client.send(:initialize, *args)
+      end
+
+      context 'specifying nil op timeout explicitly' do
+        setup do
+          @client = MongoClient.new('localhost', 27017, :connect => false, :op_timeout => nil)
+        end
+
+        should 'set op timeout to nil' do
+          assert_equal nil, @client.op_timeout
+        end
+      end
+
+      context 'specifying a different op timeout than default' do
+        setup do
+          @client = MongoClient.new('localhost', 27017, :connect => false, :op_timeout => 50)
+        end
+
+        should 'set op timeout to the specified value' do
+          assert_equal 50, @client.op_timeout
+        end
       end
 
       context "given a replica set" do
