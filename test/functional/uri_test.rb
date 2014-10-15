@@ -31,6 +31,30 @@ class URITest < Test::Unit::TestCase
     assert_equal 27018, parser.nodes[0][1]
   end
 
+  def test_unix_socket
+    parser = Mongo::URIParser.new('mongodb:///tmp/mongod.sock')
+    assert_equal 1, parser.nodes.length
+    assert_equal '/tmp/mongod.sock', parser.nodes[0][0]
+  end
+
+  def test_unix_socket_with_user
+    parser = Mongo::URIParser.new('mongodb://bob:secret.word@/tmp/mongod.sock')
+    assert_equal 1, parser.nodes.length
+    assert_equal '/tmp/mongod.sock', parser.nodes[0][0]
+    assert_equal "bob", parser.auths.first[:username]
+    assert_equal "secret.word", parser.auths.first[:password]
+    assert_equal 'admin', parser.auths.first[:source]
+  end
+
+  def test_unix_socket_with_db
+    parser = Mongo::URIParser.new('mongodb://bob:secret.word@/tmp/mongod.sock/some_db')
+    assert_equal 1, parser.nodes.length
+    assert_equal '/tmp/mongod.sock', parser.nodes[0][0]
+    assert_equal 'bob', parser.auths.first[:username]
+    assert_equal 'secret.word', parser.auths.first[:password]
+    assert_equal 'some_db', parser.auths.first[:source]
+  end
+
   def test_ipv6_format
     parser = Mongo::URIParser.new('mongodb://[::1]:27018')
     assert_equal 1, parser.nodes.length
@@ -86,6 +110,23 @@ class URITest < Test::Unit::TestCase
 
     assert_raise_error MongoArgumentError do
       Mongo::URIParser.new('mongodb://bob@localhost')
+    end
+  end
+
+  def test_username_without_password_unix_socket
+    parser = Mongo::URIParser.new('mongodb://bob:@/tmp/mongod.sock?authMechanism=GSSAPI')
+    assert_equal "bob", parser.auths.first[:username]
+    assert_equal nil, parser.auths.first[:password]
+
+    parser = Mongo::URIParser.new('mongodb://bob@/tmp/mongod.sock?authMechanism=GSSAPI')
+    assert_equal nil, parser.auths.first[:password]
+
+    assert_raise_error MongoArgumentError do
+      Mongo::URIParser.new('mongodb://bob:@/tmp/mongod.sock')
+    end
+
+    assert_raise_error MongoArgumentError do
+      Mongo::URIParser.new('mongodb://bob@/tmp/mongod.sock')
     end
   end
 
@@ -212,6 +253,11 @@ class URITest < Test::Unit::TestCase
 
   def test_read_preference_option_primary
     parser = Mongo::URIParser.new("mongodb://localhost:27018?readPreference=primary")
+    assert_equal :primary, parser.readpreference
+  end
+
+  def test_read_preference_option_primary_unix_sock
+    parser = Mongo::URIParser.new("mongodb:///tmp/mongod.sock?readPreference=primary")
     assert_equal :primary, parser.readpreference
   end
 
