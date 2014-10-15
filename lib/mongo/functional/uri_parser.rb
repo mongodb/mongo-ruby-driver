@@ -50,6 +50,7 @@ module Mongo
       :journal,
       :pool_size,
       :readpreference,
+      :readpreferencetags,
       :replicaset,
       :safe,
       :slaveok,
@@ -70,6 +71,7 @@ module Mongo
       :journal                 => lambda { |arg| ['true', 'false'].include?(arg) },
       :pool_size               => lambda { |arg| arg.to_i > 0 },
       :readpreference          => lambda { |arg| READ_PREFERENCES.keys.include?(arg) },
+      :readpreferencetags      => lambda { |arg| arg.none? { |tags| tags.scan(/(\w+:\w+),?/).empty? } },
       :replicaset              => lambda { |arg| arg.length > 0 },
       :safe                    => lambda { |arg| ['true', 'false'].include?(arg) },
       :slaveok                 => lambda { |arg| ['true', 'false'].include?(arg) },
@@ -89,7 +91,8 @@ module Mongo
       :fsync                   => "must be 'true' or 'false'",
       :journal                 => "must be 'true' or 'false'",
       :pool_size               => "must be an integer greater than zero",
-      :readpreference          => "must be one of #{READ_PREFERENCES.keys.map(&:inspect).join(",")}",
+      :readpreference          => "must be on of #{READ_PREFERENCES.keys.map(&:inspect).join(",")}",
+      :readpreferencetags      => "must be a comma-separated list of one or more key:value pairs",
       :replicaset              => "must be a string containing the name of the replica set to connect to",
       :safe                    => "must be 'true' or 'false'",
       :slaveok                 => "must be 'true' or 'false'",
@@ -112,6 +115,12 @@ module Mongo
       :journal                 => lambda { |arg| arg == 'true' ? true : false },
       :pool_size               => lambda { |arg| arg.to_i },
       :readpreference          => lambda { |arg| READ_PREFERENCES[arg] },
+      :readpreferencetags      => lambda { |arg| arg.map do |tags|
+                                                   tags.scan(/(\w+:\w+),?/).reduce({}) do |tags, pair|
+                                                     key, value = pair.first.split(":")
+                                                     tags.merge!(key => value)
+                                                   end
+                                                 end },
       :replicaset              => lambda { |arg| arg },
       :safe                    => lambda { |arg| arg == 'true' ? true : false },
       :slaveok                 => lambda { |arg| arg == 'true' ? true : false },
@@ -140,6 +149,7 @@ module Mongo
                 :nodes,
                 :pool_size,
                 :readpreference,
+                :readpreferencetags,
                 :replicaset,
                 :safe,
                 :slaveok,
@@ -245,6 +255,8 @@ module Mongo
       opts[:op_timeout]      = @sockettimeoutms if @sockettimeoutms
       opts[:pool_size]       = @pool_size if @pool_size
       opts[:read]            = @readpreference if @readpreference
+      opts[:read].nil? ? opts[:read] = { :tags => @readpreferencetags } :
+                         opts[:read].merge!(:tags => @readpreferencetags) if @readpreferencetags
 
       if @slaveok && !@readpreference
         unless replicaset?
@@ -353,9 +365,13 @@ module Mongo
       end
 
       opts = CGI.parse(string_opts).inject({}) do |memo, (key, value)|
-        value = value.first
         key_sym = key.downcase.to_sym
-        memo[key_sym] = OPT_CASE_SENSITIVE.include?(key_sym) ? value.strip : value.strip.downcase
+        if key_sym == :readpreferencetags
+          memo[key_sym] = value
+        else
+          value = value.first
+          memo[key_sym] = OPT_CASE_SENSITIVE.include?(key_sym) ? value.strip : value.strip.downcase
+        end
         memo
       end
 
@@ -364,7 +380,11 @@ module Mongo
           raise MongoArgumentError, "Invalid Mongo URI option #{key}"
         end
         if OPT_VALID[key].call(value)
-          instance_variable_set("@#{key}", OPT_CONV[key].call(value))
+          if var = instance_variable_get("@#{key}")
+            var << OPT_CONV[key].call(value)
+          else
+            instance_variable_set("@#{key}", OPT_CONV[key].call(value))
+          end
         else
           raise MongoArgumentError, "Invalid value #{value.inspect} for #{key}: #{OPT_ERR[key]}"
         end
