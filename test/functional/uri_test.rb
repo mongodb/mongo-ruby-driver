@@ -355,6 +355,20 @@ class URITest < Test::Unit::TestCase
     assert_equal 'GSSAPI', parser.authmechanism
   end
 
+  def test_invalid_auth_mechanism_properties
+    uri = "mongodb://user@localhost?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME" +
+            ":mongodb,INVALID_PROPERTY:true"
+    assert_raise_error MongoArgumentError do
+      parser = Mongo::URIParser.new(uri)
+    end
+
+    uri = "mongodb://user@localhost?authMechanism=PLAIN&authMechanismProperties=SERVICE_NAME" +
+            ":mongodb"
+    assert_raise_error MongoArgumentError do
+      parser = Mongo::URIParser.new(uri)
+    end
+  end
+
   def test_sasl_plain
     parser = Mongo::URIParser.new("mongodb://user:pass@localhost?authMechanism=PLAIN")
     assert_equal 'PLAIN', parser.auths.first[:mechanism]
@@ -381,12 +395,14 @@ class URITest < Test::Unit::TestCase
 
 
     uri = "mongodb://foo%2Fbar%40example.net@localhost?authMechanism=GSSAPI;" +
-            "authMechanismProperties=SERVICE_NAME:mongodb,CANONICALIZE_HOST_NAME:true"
+            "authMechanismProperties=SERVICE_NAME:mongodb,SERVICE_REALM:example," +
+            "CANONICALIZE_HOST_NAME:true"
     parser = Mongo::URIParser.new(uri)
     assert_equal 'GSSAPI', parser.auths.first[:mechanism]
     assert_equal 'foo/bar@example.net', parser.auths.first[:username]
     assert_equal 'mongodb', parser.auths.first[:extra][:service_name]
     assert_equal true, parser.auths.first[:extra][:canonicalize_host_name]
+    assert_equal 'example', parser.auths.first[:extra][:service_realm]
   end
 
   def test_opts_case_sensitivity

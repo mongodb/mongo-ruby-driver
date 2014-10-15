@@ -330,11 +330,10 @@ module Mongo
           :username  => URI.unescape(username),
           :password  => password ? URI.unescape(password) : nil,
           :source    => @authsource,
-          :mechanism => @authmechanism
+          :mechanism => @authmechanism,
+          :extra     => @authmechanismproperties || {}
         })
 
-        extra = @authmechanismproperties || {}
-        auth[:extra] = extra unless extra.empty?
         @auths << auth
       end
     end

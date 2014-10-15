@@ -163,6 +163,7 @@ class ClientUnitTest < Test::Unit::TestCase
 
         auth_hash = {
           :db_name   => 'db',
+          :extra=>{},
           :username  => 'hyphen-user_name',
           :password  => 'p-s_s',
           :source    => 'db',
@@ -281,6 +282,7 @@ class ClientUnitTest < Test::Unit::TestCase
 
           auth_hash = {
             :db_name   => 'db',
+            :extra=>{},
             :username  => 'hyphen-user_name',
             :password  => 'p-s_s',
             :source    => 'db',
