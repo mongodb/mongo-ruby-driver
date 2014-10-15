@@ -43,19 +43,22 @@ class PoolTest < Test::Unit::TestCase
   end
 
   def test_pool_affinity_max_size
+    client = standard_connection({:pool_size => 15, :pool_timeout => 5,
+                                  :op_timeout => 120})
+    coll = client[TEST_DB]['pool_test']
     docs = []
     8000.times {|x| docs << {:value => x}}
-    @collection.insert(docs)
+    coll.insert(docs)
 
     threads = []
     threads << Thread.new do
-      @collection.find({"value" => {"$lt" => 100}}).each {|e| e}
+      coll.find({"value" => {"$lt" => 100}}).each {|e| e}
       Thread.pass
       sleep(0.125)
-      @collection.find({"value" => {"$gt" => 100}}).each {|e| e}
+      coll.find({"value" => {"$gt" => 100}}).each {|e| e}
     end
     threads << Thread.new do
-      @collection.find({'$where' => "function() {for(i=0;i<1000;i++) {this.value};}"}).each {|e| e}
+      coll.find({'$where' => "function() {for(i=0;i<500;i++) {this.value};}"}).each {|e| e}
     end
     threads.each(&:join)
   end
