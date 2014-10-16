@@ -101,32 +101,37 @@ module GSSAPITests
     end
 
     def test_extra_opts
-      extra_opts = { :service_name => 'example', :canonicalize_host_name => true }
-      client = Mongo::MongoClient.new(MONGODB_GSSAPI_HOST, MONGODB_GSSAPI_PORT)
+      extra_opts = { :service_name => 'example', :canonicalize_host_name => true, 
+                     :service_realm => 'dumdum' }
+      client = Mongo::MongoClient.new(TEST_HOST, MONGODB_GSSAPI_PORT)
       set_system_properties
 
       Mongo::Sasl::GSSAPI.expects(:authenticate).with do |username, client, socket, opts|
         assert_equal opts[:service_name], extra_opts[:service_name]
         assert_equal opts[:canonicalize_host_name], extra_opts[:canonicalize_host_name]
+        assert_equal opts[:service_realm], extra_opts[:service_realm]
         [ username, client, socket, opts ]
       end.returns('ok' => true )
       client[MONGODB_GSSAPI_DB].authenticate(MONGODB_GSSAPI_USER, nil, nil, nil, 'GSSAPI', extra_opts)
     end
 
     def test_extra_opts_uri
-      extra_opts = { :service_name => 'example', :canonicalize_host_name => true }
+      extra_opts = { :service_name => 'example', :canonicalize_host_name => true,
+                     :service_realm => 'dumdum' }
       set_system_properties
 
       Mongo::Sasl::GSSAPI.expects(:authenticate).with do |username, client, socket, opts|
         assert_equal opts[:service_name], extra_opts[:service_name]
         assert_equal opts[:canonicalize_host_name], extra_opts[:canonicalize_host_name]
+        assert_equal opts[:service_realm], extra_opts[:service_realm]
         [ username, client, socket, opts ]
       end.returns('ok' => true)
 
       require 'cgi'
       username = CGI::escape(ENV['MONGODB_GSSAPI_USER'])
       uri = "mongodb://#{username}@#{ENV['MONGODB_GSSAPI_HOST']}:#{ENV['MONGODB_GSSAPI_PORT']}/?" +
-         "authMechanism=GSSAPI&authmechanismproperties=SERVICE_NAME:example,CANONICALIZE_HOST_NAME:true"
+         "authMechanism=GSSAPI&authmechanismproperties=SERVICE_NAME:example," +
+         "CANONICALIZE_HOST_NAME:true,SERVICE_REALM:dumdum"
       client = @client.class.from_uri(uri)
       client.expects(:receive_message).returns([[{ 'ok' => 1 }], 1, 1])
       client[MONGODB_GSSAPI_DB].command(:dbstats => 1)

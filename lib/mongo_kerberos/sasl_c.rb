@@ -21,6 +21,7 @@ module Mongo
         hostname     = socket.pool.host
         servicename  = opts[:service_name] || 'mongodb'
         canonicalize = opts[:canonicalize_host_name] ? opts[:canonicalize_host_name] : false
+        username     += "@#{opts[:service_realm]}" if opts[:service_realm]
         authenticator = Mongo::Sasl::GSSAPIAuthenticator.new(username, hostname, servicename, canonicalize)
 
         return { } unless authenticator.valid?

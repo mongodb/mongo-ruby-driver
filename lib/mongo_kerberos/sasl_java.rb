@@ -27,6 +27,7 @@ module Mongo
         db            = client.db('$external')
         hostname      = socket.pool.host
         servicename   = opts[:service_name] || 'mongodb'
+        username      += "@#{opts[:service_realm]}" if opts[:service_realm]
         canonicalize  = opts[:canonicalize_host_name] ? opts[:canonicalize_host_name] : false
 
         begin
