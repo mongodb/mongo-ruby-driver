@@ -305,15 +305,15 @@ class URITest < Test::Unit::TestCase
   def test_read_preference_tags
     parser = Mongo::URIParser.new("mongodb://localhost:27017?replicaset=test&" +
                                   "readPreferenceTags=dc:ny,rack:1")
-    expected_read = { :tags => [{ 'dc' => 'ny', 'rack' => '1' }] }
-    assert_equal expected_read, parser.connection_options[:read]
+    expected_tags = [{ 'dc' => 'ny', 'rack' => '1' }]
+    assert_equal expected_tags, parser.connection_options[:tag_sets]
   end
 
   def test_read_preference_tags_multiple
     parser = Mongo::URIParser.new("mongodb://localhost:27017?replicaset=test&" +
                                   "readPreferenceTags=dc:ny,rack:1&readPreferenceTags=dc:bos")
-    expected_read = { :tags => [{'dc' => 'ny', 'rack' => '1'}, { 'dc' => 'bos' }] }
-    assert_equal expected_read, parser.connection_options[:read]
+    expected_tags = [{'dc' => 'ny', 'rack' => '1'}, { 'dc' => 'bos' }]
+    assert_equal expected_tags, parser.connection_options[:tag_sets]
   end
 
   def test_invalid_read_preference_tags
