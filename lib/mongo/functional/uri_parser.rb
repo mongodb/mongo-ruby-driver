@@ -382,11 +382,7 @@ module Mongo
           raise MongoArgumentError, "Invalid Mongo URI option #{key}"
         end
         if OPT_VALID[key].call(value)
-          if inst_var = instance_variable_get("@#{key}")
-            inst_var << OPT_CONV[key].call(value)
-          else
-            instance_variable_set("@#{key}", OPT_CONV[key].call(value))
-          end
+          instance_variable_set("@#{key}", OPT_CONV[key].call(value))
         else
           raise MongoArgumentError, "Invalid value #{value.inspect} for #{key}: #{OPT_ERR[key]}"
         end
