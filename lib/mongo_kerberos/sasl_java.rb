@@ -26,7 +26,8 @@ module Mongo
       def self.authenticate(username, client, socket, opts={})
         db            = client.db('$external')
         hostname      = socket.pool.host
-        servicename   = opts[:gssapi_service_name] || 'mongodb'
+        servicename   = opts[:service_name] || 'mongodb'
+        username      += "@#{opts[:service_realm]}" if opts[:service_realm]
         canonicalize  = opts[:canonicalize_host_name] ? opts[:canonicalize_host_name] : false
 
         begin
