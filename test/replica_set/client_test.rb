@@ -216,6 +216,24 @@ class ReplicaSetClientTest < Test::Unit::TestCase
     end
   end
 
+  def test_read_pref_primary_with_tags
+    parser = Mongo::URIParser.new("mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}" +
+                                    "?replicaset=#{@rs.repl_set_name}&readPreference=primary&" +
+                                    "readPreferenceTags=dc:ny,rack:1")
+    assert_raise_error Mongo::MongoArgumentError do
+      parser.connection.read_pool
+    end
+  end
+
+  def test_read_pref_with_tags
+    parser = Mongo::URIParser.new("mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}" +
+                                    "?replicaset=#{@rs.repl_set_name}&" +
+                                    "readPreferenceTags=dc:ny,rack:1")
+    assert_raise_error Mongo::MongoArgumentError do
+      parser.connection.read_pool
+    end
+  end
+
   def test_connect_with_connection_string
     @client = MongoClient.from_uri("mongodb://#{@rs.replicas[0].host_port},#{@rs.replicas[1].host_port}?replicaset=#{@rs.repl_set_name}")
     assert !@client.nil?

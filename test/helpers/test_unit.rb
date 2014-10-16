@@ -61,7 +61,7 @@ class Test::Unit::TestCase
 
     uri = "mongodb://#{TEST_USER}:#{TEST_USER_PWD}@" +
             "#{cluster_instance.members_uri}"
-    uri += "?replicaset=#{@rs.repl_set_name}" if cluster_instance.replica_set?
+    uri += "?replicaset=#{@rs.repl_set_name}&sockettimeoutms=60000" if cluster_instance.replica_set?
     instance_variable_set("@uri", uri)
   end
 
