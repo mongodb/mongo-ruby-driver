@@ -257,8 +257,7 @@ module Mongo
       opts[:op_timeout]      = @sockettimeoutms if @sockettimeoutms
       opts[:pool_size]       = @pool_size if @pool_size
       opts[:read]            = @readpreference if @readpreference
-      opts[:read].nil? ? opts[:read] = { :tags => @readpreferencetags } :
-                         opts[:read].merge!(:tags => @readpreferencetags) if @readpreferencetags
+      opts[:tag_sets]        = @readpreferencetags if @readpreferencetags
 
       if @slaveok && !@readpreference
         unless replicaset?
