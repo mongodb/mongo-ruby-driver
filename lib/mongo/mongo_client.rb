@@ -41,6 +41,7 @@ module Mongo
     DEFAULT_HOST         = 'localhost'
     DEFAULT_PORT         = 27017
     DEFAULT_DB_NAME      = 'test'
+    DEFAULT_OP_TIMEOUT   = 20
     GENERIC_OPTS         = [:auths, :logger, :connect, :db_name]
     TIMEOUT_OPTS         = [:timeout, :op_timeout, :connect_timeout]
     SSL_OPTS             = [:ssl, :ssl_key, :ssl_cert, :ssl_verify, :ssl_ca_cert, :ssl_key_pass_phrase]
@@ -125,8 +126,8 @@ module Mongo
     #  @option opts [Float] :pool_timeout (5.0) When all of the self.connections a pool are checked out,
     #    this is the number of seconds to wait for a new connection to be released before throwing an exception.
     #    Note: this setting is relevant only for multi-threaded applications.
-    #  @option opts [Float] :op_timeout (nil) The number of seconds to wait for a read operation to time out.
-    #    Disabled by default.
+    #  @option opts [Float] :op_timeout (DEFAULT_OP_TIMEOUT) The number of seconds to wait for a read operation to time out.
+    #    Set to DEFAULT_OP_TIMEOUT (20) by default. A value of nil may be specified explicitly.
     #  @option opts [Float] :connect_timeout (nil) The number of seconds to wait before timing out a
     #    connection attempt.
     #
@@ -446,7 +447,7 @@ module Mongo
       ping
       true
 
-      rescue ConnectionFailure
+      rescue ConnectionFailure, OperationTimeout
       false
     end
 
@@ -634,7 +635,7 @@ module Mongo
       @pool_timeout = opts.delete(:pool_timeout) || opts.delete(:timeout) || 5.0
 
       # Timeout on socket read operation.
-      @op_timeout = opts.delete(:op_timeout)
+      @op_timeout = opts.key?(:op_timeout) ? opts.delete(:op_timeout) : DEFAULT_OP_TIMEOUT
 
       # Timeout on socket connect.
       @connect_timeout = opts.delete(:connect_timeout) || 30
