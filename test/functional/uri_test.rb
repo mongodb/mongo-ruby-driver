@@ -302,6 +302,34 @@ class URITest < Test::Unit::TestCase
     assert_equal :nearest, parser.connection_options[:read]
   end
 
+  def test_read_preference_tags
+    parser = Mongo::URIParser.new("mongodb://localhost:27017?replicaset=test&" +
+                                  "readPreferenceTags=dc:ny,rack:1")
+    expected_read = { :tags => [{ 'dc' => 'ny', 'rack' => '1' }] }
+    assert_equal expected_read, parser.connection_options[:read]
+  end
+
+  def test_read_preference_tags_multiple
+    parser = Mongo::URIParser.new("mongodb://localhost:27017?replicaset=test&" +
+                                  "readPreferenceTags=dc:ny,rack:1&readPreferenceTags=dc:bos")
+    expected_read = { :tags => [{'dc' => 'ny', 'rack' => '1'}, { 'dc' => 'bos' }] }
+    assert_equal expected_read, parser.connection_options[:read]
+  end
+
+  def test_invalid_read_preference_tags
+    assert_raise_error MongoArgumentError do
+      Mongo::URIParser.new("mongodb://localhost:27017?replicaset=test&" +
+                                  "readPreferenceTags=dc")
+    end
+  end
+
+  def test_invalid_read_preference_tags_multiple
+    assert_raise_error MongoArgumentError do
+      Mongo::URIParser.new("mongodb://localhost:27017?replicaset=test&" +
+                                  "readPreferenceTags=dc:nyc&readPreferenceTags=dc")
+    end
+  end
+
   def test_connection_when_sharded_with_no_options
     parser = Mongo::URIParser.new("mongodb://localhost:27017,localhost:27018")
     client = parser.connection({}, false, true)
@@ -334,7 +362,7 @@ class URITest < Test::Unit::TestCase
     parser = Mongo::URIParser.new("mongodb://user@localhost?authMechanism=MONGODB-X509")
     assert_equal 'MONGODB-X509', parser.authmechanism
 
-    assert_raise_error MongoArgumentError  do
+    assert_raise_error MongoArgumentError do
       Mongo::URIParser.new("mongodb://user@localhost?authMechanism=INVALID")
     end
   end
