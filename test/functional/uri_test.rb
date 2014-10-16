@@ -362,8 +362,8 @@ class URITest < Test::Unit::TestCase
       parser = Mongo::URIParser.new(uri)
     end
 
-    uri = "mongodb://user@localhost?authMechanism=PLAIN&authMechanismProperties=SERVICE_NAME" +
-            ":mongodb"
+    uri = "mongodb://user@localhost?authMechanism=PLAIN&authMechanismProperties="+
+            "SERVICE_NAME:mongodb"
     assert_raise_error MongoArgumentError do
       parser = Mongo::URIParser.new(uri)
     end
