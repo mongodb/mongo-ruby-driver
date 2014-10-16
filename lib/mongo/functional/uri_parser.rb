@@ -91,7 +91,7 @@ module Mongo
       :fsync                   => "must be 'true' or 'false'",
       :journal                 => "must be 'true' or 'false'",
       :pool_size               => "must be an integer greater than zero",
-      :readpreference          => "must be on of #{READ_PREFERENCES.keys.map(&:inspect).join(",")}",
+      :readpreference          => "must be one of #{READ_PREFERENCES.keys.map(&:inspect).join(",")}",
       :readpreferencetags      => "must be a comma-separated list of one or more key:value pairs",
       :replicaset              => "must be a string containing the name of the replica set to connect to",
       :safe                    => "must be 'true' or 'false'",
@@ -136,6 +136,8 @@ module Mongo
                            :replicaset,
                            :w
                          ]
+
+    OPT_NOT_STRING = [ :readpreferencetags ]
 
     attr_reader :auths,
                 :authmechanism,
@@ -366,7 +368,7 @@ module Mongo
 
       opts = CGI.parse(string_opts).inject({}) do |memo, (key, value)|
         key_sym = key.downcase.to_sym
-        if key_sym == :readpreferencetags
+        if OPT_NOT_STRING.include?(key_sym)
           memo[key_sym] = value
         else
           value = value.first
@@ -380,8 +382,8 @@ module Mongo
           raise MongoArgumentError, "Invalid Mongo URI option #{key}"
         end
         if OPT_VALID[key].call(value)
-          if var = instance_variable_get("@#{key}")
-            var << OPT_CONV[key].call(value)
+          if inst_var = instance_variable_get("@#{key}")
+            inst_var << OPT_CONV[key].call(value)
           else
             instance_variable_set("@#{key}", OPT_CONV[key].call(value))
           end
