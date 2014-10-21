@@ -101,7 +101,7 @@ module Mongo
 
         def execute_message(context)
           replies = []
-          messages(context).map do |m|
+          messages.map do |m|
             context.with_connection do |connection|
               result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
               replies << result.reply
@@ -145,7 +145,7 @@ module Mongo
           @spec[DOCUMENTS] = original.spec[DOCUMENTS].dup
         end
 
-        def messages(context)
+        def messages
           if ordered?
             documents.collect do |doc|
               Protocol::Insert.new(db_name, coll_name, [ doc ], options)

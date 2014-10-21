@@ -101,7 +101,7 @@ module Mongo
         end
 
         def execute_message(context)
-          replies = messages(context).map do |m|
+          replies = messages.map do |m|
             context.with_connection do |connection|
               result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
               if stop_sending?(result)
@@ -146,7 +146,7 @@ module Mongo
           @spec[DELETES] = original.spec[DELETES].clone
         end
 
-        def messages(context)
+        def messages
           deletes.collect do |del|
             opts = ( del[:limit] || 0 ) <= 0 ? {} : { :flags => [ :single_remove ] }
             Protocol::Delete.new(db_name, coll_name, del[:q], opts)

@@ -108,7 +108,7 @@ module Mongo
         end
 
         def execute_message(context)
-          replies = messages(context).map do |m|
+          replies = messages.map do |m|
             context.with_connection do |connection|
               result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
               if stop_sending?(result)
@@ -153,7 +153,7 @@ module Mongo
           @spec[UPDATES] = original.spec[UPDATES].dup
         end
 
-        def messages(context)
+        def messages
           updates.collect do |u|
             opts = { :flags => [] }
             opts[:flags] << :multi_update if !!u[:multi]
