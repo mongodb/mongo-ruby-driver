@@ -315,14 +315,14 @@ class ReadPreferenceUnitTest < Test::Unit::TestCase
 
   def test_nearest_primary_matching
     # Confirm that a primary matching tags is included in nearest candidates
-    secondary_nyc = mock_pool({'dc' => 'nyc'}, 25)
-    secondary_chi = mock_pool({'dc' => 'chicago'}, 25)
+    secondary_nyc = mock_pool({'dc' => 'nyc'}, 5)
+    secondary_chi = mock_pool({'dc' => 'chicago'}, 10)
     primary_pool = mock_pool({'dc' => 'boston'}, 1)
     secondary_pools = [secondary_nyc, secondary_chi]
 
     client = MongoReplicaSetClient.new(["#{TEST_HOST}:#{TEST_PORT}"], :connect => false)
     client.stubs(:secondary_pools).returns(secondary_pools)
-    client.stubs(:primary_pool).returns(mock_pool)
+    client.stubs(:primary_pool).returns(primary_pool)
     client.stubs(:pools).returns(secondary_pools << primary_pool)
 
     read_pref_tags = {'dc' => 'boston'}
