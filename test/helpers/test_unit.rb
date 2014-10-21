@@ -61,7 +61,7 @@ class Test::Unit::TestCase
 
     uri = "mongodb://#{TEST_USER}:#{TEST_USER_PWD}@" +
             "#{cluster_instance.members_uri}"
-    uri += "?replicaset=#{@rs.repl_set_name}" if cluster_instance.replica_set?
+    uri += "?replicaset=#{@rs.repl_set_name}&sockettimeoutms=60000" if cluster_instance.replica_set?
     instance_variable_set("@uri", uri)
   end
 
@@ -174,6 +174,13 @@ class Test::Unit::TestCase
 
   def new_mock_db
     Object.new
+  end
+
+  def mock_pool(tags={}, ping_time=15)
+    mock('pool').tap do |pool|
+      pool.stubs(:tags).returns(tags)
+      pool.stubs(:ping_time).returns(ping_time)
+    end
   end
 
   def assert_raise_error(klass, message=nil)

@@ -146,31 +146,38 @@ module Mongo
     end
 
     def select_secondary_pool(candidates, read_pref)
-      tag_sets = read_pref[:tags]
-
-      if !tag_sets.empty?
-        matches = []
-        tag_sets.detect do |tag_set|
-          matches = candidates.select do |candidate|
-            tag_set.none? { |k,v| candidate.tags[k.to_s] != v } &&
-            candidate.ping_time
-          end
-          !matches.empty?
-        end
-      else
-        matches = candidates
-      end
-
-      matches.empty? ? nil : select_near_pool(matches, read_pref)
+      matching_pools = match_tag_sets(secondary_pools, read_pref[:tags])
+      select_near_pools(matching_pools, read_pref).first
     end
 
     def select_near_pool(candidates, read_pref)
+      matching_pools = match_tag_sets(candidates, read_pref[:tags])
+      select_near_pools(matching_pools, read_pref).first
+    end
+
+    private
+
+    def select_near_pools(candidates, read_pref)
+      return candidates if candidates.empty?
       latency = read_pref[:latency]
-      nearest_pool = candidates.min_by { |candidate| candidate.ping_time }
-      near_pools = candidates.select do |candidate|
-        (candidate.ping_time - nearest_pool.ping_time) <= latency
+      nearest_pool = candidates.min_by(&:ping_time)
+      max_latency = nearest_pool.ping_time + latency
+      near_pools = candidates.select { |candidate| candidate.ping_time <= max_latency }
+      near_pools.shuffle!
+    end
+
+    def match_tag_sets(candidates, tag_sets = [])
+      return candidates if tag_sets.empty?
+      matches = []
+      tag_sets.find do |tag_set|
+        matches = candidates.select do |candidate|
+          tag_set.none? do |k,v|
+            candidate.tags[k.to_s] != v
+          end
+        end
+        !matches.empty?
       end
-      near_pools[ rand(near_pools.length) ]
+      matches
     end
   end
 end
