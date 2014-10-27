@@ -480,12 +480,14 @@ module Mongo
     # @return [Hash] keys are index names and the values are lists of [key, type] pairs
     #   defining the index.
     def index_information(collection_name)
-      sel  = {:ns => full_collection_name(collection_name)}
-      info = {}
-      Cursor.new(Collection.new(SYSTEM_INDEX_COLLECTION, self), :selector => sel).each do |index|
-        info[index['name']] = index
+      if @client.wire_version_feature?(Mongo::MongoClient::LIST_INDEXES_CMD)
+        result = self.command(:listIndexes => collection_name)['indexes']
+      else
+        result = legacy_list_indexes(collection_name)
       end
-      info
+      result.reduce({}) do |info, index|
+        info.merge!(index['name'] => index)
+      end
     end
 
     # Return stats on this database. Uses MongoDB's dbstats command.
@@ -733,6 +735,11 @@ module Mongo
         raise ex unless ex.message =~ /login/
       end
       user
+    end
+
+    def legacy_list_indexes(collection_name)
+      sel  = {:ns => full_collection_name(collection_name)}
+      Cursor.new(Collection.new(SYSTEM_INDEX_COLLECTION, self), :selector => sel)
     end
   end
 end
