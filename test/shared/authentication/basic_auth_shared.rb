@@ -43,6 +43,16 @@ module BasicAuthTests
     @client.auths.any? { |a| a[:source] == db_name && a[:username] == username }
   end
 
+  def test_descriptive_mech_error
+    assert_raise_error Mongo::MongoArgumentError, Mongo::Authentication::MECHANISM_ERROR do
+      @db.authenticate('emily', nil, nil, nil, 'FAKE_MECHANISM')
+    end
+    assert_raise_error Mongo::MongoArgumentError, Mongo::Authentication::MECHANISM_ERROR do
+      uri = "mongodb://user:pwd@host:port/example?authSource=$external&authMechanism=FAKE_MECHANISM"
+      Mongo::MongoClient.from_uri(uri)
+    end
+  end
+
   def test_add_remove_user
     init_auth_basic
 
