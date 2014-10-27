@@ -1029,7 +1029,7 @@ module Mongo
     #
     # @return [Hash] options that apply to this collection.
     def options
-      @db.collections_info(@name).next_document['options']
+      @db.collections_info(@name).first['options']
     end
 
     # Return stats on the collection. Uses MongoDB's collstats command.

@@ -259,9 +259,14 @@ module Mongo
     #
     # @return [Array]
     def collection_names
-      names = collections_info.collect { |doc| doc['name'] || '' }
-      names = names.delete_if {|name| name.index(@name).nil? || name.index('$')}
-      names.map {|name| name.sub(@name + '.', '')}
+      if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_2_8)
+        names = collections_info.collect { |doc| doc['name'] || '' }
+        names.delete_if do |name|
+          name.index('$')
+        end
+      else
+        legacy_collection_names
+      end
     end
 
     # Get an array of Collection instances, one for each collection in this database.
@@ -281,9 +286,13 @@ module Mongo
     #
     # @return [Mongo::Cursor]
     def collections_info(coll_name=nil)
-      selector = {}
-      selector[:name] = full_collection_name(coll_name) if coll_name
-      Cursor.new(Collection.new(SYSTEM_NAMESPACE_COLLECTION, self), :selector => selector)
+      if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_2_8)
+        cmd = BSON::OrderedHash[:listCollections, 1]
+        cmd.merge!(:filter => { :name => coll_name }) if coll_name
+        self.command(cmd)['collections']
+      else
+        legacy_collections_info(coll_name)
+      end
     end
 
     # Create a collection.
@@ -740,6 +749,20 @@ module Mongo
     def legacy_list_indexes(collection_name)
       sel  = {:ns => full_collection_name(collection_name)}
       Cursor.new(Collection.new(SYSTEM_INDEX_COLLECTION, self), :selector => sel)
+    end
+
+    def legacy_collections_info(coll_name)
+      selector = {}
+      selector[:name] = full_collection_name(coll_name) if coll_name
+      Cursor.new(Collection.new(SYSTEM_NAMESPACE_COLLECTION, self), :selector => selector)
+    end
+
+    def legacy_collection_names
+      names = collections_info.collect { |doc| doc['name'] || '' }
+      names = names.delete_if do |name|
+        name.index(@name).nil? || name.index('$')
+      end
+      names.map {|name| name.sub(@name + '.', '')}
     end
   end
 end
