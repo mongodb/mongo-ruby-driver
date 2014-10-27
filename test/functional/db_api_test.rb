@@ -315,8 +315,23 @@ class DBAPITest < Test::Unit::TestCase
     cursor = @db.collections_info
     rows = cursor.to_a
     assert rows.length >= 1
-    row = rows.detect { |r| r['name'] == @coll_full_name }
+    if @client.server_version < '2.7.6'
+      row = rows.detect { |r| r['name'] == @coll_full_name }
+    else
+      row = rows.detect { |r| r['name'] == @coll.name }
+    end
     assert_not_nil row
+  end
+
+  def test_collections_info_with_name
+    cursor = @db.collections_info(@coll.name)
+    info = cursor.to_a
+    assert_equal 1, info.length
+    if @client.server_version < '2.7.6'
+      assert_equal "#{@db.name}.#{@coll.name}", info.first['name']
+    else
+      assert_equal @coll.name, info.first['name']
+    end
   end
 
   def test_collection_options
