@@ -83,7 +83,7 @@ module Mongo
      }
 
     OPT_ERR = {
-      :authmechanism           => "must be one of #{Mongo::Authentication::MECHANISMS.join(', ')}",
+      :authmechanism           => Mongo::Authentication::MECHANISM_ERROR,
       :authmechanismproperties => "must meet the format requirements of the authentication mechanism's properties",
       :authsource              => "must be a string containing the name of the database being used for authentication",
       :connect                 => "must be 'direct', 'replicaset', 'true', or 'false'",

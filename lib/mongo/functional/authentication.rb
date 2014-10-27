@@ -19,6 +19,8 @@ module Mongo
 
     DEFAULT_MECHANISM = 'MONGODB-CR'
     MECHANISMS        = ['GSSAPI', 'MONGODB-CR', 'MONGODB-X509', 'PLAIN']
+    MECHANISM_ERROR   = "Must use one of #{MECHANISMS.join(', ')} " +
+                          "authentication mechanisms."
     EXTRA             = { 'GSSAPI' => [:service_name, :canonicalize_host_name,
                                        :service_realm] }
 
@@ -191,6 +193,8 @@ module Mongo
     # @raise [AuthenticationError] Raised if the authentication fails.
     # @return [Boolean] Result of the authentication operation.
     def issue_authentication(auth, opts={})
+      raise MongoArgumentError,
+        MECHANISM_ERROR unless MECHANISMS.include?(auth[:mechanism])
       result = case auth[:mechanism]
         when 'MONGODB-CR'
           issue_cr(auth, opts)
