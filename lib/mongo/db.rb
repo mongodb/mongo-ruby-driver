@@ -480,7 +480,7 @@ module Mongo
     # @return [Hash] keys are index names and the values are lists of [key, type] pairs
     #   defining the index.
     def index_information(collection_name)
-      if @client.wire_version_feature?(Mongo::MongoClient::LIST_INDEXES_CMD)
+      if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_2_8)
         result = self.command(:listIndexes => collection_name)['indexes']
       else
         result = legacy_list_indexes(collection_name)
