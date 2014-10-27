@@ -26,6 +26,7 @@ module Mongo
     AGG_RETURNS_CURSORS    = 1 # The aggregation command may now be requested to return cursors.
     BATCH_COMMANDS         = 2 # insert, update, and delete batch command
     MONGODB_2_8            = 3 # listCollections and listIndexes commands, SCRAM-SHA-1 auth mechanism
+    LIST_INDEXES_CMD       = MONGODB_2_8 # listIndexes command
     MAX_WIRE_VERSION       = MONGODB_2_8 # supported by this client implementation
     MIN_WIRE_VERSION       = RELEASE_2_4_AND_BEFORE # supported by this client implementation
 
