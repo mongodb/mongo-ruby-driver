@@ -254,9 +254,15 @@ class Test::Unit::TestCase
   def with_default_journaling(client, &block)
     authenticate_client(client)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
-    unless client.server_version < "2.0" || cmd_line_args.include?('nojournal')
+    unless client.server_version < "2.0" || cmd_line_args.include?('nojournal') ||
+      using_heap1_storage_engine?(cmd_line_args)
       yield
     end
+  end
+
+  def using_heap1_storage_engine?(cmd_line_args)
+    cmd_line_args.include?('storage') &&
+      cmd_line_args['storage']['engine'] == 'heap1'
   end
 
   def with_no_replication(client, &block)
