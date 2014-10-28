@@ -147,6 +147,7 @@ class Test::Unit::TestCase
     begin
       step_down_command = BSON::OrderedHash.new
       step_down_command[:replSetStepDown] = 30
+      step_down_command[:force] = true
       member['admin'].command(step_down_command)
     rescue Mongo::OperationFailure => e
       retry unless (Time.now - start) > timeout
