@@ -25,7 +25,7 @@ class ReplicaSetQueryTest < Test::Unit::TestCase
   end
 
   def teardown
-    @client.close if @conn
+    @client.close if @client
   end
 
   def test_query

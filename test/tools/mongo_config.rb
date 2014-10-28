@@ -646,7 +646,8 @@ module Mongo
         servers.each{|server| server.start}
         # TODO - sharded replica sets - pending
         if @config[:replicas]
-          repl_set_initiate if repl_set_get_status.first['startupStatus'] == 3
+          repl_set_initiate if repl_set_get_status.first['code'] == 94 ||
+            (repl_set_get_status.first['startupStatus'] && repl_set_get_status.first['startupStatus'] == 3)
           repl_set_startup
         end
         if @config[:routers]
