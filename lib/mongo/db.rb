@@ -284,14 +284,14 @@ module Mongo
     #
     # @param [String] coll_name return info for the specified collection only.
     #
-    # @return [Mongo::Cursor]
+    # @return [Array] List of collection info.
     def collections_info(coll_name=nil)
       if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_2_8)
         cmd = BSON::OrderedHash[:listCollections, 1]
         cmd.merge!(:filter => { :name => coll_name }) if coll_name
         self.command(cmd)['collections']
       else
-        legacy_collections_info(coll_name)
+        legacy_collections_info(coll_name).to_a
       end
     end
 
