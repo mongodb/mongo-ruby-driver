@@ -94,9 +94,8 @@ module Mongo
     #
     # @option options [ Symbol ] :auth_mech
     # @option options [ String ] :auth_source
-    # @option options [ true, false ] :canonicalize_host_name
     # @option options [ String ] :database
-    # @option options [ String ] :gssapi_service_name
+    # @option options [ Hash ] :auth_mech_properties
     # @option options [ Float ] :heartbeat_frequency
     # @option options [ Symbol ] :mode
     # @option options [ String ] :password

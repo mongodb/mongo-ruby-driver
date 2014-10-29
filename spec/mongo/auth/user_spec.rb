@@ -80,12 +80,18 @@ describe Mongo::Auth::User do
     end
   end
 
-  describe '#gssapi_service_name' do
+  describe '#auth_mech_properties' do
 
     context 'when the option is provided' do
 
+      let(:auth_mech_properties) do
+        { service_name: 'test',
+          service_realm: 'test',
+          canonicalize_host_name: true }
+      end
+
       let(:options) do
-        { database: 'testing', user: 'user', password: 'pass', gssapi_service_name: 'test' }
+        { database: 'testing', user: 'user', password: 'pass', auth_mech_properties: auth_mech_properties }
       end
 
       let(:user) do
@@ -93,7 +99,7 @@ describe Mongo::Auth::User do
       end
 
       it 'returns the option' do
-        expect(user.gssapi_service_name).to eq('test')
+        expect(user.auth_mech_properties).to eq(auth_mech_properties)
       end
     end
 
@@ -103,37 +109,8 @@ describe Mongo::Auth::User do
         described_class.new(options)
       end
 
-      it 'returns the default' do
-        expect(user.gssapi_service_name).to eq('mongodb')
-      end
-    end
-  end
-
-  describe '#canonicalize_host_name' do
-
-    context 'when the option is provided' do
-
-      let(:options) do
-        { database: 'testing', user: 'user', password: 'pass', canonicalize_host_name: true }
-      end
-
-      let(:user) do
-        described_class.new(options)
-      end
-
-      it 'returns the option' do
-        expect(user.canonicalize_host_name).to be true
-      end
-    end
-
-    context 'when no option is provided' do
-
-      let(:user) do
-        described_class.new(options)
-      end
-
-      it 'returns the default' do
-        expect(user.canonicalize_host_name).to be false
+      it 'returns an empty hash' do
+        expect(user.auth_mech_properties).to eq({})
       end
     end
   end
