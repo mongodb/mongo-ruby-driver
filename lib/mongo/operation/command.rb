@@ -53,7 +53,8 @@ module Mongo
         'mapreduce',
         'replsetgetstatus',
         'ismaster',
-        'parallelcollectionscan'
+        'parallelcollectionscan',
+        'text'
       ].freeze
 
       # Execute the command operation.
