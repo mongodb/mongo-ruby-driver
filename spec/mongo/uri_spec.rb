@@ -341,6 +341,76 @@ describe Mongo::URI do
       end
     end
 
+    context 'auth mechanism properties provided' do
+
+      context 'service_name' do
+        let(:options) do
+          "authMechanismProperties=SERVICE_NAME:#{service_name}"
+        end
+
+        let(:service_name) { 'foo' }
+        let(:auth) do
+          { auth_mech_properties: { service_name: service_name } }
+        end
+
+        it 'sets the auth mechanism properties' do
+          expect(uri.options[:auth]).to eq(auth)
+        end
+      end
+
+      context 'canonicalize_host_name' do
+        let(:options) do
+          "authMechanismProperties=CANONICALIZE_HOST_NAME:#{canonicalize_host_name}"
+        end
+
+        let(:canonicalize_host_name) { 'true' }
+        let(:auth) do
+          { auth_mech_properties: { canonicalize_host_name: true } }
+        end
+
+        it 'sets the auth mechanism properties' do
+          expect(uri.options[:auth]).to eq(auth)
+        end
+      end
+
+      context 'service_realm' do
+        let(:options) do
+          "authMechanismProperties=SERVICE_REALM:#{service_realm}"
+        end
+
+        let(:service_realm) { 'dumdum' }
+        let(:auth) do
+          { auth_mech_properties: { service_realm: service_realm } }
+        end
+
+        it 'sets the auth mechanism properties' do
+          expect(uri.options[:auth]).to eq(auth)
+        end
+      end
+
+      context 'multiple properties' do
+        let(:options) do
+          "authMechanismProperties=SERVICE_REALM:#{service_realm}," +
+            "CANONICALIZE_HOST_NAME:#{canonicalize_host_name}," +
+            "SERVICE_NAME:#{service_name}"
+        end
+
+        let(:service_name) { 'foo' }
+        let(:canonicalize_host_name) { 'true' }
+        let(:service_realm) { 'dumdum' }
+
+        let(:auth) do
+          { auth_mech_properties: { service_name: service_name,
+                                    canonicalize_host_name: true,
+                                    service_realm: service_realm } }
+        end
+
+        it 'sets the auth mechanism properties' do
+          expect(uri.options[:auth]).to eq(auth)
+        end
+      end
+    end
+
     context 'connectTimeoutMS' do
       let(:timeout) { 4567 }
       let(:options) { "connectTimeoutMS=#{timeout}" }
