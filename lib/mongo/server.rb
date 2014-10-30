@@ -44,7 +44,8 @@ module Mongo
                    :replica_set_name,
                    :secondary?,
                    :standalone?,
-                   :write_command_enabled?
+                   :write_command_enabled?,
+                   :wire_version_feature?
 
     # Is this server equal to another?
     #
