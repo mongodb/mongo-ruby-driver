@@ -220,6 +220,8 @@ module Mongo
     # Auth Options
     option 'authSource', :source, :group => :auth, :type => :auth_source
     option 'authMechanism', :mechanism, :group => :auth, :type => :auth_mech
+    option 'authMechanismProperties', :auth_mech_properties, :group => :auth,
+           :type => :auth_mech_props
 
     # Map of URI read preference modes to ruby driver read preference modes
     READ_MODE_MAP = {
@@ -382,9 +384,32 @@ module Mongo
     #
     # @return [Hash] The tag set hash.
     def read_set(value)
+      hash_extractor(value)
+    end
+
+    # Auth mechanism properties extractor.
+    #
+    # @param value [ String ] The auth mechanism properties string.
+    #
+    # @return [ Hash ] The auth mechanism properties hash.
+    def auth_mech_props(value)
+      properties = hash_extractor(value)
+      if properties[:canonicalize_host_name]
+        properties.merge!(canonicalize_host_name:
+                            properties[:canonicalize_host_name] == 'true')
+      end
+      properties
+    end
+
+    # Extract values from the string and put them into a nested hash.
+    #
+    # @param value [ String ] The string to build a hash from.
+    #
+    # @return [ Hash ] The hash built from the string.
+    def hash_extractor(value)
       value.split(',').reduce({}) do |set, tag|
         k, v = tag.split(':')
-        set.merge(k.to_sym => v)
+        set.merge(k.downcase.to_sym => v)
       end
     end
   end

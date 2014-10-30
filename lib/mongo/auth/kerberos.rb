@@ -57,10 +57,10 @@ module Mongo
       def authenticator(host)
         @authenticator ||= org.mongodb.sasl.GSSAPIAuthenticator.new(
           JRuby.runtime,
-          user.name,
+          user_name,
           host,
-          user.gssapi_service_name,
-          user.canonicalize_host_name
+          service_name,
+          canonicalize_host_name
         )
       end
 
@@ -80,6 +80,19 @@ module Mongo
           { saslContinue: 1, payload: token, conversationId: response['conversationId'] },
           limit: -1
         )
+      end
+
+      def service_name
+        user.auth_mech_properites[:service_name] || 'mongodb'
+      end
+
+      def canonicalize_host_name
+        user.auth_mech_properites[:canonicalize_host_name] || false
+      end
+
+      def user_name
+        user.auth_mech_properites[:service_realm] ?
+          "#{user.name}@#{user.auth_mech_properites[:service_realm]}" : user.name
       end
     end
   end

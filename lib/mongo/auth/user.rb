@@ -27,15 +27,11 @@ module Mongo
       # @since 2.0.0
       COLLECTION = 'system.users'.freeze
 
-      # @return [ true, false ] For kerberos only, are we canolicalizing the
-      #   host name.
-      attr_reader :canonicalize_host_name
-
       # @return [ String ] The database the user is created in.
       attr_reader :database
 
-      # @return [ String ] The Kerberos service name.
-      attr_reader :gssapi_service_name
+      # @return [ Hash ] The authentication mechanism properties.
+      attr_reader :auth_mech_properties
 
       # @return [ Symbol ] The authorization mechanism.
       attr_reader :mechanism
@@ -116,8 +112,7 @@ module Mongo
         @name = options[:user]
         @password = options[:password] || options[:pwd]
         @mechanism = options[:auth_mech] || :mongodb_cr
-        @gssapi_service_name = options[:gssapi_service_name] || 'mongodb'
-        @canonicalize_host_name = options[:canonicalize_host_name] || false
+        @auth_mech_properties = options[:auth_mech_properties] || {}
         @roles = options[:roles] || []
       end
 
