@@ -33,6 +33,26 @@ module Mongo
         include Executable
         include Specifiable
 
+        # Execute the operation.
+        # The context gets a connection on which the operation
+        # is sent in the block.
+        #
+        # @params [ Mongo::Server::Context ] The context for this operation.
+        #
+        # @return [ Result ] The indexes operation response.
+        #
+        # @since 2.0.0
+        def execute(context)
+          if context.wire_version_feature?(
+              Mongo::Server::Description::MONGODB_2_8_WIRE_VERSION)
+            ListIndexes.new(spec).execute(context)
+          else
+            context.with_connection do |connection|
+              connection.dispatch([ message ])
+            end
+          end
+        end
+
         private
 
         def message

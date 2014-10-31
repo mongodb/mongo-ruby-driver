@@ -33,7 +33,8 @@ module Mongo
                      :primary?,
                      :secondary?,
                      :standalone?,
-                     :write_command_enabled?
+                     :write_command_enabled?,
+                     :wire_version_feature?
 
       # Instantiate a server context.
       #

@@ -98,6 +98,11 @@ module Mongo
       # @since 2.0.0
       DEFAULT_MAX_WRITE_BATCH_SIZE = 1000.freeze
 
+      # MongoDB 2.8 wire version.
+      #
+      # @since 2.0.0
+      MONGODB_2_8_WIRE_VERSION = 3.freeze
+
       # The legacy wire protocol version.
       #
       # @since 2.0.0
@@ -393,6 +398,21 @@ module Mongo
       # @since 2.0.0
       def write_command_enabled?
         max_wire_version >= WRITE_COMMAND_WIRE_VERSION
+      end
+
+      # Does the server's wire version range cover a given wire version.
+      #
+      # @example Does a certain wire version fall within the server's
+      #   wire version range?
+      #   description.wire_version_feature?(3)
+      #
+      # @return [ true, false ] If the server's wire version range covers a
+      #   given wire version.
+      #
+      # @since 2.0.0
+      def wire_version_feature?(feature_version)
+        min_wire_version <= feature_version &&
+          feature_version <= max_wire_version
       end
     end
   end
