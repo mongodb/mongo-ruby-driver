@@ -751,14 +751,14 @@ module Mongo
       Cursor.new(Collection.new(SYSTEM_INDEX_COLLECTION, self), :selector => sel)
     end
 
-    def legacy_collections_info(coll_name)
+    def legacy_collections_info(coll_name=nil)
       selector = {}
       selector[:name] = full_collection_name(coll_name) if coll_name
       Cursor.new(Collection.new(SYSTEM_NAMESPACE_COLLECTION, self), :selector => selector)
     end
 
     def legacy_collection_names
-      names = collections_info.collect { |doc| doc['name'] || '' }
+      names = legacy_collections_info.collect { |doc| doc['name'] || '' }
       names = names.delete_if do |name|
         name.index(@name).nil? || name.index('$')
       end
