@@ -35,6 +35,11 @@ module Mongo
         # @since 2.0.0
         CLIENT_FIRST_MESSAGE = { saslStart: 1, autoAuthorize: 1 }.freeze
 
+        # The client key string.
+        #
+        # @since 2.0.0
+        CLIENT_KEY = 'Client Key'.freeze
+
         # The digest to use for encryption.
         #
         # @since 2.0.0
@@ -205,7 +210,7 @@ module Mongo
         end
 
         def client_key(password)
-          hmac(password, 'Client Key')
+          hmac(password, CLIENT_KEY)
         end
 
         def client_proof(key, signature)
