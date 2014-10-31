@@ -25,25 +25,6 @@ describe Mongo::Auth::User do
     end
   end
 
-  describe '#client_key' do
-
-    let(:options) do
-      { database: 'testing', user: 'user', password: 'pencil' }
-    end
-
-    let(:client_key) do
-      user.client_key('QSXCR+Q6sek8bf92')
-    end
-
-    let(:expected) do
-      'v0X8v3Bz2T0CJGbJQyF0X+HI4Ts='
-    end
-
-    it 'returns the encrypted client key' do
-      expect(client_key).to_not be_nil
-    end
-  end
-
   describe '#encoded_name' do
 
     context 'when the user name contains an =' do
@@ -204,26 +185,6 @@ describe Mongo::Auth::User do
       it 'returns an empty array' do
         expect(user.roles).to be_empty
       end
-    end
-  end
-
-  describe '#nonce' do
-
-    let(:user) do
-      described_class.new(options)
-    end
-
-    let(:nonce) do
-      user.nonce.data
-    end
-
-    it 'returns a string with the username' do
-      expect(nonce).to include('n=user')
-    end
-
-    it 'returns a string with a secure random string' do
-      expect(nonce).to include('r=')
-      expect(nonce.length).to eq(33)
     end
   end
 end

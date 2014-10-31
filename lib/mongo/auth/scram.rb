@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/auth/scram/conversation'
+
 module Mongo
   module Auth
 
@@ -21,16 +23,10 @@ module Mongo
     class SCRAM
       include Executable
 
-      CONVERSATION_ID = 'conversationId'.freeze
-
-      DONE = 'done'.freeze
-
       # The authentication mechinism string.
       #
       # @since 2.0.0
       MECHANISM = 'SCRAM-SHA-1'.freeze
-
-      PAYLOAD = 'payload'.freeze
 
       # Log the user in on the given connection.
       #
@@ -44,54 +40,11 @@ module Mongo
       #
       # @since 2.0.0
       def login(connection)
-        token = user.nonce
-        reply = connection.dispatch([ without_proof_message(token) ]).documents[0]
-        reply = connection.dispatch([ client_final_message(nonce, reply, token) ]).documents[0]
-        # Need to verify the server key.
-        reply = connection.dispatch([ empty_message(response) ]) until reply[DONE]
+        conversation = Conversation.new(user)
+        reply = connection.dispatch([ conversation.start ])
+        reply = connection.dispatch([ conversation.continue(reply) ])
+        reply = connection.dispatch([ conversation.finalize(reply) ])
         reply
-      end
-
-      private
-
-      def without_proof_message(token)
-        Protocol::Query.new(
-          Auth::EXTERNAL,
-          Database::COMMAND,
-          { saslStart: 1, payload: token, mechanism: MECHANISM, authAuthorize: 1 },
-          limit: -1
-        )
-      end
-
-      def client_final_message(nonce, reply, token)
-        payload = continue_token(nonce, reply, response_nonce(reply, token))
-        Protocol::Query.new(
-          Auth::EXTERNAL,
-          Database::COMMAND,
-          { saslContinue: 1, payload: payload, conversationId: response[CONVERSATION_ID] },
-          limit: -1
-        )
-      end
-
-      def continue_token(nonce, reply, token)
-        salt = reply[PAYLOAD]['s']
-        iterations = reply[PAYLOAD]['i']
-        response_token = user.client_token(nonce, salt, iterations)
-      end
-
-      def empty_message(response)
-        Protocol::Query.new(
-          Auth::EXTERNAL,
-          Database::COMMAND,
-          { saslContinue: 1, payload: BSON::Binary.new(''), conversationId: response[CONVERSATION_ID] },
-          limit: -1
-        )
-      end
-
-      def response_nonce(reply, token)
-        nonce = reply[PAYLOAD]['r']
-        raise Exeption, '' unless nonce.starts_with(token)
-        nonce
       end
     end
   end

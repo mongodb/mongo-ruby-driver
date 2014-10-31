@@ -27,11 +27,6 @@ module Mongo
       # @since 2.0.0
       COLLECTION = 'system.users'.freeze
 
-      # The digest to use for encryption.
-      #
-      # @since 2.0.0
-      DIGEST = OpenSSL::Digest.new('sha1').freeze
-
       # @return [ String ] The authorization source, either a database or
       #   external name.
       attr_reader :auth_source
@@ -122,7 +117,7 @@ module Mongo
       #
       # @since 2.0.0
       def hashed_password
-        @hashed_password ||= Digest::MD5.hexdigest("#{name}:mongo:#{password}")
+        @hashed_password ||= Digest::MD5.hexdigest("#{name}:mongo:#{password}").encode(BSON::UTF8)
       end
 
       # Create the new user.
@@ -156,18 +151,6 @@ module Mongo
         @roles = options[:roles] || []
       end
 
-      # Returns a SCRAM-SHA-1 safe nonce for use with authentication.
-      #
-      # @example Get the user nonce.
-      #   user.nonce
-      #
-      # @return [ String ] The user nonce string.
-      #
-      # @since 2.0.0
-      def nonce(random = SecureRandom.base64)
-        BSON::Binary.new("n=#{name},r=#{random}")
-      end
-
       # Get the specification for the user, used in creation.
       #
       # @example Get the user's specification.
@@ -178,49 +161,6 @@ module Mongo
       # @since 2.0.0
       def spec
         { pwd: hashed_password, roles: roles }
-      end
-
-      def salted_password(salt, iterations)
-        hi(hashed_password, salt, iterations)
-      end
-
-      def client_key(password)
-        hmac(password, 'Client Key')
-      end
-
-      def stored_key(key)
-        h(key)
-      end
-
-      def client_signature(key, message)
-        hmac(key, message)
-      end
-
-      def client_proof(key, signature)
-        key ^ signature
-      end
-
-      def client_message(salt, iterations)
-        key = client_key(salted_password(salt, iterations))
-        client_proof(key, client_signature(stored_key(key), auth_message))
-      end
-
-      def client_token(nonce, salt, iterations)
-        BSON::Binary.new("c=biws,r=#{nonce},p=#{client_message(salt, iterations)}")
-      end
-
-      private
-
-      def h(string)
-        DIGEST.digest(string)
-      end
-
-      def hi(password, salt, iterations)
-        OpenSSL::PKCS5.pbkdf2_hmac(password, salt, iterations, DIGEST.size, DIGEST)
-      end
-
-      def hmac(salted_password, key)
-        OpenSSL::HMAC.digest(DIGEST, salted_password, key)
       end
     end
   end
