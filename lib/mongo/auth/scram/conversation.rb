@@ -43,7 +43,7 @@ module Mongo
         # The digest to use for encryption.
         #
         # @since 2.0.0
-        DIGEST = OpenSSL::Digest.new('sha1').freeze
+        DIGEST = Krypt::Digest::SHA1.new.freeze
 
         # The key for the done field in the responses.
         #
@@ -230,17 +230,16 @@ module Mongo
         end
 
         def hi(password)
-          OpenSSL::PKCS5.pbkdf2_hmac(
+          Krypt::PBKDF2.new(DIGEST).generate(
             password,
             Base64.strict_decode64(salt),
             iterations,
-            DIGEST.size,
-            DIGEST
+            DIGEST.digest_length
           )
         end
 
         def hmac(password, key)
-          OpenSSL::HMAC.digest(DIGEST, password, key)
+          Krypt::HMAC.digest(DIGEST, password, key)
         end
 
         def iterations
