@@ -31,10 +31,6 @@ module Mongo
       #   external name.
       attr_reader :auth_source
 
-      # @return [ true, false ] For kerberos only, are we canolicalizing the
-      #   host name.
-      attr_reader :canonicalize_host_name
-
       # @return [ String ] The database the user is created in.
       attr_reader :database
 
