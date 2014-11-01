@@ -130,10 +130,6 @@ module Mongo
       # @option options [ String ] :user The user name.
       # @option options [ String ] :password The user's password.
       # @option options [ Symbol ] :auth_mech The authorization mechanism.
-      # @option options [ String ] :gssapi_service_name The GSSAPI service
-      #   name. (For Kerberos auth only.)
-      # @option options [ true, false ] :canonicalize_host_name Whether to
-      #   canonicalize the host name. (For kerberos auth only)
       # @option options [ Array<String>, Array<Hash> ] roles The user roles.
       #
       # @since 2.0.0
