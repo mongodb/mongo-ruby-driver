@@ -14,56 +14,27 @@
 
 module Mongo
   module Auth
-    class CR
+    class LDAP
 
-      # Defines behaviour around a single MONGODB-CR conversation between the
+      # Defines behaviour around a single PLAIN conversation between the
       # client and server.
       #
       # @since 2.0.0
       class Conversation
 
-        # The login message base.
+        # The login message.
         #
         # @since 2.0.0
-        LOGIN = { authenticate: 1 }.freeze
+        LOGIN = { authenticate: 1, digestPassword: false }.freeze
 
         # @return [ Protocol::Reply ] reply The current reply in the
         #   conversation.
         attr_reader :reply
 
-        # @return [ String ] database The database to authenticate against.
-        attr_reader :database
-
-        # @return [ String ] nonce The initial auth nonce.
-        attr_reader :nonce
-
         # @return [ User ] user The user for the conversation.
         attr_reader :user
 
-        # Continue the CR conversation. This sends the client final message
-        # to the server after setting the reply from the previous server
-        # communication.
-        #
-        # @example Continue the conversation.
-        #   conversation.continue(reply)
-        #
-        # @param [ Protocol::Reply ] reply The reply of the previous
-        #   message.
-        #
-        # @return [ Protocol::Query ] The next message to send.
-        #
-        # @since 2.0.0
-        def continue(reply)
-          validate!(reply)
-          Protocol::Query.new(
-            database,
-            Database::COMMAND,
-            LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce)),
-            limit: -1
-          )
-        end
-
-        # Finalize the CR conversation. This is meant to be iterated until
+        # Finalize the PLAIN conversation. This is meant to be iterated until
         # the provided reply indicates the conversation is finished.
         #
         # @example Finalize the conversation.
@@ -79,17 +50,22 @@ module Mongo
           validate!(reply)
         end
 
-        # Start the CR conversation. This returns the first message that
+        # Start the PLAIN conversation. This returns the first message that
         # needs to be send to the server.
         #
         # @example Start the conversation.
         #   conversation.start
         #
-        # @return [ Protocol::Query ] The first CR conversation message.
+        # @return [ Protocol::Query ] The first PLAIN conversation message.
         #
         # @since 2.0.0
         def start
-          Protocol::Query.new(database, Database::COMMAND, Auth::GET_NONCE, limit: -1)
+          Protocol::Query.new(
+            Auth::EXTERNAL,
+            Database::COMMAND,
+            LOGIN.merge(user: user.name, password: user.password, mechanism: LDAP::MECHANISM),
+            limit: -1
+          )
         end
 
         # Create the new conversation.
@@ -98,19 +74,16 @@ module Mongo
         #   Conversation.new(user, "admin")
         #
         # @param [ Auth::User ] user The user to converse about.
-        # @param [ String ] database The database to authenticate against.
         #
         # @since 2.0.0
-        def initialize(user, database)
+        def initialize(user)
           @user = user
-          @database = database
         end
 
         private
 
         def validate!(reply)
           raise Unauthorized.new(user) if reply.documents[0]['ok'] != 1
-          @nonce = reply.documents[0][Auth::NONCE]
           @reply = reply
         end
       end
