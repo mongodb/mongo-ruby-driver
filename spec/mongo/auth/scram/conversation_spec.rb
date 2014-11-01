@@ -148,8 +148,12 @@ describe Mongo::Auth::SCRAM::Conversation do
       conversation.instance_variable_set(:@reply, reply)
     end
 
+    let(:expected) do
+      "\xE2s\xC1e/\x18\x1D\xAE\x0F\xBC}T\x10\x12[k\x06\xE9\xBB0".force_encoding(BSON::UTF8)
+    end
+
     it 'returns the client key' do
-      expect(client_key).to eq("\xE2s\xC1e/\x18\x1D\xAE\x0F\xBC}T\x10\x12[k\x06\xE9\xBB0")
+      expect(client_key).to eq(expected)
     end
   end
 
@@ -326,8 +330,12 @@ describe Mongo::Auth::SCRAM::Conversation do
       conversation.instance_variable_set(:@reply, reply)
     end
 
+    let(:expected) do
+      "B\x01\x8C\xDC-\xF7\xF2d\xB6,\xF3\xA5\e\xD1\xD8\xDB\xCB+f\x10".force_encoding(BSON::UTF8)
+    end
+
     it 'returns the salted password' do
-      expect(salted_password).to eq("B\x01\x8C\xDC-\xF7\xF2d\xB6,\xF3\xA5\e\xD1\xD8\xDB\xCB+f\x10")
+      expect(salted_password).to eq(expected)
     end
   end
 
