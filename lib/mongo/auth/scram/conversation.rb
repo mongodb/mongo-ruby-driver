@@ -13,7 +13,7 @@
 # limitations under the License.
 
 require 'base64'
-require 'mongo/auth/scram/conversation'
+require 'krypt'
 
 module Mongo
   module Auth
