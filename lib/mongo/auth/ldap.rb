@@ -41,8 +41,7 @@ module Mongo
       # @since 2.0.0
       def login(connection)
         conversation = Conversation.new(user)
-        reply = connection.dispatch([ conversation.start ])
-        conversation.finalize(reply)
+        conversation.finalize(connection.dispatch([ conversation.start ]))
       end
     end
   end
