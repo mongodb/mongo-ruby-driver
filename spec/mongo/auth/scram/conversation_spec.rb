@@ -14,78 +14,38 @@ describe Mongo::Auth::SCRAM::Conversation do
     described_class.new(user)
   end
 
-  describe '#auth_message' do
+  describe '#start' do
 
-    let(:auth_message) do
-      conversation.send(:auth_message)
-    end
-
-    let(:payload) do
-      BSON::Binary.new(
-        'r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
-      )
-    end
-
-    let(:reply) do
-      Mongo::Protocol::Reply.new
-    end
-
-    let(:documents) do
-      [{
-        'conversationId' => 1,
-        'done' => false,
-        'payload' => payload,
-        'ok' => 1.0
-      }]
-    end
-
-    before do
-      reply.instance_variable_set(:@documents, documents)
-      conversation.instance_variable_set(:@nonce, 'NDA2NzU3MDY3MDYwMTgy')
-      conversation.instance_variable_set(:@reply, reply)
-    end
-
-    it 'returns the auth message' do
-      expect(auth_message).to eq(
-        'n=user,r=NDA2NzU3MDY3MDYwMTgy,r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,' +
-        's=AVvQXzAbxweH2RYDICaplw==,i=10000,c=biws,r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8'
-      )
-    end
-  end
-
-  describe '#client_empty_message' do
-
-    let(:message) do
-      conversation.send(:client_empty_message)
-    end
-
-    it 'returns an empty binary' do
-      expect(message.data).to be_empty
-    end
-  end
-
-  describe '#client_first_message' do
-
-    let(:message) do
-      conversation.send(:client_first_message)
+    let(:query) do
+      conversation.start
     end
 
     before do
       expect(SecureRandom).to receive(:base64).once.and_return('NDA2NzU3MDY3MDYwMTgy')
     end
 
-    it 'returns the first client message' do
-      expect(message.data).to eq('n,,n=user,r=NDA2NzU3MDY3MDYwMTgy')
+    let(:selector) do
+      query.selector
+    end
+
+    it 'sets the sasl start flag' do
+      expect(selector[:saslStart]).to eq(1)
+    end
+
+    it 'sets the auto authorize flag' do
+      expect(selector[:autoAuthorize]).to eq(1)
+    end
+
+    it 'sets the mechanism' do
+      expect(selector[:mechanism]).to eq('SCRAM-SHA-1')
+    end
+
+    it 'sets the payload' do
+      expect(selector[:payload].data).to eq('n,,n=user,r=NDA2NzU3MDY3MDYwMTgy')
     end
   end
 
-  describe '#client_final_message' do
-
-    let(:payload) do
-      BSON::Binary.new(
-        'r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
-      )
-    end
+  describe '#continue' do
 
     let(:reply) do
       Mongo::Protocol::Reply.new
@@ -98,106 +58,76 @@ describe Mongo::Auth::SCRAM::Conversation do
         'payload' => payload,
         'ok' => 1.0
       }]
-    end
-
-    before do
-      reply.instance_variable_set(:@documents, documents)
-      conversation.instance_variable_set(:@nonce, 'NDA2NzU3MDY3MDYwMTgy')
-      conversation.instance_variable_set(:@reply, reply)
-    end
-
-    let(:message) do
-      conversation.send(:client_final_message)
-    end
-
-    it 'returns the client final message' do
-      expect(message.data).to eq(
-        'c=biws,r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,p=qYUYNy6SQ9Jucq9rFA9nVgXQdbM='
-      )
-    end
-  end
-
-  describe '#client_key' do
-
-    let(:client_key) do
-      conversation.send(:client_key, conversation.send(:salted_password)).force_encoding(BSON::UTF8)
-    end
-
-    let(:payload) do
-      BSON::Binary.new(
-        'r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
-      )
-    end
-
-    let(:reply) do
-      Mongo::Protocol::Reply.new
-    end
-
-    let(:documents) do
-      [{
-        'conversationId' => 1,
-        'done' => false,
-        'payload' => payload,
-        'ok' => 1.0
-      }]
-    end
-
-    before do
-      reply.instance_variable_set(:@documents, documents)
-      conversation.instance_variable_set(:@nonce, 'NDA2NzU3MDY3MDYwMTgy')
-      conversation.instance_variable_set(:@reply, reply)
-    end
-
-    let(:expected) do
-      "\xE2s\xC1e/\x18\x1D\xAE\x0F\xBC}T\x10\x12[k\x06\xE9\xBB0".force_encoding(BSON::UTF8)
-    end
-
-    it 'returns the client key' do
-      expect(client_key).to eq(expected)
-    end
-  end
-
-  describe '#client_proof' do
-
-    let(:key) do
-      '1100001'
-    end
-
-    let(:signature) do
-      '1100010'
-    end
-
-    let(:proof) do
-      conversation.send(:client_proof, key, signature)
-    end
-
-    it 'encodes the xor combined strings' do
-      expect(proof).to eq(Base64.strict_encode64("\x00\x00\x00\x00\x00\x01\x01"))
-    end
-  end
-
-  describe '#first_bare' do
-
-    let(:first_bare) do
-      conversation.send(:first_bare)
     end
 
     before do
       expect(SecureRandom).to receive(:base64).once.and_return('NDA2NzU3MDY3MDYwMTgy')
+      reply.instance_variable_set(:@documents, documents)
     end
 
-    it 'returns the first bare message' do
-      expect(first_bare).to eq('n=user,r=NDA2NzU3MDY3MDYwMTgy')
+    context 'when the server rnonce starts with the nonce' do
+
+      let(:payload) do
+        BSON::Binary.new(
+          'r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
+        )
+      end
+
+      let(:query) do
+        conversation.continue(reply)
+      end
+
+      let(:selector) do
+        query.selector
+      end
+
+      it 'sets the conversation id' do
+        expect(selector[:conversationId]).to eq(1)
+      end
+
+      it 'sets the payload' do
+        expect(selector[:payload].data).to eq(
+          'c=biws,r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,p=qYUYNy6SQ9Jucq9rFA9nVgXQdbM='
+        )
+      end
+
+      it 'sets the continue flag' do
+        expect(selector[:saslContinue]).to eq(1)
+      end
+    end
+
+    context 'when the server nonce does not start with the nonce' do
+
+      let(:payload) do
+        BSON::Binary.new(
+          'r=NDA2NzU4MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
+        )
+      end
+
+      it 'raises an error' do
+        expect {
+          conversation.continue(reply)
+        }.to raise_error(Mongo::Auth::SCRAM::Conversation::InvalidNonce)
+      end
     end
   end
 
-  describe '#iterations' do
+  describe '#finalize' do
 
-    let(:iterations) do
-      conversation.send(:iterations)
+    let(:continue_reply) do
+      Mongo::Protocol::Reply.new
     end
 
-    let(:payload) do
+    let(:continue_documents) do
+      [{
+        'conversationId' => 1,
+        'done' => false,
+        'payload' => continue_payload,
+        'ok' => 1.0
+      }]
+    end
+
+    let(:continue_payload) do
       BSON::Binary.new(
         'r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
       )
@@ -217,181 +147,51 @@ describe Mongo::Auth::SCRAM::Conversation do
     end
 
     before do
+      expect(SecureRandom).to receive(:base64).once.and_return('NDA2NzU3MDY3MDYwMTgy')
+      continue_reply.instance_variable_set(:@documents, continue_documents)
       reply.instance_variable_set(:@documents, documents)
-      conversation.instance_variable_set(:@nonce, 'NDA2NzU3MDY3MDYwMTgy')
-      conversation.instance_variable_set(:@reply, reply)
     end
 
-    it 'returns the iterations' do
-      expect(iterations).to eq(10000)
-    end
-  end
+    context 'when the verifier matches the server signature' do
 
-  describe '#rnonce' do
+      let(:payload) do
+        BSON::Binary.new('v=gwo9E8+uifshm7ixj441GvIfuUY=')
+      end
 
-    let(:rnonce) do
-      conversation.send(:rnonce)
-    end
+      let(:query) do
+        conversation.continue(continue_reply)
+        conversation.finalize(reply)
+      end
 
-    let(:payload) do
-      BSON::Binary.new(
-        'r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
-      )
-    end
+      let(:selector) do
+        query.selector
+      end
 
-    let(:reply) do
-      Mongo::Protocol::Reply.new
-    end
+      it 'sets the conversation id' do
+        expect(selector[:conversationId]).to eq(1)
+      end
 
-    let(:documents) do
-      [{
-        'conversationId' => 1,
-        'done' => false,
-        'payload' => payload,
-        'ok' => 1.0
-      }]
+      it 'sets the empty payload' do
+        expect(selector[:payload].data).to eq('')
+      end
+
+      it 'sets the continue flag' do
+        expect(selector[:saslContinue]).to eq(1)
+      end
     end
 
-    before do
-      reply.instance_variable_set(:@documents, documents)
-      conversation.instance_variable_set(:@nonce, 'NDA2NzU3MDY3MDYwMTgy')
-      conversation.instance_variable_set(:@reply, reply)
-    end
+    context 'when the verifier does not match the server signature' do
 
-    it 'returns the rnonce' do
-      expect(rnonce).to eq('NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8')
-    end
-  end
+      let(:payload) do
+        BSON::Binary.new('v=LQ+8yhQeVL2a3Dh+TDJ7xHz4Srk=')
+      end
 
-  describe '#salt' do
-
-    let(:salt) do
-      conversation.send(:salt)
-    end
-
-    let(:payload) do
-      BSON::Binary.new(
-        'r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
-      )
-    end
-
-    let(:reply) do
-      Mongo::Protocol::Reply.new
-    end
-
-    let(:documents) do
-      [{
-        'conversationId' => 1,
-        'done' => false,
-        'payload' => payload,
-        'ok' => 1.0
-      }]
-    end
-
-    before do
-      reply.instance_variable_set(:@documents, documents)
-      conversation.instance_variable_set(:@nonce, 'NDA2NzU3MDY3MDYwMTgy')
-      conversation.instance_variable_set(:@reply, reply)
-    end
-
-    it 'returns the salt' do
-      expect(salt).to eq('AVvQXzAbxweH2RYDICaplw==')
+      it 'raises an error' do
+        expect {
+          conversation.continue(continue_reply)
+          conversation.finalize(reply)
+        }.to raise_error(Mongo::Auth::SCRAM::Conversation::InvalidSignature)
+      end
     end
   end
-
-  describe '#salted_password' do
-
-    let(:salted_password) do
-      conversation.send(:salted_password).force_encoding(BSON::UTF8)
-    end
-
-    let(:payload) do
-      BSON::Binary.new(
-        'r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
-      )
-    end
-
-    let(:reply) do
-      Mongo::Protocol::Reply.new
-    end
-
-    let(:documents) do
-      [{
-        'conversationId' => 1,
-        'done' => false,
-        'payload' => payload,
-        'ok' => 1.0
-      }]
-    end
-
-    before do
-      reply.instance_variable_set(:@documents, documents)
-      conversation.instance_variable_set(:@nonce, 'NDA2NzU3MDY3MDYwMTgy')
-      conversation.instance_variable_set(:@reply, reply)
-    end
-
-    let(:expected) do
-      "B\x01\x8C\xDC-\xF7\xF2d\xB6,\xF3\xA5\e\xD1\xD8\xDB\xCB+f\x10".force_encoding(BSON::UTF8)
-    end
-
-    it 'returns the salted password' do
-      expect(salted_password).to eq(expected)
-    end
-  end
-
-  describe '#without_proof' do
-
-    let(:without_proof) do
-      conversation.send(:without_proof)
-    end
-
-    let(:payload) do
-      BSON::Binary.new(
-        'r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8,s=AVvQXzAbxweH2RYDICaplw==,i=10000'
-      )
-    end
-
-    let(:reply) do
-      Mongo::Protocol::Reply.new
-    end
-
-    let(:documents) do
-      [{
-        'conversationId' => 1,
-        'done' => false,
-        'payload' => payload,
-        'ok' => 1.0
-      }]
-    end
-
-    before do
-      reply.instance_variable_set(:@documents, documents)
-      conversation.instance_variable_set(:@nonce, 'NDA2NzU3MDY3MDYwMTgy')
-      conversation.instance_variable_set(:@reply, reply)
-    end
-
-    it 'returns the without proof message' do
-      expect(without_proof).to eq('c=biws,r=NDA2NzU3MDY3MDYwMTgyt7/+IWaw1HaZZ5NmPJUTWapLpH2Gg+d8')
-    end
-  end
-
-  describe '#xor' do
-
-    let(:first) do
-      '1100001'
-    end
-
-    let(:second) do
-      '1100010'
-    end
-
-    let(:xor) do
-      conversation.send(:xor, first, second)
-    end
-
-    it 'encodes the xor combined strings' do
-      expect(xor).to eq("\x00\x00\x00\x00\x00\x01\x01")
-    end
-  end
-
 end

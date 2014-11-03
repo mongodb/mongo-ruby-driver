@@ -26,10 +26,6 @@ describe Mongo::Auth::SCRAM do
         described_class.new(user)
       end
 
-      let(:login) do
-        cr.login(connection).documents[0]
-      end
-
       it 'raises an exception', if: list_command_enabled? do
         expect {
           cr.login(connection)

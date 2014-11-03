@@ -43,7 +43,9 @@ module Mongo
         conversation = Conversation.new(user)
         reply = connection.dispatch([ conversation.start ])
         reply = connection.dispatch([ conversation.continue(reply) ])
-        reply = connection.dispatch([ conversation.finalize(reply) ])
+        until reply.documents[0][Conversation::DONE]
+          reply = connection.dispatch([ conversation.finalize(reply) ])
+        end
         reply
       end
     end

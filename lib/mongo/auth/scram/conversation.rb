@@ -75,6 +75,16 @@ module Mongo
         # @since 2.0.0
         SALT = /s=([^,]*)/.freeze
 
+        # The server key string.
+        #
+        # @since 2.0.0
+        SERVER_KEY = 'Server Key'.freeze
+
+        # The server signature verifier in the response.
+        #
+        # @since 2.0.0
+        VERIFIER = /v=([^,]*)/.freeze
+
         # @return [ String ] nonce The initial user nonce.
         attr_reader :nonce
 
@@ -99,25 +109,13 @@ module Mongo
         #
         # @since 2.0.0
         def continue(reply)
-          validate!(reply)
+          validate_first_message!(reply)
           Protocol::Query.new(
             Database::ADMIN,
             Database::COMMAND,
             CLIENT_CONTINUE_MESSAGE.merge(payload: client_final_message, conversationId: id),
             limit: -1
           )
-        end
-
-        # Is the SCRAM conversation finished?
-        #
-        # @example Is the conversation finished?
-        #   conversation.done?
-        #
-        # @return [ true, false ] If the conversation is done.
-        #
-        # @since 2.0.0
-        def done?
-          reply.documents[0][DONE] == true
         end
 
         # Finalize the SCRAM conversation. This is meant to be iterated until
@@ -133,7 +131,7 @@ module Mongo
         #
         # @since 2.0.0
         def finalize(reply)
-          validate!(reply)
+          validate_final_message!(reply)
           Protocol::Query.new(
             Database::ADMIN,
             Database::COMMAND,
@@ -185,50 +183,180 @@ module Mongo
           @nonce = SecureRandom.base64
         end
 
-        private
+        # This exception is raised when the server nonce returned does not
+        # match the client nonce sent to it.
+        #
+        # @since 2.0.0
+        class InvalidNonce < OperationError
 
-        def auth_message
-          "#{first_bare},#{reply.documents[0][PAYLOAD].data},#{without_proof}"
+          # @return [ String ] nonce The client nonce.
+          attr_reader :nonce
+
+          # @return [ String ] rnonce The server nonce.
+          attr_reader :rnonce
+
+          # Instantiate the new exception.
+          #
+          # @example Create the exception.
+          #   InvalidNonce.new(nonce, rnonce)
+          #
+          # @param [ String ] nonce The client nonce.
+          # @param [ String ] rnonce The server nonce.
+          #
+          # @since 2.0.0
+          def initialize(nonce, rnonce)
+            @nonce = nonce
+            @rnonce = rnonce
+            super("Expected server rnonce '#{rnonce}' to start with client nonce '#{nonce}'.")
+          end
         end
 
+        # This exception is raised when the server verifier does not match the
+        # expected signature on the client.
+        #
+        # @since 2.0.0
+        class InvalidSignature < OperationError
+
+          # @return [ String ] verifier The server verifier string.
+          attr_reader :verifier
+
+          # @return [ String ] server_signature The expected server signature.
+          attr_reader :server_signature
+
+          # Create the new exception.
+          #
+          # @example Create the new exception.
+          #   InvalidSignature.new(verifier, server_signature)
+          #
+          # @param [ String ] verifier The verifier returned from the server.
+          # @param [ String ] server_signature The expected value from the
+          #   server.
+          #
+          # @since 2.0.0
+          def initialize(verifier, server_signature)
+            @verifier = verifier
+            @server_signature = server_signature
+            super("Expected server verifier '#{verifier}' to match '#{server_signature}'.")
+          end
+        end
+
+        private
+
+        # Auth message algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        #
+        # @since 2.0.0
+        def auth_message
+          @auth_message ||= "#{first_bare},#{reply.documents[0][PAYLOAD].data},#{without_proof}"
+        end
+
+        # Get the empty client message.
+        #
+        # @api private
+        #
+        # @since 2.0.0
         def client_empty_message
           BSON::Binary.new('')
         end
 
+        # Get the final client message.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        #
+        # @since 2.0.0
         def client_final_message
           BSON::Binary.new("#{without_proof},p=#{client_final}")
         end
 
+        # Get the client first message
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        #
+        # @since 2.0.0
         def client_first_message
           BSON::Binary.new("n,,#{first_bare}")
         end
 
+        # Client final implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-7
+        #
+        # @since 2.0.0
         def client_final
-          key = client_key(salted_password)
-          signature = client_signature(stored_key(key), auth_message)
-          client_proof(key, signature)
+          @client_final ||= client_proof(client_key, client_signature(stored_key(client_key), auth_message))
         end
 
-        def client_key(password)
-          hmac(password, CLIENT_KEY)
+        # Client key algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        #
+        # @since 2.0.0
+        def client_key
+          @client_key ||= hmac(salted_password, CLIENT_KEY)
         end
 
+        # Client proof algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        #
+        # @since 2.0.0
         def client_proof(key, signature)
-          Base64.strict_encode64(xor(key, signature))
+          @client_proof ||= Base64.strict_encode64(xor(key, signature))
         end
 
+        # Client signature algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        #
+        # @since 2.0.0
         def client_signature(key, message)
-          hmac(key, message)
+          @client_signature ||= hmac(key, message)
         end
 
+        # First bare implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-7
+        #
+        # @since 2.0.0
         def first_bare
-          "n=#{user.encoded_name},r=#{nonce}"
+          @first_bare ||= "n=#{user.encoded_name},r=#{nonce}"
         end
 
+        # H algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-2.2
+        #
+        # @since 2.0.0
         def h(string)
           DIGEST.digest(string)
         end
 
+        # HI algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-2.2
+        #
+        # @since 2.0.0
         def hi(password)
           Krypt::PBKDF2.new(DIGEST).generate(
             password,
@@ -238,41 +366,141 @@ module Mongo
           )
         end
 
+        # HMAC algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-2.2
+        #
+        # @since 2.0.0
         def hmac(password, key)
           Krypt::HMAC.digest(DIGEST, password, key)
         end
 
+        # Get the iterations from the server response.
+        #
+        # @api private
+        #
+        # @since 2.0.0
         def iterations
-          reply.documents[0][PAYLOAD].data.match(ITERATIONS)[1].to_i
+          @iterations ||= payload_data.match(ITERATIONS)[1].to_i
         end
 
+        # Get the data from the returned payload.
+        #
+        # @api private
+        #
+        # @since 2.0.0
+        def payload_data
+          reply.documents[0][PAYLOAD].data
+        end
+
+        # Get the server nonce from the payload.
+        #
+        # @api private
+        #
+        # @since 2.0.0
         def rnonce
-          reply.documents[0][PAYLOAD].data.match(RNONCE)[1]
+          @rnonce ||= payload_data.match(RNONCE)[1]
         end
 
+        # Gets the salt from the server response.
+        #
+        # @api private
+        #
+        # @since 2.0.0
         def salt
-          reply.documents[0][PAYLOAD].data.match(SALT)[1]
+          @salt ||= payload_data.match(SALT)[1]
         end
 
+        # Salted password algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        #
+        # @since 2.0.0
         def salted_password
-          hi(user.hashed_password)
+          @salted_password ||= hi(user.hashed_password)
         end
 
+        # Server key algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        #
+        # @since 2.0.0
+        def server_key
+          @server_key ||= hmac(salted_password, SERVER_KEY)
+        end
+
+        # Server signature algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        #
+        # @since 2.0.0
+        def server_signature
+          @server_signature ||= Base64.strict_encode64(hmac(server_key, auth_message))
+        end
+
+        # Stored key algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        #
+        # @since 2.0.0
         def stored_key(key)
           h(key)
         end
 
-        def validate!(reply)
-          raise Unauthorized.new(user) if reply.documents[0]['ok'] != 1
-          @reply = reply
+        # Get the verifier token from the server response.
+        #
+        # @api private
+        #
+        # @since 2.0.0
+        def verifier
+          @verifier ||= payload_data.match(VERIFIER)[1]
         end
 
+        # Get the without proof message.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-7
+        #
+        # @since 2.0.0
         def without_proof
-          "c=biws,r=#{rnonce}"
+          @withoout_proof ||= "c=biws,r=#{rnonce}"
         end
 
+        # XOR operation for two strings.
+        #
+        # @api private
+        #
+        # @since 2.0.0
         def xor(first, second)
           first.bytes.zip(second.bytes).map{ |(a,b)| (a ^ b).chr }.join('')
+        end
+
+        def validate_final_message!(reply)
+          validate!(reply)
+          unless verifier == server_signature
+            raise InvalidSignature.new(verifier, server_signature)
+          end
+        end
+
+        def validate_first_message!(reply)
+          validate!(reply)
+          raise InvalidNonce.new(nonce, rnonce) unless rnonce.start_with?(nonce)
+        end
+
+        def validate!(reply)
+          raise Unauthorized.new(user) unless reply.documents[0]['ok'] == 1
+          @reply = reply
         end
       end
     end
