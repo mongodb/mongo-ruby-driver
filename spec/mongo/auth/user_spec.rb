@@ -25,6 +25,50 @@ describe Mongo::Auth::User do
     end
   end
 
+  describe '#encoded_name' do
+
+    context 'when the user name contains an =' do
+
+      let(:options) do
+        { user: 'user=' }
+      end
+
+      it 'escapes the = character to =3D' do
+        expect(user.encoded_name).to eq('user=3D')
+      end
+
+      it 'returns a UTF-8 string' do
+        expect(user.encoded_name.encoding.name).to eq('UTF-8')
+      end
+    end
+
+    context 'when the user name contains a ,' do
+
+      let(:options) do
+        { user: 'user,' }
+      end
+
+      it 'escapes the , character to =2C' do
+        expect(user.encoded_name).to eq('user=2C')
+      end
+
+      it 'returns a UTF-8 string' do
+        expect(user.encoded_name.encoding.name).to eq('UTF-8')
+      end
+    end
+
+    context 'when the user name contains no special characters' do
+
+      it 'does not alter the user name' do
+        expect(user.name).to eq('user')
+      end
+
+      it 'returns a UTF-8 string' do
+        expect(user.encoded_name.encoding.name).to eq('UTF-8')
+      end
+    end
+  end
+
   describe '#initialize' do
 
     it 'sets the database' do

@@ -133,6 +133,11 @@ module Mongo
       # @since 2.0.0
       WRITE_COMMAND_WIRE_VERSION = 2.freeze
 
+      # The minimum version of the wire protocol to support list commands.
+      #
+      # @since 2.0.0
+      LIST_COMMAND_WIRE_VERSION = 3.freeze
+
       # @return [ Hash ] The actual result from the isnamster command.
       attr_reader :config
 
@@ -218,6 +223,18 @@ module Mongo
         @server = server
         @config = config
         @round_trip_time = round_trip_time
+      end
+
+      # Is the server able to perform list commands.
+      #
+      # @example Is the server list command enabled?
+      #   description.list_command_enabled?
+      #
+      # @return [ true, false ] If the server is list command enabled.
+      #
+      # @since 2.0.0
+      def list_command_enabled?
+        max_wire_version >= LIST_COMMAND_WIRE_VERSION
       end
 
       # Get the max BSON object size for this server version.

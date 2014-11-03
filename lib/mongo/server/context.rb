@@ -27,6 +27,7 @@ module Mongo
 
       # Delegate state checks to the server.
       def_delegators :@server,
+                     :list_command_enabled?,
                      :max_wire_version,
                      :max_write_batch_size,
                      :mongos?,

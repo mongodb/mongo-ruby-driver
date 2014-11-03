@@ -35,6 +35,7 @@ module Mongo
     attr_reader :options
 
     def_delegators :@description,
+                   :list_command_enabled?,
                    :max_wire_version,
                    :max_write_batch_size,
                    :max_bson_object_size,

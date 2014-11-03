@@ -1,4 +1,4 @@
-# Copyright (C) 2009 - 2014 MongoDB Inc.
+# Copyright (C) 2014 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,21 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/auth/x509/conversation'
+require 'mongo/auth/scram/conversation'
 
 module Mongo
   module Auth
 
-    # Defines behaviour for x.509 authentication.
+    # Defines behaviour for SCRAM-SHA1 authentication.
     #
     # @since 2.0.0
-    class X509
+    class SCRAM
       include Executable
 
       # The authentication mechinism string.
       #
       # @since 2.0.0
-      MECHANISM = 'MONGODB-X509'.freeze
+      MECHANISM = 'SCRAM-SHA-1'.freeze
 
       # Log the user in on the given connection.
       #
@@ -41,7 +41,12 @@ module Mongo
       # @since 2.0.0
       def login(connection)
         conversation = Conversation.new(user)
-        conversation.finalize(connection.dispatch([ conversation.start ]))
+        reply = connection.dispatch([ conversation.start ])
+        reply = connection.dispatch([ conversation.continue(reply) ])
+        until reply.documents[0][Conversation::DONE]
+          reply = connection.dispatch([ conversation.finalize(reply) ])
+        end
+        reply
       end
     end
   end

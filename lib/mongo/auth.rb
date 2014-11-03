@@ -15,7 +15,7 @@
 require 'mongo/auth/executable'
 require 'mongo/auth/cr'
 require 'mongo/auth/ldap'
-require 'mongo/auth/kerberos' if BSON::Environment.jruby?
+require 'mongo/auth/scram'
 require 'mongo/auth/user'
 require 'mongo/auth/x509'
 require 'mongo/auth/roles'
@@ -50,14 +50,8 @@ module Mongo
       mongodb_cr: CR,
       mongodb_x509: X509,
       plain: LDAP,
+      scram: SCRAM
     }
-
-    # We support Kerberos authentication in JRuby only.
-    #
-    # @since 2.0.0
-    if BSON::Environment.jruby?
-      SOURCES[:gssapi] = Kerberos
-    end
 
     # Get the authorization strategy for the provided auth mechanism.
     #

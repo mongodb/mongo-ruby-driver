@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/auth/ldap/conversation'
+
 module Mongo
   module Auth
 
@@ -38,26 +40,8 @@ module Mongo
       #
       # @since 2.0.0
       def login(connection)
-        reply = connection.dispatch([ login_message ])
-        raise Unauthorized.new(user) if reply.documents[0]['ok'] == 0
-        reply
-      end
-
-      private
-
-      def login_message
-        Protocol::Query.new(
-          Auth::EXTERNAL,
-          Database::COMMAND,
-          {
-            authenticate: 1,
-            user: user.name,
-            password: user.password,
-            digestPassword: false,
-            mechanism: MECHANISM
-          },
-          limit: -1
-        )
+        conversation = Conversation.new(user)
+        conversation.finalize(connection.dispatch([ conversation.start ]))
       end
     end
   end
