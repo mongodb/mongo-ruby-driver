@@ -44,6 +44,18 @@ module Mongo
       # @return [ Mongo::Connection ] connection The connection to use.
       attr_reader :connection
 
+      # Force the monitor to immediately do a check of it's server.
+      #
+      # @example Force a check.
+      #   monitor.check!
+      #
+      # @return [ Description ] The updated description.
+      #
+      # @since 2.0.0
+      def check!
+        server.description.update!(*ismaster)
+      end
+
       # Get the refresh interval for the server. This will be defined via an option
       # or will default to 5.
       #

@@ -20,7 +20,6 @@ end
 require 'mongo'
 
 require 'support/matchers'
-require 'support/monitoring'
 require 'support/authorization'
 require 'support/cluster_simulator'
 
@@ -94,9 +93,7 @@ end
 #
 # @since 2.0.0
 def initialize_scanned_client!
-  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
-  client.cluster.scan!
-  client
+  Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
 end
 
 # require all shared examples

@@ -74,9 +74,7 @@ AUTHORIZED_CLIENT = Mongo::Client.new(
   user: TEST_USER.name,
   password: TEST_USER.password,
   pool_size: 1
-).tap do |client|
-  client.cluster.scan!
-end
+)
 
 # Provides an authorized mongo client on the default test database for the
 # default root system administrator.
@@ -89,9 +87,7 @@ ROOT_AUTHORIZED_CLIENT = Mongo::Client.new(
   user: ROOT_USER.name,
   password: ROOT_USER.password,
   pool_size: 1
-).tap do |client|
-  client.cluster.scan!
-end
+)
 
 # Provides an unauthorized mongo client on the default test database.
 #
@@ -100,9 +96,7 @@ UNAUTHORIZED_CLIENT = Mongo::Client.new(
   [ '127.0.0.1:27017' ],
   database: TEST_DB,
   pool_size: 1
-).tap do |client|
-  client.cluster.scan!
-end
+)
 
 # Provides an unauthorized mongo client on the admin database, for use in
 # setting up the first admin root user.
@@ -112,9 +106,7 @@ ADMIN_UNAUTHORIZED_CLIENT = Mongo::Client.new(
   [ '127.0.0.1:27017' ],
   database: Mongo::Database::ADMIN,
   pool_size: 1
-).tap do |client|
-  client.cluster.scan!
-end
+)
 
 # Get an authorized client on the admin database logged in as the admin
 # root user.
@@ -123,9 +115,7 @@ end
 ADMIN_AUTHORIZED_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
   user: ROOT_USER.name,
   password: ROOT_USER.password
-).tap do |client|
-  client.cluster.scan!
-end
+)
 
 module Authorization
 

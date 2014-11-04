@@ -3,9 +3,7 @@ require 'spec_helper'
 describe Mongo::Connection do
 
   let(:server) do
-    Mongo::Server.new('127.0.0.1:27017').tap do |server|
-      server.check!
-    end
+    Mongo::Server.new('127.0.0.1:27017')
   end
 
   describe '#connect!' do

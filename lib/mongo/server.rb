@@ -104,6 +104,7 @@ module Mongo
       @options = options.freeze
       @monitor = Monitor.new(self, options)
       @description = Description.new(self)
+      @monitor.check!
       @monitor.run
     end
 
