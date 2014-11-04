@@ -14,25 +14,29 @@
 
 module Mongo
   class Cluster
-    module Mode
+    module Topology
 
-      # Defines behaviour for when a cluster is in sharded mode.
+      # Defines behaviour when a cluster is in replica set topology.
       #
       # @since 2.0.0
-      class Sharded
+      class ReplicaSet
 
-        # Select appropriate servers for this mode.
+        # Select appropriate servers for this topology.
         #
         # @example Select the servers.
-        #   Sharded.servers(servers, 'test')
+        #   ReplicaSet.servers(servers, 'test')
         #
         # @param [ Array<Server> ] servers The known servers.
+        # @param [ String ] replica_set_name The name of the replica set.
         #
-        # @return [ Array<Server> ] The mongos servers.
+        # @return [ Array<Server> ] The servers in the replica set.
         #
         # @since 2.0.0
-        def self.servers(servers, name = nil)
-          servers.select{ |server| server.mongos? }
+        def self.servers(servers, replica_set_name = nil)
+          servers.select do |server|
+            (replica_set_name.nil? || server.replica_set_name == replica_set_name) &&
+              server.primary? || server.secondary?
+          end
         end
       end
     end

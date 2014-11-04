@@ -12,19 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/cluster/mode/replica_set'
-require 'mongo/cluster/mode/sharded'
-require 'mongo/cluster/mode/standalone'
+require 'mongo/cluster/topology/replica_set'
+require 'mongo/cluster/topology/sharded'
+require 'mongo/cluster/topology/standalone'
 
 module Mongo
   class Cluster
 
-    # Defines behaviour for getting selection modes.
+    # Defines behaviour for getting servers.
     #
     # @since 2.0.0
-    module Mode
+    module Topology
 
-      # The 2 various modes for server selection.
+      # The 2 various topologies for server selection.
       #
       # @since 2.0.0
       OPTIONS = {
@@ -33,21 +33,21 @@ module Mongo
         standalone: Standalone
       }
 
-      # Get the cluster mode for the provided options.
+      # Get the cluster topology for the provided options.
       #
-      # @example Get the cluster mode.
-      #   Mode.get(mode: :replica_set)
+      # @example Get the cluster topology.
+      #   Topology.get(topology: :replica_set)
       #
-      # @note If a mode is not specified, we will return a replica set mode if
+      # @note If a topology is not specified, we will return a replica set topology if
       #   a set_name option is provided, otherwise a standalone.
       #
       # @param [ Hash ] options The cluster options.
       #
-      # @return [ ReplicaSet, Sharded, Standalone ] The mode.
+      # @return [ ReplicaSet, Sharded, Standalone ] The topology.
       #
       # @since 2.0.0
       def self.get(options)
-        return OPTIONS.fetch(options[:mode]) if options.has_key?(:mode)
+        return OPTIONS.fetch(options[:topology]) if options.has_key?(:topology)
         options.has_key?(:set_name) ? ReplicaSet : Standalone
       end
     end

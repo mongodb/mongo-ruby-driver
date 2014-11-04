@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Cluster::Mode::Standalone do
+describe Mongo::Cluster::Topology::Standalone do
 
   describe '.servers' do
 

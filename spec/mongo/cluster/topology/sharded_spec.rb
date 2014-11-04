@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Cluster::Mode::Sharded do
+describe Mongo::Cluster::Topology::Sharded do
 
   describe '.servers' do
 

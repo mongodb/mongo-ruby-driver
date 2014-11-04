@@ -102,7 +102,6 @@ module Mongo
     def initialize(address, options = {})
       @address = Address.new(address)
       @options = options.freeze
-      @mutex = Mutex.new
       @monitor = Monitor.new(self, options)
       @description = Description.new(self)
       @monitor.run

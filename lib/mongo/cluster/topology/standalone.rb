@@ -14,14 +14,14 @@
 
 module Mongo
   class Cluster
-    module Mode
+    module Topology
 
-      # Defines behaviour for when a cluster is in standalone mode.
+      # Defines behaviour for when a cluster is in standalone topology.
       #
       # @since 2.0.0
       class Standalone
 
-        # Select appropriate servers for this mode.
+        # Select appropriate servers for this topology.
         #
         # @example Select the servers.
         #   Standalone.servers(servers, 'test')

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Cluster::Mode::ReplicaSet do
+describe Mongo::Cluster::Topology::ReplicaSet do
 
   describe '.servers' do
 

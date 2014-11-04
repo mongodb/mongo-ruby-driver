@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/cluster/mode'
+require 'mongo/cluster/topology'
 
 module Mongo
 
@@ -35,8 +35,8 @@ module Mongo
     attr_reader :addresses
     # @return [ Hash ] The options hash.
     attr_reader :options
-    # @return [ Object ] The cluster mode.
-    attr_reader :mode
+    # @return [ Object ] The cluster topology.
+    attr_reader :topology
 
     # Determine if this cluster of servers is equal to another object. Checks the
     # servers currently in the cluster, not what was configured.
@@ -89,7 +89,7 @@ module Mongo
       @client = client
       @addresses = addresses
       @options = options.freeze
-      @mode = Mode.get(options)
+      @topology = Topology.get(options)
       @servers = addresses.map do |address|
         Server.new(address, options).tap do |server|
           subscribe_to(server, Event::SERVER_ADDED, Event::ServerAdded.new(self))
@@ -147,7 +147,7 @@ module Mongo
     #
     # @since 2.0.0
     def servers
-      mode.servers(@servers, replica_set_name)
+      topology.servers(@servers, replica_set_name)
     end
 
     # Is this cluster part of a sharded (mongos) cluster?
@@ -159,7 +159,7 @@ module Mongo
     #
     # @since 2.0.0
     def sharded?
-      mode == Mode::Sharded
+      topology == Topology::Sharded
     end
   end
 end
