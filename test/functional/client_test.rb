@@ -74,6 +74,14 @@ class ClientTest < Test::Unit::TestCase
     end
   end
 
+  def test_unix_sock
+    begin
+      MongoClient.new("/tmp/mongodb-#{TEST_PORT}.sock")
+    rescue Errno::EAFNOSUPPORT
+      pass   # System doesn't support UNIX sockets
+    end
+  end
+
   def test_initialize_with_auths
     auth = { :username  => TEST_USER,
              :password  => TEST_USER_PWD,
