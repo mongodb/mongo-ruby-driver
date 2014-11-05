@@ -61,7 +61,8 @@ module Mongo
         private
 
         def selector
-          { listCollections: 1 }
+          { listCollections: 1,
+            filter: { name: { '$not' => /system\.|\$/ } } }
         end
 
         def execute_message(context)

@@ -33,13 +33,9 @@ module Mongo
           #
           # @since 2.0.0
           def names
-            documents.reduce([]) do |names, document|
-              names.tap do |names|
-                collection = document['name']
-                unless collection.include?('system.')
-                  names << collection[collection.index(".") + 1, collection.length]
-                end
-              end
+            documents.map do |document|
+              collection = document['name']
+              collection[collection.index(".") + 1, collection.length]
             end
           end
         end

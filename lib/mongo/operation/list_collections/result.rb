@@ -38,10 +38,8 @@ module Mongo
           #
           # @since 2.0.0
           def names
-            documents[0][COLLECTIONS].reduce([]) do |names, document|
-              names.tap do |names|
-                names << document['name'] unless document['name'].include?('system.')
-              end
+            documents[0][COLLECTIONS].map do |document|
+              document['name']
             end
           end
         end

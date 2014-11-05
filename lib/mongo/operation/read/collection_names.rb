@@ -25,8 +25,8 @@ module Mongo
       #
       # @param [ Hash ] spec The specifications for the collection names operation.
       #
-      # @option spec :db_name [ String ] The name of the database on which
-      #   the query should be run.
+      # @option spec :db_name [ String ] The name of the database whose collection
+      #   names is requested.
       # @option spec :options [ Hash ] Options for the operation.
       #
       # @since 2.0.0
