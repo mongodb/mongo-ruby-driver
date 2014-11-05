@@ -33,7 +33,7 @@ module Mongo
 
       @socket_address  = Socket.pack_sockaddr_un(@address)
       @socket          = Socket.new(Socket::AF_UNIX, Socket::SOCK_STREAM, 0)
-      connect
+      connect(@socket, @socket_address)
     end
   end
 end
