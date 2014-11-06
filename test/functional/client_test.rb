@@ -75,10 +75,13 @@ class ClientTest < Test::Unit::TestCase
   end
 
   def test_unix_sock
+    # There's an issue with unix sockets on JRuby with 32-bit libc
+    # https://jira.codehaus.org/browse/JRUBY-7183
+    return if RUBY_PLATFORM =~ /java/ && 1.size == 4
     begin
-      MongoClient.new("/tmp/mongodb-#{TEST_PORT}.sock")
+      assert MongoClient.new("/tmp/mongodb-#{TEST_PORT}.sock")
     rescue Errno::EAFNOSUPPORT
-      pass   # System doesn't support UNIX sockets
+      # System doesn't support UNIX sockets
     end
   end
 
