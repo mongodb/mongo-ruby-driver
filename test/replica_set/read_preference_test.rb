@@ -106,6 +106,22 @@ class ReadPreferenceTest < Test::Unit::TestCase
     assert_query_route(@primary_preferred, @secondary_direct)
     assert_query_route(@secondary, @secondary_direct)
     assert_query_route(@secondary_preferred, @secondary_direct)
+
+    # Restore set
+    @rs.restart
+    sleep(1)
+    @repl_cons.each { |con| con.refresh }
+    sleep(1)
+    @primary_direct = Connection.new(
+        @rs.config['host'],
+        @primary.read_pool.port
+    )
+
+    # Test that reads are going to the right members
+    assert_query_route(@primary, @primary_direct)
+    assert_query_route(@primary_preferred, @secondary_direct) # secondary pool is pinned
+    assert_query_route(@secondary, @secondary_direct)
+    assert_query_route(@secondary_preferred, @secondary_direct)
   end
 
   def test_read_routing_with_secondary_down
