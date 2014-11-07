@@ -54,6 +54,14 @@ module Mongo
           execute_message(context)
         end
 
+        # The wire version required to use this command.
+        #
+        # @example Get the wire version required to use this command.
+        #   ListCollections.wire_version
+        #
+        # @return [ Integer ] The wire version.
+        #
+        # @since 2.0.0
         def self.wire_version
           Mongo::Server::Description::MONGODB_2_8_WIRE_VERSION
         end
