@@ -64,7 +64,7 @@ TEST_SET = 'ruby-driver-rs'
 COVERAGE_MIN = 90
 
 # For instances where behaviour is different on different versions, we need to
-# determin in the specs if we are 2.6 or higher.
+# determine in the specs if we are 2.6 or higher.
 #
 # @since 2.0.0
 def write_command_enabled?
@@ -73,7 +73,7 @@ def write_command_enabled?
 end
 
 # For instances where behaviour is different on different versions, we need to
-# determin in the specs if we are 2.7 or higher.
+# determine in the specs if we are 2.7 or higher.
 #
 # @since 2.0.0
 def list_command_enabled?
