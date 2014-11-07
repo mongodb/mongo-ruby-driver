@@ -38,7 +38,7 @@ module Mongo
           #
           # @since 2.0.0
           def names
-            documents[0][COLLECTIONS].map do |document|
+            first[COLLECTIONS].map do |document|
               document['name']
             end
           end
