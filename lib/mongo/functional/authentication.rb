@@ -18,7 +18,7 @@ module Mongo
   module Authentication
 
     DEFAULT_MECHANISM = 'MONGODB-CR'
-    MECHANISMS        = ['GSSAPI', 'MONGODB-CR', 'MONGODB-X509', 'PLAIN']
+    MECHANISMS        = ['GSSAPI', 'MONGODB-CR', 'MONGODB-X509', 'PLAIN', 'SCRAM-SHA-1']
     MECHANISM_ERROR   = "Must use one of #{MECHANISMS.join(', ')} " +
                           "authentication mechanisms."
     EXTRA             = { 'GSSAPI' => [:service_name, :canonicalize_host_name,
@@ -204,6 +204,8 @@ module Mongo
           issue_plain(auth, opts)
         when 'GSSAPI'
           issue_gssapi(auth, opts)
+        when 'SCRAM-SHA-1'
+          issue_scram(auth, opts)
       end
 
       unless Support.ok?(result)
@@ -290,6 +292,17 @@ module Mongo
     # @private
     def issue_gssapi(auth, opts={})
       raise "In order to use Kerberos, please add the mongo-kerberos gem to your dependencies"
+    end
+
+    def issue_scram(auth, opts = {})
+      db_name = auth[:source]
+      conversation = SCRAM.new(auth, Authentication.hash_password(auth[:username], auth[:password]))
+      result = auth_command(conversation.start, opts[:socket], db_name).first
+      result = auth_command(conversation.continue(result), opts[:socket], db_name).first
+      until result['done']
+        result = auth_command(conversation.finalize(result), opts[:socket], db_name).first
+      end
+      result
     end
 
     # Helper to fetch a nonce value from a given database instance.

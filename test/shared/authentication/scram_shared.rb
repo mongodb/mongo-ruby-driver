@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2013 MongoDB, Inc.
+# Copyright (C) 2014 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/functional/authentication'
-require 'mongo/functional/logging'
-require 'mongo/functional/read_preference'
-require 'mongo/functional/write_concern'
-require 'mongo/functional/uri_parser'
-require 'mongo/functional/scram'
+module SCRAMTests
+
+  def test_scram_authenticate
+    @client.clear_auths
+    assert @db.authenticate(TEST_USER, TEST_USER_PWD, nil, 'admin', 'SCRAM-SHA-1')
+  end
+end
