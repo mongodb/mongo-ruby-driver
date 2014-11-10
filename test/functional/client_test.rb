@@ -452,7 +452,8 @@ class ClientTest < Test::Unit::TestCase
   end
 
   def test_operation_timeout_with_active
-    conn = standard_connection
+    conn = MongoClient.new
+    authenticate_client(conn)
     assert conn.active?
     assert_equal Mongo::MongoClient::DEFAULT_OP_TIMEOUT, conn.op_timeout
 

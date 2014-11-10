@@ -672,6 +672,7 @@ module Mongo
         cmd_servers = replica_set? ? [ primary ] : routers
 
         cmd_servers.each do |cmd_server|
+          next unless cmd_server
           begin
             client = Mongo::MongoClient.new(cmd_server.config[:host],
                                             cmd_server.config[:port])
@@ -690,6 +691,7 @@ module Mongo
       end
 
       def stop
+        start
         delete_users
         servers.each{|server| server.stop}
         self

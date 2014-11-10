@@ -200,7 +200,8 @@ class ReadPreferenceTest < Test::Unit::TestCase
   end
 
   def make_connection(mode = :primary, opts = {})
-    opts.merge!({:read => mode})
+    opts.merge!(:read => mode)
+    opts.merge!(:op_timeout => nil)
     client = MongoReplicaSetClient.new(@rs.repl_set_seeds, opts)
     authenticate_client(client)
   end

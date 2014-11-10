@@ -18,7 +18,7 @@ class ReplicaSetAckTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
-    @client = MongoReplicaSetClient.from_uri(@uri)
+    @client = MongoReplicaSetClient.from_uri(@uri, :op_timeout => TEST_OP_TIMEOUT)
 
     @slave1 = MongoClient.new(
       @client.secondary_pools.first.host,
@@ -33,7 +33,7 @@ class ReplicaSetAckTest < Test::Unit::TestCase
   end
 
   def teardown
-    @client.close if @conn
+    @client.close if @client
   end
 
   def test_safe_mode_with_w_failure

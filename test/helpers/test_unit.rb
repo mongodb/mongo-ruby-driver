@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-TEST_HOST     = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost' unless defined? TEST_HOST
-TEST_DATA     = File.join(File.dirname(__FILE__), 'fixtures/data')
-TEST_BASE     = Test::Unit::TestCase
+TEST_HOST       = ENV['MONGO_RUBY_DRIVER_HOST'] || 'localhost' unless defined? TEST_HOST
+TEST_DATA       = File.join(File.dirname(__FILE__), 'fixtures/data')
+TEST_OP_TIMEOUT = 40
+TEST_BASE       = Test::Unit::TestCase
 
 unless defined? TEST_PORT
   TEST_PORT = if ENV['MONGO_RUBY_DRIVER_PORT']
@@ -89,16 +90,17 @@ class Test::Unit::TestCase
   #
   # @return [MongoClient] The client instance.
   def self.standard_connection(options={}, legacy=false)
+    opts = options[:op_timeout] ? options : options.merge(:op_timeout => TEST_OP_TIMEOUT)
     if legacy
       silently do
         # We have to create the Connection object directly here instead of using TEST_URI
         # because Connection#from_uri ends up creating a MongoClient object.
-        conn = Connection.new(TEST_HOST, TEST_PORT, options)
+        conn = Connection.new(TEST_HOST, TEST_PORT, opts)
         conn[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD)
         conn
       end
     else
-      MongoClient.from_uri(TEST_URI, options)
+      MongoClient.from_uri(TEST_URI, opts)
     end
   end
 

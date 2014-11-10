@@ -18,7 +18,7 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
-    @client = MongoReplicaSetClient.from_uri(@uri)
+    @client = MongoReplicaSetClient.from_uri(@uri, :op_timeout => TEST_OP_TIMEOUT)
     @version = @client.server_version
     @db = @client.db(TEST_DB)
     @db.drop_collection("test-sets")

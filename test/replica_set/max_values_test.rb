@@ -20,7 +20,7 @@ class MaxValuesTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
-    @client = MongoReplicaSetClient.from_uri(@uri)
+    @client = MongoReplicaSetClient.from_uri(@uri, :op_timeout => TEST_OP_TIMEOUT)
     @db = new_mock_db
     @client.stubs(:[]).returns(@db)
     @ismaster = {
