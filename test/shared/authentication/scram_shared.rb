@@ -21,8 +21,10 @@ module SCRAMTests
   end
 
   def test_scram_authenticate
-    @client.clear_auths
-    assert @db.authenticate(TEST_USER, TEST_USER_PWD, nil, 'admin', 'SCRAM-SHA-1')
+    if @version.to_s > '2.7'
+      @client.clear_auths
+      assert @db.authenticate(TEST_USER, TEST_USER_PWD, nil, 'admin', 'SCRAM-SHA-1')
+    end
   end
 
   def test_scram_conversation_start
