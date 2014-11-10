@@ -422,7 +422,7 @@ class Test::Unit::TestCase
     not_cluster = TEST_BASE.class_eval { class_variables }.none? { |v| v =~ /@@cluster_/ }
 
     if @@connected_single_mongod && not_cluster
-      client = Mongo::MongoClient.from_uri(TEST_URI)
+      client = Mongo::MongoClient.from_uri(TEST_URI, :op_timeout => TEST_OP_TIMEOUT)
       db = client[TEST_DB]
       begin
         begin
