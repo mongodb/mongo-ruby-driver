@@ -236,15 +236,30 @@ module Mongo
         @client_key ||= hmac(salted_password, CLIENT_KEY)
       end
 
-      # Client proof algorithm implementation.
-      #
-      # @api private
-      #
-      # @see http://tools.ietf.org/html/rfc5802#section-3
-      #
-      # @since 1.12.0
-      def client_proof(key, signature)
-        @client_proof ||= Base64.strict_encode64(xor(key, signature))
+      if Base64.respond_to?(:strict_encode64)
+
+        # Client proof algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        #
+        # @since 1.12.0
+        def client_proof(key, signature)
+          @client_proof ||= Base64.strict_encode64(xor(key, signature))
+        end
+      else
+
+        # Client proof algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        #
+        # @since 1.12.0
+        def client_proof(key, signature)
+          @client_proof ||= Base64.encode64(xor(key, signature))
+        end
       end
 
       # Client signature algorithm implementation.
@@ -281,21 +296,42 @@ module Mongo
         DIGEST.digest(string)
       end
 
-      # HI algorithm implementation.
-      #
-      # @api private
-      #
-      # @see http://tools.ietf.org/html/rfc5802#section-2.2
-      #
-      # @since 1.12.0
-      def hi(password)
-        OpenSSL::PKCS5.pbkdf2_hmac(
-          password,
-          Base64.strict_decode64(salt),
-          iterations,
-          DIGEST.size,
-          DIGEST
-        )
+      if Base64.respond_to?(:strict_decode64)
+
+        # HI algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-2.2
+        #
+        # @since 1.12.0
+        def hi(password)
+          OpenSSL::PKCS5.pbkdf2_hmac(
+            password,
+            Base64.strict_decode64(salt),
+            iterations,
+            DIGEST.size,
+            DIGEST
+          )
+        end
+      else
+
+        # HI algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-2.2
+        #
+        # @since 1.12.0
+        def hi(password)
+          OpenSSL::PKCS5.pbkdf2_hmac(
+            password,
+            Base64.decode64(salt),
+            iterations,
+            DIGEST.size,
+            DIGEST
+          )
+        end
       end
 
       # HMAC algorithm implementation.
@@ -367,15 +403,30 @@ module Mongo
         @server_key ||= hmac(salted_password, SERVER_KEY)
       end
 
-      # Server signature algorithm implementation.
-      #
-      # @api private
-      #
-      # @see http://tools.ietf.org/html/rfc5802#section-3
-      #
-      # @since 1.12.0
-      def server_signature
-        @server_signature ||= Base64.strict_encode64(hmac(server_key, auth_message))
+      if Base64.respond_to?(:strict_encode64)
+
+        # Server signature algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        #
+        # @since 1.12.0
+        def server_signature
+          @server_signature ||= Base64.strict_encode64(hmac(server_key, auth_message))
+        end
+      else
+
+        # Server signature algorithm implementation.
+        #
+        # @api private
+        #
+        # @see http://tools.ietf.org/html/rfc5802#section-3
+        #
+        # @since 1.12.0
+        def server_signature
+          @server_signature ||= Base64.encode64(hmac(server_key, auth_message))
+        end
       end
 
       # Stored key algorithm implementation.
