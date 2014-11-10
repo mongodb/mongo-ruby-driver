@@ -189,14 +189,6 @@ class ReadPreferenceTest < Test::Unit::TestCase
     @repl_cons.each do |client|
       client.stubs(:pinned_pool).returns(nil)
     end
-
-    @secondaries = []
-    @rs.repl_set_seeds.each do |host_port|
-      host, port = host_port.split(':')
-      client = MongoClient.new(host, port, :slave_ok => true)
-      authenticate_client(client)
-      secondary?(client) ? @secondaries << client : @primary_direct = client
-    end
   end
 
   def make_connection(mode = :primary, opts = {})
