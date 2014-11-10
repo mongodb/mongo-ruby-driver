@@ -258,7 +258,7 @@ module Mongo
         #
         # @since 1.12.0
         def client_proof(key, signature)
-          @client_proof ||= Base64.encode64(xor(key, signature))
+          @client_proof ||= Base64.encode64(xor(key, signature)).gsub('\n','')
         end
       end
 
@@ -425,7 +425,7 @@ module Mongo
         #
         # @since 1.12.0
         def server_signature
-          @server_signature ||= Base64.encode64(hmac(server_key, auth_message))
+          @server_signature ||= Base64.encode64(hmac(server_key, auth_message)).gsub('\n','')
         end
       end
 
