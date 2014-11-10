@@ -52,6 +52,9 @@ module Mongo
       # @raise [MongoArgumentError] if the credential set is invalid.
       # @return [Hash] The validated credential set.
       def validate_credentials(auth)
+        # set the default auth mechanism if not defined
+        auth[:mechanism] ||= DEFAULT_MECHANISM
+
         # set the default auth source if not defined
         auth[:source] = auth[:source] || auth[:db_name] || 'admin'
 
@@ -125,9 +128,6 @@ module Mongo
     # @raise [AuthenticationError] Raised if authentication fails.
     # @return [Hash] a hash representing the authentication just added.
     def add_auth(db_name, username, password=nil, source=nil, mechanism=nil, extra=nil)
-      # set the default auth mechanism if not defined
-      mechanism ||= (@max_wire_version >= 3 ? 'SCRAM-SHA-1' : DEFAULT_MECHANISM)
-
       auth = Authentication.validate_credentials({
         :db_name   => db_name,
         :username  => username,
@@ -204,9 +204,6 @@ module Mongo
     # @raise [AuthenticationError] Raised if the authentication fails.
     # @return [Boolean] Result of the authentication operation.
     def issue_authentication(auth, opts={})
-      # set the default auth mechanism if not defined
-      auth[:mechanism] ||= (@max_wire_version >= 3 ? 'SCRAM-SHA-1' : DEFAULT_MECHANISM)
-
       raise MongoArgumentError,
         MECHANISM_ERROR unless MECHANISMS.include?(auth[:mechanism])
       result = case auth[:mechanism]

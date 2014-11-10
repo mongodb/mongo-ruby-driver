@@ -458,7 +458,7 @@ Test::Unit.at_start do
   TEST_USER     = ENV['TEST_USER']     || 'admin_user'
   TEST_USER_PWD = ENV['TEST_USER_PWD'] || 'password'
   TEST_URI      = ENV['TEST_URI']      ||
-      "mongodb://#{TEST_USER}:#{TEST_USER_PWD}@#{TEST_HOST}:#{TEST_PORT}/#{TEST_DB}?authMechanism=MONGODB-CR"
+      "mongodb://#{TEST_USER}:#{TEST_USER_PWD}@#{TEST_HOST}:#{TEST_PORT}/#{TEST_DB}"
   TEST_BASE.class_eval { class_variable_set("@@connected_single_mongod", false) }
   Test::Unit::TestCase.ensure_admin_user
 end
