@@ -24,8 +24,7 @@ TEST_SUITES = {
   :threading => { :pattern => 'test/threading/**/*_test.rb' },
   :replica_set => {
     :pattern => 'test/replica_set/**/*_test.rb',
-    :exclude => ['test/replica_set/count_test.rb',
-                 'test/replica_set/ssl_test.rb']
+    :exclude => ['test/replica_set/ssl_test.rb']
   },
   :sharded_cluster => { :pattern => 'test/sharded_cluster/**/*_test.rb' },
   :tools => {
