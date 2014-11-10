@@ -432,7 +432,7 @@ module Mongo
 
       def validate!(reply)
         unless Support.ok?(reply)
-          raise MongoDBError, "Could not authorize user #{auth[:username]} on database #{auth[:db_name]}."
+          raise AuthenticationError, "Could not authorize user #{auth[:username]} on database #{auth[:db_name]}."
         end
         @reply = reply
       end

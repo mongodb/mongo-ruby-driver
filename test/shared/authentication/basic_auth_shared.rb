@@ -24,7 +24,9 @@ module BasicAuthTests
 
   def teardown
     return unless @client && @db
-    @client[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD) unless has_auth?(TEST_DB, TEST_USER)
+    unless has_auth?(TEST_DB, TEST_USER)
+      @client[TEST_DB].authenticate(TEST_USER, TEST_USER_PWD)
+    end
 
     if @client.server_version < '2.5'
       @db['system.users'].remove

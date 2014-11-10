@@ -52,13 +52,10 @@ module Mongo
       # @raise [MongoArgumentError] if the credential set is invalid.
       # @return [Hash] The validated credential set.
       def validate_credentials(auth)
-        # set the default auth mechanism if not defined
-        auth[:mechanism] ||= DEFAULT_MECHANISM
-
         # set the default auth source if not defined
         auth[:source] = auth[:source] || auth[:db_name] || 'admin'
 
-        if (auth[:mechanism] == 'MONGODB-CR' || auth[:mechanism] == 'PLAIN') && !auth[:password]
+        if password_required?(auth[:mechanism]) && !auth[:password]
           raise MongoArgumentError,
             "When using the authentication mechanism #{auth[:mechanism]} " +
             "both username and password are required."
@@ -95,6 +92,17 @@ module Mongo
       def hash_password(username, password)
         Digest::MD5.hexdigest("#{username}:mongo:#{password}")
       end
+
+      # Does the authentication require a password?
+      #
+      # @param [ String ] mech The authentication mechanism.
+      #
+      # @return [ true, false ] If a password is required.
+      #
+      # @since 1.12.0
+      def password_required?(mech)
+        mech == 'MONGODB-CR' || mech == 'PLAIN' || mech == 'SCRAM-SHA-1'
+      end
     end
 
     # Saves a cache of authentication credentials to the current
@@ -117,6 +125,9 @@ module Mongo
     # @raise [AuthenticationError] Raised if authentication fails.
     # @return [Hash] a hash representing the authentication just added.
     def add_auth(db_name, username, password=nil, source=nil, mechanism=nil, extra=nil)
+      # set the default auth mechanism if not defined
+      mechanism ||= (@max_wire_version >= 3 ? 'SCRAM-SHA-1' : DEFAULT_MECHANISM)
+
       auth = Authentication.validate_credentials({
         :db_name   => db_name,
         :username  => username,
@@ -193,6 +204,9 @@ module Mongo
     # @raise [AuthenticationError] Raised if the authentication fails.
     # @return [Boolean] Result of the authentication operation.
     def issue_authentication(auth, opts={})
+      # set the default auth mechanism if not defined
+      auth[:mechanism] ||= (@max_wire_version >= 3 ? 'SCRAM-SHA-1' : DEFAULT_MECHANISM)
+
       raise MongoArgumentError,
         MECHANISM_ERROR unless MECHANISMS.include?(auth[:mechanism])
       result = case auth[:mechanism]
