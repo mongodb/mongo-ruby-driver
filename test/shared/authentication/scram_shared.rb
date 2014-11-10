@@ -71,7 +71,7 @@ module SCRAMTests
     command = @scram.finalize(reply)
     assert_equal 1, command['saslContinue']
     assert_equal 1, command['conversationId']
-    assert_equal'', command['payload'].to_s
+    assert_equal '', command['payload'].to_s
   end
 
   def test_scram_conversation_finalize_with_invalid_server_signature
