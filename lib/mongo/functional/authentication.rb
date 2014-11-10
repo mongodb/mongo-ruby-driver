@@ -294,13 +294,25 @@ module Mongo
       raise "In order to use Kerberos, please add the mongo-kerberos gem to your dependencies"
     end
 
+    # Handles issuing SCRAM-SHA-1 authentication.
+    #
+    # @api private
+    #
+    # @param [ Hash ] auth The authentication credentials.
+    # @param [ Hash ] opts The options.
+    #
+    # @options opts [ Socket ] socket The Socket instance to use.
+    #
+    # @return [ Hash ] The result of the authentication operation.
+    #
+    # @since 1.12.0
     def issue_scram(auth, opts = {})
       db_name = auth[:source]
-      conversation = SCRAM.new(auth, Authentication.hash_password(auth[:username], auth[:password]))
-      result = auth_command(conversation.start, opts[:socket], db_name).first
-      result = auth_command(conversation.continue(result), opts[:socket], db_name).first
+      scram = SCRAM.new(auth, Authentication.hash_password(auth[:username], auth[:password]))
+      result = auth_command(scram.start, opts[:socket], db_name).first
+      result = auth_command(scram.continue(result), opts[:socket], db_name).first
       until result['done']
-        result = auth_command(conversation.finalize(result), opts[:socket], db_name).first
+        result = auth_command(scram.finalize(result), opts[:socket], db_name).first
       end
       result
     end
