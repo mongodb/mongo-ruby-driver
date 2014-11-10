@@ -131,7 +131,6 @@ class ReadPreferenceTest < Test::Unit::TestCase
 
     secondaries = @rs.secondaries
     secondaries[0].kill
-    sleep(2)
     assert_query_route(@secondary_preferred, :secondary)
 
     secondaries[1].kill
@@ -140,13 +139,14 @@ class ReadPreferenceTest < Test::Unit::TestCase
     recovered = false
     until recovered
       begin
-        @secondary_preferred[TEST_DB]['test-sets'].find_one
+        @secondary[TEST_DB]['test-sets'].find_one
         recovered = true
       rescue ConnectionFailure
       end
     end
 
     assert_query_route(@secondary_preferred, :secondary)
+    assert_query_route(@secondary, :secondary)
     assert_query_route(@primary_preferred, :secondary)
 
     # Restore set
