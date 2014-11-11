@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require 'base64'
+require 'openssl'
 
 module Mongo
   module Authentication
