@@ -96,6 +96,8 @@ module Mongo
         Digest::MD5.hexdigest("#{username}:mongo:#{password}")
       end
 
+      private
+
       # Does the authentication require a password?
       #
       # @param [ String ] mech The authentication mechanism.
