@@ -456,7 +456,7 @@ module Mongo
       #
       # @since 1.12.0
       def without_proof
-        @withoout_proof ||= "c=biws,r=#{rnonce}"
+        @without_proof ||= "c=biws,r=#{rnonce}"
       end
 
       # XOR operation for two strings.
