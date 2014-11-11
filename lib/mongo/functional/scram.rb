@@ -306,12 +306,11 @@ module Mongo
         #
         # @since 1.12.0
         def hi(password)
-          OpenSSL::PKCS5.pbkdf2_hmac(
+          OpenSSL::PKCS5.pbkdf2_hmac_sha1(
             password,
             Base64.strict_decode64(salt),
             iterations,
-            DIGEST.size,
-            DIGEST
+            DIGEST.size
           )
         end
       else
@@ -324,12 +323,11 @@ module Mongo
         #
         # @since 1.12.0
         def hi(password)
-          OpenSSL::PKCS5.pbkdf2_hmac(
+          OpenSSL::PKCS5.pbkdf2_hmac_sha1(
             password,
             Base64.decode64(salt),
             iterations,
-            DIGEST.size,
-            DIGEST
+            DIGEST.size
           )
         end
       end
