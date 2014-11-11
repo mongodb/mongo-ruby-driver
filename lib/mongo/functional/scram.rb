@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require 'base64'
+require 'krypt'
 
 module Mongo
   module Authentication
@@ -31,7 +32,7 @@ module Mongo
       # The digest to use for encryption.
       #
       # @since 1.12.0
-      DIGEST = OpenSSL::Digest::SHA1.new.freeze
+      DIGEST = Krypt::Digest::SHA1.new.freeze
 
       # The key for the done field in the responses.
       #
@@ -306,12 +307,11 @@ module Mongo
         #
         # @since 1.12.0
         def hi(password)
-          OpenSSL::PKCS5.pbkdf2_hmac(
+          Krypt::PBKDF2.new(DIGEST).generate(
             password,
             Base64.strict_decode64(salt),
             iterations,
-            DIGEST.size,
-            DIGEST
+            DIGEST.digest_length
           )
         end
       else
@@ -324,12 +324,11 @@ module Mongo
         #
         # @since 1.12.0
         def hi(password)
-          OpenSSL::PKCS5.pbkdf2_hmac(
+          Krypt::PBKDF2.new(DIGEST).generate(
             password,
             Base64.decode64(salt),
             iterations,
-            DIGEST.size,
-            DIGEST
+            DIGEST.digest_length
           )
         end
       end
@@ -342,7 +341,7 @@ module Mongo
       #
       # @since 1.12.0
       def hmac(password, key)
-        OpenSSL::HMAC.digest(DIGEST, password, key)
+        Krypt::HMAC.digest(DIGEST, password, key)
       end
 
       # Get the iterations from the server response.

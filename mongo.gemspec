@@ -28,4 +28,5 @@ Gem::Specification.new do |s|
   s.has_rdoc          = 'yard'
 
   s.add_dependency('bson', "#{s.version}")
+  s.add_dependency('krypt', '~> 0.0.2')
 end
