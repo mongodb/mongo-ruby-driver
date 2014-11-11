@@ -14,6 +14,7 @@
 
 require 'base64'
 require 'openssl'
+require 'krypt/ossl' if defined?(JRUBY_VERSION)
 
 module Mongo
   module Authentication
