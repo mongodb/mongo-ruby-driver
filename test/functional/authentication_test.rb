@@ -17,6 +17,7 @@ require 'shared/authentication/basic_auth_shared'
 require 'shared/authentication/sasl_plain_shared'
 require 'shared/authentication/bulk_api_auth_shared'
 require 'shared/authentication/gssapi_shared'
+require 'shared/authentication/scram_shared'
 
 
 class AuthenticationTest < Test::Unit::TestCase
@@ -25,6 +26,7 @@ class AuthenticationTest < Test::Unit::TestCase
   include SASLPlainTests
   include BulkAPIAuthTests
   include GSSAPITests
+  include SCRAMTests
 
   def setup
     @client    = standard_connection

@@ -398,7 +398,7 @@ class Test::Unit::TestCase
         client = Mongo::MongoClient.new(TEST_HOST, TEST_PORT)
         db = client[TEST_DB]
         begin
-          db.authenticate(TEST_USER, TEST_USER_PWD)
+          db.authenticate(TEST_USER, TEST_USER_PWD, nil, 'admin', 'MONGODB-CR')
         rescue Mongo::AuthenticationError => ex
           roles = [ 'dbAdminAnyDatabase',
                     'userAdminAnyDatabase',

@@ -18,7 +18,7 @@ module Mongo
   module Authentication
 
     DEFAULT_MECHANISM = 'MONGODB-CR'
-    MECHANISMS        = ['GSSAPI', 'MONGODB-CR', 'MONGODB-X509', 'PLAIN']
+    MECHANISMS        = ['GSSAPI', 'MONGODB-CR', 'MONGODB-X509', 'PLAIN', 'SCRAM-SHA-1']
     MECHANISM_ERROR   = "Must use one of #{MECHANISMS.join(', ')} " +
                           "authentication mechanisms."
     EXTRA             = { 'GSSAPI' => [:service_name, :canonicalize_host_name,
@@ -58,7 +58,7 @@ module Mongo
         # set the default auth source if not defined
         auth[:source] = auth[:source] || auth[:db_name] || 'admin'
 
-        if (auth[:mechanism] == 'MONGODB-CR' || auth[:mechanism] == 'PLAIN') && !auth[:password]
+        if password_required?(auth[:mechanism]) && !auth[:password]
           raise MongoArgumentError,
             "When using the authentication mechanism #{auth[:mechanism]} " +
             "both username and password are required."
@@ -94,6 +94,19 @@ module Mongo
       # @return [String] The hashed password value.
       def hash_password(username, password)
         Digest::MD5.hexdigest("#{username}:mongo:#{password}")
+      end
+
+      private
+
+      # Does the authentication require a password?
+      #
+      # @param [ String ] mech The authentication mechanism.
+      #
+      # @return [ true, false ] If a password is required.
+      #
+      # @since 1.12.0
+      def password_required?(mech)
+        mech == 'MONGODB-CR' || mech == 'PLAIN' || mech == 'SCRAM-SHA-1'
       end
     end
 
@@ -204,6 +217,8 @@ module Mongo
           issue_plain(auth, opts)
         when 'GSSAPI'
           issue_gssapi(auth, opts)
+        when 'SCRAM-SHA-1'
+          issue_scram(auth, opts)
       end
 
       unless Support.ok?(result)
@@ -290,6 +305,29 @@ module Mongo
     # @private
     def issue_gssapi(auth, opts={})
       raise "In order to use Kerberos, please add the mongo-kerberos gem to your dependencies"
+    end
+
+    # Handles issuing SCRAM-SHA-1 authentication.
+    #
+    # @api private
+    #
+    # @param [ Hash ] auth The authentication credentials.
+    # @param [ Hash ] opts The options.
+    #
+    # @options opts [ Socket ] socket The Socket instance to use.
+    #
+    # @return [ Hash ] The result of the authentication operation.
+    #
+    # @since 1.12.0
+    def issue_scram(auth, opts = {})
+      db_name = auth[:source]
+      scram = SCRAM.new(auth, Authentication.hash_password(auth[:username], auth[:password]))
+      result = auth_command(scram.start, opts[:socket], db_name).first
+      result = auth_command(scram.continue(result), opts[:socket], db_name).first
+      until result['done']
+        result = auth_command(scram.finalize(result), opts[:socket], db_name).first
+      end
+      result
     end
 
     # Helper to fetch a nonce value from a given database instance.
