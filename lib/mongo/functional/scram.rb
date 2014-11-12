@@ -14,7 +14,6 @@
 
 require 'base64'
 require 'openssl'
-require 'krypt/ossl' if defined?(JRUBY_VERSION)
 
 module Mongo
   module Authentication
@@ -275,6 +274,28 @@ module Mongo
         @client_signature ||= hmac(key, message)
       end
 
+      if Base64.respond_to?(:strict_decode64)
+
+        # Get the base 64 decoded salt.
+        #
+        # @api private
+        #
+        # @since 1.12.0
+        def decoded_salt
+          @decoded_salt ||= Base64.strict_decode64(salt)
+        end
+      else
+
+        # Get the base 64 decoded salt.
+        #
+        # @api private
+        #
+        # @since 1.12.0
+        def decoded_salt
+          @decoded_salt ||= Base64.decode64(salt)
+        end
+      end
+
       # First bare implementation.
       #
       # @api private
@@ -283,8 +304,7 @@ module Mongo
       #
       # @since 1.12.0
       def first_bare
-        # @todo: Encode username.
-        @first_bare ||= "n=#{auth[:username]},r=#{nonce}"
+        @first_bare ||= "n=#{auth[:username].gsub('=','=3D').gsub(',','=2C')},r=#{nonce}"
       end
 
       # H algorithm implementation.
@@ -298,7 +318,7 @@ module Mongo
         DIGEST.digest(string)
       end
 
-      if Base64.respond_to?(:strict_decode64)
+      if defined?(OpenSSL::PKCS5)
 
         # HI algorithm implementation.
         #
@@ -307,13 +327,8 @@ module Mongo
         # @see http://tools.ietf.org/html/rfc5802#section-2.2
         #
         # @since 1.12.0
-        def hi(password)
-          OpenSSL::PKCS5.pbkdf2_hmac_sha1(
-            password,
-            Base64.strict_decode64(salt),
-            iterations,
-            DIGEST.size
-          )
+        def hi(data)
+          OpenSSL::PKCS5.pbkdf2_hmac_sha1(data, decoded_salt, iterations, DIGEST.size)
         end
       else
 
@@ -324,13 +339,14 @@ module Mongo
         # @see http://tools.ietf.org/html/rfc5802#section-2.2
         #
         # @since 1.12.0
-        def hi(password)
-          OpenSSL::PKCS5.pbkdf2_hmac_sha1(
-            password,
-            Base64.decode64(salt),
-            iterations,
-            DIGEST.size
-          )
+        def hi(data)
+          u = hmac(data, decoded_salt + [1].pack("N"))
+          v = u
+          2.upto(iterations) do |i|
+            u = hmac(data, u)
+            v = xor(v, u)
+          end
+          v
         end
       end
 
@@ -341,8 +357,8 @@ module Mongo
       # @see http://tools.ietf.org/html/rfc5802#section-2.2
       #
       # @since 1.12.0
-      def hmac(password, key)
-        OpenSSL::HMAC.digest(DIGEST, password, key)
+      def hmac(data, key)
+        OpenSSL::HMAC.digest(DIGEST, data, key)
       end
 
       # Get the iterations from the server response.
