@@ -169,7 +169,7 @@ module Mongo
     #
     # @return [Boolean] result of the operation.
     def clear_auths
-      @auths = Set.new
+      @auths = []
       true
     end
 
