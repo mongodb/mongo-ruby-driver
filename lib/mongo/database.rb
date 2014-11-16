@@ -86,13 +86,9 @@ module Mongo
     #
     # @since 2.0.0
     def collection_names
-      namespaces = collection(NAMESPACES).find(
-        :name => { '$not' => /system\.|\$/ }
-      )
-      namespaces.map do |document|
-        collection = document['name']
-        collection[name.length + 1, collection.length]
-      end
+      server = cluster.next_primary
+      Operation::Read::CollectionNames.new(db_name: name).
+        execute(server.context).names
     end
 
     # Get all the collections that belong to this database.
