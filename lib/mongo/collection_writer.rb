@@ -55,7 +55,7 @@ module Mongo
       @max_write_batch_size = @collection.db.connection.max_write_batch_size
       docs = documents.dup
       catch(:error) do
-        until docs.empty? || (!errors.empty? && !collect_on_error) # process documents a batch at a time
+        until docs.empty? || (!errors.empty? && !collect_on_error && !continue_on_error) # process documents a batch at a time
           batch_docs = []
           batch_message_initialize(message, op_type, continue_on_error, write_concern)
           while !docs.empty? && batch_docs.size < @max_write_batch_size
