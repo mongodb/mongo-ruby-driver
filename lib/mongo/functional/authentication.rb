@@ -118,7 +118,7 @@ module Mongo
     # @param source [String] (nil) The authentication source database
     #   (if different than the current database).
     # @param mechanism [String] (nil) The authentication mechanism being used
-    #   (default: 'MONGODB-CR').
+    #   (default: 'MONGODB-CR' or 'SCRAM-SHA-1' if server version >= 2.7.8).
     # @param extra [Hash] (nil) A optional hash of extra options to be stored with
     #   the credential set.
     #
@@ -162,7 +162,10 @@ module Mongo
     # @return [Boolean] The result of the operation.
     def remove_auth(db_name)
       return false unless @auths
-      @auths.reject! { |a| a[:source] == db_name } ? true : false
+      auths = @auths.to_a
+      removed = auths.reject! { |a| a[:source] == db_name }
+      @auths = Set.new(auths)
+      !!removed
     end
 
     # Remove all authentication information stored in this connection.
