@@ -18,6 +18,7 @@ require 'test_helper'
 class CollectionTest < Test::Unit::TestCase
 
   LIMITED_MAX_BSON_SIZE = 1024
+  LIMITED_BSON_SIZE_WITH_HEADROOM = LIMITED_MAX_BSON_SIZE + MongoClient::APPEND_HEADROOM
   LIMITED_MAX_MESSAGE_SIZE = 3 * LIMITED_MAX_BSON_SIZE
   LIMITED_TEST_HEADROOM = 50
   LIMITED_VALID_VALUE_SIZE = LIMITED_MAX_BSON_SIZE - LIMITED_TEST_HEADROOM
@@ -29,6 +30,7 @@ class CollectionTest < Test::Unit::TestCase
     @test         = @db.collection("test")
     @version      = @client.server_version
     @test.remove
+    @ismaster     = @client['admin'].command(:isMaster => 1)
   end
 
   @@wv0 = Mongo::MongoClient::RELEASE_2_4_AND_BEFORE
@@ -669,21 +671,22 @@ class CollectionTest < Test::Unit::TestCase
 
   def limited_collection
     conn = standard_connection(:connect => false)
+    is_master = @ismaster.merge('maxBsonObjectSize' => LIMITED_MAX_BSON_SIZE,
+                                'maxMessageSizeBytes' => LIMITED_MAX_BSON_SIZE)
     admin_db = Object.new
-    admin_db.expects(:command).returns({
-                                           'ok' => 1,
-                                           'ismaster' => 1,
-                                           'maxBsonObjectSize' => LIMITED_MAX_BSON_SIZE,
-                                           'maxMessageSizeBytes' => LIMITED_MAX_MESSAGE_SIZE
-                                       })
-    conn.expects(:[]).with('admin').returns(admin_db)
+    admin_db.expects(:command).returns(is_master)
+    conn.expects(:[]).with(TEST_DB).returns(admin_db)
     conn.connect
     return conn.db(TEST_DB)["test"]
   end
 
   def test_non_operation_failure_halts_insertion_with_continue_on_error
     coll = limited_collection
-    coll.db.connection.stubs(:send_message_with_gle).raises(OperationTimeout).times(1)
+    if @client.wire_version_feature?(MongoClient::BATCH_COMMANDS)
+      coll.db.stubs(:command).raises(OperationTimeout).times(1)
+    else
+      coll.db.connection.stubs(:send_message_with_gle).raises(OperationTimeout).times(1)
+    end
     docs = []
     10.times do
       docs << {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
@@ -738,6 +741,7 @@ class CollectionTest < Test::Unit::TestCase
   end
 
   def test_chunking_batch_insert_with_continue_on_error
+    coll = limited_collection
     docs = []
     4.times do
       docs << {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
@@ -748,9 +752,9 @@ class CollectionTest < Test::Unit::TestCase
       docs << {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
     end
     assert_raise OperationFailure do
-      limited_collection.insert(docs, :continue_on_error => true)
+      coll.insert(docs, :continue_on_error => true)
     end
-    assert limited_collection.count >= 6, "write commands need headroom for doc wrapping overhead - count:#{limited_collection.count}"
+    assert coll.count >= 6, "write commands need headroom for doc wrapping overhead - count:#{coll.count}"
   end
 
   def test_chunking_batch_insert_without_continue_on_error
@@ -779,49 +783,49 @@ class CollectionTest < Test::Unit::TestCase
 
   def test_maximum_document_size
     assert_raise InvalidDocument do
-      limited_collection.insert({'foo' => 'a' * LIMITED_MAX_BSON_SIZE})
+      limited_collection.insert({'foo' => 'a' * LIMITED_BSON_SIZE_WITH_HEADROOM})
     end
   end
 
   def test_maximum_save_size
     assert limited_collection.save({'foo' => 'a' * LIMITED_VALID_VALUE_SIZE})
     assert_raise InvalidDocument do
-      limited_collection.save({'foo' => 'a' * LIMITED_MAX_BSON_SIZE})
+      limited_collection.save({'foo' => 'a' * LIMITED_BSON_SIZE_WITH_HEADROOM})
     end
   end
 
   def test_maximum_remove_size
     assert limited_collection.remove({'foo' => 'a' * LIMITED_VALID_VALUE_SIZE})
     assert_raise InvalidDocument do
-      limited_collection.remove({'foo' => 'a' * LIMITED_MAX_BSON_SIZE})
+      limited_collection.remove({'foo' => 'a' * LIMITED_BSON_SIZE_WITH_HEADROOM})
     end
   end
 
   def test_maximum_update_size
     assert_raise InvalidDocument do
       limited_collection.update(
-        {'foo' => 'a' * LIMITED_MAX_BSON_SIZE},
+        {'foo' => 'a' * LIMITED_BSON_SIZE_WITH_HEADROOM},
         {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
       )
     end
 
     assert_raise InvalidDocument do
       limited_collection.update(
-        {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE},
+        {'foo' => 'a' * LIMITED_BSON_SIZE_WITH_HEADROOM},
         {'foo' => 'a' * LIMITED_MAX_BSON_SIZE}
       )
     end
 
     assert_raise InvalidDocument do
       limited_collection.update(
-        {'foo' => 'a' * LIMITED_MAX_BSON_SIZE},
-        {'foo' => 'a' * LIMITED_MAX_BSON_SIZE}
+        {'foo' => 'a' * LIMITED_BSON_SIZE_WITH_HEADROOM},
+        {'foo' => 'a' * LIMITED_BSON_SIZE_WITH_HEADROOM}
       )
     end
 
     assert limited_collection.update(
-             {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE},
-             {'foo' => 'a' * LIMITED_VALID_VALUE_SIZE}
+             {'foo' => 'a' * (LIMITED_VALID_VALUE_SIZE/2)},
+             {'foo' => 'a' * (LIMITED_VALID_VALUE_SIZE/2)}
            )
   end
 

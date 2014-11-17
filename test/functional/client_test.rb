@@ -89,8 +89,7 @@ class ClientTest < Test::Unit::TestCase
     auth = { :username  => TEST_USER,
              :password  => TEST_USER_PWD,
              :db_name   => TEST_DB,
-             :source    => TEST_DB,
-             :mechanism => 'MONGODB-CR'}
+             :source    => TEST_DB}
 
     client = MongoClient.new(:auths => Set.new([auth]))
     assert client['test']['test'].find.to_a

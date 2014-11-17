@@ -52,15 +52,13 @@ module Mongo
       # @raise [MongoArgumentError] if the credential set is invalid.
       # @return [Hash] The validated credential set.
       def validate_credentials(auth)
-        # set the default auth mechanism if not defined
-        auth[:mechanism] ||= DEFAULT_MECHANISM
-
         # set the default auth source if not defined
         auth[:source] = auth[:source] || auth[:db_name] || 'admin'
 
         if password_required?(auth[:mechanism]) && !auth[:password]
           raise MongoArgumentError,
-            "When using the authentication mechanism #{auth[:mechanism]} " +
+            "When using the authentication mechanism " +
+            "#{auth[:mechanism].nil? ? 'MONGODB-CR or SCRAM-SHA-1' : auth[:mechanism]} " +
             "both username and password are required."
         end
         # if extra opts exist, validate them
@@ -106,7 +104,7 @@ module Mongo
       #
       # @since 1.12.0
       def password_required?(mech)
-        mech == 'MONGODB-CR' || mech == 'PLAIN' || mech == 'SCRAM-SHA-1'
+        mech == 'MONGODB-CR' || mech == 'PLAIN' || mech == 'SCRAM-SHA-1' || mech.nil?
       end
     end
 
@@ -120,7 +118,7 @@ module Mongo
     # @param source [String] (nil) The authentication source database
     #   (if different than the current database).
     # @param mechanism [String] (nil) The authentication mechanism being used
-    #   (default: 'MONGODB-CR').
+    #   (default: 'MONGODB-CR' or 'SCRAM-SHA-1' if server version >= 2.7.8).
     # @param extra [Hash] (nil) A optional hash of extra options to be stored with
     #   the credential set.
     #
@@ -147,8 +145,8 @@ module Mongo
       end
 
       begin
-        socket = self.checkout_reader(:mode => :primary_preferred)
-        self.issue_authentication(auth, :socket => socket)
+        socket = checkout_reader(:mode => :primary_preferred)
+        issue_authentication(auth, :socket => socket)
       ensure
         socket.checkin if socket
       end
@@ -164,7 +162,10 @@ module Mongo
     # @return [Boolean] The result of the operation.
     def remove_auth(db_name)
       return false unless @auths
-      @auths.reject! { |a| a[:source] == db_name } ? true : false
+      auths = @auths.to_a
+      removed = auths.reject! { |a| a[:source] == db_name }
+      @auths = Set.new(auths)
+      !!removed
     end
 
     # Remove all authentication information stored in this connection.
@@ -206,6 +207,9 @@ module Mongo
     # @raise [AuthenticationError] Raised if the authentication fails.
     # @return [Boolean] Result of the authentication operation.
     def issue_authentication(auth, opts={})
+      # set the default auth mechanism if not defined
+      auth[:mechanism] ||= default_mechanism
+
       raise MongoArgumentError,
         MECHANISM_ERROR unless MECHANISMS.include?(auth[:mechanism])
       result = case auth[:mechanism]
@@ -231,6 +235,10 @@ module Mongo
     end
 
     private
+
+    def default_mechanism
+      (@max_wire_version && @max_wire_version >= 3) ? 'SCRAM-SHA-1' : DEFAULT_MECHANISM
+    end
 
     # Handles issuing authentication commands for the MONGODB-CR auth mechanism.
     #
