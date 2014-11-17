@@ -86,7 +86,6 @@ class PoolTest < Test::Unit::TestCase
         :username  => TEST_USER,
         :password  => TEST_USER_PWD,
         :source    => TEST_DB,
-        :mechanism => Mongo::Authentication::DEFAULT_MECHANISM,
         :extra     => {}
     }
     client.auths << creds
@@ -114,7 +113,6 @@ class PoolTest < Test::Unit::TestCase
         :username  => TEST_USER,
         :password  => TEST_USER_PWD,
         :source    => TEST_DB,
-        :mechanism => Mongo::Authentication::DEFAULT_MECHANISM,
         :extra     => {}
     }
     client.auths << creds

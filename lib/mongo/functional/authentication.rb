@@ -240,6 +240,82 @@ module Mongo
       (@max_wire_version && @max_wire_version >= 3) ? 'SCRAM-SHA-1' : DEFAULT_MECHANISM
     end
 
+    # Handles copying a database with SCRAM-SHA-1 authentication.
+    #
+    # @api private
+    #
+    # @param [ String ] username The user to authenticate on the
+    #   'from' database.
+    # @param [ String ] password The password for the user authenticated
+    #   on the 'from' database.
+    # @param [ String ] from_host The host of the 'from' database.
+    # @param [ String ] from_db Name of the database to copy from.
+    # @param [ String ] to_db Name of the database to copy to.
+    #
+    # @return [ Hash ] The result of the copydb operation.
+    #
+    # @since 1.12.0
+    def copy_db_scram(username, password, from_host, from_db, to_db)
+      auth = { :db_name   => from_db,
+               :username  => username,
+               :password  => password }
+
+      socket = checkout_reader(:mode => :primary_preferred)
+
+      copy_db = { :from_host => from_host, :from_db => from_db, :to_db => to_db }
+      scram = SCRAM.new(auth, Authentication.hash_password(username, password),
+                        { :copy_db => copy_db })
+      result = auth_command(scram.copy_db_start, socket, 'admin').first
+      result = auth_command(scram.copy_db_continue(result), socket, 'admin').first
+      until result['done']
+        result = auth_command(scram.copy_db_continue(result), socket, 'admin').first
+      end
+      socket.checkin
+      result
+    end
+
+    # Handles copying a database with MONGODB-CR authentication.
+    #
+    # @api private
+    #
+    # @param [ String ] username The user to authenticate on the
+    #   'from' database.
+    # @param [ String ] password The password for the user authenticated
+    #   on the 'from' database.
+    # @param [ String ] from_host The host of the 'from' database.
+    # @param [ String ] from_db Name of the database to copy from.
+    # @param [ String ] to_db Name of the database to copy to.
+    #
+    # @return [ Hash ] The result of the copydb operation.
+    #
+    # @since 1.12.0
+    def copy_db_mongodb_cr(username, password, from_host, from_db, to_db)
+      oh = BSON::OrderedHash.new
+      oh[:copydb]   = 1
+      oh[:fromhost] = from_host
+      oh[:fromdb]   = from_db
+      oh[:todb]     = to_db
+
+      socket = checkout_reader(:mode => :primary_preferred)
+
+      if username || password
+        unless username && password
+          raise MongoArgumentError,
+            'Both username and password must be supplied for authentication.'
+        end
+        nonce_cmd = BSON::OrderedHash.new
+        nonce_cmd[:copydbgetnonce] = 1
+        nonce_cmd[:fromhost] = from_host
+        result = auth_command(nonce_cmd, socket, 'admin').first
+        oh[:nonce] = result['nonce']
+        oh[:username] = username
+        oh[:key] = Authentication.auth_key(username, password, oh[:nonce])
+      end
+      result = auth_command(oh, socket, 'admin').first
+      socket.checkin
+      result
+    end
+
     # Handles issuing authentication commands for the MONGODB-CR auth mechanism.
     #
     # @param auth [Hash] The authentication credentials to be used.
