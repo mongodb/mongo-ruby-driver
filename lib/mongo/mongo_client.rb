@@ -335,25 +335,11 @@ module Mongo
     #
     # @note This command only supports the MONGODB-CR authentication mechanism.
     def copy_database(from, to, from_host=DEFAULT_HOST, username=nil, password=nil)
-      oh = BSON::OrderedHash.new
-      oh[:copydb]   = 1
-      oh[:fromhost] = from_host
-      oh[:fromdb]   = from
-      oh[:todb]     = to
-      if username || password
-        unless username && password
-          raise MongoArgumentError,
-            'Both username and password must be supplied for authentication.'
-        end
-        nonce_cmd = BSON::OrderedHash.new
-        nonce_cmd[:copydbgetnonce] = 1
-        nonce_cmd[:fromhost] = from_host
-        result = self['admin'].command(nonce_cmd)
-        oh[:nonce] = result['nonce']
-        oh[:username] = username
-        oh[:key] = Mongo::Authentication.auth_key(username, password, oh[:nonce])
+      if wire_version_feature?(MONGODB_2_8)
+        copy_db_scram(username, password, from_host, from, to)
+      else
+        copy_db_mongodb_cr(username, password, from_host, from, to)
       end
-      self['admin'].command(oh)
     end
 
     # Checks if a server is alive. This command will return immediately

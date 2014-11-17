@@ -14,6 +14,7 @@
 
 require 'base64'
 require 'openssl'
+require 'digest/md5'
 
 module Mongo
   module Authentication
@@ -108,6 +109,31 @@ module Mongo
         command
       end
 
+      # Continue the SCRAM conversation for copydb. This sends the client final message
+      # to the server after setting the reply from the previous server
+      # communication.
+      #
+      # @example Continue the conversation when copying a database.
+      #   conversation.copy_db_continue(reply)
+      #
+      # @param [ BSON::OrderedHash ] reply The reply of the previous
+      #   message.
+      #
+      # @return [ BSON::OrderedHash ] The next message to send.
+      #
+      # @since 1.12.0
+      def copy_db_continue(reply)
+        validate_first_message!(reply)
+        command = BSON::OrderedHash.new
+        command['copydb'] = 1
+        command['fromhost'] = @copy_db[:from_host]
+        command['fromdb'] = @copy_db[:from_db]
+        command['todb'] = @copy_db[:to_db]
+        command[PAYLOAD] = client_final_message
+        command[ID] = id
+        command
+      end
+
       # Finalize the SCRAM conversation. This is meant to be iterated until
       # the provided reply indicates the conversation is finished.
       #
@@ -147,6 +173,26 @@ module Mongo
         command
       end
 
+      # Start the SCRAM conversation for copying a database.
+      # This returns the first message that needs to be sent to the server.
+      #
+      # @example Start the copydb conversation.
+      #   conversation.copy_db_start
+      #
+      # @return [ BSON::OrderedHash ] The first SCRAM copy_db conversation message.
+      #
+      # @since 1.12.0
+      def copy_db_start
+        command = BSON::OrderedHash.new
+        command['copydbsaslstart'] = 1
+        command['autoAuthorize'] = 1
+        command['fromhost'] = @copy_db[:from_host]
+        command['fromdb'] = @copy_db[:from_db]
+        command[PAYLOAD] = client_first_message
+        command['mechanism'] = 'SCRAM-SHA-1'
+        command
+      end
+
       # Get the id of the conversation.
       #
       # @example Get the id of the conversation.
@@ -161,14 +207,15 @@ module Mongo
 
       # Create the new conversation.
       #
-      # @example Create the new coversation.
+      # @example Create the new conversation.
       #   Conversation.new(auth, password)
       #
       # @since 1.12.0
-      def initialize(auth, hashed_password)
+      def initialize(auth, hashed_password, opts={})
         @auth = auth
         @hashed_password = hashed_password
         @nonce = SecureRandom.base64
+        @copy_db = opts[:copy_db] if opts[:copy_db]
       end
 
       private
