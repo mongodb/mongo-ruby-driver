@@ -198,24 +198,6 @@ module Mongo
           configure(:max_scan, value)
         end
 
-        def parallel_scan(cursor_count)
-          server = read.select_servers(cluster.servers).first
-          cursors = Operation::ParallelScan.new(
-            :coll_name => collection.name,
-            :db_name => database.name,
-            :cursor_count => cursor_count
-          ).execute(server.context).cursor_ids.map do |cursor_id|
-            result = Operation::Read::GetMore.new({
-              :to_return => 0,
-              :cursor_id => cursor_id,
-              :db_name   => database.name,
-              :coll_name => collection.name
-            }).execute(server.context)
-            Cursor.new(self, result, server)
-          end
-          MultiCursor.new(cursors)
-        end
-
         # The read preference to use for the query.
         #
         # @note If none is specified for the query, the read preference of the

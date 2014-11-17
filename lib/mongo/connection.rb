@@ -159,7 +159,11 @@ module Mongo
     end
 
     def setup_authentication!
-      @authenticator = Auth.get(Auth::User.new(options)) if options[:user]
+      if options[:user]
+        default_mechanism = @server.list_command_enabled? ? :scram : :mongodb_cr
+        user = Auth::User.new({ :auth_mech => default_mechanism }.merge(options))
+        @authenticator = Auth.get(user)
+      end
     end
 
     def write(messages, buffer = '')

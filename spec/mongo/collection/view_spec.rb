@@ -18,7 +18,6 @@ describe Mongo::Collection::View do
     authorized_collection.find.remove_many
   end
 
-  pending '#parallel_scan'
   pending '#await_data'
   pending '#exhaust'
   pending '#no_cursor_timeout'
