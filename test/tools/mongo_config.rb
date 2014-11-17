@@ -121,6 +121,7 @@ module Mongo
       fast_sync  = opts[:fastsync]   || false
       auth       = opts[:auth]       || true
       ipv6       = opts[:ipv6].nil? ? true : opts[:ipv6]
+      setParameter = opts[:setParameter] || 'enableTestCommands=1'
 
       params.merge(:command    => mongod,
                    :dbpath     => path,
@@ -129,7 +130,8 @@ module Mongo
                    :quiet      => quiet,
                    :fastsync   => fast_sync,
                    :auth       => auth,
-                   :ipv6       => ipv6)
+                   :ipv6       => ipv6,
+                   :setParameter => setParameter)
     end
 
     def self.key_file(opts)
