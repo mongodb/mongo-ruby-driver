@@ -76,7 +76,7 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
         bulk.find({:a => 2}).upsert.update({'$set' => {:a => 2}})
         bulk.insert({:a => 1})
         ex = assert_raise BulkWriteError do
-          bulk.execute({:w => 2, :wtimeout => 1})
+          bulk.execute({:w => 5, :wtimeout => 1})
         end
         result = ex.result
         assert_match_document(
