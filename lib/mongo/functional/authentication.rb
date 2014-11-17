@@ -237,7 +237,7 @@ module Mongo
     private
 
     def default_mechanism
-      (@max_wire_version && @max_wire_version >= 3) ? 'SCRAM-SHA-1' : DEFAULT_MECHANISM
+      max_wire_version >= 3 ? 'SCRAM-SHA-1' : DEFAULT_MECHANISM
     end
 
     # Handles copying a database with SCRAM-SHA-1 authentication.
