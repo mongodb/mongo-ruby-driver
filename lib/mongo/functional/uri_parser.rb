@@ -287,7 +287,7 @@ module Mongo
 
     def parse_hosts(uri_without_protocol)
       @nodes = []
-      @auths = Set.new
+      @auths = []
 
       unless matches = MONGODB_URI_MATCHER.match(uri_without_protocol)
         raise MongoArgumentError,

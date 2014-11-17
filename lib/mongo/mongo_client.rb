@@ -624,7 +624,8 @@ module Mongo
       end
 
       @db_name = opts.delete(:db_name)
-      @auths   = opts.delete(:auths) || Set.new
+      authorizations = opts.delete(:auths) || []
+      @auths = authorizations.to_a
 
       # Pool size and timeout.
       @pool_size = opts.delete(:pool_size) || 1

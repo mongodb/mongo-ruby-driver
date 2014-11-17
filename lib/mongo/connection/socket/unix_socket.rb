@@ -26,7 +26,7 @@ module Mongo
       @op_timeout      = op_timeout
       @connect_timeout = connect_timeout
       @pid             = Process.pid
-      @auths           = Set.new
+      @auths           = []
 
       @address         = socket_path
       @port            = :socket # purposely override input

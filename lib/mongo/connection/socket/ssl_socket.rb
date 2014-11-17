@@ -26,7 +26,7 @@ module Mongo
       @op_timeout      = op_timeout
       @connect_timeout = connect_timeout
       @pid             = Process.pid
-      @auths           = Set.new
+      @auths           = []
 
       @tcp_socket = ::TCPSocket.new(host, port)
       @tcp_socket.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)

@@ -25,7 +25,7 @@ module Mongo
       @op_timeout      = op_timeout
       @connect_timeout = connect_timeout
       @pid             = Process.pid
-      @auths           = Set.new
+      @auths           = []
 
       @socket = handle_connect(host, port)
     end

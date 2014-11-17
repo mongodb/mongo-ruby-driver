@@ -318,7 +318,7 @@ module Mongo
       # find and handle new auths
       (@client.auths - socket.auths).each do |auth|
         @client.issue_authentication(auth, :socket => socket)
-        socket.auths.add(auth)
+        socket.auths.push(auth)
       end
 
       socket
