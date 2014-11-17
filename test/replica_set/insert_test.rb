@@ -68,10 +68,6 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
     end
 
     should "handle error with deferred write concern error - spec Merging Results" do
-      errmsg_2_6 = /waiting for replication timed out|timed out waiting for slaves|timeout/
-      errmsg_2_8 = /enough data-bearing nodes/
-      code_2_6 = 64
-      code_2_8 = 100
       with_write_commands_and_operations(@db.connection) do |wire_version|
         @coll.remove
         @coll.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
@@ -80,7 +76,7 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
         bulk.find({:a => 2}).upsert.update({'$set' => {:a => 2}})
         bulk.insert({:a => 1})
         ex = assert_raise BulkWriteError do
-          bulk.execute({:w => 5, :wtimeout => 1})
+          bulk.execute({:w => 2, :wtimeout => 1})
         end
         result = ex.result
         assert_match_document(
@@ -96,15 +92,15 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
                 ],
                 "writeConcernError" => [
                     {
-                        "errmsg" => (@version.to_s > '2.7' ? errmsg_2_8 : errmsg_2_6),
-                        "code" => (@version.to_s > '2.7' ? code_2_8 : code_2_6),
-                        "errInfo" => @version.to_s > '2.7' ? nil : {"wtimeout" => true},
+                        "errmsg" => /waiting for replication timed out|timed out waiting for slaves|timeout/,
+                        "code" => 64,
+                        "errInfo" => {"wtimeout" => true},
                         "index" => 0
                     },
                     {
-                        "errmsg" => (@version.to_s > '2.7' ? errmsg_2_8 : errmsg_2_6),
-                        "code" => (@version.to_s > '2.7' ? code_2_8 : code_2_6),
-                        "errInfo" => @version.to_s > '2.7' ? nil : {"wtimeout" => true},
+                        "errmsg" => /waiting for replication timed out|timed out waiting for slaves|timeout/,
+                        "code" => 64,
+                        "errInfo" => {"wtimeout" => true},
                         "index" => 1
                     }
                 ],
