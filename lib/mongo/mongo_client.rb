@@ -334,8 +334,15 @@ module Mongo
     # @param password [String] password (applies to 'from' db)
     #
     # @note This command only supports the MONGODB-CR authentication mechanism.
-    def copy_database(from, to, from_host=DEFAULT_HOST, username=nil, password=nil)
-      if wire_version_feature?(MONGODB_2_8)
+    def copy_database(
+      from,
+      to,
+      from_host = DEFAULT_HOST,
+      username = nil,
+      password = nil,
+      mechanism = 'SCRAM-SHA-1'
+    )
+      if wire_version_feature?(MONGODB_2_8) && mechanism == 'SCRAM-SHA-1'
         copy_db_scram(username, password, from_host, from, to)
       else
         copy_db_mongodb_cr(username, password, from_host, from, to)
