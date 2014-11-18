@@ -17,7 +17,7 @@ require 'test_helper'
 class ReplicaSetInsertTest < Test::Unit::TestCase
 
   def setup
-    ensure_cluster(:rs, :server_version => MongoClient.new.server_version.to_s)
+    ensure_cluster(:rs, :server_version => MongoClient.from_uri(TEST_URI).server_version.to_s)
     @client = MongoReplicaSetClient.from_uri(@uri)
     @version = @client.server_version
     @db = @client.db(TEST_DB)
