@@ -519,7 +519,7 @@ class ClientTest < Test::Unit::TestCase
   context "Socket pools" do
     context "checking out writers" do
       setup do
-        @con = standard_connection(:pool_size => 10, :pool_timeout => 10)
+        @con = standard_connection(:pool_size => 10, :pool_timeout => 2)
         @coll = @con[TEST_DB]['test-connection-exceptions']
       end
 
@@ -533,13 +533,42 @@ class ClientTest < Test::Unit::TestCase
         end
       end
 
-      should "close the connection on send_message_with_gle for major exceptions" do
-        @con.stubs(:checkout_writer).raises(SystemStackError)
-        @con.stubs(:checkout_reader).raises(SystemStackError)
-        @con.expects(:close)
-        begin
-          @coll.insert({:foo => "bar"}, :w => 1)
-        rescue SystemStackError
+      context "with GLE" do
+        setup do
+          # Force this connection to use send_message_with_gle for these tests
+          @con.stubs(:use_write_command?).returns(false)
+        end
+
+        should "close the connection on send_message_with_gle for major exceptions" do
+          @con.stubs(:checkout_writer).raises(SystemStackError)
+          @con.stubs(:checkout_reader).raises(SystemStackError)
+          @con.expects(:close)
+          begin
+            @coll.insert({:foo => "bar"}, :w => 1)
+          rescue SystemStackError
+          end
+        end
+
+        should "release the connection on send_message_with_gle for connection exceptions" do
+          mock_writer = mock(:close => true)
+          mock_writer.expects(:read).raises(ConnectionFailure)
+          @con.expects(:send_message_on_socket)
+
+          @con.stubs(:checkout_writer).returns(mock_writer)
+          @con.expects(:checkin).with(mock_writer)
+          @coll.insert({:foo => "bar"}, :w => 1) rescue nil
+        end
+
+        should "release the connection on send_message_with_gle for all exceptions" do
+          mock_writer = mock()
+          mock_writer.expects(:read).raises(ArgumentError)
+          @con.expects(:send_message_on_socket)
+          @con.stubs(:checkout_writer).returns(mock_writer)
+          @con.expects(:checkin).with(mock_writer).once
+          begin
+            @coll.insert({:foo => "bar"}, :w => 1)
+          rescue ArgumentError
+          end
         end
       end
 

@@ -86,13 +86,15 @@ module Mongo
         sock = checkout_writer
         send_message_on_socket(packed_message, sock)
         docs, num_received, cursor_id = receive(sock, last_error_id)
-        checkin(sock)
       rescue ConnectionFailure, OperationFailure, OperationTimeout => ex
-        checkin(sock)
         raise ex
       rescue SystemStackError, NoMemoryError, SystemCallError => ex
         close
+        sock = nil
         raise ex
+      ensure
+        checkin(sock) if sock
+        sock = nil
       end
 
       if num_received == 1
