@@ -321,7 +321,15 @@ module Mongo
 
       def start(verifies = DEFAULT_VERIFIES)
         super(verifies)
-        verify(verifies)
+        begin
+          verify(verifies)
+        rescue Mongo::ConnectionFailure
+          # Hack for 2.2 in case the server could not start because of an
+          # invalid setParameter option.
+          config.delete(:setParameter)
+          super(verifies)
+          verify(verifies)
+        end
       end
 
       def verify(verifies = 600)
