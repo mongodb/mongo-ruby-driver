@@ -323,7 +323,7 @@ module Mongo
         super(verifies)
         begin
           verify(verifies)
-        rescue Mongo::ConnectionFailure
+        rescue Errno::ESRCH
           # Hack for 2.2 in case the server could not start because of an
           # invalid setParameter option.
           config.delete(:setParameter)
@@ -340,7 +340,7 @@ module Mongo
             Mongo::MongoClient.new(@host, @port).close
             #puts "DbServer.verified via connection - port: #{@port} iteration: #{i}"
             return @pid
-          rescue Mongo::ConnectionFailure, SystemCallError, IOError
+          rescue Mongo::ConnectionFailure
             sleep 1
           end
         end
