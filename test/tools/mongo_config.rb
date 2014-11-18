@@ -303,6 +303,11 @@ module Mongo
 
       def initialize(config)
         @config = config
+        cmd = init_config!
+        super(cmd, @config[:host], @config[:port])
+      end
+
+      def init_config!
         dbpath = @config[:dbpath]
         [dbpath, File.dirname(@config[:logpath])].compact.each{|dir| FileUtils.mkdir_p(dir) unless File.directory?(dir) }
         command = @config[:command] || 'mongod'
@@ -316,20 +321,11 @@ module Mongo
           end
         end
         cmd = [command, arguments].flatten.compact
-        super(cmd, @config[:host], @config[:port])
       end
 
       def start(verifies = DEFAULT_VERIFIES)
         super(verifies)
-        begin
-          verify(verifies)
-        rescue Errno::ESRCH
-          # Hack for 2.2 in case the server could not start because of an
-          # invalid setParameter option.
-          config.delete(:setParameter)
-          super(verifies)
-          verify(verifies)
-        end
+        verify(verifies)
       end
 
       def verify(verifies = 600)
@@ -344,8 +340,13 @@ module Mongo
             sleep 1
           end
         end
-        system "ps -fp #{@pid}; cat #{@config[:logpath]}"
-        raise Mongo::ConnectionFailure, "DbServer.start verify via connection probe failed - port:#{@port.inspect} @pid:#{@pid.inspect} kill:#{Process.kill(0, @pid).inspect} running?:#{running?.inspect} cmd:#{cmd.inspect}"
+        if @config.delete(:setParameter)
+          @cmd = init_config!
+          start(verifies)
+        else
+          system "ps -fp #{@pid}; cat #{@config[:logpath]}"
+          raise Mongo::ConnectionFailure, "DbServer.start verify via connection probe failed - port:#{@port.inspect} @pid:#{@pid.inspect} kill:#{Process.kill(0, @pid).inspect} running?:#{running?.inspect} cmd:#{cmd.inspect}"
+        end
       end
 
     end
@@ -356,7 +357,7 @@ module Mongo
         @config = config
         @servers = {}
         Mongo::Config::CLUSTER_OPT_KEYS.each do |key|
-          @servers[key] = @config[key].collect{|conf| DbServer.new(conf)} if @config[key]
+          @servers[key] = @config[key].collect{|conf| p conf; DbServer.new(conf)} if @config[key]
         end
       end
 
