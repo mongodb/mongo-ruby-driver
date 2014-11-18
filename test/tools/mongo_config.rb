@@ -121,20 +121,17 @@ module Mongo
       fast_sync  = opts[:fastsync]   || false
       auth       = opts[:auth]       || true
       ipv6       = opts[:ipv6].nil? ? true : opts[:ipv6]
+      setParameter = opts[:setParameter] || 'enableTestCommands=1'
 
-      with_additional_options = params.merge(:command    => mongod,
-                                             :dbpath     => path,
-                                             :smallfiles => smallfiles,
-                                             :noprealloc => noprealloc,
-                                             :quiet      => quiet,
-                                             :fastsync   => fast_sync,
-                                             :auth       => auth,
-                                             :ipv6       => ipv6)
-      if opts[:server_version] > '2.2'
-        with_additional_options.merge(:setParameter => opts[:setParameter] || 'enableTestCommands=1')
-      else
-        with_additional_options
-      end
+      params.merge(:command    => mongod,
+                   :dbpath     => path,
+                   :smallfiles => smallfiles,
+                   :noprealloc => noprealloc,
+                   :quiet      => quiet,
+                   :fastsync   => fast_sync,
+                   :auth       => auth,
+                   :ipv6       => ipv6,
+                   :setParameter => setParameter)
     end
 
     def self.key_file(opts)
