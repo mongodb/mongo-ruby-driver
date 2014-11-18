@@ -340,7 +340,7 @@ module Mongo
             Mongo::MongoClient.new(@host, @port).close
             #puts "DbServer.verified via connection - port: #{@port} iteration: #{i}"
             return @pid
-          rescue Mongo::ConnectionFailure
+          rescue Mongo::ConnectionFailure, SystemCallError, IOError
             sleep 1
           end
         end
