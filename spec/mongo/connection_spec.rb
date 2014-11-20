@@ -64,8 +64,7 @@ describe Mongo::Connection do
             server,
             :user => 'notauser',
             :password => 'password',
-            :database => TEST_DB,
-            :auth_mech => :mongodb_cr
+            :database => TEST_DB
           )
         end
 
@@ -83,8 +82,7 @@ describe Mongo::Connection do
             server,
             :user => TEST_USER.name,
             :password => TEST_USER.password,
-            :database => TEST_DB,
-            :auth_mech => :mongodb_cr
+            :database => TEST_DB
           )
         end
 
@@ -136,8 +134,7 @@ describe Mongo::Connection do
         server,
         :user => TEST_USER.name,
         :password => TEST_USER.password,
-        :database => TEST_DB,
-        :auth_mech => :mongodb_cr
+        :database => TEST_DB
       )
     end
 

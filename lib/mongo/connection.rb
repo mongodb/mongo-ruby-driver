@@ -36,7 +36,7 @@ module Mongo
     attr_reader :options
 
     def_delegators :@server,
-                   :write_command_enabled?,
+                   :features,
                    :max_bson_object_size,
                    :max_message_size
 
@@ -160,7 +160,7 @@ module Mongo
 
     def setup_authentication!
       if options[:user]
-        default_mechanism = @server.list_command_enabled? ? :scram : :mongodb_cr
+        default_mechanism = @server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr
         user = Auth::User.new({ :auth_mech => default_mechanism }.merge(options))
         @authenticator = Auth.get(user)
       end
