@@ -37,11 +37,6 @@ module Mongo
     # Delegate command execution to the current database.
     def_delegators :@database, :command
 
-    # The wire protocol versions that this version of the driver supports.
-    #
-    # @since 2.0.0
-    SUPPORTED_WIRE_VERSIONS = (0..3).freeze
-
     # Determine if this client is equivalent to another object.
     #
     # @example Check client equality.
