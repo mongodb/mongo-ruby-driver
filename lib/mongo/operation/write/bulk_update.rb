@@ -69,7 +69,7 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
-          if context.write_command_enabled?
+          if context.features.write_command_enabled?
             execute_write_command(context)
           else
             execute_message(context)

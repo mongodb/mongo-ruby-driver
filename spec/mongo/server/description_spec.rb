@@ -424,6 +424,4 @@ describe Mongo::Server::Description do
       end
     end
   end
-
-  pending '#update!'
 end

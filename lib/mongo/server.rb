@@ -28,15 +28,19 @@ module Mongo
     include Event::Publisher
     extend Forwardable
 
+    # @return [ Features ] The server features.
+    attr_accessor :features
+
     # @return [ String ] The configured address for the server.
     attr_reader :address
+
     # @return [ Server::Description ] The description of the server.
     attr_reader :description
+
     # @return [ Hash ] The options hash.
     attr_reader :options
 
     def_delegators :@description,
-                   :list_command_enabled?,
                    :max_wire_version,
                    :max_write_batch_size,
                    :max_bson_object_size,
@@ -45,9 +49,7 @@ module Mongo
                    :primary?,
                    :replica_set_name,
                    :secondary?,
-                   :standalone?,
-                   :write_command_enabled?,
-                   :wire_version_feature?
+                   :standalone?
 
     # Is this server equal to another?
     #
@@ -105,6 +107,7 @@ module Mongo
       @options = options.freeze
       @monitor = Monitor.new(self, options)
       @description = Description.new(self)
+      @features = Features.new(0..0)
       @monitor.check!
       @monitor.run
     end

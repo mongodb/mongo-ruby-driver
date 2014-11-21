@@ -85,7 +85,7 @@ module Mongo
       end
 
       def filter(context)
-        return selector if context.write_command_enabled?
+        return selector if context.features.write_command_enabled?
         selector.reject{ |option, value| option.to_s == 'cursor' }
       end
 

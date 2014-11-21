@@ -43,8 +43,7 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
-          if context.wire_version_feature?(
-              Mongo::Server::Description::MONGODB_2_8_WIRE_VERSION)
+          if context.features.list_indexes_enabled?
             ListIndexes.new(spec).execute(context)
           else
             context.with_connection do |connection|

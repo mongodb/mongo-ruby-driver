@@ -68,7 +68,7 @@ COVERAGE_MIN = 90
 # @since 2.0.0
 def write_command_enabled?
   @client ||= initialize_scanned_client!
-  @write_command_enabled ||= @client.cluster.servers.first.write_command_enabled?
+  @write_command_enabled ||= @client.cluster.servers.first.features.write_command_enabled?
 end
 
 # For instances where behaviour is different on different versions, we need to
@@ -77,8 +77,10 @@ end
 # @since 2.0.0
 def list_command_enabled?
   @client ||= initialize_scanned_client!
-  @list_command_enabled ||= @client.cluster.servers.first.list_command_enabled?
+  @list_command_enabled ||= @client.cluster.servers.first.features.list_indexes_enabled?
 end
+
+alias :scram_sha_1_enabled? :list_command_enabled?
 
 # Depending on whether write commands are enabled, there are different documents that
 # are guaranteed to cause a delete failure.

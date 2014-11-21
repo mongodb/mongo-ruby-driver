@@ -41,7 +41,7 @@ module Mongo
       # admin database. Otherwise for 2.4 and lower we authorize against the
       # auth source provided. The logic for that is encapsulated in the User class.
       def auth_database(connection)
-        if connection.write_command_enabled?
+        if connection.features.write_command_enabled?
           Database::ADMIN
         else
           user.auth_source

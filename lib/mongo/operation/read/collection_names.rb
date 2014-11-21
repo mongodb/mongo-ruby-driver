@@ -44,7 +44,7 @@ module Mongo
         #
         # @since 2.0.0
         def execute(context)
-          if context.wire_version_feature?(ListCollections.wire_version)
+          if context.features.list_collections_enabled?
             ListCollections.new(spec).execute(context)
           else
             context.with_connection do |connection|

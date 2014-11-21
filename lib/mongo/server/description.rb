@@ -98,11 +98,6 @@ module Mongo
       # @since 2.0.0
       DEFAULT_MAX_WRITE_BATCH_SIZE = 1000.freeze
 
-      # MongoDB 2.8 wire version.
-      #
-      # @since 2.0.0
-      MONGODB_2_8_WIRE_VERSION = 3.freeze
-
       # The legacy wire protocol version.
       #
       # @since 2.0.0
@@ -127,16 +122,6 @@ module Mongo
       #
       # @since 2.0.0
       SET_NAME = 'setName'.freeze
-
-      # The minimum version of the wire protocol to support write commands.
-      #
-      # @since 2.0.0
-      WRITE_COMMAND_WIRE_VERSION = 2.freeze
-
-      # The minimum version of the wire protocol to support list commands.
-      #
-      # @since 2.0.0
-      LIST_COMMAND_WIRE_VERSION = 3.freeze
 
       # @return [ Hash ] The actual result from the isnamster command.
       attr_reader :config
@@ -223,18 +208,6 @@ module Mongo
         @server = server
         @config = config
         @round_trip_time = round_trip_time
-      end
-
-      # Is the server able to perform list commands.
-      #
-      # @example Is the server list command enabled?
-      #   description.list_command_enabled?
-      #
-      # @return [ true, false ] If the server is list command enabled.
-      #
-      # @since 2.0.0
-      def list_command_enabled?
-        max_wire_version >= LIST_COMMAND_WIRE_VERSION
       end
 
       # Get the max BSON object size for this server version.
@@ -402,34 +375,20 @@ module Mongo
         end
         @config = new_config
         @round_trip_time = round_trip_time
+        server.features = Features.new(wire_versions)
         self
       end
 
-      # Is the server able to perform write commands.
+      # Get the range of supported wire versions for the server.
       #
-      # @example Is the server write command enabled?
-      #   description.write_command_enabled?
+      # @example Get the wire version range.
+      #   description.wire_versions
       #
-      # @return [ true, false ] If the server is write command enabled.
-      #
-      # @since 2.0.0
-      def write_command_enabled?
-        max_wire_version >= WRITE_COMMAND_WIRE_VERSION
-      end
-
-      # Does the server's wire version range cover a given wire version.
-      #
-      # @example Does a certain wire version fall within the server's
-      #   wire version range?
-      #   description.wire_version_feature?(3)
-      #
-      # @return [ true, false ] If the server's wire version range covers a
-      #   given wire version.
+      # @return [ Range ] The wire version range.
       #
       # @since 2.0.0
-      def wire_version_feature?(feature_version)
-        min_wire_version <= feature_version &&
-          feature_version <= max_wire_version
+      def wire_versions
+        min_wire_version..max_wire_version
       end
     end
   end

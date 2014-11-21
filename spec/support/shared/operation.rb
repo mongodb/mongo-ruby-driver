@@ -18,12 +18,24 @@ shared_context 'operation' do
     end
   end
 
+  let(:features_2_4) do
+    double('features').tap do |cxt|
+      allow(cxt).to receive(:write_command_enabled?) { false }
+    end
+  end
+
+  let(:features_2_6) do
+    double('features').tap do |cxt|
+      allow(cxt).to receive(:write_command_enabled?) { true }
+    end
+  end
+
   # Context doubles
   let(:primary_context) do
     double('primary_context').tap do |cxt|
       allow(cxt).to receive(:with_connection).and_yield(connection)
       allow(cxt).to receive(:server) { primary_server }
-      allow(cxt).to receive(:write_command_enabled?) { true }
+      allow(cxt).to receive(:features) { features_2_6 }
       allow(cxt).to receive(:primary?) { true }
     end
   end
@@ -39,7 +51,7 @@ shared_context 'operation' do
     double('primary_context').tap do |cxt|
       allow(cxt).to receive(:with_connection).and_yield(connection)
       allow(cxt).to receive(:server) { primary_server }
-      allow(cxt).to receive(:write_command_enabled?) { false }
+      allow(cxt).to receive(:features) { features_2_4 }
       allow(cxt).to receive(:primary?) { true }
     end
   end
