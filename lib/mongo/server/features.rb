@@ -91,7 +91,7 @@ module Mongo
             "This version of the driver, #{Mongo::VERSION}, only supports wire " +
             "protocol versions #{DRIVER_WIRE_VERSIONS} and the server supports " +
             "wire versions #{server_wire_versions}. Please upgrade the driver " +
-            "be be able to support this server version."
+            "to be able to support this server version."
           )
         end
       end
