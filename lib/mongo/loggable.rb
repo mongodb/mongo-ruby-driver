@@ -36,7 +36,7 @@ module Mongo
     def log(level, prefix, operations)
       started = Time.new
       begin
-        yield if block_given?
+        yield(operations) if block_given?
       rescue Exception => e
         raise e
       ensure

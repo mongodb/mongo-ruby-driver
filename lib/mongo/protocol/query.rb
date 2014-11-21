@@ -66,6 +66,27 @@ module Mongo
         @flags       = options[:flags] || []
       end
 
+      # The log message for a query operation.
+      #
+      # @example Get the log message.
+      #   query.log_message
+      #
+      # @return [ String ] The log message
+      #
+      # @since 2.0.0
+      def log_message
+        fields = []
+        fields << ["%s |", 'QUERY']
+        fields << ["namespace=%s", namespace]
+        fields << ["selector=%s", selector.inspect]
+        fields << ["flags=%s", flags.inspect]
+        fields << ["limit=%s", limit.inspect]
+        fields << ["skip=%s", skip.inspect]
+        fields << ["project=%s", project.inspect]
+        f, v = fields.transpose
+        f.join(" ") % v
+      end
+
       # Query messages require replies from the database.
       #
       # @example Does the message require a reply?

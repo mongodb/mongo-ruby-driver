@@ -56,8 +56,10 @@ module Mongo
         private
 
         def execute_message(context)
-          context.with_connection do |connection|
-            Result.new(connection.dispatch([ message ]))
+          log(:debug, 'MONGODB', [ message ]) do |messages|
+            context.with_connection do |connection|
+              Result.new(connection.dispatch(messages))
+            end
           end
         end
 
