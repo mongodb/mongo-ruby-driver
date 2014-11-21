@@ -26,14 +26,14 @@ shared_examples 'a bulk write object' do
 
     context 'when non-hash arguments are provided' do
 
-      it 'raises an exception' do
+      it 'raises an InvalidDoc exception' do
         expect do
           bulk.insert('foo')
-        end.to raise_exception
+        end.to raise_error(Mongo::Bulk::BulkWrite::InvalidDoc)
 
         expect do
           bulk.insert([])
-        end.to raise_exception
+        end.to raise_error(Mongo::Bulk::BulkWrite::InvalidDoc)
       end
     end
 
@@ -710,30 +710,31 @@ shared_examples 'a bulk write object' do
     end
   end
 
-  context 're-running a batch' do
-
-    before do
-      bulk.insert(:a => 1)
-      bulk.execute
-    end
-
-    after do
-      authorized_collection.find.remove_many
-    end
-
-    it 'raises an exception' do
-      expect do
-        bulk.execute
-      end.to raise_exception
-    end
-  end
+  pending 're-running a batch'
+  # context 're-running a batch' do
+  #
+  #   before do
+  #     bulk.insert(:a => 1)
+  #     bulk.execute
+  #   end
+  #
+  #   after do
+  #     authorized_collection.find.remove_many
+  #   end
+  #
+  #   it 'raises an exception' do
+  #     expect do
+  #       bulk.execute
+  #     end.to raise_error(Mongo::Bulk::Batch::AlreadyExecuted)
+  #   end
+  # end
 
   context 'empty batch' do
 
     it 'raises an exception' do
       expect do
         bulk.execute
-      end.to raise_exception
+      end.to raise_error(Mongo::Bulk::Batch::EmptyBatch)
     end
   end
 

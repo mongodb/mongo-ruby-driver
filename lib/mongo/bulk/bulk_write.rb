@@ -48,12 +48,11 @@ module Mongo
       #
       # @params [ Hash ] doc The document to insert.
       #
-      # @todo: change this Exception class
-      # @raise [ Exception ] The document must be a Hash.
+      # @raise [ InvalidDoc ] The document must be a Hash.
       #
       # @return [ Batch ] The current batch object.
       def insert(doc)
-        raise Exception.new("Not a valid doc") unless valid_doc?(doc)
+        raise InvalidDoc.new unless valid_doc?(doc)
 
         spec = { documents: [ doc ],
                  db_name: db_name,
@@ -138,6 +137,22 @@ module Mongo
       def valid_doc?(doc)
         doc.respond_to?(:keys)
       end
+
+      # Exception raised if the object is not a valid document.
+      #
+      # @since 2.0.0
+      class InvalidDoc < DriverError
+
+        # Instantiate the new exception.
+        #
+        # @example Instantiate the exception.
+        #   Mongo::Bulk::BulkWrite::InvalidDoc.new
+        #
+        # @since 2.0.0
+        def initialize
+          super("Invalid document provided.")
+        end
+      end
     end
 
     # Encapsulates all logic for a chain of operations between executions.
@@ -181,8 +196,8 @@ module Mongo
       #
       # @return [ Hash ] A document response from the server.
       def execute(bulk_write, write_concern = nil)
-        raise Exception.new("No ops to execute") if @ops.empty?
-        raise Exception.new("Bulk object already executed") if executed?
+        raise EmptyBatch.new if @ops.empty?
+        raise AlreadyExecuted.new if executed?
 
         # @todo: Record user-ordering of ops in this batch
         #@ops.each_with_index { |op, index| op.set_order(index) }
@@ -307,6 +322,38 @@ module Mongo
           response
         end
         response['writeErrors'] ? response.merge!('errmsg' => 'batch item errors occurred') : response
+      end
+
+      # Exception raised if the batch is empty.
+      #
+      # @since 2.0.0
+      class EmptyBatch < DriverError
+
+        # Instantiate the new exception.
+        #
+        # @example Instantiate the exception.
+        #   Mongo::Bulk::Batch::EmptyBatch.new
+        #
+        # @since 2.0.0
+        def initialize
+          super("No operations to execute.")
+        end
+      end
+
+      # Exception raised if the object is not a valid document.
+      #
+      # @since 2.0.0
+      class AlreadyExecuted < DriverError
+
+        # Instantiate the new exception.
+        #
+        # @example Instantiate the exception.
+        #   Mongo::Bulk::Batch::AlreadyExecuted.new
+        #
+        # @since 2.0.0
+        def initialize
+          super("The operations have already been executed.")
+        end
       end
     end
   end
