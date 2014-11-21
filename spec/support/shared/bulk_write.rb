@@ -160,7 +160,7 @@ shared_examples 'a bulk write object' do
         it 'raises an exception' do
           expect do
             bulk.find({}).update([])
-          end.to raise_exception
+          end.to raise_error(Mongo::Bulk::BulkCollectionView::InvalidUpdateDoc)
         end
       end
 
@@ -170,7 +170,7 @@ shared_examples 'a bulk write object' do
         it 'raises an exception' do
           expect do
             bulk.find({}).update(update_doc)
-          end.to raise_exception
+          end.to raise_error(Mongo::Bulk::BulkCollectionView::InvalidUpdateDoc)
         end
       end
     end
@@ -240,7 +240,7 @@ shared_examples 'a bulk write object' do
         it 'raises an exception' do
           expect do
             bulk.find({}).update_one([])
-          end.to raise_exception
+          end.to raise_error(Mongo::Bulk::BulkCollectionView::InvalidUpdateDoc)
         end
       end
 
@@ -253,7 +253,7 @@ shared_examples 'a bulk write object' do
         it 'raises an exception' do
           expect do
             bulk.find({}).update_one(update_doc)
-          end.to raise_exception
+          end.to raise_error(Mongo::Bulk::BulkCollectionView::InvalidUpdateDoc)
         end
       end
     end
@@ -296,7 +296,7 @@ shared_examples 'a bulk write object' do
 
   context '#replace' do
 
-    it 'does not exist' do
+    it 'is not implemented' do
       expect do
         bulk.find({}).replace(:x => 1)
       end.to raise_exception
@@ -332,7 +332,7 @@ shared_examples 'a bulk write object' do
         it 'raises an exception' do
           expect do
             bulk.find({}).replace_one([])
-          end.to raise_exception
+          end.to raise_error(Mongo::Bulk::BulkCollectionView::InvalidReplacementDoc)
         end
       end
 
@@ -346,7 +346,7 @@ shared_examples 'a bulk write object' do
 
           expect do
             bulk.find({}).replace_one(replacement)
-          end.to raise_exception
+          end.to raise_error(Mongo::Bulk::BulkCollectionView::InvalidReplacementDoc)
         end
       end
     end
