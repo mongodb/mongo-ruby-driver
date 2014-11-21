@@ -69,8 +69,8 @@ module Mongo
     def add(address)
       unless addresses.include?(address)
         log(:debug, 'MONGODB', [ "Adding #{address} to the cluster." ])
-        server = Server.new(address, options)
         addresses.push(address)
+        server = Server.new(address, options)
         @servers.push(server)
         server
       end
@@ -91,11 +91,10 @@ module Mongo
       @options = options.freeze
       @topology = Topology.get(options)
       @servers = addresses.map do |address|
-        Server.new(address, options).tap do |server|
-          subscribe_to(server, Event::SERVER_ADDED, Event::ServerAdded.new(self))
-          subscribe_to(server, Event::SERVER_REMOVED, Event::ServerRemoved.new(self))
-        end
+        Server.new(address, options)
       end
+      subscribe_to(Event::SERVER_ADDED, Event::ServerAdded.new(self))
+      subscribe_to(Event::SERVER_REMOVED, Event::ServerRemoved.new(self))
     end
 
     # Get the next primary server we can send an operation to.

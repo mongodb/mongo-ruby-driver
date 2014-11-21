@@ -20,18 +20,17 @@ module Mongo
     # @since 2.0.0
     module Subscriber
 
-      # Subscribe to the provided publisher's event.
+      # Subscribe to the provided event.
       #
       # @example Subscribe to the event.
-      #   subscriber.subscribe_to(publisher, 'test', listener)
+      #   subscriber.subscribe_to('test', listener)
       #
-      # @param [ Mongo::Event::Publisher ] publisher The publisher.
       # @param [ String ] event The event.
       # @param [ Object ] listener The event listener.
       #
       # @since 2.0.0
-      def subscribe_to(publisher, event, listener)
-        publisher.add_listener(event, listener)
+      def subscribe_to(event, listener)
+        Event.add_listener(event, listener)
       end
     end
   end
