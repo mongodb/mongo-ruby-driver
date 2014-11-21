@@ -80,6 +80,8 @@ def list_command_enabled?
   @list_command_enabled ||= @client.cluster.servers.first.features.list_indexes_enabled?
 end
 
+alias :scram_sha_1_enabled? :list_command_enabled?
+
 # Depending on whether write commands are enabled, there are different documents that
 # are guaranteed to cause a delete failure.
 #

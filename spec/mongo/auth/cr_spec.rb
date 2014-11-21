@@ -48,7 +48,7 @@ describe Mongo::Auth::CR do
       cr.login(connection).documents[0]
     end
 
-    it 'logs the user into the connection', unless: list_command_enabled? do
+    it 'logs the user into the connection', unless: scram_sha_1_enabled? do
       expect(cr.login(connection).documents[0]['ok']).to eq(1)
     end
   end
