@@ -146,7 +146,7 @@ module Mongo
         end
 
         def messages
-          if ordered?
+          if ordered? || gle
             documents.collect do |doc|
               Protocol::Insert.new(db_name, coll_name, [ doc ], options)
             end
