@@ -68,8 +68,10 @@ module Mongo
       private
 
       def execute_message(context)
-        context.with_connection do |connection|
-          Result.new(connection.dispatch([ message ])).validate!
+        log(:debug, 'MONGODB | MAP/REDUCE', [ message ]) do |messages|
+          context.with_connection do |connection|
+            Result.new(connection.dispatch(messages)).validate!
+          end
         end
       end
 
