@@ -58,6 +58,25 @@ module Mongo
         @flags       = options[:flags] || []
       end
 
+      # The log message for an update operation.
+      #
+      # @example Get the log message.
+      #   update.log_message
+      #
+      # @return [ String ] The log message
+      #
+      # @since 2.0.0
+      def log_message
+        fields = []
+        fields << ["%s |", "UPDATE"]
+        fields << ["namespace=%s", namespace]
+        fields << ["selector=%s", selector.inspect]
+        fields << ["udpdate=%s", update.inspect]
+        fields << ["flags=%s", flags.inspect]
+        f, v = fields.transpose
+        f.join(" ") % v
+      end
+
       private
 
       # The operation code required to specify an Update message.
