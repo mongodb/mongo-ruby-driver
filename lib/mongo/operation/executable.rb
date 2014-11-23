@@ -20,7 +20,6 @@ module Mongo
     #
     # @since 2.0.0
     module Executable
-      include Loggable
 
       # Execute the operation.
       # The context gets a connection on which the operation

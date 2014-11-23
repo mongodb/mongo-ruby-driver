@@ -52,6 +52,7 @@ module Mongo
       # @since 2.0.0
       def log_message
         fields = []
+        fields << ["%s |", "GETMORE"]
         fields << ["namespace=%s", namespace]
         fields << ["number_to_return=%s", number_to_return]
         fields << ["cursor_id=%s", cursor_id]

@@ -76,6 +76,7 @@ module Mongo
       # @since 2.0.0
       def log_message
         fields = []
+        fields << ["%s |", "QUERY"]
         fields << ["namespace=%s", namespace]
         fields << ["selector=%s", selector.inspect]
         fields << ["flags=%s", flags.inspect]
