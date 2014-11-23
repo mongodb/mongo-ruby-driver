@@ -23,7 +23,8 @@ require 'support/matchers'
 require 'support/authorization'
 require 'support/cluster_simulator'
 
-Mongo::Logger.logger = Logger.new($stdout, Logger::DEBUG)
+Mongo::Logger.logger = Logger.new($stdout)
+Mongo::Logger.logger.level = Logger::INFO
 
 RSpec.configure do |config|
   config.color     = true
