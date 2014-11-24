@@ -50,6 +50,14 @@ describe Mongo::Bulk::BulkWrite do
 
       context 'operations exceed max bson size' do
 
+        let(:error) do
+          begin
+            bulk.execute
+          rescue => ex
+            ex
+          end
+        end
+
         before do
           6.times do |i|
             bulk.insert(_id: i, x: 'y'*4000000)
@@ -62,10 +70,12 @@ describe Mongo::Bulk::BulkWrite do
           authorized_collection.find.remove_many
         end
 
-        # @todo should raise exception
+        it 'raises a BulkWriteError' do
+          expect(error).to be_a(Mongo::Bulk::BulkWrite::BulkWriteError)
+        end
 
         it 'splits messages into multiple messages' do
-          bulk.execute
+          error
           expect(authorized_collection.find.count).to eq(6)
         end
       end
@@ -121,6 +131,14 @@ describe Mongo::Bulk::BulkWrite do
 
     context 'operations exceed max bson size' do
 
+      let(:error) do
+        begin
+          bulk.execute
+        rescue => ex
+          ex
+        end
+      end
+
       before do
         15.times do |i|
           bulk.insert(_id: i, x: 'y'*4000000)
@@ -133,10 +151,12 @@ describe Mongo::Bulk::BulkWrite do
         authorized_collection.find.remove_many
       end
 
-      # @todo should raise exception
+      it 'raises a BulkWriteError' do
+        expect(error).to be_a(Mongo::Bulk::BulkWrite::BulkWriteError)
+      end
 
       it 'splits messages into multiple messages' do
-        bulk.execute
+        error
         expect(authorized_collection.find.count).to eq(16)
       end
     end
