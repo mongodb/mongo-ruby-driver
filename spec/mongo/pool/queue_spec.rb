@@ -42,7 +42,7 @@ describe Mongo::Pool::Queue do
       end
 
       it 'returns the enqueued connection' do
-        expect(queue.dequeue(1)).to eq(connection)
+        expect(queue.dequeue).to eq(connection)
       end
     end
   end
@@ -112,6 +112,31 @@ describe Mongo::Pool::Queue do
 
       it 'returns the default size' do
         expect(queue.max_size).to eq(5)
+      end
+    end
+  end
+
+  describe '#wait_timeout' do
+
+    context 'when the wait timeout option is provided' do
+
+      let(:queue) do
+        described_class.new(:wait_queue_timeout => 3) { double('connection') }
+      end
+
+      it 'returns the wait timeout' do
+        expect(queue.wait_timeout).to eq(3)
+      end
+    end
+
+    context 'when the wait timeout option is not provided' do
+
+      let(:queue) do
+        described_class.new { double('connection') }
+      end
+
+      it 'returns the default wait timeout' do
+        expect(queue.wait_timeout).to eq(1)
       end
     end
   end

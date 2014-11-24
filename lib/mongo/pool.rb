@@ -26,9 +26,6 @@ module Mongo
     # Used for synchronization of pools access.
     MUTEX = Mutex.new
 
-    # The default timeout for getting connections from the queue.
-    TIMEOUT = 0.5
-
     # @return [ Hash ] options The pool options.
     attr_reader :options
 
@@ -54,7 +51,7 @@ module Mongo
     #
     # @since 2.0.0
     def checkout
-      queue.dequeue(timeout)
+      queue.dequeue
     end
 
     # Create the new connection pool.
@@ -72,18 +69,6 @@ module Mongo
     def initialize(options = {}, &block)
       @options = options.freeze
       @queue = Queue.new(options, &block)
-    end
-
-    # Get the timeout for checking connections out from the pool.
-    #
-    # @example Get the pool timeout.
-    #   pool.timeout
-    #
-    # @return [ Float ] The pool timeout.
-    #
-    # @since 2.0.0
-    def timeout
-      @timeout ||= options[:connect_timeout] || TIMEOUT
     end
 
     # Yield the block to a connection, while handling checkin/checkout logic.
@@ -130,10 +115,7 @@ module Mongo
       private
 
       def create_pool(server)
-        Pool.new(
-          max_pool_size: server.options[:max_pool_size],
-          timeout: server.options[:connect_timeout]
-        ) do
+        Pool.new(server.options) do
           Connection.new(server, server.options)
         end
       end

@@ -94,29 +94,4 @@ describe Mongo::Pool do
       expect(pool).to eql(described_class.get(server))
     end
   end
-
-  describe '#timeout' do
-
-    context 'when a timeout option is provided' do
-
-      let(:pool) do
-        described_class.new(:connect_timeout => 1) { double('connection') }
-      end
-
-      it 'returns the timeout' do
-        expect(pool.timeout).to eq(1)
-      end
-    end
-
-    context 'when no timeout option is provided' do
-
-      let(:pool) do
-        described_class.new { double('connection') }
-      end
-
-      it 'returns the default timeout' do
-        expect(pool.timeout).to eq(0.5)
-      end
-    end
-  end
 end

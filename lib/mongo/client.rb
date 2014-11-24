@@ -100,6 +100,8 @@ module Mongo
     # @option options [ Symbol ] :mode
     # @option options [ String ] :password
     # @option options [ Integer ] :max_pool_size
+    # @option options [ Integer ] :min_pool_size
+    # @option options [ Float ] :wait_queue_timeout
     # @option options [ Float ] :connect_timeout
     # @option options [ Hash ] :read
     # @option options [ Array<Hash, String> ] :roles
