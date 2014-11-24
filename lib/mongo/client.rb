@@ -112,7 +112,7 @@ module Mongo
     # @since 2.0.0
     def initialize(addresses_or_uri, options = {})
       if addresses_or_uri.is_a?(::String)
-        create_from_uri(addresses_or_uri)
+        create_from_uri(addresses_or_uri, options)
       else
         create_from_addresses(addresses_or_uri, options)
       end
@@ -195,10 +195,10 @@ module Mongo
       @database = Database.new(self, options[:database] || Database::ADMIN)
     end
 
-    def create_from_uri(connection_string)
+    def create_from_uri(connection_string, options = {})
       uri = URI.new(connection_string)
       @cluster = Cluster.new(self, uri.servers)
-      @options = uri.client_options.dup.freeze
+      @options = uri.client_options.merge(options).freeze
       @database = Database.new(self, options[:database] || Database::ADMIN)
     end
   end
