@@ -187,42 +187,19 @@ module Mongo
       @write_concern ||= WriteConcern::Mode.get(options[:write])
     end
 
-    # Exception that is raised when trying to perform operations before ever
-    # telling the client which database to execute ops on.
-    #
-    # @since 2.0.0
-    class NoDatabase < DriverError
-
-      # The message does not need to be dynamic, so is held in a constant.
-      #
-      # @since 2.0.0
-      MESSAGE = 'No database has been set to operate on in the client. ' +
-        'Please do so via: client.use(:db_name).'
-
-      # Instantiate the new exception.
-      #
-      # @example Instantiate the exception.
-      #   NoDatabase.new
-      #
-      # @since 2.0.0
-      def initialize
-        super(MESSAGE)
-      end
-    end
-
     private
 
     def create_from_addresses(addresses, options = {})
       @cluster = Cluster.new(self, addresses, options)
-      @options = options.freeze
-      @database = Database.new(self, options[:database])
+      @options = options.dup.freeze
+      @database = Database.new(self, options[:database] || Database::ADMIN)
     end
 
     def create_from_uri(connection_string)
       uri = URI.new(connection_string)
       @cluster = Cluster.new(self, uri.servers)
-      @options = uri.client_options.freeze
-      @database = Database.new(self, options[:database])
+      @options = uri.client_options.dup.freeze
+      @database = Database.new(self, options[:database] || Database::ADMIN)
     end
   end
 end
