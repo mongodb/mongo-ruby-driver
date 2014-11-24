@@ -26,9 +26,6 @@ module Mongo
     # Used for synchronization of pools access.
     MUTEX = Mutex.new
 
-    # The default max size for the connection pool.
-    POOL_SIZE = 5
-
     # The default timeout for getting connections from the queue.
     TIMEOUT = 0.5
 
@@ -74,19 +71,7 @@ module Mongo
     # @since 2.0.0
     def initialize(options = {}, &block)
       @options = options.freeze
-      @queue = Queue.new(pool_size, &block)
-    end
-
-    # Get the default size of the connection pool.
-    #
-    # @example Get the pool size.
-    #   pool.pool_size
-    #
-    # @return [ Integer ] The size of the pool.
-    #
-    # @since 2.0.0
-    def pool_size
-      @pool_size ||= options[:pool_size] || POOL_SIZE
+      @queue = Queue.new(options, &block)
     end
 
     # Get the timeout for checking connections out from the pool.
@@ -146,7 +131,7 @@ module Mongo
 
       def create_pool(server)
         Pool.new(
-          pool_size: server.options[:pool_size],
+          max_pool_size: server.options[:max_pool_size],
           timeout: server.options[:connect_timeout]
         ) do
           Connection.new(server, server.options)

@@ -99,7 +99,7 @@ module Mongo
     # @option options [ Float ] :heartbeat_frequency
     # @option options [ Symbol ] :mode
     # @option options [ String ] :password
-    # @option options [ Integer ] :pool_size
+    # @option options [ Integer ] :max_pool_size
     # @option options [ Float ] :connect_timeout
     # @option options [ Hash ] :read
     # @option options [ Array<Hash, String> ] :roles
