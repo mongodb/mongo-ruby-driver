@@ -94,7 +94,8 @@ describe Mongo::Bulk::BulkWrite do
         # @todo should raise exception
 
         it 'does not halt execution after first error' do
-          bulk.execute
+          result = bulk.execute
+          expect(result['writeErrors'].first['index']).to eq(3000)
           expect(authorized_collection.find.count).to eq(3001)
         end
       end

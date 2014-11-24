@@ -51,7 +51,7 @@ module Mongo
       #
       # @since 2.0.0
       def update_one(update_doc)
-        raise Exception unless update_doc?(update_doc)
+        raise InvalidUpdateDoc.new unless update_doc?(update_doc)
         multi_or_single_update(update_doc, false)
       end
 
@@ -63,7 +63,7 @@ module Mongo
       #
       # @since 2.0.0
       def update(update_doc)
-        raise Exception unless update_doc?(update_doc)
+        raise InvalidUpdateDoc.new unless update_doc?(update_doc)
         multi_or_single_update(update_doc, true)
       end
 
@@ -76,7 +76,7 @@ module Mongo
       #
       # @since 2.0.0
       def replace_one(replace_doc)
-        raise Exception unless replace_doc?(replace_doc)
+        raise InvalidReplacementDoc.new unless replace_doc?(replace_doc)
         multi_or_single_update(replace_doc, false)
       end
 
@@ -107,7 +107,7 @@ module Mongo
       #
       # @since 2.0.0
       def update_doc?(doc)
-        !doc.empty? && doc.keys.first.to_s =~ /^\$/
+        !doc.empty? && doc.respond_to?(:keys) && doc.keys.first.to_s =~ /^\$/
       end
 
       # Is the document a valid replacement document?
@@ -117,7 +117,7 @@ module Mongo
       #
       # @since 2.0.0
       def replace_doc?(doc)
-        doc.keys.all?{|key| key !~ /^\$/}
+        doc.respond_to?(:keys) && doc.keys.all?{|key| key !~ /^\$/}
       end
 
       # Either do a multi update or a single update.
@@ -131,7 +131,7 @@ module Mongo
       #
       # @since 2.0.0
       def multi_or_single_update(update_doc, multi = false)
-        raise Exception unless @selector
+        raise MissingQuerySelector.new unless @selector
 
         spec = { updates:   [{ q: @selector,
                                u: update_doc,
@@ -155,7 +155,7 @@ module Mongo
       #
       # @since 2.0.0
       def multi_or_single_remove(multi = false)
-        raise Exception unless @selector
+        raise MissingQuerySelector.new unless @selector
         
         spec = { deletes:   [{ q: @selector,
                                limit: multi ? 0 : 1 }],
@@ -165,6 +165,54 @@ module Mongo
 
         @bulk_write.tap do |b|
           b.push_op(Mongo::Operation::Write::BulkDelete, spec)
+        end
+      end
+
+      # Exception raised if the object is not a valid update document.
+      #
+      # @since 2.0.0
+      class InvalidUpdateDoc < DriverError
+
+        # Instantiate the new exception.
+        #
+        # @example Instantiate the exception.
+        #   Mongo::Bulk::BulkCollectionView::InvalidUpdateDoc.new
+        #
+        # @since 2.0.0
+        def initialize
+          super("Invalid update document provided.")
+        end
+      end
+
+      # Exception raised if the object is not a valid replacement document.
+      #
+      # @since 2.0.0
+      class InvalidReplacementDoc < DriverError
+
+        # Instantiate the new exception.
+        #
+        # @example Instantiate the exception.
+        #   Mongo::Bulk::BulkCollectionView::InvalidReplacementDoc.new
+        #
+        # @since 2.0.0
+        def initialize
+          super("Invalid replacement document provided.")
+        end
+      end
+
+      # Exception raised if there is no query selector defined.
+      #
+      # @since 2.0.0
+      class MissingQuerySelector < DriverError
+
+        # Instantiate the new exception.
+        #
+        # @example Instantiate the exception.
+        #   Mongo::Bulk::BulkCollectionView::MissingQuerySelector.new
+        #
+        # @since 2.0.0
+        def initialize
+          super("You must first provide a query selector.")
         end
       end
     end

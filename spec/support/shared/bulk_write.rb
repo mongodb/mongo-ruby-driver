@@ -26,14 +26,14 @@ shared_examples 'a bulk write object' do
 
     context 'when non-hash arguments are provided' do
 
-      it 'raises an exception' do
+      it 'raises an InvalidDoc exception' do
         expect do
           bulk.insert('foo')
-        end.to raise_exception
+        end.to raise_error(Mongo::Bulk::BulkWrite::InvalidDoc)
 
         expect do
           bulk.insert([])
-        end.to raise_exception
+        end.to raise_error(Mongo::Bulk::BulkWrite::InvalidDoc)
       end
     end
 
@@ -160,7 +160,7 @@ shared_examples 'a bulk write object' do
         it 'raises an exception' do
           expect do
             bulk.find({}).update([])
-          end.to raise_exception
+          end.to raise_error(Mongo::Bulk::BulkCollectionView::InvalidUpdateDoc)
         end
       end
 
@@ -170,7 +170,7 @@ shared_examples 'a bulk write object' do
         it 'raises an exception' do
           expect do
             bulk.find({}).update(update_doc)
-          end.to raise_exception
+          end.to raise_error(Mongo::Bulk::BulkCollectionView::InvalidUpdateDoc)
         end
       end
     end
@@ -240,7 +240,7 @@ shared_examples 'a bulk write object' do
         it 'raises an exception' do
           expect do
             bulk.find({}).update_one([])
-          end.to raise_exception
+          end.to raise_error(Mongo::Bulk::BulkCollectionView::InvalidUpdateDoc)
         end
       end
 
@@ -253,7 +253,7 @@ shared_examples 'a bulk write object' do
         it 'raises an exception' do
           expect do
             bulk.find({}).update_one(update_doc)
-          end.to raise_exception
+          end.to raise_error(Mongo::Bulk::BulkCollectionView::InvalidUpdateDoc)
         end
       end
     end
@@ -296,7 +296,7 @@ shared_examples 'a bulk write object' do
 
   context '#replace' do
 
-    it 'does not exist' do
+    it 'is not implemented' do
       expect do
         bulk.find({}).replace(:x => 1)
       end.to raise_exception
@@ -332,7 +332,7 @@ shared_examples 'a bulk write object' do
         it 'raises an exception' do
           expect do
             bulk.find({}).replace_one([])
-          end.to raise_exception
+          end.to raise_error(Mongo::Bulk::BulkCollectionView::InvalidReplacementDoc)
         end
       end
 
@@ -346,7 +346,7 @@ shared_examples 'a bulk write object' do
 
           expect do
             bulk.find({}).replace_one(replacement)
-          end.to raise_exception
+          end.to raise_error(Mongo::Bulk::BulkCollectionView::InvalidReplacementDoc)
         end
       end
     end
@@ -710,30 +710,31 @@ shared_examples 'a bulk write object' do
     end
   end
 
-  context 're-running a batch' do
-
-    before do
-      bulk.insert(:a => 1)
-      bulk.execute
-    end
-
-    after do
-      authorized_collection.find.remove_many
-    end
-
-    it 'raises an exception' do
-      expect do
-        bulk.execute
-      end.to raise_exception
-    end
-  end
+  pending 're-running a batch'
+  # context 're-running a batch' do
+  #
+  #   before do
+  #     bulk.insert(:a => 1)
+  #     bulk.execute
+  #   end
+  #
+  #   after do
+  #     authorized_collection.find.remove_many
+  #   end
+  #
+  #   it 'raises an exception' do
+  #     expect do
+  #       bulk.execute
+  #     end.to raise_error(Mongo::Bulk::Batch::AlreadyExecuted)
+  #   end
+  # end
 
   context 'empty batch' do
 
     it 'raises an exception' do
       expect do
         bulk.execute
-      end.to raise_exception
+      end.to raise_error(Mongo::Bulk::Batch::EmptyBatch)
     end
   end
 

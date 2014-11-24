@@ -458,8 +458,8 @@ describe Mongo::Operation::Write::BulkInsert do
       end
 
       it 'uses that write concern' do
-        replies = op.write_concern(acknowledged).execute(authorized_primary.context).replies
-        expect(replies.size).to eq(1)
+        result = op.write_concern(acknowledged).execute(authorized_primary.context)
+        expect(result.n_inserted).to eq(2)
       end
     end
 
