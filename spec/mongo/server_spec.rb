@@ -32,7 +32,7 @@ describe Mongo::Server do
         end
       end
 
-      context 'when the addresses dont match', simulator: 'cluster' do
+      context 'when the addresses dont match' do
 
         let(:other) do
           described_class.new('127.0.0.1:27018')

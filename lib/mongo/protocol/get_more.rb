@@ -42,6 +42,24 @@ module Mongo
         @cursor_id = cursor_id
       end
 
+      # The log message for a get more operation.
+      #
+      # @example Get the log message.
+      #   get_more.log_message
+      #
+      # @return [ String ] The log message
+      #
+      # @since 2.0.0
+      def log_message
+        fields = []
+        fields << ["%s |", "GETMORE"]
+        fields << ["namespace=%s", namespace]
+        fields << ["number_to_return=%s", number_to_return]
+        fields << ["cursor_id=%s", cursor_id]
+        f, v = fields.transpose
+        f.join(" ") % v
+      end
+
       # Get more messages require replies from the database.
       #
       # @example Does the message require a reply?

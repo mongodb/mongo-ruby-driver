@@ -54,6 +54,24 @@ module Mongo
         @flags = options[:flags] || []
       end
 
+      # The log message for a insert operation.
+      #
+      # @example Get the log message.
+      #   insert.log_message
+      #
+      # @return [ String ] The log message
+      #
+      # @since 2.0.0
+      def log_message
+        fields = []
+        fields << ["%s |", "INSERT"]
+        fields << ["namespace=%s", namespace]
+        fields << ["documents=%s", documents.inspect]
+        fields << ["flags=%s", flags.inspect]
+        f, v = fields.transpose
+        f.join(" ") % v
+      end
+
       private
 
       # The operation code required to specify an Insert message.

@@ -21,6 +21,7 @@ module Mongo
   class ConnectionError < StandardError; end
 
   class Pool
+    include Loggable
 
     # Used for synchronization of pools access.
     MUTEX = Mutex.new

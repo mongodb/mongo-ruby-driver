@@ -22,6 +22,7 @@ module Mongo
         #
         # @since 2.0.0
         class ServerAdded
+          extend Event::Publisher
 
           # Run the server added inspection.
           #
@@ -35,7 +36,7 @@ module Mongo
           def self.run(description, updated)
             updated.hosts.each do |host|
               unless description.hosts.include?(host)
-                description.server.publish(Event::SERVER_ADDED, host)
+                publish(Event::SERVER_ADDED, host)
               end
             end
           end

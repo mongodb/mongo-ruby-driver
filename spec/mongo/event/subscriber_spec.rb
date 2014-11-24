@@ -10,10 +10,6 @@ describe Mongo::Event::Subscriber do
 
   describe '#subscribe_to' do
 
-    let(:publisher) do
-      double('publisher')
-    end
-
     let(:listener) do
       double('listener')
     end
@@ -22,9 +18,13 @@ describe Mongo::Event::Subscriber do
       klass.new
     end
 
+    after do
+      Mongo::Event.listeners.delete('test')
+    end
+
     it 'adds subscribes the listener to the publisher' do
-      expect(publisher).to receive(:add_listener).with('test', listener)
-      subscriber.subscribe_to(publisher, 'test', listener)
+      expect(Mongo::Event).to receive(:add_listener).with('test', listener)
+      subscriber.subscribe_to('test', listener)
     end
   end
 end

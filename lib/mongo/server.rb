@@ -25,7 +25,6 @@ module Mongo
   #
   # @since 2.0.0
   class Server
-    include Event::Publisher
     extend Forwardable
 
     # @return [ Features ] The server features.

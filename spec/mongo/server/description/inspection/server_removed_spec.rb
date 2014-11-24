@@ -30,7 +30,11 @@ describe Mongo::Server::Description::Inspection::ServerRemoved do
     end
 
     before do
-      server.add_listener(Mongo::Event::SERVER_REMOVED, listener)
+      Mongo::Event.add_listener(Mongo::Event::SERVER_REMOVED, listener)
+    end
+
+    after do
+      Mongo::Event.listeners[Mongo::Event::SERVER_REMOVED].delete(listener)
     end
 
     context 'when no server is removed' do

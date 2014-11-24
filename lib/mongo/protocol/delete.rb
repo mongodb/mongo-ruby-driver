@@ -46,6 +46,24 @@ module Mongo
         @flags     = options[:flags] || []
       end
 
+      # The log message for a delete operation.
+      #
+      # @example Get the log message.
+      #   delete.log_message
+      #
+      # @return [ String ] The log message
+      #
+      # @since 2.0.0
+      def log_message
+        fields = []
+        fields << ["%s |", "DELETE"]
+        fields << ["namespace=%s", namespace]
+        fields << ["selector=%s", selector.inspect]
+        fields << ["flags=%s", flags.inspect]
+        f, v = fields.transpose
+        f.join(" ") % v
+      end
+
       private
 
       # The operation code required to specify a Delete message.

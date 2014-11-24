@@ -30,7 +30,11 @@ describe Mongo::Server::Description::Inspection::ServerAdded do
     end
 
     before do
-      server.add_listener(Mongo::Event::SERVER_ADDED, listener)
+      Mongo::Event.add_listener(Mongo::Event::SERVER_ADDED, listener)
+    end
+
+    after do
+      Mongo::Event.listeners[Mongo::Event::SERVER_ADDED].delete(listener)
     end
 
     context 'when a server is added' do

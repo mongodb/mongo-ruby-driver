@@ -35,6 +35,22 @@ module Mongo
         @id_count   = @cursor_ids.size
       end
 
+      # The log message for a kill cursors operation.
+      #
+      # @example Get the log message.
+      #   kill_cursors.log_message
+      #
+      # @return [ String ] The log message
+      #
+      # @since 2.0.0
+      def log_message
+        fields = []
+        fields << ["%s |", "KILLCURSORS"]
+        fields << ["cursor_ids=%s", cursor_ids.inspect]
+        f, v = fields.transpose
+        f.join(" ") % v
+      end
+
       private
 
       # The operation code required to specify +KillCursors+ message.

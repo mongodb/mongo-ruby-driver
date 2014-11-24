@@ -42,6 +42,18 @@ describe Mongo::Logger do
 
     context 'when no logger has been set' do
 
+      let(:test_logger) do
+        Mongo::Logger.logger
+      end
+
+      before do
+        Mongo::Logger.logger = nil
+      end
+
+      after do
+        Mongo::Logger.logger = test_logger
+      end
+
       it 'returns the default logger' do
         expect(logger.level).to eq(Logger::DEBUG)
       end
@@ -62,15 +74,15 @@ describe Mongo::Logger do
       end
 
       before do
-        described_class.logger = info
-      end
-
-      after do
         described_class.logger = debug
       end
 
+      after do
+        described_class.logger = info
+      end
+
       it 'returns the provided logger' do
-        expect(logger.level).to eq(Logger::INFO)
+        expect(logger.level).to eq(Logger::DEBUG)
       end
     end
   end

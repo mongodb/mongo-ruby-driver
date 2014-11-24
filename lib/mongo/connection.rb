@@ -18,6 +18,7 @@ module Mongo
   #
   # @since 2.0.0
   class Connection
+    include Loggable
     extend Forwardable
 
     # The default time in seconds to timeout a connection attempt.
@@ -111,8 +112,10 @@ module Mongo
     #
     # @since 2.0.0
     def dispatch(messages)
-      write(messages)
-      messages.last.replyable? ? read : nil
+      log(:debug, 'MONGODB', messages) do |msgs|
+        write(msgs)
+        msgs.last.replyable? ? read : nil
+      end
     end
 
     # Initialize a new socket connection from the client to the server.
