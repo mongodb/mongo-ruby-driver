@@ -21,7 +21,6 @@ require 'mongo'
 
 require 'support/matchers'
 require 'support/authorization'
-require 'support/cluster_simulator'
 
 Mongo::Logger.logger = Logger.new($stdout)
 Mongo::Logger.logger.level = Logger::INFO
@@ -31,8 +30,6 @@ RSpec.configure do |config|
   config.fail_fast = true unless ENV['CI'] || ENV['JENKINS_HOME']
   config.formatter = 'documentation'
   config.include(Authorization)
-  config.include(ClusterSimulator::Helpers)
-  ClusterSimulator.configure(config)
 
   config.before(:suite) do
     begin
