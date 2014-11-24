@@ -88,7 +88,7 @@ module Mongo
           def n_inserted
             return 0 unless acknowledged?
             @replies.reduce(0) do |n, reply|
-              n += 1 if reply.documents.first[OK] == 1
+              n += 1 unless reply_write_errors?(reply)
               n
             end
           end
