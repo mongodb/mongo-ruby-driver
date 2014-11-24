@@ -221,6 +221,36 @@ describe Mongo::Client do
           expect(client.options).to eq(:write => { :w => 3 }, :database => 'testdb')
         end
       end
+
+      context 'when options are provided not in the string' do
+
+        let!(:uri) do
+          'mongodb://127.0.0.1:27017/testdb'
+        end
+
+        let(:client) do
+          described_class.new(uri, :write => { :w => 3 })
+        end
+
+        it 'sets the options' do
+          expect(client.options).to eq(:write => { :w => 3 }, :database => 'testdb')
+        end
+      end
+
+      context 'when options are provided in the string and explicitly' do
+
+        let!(:uri) do
+          'mongodb://127.0.0.1:27017/testdb?w=3'
+        end
+
+        let(:client) do
+          described_class.new(uri, :write => { :w => 4 })
+        end
+
+        it 'allows explicit options to take preference' do
+          expect(client.options).to eq(:write => { :w => 4 }, :database => 'testdb')
+        end
+      end
     end
   end
 
