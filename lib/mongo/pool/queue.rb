@@ -21,6 +21,10 @@ module Mongo
     #
     # @since 2.0.0
     class Queue
+      extend Forwardable
+
+      # Size of the queue delegates to the wrapped queue.
+      def_delegators :queue, :size
 
       # The default max size for the queue.
       MAX_SIZE = 5.freeze
@@ -85,7 +89,7 @@ module Mongo
         @block = block
         @connections = 0
         @options = options
-        @queue = []
+        @queue = Array.new(min_size, create_connection)
         @mutex = Mutex.new
         @resource = ConditionVariable.new
       end

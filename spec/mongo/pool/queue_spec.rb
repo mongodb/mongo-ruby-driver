@@ -49,12 +49,12 @@ describe Mongo::Pool::Queue do
 
   describe '#enqueue' do
 
-    let(:queue) do
-      described_class.new { double('connection') }
-    end
-
     let(:connection) do
       double('connection')
+    end
+
+    let(:queue) do
+      described_class.new { connection }
     end
 
     before do
@@ -63,6 +63,31 @@ describe Mongo::Pool::Queue do
 
     it 'adds the connection to the queue' do
       expect(queue.dequeue).to eq(connection)
+    end
+  end
+
+  describe '#initialize' do
+
+    context 'when a min size is provided' do
+
+      let(:queue) do
+        described_class.new(:min_pool_size => 2) { double('connection') }
+      end
+
+      it 'creates the queue with the minimum connections' do
+        expect(queue.size).to eq(2)
+      end
+    end
+
+    context 'when no min size is provided' do
+
+      let(:queue) do
+        described_class.new { double('connection') }
+      end
+
+      it 'creates the queue with the default connections' do
+        expect(queue.size).to eq(1)
+      end
     end
   end
 
