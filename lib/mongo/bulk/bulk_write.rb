@@ -153,6 +153,28 @@ module Mongo
           super("Invalid document provided.")
         end
       end
+
+      # Exception raised if there are write errors upon executing the bulk
+      # operation.
+      #
+      # @since 2.0.0
+      class BulkWriteError < OperationError
+
+        attr_reader :result
+
+        # Instantiate the new exception.
+        #
+        # @example Instantiate the exception.
+        #   Mongo::Bulk::BulkWrite::BulkWriteError.new(response)
+        #
+        # @params [ Hash ] result A processed response from the server
+        #   reporting results of the operation.
+        #
+        # @since 2.0.0
+        def initialize(result)
+          @result = result
+        end
+      end
     end
 
     # Encapsulates all logic for a chain of operations between executions.
@@ -199,9 +221,6 @@ module Mongo
         raise EmptyBatch.new if @ops.empty?
         raise AlreadyExecuted.new if executed?
 
-        # @todo: Record user-ordering of ops in this batch
-        #@ops.each_with_index { |op, index| op.set_order(index) }
-
         @executed = true
         ops = merge_ops
 
@@ -224,9 +243,9 @@ module Mongo
             raise ex unless op.batchable?
             ops = op.batch(2) + ops
           end
-          return make_response(replies) if stop_executing?(replies.last)
+          return make_response!(replies) if stop_executing?(replies.last)
         end
-        make_response(replies) if write_concern.get_last_error
+        make_response!(replies) if write_concern.get_last_error
       end
 
       private
@@ -310,7 +329,7 @@ module Mongo
       # Process the response from the server after the bulk execution.
       #
       # @return [ Hash ] The response from the server.
-      def make_response(results)
+      def make_response!(results)
         response = results.reduce({}) do |response, result|
           write_errors = result.aggregate_write_errors
           response['nInserted'] = ( response['nInserted'] || 0 ) + result.n_inserted if result.respond_to?(:n_inserted)
@@ -321,7 +340,12 @@ module Mongo
           response['writeErrors'] = ( response['writeErrors'] || [] ) + write_errors if write_errors
           response
         end
-        response['writeErrors'] ? response.merge!('errmsg' => 'batch item errors occurred') : response
+        if response['writeErrors']
+          response.merge!('errmsg' => 'batch item errors occurred')
+          raise Mongo::Bulk::BulkWrite::BulkWriteError.new(response)
+        else
+          response
+        end
       end
 
       # Exception raised if the batch is empty.
