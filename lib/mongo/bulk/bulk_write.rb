@@ -340,6 +340,7 @@ module Mongo
           response['writeErrors'] = ( response['writeErrors'] || [] ) + write_errors if write_errors
           response
         end
+
         if response['writeErrors']
           response.merge!('errmsg' => 'batch item errors occurred')
           raise Mongo::Bulk::BulkWrite::BulkWriteError.new(response)
