@@ -155,11 +155,11 @@ describe Mongo::Client do
       context 'when no database is provided' do
 
         let(:client) do
-          described_class.new(['127.0.0.1:27017'], :read => :secondary, :database => TEST_DB)
+          described_class.new(['127.0.0.1:27017'], :read => :secondary)
         end
 
-        it 'sets the options on the client' do
-          expect(client.options).to eq(:read => :secondary, :database => TEST_DB)
+        it 'defaults the database to admin' do
+          expect(client.database.name).to eq('admin')
         end
       end
 
@@ -202,8 +202,8 @@ describe Mongo::Client do
           described_class.new(uri)
         end
 
-        it 'raises an error' do
-          expect { client }.to raise_error(Mongo::Database::InvalidName)
+        it 'defaults the database to admin' do
+          expect(client.database.name).to eq('admin')
         end
       end
 
@@ -334,10 +334,8 @@ describe Mongo::Client do
 
     context 'when providing nil' do
 
-      it 'raises an error' do
-        expect do
-          client.use(nil)
-        end.to raise_error(Mongo::Database::InvalidName)
+      it 'defaults the database to admin' do
+        expect(client.use(nil).database.name).to eq('admin')
       end
     end
   end

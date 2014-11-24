@@ -134,8 +134,8 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(options)
-        @auth_source = options[:auth_source] || options[:database]
-        @database = options[:database]
+        @auth_source = options[:auth_source] || options[:database] || Database::ADMIN
+        @database = options[:database] || Database::ADMIN
         @name = options[:user]
         @password = options[:password] || options[:pwd]
         @mechanism = options[:auth_mech] || :mongodb_cr
