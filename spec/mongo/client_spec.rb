@@ -251,6 +251,21 @@ describe Mongo::Client do
           expect(client.options).to eq(:write => { :w => 4 }, :database => 'testdb')
         end
       end
+
+      context 'when a replica set name is provided' do
+
+        let!(:uri) do
+          'mongodb://127.0.0.1:27017/testdb?replicaSet=testing'
+        end
+
+        let(:client) do
+          described_class.new(uri)
+        end
+
+        it 'sets the correct cluster topology' do
+          expect(client.cluster.topology).to eq(Mongo::Cluster::Topology::ReplicaSet)
+        end
+      end
     end
   end
 

@@ -42,7 +42,7 @@ describe Mongo::Cluster::Topology do
       context 'when a set name is in the options' do
 
         let(:topology) do
-          described_class.get(set_name: 'testing')
+          described_class.get(replica_set: 'testing')
         end
 
         it 'returns a replica set topology' do
