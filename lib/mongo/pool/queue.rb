@@ -32,6 +32,9 @@ module Mongo
       # The default min size for the queue.
       MIN_SIZE = 1.freeze
 
+      # The default timeout, in seconds, to wait for a connection.
+      WAIT_TIMEOUT = 1.freeze
+
       # @return [ Array ] queue The underlying array of connections.
       attr_reader :queue
 
@@ -48,16 +51,14 @@ module Mongo
       # for an item if none is in the queue.
       #
       # @example Dequeue a connection.
-      #   queue.dequeue(1.0)
-      #
-      # @param [ Float ] timeout The time to wait in seconds.
+      #   queue.dequeue
       #
       # @return [ Mongo::Pool::Connection ] The next connection.
       #
       # @since 2.0.0
-      def dequeue(timeout = 0.5)
+      def dequeue
         mutex.synchronize do
-          dequeue_connection(timeout)
+          dequeue_connection
         end
       end
 
@@ -80,9 +81,14 @@ module Mongo
       # the initial size of the queue.
       #
       # @example Create the queue.
-      #   Mongo::Pool::Queue.new(5)
+      #   Mongo::Pool::Queue.new(max_pool_size: 5) { Connection.new }
       #
       # @param [ Integer ] size The initial size of the queue.
+      #
+      # @option options [ Integer ] :max_pool_size The maximum size.
+      # @option options [ Integer ] :min_pool_size The minimum size.
+      # @option options [ Float ] :wait_queue_timeout The time to wait, in
+      #   seconds, for a free connection.
       #
       # @since 2.0.0
       def initialize(options = {}, &block)
@@ -118,15 +124,27 @@ module Mongo
         @min_size ||= options[:min_pool_size] || MIN_SIZE
       end
 
+      # The time to wait, in seconds, for a connection to become available.
+      #
+      # @example Get the wait timeout.
+      #   queue.wait_timeout
+      #
+      # @return [ Float ] The queue wait timeout.
+      #
+      # @since 2.0.0
+      def wait_timeout
+        @wait_timeout ||= options[:wait_queue_timeout] || WAIT_TIMEOUT
+      end
+
       private
 
-      def dequeue_connection(timeout)
-        deadline = Time.now - timeout
+      def dequeue_connection
+        deadline = Time.now - wait_timeout
         loop do
           return queue.delete_at(0) unless queue.empty?
           connection = create_connection
           return connection if connection
-          wait_for_next!(deadline, timeout)
+          wait_for_next!(deadline)
         end
       end
 
@@ -137,10 +155,10 @@ module Mongo
         end
       end
 
-      def wait_for_next!(deadline, timeout)
+      def wait_for_next!(deadline)
         wait = deadline - Time.now
         if wait <= 0
-          raise Timeout::Error.new("Timed out attempting to dequeue connection after #{timeout} sec.")
+          raise Timeout::Error.new("Timed out attempting to dequeue connection after #{wait_timeout} sec.")
         end
         resource.wait(mutex, wait)
       end
