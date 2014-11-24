@@ -429,6 +429,26 @@ describe Mongo::URI do
       end
     end
 
+    context 'when providing maxPoolSize' do
+
+      let(:max_pool_size) { 10 }
+      let(:options) { "maxPoolSize=#{max_pool_size}" }
+
+      it 'sets the max pool size option' do
+        expect(uri.options[:max_pool_size]).to eq(max_pool_size)
+      end
+    end
+
+    context 'when providing minPoolSize' do
+
+      let(:min_pool_size) { 5 }
+      let(:options) { "minPoolSize=#{min_pool_size}" }
+
+      it 'sets the min pool size option' do
+        expect(uri.options[:min_pool_size]).to eq(min_pool_size)
+      end
+    end
+
     context 'ssl' do
       let(:options) { "ssl=#{ssl}" }
 

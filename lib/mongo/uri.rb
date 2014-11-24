@@ -214,6 +214,10 @@ module Mongo
     option 'readPreference', :mode, :group => :read, :type => :read_mode
     option 'readPreferenceTags', :tags, :group => :read, :type => :read_tags
 
+    # Pool options
+    option 'minPoolSize', :min_pool_size
+    option 'maxPoolSize', :max_pool_size
+
     # Security Options
     option 'ssl', :ssl
 
