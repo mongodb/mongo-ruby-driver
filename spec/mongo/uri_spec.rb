@@ -449,6 +449,16 @@ describe Mongo::URI do
       end
     end
 
+    context 'when providing waitQueueTimeoutMS' do
+
+      let(:wait_queue_timeout) { 500 }
+      let(:options) { "waitQueueTimeoutMS=#{wait_queue_timeout}" }
+
+      it 'sets the wait queue timeout option' do
+        expect(uri.options[:wait_queue_timeout]).to eq(0.5)
+      end
+    end
+
     context 'ssl' do
       let(:options) { "ssl=#{ssl}" }
 

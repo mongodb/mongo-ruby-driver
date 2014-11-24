@@ -217,6 +217,7 @@ module Mongo
     # Pool options
     option 'minPoolSize', :min_pool_size
     option 'maxPoolSize', :max_pool_size
+    option 'waitQueueTimeoutMS', :wait_queue_timeout, :type => :ms_convert
 
     # Security Options
     option 'ssl', :ssl
@@ -403,6 +404,19 @@ module Mongo
                             properties[:canonicalize_host_name] == 'true')
       end
       properties
+    end
+
+    # Ruby's convention is to provide timeouts in seconds, not milliseconds and
+    # to use fractions where more precision is necessary. The connection string
+    # options are always in MS so we provide an easy conversion type.
+    #
+    # @param [ Integer ] value The millisecond value.
+    #
+    # @return [ Float ] The seconds value.
+    #
+    # @since 2.0.0
+    def ms_convert(value)
+      value.to_f / 1000
     end
 
     # Extract values from the string and put them into a nested hash.
