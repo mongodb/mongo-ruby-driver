@@ -27,7 +27,7 @@ describe Mongo::Pool do
       end
 
       it 'returns the connection to the queue' do
-        expect(queue.size).to eq(5)
+        expect(queue.size).to eq(1)
       end
     end
   end
@@ -92,31 +92,6 @@ describe Mongo::Pool do
 
     it 'returns the pool for the server' do
       expect(pool).to eql(described_class.get(server))
-    end
-  end
-
-  describe '#pool_size' do
-
-    context 'when a pool size option is provided' do
-
-      let(:pool) do
-        described_class.new(:pool_size => 3) { double('connection') }
-      end
-
-      it 'returns the pool size' do
-        expect(pool.pool_size).to eq(3)
-      end
-    end
-
-    context 'when no pool size option is not provided' do
-
-      let(:pool) do
-        described_class.new { double('connection') }
-      end
-
-      it 'returns the default pool size' do
-        expect(pool.pool_size).to eq(5)
-      end
     end
   end
 

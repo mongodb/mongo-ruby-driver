@@ -98,7 +98,7 @@ describe Mongo::Server do
     end
 
     it 'returns the connection pool for the server' do
-      expect(pool.pool_size).to eq(5)
+      expect(pool).to be_a(Mongo::Pool)
     end
   end
 end

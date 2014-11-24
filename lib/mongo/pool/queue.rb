@@ -22,11 +22,20 @@ module Mongo
     # @since 2.0.0
     class Queue
 
+      # The default max size for the queue.
+      MAX_SIZE = 5.freeze
+
+      # The default min size for the queue.
+      MIN_SIZE = 1.freeze
+
       # @return [ Array ] queue The underlying array of connections.
       attr_reader :queue
 
       # @return [ Mutex ] mutex The mutex used for synchronization.
       attr_reader :mutex
+
+      # @return [ Hash ] options The options.
+      attr_reader :options
 
       # @return [ ConditionVariable ] resource The resource.
       attr_reader :resource
@@ -72,10 +81,37 @@ module Mongo
       # @param [ Integer ] size The initial size of the queue.
       #
       # @since 2.0.0
-      def initialize(size = 0)
-        @queue = Array.new(size) { yield }
+      def initialize(options = {}, &block)
+        @block = block
+        @connections = 0
+        @options = options
+        @queue = []
         @mutex = Mutex.new
         @resource = ConditionVariable.new
+      end
+
+      # Get the maximum size of the queue.
+      #
+      # @example Get the max size.
+      #   queue.max_size
+      #
+      # @return [ Integer ] The maximum size of the queue.
+      #
+      # @since 2.0.0
+      def max_size
+        @max_size ||= options[:max_pool_size] || MAX_SIZE
+      end
+
+      # Get the minimum size of the queue.
+      #
+      # @example Get the min size.
+      #   queue.min_size
+      #
+      # @return [ Integer ] The minimum size of the queue.
+      #
+      # @since 2.0.0
+      def min_size
+        @min_size ||= options[:min_pool_size] || MIN_SIZE
       end
 
       private
@@ -84,12 +120,25 @@ module Mongo
         deadline = Time.now - timeout
         loop do
           return queue.delete_at(0) unless queue.empty?
-          wait = deadline - Time.now
-          if wait <= 0
-            raise Timeout::Error.new("Timed out attempting to dequeue connection after #{timeout} sec.")
-          end
-          resource.wait(mutex, wait)
+          connection = create_connection
+          return connection if connection
+          wait_for_next!(deadline, timeout)
         end
+      end
+
+      def create_connection
+        if @connections < max_size
+          @connections += 1
+          @block.call
+        end
+      end
+
+      def wait_for_next!(deadline, timeout)
+        wait = deadline - Time.now
+        if wait <= 0
+          raise Timeout::Error.new("Timed out attempting to dequeue connection after #{timeout} sec.")
+        end
+        resource.wait(mutex, wait)
       end
     end
   end
