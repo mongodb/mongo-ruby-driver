@@ -66,13 +66,14 @@ module Mongo
           #
           # @since 2.0.0
           def aggregate_write_errors
-            @replies.reduce([]) do |all_write_errors, reply|
+            @replies.reduce(nil) do |errors, reply|
               if write_errors = reply.documents.first['writeErrors']
+                errors ||= []
                 write_errors.each do |write_error|
-                  all_write_errors << write_error.merge('index' => indexes[write_error['index']])
+                  errors << write_error.merge('index' => indexes[write_error['index']])
                 end
-                all_write_errors
               end
+              errors
             end
           end
         end
@@ -122,13 +123,14 @@ module Mongo
           #
           # @since 2.0.0
           def aggregate_write_errors
-            @replies.each_with_index.reduce([]) do |errors, (reply, i)|
-              errors.tap do |e|
-                e << { 'errmsg' => reply.documents.first[Operation::ERROR],
-                       'index' => indexes[i],
-                       'code' => reply.documents.first[Operation::ERROR_CODE]
-                     } if reply_write_errors?(reply)
+            @replies.each_with_index.reduce(nil) do |errors, (reply, i)|
+              if reply_write_errors?(reply)
+                errors ||= []
+                errors << { 'errmsg' => reply.documents.first[Operation::ERROR],
+                            'index' => indexes[i],
+                            'code' => reply.documents.first[Operation::ERROR_CODE] }
               end
+              errors
             end
           end
 
