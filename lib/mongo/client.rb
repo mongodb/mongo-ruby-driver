@@ -199,8 +199,8 @@ module Mongo
 
     def create_from_uri(connection_string, options = {})
       uri = URI.new(connection_string)
-      @cluster = Cluster.new(self, uri.servers)
       @options = uri.client_options.merge(options).freeze
+      @cluster = Cluster.new(self, uri.servers, @options)
       @database = Database.new(self, options[:database] || Database::ADMIN)
     end
   end

@@ -48,7 +48,7 @@ module Mongo
       # @since 2.0.0
       def self.get(options)
         return OPTIONS.fetch(options[:topology]) if options.has_key?(:topology)
-        options.has_key?(:set_name) ? ReplicaSet : Standalone
+        options.has_key?(:replica_set) ? ReplicaSet : Standalone
       end
     end
   end

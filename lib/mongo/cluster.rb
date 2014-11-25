@@ -27,7 +27,7 @@ module Mongo
     # Constant for the replica set name configuration option.
     #
     # @since 2.0.0
-    REPLICA_SET_NAME = :replica_set_name.freeze
+    REPLICA_SET_NAME = :replica_set.freeze
 
     # @return [ Mongo::Client ] The cluster's client.
     attr_reader :client
