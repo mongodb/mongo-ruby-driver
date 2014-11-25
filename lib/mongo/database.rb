@@ -109,10 +109,16 @@ module Mongo
     #   database.command(:ismaster => 1)
     #
     # @param [ Hash ] operation The command to execute.
+    # @param [ Hash ] options The command options.
+    #
+    # @option options :read [ Hash ] The read preference for this command.
     #
     # @return [ Hash ] The result of the command execution.
-    def command(operation)
-      server = server_preference.select_servers(cluster.servers).first
+    def command(operation, options = {})
+      preference = options[:read] ? ServerPreference.get(options[:read]) :
+                     server_preference
+      server = preference.select_servers(cluster.servers).first
+      raise ServerPreference::NoServerAvailable.new(options[:read]) unless server
       Operation::Command.new({
         :selector => operation,
         :db_name => name,
