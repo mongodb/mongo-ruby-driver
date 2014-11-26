@@ -21,7 +21,7 @@ class ReplicaSetBasicTest < Test::Unit::TestCase
   end
 
   def test_connect
-    client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name)
+    client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :name => @rs.repl_set_name, :op_timeout => TEST_OP_TIMEOUT)
     assert client.connected?
     assert_equal @rs.primary_name, client.primary.join(':')
     assert_equal @rs.secondary_names.sort, client.secondaries.collect{|s| s.join(':')}.sort

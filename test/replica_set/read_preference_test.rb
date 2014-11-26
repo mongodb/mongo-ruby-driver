@@ -17,66 +17,63 @@ require 'test_helper'
 class ReadPreferenceTest < Test::Unit::TestCase
 
   def setup
-    ensure_cluster(:rs, :replicas => 2, :arbiters => 0)
-
-    # Insert data
-    primary = @rs.primary
-    conn = Connection.new(primary.host, primary.port)
-    authenticate_client(conn)
-    db = conn.db(TEST_DB)
-    coll = db.collection("test-sets")
+    ensure_cluster(:rs)
+    client = make_connection
+    db = client.db(TEST_DB)
+    coll = db.collection('test-sets')
     coll.save({:a => 20}, {:w => 2})
   end
 
   def test_read_primary
-    conn = make_connection
+    client = make_connection
     rescue_connection_failure do
-      assert conn.read_primary?
-      assert conn.primary?
+      assert client.read_primary?
+      assert client.primary?
     end
 
-    conn = make_connection(:primary_preferred)
+    client = make_connection(:primary_preferred)
     rescue_connection_failure do
-      assert conn.read_primary?
-      assert conn.primary?
+      assert client.read_primary?
+      assert client.primary?
     end
 
-    conn = make_connection(:secondary)
+    client = make_connection(:secondary)
     rescue_connection_failure do
-      assert !conn.read_primary?
-      assert !conn.primary?
+      assert !client.read_primary?
+      assert !client.primary?
     end
 
-    conn = make_connection(:secondary_preferred)
+    client = make_connection(:secondary_preferred)
     rescue_connection_failure do
-      assert !conn.read_primary?
-      assert !conn.primary?
+      assert !client.read_primary?
+      assert !client.primary?
     end
   end
 
   def test_connection_pools
-    conn = make_connection
-    assert conn.primary_pool, "No primary pool!"
-    assert conn.read_pool, "No read pool!"
-    assert conn.primary_pool.port == conn.read_pool.port,
+    client = make_connection
+    assert client.primary_pool, "No primary pool!"
+    assert client.read_pool, "No read pool!"
+    assert client.primary_pool.port == client.read_pool.port,
       "Primary port and read port are not the same!"
 
-    conn = make_connection(:primary_preferred)
-    assert conn.primary_pool, "No primary pool!"
-    assert conn.read_pool, "No read pool!"
-    assert conn.primary_pool.port == conn.read_pool.port,
+
+    client = make_connection(:primary_preferred)
+    assert client.primary_pool, "No primary pool!"
+    assert client.read_pool, "No read pool!"
+    assert client.primary_pool.port == client.read_pool.port,
       "Primary port and read port are not the same!"
 
-    conn = make_connection(:secondary)
-    assert conn.primary_pool, "No primary pool!"
-    assert conn.read_pool, "No read pool!"
-    assert conn.primary_pool.port != conn.read_pool.port,
+    client = make_connection(:secondary)
+    assert client.primary_pool, "No primary pool!"
+    assert client.read_pool, "No read pool!"
+    assert client.primary_pool.port != client.read_pool.port,
       "Primary port and read port are the same!"
 
-    conn = make_connection(:secondary_preferred)
-    assert conn.primary_pool, "No primary pool!"
-    assert conn.read_pool, "No read pool!"
-    assert conn.primary_pool.port != conn.read_pool.port,
+    client = make_connection(:secondary_preferred)
+    assert client.primary_pool, "No primary pool!"
+    assert client.read_pool, "No read pool!"
+    assert client.primary_pool.port != client.read_pool.port,
       "Primary port and read port are the same!"
   end
 
@@ -84,97 +81,97 @@ class ReadPreferenceTest < Test::Unit::TestCase
     prepare_routing_test
 
     # Test that reads are going to the right members
-    assert_query_route(@primary, @primary_direct)
-    assert_query_route(@primary_preferred, @primary_direct)
-    assert_query_route(@secondary, @secondary_direct)
-    assert_query_route(@secondary_preferred, @secondary_direct)
+    assert_query_route(@primary, :primary)
+    assert_query_route(@primary_preferred, :primary)
+    assert_query_route(@secondary, :secondary)
+    assert_query_route(@secondary_preferred, :secondary)
   end
 
   def test_read_routing_with_primary_down
     prepare_routing_test
 
     # Test that reads are going to the right members
-    assert_query_route(@primary, @primary_direct)
-    assert_query_route(@primary_preferred, @primary_direct)
-    assert_query_route(@secondary, @secondary_direct)
-    assert_query_route(@secondary_preferred, @secondary_direct)
+    assert_query_route(@primary, :primary)
+    assert_query_route(@primary_preferred, :primary)
+    assert_query_route(@secondary, :secondary)
+    assert_query_route(@secondary_preferred, :secondary)
 
-    # Kill the primary so only a single secondary exists
+    # Kill the primary so the remaining two members are secondaries
     @rs.primary.kill
-
+    sleep(2)
     # Test that reads are going to the right members
     assert_raise_error ConnectionFailure do
       @primary[TEST_DB]['test-sets'].find_one
     end
-    assert_query_route(@primary_preferred, @secondary_direct)
-    assert_query_route(@secondary, @secondary_direct)
-    assert_query_route(@secondary_preferred, @secondary_direct)
+    assert_query_route(@primary_preferred, :secondary)
+    assert_query_route(@secondary, :secondary)
+    assert_query_route(@secondary_preferred, :secondary)
 
     # Restore set
     @rs.restart
     sleep(1)
     @repl_cons.each { |con| con.refresh }
     sleep(1)
-    @primary_direct = Connection.new(
-      @rs.config['host'],
-      @primary.read_pool.port
-    )
 
     # Test that reads are going to the right members
-    assert_query_route(@primary, @primary_direct)
-    assert_query_route(@primary_preferred, @primary_direct)
-    assert_query_route(@secondary, @secondary_direct)
-    assert_query_route(@secondary_preferred, @secondary_direct)
+    assert_query_route(@primary, :primary)
+    assert_query_route(@primary_preferred, :primary)
+    assert_query_route(@secondary, :secondary)
+    assert_query_route(@secondary_preferred, :secondary)
   end
 
   def test_read_routing_with_secondary_down
     prepare_routing_test
 
     # Test that reads are going to the right members
-    assert_query_route(@primary, @primary_direct)
-    assert_query_route(@primary_preferred, @primary_direct)
-    assert_query_route(@secondary, @secondary_direct)
-    assert_query_route(@secondary_preferred, @secondary_direct)
+    assert_query_route(@primary, :primary)
+    assert_query_route(@primary_preferred, :primary)
+    assert_query_route(@secondary, :secondary)
+    assert_query_route(@secondary_preferred, :secondary)
 
-    # Kill the secondary so that only primary exists
-    @rs.secondaries.first.kill
+    secondaries = @rs.secondaries
+    secondaries[0].kill
+    assert_query_route(@secondary_preferred, :secondary)
 
-    # Test that reads are going to the right members
-    assert_query_route(@primary, @primary_direct)
-    assert_query_route(@primary_preferred, @primary_direct)
-    assert_raise_error ConnectionFailure do
-      @secondary[TEST_DB]['test-sets'].find_one
+    secondaries[1].kill
+    sleep(2)
+
+    recovered = false
+    until recovered
+      begin
+        @secondary[TEST_DB]['test-sets'].find_one
+        recovered = true
+      rescue ConnectionFailure
+      end
     end
-    assert_query_route(@secondary_preferred, @primary_direct)
+
+    assert_query_route(@secondary_preferred, :secondary)
+    assert_query_route(@secondary, :secondary)
+    assert_query_route(@primary_preferred, :secondary)
 
     # Restore set
     @rs.restart
     sleep(1)
     @repl_cons.each { |con| con.refresh }
     sleep(1)
-    @secondary_direct = Connection.new(
-      @rs.config['host'],
-      @secondary.read_pool.port,
-      :slave_ok => true
-    )
 
     # Test that reads are going to the right members
-    assert_query_route(@primary, @primary_direct)
-    assert_query_route(@primary_preferred, @primary_direct)
-    assert_query_route(@secondary, @secondary_direct)
-    assert_query_route(@secondary_preferred, @secondary_direct)
+    assert_query_route(@primary, :primary)
+    assert_query_route(@primary_preferred, :primary)
+    assert_query_route(@secondary, :secondary)
+    assert_query_route(@secondary_preferred, :secondary)
   end
 
   def test_write_lots_of_data
-    @conn = make_connection(:secondary_preferred)
-    @db = @conn[TEST_DB]
-    @coll = @db.collection("test-sets", {:w => 2})
+    client = make_connection(:secondary_preferred)
+    db = client[TEST_DB]
+    coll = db.collection("test-sets", {:w => 2})
 
     6000.times do |n|
-      @coll.save({:a => n})
+      coll.save({:a => n})
     end
 
-    cursor = @coll.find()
+    cursor = coll.find()
     cursor.next
     cursor.close
   end
@@ -189,15 +186,14 @@ class ReadPreferenceTest < Test::Unit::TestCase
     @secondary_preferred = make_connection(:secondary_preferred)
     @repl_cons = [@primary, @primary_preferred, @secondary, @secondary_preferred]
 
-    # Setup direct connections
-    @primary_direct = Connection.new(@rs.config['host'], @primary.read_pool.port)
-    authenticate_client(@primary_direct)
-    @secondary_direct = Connection.new(@rs.config['host'], @secondary.read_pool.port, :slave_ok => true)
-    authenticate_client(@secondary_direct)
+    @repl_cons.each do |client|
+      client.stubs(:pinned_pool).returns(nil)
+    end
   end
 
   def make_connection(mode = :primary, opts = {})
-    opts.merge!({:read => mode})
+    opts.merge!(:read => mode)
+    opts.merge!(:op_timeout => nil)
     client = MongoReplicaSetClient.new(@rs.repl_set_seeds, opts)
     authenticate_client(client)
   end
@@ -206,15 +202,18 @@ class ReadPreferenceTest < Test::Unit::TestCase
     connection['admin'].command({:serverStatus => 1})['opcounters']['query']
   end
 
-  def assert_query_route(test_connection, expected_target)
-    #puts "#{test_connection.read_pool.port} #{expected_target.read_pool.port}"
+  def assert_query_route(test_connection, type)
+    secondary = type == :secondary
     authenticate_client(test_connection)
-    authenticate_client(expected_target)
-    queries_before = query_count(expected_target)
+    cursor = test_connection[TEST_DB]['test-sets'].find
     assert_nothing_raised do
-      test_connection[TEST_DB]['test-sets'].find_one
+      cursor.next
     end
-    queries_after = query_count(expected_target)
-    assert_equal 1, queries_after - queries_before
+    pool = cursor.instance_variable_get("@pool")
+    assert_equal secondary, secondary?(MongoClient.new(pool.host, pool.port))
+  end
+
+  def secondary?(client)
+    client['admin'].command(:isMaster => 1)['secondary']
   end
 end

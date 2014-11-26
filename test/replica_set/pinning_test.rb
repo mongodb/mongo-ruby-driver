@@ -17,7 +17,7 @@ require 'test_helper'
 class ReplicaSetPinningTest < Test::Unit::TestCase
   def setup
     ensure_cluster(:rs)
-    @client = MongoReplicaSetClient.from_uri(@uri)
+    @client = MongoReplicaSetClient.from_uri(@uri, :op_timeout => TEST_OP_TIMEOUT)
     @db = @client.db(TEST_DB)
     @coll = @db.collection("test-sets")
     @coll.insert({:a => 1})

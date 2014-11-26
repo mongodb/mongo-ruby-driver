@@ -28,7 +28,7 @@ class ReplicaSetAuthenticationTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
-    @client    = MongoReplicaSetClient.from_uri(@uri)
+    @client    = MongoReplicaSetClient.from_uri(@uri, :op_timeout => TEST_OP_TIMEOUT)
     @admin     = @client['admin']
     @version   = @client.server_version
     @db        = @client['ruby-test']

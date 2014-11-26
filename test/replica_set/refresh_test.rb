@@ -22,7 +22,8 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
 
   def test_connect_and_manual_refresh_with_secondary_down
     num_secondaries = @rs.secondaries.size
-    client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :refresh_mode => false)
+    client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :refresh_mode => false,
+                                       :op_timeout => TEST_OP_TIMEOUT)
     authenticate_client(client)
 
     assert_equal num_secondaries, client.secondaries.size
@@ -57,7 +58,8 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
   def test_automated_refresh_with_secondary_down
     num_secondaries = @rs.secondaries.size
     client = MongoReplicaSetClient.new(@rs.repl_set_seeds,
-      :refresh_interval => 1, :refresh_mode => :sync, :read => :secondary_preferred)
+      :refresh_interval => 1, :refresh_mode => :sync, :read => :secondary_preferred,
+      :op_timeout => TEST_OP_TIMEOUT)
     authenticate_client(client)
 
     # Ensure secondaries are all recognized by client and client is connected
@@ -99,7 +101,8 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     factor = 5
     nthreads = factor * 10
     threads = []
-    client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :refresh_mode => :sync, :refresh_interval => 1)
+    client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :refresh_mode => :sync,
+                                       :refresh_interval => 1, :op_timeout => TEST_OP_TIMEOUT)
     authenticate_client(client)
 
     nthreads.times do |i|

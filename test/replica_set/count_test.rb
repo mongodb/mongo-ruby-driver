@@ -18,7 +18,7 @@ class ReplicaSetCountTest < Test::Unit::TestCase
 
   def setup
     ensure_cluster(:rs)
-    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :read => :primary_preferred)
+    @client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :read => :primary_preferred, :op_timeout => TEST_OP_TIMEOUT)
     authenticate_client(@client)
     assert @client.primary_pool
     @primary = MongoClient.new(@client.primary_pool.host, @client.primary_pool.port)

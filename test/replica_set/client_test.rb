@@ -26,7 +26,7 @@ class ReplicaSetClientTest < Test::Unit::TestCase
   end
 
   def test_reconnection
-    @client = MongoReplicaSetClient.from_uri(@uri)
+    @client = MongoReplicaSetClient.from_uri(@uri, :op_timeout => TEST_OP_TIMEOUT)
     assert @client.connected?
 
     manager = @client.local_manager
