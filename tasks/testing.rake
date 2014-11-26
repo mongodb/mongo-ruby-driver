@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Note: To run all replica set tests, set the env variable, ALL_RS_TESTS to true.
+
 TEST_SUITES = {
   :bson => { :pattern => 'test/bson/*_test.rb' },
   :unit => { :pattern => 'test/unit/**/*_test.rb' },
@@ -24,7 +26,9 @@ TEST_SUITES = {
   :threading => { :pattern => 'test/threading/**/*_test.rb' },
   :replica_set => {
     :pattern => 'test/replica_set/**/*_test.rb',
-    :exclude => ['test/replica_set/ssl_test.rb']
+    :exclude => ['test/replica_set/count_test.rb',
+                 'test/replica_set/read_preference_test.rb',
+                 'test/replica_set/ssl_test.rb']
   },
   :sharded_cluster => { :pattern => 'test/sharded_cluster/**/*_test.rb' },
   :tools => {
@@ -32,6 +36,11 @@ TEST_SUITES = {
     :exclude => ['test/tools/mongo_config_test.rb']
   }
 }
+
+if ENV['ALL_RS_TESTS']
+  TEST_SUITES[:replica_set][:exclude].delete('test/replica_set/count_test.rb')
+  TEST_SUITES[:replica_set][:exclude].delete('test/replica_set/read_preference_test.rb')
+end
 
 if RUBY_VERSION > '1.9'
   require 'coveralls/rake/task'
