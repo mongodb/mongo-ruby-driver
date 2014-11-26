@@ -316,7 +316,8 @@ module Mongo
     #   either we're in +strict+ mode and the collection
     #   already exists or collection creation fails on the server.
     #
-    # @note See the MongoDB documentation for a full list of supported options by server version.
+    # @note Note that the options listed may be subset of those available.
+    #   Please see the MongoDB documentation for a full list of supported options by server version.
     #
     # @return [Mongo::Collection]
     def create_collection(name, opts={})

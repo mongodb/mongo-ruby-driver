@@ -550,7 +550,8 @@ module Mongo
     #   The option is silently ignored by the server and unique index builds using the option will
     #   fail if a duplicate value is detected.
     #
-    # @note See the MongoDB documentation for a full list of supported options by server version.
+    # @note Note that the options listed may be subset of those available.
+    #   See the MongoDB documentation for a full list of supported options by server version.
     #
     # @return [String] the name of the index created.
     def create_index(spec, opts={})
@@ -583,7 +584,8 @@ module Mongo
     #   The option is silently ignored by the server and unique index builds using the option will
     #   fail if a duplicate value is detected.
     #
-    # @note See the MongoDB documentation for a full list of supported options by server version.
+    # @note Note that the options listed may be subset of those available.
+    #   See the MongoDB documentation for a full list of supported options by server version.
     #
     # @return [String] the name of the index.
     def ensure_index(spec, opts={})
