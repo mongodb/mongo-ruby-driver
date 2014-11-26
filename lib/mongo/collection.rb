@@ -550,6 +550,8 @@ module Mongo
     #   The option is silently ignored by the server and unique index builds using the option will
     #   fail if a duplicate value is detected.
     #
+    # @note See the MongoDB documentation for a full list of supported options by server version.
+    #
     # @return [String] the name of the index created.
     def create_index(spec, opts={})
       options              = opts.dup
@@ -580,6 +582,8 @@ module Mongo
     # @note The :drop_dups option is no longer supported by MongoDB starting with server version 2.7.5.
     #   The option is silently ignored by the server and unique index builds using the option will
     #   fail if a duplicate value is detected.
+    #
+    # @note See the MongoDB documentation for a full list of supported options by server version.
     #
     # @return [String] the name of the index.
     def ensure_index(spec, opts={})
