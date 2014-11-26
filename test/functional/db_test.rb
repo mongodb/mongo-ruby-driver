@@ -65,7 +65,8 @@ class DBTest < Test::Unit::TestCase
 
     db.create_collection(:foo)
     assert db.collection(:foo)
-    assert db.drop_collection(:foo)
+    # Use a string because of SERVER-16260
+    assert db.drop_collection('foo')
   end
 
   def test_logger
