@@ -59,5 +59,24 @@ module Mongo
         options[:acceptable_latency] || 15
       )
     end
+
+    # Exception raised if there are no servers available matching server preference.
+    #
+    # @since 2.0.0
+    class NoServerAvailable < MongoError
+
+      # Instantiate the new exception.
+      #
+      # @example Instantiate the exception.
+      #   Mongo::ServerPreference::NoServerAvailable.new(:mode => :secondary)
+      #
+      # @params [ Hash ] server_preference The server preference that could not be
+      #   satisfied.
+      #
+      # @since 2.0.0
+      def initialize(server_preference)
+        super("No server is available matching server preference: #{server_preference}")
+      end
+    end
   end
 end

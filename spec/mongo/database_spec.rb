@@ -124,6 +124,28 @@ describe Mongo::Database do
     it 'sends the query command to the cluster' do
       expect(database.command(:ismaster => 1).written_count).to eq(0)
     end
+
+    context 'when an alternate read preference is specified' do
+
+      let(:read) do
+        { :mode => :secondary,
+          :tags => [{ 'non' => 'existent' }] }
+      end
+
+      let(:client) do
+        Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
+      end
+
+      let(:database) do
+        described_class.new(authorized_client, TEST_DB)
+      end
+
+      it 'uses that read preference' do
+        expect do
+          database.command({ ping: 1 }, { read: read })
+        end.to raise_error(Mongo::ServerPreference::NoServerAvailable)
+      end
+    end
   end
 
   describe '#drop' do
