@@ -143,7 +143,8 @@ module Mongo
     #
     # @since 2.0.0
     def clean_up
-      @monitor.stop && true
+      @monitor.stop
+      true
     end
   end
 end
