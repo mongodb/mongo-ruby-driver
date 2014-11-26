@@ -87,7 +87,7 @@ describe Mongo::Operation::Write::Command::Insert do
         let(:expected_selector) do
           { :documents     => documents,
             :insert        => coll_name,
-            :write_concern => write_concern.options,
+            :writeConcern => write_concern.options,
             :ordered       => true
           }
         end

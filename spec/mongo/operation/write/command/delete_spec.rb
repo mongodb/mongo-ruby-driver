@@ -87,7 +87,7 @@ describe Mongo::Operation::Write::Command::Delete do
         let(:expected_selector) do
           { :deletes       => deletes,
             :delete        => coll_name,
-            :write_concern => write_concern.options,
+            :writeConcern => write_concern.options,
             :ordered       => true
           }
         end

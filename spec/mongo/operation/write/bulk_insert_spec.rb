@@ -81,17 +81,17 @@ describe Mongo::Operation::Write::BulkInsert do
     end
   end
 
-  describe '#write_concern=' do
+  describe '#write_concern' do
 
     let(:other_write_concern) do
-      Mongo::WriteConcern::Mode.get(:w => 2)
+      { w: 2 }
     end
 
     context 'when the write concern is set' do
 
       it 'sets the write concern' do
         new_op = op.write_concern(other_write_concern)
-        expect(new_op.write_concern).to eq(other_write_concern)
+        expect(new_op.write_concern.options).to eq(other_write_concern)
       end
     end
   end
@@ -454,7 +454,7 @@ describe Mongo::Operation::Write::BulkInsert do
       end
 
       let(:acknowledged) do
-        Mongo::WriteConcern::Mode.get(w: 1)
+        { w: 1 }
       end
 
       it 'uses that write concern' do
