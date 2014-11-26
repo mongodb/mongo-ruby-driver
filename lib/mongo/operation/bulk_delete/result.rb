@@ -76,6 +76,27 @@ module Mongo
               errors
             end
           end
+
+          # Aggregate the write concern errors returned from this result.
+          #
+          # @example Aggregate the write concern errors.
+          #   result.aggregate_write_concern_errors
+          #
+          # @return [ Array ] The aggregate write concern errors.
+          #
+          # @since 2.0.0
+          def aggregate_write_concern_errors
+            @replies.reduce(nil) do |errors, reply|
+              if write_concern_errors = reply.documents.first['writeConcernErrors']
+                errors ||= []
+                write_concern_errors.each do |write_concern_error|
+                  errors << write_concern_error.merge('index' =>
+                                                      indexes[write_concern_error['index']])
+                end
+              end
+              errors
+            end
+          end
         end
 
         # Defines custom behaviour of results when deleting.
@@ -134,11 +155,40 @@ module Mongo
             end
           end
 
+          # Aggregate the write concern errors returned from this result.
+          #
+          # @example Aggregate the write concern errors.
+          #   result.aggregate_write_concern_errors
+          #
+          # @return [ Array ] The aggregate write concern errors.
+          #
+          # @since 2.0.0
+          def aggregate_write_concern_errors
+            @replies.each_with_index.reduce(nil) do |errors, (reply, i)|
+              # @todo: only raise if error is timeout
+              if error = reply_write_errors?(reply)
+                errors ||= []
+                note = reply.documents.first['wnote'] || reply.documents.first['jnote']
+                if note
+                  code = reply.documents.first['code'] || Operation::BAD_VALUE
+                  error_string = "#{code}: #{note}"
+                else
+                  code = reply.documents.first['code'] || Operation::UNKNOWN_ERROR
+                  error_string = "#{code}: #{error}"
+                end
+                errors << { 'errmsg' => error_string,
+                            'index' => indexes[i],
+                            'code' => code }
+              end
+              errors
+            end
+          end
+
           private
 
           def reply_write_errors?(reply)
-            reply.documents.first[Operation::ERROR] &&
-              reply.documents.first[Operation::ERROR_CODE]
+            reply.documents.first[Operation::ERROR] ||
+              reply.documents.first[Operation::ERROR_MSG]
           end
         end
       end

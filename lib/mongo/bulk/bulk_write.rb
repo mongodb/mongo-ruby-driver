@@ -93,7 +93,7 @@ module Mongo
       def execute(write_concern = nil)
         response = current_batch.execute( self,
                                           write_concern ||
-                                          @collection.write_concern )
+                                            @collection.write_concern.options )
         @batches << Batch.new(ordered?)
         response
       end
@@ -245,7 +245,7 @@ module Mongo
           end
           return make_response!(replies) if stop_executing?(replies.last)
         end
-        make_response!(replies) if write_concern.get_last_error
+        make_response!(replies) if op.write_concern.get_last_error
       end
 
       private
@@ -332,21 +332,23 @@ module Mongo
       def make_response!(results)
         response = results.reduce({}) do |response, result|
           write_errors = result.aggregate_write_errors
-          response['nInserted'] = ( response['nInserted'] || 0 ) + result.n_inserted if result.respond_to?(:n_inserted)
-          response['nMatched'] = ( response['nMatched'] || 0 ) + result.n_matched if result.respond_to?(:n_matched)
-          response['nModified'] = ( response['nModified'] || 0 ) + result.n_modified if result.respond_to?(:n_modified) && result.n_modified
-          response['nUpserted'] = ( response['nUpserted'] || 0 ) + result.n_upserted if result.respond_to?(:n_upserted)
-          response['nRemoved'] = ( response['nRemoved'] || 0 ) + result.n_removed if result.respond_to?(:n_removed)
-          response['writeErrors'] = ( response['writeErrors'] || [] ) + write_errors if write_errors
-          response
+          write_concern_errors = result.aggregate_write_concern_errors
+          response.tap do |r|
+            r['nInserted'] = ( r['nInserted'] || 0 ) + result.n_inserted if result.respond_to?(:n_inserted)
+            r['nMatched'] = ( r['nMatched'] || 0 ) + result.n_matched if result.respond_to?(:n_matched)
+            r['nModified'] = ( r['nModified'] || 0 ) + result.n_modified if result.respond_to?(:n_modified) && result.n_modified
+            r['nUpserted'] = ( r['nUpserted'] || 0 ) + result.n_upserted if result.respond_to?(:n_upserted)
+            r['nRemoved'] = ( r['nRemoved'] || 0 ) + result.n_removed if result.respond_to?(:n_removed)
+            r['writeErrors'] = ( r['writeErrors'] || [] ) + write_errors if write_errors
+            r['writeConcernErrors'] = ( r['writeConcernErrors'] || [] ) + write_concern_errors if write_concern_errors
+          end
         end
 
-        if response['writeErrors']
+        if response['writeErrors'] || response['writeConcernErrors']
           response.merge!('errmsg' => 'batch item errors occurred')
           raise Mongo::Bulk::BulkWrite::BulkWriteError.new(response)
-        else
-          response
         end
+        response
       end
 
       # Exception raised if the batch is empty.
