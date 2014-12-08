@@ -81,7 +81,7 @@ module Mongo
         # @example Set a write concern.
         #   new_op = operation.write_concern(:w => 2)
         #
-        # @params [ Mongo::WriteConcern::Mode ] The write concern.
+        # @params [ Hash ] The write concern.
         #
         # @since 2.0.0
         def write_concern(wc = nil)
