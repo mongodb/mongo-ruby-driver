@@ -345,6 +345,18 @@ class CollectionTest < Test::Unit::TestCase
     end
   end
 
+  def test_error_code
+    coll = @db['test-error-code']
+    coll.ensure_index(BSON::OrderedHash[:x, Mongo::ASCENDING], { :unique => true })
+    coll.save(:x => 2)
+    begin
+      coll.save(:x => 2)
+    rescue => ex
+      assert_not_nil ex.error_code
+    end
+    coll.drop
+  end
+
   def test_aggregation_cursor
     return unless @version >= '2.5.1'
     [10, 1000].each do |size|
