@@ -93,7 +93,7 @@ describe Mongo::Operation::Write::Command::Update do
         let(:expected_selector) do
           { :updates       => updates,
             :update        => coll_name,
-            :write_concern => write_concern.options,
+            :writeConcern => write_concern.options,
             :ordered       => true
           }
         end

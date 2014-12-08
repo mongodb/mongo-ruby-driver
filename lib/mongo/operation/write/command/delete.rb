@@ -44,7 +44,7 @@ module Mongo
           def selector
             { :delete        => coll_name,
               :deletes       => deletes,
-              :write_concern => write_concern.options,
+              :writeConcern  => write_concern.options,
               :ordered       => ordered?
             }
           end

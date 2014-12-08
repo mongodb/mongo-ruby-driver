@@ -43,7 +43,7 @@ module Mongo
           def selector
             { :insert        => coll_name,
               :documents     => documents,
-              :write_concern => write_concern.options,
+              :writeConcern  => write_concern.options,
               :ordered       => ordered?
             }
           end
