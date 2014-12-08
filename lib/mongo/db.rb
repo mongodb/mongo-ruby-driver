@@ -589,6 +589,9 @@ module Mongo
         end.join('; ')
         message << ').'
         code = result['code'] || result['assertionCode']
+        if result['writeErrors']
+          code = result['writeErrors'].first['code']
+        end
         raise ExecutionTimeout.new(message, code, result) if code == MAX_TIME_MS_CODE
         raise OperationFailure.new(message, code, result)
       end
