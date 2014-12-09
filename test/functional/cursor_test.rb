@@ -468,21 +468,19 @@ class CursorTest < Test::Unit::TestCase
   def test_kill_cursors
     @coll.drop
 
-    client_cursors = @db.command("cursorInfo" => 1)["clientCursors_size"]
+    client_cursors = cursor_count(@db)
 
     10000.times do |i|
       @coll.insert("i" => i)
     end
 
-    assert_equal(client_cursors,
-                 @db.command("cursorInfo" => 1)["clientCursors_size"])
+    assert_equal(client_cursors, cursor_count(@db))
 
     10.times do |i|
       @coll.find_one()
     end
 
-    assert_equal(client_cursors,
-                 @db.command("cursorInfo" => 1)["clientCursors_size"])
+    assert_equal(client_cursors, cursor_count(@db))
 
     10.times do |i|
       a = @coll.find()
@@ -490,38 +488,32 @@ class CursorTest < Test::Unit::TestCase
       a.close()
     end
 
-    assert_equal(client_cursors,
-                 @db.command("cursorInfo" => 1)["clientCursors_size"])
+    assert_equal(client_cursors, cursor_count(@db))
 
     a = @coll.find()
     a.next_document
 
-    assert_not_equal(client_cursors,
-                     @db.command("cursorInfo" => 1)["clientCursors_size"])
+    assert_not_equal(client_cursors, cursor_count(@db))
 
     a.close()
 
-    assert_equal(client_cursors,
-                 @db.command("cursorInfo" => 1)["clientCursors_size"])
+    assert_equal(client_cursors, cursor_count(@db))
 
     a = @coll.find({}, :limit => 10).next_document
 
-    assert_equal(client_cursors,
-                 @db.command("cursorInfo" => 1)["clientCursors_size"])
+    assert_equal(client_cursors, cursor_count(@db))
 
     @coll.find() do |cursor|
       cursor.next_document
     end
 
-    assert_equal(client_cursors,
-                 @db.command("cursorInfo" => 1)["clientCursors_size"])
+    assert_equal(client_cursors, cursor_count(@db))
 
     @coll.find() { |cursor|
       cursor.next_document
     }
 
-    assert_equal(client_cursors,
-                 @db.command("cursorInfo" => 1)["clientCursors_size"])
+    assert_equal(client_cursors, cursor_count(@db))
   end
 
   def test_count_with_fields
@@ -678,6 +670,14 @@ class CursorTest < Test::Unit::TestCase
 
     cursor.each do |instance|
       assert_instance_of(klass, instance)
+    end
+  end
+
+  def cursor_count(db)
+    if @version > '2.6.0'
+      db.command("serverStatus" => 1)["metrics"]["cursor"]["open"]["total"]
+    else
+      db.command("cursorInfo" => 1)["clientCursors_size"]
     end
   end
 end
