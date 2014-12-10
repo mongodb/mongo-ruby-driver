@@ -98,7 +98,7 @@ module Mongo
     end
 
     def insert_one(doc)
-      raise InvalidDoc.new unless valid_doc?(doc) 
+      raise InvalidDoc.new unless valid_doc?(doc)
       spec = { documents: [ doc ],
                db_name: db_name,
                coll_name: collection.name,
@@ -106,6 +106,18 @@ module Mongo
                write_concern: @collection.write_concern }
 
       push_op(Mongo::Operation::Write::BulkInsert, spec)
+    end
+
+    def delete_one(selector)
+      raise InvalidDoc.new unless valid_doc?(selector)
+      spec = { deletes:   [{ q: selector,
+                             limit: 1 }],
+               db_name:   db_name,
+               coll_name: collection.name,
+               ordered: @ordered,
+               write_concern: @collection.write_concern }
+
+      push_op(Mongo::Operation::Write::BulkDelete, spec)
     end
 
     def push_op(op_class, spec)
