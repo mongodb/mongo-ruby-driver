@@ -56,9 +56,9 @@ module Mongo
       @ops = []
 
       @operations.each do |op|
-        op_name = op.first
+        op_name = op.keys.first
         begin
-          send(op_name, op[1])
+          send(op_name, op[op_name])
         rescue NoMethodError
           raise InvalidOpType.new(op_name)
         end
@@ -130,6 +130,20 @@ module Mongo
                write_concern: @collection.write_concern }
 
       push_op(Mongo::Operation::Write::BulkDelete, spec)
+    end
+
+    def replace_one(docs)
+      raise ArgumentError unless docs.size >= 2
+      upsert = !!(docs[2] || {})[:upsert]
+      spec = { updates:   [{ q: docs[0],
+                             u: docs[1],
+                             multi: false,
+                             upsert: upsert }],
+               db_name:   db_name,
+               coll_name: collection.name,
+               ordered: @ordered,
+               write_concern: @collection.write_concern }
+      push_op(Mongo::Operation::Write::BulkUpdate, spec)
     end
 
     def push_op(op_class, spec)

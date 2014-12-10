@@ -21,7 +21,7 @@ describe Mongo::BulkWrite do
       context 'when a document is provided' do
 
         let(:operations) do
-          { insert_one: { name: 'test' } }
+          [ { insert_one: { name: 'test' } } ]
         end
   
         it 'returns nInserted of 1' do
@@ -39,7 +39,7 @@ describe Mongo::BulkWrite do
       context 'when non-hash doc is provided' do
 
         let(:operations) do
-          { insert_one: [] }
+          [ { insert_one: [] } ]
         end
 
         it 'raises an InvalidDoc exception' do
@@ -69,12 +69,12 @@ describe Mongo::BulkWrite do
       end
 
       let(:operations) do
-        { delete_one: { a: 1 } }
+        [ { delete_one: { a: 1 } } ]
       end
 
       context 'when no selector is specified' do
         let(:operations) do
-          { delete_one: nil }
+          [ { delete_one: nil } ]
         end
 
         it 'raises an exception' do
@@ -112,13 +112,13 @@ describe Mongo::BulkWrite do
       end
 
       let(:operations) do
-        { delete_many: { a: 1 } }
+        [ { delete_many: { a: 1 } } ]
       end
 
       context 'when no selector is specified' do
 
         let(:operations) do
-          { delete_many: nil }
+          [ { delete_many: nil } ]
         end
 
         it 'raises an exception' do
@@ -160,6 +160,90 @@ describe Mongo::BulkWrite do
             bulk.execute
             expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
           end
+        end
+      end
+    end
+
+    context 'replace_one' do
+
+      let(:docs) do
+        [ { a: 1 }, { a: 1 } ]
+      end
+
+      let(:expected) do
+        [ { 'a' => 2 }, { 'a' => 1 } ]
+      end
+
+      before do
+        authorized_collection.insert_many(docs)
+      end
+
+      after do
+        authorized_collection.find.remove_many
+      end
+
+      let(:replacement) do
+        { a: 2 }
+      end
+
+      let(:operations) do
+        [ { replace_one: [ { a: 1 }, replacement ] } ]
+      end
+
+      context 'when a replace document is not specified' do
+
+        let(:operations) do
+          [ { replace_one: [ { a: 1 } ] } ]
+        end
+
+        it 'raises an exception' do
+          expect do
+            bulk.execute
+          end.to raise_exception(ArgumentError)
+        end
+      end
+
+      context 'when a replace document is specified' do
+
+        it 'applies the replacement to only one matching document' do
+          bulk.execute
+          expect(authorized_collection.find(replacement).count).to eq(1)
+        end
+
+        it 'reports nMatched correctly' do
+          expect(bulk.execute['nMatched']).to eq(1)
+        end
+
+        it 'only applies the replacement to one matching document' do
+          bulk.execute
+          expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+        end
+      end
+
+      context 'when upsert is true' do
+
+        let(:operations) do
+          [ { replace_one: [ { a: 4 }, 
+              replacement, 
+              { :upsert => true } ] } ]
+        end
+
+        let(:expected) do
+          [ { 'a' => 1 }, { 'a' => 1 }, { 'a' => 2 } ]
+        end
+
+        it 'upserts the replacement document' do
+          bulk.execute
+          expect(authorized_collection.find(replacement).count).to eq(1)
+        end
+
+        it 'reports nMatched correctly' do
+          expect(bulk.execute['nMatched']).to eq(0)
+        end
+
+        it 'does not replace any documents' do
+          bulk.execute
+          expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
         end
       end
     end
