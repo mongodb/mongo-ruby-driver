@@ -97,6 +97,12 @@ module Mongo
       doc.respond_to?(:keys)
     end
 
+      def update_doc?(doc)
+        !doc.empty? &&
+          doc.respond_to?(:keys) &&
+          doc.keys.first.to_s =~ /^\$/
+      end
+
     def insert_one(doc)
       raise InvalidDoc.new unless valid_doc?(doc)
       spec = { documents: [ doc ],
@@ -134,6 +140,21 @@ module Mongo
 
     def replace_one(docs)
       raise ArgumentError unless docs.size >= 2
+      upsert = !!(docs[2] || {})[:upsert]
+      spec = { updates:   [{ q: docs[0],
+                             u: docs[1],
+                             multi: false,
+                             upsert: upsert }],
+               db_name:   db_name,
+               coll_name: collection.name,
+               ordered: @ordered,
+               write_concern: @collection.write_concern }
+      push_op(Mongo::Operation::Write::BulkUpdate, spec)
+    end
+
+    def update_one(docs)
+      raise ArgumentError unless docs.size >= 2
+      raise InvalidUpdateDoc.new unless update_doc?(docs[1])
       upsert = !!(docs[2] || {})[:upsert]
       spec = { updates:   [{ q: docs[0],
                              u: docs[1],
@@ -249,6 +270,22 @@ module Mongo
       # @since 2.0.0
       def initialize
         super("Invalid document provided.")
+      end
+    end
+
+    # Exception raised if the object is not a valid update document.
+    #
+    # @since 2.0.0
+    class InvalidUpdateDoc < DriverError
+
+      # Instantiate the new exception.
+      #
+      # @example Instantiate the exception.
+      #   Mongo::BulkWrite::InvalidUpdateDoc.new
+      #
+      # @since 2.0.0
+      def initialize
+        super("Invalid update document provided.")
       end
     end
 

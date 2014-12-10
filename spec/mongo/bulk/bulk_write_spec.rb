@@ -64,10 +64,6 @@ describe Mongo::BulkWrite do
         authorized_collection.insert_many(docs)
       end
 
-      after do
-        authorized_collection.find.remove_many
-      end
-
       let(:operations) do
         [ { delete_one: { a: 1 } } ]
       end
@@ -105,10 +101,6 @@ describe Mongo::BulkWrite do
 
       before do
         authorized_collection.insert_many(docs)
-      end
-
-      after do
-        authorized_collection.find.remove_many
       end
 
       let(:operations) do
@@ -178,10 +170,6 @@ describe Mongo::BulkWrite do
         authorized_collection.insert_many(docs)
       end
 
-      after do
-        authorized_collection.find.remove_many
-      end
-
       let(:replacement) do
         { a: 2 }
       end
@@ -218,32 +206,140 @@ describe Mongo::BulkWrite do
           bulk.execute
           expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
         end
+
+        context 'when upsert is true' do
+
+          let(:operations) do
+            [ { replace_one: [ { a: 4 },
+                replacement,
+                { :upsert => true } ] } ]
+          end
+
+          let(:expected) do
+            [ { 'a' => 1 }, { 'a' => 1 }, { 'a' => 2 } ]
+          end
+
+          it 'upserts the replacement document' do
+            bulk.execute
+            expect(authorized_collection.find(replacement).count).to eq(1)
+          end
+
+          it 'reports nMatched correctly' do
+            expect(bulk.execute['nMatched']).to eq(0)
+          end
+
+          it 'does not replace any documents' do
+            bulk.execute
+            expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+          end
+        end
+      end
+    end
+
+    context 'update_one' do
+
+      let(:docs) do
+        [ { a: 1 }, { a: 1 } ]
       end
 
-      context 'when upsert is true' do
+      let(:update) do
+        { :$set => { a: 2 } }
+      end
+
+      let(:operations) do
+        [ { update_one: [ { a: 1 },
+                          update ] } ]
+      end
+
+      before do
+        authorized_collection.insert_many(docs)
+      end
+
+      let(:expected) do
+        [ { 'a' => 2 },  { 'a' => 1 } ]
+      end
+
+      context 'when an update document is not specified' do
 
         let(:operations) do
-          [ { replace_one: [ { a: 4 }, 
-              replacement, 
-              { :upsert => true } ] } ]
+          [ { update_one: [ { a: 1 } ] } ]
         end
 
-        let(:expected) do
-          [ { 'a' => 1 }, { 'a' => 1 }, { 'a' => 2 } ]
+        it 'raises an exception' do
+          expect do
+            bulk.execute
+          end.to raise_exception(ArgumentError)
+        end
+      end
+
+      context 'when an invalid update document is specified' do
+
+        let(:update) do
+          { a: 2 }
         end
 
-        it 'upserts the replacement document' do
-          bulk.execute
-          expect(authorized_collection.find(replacement).count).to eq(1)
+        it 'raises an exception' do
+          expect do
+            bulk.execute
+          end.to raise_exception(Mongo::BulkWrite::InvalidUpdateDoc)
+        end
+      end
+
+      context 'when a valid update document is specified' do
+
+        it 'reports nModified correctly', if: write_command_enabled?  do
+          expect(bulk.execute['nModified']).to eq(1)
+        end
+
+        it 'reports nModified correctly', unless: write_command_enabled?  do
+          expect(bulk.execute['nModified']).to eq(nil)
+        end
+
+        it 'reports nUpserted correctly' do
+          expect(bulk.execute['nUpserted']).to eq(0)
         end
 
         it 'reports nMatched correctly' do
-          expect(bulk.execute['nMatched']).to eq(0)
+          expect(bulk.execute['nMatched']).to eq(1)
         end
 
-        it 'does not replace any documents' do
+        it 'applies the correct writes' do
           bulk.execute
           expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+        end
+
+        context 'when upsert is true' do
+
+          let(:operations) do
+            [ { update_one: [ { a: 3 },
+                              update,
+                              { upsert: true } ] } ]
+          end
+
+          let(:expected) do
+            [ { 'a' => 1 },  { 'a' => 1 }, { 'a' => 2 } ]
+          end
+
+          it 'reports nModified correctly', if: write_command_enabled?  do
+            expect(bulk.execute['nModified']).to eq(0)
+          end
+
+          it 'reports nModified correctly', unless: write_command_enabled?  do
+            expect(bulk.execute['nModified']).to eq(nil)
+          end
+
+          it 'reports nUpserted correctly' do
+            expect(bulk.execute['nUpserted']).to eq(1)
+          end
+
+          it 'reports nMatched correctly' do
+            expect(bulk.execute['nMatched']).to eq(0)
+          end
+
+          it 'applies the correct writes' do
+            bulk.execute
+            expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+          end
         end
       end
     end
