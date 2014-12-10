@@ -96,5 +96,72 @@ describe Mongo::BulkWrite do
         end
       end
     end
+
+    context 'delete_many' do
+
+      let(:docs) do
+        [ { a: 1 }, { a: 1 } ]
+      end
+
+      before do
+        authorized_collection.insert_many(docs)
+      end
+
+      after do
+        authorized_collection.find.remove_many
+      end
+
+      let(:operations) do
+        { delete_many: { a: 1 } }
+      end
+
+      context 'when no selector is specified' do
+
+        let(:operations) do
+          { delete_many: nil }
+        end
+
+        it 'raises an exception' do
+          expect do
+            bulk.execute
+          end.to raise_exception(Mongo::BulkWrite::InvalidDoc)
+        end
+      end
+
+      context 'when a selector is specified' do
+
+        context 'when multiple documents match delete selector' do
+
+          it 'reports nRemoved correctly' do
+            expect(bulk.execute['nRemoved']).to eq(2)
+          end
+
+          it 'deletes all matching documents' do
+            bulk.execute
+            expect(authorized_collection.find.to_a).to be_empty
+          end
+        end
+
+        context 'when only one document matches delete selector' do
+
+          let(:docs) do
+            [ { a: 1 }, { a: 2 } ]
+          end
+
+          let(:expected) do
+            [ { 'a' => 2 } ]
+          end
+
+          it 'reports nRemoved correctly' do
+            expect(bulk.execute['nRemoved']).to eq(1)
+          end
+
+          it 'deletes all matching documents' do
+            bulk.execute
+            expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+          end
+        end
+      end
+    end
   end
 end

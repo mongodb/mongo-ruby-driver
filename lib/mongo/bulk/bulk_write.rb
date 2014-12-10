@@ -120,6 +120,18 @@ module Mongo
       push_op(Mongo::Operation::Write::BulkDelete, spec)
     end
 
+    def delete_many(selector)
+      raise InvalidDoc.new unless valid_doc?(selector)
+      spec = { deletes:   [{ q: selector,
+                             limit: 0 }],
+               db_name:   db_name,
+               coll_name: collection.name,
+               ordered: @ordered,
+               write_concern: @collection.write_concern }
+
+      push_op(Mongo::Operation::Write::BulkDelete, spec)
+    end
+
     def push_op(op_class, spec)
       spec.merge!(indexes: [ increment_index ])
       @ops << op_class.send(:new, spec)
