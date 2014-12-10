@@ -167,6 +167,21 @@ module Mongo
       push_op(Mongo::Operation::Write::BulkUpdate, spec)
     end
 
+    def update_many(docs)
+      raise ArgumentError unless docs.size >= 2
+      raise InvalidUpdateDoc.new unless update_doc?(docs[1])
+      upsert = !!(docs[2] || {})[:upsert]
+      spec = { updates:   [{ q: docs[0],
+                             u: docs[1],
+                             multi: true,
+                             upsert: upsert }],
+               db_name:   db_name,
+               coll_name: collection.name,
+               ordered: @ordered,
+               write_concern: @collection.write_concern }
+      push_op(Mongo::Operation::Write::BulkUpdate, spec)
+    end
+
     def push_op(op_class, spec)
       spec.merge!(indexes: [ increment_index ])
       @ops << op_class.send(:new, spec)
