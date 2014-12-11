@@ -15,19 +15,25 @@
 module Mongo
   class BulkWrite
 
+    # This semi-public class handles the logic for executing a batch of
+    # operations
+
     # @return [ Mongo::Collection ] The collection on which this bulk write
     #   operation will be executed.
     attr_reader :collection
 
-
     # Initialize the BulkWrite object.
     #
     # @example Create an ordered bulk write object.
-    #   BulkWrite.new({ insert_many: [{ x: 1 }, { x: 2 }], 
+    #   BulkWrite.new([ { insert_one: { x: 1 } },
+    #                   { update_one: [ { x: 1 }, { '$set' => { x: 2 } } ] }
+    #                 ],
     #                 { ordered: true }, collection)
     #
     # @example Create an unordered bulk write object.
-    #   BulkWrite.new({ insert_many: [{ x: 1 }, { x: 2 }], 
+    #   BulkWrite.new([ { insert_one: { x: 1 } },
+    #                   { update_one: [ { x: 2 }, { '$set' => { x: 3 } } ] }
+    #                 ],
     #                 { ordered: false }, collection)
     #
     # @param [ Array ] operations The operations to execute.
@@ -37,15 +43,22 @@ module Mongo
     #
     # @option options [ String ] :ordered Whether the operations should
     #   be executed in order.
+    # @option options [ Hash ] :write_concern The write concern to use when
+    #   executing the operations.
     def initialize(operations, options, collection)
       @operations = operations
       @ordered = !!options[:ordered]
       @collection = collection
+      if options[:write_concern]
+        @write_concern = WriteConcern::Mode.get(options[:write_concern])
+      else
+        @write_concern = collection.write_concern
+      end
     end
 
     # Execute the bulk write.
     #
-    # @example execute the bulk writes.
+    # @example execute the bulk write operations.
     #   bulk.execute
     #
     # @return [ Hash ] The result of doing the bulk write.
@@ -97,11 +110,15 @@ module Mongo
       doc.respond_to?(:keys)
     end
 
-      def update_doc?(doc)
-        !doc.empty? &&
-          doc.respond_to?(:keys) &&
-          doc.keys.first.to_s =~ /^\$/
-      end
+    def update_doc?(doc)
+      !doc.empty? &&
+        doc.respond_to?(:keys) &&
+        doc.keys.first.to_s =~ /^\$/
+    end
+
+    def replacement_doc?(doc)
+      doc.respond_to?(:keys) && doc.keys.all?{|key| key !~ /^\$/}
+    end
 
     def insert_one(doc)
       raise InvalidDoc.new unless valid_doc?(doc)
@@ -109,7 +126,7 @@ module Mongo
                db_name: db_name,
                coll_name: collection.name,
                ordered: @ordered,
-               write_concern: @collection.write_concern }
+               write_concern: @write_concern }
 
       push_op(Mongo::Operation::Write::BulkInsert, spec)
     end
@@ -121,7 +138,7 @@ module Mongo
                db_name:   db_name,
                coll_name: collection.name,
                ordered: @ordered,
-               write_concern: @collection.write_concern }
+               write_concern: @write_concern }
 
       push_op(Mongo::Operation::Write::BulkDelete, spec)
     end
@@ -133,52 +150,53 @@ module Mongo
                db_name:   db_name,
                coll_name: collection.name,
                ordered: @ordered,
-               write_concern: @collection.write_concern }
+               write_concern: @write_concern }
 
       push_op(Mongo::Operation::Write::BulkDelete, spec)
     end
 
     def replace_one(docs)
-      raise ArgumentError unless docs.size >= 2
-      upsert = !!(docs[2] || {})[:upsert]
-      spec = { updates:   [{ q: docs[0],
-                             u: docs[1],
+      selector = docs[0]
+      replacement = docs[1]
+      upsert = (docs[2] || {})[:upsert]
+      raise ArgumentError unless selector && replacement
+      raise InvalidReplacementDoc.new unless replacement_doc?(replacement)
+      upsert = !!upsert
+      spec = { updates:   [{ q: selector,
+                             u: replacement,
                              multi: false,
                              upsert: upsert }],
                db_name:   db_name,
                coll_name: collection.name,
                ordered: @ordered,
-               write_concern: @collection.write_concern }
+               write_concern: @write_concern }
+
       push_op(Mongo::Operation::Write::BulkUpdate, spec)
     end
 
     def update_one(docs)
-      raise ArgumentError unless docs.size >= 2
-      raise InvalidUpdateDoc.new unless update_doc?(docs[1])
-      upsert = !!(docs[2] || {})[:upsert]
-      spec = { updates:   [{ q: docs[0],
-                             u: docs[1],
-                             multi: false,
-                             upsert: upsert }],
-               db_name:   db_name,
-               coll_name: collection.name,
-               ordered: @ordered,
-               write_concern: @collection.write_concern }
-      push_op(Mongo::Operation::Write::BulkUpdate, spec)
+      upsert = (docs[2] || {})[:upsert]
+      update_one_or_many(docs[0], docs[1], upsert, false)
     end
 
     def update_many(docs)
-      raise ArgumentError unless docs.size >= 2
-      raise InvalidUpdateDoc.new unless update_doc?(docs[1])
-      upsert = !!(docs[2] || {})[:upsert]
-      spec = { updates:   [{ q: docs[0],
-                             u: docs[1],
-                             multi: true,
+      upsert = (docs[2] || {})[:upsert]
+      update_one_or_many(docs[0], docs[1], upsert, true)
+    end
+
+    def update_one_or_many(selector, update, upsert, multi)
+      raise ArgumentError unless selector && update
+      raise InvalidUpdateDoc.new unless update_doc?(update)
+      upsert = !!upsert
+      spec = { updates:   [{ q: selector,
+                             u: update,
+                             multi: multi,
                              upsert: upsert }],
                db_name:   db_name,
                coll_name: collection.name,
                ordered: @ordered,
-               write_concern: @collection.write_concern }
+               write_concern: @write_concern }
+
       push_op(Mongo::Operation::Write::BulkUpdate, spec)
     end
 
@@ -303,6 +321,22 @@ module Mongo
         super("Invalid update document provided.")
       end
     end
+
+      # Exception raised if the object is not a valid replacement document.
+      #
+      # @since 2.0.0
+      class InvalidReplacementDoc < DriverError
+
+        # Instantiate the new exception.
+        #
+        # @example Instantiate the exception.
+        #   Mongo::BulkWrite::InvalidReplacementDoc.new
+        #
+        # @since 2.0.0
+        def initialize
+          super("Invalid replacement document provided.")
+        end
+      end
 
     # Exception raised if an non-existent operation type is used.
     #

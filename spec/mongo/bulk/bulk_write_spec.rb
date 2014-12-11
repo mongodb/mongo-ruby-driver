@@ -8,12 +8,12 @@ describe Mongo::BulkWrite do
       authorized_collection.find.remove_many
     end
 
-    let(:bulk) do
-      described_class.new(operations, options, authorized_collection)
-    end
-
     let(:options) do
       { ordered: true }
+    end
+
+    let(:bulk) do
+      described_class.new(operations, options, authorized_collection)
     end
 
     it_behaves_like 'a bulk write object'
@@ -25,12 +25,12 @@ describe Mongo::BulkWrite do
       authorized_collection.find.remove_many
     end
 
-    let(:bulk) do
-      described_class.new(operations, options, authorized_collection)
-    end
-
     let(:options) do
       { ordered: false }
+    end
+
+    let(:bulk) do
+      described_class.new(operations, options, authorized_collection)
     end
 
     it_behaves_like 'a bulk write object'
