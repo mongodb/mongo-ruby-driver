@@ -175,6 +175,19 @@ shared_examples 'a bulk write object' do
       end
     end
 
+    context 'when there are $-operator top-level keys' do
+      let(:replacement) do
+        { :$set => { a: 3 } }
+      end
+
+      it 'raises an exception' do
+        expect do
+          bulk.execute
+        end.to raise_exception(Mongo::BulkWrite::InvalidReplacementDoc)
+      end
+
+    end
+
     context 'when a replace document is specified' do
 
       it 'applies the replacement to only one matching document' do
@@ -343,12 +356,12 @@ shared_examples 'a bulk write object' do
                         update ] } ]
     end
 
-    before do
-      authorized_collection.insert_many(docs)
-    end
-
     let(:expected) do
       [ { 'a' => 2 },  { 'a' => 2 } ]
+    end
+
+    before do
+      authorized_collection.insert_many(docs)
     end
 
     context 'when an update document is not specified' do
@@ -433,6 +446,37 @@ shared_examples 'a bulk write object' do
           expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
         end
       end
+    end
+  end
+
+  context 'when the operations need to be split' do
+
+    before do
+      authorized_collection.find.remove_many
+      6000.times do |i|
+        authorized_collection.insert_one(x: i)
+      end
+    end
+
+    let(:operations) do
+      [].tap do |ops|
+        3000.times do |i|
+          ops << { :update_one => [ { x: i },
+                                    {'$set' => { x: 6000-i } }]
+                 }
+        end
+        ops << { :insert_one => { test: 'emily' } }
+        3000.times do |i|
+          ops << { :update_one => [ { x: 3000+i },
+                                    {'$set' => { x: 3000-i } }]
+                 }
+        end
+      end
+    end
+
+    it 'completes all operations' do
+      bulk.execute
+      expect(authorized_collection.find(x: { '$lte' => 3000 }).to_a.size).to eq(3000)
     end
   end
 end
