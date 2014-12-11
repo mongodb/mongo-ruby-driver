@@ -177,6 +177,11 @@ module Mongo
       ).execute(next_primary.context)
     end
 
+    def bulk_write(operations, options)
+      bulk = BulkWrite.new(operations, options, self)
+      bulk.execute
+    end
+
     # Get the fully qualified namespace of the collection.
     #
     # @example Get the fully qualified namespace.
