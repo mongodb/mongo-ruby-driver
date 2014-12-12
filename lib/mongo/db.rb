@@ -508,11 +508,26 @@ module Mongo
     #   defining the index.
     def index_information(collection_name)
       if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_2_8)
-        result = self.command(:listIndexes => collection_name)['indexes']
+        result = self.command(:listIndexes => collection_name)
+        if result.key?('cursor')
+          cursor_info = result['cursor']
+          pinned_pool = @connection.pinned_pool
+          pinned_pool = pinned_pool[:pool] if pinned_pool.respond_to?(:keys)
+
+          seed = {
+            :cursor_id => cursor_info['id'],
+            :first_batch => cursor_info['firstBatch'],
+            :pool => pinned_pool
+          }
+
+          indexes = Cursor.new(self, seed.merge!(opts)).collect { |doc| doc['indexes'] }
+        else
+          indexes = result['indexes']
+        end
       else
-        result = legacy_list_indexes(collection_name)
+        indexes = legacy_list_indexes(collection_name)
       end
-      result.reduce({}) do |info, index|
+      indexes.reduce({}) do |info, index|
         info.merge!(index['name'] => index)
       end
     end
