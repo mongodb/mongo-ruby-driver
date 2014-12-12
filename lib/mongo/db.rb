@@ -289,7 +289,22 @@ module Mongo
       if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_2_8)
         cmd = BSON::OrderedHash[:listCollections, 1]
         cmd.merge!(:filter => { :name => coll_name }) if coll_name
-        self.command(cmd)['collections']
+        result = self.command(cmd)
+        if result.key?('cursor')
+          cursor_info = result['cursor']
+          pinned_pool = @connection.pinned_pool
+          pinned_pool = pinned_pool[:pool] if pinned_pool.respond_to?(:keys)
+
+          seed = {
+            :cursor_id => cursor_info['id'],
+            :first_batch => cursor_info['firstBatch'],
+            :pool => pinned_pool
+          }
+
+          Cursor.new(self, seed.merge!(opts)).collect { |doc| doc['collections'] }
+        else
+          result['collections']
+        end
       else
         legacy_collections_info(coll_name).to_a
       end
