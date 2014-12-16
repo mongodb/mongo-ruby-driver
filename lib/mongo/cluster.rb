@@ -21,6 +21,7 @@ module Mongo
   #
   # @since 2.0.0
   class Cluster
+    extend Forwardable
     include Event::Subscriber
     include Loggable
 
@@ -37,6 +38,8 @@ module Mongo
     attr_reader :options
     # @return [ Object ] The cluster topology.
     attr_reader :topology
+
+    def_delegators :topology, :sharded?
 
     # Determine if this cluster of servers is equal to another object. Checks the
     # servers currently in the cluster, not what was configured.
@@ -147,18 +150,6 @@ module Mongo
     # @since 2.0.0
     def servers
       topology.servers(@servers, replica_set_name)
-    end
-
-    # Is this cluster part of a sharded (mongos) cluster?
-    #
-    # @example Is the cluster a sharded cluster?
-    #   cluster.sharded?
-    #
-    # @return [ true, false ] If the cluster is sharded.
-    #
-    # @since 2.0.0
-    def sharded?
-      topology == Topology::Sharded
     end
   end
 end
