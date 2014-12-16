@@ -54,4 +54,11 @@ describe Mongo::Cluster::Topology::Standalone do
       expect(described_class).to_not be_sharded
     end
   end
+
+  describe '.standalone?' do
+
+    it 'returns true' do
+      expect(described_class).to be_standalone
+    end
+  end
 end

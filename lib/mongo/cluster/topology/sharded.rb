@@ -46,6 +46,16 @@ module Mongo
           #
           # @since 2.0.0
           def sharded?; true; end
+
+          # A sharded topology is not standalone.
+          #
+          # @example Is the topology standalone?
+          #   Sharded.standalone?
+          #
+          # @return [ false ] Always false.
+          #
+          # @since 2.0.0
+          def standalone?; false; end
         end
       end
     end
