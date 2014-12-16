@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/server/address/resolvable'
 require 'mongo/server/address/ipv4'
 require 'mongo/server/address/ipv6'
 require 'mongo/server/address/unix'
@@ -30,7 +29,7 @@ module Mongo
       # Delegate the ip, host, and port methods to the resolver.
       #
       # @since 2.0.0
-      def_delegators :@resolver, :ip, :host, :port, :socket, :seed, :to_s
+      def_delegators :@resolver, :host, :port, :socket, :seed, :to_s
 
       # @return [ Integer ] port The port to the connect to.
       attr_reader :resolver

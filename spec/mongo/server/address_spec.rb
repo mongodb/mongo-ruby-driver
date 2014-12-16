@@ -97,10 +97,6 @@ describe Mongo::Server::Address do
           described_class.new('127.0.0.1:27017')
         end
 
-        it 'sets the host ip' do
-          expect(address.ip).to eq('127.0.0.1')
-        end
-
         it 'sets the port' do
           expect(address.port).to eq(27017)
         end
@@ -114,10 +110,6 @@ describe Mongo::Server::Address do
 
         let(:address) do
           described_class.new('127.0.0.1')
-        end
-
-        it 'sets the host ip' do
-          expect(address.ip).to eq('127.0.0.1')
         end
 
         it 'sets the port to 27017' do
@@ -138,10 +130,6 @@ describe Mongo::Server::Address do
           described_class.new('[::1]:27017')
         end
 
-        it 'sets the host ip' do
-          expect(address.ip).to eq('::1')
-        end
-
         it 'sets the port' do
           expect(address.port).to eq(27017)
         end
@@ -155,10 +143,6 @@ describe Mongo::Server::Address do
 
         let(:address) do
           described_class.new('[::1]')
-        end
-
-        it 'sets the host ip' do
-          expect(address.ip).to eq('::1')
         end
 
         it 'sets the port to 27017' do
@@ -179,10 +163,6 @@ describe Mongo::Server::Address do
           described_class.new('localhost:27017')
         end
 
-        it 'resolves the host ip' do
-          expect(address.ip).to eq('127.0.0.1')
-        end
-
         it 'sets the port' do
           expect(address.port).to eq(27017)
         end
@@ -196,10 +176,6 @@ describe Mongo::Server::Address do
 
         let(:address) do
           described_class.new('localhost')
-        end
-
-        it 'resolves the host ip' do
-          expect(address.ip).to eq('127.0.0.1')
         end
 
         it 'sets the port to 27017' do
@@ -216,10 +192,6 @@ describe Mongo::Server::Address do
 
       let(:address) do
         described_class.new('/path/to/socket.sock')
-      end
-
-      it 'sets the ip to nil' do
-        expect(address.ip).to be_nil
       end
 
       it 'sets the port to nil' do

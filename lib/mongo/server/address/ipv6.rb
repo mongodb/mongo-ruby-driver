@@ -21,7 +21,15 @@ module Mongo
       #
       # @since 2.0.0
       class IPv6
-        include Resolvable
+
+        # @return [ String ] host The original host name.
+        attr_reader :host
+
+        # @return [ Integer ] port The port.
+        attr_reader :port
+
+        # @return [ String ] seed The seed address.
+        attr_reader :seed
 
         # The regular expression to use to match an IPv6 ip address.
         #
@@ -41,20 +49,6 @@ module Mongo
           @host = parts[1]
           @port = (parts[2] || 27017).to_i
           @seed = address
-          resolve!
-        end
-
-        # Get the pattern to use when the DNS is resolved to match an IPv6
-        # address.
-        #
-        # @example Get the IPv6 regex pattern.
-        #   ipv6.pattern
-        #
-        # @return [ Regexp ] The regexp.
-        #
-        # @since 2.0.0
-        def pattern
-          Resolv::IPv6::Regex
         end
 
         # Get a socket for the provided address type, given the options.
@@ -70,9 +64,9 @@ module Mongo
         # @since 2.0.0
         def socket(timeout, ssl_options = {})
           unless ssl_options.empty?
-            Socket::SSL.new(ip, port, timeout, Socket::PF_INET6, ssl_options)
+            Socket::SSL.new(host, port, timeout, Socket::PF_INET6, ssl_options)
           else
-            Socket::TCP.new(ip, port, timeout, Socket::PF_INET6)
+            Socket::TCP.new(host, port, timeout, Socket::PF_INET6)
           end
         end
 

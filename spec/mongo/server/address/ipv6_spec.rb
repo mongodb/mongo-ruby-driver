@@ -10,10 +10,6 @@ describe Mongo::Server::Address::IPv6 do
         described_class.new('[::1]:27017')
       end
 
-      it 'sets the host ip' do
-        expect(resolver.ip).to eq('::1')
-      end
-
       it 'sets the port' do
         expect(resolver.port).to eq(27017)
       end
@@ -27,10 +23,6 @@ describe Mongo::Server::Address::IPv6 do
 
       let(:resolver) do
         described_class.new('[::1]')
-      end
-
-      it 'sets the host ip' do
-        expect(resolver.ip).to eq('::1')
       end
 
       it 'sets the port to 27017' do

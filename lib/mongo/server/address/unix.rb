@@ -20,7 +20,15 @@ module Mongo
       #
       # @since 2.0.0
       class Unix
-        include Resolvable
+
+        # @return [ String ] host The original host name.
+        attr_reader :host
+
+        # @return [ nil ] port Will always be nil.
+        attr_reader :port
+
+        # @return [ String ] seed The seed address.
+        attr_reader :seed
 
         # The regular expression to use to match a socket path.
         #

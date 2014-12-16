@@ -78,10 +78,6 @@ describe Mongo::Server do
       expect(server.address.port).to eq(27017)
     end
 
-    it 'sets the address ip' do
-      expect(server.address.ip).to eq('127.0.0.1')
-    end
-
     it 'sets the options' do
       expect(server.options).to eq(:heartbeat_frequency => 5)
     end
