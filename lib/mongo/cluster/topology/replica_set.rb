@@ -19,48 +19,46 @@ module Mongo
       # Defines behaviour when a cluster is in replica set topology.
       #
       # @since 2.0.0
-      class ReplicaSet
+      module ReplicaSet
+        extend self
 
-        class << self
-
-          # Select appropriate servers for this topology.
-          #
-          # @example Select the servers.
-          #   ReplicaSet.servers(servers, 'test')
-          #
-          # @param [ Array<Server> ] servers The known servers.
-          # @param [ String ] replica_set_name The name of the replica set.
-          #
-          # @return [ Array<Server> ] The servers in the replica set.
-          #
-          # @since 2.0.0
-          def servers(servers, replica_set_name = nil)
-            servers.select do |server|
-              (replica_set_name.nil? || server.replica_set_name == replica_set_name) &&
-                server.primary? || server.secondary?
-            end
+        # Select appropriate servers for this topology.
+        #
+        # @example Select the servers.
+        #   ReplicaSet.servers(servers, 'test')
+        #
+        # @param [ Array<Server> ] servers The known servers.
+        # @param [ String ] replica_set_name The name of the replica set.
+        #
+        # @return [ Array<Server> ] The servers in the replica set.
+        #
+        # @since 2.0.0
+        def servers(servers, replica_set_name = nil)
+          servers.select do |server|
+            (replica_set_name.nil? || server.replica_set_name == replica_set_name) &&
+              server.primary? || server.secondary?
           end
-
-          # A replica set topology is not sharded.
-          #
-          # @example Is the topology sharded?
-          #   ReplicaSet.sharded?
-          #
-          # @return [ false ] Always false.
-          #
-          # @since 2.0.0
-          def sharded?; false; end
-
-          # A replica set topology is not standalone.
-          #
-          # @example Is the topology standalone?
-          #   ReplicaSet.standalone?
-          #
-          # @return [ false ] Always false.
-          #
-          # @since 2.0.0
-          def standalone?; false; end
         end
+
+        # A replica set topology is not sharded.
+        #
+        # @example Is the topology sharded?
+        #   ReplicaSet.sharded?
+        #
+        # @return [ false ] Always false.
+        #
+        # @since 2.0.0
+        def sharded?; false; end
+
+        # A replica set topology is not standalone.
+        #
+        # @example Is the topology standalone?
+        #   ReplicaSet.standalone?
+        #
+        # @return [ false ] Always false.
+        #
+        # @since 2.0.0
+        def standalone?; false; end
       end
     end
   end

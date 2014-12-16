@@ -23,6 +23,7 @@ module Mongo
     #
     # @since 2.0.0
     module Topology
+      extend self
 
       # The 2 various topologies for server selection.
       #
@@ -46,7 +47,7 @@ module Mongo
       # @return [ ReplicaSet, Sharded, Standalone ] The topology.
       #
       # @since 2.0.0
-      def self.get(options)
+      def get(options)
         return OPTIONS.fetch(options[:topology]) if options.has_key?(:topology)
         options.has_key?(:replica_set) ? ReplicaSet : Standalone
       end

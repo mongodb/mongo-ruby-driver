@@ -30,8 +30,8 @@ module Mongo
     # @since 2.0.0
     REPLICA_SET_NAME = :replica_set.freeze
 
-    # @return [ Mongo::Client ] The cluster's client.
-    attr_reader :client
+    # @return [ Mongo::ServerPreference ] The server preference.
+    attr_reader :server_preference
     # @return [ Array<String> ] The provided seed addresses.
     attr_reader :addresses
     # @return [ Hash ] The options hash.
@@ -54,7 +54,7 @@ module Mongo
     # @since 2.0.0
     def ==(other)
       return false unless other.is_a?(Cluster)
-      addresses == other.addresses
+      addresses == other.addresses && options == other.options
     end
 
     # Add a server to the cluster with the provided address. Useful in
@@ -88,9 +88,9 @@ module Mongo
     # @param [ Hash ] options The options.
     #
     # @since 2.0.0
-    def initialize(client, addresses, options = {})
-      @client = client
+    def initialize(addresses, server_preference, options = {})
       @addresses = addresses
+      @server_preference = server_preference
       @options = options.freeze
       @topology = Topology.get(options)
       @servers = addresses.map do |address|
@@ -109,7 +109,7 @@ module Mongo
     #
     # @since 2.0.0
     def next_primary
-      client.server_preference.primary(servers).first
+      server_preference.primary(servers).first
     end
 
     # Removed the server from the cluster for the provided address, if it

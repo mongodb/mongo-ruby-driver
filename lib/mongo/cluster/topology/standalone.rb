@@ -19,44 +19,42 @@ module Mongo
       # Defines behaviour for when a cluster is in standalone topology.
       #
       # @since 2.0.0
-      class Standalone
+      module Standalone
+        extend self
 
-        class << self
-
-          # Select appropriate servers for this topology.
-          #
-          # @example Select the servers.
-          #   Standalone.servers(servers, 'test')
-          #
-          # @param [ Array<Server> ] servers The known servers.
-          #
-          # @return [ Array<Server> ] The standalone servers.
-          #
-          # @since 2.0.0
-          def servers(servers, name = nil)
-            [ servers.detect{ |server| server.standalone? } ]
-          end
-
-          # A standalone topology is not sharded.
-          #
-          # @example Is the topology sharded?
-          #   Standalone.sharded?
-          #
-          # @return [ false ] Always false.
-          #
-          # @since 2.0.0
-          def sharded?; false; end
-
-          # A standalone topology is standalone.
-          #
-          # @example Is the topology standalone?
-          #   Standalone.standalone?
-          #
-          # @return [ true ] Always true.
-          #
-          # @since 2.0.0
-          def standalone?; true; end
+        # Select appropriate servers for this topology.
+        #
+        # @example Select the servers.
+        #   Standalone.servers(servers, 'test')
+        #
+        # @param [ Array<Server> ] servers The known servers.
+        #
+        # @return [ Array<Server> ] The standalone servers.
+        #
+        # @since 2.0.0
+        def servers(servers, name = nil)
+          [ servers.detect{ |server| server.standalone? } ]
         end
+
+        # A standalone topology is not sharded.
+        #
+        # @example Is the topology sharded?
+        #   Standalone.sharded?
+        #
+        # @return [ false ] Always false.
+        #
+        # @since 2.0.0
+        def sharded?; false; end
+
+        # A standalone topology is standalone.
+        #
+        # @example Is the topology standalone?
+        #   Standalone.standalone?
+        #
+        # @return [ true ] Always true.
+        #
+        # @since 2.0.0
+        def standalone?; true; end
       end
     end
   end

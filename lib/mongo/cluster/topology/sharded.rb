@@ -19,44 +19,42 @@ module Mongo
       # Defines behaviour for when a cluster is in sharded topology.
       #
       # @since 2.0.0
-      class Sharded
+      module Sharded
+        extend self
 
-        class << self
-
-          # Select appropriate servers for this topology.
-          #
-          # @example Select the servers.
-          #   Sharded.servers(servers, 'test')
-          #
-          # @param [ Array<Server> ] servers The known servers.
-          #
-          # @return [ Array<Server> ] The mongos servers.
-          #
-          # @since 2.0.0
-          def servers(servers, name = nil)
-            servers.select{ |server| server.mongos? }
-          end
-
-          # A sharded topology is sharded.
-          #
-          # @example Is the topology sharded?
-          #   Sharded.sharded?
-          #
-          # @return [ true ] Always true.
-          #
-          # @since 2.0.0
-          def sharded?; true; end
-
-          # A sharded topology is not standalone.
-          #
-          # @example Is the topology standalone?
-          #   Sharded.standalone?
-          #
-          # @return [ false ] Always false.
-          #
-          # @since 2.0.0
-          def standalone?; false; end
+        # Select appropriate servers for this topology.
+        #
+        # @example Select the servers.
+        #   Sharded.servers(servers, 'test')
+        #
+        # @param [ Array<Server> ] servers The known servers.
+        #
+        # @return [ Array<Server> ] The mongos servers.
+        #
+        # @since 2.0.0
+        def servers(servers, name = nil)
+          servers.select{ |server| server.mongos? }
         end
+
+        # A sharded topology is sharded.
+        #
+        # @example Is the topology sharded?
+        #   Sharded.sharded?
+        #
+        # @return [ true ] Always true.
+        #
+        # @since 2.0.0
+        def sharded?; true; end
+
+        # A sharded topology is not standalone.
+        #
+        # @example Is the topology standalone?
+        #   Sharded.standalone?
+        #
+        # @return [ false ] Always false.
+        #
+        # @since 2.0.0
+        def standalone?; false; end
       end
     end
   end
