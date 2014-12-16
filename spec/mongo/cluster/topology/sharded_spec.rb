@@ -42,4 +42,11 @@ describe Mongo::Cluster::Topology::Sharded do
       expect(servers).to eq([ mongos ])
     end
   end
+
+  describe '.sharded?' do
+
+    it 'returns true' do
+      expect(described_class).to be_sharded
+    end
+  end
 end

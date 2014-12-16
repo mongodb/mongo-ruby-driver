@@ -21,18 +21,31 @@ module Mongo
       # @since 2.0.0
       class Sharded
 
-        # Select appropriate servers for this topology.
-        #
-        # @example Select the servers.
-        #   Sharded.servers(servers, 'test')
-        #
-        # @param [ Array<Server> ] servers The known servers.
-        #
-        # @return [ Array<Server> ] The mongos servers.
-        #
-        # @since 2.0.0
-        def self.servers(servers, name = nil)
-          servers.select{ |server| server.mongos? }
+        class << self
+
+          # Select appropriate servers for this topology.
+          #
+          # @example Select the servers.
+          #   Sharded.servers(servers, 'test')
+          #
+          # @param [ Array<Server> ] servers The known servers.
+          #
+          # @return [ Array<Server> ] The mongos servers.
+          #
+          # @since 2.0.0
+          def servers(servers, name = nil)
+            servers.select{ |server| server.mongos? }
+          end
+
+          # A sharded topology is sharded.
+          #
+          # @example Is the topology sharded?
+          #   Sharded.sharded?
+          #
+          # @return [ true ] Always true.
+          #
+          # @since 2.0.0
+          def sharded?; true; end
         end
       end
     end

@@ -47,4 +47,11 @@ describe Mongo::Cluster::Topology::Standalone do
       expect(servers).to eq([ standalone ])
     end
   end
+
+  describe '.sharded?' do
+
+    it 'returns false' do
+      expect(described_class).to_not be_sharded
+    end
+  end
 end

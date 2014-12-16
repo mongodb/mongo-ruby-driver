@@ -21,18 +21,31 @@ module Mongo
       # @since 2.0.0
       class Standalone
 
-        # Select appropriate servers for this topology.
-        #
-        # @example Select the servers.
-        #   Standalone.servers(servers, 'test')
-        #
-        # @param [ Array<Server> ] servers The known servers.
-        #
-        # @return [ Array<Server> ] The standalone servers.
-        #
-        # @since 2.0.0
-        def self.servers(servers, name = nil)
-          [ servers.detect{ |server| server.standalone? } ]
+        class << self
+
+          # Select appropriate servers for this topology.
+          #
+          # @example Select the servers.
+          #   Standalone.servers(servers, 'test')
+          #
+          # @param [ Array<Server> ] servers The known servers.
+          #
+          # @return [ Array<Server> ] The standalone servers.
+          #
+          # @since 2.0.0
+          def servers(servers, name = nil)
+            [ servers.detect{ |server| server.standalone? } ]
+          end
+
+          # A standalone topology is not sharded.
+          #
+          # @example Is the topology sharded?
+          #   Standalone.sharded?
+          #
+          # @return [ false ] Always false.
+          #
+          # @since 2.0.0
+          def sharded?; false; end
         end
       end
     end
