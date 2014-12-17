@@ -60,6 +60,8 @@ end
 
 TEST_SET = 'ruby-driver-rs'
 COVERAGE_MIN = 90
+CURRENT_PATH = File.expand_path(File.dirname(__FILE__))
+SERVER_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/support/sdam/**/*.yml")
 
 # For instances where behaviour is different on different versions, we need to
 # determine in the specs if we are 2.6 or higher.
