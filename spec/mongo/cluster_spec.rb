@@ -59,5 +59,19 @@ describe Mongo::Cluster do
     end
   end
 
-  pending '#inspect'
+  describe '#inspect' do
+
+    let(:preference) do
+      Mongo::ServerPreference.get
+    end
+
+    let(:cluster) do
+      described_class.new([ '127.0.0.1:27017' ], preference)
+    end
+
+    it 'displays the cluster seeds and topology' do
+      expect(cluster.inspect).to include('topology')
+      expect(cluster.inspect).to include('servers')
+    end
+  end
 end

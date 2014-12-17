@@ -22,6 +22,23 @@ module Mongo
       module ReplicaSet
         extend self
 
+        # The display name for the topology.
+        #
+        # @since 2.0.0
+        NAME = 'Replica Set'.freeze
+
+        # Get the display name.
+        #
+        # @example Get the display name.
+        #   ReplicaSet.display_name
+        #
+        # @return [ String ] The display name.
+        #
+        # @since 2.0.0
+        def display_name
+          NAME
+        end
+
         # Select appropriate servers for this topology.
         #
         # @example Select the servers.

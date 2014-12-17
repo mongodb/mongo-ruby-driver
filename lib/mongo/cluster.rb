@@ -100,6 +100,18 @@ module Mongo
       subscribe_to(Event::SERVER_REMOVED, Event::ServerRemoved.new(self))
     end
 
+    # Get the nicer formatted string for use in inspection.
+    #
+    # @example Inspect the cluster.
+    #   cluster.inspect
+    #
+    # @return [ String ] The cluster inspection.
+    #
+    # @since 2.0.0
+    def inspect
+      "#<Mongo::Cluster:0x#{object_id} servers=#{servers} topology=#{topology.display_name}>"
+    end
+
     # Get the next primary server we can send an operation to.
     #
     # @example Get the next primary server.

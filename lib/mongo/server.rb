@@ -120,7 +120,7 @@ module Mongo
     #
     # @since 2.0.0
     def inspect
-      "#<Mongo::Server:0x#{object_id} address=#{address.host}:#{address.port}"
+      "#<Mongo::Server:0x#{object_id} address=#{address.host}:#{address.port}>"
     end
 
     # Get the connection pool for this server.
