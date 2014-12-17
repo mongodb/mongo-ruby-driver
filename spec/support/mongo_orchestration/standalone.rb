@@ -16,28 +16,34 @@ module MongoOrchestration
   class Standalone
     include Requestable
 
+    attr_reader :client
     attr_reader :id
-    attr_reader :config
+
+    def stop
+      request_content = { action: 'stop' }
+      @config = post("#{orchestration}/#{id}", request_content)
+      self
+    end
 
     private
 
     def create(options = {})
-      request_content = setup_config[:request_content]
-      id = request_content[:id]
-      if exists?(id)
-        @id = id
-      else
-        post(setup_config[:orchestration], { body: request_content })
-        @config = @response
-      end
+      @config = post(orchestration,
+                     { body: create_config[:request_content] })
+      @id = @config['id']
+      @client ||= Mongo::Client.new("#{@config['mongodb_uri']}")
+      self
     end
 
-    def setup_config
+    def orchestration
+      create_config[:orchestration]
+    end
+
+    def create_config
      {
-        orchestration: "servers",
+        orchestration: 'servers',
         request_content: {
-                          id: "standalone",
-                          name: "mongod",
+                          name: 'mongod',
                           procParams: { journal: true }
                          }
       }

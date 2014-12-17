@@ -19,51 +19,45 @@ module MongoOrchestration
   module Requestable
     include HTTParty
 
-    # The default base uri for mongo orchestration.
-    #
-    # @since 2.0.0
-    DEFAULT_BASE_URI = 'http://localhost:8889'.freeze
-
     def initialize(options = {})
-      @base_path = options[:path] || DEFAULT_BASE_URI
+      @base_path = options[:path] || MongoOrchestration::DEFAULT_BASE_URI
       create(options)
     end
+
+    private
 
     def http_request(method, path = nil, options = {})
       dispatch do
         abs_path = [@base_path, path].compact.join('/')
         options[:body] = options[:body].to_json if options.has_key?(:body)
-        @response = HTTParty.send(method, abs_path, options)
+        HTTParty.send(method, abs_path, options)
       end
-      self
     end
 
     def get(path = nil, options = {})
       http_request(__method__, path, options)
-      self
     end
 
     def post(path = nil, options = {})
       http_request(__method__, path, options)
-      self
     end
 
     def ok?
       @response && @response.code/100 == 2
     end
 
-    def exists?(id)
+    def alive?(id)
       begin
         get("servers/#{id}")
-        @config = @response
       rescue ServiceNotAvailable
         return false
       end
+      @config = @response if @response && @response['procInfo']['alive']
     end
 
     def dispatch
       begin
-        yield
+        @response = yield
       rescue ArgumentError, Errno::ECONNREFUSED
         raise ServiceNotAvailable.new unless ok?
       end

@@ -1,21 +1,29 @@
 require 'spec_helper'
 
-describe MongoOrchestration do
+describe MongoOrchestration, if: mongo_orchestration_available? do
 
   context 'when creating a standalone' do
 
     context 'when the mongo orchestration service is available' do
 
       before do
-        initialize_standalone!
+        initialize_mo_standalone!
       end
 
-      it 'sets up a standalone object with a config' do
-        expect(@standalone.config).to_not be_nil
+      after do
+        stop_mo_standalone!
       end
 
       it 'sets up a standalone object with an id' do
-        expect(@standalone.id).to eq('standalone')
+        expect(@standalone.id).to_not be_nil
+      end
+
+      it 'sets up a standalone object with a client' do
+        expect(@standalone.client).to_not be_nil
+      end
+
+      it 'sets the correct cluster topology' do
+        expect(@standalone.client.cluster.topology).to eq(Mongo::Cluster::Topology::Standalone)
       end
     end
 
@@ -23,7 +31,7 @@ describe MongoOrchestration do
 
       it 'raises an error' do
         expect do
-          initialize_standalone!('http://localhost:1000')
+          initialize_mo_standalone!('http://localhost:1')
         end.to raise_exception(MongoOrchestration::ServiceNotAvailable)
       end
     end

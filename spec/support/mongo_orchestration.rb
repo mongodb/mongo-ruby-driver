@@ -24,6 +24,11 @@ module MongoOrchestration
       standalone: Standalone
     }
 
+  # The default base uri for mongo orchestration.
+  #
+  # @since 2.0.0
+  DEFAULT_BASE_URI = 'http://localhost:8889'.freeze
+
   def get(type, options = {})
     TYPES[type].new(options)
   end
