@@ -66,6 +66,13 @@ describe Mongo::Cluster::Topology::ReplicaSet do
     end
   end
 
+  describe '.replica_set?' do
+
+    it 'returns true' do
+      expect(described_class).to be_replica_set
+    end
+  end
+
   describe '.sharded?' do
 
     it 'returns false' do

@@ -39,6 +39,16 @@ module Mongo
           NAME
         end
 
+        # A replica set topology is a replica set.
+        #
+        # @example Is the topology a replica set?
+        #   ReplicaSet.replica_set?
+        #
+        # @return [ true ] Always true.
+        #
+        # @since 2.0.0
+        def replica_set?; true; end
+
         # Select appropriate servers for this topology.
         #
         # @example Select the servers.

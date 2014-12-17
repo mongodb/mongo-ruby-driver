@@ -39,6 +39,16 @@ module Mongo
           NAME
         end
 
+        # A standalone topology is not a replica set.
+        #
+        # @example Is the topology a replica set?
+        #   Sharded.replica_set?
+        #
+        # @return [ false ] Always false.
+        #
+        # @since 2.0.0
+        def replica_set?; false; end
+
         # Select appropriate servers for this topology.
         #
         # @example Select the servers.
