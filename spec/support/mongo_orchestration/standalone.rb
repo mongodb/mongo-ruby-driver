@@ -19,6 +19,9 @@ module MongoOrchestration
     attr_reader :client
     attr_reader :id
 
+    # Stop this resource.
+    #
+    # @since 2.0.0
     def stop
       request_content = { action: 'stop' }
       @config = post("#{orchestration}/#{id}", request_content)

@@ -19,9 +19,9 @@ module MongoOrchestration
   extend self
 
   TYPES = {
+      standalone: Standalone,
       #replica_set: ReplicaSet,
-      #sharded_cluster: ShardedCluster,
-      standalone: Standalone
+      #sharded_cluster: ShardedCluster
     }
 
   # The default base uri for mongo orchestration.
@@ -29,10 +29,28 @@ module MongoOrchestration
   # @since 2.0.0
   DEFAULT_BASE_URI = 'http://localhost:8889'.freeze
 
+
+  # Get a Mongo Orchestration resource.
+  #
+  # @example Get the Mongo Orchestration resource.
+  #   MongoOrchestration.get(:standalone)
+  #
+  # @param [ Symbol ] type The type of resource.
+  # @param [ Hash ] options Options for creating the resource.
+  #
+  # @option options [ String ] :path The path to use for making
+  #   requests to the Mongo Orchestration service.
+  #
+  # @return [ Standlone, ReplicaSet, ShardedCluster ] The resource.
+  #
+  # @since 2.0.0
   def get(type, options = {})
     TYPES[type].new(options)
   end
 
+  # Raised when the Mongo Orchestration service is not available.
+  #
+  # @since 2.0.0
   class ServiceNotAvailable < RuntimeError
 
     def initialize

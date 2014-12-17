@@ -16,9 +16,22 @@ require 'httparty'
 
 module MongoOrchestration
 
+  # Encapsulates behavior of a Mongo Orchestration resource.
+  #
+  # @since 2.0.0
   module Requestable
     include HTTParty
 
+    # Initialize a Mongo Orchestration resource.
+    #
+    # @example Initialize a Mongo Orchestration resource.
+    #   Standalone.new
+    #
+    # @param [ Hash ] options Options for creating the resource.
+    #
+    # @option options [ String ] :path The path to use for Mongo Orchestration.
+    #
+    # @since 2.0.0
     def initialize(options = {})
       @base_path = options[:path] || MongoOrchestration::DEFAULT_BASE_URI
       create(options)
