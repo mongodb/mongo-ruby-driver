@@ -74,4 +74,37 @@ describe Mongo::Cluster do
       expect(cluster.inspect).to include('servers')
     end
   end
+
+  describe '#replica_set_name' do
+
+    let(:preference) do
+      Mongo::ServerPreference.get
+    end
+
+    let(:cluster) do
+      described_class.new([ '127.0.0.1:27017' ], preference, :replica_set => 'testing')
+    end
+
+    context 'when the option is provided' do
+
+      let(:cluster) do
+        described_class.new([ '127.0.0.1:27017' ], preference, :replica_set => 'testing')
+      end
+
+      it 'returns the name' do
+        expect(cluster.replica_set_name).to eq('testing')
+      end
+    end
+
+    context 'when the option is not provided' do
+
+      let(:cluster) do
+        described_class.new([ '127.0.0.1:27017' ], preference)
+      end
+
+      it 'returns nil' do
+        expect(cluster.replica_set_name).to be_nil
+      end
+    end
+  end
 end
