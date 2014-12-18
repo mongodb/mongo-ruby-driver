@@ -16,6 +16,7 @@ require 'support/mongo_orchestration/requestable'
 require 'support/mongo_orchestration/standalone'
 
 module MongoOrchestration
+
   extend self
 
   TYPES = {

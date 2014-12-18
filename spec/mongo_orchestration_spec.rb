@@ -36,4 +36,16 @@ describe MongoOrchestration, if: mongo_orchestration_available? do
       end
     end
   end
+
+  context 'when stopping a standalone' do
+
+    before do
+      initialize_mo_standalone!
+      stop_mo_standalone!
+    end
+
+    it 'stops the standalone' do
+      expect(@standalone.alive?).to eq(false)
+    end
+  end
 end

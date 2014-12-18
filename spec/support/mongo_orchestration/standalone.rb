@@ -23,7 +23,7 @@ module MongoOrchestration
     #
     # @since 2.0.0
     def stop
-      request_content = { action: 'stop' }
+      request_content = { body: { action: 'stop' } }
       @config = post("#{orchestration}/#{id}", request_content)
       self
     end

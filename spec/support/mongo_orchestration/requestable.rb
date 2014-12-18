@@ -37,6 +37,15 @@ module MongoOrchestration
       create(options)
     end
 
+    def alive?
+      begin
+        get("servers/#{id}")
+      rescue ServiceNotAvailable
+        return false
+      end
+      !!(@config = @response if @response && @response['procInfo']['alive'])
+    end
+
     private
 
     def http_request(method, path = nil, options = {})
@@ -57,15 +66,6 @@ module MongoOrchestration
 
     def ok?
       @response && @response.code/100 == 2
-    end
-
-    def alive?(id)
-      begin
-        get("servers/#{id}")
-      rescue ServiceNotAvailable
-        return false
-      end
-      @config = @response if @response && @response['procInfo']['alive']
     end
 
     def dispatch
