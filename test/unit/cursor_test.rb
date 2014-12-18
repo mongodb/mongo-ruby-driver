@@ -138,7 +138,15 @@ class CursorUnitTest < Test::Unit::TestCase
       assert_equal 100, @cursor.batch_size
     end
 
-    context "conected to mongos" do
+    context 'when an alternate namespace is specified' do
+
+      should 'use the alternate namespace' do
+        assert_equal('other_db.other_collection',
+                     Cursor.new(@collection, :ns => 'other_db.other_collection').full_collection_name)
+      end
+    end
+
+    context "connected to mongos" do
       setup do
         @connection.stubs(:mongos?).returns(true)
         @tag_sets = [{:dc => "ny"}]
@@ -211,7 +219,7 @@ class CursorUnitTest < Test::Unit::TestCase
       end
     end
 
-    context "not conected to mongos" do
+    context "not connected to mongos" do
       setup do
         @connection.stubs(:mongos?).returns(false)
       end

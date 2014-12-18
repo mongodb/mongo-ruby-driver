@@ -729,7 +729,8 @@ module Mongo
         seed = {
           :cursor_id => cursor_info['id'],
           :first_batch => cursor_info['firstBatch'],
-          :pool => pinned_pool
+          :pool => pinned_pool,
+          :ns => cursor_info['ns']
         }
 
         return Cursor.new(self, seed.merge!(opts))
@@ -901,7 +902,8 @@ module Mongo
         seed = {
           :cursor_id   => cursor_info['cursor']['id'],
           :first_batch => cursor_info['cursor']['firstBatch'],
-          :pool        => pinned_pool
+          :pool        => pinned_pool,
+          :ns          => cursor_info['ns']
         }
         Cursor.new(self, seed.merge!(opts))
       end
