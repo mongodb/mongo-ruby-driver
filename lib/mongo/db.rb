@@ -289,7 +289,7 @@ module Mongo
       if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_2_8)
         cmd = BSON::OrderedHash[:listCollections, 1]
         cmd.merge!(:filter => { :name => coll_name }) if coll_name
-        result = self.command(cmd)
+        result = self.command(cmd, :cursor => {})
         if result.key?('cursor')
           cursor_info = result['cursor']
           pinned_pool = @connection.pinned_pool
@@ -298,7 +298,8 @@ module Mongo
           seed = {
             :cursor_id => cursor_info['id'],
             :first_batch => cursor_info['firstBatch'],
-            :pool => pinned_pool
+            :pool => pinned_pool,
+            :ns => cursor_info['ns']
           }
 
           Cursor.new(self, seed.merge!(opts)).collect { |doc| doc['collections'] }
@@ -508,7 +509,7 @@ module Mongo
     #   defining the index.
     def index_information(collection_name)
       if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_2_8)
-        result = self.command(:listIndexes => collection_name)
+        result = self.command({ :listIndexes => collection_name }, :cursor => {})
         if result.key?('cursor')
           cursor_info = result['cursor']
           pinned_pool = @connection.pinned_pool
@@ -517,7 +518,8 @@ module Mongo
           seed = {
             :cursor_id => cursor_info['id'],
             :first_batch => cursor_info['firstBatch'],
-            :pool => pinned_pool
+            :pool => pinned_pool,
+            :ns => cursor_info['ns']
           }
 
           indexes = Cursor.new(self, seed.merge!(opts)).collect { |doc| doc['indexes'] }
