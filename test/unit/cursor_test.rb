@@ -141,8 +141,8 @@ class CursorUnitTest < Test::Unit::TestCase
     context 'when an alternate namespace is specified' do
 
       should 'use the alternate namespace' do
-        assert_equal('other_db.other_collection',
-                     Cursor.new(@collection, :ns => 'other_db.other_collection').full_collection_name)
+        cursor = Cursor.new(@collection, :ns => 'other_db.other_collection')
+        assert_equal('other_db.other_collection', cursor.full_collection_name)
       end
     end
 

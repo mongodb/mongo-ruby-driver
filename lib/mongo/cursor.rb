@@ -23,8 +23,7 @@ module Mongo
     include Mongo::ReadPreference
 
     attr_reader :collection, :selector, :fields,
-      :order, :hint, :snapshot, :timeout,
-      :full_collection_name, :transformer,
+      :order, :hint, :snapshot, :timeout, :transformer,
       :options, :cursor_id, :show_disk_loc,
       :comment, :compile_regex, :read, :tag_sets,
       :acceptable_latency
