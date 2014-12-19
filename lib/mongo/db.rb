@@ -289,7 +289,23 @@ module Mongo
       if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_2_8)
         cmd = BSON::OrderedHash[:listCollections, 1]
         cmd.merge!(:filter => { :name => coll_name }) if coll_name
-        self.command(cmd)['collections']
+        result = self.command(cmd, :cursor => {})
+        if result.key?('cursor')
+          cursor_info = result['cursor']
+          pinned_pool = @connection.pinned_pool
+          pinned_pool = pinned_pool[:pool] if pinned_pool.respond_to?(:keys)
+
+          seed = {
+            :cursor_id => cursor_info['id'],
+            :first_batch => cursor_info['firstBatch'],
+            :pool => pinned_pool,
+            :ns => cursor_info['ns']
+          }
+
+          Cursor.new(self, seed.merge!(opts)).collect { |doc| doc['collections'] }
+        else
+          result['collections']
+        end
       else
         legacy_collections_info(coll_name).to_a
       end
@@ -493,11 +509,27 @@ module Mongo
     #   defining the index.
     def index_information(collection_name)
       if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_2_8)
-        result = self.command(:listIndexes => collection_name)['indexes']
+        result = self.command({ :listIndexes => collection_name }, :cursor => {})
+        if result.key?('cursor')
+          cursor_info = result['cursor']
+          pinned_pool = @connection.pinned_pool
+          pinned_pool = pinned_pool[:pool] if pinned_pool.respond_to?(:keys)
+
+          seed = {
+            :cursor_id => cursor_info['id'],
+            :first_batch => cursor_info['firstBatch'],
+            :pool => pinned_pool,
+            :ns => cursor_info['ns']
+          }
+
+          indexes = Cursor.new(self, seed.merge!(opts)).collect { |doc| doc['indexes'] }
+        else
+          indexes = result['indexes']
+        end
       else
-        result = legacy_list_indexes(collection_name)
+        indexes = legacy_list_indexes(collection_name)
       end
-      result.reduce({}) do |info, index|
+      indexes.reduce({}) do |info, index|
         info.merge!(index['name'] => index)
       end
     end
