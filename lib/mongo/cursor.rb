@@ -23,8 +23,7 @@ module Mongo
     include Mongo::ReadPreference
 
     attr_reader :collection, :selector, :fields,
-      :order, :hint, :snapshot, :timeout,
-      :full_collection_name, :transformer,
+      :order, :hint, :snapshot, :timeout, :transformer,
       :options, :cursor_id, :show_disk_loc,
       :comment, :compile_regex, :read, :tag_sets,
       :acceptable_latency
@@ -40,6 +39,7 @@ module Mongo
       @cursor_id  = opts.delete(:cursor_id)
       @db         = collection.db
       @collection = collection
+      @ns         = opts.delete(:ns)
       @connection = @db.connection
       @logger     = @connection.logger
 
@@ -83,7 +83,6 @@ module Mongo
 
       batch_size(opts.delete(:batch_size) || 0)
 
-      @full_collection_name = "#{@collection.db.name}.#{@collection.name}"
       @cache                = opts.delete(:first_batch) || []
       @returned             = 0
 
@@ -122,6 +121,10 @@ module Mongo
     # @return [Boolean]
     def alive?
       @cursor_id && @cursor_id != 0
+    end
+
+    def full_collection_name
+      @ns || "#{@collection.db.name}.#{@collection.name}"
     end
 
     # Get the next document specified the cursor options.
@@ -484,7 +487,7 @@ module Mongo
 
     # Clean output for inspect.
     def inspect
-      "<Mongo::Cursor:0x#{object_id.to_s(16)} namespace='#{@db.name}.#{@collection.name}' " +
+      "<Mongo::Cursor:0x#{object_id.to_s(16)} namespace='#{full_collection_name}' " +
         "@selector=#{@selector.inspect} @cursor_id=#{@cursor_id}>"
     end
 
@@ -580,7 +583,7 @@ module Mongo
       message = BSON::ByteBuffer.new([0, 0, 0, 0])
 
       # DB name.
-      BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@collection.name}")
+      BSON::BSON_RUBY.serialize_cstr(message, full_collection_name)
 
       # Number of results to return.
       if @limit > 0
@@ -636,7 +639,7 @@ module Mongo
     def construct_query_message
       message = BSON::ByteBuffer.new("", @connection.max_bson_size + MongoClient::COMMAND_HEADROOM)
       message.put_int(@options)
-      BSON::BSON_RUBY.serialize_cstr(message, "#{@db.name}.#{@collection.name}")
+      BSON::BSON_RUBY.serialize_cstr(message, full_collection_name)
       message.put_int(@skip)
       @batch_size > 1 ? message.put_int(@batch_size) : message.put_int(@limit)
       if query_contains_special_fields? && @bson # costs two serialize calls
