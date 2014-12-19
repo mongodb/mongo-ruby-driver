@@ -292,7 +292,7 @@ module Mongo
         result = self.command(cmd, :cursor => {})
         if result.key?('cursor')
           cursor_info = result['cursor']
-          pinned_pool = @connection.pinned_pool
+          pinned_pool = @client.pinned_pool
           pinned_pool = pinned_pool[:pool] if pinned_pool.respond_to?(:keys)
 
           seed = {
@@ -302,7 +302,7 @@ module Mongo
             :ns => cursor_info['ns']
           }
 
-          Cursor.new(self, seed.merge!(opts)).collect { |doc| doc['collections'] }
+          Cursor.new(Collection.new('$cmd', self), seed).to_a
         else
           result['collections']
         end
@@ -512,7 +512,7 @@ module Mongo
         result = self.command({ :listIndexes => collection_name }, :cursor => {})
         if result.key?('cursor')
           cursor_info = result['cursor']
-          pinned_pool = @connection.pinned_pool
+          pinned_pool = @client.pinned_pool
           pinned_pool = pinned_pool[:pool] if pinned_pool.respond_to?(:keys)
 
           seed = {
@@ -522,7 +522,7 @@ module Mongo
             :ns => cursor_info['ns']
           }
 
-          indexes = Cursor.new(self, seed.merge!(opts)).collect { |doc| doc['indexes'] }
+          indexes = Cursor.new(Collection.new('$cmd', self), seed).to_a
         else
           indexes = result['indexes']
         end
