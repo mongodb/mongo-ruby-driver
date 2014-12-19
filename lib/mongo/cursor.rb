@@ -487,7 +487,7 @@ module Mongo
 
     # Clean output for inspect.
     def inspect
-      "<Mongo::Cursor:0x#{object_id.to_s(16)} namespace='#{@db.name}.#{@collection.name}' " +
+      "<Mongo::Cursor:0x#{object_id.to_s(16)} namespace='#{full_collection_name}' " +
         "@selector=#{@selector.inspect} @cursor_id=#{@cursor_id}>"
     end
 
