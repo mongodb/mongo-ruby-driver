@@ -88,7 +88,7 @@ module Mongo
     def disconnect!
       context.with_connection do |connection|
         connection.disconnect!
-      end and true
+      end and clean_up and true
     end
 
     # Instantiate a new server object. Will start the background refresh and
@@ -133,6 +133,18 @@ module Mongo
     # @since 2.0.0
     def pool
       @pool ||= Pool.get(self)
+    end
+
+    private
+
+    # Cleans up the Server instance. Stops the monitoring process.
+    #
+    # @return [ Boolean ] Always true with no exception.
+    #
+    # @since 2.0.0
+    def clean_up
+      @monitor.stop
+      true
     end
   end
 end

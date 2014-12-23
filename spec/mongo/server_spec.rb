@@ -97,4 +97,22 @@ describe Mongo::Server do
       expect(pool).to be_a(Mongo::Pool)
     end
   end
+
+  describe '#disconnect!' do
+    let(:server) do
+      described_class.new('127.0.0.1:27017')
+    end
+
+    it 'removed the monitor thread instance' do
+      s = described_class.new('127.0.0.1:27017')
+      monitor_count = Mongo::Server::Monitor.threads.size
+      s.disconnect!
+      expect(Mongo::Server::Monitor.threads.size).to eq(monitor_count - 1)
+    end
+
+    it 'stops the monitor instance' do
+      expect_any_instance_of(Mongo::Server::Monitor).to receive(:stop).and_return(true)
+      server.disconnect!
+    end
+  end
 end

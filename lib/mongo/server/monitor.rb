@@ -108,6 +108,20 @@ module Mongo
         end
       end
 
+      # Stops the server monitor. Kills the thread so it doesn't continue
+      # taking memory and sending commands to the connection.
+      #
+      # @example Stop the monitor.
+      #   monitor.stop
+      #
+      # @return [ Boolean ] Is the Thread stopped?
+      #
+      # @since 2.0.0
+      def stop
+        thread = Monitor.threads.delete(object_id)
+        thread.kill && thread.stop?
+      end
+
       private
 
       def calculate_round_trip_time(start)
