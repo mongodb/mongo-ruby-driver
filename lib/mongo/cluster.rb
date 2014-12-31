@@ -106,7 +106,7 @@ module Mongo
     #
     # @since 2.0.0
     def next_primary
-      client.server_preference.primary(servers).first
+      client.server_preference.primary(@servers).first
     end
 
     # Removed the server from the cluster for the provided address, if it
