@@ -176,6 +176,21 @@ module Mongo
       setup(opts.dup)
     end
 
+    # Replace the list of nodes to use as seeds in the event of a lost connection
+    #
+    # @param [Array<String>] new seeds
+    #
+    # @raise [MongoArgumentError] This is raised if the list of seeds is empty
+    def update_seeds!(seeds)
+      if seeds.length.zero?
+        raise MongoArgumentError, "Updating seeds requires at least one seed node."
+      end
+
+      @seeds = Support.normalize_seeds(seeds).freeze
+      connect(true)
+      nil
+    end
+
     def valid_opts
       super + REPL_SET_OPTS - CLIENT_ONLY_OPTS
     end
