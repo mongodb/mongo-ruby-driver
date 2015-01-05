@@ -39,8 +39,8 @@ module MongoOrchestration
   # @param [ Symbol ] type The type of resource.
   # @param [ Hash ] options Options for creating the resource.
   #
-  # @option options [ String ] :path The path to use for making
-  #   requests to the Mongo Orchestration service.
+  # @option options [ String ] :path The path to use for the
+  #   Mongo Orchestration service.
   #
   # @return [ Standlone, ReplicaSet, ShardedCluster ] The resource.
   #

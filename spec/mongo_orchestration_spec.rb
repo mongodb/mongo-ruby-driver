@@ -25,6 +25,10 @@ describe MongoOrchestration, if: mongo_orchestration_available? do
       it 'sets the correct cluster topology' do
         expect(@standalone.client.cluster.topology).to eq(Mongo::Cluster::Topology::Standalone)
       end
+
+      it 'sets the path' do
+        expect(@standalone.path).to eq(MongoOrchestration::DEFAULT_BASE_URI)
+      end
     end
 
     context 'when the mongo orchestration service is not available' do

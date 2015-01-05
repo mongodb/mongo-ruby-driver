@@ -22,10 +22,14 @@ module MongoOrchestration
   module Requestable
     include HTTParty
 
+    # @return [ String ] base_path The path used to connect to the MO service.
+    attr_reader :base_path
+    alias_method :path, :base_path
+
     # Initialize a Mongo Orchestration resource.
     #
     # @example Initialize a Mongo Orchestration resource.
-    #   Standalone.new
+    #   MongoOrchestration::Standalone.new
     #
     # @param [ Hash ] options Options for creating the resource.
     #
@@ -37,6 +41,14 @@ module MongoOrchestration
       create(options)
     end
 
+    # Is the Mongo Orchestration resource still available?
+    #
+    # @exmaple Check if the Mongo Orchestration resource is available.
+    #   standalone.alive?
+    #
+    # @return [ true, false ] If the resource is available.
+    #
+    # @since 2.0.0
     def alive?
       begin
         get("servers/#{id}")
@@ -64,16 +76,16 @@ module MongoOrchestration
       http_request(__method__, path, options)
     end
 
-    def ok?
-      @response && @response.code/100 == 2
-    end
-
     def dispatch
       begin
         @response = yield
       rescue ArgumentError, Errno::ECONNREFUSED
         raise ServiceNotAvailable.new unless ok?
       end
+    end
+
+    def ok?
+      @response && @response.code/100 == 2
     end
   end
 end
