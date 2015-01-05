@@ -32,49 +32,65 @@ end
 
 describe 'Server Discovery and Monitoring' do
 
-  SERVER_DISCOVERY_TESTS.each do |file|
+  SERVER_DISCOVERY_TESTS.take(1).each do |file|
 
-    test = YAML.load(ERB.new(File.new(file).read).result)
+    spec = Mongo::SDAM::Spec.new(file)
 
-    # Description will be mapped to the name of the spec.
-    description = test['description']
-
-    # Phases are for each step in the spec.
-    phases = test['phases']
-
-    # URI in which the Mongo::Client will be instantiated with.
-    uri = test['uri']
-
-    context(description) do
+    context(spec.description) do
 
       let(:client) do
-        Mongo::Client.new(uri)
+        Mongo::Client.new(spec.uri_string)
       end
 
-      phases.each do |phase|
+      spec.phases.each do |phase|
 
         # The responses for each server ismaster call during the phase.
-        responses = phase['responses']
+        p "###################### RESPONSES FOR PHASE ######################"
+        p phase.responses
 
         # The outcome (expected cluster topology) for each phase.
-        outcome = phase['outcome']
+        p "###################### OUTCOME FOR PHASE ######################"
+        p phase.outcome
 
-        responses.each do |map|
+        p "###################### CONNECTION MOCKS #######################"
+        servers = phase.outcome.servers
+
+        let(:connections) do
+          servers.keys.reduce({}) do |mocks, address|
+            mock = double(address)
+            expect(Mongo::Connection).to receive(:new).
+              with(Mongo::Server.new(address, {})).
+              and_return(mock)
+            mocks[address] = mock
+            mocks
+          end
+        end
+
+        phase.responses.each do |response|
 
           # The response map for each ismaster call for each server in the
           # phase.
-          response = Hash[*map]
+          p "###################### RESPONSE FOR EACH SERVER ######################"
+          p response
+
+          before do
+            # Provide the expectation on the connection for the ismaster
+            # command and return the reply.
+            expect(connections[response.address]).to receive(:dispatch).
+              with([ Mongo::Server::Monitor::ISMASTER ]).
+              and_return(response.reply)
+          end
         end
 
-        it "sets the cluster topology to #{outcome['topologyType']}" do
+        it "sets the cluster topology to #{phase.outcome.topology_type}" do
+          p client
+        end
+
+        it "sets the cluster replica set name to #{phase.outcome.set_name}" do
 
         end
 
-        it "sets the cluster replica set name to #{outcome['setName'].inspect}" do
-
-        end
-
-        outcome['servers'].each do |uri, server|
+        phase.outcome.servers.each do |uri, server|
 
           it "sets #{uri} to #{server['type']}" do
 

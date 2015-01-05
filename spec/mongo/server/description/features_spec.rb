@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Server::Features do
+describe Mongo::Server::Description::Features do
 
   describe '#initialize' do
 
@@ -20,7 +20,7 @@ describe Mongo::Server::Features do
       it 'raises an exception' do
         expect {
           described_class.new(0..4)
-        }.to raise_error(Mongo::Server::Features::Unsupported)
+        }.to raise_error(Mongo::Server::Description::Features::Unsupported)
       end
     end
 

@@ -22,6 +22,7 @@ require 'mongo'
 require 'support/matchers'
 require 'support/authorization'
 require 'support/mongo_orchestration'
+require 'support/server_discovery_and_monitoring'
 
 Mongo::Logger.logger = Logger.new($stdout)
 Mongo::Logger.logger.level = Logger::INFO

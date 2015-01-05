@@ -15,7 +15,6 @@
 require 'mongo/server/address'
 require 'mongo/server/context'
 require 'mongo/server/description'
-require 'mongo/server/features'
 require 'mongo/server/monitor'
 
 module Mongo
@@ -27,9 +26,6 @@ module Mongo
   class Server
     extend Forwardable
 
-    # @return [ Features ] The server features.
-    attr_accessor :features
-
     # @return [ String ] The configured address for the server.
     attr_reader :address
 
@@ -40,6 +36,7 @@ module Mongo
     attr_reader :options
 
     def_delegators :@description,
+                   :features,
                    :max_wire_version,
                    :max_write_batch_size,
                    :max_bson_object_size,
@@ -105,8 +102,7 @@ module Mongo
       @address = Address.new(address)
       @options = options.freeze
       @monitor = Monitor.new(self, options)
-      @description = Description.new(self)
-      @features = Features.new(0..0)
+      @description = Description.new
       @monitor.check!
       @monitor.run
     end

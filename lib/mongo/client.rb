@@ -192,16 +192,20 @@ module Mongo
     private
 
     def create_from_addresses(addresses, options = {})
-      @options = options.dup.freeze
+      @options = create_options(options)
       @cluster = Cluster.new(addresses, server_preference, @options)
-      @database = Database.new(self, options[:database] || Database::ADMIN)
+      @database = Database.new(self, @options)
     end
 
     def create_from_uri(connection_string, options = {})
       uri = URI.new(connection_string)
-      @options = uri.client_options.merge(options).freeze
+      @options = create_options(uri.client_options.merge(options))
       @cluster = Cluster.new(uri.servers, server_preference, @options)
-      @database = Database.new(self, options[:database] || Database::ADMIN)
+      @database = Database.new(self, @options)
+    end
+
+    def create_options(options = {})
+      { :database => Database::ADMIN }.merge(options).freeze
     end
   end
 end

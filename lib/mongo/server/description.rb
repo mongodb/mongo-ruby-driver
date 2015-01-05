@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/server/description/features'
 require 'mongo/server/description/inspection'
 
 module Mongo
@@ -126,6 +127,9 @@ module Mongo
       # @return [ Hash ] The actual result from the isnamster command.
       attr_reader :config
 
+      # @return [ Features ] features The features for the server.
+      attr_reader :features
+
       # @return [ Float ] The time the ismaster call took to complete.
       attr_reader :round_trip_time
 
@@ -202,11 +206,12 @@ module Mongo
       #   Description.new(result)
       #
       # @param [ Hash ] config The result of the ismaster command.
+      # @param [ Float ] round_trip_time The time for a round trip ismaster.
       #
       # @since 2.0.0
-      def initialize(server, config = {}, round_trip_time = 0)
-        @server = server
+      def initialize(config = {}, round_trip_time = 0)
         @config = config
+        @features = Features.new(0..0)
         @round_trip_time = round_trip_time
       end
 
@@ -371,11 +376,11 @@ module Mongo
       # @since 2.0.0
       def update!(new_config, round_trip_time)
         INSPECTIONS.each do |inspection|
-          inspection.run(self, Description.new(server, new_config))
+          inspection.run(self, Description.new(new_config))
         end
         @config = new_config
         @round_trip_time = round_trip_time
-        server.features = Features.new(wire_versions)
+        @features = Features.new(wire_versions)
         self
       end
 
