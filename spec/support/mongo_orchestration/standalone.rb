@@ -31,18 +31,20 @@ module MongoOrchestration
     private
 
     def create(options = {})
-      @config = post(orchestration,
-                     { body: create_config[:request_content] })
-      @id = @config['id']
-      @client ||= Mongo::Client.new("#{@config['mongodb_uri']}")
+      unless alive?
+        @config = post(orchestration,
+                      { body: initialize_config[:request_content] })
+        @id = @config['id']
+        @client = Mongo::Client.new("#{@config['mongodb_uri']}")
+      end
       self
     end
 
     def orchestration
-      create_config[:orchestration]
+      initialize_config[:orchestration]
     end
 
-    def create_config
+    def initialize_config
      {
         orchestration: 'servers',
         request_content: {

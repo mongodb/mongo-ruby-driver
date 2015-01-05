@@ -55,7 +55,9 @@ module MongoOrchestration
       rescue ServiceNotAvailable
         return false
       end
-      !!(@config = @response if @response && @response['procInfo']['alive'])
+      !!(@config = @response if @response &&
+                                  @response['procInfo'] &&
+                                  @response['procInfo']['alive'])
     end
 
     private
