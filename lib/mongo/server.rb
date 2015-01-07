@@ -37,6 +37,7 @@ module Mongo
 
     def_delegators :@description,
                    :features,
+                   :ghost?,
                    :max_wire_version,
                    :max_write_batch_size,
                    :max_bson_object_size,
@@ -45,7 +46,8 @@ module Mongo
                    :primary?,
                    :replica_set_name,
                    :secondary?,
-                   :standalone?
+                   :standalone?,
+                   :unknown?
 
     # Is this server equal to another?
     #
@@ -92,17 +94,18 @@ module Mongo
     # subscribe to the appropriate events.
     #
     # @example Initialize the server.
-    #   Mongo::Server.new('127.0.0.1:27017')
+    #   Mongo::Server.new('127.0.0.1:27017', listeners)
     #
     # @param [ String ] address The host:port address to connect to.
+    # @param [ Event::Listeners ] event_listeners The event listeners.
     # @param [ Hash ] options The server options.
     #
     # @since 2.0.0
-    def initialize(address, options = {})
+    def initialize(address, event_listeners, options = {})
       @address = Address.new(address)
       @options = options.freeze
       @monitor = Monitor.new(self, options)
-      @description = Description.new
+      @description = Description.new({}, event_listeners)
       @monitor.check!
       @monitor.run
     end

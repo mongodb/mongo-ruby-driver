@@ -5,7 +5,7 @@ describe Mongo::Pool do
   describe '#checkin' do
 
     let(:server) do
-      Mongo::Server.new('127.0.0.1:27017')
+      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
     end
 
     let(:pool) do
@@ -35,7 +35,7 @@ describe Mongo::Pool do
   describe '#checkout' do
 
     let(:server) do
-      Mongo::Server.new('127.0.0.1:27017')
+      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
     end
 
     let(:pool) do
@@ -83,7 +83,7 @@ describe Mongo::Pool do
   describe '.get' do
 
     let(:server) do
-      Mongo::Server.new('127.0.0.1:27017')
+      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
     end
 
     let(:pool) do

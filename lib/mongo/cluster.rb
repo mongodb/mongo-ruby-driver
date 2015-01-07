@@ -73,7 +73,7 @@ module Mongo
       unless addresses.include?(address)
         log(:debug, 'MONGODB', [ "Adding #{address} to the cluster." ])
         addresses.push(address)
-        server = Server.new(address, options)
+        server = Server.new(address, event_listeners, options)
         @servers.push(server)
         server
       end
@@ -88,16 +88,20 @@ module Mongo
     # @param [ Hash ] options The options.
     #
     # @since 2.0.0
-    def initialize(addresses, server_preference, options = {})
-      @addresses = addresses
+    def initialize(addresses, server_preference, event_listeners, options = {})
+      @addresses = []
+      @servers = []
+      @event_listeners = event_listeners
       @server_preference = server_preference
       @options = options.freeze
       @topology = Topology.get(options)
-      @servers = addresses.map do |address|
-        Server.new(address, options)
-      end
+
       subscribe_to(Event::SERVER_ADDED, Event::ServerAdded.new(self))
       subscribe_to(Event::SERVER_REMOVED, Event::ServerRemoved.new(self))
+
+      addresses.each do |address|
+        add(Server::Address.new(address).to_s)
+      end
     end
 
     # Get the nicer formatted string for use in inspection.

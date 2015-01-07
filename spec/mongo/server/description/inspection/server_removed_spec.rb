@@ -2,8 +2,12 @@ require 'spec_helper'
 
 describe Mongo::Server::Description::Inspection::ServerRemoved do
 
-  let(:server) do
-    Mongo::Server.new('127.0.0.1:27017')
+  let(:listeners) do
+    Mongo::Event::Listeners.new
+  end
+
+  let(:inspection) do
+    described_class.new(listeners)
   end
 
   describe '.run' do
@@ -18,11 +22,11 @@ describe Mongo::Server::Description::Inspection::ServerRemoved do
     end
 
     let(:description) do
-      Mongo::Server::Description.new(server, config)
+      Mongo::Server::Description.new(config, listeners)
     end
 
     let(:updated) do
-      Mongo::Server::Description.new(server, new_config)
+      Mongo::Server::Description.new(new_config, listeners)
     end
 
     let(:listener) do
@@ -30,11 +34,7 @@ describe Mongo::Server::Description::Inspection::ServerRemoved do
     end
 
     before do
-      Mongo::Event.add_listener(Mongo::Event::SERVER_REMOVED, listener)
-    end
-
-    after do
-      Mongo::Event.listeners[Mongo::Event::SERVER_REMOVED].delete(listener)
+      listeners.add_listener(Mongo::Event::SERVER_REMOVED, listener)
     end
 
     context 'when no server is removed' do
@@ -49,7 +49,7 @@ describe Mongo::Server::Description::Inspection::ServerRemoved do
 
       it 'does not fire a server removed event' do
         expect(listener).to_not receive(:handle)
-        described_class.run(description, updated)
+        inspection.run(description, updated)
       end
     end
 
@@ -67,7 +67,7 @@ describe Mongo::Server::Description::Inspection::ServerRemoved do
 
         it 'fires a server removed event' do
           expect(listener).to receive(:handle).with('127.0.0.1:27018')
-          described_class.run(description, updated)
+          inspection.run(description, updated)
         end
       end
 
@@ -83,7 +83,7 @@ describe Mongo::Server::Description::Inspection::ServerRemoved do
 
         it 'does not fire a server removed event' do
           expect(listener).to_not receive(:handle)
-          described_class.run(description, updated)
+          inspection.run(description, updated)
         end
       end
     end

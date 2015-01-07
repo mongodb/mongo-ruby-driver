@@ -20,6 +20,9 @@ module Mongo
     # @since 2.0.0
     module Subscriber
 
+      # @return [ Event::Listeners ] event_listeners The listeners.
+      attr_reader :event_listeners
+
       # Subscribe to the provided event.
       #
       # @example Subscribe to the event.
@@ -30,7 +33,7 @@ module Mongo
       #
       # @since 2.0.0
       def subscribe_to(event, listener)
-        Event.add_listener(event, listener)
+        event_listeners.add_listener(event, listener)
       end
     end
   end

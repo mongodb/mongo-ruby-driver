@@ -5,19 +5,19 @@ describe Mongo::Cluster::Topology::ReplicaSet do
   describe '.servers' do
 
     let(:mongos) do
-      Mongo::Server.new('127.0.0.1:27017')
+      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
     end
 
     let(:standalone) do
-      Mongo::Server.new('127.0.0.1:27017')
+      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
     end
 
     let(:replica_set) do
-      Mongo::Server.new('127.0.0.1:27017')
+      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
     end
 
     let(:replica_set_two) do
-      Mongo::Server.new('127.0.0.1:27017')
+      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
     end
 
     let(:mongos_description) do

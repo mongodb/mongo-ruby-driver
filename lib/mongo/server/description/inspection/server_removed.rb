@@ -22,7 +22,19 @@ module Mongo
         #
         # @since 2.0.0
         class ServerRemoved
-          extend Event::Publisher
+          include Event::Publisher
+
+          # Instantiate the server removed inspection.
+          #
+          # @example Instantiate the inspection.
+          #   ServerRemoved.new(listeners)
+          #
+          # @param [ Event::Listeners ] event_listeners The event listeners.
+          #
+          # @since 2.0.0
+          def initialize(event_listeners)
+            @event_listeners = event_listeners
+          end
 
           # Run the server added inspection.
           #
@@ -33,7 +45,7 @@ module Mongo
           # @param [ Description ] updated The updated description.
           #
           # @since 2.0.0
-          def self.run(description, updated)
+          def run(description, updated)
             description.hosts.each do |host|
               if updated.primary? && !updated.hosts.include?(host)
                 publish(Event::SERVER_REMOVED, host)

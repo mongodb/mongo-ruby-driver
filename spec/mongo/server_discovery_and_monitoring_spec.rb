@@ -11,7 +11,7 @@ RSpec::Matchers.define :be_server_type do |expected|
       when 'RSSecondary' then actual.secondary?
       when 'RSArbiter' then actual.arbiter?
       when 'Mongos' then actual.mongos?
-      when 'Unknown' then actual.ghost?
+      when 'Unknown' then actual.unknown?
     end
   end
 end
@@ -30,9 +30,13 @@ RSpec::Matchers.define :be_topology do |expected|
   end
 end
 
+def find_server(cluster, uri)
+  cluster.instance_variable_get(:@servers).detect{ |s| s.address.to_s == uri }
+end
+
 describe 'Server Discovery and Monitoring' do
 
-  SERVER_DISCOVERY_TESTS.take(1).each do |file|
+  SERVER_DISCOVERY_TESTS.take(2).each do |file|
 
     spec = Mongo::SDAM::Spec.new(file)
 
@@ -44,60 +48,49 @@ describe 'Server Discovery and Monitoring' do
 
       spec.phases.each do |phase|
 
-        # The responses for each server ismaster call during the phase.
-        p "###################### RESPONSES FOR PHASE ######################"
-        p phase.responses
-
-        # The outcome (expected cluster topology) for each phase.
-        p "###################### OUTCOME FOR PHASE ######################"
-        p phase.outcome
-
-        p "###################### CONNECTION MOCKS #######################"
-        servers = phase.outcome.servers
-
-        let(:connections) do
-          servers.keys.reduce({}) do |mocks, address|
-            mock = double(address)
-            expect(Mongo::Connection).to receive(:new).
-              with(Mongo::Server.new(address, {})).
-              and_return(mock)
-            mocks[address] = mock
-            mocks
-          end
-        end
-
         phase.responses.each do |response|
-
-          # The response map for each ismaster call for each server in the
-          # phase.
-          p "###################### RESPONSE FOR EACH SERVER ######################"
-          p response
 
           before do
             # Provide the expectation on the connection for the ismaster
             # command and return the reply.
-            expect(connections[response.address]).to receive(:dispatch).
-              with([ Mongo::Server::Monitor::ISMASTER ]).
-              and_return(response.reply)
+            expect(Mongo::Server).to receive(:new).
+              with(
+                response.address,
+                instance_of(Mongo::Event::Listeners),
+                spec.uri.client_options
+              ) do |addr, listeners, options|
+                Mongo::SDAM::Server.new(addr, listeners, options, response.ismaster)
+              end
+
+            allow(Mongo::Server).to receive(:new).
+              with(
+                instance_of(String),
+                instance_of(Mongo::Event::Listeners),
+                spec.uri.client_options
+              ) do |addr, listeners, options|
+                Mongo::SDAM::Server.new(addr, listeners, options, {})
+              end
           end
         end
 
         it "sets the cluster topology to #{phase.outcome.topology_type}" do
-          p client
+          expect(client.cluster).to be_topology(phase.outcome.topology_type)
         end
 
         it "sets the cluster replica set name to #{phase.outcome.set_name}" do
-
+          expect(client.cluster.replica_set_name).to eq(phase.outcome.set_name)
         end
 
         phase.outcome.servers.each do |uri, server|
 
           it "sets #{uri} to #{server['type']}" do
-
+            srv = find_server(client.cluster, uri)
+            expect(srv).to be_server_type(server['type'])
           end
 
           it "sets #{uri} replica set name to #{server['setName'].inspect}" do
-
+            srv = find_server(client.cluster, uri)
+            expect(srv.replica_set_name).to eq(server['setName'])
           end
         end
       end

@@ -22,7 +22,19 @@ module Mongo
         #
         # @since 2.0.0
         class ServerAdded
-          extend Event::Publisher
+          include Event::Publisher
+
+          # Instantiate the server added inspection.
+          #
+          # @example Instantiate the inspection.
+          #   ServerAdded.new(listeners)
+          #
+          # @param [ Event::Listeners ] event_listeners The event listeners.
+          #
+          # @since 2.0.0
+          def initialize(event_listeners)
+            @event_listeners = event_listeners
+          end
 
           # Run the server added inspection.
           #
@@ -33,9 +45,9 @@ module Mongo
           # @param [ Description ] updated The updated description.
           #
           # @since 2.0.0
-          def self.run(description, updated)
-            updated.hosts.each do |host|
-              unless description.hosts.include?(host)
+          def run(description, updated)
+            updated.servers.each do |host|
+              unless description.servers.include?(host)
                 publish(Event::SERVER_ADDED, host)
               end
             end

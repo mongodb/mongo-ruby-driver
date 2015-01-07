@@ -25,13 +25,17 @@ module Mongo
   class Client
     extend Forwardable
 
-    # @return [ Mongo::Cluster ] The cluster of servers for the client.
+    # @return [ Mongo::Cluster ] cluster The cluster of servers for the client.
     attr_reader :cluster
 
-    # @return [ Mongo::Database ] The database the client is operating on.
+    # @return [ Mongo::Database ] database The database the client is operating on.
     attr_reader :database
 
-    # @return [ Hash ] The configuration options.
+    # @return [ Event::Listeners ] event_listeners The event listeners for the
+    #   client.
+    attr_reader :event_listeners
+
+    # @return [ Hash ] options The configuration options.
     attr_reader :options
 
     # Delegate command execution to the current database.
@@ -113,6 +117,7 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = {})
+      @event_listeners = Event::Listeners.new
       if addresses_or_uri.is_a?(::String)
         create_from_uri(addresses_or_uri, options)
       else
@@ -193,14 +198,14 @@ module Mongo
 
     def create_from_addresses(addresses, options = {})
       @options = create_options(options)
-      @cluster = Cluster.new(addresses, server_preference, @options)
+      @cluster = Cluster.new(addresses, server_preference, event_listeners, @options)
       @database = Database.new(self, @options)
     end
 
     def create_from_uri(connection_string, options = {})
       uri = URI.new(connection_string)
       @options = create_options(uri.client_options.merge(options))
-      @cluster = Cluster.new(uri.servers, server_preference, @options)
+      @cluster = Cluster.new(uri.servers, server_preference, event_listeners, @options)
       @database = Database.new(self, @options)
     end
 

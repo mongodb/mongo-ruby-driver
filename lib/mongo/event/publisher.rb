@@ -20,6 +20,9 @@ module Mongo
     # @since 2.0.0
     module Publisher
 
+      # @return [ Event::Listeners ] event_listeners The listeners.
+      attr_reader :event_listeners
+
       # Publish the provided event.
       #
       # @example Publish an event.
@@ -30,7 +33,7 @@ module Mongo
       #
       # @since 2.0.0
       def publish(event, *args)
-        Event.listeners_for(event).each do |listener|
+        event_listeners.listeners_for(event).each do |listener|
           listener.handle(*args)
         end
       end

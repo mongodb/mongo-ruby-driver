@@ -25,6 +25,10 @@ describe Mongo::Server::Description do
     }
   end
 
+  let(:listeners) do
+    Mongo::Event::Listeners.new
+  end
+
   describe '#arbiter?' do
 
     context 'when the server is an arbiter' do
@@ -277,6 +281,31 @@ describe Mongo::Server::Description do
     end
   end
 
+  describe '#passives' do
+
+    context 'when passive servers exists' do
+
+      let(:description) do
+        described_class.new({ 'passives' => [ '127.0.0.1:27025' ] })
+      end
+
+      it 'returns a list of the passives' do
+        expect(description.passives).to eq([ '127.0.0.1:27025' ])
+      end
+    end
+
+    context 'when no passive servers exist' do
+
+      let(:description) do
+        described_class.new(replica)
+      end
+
+      it 'returns an empty array' do
+        expect(description.passives).to be_empty
+      end
+    end
+  end
+
   describe '#primary?' do
 
     context 'when the server is not a primary' do
@@ -305,7 +334,7 @@ describe Mongo::Server::Description do
   describe '#round_trip_time' do
 
     let(:description) do
-      described_class.new({ 'secondary' => false }, 4.5)
+      described_class.new({ 'secondary' => false }, listeners, 4.5)
     end
 
     it 'defaults to 0' do
@@ -364,6 +393,23 @@ describe Mongo::Server::Description do
       it 'returns false' do
         expect(description).to be_secondary
       end
+    end
+  end
+
+  describe '#servers' do
+
+    let(:config) do
+      replica.merge({ 'passives' => [ '127.0.0.1:27025' ]})
+    end
+
+    let(:description) do
+      described_class.new(config)
+    end
+
+    it 'returns the hosts + arbiters + passives' do
+      expect(description.servers).to eq(
+        [ '127.0.0.1:27018', '127.0.0.1:27019', '127.0.0.1:27120', '127.0.0.1:27025' ]
+      )
     end
   end
 

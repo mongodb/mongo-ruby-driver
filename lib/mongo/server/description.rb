@@ -109,6 +109,11 @@ module Mongo
       # @since 2.0.0
       PASSIVE = 'passive'.freeze
 
+      # Constant for reading the passive server list.
+      #
+      # @since 2.0.0
+      PASSIVES = 'passives'.freeze
+
       # Constant for reading primary info from config.
       #
       # @since 2.0.0
@@ -209,7 +214,9 @@ module Mongo
       # @param [ Float ] round_trip_time The time for a round trip ismaster.
       #
       # @since 2.0.0
-      def initialize(config = {}, round_trip_time = 0)
+      def initialize(config = {}, event_listeners = nil, round_trip_time = 0)
+        @event_listeners = event_listeners
+        @inspections = INSPECTIONS.map{ |insp| insp.new(event_listeners) }
         @config = config
         @features = Features.new(0..0)
         @round_trip_time = round_trip_time
@@ -299,6 +306,18 @@ module Mongo
         !!config[PASSIVE]
       end
 
+      # Get a list of the passive servers in the cluster.
+      #
+      # @example Get the passives.
+      #   description.passives
+      #
+      # @return [ Array<String> ] The list of passives.
+      #
+      # @since 2.0.0
+      def passives
+        config[PASSIVES] || []
+      end
+
       # Will return true if the server is a primary.
       #
       # @example Is the server a primary?
@@ -322,6 +341,10 @@ module Mongo
       # @since 2.0.0
       def replica_set_name
         config[SET_NAME]
+      end
+
+      def servers
+        hosts + arbiters + passives
       end
 
       # Will return true if the server is a secondary.
@@ -375,7 +398,7 @@ module Mongo
       #
       # @since 2.0.0
       def update!(new_config, round_trip_time)
-        INSPECTIONS.each do |inspection|
+        @inspections.each do |inspection|
           inspection.run(self, Description.new(new_config))
         end
         @config = new_config
