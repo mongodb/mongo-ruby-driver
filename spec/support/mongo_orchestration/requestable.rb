@@ -43,7 +43,7 @@ module MongoOrchestration
 
     # Is the Mongo Orchestration resource still available?
     #
-    # @exmaple Check if the Mongo Orchestration resource is available.
+    # @example Check if the Mongo Orchestration resource is available.
     #   standalone.alive?
     #
     # @return [ true, false ] If the resource is available.
@@ -60,13 +60,29 @@ module MongoOrchestration
                                   @response['procInfo']['alive'])
     end
 
+    # Send a request to Mongo Orchestration, specifying the request type.
+    #
+    # @example Get a list of servers.
+    #   standalone.request('GET', 'servers')
+    #
+    # @param [ String ] method The request type.
+    # @param [ String ] path The path for the request.
+    # @param [ Hash ] options Options for the request.
+    #
+    # @return [ HTTParty::Response ] The response from the request.
+    #
+    # @since 2.0.0
+    def request(method, path, options = {})
+      http_request(method, path, options)
+    end
+
     private
 
     def http_request(method, path = nil, options = {})
       dispatch do
-        abs_path = [@base_path, path].compact.join('/')
+        method = method.downcase.to_sym unless method.class == Symbol
         options[:body] = options[:body].to_json if options.has_key?(:body)
-        HTTParty.send(method, abs_path, options)
+        HTTParty.send(method, [@base_path, path].compact.join('/'), options)
       end
     end
 

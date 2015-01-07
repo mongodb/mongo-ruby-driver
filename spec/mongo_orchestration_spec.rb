@@ -52,4 +52,19 @@ describe MongoOrchestration, if: mongo_orchestration_available? do
       expect(@standalone.alive?).to eq(false)
     end
   end
+
+  context 'when making a direct request' do
+
+    before do
+      initialize_mo_standalone!
+    end
+
+    after do
+      stop_mo_standalone!
+    end
+
+    it 'returns the response' do
+      expect(@standalone.request('GET', 'servers').class).to be(HTTParty::Response)
+    end
+  end
 end
