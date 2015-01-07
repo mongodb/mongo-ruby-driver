@@ -21,6 +21,7 @@ require 'mongo'
 
 require 'support/matchers'
 require 'support/authorization'
+require 'support/mongo_orchestration'
 
 Mongo::Logger.logger = Logger.new($stdout)
 Mongo::Logger.logger.level = Logger::INFO
@@ -89,11 +90,27 @@ def failing_delete_doc
                            { que: { field: 'test' } }
 end
 
-# Inititializes a basic scanned client to do an ismaster check.
+# Initializes a basic scanned client to do an ismaster check.
 #
 # @since 2.0.0
 def initialize_scanned_client!
   Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
+end
+
+def initialize_mo_standalone!(path = nil)
+  @standalone ||= MongoOrchestration.get(:standalone, path: path)
+end
+
+def stop_mo_standalone!
+  @standalone.stop if @standalone
+end
+
+def mongo_orchestration_available?(path = nil)
+  begin
+    MongoOrchestration.get(:standalone, path: path)
+  rescue MongoOrchestration::ServiceNotAvailable
+    return false
+  end
 end
 
 # require all shared examples
