@@ -82,7 +82,7 @@ module Mongo
     #
     # @return [String] The database.
     def database
-      @match[4].empty? ? Database::ADMIN : @match[4]
+      @match[4].nil? ? Database::ADMIN : @match[4]
     end
 
     # Get the options provided in the URI.

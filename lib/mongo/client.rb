@@ -199,14 +199,14 @@ module Mongo
     def create_from_addresses(addresses, options = {})
       @options = create_options(options)
       @cluster = Cluster.new(addresses, server_preference, event_listeners, @options)
-      @database = Database.new(self, @options)
+      @database = Database.new(self, @options[:database])
     end
 
     def create_from_uri(connection_string, options = {})
       uri = URI.new(connection_string)
       @options = create_options(uri.client_options.merge(options))
       @cluster = Cluster.new(uri.servers, server_preference, event_listeners, @options)
-      @database = Database.new(self, @options)
+      @database = Database.new(self, @options[:database])
     end
 
     def create_options(options = {})

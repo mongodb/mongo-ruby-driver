@@ -415,8 +415,10 @@ describe Mongo::Client do
 
     context 'when providing nil' do
 
-      it 'defaults the database to admin' do
-        expect(client.use(nil).database.name).to eq('admin')
+      it 'raises an exception' do
+        expect {
+          client.use(nil)
+        }.to raise_error(Mongo::Database::InvalidName)
       end
     end
   end

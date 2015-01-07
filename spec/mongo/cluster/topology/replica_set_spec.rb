@@ -21,19 +21,19 @@ describe Mongo::Cluster::Topology::ReplicaSet do
     end
 
     let(:mongos_description) do
-      Mongo::Server::Description.new(mongos, { 'msg' => 'isdbgrid' })
+      Mongo::Server::Description.new({ 'msg' => 'isdbgrid' })
     end
 
     let(:standalone_description) do
-      Mongo::Server::Description.new(standalone, { 'ismaster' => true })
+      Mongo::Server::Description.new({ 'ismaster' => true })
     end
 
     let(:replica_set_description) do
-      Mongo::Server::Description.new(replica_set, { 'ismaster' => true, 'setName' => 'testing' })
+      Mongo::Server::Description.new({ 'ismaster' => true, 'setName' => 'testing' })
     end
 
     let(:replica_set_two_description) do
-      Mongo::Server::Description.new(replica_set, { 'ismaster' => true, 'setName' => 'test' })
+      Mongo::Server::Description.new({ 'ismaster' => true, 'setName' => 'test' })
     end
 
     before do

@@ -2,10 +2,14 @@ require 'spec_helper'
 
 describe Mongo::Server do
 
+  let(:listeners) do
+    Mongo::Event::Listeners.new
+  end
+
   describe '#==' do
 
     let(:server) do
-      described_class.new('127.0.0.1:27017')
+      described_class.new('127.0.0.1:27017', listeners)
     end
 
     context 'when the other is not a server' do
@@ -24,7 +28,7 @@ describe Mongo::Server do
       context 'when the addresses match' do
 
         let(:other) do
-          described_class.new('127.0.0.1:27017')
+          described_class.new('127.0.0.1:27017', listeners)
         end
 
         it 'returns true' do
@@ -35,7 +39,7 @@ describe Mongo::Server do
       context 'when the addresses dont match' do
 
         let(:other) do
-          described_class.new('127.0.0.1:27018')
+          described_class.new('127.0.0.1:27018', listeners)
         end
 
         it 'returns false' do
@@ -48,7 +52,7 @@ describe Mongo::Server do
   describe '#context' do
 
     let(:server) do
-      described_class.new('127.0.0.1:27017')
+      described_class.new('127.0.0.1:27017', listeners)
     end
 
     let(:context) do
@@ -67,7 +71,7 @@ describe Mongo::Server do
     end
 
     let(:server) do
-      described_class.new(address, :heartbeat_frequency => 5)
+      described_class.new(address, listeners, :heartbeat_frequency => 5)
     end
 
     it 'sets the address host' do
@@ -86,7 +90,7 @@ describe Mongo::Server do
   describe '#pool' do
 
     let(:server) do
-      described_class.new('127.0.0.1:27017')
+      described_class.new('127.0.0.1:27017', listeners)
     end
 
     let(:pool) do

@@ -2,6 +2,10 @@ require 'spec_helper'
 
 describe Mongo::Cluster do
 
+  let(:listeners) do
+    Mongo::Event::Listeners.new
+  end
+
   describe '#==' do
 
     let(:preference) do
@@ -9,7 +13,7 @@ describe Mongo::Cluster do
     end
 
     let(:cluster) do
-      described_class.new([ '127.0.0.1:27017' ], preference)
+      described_class.new([ '127.0.0.1:27017' ], preference, listeners)
     end
 
     context 'when the other is a cluster' do
@@ -19,7 +23,7 @@ describe Mongo::Cluster do
         context 'when the options are the same' do
 
           let(:other) do
-            described_class.new([ '127.0.0.1:27017' ], preference)
+            described_class.new([ '127.0.0.1:27017' ], preference, listeners)
           end
 
           it 'returns true' do
@@ -30,7 +34,7 @@ describe Mongo::Cluster do
         context 'when the options are not the same' do
 
           let(:other) do
-            described_class.new([ '127.0.0.1:27017' ], preference, :replica_set => 'test')
+            described_class.new([ '127.0.0.1:27017' ], preference, listeners, :replica_set => 'test')
           end
 
           it 'returns false' do
@@ -42,7 +46,7 @@ describe Mongo::Cluster do
       context 'when the addresses are not the same' do
 
         let(:other) do
-          described_class.new([ '127.0.0.1:27018' ], preference)
+          described_class.new([ '127.0.0.1:27018' ], preference, listeners)
         end
 
         it 'returns false' do
@@ -66,7 +70,7 @@ describe Mongo::Cluster do
     end
 
     let(:cluster) do
-      described_class.new([ '127.0.0.1:27017' ], preference)
+      described_class.new([ '127.0.0.1:27017' ], preference, listeners)
     end
 
     it 'displays the cluster seeds and topology' do
@@ -82,13 +86,13 @@ describe Mongo::Cluster do
     end
 
     let(:cluster) do
-      described_class.new([ '127.0.0.1:27017' ], preference, :replica_set => 'testing')
+      described_class.new([ '127.0.0.1:27017' ], preference, listeners, :replica_set => 'testing')
     end
 
     context 'when the option is provided' do
 
       let(:cluster) do
-        described_class.new([ '127.0.0.1:27017' ], preference, :replica_set => 'testing')
+        described_class.new([ '127.0.0.1:27017' ], preference, listeners, :replica_set => 'testing')
       end
 
       it 'returns the name' do
@@ -99,7 +103,7 @@ describe Mongo::Cluster do
     context 'when the option is not provided' do
 
       let(:cluster) do
-        described_class.new([ '127.0.0.1:27017' ], preference)
+        described_class.new([ '127.0.0.1:27017' ], preference, listeners)
       end
 
       it 'returns nil' do

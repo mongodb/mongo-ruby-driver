@@ -4,14 +4,22 @@ describe Mongo::Event::Publisher do
 
   describe '#publish' do
 
+    let(:listeners) do
+      Mongo::Event::Listeners.new
+    end
+
     let(:klass) do
       Class.new do
         include Mongo::Event::Publisher
+
+        def initialize(listeners)
+          @event_listeners = listeners
+        end
       end
     end
 
     let(:publisher) do
-      klass.new
+      klass.new(listeners)
     end
 
     let(:listener) do
@@ -21,12 +29,8 @@ describe Mongo::Event::Publisher do
     context 'when the event has listeners' do
 
       before do
-        Mongo::Event.add_listener('test', listener)
-        Mongo::Event.add_listener('test', listener)
-      end
-
-      after do
-        Mongo::Event.listeners.delete('test')
+        listeners.add_listener('test', listener)
+        listeners.add_listener('test', listener)
       end
 
       it 'handles the event for each listener' do

@@ -21,15 +21,15 @@ describe Mongo::Cluster::Topology::Standalone do
     end
 
     let(:mongos_description) do
-      Mongo::Server::Description.new(mongos, { 'msg' => 'isdbgrid' })
+      Mongo::Server::Description.new({ 'msg' => 'isdbgrid' })
     end
 
     let(:standalone_description) do
-      Mongo::Server::Description.new(standalone, { 'ismaster' => true })
+      Mongo::Server::Description.new({ 'ismaster' => true })
     end
 
     let(:replica_set_description) do
-      Mongo::Server::Description.new(replica_set, { 'ismaster' => true, 'setName' => 'testing' })
+      Mongo::Server::Description.new({ 'ismaster' => true, 'setName' => 'testing' })
     end
 
     before do
