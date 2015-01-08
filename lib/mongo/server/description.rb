@@ -222,6 +222,10 @@ module Mongo
         @round_trip_time = round_trip_time
       end
 
+      def inspect
+        "#<Mongo::Server:Description0x#{object_id} config=#{config} round_trip_time=#{round_trip_time}>"
+      end
+
       # Get the max BSON object size for this server version.
       #
       # @example Get the max BSON object size.

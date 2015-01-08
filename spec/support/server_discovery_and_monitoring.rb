@@ -45,37 +45,6 @@ module Mongo
       end
     end
 
-    class Server
-      extend Forwardable
-
-      attr_reader :address
-
-      def_delegators :@description,
-                     :features,
-                     :ghost?,
-                     :max_wire_version,
-                     :max_write_batch_size,
-                     :max_bson_object_size,
-                     :max_message_size,
-                     :mongos?,
-                     :primary?,
-                     :replica_set_name,
-                     :secondary?,
-                     :standalone?,
-                     :unknown?
-
-      def initialize(address, event_listeners, options = {}, ismaster)
-        @address = Mongo::Server::Address.new(address)
-        @options = options.freeze
-        @description = Mongo::Server::Description.new({}, event_listeners)
-        @description.update!(ismaster, 0.5)
-      end
-
-      def inspect
-        "#<Mongo::SDAM::Server:0x#{object_id} address=#{address.host}:#{address.port}>"
-      end
-    end
-
     class Outcome
 
       attr_reader :servers
