@@ -46,7 +46,6 @@ module Mongo
       #
       # @since 2.0.0
       def handle(address)
-        log(:info, 'MONGODB', [ "#{address} being removed from the cluster." ])
         cluster.remove(address)
       end
     end

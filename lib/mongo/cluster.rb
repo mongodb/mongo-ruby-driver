@@ -138,6 +138,7 @@ module Mongo
     #
     # @since 2.0.0
     def remove(address)
+      log(:debug, 'MONGODB', [ "#{address} being removed from the cluster." ])
       removed_servers = @servers.reject!{ |server| server.address.seed == address }
       removed_servers.each{ |server| server.disconnect! } if removed_servers
       addresses.reject!{ |addr| addr == address }

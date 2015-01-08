@@ -1,37 +1,5 @@
 require 'spec_helper'
 
-# Matcher for determining if the server is of the expected type according to
-# the test.
-RSpec::Matchers.define :be_server_type do |expected|
-
-  match do |actual|
-    case expected
-      when 'Standalone' then actual.standalone?
-      when 'RSPrimary' then actual.primary?
-      when 'RSSecondary' then actual.secondary?
-      when 'RSArbiter' then actual.arbiter?
-      when 'Mongos' then actual.mongos?
-      when 'Unknown' then actual.unknown?
-      when 'PossiblePrimary' then actual.unknown?
-      when 'RSGhost' then actual.ghost?
-    end
-  end
-end
-
-# Matcher for determining if the cluster topology is the expected type.
-RSpec::Matchers.define :be_topology do |expected|
-
-  match do |actual|
-    case expected
-      when 'ReplicaSetWithPrimary' then actual.replica_set?
-      when 'ReplicaSetNoPrimary' then actual.replica_set?
-      when 'Sharded' then actual.sharded?
-      when 'Single' then actual.standalone?
-      when 'Unknown' then actual.standalone?
-    end
-  end
-end
-
 def find_server(client, uri)
   client.cluster.instance_variable_get(:@servers).detect{ |s| s.address.to_s == uri }
 end

@@ -222,6 +222,14 @@ module Mongo
         @round_trip_time = round_trip_time
       end
 
+      # Inspect the server description.
+      #
+      # @example Inspect the server description
+      #   description.inspect
+      #
+      # @return [ String ] The inspection.
+      #
+      # @since 2.0.0
       def inspect
         "#<Mongo::Server:Description0x#{object_id} config=#{config} round_trip_time=#{round_trip_time}>"
       end
