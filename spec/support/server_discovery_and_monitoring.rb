@@ -37,6 +37,13 @@ end
 module Mongo
   module SDAM
 
+    # Convenience helper to find a server by it's URI.
+    #
+    # @since 2.0.0
+    def find_server(client, uri)
+      client.cluster.instance_variable_get(:@servers).detect{ |s| s.address.to_s == uri }
+    end
+
     # Represents a specification.
     #
     # @since 2.0.0
