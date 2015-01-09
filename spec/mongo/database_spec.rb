@@ -86,6 +86,13 @@ describe Mongo::Database do
     it 'does not include system collections' do
       expect(database.collection_names).to_not include('system.indexes')
     end
+
+    context 'when specifying a batch size' do
+
+      it 'returns the stripped names of the collections' do
+        expect(database.collection_names(batch_size: 1)).to include('users')
+      end
+    end
   end
 
   describe '#collections' do
