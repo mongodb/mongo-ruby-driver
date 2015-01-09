@@ -23,13 +23,40 @@ module Mongo
         # @since 2.0.0
         class Result < Operation::Result
 
-          # The field of index information returned.
+          # The field name for the cursor document in a listIndexes result.
           #
           # @since 2.0.0
-          INDEXES = 'indexes'.freeze
+          CURSOR = 'cursor'.freeze
 
-          # Get the index information documents returned from the
-          # listIndexes command.
+          # The cursor id field in the cursor document.
+          #
+          # @since 2.0.0
+          CURSOR_ID = 'id'.freeze
+
+          # The field name for the first batch of a cursor.
+          #
+          # @since 2.0.0
+          FIRST_BATCH = 'firstBatch'.freeze
+
+          # Get the cursor id for the result.
+          #
+          # @example Get the cursor id.
+          #   result.cursor_id
+          #
+          # @note Even though the wire protocol has a cursor_id field for all
+          #   messages of type reply, it is always zero when using the
+          #   listIndexes command and must be retrieved from the cursor
+          #   document itself.
+          #
+          # @return [ Integer ] The cursor id.
+          #
+          # @since 2.0.0
+          def cursor_id
+            cursor_document ? cursor_document[CURSOR_ID] : super
+          end
+
+          # Get the documents for the listIndexes result. This is the 'firstBatch'
+          # field in the 'cursor' field of the first document returned.
           #
           # @example Get the documents.
           #   result.documents
@@ -38,7 +65,13 @@ module Mongo
           #
           # @since 2.0.0
           def documents
-            reply.documents[0][INDEXES]
+            cursor_document[FIRST_BATCH]
+          end
+
+          private
+
+          def cursor_document
+            @cursor_document ||= reply.documents[0][CURSOR]
           end
         end
       end

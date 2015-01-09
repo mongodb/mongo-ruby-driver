@@ -117,11 +117,13 @@ module Mongo
     # @example Get the index view.
     #   collection.indexes
     #
+    # @param [ Hash ] options Options for getting a list of all indexes.
+    #
     # @return [ View::Index ] The index view.
     #
     # @since 2.0.0
-    def indexes
-      Index::View.new(self)
+    def indexes(options = {})
+      Index::View.new(self, options)
     end
 
     # Instantiate a new collection.

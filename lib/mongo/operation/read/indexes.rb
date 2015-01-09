@@ -47,7 +47,7 @@ module Mongo
             ListIndexes.new(spec).execute(context)
           else
             context.with_connection do |connection|
-              connection.dispatch([ message ])
+              Result.new(connection.dispatch([ message ]))
             end
           end
         end

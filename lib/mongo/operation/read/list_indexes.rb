@@ -58,10 +58,6 @@ module Mongo
 
         private
 
-        def selector
-          { listIndexes: coll_name }
-        end
-
         def execute_message(context)
           context.with_connection do |connection|
             Result.new(connection.dispatch([ message ]))
