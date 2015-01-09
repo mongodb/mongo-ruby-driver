@@ -25,6 +25,10 @@ module Mongo
       # @return [ Collection ] collection The indexes collection.
       attr_reader :collection
 
+      # @return [ Integer ] batch_size The size of the batch of results
+      #   when sending the listIndexes command.
+      attr_reader :batch_size
+
       def_delegators :@collection, :cluster, :database, :server_preference
       def_delegators :cluster, :next_primary
 
@@ -136,11 +140,12 @@ module Mongo
       #
       # @since 2.0.0
       def each(&block)
-        server = server_preference.select_servers(cluster.servers).first
-        Operation::Read::Indexes.new(
-          db_name: database.name,
-          coll_name: collection.name
-        ).execute(server.context).documents.each(&block)
+        server = next_primary
+        cursor = Cursor.new(self, send_initial_query(server), server).to_enum
+        cursor.each do |doc|
+          yield doc
+        end if block_given?
+        cursor
       end
 
       # Create the new index view.
@@ -149,13 +154,40 @@ module Mongo
       #   View::Index.new(collection)
       #
       # @param [ Collection ] collection The collection.
+      # @param [ Hash ] options Options for getting a list of indexes.
+      #   Only relevant for when the listIndexes command is used with server
+      #   versions >=2.8.
+      #
+      # @option options [ Integer ] :batch_size The batch size for results
+      #   returned from the listIndexes command.
       #
       # @since 2.0.0
-      def initialize(collection)
+      def initialize(collection, options = {})
         @collection = collection
+        @batch_size = options[:batch_size]
       end
 
       private
+
+      def limit
+        -1
+      end
+
+      def indexes_spec
+        { selector: {
+            listIndexes: collection.name,
+            cursor: batch_size ? { batchSize: batch_size } : {} },
+          coll_name: collection.name,
+          db_name: database.name }
+      end
+
+      def initial_query_op
+        Operation::Read::Indexes.new(indexes_spec)
+      end
+
+      def send_initial_query(server)
+        initial_query_op.execute(server.context)
+      end
 
       def index_name(spec)
         spec.to_a.join('_')

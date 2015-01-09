@@ -314,4 +314,30 @@ describe Mongo::Collection do
       expect(result.written_count).to eq(0)
     end
   end
+
+  describe '#indexes' do
+
+    let(:index_spec) do
+      { name: 1 }
+    end
+
+    before do
+      authorized_collection.indexes.ensure(index_spec, unique: true)
+    end
+
+    after do
+      authorized_collection.indexes.drop(index_spec)
+    end
+
+    it 'returns a list of indexes' do
+      expect(authorized_collection.indexes.to_a.size).to eq(2)
+    end
+
+    context 'when batch size is specified' do
+
+      it 'returns a list of indexes' do
+        expect(authorized_collection.indexes(batch_size: 1).to_a.size).to eq(2)
+      end
+    end
+  end
 end

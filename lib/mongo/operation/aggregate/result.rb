@@ -59,7 +59,7 @@ module Mongo
         end
 
         # Get the documents for the aggregation result. This is either the
-        # first documents' 'result' field, or if a cursor option was selected
+        # first document's 'result' field, or if a cursor option was selected
         # it is the 'firstBatch' field in the 'cursor' field of the first
         # document returned.
         #
