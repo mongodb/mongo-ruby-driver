@@ -56,11 +56,6 @@ module Mongo
 
         private
 
-        def selector
-          { listCollections: 1,
-            filter: { name: { '$not' => /system\.|\$/ } } }
-        end
-
         def execute_message(context)
           context.with_connection do |connection|
             Result.new(connection.dispatch([ message ]))
@@ -68,7 +63,8 @@ module Mongo
         end
 
         def message
-          Protocol::Query.new(db_name, Database::COMMAND, selector, options)
+          sel = (selector || {}).merge(listCollections: 1, filter: { name: { '$not' => /system\.|\$/ } })
+          Protocol::Query.new(db_name, Database::COMMAND, sel, options)
         end
       end
     end

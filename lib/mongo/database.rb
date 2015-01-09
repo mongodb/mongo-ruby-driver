@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/database/view'
+
 module Mongo
 
   # Represents a database on the db server and operations that can execute on
@@ -85,10 +87,8 @@ module Mongo
     # @return [ Array<String> ] The names of all non-system collections.
     #
     # @since 2.0.0
-    def collection_names
-      server = cluster.next_primary
-      Operation::Read::CollectionNames.new(db_name: name).
-        execute(server.context).names
+    def collection_names(options = {})
+      View.new(self).collection_names(options)
     end
 
     # Get all the collections that belong to this database.

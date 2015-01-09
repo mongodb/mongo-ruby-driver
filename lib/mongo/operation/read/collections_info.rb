@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/collection_names/result'
-
 module Mongo
   module Operation
     module Read
@@ -30,7 +28,7 @@ module Mongo
       # @option spec :options [ Hash ] Options for the operation.
       #
       # @since 2.0.0
-      class CollectionNames
+      class CollectionsInfo
         include Executable
         include Specifiable
 
