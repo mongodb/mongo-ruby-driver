@@ -65,7 +65,8 @@ module Mongo
         end
 
         def message
-          Protocol::Query.new(db_name, Database::COMMAND, selector, options)
+          sel = (selector || {}).merge(listIndexes: coll_name)
+          Protocol::Query.new(db_name, Database::COMMAND, sel, options)
         end
       end
     end
