@@ -2,6 +2,10 @@ require 'spec_helper'
 
 describe Mongo::Cluster::Topology::ReplicaSet do
 
+  let(:address) do
+    Mongo::Server::Address.new('127.0.0.1:27017')
+  end
+
   describe '.servers' do
 
     let(:mongos) do
@@ -21,19 +25,19 @@ describe Mongo::Cluster::Topology::ReplicaSet do
     end
 
     let(:mongos_description) do
-      Mongo::Server::Description.new({ 'msg' => 'isdbgrid' })
+      Mongo::Server::Description.new(address, { 'msg' => 'isdbgrid' })
     end
 
     let(:standalone_description) do
-      Mongo::Server::Description.new({ 'ismaster' => true })
+      Mongo::Server::Description.new(address, { 'ismaster' => true })
     end
 
     let(:replica_set_description) do
-      Mongo::Server::Description.new({ 'ismaster' => true, 'setName' => 'testing' })
+      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'testing' })
     end
 
     let(:replica_set_two_description) do
-      Mongo::Server::Description.new({ 'ismaster' => true, 'setName' => 'test' })
+      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'test' })
     end
 
     before do

@@ -107,7 +107,7 @@ module Mongo
       @address = Address.new(address)
       @options = options.freeze
       @monitor = Monitor.new(self, options)
-      @description = Description.new({}, event_listeners)
+      @description = Description.new(@address, {}, event_listeners)
       @monitor.check!
       @monitor.run
     end

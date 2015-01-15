@@ -2,6 +2,10 @@ require 'spec_helper'
 
 describe Mongo::Cluster::Topology::Standalone do
 
+  let(:address) do
+    Mongo::Server::Address.new('127.0.0.1:27017')
+  end
+
   describe '.servers' do
 
     let(:mongos) do
@@ -21,15 +25,15 @@ describe Mongo::Cluster::Topology::Standalone do
     end
 
     let(:mongos_description) do
-      Mongo::Server::Description.new({ 'msg' => 'isdbgrid' })
+      Mongo::Server::Description.new(address, { 'msg' => 'isdbgrid' })
     end
 
     let(:standalone_description) do
-      Mongo::Server::Description.new({ 'ismaster' => true, 'ok' => 1 })
+      Mongo::Server::Description.new(address, { 'ismaster' => true, 'ok' => 1 })
     end
 
     let(:replica_set_description) do
-      Mongo::Server::Description.new({ 'ismaster' => true, 'setName' => 'testing' })
+      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'testing' })
     end
 
     before do

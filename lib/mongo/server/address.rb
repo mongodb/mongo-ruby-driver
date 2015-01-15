@@ -90,9 +90,9 @@ module Mongo
       # @since 2.0.0
       def initialize(address, options = {})
         case address
-        when Unix::MATCH then @resolver = Unix.new(address)
-        when IPv6::MATCH then @resolver = IPv6.new(address)
-        else @resolver = IPv4.new(address)
+          when Unix::MATCH then @resolver = Unix.new(address)
+          when IPv6::MATCH then @resolver = IPv6.new(address)
+          else @resolver = IPv4.new(address)
         end
       end
     end

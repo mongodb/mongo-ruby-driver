@@ -129,6 +129,9 @@ module Mongo
       # @since 2.0.0
       SET_NAME = 'setName'.freeze
 
+      # @return [ Address ] address The server's address.
+      attr_reader :address
+
       # @return [ Hash ] The actual result from the isnamster command.
       attr_reader :config
 
@@ -214,7 +217,8 @@ module Mongo
       # @param [ Float ] round_trip_time The time for a round trip ismaster.
       #
       # @since 2.0.0
-      def initialize(config = {}, event_listeners = nil, round_trip_time = 0)
+      def initialize(address, config = {}, event_listeners = nil, round_trip_time = 0)
+        @address = address
         @event_listeners = event_listeners
         @inspections = INSPECTIONS.map{ |insp| insp.new(event_listeners) }
         @config = config
@@ -411,7 +415,7 @@ module Mongo
       # @since 2.0.0
       def update!(new_config, round_trip_time)
         @inspections.each do |inspection|
-          inspection.run(self, Description.new(new_config))
+          inspection.run(self, Description.new(address, new_config))
         end
         @config = new_config
         @round_trip_time = round_trip_time

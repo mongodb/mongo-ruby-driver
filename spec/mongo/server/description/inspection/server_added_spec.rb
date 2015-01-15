@@ -10,6 +10,10 @@ describe Mongo::Server::Description::Inspection::ServerAdded do
     described_class.new(listeners)
   end
 
+  let(:address) do
+    Mongo::Server::Address.new('127.0.0.1:27017')
+  end
+
   describe '#run' do
 
     let(:config) do
@@ -22,11 +26,11 @@ describe Mongo::Server::Description::Inspection::ServerAdded do
     end
 
     let(:description) do
-      Mongo::Server::Description.new(config, listeners)
+      Mongo::Server::Description.new(address, config, listeners)
     end
 
     let(:updated) do
-      Mongo::Server::Description.new(new_config, listeners)
+      Mongo::Server::Description.new(address, new_config, listeners)
     end
 
     let(:listener) do
