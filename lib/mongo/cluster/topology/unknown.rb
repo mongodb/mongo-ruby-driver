@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2014 MongoDB, Inc.
+# Copyright (C) 2015 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,21 +16,21 @@ module Mongo
   class Cluster
     module Topology
 
-      # Defines behaviour for when a cluster is in standalone topology.
+      # Defines behaviour for when a cluster is in an unknown state.
       #
       # @since 2.0.0
-      module Standalone
+      module Unknown
         extend self
 
         # The display name for the topology.
         #
         # @since 2.0.0
-        NAME = 'Standalone'.freeze
+        NAME = 'Unknown'.freeze
 
         # Get the display name.
         #
         # @example Get the display name.
-        #   Standalone.display_name
+        #   Unknown.display_name
         #
         # @return [ String ] The display name.
         #
@@ -39,10 +39,10 @@ module Mongo
           NAME
         end
 
-        # A standalone topology is not a replica set.
+        # An unknown topology is not a replica set.
         #
         # @example Is the topology a replica set?
-        #   Sharded.replica_set?
+        #   Unknown.replica_set?
         #
         # @return [ false ] Always false.
         #
@@ -52,46 +52,46 @@ module Mongo
         # Select appropriate servers for this topology.
         #
         # @example Select the servers.
-        #   Standalone.servers(servers, 'test')
+        #   Unknown.servers(servers, 'test')
         #
         # @param [ Array<Server> ] servers The known servers.
         #
-        # @return [ Array<Server> ] The standalone servers.
+        # @raise [ Unknown ] Cannot select servers when the topology is
+        #   unknown.
         #
         # @since 2.0.0
         def servers(servers, name = nil)
-          [ servers.detect{ |server| server.standalone? } ]
         end
 
-        # A standalone topology is not sharded.
+        # An unknown topology is not sharded.
         #
         # @example Is the topology sharded?
-        #   Standalone.sharded?
+        #   Unknown.sharded?
         #
         # @return [ false ] Always false.
         #
         # @since 2.0.0
         def sharded?; false; end
 
-        # A standalone topology is standalone.
+        # An unknown topology is not standalone.
         #
         # @example Is the topology standalone?
-        #   Standalone.standalone?
+        #   Unknown.standalone?
+        #
+        # @return [ true ] Always false.
+        #
+        # @since 2.0.0
+        def standalone?; false; end
+
+        # An unknown topology is unknown.
+        #
+        # @example Is the topology unknown?
+        #   Unknown.unknown?
         #
         # @return [ true ] Always true.
         #
         # @since 2.0.0
-        def standalone?; true; end
-
-        # An standalone topology is not unknown.
-        #
-        # @example Is the topology unknown?
-        #   Standalone.unknown?
-        #
-        # @return [ false ] Always false.
-        #
-        # @since 2.0.0
-        def unknown?; false; end
+        def unknown?; true; end
       end
     end
   end

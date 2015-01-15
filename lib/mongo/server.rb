@@ -36,6 +36,7 @@ module Mongo
     attr_reader :options
 
     def_delegators :@description,
+                   :arbiter?,
                    :features,
                    :ghost?,
                    :max_wire_version,

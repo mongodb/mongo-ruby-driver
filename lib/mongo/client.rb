@@ -98,6 +98,7 @@ module Mongo
     #
     # @option options [ Symbol ] :auth_mech
     # @option options [ String ] :auth_source
+    # @option options [ Symbol ] :connect
     # @option options [ String ] :database
     # @option options [ Hash ] :auth_mech_properties
     # @option options [ Float ] :heartbeat_frequency

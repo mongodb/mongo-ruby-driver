@@ -2,12 +2,12 @@ require 'spec_helper'
 
 describe Mongo::Cluster::Topology do
 
-  describe '.get' do
+  describe '.initial' do
 
     context 'when provided a replica set option' do
 
       let(:topology) do
-        described_class.get(topology: :replica_set)
+        described_class.initial(connect: :replica_set)
       end
 
       it 'returns a replica set topology' do
@@ -18,7 +18,7 @@ describe Mongo::Cluster::Topology do
     context 'when provided a standalone option' do
 
       let(:topology) do
-        described_class.get(topology: :standalone)
+        described_class.initial(connect: :direct)
       end
 
       it 'returns a standalone topology' do
@@ -29,7 +29,7 @@ describe Mongo::Cluster::Topology do
     context 'when provided a sharded option' do
 
       let(:topology) do
-        described_class.get(topology: :sharded)
+        described_class.initial(connect: :sharded)
       end
 
       it 'returns a sharded topology' do
@@ -42,7 +42,7 @@ describe Mongo::Cluster::Topology do
       context 'when a set name is in the options' do
 
         let(:topology) do
-          described_class.get(replica_set: 'testing')
+          described_class.initial(replica_set: 'testing')
         end
 
         it 'returns a replica set topology' do
@@ -53,7 +53,7 @@ describe Mongo::Cluster::Topology do
       context 'when no set name is in the options' do
 
         let(:topology) do
-          described_class.get({})
+          described_class.initial({})
         end
 
         it 'returns a standalone topology' do

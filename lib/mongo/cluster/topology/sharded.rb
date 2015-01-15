@@ -82,6 +82,16 @@ module Mongo
         #
         # @since 2.0.0
         def standalone?; false; end
+
+        # A sharded topology is not unknown.
+        #
+        # @example Is the topology unknown?
+        #   Sharded.unknown?
+        #
+        # @return [ false ] Always false.
+        #
+        # @since 2.0.0
+        def unknown?; false; end
       end
     end
   end

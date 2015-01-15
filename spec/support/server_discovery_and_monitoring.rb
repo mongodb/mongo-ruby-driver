@@ -29,7 +29,7 @@ RSpec::Matchers.define :be_topology do |expected|
       when 'ReplicaSetNoPrimary' then actual.replica_set?
       when 'Sharded' then actual.sharded?
       when 'Single' then actual.standalone?
-      when 'Unknown' then actual.standalone?
+      when 'Unknown' then actual.unknown?
     end
   end
 end

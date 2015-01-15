@@ -392,7 +392,7 @@ module Mongo
       #
       # @since 2.0.0
       def unknown?
-        config.empty?
+        config.empty? || config[Operation::Result::OK] != 1
       end
 
       # Update this description with a new description. Will fire the

@@ -222,6 +222,9 @@ module Mongo
     # Security Options
     option 'ssl', :ssl
 
+    # Topology options
+    option 'connect', :connect
+
     # Auth Options
     option 'authSource', :source, :group => :auth, :type => :auth_source
     option 'authMechanism', :mechanism, :group => :auth, :type => :auth_mech

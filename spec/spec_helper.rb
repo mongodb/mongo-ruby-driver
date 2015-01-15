@@ -29,7 +29,7 @@ Mongo::Logger.logger.level = Logger::INFO
 
 RSpec.configure do |config|
   config.color     = true
-  config.fail_fast = true unless ENV['CI'] || ENV['JENKINS_HOME']
+  config.fail_fast = false unless ENV['CI'] || ENV['JENKINS_HOME']
   config.formatter = 'documentation'
   config.include(Authorization)
 

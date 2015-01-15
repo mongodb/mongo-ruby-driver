@@ -15,6 +15,7 @@
 require 'mongo/cluster/topology/replica_set'
 require 'mongo/cluster/topology/sharded'
 require 'mongo/cluster/topology/standalone'
+require 'mongo/cluster/topology/unknown'
 
 module Mongo
   class Cluster
@@ -31,24 +32,21 @@ module Mongo
       OPTIONS = {
         replica_set: ReplicaSet,
         sharded: Sharded,
-        standalone: Standalone
+        direct: Standalone
       }
 
-      # Get the cluster topology for the provided options.
+      # Get the initial cluster topology for the provided options.
       #
-      # @example Get the cluster topology.
-      #   Topology.get(topology: :replica_set)
-      #
-      # @note If a topology is not specified, we will return a replica set topology if
-      #   a set_name option is provided, otherwise a standalone.
+      # @example Get the initial cluster topology.
+      #   Topology.initial(topology: :replica_set)
       #
       # @param [ Hash ] options The cluster options.
       #
       # @return [ ReplicaSet, Sharded, Standalone ] The topology.
       #
       # @since 2.0.0
-      def get(options)
-        return OPTIONS.fetch(options[:topology]) if options.has_key?(:topology)
+      def initial(options)
+        return OPTIONS.fetch(options[:connect]) if options.has_key?(:connect)
         options.has_key?(:replica_set) ? ReplicaSet : Standalone
       end
     end

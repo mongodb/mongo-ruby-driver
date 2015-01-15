@@ -39,7 +39,7 @@ module Mongo
     # @return [ Object ] The cluster topology.
     attr_reader :topology
 
-    def_delegators :topology, :replica_set?, :sharded?, :standalone?
+    def_delegators :topology, :replica_set?, :sharded?, :standalone?, :unknown?
 
     # Determine if this cluster of servers is equal to another object. Checks the
     # servers currently in the cluster, not what was configured.
@@ -94,7 +94,7 @@ module Mongo
       @event_listeners = event_listeners
       @server_preference = server_preference
       @options = options.freeze
-      @topology = Topology.get(options)
+      @topology = Topology.initial(options)
 
       subscribe_to(Event::SERVER_ADDED, Event::ServerAdded.new(self))
       subscribe_to(Event::SERVER_REMOVED, Event::ServerRemoved.new(self))

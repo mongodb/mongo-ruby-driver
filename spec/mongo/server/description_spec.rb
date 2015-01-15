@@ -418,7 +418,7 @@ describe Mongo::Server::Description do
     context 'when the server is standalone' do
 
       let(:description) do
-        described_class.new({ 'ismaster' => true })
+        described_class.new({ 'ismaster' => true, 'ok' => 1 })
       end
 
       it 'returns true' do
@@ -451,10 +451,21 @@ describe Mongo::Server::Description do
       end
     end
 
+    context 'when the command was not ok' do
+
+      let(:description) do
+        described_class.new({ 'ok' => 0 })
+      end
+
+      it 'returns true' do
+        expect(description).to be_unknown
+      end
+    end
+
     context 'when the description has a configuration' do
 
       let(:config) do
-        { 'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ] }
+        { 'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ], 'ok' => 1 }
       end
 
       let(:description) do

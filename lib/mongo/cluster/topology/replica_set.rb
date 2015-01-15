@@ -86,6 +86,16 @@ module Mongo
         #
         # @since 2.0.0
         def standalone?; false; end
+
+        # A replica set topology is not unknown.
+        #
+        # @example Is the topology unknown?
+        #   ReplicaSet.unknown?
+        #
+        # @return [ false ] Always false.
+        #
+        # @since 2.0.0
+        def unknown?; false; end
       end
     end
   end
