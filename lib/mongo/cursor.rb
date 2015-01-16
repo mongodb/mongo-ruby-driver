@@ -103,7 +103,7 @@ module Mongo
         :to_return => to_return,
         :cursor_id => @cursor_id,
         :db_name   => database.name,
-        :coll_name => collection.name
+        :coll_name => @coll_name || collection.name
       })
     end
 
@@ -126,6 +126,7 @@ module Mongo
     def process(result)
       @remaining -= result.returned_count if limited?
       @cursor_id = result.cursor_id
+      @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace
       result.documents
     end
 
