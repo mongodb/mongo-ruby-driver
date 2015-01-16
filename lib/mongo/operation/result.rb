@@ -77,6 +77,16 @@ module Mongo
         acknowledged? ? replies.last.cursor_id : 0
       end
 
+      # Get the namespace of the cursor. The method should be defined in
+      # result classes where 'ns' is in the server response.
+      #
+      # @return [ Nil ]
+      #
+      # @since 2.0.0
+      def namespace
+        nil
+      end
+
       # Get the documents in the result.
       #
       # @example Get the documents.

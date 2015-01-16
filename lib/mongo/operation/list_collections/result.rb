@@ -33,6 +33,11 @@ module Mongo
           # @since 2.0.0
           CURSOR_ID = 'id'.freeze
 
+          # The namespace field in the cursor document.
+          #
+          # @since 2.0.0
+          NAMESPACE = 'ns'.freeze
+
           # The field name for the first batch of a cursor.
           #
           # @since 2.0.0
@@ -53,6 +58,18 @@ module Mongo
           # @since 2.0.0
           def cursor_id
             cursor_document ? cursor_document[CURSOR_ID] : super
+          end
+
+          # Get the namespace for the cursor.
+          #
+          # @example Get the namespace.
+          #   result.namespace
+          #
+          # @return [ String ] The namespace.
+          #
+          # @since 2.0.0
+          def namespace
+            cursor_document ? cursor_document[NAMESPACE] : super
           end
 
           # Get the documents for the listCollections result. It is the 'firstBatch'

@@ -29,6 +29,12 @@ module Mongo
       #   when sending the listCollections command.
       attr_reader :batch_size
 
+      # @return [ Integer ] limit The limit when sending a command.
+      attr_reader :limit
+
+      # @return [ Collection ] collection The command collection.
+      attr_reader :collection
+
       # Get all the names of the non system collections in the database.
       #
       # @example Get the collection names.
@@ -61,19 +67,12 @@ module Mongo
       # @since 2.0.0
       def initialize(database)
         @database = database
-        @cmd_collection = @database['$cmd']
         @batch_size =  nil
+        @limit = -1
+        @collection = @database[Database::COMMAND]
       end
 
       private
-
-      def limit
-        -1
-      end
-
-      def collection
-        @cmd_collection
-      end
 
       def collections_info(server, &block)
         cursor = Cursor.new(self, send_initial_query(server), server).to_enum

@@ -90,7 +90,7 @@ describe Mongo::Database do
     context 'when specifying a batch size' do
 
       it 'returns the stripped names of the collections' do
-        expect(database.collection_names(batch_size: 1)).to include('users')
+        expect(database.collection_names(batch_size: 1).to_a).to include('users')
       end
     end
   end
