@@ -321,6 +321,12 @@ describe Mongo::Collection do
       { name: 1 }
     end
 
+    let(:batch_size) { nil }
+
+    let(:index_names) do
+      authorized_collection.indexes(batch_size: batch_size).collect { |i| i['name'] }
+    end
+
     before do
       authorized_collection.indexes.ensure(index_spec, unique: true)
     end
@@ -330,13 +336,15 @@ describe Mongo::Collection do
     end
 
     it 'returns a list of indexes' do
-      expect(authorized_collection.indexes.to_a.size).to eq(2)
+      expect(index_names).to include(*'name_1', '_id_')
     end
 
     context 'when batch size is specified' do
 
+      let(:batch_size) { 1 }
+
       it 'returns a list of indexes' do
-        expect(authorized_collection.indexes(batch_size: 1).to_a.size).to eq(2)
+        expect(index_names).to include(*'name_1', '_id_')
       end
     end
   end
