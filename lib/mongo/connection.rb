@@ -30,7 +30,7 @@ module Mongo
     #   authenticator The authentication strategy.
     attr_reader :authenticator
 
-    # @return [ Mongo::Server::Address ] address The address to connect to.
+    # @return [ Mongo::Address ] address The address to connect to.
     attr_reader :address
 
     # @return [ Hash ] options The passed in options.

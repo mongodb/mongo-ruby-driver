@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Cluster::Topology::Standalone do
 
   let(:address) do
-    Mongo::Server::Address.new('127.0.0.1:27017')
+    Mongo::Address.new('127.0.0.1:27017')
   end
 
   let(:topology) do

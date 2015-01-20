@@ -68,7 +68,7 @@ module Mongo
     #
     # @since 2.0.0
     def add(host)
-      address = Server::Address.new(host)
+      address = Address.new(host)
       unless addresses.include?(address)
         log(:debug, 'MONGODB', [ "Adding #{address.to_s} to the cluster." ])
         addresses.push(address)
@@ -142,7 +142,7 @@ module Mongo
     # @since 2.0.0
     def remove(host)
       log(:debug, 'MONGODB', [ "#{host} being removed from the cluster." ])
-      address = Server::Address.new(host)
+      address = Address.new(host)
       removed_servers = @servers.reject!{ |server| server.address == address }
       removed_servers.each{ |server| server.disconnect! } if removed_servers
       addresses.reject!{ |addr| addr == address }

@@ -30,7 +30,7 @@ describe Mongo::Server::Description do
   end
 
   let(:address) do
-    Mongo::Server::Address.new('127.0.0.1:27017')
+    Mongo::Address.new('127.0.0.1:27017')
   end
 
   describe '#arbiter?' do

@@ -42,7 +42,7 @@ module Mongo
       # @example Handle the event.
       #   server_removed.handle('127.0.0.1:27018')
       #
-      # @param [ Server::Address ] address The removed host.
+      # @param [ Address ] address The removed host.
       #
       # @since 2.0.0
       def handle(address)

@@ -7,7 +7,7 @@ describe Mongo::Server do
   end
 
   let(:address) do
-    Mongo::Server::Address.new('127.0.0.1:27017')
+    Mongo::Address.new('127.0.0.1:27017')
   end
 
   describe '#==' do
@@ -43,7 +43,7 @@ describe Mongo::Server do
       context 'when the addresses dont match' do
 
         let(:other_address) do
-          Mongo::Server::Address.new('127.0.0.1:27018')
+          Mongo::Address.new('127.0.0.1:27018')
         end
 
         let(:other) do

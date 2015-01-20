@@ -1,13 +1,13 @@
 require 'spec_helper'
 
-describe Mongo::Server::Address::IPv6 do
+describe Mongo::Address::IPv4 do
 
   describe '#initialize' do
 
     context 'when a port is provided' do
 
       let(:resolver) do
-        described_class.new('[::1]:27017')
+        described_class.new('127.0.0.1:27017')
       end
 
       it 'sets the port' do
@@ -15,14 +15,14 @@ describe Mongo::Server::Address::IPv6 do
       end
 
       it 'sets the host' do
-        expect(resolver.host).to eq('::1')
+        expect(resolver.host).to eq('127.0.0.1')
       end
     end
 
     context 'when no port is provided' do
 
       let(:resolver) do
-        described_class.new('[::1]')
+        described_class.new('127.0.0.1')
       end
 
       it 'sets the port to 27017' do
@@ -30,7 +30,7 @@ describe Mongo::Server::Address::IPv6 do
       end
 
       it 'sets the host' do
-        expect(resolver.host).to eq('::1')
+        expect(resolver.host).to eq('127.0.0.1')
       end
     end
   end
@@ -38,7 +38,7 @@ describe Mongo::Server::Address::IPv6 do
   describe '#socket' do
 
     let(:resolver) do
-      described_class.new('[::1]')
+      described_class.new('127.0.0.1')
     end
 
     context 'when ssl options are provided' do
@@ -51,8 +51,8 @@ describe Mongo::Server::Address::IPv6 do
         expect(socket).to be_a(Mongo::Socket::SSL)
       end
 
-      it 'sets the family as ipv6' do
-        expect(socket.family).to eq(Socket::PF_INET6)
+      it 'sets the family as ipv4' do
+        expect(socket.family).to eq(Socket::PF_INET)
       end
     end
 
@@ -66,8 +66,8 @@ describe Mongo::Server::Address::IPv6 do
         expect(socket).to be_a(Mongo::Socket::TCP)
       end
 
-      it 'sets the family a ipv6' do
-        expect(socket.family).to eq(Socket::PF_INET6)
+      it 'sets the family a ipv4' do
+        expect(socket.family).to eq(Socket::PF_INET)
       end
     end
   end

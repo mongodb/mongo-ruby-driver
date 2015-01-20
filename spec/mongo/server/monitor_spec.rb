@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Server::Monitor do
 
   let(:address) do
-    Mongo::Server::Address.new('127.0.0.1:27017')
+    Mongo::Address.new('127.0.0.1:27017')
   end
 
   describe '#check!' do

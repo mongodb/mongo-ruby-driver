@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Server::Address do
+describe Mongo::Address do
 
   describe '#==' do
 
