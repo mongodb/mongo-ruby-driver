@@ -38,7 +38,18 @@ module Mongo
           NAME
         end
 
-        def elect_primary(description, servers, options); self; end
+        # Elect a primary server within this topology.
+        #
+        # @example Elect a primary server.
+        #   topology.elect_primary(description, servers)
+        #
+        # @param [ Server::Description ] description The description of the
+        #   elected primary.
+        # @param [ Array<Server> ] server The list of known servers to the
+        #   cluster.
+        #
+        # @return [ Standalone ] The topology.
+        def elect_primary(description, servers); self; end
 
         # Initialize the topology with the options.
         #

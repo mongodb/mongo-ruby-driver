@@ -26,6 +26,9 @@ module Mongo
         # @since 2.0.0
         NAME = 'Unknown'.freeze
 
+        # @return [ Hash ] options The options.
+        attr_reader :options
+
         # Get the display name.
         #
         # @example Get the display name.
@@ -38,16 +41,22 @@ module Mongo
           NAME
         end
 
-        def elect_primary(description, servers, options)
+        # Elect a primary server within this topology.
+        #
+        # @example Elect a primary server.
+        #   topology.elect_primary(description, servers)
+        #
+        # @param [ Server::Description ] description The description of the
+        #   elected primary.
+        # @param [ Array<Server> ] server The list of known servers to the
+        #   cluster.
+        #
+        # @return [ Sharded, ReplicaSet ] The new topology.
+        def elect_primary(description, servers)
           if description.mongos?
             Sharded.new(options)
           else
-            servers.each do |server|
-              if server.standalone? && server.address != description.address
-                server.description.unknown!
-              end
-            end
-            ReplicaSet.new(options.merge(:replica_set => description.replica_set_name))
+            initialize_replica_set(description, servers)
           end
         end
 
@@ -126,6 +135,17 @@ module Mongo
         #
         # @since 2.0.0
         def unknown?; true; end
+
+        private
+
+        def initialize_replica_set(description, servers)
+          servers.each do |server|
+            if server.standalone? && server.address != description.address
+              server.description.unknown!
+            end
+          end
+          ReplicaSet.new(options.merge(:replica_set => description.replica_set_name))
+        end
       end
     end
   end

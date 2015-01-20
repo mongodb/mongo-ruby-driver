@@ -128,7 +128,7 @@ module Mongo
 
     def elect_primary!(description)
       log(:debug, 'MONGODB', [ "Server #{description.address.to_s} elected as primary." ])
-      @topology = topology.elect_primary(description, @servers, options)
+      @topology = topology.elect_primary(description, @servers)
     end
 
     # Removed the server from the cluster for the provided address, if it

@@ -46,7 +46,18 @@ module Mongo
           NAME
         end
 
-        def elect_primary(description, servers, options)
+        # Elect a primary server within this topology.
+        #
+        # @example Elect a primary server.
+        #   topology.elect_primary(description, servers)
+        #
+        # @param [ Server::Description ] description The description of the
+        #   elected primary.
+        # @param [ Array<Server> ] server The list of known servers to the
+        #   cluster.
+        #
+        # @return [ ReplicaSet ] The topology.
+        def elect_primary(description, servers)
           servers.each do |server|
             if description.replica_set_name == replica_set_name
               if server.primary? && server.address != description.address
