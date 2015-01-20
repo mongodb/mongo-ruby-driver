@@ -84,11 +84,12 @@ module Mongo
       # @example Initialize the address with a unix socket.
       #   Mongo::Server::Address.new("/path/to/socket.sock")
       #
-      # @param [ String ] address The provided address, ip or DNS entry.
+      # @param [ String ] seed The provided address.
       # @param [ Hash ] options The address options.
       #
       # @since 2.0.0
-      def initialize(address, options = {})
+      def initialize(seed, options = {})
+        address = seed.downcase
         case address
           when Unix::MATCH then @resolver = Unix.new(address)
           when IPv6::MATCH then @resolver = IPv6.new(address)

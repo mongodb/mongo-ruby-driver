@@ -12,5 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/server/description/inspection/primary_elected'
 require 'mongo/server/description/inspection/server_added'
 require 'mongo/server/description/inspection/server_removed'

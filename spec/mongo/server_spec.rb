@@ -6,10 +6,14 @@ describe Mongo::Server do
     Mongo::Event::Listeners.new
   end
 
+  let(:address) do
+    Mongo::Server::Address.new('127.0.0.1:27017')
+  end
+
   describe '#==' do
 
     let(:server) do
-      described_class.new('127.0.0.1:27017', listeners)
+      described_class.new(address, listeners)
     end
 
     context 'when the other is not a server' do
@@ -28,7 +32,7 @@ describe Mongo::Server do
       context 'when the addresses match' do
 
         let(:other) do
-          described_class.new('127.0.0.1:27017', listeners)
+          described_class.new(address, listeners)
         end
 
         it 'returns true' do
@@ -38,8 +42,12 @@ describe Mongo::Server do
 
       context 'when the addresses dont match' do
 
+        let(:other_address) do
+          Mongo::Server::Address.new('127.0.0.1:27018')
+        end
+
         let(:other) do
-          described_class.new('127.0.0.1:27018', listeners)
+          described_class.new(other_address, listeners)
         end
 
         it 'returns false' do
@@ -52,7 +60,7 @@ describe Mongo::Server do
   describe '#context' do
 
     let(:server) do
-      described_class.new('127.0.0.1:27017', listeners)
+      described_class.new(address, listeners)
     end
 
     let(:context) do
@@ -65,10 +73,6 @@ describe Mongo::Server do
   end
 
   describe '#initialize' do
-
-    let(:address) do
-      '127.0.0.1:27017'
-    end
 
     let(:server) do
       described_class.new(address, listeners, :heartbeat_frequency => 5)
@@ -90,7 +94,7 @@ describe Mongo::Server do
   describe '#pool' do
 
     let(:server) do
-      described_class.new('127.0.0.1:27017', listeners)
+      described_class.new(address, listeners)
     end
 
     let(:pool) do
@@ -105,11 +109,11 @@ describe Mongo::Server do
   describe '#disconnect!' do
 
     let(:server) do
-      described_class.new('127.0.0.1:27017', listeners)
+      described_class.new(address, listeners)
     end
 
     it 'removed the monitor thread instance' do
-      s = described_class.new('127.0.0.1:27017', listeners)
+      s = described_class.new(address, listeners)
       monitor_count = Mongo::Server::Monitor.threads.size
       s.disconnect!
       expect(Mongo::Server::Monitor.threads.size).to eq(monitor_count - 1)

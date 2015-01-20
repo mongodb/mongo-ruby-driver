@@ -19,8 +19,7 @@ module Mongo
       # Defines behaviour for when a cluster is in standalone topology.
       #
       # @since 2.0.0
-      module Standalone
-        extend self
+      class Standalone
 
         # The display name for the topology.
         #
@@ -39,6 +38,20 @@ module Mongo
           NAME
         end
 
+        def elect_primary(description, servers, options); self; end
+
+        # Initialize the topology with the options.
+        #
+        # @example Initialize the topology.
+        #   Standalone.new(options)
+        #
+        # @param [ Hash ] options The options.
+        #
+        # @since 2.0.0
+        def initialize(options)
+          @options = options
+        end
+
         # A standalone topology is not a replica set.
         #
         # @example Is the topology a replica set?
@@ -48,6 +61,16 @@ module Mongo
         #
         # @since 2.0.0
         def replica_set?; false; end
+
+        # Standalone topologies have no replica set name.
+        #
+        # @example Get the replica set name.
+        #   standalone.replica_set_name
+        #
+        # @return [ nil ] Always nil.
+        #
+        # @since 2.0.0
+        def replica_set_name; nil; end
 
         # Select appropriate servers for this topology.
         #

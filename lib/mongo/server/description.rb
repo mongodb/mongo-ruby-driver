@@ -65,6 +65,7 @@ module Mongo
       #
       # @since 2.0.0
       INSPECTIONS = [
+        Inspection::PrimaryElected,
         Inspection::ServerAdded,
         Inspection::ServerRemoved
       ].freeze
@@ -310,6 +311,10 @@ module Mongo
         config[MESSAGE] == MONGOS_MESSAGE
       end
 
+      def other?
+        !primary? && !secondary? && !passive? && !arbiter?
+      end
+
       # Will return true if the server is passive.
       #
       # @example Is the server passive?
@@ -359,6 +364,14 @@ module Mongo
         config[SET_NAME]
       end
 
+      # Get a list of all servers known to the cluster.
+      #
+      # @example Get all servers.
+      #   description.servers
+      #
+      # @return [ Array<String> ] The list of all servers.
+      #
+      # @since 2.0.0
       def servers
         hosts + arbiters + passives
       end
@@ -397,6 +410,20 @@ module Mongo
       # @since 2.0.0
       def unknown?
         config.empty? || config[Operation::Result::OK] != 1
+      end
+
+      # A result from another server's ismaster command before this server has
+      # refreshed causes the need for this description to become unknown before
+      # the next refresh.
+      #
+      # @example Force an unknown state.
+      #   description.unknown!
+      #
+      # @return [ true ] Always true.
+      #
+      # @since 2.0.0
+      def unknown!
+        @config = {} and true
       end
 
       # Update this description with a new description. Will fire the

@@ -19,8 +19,15 @@ module Mongo
       # Defines behaviour when a cluster is in replica set topology.
       #
       # @since 2.0.0
-      module ReplicaSet
-        extend self
+      class ReplicaSet
+
+        # Constant for the replica set name configuration option.
+        #
+        # @since 2.0.0
+        REPLICA_SET_NAME = :replica_set.freeze
+
+        # @return [ Hash ] options The options.
+        attr_reader :options
 
         # The display name for the topology.
         #
@@ -39,6 +46,29 @@ module Mongo
           NAME
         end
 
+        def elect_primary(description, servers, options)
+          servers.each do |server|
+            if description.replica_set_name == replica_set_name
+              if server.primary? && server.address != description.address
+                server.description.unknown!
+              end
+            end
+          end
+          self
+        end
+
+        # Initialize the topology with the options.
+        #
+        # @example Initialize the topology.
+        #   ReplicaSet.new(options)
+        #
+        # @param [ Hash ] options The options.
+        #
+        # @since 2.0.0
+        def initialize(options)
+          @options = options
+        end
+
         # A replica set topology is a replica set.
         #
         # @example Is the topology a replica set?
@@ -49,18 +79,29 @@ module Mongo
         # @since 2.0.0
         def replica_set?; true; end
 
+        # Get the replica set name configured for this topology.
+        #
+        # @example Get the replica set name.
+        #   topology.replica_set_name
+        #
+        # @return [ String ] The name of the configured replica set.
+        #
+        # @since 2.0.0
+        def replica_set_name
+          @replica_set_name ||= options[REPLICA_SET_NAME]
+        end
+
         # Select appropriate servers for this topology.
         #
         # @example Select the servers.
-        #   ReplicaSet.servers(servers, 'test')
+        #   ReplicaSet.servers(servers)
         #
         # @param [ Array<Server> ] servers The known servers.
-        # @param [ String ] replica_set_name The name of the replica set.
         #
         # @return [ Array<Server> ] The servers in the replica set.
         #
         # @since 2.0.0
-        def servers(servers, replica_set_name = nil)
+        def servers(servers)
           servers.select do |server|
             (replica_set_name.nil? || server.replica_set_name == replica_set_name) &&
               server.primary? || server.secondary?

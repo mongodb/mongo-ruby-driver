@@ -299,7 +299,7 @@ describe Mongo::Client do
         end
 
         it 'sets the correct cluster topology' do
-          expect(client.cluster.topology).to eq(Mongo::Cluster::Topology::ReplicaSet)
+          expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::ReplicaSet)
         end
       end
     end

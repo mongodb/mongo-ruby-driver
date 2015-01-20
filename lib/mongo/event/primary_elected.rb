@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2014 MongoDB, Inc.
+# Copyright (C) 2015 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,19 +15,18 @@
 module Mongo
   module Event
 
-    # This handles host removed events for server descriptions.
+    # This handles primary elected events for server descriptions.
     #
     # @since 2.0.0
-    class ServerRemoved
-      include Loggable
+    class PrimaryElected
 
       # @return [ Mongo::Cluster ] cluster The event publisher.
       attr_reader :cluster
 
-      # Initialize the new host removed event handler.
+      # Initialize the new primary elected event handler.
       #
       # @example Create the new handler.
-      #   ServerRemoved.new(cluster)
+      #   PrimaryElected.new(cluster)
       #
       # @param [ Mongo::Cluster ] cluster The cluster to publish from.
       #
@@ -36,17 +35,18 @@ module Mongo
         @cluster = cluster
       end
 
-      # This event publishes an event to remove from the cluster and logs the
-      # configuration change.
+      # This event tells the cluster to take all previous primaries to an
+      # unknown state.
       #
       # @example Handle the event.
-      #   server_removed.handle('127.0.0.1:27018')
+      #   primary_elected.handle(description)
       #
-      # @param [ Server::Address ] address The removed host.
+      # @param [ Server::Description ] description The description of the
+      #   elected server.
       #
       # @since 2.0.0
-      def handle(address)
-        cluster.remove(address)
+      def handle(description)
+        cluster.elect_primary!(description)
       end
     end
   end

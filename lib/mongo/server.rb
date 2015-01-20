@@ -44,6 +44,7 @@ module Mongo
                    :max_bson_object_size,
                    :max_message_size,
                    :mongos?,
+                   :other?,
                    :primary?,
                    :replica_set_name,
                    :secondary?,
@@ -98,13 +99,13 @@ module Mongo
     # @example Initialize the server.
     #   Mongo::Server.new('127.0.0.1:27017', listeners)
     #
-    # @param [ String ] address The host:port address to connect to.
+    # @param [ Address ] address The host:port address to connect to.
     # @param [ Event::Listeners ] event_listeners The event listeners.
     # @param [ Hash ] options The server options.
     #
     # @since 2.0.0
     def initialize(address, event_listeners, options = {})
-      @address = Address.new(address)
+      @address = address
       @options = options.freeze
       @monitor = Monitor.new(self, options)
       @description = Description.new(@address, {}, event_listeners)

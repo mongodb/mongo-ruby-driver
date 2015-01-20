@@ -2,8 +2,12 @@ require 'spec_helper'
 
 describe Mongo::Auth::X509 do
 
+  let(:address) do
+    Mongo::Server::Address.new('127.0.0.1:27017')
+  end
+
   let(:server) do
-    Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
+    Mongo::Server.new(address, Mongo::Event::Listeners.new)
   end
 
   let(:connection) do

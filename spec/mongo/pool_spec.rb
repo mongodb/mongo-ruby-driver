@@ -2,10 +2,14 @@ require 'spec_helper'
 
 describe Mongo::Pool do
 
+  let(:address) do
+    Mongo::Server::Address.new('127.0.0.1:27017')
+  end
+
   describe '#checkin' do
 
     let(:server) do
-      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new)
     end
 
     let(:pool) do
@@ -35,7 +39,7 @@ describe Mongo::Pool do
   describe '#checkout' do
 
     let(:server) do
-      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new)
     end
 
     let(:pool) do
@@ -83,7 +87,7 @@ describe Mongo::Pool do
   describe '.get' do
 
     let(:server) do
-      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new)
     end
 
     let(:pool) do

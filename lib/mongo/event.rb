@@ -15,11 +15,17 @@
 require 'mongo/event/listeners'
 require 'mongo/event/publisher'
 require 'mongo/event/subscriber'
+require 'mongo/event/primary_elected'
 require 'mongo/event/server_added'
 require 'mongo/event/server_removed'
 
 module Mongo
   module Event
+
+    # When a server is elected primary.
+    #
+    # @since 2.0.0
+    PRIMARY_ELECTED = 'primary_elected'.freeze
 
     # When a server is to be added to a cluster.
     #

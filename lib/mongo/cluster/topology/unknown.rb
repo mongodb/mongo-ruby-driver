@@ -19,8 +19,7 @@ module Mongo
       # Defines behaviour for when a cluster is in an unknown state.
       #
       # @since 2.0.0
-      module Unknown
-        extend self
+      class Unknown
 
         # The display name for the topology.
         #
@@ -39,6 +38,31 @@ module Mongo
           NAME
         end
 
+        def elect_primary(description, servers, options)
+          if description.mongos?
+            Sharded.new(options)
+          else
+            servers.each do |server|
+              if server.standalone? && server.address != description.address
+                server.description.unknown!
+              end
+            end
+            ReplicaSet.new(options.merge(:replica_set => description.replica_set_name))
+          end
+        end
+
+        # Initialize the topology with the options.
+        #
+        # @example Initialize the topology.
+        #   Unknown.new(options)
+        #
+        # @param [ Hash ] options The options.
+        #
+        # @since 2.0.0
+        def initialize(options)
+          @options = options
+        end
+
         # An unknown topology is not a replica set.
         #
         # @example Is the topology a replica set?
@@ -49,10 +73,20 @@ module Mongo
         # @since 2.0.0
         def replica_set?; false; end
 
+        # Unknown topologies have no replica set name.
+        #
+        # @example Get the replica set name.
+        #   unknown.replica_set_name
+        #
+        # @return [ nil ] Always nil.
+        #
+        # @since 2.0.0
+        def replica_set_name; nil; end
+
         # Select appropriate servers for this topology.
         #
         # @example Select the servers.
-        #   Unknown.servers(servers, 'test')
+        #   Unknown.servers(servers)
         #
         # @param [ Array<Server> ] servers The known servers.
         #
@@ -60,7 +94,7 @@ module Mongo
         #   unknown.
         #
         # @since 2.0.0
-        def servers(servers, name = nil)
+        def servers(servers)
         end
 
         # An unknown topology is not sharded.

@@ -19,8 +19,7 @@ module Mongo
       # Defines behaviour for when a cluster is in sharded topology.
       #
       # @since 2.0.0
-      module Sharded
-        extend self
+      class Sharded
 
         # The display name for the topology.
         #
@@ -39,6 +38,20 @@ module Mongo
           NAME
         end
 
+        def elect_primary(description, servers, options); self; end
+
+        # Initialize the topology with the options.
+        #
+        # @example Initialize the topology.
+        #   Sharded.new(options)
+        #
+        # @param [ Hash ] options The options.
+        #
+        # @since 2.0.0
+        def initialize(options)
+          @options = options
+        end
+
         # A sharded topology is not a replica set.
         #
         # @example Is the topology a replica set?
@@ -49,17 +62,27 @@ module Mongo
         # @since 2.0.0
         def replica_set?; false; end
 
+        # Sharded topologies have no replica set name.
+        #
+        # @example Get the replica set name.
+        #   sharded.replica_set_name
+        #
+        # @return [ nil ] Always nil.
+        #
+        # @since 2.0.0
+        def replica_set_name; nil; end
+
         # Select appropriate servers for this topology.
         #
         # @example Select the servers.
-        #   Sharded.servers(servers, 'test')
+        #   Sharded.servers(servers)
         #
         # @param [ Array<Server> ] servers The known servers.
         #
         # @return [ Array<Server> ] The mongos servers.
         #
         # @since 2.0.0
-        def servers(servers, name = nil)
+        def servers(servers)
           servers.select{ |server| server.mongos? }
         end
 

@@ -45,9 +45,15 @@ module Mongo
       # @return [ ReplicaSet, Sharded, Standalone ] The topology.
       #
       # @since 2.0.0
-      def initial(options)
-        return OPTIONS.fetch(options[:connect]) if options.has_key?(:connect)
-        options.has_key?(:replica_set) ? ReplicaSet : Standalone
+      def initial(seeds, options)
+        if options.has_key?(:connect)
+          return OPTIONS.fetch(options[:connect]).new(options)
+        end
+        if options.has_key?(:replica_set)
+          ReplicaSet.new(options)
+        else
+          seeds.size > 1 ? Unknown.new(options) : Standalone.new(options)
+        end
       end
     end
   end

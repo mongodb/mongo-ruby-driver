@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'Server Discovery and Monitoring' do
   include Mongo::SDAM
 
-  SERVER_DISCOVERY_TESTS.take(8).each do |file|
+  SERVER_DISCOVERY_TESTS.each do |file|
 
     spec = Mongo::SDAM::Spec.new(file)
 
@@ -29,7 +29,7 @@ describe 'Server Discovery and Monitoring' do
           # monitor and run it.
           def initialize(address, event_listeners, options = {})
             @event_listeners = event_listeners
-            @address = Address.new(address)
+            @address = address
             @options = options.freeze
             @description = Description.new(@address, {}, event_listeners)
           end
@@ -53,7 +53,7 @@ describe 'Server Discovery and Monitoring' do
 
           # Returns the constructor to its original implementation.
           def initialize(address, event_listeners, options = {})
-            @address = Address.new(address)
+            @address = address
             @options = options.freeze
             @monitor = Monitor.new(self, options)
             @description = Description.new(@address, {}, event_listeners)

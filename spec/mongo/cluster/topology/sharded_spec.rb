@@ -6,18 +6,22 @@ describe Mongo::Cluster::Topology::Sharded do
     Mongo::Server::Address.new('127.0.0.1:27017')
   end
 
+  let(:topology) do
+    described_class.new({})
+  end
+
   describe '.servers' do
 
     let(:mongos) do
-      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new)
     end
 
     let(:standalone) do
-      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new)
     end
 
     let(:replica_set) do
-      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new)
     end
 
     let(:mongos_description) do
@@ -39,7 +43,7 @@ describe Mongo::Cluster::Topology::Sharded do
     end
 
     let(:servers) do
-      described_class.servers([ mongos, standalone, replica_set ])
+      topology.servers([ mongos, standalone, replica_set ])
     end
 
     it 'returns only mongos servers' do
@@ -50,21 +54,21 @@ describe Mongo::Cluster::Topology::Sharded do
   describe '.replica_set?' do
 
     it 'returns false' do
-      expect(described_class).to_not be_replica_set
+      expect(topology).to_not be_replica_set
     end
   end
 
   describe '.sharded?' do
 
     it 'returns true' do
-      expect(described_class).to be_sharded
+      expect(topology).to be_sharded
     end
   end
 
   describe '.standalone?' do
 
     it 'returns false' do
-      expect(described_class).to_not be_standalone
+      expect(topology).to_not be_standalone
     end
   end
 end

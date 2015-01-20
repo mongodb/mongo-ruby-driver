@@ -14,6 +14,7 @@ RSpec::Matchers.define :be_server_type do |expected|
       when 'Unknown' then actual.unknown?
       when 'PossiblePrimary' then actual.unknown?
       when 'RSGhost' then actual.ghost?
+      when 'RSOther' then actual.other?
     end
   end
 end

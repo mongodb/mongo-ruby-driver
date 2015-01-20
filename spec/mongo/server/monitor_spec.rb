@@ -2,10 +2,14 @@ require 'spec_helper'
 
 describe Mongo::Server::Monitor do
 
+  let(:address) do
+    Mongo::Server::Address.new('127.0.0.1:27017')
+  end
+
   describe '#check!' do
 
     let(:server) do
-      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new)
     end
 
     let(:monitor) do
@@ -24,7 +28,7 @@ describe Mongo::Server::Monitor do
   describe '#heartbeat_frequency' do
 
     let(:server) do
-      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new)
     end
 
     context 'when an option is provided' do
@@ -53,7 +57,7 @@ describe Mongo::Server::Monitor do
   describe '#run' do
 
     let(:server) do
-      Mongo::Server.new('127.0.0.1:27017', Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new)
     end
 
     let(:monitor) do

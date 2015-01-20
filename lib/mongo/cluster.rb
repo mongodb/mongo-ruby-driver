@@ -25,21 +25,19 @@ module Mongo
     include Event::Subscriber
     include Loggable
 
-    # Constant for the replica set name configuration option.
-    #
-    # @since 2.0.0
-    REPLICA_SET_NAME = :replica_set.freeze
+    # @return [ Array<String> ] The provided seed addresses.
+    attr_reader :addresses
+
+    # @return [ Hash ] The options hash.
+    attr_reader :options
 
     # @return [ Mongo::ServerPreference ] The server preference.
     attr_reader :server_preference
-    # @return [ Array<String> ] The provided seed addresses.
-    attr_reader :addresses
-    # @return [ Hash ] The options hash.
-    attr_reader :options
+
     # @return [ Object ] The cluster topology.
     attr_reader :topology
 
-    def_delegators :topology, :replica_set?, :sharded?, :standalone?, :unknown?
+    def_delegators :topology, :replica_set?, :replica_set_name, :sharded?, :standalone?, :unknown?
 
     # Determine if this cluster of servers is equal to another object. Checks the
     # servers currently in the cluster, not what was configured.
@@ -64,14 +62,15 @@ module Mongo
     # @example Add the server for the address to the cluster.
     #   cluster.add('127.0.0.1:27018')
     #
-    # @param [ String ] address The address of the server to add.
+    # @param [ String ] host The address of the server to add.
     #
     # @return [ Server ] The newly added server, if not present already.
     #
     # @since 2.0.0
-    def add(address)
+    def add(host)
+      address = Server::Address.new(host)
       unless addresses.include?(address)
-        log(:debug, 'MONGODB', [ "Adding #{address} to the cluster." ])
+        log(:debug, 'MONGODB', [ "Adding #{address.to_s} to the cluster." ])
         addresses.push(address)
         server = Server.new(address, event_listeners, options)
         @servers.push(server)
@@ -84,24 +83,23 @@ module Mongo
     # @example Instantiate the cluster.
     #   Mongo::Cluster.new(["127.0.0.1:27017"])
     #
-    # @param [ Array<String> ] addresses The addresses of the configured servers.
+    # @param [ Array<String> ] seeds The addresses of the configured servers.
     # @param [ Hash ] options The options.
     #
     # @since 2.0.0
-    def initialize(addresses, server_preference, event_listeners, options = {})
+    def initialize(seeds, server_preference, event_listeners, options = {})
       @addresses = []
       @servers = []
       @event_listeners = event_listeners
       @server_preference = server_preference
       @options = options.freeze
-      @topology = Topology.initial(options)
+      @topology = Topology.initial(seeds, options)
 
       subscribe_to(Event::SERVER_ADDED, Event::ServerAdded.new(self))
       subscribe_to(Event::SERVER_REMOVED, Event::ServerRemoved.new(self))
+      subscribe_to(Event::PRIMARY_ELECTED, Event::PrimaryElected.new(self))
 
-      addresses.each do |address|
-        add(Server::Address.new(address).to_s)
-      end
+      seeds.each{ |seed| add(seed) }
     end
 
     # Get the nicer formatted string for use in inspection.
@@ -128,32 +126,26 @@ module Mongo
       server_preference.primary(servers).first
     end
 
+    def elect_primary!(description)
+      log(:debug, 'MONGODB', [ "Server #{description.address.to_s} elected as primary." ])
+      @topology = topology.elect_primary(description, @servers, options)
+    end
+
     # Removed the server from the cluster for the provided address, if it
     # exists.
     #
     # @example Remove the server from the cluster.
     #   server.remove('127.0.0.1:27017')
     #
-    # @param [ String ] address The host/port or socket address.
+    # @param [ String ] host The host/port or socket address.
     #
     # @since 2.0.0
-    def remove(address)
-      log(:debug, 'MONGODB', [ "#{address} being removed from the cluster." ])
-      removed_servers = @servers.reject!{ |server| server.address.seed == address }
+    def remove(host)
+      log(:debug, 'MONGODB', [ "#{host} being removed from the cluster." ])
+      address = Server::Address.new(host)
+      removed_servers = @servers.reject!{ |server| server.address == address }
       removed_servers.each{ |server| server.disconnect! } if removed_servers
       addresses.reject!{ |addr| addr == address }
-    end
-
-    # Get the replica set name configured for this cluster.
-    #
-    # @example Get the replica set name.
-    #   cluster.replica_set_name
-    #
-    # @return [ String ] The name of the configured replica set.
-    #
-    # @since 2.0.0
-    def replica_set_name
-      options[REPLICA_SET_NAME]
     end
 
     # Get a list of server candidates from the cluster that can have operations
@@ -166,7 +158,7 @@ module Mongo
     #
     # @since 2.0.0
     def servers
-      topology.servers(@servers, replica_set_name)
+      topology.servers(@servers)
     end
   end
 end

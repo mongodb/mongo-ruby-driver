@@ -179,7 +179,7 @@ module Mongo
     #
     # @since 2.0.0
     def with(new_options = {})
-      Client.new(cluster.addresses.dup, options.merge(new_options))
+      Client.new(cluster.addresses.map(&:to_s), options.merge(new_options))
     end
 
     # Get the write concern for this client. If no option was provided, then a
