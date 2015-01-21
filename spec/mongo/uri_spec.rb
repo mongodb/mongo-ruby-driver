@@ -256,7 +256,7 @@ describe Mongo::URI do
         end
 
         let(:read) do
-          { :tags => [{ :dc => 'ny', :rack => '1' }] }
+          { :tag_sets => [{ :dc => 'ny', :rack => '1' }] }
         end
 
         it 'sets the read preference tag set' do
@@ -270,7 +270,7 @@ describe Mongo::URI do
         end
 
         let(:read) do
-          { :tags => [{ :dc => 'ny' }, { :dc => 'bos' }] }
+          { :tag_sets => [{ :dc => 'ny' }, { :dc => 'bos' }] }
         end
 
         it 'sets the read preference tag sets' do

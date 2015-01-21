@@ -42,21 +42,25 @@ module Mongo
     # Create a server preference object.
     #
     # @example Get a server preference object for selecting a secondary with
-    #   specific tag sets and acceptable latency.
-    #   Mongo::ServerPreference.get(:mode => :secondary, :tags => [{'tag' => 'set'}])
+    #   specific tag sets and local threshold.
+    #   Mongo::ServerPreference.get({ :mode => :secondary, :tag_sets => [{'dc' => 'nyc'}] },
+     #                              { :local_threshold_ms => 10 })
     #
+    # @param [ Hash ] read The read preference.
     # @param [ Hash ] options The read preference options.
     #
-    # @option options :mode [ Symbol ] The read preference mode.
-    # @option options :tags [ Array<String ] The tag sets.
+    # @option read :mode [ Symbol ] The read preference mode.
+    # @option read :tag_sets [ Array<Hash> ] The tag sets.
+    #
+    # @option options :local_threshold_ms [ Integer ] The local threshold in ms.
+    # @option options :server_selection_timeout_ms [ Integer ] The server selection timeout in ms.
     #
     # @since 2.0.0
-    #
-    # @todo: acceptable_latency should be grabbed from a global setting (client)
-    def get(options = {})
-      PREFERENCES.fetch(options[:mode] || :primary).new(
-        options[:tags] || [],
-        options[:acceptable_latency] || 15
+    def get(read = {}, options = {})
+      PREFERENCES.fetch(read[:mode] || :primary).new(
+        read[:tag_sets] || [],
+        options[:local_threshold_ms] || 15,
+        options[:server_selection_timeout_ms] || 30000
       )
     end
 

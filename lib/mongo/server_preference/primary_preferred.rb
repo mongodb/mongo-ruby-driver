@@ -72,7 +72,7 @@ module Mongo
       end
 
       # Select servers taking into account any defined tag sets and
-      #   acceptable latency, with the primary preferred.
+      #   local threshold, with the primary preferred.
       #
       # @example Select servers given a list of candidates,
       #   with the primary preferred.

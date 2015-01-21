@@ -106,7 +106,7 @@ module Mongo
     #
     #   Read Options (returned in a hash under the :read key)
     #   * :mode [Symbol]  read mode
-    #   * :tags [Array<Hash>] read tag sets
+    #   * :tag_sets [Array<Hash>] read tag sets
     def options
       parsed_options = @match[5]
       return {} unless parsed_options
@@ -212,7 +212,7 @@ module Mongo
 
     # Read Options
     option 'readPreference', :mode, :group => :read, :type => :read_mode
-    option 'readPreferenceTags', :tags, :group => :read, :type => :read_tags
+    option 'readPreferenceTags', :tag_sets, :group => :read, :type => :read_tags
 
     # Pool options
     option 'minPoolSize', :min_pool_size

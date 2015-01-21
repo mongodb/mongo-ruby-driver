@@ -102,6 +102,8 @@ module Mongo
     # @option options [ String ] :database
     # @option options [ Hash ] :auth_mech_properties
     # @option options [ Float ] :heartbeat_frequency
+    # @option options [ Integer ] :local_threshold_ms
+    # @option options [ Integer ] :server_selection_timeout_ms
     # @option options [ Symbol ] :mode
     # @option options [ String ] :password
     # @option options [ Integer ] :max_pool_size
@@ -148,7 +150,9 @@ module Mongo
     #
     # @since 2.0.0
     def server_preference
-      @server_preference ||= ServerPreference.get(options[:read] || {})
+      read_options = { local_threshold_ms: options[:local_threshold_ms],
+                       server_selection_timeout_ms: options[:server_selection_timeout_ms] }
+      @server_preference ||= ServerPreference.get(options[:read] || {}, read_options)
     end
 
     # Use the database with the provided name. This will switch the current

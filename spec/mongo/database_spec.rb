@@ -136,7 +136,7 @@ describe Mongo::Database do
 
       let(:read) do
         { :mode => :secondary,
-          :tags => [{ 'non' => 'existent' }] }
+          :tag_sets => [{ 'non' => 'existent' }] }
       end
 
       let(:client) do

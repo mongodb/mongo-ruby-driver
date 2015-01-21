@@ -23,9 +23,14 @@ module Mongo
 
       # @return [ Array ] tag_sets The tag sets used to select servers.
       attr_reader :tag_sets
-      # @return [ Integer ] acceptable_latency The max latency in milliseconds between
+
+      # @return [ Integer ] local_threshold_ms The max latency in milliseconds between
       #   the closest secondary and other secondaries considered for selection.
-      attr_reader :acceptable_latency
+      attr_reader :local_threshold_ms
+
+      # @return [ Integer ] server_selection_timeout_ms How long to block for server selection
+      #   before throwing an exception. The default is 30,000 (milliseconds).
+      attr_reader :server_selection_timeout_ms
 
       # Check equality of two server preferences.
       #
@@ -40,7 +45,8 @@ module Mongo
       def ==(other)
         name == other.name &&
             tag_sets == other.tag_sets &&
-            acceptable_latency == other.acceptable_latency
+            local_threshold_ms == other.local_threshold_ms &&
+            server_selection_timeout_ms == other.server_selection_timeout_ms
       end
 
       # Initialize the server preference.
@@ -48,26 +54,29 @@ module Mongo
       # @example Initialize the preference with tag sets.
       #   Mongo::ServerPreference::Secondary.new([{ 'tag' => 'set' }])
       #
-      # @example Initialize the preference with acceptable latency
+      # @example Initialize the preference with local threshold
       #   Mongo::ServerPreference::Secondary.new([], 20)
       #
       # @example Initialize the preference with no options.
       #   Mongo::ServerPreference::Secondary.new
       #
       # @param [ Array ] tag_sets The tag sets used to select servers.
-      # @param [ Integer ] acceptable_latency (15) The max latency in milliseconds
+      # @param [ Integer ] local_threshold_ms (15) The max latency in milliseconds
       #   between the closest secondary and other secondaries considered for selection.
+      # @param [ Integer ] server_selection_timeout_ms (30000) How long to block for
+      #   server selection before throwing an exception
       #
       # @todo: document specific error
       # @raise [ Exception ] If tag sets are specified but not allowed.
       #
       # @since 2.0.0
-      def initialize(tag_sets = [], acceptable_latency = 15)
+      def initialize(tag_sets = [], local_threshold_ms = 15, server_selection_timeout_ms = 30000)
         # @todo: raise specific Exception
         raise Exception, "server preference #{name} cannot be combined " +
             " with tags" if !tag_sets.empty? && !tags_allowed?
         @tag_sets = tag_sets
-        @acceptable_latency = acceptable_latency
+        @local_threshold_ms = local_threshold_ms
+        @server_selection_timeout_ms = server_selection_timeout_ms
       end
 
       # Select the primary from a list of provided candidates.
@@ -99,7 +108,7 @@ module Mongo
       end
 
       # Select the near servers from a list of provided candidates, taking the
-      #   acceptable latency into account.
+      #   local threshold into account.
       #
       # @param [ Array ] candidates List of candidate servers to select the
       #   near servers from.
@@ -110,8 +119,8 @@ module Mongo
       def near_servers(candidates = [])
         return candidates if candidates.empty?
         nearest_server = candidates.min_by(&:ping_time)
-        max_latency = nearest_server.ping_time + acceptable_latency
-        near_servers = candidates.select { |server| server.ping_time <= max_latency }
+        threshold = nearest_server.ping_time + local_threshold_ms
+        near_servers = candidates.select { |server| server.ping_time <= threshold }
         near_servers.shuffle!
       end
 
