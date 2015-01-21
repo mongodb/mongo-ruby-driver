@@ -8,20 +8,82 @@ describe Mongo::Server::Monitor do
 
   describe '#check!' do
 
-    let(:server) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new)
+    context 'when the ismaster command succeeds' do
+
+      let(:server) do
+        Mongo::Server.new(address, Mongo::Event::Listeners.new)
+      end
+
+      let(:monitor) do
+        described_class.new(server)
+      end
+
+      before do
+        monitor.check!
+      end
+
+      it 'updates the server description' do
+        expect(server.description).to be_standalone
+      end
     end
 
-    let(:monitor) do
-      described_class.new(server)
-    end
+    context 'when the ismaster command fails' do
 
-    before do
-      monitor.check!
-    end
+      context 'when no server is running on the address' do
 
-    it 'updates the server description' do
-      expect(server.description).to be_standalone
+        let(:bad_address) do
+          Mongo::Address.new('127.0.0.1:27050')
+        end
+
+        let(:server) do
+          Mongo::Server.new(bad_address, Mongo::Event::Listeners.new)
+        end
+
+        let(:monitor) do
+          described_class.new(server)
+        end
+
+        before do
+          monitor.check!
+        end
+
+        it 'keeps the server unknown' do
+          expect(server).to be_unknown
+        end
+      end
+
+      context 'when the socket gets an exception' do
+
+        let(:bad_address) do
+          Mongo::Address.new('127.0.0.1:27017')
+        end
+
+        let(:server) do
+          Mongo::Server.new(bad_address, Mongo::Event::Listeners.new)
+        end
+
+        let(:monitor) do
+          described_class.new(server)
+        end
+
+        let(:socket) do
+          monitor.connection.connect!
+          monitor.connection.__send__(:socket)
+        end
+
+        before do
+          expect(socket).to receive(:write).and_raise(SocketError)
+          monitor.check!
+        end
+
+        it 'keeps the server unknown' do
+          expect(server).to be_unknown
+        end
+
+        it 'disconnects the connection' do
+          expect(monitor.connection.send(:socket)).to be_nil
+        end
+      end
     end
   end
 

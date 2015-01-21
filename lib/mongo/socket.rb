@@ -74,7 +74,8 @@ module Mongo
     #
     # @since 2.0.0
     def close
-      socket.close and true
+      socket.close rescue true
+      true
     end
 
     # Delegates gets to the underlying socket.

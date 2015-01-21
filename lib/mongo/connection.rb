@@ -200,8 +200,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(max_size = nil)
-        super(max_size ?
-                MESSAGE + " The max is #{max_size}." : MESSAGE)
+        super(max_size ?  MESSAGE + " The max is #{max_size}." : MESSAGE)
       end
     end
   end
