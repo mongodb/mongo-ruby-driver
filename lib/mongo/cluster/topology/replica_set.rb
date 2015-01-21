@@ -66,6 +66,10 @@ module Mongo
                 server.description.unknown!
               end
             end
+          else
+            log_warn([
+              "Server #{description.address.to_s} in incorrect replica set: #{description.replica_set_name}."
+            ])
           end
           self
         end
