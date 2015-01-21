@@ -1,4 +1,4 @@
-# Copyright (C) 2009 - 2014 MongoDB Inc.
+# Copyright (C) 2014-2015 MongoDB Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -134,7 +134,7 @@ module Mongo
           result = connection.dispatch([ ISMASTER ]).documents[0]
           return result, calculate_round_trip_time(start)
         rescue SystemCallError, IOError => e
-          log(:debug, 'MONGODB', [ e.message ])
+          log_debug([ e.message ])
           return {}, calculate_round_trip_time(start)
         end
       end

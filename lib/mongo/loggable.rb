@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2014 MongoDB, Inc.
+# Copyright (C) 2014-2015 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,11 @@ module Mongo
   #
   # @since 2.0.0
   module Loggable
+
+    # The standard MongoDB log prefix.
+    #
+    # @since 2.0.0
+    PREFIX = 'MONGODB'.freeze
 
     # Log the operations. If a block is provided it will be yielded to,
     # otherwise only the logging will take place.
@@ -45,6 +50,71 @@ module Mongo
           Logger.send(level, prefix, log_inspect(operation), runtime)
         end
       end
+    end
+
+    # Convenience method to log debug messages with the standard prefix.
+    #
+    # @example Log a debug message.
+    #   log_debug([ 'Message' ])
+    #
+    # @param [ Array<Operation, String> ] operations The operations or messages
+    #   to log.
+    #
+    # @since 2.0.0
+    def log_debug(operations, &block)
+      log(:debug, PREFIX, operations, &block)
+    end
+
+    # Convenience method to log error messages with the standard prefix.
+    #
+    # @example Log a error message.
+    #   log_error([ 'Message' ])
+    #
+    # @param [ Array<Operation, String> ] operations The operations or messages
+    #   to log.
+    #
+    # @since 2.0.0
+    def log_error(operations, &block)
+      log(:error, PREFIX, operations, &block)
+    end
+
+    # Convenience method to log fatal messages with the standard prefix.
+    #
+    # @example Log a fatal message.
+    #   log_fatal([ 'Message' ])
+    #
+    # @param [ Array<Operation, String> ] operations The operations or messages
+    #   to log.
+    #
+    # @since 2.0.0
+    def log_fatal(operations, &block)
+      log(:fatal, PREFIX, operations, &block)
+    end
+
+    # Convenience method to log info messages with the standard prefix.
+    #
+    # @example Log a info message.
+    #   log_info([ 'Message' ])
+    #
+    # @param [ Array<Operation, String> ] operations The operations or messages
+    #   to log.
+    #
+    # @since 2.0.0
+    def log_info(operations, &block)
+      log(:info, PREFIX, operations, &block)
+    end
+
+    # Convenience method to log warn messages with the standard prefix.
+    #
+    # @example Log a warn message.
+    #   log_warn([ 'Message' ])
+    #
+    # @param [ Array<Operation, String> ] operations The operations or messages
+    #   to log.
+    #
+    # @since 2.0.0
+    def log_warn(operations, &block)
+      log(:warn, PREFIX, operations, &block)
     end
 
     private

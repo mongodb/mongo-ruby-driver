@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2014 MongoDB, Inc.
+# Copyright (C) 2014-2015 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ module Mongo
     def add(host)
       address = Address.new(host)
       unless addresses.include?(address)
-        log(:debug, 'MONGODB', [ "Adding #{address.to_s} to the cluster." ])
+        log_debug([ "Adding #{address.to_s} to the cluster." ])
         addresses.push(address)
         server = Server.new(address, event_listeners, options)
         @servers.push(server)
@@ -127,7 +127,7 @@ module Mongo
     end
 
     def elect_primary!(description)
-      log(:debug, 'MONGODB', [ "Server #{description.address.to_s} elected as primary." ])
+      log_debug([ "Server #{description.address.to_s} elected as primary." ])
       @topology = topology.elect_primary(description, @servers)
     end
 
@@ -141,7 +141,7 @@ module Mongo
     #
     # @since 2.0.0
     def remove(host)
-      log(:debug, 'MONGODB', [ "#{host} being removed from the cluster." ])
+      log_debug([ "#{host} being removed from the cluster." ])
       address = Address.new(host)
       removed_servers = @servers.reject!{ |server| server.address == address }
       removed_servers.each{ |server| server.disconnect! } if removed_servers

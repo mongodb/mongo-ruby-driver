@@ -112,7 +112,7 @@ module Mongo
     #
     # @since 2.0.0
     def dispatch(messages)
-      log(:debug, 'MONGODB', messages) do |msgs|
+      log_debug(messages) do |msgs|
         write(msgs)
         msgs.last.replyable? ? read : nil
       end
