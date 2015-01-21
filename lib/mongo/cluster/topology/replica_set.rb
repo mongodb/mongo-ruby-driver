@@ -20,6 +20,7 @@ module Mongo
       #
       # @since 2.0.0
       class ReplicaSet
+        include Loggable
 
         # Constant for the replica set name configuration option.
         #
@@ -58,8 +59,9 @@ module Mongo
         #
         # @return [ ReplicaSet ] The topology.
         def elect_primary(description, servers)
-          servers.each do |server|
-            if description.replica_set_name == replica_set_name
+          if description.replica_set_name == replica_set_name
+            log_debug([ "Server #{description.address.to_s} elected as primary in #{replica_set_name}." ])
+            servers.each do |server|
               if server.primary? && server.address != description.address
                 server.description.unknown!
               end

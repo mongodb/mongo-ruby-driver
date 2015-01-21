@@ -126,8 +126,18 @@ module Mongo
       server_preference.primary(servers).first
     end
 
+    # Elect a primary server from the description that has just changed to a
+    # primary.
+    #
+    # @example Elect a primary server.
+    #   cluster.elect_primary!(description)
+    #
+    # @param [ Server::Description ] description The newly elected primary.
+    #
+    # @return [ Topology ] The cluster topology.
+    #
+    # @since 2.0.0
     def elect_primary!(description)
-      log_debug([ "Server #{description.address.to_s} elected as primary." ])
       @topology = topology.elect_primary(description, @servers)
     end
 
