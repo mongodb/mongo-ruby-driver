@@ -133,7 +133,7 @@ module Mongo
         begin
           result = connection.dispatch([ ISMASTER ]).documents[0]
           return result, calculate_round_trip_time(start)
-        rescue ::SocketError, SystemCallError, IOError => e
+        rescue Exception => e
           log_debug([ e.message ])
           connection.disconnect!
           return {}, calculate_round_trip_time(start)
