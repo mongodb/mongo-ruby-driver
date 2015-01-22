@@ -24,10 +24,14 @@ def server(mode, options = {})
 end
 
 shared_context 'server preference' do
-  let(:server_pref) { described_class.new(tag_sets, acceptable_latency) }
+  let(:server_pref) do
+    described_class.new(tag_sets, local_threshold_ms,
+                        server_selection_timeout_ms)
+  end
   let(:tag_sets) { [] }
   let(:tag_set) { { 'test' => 'tag' } }
-  let(:acceptable_latency) { 15 }
+  let(:local_threshold_ms) { 15 }
+  let(:server_selection_timeout_ms) { 30000 }
   let(:primary) { server(:primary) }
   let(:secondary) { server(:secondary) }
 end
@@ -49,17 +53,25 @@ shared_examples 'a server preference mode' do
   end
 
   describe '#==' do
+
     context 'when mode is the same' do
       let(:other) { described_class.new }
 
-      context 'tag sets and acceptable latency are the same' do
+      context 'tag sets and local threshold, server selection timeout are the same' do
         it 'returns true' do
           expect(server_pref).to eq(other)
         end
       end
 
-      context 'acceptable latency is different' do
-        let(:acceptable_latency) { 20 }
+      context 'local threshold ms is different' do
+        let(:local_threshold_ms) { 20 }
+        it 'returns false' do
+          expect(server_pref).not_to eq(other)
+        end
+      end
+
+      context 'server selection timeout is different' do
+        let(:server_selection_timeout_ms) { 20000 }
         it 'returns false' do
           expect(server_pref).not_to eq(other)
         end

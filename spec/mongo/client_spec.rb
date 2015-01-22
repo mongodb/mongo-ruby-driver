@@ -154,12 +154,17 @@ describe Mongo::Client do
       described_class.new(
         ['127.0.0.1:27017'],
         :read => { :mode => :primary },
+        :local_threshold_ms => 10,
+        :server_selection_timeout_ms => 10000,
         :database => TEST_DB
       )
     end
 
     let(:expected) do
-      [client.cluster, { :read => { :mode => :primary }, :database => TEST_DB }].hash
+      [client.cluster, { :read => { :mode => :primary },
+                         :local_threshold_ms => 10,
+                         :server_selection_timeout_ms => 10000,
+                         :database => TEST_DB }].hash
     end
 
     it 'returns a hash of the cluster and options' do
@@ -307,8 +312,15 @@ describe Mongo::Client do
 
   describe '#server_preference' do
 
+    let(:local_threshold_ms) { 10 }
+    let(:server_selection_timeout_ms) { 5000 }
+
     let(:client) do
-      described_class.new(['127.0.0.1:27017'], :database => TEST_DB, :read => mode)
+      described_class.new(['127.0.0.1:27017'],
+                          :database => TEST_DB,
+                          :read => mode,
+                          :local_threshold_ms => local_threshold_ms,
+                          :server_selection_timeout_ms => server_selection_timeout_ms)
     end
 
     let(:preference) do
@@ -324,6 +336,14 @@ describe Mongo::Client do
       it 'returns a primary server preference' do
         expect(preference).to be_a(Mongo::ServerPreference::Primary)
       end
+
+      it 'passes local_threshold_ms to the server preference instance' do
+        expect(preference.local_threshold_ms).to eq(local_threshold_ms)
+      end
+
+      it 'passes server_selection_timeout_ms to the server preference instance' do
+        expect(preference.server_selection_timeout_ms).to eq(server_selection_timeout_ms)
+      end
     end
 
     context 'when mode is primary_preferred' do
@@ -334,6 +354,14 @@ describe Mongo::Client do
 
       it 'returns a primary preferred server preference' do
         expect(preference).to be_a(Mongo::ServerPreference::PrimaryPreferred)
+      end
+
+      it 'passes local_threshold_ms to the server preference instance' do
+        expect(preference.local_threshold_ms).to eq(local_threshold_ms)
+      end
+
+      it 'passes server_selection_timeout_ms to the server preference instance' do
+        expect(preference.server_selection_timeout_ms).to eq(server_selection_timeout_ms)
       end
     end
 
@@ -346,6 +374,14 @@ describe Mongo::Client do
       it 'returns a secondary server preference' do
         expect(preference).to be_a(Mongo::ServerPreference::Secondary)
       end
+
+      it 'passes local_threshold_ms to the server preference instance' do
+        expect(preference.local_threshold_ms).to eq(local_threshold_ms)
+      end
+
+      it 'passes server_selection_timeout_ms to the server preference instance' do
+        expect(preference.server_selection_timeout_ms).to eq(server_selection_timeout_ms)
+      end
     end
 
     context 'when mode is secondary preferred' do
@@ -356,6 +392,14 @@ describe Mongo::Client do
 
       it 'returns a secondary preferred server preference' do
         expect(preference).to be_a(Mongo::ServerPreference::SecondaryPreferred)
+      end
+
+      it 'passes local_threshold_ms to the server preference instance' do
+        expect(preference.local_threshold_ms).to eq(local_threshold_ms)
+      end
+
+      it 'passes server_selection_timeout_ms to the server preference instance' do
+        expect(preference.server_selection_timeout_ms).to eq(server_selection_timeout_ms)
       end
     end
 
@@ -368,6 +412,14 @@ describe Mongo::Client do
       it 'returns a nearest server preference' do
         expect(preference).to be_a(Mongo::ServerPreference::Nearest)
       end
+
+      it 'passes local_threshold_ms to the server preference instance' do
+        expect(preference.local_threshold_ms).to eq(local_threshold_ms)
+      end
+
+      it 'passes server_selection_timeout_ms to the server preference instance' do
+        expect(preference.server_selection_timeout_ms).to eq(server_selection_timeout_ms)
+      end
     end
 
     context 'when no mode provided' do
@@ -378,6 +430,14 @@ describe Mongo::Client do
 
       it 'returns a primary server preference' do
         expect(preference).to be_a(Mongo::ServerPreference::Primary)
+      end
+
+      it 'passes local_threshold_ms to the server preference instance' do
+        expect(preference.local_threshold_ms).to eq(local_threshold_ms)
+      end
+
+      it 'passes server_selection_timeout_ms to the server preference instance' do
+        expect(preference.server_selection_timeout_ms).to eq(server_selection_timeout_ms)
       end
     end
   end

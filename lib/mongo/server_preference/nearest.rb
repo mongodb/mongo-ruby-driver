@@ -72,7 +72,7 @@ module Mongo
       end
 
       # Select the near servers taking into account any defined tag sets and
-      #   acceptable latency between the nearest secondary and other secondaries.
+      #   local threshold between the nearest secondary and other secondaries.
       #
       # @example Select nearest servers given a list of candidates.
       #   preference = Mongo::Serverreference::Nearest.new
