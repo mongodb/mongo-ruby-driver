@@ -96,27 +96,40 @@ module Mongo
     #   form of host:port or a MongoDB URI connection string.
     # @param [ Hash ] options The options to be used by the client.
     #
-    # @option options [ Symbol ] :auth_mech
-    # @option options [ String ] :auth_source
-    # @option options [ Symbol ] :connect
-    # @option options [ String ] :database
+    # @option options [ Symbol ] :auth_mech The authentication mechanism to
+    #   use. One of :mongodb_cr, :mongodb_x509, :plain, :scram
+    # @option options [ String ] :auth_source The source to authenticate from.
+    # @option options [ Symbol ] :connect The connection method to use. This
+    #   forces the cluster to behave in the specified way instead of
+    #   auto-discovering. One of :direct, :replica_set, :sharded
+    # @option options [ String ] :database The database to connect to.
     # @option options [ Hash ] :auth_mech_properties
-    # @option options [ Float ] :heartbeat_frequency
+    # @option options [ Float ] :heartbeat_frequency The number of seconds for
+    #   the server monitor to refresh it's description via ismaster.
     # @option options [ Integer ] :local_threshold_ms
     # @option options [ Integer ] :server_selection_timeout_ms
-    # @option options [ Symbol ] :mode
-    # @option options [ String ] :password
-    # @option options [ Integer ] :max_pool_size
-    # @option options [ Integer ] :min_pool_size
-    # @option options [ Float ] :wait_queue_timeout
-    # @option options [ Float ] :connect_timeout
-    # @option options [ Hash ] :read
-    # @option options [ Array<Hash, String> ] :roles
-    # @option options [ Symbol ] :replica_set_name
-    # @option options [ true, false ] :ssl
-    # @option options [ Float ] :socket_timeout
-    # @option options [ String ] :user
-    # @option options [ Symbol ] :write
+    # @option options [ String ] :password The user's password.
+    # @option options [ Integer ] :max_pool_size The maximum size of the
+    #   connection pool.
+    # @option options [ Integer ] :min_pool_size The minimum size of the
+    #   connection pool.
+    # @option options [ Float ] :wait_queue_timeout The time to wait, in
+    #   seconds, in the connection pool for a connection to be checked in.
+    # @option options [ Float ] :connect_timeout The timeout, in seconds, to
+    #   attempt a connection.
+    # @option options [ Symbol ] :read The read preference options. :mode can
+    #   be one of :secondary, :secondary_preferred, :primary,
+    #   :primary_preferred, :nearest.
+    # @option options [ Array<Hash, String> ] :roles The list of roles for the
+    #   user.
+    # @option options [ Symbol ] :replica_set The name of the replica set to
+    #   connect to. Servers not in this replica set will be ignored.
+    # @option options [ true, false ] :ssl Whether to use SSL.
+    # @option options [ Float ] :socket_timeout The timeout, in seconds, to
+    #   execute operations on a socket.
+    # @option options [ String ] :user The user name.
+    # @option options [ Hash ] :write The write concern options. Can be :w =>
+    #   Integer, :fsync => Boolean, :j => Boolean.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = {})
