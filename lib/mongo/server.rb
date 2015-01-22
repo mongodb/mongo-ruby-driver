@@ -42,6 +42,8 @@ module Mongo
                    :max_write_batch_size,
                    :max_bson_object_size,
                    :max_message_size,
+                   :tags,
+                   :round_trip_time,
                    :mongos?,
                    :other?,
                    :primary?,
@@ -134,6 +136,24 @@ module Mongo
     # @since 2.0.0
     def pool
       @pool ||= Pool.get(self)
+    end
+
+    # Determine if the provided tags are a subset of the server's tags.
+    #
+    # @example Are the provided tags a subset of the server's tags.
+    #   server.matches_tags?([{ 'rack' => 'a' }])
+    #
+    # @param [ Hash ] The tag set to compare to the server's tags.
+    #
+    # @return [ true, false ] If the provided tags are a subset of the server's tags.
+    #
+    # @since 2.0.0
+    def matches_tags?(tag_set)
+      tags.any? do |tag|
+        tag_set.each do |k,v|
+          tag.keys.include?(k) && tag[k] == v
+        end
+      end
     end
   end
 end
