@@ -131,8 +131,8 @@ describe Mongo::ServerPreference::Secondary do
     end
 
     context 'high latency servers' do
-      let(:far_primary) { server(:primary, :ping => 100) }
-      let(:far_secondary) { server(:secondary, :ping => 113) }
+      let(:far_primary) { server(:primary, :round_trip_time => 100) }
+      let(:far_secondary) { server(:secondary, :round_trip_time => 113) }
 
       context 'single candidate' do
 

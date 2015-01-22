@@ -15,6 +15,7 @@ describe Mongo::Server::Description do
         '127.0.0.1:27120'
       ],
       'primary' => '127.0.0.1:27019',
+      'tags' => { 'rack' => 'a' },
       'me' => '127.0.0.1:27019',
       'maxBsonObjectSize' => 16777216,
       'maxMessageSizeBytes' => 48000000,
@@ -227,6 +228,35 @@ describe Mongo::Server::Description do
 
       it 'returns the default' do
         expect(description.min_wire_version).to eq(0)
+      end
+    end
+  end
+
+  describe '#tags' do
+
+    context 'when the server has tags' do
+
+      let(:description) do
+        described_class.new(address, replica)
+      end
+
+      it 'returns the tags' do
+        expect(description.tags).to eq(replica['tags'])
+      end
+    end
+
+    context 'when the server does not have tags' do
+
+      let(:config) do
+        { 'ismaster' => true }
+      end
+
+      let(:description) do
+        described_class.new(address, config)
+      end
+
+      it 'returns an empty hash' do
+        expect(description.tags).to eq({})
       end
     end
   end

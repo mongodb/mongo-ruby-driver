@@ -1,25 +1,22 @@
 def server(mode, options = {})
   tags = options[:tags] || {}
-  ping = options[:ping] || 0
+  round_trip_time = options[:round_trip_time] || 0
 
-  # @todo: take some of this out when server is finished
-  double(mode.to_s).tap do |server|
-    allow(server).to receive(:primary?) do
-      mode == :primary ? true : false
-    end
-    allow(server).to receive(:secondary?) do
-      mode == :secondary ? true :false
-    end
-    allow(server).to receive(:standalone?).and_return(false)
-    allow(server).to receive(:tags) { tags }
-    allow(server).to receive(:matches_tags?) do |tag_set|
-      server.tags.any? do |tag|
-        tag_set.each do |k,v|
-          tag.keys.include?(k) && tag[k] == v
-        end
-      end
-    end
-    allow(server).to receive(:ping_time) { ping }
+  ismaster = {
+              'setName' => 'mongodb_set',
+              'ismaster' => mode == :primary,
+              'secondary' => mode != :primary,
+              'tags' => tags,
+              'ok' => 1
+              }
+
+  listeners = Mongo::Event::Listeners.new
+  address = Mongo::Address.new('127.0.0.1:27017')
+
+  server = Mongo::Server.new(address, listeners)
+  description = Mongo::Server::Description.new(address, ismaster, listeners, round_trip_time)
+  server.tap do |s|
+    s.instance_variable_set(:@description, description)
   end
 end
 

@@ -118,9 +118,9 @@ module Mongo
       # @since 2.0.0
       def near_servers(candidates = [])
         return candidates if candidates.empty?
-        nearest_server = candidates.min_by(&:ping_time)
-        threshold = nearest_server.ping_time + local_threshold_ms
-        near_servers = candidates.select { |server| server.ping_time <= threshold }
+        nearest_server = candidates.min_by(&:round_trip_time)
+        threshold = nearest_server.round_trip_time + local_threshold_ms
+        near_servers = candidates.select { |server| server.round_trip_time <= threshold }
         near_servers.shuffle!
       end
 

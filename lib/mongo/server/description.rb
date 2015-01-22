@@ -130,10 +130,15 @@ module Mongo
       # @since 2.0.0
       SET_NAME = 'setName'.freeze
 
+      # Constant for reading tags info from config.
+      #
+      # @since 2.0.0
+      TAGS = 'tags'.freeze
+
       # @return [ Address ] address The server's address.
       attr_reader :address
 
-      # @return [ Hash ] The actual result from the isnamster command.
+      # @return [ Hash ] The actual result from the ismaster command.
       attr_reader :config
 
       # @return [ Features ] features The features for the server.
@@ -266,7 +271,7 @@ module Mongo
       # Get the maximum batch size for writes.
       #
       # @example Get the max batch size.
-      #   config.max_write_batch_size
+      #   description.max_write_batch_size
       #
       # @return [ Integer ] The max batch size.
       #
@@ -278,7 +283,7 @@ module Mongo
       # Get the maximum wire version.
       #
       # @example Get the max wire version.
-      #   config.max_wire_version
+      #   description.max_wire_version
       #
       # @return [ Integer ] The max wire version supported.
       #
@@ -290,13 +295,25 @@ module Mongo
       # Get the minimum wire version.
       #
       # @example Get the min wire version.
-      #   config.min_wire_version
+      #   description.min_wire_version
       #
       # @return [ Integer ] The min wire version supported.
       #
       # @since 2.0.0
       def min_wire_version
         config[MIN_WIRE_VERSION] || LEGACY_WIRE_VERSION
+      end
+
+      # Get the tags configured for the server.
+      #
+      # @example Get the tags.
+      #   description.tags
+      #
+      # @return [ Hash ] The tags of the server.
+      #
+      # @since 2.0.0
+      def tags
+        config[TAGS] || {}
       end
 
       # Is the server a mongos?
