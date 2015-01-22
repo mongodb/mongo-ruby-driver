@@ -98,4 +98,23 @@ describe Mongo::Pool do
       expect(pool).to eql(described_class.get(server))
     end
   end
+
+  describe '#inspect' do
+
+    let(:server) do
+      Mongo::Server.new(address, Mongo::Event::Listeners.new)
+    end
+
+    let(:pool) do
+      described_class.get(server)
+    end
+
+    it 'includes the object id' do
+      expect(pool.inspect).to include(pool.object_id.to_s)
+    end
+
+    it 'includes the queue inspection' do
+      expect(pool.inspect).to include(pool.__send__(:queue).inspect)
+    end
+  end
 end

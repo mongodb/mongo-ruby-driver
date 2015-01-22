@@ -71,6 +71,18 @@ module Mongo
       @queue = Queue.new(options, &block)
     end
 
+    # Get a pretty printed string inspection for the pool.
+    #
+    # @example Inspect the pool.
+    #   pool.inspect
+    #
+    # @return [ String ] The pool inspection.
+    #
+    # @since 2.0.0
+    def inspect
+      "<Mongo::Pool:0x#{object_id} queue=#{queue.inspect}>"
+    end
+
     # Yield the block to a connection, while handling checkin/checkout logic.
     #
     # @example Execute with a connection.

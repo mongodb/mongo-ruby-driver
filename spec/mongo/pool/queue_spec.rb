@@ -91,6 +91,33 @@ describe Mongo::Pool::Queue do
     end
   end
 
+  describe '#inspect' do
+
+    let(:queue) do
+      described_class.new(:min_pool_size => 2) { double('connection') }
+    end
+
+    it 'includes the object id' do
+      expect(queue.inspect).to include(queue.object_id.to_s)
+    end
+
+    it 'includes the min size' do
+      expect(queue.inspect).to include('min_size=2')
+    end
+
+    it 'includes the max size' do
+      expect(queue.inspect).to include('max_size=5')
+    end
+
+    it 'includes the wait timeout' do
+      expect(queue.inspect).to include('wait_timeout=1')
+    end
+
+    it 'includes the current size' do
+      expect(queue.inspect).to include('current_size=2')
+    end
+  end
+
   describe '#max_size' do
 
     context 'when a max pool size option is provided' do

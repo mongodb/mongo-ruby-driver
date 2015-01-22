@@ -100,6 +100,19 @@ module Mongo
         @resource = ConditionVariable.new
       end
 
+      # Get a pretty printed string inspection for the queue.
+      #
+      # @example Inspect the queue.
+      #   queue.inspect
+      #
+      # @return [ String ] The queue inspection.
+      #
+      # @since 2.0.0
+      def inspect
+        "<Mongo::Pool::Queue:0x#{object_id} min_size=#{min_size} max_size=#{max_size} " +
+          "wait_timeout=#{wait_timeout} current_size=#{queue.size}>"
+      end
+
       # Get the maximum size of the queue.
       #
       # @example Get the max size.
