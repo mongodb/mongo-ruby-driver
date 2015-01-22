@@ -199,6 +199,21 @@ describe Mongo::Database do
     end
   end
 
+  describe '#inspect' do
+
+    let(:database) do
+      described_class.new(authorized_client, TEST_DB)
+    end
+
+    it 'includes the object id' do
+      expect(database.inspect).to include(database.object_id.to_s)
+    end
+
+    it 'includes the name' do
+      expect(database.inspect).to include(database.name)
+    end
+  end
+
   describe '#fs' do
 
     let(:database) do
