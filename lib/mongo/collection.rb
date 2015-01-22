@@ -143,6 +143,18 @@ module Mongo
       @options = options.freeze
     end
 
+    # Get a pretty printed string inspection for the collection.
+    #
+    # @example Inspect the collection.
+    #   collection.inspect
+    #
+    # @return [ String ] The collection inspection.
+    #
+    # @since 2.0.0
+    def inspect
+      "<Mongo::Collection:0x#{object_id} namespace=#{namespace}>"
+    end
+
     # Insert a single document into the collection.
     #
     # @example Insert a document into the collection.

@@ -315,6 +315,17 @@ describe Mongo::Collection do
     end
   end
 
+  describe '#inspect' do
+
+    it 'includes the object id' do
+      expect(authorized_collection.inspect).to include(authorized_collection.object_id.to_s)
+    end
+
+    it 'includes the namespace' do
+      expect(authorized_collection.inspect).to include(authorized_collection.namespace)
+    end
+  end
+
   describe '#indexes' do
 
     let(:index_spec) do
