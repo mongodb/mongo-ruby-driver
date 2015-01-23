@@ -96,12 +96,12 @@ module Mongo
         # @return [ Integer ] The document count.
         #
         # @since 2.0.0
-        def count
+        def count(options={})
           cmd = { :count => collection.name, :query => selector }
           cmd[:skip] = options[:skip] if options[:skip]
           cmd[:hint] = options[:hint] if options[:hint]
           cmd[:limit] = options[:limit] if options[:limit]
-          database.command(cmd).n
+          database.command(cmd, options).n
         end
 
         # Get a list of distinct values for a specific field.
