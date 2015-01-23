@@ -34,7 +34,6 @@ module Mongo
       #
       # @since 2.0.0
       class DropIndex
-        include Executable
         include Specifiable
 
         # Execute the drop index operation.

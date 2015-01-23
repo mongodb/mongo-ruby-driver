@@ -42,7 +42,6 @@ module Mongo
     #
     # @since 2.0.0
     class MapReduce
-      include Executable
       include Specifiable
       include Limited
 

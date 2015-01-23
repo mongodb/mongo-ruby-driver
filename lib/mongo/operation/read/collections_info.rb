@@ -29,7 +29,6 @@ module Mongo
       #
       # @since 2.0.0
       class CollectionsInfo
-        include Executable
         include Specifiable
 
         # Execute the operation.

@@ -33,7 +33,6 @@ module Mongo
       #
       # @since 2.0.0
       class ListCollections
-        include Executable
         include Specifiable
         include Limited
 

@@ -48,7 +48,6 @@ module Mongo
       #
       # @since 2.0.0
       class Update
-        include Executable
         include Specifiable
 
         # Execute the update operation.

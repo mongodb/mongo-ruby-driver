@@ -23,6 +23,21 @@ module Mongo
         module Writable
           include Limited
 
+          # Execute the operation.
+          # The context gets a connection on which the operation
+          # is sent in the block.
+          #
+          # @params [ Mongo::Server::Context ] The context for this operation.
+          #
+          # @return [ Result ] The operation response, if there is one.
+          #
+          # @since 2.0.0
+          def execute(context)
+            context.with_connection do |connection|
+              connection.dispatch([ message ])
+            end
+          end
+
           private
 
           # Whether this operation may be executed on a secondary server.
