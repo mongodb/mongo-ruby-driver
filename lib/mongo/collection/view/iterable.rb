@@ -35,7 +35,7 @@ module Mongo
         #
         # @yieldparam [ Hash ] Each matching document.
         def each
-          server = read.select_servers(cluster.servers).first
+          server = read.select_server(cluster)
           cursor = Cursor.new(view, send_initial_query(server), server).to_enum
           cursor.each do |doc|
             yield doc

@@ -134,6 +134,10 @@ describe Mongo::Database do
 
     context 'when an alternate read preference is specified' do
 
+      before do
+        allow(database.cluster).to receive(:standalone?).and_return(false)
+      end
+
       let(:read) do
         { :mode => :secondary,
           :tag_sets => [{ 'non' => 'existent' }] }

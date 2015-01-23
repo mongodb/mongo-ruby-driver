@@ -77,13 +77,13 @@ module Mongo
       # @example Select servers given a list of candidates,
       #   with the primary preferred.
       #   preference = Mongo::ServerPreference::PrimaryPreferred.new
-      #   preference.select_servers([candidate_1, candidate_2])
+      #   preference.select([candidate_1, candidate_2])
       #
       # @return [ Array ] A list of servers matching tag sets and acceptable
       #   latency with the primary preferred.
       #
       # @since 2.0.0
-      def select_servers(candidates)
+      def select(candidates)
         primary(candidates) + near_servers(secondaries(candidates))
       end
     end

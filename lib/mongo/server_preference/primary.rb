@@ -73,12 +73,12 @@ module Mongo
       #
       # @example Select the primary server given a list of candidates.
       #   preference = Mongo::ServerPreference::Primary.new
-      #   preference.select_servers([candidate_1, candidate_2])
+      #   preference.select([candidate_1, candidate_2])
       #
       # @return [ Array ] The primary server from the list of candidates.
       #
       # @since 2.0.0
-      def select_servers(candidates)
+      def select(candidates)
         primary(candidates)
       end
     end

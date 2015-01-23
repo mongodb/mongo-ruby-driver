@@ -91,6 +91,21 @@ module Mongo
         candidates.select{ |server| server.primary? || server.standalone? }
       end
 
+      # Select ta server from eligible candidates.
+      #
+      # @param [ Mongo::Cluster ] cluster The cluster from which to select an eligible server.
+      #
+      # @return [ Mongo::Server ] A server matching the read preference.
+      #
+      # @since 2.0.0
+      def select_server(cluster)
+        return cluster.servers.first if cluster.standalone?
+        return near_servers(cluster.servers) if cluster.sharded?
+        servers = select(cluster.servers)
+        raise NoServerAvailable.new(self) if servers.empty?
+        servers.shuffle!.first
+      end
+
       private
 
       # Select the secondaries from a list of provided candidates.
@@ -120,8 +135,7 @@ module Mongo
         return candidates if candidates.empty?
         nearest_server = candidates.min_by(&:round_trip_time)
         threshold = nearest_server.round_trip_time + local_threshold_ms
-        near_servers = candidates.select { |server| server.round_trip_time <= threshold }
-        near_servers.shuffle!
+        candidates.select { |server| server.round_trip_time <= threshold }
       end
 
       # Select the servers matching the defined tag sets.

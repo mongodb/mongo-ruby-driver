@@ -93,15 +93,19 @@ module Mongo
         # @example Get the number of documents in the collection.
         #   collection_view.count
         #
+        # @param [ Hash ] options Options for the count command.
+        #
+        # @option read :read [ Hash ] The read preference for this command.
+        #
         # @return [ Integer ] The document count.
         #
         # @since 2.0.0
-        def count
+        def count(options={})
           cmd = { :count => collection.name, :query => selector }
           cmd[:skip] = options[:skip] if options[:skip]
           cmd[:hint] = options[:hint] if options[:hint]
           cmd[:limit] = options[:limit] if options[:limit]
-          database.command(cmd).n
+          database.command(cmd, options).n
         end
 
         # Get a list of distinct values for a specific field.
@@ -110,15 +114,19 @@ module Mongo
         #   collection_view.distinct('name')
         #
         # @param [ String, Symbol ] field The name of the field.
+        # @param [ Hash ] options Options for the distinct command.
+        #
+        # @option read :read [ Hash ] The read preference for this command.
         #
         # @return [ Array<Object> ] The list of distinct values.
         #
         # @since 2.0.0
-        def distinct(field)
-          database.command(
+        def distinct(field, options={})
+          database.command({
             :distinct => collection.name,
             :key => field.to_s,
-            :query => selector
+            :query => selector },
+            options
           ).documents.first['values']
         end
 

@@ -76,12 +76,12 @@ module Mongo
       #
       # @example Select secondary servers given a list of candidates.
       #   preference = Mongo::ServerPreference::Secondary.new
-      #   preference.select_servers([candidate_1, candidate_2])
+      #   preference.select([candidate_1, candidate_2])
       #
       # @return [ Array ] The secondary servers from the list of candidates.
       #
       # @since 2.0.0
-      def select_servers(candidates)
+      def select(candidates)
         near_servers(secondaries(candidates))
       end
     end

@@ -117,8 +117,7 @@ module Mongo
     def command(operation, options = {})
       preference = options[:read] ? ServerPreference.get(options[:read]) :
                      server_preference
-      server = preference.select_servers(cluster.servers).first
-      raise ServerPreference::NoServerAvailable.new(options[:read]) unless server
+      server = preference.select_server(cluster)
       Operation::Command.new({
         :selector => operation,
         :db_name => name,
