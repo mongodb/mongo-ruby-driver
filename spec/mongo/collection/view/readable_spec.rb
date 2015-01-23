@@ -441,11 +441,11 @@ describe Mongo::Collection::View::Readable do
     context 'when a read pref is specified' do
 
       let(:options) do
-        { :read => Mongo::ServerPreference.get(:mode => :secondary) }
+        { :read => Mongo::ReadPreference.get(:mode => :secondary) }
       end
 
       let(:new_read) do
-        Mongo::ServerPreference.get(:mode => :secondary_preferred)
+        Mongo::ReadPreference.get(:mode => :secondary_preferred)
       end
 
       it 'sets the read preference' do
@@ -461,7 +461,7 @@ describe Mongo::Collection::View::Readable do
     context 'when a read pref is not specified' do
 
       let(:options) do
-        { :read =>  Mongo::ServerPreference.get(:mode => :secondary) }
+        { :read =>  Mongo::ReadPreference.get(:mode => :secondary) }
       end
 
       it 'returns the read preference' do
@@ -475,7 +475,7 @@ describe Mongo::Collection::View::Readable do
         end
 
         it 'returns the collection read preference' do
-          expect(view.read).to eq(authorized_collection.server_preference)
+          expect(view.read).to eq(authorized_collection.read_preference)
         end
       end
     end

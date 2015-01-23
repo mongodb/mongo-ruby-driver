@@ -12,22 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/server_preference/selectable'
-require 'mongo/server_preference/nearest'
-require 'mongo/server_preference/primary'
-require 'mongo/server_preference/primary_preferred'
-require 'mongo/server_preference/secondary'
-require 'mongo/server_preference/secondary_preferred'
+require 'mongo/read_preference/selectable'
+require 'mongo/read_preference/nearest'
+require 'mongo/read_preference/primary'
+require 'mongo/read_preference/primary_preferred'
+require 'mongo/read_preference/secondary'
+require 'mongo/read_preference/secondary_preferred'
 
 module Mongo
 
-  # Functionality for getting an object representing a specific server preference.
+  # Functionality for getting an object representing a specific read preference.
   #
   # @since 2.0.0
-  module ServerPreference
+  module ReadPreference
     extend self
 
-    # Hash lookup for the server preference classes based off the symbols
+    # Hash lookup for the read preference classes based off the symbols
     #   provided in configuration.
     #
     # @since 2.0.0
@@ -39,11 +39,11 @@ module Mongo
         secondary_preferred: SecondaryPreferred
     }.freeze
 
-    # Create a server preference object.
+    # Create a read preference object.
     #
-    # @example Get a server preference object for selecting a secondary with
+    # @example Get a read preference object for selecting a secondary with
     #   specific tag sets and local threshold.
-    #   Mongo::ServerPreference.get({ :mode => :secondary, :tag_sets => [{'dc' => 'nyc'}] },
+    #   Mongo::ReadPreference.get({ :mode => :secondary, :tag_sets => [{'dc' => 'nyc'}] },
      #                              { :local_threshold_ms => 10 })
     #
     # @param [ Hash ] read The read preference.
@@ -64,7 +64,7 @@ module Mongo
       )
     end
 
-    # Exception raised if there are no servers available matching server preference.
+    # Exception raised if there are no servers available matching read preference.
     #
     # @since 2.0.0
     class NoServerAvailable < MongoError
@@ -72,14 +72,14 @@ module Mongo
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
-      #   Mongo::ServerPreference::NoServerAvailable.new(server_preference)
+      #   Mongo::ReadPreference::NoServerAvailable.new(read_preference)
       #
-      # @params [ Hash ] server_preference The server preference that could not be
+      # @params [ Hash ] read_preference The read preference that could not be
       #   satisfied.
       #
       # @since 2.0.0
-      def initialize(server_preference)
-        super("No server is available matching server preference: #{server_preference.inspect}")
+      def initialize(read_preference)
+        super("No server is available matching read preference: #{read_preference.inspect}")
       end
     end
   end

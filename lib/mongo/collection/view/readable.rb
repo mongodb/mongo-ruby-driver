@@ -285,7 +285,7 @@ module Mongo
         private
 
         def default_read(read = nil)
-          options[:read] || server_preference
+          options[:read] || read_preference
         end
 
         def flags

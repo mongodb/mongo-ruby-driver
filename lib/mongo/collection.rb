@@ -32,8 +32,8 @@ module Mongo
     # @return [ Hash ] The collection options.
     attr_reader :options
 
-    # Get client, cluser and server preference from client.
-    def_delegators :database, :client, :cluster, :server_preference, :write_concern
+    # Get client, cluser and read preference from client.
+    def_delegators :database, :client, :cluster, :read_preference, :write_concern
 
     # Delegate to the cluster for the next primary.
     def_delegators :cluster, :next_primary

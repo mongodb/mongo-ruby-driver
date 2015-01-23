@@ -14,7 +14,7 @@
 
 module Mongo
 
-  module ServerPreference
+  module ReadPreference
 
     # Provides common behavior for filtering a list of servers by server mode or tag set.
     #
@@ -32,9 +32,9 @@ module Mongo
       #   before throwing an exception. The default is 30,000 (milliseconds).
       attr_reader :server_selection_timeout_ms
 
-      # Check equality of two server preferences.
+      # Check equality of two read preferences.
       #
-      # @example Check server preference equality.
+      # @example Check read preference equality.
       #   preference == other
       #
       # @param [ Object ] other The other preference.
@@ -49,16 +49,16 @@ module Mongo
             server_selection_timeout_ms == other.server_selection_timeout_ms
       end
 
-      # Initialize the server preference.
+      # Initialize the read preference.
       #
       # @example Initialize the preference with tag sets.
-      #   Mongo::ServerPreference::Secondary.new([{ 'tag' => 'set' }])
+      #   Mongo::ReadPreference::Secondary.new([{ 'tag' => 'set' }])
       #
       # @example Initialize the preference with local threshold
-      #   Mongo::ServerPreference::Secondary.new([], 20)
+      #   Mongo::ReadPreference::Secondary.new([], 20)
       #
       # @example Initialize the preference with no options.
-      #   Mongo::ServerPreference::Secondary.new
+      #   Mongo::ReadPreference::Secondary.new
       #
       # @param [ Array ] tag_sets The tag sets used to select servers.
       # @param [ Integer ] local_threshold_ms (15) The max latency in milliseconds
@@ -72,7 +72,7 @@ module Mongo
       # @since 2.0.0
       def initialize(tag_sets = [], local_threshold_ms = 15, server_selection_timeout_ms = 30000)
         # @todo: raise specific Exception
-        raise Exception, "server preference #{name} cannot be combined " +
+        raise Exception, "read preference #{name} cannot be combined " +
             " with tags" if !tag_sets.empty? && !tags_allowed?
         @tag_sets = tag_sets
         @local_threshold_ms = local_threshold_ms

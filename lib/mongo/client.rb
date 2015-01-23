@@ -155,17 +155,17 @@ module Mongo
 
     # Get the server (read) preference from the options passed to the client.
     #
-    # @example Get the server (read) preference.
-    #   client.server_preference
+    # @example Get the read preference.
+    #   client.read_preference
     #
-    # @return [ Object ] The appropriate server preference or primary if none
+    # @return [ Object ] The appropriate read preference or primary if none
     #   was provided to the client.
     #
     # @since 2.0.0
-    def server_preference
+    def read_preference
       read_options = { local_threshold_ms: options[:local_threshold_ms],
                        server_selection_timeout_ms: options[:server_selection_timeout_ms] }
-      @server_preference ||= ServerPreference.get(options[:read] || {}, read_options)
+      @read_preference ||= ReadPreference.get(options[:read] || {}, read_options)
     end
 
     # Use the database with the provided name. This will switch the current
@@ -216,14 +216,14 @@ module Mongo
 
     def create_from_addresses(addresses, options = {})
       @options = create_options(options)
-      @cluster = Cluster.new(addresses, server_preference, event_listeners, @options)
+      @cluster = Cluster.new(addresses, read_preference, event_listeners, @options)
       @database = Database.new(self, @options[:database])
     end
 
     def create_from_uri(connection_string, options = {})
       uri = URI.new(connection_string)
       @options = create_options(uri.client_options.merge(options))
-      @cluster = Cluster.new(uri.servers, server_preference, event_listeners, @options)
+      @cluster = Cluster.new(uri.servers, read_preference, event_listeners, @options)
       @database = Database.new(self, @options[:database])
     end
 

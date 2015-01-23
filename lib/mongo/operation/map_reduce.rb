@@ -60,7 +60,7 @@ module Mongo
         # @todo: Should we respect tag sets and options here?
         if context.secondary? && !secondary_ok?
           warn "Database command '#{selector.keys.first}' rerouted to primary server"
-          context = Mongo::ServerPreference.get(:mode => :primary).server.context
+          context = Mongo::ReadPreference.get(:mode => :primary).server.context
         end
         execute_message(context)
       end
