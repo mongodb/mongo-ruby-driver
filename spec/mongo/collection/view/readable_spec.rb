@@ -304,6 +304,25 @@ describe Mongo::Collection::View::Readable do
         end
       end
     end
+
+    context 'when a read preference is specified' do
+
+      let(:documents) do
+        (1..3).map{ |i| { field: "test#{i}" }}
+      end
+
+      before do
+        authorized_collection.insert_many(documents)
+      end
+
+      let(:distinct) do
+        view.distinct(:field, read: { mode: :secondary })
+      end
+
+      it 'returns the distinct values' do
+        expect(distinct).to eq([ 'test1', 'test2', 'test3' ])
+      end
+    end
   end
 
   describe '#hint' do
