@@ -16,7 +16,7 @@ module Mongo
   module Operation
     module Write
       class BulkInsert
-  
+
         # Defines custom behaviour of results when inserting.
         #
         # @since 2.0.0

@@ -16,7 +16,7 @@ module Mongo
   module Operation
     module Write
       class BulkDelete
-  
+
         # Defines custom behaviour of results when deleting.
         #
         # @since 2.0.0
