@@ -363,6 +363,18 @@ module Mongo
       def write_concern
         @spec[WRITE_CONCERN] || WriteConcern::Mode.get(WriteConcern::Mode::DEFAULT)
       end
+
+      # The read preference for this operation.
+      #
+      # @example Get the read preference.
+      #   specifiable.read
+      #
+      # @return [ Mongo::ServerPreference ] The read preference.
+      #
+      # @since 2.0.0
+      def read
+        @spec[READ] || ServerPreference.get(mode: :primary)
+      end
     end
   end
 end

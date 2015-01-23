@@ -37,6 +37,7 @@ shared_context 'operation' do
       allow(cxt).to receive(:server) { primary_server }
       allow(cxt).to receive(:features) { features_2_6 }
       allow(cxt).to receive(:primary?) { true }
+      allow(cxt).to receive(:mongos?) { false }
     end
   end
   let(:secondary_context) do
@@ -53,6 +54,7 @@ shared_context 'operation' do
       allow(cxt).to receive(:server) { primary_server }
       allow(cxt).to receive(:features) { features_2_4 }
       allow(cxt).to receive(:primary?) { true }
+      allow(cxt).to receive(:mongos?) { false }
     end
   end
 
