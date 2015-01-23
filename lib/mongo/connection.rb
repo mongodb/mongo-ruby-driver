@@ -39,7 +39,8 @@ module Mongo
     def_delegators :@server,
                    :features,
                    :max_bson_object_size,
-                   :max_message_size
+                   :max_message_size,
+                   :mongos?
 
     # Is this connection authenticated. Will return true if authorization
     # details were provided and authentication passed.

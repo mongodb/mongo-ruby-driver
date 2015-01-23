@@ -57,12 +57,17 @@ module Mongo
 
         def execute_message(context)
           context.with_connection do |connection|
-            Result.new(connection.dispatch([ message ]))
+            Result.new(connection.dispatch([ message(context) ]))
           end
         end
 
-        def message
-          Protocol::Query.new(db_name, coll_name, selector, options)
+        def message(context)
+          if context.mongos?
+            sel = read_pref = read.to_mongos ?
+                    selector.merge(:$readPreference => read_pref) : selector
+          end
+          opts = read.slave_ok?(context.mongos?) ? options.merge(flags: [:slave_ok]) : options
+          Protocol::Query.new(db_name, coll_name, s, opts)
         end
       end
     end
