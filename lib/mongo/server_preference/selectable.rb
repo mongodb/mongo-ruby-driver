@@ -91,6 +91,11 @@ module Mongo
         candidates.select{ |server| server.primary? || server.standalone? }
       end
 
+      def select_servers(cluster)
+        return cluster.servers.first if cluster.standalone?
+        select(cluster.servers).first
+      end
+
       private
 
       # Select the secondaries from a list of provided candidates.

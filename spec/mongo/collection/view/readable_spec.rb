@@ -205,6 +205,10 @@ describe Mongo::Collection::View::Readable do
         expect(view.count).to eq(10)
       end
     end
+
+    it 'takes a read preference option' do
+      expect(view.count(read: { mode: :secondary })).to eq(10)
+    end
   end
 
   describe '#distinct' do

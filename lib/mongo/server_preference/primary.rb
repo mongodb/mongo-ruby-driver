@@ -78,7 +78,7 @@ module Mongo
       # @return [ Array ] The primary server from the list of candidates.
       #
       # @since 2.0.0
-      def select_servers(candidates)
+      def select(candidates)
         primary(candidates)
       end
     end

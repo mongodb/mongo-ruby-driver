@@ -83,7 +83,7 @@ module Mongo
       #   latency with the primary preferred.
       #
       # @since 2.0.0
-      def select_servers(candidates)
+      def select(candidates)
         primary(candidates) + near_servers(secondaries(candidates))
       end
     end

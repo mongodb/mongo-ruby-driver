@@ -81,7 +81,7 @@ module Mongo
       # @return [ Array ] The nearest servers from the list of candidates.
       #
       # @since 2.0.0
-      def select_servers(candidates)
+      def select(candidates)
         if tag_sets.empty?
           # @todo: check to see if candidates should be secondaries only
           near_servers(candidates)

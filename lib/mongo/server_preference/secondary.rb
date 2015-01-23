@@ -81,7 +81,7 @@ module Mongo
       # @return [ Array ] The secondary servers from the list of candidates.
       #
       # @since 2.0.0
-      def select_servers(candidates)
+      def select(candidates)
         near_servers(secondaries(candidates))
       end
     end
