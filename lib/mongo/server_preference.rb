@@ -72,14 +72,14 @@ module Mongo
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
-      #   Mongo::ServerPreference::NoServerAvailable.new(:mode => :secondary)
+      #   Mongo::ServerPreference::NoServerAvailable.new(server_preference)
       #
       # @params [ Hash ] server_preference The server preference that could not be
       #   satisfied.
       #
       # @since 2.0.0
       def initialize(server_preference)
-        super("No server is available matching server preference: #{server_preference}")
+        super("No server is available matching server preference: #{server_preference.inspect}")
       end
     end
   end

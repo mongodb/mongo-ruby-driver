@@ -118,7 +118,6 @@ module Mongo
       preference = options[:read] ? ServerPreference.get(options[:read]) :
                      server_preference
       server = preference.select_server(cluster)
-      raise ServerPreference::NoServerAvailable.new(options[:read]) unless server
       Operation::Command.new({
         :selector => operation,
         :db_name => name,

@@ -91,9 +91,18 @@ module Mongo
         candidates.select{ |server| server.primary? || server.standalone? }
       end
 
+      # Select ta server from eligible candidates.
+      #
+      # @param [ Mongo::Cluster ] cluster The cluster from which to select an eligible server.
+      #
+      # @return [ Mongo::Server ] A server matching the read preference.
+      #
+      # @since 2.0.0
       def select_server(cluster)
         return cluster.servers.first if cluster.standalone?
-        select(cluster.servers).first
+        servers = select(cluster.servers)
+        raise NoServerAvailable.new(self) if servers.empty?
+        servers.shuffle!.first
       end
 
       private
