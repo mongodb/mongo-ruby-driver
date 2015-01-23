@@ -16,7 +16,7 @@ module Mongo
   module Operation
     module Write
       class BulkUpdate
-  
+
         # Defines custom behaviour of results when updating.
         #
         # @since 2.0.0

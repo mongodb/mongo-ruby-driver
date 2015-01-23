@@ -188,7 +188,7 @@ module Mongo
       #
       # @since 2.0.0
       def successful?
-        acknowledged? ? first[OK] == 1 : true
+        acknowledged? ? first_document[OK] == 1 : true
       end
 
       # Validate the result by checking for any errors.
@@ -206,7 +206,7 @@ module Mongo
       #
       # @since 2.0.0
       def validate!
-        write_failure? ? raise(Write::Failure.new(first)) : self
+        write_failure? ? raise(Write::Failure.new(first_document)) : self
       end
 
       # Get the number of documents written by the server.
@@ -219,7 +219,7 @@ module Mongo
       # @since 2.0.0
       def written_count
         if acknowledged?
-          multiple? ? aggregate_written_count : (first[N] || 0)
+          multiple? ? aggregate_written_count : (first_document[N] || 0)
         else
           0
         end
@@ -259,15 +259,15 @@ module Mongo
       end
 
       def errors?
-        first[Operation::ERROR] && first[Operation::ERROR_CODE]
+        first_document[Operation::ERROR] && first[Operation::ERROR_CODE]
       end
 
-      def first
-        @first ||= documents[0] || {}
+      def first_document
+        @first_document ||= first || BSON::Document.new
       end
 
       def write_concern_errors
-        first[Write::WRITE_CONCERN_ERROR] || []
+        first_document[Write::WRITE_CONCERN_ERROR] || []
       end
 
       def write_concern_errors?
@@ -275,7 +275,7 @@ module Mongo
       end
 
       def write_errors
-        first[Write::WRITE_ERRORS] || []
+        first_document[Write::WRITE_ERRORS] || []
       end
 
       def write_errors?
