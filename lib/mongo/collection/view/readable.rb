@@ -307,6 +307,7 @@ module Mongo
         def query_spec
           sel = has_special_fields? ? special_selector : selector
           { :selector  => sel,
+            :read      => read,
             :options   => query_options,
             :db_name   => database.name,
             :coll_name => collection.name }
