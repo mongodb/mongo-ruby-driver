@@ -29,7 +29,6 @@ module Mongo
       #
       # @since 2.0.0
       class CreateUser
-        include Executable
         include Specifiable
 
         # Execute the operation.

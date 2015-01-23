@@ -46,7 +46,6 @@ module Mongo
       #
       # @since 2.0.0
       class BulkInsert
-        include Executable
         include Specifiable
         include Batchable
 

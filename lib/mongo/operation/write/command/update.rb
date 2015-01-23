@@ -37,7 +37,6 @@ module Mongo
         # @since 2.0.0
         class Update
           include Specifiable
-          include Executable
           include Writable
 
           private

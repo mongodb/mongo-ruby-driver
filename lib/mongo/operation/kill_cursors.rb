@@ -26,10 +26,28 @@ module Mongo
     #
     # @since 2.0.0
     class KillCursors
-      include Executable
       include Specifiable
 
+      # Execute the operation.
+      # The context gets a connection on which the operation
+      # is sent in the block.
+      #
+      # @params [ Mongo::Server::Context ] The context for this operation.
+      #
+      # @return [ Result ] The operation response, if there is one.
+      #
+      # @since 2.0.0
+      def execute(context)
+        execute_message(context)
+      end
+
       private
+
+      def execute_message(context)
+        context.with_connection do |connection|
+          Result.new(connection.dispatch([ message ]))
+        end
+      end
 
       def message
         Protocol::KillCursors.new(cursor_ids)

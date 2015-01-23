@@ -31,7 +31,6 @@ module Mongo
         # @since 2.0.0
         class EnsureIndex
           include Specifiable
-          include Executable
           include Writable
 
           private

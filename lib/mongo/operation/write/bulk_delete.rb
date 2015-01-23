@@ -47,7 +47,6 @@ module Mongo
       #
       # @since 2.0.0
       class BulkDelete
-        include Executable
         include Specifiable
         include Batchable
 

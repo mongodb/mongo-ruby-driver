@@ -40,7 +40,6 @@ module Mongo
       #
       # @since 2.0.0
       class Insert
-        include Executable
         include Specifiable
 
         # Execute the insert operation.

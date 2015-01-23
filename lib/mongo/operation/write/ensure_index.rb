@@ -41,7 +41,6 @@ module Mongo
       #
       # @since 2.0.0
       class EnsureIndex
-        include Executable
         include Specifiable
 
         # Execute the ensure index operation.

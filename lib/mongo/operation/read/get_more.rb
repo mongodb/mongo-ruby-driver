@@ -37,7 +37,6 @@ module Mongo
       #
       # @since 2.0.0
       class GetMore
-        include Executable
         include Specifiable
 
         # Execute the get more operation.

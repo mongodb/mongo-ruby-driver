@@ -54,7 +54,6 @@ module Mongo
       #
       # @since 2.0.0
       class BulkUpdate
-        include Executable
         include Specifiable
         include Batchable
 

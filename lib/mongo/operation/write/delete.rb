@@ -45,7 +45,6 @@ module Mongo
       #
       # @since 2.0.0
       class Delete
-        include Executable
         include Specifiable
 
         # Execute the delete operation.
