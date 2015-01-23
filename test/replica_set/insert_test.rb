@@ -68,7 +68,7 @@ class ReplicaSetInsertTest < Test::Unit::TestCase
     end
 
     should "handle error with deferred write concern error - spec Merging Results" do
-      if @client.wire_version_feature?(MongoClient::MONGODB_2_8)
+      if @client.wire_version_feature?(MongoClient::MONGODB_3_0)
         @coll.remove
         @coll.ensure_index(BSON::OrderedHash[:a, Mongo::ASCENDING], {:unique => true})
         bulk = @coll.initialize_ordered_bulk_op

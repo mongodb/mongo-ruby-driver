@@ -259,7 +259,7 @@ module Mongo
     #
     # @return [Array]
     def collection_names
-      if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_2_8)
+      if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_3_0)
         names = collections_info.collect { |doc| doc['name'] || '' }
         names.delete_if do |name|
           name.index('$')
@@ -286,7 +286,7 @@ module Mongo
     #
     # @return [Array] List of collection info.
     def collections_info(coll_name=nil)
-      if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_2_8)
+      if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_3_0)
         cmd = BSON::OrderedHash[:listCollections, 1]
         cmd.merge!(:filter => { :name => coll_name }) if coll_name
         result = self.command(cmd, :cursor => {})
@@ -508,7 +508,7 @@ module Mongo
     # @return [Hash] keys are index names and the values are lists of [key, type] pairs
     #   defining the index.
     def index_information(collection_name)
-      if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_2_8)
+      if @client.wire_version_feature?(Mongo::MongoClient::MONGODB_3_0)
         result = self.command({ :listIndexes => collection_name }, :cursor => {})
         if result.key?('cursor')
           cursor_info = result['cursor']
