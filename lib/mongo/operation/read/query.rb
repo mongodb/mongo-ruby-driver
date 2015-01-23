@@ -64,7 +64,8 @@ module Mongo
         def message(context)
           sel = (context.mongos? && read_pref = read.to_mongos) ?
                   selector.merge(:$readPreference => read_pref) : selector
-          opts = read.slave_ok? ? options.merge(flags: [:slave_ok]) : options
+          opts = read.slave_ok? || context.standalone? ?
+                   options.merge(flags: [:slave_ok]) : options
           Protocol::Query.new(db_name, coll_name, sel, opts)
         end
       end
