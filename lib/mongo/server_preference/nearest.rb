@@ -76,7 +76,7 @@ module Mongo
       #
       # @example Select nearest servers given a list of candidates.
       #   preference = Mongo::Serverreference::Nearest.new
-      #   preference.select_servers([candidate_1, candidate_2])
+      #   preference.select_server(cluster)
       #
       # @return [ Array ] The nearest servers from the list of candidates.
       #
