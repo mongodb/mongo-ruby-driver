@@ -76,13 +76,6 @@ describe Mongo::Operation::Write::Command::Insert do
 
     context 'server' do
 
-      context 'when the type is secondary' do
-
-        it 'throws an error' do
-          expect{ op.execute(secondary_context) }.to raise_exception
-        end
-      end
-
       context 'message' do
         let(:expected_selector) do
           { :documents     => documents,
