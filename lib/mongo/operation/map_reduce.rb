@@ -57,7 +57,6 @@ module Mongo
       #
       # @since 2.0.0
       def execute(context)
-        # @todo: Should we respect tag sets and options here?
         if context.secondary? && !secondary_ok?
           warn "Database command '#{selector.keys.first}' rerouted to primary server"
           # TODO: get read_preference_options from client
@@ -70,7 +69,7 @@ module Mongo
 
       def execute_message(context)
         context.with_connection do |connection|
-          Result.new(connection.dispatch([ message ])).validate!
+          Result.new(connection.dispatch([ message(context) ])).validate!
         end
       end
 
@@ -85,8 +84,12 @@ module Mongo
         selector[:out] == 'inline'
       end
 
-      def message
-        Protocol::Query.new(db_name, Database::COMMAND, selector, options)
+      def message(context)
+        sel = (context.mongos? && read_pref = read.to_mongos) ?
+                selector.merge(:$readPreference => read_pref) : selector
+        opts = context.standalone? || read.slave_ok? ?
+                 options.merge(flags: [:slave_ok]) : options
+        Protocol::Query.new(db_name, Database::COMMAND, sel, opts)
       end
     end
   end

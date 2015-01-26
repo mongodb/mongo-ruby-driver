@@ -47,15 +47,20 @@ module Mongo
             ListIndexes.new(spec).execute(context)
           else
             context.with_connection do |connection|
-              Result.new(connection.dispatch([ message ]))
+              Result.new(connection.dispatch([ message(context) ]))
             end
           end
         end
 
         private
 
-        def message
-          Protocol::Query.new(db_name, Index::COLLECTION, { ns: namespace }, options)
+        def message(context)
+          selector = { ns: namespace }
+          sel = (context.mongos? && read_pref = read.to_mongos) ?
+                  selector.merge(:$readPreference => read_pref) : selector
+          opts = context.standalone? || read.slave_ok? ?
+                   options.merge(flags: [:slave_ok]) : options
+          Protocol::Query.new(db_name, Index::COLLECTION, sel, opts)
         end
       end
     end

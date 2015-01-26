@@ -66,7 +66,7 @@ describe Mongo::Operation::Read::Query do
           expect(db).to eq(db_name)
           expect(coll).to eq(coll_name)
           expect(sel).to eq(selector)
-          expect(options).to eq(query_options)
+          expect(options).to eq(query_options.merge(flags: [:slave_ok]))
         end
         op.execute(primary_context)
       end

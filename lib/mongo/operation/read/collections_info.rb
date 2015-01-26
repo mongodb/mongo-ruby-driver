@@ -46,7 +46,7 @@ module Mongo
             ListCollections.new(spec).execute(context)
           else
             context.with_connection do |connection|
-              Result.new(connection.dispatch([ message ]))
+              Result.new(connection.dispatch([ message(context) ]))
             end
           end
         end
@@ -57,8 +57,12 @@ module Mongo
           { :name => { '$not' => /system\.|\$/ } }
         end
 
-        def message
-          Protocol::Query.new(db_name, Mongo::Database::NAMESPACES, selector, options)
+        def message(context)
+          sel = (context.mongos? && read_pref = read.to_mongos) ?
+                  selector.merge(:$readPreference => read_pref) : selector
+          opts = context.standalone? || read.slave_ok? ?
+                   options.merge(flags: [:slave_ok]) : options
+          Protocol::Query.new(db_name, Mongo::Database::NAMESPACES, sel, opts)
         end
       end
     end

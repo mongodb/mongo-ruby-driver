@@ -81,7 +81,7 @@ module Mongo
 
       def execute_message(context)
         context.with_connection do |connection|
-          Result.new(connection.dispatch([ message ])).validate!
+          Result.new(connection.dispatch([ message(context) ])).validate!
         end
       end
 
@@ -90,8 +90,12 @@ module Mongo
         SECONDARY_OK_COMMANDS.include?(command)
       end
 
-      def message
-        Protocol::Query.new(db_name, Database::COMMAND, selector, options)
+      def message(context)
+        sel = (context.mongos? && read_pref = read.to_mongos) ?
+                selector.merge(:$readPreference => read_pref) : selector
+        opts = context.standalone? || read.slave_ok? ?
+                 options.merge(flags: [:slave_ok]) : options
+        Protocol::Query.new(db_name, Database::COMMAND, sel, opts)
       end
     end
   end
