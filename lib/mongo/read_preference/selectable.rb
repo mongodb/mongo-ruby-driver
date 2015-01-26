@@ -88,7 +88,9 @@ module Mongo
       #
       # @since 2.0.0
       def primary(candidates)
-        candidates.select{ |server| server.primary? || server.standalone? }
+        candidates.select do |server|
+          server.primary? || server.standalone?
+        end
       end
 
       # Select ta server from eligible candidates.
@@ -100,7 +102,7 @@ module Mongo
       # @since 2.0.0
       def select_server(cluster)
         return cluster.servers.first if cluster.standalone?
-        return near_servers(cluster.servers) if cluster.sharded?
+        return near_servers(cluster.servers).shuffle!.first if cluster.sharded?
         servers = select(cluster.servers)
         raise NoServerAvailable.new(self) if servers.empty?
         servers.shuffle!.first

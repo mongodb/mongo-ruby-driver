@@ -56,6 +56,8 @@ module Mongo
 
       # Convert this read preference definition into a format appropriate
       #   for a mongos server.
+      # Note that the read preference is not sent to mongos as part of the query
+      #   selector if there are no tag sets, for maximum backwards compatibility.
       #
       # @example Convert this read preference definition into a format
       #   for mongos.
@@ -66,10 +68,9 @@ module Mongo
       #
       # @since 2.0.0
       def to_mongos
-        # don't send if there are no tags
         return nil if tag_sets.empty?
-        preference = { :mode => 'secondaryPreferred' }
-        preference.merge!({ :tags => tag_sets })
+        preference = { mode: 'secondaryPreferred' }
+        preference.merge!({ tags: tag_sets })
         preference
       end
 
