@@ -39,6 +39,7 @@ module Mongo
       class Query
         include Executable
         include Specifiable
+        include ReadPreferrable
 
         # Execute the operation.
         # The context gets a connection on which the operation
@@ -61,12 +62,8 @@ module Mongo
           end
         end
 
-        def message(context)
-          sel = (context.mongos? && read_pref = read.to_mongos) ?
-                  selector.merge(:$readPreference => read_pref) : selector
-          opts = read.slave_ok? || context.standalone? ?
-                   options.merge(flags: [:slave_ok]) : options
-          Protocol::Query.new(db_name, coll_name, sel, opts)
+        def query_coll
+          coll_name
         end
       end
     end

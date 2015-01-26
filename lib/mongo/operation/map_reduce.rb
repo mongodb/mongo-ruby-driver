@@ -45,6 +45,7 @@ module Mongo
       include Executable
       include Specifiable
       include Limited
+      include ReadPreferrable
 
       # Execute the map/reduce operation.
       #
@@ -84,12 +85,8 @@ module Mongo
         selector[:out] == 'inline'
       end
 
-      def message(context)
-        sel = (context.mongos? && read_pref = read.to_mongos) ?
-                selector.merge(:$readPreference => read_pref) : selector
-        opts = context.standalone? || read.slave_ok? ?
-                 options.merge(flags: [:slave_ok]) : options
-        Protocol::Query.new(db_name, Database::COMMAND, sel, opts)
+      def query_coll
+        Database::COMMAND
       end
     end
   end

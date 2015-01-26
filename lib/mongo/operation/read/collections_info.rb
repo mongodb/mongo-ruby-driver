@@ -31,6 +31,7 @@ module Mongo
       class CollectionsInfo
         include Executable
         include Specifiable
+        include ReadPreferrable
 
         # Execute the operation.
         # The context gets a connection on which the operation
@@ -57,12 +58,8 @@ module Mongo
           { :name => { '$not' => /system\.|\$/ } }
         end
 
-        def message(context)
-          sel = (context.mongos? && read_pref = read.to_mongos) ?
-                  selector.merge(:$readPreference => read_pref) : selector
-          opts = context.standalone? || read.slave_ok? ?
-                   options.merge(flags: [:slave_ok]) : options
-          Protocol::Query.new(db_name, Mongo::Database::NAMESPACES, sel, opts)
+        def query_coll
+          Database::NAMESPACES
         end
       end
     end

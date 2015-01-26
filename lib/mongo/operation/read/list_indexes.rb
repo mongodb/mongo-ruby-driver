@@ -38,6 +38,7 @@ module Mongo
         include Executable
         include Specifiable
         include Limited
+        include ReadPreferrable
 
         # Execute the listIndexes command operation.
         #
@@ -64,13 +65,12 @@ module Mongo
           end
         end
 
-        def message(context)
-          sel = (selector || {}).merge(listIndexes: coll_name)
-          sel = (context.mongos? && read_pref = read.to_mongos) ?
-                  sel.merge(:$readPreference => read_pref) : sel
-          opts = context.standalone? || read.slave_ok? ?
-                   options.merge(flags: [:slave_ok]) : options
-          Protocol::Query.new(db_name, Database::COMMAND, sel, opts)
+        def query_coll
+          Database::COMMAND
+        end
+
+        def selector
+          (spec[SELECTOR] || {}).merge(listIndexes: coll_name)
         end
       end
     end

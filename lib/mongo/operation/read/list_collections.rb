@@ -36,6 +36,7 @@ module Mongo
         include Executable
         include Specifiable
         include Limited
+        include ReadPreferrable
 
         # Execute the listCollections command operation.
         #
@@ -62,13 +63,13 @@ module Mongo
           end
         end
 
-        def message(context)
-          sel = (selector || {}).merge(listCollections: 1, filter: { name: { '$not' => /system\.|\$/ } })
-          sel = (context.mongos? && read_pref = read.to_mongos) ?
-                  sel.merge(:$readPreference => read_pref) : sel
-          opts = context.standalone? || read.slave_ok? ?
-                   options.merge(flags: [:slave_ok]) : options
-          Protocol::Query.new(db_name, Database::COMMAND, sel, opts)
+        def selector
+          (spec[SELECTOR] || {}).merge(listCollections: 1,
+                                       filter: { name: { '$not' => /system\.|\$/ } })
+        end
+
+        def query_coll
+          Database::COMMAND
         end
       end
     end

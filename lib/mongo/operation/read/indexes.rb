@@ -32,6 +32,7 @@ module Mongo
       class Indexes
         include Executable
         include Specifiable
+        include ReadPreferrable
 
         # Execute the operation.
         # The context gets a connection on which the operation
@@ -54,13 +55,12 @@ module Mongo
 
         private
 
-        def message(context)
-          selector = { ns: namespace }
-          sel = (context.mongos? && read_pref = read.to_mongos) ?
-                  selector.merge(:$readPreference => read_pref) : selector
-          opts = context.standalone? || read.slave_ok? ?
-                   options.merge(flags: [:slave_ok]) : options
-          Protocol::Query.new(db_name, Index::COLLECTION, sel, opts)
+        def selector
+          { ns: namespace }
+        end
+
+        def query_coll
+          Index::COLLECTION
         end
       end
     end
