@@ -44,8 +44,8 @@ module Mongo
     # @return [ String ] The name of the collection.
     attr_reader :name
 
-    # Get cluser and server preference from client.
-    def_delegators :@client, :cluster, :server_preference, :write_concern
+    # Get cluser and read preference from client.
+    def_delegators :@client, :cluster, :read_preference, :write_concern
 
     # Check equality of the database object against another. Will simply check
     # if the names are the same.
@@ -115,8 +115,8 @@ module Mongo
     #
     # @return [ Hash ] The result of the command execution.
     def command(operation, options = {})
-      preference = options[:read] ? ServerPreference.get(options[:read]) :
-                     server_preference
+      preference = options[:read] ? ReadPreference.get(options[:read]) :
+                     read_preference
       server = preference.select_server(cluster)
       Operation::Command.new({
         :selector => operation,

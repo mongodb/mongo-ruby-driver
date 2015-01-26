@@ -31,8 +31,8 @@ module Mongo
     # @return [ Hash ] The options hash.
     attr_reader :options
 
-    # @return [ Mongo::ServerPreference ] The server preference.
-    attr_reader :server_preference
+    # @return [ Mongo::ReadPreference ] The read preference.
+    attr_reader :read_preference
 
     # @return [ Object ] The cluster topology.
     attr_reader :topology
@@ -87,11 +87,11 @@ module Mongo
     # @param [ Hash ] options The options.
     #
     # @since 2.0.0
-    def initialize(seeds, server_preference, event_listeners, options = {})
+    def initialize(seeds, read_preference, event_listeners, options = {})
       @addresses = []
       @servers = []
       @event_listeners = event_listeners
-      @server_preference = server_preference
+      @read_preference = read_preference
       @options = options.freeze
       @topology = Topology.initial(seeds, options)
 
@@ -123,7 +123,7 @@ module Mongo
     #
     # @since 2.0.0
     def next_primary
-      server_preference.primary(servers).first
+      read_preference.primary(servers).first
     end
 
     # Elect a primary server from the description that has just changed to a

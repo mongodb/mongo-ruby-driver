@@ -53,7 +53,7 @@ module Mongo
       attr_reader :selector
 
       # Delegate necessary operations to the collection.
-      def_delegators :collection, :client, :cluster, :database, :server_preference, :write_concern
+      def_delegators :collection, :client, :cluster, :database, :read_preference, :write_concern
 
       # Delegate to the cluster for the next primary.
       def_delegators :cluster, :next_primary

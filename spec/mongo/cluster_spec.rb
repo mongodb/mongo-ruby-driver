@@ -9,7 +9,7 @@ describe Mongo::Cluster do
   describe '#==' do
 
     let(:preference) do
-      Mongo::ServerPreference.get
+      Mongo::ReadPreference.get
     end
 
     let(:cluster) do
@@ -66,7 +66,7 @@ describe Mongo::Cluster do
   describe '#inspect' do
 
     let(:preference) do
-      Mongo::ServerPreference.get
+      Mongo::ReadPreference.get
     end
 
     let(:cluster) do
@@ -82,7 +82,7 @@ describe Mongo::Cluster do
   describe '#replica_set_name' do
 
     let(:preference) do
-      Mongo::ServerPreference.get
+      Mongo::ReadPreference.get
     end
 
     let(:cluster) do

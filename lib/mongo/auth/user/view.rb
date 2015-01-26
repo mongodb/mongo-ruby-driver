@@ -25,7 +25,7 @@ module Mongo
         # @return [ Database ] database The view's database.
         attr_reader :database
 
-        def_delegators :database, :cluster, :server_preference
+        def_delegators :database, :cluster, :read_preference
         def_delegators :cluster, :next_primary
 
         # Create a new user in the database.

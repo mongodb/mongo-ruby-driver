@@ -22,7 +22,7 @@ module Mongo
       extend Forwardable
       include Enumerable
 
-      def_delegators :@database, :cluster, :server_preference
+      def_delegators :@database, :cluster, :read_preference
       def_delegators :cluster, :next_primary
 
       # @return [ Integer ] batch_size The size of the batch of results
