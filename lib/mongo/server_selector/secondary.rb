@@ -14,7 +14,7 @@
 
 module Mongo
 
-  module ReadPreference
+  module ServerSelector
 
     # Encapsulates specifications for selecting secondary servers given a list
     #   of candidates.
@@ -45,7 +45,7 @@ module Mongo
         true
       end
 
-      # Whether tag sets are allowed to be defined for this read preference.
+      # Whether tag sets are allowed to be defined for this server preference.
       #
       # @return [ true ] true
       #
@@ -54,15 +54,15 @@ module Mongo
         true
       end
 
-      # Convert this read preference definition into a format appropriate
+      # Convert this server preference definition into a format appropriate
       #   for a mongos server.
       #
-      # @example Convert this read preference definition into a format
+      # @example Convert this server preference definition into a format
       #   for mongos.
-      #   preference = Mongo::ReadPreference::Secondary.new
+      #   preference = Mongo::ServerSelector::Secondary.new
       #   preference.to_mongos
       #
-      # @return [ Hash ] The read preference formatted for a mongos server.
+      # @return [ Hash ] The server preference formatted for a mongos server.
       #
       # @since 2.0.0
       def to_mongos
@@ -75,7 +75,7 @@ module Mongo
       #   local threshold between the nearest secondary and other secondaries.
       #
       # @example Select secondary servers given a list of candidates.
-      #   preference = Mongo::ReadPreference::Secondary.new
+      #   preference = Mongo::ServerSelector::Secondary.new
       #   preference.select([candidate_1, candidate_2])
       #
       # @return [ Array ] The secondary servers from the list of candidates.

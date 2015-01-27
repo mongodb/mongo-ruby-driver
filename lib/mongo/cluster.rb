@@ -31,7 +31,7 @@ module Mongo
     # @return [ Hash ] The options hash.
     attr_reader :options
 
-    # @return [ Mongo::ReadPreference ] The read preference.
+    # @return [ Mongo::ServerSelector ] The read preference.
     attr_reader :read_preference
 
     # @return [ Object ] The cluster topology.
@@ -123,7 +123,7 @@ module Mongo
     #
     # @since 2.0.0
     def next_primary
-      ReadPreference.get(mode: :primary).select_server(self)
+      ServerSelector.get(mode: :primary).select_server(self)
     end
 
     # Elect a primary server from the description that has just changed to a

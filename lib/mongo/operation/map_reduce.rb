@@ -60,8 +60,7 @@ module Mongo
       def execute(context)
         if context.secondary? && !secondary_ok?
           warn "Database command '#{selector.keys.first}' rerouted to primary server"
-          # TODO: get read_preference_options from client
-          context = Mongo::ReadPreference.get(mode: :primary).select_server(context.cluster)
+          context = Mongo::ServerSelector.get(mode: :primary).select_server(context.cluster)
         end
         execute_message(context)
       end

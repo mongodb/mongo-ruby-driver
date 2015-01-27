@@ -369,7 +369,7 @@ module Mongo
       # @example Get the read preference.
       #   specifiable.read
       #
-      # @return [ Mongo::ReadPreference ] The read preference.
+      # @return [ Mongo::ServerSelector ] The read preference.
       #
       # @since 2.0.0
       def read

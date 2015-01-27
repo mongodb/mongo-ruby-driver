@@ -329,7 +329,7 @@ describe Mongo::Client do
       end
 
       it 'returns a primary read preference' do
-        expect(preference).to be_a(Mongo::ReadPreference::Primary)
+        expect(preference).to be_a(Mongo::ServerSelector::Primary)
       end
     end
 
@@ -340,7 +340,7 @@ describe Mongo::Client do
       end
 
       it 'returns a primary preferred read preference' do
-        expect(preference).to be_a(Mongo::ReadPreference::PrimaryPreferred)
+        expect(preference).to be_a(Mongo::ServerSelector::PrimaryPreferred)
       end
     end
 
@@ -351,7 +351,7 @@ describe Mongo::Client do
       end
 
       it 'returns a secondary read preference' do
-        expect(preference).to be_a(Mongo::ReadPreference::Secondary)
+        expect(preference).to be_a(Mongo::ServerSelector::Secondary)
       end
     end
 
@@ -362,7 +362,7 @@ describe Mongo::Client do
       end
 
       it 'returns a secondary preferred read preference' do
-        expect(preference).to be_a(Mongo::ReadPreference::SecondaryPreferred)
+        expect(preference).to be_a(Mongo::ServerSelector::SecondaryPreferred)
       end
     end
 
@@ -373,7 +373,7 @@ describe Mongo::Client do
       end
 
       it 'returns a nearest read preference' do
-        expect(preference).to be_a(Mongo::ReadPreference::Nearest)
+        expect(preference).to be_a(Mongo::ServerSelector::Nearest)
       end
     end
 
@@ -384,7 +384,7 @@ describe Mongo::Client do
       end
 
       it 'returns a primary read preference' do
-        expect(preference).to be_a(Mongo::ReadPreference::Primary)
+        expect(preference).to be_a(Mongo::ServerSelector::Primary)
       end
     end
   end

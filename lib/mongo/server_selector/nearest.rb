@@ -14,13 +14,13 @@
 
 module Mongo
 
-  module ReadPreference
+  module ServerSelector
 
-    # Encapsulates specifications for selecting the primary server given a list
+    # Encapsulates specifications for selecting near servers given a list
     #   of candidates.
     #
     # @since 2.0.0
-    class Primary
+    class Nearest
       include Selectable
 
       # Get the name of the server mode type.
@@ -28,58 +28,65 @@ module Mongo
       # @example Get the name of the server mode for this preference.
       #   preference.name
       #
-      # @return [ Symbol ] :primary
+      # @return [ Symbol ] :nearest
       #
       # @since 2.0.0
       def name
-        :primary
+        :nearest
       end
 
       # Whether the slaveOk bit should be set on wire protocol messages.
       #   I.e. whether the operation can be performed on a secondary server.
       #
-      # @return [ false ] false
+      # @return [ true ] true
       #
       # @since 2.0.0
       def slave_ok?
-        false
+        true
       end
 
-      # Whether tag sets are allowed to be defined for this read preference.
+      # Whether tag sets are allowed to be defined for this server preference.
       #
-      # @return [ false ] false
+      # @return [ true ] true
       #
       # @since 2.0.0
       def tags_allowed?
-        false
+        true
       end
 
-      # Convert this read preference definition into a format appropriate
+      # Convert this server preference definition into a format appropriate
       #   for a mongos server.
       #
-      # @example Convert this read preference definition into a format
+      # @example Convert this server preference definition into a format
       #   for mongos.
-      #   preference = Mongo::ReadPreference::Primary.new
+      #   preference = Mongo::ServerSelector::Nearest.new
       #   preference.to_mongos
       #
-      # @return [ nil ] nil
+      # @return [ Hash ] The server preference formatted for a mongos server.
       #
       # @since 2.0.0
       def to_mongos
-        nil
+        preference = { :mode => 'nearest' }
+        preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
+        preference
       end
 
-      # Select the primary server from a list of candidates.
+      # Select the near servers taking into account any defined tag sets and
+      #   local threshold between the nearest server and other servers.
       #
-      # @example Select the primary server given a list of candidates.
-      #   preference = Mongo::ReadPreference::Primary.new
-      #   preference.select([candidate_1, candidate_2])
+      # @example Select nearest servers given a list of candidates.
+      #   preference = Mongo::Serverreference::Nearest.new
+      #   preference.select_server(cluster)
       #
-      # @return [ Array ] The primary server from the list of candidates.
+      # @return [ Array ] The nearest servers from the list of candidates.
       #
       # @since 2.0.0
       def select(candidates)
-        primary(candidates)
+        if tag_sets.empty?
+          near_servers(candidates)
+        else
+          near_servers(match_tag_sets(candidates))
+        end
       end
     end
   end

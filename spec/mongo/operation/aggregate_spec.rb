@@ -70,7 +70,7 @@ describe Mongo::Operation::Aggregate do
     context 'message' do
 
       it 'creates a query wire protocol message with correct specs' do
-        allow_any_instance_of(Mongo::ReadPreference::Primary).to receive(:server) do
+        allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:server) do
           primary_server
         end
 
@@ -87,7 +87,7 @@ describe Mongo::Operation::Aggregate do
     context 'connection' do
 
       it 'dispatches the message on the connection' do
-        allow_any_instance_of(Mongo::ReadPreference::Primary).to receive(:server) do
+        allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:server) do
           primary_server
         end
 
@@ -106,7 +106,7 @@ describe Mongo::Operation::Aggregate do
         end
 
         it 'raises an error' do
-          allow_any_instance_of(Mongo::ReadPreference::Primary).to receive(:server) do
+          allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:server) do
             primary_server
           end
           expect {
@@ -123,7 +123,7 @@ describe Mongo::Operation::Aggregate do
         end
 
         it 'sends the operation to the primary' do
-          allow_any_instance_of(Mongo::ReadPreference::Primary).to receive(:server) do
+          allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:server) do
             primary_server
           end
           expect(primary_context).to receive(:with_connection)

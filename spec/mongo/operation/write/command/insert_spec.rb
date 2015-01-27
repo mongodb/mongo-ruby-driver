@@ -86,7 +86,7 @@ describe Mongo::Operation::Write::Command::Insert do
         end
 
         it 'creates a query wire protocol message with correct specs' do
-          allow_any_instance_of(Mongo::ReadPreference::Primary).to receive(:server) do
+          allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:server) do
             primary_server
           end
 

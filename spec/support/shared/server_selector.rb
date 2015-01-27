@@ -20,7 +20,7 @@ def server(mode, options = {})
   end
 end
 
-shared_context 'read preference' do
+shared_context 'server selector' do
   let(:read_pref) { described_class.new(tag_sets) }
   let(:tag_sets) { [] }
   let(:tag_set) { { 'test' => 'tag' } }

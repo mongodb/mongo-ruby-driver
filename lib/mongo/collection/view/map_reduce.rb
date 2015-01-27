@@ -161,7 +161,7 @@ module Mongo
               initial_query_op.execute(server.context)
             rescue Mongo::Operation::MapReduce::NeedPrimaryServer
               warn 'Rerouting the MapReduce operation to the primary server.'
-              server = ReadPreference.get(mode: :primary).select_server(cluster)
+              server = ServerSelector.get(mode: :primary).select_server(cluster)
               initial_query_op.execute(server.context)
             end
           if inline?

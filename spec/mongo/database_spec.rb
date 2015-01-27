@@ -155,7 +155,7 @@ describe Mongo::Database do
       it 'uses that read preference' do
         expect do
           database.command({ ping: 1 }, { read: read })
-        end.to raise_error(Mongo::ReadPreference::NoServerAvailable)
+        end.to raise_error(Mongo::ServerSelector::NoServerAvailable)
       end
     end
   end

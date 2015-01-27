@@ -14,7 +14,7 @@
 
 module Mongo
 
-  module ReadPreference
+  module ServerSelector
 
     # Provides common behavior for filtering a list of servers by server mode or tag set.
     #
@@ -35,9 +35,9 @@ module Mongo
       # @return [ Array ] tag_sets The tag sets used to select servers.
       attr_reader :tag_sets
 
-      # Check equality of two read preferences.
+      # Check equality of two server selector.
       #
-      # @example Check read preference equality.
+      # @example Check server selector equality.
       #   preference == other
       #
       # @param [ Object ] other The other preference.
@@ -50,13 +50,13 @@ module Mongo
             tag_sets == other.tag_sets
       end
 
-      # Initialize the read preference.
+      # Initialize the server selector.
       #
       # @example Initialize the preference with tag sets.
-      #   Mongo::ReadPreference::Secondary.new([{ 'tag' => 'set' }])
+      #   Mongo::ServerSelector::Secondary.new([{ 'tag' => 'set' }])
       #
       # @example Initialize the preference with no options.
-      #   Mongo::ReadPreference::Secondary.new
+      #   Mongo::ServerSelector::Secondary.new
       #
       # @param [ Array ] tag_sets The tag sets used to select servers.
       #
@@ -65,9 +65,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(tag_sets = [], options = {})
-        # @todo: raise specific Exception
-        raise Exception, "read preference #{name} cannot be combined " +
-            " with tags" if !tag_sets.empty? && !tags_allowed?
+        raise ServerSelector::InvalidServerPreference.new(name) if !tag_sets.empty? && !tags_allowed?
         @tag_sets = tag_sets
       end
 
@@ -75,7 +73,7 @@ module Mongo
       #
       # @param [ Mongo::Cluster ] cluster The cluster from which to select an eligible server.
       #
-      # @return [ Mongo::Server ] A server matching the read preference.
+      # @return [ Mongo::Server ] A server matching the server preference.
       #
       # @since 2.0.0
       def select_server(cluster)
@@ -165,6 +163,19 @@ module Mongo
           !matches.empty?
         end
         matches || []
+      end
+    end
+
+    class InvalidServerPreference < MongoError
+
+      # Instantiate the new exception.
+      #
+      # @example Instantiate the exception.
+      #   Mongo::ServerSelector::InvalidServerPreference.new
+      #
+      # @since 2.0.0
+      def initialize(name)
+        super("This server preference #{mode} cannot be combined with tags.")
       end
     end
   end

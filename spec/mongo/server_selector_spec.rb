@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::ReadPreference do
+describe Mongo::ServerSelector do
 
   describe '.get' do
 
@@ -17,7 +17,7 @@ describe Mongo::ReadPreference do
         let(:name) { :primary }
 
         it 'returns a read preference of class Primary' do
-          expect(read_pref).to be_a(Mongo::ReadPreference::Primary)
+          expect(read_pref).to be_a(Mongo::ServerSelector::Primary)
         end
       end
 
@@ -25,7 +25,7 @@ describe Mongo::ReadPreference do
         let(:name) { :primary_preferred }
 
         it 'returns a read preference of class PrimaryPreferred' do
-          expect(read_pref).to be_a(Mongo::ReadPreference::PrimaryPreferred)
+          expect(read_pref).to be_a(Mongo::ServerSelector::PrimaryPreferred)
         end
       end
 
@@ -33,7 +33,7 @@ describe Mongo::ReadPreference do
         let(:name) { :secondary }
 
         it 'returns a read preference of class Secondary' do
-          expect(read_pref).to be_a(Mongo::ReadPreference::Secondary)
+          expect(read_pref).to be_a(Mongo::ServerSelector::Secondary)
         end
       end
 
@@ -41,7 +41,7 @@ describe Mongo::ReadPreference do
         let(:name) { :secondary_preferred }
 
         it 'returns a read preference of class SecondaryPreferred' do
-          expect(read_pref).to be_a(Mongo::ReadPreference::SecondaryPreferred)
+          expect(read_pref).to be_a(Mongo::ServerSelector::SecondaryPreferred)
         end
       end
 
@@ -49,7 +49,7 @@ describe Mongo::ReadPreference do
         let(:name) { :nearest }
 
         it 'returns a read preference of class Nearest' do
-          expect(read_pref).to be_a(Mongo::ReadPreference::Nearest)
+          expect(read_pref).to be_a(Mongo::ServerSelector::Nearest)
         end
       end
     end
@@ -58,7 +58,7 @@ describe Mongo::ReadPreference do
       let(:read_pref) { described_class.get }
 
       it 'returns a read preference of class Primary' do
-        expect(read_pref).to be_a(Mongo::ReadPreference::Primary)
+        expect(read_pref).to be_a(Mongo::ServerSelector::Primary)
       end
     end
 

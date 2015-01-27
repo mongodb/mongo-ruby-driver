@@ -44,7 +44,7 @@ module Mongo
     # @return [ String ] The name of the collection.
     attr_reader :name
 
-    # Get cluser and read preference from client.
+    # Get cluster, read preference, and write concern from client.
     def_delegators :@client,
                    :cluster,
                    :read_preference,
@@ -118,7 +118,7 @@ module Mongo
     #
     # @return [ Hash ] The result of the command execution.
     def command(operation, options = {})
-      preference = options[:read] ? ReadPreference.get(options[:read]) : read_preference
+      preference = options[:read] ? ServerSelector.get(options[:read]) : read_preference
       server = preference.select_server(cluster)
       Operation::Command.new({
         :selector => operation,

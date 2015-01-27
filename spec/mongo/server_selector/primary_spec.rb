@@ -1,8 +1,8 @@
 require 'spec_helper'
 
-describe Mongo::ReadPreference::Primary do
+describe Mongo::ServerSelector::Primary do
 
-  include_context 'read preference'
+  include_context 'server selector'
 
   it_behaves_like 'a read preference mode' do
     let(:name) { :primary }
