@@ -61,7 +61,7 @@ module Mongo
         if context.secondary? && !secondary_ok?
           warn "Database command '#{selector.keys.first}' rerouted to primary server"
           # TODO: get read_preference_options from client
-          context = Mongo::ReadPreference.get(:mode => :primary).server.context
+          context = Mongo::ReadPreference.get(mode: :primary).select_server(context.cluster)
         end
         execute_message(context)
       end
@@ -87,6 +87,19 @@ module Mongo
 
       def query_coll
         Database::COMMAND
+      end
+
+      class NeedPrimaryServer < MongoError
+
+        # Instantiate the new exception.
+        #
+        # @example Instantiate the exception.
+        #   Mongo::Operation::Aggregate::NeedPrimaryServer.new
+        #
+        # @since 2.0.0
+        def initialize
+          super("If 'out' is specified as a collection, the primary server must be used.")
+        end
       end
     end
   end

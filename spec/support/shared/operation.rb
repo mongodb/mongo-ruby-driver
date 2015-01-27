@@ -9,11 +9,13 @@ shared_context 'operation' do
   let(:secondary_server) do
     double('secondary_server').tap do |s|
       allow(s).to receive(:secondary?) { true }
+      allow(s).to receive(:primary?) { false }
     end
   end
   let(:primary_server) do
     double('primary_server').tap do |s|
       allow(s).to receive(:secondary?) { false }
+      allow(s).to receive(:primary?) { true }
       allow(s).to receive(:context) { primary_context }
     end
   end

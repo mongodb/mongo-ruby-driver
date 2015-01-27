@@ -148,7 +148,8 @@ describe Mongo::Database do
       end
 
       let(:database) do
-        described_class.new(authorized_client, TEST_DB)
+        client_with_shorter_timeout = authorized_client.with(server_selection_timeout_ms: 2)
+        described_class.new(client_with_shorter_timeout, TEST_DB)
       end
 
       it 'uses that read preference' do

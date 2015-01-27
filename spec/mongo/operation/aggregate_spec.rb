@@ -105,12 +105,13 @@ describe Mongo::Operation::Aggregate do
           }
         end
 
-        it 'reroutes the operation to the primary' do
+        it 'raises an error' do
           allow_any_instance_of(Mongo::ReadPreference::Primary).to receive(:server) do
             primary_server
           end
-          expect(primary_context).to receive(:with_connection)
-          op.execute(secondary_context)
+          expect {
+            op.execute(secondary_context)
+          }.to raise_error(Mongo::Operation::Aggregate::NeedPrimaryServer)
         end
       end
 

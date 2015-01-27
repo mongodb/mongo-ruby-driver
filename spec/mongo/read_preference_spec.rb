@@ -4,13 +4,8 @@ describe Mongo::ReadPreference do
 
   describe '.get' do
 
-    let(:local_threshold_ms) { 15 }
-    let(:server_selection_timeout_ms) { 30000 }
-
     let(:read_pref) do
-      described_class.get({ :mode => name },
-                          { :local_threshold_ms => local_threshold_ms,
-                            :server_selection_timeout_ms => server_selection_timeout_ms })
+      described_class.get({ :mode => name })
     end
 
     let(:name) { :secondary }
@@ -74,24 +69,6 @@ describe Mongo::ReadPreference do
         expect(read_pref.tag_sets).to eq(tag_sets)
       end
 
-    end
-
-    context 'local threshold ms provided' do
-
-      let(:local_threshold_ms) { 100 }
-
-      it 'sets local_threshold_ms on the read preference object' do
-        expect(read_pref.local_threshold_ms).to eq(local_threshold_ms)
-      end
-    end
-
-    context 'server selection timeout ms' do
-
-      let(:server_selection_timeout_ms) { 100 }
-
-      it 'sets server_selection_timeout_ms on the read preference object' do
-        expect(read_pref.server_selection_timeout_ms).to eq(server_selection_timeout_ms)
-      end
     end
   end
 end

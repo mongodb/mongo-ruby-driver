@@ -123,7 +123,7 @@ module Mongo
     #
     # @since 2.0.0
     def next_primary
-      read_preference.primary(servers).first
+      ReadPreference.get(mode: :primary).select_server(self)
     end
 
     # Elect a primary server from the description that has just changed to a

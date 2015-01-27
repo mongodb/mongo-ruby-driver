@@ -72,7 +72,7 @@ module Mongo
       end
 
       # Select the near servers taking into account any defined tag sets and
-      #   local threshold between the nearest secondary and other secondaries.
+      #   local threshold between the nearest server and other servers.
       #
       # @example Select nearest servers given a list of candidates.
       #   preference = Mongo::Serverreference::Nearest.new
@@ -83,7 +83,6 @@ module Mongo
       # @since 2.0.0
       def select(candidates)
         if tag_sets.empty?
-          # @todo: check to see if candidates should be secondaries only
           near_servers(candidates)
         else
           near_servers(match_tag_sets(candidates))

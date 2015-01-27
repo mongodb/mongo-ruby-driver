@@ -42,9 +42,8 @@ module Mongo
     # Create a read preference object.
     #
     # @example Get a read preference object for selecting a secondary with
-    #   specific tag sets and local threshold.
-    #   Mongo::ReadPreference.get({ :mode => :secondary, :tag_sets => [{'dc' => 'nyc'}] },
-     #                              { :local_threshold_ms => 10 })
+    #   specific tag sets.
+    #   Mongo::ReadPreference.get({ :mode => :secondary, :tag_sets => [{'dc' => 'nyc'}] })
     #
     # @param [ Hash ] read The read preference.
     # @param [ Hash ] options The read preference options.
@@ -52,15 +51,11 @@ module Mongo
     # @option read :mode [ Symbol ] The read preference mode.
     # @option read :tag_sets [ Array<Hash> ] The tag sets.
     #
-    # @option options :local_threshold_ms [ Integer ] The local threshold in ms.
-    # @option options :server_selection_timeout_ms [ Integer ] The server selection timeout in ms.
-    #
     # @since 2.0.0
     def get(read = {}, options = {})
       PREFERENCES.fetch(read[:mode] || :primary).new(
         read[:tag_sets] || [],
-        options[:local_threshold_ms] || 15,
-        options[:server_selection_timeout_ms] || 30000
+        options
       )
     end
 

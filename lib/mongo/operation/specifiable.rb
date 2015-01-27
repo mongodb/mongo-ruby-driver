@@ -373,7 +373,7 @@ module Mongo
       #
       # @since 2.0.0
       def read
-        @spec[READ] || ReadPreference.get(mode: :primary)
+        @spec[READ]
       end
     end
   end
