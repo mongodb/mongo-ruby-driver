@@ -57,8 +57,8 @@ module Mongo
       #
       # @since 2.0.0
       def execute(context)
-        raise NeedPrimaryServer.new unless context.server.standalone? ||
-                                             context.server.primary? ||
+        raise NeedPrimaryServer.new unless context.standalone? ||
+                                             context.primary? ||
                                              secondary_ok?
         execute_message(context)
       end
