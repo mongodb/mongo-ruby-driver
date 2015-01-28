@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/server/monitor/connection'
+
 module Mongo
   class Server
 
@@ -81,13 +83,7 @@ module Mongo
       def initialize(server, options = {})
         @server = server
         @options = options.freeze
-
-        # @note We reject the user option here as the ismaster command should
-        # be able to run without being authorized.
-        @connection = Mongo::Connection.new(
-          server,
-          options.reject{ |key, value| key == :user }
-        )
+        @connection = Monitor::Connection.new(server.address, options)
       end
 
       # Runs the server monitor. Refreshing happens on a separate thread per
