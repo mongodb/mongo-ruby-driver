@@ -20,18 +20,7 @@ module Mongo
       #
       # @since 2.0.0
       class Connection
-        include Loggable
-
-        # The default time in seconds to timeout a connection attempt.
-        #
-        # @since 2.0.0
-        TIMEOUT = 5.freeze
-
-        # @return [ Mongo::Address ] address The address to connect to.
-        attr_reader :address
-
-        # @return [ Hash ] options The passed in options.
-        attr_reader :options
+        include Connectable
 
         # Tell the underlying socket to establish a connection to the host.
         #
@@ -71,27 +60,6 @@ module Mongo
           true
         end
 
-        # Dispatch the provided messages to the connection. If the last message
-        # requires a response a reply will be returned.
-        #
-        # @example Dispatch the messages.
-        #   connection.dispatch([ insert, command ])
-        #
-        # @note This method is named dispatch since 'send' is a core Ruby method on
-        #   all objects.
-        #
-        # @param [ Array<Message> ] messages The messages to dispatch.
-        #
-        # @return [ Protocol::Reply ] The reply if needed.
-        #
-        # @since 2.0.0
-        def dispatch(messages)
-          log_debug(messages) do |msgs|
-            write(msgs)
-            msgs.last.replyable? ? read : nil
-          end
-        end
-
         # Initialize a new socket connection from the client to the server.
         #
         # @example Create the connection.
@@ -108,30 +76,7 @@ module Mongo
           @socket = nil
         end
 
-        # Get the connection timeout.
-        #
-        # @example Get the connection timeout.
-        #   connection.timeout
-        #
-        # @return [ Float ] The connection timeout in seconds.
-        #
-        # @since 2.0.0
-        def timeout
-          @timeout ||= options[:socket_timeout] || TIMEOUT
-        end
-
         private
-
-        attr_reader :socket, :ssl_options
-
-        def ensure_connected
-          connect! if socket.nil? || !socket.alive?
-          yield socket
-        end
-
-        def read
-          ensure_connected{ |socket| Protocol::Reply.deserialize(socket) }
-        end
 
         def write(messages, buffer = '')
           messages.each{ |message| message.serialize(buffer) }
