@@ -1,7 +1,8 @@
 require 'spec_helper'
 
-describe Mongo::ReadPreference::SecondaryPreferred do
-  include_context 'read preference'
+describe Mongo::ServerSelector::SecondaryPreferred do
+
+  include_context 'server selector'
 
   it_behaves_like 'a read preference mode' do
     let(:name) { :secondary_preferred }

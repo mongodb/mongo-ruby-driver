@@ -38,6 +38,7 @@ module Mongo
         include Executable
         include Specifiable
         include Limited
+        include ReadPreferrable
 
         # Execute the listIndexes command operation.
         #
@@ -60,13 +61,16 @@ module Mongo
 
         def execute_message(context)
           context.with_connection do |connection|
-            Result.new(connection.dispatch([ message ]))
+            Result.new(connection.dispatch([ message(context) ]))
           end
         end
 
-        def message
-          sel = (selector || {}).merge(listIndexes: coll_name)
-          Protocol::Query.new(db_name, Database::COMMAND, sel, options)
+        def query_coll
+          Database::COMMAND
+        end
+
+        def selector
+          (spec[SELECTOR] || {}).merge(listIndexes: coll_name)
         end
       end
     end

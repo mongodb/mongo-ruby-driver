@@ -9,12 +9,15 @@ shared_context 'operation' do
   let(:secondary_server) do
     double('secondary_server').tap do |s|
       allow(s).to receive(:secondary?) { true }
+      allow(s).to receive(:primary?) { false }
+      allow(s).to receive(:standalone?) { false }
     end
   end
   let(:primary_server) do
     double('primary_server').tap do |s|
+      allow(s).to receive(:primary?) { true }
       allow(s).to receive(:secondary?) { false }
-      allow(s).to receive(:context) { primary_context }
+      allow(s).to receive(:standalone?) { false }
     end
   end
 
@@ -36,23 +39,32 @@ shared_context 'operation' do
       allow(cxt).to receive(:with_connection).and_yield(connection)
       allow(cxt).to receive(:server) { primary_server }
       allow(cxt).to receive(:features) { features_2_6 }
+      allow(cxt).to receive(:mongos?) { false }
       allow(cxt).to receive(:primary?) { true }
+      allow(cxt).to receive(:secondary?) { false }
+      allow(cxt).to receive(:standalone?) { false }
     end
   end
   let(:secondary_context) do
     double('secondary_context').tap do |cxt|
       allow(cxt).to receive(:with_connection).and_yield(connection)
-      allow(cxt).to receive(:server) do
-        secondary_server
-      end
+      allow(cxt).to receive(:server) { secondary_server }
+      allow(cxt).to receive(:mongos?) { false }
+      allow(cxt).to receive(:features) { features_2_6 }
+      allow(cxt).to receive(:secondary?) { true }
+      allow(cxt).to receive(:primary?) { false }
+      allow(cxt).to receive(:standalone?) { false }
     end
   end
   let(:primary_context_2_4_version) do
     double('primary_context').tap do |cxt|
       allow(cxt).to receive(:with_connection).and_yield(connection)
       allow(cxt).to receive(:server) { primary_server }
-      allow(cxt).to receive(:features) { features_2_4 }
+      allow(cxt).to receive(:mongos?) { false }
       allow(cxt).to receive(:primary?) { true }
+      allow(cxt).to receive(:secondary?) { false }
+      allow(cxt).to receive(:standalone?) { false }
+      allow(cxt).to receive(:features) { features_2_4 }
     end
   end
 

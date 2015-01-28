@@ -469,10 +469,5 @@ describe Mongo::Operation::Write::BulkDelete do
         expect(result.replies).to be(nil)
       end
     end
-
-    context 'when the server is a secondary' do
-
-      pending 'it raises an exception'
-    end
   end
 end

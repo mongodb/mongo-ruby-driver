@@ -39,6 +39,7 @@ module Mongo
       class Query
         include Executable
         include Specifiable
+        include ReadPreferrable
 
         # Execute the operation.
         # The context gets a connection on which the operation
@@ -57,12 +58,12 @@ module Mongo
 
         def execute_message(context)
           context.with_connection do |connection|
-            Result.new(connection.dispatch([ message ]))
+            Result.new(connection.dispatch([ message(context) ]))
           end
         end
 
-        def message
-          Protocol::Query.new(db_name, coll_name, selector, options)
+        def query_coll
+          coll_name
         end
       end
     end

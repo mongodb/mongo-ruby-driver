@@ -462,10 +462,5 @@ describe Mongo::Operation::Write::BulkInsert do
         expect(result.n_inserted).to eq(2)
       end
     end
-
-    context 'when the server is a secondary' do
-
-      pending 'it raises an exception'
-    end
   end
 end

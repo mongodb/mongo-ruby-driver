@@ -14,13 +14,13 @@
 
 module Mongo
 
-  module ReadPreference
+  module ServerSelector
 
-    # Encapsulates specifications for selecting secondary servers given a list
+    # Encapsulates specifications for selecting near servers given a list
     #   of candidates.
     #
     # @since 2.0.0
-    class Secondary
+    class Nearest
       include Selectable
 
       # Get the name of the server mode type.
@@ -28,11 +28,11 @@ module Mongo
       # @example Get the name of the server mode for this preference.
       #   preference.name
       #
-      # @return [ Symbol ] :secondary
+      # @return [ Symbol ] :nearest
       #
       # @since 2.0.0
       def name
-        :secondary
+        :nearest
       end
 
       # Whether the slaveOk bit should be set on wire protocol messages.
@@ -45,7 +45,7 @@ module Mongo
         true
       end
 
-      # Whether tag sets are allowed to be defined for this read preference.
+      # Whether tag sets are allowed to be defined for this server preference.
       #
       # @return [ true ] true
       #
@@ -54,35 +54,39 @@ module Mongo
         true
       end
 
-      # Convert this read preference definition into a format appropriate
+      # Convert this server preference definition into a format appropriate
       #   for a mongos server.
       #
-      # @example Convert this read preference definition into a format
+      # @example Convert this server preference definition into a format
       #   for mongos.
-      #   preference = Mongo::ReadPreference::Secondary.new
+      #   preference = Mongo::ServerSelector::Nearest.new
       #   preference.to_mongos
       #
-      # @return [ Hash ] The read preference formatted for a mongos server.
+      # @return [ Hash ] The server preference formatted for a mongos server.
       #
       # @since 2.0.0
       def to_mongos
-        preference = { :mode => 'secondary' }
+        preference = { :mode => 'nearest' }
         preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
         preference
       end
 
-      # Select the secondary servers taking into account any defined tag sets and
-      #   local threshold between the nearest secondary and other secondaries.
+      # Select the near servers taking into account any defined tag sets and
+      #   local threshold between the nearest server and other servers.
       #
-      # @example Select secondary servers given a list of candidates.
-      #   preference = Mongo::ReadPreference::Secondary.new
-      #   preference.select([candidate_1, candidate_2])
+      # @example Select nearest servers given a list of candidates.
+      #   preference = Mongo::Serverreference::Nearest.new
+      #   preference.select_server(cluster)
       #
-      # @return [ Array ] The secondary servers from the list of candidates.
+      # @return [ Array ] The nearest servers from the list of candidates.
       #
       # @since 2.0.0
       def select(candidates)
-        near_servers(secondaries(candidates))
+        if tag_sets.empty?
+          near_servers(candidates)
+        else
+          near_servers(match_tag_sets(candidates))
+        end
       end
     end
   end

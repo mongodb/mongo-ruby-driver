@@ -12,28 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'forwardable'
-require 'bson'
-require 'mongo/loggable'
-require 'mongo/logger'
-require 'mongo/errors'
-require 'mongo/event'
-require 'mongo/address'
-require 'mongo/auth'
-require 'mongo/bulk'
-require 'mongo/client'
-require 'mongo/cluster'
-require 'mongo/collection'
-require 'mongo/connection'
-require 'mongo/cursor'
-require 'mongo/database'
-require 'mongo/grid'
-require 'mongo/index'
-require 'mongo/operation'
-require 'mongo/pool'
-require 'mongo/protocol'
-require 'mongo/server'
-require 'mongo/server_selector'
-require 'mongo/socket'
-require 'mongo/uri'
-require 'mongo/version'
+module Mongo
+  module Operation
+
+    # Adds behaviour for queries that need to take read preference into account.
+    #
+    # @since 2.0.0
+    module ReadPreferrable
+
+      private
+
+      def message(context)
+        sel = (context.mongos? && read_pref = read.to_mongos) ?
+                selector.merge(:$readPreference => read_pref) : selector
+        opts = context.standalone? || read.slave_ok? ?
+                 options.merge(flags: [:slave_ok]) : options
+        Protocol::Query.new(db_name, query_coll, sel, opts)
+      end
+    end
+  end
+end

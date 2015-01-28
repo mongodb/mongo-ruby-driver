@@ -34,28 +34,7 @@ module Mongo
       include Executable
       include Specifiable
       include Limited
-
-      # In general, commands must always be sent to a primary server.
-      # There are some exceptions; the following commands may be sent
-      # to secondaries.
-      #
-      # @since 2.0.0
-      SECONDARY_OK_COMMANDS = [
-        'group',
-        'aggregate',
-        'collstats',
-        'dbstats',
-        'count',
-        'distinct',
-        'geonear',
-        'geosearch',
-        'geowalk',
-        'mapreduce',
-        'replsetgetstatus',
-        'ismaster',
-        'parallelcollectionscan',
-        'text'
-      ].freeze
+      include ReadPreferrable
 
       # Execute the command operation.
       #
@@ -68,30 +47,15 @@ module Mongo
       #
       # @since 2.0.0
       def execute(context)
-        # @todo: Should we respect tag sets and options here?
-        if context.server.secondary? && !secondary_ok?
-          warn "Database command '#{selector.keys.first}' rerouted to primary server"
-          # TODO: get read preference options from client
-          context = Mongo::ReadPreference.get(:mode => :primary).server.context
+        context.with_connection do |connection|
+          Result.new(connection.dispatch([ message(context) ])).validate!
         end
-        execute_message(context)
       end
 
       private
 
-      def execute_message(context)
-        context.with_connection do |connection|
-          Result.new(connection.dispatch([ message ])).validate!
-        end
-      end
-
-      def secondary_ok?
-        command = selector.keys.first.to_s.downcase
-        SECONDARY_OK_COMMANDS.include?(command)
-      end
-
-      def message
-        Protocol::Query.new(db_name, Database::COMMAND, selector, options)
+      def query_coll
+        Database::COMMAND
       end
     end
   end

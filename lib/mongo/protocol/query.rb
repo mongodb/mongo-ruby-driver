@@ -40,7 +40,7 @@ module Mongo
       #                                                  :limit => 10)
       #
       # @example Find all users with slave ok bit set
-      #   Query.new('xgen', 'users', {:name => 'Tyler', :flags => [:slave_ok]})
+      #   Query.new('xgen', 'users', {:name => 'Tyler'}, :flags => [:slave_ok])
       #
       # @example Find all user ids.
       #   Query.new('xgen', 'users', {}, :fields => {:id => 1})

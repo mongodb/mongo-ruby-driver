@@ -32,6 +32,7 @@ module Mongo
       class Indexes
         include Executable
         include Specifiable
+        include ReadPreferrable
 
         # Execute the operation.
         # The context gets a connection on which the operation
@@ -47,15 +48,19 @@ module Mongo
             ListIndexes.new(spec).execute(context)
           else
             context.with_connection do |connection|
-              Result.new(connection.dispatch([ message ]))
+              Result.new(connection.dispatch([ message(context) ]))
             end
           end
         end
 
         private
 
-        def message
-          Protocol::Query.new(db_name, Index::COLLECTION, { ns: namespace }, options)
+        def selector
+          { ns: namespace }
+        end
+
+        def query_coll
+          Index::COLLECTION
         end
       end
     end

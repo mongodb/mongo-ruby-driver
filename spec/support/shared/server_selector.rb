@@ -20,15 +20,10 @@ def server(mode, options = {})
   end
 end
 
-shared_context 'read preference' do
-  let(:read_pref) do
-    described_class.new(tag_sets, local_threshold_ms,
-                        server_selection_timeout_ms)
-  end
+shared_context 'server selector' do
+  let(:read_pref) { described_class.new(tag_sets) }
   let(:tag_sets) { [] }
   let(:tag_set) { { 'test' => 'tag' } }
-  let(:local_threshold_ms) { 15 }
-  let(:server_selection_timeout_ms) { 30000 }
   let(:primary) { server(:primary) }
   let(:secondary) { server(:secondary) }
 end
@@ -54,23 +49,9 @@ shared_examples 'a read preference mode' do
     context 'when mode is the same' do
       let(:other) { described_class.new }
 
-      context 'tag sets and local threshold, server selection timeout are the same' do
+      context 'tag sets are the same' do
         it 'returns true' do
           expect(read_pref).to eq(other)
-        end
-      end
-
-      context 'local threshold ms is different' do
-        let(:local_threshold_ms) { 20 }
-        it 'returns false' do
-          expect(read_pref).not_to eq(other)
-        end
-      end
-
-      context 'server selection timeout is different' do
-        let(:server_selection_timeout_ms) { 20000 }
-        it 'returns false' do
-          expect(read_pref).not_to eq(other)
         end
       end
     end

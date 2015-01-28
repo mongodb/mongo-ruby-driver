@@ -312,15 +312,10 @@ describe Mongo::Client do
 
   describe '#read_preference' do
 
-    let(:local_threshold_ms) { 10 }
-    let(:server_selection_timeout_ms) { 5000 }
-
     let(:client) do
       described_class.new(['127.0.0.1:27017'],
                           :database => TEST_DB,
-                          :read => mode,
-                          :local_threshold_ms => local_threshold_ms,
-                          :server_selection_timeout_ms => server_selection_timeout_ms)
+                          :read => mode)
     end
 
     let(:preference) do
@@ -334,15 +329,7 @@ describe Mongo::Client do
       end
 
       it 'returns a primary read preference' do
-        expect(preference).to be_a(Mongo::ReadPreference::Primary)
-      end
-
-      it 'passes local_threshold_ms to the read preference instance' do
-        expect(preference.local_threshold_ms).to eq(local_threshold_ms)
-      end
-
-      it 'passes server_selection_timeout_ms to the read preference instance' do
-        expect(preference.server_selection_timeout_ms).to eq(server_selection_timeout_ms)
+        expect(preference).to be_a(Mongo::ServerSelector::Primary)
       end
     end
 
@@ -353,15 +340,7 @@ describe Mongo::Client do
       end
 
       it 'returns a primary preferred read preference' do
-        expect(preference).to be_a(Mongo::ReadPreference::PrimaryPreferred)
-      end
-
-      it 'passes local_threshold_ms to the read preference instance' do
-        expect(preference.local_threshold_ms).to eq(local_threshold_ms)
-      end
-
-      it 'passes server_selection_timeout_ms to the read preference instance' do
-        expect(preference.server_selection_timeout_ms).to eq(server_selection_timeout_ms)
+        expect(preference).to be_a(Mongo::ServerSelector::PrimaryPreferred)
       end
     end
 
@@ -372,15 +351,7 @@ describe Mongo::Client do
       end
 
       it 'returns a secondary read preference' do
-        expect(preference).to be_a(Mongo::ReadPreference::Secondary)
-      end
-
-      it 'passes local_threshold_ms to the read preference instance' do
-        expect(preference.local_threshold_ms).to eq(local_threshold_ms)
-      end
-
-      it 'passes server_selection_timeout_ms to the read preference instance' do
-        expect(preference.server_selection_timeout_ms).to eq(server_selection_timeout_ms)
+        expect(preference).to be_a(Mongo::ServerSelector::Secondary)
       end
     end
 
@@ -391,15 +362,7 @@ describe Mongo::Client do
       end
 
       it 'returns a secondary preferred read preference' do
-        expect(preference).to be_a(Mongo::ReadPreference::SecondaryPreferred)
-      end
-
-      it 'passes local_threshold_ms to the read preference instance' do
-        expect(preference.local_threshold_ms).to eq(local_threshold_ms)
-      end
-
-      it 'passes server_selection_timeout_ms to the read preference instance' do
-        expect(preference.server_selection_timeout_ms).to eq(server_selection_timeout_ms)
+        expect(preference).to be_a(Mongo::ServerSelector::SecondaryPreferred)
       end
     end
 
@@ -410,15 +373,7 @@ describe Mongo::Client do
       end
 
       it 'returns a nearest read preference' do
-        expect(preference).to be_a(Mongo::ReadPreference::Nearest)
-      end
-
-      it 'passes local_threshold_ms to the read preference instance' do
-        expect(preference.local_threshold_ms).to eq(local_threshold_ms)
-      end
-
-      it 'passes server_selection_timeout_ms to the read preference instance' do
-        expect(preference.server_selection_timeout_ms).to eq(server_selection_timeout_ms)
+        expect(preference).to be_a(Mongo::ServerSelector::Nearest)
       end
     end
 
@@ -429,15 +384,7 @@ describe Mongo::Client do
       end
 
       it 'returns a primary read preference' do
-        expect(preference).to be_a(Mongo::ReadPreference::Primary)
-      end
-
-      it 'passes local_threshold_ms to the read preference instance' do
-        expect(preference.local_threshold_ms).to eq(local_threshold_ms)
-      end
-
-      it 'passes server_selection_timeout_ms to the read preference instance' do
-        expect(preference.server_selection_timeout_ms).to eq(server_selection_timeout_ms)
+        expect(preference).to be_a(Mongo::ServerSelector::Primary)
       end
     end
   end

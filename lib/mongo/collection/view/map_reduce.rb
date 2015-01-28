@@ -156,7 +156,14 @@ module Mongo
         end
 
         def send_initial_query(server)
-          result = initial_query_op.execute(server.context)
+          result =
+            begin
+              initial_query_op.execute(server.context)
+            rescue Mongo::Operation::MapReduce::NeedPrimaryServer
+              warn 'Rerouting the MapReduce operation to the primary server.'
+              server = ServerSelector.get(mode: :primary).select_server(cluster)
+              initial_query_op.execute(server.context)
+            end
           if inline?
             result
           else

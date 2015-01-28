@@ -14,7 +14,7 @@
 
 module Mongo
 
-  module ReadPreference
+  module ServerSelector
 
     # Encapsulates specifications for selecting the primary server given a list
     #   of candidates.
@@ -45,7 +45,7 @@ module Mongo
         false
       end
 
-      # Whether tag sets are allowed to be defined for this read preference.
+      # Whether tag sets are allowed to be defined for this server preference.
       #
       # @return [ false ] false
       #
@@ -54,12 +54,12 @@ module Mongo
         false
       end
 
-      # Convert this read preference definition into a format appropriate
+      # Convert this server preference definition into a format appropriate
       #   for a mongos server.
       #
-      # @example Convert this read preference definition into a format
+      # @example Convert this server preference definition into a format
       #   for mongos.
-      #   preference = Mongo::ReadPreference::Primary.new
+      #   preference = Mongo::ServerSelector::Primary.new
       #   preference.to_mongos
       #
       # @return [ nil ] nil
@@ -72,7 +72,7 @@ module Mongo
       # Select the primary server from a list of candidates.
       #
       # @example Select the primary server given a list of candidates.
-      #   preference = Mongo::ReadPreference::Primary.new
+      #   preference = Mongo::ServerSelector::Primary.new
       #   preference.select([candidate_1, candidate_2])
       #
       # @return [ Array ] The primary server from the list of candidates.

@@ -31,6 +31,7 @@ module Mongo
       class CollectionsInfo
         include Executable
         include Specifiable
+        include ReadPreferrable
 
         # Execute the operation.
         # The context gets a connection on which the operation
@@ -46,7 +47,7 @@ module Mongo
             ListCollections.new(spec).execute(context)
           else
             context.with_connection do |connection|
-              Result.new(connection.dispatch([ message ]))
+              Result.new(connection.dispatch([ message(context) ]))
             end
           end
         end
@@ -57,8 +58,8 @@ module Mongo
           { :name => { '$not' => /system\.|\$/ } }
         end
 
-        def message
-          Protocol::Query.new(db_name, Mongo::Database::NAMESPACES, selector, options)
+        def query_coll
+          Database::NAMESPACES
         end
       end
     end

@@ -163,21 +163,7 @@ module Mongo
     #
     # @since 2.0.0
     def read_preference
-      @read_preference ||= ReadPreference.get(options[:read] || {},
-                                              read_preference_options)
-    end
-
-    # Get the read preference options, which can only be set on the client.
-    #
-    # @example Get the read preference options.
-    #   client.read_preference_options
-    #
-    # @return [ Hash ] The read preference options.
-    #
-    # @since 2.0.0
-    def read_preference_options
-      { local_threshold_ms: options[:local_threshold_ms],
-        server_selection_timeout_ms: options[:server_selection_timeout_ms] }
+      @read_preference ||= ServerSelector.get(options[:read] || {})
     end
 
     # Use the database with the provided name. This will switch the current

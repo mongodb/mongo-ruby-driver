@@ -95,7 +95,11 @@ module Mongo
         #
         # @param [ Hash ] options Options for the count command.
         #
-        # @option read :read [ Hash ] The read preference for this command.
+        # @option options :skip [ Integer ] The number of documents to skip.
+        # @option options :hint [ Hash ] Override default index selection and force
+        #   MongoDB to use a specific index for the query.
+        # @option options :limit [ Integer ] Max number of docs to return.
+        # @option options :read [ Hash ] The read preference for this command.
         #
         # @return [ Integer ] The document count.
         #
@@ -116,7 +120,7 @@ module Mongo
         # @param [ String, Symbol ] field The name of the field.
         # @param [ Hash ] options Options for the distinct command.
         #
-        # @option read :read [ Hash ] The read preference for this command.
+        # @option options :read [ Hash ] The read preference for this command.
         #
         # @return [ Array<Object> ] The list of distinct values.
         #
@@ -307,6 +311,7 @@ module Mongo
         def query_spec
           sel = has_special_fields? ? special_selector : selector
           { :selector  => sel,
+            :read      => read,
             :options   => query_options,
             :db_name   => database.name,
             :coll_name => collection.name }

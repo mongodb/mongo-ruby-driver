@@ -1,16 +1,11 @@
 require 'spec_helper'
 
-describe Mongo::ReadPreference do
+describe Mongo::ServerSelector do
 
   describe '.get' do
 
-    let(:local_threshold_ms) { 15 }
-    let(:server_selection_timeout_ms) { 30000 }
-
     let(:read_pref) do
-      described_class.get({ :mode => name },
-                          { :local_threshold_ms => local_threshold_ms,
-                            :server_selection_timeout_ms => server_selection_timeout_ms })
+      described_class.get({ :mode => name })
     end
 
     let(:name) { :secondary }
@@ -22,7 +17,7 @@ describe Mongo::ReadPreference do
         let(:name) { :primary }
 
         it 'returns a read preference of class Primary' do
-          expect(read_pref).to be_a(Mongo::ReadPreference::Primary)
+          expect(read_pref).to be_a(Mongo::ServerSelector::Primary)
         end
       end
 
@@ -30,7 +25,7 @@ describe Mongo::ReadPreference do
         let(:name) { :primary_preferred }
 
         it 'returns a read preference of class PrimaryPreferred' do
-          expect(read_pref).to be_a(Mongo::ReadPreference::PrimaryPreferred)
+          expect(read_pref).to be_a(Mongo::ServerSelector::PrimaryPreferred)
         end
       end
 
@@ -38,7 +33,7 @@ describe Mongo::ReadPreference do
         let(:name) { :secondary }
 
         it 'returns a read preference of class Secondary' do
-          expect(read_pref).to be_a(Mongo::ReadPreference::Secondary)
+          expect(read_pref).to be_a(Mongo::ServerSelector::Secondary)
         end
       end
 
@@ -46,7 +41,7 @@ describe Mongo::ReadPreference do
         let(:name) { :secondary_preferred }
 
         it 'returns a read preference of class SecondaryPreferred' do
-          expect(read_pref).to be_a(Mongo::ReadPreference::SecondaryPreferred)
+          expect(read_pref).to be_a(Mongo::ServerSelector::SecondaryPreferred)
         end
       end
 
@@ -54,7 +49,7 @@ describe Mongo::ReadPreference do
         let(:name) { :nearest }
 
         it 'returns a read preference of class Nearest' do
-          expect(read_pref).to be_a(Mongo::ReadPreference::Nearest)
+          expect(read_pref).to be_a(Mongo::ServerSelector::Nearest)
         end
       end
     end
@@ -63,7 +58,7 @@ describe Mongo::ReadPreference do
       let(:read_pref) { described_class.get }
 
       it 'returns a read preference of class Primary' do
-        expect(read_pref).to be_a(Mongo::ReadPreference::Primary)
+        expect(read_pref).to be_a(Mongo::ServerSelector::Primary)
       end
     end
 
@@ -74,24 +69,6 @@ describe Mongo::ReadPreference do
         expect(read_pref.tag_sets).to eq(tag_sets)
       end
 
-    end
-
-    context 'local threshold ms provided' do
-
-      let(:local_threshold_ms) { 100 }
-
-      it 'sets local_threshold_ms on the read preference object' do
-        expect(read_pref.local_threshold_ms).to eq(local_threshold_ms)
-      end
-    end
-
-    context 'server selection timeout ms' do
-
-      let(:server_selection_timeout_ms) { 100 }
-
-      it 'sets server_selection_timeout_ms on the read preference object' do
-        expect(read_pref.server_selection_timeout_ms).to eq(server_selection_timeout_ms)
-      end
     end
   end
 end

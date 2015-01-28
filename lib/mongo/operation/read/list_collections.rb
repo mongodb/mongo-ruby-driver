@@ -36,6 +36,7 @@ module Mongo
         include Executable
         include Specifiable
         include Limited
+        include ReadPreferrable
 
         # Execute the listCollections command operation.
         #
@@ -58,13 +59,17 @@ module Mongo
 
         def execute_message(context)
           context.with_connection do |connection|
-            Result.new(connection.dispatch([ message ]))
+            Result.new(connection.dispatch([ message(context) ]))
           end
         end
 
-        def message
-          sel = (selector || {}).merge(listCollections: 1, filter: { name: { '$not' => /system\.|\$/ } })
-          Protocol::Query.new(db_name, Database::COMMAND, sel, options)
+        def selector
+          (spec[SELECTOR] || {}).merge(listCollections: 1,
+                                       filter: { name: { '$not' => /system\.|\$/ } })
+        end
+
+        def query_coll
+          Database::COMMAND
         end
       end
     end

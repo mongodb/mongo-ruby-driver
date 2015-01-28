@@ -111,6 +111,11 @@ module Mongo
       # @since 2.0.0
       WRITE_CONCERN = :write_concern.freeze
 
+      # The field name for the read preference.
+      #
+      # @since 2.0.0
+      READ = :read.freeze
+
       # @return [ Hash ] spec The specification for the operation.
       attr_reader :spec
 
@@ -357,6 +362,18 @@ module Mongo
       # @since 2.0.0
       def write_concern
         @spec[WRITE_CONCERN] || WriteConcern::Mode.get(WriteConcern::Mode::DEFAULT)
+      end
+
+      # The read preference for this operation.
+      #
+      # @example Get the read preference.
+      #   specifiable.read
+      #
+      # @return [ Mongo::ServerSelector ] The read preference.
+      #
+      # @since 2.0.0
+      def read
+        @spec[READ]
       end
     end
   end

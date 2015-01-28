@@ -76,13 +76,6 @@ describe Mongo::Operation::Write::Command::Insert do
 
     context 'server' do
 
-      context 'when the type is secondary' do
-
-        it 'throws an error' do
-          expect{ op.execute(secondary_context) }.to raise_exception
-        end
-      end
-
       context 'message' do
         let(:expected_selector) do
           { :documents     => documents,
@@ -93,7 +86,7 @@ describe Mongo::Operation::Write::Command::Insert do
         end
 
         it 'creates a query wire protocol message with correct specs' do
-          allow_any_instance_of(Mongo::ReadPreference::Primary).to receive(:server) do
+          allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:server) do
             primary_server
           end
 
