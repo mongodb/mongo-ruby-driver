@@ -11,7 +11,7 @@ describe Mongo::Auth::LDAP do
   end
 
   let(:connection) do
-    Mongo::Connection.new(server)
+    Mongo::Server::Connection.new(server)
   end
 
   let(:user) do

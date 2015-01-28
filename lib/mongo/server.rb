@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/server/connection'
+require 'mongo/server/connection_pool'
 require 'mongo/server/context'
 require 'mongo/server/description'
 require 'mongo/server/monitor'
@@ -135,7 +137,7 @@ module Mongo
     #
     # @since 2.0.0
     def pool
-      @pool ||= Pool.get(self)
+      @pool ||= ConnectionPool.get(self)
     end
 
     # Determine if the provided tags are a subset of the server's tags.

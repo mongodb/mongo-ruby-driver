@@ -7,4 +7,8 @@ module Mongo
 
   # Base error class for all errors coming from the server.
   class OperationError < MongoError; end
+
+  class SocketError < StandardError; end
+  class SocketTimeoutError < SocketError; end
+  class ConnectionError < StandardError; end
 end

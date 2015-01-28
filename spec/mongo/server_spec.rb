@@ -102,7 +102,7 @@ describe Mongo::Server do
     end
 
     it 'returns the connection pool for the server' do
-      expect(pool).to be_a(Mongo::Pool)
+      expect(pool).to be_a(Mongo::Server::ConnectionPool)
     end
   end
 
