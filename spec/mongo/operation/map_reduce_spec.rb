@@ -118,7 +118,7 @@ describe Mongo::Operation::MapReduce do
         op.execute(authorized_primary.context)
       end
 
-      it 'returns the reponse' do
+      it 'returns the response' do
         expect(response).to be_successful
       end
     end

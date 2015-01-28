@@ -58,10 +58,9 @@ module Mongo
       #
       # @since 2.0.0
       def execute(context)
-        if context.secondary? && !secondary_ok?
-          warn "Database command '#{selector.keys.first}' rerouted to primary server"
-          context = Mongo::ServerSelector.get(mode: :primary).select_server(context.cluster)
-        end
+        raise NeedPrimaryServer.new unless context.server.standalone? ||
+                                             context.server.primary? ||
+                                             secondary_ok?
         execute_message(context)
       end
 
