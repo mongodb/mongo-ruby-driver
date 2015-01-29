@@ -6,7 +6,7 @@ describe Mongo::Server::Monitor do
     Mongo::Address.new('127.0.0.1:27017')
   end
 
-  describe '#check!' do
+  describe '#scan!' do
 
     context 'when the ismaster command succeeds' do
 
@@ -19,7 +19,7 @@ describe Mongo::Server::Monitor do
       end
 
       before do
-        monitor.check!
+        monitor.scan!
       end
 
       it 'updates the server description' do
@@ -44,7 +44,7 @@ describe Mongo::Server::Monitor do
         end
 
         before do
-          monitor.check!
+          monitor.scan!
         end
 
         it 'keeps the server unknown' do
@@ -73,7 +73,7 @@ describe Mongo::Server::Monitor do
 
         before do
           expect(socket).to receive(:write).and_raise(SocketError)
-          monitor.check!
+          monitor.scan!
         end
 
         it 'keeps the server unknown' do
@@ -116,7 +116,7 @@ describe Mongo::Server::Monitor do
     end
   end
 
-  describe '#run' do
+  describe '#run!' do
 
     let(:server) do
       Mongo::Server.new(address, Mongo::Event::Listeners.new)
@@ -127,7 +127,7 @@ describe Mongo::Server::Monitor do
     end
 
     before do
-      monitor.run
+      monitor.run!
       sleep(1)
     end
 

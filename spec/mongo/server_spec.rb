@@ -112,15 +112,8 @@ describe Mongo::Server do
       described_class.new(address, listeners)
     end
 
-    it 'removed the monitor thread instance' do
-      s = described_class.new(address, listeners)
-      monitor_count = Mongo::Server::Monitor.threads.size
-      s.disconnect!
-      expect(Mongo::Server::Monitor.threads.size).to eq(monitor_count - 1)
-    end
-
     it 'stops the monitor instance' do
-      expect_any_instance_of(Mongo::Server::Monitor).to receive(:stop).and_return(true)
+      expect(server.instance_variable_get(:@monitor)).to receive(:stop!).and_return(true)
       server.disconnect!
     end
   end

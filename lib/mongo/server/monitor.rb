@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'weakref'
 require 'mongo/server/monitor/connection'
 
 module Mongo
@@ -49,15 +50,15 @@ module Mongo
       # @return [ Mongo::Connection ] connection The connection to use.
       attr_reader :connection
 
-      # Force the monitor to immediately do a check of it's server.
+      # Force the monitor to immediately do a check of its server.
       #
-      # @example Force a check.
-      #   monitor.check!
+      # @example Force a scan.
+      #   monitor.scan!
       #
       # @return [ Description ] The updated description.
       #
       # @since 2.0.0
-      def check!
+      def scan!
         description.update!(*ismaster)
       end
 
@@ -85,7 +86,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(address, description, options = {})
-        @description = description
+        @description = WeakRef.new(description)
         @options = options.freeze
         @connection = Connection.new(address, options)
       end
@@ -99,11 +100,15 @@ module Mongo
       # @return [ Thread ] The thread the monitor runs on.
       #
       # @since 2.0.0
-      def run
-        Monitor.threads[object_id] = Thread.new(heartbeat_frequency) do |i|
+      def run!
+        @thread = Thread.new(heartbeat_frequency) do |i|
           loop do
             sleep(i)
-            check!
+            if description.weakref_alive?
+              check!
+            else
+              stop!
+            end
           end
         end
       end
@@ -112,14 +117,13 @@ module Mongo
       # taking memory and sending commands to the connection.
       #
       # @example Stop the monitor.
-      #   monitor.stop
+      #   monitor.stop!
       #
       # @return [ Boolean ] Is the Thread stopped?
       #
       # @since 2.0.0
-      def stop
-        thread = Monitor.threads.delete(object_id)
-        thread.kill && thread.stop?
+      def stop!
+        @thread.kill && @thread.stop?
       end
 
       private
@@ -137,23 +141,6 @@ module Mongo
           log_debug([ e.message ])
           connection.disconnect!
           return {}, calculate_round_trip_time(start)
-        end
-      end
-
-      class << self
-
-        # For the purposes of cleanup, we store all monitor threads in a global
-        # array to be able to shut them down on spec cleanup or GC when server
-        # is garbage collected.
-        #
-        # @example Get all the monitor threads.
-        #   Monitor.threads
-        #
-        # @return [ Hash<Integer, Thread> ] The monitor threads.
-        #
-        # @since 2.0.0
-        def threads
-          @threads ||= {}
         end
       end
     end

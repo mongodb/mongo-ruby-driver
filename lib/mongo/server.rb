@@ -94,7 +94,7 @@ module Mongo
       context.with_connection do |connection|
         connection.disconnect!
       end
-      @monitor.stop and true
+      @monitor.stop! and true
     end
 
     # Instantiate a new server object. Will start the background refresh and
@@ -113,8 +113,8 @@ module Mongo
       @options = options.freeze
       @description = Description.new(address, {}, event_listeners)
       @monitor = Monitor.new(address, description, options)
-      @monitor.check!
-      @monitor.run
+      @monitor.scan!
+      @monitor.run!
     end
 
     # Get a pretty printed server inspection.
