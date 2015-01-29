@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'weakref'
 require 'mongo/server/monitor/connection'
 
 module Mongo
