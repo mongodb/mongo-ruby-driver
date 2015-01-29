@@ -15,7 +15,7 @@ describe Mongo::Server::Monitor do
       end
 
       let(:monitor) do
-        described_class.new(server)
+        described_class.new(address, server.description)
       end
 
       before do
@@ -40,7 +40,7 @@ describe Mongo::Server::Monitor do
         end
 
         let(:monitor) do
-          described_class.new(server)
+          described_class.new(bad_address, server.description)
         end
 
         before do
@@ -63,7 +63,7 @@ describe Mongo::Server::Monitor do
         end
 
         let(:monitor) do
-          described_class.new(server)
+          described_class.new(bad_address, server.description)
         end
 
         let(:socket) do
@@ -96,7 +96,7 @@ describe Mongo::Server::Monitor do
     context 'when an option is provided' do
 
       let(:monitor) do
-        described_class.new(server, :heartbeat_frequency => 5)
+        described_class.new(address, server.description, :heartbeat_frequency => 5)
       end
 
       it 'returns the option' do
@@ -107,7 +107,7 @@ describe Mongo::Server::Monitor do
     context 'when no option is provided' do
 
       let(:monitor) do
-        described_class.new(server)
+        described_class.new(address, server.description)
       end
 
       it 'defaults to 5' do
@@ -123,7 +123,7 @@ describe Mongo::Server::Monitor do
     end
 
     let(:monitor) do
-      described_class.new(server, :heartbeat_frequency => 1)
+      described_class.new(address, server.description, :heartbeat_frequency => 1)
     end
 
     before do

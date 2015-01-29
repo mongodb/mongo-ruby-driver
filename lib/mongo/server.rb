@@ -111,8 +111,8 @@ module Mongo
     def initialize(address, event_listeners, options = {})
       @address = address
       @options = options.freeze
-      @monitor = Monitor.new(self, options)
-      @description = Description.new(@address, {}, event_listeners)
+      @description = Description.new(address, {}, event_listeners)
+      @monitor = Monitor.new(address, description, options)
       @monitor.check!
       @monitor.run
     end

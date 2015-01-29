@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'weakref'
 require 'mongo/server/monitor/connection'
 
 module Mongo
@@ -39,10 +40,13 @@ module Mongo
       # @since 2.0.0
       ISMASTER = Protocol::Query.new(Database::ADMIN, Database::COMMAND, STATUS, :limit => -1)
 
-      # @return [ Mongo::Server ] The server the monitor refreshes.
-      attr_reader :server
+      # @return [ Mongo::Server::Description ] description The server
+      #   description the monitor refreshes.
+      attr_reader :description
+
       # @return [ Hash ] options The server options.
       attr_reader :options
+
       # @return [ Mongo::Connection ] connection The connection to use.
       attr_reader :connection
 
@@ -55,7 +59,7 @@ module Mongo
       #
       # @since 2.0.0
       def check!
-        server.description.update!(*ismaster)
+        description.update!(*ismaster)
       end
 
       # Get the refresh interval for the server. This will be defined via an option
@@ -74,16 +78,17 @@ module Mongo
       # Create the new server monitor.
       #
       # @example Create the server monitor.
-      #   Mongo::Server::Monitor.new(server, 5)
+      #   Mongo::Server::Monitor.new(address, description)
       #
-      # @param [ Mongo::Server ] server The server to refresh.
+      # @param [ Address ] address The address to connect to.
+      # @param [ Mongo::Server::Description ] server The server description to refresh.
       # @param [ Integer ] interval The refresh interval in seconds.
       #
       # @since 2.0.0
-      def initialize(server, options = {})
-        @server = server
+      def initialize(address, description, options = {})
+        @description = description
         @options = options.freeze
-        @connection = Monitor::Connection.new(server.address, options)
+        @connection = Connection.new(address, options)
       end
 
       # Runs the server monitor. Refreshing happens on a separate thread per
@@ -96,7 +101,7 @@ module Mongo
       #
       # @since 2.0.0
       def run
-        Monitor.threads[object_id] = Thread.new(heartbeat_frequency, server) do |i, s|
+        Monitor.threads[object_id] = Thread.new(heartbeat_frequency) do |i|
           loop do
             sleep(i)
             check!

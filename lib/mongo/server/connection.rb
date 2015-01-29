@@ -138,12 +138,12 @@ module Mongo
         # The message is constant.
         #
         # @since 2.0.0
-        MESSAGE = "Message exceeds allowed max message size."
+        MESSAGE = "Message exceeds allowed max message size.".freeze
 
         # Instantiate the new exception.
         #
         # @example Instantiate the exception.
-        #   Mongo::Connection::InvalidMessageSize.new(max)
+        #   Mongo::Server::Connection::InvalidMessageSize.new(max)
         #
         # @since 2.0.0
         def initialize(max_size = nil)
