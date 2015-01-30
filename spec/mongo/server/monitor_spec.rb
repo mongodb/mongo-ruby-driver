@@ -118,21 +118,53 @@ describe Mongo::Server::Monitor do
 
   describe '#run!' do
 
-    let(:server) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new)
+    context 'when the description has not been GCed' do
+
+      let(:server) do
+        Mongo::Server.new(address, Mongo::Event::Listeners.new)
+      end
+
+      let(:monitor) do
+        described_class.new(server.description, :heartbeat_frequency => 1)
+      end
+
+      before do
+        monitor.run!
+        sleep(1)
+      end
+
+      it 'refreshes the server on the provided interval' do
+        expect(server.description).to_not be_nil
+      end
     end
 
-    let(:monitor) do
-      described_class.new(server.description, :heartbeat_frequency => 1)
-    end
+    context 'when the description has been GCed' do
 
-    before do
-      monitor.run!
-      sleep(1)
-    end
+      let(:address) do
+        Mongo::Address.new('127.0.0.1:27017')
+      end
 
-    it 'refreshes the server on the provided interval' do
-      expect(server.description).to_not be_nil
+      let(:description) do
+         Mongo::Server::Description.new(address)
+      end
+
+      let(:monitor) do
+        described_class.new(description, :heartbeat_frequency => 1)
+      end
+
+      let(:weakref) do
+        monitor.instance_variable_get(:@description)
+      end
+
+      before do
+        expect(weakref).to receive(:weakref_alive?).and_return(false)
+      end
+
+      it 'stops the monitor' do
+        monitor.run!
+        sleep(1.5)
+        expect(monitor.instance_variable_get(:@thread)).to be_stop
+      end
     end
   end
 end
