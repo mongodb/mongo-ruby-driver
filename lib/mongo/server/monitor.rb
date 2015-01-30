@@ -80,15 +80,14 @@ module Mongo
       # @example Create the server monitor.
       #   Mongo::Server::Monitor.new(address, description)
       #
-      # @param [ Address ] address The address to connect to.
-      # @param [ Mongo::Server::Description ] server The server description to refresh.
+      # @param [ Server::Description ] server The server description to refresh.
       # @param [ Integer ] interval The refresh interval in seconds.
       #
       # @since 2.0.0
-      def initialize(address, description, options = {})
+      def initialize(description, options = {})
         @description = WeakRef.new(description)
         @options = options.freeze
-        @connection = Connection.new(address, options)
+        @connection = Connection.new(description.address, options)
       end
 
       # Runs the server monitor. Refreshing happens on a separate thread per

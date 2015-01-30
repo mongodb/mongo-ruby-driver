@@ -112,7 +112,7 @@ module Mongo
       @address = address
       @options = options.freeze
       @description = Description.new(address, {}, event_listeners)
-      @monitor = Monitor.new(address, description, options)
+      @monitor = Monitor.new(description, options)
       @monitor.scan!
       @monitor.run!
     end
