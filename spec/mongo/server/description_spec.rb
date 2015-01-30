@@ -26,10 +26,6 @@ describe Mongo::Server::Description do
     }
   end
 
-  let(:listeners) do
-    Mongo::Event::Listeners.new
-  end
-
   let(:address) do
     Mongo::Address.new('127.0.0.1:27017')
   end
@@ -368,7 +364,7 @@ describe Mongo::Server::Description do
   describe '#round_trip_time' do
 
     let(:description) do
-      described_class.new(address, { 'secondary' => false }, listeners, 4.5)
+      described_class.new(address, { 'secondary' => false }, 4.5)
     end
 
     it 'defaults to 0' do

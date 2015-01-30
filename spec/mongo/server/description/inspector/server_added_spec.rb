@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Server::Description::Inspection::ServerAdded do
+describe Mongo::Server::Description::Inspector::ServerAdded do
 
   let(:listeners) do
     Mongo::Event::Listeners.new

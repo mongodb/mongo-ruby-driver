@@ -18,20 +18,12 @@ describe 'Server Discovery and Monitoring' do
         # @since 2.0.0
         class Mongo::Server
 
-          # Provides the ability to get and set the description from outside the class.
-          attr_accessor :description
-
-          # Provide a reader for event listeners to pass them to new
-          # descriptions.
-          attr_reader :event_listeners
-
           # The contructor keeps the same API, but does not instantiate a
           # monitor and run it.
           def initialize(address, event_listeners, options = {})
-            @event_listeners = event_listeners
             @address = address
             @options = options.freeze
-            @description = Description.new(@address, {}, event_listeners)
+            @monitor = Monitor.new(address, event_listeners, options)
           end
 
           # Disconnect simply needs to return true since we have no monitor and
@@ -55,8 +47,7 @@ describe 'Server Discovery and Monitoring' do
           def initialize(address, event_listeners, options = {})
             @address = address
             @options = options.freeze
-            @description = Description.new(address, {}, event_listeners)
-            @monitor = Monitor.new(description, options)
+            @monitor = Monitor.new(address, event_listeners, options)
             @monitor.scan!
             @monitor.run!
           end
@@ -81,7 +72,9 @@ describe 'Server Discovery and Monitoring' do
               # For each response in the phase, we need to change that server's
               # description.
               server = find_server(@client, response.address)
-              server.description.update!(response.ismaster, 0.5)
+              monitor = server.instance_variable_get(:@monitor)
+              description = monitor.inspector.run(server.description, response.ismaster, 0.5)
+              monitor.instance_variable_set(:@description, description)
             end
           end
 

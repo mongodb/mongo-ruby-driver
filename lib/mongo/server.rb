@@ -31,13 +31,17 @@ module Mongo
     # @return [ String ] The configured address for the server.
     attr_reader :address
 
-    # @return [ Server::Description ] The description of the server.
-    attr_reader :description
+    # @return [ Monitor ] monitor The server monitor.
+    attr_reader :monitor
 
     # @return [ Hash ] The options hash.
     attr_reader :options
 
-    def_delegators :@description,
+    # Get the description from the monitor.
+    def_delegators :monitor, :description
+
+    # Delegate convenience methods to the monitor description.
+    def_delegators :description,
                    :arbiter?,
                    :features,
                    :ghost?,
@@ -111,8 +115,7 @@ module Mongo
     def initialize(address, event_listeners, options = {})
       @address = address
       @options = options.freeze
-      @description = Description.new(address, {}, event_listeners)
-      @monitor = Monitor.new(description, options)
+      @monitor = Monitor.new(address, event_listeners, options)
       @monitor.scan!
       @monitor.run!
     end

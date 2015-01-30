@@ -41,10 +41,10 @@ describe Mongo::Cluster::Topology::Standalone do
     end
 
     before do
-      mongos.instance_variable_set(:@description, mongos_description)
-      standalone.instance_variable_set(:@description, standalone_description)
-      standalone_two.instance_variable_set(:@description, standalone_description)
-      replica_set.instance_variable_set(:@description, replica_set_description)
+      mongos.monitor.instance_variable_set(:@description, mongos_description)
+      standalone.monitor.instance_variable_set(:@description, standalone_description)
+      standalone_two.monitor.instance_variable_set(:@description, standalone_description)
+      replica_set.monitor.instance_variable_set(:@description, replica_set_description)
     end
 
     let(:servers) do

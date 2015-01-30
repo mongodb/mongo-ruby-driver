@@ -41,10 +41,10 @@ describe Mongo::Cluster::Topology::ReplicaSet do
     end
 
     before do
-      mongos.instance_variable_set(:@description, mongos_description)
-      standalone.instance_variable_set(:@description, standalone_description)
-      replica_set.instance_variable_set(:@description, replica_set_description)
-      replica_set_two.instance_variable_set(:@description, replica_set_two_description)
+      mongos.monitor.instance_variable_set(:@description, mongos_description)
+      standalone.monitor.instance_variable_set(:@description, standalone_description)
+      replica_set.monitor.instance_variable_set(:@description, replica_set_description)
+      replica_set_two.monitor.instance_variable_set(:@description, replica_set_two_description)
     end
 
     context 'when no replica set name is provided' do

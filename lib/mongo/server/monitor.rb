@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'weakref'
 require 'mongo/server/monitor/connection'
 
 module Mongo
@@ -40,15 +39,18 @@ module Mongo
       # @since 2.0.0
       ISMASTER = Protocol::Query.new(Database::ADMIN, Database::COMMAND, STATUS, :limit => -1)
 
-      # @return [ Mongo::Server::Description ] description The server
+      # @return [ Mongo::Connection ] connection The connection to use.
+      attr_reader :connection
+
+      # @return [ Server::Description ] description The server
       #   description the monitor refreshes.
       attr_reader :description
 
+      # @return [ Description::Inspector ] inspector The description inspector.
+      attr_reader :inspector
+
       # @return [ Hash ] options The server options.
       attr_reader :options
-
-      # @return [ Mongo::Connection ] connection The connection to use.
-      attr_reader :connection
 
       # Force the monitor to immediately do a check of its server.
       #
@@ -59,7 +61,7 @@ module Mongo
       #
       # @since 2.0.0
       def scan!
-        description.update!(*ismaster)
+        @description = inspector.run(description, *ismaster)
       end
 
       # Get the refresh interval for the server. This will be defined via an option
@@ -78,16 +80,18 @@ module Mongo
       # Create the new server monitor.
       #
       # @example Create the server monitor.
-      #   Mongo::Server::Monitor.new(address, description)
+      #   Mongo::Server::Monitor.new(address, listeners)
       #
-      # @param [ Server::Description ] server The server description to refresh.
-      # @param [ Integer ] interval The refresh interval in seconds.
+      # @param [ Address ] address The address to monitor.
+      # @param [ Event::Listeners ] listeners The event listeners.
+      # @param [ Hash ] options The options.
       #
       # @since 2.0.0
-      def initialize(description, options = {})
-        @description = WeakRef.new(description)
+      def initialize(address, listeners, options = {})
+        @description = Description.new(address, {})
+        @inspector = Description::Inspector.new(listeners)
         @options = options.freeze
-        @connection = Connection.new(description.address, options)
+        @connection = Connection.new(address, options)
       end
 
       # Runs the server monitor. Refreshing happens on a separate thread per
@@ -103,11 +107,7 @@ module Mongo
         @thread = Thread.new(heartbeat_frequency) do |i|
           loop do
             sleep(i)
-            if description.weakref_alive?
-              check!
-            else
-              stop!
-            end
+            scan!
           end
         end
       end

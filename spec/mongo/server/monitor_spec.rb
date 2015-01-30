@@ -6,16 +6,16 @@ describe Mongo::Server::Monitor do
     Mongo::Address.new('127.0.0.1:27017')
   end
 
+  let(:listeners) do
+    Mongo::Event::Listeners.new
+  end
+
   describe '#scan!' do
 
     context 'when the ismaster command succeeds' do
 
-      let(:server) do
-        Mongo::Server.new(address, Mongo::Event::Listeners.new)
-      end
-
       let(:monitor) do
-        described_class.new(server.description)
+        described_class.new(address, listeners)
       end
 
       before do
@@ -23,7 +23,7 @@ describe Mongo::Server::Monitor do
       end
 
       it 'updates the server description' do
-        expect(server.description).to be_standalone
+        expect(monitor.description).to be_standalone
       end
     end
 
@@ -35,12 +35,8 @@ describe Mongo::Server::Monitor do
           Mongo::Address.new('127.0.0.1:27050')
         end
 
-        let(:server) do
-          Mongo::Server.new(bad_address, Mongo::Event::Listeners.new)
-        end
-
         let(:monitor) do
-          described_class.new(server.description)
+          described_class.new(bad_address, listeners)
         end
 
         before do
@@ -48,7 +44,7 @@ describe Mongo::Server::Monitor do
         end
 
         it 'keeps the server unknown' do
-          expect(server).to be_unknown
+          expect(monitor.description).to be_unknown
         end
       end
 
@@ -58,12 +54,8 @@ describe Mongo::Server::Monitor do
           Mongo::Address.new('127.0.0.1:27017')
         end
 
-        let(:server) do
-          Mongo::Server.new(bad_address, Mongo::Event::Listeners.new)
-        end
-
         let(:monitor) do
-          described_class.new(server.description)
+          described_class.new(bad_address, listeners)
         end
 
         let(:socket) do
@@ -77,7 +69,7 @@ describe Mongo::Server::Monitor do
         end
 
         it 'keeps the server unknown' do
-          expect(server).to be_unknown
+          expect(monitor.description).to be_unknown
         end
 
         it 'disconnects the connection' do
@@ -89,14 +81,10 @@ describe Mongo::Server::Monitor do
 
   describe '#heartbeat_frequency' do
 
-    let(:server) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new)
-    end
-
     context 'when an option is provided' do
 
       let(:monitor) do
-        described_class.new(server.description, :heartbeat_frequency => 5)
+        described_class.new(address, listeners, :heartbeat_frequency => 5)
       end
 
       it 'returns the option' do
@@ -107,7 +95,7 @@ describe Mongo::Server::Monitor do
     context 'when no option is provided' do
 
       let(:monitor) do
-        described_class.new(server.description)
+        described_class.new(address, listeners)
       end
 
       it 'defaults to 5' do
@@ -118,53 +106,17 @@ describe Mongo::Server::Monitor do
 
   describe '#run!' do
 
-    context 'when the description has not been GCed' do
-
-      let(:server) do
-        Mongo::Server.new(address, Mongo::Event::Listeners.new)
-      end
-
-      let(:monitor) do
-        described_class.new(server.description, :heartbeat_frequency => 1)
-      end
-
-      before do
-        monitor.run!
-        sleep(1)
-      end
-
-      it 'refreshes the server on the provided interval' do
-        expect(server.description).to_not be_nil
-      end
+    let(:monitor) do
+      described_class.new(address, listeners, :heartbeat_frequency => 1)
     end
 
-    context 'when the description has been GCed' do
+    before do
+      monitor.run!
+      sleep(1)
+    end
 
-      let(:address) do
-        Mongo::Address.new('127.0.0.1:27017')
-      end
-
-      let(:description) do
-         Mongo::Server::Description.new(address)
-      end
-
-      let(:monitor) do
-        described_class.new(description, :heartbeat_frequency => 1)
-      end
-
-      let(:weakref) do
-        monitor.instance_variable_get(:@description)
-      end
-
-      before do
-        expect(weakref).to receive(:weakref_alive?).and_return(false)
-      end
-
-      it 'stops the monitor' do
-        monitor.run!
-        sleep(1.5)
-        expect(monitor.instance_variable_get(:@thread)).to be_stop
-      end
+    it 'refreshes the server on the provided interval' do
+      expect(monitor.description).to_not be_nil
     end
   end
 end
