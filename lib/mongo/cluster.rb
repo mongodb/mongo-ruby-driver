@@ -81,14 +81,13 @@ module Mongo
     #   Mongo::Cluster.new(["127.0.0.1:27017"])
     #
     # @param [ Array<String> ] seeds The addresses of the configured servers.
-    # @param [ Event::Listeners ] event_listeners The event listeners.
     # @param [ Hash ] options The options.
     #
     # @since 2.0.0
-    def initialize(seeds, event_listeners, options = {})
+    def initialize(seeds, options = {})
       @addresses = []
       @servers = []
-      @event_listeners = event_listeners
+      @event_listeners = Event::Listeners.new
       @options = options.freeze
       @topology = Topology.initial(seeds, options)
 
