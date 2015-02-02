@@ -82,7 +82,7 @@ describe Mongo::Operation::Write::Delete do
           delete: document,
           db_name: TEST_DB,
           coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+          write_concern: Mongo::WriteConcern.get(:w => 1)
         })
       end
 
@@ -122,7 +122,7 @@ describe Mongo::Operation::Write::Delete do
           delete: document,
           db_name: TEST_DB,
           coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+          write_concern: Mongo::WriteConcern.get(:w => 1)
         })
       end
 

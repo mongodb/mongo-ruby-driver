@@ -19,12 +19,7 @@ module Mongo
     # interface to get a proper object from options.
     #
     # @since 2.0.0
-    class Mode
-
-      # The default write concern is to acknowledge on a single server.
-      #
-      # @since 2.0.0
-      DEFAULT = { :w => 1 }.freeze
+    module Normalizable
 
       # @return [ Hash ] The write concern options.
       attr_reader :options
@@ -34,7 +29,7 @@ module Mongo
       # @api private
       #
       # @example Instantiate a new write concern mode.
-      #   Mongo::WriteConcern::Mode.new(:w => 1)
+      #   Mongo::WriteConcern.new(:w => 1)
       #
       # @param [ Hash ] options The options to instantiate with.
       #
@@ -71,51 +66,6 @@ module Mongo
         options.reduce({}) do |options, (key, value)|
           options[key] = value.is_a?(Symbol) ? value.to_s : value
           options
-        end
-      end
-
-      class << self
-
-        # Get a write concern mode for the provided options.
-        #
-        # @example Get a write concern mode.
-        #   Mongo::WriteConcern::Mode.get(:w => 1)
-        #
-        # @param [ Hash ] options The options to instantiate with.
-        #
-        # @option options :w [ Integer, String ] The number of servers or the
-        #   custom mode to acknowledge.
-        # @option options :j [ true, false ] Whether to acknowledge a write to
-        #   the journal.
-        # @option options :fsync [ true, false ] Should the write be synced to
-        #   disc.
-        # @option options :wtimeout [ Integer ] The number of milliseconds to
-        #   wait for acknowledgement before raising an error.
-        #
-        # @return [ Mongo::WriteConcern::Mode ] The appropriate server.
-        #
-        # @since 2.0.0
-        def get(options)
-          if unacknowledged?(options)
-            Unacknowledged.new(options)
-          else
-            Acknowledged.new(options || DEFAULT)
-          end
-        end
-
-        private
-
-        # Determine if the options are for an unacknowledged write concern.
-        #
-        # @api private
-        #
-        # @param [ Hash ] options The options to check.
-        #
-        # @return [ true, false ] If the options are unacknowledged.
-        #
-        # @since 2.0.0
-        def unacknowledged?(options)
-          options && (options[:w] == 0 || options[:w] == -1)
         end
       end
     end

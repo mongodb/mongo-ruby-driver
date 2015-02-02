@@ -300,7 +300,7 @@ describe Mongo::Operation::Write::BulkDelete do
           deletes: documents,
           db_name: TEST_DB,
           coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern::Mode.get(w: 1)
+          write_concern: Mongo::WriteConcern.get(w: 1)
         })
       end
 
@@ -324,7 +324,7 @@ describe Mongo::Operation::Write::BulkDelete do
           deletes: documents,
           db_name: TEST_DB,
           coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern::Mode.get(w: 1)
+          write_concern: Mongo::WriteConcern.get(w: 1)
         })
       end
 
@@ -367,7 +367,7 @@ describe Mongo::Operation::Write::BulkDelete do
         context 'when write concern is acknowledged' do
 
           let(:write_concern) do
-            Mongo::WriteConcern::Mode.get(w: 1)
+            Mongo::WriteConcern.get(w: 1)
           end
         
           it 'aborts after first error' do
@@ -379,7 +379,7 @@ describe Mongo::Operation::Write::BulkDelete do
         context 'when write concern is unacknowledged' do
           
           let(:write_concern) do
-            Mongo::WriteConcern::Mode.get(w: 0)
+            Mongo::WriteConcern.get(w: 0)
           end
       
           it 'aborts after first error' do
@@ -416,7 +416,7 @@ describe Mongo::Operation::Write::BulkDelete do
         context 'when write concern is acknowledged' do
 
           let(:write_concern) do
-            Mongo::WriteConcern::Mode.get(w: 1)
+            Mongo::WriteConcern.get(w: 1)
           end
         
           it 'does not abort after first error' do
@@ -428,7 +428,7 @@ describe Mongo::Operation::Write::BulkDelete do
         context 'when write concern is unacknowledged' do
           
           let(:write_concern) do
-            Mongo::WriteConcern::Mode.get(w: 0)
+            Mongo::WriteConcern.get(w: 0)
           end
       
           it 'does not abort after first error' do
@@ -450,7 +450,7 @@ describe Mongo::Operation::Write::BulkDelete do
             deletes: documents,
             db_name: db_name,
             coll_name: coll_name,
-            write_concern: Mongo::WriteConcern::Mode.get(w: 1),
+            write_concern: Mongo::WriteConcern.get(w: 1),
             ordered: false
           })
       end

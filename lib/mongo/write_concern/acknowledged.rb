@@ -19,7 +19,8 @@ module Mongo
     # appropriate options on each write operation.
     #
     # @since 2.0.0
-    class Acknowledged < Mode
+    class Acknowledged
+      include Normalizable
 
       # Get the get last error command for the concern.
       #
@@ -30,7 +31,7 @@ module Mongo
       #
       # @since 2.0.0
       def get_last_error
-        @get_last_error ||= { :getlasterror => 1 }.merge(normalize(options))
+        @get_last_error ||= { GET_LAST_ERROR => 1 }.merge(normalize(options))
       end
     end
   end

@@ -359,7 +359,7 @@ describe Mongo::Operation::Write::BulkInsert do
       context 'when write concern is acknowledged' do
 
         let(:write_concern) do
-          Mongo::WriteConcern::Mode.get(w: 1)
+          Mongo::WriteConcern.get(w: 1)
         end
 
         context 'when the insert fails' do
@@ -374,7 +374,7 @@ describe Mongo::Operation::Write::BulkInsert do
       context 'when write concern is unacknowledged' do
 
         let(:write_concern) do
-          Mongo::WriteConcern::Mode.get(w: 0)
+          Mongo::WriteConcern.get(w: 0)
         end
 
         context 'when the insert fails' do
@@ -409,7 +409,7 @@ describe Mongo::Operation::Write::BulkInsert do
       context 'when write concern is acknowledged' do
 
         let(:write_concern) do
-          Mongo::WriteConcern::Mode.get(w: 1)
+          Mongo::WriteConcern.get(w: 1)
         end
 
         context 'when the insert fails' do
@@ -424,7 +424,7 @@ describe Mongo::Operation::Write::BulkInsert do
       context 'when write concern is unacknowledged' do
 
         let(:write_concern) do
-          Mongo::WriteConcern::Mode.get(w: 0)
+          Mongo::WriteConcern.get(w: 0)
         end
 
         context 'when the insert fails' do
@@ -444,7 +444,7 @@ describe Mongo::Operation::Write::BulkInsert do
             documents: documents,
             db_name: db_name,
             coll_name: coll_name,
-            write_concern: Mongo::WriteConcern::Mode.get(w: 0),
+            write_concern: Mongo::WriteConcern.get(w: 0),
             ordered: false
           })
       end

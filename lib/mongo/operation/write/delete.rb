@@ -36,7 +36,7 @@ module Mongo
       #   the delete should be executed.
       # @option spec :coll_name [ String ] The name of the collection on which
       #   the delete should be executed.
-      # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern
+      # @option spec :write_concern [ Mongo::WriteConcern ] The write concern
       #   for this operation.
       # @option spec :ordered [ true, false ] Whether the operations should be
       #   executed in order.

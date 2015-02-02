@@ -50,7 +50,7 @@ module Mongo
       @ordered = !!options[:ordered]
       @collection = collection
       if options[:write_concern]
-        @write_concern = WriteConcern::Mode.get(options[:write_concern])
+        @write_concern = WriteConcern.get(options[:write_concern])
       else
         @write_concern = collection.write_concern
       end

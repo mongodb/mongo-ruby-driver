@@ -357,11 +357,11 @@ module Mongo
       # @example Get the write concern.
       #   specifiable.write_concern
       #
-      # @return [ Mongo::WriteConcern::Mode ] The write concern.
+      # @return [ Mongo::WriteConcern ] The write concern.
       #
       # @since 2.0.0
       def write_concern
-        @spec[WRITE_CONCERN] || WriteConcern::Mode.get(WriteConcern::Mode::DEFAULT)
+        @spec[WRITE_CONCERN] || WriteConcern.get(WriteConcern::DEFAULT)
       end
 
       # The read preference for this operation.

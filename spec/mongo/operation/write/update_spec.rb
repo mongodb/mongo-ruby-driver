@@ -13,7 +13,7 @@ describe Mongo::Operation::Write::Update do
     { :update        => document,
       :db_name       => TEST_DB,
       :coll_name     => TEST_COLL,
-      :write_concern => Mongo::WriteConcern::Mode.get(:w => 1),
+      :write_concern => Mongo::WriteConcern.get(:w => 1),
       :ordered       => true
     }
   end
@@ -54,7 +54,7 @@ describe Mongo::Operation::Write::Update do
           { :update        => other_doc,
             :db_name       => TEST_DB,
             :coll_name     => TEST_COLL,
-            :write_concern => Mongo::WriteConcern::Mode.get(:w => 1),
+            :write_concern => Mongo::WriteConcern.get(:w => 1),
             :ordered       => true
           }
         end
@@ -88,7 +88,7 @@ describe Mongo::Operation::Write::Update do
           update: document,
           db_name: TEST_DB,
           coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+          write_concern: Mongo::WriteConcern.get(:w => 1)
         })
       end
 
@@ -128,7 +128,7 @@ describe Mongo::Operation::Write::Update do
           update: document,
           db_name: TEST_DB,
           coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern::Mode.get(:w => 1)
+          write_concern: Mongo::WriteConcern.get(:w => 1)
         })
       end
 

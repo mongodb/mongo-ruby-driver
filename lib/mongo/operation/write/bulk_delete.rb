@@ -38,7 +38,7 @@ module Mongo
       #   the delete should be executed.
       # @option spec :coll_name [ String ] The name of the collection on which
       #   the delete should be executed.
-      # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern
+      # @option spec :write_concern [ Mongo::WriteConcern ] The write concern
       #   for this operation.
       # @option spec :ordered [ true, false ] Whether the operations should be
       #   executed in order.
@@ -79,7 +79,7 @@ module Mongo
         # @since 2.0.0
         def write_concern(wc = nil)
           if wc
-            self.class.new(spec.merge(write_concern: WriteConcern::Mode.get(wc)))
+            self.class.new(spec.merge(write_concern: WriteConcern.get(wc)))
           else
             spec[WRITE_CONCERN]
           end
@@ -125,7 +125,7 @@ module Mongo
 
         def gle
           gle_message = ( ordered? && write_concern.get_last_error.nil? ) ?
-                           Mongo::WriteConcern::Mode.get(:w => 1).get_last_error :
+                           Mongo::WriteConcern.get(:w => 1).get_last_error :
                            write_concern.get_last_error
           if gle_message
             Protocol::Query.new(

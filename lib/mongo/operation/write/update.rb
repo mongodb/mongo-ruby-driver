@@ -42,7 +42,7 @@ module Mongo
       #   the query should be run.
       # @option spec :coll_name [ String ] The name of the collection on which
       #   the query should be run.
-      # @option spec :write_concern [ Mongo::WriteConcern::Mode ] The write concern.
+      # @option spec :write_concern [ Mongo::WriteConcern ] The write concern.
       # @option spec :options [ Hash ] Options for the command, if it ends up being a
       #   write command.
       #

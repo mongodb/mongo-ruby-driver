@@ -2,7 +2,7 @@ shared_context 'operation' do
 
   let(:db_name) { TEST_DB }
   let(:coll_name) { TEST_COLL }
-  let(:write_concern) { Mongo::WriteConcern::Mode.get(:w => 1) }
+  let(:write_concern) { Mongo::WriteConcern.get(:w => 1) }
   let(:options) { {} }
 
   # Server doubles
