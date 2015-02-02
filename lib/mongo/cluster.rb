@@ -158,6 +158,21 @@ module Mongo
       addresses.reject!{ |addr| addr == address }
     end
 
+    # Force a scan of all known servers in the cluster.
+    #
+    # @example Force a full cluster scan.
+    #   cluster.scan!
+    #
+    # @note This operation is done synchronously. If servers in the cluster are
+    #   down or slow to respond this can potentially be a slow operation.
+    #
+    # @return [ true ] Always true.
+    #
+    # @since 2.0.0
+    def scan!
+      @servers.each{ |server| server.scan! } and true
+    end
+
     # Get a list of server candidates from the cluster that can have operations
     # executed on them.
     #

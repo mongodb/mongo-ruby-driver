@@ -111,4 +111,27 @@ describe Mongo::Cluster do
       end
     end
   end
+
+  describe '#scan!' do
+
+    let(:preference) do
+      Mongo::ServerSelector.get
+    end
+
+    let(:cluster) do
+      described_class.new([ '127.0.0.1:27017' ], preference, listeners)
+    end
+
+    let(:known_servers) do
+      cluster.instance_variable_get(:@servers)
+    end
+
+    before do
+      expect(known_servers.first).to receive(:scan!).and_call_original
+    end
+
+    it 'returns true' do
+      expect(cluster.scan!).to be true
+    end
+  end
 end
