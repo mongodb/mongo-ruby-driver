@@ -13,7 +13,6 @@
 # limitations under the License.
 
 module Mongo
-
   module ServerSelector
 
     # Provides common behavior for filtering a list of servers by server mode or tag set.

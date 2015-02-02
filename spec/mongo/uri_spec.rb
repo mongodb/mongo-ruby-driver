@@ -8,7 +8,7 @@ describe Mongo::URI do
     context 'string is not uri' do
       let(:string) { 'tyler' }
       it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::URI::BadURI)
+        expect { uri }.to raise_error(Mongo::URI::Invalid)
       end
     end
   end
@@ -412,20 +412,36 @@ describe Mongo::URI do
     end
 
     context 'connectTimeoutMS' do
-      let(:timeout) { 4567 }
-      let(:options) { "connectTimeoutMS=#{timeout}" }
+      let(:options) { "connectTimeoutMS=4567" }
 
       it 'sets the the connect timeout' do
-        expect(uri.options[:connect_timeout]).to eq(timeout)
+        expect(uri.options[:connect_timeout]).to eq(4.567)
       end
     end
 
     context 'socketTimeoutMS' do
-      let(:timeout) { 8910 }
-      let(:options) { "socketTimeoutMS=#{timeout}" }
+      let(:options) { "socketTimeoutMS=8910" }
 
       it 'sets the socket timeout' do
-        expect(uri.options[:socket_timeout]).to eq(timeout)
+        expect(uri.options[:socket_timeout]).to eq(8.910)
+      end
+    end
+
+    context 'when providing serverSelectionTimeoutMS' do
+
+      let(:options) { "serverSelectionTimeoutMS=3561" }
+
+      it 'sets the the connect timeout' do
+        expect(uri.options[:server_selection_timeout]).to eq(3.561)
+      end
+    end
+
+    context 'when providing localThresholdMS' do
+
+      let(:options) { "localThresholdMS=3561" }
+
+      it 'sets the the connect timeout' do
+        expect(uri.options[:local_threshold]).to eq(3.561)
       end
     end
 
@@ -484,6 +500,17 @@ describe Mongo::URI do
 
       it 'do not overshadow top level options' do
         expect(uri.options).not_to be_empty
+      end
+    end
+
+    context 'when an invalid option is provided' do
+
+      let(:options) { 'iDontKnow=10' }
+
+      it 'raises an exception' do
+        expect {
+          uri.options
+        }.to raise_error(Mongo::URI::InvalidOption)
       end
     end
   end
