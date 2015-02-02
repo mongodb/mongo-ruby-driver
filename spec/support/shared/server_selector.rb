@@ -14,9 +14,9 @@ def server(mode, options = {})
   address = Mongo::Address.new('127.0.0.1:27017')
 
   server = Mongo::Server.new(address, listeners)
-  description = Mongo::Server::Description.new(address, ismaster, listeners, round_trip_time)
+  description = Mongo::Server::Description.new(address, ismaster, round_trip_time)
   server.tap do |s|
-    s.instance_variable_set(:@description, description)
+    s.monitor.instance_variable_set(:@description, description)
   end
 end
 

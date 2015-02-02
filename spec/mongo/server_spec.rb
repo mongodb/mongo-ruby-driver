@@ -72,6 +72,18 @@ describe Mongo::Server do
     end
   end
 
+  describe '#disconnect!' do
+
+    let(:server) do
+      described_class.new(address, listeners)
+    end
+
+    it 'stops the monitor instance' do
+      expect(server.instance_variable_get(:@monitor)).to receive(:stop!).and_return(true)
+      server.disconnect!
+    end
+  end
+
   describe '#initialize' do
 
     let(:server) do
@@ -102,26 +114,18 @@ describe Mongo::Server do
     end
 
     it 'returns the connection pool for the server' do
-      expect(pool).to be_a(Mongo::Pool)
+      expect(pool).to be_a(Mongo::Server::ConnectionPool)
     end
   end
 
-  describe '#disconnect!' do
+  describe '#scan!' do
 
     let(:server) do
       described_class.new(address, listeners)
     end
 
-    it 'removed the monitor thread instance' do
-      s = described_class.new(address, listeners)
-      monitor_count = Mongo::Server::Monitor.threads.size
-      s.disconnect!
-      expect(Mongo::Server::Monitor.threads.size).to eq(monitor_count - 1)
-    end
-
-    it 'stops the monitor instance' do
-      expect_any_instance_of(Mongo::Server::Monitor).to receive(:stop).and_return(true)
-      server.disconnect!
+    it 'forces a scan on the monitor' do
+      expect(server.scan!).to eq(server.description)
     end
   end
 end

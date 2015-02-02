@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Server::Description::Inspection::ServerRemoved do
+describe Mongo::Server::Description::Inspector::ServerRemoved do
 
   let(:listeners) do
     Mongo::Event::Listeners.new

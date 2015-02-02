@@ -13,7 +13,7 @@
 # limitations under the License.
 
 require 'mongo/server/description/features'
-require 'mongo/server/description/inspection'
+require 'mongo/server/description/inspector'
 
 module Mongo
   class Server
@@ -58,17 +58,6 @@ module Mongo
       #
       # @since 2.0.0
       REPLICA_SET = 'isreplicaset'.freeze
-
-      # Static list of inspections that are performed on the result of an
-      # ismaster command in order to generate the appropriate events for the
-      # changes.
-      #
-      # @since 2.0.0
-      INSPECTIONS = [
-        Inspection::PrimaryElected,
-        Inspection::ServerAdded,
-        Inspection::ServerRemoved
-      ].freeze
 
       # Constant for reading max bson size info from config.
       #
@@ -147,12 +136,6 @@ module Mongo
       # @return [ Float ] The time the ismaster call took to complete.
       attr_reader :round_trip_time
 
-      # @return [ Mongo::Server ] server Needed to fire events.
-      attr_reader :server
-
-      # @return [ Symbol ] The type of server this description represents.
-      attr_accessor :server_type
-
       # Will return true if the server is an arbiter.
       #
       # @example Is the server an arbiter?
@@ -217,18 +200,17 @@ module Mongo
       # command.
       #
       # @example Instantiate the new description.
-      #   Description.new(result)
+      #   Description.new(address, { 'ismaster' => true }, 0.5)
       #
+      # @param [ Address ] addressThe server address.
       # @param [ Hash ] config The result of the ismaster command.
       # @param [ Float ] round_trip_time The time for a round trip ismaster.
       #
       # @since 2.0.0
-      def initialize(address, config = {}, event_listeners = nil, round_trip_time = 0)
+      def initialize(address, config = {}, round_trip_time = 0)
         @address = address
-        @event_listeners = event_listeners
-        @inspections = INSPECTIONS.map{ |insp| insp.new(event_listeners) }
         @config = config
-        @features = Features.new(0..0)
+        @features = Features.new(wire_versions)
         @round_trip_time = round_trip_time
       end
 
@@ -241,7 +223,7 @@ module Mongo
       #
       # @since 2.0.0
       def inspect
-        "#<Mongo::Server:Description0x#{object_id} config=#{config} round_trip_time=#{round_trip_time}>"
+        "#<Mongo::Server:Description:0x#{object_id} config=#{config} round_trip_time=#{round_trip_time}>"
       end
 
       # Get the max BSON object size for this server version.
@@ -328,6 +310,14 @@ module Mongo
         config[MESSAGE] == MONGOS_MESSAGE
       end
 
+      # Is the description of type other.
+      #
+      # @example Is the description of type other.
+      #   description.other?
+      #
+      # @return [ true, false ] If the description is other.
+      #
+      # @since 2.0.0
       def other?
         !primary? && !secondary? && !passive? && !arbiter?
       end
@@ -441,30 +431,6 @@ module Mongo
       # @since 2.0.0
       def unknown!
         @config = {} and true
-      end
-
-      # Update this description with a new description. Will fire the
-      # necessary events depending on what has changed from the old description
-      # to the new one.
-      #
-      # @example Update the description with the new config.
-      #   description.update!({ "ismaster" => false })
-      #
-      # @note This modifies the state of the description.
-      #
-      # @param [ Hash ] new_config The new configuration.
-      #
-      # @return [ Description ] The updated description.
-      #
-      # @since 2.0.0
-      def update!(new_config, round_trip_time)
-        @inspections.each do |inspection|
-          inspection.run(self, Description.new(address, new_config))
-        end
-        @config = new_config
-        @round_trip_time = round_trip_time
-        @features = Features.new(wire_versions)
-        self
       end
 
       # Get the range of supported wire versions for the server.

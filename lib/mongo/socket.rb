@@ -123,11 +123,13 @@ module Mongo
     #
     # @since 2.0.0
     def read(length)
-      data = handle_errors{ socket.read(length) } || String.new
-      if data.length < length
-        data << read(length - data.length)
+      handle_errors do
+        data = read_from_socket(length)
+        while data.length < length
+          data << read_from_socket(length - data.length)
+        end
+        data
       end
-      data
     end
 
     # Read a single byte from the socket.
@@ -157,6 +159,10 @@ module Mongo
     end
 
     private
+
+    def read_from_socket(length)
+      socket.read(length) || String.new
+    end
 
     def handle_errors
       begin

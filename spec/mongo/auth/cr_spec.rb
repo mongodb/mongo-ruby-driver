@@ -11,7 +11,7 @@ describe Mongo::Auth::CR do
   end
 
   let(:connection) do
-    Mongo::Connection.new(server)
+    Mongo::Server::Connection.new(server)
   end
 
   describe '#login' do

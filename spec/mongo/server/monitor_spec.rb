@@ -6,24 +6,24 @@ describe Mongo::Server::Monitor do
     Mongo::Address.new('127.0.0.1:27017')
   end
 
-  describe '#check!' do
+  let(:listeners) do
+    Mongo::Event::Listeners.new
+  end
+
+  describe '#scan!' do
 
     context 'when the ismaster command succeeds' do
 
-      let(:server) do
-        Mongo::Server.new(address, Mongo::Event::Listeners.new)
-      end
-
       let(:monitor) do
-        described_class.new(server)
+        described_class.new(address, listeners)
       end
 
       before do
-        monitor.check!
+        monitor.scan!
       end
 
       it 'updates the server description' do
-        expect(server.description).to be_standalone
+        expect(monitor.description).to be_standalone
       end
     end
 
@@ -35,20 +35,16 @@ describe Mongo::Server::Monitor do
           Mongo::Address.new('127.0.0.1:27050')
         end
 
-        let(:server) do
-          Mongo::Server.new(bad_address, Mongo::Event::Listeners.new)
-        end
-
         let(:monitor) do
-          described_class.new(server)
+          described_class.new(bad_address, listeners)
         end
 
         before do
-          monitor.check!
+          monitor.scan!
         end
 
         it 'keeps the server unknown' do
-          expect(server).to be_unknown
+          expect(monitor.description).to be_unknown
         end
       end
 
@@ -58,12 +54,8 @@ describe Mongo::Server::Monitor do
           Mongo::Address.new('127.0.0.1:27017')
         end
 
-        let(:server) do
-          Mongo::Server.new(bad_address, Mongo::Event::Listeners.new)
-        end
-
         let(:monitor) do
-          described_class.new(server)
+          described_class.new(bad_address, listeners)
         end
 
         let(:socket) do
@@ -73,11 +65,11 @@ describe Mongo::Server::Monitor do
 
         before do
           expect(socket).to receive(:write).and_raise(SocketError)
-          monitor.check!
+          monitor.scan!
         end
 
         it 'keeps the server unknown' do
-          expect(server).to be_unknown
+          expect(monitor.description).to be_unknown
         end
 
         it 'disconnects the connection' do
@@ -89,14 +81,10 @@ describe Mongo::Server::Monitor do
 
   describe '#heartbeat_frequency' do
 
-    let(:server) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new)
-    end
-
     context 'when an option is provided' do
 
       let(:monitor) do
-        described_class.new(server, :heartbeat_frequency => 5)
+        described_class.new(address, listeners, :heartbeat_frequency => 5)
       end
 
       it 'returns the option' do
@@ -107,7 +95,7 @@ describe Mongo::Server::Monitor do
     context 'when no option is provided' do
 
       let(:monitor) do
-        described_class.new(server)
+        described_class.new(address, listeners)
       end
 
       it 'defaults to 5' do
@@ -116,23 +104,19 @@ describe Mongo::Server::Monitor do
     end
   end
 
-  describe '#run' do
-
-    let(:server) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new)
-    end
+  describe '#run!' do
 
     let(:monitor) do
-      described_class.new(server, :heartbeat_frequency => 1)
+      described_class.new(address, listeners, :heartbeat_frequency => 1)
     end
 
     before do
-      monitor.run
+      monitor.run!
       sleep(1)
     end
 
     it 'refreshes the server on the provided interval' do
-      expect(server.description).to_not be_nil
+      expect(monitor.description).to_not be_nil
     end
   end
 end

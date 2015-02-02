@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/server/connectable'
+require 'mongo/server/connection'
+require 'mongo/server/connection_pool'
 require 'mongo/server/context'
 require 'mongo/server/description'
 require 'mongo/server/monitor'
@@ -28,13 +31,17 @@ module Mongo
     # @return [ String ] The configured address for the server.
     attr_reader :address
 
-    # @return [ Server::Description ] The description of the server.
-    attr_reader :description
+    # @return [ Monitor ] monitor The server monitor.
+    attr_reader :monitor
 
     # @return [ Hash ] The options hash.
     attr_reader :options
 
-    def_delegators :@description,
+    # Get the description from the monitor and scan on monitor.
+    def_delegators :monitor, :description, :scan!
+
+    # Delegate convenience methods to the monitor description.
+    def_delegators :description,
                    :arbiter?,
                    :features,
                    :ghost?,
@@ -91,7 +98,7 @@ module Mongo
       context.with_connection do |connection|
         connection.disconnect!
       end
-      @monitor.stop and true
+      monitor.stop! and true
     end
 
     # Instantiate a new server object. Will start the background refresh and
@@ -108,10 +115,9 @@ module Mongo
     def initialize(address, event_listeners, options = {})
       @address = address
       @options = options.freeze
-      @monitor = Monitor.new(self, options)
-      @description = Description.new(@address, {}, event_listeners)
-      @monitor.check!
-      @monitor.run
+      @monitor = Monitor.new(address, event_listeners, options)
+      monitor.scan!
+      monitor.run!
     end
 
     # Get a pretty printed server inspection.
@@ -135,7 +141,7 @@ module Mongo
     #
     # @since 2.0.0
     def pool
-      @pool ||= Pool.get(self)
+      @pool ||= ConnectionPool.get(self)
     end
 
     # Determine if the provided tags are a subset of the server's tags.

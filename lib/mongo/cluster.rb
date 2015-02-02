@@ -31,9 +31,6 @@ module Mongo
     # @return [ Hash ] The options hash.
     attr_reader :options
 
-    # @return [ Mongo::ServerSelector ] The read preference.
-    attr_reader :read_preference
-
     # @return [ Object ] The cluster topology.
     attr_reader :topology
 
@@ -84,14 +81,14 @@ module Mongo
     #   Mongo::Cluster.new(["127.0.0.1:27017"])
     #
     # @param [ Array<String> ] seeds The addresses of the configured servers.
+    # @param [ Event::Listeners ] event_listeners The event listeners.
     # @param [ Hash ] options The options.
     #
     # @since 2.0.0
-    def initialize(seeds, read_preference, event_listeners, options = {})
+    def initialize(seeds, event_listeners, options = {})
       @addresses = []
       @servers = []
       @event_listeners = event_listeners
-      @read_preference = read_preference
       @options = options.freeze
       @topology = Topology.initial(seeds, options)
 
@@ -123,7 +120,7 @@ module Mongo
     #
     # @since 2.0.0
     def next_primary
-      ServerSelector.get(mode: :primary).select_server(self)
+      ServerSelector.get({ mode: :primary }, options).select_server(self)
     end
 
     # Elect a primary server from the description that has just changed to a
@@ -156,6 +153,21 @@ module Mongo
       removed_servers = @servers.reject!{ |server| server.address == address }
       removed_servers.each{ |server| server.disconnect! } if removed_servers
       addresses.reject!{ |addr| addr == address }
+    end
+
+    # Force a scan of all known servers in the cluster.
+    #
+    # @example Force a full cluster scan.
+    #   cluster.scan!
+    #
+    # @note This operation is done synchronously. If servers in the cluster are
+    #   down or slow to respond this can potentially be a slow operation.
+    #
+    # @return [ true ] Always true.
+    #
+    # @since 2.0.0
+    def scan!
+      @servers.each{ |server| server.scan! } and true
     end
 
     # Get a list of server candidates from the cluster that can have operations

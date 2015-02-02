@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/server/monitor/connection'
+
 module Mongo
   class Server
 
@@ -37,23 +39,29 @@ module Mongo
       # @since 2.0.0
       ISMASTER = Protocol::Query.new(Database::ADMIN, Database::COMMAND, STATUS, :limit => -1)
 
-      # @return [ Mongo::Server ] The server the monitor refreshes.
-      attr_reader :server
-      # @return [ Hash ] options The server options.
-      attr_reader :options
       # @return [ Mongo::Connection ] connection The connection to use.
       attr_reader :connection
 
-      # Force the monitor to immediately do a check of it's server.
+      # @return [ Server::Description ] description The server
+      #   description the monitor refreshes.
+      attr_reader :description
+
+      # @return [ Description::Inspector ] inspector The description inspector.
+      attr_reader :inspector
+
+      # @return [ Hash ] options The server options.
+      attr_reader :options
+
+      # Force the monitor to immediately do a check of its server.
       #
-      # @example Force a check.
-      #   monitor.check!
+      # @example Force a scan.
+      #   monitor.scan!
       #
       # @return [ Description ] The updated description.
       #
       # @since 2.0.0
-      def check!
-        server.description.update!(*ismaster)
+      def scan!
+        @description = inspector.run(description, *ismaster)
       end
 
       # Get the refresh interval for the server. This will be defined via an option
@@ -72,22 +80,19 @@ module Mongo
       # Create the new server monitor.
       #
       # @example Create the server monitor.
-      #   Mongo::Server::Monitor.new(server, 5)
+      #   Mongo::Server::Monitor.new(address, listeners)
       #
-      # @param [ Mongo::Server ] server The server to refresh.
-      # @param [ Integer ] interval The refresh interval in seconds.
+      # @param [ Address ] address The address to monitor.
+      # @param [ Event::Listeners ] listeners The event listeners.
+      # @param [ Hash ] options The options.
       #
       # @since 2.0.0
-      def initialize(server, options = {})
-        @server = server
+      def initialize(address, listeners, options = {})
+        @description = Description.new(address, {})
+        @inspector = Description::Inspector.new(listeners)
         @options = options.freeze
-
-        # @note We reject the user option here as the ismaster command should
-        # be able to run without being authorized.
-        @connection = Mongo::Connection.new(
-          server,
-          options.reject{ |key, value| key == :user }
-        )
+        @connection = Connection.new(address, options)
+        @mutex = Mutex.new
       end
 
       # Runs the server monitor. Refreshing happens on a separate thread per
@@ -99,11 +104,11 @@ module Mongo
       # @return [ Thread ] The thread the monitor runs on.
       #
       # @since 2.0.0
-      def run
-        Monitor.threads[object_id] = Thread.new(heartbeat_frequency, server) do |i, s|
+      def run!
+        @thread = Thread.new(heartbeat_frequency) do |i|
           loop do
             sleep(i)
-            check!
+            scan!
           end
         end
       end
@@ -112,14 +117,13 @@ module Mongo
       # taking memory and sending commands to the connection.
       #
       # @example Stop the monitor.
-      #   monitor.stop
+      #   monitor.stop!
       #
       # @return [ Boolean ] Is the Thread stopped?
       #
       # @since 2.0.0
-      def stop
-        thread = Monitor.threads.delete(object_id)
-        thread.kill && thread.stop?
+      def stop!
+        @thread.kill && @thread.stop?
       end
 
       private
@@ -129,31 +133,16 @@ module Mongo
       end
 
       def ismaster
-        start = Time.now
-        begin
-          result = connection.dispatch([ ISMASTER ]).documents[0]
-          return result, calculate_round_trip_time(start)
-        rescue Exception => e
-          log_debug([ e.message ])
-          connection.disconnect!
-          return {}, calculate_round_trip_time(start)
-        end
-      end
-
-      class << self
-
-        # For the purposes of cleanup, we store all monitor threads in a global
-        # array to be able to shut them down on spec cleanup or GC when server
-        # is garbage collected.
-        #
-        # @example Get all the monitor threads.
-        #   Monitor.threads
-        #
-        # @return [ Hash<Integer, Thread> ] The monitor threads.
-        #
-        # @since 2.0.0
-        def threads
-          @threads ||= {}
+        @mutex.synchronize do
+          start = Time.now
+          begin
+            result = connection.dispatch([ ISMASTER ]).documents[0]
+            return result, calculate_round_trip_time(start)
+          rescue Exception => e
+            log_debug([ e.message ])
+            connection.disconnect!
+            return {}, calculate_round_trip_time(start)
+          end
         end
       end
     end

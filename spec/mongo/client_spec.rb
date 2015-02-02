@@ -331,6 +331,10 @@ describe Mongo::Client do
       it 'returns a primary read preference' do
         expect(preference).to be_a(Mongo::ServerSelector::Primary)
       end
+
+      it 'passes the options to the read preference' do
+        expect(preference.options[:database]).to eq(TEST_DB)
+      end
     end
 
     context 'when mode is primary_preferred' do

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Pool::Queue do
+describe Mongo::Server::ConnectionPool::Queue do
 
   describe '#dequeue' do
 

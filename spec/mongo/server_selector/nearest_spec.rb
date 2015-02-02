@@ -163,8 +163,8 @@ describe Mongo::ServerSelector::Nearest do
     end
 
     context 'high latency servers' do
-      let(:far_primary) { server(:primary, :round_trip_time => 100) }
-      let(:far_secondary) { server(:secondary, :round_trip_time => 113) }
+      let(:far_primary) { server(:primary, :round_trip_time => 1.13) }
+      let(:far_secondary) { server(:secondary, :round_trip_time => 1.14) }
 
       context 'single candidate' do
 

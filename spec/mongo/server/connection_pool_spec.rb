@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Pool do
+describe Mongo::Server::ConnectionPool do
 
   let(:address) do
     Mongo::Address.new('127.0.0.1:27017')
