@@ -120,7 +120,7 @@ module Mongo
     #
     # @since 2.0.0
     def next_primary
-      ServerSelector.get(mode: :primary).select_server(self)
+      ServerSelector.get({ mode: :primary }, options).select_server(self)
     end
 
     # Elect a primary server from the description that has just changed to a

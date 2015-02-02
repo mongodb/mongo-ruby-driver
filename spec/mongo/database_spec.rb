@@ -120,10 +120,6 @@ describe Mongo::Database do
 
   describe '#command' do
 
-    let(:client) do
-      Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
-    end
-
     let(:database) do
       described_class.new(authorized_client, TEST_DB)
     end
@@ -139,17 +135,15 @@ describe Mongo::Database do
       end
 
       let(:read) do
-        { :mode => :secondary,
-          :tag_sets => [{ 'non' => 'existent' }] }
+        { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
       end
 
       let(:client) do
-        Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
+        authorized_client.with(server_selection_timeout: 2)
       end
 
       let(:database) do
-        client_with_shorter_timeout = authorized_client.with(server_selection_timeout_ms: 2)
-        described_class.new(client_with_shorter_timeout, TEST_DB)
+        described_class.new(client, TEST_DB, client.options)
       end
 
       it 'uses that read preference' do

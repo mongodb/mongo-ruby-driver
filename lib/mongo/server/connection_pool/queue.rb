@@ -153,7 +153,7 @@ module Mongo
         private
 
         def dequeue_connection
-          deadline = Time.now - wait_timeout
+          deadline = Time.now + wait_timeout
           loop do
             return queue.delete_at(0) unless queue.empty?
             connection = create_connection

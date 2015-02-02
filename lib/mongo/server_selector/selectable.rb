@@ -21,16 +21,19 @@ module Mongo
     # @since 2.0.0
     module Selectable
 
-      # The max latency in milliseconds between the closest server and other servers
+      # The max latency in seconds between the closest server and other servers
       # considered for selection.
       #
       # @since 2.0.0
-      LOCAL_THRESHOLD_MS = 15
+      LOCAL_THRESHOLD = 0.015.freeze
 
       # How long to block for server selection before throwing an exception.
       #
       # @since 2.0.0
-      SERVER_SELECTION_TIMEOUT_MS = 30000
+      SERVER_SELECTION_TIMEOUT = 30.freeze
+
+      # @return [ Hash ] options The options.
+      attr_reader :options
 
       # @return [ Array ] tag_sets The tag sets used to select servers.
       attr_reader :tag_sets
@@ -46,8 +49,7 @@ module Mongo
       #
       # @since 2.0.0
       def ==(other)
-        name == other.name &&
-            tag_sets == other.tag_sets
+        name == other.name && tag_sets == other.tag_sets
       end
 
       # Initialize the server selector.
@@ -65,11 +67,17 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(tag_sets = [], options = {})
-        raise ServerSelector::InvalidServerPreference.new(name) if !tag_sets.empty? && !tags_allowed?
+        if !tag_sets.empty? && !tags_allowed?
+          raise ServerSelector::InvalidServerPreference.new(name)
+        end
         @tag_sets = tag_sets
+        @options = options
       end
 
       # Select a server from eligible candidates.
+      #
+      # @example Select a server from the cluster.
+      #   selector.select_server(cluster)
       #
       # @param [ Mongo::Cluster ] cluster The cluster from which to select an eligible server.
       #
@@ -77,29 +85,44 @@ module Mongo
       #
       # @since 2.0.0
       def select_server(cluster)
-        @server_selection_timeout_ms = cluster.options[:server_selection_timeout_ms] ||
-                                         SERVER_SELECTION_TIMEOUT_MS
-        @local_threshold_ms = cluster.options[:local_threshold_ms] ||
-                                LOCAL_THRESHOLD_MS
-
-        now = Time.now
-        end_time = now + @server_selection_timeout_ms # TODO: wrong arithmetic
-
-        while now < end_time
+        deadline = Time.now + server_selection_timeout
+        while (deadline - Time.now) > 0
           if cluster.standalone?
             servers = cluster.servers
           elsif cluster.sharded?
             servers = near_servers(cluster.servers).shuffle!
           else
-            select(cluster.servers).shuffle!
+            servers = select(cluster.servers).shuffle!
           end
-
-          return servers.first unless servers.nil? || servers.empty?
-          # cluster.rescan...?
-          now = Time.now
+          return servers.first if servers && !servers.empty?
+          # @todo: cluster.scan!?
         end
+        raise NoServerAvailable.new(self)
+      end
 
-        raise NoServerAvailable.new(self) if servers.nil? || servers.empty?
+      # Get the timeout for server selection.
+      #
+      # @example Get the server selection timeout, in seconds.
+      #   selector.server_selection_timeout
+      #
+      # @return [ Float ] The timeout.
+      #
+      # @since 2.0.0
+      def server_selection_timeout
+        @server_selection_timeout ||=
+          (options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT)
+      end
+
+      # Get the local threshold boundary for nearest selection in seconds.
+      #
+      # @example Get the local threshold.
+      #   selector.local_threshold
+      #
+      # @return [ Float ] The local threshold.
+      #
+      # @since 2.0.0
+      def local_threshold
+        @local_threshold ||= (options[:local_threshold] || LOCAL_THRESHOLD)
       end
 
       private
@@ -144,7 +167,7 @@ module Mongo
       def near_servers(candidates = [])
         return candidates if candidates.empty?
         nearest_server = candidates.min_by(&:round_trip_time)
-        threshold = nearest_server.round_trip_time + (@local_threshold_ms || LOCAL_THRESHOLD_MS)
+        threshold = nearest_server.round_trip_time + local_threshold
         candidates.select { |server| server.round_trip_time <= threshold }
       end
 
@@ -166,12 +189,17 @@ module Mongo
       end
     end
 
+    # Raised when an invalid server preference is provided.
+    #
+    # @since 2.0.0
     class InvalidServerPreference < MongoError
 
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
       #   Mongo::ServerSelector::InvalidServerPreference.new
+      #
+      # @param [ String ] name The preference name.
       #
       # @since 2.0.0
       def initialize(name)

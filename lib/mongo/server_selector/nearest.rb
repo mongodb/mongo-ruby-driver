@@ -13,7 +13,6 @@
 # limitations under the License.
 
 module Mongo
-
   module ServerSelector
 
     # Encapsulates specifications for selecting near servers given a list

@@ -38,11 +38,14 @@ module Mongo
     # @since 2.0.0
     NAMESPACES = 'system.namespaces'.freeze
 
-    # @return [ Mongo::Client ] The database client.
+    # @return [ Client ] client The database client.
     attr_reader :client
 
-    # @return [ String ] The name of the collection.
+    # @return [ String ] name The name of the database.
     attr_reader :name
+
+    # @return [ Hash ] options The options.
+    attr_reader :options
 
     # Get cluster, read preference, and write concern from client.
     def_delegators :@client,
@@ -112,13 +115,13 @@ module Mongo
     #   database.command(:ismaster => 1)
     #
     # @param [ Hash ] operation The command to execute.
-    # @param [ Hash ] options The command options.
+    # @param [ Hash ] opts The command options.
     #
-    # @option options :read [ Hash ] The read preference for this command.
+    # @option opts :read [ Hash ] The read preference for this command.
     #
     # @return [ Hash ] The result of the command execution.
-    def command(operation, options = {})
-      preference = options[:read] ? ServerSelector.get(options[:read]) : read_preference
+    def command(operation, opts = {})
+      preference = opts[:read] ? ServerSelector.get(opts[:read], options) : read_preference
       server = preference.select_server(cluster)
       Operation::Command.new({
         :selector => operation,
@@ -146,14 +149,16 @@ module Mongo
     #
     # @param [ Mongo::Client ] client The driver client.
     # @param [ String, Symbol ] name The name of the database.
+    # @param [ Hash ] options The options.
     #
     # @raise [ Mongo::Database::InvalidName ] If the name is nil.
     #
     # @since 2.0.0
-    def initialize(client, name)
+    def initialize(client, name, options = {})
       raise InvalidName.new unless name
       @client = client
       @name = name.to_s.freeze
+      @options = options.freeze
     end
 
     # Get a pretty printed string inspection for the database.
