@@ -185,7 +185,11 @@ module Mongo
     #
     # @since 2.0.0
     def with(new_options = {})
-      Client.new(cluster.addresses.map(&:to_s), options.merge(new_options))
+      clone.tap do |client|
+        client.options.update(new_options)
+        db = Database.new(client, client.options[:database], client.options)
+        client.instance_variable_set(:@database, db)
+      end
     end
 
     # Get the write concern for this client. If no option was provided, then a
@@ -203,21 +207,24 @@ module Mongo
 
     private
 
-    def create_from_addresses(addresses, options = {})
-      @options = create_options(options)
-      @cluster = Cluster.new(addresses, @options)
-      @database = Database.new(self, @options[:database], @options)
+    def create_from_addresses(addresses, opts = {})
+      @options = Database::DEFAULT_OPTIONS.merge(opts).freeze
+      @cluster = Cluster.new(addresses, options)
+      @database = Database.new(self, options[:database], options)
     end
 
-    def create_from_uri(connection_string, options = {})
+    def create_from_uri(connection_string, opts = {})
       uri = URI.new(connection_string)
-      @options = create_options(uri.client_options.merge(options))
-      @cluster = Cluster.new(uri.servers, @options)
-      @database = Database.new(self, @options[:database], @options)
+      @options = Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts)).freeze
+      @cluster = Cluster.new(uri.servers, options)
+      @database = Database.new(self, options[:database], options)
     end
 
-    def create_options(options = {})
-      { :database => Database::ADMIN }.merge(options).freeze
+    def initialize_copy(original)
+      @options = original.options.dup
+      @database = nil
+      @read_preference = nil
+      @write_concern = nil
     end
   end
 end

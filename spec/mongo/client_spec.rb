@@ -465,8 +465,8 @@ describe Mongo::Client do
         })
       end
 
-      it 'clones the cluster addresses' do
-        expect(new_client.cluster.addresses).not_to equal(client.cluster.addresses)
+      it 'keeps the same cluster' do
+        expect(new_client.cluster).to equal(client.cluster)
       end
     end
 

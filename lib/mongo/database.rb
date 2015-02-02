@@ -33,6 +33,11 @@ module Mongo
     # @since 2.0.0
     COMMAND = '$cmd'.freeze
 
+    # The default database options.
+    #
+    # @since 2.0.0
+    DEFAULT_OPTIONS = { :database => ADMIN }.freeze
+
     # The name of the collection that holds all the collection names.
     #
     # @since 2.0.0
