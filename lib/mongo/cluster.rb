@@ -31,9 +31,6 @@ module Mongo
     # @return [ Hash ] The options hash.
     attr_reader :options
 
-    # @return [ Mongo::ServerSelector ] The read preference.
-    attr_reader :read_preference
-
     # @return [ Object ] The cluster topology.
     attr_reader :topology
 
@@ -84,14 +81,14 @@ module Mongo
     #   Mongo::Cluster.new(["127.0.0.1:27017"])
     #
     # @param [ Array<String> ] seeds The addresses of the configured servers.
+    # @param [ Event::Listeners ] event_listeners The event listeners.
     # @param [ Hash ] options The options.
     #
     # @since 2.0.0
-    def initialize(seeds, read_preference, event_listeners, options = {})
+    def initialize(seeds, event_listeners, options = {})
       @addresses = []
       @servers = []
       @event_listeners = event_listeners
-      @read_preference = read_preference
       @options = options.freeze
       @topology = Topology.initial(seeds, options)
 
