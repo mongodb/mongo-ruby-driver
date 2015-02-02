@@ -37,8 +37,8 @@ module Mongo
     # @return [ Hash ] The options hash.
     attr_reader :options
 
-    # Get the description from the monitor.
-    def_delegators :monitor, :description
+    # Get the description from the monitor and scan on monitor.
+    def_delegators :monitor, :description, :scan!
 
     # Delegate convenience methods to the monitor description.
     def_delegators :description,
@@ -98,7 +98,7 @@ module Mongo
       context.with_connection do |connection|
         connection.disconnect!
       end
-      @monitor.stop! and true
+      monitor.stop! and true
     end
 
     # Instantiate a new server object. Will start the background refresh and
@@ -116,8 +116,8 @@ module Mongo
       @address = address
       @options = options.freeze
       @monitor = Monitor.new(address, event_listeners, options)
-      @monitor.scan!
-      @monitor.run!
+      monitor.scan!
+      monitor.run!
     end
 
     # Get a pretty printed server inspection.

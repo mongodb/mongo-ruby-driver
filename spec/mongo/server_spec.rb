@@ -72,6 +72,18 @@ describe Mongo::Server do
     end
   end
 
+  describe '#disconnect!' do
+
+    let(:server) do
+      described_class.new(address, listeners)
+    end
+
+    it 'stops the monitor instance' do
+      expect(server.instance_variable_get(:@monitor)).to receive(:stop!).and_return(true)
+      server.disconnect!
+    end
+  end
+
   describe '#initialize' do
 
     let(:server) do
@@ -106,15 +118,14 @@ describe Mongo::Server do
     end
   end
 
-  describe '#disconnect!' do
+  describe '#scan!' do
 
     let(:server) do
       described_class.new(address, listeners)
     end
 
-    it 'stops the monitor instance' do
-      expect(server.instance_variable_get(:@monitor)).to receive(:stop!).and_return(true)
-      server.disconnect!
+    it 'forces a scan on the monitor' do
+      expect(server.scan!).to eq(server.description)
     end
   end
 end

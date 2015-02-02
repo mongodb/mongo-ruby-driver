@@ -92,6 +92,7 @@ module Mongo
         @inspector = Description::Inspector.new(listeners)
         @options = options.freeze
         @connection = Connection.new(address, options)
+        @mutex = Mutex.new
       end
 
       # Runs the server monitor. Refreshing happens on a separate thread per
@@ -132,14 +133,16 @@ module Mongo
       end
 
       def ismaster
-        start = Time.now
-        begin
-          result = connection.dispatch([ ISMASTER ]).documents[0]
-          return result, calculate_round_trip_time(start)
-        rescue Exception => e
-          log_debug([ e.message ])
-          connection.disconnect!
-          return {}, calculate_round_trip_time(start)
+        @mutex.synchronize do
+          start = Time.now
+          begin
+            result = connection.dispatch([ ISMASTER ]).documents[0]
+            return result, calculate_round_trip_time(start)
+          rescue Exception => e
+            log_debug([ e.message ])
+            connection.disconnect!
+            return {}, calculate_round_trip_time(start)
+          end
         end
       end
     end
