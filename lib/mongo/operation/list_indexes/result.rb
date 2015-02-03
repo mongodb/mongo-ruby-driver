@@ -85,10 +85,31 @@ module Mongo
             cursor_document[FIRST_BATCH]
           end
 
+          # Validate the result. In the case where the database or collection
+          # does not exist on the server we will get an error, and it's better
+          # to raise a meaningful exception here than the ambiguous one when
+          # the error occurs.
+          #
+          # @example Validate the result.
+          #   result.validate!
+          #
+          # @raise [ NoNamespace ] If the ns doesn't exist.
+          #
+          # @return [ Result ] Self if successful.
+          #
+          # @since 2.0.0
+          def validate!
+            first_document[ERROR_MSG] ? raise(NoNamespace.new(first_document)) : self
+          end
+
           private
 
           def cursor_document
-            @cursor_document ||= reply.documents[0][CURSOR]
+            @cursor_document ||= first_document[CURSOR]
+          end
+
+          def first_document
+            @first_document ||= reply.documents[0]
           end
         end
       end

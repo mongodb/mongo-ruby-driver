@@ -183,24 +183,44 @@ describe Mongo::Index::View do
 
   describe '#each' do
 
-    let(:spec) do
-      { name: 1 }
+    context 'when the collection exists' do
+
+      let(:spec) do
+        { name: 1 }
+      end
+
+      before do
+        view.create(spec, unique: true)
+      end
+
+      after do
+        view.drop(spec)
+      end
+
+      let(:indexes) do
+        view.each
+      end
+
+      it 'returns all the indexes for the database' do
+        expect(indexes.to_a.count).to eq(2)
+      end
     end
 
-    before do
-      view.create(spec, unique: true)
-    end
+    context 'when the collection does not exist' do
 
-    after do
-      view.drop(spec)
-    end
+      let(:nonexistant_collection) do
+        authorized_client[:not_a_collection]
+      end
 
-    let(:indexes) do
-      view.each
-    end
+      let(:nonexistant_view) do
+        described_class.new(nonexistant_collection)
+      end
 
-    it 'returns all the indexes for the database' do
-      expect(indexes.to_a.count).to eq(2)
+      it 'raises a nonexistant collection error' do
+        expect {
+          nonexistant_view.each.to_a
+        }.to raise_error(Mongo::Operation::Read::NoNamespace)
+      end
     end
   end
 end

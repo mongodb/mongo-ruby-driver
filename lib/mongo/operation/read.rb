@@ -18,3 +18,17 @@ require 'mongo/operation/read/indexes'
 require 'mongo/operation/read/list_indexes'
 require 'mongo/operation/read/list_collections'
 require 'mongo/operation/read/collections_info'
+
+module Mongo
+  module Operation
+    module Read
+
+      class NoNamespace < OperationError
+
+        def initialize(document)
+          super("Namespace does not exist on server: '#{document[ERROR_MSG]}'.")
+        end
+      end
+    end
+  end
+end
