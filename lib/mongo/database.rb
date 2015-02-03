@@ -131,7 +131,8 @@ module Mongo
       Operation::Command.new({
         :selector => operation,
         :db_name => name,
-        :options => { :limit => -1 }
+        :options => { :limit => -1 },
+        :read => preference
       }).execute(server.context)
     end
 

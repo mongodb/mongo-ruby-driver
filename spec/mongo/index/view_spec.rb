@@ -13,7 +13,7 @@ describe Mongo::Index::View do
     end
 
     before do
-      view.ensure(spec, unique: true)
+      view.create(spec, unique: true)
     end
 
     context 'when providing an index spec' do
@@ -52,7 +52,7 @@ describe Mongo::Index::View do
     end
 
     before do
-      view.ensure(spec, unique: true)
+      view.create(spec, unique: true)
     end
 
     context 'when indexes exists' do
@@ -67,7 +67,7 @@ describe Mongo::Index::View do
     end
   end
 
-  describe '#ensure' do
+  describe '#create' do
 
     context 'when the index is created' do
 
@@ -76,7 +76,7 @@ describe Mongo::Index::View do
       end
 
       let(:result) do
-        view.ensure(spec, unique: true)
+        view.create(spec, unique: true)
       end
 
       after do
@@ -95,7 +95,7 @@ describe Mongo::Index::View do
       end
 
       before do
-        view.ensure(spec, unique: true)
+        view.create(spec, unique: true)
       end
 
       after do
@@ -104,12 +104,12 @@ describe Mongo::Index::View do
 
       it 'raises an exception', if: write_command_enabled? do
         expect {
-          view.ensure(spec, unique: false)
+          view.create(spec, unique: false)
         }.to raise_error(Mongo::Operation::Write::Failure)
       end
 
       it 'does not raise an exception', unless: write_command_enabled? do
-        expect(view.ensure(spec, unique: false)).to be_successful
+        expect(view.create(spec, unique: false)).to be_successful
       end
     end
 
@@ -120,7 +120,7 @@ describe Mongo::Index::View do
       end
 
       let!(:result) do
-        view.ensure(spec, unique: true, name: 'random_name')
+        view.create(spec, unique: true, name: 'random_name')
       end
 
       after do
@@ -144,7 +144,7 @@ describe Mongo::Index::View do
     end
 
     let!(:result) do
-      view.ensure(spec, unique: true, name: 'random_name')
+      view.create(spec, unique: true, name: 'random_name')
     end
 
     after do
@@ -188,7 +188,7 @@ describe Mongo::Index::View do
     end
 
     before do
-      view.ensure(spec, unique: true)
+      view.create(spec, unique: true)
     end
 
     after do

@@ -65,7 +65,7 @@ module Mongo
         private
 
         def execute_write_command(context)
-          Result.new(Command::EnsureIndex.new(spec).execute(context)).validate!
+          Result.new(Command::CreateIndex.new(spec).execute(context)).validate!
         end
 
         def execute_message(context)

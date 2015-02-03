@@ -9,7 +9,7 @@ describe Mongo::Operation::Read::Indexes do
     end
 
     before do
-      authorized_collection.indexes.ensure(spec, unique: true)
+      authorized_collection.indexes.create(spec, unique: true)
     end
 
     after do

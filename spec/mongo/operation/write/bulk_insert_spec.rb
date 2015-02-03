@@ -289,7 +289,7 @@ describe Mongo::Operation::Write::BulkInsert do
   describe '#execute' do
 
     before do
-      authorized_collection.indexes.ensure({ name: 1 }, { unique: true })
+      authorized_collection.indexes.create({ name: 1 }, { unique: true })
     end
 
     after do

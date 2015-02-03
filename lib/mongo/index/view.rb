@@ -101,7 +101,7 @@ module Mongo
       # @return [ Result ] The response.
       #
       # @since 2.0.0
-      def ensure(spec, options = {})
+      def create(spec, options = {})
         Operation::Write::EnsureIndex.new(
           index: spec,
           db_name: database.name,

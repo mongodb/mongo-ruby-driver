@@ -29,7 +29,7 @@ module Mongo
         #   })
         #
         # @since 2.0.0
-        class EnsureIndex
+        class CreateIndex
           include Specifiable
           include Executable
           include Writable

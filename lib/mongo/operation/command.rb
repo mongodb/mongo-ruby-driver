@@ -60,5 +60,3 @@ module Mongo
     end
   end
 end
-
-
