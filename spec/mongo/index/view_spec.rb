@@ -216,7 +216,7 @@ describe Mongo::Index::View do
         described_class.new(nonexistant_collection)
       end
 
-      it 'raises a nonexistant collection error' do
+      it 'raises a nonexistant collection error', if: list_command_enabled? do
         expect {
           nonexistant_view.each.to_a
         }.to raise_error(Mongo::Operation::Read::NoNamespace)
