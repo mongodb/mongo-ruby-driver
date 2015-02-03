@@ -133,8 +133,8 @@ module Mongo
       # @return [ Features ] features The features for the server.
       attr_reader :features
 
-      # @return [ Float ] The time the ismaster call took to complete.
-      attr_reader :round_trip_time
+      # @return [ Float ] The moving average time the ismaster call took to complete.
+      attr_reader :average_round_trip_time
 
       # Will return true if the server is an arbiter.
       #
@@ -204,14 +204,15 @@ module Mongo
       #
       # @param [ Address ] addressThe server address.
       # @param [ Hash ] config The result of the ismaster command.
-      # @param [ Float ] round_trip_time The time for a round trip ismaster.
+      # @param [ Float ] average_round_trip_time The moving average time the ismaster
+      #   call took to complete..
       #
       # @since 2.0.0
-      def initialize(address, config = {}, round_trip_time = 0)
+      def initialize(address, config = {}, average_round_trip_time = 0)
         @address = address
         @config = config
         @features = Features.new(wire_versions)
-        @round_trip_time = round_trip_time
+        @average_round_trip_time = average_round_trip_time
       end
 
       # Inspect the server description.
@@ -223,7 +224,7 @@ module Mongo
       #
       # @since 2.0.0
       def inspect
-        "#<Mongo::Server:Description:0x#{object_id} config=#{config} round_trip_time=#{round_trip_time}>"
+        "#<Mongo::Server:Description:0x#{object_id} config=#{config} average_round_trip_time=#{average_round_trip_time}>"
       end
 
       # Get the max BSON object size for this server version.
