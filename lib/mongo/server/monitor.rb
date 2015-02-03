@@ -42,7 +42,7 @@ module Mongo
       # The weighting factor (alpha) for calculating the average moving round trip time.
       #
       # @since 2.0.0
-      RTT_WEIGHT_FACTOR = 0.2
+      RTT_WEIGHT_FACTOR = 0.2.freeze
 
       # @return [ Mongo::Connection ] connection The connection to use.
       attr_reader :connection
