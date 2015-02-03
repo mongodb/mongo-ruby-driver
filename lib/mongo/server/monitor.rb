@@ -97,7 +97,7 @@ module Mongo
         @inspector = Description::Inspector.new(listeners)
         @options = options.freeze
         @connection = Connection.new(address, options)
-        @round_trip_times = [0]
+        @round_trip_times = []
         @mutex = Mutex.new
       end
 
@@ -135,10 +135,14 @@ module Mongo
       private
 
       def average_round_trip_time(start)
-        rtt = Time.now - start
-        average = RTT_WEIGHT_FACTOR * rtt + (1 - RTT_WEIGHT_FACTOR) * @round_trip_times.last
-        @round_trip_times.push(rtt)
+        new_rtt = Time.now - start
+        average = RTT_WEIGHT_FACTOR * new_rtt + (1 - RTT_WEIGHT_FACTOR) * last_round_trip_time
+        @round_trip_times.push(new_rtt)
         average
+      end
+
+      def last_round_trip_time
+        @round_trip_times[-2] || 0
       end
 
       def ismaster
