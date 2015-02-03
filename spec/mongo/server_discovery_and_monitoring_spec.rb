@@ -39,7 +39,7 @@ describe 'Server Discovery and Monitoring' do
 
       after(:all) do
 
-        # Return the server implementation to its original form the the other
+        # Return the server implementation to its original for the other
         # tests in the suite.
         class Mongo::Server
 

@@ -136,13 +136,14 @@ module Mongo
 
       def average_round_trip_time(start)
         new_rtt = Time.now - start
+        return new_rtt unless last_round_trip_time
         average = RTT_WEIGHT_FACTOR * new_rtt + (1 - RTT_WEIGHT_FACTOR) * last_round_trip_time
         @round_trip_times.push(new_rtt)
         average
       end
 
       def last_round_trip_time
-        @round_trip_times[-2] || 0
+        @round_trip_times[-1]
       end
 
       def ismaster
