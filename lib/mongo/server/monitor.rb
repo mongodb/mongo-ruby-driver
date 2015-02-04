@@ -97,7 +97,7 @@ module Mongo
         @inspector = Description::Inspector.new(listeners)
         @options = options.freeze
         @connection = Connection.new(address, options)
-        @round_trip_times = []
+        @last_round_trip_time = nil
         @mutex = Mutex.new
       end
 
@@ -136,14 +136,7 @@ module Mongo
 
       def average_round_trip_time(start)
         new_rtt = Time.now - start
-        return new_rtt unless last_round_trip_time
-        average = RTT_WEIGHT_FACTOR * new_rtt + (1 - RTT_WEIGHT_FACTOR) * last_round_trip_time
-        @round_trip_times.push(new_rtt)
-        average
-      end
-
-      def last_round_trip_time
-        @round_trip_times[-1]
+        RTT_WEIGHT_FACTOR * new_rtt + (1 - RTT_WEIGHT_FACTOR) * (@last_round_trip_time || new_rtt)
       end
 
       def ismaster
@@ -151,7 +144,7 @@ module Mongo
           start = Time.now
           begin
             result = connection.dispatch([ ISMASTER ]).documents[0]
-            return result, average_round_trip_time(start)
+            return result, @last_round_trip_time = average_round_trip_time(start)
           rescue Exception => e
             log_debug([ e.message ])
             connection.disconnect!

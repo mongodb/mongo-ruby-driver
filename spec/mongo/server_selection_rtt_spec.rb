@@ -17,11 +17,11 @@ describe 'Server Selection moving average round trip time calculation' do
       class Mongo::Server::Monitor
 
         def initialize(address, listeners, options = {})
-          @description = Mongo::Server::Description.new(address, {}, options[:avg_rtt_ms])
+          @description = Mongo::Server::Description.new(address, {})
           @inspector = Mongo::Server::Description::Inspector.new(listeners)
           @options = options.freeze
           @connection = Connection.new(address, options)
-          @round_trip_times = @description.average_round_trip_time ? [ @description.average_round_trip_time ] : []
+          @last_round_trip_time = options[:avg_rtt_ms]
           @mutex = Mutex.new
         end
 
@@ -32,10 +32,7 @@ describe 'Server Selection moving average round trip time calculation' do
         # @since 2.0.0
         def average_round_trip_time(start)
           new_rtt = @new_rtt_ms
-          return new_rtt unless last_round_trip_time
-          average = RTT_WEIGHT_FACTOR * new_rtt + (1 - RTT_WEIGHT_FACTOR) * last_round_trip_time
-          @round_trip_times.push(new_rtt)
-          average
+          RTT_WEIGHT_FACTOR * new_rtt + (1 - RTT_WEIGHT_FACTOR) * (@last_round_trip_time || @new_rtt_ms)
         end
       end
     end
@@ -61,7 +58,7 @@ describe 'Server Selection moving average round trip time calculation' do
           @inspector = Description::Inspector.new(listeners)
           @options = options.freeze
           @connection = Connection.new(address, options)
-          @round_trip_times = []
+          @last_round_trip_time = nil
           @mutex = Mutex.new
         end
 
@@ -69,10 +66,7 @@ describe 'Server Selection moving average round trip time calculation' do
 
         def average_round_trip_time(start)
           new_rtt = Time.now - start
-          return new_rtt unless last_round_trip_time
-          average = RTT_WEIGHT_FACTOR * new_rtt + (1 - RTT_WEIGHT_FACTOR) * last_round_trip_time
-          @round_trip_times.push(new_rtt)
-          average
+          RTT_WEIGHT_FACTOR * new_rtt + (1 - RTT_WEIGHT_FACTOR) * (@last_round_trip_time || new_rtt)
         end
       end
     end
