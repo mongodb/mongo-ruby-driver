@@ -187,8 +187,11 @@ module Mongo
     def with(new_options = {})
       clone.tap do |client|
         client.options.update(new_options)
-        db = Database.new(client, client.options[:database], client.options)
-        client.instance_variable_set(:@database, db)
+        initialize_database(client)
+        # We can't use the same cluster if authentication details have changed.
+        if new_options[:user] || new_options[:password]
+          initialize_cluster(client)
+        end
       end
     end
 
@@ -225,6 +228,16 @@ module Mongo
       @database = nil
       @read_preference = nil
       @write_concern = nil
+    end
+
+    def initialize_cluster(client)
+      cluster = Cluster.new(client.cluster.addresses.map(&:to_s), client.options)
+      client.instance_variable_set(:@cluster, cluster)
+    end
+
+    def initialize_database(client)
+      db = Database.new(client, client.options[:database], client.options)
+      client.instance_variable_set(:@database, db)
     end
   end
 end
