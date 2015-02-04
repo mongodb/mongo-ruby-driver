@@ -139,16 +139,20 @@ module Mongo
         RTT_WEIGHT_FACTOR * new_rtt + (1 - RTT_WEIGHT_FACTOR) * (@last_round_trip_time || new_rtt)
       end
 
+      def calculate_average_round_trip_time(start)
+        @last_round_trip_time = average_round_trip_time(start)
+      end
+
       def ismaster
         @mutex.synchronize do
           start = Time.now
           begin
             result = connection.dispatch([ ISMASTER ]).documents[0]
-            return result, @last_round_trip_time = average_round_trip_time(start)
+            return result, calculate_average_round_trip_time(start)
           rescue Exception => e
             log_debug([ e.message ])
             connection.disconnect!
-            return {}, average_round_trip_time(start)
+            return {}, calculate_average_round_trip_time(start)
           end
         end
       end
