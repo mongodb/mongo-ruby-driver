@@ -50,7 +50,7 @@ module Mongo
                    :max_bson_object_size,
                    :max_message_size,
                    :tags,
-                   :round_trip_time,
+                   :average_round_trip_time,
                    :mongos?,
                    :other?,
                    :primary?,

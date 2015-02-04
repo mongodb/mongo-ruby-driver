@@ -69,8 +69,8 @@ describe Mongo::ServerSelector::Primary do
     end
 
     context 'high latency candidates' do
-      let(:far_primary) { server(:primary, :round_trip_time => 100) }
-      let(:far_secondary) { server(:secondary, :round_trip_time => 120) }
+      let(:far_primary) { server(:primary, :average_round_trip_time => 100) }
+      let(:far_secondary) { server(:secondary, :average_round_trip_time => 120) }
 
       context 'single candidate' do
 

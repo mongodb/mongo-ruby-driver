@@ -61,13 +61,13 @@ module Mongo
         #
         # @param [ Description ] description The old description.
         # @param [ Hash ] ismaster The updated ismaster.
-        # @param [ Float ] round_trip_time The round trip time.
+        # @param [ Float ] average_round_trip_time The moving average round trip time (ms).
         #
         # @return [ Description ] The new description.
         #
         # @since 2.0.0
-        def run(description, ismaster, round_trip_time)
-          new_description = Description.new(description.address, ismaster, round_trip_time)
+        def run(description, ismaster, average_round_trip_time)
+          new_description = Description.new(description.address, ismaster, average_round_trip_time)
           inspectors.each do |inspector|
             inspector.run(description, new_description)
           end

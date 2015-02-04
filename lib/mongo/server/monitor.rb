@@ -39,6 +39,11 @@ module Mongo
       # @since 2.0.0
       ISMASTER = Protocol::Query.new(Database::ADMIN, Database::COMMAND, STATUS, :limit => -1)
 
+      # The weighting factor (alpha) for calculating the average moving round trip time.
+      #
+      # @since 2.0.0
+      RTT_WEIGHT_FACTOR = 0.2.freeze
+
       # @return [ Mongo::Connection ] connection The connection to use.
       attr_reader :connection
 
@@ -92,6 +97,7 @@ module Mongo
         @inspector = Description::Inspector.new(listeners)
         @options = options.freeze
         @connection = Connection.new(address, options)
+        @last_round_trip_time = nil
         @mutex = Mutex.new
       end
 
@@ -128,8 +134,13 @@ module Mongo
 
       private
 
-      def calculate_round_trip_time(start)
-        Time.now - start
+      def average_round_trip_time(start)
+        new_rtt = Time.now - start
+        RTT_WEIGHT_FACTOR * new_rtt + (1 - RTT_WEIGHT_FACTOR) * (@last_round_trip_time || new_rtt)
+      end
+
+      def calculate_average_round_trip_time(start)
+        @last_round_trip_time = average_round_trip_time(start)
       end
 
       def ismaster
@@ -137,11 +148,11 @@ module Mongo
           start = Time.now
           begin
             result = connection.dispatch([ ISMASTER ]).documents[0]
-            return result, calculate_round_trip_time(start)
+            return result, calculate_average_round_trip_time(start)
           rescue Exception => e
             log_debug([ e.message ])
             connection.disconnect!
-            return {}, calculate_round_trip_time(start)
+            return {}, calculate_average_round_trip_time(start)
           end
         end
       end

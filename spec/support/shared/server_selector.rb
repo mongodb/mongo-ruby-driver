@@ -1,6 +1,6 @@
 def server(mode, options = {})
   tags = options[:tags] || {}
-  round_trip_time = options[:round_trip_time] || 0
+  average_round_trip_time = options[:average_round_trip_time] || 0
 
   ismaster = {
               'setName' => 'mongodb_set',
@@ -14,7 +14,7 @@ def server(mode, options = {})
   address = Mongo::Address.new('127.0.0.1:27017')
 
   server = Mongo::Server.new(address, listeners)
-  description = Mongo::Server::Description.new(address, ismaster, round_trip_time)
+  description = Mongo::Server::Description.new(address, ismaster, average_round_trip_time)
   server.tap do |s|
     s.monitor.instance_variable_set(:@description, description)
   end

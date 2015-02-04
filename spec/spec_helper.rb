@@ -23,6 +23,7 @@ require 'support/matchers'
 require 'support/authorization'
 require 'support/mongo_orchestration'
 require 'support/server_discovery_and_monitoring'
+require 'support/server_selection_rtt'
 
 Mongo::Logger.logger = Logger.new($stdout)
 Mongo::Logger.logger.level = Logger::INFO
@@ -63,6 +64,7 @@ TEST_SET = 'ruby-driver-rs'
 COVERAGE_MIN = 90
 CURRENT_PATH = File.expand_path(File.dirname(__FILE__))
 SERVER_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/support/sdam/**/*.yml")
+SERVER_SELECTION_RTT_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/rtt/*.yml")
 
 # For instances where behaviour is different on different versions, we need to
 # determine in the specs if we are 2.6 or higher.
