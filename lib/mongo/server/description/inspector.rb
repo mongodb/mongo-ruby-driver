@@ -61,7 +61,7 @@ module Mongo
         #
         # @param [ Description ] description The old description.
         # @param [ Hash ] ismaster The updated ismaster.
-        # @param [ Float ] average_round_trip_time The moving average round trip time.
+        # @param [ Float ] average_round_trip_time The moving average round trip time (ms).
         #
         # @return [ Description ] The new description.
         #

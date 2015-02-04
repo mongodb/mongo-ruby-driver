@@ -13,8 +13,8 @@ describe 'Server Selection moving average round trip time calculation' do
       module Mongo
         class Server
 
-          # We monkey-patch the monitor here, so the history of rtt's can be controlled.
-          # We keep the API of Monitor#initialize but add in an extra option and seed the rtt history.
+          # We monkey-patch the monitor here, so the last average rtt can be controlled.
+          # We keep the API of Monitor#initialize but add in an extra option and set the last rtt.
           #
           # @since 2.0.0
           class Monitor
@@ -35,7 +35,7 @@ describe 'Server Selection moving average round trip time calculation' do
             # @since 2.0.0
             def average_round_trip_time(start)
               new_rtt = @new_rtt_ms
-              RTT_WEIGHT_FACTOR * new_rtt + (1 - RTT_WEIGHT_FACTOR) * (@last_round_trip_time || @new_rtt_ms)
+              RTT_WEIGHT_FACTOR * new_rtt + (1 - RTT_WEIGHT_FACTOR) * (@last_round_trip_time || new_rtt)
             end
           end
         end

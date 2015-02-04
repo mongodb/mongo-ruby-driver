@@ -204,8 +204,8 @@ module Mongo
       #
       # @param [ Address ] addressThe server address.
       # @param [ Hash ] config The result of the ismaster command.
-      # @param [ Float ] average_round_trip_time The moving average time the ismaster
-      #   call took to complete..
+      # @param [ Float ] average_round_trip_time The moving average time (ms) the ismaster
+      #   call took to complete.
       #
       # @since 2.0.0
       def initialize(address, config = {}, average_round_trip_time = 0)
