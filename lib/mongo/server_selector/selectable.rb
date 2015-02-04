@@ -166,7 +166,7 @@ module Mongo
       def near_servers(candidates = [])
         return candidates if candidates.empty?
         nearest_server = candidates.min_by(&:average_round_trip_time)
-        threshold = nearest_server.average_round_trip_time + local_threshold
+        threshold = nearest_server.average_round_trip_time * 1000 + local_threshold
         candidates.select { |server| server.average_round_trip_time <= threshold }
       end
 
