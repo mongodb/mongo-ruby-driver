@@ -18,12 +18,6 @@ describe Mongo::Collection::View do
     authorized_collection.find.remove_many
   end
 
-  pending '#await_data'
-  pending '#exhaust'
-  pending '#no_cursor_timeout'
-  pending '#partial'
-  pending '#tailable'
-
   describe '#==' do
 
     context 'when the other object is not a collection view' do
