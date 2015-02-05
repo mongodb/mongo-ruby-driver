@@ -104,7 +104,7 @@ module Mongo
         # @return [ Integer ] The document count.
         #
         # @since 2.0.0
-        def count(options={})
+        def count(options = {})
           cmd = { :count => collection.name, :query => selector }
           cmd[:skip] = options[:skip] if options[:skip]
           cmd[:hint] = options[:hint] if options[:hint]

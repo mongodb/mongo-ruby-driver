@@ -102,13 +102,13 @@ module Mongo
     # @example Get all documents in a collection.
     #   collection.find
     #
-    # @param [ Hash ] selector The selector to use in the find.
+    # @param [ Hash ] filter The filter to use in the find.
     #
     # @return [ CollectionView ] The collection view.
     #
     # @since 2.0.0
-    def find(selector = nil)
-      View.new(self, selector || {})
+    def find(filter = nil)
+      View.new(self, filter || {})
     end
 
     # Get a view of all indexes for this collection. Can be iterated or has
