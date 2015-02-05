@@ -18,6 +18,21 @@ describe Mongo::Collection::View::Readable do
     authorized_collection.find.remove_many
   end
 
+  describe '#allow_partial_results' do
+
+    let(:new_view) do
+      view.allow_partial_results
+    end
+
+    it 'sets the flag' do
+      expect(new_view.send(:flags)).to include(:partial)
+    end
+
+    it 'returns a new View' do
+      expect(new_view).not_to be(view)
+    end
+  end
+
   describe '#aggregate' do
 
      let(:documents) do
@@ -131,7 +146,7 @@ describe Mongo::Collection::View::Readable do
         expect(new_view.batch_size).to eq(new_batch_size)
       end
 
-      it 'returns a new Collection' do
+      it 'returns a new View' do
         expect(view.batch_size(new_batch_size)).not_to be(view)
       end
     end
@@ -161,7 +176,7 @@ describe Mongo::Collection::View::Readable do
         expect(new_view.comment).to eq(new_comment)
       end
 
-      it 'returns a new Collection' do
+      it 'returns a new View' do
         expect(view.comment(new_comment)).not_to be(view)
       end
     end
@@ -342,7 +357,7 @@ describe Mongo::Collection::View::Readable do
         expect(new_view.hint).to eq(new_hint)
       end
 
-      it 'returns a new Collection' do
+      it 'returns a new View' do
         expect(view.hint(new_hint)).not_to be(view)
       end
     end
@@ -376,7 +391,7 @@ describe Mongo::Collection::View::Readable do
         expect(new_view.limit).to eq(new_limit)
       end
 
-      it 'returns a new Collection' do
+      it 'returns a new View' do
         expect(view.limit(new_limit)).not_to be(view)
       end
     end
@@ -421,7 +436,7 @@ describe Mongo::Collection::View::Readable do
         expect(new_view.projection).to eq(new_projection)
       end
 
-      it 'returns a new Collection' do
+      it 'returns a new View' do
         expect(view.projection(new_projection)).not_to be(view)
       end
     end
@@ -453,7 +468,7 @@ describe Mongo::Collection::View::Readable do
         expect(new_view.read).to eq(new_read)
       end
 
-      it 'returns a new Collection' do
+      it 'returns a new View' do
         expect(view.read(new_read)).not_to be(view)
       end
     end
@@ -509,7 +524,7 @@ describe Mongo::Collection::View::Readable do
         expect(new_view.skip).to eq(new_skip)
       end
 
-      it 'returns a new Collection' do
+      it 'returns a new View' do
         expect(view.skip(new_skip)).not_to be(view)
       end
     end
@@ -554,7 +569,7 @@ describe Mongo::Collection::View::Readable do
         expect(new_view.sort).to eq(new_sort)
       end
 
-      it 'returns a new Collection' do
+      it 'returns a new View' do
         expect(view.sort(new_sort)).not_to be(view)
       end
     end

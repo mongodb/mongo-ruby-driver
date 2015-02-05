@@ -53,6 +53,18 @@ module Mongo
           Aggregation.new(self, pipeline, options)
         end
 
+        # Allows the query to get partial results if some shards are down.
+        #
+        # @example Allow partial results.
+        #   view.allow_partial_results
+        #
+        # @return [ View ] The new view.
+        #
+        # @since 2.0.0
+        def allow_partial_results
+          configure_flag(:partial)
+        end
+
         # The number of documents returned in each batch of results from MongoDB.
         #
         # @example Set the batch size.
@@ -134,24 +146,6 @@ module Mongo
           ).documents.first['values']
         end
 
-        # The fields to include or exclude from each doc in the result set.
-        #
-        # @example Set the fields to include or exclude.
-        #   view.projection(name: 1)
-        #
-        # @note A value of 0 excludes a field from the doc. A value of 1 includes it.
-        #   Values must all be 0 or all be 1, with the exception of the _id value.
-        #   The _id field is included by default. It must be excluded explicitly.
-        #
-        # @param [ Hash ] fields The field and 1 or 0, to include or exclude it.
-        #
-        # @return [ Hash, View ] Either the fields or a new +View+.
-        #
-        # @since 2.0.0
-        def projection(spec = nil)
-          configure(:projection, spec)
-        end
-
         # The index that MongoDB will be forced to use for the query.
         #
         # @example Set the index hint.
@@ -208,6 +202,24 @@ module Mongo
         # @since 2.0.0
         def max_scan(value = nil)
           configure(:max_scan, value)
+        end
+
+        # The fields to include or exclude from each doc in the result set.
+        #
+        # @example Set the fields to include or exclude.
+        #   view.projection(name: 1)
+        #
+        # @note A value of 0 excludes a field from the doc. A value of 1 includes it.
+        #   Values must all be 0 or all be 1, with the exception of the _id value.
+        #   The _id field is included by default. It must be excluded explicitly.
+        #
+        # @param [ Hash ] fields The field and 1 or 0, to include or exclude it.
+        #
+        # @return [ Hash, View ] Either the fields or a new +View+.
+        #
+        # @since 2.0.0
+        def projection(spec = nil)
+          configure(:projection, spec)
         end
 
         # The read preference to use for the query.
@@ -293,7 +305,7 @@ module Mongo
         end
 
         def flags
-          !primary? ? [ :slave_ok ] : []
+          @flags ||= (!primary? ? [ :slave_ok ] : [])
         end
 
         def has_special_fields?

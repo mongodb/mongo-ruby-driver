@@ -31,6 +31,12 @@ module Mongo
           return options[field] if value.nil?
           new(options.merge(field => value))
         end
+
+        def configure_flag(flag)
+          new(options.dup).tap do |view|
+            view.send(:flags).push(flag)
+          end
+        end
       end
     end
   end
