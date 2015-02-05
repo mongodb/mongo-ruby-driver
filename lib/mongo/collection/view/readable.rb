@@ -117,7 +117,7 @@ module Mongo
         # @example Get the distinct values.
         #   collection_view.distinct('name')
         #
-        # @param [ String, Symbol ] field The name of the field.
+        # @param [ String, Symbol ] field_name The name of the field.
         # @param [ Hash ] options Options for the distinct command.
         #
         # @option options :read [ Hash ] The read preference for this command.
@@ -125,10 +125,10 @@ module Mongo
         # @return [ Array<Object> ] The list of distinct values.
         #
         # @since 2.0.0
-        def distinct(field, options={})
+        def distinct(field_name, options={})
           database.command({
             :distinct => collection.name,
-            :key => field.to_s,
+            :key => field_name.to_s,
             :query => selector },
             options
           ).documents.first['values']
