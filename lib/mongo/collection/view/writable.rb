@@ -31,10 +31,37 @@ module Mongo
         #
         # @since 2.0.0
         def find_one_and_delete
-          cmd = { :findAndModify => collection.name, :query => selector, :remove => true }
+          cmd = { :findandmodify => collection.name, :query => selector, :remove => true }
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
-          database.command(cmd, options).first['value']
+          database.command(cmd).first['value']
+        end
+
+        def find_one_and_replace(replacement, opts = {})
+        end
+
+        # Finds a single document and updates it.
+        #
+        # @example Find a document and update it, returning the original.
+        #   view.find_one_and_update({ "$set" => { name: 'test' }}, :return_document => :before)
+        #
+        # @param [ BSON::Document ] document The updates.
+        # @param [ Hash ] opts The options.
+        #
+        # @option opts [ Symbol ] :return_document Either :before or :after.
+        # @option opts [ true, false ] :upsert Whether to upsert if the
+        #   document doesn't exist.
+        #
+        # @return [ BSON::Document ] The document.
+        #
+        # @since 2.0.0
+        def find_one_and_update(document, opts = {})
+          cmd = { :findandmodify => collection.name, :query => selector }
+          cmd[:update] = document
+          cmd[:fields] = projection if projection
+          cmd[:sort] = sort if sort
+          cmd[:new] = (opts[:return_document] == :after ? true : false) if opts[:return_document]
+          database.command(cmd).first['value']
         end
 
         # Remove documents from the collection.
