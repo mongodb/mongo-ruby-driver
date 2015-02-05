@@ -18,6 +18,84 @@ describe Mongo::Collection::View::Writable do
     authorized_collection.find.remove_many
   end
 
+  describe '#find_one_and_delete' do
+
+    before do
+      authorized_collection.insert_many([{ field: 'test1' }])
+    end
+
+    context 'when a matching document is found' do
+
+      let(:selector) do
+        { field: 'test1' }
+      end
+
+      context 'when no options are provided' do
+
+        let!(:document) do
+          view.find_one_and_delete
+        end
+
+        it 'deletes the document from the database' do
+          expect(view.to_a).to be_empty
+        end
+
+        it 'returns the document' do
+          expect(document['field']).to eq('test1')
+        end
+      end
+
+      context 'when a projection is provided' do
+
+        let!(:document) do
+          view.projection(_id: 1).find_one_and_delete
+        end
+
+        it 'deletes the document from the database' do
+          expect(view.to_a).to be_empty
+        end
+
+        it 'returns the document with limited fields' do
+          expect(document['field']).to be_nil
+          expect(document['_id']).to_not be_nil
+        end
+      end
+
+      context 'when a sort is provided' do
+
+        let!(:document) do
+          view.sort(field: 1).find_one_and_delete
+        end
+
+        it 'deletes the document from the database' do
+          expect(view.to_a).to be_empty
+        end
+
+        it 'returns the document with limited fields' do
+          expect(document['field']).to eq('test1')
+        end
+      end
+    end
+
+    context 'when no matching document is found' do
+
+      let(:selector) do
+        { field: 'test5' }
+      end
+
+      let!(:document) do
+        view.find_one_and_delete
+      end
+
+      it 'returns nil' do
+        expect(document).to be_nil
+      end
+    end
+  end
+
+  pending '#find_one_and_replace'
+  pending '#find_one_and_modify'
+
   describe '#remove_many' do
 
     context 'when a selector was provided' do

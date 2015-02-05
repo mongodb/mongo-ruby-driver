@@ -21,6 +21,22 @@ module Mongo
       # @since 2.0.0
       module Writable
 
+        # Finds a single document in the database via findAndModify and deletes
+        # it, returning the original document.
+        #
+        # @example Find one document and delete it.
+        #   view.find_one_and_delete
+        #
+        # @return [ BSON::Document, nil ] The document, if found.
+        #
+        # @since 2.0.0
+        def find_one_and_delete
+          cmd = { :findAndModify => collection.name, :query => selector, :remove => true }
+          cmd[:fields] = projection if projection
+          cmd[:sort] = sort if sort
+          database.command(cmd, options).first['value']
+        end
+
         # Remove documents from the collection.
         #
         # @example Remove multiple documents from the collection.
