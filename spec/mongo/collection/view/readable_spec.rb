@@ -419,6 +419,21 @@ describe Mongo::Collection::View::Readable do
     end
   end
 
+  describe '#no_cursor_timeout' do
+
+    let(:new_view) do
+      view.no_cursor_timeout
+    end
+
+    it 'sets the flag' do
+      expect(new_view.send(:flags)).to include(:no_cursor_timeout)
+    end
+
+    it 'returns a new View' do
+      expect(new_view).not_to be(view)
+    end
+  end
+
   describe '#projection' do
 
     context 'when projection are specified' do

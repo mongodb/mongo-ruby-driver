@@ -204,6 +204,19 @@ module Mongo
           configure(:max_scan, value)
         end
 
+        # The server normally times out idle cursors after an inactivity period
+        # (10 minutes) to prevent excess memory use. Set this option to prevent that.
+        #
+        # @example Set the cursor to not timeout.
+        #   view.no_cursor_timeout
+        #
+        # @return [ View ] The new view.
+        #
+        # @since 2.0.0
+        def no_cursor_timeout
+          configure_flag(:no_cursor_timeout)
+        end
+
         # The fields to include or exclude from each doc in the result set.
         #
         # @example Set the fields to include or exclude.
