@@ -3,12 +3,6 @@ source 'https://rubygems.org'
 gemspec
 gem 'rake'
 
-# group :release do
-  # gem 'git'
-  # gem 'kramdown'
-  # gem 'yard'
-# end
-
 platforms :rbx do
   gem 'racc'
   gem 'rubysl', '~> 2.0'
@@ -24,7 +18,6 @@ group :development, :testing do
 
   platforms :ruby_19, :ruby_20, :ruby_21, :jruby do
     gem 'coveralls', :require => false
-    gem 'rubocop', '0.15.0' if RUBY_VERSION > '1.9'
   end
 end
 
@@ -38,7 +31,6 @@ group :development do
     gem 'guard-bundler'
     gem 'guard-rspec', :platforms => :mri
     gem 'guard-jruby-rspec', :platforms => :jruby
-    gem 'guard-rubocop', :platforms => [:ruby_19, :ruby_20, :jruby]
     gem 'guard-yard', :platforms => [:mri_19, :mri_20]
   end
 
