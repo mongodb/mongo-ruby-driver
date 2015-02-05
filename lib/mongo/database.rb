@@ -224,5 +224,23 @@ module Mongo
         super(MESSAGE)
       end
     end
+
+    # Create a database for the provided client, for use when we don't want the
+    # client's original database instance to be the same.
+    #
+    # @api private
+    #
+    # @example Create a database for the client.
+    #   Database.create(client)
+    #
+    # @param [ Client ] client The client to create on.
+    #
+    # @return [ Database ] The database.
+    #
+    # @since 2.0.0
+    def self.create(client)
+      database = Database.new(client, client.options[:database], client.options)
+      client.instance_variable_set(:@database, database)
+    end
   end
 end

@@ -181,5 +181,23 @@ module Mongo
     def servers
       topology.servers(@servers)
     end
+
+    # Create a cluster for the provided client, for use when we don't want the
+    # client's original cluster instance to be the same.
+    #
+    # @api private
+    #
+    # @example Create a cluster for the client.
+    #   Cluster.create(client)
+    #
+    # @param [ Client ] client The client to create on.
+    #
+    # @return [ Cluster ] The cluster.
+    #
+    # @since 2.0.0
+    def self.create(client)
+      cluster = Cluster.new(client.cluster.addresses.map(&:to_s), client.options)
+      client.instance_variable_set(:@cluster, cluster)
+    end
   end
 end
