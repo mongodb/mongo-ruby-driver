@@ -93,6 +93,102 @@ describe Mongo::Collection::View::Writable do
     end
   end
 
+  describe '#find_one_and_replace' do
+
+    before do
+      authorized_collection.insert_many([{ field: 'test1', other: 'sth' }])
+    end
+
+    context 'when a matching document is found' do
+
+      let(:selector) do
+        { field: 'test1' }
+      end
+
+      context 'when no options are provided' do
+
+        let(:document) do
+          view.find_one_and_replace({ field: 'testing' })
+        end
+
+        it 'returns the original document' do
+          expect(document['field']).to eq('test1')
+        end
+      end
+
+      context 'when return_document options are provided' do
+
+        let(:document) do
+          view.find_one_and_replace({ field: 'testing' }, :return_document => :after)
+        end
+
+        it 'returns the new document' do
+          expect(document['field']).to eq('testing')
+        end
+
+        it 'replaces the document' do
+          expect(document['other']).to be_nil
+        end
+      end
+
+      context 'when a projection is provided' do
+
+        let(:document) do
+          view.projection(_id: 1).find_one_and_replace({ field: 'testing' })
+        end
+
+        it 'returns the document with limited fields' do
+          expect(document['field']).to be_nil
+          expect(document['_id']).to_not be_nil
+        end
+      end
+
+      context 'when a sort is provided' do
+
+        let(:document) do
+          view.sort(field: 1).find_one_and_replace({ field: 'testing' })
+        end
+
+        it 'returns the original document' do
+          expect(document['field']).to eq('test1')
+        end
+      end
+    end
+
+    context 'when no matching document is found' do
+
+      context 'when no upsert options are provided' do
+
+        let(:selector) do
+          { field: 'test5' }
+        end
+
+        let(:document) do
+          view.find_one_and_replace({ field: 'testing' })
+        end
+
+        it 'returns nil' do
+          expect(document).to be_nil
+        end
+      end
+
+      context 'when upsert options are provided' do
+
+        let(:selector) do
+          { field: 'test5' }
+        end
+
+        let(:document) do
+          view.find_one_and_replace({ field: 'testing' }, :upsert => true, :return_document => :after)
+        end
+
+        it 'returns the new document' do
+          expect(document['field']).to eq('testing')
+        end
+      end
+    end
+  end
+
   describe '#find_one_and_update' do
 
     before do
@@ -122,7 +218,7 @@ describe Mongo::Collection::View::Writable do
           view.find_one_and_update({ '$set' => { field: 'testing' }}, :return_document => :after)
         end
 
-        it 'returns the original document' do
+        it 'returns the new document' do
           expect(document['field']).to eq('testing')
         end
       end
@@ -166,8 +262,6 @@ describe Mongo::Collection::View::Writable do
       end
     end
   end
-
-  pending '#find_one_and_replace'
 
   describe '#remove_many' do
 
