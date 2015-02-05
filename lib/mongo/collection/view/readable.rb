@@ -226,13 +226,13 @@ module Mongo
         #   Values must all be 0 or all be 1, with the exception of the _id value.
         #   The _id field is included by default. It must be excluded explicitly.
         #
-        # @param [ Hash ] fields The field and 1 or 0, to include or exclude it.
+        # @param [ Hash ] document The field and 1 or 0, to include or exclude it.
         #
         # @return [ Hash, View ] Either the fields or a new +View+.
         #
         # @since 2.0.0
-        def projection(spec = nil)
-          configure(:projection, spec)
+        def projection(document = nil)
+          configure(:projection, document)
         end
 
         # The read preference to use for the query.
