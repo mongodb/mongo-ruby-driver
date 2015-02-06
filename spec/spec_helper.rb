@@ -71,8 +71,8 @@ SERVER_SELECTION_RTT_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/
 #
 # @since 2.0.0
 def write_command_enabled?
-  @client ||= initialize_scanned_client!
-  @write_command_enabled ||= @client.cluster.servers.first.features.write_command_enabled?
+  $mongo_client ||= initialize_scanned_client!
+  $write_command_enabled ||= $mongo_client.cluster.servers.first.features.write_command_enabled?
 end
 
 # For instances where behaviour is different on different versions, we need to
@@ -80,8 +80,8 @@ end
 #
 # @since 2.0.0
 def list_command_enabled?
-  @client ||= initialize_scanned_client!
-  @list_command_enabled ||= @client.cluster.servers.first.features.list_indexes_enabled?
+  $mongo_client ||= initialize_scanned_client!
+  $list_command_enabled ||= $mongo_client.cluster.servers.first.features.list_indexes_enabled?
 end
 
 alias :scram_sha_1_enabled? :list_command_enabled?
@@ -103,11 +103,11 @@ def initialize_scanned_client!
 end
 
 def initialize_mo_standalone!(path = nil)
-  @standalone ||= MongoOrchestration.get(:standalone, path: path)
+  $mongo_standalone ||= MongoOrchestration.get(:standalone, path: path)
 end
 
 def stop_mo_standalone!
-  @standalone.stop if @standalone
+  $mongo_standalone.stop if $mongo_standalone
 end
 
 def mongo_orchestration_available?(path = nil)
