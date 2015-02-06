@@ -156,7 +156,7 @@ module Mongo
     # @since 2.0.0
     def matches_tags?(tag_set)
       tags.any? do |tag|
-        tag_set.each do |k,v|
+        tag_set.all? do |k,v|
           tag.keys.include?(k) && tag[k] == v
         end
       end
