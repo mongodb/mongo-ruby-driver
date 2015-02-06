@@ -13,7 +13,6 @@
 # limitations under the License.
 
 require 'base64'
-require 'krypt'
 
 module Mongo
   module Auth
@@ -43,7 +42,7 @@ module Mongo
         # The digest to use for encryption.
         #
         # @since 2.0.0
-        DIGEST = Krypt::Digest::SHA1.new.freeze
+        DIGEST = OpenSSL::Digest::SHA1.new.freeze
 
         # The key for the done field in the responses.
         #
@@ -357,12 +356,12 @@ module Mongo
         # @see http://tools.ietf.org/html/rfc5802#section-2.2
         #
         # @since 2.0.0
-        def hi(password)
-          Krypt::PBKDF2.new(DIGEST).generate(
-            password,
+        def hi(data)
+          OpenSSL::PKCS5.pbkdf2_hmac_sha1(
+            data,
             Base64.strict_decode64(salt),
             iterations,
-            DIGEST.digest_length
+            DIGEST.size
           )
         end
 
@@ -373,8 +372,8 @@ module Mongo
         # @see http://tools.ietf.org/html/rfc5802#section-2.2
         #
         # @since 2.0.0
-        def hmac(password, key)
-          Krypt::HMAC.digest(DIGEST, password, key)
+        def hmac(data, key)
+          OpenSSL::HMAC.digest(DIGEST, data, key)
         end
 
         # Get the iterations from the server response.
