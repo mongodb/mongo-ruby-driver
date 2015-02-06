@@ -152,7 +152,7 @@ module Mongo
           rescue Exception => e
             log_debug([ e.message ])
             log_debug([ description.address ])
-            log_debug([ description.address.resolver ])
+            log_debug([ description.address.resolver.class.name ])
             connection.disconnect!
             return {}, calculate_average_round_trip_time(start)
           end
