@@ -95,7 +95,7 @@ module Mongo
             servers = select(cluster.servers).shuffle!
           end
           return servers.first if servers && !servers.compact.empty?
-          # @todo: cluster.scan!?
+          # @todo: cluster.scan!? and test for compact
         end
         raise NoServerAvailable.new(self)
       end
