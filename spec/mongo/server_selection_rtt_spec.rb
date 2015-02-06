@@ -96,7 +96,7 @@ describe 'Server Selection moving average round trip time calculation' do
         monitor.scan!
       end
 
-      it 'correctly caculates the moving average round trip time' do
+      it 'correctly calculates the moving average round trip time' do
         expect(monitor.description.average_round_trip_time).to eq(spec.new_avg_rtt)
       end
     end
