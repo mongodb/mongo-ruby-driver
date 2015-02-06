@@ -66,7 +66,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(tag_sets = [], options = {})
-        if !tag_sets.empty? && !tags_allowed?
+        if !tag_sets.all? { |set| set.empty? } && !tags_allowed?
           raise ServerSelector::InvalidServerPreference.new(name)
         end
         @tag_sets = tag_sets
@@ -167,7 +167,7 @@ module Mongo
       def near_servers(candidates = [])
         return candidates if candidates.empty?
         nearest_server = candidates.min_by(&:average_round_trip_time)
-        threshold = nearest_server.average_round_trip_time * 1000 + local_threshold
+        threshold = nearest_server.average_round_trip_time + (local_threshold * 1000)
         candidates.select { |server| server.average_round_trip_time <= threshold }
       end
 
@@ -203,7 +203,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(name)
-        super("This server preference #{mode} cannot be combined with tags.")
+        super("This server preference #{name} cannot be combined with tags.")
       end
     end
   end

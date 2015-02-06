@@ -70,6 +70,8 @@ module Mongo
         preference
       end
 
+      private
+
       # Select the near servers taking into account any defined tag sets and
       #   local threshold between the nearest server and other servers.
       #

@@ -74,6 +74,8 @@ module Mongo
         preference
       end
 
+      private
+
       # Select servers taking into account any defined tag sets and
       #   local threshold, with secondaries.
       #
