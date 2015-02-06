@@ -84,6 +84,7 @@ module Mongo
       #
       # @since 2.0.0
       def select_server(cluster)
+        # @todo: servers can contain [ nil ]
         deadline = Time.now + server_selection_timeout
         while (deadline - Time.now) > 0
           if cluster.standalone?
@@ -93,7 +94,7 @@ module Mongo
           else
             servers = select(cluster.servers).shuffle!
           end
-          return servers.first if servers && !servers.empty?
+          return servers.first if servers && !servers.compact.empty?
           # @todo: cluster.scan!?
         end
         raise NoServerAvailable.new(self)
