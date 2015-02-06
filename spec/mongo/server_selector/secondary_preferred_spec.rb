@@ -37,7 +37,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
       let(:candidates) { [] }
 
       it 'returns an empty array' do
-        expect(read_pref.select(candidates)).to be_empty
+        expect(read_pref.send(:select, candidates)).to be_empty
       end
     end
 
@@ -45,7 +45,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
       let(:candidates) { [primary] }
 
       it 'returns array with primary' do
-        expect(read_pref.select(candidates)).to eq([primary])
+        expect(read_pref.send(:select, candidates)).to eq([primary])
       end
     end
 
@@ -53,7 +53,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
       let(:candidates) { [secondary] }
 
       it 'returns array with secondary' do
-        expect(read_pref.select(candidates)).to eq([secondary])
+        expect(read_pref.send(:select, candidates)).to eq([secondary])
       end
     end
 
@@ -62,7 +62,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
       let(:expected) { [secondary, primary] }
 
       it 'returns array with secondary first, then primary' do
-        expect(read_pref.select(candidates)).to eq(expected)
+        expect(read_pref.send(:select, candidates)).to eq(expected)
       end
     end
 
@@ -71,7 +71,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
       let(:expected) { [secondary, primary] }
 
       it 'returns array with secondary first, then primary' do
-        expect(read_pref.select(candidates)).to eq(expected)
+        expect(read_pref.send(:select, candidates)).to eq(expected)
       end
     end
 
@@ -90,7 +90,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           let(:candidates) { [primary] }
 
           it 'returns array with primary' do
-            expect(read_pref.select(candidates)).to eq([primary])
+            expect(read_pref.send(:select, candidates)).to eq([primary])
           end
         end
 
@@ -98,7 +98,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           let(:candidates) { [matching_primary] }
 
           it 'returns array with matching primary' do
-            expect(read_pref.select(candidates)).to eq([matching_primary])
+            expect(read_pref.send(:select, candidates)).to eq([matching_primary])
           end
         end
 
@@ -106,7 +106,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           let(:candidates) { [matching_secondary] }
 
           it 'returns array with matching secondary' do
-            expect(read_pref.select(candidates)).to eq([matching_secondary])
+            expect(read_pref.send(:select, candidates)).to eq([matching_secondary])
           end
         end
 
@@ -114,7 +114,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           let(:candidates) { [secondary] }
 
           it 'returns an empty array' do
-            expect(read_pref.select(candidates)).to be_empty
+            expect(read_pref.send(:select, candidates)).to be_empty
           end
         end
       end
@@ -125,7 +125,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           let(:candidates) { [primary, secondary, secondary] }
 
           it 'returns an array with the primary' do
-            expect(read_pref.select(candidates)).to eq([primary])
+            expect(read_pref.send(:select, candidates)).to eq([primary])
           end
         end
 
@@ -133,7 +133,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           let(:candidates) { [primary, matching_secondary] }
 
           it 'returns an array of the matching secondary, then primary' do
-            expect(read_pref.select(candidates)).to eq(
+            expect(read_pref.send(:select, candidates)).to eq(
               [matching_secondary, primary]
             )
           end
@@ -144,7 +144,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           let(:expected) { [matching_secondary, matching_secondary, primary] }
 
           it 'returns an array of the matching secondary, then primary' do
-            expect(read_pref.select(candidates)).to eq(expected)
+            expect(read_pref.send(:select, candidates)).to eq(expected)
           end
         end
 
@@ -153,7 +153,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           let(:expected) {[matching_secondary, matching_primary] }
 
           it 'returns an array of the matching secondary, then the primary' do
-            expect(read_pref.select(candidates)).to eq(expected)
+            expect(read_pref.send(:select, candidates)).to eq(expected)
           end
         end
       end
@@ -169,7 +169,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           let(:candidates) { [far_primary] }
 
           it 'returns array with primary' do
-            expect(read_pref.select(candidates)).to eq([far_primary])
+            expect(read_pref.send(:select, candidates)).to eq([far_primary])
           end
         end
 
@@ -177,7 +177,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           let(:candidates) { [far_secondary] }
 
           it 'returns an array with the secondary' do
-            expect(read_pref.select(candidates)).to eq([far_secondary])
+            expect(read_pref.send(:select, candidates)).to eq([far_secondary])
           end
         end
       end
@@ -188,7 +188,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           let(:candidates) { [primary, secondary] }
 
           it 'returns an array with secondary, then primary' do
-            expect(read_pref.select(candidates)).to eq([secondary, primary])
+            expect(read_pref.send(:select, candidates)).to eq([secondary, primary])
           end
         end
 
@@ -196,16 +196,16 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           let(:candidates) { [primary, far_secondary] }
 
           it 'returns an array with the secondary, then primary' do
-            expect(read_pref.select(candidates)).to eq([far_secondary, primary])
+            expect(read_pref.send(:select, candidates)).to eq([far_secondary, primary])
           end
         end
 
-        context 'far primary, local secondary' do
+        context '.send(:select, candidates)cal secondary' do
           let(:candidates) { [far_primary, secondary] }
           let(:expected) { [secondary, far_primary] }
 
           it 'returns an array with secondary, then primary' do
-            expect(read_pref.select(candidates)).to eq(expected)
+            expect(read_pref.send(:select, candidates)).to eq(expected)
           end
         end
 
@@ -214,7 +214,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           let(:expected) { [far_secondary, far_primary] }
 
           it 'returns an array with secondary, then primary' do
-            expect(read_pref.select(candidates)).to eq(expected)
+            expect(read_pref.send(:select, candidates)).to eq(expected)
           end
         end
 
@@ -225,7 +225,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
             let(:expected) { [secondary, primary] }
 
             it 'returns an array with near secondary, then primary' do
-              expect(read_pref.select(candidates)).to eq(expected)
+              expect(read_pref.send(:select, candidates)).to eq(expected)
             end
           end
 
@@ -234,7 +234,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
             let(:expected) { [secondary, secondary, far_primary] }
 
             it 'returns an array with secondaries, then primary' do
-              expect(read_pref.select(candidates)).to eq(expected)
+              expect(read_pref.send(:select, candidates)).to eq(expected)
             end
           end
         end
