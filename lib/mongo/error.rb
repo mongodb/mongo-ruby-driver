@@ -19,11 +19,6 @@ module Mongo
   # @since 2.0.0
   class Error < StandardError; end
 
-  # Base error class for all errors coming from the server.
-  #
-  # @since 2.0.0
-  class OperationError < Error; end
-
   # Base class for socket errors.
   #
   # @since 2.0.0
@@ -40,8 +35,8 @@ module Mongo
   class ConnectionError < Error; end
 end
 
+# Require all the driver specific errors.
 require 'mongo/error/driver_error'
-require 'mongo/error/bulk_write_failure'
 require 'mongo/error/max_bson_size'
 require 'mongo/error/max_message_size'
 require 'mongo/error/empty_batch'
@@ -54,3 +49,7 @@ require 'mongo/error/invalid_replacement_document'
 require 'mongo/error/invalid_update_document'
 require 'mongo/error/need_primary_server'
 require 'mongo/error/unsupported_features'
+
+# Require all the operation errors.
+require 'mongo/error/operation_failure'
+require 'mongo/error/bulk_write_failure'

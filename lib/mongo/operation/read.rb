@@ -26,7 +26,7 @@ module Mongo
       # Raised for general errors happening on reads.
       #
       # @since 2.0.0
-      class Failure < OperationError
+      class Failure < Error::OperationFailure
 
         # Initialize the failure error.
         #
@@ -45,7 +45,7 @@ module Mongo
       # database that does not exist.
       #
       # @since 2.0.0
-      class NoNamespace < OperationError
+      class NoNamespace < Error::OperationFailure
 
         # Initialize the exception.
         #

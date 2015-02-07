@@ -46,7 +46,7 @@ module Mongo
       # Raised when a write failes for some reason.
       #
       # @since 2.0.0
-      class Failure < OperationError
+      class Failure < Error::OperationFailure
 
         # @return [ BSON::Document] document The error document.
         attr_reader :document

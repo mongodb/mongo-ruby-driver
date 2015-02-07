@@ -186,7 +186,7 @@ module Mongo
         # match the client nonce sent to it.
         #
         # @since 2.0.0
-        class InvalidNonce < OperationError
+        class InvalidNonce < Error::OperationFailure
 
           # @return [ String ] nonce The client nonce.
           attr_reader :nonce
@@ -214,7 +214,7 @@ module Mongo
         # expected signature on the client.
         #
         # @since 2.0.0
-        class InvalidSignature < OperationError
+        class InvalidSignature < Error::OperationFailure
 
           # @return [ String ] verifier The server verifier string.
           attr_reader :verifier
