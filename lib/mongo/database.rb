@@ -161,7 +161,7 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(client, name, options = {})
-      raise InvalidName.new unless name
+      raise Error::InvalidDatabaseName.new unless name
       @client = client
       @name = name.to_s.freeze
       @options = options.freeze
@@ -201,28 +201,6 @@ module Mongo
     # @since 2.0.0
     def users
       Auth::User::View.new(self)
-    end
-
-    # Exception that is raised when trying to create a database with no name.
-    #
-    # @since 2.0.0
-    class InvalidName < Error::DriverError
-
-      # The message is constant.
-      #
-      # @since 2.0.0
-      MESSAGE = 'nil is an invalid database name. ' +
-        'Please provide a string or symbol.'
-
-      # Instantiate the new exception.
-      #
-      # @example Instantiate the exception.
-      #   Mongo::Database::InvalidName.new
-      #
-      # @since 2.0.0
-      def initialize
-        super(MESSAGE)
-      end
     end
 
     # Create a database for the provided client, for use when we don't want the

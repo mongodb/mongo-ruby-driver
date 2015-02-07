@@ -429,7 +429,7 @@ describe Mongo::Client do
       it 'raises an exception' do
         expect {
           client.use(nil)
-        }.to raise_error(Mongo::Database::InvalidName)
+        }.to raise_error(Mongo::Error::InvalidDatabaseName)
       end
     end
   end

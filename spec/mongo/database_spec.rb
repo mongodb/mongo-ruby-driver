@@ -220,7 +220,7 @@ describe Mongo::Database do
       it 'raises an error' do
         expect do
           described_class.new(authorized_client, nil)
-        end.to raise_error(Mongo::Database::InvalidName)
+        end.to raise_error(Mongo::Error::InvalidDatabaseName)
       end
     end
   end
