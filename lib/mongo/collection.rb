@@ -137,7 +137,7 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(database, name, options = {})
-      raise InvalidName.new unless name
+      raise Error::InvalidCollectionName.new unless name
       @database = database
       @name = name.to_s.freeze
       @options = options.freeze
@@ -191,9 +191,19 @@ module Mongo
       ).execute(next_primary.context)
     end
 
+    # Execute a batch of bulk write operations.
+    #
+    # @example Execute a bulk write.
+    #   collection.bulk_write(operations, options)
+    #
+    # @param [ Array<Hash> ] operations The operations.
+    # @param [ Hash ] options The options.
+    #
+    # @return [ BSON::Document ] The result of the operation.
+    #
+    # @since 2.0.0
     def bulk_write(operations, options)
-      bulk = BulkWrite.new(operations, options, self)
-      bulk.execute
+      BulkWrite.new(operations, options, self).execute
     end
 
     # Get the fully qualified namespace of the collection.
@@ -206,28 +216,6 @@ module Mongo
     # @since 2.0.0
     def namespace
       "#{name}.#{database.name}"
-    end
-
-    # Exception that is raised when trying to create a collection with no name.
-    #
-    # @since 2.0.0
-    class InvalidName < Error::DriverError
-
-      # The message is constant.
-      #
-      # @since 2.0.0
-      MESSAGE = 'nil is an invalid collection name. ' +
-        'Please provide a string or symbol.'
-
-      # Instantiate the new exception.
-      #
-      # @example Instantiate the exception.
-      #   Mongo::Collection::InvalidName.new
-      #
-      # @since 2.0.0
-      def initialize
-        super(MESSAGE)
-      end
     end
   end
 end

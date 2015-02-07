@@ -60,7 +60,7 @@ describe Mongo::Database do
       it 'raises an error' do
         expect do
           database[nil]
-        end.to raise_error(Mongo::Collection::InvalidName)
+        end.to raise_error(Mongo::Error::InvalidCollectionName)
       end
     end
   end
