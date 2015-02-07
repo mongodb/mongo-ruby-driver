@@ -72,36 +72,11 @@ module Mongo
           check_driver_support!
         end
 
-        # Raised when the driver does not support the complete set of server
-        # features.
-        #
-        # @since 2.0.0
-        class Unsupported < Error::DriverError
-
-          # Initialize the exception.
-          #
-          # @example Initialize the exception.
-          #   Unsupported.new(0..3)
-          #
-          # @param [ Range ] server_wire_versions The server's supported wire
-          #   versions.
-          #
-          # @since 2.0.0
-          def initialize(server_wire_versions)
-            super(
-              "This version of the driver, #{Mongo::VERSION}, only supports wire " +
-              "protocol versions #{DRIVER_WIRE_VERSIONS} and the server supports " +
-              "wire versions #{server_wire_versions}. Please upgrade the driver " +
-              "to be able to support this server version."
-            )
-          end
-        end
-
         private
 
         def check_driver_support!
           if DRIVER_WIRE_VERSIONS.max < server_wire_versions.max
-            raise Unsupported.new(server_wire_versions)
+            raise Error::UnsupportedFeatures.new(server_wire_versions)
           end
         end
       end

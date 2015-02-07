@@ -20,7 +20,7 @@ describe Mongo::Server::Description::Features do
       it 'raises an exception' do
         expect {
           described_class.new(0..4)
-        }.to raise_error(Mongo::Server::Description::Features::Unsupported)
+        }.to raise_error(Mongo::Error::UnsupportedFeatures)
       end
     end
 
