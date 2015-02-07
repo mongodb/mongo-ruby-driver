@@ -200,13 +200,13 @@ module Mongo
       # @example Validate the result.
       #   result.validate!
       #
-      # @raise [ Write::Failure ] If an error is in the result.
+      # @raise [ Error::CommandFailure ] If an error is in the result.
       #
       # @return [ Result ] The result if verification passed.
       #
       # @since 2.0.0
       def validate!
-        write_failure? ? raise(Write::Failure.new(first_document)) : self
+        write_failure? ? raise(Error::CommandFailure.new(first_document)) : self
       end
 
       # Get the number of documents written by the server.

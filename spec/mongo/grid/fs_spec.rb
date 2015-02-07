@@ -98,7 +98,7 @@ describe Mongo::Grid::FS do
         expect {
           fs.insert_one(file)
           fs.insert_one(file)
-        }.to raise_error(Mongo::Operation::Write::Failure)
+        }.to raise_error(Mongo::Error::CommandFailure)
       end
     end
   end
@@ -122,7 +122,7 @@ describe Mongo::Grid::FS do
       fs.find_one(:filename => 'test.txt')
     end
 
-    it 'returns the assembled file from the db' do
+    it 'removes the file from the db' do
       expect(from_db).to be_nil
     end
   end

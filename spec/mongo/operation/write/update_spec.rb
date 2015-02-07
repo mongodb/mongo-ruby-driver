@@ -116,7 +116,7 @@ describe Mongo::Operation::Write::Update do
         it 'raises an exception' do
           expect {
             update.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Operation::Write::Failure)
+          }.to raise_error(Mongo::Error::CommandFailure)
         end
       end
     end
@@ -156,7 +156,7 @@ describe Mongo::Operation::Write::Update do
         it 'raises an exception' do
           expect {
             update.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Operation::Write::Failure)
+          }.to raise_error(Mongo::Error::CommandFailure)
         end
       end
 

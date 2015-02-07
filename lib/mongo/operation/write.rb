@@ -23,32 +23,3 @@ require 'mongo/operation/write/drop_index'
 require 'mongo/operation/write/create_user'
 require 'mongo/operation/write/remove_user'
 require 'mongo/operation/write/command'
-
-module Mongo
-  module Operation
-    module Write
-
-      # Raised when a write failes for some reason.
-      #
-      # @since 2.0.0
-      class Failure < Error::OperationFailure
-
-        # @return [ BSON::Document] document The error document.
-        attr_reader :document
-
-        # Initialize the exception with the document that triggered the error.
-        #
-        # @example Initialize the new exception.
-        #   Write::Failure.new({ 'ok' => 0.0 })
-        #
-        # @param [ Hash ] document The document that triggered the error.
-        #
-        # @since 2.0.0
-        def initialize(document)
-          @document = document
-          super(Error::Parser.new(document).parse)
-        end
-      end
-    end
-  end
-end

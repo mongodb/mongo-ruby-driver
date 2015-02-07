@@ -23,24 +23,6 @@ module Mongo
   module Operation
     module Read
 
-      # Raised for general errors happening on reads.
-      #
-      # @since 2.0.0
-      class Failure < Error::OperationFailure
-
-        # Initialize the failure error.
-        #
-        # @example Initialize the error.
-        #   Failure.new(document)
-        #
-        # @param [ BSON::Document ] document The document.
-        #
-        # @since 2.0.0
-        def initialize(document)
-          super(document[ERROR_MSG])
-        end
-      end
-
       # Raised for read commands that attempt to execute on a collection or
       # database that does not exist.
       #

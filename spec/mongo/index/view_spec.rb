@@ -105,7 +105,7 @@ describe Mongo::Index::View do
       it 'raises an exception', if: write_command_enabled? do
         expect {
           view.create(spec, unique: false)
-        }.to raise_error(Mongo::Operation::Write::Failure)
+        }.to raise_error(Mongo::Error::CommandFailure)
       end
 
       it 'does not raise an exception', unless: write_command_enabled? do

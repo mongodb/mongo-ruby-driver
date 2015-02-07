@@ -67,7 +67,7 @@ end
 
 require 'mongo/error/parser'
 
-# require 'mongo/error/client'
+# require 'mongo/error/driver'
 # require 'mongo/error/server'
 # require 'mongo/error/network'
 
@@ -89,5 +89,6 @@ require 'mongo/error/unsupported_features'
 # Require all the server errors.
 require 'mongo/error/operation_failure'
 require 'mongo/error/bulk_write_failure'
+require 'mongo/error/command_failure'
 require 'mongo/error/invalid_nonce'
 require 'mongo/error/invalid_signature'

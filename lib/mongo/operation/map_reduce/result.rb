@@ -102,13 +102,13 @@ module Mongo
         # @example Validate the result.
         #   result.validate!
         #
-        # @raise [ Write::Failure ] If an error is in the result.
+        # @raise [ Error::CommandFailure ] If an error is in the result.
         #
         # @return [ Result ] The result if verification passed.
         #
         # @since 2.0.0
         def validate!
-          documents.nil? ? raise(Write::Failure.new(reply.documents[0])) : self
+          documents.nil? ? raise(Error::CommandFailure.new(reply.documents[0])) : self
         end
       end
     end

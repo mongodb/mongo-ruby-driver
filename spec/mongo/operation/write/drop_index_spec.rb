@@ -44,7 +44,7 @@ describe Mongo::Operation::Write::DropIndex do
       it 'raises an exception' do
         expect {
           operation.execute(authorized_primary.context)
-        }.to raise_error(Mongo::Operation::Write::Failure)
+        }.to raise_error(Mongo::Error::CommandFailure)
       end
     end
   end

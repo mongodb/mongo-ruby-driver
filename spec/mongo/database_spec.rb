@@ -198,7 +198,7 @@ describe Mongo::Database do
     it 'raises an exception', unless: write_command_enabled? do
       expect {
         database.drop
-      }.to raise_error(Mongo::Operation::Write::Failure)
+      }.to raise_error(Mongo::Error::CommandFailure)
     end
   end
 
