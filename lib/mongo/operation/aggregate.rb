@@ -44,6 +44,11 @@ module Mongo
       include Specifiable
       include Limited
 
+      # The need primary error message.
+      #
+      # @since 2.0.0
+      ERROR_MESSAGE = "The pipeline contains the '$out' operator so the primary must be used.".freeze
+
       # Execute the operation.
       # The context gets a connection on which the operation
       # is sent in the block.
@@ -57,9 +62,9 @@ module Mongo
       #
       # @since 2.0.0
       def execute(context)
-        raise NeedPrimaryServer.new unless context.standalone? ||
-                                             context.primary? ||
-                                             secondary_ok?
+        unless context.standalone? || context.primary? || secondary_ok?
+          raise Error::NeedPrimaryServer.new(ERROR_MESSAGE)
+        end
         execute_message(context)
       end
 
@@ -90,23 +95,6 @@ module Mongo
       def message(context)
         Protocol::Query.new(db_name, Database::COMMAND, filter(context), options)
       end
-
-      # Raised when a primary server is required and not found.
-      #
-      # @since 2.0.0
-      class NeedPrimaryServer < Error
-
-        # Instantiate the new exception.
-        #
-        # @example Instantiate the exception.
-        #   Mongo::Operation::Aggregate::NeedPrimaryServer.new
-        #
-        # @since 2.0.0
-        def initialize
-          super("The pipeline contains the '$out' operator so the primary must be used.")
-        end
-      end
     end
   end
 end
-

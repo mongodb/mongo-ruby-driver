@@ -44,3 +44,5 @@ module Mongo
   # @since 2.0.0
   class ConnectionError < Error; end
 end
+
+require 'mongo/error/need_primary_server'

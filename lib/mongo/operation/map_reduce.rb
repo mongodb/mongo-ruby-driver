@@ -47,6 +47,11 @@ module Mongo
       include Limited
       include ReadPreferrable
 
+      # The error message for needing a primary.
+      #
+      # @since 2.0.
+      ERROR_MESSAGE = "If 'out' is specified as a collection, the primary server must be used.".freeze
+
       # Execute the map/reduce operation.
       #
       # @example Execute the operation.
@@ -58,9 +63,9 @@ module Mongo
       #
       # @since 2.0.0
       def execute(context)
-        raise NeedPrimaryServer.new unless context.standalone? ||
-                                             context.primary? ||
-                                             secondary_ok?
+        unless context.standalone? || context.primary? || secondary_ok?
+          raise Error::NeedPrimaryServer.new(ERROR_MESSAGE)
+        end
         execute_message(context)
       end
 
@@ -85,22 +90,6 @@ module Mongo
 
       def query_coll
         Database::COMMAND
-      end
-
-      # Raised when a primary server is needed but not found.
-      #
-      # @since 2.0.0
-      class NeedPrimaryServer < Error
-
-        # Instantiate the new exception.
-        #
-        # @example Instantiate the exception.
-        #   Mongo::Operation::Aggregate::NeedPrimaryServer.new
-        #
-        # @since 2.0.0
-        def initialize
-          super("If 'out' is specified as a collection, the primary server must be used.")
-        end
       end
     end
   end

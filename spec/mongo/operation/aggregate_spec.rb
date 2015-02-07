@@ -111,7 +111,7 @@ describe Mongo::Operation::Aggregate do
           end
           expect {
             op.execute(secondary_context)
-          }.to raise_error(Mongo::Operation::Aggregate::NeedPrimaryServer)
+          }.to raise_error(Mongo::Error::NeedPrimaryServer)
         end
       end
 
