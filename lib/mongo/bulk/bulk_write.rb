@@ -267,35 +267,13 @@ module Mongo
 
       if response['writeErrors'] || response['writeConcernErrors']
         response.merge!('errmsg' => 'batch item errors occurred')
-        raise Mongo::BulkWrite::BulkWriteError.new(response)
+        raise Error::BulkWriteFailure.new(response)
       end
       response
     end
 
     def db_name
       collection.database.name
-    end
-
-    # Exception raised if there are write errors upon executing the bulk
-    # operation.
-    #
-    # @since 2.0.0
-    class BulkWriteError < OperationError
-
-      attr_reader :result
-
-      # Instantiate the new exception.
-      #
-      # @example Instantiate the exception.
-      #   Mongo::Bulk::BulkWrite::BulkWriteError.new(response)
-      #
-      # @params [ Hash ] result A processed response from the server
-      #   reporting results of the operation.
-      #
-      # @since 2.0.0
-      def initialize(result)
-        @result = result
-      end
     end
   end
 end

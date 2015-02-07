@@ -41,7 +41,7 @@ describe Mongo::BulkWrite do
         end
 
         it 'raises a BulkWriteError' do
-          expect(error).to be_a(Mongo::BulkWrite::BulkWriteError)
+          expect(error).to be_a(Mongo::Error::BulkWriteFailure)
         end
 
         it 'halts execution after first error and reports correct index' do
@@ -71,7 +71,7 @@ describe Mongo::BulkWrite do
         end
 
         it 'raises a BulkWriteError' do
-          expect(error).to be_a(Mongo::BulkWrite::BulkWriteError)
+          expect(error).to be_a(Mongo::Error::BulkWriteFailure)
         end
 
         it 'splits messages into multiple messages' do
@@ -125,7 +125,7 @@ describe Mongo::BulkWrite do
         end
 
         it 'raises a BulkWriteError' do
-          expect(error).to be_a(Mongo::BulkWrite::BulkWriteError)
+          expect(error).to be_a(Mongo::Error::BulkWriteFailure)
         end
 
         it 'does not halt execution after first error' do
@@ -160,7 +160,7 @@ describe Mongo::BulkWrite do
       end
 
       it 'raises a BulkWriteError' do
-        expect(error).to be_a(Mongo::BulkWrite::BulkWriteError)
+        expect(error).to be_a(Mongo::Error::BulkWriteFailure)
       end
 
       it 'splits messages into multiple messages' do
