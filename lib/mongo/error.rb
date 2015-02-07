@@ -28,6 +28,11 @@ module Mongo
     # @since 2.0.0
     ERR = '$err'.freeze
 
+    # An error field, MongoDB < 2.4
+    #
+    # @since 2.0.0
+    ERROR = 'err'.freeze
+
     # The standard error message field, MongoDB 3.0+
     #
     # @since 2.0.0

@@ -44,32 +44,29 @@ module Mongo
       # @return [ String ] The error message.
       #
       # @since 2.0.0
-      def parse(message = String.new)
-        parse_err(message)
-        parse_errmsg(message)
-        parse_errors(message, WRITE_ERRORS)
-        parse_errors(message, WRITE_CONCERN_ERROR)
-        message
+      def parse
+        return @message if @message
+        @message = String.new
+        parse_single(@message, ERR)
+        parse_single(@message, ERROR)
+        parse_single(@message, ERRMSG)
+        parse_multiple(@message, WRITE_ERRORS)
+        parse_multiple(@message, WRITE_CONCERN_ERROR)
+        @message
       end
 
       private
 
-      def parse_err(message)
-        if error = document[ERR]
-          message.concat("#{error} (#{document[CODE]})")
-        end
-      end
-
-      def parse_errmsg(message, doc = document)
-        if error = doc[ERRMSG]
+      def parse_single(message, key, doc = document)
+        if error = doc[key]
           message.concat("#{error} (#{doc[CODE]})")
         end
       end
 
-      def parse_errors(message, key)
+      def parse_multiple(message, key)
         if errors = document[key]
           errors.each do |error|
-            parse_errmsg(message, error)
+            parse_single(message, ERRMSG, error)
           end
         end
       end

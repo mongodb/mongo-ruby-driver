@@ -28,26 +28,6 @@ require 'mongo/operation/map_reduce'
 module Mongo
   module Operation
 
-    # Legacy error message field.
-    #
-    # @since 2.0.0
-    ERROR = 'err'.freeze
-
-    # The write errors field in the response, 2.6 and higher.
-    #
-    # @since 2.0.0
-    WRITE_ERRORS = 'writeErrors'.freeze
-
-    # Constant for the error code field.
-    #
-    # @since 2.0.0
-    ERROR_CODE = 'code'.freeze
-
-    # Constant for the error message field.
-    #
-    # @since 2.0.0
-    ERROR_MSG = 'errmsg'.freeze
-
     # Constant for an unknown error.
     #
     # @since 2.0.0
