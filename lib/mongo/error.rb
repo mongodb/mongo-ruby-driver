@@ -35,6 +35,12 @@ module Mongo
   class ConnectionError < Error; end
 end
 
+require 'mongo/error/parser'
+
+# require 'mongo/error/client'
+# require 'mongo/error/server'
+# require 'mongo/error/network'
+
 # Require all the driver specific errors.
 require 'mongo/error/driver_error'
 require 'mongo/error/max_bson_size'
@@ -50,7 +56,7 @@ require 'mongo/error/invalid_update_document'
 require 'mongo/error/need_primary_server'
 require 'mongo/error/unsupported_features'
 
-# Require all the operation failures.
+# Require all the server errors.
 require 'mongo/error/operation_failure'
 require 'mongo/error/bulk_write_failure'
 require 'mongo/error/invalid_nonce'
