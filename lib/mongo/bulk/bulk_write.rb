@@ -162,7 +162,7 @@ module Mongo
       replacement = docs[1]
       upsert = (docs[2] || {})[:upsert]
       raise ArgumentError unless selector && replacement
-      raise InvalidReplacementDoc.new unless replacement_doc?(replacement)
+      raise Error::InvalidReplacementDocument.new unless replacement_doc?(replacement)
       upsert = !!upsert
       spec = { updates:   [{ q: selector,
                              u: replacement,
@@ -327,22 +327,6 @@ module Mongo
       # @since 2.0.0
       def initialize
         super("Invalid update document provided.")
-      end
-    end
-
-    # Exception raised if the object is not a valid replacement document.
-    #
-    # @since 2.0.0
-    class InvalidReplacementDoc < Error::DriverError
-
-      # Instantiate the new exception.
-      #
-      # @example Instantiate the exception.
-      #   Mongo::BulkWrite::InvalidReplacementDoc.new
-      #
-      # @since 2.0.0
-      def initialize
-        super("Invalid replacement document provided.")
       end
     end
   end

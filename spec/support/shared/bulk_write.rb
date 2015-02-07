@@ -183,7 +183,7 @@ shared_examples 'a bulk write object' do
       it 'raises an exception' do
         expect do
           bulk.execute
-        end.to raise_exception(Mongo::BulkWrite::InvalidReplacementDoc)
+        end.to raise_exception(Mongo::Error::InvalidReplacementDocument)
       end
 
     end
