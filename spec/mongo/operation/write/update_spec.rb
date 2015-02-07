@@ -169,7 +169,7 @@ describe Mongo::Operation::Write::Update do
         it 'raises an error' do
           expect {
             update.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Protocol::Serializers::Document::InvalidBSONSize)
+          }.to raise_error(Mongo::Error::MaxBSONSize)
         end
       end
     end

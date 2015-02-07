@@ -42,6 +42,7 @@ end
 
 require 'mongo/error/driver_error'
 require 'mongo/error/bulk_write_failure'
+require 'mongo/error/max_bson_size'
 require 'mongo/error/empty_batch'
 require 'mongo/error/invalid_bulk_operation'
 require 'mongo/error/invalid_collection_name'

@@ -216,13 +216,13 @@ describe Mongo::Operation::Write::Insert do
         it 'raises an error' do
           expect {
             insert.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Protocol::Serializers::Document::InvalidBSONSize)
+          }.to raise_error(Mongo::Error::MaxBSONSize)
         end
 
         it 'does not insert the document' do
           expect {
             insert.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Protocol::Serializers::Document::InvalidBSONSize)
+          }.to raise_error(Mongo::Error::MaxBSONSize)
           expect(authorized_collection.find.count).to eq(0)
         end
       end

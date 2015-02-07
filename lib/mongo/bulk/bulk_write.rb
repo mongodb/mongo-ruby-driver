@@ -92,8 +92,7 @@ module Mongo
 
         begin
           replies << op.execute(collection.next_primary.context)
-        rescue Protocol::Serializers::Document::InvalidBSONSize,
-               Server::Connection::InvalidMessageSize => ex
+        rescue Error::MaxBSONSize, Server::Connection::InvalidMessageSize => ex
           raise ex unless op.batchable?
           ops = op.batch(2) + ops
         end

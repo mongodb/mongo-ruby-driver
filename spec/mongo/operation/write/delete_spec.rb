@@ -170,7 +170,7 @@ describe Mongo::Operation::Write::Delete do
         it 'raises an error' do
           expect {
             op.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Protocol::Serializers::Document::InvalidBSONSize)
+          }.to raise_error(Mongo::Error::MaxBSONSize)
         end
       end
     end
