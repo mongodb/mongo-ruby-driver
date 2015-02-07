@@ -93,13 +93,15 @@ module Mongo
           # @example Validate the result.
           #   result.validate!
           #
+          # @param [ Hash ] spec The spec used to run the command.
+          #
           # @raise [ NoNamespace ] If the ns doesn't exist.
           #
           # @return [ Result ] Self if successful.
           #
           # @since 2.0.0
-          def validate!
-            first_document[ERROR_MSG] ? raise(NoNamespace.new(first_document)) : self
+          def validate!(spec)
+            first_document[ERROR_MSG] ? raise(NoNamespace.new(first_document, spec)) : self
           end
 
           private

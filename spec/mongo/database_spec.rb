@@ -97,24 +97,51 @@ describe Mongo::Database do
 
   describe '#collections' do
 
-    let(:database) do
-      described_class.new(authorized_client, TEST_DB)
+    context 'when the database exists' do
+
+      let(:database) do
+        described_class.new(authorized_client, TEST_DB)
+      end
+
+      let(:collection) do
+        Mongo::Collection.new(database, 'users')
+      end
+
+      before do
+        database[:users].create
+      end
+
+      after do
+        database[:users].drop
+      end
+
+      it 'returns collection objects for each name' do
+        expect(database.collections).to include(collection)
+      end
     end
 
-    let(:collection) do
-      Mongo::Collection.new(database, 'users')
+    context 'when the database does not exist' do
+
+      let(:database) do
+        described_class.new(authorized_client, 'invalid_database')
+      end
+
+      it 'returns an empty list' do
+        expect(database.collections).to be_empty
+      end
     end
 
-    before do
-      database[:users].create
-    end
+    context 'when the user is not authorized' do
 
-    after do
-      database[:users].drop
-    end
+      let(:database) do
+        described_class.new(unauthorized_client, TEST_DB)
+      end
 
-    it 'returns collection objects for each name' do
-      expect(database.collections).to include(collection)
+      it 'raises an exception' do
+        expect {
+          database.collections
+        }.to raise_error(Mongo::Operation::Read::Failure)
+      end
     end
   end
 

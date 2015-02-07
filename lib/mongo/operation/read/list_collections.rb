@@ -59,21 +59,20 @@ module Mongo
 
         def execute_message(context)
           context.with_connection do |connection|
-            Result.new(connection.dispatch([ message(context) ]))
+            Result.new(connection.dispatch([ message(context) ])).validate!
           end
-        end
-
-        def selector
-          (spec[SELECTOR] || {}).merge(listCollections: 1,
-                                       filter: { name: { '$not' => /system\.|\$/ } })
         end
 
         def query_coll
           Database::COMMAND
         end
+
+        def selector
+          (spec[SELECTOR] || {}).merge(
+            listCollections: 1, filter: { name: { '$not' => /system\.|\$/ }}
+          )
+        end
       end
     end
   end
 end
-
-

@@ -23,10 +23,44 @@ module Mongo
   module Operation
     module Read
 
+      # Raised for general errors happening on reads.
+      #
+      # @since 2.0.0
+      class Failure < OperationError
+
+        # Initialize the failure error.
+        #
+        # @example Initialize the error.
+        #   Failure.new(document)
+        #
+        # @param [ BSON::Document ] document The document.
+        #
+        # @since 2.0.0
+        def initialize(document)
+          super(document[ERROR_MSG])
+        end
+      end
+
+      # Raised for read commands that attempt to execute on a collection or
+      # database that does not exist.
+      #
+      # @since 2.0.0
       class NoNamespace < OperationError
 
-        def initialize(document)
-          super("Namespace does not exist on server: '#{document[ERROR_MSG]}'.")
+        # Initialize the exception.
+        #
+        # @example Initialize the exception.
+        #   NoNamespace.new(document, spec)
+        #
+        # @param [ BSON::Document ] document The error document.
+        # @param [ Hash ] spec The spec the command executed with.
+        #
+        # @since 2.0.0
+        def initialize(document, spec)
+          super(
+            "Command failed with '#{document[ERROR_MSG]}' " +
+            "for collection '#{spec[:coll_name]}' on database '#{spec[:db_name]}'."
+          )
         end
       end
     end

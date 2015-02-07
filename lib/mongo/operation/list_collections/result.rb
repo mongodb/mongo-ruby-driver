@@ -85,10 +85,29 @@ module Mongo
             cursor_document[FIRST_BATCH]
           end
 
+          # Validate the result. In the case where an unauthorized client tries
+          # to run the command we need to generate the proper error.
+          #
+          # @example Validate the result.
+          #   result.validate!
+          #
+          # @param [ Hash ] spec The spec used to run the command.
+          #
+          # @return [ Result ] Self if successful.
+          #
+          # @since 2.0.0
+          def validate!
+            first_document[ERROR_MSG] ? raise(Failure.new(first_document)) : self
+          end
+
           private
 
           def cursor_document
-            @cursor_document ||= reply.documents[0][CURSOR]
+            @cursor_document ||= first_document[CURSOR]
+          end
+
+          def first_document
+            @first_document ||= reply.documents[0]
           end
         end
       end

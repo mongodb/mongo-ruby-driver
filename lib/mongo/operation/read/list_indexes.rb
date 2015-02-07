@@ -61,7 +61,7 @@ module Mongo
 
         def execute_message(context)
           context.with_connection do |connection|
-            Result.new(connection.dispatch([ message(context) ])).validate!
+            Result.new(connection.dispatch([ message(context) ])).validate!(spec)
           end
         end
 
