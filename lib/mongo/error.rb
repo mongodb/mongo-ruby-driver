@@ -13,11 +13,36 @@
 # limitations under the License.
 
 module Mongo
-
   # Base error class for all Mongo related errors.
   #
   # @since 2.0.0
-  class Error < StandardError; end
+  class Error < StandardError
+
+    # The error code field.
+    #
+    # @since 2.0.0
+    CODE = 'code'.freeze
+
+    # An error field, MongoDB < 2.6
+    #
+    # @since 2.0.0
+    ERR = '$err'.freeze
+
+    # The standard error message field, MongoDB 3.0+
+    #
+    # @since 2.0.0
+    ERRMSG = 'errmsg'.freeze
+
+    # The constant for the writeErrors array.
+    #
+    # @sicne 2.0.0
+    WRITE_ERRORS = 'writeErrors'.freeze
+
+    # The constant for write concern errors.
+    #
+    # @since 2.0.0
+    WRITE_CONCERN_ERROR = 'writeConcernError'.freeze
+  end
 
   # Base class for socket errors.
   #

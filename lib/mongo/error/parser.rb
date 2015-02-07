@@ -21,28 +21,13 @@ module Mongo
     # @since 2.0.0
     class Parser
 
-      # The error code field.
-      #
-      # @since 2.0.0
-      CODE = 'code'.freeze
-
-      # The standard error message field.
-      #
-      # @since 2.0.0
-      ERRMSG = 'errmsg'.freeze
-
-      # The constant for the writeErrors array.
-      #
-      # @sicne 2.0.0
-      WRITE_ERRORS = 'writeErrors'.freeze
-
       # @return [ BSON::Document ] document The returned document.
       attr_reader :document
 
       # Create the new parser with the returned document.
       #
       # @example Create the new parser.
-      #   Parser.new({ 'ok' => 0.0 })
+      #   Parser.new({ 'errmsg' => 'failed' })
       #
       # @param [ BSON::Document ] document The returned document.
       #
@@ -60,12 +45,20 @@ module Mongo
       #
       # @since 2.0.0
       def parse(message = String.new)
+        parse_err(message)
         parse_errmsg(message)
-        parse_write_errors(message)
+        parse_errors(message, WRITE_ERRORS)
+        parse_errors(message, WRITE_CONCERN_ERROR)
         message
       end
 
       private
+
+      def parse_err(message)
+        if error = document[ERR]
+          message.concat("#{error} (#{document[CODE]})")
+        end
+      end
 
       def parse_errmsg(message, doc = document)
         if error = doc[ERRMSG]
@@ -73,8 +66,8 @@ module Mongo
         end
       end
 
-      def parse_write_errors(message)
-        if errors = document[WRITE_ERRORS]
+      def parse_errors(message, key)
+        if errors = document[key]
           errors.each do |error|
             parse_errmsg(message, error)
           end

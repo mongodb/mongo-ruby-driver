@@ -259,7 +259,7 @@ module Mongo
       end
 
       def errors?
-        first_document[Operation::ERROR] && first[Operation::ERROR_CODE]
+        first_document[Error::ERRMSG] && first[Error::CODE]
       end
 
       def first_document
@@ -267,7 +267,7 @@ module Mongo
       end
 
       def write_concern_errors
-        first_document[Write::WRITE_CONCERN_ERROR] || []
+        first_document[Error::WRITE_CONCERN_ERROR] || []
       end
 
       def write_concern_errors?
@@ -275,7 +275,7 @@ module Mongo
       end
 
       def write_errors
-        first_document[Write::WRITE_ERRORS] || []
+        first_document[Error::WRITE_ERRORS] || []
       end
 
       def write_errors?

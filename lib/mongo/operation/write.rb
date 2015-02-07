@@ -28,21 +28,6 @@ module Mongo
   module Operation
     module Write
 
-      # The write errors field in the response, 2.6 and higher.
-      #
-      # @since 2.0.0
-      WRITE_ERRORS = 'writeErrors'.freeze
-
-      # Constant for the errmsg field.
-      #
-      # @since 2.0.0
-      ERROR_MESSAGE = 'errmsg'.freeze
-
-      # The write concern error field in the response. 2.4 and lower.
-      #
-      # @since 2.0.0
-      WRITE_CONCERN_ERROR = 'writeConcernError'.freeze
-
       # Raised when a write failes for some reason.
       #
       # @since 2.0.0
@@ -61,45 +46,7 @@ module Mongo
         # @since 2.0.0
         def initialize(document)
           @document = document
-          super(generate_message)
-        end
-
-        private
-
-        def errors
-          error_message(Operation::ERROR) do
-            "#{document[Operation::ERROR_CODE]}: #{document[Operation::ERROR]}"
-          end
-        end
-
-        def error_messages
-          error_message(ERROR_MESSAGE) do
-            document[ERROR_MESSAGE]
-          end
-        end
-
-        def error_message(key)
-          document.has_key?(key) ? yield : ''
-        end
-
-        def generate_message
-          errors + error_messages + write_errors + write_concern_errors
-        end
-
-        def write_errors
-          error_message(WRITE_ERRORS) do
-            document[WRITE_ERRORS].map do |e|
-              "#{e[Operation::ERROR_CODE]}: #{e[ERROR_MESSAGE]}"
-            end.join(', ')
-          end
-        end
-
-        def write_concern_errors
-          error_message(WRITE_CONCERN_ERROR) do
-            document[WRITE_CONCERN_ERROR].map do |e|
-              "#{e[Operation::ERROR_CODE]}: #{e[ERROR_MESSAGE]}"
-            end.join(', ')
-          end
+          super(Error::Parser.new(document).parse)
         end
       end
     end

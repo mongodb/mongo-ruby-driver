@@ -126,9 +126,11 @@ describe Mongo::Database do
         described_class.new(authorized_client, 'invalid_database')
       end
 
-      it 'returns an empty list' do
+      it 'returns an empty list', if: list_command_enabled? do
         expect(database.collections).to be_empty
       end
+
+      pending 'raises an exception' # 2.6
     end
 
     context 'when the user is not authorized' do
@@ -137,11 +139,13 @@ describe Mongo::Database do
         described_class.new(unauthorized_client, TEST_DB)
       end
 
-      it 'raises an exception' do
+      it 'raises an exception', if: list_command_enabled? do
         expect {
           database.collections
         }.to raise_error(Mongo::Operation::Read::Failure)
       end
+
+      pending 'raises an exception' # 2.6 not authorized
     end
   end
 
