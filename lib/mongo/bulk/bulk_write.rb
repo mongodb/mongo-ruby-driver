@@ -188,7 +188,7 @@ module Mongo
 
     def update_one_or_many(selector, update, upsert, multi)
       raise ArgumentError unless selector && update
-      raise InvalidUpdateDoc.new unless update_doc?(update)
+      raise Error::InvalidUpdateDocument.new unless update_doc?(update)
       upsert = !!upsert
       spec = { updates:   [{ q: selector,
                              u: update,
@@ -311,22 +311,6 @@ module Mongo
       # @since 2.0.0
       def initialize
         super("Invalid document provided.")
-      end
-    end
-
-    # Exception raised if the object is not a valid update document.
-    #
-    # @since 2.0.0
-    class InvalidUpdateDoc < Error::DriverError
-
-      # Instantiate the new exception.
-      #
-      # @example Instantiate the exception.
-      #   Mongo::BulkWrite::InvalidUpdateDoc.new
-      #
-      # @since 2.0.0
-      def initialize
-        super("Invalid update document provided.")
       end
     end
   end

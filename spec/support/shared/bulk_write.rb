@@ -7,7 +7,7 @@ shared_examples 'a bulk write object' do
       let(:operations) do
         [ { insert_one: { name: 'test' } } ]
       end
-  
+
       it 'returns nInserted of 1' do
         expect(
           bulk.execute['nInserted']
@@ -278,7 +278,7 @@ shared_examples 'a bulk write object' do
       it 'raises an exception' do
         expect do
           bulk.execute
-        end.to raise_exception(Mongo::BulkWrite::InvalidUpdateDoc)
+        end.to raise_exception(Mongo::Error::InvalidUpdateDocument)
       end
     end
 
@@ -386,7 +386,7 @@ shared_examples 'a bulk write object' do
       it 'raises an exception' do
         expect do
           bulk.execute
-        end.to raise_exception(Mongo::BulkWrite::InvalidUpdateDoc)
+        end.to raise_exception(Mongo::Error::InvalidUpdateDocument)
       end
     end
 
