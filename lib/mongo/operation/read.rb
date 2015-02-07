@@ -18,33 +18,3 @@ require 'mongo/operation/read/indexes'
 require 'mongo/operation/read/list_indexes'
 require 'mongo/operation/read/list_collections'
 require 'mongo/operation/read/collections_info'
-
-module Mongo
-  module Operation
-    module Read
-
-      # Raised for read commands that attempt to execute on a collection or
-      # database that does not exist.
-      #
-      # @since 2.0.0
-      class NoNamespace < Error::OperationFailure
-
-        # Initialize the exception.
-        #
-        # @example Initialize the exception.
-        #   NoNamespace.new(document, spec)
-        #
-        # @param [ BSON::Document ] document The error document.
-        # @param [ Hash ] spec The spec the command executed with.
-        #
-        # @since 2.0.0
-        def initialize(document, spec)
-          super(
-            "Command failed with '#{document[ERROR_MSG]}' " +
-            "for collection '#{spec[:coll_name]}' on database '#{spec[:db_name]}'."
-          )
-        end
-      end
-    end
-  end
-end
