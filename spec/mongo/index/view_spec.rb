@@ -219,7 +219,7 @@ describe Mongo::Index::View do
       it 'raises a nonexistant collection error', if: list_command_enabled? do
         expect {
           nonexistant_view.each.to_a
-        }.to raise_error(Mongo::Operation::Read::NoNamespace)
+        }.to raise_error(Mongo::Error::CommandFailure)
       end
     end
   end

@@ -99,7 +99,7 @@ module Mongo
           #
           # @since 2.0.0
           def validate!
-            first_document[ERROR_MSG] ? raise(Error::CommandFailure.new(first_document)) : self
+            first_document[Error::ERRMSG] ? raise(Error::CommandFailure.new(first_document)) : self
           end
 
           private
