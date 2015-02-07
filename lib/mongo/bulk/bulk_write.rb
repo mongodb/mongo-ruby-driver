@@ -92,7 +92,8 @@ module Mongo
 
         begin
           replies << op.execute(collection.next_primary.context)
-        rescue Error::MaxBSONSize, Server::Connection::InvalidMessageSize => ex
+          # @todo: No test for max message size.
+        rescue Error::MaxBSONSize, Error::MaxMessageSize => ex
           raise ex unless op.batchable?
           ops = op.batch(2) + ops
         end

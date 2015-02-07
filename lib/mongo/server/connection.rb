@@ -122,33 +122,11 @@ module Mongo
           message.serialize(buffer, max_bson_object_size)
           if max_message_size &&
             (buffer.size - start_size) > max_message_size
-            raise InvalidMessageSize.new(max_message_size)
+            raise Error::MaxMessageSize.new(max_message_size)
             start_size = buffer.size
           end
         end
         ensure_connected{ |socket| socket.write(buffer) }
-      end
-
-      # Exception that is raised when trying to send a message that exceeds max
-      # message size.
-      #
-      # @since 2.0.0
-      class InvalidMessageSize < Error::DriverError
-
-        # The message is constant.
-        #
-        # @since 2.0.0
-        MESSAGE = "Message exceeds allowed max message size.".freeze
-
-        # Instantiate the new exception.
-        #
-        # @example Instantiate the exception.
-        #   Mongo::Server::Connection::InvalidMessageSize.new(max)
-        #
-        # @since 2.0.0
-        def initialize(max_size = nil)
-          super(max_size ?  MESSAGE + " The max is #{max_size}." : MESSAGE)
-        end
       end
     end
   end

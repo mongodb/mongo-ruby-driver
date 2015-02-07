@@ -15,21 +15,23 @@
 module Mongo
   class Error
 
-    # Exception that is raised when trying to serialize a document that
-    # exceeds max BSON object size.
+    # Exception that is raised when trying to send a message that exceeds max
+    # message size.
     #
     # @since 2.0.0
-    class MaxBSONSize < DriverError
+    class MaxMessageSize < DriverError
 
       # The message is constant.
       #
       # @since 2.0.0
-      MESSAGE = "Document exceeds allowed max BSON size.".freeze
+      MESSAGE = "Message exceeds allowed max message size.".freeze
 
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
-      #   Mongo::Error::MaxBSONSize.new(max)
+      #   Mongo::Error::MaxMessageSize.new(max)
+      #
+      # @param [ Integer ] max_size The maximum message size.
       #
       # @since 2.0.0
       def initialize(max_size = nil)
