@@ -41,4 +41,5 @@ module Mongo
 end
 
 require 'mongo/error/driver_error'
+require 'mongo/error/empty_batch'
 require 'mongo/error/need_primary_server'

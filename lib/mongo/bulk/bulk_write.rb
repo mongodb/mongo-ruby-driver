@@ -63,7 +63,8 @@ module Mongo
     #
     # @return [ Hash ] The result of doing the bulk write.
     def execute
-      raise EmptyOps.new if @operations.empty?
+      # @todo: No test for this case.
+      raise Error::EmptyBatch.new if @operations.empty?
 
       @index = -1
       @ops = []
@@ -293,22 +294,6 @@ module Mongo
       # @since 2.0.0
       def initialize(result)
         @result = result
-      end
-    end
-
-    # Exception raised if the batch is empty.
-    #
-    # @since 2.0.0
-    class EmptyOps < Error::DriverError
-
-      # Instantiate the new exception.
-      #
-      # @example Instantiate the exception.
-      #   Mongo::BulkWrite::EmptyOps.new
-      #
-      # @since 2.0.0
-      def initialize
-        super("No operations to execute.")
       end
     end
 
