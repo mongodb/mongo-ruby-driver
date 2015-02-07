@@ -62,7 +62,7 @@ module Mongo
     # Exception raised if there are no servers available matching the preference.
     #
     # @since 2.0.0
-    class NoServerAvailable < MongoError
+    class NoServerAvailable < Error
 
       # Instantiate the new exception.
       #

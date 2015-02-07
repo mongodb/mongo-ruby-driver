@@ -192,7 +192,7 @@ module Mongo
     # Raised when an invalid server preference is provided.
     #
     # @since 2.0.0
-    class InvalidServerPreference < MongoError
+    class InvalidServerPreference < Error
 
       # Instantiate the new exception.
       #

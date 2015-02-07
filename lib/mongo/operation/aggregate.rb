@@ -91,7 +91,10 @@ module Mongo
         Protocol::Query.new(db_name, Database::COMMAND, filter(context), options)
       end
 
-      class NeedPrimaryServer < MongoError
+      # Raised when a primary server is required and not found.
+      #
+      # @since 2.0.0
+      class NeedPrimaryServer < Error
 
         # Instantiate the new exception.
         #

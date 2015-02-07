@@ -17,22 +17,22 @@ module Mongo
   # Base error class for all Mongo related errors.
   #
   # @since 2.0.0
-  class MongoError < StandardError; end
+  class Error < StandardError; end
 
   # Base error class for all errors coming from the driver.
   #
   # @since 2.0.0
-  class DriverError < MongoError; end
+  class DriverError < Error; end
 
   # Base error class for all errors coming from the server.
   #
   # @since 2.0.0
-  class OperationError < MongoError; end
+  class OperationError < Error; end
 
   # Base class for socket errors.
   #
   # @since 2.0.0
-  class SocketError < StandardError; end
+  class SocketError < Error; end
 
   # Raised when a socket connection times out.
   #
@@ -42,5 +42,5 @@ module Mongo
   # Raised when a connection failure occurs.
   #
   # @since 2.0.0
-  class ConnectionError < StandardError; end
+  class ConnectionError < Error; end
 end

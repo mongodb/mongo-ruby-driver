@@ -87,7 +87,10 @@ module Mongo
         Database::COMMAND
       end
 
-      class NeedPrimaryServer < MongoError
+      # Raised when a primary server is needed but not found.
+      #
+      # @since 2.0.0
+      class NeedPrimaryServer < Error
 
         # Instantiate the new exception.
         #
