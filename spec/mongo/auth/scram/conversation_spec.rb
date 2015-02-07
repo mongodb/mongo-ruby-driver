@@ -107,7 +107,7 @@ describe Mongo::Auth::SCRAM::Conversation do
       it 'raises an error' do
         expect {
           conversation.continue(reply)
-        }.to raise_error(Mongo::Auth::SCRAM::Conversation::InvalidNonce)
+        }.to raise_error(Mongo::Error::InvalidNonce)
       end
     end
   end
@@ -190,7 +190,7 @@ describe Mongo::Auth::SCRAM::Conversation do
         expect {
           conversation.continue(continue_reply)
           conversation.finalize(reply)
-        }.to raise_error(Mongo::Auth::SCRAM::Conversation::InvalidSignature)
+        }.to raise_error(Mongo::Error::InvalidSignature)
       end
     end
   end

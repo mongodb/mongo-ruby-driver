@@ -182,63 +182,6 @@ module Mongo
           @nonce = SecureRandom.base64
         end
 
-        # This exception is raised when the server nonce returned does not
-        # match the client nonce sent to it.
-        #
-        # @since 2.0.0
-        class InvalidNonce < Error::OperationFailure
-
-          # @return [ String ] nonce The client nonce.
-          attr_reader :nonce
-
-          # @return [ String ] rnonce The server nonce.
-          attr_reader :rnonce
-
-          # Instantiate the new exception.
-          #
-          # @example Create the exception.
-          #   InvalidNonce.new(nonce, rnonce)
-          #
-          # @param [ String ] nonce The client nonce.
-          # @param [ String ] rnonce The server nonce.
-          #
-          # @since 2.0.0
-          def initialize(nonce, rnonce)
-            @nonce = nonce
-            @rnonce = rnonce
-            super("Expected server rnonce '#{rnonce}' to start with client nonce '#{nonce}'.")
-          end
-        end
-
-        # This exception is raised when the server verifier does not match the
-        # expected signature on the client.
-        #
-        # @since 2.0.0
-        class InvalidSignature < Error::OperationFailure
-
-          # @return [ String ] verifier The server verifier string.
-          attr_reader :verifier
-
-          # @return [ String ] server_signature The expected server signature.
-          attr_reader :server_signature
-
-          # Create the new exception.
-          #
-          # @example Create the new exception.
-          #   InvalidSignature.new(verifier, server_signature)
-          #
-          # @param [ String ] verifier The verifier returned from the server.
-          # @param [ String ] server_signature The expected value from the
-          #   server.
-          #
-          # @since 2.0.0
-          def initialize(verifier, server_signature)
-            @verifier = verifier
-            @server_signature = server_signature
-            super("Expected server verifier '#{verifier}' to match '#{server_signature}'.")
-          end
-        end
-
         private
 
         # Auth message algorithm implementation.
@@ -488,13 +431,13 @@ module Mongo
         def validate_final_message!(reply)
           validate!(reply)
           unless verifier == server_signature
-            raise InvalidSignature.new(verifier, server_signature)
+            raise Error::InvalidSignature.new(verifier, server_signature)
           end
         end
 
         def validate_first_message!(reply)
           validate!(reply)
-          raise InvalidNonce.new(nonce, rnonce) unless rnonce.start_with?(nonce)
+          raise Error::InvalidNonce.new(nonce, rnonce) unless rnonce.start_with?(nonce)
         end
 
         def validate!(reply)

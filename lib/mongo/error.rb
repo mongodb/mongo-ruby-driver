@@ -50,6 +50,8 @@ require 'mongo/error/invalid_update_document'
 require 'mongo/error/need_primary_server'
 require 'mongo/error/unsupported_features'
 
-# Require all the operation errors.
+# Require all the operation failures.
 require 'mongo/error/operation_failure'
 require 'mongo/error/bulk_write_failure'
+require 'mongo/error/invalid_nonce'
+require 'mongo/error/invalid_signature'
