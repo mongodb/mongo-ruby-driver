@@ -73,8 +73,9 @@ module Mongo
         op_name = op.keys.first
         begin
           send(op_name, op[op_name])
+        # @todo: No test for this case.
         rescue NoMethodError
-          raise InvalidOpType.new(op_name)
+          raise Error::InvalidBulkOperation.new(op_name)
         end
       end
 
@@ -342,22 +343,6 @@ module Mongo
       # @since 2.0.0
       def initialize
         super("Invalid replacement document provided.")
-      end
-    end
-
-    # Exception raised if an non-existent operation type is used.
-    #
-    # @since 2.0.0
-    class InvalidOpType < Error::DriverError
-
-      # Instantiate the new exception.
-      #
-      # @example Instantiate the exception.
-      #   Mongo::BulkWrite::InvalidDoc.new
-      #
-      # @since 2.0.0
-      def initialize(op_name)
-        super("Invalid operation type: #{op_name}")
       end
     end
   end

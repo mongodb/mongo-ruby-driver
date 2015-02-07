@@ -42,4 +42,5 @@ end
 
 require 'mongo/error/driver_error'
 require 'mongo/error/empty_batch'
+require 'mongo/error/invalid_bulk_operation'
 require 'mongo/error/need_primary_server'
