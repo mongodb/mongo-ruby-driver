@@ -29,7 +29,7 @@ shared_examples 'a bulk write object' do
       it 'raises an InvalidDoc exception' do
         expect do
           bulk.execute
-        end.to raise_error(Mongo::BulkWrite::InvalidDoc)
+        end.to raise_error(Mongo::Error::InvalidDocument)
       end
     end
   end
@@ -60,7 +60,7 @@ shared_examples 'a bulk write object' do
       it 'raises an exception' do
         expect do
           bulk.execute
-        end.to raise_exception(Mongo::BulkWrite::InvalidDoc)
+        end.to raise_exception(Mongo::Error::InvalidDocument)
       end
     end
 
@@ -100,7 +100,7 @@ shared_examples 'a bulk write object' do
       it 'raises an exception' do
         expect do
           bulk.execute
-        end.to raise_exception(Mongo::BulkWrite::InvalidDoc)
+        end.to raise_exception(Mongo::Error::InvalidDocument)
       end
     end
 

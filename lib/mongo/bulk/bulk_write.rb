@@ -123,7 +123,7 @@ module Mongo
     end
 
     def insert_one(doc)
-      raise InvalidDoc.new unless valid_doc?(doc)
+      raise Error::InvalidDocument.new unless valid_doc?(doc)
       spec = { documents: [ doc ],
                db_name: db_name,
                coll_name: collection.name,
@@ -134,7 +134,7 @@ module Mongo
     end
 
     def delete_one(selector)
-      raise InvalidDoc.new unless valid_doc?(selector)
+      raise Error::InvalidDocument.new unless valid_doc?(selector)
       spec = { deletes:   [{ q: selector,
                              limit: 1 }],
                db_name:   db_name,
@@ -146,7 +146,7 @@ module Mongo
     end
 
     def delete_many(selector)
-      raise InvalidDoc.new unless valid_doc?(selector)
+      raise Error::InvalidDocument.new unless valid_doc?(selector)
       spec = { deletes:   [{ q: selector,
                              limit: 0 }],
                db_name:   db_name,
@@ -295,22 +295,6 @@ module Mongo
       # @since 2.0.0
       def initialize(result)
         @result = result
-      end
-    end
-
-    # Exception raised if the object is not a valid document.
-    #
-    # @since 2.0.0
-    class InvalidDoc < Error::DriverError
-
-      # Instantiate the new exception.
-      #
-      # @example Instantiate the exception.
-      #   Mongo::BulkWrite::InvalidDoc.new
-      #
-      # @since 2.0.0
-      def initialize
-        super("Invalid document provided.")
       end
     end
   end
