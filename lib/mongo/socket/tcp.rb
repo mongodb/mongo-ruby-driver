@@ -41,7 +41,7 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
-        Timeout.timeout(timeout, Mongo::SocketTimeoutError) do
+        Timeout.timeout(timeout, Error::SocketTimeoutError) do
           socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
           socket.connect(::Socket.pack_sockaddr_in(port, host))
           self

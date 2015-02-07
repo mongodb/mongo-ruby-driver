@@ -168,11 +168,11 @@ module Mongo
       begin
         yield
       rescue Errno::ETIMEDOUT
-        raise Mongo::SocketTimeoutError, TIMEOUT_ERROR
+        raise Error::SocketTimeoutError, TIMEOUT_ERROR
       rescue IOError, SystemCallError => e
-        raise Mongo::SocketError, e.message
+        raise Error::SocketError, e.message
       rescue OpenSSL::SSL::SSLError
-        raise Mongo::SocketError, SSL_ERROR
+        raise Error::SocketError, SSL_ERROR
       end
     end
   end

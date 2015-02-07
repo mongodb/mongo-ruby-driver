@@ -48,21 +48,6 @@ module Mongo
     # @since 2.0.0
     WRITE_CONCERN_ERROR = 'writeConcernError'.freeze
   end
-
-  # Base class for socket errors.
-  #
-  # @since 2.0.0
-  class SocketError < Error; end
-
-  # Raised when a socket connection times out.
-  #
-  # @since 2.0.0
-  class SocketTimeoutError < SocketError; end
-
-  # Raised when a connection failure occurs.
-  #
-  # @since 2.0.0
-  class ConnectionError < Error; end
 end
 
 require 'mongo/error/parser'
@@ -92,3 +77,8 @@ require 'mongo/error/bulk_write_failure'
 require 'mongo/error/command_failure'
 require 'mongo/error/invalid_nonce'
 require 'mongo/error/invalid_signature'
+
+# Require all the network errors.
+require 'mongo/error/socket_error'
+require 'mongo/error/connection_error'
+require 'mongo/error/socket_timeout_error'
