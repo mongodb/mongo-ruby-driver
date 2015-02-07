@@ -76,7 +76,7 @@ module Mongo
         # features.
         #
         # @since 2.0.0
-        class Unsupported < DriverError
+        class Unsupported < Error::DriverError
 
           # Initialize the exception.
           #

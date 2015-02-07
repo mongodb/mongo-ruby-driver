@@ -19,11 +19,6 @@ module Mongo
   # @since 2.0.0
   class Error < StandardError; end
 
-  # Base error class for all errors coming from the driver.
-  #
-  # @since 2.0.0
-  class DriverError < Error; end
-
   # Base error class for all errors coming from the server.
   #
   # @since 2.0.0
@@ -45,4 +40,5 @@ module Mongo
   class ConnectionError < Error; end
 end
 
+require 'mongo/error/driver_error'
 require 'mongo/error/need_primary_server'

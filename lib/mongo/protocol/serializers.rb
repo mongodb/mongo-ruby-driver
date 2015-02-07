@@ -179,12 +179,12 @@ module Mongo
         # exceeds max BSON object size.
         #
         # @since 2.0.0
-        class InvalidBSONSize < DriverError
+        class InvalidBSONSize < Error::DriverError
 
           # The message is constant.
           #
           # @since 2.0.0
-          MESSAGE = "Document exceeds allowed max BSON size."
+          MESSAGE = "Document exceeds allowed max BSON size.".freeze
 
           # Instantiate the new exception.
           #

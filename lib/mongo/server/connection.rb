@@ -133,7 +133,7 @@ module Mongo
       # message size.
       #
       # @since 2.0.0
-      class InvalidMessageSize < DriverError
+      class InvalidMessageSize < Error::DriverError
 
         # The message is constant.
         #

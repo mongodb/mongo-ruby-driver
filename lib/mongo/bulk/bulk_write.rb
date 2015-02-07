@@ -299,7 +299,7 @@ module Mongo
     # Exception raised if the batch is empty.
     #
     # @since 2.0.0
-    class EmptyOps < DriverError
+    class EmptyOps < Error::DriverError
 
       # Instantiate the new exception.
       #
@@ -315,7 +315,7 @@ module Mongo
     # Exception raised if the object is not a valid document.
     #
     # @since 2.0.0
-    class InvalidDoc < DriverError
+    class InvalidDoc < Error::DriverError
 
       # Instantiate the new exception.
       #
@@ -331,7 +331,7 @@ module Mongo
     # Exception raised if the object is not a valid update document.
     #
     # @since 2.0.0
-    class InvalidUpdateDoc < DriverError
+    class InvalidUpdateDoc < Error::DriverError
 
       # Instantiate the new exception.
       #
@@ -344,26 +344,26 @@ module Mongo
       end
     end
 
-      # Exception raised if the object is not a valid replacement document.
+    # Exception raised if the object is not a valid replacement document.
+    #
+    # @since 2.0.0
+    class InvalidReplacementDoc < Error::DriverError
+
+      # Instantiate the new exception.
+      #
+      # @example Instantiate the exception.
+      #   Mongo::BulkWrite::InvalidReplacementDoc.new
       #
       # @since 2.0.0
-      class InvalidReplacementDoc < DriverError
-
-        # Instantiate the new exception.
-        #
-        # @example Instantiate the exception.
-        #   Mongo::BulkWrite::InvalidReplacementDoc.new
-        #
-        # @since 2.0.0
-        def initialize
-          super("Invalid replacement document provided.")
-        end
+      def initialize
+        super("Invalid replacement document provided.")
       end
+    end
 
     # Exception raised if an non-existent operation type is used.
     #
     # @since 2.0.0
-    class InvalidOpType < DriverError
+    class InvalidOpType < Error::DriverError
 
       # Instantiate the new exception.
       #
