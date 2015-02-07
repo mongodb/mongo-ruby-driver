@@ -130,26 +130,6 @@ module Mongo
         chunks_collection.find(:files_id => file.id).remove_many
       end
 
-      # Raised if the file md5 and server md5 do not match when acknowledging
-      # GridFS writes.
-      #
-      # @since 2.0.0
-      class InvalidFile < Error::DriverError
-
-        # Create the nex exception.
-        #
-        # @example Create the mew exception.
-        #   InvalidFile.new(file_md5, server_md5)
-        #
-        # @param [ String ] client_md5 The client side file md5.
-        # @param [ String ] server_md5 The server side file md5.
-        #
-        # @since 2.0.0
-        def initialize(client_md5, server_md5)
-          super("File MD5 on client side is #{client_md5} but the server reported #{server_md5}.")
-        end
-      end
-
       private
 
       def chunks_name
@@ -162,7 +142,7 @@ module Mongo
 
       def validate_md5!(file)
         md5 = database.command(:filemd5 => file.id, :root => prefix).documents[0][:md5]
-        raise InvalidFile.new(file.md5, md5) unless file.md5 == md5
+        raise Error::InvalidFile.new(file.md5, md5) unless file.md5 == md5
       end
     end
   end
