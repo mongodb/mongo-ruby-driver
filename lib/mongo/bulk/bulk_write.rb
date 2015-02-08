@@ -63,7 +63,6 @@ module Mongo
     #
     # @return [ Hash ] The result of doing the bulk write.
     def execute
-      # @todo: No test for this case.
       raise Error::EmptyBatch.new if @operations.empty?
 
       @index = -1
@@ -73,7 +72,6 @@ module Mongo
         op_name = op.keys.first
         begin
           send(op_name, op[op_name])
-        # @todo: No test for this case.
         rescue NoMethodError
           raise Error::InvalidBulkOperation.new(op_name)
         end

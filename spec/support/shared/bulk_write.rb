@@ -1,17 +1,39 @@
 shared_examples 'a bulk write object' do
 
-  context 'insert_one' do
+  context 'when no operations are provided' do
+
+    let(:operations) {[]}
+
+    it 'raises an error' do
+      expect {
+        bulk.execute
+      }.to raise_error(Mongo::Error::EmptyBatch)
+    end
+  end
+
+  context 'when invalid operations are provided' do
+
+    let(:operations) do
+      [{ :not_an_op => {}}]
+    end
+
+    it 'raises an error' do
+      expect {
+        bulk.execute
+      }.to raise_error(Mongo::Error::InvalidBulkOperation)
+    end
+  end
+
+  context 'when an insert_one operation is provided' do
 
     context 'when a document is provided' do
 
       let(:operations) do
-        [ { insert_one: { name: 'test' } } ]
+        [{ insert_one: { name: 'test' }}]
       end
 
       it 'returns nInserted of 1' do
-        expect(
-          bulk.execute['nInserted']
-        ).to eq(1)
+        expect(bulk.execute['nInserted']).to eq(1)
       end
 
       it 'only inserts that document' do
@@ -20,16 +42,16 @@ shared_examples 'a bulk write object' do
       end
     end
 
-    context 'when non-hash doc is provided' do
+    context 'when an invalid object is provided' do
 
       let(:operations) do
-        [ { insert_one: [] } ]
+        [{ insert_one: [] }]
       end
 
-      it 'raises an InvalidDoc exception' do
-        expect do
+      it 'raises an exception' do
+        expect {
           bulk.execute
-        end.to raise_error(Mongo::Error::InvalidDocument)
+        }.to raise_error(Mongo::Error::InvalidDocument)
       end
     end
   end
@@ -40,8 +62,8 @@ shared_examples 'a bulk write object' do
       [ { a: 1 }, { a: 1 } ]
     end
 
-     let(:expected) do
-      [ { 'a' => 1 } ]
+    let(:expected) do
+      [{ 'a' => 1 }]
     end
 
     before do
@@ -49,18 +71,19 @@ shared_examples 'a bulk write object' do
     end
 
     let(:operations) do
-      [ { delete_one: { a: 1 } } ]
+      [{ delete_one: { a: 1 }}]
     end
 
     context 'when no selector is specified' do
+
       let(:operations) do
-        [ { delete_one: nil } ]
+        [{ delete_one: nil }]
       end
 
       it 'raises an exception' do
-        expect do
+        expect {
           bulk.execute
-        end.to raise_exception(Mongo::Error::InvalidDocument)
+        }.to raise_exception(Mongo::Error::InvalidDocument)
       end
     end
 
@@ -77,10 +100,10 @@ shared_examples 'a bulk write object' do
     end
   end
 
-  context 'delete_many' do
+  context 'when a delete_many operation is provided' do
 
     let(:docs) do
-      [ { a: 1 }, { a: 1 } ]
+      [{ a: 1 }, { a: 1 }]
     end
 
     before do
@@ -88,19 +111,19 @@ shared_examples 'a bulk write object' do
     end
 
     let(:operations) do
-      [ { delete_many: { a: 1 } } ]
+      [{ delete_many: { a: 1 }}]
     end
 
     context 'when no selector is specified' do
 
       let(:operations) do
-        [ { delete_many: nil } ]
+        [{ delete_many: nil }]
       end
 
       it 'raises an exception' do
-        expect do
+        expect {
           bulk.execute
-        end.to raise_exception(Mongo::Error::InvalidDocument)
+        }.to raise_exception(Mongo::Error::InvalidDocument)
       end
     end
 
@@ -121,11 +144,11 @@ shared_examples 'a bulk write object' do
       context 'when only one document matches delete selector' do
 
         let(:docs) do
-          [ { a: 1 }, { a: 2 } ]
+          [{ a: 1 }, { a: 2 }]
         end
 
         let(:expected) do
-          [ { 'a' => 2 } ]
+          [{ 'a' => 2 }]
         end
 
         it 'reports nRemoved correctly' do
@@ -140,14 +163,14 @@ shared_examples 'a bulk write object' do
     end
   end
 
-  context 'replace_one' do
+  context 'when a replace_one operation is provided' do
 
     let(:docs) do
-      [ { a: 1 }, { a: 1 } ]
+      [{ a: 1 }, { a: 1 }]
     end
 
     let(:expected) do
-      [ { 'a' => 2 }, { 'a' => 1 } ]
+      [{ 'a' => 2 }, { 'a' => 1 }]
     end
 
     before do
@@ -159,31 +182,32 @@ shared_examples 'a bulk write object' do
     end
 
     let(:operations) do
-      [ { replace_one: [ { a: 1 }, replacement ] } ]
+      [{ replace_one: [{ a: 1 }, replacement ]}]
     end
 
     context 'when a replace document is not specified' do
 
       let(:operations) do
-        [ { replace_one: [ { a: 1 } ] } ]
+        [{ replace_one: [{ a: 1 }]}]
       end
 
       it 'raises an exception' do
-        expect do
+        expect {
           bulk.execute
-        end.to raise_exception(ArgumentError)
+        }.to raise_exception(ArgumentError)
       end
     end
 
     context 'when there are $-operator top-level keys' do
+
       let(:replacement) do
-        { :$set => { a: 3 } }
+        { :$set => { a: 3 }}
       end
 
       it 'raises an exception' do
-        expect do
+        expect {
           bulk.execute
-        end.to raise_exception(Mongo::Error::InvalidReplacementDocument)
+        }.to raise_exception(Mongo::Error::InvalidReplacementDocument)
       end
 
     end
@@ -207,13 +231,11 @@ shared_examples 'a bulk write object' do
       context 'when upsert is true' do
 
         let(:operations) do
-          [ { replace_one: [ { a: 4 },
-              replacement,
-              { :upsert => true } ] } ]
+          [{ replace_one: [{ a: 4 }, replacement, { :upsert => true }]}]
         end
 
         let(:expected) do
-          [ { 'a' => 1 }, { 'a' => 1 }, { 'a' => 2 } ]
+          [{ 'a' => 1 }, { 'a' => 1 }, { 'a' => 2 }]
         end
 
         it 'upserts the replacement document' do
@@ -233,19 +255,18 @@ shared_examples 'a bulk write object' do
     end
   end
 
-  context 'update_one' do
+  context 'when an update_one operation is provided' do
 
     let(:docs) do
-      [ { a: 1 }, { a: 1 } ]
+      [{ a: 1 }, { a: 1 }]
     end
 
     let(:update) do
-      { :$set => { a: 2 } }
+      { :$set => { a: 2 }}
     end
 
     let(:operations) do
-      [ { update_one: [ { a: 1 },
-                        update ] } ]
+      [{ update_one: [{ a: 1 }, update ]}]
     end
 
     before do
@@ -253,19 +274,19 @@ shared_examples 'a bulk write object' do
     end
 
     let(:expected) do
-      [ { 'a' => 2 },  { 'a' => 1 } ]
+      [{ 'a' => 2 },  { 'a' => 1 }]
     end
 
     context 'when an update document is not specified' do
 
       let(:operations) do
-        [ { update_one: [ { a: 1 } ] } ]
+        [{ update_one: [{ a: 1 }]}]
       end
 
       it 'raises an exception' do
-        expect do
+        expect {
           bulk.execute
-        end.to raise_exception(ArgumentError)
+        }.to raise_exception(ArgumentError)
       end
     end
 
@@ -276,9 +297,9 @@ shared_examples 'a bulk write object' do
       end
 
       it 'raises an exception' do
-        expect do
+        expect {
           bulk.execute
-        end.to raise_exception(Mongo::Error::InvalidUpdateDocument)
+        }.to raise_exception(Mongo::Error::InvalidUpdateDocument)
       end
     end
 
@@ -308,13 +329,11 @@ shared_examples 'a bulk write object' do
       context 'when upsert is true' do
 
         let(:operations) do
-          [ { update_one: [ { a: 3 },
-                            update,
-                            { upsert: true } ] } ]
+          [{ update_one: [{ a: 3 }, update, { upsert: true }]}]
         end
 
         let(:expected) do
-          [ { 'a' => 1 },  { 'a' => 1 }, { 'a' => 2 } ]
+          [{ 'a' => 1 },  { 'a' => 1 }, { 'a' => 2 }]
         end
 
         it 'reports nModified correctly', if: write_command_enabled?  do
@@ -341,23 +360,22 @@ shared_examples 'a bulk write object' do
     end
   end
 
-  context 'update_many' do
+  context 'when an update_many operation is provided' do
 
     let(:docs) do
-      [ { a: 1 }, { a: 1 } ]
+      [{ a: 1 }, { a: 1 }]
     end
 
     let(:update) do
-      { :$set => { a: 2 } }
+      { :$set => { a: 2 }}
     end
 
     let(:operations) do
-      [ { update_many: [ { a: 1 },
-                        update ] } ]
+      [{ update_many: [{ a: 1 }, update ]}]
     end
 
     let(:expected) do
-      [ { 'a' => 2 },  { 'a' => 2 } ]
+      [{ 'a' => 2 },  { 'a' => 2 }]
     end
 
     before do
@@ -367,7 +385,7 @@ shared_examples 'a bulk write object' do
     context 'when an update document is not specified' do
 
       let(:operations) do
-        [ { update_many: [ { a: 1 } ] } ]
+        [{ update_many: [{ a: 1 }]}]
       end
 
       it 'raises an exception' do
@@ -416,9 +434,7 @@ shared_examples 'a bulk write object' do
       context 'when upsert is true' do
 
         let(:operations) do
-          [ { update_one: [ { a: 3 },
-                            update,
-                            { upsert: true } ] } ]
+          [{ update_one: [{ a: 3 }, update, { upsert: true }]}]
         end
 
         let(:expected) do
