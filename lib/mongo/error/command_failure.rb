@@ -18,7 +18,7 @@ module Mongo
     # Raised when a command failes for some reason.
     #
     # @since 2.0.0
-    class CommandFailure < OperationFailure
+    class CommandFailure < Error
 
       # @return [ BSON::Document] document The error document.
       attr_reader :document

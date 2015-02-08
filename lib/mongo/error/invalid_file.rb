@@ -19,7 +19,7 @@ module Mongo
     # GridFS writes.
     #
     # @since 2.0.0
-    class InvalidFile < DriverError
+    class InvalidFile < Error
 
       # Create the nex exception.
       #

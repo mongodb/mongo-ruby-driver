@@ -18,7 +18,7 @@ module Mongo
     # Exception raised if the object is not a valid document.
     #
     # @since 2.0.0
-    class InvalidDocument < DriverError
+    class InvalidDocument < Error
 
       # The error message.
       #

@@ -18,7 +18,7 @@ module Mongo
     # Exception that is raised when trying to create a database with no name.
     #
     # @since 2.0.0
-    class InvalidDatabaseName < DriverError
+    class InvalidDatabaseName < Error
 
       # The message is constant.
       #

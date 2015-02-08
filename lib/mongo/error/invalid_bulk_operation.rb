@@ -18,7 +18,7 @@ module Mongo
     # Exception raised if an non-existent operation type is used.
     #
     # @since 2.0.0
-    class InvalidBulkOperation < DriverError
+    class InvalidBulkOperation < Error
 
       # Instantiate the new exception.
       #

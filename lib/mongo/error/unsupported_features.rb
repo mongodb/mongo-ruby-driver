@@ -19,7 +19,7 @@ module Mongo
     # features.
     #
     # @since 2.0.0
-    class UnsupportedFeatures < DriverError
+    class UnsupportedFeatures < Error
 
       # Initialize the exception.
       #

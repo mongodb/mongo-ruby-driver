@@ -19,7 +19,7 @@ module Mongo
     # message size.
     #
     # @since 2.0.0
-    class MaxMessageSize < DriverError
+    class MaxMessageSize < Error
 
       # The message is constant.
       #

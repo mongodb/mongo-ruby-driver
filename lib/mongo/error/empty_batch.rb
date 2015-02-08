@@ -18,7 +18,7 @@ module Mongo
     # Exception raised for bulk operations that are empty.
     #
     # @since 2.0.0
-    class EmptyBatch < DriverError
+    class EmptyBatch < Error
 
       # The error message.
       #

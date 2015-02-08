@@ -18,6 +18,6 @@ module Mongo
     # Raised when a socket connection times out.
     #
     # @since 2.0.0
-    class SocketTimeoutError < SocketError; end
+    class SocketTimeoutError < Error; end
   end
 end

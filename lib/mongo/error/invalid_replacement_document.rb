@@ -18,7 +18,7 @@ module Mongo
     # Exception raised if the object is not a valid replacement document.
     #
     # @since 2.0.0
-    class InvalidReplacementDocument < DriverError
+    class InvalidReplacementDocument < Error
 
       # The error message.
       #

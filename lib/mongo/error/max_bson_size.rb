@@ -19,7 +19,7 @@ module Mongo
     # exceeds max BSON object size.
     #
     # @since 2.0.0
-    class MaxBSONSize < DriverError
+    class MaxBSONSize < Error
 
       # The message is constant.
       #

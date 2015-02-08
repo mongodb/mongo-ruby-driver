@@ -19,7 +19,7 @@ module Mongo
     # expected signature on the client.
     #
     # @since 2.0.0
-    class InvalidSignature < OperationFailure
+    class InvalidSignature < Error
 
       # @return [ String ] verifier The server verifier string.
       attr_reader :verifier

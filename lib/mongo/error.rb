@@ -51,34 +51,21 @@ module Mongo
 end
 
 require 'mongo/error/parser'
-
-# require 'mongo/error/driver'
-# require 'mongo/error/server'
-# require 'mongo/error/network'
-
-# Require all the driver specific errors.
-require 'mongo/error/driver_error'
-require 'mongo/error/max_bson_size'
-require 'mongo/error/max_message_size'
+require 'mongo/error/bulk_write_failure'
+require 'mongo/error/command_failure'
+require 'mongo/error/connection_error'
 require 'mongo/error/empty_batch'
 require 'mongo/error/invalid_bulk_operation'
 require 'mongo/error/invalid_collection_name'
 require 'mongo/error/invalid_database_name'
 require 'mongo/error/invalid_document'
 require 'mongo/error/invalid_file'
-require 'mongo/error/invalid_replacement_document'
-require 'mongo/error/invalid_update_document'
-require 'mongo/error/need_primary_server'
-require 'mongo/error/unsupported_features'
-
-# Require all the server errors.
-require 'mongo/error/operation_failure'
-require 'mongo/error/bulk_write_failure'
-require 'mongo/error/command_failure'
 require 'mongo/error/invalid_nonce'
+require 'mongo/error/invalid_replacement_document'
 require 'mongo/error/invalid_signature'
-
-# Require all the network errors.
-require 'mongo/error/socket_error'
-require 'mongo/error/connection_error'
+require 'mongo/error/invalid_update_document'
+require 'mongo/error/max_bson_size'
+require 'mongo/error/max_message_size'
+require 'mongo/error/need_primary_server'
 require 'mongo/error/socket_timeout_error'
+require 'mongo/error/unsupported_features'

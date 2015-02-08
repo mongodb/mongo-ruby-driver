@@ -19,7 +19,7 @@ module Mongo
     # match the client nonce sent to it.
     #
     # @since 2.0.0
-    class InvalidNonce < OperationFailure
+    class InvalidNonce < Error
 
       # @return [ String ] nonce The client nonce.
       attr_reader :nonce
