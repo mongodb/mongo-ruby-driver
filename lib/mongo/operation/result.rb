@@ -235,7 +235,7 @@ module Mongo
       #
       # @since 2.0.0
       def write_failure?
-        acknowledged? && (command_failure? || write_errors? || write_concern_errors?)
+        acknowledged? && command_failure?
       end
 
       private
@@ -258,28 +258,16 @@ module Mongo
         acknowledged? && (!successful? || errors?)
       end
 
+      def parser
+        @parser ||= Error::Parser.new(first_document)
+      end
+
       def errors?
-        first_document[Error::ERRMSG] && first[Error::CODE]
+        !parser.message.empty?
       end
 
       def first_document
         @first_document ||= first || BSON::Document.new
-      end
-
-      def write_concern_errors
-        first_document[Error::WRITE_CONCERN_ERROR] || []
-      end
-
-      def write_concern_errors?
-        !write_concern_errors.empty?
-      end
-
-      def write_errors
-        first_document[Error::WRITE_ERRORS] || []
-      end
-
-      def write_errors?
-        !write_errors.empty?
       end
     end
   end
