@@ -206,7 +206,7 @@ module Mongo
       #
       # @since 2.0.0
       def validate!
-        failure? ? raise(Error::CommandFailure.new(first_document)) : self
+        failure? ? raise(Error::CommandFailure.new(parser.message)) : self
       end
 
       # Get the number of documents written by the server.

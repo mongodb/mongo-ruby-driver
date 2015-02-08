@@ -108,7 +108,13 @@ module Mongo
         #
         # @since 2.0.0
         def validate!
-          documents.nil? ? raise(Error::CommandFailure.new(reply.documents[0])) : self
+          documents.nil? ? raise(Error::CommandFailure.new(parser.message)) : self
+        end
+
+        private
+
+        def first_document
+          @first_document ||= reply.documents[0]
         end
       end
     end

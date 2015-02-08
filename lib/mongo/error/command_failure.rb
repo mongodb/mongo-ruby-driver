@@ -18,23 +18,6 @@ module Mongo
     # Raised when a command failes for some reason.
     #
     # @since 2.0.0
-    class CommandFailure < Error
-
-      # @return [ BSON::Document] document The error document.
-      attr_reader :document
-
-      # Initialize the exception with the document that triggered the error.
-      #
-      # @example Initialize the new exception.
-      #   Error::CommandFailure.new({ 'ok' => 0.0 })
-      #
-      # @param [ Hash ] document The document that triggered the error.
-      #
-      # @since 2.0.0
-      def initialize(document)
-        @document = document
-        super(Parser.new(document).message)
-      end
-    end
+    class CommandFailure < Error; end
   end
 end
