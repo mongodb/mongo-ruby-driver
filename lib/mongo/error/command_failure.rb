@@ -33,7 +33,7 @@ module Mongo
       # @since 2.0.0
       def initialize(document)
         @document = document
-        super(Parser.new(document).parse)
+        super(Parser.new(document).message)
       end
     end
   end

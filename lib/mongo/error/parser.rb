@@ -24,6 +24,9 @@ module Mongo
       # @return [ BSON::Document ] document The returned document.
       attr_reader :document
 
+      # @return [ String ] message The error message parsed from the document.
+      attr_reader :message
+
       # Create the new parser with the returned document.
       #
       # @example Create the new parser.
@@ -34,32 +37,23 @@ module Mongo
       # @since 2.0.0
       def initialize(document)
         @document = document
+        parse!
       end
 
-      # Parse the returned document, giving back the extracted error message.
-      #
-      # @example Parse the document for the errors.
-      #   parser.parse
-      #
-      # @return [ String ] The error message.
-      #
-      # @since 2.0.0
-      def parse
-        return @message if @message
-        @message = String.new
+      private
+
+      def parse!
+        @message = ""
         parse_single(@message, ERR)
         parse_single(@message, ERROR)
         parse_single(@message, ERRMSG)
         parse_multiple(@message, WRITE_ERRORS)
         parse_multiple(@message, WRITE_CONCERN_ERROR)
-        @message
       end
-
-      private
 
       def parse_single(message, key, doc = document)
         if error = doc[key]
-          message.concat("#{error} (#{doc[CODE]})")
+          append(message ,"#{error} (#{doc[CODE]})")
         end
       end
 
@@ -68,6 +62,14 @@ module Mongo
           errors.each do |error|
             parse_single(message, ERRMSG, error)
           end
+        end
+      end
+
+      def append(message, error)
+        if message.length > 1
+          message.concat(", #{error}")
+        else
+          message.concat(error)
         end
       end
     end
