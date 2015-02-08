@@ -24,18 +24,3 @@ require 'mongo/operation/aggregate'
 require 'mongo/operation/command'
 require 'mongo/operation/kill_cursors'
 require 'mongo/operation/map_reduce'
-
-module Mongo
-  module Operation
-
-    # Constant for an unknown error.
-    #
-    # @since 2.0.0
-    UNKNOWN_ERROR = 8.freeze
-
-    # Constant for a bad value error.
-    #
-    # @since 2.0.0
-    BAD_VALUE = 2.freeze
-  end
-end

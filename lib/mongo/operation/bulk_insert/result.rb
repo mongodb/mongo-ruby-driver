@@ -145,9 +145,9 @@ module Mongo
             @replies.each_with_index.reduce(nil) do |errors, (reply, i)|
               if reply_write_errors?(reply)
                 errors ||= []
-                errors << { 'errmsg' => reply.documents.first[Operation::ERROR],
+                errors << { 'errmsg' => reply.documents.first[Error::ERROR],
                             'index' => indexes[i],
-                            'code' => reply.documents.first[Operation::ERROR_CODE] }
+                            'code' => reply.documents.first[Error::CODE] }
               end
               errors
             end
@@ -185,8 +185,8 @@ module Mongo
           private
 
           def reply_write_errors?(reply)
-            reply.documents.first[Operation::ERROR] ||
-              reply.documents.first[Operation::ERROR_MSG]
+            reply.documents.first[Error::ERROR] ||
+              reply.documents.first[Error::ERRMSG]
           end
         end
       end

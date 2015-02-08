@@ -47,6 +47,16 @@ module Mongo
     #
     # @since 2.0.0
     WRITE_CONCERN_ERROR = 'writeConcernError'.freeze
+
+    # Constant for an unknown error.
+    #
+    # @since 2.0.0
+    UNKNOWN_ERROR = 8.freeze
+
+    # Constant for a bad value error.
+    #
+    # @since 2.0.0
+    BAD_VALUE = 2.freeze
   end
 end
 
