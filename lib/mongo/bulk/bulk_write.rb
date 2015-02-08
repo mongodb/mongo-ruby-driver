@@ -13,30 +13,47 @@
 # limitations under the License.
 
 module Mongo
-  class BulkWrite
 
-    # This semi-public class handles the logic for executing a batch of
-    # operations
+  # This semi-public class handles the logic for executing a batch of
+  # operations.
+  #
+  # @since 2.0.0
+  class BulkWrite
 
     # @return [ Mongo::Collection ] The collection on which this bulk write
     #   operation will be executed.
     attr_reader :collection
 
+    # @return [ Array<Hash> ] operations The list of operations.
+    attr_reader :operations
+
+    # @return [ Hash ] options The options.
+    attr_reader :options
+
+    # @return [ Acknowledged, Unacknowledged ] write_concern The write concern.
+    attr_reader :write_concern
+
     # Initialize the BulkWrite object.
     #
     # @example Create an ordered bulk write object.
-    #   BulkWrite.new([ { insert_one: { x: 1 } },
-    #                   { update_one: [ { x: 1 }, { '$set' => { x: 2 } } ] }
-    #                 ],
-    #                 { ordered: true }, collection)
+    #   BulkWrite.new([
+    #       { insert_one: { x: 1 }},
+    #       { update_one: [{ x: 1 }, { '$set' => { x: 2 }}]}
+    #     ],
+    #     { ordered: true },
+    #     collection
+    #   )
     #
     # @example Create an unordered bulk write object.
-    #   BulkWrite.new([ { insert_one: { x: 1 } },
-    #                   { update_one: [ { x: 2 }, { '$set' => { x: 3 } } ] }
-    #                 ],
-    #                 { ordered: false }, collection)
+    #   BulkWrite.new([
+    #       { insert_one: { x: 1 }},
+    #       { update_one: [{ x: 1 }, { '$set' => { x: 2 }}]}
+    #     ],
+    #     { ordered: false },
+    #     collection
+    #   )
     #
-    # @param [ Array ] operations The operations to execute.
+    # @param [ Array<Hash> ] operations The operations to execute.
     # @param [ Hash ] options The options for executing the operations.
     # @param [ Collection ] collection The collection on which the
     #   operations will be executed.
@@ -45,15 +62,29 @@ module Mongo
     #   be executed in order.
     # @option options [ Hash ] :write_concern The write concern to use when
     #   executing the operations.
+    #
+    # @since 2.0.0
     def initialize(operations, options, collection)
       @operations = operations
-      @ordered = !!options[:ordered]
+      @options = options
       @collection = collection
       if options[:write_concern]
         @write_concern = WriteConcern.get(options[:write_concern])
       else
         @write_concern = collection.write_concern
       end
+    end
+
+    # Is the bulk write operation ordered?
+    #
+    # @example Is the bulk write operation ordered?
+    #   bulk_write.ordered?
+    #
+    # @return [ true, false ] If the bulk write is ordered.
+    #
+    # @since 2.0.0
+    def ordered?
+      @ordered ||= !!options[:ordered]
     end
 
     # Execute the bulk write.
@@ -63,17 +94,18 @@ module Mongo
     #
     # @return [ Hash ] The result of doing the bulk write.
     def execute
-      raise Error::EmptyBatch.new if @operations.empty?
+      raise Error::EmptyBatch.new if operations.empty?
 
       @index = -1
       @ops = []
 
-      @operations.each do |op|
-        op_name = op.keys.first
-        begin
-          send(op_name, op[op_name])
-        rescue NoMethodError
-          raise Error::InvalidBulkOperation.new(op_name)
+      operations.each do |operation|
+        operation.each do |name, document|
+          if respond_to?(name, true)
+            send(name, document)
+          else
+            raise Error::InvalidBulkOperation.new(name)
+          end
         end
       end
 
@@ -125,32 +157,30 @@ module Mongo
       spec = { documents: [ doc ],
                db_name: db_name,
                coll_name: collection.name,
-               ordered: @ordered,
-               write_concern: @write_concern }
+               ordered: ordered?,
+               write_concern: write_concern }
 
       push_op(Mongo::Operation::Write::BulkInsert, spec)
     end
 
     def delete_one(selector)
       raise Error::InvalidDocument.new unless valid_doc?(selector)
-      spec = { deletes:   [{ q: selector,
-                             limit: 1 }],
+      spec = { deletes: [{ q: selector, limit: 1 }],
                db_name:   db_name,
                coll_name: collection.name,
-               ordered: @ordered,
-               write_concern: @write_concern }
+               ordered: ordered?,
+               write_concern: write_concern }
 
       push_op(Mongo::Operation::Write::BulkDelete, spec)
     end
 
     def delete_many(selector)
       raise Error::InvalidDocument.new unless valid_doc?(selector)
-      spec = { deletes:   [{ q: selector,
-                             limit: 0 }],
+      spec = { deletes: [{ q: selector, limit: 0 }],
                db_name:   db_name,
                coll_name: collection.name,
-               ordered: @ordered,
-               write_concern: @write_concern }
+               ordered: ordered?,
+               write_concern: write_concern }
 
       push_op(Mongo::Operation::Write::BulkDelete, spec)
     end
@@ -162,14 +192,14 @@ module Mongo
       raise ArgumentError unless selector && replacement
       raise Error::InvalidReplacementDocument.new unless replacement_doc?(replacement)
       upsert = !!upsert
-      spec = { updates:   [{ q: selector,
-                             u: replacement,
-                             multi: false,
-                             upsert: upsert }],
+      spec = { updates: [{ q: selector,
+                           u: replacement,
+                           multi: false,
+                           upsert: upsert }],
                db_name:   db_name,
                coll_name: collection.name,
-               ordered: @ordered,
-               write_concern: @write_concern }
+               ordered: ordered?,
+               write_concern: write_concern }
 
       push_op(Mongo::Operation::Write::BulkUpdate, spec)
     end
@@ -188,14 +218,14 @@ module Mongo
       raise ArgumentError unless selector && update
       raise Error::InvalidUpdateDocument.new unless update_doc?(update)
       upsert = !!upsert
-      spec = { updates:   [{ q: selector,
-                             u: update,
-                             multi: multi,
-                             upsert: upsert }],
+      spec = { updates: [{ q: selector,
+                           u: update,
+                           multi: multi,
+                           upsert: upsert }],
                db_name:   db_name,
                coll_name: collection.name,
-               ordered: @ordered,
-               write_concern: @write_concern }
+               ordered: ordered?,
+               write_concern: write_concern }
 
       push_op(Mongo::Operation::Write::BulkUpdate, spec)
     end
@@ -206,7 +236,7 @@ module Mongo
     end
 
     def merge_ops
-      if @ordered
+      if ordered?
         merge_consecutive_ops(@ops)
       else
         merge_ops_by_type(@ops)
@@ -245,7 +275,7 @@ module Mongo
     end
 
     def stop_executing?(reply)
-      reply && @ordered && reply.failure?
+      reply && ordered? && reply.failure?
     end
 
     def make_response!(results)
