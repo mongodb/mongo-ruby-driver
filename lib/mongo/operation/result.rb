@@ -206,7 +206,7 @@ module Mongo
       #
       # @since 2.0.0
       def validate!
-        write_failure? ? raise(Error::CommandFailure.new(first_document)) : self
+        failure? ? raise(Error::CommandFailure.new(first_document)) : self
       end
 
       # Get the number of documents written by the server.
@@ -226,16 +226,16 @@ module Mongo
       end
       alias :n :written_count
 
-      # Whether there was a write failure.
+      # Whether there was a failure.
       #
-      # @example Determine if there was a write failure.
-      #   result.write_failure?
+      # @example Determine if there was a failure.
+      #   result.failure?
       #
-      # @return [ true, false ] If there was a write failure.
+      # @return [ true, false ] If there was a  failure.
       #
       # @since 2.0.0
-      def write_failure?
-        acknowledged? && command_failure?
+      def failure?
+        acknowledged? && (!successful? || !parser.message.empty?)
       end
 
       private
@@ -254,16 +254,8 @@ module Mongo
         end
       end
 
-      def command_failure?
-        acknowledged? && (!successful? || errors?)
-      end
-
       def parser
         @parser ||= Error::Parser.new(first_document)
-      end
-
-      def errors?
-        !parser.message.empty?
       end
 
       def first_document

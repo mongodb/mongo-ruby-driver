@@ -247,7 +247,7 @@ module Mongo
     end
 
     def stop_executing?(reply)
-      reply && @ordered && reply.write_failure?
+      reply && @ordered && reply.failure?
     end
 
     def make_response!(results)
