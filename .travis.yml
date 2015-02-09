@@ -19,15 +19,22 @@ install: ruby -S bundle install --without release development
 env:
   global:
     - CI="travis"
+  matrix:
+    - MONGODB=2.4.12
+    - MONGODB=2.6.7
+    - MONGODB=3.0.0-rc8
+
+before_script:
+  - wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB}.tgz -O /tmp/mongodb.tgz
+  - tar -xvf /tmp/mongodb.tgz
+  - mkdir /tmp/data
+  - ${PWD}/mongodb-linux-x86_64-${MONGODB}/bin/mongod --dbpath /tmp/data --bind_ip 127.0.0.1 --auth &> /dev/null &
 
 script: bundle exec rake spec:ci
 
 notifications:
   email: false
   flowdock: 1da4416b8ff98d1880986472428b1b1b
-
-services:
-  - mongodb
 
 branches:
   only:
