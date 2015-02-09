@@ -3,7 +3,7 @@ language: ruby
 rvm:
   - 1.9.3
   - 2.0.0
-  - 2.1.1
+  - 2.1.5
   - 2.2.0
   - ruby-head
   - jruby-19mode
@@ -16,7 +16,9 @@ jdk:
 
 install: ruby -S bundle install --without release development
 
-env: CI="travis"
+env:
+  global:
+    - CI="travis"
 
 script: bundle exec rake spec:ci
 
@@ -36,38 +38,24 @@ matrix:
   allow_failures:
     - rvm: ruby-head
     - rvm: jruby-head
-    - rvm: rbx-2.2.5
   exclude:
     - rvm: 1.9.3
       jdk: openjdk7
-      env: CI="travis"
-    - rvm: 2.0.0
-      jdk: openjdk7
-      env: CI="travis"
-    - rvm: 2.1.1
-      jdk: openjdk7
-      env: CI="travis"
-    - rvm: 2.2.0
-      jdk: openjdk7
-      env: CI="travis"
-    - rvm: ruby-head
-      jdk: openjdk7
-      env: CI="travis"
-    - rvm: rbx-2.2.5
-      jdk: openjdk7
-      env: CI="travis"
     - rvm: 1.9.3
       jdk: oraclejdk8
-      env: CI="travis"
+    - rvm: 2.0.0
+      jdk: openjdk7
     - rvm: 2.0.0
       jdk: oraclejdk8
-      env: CI="travis"
-    - rvm: 2.1.1
+    - rvm: 2.1.5
+      jdk: openjdk7
+    - rvm: 2.1.5
       jdk: oraclejdk8
-      env: CI="travis"
+    - rvm: 2.2.0
+      jdk: openjdk7
     - rvm: 2.2.0
       jdk: oraclejdk8
-      env: CI="travis"
+    - rvm: ruby-head
+      jdk: openjdk7
     - rvm: ruby-head
       jdk: oraclejdk8
-      env: CI="travis"
