@@ -58,7 +58,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
     end
 
     context 'primary and secondary candidates' do
-      let(:candidates) { [primary, secondary] }
+      let(:candidates) { [secondary, primary] }
       let(:expected) { [primary] }
 
       it 'returns an array with the primary' do
@@ -70,16 +70,18 @@ describe Mongo::ServerSelector::PrimaryPreferred do
       let(:candidates) { [secondary, primary] }
       let(:expected) { [primary] }
 
-      it 'returns an array with the primary ' do
+      it 'returns an array with the primary' do
         expect(read_pref.send(:select, candidates)).to eq(expected)
       end
     end
 
     context 'tag sets provided' do
       let(:tag_sets) { [tag_set] }
+
       let(:matching_primary) do
         server(:primary, :tags => tag_sets)
       end
+
       let(:matching_secondary) do
         server(:secondary, :tags => tag_sets)
       end
@@ -132,7 +134,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
         context 'one matching primary' do
           let(:candidates) { [matching_primary, secondary, secondary] }
 
-          it 'returns an array of the matching secondary, then primary' do
+          it 'returns an array of the primary' do
             expect(read_pref.send(:select, candidates)).to eq([matching_primary])
           end
         end
@@ -192,46 +194,10 @@ describe Mongo::ServerSelector::PrimaryPreferred do
 
       context 'multiple candidates' do
 
-        context 'local primary, local secondary' do
-          let(:candidates) { [primary, secondary] }
-          let(:expected) { [primary] }
+        context 'primary available' do
 
-          it 'returns an array of the primary' do
-            expect(read_pref.send(:select, candidates)).to eq(expected)
-          end
-        end
-
-        context 'local primary, far secondary' do
-          let(:candidates) { [primary, far_secondary] }
-          let(:expected) { [primary] }
-
-          it 'returns an array of the primary' do
-            expect(read_pref.send(:select, candidates)).to eq(expected)
-          end
-        end
-
-        context 'far primary, local secondary' do
-          let(:candidates) { [far_primary, secondary] }
-          let(:expected) { [far_primary] }
-
-          it 'returns an array of the far primary' do
-            expect(read_pref.send(:select, candidates)).to eq(expected)
-          end
-        end
-
-        context 'far primary, far secondary' do
-          let(:candidates) { [far_primary, far_secondary] }
-          let(:expected) { [far_primary] }
-
-          it 'returns an array of the far primary' do
-            expect(read_pref.send(:select, candidates)).to eq(expected)
-          end
-        end
-
-        context 'two local servers, one far server' do
-
-          context 'local primary, local secondary, far secondary' do
-            let(:candidates) { [primary, secondary, far_secondary] }
+          context 'local primary, local secondary' do
+            let(:candidates) { [primary, secondary] }
             let(:expected) { [primary] }
 
             it 'returns an array of the primary' do
@@ -239,11 +205,80 @@ describe Mongo::ServerSelector::PrimaryPreferred do
             end
           end
 
-          context 'two local secondaries' do
-            let(:candidates) { [far_primary, secondary, secondary] }
+          context 'local primary, far secondary' do
+            let(:candidates) { [primary, far_secondary] }
+            let(:expected) { [primary] }
+
+            it 'returns an array of the primary' do
+              expect(read_pref.send(:select, candidates)).to eq(expected)
+            end
+          end
+
+          context 'far primary, local secondary' do
+            let(:candidates) { [far_primary, secondary] }
             let(:expected) { [far_primary] }
 
-            it 'returns an array with primary then two secondaries' do
+            it 'returns an array of the far primary' do
+              expect(read_pref.send(:select, candidates)).to eq(expected)
+            end
+          end
+
+          context 'far primary, far secondary' do
+            let(:candidates) { [far_primary, far_secondary] }
+            let(:expected) { [far_primary] }
+
+            it 'returns an array of the far primary' do
+              expect(read_pref.send(:select, candidates)).to eq(expected)
+            end
+          end
+
+          context 'two local servers, one far server' do
+
+            context 'local primary, local secondary, far secondary' do
+              let(:candidates) { [primary, secondary, far_secondary] }
+              let(:expected) { [primary] }
+
+              it 'returns an array of the primary' do
+                expect(read_pref.send(:select, candidates)).to eq(expected)
+              end
+            end
+
+            context 'two local secondaries' do
+              let(:candidates) { [far_primary, secondary, secondary] }
+              let(:expected) { [far_primary] }
+
+              it 'returns an array with primary' do
+                expect(read_pref.send(:select, candidates)).to eq(expected)
+              end
+            end
+          end
+        end
+
+        context 'primary not available' do
+
+          context 'one secondary' do
+            let(:candidates) { [secondary] }
+            let(:expected) { [secondary] }
+
+            it 'returns an array with the secondary' do
+              expect(read_pref.send(:select, candidates)).to eq(expected)
+            end
+          end
+
+          context 'one local secondary, one far secondary' do
+            let(:candidates) { [secondary, far_secondary] }
+            let(:expected) { [secondary] }
+
+            it 'returns an array of the secondary' do
+              expect(read_pref.send(:select, candidates)).to eq(expected)
+            end
+          end
+
+          context 'two local secondaries, one far secondary' do
+            let(:candidates) { [secondary, secondary, far_secondary] }
+            let(:expected) { [secondary, secondary] }
+
+            it 'returns an array of the secondary' do
               expect(read_pref.send(:select, candidates)).to eq(expected)
             end
           end

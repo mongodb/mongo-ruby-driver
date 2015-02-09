@@ -70,7 +70,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
       let(:candidates) { [secondary, primary] }
       let(:expected) { [secondary, primary] }
 
-      it 'returns array with secondary first, then primary' do
+      it 'returns array with secondary and primary' do
         expect(read_pref.send(:select, candidates)).to eq(expected)
       end
     end
@@ -143,7 +143,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           let(:candidates) { [primary, matching_secondary, matching_secondary] }
           let(:expected) { [matching_secondary, matching_secondary, primary] }
 
-          it 'returns an array of the matching secondary, then primary' do
+          it 'returns an array of the matching secondaries, then primary' do
             expect(read_pref.send(:select, candidates)).to eq(expected)
           end
         end
@@ -200,7 +200,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           end
         end
 
-        context '.send(:select, candidates)cal secondary' do
+        context 'local secondary' do
           let(:candidates) { [far_primary, secondary] }
           let(:expected) { [secondary, far_primary] }
 
@@ -218,7 +218,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
           end
         end
 
-        context 'two near servers, one far server' do
+        context 'two near servers, one far secondary' do
 
           context 'near primary, near secondary, far secondary' do
             let(:candidates) { [primary, secondary, far_secondary] }

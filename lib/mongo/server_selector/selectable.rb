@@ -90,9 +90,9 @@ module Mongo
           if cluster.standalone?
             servers = cluster.servers
           elsif cluster.sharded?
-            servers = near_servers(cluster.servers).shuffle!
+            servers = near_servers(cluster.servers)
           else
-            servers = select(cluster.servers).shuffle!
+            servers = select(cluster.servers)
           end
           return servers.first if servers && !servers.compact.empty?
           # @todo: cluster.scan!? and test for compact
@@ -168,7 +168,7 @@ module Mongo
         return candidates if candidates.empty?
         nearest_server = candidates.min_by(&:average_round_trip_time)
         threshold = nearest_server.average_round_trip_time + (local_threshold * 1000)
-        candidates.select { |server| server.average_round_trip_time <= threshold }
+        candidates.select { |server| server.average_round_trip_time <= threshold }.shuffle!
       end
 
       # Select the servers matching the defined tag sets.
