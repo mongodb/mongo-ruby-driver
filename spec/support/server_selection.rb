@@ -59,7 +59,7 @@ module Mongo
         # @since 2.0.0
         def initialize(file)
           @test = YAML.load(ERB.new(File.new(file).read).result)
-          @description = file#File.basename(file)
+          @description = "#{@test['topology_description']['type']}: #{File.basename(file)}"
           @read_preference = @test['read_preference']
           @read_preference['mode'] = READ_PREFERENCES[@read_preference['mode']]
           @candidate_servers = @test['candidate_servers']
@@ -67,6 +67,54 @@ module Mongo
           @suitable_servers = @test['suitable_servers']
           @in_latency_window = @test['in_latency_window']
           @type = TOPOLOGY_TYPES[@test['topology_description']['type']]
+        end
+
+        # Whether this spec describes a replica set.
+        #
+        # @example Determine if the spec describes a replica set.
+        #   spec.replica_set?
+        #
+        # @return [true, false] If the spec describes a replica set.
+        #
+        # @since 2.0.0
+        def replica_set?
+          type == Mongo::Cluster::Topology::ReplicaSet
+        end
+
+        # Does this spec raise an exception.
+        #
+        # @example Determine if the spec raises an exception.
+        #   spec.raises_exception?
+        #
+        # @return [true, false] If the spec raises an exception.
+        #
+        # @since 2.0.0
+        def raises_exception?
+          !server_available? || invalid_server_preference?
+        end
+
+        # Does this spec expect a server to be found.
+        #
+        # @example Will a server be found with this spec.
+        #   spec.server_available?
+        #
+        # @return [true, false] If a server will be found with this spec.
+        #
+        # @since 2.0.0
+        def server_available?
+          !in_latency_window.empty?
+        end
+
+        # Is the read preference defined in the spec invalid.
+        #
+        # @example Determine if the spec's read preference is invalid.
+        #   spec.invalid_server_preference?
+        #
+        # @return [true, false] If the spec's read preference is invalid.
+        #
+        # @since 2.0.0
+        def invalid_server_preference?
+          read_preference['mode'] == 'Primary' && read_preference['tag_sets']
         end
       end
     end
