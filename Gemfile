@@ -11,6 +11,7 @@ platforms :rbx do
 end
 
 group :development, :testing do
+  gem 'jruby-openssl', :platforms => [ :jruby ]
   gem 'json', :platforms => [ :jruby ]
   gem 'rspec', '~> 3.0'
   gem 'mime-types', '~> 1.25'
