@@ -75,10 +75,7 @@ module Mongo
         drop('*')
       end
 
-      # Calls create_index and sets a flag not to do so again for another X minutes.
-      #  This time can be specified as an option when initializing a Mongo::DB object
-      #  as options. Any changes to an index will be propagated through regardless of
-      #  cache time (e.g., a change of index direction).
+      #  Creates an index on the collection.
       #
       # @param [ Hash ] spec A hash of field name/direction pairs.
       # @param [ Hash ] options Options for this index.
@@ -97,6 +94,9 @@ module Mongo
       #   a geo index.
       # @option options [ Integer ] :min (nil) Specify the min latitude and longitude for
       #   a geo index.
+      #
+      # @note Note that the options listed may be subset of those available.
+      # See the MongoDB documentation for a full list of supported options by server version.
       #
       # @return [ Result ] The response.
       #
