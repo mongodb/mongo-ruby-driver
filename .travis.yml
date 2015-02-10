@@ -19,6 +19,7 @@ install: ruby -S bundle install --without release development
 env:
   global:
     - CI="travis"
+    - JRUBY_OPTS="--server -J-Xms512m -J-Xmx1024m"
   matrix:
     - MONGODB=2.4.12
     - MONGODB=2.6.7
