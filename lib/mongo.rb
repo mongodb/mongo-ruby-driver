@@ -14,6 +14,7 @@
 
 require 'forwardable'
 require 'bson'
+require 'openssl'
 require 'mongo/loggable'
 require 'mongo/logger'
 require 'mongo/error'

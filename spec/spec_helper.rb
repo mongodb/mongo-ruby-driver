@@ -19,6 +19,21 @@ end
 
 require 'mongo'
 
+# Give MongoDB time to start up on the travis ci environment.
+if (ENV['CI'] == 'travis')
+  starting = true
+  client = Mongo::Client.new(['127.0.0.1:27017'])
+  while starting
+    begin
+      client.command(Mongo::Server::Monitor::STATUS)
+      break
+    rescue Mongo::Error::CommandFailure => e
+      sleep(2)
+      client.cluster.scan!
+    end
+  end
+end
+
 require 'support/matchers'
 require 'support/authorization'
 require 'support/mongo_orchestration'
@@ -35,28 +50,29 @@ RSpec.configure do |config|
   config.include(Authorization)
 
   config.before(:suite) do
+
     begin
       # Create the root user administrator as the first user to be added to the
       # database. This user will need to be authenticated in order to add any
       # more users to any other databases.
-      p ADMIN_UNAUTHORIZED_CLIENT.database.users.create(ROOT_USER)
+      ADMIN_UNAUTHORIZED_CLIENT.database.users.create(ROOT_USER)
     rescue Exception => e
-      p e
     end
     begin
       # Adds the test user to the test database with permissions on all
       # databases that will be used in the test suite.
-      p ADMIN_AUTHORIZED_CLIENT.database.users.create(TEST_USER)
+      ADMIN_AUTHORIZED_CLIENT.database.users.create(TEST_USER)
     rescue Exception => e
-      p e
       unless write_command_enabled?
         # If we are on versions less than 2.6, we need to create a user for
         # each database, since the users are not stored in the admin database
         # but in the system.users collection on the datbases themselves. Also,
         # roles in versions lower than 2.6 can only be strings, not hashes.
-        begin p ROOT_AUTHORIZED_CLIENT.database.users.create(TEST_READ_WRITE_USER); rescue; end
+        begin ROOT_AUTHORIZED_CLIENT.database.users.create(TEST_READ_WRITE_USER); rescue; end
       end
     end
+
+    p ADMIN_AUTHORIZED_CLIENT.command(buildinfo: 1)
   end
 end
 
