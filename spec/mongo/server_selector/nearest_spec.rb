@@ -20,11 +20,13 @@ describe Mongo::ServerSelector::Nearest do
     end
 
     context 'tag set provided' do
-      let(:tag_sets) { [tag_set] }
+      let(:tag_sets) do
+        [tag_set]
+      end
 
       it 'returns a read preference formatted for mongos' do
         expect(read_pref.to_mongos).to eq(
-          { :mode => 'nearest', :tags => tag_sets}
+          { :mode => 'nearest', :tags => tag_sets }
         )
       end
     end
@@ -75,10 +77,10 @@ describe Mongo::ServerSelector::Nearest do
     context 'tag sets provided' do
       let(:tag_sets) { [tag_set] }
       let(:matching_primary) do
-        server(:primary, :tags => tag_sets)
+        server(:primary, :tags => server_tags)
       end
       let(:matching_secondary) do
-        server(:secondary, :tags => tag_sets)
+        server(:secondary, :tags => server_tags)
       end
 
       context 'single candidate' do

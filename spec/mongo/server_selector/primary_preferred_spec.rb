@@ -79,11 +79,11 @@ describe Mongo::ServerSelector::PrimaryPreferred do
       let(:tag_sets) { [tag_set] }
 
       let(:matching_primary) do
-        server(:primary, :tags => tag_sets)
+        server(:primary, :tags => server_tags )
       end
 
       let(:matching_secondary) do
-        server(:secondary, :tags => tag_sets)
+        server(:secondary, :tags => server_tags )
       end
 
       context 'single candidate' do

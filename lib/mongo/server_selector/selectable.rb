@@ -182,7 +182,7 @@ module Mongo
       def match_tag_sets(candidates)
         matches = []
         tag_sets.find do |tag_set|
-          matches = candidates.select { |server| server.matches_tags?(tag_set) }
+          matches = candidates.select { |server| server.matches_tag_set?(tag_set) }
           !matches.empty?
         end
         matches || []

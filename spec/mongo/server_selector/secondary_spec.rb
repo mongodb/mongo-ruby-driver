@@ -74,7 +74,7 @@ describe Mongo::ServerSelector::Secondary do
 
     context 'tag sets provided' do
       let(:tag_sets) { [tag_set] }
-      let(:matching_secondary) { server(:secondary, :tags => tag_sets) }
+      let(:matching_secondary) { server(:secondary, :tags => server_tags) }
 
       context 'single candidate' do
 

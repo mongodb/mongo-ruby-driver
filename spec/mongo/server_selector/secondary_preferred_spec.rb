@@ -14,11 +14,14 @@ describe Mongo::ServerSelector::SecondaryPreferred do
   describe '#to_mongos' do
 
     context 'tag sets provided' do
-      let(:tag_sets) { [tag_set] }
+
+      let(:tag_sets) do
+        [ tag_set ]
+      end
 
       it 'returns a read preference formatted for mongos' do
         expect(read_pref.to_mongos).to eq(
-          { :mode => 'secondaryPreferred', :tags => tag_sets}
+          { :mode => 'secondaryPreferred', :tags => tag_sets }
         )
       end
     end
@@ -76,12 +79,17 @@ describe Mongo::ServerSelector::SecondaryPreferred do
     end
 
     context 'tag sets provided' do
-      let(:tag_sets) { [tag_set] }
-      let(:matching_primary) do
-        server(:primary, :tags => tag_sets)
+
+      let(:tag_sets) do
+        [ tag_set ]
       end
+
+      let(:matching_primary) do
+        server(:primary, :tags => server_tags)
+      end
+
       let(:matching_secondary) do
-        server(:secondary, :tags => tag_sets)
+        server(:secondary, :tags => server_tags)
       end
 
       context 'single candidate' do

@@ -147,18 +147,16 @@ module Mongo
     # Determine if the provided tags are a subset of the server's tags.
     #
     # @example Are the provided tags a subset of the server's tags.
-    #   server.matches_tags?([{ 'rack' => 'a' }])
+    #   server.matches_tag_set?({ 'rack' => 'a', 'dc' => 'nyc' })
     #
     # @param [ Hash ] The tag set to compare to the server's tags.
     #
     # @return [ true, false ] If the provided tags are a subset of the server's tags.
     #
     # @since 2.0.0
-    def matches_tags?(tag_set)
-      tags.any? do |tag|
-        tag_set.all? do |k,v|
-          tag.keys.include?(k) && tag[k] == v
-        end
+    def matches_tag_set?(tag_set)
+      tag_set.keys.all? do |k|
+        tags[k] && tags[k] == tag_set[k]
       end
     end
   end
