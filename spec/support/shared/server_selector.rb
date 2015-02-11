@@ -16,14 +16,19 @@ def server(mode, options = {})
   server = Mongo::Server.new(address, listeners)
   description = Mongo::Server::Description.new(address, ismaster, average_round_trip_time)
   server.tap do |s|
-    s.monitor.instance_variable_set(:@description, description)
+    allow(s).to receive(:description).and_return(description)
   end
 end
 
 shared_context 'server selector' do
   let(:read_pref) { described_class.new(tag_sets) }
   let(:tag_sets) { [] }
-  let(:tag_set) { { 'test' => 'tag' } }
+  let(:tag_set) do
+    { 'test' => 'tag' }
+  end
+  let(:server_tags) do
+    { 'test' => 'tag', 'other' => 'tag' }
+  end
   let(:primary) { server(:primary) }
   let(:secondary) { server(:secondary) }
 end

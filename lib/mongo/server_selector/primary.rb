@@ -69,6 +69,8 @@ module Mongo
         nil
       end
 
+      private
+
       # Select the primary server from a list of candidates.
       #
       # @example Select the primary server given a list of candidates.

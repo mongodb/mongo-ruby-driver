@@ -1,0 +1,88 @@
+require 'spec_helper'
+
+describe 'Server Selection' do
+
+  include Mongo::ServerSelection::Read
+
+  SERVER_SELECTION_TESTS.each do |file|
+
+    spec = Mongo::ServerSelection::Read::Spec.new(file)
+
+    context(spec.description) do
+
+      let(:topology) do
+        spec.type.new({})
+      end
+
+      let(:cluster) do
+        double('cluster').tap do |c|
+          allow(c).to receive(:topology).and_return(topology)
+          allow(c).to receive(:standalone?).and_return(topology.standalone?)
+          allow(c).to receive(:sharded?).and_return(topology.sharded?)
+          allow(c).to receive(:replica_set?).and_return(topology.replica_set?)
+        end
+      end
+
+      let(:candidate_servers) do
+        spec.candidate_servers.collect do |server|
+          address = Mongo::Address.new(server['address'])
+          Mongo::Server.new(address, Mongo::Event::Listeners.new).tap do |s|
+            allow(s).to receive(:average_round_trip_time).and_return(server['avg_rtt_ms'])
+            allow(s).to receive(:tags).and_return(server['tag_sets'].first)
+            allow(s).to receive(:secondary?).and_return(server['type'] == 'RSSecondary')
+            allow(s).to receive(:primary?).and_return(server['type'] == 'RSPrimary')
+          end
+        end
+      end
+
+      let(:in_latency_window) do
+        spec.in_latency_window.collect do |server|
+          address = Mongo::Address.new(server['address'])
+          Mongo::Server.new(address, Mongo::Event::Listeners.new).tap do |s|
+            allow(s).to receive(:average_round_trip_time).and_return(server['avg_rtt_ms'])
+            allow(s).to receive(:tags).and_return(server['tag_sets'].first)
+          end
+        end
+      end
+
+      let(:server_selector) do
+        Mongo::ServerSelector.get({ :mode => spec.read_preference['mode'],
+                                    :tag_sets => spec.read_preference['tag_sets'] },
+                                    :server_selection_timeout => 1)
+      end
+
+      before do
+        allow(cluster).to receive(:servers).and_return(candidate_servers)
+      end
+
+      context 'Valid read preference and matching server available', unless: spec.raises_exception? do
+      
+        it 'Finds all suitable servers in the latency window', if: spec.replica_set? do
+          expect(server_selector.send(:select, cluster.servers)).to eq(in_latency_window)   
+        end
+      
+        it 'Finds the most suitable server in the latency window' do
+          expect(in_latency_window).to include(server_selector.select_server(cluster))
+        end
+      end
+
+      context 'Invalid read preference', if: spec.invalid_server_preference? do
+      
+        it 'Raises exception' do
+          expect do
+            server_selector.select_server(cluster)
+          end.to raise_exception(Mongo::ServerSelector::InvalidServerPreference) 
+        end
+      end
+
+      context 'No matching server available', unless: spec.server_available? do
+      
+        it 'Raises exception' do
+          expect do
+            server_selector.select_server(cluster)
+          end.to raise_exception(Mongo::ServerSelector::NoServerAvailable) 
+        end
+      end
+    end
+  end
+end

@@ -71,6 +71,8 @@ module Mongo
         preference
       end
 
+      private
+
       # Select servers taking into account any defined tag sets and
       #   local threshold, with the primary preferred.
       #
@@ -84,7 +86,8 @@ module Mongo
       #
       # @since 2.0.0
       def select(candidates)
-        primary(candidates) + near_servers(secondaries(candidates))
+        primary = primary(candidates)
+        primary.first ? primary : near_servers(secondaries(candidates))
       end
     end
   end
