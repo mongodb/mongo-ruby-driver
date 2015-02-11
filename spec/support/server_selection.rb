@@ -2,12 +2,14 @@ module Mongo
   module ServerSelection
     module Read
 
-      # Represents a specification.
+      # Represents a Server Selection specification test.
       #
       # @since 2.0.0
       class Spec
 
         # Mapping of topology description strings to topology type classes.
+        #
+        # @since 2.0.0
         TOPOLOGY_TYPES = {
           'ReplicaSetNoPrimary' => Mongo::Cluster::Topology::ReplicaSet,
           'ReplicaSetWithPrimary' => Mongo::Cluster::Topology::ReplicaSet,
@@ -17,6 +19,8 @@ module Mongo
         }
 
         # Mapping of read preference modes.
+        #
+        # @since 2.0.0
         READ_PREFERENCES = {
           'Primary' => :primary,
           'Secondary' => :secondary,
@@ -26,27 +30,41 @@ module Mongo
         }
 
         # @return [ String ] description The spec description.
+        #
+        # @since 2.0.0
         attr_reader :description
 
         # @return [ Hash ] read_preference The read preference to be used for selection.
+        #
+        # @since 2.0.0
         attr_reader :read_preference
 
         # @return [ Array<Hash> ] candidate_servers The candidate servers.
+        #
+        # @since 2.0.0
         attr_reader :candidate_servers
 
-        # @return [ Array<Hash> ] eligible_servers The eligible servers before latency
+        # @return [ Array<Hash> ] eligible_servers The eligible servers before the latency
         #   window is taken into account.
+        #
+        # @since 2.0.0
         attr_reader :eligible_servers
 
         # @return [ Array<Hash> ] suitable_servers The set of servers matching all server
-        #  selection logic. May be a subset of eligible_servers and/or candidate_servers
+        #  selection logic. May be a subset of eligible_servers and/or candidate_servers.
+        #
+        # @since 2.0.0
         attr_reader :suitable_servers
 
         # @return [ Array<Hash> ] in_latency_window The subset of suitable servers that falls
         #  within the allowable latency window.
+        #
+        # @since 2.0.0
         attr_reader :in_latency_window
 
         # @return [ Mongo::Cluster::Topology ] type The topology type.
+        #
+        # @since 2.0.0
         attr_reader :type
 
         # Instantiate the new spec.
