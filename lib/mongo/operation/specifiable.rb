@@ -373,7 +373,7 @@ module Mongo
       #
       # @since 2.0.0
       def read
-        @spec[READ]
+        @spec[READ] || ServerSelector.get
       end
     end
   end
