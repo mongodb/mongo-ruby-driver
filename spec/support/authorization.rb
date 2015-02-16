@@ -22,6 +22,19 @@ TEST_DB = 'ruby-driver'.freeze
 # @since 2.0.0
 TEST_COLL = 'test'.freeze
 
+# The seed addresses to be used when creating a client.
+#
+# @since 2.0.0
+ADDRESSES = ENV['MONGODB_ADDRESSES'] ? ENV['MONGODB_ADDRESSES'].split(',').freeze :
+              [ '127.0.0.1:27017' ].freeze
+
+# The topology type.
+#
+# @since 2.0.0
+CONNECT = ENV['RS_ENABLED'] == 'true' ? :replica_set.freeze :
+            ENV['SHARDED'] == 'true' ? :sharded.freeze :
+            :direct.freeze
+
 # Gets the root system administrator user.
 #
 # @since 2.0.0
@@ -69,11 +82,12 @@ TEST_READ_WRITE_USER = Mongo::Auth::User.new(
 #
 # @since 2.0.0
 AUTHORIZED_CLIENT = Mongo::Client.new(
-  [ '127.0.0.1:27017' ],
+  ADDRESSES,
   database: TEST_DB,
   user: TEST_USER.name,
   password: TEST_USER.password,
-  max_pool_size: 1
+  max_pool_size: 1,
+  connect: CONNECT
 )
 
 # Provides an authorized mongo client on the default test database for the
@@ -81,21 +95,23 @@ AUTHORIZED_CLIENT = Mongo::Client.new(
 #
 # @since 2.0.0
 ROOT_AUTHORIZED_CLIENT = Mongo::Client.new(
-  [ '127.0.0.1:27017' ],
+  ADDRESSES,
   auth_source: Mongo::Database::ADMIN,
   database: TEST_DB,
   user: ROOT_USER.name,
   password: ROOT_USER.password,
-  max_pool_size: 1
+  max_pool_size: 1,
+  connect: CONNECT
 )
 
 # Provides an unauthorized mongo client on the default test database.
 #
 # @since 2.0.0
 UNAUTHORIZED_CLIENT = Mongo::Client.new(
-  [ '127.0.0.1:27017' ],
+  ADDRESSES,
   database: TEST_DB,
-  max_pool_size: 1
+  max_pool_size: 1,
+  connect: CONNECT
 )
 
 # Provides an unauthorized mongo client on the admin database, for use in
@@ -103,9 +119,10 @@ UNAUTHORIZED_CLIENT = Mongo::Client.new(
 #
 # @since 2.0.0
 ADMIN_UNAUTHORIZED_CLIENT = Mongo::Client.new(
-  [ '127.0.0.1:27017' ],
+  ADDRESSES,
   database: Mongo::Database::ADMIN,
-  max_pool_size: 1
+  max_pool_size: 1,
+  connect: CONNECT
 )
 
 # Get an authorized client on the admin database logged in as the admin

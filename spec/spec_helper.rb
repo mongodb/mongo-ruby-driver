@@ -84,6 +84,30 @@ SERVER_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/support/sdam/**/*.yml")
 SERVER_SELECTION_RTT_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/rtt/*.yml")
 SERVER_SELECTION_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/selection/**/*.yml")
 
+# Determine whether the test clients are connecting to a standlone.
+#
+# @since 2.0.0
+def standlone?
+  $mongo_client ||= initialize_scanned_client!
+  $standalone ||= $mongo_client.cluster.standalone?
+end
+
+# Determine whether the test clients are connecting to a replica set.
+#
+# @since 2.0.0
+def replica_set?
+  $mongo_client ||= initialize_scanned_client!
+  $replica_set ||= $mongo_client.cluster.replica_set?
+end
+
+# Determine whether the test clients are connecting to a sharded cluster.
+#
+# @since 2.0.0
+def sharded?
+  $mongo_client ||= initialize_scanned_client!
+  $sharded ||= $mongo_client.cluster.sharded?
+end
+
 # For instances where behaviour is different on different versions, we need to
 # determine in the specs if we are 2.6 or higher.
 #
@@ -117,7 +141,7 @@ end
 #
 # @since 2.0.0
 def initialize_scanned_client!
-  Mongo::Client.new([ '127.0.0.1:27017' ], database: TEST_DB)
+  Mongo::Client.new(ADDRESSES, database: TEST_DB, connect: CONNECT)
 end
 
 def initialize_mo_standalone!(path = nil)
