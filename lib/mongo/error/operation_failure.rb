@@ -18,6 +18,6 @@ module Mongo
     # Raised when a command failes for some reason.
     #
     # @since 2.0.0
-    class CommandFailure < Error; end
+    class OperationFailure < Error; end
   end
 end

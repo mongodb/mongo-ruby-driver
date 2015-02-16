@@ -31,7 +31,7 @@ describe Mongo::Auth::User::View do
       it 'raises an exception' do
         expect {
           view.create('durran', password: 'password')
-        }.to raise_error(Mongo::Error::CommandFailure)
+        }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
   end
@@ -61,7 +61,7 @@ describe Mongo::Auth::User::View do
       it 'raises an exception', if: write_command_enabled? do
         expect {
           view.remove('notauser')
-        }.to raise_error(Mongo::Error::CommandFailure)
+        }.to raise_error(Mongo::Error::OperationFailure)
       end
 
       it 'does not raise an exception', unless: write_command_enabled? do

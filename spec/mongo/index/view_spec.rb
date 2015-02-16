@@ -105,7 +105,7 @@ describe Mongo::Index::View do
       it 'raises an exception', if: write_command_enabled? do
         expect {
           view.create(spec, unique: false)
-        }.to raise_error(Mongo::Error::CommandFailure)
+        }.to raise_error(Mongo::Error::OperationFailure)
       end
 
       it 'does not raise an exception', unless: write_command_enabled? do
@@ -219,7 +219,7 @@ describe Mongo::Index::View do
       it 'raises a nonexistant collection error', if: list_command_enabled? do
         expect {
           nonexistant_view.each.to_a
-        }.to raise_error(Mongo::Error::CommandFailure)
+        }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
   end

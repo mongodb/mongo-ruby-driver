@@ -62,7 +62,7 @@ end
 
 require 'mongo/error/parser'
 require 'mongo/error/bulk_write_failure'
-require 'mongo/error/command_failure'
+require 'mongo/error/operation_failure'
 require 'mongo/error/empty_batch'
 require 'mongo/error/invalid_bulk_operation'
 require 'mongo/error/invalid_collection_name'

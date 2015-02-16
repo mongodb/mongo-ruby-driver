@@ -142,7 +142,7 @@ describe Mongo::Database do
       it 'raises an exception', if: list_command_enabled? do
         expect {
           database.collections
-        }.to raise_error(Mongo::Error::CommandFailure)
+        }.to raise_error(Mongo::Error::OperationFailure)
       end
 
       pending 'raises an exception' # 2.6 not authorized
@@ -198,7 +198,7 @@ describe Mongo::Database do
     it 'raises an exception', unless: write_command_enabled? do
       expect {
         database.drop
-      }.to raise_error(Mongo::Error::CommandFailure)
+      }.to raise_error(Mongo::Error::OperationFailure)
     end
   end
 

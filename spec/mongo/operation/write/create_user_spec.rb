@@ -37,7 +37,7 @@ describe Mongo::Operation::Write::CreateUser do
         expect {
           operation.execute(root_authorized_primary.context)
           operation.execute(root_authorized_primary.context)
-        }.to raise_error(Mongo::Error::CommandFailure)
+        }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
   end

@@ -35,7 +35,7 @@ describe Mongo::Operation::Write::RemoveUser do
       it 'raises an exception', if: write_command_enabled? do
         expect {
           operation.execute(root_authorized_primary.context)
-        }.to raise_error(Mongo::Error::CommandFailure)
+        }.to raise_error(Mongo::Error::OperationFailure)
       end
 
       it 'does not raise an exception', unless: write_command_enabled? do

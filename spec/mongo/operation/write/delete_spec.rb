@@ -110,7 +110,7 @@ describe Mongo::Operation::Write::Delete do
         it 'raises an exception' do
           expect {
             delete.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Error::CommandFailure)
+          }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
     end
@@ -155,7 +155,7 @@ describe Mongo::Operation::Write::Delete do
 
           expect {
             op.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Error::CommandFailure)
+          }.to raise_error(Mongo::Error::OperationFailure)
 
           expect(authorized_collection.find.count).to eq(2)
         end

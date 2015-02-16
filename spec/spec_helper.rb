@@ -27,7 +27,7 @@ if (ENV['CI'] == 'travis')
     begin
       client.command(Mongo::Server::Monitor::STATUS)
       break
-    rescue Mongo::Error::CommandFailure => e
+    rescue Mongo::Error::OperationFailure => e
       sleep(2)
       client.cluster.scan!
     end

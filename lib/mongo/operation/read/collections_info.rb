@@ -47,7 +47,7 @@ module Mongo
             ListCollections.new(spec).execute(context)
           else
             context.with_connection do |connection|
-              Result.new(connection.dispatch([ message(context) ]))
+              Result.new(connection.dispatch([ message(context) ])).validate!
             end
           end
         end

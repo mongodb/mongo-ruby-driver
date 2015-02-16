@@ -136,7 +136,7 @@ describe Mongo::Operation::MapReduce do
       it 'raises an exception' do
         expect {
           op.execute(authorized_primary.context)
-        }.to raise_error(Mongo::Error::CommandFailure)
+        }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
   end

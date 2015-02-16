@@ -129,7 +129,7 @@ describe Mongo::Operation::Write::Insert do
           expect {
             failing_insert.execute(authorized_primary.context)
             failing_insert.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Error::CommandFailure)
+          }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
     end
@@ -177,7 +177,7 @@ describe Mongo::Operation::Write::Insert do
           expect {
             failing_insert.execute(authorized_primary.context)
             failing_insert.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Error::CommandFailure)
+          }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
 
@@ -203,7 +203,7 @@ describe Mongo::Operation::Write::Insert do
           expect {
             failing_insert.execute(authorized_primary.context)
             failing_insert.execute(authorized_primary.context)
-          }.to raise_error(Mongo::Error::CommandFailure)
+          }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
 

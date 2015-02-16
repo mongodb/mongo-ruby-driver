@@ -70,7 +70,7 @@ describe Mongo::Operation::Write::EnsureIndex do
       it 'raises an exception', if: write_command_enabled? do
         expect {
           second_operation.execute(authorized_primary.context)
-        }.to raise_error(Mongo::Error::CommandFailure)
+        }.to raise_error(Mongo::Error::OperationFailure)
       end
 
       it 'does not raise an exception', unless: write_command_enabled? do

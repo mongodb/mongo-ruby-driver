@@ -97,7 +97,7 @@ module Mongo
           #
           # @since 2.0.0
           def validate!
-            failure? ? raise(Error::CommandFailure.new(parser.message)) : self
+            failure? ? raise(Error::OperationFailure.new(parser.message)) : self
           end
 
           private

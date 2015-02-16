@@ -98,7 +98,7 @@ describe Mongo::Grid::FS do
         expect {
           fs.insert_one(file)
           fs.insert_one(file)
-        }.to raise_error(Mongo::Error::CommandFailure)
+        }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
   end
