@@ -114,7 +114,7 @@ module Mongo
         end
 
         def stop_sending?(result)
-          ordered? && result.failure?
+          ordered? && !result.successful?
         end
 
         # @todo put this somewhere else

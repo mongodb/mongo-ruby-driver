@@ -188,7 +188,12 @@ module Mongo
       #
       # @since 2.0.0
       def successful?
-        acknowledged? ? first_document[OK] == 1 : true
+        return true if !acknowledged?
+        if first_document.has_key?(OK)
+          first_document[OK] == 1 && parser.message.empty?
+        else
+          parser.message.empty?
+        end
       end
 
       # Validate the result by checking for any errors.
@@ -206,7 +211,7 @@ module Mongo
       #
       # @since 2.0.0
       def validate!
-        failure? ? raise(Error::OperationFailure.new(parser.message)) : self
+        !successful? ? raise(Error::OperationFailure.new(parser.message)) : self
       end
 
       # Get the number of documents written by the server.
@@ -225,18 +230,6 @@ module Mongo
         end
       end
       alias :n :written_count
-
-      # Whether there was a failure.
-      #
-      # @example Determine if there was a failure.
-      #   result.failure?
-      #
-      # @return [ true, false ] If there was a  failure.
-      #
-      # @since 2.0.0
-      def failure?
-        acknowledged? && (!successful? || !parser.message.empty?)
-      end
 
       private
 

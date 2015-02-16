@@ -185,6 +185,31 @@ describe Mongo::Operation::Result do
       end
     end
 
+    context 'when the reply is for a query' do
+
+      context 'when the query has no errors' do
+
+        let(:documents) do
+          [{ 'field' => 'name' }]
+        end
+
+        it 'returns true' do
+          expect(result).to be_successful
+        end
+      end
+
+      context 'when the query has errors' do
+
+        let(:documents) do
+          [{ '$err' => 'not authorized for query on test.system.namespaces', 'code'=> 16550 }]
+        end
+
+        it 'returns false' do
+          expect(result).to_not be_successful
+        end
+      end
+    end
+
     context 'when the reply is for a write command' do
 
       context 'when the write is acknowledged' do

@@ -274,8 +274,8 @@ module Mongo
       end.flatten
     end
 
-    def stop_executing?(reply)
-      reply && ordered? && reply.failure?
+    def stop_executing?(result)
+      result && ordered? && !result.successful?
     end
 
     def make_response!(results)
