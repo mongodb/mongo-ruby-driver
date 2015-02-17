@@ -53,6 +53,7 @@ describe 'Server Selection' do
 
       before do
         allow(cluster).to receive(:servers).and_return(candidate_servers)
+        allow(cluster).to receive(:scan!).and_return(true)
       end
 
       context 'Valid read preference and matching server available', unless: spec.raises_exception? do
