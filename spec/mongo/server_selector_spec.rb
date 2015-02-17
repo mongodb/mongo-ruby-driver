@@ -2,6 +2,8 @@ require 'spec_helper'
 
 describe Mongo::ServerSelector do
 
+  include_context 'server selector'
+
   describe '.get' do
 
     let(:read_pref) do
@@ -64,6 +66,35 @@ describe Mongo::ServerSelector do
 
       it 'sets tag sets on the read preference object' do
         expect(read_pref.tag_sets).to eq(tag_sets)
+      end
+    end
+  end
+
+  describe "#select_server" do
+
+    context 'when #select returns a list of nils' do
+
+      let(:servers) { [ server(:primary) ] }
+
+      let(:cluster) do
+        double('cluster').tap do |c|
+          allow(c).to receive(:servers).and_return(servers)
+          allow(c).to receive(:standalone?).and_return(false)
+          allow(c).to receive(:sharded?).and_return(false)
+          allow(c).to receive(:scan!).and_return(true)
+        end
+      end
+
+      let(:read_pref) do
+        described_class.get({ mode: :primary }, server_selection_timeout: 1).tap do |pref|
+          allow(pref).to receive(:select).and_return([ nil, nil ])
+        end
+      end
+
+      it 'raises a NoServerAvailable error' do
+        expect do
+          read_pref.select_server(cluster)
+        end.to raise_exception(Mongo::ServerSelector::NoServerAvailable)
       end
     end
   end
