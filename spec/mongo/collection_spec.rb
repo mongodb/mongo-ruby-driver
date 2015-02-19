@@ -5,6 +5,7 @@ describe Mongo::Collection do
   describe '#==' do
 
     let(:database) do
+      puts "authorized client has topology: #{authorized_client.cluster.topology}"
       Mongo::Database.new(authorized_client, :test)
     end
 
