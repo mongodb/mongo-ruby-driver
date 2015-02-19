@@ -63,7 +63,7 @@ module Mongo
       #
       # @since 2.0.0
       def execute(context)
-        unless context.standalone? || context.primary? || secondary_ok?
+        unless context.standalone? || context.mongos? || context.primary? || secondary_ok?
           raise Error::NeedPrimaryServer.new(ERROR_MESSAGE)
         end
         execute_message(context)

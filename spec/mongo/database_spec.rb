@@ -133,7 +133,7 @@ describe Mongo::Database do
       pending 'raises an exception' # 2.6
     end
 
-    context 'when the user is not authorized' do
+    context 'when the user is not authorized', unless: sharded? do
 
       let(:database) do
         described_class.new(unauthorized_client, TEST_DB)
@@ -177,7 +177,7 @@ describe Mongo::Database do
         described_class.new(client, TEST_DB, client.options)
       end
 
-      it 'uses that read preference' do
+      it 'uses that read preference', unless: sharded? do
         expect do
           database.command({ ping: 1 }, { read: read })
         end.to raise_error(Mongo::ServerSelector::NoServerAvailable)

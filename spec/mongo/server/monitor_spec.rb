@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Server::Monitor do
 
   let(:address) do
-    Mongo::Address.new('127.0.0.1:27017')
+    Mongo::Address.new(DEFAULT_ADDRESS)
   end
 
   let(:listeners) do
@@ -59,7 +59,7 @@ describe Mongo::Server::Monitor do
       context 'when the socket gets an exception' do
 
         let(:bad_address) do
-          Mongo::Address.new('127.0.0.1:27017')
+          Mongo::Address.new(DEFAULT_ADDRESS)
         end
 
         let(:monitor) do

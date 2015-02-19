@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Auth::CR do
 
   let(:address) do
-    Mongo::Address.new('127.0.0.1:27017')
+    Mongo::Address.new(DEFAULT_ADDRESS)
   end
 
   let(:server) do

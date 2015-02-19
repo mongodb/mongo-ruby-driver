@@ -28,6 +28,11 @@ TEST_COLL = 'test'.freeze
 ADDRESSES = ENV['MONGODB_ADDRESSES'] ? ENV['MONGODB_ADDRESSES'].split(',').freeze :
               [ '127.0.0.1:27017' ].freeze
 
+# A default address to use in tests.
+#
+# @since 2.0.0
+DEFAULT_ADDRESS = ADDRESSES.first
+
 # The topology type.
 #
 # @since 2.0.0
@@ -90,7 +95,7 @@ TEST_READ_WRITE_USER = Mongo::Auth::User.new(
 # The write concern to use in the tests.
 #
 # @since 2.0.0
-WRITE_CONCERN = CONNECT == :direct ? { w: 1 } : { w: ADDRESSES.size }
+WRITE_CONCERN = CONNECT == :direct ? { w: 1 } : { w: 'majority' }
 
 # Provides an authorized mongo client on the default test database for the
 # default test user.
