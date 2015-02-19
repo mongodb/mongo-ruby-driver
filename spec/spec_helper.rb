@@ -71,7 +71,7 @@ SERVER_SELECTION_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/sele
 # Determine whether the test clients are connecting to a standlone.
 #
 # @since 2.0.0
-def standlone?
+def standalone?
   $mongo_client ||= initialize_scanned_client!
   $standalone ||= $mongo_client.cluster.standalone?
 end

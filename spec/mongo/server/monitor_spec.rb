@@ -22,8 +22,16 @@ describe Mongo::Server::Monitor do
         monitor.scan!
       end
 
-      it 'updates the server description' do
+      it 'updates the server description', if: standalone? do
         expect(monitor.description).to be_standalone
+      end
+
+      it 'updates the server description', if: replica_set? do
+        expect(monitor.description).to be_primary
+      end
+
+      it 'updates the server description', if: sharded? do
+        expect(monitor.description).to be_mongos
       end
     end
 
