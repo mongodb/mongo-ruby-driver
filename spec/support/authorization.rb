@@ -219,7 +219,7 @@ module Authorization
     #
     # @since 2.0.0
     context.let(:authorized_primary) do
-      authorized_client.cluster.servers.first
+      authorized_client.cluster.next_primary
     end
 
     # Get a primary server for the client authorized as the root system
@@ -227,14 +227,14 @@ module Authorization
     #
     # @since 2.0.0
     context.let(:root_authorized_primary) do
-      root_authorized_client.cluster.servers.first
+      root_authorized_client.cluster.next_primary
     end
 
     # Get a primary server from the unauthorized client.
     #
     # @since 2.0.0
     context.let(:unauthorized_primary) do
-      authorized_client.cluster.servers.first
+      authorized_client.cluster.next_primary
     end
   end
 end
