@@ -37,7 +37,7 @@ DEFAULT_ADDRESS = ADDRESSES.first
 #
 # @since 2.0.0
 CONNECT = ENV['RS_ENABLED'] == 'true' ? :replica_set.freeze :
-            ENV['SHARDED'] == 'true' ? :sharded.freeze :
+            ENV['SHARDED_ENABLED'] == 'true' ? :sharded.freeze :
             :direct.freeze
 
 # The root user name.
