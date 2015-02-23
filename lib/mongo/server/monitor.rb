@@ -151,7 +151,6 @@ module Mongo
             return result, calculate_average_round_trip_time(start)
           rescue Exception => e
             log_debug([ e.message ])
-            connection.disconnect!
             return {}, calculate_average_round_trip_time(start)
           end
         end

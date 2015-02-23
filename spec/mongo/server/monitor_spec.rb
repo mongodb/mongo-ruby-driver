@@ -64,7 +64,7 @@ describe Mongo::Server::Monitor do
         end
 
         before do
-          expect(socket).to receive(:write).and_raise(SocketError)
+          expect(socket).to receive(:write).and_raise(Mongo::Error::SocketError)
           monitor.scan!
         end
 
@@ -73,7 +73,7 @@ describe Mongo::Server::Monitor do
         end
 
         it 'disconnects the connection' do
-          expect(monitor.connection.send(:socket)).to be_nil
+          expect(monitor.connection).to_not be_connected
         end
       end
     end
