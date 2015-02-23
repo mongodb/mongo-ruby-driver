@@ -95,7 +95,7 @@ TEST_READ_WRITE_USER = Mongo::Auth::User.new(
 # The write concern to use in the tests.
 #
 # @since 2.0.0
-WRITE_CONCERN = CONNECT == :direct || :sharded ? { w: 1 } : { w: ADDRESSES.size }
+WRITE_CONCERN = CONNECT == :direct || :sharded ? { w: 1 } : { w: 'majority' }
 
 # Provides an authorized mongo client on the default test database for the
 # default test user.
