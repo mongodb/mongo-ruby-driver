@@ -72,8 +72,6 @@ RSpec.configure do |config|
         begin ROOT_AUTHORIZED_CLIENT.database.users.create(TEST_READ_WRITE_USER); rescue; end
       end
     end
-
-    p ADMIN_AUTHORIZED_CLIENT.command(buildinfo: 1)
   end
 end
 
