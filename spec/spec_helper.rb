@@ -20,6 +20,7 @@ end
 require 'mongo'
 
 require 'support/travis'
+require 'support/matchers'
 require 'support/authorization'
 require 'support/mongo_orchestration'
 require 'support/server_discovery_and_monitoring'
