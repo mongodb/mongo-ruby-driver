@@ -28,20 +28,35 @@ TEST_COLL = 'test'.freeze
 ADDRESSES = ENV['MONGODB_ADDRESSES'] ? ENV['MONGODB_ADDRESSES'].split(',').freeze :
               [ '127.0.0.1:27017' ].freeze
 
+# A default address to use in tests.
+#
+# @since 2.0.0
+DEFAULT_ADDRESS = ADDRESSES.first
+
 # The topology type.
 #
 # @since 2.0.0
 CONNECT = ENV['RS_ENABLED'] == 'true' ? :replica_set.freeze :
-            ENV['SHARDED'] == 'true' ? :sharded.freeze :
+            ENV['SHARDED_ENABLED'] == 'true' ? :sharded.freeze :
             :direct.freeze
+
+# The root user name.
+#
+# @since 2.0.0
+ROOT_USER_NAME = ENV['ROOT_USER_NAME'] || 'root-user'
+
+# The root user password.
+#
+# @since 2.0.0
+ROOT_USER_PWD = ENV['ROOT_USER_PWD'] || 'password'
 
 # Gets the root system administrator user.
 #
 # @since 2.0.0
 ROOT_USER = Mongo::Auth::User.new(
   database: Mongo::Database::ADMIN,
-  user: 'root-user',
-  password: 'password',
+  user: ROOT_USER_NAME,
+  password: ROOT_USER_PWD,
   roles: [
     Mongo::Auth::Roles::USER_ADMIN_ANY_DATABASE,
     Mongo::Auth::Roles::DATABASE_ADMIN_ANY_DATABASE,
@@ -77,6 +92,11 @@ TEST_READ_WRITE_USER = Mongo::Auth::User.new(
   roles: [ Mongo::Auth::Roles::READ_WRITE, Mongo::Auth::Roles::DATABASE_ADMIN ]
 )
 
+# The write concern to use in the tests.
+#
+# @since 2.0.0
+WRITE_CONCERN = CONNECT == :direct || :sharded ? { w: 1 } : { w: 'majority' }
+
 # Provides an authorized mongo client on the default test database for the
 # default test user.
 #
@@ -87,6 +107,7 @@ AUTHORIZED_CLIENT = Mongo::Client.new(
   user: TEST_USER.name,
   password: TEST_USER.password,
   max_pool_size: 1,
+  write: WRITE_CONCERN,
   connect: CONNECT
 )
 
@@ -101,6 +122,7 @@ ROOT_AUTHORIZED_CLIENT = Mongo::Client.new(
   user: ROOT_USER.name,
   password: ROOT_USER.password,
   max_pool_size: 1,
+  write: WRITE_CONCERN,
   connect: CONNECT
 )
 
@@ -111,6 +133,7 @@ UNAUTHORIZED_CLIENT = Mongo::Client.new(
   ADDRESSES,
   database: TEST_DB,
   max_pool_size: 1,
+  write: WRITE_CONCERN,
   connect: CONNECT
 )
 
@@ -122,6 +145,7 @@ ADMIN_UNAUTHORIZED_CLIENT = Mongo::Client.new(
   ADDRESSES,
   database: Mongo::Database::ADMIN,
   max_pool_size: 1,
+  write: WRITE_CONCERN,
   connect: CONNECT
 )
 
@@ -200,7 +224,7 @@ module Authorization
     #
     # @since 2.0.0
     context.let(:authorized_primary) do
-      authorized_client.cluster.servers.first
+      authorized_client.cluster.next_primary
     end
 
     # Get a primary server for the client authorized as the root system
@@ -208,14 +232,14 @@ module Authorization
     #
     # @since 2.0.0
     context.let(:root_authorized_primary) do
-      root_authorized_client.cluster.servers.first
+      root_authorized_client.cluster.next_primary
     end
 
     # Get a primary server from the unauthorized client.
     #
     # @since 2.0.0
     context.let(:unauthorized_primary) do
-      authorized_client.cluster.servers.first
+      authorized_client.cluster.next_primary
     end
   end
 end

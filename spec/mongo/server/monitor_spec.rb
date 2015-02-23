@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Server::Monitor do
 
   let(:address) do
-    Mongo::Address.new('127.0.0.1:27017')
+    Mongo::Address.new(DEFAULT_ADDRESS)
   end
 
   let(:listeners) do
@@ -22,8 +22,16 @@ describe Mongo::Server::Monitor do
         monitor.scan!
       end
 
-      it 'updates the server description' do
+      it 'updates the server description', if: standalone? do
         expect(monitor.description).to be_standalone
+      end
+
+      it 'updates the server description', if: replica_set? do
+        expect(monitor.description).to be_primary
+      end
+
+      it 'updates the server description', if: sharded? do
+        expect(monitor.description).to be_mongos
       end
     end
 
@@ -51,7 +59,7 @@ describe Mongo::Server::Monitor do
       context 'when the socket gets an exception' do
 
         let(:bad_address) do
-          Mongo::Address.new('127.0.0.1:27017')
+          Mongo::Address.new(DEFAULT_ADDRESS)
         end
 
         let(:monitor) do
