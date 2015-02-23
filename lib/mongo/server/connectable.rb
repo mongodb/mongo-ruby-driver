@@ -32,6 +32,18 @@ module Mongo
       # @return [ Hash ] options The passed in options.
       attr_reader :options
 
+      # Determine if the connection is currently connected.
+      #
+      # @example Is the connection connected?
+      #   connection.connected?
+      #
+      # @return [ true, false ] If connected.
+      #
+      # @since 2.0.0
+      def connected?
+        !!@socket && @socket.alive?
+      end
+
       # Dispatch the provided messages to the connection. If the last message
       # requires a response a reply will be returned.
       #
@@ -71,7 +83,12 @@ module Mongo
 
       def ensure_connected
         connect! if socket.nil? || !socket.alive?
-        yield socket
+        begin
+          yield socket
+        rescue Error::SocketError, Error::SocketTimeoutError => e
+          disconnect!
+          raise e
+        end
       end
 
       def read

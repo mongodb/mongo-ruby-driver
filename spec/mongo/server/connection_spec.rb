@@ -197,6 +197,25 @@ describe Mongo::Server::Connection do
         expect(reply.documents.first['ok']).to eq(1.0)
       end
     end
+
+    context 'when a network or socket error occurs' do
+
+      let(:socket) do
+        connection.connect!
+        connection.instance_variable_get(:@socket)
+      end
+
+      before do
+        expect(socket).to receive(:write).and_raise(Mongo::Error::SocketError)
+      end
+
+      it 'disconnects and raises the exception' do
+        expect {
+          connection.dispatch([ insert ])
+        }.to raise_error(Mongo::Error::SocketError)
+        expect(connection).to_not be_connected
+      end
+    end
   end
 
   describe '#initialize' do
