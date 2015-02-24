@@ -11,7 +11,26 @@ rescue LoadError
 end
 
 default_groups = [:default, :testing]
-default_groups << :release unless ENV['TEST']
 Bundler.require(*default_groups)
 
-Dir.glob('tasks/**/*.rake').sort.each { |r| load r }
+require 'rspec/core/rake_task'
+
+RSpec::Core::RakeTask.new(:spec)
+task :default => :spec
+
+namespace :spec do
+  if RUBY_VERSION > '1.9' && RUBY_VERSION < '2.2'
+    require 'coveralls/rake/task'
+    Coveralls::RakeTask.new
+    task :ci => [:spec, 'coveralls:push']
+  else
+    task :ci => [:spec]
+  end
+end
+
+task :release => :spec do
+  system "git tag -a v#{Mongo::VERSION} -m 'Tagging release: #{Mongo::VERSION}'"
+  system "git push --tags"
+  system "gem push mongo-#{Mongo::VERSION}.gem"
+  system "rm mongo-#{Mongo::VERSION}.gem"
+end
