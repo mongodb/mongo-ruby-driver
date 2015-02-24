@@ -8,7 +8,7 @@ Documentation
 -----
 
 Documentation for the 2.x series is currently a work in progress, but that work can
-be sean in the meantime [here](https://github.com/durran/docs-ecosystem/blob/RUBY-684/source/tutorial/ruby-driver-tutorial.txt).
+be seen in the meantime [here](https://github.com/durran/docs-ecosystem/blob/RUBY-684/source/tutorial/ruby-driver-tutorial.txt).
 
 API docs can be found [here](http://api.mongodb.org/ruby/).
 
