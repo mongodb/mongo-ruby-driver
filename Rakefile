@@ -35,3 +35,15 @@ task :release => :spec do
   system "gem push mongo-#{Mongo::VERSION}.gem"
   system "rm mongo-#{Mongo::VERSION}.gem"
 end
+
+desc "Generate all documentation"
+task :docs => 'docs:yard'
+
+namespace :docs do
+  desc "Generate yard documention"
+  task :yard do
+    out = File.join('docs', Mongo::VERSION)
+    FileUtils.rm_rf(out)
+    system "yardoc -o #{out} --title mongo-#{Mongo::VERSION}"
+  end
+end

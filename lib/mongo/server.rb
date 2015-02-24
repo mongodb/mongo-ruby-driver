@@ -79,7 +79,7 @@ module Mongo
     # @example Get the server context.
     #   server.context
     #
-    # @return [ Mongo::Server::Context ] The server context.
+    # @return [ Mongo::Server::Context ] context The server context.
     #
     # @since 2.0.0
     def context
@@ -149,7 +149,7 @@ module Mongo
     # @example Are the provided tags a subset of the server's tags.
     #   server.matches_tag_set?({ 'rack' => 'a', 'dc' => 'nyc' })
     #
-    # @param [ Hash ] The tag set to compare to the server's tags.
+    # @param [ Hash ] tag_set The tag set to compare to the server's tags.
     #
     # @return [ true, false ] If the provided tags are a subset of the server's tags.
     #

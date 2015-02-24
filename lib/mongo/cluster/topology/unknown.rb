@@ -49,7 +49,7 @@ module Mongo
         #
         # @param [ Server::Description ] description The description of the
         #   elected primary.
-        # @param [ Array<Server> ] server The list of known servers to the
+        # @param [ Array<Server> ] servers The list of known servers to the
         #   cluster.
         #
         # @return [ Sharded, ReplicaSet ] The new topology.

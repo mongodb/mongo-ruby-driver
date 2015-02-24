@@ -26,7 +26,7 @@ module Mongo
 
       # Slices this operation into the specified number of children operations.
       #
-      # @params [ Integer ] n_batches The number of children operations to split
+      # @param [ Integer ] n_batches The number of children operations to split
       #   this one into.
       #
       # @return [ Array ] An array of children operations.
@@ -64,7 +64,7 @@ module Mongo
       # Merge another operation with this one.
       # Requires that the collection and database of the two ops are the same.
       #
-      # @params[ Mongo::Operation ] The other operation.
+      # @param[ Mongo::Operation ] The other operation.
       #
       # @return [ self ] This operation merged with the other one.
       #
@@ -81,7 +81,7 @@ module Mongo
 
       # Determine if the batch size exceeds a given maximum.
       #
-      # @params[ Integer ] The max batch size.
+      # @param[ Integer ] The max batch size.
       #
       # @return [ true, false ] If this operation exceeds the given batch size.
       #

@@ -45,7 +45,7 @@ module Mongo
         # @example Create the new inspector.
         #   Inspector.new(listeners)
         #
-        # @param [ Event::Listeners ] The event listeners.
+        # @param [ Event::Listeners ] listeners The event listeners.
         #
         # @since 2.0.0
         def initialize(listeners)

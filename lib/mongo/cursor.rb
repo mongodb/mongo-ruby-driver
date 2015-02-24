@@ -71,8 +71,6 @@ module Mongo
     #     ...
     #   end
     #
-    # @yield param [Hash] Each matching document.
-    #
     # @return [ Enumerator ] The enumerator.
     #
     # @since 2.0.0

@@ -56,9 +56,9 @@ module Mongo
     # Get the authorization strategy for the provided auth mechanism.
     #
     # @example Get the strategy.
-    #   Auth.get(:mongodb_cr)
+    #   Auth.get(user)
     #
-    # @param [ Symbol ] mechanism The authorization mechanism.
+    # @param [ Auth::User ] user The user object.
     #
     # @return [ CR, X509, LDAP, Kerberos ] The auth strategy.
     #

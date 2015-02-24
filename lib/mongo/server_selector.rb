@@ -69,7 +69,7 @@ module Mongo
       # @example Instantiate the exception.
       #   Mongo::ServerSelector::NoServerAvailable.new(server_selector)
       #
-      # @params [ Hash ] server_selector The server preference that could not be
+      # @param [ Hash ] server_selector The server preference that could not be
       #   satisfied.
       #
       # @since 2.0.0

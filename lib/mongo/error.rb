@@ -40,7 +40,7 @@ module Mongo
 
     # The constant for the writeErrors array.
     #
-    # @sicne 2.0.0
+    # @since 2.0.0
     WRITE_ERRORS = 'writeErrors'.freeze
 
     # The constant for write concern errors.

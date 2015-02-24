@@ -47,11 +47,9 @@ module Mongo
       # Initializes a new Unix socket.
       #
       # @example Create the Unix socket.
-      #   Unix.new('::1', 27017, 30)
-      #   Unix.new('127.0.0.1', 27017, 30)
+      #   Unix.new('/path/to.sock', 27017, 30)
       #
-      # @param [ String ] host The hostname or IP address.
-      # @param [ Integer ] port The port number.
+      # @param [ String ] path The path.
       # @param [ Float ] timeout The socket timeout value.
       # @param [ Integer ] family The socket family.
       #

@@ -202,7 +202,7 @@ module Mongo
       # @example Instantiate the new description.
       #   Description.new(address, { 'ismaster' => true }, 0.5)
       #
-      # @param [ Address ] addressThe server address.
+      # @param [ Address ] address The server address.
       # @param [ Hash ] config The result of the ismaster command.
       # @param [ Float ] average_round_trip_time The moving average time (ms) the ismaster
       #   call took to complete.

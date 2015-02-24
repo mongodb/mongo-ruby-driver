@@ -45,7 +45,7 @@ module Mongo
         # @example Find a document and replace it, returning the new document.
         #   view.find_one_and_replace({ name: 'test' }, :return_document => :after)
         #
-        # @param [ BSON::Document ] document The updates.
+        # @param [ BSON::Document ] replacement The updates.
         # @param [ Hash ] opts The options.
         #
         # @option opts [ Symbol ] :return_document Either :before or :after.

@@ -55,7 +55,7 @@ module Mongo
         # @example Execute the operation.
         #   operation.execute(context)
         #
-        # @params [ Mongo::Server::Context ] The context for this operation.
+        # @param [ Mongo::Server::Context ] context The context for this operation.
         #
         # @return [ Result ] The operation result.
         #
@@ -73,7 +73,7 @@ module Mongo
         # @example Set a write concern.
         #   new_op = operation.write_concern(:w => 2)
         #
-        # @params [ Hash ] The write concern.
+        # @param [ Hash ] wc The write concern.
         #
         # @since 2.0.0
         def write_concern(wc = nil)
@@ -85,8 +85,6 @@ module Mongo
         end
 
         # The index of each document as it was added onto the bulk object.
-        #
-        # @params [ Integer ] The index of each document.
         #
         # @since 2.0.0
         def indexes

@@ -91,8 +91,6 @@ module Mongo
           # @example Validate the result.
           #   result.validate!
           #
-          # @param [ Hash ] spec The spec used to run the command.
-          #
           # @return [ Result ] Self if successful.
           #
           # @since 2.0.0

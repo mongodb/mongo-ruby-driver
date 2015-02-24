@@ -271,7 +271,7 @@ module Mongo
         # @example Set the number to skip.
         #   view.skip(10)
         #
-        # @param [ Integer ] skip Number of docs to skip.
+        # @param [ Integer ] number Number of docs to skip.
         #
         # @return [ Integer, View ] Either the skip value or a
         #   new +View+.

@@ -84,7 +84,7 @@ module Mongo
         # @example Create the queue.
         #   Mongo::Pool::Queue.new(max_pool_size: 5) { Connection.new }
         #
-        # @param [ Integer ] size The initial size of the queue.
+        # @param [ Hash ] options The options.
         #
         # @option options [ Integer ] :max_pool_size The maximum size.
         # @option options [ Integer ] :min_pool_size The minimum size.

@@ -37,7 +37,7 @@ module Mongo
         # The context gets a connection on which the operation
         # is sent in the block.
         #
-        # @params [ Mongo::Server::Context ] The context for this operation.
+        # @param [ Mongo::Server::Context ] context The context for this operation.
         #
         # @return [ Result ] The operation response, if there is one.
         #

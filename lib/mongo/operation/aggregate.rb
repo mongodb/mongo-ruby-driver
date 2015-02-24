@@ -56,7 +56,7 @@ module Mongo
       # server is not primary, the operation will be rerouted to the primary
       # with a warning.
       #
-      # @params [ Mongo::Server::Context ] The context for this operation.
+      # @param [ Server::Context ] context The context for this operation.
       #
       # @return [ Result ] The operation response, if there is one.
       #
