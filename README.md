@@ -4,70 +4,13 @@ The officially supported Ruby driver for [MongoDB](http://www.mongodb.org).
 
 > **Note: You are viewing the 2.x version of the MongoDB Ruby driver which is currently unreleased and under heavy development. To view the current stable version of driver, please use the [1.x-stable](https://github.com/mongodb/mongo-ruby-driver/tree/1.x-stable) branch.**
 
-
-Installation
+Documentation
 -----
 
-**Gem Installation**<br>
-The Ruby driver is released and distributed through RubyGems and it can be installed with the following command:
-```bash
-gem install mongo
-```
-**Github Installation**<br>
-For development and test environments (not recommended for production) you can also install the Ruby driver directly from source:
+Documentation for the 2.x series is currently a work in progress, but that work can
+be sean in the meantime [here](https://github.com/durran/docs-ecosystem/blob/RUBY-684/source/tutorial/ruby-driver-tutorial.txt).
 
-```bash
-# clone the repository
-git clone https://github.com/mongodb/mongo-ruby-driver.git
-cd mongo-ruby-driver
-
-# checkout a specific version by tag (optional)
-git checkout 2.x.x
-
-# install all development dependencies
-gem install bundler
-bundle install
-
-# install the ruby driver
-rake install
-```
-
-Usage
------
-Here is a quick example of basic usage for the Ruby driver:
-```ruby
-require 'mongo'
-
-# connecting to the database
-client = Mongo::Client.new # defaults to localhost:27017
-db     = client['example-db']
-coll   = db['example-collection']
-
-# inserting documents
-10.times { |i| coll.insert({ :count => i+1 }) }
-
-# finding documents
-puts "There are #{coll.count} total documents. Here they are:"
-coll.find.each { |doc| puts doc.inspect }
-
-# updating documents
-coll.update({ :count => 5 }, { :count => 'foobar' })
-
-# removing documents
-coll.remove({ :count => 8 })
-coll.remove
-```
-
-For many more usage examples and a full tutorial, please visit our [wiki](https://github.com/mongodb/mongo-ruby-driver/wiki).<br>
-For API reference documentation, please visit [here](http://api.mongodb.org/ruby/current).
-
-Compatibility
------
-The MongoDB Ruby driver requires Ruby 1.8.7 or greater and is regularly tested against the platforms and environments listed below.
-
-Ruby Platforms | Operating Systems | Architectures
--------------- | ----------------- | -------------
-MRI 1.9.3, 2.0.0, 2.1.0<br>JRuby 1.7.x<br>Rubinius 2.x | Windows<br>Linux<br>OS X | x86<br>x64<br>ARM
+API docs can be found [here](http://api.mongodb.org/ruby/).
 
 Support & Feedback
 -----
@@ -114,7 +57,7 @@ Full release notes and release history are available [here](https://github.com/m
 License
 -----
 
- Copyright (C) 2009-2013 MongoDB, Inc.
+ Copyright (C) 2009-2015 MongoDB, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
