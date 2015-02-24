@@ -2,7 +2,7 @@ MongoDB Ruby Driver [![Build Status][travis-img]][travis-url] [![Code Climate][c
 -----
 The officially supported Ruby driver for [MongoDB](http://www.mongodb.org).
 
-> **Note: You are viewing the 2.x version of the MongoDB Ruby driver which is currently unreleased and under heavy development. To view the current stable version of driver, please use the [1.x-stable](https://github.com/mongodb/mongo-ruby-driver/tree/1.x-stable) branch.**
+> **Note: You are viewing the 2.x version of the MongoDB Ruby driver which is currently in beta and under heavy development. To view the current stable version of driver, please use the [1.x-stable](https://github.com/mongodb/mongo-ruby-driver/tree/1.x-stable) branch.**
 
 Documentation
 -----
