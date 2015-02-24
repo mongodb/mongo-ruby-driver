@@ -29,7 +29,7 @@ namespace :spec do
 end
 
 task :release => :spec do
-  system "git tag -a v#{Mongo::VERSION} -m 'Tagging release: #{Mongo::VERSION}'"
+  system "git tag -a #{Mongo::VERSION} -m 'Tagging release: #{Mongo::VERSION}'"
   system "git push --tags"
   system "gem build mongo.gemspec"
   system "gem push mongo-#{Mongo::VERSION}.gem"
