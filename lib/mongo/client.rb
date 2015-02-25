@@ -117,6 +117,17 @@ module Mongo
     # @option options [ Symbol ] :replica_set The name of the replica set to
     #   connect to. Servers not in this replica set will be ignored.
     # @option options [ true, false ] :ssl Whether to use SSL.
+    # @option options [ String ] :ssl_cert The certificate file used to identify
+    #   the connection against MongoDB.
+    # @option options [ String ] :ssl_key The private keyfile used to identify the
+    #   connection against MongoDB. Note that even if the key is stored in the same
+    #   file as the certificate, both need to be explicitly specified.
+    # @option options [ String ] :ssl_key_pass_phrase A passphrase for the private key.
+    # @option options [ true, false ] :ssl_verify Whether or not to do peer certification
+    #   validation.
+    # @option options [ String ] :ssl_ca_cert The file containing a set of concatenated
+    #   certification authority certifications used to validate certs passed from the
+    #   other end of the connection. Required for :ssl_verify.
     # @option options [ Float ] :socket_timeout The timeout, in seconds, to
     #   execute operations on a socket.
     # @option options [ String ] :user The user name.
