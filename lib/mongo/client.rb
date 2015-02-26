@@ -98,8 +98,10 @@ module Mongo
     # @option options [ Hash ] :auth_mech_properties
     # @option options [ Float ] :heartbeat_frequency The number of seconds for
     #   the server monitor to refresh it's description via ismaster.
-    # @option options [ Integer ] :local_threshold
-    # @option options [ Integer ] :server_selection_timeout
+    # @option options [ Integer ] :local_threshold The local threshold boundary
+    #   in seconds for selecting a near server for an operation.
+    # @option options [ Integer ] :server_selection_timeout The timeout in seconds
+    #   for selecting a server for an operation.
     # @option options [ String ] :password The user's password.
     # @option options [ Integer ] :max_pool_size The maximum size of the
     #   connection pool.
