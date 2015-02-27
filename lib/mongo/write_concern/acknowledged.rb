@@ -33,6 +33,18 @@ module Mongo
       def get_last_error
         @get_last_error ||= { GET_LAST_ERROR => 1 }.merge(normalize(options))
       end
+
+      # Get a human-readable string representation of an acknowledged write concern.
+      #
+      # @example Inspect the write concern.
+      #   write_concern.inspect
+      #
+      # @return [ String ] A string representation of an acknowledged write concern.
+      #
+      # @since 2.0.0
+      def inspect
+        "<Mongo::WriteConcern::Acknowledged:0x#{object_id} options=#{options}>"
+      end
     end
   end
 end

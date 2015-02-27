@@ -38,6 +38,18 @@ module Mongo
       def get_last_error
         NOOP
       end
+
+      # Get a human-readable string representation of an unacknowledged write concern.
+      #
+      # @example Inspect the write concern.
+      #   write_concern.inspect
+      #
+      # @return [ String ] A string representation of an unacknowledged write concern.
+      #
+      # @since 2.0.0
+      def inspect
+        "<Mongo::WriteConcern::Unacknowledged:0x#{object_id} options=#{options}>"
+      end
     end
   end
 end
