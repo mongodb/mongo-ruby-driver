@@ -85,24 +85,24 @@ module Mongo
         # Remove documents from the collection.
         #
         # @example Remove multiple documents from the collection.
-        #   collection_view.remove_many
+        #   collection_view.delete_many
         #
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
-        def remove_many
+        def delete_many
           remove(0)
         end
 
         # Remove a document from the collection.
         #
         # @example Remove a single document from the collection.
-        #   collection_view.remove_one
+        #   collection_view.delete_one
         #
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
-        def remove_one
+        def delete_one
           remove(1)
         end
 

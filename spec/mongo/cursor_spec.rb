@@ -33,7 +33,7 @@ describe Mongo::Cursor do
         end
 
         after do
-          authorized_collection.find.remove_many
+          authorized_collection.find.delete_many
         end
 
         it 'returns the correct amount' do
@@ -58,7 +58,7 @@ describe Mongo::Cursor do
         end
 
         after do
-          authorized_collection.find.remove_many
+          authorized_collection.find.delete_many
         end
 
         it 'returns the correct amount' do
@@ -84,7 +84,7 @@ describe Mongo::Cursor do
       end
 
       after do
-        authorized_collection.find.remove_many
+        authorized_collection.find.delete_many
       end
 
       context 'when a limit is provided' do

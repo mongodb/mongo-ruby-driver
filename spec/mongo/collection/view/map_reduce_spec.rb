@@ -48,7 +48,7 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   after do
-    authorized_collection.find.remove_many
+    authorized_collection.find.delete_many
   end
 
   let(:map_reduce) do
@@ -82,7 +82,7 @@ describe Mongo::Collection::View::MapReduce do
     context 'when out is a collection' do
 
       after do
-        authorized_client['output_collection'].find.remove_many
+        authorized_client['output_collection'].find.delete_many
       end
 
       context 'when the option is to replace' do

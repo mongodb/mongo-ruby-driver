@@ -290,7 +290,7 @@ describe Mongo::Operation::Write::BulkDelete do
     end
 
     after do
-      authorized_collection.find.remove_many
+      authorized_collection.find.delete_many
     end
 
     context 'when deleting a single document' do

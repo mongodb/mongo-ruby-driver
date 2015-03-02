@@ -40,8 +40,8 @@ describe Mongo::Grid::FS do
     end
 
     after do
-      fs.files_collection.find.remove_many
-      fs.chunks_collection.find.remove_many
+      fs.files_collection.find.delete_many
+      fs.chunks_collection.find.delete_many
     end
 
     let(:from_db) do
@@ -70,8 +70,8 @@ describe Mongo::Grid::FS do
       end
 
       after do
-        fs.files_collection.find.remove_many
-        fs.chunks_collection.find.remove_many
+        fs.files_collection.find.delete_many
+        fs.chunks_collection.find.delete_many
       end
 
       let(:from_db) do
@@ -90,8 +90,8 @@ describe Mongo::Grid::FS do
     context 'when inserting the file more than once' do
 
       after do
-        fs.files_collection.find.remove_many
-        fs.chunks_collection.find.remove_many
+        fs.files_collection.find.delete_many
+        fs.chunks_collection.find.delete_many
       end
 
       it 'raises an error' do
@@ -103,7 +103,7 @@ describe Mongo::Grid::FS do
     end
   end
 
-  describe '#remove_one' do
+  describe '#delete_one' do
 
     let(:fs) do
       described_class.new(authorized_client.database)
@@ -115,7 +115,7 @@ describe Mongo::Grid::FS do
 
     before do
       fs.insert_one(file)
-      fs.remove_one(file)
+      fs.delete_one(file)
     end
 
     let(:from_db) do

@@ -15,7 +15,7 @@ describe Mongo::Collection::View::Writable do
   end
 
   after do
-    authorized_collection.find.remove_many
+    authorized_collection.find.delete_many
   end
 
   describe '#find_one_and_delete' do
@@ -263,7 +263,7 @@ describe Mongo::Collection::View::Writable do
     end
   end
 
-  describe '#remove_many' do
+  describe '#delete_many' do
 
     context 'when a selector was provided' do
 
@@ -276,7 +276,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       let(:response) do
-        view.remove_many
+        view.delete_many
       end
 
       it 'deletes the matching documents in the collection' do
@@ -291,7 +291,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       let(:response) do
-        view.remove_many
+        view.delete_many
       end
 
       it 'deletes all the documents in the collection' do
@@ -300,7 +300,7 @@ describe Mongo::Collection::View::Writable do
     end
   end
 
-  describe '#remove_one' do
+  describe '#delete_one' do
 
     context 'when a selector was provided' do
 
@@ -317,7 +317,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       let(:response) do
-        view.remove_one
+        view.delete_one
       end
 
       it 'deletes the first matching document in the collection' do
@@ -332,7 +332,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       let(:response) do
-        view.remove_one
+        view.delete_one
       end
 
       it 'deletes the first document in the collection' do

@@ -293,7 +293,7 @@ describe Mongo::Operation::Write::BulkInsert do
     end
 
     after do
-      authorized_collection.find.remove_many
+      authorized_collection.find.delete_many
       authorized_collection.indexes.drop({ name: 1 })
     end
 

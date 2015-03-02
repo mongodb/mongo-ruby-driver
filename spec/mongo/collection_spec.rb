@@ -262,7 +262,7 @@ describe Mongo::Collection do
       end
 
       after do
-        authorized_collection.find.remove_many
+        authorized_collection.find.delete_many
       end
 
       let(:view) do
@@ -280,7 +280,7 @@ describe Mongo::Collection do
   describe '#insert_many' do
 
     after do
-      authorized_collection.find.remove_many
+      authorized_collection.find.delete_many
     end
 
     let(:result) do
@@ -299,7 +299,7 @@ describe Mongo::Collection do
   describe '#insert_one' do
 
     after do
-      authorized_collection.find.remove_many
+      authorized_collection.find.delete_many
     end
 
     let(:result) do

@@ -118,16 +118,16 @@ module Mongo
       # Remove a single file from the GridFS.
       #
       # @example Remove a file from the GridFS.
-      #   fs.remove_one(file)
+      #   fs.delete_one(file)
       #
       # @param [ Grid::File ] file The file to remove.
       #
       # @return [ Result ] The result of the remove.
       #
       # @since 2.0.0
-      def remove_one(file)
-        files_collection.find(:_id => file.id).remove_one
-        chunks_collection.find(:files_id => file.id).remove_many
+      def delete_one(file)
+        files_collection.find(:_id => file.id).delete_one
+        chunks_collection.find(:files_id => file.id).delete_many
       end
 
       private

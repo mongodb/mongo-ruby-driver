@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::BulkWrite do
 
   before do
-    authorized_collection.find.remove_many
+    authorized_collection.find.delete_many
   end
 
   describe '#execute' do
@@ -87,7 +87,7 @@ describe Mongo::BulkWrite do
     context 'when the operations are unordered' do
 
       before do
-        authorized_collection.find.remove_many
+        authorized_collection.find.delete_many
       end
 
       let(:options) do
@@ -123,7 +123,7 @@ describe Mongo::BulkWrite do
           end
 
           after do
-            authorized_collection.find.remove_many
+            authorized_collection.find.delete_many
           end
 
           it 'raises an error' do
@@ -158,7 +158,7 @@ describe Mongo::BulkWrite do
         end
 
         after do
-          authorized_collection.find.remove_many
+          authorized_collection.find.delete_many
         end
 
         it 'raises an error' do

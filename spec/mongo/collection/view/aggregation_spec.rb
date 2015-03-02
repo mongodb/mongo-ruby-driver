@@ -61,7 +61,7 @@ describe Mongo::Collection::View::Aggregation do
     end
 
     after do
-      authorized_collection.find.remove_many
+      authorized_collection.find.delete_many
     end
 
     context 'when a block is provided' do

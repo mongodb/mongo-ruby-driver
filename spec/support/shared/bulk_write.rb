@@ -468,7 +468,7 @@ shared_examples 'a bulk write object' do
   context 'when the operations need to be split' do
 
     before do
-      authorized_collection.find.remove_many
+      authorized_collection.find.delete_many
       6000.times do |i|
         authorized_collection.insert_one(x: i)
       end
