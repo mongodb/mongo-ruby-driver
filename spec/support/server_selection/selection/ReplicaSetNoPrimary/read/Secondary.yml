@@ -19,12 +19,6 @@ read_preference:
   mode: Secondary
   tag_sets:
   - data_center: nyc
-candidate_servers:
-- *1
-- *2
-eligible_servers:
-- *1
-- *2
 suitable_servers:
 - *1
 - *2

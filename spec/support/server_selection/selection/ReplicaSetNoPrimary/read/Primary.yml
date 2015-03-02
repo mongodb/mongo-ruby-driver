@@ -17,7 +17,5 @@ read_preference:
   mode: Primary
   tag_sets:
   - {}
-candidate_servers: []
-eligible_servers: []
 suitable_servers: []
 in_latency_window: []

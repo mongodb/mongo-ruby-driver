@@ -74,8 +74,7 @@ module Mongo
           @description = "#{@test['topology_description']['type']}: #{File.basename(file)}"
           @read_preference = @test['read_preference']
           @read_preference['mode'] = READ_PREFERENCES[@read_preference['mode']]
-          @candidate_servers = @test['candidate_servers']
-          @eligible_servers = @test['eligible_servers']
+          @candidate_servers = @test['topology_description']['servers']
           @suitable_servers = @test['suitable_servers']
           @in_latency_window = @test['in_latency_window']
           @type = TOPOLOGY_TYPES[@test['topology_description']['type']]

@@ -19,12 +19,6 @@ read_preference:
   mode: PrimaryPreferred
   tag_sets:
   - {}
-candidate_servers:
-- *1
-- *2
-eligible_servers:
-- *1
-- *2
 suitable_servers:
 - *1
 - *2
