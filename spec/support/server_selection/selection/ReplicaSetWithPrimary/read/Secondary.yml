@@ -14,23 +14,24 @@ topology_description:
     type: RSSecondary
     tags:
       data_center: nyc
-  - &3
-    address: a:27017
+  - address: a:27017
     avg_rtt_ms: 26
     type: RSPrimary
     tags:
       data_center: nyc
 operation: read
 read_preference:
-  mode: PrimaryPreferred
+  mode: Secondary
   tag_sets:
-  - data_center: sf
+  - data_center: nyc
 candidate_servers:
 - *1
 - *2
-- *3
-eligible_servers: []
+eligible_servers:
+- *1
+- *2
 suitable_servers:
-- *3
+- *1
+- *2
 in_latency_window:
-- *3
+- *1

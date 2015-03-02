@@ -56,12 +56,6 @@ module Mongo
         # @since 2.0.0
         attr_reader :suitable_servers
 
-        # @return [ Array<Hash> ] in_latency_window The subset of suitable servers that falls
-        #  within the allowable latency window.
-        #
-        # @since 2.0.0
-        attr_reader :in_latency_window
-
         # @return [ Mongo::Cluster::Topology ] type The topology type.
         #
         # @since 2.0.0
@@ -133,6 +127,30 @@ module Mongo
         # @since 2.0.0
         def invalid_server_preference?
           read_preference['mode'] == 'Primary' && read_preference['tag_sets']
+        end
+
+        # The subset of suitable servers that falls within the allowable latency
+        #   window.
+        # We have to correct for our server selection algorithm that adds the primary
+        #  to the end of the list for SecondaryPreferred read preference mode.
+        #
+        # @example Get the list of suitable servers within the latency window.
+        #   spec.in_latency_window
+        #
+        # @return [ Array<Hash> ] The servers within the latency window.
+        #
+        # @since 2.0.0
+        def in_latency_window
+          if read_preference['mode'] == :secondary_preferred && primary
+            return @in_latency_window.push(primary).uniq
+          end
+          @in_latency_window
+        end
+
+        private
+
+        def primary
+          @candidate_servers.find { |s| s['type'] == 'RSPrimary' }
         end
       end
     end

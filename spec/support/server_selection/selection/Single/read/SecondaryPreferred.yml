@@ -6,8 +6,8 @@ topology_description:
     address: a:27017
     avg_rtt_ms: 5
     type: Standalone
-    tag_sets:
-    - data_center: dc
+    tags:
+      data_center: dc
 operation: read
 read_preference:
   mode: SecondaryPreferred

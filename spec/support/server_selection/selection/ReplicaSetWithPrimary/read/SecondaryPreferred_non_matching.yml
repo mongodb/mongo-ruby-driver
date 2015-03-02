@@ -22,7 +22,7 @@ topology_description:
       data_center: nyc
 operation: read
 read_preference:
-  mode: PrimaryPreferred
+  mode: SecondaryPreferred
   tag_sets:
   - data_center: sf
 candidate_servers:
