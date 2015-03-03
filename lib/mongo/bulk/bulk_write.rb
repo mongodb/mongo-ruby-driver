@@ -13,295 +13,105 @@
 # limitations under the License.
 
 module Mongo
-
-  # This semi-public class handles the logic for executing a batch of
-  # operations.
-  #
-  # @since 2.0.0
   class BulkWrite
+    extend Forwardable
 
-    # @return [ Mongo::Collection ] The collection on which this bulk write
-    #   operation will be executed.
-    attr_reader :collection
+    def_delegators :@collection, :database, :cluster, :next_primary
 
-    # @return [ Array<Hash> ] operations The list of operations.
-    attr_reader :operations
-
-    # @return [ Hash ] options The options.
-    attr_reader :options
-
-    # @return [ Acknowledged, Unacknowledged ] write_concern The write concern.
-    attr_reader :write_concern
-
-    # Initialize the BulkWrite object.
-    #
-    # @example Create an ordered bulk write object.
-    #   BulkWrite.new([
-    #       { insert_one: { x: 1 }},
-    #       { update_one: [{ x: 1 }, { '$set' => { x: 2 }}]}
-    #     ],
-    #     { ordered: true },
-    #     collection
-    #   )
-    #
-    # @example Create an unordered bulk write object.
-    #   BulkWrite.new([
-    #       { insert_one: { x: 1 }},
-    #       { update_one: [{ x: 1 }, { '$set' => { x: 2 }}]}
-    #     ],
-    #     { ordered: false },
-    #     collection
-    #   )
-    #
-    # @param [ Array<Hash> ] operations The operations to execute.
-    # @param [ Hash ] options The options for executing the operations.
-    # @param [ Collection ] collection The collection on which the
-    #   operations will be executed.
-    #
-    # @option options [ String ] :ordered Whether the operations should
-    #   be executed in order.
-    # @option options [ Hash ] :write_concern The write concern to use when
-    #   executing the operations.
-    #
-    # @since 2.0.0
-    def initialize(operations, options, collection)
+    def initialize(collection, operations, options)
+      @collection = collection
       @operations = operations
       @options = options
-      @collection = collection
-      if options[:write_concern]
-        @write_concern = WriteConcern.get(options[:write_concern])
-      else
-        @write_concern = collection.write_concern
-      end
     end
 
-    # Is the bulk write operation ordered?
-    #
-    # @example Is the bulk write operation ordered?
-    #   bulk_write.ordered?
-    #
-    # @return [ true, false ] If the bulk write is ordered.
-    #
-    # @since 2.0.0
-    def ordered?
-      @ordered ||= !!options[:ordered]
-    end
-
-    # Execute the bulk write.
-    #
-    # @example execute the bulk write operations.
-    #   bulk.execute
-    #
-    # @return [ Hash ] The result of doing the bulk write.
     def execute
-      raise Error::EmptyBatch.new if operations.empty?
-
-      @index = -1
-      @ops = []
-
-      operations.each do |operation|
-        operation.each do |name, document|
-          if respond_to?(name, true)
-            send(name, document)
-          else
-            raise Error::InvalidBulkOperation.new(name)
-          end
-        end
+      merged_ops.each do |op|
+        execute_op(op)
       end
-
-      ops = merge_ops
-
-      replies = []
-      until ops.empty?
-        op = ops.shift
-
-        until op.valid_batch_size?(collection.next_primary.context.max_write_batch_size)
-          ops = op.batch(2) + ops
-          op = ops.shift
-        end
-
-        begin
-          replies << op.execute(collection.next_primary.context)
-          # @todo: No test for max message size.
-        rescue Error::MaxBSONSize, Error::MaxMessageSize => ex
-          raise ex unless op.batchable?
-          ops = op.batch(2) + ops
-        end
-        return make_response!(replies) if stop_executing?(replies.last)
-      end
-      make_response!(replies) if op.write_concern.get_last_error
+      @results
     end
 
     private
 
-    def increment_index
-      @index += 1
-    end
-
-    def valid_doc?(doc)
-      doc.respond_to?(:keys)
-    end
-
-    def update_doc?(doc)
-      !doc.empty? &&
-        doc.respond_to?(:keys) &&
-        doc.keys.first.to_s =~ /^\$/
-    end
-
-    def replacement_doc?(doc)
-      doc.respond_to?(:keys) && doc.keys.all?{|key| key !~ /^\$/}
-    end
-
-    def insert_one(doc)
-      raise Error::InvalidDocument.new unless valid_doc?(doc)
-      spec = { documents: [ doc ],
-               db_name: db_name,
-               coll_name: collection.name,
-               ordered: ordered?,
-               write_concern: write_concern }
-
-      push_op(Mongo::Operation::Write::BulkInsert, spec)
-    end
-
-    def delete_one(selector)
-      raise Error::InvalidDocument.new unless valid_doc?(selector)
-      spec = { deletes: [{ q: selector, limit: 1 }],
-               db_name:   db_name,
-               coll_name: collection.name,
-               ordered: ordered?,
-               write_concern: write_concern }
-
-      push_op(Mongo::Operation::Write::BulkDelete, spec)
-    end
-
-    def delete_many(selector)
-      raise Error::InvalidDocument.new unless valid_doc?(selector)
-      spec = { deletes: [{ q: selector, limit: 0 }],
-               db_name:   db_name,
-               coll_name: collection.name,
-               ordered: ordered?,
-               write_concern: write_concern }
-
-      push_op(Mongo::Operation::Write::BulkDelete, spec)
-    end
-
-    def replace_one(docs)
-      selector = docs[0]
-      replacement = docs[1]
-      upsert = (docs[2] || {})[:upsert]
-      raise ArgumentError unless selector && replacement
-      raise Error::InvalidReplacementDocument.new unless replacement_doc?(replacement)
-      upsert = !!upsert
-      spec = { updates: [{ q: selector,
-                           u: replacement,
-                           multi: false,
-                           upsert: upsert }],
-               db_name:   db_name,
-               coll_name: collection.name,
-               ordered: ordered?,
-               write_concern: write_concern }
-
-      push_op(Mongo::Operation::Write::BulkUpdate, spec)
-    end
-
-    def update_one(docs)
-      upsert = (docs[2] || {})[:upsert]
-      update_one_or_many(docs[0], docs[1], upsert, false)
-    end
-
-    def update_many(docs)
-      upsert = (docs[2] || {})[:upsert]
-      update_one_or_many(docs[0], docs[1], upsert, true)
-    end
-
-    def update_one_or_many(selector, update, upsert, multi)
-      raise ArgumentError unless selector && update
-      raise Error::InvalidUpdateDocument.new unless update_doc?(update)
-      upsert = !!upsert
-      spec = { updates: [{ q: selector,
-                           u: update,
-                           multi: multi,
-                           upsert: upsert }],
-               db_name:   db_name,
-               coll_name: collection.name,
-               ordered: ordered?,
-               write_concern: write_concern }
-
-      push_op(Mongo::Operation::Write::BulkUpdate, spec)
-    end
-
-    def push_op(op_class, spec)
-      spec.merge!(indexes: [ increment_index ])
-      @ops << op_class.send(:new, spec)
-    end
-
-    def merge_ops
+    def merged_ops
       if ordered?
-        merge_consecutive_ops(@ops)
+        merge_consecutive_ops(@operations)
       else
-        merge_ops_by_type(@ops)
+        merge_ops_by_type(@operations)
       end
     end
 
-    def merge_consecutive_ops(operations)
-      operations.inject([]) do |merged_ops, op|
-        previous_op = merged_ops.last
-        if previous_op.class == op.class
-          merged_ops.tap do |m|
-            m[m.size - 1] = previous_op.merge!(op)
-          end
+    def merge_consecutive_ops(ops)
+      ops.inject([]) do |merged, op|
+        type = op.keys.first
+        previous_op = merged.last
+        if previous_op && previous_op.keys.first == type
+          merged[-1] = { type => ([ previous_op[type] ] << op[type]).flatten }
+          merged
         else
-          merged_ops << op
+          merged << op
         end
       end
     end
-
-    def merge_ops_by_type(operations)
-      ops_by_type = operations.inject({}) do |merged_ops, op|
-        if merged_ops[op.class]
-          merged_ops.tap do |m|
-            m[op.class] << op
-          end
-        else
-          merged_ops.tap do |m|
-            m[op.class] = [ op ]
-          end
-        end
+ 
+    def merge_ops_by_type(ops)
+      ops_by_type = ops.inject({}) do |merged, op|
+        merged[op.class] = merged.fetch(op.class, []).push(op)
       end
-
-      ops_by_type.keys.inject([]) do |merged_ops, type|
-        merged_ops << merge_consecutive_ops( ops_by_type[ type ] )
+ 
+      ops_by_type.keys.inject([]) do |merged, type|
+        merged << merge_consecutive_ops( ops_by_type[ type ] )
       end.flatten
     end
 
-    def stop_executing?(result)
-      result && ordered? && !result.successful?
+    def execute_op(operation)
+      server = next_primary
+      type = operation.keys.first
+      valid_batch_sizes(operation, server).each do |op|
+        validate!(send(type, op))
+      end
     end
 
-    def make_response!(results)
-      response = results.reduce({}) do |response, result|
-        write_errors = result.aggregate_write_errors
-        write_concern_errors = result.aggregate_write_concern_errors
-        response.tap do |r|
-          r['nInserted'] = ( r['nInserted'] || 0 ) + result.n_inserted if result.respond_to?(:n_inserted)
-          r['nMatched'] = ( r['nMatched'] || 0 ) + result.n_matched if result.respond_to?(:n_matched)
-          r['nModified'] = ( r['nModified'] || 0 ) + result.n_modified if result.respond_to?(:n_modified) && result.n_modified
-          r['nUpserted'] = ( r['nUpserted'] || 0 ) + result.n_upserted if result.respond_to?(:n_upserted)
-          r['nRemoved'] = ( r['nRemoved'] || 0 ) + result.n_removed if result.respond_to?(:n_removed)
-          r['writeErrors'] = ( r['writeErrors'] || [] ) + write_errors if write_errors
-          r['writeConcernErrors'] = ( r['writeConcernErrors'] || [] ) + write_concern_errors if write_concern_errors
-        end
+    def valid_batch_sizes(op, server)
+      type = op.keys.first
+      ops = []
+      until op[type].size < server.max_write_batch_size
+        ops << { type => op[type].slice!(0, server.max_write_batch_size) }
       end
-
-      if response['writeErrors'] || response['writeConcernErrors']
-        response.merge!('errmsg' => 'batch item errors occurred')
-        raise Error::BulkWriteFailure.new(response)
-      end
-      response
+      ops << op
     end
 
-    def db_name
-      collection.database.name
+    def insert_one(op)
+      Operation::Write::BulkInsert.new(
+        :documents => [ op[:insert_one] ].flatten,
+        :db_name => database.name,
+        :coll_name => @collection.name,
+        :write_concern => write_concern,
+        :ordered => ordered?
+      ).execute(next_primary.context)
+    end
+
+    def validate!(result)
+      process(result)
+      if ordered? && !result.successful?
+        raise Error::BulkWriteError.new(@results)
+      end
+    end
+
+    def ordered?
+      @ordered ||= @options.fetch(:ordered, true)
+    end
+
+    def write_concern
+      @write_concern ||= WriteConcern.get(@options[:write_concern]) ||
+                          @collection.write_concern
+    end
+
+    def process(result)
+      @results ||= {}
+      @results.merge!({
+        'nInserted' => (@results['nInserted'] || 0) + result.n_inserted
+      })
     end
   end
 end
