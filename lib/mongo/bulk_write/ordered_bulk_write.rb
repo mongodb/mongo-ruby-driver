@@ -47,16 +47,11 @@ module Mongo
 
       def validate!(result)
         process(result)
-        if ordered? && !result.successful?
+        if result.successful?
+          @results
+        else
           raise Error::BulkWriteError.new(@results)
         end
-      end
-
-      def process(result)
-        @results ||= {}
-        @results.merge!({
-          'nInserted' => (@results['nInserted'] || 0) + result.n_inserted
-        })
       end
     end
   end

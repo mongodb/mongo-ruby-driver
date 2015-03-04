@@ -43,11 +43,10 @@ module Mongo
           #
           # @since 2.0.0
           def aggregate_write_errors
-            []
-            #@replies.reduce(nil) do |errors, reply|
-            #  write_errors = reply.documents.first['writeErrors']
-            #  errors << write_errors if write_errors
-            #end
+            @replies.reduce(nil) do |errors, reply|
+              write_errors = reply.documents.first['writeErrors']
+              (errors || []) << write_errors if write_errors
+            end
           end
 
           # Aggregate the write concern errors returned from this result.
@@ -59,22 +58,21 @@ module Mongo
           #
           # @since 2.0.0
           def aggregate_write_concern_errors
-            []
-            #@replies.each_with_index.reduce(nil) do |errors, (reply, i)|
-            #  if write_concern_errors = reply.documents.first['writeConcernError']
-            #    errors ||= []
-            #    write_concern_errors.each do |write_concern_error|
-            #      errors << write_concern_error.merge('index' =>
-            #                                          indexes[write_concern_error['index']])
-            #    end
-            #  elsif reply.documents.first['errmsg']
-            #    errors ||= []
-            #    errors << { 'errmsg' => reply.documents.first['errmsg'],
-            #                'index' => indexes[i],
-            #                'code' => reply.documents.first['code'] }
-            #  end
-            #  errors
-            #end
+            @replies.each_with_index.reduce(nil) do |errors, (reply, i)|
+              if write_concern_errors = reply.documents.first['writeConcernError']
+                errors ||= []
+                write_concern_errors.each do |write_concern_error|
+                  errors << write_concern_error.merge('index' =>
+                                                      indexes[write_concern_error['index']])
+                end
+              elsif reply.documents.first['errmsg']
+                errors ||= []
+                errors << { 'errmsg' => reply.documents.first['errmsg'],
+                            'index' => indexes[i],
+                            'code' => reply.documents.first['code'] }
+              end
+              errors
+            end
           end
         end
 

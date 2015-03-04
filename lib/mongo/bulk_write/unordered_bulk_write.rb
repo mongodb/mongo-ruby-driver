@@ -24,20 +24,20 @@ module Mongo
         merged_ops.each do |op|
           execute_op(op)
         end
-        @results
+        validate!
       end
 
       private
 
       def merged_ops
-        merge_consecutive_ops(@operations)
+        merge_consecutive_ops(merge_ops_by_type)
       end
 
       def execute_op(operation)
         server = next_primary
         type = operation.keys.first
         valid_batch_sizes(operation, server).each do |op|
-          validate!(send(type, op))
+          process(send(type, op))
         end
       end
 
@@ -45,18 +45,12 @@ module Mongo
         false
       end
 
-      def validate!(result)
-        process(result)
-        if ordered? && !result.successful?
+      def validate!
+        if @results['writeErrors']
           raise Error::BulkWriteError.new(@results)
+        else
+          @results
         end
-      end
-
-      def process(result)
-        @results ||= {}
-        @results.merge!({
-          'nInserted' => (@results['nInserted'] || 0) + result.n_inserted
-        })
       end
     end
   end

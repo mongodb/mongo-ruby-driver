@@ -54,7 +54,7 @@ shared_examples 'a bulk write object' do
   #       }.to raise_error(Mongo::Error::InvalidDocument)
   #     end
   #   end
-   end
+  end
 
   # context 'delete_one' do
 

@@ -48,8 +48,8 @@ module Mongo
         end
       end
 
-      def merge_ops_by_type(ops)
-        ops_by_type = ops.inject({}) do |merged, op|
+      def merge_ops_by_type
+        ops_by_type = @operations.inject({}) do |merged, op|
           merged[op.class] = merged.fetch(op.class, []).push(op)
           merged
         end
@@ -81,6 +81,19 @@ module Mongo
       def write_concern
         @write_concern ||= WriteConcern.get(@options[:write_concern]) ||
                             @collection.write_concern
+      end
+
+      def process(result)
+        @results ||= {}
+        write_errors = result.aggregate_write_errors
+
+        @results.merge!(
+          'nInserted' => (@results['nInserted'] || 0) + result.n_inserted
+        )
+        @results.merge!(
+          'writeErrors' => ((@results['writeErrors'] || []) << write_errors).flatten
+        ) if write_errors
+        @results
       end
     end
   end
