@@ -203,7 +203,7 @@ module Mongo
     #
     # @since 2.0.0
     def bulk_write(operations, options)
-      BulkWrite.new(operations, options, self).execute
+      BulkWrite.get(self, operations, options).execute
     end
 
     # Get the fully qualified namespace of the collection.

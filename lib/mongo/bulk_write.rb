@@ -12,4 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/bulk/bulk_write'
+require 'mongo/bulk_write/bulk_writable'
+require 'mongo/bulk_write/ordered_bulk_write'
+require 'mongo/bulk_write/unordered_bulk_write'
+
+module Mongo
+  module BulkWrite
+    extend self
+
+    def get(collection, operations, options)
+      if options.fetch(:ordered, true)
+        OrderedBulkWrite.new(collection, operations, options)
+      else
+        UnorderedBulkWrite.new(collection, operations, options)
+      end
+    end
+  end
+end
