@@ -38,13 +38,16 @@ module Mongo
         ).execute(next_primary.context)
       end
 
-      def delete(ops, limit)
-        deletes = ops.collect do |d|
-          raise Error::InvalidBulkOperation.new(__method__, d) unless valid_doc?(d)
+      def deletes(ops, limit)
+        ops.collect do |d|
+          validate_delete_doc!(d)
           { q: d, limit: limit }
         end
+      end
+
+      def delete(ops, limit)
         Operation::Write::BulkDelete.new(
-          :deletes => deletes,
+          :deletes => deletes(ops, limit),
           :db_name => database.name,
           :coll_name => @collection.name,
           :write_concern => write_concern,
@@ -60,8 +63,8 @@ module Mongo
         delete(op[:delete_many], 0)
       end
 
-      def update(ops, multi)
-        updates = ops.collect do |u|
+      def updates(ops, multi)
+        ops.collect do |u|
           unless u[:find] && u[:update] && update_doc?(u[:update])
             raise Error::InvalidBulkOperation.new(__method__, u)
           end
@@ -71,8 +74,11 @@ module Mongo
             upsert: u[:upsert]
           }
         end
+      end
+
+      def update(ops, multi)
         Operation::Write::BulkUpdate.new(
-          :updates => updates,
+          :updates => updates(ops, multi),
           :db_name => database.name,
           :coll_name => @collection.name,
           :write_concern => write_concern,
@@ -88,19 +94,20 @@ module Mongo
         update(op[:update_many], true)
       end
 
-      def replace_one(op)
-        updates = op[:replace_one].collect do |r|
-          unless r[:find] && r[:replacement] && replacement_doc?(r[:replacement])
-            raise Error::InvalidBulkOperation.new(__method__, r)
-          end
+      def replaces(ops)
+        ops.collect do |r|
+          validate_replace_doc!(r)
           { q: r[:find],
             u: r[:replacement],
             multi: false,
             upsert: r.fetch(:upsert, false)
           }
         end
+      end
+
+      def replace_one(op)
         Operation::Write::BulkUpdate.new(
-          :updates => updates,
+          :updates => replaces(op[:replace_one]),
           :db_name => database.name,
           :coll_name => @collection.name,
           :write_concern => write_concern,
@@ -156,6 +163,16 @@ module Mongo
           'writeErrors' => ((@results['writeErrors'] || []) << write_errors).flatten
         ) if write_errors
         @results
+      end
+
+      def validate_replace_doc!(r)
+        unless r[:find] && r[:replacement] && replacement_doc?(r[:replacement])
+          raise Error::InvalidBulkOperation.new(__method__, r)
+        end
+      end
+
+      def validate_delete_doc!(d)
+        raise Error::InvalidBulkOperation.new(__method__, d) unless valid_doc?(d)
       end
 
       def valid_doc?(doc)
