@@ -28,8 +28,8 @@ module Mongo
       # @param [ String ] name The attempted operation name.
       #
       # @since 2.0.0
-      def initialize(name)
-        super("Invalid operation type: #{name}.")
+      def initialize(type, operation)
+        super("Invalid document format for bulk #{type} operation: #{operation}.")
       end
     end
   end

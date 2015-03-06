@@ -28,6 +28,12 @@ module Mongo
       private
 
       def insert_one(op)
+        raise Error::InvalidBulkOperation.new(__method__, op[:insert_one]) if op[:insert_one].empty?
+        op[:insert_one].each do |i|
+          unless valid_doc?(i)
+            raise Error::InvalidBulkOperation.new(__method__, i)
+          end
+        end
         Operation::Write::BulkInsert.new(
           # todo flatten necessary?
           :documents => [ op[:insert_one] ].flatten,
@@ -40,6 +46,7 @@ module Mongo
 
       def delete(ops, limit)
         deletes = ops.collect do |d|
+          raise Error::InvalidBulkOperation.new(__method__, d) unless valid_doc?(d)
           { q: d, limit: limit }
         end
         Operation::Write::BulkDelete.new(
@@ -61,6 +68,9 @@ module Mongo
 
       def update(ops, multi)
         updates = ops.collect do |u|
+          unless u[:find] && u[:update] && update_doc?(u[:update])
+            raise Error::InvalidBulkOperation.new(__method__, u)
+          end
           { q: u[:find],
             u: u[:update],
             multi: multi,
@@ -86,10 +96,13 @@ module Mongo
 
       def replace_one(op)
         updates = op[:replace_one].collect do |r|
+          unless r[:find] && r[:replacement] && replacement_doc?(r[:replacement])
+            raise Error::InvalidBulkOperation.new(__method__, r)
+          end
           { q: r[:find],
             u: r[:replacement],
             multi: false,
-            upsert: r[:upsert]
+            upsert: r.fetch(:upsert, false)
           }
         end
         Operation::Write::BulkUpdate.new(
@@ -163,6 +176,30 @@ module Mongo
           'writeErrors' => ((@results['writeErrors'] || []) << write_errors).flatten
         ) if write_errors
         @results
+      end
+
+      def valid_doc?(doc)
+        doc.respond_to?(:keys)
+      end
+
+      def replacement_doc?(doc)
+        doc.respond_to?(:keys) && doc.keys.all?{|key| key !~ /^\$/}
+      end
+
+      def update_doc?(doc)
+        !doc.empty? &&
+          doc.respond_to?(:keys) &&
+          doc.keys.first.to_s =~ /^\$/
+      end
+
+      def check_type!(type, op)
+        raise Error::InvalidBulkOperation.new(type, op) unless respond_to?(type, true)
+      end
+
+      def check_operations!
+        unless @operations && @operations.size > 0
+          raise ArgumentError.new('Operations cannot be empty')
+        end
       end
     end
   end

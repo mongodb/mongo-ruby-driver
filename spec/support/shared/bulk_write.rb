@@ -1,28 +1,30 @@
 shared_examples 'a bulk write object' do
 
-  # context 'when no operations are provided' do
+  context 'when no operations are provided' do
 
-  #   let(:operations) {[]}
+    let(:operations) do
+      []
+    end
 
-  #   it 'raises an error' do
-  #     expect {
-  #       bulk.execute
-  #     }.to raise_error(Mongo::Error::EmptyBatch)
-  #   end
-  # end
+    it 'raises an error' do
+      expect {
+        bulk.execute
+      }.to raise_error(ArgumentError)
+    end
+  end
 
-  # context 'when invalid operations are provided' do
+  context 'when invalid operations are provided' do
 
-  #   let(:operations) do
-  #     [{ :not_an_op => {}}]
-  #   end
+    let(:operations) do
+      [{ :not_an_op => {}}]
+    end
 
-  #   it 'raises an error' do
-  #     expect {
-  #       bulk.execute
-  #     }.to raise_error(Mongo::Error::InvalidBulkOperation)
-  #   end
-  # end
+    it 'raises an error' do
+      expect {
+        bulk.execute
+      }.to raise_error(Mongo::Error::InvalidBulkOperation)
+    end
+  end
 
   context 'when an insert_one operation is provided' do
 
@@ -42,18 +44,18 @@ shared_examples 'a bulk write object' do
       end
     end
 
-  #   context 'when an invalid object is provided' do
+    context 'when an invalid object is provided' do
 
-  #     let(:operations) do
-  #       [{ insert_one: [] }]
-  #     end
+      let(:operations) do
+        [{ insert_one: [] }]
+      end
 
-  #     it 'raises an exception' do
-  #       expect {
-  #         bulk.execute
-  #       }.to raise_error(Mongo::Error::InvalidDocument)
-  #     end
-  #   end
+      it 'raises an exception' do
+        expect {
+          bulk.execute
+        }.to raise_error(Mongo::Error::InvalidBulkOperation)
+      end
+    end
   end
 
   context 'delete_one' do
@@ -76,18 +78,18 @@ shared_examples 'a bulk write object' do
       ]
     end
 
-  #   context 'when no selector is specified' do
+    context 'when no selector is specified' do
 
-  #     let(:operations) do
-  #       [{ delete_one: nil }]
-  #     end
+      let(:operations) do
+        [{ delete_one: nil }]
+      end
 
-  #     it 'raises an exception' do
-  #       expect {
-  #         bulk.execute
-  #       }.to raise_exception(Mongo::Error::InvalidDocument)
-  #     end
-  #   end
+      it 'raises an exception' do
+        expect {
+          bulk.execute
+        }.to raise_exception(Mongo::Error::InvalidBulkOperation)
+      end
+    end
 
     context 'when multiple documents match delete selector' do
 
@@ -190,32 +192,38 @@ shared_examples 'a bulk write object' do
       }]
     end
 
-  #   context 'when a replace document is not specified' do
+    context 'when a replace document is not specified' do
 
-  #     let(:operations) do
-  #       [{ replace_one: [{ a: 1 }]}]
-  #     end
+      let(:operations) do
+        [{ replace_one: { find: { a: 1 },
+                          replacement: nil,
+                          upsert: false }
+        }]
+      end
 
-  #     it 'raises an exception' do
-  #       expect {
-  #         bulk.execute
-  #       }.to raise_exception(ArgumentError)
-  #     end
-  #   end
+      it 'raises an exception' do
+        expect {
+          bulk.execute
+        }.to raise_exception(Mongo::Error::InvalidBulkOperation)
+      end
+    end
 
-  #   context 'when there are $-operator top-level keys' do
+    context 'when there are $-operator top-level keys' do
 
-  #     let(:replacement) do
-  #       { :$set => { a: 3 }}
-  #     end
+      let(:operations) do
+        [{ replace_one: { find: { a: 1 },
+                          replacement: { :$set => { a: 3 }},
+                          upsert: false }
+        }]
+      end
 
-  #     it 'raises an exception' do
-  #       expect {
-  #         bulk.execute
-  #       }.to raise_exception(Mongo::Error::InvalidReplacementDocument)
-  #     end
+      it 'raises an exception' do
+        expect {
+          bulk.execute
+        }.to raise_exception(Mongo::Error::InvalidBulkOperation)
+      end
 
-  #   end
+    end
 
     context 'when a replace document is specified' do
 
@@ -288,31 +296,37 @@ shared_examples 'a bulk write object' do
       [{ 'a' => 2 },  { 'a' => 1 }]
     end
 
-  #   context 'when an update document is not specified' do
+    context 'when an update document is not specified' do
 
-  #     let(:operations) do
-  #       [{ update_one: [{ a: 1 }]}]
-  #     end
+      let(:operations) do
+        [{ update_one: [{ a: 1 }]}]
+      end
 
-  #     it 'raises an exception' do
-  #       expect {
-  #         bulk.execute
-  #       }.to raise_exception(ArgumentError)
-  #     end
-  #   end
+      let(:operations) do
+        [{ update_one: { find: { a: 1 },
+                         upsert: false }
+        }]
+      end
 
-  #   context 'when an invalid update document is specified' do
+      it 'raises an exception' do
+        expect {
+          bulk.execute
+        }.to raise_exception(Mongo::Error::InvalidBulkOperation)
+      end
+    end
 
-  #     let(:update) do
-  #       { a: 2 }
-  #     end
+    context 'when an invalid update document is specified' do
 
-  #     it 'raises an exception' do
-  #       expect {
-  #         bulk.execute
-  #       }.to raise_exception(Mongo::Error::InvalidUpdateDocument)
-  #     end
-  #   end
+      let(:update) do
+        { a: 2 }
+      end
+
+      it 'raises an exception' do
+        expect {
+          bulk.execute
+        }.to raise_exception(Mongo::Error::InvalidBulkOperation)
+      end
+    end
 
     context 'when a valid update document is specified' do
 
@@ -399,31 +413,33 @@ shared_examples 'a bulk write object' do
       authorized_collection.insert_many(docs)
     end
 
-  #   context 'when an update document is not specified' do
+    context 'when an update document is not specified' do
 
-  #     let(:operations) do
-  #       [{ update_many: [{ a: 1 }]}]
-  #     end
+      let(:operations) do
+        [{ update_many: { find: { a: 1 },
+                          upsert: false }
+        }]
+      end
 
-  #     it 'raises an exception' do
-  #       expect do
-  #         bulk.execute
-  #       end.to raise_exception(ArgumentError)
-  #     end
-  #   end
+      it 'raises an exception' do
+        expect do
+          bulk.execute
+        end.to raise_exception(Mongo::Error::InvalidBulkOperation)
+      end
+    end
 
-  #   context 'when an invalid update document is specified' do
+    context 'when an invalid update document is specified' do
 
-  #     let(:update) do
-  #       { a: 2 }
-  #     end
+      let(:update) do
+        { a: 2 }
+      end
 
-  #     it 'raises an exception' do
-  #       expect do
-  #         bulk.execute
-  #       end.to raise_exception(Mongo::Error::InvalidUpdateDocument)
-  #     end
-  #   end
+      it 'raises an exception' do
+        expect do
+          bulk.execute
+        end.to raise_exception(Mongo::Error::InvalidBulkOperation)
+      end
+    end
 
     context 'when a valid update document is specified' do
 
