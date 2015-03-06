@@ -28,15 +28,9 @@ module Mongo
       private
 
       def insert_one(op)
-        raise Error::InvalidBulkOperation.new(__method__, op[:insert_one]) if op[:insert_one].empty?
-        op[:insert_one].each do |i|
-          unless valid_doc?(i)
-            raise Error::InvalidBulkOperation.new(__method__, i)
-          end
-        end
+        validate_insert_operations!(op[:insert_one])
         Operation::Write::BulkInsert.new(
-          # todo flatten necessary?
-          :documents => [ op[:insert_one] ].flatten,
+          :documents => op[:insert_one].flatten,
           :db_name => database.name,
           :coll_name => @collection.name,
           :write_concern => write_concern,
@@ -152,25 +146,11 @@ module Mongo
         @results ||= {}
         write_errors = result.aggregate_write_errors
 
-        @results.merge!(
-          'nInserted' => (@results['nInserted'] || 0) + result.n_inserted
-        ) if result.respond_to?(:n_inserted)
-
-        @results.merge!(
-          'nRemoved' => (@results['nRemoved'] || 0) + result.n_removed
-        ) if result.respond_to?(:n_removed)
-
-        @results.merge!(
-          'nMatched' => (@results['nMatched'] || 0) + result.n_matched
-        ) if result.respond_to?(:n_matched)
-
-        @results.merge!(
-          'nModified' => (@results['nModified'] || 0) + result.n_modified
-        ) if result.respond_to?(:n_modified)
-
-        @results.merge!(
-          'nUpserted' => (@results['nUpserted'] || 0) + result.n_upserted
-        ) if result.respond_to?(:n_upserted)
+        [:n_inserted, :n_removed, :n_modified, :n_upserted, :n_matched].each do |count|
+          @results.merge!(
+          count => (@results[count] || 0) + result.send(count)
+        ) if result.respond_to?(count) 
+        end
 
         @results.merge!(
           'writeErrors' => ((@results['writeErrors'] || []) << write_errors).flatten
@@ -192,13 +172,24 @@ module Mongo
           doc.keys.first.to_s =~ /^\$/
       end
 
-      def check_type!(type, op)
+      def validate_type!(type, op)
         raise Error::InvalidBulkOperation.new(type, op) unless respond_to?(type, true)
       end
 
-      def check_operations!
+      def validate_operations!
         unless @operations && @operations.size > 0
           raise ArgumentError.new('Operations cannot be empty')
+        end
+      end
+
+      def validate_insert_operations!(inserts)
+        if inserts.empty?
+          raise Error::InvalidBulkOperation.new(__method__, inserts)
+        end
+        inserts.each do |i|
+          unless valid_doc?(i)
+            raise Error::InvalidBulkOperation.new(__method__, i)
+          end
         end
       end
     end

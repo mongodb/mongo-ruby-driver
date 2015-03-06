@@ -21,11 +21,11 @@ module Mongo
       include BulkWritable
 
       def execute
-        check_operations!
+        validate_operations!
         merged_ops.each do |op|
           execute_op(op)
         end
-        validate!
+        validate_result!
       end
 
       private
@@ -38,7 +38,7 @@ module Mongo
         server = next_primary
         type = operation.keys.first
         valid_batch_sizes(operation, server).each do |op|
-          check_type!(type, op)
+          validate_type!(type, op)
           process(send(type, op))
         end
       end
@@ -47,7 +47,7 @@ module Mongo
         false
       end
 
-      def validate!
+      def validate_result!
         raise Error::BulkWriteError.new(@results) if @results['writeErrors']
         @results
       end
