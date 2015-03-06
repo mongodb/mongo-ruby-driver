@@ -38,9 +38,9 @@ module Mongo
         ).execute(next_primary.context)
       end
 
-      def delete_one(op)
-        deletes = op[:delete_one].collect do |d|
-          { q: d, limit: 1 }
+      def delete(ops, limit)
+        deletes = ops.collect do |d|
+          { q: d, limit: limit }
         end
         Operation::Write::BulkDelete.new(
           :deletes => deletes,
@@ -51,17 +51,37 @@ module Mongo
         ).execute(next_primary.context)
       end
 
+      def delete_one(op)
+        delete(op[:delete_one], 1)
+      end
+
       def delete_many(op)
-        deletes = op[:delete_many].collect do |d|
-          { q: d, limit: 0 }
+        delete(op[:delete_many], 0)
+      end
+
+      def update(ops, multi)
+        updates = ops.collect do |u|
+          { q: u[:find],
+            u: u[:update],
+            multi: multi,
+            upsert: u[:upsert]
+          }
         end
-        Operation::Write::BulkDelete.new(
-          :deletes => deletes,
+        Operation::Write::BulkUpdate.new(
+          :updates => updates,
           :db_name => database.name,
           :coll_name => @collection.name,
           :write_concern => write_concern,
           :ordered => ordered?
         ).execute(next_primary.context)
+      end
+
+      def update_one(op)
+        update(op[:update_one], false)
+      end
+
+      def update_many(op)
+        update(op[:update_many], true)
       end
 
       def replace_one(op)
@@ -126,6 +146,18 @@ module Mongo
         @results.merge!(
           'nRemoved' => (@results['nRemoved'] || 0) + result.n_removed
         ) if result.respond_to?(:n_removed)
+
+        @results.merge!(
+          'nMatched' => (@results['nMatched'] || 0) + result.n_matched
+        ) if result.respond_to?(:n_matched)
+
+        @results.merge!(
+          'nModified' => (@results['nModified'] || 0) + result.n_modified
+        ) if result.respond_to?(:n_modified)
+
+        @results.merge!(
+          'nUpserted' => (@results['nUpserted'] || 0) + result.n_upserted
+        ) if result.respond_to?(:n_upserted)
 
         @results.merge!(
           'writeErrors' => ((@results['writeErrors'] || []) << write_errors).flatten

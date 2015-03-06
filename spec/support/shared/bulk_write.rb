@@ -183,14 +183,10 @@ shared_examples 'a bulk write object' do
       { a: 2 }
     end
 
-    let(:upsert) do
-      false
-    end
-
     let(:operations) do
       [{ replace_one: { find: { a: 1 },
                         replacement: replacement,
-                        upsert: upsert }
+                        upsert: false }
       }]
     end
 
@@ -228,63 +224,69 @@ shared_examples 'a bulk write object' do
         expect(authorized_collection.find(replacement).count).to eq(1)
       end
 
-  #     it 'reports nMatched correctly' do
-  #       expect(bulk.execute['nMatched']).to eq(1)
-  #     end
+      it 'reports nMatched correctly' do
+        expect(bulk.execute['nMatched']).to eq(1)
+      end
 
-  #     it 'only applies the replacement to one matching document' do
-  #       bulk.execute
-  #       expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
-  #     end
+      it 'only applies the replacement to one matching document' do
+        bulk.execute
+        expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+      end
 
-  #     context 'when upsert is true' do
+      context 'when upsert is true' do
 
-  #       let(:operations) do
-  #         [{ replace_one: [{ a: 4 }, replacement, { :upsert => true }]}]
-  #       end
+        let(:operations) do
+          [{ replace_one: { find: { a: 4 },
+                            replacement: replacement,
+                            upsert: true }
+          }]
+        end
 
-  #       let(:expected) do
-  #         [{ 'a' => 1 }, { 'a' => 1 }, { 'a' => 2 }]
-  #       end
+        let(:expected) do
+          [{ 'a' => 1 }, { 'a' => 1 }, { 'a' => 2 }]
+        end
 
-  #       it 'upserts the replacement document' do
-  #         bulk.execute
-  #         expect(authorized_collection.find(replacement).count).to eq(1)
-  #       end
+        it 'upserts the replacement document' do
+          bulk.execute
+          expect(authorized_collection.find(replacement).count).to eq(1)
+        end
 
-  #       it 'reports nMatched correctly' do
-  #         expect(bulk.execute['nMatched']).to eq(0)
-  #       end
+        it 'reports nMatched correctly' do
+          expect(bulk.execute['nMatched']).to eq(0)
+        end
 
-  #       it 'does not replace any documents' do
-  #         bulk.execute
-  #         expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
-  #       end
-  #     end
+        it 'does not replace any documents' do
+          bulk.execute
+          expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+        end
+      end
     end
   end
 
-  # context 'when an update_one operation is provided' do
+  context 'when an update_one operation is provided' do
 
-  #   let(:docs) do
-  #     [{ a: 1 }, { a: 1 }]
-  #   end
+    let(:docs) do
+      [{ a: 1 }, { a: 1 }]
+    end
 
-  #   let(:update) do
-  #     { :$set => { a: 2 }}
-  #   end
+    let(:update) do
+      { :$set => { a: 2 }}
+    end
 
-  #   let(:operations) do
-  #     [{ update_one: [{ a: 1 }, update ]}]
-  #   end
+    let(:operations) do
+      [{ update_one: { find: { a: 1 },
+                       update: update,
+                       upsert: false }
+      }]
+    end
 
-  #   before do
-  #     authorized_collection.insert_many(docs)
-  #   end
+    before do
+      authorized_collection.insert_many(docs)
+    end
 
-  #   let(:expected) do
-  #     [{ 'a' => 2 },  { 'a' => 1 }]
-  #   end
+    let(:expected) do
+      [{ 'a' => 2 },  { 'a' => 1 }]
+    end
 
   #   context 'when an update document is not specified' do
 
@@ -312,84 +314,90 @@ shared_examples 'a bulk write object' do
   #     end
   #   end
 
-  #   context 'when a valid update document is specified' do
+    context 'when a valid update document is specified' do
 
-  #     it 'reports nModified correctly', if: write_command_enabled?  do
-  #       expect(bulk.execute['nModified']).to eq(1)
-  #     end
+      it 'reports nModified correctly', if: write_command_enabled?  do
+        expect(bulk.execute['nModified']).to eq(1)
+      end
 
-  #     it 'reports nModified correctly', unless: write_command_enabled?  do
-  #       expect(bulk.execute['nModified']).to eq(nil)
-  #     end
+      it 'reports nModified correctly', unless: write_command_enabled?  do
+        expect(bulk.execute['nModified']).to eq(nil)
+      end
 
-  #     it 'reports nUpserted correctly' do
-  #       expect(bulk.execute['nUpserted']).to eq(0)
-  #     end
+      it 'reports nUpserted correctly' do
+        expect(bulk.execute['nUpserted']).to eq(0)
+      end
 
-  #     it 'reports nMatched correctly' do
-  #       expect(bulk.execute['nMatched']).to eq(1)
-  #     end
+      it 'reports nMatched correctly' do
+        expect(bulk.execute['nMatched']).to eq(1)
+      end
 
-  #     it 'applies the correct writes' do
-  #       bulk.execute
-  #       expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
-  #     end
+      it 'applies the correct writes' do
+        bulk.execute
+        expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+      end
 
-  #     context 'when upsert is true' do
+      context 'when upsert is true' do
 
-  #       let(:operations) do
-  #         [{ update_one: [{ a: 3 }, update, { upsert: true }]}]
-  #       end
+        let(:operations) do
+          [{ update_one: { find: { a: 3 },
+                           update: update,
+                           upsert: true }
+          }]
+        end
 
-  #       let(:expected) do
-  #         [{ 'a' => 1 },  { 'a' => 1 }, { 'a' => 2 }]
-  #       end
+        let(:expected) do
+          [{ 'a' => 1 },  { 'a' => 1 }, { 'a' => 2 }]
+        end
 
-  #       it 'reports nModified correctly', if: write_command_enabled?  do
-  #         expect(bulk.execute['nModified']).to eq(0)
-  #       end
+        it 'reports nModified correctly', if: write_command_enabled?  do
+          expect(bulk.execute['nModified']).to eq(0)
+        end
 
-  #       it 'reports nModified correctly', unless: write_command_enabled?  do
-  #         expect(bulk.execute['nModified']).to eq(nil)
-  #       end
+        it 'reports nModified correctly', unless: write_command_enabled?  do
+          expect(bulk.execute['nModified']).to eq(nil)
+        end
 
-  #       it 'reports nUpserted correctly' do
-  #         expect(bulk.execute['nUpserted']).to eq(1)
-  #       end
+        it 'reports nUpserted correctly' do
+          expect(bulk.execute['nUpserted']).to eq(1)
+        end
 
-  #       it 'reports nMatched correctly' do
-  #         expect(bulk.execute['nMatched']).to eq(0)
-  #       end
+        it 'reports nMatched correctly' do
+          expect(bulk.execute['nMatched']).to eq(0)
+        end
 
-  #       it 'applies the correct writes' do
-  #         bulk.execute
-  #         expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
-  #       end
-  #     end
-  #   end
-  # end
+        it 'applies the correct writes' do
+          bulk.execute
+          expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+        end
+      end
+    end
+  end
 
-  # context 'when an update_many operation is provided' do
+  context 'when an update_many operation is provided' do
 
-  #   let(:docs) do
-  #     [{ a: 1 }, { a: 1 }]
-  #   end
+    let(:docs) do
+      [{ a: 1 }, { a: 1 }]
+    end
 
-  #   let(:update) do
-  #     { :$set => { a: 2 }}
-  #   end
+    let(:update) do
+      { :$set => { a: 2 }}
+    end
 
-  #   let(:operations) do
-  #     [{ update_many: [{ a: 1 }, update ]}]
-  #   end
+    let(:operations) do
+      [{ update_many: { find: { a: 1 },
+                        update: update,
+                        upsert: false }
+      }]
+    end
 
-  #   let(:expected) do
-  #     [{ 'a' => 2 },  { 'a' => 2 }]
-  #   end
+    let(:expected) do
+      [{ 'a' => 2 },  { 'a' => 2 }]
+    end
 
-  #   before do
-  #     authorized_collection.insert_many(docs)
-  #   end
+    before do
+      authorized_collection.insert_many(docs)
+    end
 
   #   context 'when an update document is not specified' do
 
@@ -417,62 +425,65 @@ shared_examples 'a bulk write object' do
   #     end
   #   end
 
-  #   context 'when a valid update document is specified' do
+    context 'when a valid update document is specified' do
 
-  #     it 'reports nModified correctly', if: write_command_enabled?  do
-  #       expect(bulk.execute['nModified']).to eq(2)
-  #     end
+      it 'reports nModified correctly', if: write_command_enabled?  do
+        expect(bulk.execute['nModified']).to eq(2)
+      end
 
-  #     it 'reports nModified correctly', unless: write_command_enabled?  do
-  #       expect(bulk.execute['nModified']).to eq(nil)
-  #     end
+      it 'reports nModified correctly', unless: write_command_enabled?  do
+        expect(bulk.execute['nModified']).to eq(nil)
+      end
 
-  #     it 'reports nUpserted correctly' do
-  #       expect(bulk.execute['nUpserted']).to eq(0)
-  #     end
+      it 'reports nUpserted correctly' do
+        expect(bulk.execute['nUpserted']).to eq(0)
+      end
 
-  #     it 'reports nMatched correctly' do
-  #       expect(bulk.execute['nMatched']).to eq(2)
-  #     end
+      it 'reports nMatched correctly' do
+        expect(bulk.execute['nMatched']).to eq(2)
+      end
 
-  #     it 'applies the correct writes' do
-  #       bulk.execute
-  #       expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
-  #     end
+      it 'applies the correct writes' do
+        bulk.execute
+        expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+      end
 
-  #     context 'when upsert is true' do
+      context 'when upsert is true' do
 
-  #       let(:operations) do
-  #         [{ update_one: [{ a: 3 }, update, { upsert: true }]}]
-  #       end
+        let(:operations) do
+          [{ update_many: { find: { a: 3 },
+                            update: update,
+                            upsert: true }
+          }]
+        end
 
-  #       let(:expected) do
-  #         [ { 'a' => 1 },  { 'a' => 1 }, { 'a' => 2 } ]
-  #       end
+        let(:expected) do
+          [ { 'a' => 1 },  { 'a' => 1 }, { 'a' => 2 } ]
+        end
 
-  #       it 'reports nModified correctly', if: write_command_enabled?  do
-  #         expect(bulk.execute['nModified']).to eq(0)
-  #       end
+        it 'reports nModified correctly', if: write_command_enabled?  do
+          expect(bulk.execute['nModified']).to eq(0)
+        end
 
-  #       it 'reports nModified correctly', unless: write_command_enabled?  do
-  #         expect(bulk.execute['nModified']).to eq(nil)
-  #       end
+        it 'reports nModified correctly', unless: write_command_enabled?  do
+          expect(bulk.execute['nModified']).to eq(nil)
+        end
 
-  #       it 'reports nUpserted correctly' do
-  #         expect(bulk.execute['nUpserted']).to eq(1)
-  #       end
+        it 'reports nUpserted correctly' do
+          expect(bulk.execute['nUpserted']).to eq(1)
+        end
 
-  #       it 'reports nMatched correctly' do
-  #         expect(bulk.execute['nMatched']).to eq(0)
-  #       end
+        it 'reports nMatched correctly' do
+          expect(bulk.execute['nMatched']).to eq(0)
+        end
 
-  #       it 'applies the correct writes' do
-  #         bulk.execute
-  #         expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
-  #       end
-  #     end
-  #   end
-  # end
+        it 'applies the correct writes' do
+          bulk.execute
+          expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+        end
+      end
+    end
+  end
 
   # context 'when the operations need to be split' do
 
