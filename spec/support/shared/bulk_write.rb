@@ -56,23 +56,25 @@ shared_examples 'a bulk write object' do
   #   end
   end
 
-  # context 'delete_one' do
+  context 'delete_one' do
 
-  #   let(:docs) do
-  #     [ { a: 1 }, { a: 1 } ]
-  #   end
+    let(:docs) do
+      [ { a: 1 }, { a: 1 } ]
+    end
 
-  #   let(:expected) do
-  #     [{ 'a' => 1 }]
-  #   end
+    let(:expected) do
+      [{ 'a' => 1 }]
+    end
 
-  #   before do
-  #     authorized_collection.insert_many(docs)
-  #   end
+    before do
+      authorized_collection.insert_many(docs)
+    end
 
-  #   let(:operations) do
-  #     [{ delete_one: { a: 1 }}]
-  #   end
+    let(:operations) do
+      [ { delete_one: { a: 1 }},
+        { delete_one: { a: 2 }}
+      ]
+    end
 
   #   context 'when no selector is specified' do
 
@@ -87,32 +89,32 @@ shared_examples 'a bulk write object' do
   #     end
   #   end
 
-  #   context 'when multiple documents match delete selector' do
+    context 'when multiple documents match delete selector' do
 
-  #     it 'reports nRemoved correctly' do
-  #       expect(bulk.execute['nRemoved']).to eq(1)
-  #     end
+      it 'reports nRemoved correctly' do
+        expect(bulk.execute['nRemoved']).to eq(1)
+      end
 
-  #     it 'deletes only matching documents' do
-  #       bulk.execute
-  #       expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
-  #     end
-  #   end
-  # end
+      it 'deletes only matching documents' do
+        bulk.execute
+        expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+      end
+    end
+  end
 
-  # context 'when a delete_many operation is provided' do
+  context 'when a delete_many operation is provided' do
 
-  #   let(:docs) do
-  #     [{ a: 1 }, { a: 1 }]
-  #   end
+    let(:docs) do
+      [{ a: 1 }, { a: 1 }]
+    end
 
-  #   before do
-  #     authorized_collection.insert_many(docs)
-  #   end
+    before do
+      authorized_collection.insert_many(docs)
+    end
 
-  #   let(:operations) do
-  #     [{ delete_many: { a: 1 }}]
-  #   end
+    let(:operations) do
+      [{ delete_many: { a: 1 }}]
+    end
 
   #   context 'when no selector is specified' do
 
@@ -127,63 +129,70 @@ shared_examples 'a bulk write object' do
   #     end
   #   end
 
-  #   context 'when a selector is specified' do
+    context 'when a selector is specified' do
 
-  #     context 'when multiple documents match delete selector' do
+      context 'when multiple documents match delete selector' do
 
-  #       it 'reports nRemoved correctly' do
-  #         expect(bulk.execute['nRemoved']).to eq(2)
-  #       end
+        it 'reports nRemoved correctly' do
+          expect(bulk.execute['nRemoved']).to eq(2)
+        end
 
-  #       it 'deletes all matching documents' do
-  #         bulk.execute
-  #         expect(authorized_collection.find.to_a).to be_empty
-  #       end
-  #     end
+        it 'deletes all matching documents' do
+          bulk.execute
+          expect(authorized_collection.find.to_a).to be_empty
+        end
+      end
 
-  #     context 'when only one document matches delete selector' do
+      context 'when only one document matches delete selector' do
 
-  #       let(:docs) do
-  #         [{ a: 1 }, { a: 2 }]
-  #       end
+        let(:docs) do
+          [{ a: 1 }, { a: 2 }]
+        end
 
-  #       let(:expected) do
-  #         [{ 'a' => 2 }]
-  #       end
+        let(:expected) do
+          [{ 'a' => 2 }]
+        end
 
-  #       it 'reports nRemoved correctly' do
-  #         expect(bulk.execute['nRemoved']).to eq(1)
-  #       end
+        it 'reports nRemoved correctly' do
+          expect(bulk.execute['nRemoved']).to eq(1)
+        end
 
-  #       it 'deletes all matching documents' do
-  #         bulk.execute
-  #         expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
-  #       end
-  #     end
-  #   end
-  # end
+        it 'deletes all matching documents' do
+          bulk.execute
+          expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+        end
+      end
+    end
+  end
 
-  # context 'when a replace_one operation is provided' do
+  context 'when a replace_one operation is provided' do
 
-  #   let(:docs) do
-  #     [{ a: 1 }, { a: 1 }]
-  #   end
+    let(:docs) do
+      [{ a: 1 }, { a: 1 }]
+    end
 
-  #   let(:expected) do
-  #     [{ 'a' => 2 }, { 'a' => 1 }]
-  #   end
+    let(:expected) do
+      [{ 'a' => 2 }, { 'a' => 1 }]
+    end
 
-  #   before do
-  #     authorized_collection.insert_many(docs)
-  #   end
+    before do
+      authorized_collection.insert_many(docs)
+    end
 
-  #   let(:replacement) do
-  #     { a: 2 }
-  #   end
+    let(:replacement) do
+      { a: 2 }
+    end
 
-  #   let(:operations) do
-  #     [{ replace_one: [{ a: 1 }, replacement ]}]
-  #   end
+    let(:upsert) do
+      false
+    end
+
+    let(:operations) do
+      [{ replace_one: { find: { a: 1 },
+                        replacement: replacement,
+                        upsert: upsert }
+      }]
+    end
 
   #   context 'when a replace document is not specified' do
 
@@ -212,12 +221,12 @@ shared_examples 'a bulk write object' do
 
   #   end
 
-  #   context 'when a replace document is specified' do
+    context 'when a replace document is specified' do
 
-  #     it 'applies the replacement to only one matching document' do
-  #       bulk.execute
-  #       expect(authorized_collection.find(replacement).count).to eq(1)
-  #     end
+      it 'applies the replacement to only one matching document' do
+        bulk.execute
+        expect(authorized_collection.find(replacement).count).to eq(1)
+      end
 
   #     it 'reports nMatched correctly' do
   #       expect(bulk.execute['nMatched']).to eq(1)
@@ -252,8 +261,8 @@ shared_examples 'a bulk write object' do
   #         expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
   #       end
   #     end
-  #   end
-  # end
+    end
+  end
 
   # context 'when an update_one operation is provided' do
 
@@ -468,7 +477,7 @@ shared_examples 'a bulk write object' do
   # context 'when the operations need to be split' do
 
   #   before do
-  #     authorized_collection.find.delete_many
+  #     #authorized_collection.find.delete_many
   #     6000.times do |i|
   #       authorized_collection.insert_one(x: i)
   #     end
@@ -495,4 +504,31 @@ shared_examples 'a bulk write object' do
   #     expect(authorized_collection.find(x: { '$lte' => 3000 }).to_a.size).to eq(3000)
   #   end
   # end
+
+  context 'when replace_one operations exceed the max batch size' do
+
+    let(:error) do
+      begin
+        bulk.execute
+      rescue => ex
+        ex
+      end
+    end
+
+    let(:operations) do
+      [].tap do |ops|
+        10.times do |i|
+          ops << { replace_one: { find: { a: i },
+                                  replacement: { b: i },
+                                  upsert: false
+                                 }
+                 }
+        end
+      end
+    end
+
+    it 'halts execution after first error and reports correct index' do
+      bulk.execute
+    end
+  end
 end

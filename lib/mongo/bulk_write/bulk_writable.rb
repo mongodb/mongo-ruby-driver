@@ -27,36 +27,78 @@ module Mongo
 
       private
 
-      def merged_ops
-        if ordered?
-          merge_consecutive_ops(@operations)
-        else
-          merge_ops_by_type(@operations)
+      def insert_one(op)
+        Operation::Write::BulkInsert.new(
+          # todo flatten necessary?
+          :documents => [ op[:insert_one] ].flatten,
+          :db_name => database.name,
+          :coll_name => @collection.name,
+          :write_concern => write_concern,
+          :ordered => ordered?
+        ).execute(next_primary.context)
+      end
+
+      def delete_one(op)
+        deletes = op[:delete_one].collect do |d|
+          { q: d, limit: 1 }
         end
+        Operation::Write::BulkDelete.new(
+          :deletes => deletes,
+          :db_name => database.name,
+          :coll_name => @collection.name,
+          :write_concern => write_concern,
+          :ordered => ordered?
+        ).execute(next_primary.context)
+      end
+
+      def delete_many(op)
+        deletes = op[:delete_many].collect do |d|
+          { q: d, limit: 0 }
+        end
+        Operation::Write::BulkDelete.new(
+          :deletes => deletes,
+          :db_name => database.name,
+          :coll_name => @collection.name,
+          :write_concern => write_concern,
+          :ordered => ordered?
+        ).execute(next_primary.context)
+      end
+
+      def replace_one(op)
+        updates = op[:replace_one].collect do |r|
+          { q: r[:find],
+            u: r[:replacement],
+            multi: false,
+            upsert: r[:upsert]
+          }
+        end
+        Operation::Write::BulkUpdate.new(
+          :updates => updates,
+          :db_name => database.name,
+          :coll_name => @collection.name,
+          :write_concern => write_concern,
+          :ordered => ordered?
+        ).execute(next_primary.context)
       end
 
       def merge_consecutive_ops(ops)
         ops.inject([]) do |merged, op|
           type = op.keys.first
-          previous_op = merged.last
-          if previous_op && previous_op.keys.first == type
-            merged[-1] = { type => ([ previous_op[type] ] << op[type]).flatten }
+          previous = merged.last
+          if previous && previous.keys.first == type
+            merged[-1].merge(type => previous[type] << op[type])
             merged
           else
-            merged << op
+            merged << { type => [ op[type] ].flatten }
           end
         end
       end
 
       def merge_ops_by_type
-        ops_by_type = @operations.inject({}) do |merged, op|
-          merged[op.class] = merged.fetch(op.class, []).push(op)
-          merged
-        end
-
-        ops_by_type.keys.inject([]) do |merged, type|
-          merged << merge_consecutive_ops( ops_by_type[ type ] )
-        end.flatten
+        [ @operations.inject({}) do |merged, op|
+          type = op.keys.first
+          merged.merge!(type => merged.fetch(type, []).push(op[type]))
+        end ]
       end
 
       def valid_batch_sizes(op, server)
@@ -66,16 +108,6 @@ module Mongo
           ops << { type => op[type].slice!(0, server.max_write_batch_size) }
         end
         ops << op
-      end
-
-      def insert_one(op)
-        Operation::Write::BulkInsert.new(
-          :documents => [ op[:insert_one] ].flatten,
-          :db_name => database.name,
-          :coll_name => @collection.name,
-          :write_concern => write_concern,
-          :ordered => ordered?
-        ).execute(next_primary.context)
       end
 
       def write_concern
@@ -89,7 +121,12 @@ module Mongo
 
         @results.merge!(
           'nInserted' => (@results['nInserted'] || 0) + result.n_inserted
-        )
+        ) if result.respond_to?(:n_inserted)
+
+        @results.merge!(
+          'nRemoved' => (@results['nRemoved'] || 0) + result.n_removed
+        ) if result.respond_to?(:n_removed)
+
         @results.merge!(
           'writeErrors' => ((@results['writeErrors'] || []) << write_errors).flatten
         ) if write_errors

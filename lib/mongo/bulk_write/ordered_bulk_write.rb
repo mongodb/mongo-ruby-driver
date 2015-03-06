@@ -47,11 +47,7 @@ module Mongo
 
       def validate!(result)
         process(result)
-        if result.successful?
-          @results
-        else
-          raise Error::BulkWriteError.new(@results)
-        end
+        raise Error::BulkWriteError.new(@results) unless result.successful?
       end
     end
   end

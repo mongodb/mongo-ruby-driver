@@ -46,10 +46,10 @@ module Mongo
           #
           # @return [ Hash ] The selector describing this update operation.
           def selector
-            { :update        => coll_name,
-              :updates       => updates,
-              :writeConcern  => write_concern.options,
-              :ordered       => ordered?
+            { update: coll_name,
+              updates: updates,
+              writeConcern: write_concern.options,
+              ordered: ordered?
             }
           end
         end

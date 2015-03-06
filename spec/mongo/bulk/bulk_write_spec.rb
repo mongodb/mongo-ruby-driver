@@ -6,14 +6,18 @@ describe Mongo::BulkWrite do
     authorized_collection.find.delete_many
   end
 
+  after do
+    authorized_collection.find.delete_many
+  end
+
+  let(:bulk) do
+    described_class.get(authorized_collection, operations, options)
+  end
+
   describe '#get' do
 
     let(:operations) do
       [{ insert_one: { _id: 0 } }]
-    end
-
-    let(:bulk) do
-      described_class.get(authorized_collection, operations, options)
     end
 
     context 'When an ordered bulk write object is created' do
@@ -23,7 +27,7 @@ describe Mongo::BulkWrite do
       end
 
       it 'returns an OrderedBulkWrite object' do
-        expect(Mongo::BulkWrite.get(authorized_collection, operations, options)).to be_a(Mongo::BulkWrite::OrderedBulkWrite)
+        expect(bulk).to be_a(Mongo::BulkWrite::OrderedBulkWrite)
       end
     end
 
@@ -34,7 +38,7 @@ describe Mongo::BulkWrite do
       end
 
       it 'returns an UnorderedBulkWrite object' do
-        expect(Mongo::BulkWrite.get(authorized_collection, operations, options)).to be_a(Mongo::BulkWrite::UnorderedBulkWrite)
+        expect(bulk).to be_a(Mongo::BulkWrite::UnorderedBulkWrite)
       end
     end
   end
@@ -44,99 +48,81 @@ describe Mongo::BulkWrite do
     let(:options) do
        { ordered: true }
     end
-
-    before do
-      authorized_collection.find.delete_many
-    end
-
-    describe '#execute' do
-    
-      let(:bulk) do
-        described_class.get(authorized_collection, operations, options)
-      end
      
-      it_behaves_like 'a bulk write object'
+    it_behaves_like 'a bulk write object'
     
-      context 'when the insert batch requires splitting' do
+    context 'when the insert batch requires splitting' do
     
-        context 'when the operations exceed the max batch size' do
+      context 'when insert_one operations exceed the max batch size' do
     
-          let(:error) do
-            begin
-              bulk.execute
-            rescue => ex
-              ex
-            end
-          end
-    
-          let(:operations) do
-            [].tap do |ops|
-              3000.times do |i|
-                ops << { insert_one: { _id: i } }
-              end
-              ops << { insert_one: { _id: 0 } }
-              ops << { insert_one: { _id: 3001 } }
-            end
-          end
-    
-          it 'raises a BulkWriteError' do
-            expect(error).to be_a(Mongo::Error::BulkWriteError)
-          end
-    
-          it 'halts execution after first error and reports correct index' do
-            # TODO uncomment
-            #expect(error.result['writeErrors'].first['index']).to eq(3000)
-            error
-            expect(authorized_collection.find.count).to eq(3000)
+        let(:error) do
+          begin
+            bulk.execute
+          rescue => ex
+            ex
           end
         end
     
-      #   context 'when the operations exceed the max bson size' do
+        let(:operations) do
+          [].tap do |ops|
+            3000.times do |i|
+              ops << { insert_one: { _id: i } }
+            end
+            ops << { insert_one: { _id: 0 } }
+            ops << { insert_one: { _id: 3001 } }
+          end
+        end
     
-      #     let(:error) do
-      #       begin
-      #         bulk.execute
-      #       rescue => ex
-      #         ex
-      #       end
-      #     end
+        it 'raises a BulkWriteError' do
+          expect(error).to be_a(Mongo::Error::BulkWriteError)
+        end
     
-      #     let(:operations) do
-      #       [].tap do |ops|
-      #         6.times do |i|
-      #           ops << { insert_one: { _id: i, x: 'y'*4000000 } }
-      #         end
-      #         ops << { insert_one: { _id: 0 } }
-      #         ops << { insert_one: { _id: 100 } }
-      #       end
-      #     end
+        it 'halts execution after first error and reports correct index' do
+          # TODO uncomment to check for indexes
+          #expect(error.result['writeErrors'].first['index']).to eq(3000)
+          error
+          expect(authorized_collection.find.count).to eq(3000)
+        end
+      end
     
-      #     it 'raises an error' do
-      #       expect(error).to be_a(Mongo::Error::BulkWriteError)
-      #     end
+    #   context 'when the operations exceed the max bson size' do
     
-      #     it 'splits messages into multiple messages' do
-      #       error
-      #       expect(authorized_collection.find.count).to eq(6)
-      #     end
-      #   end
+    #     let(:error) do
+    #       begin
+    #         bulk.execute
+    #       rescue => ex
+    #         ex
+    #       end
+    #     end
+    
+    #     let(:operations) do
+    #       [].tap do |ops|
+    #         6.times do |i|
+    #           ops << { insert_one: { _id: i, x: 'y'*4000000 } }
+    #         end
+    #         ops << { insert_one: { _id: 0 } }
+    #         ops << { insert_one: { _id: 100 } }
+    #       end
+    #     end
+    
+    #     it 'raises an error' do
+    #       expect(error).to be_a(Mongo::Error::BulkWriteError)
+    #     end
+    
+    #     it 'splits messages into multiple messages' do
+    #       error
+    #       expect(authorized_collection.find.count).to eq(6)
+    #     end
+    #   end
       end
     end
 
-    context 'Unordered bulk write' do
+    describe 'Unordered bulk write' do
 
       let(:options) do
          { ordered: false }
       end
 
-      before do
-        authorized_collection.find.delete_many
-      end
-
-      let(:bulk) do
-        described_class.get(authorized_collection, operations, options, )
-      end
-
       it_behaves_like 'a bulk write object'
 
       context 'when the insert batch requires splitting' do
@@ -159,10 +145,6 @@ describe Mongo::BulkWrite do
               ops << { insert_one: { _id: 0 } }
               ops << { insert_one: { _id: 3001 } }
             end
-          end
-
-          after do
-            authorized_collection.find.delete_many
           end
 
           it 'raises an error' do
@@ -176,7 +158,6 @@ describe Mongo::BulkWrite do
             expect(authorized_collection.find.count).to eq(3001)
           end
         end
-      end
 
     #   context 'when the operations exceed the max bson size' do
 
@@ -196,10 +177,6 @@ describe Mongo::BulkWrite do
     #         ops << { insert_one: { _id: 0 } }
     #         ops << { insert_one: { _id: 100 } }
     #       end
-    #     end
-
-    #     after do
-    #       authorized_collection.find.delete_many
     #     end
 
     #     it 'raises an error' do

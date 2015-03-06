@@ -95,6 +95,11 @@ module Mongo
           @spec.fetch(:ordered, true)
         end
 
+        def initialize_copy(original)
+          @spec = original.spec.dup
+          @spec[DOCUMENTS] = original.spec[DOCUMENTS].clone
+        end
+
         def gle
           gle_message = ( ordered? && write_concern.get_last_error.nil? ) ?
                            Mongo::WriteConcern.get(:w => 1).get_last_error :

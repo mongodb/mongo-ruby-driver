@@ -46,11 +46,8 @@ module Mongo
       end
 
       def validate!
-        if @results['writeErrors']
-          raise Error::BulkWriteError.new(@results)
-        else
-          @results
-        end
+        raise Error::BulkWriteError.new(@results) if @results['writeErrors']
+        @results
       end
     end
   end
