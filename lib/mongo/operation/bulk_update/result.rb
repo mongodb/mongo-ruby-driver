@@ -192,11 +192,12 @@ module Mongo
           # @return [ Array ] The aggregate write errors.
           #
           # @since 2.0.0
-          def aggregate_write_errors
+          def aggregate_write_errors(indexes)
             @replies.each_with_index.reduce(nil) do |errors, (reply, i)|
               if reply_write_errors?(reply)
                 errors ||= []
                 errors << { 'errmsg' => reply.documents.first[Error::ERROR],
+                            'index' => indexes[i],
                             'code' => reply.documents.first[Error::CODE] }
               end
               errors

@@ -98,10 +98,16 @@ module Mongo
       end
 
       def merge_ops_by_type
-        [ @operations.inject({}) do |merged, op|
+        indexes = {}
+        ops = @operations.each_with_index.inject({}) do |merged, (op, i)|
           type = op.keys.first
-          merged.merge!(type => merged.fetch(type, []).push(op[type]))
-        end ]
+          merged.merge!(op) { |type, v1, v2| ([v1] << v2).flatten }
+          indexes[type] = (indexes[type] || []).push(i)
+          merged
+        end
+        ops.keys.reduce([]) do |list, type|
+          list << { type => ops[type], :indexes => indexes[type] }
+        end
       end
 
       def write_concern

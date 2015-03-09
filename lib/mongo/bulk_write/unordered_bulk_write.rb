@@ -27,8 +27,7 @@ module Mongo
       end
 
       def merged_ops
-        merge_ops_by_type
-        #merge_consecutive_ops(merge_ops_by_type)
+        merge_consecutive_ops(merge_ops_by_type)
       end
 
       def process(result, indexes)
