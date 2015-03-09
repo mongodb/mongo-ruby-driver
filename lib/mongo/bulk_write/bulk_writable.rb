@@ -28,6 +28,12 @@ module Mongo
 
       def_delegators :@collection, :database, :cluster, :next_primary
 
+      RESULT_FIELDS = [ :n_inserted,
+                        :n_removed,
+                        :n_modified,
+                        :n_upserted,
+                        :n_matched ]
+
       def initialize(collection, operations, options)
         @collection = collection
         @operations = operations
@@ -102,17 +108,24 @@ module Mongo
       def merge_result(result)
         @results ||= {}
         write_errors = result.aggregate_write_errors
+        write_concern_errors = result.aggregate_write_concern_errors
 
-        [:n_inserted, :n_removed, :n_modified, :n_upserted, :n_matched].each do |count|
-          @results.merge!(
-            count => (@results[count] || 0) + result.send(count)
-          ) if result.respond_to?(count)
+        @results.tap do |results|
+
+          RESULT_FIELDS.each do |field|
+            results.merge!(
+              field => (results[field] || 0) + result.send(field)
+            ) if result.respond_to?(field)
+          end
+
+          results.merge!(
+            write_errors: ((results[:write_errors] || []) << write_errors).flatten
+          ) if write_errors
+
+          results.merge!(
+            write_concern_errors: ((results[:write_concern_errors] || []) << write_concern_errors).flatten
+          ) if write_concern_errors
         end
-
-        @results.merge!(
-          'writeErrors' => ((@results['writeErrors'] || []) << write_errors).flatten
-        ) if write_errors
-        @results
       end
     end
   end

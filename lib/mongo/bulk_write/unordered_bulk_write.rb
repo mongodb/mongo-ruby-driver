@@ -36,7 +36,7 @@ module Mongo
 
       def finalize
         @results.tap do |results|
-          raise Error::BulkWriteError.new(results) if results['writeErrors']
+          raise Error::BulkWriteError.new(results) if results[:write_errors]
         end
       end
     end
