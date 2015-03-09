@@ -56,7 +56,6 @@ module Mongo
       class BulkUpdate
         include Executable
         include Specifiable
-        include Batchable
 
         # Execute the update operation.
         #
@@ -133,10 +132,6 @@ module Mongo
               options.merge(limit: -1)
             )
           end
-        end
-
-        def batch_key
-          UPDATES
         end
 
         def initialize_copy(original)

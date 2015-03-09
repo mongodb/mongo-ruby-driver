@@ -49,7 +49,6 @@ module Mongo
       class BulkDelete
         include Executable
         include Specifiable
-        include Batchable
 
         # Execute the delete operation.
         #
@@ -126,10 +125,6 @@ module Mongo
               options.merge(limit: -1)
             )
           end
-        end
-
-        def batch_key
-          DELETES
         end
 
         def initialize_copy(original)
