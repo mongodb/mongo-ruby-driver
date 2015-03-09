@@ -18,27 +18,22 @@ module Mongo
 
       private
 
-      def validate_replace_doc!(r)
-        unless r[:find] && r[:replacement] && replacement_doc?(r[:replacement])
-          raise Error::InvalidBulkOperation.new(__method__, r)
-        end
-      end
-
-      def replacement_doc?(doc)
-        doc.respond_to?(:keys) && doc.keys.all?{|key| key !~ /^\$/}
-      end
-
       def update_doc?(doc)
         !doc.empty? &&
           doc.respond_to?(:keys) &&
           doc.keys.first.to_s =~ /^\$/
       end
 
-      def updates(ops, multi)
+      def validate_update_op!(type, u)
+        unless u[:find] && u[:update] && update_doc?(u[:update])
+          raise Error::InvalidBulkOperation.new(type, u)
+        end
+      end
+
+      def updates(ops, type)
+        multi = type == :update_many
         ops.collect do |u|
-          unless u[:find] && u[:update] && update_doc?(u[:update])
-            raise Error::InvalidBulkOperation.new(__method__, u)
-          end
+          validate_update_op!(type, u)
           { q: u[:find],
             u: u[:update],
             multi: multi,
@@ -47,9 +42,9 @@ module Mongo
         end
       end
 
-      def update(ops, multi, server)
+      def update(ops, type, server)
         Operation::Write::BulkUpdate.new(
-          :updates => updates(ops, multi),
+          :updates => updates(ops, type),
           :db_name => database.name,
           :coll_name => @collection.name,
           :write_concern => write_concern,
@@ -58,34 +53,12 @@ module Mongo
       end
 
       def update_one(op, server)
-        update(op[:update_one], false, server)
+        update(op[:update_one], __method__, server)
       end
 
       def update_many(op, server)
-        update(op[:update_many], true, server)
+        update(op[:update_many], __method__, server)
       end
-
-      def replaces(ops)
-        ops.collect do |r|
-          validate_replace_doc!(r)
-          { q: r[:find],
-            u: r[:replacement],
-            multi: false,
-            upsert: r.fetch(:upsert, false)
-          }
-        end
-      end
-
-      def replace_one(op, server)
-        Operation::Write::BulkUpdate.new(
-          :updates => replaces(op[:replace_one]),
-          :db_name => database.name,
-          :coll_name => @collection.name,
-          :write_concern => write_concern,
-          :ordered => ordered?
-        ).execute(server.context)
-      end
-
     end
   end
 end

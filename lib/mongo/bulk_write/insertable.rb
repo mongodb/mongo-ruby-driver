@@ -18,8 +18,23 @@ module Mongo
 
       private
 
+      def valid_doc?(doc)
+        doc.respond_to?(:keys)
+      end
+
+      def validate_insert_ops!(type, inserts)
+        if inserts.empty?
+          raise Error::InvalidBulkOperation.new(type, inserts)
+        end
+        inserts.each do |i|
+          unless valid_doc?(i)
+            raise Error::InvalidBulkOperation.new(type, i)
+          end
+        end
+      end
+
       def insert_one(op, server)
-        validate_insert_operations!(op[:insert_one])
+        validate_insert_ops!(__method__, op[:insert_one])
         Operation::Write::BulkInsert.new(
           :documents => op[:insert_one].flatten,
           :db_name => database.name,
@@ -27,17 +42,6 @@ module Mongo
           :write_concern => write_concern,
           :ordered => ordered?
         ).execute(server.context)
-      end
-
-      def validate_insert_operations!(inserts)
-        if inserts.empty?
-          raise Error::InvalidBulkOperation.new(__method__, inserts)
-        end
-        inserts.each do |i|
-          unless valid_doc?(i)
-            raise Error::InvalidBulkOperation.new(__method__, i)
-          end
-        end
       end
     end
   end

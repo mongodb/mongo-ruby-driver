@@ -15,6 +15,7 @@
 require 'mongo/bulk_write/insertable'
 require 'mongo/bulk_write/deletable'
 require 'mongo/bulk_write/updatable'
+require 'mongo/bulk_write/replacable'
 
 module Mongo
   module BulkWrite
@@ -22,6 +23,7 @@ module Mongo
       include Insertable
       include Deletable
       include Updatable
+      include Replacable
       extend Forwardable
 
       def_delegators :@collection, :database, :cluster, :next_primary
@@ -32,7 +34,45 @@ module Mongo
         @options = options
       end
 
+      def execute
+        validate_operations!
+        merged_ops.each do |op|
+          execute_op(op)
+        end
+        finalize
+      end
+
       private
+
+      def validate_operations!
+        unless @operations && @operations.size > 0
+          raise ArgumentError.new('Operations cannot be empty')
+        end
+      end
+
+      def validate_type!(type)
+        unless respond_to?(type, true)
+          raise Error::InvalidBulkOperationType.new(type)
+        end
+      end
+
+      def batches(op, server)
+        type = op.keys.first
+        ops = []
+        until op[type].size < server.max_write_batch_size
+          ops << { type => op[type].slice!(0, server.max_write_batch_size) }
+        end
+        ops << op
+      end
+
+      def execute_op(operation)
+        server = next_primary
+        type = operation.keys.first
+        validate_type!(type)
+        batches(operation, server).each do |op|
+          process(send(type, op, server))
+        end
+      end
 
       def merge_consecutive_ops(ops)
         ops.inject([]) do |merged, op|
@@ -54,21 +94,12 @@ module Mongo
         end ]
       end
 
-      def batched_operation(op, server)
-        type = op.keys.first
-        ops = []
-        until op[type].size < server.max_write_batch_size
-          ops << { type => op[type].slice!(0, server.max_write_batch_size) }
-        end
-        ops << op
-      end
-
       def write_concern
         @write_concern ||= WriteConcern.get(@options[:write_concern]) ||
                             @collection.write_concern
       end
 
-      def process(result)
+      def merge_result(result)
         @results ||= {}
         write_errors = result.aggregate_write_errors
 
@@ -82,20 +113,6 @@ module Mongo
           'writeErrors' => ((@results['writeErrors'] || []) << write_errors).flatten
         ) if write_errors
         @results
-      end
-
-      def valid_doc?(doc)
-        doc.respond_to?(:keys)
-      end
-
-      def validate_type!(type, op)
-        raise Error::InvalidBulkOperation.new(type, op) unless respond_to?(type, true)
-      end
-
-      def validate_operations!
-        unless @operations && @operations.size > 0
-          raise ArgumentError.new('Operations cannot be empty')
-        end
       end
     end
   end

@@ -14,42 +14,39 @@
 
 module Mongo
   module BulkWrite
-    module Deletable
+    module Replacable
 
       private
 
-      def valid_doc?(doc)
-        doc.respond_to?(:keys)
+      def replacement_doc?(doc)
+        doc.respond_to?(:keys) && doc.keys.all?{|key| key !~ /^\$/}
       end
 
-      def validate_delete_op!(type, d)
-        raise Error::InvalidBulkOperation.new(type, d) unless valid_doc?(d)
-      end
-
-      def deletes(ops, type)
-        limit = (type == :delete_one) ? 1 : 0
-        ops.collect do |d|
-          validate_delete_op!(type, d)
-          { q: d, limit: limit }
+      def validate_replace_op!(r, type)
+        unless r[:find] && r[:replacement] && replacement_doc?(r[:replacement])
+          raise Error::InvalidBulkOperation.new(type, r)
         end
       end
 
-      def delete(ops, type, server)
-        Operation::Write::BulkDelete.new(
-          :deletes => deletes(ops, type),
+      def replace_ops(ops, type)
+        ops.collect do |r|
+          validate_replace_op!(r, type)
+          { q: r[:find],
+            u: r[:replacement],
+            multi: false,
+            upsert: r.fetch(:upsert, false)
+          }
+        end
+      end
+
+      def replace_one(op, server)
+        Operation::Write::BulkUpdate.new(
+          :updates => replace_ops(op[:replace_one], __method__),
           :db_name => database.name,
           :coll_name => @collection.name,
           :write_concern => write_concern,
           :ordered => ordered?
         ).execute(server.context)
-      end
-
-      def delete_one(op, server)
-        delete(op[:delete_one], __method__, server)
-      end
-
-      def delete_many(op, server)
-        delete(op[:delete_many], __method__, server)
       end
     end
   end

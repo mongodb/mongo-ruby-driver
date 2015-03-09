@@ -22,7 +22,7 @@ shared_examples 'a bulk write object' do
     it 'raises an error' do
       expect {
         bulk.execute
-      }.to raise_error(Mongo::Error::InvalidBulkOperation)
+      }.to raise_error(Mongo::Error::InvalidBulkOperationType)
     end
   end
 

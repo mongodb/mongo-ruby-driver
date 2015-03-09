@@ -20,36 +20,23 @@ module Mongo
 
       include BulkWritable
 
-      def execute
-        prepare_operations!.each do |op|
-          execute_op(op)
-        end
-        @results
-      end
-
       private
-
-      def prepare_operations!
-        validate_operations!
-        merge_consecutive_ops(@operations)
-      end
-
-      def execute_op(operation)
-        server = next_primary
-        type = operation.keys.first
-        batched_operation(operation, server).each do |op|
-          validate_type!(type, op)
-          validate_result!(send(type, op, server))
-        end
-      end
 
       def ordered?
         true
       end
 
-      def validate_result!(result)
-        process(result)
+      def merged_ops
+        merge_consecutive_ops(@operations)
+      end
+
+      def process(result)
+        merge_result(result)
         raise Error::BulkWriteError.new(@results) unless result.successful?
+      end
+
+      def finalize
+        @results
       end
     end
   end

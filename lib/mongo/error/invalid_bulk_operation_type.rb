@@ -13,31 +13,23 @@
 # limitations under the License.
 
 module Mongo
+  class Error
 
-  module BulkWrite
+    # Exception raised if an non-existent operation type is used.
+    #
+    # @since 2.0.0
+    class InvalidBulkOperationType < Error
 
-    class UnorderedBulkWrite
-
-      include BulkWritable
-
-      private
-
-      def ordered?
-        false
-      end
-
-      def merged_ops
-        merge_consecutive_ops(merge_ops_by_type)
-      end
-
-      def process(result)
-        merge_result(result)
-      end
-
-      def finalize
-        @results.tap do |results|
-          raise Error::BulkWriteError.new(results) if results['writeErrors']
-        end
+      # Instantiate the new exception.
+      #
+      # @example Instantiate the exception.
+      #   Mongo::Error::InvalidBulkOperationType.new(type)
+      #
+      # @param [ String ] type The attempted operation type.
+      #
+      # @since 2.0.0
+      def initialize(type)
+        super("Invalid bulk operation type: #{type}.")
       end
     end
   end
