@@ -42,10 +42,14 @@ module Mongo
           # @return [ Array ] The aggregate write errors.
           #
           # @since 2.0.0
-          def aggregate_write_errors
+          def aggregate_write_errors(indexes)
             @replies.reduce(nil) do |errors, reply|
-              write_errors = reply.documents.first['writeErrors']
-              (errors || []) << write_errors if write_errors
+              if reply.documents.first['writeErrors']
+                write_errors = reply.documents.first['writeErrors'].collect do |we|
+                  we.merge!('index' => indexes[we['index']])
+                end
+                (errors || []) << write_errors if write_errors
+              end
             end
           end
 

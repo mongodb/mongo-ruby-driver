@@ -78,9 +78,7 @@ describe Mongo::BulkWrite do
         end
     
         it 'halts execution after first error and reports correct index' do
-          # TODO uncomment to check for indexes
-          #expect(error.result['writeErrors'].first['index']).to eq(3000)
-          error
+          expect(error.result[:write_errors].first['index']).to eq(3000)
           expect(authorized_collection.find.count).to eq(3000)
         end
       end
@@ -152,9 +150,7 @@ describe Mongo::BulkWrite do
           end
 
           it 'does not halt execution after first error' do
-            # TODO uncomment
-            #expect(error.result['writeErrors'].first['index']).to eq(3000)
-            error
+            expect(error.result[:write_errors].first['index']).to eq(3000)
             expect(authorized_collection.find.count).to eq(3001)
           end
         end

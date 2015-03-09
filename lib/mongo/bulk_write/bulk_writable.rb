@@ -66,7 +66,8 @@ module Mongo
         type = op.keys.first
         ops = []
         until op[type].size < server.max_write_batch_size
-          ops << { type => op[type].slice!(0, server.max_write_batch_size) }
+          ops << { type => op[type].slice!(0, server.max_write_batch_size),
+                   :indexes => op[:indexes].slice!(0, server.max_write_batch_size) }
         end
         ops << op
       end
@@ -76,19 +77,22 @@ module Mongo
         type = operation.keys.first
         validate_type!(type)
         batches(operation, server).each do |op|
-          process(send(type, op, server))
+          process(send(type, op, server), op[:indexes])
         end
       end
 
       def merge_consecutive_ops(ops)
-        ops.inject([]) do |merged, op|
+        ops.each_with_index.inject([]) do |merged, (op, i)|
           type = op.keys.first
+          op[:indexes] = [ i ] unless op[:indexes]
           previous = merged.last
           if previous && previous.keys.first == type
-            merged[-1].merge(type => previous[type] << op[type])
+            merged[-1].merge!(type => previous[type] << op[type],
+                             :indexes => previous[:indexes] + op[:indexes])
             merged
           else
-            merged << { type => [ op[type] ].flatten }
+            merged << { type => [ op[type] ].flatten,
+                        :indexes => op[:indexes] }
           end
         end
       end
@@ -105,9 +109,9 @@ module Mongo
                             @collection.write_concern
       end
 
-      def merge_result(result)
+      def merge_result(result, indexes)
         @results ||= {}
-        write_errors = result.aggregate_write_errors
+        write_errors = result.aggregate_write_errors(indexes)
         write_concern_errors = result.aggregate_write_concern_errors
 
         @results.tap do |results|

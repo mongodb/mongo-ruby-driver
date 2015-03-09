@@ -30,8 +30,8 @@ module Mongo
         merge_consecutive_ops(@operations)
       end
 
-      def process(result)
-        merge_result(result)
+      def process(result, indexes)
+        merge_result(result, indexes)
         raise Error::BulkWriteError.new(@results) unless result.successful?
       end
 
