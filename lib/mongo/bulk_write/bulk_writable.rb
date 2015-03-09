@@ -12,9 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/bulk_write/insertable'
+require 'mongo/bulk_write/deletable'
+require 'mongo/bulk_write/updatable'
+
 module Mongo
   module BulkWrite
     module BulkWritable
+      include Insertable
+      include Deletable
+      include Updatable
       extend Forwardable
 
       def_delegators :@collection, :database, :cluster, :next_primary
@@ -26,94 +33,6 @@ module Mongo
       end
 
       private
-
-      def insert_one(op)
-        validate_insert_operations!(op[:insert_one])
-        Operation::Write::BulkInsert.new(
-          :documents => op[:insert_one].flatten,
-          :db_name => database.name,
-          :coll_name => @collection.name,
-          :write_concern => write_concern,
-          :ordered => ordered?
-        ).execute(next_primary.context)
-      end
-
-      def deletes(ops, limit)
-        ops.collect do |d|
-          validate_delete_doc!(d)
-          { q: d, limit: limit }
-        end
-      end
-
-      def delete(ops, limit)
-        Operation::Write::BulkDelete.new(
-          :deletes => deletes(ops, limit),
-          :db_name => database.name,
-          :coll_name => @collection.name,
-          :write_concern => write_concern,
-          :ordered => ordered?
-        ).execute(next_primary.context)
-      end
-
-      def delete_one(op)
-        delete(op[:delete_one], 1)
-      end
-
-      def delete_many(op)
-        delete(op[:delete_many], 0)
-      end
-
-      def updates(ops, multi)
-        ops.collect do |u|
-          unless u[:find] && u[:update] && update_doc?(u[:update])
-            raise Error::InvalidBulkOperation.new(__method__, u)
-          end
-          { q: u[:find],
-            u: u[:update],
-            multi: multi,
-            upsert: u[:upsert]
-          }
-        end
-      end
-
-      def update(ops, multi)
-        Operation::Write::BulkUpdate.new(
-          :updates => updates(ops, multi),
-          :db_name => database.name,
-          :coll_name => @collection.name,
-          :write_concern => write_concern,
-          :ordered => ordered?
-        ).execute(next_primary.context)
-      end
-
-      def update_one(op)
-        update(op[:update_one], false)
-      end
-
-      def update_many(op)
-        update(op[:update_many], true)
-      end
-
-      def replaces(ops)
-        ops.collect do |r|
-          validate_replace_doc!(r)
-          { q: r[:find],
-            u: r[:replacement],
-            multi: false,
-            upsert: r.fetch(:upsert, false)
-          }
-        end
-      end
-
-      def replace_one(op)
-        Operation::Write::BulkUpdate.new(
-          :updates => replaces(op[:replace_one]),
-          :db_name => database.name,
-          :coll_name => @collection.name,
-          :write_concern => write_concern,
-          :ordered => ordered?
-        ).execute(next_primary.context)
-      end
 
       def merge_consecutive_ops(ops)
         ops.inject([]) do |merged, op|
@@ -135,7 +54,7 @@ module Mongo
         end ]
       end
 
-      def valid_batch_sizes(op, server)
+      def batched_operation(op, server)
         type = op.keys.first
         ops = []
         until op[type].size < server.max_write_batch_size
@@ -165,28 +84,8 @@ module Mongo
         @results
       end
 
-      def validate_replace_doc!(r)
-        unless r[:find] && r[:replacement] && replacement_doc?(r[:replacement])
-          raise Error::InvalidBulkOperation.new(__method__, r)
-        end
-      end
-
-      def validate_delete_doc!(d)
-        raise Error::InvalidBulkOperation.new(__method__, d) unless valid_doc?(d)
-      end
-
       def valid_doc?(doc)
         doc.respond_to?(:keys)
-      end
-
-      def replacement_doc?(doc)
-        doc.respond_to?(:keys) && doc.keys.all?{|key| key !~ /^\$/}
-      end
-
-      def update_doc?(doc)
-        !doc.empty? &&
-          doc.respond_to?(:keys) &&
-          doc.keys.first.to_s =~ /^\$/
       end
 
       def validate_type!(type, op)
@@ -196,17 +95,6 @@ module Mongo
       def validate_operations!
         unless @operations && @operations.size > 0
           raise ArgumentError.new('Operations cannot be empty')
-        end
-      end
-
-      def validate_insert_operations!(inserts)
-        if inserts.empty?
-          raise Error::InvalidBulkOperation.new(__method__, inserts)
-        end
-        inserts.each do |i|
-          unless valid_doc?(i)
-            raise Error::InvalidBulkOperation.new(__method__, i)
-          end
         end
       end
     end

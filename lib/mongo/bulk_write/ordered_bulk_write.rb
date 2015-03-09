@@ -21,8 +21,7 @@ module Mongo
       include BulkWritable
 
       def execute
-        validate_operations!
-        merged_ops.each do |op|
+        prepare_operations!.each do |op|
           execute_op(op)
         end
         @results
@@ -30,16 +29,17 @@ module Mongo
 
       private
 
-      def merged_ops
+      def prepare_operations!
+        validate_operations!
         merge_consecutive_ops(@operations)
       end
 
       def execute_op(operation)
         server = next_primary
         type = operation.keys.first
-        valid_batch_sizes(operation, server).each do |op|
+        batched_operation(operation, server).each do |op|
           validate_type!(type, op)
-          validate_result!(send(type, op))
+          validate_result!(send(type, op, server))
         end
       end
 
