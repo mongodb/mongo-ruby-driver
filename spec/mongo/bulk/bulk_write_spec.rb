@@ -51,9 +51,9 @@ describe Mongo::BulkWrite do
      
     it_behaves_like 'a bulk write object'
     
-    context 'when the insert batch requires splitting' do
+    context 'when the batch requires splitting' do
     
-      context 'when insert_one operations exceed the max batch size' do
+      context 'when the operations are the same type' do
     
         let(:error) do
           begin
@@ -76,114 +76,176 @@ describe Mongo::BulkWrite do
         it 'raises a BulkWriteError' do
           expect(error).to be_a(Mongo::Error::BulkWriteError)
         end
-    
+
         it 'halts execution after first error and reports correct index' do
           expect(error.result[:write_errors].first['index']).to eq(3000)
           expect(authorized_collection.find.count).to eq(3000)
         end
       end
+
+      # context 'when operations are mixed types' do
+
+      #   let(:error) do
+      #     begin
+      #       bulk.execute
+      #     rescue => ex
+      #       ex
+      #     end
+      #   end
+
+      #   let(:operations) do
+      #     [].tap do |ops|
+      #       2000.times do |i|
+      #         ops << { insert_one: { _id: i } }
+      #       end
+      #       ops << { delete_one: { _id: 0 } }
+      #       ops << { insert_one: { _id: 1 } }
+      #       ops << { insert_one: { _id: 2000 } }
+      #     end
+      #   end
+
+      #   it 'raises an error' do
+      #     expect(error).to be_a(Mongo::Error::BulkWriteError)
+      #   end
+
+      #   it 'halts execution after first error and reports correct index' do
+      #     expect(error.result[:write_errors].first['index']).to eq(2001)
+      #     expect(authorized_collection.find.count).to eq(1999)
+      #   end
+      # end
+
+      # context 'when the operations exceed the max bson size' do
+
+      #   let(:error) do
+      #     begin
+      #       bulk.execute
+      #     rescue => ex
+      #       ex
+      #     end
+      #   end
     
-    #   context 'when the operations exceed the max bson size' do
+      #   let(:operations) do
+      #     [].tap do |ops|
+      #       6.times do |i|
+      #         ops << { insert_one: { _id: i, x: 'y'*4000000 } }
+      #       end
+      #       ops << { insert_one: { _id: 0 } }
+      #       ops << { insert_one: { _id: 100 } }
+      #     end
+      #   end
     
-    #     let(:error) do
-    #       begin
-    #         bulk.execute
-    #       rescue => ex
-    #         ex
-    #       end
-    #     end
+      #   it 'raises an error' do
+      #     expect(error).to be_a(Mongo::Error::BulkWriteError)
+      #   end
     
-    #     let(:operations) do
-    #       [].tap do |ops|
-    #         6.times do |i|
-    #           ops << { insert_one: { _id: i, x: 'y'*4000000 } }
-    #         end
-    #         ops << { insert_one: { _id: 0 } }
-    #         ops << { insert_one: { _id: 100 } }
-    #       end
-    #     end
-    
-    #     it 'raises an error' do
-    #       expect(error).to be_a(Mongo::Error::BulkWriteError)
-    #     end
-    
-    #     it 'splits messages into multiple messages' do
-    #       error
-    #       expect(authorized_collection.find.count).to eq(6)
-    #     end
-    #   end
-      end
+      #   it 'splits messages into multiple messages' do
+      #     error
+      #     expect(authorized_collection.find.count).to eq(6)
+      #   end
+      # end
+    end
+  end
+
+  describe 'Unordered bulk write' do
+
+    let(:options) do
+       { ordered: false }
     end
 
-    describe 'Unordered bulk write' do
+    it_behaves_like 'a bulk write object'
 
-      let(:options) do
-         { ordered: false }
-      end
+    context 'when the operations exceed the max batch size' do
 
-      it_behaves_like 'a bulk write object'
+      context 'when operations are all the same type' do
 
-      context 'when the insert batch requires splitting' do
-
-        context 'when the operations exceed the max batch size' do
-
-          let(:error) do
-            begin
-              bulk.execute
-            rescue => ex
-              ex
-            end
-          end
-
-          let(:operations) do
-            [].tap do |ops|
-              3000.times do |i|
-                ops << { insert_one: { _id: i } }
-              end
-              ops << { insert_one: { _id: 0 } }
-              ops << { insert_one: { _id: 3001 } }
-            end
-          end
-
-          it 'raises an error' do
-            expect(error).to be_a(Mongo::Error::BulkWriteError)
-          end
-
-          it 'does not halt execution after first error' do
-            expect(error.result[:write_errors].first['index']).to eq(3000)
-            expect(authorized_collection.find.count).to eq(3001)
+        let(:error) do
+          begin
+            bulk.execute
+          rescue => ex
+            ex
           end
         end
 
-    #   context 'when the operations exceed the max bson size' do
+        let(:operations) do
+          [].tap do |ops|
+            3000.times do |i|
+              ops << { insert_one: { _id: i } }
+            end
+            ops << { insert_one: { _id: 0 } }
+            ops << { insert_one: { _id: 3001 } }
+          end
+        end
 
-    #     let(:error) do
-    #       begin
-    #         bulk.execute
-    #       rescue => ex
-    #         ex
-    #       end
-    #     end
+        it 'raises an error' do
+          expect(error).to be_a(Mongo::Error::BulkWriteError)
+        end
 
-    #     let(:operations) do
-    #       [].tap do |ops|
-    #         15.times do |i|
-    #           ops << { insert_one: { _id: i, x: 'y'*4000000 } }
-    #         end
-    #         ops << { insert_one: { _id: 0 } }
-    #         ops << { insert_one: { _id: 100 } }
-    #       end
-    #     end
+        it 'does not halt execution after first error' do
+          expect(error.result[:write_errors].first['index']).to eq(3000)
+          expect(authorized_collection.find.count).to eq(3001)
+        end
+      end
 
-    #     it 'raises an error' do
-    #       expect(error).to be_a(Mongo::Error::BulkWriteError)
-    #     end
+      context 'when operations are mixed types' do
 
-    #     it 'splits messages into multiple messages' do
-    #       error
-    #       expect(authorized_collection.find.count).to eq(16)
-    #     end
-    #   end
+        let(:error) do
+          begin
+            bulk.execute
+          rescue => ex
+            ex
+          end
+        end
+
+        let(:operations) do
+          [].tap do |ops|
+            2000.times do |i|
+              ops << { insert_one: { _id: i } }
+            end
+            ops << { delete_one: { _id: 0 } }
+            ops << { insert_one: { _id: 1 } }
+            ops << { insert_one: { _id: 2000 } }
+          end
+        end
+
+        it 'raises an error' do
+          expect(error).to be_a(Mongo::Error::BulkWriteError)
+        end
+
+        it 'does not halt execution after first error' do
+          expect(error.result[:write_errors].first['index']).to eq(2001)
+          expect(authorized_collection.find.count).to eq(2000)
+        end
+      end
+
+      # context 'when the operations exceed the max bson size' do
+
+      #   let(:error) do
+      #     begin
+      #       bulk.execute
+      #     rescue => ex
+      #       ex
+      #     end
+      #   end
+
+      #   let(:operations) do
+      #     [].tap do |ops|
+      #       15.times do |i|
+      #         ops << { insert_one: { _id: i, x: 'y'*4000000 } }
+      #       end
+      #       ops << { insert_one: { _id: 0 } }
+      #       ops << { insert_one: { _id: 100 } }
+      #     end
+      #   end
+
+      #   it 'raises an error' do
+      #     expect(error).to be_a(Mongo::Error::BulkWriteError)
+      #   end
+
+      #   it 'splits messages into multiple messages' do
+      #     error
+      #     expect(authorized_collection.find.count).to eq(16)
+      #   end
+      # end
     end
   end
 end

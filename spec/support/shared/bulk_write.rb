@@ -44,18 +44,18 @@ shared_examples 'a bulk write object' do
       end
     end
 
-    context 'when an invalid object is provided' do
+    # context 'when an invalid object is provided' do
 
-      let(:operations) do
-        [{ insert_one: [] }]
-      end
+    #   let(:operations) do
+    #     [{ insert_one: [] }]
+    #   end
 
-      it 'raises an exception' do
-        expect {
-          bulk.execute
-        }.to raise_error(Mongo::Error::InvalidBulkOperation)
-      end
-    end
+    #   it 'raises an exception' do
+    #     expect {
+    #       bulk.execute
+    #     }.to raise_error(Mongo::Error::InvalidBulkOperation)
+    #   end
+    # end
   end
 
   context 'delete_one' do
