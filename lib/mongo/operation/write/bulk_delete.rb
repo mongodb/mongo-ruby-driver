@@ -85,17 +85,10 @@ module Mongo
           end
         end
 
-        # The index of each delete as it was added onto the bulk object.
-        #
-        # @since 2.0.0
-        def indexes
-          @spec[:indexes] || []
-        end
-
         private
 
         def execute_write_command(context)
-          Result.new(Command::Delete.new(spec).execute(context)).set_indexes(indexes)
+          Result.new(Command::Delete.new(spec).execute(context))
         end
 
         def execute_message(context)
@@ -103,13 +96,13 @@ module Mongo
             context.with_connection do |connection|
               result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
               if stop_sending?(result)
-                return result.set_indexes(indexes)
+                return result
               else
                 result.reply
               end
             end
           end
-          LegacyResult.new(replies.compact.empty? ? nil : replies).set_indexes(indexes)
+          LegacyResult.new(replies.compact.empty? ? nil : replies)
         end
 
         def stop_sending?(result)

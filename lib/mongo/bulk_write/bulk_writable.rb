@@ -105,8 +105,8 @@ module Mongo
 
         [:n_inserted, :n_removed, :n_modified, :n_upserted, :n_matched].each do |count|
           @results.merge!(
-          count => (@results[count] || 0) + result.send(count)
-        ) if result.respond_to?(count) 
+            count => (@results[count] || 0) + result.send(count)
+          ) if result.respond_to?(count)
         end
 
         @results.merge!(

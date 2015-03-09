@@ -22,8 +22,6 @@ module Mongo
         # @since 2.0.0
         class Result < Operation::Result
 
-          attr_reader :indexes
-
           # The number of modified docs field in the result.
           #
           # @since 2.0.0
@@ -87,19 +85,6 @@ module Mongo
             end
           end
 
-          # Set a list of indexes of the operations creating this result.
-          #
-          # @example Set the list of indexes.
-          #   result.set_indexes([1,2,3])
-          #
-          # @return [ self ] The result.
-          #
-          # @since 2.0.0
-          def set_indexes(indexes)
-            @indexes = indexes
-            self
-          end
-
           # Aggregate the write errors returned from this result.
           #
           # @example Aggregate the write errors.
@@ -113,7 +98,7 @@ module Mongo
               if write_errors = reply.documents.first['writeErrors']
                 errors ||= []
                 write_errors.each do |write_error|
-                  errors << write_error.merge('index' => indexes[write_error['index']])
+                  errors << write_error
                 end
               end
               errors
@@ -133,13 +118,11 @@ module Mongo
               if write_concern_errors = reply.documents.first['writeConcernError']
                 errors ||= []
                 write_concern_errors.each do |write_concern_error|
-                  errors << write_concern_error.merge('index' =>
-                                                      indexes[write_concern_error['index']])
+                  errors << write_concern_error
                 end
               elsif reply.documents.first['errmsg']
                 errors ||= []
                 errors << { 'errmsg' => reply.documents.first['errmsg'],
-                            'index' => indexes[i],
                             'code' => reply.documents.first['code'] }
               end
               errors
@@ -158,8 +141,6 @@ module Mongo
         #
         # @since 2.0.0
         class LegacyResult < Operation::Result
-
-          attr_reader :indexes
 
           # The updated existing field in the result.
           #
@@ -204,31 +185,6 @@ module Mongo
             end
           end
 
-          # Gets the number of documents modified.
-          #
-          # @example Get the modified count.
-          #   result.n_modified
-          #
-          # @return [ nil ] nil for legacy.
-          #
-          # @since 2.0.0
-          def n_modified
-            nil
-          end
-
-          # Set a list of indexes of the operations creating this result.
-          #
-          # @example Set the list of indexes.
-          #   result.set_indexes([1,2,3])
-          #
-          # @return [ self ] The result.
-          #
-          # @since 2.0.0
-          def set_indexes(indexes)
-            @indexes = indexes
-            self
-          end
-
           # Aggregate the write errors returned from this result.
           #
           # @example Aggregate the write errors.
@@ -242,7 +198,6 @@ module Mongo
               if reply_write_errors?(reply)
                 errors ||= []
                 errors << { 'errmsg' => reply.documents.first[Error::ERROR],
-                            'index' => indexes[i],
                             'code' => reply.documents.first[Error::CODE] }
               end
               errors
@@ -271,7 +226,6 @@ module Mongo
                   error_string = "#{code}: #{error}"
                 end
                 errors << { 'errmsg' => error_string,
-                            'index' => indexes[i],
                             'code' => code }
               end
               errors

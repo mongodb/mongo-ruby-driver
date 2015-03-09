@@ -83,7 +83,7 @@ module Mongo
               end
             end
           end
-          LegacyResult.new(replies.compact.empty? ? nil : replies).set_indexes(indexes)
+          LegacyResult.new(replies.compact.empty? ? nil : replies)
         end
 
         def stop_sending?(result)
