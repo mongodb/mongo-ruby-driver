@@ -83,36 +83,36 @@ describe Mongo::BulkWrite do
         end
       end
 
-      # context 'when operations are mixed types' do
+      context 'when operations are mixed types' do
 
-      #   let(:error) do
-      #     begin
-      #       bulk.execute
-      #     rescue => ex
-      #       ex
-      #     end
-      #   end
+        let(:error) do
+          begin
+            bulk.execute
+          rescue => ex
+            ex
+          end
+        end
 
-      #   let(:operations) do
-      #     [].tap do |ops|
-      #       2000.times do |i|
-      #         ops << { insert_one: { _id: i } }
-      #       end
-      #       ops << { delete_one: { _id: 0 } }
-      #       ops << { insert_one: { _id: 1 } }
-      #       ops << { insert_one: { _id: 2000 } }
-      #     end
-      #   end
+        let(:operations) do
+          [].tap do |ops|
+            2000.times do |i|
+              ops << { insert_one: { _id: i } }
+            end
+            ops << { delete_one: { _id: 0 } }
+            ops << { insert_one: { _id: 1 } }
+            ops << { insert_one: { _id: 2000 } }
+          end
+        end
 
-      #   it 'raises an error' do
-      #     expect(error).to be_a(Mongo::Error::BulkWriteError)
-      #   end
+        it 'raises a BulkWriteError error' do
+          expect(error).to be_a(Mongo::Error::BulkWriteError)
+        end
 
-      #   it 'halts execution after first error and reports correct index' do
-      #     expect(error.result[:write_errors].first['index']).to eq(2001)
-      #     expect(authorized_collection.find.count).to eq(1999)
-      #   end
-      # end
+        it 'halts execution after first error and reports correct index' do
+          expect(error.result[:write_errors].first['index']).to eq(2001)
+          expect(authorized_collection.find.count).to eq(1999)
+        end
+      end
 
       # context 'when the operations exceed the max bson size' do
 
@@ -134,7 +134,7 @@ describe Mongo::BulkWrite do
       #     end
       #   end
     
-      #   it 'raises an error' do
+      #   it 'raises a BulkWriteError error' do
       #     expect(error).to be_a(Mongo::Error::BulkWriteError)
       #   end
     
@@ -176,7 +176,7 @@ describe Mongo::BulkWrite do
           end
         end
 
-        it 'raises an error' do
+        it 'raises a BulkWriteError error' do
           expect(error).to be_a(Mongo::Error::BulkWriteError)
         end
 
@@ -207,7 +207,7 @@ describe Mongo::BulkWrite do
           end
         end
 
-        it 'raises an error' do
+        it 'raises a BulkWriteError error' do
           expect(error).to be_a(Mongo::Error::BulkWriteError)
         end
 
@@ -237,7 +237,7 @@ describe Mongo::BulkWrite do
       #     end
       #   end
 
-      #   it 'raises an error' do
+      #   it 'raises a BulkWriteError error' do
       #     expect(error).to be_a(Mongo::Error::BulkWriteError)
       #   end
 

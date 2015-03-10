@@ -31,7 +31,7 @@ module Mongo
       end
 
       def process(result, indexes)
-        merge_result(result, indexes)
+        combine_results(result, indexes)
       end
 
       def finalize

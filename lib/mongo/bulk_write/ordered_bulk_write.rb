@@ -31,7 +31,7 @@ module Mongo
       end
 
       def process(result, indexes)
-        merge_result(result, indexes)
+        combine_results(result, indexes)
         raise Error::BulkWriteError.new(@results) unless result.successful?
       end
 

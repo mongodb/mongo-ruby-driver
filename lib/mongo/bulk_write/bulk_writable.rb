@@ -50,6 +50,11 @@ module Mongo
 
       private
 
+      def write_concern
+        @write_concern ||= WriteConcern.get(@options[:write_concern]) ||
+                            @collection.write_concern
+      end
+
       def validate_operations!
         unless @operations && @operations.size > 0
           raise ArgumentError.new('Operations cannot be empty')
@@ -65,9 +70,9 @@ module Mongo
       def batches(op, server)
         type = op.keys.first
         ops = []
-        until op[type].size < server.max_write_batch_size
-          ops << { type => op[type].slice!(0, server.max_write_batch_size),
-                   :indexes => op[:indexes].slice!(0, server.max_write_batch_size) }
+        while op[type].size > server.max_write_batch_size
+          ops << { type => op[type].shift(server.max_write_batch_size),
+                   :indexes => op[:indexes].shift(server.max_write_batch_size) }
         end
         ops << op
       end
@@ -84,7 +89,7 @@ module Mongo
       def merge_consecutive_ops(ops)
         ops.each_with_index.inject([]) do |merged, (op, i)|
           type = op.keys.first
-          op[:indexes] = [ i ] unless op[:indexes]
+          op[:indexes] ||= [ i ]
           previous = merged.last
           if previous && previous.keys.first == type
             merged[-1].merge!(type => previous[type] << op[type],
@@ -99,23 +104,18 @@ module Mongo
 
       def merge_ops_by_type
         indexes = {}
-        ops = @operations.each_with_index.inject({}) do |merged, (op, i)|
+        ops_hash = @operations.each_with_index.inject({}) do |merged, (op, i)|
           type = op.keys.first
           merged.merge!(op) { |type, v1, v2| ([v1] << v2).flatten }
           indexes[type] = (indexes[type] || []).push(i)
           merged
         end
-        ops.keys.reduce([]) do |list, type|
-          list << { type => ops[type], :indexes => indexes[type] }
+        ops_hash.keys.reduce([]) do |ops_list, type|
+          ops_list << { type => ops_hash[type], :indexes => indexes[type] }
         end
       end
 
-      def write_concern
-        @write_concern ||= WriteConcern.get(@options[:write_concern]) ||
-                            @collection.write_concern
-      end
-
-      def merge_result(result, indexes)
+      def combine_results(result, indexes)
         @results ||= {}
         write_errors = result.aggregate_write_errors(indexes)
         write_concern_errors = result.aggregate_write_concern_errors
