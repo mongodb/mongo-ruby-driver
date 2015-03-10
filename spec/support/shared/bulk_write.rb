@@ -501,36 +501,37 @@ shared_examples 'a bulk write object' do
     end
   end
 
-  # context 'when the operations need to be split' do
+  context 'when the operations need to be split' do
 
-  #   before do
-  #     #authorized_collection.find.delete_many
-  #     6000.times do |i|
-  #       authorized_collection.insert_one(x: i)
-  #     end
-  #   end
+    before do
+      6000.times do |i|
+        authorized_collection.insert_one(x: i)
+      end
+    end
 
-  #   let(:operations) do
-  #     [].tap do |ops|
-  #       3000.times do |i|
-  #         ops << { :update_one => [ { x: i },
-  #                                   {'$set' => { x: 6000-i } }]
-  #                }
-  #       end
-  #       ops << { :insert_one => { test: 'emily' } }
-  #       3000.times do |i|
-  #         ops << { :update_one => [ { x: 3000+i },
-  #                                   {'$set' => { x: 3000-i } }]
-  #                }
-  #       end
-  #     end
-  #   end
+    let(:operations) do
+      [].tap do |ops|
+        3000.times do |i|
+          ops << { update_one: { find: { x: i },
+                                 update: { '$set' => { x: 6000-i } },
+                                 upsert: false }
+                 }
+        end
+        ops << { :insert_one => { test: 'emily' } }
+        3000.times do |i|
+          ops << { update_one: { find:  { x: 3000+i },
+                                 update: { '$set' => { x: 3000-i } },
+                                 upsert: false }
+                 }
+        end
+      end
+    end
 
-  #   it 'completes all operations' do
-  #     bulk.execute
-  #     expect(authorized_collection.find(x: { '$lte' => 3000 }).to_a.size).to eq(3000)
-  #   end
-  # end
+    it 'completes all operations' do
+      bulk.execute
+      expect(authorized_collection.find(x: { '$lte' => 3000 }).to_a.size).to eq(3000)
+    end
+  end
 
   context 'when replace_one operations exceed the max batch size' do
 
