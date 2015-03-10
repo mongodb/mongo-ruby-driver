@@ -114,35 +114,35 @@ describe Mongo::BulkWrite do
         end
       end
 
-      # context 'when the operations exceed the max bson size' do
+      context 'when the operations exceed the max bson size' do
 
-      #   let(:error) do
-      #     begin
-      #       bulk.execute
-      #     rescue => ex
-      #       ex
-      #     end
-      #   end
+        let(:error) do
+          begin
+            bulk.execute
+          rescue => ex
+            ex
+          end
+        end
     
-      #   let(:operations) do
-      #     [].tap do |ops|
-      #       6.times do |i|
-      #         ops << { insert_one: { _id: i, x: 'y'*4000000 } }
-      #       end
-      #       ops << { insert_one: { _id: 0 } }
-      #       ops << { insert_one: { _id: 100 } }
-      #     end
-      #   end
+        let(:operations) do
+          [].tap do |ops|
+            6.times do |i|
+              ops << { insert_one: { _id: i, x: 'y'*4000000 } }
+            end
+            ops << { insert_one: { _id: 0 } }
+            ops << { insert_one: { _id: 100 } }
+          end
+        end
     
-      #   it 'raises a BulkWriteError error' do
-      #     expect(error).to be_a(Mongo::Error::BulkWriteError)
-      #   end
+        it 'raises a BulkWriteError error' do
+          expect(error).to be_a(Mongo::Error::BulkWriteError)
+        end
     
-      #   it 'splits messages into multiple messages' do
-      #     error
-      #     expect(authorized_collection.find.count).to eq(6)
-      #   end
-      # end
+        it 'splits messages into multiple messages' do
+          error
+          expect(authorized_collection.find.count).to eq(6)
+        end
+      end
     end
   end
 
@@ -217,35 +217,35 @@ describe Mongo::BulkWrite do
         end
       end
 
-      # context 'when the operations exceed the max bson size' do
+      context 'when the operations exceed the max bson size' do
 
-      #   let(:error) do
-      #     begin
-      #       bulk.execute
-      #     rescue => ex
-      #       ex
-      #     end
-      #   end
+        let(:error) do
+          begin
+            bulk.execute
+          rescue => ex
+            ex
+          end
+        end
 
-      #   let(:operations) do
-      #     [].tap do |ops|
-      #       15.times do |i|
-      #         ops << { insert_one: { _id: i, x: 'y'*4000000 } }
-      #       end
-      #       ops << { insert_one: { _id: 0 } }
-      #       ops << { insert_one: { _id: 100 } }
-      #     end
-      #   end
+        let(:operations) do
+          [].tap do |ops|
+            15.times do |i|
+              ops << { insert_one: { _id: i, x: 'y'*4000000 } }
+            end
+            ops << { insert_one: { _id: 0 } }
+            ops << { insert_one: { _id: 100 } }
+          end
+        end
 
-      #   it 'raises a BulkWriteError error' do
-      #     expect(error).to be_a(Mongo::Error::BulkWriteError)
-      #   end
+        it 'raises a BulkWriteError error' do
+          expect(error).to be_a(Mongo::Error::BulkWriteError)
+        end
 
-      #   it 'splits messages into multiple messages' do
-      #     error
-      #     expect(authorized_collection.find.count).to eq(16)
-      #   end
-      # end
+        it 'splits messages into multiple messages' do
+          error
+          expect(authorized_collection.find.count).to eq(16)
+        end
+      end
     end
   end
 end

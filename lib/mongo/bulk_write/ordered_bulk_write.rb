@@ -32,7 +32,11 @@ module Mongo
 
       def process(result, indexes)
         combine_results(result, indexes)
-        raise Error::BulkWriteError.new(@results) unless result.successful?
+        raise Error::BulkWriteError.new(@results) unless successful?
+      end
+
+      def successful?
+        !@results.keys.include?(:write_errors) && !@results.keys.include?(:write_concern_errors)
       end
 
       def finalize

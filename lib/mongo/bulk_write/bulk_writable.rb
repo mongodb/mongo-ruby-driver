@@ -67,7 +67,7 @@ module Mongo
         end
       end
 
-      def batches(op, server)
+      def max_write_batches(op, server)
         type = op.keys.first
         ops = []
         while op[type].size > server.max_write_batch_size
@@ -77,12 +77,30 @@ module Mongo
         ops << op
       end
 
+      def split(op)
+        type = op.keys.first
+        n = op[type].size/2
+        [ { type => op[type].shift(n),
+            :indexes => op[:indexes].shift(n) },
+          { type => op[type],
+            :indexes => op[:indexes] }
+        ]
+      end
+
       def execute_op(operation)
         server = next_primary
         type = operation.keys.first
         validate_type!(type)
-        batches(operation, server).each do |op|
-          process(send(type, op, server), op[:indexes])
+        ops = max_write_batches(operation, server)
+
+        until ops.empty?
+          op = ops.shift
+
+          begin
+            process(send(type, op, server), op[:indexes])
+          rescue Error::MaxBSONSize, Error::MaxMessageSize => ex
+            ops = split(op) + ops
+          end
         end
       end
 
