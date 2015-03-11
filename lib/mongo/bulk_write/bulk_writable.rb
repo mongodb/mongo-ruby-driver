@@ -74,9 +74,11 @@ module Mongo
       #
       # @since 2.0.0
       def execute
+        server = next_primary
         validate_operations!
         merged_ops.each do |op|
-          execute_op(op)
+          validate_type!(op.keys.first)
+          execute_op(op, server)
         end
         finalize
       end
@@ -110,8 +112,7 @@ module Mongo
         ops << op
       end
 
-      def split(op)
-        type = op.keys.first
+      def split(op, type)
         n = op[type].size/2
         [ { type => op[type].shift(n),
             :indexes => op[:indexes].shift(n) },
@@ -120,19 +121,17 @@ module Mongo
         ]
       end
 
-      def execute_op(operation)
-        server = next_primary
-        type = operation.keys.first
-        validate_type!(type)
+      def execute_op(operation, server)
         ops = max_write_batches(operation, server)
 
         until ops.empty?
           op = ops.shift
-
+          type = op.keys.first
           begin
             process(send(type, op, server), op[:indexes])
           rescue Error::MaxBSONSize, Error::MaxMessageSize => ex
-            ops = split(op) + ops
+            raise ex if op[type].size < 2
+            ops = split(op, type) + ops
           end
         end
       end
@@ -174,7 +173,6 @@ module Mongo
         @write_concern_errors ||= result.aggregate_write_concern_errors(indexes)
 
         @results.tap do |results|
-
           RESULT_FIELDS.each do |field|
             results.merge!(
               field => (results[field] || 0) + result.send(field)
