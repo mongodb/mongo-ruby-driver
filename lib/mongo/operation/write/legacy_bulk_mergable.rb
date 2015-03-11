@@ -21,7 +21,7 @@ module Mongo
         # Aggregate the write errors returned from this result.
         #
         # @example Aggregate the write errors.
-        #   result.aggregate_write_errors(indexes)
+        #   result.aggregate_write_errors([0, 1, 2, 3])
         #
         # @param [ Array ] indexes The indexes of each operation as they
         #   were listed in the Bulk API.
@@ -44,7 +44,7 @@ module Mongo
         # Aggregate the write concern errors returned from this result.
         #
         # @example Aggregate the write concern errors.
-        #   result.aggregate_write_concern_errors(indexes)
+        #   result.aggregate_write_concern_errors([0, 1, 2, 3])
         #
         # @param [ Array ] indexes The indexes of each operation as they
         #   were listed in the Bulk API.
@@ -53,8 +53,9 @@ module Mongo
         #
         # @since 2.0.0
         def aggregate_write_concern_errors(indexes)
-          @replies.each_with_index.find do |reply, i|
+          @replies.each_with_index.reduce(nil) do |errors, (reply, i)|
             if error = reply_write_errors?(reply)
+              errors ||= []
               if note = reply.documents.first['wnote'] || reply.documents.first['jnote']
                 code = reply.documents.first['code'] || Error::BAD_VALUE
                 error_string = "#{code}: #{note}"
@@ -62,12 +63,20 @@ module Mongo
                 code = reply.documents.first['code'] || Error::UNKNOWN_ERROR
                 error_string = "#{code}: #{error}"
               end
-              { 'errmsg' => error_string,
-                'index' => indexes[i],
-                'code' => code } if error_string
+              errors << { 'errmsg' => error_string,
+                          'index' => indexes[i],
+                          'code' => code } if error_string
             end
+            errors
           end
         end
+
+        private
+
+       def reply_write_errors?(reply)
+         reply.documents.first[Error::ERROR] ||
+           reply.documents.first[Error::ERRMSG]
+       end
       end
     end
   end

@@ -65,13 +65,6 @@ module Mongo
               n += reply.documents.first[N]
             end
           end
-
-          private
-
-          def reply_write_errors?(reply)
-            reply.documents.first[Error::ERROR] ||
-              reply.documents.first[Error::ERRMSG]
-          end
         end
       end
     end
