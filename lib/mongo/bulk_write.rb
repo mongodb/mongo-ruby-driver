@@ -12,14 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/result'
-require 'mongo/operation/executable'
-require 'mongo/operation/specifiable'
-require 'mongo/operation/limited'
-require 'mongo/operation/read_preferrable'
-require 'mongo/operation/read'
-require 'mongo/operation/write'
-require 'mongo/operation/aggregate'
-require 'mongo/operation/command'
-require 'mongo/operation/kill_cursors'
-require 'mongo/operation/map_reduce'
+require 'mongo/bulk_write/bulk_writable'
+require 'mongo/bulk_write/ordered_bulk_write'
+require 'mongo/bulk_write/unordered_bulk_write'
+
+module Mongo
+  module BulkWrite
+    extend self
+
+    def get(collection, operations, options)
+      if options.fetch(:ordered, true)
+        OrderedBulkWrite.new(collection, operations, options)
+      else
+        UnorderedBulkWrite.new(collection, operations, options)
+      end
+    end
+  end
+end

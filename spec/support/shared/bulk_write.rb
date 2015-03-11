@@ -2,12 +2,14 @@ shared_examples 'a bulk write object' do
 
   context 'when no operations are provided' do
 
-    let(:operations) {[]}
+    let(:operations) do
+      []
+    end
 
     it 'raises an error' do
       expect {
         bulk.execute
-      }.to raise_error(Mongo::Error::EmptyBatch)
+      }.to raise_error(ArgumentError)
     end
   end
 
@@ -20,7 +22,7 @@ shared_examples 'a bulk write object' do
     it 'raises an error' do
       expect {
         bulk.execute
-      }.to raise_error(Mongo::Error::InvalidBulkOperation)
+      }.to raise_error(Mongo::Error::InvalidBulkOperationType)
     end
   end
 
@@ -32,8 +34,8 @@ shared_examples 'a bulk write object' do
         [{ insert_one: { name: 'test' }}]
       end
 
-      it 'returns nInserted of 1' do
-        expect(bulk.execute['nInserted']).to eq(1)
+      it 'returns n_inserted of 1' do
+        expect(bulk.execute[:n_inserted]).to eq(1)
       end
 
       it 'only inserts that document' do
@@ -51,7 +53,7 @@ shared_examples 'a bulk write object' do
       it 'raises an exception' do
         expect {
           bulk.execute
-        }.to raise_error(Mongo::Error::InvalidDocument)
+        }.to raise_error(Mongo::Error::InvalidBulkOperation)
       end
     end
   end
@@ -71,7 +73,9 @@ shared_examples 'a bulk write object' do
     end
 
     let(:operations) do
-      [{ delete_one: { a: 1 }}]
+      [ { delete_one: { a: 1 }},
+        { delete_one: { a: 2 }}
+      ]
     end
 
     context 'when no selector is specified' do
@@ -83,14 +87,14 @@ shared_examples 'a bulk write object' do
       it 'raises an exception' do
         expect {
           bulk.execute
-        }.to raise_exception(Mongo::Error::InvalidDocument)
+        }.to raise_exception(Mongo::Error::InvalidBulkOperation)
       end
     end
 
     context 'when multiple documents match delete selector' do
 
-      it 'reports nRemoved correctly' do
-        expect(bulk.execute['nRemoved']).to eq(1)
+      it 'reports n_removed correctly' do
+        expect(bulk.execute[:n_removed]).to eq(1)
       end
 
       it 'deletes only matching documents' do
@@ -123,7 +127,7 @@ shared_examples 'a bulk write object' do
       it 'raises an exception' do
         expect {
           bulk.execute
-        }.to raise_exception(Mongo::Error::InvalidDocument)
+        }.to raise_exception(Mongo::Error::InvalidBulkOperation)
       end
     end
 
@@ -131,8 +135,8 @@ shared_examples 'a bulk write object' do
 
       context 'when multiple documents match delete selector' do
 
-        it 'reports nRemoved correctly' do
-          expect(bulk.execute['nRemoved']).to eq(2)
+        it 'reports n_removed correctly' do
+          expect(bulk.execute[:n_removed]).to eq(2)
         end
 
         it 'deletes all matching documents' do
@@ -151,8 +155,8 @@ shared_examples 'a bulk write object' do
           [{ 'a' => 2 }]
         end
 
-        it 'reports nRemoved correctly' do
-          expect(bulk.execute['nRemoved']).to eq(1)
+        it 'reports n_removed correctly' do
+          expect(bulk.execute[:n_removed]).to eq(1)
         end
 
         it 'deletes all matching documents' do
@@ -182,32 +186,41 @@ shared_examples 'a bulk write object' do
     end
 
     let(:operations) do
-      [{ replace_one: [{ a: 1 }, replacement ]}]
+      [{ replace_one: { find: { a: 1 },
+                        replacement: replacement,
+                        upsert: false }
+      }]
     end
 
     context 'when a replace document is not specified' do
 
       let(:operations) do
-        [{ replace_one: [{ a: 1 }]}]
+        [{ replace_one: { find: { a: 1 },
+                          replacement: nil,
+                          upsert: false }
+        }]
       end
 
       it 'raises an exception' do
         expect {
           bulk.execute
-        }.to raise_exception(ArgumentError)
+        }.to raise_exception(Mongo::Error::InvalidBulkOperation)
       end
     end
 
     context 'when there are $-operator top-level keys' do
 
-      let(:replacement) do
-        { :$set => { a: 3 }}
+      let(:operations) do
+        [{ replace_one: { find: { a: 1 },
+                          replacement: { :$set => { a: 3 }},
+                          upsert: false }
+        }]
       end
 
       it 'raises an exception' do
         expect {
           bulk.execute
-        }.to raise_exception(Mongo::Error::InvalidReplacementDocument)
+        }.to raise_exception(Mongo::Error::InvalidBulkOperation)
       end
 
     end
@@ -219,8 +232,8 @@ shared_examples 'a bulk write object' do
         expect(authorized_collection.find(replacement).count).to eq(1)
       end
 
-      it 'reports nMatched correctly' do
-        expect(bulk.execute['nMatched']).to eq(1)
+      it 'reports n_matched correctly' do
+        expect(bulk.execute[:n_matched]).to eq(1)
       end
 
       it 'only applies the replacement to one matching document' do
@@ -231,7 +244,10 @@ shared_examples 'a bulk write object' do
       context 'when upsert is true' do
 
         let(:operations) do
-          [{ replace_one: [{ a: 4 }, replacement, { :upsert => true }]}]
+          [{ replace_one: { find: { a: 4 },
+                            replacement: replacement,
+                            upsert: true }
+          }]
         end
 
         let(:expected) do
@@ -243,8 +259,8 @@ shared_examples 'a bulk write object' do
           expect(authorized_collection.find(replacement).count).to eq(1)
         end
 
-        it 'reports nMatched correctly' do
-          expect(bulk.execute['nMatched']).to eq(0)
+        it 'reports n_matched correctly' do
+          expect(bulk.execute[:n_matched]).to eq(0)
         end
 
         it 'does not replace any documents' do
@@ -266,7 +282,10 @@ shared_examples 'a bulk write object' do
     end
 
     let(:operations) do
-      [{ update_one: [{ a: 1 }, update ]}]
+      [{ update_one: { find: { a: 1 },
+                       update: update,
+                       upsert: false }
+      }]
     end
 
     before do
@@ -283,10 +302,16 @@ shared_examples 'a bulk write object' do
         [{ update_one: [{ a: 1 }]}]
       end
 
+      let(:operations) do
+        [{ update_one: { find: { a: 1 },
+                         upsert: false }
+        }]
+      end
+
       it 'raises an exception' do
         expect {
           bulk.execute
-        }.to raise_exception(ArgumentError)
+        }.to raise_exception(Mongo::Error::InvalidBulkOperation)
       end
     end
 
@@ -299,26 +324,26 @@ shared_examples 'a bulk write object' do
       it 'raises an exception' do
         expect {
           bulk.execute
-        }.to raise_exception(Mongo::Error::InvalidUpdateDocument)
+        }.to raise_exception(Mongo::Error::InvalidBulkOperation)
       end
     end
 
     context 'when a valid update document is specified' do
 
-      it 'reports nModified correctly', if: write_command_enabled?  do
-        expect(bulk.execute['nModified']).to eq(1)
+      it 'reports n_modified correctly', if: write_command_enabled?  do
+        expect(bulk.execute[:n_modified]).to eq(1)
       end
 
-      it 'reports nModified correctly', unless: write_command_enabled?  do
-        expect(bulk.execute['nModified']).to eq(nil)
+      it 'reports n_modified correctly', unless: write_command_enabled?  do
+        expect(bulk.execute[:n_modified]).to eq(nil)
       end
 
-      it 'reports nUpserted correctly' do
-        expect(bulk.execute['nUpserted']).to eq(0)
+      it 'reports n_upserted correctly' do
+        expect(bulk.execute[:n_upserted]).to eq(0)
       end
 
-      it 'reports nMatched correctly' do
-        expect(bulk.execute['nMatched']).to eq(1)
+      it 'reports n_matched correctly' do
+        expect(bulk.execute[:n_matched]).to eq(1)
       end
 
       it 'applies the correct writes' do
@@ -329,27 +354,30 @@ shared_examples 'a bulk write object' do
       context 'when upsert is true' do
 
         let(:operations) do
-          [{ update_one: [{ a: 3 }, update, { upsert: true }]}]
+          [{ update_one: { find: { a: 3 },
+                           update: update,
+                           upsert: true }
+          }]
         end
 
         let(:expected) do
           [{ 'a' => 1 },  { 'a' => 1 }, { 'a' => 2 }]
         end
 
-        it 'reports nModified correctly', if: write_command_enabled?  do
-          expect(bulk.execute['nModified']).to eq(0)
+        it 'reports n_modified correctly', if: write_command_enabled?  do
+          expect(bulk.execute[:n_modified]).to eq(0)
         end
 
-        it 'reports nModified correctly', unless: write_command_enabled?  do
-          expect(bulk.execute['nModified']).to eq(nil)
+        it 'reports n_modified correctly', unless: write_command_enabled?  do
+          expect(bulk.execute[:n_modified]).to eq(nil)
         end
 
-        it 'reports nUpserted correctly' do
-          expect(bulk.execute['nUpserted']).to eq(1)
+        it 'reports n_upserted correctly' do
+          expect(bulk.execute[:n_upserted]).to eq(1)
         end
 
-        it 'reports nMatched correctly' do
-          expect(bulk.execute['nMatched']).to eq(0)
+        it 'reports n_matched correctly' do
+          expect(bulk.execute[:n_matched]).to eq(0)
         end
 
         it 'applies the correct writes' do
@@ -371,7 +399,10 @@ shared_examples 'a bulk write object' do
     end
 
     let(:operations) do
-      [{ update_many: [{ a: 1 }, update ]}]
+      [{ update_many: { find: { a: 1 },
+                        update: update,
+                        upsert: false }
+      }]
     end
 
     let(:expected) do
@@ -385,13 +416,15 @@ shared_examples 'a bulk write object' do
     context 'when an update document is not specified' do
 
       let(:operations) do
-        [{ update_many: [{ a: 1 }]}]
+        [{ update_many: { find: { a: 1 },
+                          upsert: false }
+        }]
       end
 
       it 'raises an exception' do
         expect do
           bulk.execute
-        end.to raise_exception(ArgumentError)
+        end.to raise_exception(Mongo::Error::InvalidBulkOperation)
       end
     end
 
@@ -404,26 +437,26 @@ shared_examples 'a bulk write object' do
       it 'raises an exception' do
         expect do
           bulk.execute
-        end.to raise_exception(Mongo::Error::InvalidUpdateDocument)
+        end.to raise_exception(Mongo::Error::InvalidBulkOperation)
       end
     end
 
     context 'when a valid update document is specified' do
 
-      it 'reports nModified correctly', if: write_command_enabled?  do
-        expect(bulk.execute['nModified']).to eq(2)
+      it 'reports n_modified correctly', if: write_command_enabled?  do
+        expect(bulk.execute[:n_modified]).to eq(2)
       end
 
-      it 'reports nModified correctly', unless: write_command_enabled?  do
-        expect(bulk.execute['nModified']).to eq(nil)
+      it 'reports n_modified correctly', unless: write_command_enabled?  do
+        expect(bulk.execute[:n_modified]).to eq(nil)
       end
 
-      it 'reports nUpserted correctly' do
-        expect(bulk.execute['nUpserted']).to eq(0)
+      it 'reports n_upserted correctly' do
+        expect(bulk.execute[:n_upserted]).to eq(0)
       end
 
-      it 'reports nMatched correctly' do
-        expect(bulk.execute['nMatched']).to eq(2)
+      it 'reports n_matched correctly' do
+        expect(bulk.execute[:n_matched]).to eq(2)
       end
 
       it 'applies the correct writes' do
@@ -434,27 +467,30 @@ shared_examples 'a bulk write object' do
       context 'when upsert is true' do
 
         let(:operations) do
-          [{ update_one: [{ a: 3 }, update, { upsert: true }]}]
+          [{ update_many: { find: { a: 3 },
+                            update: update,
+                            upsert: true }
+          }]
         end
 
         let(:expected) do
           [ { 'a' => 1 },  { 'a' => 1 }, { 'a' => 2 } ]
         end
 
-        it 'reports nModified correctly', if: write_command_enabled?  do
-          expect(bulk.execute['nModified']).to eq(0)
+        it 'reports n_modified correctly', if: write_command_enabled?  do
+          expect(bulk.execute[:n_modified]).to eq(0)
         end
 
-        it 'reports nModified correctly', unless: write_command_enabled?  do
-          expect(bulk.execute['nModified']).to eq(nil)
+        it 'reports n_modified correctly', unless: write_command_enabled?  do
+          expect(bulk.execute[:n_modified]).to eq(nil)
         end
 
-        it 'reports nUpserted correctly' do
-          expect(bulk.execute['nUpserted']).to eq(1)
+        it 'reports n_upserted correctly' do
+          expect(bulk.execute[:n_upserted]).to eq(1)
         end
 
-        it 'reports nMatched correctly' do
-          expect(bulk.execute['nMatched']).to eq(0)
+        it 'reports n_matched correctly' do
+          expect(bulk.execute[:n_matched]).to eq(0)
         end
 
         it 'applies the correct writes' do
@@ -468,7 +504,6 @@ shared_examples 'a bulk write object' do
   context 'when the operations need to be split' do
 
     before do
-      authorized_collection.find.delete_many
       6000.times do |i|
         authorized_collection.insert_one(x: i)
       end
@@ -477,14 +512,16 @@ shared_examples 'a bulk write object' do
     let(:operations) do
       [].tap do |ops|
         3000.times do |i|
-          ops << { :update_one => [ { x: i },
-                                    {'$set' => { x: 6000-i } }]
+          ops << { update_one: { find: { x: i },
+                                 update: { '$set' => { x: 6000-i } },
+                                 upsert: false }
                  }
         end
         ops << { :insert_one => { test: 'emily' } }
         3000.times do |i|
-          ops << { :update_one => [ { x: 3000+i },
-                                    {'$set' => { x: 3000-i } }]
+          ops << { update_one: { find:  { x: 3000+i },
+                                 update: { '$set' => { x: 3000-i } },
+                                 upsert: false }
                  }
         end
       end

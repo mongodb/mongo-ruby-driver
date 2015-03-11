@@ -46,9 +46,7 @@ module Mongo
       #
       # @since 2.0.0
       class BulkInsert
-        include Executable
         include Specifiable
-        include Batchable
 
         # Execute the bulk insert operation.
         #
@@ -68,33 +66,10 @@ module Mongo
           end
         end
 
-        # Set the write concern on this operation.
-        #
-        # @example Set a write concern.
-        #   new_op = operation.write_concern(:w => 2)
-        #
-        # @param [ Hash ] wc The write concern.
-        #
-        # @since 2.0.0
-        def write_concern(wc = nil)
-          if wc
-            self.class.new(spec.merge(write_concern: WriteConcern.get(wc)))
-          else
-            spec[WRITE_CONCERN]
-          end
-        end
-
-        # The index of each document as it was added onto the bulk object.
-        #
-        # @since 2.0.0
-        def indexes
-          @spec[:indexes] || []
-        end
-
         private
 
         def execute_write_command(context)
-          Result.new(Command::Insert.new(spec).execute(context)).set_indexes(indexes)
+          Result.new(Command::Insert.new(spec).execute(context))
         end
 
         def execute_message(context)
@@ -104,11 +79,11 @@ module Mongo
               result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
               replies << result.reply
               if stop_sending?(result)
-                return LegacyResult.new(replies).set_indexes(indexes)
+                return LegacyResult.new(replies)
               end
             end
           end
-          LegacyResult.new(replies.compact.empty? ? nil : replies).set_indexes(indexes)
+          LegacyResult.new(replies.compact.empty? ? nil : replies)
         end
 
         def stop_sending?(result)
@@ -118,6 +93,11 @@ module Mongo
         # @todo put this somewhere else
         def ordered?
           @spec.fetch(:ordered, true)
+        end
+
+        def initialize_copy(original)
+          @spec = original.spec.dup
+          @spec[DOCUMENTS] = original.spec[DOCUMENTS].clone
         end
 
         def gle
@@ -132,15 +112,6 @@ module Mongo
               options.merge(limit: -1)
             )
           end
-        end
-
-        def batch_key
-          DOCUMENTS
-        end
-
-        def initialize_copy(original)
-          @spec = original.spec.dup
-          @spec[DOCUMENTS] = original.spec[DOCUMENTS].dup
         end
 
         def messages

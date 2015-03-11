@@ -41,10 +41,10 @@ module Mongo
           #
           # @since 2.0.0
           def selector
-            { :insert        => coll_name,
-              :documents     => documents,
-              :writeConcern  => write_concern.options,
-              :ordered       => ordered?
+            { insert: coll_name,
+              documents: documents,
+              writeConcern: write_concern.options,
+              ordered: ordered?
             }
           end
         end

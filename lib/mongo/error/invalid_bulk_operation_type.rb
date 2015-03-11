@@ -12,14 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/result'
-require 'mongo/operation/executable'
-require 'mongo/operation/specifiable'
-require 'mongo/operation/limited'
-require 'mongo/operation/read_preferrable'
-require 'mongo/operation/read'
-require 'mongo/operation/write'
-require 'mongo/operation/aggregate'
-require 'mongo/operation/command'
-require 'mongo/operation/kill_cursors'
-require 'mongo/operation/map_reduce'
+module Mongo
+  class Error
+
+    # Exception raised if an non-existent operation type is used.
+    #
+    # @since 2.0.0
+    class InvalidBulkOperationType < Error
+
+      # Instantiate the new exception.
+      #
+      # @example Instantiate the exception.
+      #   Mongo::Error::InvalidBulkOperationType.new(type)
+      #
+      # @param [ String ] type The attempted operation type.
+      #
+      # @since 2.0.0
+      def initialize(type)
+        super("Invalid bulk operation type: #{type}.")
+      end
+    end
+  end
+end

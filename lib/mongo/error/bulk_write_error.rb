@@ -19,7 +19,7 @@ module Mongo
     # operation.
     #
     # @since 2.0.0
-    class BulkWriteFailure < Error
+    class BulkWriteError < Error
 
       # @return [ BSON::Document ] result The error result.
       attr_reader :result

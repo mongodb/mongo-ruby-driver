@@ -12,4 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/bulk/bulk_write'
+module Mongo
+
+  module BulkWrite
+
+    class UnorderedBulkWrite
+
+      include BulkWritable
+
+      private
+
+      def ordered?
+        false
+      end
+
+      def merged_ops
+        merge_consecutive_ops(merge_ops_by_type)
+      end
+
+      def process(result, indexes)
+        combine_results(result, indexes)
+      end
+
+      def finalize
+        @results.tap do |results|
+          if results[:write_errors] || results[:write_concern_errors]
+            raise Error::BulkWriteError.new(results)
+          end
+        end
+      end
+    end
+  end
+end

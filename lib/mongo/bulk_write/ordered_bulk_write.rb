@@ -13,26 +13,35 @@
 # limitations under the License.
 
 module Mongo
-  class Error
 
-    # Exception raised for bulk operations that are empty.
-    #
-    # @since 2.0.0
-    class EmptyBatch < Error
+  module BulkWrite
 
-      # The error message.
-      #
-      # @since 2.0.0
-      MESSAGE = 'No operations to execute'.freeze
+    class OrderedBulkWrite
 
-      # Instantiate the new exception.
-      #
-      # @example Instantiate the exception.
-      #   Mongo::Error::EmptyBatch.new
-      #
-      # @since 2.0.0
-      def initialize
-        super(MESSAGE)
+      include BulkWritable
+
+      private
+
+      def ordered?
+        true
+      end
+
+      def merged_ops
+        merge_consecutive_ops(@operations)
+      end
+
+      def process(result, indexes)
+        combine_results(result, indexes)
+        raise Error::BulkWriteError.new(@results) if stop?
+      end
+
+      def stop?
+        @results.keys.include?(:write_errors)
+      end
+
+      def finalize
+        raise Error::BulkWriteError.new(@results) if @results[:write_concern_errors]
+        @results
       end
     end
   end

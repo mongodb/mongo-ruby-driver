@@ -42,10 +42,10 @@ module Mongo
           #
           # @since 2.0.0
           def selector
-            { :delete        => coll_name,
-              :deletes       => deletes,
-              :writeConcern  => write_concern.options,
-              :ordered       => ordered?
+            { delete: coll_name,
+              deletes: deletes,
+              writeConcern: write_concern.options,
+              ordered: ordered?
             }
           end
         end
