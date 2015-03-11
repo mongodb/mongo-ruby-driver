@@ -56,10 +56,10 @@ module Mongo
           @replies.each_with_index.find do |reply, i|
             if error = reply_write_errors?(reply)
               if note = reply.documents.first['wnote'] || reply.documents.first['jnote']
-                code = reply.documents.first['code'] || "bad value constant"
+                code = reply.documents.first['code'] || Error::BAD_VALUE
                 error_string = "#{code}: #{note}"
               elsif error == 'timeout'
-                code = reply.documents.first['code'] || "unknown error constant"
+                code = reply.documents.first['code'] || Error::UNKNOWN_ERROR
                 error_string = "#{code}: #{error}"
               end
               { 'errmsg' => error_string,
