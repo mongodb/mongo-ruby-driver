@@ -14,6 +14,10 @@
 
 module Mongo
   module BulkWrite
+
+    # Defines behavior for validating and combining replace bulk write operations.
+    #
+    # @since 2.0.0.
     module Replacable
 
       private

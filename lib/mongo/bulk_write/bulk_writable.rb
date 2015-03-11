@@ -20,6 +20,9 @@ require 'mongo/bulk_write/replacable'
 module Mongo
   module BulkWrite
 
+    # Defines shared behaviour between ordered and unordered bulk operations.
+    #
+    # @since 2.0.0
     module BulkWritable
       include Insertable
       include Deletable
@@ -27,20 +30,49 @@ module Mongo
       include Replacable
       extend Forwardable
 
+      # Delegate various methods to the collection.
       def_delegators :@collection, :database, :cluster, :next_primary
 
+      # The fields contained in the result document returned from executing the
+      # operations.
+      #
+      # @since 2.0.0.
       RESULT_FIELDS = [ :n_inserted,
                         :n_removed,
                         :n_modified,
                         :n_upserted,
                         :n_matched ]
 
+
+      # Initialize a bulk write object.
+      #
+      # @example Initialize a bulk write object.
+      #   Mongo::BulkWrite::OrderedBulkWrite.new(collection, operations, options)
+      #   Mongo::BulkWrite::UnorderedBulkWrite.new(collection, operations, options)
+      #
+      # @param [ Mongo::Collection ] collection The collection the operations will
+      #   be executed on.
+      # @param [ Array<Hash> ] operations The operations to be executed.
+      # @param [ Hash ] options The options.
+      #
+      # @option options [ Hash ] :write_concern The write concern to use for this
+      #   bulk write.
+      #
+      # @since 2.0.0
       def initialize(collection, operations, options)
         @collection = collection
         @operations = operations
         @options = options
       end
 
+      # Execute the bulk operations.
+      #
+      # @example Execute the operations.
+      #   bulk.execute
+      #
+      # @return [ Hash ] The results from the bulk write.
+      #
+      # @since 2.0.0
       def execute
         validate_operations!
         merged_ops.each do |op|
