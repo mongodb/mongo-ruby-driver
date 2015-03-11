@@ -19,6 +19,7 @@ require 'mongo/bulk_write/replacable'
 
 module Mongo
   module BulkWrite
+
     module BulkWritable
       include Insertable
       include Deletable
@@ -136,7 +137,9 @@ module Mongo
       def combine_results(result, indexes)
         @results ||= {}
         write_errors = result.aggregate_write_errors(indexes)
-        write_concern_errors = result.aggregate_write_concern_errors
+
+        # The Bulk API only returns the first write concern error encountered.
+        @write_concern_errors ||= result.aggregate_write_concern_errors(indexes)
 
         @results.tap do |results|
 
@@ -150,9 +153,7 @@ module Mongo
             write_errors: ((results[:write_errors] || []) << write_errors).flatten
           ) if write_errors
 
-          results.merge!(
-            write_concern_errors: ((results[:write_concern_errors] || []) << write_concern_errors).flatten
-          ) if write_concern_errors
+          results.merge!(write_concern_errors: @write_concern_errors) if @write_concern_errors
         end
       end
     end

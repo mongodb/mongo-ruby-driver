@@ -36,11 +36,11 @@ module Mongo
       end
 
       def stop?
-        @results.keys.include?(:write_errors) ||
-          @results.keys.include?(:write_concern_errors)
+        @results.keys.include?(:write_errors)
       end
 
       def finalize
+        raise Error::BulkWriteError.new(@results) if @results[:write_concern_errors]
         @results
       end
     end

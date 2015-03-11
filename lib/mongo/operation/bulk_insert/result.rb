@@ -61,19 +61,14 @@ module Mongo
           # @return [ Array ] The aggregate write concern errors.
           #
           # @since 2.0.0
-          def aggregate_write_concern_errors
+          def aggregate_write_concern_errors(indexes)
             @replies.each_with_index.reduce(nil) do |errors, (reply, i)|
-              if write_concern_errors = reply.documents.first['writeConcernError']
-                errors ||= []
-                write_concern_errors.each do |write_concern_error|
-                  errors << write_concern_error
+              if write_concern_errors = reply.documents.first['writeConcernErrors']
+                (errors || []) << write_concern_errors.reduce(nil) do |errs, wce|
+                    wce.merge!('index' => indexes[wce['index']])
+                    (errs || []) << write_concern_error
                 end
-              elsif reply.documents.first['errmsg']
-                errors ||= []
-                errors << { 'errmsg' => reply.documents.first['errmsg'],
-                            'code' => reply.documents.first['code'] }
               end
-              errors
             end
           end
         end
@@ -128,23 +123,20 @@ module Mongo
           # @return [ Array ] The aggregate write concern errors.
           #
           # @since 2.0.0
-          def aggregate_write_concern_errors
-            @replies.each_with_index.reduce(nil) do |errors, (reply, i)|
-              # @todo: only raise if error is timeout
+          def aggregate_write_concern_errors(indexes)
+            @replies.each_with_index.find do |reply, i|
               if error = reply_write_errors?(reply)
-                errors ||= []
-                note = reply.documents.first['wnote'] || reply.documents.first['jnote']
-                if note
+                if note = reply.documents.first['wnote'] || reply.documents.first['jnote']
                   code = reply.documents.first['code'] || "bad value constant"
                   error_string = "#{code}: #{note}"
-                else
+                elsif error == 'timeout'
                   code = reply.documents.first['code'] || "unknown error constant"
                   error_string = "#{code}: #{error}"
                 end
-                errors << { 'errmsg' => error_string,
-                            'code' => code }
+                { 'errmsg' => error_string,
+                  'index' => indexes[i],
+                  'code' => code } if error_string
               end
-              errors
             end
           end
 

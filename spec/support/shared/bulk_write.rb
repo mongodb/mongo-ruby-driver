@@ -532,31 +532,4 @@ shared_examples 'a bulk write object' do
       expect(authorized_collection.find(x: { '$lte' => 3000 }).to_a.size).to eq(3000)
     end
   end
-
-  context 'when replace_one operations exceed the max batch size' do
-
-    let(:error) do
-      begin
-        bulk.execute
-      rescue => ex
-        ex
-      end
-    end
-
-    let(:operations) do
-      [].tap do |ops|
-        10.times do |i|
-          ops << { replace_one: { find: { a: i },
-                                  replacement: { b: i },
-                                  upsert: false
-                                 }
-                 }
-        end
-      end
-    end
-
-    it 'halts execution after first error and reports correct index' do
-      bulk.execute
-    end
-  end
 end
