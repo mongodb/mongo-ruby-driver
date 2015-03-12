@@ -27,4 +27,3 @@ result = client[:restaurants].insert_one({
   })
 
 result.n #=> returns 1, because 1 document was inserted.
-
